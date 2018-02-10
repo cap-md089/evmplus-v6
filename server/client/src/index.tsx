@@ -7,11 +7,25 @@ import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 
 import reducers from './reducers';
+import { closeDialogue } from './actions/dialogue';
 
 import './nhq.css';
 
 const store = createStore(
-	reducers
+	reducers,
+	{
+		BreadCrumbs : {
+			links: []
+		},
+		SideNavigation : {
+			links: []
+		},
+		Dialogue: {
+			open: false,
+			text: '',
+			title: ''
+		}
+	}
 );
 
 ReactDOM.render(
@@ -34,10 +48,8 @@ registerServiceWorker();
 window.addEventListener(
 	'message',
 	(event: MessageEvent): void => {
-		let log = document.getElementById('log');
-		if (log) {
-			log.innerHTML += JSON.stringify(event.data);
-		}
+		console.log(event);
+		store.dispatch(closeDialogue());
 	},
 	false
 );

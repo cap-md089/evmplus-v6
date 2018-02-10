@@ -1,8 +1,16 @@
-export const displayDialogue = (title: string, text: string) => {
+export const displayDialogue = (
+	title: string,
+	text: JSX.Element | string,
+	buttontext: string = 'Close',
+	displayButton: boolean = true,
+	onClose: Function = () => null) => {
 	return {
-		type: 'DISPLAY_DIALOGUES',
+		type: 'DISPLAY_DIALOGUE',
 		title,
-		text
+		text,
+		buttontext,
+		displayButton,
+		onClose
 	};
 };
 

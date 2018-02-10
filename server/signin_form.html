@@ -1,35 +1,112 @@
-<script>
-	function onSubmit (form) {
-		fetch ('/api/signin', {
-			credentials: "same-origin",
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/x-www-form-urlencodeds'
-			},
-			method: 'post',
-			body: new FormData(form)
-		}).then(res => {
-			if (res.status >= 200 && res.status < 300) {
-				return res;
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			@font-face{font-family:"RobotoRegular";src:url("/images/regular/Roboto-Regular-webfont.eot");src:url("/images/regular/Roboto-Regular-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoMedium";src:url("/images/Medium/Roboto-Medium-webfont.eot");src:url("/images/Medium/Roboto-Medium-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoLight";src:url("/images/Light/Roboto-Light-webfont.eot");src:url("/images/Light/Roboto-Light-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoBold";src:url("/images/Bold/Roboto-Bold-webfont.eot");src:url("/images/Bold/Roboto-Bold-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}
+
+			html, body {
+				padding: 0;
+				margin: 0;
+				width: 100%;
+				height: 100%;
 			}
-			let err = new Error(res.statusText);
-			err.response = res;
-			throw err;
-		}).then(res => {
-			return res.json();
-		}).then(json => {
-			parent.postMessage(json);
-		}).catch(err => {
+
+			.asyncForm {
+				margin: 20px auto;
+			}
+
+			.primaryButton {
+				font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+				font-size: 14px;
+				line-height: 18px;
+				color: #fff;
+				text-transform: uppercase;
+				border: 0px;
+				background: #4278ba;
+				-webkit-border-radius: 8px;
+				-moz-border-radius: 8px;
+				-ms-border-radius: 8px;
+				border-radius: 8px;
+				padding: 10px 24px 8px 24px;
+				cursor: pointer;
+			}
+
+			.primaryButton:hover {
+				background: #07346c;
+			}
+
+			.formbar {
+				clear: both;
+				display: block;
+				width: 100%;
+				margin: 5px 0;
+				padding: 0;
+			}
 			
-		});
-	}
-</script>
-<form onsubmit="return onSubmit(this);" class="asyncForm">
-	<label for="capid">CAP ID:</label>
-	<input name="capid" id="capid" />
-	
-	<label for="password">Password:</label>
-	<input name="password" id="password" />
-	
-	<input type="submit" value="submit" />
-</form>
+			.formbox {
+				display: inline-block;
+				width: 220px;
+				
+			}
+		</style>
+		<script>
+			function onSubmit (form) {
+				fetch ('/api/signin', {
+					credentials: "same-origin",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/x-www-form-urlencodeds'
+					},
+					method: 'post',
+					body: new FormData(form)
+				}).then(res => {
+					console.log(res);
+					if (res.status >= 200 && res.status < 300) {
+						return res;
+					}
+					let err = new Error(res.statusText);
+					err.response = res;
+					throw err;
+				}).then(res => {
+					console.log(res);
+					return res.json();
+				}).then(json => {
+					console.log(json);
+					parent.postMessage(json, '*');
+				}).catch(err => {
+					console.log(err);
+				});
+				return false;
+			}
+		</script>
+	</head>
+
+	<body>
+		<form onsubmit="return onSubmit(this);" class="asyncForm">
+			<div class="formbar">
+				<div class="formbox">
+					<label for="capid">CAP ID:</label>
+				</div>
+				<div class="formbox">
+					<input name="capid" id="capid" />
+				</div>
+			</div>
+			
+			<div class="formbar">
+				<div class="formbox">
+					<label for="password">Password:</label>
+				</div>
+				<div class="formbox">
+					<input name="password" id="password" type="password" />
+				</div>
+			</div>
+			
+			<div class="formbar">
+				<div class="formbox"></div>
+				<div class="formbox">
+					<input type="submit" value="submit" />
+				</div>
+			</div>
+		</form>
+	</body>
+</html>

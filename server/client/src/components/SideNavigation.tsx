@@ -2,13 +2,16 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import * as $ from 'jquery';
+import { connect } from 'react-redux';
+
+import SigninLink from './SigninLink';
 
 export enum LinkType {
 	REFERENCE,
 	LINK
 } 
 
-interface SideNavigationState {
+export interface SideNavigationState {
 	links: {
 		type: LinkType,
 		url: string,
@@ -16,17 +19,18 @@ interface SideNavigationState {
 	}[];
 }
 
-export default class SideNavigation extends React.Component<{}, SideNavigationState> {
-	public state: SideNavigationState = {
-		links: []
-	};
-
+export class SideNavigation extends React.Component<SideNavigationState, {}> {
 	render () {
 		return (
 			<div id="sidenav">
 				<ul id="nav">
+					<li>
+						<SigninLink>
+							<span className="arrow" /><span>Sign in</span>
+						</SigninLink>
+					</li>
 					{
-						this.state.links.map((el, i) => {
+						this.props.links.map((el, i) => {
 							switch (el.type) {
 								case LinkType.REFERENCE :
 									return (
@@ -74,3 +78,13 @@ export default class SideNavigation extends React.Component<{}, SideNavigationSt
 		);
 	}
 }
+
+const mapStateToProps = (state: {
+	SideNavigation: SideNavigationState
+}) => {
+	return state.SideNavigation;
+};
+
+export default connect(
+	mapStateToProps
+)(SideNavigation);
