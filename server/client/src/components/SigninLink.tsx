@@ -21,7 +21,16 @@ class SigninLink extends React.Component<{
 						e.preventDefault();
 						this.props.displayDialogue(
 							'Sign in', 
-							<iframe src={path} />,
+							<iframe
+								src={path}
+								style={{
+									width: '100%',
+									height: '220px',
+									padding: 0,
+									margin: 0,
+									border: 'none'
+								}}
+							/>,
 							'Sign in',
 							false
 						);
