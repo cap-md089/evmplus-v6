@@ -5,6 +5,12 @@ import * as React from 'react';
 export class Label extends React.Component {
 	public IsLabel = true;
 
+	constructor(props: {}) {
+		super(props);
+
+		this.IsLabel = true;
+	}
+
 	render() {
 		return (
 			<div className="formbox">
@@ -16,6 +22,12 @@ export class Label extends React.Component {
 
 export class Title extends React.Component {
 	public IsLabel = true;
+
+	constructor(props: {}) {
+		super(props);
+
+		this.IsLabel = true;
+	}
 
 	render() {
 		return (
@@ -45,58 +57,60 @@ export default class Form<T> extends React.Component<{}, T> {
 		return (
 			<form>
 				{
-					React.Children.map(this.props.children, (child: React.ReactChild & { IsInput?: boolean }, i) => {
-						if (typeof this.props.children === 'undefined' || this.props.children === null) {
-							throw new TypeError('Some React error occurred');
-						}
-						let ret;
-						if (!React.isValidElement(child)) {
-							throw new TypeError('Form: Children must be a React element');
-						}
-						if (typeof (
-							child as React.ReactChild & { IsInput?: boolean }
-						).IsInput === 'undefined' ||
-						!(
-							child as React.ReactChild & { IsInput?: boolean }
-						).IsInput) {
-							if (typeof (
-								child as React.ReactChild & { IsLabel?: boolean }
-							).IsLabel === 'undefined' ||
-							!(
-								child as React.ReactChild & { IsLabel?: boolean }
-							).IsLabel) {
-								throw new TypeError('Form: Children must be either an input, label, or title');
+					React.Children.map(
+						this.props.children,
+						(child: React.ReactChild & { IsInput?: boolean, IsLabel?: boolean }, i) => {
+							if (typeof this.props.children === 'undefined' || this.props.children === null) {
+								throw new TypeError('Some React error occurred');
 							}
-							return;
-						} else {
-							ret = [
-								React.cloneElement(
-									child as React.ReactElement<{
-										onChange: (e: React.FormEvent<HTMLInputElement>) => void
-									}>,
-									{
-										onChange: this.onChange
-									}
-								)
-							];
+							let ret;
+							if (!React.isValidElement(child)) {
+								throw new TypeError('Form: Children must be a React element');
+							}
+							if (typeof (
+								child as React.ReactChild & { IsInput?: boolean }
+							).IsInput === 'undefined' ||
+							!(
+								child as React.ReactChild & { IsInput?: boolean }
+							).IsInput) {
+								// console.log(child);
+								// console.log((child as React.ReactChild & { IsLabel?: boolean}).IsLabel);
+								// if ((child as React.ReactChild).type.name !== 'Label') {
+								// 	throw new TypeError('Form: Children must be either an input, label, or title');
+								// }
+								return;
+							} else {
+								ret = [
+									React.cloneElement(
+										child as React.ReactElement<{
+											onChange: (e: React.FormEvent<HTMLInputElement>) => void
+										}>,
+										{
+											onChange: this.onChange
+										}
+									)
+								];
+							}
+							if (i > 0 && (this.props.children as React.ReactNode[])[i - 1]) {
+								ret.unshift(
+									this.props.children[i - 1]
+								);
+							} else {
+								ret.unshift(
+									<div
+										className="formbar"
+										style={{
+											height: 2
+										}}
+									/>
+								);
+							}
+							
+							console.log(ret);
+
+							return <div className="formbar">{ret}</div>;
 						}
-						if (i > 0 && (this.props.children as React.ReactNode[])[i - 1]) {
-							ret.unshift(
-								this.props.children[i - 1]
-							);
-						} else {
-							ret.unshift(
-								<div
-									className="formbar"
-									style={{
-										height: 2
-									}}
-								/>
-							);
-						}
-						
-						return <div className="formbar">{ret}</div>;
-					})}
+					)}
 			</form>
 		);
 	}

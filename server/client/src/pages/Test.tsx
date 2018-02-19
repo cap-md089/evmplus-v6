@@ -11,10 +11,11 @@ export default class Test extends React.Component<{}, {}> {
 				</Label>
 				<TextInput 
 					onChange={
-						() => {
-							console.log('hi');
+						(text) => {
+							console.log(text);
 						}
 					}
+					name="test1"
 				/>
 			</Form>
 		);
