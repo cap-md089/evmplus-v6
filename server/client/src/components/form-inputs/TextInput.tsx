@@ -1,27 +1,25 @@
 import * as React from 'react';
 
-interface Input {
-	onChange: (e?: React.FormEvent<HTMLInputElement>, str?: string) => void;
-	name: string;
-}
+import { InputProps, InputState } from './Input';
 
-interface InputState {
-	value: string;
-}
-
-export default class TextInput extends React.Component<Input, InputState> {
-	public IsInput: boolean = true;
-
+/**
+ * A text input that can be used by a Form
+ */
+export default class TextInput extends React.Component<InputProps, InputState> {
 	public state = {
 		value: ''
 	};
 	
-	constructor(props: Input) {
+	constructor(props: InputProps) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
 
-		this.IsInput = true;
+		if (props.value) {
+			this.state = {
+				value: props.value
+			};
+		}
 	}
 
 	public onChange (e: React.FormEvent<HTMLInputElement>) {
@@ -31,21 +29,28 @@ export default class TextInput extends React.Component<Input, InputState> {
 			value: text
 		});
 
-		this.props.onChange(e, text);
-	}
+		if (typeof this.props.onChange !== 'undefined') {
+			this.props.onChange(e, text);
+		}
 
-	public getName (): string {
-		return this.props.name;
-	}
-
-	public getValue (): string {
-		return this.state.value;
+		if (typeof this.props.onUpdate !== 'undefined') {
+			this.props.onUpdate(e);
+		}
 	}
 
 	render() {
 		return (
-			<div className="formbox">
-				<input value={this.state.value} onChange={this.onChange} />
+			<div
+				className="formbox"
+				style={this.props.boxStyles}
+			>
+				<input
+					type="text"
+					value={this.state.value}
+					onChange={this.onChange}
+					name={this.props.name}
+					style={this.props.inputStyles}
+				/>
 			</div>
 		);
 	}

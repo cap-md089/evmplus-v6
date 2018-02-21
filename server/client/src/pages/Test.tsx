@@ -1,23 +1,49 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput } from '../components/Form';
+import Form, { Label, TextInput, Title } from '../components/Form';
 
 export default class Test extends React.Component<{}, {}> {
 	render () {
+		type TestForm = new () => Form<{
+			test1: string;
+			test2: string;
+			test3: string;
+		}>;
+		let TestForm = Form as TestForm;
+
 		return (
-			<Form>
+			<TestForm
+				onSubmit={
+					(data) => {
+						console.log(data);
+					}
+				}
+				id="aLongTestForm"
+				// submitInfo={{
+				// 	text: 'Click me'
+				// }}
+			>
 				<Label>
 					Input label
 				</Label>
 				<TextInput 
 					onChange={
 						(text) => {
-							console.log(text);
+							if (typeof text === 'undefined') {
+								return;
+							}
+							console.log(text.currentTarget.value);
 						}
 					}
 					name="test1"
 				/>
-			</Form>
+				<Title>
+					A title
+				</Title>
+				A label
+				<TextInput name="test2" />
+				<TextInput name="test3" />
+			</TestForm>
 		);
 	}
 }

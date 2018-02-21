@@ -10,6 +10,8 @@ import PageRouter from './components/PageRouter';
 import SideNavigation from './components/SideNavigation';
 import Dialogue from './components/Dialogue';
 
+import myFetch from './myFetch';
+
 export class Head extends React.Component {
 	render() {
 		return (
@@ -17,43 +19,6 @@ export class Head extends React.Component {
 				<meta name="ROBOTS" content="INDEX, FOLLOW" />
 				<title>React app</title>
 			</div>
-		);
-	}
-}
-
-export class Signin extends React.Component<{}, {
-	name: string,
-	password: string
-}> {
-	constructor (props: {}) {
-		super(props);
-		this.submit = this.submit.bind(this);
-		this.handleChange = this.handleChange.bind(this);
-		this.state = {
-			name: '',
-			password: ''
-		};
-	}
-
-	submit (e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		parent.postMessage(this.state, '*');
-	}
-
-	handleChange (e: React.FormEvent<HTMLInputElement>) {
-		e.preventDefault();
-		let s = this.state;
-		s[e.currentTarget.name] = e.currentTarget.value;
-		this.setState(s);
-	}
-
-	render() {
-		return (
-			<form target="_parent" onSubmit={this.submit}>
-				<input type="text" name="name" onChange={this.handleChange} value={this.state.name} />
-				<input type="password" name="password" onChange={this.handleChange} value={this.state.password} />
-				<input type="submit" value="Submit" />
-			</form>
 		);
 	}
 }
@@ -113,6 +78,7 @@ class SearchForm extends React.Component<{}, {
 
 export default class App extends React.Component<{
 	isMobile: boolean
+	fetch?: Function
 }, {
 	Registry: Registry
 }> {
@@ -139,10 +105,10 @@ export default class App extends React.Component<{
 
 	componentDidMount(): void {
 		// Load registry
-		fetch('/api/registry', {
+		myFetch('/api/registry', {
 			method: 'post'
 		})
-			.then(res => {
+			.then((res: Response) => {
 				return res.json();
 			})
 			.then((res: {

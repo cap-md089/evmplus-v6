@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { connect } from 'react-redux';
 import $ from '../jquery.textfit';
 
@@ -15,8 +16,37 @@ class Dialogue extends React.Component<{
 	isMobile: boolean, // Required property
 	
 	dispatch: Function // Provided by react-redux
-}, {}> {
+}, {
+	open: boolean,
+	title: string,
+	text: JSX.Element | string,
+	buttonText: string,
+	displayButton: boolean
+}> {
 	private mainDiv: HTMLDivElement;
+	
+	constructor(props: {
+		open: boolean,					// Part of state specified for the react store
+		title: string,
+		text: JSX.Element | string,
+		buttontext: string,
+		displayButton: boolean,
+		onClose: Function,
+	
+		isMobile: boolean, // Required property
+		
+		dispatch: Function // Provided by react-redux
+	}) {
+		super(props);
+
+		this.state = {
+			open: false,
+			title: '',
+			text: '',
+			buttonText: '',
+			displayButton: false
+		};
+	}
 
 	componentDidMount() {
 		let div: JQuery = $(this.mainDiv).css({
@@ -41,6 +71,34 @@ class Dialogue extends React.Component<{
 		if (div.find('input[type=text]')[0]) {
 			div.find('input[type=text]')[0].focus();
 		}
+
+		if (this.props.open) {
+			$(div).animate(
+				{
+					opacity: 1
+				},
+				250,
+				'swing'
+			);
+		} else {
+			$(div).animate(
+				{
+					opacity: 0
+				},
+				250,
+				'swing',
+				() => {
+					this.setState({
+						open: this.props.open,
+						title: this.props.title,
+						text: this.props.text,
+						buttonText: this.props.buttontext,
+						displayButton: this.props.displayButton
+					});
+				}
+			);
+		}
+
 		return true;
 	}
 
@@ -59,7 +117,7 @@ class Dialogue extends React.Component<{
 					right: 0,
 					position: 'fixed',
 					zIndex: 5010,
-					display: this.props.open ? 'block' : 'none'
+					display: this.state.open ? 'block' : 'none'
 				}}
 				onClick={
 					() => {
@@ -68,22 +126,20 @@ class Dialogue extends React.Component<{
 				}
 			>
 				<div
-					style={{
-						display: this.props.open ? 'block' : 'none'
-					}}
 					ref={
 						(el: HTMLDivElement) => {
 							this.mainDiv = el as HTMLDivElement;
 						}
 					}
-					id="alert_box" 
+					id="alert_box"
+					key="main_alert"
 				>
-					{this.props.title ? <h2>{this.props.title}</h2> : null}
+					{this.state.title ? <h2>{this.state.title}</h2> : null}
 					<div className="content">
-						{this.props.text}
+						{this.state.text}
 					</div>
 					{
-						this.props.displayButton ? 
+						this.state.displayButton ? 
 							<div className="closeButton">
 								<a
 									style={{
@@ -100,7 +156,7 @@ class Dialogue extends React.Component<{
 										}
 									}
 								>
-									{this.props.buttontext}
+									{this.state.buttonText}
 								</a>
 							</div> :
 							null

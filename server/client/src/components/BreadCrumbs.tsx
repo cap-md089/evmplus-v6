@@ -7,7 +7,7 @@ export interface BreadCrumbs {
 	target: string;
 }
 
-class BreadCrumbsPresentation extends React.Component<{
+export class BreadCrumbsPresentation extends React.Component<{
 	links: BreadCrumbs[]
 }, {}> {
 	render () {

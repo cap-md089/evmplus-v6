@@ -48,6 +48,9 @@ registerServiceWorker();
 window.addEventListener(
 	'message',
 	(event: MessageEvent): void => {
+		if (event.data.source && event.data.source.indexOf('react-devtools') > -1) {
+			return;
+		}
 		console.log(event);
 		store.dispatch(closeDialogue());
 	},
