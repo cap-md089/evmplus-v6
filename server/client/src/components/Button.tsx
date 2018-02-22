@@ -57,6 +57,9 @@ export default class Button extends React.Component<ButtonProps, {
 
 	protected handleClick (e: React.MouseEvent<HTMLAnchorElement>) {
 		let promise = new Promise<{push: boolean, data: any}> ((res, rej): void => {
+			this.setState({
+				disabled: true
+			});
 			if (typeof this.props.onClick === 'undefined') {
 				res({
 					push: true,
@@ -65,9 +68,12 @@ export default class Button extends React.Component<ButtonProps, {
 				return;
 			}
 			let clickResolve = this.props.onClick(this.props.data);
-			
-			if (clickResolve instanceof Promise) {
-				clickResolve.then((data) => {
+			console.log(clickResolve instanceof Promise);
+			console.log(clickResolve);
+			if (typeof clickResolve !== 'undefined' && typeof clickResolve.then !== 'undefined') {
+				console.log('Handling promise');
+				clickResolve.then((data: any) => {
+					console.log('Promise done');
 					if (typeof data === 'boolean') {
 						res ({
 							push: data,
@@ -92,10 +98,14 @@ export default class Button extends React.Component<ButtonProps, {
 				});
 			}
 		}).then((data) => {
+			console.log('Hi', data);
 			((this.props.jQuery || jQuery).getJSON as any)(
 				this.props.url || '/',
 				data,
 				(serverData: any) => {
+					this.setState({
+						disabled: false
+					});
 					if (typeof this.props.onReceiveData === 'undefined') {
 						return;
 					}

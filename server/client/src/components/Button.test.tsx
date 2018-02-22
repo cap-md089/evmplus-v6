@@ -54,19 +54,19 @@ describe ('<Button />', () => {
 	it ('should handle promises correctly', () => {
 		let jQuerySpy = {
 			getJSON: spy()
-		} as any as JQueryStatic<HTMLElement>;
+		} as {getJSON: sinon.SinonSpy} & JQueryStatic<HTMLElement>;
 		let buttonData = {
 			test1: 'test2'
 		};
 		let onClick = () => {
-			return new Promise((res, rej) => {
+			let p = new Promise((res, rej) => {
 				setTimeout(
 					() => {
 						res(true);
-					},
-					1
+					}
 				);
 			});
+			return p;
 		};
 		let button = shallow(
 			<Button
@@ -78,5 +78,7 @@ describe ('<Button />', () => {
 				A link
 			</Button>
 		);
+		button.simulate('click');
+		expect(jQuerySpy.getJSON.args).toEqual(buttonData);
 	});
 });
