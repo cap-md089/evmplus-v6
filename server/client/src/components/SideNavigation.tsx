@@ -36,6 +36,7 @@ export class SideNavigation extends React.Component<SideNavigationState, {}> {
 									return (
 										<a
 											href={`#${el.url}`}
+											key={i}
 											onClick={
 												(e: React.MouseEvent<HTMLElement>) => {
 													e.preventDefault();
@@ -61,6 +62,7 @@ export class SideNavigation extends React.Component<SideNavigationState, {}> {
 									return (
 										<Link
 											to={el.url}
+											key={i}
 										>
 											<span className="arrow" />
 											<span>
