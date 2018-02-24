@@ -68,12 +68,8 @@ export default class Button extends React.Component<ButtonProps, {
 				return;
 			}
 			let clickResolve = this.props.onClick(this.props.data);
-			console.log(clickResolve instanceof Promise);
-			console.log(clickResolve);
 			if (typeof clickResolve !== 'undefined' && typeof clickResolve.then !== 'undefined') {
-				console.log('Handling promise');
 				clickResolve.then((data: any) => {
-					console.log('Promise done');
 					if (typeof data === 'boolean') {
 						res ({
 							push: data,
@@ -98,11 +94,11 @@ export default class Button extends React.Component<ButtonProps, {
 				});
 			}
 		}).then((data) => {
-			console.log('Hi', data);
-			((this.props.jQuery || jQuery).getJSON as any)(
-				this.props.url || '/',
+			(this.props.jQuery || jQuery).ajax({
+				dataType: 'json',
+				url: this.props.url || '/',
 				data,
-				(serverData: any) => {
+				success: (serverData: any) => {
 					this.setState({
 						disabled: false
 					});
@@ -110,8 +106,12 @@ export default class Button extends React.Component<ButtonProps, {
 						return;
 					}
 					this.props.onReceiveData(serverData);
+				},
+				method: 'POST',
+				xhrFields: {
+					withCredentials: true
 				}
-			);
+			});
 		});
 		return promise;
 	}

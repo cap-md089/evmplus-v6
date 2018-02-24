@@ -48,7 +48,6 @@ describe ('<Button />', () => {
 		);
 		button.find('a').simulate('click');
 		expect(buttonSpy.calledWith(buttonData)).toEqual(true);
-		expect(buttonSpy.args[0][0]).toEqual(buttonData);
 	});
 
 	it ('should handle promises correctly', () => {
@@ -58,13 +57,13 @@ describe ('<Button />', () => {
 		let buttonData = {
 			test1: 'test2'
 		};
+		let clickSpy = spy();
 		let onClick = () => {
+			clickSpy();
 			let p = new Promise((res, rej) => {
-				setTimeout(
-					() => {
-						res(true);
-					}
-				);
+				res(true);
+				expect(jQuerySpy.getJSON.calledOnce).toEqual(true);
+				expect(false).toEqual(true);
 			});
 			return p;
 		};
@@ -79,6 +78,6 @@ describe ('<Button />', () => {
 			</Button>
 		);
 		button.simulate('click');
-		expect(jQuerySpy.getJSON.args).toEqual(buttonData);
+		expect(clickSpy.callCount).toEqual(1);
 	});
 });
