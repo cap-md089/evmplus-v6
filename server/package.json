@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon dist/index.js"
+    "start": "nodemon dist/index.js",
+    "develop": "grunt watch",
+    "sass": "sass --watch ./client/src/nhq.sass --style=compressed"
   },
   "dependencies": {
     "body-parser": "~1.18.2",

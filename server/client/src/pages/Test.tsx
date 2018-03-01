@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import Form, { Label, TextInput, Title } from '../components/Form';
+import Button from '../components/Button';
 
 export default class Test extends React.Component<{}, {}> {
 	render () {
@@ -12,38 +13,50 @@ export default class Test extends React.Component<{}, {}> {
 		let TestForm = Form as TestForm;
 
 		return (
-			<TestForm
-				onSubmit={
-					(data) => {
-						console.log(data);
-					}
-				}
-				id="aLongTestForm"
-				// submitInfo={{
-				// 	text: 'Click me'
-				// }}
-			>
-				<Label>
-					Input label
-				</Label>
-				<TextInput 
-					onChange={
-						(text) => {
-							if (typeof text === 'undefined') {
-								return;
-							}
-							console.log(text.currentTarget.value);
+			<div>
+				<TestForm
+					onSubmit={
+						(data) => {
+							console.log(data);
 						}
 					}
-					name="test1"
-				/>
-				<Title>
-					A title
-				</Title>
-				A label
-				<TextInput name="test2" />
-				<TextInput name="test3" />
-			</TestForm>
+					id="aLongTestForm"
+					// submitInfo={{
+					// 	text: 'Click me'
+					// }}
+				>
+					<Label>
+						Input label
+					</Label>
+					<TextInput 
+						onChange={
+							(text) => {
+								if (typeof text === 'undefined') {
+									return;
+								}
+								console.log(text.currentTarget.value);
+							}
+						}
+						name="test1"
+					/>
+					<Title>
+						A title
+					</Title>
+					A label
+					<TextInput name="test2" />
+					<TextInput name="test3" />
+				</TestForm>
+				<Button 
+					data={
+						{
+							hi: true
+						}
+					}
+					url={'/api/echo'}
+				>
+					Hello
+				</Button>
+			</div>
 		);
 	}
 }

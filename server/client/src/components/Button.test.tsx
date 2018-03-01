@@ -11,8 +11,6 @@ import { shallow } from 'enzyme';
 // import { stub, spy } from 'sinon';
 import { spy } from 'sinon';
 
-import * as jQuery from 'jquery';
-
 Enzyme.configure({ adapter: new Adapter() });
 
 // stub(jQuery, 'ajax');
@@ -38,10 +36,9 @@ describe ('<Button />', () => {
 		};
 		let button = shallow(
 			<Button
-				jQuery={jQuery}
 				onClick={buttonSpy}
 				data={buttonData}
-				url={'/test/test2'}
+				url={'/api/echo'}
 			>
 				A link
 			</Button>
@@ -50,34 +47,121 @@ describe ('<Button />', () => {
 		expect(buttonSpy.calledWith(buttonData)).toEqual(true);
 	});
 
-	it ('should handle promises correctly', () => {
-		let jQuerySpy = {
-			getJSON: spy()
-		} as {getJSON: sinon.SinonSpy} & JQueryStatic<HTMLElement>;
-		let buttonData = {
-			test1: 'test2'
-		};
-		let clickSpy = spy();
-		let onClick = () => {
-			clickSpy();
-			let p = new Promise((res, rej) => {
-				res(true);
-				expect(jQuerySpy.getJSON.calledOnce).toEqual(true);
-				expect(false).toEqual(true);
-			});
-			return p;
-		};
-		let button = shallow(
-			<Button
-				jQuery={jQuerySpy}
-				data={buttonData}
-				onClick={onClick}
-				url={'/test/test2'}
-			>
-				A link
-			</Button>
-		);
-		button.simulate('click');
-		expect(clickSpy.callCount).toEqual(1);
-	});
+	it (
+		'should handle promises',
+		done => {
+			let testServerResponse = {
+				hi: true
+			};
+			let onReceive = (params: any) => {
+				expect(params).toEqual(testServerResponse);
+				done();
+			};
+			let onClick = () => {
+				return new Promise((res, rej) => {
+					res(true);
+				});
+			};
+
+			let button = shallow(
+				<Button
+					data={testServerResponse}
+					onClick={onClick}
+					onReceiveData={onReceive}
+					url={'/api/echo'}
+					buttonType={'primaryButton'}
+				>
+					A link
+				</Button>
+			);
+			button.simulate('click');
+		},
+		15
+	);
+
+	it (
+		'should handle false values',
+		done => {
+			let ajaxSpy = spy();
+			let fetch = function () {
+				ajaxSpy();
+				return new Promise<Response>((res, rej) => {
+					res({
+						json: () => {
+							return Promise.resolve({});
+						}
+					} as any as Response);
+				});
+			};
+			let buttonData = {
+				test1: 'test2'
+			};
+			let onReceive = (params: any) => {
+				expect(ajaxSpy.notCalled).toEqual(true);
+				done();
+			};
+			let onClick = () => {
+				return Promise.resolve(false);
+			};
+			let button = shallow(
+				<Button
+					data={buttonData}
+					onClick={onClick}
+					onReceiveData={onReceive}
+					url={'/test/test2'}
+					fetch={fetch}
+				>
+					A link
+				</Button>
+			);
+			button.simulate('click');
+
+			setTimeout(
+				() => {
+					expect(ajaxSpy.calledOnce).toEqual(false);
+					done();
+				},
+				15
+			);
+		},
+		20
+	);
+
+	it (
+		'should call onReceiveData immediately if no url is provided',
+		done => {
+			let buttonData = {
+				url: '/'
+			};
+
+			let TestButton = Button as any as new() => Button<{
+				url: string
+			}, {
+				url: string
+			}>;
+
+			let onReceive = spy();
+
+			let button = shallow(
+				<TestButton
+					data={buttonData}
+					onReceiveData={onReceive}
+					buttonType={'primaryButton'}
+				>
+					A link
+				</TestButton>
+			);
+			button.simulate('click');
+
+			setTimeout(
+				() => {
+					expect(onReceive.calledOnce).toEqual(true);
+					expect(onReceive.args[0][0]).toEqual(undefined);
+					done();
+				},
+				10
+			);
+		},
+		15
+	);
 });

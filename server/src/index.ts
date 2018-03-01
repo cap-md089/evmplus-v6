@@ -41,6 +41,9 @@ router.post('/signin', signin(Configuration));
 import registry from './apis/registry';
 router.post('/registry', registry(Configuration));
 
+import echo from './apis/echo';
+router.post('/echo', echo(Configuration));
+
 router.get('/signin', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
 });

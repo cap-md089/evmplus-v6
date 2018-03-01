@@ -108,7 +108,7 @@ export default class App extends React.Component<{
 		myFetch('/api/registry', {
 			method: 'post'
 		})
-			.then((res: Response) => {
+			.then((res) => {
 				return res.json();
 			})
 			.then((res: {

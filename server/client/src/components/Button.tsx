@@ -1,10 +1,16 @@
 import * as React from 'react';
 
-import * as jQuery from 'jquery';
+import myFetch from '../myFetch';
 
 import * as classNames from 'classnames';
 
-export interface ButtonProps {
+export const ButtonType = {
+	BUTTON_1:	'primaryButton',
+	BUTTON_2:	'secondaryButton',
+	TEXT:		''
+};
+
+export interface ButtonProps<C, S> {
 	url?: string;
 	className?: string;
 	id?: string;
@@ -12,7 +18,7 @@ export interface ButtonProps {
 	/**
 	 * Data to send on button press
 	 */
-	data?: any;
+	data?: C;
 
 	/** 
 	 * The function to handle data before a request is sent.
@@ -26,27 +32,52 @@ export interface ButtonProps {
 	 * 
 	 * @returns {Promise<any> | boolean | any} Data to control the request
 	 */
-	onClick?: (data: any) => Promise<any> | boolean | any;
+	onClick?: (data?: C) => Promise<any> | boolean | any;
 
 	/** 
 	 * The receiver function to handle the response from the server
+	 * 
+	 * Will not be called if onClick resolves to a boolean that is false
+	 * Data will be undefined if the `url` property is undefined
 	 * 
 	 * @param data Data received, as this is a REST service it will attempt to call JSON.parse
 	 * 
 	 * @returns {void}
 	 */
-	onReceiveData?: (data: any) => void;
+	onReceiveData?: (data?: S) => void;
+
+	/**
+	 * Same as onReceiveData except the first parameter is client data
+	 * 
+	 * @param clientData Data to send
+	 * @param serverData Data that was received
+	 * 
+	 * @returns {void}
+	 */
+	onFinish?: (clientData?: C, serverData?: S) => void;
 
 	/**
 	 * Used for testing purposes
 	 */
 	jQuery?: JQueryStatic<HTMLElement>;
+
+	/**
+	 * Used for testing purposes
+	 */
+	fetch?: (url: string, options: RequestInit) => Promise<Response>;
+
+	buttonType?: 'primaryButton' | 'secondaryButton' | '';
 }
 
-export default class Button extends React.Component<ButtonProps, {
+export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 	disabled: boolean
 }> {
-	constructor(props: ButtonProps) {
+
+	public static PassThrough<C> (data: C): C {
+		return data;
+	}
+
+	constructor(props: ButtonProps<C, S>) {
 		super(props);
 
 		this.handleClick = this.handleClick.bind(this);
@@ -55,7 +86,7 @@ export default class Button extends React.Component<ButtonProps, {
 		};
 	}
 
-	protected handleClick (e: React.MouseEvent<HTMLAnchorElement>) {
+	public handleClick (e: React.MouseEvent<HTMLAnchorElement>) {
 		let promise = new Promise<{push: boolean, data: any}> ((res, rej): void => {
 			this.setState({
 				disabled: true
@@ -63,29 +94,34 @@ export default class Button extends React.Component<ButtonProps, {
 			if (typeof this.props.onClick === 'undefined') {
 				res({
 					push: true,
-					data: null
+					data: this.props.data
 				});
 				return;
 			}
-			let clickResolve = this.props.onClick(this.props.data);
+			let clickResolve;
+			if (typeof this.props.data !== 'undefined') {
+				clickResolve = this.props.onClick(this.props.data);
+			} else {
+				clickResolve = this.props.onClick();
+			}
 			if (typeof clickResolve !== 'undefined' && typeof clickResolve.then !== 'undefined') {
 				clickResolve.then((data: any) => {
 					if (typeof data === 'boolean') {
 						res ({
 							push: data,
-							data: null
+							data: this.props.data
 						});
 					} else {
 						res ({
 							push: true,
-							data
+							data: typeof data === 'undefined' ? this.props.data : data
 						});
 					}
 				});
 			} else if (typeof clickResolve === 'boolean') {
 				res({
 					push: clickResolve,
-					data: null
+					data: this.props.data
 				});
 			} else {
 				res({
@@ -93,25 +129,37 @@ export default class Button extends React.Component<ButtonProps, {
 					data: clickResolve
 				});
 			}
-		}).then((data) => {
-			(this.props.jQuery || jQuery).ajax({
-				dataType: 'json',
-				url: this.props.url || '/',
-				data,
-				success: (serverData: any) => {
+		}).then((pushData) => {
+			if (pushData.push && this.props.url) {
+				(this.props.fetch || myFetch)(this.props.url, {
+					body: JSON.stringify(pushData.data),
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						'Content-type': 'application/json'
+					}
+				}).then(res => {
+					return res.json();
+				}).then((serverData: S) => {
 					this.setState({
 						disabled: false
 					});
-					if (typeof this.props.onReceiveData === 'undefined') {
-						return;
+					console.log(this.props.url, JSON.stringify(pushData.data), pushData.data, this.props.data, serverData);
+					
+					if (typeof this.props.onReceiveData !== 'undefined') {
+						this.props.onReceiveData(serverData);
 					}
-					this.props.onReceiveData(serverData);
-				},
-				method: 'POST',
-				xhrFields: {
-					withCredentials: true
+					if (typeof this.props.onFinish !== 'undefined') {
+						this.props.onFinish(this.props.data, serverData);
+					}
+				}).catch((err: Error) => {
+					console.log(err);	
+				});
+			} else if (pushData.push) {
+				if (typeof this.props.onReceiveData !== 'undefined') {
+					this.props.onReceiveData(undefined);
 				}
-			});
+			}
 		});
 		return promise;
 	}
@@ -122,6 +170,7 @@ export default class Button extends React.Component<ButtonProps, {
 				onClick={this.handleClick}
 				className={
 					classNames({
+						[this.props.buttonType || 'primaryButton']: true,
 						[this.props.className || 'asyncButton']: true,
 						disabled: this.state.disabled
 					})
