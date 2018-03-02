@@ -5,12 +5,12 @@ import { InputProps, InputState } from './Input';
 /**
  * A text input that can be used by a Form
  */
-export default class TextInput extends React.Component<InputProps, InputState> {
+export default class TextInput extends React.Component<InputProps<string>, InputState> {
 	public state = {
 		value: ''
 	};
 	
-	constructor(props: InputProps) {
+	constructor(props: InputProps<string>) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);

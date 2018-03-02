@@ -76,7 +76,7 @@ describe ('<Button />', () => {
 			);
 			button.simulate('click');
 		},
-		15
+		250
 	);
 
 	it (
@@ -121,10 +121,10 @@ describe ('<Button />', () => {
 					expect(ajaxSpy.calledOnce).toEqual(false);
 					done();
 				},
-				15
+				190
 			);
 		},
-		20
+		200
 	);
 
 	it (

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput, Title } from '../components/Form';
+import Form, { Label, TextInput, Title, FileInput } from '../components/Form';
 import Button from '../components/Button';
 
 export default class Test extends React.Component<{}, {}> {
@@ -21,9 +21,9 @@ export default class Test extends React.Component<{}, {}> {
 						}
 					}
 					id="aLongTestForm"
-					// submitInfo={{
-					// 	text: 'Click me'
-					// }}
+					submitInfo={{
+						text: 'Click me'
+					}}
 				>
 					<Label>
 						Input label
@@ -45,6 +45,9 @@ export default class Test extends React.Component<{}, {}> {
 					A label
 					<TextInput name="test2" />
 					<TextInput name="test3" />
+					<FileInput name="test4">
+						Upload files
+					</FileInput>
 				</TestForm>
 				<Button 
 					data={
@@ -53,8 +56,10 @@ export default class Test extends React.Component<{}, {}> {
 						}
 					}
 					url={'/api/echo'}
+					onClick={console.log}
+					onReceiveData={console.log}
 				>
-					Hello
+					Submit
 				</Button>
 			</div>
 		);

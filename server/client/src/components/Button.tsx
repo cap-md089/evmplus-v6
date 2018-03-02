@@ -144,8 +144,6 @@ export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 					this.setState({
 						disabled: false
 					});
-					console.log(this.props.url, JSON.stringify(pushData.data), pushData.data, this.props.data, serverData);
-					
 					if (typeof this.props.onReceiveData !== 'undefined') {
 						this.props.onReceiveData(serverData);
 					}
