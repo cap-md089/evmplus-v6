@@ -6,6 +6,7 @@ import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
+import * as busboy from 'connect-busboy';
 
 import { Configuration } from './conf';
 
@@ -26,7 +27,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
 let router: express.Router = express.Router();
-
+let filerouter: express.Router = express.Router();
 
 /**
  * DEFINE ROUTERS HERE
@@ -48,11 +49,25 @@ router.get('/signin', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
 });
 
+filerouter.use(busboy({
+	limits: {
+		fileSize: 10 * 1024 * 1024
+	},
+	immediate: true
+}));
+
+import upload from './apis/fileupload';
+filerouter.post('/upload', upload(Configuration));
+
+import head from './apis/filehead';
+filerouter.post('/upload', head(Configuration));
+
 /**
  * END DEFINE ROUTES
  */
 
 app.use('/api', router);
+app.use('/file', filerouter);
 
 app.get('/images/banner', (req, res) => {
 	fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {

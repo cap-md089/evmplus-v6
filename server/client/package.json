@@ -41,8 +41,5 @@
     "sinon": "^4.2.2",
     "typescript": "^2.6.2"
   },
-  "proxy": {
-    "/api": "http://localhost:3001",
-    "/files": "http://localhost:3001"
-  }
+  "proxy": "http://localhost:3001"
 }

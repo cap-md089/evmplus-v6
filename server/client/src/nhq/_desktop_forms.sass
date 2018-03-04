@@ -70,6 +70,43 @@ form.asyncForm
 			position: fixed
 			left: -20px
 			z-index: -1
+		
+		.fileinput-container
+			.filesList
+				overflow: auto
+				clear: both
+				border: 1px solid black
+				margin-bottom: 15px
+				
+				ul
+					list-style-type: none
+					margin-top: 0
+
+					li
+						padding: 0
+						clear: both
+
+						.fileName
+							width: 50%
+							float: left
+							box-sizing: border-box
+							margin: 0
+							padding: 15px
+
+						.fileProgress
+							width: calc(50% - 30px)
+							margin: 15px
+							border: 1px solid black
+							box-sizing: border-box
+							float: right
+							padding: 0
+							height: 24px
+
+							div
+								background-color: green
+								height: 100%
+								margin: 0
+
 
 		input.forminput:focus
 			@include box-shadows(inset 0 0 1em #3c9aec)

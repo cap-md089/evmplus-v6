@@ -8,7 +8,9 @@
     "sass": "sass --watch ./client/src/nhq.sass --style=compressed"
   },
   "dependencies": {
+    "@types/connect-busboy": "0.0.0",
     "body-parser": "~1.18.2",
+    "connect-busboy": "0.0.2",
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.9",
     "express": "~4.15.5",

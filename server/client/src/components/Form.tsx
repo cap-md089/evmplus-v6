@@ -81,7 +81,9 @@ interface FormProps<T> {
  * let SampleForm = Form as SampleForm
  * // <SampleForm /> now works as Form<{}>
  */
-export default class Form<T> extends React.Component<FormProps<T>, T> {
+export default class Form<T> extends React.Component<FormProps<T>, {
+	displayLoadFields: boolean	
+}> {
 	protected fields: T;
 
 	/**
@@ -100,6 +102,10 @@ export default class Form<T> extends React.Component<FormProps<T>, T> {
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as T;
+
+		this.state = {
+			displayLoadFields: localStorage.getItem(this.props.id + '-storage') !== null
+		};
 	}
 
 	/**

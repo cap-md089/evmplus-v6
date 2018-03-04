@@ -9,6 +9,7 @@ export default class Test extends React.Component<{}, {}> {
 			test1: string;
 			test2: string;
 			test3: string;
+			test4: string[];
 		}>;
 		let TestForm = Form as TestForm;
 
@@ -45,7 +46,10 @@ export default class Test extends React.Component<{}, {}> {
 					A label
 					<TextInput name="test2" />
 					<TextInput name="test3" />
-					<FileInput name="test4">
+					File label
+					<FileInput
+						name="test4"
+					>
 						Upload files
 					</FileInput>
 				</TestForm>
