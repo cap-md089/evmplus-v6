@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import TextInput from './form-inputs/TextInput';
 import FileInput from './form-inputs/FileInput';
+import TextArea from './form-inputs/TextArea';
 
 /**
  * Creates a label to be used in the form
@@ -57,7 +58,8 @@ function isInput (el: React.ReactChild): boolean {
 		return false;
 	}
 	return el.type === TextInput ||
-		el.type === FileInput;
+		el.type === FileInput ||
+		el.type === TextArea;
 }
 
 /**
@@ -247,5 +249,6 @@ export {
 	Title,
 	Label,
 	TextInput,
-	FileInput
+	FileInput,
+	TextArea
 };

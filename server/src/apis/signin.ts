@@ -10,7 +10,7 @@ export default (config: IMyConfiguration) => {
             'SESSID',
             'Idc'
         );
-        console.log(req);
+        console.log(req.body);
         res.json({
 
         });

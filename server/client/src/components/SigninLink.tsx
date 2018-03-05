@@ -22,6 +22,7 @@ class SigninLink extends React.Component<{
 						this.props.displayDialogue(
 							'Sign in', 
 							<iframe
+								sandbox="allow-scripts allow-forms allow-same-origin"
 								src={path}
 								style={{
 									width: '100%',
