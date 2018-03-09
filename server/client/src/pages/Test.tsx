@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput, Title, FileInput } from '../components/Form';
+import Form, { Label, TextInput, Title, FileInput, TextArea } from '../components/Form';
 import Button from '../components/Button';
 
 export default class Test extends React.Component<{}, {}> {
@@ -52,6 +52,7 @@ export default class Test extends React.Component<{}, {}> {
 					>
 						Upload files
 					</FileInput>
+					<TextArea />
 				</TestForm>
 				<Button 
 					data={
