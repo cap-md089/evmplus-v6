@@ -1,16 +1,13 @@
 import * as React from 'react';
+
 import { Editor, EditorState } from 'draft-js';
 
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { InputProps } from './Input';
 
-export default class TextArea extends React.Component {
-	state: {
-		editorState: EditorState
-	};
-
-	editor: Editor | null;
-
-	constructor(props: {}) {
+export default class TextArea extends React.Component<InputProps<string>, {
+	editorState: EditorState
+}> {
+	constructor (props: InputProps<string>) {
 		super(props);
 		this.state = {
 			editorState: EditorState.createEmpty()
@@ -18,16 +15,17 @@ export default class TextArea extends React.Component {
 		this.onChange = this.onChange.bind(this);
 	}
 
-	public onChange (editorState: EditorState) {
-		this.setState({editorState});
-		console.log(editorState);
+	onChange (editorState: EditorState) {
+		this.setState({
+			editorState
+		});
 	}
 
 	render () {
 		return (
-			<div className="textArea">
+			<div className="formbox">
 				<Editor
-					ref={el => { this.editor = el; }}
+					{...this.props}
 					editorState={this.state.editorState}
 					onChange={this.onChange}
 				/>

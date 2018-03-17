@@ -65,13 +65,48 @@ function isInput (el: React.ReactChild): boolean {
 /**
  * The properties a form itself requires
  */
-interface FormProps<T> {
+export interface FormProps<T> {
+	/**
+	 * The function that is called when the user submits the form
+	 * 
+	 * @param fields The fields of the form
+	 */
 	onSubmit: (fields: T) => void;
+	/**
+	 * Styles the submit button
+	 */
 	submitInfo?: {
+		/**
+		 * The text for the submit button to use
+		 */
 		text: string,
+		/**
+		 * A CSS class to use
+		 */
 		className?: string
 	};
-	id: string; // Make it long!
+	/**
+	 * The ID to identify the form with CSS
+	 * 
+	 * Also used to 'save' the form; make it long so that it is unique!
+	 */
+	id: string;
+	/**
+	 * Determines whether or not to load a previously saved form
+	 * 
+	 * @param saveTime How long ago was the form saved
+	 * @param fields The fields to look at
+	 * 
+	 * @returns Whether or not to load a previous save
+	 */
+	shouldLoadPreviousFields?: (saveTime: number, fields: T) => boolean;
+	/**
+	 * Replaces the previous property
+	 * 
+	 * Basically makes it so it uses a function that checks whether or not saveTime
+	 * is less than the value specified
+	 */
+	saveCheckTime?: number;
 }
 
 /**
@@ -79,14 +114,20 @@ interface FormProps<T> {
  * 
  * To use with type checking in the submit function, you can do something similar to the following:
  * @example
- * type SampleForm = new () => Form<{}>
+ * type SampleForm = new () => Form<{x: string}>
  * let SampleForm = Form as SampleForm
- * // <SampleForm /> now works as Form<{}>
+ * // <SampleForm /> now works as Form<{x: string}>
  */
-export default class Form<T> extends React.Component<FormProps<T>, {
-	displayLoadFields: boolean	
+export default class Form<
+	T = {},
+	P extends FormProps<T> = FormProps<T>
+> extends React.Component<P, {
+	disabled: boolean;
 }> {
 	protected fields: T;
+
+	protected displayLoadFields: boolean = false;
+	protected loadedFields: T = {} as T;
 
 	/**
 	 * Create a form
@@ -95,19 +136,42 @@ export default class Form<T> extends React.Component<FormProps<T>, {
 	 * SubmitInfo describes the submit button
 	 * onSubmit is the callback to use when the form is submitted
 	 * 
-	 * @param {FormProps<T>} props The properties
+	 * @param {P} props The properties
 	 */
-	constructor (props: FormProps<T>) {
+	constructor (props: P) {
 		super(props);
+
+		this.state = {
+			disabled: false
+		};
 
 		this.onChange = this.onChange.bind(this);
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as T;
 
-		this.state = {
-			displayLoadFields: localStorage.getItem(this.props.id + '-storage') !== null
-		};
+		if (typeof localStorage !== 'undefined') {
+			let fields = localStorage.getItem(`${this.props.id}-storage`);
+			let time = 0;
+
+			let saveTime = localStorage.getItem(`${this.props.id}-savetime`);
+			if (saveTime) {
+				time = Date.now() - parseInt(saveTime, 10);
+
+				if (this.props.shouldLoadPreviousFields) {
+					this.displayLoadFields = this.props.shouldLoadPreviousFields(
+						time,
+						fields ? JSON.parse(fields) : {}
+					);
+				} else if (typeof this.props.saveCheckTime !== 'undefined') {
+					this.displayLoadFields = time < 1000 * 60 * 60 * 5;
+				}
+			} else {
+				this.displayLoadFields = false;
+			}
+		} else {
+			this.displayLoadFields = true;
+		}
 	}
 
 	/**
@@ -237,6 +301,7 @@ export default class Form<T> extends React.Component<FormProps<T>, {
 							type="submit"
 							value={submitInfo.text}
 							className={submitInfo.className}
+							disabled={this.state.disabled}
 						/>
 					</div>
 				</div>
@@ -248,6 +313,7 @@ export default class Form<T> extends React.Component<FormProps<T>, {
 export {
 	Title,
 	Label,
+
 	TextInput,
 	FileInput,
 	TextArea

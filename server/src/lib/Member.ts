@@ -18,6 +18,11 @@ export default class Member {
 
         return null;
     }
+
+    public static Estimate (capid: number): Promise<Member> {
+
+        return null;
+    }
     
     private constructor (data: IMyMember) {
 

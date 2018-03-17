@@ -52,7 +52,9 @@ export default class Test extends React.Component<{}, {}> {
 					>
 						Upload files
 					</FileInput>
-					<TextArea />
+					<TextArea
+						name="test5"
+					/>
 				</TestForm>
 				<Button 
 					data={
