@@ -71,7 +71,7 @@ export interface FormProps<T> {
 	 * 
 	 * @param fields The fields of the form
 	 */
-	onSubmit: (fields: T) => void;
+	onSubmit?: (fields: T, token: string) => void;
 	/**
 	 * Styles the submit button
 	 */
@@ -115,7 +115,7 @@ export interface FormProps<T> {
  * To use with type checking in the submit function, you can do something similar to the following:
  * @example
  * type SampleForm = new () => Form<{x: string}>
- * let SampleForm = Form as SampleForm
+ * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
  */
 export default class Form<
@@ -125,6 +125,8 @@ export default class Form<
 	disabled: boolean;
 }> {
 	protected fields: T;
+
+	protected token: string = '';
 
 	protected displayLoadFields: boolean = false;
 	protected loadedFields: T = {} as T;
@@ -190,7 +192,9 @@ export default class Form<
 	 */
 	protected submit (e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		this.props.onSubmit(this.fields);
+		if (typeof this.props.onSubmit !== 'undefined') {
+			this.props.onSubmit(this.fields, this.token);
+		}
 	}
 
 	/**

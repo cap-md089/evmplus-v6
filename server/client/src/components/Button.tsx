@@ -1,14 +1,8 @@
 import * as React from 'react';
 
-import myFetch from '../myFetch';
+import myFetch from '../lib/myFetch';
 
 import * as classNames from 'classnames';
-
-export const ButtonType = {
-	BUTTON_1:	'primaryButton',
-	BUTTON_2:	'secondaryButton',
-	TEXT:		''
-};
 
 export interface ButtonProps<C, S> {
 	url?: string;
@@ -86,8 +80,8 @@ export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 		};
 	}
 
-	public handleClick (e: React.MouseEvent<HTMLAnchorElement>) {
-		let promise = new Promise<{push: boolean, data: any}> ((res, rej): void => {
+	public handleClick (e: React.MouseEvent<HTMLAnchorElement>): void {
+		(new Promise<{push: boolean, data: any}> ((res, rej): void => {
 			this.setState({
 				disabled: true
 			});
@@ -158,8 +152,7 @@ export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 					this.props.onReceiveData(undefined);
 				}
 			}
-		});
-		return promise;
+		}));
 	}
 
 	render () {

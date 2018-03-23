@@ -68,7 +68,7 @@ class FileDisplay extends React.Component<FileDisplayProps, UploadedFileElement>
 						onClick={() => {
 							this.props.delete(this.props.displayId);
 						}}
-						buttonType={'primaryButton'}
+						buttonType={''}
 					>
 						Remove file
 					</Button>

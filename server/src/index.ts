@@ -20,7 +20,6 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -32,6 +31,8 @@ let filerouter: express.Router = express.Router();
 /**
  * DEFINE ROUTERS HERE
  */
+import Member from './lib/Member';
+router.use(Member.ExpressMiddleware);
 
 import getevents from './apis/getevents';
 router.post('/events', getevents(Configuration));
@@ -71,7 +72,9 @@ app.use('/file', filerouter);
 
 app.get('/images/banner', (req, res) => {
 	fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {
-		if (err) throw err;
+		if (err) {
+			throw err;
+		}
 		let image = data[Math.round(Math.random() * (data.length - 1))];
 		res.sendFile(path.join(__dirname, '..', 'images', 'banner-images', image));
 	});
@@ -84,21 +87,29 @@ app.get('*', (req, res) => {
 });
 
 function normalizePort(val: number|string): number|string|boolean {
-	let port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
-	if (isNaN(port)) return val;
-	else if (port >= 0) return port;
-	else return false;
+	let _port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
+	if (isNaN(_port)) {
+		return val;
+	} else if (_port >= 0) {
+		return _port;
+	} else {
+		return false;
+	}
 }
 
 function onError(error: NodeJS.ErrnoException): void {
-	if (error.syscall !== 'listen') throw error;
+	if (error.syscall !== 'listen') {
+		throw error;
+	}
 	let bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
-	switch(error.code) {
+	switch (error.code) {
 		case 'EACCES':
+			// tslint:disable-next-line:no-console
 			console.error(`${bind} requires elevated privileges`);
 			process.exit(1);
 			break;
 		case 'EADDRINUSE':
+			// tslint:disable-next-line:no-console
 			console.error(`${bind} is already in use`);
 			process.exit(1);
 			break;

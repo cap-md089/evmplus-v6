@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import myFetch from '../lib/myFetch';
+
 import Form, { FormProps } from './Form';
 
 interface RequestFormProps<T, S> extends FormProps<T> {
@@ -18,7 +20,7 @@ interface RequestFormProps<T, S> extends FormProps<T> {
 	 * 
 	 * @returns {void}
 	 */
-	onReceiveData?: (data?: S) => void;
+	onReceiveData?: (data: S) => void;
 	
 	/** 
 	 * The function to handle data before a request is sent.
@@ -32,14 +34,70 @@ interface RequestFormProps<T, S> extends FormProps<T> {
 	 * 
 	 * @returns {Promise<any> | boolean | any} Data to control the request
 	 */
-	onSubmit: (data?: T) => Promise<any> | boolean | any;
+	onSubmit?: (fields: T) => Promise<any> | boolean | any;
 }
 
-class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
-	// tslint:disable-next-line:no-empty
+export default class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
 	protected submit (e: React.FormEvent<HTMLFormElement>): void {
-		
+		(new Promise<{push: boolean, data: any}> ((res, rej): void => {
+			this.setState({
+				disabled: true
+			});
+			if (typeof this.props.onSubmit === 'undefined') {
+				res({
+					push: true,
+					data: this.fields
+				});
+				return;
+			}
+			let clickResolve = this.props.onSubmit(this.fields);
+			if (typeof clickResolve !== 'undefined' && typeof clickResolve.then !== 'undefined') {
+				clickResolve.then((data: any) => {
+					if (typeof data === 'boolean') {
+						res ({
+							push: data,
+							data: this.fields
+						});
+					} else {
+						res ({
+							push: true,
+							data: typeof data === 'undefined' ? this.fields : data
+						});
+					}
+				});
+			} else if (typeof clickResolve === 'boolean') {
+				res({
+					push: clickResolve,
+					data: this.fields
+				});
+			} else {
+				res({
+					push: true,
+					data: clickResolve
+				});
+			}
+		}).then((pushData) => {
+			if (pushData.push && this.props.url) {
+				myFetch(this.props.url, {
+					body: JSON.stringify(pushData.data),
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						'Content-type': 'application/json'
+					}
+				}).then(res => {
+					return res.json();
+				}).then((serverData: S) => {
+					this.setState({
+						disabled: false
+					});
+					if (typeof this.props.onReceiveData !== 'undefined') {
+						this.props.onReceiveData(serverData);
+					}
+				}).catch((err: Error) => {
+					console.log(err);	
+				});
+			}
+		}));
 	}
 }
-
-export default RequestForm;

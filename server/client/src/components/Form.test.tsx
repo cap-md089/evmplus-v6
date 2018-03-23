@@ -11,7 +11,7 @@ import { shallow, mount } from 'enzyme';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-const nil = (e: React.FormEvent<HTMLInputElement>): void => {
+const nil = (e: React.FormEvent<HTMLInputElement>, token: string): void => {
 	return;
 };
 
@@ -125,7 +125,12 @@ describe ('<Form />', () => {
 
 		it ('should submit and call the callback', () => {
 			let submit = sinon.spy();
-			let wrapper = mount(<Form id="id" onSubmit={submit} />);
+			let wrapper = mount(
+				<Form
+					id="id"
+					onSubmit={submit}
+				/>
+			);
 			wrapper.find('input').simulate('submit');
 			expect(submit.calledOnce).toEqual(true);
 		});

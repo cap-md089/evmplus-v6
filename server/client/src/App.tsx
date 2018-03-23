@@ -10,7 +10,7 @@ import PageRouter from './components/PageRouter';
 import SideNavigation from './components/SideNavigation';
 import Dialogue from './components/Dialogue';
 
-import myFetch from './myFetch';
+import myFetch from './lib/myFetch';
 
 export class Head extends React.Component {
 	render() {

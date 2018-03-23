@@ -9,11 +9,13 @@
   },
   "dependencies": {
     "@types/connect-busboy": "0.0.0",
+    "@types/jsonwebtoken": "^7.2.6",
     "body-parser": "~1.18.2",
     "connect-busboy": "0.0.2",
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.9",
     "express": "~4.15.5",
+    "jsonwebtoken": "^8.2.0",
     "morgan": "^1.9.0",
     "mysql": "^2.15.0",
     "react-router": "^4.2.0",
