@@ -3,7 +3,7 @@ import * as React from 'react';
 import jQuery from './jquery.textfit';
 
 import Registry from './registry';
-import { NavLink } from 'react-router-dom';
+import { NavLink, withRouter, RouteComponentProps } from 'react-router-dom';
 
 import BreadCrumbs from './components/BreadCrumbs';
 import PageRouter from './components/PageRouter';
@@ -23,10 +23,10 @@ export class Head extends React.Component {
 	}
 }
 
-class SearchForm extends React.Component<{}, {
+class SearchForm extends React.Component<RouteComponentProps<any>, {
 	text: string
 }> {
-	constructor(props: {}) {
+	constructor(props: RouteComponentProps<any>) {
 		super(props);
 		this.handleChange = this.handleChange.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
@@ -43,7 +43,11 @@ class SearchForm extends React.Component<{}, {
 	}
 
 	handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		return;
+		e.preventDefault();
+		this.props.history.push('/search?query=' + this.state.text);
+		this.setState({
+			text: ''
+		});
 	}
 
 	render() {
@@ -75,6 +79,8 @@ class SearchForm extends React.Component<{}, {
 		);
 	}
 }
+
+const RoutingSearchForm = withRouter(SearchForm);
 
 export default class App extends React.Component<{
 	isMobile: boolean
@@ -195,7 +201,7 @@ export default class App extends React.Component<{
 										</li>
 									</ul>
 									<div className="search">
-										<SearchForm />
+										<RoutingSearchForm />
 									</div>
 								</nav>
 							</header>
@@ -325,7 +331,7 @@ export default class App extends React.Component<{
 								>
 									&copy; 2017-{
 										new Date().getFullYear()
-									} CAPUnit.com, {this.state.Registry.Website.Name}
+									} CAPUnit.com
 								</div>
 								<div
 									style={{

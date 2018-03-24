@@ -9,9 +9,15 @@ export default class TextArea extends React.Component<InputProps<string>, {
 }> {
 	constructor (props: InputProps<string>) {
 		super(props);
-		this.state = {
-			editorState: EditorState.createEmpty()
-		};
+		if (typeof this.props.value !== 'undefined') {
+			this.state = {
+				editorState: JSON.parse(this.props.value)
+			};
+		} else {
+			this.state = {
+				editorState: EditorState.createEmpty()
+			};
+		}
 		this.onChange = this.onChange.bind(this);
 	}
 

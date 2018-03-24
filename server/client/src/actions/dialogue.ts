@@ -3,7 +3,8 @@ export const displayDialogue = (
 	text: JSX.Element | string,
 	buttontext: string = 'Close',
 	displayButton: boolean = true,
-	onClose: Function = () => null) => {
+	onClose: Function = () => null
+) => {
 	return {
 		type: 'DISPLAY_DIALOGUE',
 		title,

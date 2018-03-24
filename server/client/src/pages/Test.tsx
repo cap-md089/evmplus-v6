@@ -65,6 +65,7 @@ export default class Test extends React.Component<{}, {}> {
 					url={'/api/echo'}
 					onClick={console.log}
 					onReceiveData={console.log}
+					buttonType={''}
 				>
 					Submit
 				</Button>

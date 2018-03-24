@@ -24,6 +24,9 @@ const store = createStore(
 			open: false,
 			text: '',
 			title: ''
+		},
+		SignedInUser: {
+			valid: false
 		}
 	}
 );

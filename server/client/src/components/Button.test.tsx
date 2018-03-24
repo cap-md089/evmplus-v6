@@ -69,14 +69,13 @@ describe ('<Button />', () => {
 					onClick={onClick}
 					onReceiveData={onReceive}
 					url={'/api/echo'}
-					buttonType={'primaryButton'}
 				>
 					A link
 				</Button>
 			);
 			button.simulate('click');
 		},
-		250
+		1500
 	);
 
 	it (

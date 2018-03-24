@@ -130,11 +130,11 @@ export interface MemberContact {
  * Member.Check: Takes a session id and returns the user
  * Member.Estimate: Estimates the user based off of CAPWATCH data
  */
-export class MemberObject {
+export interface MemberObject {
 	/**
 	 * The CAPID of the member
 	 */
-	id: number;
+	capid: number;
 	/**
 	 * Check for this from the Member.Create function, it shows whether it is valid
 	 */
@@ -331,7 +331,7 @@ export class MemberObject {
 	canPerformNHQActions: boolean;
 }
 
-export class AccountObject {
+export interface AccountObject {
 	/**
 	 * The Account ID
 	 */
@@ -372,4 +372,27 @@ export class AccountObject {
 	 * CAP IDs of the admins of this account
 	 */
 	adminIDs: number[];
+}
+
+export interface FileObject {
+	/**
+	 * The file identifier
+	 */
+	id: string;
+	/**
+	 * The file name
+	 */
+	name: string;
+	/**
+	 * The MIME type for the file
+	 */
+	contentType: string;
+	/**
+	 * Raw data for the file, if it is a string it is base 64 encoded
+	 */
+	content: Buffer | string;
+	/**
+	 * Comments for the file
+	 */
+	comments: string;
 }

@@ -3,6 +3,7 @@ import { Route } from 'react-router-dom';
 
 import Main from '../pages/Main';
 import Test from '../pages/Test';
+import Blog from '../pages/Blog';
 
 const pages = [
 	{
@@ -13,6 +14,11 @@ const pages = [
 	{
 		url: '/test',
 		component: Test,
+		exact: false
+	},
+	{
+		url: '/blog',
+		component: Blog,
 		exact: false
 	}
 ];
@@ -28,7 +34,12 @@ export default class PageRouter extends React.Component {
 				{
 					pages.map((value, i) => {
 						return (
-							<Route key={i} path={value.url} exact={value.exact} component={value.component} />
+							<Route
+								key={i}
+								path={value.url}
+								exact={value.exact}
+								component={value.component as any}
+							/>
 						);
 					})
 				}

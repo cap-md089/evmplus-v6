@@ -66,11 +66,6 @@ export interface ButtonProps<C, S> {
 export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 	disabled: boolean
 }> {
-
-	public static PassThrough<C> (data: C): C {
-		return data;
-	}
-
 	constructor(props: ButtonProps<C, S>) {
 		super(props);
 
@@ -159,9 +154,14 @@ export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 		return (
 			<a
 				onClick={this.handleClick}
+				style={
+					{
+						cursor: 'pointer'
+					}
+				}
 				className={
 					classNames({
-						[this.props.buttonType || 'primaryButton']: true,
+						[typeof this.props.buttonType === 'string' ? this.props.buttonType : 'primaryButton']: true,
 						[this.props.className || 'asyncButton']: true,
 						disabled: this.state.disabled
 					})

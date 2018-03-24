@@ -1,20 +1,22 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import TextArea from './TextArea';
+import PageRouter from './PageRouter';
 
 import * as Enzyme from 'enzyme';
 import * as Adapter from 'enzyme-adapter-react-16';
 
+import { BrowserRouter as Router } from 'react-router-dom';
+
 Enzyme.configure({ adapter: new Adapter() });
 
-describe('<TextInput />', () => {
+describe('<PageRouter />', () => {
 	it ('should render without crashing', () => {
 		const div = document.createElement('div');
 		ReactDOM.render(
-			<TextArea
-				name="test1"
-			/>,
+			<Router>
+				<PageRouter />
+			</Router>,
 			div
 		);
 		ReactDOM.unmountComponentAtNode(div);

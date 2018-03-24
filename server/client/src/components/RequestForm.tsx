@@ -20,7 +20,7 @@ interface RequestFormProps<T, S> extends FormProps<T> {
 	 * 
 	 * @returns {void}
 	 */
-	onReceiveData?: (data: S) => void;
+	onReceiveData?: (data: S, fields: T) => void;
 	
 	/** 
 	 * The function to handle data before a request is sent.
@@ -92,7 +92,7 @@ export default class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
 						disabled: false
 					});
 					if (typeof this.props.onReceiveData !== 'undefined') {
-						this.props.onReceiveData(serverData);
+						this.props.onReceiveData(serverData, this.fields);
 					}
 				}).catch((err: Error) => {
 					console.log(err);	
