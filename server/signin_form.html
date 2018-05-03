@@ -53,15 +53,16 @@
 		<script>
 			function onSubmit (form) {
 				fetch ('/api/signin', {
-					credentials: "same-origin",
 					headers: {
 						'Accept': 'application/json',
-						'Content-Type': 'application/x-www-form-urlencoded'
+						'Content-Type': 'application/json'
 					},
 					method: 'post',
-					body: `capid=${form.capid.value}&password=${form.password.value}`
+					body: JSON.stringify({
+						capid: form.capid.value,
+						password: form.password.value
+					})
 				}).then(res => {
-					console.log(res);
 					if (res.status >= 200 && res.status < 300) {
 						return res;
 					}
@@ -69,10 +70,8 @@
 					err.response = res;
 					throw err;
 				}).then(res => {
-					console.log(res);
 					return res.json();
 				}).then(json => {
-					console.log(json);
 					parent.postMessage(json, '*');
 				}).catch(err => {
 					console.log(err);

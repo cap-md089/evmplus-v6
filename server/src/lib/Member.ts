@@ -2,16 +2,21 @@ import * as CAP from '../types';
 import Account from './Account';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
+import * as express from 'express';
+
+export interface MemberRequest extends express.Request {
+	member?: Member;
+}
 
 interface MemberSession {
-	capid: number;
+	id: number;
 	expireTime: number;
 	contact: CAP.MemberContact;
 	memberRank: string;
 	rawContact: string;
 	cookieData: string;
 	squadMember: boolean;
-	accessLevel: string;
+	accessLevel: CAP.MemberAccessLevel;
 	squadron: string;
 	nameFirst: string;
 	nameMiddle: string;
@@ -29,59 +34,126 @@ export default class Member implements CAP.MemberObject {
 	 * Store the sessions in memory vs database, as it simplifies code and sessions
 	 * 		aren't meant to last very long anyway
 	 */
-	private static memberSessions: MemberSession[] = [];
+	static memberSessions: MemberSession[] = [];
 
 	/**
 	 * The CAPID of the member
 	 */
-	capid: number;
+	id: number = 0;
 	/**
 	 * Check for this from the Member.Create function, it shows whether it is valid
 	 */
-	valid: boolean;
+	valid: boolean = false;
 	/**
 	 * The error to use when the valid boolean is false
 	 */
 	error?: CAP.MemberCreateError;
 	/**
-	 * The name of the member: basically equal to:
-	 *      nameFirst + nameMiddle + nameLast + nameSuffix
-	 */
-	memberName: string;
-	/**
-	 * Alias of nameLast
-	 */
-	memberNameLast: string;
-	/**
 	 * The rank of the member provided
 	 */
-	memberRank: string;
+	memberRank: string = '';
 	/**
 	 * Whether or not the member is a senior member
 	 */
-	seniorMember: boolean;
+	seniorMember: boolean = false;
 	/**
 	 * memberName + memberRank
 	 */
-	memberRankName: string;
+	memberRankName: string = '';
 	/**
 	 * Contact information for the user
 	 */
-	contact: CAP.MemberContact;
+	contact: CAP.MemberContact = {
+		ALPHAPAGER : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		ASSISTANT : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		CADETPARENTEMAIL : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		CADETPARENTPHONE : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		CELLPHONE : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		DIGITALPAGER : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		EMAIL : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		HOMEFAX : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		HOMEPHONE : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		INSTANTMESSAGER : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		ISDN : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		RADIO : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		TELEX : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		WORKFAX : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		},
+		WORKPHONE : {
+			PRIMARY: [],
+			SECONDARY: [],
+			EMERGENCY: []
+		}
+	};
 	/**
 	 * The raw contact information
 	 * 
 	 * @deprecated
 	 */
-	rawContact: string;
+	rawContact: string = '';
 	/**
 	 * Cookies from NHQ to be stored and used to gather information
 	 */
-	cookieData: string;
+	cookieData: string = '';
 	/**
 	 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
 	 */
-	dutyPositions: string[];
+	dutyPositions: string[] = [];
 	/**
 	 * Permissions of the user
 	 */
@@ -124,7 +196,7 @@ export default class Member implements CAP.MemberObject {
 		 */
 		AddEvent: number;
 		/**
-		 * Whether or not the user can 
+		 * Whether or not the user can edit an event
 		 */
 		EditEvent: number;
 		/**
@@ -194,61 +266,268 @@ export default class Member implements CAP.MemberObject {
 
 		// To get it to not throw errors
 		[key: string]: number;
+	} = {
+		FlightAssign: 0,
+		MusterSheet: 0,
+		PTSheet: 0,
+		PromotionManagement: 0,
+		AssignTasks: 0,
+		AdministerPT: 0,
+		DownloadStaffGuide: 0,
+		AddEvent: 0,
+		EditEvent: 0,
+		EventContactSheet: 0,
+		SignUpEdit: 0,
+		CopyEvent: 0,
+		ORMOPORD: 0,
+		DeleteEvent: 0,
+		AssignPosition: 0,
+		EventStatusPage: 0,
+		ProspectiveMemberManagment: 0,
+		EventLinkList: 0,
+		AddTeam: 0,
+		EditTeam: 0,
+		FileManagement: 0,
+		PermissionManagement: 0,
+		DownloadCAPWATCH: 0,
+		RegistryEdit: 0
 	};
 	/**
 	 * Is the member a member of the squadron of the page they are currrently viewing?
 	 */
-	squadMember: boolean;
+	squadMember: boolean = false;
 	/**
 	 * The permission descriptor for the access level
 	 */
-	accessLevel: string;
+	accessLevel: CAP.MemberAccessLevel = 'Member';
 	/**
 	 * The Squadron a member belongs to
 	 */
-	squadron: string;
+	squadron: string = '';
 	/**
 	 * First name of member
 	 */
-	nameFirst: string;
+	nameFirst: string = '';
 	/**
 	 * Middle name of member
 	 */
-	nameMiddle: string;
+	nameMiddle: string = '';
 	/**
 	 * Last name of member
 	 */
-	nameLast: string;
+	nameLast: string = '';
 	/**
 	 * Suffix of member
 	 */
-	nameSuffix: string;
+	nameSuffix: string = '';
 	/**
 	 * Whether or not the user can perform actions on CAP NHQ
 	 * 
 	 * Since member objects created by Estimate don't have cookies, this is for that
 	 */
-	canPerformNHQActions: boolean;
+	canPerformNHQActions: boolean = false;
+	
+	public static Create (uname: number, pass: string): Promise<Member> {
+		// tslint:disable-next-line:no-any
+		return new (Promise as any)((res: (mem: Member) => void, rej: () => void) => {
+			let mem = new this({
+				id: uname,
+				valid: true,
+				memberRank: '',
+				seniorMember: false,
+				contact: {
+					ALPHAPAGER : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					ASSISTANT : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					CADETPARENTEMAIL : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					CADETPARENTPHONE : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					CELLPHONE : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					DIGITALPAGER : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					EMAIL : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					HOMEFAX : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					HOMEPHONE : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					INSTANTMESSAGER : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					ISDN : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					RADIO : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					TELEX : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					WORKFAX : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					},
+					WORKPHONE : {
+						PRIMARY: [],
+						SECONDARY: [],
+						EMERGENCY: []
+					}
+				},
+				rawContact: '',
+				cookieData: '',
+				dutyPositions: [],
+				permissions: {
+					FlightAssign: 0,
+					MusterSheet: 0,
+					PTSheet: 0,
+					PromotionManagement: 0,
+					AssignTasks: 0,
+					AdministerPT: 0,
+					DownloadStaffGuide: 0,
+					AddEvent: 0,
+					EditEvent: 0,
+					EventContactSheet: 0,
+					SignUpEdit: 0,
+					CopyEvent: 0,
+					ORMOPORD: 0,
+					DeleteEvent: 0,
+					AssignPosition: 0,
+					EventStatusPage: 0,
+					ProspectiveMemberManagment: 0,
+					EventLinkList: 0,
+					AddTeam: 0,
+					EditTeam: 0,
+					FileManagement: 0,
+					PermissionManagement: 0,
+					DownloadCAPWATCH: 0,
+					RegistryEdit: 0
+				},
+				squadMember: false,
+				accessLevel: 'Member',
+				squadron: '',
+				nameFirst: '',
+				nameLast: '',
+				nameMiddle: '',
+				nameSuffix: '',
+				canPerformNHQActions: true
+			});
 
-	public static Create (uname: string, pass: string): Promise<Member> {
-		// let mem: Member;
-
-		// mem.canPerformNHQActions = true;
-		return null;
+			res(mem);
+		});
 	}
 
-	public static Check (capid: number): Promise<Member> {
-		// let mem: Member;
-
-		// mem.canPerformNHQActions = true;
-		return null;
+	public static Check (capid: number): Promise<Member> | null {
+		return new Promise ((res: (mem: Member) => void, rej: () => void) => {
+			let session = Member.memberSessions.filter(sess => sess.id === capid);
+			if (session.length === 1) {
+				let {
+					id,
+					contact,
+					memberRank,
+					rawContact,
+					cookieData,
+					squadMember,
+					accessLevel,
+					squadron,
+					nameFirst,
+					nameMiddle,
+					nameLast,
+					nameSuffix
+				} = session[0];
+				res(new this({
+					id,
+					contact,
+					memberRank,
+					rawContact,
+					cookieData,
+					squadMember,
+					accessLevel,
+					squadron,
+					nameFirst,
+					nameMiddle,
+					nameLast,
+					nameSuffix,
+					valid: true,
+					seniorMember: false,
+					dutyPositions: [],
+					permissions: {
+						FlightAssign: 0,
+						MusterSheet: 0,
+						PTSheet: 0,
+						PromotionManagement: 0,
+						AssignTasks: 0,
+						AdministerPT: 0,
+						DownloadStaffGuide: 0,
+						AddEvent: 0,
+						EditEvent: 0,
+						EventContactSheet: 0,
+						SignUpEdit: 0,
+						CopyEvent: 0,
+						ORMOPORD: 0,
+						DeleteEvent: 0,
+						AssignPosition: 0,
+						EventStatusPage: 0,
+						ProspectiveMemberManagment: 0,
+						EventLinkList: 0,
+						AddTeam: 0,
+						EditTeam: 0,
+						FileManagement: 0,
+						PermissionManagement: 0,
+						DownloadCAPWATCH: 0,
+						RegistryEdit: 0
+					},
+					canPerformNHQActions: true
+				}));
+			} else {
+				rej();
+			}
+		});
 	}
 
 	public static Estimate (
 		capid: number,
 		global: boolean = false,
 		account?: Account
-	): Promise<Member> {
+	): Promise<Member> | null {
 		// let mem: Member;
 
 		// mem.canPerformNHQActions = false;
@@ -260,8 +539,8 @@ export default class Member implements CAP.MemberObject {
 		res: Response,
 		next: NextFunction
 	): void {
-		if (typeof req.cookies.authorization !== 'undefined') {
-			let header = req.cookies.authorization;
+		if (typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined') {
+			let header = req.headers.authorization;
 			if (typeof header !== 'string') {
 				header = header[0];
 			}
@@ -277,12 +556,23 @@ export default class Member implements CAP.MemberObject {
 					capid: number
 				}) => {
 					if (err) {
-						throw err;
-					}
-					Member.Check(decoded.capid).then(mem => {
-						req.member = mem;
+						req.member = null;
 						next();
-					});
+						return;
+					}
+					Member
+						.Check(decoded.capid)
+						.then((mem: Member | null) => {
+							if (mem !== null) {
+								req.member = mem;
+							} else {
+								req.member = null;
+							}
+							next();
+						}).catch (() => {
+							req.member = null;
+							next();
+						});
 				}
 			);
 		} else {
@@ -292,7 +582,8 @@ export default class Member implements CAP.MemberObject {
 	}
 
 	private constructor (data: CAP.MemberObject) {
-
+		// tslint:disable-next-line:no-any
+		(<any> Object).assign(this, data);
 	}
 
 	public hasDutyPosition (dutyposition: string | string[]): boolean {
@@ -320,18 +611,19 @@ export default class Member implements CAP.MemberObject {
 			//     return false;
 			// }
 		}
+		return false;
 	}
 	
 	public setSession (): string {
-		let member: number = -1;
+		let memberIndex: number = -1;
 		for (let i in Member.memberSessions) {
-			if (Member.memberSessions[i].capid === this.capid) {
-				member = parseInt(i, 10);
+			if (Member.memberSessions[i].id === this.id) {
+				memberIndex = parseInt(i, 10);
 			}
 		}
-		if (member === -1) {
+		if (memberIndex === -1) {
 			let {
-				capid,
+				id,
 				contact,
 				cookieData,
 				memberRank,
@@ -345,8 +637,8 @@ export default class Member implements CAP.MemberObject {
 				nameSuffix
 			} = this;
 			Member.memberSessions.push({
-				expireTime: (Date.now() / 1000) * (60 * 10),
-				capid,
+				expireTime: (Date.now() / 1000) + (60 * 10),
+				id,
 				contact,
 				cookieData,
 				memberRank,
@@ -360,12 +652,12 @@ export default class Member implements CAP.MemberObject {
 				nameSuffix
 			});
 		} else {
-			Member.memberSessions[member].expireTime = 
-				(Date.now() / 1000 * (60 * 10));
+			Member.memberSessions[memberIndex].expireTime = 
+				(Date.now() / 1000 + (60 * 10));
 		}
 		return jwt.sign(
 			{
-				capid: this.capid
+				capid: this.id
 			},
 			Member.secret,
 			{

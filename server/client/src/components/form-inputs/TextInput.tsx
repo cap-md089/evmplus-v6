@@ -1,11 +1,18 @@
 import * as React from 'react';
 
-import { InputProps, InputState } from './Input';
+import { InputProps } from './Input';
+
+interface TextInputProps extends InputProps<string> {
+	fullWidth?: boolean;
+	placeholder?: string;
+}
 
 /**
  * A text input that can be used by a Form
  */
-export default class TextInput extends React.Component<InputProps<string>, InputState> {
+export default class TextInput extends React.Component<TextInputProps, {
+	value: string
+}> {
 	public state = {
 		value: ''
 	};
@@ -34,7 +41,10 @@ export default class TextInput extends React.Component<InputProps<string>, Input
 		}
 
 		if (typeof this.props.onUpdate !== 'undefined') {
-			this.props.onUpdate(e);
+			this.props.onUpdate({
+				name: this.props.name,
+				value: text
+			});
 		}
 	}
 
@@ -42,14 +52,22 @@ export default class TextInput extends React.Component<InputProps<string>, Input
 		return (
 			<div
 				className="formbox"
-				style={this.props.boxStyles}
+				style={{
+					clear: this.props.fullWidth ? 'both' : undefined,
+					width: this.props.fullWidth ? '90%' : undefined,
+					...this.props.boxStyles
+				}}
 			>
 				<input
 					type="text"
 					value={this.state.value}
 					onChange={this.onChange}
 					name={this.props.name}
-					style={this.props.inputStyles}
+					style={{
+						width: this.props.fullWidth ? '100%' : undefined,
+						...this.props.inputStyles
+					}}
+					placeholder={this.props.placeholder}
 				/>
 			</div>
 		);

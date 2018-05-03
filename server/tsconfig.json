@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es2015",
         "module": "commonjs",
         "outDir": "dist",
         "noImplicitAny": true,
@@ -17,5 +17,10 @@
     ],
     "exclude": [
         "node_modules"
+    ],
+    "lib": [
+        "es2015",
+        "es2017",
+        "es2015.promise"
     ]
 }

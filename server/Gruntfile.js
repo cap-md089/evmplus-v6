@@ -22,7 +22,7 @@ module.exports = function (grunt) {
 		watch : {
 			project: {
 				files: ['src/**/*.ts'],
-				tasks: ['ts']
+				tasks: ['ts', 'tslint']
 			}
 		},
 		jshint : {

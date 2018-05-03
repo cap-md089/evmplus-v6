@@ -4,7 +4,7 @@ import myFetch from '../lib/myFetch';
 
 import Form, { FormProps } from './Form';
 
-interface RequestFormProps<T, S> extends FormProps<T> {
+interface RequestFormProps<C, S> extends FormProps<C> {
 	/**
 	 * URL to submit the form request to
 	 */
@@ -20,7 +20,7 @@ interface RequestFormProps<T, S> extends FormProps<T> {
 	 * 
 	 * @returns {void}
 	 */
-	onReceiveData?: (data: S, fields: T) => void;
+	onReceiveData?: (data: S, fields: C) => void;
 	
 	/** 
 	 * The function to handle data before a request is sent.
@@ -32,21 +32,23 @@ interface RequestFormProps<T, S> extends FormProps<T> {
 	 * 
 	 * @param data The data currently being sent
 	 * 
-	 * @returns {Promise<any> | boolean | any} Data to control the request
+	 * @returns {Promise<boolean | any> | boolean | any} Data to control the request
 	 */
-	onSubmit?: (fields: T) => Promise<any> | boolean | any;
+	onSubmit?: (fields: C) => Promise<boolean | any> | boolean | any;
 }
 
-export default class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
+export default class RequestForm<C extends object, S> extends Form<C, RequestFormProps<C, S>> {
 	protected submit (e: React.FormEvent<HTMLFormElement>): void {
+		e.preventDefault();
+		let formFields: C & {token: string} = {
+			...(this.fields as any),
+			token: this.token
+		};
 		(new Promise<{push: boolean, data: any}> ((res, rej): void => {
-			this.setState({
-				disabled: true
-			});
 			if (typeof this.props.onSubmit === 'undefined') {
 				res({
 					push: true,
-					data: this.fields
+					data: formFields
 				});
 				return;
 			}
@@ -56,19 +58,19 @@ export default class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
 					if (typeof data === 'boolean') {
 						res ({
 							push: data,
-							data: this.fields
+							data: formFields
 						});
 					} else {
 						res ({
 							push: true,
-							data: typeof data === 'undefined' ? this.fields : data
+							data: typeof data === 'undefined' ? formFields : data
 						});
 					}
 				});
 			} else if (typeof clickResolve === 'boolean') {
 				res({
 					push: clickResolve,
-					data: this.fields
+					data: formFields
 				});
 			} else {
 				res({
@@ -76,14 +78,15 @@ export default class RequestForm<T, S> extends Form<T, RequestFormProps<T, S>> {
 					data: clickResolve
 				});
 			}
-		}).then((pushData) => {
+		}).then(pushData => {
 			if (pushData.push && this.props.url) {
 				myFetch(this.props.url, {
 					body: JSON.stringify(pushData.data),
 					method: 'POST',
 					credentials: 'same-origin',
 					headers: {
-						'Content-type': 'application/json'
+						'Content-type': 'application/json',
+						'Authorization': this.sessionID
 					}
 				}).then(res => {
 					return res.json();

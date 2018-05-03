@@ -121,7 +121,7 @@ class Dialogue extends React.Component<{
 				}}
 				onClick={
 					() => {
-						this.props.dispatch(closeDialogue());
+						// this.props.dispatch(closeDialogue());
 					}
 				}
 			>
@@ -151,8 +151,9 @@ class Dialogue extends React.Component<{
 									onClick={
 										(e: React.MouseEvent<HTMLAnchorElement>) => {
 											e.preventDefault();
-											this.props.dispatch(closeDialogue());
+											console.log('Closing');
 											this.props.onClose();
+											this.props.dispatch(closeDialogue());
 										}
 									}
 								>

@@ -17,7 +17,12 @@ describe ('<FileInput />', () => {
 	it ('should render without crashing', () => {
 		const div = document.createElement('div');
 		ReactDOM.render(
-			<FileInput name="test" />,
+			<FileInput
+				name="test"
+				displayDialogue={
+					() => null
+				}
+			/>,
 			div
 		);
 		ReactDOM.unmountComponentAtNode(div);

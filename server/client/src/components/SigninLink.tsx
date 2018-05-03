@@ -17,13 +17,12 @@ class SigninLink extends React.Component<{
 				href="#"
 				onClick={
 					(e: React.MouseEvent<HTMLElement>) => {
-						let path = true ? 'http://localhost:3001/api/signin' : '/api/signin';
 						e.preventDefault();
 						this.props.displayDialogue(
 							'Sign in', 
 							<iframe
 								sandbox="allow-scripts allow-forms allow-same-origin"
-								src={path}
+								src="/api/signin"
 								style={{
 									width: '100%',
 									height: '220px',
@@ -38,9 +37,7 @@ class SigninLink extends React.Component<{
 					}
 				}
 			>
-				{
-					React.Children.map(this.props.children, a => a)
-				}
+				{this.props.children}
 			</a>
 		);
 	}

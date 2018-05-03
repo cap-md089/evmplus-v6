@@ -1,16 +1,19 @@
 import * as React from 'react';
 
 import TextInput from './form-inputs/TextInput';
-import FileInput from './form-inputs/FileInput';
+import FileInput, { FileInputLoader, FileInputLoaderSelect } from './form-inputs/FileInput';
 import TextArea from './form-inputs/TextArea';
+import UserData from './UserData';
+import { MemberObject } from '../../../src/types';
+import myFetch from '../lib/myFetch';
 
 /**
  * Creates a label to be used in the form
  */
-class Label extends React.Component {
+class Label extends React.Component<{fullWidth?: boolean}> {
 	public readonly IsLabel = true;
 
-	constructor(props: {}) {
+	constructor(props: {fullWidth: boolean}) {
 		super(props);
 
 		this.IsLabel = true;
@@ -28,10 +31,10 @@ class Label extends React.Component {
 /**
  * Creates a title to use in the form
  */
-class Title extends React.Component {
+class Title extends React.Component<{fullWidth?: boolean}> {
 	public readonly IsLabel = true;
 
-	constructor(props: {}) {
+	constructor(props: {fullWidth: boolean}) {
 		super(props);
 
 		this.IsLabel = true;
@@ -59,19 +62,21 @@ function isInput (el: React.ReactChild): boolean {
 	}
 	return el.type === TextInput ||
 		el.type === FileInput ||
+		el.type === FileInputLoader ||
+		el.type === FileInputLoaderSelect ||
 		el.type === TextArea;
 }
 
 /**
  * The properties a form itself requires
  */
-export interface FormProps<T> {
+export interface FormProps<F> {
 	/**
 	 * The function that is called when the user submits the form
 	 * 
 	 * @param fields The fields of the form
 	 */
-	onSubmit?: (fields: T, token: string) => void;
+	onSubmit?: (fields: F, token: string) => void;
 	/**
 	 * Styles the submit button
 	 */
@@ -99,7 +104,7 @@ export interface FormProps<T> {
 	 * 
 	 * @returns Whether or not to load a previous save
 	 */
-	shouldLoadPreviousFields?: (saveTime: number, fields: T) => boolean;
+	shouldLoadPreviousFields?: (saveTime: number, fields: F) => boolean;
 	/**
 	 * Replaces the previous property
 	 * 
@@ -118,18 +123,19 @@ export interface FormProps<T> {
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
  */
-export default class Form<
-	T = {},
-	P extends FormProps<T> = FormProps<T>
+class Form<
+	C = {},
+	P extends FormProps<C> = FormProps<C>
 > extends React.Component<P, {
 	disabled: boolean;
 }> {
-	protected fields: T;
+	protected fields: C;
 
 	protected token: string = '';
+	protected sessionID: string = '';
 
 	protected displayLoadFields: boolean = false;
-	protected loadedFields: T = {} as T;
+	protected loadedFields: C = {} as C;
 
 	/**
 	 * Create a form
@@ -149,8 +155,9 @@ export default class Form<
 
 		this.onChange = this.onChange.bind(this);
 		this.submit = this.submit.bind(this);
+		this.requestToken = this.requestToken.bind(this);
 
-		this.fields = {} as T;
+		this.fields = {} as C;
 
 		if (typeof localStorage !== 'undefined') {
 			let fields = localStorage.getItem(`${this.props.id}-storage`);
@@ -178,11 +185,9 @@ export default class Form<
 
 	/**
 	 * What is used to describe when a form element changes
-	 * 
-	 * @param {React.FormEvent<HTMLFormEvent>} e Event
 	 */
-	protected onChange (e: React.FormEvent<HTMLInputElement>) {
-		this.fields[e.currentTarget.name] = e.currentTarget.value;
+	protected onChange (e: {name: string, value: any}) {
+		this.fields[e.name] = e.value;
 	}
 	
 	/**
@@ -198,11 +203,35 @@ export default class Form<
 	}
 
 	/**
+	 * Starts to request a token
+	 * 
+	 * @param {boolean} valid Whether or not is the user a valid user
+	 * @param {MemberObject} member The member to request a token for
+	 * @param {string} sessionID The session ID for the member
+	 */
+	protected requestToken (valid: boolean, member: MemberObject, sessionID: string): void {
+		this.sessionID = sessionID;
+		myFetch(
+			'/api/token',
+			{
+				headers: {
+					authorization: sessionID
+				}
+			}
+		)
+			.then(res =>
+				res.json())
+			.then(json => {
+				this.token = json.token;
+			});
+	}
+
+	/**
 	 * Render function for a React Component
 	 * 
 	 * @returns {JSX.Element} A form
 	 */
-	render () {
+	render (): JSX.Element {
 		let submitInfo = this.props.submitInfo === undefined ?
 			{
 				text: 'Submit',
@@ -220,6 +249,9 @@ export default class Form<
 				onSubmit={this.submit}
 				className="asyncForm"
 			>
+				<UserData
+					onload={this.requestToken}
+				/>
 				{
 					React.Children.map(
 						this.props.children,
@@ -230,7 +262,7 @@ export default class Form<
 							if (typeof this.props.children === 'undefined' || this.props.children === null) {
 								throw new TypeError('Some error occurred');
 							}
-							let ret;
+							let ret, fullWidth = false;
 							if (!isInput(child)) {
 								// This algorithm handles labels for inputs by handling inputs
 								// Puts out titles on their own line
@@ -242,10 +274,14 @@ export default class Form<
 							} else {
 								this.fields[(child as React.ReactElement<any>).props.name] =
 									(child as React.ReactElement<any>).props.value || '';
+								fullWidth = (child as React.ReactElement<any>).props.fullWidth; 
+								if (typeof fullWidth === 'undefined') {
+									fullWidth = false;
+								}
 								ret = [
 									React.cloneElement(
 										child as React.ReactElement<{
-											onUpdate: (e: React.FormEvent<any>) => void,
+											onUpdate: (e: {name: string, value: any}) => void,
 											key: number
 										}>,
 										{
@@ -262,7 +298,12 @@ export default class Form<
 								if (typeof this.props.children[i - 1] === 'string' ||
 									typeof this.props.children[i - 1] === 'number') {
 									ret.unshift(
-										<Label key={Math.random()}>{this.props.children[i - 1]}</Label>
+										<Label
+											key={i - 1}
+											fullWidth={fullWidth}
+										>
+											{this.props.children[i - 1]}
+										</Label>
 									);
 								} else {
 									if (this.props.children[i - 1].type !== Title) {
@@ -270,7 +311,7 @@ export default class Form<
 											React.cloneElement(
 												this.props.children[i - 1],
 												{
-													key: Math.random()
+													key: i - 1
 												}
 											)
 										);
@@ -283,12 +324,19 @@ export default class Form<
 										style={{
 											height: 2
 										}}
-										key={Math.random()}
+										key={i - 1}
 									/>
 								);
 							}
 							
-							return <div key={i} className="formbar">{ret}</div>;
+							return (
+								<div
+									key={i}
+									className="formbar"
+								>
+									{ret}
+								</div>
+							);
 						}
 					)}
 				<div className="formbar">
@@ -314,11 +362,15 @@ export default class Form<
 	}
 }
 
+export default Form;
+
 export {
 	Title,
 	Label,
 
 	TextInput,
 	FileInput,
+	FileInputLoader,
+	FileInputLoaderSelect,
 	TextArea
 };

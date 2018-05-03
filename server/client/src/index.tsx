@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import App, { Head } from './App';
-import registerServiceWorker from './registerServiceWorker';
+// import registerServiceWorker from './registerServiceWorker';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
@@ -25,8 +25,10 @@ const store = createStore(
 			text: '',
 			title: ''
 		},
-		SignedInUser: {
-			valid: false
+		FileDialogue: {
+			open: false,
+			onClose: () => undefined,
+			returnValue: []
 		}
 	}
 );
@@ -46,7 +48,7 @@ document.onload = function () {
 	);
 };
 
-registerServiceWorker();
+// registerServiceWorker();
 
 window.addEventListener(
 	'message',
@@ -54,7 +56,7 @@ window.addEventListener(
 		if (event.data.source && event.data.source.indexOf('react-devtools') > -1) {
 			return;
 		}
-		console.log(event);
+		localStorage.setItem('sessionID', event.data.sessionID);
 		store.dispatch(closeDialogue());
 	},
 	false

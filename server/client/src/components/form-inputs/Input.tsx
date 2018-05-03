@@ -14,9 +14,12 @@ export interface InputProps<V> {
 	 * 
 	 * Meant to be used by the Form class (and its derivatives)
 	 * 
-	 * @param {React.FormEvent<HTMLInputElement>} event The form event
+	 * @param {{name: string, value: V}} event The form event
 	 */
-	onUpdate?: (e?: React.FormEvent<HTMLInputElement>) => void;
+	onUpdate?: (e?: {
+		name: string,
+		value: V
+	}) => void;
 	
 	// Implement HTML form stuff
 	/**
@@ -30,15 +33,11 @@ export interface InputProps<V> {
 
 	// Pass on styles to children
 	/**
-	 * Used to style the div that holds the input
+	 * Used to style the div that holds the input, not always used
 	 */
 	boxStyles?: React.CSSProperties;
 	/**
-	 * Used to style the input itself
+	 * Used to style the input itself, not always used
 	 */
 	inputStyles?: React.CSSProperties;
-}
-
-export interface InputState {
-	value: string;
 }

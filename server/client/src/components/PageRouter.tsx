@@ -4,6 +4,7 @@ import { Route } from 'react-router-dom';
 import Main from '../pages/Main';
 import Test from '../pages/Test';
 import Blog from '../pages/Blog';
+import RackBuilder from '../pages/RibbonRack';
 
 const pages = [
 	{
@@ -19,6 +20,11 @@ const pages = [
 	{
 		url: '/blog',
 		component: Blog,
+		exact: false
+	},
+	{
+		url: '/rack',
+		component: RackBuilder,
 		exact: false
 	}
 ];

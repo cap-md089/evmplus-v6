@@ -11,6 +11,8 @@ import SideNavigation from './components/SideNavigation';
 import Dialogue from './components/Dialogue';
 
 import myFetch from './lib/myFetch';
+// import { fileDisplayDialogue } from './actions/fileDialogue';
+import FileDialogue from './components/FileDialogue';
 
 export class Head extends React.Component {
 	render() {
@@ -159,6 +161,7 @@ export default class App extends React.Component<{
 					id="mother"
 				>
 					<Dialogue isMobile={this.props.isMobile} />
+					<FileDialogue isMobile={this.props.isMobile} />
 					<div 
 						id="bodyContainer"
 					>
@@ -191,7 +194,7 @@ export default class App extends React.Component<{
 											<NavLink to="/" exact={true} activeClassName="selected">Home</NavLink>
 										</li>
 										<li>
-											<NavLink to="/news" activeClassName="selected">News</NavLink>
+											<NavLink to="/blog" activeClassName="selected">News</NavLink>
 										</li>
 										<li>
 											<NavLink to="/calendar" activeClassName="selected">Calendar</NavLink>

@@ -1,4 +1,4 @@
-export function extend<T> (obj1: T, obj2: T): T {
+export function extend<T> (obj1: T, obj2: Partial<T>): T {
 	let ret = <T> {};
 	for (let i in obj1) {
 		if (obj1.hasOwnProperty(i)) {

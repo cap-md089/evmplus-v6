@@ -3,17 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/classnames": "^2.2.3",
-    "@types/draft-js": "^0.10.20",
-    "@types/enzyme": "^3.1.9",
-    "@types/enzyme-adapter-react-16": "^1.0.2",
-    "@types/jquery": "^3.3.0",
-    "@types/promise-polyfill": "^6.0.0",
-    "@types/react-redux": "^5.0.14",
     "draft-js": "^0.10.5",
-    "enzyme": "^3.3.0",
-    "enzyme-adapter-react-16": "^1.1.1",
-    "isomorphic-fetch": "^2.2.1",
     "jquery": "^3.3.1",
     "promise-polyfill": "^7.1.0",
     "react": "^16.2.0",
@@ -36,6 +26,16 @@
     "sass": "sass --watch src/nhq.sass --style=compressed"
   },
   "devDependencies": {
+    "@types/classnames": "^2.2.3",
+    "@types/draft-js": "^0.10.20",
+    "@types/enzyme": "^3.1.9",
+    "@types/enzyme-adapter-react-16": "^1.0.2",
+    "@types/jquery": "^3.3.0",
+    "@types/promise-polyfill": "^6.0.0",
+    "@types/react-redux": "^5.0.14",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
+    "isomorphic-fetch": "^2.2.1",
     "@types/isomorphic-fetch": "0.0.34",
     "@types/react-router-dom": "^4.2.3",
     "@types/sinon": "^4.1.3",
@@ -46,5 +46,12 @@
     "sinon": "^4.2.2",
     "typescript": "^2.6.2"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": {
+    "/api": {
+      "target": "http://localhost:3001"
+    },
+    "/images": {
+      "target": "http://localhost:3001"
+    }
+  }
 }

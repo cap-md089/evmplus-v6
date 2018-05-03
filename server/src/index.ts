@@ -1,12 +1,9 @@
 import * as http from 'http';
-import * as debug from 'debug';
 import * as path from 'path';
 import * as express from 'express';
 import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
-import * as cookieParser from 'cookie-parser';
 import * as fs from 'fs';
-import * as busboy from 'connect-busboy';
 
 import { Configuration } from './conf';
 
@@ -14,6 +11,7 @@ const app: express.Application = express();
 
 const port = normalizePort(process.env.PORT || 3001);
 app.set('port', port);
+app.disable('x-powered-by');
 
 const server = http.createServer(app);
 server.listen(port);
@@ -21,54 +19,86 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
 
 let router: express.Router = express.Router();
-let filerouter: express.Router = express.Router();
 
 /**
- * DEFINE ROUTERS HERE
+ * DEFINE API ROUTERS HERE
  */
-import Member from './lib/Member';
-router.use(Member.ExpressMiddleware);
 
-import getevents from './apis/getevents';
-router.post('/events', getevents(Configuration));
-
-import signin from './apis/signin';
-router.post('/signin', signin(Configuration));
-
-import registry from './apis/registry';
-router.post('/registry', registry(Configuration));
-
-import echo from './apis/echo';
-router.post('/echo', echo(Configuration));
+import filerouter from './api/files/';
+router.use('/files', filerouter(Configuration));
 
 router.get('/signin', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
 });
 
-filerouter.use(busboy({
-	limits: {
-		fileSize: 10 * 1024 * 1024
-	},
-	immediate: true
-}));
+router.use(bodyParser.urlencoded({extended: true}));
+router.use((req, res, next) => {
+	if (req.headers['content-type'] && req.headers['content-type'] === 'application/json') {
+		// Get body text
+		req.setEncoding('utf8');
+		req.body = '';
+		req.on('data', chunk => {
+			req.body += chunk;
+		});
+		req.on('end', () => {
+			next();
+		});
+	}
+});
 
-import upload from './apis/fileupload';
-filerouter.post('/upload', upload(Configuration));
+router.use((req, res, next) => {
+	if (
+		typeof req.headers['content-type'] !== 'undefined' &&
+		req.headers['content-type'] === 'application/json'
+	) {
+		try {
+			if (req.body !== '') {
+				req.body = JSON.parse(req.body);
+			}
+			next();
+		} catch (e) {
+			res.status(400);
+			res.end();
+		}
+	} else {
+		res.status(400);
+		res.end();
+	}
+});
 
-import head from './apis/filehead';
-filerouter.post('/upload', head(Configuration));
+import Member from './lib/Member';
+router.use(Member.ExpressMiddleware);
+
+import signin from './api/signin';
+router.post('/signin', signin);
+
+import { getFormToken } from './api/formtoken';
+router.get('/token', getFormToken);
+
+import getevents from './api/getevents';
+router.post('/events', getevents);
+
+import registry from './api/registry';
+router.post('/registry', registry);
+
+import echo from './api/echo';
+router.post('/echo', echo);
+
+import blog from './api/blog/';
+router.use('/blog', blog);
+
+router.get('*', (req, res) => {
+	res.status(404);
+	res.end();
+});
 
 /**
- * END DEFINE ROUTES
+ * END DEFINE API ROUTES
  */
 
 app.use('/api', router);
-app.use('/file', filerouter);
 
 app.get('/images/banner', (req, res) => {
 	fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {
@@ -80,6 +110,11 @@ app.get('/images/banner', (req, res) => {
 	});
 });
 app.use('/images', express.static(path.join(__dirname, '..', 'images')));
+
+app.use('/teapot', (req, res) => {
+	res.status(418);
+	res.end();
+});
 
 app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 app.get('*', (req, res) => {
@@ -121,11 +156,14 @@ function onError(error: NodeJS.ErrnoException): void {
 function onListening(): void {
 	let addr = server.address();
 	let bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
-	debug(`Listening on ${bind}`);
+	console.log(`Bound on ${bind}`);
 }
 
 process.on('beforeExit', () => {
 	server.close();
 });
 
-debug('Starting');
+process.stdin.on('data', (data) => {
+	// tslint:disable-next-line:no-eval
+	eval(data.toString());
+});

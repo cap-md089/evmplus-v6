@@ -1,38 +1,5 @@
-import { Request, Response } from 'express';
-import Member from './lib/Member';
-
-export interface WebPageListener {
-	(
-		/**
-		 * The request for the object
-		 */
-		request: Request,
-		/**
-		 * The response object
-		 */
-		response: Response,
-		/**
-		 * A member object to be passed IF the user is signed in, otherwise it 
-		 * 		is null
-		 */
-		member: Member | null,
-		/**
-		 * The Account for the requested page
-		 */
-		account: Account
-	): Promise<{
-		/**
-		 * Headers to send back to the client
-		 */
-		headers: {
-			[key: string]: string
-		};
-		/** 
-		 * The body of the message for the client
-		 */
-		// tslint:disable-next-line:no-any
-		body: any;
-	}>;
+export interface Identifiable {
+	id: string | number;
 }
 
 export class EventObject {
@@ -54,6 +21,8 @@ export interface MemberContactInstance {
 	SECONDARY: string[];
 	EMERGENCY: string[];
 }
+
+export type MemberAccessLevel = 'Member' | 'CadetStaff' | 'Manager' | 'Admin';
 
 /**
  * Contains all the contact info for the member, according to NHQ
@@ -130,11 +99,11 @@ export interface MemberContact {
  * Member.Check: Takes a session id and returns the user
  * Member.Estimate: Estimates the user based off of CAPWATCH data
  */
-export interface MemberObject {
+export interface MemberObject extends Identifiable {
 	/**
 	 * The CAPID of the member
 	 */
-	capid: number;
+	id: number;
 	/**
 	 * Check for this from the Member.Create function, it shows whether it is valid
 	 */
@@ -144,15 +113,6 @@ export interface MemberObject {
 	 */
 	error?: MemberCreateError;
 	/**
-	 * The name of the member: basically equal to:
-	 *      nameFirst + nameMiddle + nameLast + nameSuffix
-	 */
-	memberName: string;
-	/**
-	 * Alias of nameLast
-	 */
-	memberNameLast: string;
-	/**
 	 * The rank of the member provided
 	 */
 	memberRank: string;
@@ -160,10 +120,6 @@ export interface MemberObject {
 	 * Whether or not the member is a senior member
 	 */
 	seniorMember: boolean;
-	/**
-	 * memberName + memberRank
-	 */
-	memberRankName: string;
 	/**
 	 * Contact information for the user
 	 */
@@ -302,7 +258,7 @@ export interface MemberObject {
 	/**
 	 * The permission descriptor for the access level
 	 */
-	accessLevel: string;
+	accessLevel: MemberAccessLevel;
 	/**
 	 * The Squadron a member belongs to
 	 */
@@ -374,7 +330,7 @@ export interface AccountObject {
 	adminIDs: number[];
 }
 
-export interface FileObject {
+export interface FileObject extends Identifiable {
 	/**
 	 * The file identifier
 	 */
@@ -388,11 +344,32 @@ export interface FileObject {
 	 */
 	contentType: string;
 	/**
-	 * Raw data for the file, if it is a string it is base 64 encoded
+	 * Raw data for the file
+	 * 
+	 * Not sent with requests
 	 */
-	content: Buffer | string;
+	content?: Buffer;
 	/**
 	 * Comments for the file
 	 */
 	comments: string;
+	/**
+	 * Is it a photo? Basically if content type starts with image/
+	 */
+	isPhoto: boolean;
+	/**
+	 * The size of the buffer, as it is not always present
+	 */
+	size: number;
+}
+
+import { RawDraftContentState } from '../client/node_modules/@types/draft-js';
+
+export interface BlogPost {
+	id: number;
+	// tslint:disable-next-line:no-any
+	content: RawDraftContentState;
+	fileIDs: string[];
+	title: string;
+	// author: Member;
 }

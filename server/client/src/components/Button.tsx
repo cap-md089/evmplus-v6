@@ -60,7 +60,7 @@ export interface ButtonProps<C, S> {
 	 */
 	fetch?: (url: string, options: RequestInit) => Promise<Response>;
 
-	buttonType?: 'primaryButton' | 'secondaryButton' | '';
+	buttonType?: 'primaryButton' | 'secondaryButton' | ('none' | '');
 }
 
 export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
