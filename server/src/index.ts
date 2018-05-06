@@ -4,6 +4,7 @@ import * as express from 'express';
 import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as fs from 'fs';
+import * as mysql from 'mysql';
 
 import { Configuration } from './conf';
 
@@ -20,6 +21,12 @@ server.on('listening', onListening);
 
 app.use(logger('dev'));
 
+// Connect to mysql
+const pool = mysql.createPool({
+	connectionLimit: Configuration.database.connectionCount,
+	...Configuration.database.connection
+});
+
 let router: express.Router = express.Router();
 
 /**
@@ -33,49 +40,16 @@ router.get('/signin', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
 });
 
-router.use(bodyParser.urlencoded({extended: true}));
-router.use((req, res, next) => {
-	if (req.headers['content-type'] && req.headers['content-type'] === 'application/json') {
-		// Get body text
-		req.setEncoding('utf8');
-		req.body = '';
-		req.on('data', chunk => {
-			req.body += chunk;
-		});
-		req.on('end', () => {
-			next();
-		});
-	}
-});
+router.use(bodyParser.json());
 
-router.use((req, res, next) => {
-	if (
-		typeof req.headers['content-type'] !== 'undefined' &&
-		req.headers['content-type'] === 'application/json'
-	) {
-		try {
-			if (req.body !== '') {
-				req.body = JSON.parse(req.body);
-			}
-			next();
-		} catch (e) {
-			res.status(400);
-			res.end();
-		}
-	} else {
-		res.status(400);
-		res.end();
-	}
-});
-
+import Account from './lib/Account';
 import Member from './lib/Member';
-router.use(Member.ExpressMiddleware);
 
 import signin from './api/signin';
 router.post('/signin', signin);
 
 import { getFormToken } from './api/formtoken';
-router.get('/token', getFormToken);
+router.get('/token', Member.ExpressMiddleware, getFormToken);
 
 import getevents from './api/getevents';
 router.post('/events', getevents);
@@ -87,7 +61,7 @@ import echo from './api/echo';
 router.post('/echo', echo);
 
 import blog from './api/blog/';
-router.use('/blog', blog);
+router.use('/blog', Account.ExpressMiddleware, blog(pool));
 
 router.get('*', (req, res) => {
 	res.status(404);
@@ -160,6 +134,7 @@ function onListening(): void {
 }
 
 process.on('beforeExit', () => {
+	pool.end();
 	server.close();
 });
 

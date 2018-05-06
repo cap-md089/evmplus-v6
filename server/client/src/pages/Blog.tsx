@@ -33,7 +33,7 @@ class BlogList extends React.Component<{}, {
 	}
 
 	componentDidMount () {
-		myFetch('/api/blog/list/' + this.state.page)
+		myFetch('/api/blog/post/list/' + this.state.page)
 			.then(val => val.json())
 			.then((posts: {
 				posts: BlogPost[]
@@ -96,7 +96,7 @@ class BlogPostCreate extends React.Component<RouteComponentProps<any>> {
 			<>
 				<h2>Create blog post</h2>
 				<PostCreateForm 
-					url="/api/blog/add"
+					url="/api/blog/post/add"
 					id="blogPostCreate"
 					submitInfo={{
 						text: 'Create blog post',
@@ -155,7 +155,7 @@ class BlogView extends React.Component<RouteComponentProps<{
 	}
 
 	componentDidMount () {
-		myFetch('/api/blog/' + this.props.match.params.id)
+		myFetch('/api/blog/post/' + this.props.match.params.id)
 			.then(val => val.json())
 			.then((post: BlogPost) => this.setState({post}));
 	}

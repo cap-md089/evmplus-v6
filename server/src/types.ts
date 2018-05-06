@@ -367,9 +367,9 @@ import { RawDraftContentState } from '../client/node_modules/@types/draft-js';
 
 export interface BlogPost {
 	id: number;
-	// tslint:disable-next-line:no-any
+	title: string;
+	authorid: number;
 	content: RawDraftContentState;
 	fileIDs: string[];
-	title: string;
-	// author: Member;
+	posted: number;
 }

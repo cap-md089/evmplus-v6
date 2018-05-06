@@ -1,0 +1,22 @@
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		// Take your pick for being true
+		"tsconfig.json": true,
+		"tslint.json": true,
+		"package.json": true,
+		"package-lock.json": true,
+		// Generally can be true
+		".vscode": true,
+		".tscache": true,
+		"node_modules": true,
+		"dist": true,
+		"coverage": true,
+		// Can always be true (if open with Workspace view)
+		"client": true
+	}
+}

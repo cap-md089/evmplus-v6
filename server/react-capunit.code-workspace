@@ -8,5 +8,6 @@
 			"name": "Client",
 			"path": "client"
 		}
-	]
+	],
+	"settings": {}
 }

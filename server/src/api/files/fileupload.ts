@@ -1,7 +1,7 @@
 import { Configuration as config } from '../../conf';
 import * as express from 'express';
 import * as fs from 'fs'; 
-import { join } from 'path';
+import { join, basename } from 'path';
 
 const parseHeaders = (lines: string[]) => {
 	let headers: {[key: string]: string} = {};
@@ -13,58 +13,37 @@ const parseHeaders = (lines: string[]) => {
 	return headers;
 };
 
-const findEnding = (input: Buffer, boundary: string, start: number = 0) => {
-	let foundBoundary = false;
-	let index = start;
-	
-	while (!(foundBoundary && index < input.length - boundary.length)) {
-		let data = input.slice(index, index + boundary.length).toString();
-		if (data === boundary) {
-			foundBoundary = true;
-		}
-		index++;
+const findEnding = (input: Buffer, boundary: string) => {
+	const index = input.length - boundary.length;
+	const testBoundary = input.slice(index).toString();
+
+	if (testBoundary === boundary) {
+		return index;
 	}
 
-	if (!foundBoundary) {
-		index = input.length;
-	}
-
-	return index;
+	return input.length;
 };
 
+fs.exists(config.fileStoragePath, exists => {
+	if (!exists) {
+		fs.mkdirSync(config.fileStoragePath, 0o755);
+	}
+});
+
 export default (req: express.Request & {busboy?: busboy.Busboy}, res: express.Response, next: Function) => {
-	// if (typeof req.busboy !== 'undefined') {
-	// 	req.busboy.on('file', (___, file, filename, __, _) => {
-	// 		let rs = fs.createWriteStream(join(config.path, 'uploads', filename));
-	// 		file.pipe(rs);
-	// 		rs.on('close', () => {
-	// 			res.json({
-	// 				id: filename
-	// 			});
-	// 		});
-	// 	});
-
-	// 	req.busboy.on('finish', () => {
-	// 		console.log('Finished file upload');
-	// 	});
-
-	// 	req.pipe(req.busboy);
-	// }
-
-	let data = new Buffer(0);
 	let collectingData = false;
 	let fileName = '';
 	let boundary = '';
 	let writeStream: fs.WriteStream;
 	
-	// If I buffer into the MySQL server, these are values used.
-	// However, the MySQL server may not buffer output, so I will have to load the entire
-	// value anyway
-	// let usedTo = 0;
-	// const CHUNK_SIZE = 4096;
+	/*
+		File data plan:
 
+		 1. Store FILE on disk
+		 2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
+		 3. MySQL database will store METADATA (Author, filename, etc)
+	*/
 	req.on('data', info => {
-		console.log('Receiving data');
 		if (typeof info === 'string') {
 			info = new Buffer(info);
 		}	
@@ -72,11 +51,11 @@ export default (req: express.Request & {busboy?: busboy.Busboy}, res: express.Re
 			let headerString = '';
 			let i = 0;
 			while (!(
-				String.fromCharCode(info[i]) === '\r' &&
-				String.fromCharCode(info[i + 1]) === '\n' &&
-				String.fromCharCode(info[i + 2]) === '\r' &&
-				String.fromCharCode(info[i + 3]) === '\n'
-				// info.slice(i, i + 3).toString() === '\r\n\r\n'
+				// String.fromCharCode(info[i]) === '\r' &&
+				// String.fromCharCode(info[i + 1]) === '\n' &&
+				// String.fromCharCode(info[i + 2]) === '\r' &&
+				// String.fromCharCode(info[i + 3]) === '\n'
+				info.slice(i, i + 4).toString() === '\r\n\r\n'
 			)) {
 				headerString += String.fromCharCode(info[i++]);
 			}
@@ -85,7 +64,7 @@ export default (req: express.Request & {busboy?: busboy.Busboy}, res: express.Re
 			// Get headers
 			let firstLines = headerString.split('\r\n');
 	
-			boundary = firstLines[0] + '--';
+			boundary = '\r\n' + firstLines[0] + '--\r\n';
 			
 			let headers = parseHeaders(firstLines);
 
@@ -93,43 +72,25 @@ export default (req: express.Request & {busboy?: busboy.Busboy}, res: express.Re
 				.split(/; ?/)
 				.map(str => str.split(/ ?\= ?/))
 				.filter(pair => pair[0].match(/filename/))[0][1];
-			fileName = JSON.parse(query);
+			fileName = basename(JSON.parse(query));
 
-			console.log('Writing', join(config.path, 'uploads', fileName));
+			writeStream = fs.createWriteStream(join(config.fileStoragePath, fileName));
 
-			writeStream = fs.createWriteStream(join(config.path, 'uploads', fileName));
-
-			let end = findEnding(info, boundary, i);
-
-			data = info.slice(i, end);
-
-			console.log(data.length);
-
-			writeStream.write(data);
+			writeStream.write(info.slice(i, findEnding(info, boundary)));
 
 			collectingData = true;
-
-			req.resume();
 		} else {
-			// data += info;
 			let newData = info.slice(
 				0,
 				findEnding(info, boundary)
 			);
-			console.log(newData.length);
-			// data = Buffer.concat([data, newData]);
 			writeStream.write(newData);
-
-			req.resume();
 		}
+		req.resume();
 	});
 
 	req.on('end', () => {
-		console.log(fileName);
-		let file = fs.createWriteStream(join(config.path, 'uploads', fileName));
-		file.write(data, () => {
-			console.log('Wrote data');
-		});
+		writeStream.close();
 		res.end();
 	});
 };

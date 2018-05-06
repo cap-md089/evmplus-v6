@@ -1,20 +1,15 @@
 import * as express from 'express';
 
-import getpost from './getpost';
-import setpost from './setpost';
-import addpost from './addpost';
-import getlist from './getlist';
+import post from './post';
 
-import { BlogPost } from '../../types';
-export { BlogPost };
+export { BlogPost } from '../../types';
 
-let posts: BlogPost[] = [];
+import * as mysql from 'mysql';
 
-const router = express.Router();
+export default (pool: mysql.Pool) => {
+	const router = express.Router();
 
-router.get('/:id', getpost(posts));
-router.put('/set/:id', setpost(posts));
-router.post('/add', addpost(posts));
-router.get('/list/:id', getlist(posts));
+	router.use('/post', post(pool));
 
-export default router;
+	return router;
+};
