@@ -3,8 +3,6 @@ import * as React from 'react';
 import TextInput from './form-inputs/TextInput';
 import FileInput, { FileInputLoader, FileInputLoaderSelect } from './form-inputs/FileInput';
 import TextArea from './form-inputs/TextArea';
-import UserData from './UserData';
-import { MemberObject } from '../../../src/types';
 import myFetch from '../lib/myFetch';
 
 /**
@@ -155,7 +153,6 @@ class Form<
 
 		this.onChange = this.onChange.bind(this);
 		this.submit = this.submit.bind(this);
-		this.requestToken = this.requestToken.bind(this);
 
 		this.fields = {} as C;
 
@@ -181,6 +178,21 @@ class Form<
 		} else {
 			this.displayLoadFields = true;
 		}
+
+		let sid = localStorage.getItem('sessionID');
+		if (sid) {
+			myFetch(
+				'/api/token',
+				{
+					headers: {
+						authorization: sid
+					}
+				}
+			).then(res =>
+				res.json())
+			.then(tokenObj =>
+				this.token = tokenObj.token);
+		}
 	}
 
 	/**
@@ -200,30 +212,6 @@ class Form<
 		if (typeof this.props.onSubmit !== 'undefined') {
 			this.props.onSubmit(this.fields, this.token);
 		}
-	}
-
-	/**
-	 * Starts to request a token
-	 * 
-	 * @param {boolean} valid Whether or not is the user a valid user
-	 * @param {MemberObject} member The member to request a token for
-	 * @param {string} sessionID The session ID for the member
-	 */
-	protected requestToken (valid: boolean, member: MemberObject, sessionID: string): void {
-		this.sessionID = sessionID;
-		myFetch(
-			'/api/token',
-			{
-				headers: {
-					authorization: sessionID
-				}
-			}
-		)
-			.then(res =>
-				res.json())
-			.then(json => {
-				this.token = json.token;
-			});
 	}
 
 	/**
@@ -249,9 +237,6 @@ class Form<
 				onSubmit={this.submit}
 				className="asyncForm"
 			>
-				<UserData
-					onload={this.requestToken}
-				/>
 				{
 					React.Children.map(
 						this.props.children,
@@ -368,9 +353,10 @@ export {
 	Title,
 	Label,
 
-	TextInput,
 	FileInput,
 	FileInputLoader,
 	FileInputLoaderSelect,
+	
+	TextInput,
 	TextArea
 };

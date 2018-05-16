@@ -2,9 +2,11 @@ import * as CAP from '../types';
 import Account from './Account';
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
-import * as express from 'express';
+import 'es6-promise';
 
-export interface MemberRequest extends express.Request {
+import { MySQLRequest } from './MySQLUtil';
+
+export interface MemberRequest extends MySQLRequest {
 	member?: Member;
 }
 

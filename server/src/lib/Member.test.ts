@@ -1,1 +1,0 @@
-import Member from './Member';

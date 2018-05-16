@@ -1,7 +1,8 @@
 import * as express from 'express';
-import * as mysql from 'mysql';
-import { AccountRequest } from '../../lib/Account';
-import { MemberRequest } from '../../lib/Member';
+import * as mysql from 'promise-mysql';
+import { AccountRequest } from '../../../lib/Account';
+import { MemberRequest } from '../../../lib/Member';
+import { errorFunction } from '../../../lib/MySQLUtil';
 
 export default (connectionPool: mysql.Pool): express.RequestHandler => {
 	return (req: AccountRequest & MemberRequest, res, next) => {
@@ -13,18 +14,10 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 			connectionPool.query(
 				'DELETE FROM blog WHERE id = ? AND AccountID = ?',
 				[req.params.id, req.account.id],
-				(err, results, fields) => {
-					if (err) {
-						console.log(err);
-						res.status(500);
-						res.end();
-						return;
-					}
-
-					res.status(200);
-					res.end();
-				}
-			);
+			).then(results => {
+				res.status(200);
+				res.end();
+			}).catch(errorFunction(res));
 		} else {
 			res.status(400);
 			res.end();

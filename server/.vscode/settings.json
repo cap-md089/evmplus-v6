@@ -17,6 +17,8 @@
 		"dist": true,
 		"coverage": true,
 		// Can always be true (if open with Workspace view)
-		"client": true
-	}
+		"client": true,
+		"tscommand-*": true
+	},
+	"npm.enableScriptExplorer": true
 }

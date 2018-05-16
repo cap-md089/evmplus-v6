@@ -8,7 +8,7 @@ import deletePost from './deletePost';
 
 export { BlogPost } from '../../../types';
 
-import * as mysql from 'mysql';
+import * as mysql from 'promise-mysql';
 
 import Member from '../../../lib/Member';
 

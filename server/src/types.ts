@@ -2,10 +2,6 @@ export interface Identifiable {
 	id: string | number;
 }
 
-export class EventObject {
-
-}
-
 export enum MemberCreateError {
 	INVALID_CREDENTIALS,
 	PASSWORD_EXPIRED
@@ -90,6 +86,117 @@ export interface MemberContact {
 	WORKPHONE: MemberContactInstance;
 }
 
+export interface MemberPermissions {
+	// Start the Cadet Staff permissions
+	/**
+	 * Whether or not the user can assign flight members
+	 */
+	FlightAssign: number;
+	/**
+	 * Whether or not the user can get the muster sheet
+	 */
+	MusterSheet: number;
+	/**
+	 * Whether or not the user can get PT sheets
+	 */
+	PTSheet: number;
+	/**
+	 * Whether or not the user can manage promotions
+	 */
+	PromotionManagement: number;
+	/**
+	 * Whether or not the user can assign tasks
+	 */
+	AssignTasks: number;
+	/**
+	 * Whether or not the user can administer PT
+	 */
+	AdministerPT: number;
+	/**
+	 * Whether or not the user can download the cadet staff guide
+	 */
+	DownloadStaffGuide: number;
+	
+	// Start Manager permissions
+	/**
+	 * Whether or not the user can add an event
+	 * 1 for they can add a draft event only
+	 * 2 for full access
+	 */
+	AddEvent: number;
+	/**
+	 * Whether or not the user can 
+	 */
+	EditEvent: number;
+	/**
+	 * Whether or not the user can get event contact information
+	 */
+	EventContactSheet: number;
+	/**
+	 * Whether or not the user can edit sign up information
+	 */
+	SignUpEdit: number;
+	/**
+	 * Whether or not the user can copy events
+	 */
+	CopyEvent: number;
+	/**
+	 * Whether or not the user can get ORM OPORD information
+	 */
+	ORMOPORD: number;
+	/**
+	 * Whether or not the user can delete events
+	 */
+	DeleteEvent: number;
+	/**
+	 * Whether or not the user can assign positions
+	 */
+	AssignPosition: number;
+	
+	// Admin privileges
+	/**
+	 * Whether or not the user can get the event status page
+	 */
+	EventStatusPage: number;
+	/**
+	 * Whether or not the user can manage prospective members
+	 */
+	ProspectiveMemberManagment: number;
+	/**
+	 * Whether or not the user can view a list of all events
+	 */
+	EventLinkList: number;
+	/**
+	 * Whether or not the user can add a team
+	 */
+	AddTeam: number;
+	/**
+	 * Whether or not the user can edit a team
+	 */
+	EditTeam: number;
+	/**
+	 * Whether or not the user can manage files
+	 */
+	FileManagement: number;
+	/**
+	 * Whether or not the user can manage permissions of others
+	 */
+	PermissionManagement: number;
+	/**
+	 * Whether or not the user can download CAPWATCH files
+	 */
+	DownloadCAPWATCH: number;
+	
+	// Developer/super admin privileges?
+	/**
+	 * Whether or not the user can edit the registry
+	 */
+	RegistryEdit: number;
+
+	// To get it to not throw errors
+	[key: string]: number;
+}
+
 /**
  * Describes a CAP member
  * 
@@ -141,116 +248,7 @@ export interface MemberObject extends Identifiable {
 	/**
 	 * Permissions of the user
 	 */
-	permissions: {
-		// Start the Cadet Staff permissions
-		/**
-		 * Whether or not the user can assign flight members
-		 */
-		FlightAssign: number;
-		/**
-		 * Whether or not the user can get the muster sheet
-		 */
-		MusterSheet: number;
-		/**
-		 * Whether or not the user can get PT sheets
-		 */
-		PTSheet: number;
-		/**
-		 * Whether or not the user can manage promotions
-		 */
-		PromotionManagement: number;
-		/**
-		 * Whether or not the user can assign tasks
-		 */
-		AssignTasks: number;
-		/**
-		 * Whether or not the user can administer PT
-		 */
-		AdministerPT: number;
-		/**
-		 * Whether or not the user can download the cadet staff guide
-		 */
-		DownloadStaffGuide: number;
-		
-		// Start Manager permissions
-		/**
-		 * Whether or not the user can add an event
-		 * 1 for they can add a draft event only
-		 * 2 for full access
-		 */
-		AddEvent: number;
-		/**
-		 * Whether or not the user can 
-		 */
-		EditEvent: number;
-		/**
-		 * Whether or not the user can get event contact information
-		 */
-		EventContactSheet: number;
-		/**
-		 * Whether or not the user can edit sign up information
-		 */
-		SignUpEdit: number;
-		/**
-		 * Whether or not the user can copy events
-		 */
-		CopyEvent: number;
-		/**
-		 * Whether or not the user can get ORM OPORD information
-		 */
-		ORMOPORD: number;
-		/**
-		 * Whether or not the user can delete events
-		 */
-		DeleteEvent: number;
-		/**
-		 * Whether or not the user can assign positions
-		 */
-		AssignPosition: number;
-		
-		// Admin privileges
-		/**
-		 * Whether or not the user can get the event status page
-		 */
-		EventStatusPage: number;
-		/**
-		 * Whether or not the user can manage prospective members
-		 */
-		ProspectiveMemberManagment: number;
-		/**
-		 * Whether or not the user can view a list of all events
-		 */
-		EventLinkList: number;
-		/**
-		 * Whether or not the user can add a team
-		 */
-		AddTeam: number;
-		/**
-		 * Whether or not the user can edit a team
-		 */
-		EditTeam: number;
-		/**
-		 * Whether or not the user can manage files
-		 */
-		FileManagement: number;
-		/**
-		 * Whether or not the user can manage permissions of others
-		 */
-		PermissionManagement: number;
-		/**
-		 * Whether or not the user can download CAPWATCH files
-		 */
-		DownloadCAPWATCH: number;
-		
-		// Developer/super admin privileges?
-		/**
-		 * Whether or not the user can edit the registry
-		 */
-		RegistryEdit: number;
-
-		// To get it to not throw errors
-		[key: string]: number;
-	};
+	permissions: MemberPermissions;
 	/**
 	 * Is the member a member of the squadron of the page they are currrently viewing?
 	 */
@@ -287,7 +285,7 @@ export interface MemberObject extends Identifiable {
 	canPerformNHQActions: boolean;
 }
 
-export interface AccountObject {
+export interface AccountObject extends Identifiable {
 	/**
 	 * The Account ID
 	 */
@@ -330,37 +328,81 @@ export interface AccountObject {
 	adminIDs: number[];
 }
 
-export interface FileObject extends Identifiable {
+export interface DriveObject extends Identifiable {
+	/**
+	 * The kind of object it is, as these pass through JSON requests
+	 */
+	kind: string;
+}
+
+export interface FileObject extends DriveObject {
+	/**
+	 * 
+	 */
+	kind: 'drive#file';
 	/**
 	 * The file identifier
 	 */
 	id: string;
 	/**
-	 * The file name
+	 * The id of the uploader
 	 */
-	name: string;
+	uploaderID: number;
+	/**
+	 * The name of the file
+	 */
+	fileName: string;
+	/**
+	 * Comments about the file
+	 */
+	comments: string;
 	/**
 	 * The MIME type for the file
 	 */
 	contentType: string;
 	/**
-	 * Raw data for the file
-	 * 
-	 * Not sent with requests
+	 * The UTC unix time stamp of when the file was created
 	 */
-	content?: Buffer;
+	created: number;
 	/**
-	 * Comments for the file
+	 * Whether or not the file is limited to the members
 	 */
-	comments: string;
+	memberOnly: boolean;
 	/**
-	 * Is it a photo? Basically if content type starts with image/
+	 * Whether or not the file is displayed in the photo library (only works with photos)
 	 */
-	isPhoto: boolean;
+	forDisplay: boolean;
 	/**
-	 * The size of the buffer, as it is not always present
+	 * Whether or not the file is to be shown in the slideshow
 	 */
-	size: number;
+	forSlideshow: boolean;
+	/**
+	 * The ID of the parent folder. The root folder is 'base'
+	 */
+	folderID: string;
+	/**
+	 * The ID of the account the folder belongs to
+	 */
+	accountID: string;
+}
+
+export interface FileChildObject extends DriveObject {
+	/**
+	 * This is a child reference
+	 */
+	kind: 'drive#childReference';
+	/**
+	 * The ID of the child file
+	 */
+	id: string;
+	/**
+	 * A link that references the url that generated this reference
+	 */
+	selfLink: string;
+	/**
+	 * A link to the child
+	 */
+	childLink: string;
 }
 
 import { RawDraftContentState } from '../client/node_modules/@types/draft-js';

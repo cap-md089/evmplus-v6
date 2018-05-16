@@ -4,7 +4,7 @@ import * as express from 'express';
 import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as fs from 'fs';
-import * as mysql from 'mysql';
+import * as mysql from 'promise-mysql';
 
 import { Configuration } from './conf';
 
@@ -29,18 +29,31 @@ const pool = mysql.createPool({
 
 let router: express.Router = express.Router();
 
+import MySQLMiddleware from './lib/MySQLUtil';
+router.use(MySQLMiddleware(pool));
+
 /**
  * DEFINE API ROUTERS HERE
  */
 
 import filerouter from './api/files/';
-router.use('/files', filerouter(Configuration));
+router.use('/files', filerouter);
 
 router.get('/signin', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
 });
 
-router.use(bodyParser.json());
+router.use(bodyParser.json({
+	strict: false
+}));
+router.use((req, res, next) => {
+	if (typeof req.body !== 'undefined' && req.body === 'teapot') {
+		res.status(418);
+		res.end();
+	} else {
+		next();
+	}
+});
 
 import Account from './lib/Account';
 import Member from './lib/Member';

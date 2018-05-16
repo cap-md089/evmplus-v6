@@ -4,7 +4,7 @@ import post from './post';
 
 export { BlogPost } from '../../types';
 
-import * as mysql from 'mysql';
+import * as mysql from 'promise-mysql';
 
 export default (pool: mysql.Pool) => {
 	const router = express.Router();

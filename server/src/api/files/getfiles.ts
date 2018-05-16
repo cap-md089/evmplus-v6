@@ -1,10 +1,47 @@
-import { Configuration as config } from '../../conf';
 import * as express from 'express';
-import * as fs from 'fs';
-import { join } from 'path';
+import { AccountRequest } from '../../lib/Account';
+import { prettySQL } from '../../lib/MySQLUtil';
 
-export default (req: express.Request & {busboy?: busboy.Busboy}, res: express.Response, next: Function) => {
-	fs.readdir(join(config.path, 'uploads'), (err, data) => {
-		res.json(data);
+export default async (req: AccountRequest, res: express.Response, next: Function) => {
+	if (
+		typeof req.account === 'undefined'
+	) {
+		res.status(400);
+		res.end();
+		return;
+	}
+
+	const parentid = typeof req.params.parentid === 'undefined' ? 'base' : req.params.parentid;
+
+	const fileInfo: {
+		childID: string
+	}[] = await req.connectionPool.query(
+		prettySQL`
+			SELECT
+				childID
+			FROM
+				DriveChildrenList
+			WHERE
+				accountID = ? AND parentID = ?
+		`,
+		[
+			req.account.id,
+			parentid
+		]
+	);
+
+	res.json({
+		kind: 'drive#childList',
+		selfLink: req.account.buildURI('api', 'files', parentid, 'children'),
+		items: [
+			fileInfo.map(file => {
+				return {
+					kind: 'drive#childReference',
+					id: file.childID,
+					selfLink: req.account.buildURI('api', 'files', parentid, 'children', file.childID),
+					childLink: req.account.buildURI('api', 'files', parentid)
+				};
+			})
+		]
 	});
 };
