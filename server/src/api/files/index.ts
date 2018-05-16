@@ -16,6 +16,8 @@ import setfileinfopartial from './setfileinfopartial';
 
 filerouter.use(Account.ExpressMiddleware);
 
+// Only client will need this, but I'm going to make files a folder with a MIME type of application/folder
+
 /// https://developers.google.com/drive/v2/reference/files#methods
 // The following two have to be first, as they can't have bodyParser taking the data
 filerouter.post('/upload', upload); // insert
