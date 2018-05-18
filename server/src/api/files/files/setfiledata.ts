@@ -1,8 +1,8 @@
 import * as express from 'express';
 import * as fs from 'fs';
-import { Configuration as config } from '../../conf';
-import { AccountRequest } from '../../lib/Account';
-import { MemberRequest } from '../../lib/Member';
+import { Configuration as config } from '../../../conf';
+import { AccountRequest } from '../../../lib/Account';
+import { MemberRequest } from '../../../lib/Member';
 import { join } from 'path';
 
 const findEnding = (input: Buffer, boundary: string) => {

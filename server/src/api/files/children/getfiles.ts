@@ -1,6 +1,6 @@
 import * as express from 'express';
-import { AccountRequest } from '../../lib/Account';
-import { prettySQL } from '../../lib/MySQLUtil';
+import { AccountRequest } from '../../../lib/Account';
+import { prettySQL } from '../../../lib/MySQLUtil';
 
 export default async (req: AccountRequest, res: express.Response, next: Function) => {
 	if (
@@ -11,7 +11,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 		return;
 	}
 
-	const parentid = typeof req.params.parentid === 'undefined' ? 'base' : req.params.parentid;
+	const parentid = typeof req.params.parentid === 'undefined' ? 'root' : req.params.parentid;
 
 	const fileInfo: {
 		childID: string
@@ -22,7 +22,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 			FROM
 				DriveChildrenList
 			WHERE
-				accountID = ? AND parentID = ?
+				accountID = ? AND folderID = ?
 		`,
 		[
 			req.account.id,

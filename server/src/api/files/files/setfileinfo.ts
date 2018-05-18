@@ -1,6 +1,6 @@
 import * as express from 'express';
-import { AccountRequest } from '../../lib/Account';
-import { MemberRequest } from '../../lib/Member';
+import { AccountRequest } from '../../../lib/Account';
+import { MemberRequest } from '../../../lib/Member';
 
 export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
 	if (

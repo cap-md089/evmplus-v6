@@ -3,10 +3,10 @@ import * as fs from 'fs';
 import * as moment from 'moment';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
-import { Configuration as config } from '../../conf';
-import { AccountRequest } from '../../lib/Account';
-import { MemberRequest } from '../../lib/Member';
-import { prettySQL } from '../../lib/MySQLUtil';
+import { Configuration as config } from '../../../conf';
+import { AccountRequest } from '../../../lib/Account';
+import { MemberRequest } from '../../../lib/Member';
+import { prettySQL } from '../../../lib/MySQLUtil';
 
 const parseHeaders = (lines: string[]) => {
 	let headers: {[key: string]: string} = {};
