@@ -19,9 +19,6 @@ describe ('<FileInput />', () => {
 		ReactDOM.render(
 			<FileInput
 				name="test"
-				displayDialogue={
-					() => null
-				}
 			/>,
 			div
 		);

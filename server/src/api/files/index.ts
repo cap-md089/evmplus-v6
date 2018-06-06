@@ -39,7 +39,7 @@ filerouter.put('/:fileid', setfileinfo); // update
 filerouter.patch('/:fileid', setfileinfopartial); // patch
 
 /// https://developers.google.com/drive/v2/reference/children#methods
-filerouter.get('/:parentid/children', getfiles); // list
+filerouter.get('/:parentid/children/:method*?', getfiles); // list
 filerouter.delete('/:parentid/children/:childid', removefile); // delete
 filerouter.get('/:parentid/children/:childid', getchild); // get
 filerouter.post('/:parentid/children', insertchild); // insert

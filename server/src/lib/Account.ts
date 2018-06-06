@@ -73,6 +73,8 @@ export default class Account implements CAP.AccountObject {
 			if (accountID === 'capeventmanager') {
 				accountID = 'mdx89';
 			}
+		} else if (parts.length === 4 && Configuration.testing) {
+			accountID = 'mdx89';
 		} else {
 			res.status(400);
 			res.end();
@@ -107,18 +109,20 @@ export default class Account implements CAP.AccountObject {
 			unpaidEventLimit: number
 		}[];
 
-		let parsed = results.map(result => {
-			return {
-				unitID: result.unitID,
-				unitName: result.unitName,
-				mainOrg: result.mainOrg,
-				paid: result.paid === 1,
-				echelon: result.echelon === 1,
-				expires: result.expires,
-				paidEventLimit: result.paidEventLimit,
-				unpaidEventLimit: result.unpaidEventLimit
-			};
-		});
+		let parsed = results.map(result => ({
+			unitID: result.unitID,
+			unitName: result.unitName,
+			mainOrg: result.mainOrg,
+			paid: result.paid === 1,
+			echelon: result.echelon === 1,
+			expires: result.expires,
+			paidEventLimit: result.paidEventLimit,
+			unpaidEventLimit: result.unpaidEventLimit
+		}));
+
+		if (parsed.length === 0) {
+			throw new Error(`Account '${id}' not found`);
+		}
 
 		let orgIDs = parsed.map(org => org.unitID);
 		let orgSQL = '(' + orgIDs.join(', ') + ')';

@@ -1,25 +1,17 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 
-import { connect } from 'react-redux';
 import $ from '../jquery.textfit';
 
-import { closeDialogue } from '../actions/dialogue';
-
-class Dialogue extends React.Component<{
+export default class Dialogue extends React.Component<{
 	open: boolean,					// Part of state specified for the react store
 	title: string,
-	text: JSX.Element | string,
-	buttontext: string,
+	buttonText: string,
 	displayButton: boolean,
 	onClose: Function,
-
-	isMobile: boolean, // Required property
-	
-	dispatch: Function // Provided by react-redux
 }, {
 	open: boolean,
 	title: string,
-	text: JSX.Element | string,
 	buttonText: string,
 	displayButton: boolean
 }> {
@@ -28,8 +20,7 @@ class Dialogue extends React.Component<{
 	constructor(props: {
 		open: boolean,					// Part of state specified for the react store
 		title: string,
-		text: JSX.Element | string,
-		buttontext: string,
+		buttonText: string,
 		displayButton: boolean,
 		onClose: Function,
 	
@@ -42,7 +33,6 @@ class Dialogue extends React.Component<{
 		this.state = {
 			open: false,
 			title: '',
-			text: '',
 			buttonText: '',
 			displayButton: false
 		};
@@ -53,7 +43,10 @@ class Dialogue extends React.Component<{
 			'zIndex': 5010,
 			'position': 'fixed'
 		});
-		if (!this.props.isMobile) {
+
+		let mobile = $('body').hasClass('mobile');
+
+		if (!mobile) {
 			div.css({
 				'left': '50%',
 				'top': '50%',
@@ -68,11 +61,12 @@ class Dialogue extends React.Component<{
 				bottom: 0
 			});
 		}
+
 		if (div.find('input[type=text]')[0]) {
 			div.find('input[type=text]')[0].focus();
 		}
 
-		if (this.props.open) {
+		if (this.props.open && !this.state.open) {
 			$(div).animate(
 				{
 					opacity: 1
@@ -80,7 +74,8 @@ class Dialogue extends React.Component<{
 				250,
 				'swing'
 			);
-		} else {
+			this.setState(this.props);
+		} else if (!this.props.open && this.state.open) {
 			$(div).animate(
 				{
 					opacity: 0
@@ -89,11 +84,7 @@ class Dialogue extends React.Component<{
 				'swing',
 				() => {
 					this.setState({
-						open: this.props.open,
-						title: this.props.title,
-						text: this.props.text,
-						buttonText: this.props.buttontext,
-						displayButton: this.props.displayButton
+						open: false
 					});
 				}
 			);
@@ -107,7 +98,7 @@ class Dialogue extends React.Component<{
 			this.componentDidMount();
 		});
 
-		return (
+		return createPortal(
 			<div
 				id="cover"
 				style={{
@@ -116,12 +107,13 @@ class Dialogue extends React.Component<{
 					left: 0,
 					right: 0,
 					position: 'fixed',
-					zIndex: 5010,
-					display: this.state.open ? 'block' : 'none'
+					zIndex: this.state.open ? 5010 : -5010,
+					display: 'block',
+					backgroundColor: 'rgba(0, 0, 0, 0.5)'
 				}}
 				onClick={
 					() => {
-						// this.props.dispatch(closeDialogue());
+						this.props.onClose();
 					}
 				}
 			>
@@ -133,10 +125,11 @@ class Dialogue extends React.Component<{
 					}
 					id="alert_box"
 					key="main_alert"
+					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
 				>
 					{this.state.title ? <h2>{this.state.title}</h2> : null}
 					<div className="content">
-						{this.state.text}
+						{this.props.children}
 					</div>
 					{
 						this.state.displayButton ? 
@@ -151,9 +144,7 @@ class Dialogue extends React.Component<{
 									onClick={
 										(e: React.MouseEvent<HTMLAnchorElement>) => {
 											e.preventDefault();
-											console.log('Closing');
 											this.props.onClose();
-											this.props.dispatch(closeDialogue());
 										}
 									}
 								>
@@ -163,32 +154,8 @@ class Dialogue extends React.Component<{
 							null
 					}
 				</div>
-			</div>
+			</div>,
+			document.getElementById('dialogue-box') as HTMLElement
 		);
 	}
 }
-
-const mapStateToProps = (state: {
-	Dialogue: {
-		open: boolean,
-		title: string,
-		text: JSX.Element | string,
-		buttontext: string,
-		displayButton: boolean,
-
-		onClose: Function
-	} 
-}) => {
-	return state.Dialogue;
-};
-
-const mapDispatchToProps = (dispatch: Function) => {
-	return {
-		dispatch
-	};
-};
-
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(Dialogue);

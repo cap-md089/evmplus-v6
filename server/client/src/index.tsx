@@ -7,9 +7,9 @@ import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 
 import reducers from './reducers';
-import { closeDialogue } from './actions/dialogue';
 
 import './nhq.css';
+import { signIn } from './actions/userActions';
 
 const store = createStore(
 	reducers,
@@ -20,15 +20,8 @@ const store = createStore(
 		SideNavigation : {
 			links: []
 		},
-		Dialogue: {
-			open: false,
-			text: '',
-			title: ''
-		},
-		FileDialogue: {
-			open: false,
-			onClose: () => undefined,
-			returnValue: []
+		SignedInUser : {
+
 		}
 	}
 );
@@ -56,8 +49,16 @@ window.addEventListener(
 		if (event.data.source && event.data.source.indexOf('react-devtools') > -1) {
 			return;
 		}
+		if (typeof event.data.sessionID === 'undefined') {
+			return;
+		}
 		localStorage.setItem('sessionID', event.data.sessionID);
-		store.dispatch(closeDialogue());
+		store.dispatch(signIn(
+			event.data.sessionID !== '',
+			event.data.sessionID,
+			event.data.error,
+			event.data.member
+		));
 	},
 	false
 );

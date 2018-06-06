@@ -3,6 +3,7 @@ import * as express from 'express';
 
 export interface MySQLRequest extends express.Request {
 	connectionPool: mysql.Pool;
+	_originalUrl: string;
 }
 
 export default (pool: mysql.Pool): express.RequestHandler => {

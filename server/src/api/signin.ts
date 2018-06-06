@@ -6,7 +6,16 @@ export default (req: express.Request, res: express.Response, next: Function) => 
 
 	Member.Create(capid, password).then(member => {
 		res.json({
-			sessionID: member.setSession()
+			sessionID: member.setSession(),
+			valid: true,
+			error: '',
+			member
+		});
+	}).catch(errors => {
+		res.json({
+			sessionID: '',
+			valid: false,
+			error: errors,
 		});
 	});
 };

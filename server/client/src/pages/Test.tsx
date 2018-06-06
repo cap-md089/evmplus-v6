@@ -1,10 +1,16 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput, FileInputLoaderSelect, Title, TextArea } from '../components/Form';
+import Form, { Label, TextInput, Title, TextArea } from '../components/Form';
 import Button from '../components/Button';
 import { RawDraftContentState } from 'draft-js';
+// import Dialogue from '../components/Dialogue';
+import FileDialogue from '../components/FileDialogue';
 
-export default class Test extends React.Component<{}, {}> {
+export default class Test extends React.Component<{}, {open: boolean}> {
+	state = {
+		open: true
+	};
+
 	render () {
 		let TestForm = Form as new () => Form<{
 			test1: string;
@@ -23,6 +29,15 @@ export default class Test extends React.Component<{}, {}> {
 		
 		return (
 			<div>
+				<FileDialogue
+					open={this.state.open}
+					onReturn={
+						(values: string[]) => {
+							console.log(values);
+							this.setState({open: false});
+						}
+					}
+				/>
 				<TestForm
 					onSubmit={
 						(data) => {
@@ -55,16 +70,6 @@ export default class Test extends React.Component<{}, {}> {
 					<TextInput name="test2" />
 					<TextInput name="test3" />
 					File label
-					<FileInputLoaderSelect
-						name="test4"
-						value={[
-							'test1',
-							'test2'
-						]}
-						displaySelect={true}
-					>
-						Upload files
-					</FileInputLoaderSelect>
 					<TextInput
 						name="test6"
 						fullWidth={true}

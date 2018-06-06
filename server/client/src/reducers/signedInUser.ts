@@ -20,6 +20,7 @@ export default (
 			return {
 				member: action.member,
 				sessionID: action.sessionID,
+				error: action.error,
 				valid: true
 			};
 

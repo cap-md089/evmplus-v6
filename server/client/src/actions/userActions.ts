@@ -1,14 +1,18 @@
 import { MemberObject } from '../../../src/types';
 
-export enum UserActions {
-	SIGNIN,
-	SIGNOUT
-}
+export const UserActions: {[key: string]: UserActionType} = {
+	SIGNIN: 'USER_SIGNIN',
+	SIGNOUT: 'USER_SIGNOUT'
+};
+
+export type UserActionType = 'USER_SIGNIN' | 'USER_SIGNOUT';
 
 export interface UserAction {
-	type: UserActions;
+	type: UserActionType;
 	member: MemberObject;
 	sessionID: string;
+	error: string;
+	valid: boolean;
 }
 
 export const signOut = () => {
@@ -17,12 +21,12 @@ export const signOut = () => {
 	};
 };
 
-export const signIn = (links: {
-	text: string,
-	target: string,
-}[]) => {
+export const signIn = (valid: boolean, sessionID: string, error: string, member: MemberObject): UserAction => {
 	return {
 		type: UserActions.SIGNIN,
-		links: links
+		sessionID,
+		error,
+		member,
+		valid
 	};
 };

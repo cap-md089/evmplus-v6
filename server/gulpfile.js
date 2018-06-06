@@ -2,13 +2,16 @@ var gulp = require('gulp');
 var ts = require('gulp-typescript');
 var tslint = require('gulp-tslint');
 var jest = require('gulp-jest').default;
+var sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('ts', function () {
 	return gulp.src([
 		'src/**/*.ts',
 		'!src/**/*.test.ts'
 	])
+		.pipe(sourcemaps.init())
 		.pipe(ts.createProject('tsconfig.json')())
+		.pipe(sourcemaps.write('.'))
 		.pipe(gulp.dest('dist'))
 });
 

@@ -19,8 +19,6 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-app.use(logger('dev'));
-
 // Connect to mysql
 const pool = mysql.createPool({
 	connectionLimit: Configuration.database.connectionCount,
@@ -29,8 +27,15 @@ const pool = mysql.createPool({
 
 let router: express.Router = express.Router();
 
-import MySQLMiddleware from './lib/MySQLUtil';
+import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 router.use(MySQLMiddleware(pool));
+
+router.use((req: MySQLRequest, _, next) => {
+	req._originalUrl = req.originalUrl;
+	req.originalUrl = 'http' + (req.secure ? 's' : '') + '://' + req.hostname + req.originalUrl;
+	next();
+});
+router.use(logger('dev'));
 
 /**
  * DEFINE API ROUTERS HERE

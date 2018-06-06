@@ -48,10 +48,10 @@
   },
   "proxy": {
     "/api": {
-      "target": "http://localhost:3001"
+      "target": "http://md089.localcapunit.com:3001"
     },
     "/images": {
-      "target": "http://localhost:3001"
+      "target": "http://md089.localcapunit.com:3001"
     }
   }
 }

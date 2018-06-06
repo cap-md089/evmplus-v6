@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import TextInput from './form-inputs/TextInput';
-import FileInput, { FileInputLoader, FileInputLoaderSelect } from './form-inputs/FileInput';
+import FileInput from './form-inputs/FileInput';
 import TextArea from './form-inputs/TextArea';
 import myFetch from '../lib/myFetch';
 
@@ -60,8 +60,6 @@ function isInput (el: React.ReactChild): boolean {
 	}
 	return el.type === TextInput ||
 		el.type === FileInput ||
-		el.type === FileInputLoader ||
-		el.type === FileInputLoaderSelect ||
 		el.type === TextArea;
 }
 
@@ -87,6 +85,10 @@ export interface FormProps<F> {
 		 * A CSS class to use
 		 */
 		className?: string
+		/**
+		 * Whether or not the button is to be disabled
+		 */
+		disabled?: boolean
 	};
 	/**
 	 * The ID to identify the form with CSS
@@ -110,6 +112,12 @@ export interface FormProps<F> {
 	 * is less than the value specified
 	 */
 	saveCheckTime?: number;
+	/**
+	 * What to do on a form value changing
+	 * 
+	 * Can be used to help with checking if a form field should be disabled
+	 */
+	onChange?: (fields: F) => void;
 }
 
 /**
@@ -188,10 +196,17 @@ class Form<
 						authorization: sid
 					}
 				}
-			).then(res =>
-				res.json())
-			.then(tokenObj =>
-				this.token = tokenObj.token);
+			).then(res => {
+				if (res.status !== 403) {
+					return Promise.resolve(res);
+				} else {
+					return Promise.reject(new Error ('User not signed in'));
+				}
+			}).then(res => 
+				res.json()
+			).then(tokenObj =>
+				this.token = tokenObj.token
+			).catch(e => undefined);
 		}
 	}
 
@@ -200,6 +215,9 @@ class Form<
 	 */
 	protected onChange (e: {name: string, value: any}) {
 		this.fields[e.name] = e.value;
+		if (this.props.onChange) {
+			this.props.onChange(this.fields);
+		}
 	}
 	
 	/**
@@ -223,11 +241,13 @@ class Form<
 		let submitInfo = this.props.submitInfo === undefined ?
 			{
 				text: 'Submit',
-				className: 'submit'
+				className: 'submit',
+				disabled: false
 			} : Object.assign(
 				{
 					text: 'Submit',
-					className: 'submit'
+					className: 'submit',
+					disabled: false
 				},
 				this.props.submitInfo
 			);
@@ -296,7 +316,8 @@ class Form<
 											React.cloneElement(
 												this.props.children[i - 1],
 												{
-													key: i - 1
+													key: i - 1,
+													onUpdate: this.onChange
 												}
 											)
 										);
@@ -338,7 +359,7 @@ class Form<
 							type="submit"
 							value={submitInfo.text}
 							className={submitInfo.className}
-							disabled={this.state.disabled}
+							disabled={this.state.disabled || submitInfo.disabled}
 						/>
 					</div>
 				</div>
@@ -354,8 +375,6 @@ export {
 	Label,
 
 	FileInput,
-	FileInputLoader,
-	FileInputLoaderSelect,
 	
 	TextInput,
 	TextArea

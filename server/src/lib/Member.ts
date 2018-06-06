@@ -468,7 +468,6 @@ export default class Member implements CAP.MemberObject {
 					rawContact,
 					cookieData,
 					squadMember,
-					accessLevel,
 					squadron,
 					nameFirst,
 					nameMiddle,
@@ -482,7 +481,7 @@ export default class Member implements CAP.MemberObject {
 					rawContact,
 					cookieData,
 					squadMember,
-					accessLevel,
+					accessLevel: 'Member',
 					squadron,
 					nameFirst,
 					nameMiddle,
@@ -543,9 +542,6 @@ export default class Member implements CAP.MemberObject {
 	): void {
 		if (typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined') {
 			let header = req.headers.authorization;
-			if (typeof header !== 'string') {
-				header = header[0];
-			}
 			jwt.verify(
 				header,
 				Member.secret,

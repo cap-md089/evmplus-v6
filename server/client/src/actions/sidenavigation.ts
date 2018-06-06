@@ -1,10 +1,12 @@
-export enum SideNavigationActions {
-	REMOVE,
-	UPDATE
-}
+export const SideNavigationActions = {
+	REMOVE: 'SIDENAV_REMOVE',
+	UPDATE: 'SIDENAV_UPDATE'
+};
+
+export type SideNavigationActionType = 'SIDENAV_REMOVE' | 'SIDENAV_UPDATE';
 
 export interface SideNavigationAction {
-	type: SideNavigationActions;
+	type: SideNavigationActionType;
 	links?: {
 		text: string,
 		target: string

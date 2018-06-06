@@ -27,5 +27,5 @@ export const Configuration: MyConfiguration = {
 	},
 	path: __dirname,
 	testing: true,
-	fileStoragePath: '/home/arioux/Desktop/uploads'
+	fileStoragePath: '/uploads'
 };

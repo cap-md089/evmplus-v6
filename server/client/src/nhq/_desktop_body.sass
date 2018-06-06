@@ -1,3 +1,69 @@
+.primaryButton
+	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+	font-size: 14px
+	line-height: 18px
+	color: #fff
+	text-transform: uppercase
+	border: 0px
+	background: #4278ba
+	@include border-radius(8px)
+	padding: 10px 24px 8px 24px
+	cursor: pointer
+	
+	&:hover
+		@extend .buttonHover
+		
+
+.buttonHover
+	background-color: #f6bf22
+	color: #0b375b
+
+.secondaryButton
+	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+	font-size: 14px
+	line-height: 18px
+	color: #fff
+	text-transform: uppercase
+	border: 0px
+	background: #07346c
+	@include border-radius(8px)
+	padding: 10px 24px 8px 24px
+	cursor: pointer
+	
+#alert_box
+	display: inline-block
+	vertical-align: middle
+	background-color: #ffffff
+	color: #999999
+	box-sizing: border-box
+	padding: 20px
+	border-radius: 20px
+	box-shadow: 0 0 1em black
+	min-width: 614px
+	max-width: 90%
+	max-height: 80%
+
+	& > div
+		box-sizing: border-box
+		padding: 15px
+		margin: 0.0000000001px
+		padding-bottom: 25px
+
+	h2
+		text-align: center
+		border-bottom: 1px solid #f6bf22
+		padding-bottom: 5px
+
+	#ok
+		@extend .primaryButton
+
+		&:hover
+			@extend .buttonHover
+
+
+#fileDialogue
+	@extend #alert_box
+
 #pageContent
 	width: 100%
 
@@ -218,38 +284,6 @@
 			line-height: 22px
 			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif
 
-	.primaryButton
-		font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
-		font-size: 14px
-		line-height: 18px
-		color: #fff
-		text-transform: uppercase
-		border: 0px
-		background: #4278ba
-		@include border-radius(8px)
-		padding: 10px 24px 8px 24px
-		cursor: pointer
-		
-		&:hover
-			@extend .buttonHover
-			
-
-	.buttonHover
-		background-color: #f6bf22
-		color: #0b375b
-
-	.secondaryButton
-		font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
-		font-size: 14px
-		line-height: 18px
-		color: #fff
-		text-transform: uppercase
-		border: 0px
-		background: #07346c
-		@include border-radius(8px)
-		padding: 10px 24px 8px 24px
-		cursor: pointer
-
 	#breadcrumbs
 		width: 100%
 		margin-bottom: 8px
@@ -283,36 +317,6 @@
 					color: #999999
 					content: "/"
 	
-	#alert_box
-		display: inline-block
-		vertical-align: middle
-		background-color: #ffffff
-		color: #999999
-		box-sizing: border-box
-		padding: 20px
-		border-radius: 20px
-		box-shadow: 0 0 1em black
-		min-width: 614px
-		max-width: 90%
-		max-height: 80%
-
-		& > div
-			box-sizing: border-box
-			padding: 15px
-			margin: 0.0000000001px
-			padding-bottom: 25px
-
-		h2
-			text-align: center
-			border-bottom: 1px solid #f6bf22
-			padding-bottom: 5px
-
-		#ok
-			@extend .primaryButton
-
-			&:hover
-				@extend .buttonHover
-
 	div.image-box
 		width: 89.148px
 		float: left

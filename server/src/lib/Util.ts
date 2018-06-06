@@ -1,3 +1,5 @@
+import * as express from 'express';
+
 export function extend<T> (obj1: T, obj2: Partial<T>): T {
 	let ret = <T> {};
 	for (let i in obj1) {
@@ -22,4 +24,8 @@ export async function orderlyExecute<T, S> (
 		ret.push(await promiseFunction(values[i]));
 	}
 	return ret;
+}
+
+export function json<T> (res: express.Response, values: T): void {
+	res.json(values);
 }

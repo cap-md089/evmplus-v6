@@ -377,10 +377,6 @@ export interface FileObject extends DriveObject {
 	 */
 	forSlideshow: boolean;
 	/**
-	 * The ID of the parent folder. The root folder is 'base'
-	 */
-	folderID: string;
-	/**
 	 * The ID of the account the folder belongs to
 	 */
 	accountID: string;

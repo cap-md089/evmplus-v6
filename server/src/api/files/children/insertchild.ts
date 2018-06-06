@@ -20,7 +20,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 	await req.connectionPool.query(
 		prettySQL`
 			INSERT INTO
-				FileInfo (
+				DriveChildrenList (
 					childID,
 					folderID,
 					accountID

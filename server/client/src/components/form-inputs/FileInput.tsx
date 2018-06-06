@@ -8,10 +8,6 @@ import myFetch from '../../lib/myFetch';
 import Button from '../Button';
 import Loader from '../Loader';
 import { FileObject } from '../../../../src/types';
-import { connect } from 'react-redux';
-import { displayDialogue, DialogueAction } from '../../actions/dialogue';
-
-import fileSelect from '../../lib/fileSelect';
 
 interface FileInputElement {
 	name: string;
@@ -41,10 +37,6 @@ interface FileInputProps extends InputProps<string[]> {
 	currentFiles?: string[];
 	_currentFiles?: UploadedFileElement[];
 	displaySelect?: boolean;
-}
-
-interface ConnectedFileInputProps extends FileInputProps {
-	displayDialogue: (data: DialogueAction) => void;
 }
 
 interface FileUploadSliderProps extends UploadingFileElement {
@@ -189,7 +181,7 @@ class FileUploadSlider extends React.Component<FileUploadSliderProps, UploadingF
 	}
 }
 
-export default class FileInput extends React.Component<ConnectedFileInputProps, {
+export class FileInput extends React.Component<FileInputProps, {
 	uploadedFiles: UploadedFileElement[],
 	uploadingFiles: UploadingFileElement[]
 }> {
@@ -203,7 +195,7 @@ export default class FileInput extends React.Component<ConnectedFileInputProps, 
 
 	files: string[] = [];
 
-	constructor(props: ConnectedFileInputProps) {
+	constructor(props: FileInputProps) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
@@ -305,11 +297,11 @@ export default class FileInput extends React.Component<ConnectedFileInputProps, 
 	}
 
 	private selectFiles () {
-		fileSelect(
-			this.props.displayDialogue,
-			true,
-			false,
-		).then(console.log);
+		// fileSelect(
+		// 	this.props.displayDialogue,
+		// 	true,
+		// 	false,
+		// ).then(console.log);
 	}
 
 	private onChange (event: React.FormEvent<HTMLInputElement>) {
@@ -389,11 +381,11 @@ export default class FileInput extends React.Component<ConnectedFileInputProps, 
 	}
 }
 
-export class FileInputLoader extends React.Component<ConnectedFileInputProps, {
+export class FileInputLoader extends React.Component<FileInputProps, {
 	files: UploadedFileElement[],
 	loaded: boolean
 }> {
-	constructor(props: ConnectedFileInputProps) {
+	constructor(props: FileInputProps) {
 		super(props);
 
 		this.state = {
@@ -418,7 +410,7 @@ export class FileInputLoader extends React.Component<ConnectedFileInputProps, {
 				this.setState({
 					files: value.map(fobj => {
 						return {
-							name: fobj.name,
+							name: fobj.fileName,
 							complete: true,
 							id: fobj.id
 						};
@@ -450,8 +442,6 @@ export class FileInputLoader extends React.Component<ConnectedFileInputProps, {
 						name={this.props.name}
 						currentFiles={this.props.value}
 						_currentFiles={this.state.files}
-
-						displayDialogue={this.props.displayDialogue}
 					>
 						{this.props.children}
 					</FileInput>
@@ -462,19 +452,4 @@ export class FileInputLoader extends React.Component<ConnectedFileInputProps, {
 	}
 }
 
-export const FileInputLoaderSelect = connect(
-	undefined,
-	dispatch => {
-		return {
-			displayDialogue: (data: DialogueAction) => {
-				dispatch(displayDialogue(
-					data.title,
-					data.text,
-					data.buttontext,
-					data.displayButton,
-					data.onClose
-				));
-			}
-		};
-	}
-)(FileInputLoader);
+export default FileInputLoader;

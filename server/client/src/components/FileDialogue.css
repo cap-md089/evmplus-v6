@@ -1,0 +1,23 @@
+#fileDialogueControls {
+	display: block;
+	margin: 0;
+	padding: 0 15px !important;
+}
+
+#fileDialogueControls a {
+	display: inline-block;
+	padding: 12px;
+	box-sizing: border-box;
+	margin-right: 5px;
+	text-decoration: none;
+	color: #0b375b;
+}
+
+#fileDialogueControls a.selected {
+	border-bottom: 1px solid #f6bf22;
+	font-weight: bold;
+}
+
+#fileDialogueControls a:hover {
+	text-decoration: underline;
+}

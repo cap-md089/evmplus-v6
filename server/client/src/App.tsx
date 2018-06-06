@@ -8,11 +8,9 @@ import { NavLink, withRouter, RouteComponentProps } from 'react-router-dom';
 import BreadCrumbs from './components/BreadCrumbs';
 import PageRouter from './components/PageRouter';
 import SideNavigation from './components/SideNavigation';
-import Dialogue from './components/Dialogue';
 
 import myFetch from './lib/myFetch';
 // import { fileDisplayDialogue } from './actions/fileDialogue';
-import FileDialogue from './components/FileDialogue';
 
 export class Head extends React.Component {
 	render() {
@@ -151,17 +149,14 @@ export default class App extends React.Component<{
 			'fourth'
 		][countd];
 
+		jQuery('body').removeClass('mobile').removeClass('desktop');
+		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
+
 		return (
-			<div
-				className={
-					this.props.isMobile ? 'mobile' : 'desktop'
-				}
-			>
+			<div>
 				<div
 					id="mother"
 				>
-					<Dialogue isMobile={this.props.isMobile} />
-					<FileDialogue isMobile={this.props.isMobile} />
 					<div 
 						id="bodyContainer"
 					>

@@ -1,12 +1,14 @@
 import { BreadCrumbs } from '../components/BreadCrumbs';
 
-export enum BreadCrumbsActions {
-	REMOVE,
-	UPDATE
-}
+export const BreadCrumbsActions = {
+	REMOVE: 'BREADCRUMBS_REMOVE',
+	UPDATE: 'BREADCRUMBS_UPDATE'
+};
+
+export type BreadCrumbsActionType = 'BREADCRUMBS_REMOVE' | 'BREADCRUMBS_UPDATE';
 
 export interface BreadCrumbAction {
-	type: BreadCrumbsActions;
+	type: BreadCrumbsActionType;
 	links?: BreadCrumbs[];
 }
 

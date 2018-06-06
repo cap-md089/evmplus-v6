@@ -1,60 +1,119 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-
-import { displayDialogue } from '../actions/dialogue';
+import Dialogue from './Dialogue';
 
 class SigninLink extends React.Component<{
-	displayDialogue: (
-		title: string,
-		text: JSX.Element,
-		buttontext: string,
-		displayButton: boolean
-	) => void
-}, {}> {
+	valid: boolean,
+	error: string
+}, {
+	open: boolean,
+	error: string
+}> {
+	state = {
+		open: false,
+		error: ''
+	};
+
+	private iframeRef = React.createRef<HTMLIFrameElement>();
+
+	constructor (props: {
+		valid: boolean,
+		error: string
+	}) {
+		super(props);
+
+		this.openDialogue = this.openDialogue.bind(this);
+		this.closeDialogue = this.closeDialogue.bind(this);
+	}
+
+	componentDidUpdate (
+		props: {valid: boolean, error: string},
+		state: {open: boolean, error: string}
+	) {
+		// check if new user is valid, if so update state to close dialogue
+		if (state.open && props.valid) {
+			this.setState({
+				open: false
+			});
+		} else if (state.open && (props.error !== '' && typeof props.error !== 'undefined')) {
+			this.setState({
+				error: props.error
+			});
+		}
+
+	}
+
 	render() {
 		return (
-			<a
-				href="#"
-				onClick={
-					(e: React.MouseEvent<HTMLElement>) => {
-						e.preventDefault();
-						this.props.displayDialogue(
-							'Sign in', 
-							<iframe
-								sandbox="allow-scripts allow-forms allow-same-origin"
-								src="/api/signin"
-								style={{
-									width: '100%',
-									height: '220px',
-									padding: 0,
-									margin: 0,
-									border: 'none'
-								}}
-							/>,
-							'Sign in',
-							false
-						);
-					}
-				}
-			>
-				{this.props.children}
-			</a>
+			<>
+				<a
+					href="#"
+					onClick={this.openDialogue}
+				>
+					{this.props.children}
+				</a>
+				<Dialogue
+					title={'Sign in'}
+					displayButton={this.state.error !== ''}
+					buttonText={this.state.error}
+					open={this.state.open}
+					onClose={this.closeDialogue}
+				>
+					<div
+						style={{
+							width: 614
+						}}
+					>
+						Enter your eServices login information below to sign into the site.
+						Your password is not permanently stored. By providing your eServices information
+						you agree to the terms and conditions located at&nbsp;
+						<a
+							href="https://www.capunit.com/eula"
+							target="_blank"
+						>
+							https://www.capunit.com/eula
+						</a>
+						<br />
+						<br />
+						<iframe
+							ref={this.iframeRef}
+							sandbox="allow-scripts allow-forms allow-same-origin"
+							src="/api/signin"
+							style={{
+								width: '100%',
+								height: 140,
+								padding: 0,
+								margin: 0,
+								border: 'none'
+							}}
+						/>
+					</div>
+				</Dialogue>
+			</>
 		);
+	}
+
+	private openDialogue (e: React.MouseEvent<HTMLAnchorElement>) {
+		e.preventDefault();
+		this.setState({
+			open: true
+		});
+	}
+
+	private closeDialogue () {
+		this.setState({
+			open: false
+		});
 	}
 }
 
 export default connect(
-	undefined,
-	(dispatch) => {
-		return {
-			displayDialogue: (
-				title: string,
-				text: JSX.Element,
-				buttontext: string,
-				displayButton: boolean
-			) => {
-				dispatch(displayDialogue(title, text, buttontext, displayButton));	
-			}
-		};
-	}
+	(state: {
+		SignedInUser: {
+			valid: boolean,
+			error: string
+		}
+	}) => ({
+		...state.SignedInUser
+	}),
 )(SigninLink);
