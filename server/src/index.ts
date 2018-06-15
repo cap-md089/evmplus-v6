@@ -6,7 +6,7 @@ import * as bodyParser from 'body-parser';
 import * as fs from 'fs';
 import * as mysql from 'promise-mysql';
 
-import { Configuration } from './conf';
+import conf, { Configuration } from './conf';
 
 const app: express.Application = express();
 
@@ -108,9 +108,9 @@ app.use('/teapot', (req, res) => {
 	res.end();
 });
 
-app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
+app.use(express.static(path.join(conf.clientStorage, 'build')));
 app.get('*', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'client', 'build', 'index.html'));
+	res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
 });
 
 function normalizePort(val: number|string): number|string|boolean {

@@ -1,20 +1,4 @@
-export interface MyConfiguration {
-	database: {
-		connection: {
-			port: number,
-			user: string,
-			password: string,
-			host: string,
-			database: string
-		}
-		connectionCount: number
-	};
-	path: string;
-	testing: boolean;
-	fileStoragePath: string;
-}
-
-export const Configuration: MyConfiguration = {
+export const Configuration = {
 	database: {
 		connection: {
 			port: 3306,
@@ -27,5 +11,10 @@ export const Configuration: MyConfiguration = {
 	},
 	path: __dirname,
 	testing: true,
-	fileStoragePath: '/uploads'
+	fileStoragePath: '/uploads',
+	clientStorage: '/home/andrew/Desktop/react-capunit-client'
 };
+
+const conf = Configuration;
+
+export default conf;

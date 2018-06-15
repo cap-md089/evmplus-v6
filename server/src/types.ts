@@ -401,7 +401,7 @@ export interface FileChildObject extends DriveObject {
 	childLink: string;
 }
 
-import { RawDraftContentState } from '../client/node_modules/@types/draft-js';
+import { RawDraftContentState } from 'draft-js';
 
 export interface BlogPost {
 	id: number;
