@@ -1,0 +1,160 @@
+.primaryButton
+	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+	font-size: 14px
+	line-height: 18px
+	color: #fff !important
+	text-transform: uppercase
+	border: 0px
+	background: #4278ba
+	@include border-radius(8px)
+	padding: 10px 24px 8px 24px
+	cursor: pointer
+
+	&:hover
+		@extend .buttonHover
+
+.buttonHover
+	background-color: #f6bf22
+	color: #0b375b
+
+.secondaryButton
+	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+	font-size: 14px
+	line-height: 18px
+	color: #fff
+	text-transform: uppercase
+	border: 0px
+	background: #07346c
+	@include border-radius(8px)
+	padding: 10px 24px 8px 24px
+	cursor: pointer
+
+a, a:visited
+	color: #2875d7
+
+#body
+	clear: both
+
+	#breadcrumbs
+		width: 100%
+		margin-bottom: 8px
+		
+		ul
+			margin: 0px
+			padding: 0px
+			list-style-type: none
+
+			li
+				margin: 0
+				padding: 0
+				display: inline
+				font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+				color: #396f9c
+				line-height: 12px
+				font-size: 10px
+				text-transform: uppercase
+
+				a
+					font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+					color: #396f9c
+					line-height: 12px
+					font-size: 10px
+
+					&:hover
+						color: #022c61
+
+				&.divider
+					padding: 0 1px 0 1px
+					color: #999999
+					content: "/"
+
+	#content
+		background-color: white
+		box-sizing: border-box
+		padding: 10px
+
+		.halfSection, .fullSection
+			box-sizing: border-box
+			width: 100%
+			padding: 20px
+
+	
+
+	div.image-box
+		width: 95px
+		float: left
+		margin: 2.5px
+		padding: 0
+		height: 95px
+		line-height: 95px
+		text-align: center
+		border-radius: 5px
+		display: flex
+		align-items: center
+		justify-content: center
+		
+		a
+			max-height: 95px
+
+		img.image
+			max-width: 95%
+			max-height: 95px
+			vertical-align: middle
+
+	.date
+		font-style: italic
+		float: right
+		font-size: 1em
+
+	.author
+		font-style: italic
+		float: left
+		font-size: 1em
+
+	div.blog-post
+		margin: 15px 0
+		clear: both
+
+#alert_box
+	display: block
+	vertical-align: middle
+	background-color: #ffffff
+	color: #999999
+	box-sizing: border-box
+	padding: 20px
+	@include animation (flash 0.25s ease-out)
+	box-shadow: 0 0 1em black
+
+	& > div.content
+		box-sizing: border-box
+		padding: 15px
+		padding-bottom: 25px
+
+	h2
+		text-align: center
+		border-bottom: 1px solid #f6bf22
+		padding-bottom: 5px
+
+	.closeButton
+		position: fixed
+		bottom: 20px
+		right: 20px
+		width: auto
+
+		a
+			@extend .primaryButton
+
+			&:hover
+				@extend .buttonHover
+
+		
+	.image-view
+		height: auto
+		width: 80%
+		margin: 20px auto
+		display: block
+	
+	.caption
+		display: block
+		text-align: center
+		font-style: italic

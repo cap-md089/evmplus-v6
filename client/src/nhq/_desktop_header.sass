@@ -1,0 +1,114 @@
+header
+	height: 182px
+	
+	#logo
+		float: left
+		margin: -5px 0 0 -5px
+		padding: 0 19px 0 0
+		position: relative
+		height: 127px
+		width: 362px / 1028px * 100%
+
+		img
+			width: auto
+
+	.headerDivider
+		background: url('/images/bg-header-divider.png') center right no-repeat
+		float: left
+		width: 8px / 1028px * 100%
+		height: 81px
+		margin: 25px 0 0 0
+
+	.pagetitle
+		float: left
+		text-transform: uppercase
+		color: $secondary-color
+		font-size: 42px
+		font-family: 'RobotoRegular', Arial, Helvetica, sans-serif
+		line-height: 43px
+		margin: 49px 0 0 25px
+		height: 43px
+		width: 320px
+
+	.servings
+		float: right
+		margin: 25px 59px 0 0
+
+		.servingsTitle
+			text-transform: uppercase
+			font-size: 18px
+			line-height: 19px
+			color: $secondary-color
+			font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+
+	#mainNavigation
+		width: 100%
+		float: left
+		margin: 14px 0 0 0
+		height: 46px
+
+		ul
+			margin: 0 0 0 1px
+			padding: 0
+			list-style-type: none
+			float: left
+			height: 46px
+
+			li
+				padding: 0
+				display: inline-block
+				height: 46px
+				float: left
+				margin: 0 3px 0 0
+
+				a
+					box-sizing: border-box
+					font-family: 'RobotoMedium', Arial, Helvetica, sans-serif
+					font-size: 16px
+					line-height: 18px
+					background: #0e3e66
+					color: #ffffff
+					padding: 14px 33px 0 33px
+					text-transform: uppercase
+					text-decoration: none
+					height: 45px
+					display: inline-block
+					border-top-left-radius: 9px
+					border-top-right-radius: 9px
+					border-bottom: 1px solid #4370a4
+
+					&.selected
+						margin-top: 1px
+						height: 47px
+						padding: 14px 33px 0 33px
+						color: $secondary-color
+						border-left: 1px solid #194a84
+						border-left: 1px solid #193e6b
+						border-top: 1px solid #255187
+
+						@include linear-gradient(to bottom, rgba(9,59,120,1) 1%, rgba(39,89,149,1) 88%)
+		
+		.search
+			float: right
+			margin: 5px 3px 0 0
+
+			form
+				input.searchInput
+					border-top-left-radius: 3px
+					border-bottom-left-radius: 3px
+					border: 0
+					height: 29px
+					width: 149px
+					font-size: 12px
+					color: #333333
+					font-family: 'RobotoRegular', Arial, Helvetica, sans-serif
+					padding: 3px 15px 0px 15px
+					float: left
+
+				input.submitBt
+					background: url('/images/bg-submit.png') no-repeat
+					height: 32px
+					width: 37px
+					border: 0px
+					cursor: pointer
+					

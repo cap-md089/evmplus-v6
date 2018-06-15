@@ -1,0 +1,369 @@
+.detailedlistplus
+	list-style-type: none
+	margin: 0
+	padding: 0
+	clear: both
+	overflow: auto
+
+	.detailedlistplustitle
+		font-size: 2em
+		color: $secondary-color
+		margin: 0
+		margin-bottom: 5px
+
+	li
+		margin: 0
+		clear: both
+		width: 100%
+		padding-bottom: 5px
+	
+	.detailedlistplusrow
+		width: 100%
+		margin: 0
+		height: 30px
+		padding: 5px
+		box-sizing: border-box
+		position: relative
+	
+		.detailedlistplusarrow
+			position: absolute
+			display: inline-block
+			width: 0
+			height: 0
+			border-top: 7px solid transparent
+			border-left: 10px solid #aaaaaa
+			border-bottom: 7px solid transparent
+			transition: transform 0.25s ease-out
+			left: 10px
+			top: 9px
+			transform: rotate(0deg)
+			cursor: pointer
+
+			&.down
+				transform: rotate(450deg)
+				
+	.detailedlistplusname
+		margin: 0
+		padding: 0
+		display: inline-block
+		width: 50%
+		float: left
+		box-sizing: border-box
+		padding-left: 25px
+		cursor: pointer
+
+	.detailedlistpluslink
+		margin: 0
+		padding: 0
+		display: inline-block
+		width: 49.999%
+		float: right
+		text-align: left
+		
+	.detailedlistplusdesc
+		margin: 0
+		font-style: italic
+		display: none
+		float: left
+		padding: 5px
+		box-sizing: border-box
+		font-size: 0.8em
+		width: 100%
+		padding-left: 15px
+
+#fileSelect
+	padding: 0
+	margin: 20px auto
+
+	input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="url"]
+		font-family: "Montserrat"
+		box-sizing: border-box
+		border: 1px solid black
+		border-radius: 10px
+		padding: 5px
+		display: inline-block
+		margin: 2%
+		width: 96%
+
+	input[type="checkbox"], input[type="radio"]
+		visibility: hidden
+		position: absolute
+
+		&:checked + label
+			background-color: #4278ba
+
+	label
+		background-color: transparent
+		display: none
+		border-top: 1px solid #999999
+		border-bottom: 1px solid #999999
+		padding: 10px
+		cursor: pointer
+
+		&.shown
+			display: block
+			margin-top: -1px
+
+#templateAdder
+	display: none
+
+.warning
+	color: red
+
+	&::before, &::after
+		content: " !! "
+
+.red
+	color: red
+
+
+#filelist
+
+	div.file
+		background: #ffffff
+		border-radius: 25px
+		clear: both
+		padding: 20px
+		margin: 20px
+		box-sizing: border-box
+		display: flex
+
+		div.img
+			flex: 0 0 300px
+			width: 300px
+			padding: 0
+			margin: 0
+
+			img
+				width: 300px
+
+		div.desc
+			flex: 1
+			box-sizing: border-box
+			padding: 20px
+			color: #999999
+			position: relative
+
+			div#_box
+				width: 100%
+			
+			h2
+				margin-top: 0
+
+.cover
+	position: fixed
+	top: 0
+	left: 0
+	right: 0
+	bottom: 0
+	z-index: 5005
+	color: black
+	animation: flash 0.25s ease-out
+
+#signin_box
+	display: inline-block
+	vertical-align: middle
+	background-color: white
+	color: black
+	box-sizing: border-box
+	padding: 20px
+	border-radius: 20px
+	animation: flash 0.25s ease-out
+	box-shadow: 0 0 1em black
+	display: none
+	z-index: 5006
+
+	h2
+		text-align: center
+		border-bottom: 1px solid $secondary-color
+		padding-bottom: 5px
+
+@keyframes flash
+	from
+		opacity: 0
+	to
+		opacity: 1
+
+@-webkit-keyframes flash
+	from
+		opacity: 0
+	to
+		opacity: 1
+
+#templateAdder
+	display: none
+
+.warning
+	color: red
+
+	&::before, &::after
+		content: " !! "
+
+.red
+	color: red
+
+#photoLibraryBox
+	.image-box
+		padding-bottom: 100%
+		margin: 10px
+		width: calc(14.285% - 20px)
+
+table#eventCalendar
+	padding: 0
+	border-collapse: collapse
+	width: 100%
+	
+	tr
+		padding: 0
+		margin: 0
+		width: 100%
+
+	caption
+		padding: 10px
+		font-size: 1.2em
+		border-bottom-width: 0px
+
+		span
+			display: inline-block
+			margin: 0 20px
+
+			&.fleft
+				float: left
+			&.fright
+				float: right
+
+	tbody
+		width: 100%
+		border-top-width: 0px
+
+	td, th, caption
+		margin: 0
+		border: 1px solid #0b375b
+
+	th
+		font-weight: bold
+		padding: 4px
+		width: 14.28571428571429% // 1/7th
+
+	td
+		width: 14.28571428571429% // 1/7th
+		min-height: 150px
+		padding: 0
+		vertical-align: top
+
+	div
+		&.td-row
+			margin: 0
+			padding: 4px
+			border-bottom: 1px solid #0b375b
+
+		&.td-data ul
+			list-style-type: none
+			height: 150px
+			overflow-y: auto
+			padding: 0
+			margin: 0
+
+			li
+				overflow-y: hidden
+				width: 95%
+				margin: 3px
+				max-height: 55px
+				padding: 5px
+				box-sizing: border-box
+				border-width: 2px
+				border-style: solid
+				font-size: 0.8em
+				cursor: pointer
+				text-decoration: none !important
+
+				&.ce0 // deleted/archived
+					display: none
+
+				&.ce1 // info
+					background-color: #A4BDFC
+					a
+						color: #000 !important
+					border-color: #000
+
+				&.ce2 // cancelled
+					background: #DC2127
+					background-image: repeating-linear-gradient(-45deg, #DC2127, #DC2127 10px, #f77 10px, #f77 20px)
+					background-image: -webkit-repeating-linear-gradient(-45deg, #DC2127, #DC2127 10px, #f77 10px, #f77 20px)
+					a
+						color: #fff
+					border-color: #FAA
+
+				&.ce3 // main
+					background-color: #5484ED
+					a
+						color: #fff
+					border-color: #877406
+
+				&.ce4 // Draft
+					background-color: #FBD75B
+					background-image: repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px)
+					background-image: -webkit-repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px)
+					a
+						color: #fff
+					border-color: #131
+
+				&.ce45 // Draft Team event
+					background-color: #7AE7BF
+					background-image: repeating-linear-gradient(-45deg, #51B749, #51B749 10px, #55da5e 10px, #55da5e 20px)
+					background-image: -webkit-repeating-linear-gradient(-45deg, #51B749, #51B749 10px, #55da5e 10px, #55da5e 20px)
+					a
+						color: #fff
+					border-color: #113
+					
+				&.ce5 // Team event
+					background-color: #51B749
+					a
+						color: #fff
+					border-color: #113
+					
+				&.ce6 // Tentative event
+					background-color: #46D6DB
+					a
+						color: #fff
+					border-color: #113
+
+#flights-title .title
+	font-size: 1.2em
+	display: inline-block
+	box-sizing: border-box
+	padding: 5px
+	border: 1px solid #0b375b
+	flex: 1 0 auto
+	width: 20%
+	text-align: center
+
+#flights
+	height: auto
+	padding: 0
+	margin: 0
+	width: 100%
+	display: flex
+
+	&::after
+		content: ""
+		display: table
+		clear: both	
+
+	.flight
+		display: block
+		box-sizing: border-box
+		padding: 5px
+		border: 1px solid #0b375b
+		flex: 1 0 auto
+		width: 20%
+
+		.cadet
+			width: 100%
+			border: 1px solid #0d3a74
+			cursor: move
+			min-height: 42px
+			box-sizing: border-box
+			text-align: center
+			padding: 4px
+			margin: 2.5px 0
