@@ -10,7 +10,7 @@
 			"request": "launch",
 			"name": "Launch Server",
 			"program": "${workspaceFolder}/dist/index.js",
-			"cwd": "/home/andrew/Desktop/react-capunit",
+			"cwd": "/home/andrew/Desktop/react-capunit-server",
 			"autoAttachChildProcesses": true,
 			"sourceMaps": true,
 			"outFiles": [
