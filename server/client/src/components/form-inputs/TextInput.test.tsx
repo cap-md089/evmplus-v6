@@ -16,7 +16,7 @@ describe('<TextInput />', () => {
 	it ('should render without crashing', () => {
 		const div = document.createElement('div');
 		ReactDOM.render(
-			<TextInput name="test1" />,
+			<TextInput name="test1" onChange={console.log} />,
 			div
 		);
 		ReactDOM.unmountComponentAtNode(div);
@@ -31,6 +31,6 @@ describe('<TextInput />', () => {
 		(node as any as {value: string}).value = 'text';
 		ReactTestUtils.Simulate.change(node);
 		expect(spy.calledOnce).toEqual(true);
-		expect((spy.args[0][1] as React.FormEvent<HTMLFormElement>)).toEqual('text');
+		expect(spy.args[0][1]).toEqual('text');
 	});
 });

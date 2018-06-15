@@ -2,6 +2,8 @@ import * as express from 'express';
 
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
+import { json } from '../../../lib/Util';
+import { FileObject } from '../../../types';
 
 export default async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
 	if (
@@ -54,6 +56,14 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 	}
 
 	// Return file info
-	const fileRequestedData = requestedFileQuery[0];
-	res.json(fileRequestedData);
+	const fileRequestedData = {
+		kind: 'drive#file' as 'drive#file',
+		id: req.params.fileid,
+		accountID: req.account.id,
+		...requestedFileQuery[0],
+		memberOnly: requestedFileQuery[0].memberOnly === 1,
+		forDisplay: requestedFileQuery[0].forDisplay === 1,
+		forSlideshow: requestedFileQuery[0].forSlideshow === 1
+	};
+	json<FileObject>(res, fileRequestedData);
 };

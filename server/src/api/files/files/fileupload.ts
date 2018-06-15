@@ -133,9 +133,9 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 
 			const created = Math.floor(moment().valueOf() / 1000);
 
-			// Wait until query is finished and data is written before closing file and connection
+			// Wait until query is finished and data is written before closing connection
 			Promise.all([
-				new Promise((resolve, rej) => {
+				new Promise((resolve) => {
 					req.on('end', () => {
 						writeStream.close();
 						resolve();
@@ -184,7 +184,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 						req.account.id
 					]
 				)
-			]).then(result => {
+			]).then(() => {
 				// Return results
 				res.json({
 					id: realFilename,

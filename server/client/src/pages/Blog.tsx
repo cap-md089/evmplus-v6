@@ -3,8 +3,8 @@ import * as React from 'react';
 import './blog.css';
 
 import { Route, RouteComponentProps, withRouter, Link } from 'react-router-dom';
-import RequestForm from '../components/RequestForm';
-import { TextInput, TextArea } from '../components/Form';
+import RequestForm from '../components/SimpleRequestForm';
+import { TextInput, TextArea } from '../components/SimpleForm';
 import { connect } from 'react-redux';
 import {  } from 'react-router';
 

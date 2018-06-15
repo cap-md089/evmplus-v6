@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput, Title, TextArea } from '../components/Form';
+import Form, { Label, TextInput, Title, TextArea, FileInput } from '../components/SimpleForm';
 import Button from '../components/Button';
 import { RawDraftContentState } from 'draft-js';
-// import Dialogue from '../components/Dialogue';
 import FileDialogue from '../components/FileDialogue';
+import { FileObject } from '../../../src/types';
 
 export default class Test extends React.Component<{}, {open: boolean}> {
 	state = {
@@ -32,7 +32,7 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 				<FileDialogue
 					open={this.state.open}
 					onReturn={
-						(values: string[]) => {
+						(values: FileObject[]) => {
 							console.log(values);
 							this.setState({open: false});
 						}
@@ -55,10 +55,7 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 					<TextInput 
 						onChange={
 							(text) => {
-								if (typeof text === 'undefined') {
-									return;
-								}
-								console.log(text.currentTarget.value);
+								console.log(text);
 							}
 						}
 						name="test1"
@@ -70,6 +67,12 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 					<TextInput name="test2" />
 					<TextInput name="test3" />
 					File label
+					<FileInput
+						name="test4"
+						value={[
+							'mdx89-41736954-9a9d-4cef-9e58-049f934d5b96'
+						]}
+					/>
 					<TextInput
 						name="test6"
 						fullWidth={true}

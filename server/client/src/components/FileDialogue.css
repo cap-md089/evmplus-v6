@@ -1,3 +1,8 @@
+#fileDialogue > div {
+	width: 570px;
+	overflow-y: auto;
+}
+
 #fileDialogueControls {
 	display: block;
 	margin: 0;
@@ -20,4 +25,46 @@
 
 #fileDialogueControls a:hover {
 	text-decoration: underline;
+}
+
+#fileDialogue .folderDisplayer {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .folderDisplayer .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .folderDisplayer .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
+}
+
+#fileDialogue .fileDisplayer {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .fileDisplayer .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .fileDisplayer .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
 }

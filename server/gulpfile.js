@@ -11,7 +11,7 @@ gulp.task('ts', function () {
 	])
 		.pipe(sourcemaps.init())
 		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(sourcemaps.write('.'))
+		.pipe(sourcemaps.write('./', { sourceRoot: './', includeContent: false }))
 		.pipe(gulp.dest('dist'))
 });
 

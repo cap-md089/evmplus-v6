@@ -1,0 +1,61 @@
+#%RAML 1.0
+title: CAPUnit4
+version: v4
+baseUri: https://capunit.com/api
+mediaType: application/json
+types:
+    Member:
+        type: object
+        properties:
+            id: number
+    FileObject:
+        type: object
+        properties:
+            id: number
+            fileName: string
+    FileChildObject:
+        type: object
+        properties:
+            kind: string
+            id: string
+            selfLink: string
+            childLink: string
+
+/files:
+    /{fileid}:
+        get:
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: FileObject
+    
+    /{fileid}/children:
+        get:
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: object
+                            properties:
+                                kind: string
+                                selfLink: string
+                                items: FileChildObject[]
+        post:
+            body:
+                type: object
+                properties:
+                    id: string
+            responses:
+                204:
+                    description: It worked
+
+    /{fileid}/children/{childid}:
+        get:
+            responses:
+                404:
+                    description: Could not find a parent/child relationship between files
+                200:
+                    body:
+                        application/json:
+                            type: FileChildObject

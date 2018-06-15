@@ -3,6 +3,12 @@ import * as React from 'react';
 import { InputProps } from './Input';
 
 interface TextInputProps extends InputProps<string> {
+	/**
+	 * Called when the file is changed
+	 * 
+	 * If it returns a boolean, it changes whether or not the change is accepted
+	 */
+	onChange?: (val: string) => boolean | void;
 	fullWidth?: boolean;
 	placeholder?: string;
 }
@@ -17,7 +23,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 		value: ''
 	};
 	
-	constructor(props: InputProps<string>) {
+	constructor(props: TextInputProps) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
@@ -32,12 +38,13 @@ export default class TextInput extends React.Component<TextInputProps, {
 	public onChange (e: React.FormEvent<HTMLInputElement>) {
 		let text = e.currentTarget.value;
 
-		this.setState({
-			value: text
-		});
+		let change = true;
 
 		if (typeof this.props.onChange !== 'undefined') {
-			this.props.onChange(e, text);
+			let newChange = this.props.onChange(text);
+			if (typeof newChange === 'boolean') {
+				change = newChange;
+			}
 		}
 
 		if (typeof this.props.onUpdate !== 'undefined') {
@@ -45,6 +52,18 @@ export default class TextInput extends React.Component<TextInputProps, {
 				name: this.props.name,
 				value: text
 			});
+		}
+
+		if (change) {
+			this.setState({
+				value: text
+			});
+		} else {
+			// Call this to update the input, thus causing a re-render
+			// A re-render will set the input to match the state
+			this.setState(prev => ({
+				value: prev.value
+			}));
 		}
 	}
 

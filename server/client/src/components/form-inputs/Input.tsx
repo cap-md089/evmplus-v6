@@ -5,10 +5,9 @@ export interface InputProps<V> {
 	/**
 	 * Function called whenever the user enters something and updates the values
 	 * 
-	 * @param {React.FormEvent<HTMLInputElement>} event The form event
 	 * @param {V} val The value of the input
 	 */
-	onChange?: (e?: React.FormEvent<HTMLInputElement>, val?: V) => void;
+	onChange?: (val: V) => void;
 	/**
 	 * Function called whenever the user enters something and updates the values
 	 * 

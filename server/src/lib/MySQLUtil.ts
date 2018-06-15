@@ -22,5 +22,5 @@ export const errorFunction = (response: express.Response) => {
 };
 
 export const prettySQL = (text: TemplateStringsArray): string => {
-	return text[0].replace(/\n\t/g, '');
+	return text[0].replace(/[\n\t]/g, ' ').replace(/ +/g, ' ');
 };

@@ -8,6 +8,7 @@ import myFetch from '../lib/myFetch';
 
 import './FileDialogue.css';
 import urlFormat from '../lib/urlFormat';
+import Button from './Button';
 
 enum FileDialogueView {
 	MYDRIVE,
@@ -21,62 +22,212 @@ interface ItemProps extends FileObject {
 	selected: boolean;
 }
 
-class FolderDisplayer extends React.Component<ItemProps> {
+export class FolderDisplayer extends React.Component<ItemProps> {
 	constructor(props: ItemProps) {
 		super(props);
 	}
 
 	render () {
 		return (
-			<div style={{border: '1px solid black'}}>
-				{this.props.fileName}
+			<div
+				className="folderDisplayer"
+				onClick={e => {
+					e.stopPropagation();
+					let {
+						fileName,
+						accountID,
+						comments,
+						contentType,
+						created,
+						forDisplay,
+						forSlideshow,
+						id,
+						kind,
+						memberOnly,
+						uploaderID
+					} = this.props;
+					this.props.onClick(
+						{
+							fileName,
+							accountID,
+							comments,
+							contentType,
+							created,
+							forDisplay,
+							forSlideshow,
+							id,
+							kind,
+							memberOnly,
+							uploaderID
+						},
+						this.props.selected
+					);
+				}}
+			>
+				<div
+					className={'box' + (this.props.selected ? ' selected' : '')}
+				>
+					{this.props.fileName}
+				</div>
 			</div>
 		);
 	}
 }
 
-class FileDisplayer extends React.Component<ItemProps> {
+export class FileDisplayer extends React.Component<ItemProps> {
 	constructor(props: ItemProps) {
 		super(props);
 	}
 
 	render () {
 		return (
-			<div>
-				{this.props.fileName}
+			<div
+				className="fileDisplayer"
+				onClick={e => {
+					e.stopPropagation();
+					let {
+						fileName,
+						accountID,
+						comments,
+						contentType,
+						created,
+						forDisplay,
+						forSlideshow,
+						id,
+						kind,
+						memberOnly,
+						uploaderID
+					} = this.props;
+					this.props.onClick(
+						{
+							fileName,
+							accountID,
+							comments,
+							contentType,
+							created,
+							forDisplay,
+							forSlideshow,
+							id,
+							kind,
+							memberOnly,
+							uploaderID
+						},
+						this.props.selected
+					);
+				}}
+			>
+				<div
+					className={'box' + (this.props.selected ? ' selected' : '')}
+					title={this.props.fileName}
+				>
+					{this.props.fileName}
+				</div>
 			</div>
 		);
 	}
 }
 
-interface UploadingFile {
-	uploading: boolean;
-	done: boolean;
-	size: number;
+class SelectedFileDisplayer extends React.Component<ItemProps> {
+	render () {
+		return (
+			<div
+				onClick={(e) => {
+					e.stopPropagation();
+					let {
+						fileName,
+						accountID,
+						comments,
+						contentType,
+						created,
+						forDisplay,
+						forSlideshow,
+						id,
+						kind,
+						memberOnly,
+						uploaderID
+					} = this.props;
+					this.props.onClick(
+						{
+							fileName,
+							accountID,
+							comments,
+							contentType,
+							created,
+							forDisplay,
+							forSlideshow,
+							id,
+							kind,
+							memberOnly,
+							uploaderID
+						},
+						this.props.selected
+					);
+				}}
+			>
+				{this.props.fileName} selected
+			</div>
+		);
+	}
+}
+
+interface FileUploaderProps {
+	files: File[];
+	onUploadedFile: (file: FileObject) => void;
+	clearFileList: () => void;
+}
+
+interface FileUploaderState {
+	files: File[];
 	progress: number;
-	name: string;
-	file: File;
+	doneWithCurrentFile: boolean;
 }
 
-interface FileUploaderProps extends UploadingFile {
-	onComplete: (uploadedFile: FileObject) => void;
-}
+class FileUploader extends React.Component<FileUploaderProps, FileUploaderState> {
+	public state = {
+		files: [] as File[],
+		progress: 0,
+		doneWithCurrentFile: true
+	};
 
-class FileUploader extends React.Component<FileUploaderProps, UploadingFile> {
-	constructor(props: FileUploaderProps) {
-		super(props);
+	static getDerivedStateFromProps(props: FileUploaderProps, state: FileUploaderState): FileUploaderState | null {
+		let newFileList = state.files.slice(0);
+		let fileCount = newFileList.length; // Keep track of this to see if the component
+		// needs to rerender
+		for (let i of props.files) {
+			if (newFileList.indexOf(i) === -1) {
+				newFileList.push(i);
+			}
+		}
 
-		this.state = props;
+		// If true, there were files added
+		if (newFileList.length !== fileCount) {
+			return {
+				files: newFileList,
+				progress: state.progress,
+				doneWithCurrentFile: state.doneWithCurrentFile
+			};
+		}
+		
+		// Parent function to clear list so that the files don't get added again once they are done
+		props.clearFileList();
+
+		// else, return no changes
+		return null;
 	}
 
-	componentDidMount() {
-		// upload only when commanded to
-		if (!this.props.uploading) {
+	public componentDidUpdate () {
+		// Don't start uploading again if it is currently uploading
+		if (!this.state.doneWithCurrentFile && this.state.files.length > 0) {
+			return;
+		}
+
+		// If there are no files to upload, don't try
+		if (this.state.files.length === 0) {
 			return;
 		}
 
 		let fd = new FormData();
-		fd.append('file', this.props.file, this.props.name);
+		fd.append('file', this.state.files[0], this.state.files[0].name);
 
 		let xhr = new XMLHttpRequest();
 		xhr.open(
@@ -84,26 +235,24 @@ class FileUploader extends React.Component<FileUploaderProps, UploadingFile> {
 			urlFormat('api', 'files', 'upload')
 		);
 
-		xhr.addEventListener(
+		xhr.upload.addEventListener(
 			'progress',
-			evt => {
-				if (evt.lengthComputable) {
+			ev => {
+				if (ev.lengthComputable) {
 					this.setState({
-						progress: 100 * (evt.loaded / evt.total)
+						progress: ev.loaded / ev.total
 					});
 				}
-			},
-			false
+			}
 		);
 
-		xhr.addEventListener(
+		xhr.upload.addEventListener(
 			'loadend',
-			evt => {
+			() => {
 				this.setState({
-					progress: 100
+					progress: 1
 				});
-			},
-			false
+			}
 		);
 
 		let self = this;
@@ -111,9 +260,6 @@ class FileUploader extends React.Component<FileUploaderProps, UploadingFile> {
 			if (this.readyState === 4) {
 				try {
 					let resp = JSON.parse(this.responseText) as FileObject;
-					self.setState({
-						done: true
-					});
 					let sid = localStorage.getItem('sessionID');
 					myFetch(
 						urlFormat('api', 'files', 'root', 'children'),
@@ -123,13 +269,18 @@ class FileUploader extends React.Component<FileUploaderProps, UploadingFile> {
 								id: resp.id
 							}),
 							headers: {
-								authorization: !!sid ? sid : '',
+								'authorization': !!sid ? sid : '',
 								'content-type': 'application/json'
 							},
 							cache: 'no-cache'
 						}
 					);
-					self.props.onComplete(resp);
+					self.props.onUploadedFile(resp);
+					self.setState(prev => ({
+						files: prev.files.slice(1),
+						doneWithCurrentFile: true,
+						progress: 0
+					}));
 				} catch (e) {
 					console.log(e);
 				}
@@ -137,22 +288,29 @@ class FileUploader extends React.Component<FileUploaderProps, UploadingFile> {
 		});
 
 		xhr.send(fd);
+
+		this.setState({
+			doneWithCurrentFile: false
+		});
 	}
 
-	render () {
+	public render () {
 		return (
 			<div>
-				{this.state.progress}% {this.state.name}
-			</div>
-		);
-	}
-}
-
-class SelectedFileDisplayer extends React.Component<ItemProps> {
-	render () {
-		return (
-			<div>
-				{this.props.fileName} done uploading
+				{
+					this.state.files.length > 0 ?
+						<div>Uploading files</div> :
+						null
+				}
+				{
+					this.state.files.map((f, i) => 
+						<div
+							key={i}
+						>
+							{f.name} {i === 0 ? this.state.progress : 0}%
+						</div>
+					)
+				}
 			</div>
 		);
 	}
@@ -165,45 +323,57 @@ export default class FileDialogue extends React.Component<{
 	 * 
 	 * If it returns a boolean value, it stays open; otherwise it closes
 	 */
-	onReturn: (ids: string[]) => void
+	onReturn: (ids: FileObject[]) => void
+	/**
+	 * Used to filter all the files to show only the desired ones to be selected
+	 * 
+	 * When files are uploaded, a warning is given saying that the provided file
+	 * has been uploaded but is invalid
+	 */
+	filter?: (element: FileObject, index: number, array: FileObject[]) => boolean
 }, {
 	view: FileDialogueView
 	hovering: boolean
 	open: boolean
-	values: string[]
 	loaded: boolean
 	folder: string
 	folderFiles: FileObject[]
 	error: boolean
 	selectedFolder: string
-	uploadingFiles: UploadingFile[]
 	selectedFiles: FileObject[]
+	uploadingFiles: File[]
 }> {
 	state = {
 		view: FileDialogueView.MYDRIVE,
 		open: false,
-		values: [] as string[],
 		loaded: false,
 		folder: 'root',
 		folderFiles: [] as FileObject[],
 		error: false,
 		hovering: false,
 		selectedFolder: '',
-		uploadingFiles: [] as UploadingFile[],
-		selectedFiles: [] as FileObject[]
+		selectedFiles: [] as FileObject[],
+		uploadingFiles: [] as File[]
 	};
 
 	private mainDiv: HTMLDivElement;
 
 	constructor(props: {
 		open: boolean,
-		onReturn: (ids: string[]) => void
+		onReturn: (ids: FileObject[]) => void,
+		filter?: (file: FileObject) => boolean
 	}) {
 		super(props);
 
 		this.handleSelectChange = this.handleSelectChange.bind(this);
 		this.handleDrop = this.handleDrop.bind(this);
-		this.handleNextFile = this.handleNextFile.bind(this);
+
+		this.onFileClick = this.onFileClick.bind(this);
+		this.onFolderClick = this.onFolderClick.bind(this);
+		this.handleSelectedFileDelete = this.handleSelectedFileDelete.bind(this);
+
+		this.clearFileList = this.clearFileList.bind(this);
+		this.addFile = this.addFile.bind(this);
 	}
 
 	componentDidMount() {
@@ -286,10 +456,89 @@ export default class FileDialogue extends React.Component<{
 		return true;
 	}
 
-	render () {
-		setTimeout(() => {
-			this.componentDidMount();
+	componentDidUpdate () {
+		let div: JQuery = jQuery(this.mainDiv);
+
+		div.css({
+			'zIndex': 5010,
+			position: 'fixed'
 		});
+
+		let mobile = jQuery('body').hasClass('mobile');
+
+		if (!mobile) {
+			div.css({
+				'left': '50%',
+				'top': '50%',
+				'margin-left': function () { return -(jQuery(this).outerWidth() as number) / 2; },
+				'margin-top': function () { return -(jQuery(this).outerHeight() as number) / 2; }
+			});
+		} else {
+			div.css({
+				left: 0,
+				top: 0,
+				right: 0,
+				bottom: 0
+			});
+		}
+		if (div.find('input[type=text]')[0]) {
+			div.find('input[type=text]')[0].focus();
+		}
+
+		if (this.props.open && !this.state.open) {
+			this.setState({
+				open: true
+			});
+
+			myFetch(
+				'/api/files/' + this.state.folder + '/children/dirty'
+			).then(res =>
+				res.ok ? 
+					Promise.resolve(res) :
+					Promise.reject(new Error('404'))
+			).then(res =>
+				res.json()
+			).then((folderFiles: FileObject[]) => {
+				this.setState({
+					loaded: true,
+					error: false,
+					folderFiles
+				});
+			}).catch(err => {
+				this.setState({
+					error: true,
+					loaded: true
+				});
+			});
+
+			jQuery(div).animate(
+				{
+					opacity: 1
+				},
+				250,
+				'swing'
+			);
+		} else if (!this.props.open && this.state.open) {
+			jQuery(div).animate(
+				{
+					opacity: 0
+				},
+				250,
+				'swing',
+				() => {
+					this.setState({
+						open: this.props.open
+					});
+				}
+			);
+		}	
+	}
+
+	render () {
+		let folderFiles = this.state.folderFiles
+			.filter(f => f.contentType !== 'application/folder');
+		let folderFolders = this.state.folderFiles
+			.filter(f => f.contentType === 'application/folder');
 
 		return createPortal(
 			<div
@@ -306,7 +555,7 @@ export default class FileDialogue extends React.Component<{
 				}}
 				onClick={
 					() => {
-						this.props.onReturn(this.state.values);
+						this.props.onReturn(this.state.selectedFiles);
 					}
 				}
 			>
@@ -318,7 +567,12 @@ export default class FileDialogue extends React.Component<{
 					}
 					id="fileDialogue"
 					key="main_alert"
-					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
+					onClick={e => {
+						e.stopPropagation();
+						this.setState({
+							selectedFolder: ''
+						});
+					}}
 				>
 					<div id="fileDialogueControls">
 						<a
@@ -326,7 +580,7 @@ export default class FileDialogue extends React.Component<{
 							onClick={this.getViewChanger(FileDialogueView.MYDRIVE)}
 							className={this.state.view === FileDialogueView.MYDRIVE ? 'selected' : ''}
 						>
-							My Drive
+							Squadron Drive
 						</a>
 						<a
 							href="#"
@@ -338,23 +592,26 @@ export default class FileDialogue extends React.Component<{
 					</div>
 					<div id="fileDialogueBody">
 						{
+							this.state.selectedFiles.length > 0 ?
+								<div>Selected files</div> :
+								null
+						}
+						{
 							this.state.selectedFiles.map((file, i) => 
 								<SelectedFileDisplayer
 									key={i}
 									{...file}
 									onClick={this.handleSelectedFileDelete}
-									selected={false}
+									selected={true}
 								/>
 							)
 						}
 						{
-							this.state.uploadingFiles.map((file, i) =>
-								<FileUploader
-									key={i}
-									{...file}
-									onComplete={this.handleNextFile}
-								/>
-							)
+							<FileUploader
+								files={this.state.uploadingFiles}
+								onUploadedFile={this.addFile}
+								clearFileList={this.clearFileList}
+							/>
 						}
 						{
 							!this.state.loaded ?
@@ -369,26 +626,39 @@ export default class FileDialogue extends React.Component<{
 								>
 									No files to select
 								</div> :
-							this.state.view === FileDialogueView.MYDRIVE ?
-								this.state.folderFiles.sort((a, b) => 
-									a.fileName.localeCompare(b.fileName)
-								).sort((a, b) => 
-									a.contentType === 'application/folder' ? -1 :
-									b.contentType === 'application/folder' ? 1 :
-										0
-								).map(file =>
-									file.contentType === 'application/folder' ?
-										<FolderDisplayer
-											{...file}
-											onClick={this.onFolderClick}
-											selected={this.state.selectedFolder === file.id}
-										/> :
-										<FileDisplayer
-											{...file}
-											onClick={this.onFileClick}
-											selected={this.state.values.indexOf(file.id) > -1}
-										/>
-								) :
+							this.state.view === FileDialogueView.MYDRIVE ? 
+								[
+									folderFolders.length > 0 ? (
+										<div key={0}>
+											Folders
+										</div>
+									) : null,
+									folderFolders
+										.sort((a, b) => a.fileName.localeCompare(b.fileName))
+										.map((folder, i) => 
+											<FolderDisplayer
+												{...folder}
+												key={i}
+												onClick={this.onFolderClick}
+												selected={this.state.selectedFolder === folder.id}
+											/>
+										),
+									folderFiles.length > 0 ? (
+										<div key={1}>
+											Files
+										</div>
+									) : null,
+									folderFiles
+										.sort((a, b) => a.fileName.localeCompare(b.fileName))
+										.map((file, i) =>
+											<FileDisplayer
+												{...file}
+												key={i}
+												onClick={this.onFileClick}
+												selected={this.state.selectedFiles.map(f => f.id).indexOf(file.id) > -1}
+											/>
+										)
+								] :
 								(
 									<>
 										<div
@@ -449,6 +719,21 @@ export default class FileDialogue extends React.Component<{
 								)
 						}
 					</div>
+					<Button
+						buttonType="primaryButton"
+						onClick={() => {
+							this.props.onReturn(this.state.selectedFiles);
+
+							return false;
+						}}
+						className="floatAllthewayRight"
+					>
+						{
+							this.state.selectedFiles.length === 0 ?
+								'Cancel' :
+								'Select files'
+						}
+					</Button>
 				</div>
 			</div>,
 			document.getElementById('file-dialogue-box') as HTMLDivElement
@@ -457,19 +742,69 @@ export default class FileDialogue extends React.Component<{
 
 	private getViewChanger (view: FileDialogueView) {
 		return ((e: React.MouseEvent<HTMLAnchorElement>) => {
+			if (view === FileDialogueView.MYDRIVE) {
+				myFetch(
+					'/api/files/' + this.state.folder + '/children/dirty'
+				).then(res =>
+					res.ok ? 
+						Promise.resolve(res) :
+						Promise.reject(new Error('404'))
+				).then(res =>
+					res.json()
+				).then((folderFiles: FileObject[]) => {
+					this.setState({
+						loaded: true,
+						error: false,
+						folderFiles
+					});
+				}).catch(err => {
+					this.setState({
+						error: true,
+						loaded: true
+					});
+				});
+				this.setState({
+					loaded: false,
+					error: false,
+					folderFiles: [],
+					view
+				});
+			} else {
+				this.setState({
+					view
+				});
+			}
 			e.preventDefault();
-			this.setState({
-				view
-			});
 		}).bind(this);
 	}
 
-	private onFolderClick (folder: FileObject) {
+	private onFolderClick (folder: FileObject, selected: boolean) {
 		// basically set state with folder id
+		if (selected) {
+			this.setState({
+				folder: folder.id,
+				selectedFolder: ''
+			});
+		} else {
+			this.setState({
+				selectedFolder: folder.id
+			});
+		}
 	}
 
-	private onFileClick (file: FileObject) {
+	private onFileClick (file: FileObject, selected: boolean) {
 		// add file to selected files if it is not selected else remove
+		if (selected) {
+			let selectedFiles = this.state.selectedFiles.filter(filterFile => filterFile.id !== file.id);
+			this.setState({
+				selectedFiles
+			});
+		} else {
+			let selectedFiles = [...this.state.selectedFiles, file];
+			this.setState({
+				selectedFiles
+			});
+		}
 	}
 
 	private handleDrop (ev: React.DragEvent<HTMLDivElement>) {
@@ -492,6 +827,15 @@ export default class FileDialogue extends React.Component<{
 		});
 	}
 
+	private getDropOverChanger (hovering: boolean) {
+		return ((e: React.DragEvent<HTMLDivElement>) => {
+			e.preventDefault();
+			this.setState({
+				hovering
+			});
+		}).bind(this);
+	}
+	
 	private handleSelectChange (ev: React.FormEvent<HTMLInputElement>) {
 		let files = ev.currentTarget.files;
 
@@ -502,61 +846,38 @@ export default class FileDialogue extends React.Component<{
 		this.handleFiles(files);
 	}
 
-	private getDropOverChanger (hovering: boolean) {
-		return ((e: React.DragEvent<HTMLDivElement>) => {
-			e.preventDefault();
-			this.setState({
-				hovering
-			});
-		}).bind(this);
-	}
-
 	private handleFiles (files: FileList) {
 		// program will crash if we use files.item(index); use files[index] instead
 		// upload file and add to selected files
 		// upload to root folder
 
-		let uploadingFiles = [] as UploadingFile[];
+		let uploadingFiles = [] as File[];
 		for (let i = 0; i < files.length; i++) {
-			uploadingFiles.push({
-				uploading: i === 0,
-				done: false,
-				progress: 0,
-				size: files[i].size,
-				name: files[i].name,
-				file: files[i]
-			});
+			uploadingFiles.push(files[i]);
 		}
 
 		this.setState({
-			uploadingFiles
-		});
-	}
-
-	private handleNextFile (file: FileObject) {
-		// Don't modify mutable objects, clone them
-		let selectedFiles = this.state.selectedFiles.slice(0);	
-		let uploadingFiles = this.state.uploadingFiles.slice(0);
-
-		selectedFiles.push(file);
-
-		// change state for first file, remove done files
-		for (let i = 0; i < uploadingFiles.length; i++) {
-			if (uploadingFiles[i].done) {
-				uploadingFiles.splice(i, 1);
-				i--;
-			}
-		}
-
-		uploadingFiles[0].uploading = true;
-
-		this.setState({
-			selectedFiles,
 			uploadingFiles
 		});
 	}
 
 	private handleSelectedFileDelete (file: FileObject, selected: boolean) {
 		// delete the file from this.state.selectedFiles
+		let selectedFiles = this.state.selectedFiles.filter(f => f.id !== file.id);
+		this.setState({selectedFiles});
+	}
+
+	private addFile (file: FileObject) {
+		this.setState(prev => ({
+			selectedFiles: [...prev.selectedFiles, file]
+		}));
+	}
+
+	private clearFileList () {
+		if (this.state.uploadingFiles.length !== 0) {
+			this.setState({
+				uploadingFiles: []
+			});
+		}
 	}
 }

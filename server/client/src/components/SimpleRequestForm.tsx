@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import myFetch from '../lib/myFetch';
 
-import Form, { FormProps } from './Form';
+import Form, { FormProps } from './SimpleForm';
 
 interface RequestFormProps<C, S> extends FormProps<C> {
 	/**
@@ -44,6 +44,9 @@ export default class RequestForm<C extends object, S> extends Form<C, RequestFor
 			...(this.fields as any),
 			token: this.token
 		};
+		this.setState({
+			disabled: true
+		});
 		(new Promise<{push: boolean, data: any}> ((res, rej): void => {
 			if (typeof this.props.onSubmit === 'undefined') {
 				res({
@@ -99,6 +102,10 @@ export default class RequestForm<C extends object, S> extends Form<C, RequestFor
 					}
 				}).catch((err: Error) => {
 					console.log(err);	
+				});
+			} else {
+				this.setState({
+					disabled: false
 				});
 			}
 		}));

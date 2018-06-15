@@ -14,6 +14,7 @@ import setfileinfo from './files/setfileinfo';
 import setfiledata from './files/setfiledata';
 import deletefile from './files/deletefile';
 import setfileinfopartial from './files/setfileinfopartial';
+import createfolder from './files/createfolder';
 
 // Children methods
 import getfiles from './children/getfiles';
@@ -37,6 +38,7 @@ filerouter.get('/:fileid/export', getfile); // export, functions differently and
 filerouter.delete('/:fileid', deletefile); // delete
 filerouter.put('/:fileid', setfileinfo); // update
 filerouter.patch('/:fileid', setfileinfopartial); // patch
+filerouter.post('/create/:name', createfolder);
 
 /// https://developers.google.com/drive/v2/reference/children#methods
 filerouter.get('/:parentid/children/:method*?', getfiles); // list

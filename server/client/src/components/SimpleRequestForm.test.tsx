@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import RequestForm from './RequestForm';
+import RequestForm from './SimpleRequestForm';
 
 import * as Enzyme from 'enzyme';
 import * as Adapter from 'enzyme-adapter-react-16';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import Form, { Title, Label, TextInput } from './Form';
+import Form, { Title, Label, TextInput } from './SimpleForm';
 import * as sinon from 'sinon';
 
 import * as Enzyme from 'enzyme';

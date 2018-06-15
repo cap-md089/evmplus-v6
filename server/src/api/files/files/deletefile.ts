@@ -11,7 +11,7 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 	) {
 		await req.connectionPool.query(
 			'DELETE FROM FileInfo WHERE id = ? AND AccountID = ?',
-			[req.params.id, req.account.id],
+			[req.params.fileid, req.account.id],
 		);
 
 		fs.unlink(join(Configuration.fileStoragePath, req.params.id), err => {
