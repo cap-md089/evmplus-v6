@@ -6,7 +6,7 @@ import addpost from './addpost';
 import getlist from './getlist';
 import deletePost from './deletePost';
 
-export { BlogPost } from '../../../types';
+export { BlogPost } from '../../../types.d';
 
 import * as mysql from 'promise-mysql';
 

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "body-parser": "~1.18.2",
+    "cheerio": "^1.0.0-rc.2",
     "connect-busboy": "0.0.2",
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.9",
@@ -20,11 +21,14 @@
     "morgan": "^1.9.0",
     "mysql": "^2.15.0",
     "promise-mysql": "^3.2.1",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2",
     "serve-favicon": "~2.4.5",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.8",
+    "@types/cheerio": "^0.22.7",
     "@types/connect-busboy": "0.0.0",
     "@types/cookie-parser": "^1.4.1",
     "@types/debug": "0.0.30",
@@ -37,6 +41,7 @@
     "@types/morgan": "^1.7.35",
     "@types/mysql": "^2.15.4",
     "@types/node": "^9.3.0",
+    "@types/request-promise-native": "^1.0.15",
     "@types/uuid": "^3.4.3",
     "gulp": "^4.0.0",
     "gulp-jest": "^4.0.2",

@@ -1,61 +1,99 @@
 #%RAML 1.0
-title: CAPUnit4
+title: CAPUnit
 version: v4
 baseUri: https://capunit.com/api
 mediaType: application/json
 types:
-    Member:
-        type: object
-        properties:
-            id: number
-    FileObject:
-        type: object
-        properties:
-            id: number
-            fileName: string
-    FileChildObject:
-        type: object
-        properties:
-            kind: string
-            id: string
-            selfLink: string
-            childLink: string
+	Member:
+		type: object
+		properties:
+			id: number
+	FileObject:
+		type: object
+		properties:
+			id: number
+			fileName: string
+	FileChildObject:
+		type: object
+		properties:
+			kind: string
+			id: string
+			selfLink: string
+			childLink: string
 
 /files:
-    /{fileid}:
-        get:
-            responses:
-                200:
-                    body:
-                        application/json:
-                            type: FileObject
-    
-    /{fileid}/children:
-        get:
-            responses:
-                200:
-                    body:
-                        application/json:
-                            type: object
-                            properties:
-                                kind: string
-                                selfLink: string
-                                items: FileChildObject[]
-        post:
-            body:
-                type: object
-                properties:
-                    id: string
-            responses:
-                204:
-                    description: It worked
+	/{fileid}:
+		get:
+			responses:
+				200:
+					body:
+						application/json:
+							type: FileObject
+		delete:
+			responses:
+				204:
+					description: It succeeded
+				400:
+					description: Account or file id not provided
+				500:
+					description: Error in unlinking the file or in updating database
+		put:
+			body:
+				application/json:
+					type: object
+					properties:
+						fileName: string
+						comments: string
+						memberOnly: boolean
+						forDisplay: boolean
+						forSlideshow: boolean
+			responses:
+				204:
+					description: It succeeded
+				400:
+					description: One or more of the properties were not present
+		patch:
+			body:
+				application/json:
+					type: object
+					properties:
+						fileName?: string
+						comments?: string
+						memberOnly?: boolean
+						forSlideshow?: boolean
+						forDisplay?: boolean
+			responses:
+				204:
+					description: It succeeded
+				400:
+					description: No body was sent, no account, no file ID
 
-    /{fileid}/children/{childid}:
-        get:
-            responses:
-                404:
-                    description: Could not find a parent/child relationship between files
-                200:
-                    body:
-                        application/json:
-                            type: FileChildObject
+	/{fileid}/children:
+		get:
+			responses:
+				200:
+					body:
+						application/json:
+							type: object
+							properties:
+								kind: string
+								selfLink: string
+								items: FileChildObject[]
+		post:
+			body:
+				type: object
+				properties:
+					id: string
+			responses:
+				204:
+					description: It worked
+
+	/{fileid}/children/{childid}:
+		get:
+			responses:
+				404:
+					description: Could not find a parent/child relationship between files
+				200:
+					body:
+						application/json:
+							type: FileChildObject

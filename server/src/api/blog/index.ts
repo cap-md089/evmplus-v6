@@ -2,7 +2,7 @@ import * as express from 'express';
 
 import post from './post';
 
-export { BlogPost } from '../../types';
+export { BlogPost } from '../../types.d';
 
 import * as mysql from 'promise-mysql';
 

@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
-import { FileObject } from '../../../types';
+import { FileObject } from '../../../types.d';
 import { json } from '../../../lib/Util';
 
 export default async (req: AccountRequest, res: express.Response, next: Function) => {

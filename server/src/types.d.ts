@@ -2,11 +2,6 @@ export interface Identifiable {
 	id: string | number;
 }
 
-export enum MemberCreateError {
-	INVALID_CREDENTIALS,
-	PASSWORD_EXPIRED
-}
-
 export enum MemberCAPWATCHErrors {
 	INVALID_PERMISSIONS,
 	NO_NHQ_ACTION
@@ -197,6 +192,8 @@ export interface MemberPermissions {
 	[key: string]: number;
 }
 
+export type MemberPermission = keyof MemberPermissions;
+
 /**
  * Describes a CAP member
  * 
@@ -212,14 +209,6 @@ export interface MemberObject extends Identifiable {
 	 */
 	id: number;
 	/**
-	 * Check for this from the Member.Create function, it shows whether it is valid
-	 */
-	valid: boolean;
-	/**
-	 * The error to use when the valid boolean is false
-	 */
-	error?: MemberCreateError;
-	/**
 	 * The rank of the member provided
 	 */
 	memberRank: string;
@@ -232,31 +221,9 @@ export interface MemberObject extends Identifiable {
 	 */
 	contact: MemberContact;
 	/**
-	 * The raw contact information
-	 * 
-	 * @deprecated
-	 */
-	rawContact: string;
-	/**
-	 * Cookies from NHQ to be stored and used to gather information
-	 */
-	cookieData: string;
-	/**
 	 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
 	 */
 	dutyPositions: string[];
-	/**
-	 * Permissions of the user
-	 */
-	permissions: MemberPermissions;
-	/**
-	 * Is the member a member of the squadron of the page they are currrently viewing?
-	 */
-	squadMember: boolean;
-	/**
-	 * The permission descriptor for the access level
-	 */
-	accessLevel: MemberAccessLevel;
 	/**
 	 * The Squadron a member belongs to
 	 */
@@ -277,12 +244,6 @@ export interface MemberObject extends Identifiable {
 	 * Suffix of member
 	 */
 	nameSuffix: string;
-	/**
-	 * Whether or not the user can perform actions on CAP NHQ
-	 * 
-	 * Since member objects created by Estimate don't have cookies, this is for that
-	 */
-	canPerformNHQActions: boolean;
 }
 
 export interface AccountObject extends Identifiable {
