@@ -60,7 +60,7 @@
 					},
 					method: 'post',
 					body: JSON.stringify({
-						capid: form.capid.value,
+						username: form.username.value,
 						password: form.password.value
 					})
 				}).then(res => {
@@ -86,10 +86,10 @@
 		<form onsubmit="return onSubmit(this);" class="asyncForm">
 			<div class="formbar">
 				<div class="formbox">
-					<label for="capid">CAP ID:</label>
+					<label for="username">CAP ID:</label>
 				</div>
 				<div class="formbox">
-					<input name="capid" id="capid" />
+					<input name="username" id="username" />
 				</div>
 			</div>
 			

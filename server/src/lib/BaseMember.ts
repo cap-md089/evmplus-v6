@@ -1,6 +1,4 @@
-import { MemberObject, MemberContact } from '../types.d';
-import { MemberRequest } from './members/NHQMember';
-import { Response, NextFunction } from 'express';
+import { MemberObject, MemberContact } from '../types';
 // import Account from './Account';
 // import * as mysql from 'promise-mysql';
 // import { prettySQL } from './MySQLUtil';
@@ -26,51 +24,21 @@ export default class MemberBase implements MemberObject {
 	 * Contact information
 	 */
 	public contact: MemberContact = {
-		ALPHAPAGER : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		ASSISTANT : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		CADETPARENTEMAIL : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		CADETPARENTPHONE : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		CELLPHONE : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		DIGITALPAGER : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		EMAIL : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		HOMEFAX : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		HOMEPHONE : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		INSTANTMESSAGER : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		ISDN : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		RADIO : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		TELEX : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		WORKFAX : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		},
-		WORKPHONE : {
-			PRIMARY: [], SECONDARY: [], EMERGENCY: []
-		}
+		ALPHAPAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		ASSISTANT : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CADETPARENTEMAIL : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CADETPARENTPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CELLPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		DIGITALPAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		EMAIL : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		HOMEFAX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		HOMEPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		INSTANTMESSAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		ISDN : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		RADIO : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		TELEX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		WORKFAX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		WORKPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 	};
 	/**
 	 * Duty positions
@@ -96,13 +64,28 @@ export default class MemberBase implements MemberObject {
 	 * The suffix of the user
 	 */
 	public nameSuffix: string = '';
+	/**
+	 * Whether or not the user is Rioux
+	 */
+	public readonly isRioux: boolean = false;
 
-	public static ExpressMiddleware (req: MemberRequest, res: Response, next: NextFunction) {
-		// Overwritten in Member.ts, alias for NHQMember.ExpressMiddleware
+	public static IsRioux (capid: number): boolean;
+	public static IsRioux (member: MemberBase): boolean;
+	
+	public static IsRioux (cm: MemberBase | number): boolean {
+		if (typeof cm === 'number') {
+			return (cm === 542488 || cm === 546319);
+		} else {
+			return cm.isRioux;
+		}
 	}
 
 	public constructor (data: MemberObject) {
 		Object.assign(this, data);
+
+		this.memberRankName = this.memberRank + this.getName();
+
+		this.isRioux = (data.id === 542488 || data.id === 546319);
 	}
 
 	public hasDutyPosition (dutyPosition: string | string[]): boolean {
@@ -114,6 +97,16 @@ export default class MemberBase implements MemberObject {
 				.reduce((a, b) => a || b);
 		}
 	}
+
+	public getName (): string {
+		return [
+			this.nameFirst,
+			this.nameMiddle,
+			this.nameLast,
+			this.nameSuffix
+		].filter(s => s !== '' && s !== undefined).join(' ');
+	}
 }
 
 export { default as NHQMember } from './members/NHQMember';
+export { MemberRequest } from './members/NHQMember';

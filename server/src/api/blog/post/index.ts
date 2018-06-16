@@ -6,11 +6,11 @@ import addpost from './addpost';
 import getlist from './getlist';
 import deletePost from './deletePost';
 
-export { BlogPost } from '../../../types.d';
+export { BlogPost } from '../../../types';
 
 import * as mysql from 'promise-mysql';
 
-import Member from '../../../lib/Member';
+import Member from '../../../lib/members/NHQMember';
 
 export default (pool: mysql.Pool) => {
 	const router = express.Router();

@@ -61,10 +61,10 @@ router.use((req, res, next) => {
 });
 
 import Account from './lib/Account';
-import Member from './lib/Member';
+import Member from './lib/members/NHQMember';
 
 import signin from './api/signin';
-router.post('/signin', signin);
+router.post('/signin', Account.ExpressMiddleware, signin);
 
 import { getFormToken } from './api/formtoken';
 router.get('/token', Member.ExpressMiddleware, getFormToken);

@@ -2,15 +2,20 @@ export interface Identifiable {
 	id: string | number;
 }
 
+export enum MemberCreateError {
+	INCORRECT_CREDENTIALS,
+	PASSWORD_EXPIRED
+}
+
 export enum MemberCAPWATCHErrors {
 	INVALID_PERMISSIONS,
 	NO_NHQ_ACTION
 }
 
 export interface MemberContactInstance {
-	PRIMARY: string[];
-	SECONDARY: string[];
-	EMERGENCY: string[];
+	PRIMARY: string;
+	SECONDARY: string;
+	EMERGENCY: string;
 }
 
 export type MemberAccessLevel = 'Member' | 'CadetStaff' | 'Manager' | 'Admin';
@@ -80,6 +85,10 @@ export interface MemberContact {
 	 */
 	WORKPHONE: MemberContactInstance;
 }
+
+export type MemberContactType = keyof MemberContact;
+
+export type MemberContactPriority = keyof MemberContactInstance;
 
 export interface MemberPermissions {
 	// Start the Cadet Staff permissions
@@ -244,6 +253,10 @@ export interface MemberObject extends Identifiable {
 	 * Suffix of member
 	 */
 	nameSuffix: string;
+	/**
+	 * Which flight the user is in. Should only exist if not a senior member
+	 */
+	flight?: string;
 }
 
 export interface AccountObject extends Identifiable {

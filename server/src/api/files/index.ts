@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 
 import Account from '../../lib/Account';
-import Member from '../../lib/Member';
+import Member from '../../lib/members/NHQMember';
 
 let filerouter: express.Router = express.Router();
 

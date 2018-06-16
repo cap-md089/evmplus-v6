@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/Member';
+import { MemberRequest } from '../../../lib/BaseMember';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration } from '../../../conf';

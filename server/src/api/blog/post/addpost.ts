@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as mysql from 'promise-mysql';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/Member';
+import { MemberRequest } from '../../../lib/BaseMember';
 
 export default (connectionPool: mysql.Pool): express.RequestHandler => {
 	return async (req: AccountRequest & MemberRequest, res, next) => {

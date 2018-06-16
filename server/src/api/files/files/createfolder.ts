@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/Member';
+import { MemberRequest } from '../../../lib/BaseMember';
 import { prettySQL } from '../../../lib/MySQLUtil';
 import { v4 as uuid } from 'uuid';
 import * as moment from 'moment';

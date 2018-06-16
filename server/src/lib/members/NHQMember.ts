@@ -1,28 +1,40 @@
 import Member from '../BaseMember';
-import { MemberContact, MemberAccessLevel, MemberPermissions, MemberObject } from '../../types';
-import { getCookies } from './pam/nhq-authenticate';
-import { Response, NextFunction } from 'express';
+import { 
+	Identifiable,
+	MemberContact,
+	MemberAccessLevel,
+	MemberPermissions,
+	MemberObject,
+	MemberCreateError
+} from '../../types';
+import { nhq as auth } from './pam/';
+import { RequestHandler } from 'express';
+import { MySQLRequest, prettySQL } from '../MySQLUtil';
+import { sign, verify } from 'jsonwebtoken';
+import * as mysql from 'promise-mysql';
+import Account, { AccountRequest } from '../Account';
+import {
+	Member as MemberPermissionsLevel, getPermissions
+} from '../Permissions';
 
-interface MemberSession {
+interface MemberSession extends Identifiable {
 	id: number;
 	expireTime: number;
 
 	contact: MemberContact;
 	memberRank: string;
 	cookieData: string;
-	accessLevel: MemberAccessLevel;
 	nameFirst: string;
 	nameMiddle: string;
 	nameLast: string;
 	nameSuffix: string;
+	seniorMember: boolean;
+	squadron: string;
 }
 
-export enum MemberCreateError {
-	INCORRECT_CREDENTIALS,
-	PASSWORD_EXPIRED
-}
+export { MemberCreateError };
 
-export interface MemberRequest {
+export interface MemberRequest extends MySQLRequest {
 	member?: NHQMember;
 }
 
@@ -71,36 +83,264 @@ export default class NHQMember extends Member {
 	 */
 	public accessLevel: MemberAccessLevel = 'Member';
 	/**
+	 * The ID to for the session of the member
+	 */
+	public sessionID: string = '';
+	/**
 	 * The cookie data used to access NHQ
 	 */
 	private cookie: string = '';
 
-	public static async Create (username: string, password: string): Promise<{
-		member?: NHQMember,
-		error?: MemberCreateError
-	}> {
-		let cookies = await getCookies(username, password);
+	public static async Create (
+		username: string,
+		password: string,
+		pool: mysql.Pool,
+		account: Account
+	): Promise<NHQMember> {
+		let cookie;
+		try {
+			cookie = await auth.getCookies(username, password);
+		} catch (e) {
+			throw e;
+		}
 
-		return {};
+		let memberInfo = await Promise.all([
+			auth.getName(cookie, username),
+			auth.getContact(cookie),
+		]);
+
+		let id = memberInfo[0].capid;
+		let sessionID;
+
+		// Set session
+		{
+			let memberIndex = -1;
+
+			for (let i in this.memberSessions) {
+				if (NHQMember.memberSessions[i].id === id) {
+					memberIndex = parseInt(i, 10);
+				}
+			}
+
+			if (memberIndex === -1) {
+				let sess: MemberSession = {
+					expireTime: (Date.now() / 1000) + (60 * 10),
+
+					id,
+					memberRank: memberInfo[0].rank,
+					cookieData: cookie,
+					nameFirst: memberInfo[0].nameFirst,
+					nameMiddle: memberInfo[0].nameMiddle,
+					nameLast: memberInfo[0].nameLast,
+					nameSuffix: memberInfo[0].nameSuffix,
+					seniorMember: memberInfo[0].seniorMember,
+					squadron: memberInfo[0].squadron,
+					contact: memberInfo[1],
+				};
+				NHQMember.memberSessions.push(sess);
+			} else {
+				NHQMember.memberSessions[memberIndex].expireTime =
+					(Date.now()) / 1000 + (60 * 10);
+			}
+
+			sessionID = sign(
+				{
+					id
+				},
+				NHQMember.secret,
+				{
+					algorithm: 'HS512',
+					expiresIn: '10min'
+				}
+			);
+		}
+
+		let [
+			pinfo,
+			dutyPositions
+		] = await Promise.all([
+			NHQMember.GetPermissions(id, pool, account),
+			NHQMember.GetDutypositions(id, pool, account)
+		]);
+
+		return new NHQMember(
+			{
+				id,
+				memberRank: memberInfo[0].rank,
+				nameFirst: memberInfo[0].nameFirst,
+				nameMiddle: memberInfo[0].nameMiddle,
+				nameLast: memberInfo[0].nameLast,
+				nameSuffix: memberInfo[0].nameSuffix,
+				seniorMember: memberInfo[0].seniorMember,
+				squadron: memberInfo[0].squadron,
+				contact: memberInfo[1],
+				dutyPositions
+			},
+			pinfo.permissions,
+			pinfo.accessLevel,
+			cookie,
+			sessionID
+		);
 	}
 
-	public static async ExpressMiddleware (
-		req: MemberRequest,
-		res: Response,
-		next: NextFunction
-	) {
-		//
+	public static ExpressMiddleware: RequestHandler = (req: MemberRequest & AccountRequest, res, next) => {
+		if (
+			typeof req.headers !== 'undefined' &&
+			typeof req.headers.authorization !== 'undefined' &&
+			typeof req.account !== 'undefined'
+		) {
+			let header = req.headers.authorization;
+			verify(
+				header,
+				NHQMember.secret,
+				{
+					algorithms: [
+						'HS512'
+					]
+				},
+				async (err, decoded: {
+					id: number
+				}) => {
+					if (err) {
+						req.member = null;
+						next();
+						return;
+					}
+					NHQMember.memberSessions = NHQMember.memberSessions.filter(s =>
+						s.expireTime < (Date.now () / 1000));
+					let sess = NHQMember.memberSessions.filter(s =>
+						s.id === decoded.id);
+					if (sess.length === 1) {
+						let [
+							pinfo,
+							dutyPositions
+						] = await Promise.all([
+							NHQMember.GetPermissions(decoded.id, req.connectionPool, req.account),
+							NHQMember.GetDutypositions(decoded.id, req.connectionPool, req.account)
+						]);
+						return new NHQMember(
+							{
+								id: sess[0].id,
+								contact: sess[0].contact,
+								dutyPositions,
+								memberRank: sess[0].memberRank,
+								nameFirst: sess[0].nameFirst,
+								nameLast: sess[0].nameLast,
+								nameMiddle: sess[0].nameMiddle,
+								nameSuffix: sess[0].nameSuffix,
+								seniorMember: sess[0].seniorMember,
+								squadron: sess[0].squadron
+							},
+							pinfo.permissions,
+							pinfo.accessLevel,
+							sess[0].cookieData,
+							header
+						);
+					} else {
+						req.member = null;
+						next();
+					}
+				}
+			);
+		} else {
+			req.member = null;
+			next();
+		}
+	}
+
+	private static GetDutypositions = async (capid: number, pool: mysql.Pool, account: Account): Promise<string[]> =>
+		(await pool.query(
+			`
+				(
+					SELECT
+						Duty
+					FROM
+						Data_DutyPosition
+					WHERE
+						CAPID = ${capid}
+					AND
+						ORGID in (${account.orgIDs.join(', ')})
+				)
+					UNION
+				(
+					SELECT
+						Duty
+					FROM
+						Data_CadetDutyPositions
+					WHERE
+						CAPID = ${capid}
+					AND
+						ORGID in (${account.orgIDs.join(', ')})
+				)
+					UNION
+				(
+					SELECT
+						Duty
+					FROM
+						TemporaryDutyPositions
+					WHERE
+						capid = ${capid}
+					AND
+						AccountID = ${mysql.escape(account.id)}
+				)
+			`
+		)).map((item: {Duty: string}) =>
+			item.Duty)
+	
+	private static async GetPermissions (capid: number, pool: mysql.Pool, account: Account, su?: number): Promise<{
+		accessLevel: MemberAccessLevel,
+		permissions: MemberPermissions
+	}> {
+		let rows: Array<{
+			AccessLevel: MemberAccessLevel,
+		}> = await pool.query(
+			prettySQL`
+				SELECT
+					AccessLevel
+				FROM
+					UserAccessLevels
+				WHERE
+					CAPID = ?
+				AND
+					(AccountID = ? OR AccountID = 'www')
+			`,
+			[
+				NHQMember.IsRioux(capid) && typeof su !== 'undefined' ? su : capid,
+				account.id
+			]
+		);
+
+		if (
+			rows.length === 1 ||
+			NHQMember.IsRioux(capid)
+		) {
+			let accessLevel = rows[0].AccessLevel;
+			if (NHQMember.IsRioux(capid)) {
+				accessLevel = 'Admin';
+			}
+			return {
+				accessLevel,
+				permissions: getPermissions(accessLevel)
+			};
+		} else {
+			return {
+				accessLevel: 'Member',
+				permissions: MemberPermissionsLevel
+			};
+		}
 	}
 
 	private constructor (
 		data: MemberObject,
 		permissions: MemberPermissions,
 		accessLevel: MemberAccessLevel,
-		cookie: string
+		cookie: string,
+		sessionID: string
 	) {
 		super(data);
 		this.permissions = permissions;
 		this.accessLevel = accessLevel;
 		this.cookie = cookie;
+		this.sessionID = sessionID; 
 	}
 }

@@ -5,7 +5,7 @@ import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/Member';
+import { MemberRequest } from '../../../lib/BaseMember';
 import { prettySQL } from '../../../lib/MySQLUtil';
 
 const parseHeaders = (lines: string[]) => {

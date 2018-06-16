@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as uuid from 'uuid/v4';
-import Member, { MemberRequest } from '../lib/Member';
+import Member, { MemberRequest } from '../lib/members/NHQMember';
 
 let validTokens: {
 	member: Member,

@@ -1,4 +1,3 @@
-import { MemberCreateError } from '../NHQMember';
 import * as rp from 'request-promise-native';
 
 import * as cheerio from 'cheerio';
@@ -6,10 +5,7 @@ import * as cheerio from 'cheerio';
 const GET_SIGNIN_VALUES_URL = 'https://www.capnhq.gov/CAP.eServices.Web/default.aspx';
 const SIGNIN_URL = GET_SIGNIN_VALUES_URL;
 
-export const getCookies = async (Login1$UserName: string, Login1$Password: string): Promise<{
-	error?: MemberCreateError,
-	cookies?: ''
-}> => {
+export default async (Login1$UserName: string, Login1$Password: string): Promise<string> => {
 	let page = await rp(GET_SIGNIN_VALUES_URL);
 
 	let $ = cheerio.load(page);
@@ -45,20 +41,14 @@ export const getCookies = async (Login1$UserName: string, Login1$Password: strin
 
 	if (results.statusCode === 302) {
 		if (results.headers.location.slice(0, 38) === '/CAP.eServices.Web/NL/Recover.aspx?UP=') {
-			return {
-				error: MemberCreateError.PASSWORD_EXPIRED
-			};
+			throw new Error('1');
 		} else {
 			let cookies = results.headers['set-cookie'].map((ctext: string) =>
 				ctext.match(/(.*?\=.*?);/)[1]).join('; ');
 	
-			return {
-				cookies
-			};
+			return cookies;
 		}
 	} else {
-		return {
-			error: MemberCreateError.INCORRECT_CREDENTIALS
-		};
+		throw new Error('0');
 	}
 };

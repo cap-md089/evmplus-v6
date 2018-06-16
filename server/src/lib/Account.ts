@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as mysql from 'promise-mysql';
 import * as moment from 'moment';
 
-import * as CAP from '../types.d';
+import * as CAP from '../types';
 import { Configuration } from '../conf';
 import { MySQLRequest } from './MySQLUtil';
 
