@@ -68,3 +68,29 @@
 	border-color: #1080be;
 	box-shadow: 0 0 4px #1080be;
 }
+
+#fileDialogue .selectedFile {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .selectedFile .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .selectedFile .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
+}
+
+#fileDialogue .selectedFile .box.selected.red {
+	border-color: #ee4444;
+	box-shadow: 0 0 4px #ee4444;
+}

@@ -127,10 +127,11 @@ export class FileDisplayer extends React.Component<ItemProps> {
 	}
 }
 
-class SelectedFileDisplayer extends React.Component<ItemProps> {
+class SelectedFileDisplayer extends React.Component<ItemProps & {red: boolean}> {
 	render () {
 		return (
 			<div
+				className="selectedFile"
 				onClick={(e) => {
 					e.stopPropagation();
 					let {
@@ -164,7 +165,18 @@ class SelectedFileDisplayer extends React.Component<ItemProps> {
 					);
 				}}
 			>
-				{this.props.fileName} selected
+				<div
+					className={
+						'box selected' + (this.props.red ? ' red' : '')
+					}
+					title={
+						this.props.red ?
+							'Invalid file selected' :
+							this.props.fileName
+					}
+				>
+					{this.props.fileName}
+				</div>
 			</div>
 		);
 	}
@@ -337,6 +349,7 @@ export default class FileDialogue extends React.Component<{
 	open: boolean
 	loaded: boolean
 	folder: string
+	previousFolders: string[]
 	folderFiles: FileObject[]
 	error: boolean
 	selectedFolder: string
@@ -348,6 +361,7 @@ export default class FileDialogue extends React.Component<{
 		open: false,
 		loaded: false,
 		folder: 'root',
+		previousFolders: [] as string[],
 		folderFiles: [] as FileObject[],
 		error: false,
 		hovering: false,
@@ -361,7 +375,7 @@ export default class FileDialogue extends React.Component<{
 	constructor(props: {
 		open: boolean,
 		onReturn: (ids: FileObject[]) => void,
-		filter?: (file: FileObject) => boolean
+		filter?: (file: FileObject, index: number, array: FileObject[]) => boolean
 	}) {
 		super(props);
 
@@ -555,7 +569,9 @@ export default class FileDialogue extends React.Component<{
 				}}
 				onClick={
 					() => {
-						this.props.onReturn(this.state.selectedFiles);
+						this.props.onReturn(this.state.selectedFiles.filter(
+							this.props.filter ? this.props.filter : () => true
+						));
 					}
 				}
 			>
@@ -603,6 +619,11 @@ export default class FileDialogue extends React.Component<{
 									{...file}
 									onClick={this.handleSelectedFileDelete}
 									selected={true}
+									red={
+										this.props.filter ?
+											!this.props.filter(file, i, this.state.selectedFiles) :
+											false
+									}
 								/>
 							)
 						}
@@ -650,6 +671,7 @@ export default class FileDialogue extends React.Component<{
 									) : null,
 									folderFiles
 										.sort((a, b) => a.fileName.localeCompare(b.fileName))
+										.filter(this.props.filter ? this.props.filter : () => true)
 										.map((file, i) =>
 											<FileDisplayer
 												{...file}
@@ -722,7 +744,9 @@ export default class FileDialogue extends React.Component<{
 					<Button
 						buttonType="primaryButton"
 						onClick={() => {
-							this.props.onReturn(this.state.selectedFiles);
+							this.props.onReturn(this.state.selectedFiles.filter(
+								this.props.filter ? this.props.filter : () => true
+							));
 
 							return false;
 						}}

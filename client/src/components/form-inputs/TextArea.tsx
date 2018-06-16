@@ -249,6 +249,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 				value: convertToRaw(this.state.editorState.getCurrentContent())
 			});
 		}
+
+		if (this.props.onChange) {
+			this.props.onChange(convertToRaw(this.state.editorState.getCurrentContent()));
+		}
 	}
 
 	private getBlockType () {

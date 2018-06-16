@@ -1,53 +1,10 @@
 import * as React from 'react';
 
-import TextInput from './form-inputs/TextInput';
-import FileInput from './form-inputs/FileInput';
-import TextArea from './form-inputs/TextArea';
-import myFetch from '../lib/myFetch';
-
-/**
- * Creates a label to be used in the form
- */
-class Label extends React.Component<{fullWidth?: boolean}> {
-	public readonly IsLabel = true;
-
-	constructor(props: {fullWidth: boolean}) {
-		super(props);
-
-		this.IsLabel = true;
-	}
-
-	render() {
-		return (
-			<div className="formbox">
-				{this.props.children}
-			</div>
-		);
-	}
-}
-
-/**
- * Creates a title to use in the form
- */
-class Title extends React.Component<{fullWidth?: boolean}> {
-	public readonly IsLabel = true;
-
-	constructor(props: {fullWidth: boolean}) {
-		super(props);
-
-		this.IsLabel = true;
-	}
-
-	render() {
-		return (
-			<div className="formbar fheader">
-				<div className="formbox">
-					<h3>{this.props.children}</h3>
-				</div>
-			</div>
-		);
-	}
-}
+import {
+	TextArea,
+	TextInput,
+	FileInput
+} from './SimpleForm';
 
 /**
  * Helper function
@@ -63,62 +20,9 @@ function isInput (el: React.ReactChild): boolean {
 		el.type === TextArea;
 }
 
-/**
- * The properties a form itself requires
- */
-export interface FormProps<F> {
-	/**
-	 * The function that is called when the user submits the form
-	 * 
-	 * @param fields The fields of the form
-	 */
-	onSubmit?: (fields: F, token: string) => void;
-	/**
-	 * Styles the submit button
-	 */
-	submitInfo?: {
-		/**
-		 * The text for the submit button to use
-		 */
-		text: string,
-		/**
-		 * A CSS class to use
-		 */
-		className?: string
-		/**
-		 * Whether or not the button is to be disabled
-		 */
-		disabled?: boolean
-	};
-	/**
-	 * The ID to identify the form with CSS
-	 * 
-	 * Also used to 'save' the form; make it long so that it is unique!
-	 */
-	id: string;
-	/**
-	 * Determines whether or not to load a previously saved form
-	 * 
-	 * @param saveTime How long ago was the form saved
-	 * @param fields The fields to look at
-	 * 
-	 * @returns Whether or not to load a previous save
-	 */
-	shouldLoadPreviousFields?: (saveTime: number, fields: F) => boolean;
-	/**
-	 * Replaces the previous property
-	 * 
-	 * Basically makes it so it uses a function that checks whether or not saveTime
-	 * is less than the value specified
-	 */
-	saveCheckTime?: number;
-	/**
-	 * What to do on a form value changing
-	 * 
-	 * Can be used to help with checking if a form field should be disabled
-	 */
-	onChange?: (fields: F) => void;
-}
+import { FormProps } from './SimpleForm';
+import myFetch from '../lib/myFetch';
+export { FormProps } from './SimpleForm';
 
 /**
  * The form itself
@@ -263,87 +167,18 @@ class Form<
 						(
 							child: React.ReactChild,
 							i
-						) => {
-							if (typeof this.props.children === 'undefined' || this.props.children === null) {
-								throw new TypeError('Some error occurred');
-							}
-							let ret, fullWidth = false;
-							if (!isInput(child)) {
-								// This algorithm handles labels for inputs by handling inputs
-								// Puts out titles on their own line
-								// Disregards spare labels and such
-								if ((child as React.ReactElement<any>).type === Title) {
-									return child;
-								}
-								return;
-							} else {
-								this.fields[(child as React.ReactElement<any>).props.name] =
-									(child as React.ReactElement<any>).props.value || '';
-								fullWidth = (child as React.ReactElement<any>).props.fullWidth; 
-								if (typeof fullWidth === 'undefined') {
-									fullWidth = false;
-								}
-								ret = [
-									React.cloneElement(
-										child as React.ReactElement<{
-											onUpdate: (e: {name: string, value: any}) => void,
-											key: number
-										}>,
-										{
-											onUpdate: this.onChange,
-											key: Math.random()
-										}
-									)
-								];
-							}
-							if (i > 0 &&
-								typeof (this.props.children as React.ReactChild[])[i - 1] !== 'undefined' &&
-								!isInput((this.props.children as React.ReactChild[])[i - 1])
-							) {
-								if (typeof this.props.children[i - 1] === 'string' ||
-									typeof this.props.children[i - 1] === 'number') {
-									ret.unshift(
-										<Label
-											key={i - 1}
-											fullWidth={fullWidth}
-										>
-											{this.props.children[i - 1]}
-										</Label>
-									);
-								} else {
-									if (this.props.children[i - 1].type !== Title) {
-										ret.unshift(
-											React.cloneElement(
-												this.props.children[i - 1],
-												{
-													key: i - 1,
-													onUpdate: this.onChange
-												}
-											)
-										);
+						) => 
+							isInput(child) ? 
+								React.cloneElement(
+									child as React.ReactElement<{
+										onUpdate: (e: {name: string, value: any}) => void
+									}>,
+									{
+										key: i,
+										onUpdate: this.onChange
 									}
-								}
-							} else {
-								ret.unshift(
-									<div
-										className="formbox"
-										style={{
-											height: 2
-										}}
-										key={i - 1}
-									/>
-								);
-							}
-							
-							return (
-								<div
-									key={i}
-									className="formbar"
-								>
-									{ret}
-								</div>
-							);
-						}
+								) :
+								child
 					)}
 				<div className="formbar">
 					<div
@@ -370,10 +205,9 @@ class Form<
 
 export default Form;
 
-export {
-	Title,
-	Label,
+export { Title, Label } from './SimpleForm';
 
+export {
 	FileInput,
 	
 	TextInput,

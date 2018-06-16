@@ -37,6 +37,7 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 							this.setState({open: false});
 						}
 					}
+					filter={file => file.fileName.split('.')[file.fileName.split('.').length - 1] === 'json'}
 				/>
 				<TestForm
 					onSubmit={
