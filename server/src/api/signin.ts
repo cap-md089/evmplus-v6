@@ -16,7 +16,7 @@ export default (req: AccountRequest, res: express.Response, next: Function) => {
 			error: -1,
 			member
 		});
-	}).catch(errors => {
+	}).catch((errors: Error) => {
 		console.log(errors);
 		res.json({
 			sessionID: '',

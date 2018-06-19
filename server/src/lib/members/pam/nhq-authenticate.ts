@@ -41,7 +41,7 @@ export default async (Login1$UserName: string, Login1$Password: string): Promise
 
 	if (results.statusCode === 302) {
 		if (results.headers.location.slice(0, 38) === '/CAP.eServices.Web/NL/Recover.aspx?UP=') {
-			throw new Error('1');
+			throw new Error('User needs to reset password');
 		} else {
 			let cookies = results.headers['set-cookie'].map((ctext: string) =>
 				ctext.match(/(.*?\=.*?);/)[1]).join('; ');
@@ -49,6 +49,6 @@ export default async (Login1$UserName: string, Login1$Password: string): Promise
 			return cookies;
 		}
 	} else {
-		throw new Error('0');
+		throw new Error('Invalid credentials');
 	}
 };

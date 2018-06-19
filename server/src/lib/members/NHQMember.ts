@@ -7,15 +7,21 @@ import {
 	MemberObject,
 	MemberCreateError
 } from '../../types';
+import { Member as MemberPermissionsLevel, getPermissions } from '../Permissions';
+
 import { nhq as auth } from './pam/';
+import { sign, verify } from 'jsonwebtoken';
+import request from './pam/nhq-request';
+import { load } from 'cheerio';
+
 import { RequestHandler } from 'express';
 import { MySQLRequest, prettySQL } from '../MySQLUtil';
-import { sign, verify } from 'jsonwebtoken';
 import * as mysql from 'promise-mysql';
+
 import Account, { AccountRequest } from '../Account';
-import {
-	Member as MemberPermissionsLevel, getPermissions
-} from '../Permissions';
+import conf from '../../conf';
+import { join } from 'path';
+import { existsSync, unlinkSync, writeFile } from 'fs';
 
 interface MemberSession extends Identifiable {
 	id: number;
@@ -342,5 +348,49 @@ export default class NHQMember extends Member {
 		this.accessLevel = accessLevel;
 		this.cookie = cookie;
 		this.sessionID = sessionID; 
+	}
+
+	public async getCAPWATCHList (): Promise<string[]> {
+		let retData: string[] = [];
+		let data = await request('/cap.capwatch.web/splash.aspx', this.cookie, true);
+
+		if (
+			typeof data.headers.location !== 'undefined' &&
+			data.headers.location === '/cap.capwatch.web/Modules/CapwatchRequest.aspx'
+		) {
+			throw new Error ('User needs permissions to access CAPWATCH');
+		}
+
+		data = await request('/cap.capwatch.web/Default.aspx', this.cookie);
+
+		let $ = load (data.body);
+
+		let select = $('#OrgChooser');
+
+		// don't know what to do here. I don't know cheerio well
+
+		return retData;
+	}
+
+	public async getCAPWATCHFile (id: number, location?: string) {
+		if (location === undefined) {
+			let date = new Date();
+			let datestring = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getHours()}`;
+			location = join(conf.path, 'capwatch-zips', `CAPWATCH-${datestring}.zip`);
+		}
+
+		let url = `https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
+
+		let body = request(url, this.cookie);
+
+		if (existsSync(location)) {
+			unlinkSync(location);
+		}
+
+		writeFile(location, body, {}, err => {
+			if (err) {
+				console.log('Error in writing CAPWATCH file: ',  err);
+			}
+		});
 	}
 }
