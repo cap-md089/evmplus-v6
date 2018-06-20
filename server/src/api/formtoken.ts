@@ -2,20 +2,20 @@ import * as express from 'express';
 import * as uuid from 'uuid/v4';
 import Member, { MemberRequest } from '../lib/members/NHQMember';
 
-let validTokens: {
+let validTokens: Array<{
 	member: Member,
 	token: string
-}[] = [];
+}> = [];
 
 export const getFormToken: express.RequestHandler = (
 	req: MemberRequest,
 	res
 ) => {
 	if (req.member) {
-		let token = uuid();
+		const token = uuid();
 		validTokens.push({
-			token,
-			member: req.member
+			member: req.member,
+			token
 		});
 		res.json({
 			token

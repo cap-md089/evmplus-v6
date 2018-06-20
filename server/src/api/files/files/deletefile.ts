@@ -1,9 +1,9 @@
 import * as express from 'express';
-import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration } from '../../../conf';
+import { AccountRequest } from '../../../lib/Account';
+import { MemberRequest } from '../../../lib/BaseMember';
 
 export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
 	if (

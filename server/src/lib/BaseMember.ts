@@ -1,9 +1,17 @@
-import { MemberObject, MemberContact } from '../types';
+import { MemberContact, MemberObject } from '../types';
 // import Account from './Account';
 // import * as mysql from 'promise-mysql';
 // import { prettySQL } from './MySQLUtil';
 
 export default class MemberBase implements MemberObject {
+	public static IsRioux (cm: MemberBase | number): boolean {
+		if (typeof cm === 'number') {
+			return (cm === 542488 || cm === 546319);
+		} else {
+			return cm.isRioux;
+		}
+	}
+
 	/**
 	 * CAPID
 	 */
@@ -68,17 +76,6 @@ export default class MemberBase implements MemberObject {
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
-
-	public static IsRioux (capid: number): boolean;
-	public static IsRioux (member: MemberBase): boolean;
-	
-	public static IsRioux (cm: MemberBase | number): boolean {
-		if (typeof cm === 'number') {
-			return (cm === 542488 || cm === 546319);
-		} else {
-			return cm.isRioux;
-		}
-	}
 
 	public constructor (data: MemberObject) {
 		Object.assign(this, data);

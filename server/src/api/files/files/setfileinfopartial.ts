@@ -19,11 +19,11 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 		} = req.body;
 
 		const newFile = {
-			fileName,
 			comments,
-			memberOnly,
+			fileName,
 			forDisplay,
 			forSlideshow,
+			memberOnly,
 		};
 
 		const query = req.connectionPool.query(

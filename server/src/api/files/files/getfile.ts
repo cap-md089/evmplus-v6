@@ -1,7 +1,7 @@
 import * as express from 'express';
-import { Configuration as config } from '../../../conf';
 import * as fs from 'fs';
 import { join } from 'path';
+import { Configuration as config } from '../../../conf';
 
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
@@ -17,12 +17,12 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		return;
 	}
 
-	const requestedFileQuery: {
+	const requestedFileQuery: Array<{
 		id: string;
 		memberOnly: number;
 		contentType: string;
 		fileName: string;
-	}[] = await req.connectionPool.query(
+	}> = await req.connectionPool.query(
 		prettySQL`
 			SELECT
 				id, memberOnly, contentType, fileName

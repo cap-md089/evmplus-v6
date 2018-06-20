@@ -1,10 +1,10 @@
 import * as express from 'express';
 
+import addpost from './addpost';
+import deletePost from './deletePost';
+import getlist from './getlist';
 import getpost from './getpost';
 import setpost from './setpost';
-import addpost from './addpost';
-import getlist from './getlist';
-import deletePost from './deletePost';
 
 export { BlogPost } from '../../../types';
 

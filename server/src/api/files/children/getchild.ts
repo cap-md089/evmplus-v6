@@ -2,7 +2,7 @@ import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
 
-export default async (req: AccountRequest, res: express.Response, next: Function) => {
+export default async (req: AccountRequest, res: express.Response) => {
 	if (
 		typeof req.account === 'undefined' ||
 		typeof req.params.parentid === 'undefined' ||
@@ -16,9 +16,9 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 	const parentid = req.params.parentid;
 	const childid = req.params.childid;
 
-	const fileInfo: {
+	const fileInfo: Array<{
 		childID: string
-	}[] = await req.connectionPool.query(
+	}> = await req.connectionPool.query(
 		prettySQL`
 			SELECT
 				childID
@@ -39,10 +39,10 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 		res.end();
 	} else {
 		res.json({
-			kind: 'drive#childReference',
+			childLink: req.account.buildURI('api', 'files', childid),
 			id: childid,
-			selfLink: req.account.buildURI('api', 'files', parentid, 'children', childid),
-			childLink: req.account.buildURI('api', 'files', childid)
+			kind: 'drive#childReference',
+			selfLink: req.account.buildURI('api', 'files', parentid, 'children', childid)
 		});
 	}
 };

@@ -1,8 +1,9 @@
 import * as express from 'express';
-import { BlogPost } from './index';
 import * as mysql from 'promise-mysql';
 import { AccountRequest } from '../../../lib/Account';
 import { errorFunction } from '../../../lib/MySQLUtil';
+import { json } from '../../../lib/Util';
+import { BlogPost } from './index';
 
 const postsPerPage = 15;
 
@@ -22,25 +23,27 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 					res.status(400);
 					res.end();
 				} else {
-					res.json({
+					json<{
+						displayLeft: boolean,
+						displayRight: boolean,
+						posts: BlogPost[]
+					}>(res, {
+						displayLeft: start !== 0,
+						displayRight: start + postsPerPage < results.length,
 						posts: results.map((post: {
 							id: number,
 							title: string,
 							authorid: number,
 							content: string,
 							posted: number
-						}) => {
-							return {
-								id: post.id,
-								title: post.title,
-								authorid: post.authorid,
-								posted: post.posted,
-								content: JSON.parse(post.content),
-								fileIDs: []
-							} as BlogPost;
-						}),
-						displayLeft: start !== 0,
-						displayRight: start + postsPerPage < results.length
+						}) => ({
+							authorid: post.authorid,
+							content: JSON.parse(post.content),
+							fileIDs: [] as string[],
+							id: post.id,
+							posted: post.posted,
+							title: post.title,
+						}))
 					});
 				}
 			}).catch(errorFunction(res));

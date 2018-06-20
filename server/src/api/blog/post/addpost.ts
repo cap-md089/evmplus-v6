@@ -2,6 +2,8 @@ import * as express from 'express';
 import * as mysql from 'promise-mysql';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
+import { json } from '../../../lib/Util';
+import { BlogPost } from '../../../types';
 
 export default (connectionPool: mysql.Pool): express.RequestHandler => {
 	return async (req: AccountRequest & MemberRequest, res, next) => {
@@ -12,7 +14,7 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 			typeof req.body.title !== 'undefined' &&
 			typeof req.member !== 'undefined'
 		) {
-			const result: {newID: number}[] = 
+			const result: Array<{newID: number}> = 
 				await connectionPool.query('SELECT MAX(id) as newID FROM blog WHERE AccountID = ?', req.account.id);
 			const newID: number = result[0].newID || 1;
 			const posted = Date.now() / 1000;
@@ -31,13 +33,14 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 				newPost
 			);
 
-			res.json({
-				id: newID,
-				title: req.body.title,
+			json<BlogPost>(res, {
+				accountID: req.account.id,
 				authorid: 0,
 				content: req.body.content,
+				fileIDs: [],
+				id: newID,
 				posted,
-				accountID: req.account.id
+				title: req.body.title
 			});
 		} else {
 			res.status(400);

@@ -1,9 +1,9 @@
-import * as http from 'http';
-import * as path from 'path';
-import * as express from 'express';
-import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
+import * as express from 'express';
 import * as fs from 'fs';
+import * as http from 'http';
+import * as logger from 'morgan';
+import * as path from 'path';
 import * as mysql from 'promise-mysql';
 
 import conf, { Configuration } from './conf';
@@ -25,7 +25,7 @@ const pool = mysql.createPool({
 	...Configuration.database.connection
 });
 
-let router: express.Router = express.Router();
+const router: express.Router = express.Router();
 
 import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 router.use(MySQLMiddleware(pool));
@@ -97,7 +97,7 @@ app.get('/images/banner', (req, res) => {
 		if (err) {
 			throw err;
 		}
-		let image = data[Math.round(Math.random() * (data.length - 1))];
+		const image = data[Math.round(Math.random() * (data.length - 1))];
 		res.sendFile(path.join(__dirname, '..', 'images', 'banner-images', image));
 	});
 });
@@ -114,11 +114,11 @@ app.get('*', (req, res) => {
 });
 
 function normalizePort(val: number|string): number|string|boolean {
-	let _port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
-	if (isNaN(_port)) {
+	const portToTest: number = (typeof val === 'string') ? parseInt(val, 10) : val;
+	if (isNaN(portToTest)) {
 		return val;
-	} else if (_port >= 0) {
-		return _port;
+	} else if (portToTest >= 0) {
+		return portToTest;
 	} else {
 		return false;
 	}
@@ -128,7 +128,7 @@ function onError(error: NodeJS.ErrnoException): void {
 	if (error.syscall !== 'listen') {
 		throw error;
 	}
-	let bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
+	const bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
 	switch (error.code) {
 		case 'EACCES':
 			// tslint:disable-next-line:no-console
@@ -146,8 +146,9 @@ function onError(error: NodeJS.ErrnoException): void {
 }
 
 function onListening(): void {
-	let addr = server.address();
-	let bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+	const addr = server.address();
+	const bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+	// tslint:disable-next-line:no-console
 	console.log(`Bound on ${bind}`);
 }
 

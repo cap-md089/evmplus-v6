@@ -1,6 +1,6 @@
-import req from './nhq-request';
 import { load } from 'cheerio';
 import getCAPID from './nhq-getcapid';
+import req from './nhq-request';
 
 export default async (cookie: string, username: string): Promise<{
 	rank: string,
@@ -12,20 +12,20 @@ export default async (cookie: string, username: string): Promise<{
 	nameLast: string,
 	nameSuffix: string
 }> => {
-	let body = await req('/CAP.eServices.Web/MyAccount/GeneralInfo.aspx', cookie);
+	const body = await req('/CAP.eServices.Web/MyAccount/GeneralInfo.aspx', cookie);
 
-	let $ = load(body);
+	const $ = load(body);
 
-	let nameFirst = $('#txtFirstName').val();
-	let nameMiddle = $('#txtMI').val();
-	let nameLast = $('#txtLastName').val();
-	let nameSuffix = $('#txtSuffix').val();
+	const nameFirst = $('#txtFirstName').val();
+	const nameMiddle = $('#txtMI').val();
+	const nameLast = $('#txtLastName').val();
+	const nameSuffix = $('#txtSuffix').val();
 
-	let rank = $('#txtRank').val();
+	const rank = $('#txtRank').val();
 
-	let seniorMember = $('#txtType').val() !== 'Cadet';
+	const seniorMember = $('#txtType').val() !== 'Cadet';
 
-	let squadron = $('#txtSquadron').val();
+	const squadron = $('#txtSquadron').val();
 
 	let capid;
 	if (username.match(/\d{6}/)) {
@@ -35,13 +35,13 @@ export default async (cookie: string, username: string): Promise<{
 	}
 
 	return {
-		rank,
-		seniorMember,
-		squadron,
 		capid,
 		nameFirst,
-		nameMiddle,
 		nameLast,
-		nameSuffix
+		nameMiddle,
+		nameSuffix,
+		rank,
+		seniorMember,
+		squadron
 	};
 };

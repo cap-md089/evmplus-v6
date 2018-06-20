@@ -9,23 +9,23 @@ import { MemberRequest } from '../../../lib/BaseMember';
 import { prettySQL } from '../../../lib/MySQLUtil';
 
 const parseHeaders = (lines: string[]) => {
-	let headers: {[key: string]: string} = {};
-	for (let line of lines) {
-		let parts = line.split(': ');
-		let header = parts[0].toLowerCase();
+	const headers: {[key: string]: string} = {};
+	for (const line of lines) {
+		const parts = line.split(': ');
+		const header = parts[0].toLowerCase();
 		headers[header] = parts[1];
 	}
 	return headers;
 };
 
 const endingToMime = (ending: string): string => {
-	let mimes: {[key: string]: string} = {
-		'png': 'image/png',
-		'jpg': 'image/jpg',
-		'jpeg': 'image/jpeg',
+	const mimes: {[key: string]: string} = {
 		'gif': 'image/gif',
-		'txt': 'text/plain',
-		'text': 'text/plain'
+		'jpeg': 'image/jpeg',
+		'jpg': 'image/jpg',
+		'png': 'image/png',
+		'text': 'text/plain',
+		'txt': 'text/plain'
 	};
 
 	if (typeof mimes[ending] === 'undefined') {
@@ -103,14 +103,14 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 			// when there is a double \r\n
 
 			// Get headers
-			let firstLines = headerString.split('\r\n');
+			const firstLines = headerString.split('\r\n');
 	
 			boundary = '\r\n' + firstLines[0] + '--\r\n';
 			
-			let headers = parseHeaders(firstLines);
+			const headers = parseHeaders(firstLines);
 
 			// Get file name
-			let query = headers['content-disposition']
+			const query = headers['content-disposition']
 				.split(/; ?/)
 				.map(str => str.split(/ ?\= ?/))
 				.filter(pair => pair[0].match(/filename/))[0][1];
@@ -125,7 +125,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 			}
 
 			// Start to write to disk
-			let realFilename = `${req.account.id}-${uuid()}`;
+			const realFilename = `${req.account.id}-${uuid()}`;
 			writeStream = fs.createWriteStream(join(config.fileStoragePath, realFilename));
 			writeStream.write(info.slice(i, findEnding(info, boundary)));
 
@@ -187,25 +187,26 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 			]).then(() => {
 				// Return results
 				res.json({
-					id: realFilename,
-					uploaderID: 0,
-					fileName,
+					accountID: req.account.id,
 					comments: '',
 					contentType,
 					created,
-					memberOnly: 0,
+					fileName,
 					forDisplay: 1,
 					forSlideshow: 0,
-					accountID: req.account.id
+					id: realFilename,
+					memberOnly: 0,
+					uploaderID: 0
 				});
 			}).catch(err => {
+				// tslint:disable-next-line:no-console
 				console.log(err);
 				res.status(500);
 				res.end();	
 			});
 		} else {
 			// Adds more data to file. If it finds the ending, it will not get to this section again
-			let newData = info.slice(
+			const newData = info.slice(
 				0,
 				findEnding(info, boundary)
 			);

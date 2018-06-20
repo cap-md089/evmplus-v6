@@ -384,4 +384,5 @@ export interface BlogPost {
 	content: RawDraftContentState;
 	fileIDs: string[];
 	posted: number;
+	accountID: string;
 }

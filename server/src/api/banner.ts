@@ -1,7 +1,7 @@
 import * as express from 'express';
-import { Configuration as config } from '../conf';
 import * as fs from 'fs';
 import { join } from 'path';
+import { Configuration as config } from '../conf';
 
 import { AccountRequest } from '../lib/Account';
 import { prettySQL } from '../lib/MySQLUtil';
@@ -13,7 +13,7 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		return;
 	}
 
-	const imageRequest: {id: string}[] = await req.connectionPool.query(
+	const imageRequest: Array<{id: string}> = await req.connectionPool.query(
 		prettySQL`
 			SELECT
 				id

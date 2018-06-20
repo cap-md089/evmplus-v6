@@ -15,8 +15,8 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 			typeof req.body.title !== 'undefined'
 		) {
 			const post = {
-				title: req.body.title,
-				content: JSON.stringify(req.body.content)
+				content: JSON.stringify(req.body.content),
+				title: req.body.title
 			};
 			connectionPool.query(
 				'UPDATE blog SET ? WHERE id = ? AND AccountID = ?',

@@ -6,44 +6,44 @@ const GET_SIGNIN_VALUES_URL = 'https://www.capnhq.gov/CAP.eServices.Web/default.
 const SIGNIN_URL = GET_SIGNIN_VALUES_URL;
 
 export default async (Login1$UserName: string, Login1$Password: string): Promise<string> => {
-	let page = await rp(GET_SIGNIN_VALUES_URL);
+	const page = await rp(GET_SIGNIN_VALUES_URL);
 
-	let $ = cheerio.load(page);
+	const $ = cheerio.load(page);
 
-	let form = {
+	const form = {
+		Login1$LoginButton: 'Sign+in',
+		Login1$Password,
+		Login1$UserName,
+		__EVENTARGUMENT: '',
+		__EVENTTARGET: '',
+		__EVENTVALIDATION: $('input[name=__EVENTVALIDATION]').val(),
 		__LASTFOCUS: '',
 		__VIEWSTATE: $('input[name=__VIEWSTATE]').val(),
-		__EVENTTARGET: '',
-		__EVENTARGUMENT: '',
-		__EVENTVALIDATION: $('input[name=__EVENTVALIDATION]').val(),
-		__VIEWSTATEGENERATOR: $('input[name=__VIEWSTATEGENERATOR]').val(),
-		Login1$UserName,
-		Login1$Password,
-		Login1$LoginButton: 'Sign+in'
+		__VIEWSTATEGENERATOR: $('input[name=__VIEWSTATEGENERATOR]').val()
 	};
 
-	let results = await rp(SIGNIN_URL, {
-		form,
-		method: 'POST',
-		simple: false,
-		resolveWithFullResponse: true,
+	const results = await rp(SIGNIN_URL, {
 		followRedirect: false,
+		form,
 		headers: {
-			host: 'www.capnhq.gov',
-			'User-Agent': 'EventManagementLoginBot/3.0',
-			Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
-			'Accept-Language': 'en-us,en;q=0.5',
+			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
 			'Accept-Encoding': 'gzip, deflate, br',
+			'Accept-Language': 'en-us,en;q=0.5',
 			'Connection': 'keep-alive',
-			'Upgrade-Insecure-Requests': '1'
-		}
+			'Host': 'www.capnhq.gov',
+			'Upgrade-Insecure-Requests': '1',
+			'User-Agent': 'EventManagementLoginBot/3.0',
+		},
+		method: 'POST',
+		resolveWithFullResponse: true,
+		simple: false
 	});
 
 	if (results.statusCode === 302) {
 		if (results.headers.location.slice(0, 38) === '/CAP.eServices.Web/NL/Recover.aspx?UP=') {
 			throw new Error('User needs to reset password');
 		} else {
-			let cookies = results.headers['set-cookie'].map((ctext: string) =>
+			const cookies = results.headers['set-cookie'].map((ctext: string) =>
 				ctext.match(/(.*?\=.*?);/)[1]).join('; ');
 	
 			return cookies;

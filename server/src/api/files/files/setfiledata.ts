@@ -1,9 +1,9 @@
 import * as express from 'express';
 import * as fs from 'fs';
+import { join } from 'path';
 import { Configuration as config } from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
-import { join } from 'path';
 
 const findEnding = (input: Buffer, boundary: string) => {
 	const index = input.length - boundary.length;
@@ -55,7 +55,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 			i += 4;
 			// It has the headers recorded; standards say that the headers are defined as ending
 			// when there is a double \r\n
-			let firstLines = headerString.split('\r\n');
+			const firstLines = headerString.split('\r\n');
 			boundary = '\r\n' + firstLines[0] + '--\r\n';
 			
 			writeStream = fs.createWriteStream(join(config.fileStoragePath, req.params.fileid));
@@ -71,7 +71,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 			});
 		} else {
 			// Adds more data to file. If it finds the ending, it will not get to this section again
-			let newData = info.slice(
+			const newData = info.slice(
 				0,
 				findEnding(info, boundary)
 			);

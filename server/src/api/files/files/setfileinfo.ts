@@ -24,11 +24,11 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 		} = req.body;
 
 		const newFile = {
-			fileName,
 			comments,
-			memberOnly: memberOnly ? 1 : 0,
+			fileName,
 			forDisplay: forDisplay ? 1 : 0,
 			forSlideshow: forSlideshow ? 1 : 0,
+			memberOnly: memberOnly ? 1 : 0,
 		};
 
 		const query = req.connectionPool.query(

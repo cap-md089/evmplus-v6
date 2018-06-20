@@ -2,6 +2,8 @@ import * as express from 'express';
 import * as mysql from 'promise-mysql';
 import { AccountRequest } from '../../../lib/Account';
 import { errorFunction } from '../../../lib/MySQLUtil';
+import { json } from '../../../lib/Util';
+import { BlogPost } from '../../../types';
 
 export default (connectionPool: mysql.Pool): express.RequestHandler => {
 	return (req: AccountRequest, res, next) => {
@@ -21,13 +23,14 @@ export default (connectionPool: mysql.Pool): express.RequestHandler => {
 
 				const post = result[0];
 
-				res.json({
-					id: req.params.id,
-					title: post.title,
+				json<BlogPost>(res, {
+					accountID: req.account.id,
 					authorid: post.authorid,
 					content: JSON.parse(post.content),
+					fileIDs: [],
+					id: req.params.id,
 					posted: post.posted,
-					AccountID: req.account.id
+					title: post.title,
 				});
 			}).catch(errorFunction(res));
 		} else {

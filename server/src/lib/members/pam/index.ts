@@ -1,11 +1,11 @@
 import getCookies from './nhq-authenticate';
-import getName from './nhq-getname';
-import getContact from './nhq-getcontact';
 import getID from './nhq-getcapid';
+import getContact from './nhq-getcontact';
+import getName from './nhq-getname';
 
 export const nhq = {
-	getCookies,
-	getName,
 	getContact,
-	getID
+	getCookies,
+	getID,
+	getName
 };

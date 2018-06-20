@@ -17,7 +17,7 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 	}
 
 	// Get file info
-	const requestedFileQuery: {
+	const requestedFileQuery: Array<{
 		uploaderID: number;
 		comments: string;
 		created: number;
@@ -26,7 +26,7 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		memberOnly: number;
 		contentType: string;
 		fileName: string;
-	}[] = await req.connectionPool.query(
+	}> = await req.connectionPool.query(
 		prettySQL`
 			SELECT
 				uploaderID,
@@ -57,8 +57,9 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 
 	// Return file info
 	const fileRequestedData = {
-		kind: 'drive#file' as 'drive#file',
 		id: req.params.fileid,
+		kind: 'drive#file' as 'drive#file',
+		// tslint:disable-next-line:object-literal-sort-keys
 		accountID: req.account.id,
 		...requestedFileQuery[0],
 		memberOnly: requestedFileQuery[0].memberOnly === 1,

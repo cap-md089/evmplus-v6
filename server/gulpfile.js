@@ -23,7 +23,10 @@ gulp.task('tslint', function () {
 		.pipe(tslint({
 			
 		}))
-		.pipe(tslint.report());
+		.pipe(tslint.report({
+			emitError: false,
+			summarizeFailureOutput: true
+		}));
 });
 
 gulp.task('jest', function () {

@@ -1,9 +1,9 @@
 import * as express from 'express';
-import Member from '../lib/members/NHQMember';
 import { AccountRequest } from '../lib/Account';
+import Member from '../lib/members/NHQMember';
 
-export default (req: AccountRequest, res: express.Response, next: Function) => {
-	let { username, password } = req.body;
+export default (req: AccountRequest, res: express.Response) => {
+	const { username, password } = req.body;
 	if (typeof req.account === 'undefined') {
 		res.status(400);
 		res.end();
@@ -11,17 +11,16 @@ export default (req: AccountRequest, res: express.Response, next: Function) => {
 	}
 	Member.Create(username, password, req.connectionPool, req.account).then(member => {
 		res.json({
-			sessionID: member.sessionID,
-			valid: true,
 			error: -1,
-			member
+			member,
+			sessionID: member.sessionID,
+			valid: true
 		});
 	}).catch((errors: Error) => {
-		console.log(errors);
 		res.json({
-			sessionID: '',
-			valid: false,
 			error: errors.message,
+			sessionID: '',
+			valid: false
 		});
 	});
 };

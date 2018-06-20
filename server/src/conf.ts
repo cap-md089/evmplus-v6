@@ -1,18 +1,28 @@
 export const Configuration = {
+	clientStorage: '/home/andrew/Desktop/react-capunit-client',
 	database: {
 		connection: {
-			port: 33389,
-			user: 'em',
-			password: 'alongpassword2017',
+			database: 'EventManagement4',
 			host: '192.168.45.10',
-			database: 'EventManagement4'
+			password: 'alongpassword2017',
+			port: 33389,
+			user: 'em'
 		},
 		connectionCount: 15
 	},
+	fileStoragePath: '/uploads',
 	path: __dirname,
 	testing: true,
-	fileStoragePath: '/uploads',
-	clientStorage: '/home/andrew/Desktop/react-capunit-client'
+	unitTestDatabase: {
+		connection: {
+			database: 'EventManagementTests',
+			host: '192.168.45.10',
+			password: 'alongpassword2017',
+			port: 33389,
+			user: 'em'
+		},
+		connectionCount: 15
+	}
 };
 
 const conf = Configuration;

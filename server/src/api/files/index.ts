@@ -1,26 +1,26 @@
-import * as express from 'express';
 import * as bodyParser from 'body-parser';
+import * as express from 'express';
 
 import Account from '../../lib/Account';
 import Member from '../../lib/members/NHQMember';
 
-let filerouter: express.Router = express.Router();
+const filerouter: express.Router = express.Router();
 
 // File methods
+import createfolder from './files/createfolder';
+import deletefile from './files/deletefile';
 import fileinfo from './files/fileinfo';
 import upload from './files/fileupload';
 import getfile from './files/getfile';
-import setfileinfo from './files/setfileinfo';
 import setfiledata from './files/setfiledata';
-import deletefile from './files/deletefile';
+import setfileinfo from './files/setfileinfo';
 import setfileinfopartial from './files/setfileinfopartial';
-import createfolder from './files/createfolder';
 
 // Children methods
-import getfiles from './children/getfiles';
-import removefile from './children/removefile';
 import getchild from './children/getchild';
+import getfiles from './children/getfiles';
 import insertchild from './children/insertchild';
+import removefile from './children/removefile';
 
 filerouter.use(Account.ExpressMiddleware);
 filerouter.use(Member.ExpressMiddleware);

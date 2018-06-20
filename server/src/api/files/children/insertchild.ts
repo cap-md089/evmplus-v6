@@ -2,7 +2,7 @@ import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
 
-export default async (req: AccountRequest, res: express.Response, next: Function) => {
+export default async (req: AccountRequest, res: express.Response) => {
 	if (
 		typeof req.account === 'undefined' ||
 		typeof req.params.parentid === 'undefined' ||

@@ -1,10 +1,10 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import { prettySQL } from '../../../lib/MySQLUtil';
-import { FileObject } from '../../../types';
 import { json } from '../../../lib/Util';
+import { FileObject } from '../../../types';
 
-export default async (req: AccountRequest, res: express.Response, next: Function) => {
+export default async (req: AccountRequest, res: express.Response) => {
 	if (
 		typeof req.account === 'undefined'
 	) {
@@ -25,7 +25,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 	}
 
 	if (parentid !== 'root') {
-		const fileCount: {count: number}[] = await req.connectionPool.query(
+		const fileCount: Array<{count: number}> = await req.connectionPool.query(
 			prettySQL`
 				SELECT
 					COUNT(*) AS count
@@ -47,9 +47,9 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 		}
 	}
 
-	const fileInfo: {
+	const fileInfo: Array<{
 		childID: string
-	}[] = await req.connectionPool.query(
+	}> = await req.connectionPool.query(
 		prettySQL`
 			SELECT
 				childID
@@ -66,19 +66,19 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 
 	if (method === 'clean') {
 		res.json({
-			kind: 'drive#childList',
-			selfLink: req.account.buildURI('api', 'files', parentid, 'children'),
 			items: [
 				fileInfo.map(file => ({
-					kind: 'drive#childReference',
+					childLink: req.account.buildURI('api', 'files', parentid),
 					id: file.childID,
+					kind: 'drive#childReference',
 					selfLink: req.account.buildURI('api', 'files', parentid, 'children', file.childID),
-					childLink: req.account.buildURI('api', 'files', parentid)
 				}))
-			]
+			],
+			kind: 'drive#childList',
+			selfLink: req.account.buildURI('api', 'files', parentid, 'children'),
 		});
 	} else if (method === 'dirty') {
-		const filesInfo: {
+		const filesInfo: Array<{
 			id: string,
 			uploaderID: number,
 			fileName: string,
@@ -89,7 +89,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 			forDisplay: number,
 			forSlideshow: number,
 			accountID: string
-		}[] = await req.connectionPool.query(
+		}> = await req.connectionPool.query(
 			`
 				SELECT
 					id, uploaderID, fileName, comments, contentType, created, memberOnly, forDisplay, forSlideshow, accountID
@@ -108,6 +108,7 @@ export default async (req: AccountRequest, res: express.Response, next: Function
 		);
 		json<FileObject[]>(res, filesInfo.map(dirtyFile => ({
 			kind: 'drive#file' as 'drive#file',
+			// tslint:disable-next-line:object-literal-sort-keys
 			id: dirtyFile.id,
 			uploaderID: dirtyFile.uploaderID,
 			fileName: dirtyFile.fileName,

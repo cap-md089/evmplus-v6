@@ -1,9 +1,9 @@
-import req from './nhq-request';
 import { load } from 'cheerio';
-import { MemberContact, MemberContactType, MemberContactPriority } from '../../../types';
+import { MemberContact, MemberContactPriority, MemberContactType } from '../../../types';
+import req from './nhq-request';
 
 export default async (cookie: string): Promise<MemberContact> => {
-	let contact: MemberContact = {
+	const contact: MemberContact = {
 		ALPHAPAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		ASSISTANT : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		CADETPARENTEMAIL : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
@@ -21,14 +21,14 @@ export default async (cookie: string): Promise<MemberContact> => {
 		WORKPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 	};
 
-	let page = await req('/CAP.eServices.Web/MyAccount/ContactInfo.aspx', cookie);
+	const page = await req('/CAP.eServices.Web/MyAccount/ContactInfo.aspx', cookie);
 
 	const $ = load(page);
 
-	let table = $('#gvContactInformation');
+	const table = $('#gvContactInformation');
 
 	table.find('tr').each(function () {
-		let texts = $(this).children().map(function (i: number, el: CheerioElement) {
+		const texts = $(this).children().map(function (i: number, el: CheerioElement) {
 			return $(this).text().replace(/[ \n\r]/g, '');
 		}).get();
 
