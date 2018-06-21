@@ -1,6 +1,6 @@
+import * as mysql from 'promise-mysql';
 import { MemberContact, MemberObject } from '../types';
-// import Account from './Account';
-// import * as mysql from 'promise-mysql';
+import Account from './Account';
 // import { prettySQL } from './MySQLUtil';
 
 export default class MemberBase implements MemberObject {
@@ -11,6 +11,45 @@ export default class MemberBase implements MemberObject {
 			return cm.isRioux;
 		}
 	}
+
+	protected static GetDutypositions = async (capid: number, pool: mysql.Pool, account: Account): Promise<string[]> =>
+		(await pool.query(
+			`
+				(
+					SELECT
+						Duty
+					FROM
+						Data_DutyPosition
+					WHERE
+						CAPID = ${capid}
+					AND
+						ORGID in (${account.orgIDs.join(', ')})
+				)
+					UNION
+				(
+					SELECT
+						Duty
+					FROM
+						Data_CadetDutyPositions
+					WHERE
+						CAPID = ${capid}
+					AND
+						ORGID in (${account.orgIDs.join(', ')})
+				)
+					UNION
+				(
+					SELECT
+						Duty
+					FROM
+						TemporaryDutyPositions
+					WHERE
+						capid = ${capid}
+					AND
+						AccountID = ${mysql.escape(account.id)}
+				)
+			`
+		)).map((item: {Duty: string}) =>
+			item.Duty)
 
 	/**
 	 * CAPID

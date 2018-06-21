@@ -386,3 +386,14 @@ export interface BlogPost {
 	posted: number;
 	accountID: string;
 }
+
+export interface EventObject extends Identifiable {
+	/**
+	 * ID of the Event, can be expressed as the event number
+	 */
+	id: number;
+	/**
+	 * Account from which the Event came
+	 */
+	accountID: string;
+}

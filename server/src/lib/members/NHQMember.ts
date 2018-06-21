@@ -214,45 +214,6 @@ export default class NHQMember extends Member {
 	 * Used to sign JWTs
 	 */
 	private static secret: string = 'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
-
-	private static GetDutypositions = async (capid: number, pool: mysql.Pool, account: Account): Promise<string[]> =>
-		(await pool.query(
-			`
-				(
-					SELECT
-						Duty
-					FROM
-						Data_DutyPosition
-					WHERE
-						CAPID = ${capid}
-					AND
-						ORGID in (${account.orgIDs.join(', ')})
-				)
-					UNION
-				(
-					SELECT
-						Duty
-					FROM
-						Data_CadetDutyPositions
-					WHERE
-						CAPID = ${capid}
-					AND
-						ORGID in (${account.orgIDs.join(', ')})
-				)
-					UNION
-				(
-					SELECT
-						Duty
-					FROM
-						TemporaryDutyPositions
-					WHERE
-						capid = ${capid}
-					AND
-						AccountID = ${mysql.escape(account.id)}
-				)
-			`
-		)).map((item: {Duty: string}) =>
-			item.Duty)
 	
 	private static async GetPermissions (capid: number, pool: mysql.Pool, account: Account, su?: number): Promise<{
 		accessLevel: MemberAccessLevel,
