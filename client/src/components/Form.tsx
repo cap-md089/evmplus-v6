@@ -3,22 +3,12 @@ import * as React from 'react';
 import {
 	TextArea,
 	TextInput,
-	FileInput
+	FileInput,
+	MultiRange,
+	DateTimeInput
 } from './SimpleForm';
 
-/**
- * Helper function
- * 
- * @param el 
- */
-function isInput (el: React.ReactChild): boolean {
-	if (typeof el === 'string' || typeof el === 'number') {
-		return false;
-	}
-	return el.type === TextInput ||
-		el.type === FileInput ||
-		el.type === TextArea;
-}
+import { isInput } from './SimpleForm';
 
 import { FormProps } from './SimpleForm';
 import myFetch from '../lib/myFetch';
@@ -209,7 +199,8 @@ export { Title, Label } from './SimpleForm';
 
 export {
 	FileInput,
-	
 	TextInput,
-	TextArea
+	TextArea,
+	MultiRange,
+	DateTimeInput
 };

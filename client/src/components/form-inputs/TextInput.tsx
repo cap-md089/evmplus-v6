@@ -61,9 +61,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 		} else {
 			// Call this to update the input, thus causing a re-render
 			// A re-render will set the input to match the state
-			this.setState(prev => ({
-				value: prev.value
-			}));
+			this.forceUpdate();
 		}
 	}
 

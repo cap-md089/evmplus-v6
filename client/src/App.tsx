@@ -214,10 +214,10 @@ export default class App extends React.Component<{
 									<div id="body">
 										<div id="content">
 											<div id="fb-root" />
-											<BreadCrumbs />
+											<BreadCrumbs links={[]} />
 											<PageRouter />
 										</div>
-										<SideNavigation />
+										<SideNavigation links={[]}/>
 									</div>
 									<div className="mainContentBottom" />
 								</div>

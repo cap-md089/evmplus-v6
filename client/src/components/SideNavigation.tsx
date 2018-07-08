@@ -2,9 +2,8 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 
 import * as $ from 'jquery';
-import { connect } from 'react-redux';
 
-import SigninLink from './SigninLink';
+// import SigninLink from './SigninLink';
 
 export enum LinkType {
 	REFERENCE,
@@ -24,11 +23,11 @@ export class SideNavigation extends React.Component<SideNavigationState, {}> {
 		return (
 			<div id="sidenav">
 				<ul id="nav">
-					<li>
+					{/* <li>
 						<SigninLink>
 							<span className="arrow" /><span>Sign in</span>
 						</SigninLink>
-					</li>
+					</li> */}
 					{
 						this.props.links.map((el, i) => {
 							switch (el.type) {
@@ -81,12 +80,4 @@ export class SideNavigation extends React.Component<SideNavigationState, {}> {
 	}
 }
 
-const mapStateToProps = (state: {
-	SideNavigation: SideNavigationState
-}) => {
-	return state.SideNavigation;
-};
-
-export default connect(
-	mapStateToProps
-)(SideNavigation);
+export default SideNavigation;

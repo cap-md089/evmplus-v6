@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import Dialogue from './Dialogue';
 
 class SigninLink extends React.Component<{
@@ -77,7 +76,7 @@ class SigninLink extends React.Component<{
 						<br />
 						<iframe
 							ref={this.iframeRef}
-							sandbox="allow-scripts allow-forms allow-same-origin"
+							sandbox="allow-scripts allow-forms"
 							src="/api/signin"
 							style={{
 								width: '100%',
@@ -107,13 +106,4 @@ class SigninLink extends React.Component<{
 	}
 }
 
-export default connect(
-	(state: {
-		SignedInUser: {
-			valid: boolean,
-			error: string
-		}
-	}) => ({
-		...state.SignedInUser
-	}),
-)(SigninLink);
+export default SigninLink;

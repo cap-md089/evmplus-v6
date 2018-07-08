@@ -5,14 +5,14 @@ import './blog.css';
 import { Route, RouteComponentProps, withRouter, Link } from 'react-router-dom';
 import RequestForm from '../components/SimpleRequestForm';
 import { TextInput, TextArea } from '../components/SimpleForm';
-import { connect } from 'react-redux';
-import {  } from 'react-router';
 
 import { MemberObject, BlogPost } from '../types';
 import { RawDraftContentState, Editor, EditorState, convertFromRaw } from 'draft-js';
 
 import myFetch from '../lib/myFetch';
 import Loader from '../components/Loader';
+
+import Page from './Page';
 
 class BlogList extends React.Component<{}, {
 	posts: BlogPost[],
@@ -187,7 +187,7 @@ interface BlogProps {
 	};
 }
 
-class Blog extends React.Component<BlogProps> {
+export default class Blog extends Page<BlogProps> {
 	render() {
 		return (
 			<>
@@ -199,18 +199,3 @@ class Blog extends React.Component<BlogProps> {
 		);
 	}
 }
-
-const mapStateToProps = (state: {
-	SignedInUser: {
-		valid: true,
-		member: MemberObject
-	}
-}) => {
-	return {
-		SignedInUser: state.SignedInUser
-	};
-};
-
-export default connect(
-	mapStateToProps
-)(Blog);

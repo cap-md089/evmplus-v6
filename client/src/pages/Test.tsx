@@ -1,10 +1,18 @@
 import * as React from 'react';
 
-import Form, { Label, TextInput, Title, TextArea, FileInput } from '../components/SimpleForm';
+import Form, {
+	Label,
+	TextInput,
+	Title,
+	TextArea,
+	FileInput,
+	MultiRange,
+	DateTimeInput
+} from '../components/SimpleForm';
 import Button from '../components/Button';
 import { RawDraftContentState } from 'draft-js';
-import FileDialogue from '../components/FileDialogue';
-import { FileObject } from '../types';
+import * as moment from 'moment';
+import today from '../lib/today';
 
 export default class Test extends React.Component<{}, {open: boolean}> {
 	state = {
@@ -18,7 +26,11 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 			test3: string;
 			test4: string[];
 			test6: string;
-			test5: RawDraftContentState
+			test5: RawDraftContentState;
+			test7: [number, number];
+			test8: moment.Moment;
+			test9: moment.Moment;
+			test10: moment.Moment;
 		}>;
 
 		let TestButton = Button as new () => Button<{
@@ -26,19 +38,9 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 		}, {
 			hi: boolean
 		}>;
-		
+
 		return (
 			<div>
-				<FileDialogue
-					open={this.state.open}
-					onReturn={
-						(values: FileObject[]) => {
-							console.log(values);
-							this.setState({open: false});
-						}
-					}
-					filter={file => file.fileName.split('.')[file.fileName.split('.').length - 1] === 'json'}
-				/>
 				<TestForm
 					onSubmit={
 						(data) => {
@@ -50,24 +52,40 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 						text: 'Click me'
 					}}
 				>
+					<Label>Time input</Label>
+					<DateTimeInput
+						name="test8"
+						date={false}
+						time={true}
+						value={moment()}
+					/>
+					<Label>Date input</Label>
+					<DateTimeInput
+						name="test9"
+						date={true}
+						time={false}
+						value={today()}
+					/>
+					<Label>Date and time input</Label>
+					<DateTimeInput
+						name="test10"
+						date={true}
+						time={true}
+					/>
 					<Label>
 						Input label
 					</Label>
 					<TextInput 
-						onChange={
-							(text) => {
-								console.log(text);
-							}
-						}
+						onChange={text => text.startsWith('a') || text.length === 0}
 						name="test1"
 					/>
 					<Title>
 						A title
 					</Title>
-					A label
+					<Label>A label</Label>
 					<TextInput name="test2" />
 					<TextInput name="test3" />
-					File label
+					<Label>File label</Label>
 					<FileInput
 						name="test4"
 						value={[
@@ -94,6 +112,14 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 					<TextArea
 						name="test5"
 						fullWidth={true}
+					/>
+					<MultiRange
+						name="test7"
+						min={100}
+						max={200}
+						step={10}
+						rightDisplay={(low, high) => `${high}`}
+						leftDisplay={(low, high) => `${low}`}
 					/>
 				</TestForm>
 				<TestButton 

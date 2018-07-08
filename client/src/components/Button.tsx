@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import myFetch from '../lib/myFetch';
 
-import * as classNames from 'classnames';
-
 export interface ButtonProps<C, S> {
 	url?: string;
 	className?: string;
@@ -160,11 +158,9 @@ export default class Button<C, S> extends React.Component<ButtonProps<C, S>, {
 					}
 				}
 				className={
-					classNames({
-						[typeof this.props.buttonType === 'string' ? this.props.buttonType : 'primaryButton']: true,
-						[this.props.className || 'asyncButton']: true,
-						disabled: this.state.disabled
-					})
+					(typeof this.props.buttonType === 'string' ? this.props.buttonType : 'primaryButton') + 
+					(this.props.className || ' asyncButton') + 
+					(this.state.disabled ? ' disabled' : '')
 				}
 			>
 				{this.props.children}

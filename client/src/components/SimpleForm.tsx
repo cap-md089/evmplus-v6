@@ -1,8 +1,10 @@
 import * as React from 'react';
 
+import DateTimeInput from './form-inputs/DateTimeInput';
 import TextInput from './form-inputs/TextInput';
 import FileInput from './form-inputs/FileInput';
 import TextArea from './form-inputs/TextArea';
+import MultiRange from './form-inputs/MultiRange';
 import myFetch from '../lib/myFetch';
 
 /**
@@ -54,13 +56,27 @@ class Title extends React.Component<{fullWidth?: boolean}> {
  * 
  * @param el 
  */
-function isInput (el: React.ReactChild): boolean {
+export function isInput (el: React.ReactChild | React.ReactElement<any>): el is React.ReactElement<any> {
 	if (typeof el === 'string' || typeof el === 'number') {
 		return false;
 	}
 	return el.type === TextInput ||
 		el.type === FileInput ||
-		el.type === TextArea;
+		el.type === TextArea ||
+		el.type === MultiRange ||
+		el.type === DateTimeInput;
+}
+
+/**
+ * Similar helper function
+ * 
+ * @param el
+ */
+export function isLabel (el: React.ReactChild): el is React.ReactElement<any> {
+	if (typeof el === 'string' || typeof el === 'number') {
+		return false;
+	}
+	return el.type === Title || el.type === Label;
 }
 
 /**
@@ -118,6 +134,10 @@ export interface FormProps<F> {
 	 * Can be used to help with checking if a form field should be disabled
 	 */
 	onChange?: (fields: F) => void;
+	/**
+	 * Type checking for children!
+	 */
+	children?: JSX.Element[] | JSX.Element;
 }
 
 /**
@@ -272,23 +292,20 @@ class Form<
 								// This algorithm handles labels for inputs by handling inputs
 								// Puts out titles on their own line
 								// Disregards spare labels and such
-								if ((child as React.ReactElement<any>).type === Title) {
+								if (isLabel(child) && child.type === Title) {
 									return child;
 								}
 								return;
 							} else {
-								this.fields[(child as React.ReactElement<any>).props.name] =
-									(child as React.ReactElement<any>).props.value || '';
-								fullWidth = (child as React.ReactElement<any>).props.fullWidth; 
+								this.fields[child.props.name] =
+									child.props.value || '';
+								fullWidth = child.props.fullWidth; 
 								if (typeof fullWidth === 'undefined') {
 									fullWidth = false;
 								}
 								ret = [
 									React.cloneElement(
-										child as React.ReactElement<{
-											onUpdate: (e: {name: string, value: any}) => void,
-											key: number
-										}>,
+										child,
 										{
 											onUpdate: this.onChange,
 											key: Math.random()
@@ -375,7 +392,8 @@ export {
 	Label,
 
 	FileInput,
-	
+	MultiRange,
 	TextInput,
-	TextArea
+	TextArea,
+	DateTimeInput
 };
