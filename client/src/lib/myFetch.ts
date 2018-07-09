@@ -1,5 +1,3 @@
-/// <reference path="../whatwg-fetch.d.ts" />
-
 import * as fetch2 from 'isomorphic-fetch';
 import 'whatwg-fetch';
 

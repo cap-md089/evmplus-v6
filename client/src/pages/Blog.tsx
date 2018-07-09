@@ -1,18 +1,13 @@
+import { convertFromRaw, Editor, EditorState, RawDraftContentState } from 'draft-js';
 import * as React from 'react';
-
-import './blog.css';
-
-import { Route, RouteComponentProps, withRouter, Link } from 'react-router-dom';
-import RequestForm from '../components/SimpleRequestForm';
-import { TextInput, TextArea } from '../components/SimpleForm';
-
-import { MemberObject, BlogPost } from '../types';
-import { RawDraftContentState, Editor, EditorState, convertFromRaw } from 'draft-js';
-
-import myFetch from '../lib/myFetch';
+import { Link, Route, RouteComponentProps, withRouter } from 'react-router-dom';
 import Loader from '../components/Loader';
-
-import Page from './Page';
+import { TextArea, TextInput } from '../components/SimpleForm';
+import RequestForm from '../components/SimpleRequestForm';
+import myFetch from '../lib/myFetch';
+import { BlogPost } from '../types';
+import './blog.css';
+import Page, { PageProps } from './Page';
 
 class BlogList extends React.Component<{}, {
 	posts: BlogPost[],
@@ -32,7 +27,7 @@ class BlogList extends React.Component<{}, {
 		};
 	}
 
-	componentDidMount () {
+	public componentDidMount () {
 		myFetch('/api/blog/post/list/' + this.state.page)
 			.then(val => val.json())
 			.then((posts: {
@@ -48,7 +43,7 @@ class BlogList extends React.Component<{}, {
 			});
 	}
 
-	render () {
+	public render () {
 		return !this.state.loaded ?
 			<Loader /> :
 			(
@@ -86,8 +81,8 @@ class BlogList extends React.Component<{}, {
 }
 
 class BlogPostCreate extends React.Component<RouteComponentProps<any>> {
-	render () {
-		let PostCreateForm = RequestForm as new () => RequestForm<{
+	public render () {
+		const PostCreateForm = RequestForm as new () => RequestForm<{
 			postname: string,
 			content: RawDraftContentState
 		}, BlogPost>;
@@ -154,13 +149,13 @@ class BlogView extends React.Component<RouteComponentProps<{
 		};
 	}
 
-	componentDidMount () {
+	public componentDidMount () {
 		myFetch('/api/blog/post/' + this.props.match.params.id)
 			.then(val => val.json())
 			.then((post: BlogPost) => this.setState({post}));
 	}
 
-	render () {
+	public render () {
 		return (
 			typeof this.state.post === 'undefined' ? 
 				<Loader /> :
@@ -180,15 +175,8 @@ class BlogView extends React.Component<RouteComponentProps<{
 	}
 }
 
-interface BlogProps {
-	SignedInUser: {
-		valid: true,
-		member: MemberObject
-	};
-}
-
-export default class Blog extends Page<BlogProps> {
-	render() {
+export default class Blog extends Page<PageProps<{}>> {
+	public render() {
 		return (
 			<>
 				<Route exact={true} path="/blog" component={BlogList} />

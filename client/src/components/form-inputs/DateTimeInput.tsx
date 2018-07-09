@@ -3,32 +3,42 @@ import * as React from 'react';
 import './DateTimeInput.css';
 
 import { InputProps } from './Input';
-import * as moment from 'moment';
-// import * as momentTimezone from 'moment-timezone';
+
+import { DateTime } from 'luxon';
+
+const TimeZoneDisplays = {
+	'America/New_York' : 'EST',
+	'America/Chicago': 'CST',
+	'America/Denver': 'MST',
+	'America/Los_Angeles': 'PST',
+	'America/Arizona': 'Arizona',
+	'America/Anchorage': 'Alaska',
+	'Pacific/Hawaii': 'Hawaii'
+};
+
+type SupportedTimeZones = 'America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles' | 'America/Arizona' | 'America/Anchorage' | 'Pacific/Hawaii';
 
 // We don't want it to throw an error with value being a moment or a number
 // @ts-ignore
-export interface TimeInputProps extends InputProps<moment.Moment> {
-	value: moment.Moment | number;
+export interface DateTimeInputProps extends InputProps<DateTime> {
+	value?: DateTime | number;
+	date: boolean;
+	time: boolean;
+	minuteInterval?: number;
+	originalTimeZoneOffset: SupportedTimeZones;
+}
+
+// @ts-ignore
+export interface TimeInputProps extends DateTimeInputProps {
+	value: DateTime | number; // Make it required to specify day
 	date: false;
 	time: true;
-	minuteInterval?: number;
 }
 
 // @ts-ignore
-export interface DateInputProps extends InputProps<moment.Moment> {
-	value: moment.Moment | number;
+export interface DateInputProps extends DateTimeInputProps {
 	date: true;
 	time: false;
-	minuteInterval?: never;
-}
-
-// @ts-ignore
-export interface DateTimeInputProps extends InputProps<moment.Moment> {
-	value?: moment.Moment | number;
-	date: true;
-	time: true;
-	minuteInterval?: number;
 }
 
 export const MONTHS = [
@@ -50,16 +60,17 @@ interface DateTimeState {
 	guiOpen: boolean;
 	guiCurrentMonth: number;
 	guiCurrentYear: number;
-	currentInput: moment.Moment;
-	currentYear: number;
-	currentMonth: number;
-	currentDay: number;
-	currentHour: number;
-	currentMinute: number;
+	currentInput: DateTime;
 	focused: boolean;
 }
 
-const getMonth = (month: number, year: number) => moment().set('month', month).set('year', year).startOf('month');
+const getMonth = (month: number, year: number) =>
+	DateTime.utc()
+		.set({
+			year,
+			month
+		})
+		.startOf('month');
 
 export default class DateTimeInput extends React.Component<
 	DateTimeInputProps | TimeInputProps | DateInputProps,
@@ -68,12 +79,19 @@ export default class DateTimeInput extends React.Component<
 	constructor(props: DateTimeInputProps | TimeInputProps | DateInputProps) {
 		super(props);
 
-		let start = typeof this.props.value !== 'undefined' ?
-			(typeof this.props.value === 'number' ? moment(this.props.value) : this.props.value) :
-			moment();
+		let start =
+			typeof this.props.value !== 'undefined'
+				? typeof this.props.value === 'number'
+					? DateTime.fromMillis(this.props.value * 1000, {
+							zone: this.props.originalTimeZoneOffset
+					  })
+					: this.props.value
+				: DateTime.utc();
 
-		let interval = this.props.minuteInterval || 5 * 60 * 1000;
-		start = moment(Math.round(+start / interval) * interval);
+		const interval = this.props.minuteInterval || 5 * 60 * 1000;
+		start = DateTime.fromMillis(Math.round(+start / interval) * interval, {
+			zone: this.props.originalTimeZoneOffset
+		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
@@ -84,15 +102,10 @@ export default class DateTimeInput extends React.Component<
 
 		this.state = {
 			guiOpen: false,
-			guiCurrentMonth: start.get('month'),
-			guiCurrentYear: start.get('year'),
+			guiCurrentMonth: start.month,
+			guiCurrentYear: start.year,
 			currentInput: start,
-			currentYear: start.get('year'),
-			currentMonth: start.get('month') + 1,
-			currentDay: start.get('date'),
-			currentHour: start.get('hour'),
-			currentMinute: start.get('minute'),
-			focused: false
+			focused: false,
 		};
 
 		this.updateDateDay = this.updateDateDay.bind(this);
@@ -112,133 +125,131 @@ export default class DateTimeInput extends React.Component<
 		this.closeGui = this.closeGui.bind(this);
 	}
 
-	public render () {
-		const className = 
-			(this.props.date ? 'date' : '') +
-			(this.props.time ? 'time' : '');
+	public render() {
+		const sameTimezone = DateTime.local().offset === this.state.currentInput.offset;
+
+		const className =
+			(this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
 
 		return (
 			<div className="formbox">
 				<div
-					className={
-						`${className}-input-box 
+					className={`${className}-input-box 
 						datetime-input-root
 						${this.state.focused ? ' focused' : ''}
 						${this.state.guiOpen ? ' gui-open' : ''}`}
 				>
 					<div>
-						{
-							this.props.date ?
-								<>
-									<input
-										className="date-input-year"
-										placeholder="----"
-										value={this.state.currentYear}
-										onChange={this.updateDateYear}
-										onFocus={this.onFocus}
-										onBlur={() => {
-											this.onBlur();
-											this.onYearBlur();
-										}}
-									/>
-									<span className="datetime-input-seperator">/</span>
-									<input
-										className="date-input-month"
-										placeholder="--"
-										value={this.state.currentMonth}
-										onChange={this.updateDateMonth}
-										onFocus={this.onFocus}
-										onBlur={this.onBlur}
-									/>
-									<span className="datetime-input-seperator">/</span>
-									<input
-										className="date-input-day"
-										placeholder="--"
-										value={this.state.currentDay}
-										onChange={this.updateDateDay}
-										onFocus={this.onFocus}
-										onBlur={this.onBlur}
-									/>
-								</> :
-								null
-						}
-						{
-							this.props.date && this.props.time ?
-								<span className="datetime-input-seperator">&nbsp;</span>  :
-								null
-						}
-						{
-							this.props.time ?
-								<>
-									<input
-										className="time-input-hour"
-										placeholder="--"
-										value={this.state.currentHour}
-										onChange={this.updateTimeHours}
-										onFocus={this.onFocus}
-										onBlur={this.onBlur}
-									/>
-									<span className="datetime-input-seperator">:</span>
-									<input
-										className="time-input-minute"
-										placeholder="--"
-										value={this.state.currentMinute}
-										onChange={this.updateTimeMinutes}
-										onFocus={this.onFocus}
-										onBlur={() => {
-											this.onBlur();
-											this.onMinuteBlur();
-										}}
-									/>
-								</> :
-								null
-						}
-						{
-							this.props.date ?
-								<button
-									className="date-input-opendialogue"
+						{this.props.date ? (
+							<>
+								<input
+									className="date-input-year"
+									placeholder="----"
+									value={this.state.currentInput.year}
+									onChange={this.updateDateYear}
+									onFocus={this.onFocus}
+									onBlur={() => {
+										this.onBlur();
+										this.onYearBlur();
+									}}
+								/>
+								<span className="datetime-input-seperator">
+									/
+								</span>
+								<input
+									className="date-input-month"
+									placeholder="--"
+									value={this.state.currentInput.month}
+									onChange={this.updateDateMonth}
 									onFocus={this.onFocus}
 									onBlur={this.onBlur}
-									onClick={this.openGui}
 								/>
-								: null
-						}
-						{
-							this.props.time ?
-								<button
-									className="time-input-opendialogue"
+								<span className="datetime-input-seperator">
+									/
+								</span>
+								<input
+									className="date-input-day"
+									placeholder="--"
+									value={this.state.currentInput.day}
+									onChange={this.updateDateDay}
 									onFocus={this.onFocus}
 									onBlur={this.onBlur}
-									onClick={this.openGui}
 								/>
-								: null
-						}
+							</>
+						) : null}
+						{this.props.date && this.props.time ? (
+							<span className="datetime-input-seperator">
+								&nbsp;
+							</span>
+						) : null}
+						{this.props.time ? (
+							<>
+								<input
+									className="time-input-hour"
+									placeholder="--"
+									value={this.state.currentInput.hour}
+									onChange={this.updateTimeHours}
+									onFocus={this.onFocus}
+									onBlur={this.onBlur}
+								/>
+								<span className="datetime-input-seperator">
+									:
+								</span>
+								<input
+									className="time-input-minute"
+									placeholder="--"
+									value={this.state.currentInput.minute}
+									onChange={this.updateTimeMinutes}
+									onFocus={this.onFocus}
+									onBlur={() => {
+										this.onBlur();
+										this.onMinuteBlur();
+									}}
+								/>
+							</>
+						) : null}
+						{this.props.date ? (
+							<button
+								className="date-input-opendialogue"
+								onFocus={this.onFocus}
+								onBlur={this.onBlur}
+								onClick={this.openGui}
+							/>
+						) : null}
+						{this.props.time ? (
+							<button
+								className="time-input-opendialogue"
+								onFocus={this.onFocus}
+								onBlur={this.onBlur}
+								onClick={this.openGui}
+							/>
+						) : null}
 					</div>
 					{
-						this.state.guiOpen ? 
-						(
-							this.renderCalendar()
-						) : null
+						!sameTimezone ?
+							<>
+								<br />
+								<div className="original-time">
+									Time displayed in {TimeZoneDisplays[this.props.originalTimeZoneOffset]}
+								</div>
+							</>
+							: null
 					}
+					{this.state.guiOpen ? this.renderCalendar() : null}
 				</div>
 			</div>
 		);
 	}
 
-	private updateDateYear (e: React.ChangeEvent<HTMLInputElement>) {
+	private updateDateYear(e: React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value === '') {
-			this.setState({
-				currentYear: 0
-			});
+			this.setState(prev => ({
+				currentInput: prev.currentInput.set({year: 0})
+			}));
 			return;
 		}
 
-		if (moment(e.target.value).isValid()) {
-			this.setStateFromMoment(moment(e.target.value));
-			return;
-		}
-
-		let test = parseInt(e.target.value, 10);
+		const test = parseInt(e.target.value, 10);
 
 		if (test !== test) {
 			// NaN
@@ -251,30 +262,33 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		let { currentInput } = this.state;
+		const { currentInput } = this.state;
 
-		currentInput.set('year', test);
+		const newInput = currentInput.set({
+			year: test
+		});
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: newInput
+			});
+		}
 
 		this.setState({
-			currentInput,
-			currentYear: test
+			currentInput: newInput
 		});
 	}
 
-	private updateDateMonth (e: React.ChangeEvent<HTMLInputElement>) {
+	private updateDateMonth(e: React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value === '') {
-			this.setState({
-				currentMonth: 0
-			});
+			this.setState(prev => ({
+				currentInput: prev.currentInput.set({ month: 0 })
+			}));
 			return;
 		}
 
-		if (moment(e.target.value).isValid()) {
-			this.setStateFromMoment(moment(e.target.value));
-			return;
-		}
-
-		let test = parseInt(e.target.value, 10);
+		const test = parseInt(e.target.value, 10);
 
 		if (test !== test) {
 			// NaN
@@ -287,44 +301,40 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		let { currentInput } = this.state;
+		const { currentInput } = this.state;
 
-		currentInput.set('month', test - 1);
+		let newInput = currentInput.set({
+			month: test
+		});
 
-		if (currentInput.daysInMonth() < this.state.currentDay) {
-			this.setState({
-				currentDay: currentInput.daysInMonth()
+		if (newInput.daysInMonth < this.state.currentInput.day) {
+			newInput = newInput.set({
+				day: newInput.daysInMonth
 			});
 		}
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: currentInput
+				value: newInput
 			});
 		}
 
 		this.setState({
-			currentInput,
-			currentMonth: test
+			currentInput
 		});
 	}
 
-	private updateDateDay (e: React.ChangeEvent<HTMLInputElement>) {
+	private updateDateDay(e: React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value === '') {
-			this.setState({
-				currentDay: 0
-			});
+			this.setState(prev => ({
+				currentInput: prev.currentInput.set({ day: 0 })
+			}));
 			return;
 		}
 
-		if (moment(e.target.value).isValid()) {
-			this.setStateFromMoment(moment(e.target.value));
-			return;
-		}
-
-		let { currentInput } = this.state;
-		let test = parseInt(e.target.value, 10);
+		const { currentInput } = this.state;
+		const test = parseInt(e.target.value, 10);
 
 		if (test !== test) {
 			// NaN
@@ -332,36 +342,32 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		if (test > currentInput.daysInMonth() || test < 1) {
+		if (test > currentInput.daysInMonth || test < 1) {
 			this.forceUpdate();
 			return;
 		}
 
-		currentInput.set('date', test);
+		const newInput = currentInput.set({
+			day: test
+		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: currentInput
+				value: newInput
 			});
 		}
 
 		this.setState({
-			currentInput,
-			currentDay: test
+			currentInput: newInput
 		});
 	}
 
-	private updateTimeHours (e: React.ChangeEvent<HTMLInputElement>) {
+	private updateTimeHours(e: React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value === '') {
-			this.setState({
-				currentHour: 0
-			});
-			return;
-		}
-
-		if (moment(e.target.value).isValid()) {
-			this.setStateFromMoment(moment(e.target.value));
+			this.setState(prev => ({
+				currentInput: prev.currentInput.set({ hour: 0 })
+			}));
 			return;
 		}
 
@@ -382,33 +388,29 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		let { currentInput } = this.state;
+		const { currentInput } = this.state;
 
-		currentInput.set('hour', test);
+		const newInput = currentInput.set({
+			hour: test
+		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: currentInput
+				value: newInput
 			});
 		}
 
 		this.setState({
-			currentInput,
-			currentHour: test
+			currentInput: newInput
 		});
 	}
 
-	private updateTimeMinutes (e: React.ChangeEvent<HTMLInputElement>) {
+	private updateTimeMinutes(e: React.ChangeEvent<HTMLInputElement>) {
 		if (e.target.value === '') {
-			this.setState({
-				currentMinute: 0
-			});
-			return;
-		}
-
-		if (moment(e.target.value).isValid()) {
-			this.setStateFromMoment(moment(e.target.value));
+			this.setState(prev => ({
+				currentInput: prev.currentInput.set({ minute: 0 })
+			}));
 			return;
 		}
 
@@ -425,41 +427,42 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		let { currentInput } = this.state;
+		const { currentInput } = this.state;
 
 		if (test >= 10) {
 			test = Math.round(test / 5) * 5;
 		}
 
-		currentInput.set('minute', test);
+		const newInput = currentInput.set({
+			minute: test
+		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: currentInput
+				value: newInput
 			});
 		}
 
 		this.setState({
-			currentInput,
-			currentMinute: test
+			currentInput: newInput
 		});
 	}
 
-	private onFocus () {
+	private onFocus() {
 		this.setState({
 			focused: true
 		});
 	}
 
-	private onBlur () {
+	private onBlur() {
 		this.setState({
 			focused: false
 		});
 	}
 
-	private onMinuteBlur () {
-		let test = this.state.currentMinute;
+	private onMinuteBlur() {
+		const test = this.state.currentInput.minute;
 
 		if (test !== test) {
 			// NaN
@@ -472,77 +475,56 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		let { currentInput } = this.state;
+		const { currentInput } = this.state;
 
-		currentInput.set('minute', test);
+		const newInput = currentInput.set({
+			minute: test
+		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: currentInput
+				value: newInput
 			});
 		}
 
 		this.setState({
-			currentInput,
-			currentMinute: test
+			currentInput: newInput
 		});
 	}
 
-	private onYearBlur () {
-		let test = this.state.currentYear;
+	private onYearBlur() {
+		let test = this.state.currentInput.year;
 
 		if (test !== test) {
 			// NaN
 			this.forceUpdate();
 			return;
 		}
-		
-		let { currentInput } = this.state;
+
+		const { currentInput } = this.state;
 
 		if (test >= 0 && test < 100) {
-			if (test >= moment().add('2 years').get('year')) {
+			if (test >= DateTime.local().plus({ years: 2 }).year) {
 				test = 1900 + test;
 			} else {
 				test = 2000 + test;
 			}
 		}
 
-		currentInput.set('minute', test);
-
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
-				name: this.props.name,
-				value: currentInput
-			});
-		}
-
-		this.setState({
-			currentInput,
-			currentYear: test
+		const newInput = currentInput.set({
+			year: test
 		});
-	}
-
-	private setStateFromMoment (start: moment.Moment) {
-		let interval = this.props.minuteInterval || 5 * 60 * 1000;
-		start = moment(Math.round(+start / interval) * interval);
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: start
+				value: newInput
 			});
 		}
 
 		this.setState({
-			guiOpen: false,
-			currentInput: start,
-			currentYear: start.get('year'),
-			currentMonth: start.get('month') + 1,
-			currentDay: start.get('date'),
-			currentHour: start.get('hour'),
-			currentMinute: start.get('minute'),
-			focused: false
+			currentInput: newInput
 		});
 	}
 
@@ -551,52 +533,56 @@ export default class DateTimeInput extends React.Component<
 			guiOpen: true
 		});
 	}
-	
+
 	private closeGui() {
 		this.setState({
 			guiOpen: false
 		});
 	}
 
-	private renderCalendar () {
-		const className = 
-			(this.props.date ? 'date' : '') +
-			(this.props.time ? 'time' : '');
+	private renderCalendar() {
+		const className =
+			(this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
 
 		const year = this.state.guiCurrentYear;
 		const month = this.state.guiCurrentMonth;
 
 		const lastMonth = getMonth(month - 1, year).endOf('month');
-		const thisMonth = getMonth(month    , year);
+		const thisMonth = getMonth(month, year);
 		const nextMonth = getMonth(month + 1, year);
 
-		const firstDay = thisMonth.isoWeekday() % 7;
+		const firstDay = thisMonth.weekday % 7;
 
-		const numberWeeks = Math.ceil((thisMonth.daysInMonth() + thisMonth.isoWeekday() % 7) / 7) + 1;
+		const numberWeeks =
+			Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) +
+			1;
 
-		const calendar: Array<{
-			day: number,
-			month: number,
-			year: number
-		}>[] = [];
+		const calendar: Array<
+			Array<{
+				day: number;
+				month: number;
+				year: number;
+			}>
+		> = [];
 
 		const startOfLastMonthWeek = lastMonth.startOf('week');
-		let j, i;
+		let j;
+		let i;
 
 		calendar[0] = [];
 		for (i = 0; i < firstDay; i++) {
 			calendar[0][i] = {
-				day: startOfLastMonthWeek.get('date') + i,
-				month: lastMonth.get('month'),
-				year: lastMonth.get('year')
+				day: startOfLastMonthWeek.day + i,
+				month: lastMonth.month,
+				year: lastMonth.year
 			};
 		}
 
 		for (i = firstDay; i < 7; i++) {
 			calendar[0][i] = {
 				day: i - firstDay + 1,
-				month: thisMonth.get('month'),
-				year: thisMonth.get('year')
+				month: thisMonth.month,
+				year: thisMonth.year
 			};
 		}
 
@@ -616,7 +602,7 @@ export default class DateTimeInput extends React.Component<
 
 		start = calendar[calendar.length - 1][6].day + 1;
 		calendar[calendar.length] = [];
-		for (i = start, j = 0; i <= thisMonth.daysInMonth(); i++, j++) {
+		for (i = start, j = 0; i <= thisMonth.daysInMonth; i++, j++) {
 			calendar[calendar.length - 1][j] = {
 				day: i,
 				month: thisMonth.get('month'),
@@ -635,35 +621,37 @@ export default class DateTimeInput extends React.Component<
 		}
 
 		return (
-			<div className={`${className}-input-gui-box datetime-input-gui-root`}>
+			<div
+				className={`${className}-input-gui-box datetime-input-gui-root`}
+			>
 				<div className="datetime-gui-parent">
 					<div className="date-picker">
 						<table>
 							<caption>
-								{this.state.guiCurrentYear} {MONTHS[this.state.guiCurrentMonth]}
+								{this.state.guiCurrentYear}{' '}
+								{MONTHS[this.state.guiCurrentMonth]}
 							</caption>
 							<tbody>
-								{
-									calendar.map(row => (
-										<tr>
-											{
-												row.map(item => (
-													<td
-														className={item.month === thisMonth.get('month') ? 'datetime-gui-inmonth' : 'datetime-gui-outmonth'}
-													>
-														{item.day}
-													</td>
-												))
-											}
-										</tr>
-									))
-								}
+								{calendar.map(row => (
+									<tr>
+										{row.map(item => (
+											<td
+												className={
+													item.month ===
+													thisMonth.get('month')
+														? 'datetime-gui-inmonth'
+														: 'datetime-gui-outmonth'
+												}
+											>
+												{item.day}
+											</td>
+										))}
+									</tr>
+								))}
 							</tbody>
 						</table>
 					</div>
-					<div className="time-picker">
-						2
-					</div>
+					<div className="time-picker">2</div>
 				</div>
 			</div>
 		);

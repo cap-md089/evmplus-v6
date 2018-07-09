@@ -40,7 +40,7 @@ interface RequestFormProps<C, S> extends FormProps<C> {
 export default class RequestForm<C extends object, S> extends Form<C, RequestFormProps<C, S>> {
 	protected submit (e: React.FormEvent<HTMLFormElement>): void {
 		e.preventDefault();
-		let formFields: C & {token: string} = {
+		const formFields: C & {token: string} = {
 			...(this.fields as any),
 			token: this.token
 		};
@@ -55,7 +55,7 @@ export default class RequestForm<C extends object, S> extends Form<C, RequestFor
 				});
 				return;
 			}
-			let clickResolve = this.props.onSubmit(this.fields);
+			const clickResolve = this.props.onSubmit(this.fields);
 			if (typeof clickResolve !== 'undefined' && typeof clickResolve.then !== 'undefined') {
 				clickResolve.then((data: any) => {
 					if (typeof data === 'boolean') {
@@ -101,6 +101,7 @@ export default class RequestForm<C extends object, S> extends Form<C, RequestFor
 						this.props.onReceiveData(serverData, this.fields);
 					}
 				}).catch((err: Error) => {
+					// tslint:disable-next-line:no-console
 					console.log(err);	
 				});
 			} else {

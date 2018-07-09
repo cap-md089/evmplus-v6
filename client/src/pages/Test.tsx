@@ -1,26 +1,18 @@
-import * as React from 'react';
-
-import Form, {
-	Label,
-	TextInput,
-	Title,
-	TextArea,
-	FileInput,
-	MultiRange,
-	DateTimeInput
-} from '../components/SimpleForm';
-import Button from '../components/Button';
 import { RawDraftContentState } from 'draft-js';
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
+import * as React from 'react';
+import Button from '../components/Button';
+import Form, { DateTimeInput, FileInput, Label, MultiRange, TextArea, TextInput, Title } from '../components/SimpleForm';
 import today from '../lib/today';
+import Page, { PageProps } from './Page';
 
-export default class Test extends React.Component<{}, {open: boolean}> {
-	state = {
+export default class Test extends Page<PageProps<{}>, {open: boolean}> {
+	public state = {
 		open: true
 	};
 
-	render () {
-		let TestForm = Form as new () => Form<{
+	public render () {
+		const TestForm = Form as new () => Form<{
 			test1: string;
 			test2: string;
 			test3: string;
@@ -28,12 +20,12 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 			test6: string;
 			test5: RawDraftContentState;
 			test7: [number, number];
-			test8: moment.Moment;
-			test9: moment.Moment;
-			test10: moment.Moment;
+			test8: DateTime;
+			test9: DateTime;
+			test10: DateTime;
 		}>;
 
-		let TestButton = Button as new () => Button<{
+		const TestButton = Button as new () => Button<{
 			hi: boolean
 		}, {
 			hi: boolean
@@ -44,6 +36,7 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 				<TestForm
 					onSubmit={
 						(data) => {
+							// tslint:disable-next-line:no-console
 							console.log(data);
 						}
 					}
@@ -57,7 +50,8 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 						name="test8"
 						date={false}
 						time={true}
-						value={moment()}
+						value={DateTime.utc()}
+						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>Date input</Label>
 					<DateTimeInput
@@ -65,12 +59,14 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 						date={true}
 						time={false}
 						value={today()}
+						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>Date and time input</Label>
 					<DateTimeInput
 						name="test10"
 						date={true}
 						time={true}
+						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>
 						Input label
@@ -98,15 +94,15 @@ export default class Test extends React.Component<{}, {open: boolean}> {
 						placeholder="Post title..."
 						boxStyles={{
 							margin: 0,
+							marginBottom: -11,
 							padding: 0,
-							marginBottom: -11
 						}}
 						inputStyles={{
 							backgroundColor: '#fff',
+							borderBottomWidth: 0,
+							borderColor: '#aaa',
 							borderRadius: 0,
 							padding: 10,
-							borderBottomWidth: 0,
-							borderColor: '#aaa'
 						}}
 					/>
 					<TextArea

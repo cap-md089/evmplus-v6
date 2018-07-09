@@ -36,12 +36,12 @@ export default class TextInput extends React.Component<TextInputProps, {
 	}
 
 	public onChange (e: React.FormEvent<HTMLInputElement>) {
-		let text = e.currentTarget.value;
+		const text = e.currentTarget.value;
 
 		let change = true;
 
 		if (typeof this.props.onChange !== 'undefined') {
-			let newChange = this.props.onChange(text);
+			const newChange = this.props.onChange(text);
 			if (typeof newChange === 'boolean') {
 				change = newChange;
 			}
@@ -65,7 +65,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 		}
 	}
 
-	render() {
+	public render() {
 		return (
 			<div
 				className="formbox"

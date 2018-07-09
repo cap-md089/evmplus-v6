@@ -1,12 +1,11 @@
-import './polyfills';
-
+import 'promise-polyfill/src/polyfill';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import App, { Head } from './App';
 // import registerServiceWorker from './registerServiceWorker';
 import { BrowserRouter as Router } from 'react-router-dom';
-
+import App from './App';
 import './nhq.css';
+import './polyfills';
 
 ReactDOM.render(
 	<Router>
@@ -14,12 +13,6 @@ ReactDOM.render(
 	</Router>,
 	document.getElementById('root') as HTMLElement
 );
-document.onload = function () {
-	ReactDOM.render(
-		<Head />,
-		document.getElementById('headelem') as HTMLElement
-	);
-};
 
 // registerServiceWorker();
 

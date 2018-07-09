@@ -1,15 +1,13 @@
-import * as React from 'react';
-
 import {
-	Editor,
-	EditorState,
-	RichUtils,
-	DraftHandleValue,
-	RawDraftContentState,
 	convertFromRaw,
 	convertToRaw,
+	DraftHandleValue,
+	Editor,
+	EditorState,
+	RawDraftContentState,
+	RichUtils
 } from 'draft-js';
-
+import * as React from 'react';
 import { InputProps } from './Input';
 
 interface TextAreaProps extends InputProps<RawDraftContentState> {
@@ -21,7 +19,7 @@ interface TextAreaProps extends InputProps<RawDraftContentState> {
 
 /**
  * To use values generated here, use the following code:
- * 
+ *
  * 		<Editor
  * 			editorState={EditorState.createWithContent(
  * 				convertFromRaw(text)
@@ -30,10 +28,13 @@ interface TextAreaProps extends InputProps<RawDraftContentState> {
  * 			onChange={() => null}
  * 		/>
  */
-export default class TextArea extends React.Component<TextAreaProps, {
-	editorState: EditorState
-}> {
-	constructor (props: TextAreaProps) {
+export default class TextArea extends React.Component<
+	TextAreaProps,
+	{
+		editorState: EditorState;
+	}
+> {
+	constructor(props: TextAreaProps) {
 		super(props);
 		if (typeof this.props.value !== 'undefined') {
 			this.state = {
@@ -62,7 +63,7 @@ export default class TextArea extends React.Component<TextAreaProps, {
 		this.toggleOL = this.toggleOL.bind(this);
 	}
 
-	render () {
+	public render() {
 		return (
 			<div
 				className="formbox"
@@ -77,7 +78,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading1}
 							style={{
-								fontWeight: this.getBlockType() === 'header-one' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-one'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H1
@@ -85,7 +89,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading2}
 							style={{
-								fontWeight: this.getBlockType() === 'header-two' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-two'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H2
@@ -93,7 +100,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading3}
 							style={{
-								fontWeight: this.getBlockType() === 'header-three' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-three'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H3
@@ -101,7 +111,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading4}
 							style={{
-								fontWeight: this.getBlockType() === 'header-four' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-four'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H4
@@ -109,7 +122,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading5}
 							style={{
-								fontWeight: this.getBlockType() === 'header-five' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-five'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H5
@@ -117,7 +133,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleHeading6}
 							style={{
-								fontWeight: this.getBlockType() === 'header-six' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'header-six'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							H6
@@ -125,7 +144,11 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleUL}
 							style={{
-								fontWeight: this.getBlockType() === 'unordered-list-item' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() ===
+									'unordered-list-item'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							UL
@@ -133,7 +156,10 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleOL}
 							style={{
-								fontWeight: this.getBlockType() === 'ordered-list-item' ? 'bold' : 'normal'
+								fontWeight:
+									this.getBlockType() === 'ordered-list-item'
+										? 'bold'
+										: 'normal'
 							}}
 						>
 							OL
@@ -142,7 +168,11 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleBold}
 							style={{
-								fontWeight: this.state.editorState.getCurrentInlineStyle().has('BOLD') ? 'bold' : 'normal'
+								fontWeight: this.state.editorState
+									.getCurrentInlineStyle()
+									.has('BOLD')
+									? 'bold'
+									: 'normal'
 							}}
 						>
 							B
@@ -150,7 +180,11 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleItalic}
 							style={{
-								fontStyle: this.state.editorState.getCurrentInlineStyle().has('ITALIC') ? 'italic' : 'normal'
+								fontStyle: this.state.editorState
+									.getCurrentInlineStyle()
+									.has('ITALIC')
+									? 'italic'
+									: 'normal'
 							}}
 						>
 							I
@@ -158,7 +192,11 @@ export default class TextArea extends React.Component<TextAreaProps, {
 						<span
 							onMouseDown={this.toggleUnderline}
 							style={{
-								textDecoration: this.state.editorState.getCurrentInlineStyle().has('UNDERLINE') ? 'underline' : 'none'
+								textDecoration: this.state.editorState
+									.getCurrentInlineStyle()
+									.has('UNDERLINE')
+									? 'underline'
+									: 'none'
 							}}
 						>
 							U
@@ -183,62 +221,90 @@ export default class TextArea extends React.Component<TextAreaProps, {
 		);
 	}
 
-	private toggleBold (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleBold(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD'));
+		this.onChange(
+			RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD')
+		);
 	}
 
-	private toggleItalic (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleItalic(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'ITALIC'));
+		this.onChange(
+			RichUtils.toggleInlineStyle(this.state.editorState, 'ITALIC')
+		);
 	}
 
-	private toggleUnderline (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleUnderline(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, 'UNDERLINE'));
+		this.onChange(
+			RichUtils.toggleInlineStyle(this.state.editorState, 'UNDERLINE')
+		);
 	}
 
-	private toggleHeading1 (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading1(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-one'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-one')
+		);
 	}
 
-	private toggleHeading2 (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading2(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-two'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-two')
+		);
 	}
 
-	private toggleHeading3 (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading3(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-three'));
-	}
-	
-	private toggleHeading4 (e: React.MouseEvent<HTMLSpanElement>) {
-		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-four'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-three')
+		);
 	}
 
-	private toggleHeading5 (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading4(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-five'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-four')
+		);
 	}
 
-	private toggleHeading6 (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading5(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'header-six'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-five')
+		);
 	}
 
-	private toggleUL (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleHeading6(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'unordered-list-item'));
+		this.onChange(
+			RichUtils.toggleBlockType(this.state.editorState, 'header-six')
+		);
 	}
 
-	private toggleOL (e: React.MouseEvent<HTMLSpanElement>) {
+	private toggleUL(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(RichUtils.toggleBlockType(this.state.editorState, 'ordered-list-item'));
+		this.onChange(
+			RichUtils.toggleBlockType(
+				this.state.editorState,
+				'unordered-list-item'
+			)
+		);
 	}
 
-	private onChange (editorState: EditorState): void {
+	private toggleOL(e: React.MouseEvent<HTMLSpanElement>) {
+		e.preventDefault();
+		this.onChange(
+			RichUtils.toggleBlockType(
+				this.state.editorState,
+				'ordered-list-item'
+			)
+		);
+	}
+
+	private onChange(editorState: EditorState): void {
 		this.setState({
 			editorState
 		});
@@ -251,18 +317,23 @@ export default class TextArea extends React.Component<TextAreaProps, {
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(convertToRaw(this.state.editorState.getCurrentContent()));
+			this.props.onChange(
+				convertToRaw(this.state.editorState.getCurrentContent())
+			);
 		}
 	}
 
-	private getBlockType () {
+	private getBlockType() {
 		return this.state.editorState
 			.getCurrentContent()
 			.getBlockForKey(this.state.editorState.getSelection().getStartKey())
 			.getType();
 	}
 
-	private handleKeyCommand (command: string, editorState: EditorState): DraftHandleValue {
+	private handleKeyCommand(
+		command: string,
+		editorState: EditorState
+	): DraftHandleValue {
 		const newState = RichUtils.handleKeyCommand(editorState, command);
 		if (newState) {
 			this.onChange(newState);

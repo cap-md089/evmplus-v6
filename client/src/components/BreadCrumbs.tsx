@@ -9,7 +9,7 @@ export interface BreadCrumb {
 export class BreadCrumbsPresentation extends React.Component<{
 	links: BreadCrumb[]
 }, {}> {
-	render () {
+	public render () {
 		return (
 			<div id="breadcrumbs">
 				<ul>

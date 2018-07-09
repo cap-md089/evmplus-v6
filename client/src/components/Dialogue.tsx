@@ -8,7 +8,7 @@ export default class Dialogue extends React.Component<{
 	title: string,
 	buttonText: string,
 	displayButton: boolean,
-	onClose: Function,
+	onClose: () => void,
 }, {
 	open: boolean,
 	title: string,
@@ -22,11 +22,7 @@ export default class Dialogue extends React.Component<{
 		title: string,
 		buttonText: string,
 		displayButton: boolean,
-		onClose: Function,
-	
-		isMobile: boolean, // Required property
-		
-		dispatch: Function // Provided by react-redux
+		onClose: () => void
 	}) {
 		super(props);
 
@@ -38,20 +34,20 @@ export default class Dialogue extends React.Component<{
 		};
 	}
 
-	componentDidMount() {
-		let div: JQuery = $(this.mainDiv).css({
+	public componentDidMount() {
+		const div: JQuery = $(this.mainDiv).css({
 			'zIndex': 5010,
 			'position': 'fixed'
 		});
 
-		let mobile = $('body').hasClass('mobile');
+		const mobile = $('body').hasClass('mobile');
 
 		if (!mobile) {
 			div.css({
 				'left': '50%',
 				'top': '50%',
-				'margin-left': function () { return -($(this).outerWidth() as number) / 2; },
-				'margin-top': function () { return -($(this).outerHeight() as number) / 2; }
+				'margin-left'() { return -($(this).outerWidth() as number) / 2; },
+				'margin-top'() { return -($(this).outerHeight() as number) / 2; }
 			});
 		} else {
 			div.css({
@@ -93,7 +89,7 @@ export default class Dialogue extends React.Component<{
 		return true;
 	}
 
-	render () {
+	public render () {
 		setTimeout(() => {
 			this.componentDidMount();
 		});

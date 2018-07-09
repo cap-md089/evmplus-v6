@@ -1,14 +1,12 @@
 import * as React from 'react';
-
-import FileDialogue from '../FileDialogue';
-import { FileObject } from '../../types';
-import Loader from '../Loader';
-import Button from '../Button';
 import myFetch from '../../lib/myFetch';
 import urlFormat from '../../lib/urlFormat';
-import { InputProps } from './Input';
-
+import { FileObject } from '../../types';
+import Button from '../Button';
+import FileDialogue from '../FileDialogue';
+import Loader from '../Loader';
 import './FileInput.css';
+import { InputProps } from './Input';
 
 interface FileInputState {
 	files: FileObject[];
@@ -46,7 +44,7 @@ const FileDisplay = ({
 );
 
 export default class FileInput extends React.Component<InputProps<string[]>, FileInputState> {
-	state = {
+	public state = {
 		loaded: false,
 		dialogueOpen: false,
 		files: [] as FileObject[]
@@ -59,11 +57,11 @@ export default class FileInput extends React.Component<InputProps<string[]>, Fil
 		this.onFileRemove = this.onFileRemove.bind(this);
 	}
 
-	async componentDidMount() {
-		let sid = localStorage.getItem('sessionID');
+	public async componentDidMount() {
+		const sid = localStorage.getItem('sessionID');
 
 		if (this.props.value) {
-			let files: FileObject[] = await Promise.all(this.props.value.map(id => 
+			const files: FileObject[] = await Promise.all(this.props.value.map(id => 
 				myFetch(
 					urlFormat('api', 'files', id),
 					{
@@ -74,8 +72,6 @@ export default class FileInput extends React.Component<InputProps<string[]>, Fil
 				).then(res =>
 					res.json())
 			));
-
-			console.log(files);
 
 			this.setState({
 				files,
@@ -88,7 +84,7 @@ export default class FileInput extends React.Component<InputProps<string[]>, Fil
 		}
 	}
 
-	componentDidUpdate () {
+	public componentDidUpdate () {
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
@@ -103,7 +99,7 @@ export default class FileInput extends React.Component<InputProps<string[]>, Fil
 		}
 	}
 
-	render () {
+	public render () {
 		return this.state.loaded ?
 			(
 				<div className="formbox">
@@ -139,18 +135,18 @@ export default class FileInput extends React.Component<InputProps<string[]>, Fil
 	}
 
 	private handleFileSelect (files: FileObject[]) {
-		let newFiles = this.state.files.slice(0);
+		const newFiles = this.state.files.slice(0);
 
-		for (let i = 0; i < files.length; i++) {
+		for (const file of files) {
 			let add = true;
-			for (let j = 0; j < newFiles.length; j++) {
-				if (newFiles[j].id === files[i].id) {
+			for (const newFile of newFiles) {
+				if (newFile.id === file.id) {
 					add = false;
 					break;
 				}
 			}
 			if (add) {
-				newFiles.push(files[i]);
+				newFiles.push(file);
 			}
 		}
 

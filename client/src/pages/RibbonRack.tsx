@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Page from './Page';
 import './ribbonBuilder.css';
 
 interface Ribbons {
@@ -43,16 +44,16 @@ interface Ribbons {
 }
 
 class Ribbon extends React.Component<{
-	source: string
+	source: string;
 }> {
-	render () {
+	public render() {
 		const names = {
 			SilverValor: 'Silver Medal of Valor',
 			BronzeValor: 'Bronze Medal of Valor',
 			DistinguishedService: 'Distinguished Service Award',
 			ExceptionalService: 'Exceptional Service Award',
 			MeritoriousService: 'Meritorious Service Award',
-			CommandersCommendation: 'Commander\' Commendation Award',
+			CommandersCommendation: "Commander' Commendation Award",
 			CAPAchievement: 'CAP Achievement Award',
 			Lifesaving: 'Certificate of Recognition For Life Saving',
 			NatCommanderUnitCitation: 'National Commanders Unit Citation Award',
@@ -91,10 +92,12 @@ class Ribbon extends React.Component<{
 				style={{
 					flex: `2 1 ${100 / 3}%`,
 					width: `${100 / 3}%`,
-					backgroundImage: `url(/images/cadet-ribbons/${this.props.source}.png)`,
+					backgroundImage: `url(/images/cadet-ribbons/${
+						this.props.source
+					}.png)`,
 					backgroundSize: '100%',
 					backgroundPosition: 'center',
-					height: 20,
+					height: 20
 				}}
 				title={names[this.props.source]}
 			/>
@@ -102,7 +105,7 @@ class Ribbon extends React.Component<{
 	}
 }
 
-const Spacer = (props: {size: number}) => (
+const Spacer = (props: { size: number }) => (
 	<div
 		style={{
 			flex: `${6 / props.size} 1 ${100 / props.size}%`,
@@ -112,7 +115,7 @@ const Spacer = (props: {size: number}) => (
 );
 
 class RibbonRack extends React.Component<Partial<Ribbons>, Ribbons> {
-	state = {
+	public state = {
 		SilverValor: false,
 		BronzeValor: false,
 		DistinguishedService: false,
@@ -156,25 +159,20 @@ class RibbonRack extends React.Component<Partial<Ribbons>, Ribbons> {
 	constructor(props: Partial<Ribbons>) {
 		super(props);
 
-		for (let i in this.state) {
+		for (const i in this.state) {
 			if (props.hasOwnProperty(i)) {
 				this.state[i] = Boolean(props[i]);
 			}
 		}
 	}
 
-	render () {
-		let ribbons: JSX.Element[] = [];
-		
-		for (let i in this.state) {
+	public render() {
+		const ribbons: JSX.Element[] = [];
+
+		for (const i in this.state) {
 			if (this.state.hasOwnProperty(i)) {
 				if (this.state[i]) {
-					ribbons.push(
-						<Ribbon
-							key={i}
-							source={i}
-						/>
-					);
+					ribbons.push(<Ribbon key={i} source={i} />);
 				}
 			}
 		}
@@ -202,8 +200,8 @@ class RibbonRack extends React.Component<Partial<Ribbons>, Ribbons> {
 	}
 }
 
-export default class RibbonRackBuilder extends React.Component {
-	render () {
+export default class RibbonRackBuilder extends Page {
+	public render() {
 		return (
 			<RibbonRack
 				Mitchell={true}

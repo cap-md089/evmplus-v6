@@ -5,8 +5,8 @@ export default function (...args: string[]): string {
 		url = 'http://localhost:3001/';
 	}
 
-	for (let i of args) {
-		url += `${i}/`;
+	for (const arg of args) {
+		url += `${arg}/`;
 	}
 
 	return url;

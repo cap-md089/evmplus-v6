@@ -15,11 +15,11 @@ interface MultiRangeProps extends InputProps<[number, number]> {
 export default class MultiRange extends React.Component<
 	MultiRangeProps,
 	{
-		low: number,
-		high: number
+		low: number;
+		high: number;
 	}
 > {
-	private range = React.createRef<HTMLInputElement>();
+	private range: HTMLInputElement | null;
 
 	constructor(props: MultiRangeProps) {
 		super(props);
@@ -37,12 +37,12 @@ export default class MultiRange extends React.Component<
 		}
 	}
 
-	public componentDidMount () {
-		if (!this.range.current) {
+	public componentDidMount() {
+		if (!this.range) {
 			return;
 		}
 
-		const input = this.range.current;
+		const input = this.range;
 		const ghost = input.cloneNode() as HTMLInputElement;
 
 		input.classList.add('multirange', 'original');
@@ -51,7 +51,10 @@ export default class MultiRange extends React.Component<
 		input.value = this.state.low.toString();
 		ghost.value = this.state.high.toString();
 
-		(input.parentElement as HTMLDivElement).insertBefore(ghost, input.nextSibling);
+		(input.parentElement as HTMLDivElement).insertBefore(
+			ghost,
+			input.nextSibling
+		);
 
 		const update = () => {
 			const high = Math.max(+input.value, +ghost.value);
@@ -75,32 +78,31 @@ export default class MultiRange extends React.Component<
 		update();
 	}
 
-	public render () {
+	public render() {
 		const { min, max } = this.props;
-		const parsedLow = (this.state.low / 100 * (max - min)) + min;
-		const parsedHigh = (this.state.high / 100 * (max - min)) + min;
+		const parsedLow = (this.state.low / 100) * (max - min) + min;
+		const parsedHigh = (this.state.high / 100) * (max - min) + min;
 
 		return (
 			<div className="formbox">
-				{
-					this.props.leftDisplay ? 
-						(<div className="multirange-leftdisplay">
-							{this.props.leftDisplay(parsedLow, parsedHigh)}
-						</div>) : null
-				}
+				{this.props.leftDisplay ? (
+					<div className="multirange-leftdisplay">
+						{this.props.leftDisplay(parsedLow, parsedHigh)}
+					</div>
+				) : null}
 				<input
 					type="range"
 					defaultValue={`${this.state.low},${this.state.high}`}
-					multiple={true}
-					ref={this.range}
+					ref={el => {
+						this.range = el;
+					}}
 					step={this.props.step || 1}
 				/>
-				{
-					this.props.rightDisplay ? 
-						(<div className="multirange-rightdisplay">
-							{this.props.rightDisplay(parsedLow, parsedHigh)}
-						</div>) : null
-				}
+				{this.props.rightDisplay ? (
+					<div className="multirange-rightdisplay">
+						{this.props.rightDisplay(parsedLow, parsedHigh)}
+					</div>
+				) : null}
 			</div>
 		);
 	}
