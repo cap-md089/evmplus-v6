@@ -7,7 +7,7 @@
 		"**/.DS_Store": true,
 		".vscode": true,
 		".tscache": true,
-		"node_modules": true,
+		"node_modules": false,
 		"dist": true,
 		"coverage": true,
 		"tscommand-*": true,

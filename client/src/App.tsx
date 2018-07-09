@@ -1,19 +1,18 @@
 import * as React from 'react';
-// import * as jQuery from 'jquery';
-import jQuery from './jquery.textfit';
-
-import Registry from './registry';
-import { NavLink, withRouter, RouteComponentProps } from 'react-router-dom';
-
-import BreadCrumbs from './components/BreadCrumbs';
+import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
+import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import PageRouter from './components/PageRouter';
 import SideNavigation from './components/SideNavigation';
-
+// import * as jQuery from 'jquery';
+import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
+import Registry from './registry';
+import { MemberObject } from './types';
+
 // import { fileDisplayDialogue } from './actions/fileDialogue';
 
 export class Head extends React.Component {
-	render() {
+	public render() {
 		return (
 			<div>
 				<meta name="ROBOTS" content="INDEX, FOLLOW" />
@@ -23,9 +22,12 @@ export class Head extends React.Component {
 	}
 }
 
-class SearchForm extends React.Component<RouteComponentProps<any>, {
-	text: string
-}> {
+class SearchForm extends React.Component<
+	RouteComponentProps<any>,
+	{
+		text: string;
+	}
+> {
 	constructor(props: RouteComponentProps<any>) {
 		super(props);
 		this.handleChange = this.handleChange.bind(this);
@@ -35,27 +37,9 @@ class SearchForm extends React.Component<RouteComponentProps<any>, {
 		};
 	}
 
-	handleChange(e: React.FormEvent<HTMLInputElement>) {
-		e.preventDefault();
-		this.setState({
-			text: e.currentTarget.value
-		});
-	}
-
-	handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		this.props.history.push('/search?query=' + this.state.text);
-		this.setState({
-			text: ''
-		});
-	}
-
-	render() {
-		return ( 
-			<form 
-				id="search"
-				onSubmit={this.handleSubmit}
-			>
+	public render() {
+		return (
+			<form id="search" onSubmit={this.handleSubmit}>
 				<div role="search">
 					<input
 						className="searchInput"
@@ -78,48 +62,72 @@ class SearchForm extends React.Component<RouteComponentProps<any>, {
 			</form>
 		);
 	}
+
+	private handleChange(e: React.FormEvent<HTMLInputElement>) {
+		e.preventDefault();
+		this.setState({
+			text: e.currentTarget.value
+		});
+	}
+
+	private handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+		e.preventDefault();
+		this.props.history.push('/search?query=' + this.state.text);
+		this.setState({
+			text: ''
+		});
+	}
 }
 
 const RoutingSearchForm = withRouter(SearchForm);
 
-export default class App extends React.Component<{
-	isMobile: boolean
-	fetch?: Function
-}, {
-	Registry: Registry
-}> {
-	
-	public state: {
-		Registry: Registry
-	} = {
+export default class App extends React.Component<
+	{
+		isMobile: boolean;
+	},
+	{
+		Registry: Registry;
+		member: {
+			object: MemberObject | null;
+			valid: boolean;
+			error: string;
+		};
+		sideNavLinks: JSX.Element[];
+		breadCrumbs: BreadCrumb[];
+	}
+> {
+	public state = {
+		member: {
+			error: '',
+			object: null,
+			valid: false
+		},
 		Registry: {
+			Contact: {},
 			Website: {
 				Name: '',
 				Separator: ''
-			},
-			Contact: {}
-		}
+			}
+		} as Registry,
+		sideNavLinks: [] as JSX.Element[],
+		breadCrumbs: [] as BreadCrumb[]
 	};
-	
+
 	private titleElement: HTMLDivElement;
 
-	constructor(props: {
-		isMobile: boolean
-	}) {
+	constructor(props: { isMobile: boolean }) {
 		super(props);
+
+// 		const sid = localStorage.getItem('sid');
 	}
 
-	componentDidMount(): void {
+	public componentDidMount(): void {
 		// Load registry
-		myFetch('/api/registry', {
-			method: 'post'
-		})
-			.then((res) => {
+		myFetch('/api/registry')
+			.then(res => {
 				return res.json();
 			})
-			.then((res: {
-					value: Registry
-				}) => {
+			.then((res: { value: Registry }) => {
 				this.setState({
 					...this.state,
 					Registry: {
@@ -129,9 +137,9 @@ export default class App extends React.Component<{
 			});
 	}
 
-	render() {
+	public render() {
 		setTimeout(() => {
-			jQuery(this.titleElement).textfit('bestfit');
+			bestfit(jQuery(this.titleElement));
 		});
 
 		let countd = 0;
@@ -143,59 +151,78 @@ export default class App extends React.Component<{
 			countd++;
 		}
 
-		let count = [
-			'half',
-			'third',
-			'fourth'
-		][countd];
+		const count = ['half', 'third', 'fourth'][countd];
 
-		jQuery('body').removeClass('mobile').removeClass('desktop');
+		jQuery('body')
+			.removeClass('mobile')
+			.removeClass('desktop');
 		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
 
 		return (
 			<div>
-				<div
-					id="mother"
-				>
-					<div 
-						id="bodyContainer"
-					>
+				<div id="mother">
+					<div id="bodyContainer">
 						<div id="page">
 							<header>
 								<div id="logo">
 									<a>
-										<img src="/images/logo.png" alt="Civil Air Patrol" height="127" />
+										<img
+											src="/images/logo.png"
+											alt="Civil Air Patrol"
+											height="127"
+										/>
 									</a>
 								</div>
 								<div className="headerDivider" />
-								<div 
+								<div
 									className="pagetitle"
-									ref={(div) => {
+									ref={div => {
 										if (div) {
 											this.titleElement = div;
 										}
 									}}
 								>
-									{
-										this.state.Registry.Website.Name
-									}
+									{this.state.Registry.Website.Name}
 								</div>
 								<div className="servings">
-									<span className="servingsTitle">Citizens Serving<br />Communities</span>
+									<span className="servingsTitle">
+										Citizens Serving<br />Communities
+									</span>
 								</div>
 								<nav id="mainNavigation">
 									<ul>
 										<li>
-											<NavLink to="/" exact={true} activeClassName="selected">Home</NavLink>
+											<NavLink
+												to="/"
+												exact={true}
+												activeClassName="selected"
+											>
+												Home
+											</NavLink>
 										</li>
 										<li>
-											<NavLink to="/blog" activeClassName="selected">News</NavLink>
+											<NavLink
+												to="/blog"
+												activeClassName="selected"
+											>
+												News
+											</NavLink>
 										</li>
 										<li>
-											<NavLink to="/calendar" activeClassName="selected">Calendar</NavLink>
+											<NavLink
+												to="/calendar"
+												activeClassName="selected"
+											>
+												Calendar
+											</NavLink>
 										</li>
 										<li>
-											<NavLink to="/photolibrary" activeClassName="selected">Photo Library</NavLink>
+											<NavLink
+												to="/photolibrary"
+												activeClassName="selected"
+											>
+												Photo Library
+											</NavLink>
 										</li>
 									</ul>
 									<div className="search">
@@ -214,10 +241,23 @@ export default class App extends React.Component<{
 									<div id="body">
 										<div id="content">
 											<div id="fb-root" />
-											<BreadCrumbs />
-											<PageRouter />
+											<BreadCrumbs
+												links={this.state.breadCrumbs}
+											/>
+											<PageRouter
+												updateSideNav={this.updateSideNav}
+												updateBreadcrumbs={this.updateBreadCrumbs}
+												member={{
+													value: this.state.member.object,
+													valid: this.state.member.valid,
+													error: this.state.member.error
+												}}
+											/>
 										</div>
-										<SideNavigation />
+										<SideNavigation
+											links={this.state.sideNavLinks}
+											member={this.state.member}
+										/>
 									</div>
 									<div className="mainContentBottom" />
 								</div>
@@ -228,129 +268,174 @@ export default class App extends React.Component<{
 					<div id="footer">
 						<div className="page">
 							<div className={count + 'Box'}>
-								<div className="footerBoxTitle">Connect With Us</div>
+								<div className="footerBoxTitle">
+									Connect With Us
+								</div>
 								<p>
-									{
-										[
-											this.state.Registry.Contact.FaceBook ?
-												<a
-													href={'https://www.facebook.com/' + this.state.Registry.Contact.FaceBook}
-													target="_blank"
-													className="socialMedia fb"
-												/> :
-												null,
-											this.state.Registry.Contact.Twitter ?
-												<a
-													href={'https://www.twitter.com/' + this.state.Registry.Contact.Twitter}
-													target="_blank"
-													className="socialMedia twitter"
-												/> :
-												null,
-											this.state.Registry.Contact.YouTube ?
-												<a
-													href={'https://www.youtube.com/channel/' + this.state.Registry.Contact.YouTube}
-													target="_blank"
-													className="socialMedia youtube"
-												/> :
-												null,
-											this.state.Registry.Contact.LinkedIn ?
-												<a
-													href={'https://in.linkedin.com/in/' + this.state.Registry.Contact.LinkedIn}
-													target="_blank"
-													className="socialMedia linkedin"
-												/> :
-												null,
-											this.state.Registry.Contact.Instagram ?
-												<a
-													href={'https://www.instagram.com/' + this.state.Registry.Contact.Instagram}
-													target="_blank"
-													className="socialMedia instagram"
-												/> :
-												null,
-											this.state.Registry.Contact.Flickr ?
-												<a
-													href={'https://www.flickr.com/photos/' + this.state.Registry.Contact.Flickr}
-													target="_blank"
-													className="socialMedia flickr"
-												/> :
-												null
-										]
-									}
+									{[
+										this.state.Registry.Contact.FaceBook ? (
+											<a
+												href={
+													'https://www.facebook.com/' +
+													this.state.Registry.Contact
+														.FaceBook
+												}
+												target="_blank"
+												className="socialMedia fb"
+											/>
+										) : null,
+										this.state.Registry.Contact.Twitter ? (
+											<a
+												href={
+													'https://www.twitter.com/' +
+													this.state.Registry.Contact
+														.Twitter
+												}
+												target="_blank"
+												className="socialMedia twitter"
+											/>
+										) : null,
+										this.state.Registry.Contact.YouTube ? (
+											<a
+												href={
+													'https://www.youtube.com/channel/' +
+													this.state.Registry.Contact
+														.YouTube
+												}
+												target="_blank"
+												className="socialMedia youtube"
+											/>
+										) : null,
+										this.state.Registry.Contact.LinkedIn ? (
+											<a
+												href={
+													'https://in.linkedin.com/in/' +
+													this.state.Registry.Contact
+														.LinkedIn
+												}
+												target="_blank"
+												className="socialMedia linkedin"
+											/>
+										) : null,
+										this.state.Registry.Contact
+											.Instagram ? (
+											<a
+												href={
+													'https://www.instagram.com/' +
+													this.state.Registry.Contact
+														.Instagram
+												}
+												target="_blank"
+												className="socialMedia instagram"
+											/>
+										) : null,
+										this.state.Registry.Contact.Flickr ? (
+											<a
+												href={
+													'https://www.flickr.com/photos/' +
+													this.state.Registry.Contact
+														.Flickr
+												}
+												target="_blank"
+												className="socialMedia flickr"
+											/>
+										) : null
+									]}
 								</p>
 							</div>
-							{
-								this.state.Registry.Contact.MeetingAddress ?
-									<div className={count + 'Box'}>
-										<div className="footerBoxTitle">Meeting Address</div>
-										<p>
-											{`${this.state.Registry.Contact.MeetingAddress.Name}<br />
+							{this.state.Registry.Contact.MeetingAddress ? (
+								<div className={count + 'Box'}>
+									<div className="footerBoxTitle">
+										Meeting Address
+									</div>
+									<p>
+										{`${
+											this.state.Registry.Contact
+												.MeetingAddress.Name
+										}<br />
 												${this.state.Registry.Contact.MeetingAddress.FirstLine}<br />
 												${this.state.Registry.Contact.MeetingAddress.SecondLine}`}
-										</p>
-									</div> :
-									null
-							}
-							{
-								this.state.Registry.Contact.MailingAddress ?
-									<div className={count + 'Box'}>
-										<div className="footerBoxTitle">Mailing Address</div>
-										<p>
-											{`${this.state.Registry.Contact.MailingAddress.Name}<br />
+									</p>
+								</div>
+							) : null}
+							{this.state.Registry.Contact.MailingAddress ? (
+								<div className={count + 'Box'}>
+									<div className="footerBoxTitle">
+										Mailing Address
+									</div>
+									<p>
+										{`${
+											this.state.Registry.Contact
+												.MailingAddress.Name
+										}<br />
 												${this.state.Registry.Contact.MailingAddress.FirstLine}<br />
 												${this.state.Registry.Contact.MailingAddress.SecondLine}`}
-										</p>
-									</div> :
-									null
-							}
+									</p>
+								</div>
+							) : null}
 							<div className={count + 'Box'}>
 								<div className="footerBoxTitle">Resources</div>
 								<ul
 									style={{
-										'listStyleType': 'none',
-										'padding': '0px',
-										'margin': '0px'
+										listStyleType: 'none',
+										margin: '0px',
+										padding: '0px'
 									}}
 								>
-									<li><a target="_blank" href="https://www.capnhq.gov/">eServices</a></li>
-									<li><a target="_blank" href="http://www.cap.news/">Latest CAP News</a></li>
+									<li>
+										<a
+											target="_blank"
+											href="https://www.capnhq.gov/"
+										>
+											eServices
+										</a>
+									</li>
+									<li>
+										<a
+											target="_blank"
+											href="http://www.cap.news/"
+										>
+											Latest CAP News
+										</a>
+									</li>
 								</ul>
 							</div>
 							<div
 								style={{
-									'color': 'white'
+									color: 'white'
 								}}
 								className="onlyBox"
 							>
 								<div
 									style={{
-										'float': 'left',
-										'fontSize': '12px'
+										float: 'left',
+										fontSize: '12px'
 									}}
 								>
-									&copy; 2017-{
-										new Date().getFullYear()
-									} CAPUnit.com
+									&copy; 2017-{new Date().getFullYear()}{' '}
+									CAPUnit.com
 								</div>
 								<div
 									style={{
-										'float': 'right',
-										'fontSize': '12px'
+										float: 'right',
+										fontSize: '12px'
 									}}
 								>
-									<a target="_blank" href="http://www.capmembers.com/">CAP Members.com</a> |
-									<a target="_blank" href="http://www.cap.news/">CAP News</a> |
-									<a 
-										href="#"
-										onClick={
-											() => {
-												jQuery('html').animate(
-													{scrollTop: 0},
-													'slow'
-												);
-												return false;
-											}
-										}
+									<a
+										target="_blank"
+										href="http://www.capmembers.com/"
 									>
+										CAP Members.com
+									</a>{' '}
+									|
+									<a
+										target="_blank"
+										href="http://www.cap.news/"
+									>
+										CAP News
+									</a>{' '}
+									|
+									<a href="#" onClick={this.scrollTop}>
 										Top
 									</a>
 								</div>
@@ -360,5 +445,18 @@ export default class App extends React.Component<{
 				</div>
 			</div>
 		);
+	}
+
+	private scrollTop() {
+		jQuery('html').animate({ scrollTop: 0 }, 'slow');
+		return false;
+	}
+
+	private updateSideNav(links: JSX.Element[]) {
+		this.setState({ sideNavLinks: links });
+	}
+
+	private updateBreadCrumbs(breadCrumbs: BreadCrumb[]) {
+		this.setState({ breadCrumbs });
 	}
 }

@@ -9,54 +9,34 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-/// <reference path="jquery.textfit.d.ts" />
+import * as $ from 'jquery/dist/jquery.slim';
 
-import * as jQuery from 'jquery';
-
-(function( $: JQueryStatic<HTMLElement> ) {
-	// Helper methods
-
-	let innerWrap = function( el: JQuery<HTMLElement> ): JQuery<HTMLElement> {
-		// Wrap the content of the target element in a div with
-		// with the same width
-		el.wrapInner($('<div id="textfit-inner"></div>').css('width', el.css('width')));
-		return $('#textfit-inner');
-	};
+export const innerWrap = ( el: JQuery ) => {
+	// Wrap the content of the target element in a div with
+	// with the same width
+	el.wrapInner($('<div id="textfit-inner"></div>').css('width', el.css('width')));
+	return $('#textfit-inner');
+};
 	
-	let removeWrap = function( el: JQuery<HTMLElement> ) {
-		el.replaceWith(el.contents() as JQuery<HTMLElement>);
-	};
+export const removeWrap = ( el: JQuery<HTMLElement> ) => {
+	el.replaceWith(el.contents() as JQuery<HTMLElement>);
+};
 	
-	let bestfit = function(el: JQuery<HTMLElement>): JQuery<HTMLElement> {
-		var fs = parseInt(el.css('font-size'), 10);
+export const bestfit = (el: JQuery)=> {
+	let fs = parseInt(el.css('font-size'), 10);
 
-		// Wrap the content of the target element in a div with
-		// with the same width
-		var i = innerWrap(el);
+	// Wrap the content of the target element in a div with
+	// with the same width
+	const i = innerWrap(el);
 
-		// Keep reducing the font size of the target element
-		// until the inner div fits
-		while ((i.height() as number) > (el.height() as number)) {
-			el.css('font-size', --fs + 'px');
-		}
+	// Keep reducing the font size of the target element
+	// until the inner div fits
+	while ((i.height() as number) > (el.height() as number)) {
+		el.css('font-size', --fs + 'px');
+	}
 
-		removeWrap(i);
-		return el;
-	};
+	removeWrap(i);
+	return el;
+};
 
-	$.fn.textfit = function( method: string ) {
-
-		// If applied on multiple items
-		if (this.length > 1) {
-			this.each(function () {
-				$(this).textfit(method);
-			});
-			return;
-		}
-
-		return bestfit(this);
-	};
-
-})( jQuery );
-
-export default jQuery;
+export default $;

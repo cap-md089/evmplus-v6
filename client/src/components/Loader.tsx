@@ -2,7 +2,7 @@ import * as React from 'react';
 import './loader.css';
 
 export default class Loader extends React.Component {
-	render () {
+	public render () {
 		return (
 			<div>
 				<div

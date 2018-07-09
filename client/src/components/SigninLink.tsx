@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import Dialogue from './Dialogue';
 
 class SigninLink extends React.Component<{
@@ -9,12 +8,10 @@ class SigninLink extends React.Component<{
 	open: boolean,
 	error: string
 }> {
-	state = {
+	public state = {
 		open: false,
 		error: ''
 	};
-
-	private iframeRef = React.createRef<HTMLIFrameElement>();
 
 	constructor (props: {
 		valid: boolean,
@@ -26,7 +23,7 @@ class SigninLink extends React.Component<{
 		this.closeDialogue = this.closeDialogue.bind(this);
 	}
 
-	componentDidUpdate (
+	public componentDidUpdate (
 		props: {valid: boolean, error: string},
 		state: {open: boolean, error: string}
 	) {
@@ -43,7 +40,7 @@ class SigninLink extends React.Component<{
 
 	}
 
-	render() {
+	public render() {
 		return (
 			<>
 				<a
@@ -76,8 +73,7 @@ class SigninLink extends React.Component<{
 						<br />
 						<br />
 						<iframe
-							ref={this.iframeRef}
-							sandbox="allow-scripts allow-forms allow-same-origin"
+							sandbox="allow-scripts allow-forms"
 							src="/api/signin"
 							style={{
 								width: '100%',
@@ -107,13 +103,4 @@ class SigninLink extends React.Component<{
 	}
 }
 
-export default connect(
-	(state: {
-		SignedInUser: {
-			valid: boolean,
-			error: string
-		}
-	}) => ({
-		...state.SignedInUser
-	}),
-)(SigninLink);
+export default SigninLink;

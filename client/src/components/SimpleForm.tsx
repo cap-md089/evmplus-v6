@@ -1,9 +1,10 @@
 import * as React from 'react';
-
-import TextInput from './form-inputs/TextInput';
-import FileInput from './form-inputs/FileInput';
-import TextArea from './form-inputs/TextArea';
 import myFetch from '../lib/myFetch';
+import DateTimeInput from './form-inputs/DateTimeInput';
+import FileInput from './form-inputs/FileInput';
+import MultiRange from './form-inputs/MultiRange';
+import TextArea from './form-inputs/TextArea';
+import TextInput from './form-inputs/TextInput';
 
 /**
  * Creates a label to be used in the form
@@ -17,7 +18,7 @@ class Label extends React.Component<{fullWidth?: boolean}> {
 		this.IsLabel = true;
 	}
 
-	render() {
+	public render() {
 		return (
 			<div className="formbox">
 				{this.props.children}
@@ -38,7 +39,7 @@ class Title extends React.Component<{fullWidth?: boolean}> {
 		this.IsLabel = true;
 	}
 
-	render() {
+	public render() {
 		return (
 			<div className="formbar fheader">
 				<div className="formbox">
@@ -54,13 +55,27 @@ class Title extends React.Component<{fullWidth?: boolean}> {
  * 
  * @param el 
  */
-function isInput (el: React.ReactChild): boolean {
+export function isInput (el: React.ReactChild | React.ReactElement<any>): el is React.ReactElement<any> {
 	if (typeof el === 'string' || typeof el === 'number') {
 		return false;
 	}
 	return el.type === TextInput ||
 		el.type === FileInput ||
-		el.type === TextArea;
+		el.type === TextArea ||
+		el.type === MultiRange ||
+		el.type === DateTimeInput;
+}
+
+/**
+ * Similar helper function
+ * 
+ * @param el
+ */
+export function isLabel (el: React.ReactChild): el is React.ReactElement<any> {
+	if (typeof el === 'string' || typeof el === 'number') {
+		return false;
+	}
+	return el.type === Title || el.type === Label;
 }
 
 /**
@@ -118,6 +133,10 @@ export interface FormProps<F> {
 	 * Can be used to help with checking if a form field should be disabled
 	 */
 	onChange?: (fields: F) => void;
+	/**
+	 * Type checking for children!
+	 */
+	children?: JSX.Element[] | JSX.Element;
 }
 
 /**
@@ -165,10 +184,10 @@ class Form<
 		this.fields = {} as C;
 
 		if (typeof localStorage !== 'undefined') {
-			let fields = localStorage.getItem(`${this.props.id}-storage`);
+			const fields = localStorage.getItem(`${this.props.id}-storage`);
 			let time = 0;
 
-			let saveTime = localStorage.getItem(`${this.props.id}-savetime`);
+			const saveTime = localStorage.getItem(`${this.props.id}-savetime`);
 			if (saveTime) {
 				time = Date.now() - parseInt(saveTime, 10);
 
@@ -187,7 +206,7 @@ class Form<
 			this.displayLoadFields = true;
 		}
 
-		let sid = localStorage.getItem('sessionID');
+		const sid = localStorage.getItem('sessionID');
 		if (sid) {
 			myFetch(
 				'/api/token',
@@ -211,34 +230,12 @@ class Form<
 	}
 
 	/**
-	 * What is used to describe when a form element changes
-	 */
-	protected onChange (e: {name: string, value: any}) {
-		this.fields[e.name] = e.value;
-		if (this.props.onChange) {
-			this.props.onChange(this.fields);
-		}
-	}
-	
-	/**
-	 * Function called when the form is submitted
-	 * 
-	 * @param {React.FormEvent<HTMLFormEvent>} e Event
-	 */
-	protected submit (e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		if (typeof this.props.onSubmit !== 'undefined') {
-			this.props.onSubmit(this.fields, this.token);
-		}
-	}
-
-	/**
 	 * Render function for a React Component
 	 * 
 	 * @returns {JSX.Element} A form
 	 */
-	render (): JSX.Element {
-		let submitInfo = this.props.submitInfo === undefined ?
+	public render (): JSX.Element {
+		const submitInfo = this.props.submitInfo === undefined ?
 			{
 				text: 'Submit',
 				className: 'submit',
@@ -267,28 +264,26 @@ class Form<
 							if (typeof this.props.children === 'undefined' || this.props.children === null) {
 								throw new TypeError('Some error occurred');
 							}
-							let ret, fullWidth = false;
+							let ret;
+							let fullWidth = false;
 							if (!isInput(child)) {
 								// This algorithm handles labels for inputs by handling inputs
 								// Puts out titles on their own line
 								// Disregards spare labels and such
-								if ((child as React.ReactElement<any>).type === Title) {
+								if (isLabel(child) && child.type === Title) {
 									return child;
 								}
 								return;
 							} else {
-								this.fields[(child as React.ReactElement<any>).props.name] =
-									(child as React.ReactElement<any>).props.value || '';
-								fullWidth = (child as React.ReactElement<any>).props.fullWidth; 
+								this.fields[child.props.name] =
+									child.props.value || '';
+								fullWidth = child.props.fullWidth; 
 								if (typeof fullWidth === 'undefined') {
 									fullWidth = false;
 								}
 								ret = [
 									React.cloneElement(
-										child as React.ReactElement<{
-											onUpdate: (e: {name: string, value: any}) => void,
-											key: number
-										}>,
+										child,
 										{
 											onUpdate: this.onChange,
 											key: Math.random()
@@ -366,16 +361,31 @@ class Form<
 			</form>
 		);
 	}
+
+	/**
+	 * What is used to describe when a form element changes
+	 */
+	protected onChange (e: {name: string, value: any}) {
+		this.fields[e.name] = e.value;
+		if (this.props.onChange) {
+			this.props.onChange(this.fields);
+		}
+	}
+	
+	/**
+	 * Function called when the form is submitted
+	 * 
+	 * @param {React.FormEvent<HTMLFormEvent>} e Event
+	 */
+	protected submit (e: React.FormEvent<HTMLFormElement>) {
+		e.preventDefault();
+		if (typeof this.props.onSubmit !== 'undefined') {
+			this.props.onSubmit(this.fields, this.token);
+		}
+	}
+
 }
 
 export default Form;
 
-export {
-	Title,
-	Label,
-
-	FileInput,
-	
-	TextInput,
-	TextArea
-};
+export { Title, Label, FileInput, MultiRange, TextInput, TextArea, DateTimeInput };

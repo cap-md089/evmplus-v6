@@ -1,16 +1,15 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-export interface BreadCrumbs {
+export interface BreadCrumb {
 	text: string;
 	target: string;
 }
 
 export class BreadCrumbsPresentation extends React.Component<{
-	links: BreadCrumbs[]
+	links: BreadCrumb[]
 }, {}> {
-	render () {
+	public render () {
 		return (
 			<div id="breadcrumbs">
 				<ul>
@@ -42,20 +41,4 @@ export class BreadCrumbsPresentation extends React.Component<{
 	}
 }
 
-const mapStateToProps = (state: {
-	BreadCrumbs: {
-		links: BreadCrumbs[]
-	}
-} = {
-	BreadCrumbs : {
-		links: []
-	}
-}) => {
-	return {
-		links: state.BreadCrumbs.links
-	};
-};
-
-export default connect(
-	mapStateToProps
-)(BreadCrumbsPresentation);
+export default BreadCrumbsPresentation;

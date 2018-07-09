@@ -36,12 +36,12 @@ export default class TextInput extends React.Component<TextInputProps, {
 	}
 
 	public onChange (e: React.FormEvent<HTMLInputElement>) {
-		let text = e.currentTarget.value;
+		const text = e.currentTarget.value;
 
 		let change = true;
 
 		if (typeof this.props.onChange !== 'undefined') {
-			let newChange = this.props.onChange(text);
+			const newChange = this.props.onChange(text);
 			if (typeof newChange === 'boolean') {
 				change = newChange;
 			}
@@ -61,13 +61,11 @@ export default class TextInput extends React.Component<TextInputProps, {
 		} else {
 			// Call this to update the input, thus causing a re-render
 			// A re-render will set the input to match the state
-			this.setState(prev => ({
-				value: prev.value
-			}));
+			this.forceUpdate();
 		}
 	}
 
-	render() {
+	public render() {
 		return (
 			<div
 				className="formbox"
