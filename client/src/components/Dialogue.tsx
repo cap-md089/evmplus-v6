@@ -1,37 +1,35 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import $ from '../jquery.textfit';
+import * as $ from 'jquery';
 
-export default class Dialogue extends React.Component<{
-	open: boolean,					// Part of state specified for the react store
-	title: string,
-	buttonText: string,
-	displayButton: boolean,
-	onClose: () => void,
-}, {
+interface DialogueWithButton {
 	open: boolean,
 	title: string,
 	buttonText: string,
-	displayButton: boolean
-}> {
+	displayButton: true,
+	onClose: () => void,
+}
+
+interface DialogueWithoutButton {
+	open: boolean;
+	title: string;
+	displayButton: false;
+	onClose: () => void;
+}
+
+export default class Dialogue extends React.Component<
+DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithoutButton> {
 	private mainDiv: HTMLDivElement;
 	
-	constructor(props: {
-		open: boolean,					// Part of state specified for the react store
-		title: string,
-		buttonText: string,
-		displayButton: boolean,
-		onClose: () => void
-	}) {
+	constructor(props: DialogueWithButton | DialogueWithoutButton) {
 		super(props);
 
 		this.state = {
-			open: false,
+			open: this.props.open,
 			title: '',
-			buttonText: '',
 			displayButton: false
-		};
+		} as DialogueWithButton | DialogueWithoutButton;
 	}
 
 	public componentDidMount() {
@@ -58,12 +56,19 @@ export default class Dialogue extends React.Component<{
 			});
 		}
 
+
+		return true;
+	}
+
+	public componentDidUpdate () {
+		const div = $(this.mainDiv);
+
 		if (div.find('input[type=text]')[0]) {
 			div.find('input[type=text]')[0].focus();
 		}
 
 		if (this.props.open && !this.state.open) {
-			$(div).animate(
+			div.animate(
 				{
 					opacity: 1
 				},
@@ -72,7 +77,7 @@ export default class Dialogue extends React.Component<{
 			);
 			this.setState(this.props);
 		} else if (!this.props.open && this.state.open) {
-			$(div).animate(
+			div.animate(
 				{
 					opacity: 0
 				},
@@ -85,15 +90,9 @@ export default class Dialogue extends React.Component<{
 				}
 			);
 		}
-
-		return true;
 	}
 
 	public render () {
-		setTimeout(() => {
-			this.componentDidMount();
-		});
-
 		return createPortal(
 			<div
 				id="cover"

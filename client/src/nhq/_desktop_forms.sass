@@ -8,6 +8,10 @@ form.asyncForm
 	overflow: auto
 	clear: both
 
+	input
+		background: white
+		color: black
+
 	
 	input[type="submit"], label.file
 		@extend .primaryButton
@@ -58,6 +62,7 @@ form.asyncForm
 			@include border-radius (10px)
 			padding: 5px
 			color: #0b375b
+			background: white
 
 		input[type="text"]:focus, input[type="password"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="url"]:focus
 			@include box-shadows(inset 0 0 1em #258eea)
@@ -152,7 +157,7 @@ form.asyncForm
 		input[type="submit"]:disabled
 			color: #000000 !important
 
-		input[type="text"].otherInput.otherInput
+		input[type="text"].otherInput
 			border: 0px solid #0b375b
 			color: #0b375b
 			border-bottom-width: 1px
@@ -255,7 +260,8 @@ form.asyncForm
 				cursor: pointer
 				-webkit-transition: all 0.25s linear
 				transition: all 0.25s linear
-				line-height: initial
+				line-height: 22px
+				height: 22px
 
 			.check
 				display: block
@@ -269,6 +275,7 @@ form.asyncForm
 				z-index: 5
 				transition: border .25s linear
 				-webkit-transition: border .25s linear
+				padding-left: 0
 
 				&::before
 					display: block

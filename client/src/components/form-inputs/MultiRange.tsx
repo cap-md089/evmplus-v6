@@ -35,6 +35,18 @@ export default class MultiRange extends React.Component<
 				high: 100
 			};
 		}
+
+		if (this.props.onUpdate) {
+			const { min, max } = this.props;
+			const { low, high } = this.state;
+			const parsedLow = (low / 100) * (max - min) + min;
+			const parsedHigh = (high / 100) * (max - min) + min;
+			
+			this.props.onUpdate({
+				name: props.name,
+				value: [parsedLow, parsedHigh]
+			});
+		}
 	}
 
 	public componentDidMount() {
@@ -60,10 +72,25 @@ export default class MultiRange extends React.Component<
 			const high = Math.max(+input.value, +ghost.value);
 			const low = Math.min(+input.value, +ghost.value);
 
+			const { min, max } = this.props;
+			const parsedLow = (low / 100) * (max - min) + min;
+			const parsedHigh = (high / 100) * (max - min) + min;
+
 			this.setState({
 				high,
 				low
 			});
+
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: [parsedLow, parsedHigh]
+				});
+			}
+
+			if (this.props.onChange) {
+				this.props.onChange([parsedLow, parsedHigh])
+			}
 
 			ghost.style.setProperty('--low', low + 1 + '%');
 			ghost.style.setProperty('--high', high - 1 + '%');

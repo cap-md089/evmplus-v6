@@ -1,17 +1,29 @@
 import * as React from 'react';
 import myFetch from '../lib/myFetch';
 import {
+	Checkbox,
 	DateTimeInput,
 	FileInput,
 	FormProps,
 	isInput,
+	MultCheckbox,
 	MultiRange,
+	RadioButton,
 	TextArea,
 	TextInput
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
-export { FileInput, TextInput, TextArea, MultiRange, DateTimeInput };
+export {
+	FileInput,
+	TextInput,
+	TextArea,
+	MultiRange,
+	DateTimeInput,
+	RadioButton,
+	MultCheckbox,
+	Checkbox
+};
 
 /**
  * The form itself

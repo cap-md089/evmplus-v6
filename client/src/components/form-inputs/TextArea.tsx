@@ -61,6 +61,13 @@ export default class TextArea extends React.Component<
 		this.toggleHeading6 = this.toggleHeading6.bind(this);
 		this.toggleUL = this.toggleUL.bind(this);
 		this.toggleOL = this.toggleOL.bind(this);
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: convertToRaw(this.state.editorState.getCurrentContent())
+			});
+		}
 	}
 
 	public render() {

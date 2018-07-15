@@ -1,15 +1,34 @@
 import * as React from 'react';
 import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
+import Loader from './components/Loader';
 import PageRouter from './components/PageRouter';
 import SideNavigation from './components/SideNavigation';
-// import * as jQuery from 'jquery';
 import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
+import Subscribe from './lib/subscribe';
 import Registry from './registry';
 import { MemberObject } from './types';
 
-// import { fileDisplayDialogue } from './actions/fileDialogue';
+export const MessageEventListener = new Subscribe<MessageEvent>();
+
+interface AuthorizeUserArgumentSuccess {
+	error: -1;
+	valid: true;
+	member: MemberObject;
+	sessionID: string;
+}
+
+interface AuthorizeUserArgumentFailure {
+	error: string;
+	valid: false;
+	member: null;
+	sessionID: string;
+}
+
+export type AuthorizeUserArgument =
+	| AuthorizeUserArgumentSuccess
+	| AuthorizeUserArgumentFailure;
 
 export class Head extends React.Component {
 	public render() {
@@ -81,36 +100,37 @@ class SearchForm extends React.Component<
 
 const RoutingSearchForm = withRouter(SearchForm);
 
+interface AppState {
+	Registry: Registry;
+	member: AuthorizeUserArgument;
+	tryingMember: boolean;
+	sideNavLinks: JSX.Element[];
+	breadCrumbs: BreadCrumb[];
+}
+
 export default class App extends React.Component<
 	{
 		isMobile: boolean;
 	},
-	{
-		Registry: Registry;
-		member: {
-			object: MemberObject | null;
-			valid: boolean;
-			error: string;
-		};
-		sideNavLinks: JSX.Element[];
-		breadCrumbs: BreadCrumb[];
-	}
+	AppState
 > {
-	public state = {
+	public state: AppState = {
 		member: {
+			valid: false,
 			error: '',
-			object: null,
-			valid: false
+			member: null,
+			sessionID: ''
 		},
+		tryingMember: false,
 		Registry: {
 			Contact: {},
 			Website: {
 				Name: '',
 				Separator: ''
 			}
-		} as Registry,
-		sideNavLinks: [] as JSX.Element[],
-		breadCrumbs: [] as BreadCrumb[]
+		},
+		sideNavLinks: [],
+		breadCrumbs: []
 	};
 
 	private titleElement: HTMLDivElement;
@@ -118,7 +138,8 @@ export default class App extends React.Component<
 	constructor(props: { isMobile: boolean }) {
 		super(props);
 
-// 		const sid = localStorage.getItem('sid');
+		// 		const sid = localStorage.getItem('sid');
+		this.authorizeUser = this.authorizeUser.bind(this);
 	}
 
 	public componentDidMount(): void {
@@ -135,6 +156,25 @@ export default class App extends React.Component<
 					}
 				});
 			});
+
+		const sessionID = localStorage.getItem('sessionID');
+		if (sessionID) {
+			this.setState({
+				tryingMember: true
+			});
+			myFetch('/api/check', {
+				headers: {
+					authorization: sessionID
+				}
+			})
+				.then(res => res.json())
+				.then((member: AuthorizeUserArgument) => {
+					if (!member.valid) {
+						localStorage.removeItem('sessionID');
+					}
+					this.setState({ member, tryingMember: false });
+				});
+		}
 	}
 
 	public render() {
@@ -244,19 +284,27 @@ export default class App extends React.Component<
 											<BreadCrumbs
 												links={this.state.breadCrumbs}
 											/>
-											<PageRouter
-												updateSideNav={this.updateSideNav}
-												updateBreadcrumbs={this.updateBreadCrumbs}
-												member={{
-													value: this.state.member.object,
-													valid: this.state.member.valid,
-													error: this.state.member.error
-												}}
-											/>
+											{this.state.tryingMember ? (
+												<Loader />
+											) : (
+												<PageRouter
+													updateSideNav={
+														this.updateSideNav
+													}
+													updateBreadcrumbs={
+														this.updateBreadCrumbs
+													}
+													member={this.state.member}
+													authorizeUser={
+														this.authorizeUser
+													}
+												/>
+											)}
 										</div>
 										<SideNavigation
 											links={this.state.sideNavLinks}
 											member={this.state.member}
+											authorizeUser={this.authorizeUser}
 										/>
 									</div>
 									<div className="mainContentBottom" />
@@ -458,5 +506,17 @@ export default class App extends React.Component<
 
 	private updateBreadCrumbs(breadCrumbs: BreadCrumb[]) {
 		this.setState({ breadCrumbs });
+	}
+
+	private authorizeUser(member: AuthorizeUserArgument) {
+		if (!member.valid) {
+			this.setState({
+				member
+			});
+		} else {
+			this.setState({
+				member
+			});
+		}
 	}
 }

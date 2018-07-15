@@ -5,11 +5,12 @@
 }
 
 .datetime-input-box input, .date-input-box input, .time-input-box input {
-	border: 1px solid gray;
+	border: 1px solid black;
 	height: 15px;
 	padding: 5px;
 	font-family: 'Courier New', Courier, monospace;
 	text-align: right;
+	font-size: 14px;
 }
 
 /*
@@ -28,8 +29,8 @@
 	font-family: 'Courier New', Courier, monospace;
 	border-left-width: 0px;
 	border-right-width: 0px;
-	border-top: 1px solid gray;
-	border-bottom: 1px solid gray;
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
 	padding: 5px 0;
 	height: 15px;
 	line-height: 14px;
@@ -91,7 +92,7 @@
 .datetime-input-root .date-input-opendialogue, .datetime-input-root .time-input-opendialogue {
 	background: transparent;
 	width: 17px;
-	border: 1px solid gray;
+	border: 1px solid black;
 	border-left-width: 0px;
 	height: 15px;
 	line-height: 15px;

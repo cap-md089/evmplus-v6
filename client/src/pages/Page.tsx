@@ -1,17 +1,14 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
-import { MemberObject } from '../types';
+import { AuthorizeUserArgument } from '../App';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition
 
 export interface PageProps<R = {}> {
-	member: {
-		value: MemberObject | null;
-		valid: boolean;
-		error: string;
-	},
+	member: AuthorizeUserArgument,
 	routeProps: RouteComponentProps<R>;
+	authorizeUser: (arg: AuthorizeUserArgument) => void;
 }
 
 export default class Page<

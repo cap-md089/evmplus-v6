@@ -1,6 +1,6 @@
 #output
 	margin: 20px auto
-	
+
 form.asyncForm
 	width: 100%
 	margin: 0
@@ -26,6 +26,10 @@ form.asyncForm
 		margin: 5px 0
 		padding: 0
 
+		input
+			background: white
+			color: black
+	
 		&:after
 			content: ""
 			clear: both
@@ -87,7 +91,7 @@ form.asyncForm
 		input[type="submit"]:disabled
 			color: #000000 !important
 
-		input[type="text"].otherInput.otherInput
+		input[type="text"].otherInput
 			border: 0px solid #0b375b
 			color: #0b375b
 			border-bottom-width: 1px
@@ -190,7 +194,8 @@ form.asyncForm
 				cursor: pointer
 				-webkit-transition: all 0.25s linear
 				transition: all 0.25s linear
-				line-height: initial
+				line-height: 22px
+				height: 22px
 
 			.check
 				display: block

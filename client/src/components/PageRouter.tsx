@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
+import { AuthorizeUserArgument } from '../App';
 import Blog from '../pages/Blog';
 import Main from '../pages/Main';
 import Page from '../pages/Page';
 import RackBuilder from '../pages/RibbonRack';
 import Test from '../pages/Test';
-import { MemberObject } from '../types';
 import { BreadCrumb } from './BreadCrumbs';
 
 const pages: Array<{
@@ -37,32 +37,18 @@ const pages: Array<{
 
 const composeElement = (
 	El: typeof Page,
-	member: { value: MemberObject | null; valid: boolean; error: string }
+	member: AuthorizeUserArgument,
+	authorizeUser: (arg: AuthorizeUserArgument) => void
 ) => (props: RouteComponentProps<any>) => (
-	<El routeProps={props} member={member} />
+	<El routeProps={props} member={member} authorizeUser={authorizeUser} />
 );
 
 export default class PageRouter extends React.Component<{
 	updateSideNav: (links: JSX.Element[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
-	member: {
-		value: MemberObject | null;
-		valid: boolean;
-		error: string;
-	}
+	member: AuthorizeUserArgument;
+	authorizeUser: (arg: AuthorizeUserArgument) => void;
 }> {
-	constructor(props: {
-		updateSideNav: (links: JSX.Element[]) => void;
-		updateBreadcrumbs: (links: BreadCrumb[]) => void;
-		member: {
-			value: MemberObject | null;
-			valid: boolean;
-			error: string;
-		}
-	}) {
-		super(props);
-	}
-
 	public render() {
 		return (
 			<div id="pageblock">
@@ -72,7 +58,7 @@ export default class PageRouter extends React.Component<{
 							key={i}
 							path={value.url}
 							exact={value.exact}
-							component={composeElement(value.component, this.props.member)}
+							component={composeElement(value.component, this.props.member, this.props.authorizeUser)}
 						/>
 					);
 				})}
