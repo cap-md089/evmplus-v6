@@ -67,16 +67,19 @@ import signin from './api/signin';
 router.post('/signin', Account.ExpressMiddleware, signin);
 
 import { getFormToken } from './api/formtoken';
-router.get('/token', Member.ExpressMiddleware, getFormToken);
+router.get('/token', Account.ExpressMiddleware, Member.ExpressMiddleware, getFormToken);
 
 import getevents from './api/getevents';
 router.post('/events', getevents);
 
 import registry from './api/registry';
-router.post('/registry', registry);
+router.use('/registry', registry);
 
 import echo from './api/echo';
 router.post('/echo', echo);
+
+import check from './api/check';
+router.use('/check', Account.ExpressMiddleware, Member.ExpressMiddleware, check);
 
 import blog from './api/blog/';
 router.use('/blog', Account.ExpressMiddleware, blog(pool));

@@ -1,4 +1,12 @@
-import { 
+import { load } from 'cheerio';
+import { RequestHandler } from 'express';
+import { existsSync, unlinkSync, writeFile } from 'fs';
+import { sign, verify } from 'jsonwebtoken';
+import { join } from 'path';
+import * as mysql from 'promise-mysql';
+import { promisify } from 'util';
+import conf from '../../conf';
+import {
 	Identifiable,
 	MemberAccessLevel,
 	MemberContact,
@@ -6,22 +14,15 @@ import {
 	MemberObject,
 	MemberPermissions
 } from '../../types';
+import Account, { AccountRequest } from '../Account';
 import Member from '../BaseMember';
-import { getPermissions, Member as MemberPermissionsLevel } from '../Permissions';
-
-import { load } from 'cheerio';
-import { sign, verify } from 'jsonwebtoken';
+import { MySQLRequest, prettySQL } from '../MySQLUtil';
+import {
+	getPermissions,
+	Member as MemberPermissionsLevel
+} from '../Permissions';
 import { nhq as auth } from './pam/';
 import request from './pam/nhq-request';
-
-import { RequestHandler } from 'express';
-import * as mysql from 'promise-mysql';
-import { MySQLRequest, prettySQL } from '../MySQLUtil';
-
-import { existsSync, unlinkSync, writeFile } from 'fs';
-import { join } from 'path';
-import conf from '../../conf';
-import Account, { AccountRequest } from '../Account';
 
 interface MemberSession extends Identifiable {
 	id: number;
@@ -45,7 +46,7 @@ export interface MemberRequest extends MySQLRequest {
 }
 
 export default class NHQMember extends Member {
-	public static async Create (
+	public static async Create(
 		username: string,
 		password: string,
 		pool: mysql.Pool,
@@ -60,7 +61,7 @@ export default class NHQMember extends Member {
 
 		const memberInfo = await Promise.all([
 			auth.getName(cookie, username),
-			auth.getContact(cookie),
+			auth.getContact(cookie)
 		]);
 
 		const id = memberInfo[0].capid;
@@ -78,7 +79,7 @@ export default class NHQMember extends Member {
 
 			if (memberIndex === -1) {
 				const sess: MemberSession = {
-					expireTime: (Date.now() / 1000) + (60 * 10),
+					expireTime: Date.now() / 1000 + 60 * 10,
 
 					contact: memberInfo[1],
 					cookieData: cookie,
@@ -89,12 +90,12 @@ export default class NHQMember extends Member {
 					nameMiddle: memberInfo[0].nameMiddle,
 					nameSuffix: memberInfo[0].nameSuffix,
 					seniorMember: memberInfo[0].seniorMember,
-					squadron: memberInfo[0].squadron,
+					squadron: memberInfo[0].squadron
 				};
 				NHQMember.memberSessions.push(sess);
 			} else {
 				NHQMember.memberSessions[memberIndex].expireTime =
-					(Date.now()) / 1000 + (60 * 10);
+					Date.now() / 1000 + 60 * 10;
 			}
 
 			sessionID = sign(
@@ -109,10 +110,7 @@ export default class NHQMember extends Member {
 			);
 		}
 
-		const [
-			pinfo,
-			dutyPositions
-		] = await Promise.all([
+		const [pinfo, dutyPositions] = await Promise.all([
 			NHQMember.GetPermissions(id, pool, account),
 			NHQMember.GetDutypositions(id, pool, account)
 		]);
@@ -137,7 +135,11 @@ export default class NHQMember extends Member {
 		);
 	}
 
-	public static ExpressMiddleware: RequestHandler = (req: MemberRequest & AccountRequest, res, next) => {
+	public static ExpressMiddleware: RequestHandler = (
+		req: MemberRequest & AccountRequest,
+		res,
+		next
+	) => {
 		if (
 			typeof req.headers !== 'undefined' &&
 			typeof req.headers.authorization !== 'undefined' &&
@@ -151,31 +153,39 @@ export default class NHQMember extends Member {
 				header,
 				NHQMember.secret,
 				{
-					algorithms: [
-						'HS512'
-					]
+					algorithms: ['HS512']
 				},
-				async (err, decoded: {
-					id: number
-				}) => {
+				async (
+					err,
+					decoded: {
+						id: number;
+					}
+				) => {
 					if (err) {
 						req.member = null;
 						next();
 						return;
 					}
-					NHQMember.memberSessions = NHQMember.memberSessions.filter(s =>
-						s.expireTime < (Date.now () / 1000));
-					const sess = NHQMember.memberSessions.filter(s =>
-						s.id === decoded.id);
+					NHQMember.memberSessions = NHQMember.memberSessions.filter(
+						s => s.expireTime > Date.now() / 1000
+					);
+					const sess = NHQMember.memberSessions.filter(
+						s => s.id === decoded.id
+					);
 					if (sess.length === 1) {
-						const [
-							pinfo,
-							dutyPositions
-						] = await Promise.all([
-							NHQMember.GetPermissions(decoded.id, req.connectionPool, req.account),
-							NHQMember.GetDutypositions(decoded.id, req.connectionPool, req.account)
+						const [pinfo, dutyPositions] = await Promise.all([
+							NHQMember.GetPermissions(
+								decoded.id,
+								req.connectionPool,
+								req.account
+							),
+							NHQMember.GetDutypositions(
+								decoded.id,
+								req.connectionPool,
+								req.account
+							)
 						]);
-						return new NHQMember(
+						req.member = new NHQMember(
 							{
 								contact: sess[0].contact,
 								dutyPositions,
@@ -193,6 +203,10 @@ export default class NHQMember extends Member {
 							sess[0].cookieData,
 							header
 						);
+						next();
+						// 						if (req.member.accessLevel === 'Admin' && !req.member.isRioux) {
+
+						// 						}
 					} else {
 						req.member = null;
 						next();
@@ -203,24 +217,30 @@ export default class NHQMember extends Member {
 			req.member = null;
 			next();
 		}
-	}
+	};
 
 	/**
 	 * Stores the member sessions in memory as it is faster than a database
 	 */
 	protected static memberSessions: MemberSession[] = [];
-	
+
 	/**
 	 * Used to sign JWTs
 	 */
-	private static secret: string = 'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
-	
-	private static async GetPermissions (capid: number, pool: mysql.Pool, account: Account, su?: number): Promise<{
-		accessLevel: MemberAccessLevel,
-		permissions: MemberPermissions
+	private static secret: string =
+		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
+
+	private static async GetPermissions(
+		capid: number,
+		pool: mysql.Pool,
+		account: Account,
+		su?: number
+	): Promise<{
+		accessLevel: MemberAccessLevel;
+		permissions: MemberPermissions;
 	}> {
 		const rows: Array<{
-			AccessLevel: MemberAccessLevel,
+			AccessLevel: MemberAccessLevel;
 		}> = await pool.query(
 			prettySQL`
 				SELECT
@@ -233,18 +253,19 @@ export default class NHQMember extends Member {
 					(AccountID = ? OR AccountID = 'www')
 			`,
 			[
-				NHQMember.IsRioux(capid) && typeof su !== 'undefined' ? su : capid,
+				NHQMember.IsRioux(capid) && typeof su !== 'undefined'
+					? su
+					: capid,
 				account.id
 			]
 		);
 
-		if (
-			rows.length === 1 ||
-			NHQMember.IsRioux(capid)
-		) {
-			let accessLevel = rows[0].AccessLevel;
+		if (rows.length === 1 || NHQMember.IsRioux(capid)) {
+			let accessLevel: MemberAccessLevel;
 			if (NHQMember.IsRioux(capid)) {
 				accessLevel = 'Admin';
+			} else {
+				accessLevel = rows[0].AccessLevel as MemberAccessLevel;
 			}
 			return {
 				accessLevel,
@@ -300,9 +321,7 @@ export default class NHQMember extends Member {
 	 */
 	private cookie: string = '';
 
-	
-
-	private constructor (
+	private constructor(
 		data: MemberObject,
 		permissions: MemberPermissions,
 		accessLevel: MemberAccessLevel,
@@ -313,23 +332,28 @@ export default class NHQMember extends Member {
 		this.permissions = permissions;
 		this.accessLevel = accessLevel;
 		this.cookie = cookie;
-		this.sessionID = sessionID; 
+		this.sessionID = sessionID;
 	}
 
-	public async getCAPWATCHList (): Promise<string[]> {
+	public async getCAPWATCHList(): Promise<string[]> {
 		const retData: string[] = [];
-		let data = await request('/cap.capwatch.web/splash.aspx', this.cookie, true);
+		let data = await request(
+			'/cap.capwatch.web/splash.aspx',
+			this.cookie,
+			true
+		);
 
 		if (
 			typeof data.headers.location !== 'undefined' &&
-			data.headers.location === '/cap.capwatch.web/Modules/CapwatchRequest.aspx'
+			data.headers.location ===
+				'/cap.capwatch.web/Modules/CapwatchRequest.aspx'
 		) {
-			throw new Error ('User needs permissions to access CAPWATCH');
+			throw new Error('User needs permissions to access CAPWATCH');
 		}
 
 		data = await request('/cap.capwatch.web/Default.aspx', this.cookie);
 
-		const $ = load (data.body);
+		const $ = load(data.body);
 
 		const select = $('#OrgChooser');
 
@@ -338,25 +362,30 @@ export default class NHQMember extends Member {
 		return retData;
 	}
 
-	public async getCAPWATCHFile (id: number, location?: string) {
+	public async getCAPWATCHFile(id: number, location?: string) {
 		if (location === undefined) {
 			const date = new Date();
-			const datestring = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getHours()}`;
-			location = join(conf.path, 'capwatch-zips', `CAPWATCH-${datestring}.zip`);
+			const datestring = `${date.getFullYear()}-${date.getMonth() +
+				1}-${date.getHours()}`;
+			location = join(
+				conf.path,
+				'capwatch-zips',
+				`CAPWATCH-${datestring}.zip`
+			);
 		}
 
 		const url = `https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
 
-		const body = request(url, this.cookie);
+		const body = await request(url, this.cookie);
 
 		if (existsSync(location)) {
-			unlinkSync(location);
+			await promisify(unlinkSync)(location);
 		}
 
 		writeFile(location, body, {}, err => {
 			if (err) {
 				// tslint:disable-next-line:no-console
-				console.log('Error in writing CAPWATCH file: ',  err);
+				console.log('Error in writing CAPWATCH file: ', err);
 			}
 		});
 	}

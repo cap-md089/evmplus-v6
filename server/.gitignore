@@ -24,3 +24,5 @@ yarn-error.log*
 .tscache/*
 
 tscommand-*
+
+/.vs

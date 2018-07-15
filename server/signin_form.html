@@ -73,7 +73,7 @@
 				}).then(res => {
 					return res.json();
 				}).then(json => {
-					parent.postMessage(json, '*');
+					parent.postMessage(JSON.stringify(json), '*');
 				}).catch(err => {
 					console.log(err);
 				});

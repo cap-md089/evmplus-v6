@@ -8,7 +8,6 @@
 		".vscode": true,
 		".tscache": true,
 		"node_modules": true,
-		"dist": true,
 		"coverage": true,
 		"tscommand-*": true
 	}

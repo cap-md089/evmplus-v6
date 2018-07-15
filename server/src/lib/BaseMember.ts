@@ -1,6 +1,7 @@
 import * as mysql from 'promise-mysql';
 import { MemberContact, MemberObject } from '../types';
 import Account from './Account';
+import { prettySQL } from './MySQLUtil';
 // import { prettySQL } from './MySQLUtil';
 
 export default class MemberBase implements MemberObject {
@@ -14,40 +15,21 @@ export default class MemberBase implements MemberObject {
 
 	protected static GetDutypositions = async (capid: number, pool: mysql.Pool, account: Account): Promise<string[]> =>
 		(await pool.query(
-			`
-				(
-					SELECT
-						Duty
-					FROM
-						Data_DutyPosition
-					WHERE
-						CAPID = ${capid}
-					AND
-						ORGID in (${account.orgIDs.join(', ')})
-				)
-					UNION
-				(
-					SELECT
-						Duty
-					FROM
-						Data_CadetDutyPositions
-					WHERE
-						CAPID = ${capid}
-					AND
-						ORGID in (${account.orgIDs.join(', ')})
-				)
-					UNION
-				(
-					SELECT
-						Duty
-					FROM
-						TemporaryDutyPositions
-					WHERE
-						capid = ${capid}
-					AND
-						AccountID = ${mysql.escape(account.id)}
-				)
-			`
+			prettySQL`
+				SELECT
+					Duty
+				FROM
+					DutyPositions
+				WHERE
+					CAPID = ?
+				AND
+					AccountID = ?
+			`,
+			[
+				capid,
+				account.id
+			]
+
 		)).map((item: {Duty: string}) =>
 			item.Duty)
 
@@ -119,7 +101,7 @@ export default class MemberBase implements MemberObject {
 	public constructor (data: MemberObject) {
 		Object.assign(this, data);
 
-		this.memberRankName = this.memberRank + this.getName();
+		this.memberRankName = `${this.memberRank} ${this.getName()}`;
 
 		this.isRioux = (data.id === 542488 || data.id === 546319);
 	}
@@ -141,6 +123,21 @@ export default class MemberBase implements MemberObject {
 			this.nameLast,
 			this.nameSuffix
 		].filter(s => s !== '' && s !== undefined).join(' ');
+	}
+
+	public createTransferable(): MemberObject {
+		return {
+			id: this.id,
+			contact: this.contact,
+			dutyPositions: this.dutyPositions,
+			memberRank: this.memberRank,
+			nameFirst: this.nameFirst,
+			nameLast: this.nameLast,
+			nameMiddle: this.nameMiddle,
+			nameSuffix: this.nameSuffix,
+			seniorMember: this.seniorMember,
+			squadron: this.squadron
+		};
 	}
 }
 
