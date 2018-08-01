@@ -1,113 +1,153 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<style>
-			@font-face{font-family:"RobotoRegular";src:url("/images/regular/Roboto-Regular-webfont.eot");src:url("/images/regular/Roboto-Regular-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoMedium";src:url("/images/Medium/Roboto-Medium-webfont.eot");src:url("/images/Medium/Roboto-Medium-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoLight";src:url("/images/Light/Roboto-Light-webfont.eot");src:url("/images/Light/Roboto-Light-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}@font-face{font-family:"RobotoBold";src:url("/images/Bold/Roboto-Bold-webfont.eot");src:url("/images/Bold/Roboto-Bold-webfont.eot?#iefix") format("embedded-opentype");font-weight:normal;font-style:normal}
 
-			html, body {
-				padding: 0;
-				margin: 0;
-				width: 100%;
-				height: 140px;
-				font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
-				overflow: hidden;
-			}
+<head>
+	<style>
+		@font-face {
+			font-family: "RobotoRegular";
+			src: url("/images/regular/Roboto-Regular-webfont.eot");
+			src: url("/images/regular/Roboto-Regular-webfont.eot?#iefix") format("embedded-opentype");
+			font-weight: normal;
+			font-style: normal
+		}
 
-			.asyncForm {
-				margin: 20px auto;
-			}
+		@font-face {
+			font-family: "RobotoMedium";
+			src: url("/images/Medium/Roboto-Medium-webfont.eot");
+			src: url("/images/Medium/Roboto-Medium-webfont.eot?#iefix") format("embedded-opentype");
+			font-weight: normal;
+			font-style: normal
+		}
 
-			.primaryButton {
-				font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
-				font-size: 14px;
-				line-height: 18px;
-				color: #fff;
-				text-transform: uppercase;
-				border: 0px;
-				background: #4278ba;
-				-webkit-border-radius: 8px;
-				-moz-border-radius: 8px;
-				-ms-border-radius: 8px;
-				border-radius: 8px;
-				padding: 10px 24px 8px 24px;
-				cursor: pointer;
-			}
+		@font-face {
+			font-family: "RobotoLight";
+			src: url("/images/Light/Roboto-Light-webfont.eot");
+			src: url("/images/Light/Roboto-Light-webfont.eot?#iefix") format("embedded-opentype");
+			font-weight: normal;
+			font-style: normal
+		}
 
-			.primaryButton:hover {
-				background: #07346c;
-			}
+		@font-face {
+			font-family: "RobotoBold";
+			src: url("/images/Bold/Roboto-Bold-webfont.eot");
+			src: url("/images/Bold/Roboto-Bold-webfont.eot?#iefix") format("embedded-opentype");
+			font-weight: normal;
+			font-style: normal
+		}
 
-			.formbar {
-				clear: both;
-				display: block;
-				width: 100%;
-				margin: 5px 0;
-				padding: 0;
-			}
-			
-			.formbox {
-				display: inline-block;
-				width: 220px;
-				 
-			}
-		</style>
-		<script>
-			function onSubmit (form) {
-				fetch ('/api/signin', {
-					headers: {
-						'Accept': 'application/json',
-						'Content-Type': 'application/json'
-					},
-					method: 'post',
-					body: JSON.stringify({
-						username: form.username.value,
-						password: form.password.value
-					})
-				}).then(res => {
-					if (res.status >= 200 && res.status < 300) {
-						return res;
-					}
-					let err = new Error(res.statusText);
-					err.response = res;
-					throw err;
-				}).then(res => {
-					return res.json();
-				}).then(json => {
-					parent.postMessage(JSON.stringify(json), '*');
-				}).catch(err => {
-					console.log(err);
-				});
-				return false;
-			}
-		</script>
-	</head>
+		html,
+		body {
+			padding: 0;
+			margin: 0;
+			width: 100%;
+			height: 140px;
+			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+			overflow: hidden;
+		}
 
-	<body>
-		<form onsubmit="return onSubmit(this);" class="asyncForm">
-			<div class="formbar">
-				<div class="formbox">
-					<label for="username">CAP ID:</label>
-				</div>
-				<div class="formbox">
-					<input name="username" id="username" />
-				</div>
+		.asyncForm {
+			margin: 20px auto;
+		}
+
+		.primaryButton {
+			font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+			font-size: 14px;
+			line-height: 18px;
+			color: #fff;
+			text-transform: uppercase;
+			border: 0px;
+			background: #4278ba;
+			-webkit-border-radius: 8px;
+			-moz-border-radius: 8px;
+			-ms-border-radius: 8px;
+			border-radius: 8px;
+			padding: 10px 24px 8px 24px;
+			cursor: pointer;
+		}
+
+		.primaryButton:hover {
+			background: #07346c;
+		}
+
+		.formbar {
+			clear: both;
+			display: block;
+			width: 100%;
+			margin: 5px 0;
+			padding: 0;
+		}
+
+		.formbox {
+			display: inline-block;
+			width: 220px;
+		}
+
+		#submit:disabled {
+			color: black;
+		}
+	</style>
+	<script>
+		function onSubmit(form) {
+			form[2].disabled = true;
+			form[2].value = "submitting...";
+			fetch('/api/signin', {
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				},
+				method: 'post',
+				body: JSON.stringify({
+					username: form.username.value,
+					password: form.password.value
+				})
+			}).then(res => {
+				if (res.status >= 200 && res.status < 300) {
+					return res;
+				}
+				let err = new Error(res.statusText);
+				err.response = res;
+				throw err;
+			}).then(res => {
+				return res.json();
+			}).then(json => {
+				parent.postMessage(JSON.stringify(json), '*');
+				form[2].disabled = false;
+				form[2].value = "submit";
+			}).catch(err => {
+				console.log(err);
+			});
+			return false;
+		}
+	</script>
+</head>
+
+<body>
+	<form onsubmit="return onSubmit(this);" class="asyncForm" id="signinform">
+		<div class="formbar">
+			<div class="formbox">
+				<label for="username">CAP ID:</label>
 			</div>
-			
-			<div class="formbar">
-				<div class="formbox">
-					<label for="password">Password:</label>
-				</div>
-				<div class="formbox">
-					<input name="password" id="password" type="password" />
-				</div>
+			<div class="formbox">
+				<input name="username" id="username" />
 			</div>
-			
-			<div class="formbar">
-				<div class="formbox" style="height:2px"></div>
-				<div class="formbox">
-					<input class="primaryButton" type="submit" value="submit" />
-				</div>
+		</div>
+
+		<div class="formbar">
+			<div class="formbox">
+				<label for="password">Password:</label>
 			</div>
-		</form>
-	</body>
+			<div class="formbox">
+				<input name="password" id="password" type="password" />
+			</div>
+		</div>
+
+		<div class="formbar">
+			<div class="formbox" style="height:2px"></div>
+			<div class="formbox">
+				<input class="primaryButton" type="submit" value="submit" id="submit" />
+			</div>
+		</div>
+	</form>
+</body>
+
 </html>

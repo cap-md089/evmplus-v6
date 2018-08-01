@@ -84,6 +84,9 @@ router.use('/check', Account.ExpressMiddleware, Member.ExpressMiddleware, check)
 import blog from './api/blog/';
 router.use('/blog', Account.ExpressMiddleware, blog(pool));
 
+import events from './api/events';
+router.use('/event', events);
+
 router.get('*', (req, res) => {
 	res.status(404);
 	res.end();

@@ -11,7 +11,7 @@ export interface AccountRequest extends MySQLRequest {
 }
 
 export default class Account implements CAP.AccountObject {
-	public static ExpressMiddleware: express.RequestHandler = async (req: MySQLRequest & AccountRequest, res, next) => {
+	public static ExpressMiddleware: express.RequestHandler = async (req: AccountRequest, res, next) => {
 		const host = req.hostname;
 		const parts = host.split('.');
 		let accountID: string;
