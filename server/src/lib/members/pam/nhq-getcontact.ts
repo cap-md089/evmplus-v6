@@ -1,5 +1,4 @@
 import { load } from 'cheerio';
-import { MemberContact, MemberContactPriority, MemberContactType } from '../../../types';
 import req from './nhq-request';
 
 export default async (cookie: string): Promise<MemberContact> => {

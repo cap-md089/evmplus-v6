@@ -41,7 +41,7 @@ router.use(logger('dev'));
  * DEFINE API ROUTERS HERE
  */
 
-import filerouter from './api/files/';
+import filerouter from './api/files';
 router.use('/files', filerouter);
 
 router.get('/signin', (req, res) => {
@@ -81,7 +81,7 @@ router.post('/echo', echo);
 import check from './api/check';
 router.use('/check', Account.ExpressMiddleware, Member.ExpressMiddleware, check);
 
-import blog from './api/blog/';
+import blog from './api/blog';
 router.use('/blog', Account.ExpressMiddleware, blog(pool));
 
 import events from './api/events';

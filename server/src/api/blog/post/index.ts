@@ -6,8 +6,6 @@ import getlist from './getlist';
 import getpost from './getpost';
 import setpost from './setpost';
 
-export { BlogPost } from '../../../types';
-
 import * as mysql from 'promise-mysql';
 
 import Member from '../../../lib/members/NHQMember';

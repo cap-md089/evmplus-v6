@@ -1,6 +1,5 @@
-import * as moment from 'moment';
+import { DateTime } from 'luxon'
 import { Pool } from 'promise-mysql';
-import { EventObject, Identifiable } from '../types';
 import Account from './Account';
 import EventAttendance from './Attendance';
 import BaseMember from './BaseMember';
@@ -51,7 +50,7 @@ export default class LocalEvent implements EventObject {
 	public static async Create (data: EventObject, account: Account, pool: Pool) {
 		return new LocalEvent (
 			data,
-			EventAttendance.CreateEmpty(data.id, account, pool),
+			EventAttendance.CreateEmpty(data.id, account),
 			pool
 		);
 	}
@@ -81,7 +80,7 @@ export default class LocalEvent implements EventObject {
 	 * 		it uses the account ID the object was created with
 	 */
 	public async save (account?: Account) {
-		const updatedTimestamp = moment();
+		const updatedTimestamp = +DateTime.utc();
 		
 		await this.pool.query(
 			prettySQL`

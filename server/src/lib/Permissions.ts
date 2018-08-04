@@ -1,5 +1,3 @@
-import { MemberAccessLevel, MemberPermissions } from '../types';
-
 export const Member: MemberPermissions = {
 	AddEvent: 0,
 	AdministerPT: 0,

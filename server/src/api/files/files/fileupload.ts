@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as fs from 'fs';
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
@@ -131,7 +131,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 
 			collectingData = true;
 
-			const created = Math.floor(moment().valueOf() / 1000);
+			const created = Math.floor(+DateTime.utc() / 1000);
 
 			// Wait until query is finished and data is written before closing connection
 			Promise.all([

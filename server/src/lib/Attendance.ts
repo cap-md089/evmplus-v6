@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
 import { Pool } from 'promise-mysql';
 import Account from './Account';
 import { prettySQL } from './MySQLUtil';
@@ -17,7 +17,7 @@ interface RawAttendanceRecord {
 }
 
 interface AttendanceRecord {
-	timestamp: moment.Moment;
+	timestamp: DateTime;
 	eventID: number;
 	accountID: string;
 	memberID: number;
@@ -70,7 +70,7 @@ export default class EventAttendance {
 				}
 
 				return {
-					timestamp: moment(rec.timestamp),
+					timestamp: DateTime.utc(rec.timestamp),
 					accountID: rec.accountID,
 					eventID: rec.eventID,
 					memberID: rec.memberID,
@@ -83,13 +83,12 @@ export default class EventAttendance {
 				};
 			}),
 			eventID,
-			account,
-			pool
+			account
 		);
 	}
 
-	public static CreateEmpty (eventID: number, account: Account, pool: Pool) {
-		return new EventAttendance ([], eventID, account, pool);
+	public static CreateEmpty (eventID: number, account: Account) {
+		return new EventAttendance ([], eventID, account);
 	}
 
 	public attendanceRecords: AttendanceRecord[] = [];
@@ -97,8 +96,7 @@ export default class EventAttendance {
 	private constructor (
 		records: AttendanceRecord[],
 		public eventID: number,
-		public account: Account,
-		private pool: Pool
+		public account: Account
 	) {
 		this.attendanceRecords = records;
 	}

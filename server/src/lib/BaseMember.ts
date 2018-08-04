@@ -1,5 +1,4 @@
 import * as mysql from 'promise-mysql';
-import { MemberContact, MemberObject } from '../types';
 import Account from './Account';
 import { prettySQL } from './MySQLUtil';
 // import { prettySQL } from './MySQLUtil';

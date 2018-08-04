@@ -2,7 +2,6 @@ import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
 import Member from '../lib/members/NHQMember';
 import { json } from '../lib/Util';
-import { MemberObject } from '../types';
 
 interface SuccessfulSigninReturn {
 	error: -1;

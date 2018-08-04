@@ -1,5 +1,5 @@
 export const Configuration = {
-	clientStorage: '/home/andrew/Desktop/react-capunit-client',
+	clientStorage: '/home/andrew/Desktop/react-capunit/react-capunit-client',
 	database: {
 		connection: {
 			database: 'EventManagement4',

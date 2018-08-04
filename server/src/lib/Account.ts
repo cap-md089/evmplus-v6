@@ -1,16 +1,15 @@
 import * as express from 'express';
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
 import * as mysql from 'promise-mysql';
 
 import { Configuration } from '../conf';
-import * as CAP from '../types';
 import { MySQLRequest } from './MySQLUtil';
 
 export interface AccountRequest extends MySQLRequest {
 	account?: Account;
 }
 
-export default class Account implements CAP.AccountObject {
+export default class Account implements AccountObject {
 	public static ExpressMiddleware: express.RequestHandler = async (req: AccountRequest, res, next) => {
 		const host = req.hostname;
 		const parts = host.split('.');
@@ -91,8 +90,8 @@ export default class Account implements CAP.AccountObject {
 		const unpaidEventLimit = parsed.map(org => org.unpaidEventLimit).reduce((prev, current) => Math.max(prev, current));
 
 		const expires = parsed.map(org => org.expires).reduce((prev, current) => Math.max(prev, current));
-		const expired = moment().utc().valueOf() > expires;
-		const expiresIn = moment().utc().valueOf() - expires;
+		const expired = +DateTime.utc() > expires;
+		const expiresIn = +DateTime.utc() - expires;
 
 		// let adminIDs: number[] = (await pool.query(
 		// 	`
@@ -161,10 +160,7 @@ export default class Account implements CAP.AccountObject {
 	 */
 	public adminIDs: number[];
 
-	
-
-	private constructor (data: CAP.AccountObject) {
-		// tslint:disable-next-line:no-any
+	private constructor (data: AccountObject) {
 		Object.assign(this, data);
 	}
 

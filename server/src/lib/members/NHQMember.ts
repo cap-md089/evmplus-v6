@@ -6,14 +6,6 @@ import { join } from 'path';
 import * as mysql from 'promise-mysql';
 import { promisify } from 'util';
 import conf from '../../conf';
-import {
-	Identifiable,
-	MemberAccessLevel,
-	MemberContact,
-	MemberCreateError,
-	MemberObject,
-	MemberPermissions
-} from '../../types';
 import Account, { AccountRequest } from '../Account';
 import Member from '../BaseMember';
 import { MySQLRequest, prettySQL } from '../MySQLUtil';
@@ -21,7 +13,7 @@ import {
 	getPermissions,
 	Member as MemberPermissionsLevel
 } from '../Permissions';
-import { nhq as auth } from './pam/';
+import { nhq as auth } from './pam';
 import request from './pam/nhq-request';
 
 interface MemberSession extends Identifiable {
@@ -145,7 +137,7 @@ export default class NHQMember extends Member {
 			typeof req.headers.authorization !== 'undefined' &&
 			typeof req.account !== 'undefined'
 		) {
-			let header = req.headers.authorization;
+			let header: string = req.headers.authorization as string;
 			if (typeof header !== 'string') {
 				header = (header as string[])[0];
 			}

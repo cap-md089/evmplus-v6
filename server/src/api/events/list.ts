@@ -2,7 +2,6 @@ import * as express from 'express';
 import { AccountRequest } from '../../lib/Account';
 import { prettySQL } from '../../lib/MySQLUtil';
 import { json } from '../../lib/Util';
-import { EventObject } from '../../types';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (!req.account) {

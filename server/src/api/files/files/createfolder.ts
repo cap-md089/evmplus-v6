@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
@@ -44,7 +44,7 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 					`${req.account.id}-${id}`,
 					0,
 					req.params.name,
-					Math.floor(moment().valueOf() / 1000),
+					Math.floor(+DateTime.utc() / 1000),
 					req.account.id
 				],
 			);
