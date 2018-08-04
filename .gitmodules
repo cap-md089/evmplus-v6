@@ -1,6 +1,6 @@
 [submodule "client"]
 	path = client
-	url = ./client
+	url = /mnt/persistent/repositories/react-capunit-client.git
 [submodule "server"]
 	path = server
-	url = ./server
+	url = /mnt/persistent/repositories/react-capunit-server.git
