@@ -3,7 +3,6 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import myFetch from '../lib/myFetch';
 import urlFormat from '../lib/urlFormat';
-import { FileObject } from '../types';
 import Button from './Button';
 import './FileDialogue.css';
 import Loader from './Loader';

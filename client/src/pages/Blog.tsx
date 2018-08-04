@@ -5,7 +5,6 @@ import Loader from '../components/Loader';
 import { TextArea, TextInput } from '../components/SimpleForm';
 import RequestForm from '../components/SimpleRequestForm';
 import myFetch from '../lib/myFetch';
-import { BlogPost } from '../types';
 import './blog.css';
 import Page, { PageProps } from './Page';
 

@@ -15,4 +15,6 @@ export default class Page<
 	P extends PageProps = PageProps,
 	S = {},
 	SS = {}
-> extends React.Component<P, S, SS> {}
+> extends React.Component<P, S> {
+	public render (): JSX.Element | null {return null;}
+}

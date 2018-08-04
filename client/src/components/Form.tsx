@@ -148,6 +148,7 @@ class Form<
 										onUpdate: (
 											e: { name: string; value: any }
 										) => void;
+										key: number;
 									}>,
 									{
 										key: i,

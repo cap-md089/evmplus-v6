@@ -8,7 +8,6 @@ import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
 import Registry from './registry';
-import { MemberObject } from './types';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 

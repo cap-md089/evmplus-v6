@@ -1,7 +1,6 @@
 import * as React from 'react';
 import myFetch from '../../lib/myFetch';
 import urlFormat from '../../lib/urlFormat';
-import { FileObject } from '../../types';
 import Button from '../Button';
 import FileDialogue from '../FileDialogue';
 import Loader from '../Loader';
