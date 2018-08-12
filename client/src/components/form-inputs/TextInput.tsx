@@ -47,21 +47,13 @@ export default class TextInput extends React.Component<TextInputProps, {
 			}
 		}
 
-		if (typeof this.props.onUpdate !== 'undefined') {
-			this.props.onUpdate({
-				name: this.props.name,
-				value: text
-			});
-		}
-
 		if (change) {
-			this.setState({
-				value: text
-			});
-		} else {
-			// Call this to update the input, thus causing a re-render
-			// A re-render will set the input to match the state
-			this.forceUpdate();
+			if (typeof this.props.onUpdate !== 'undefined') {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: text
+				});
+			}
 		}
 	}
 
@@ -77,7 +69,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 			>
 				<input
 					type="text"
-					value={this.state.value}
+					value={this.props.value}
 					onChange={this.onChange}
 					name={this.props.name}
 					style={{

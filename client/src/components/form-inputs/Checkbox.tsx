@@ -21,8 +21,8 @@ export default class Checkbox extends React.Component<CheckboxProps, CheckboxSta
 			value: typeof props.value === 'undefined' ? false : props.value
 		};
 
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
+		if (this.props.onInitialize) {
+			this.props.onInitialize({
 				name: props.name,
 				value: this.state.value
 			});
@@ -31,7 +31,7 @@ export default class Checkbox extends React.Component<CheckboxProps, CheckboxSta
 
 	public render () {
 		return (
-			<div className="formbox">
+			<div className="formbox" style={this.props.boxStyles}>
 				<div className="checkboxDiv">
 					<input
 						type="checkbox"

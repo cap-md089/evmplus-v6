@@ -2,7 +2,7 @@ import * as React from 'react';
 import { InputProps } from './Input';
 
 interface MultCheckboxProps
-	extends InputProps<[boolean[], string | undefined]> {
+	extends InputProps<MultCheckboxReturn> {
 	labels: string[];
 	other?: boolean;
 }
@@ -41,12 +41,12 @@ export default class MultCheckbox extends React.Component<
 			};
 		}
 
-		if (this.props.onUpdate) {
+		if (this.props.onInitialize) {
 			const value = [
 				this.state.currentValue,
 				this.state.currentValue[this.props.labels.length] ? this.state.currentText : undefined
 			];
-			this.props.onUpdate({
+			this.props.onInitialize({
 				name: this.props.name,
 				value: value as [boolean[], string | undefined]
 			});
@@ -58,7 +58,7 @@ export default class MultCheckbox extends React.Component<
 
 	public render() {
 		return (
-			<div className="formbox">
+			<div className="formbox" style={this.props.boxStyles}>
 				<section>
 					{this.props.labels.map((label, i) => (
 						<div className="checkboxDiv checkboxDivMult" key={i}>

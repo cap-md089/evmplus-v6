@@ -4,8 +4,10 @@ import {
 	Checkbox,
 	DateTimeInput,
 	FileInput,
+	FormBlock,
 	FormProps,
 	isInput,
+	ListEditor,
 	MultCheckbox,
 	MultiRange,
 	RadioButton,
@@ -22,7 +24,9 @@ export {
 	DateTimeInput,
 	RadioButton,
 	MultCheckbox,
-	Checkbox
+	Checkbox,
+	ListEditor,
+	FormBlock
 };
 
 /**
@@ -148,10 +152,8 @@ class Form<
 										onUpdate: (
 											e: { name: string; value: any }
 										) => void;
-										key: number;
 									}>,
 									{
-										key: i,
 										onUpdate: this.onChange
 									}
 							  )

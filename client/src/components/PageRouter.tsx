@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
 import { AuthorizeUserArgument } from '../App';
+import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Main from '../pages/Main';
 import Page from '../pages/Page';
@@ -31,6 +32,11 @@ const pages: Array<{
 	{
 		url: '/rack',
 		component: RackBuilder as typeof Page,
+		exact: false
+	},
+	{
+		url: '/eventform',
+		component: AddEvent as typeof Page,
 		exact: false
 	}
 ];

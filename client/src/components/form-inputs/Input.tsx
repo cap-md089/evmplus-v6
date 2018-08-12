@@ -19,6 +19,17 @@ export interface InputProps<V> {
 		name: string,
 		value: V
 	}) => void;
+	/**
+	 * Function called when the form component initializes
+	 * 
+	 * Meant to be used by the Form class (and its derivatives)
+	 * 
+	 * @param {{name: string, value: V}} event The form event
+	 */
+	onInitialize?: (e?: {
+		name: string,
+		value: V
+	}) => void;
 	
 	// Implement HTML form stuff
 	/**
@@ -27,8 +38,10 @@ export interface InputProps<V> {
 	name: string;
 	/**
 	 * The value of the input
+	 * 
+	 * Denoted as required because all components need to be controlled
 	 */
-	value?: V;
+	value: V;
 
 	// Pass on styles to children
 	/**

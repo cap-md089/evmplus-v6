@@ -93,8 +93,8 @@ export default class DateTimeInput extends React.Component<
 			zone: this.props.originalTimeZoneOffset
 		});
 
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
+		if (this.props.onInitialize) {
+			this.props.onInitialize({
 				name: this.props.name,
 				value: start
 			});
@@ -132,7 +132,7 @@ export default class DateTimeInput extends React.Component<
 			(this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
 
 		return (
-			<div className="formbox">
+			<div className="formbox" style={this.props.boxStyles}>
 				<div
 					className={`${className}-input-box 
 						datetime-input-root

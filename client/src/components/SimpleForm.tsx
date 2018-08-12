@@ -3,6 +3,8 @@ import myFetch from '../lib/myFetch';
 import Checkbox from './form-inputs/Checkbox';
 import DateTimeInput from './form-inputs/DateTimeInput';
 import FileInput from './form-inputs/FileInput';
+import FormBlock from './form-inputs/FormBlock';
+import ListEditor from './form-inputs/ListEditor';
 import MultCheckbox from './form-inputs/MultCheckbox';
 import MultiRange from './form-inputs/MultiRange';
 import RadioButton from './form-inputs/RadioButton';
@@ -12,17 +14,24 @@ import TextInput from './form-inputs/TextInput';
 /**
  * Creates a label to be used in the form
  */
-class Label extends React.Component<{ fullWidth?: boolean }> {
+class Label extends React.Component<{
+	fullWidth?: boolean;
+	style?: React.CSSProperties;
+}> {
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean }) {
+	constructor(props: { fullWidth: boolean; style?: React.CSSProperties }) {
 		super(props);
 
 		this.IsLabel = true;
 	}
 
 	public render() {
-		return <div className="formbox">{this.props.children}</div>;
+		return (
+			<div className="formbox" style={this.props.style}>
+				{this.props.children}
+			</div>
+		);
 	}
 }
 
@@ -68,7 +77,9 @@ export function isInput(
 		el.type === DateTimeInput ||
 		el.type === RadioButton ||
 		el.type === MultCheckbox ||
-		el.type === Checkbox
+		el.type === Checkbox ||
+		el.type === ListEditor ||
+		el.type === FormBlock
 	);
 }
 
@@ -154,7 +165,7 @@ export interface FormProps<F> {
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
  */
-class Form<
+class SimpleForm<
 	C = {},
 	P extends FormProps<C> = FormProps<C>
 > extends React.Component<
@@ -287,8 +298,7 @@ class Form<
 							}
 							ret = [
 								React.cloneElement(child, {
-									onUpdate: this.onChange,
-									key: Math.random()
+									onUpdate: this.onChange
 								})
 							];
 						}
@@ -319,8 +329,8 @@ class Form<
 										React.cloneElement(
 											this.props.children[i - 1],
 											{
-												key: i - 1,
-												onUpdate: this.onChange
+												onUpdate: this.onChange,
+												onInitialize: this.onInitialize
 											}
 										)
 									);
@@ -377,6 +387,10 @@ class Form<
 		}
 	}
 
+	protected onInitialize(e: { name: string; value: any }) {
+		this.fields[e.name] = e.value;
+	}
+
 	/**
 	 * Function called when the form is submitted
 	 *
@@ -390,7 +404,7 @@ class Form<
 	}
 }
 
-export default Form;
+export default SimpleForm;
 
 export {
 	Title,
@@ -402,5 +416,7 @@ export {
 	DateTimeInput,
 	RadioButton,
 	MultCheckbox,
-	Checkbox
+	Checkbox,
+	ListEditor,
+	FormBlock
 };

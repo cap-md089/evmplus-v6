@@ -41,7 +41,10 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 						id,
 						kind,
 						memberOnly,
-						uploaderID
+						uploaderID,
+						_id,
+						fileChildren,
+						parentID
 					} = this.props;
 					this.props.onClick(
 						{
@@ -55,7 +58,10 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 							id,
 							kind,
 							memberOnly,
-							uploaderID
+							uploaderID,
+							_id,
+							fileChildren,
+							parentID
 						},
 						this.props.selected
 					);
@@ -93,7 +99,10 @@ export class FileDisplayer extends React.Component<ItemProps> {
 						id,
 						kind,
 						memberOnly,
-						uploaderID
+						uploaderID,
+						_id,
+						fileChildren,
+						parentID
 					} = this.props;
 					this.props.onClick(
 						{
@@ -107,7 +116,10 @@ export class FileDisplayer extends React.Component<ItemProps> {
 							id,
 							kind,
 							memberOnly,
-							uploaderID
+							uploaderID,
+							_id,
+							fileChildren,
+							parentID
 						},
 						this.props.selected
 					);
@@ -144,7 +156,10 @@ class SelectedFileDisplayer extends React.Component<
 						id,
 						kind,
 						memberOnly,
-						uploaderID
+						uploaderID,
+						_id,
+						fileChildren,
+						parentID
 					} = this.props;
 					this.props.onClick(
 						{
@@ -158,7 +173,10 @@ class SelectedFileDisplayer extends React.Component<
 							id,
 							kind,
 							memberOnly,
-							uploaderID
+							uploaderID,
+							_id,
+							fileChildren,
+							parentID
 						},
 						this.props.selected
 					);
@@ -247,6 +265,15 @@ class FileUploader extends React.Component<
 		const xhr = new XMLHttpRequest();
 		xhr.open('POST', urlFormat('api', 'files', 'upload'));
 
+		const sid = localStorage.getItem('sessionID');
+
+		if (!sid) {
+			// @TODO: Create an error message
+			return;
+		}
+
+		xhr.setRequestHeader('authorization', sid);
+
 		xhr.upload.addEventListener('progress', ev => {
 			if (ev.lengthComputable) {
 				this.setState({
@@ -266,7 +293,6 @@ class FileUploader extends React.Component<
 			if (this.readyState === 4) {
 				try {
 					const resp = JSON.parse(this.responseText) as FileObject;
-					const sid = localStorage.getItem('sessionID');
 					myFetch(urlFormat('api', 'files', 'root', 'children'), {
 						method: 'POST',
 						body: JSON.stringify({
@@ -427,7 +453,7 @@ export default class FileDialogue extends React.Component<
 				open: true
 			});
 
-			myFetch('/api/files/' + this.state.folder + '/children/dirty')
+			myFetch('/api/files/' + this.state.folder + '/children')
 				.then(
 					res =>
 						res.ok
@@ -512,7 +538,7 @@ export default class FileDialogue extends React.Component<
 				open: true
 			});
 
-			myFetch('/api/files/' + this.state.folder + '/children/dirty')
+			myFetch('/api/files/' + this.state.folder + '/children')
 				.then(
 					res =>
 						res.ok
@@ -806,7 +832,7 @@ export default class FileDialogue extends React.Component<
 	private getViewChanger(view: FileDialogueView) {
 		return ((e: React.MouseEvent<HTMLAnchorElement>) => {
 			if (view === FileDialogueView.MYDRIVE) {
-				myFetch('/api/files/' + this.state.folder + '/children/dirty')
+				myFetch('/api/files/' + this.state.folder + '/children')
 					.then(
 						res =>
 							res.ok

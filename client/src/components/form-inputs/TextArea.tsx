@@ -34,19 +34,29 @@ export default class TextArea extends React.Component<
 		editorState: EditorState;
 	}
 > {
+	public static getDerivedStateFromProps(
+		props: TextAreaProps
+	): {
+		editorState: EditorState;
+	} {
+		return {
+			editorState:
+				typeof props.value === 'undefined'
+					? EditorState.createEmpty()
+					: EditorState.createWithContent(convertFromRaw(props.value))
+		};
+	}
+
 	constructor(props: TextAreaProps) {
 		super(props);
-		if (typeof this.props.value !== 'undefined') {
-			this.state = {
-				editorState: EditorState.createWithContent(
-					convertFromRaw(this.props.value)
-				)
-			};
-		} else {
-			this.state = {
-				editorState: EditorState.createEmpty()
-			};
-		}
+
+		this.state = {
+			editorState:
+				typeof props.value !== 'undefined'
+					? EditorState.createWithContent(convertFromRaw(props.value))
+					: EditorState.createEmpty()
+		};
+
 		this.onChange = this.onChange.bind(this);
 		this.handleKeyCommand = this.handleKeyCommand.bind(this);
 
@@ -62,8 +72,8 @@ export default class TextArea extends React.Component<
 		this.toggleUL = this.toggleUL.bind(this);
 		this.toggleOL = this.toggleOL.bind(this);
 
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
+		if (this.props.onInitialize) {
+			this.props.onInitialize({
 				name: this.props.name,
 				value: convertToRaw(this.state.editorState.getCurrentContent())
 			});
@@ -77,7 +87,8 @@ export default class TextArea extends React.Component<
 				style={{
 					marginBottom: 10,
 					width: this.props.fullWidth ? '90%' : undefined,
-					clear: this.props.fullWidth ? 'both' : undefined
+					clear: this.props.fullWidth ? 'both' : undefined,
+					...this.props.boxStyles
 				}}
 			>
 				<div className="textarea-box">
@@ -312,21 +323,15 @@ export default class TextArea extends React.Component<
 	}
 
 	private onChange(editorState: EditorState): void {
-		this.setState({
-			editorState
-		});
-
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: convertToRaw(this.state.editorState.getCurrentContent())
+				value: convertToRaw(editorState.getCurrentContent())
 			});
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(
-				convertToRaw(this.state.editorState.getCurrentContent())
-			);
+			this.props.onChange(convertToRaw(editorState.getCurrentContent()));
 		}
 	}
 

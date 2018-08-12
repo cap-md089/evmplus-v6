@@ -1,4 +1,4 @@
-import { RawDraftContentState } from 'draft-js';
+import { convertToRaw, EditorState, RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
@@ -6,6 +6,7 @@ import Form, {
 	Checkbox,
 	DateTimeInput,
 	FileInput,
+	FormBlock,
 	Label,
 	MultCheckbox,
 	MultiRange,
@@ -14,7 +15,6 @@ import Form, {
 	TextInput,
 	Title
 } from '../components/SimpleForm';
-import today from '../lib/today';
 import Page, { PageProps } from './Page';
 
 enum Test1 {
@@ -22,28 +22,55 @@ enum Test1 {
 	Opt2
 }
 
-export default class Test extends Page<PageProps<{}>, { open: boolean }> {
-	public state = {
-		open: true
+interface Props {
+	test1: string;
+	test2: string;
+	test3: string;
+	test4: string[];
+	test6: string;
+	test5: RawDraftContentState;
+	test7: [number, number];
+	test8: DateTime;
+	test9: DateTime;
+	test10: DateTime;
+	test11: [Test1, string | undefined];
+	test12: [boolean[], string | undefined];
+	test13: boolean;
+	test14: RawDraftContentState;
+	test15: {
+		'test15-1': string;
+		'test15-2': string;
+	};
+}
+
+export default class Test extends Page<
+	PageProps<{}>,
+	{ open: boolean } & Props
+> {
+	public state: Props & { open: boolean } = {
+		open: true,
+		test1: '',
+		test2: '',
+		test3: '',
+		test4: [],
+		test5: convertToRaw(EditorState.createEmpty().getCurrentContent()),
+		test6: '',
+		test7: [100, 200],
+		test8: DateTime.utc(),
+		test9: DateTime.utc(),
+		test10: DateTime.utc(),
+		test11: [-1, undefined],
+		test12: [[false, false, false], undefined],
+		test13: false,
+		test14: convertToRaw(EditorState.createEmpty().getCurrentContent()),
+		test15: {
+			'test15-1': '',
+			'test15-2': ''
+		}
 	};
 
 	public render() {
-		const TestForm = Form as new () => Form<{
-			test1: string;
-			test2: string;
-			test3: string;
-			test4: string[];
-			test6: string;
-			test5: RawDraftContentState;
-			test7: [number, number];
-			test8: DateTime;
-			test9: DateTime;
-			test10: DateTime;
-			test11: [Test1, string | undefined];
-			test12: [boolean[], string | undefined],
-			test13: boolean,
-			test14: RawDraftContentState
-		}>;
+		const TestForm = Form as new () => Form<Props>;
 
 		const TestButton = Button as new () => Button<
 			{
@@ -63,10 +90,15 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 					onSubmit={data => {
 						// tslint:disable-next-line:no-console
 						console.log(data);
+						// tslint:disable-next-line:no-console
+						console.log(this.state);
 					}}
 					id="aLongTestForm"
 					submitInfo={{
 						text: 'Click me'
+					}}
+					onChange={data => {
+						this.setState({ ...data });
 					}}
 				>
 					<Label>Time input</Label>
@@ -74,7 +106,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 						name="test8"
 						date={false}
 						time={true}
-						value={DateTime.utc()}
+						value={this.state.test8}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>Date input</Label>
@@ -82,7 +114,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 						name="test9"
 						date={true}
 						time={false}
-						value={today()}
+						value={this.state.test9}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>Date and time input</Label>
@@ -91,9 +123,11 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
+						value={this.state.test10}
 					/>
 					<Label>Input label</Label>
 					<TextInput
+						value={this.state.test1}
 						onChange={text =>
 							text.startsWith('a') || text.length === 0
 						}
@@ -101,13 +135,10 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 					/>
 					<Title>A title</Title>
 					<Label>A label</Label>
-					<TextInput name="test2" />
-					<TextInput name="test3" />
+					<TextInput name="test2" value={this.state.test2} />
+					<TextInput name="test3" value={this.state.test3} />
 					<Label>File label</Label>
-					<FileInput
-						name="test4"
-						value={['mdx89-41736954-9a9d-4cef-9e58-049f934d5b96']}
-					/>
+					<FileInput name="test4" value={this.state.test4} />
 					<TextInput
 						name="test6"
 						fullWidth={true}
@@ -124,10 +155,15 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 							borderRadius: 0,
 							padding: 10
 						}}
+						value={this.state.test6}
 					/>
-					<TextArea name="test5" fullWidth={true} />
+					<TextArea
+						name="test5"
+						fullWidth={true}
+						value={this.state.test5}
+					/>
 					<Label>Not full width textarea</Label>
-					<TextArea name="test14" />
+					<TextArea name="test14" value={this.state.test14} />
 					<MultiRange
 						name="test7"
 						min={100}
@@ -135,6 +171,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 						step={10}
 						rightDisplay={(low, high) => `${high}`}
 						leftDisplay={(low, high) => `${low}`}
+						value={this.state.test7}
 					/>
 					<RadioButton
 						labels={['Opt1', 'Opt2']}
@@ -146,15 +183,27 @@ export default class Test extends Page<PageProps<{}>, { open: boolean }> {
 								console.log('opt 1');
 							}
 						}}
+						value={this.state.test11}
 					/>
 					<Label>Multiple checkboxes</Label>
 					<MultCheckbox
 						labels={['Opt 1', 'Opt 2']}
 						other={true}
 						name="test12"
+						value={this.state.test12}
 					/>
 					<Label>Single checkbox</Label>
-					<Checkbox name="test13" value={true} />
+					<Checkbox name="test13" value={this.state.test13} />
+					<FormBlock name="test15">
+						<TextInput
+							name="test15-1"
+							value={this.state.test15['test15-1']}
+						/>
+						<TextInput
+							name="test15-2"
+							value={this.state.test15['test15-2']}
+						/>
+					</FormBlock>
 				</TestForm>
 				<TestButton
 					data={{

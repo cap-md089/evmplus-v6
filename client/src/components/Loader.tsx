@@ -1,9 +1,31 @@
 import * as React from 'react';
 import './loader.css';
 
-export default class Loader extends React.Component {
-	public render () {
-		return (
+export default class Loader extends React.Component<
+	{},
+	{ display: boolean }
+> {
+	public state = {
+		display: false
+	};
+
+	private handle: NodeJS.Timer;
+
+	public componentDidMount() {
+		this.handle = setInterval(() => {
+			this.setState({
+				display: true
+			});
+			clearInterval(this.handle);
+		}, 200);
+	}
+
+	public componentWillUnmount() {
+		clearInterval(this.handle);
+	}
+
+	public render() {
+		return this.state.display ? (
 			<div>
 				<div
 					className="uil-default-css"
@@ -158,6 +180,6 @@ export default class Loader extends React.Component {
 					/>
 				</div>
 			</div>
-		);
+		) : null;
 	}
 }

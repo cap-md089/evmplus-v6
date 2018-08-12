@@ -40,7 +40,7 @@ export default class RadioButton<
 
 	public render() {
 		return (
-			<div className="formbox">
+			<div className="formbox" style={this.props.boxStyles}>
 				<section className="radioDiv">
 					{this.props.labels.map((label, i) => (
 						<div className="roundedTwo" key={i}>
