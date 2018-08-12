@@ -1,0 +1,6 @@
+[submodule "client"]
+	path = client
+	url = aws:/mnt/persistent/repositories/react-capunit-client.git
+[submodule "server"]
+	path = server
+	url = aws:/mnt/persistent/repositories/react-capunit-server.git

@@ -1,0 +1,6 @@
+[submodule "client"]
+	path = client
+	url = ssh://www.capunit.com:/mnt/persistent/repositories/react-capunit-client.git
+[submodule "server"]
+	path = server
+	url = ssh://www.capunit.com:/mnt/persistent/repositories/react-capunit-server.git
