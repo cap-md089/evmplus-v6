@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "accountID": {
+            "description": "The ID of the account the folder belongs to",
+            "type": "string"
+        },
+        "childLink": {
+            "description": "A link to the child",
+            "type": "string"
+        },
+        "id": {
+            "description": "The ID of the child file",
+            "type": "string"
+        },
+        "kind": {
+            "description": "This is a child reference",
+            "enum": [
+                "drive#childReference"
+            ],
+            "type": "string"
+        },
+        "selfLink": {
+            "description": "A link that references the url that generated this reference",
+            "type": "string"
+        }
+    },
+    "required": [
+        "accountID",
+        "childLink",
+        "id",
+        "kind",
+        "selfLink"
+    ],
+    "type": "object"
+}
+

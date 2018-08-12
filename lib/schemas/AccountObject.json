@@ -1,0 +1,73 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "_id": {
+            "type": "string"
+        },
+        "adminIDs": {
+            "description": "CAP IDs of the admins of this account",
+            "items": {
+                "type": "number"
+            },
+            "type": "array"
+        },
+        "echelon": {
+            "description": "Whether or not the account is an echelon account",
+            "type": "boolean"
+        },
+        "expired": {
+            "description": "Whether the account is expired",
+            "type": "boolean"
+        },
+        "expires": {
+            "description": "Datetime when the account expires in",
+            "type": "number"
+        },
+        "id": {
+            "description": "The Account ID",
+            "type": "string"
+        },
+        "mainOrg": {
+            "description": "The main organization of the account",
+            "type": "number"
+        },
+        "orgIDs": {
+            "description": "The ids of the organizations",
+            "items": {
+                "type": "number"
+            },
+            "type": "array"
+        },
+        "paid": {
+            "description": "Whether the account is a paid account",
+            "type": "boolean"
+        },
+        "paidEventLimit": {
+            "description": "How many events can be used if this account is paid for",
+            "type": "number"
+        },
+        "unpaidEventLimit": {
+            "description": "How many events can be used if this account is unpaid for",
+            "type": "number"
+        },
+        "validPaid": {
+            "description": "Whether the account is a valid paid account\n\nValid paid means it is paid for and not expired",
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "adminIDs",
+        "echelon",
+        "expired",
+        "expires",
+        "id",
+        "mainOrg",
+        "orgIDs",
+        "paid",
+        "paidEventLimit",
+        "unpaidEventLimit",
+        "validPaid"
+    ],
+    "type": "object"
+}
+

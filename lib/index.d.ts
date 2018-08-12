@@ -1,8 +1,40 @@
-export {}
-
 import { RawDraftContentState } from 'draft-js';
 
 declare global {
+	export type MultCheckboxReturn = [boolean[], string | undefined];
+
+	export const enum EventStatus {
+		DRAFT,
+		TENTATIVE,
+		CONFIRMED,
+		COMPLETE,
+		CANCELLED,
+		INFORMATIONONLY
+	}
+
+	export interface PointOfContact {
+		email: string;
+		phone: string;
+		receiveUpdates: boolean;
+		receiveRoster: boolean;
+		receiveEventUpdates: boolean;
+		receiveSignUpUpdates: boolean;
+	}
+
+	export interface InternalPointOfContact extends PointOfContact {
+		type: 'internal'
+		id: number;
+	}
+
+	export interface ExternalPointOfContact extends PointOfContact {
+		type: 'external'
+		name: string;
+	}
+
+	export interface NoSQLDocument {
+		_id?: string;
+	}
+
 	export interface Identifiable {
 		id: string | number;
 	}
@@ -30,7 +62,7 @@ declare global {
 		EMERGENCY: string;
 	}
 	
-	export type MemberAccessLevel = 'Member' | 'CadetStaff' | 'Manager' | 'Admin';
+	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
 	
 	/**
 	 * Contains all the contact info for the member, according to NHQ
@@ -270,16 +302,41 @@ declare global {
 		 */
 		flight?: string;
 	}
+
+	interface TemporaryDutyPosition {
+		validUntil: number;
+
+		Duty: string;
+	}
+
+	export interface ExtraMemberInformation extends AccountIdentifiable, NoSQLDocument {
+		/**
+		 * CAPID
+		 */
+		id: number;
+		/**
+		 * Extra duty positions that are assigned to the member
+		 */
+		temporaryDutyPositions: TemporaryDutyPosition[];
+		/**
+		 * Access level for the member
+		 */
+		accessLevel: MemberAccessLevel;
+	}
 	
-	export interface AccountObject extends Identifiable {
+	export interface AccountObject extends Identifiable, NoSQLDocument {
 		/**
 		 * The Account ID
 		 */
 		id: string;
 		/**
-		 * The SQL used to select all organizations that are in the account
+		 * Whether or not the account is an echelon account
 		 */
-		orgSQL: string;
+		echelon: boolean;
+		/**
+		 * The main organization of the account
+		 */
+		mainOrg: number;
 		/**
 		 * The ids of the organizations
 		 */
@@ -289,7 +346,9 @@ declare global {
 		 */
 		paid: boolean;
 		/**
-		 * Whether the accoutn is a valid paid account
+		 * Whether the account is a valid paid account
+		 * 
+		 * Valid paid means it is paid for and not expired
 		 */
 		validPaid: boolean;
 		/**
@@ -297,9 +356,9 @@ declare global {
 		 */
 		expired: boolean;
 		/**
-		 * When the account expires in (seconds)
+		 * Datetime when the account expires in
 		 */
-		expiresIn: number;
+		expires: number;
 		/**
 		 * How many events can be used if this account is paid for
 		 */
@@ -314,7 +373,7 @@ declare global {
 		adminIDs: number[];
 	}
 	
-	export interface DriveObject extends AccountIdentifiable {
+	export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
 		/**
 		 * The kind of object it is, as these pass through JSON requests
 		 */
@@ -362,40 +421,102 @@ declare global {
 		 * Whether or not the file is to be shown in the slideshow
 		 */
 		forSlideshow: boolean;
+		/**
+		 * Child ids
+		 */
+		fileChildren: string[];
+		/**
+		 * ID of the parent for going backwards
+		 */
+		parentID: string;
 	}
 	
-	export interface FileChildObject extends DriveObject {
-		/**
-		 * This is a child reference
-		 */
-		kind: 'drive#childReference';
-		/**
-		 * The ID of the child file
-		 */
-		id: string;
-		/**
-		 * A link that references the url that generated this reference
-		 */
-		selfLink: string;
-		/**
-		 * A link to the child
-		 */
-		childLink: string;
-	}
-	
-	export interface BlogPost extends AccountIdentifiable {
+	export interface BlogPost extends AccountIdentifiable, NoSQLDocument, NewBlogPost {
 		id: number;
+	}
+
+	export interface NewBlogPost {
 		title: string;
 		authorid: number;
 		content: RawDraftContentState;
 		fileIDs: string[];
 		posted: number;
 	}
-	
-	export interface EventObject extends AccountIdentifiable {
+
+	export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
 		/**
 		 * ID of the Event, can be expressed as the event number
 		 */
 		id: number;
+	}
+
+	export interface NewEventObject {
+		timeModified: number;
+		timeCreated: number;
+		name: string;
+		meetDateTime: number;
+		meetLocation: string;
+		startDateTime: number;
+		location: string;
+		endDateTime: number;
+		pickupDateTime: number;
+		pickupLocation: string;
+		transportationProvided: boolean;
+		transportationDescription: string;
+		uniform: MultCheckboxReturn;
+		desiredNumberOfParticipants: number;
+		registration?: {
+			deadline: number;
+			information: string;
+		};
+		participationFee?: {
+			feeDue: number;
+			feeAmount: number;
+		};
+		mealsDescription: MultCheckboxReturn;
+		lodgingArrangments: MultCheckboxReturn;
+		activity: MultCheckboxReturn;
+		highAdventureDescription: string;
+		requiredEquipment: string[];
+		eventWebsite: string;
+		requiredForms: MultCheckboxReturn;
+		comments: string;
+		acceptSignups: boolean;
+		signUpDenyMessage: string;
+		publishToWingCalendar: boolean;
+		showUpcoming: boolean;
+		groupEventNumber: number;
+		wingEventNumber: number;
+		complete: boolean;
+		administrationComments: string;
+		status: EventStatus;
+		debrief: string;
+		pointsOfContact: (InternalPointOfContact | ExternalPointOfContact)[];
+		author: number;
+		signUpPartTime: boolean;
+		teamID: number;
+		sourceEvent?: {
+			id: number;
+			accountID: string;
+		};
+	}
+
+	export interface AttendanceRecord {
+		timestamp: number;
+		eventID: number;
+		accountID: string;
+		memberID: number;
+		memberRankName: string;
+		comments: string;
+		status: AttendanceStatus;
+		requirements: string;
+		summaryEmailSent: boolean;
+		planToUseCAPTransportation: boolean;
+	}
+	
+	export const enum AttendanceStatus {
+		COMMITTEDATTENDED,
+		NOSHOW,
+		RESCINDEDCOMMITMENTTOATTEND
 	}
 }
