@@ -1,33 +1,31 @@
 import * as express from 'express';
-import * as mysql from 'promise-mysql';
+import { BlogPostValidator } from '.';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
-import { errorFunction } from '../../../lib/MySQLUtil';
 
-export default (connectionPool: mysql.Pool): express.RequestHandler => {
-	return (req: AccountRequest & MemberRequest, res, next) => {
+export default (blogPostValidator: BlogPostValidator) => {
+	return async (req: AccountRequest & MemberRequest, res: express.Response) => {
 		if (
 			req.is('json') &&
 			typeof req.account !== 'undefined' &&
 			// typeof req.member !== 'undefined' &&
-			typeof req.body !== 'undefined' &&
-			typeof req.body.content !== 'undefined' &&
-			typeof req.body.title !== 'undefined'
+			blogPostValidator(req.body)
 		) {
-			const post = {
-				content: JSON.stringify(req.body.content),
-				title: req.body.title
-			};
-			connectionPool.query(
-				'UPDATE blog SET ? WHERE id = ? AND AccountID = ?',
-				[post, req.params.id, req.account.id],
-			).then(results => {
-				res.status(200);
-				res.end();
-			}).catch(errorFunction(res));
+			const blogPostCollection = req.mysqlx.getCollection('Blog');
+
+			await blogPostCollection
+				.modify('id = :id AND accountID = :accountID')
+				.bind({
+					id: req.params.id,
+					accountID: req.account.id
+				})
+				.patch(req.body)
+				.execute();
+
+			res.send(204);
 		} else {
 			res.status(400);
 			res.end();
 		}
-	};
+	}
 };

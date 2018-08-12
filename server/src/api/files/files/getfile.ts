@@ -4,7 +4,7 @@ import { join } from 'path';
 import { Configuration as config } from '../../../conf';
 
 import { AccountRequest } from '../../../lib/Account';
-import { prettySQL } from '../../../lib/MySQLUtil';
+import { collectResults } from '../../../lib/MySQLUtil';
 
 export default async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
 	if (
@@ -17,33 +17,24 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		return;
 	}
 
-	const requestedFileQuery: Array<{
-		id: string;
-		memberOnly: number;
-		contentType: string;
-		fileName: string;
-	}> = await req.connectionPool.query(
-		prettySQL`
-			SELECT
-				id, memberOnly, contentType, fileName
-			FROM
-				FileInfo
-			WHERE
-				accountID = ? AND id = ?
-		`,
-		[
-			req.account.id,
-			req.params.fileid
-		]
+	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+
+	const results = await collectResults(
+		filesCollection
+			.find('id = :id AND accountID = :accountID')
+			.bind({
+				id: req.params.fileid,
+				accountID: req.account.id
+			})
 	);
 
-	if (requestedFileQuery.length !== 1) {
+	if (results.length !== 1) {
 		res.status(404);
 		res.end();
 		return;
 	}
 
-	const fileRequestedData = requestedFileQuery[0];
+	const fileRequestedData = results[0];
 	const fileRequested = fs.createReadStream(join(config.fileStoragePath, fileRequestedData.id));
 
 	res.contentType(fileRequestedData.contentType);

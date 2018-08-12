@@ -29,7 +29,7 @@ declare module '@mysql/xdevapi' {
 	}
 
 	interface IndexDefinition {
-		type?: string;
+		type?: 'INDEX' | 'SPATIAL';
 		fields: FieldDefinition[];
 	}
 
@@ -54,8 +54,9 @@ declare module '@mysql/xdevapi' {
 		msg: string;
 	}
 
-	interface Binding {
-		bind(parameter: string | any, value?: string): Binding;
+	interface Binding<T> {
+		bind(parameter: Partial<T>): Binding<T>;
+		bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): Binding<T>;
 	}
 
 	interface CollectionOrdering {
@@ -107,7 +108,7 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class Collection<T = any> implements DatabaseObject {
-		public add(expr: DocumentOrJSON): CollectionAdd<T>;
+		public add(expr: T): CollectionAdd<T>;
 
 		public addOrReplaceOne(id: string, data: T): Promise<Result>;
 
@@ -150,12 +151,13 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class CollectionFind<T>
-		implements Binding, CollectionOrdering, Grouping, Limiting, Locking {
-		public execute(callback: (fields: T[]) => void): Promise<Result>;
+		implements Binding<T>, CollectionOrdering, Grouping, Limiting, Locking {
+		public execute(callback: (fields: T) => void): Promise<Result>;
 
 		public fields(projections: string[] | string): CollectionFind<T>;
 
-		public bind(parameter: string | any, value: string): CollectionFind<T>;
+		public bind(parameter: Partial<T>): CollectionFind<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionFind<T>;
 
 		public sort(...SortExprStr: string[]): CollectionFind<T>;
 		public sort(SortExprStr: string | string[]): CollectionFind<T>;
@@ -174,10 +176,16 @@ declare module '@mysql/xdevapi' {
 		public lockShared(mode: LockContention): CollectionFind<T>;
 	}
 
-	class CollectionModify<T> implements Binding, CollectionOrdering, Limiting {
-		public arrayAppend(field: string, any: any): CollectionModify<T>;
+	class CollectionModify<T> implements Binding<T>, CollectionOrdering, Limiting {
+		public arrayAppend<
+			K extends keyof T = keyof T,
+			J extends keyof T[K] = keyof T[K]
+		>(field: K, any: T[K][J]): CollectionModify<T>;
 
-		public arrayInsert(field: string, any: any): CollectionModify<T>;
+		public arrayInsert<
+			K extends keyof T = keyof T,
+			J extends keyof T[K] = keyof T[K]
+		>(field: K, any: T[K][J]): CollectionModify<T>;
 
 		public execute(): Promise<Result>;
 
@@ -185,31 +193,33 @@ declare module '@mysql/xdevapi' {
 
 		public patch(properties: Partial<T>): CollectionModify<T>;
 
-		public set(field: string, any: any): CollectionModify<T>;
+		public set<K extends keyof T = keyof T>(field: K, any: T[K]): CollectionModify<T>;
 
 		public unset(fields: string | string[]): CollectionModify<T>;
 
-		public bind(parameter: string | any, value: string): CollectionFind<T>;
+		public bind(parameter: Partial<T>): CollectionModify<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionModify<T>;
 
-		public sort(...SortExprStr: string[]): CollectionFind<T>;
-		public sort(SortExprStr: string | string[]): CollectionFind<T>;
+		public sort(...SortExprStr: string[]): CollectionModify<T>;
+		public sort(SortExprStr: string | string[]): CollectionModify<T>;
 
-		public limit(count: number, offset?: number): CollectionFind<T>;
+		public limit(count: number, offset?: number): CollectionModify<T>;
 
-		public offset(value: number): CollectionFind<T>;
+		public offset(value: number): CollectionModify<T>;
 	}
 
-	class CollectionRemove<T> implements Binding, CollectionOrdering, Limiting {
+	class CollectionRemove<T> implements Binding<T>, CollectionOrdering, Limiting {
 		public execute(): Promise<Result>;
 
-		public bind(parameter: string | any, value: string): CollectionFind<T>;
+		public bind(parameter: Partial<T>): CollectionRemove<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionRemove<T>;
 
-		public sort(...SortExprStr: string[]): CollectionFind<T>;
-		public sort(SortExprStr: string | string[]): CollectionFind<T>;
+		public sort(...SortExprStr: string[]): CollectionRemove<T>;
+		public sort(SortExprStr: string | string[]): CollectionRemove<T>;
 
-		public limit(count: number, offset?: number): CollectionFind<T>;
+		public limit(count: number, offset?: number): CollectionRemove<T>;
 
-		public offset(value: number): CollectionFind<T>;
+		public offset(value: number): CollectionRemove<T>;
 	}
 
 	class Result {
@@ -238,15 +248,15 @@ declare module '@mysql/xdevapi' {
 
 		public getClassName(): string;
 
-		public getCollection(name: string): Collection;
+		public getCollection<T = any>(name: string): Collection<T>;
 
-		public getCollectionAsTable(name: string): Table;
+		public getCollectionAsTable<T = any>(name: string): Table<T>;
 
 		public getCollections(): Promise<Collection[]>;
 
 		public getName(): string;
 
-		public getTable(name: string): Table;
+		public getTable<T = any>(name: string): Table<T>;
 
 		public getTables(): Promise<Table[]>;
 
@@ -372,8 +382,8 @@ declare module '@mysql/xdevapi' {
 		public bind(values: string | string[]): SqlExecute;
 
 		public execute(
-			rowcb: (items: any[]) => void,
-			metacb?: (metadata: any[]) => void
+			rowcb: (items: any) => void,
+			metacb?: (metadata: any) => void
 		): Promise<void>;
 
 		public addArgs(args: any[]): Statement;
@@ -388,6 +398,13 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class Table<T = any> {
+		/**
+		 * Retrieve the total number of rows in the table
+		 * 
+		 * @deprecated since version 8.0.12. Will be removed in future versions
+		 */
+		public count(): Promise<number>;
+
 		public delete(expr: SearchConditionStr): TableDelete<T>;
 
 		public exiistsInDatabase(): Promise<boolean>;
@@ -402,15 +419,16 @@ declare module '@mysql/xdevapi' {
 
 		public isView(): Promise<boolean>;
 
-		public select(expr: string | string[]): TableSelect<T>;
+		public select(expr?: string | string[]): TableSelect<T>;
 
 		public update(expr: string): TableUpdate<T>;
 	}
 
-	class TableDelete<T> implements Binding, Limiting, TableOrdering {
+	class TableDelete<T> implements Binding<T>, Limiting, TableOrdering {
 		public execute(): Promise<Result>;
 
-		public bind(parameter: string | any, value?: string): TableDelete<T>;
+		public bind(parameters: Partial<T>): TableDelete<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableDelete<T>;
 
 		public limit(count: number, offset?: number): TableDelete<T>;
 
@@ -426,50 +444,55 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class TableSelect<T>
-		implements Binding, Grouping, Limiting, Locking, TableOrdering {
+		implements Binding<T>, Grouping, Limiting, Locking, TableFiltering, TableOrdering {
 		public execute(
-			rowcb: (items: any[]) => void,
-			metacb: (metadata: any[]) => void
+			rowcb?: (item: T) => void,
+			metacb?: (metadata: any) => void
 		): Promise<Result>;
 
 		public getViewDefinition(): string;
 
-		public bind(parameter: string | any, value: string): CollectionFind<T>;
+		public bind(parameter: Partial<T>): TableSelect<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableSelect<T>;
 
-		public sort(...SortExprStr: string[]): CollectionFind<T>;
-		public sort(SortExprStr: string | string[]): CollectionFind<T>;
+		public sort(...SortExprStr: string[]): TableSelect<T>;
+		public sort(SortExprStr: string | string[]): TableSelect<T>;
 
-		public groupBy(...GroupByExprStr: string[]): CollectionFind<T>;
-		public groupBy(GroupByExprStr: string | string[]): CollectionFind<T>;
+		public groupBy(...GroupByExprStr: string[]): TableSelect<T>;
+		public groupBy(GroupByExprStr: string | string[]): TableSelect<T>;
 
-		public having(expr: SearchConditionStr): CollectionFind<T>;
+		public having(expr: SearchConditionStr): TableSelect<T>;
 
-		public limit(count: number, offset?: number): CollectionFind<T>;
+		public limit(count: number, offset?: number): TableSelect<T>;
 
-		public offset(value: number): CollectionFind<T>;
+		public offset(value: number): TableSelect<T>;
 
-		public lockExclusive(mode: LockContention): CollectionFind<T>;
+		public lockExclusive(mode: LockContention): TableSelect<T>;
 
-		public lockShared(mode: LockContention): CollectionFind<T>;
+		public lockShared(mode: LockContention): TableSelect<T>;
 
-		public orderBy(SortExprStr: string | string[]): TableDelete<T>;
+		public orderBy(SortExprStr: string | string[]): TableSelect<T>;
+
+		public where(criteria: string): TableSelect<T>;
 	}
 
-	class TableUpdate<T> implements Binding, Limiting, TableOrdering {
+	class TableUpdate<T> implements Binding<T>, Limiting, TableOrdering {
 		public execute(): Promise<Result>;
 
 		public getClassName(): string;
 
 		public set(field: string, expr: string): TableUpdate<T>;
 
-		public bind(parameter: string | any, value: string): CollectionFind<T>;
+		public bind(parameter: Partial<T>): TableUpdate<T>;
+		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableUpdate<T>;
 
-		public limit(count: number, offset?: number): CollectionFind<T>;
+		public limit(count: number, offset?: number): TableUpdate<T>;
 
-		public offset(value: number): CollectionFind<T>;
+		public offset(value: number): TableUpdate<T>;
 
-		public orderBy(SortExprStr: string | string[]): TableDelete<T>;
+		public orderBy(SortExprStr: string | string[]): TableUpdate<T>;
 	}
+
 
 	/**
 	 * Load a new or existing session

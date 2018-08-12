@@ -1,10 +1,13 @@
 import * as express from 'express';
-
 import { AccountRequest } from '../../../lib/Account';
-import { prettySQL } from '../../../lib/MySQLUtil';
+import { MemberRequest } from '../../../lib/BaseMember';
+import { collectResults } from '../../../lib/MySQLUtil';
 import { json } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
+export default async (
+	req: AccountRequest & MemberRequest,
+	res: express.Response
+) => {
 	if (
 		typeof req.account === 'undefined' ||
 		typeof req.params === 'undefined' ||
@@ -15,55 +18,26 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		return;
 	}
 
-	// Get file info
-	const requestedFileQuery: Array<{
-		uploaderID: number;
-		comments: string;
-		created: number;
-		forDisplay: number;
-		forSlideshow: number;
-		memberOnly: number;
-		contentType: string;
-		fileName: string;
-	}> = await req.connectionPool.query(
-		prettySQL`
-			SELECT
-				uploaderID,
-				comments,
-				created,
-				forDisplay,
-				forSlideshow,
-				memberOnly,
-				contentType,
-				fileName
-			FROM
-				FileInfo
-			WHERE
-				accountID = ? AND id = ?
-		`,
-		[
-			req.account.id,
-			req.params.fileid
-		]
+	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+
+	const results = await collectResults(
+		filesCollection.find(':accountID = :id AND id = :id').bind({
+			accountID: req.account.id,
+			id: req.params.fileid
+		})
 	);
 
-	// Check for valid amount
-	if (requestedFileQuery.length !== 1) {
-		res.status(404);
-		res.end();
+	if (results.length !== 1) {
+		res.send(404);
 		return;
 	}
 
-	// Return file info
-	const fileRequestedData = {
-		id: req.params.fileid,
-		kind: 'drive#file' as 'drive#file',
-		// tslint:disable-next-line:object-literal-sort-keys
-		accountID: req.account.id,
-		...requestedFileQuery[0],
-		memberOnly: requestedFileQuery[0].memberOnly === 1,
-		forDisplay: requestedFileQuery[0].forDisplay === 1,
-		forSlideshow: requestedFileQuery[0].forSlideshow === 1
-	};
-	json<FileObject>(res, fileRequestedData);
+	const file = results[0];
+
+	if (file.memberOnly && typeof req.member === 'undefined') {
+		res.send(400);
+		return;
+	}
+
+	json<FileObject>(res, results[0]);
 };

@@ -1,49 +1,60 @@
 import * as express from 'express';
-import * as mysql from 'promise-mysql';
+import { DateTime } from 'luxon';
+import { join } from 'path';
+import conf from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
-import { json } from '../../../lib/Util';
+import { collectResults } from '../../../lib/MySQLUtil';
+import { getSchemaValidator, json } from '../../../lib/Util';
 
-export default (connectionPool: mysql.Pool): express.RequestHandler => {
-	return async (req: AccountRequest & MemberRequest, res, next) => {
-		if (
-			typeof req.account !== 'undefined' &&
-			typeof req.body !== 'undefined' &&
-			typeof req.body.content !== 'undefined' &&
-			typeof req.body.title !== 'undefined' &&
-			typeof req.member !== 'undefined'
-		) {
-			const result: Array<{newID: number}> = 
-				await connectionPool.query('SELECT MAX(id) as newID FROM blog WHERE AccountID = ?', req.account.id);
-			const newID: number = result[0].newID || 1;
-			const posted = Date.now() / 1000;
+// tslint:disable-next-line:no-var-requires
+const blogPostSchema = require(join(conf.schemaPath, 'NewBlogPost.json'));
 
-			const newPost = [
-				newID,
-				req.body.title,
-				0,
-				JSON.stringify(req.body.content),
-				posted,
-				req.account.id
-			];
+const privateBlogPostValidator = getSchemaValidator(blogPostSchema);
 
-			await connectionPool.query(
-				'INSERT INTO blog (id, title, authorid, content, posted, AccountID) VALUES (?, ?, ?, ?, ?, ?);',
-				newPost
-			);
+const blogPostValidator = (val: any): val is NewBlogPost =>
+	privateBlogPostValidator(val) as boolean;
 
-			json<BlogPost>(res, {
-				accountID: req.account.id,
-				authorid: 0,
-				content: req.body.content,
-				fileIDs: [],
-				id: newID,
-				posted,
-				title: req.body.title
-			});
-		} else {
-			res.status(400);
-			res.end();
-		}
-	};
+export default async (
+		req: AccountRequest & MemberRequest,
+		res: express.Response
+	) => {
+	if (
+		typeof req.account !== 'undefined' &&
+		typeof req.member !== 'undefined' && req.member !== null &&
+		blogPostValidator(req.body)
+	) {
+		const blogPosts = req.mysqlx.getCollection<BlogPost>('Blog');
+
+		const results = await collectResults(
+			blogPosts
+				.find('accountID = :accountID')
+				.bind('accountID', req.account.id)
+		);
+
+		const newID =
+			1 +
+			results
+				.map(post => post.id)
+				.reduce((prev, curr) => Math.max(prev, curr), 0);
+
+		const posted = Math.round(+DateTime.utc() / 1000);
+
+		const newPost: BlogPost = {
+			accountID: req.account.id,
+			authorid: req.member.id,
+			content: req.body.content,
+			fileIDs: req.body.fileIDs,
+			id: newID,
+			posted,
+			title: req.body.title
+		};
+
+		await blogPosts.add(newPost).execute();
+
+		json<BlogPost>(res, newPost);
+	} else {
+		res.status(400);
+		res.end();
+	}
 };

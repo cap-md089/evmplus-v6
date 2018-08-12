@@ -9,7 +9,7 @@ export default (req: MemberRequest, res: express.Response) => {
 			error: -1,
 			valid: true,
 			sessionID: req.member.sessionID,
-			member: req.member.createTransferable()
+			member: req.member.toRaw()
 		});
 	} else {
 		json<SigninReturn>(res, {

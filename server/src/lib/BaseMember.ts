@@ -1,36 +1,73 @@
-import * as mysql from 'promise-mysql';
+import { Schema } from '@mysql/xdevapi';
+import { DateTime } from 'luxon';
 import Account from './Account';
-import { prettySQL } from './MySQLUtil';
-// import { prettySQL } from './MySQLUtil';
+import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class MemberBase implements MemberObject {
-	public static IsRioux (cm: MemberBase | number): boolean {
-		if (typeof cm === 'number') {
-			return (cm === 542488 || cm === 546319);
-		} else {
-			return cm.isRioux;
-		}
-	}
+	public static IsRioux = (cm: MemberBase | number): boolean =>
+		typeof cm === 'number' ? (cm === 542488 || cm === 546319) : cm.isRioux;
 
-	protected static GetDutypositions = async (capid: number, pool: mysql.Pool, account: Account): Promise<string[]> =>
-		(await pool.query(
-			prettySQL`
-				SELECT
-					Duty
-				FROM
-					DutyPositions
-				WHERE
-					CAPID = ?
-				AND
-					AccountID = ?
-			`,
-			[
-				capid,
-				account.id
-			]
+	protected static GetDutypositions = async (
+		capid: number,
+		schema: Schema,
+		account: Account
+	): Promise<string[]> => [
+		/**
+		 * Get the duty positions from the CAPWATCH database
+		 */
+		...(await Promise.all([
+			collectResults(
+				schema
+					.getTable<{ capid: number, Duty: string }>(
+						'Data_DutyPosition'
+					)
+					.select('Duty')
+					.where('CAPID = :capid')
+					.bind('capid', capid)
+			),
+			collectResults(
+				schema
+					.getTable<{ capid: number, Duty: string }>(
+						'Data_CadetDutyPosition'
+					)
+					.select('Duty')
+					.where('CAPID = :capid')
+					.bind('capid', capid)
+			)
+		]))
+			// Flatten the array
+			.reduce((prev, curr) => [...prev, ...curr], [])
+			.map(dutyItem => dutyItem.Duty),
 
-		)).map((item: {Duty: string}) =>
-			item.Duty)
+		/**
+		 * Get the temporary duty positions from our database
+		 */
+		...(await (async (): Promise<string[]> => {
+			const results = await collectResults(
+				findAndBind(
+					schema.getCollection<ExtraMemberInformation>(
+						'ExtraMemberInformation'
+					),
+					{
+						id: capid
+					}
+				)
+			);
+
+			if (results.length === 0) {
+				return [];
+			}
+
+			// Get the valid temporary duty positions, mapping to the string representation
+			return results[0]
+				.temporaryDutyPositions
+				.filter(
+					temporaryDutyPositions =>
+						temporaryDutyPositions.validUntil > +DateTime.utc()
+				)
+				.map(item => item.Duty)
+		})())
+	];
 
 	/**
 	 * CAPID
@@ -52,21 +89,21 @@ export default class MemberBase implements MemberObject {
 	 * Contact information
 	 */
 	public contact: MemberContact = {
-		ALPHAPAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		ASSISTANT : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CADETPARENTEMAIL : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CADETPARENTPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CELLPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		DIGITALPAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		EMAIL : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		HOMEFAX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		HOMEPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		INSTANTMESSAGER : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		ISDN : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		RADIO : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		TELEX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		WORKFAX : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		WORKPHONE : { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
+		ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CADETPARENTEMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CADETPARENTPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		CELLPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		DIGITALPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		EMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		HOMEFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		HOMEPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		INSTANTMESSAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		ISDN: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		RADIO: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		TELEX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		WORKFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+		WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 	};
 	/**
 	 * Duty positions
@@ -97,15 +134,15 @@ export default class MemberBase implements MemberObject {
 	 */
 	public readonly isRioux: boolean = false;
 
-	public constructor (data: MemberObject) {
+	public constructor(data: MemberObject) {
 		Object.assign(this, data);
 
 		this.memberRankName = `${this.memberRank} ${this.getName()}`;
 
-		this.isRioux = (data.id === 542488 || data.id === 546319);
+		this.isRioux = data.id === 542488 || data.id === 546319;
 	}
 
-	public hasDutyPosition (dutyPosition: string | string[]): boolean {
+	public hasDutyPosition(dutyPosition: string | string[]): boolean {
 		if (typeof dutyPosition === 'string') {
 			return this.dutyPositions.indexOf(dutyPosition) > -1;
 		} else {
@@ -115,16 +152,13 @@ export default class MemberBase implements MemberObject {
 		}
 	}
 
-	public getName (): string {
-		return [
-			this.nameFirst,
-			this.nameMiddle,
-			this.nameLast,
-			this.nameSuffix
-		].filter(s => s !== '' && s !== undefined).join(' ');
+	public getName(): string {
+		return [this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
+			.filter(s => s !== '' && s !== undefined)
+			.join(' ');
 	}
 
-	public createTransferable(): MemberObject {
+	public toRaw(): MemberObject {
 		return {
 			id: this.id,
 			contact: this.contact,
@@ -140,5 +174,4 @@ export default class MemberBase implements MemberObject {
 	}
 }
 
-export { default as NHQMember } from './members/NHQMember';
-export { MemberRequest } from './members/NHQMember';
+export { default as NHQMember, MemberRequest } from './members/NHQMember';

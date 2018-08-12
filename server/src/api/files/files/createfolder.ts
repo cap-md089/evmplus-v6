@@ -3,58 +3,35 @@ import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
-import { prettySQL } from '../../../lib/MySQLUtil';
 
 export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
 	if (
-		typeof req.account !== 'undefined'
+		typeof req.account !== 'undefined' &&
+		typeof req.member !== 'undefined'
 	) {
 		const id = uuid();
 
-		try {
-			await req.connectionPool.query(
-				prettySQL`
-					INSERT INTO
-						FileInfo (
-							id,
-							uploaderID,
-							fileName,
-							comments,
-							contentType,
-							created,
-							memberOnly,
-							forDisplay,
-							forSlideshow,
-							accountID
-						)
-					VALUES (
-						?,
-						?,
-						?,
-						'',
-						'application/folder',
-						?,
-						0,
-						0,
-						0,
-						?
-					)
-				`,
-				[
-					`${req.account.id}-${id}`,
-					0,
-					req.params.name,
-					Math.floor(+DateTime.utc() / 1000),
-					req.account.id
-				],
-			);
+		const fileCollection = req.mysqlx.getCollection<FileObject>('Files');
 
-			res.send(204);
-		} catch (e) {
-			// tslint:disable-next-line:no-console
-			console.log(e);
-			res.send(500);
-		}
+		await fileCollection
+			.add({
+				accountID: req.account.id,
+				comments: '',
+				contentType: 'application/folder',
+				created: Math.floor(+DateTime.utc() / 1000),
+				fileName: req.params.name,
+				forDisplay: false,
+				forSlideshow: false,
+				id: `${req.account.id}-${id}`,
+				kind: 'drive#file',
+				memberOnly: false,
+				uploaderID: req.member.id,
+				fileChildren: [],
+				parentID: 'root'
+			})
+			.execute();
+
+		res.send(204);
 	} else {
 		res.status(400);
 		res.end();

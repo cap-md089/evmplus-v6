@@ -28,7 +28,7 @@ export default async (cookie: string, username: string): Promise<{
 	const squadron = $('#txtSquadron').val();
 
 	let capid;
-	if (username.match(/\d{6}/)) {
+	if (username.toString().match(/\d{6}/)) {
 		capid = parseInt(username, 10);
 	} else {
 		capid = await getCAPID(`${rank} ${name}`, cookie);

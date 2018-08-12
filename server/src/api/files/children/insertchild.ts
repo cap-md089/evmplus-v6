@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { prettySQL } from '../../../lib/MySQLUtil';
+import { modifyAndBind } from '../../../lib/MySQLUtil';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (
@@ -17,27 +17,22 @@ export default async (req: AccountRequest, res: express.Response) => {
 	const parentid = req.params.parentid;
 	const childid = req.body.id;
 
-	await req.connectionPool.query(
-		prettySQL`
-			INSERT INTO
-				DriveChildrenList (
-					childID,
-					folderID,
-					accountID
-				)
-			VALUES
-				(
-					?,
-					?,
-					?
-				)
-		`,
-		[
-			childid,
-			parentid,
-			req.account.id
-		]
-	);
+	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+
+	await Promise.all([
+		modifyAndBind(filesCollection, {
+			accountID: req.account.id,
+			id: parentid
+		})
+			.arrayAppend('fileChildren', childid)
+			.execute(),
+		modifyAndBind(filesCollection, {
+			accountID: req.account.id,
+			id: childid
+		})
+			.set('parentID', parentid)
+			.execute()
+	]);
 
 	res.status(204);
 };

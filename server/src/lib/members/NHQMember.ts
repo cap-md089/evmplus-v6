@@ -1,14 +1,14 @@
+import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
 import { RequestHandler } from 'express';
 import { existsSync, unlinkSync, writeFile } from 'fs';
 import { sign, verify } from 'jsonwebtoken';
 import { join } from 'path';
-import * as mysql from 'promise-mysql';
 import { promisify } from 'util';
 import conf from '../../conf';
 import Account, { AccountRequest } from '../Account';
 import Member from '../BaseMember';
-import { MySQLRequest, prettySQL } from '../MySQLUtil';
+import { collectResults, findAndBind, MySQLRequest } from '../MySQLUtil';
 import {
 	getPermissions,
 	Member as MemberPermissionsLevel
@@ -34,25 +34,25 @@ interface MemberSession extends Identifiable {
 export { MemberCreateError };
 
 export interface MemberRequest extends MySQLRequest {
-	member?: NHQMember;
+	member: NHQMember | null;
 }
 
 export default class NHQMember extends Member {
 	public static async Create(
-		username: string,
+		username: string | number,
 		password: string,
-		pool: mysql.Pool,
+		pool: Schema,
 		account: Account
 	): Promise<NHQMember> {
 		let cookie;
 		try {
-			cookie = await auth.getCookies(username, password);
+			cookie = await auth.getCookies(username.toString(), password);
 		} catch (e) {
 			throw e;
 		}
 
 		const memberInfo = await Promise.all([
-			auth.getName(cookie, username),
+			auth.getName(cookie, username.toString()),
 			auth.getContact(cookie)
 		]);
 
@@ -168,12 +168,12 @@ export default class NHQMember extends Member {
 						const [pinfo, dutyPositions] = await Promise.all([
 							NHQMember.GetPermissions(
 								decoded.id,
-								req.connectionPool,
+								req.mysqlx,
 								req.account
 							),
 							NHQMember.GetDutypositions(
 								decoded.id,
-								req.connectionPool,
+								req.mysqlx,
 								req.account
 							)
 						]);
@@ -224,32 +224,19 @@ export default class NHQMember extends Member {
 
 	private static async GetPermissions(
 		capid: number,
-		pool: mysql.Pool,
+		schema: Schema,
 		account: Account,
 		su?: number
 	): Promise<{
 		accessLevel: MemberAccessLevel;
 		permissions: MemberPermissions;
 	}> {
-		const rows: Array<{
-			AccessLevel: MemberAccessLevel;
-		}> = await pool.query(
-			prettySQL`
-				SELECT
-					AccessLevel
-				FROM
-					UserAccessLevels
-				WHERE
-					CAPID = ?
-				AND
-					(AccountID = ? OR AccountID = 'www')
-			`,
-			[
-				NHQMember.IsRioux(capid) && typeof su !== 'undefined'
-					? su
-					: capid,
-				account.id
-			]
+		const memberInfo = schema.getCollection('ExtraMemberInformation');
+		const rows = await collectResults(
+			findAndBind(memberInfo, {
+				id: capid,
+				accountID: account.id
+			})
 		);
 
 		if (rows.length === 1 || NHQMember.IsRioux(capid)) {

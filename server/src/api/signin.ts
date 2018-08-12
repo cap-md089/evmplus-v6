@@ -20,16 +20,25 @@ interface FailedSigninReturn {
 export type SigninReturn = SuccessfulSigninReturn | FailedSigninReturn;
 
 export default (req: AccountRequest, res: express.Response) => {
-	const { username, password } = req.body;
+	const {
+		username,
+		password
+	}: { username: string | number; password: string } = req.body;
 	if (typeof req.account === 'undefined') {
 		res.status(400);
 		res.end();
 		return;
 	}
-	Member.Create(username, password, req.connectionPool, req.account).then(member => {
+
+	Member.Create(
+		typeof username === 'number' ? username.toString() : username,
+		password,
+		req.mysqlx,
+		req.account
+	).then(member => {
 		json<SigninReturn>(res, {
 			error: -1,
-			member: member.createTransferable(),
+			member: member.toRaw(),
 			sessionID: member.sessionID,
 			valid: true
 		});

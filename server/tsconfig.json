@@ -12,6 +12,7 @@
 		"pretty": true,
 		"removeComments": true,
 		"sourceMap": true,
+		"sourceRoot": "./src",
 		"typeRoots": [
 			"./types",
 			"./node_modules/@types",

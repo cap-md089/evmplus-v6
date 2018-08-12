@@ -2,12 +2,8 @@ import * as express from 'express';
 
 import post from './post';
 
-import * as mysql from 'promise-mysql';
+const router = express.Router();
 
-export default (pool: mysql.Pool) => {
-	const router = express.Router();
+router.use('/post', post);
 
-	router.use('/post', post(pool));
-
-	return router;
-};
+export default router;

@@ -1,16 +1,14 @@
-import * as bodyParser from 'body-parser';
+import { Session } from '@mysql/xdevapi';
 import * as express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
-import * as logger from 'morgan';
 import * as path from 'path';
-import * as mysql from 'promise-mysql';
-
-import conf, { Configuration } from './conf';
+import conf from './conf';
+import getRouter from './getAPIRouter';
 
 const app: express.Application = express();
 
-const port = normalizePort(process.env.PORT || 3001);
+const port = conf.port;
 app.set('port', port);
 app.disable('x-powered-by');
 
@@ -19,122 +17,51 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-// Connect to mysql
-const pool = mysql.createPool({
-	connectionLimit: Configuration.database.connectionCount,
-	...Configuration.database.connection
-});
+let mysqlConn: Session;
 
-const router: express.Router = express.Router();
+getRouter(conf).then(({
+	router,
+	session
+}) => {
+	mysqlConn = session;
 
-import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
-router.use(MySQLMiddleware(pool));
+	app.use('/api', router);
 
-router.use((req: MySQLRequest, _, next) => {
-	req._originalUrl = req.originalUrl;
-	req.originalUrl = 'http' + (req.secure ? 's' : '') + '://' + req.hostname + req.originalUrl;
-	next();
-});
-router.use(logger('dev'));
+	app.get('/images/banner', (req, res) => {
+		fs.readdir(
+			path.join(__dirname, '..', 'images', 'banner-images'),
+			(err, data) => {
+				if (err) {
+					throw err;
+				}
+				const image = data[Math.round(Math.random() * (data.length - 1))];
+				res.sendFile(
+					path.join(__dirname, '..', 'images', 'banner-images', image)
+				);
+			}
+		);
+	});
+	app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 
-/**
- * DEFINE API ROUTERS HERE
- */
-
-import filerouter from './api/files';
-router.use('/files', filerouter);
-
-router.get('/signin', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'signin_form.html'));
-});
-
-router.use(bodyParser.json({
-	strict: false
-}));
-router.use((req, res, next) => {
-	if (typeof req.body !== 'undefined' && req.body === 'teapot') {
+	app.use('/teapot', (req, res) => {
 		res.status(418);
 		res.end();
-	} else {
-		next();
-	}
-});
-
-import Account from './lib/Account';
-import Member from './lib/members/NHQMember';
-
-import signin from './api/signin';
-router.post('/signin', Account.ExpressMiddleware, signin);
-
-import { getFormToken } from './api/formtoken';
-router.get('/token', Account.ExpressMiddleware, Member.ExpressMiddleware, getFormToken);
-
-import getevents from './api/getevents';
-router.post('/events', getevents);
-
-import registry from './api/registry';
-router.use('/registry', registry);
-
-import echo from './api/echo';
-router.post('/echo', echo);
-
-import check from './api/check';
-router.use('/check', Account.ExpressMiddleware, Member.ExpressMiddleware, check);
-
-import blog from './api/blog';
-router.use('/blog', Account.ExpressMiddleware, blog(pool));
-
-import events from './api/events';
-router.use('/event', events);
-
-router.get('*', (req, res) => {
-	res.status(404);
-	res.end();
-});
-
-/**
- * END DEFINE API ROUTES
- */
-
-app.use('/api', router);
-
-app.get('/images/banner', (req, res) => {
-	fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {
-		if (err) {
-			throw err;
-		}
-		const image = data[Math.round(Math.random() * (data.length - 1))];
-		res.sendFile(path.join(__dirname, '..', 'images', 'banner-images', image));
 	});
-});
-app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 
-app.use('/teapot', (req, res) => {
-	res.status(418);
-	res.end();
-});
+	app.use(express.static(path.join(conf.clientStorage, 'build')));
+	app.get('*', (req, res) => {
+		res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
+	});
 
-app.use(express.static(path.join(conf.clientStorage, 'build')));
-app.get('*', (req, res) => {
-	res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
+	// tslint:disable-next-line:no-console
+	console.log('Server set up');
 });
-
-function normalizePort(val: number|string): number|string|boolean {
-	const portToTest: number = (typeof val === 'string') ? parseInt(val, 10) : val;
-	if (isNaN(portToTest)) {
-		return val;
-	} else if (portToTest >= 0) {
-		return portToTest;
-	} else {
-		return false;
-	}
-}
 
 function onError(error: NodeJS.ErrnoException): void {
 	if (error.syscall !== 'listen') {
 		throw error;
 	}
-	const bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
+	const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 	switch (error.code) {
 		case 'EACCES':
 			// tslint:disable-next-line:no-console
@@ -153,17 +80,18 @@ function onError(error: NodeJS.ErrnoException): void {
 
 function onListening(): void {
 	const addr = server.address();
-	const bind = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+	const bind =
+		typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
 	// tslint:disable-next-line:no-console
 	console.log(`Bound on ${bind}`);
 }
 
 process.on('beforeExit', () => {
-	pool.end();
+	mysqlConn.close();
 	server.close();
 });
 
-process.stdin.on('data', (data) => {
+process.stdin.on('data', data => {
 	// tslint:disable-next-line:no-eval
 	eval(data.toString());
 });

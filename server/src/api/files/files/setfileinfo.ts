@@ -1,46 +1,42 @@
 import * as express from 'express';
+import { FileObjectValidator } from '..';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
 
-export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
+export default (fileValidator: FileObjectValidator) => (async (req: AccountRequest & MemberRequest, res: express.Response) => {
 	if (
 		req.is('json') &&
 		typeof req.account !== 'undefined' &&
 		// typeof req.member !== 'undefined' &&
 		typeof req.params.fileid !== 'undefined' &&
-		typeof req.body !== 'undefined' &&
-		typeof req.body.fileName === 'string' &&
-		typeof req.body.comments === 'string' &&
-		typeof req.body.memberOnly === 'boolean' &&
-		typeof req.body.forDisplay === 'boolean' &&
-		typeof req.body.forSlideshow === 'boolean'
+		fileValidator(req.body)
 	) {
 		const {
 			fileName,
 			comments,
 			memberOnly,
 			forDisplay,
-			forSlideshow,
+			forSlideshow
 		} = req.body;
 
 		const newFile = {
-			comments,
 			fileName,
-			forDisplay: forDisplay ? 1 : 0,
-			forSlideshow: forSlideshow ? 1 : 0,
-			memberOnly: memberOnly ? 1 : 0,
+			comments,
+			forDisplay,
+			forSlideshow,
+			memberOnly,
 		};
 
-		const query = req.connectionPool.query(
-			'UPDATE FileInfo SET ? WHERE id = ? AND AccountID = ?',
-			[
-				newFile,
-				req.params.fileid,
-				req.account.id
-			],
-		);
+		const filesCollection = req.mysqlx.getCollection('Files');
 
-		await query;
+		await filesCollection
+			.modify('id = :id AND accountID = :accountID')
+			.bind({
+				id: req.params.id,
+				accountID: req.account.id
+			})
+			.patch(newFile)
+			.execute();
 
 		res.status(204);
 		res.end();
@@ -48,4 +44,4 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 		res.status(400);
 		res.end();
 	}
-};
+});

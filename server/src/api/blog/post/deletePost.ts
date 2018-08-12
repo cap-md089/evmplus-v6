@@ -1,26 +1,27 @@
 import * as express from 'express';
-import * as mysql from 'promise-mysql';
 import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/BaseMember';
-import { errorFunction } from '../../../lib/MySQLUtil';
 
-export default (connectionPool: mysql.Pool): express.RequestHandler => {
-	return (req: AccountRequest & MemberRequest, res, next) => {
-		if (
-			req.is('json') &&
-			typeof req.account !== 'undefined' &&
-			typeof req.member !== 'undefined'
-		) {
-			connectionPool.query(
-				'DELETE FROM blog WHERE id = ? AND AccountID = ?',
-				[req.params.id, req.account.id],
-			).then(results => {
-				res.status(200);
-				res.end();
-			}).catch(errorFunction(res));
-		} else {
-			res.status(400);
-			res.end();
-		}
-	};
+export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
+	if (
+		req.is('json') &&
+		typeof req.account !== 'undefined' &&
+		typeof req.member !== 'undefined'
+	) {
+		const blogPosts = await req.mysqlx.getCollection<BlogPost>('Blog');
+
+		await blogPosts
+			.remove('accountID = :accountID AND id = :id')
+			.bind({
+				accountID: req.account.id,
+				id: req.params.id
+			})
+			.execute();
+
+		res.status(204);
+		res.end();
+	} else {
+		res.status(400);
+		res.end();
+	}
 };

@@ -27,7 +27,7 @@ export const Member: MemberPermissions = {
 	RegistryEdit: 0
 };
 
-export const CadetStaff: MemberPermissions = {
+export const Staff: MemberPermissions = {
 	AddEvent: 1,
 	AdministerPT: 1,
 	AssignTasks: 1,
@@ -116,7 +116,7 @@ export const Admin: MemberPermissions = {
 
 export const getPermissions = (lvl: MemberAccessLevel) =>
 	lvl === 'Member' ? Member : 
-	lvl === 'CadetStaff' ? CadetStaff :
+	lvl === 'Staff' ? Staff :
 	lvl === 'Manager' ? Manager :
 	lvl === 'Admin' ? Admin :
 		null;

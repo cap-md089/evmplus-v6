@@ -1,16 +1,19 @@
+import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import * as mysql from 'promise-mysql';
-
 import { Configuration } from '../conf';
-import { MySQLRequest } from './MySQLUtil';
+import { collectResults, findAndBind, MySQLRequest } from './MySQLUtil';
 
 export interface AccountRequest extends MySQLRequest {
-	account?: Account;
+	account: Account | null;
 }
 
 export default class Account implements AccountObject {
-	public static ExpressMiddleware: express.RequestHandler = async (req: AccountRequest, res, next) => {
+	public static ExpressMiddleware: express.RequestHandler = async (
+		req: AccountRequest,
+		res,
+		next
+	) => {
 		const host = req.hostname;
 		const parts = host.split('.');
 		let accountID: string;
@@ -19,10 +22,7 @@ export default class Account implements AccountObject {
 			parts.shift();
 		}
 
-		if (
-			parts.length === 1 &&
-			Configuration.testing
-		) {
+		if (parts.length === 1 && Configuration.testing) {
 			accountID = 'mdx89';
 		} else if (parts.length === 2) {
 			accountID = 'sales';
@@ -39,59 +39,39 @@ export default class Account implements AccountObject {
 			return;
 		}
 
-		const account = await Account.Get(accountID, req.connectionPool);
-		req.account = account;
-
-		next();
-	}
-
-	public static async Get (id: string, pool: mysql.Pool): Promise<Account> {
-		const results = await pool.query(
-			`
-				SELECT
-					unitID, unitName, mainOrg, paid, echelon, expires, paidEventLimit, unpaidEventLimit
-				FROM
-					Accounts
-				WHERE
-					AccountID = ?
-			`,
-			[id]
-		) as Array<{
-			unitID: number,
-			unitName: string,
-			mainOrg: number,
-			paid: number,
-			echelon: number,
-			expires: number,
-			paidEventLimit: number,
-			unpaidEventLimit: number
-		}>;
-
-		const parsed = results.map(result => ({
-			echelon: result.echelon === 1,
-			expires: result.expires,
-			mainOrg: result.mainOrg,
-			paid: result.paid === 1,
-			paidEventLimit: result.paidEventLimit,
-			unitID: result.unitID,
-			unitName: result.unitName,
-			unpaidEventLimit: result.unpaidEventLimit
-		}));
-
-		if (parsed.length === 0) {
-			throw new Error(`Account '${id}' not found`);
+		try {
+			const account = await Account.Get(accountID, req.mysqlx);
+			req.account = account;
+		} catch (e) {
+			res.status(500);
+			res.end();
 		}
 
-		const orgIDs = parsed.map(org => org.unitID);
-		const orgSQL = '(' + orgIDs.join(', ') + ')';
+		next();
+	};
 
-		const paid = parsed.map(org => org.paid).reduce((prev, current) => prev || current);
-		const paidEventLimit = parsed.map(org => org.paidEventLimit).reduce((prev, current) => Math.max(prev, current));
-		const unpaidEventLimit = parsed.map(org => org.unpaidEventLimit).reduce((prev, current) => Math.max(prev, current));
+	public static async Get(
+		id: string,
+		schema: mysql.Schema
+	): Promise<Account> {
+		const accountCollection = schema.getCollection<AccountObject>(
+			'Accounts'
+		);
 
-		const expires = parsed.map(org => org.expires).reduce((prev, current) => Math.max(prev, current));
+		const results = await collectResults(
+			findAndBind(accountCollection, {
+				id
+			})
+		);
+
+		if (results.length !== 1) {
+			throw new Error('Unkown account: ' + id);
+		}
+
+		const result = results[0];
+
+		const expires = result.expires;
 		const expired = +DateTime.utc() > expires;
-		const expiresIn = +DateTime.utc() - expires;
 
 		// let adminIDs: number[] = (await pool.query(
 		// 	`
@@ -105,18 +85,14 @@ export default class Account implements AccountObject {
 		// 	[id]
 		// )).map((result: {id: number}) => result.id);
 
-		return new this ({
-			adminIDs: [],
-			expired,
-			expiresIn,
-			id,
-			orgIDs,
-			orgSQL,
-			paid,
-			paidEventLimit,
-			unpaidEventLimit,
-			validPaid: !expired && paid
-		});
+		return new this(
+			{
+				...result,
+				validPaid: !expired && result.paid,
+				expired
+			},
+			schema
+		);
 	}
 
 	/**
@@ -146,7 +122,7 @@ export default class Account implements AccountObject {
 	/**
 	 * When the account expires in (seconds)
 	 */
-	public expiresIn: number;
+	public expires: number;
 	/**
 	 * How many events can be used if this account is paid for
 	 */
@@ -159,13 +135,26 @@ export default class Account implements AccountObject {
 	 * CAP IDs of the admins of this account
 	 */
 	public adminIDs: number[];
+	/**
+	 * Whether or not this account is an echelon account
+	 */
+	public echelon: boolean;
+	/**
+	 * The main organization for this account
+	 */
+	public mainOrg: number;
 
-	private constructor (data: AccountObject) {
+	// tslint:disable-next-line:variable-name
+	public _id: string;
+
+	private constructor(data: AccountObject, private schema: mysql.Schema) {
 		Object.assign(this, data);
 	}
 
-	public buildURI (...identifiers: string[]) {
-		let uri = Configuration.testing ? `/` : `https://${this.id}.capunit.com/`;
+	public buildURI(...identifiers: string[]) {
+		let uri = Configuration.testing
+			? `/`
+			: `https://${this.id}.capunit.com/`;
 
 		for (const i in identifiers) {
 			if (identifiers.hasOwnProperty(i)) {

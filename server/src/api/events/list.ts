@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../lib/Account';
-import { prettySQL } from '../../lib/MySQLUtil';
+import { collectResults } from '../../lib/MySQLUtil';
 import { json } from '../../lib/Util';
 
 export default async (req: AccountRequest, res: express.Response) => {
@@ -10,16 +10,12 @@ export default async (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
-	const events = await req.connectionPool.query(
-		prettySQL`
-				SELECT
-					*
-				FROM
-					EventInformation
-				WHERE
-					AccountID = ?
-			`,
-		[req.account.id]
+	const eventsCollection = req.mysqlx.getCollection<EventObject>('Events');
+
+	const events = await collectResults(
+		eventsCollection
+			.find('accountID = :accountID')
+			.bind('accountID', req.account.id)
 	);
 
 	json<EventObject[]>(res, events);
