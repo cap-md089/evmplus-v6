@@ -6,8 +6,17 @@
 	"configurations": [
 		{
 			"type": "chrome",
-			"request": "attach",
+			"request": "launch",
 			"name": "Launch Client",
+			"port": 9222,
+			"url": "http://localhost:8080",
+			"webRoot": "${workspaceFolder}/client/src",
+			"runtimeExecutable": "chromium-browser"
+		},
+		{
+			"type": "chrome",
+			"request": "attach",
+			"name": "Attach to Client",
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/client/src",
 			"port": 9222
@@ -32,6 +41,13 @@
 			"configurations": [
 				"Launch Server",
 				"Launch Client"
+			]
+		},
+		{
+			"name": "Launch Server & Attach to Client",
+			"configurations": [
+				"Launch Server",
+				"Attach to Client"
 			]
 		}
 	]
