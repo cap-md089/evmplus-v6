@@ -11,7 +11,7 @@ interface SuccessfulSigninReturn {
 }
 
 interface FailedSigninReturn {
-	error: string;
+	error: number;
 	member: null;
 	sessionID: string;
 	valid: false;
@@ -43,11 +43,19 @@ export default (req: AccountRequest, res: express.Response) => {
 			valid: true
 		});
 	}).catch((errors: Error) => {
-		json<SigninReturn>(res, {
-			error: errors.message,
-			member: null,
-			sessionID: '',
-			valid: false
-		});
+		if (errors.message.match(/^(\d)*$/)) {
+			// tslint:disable-next-line
+			console.log(errors);
+			res.status(500);
+			res.end();
+		} else {
+			res.status(400);
+			json<SigninReturn>(res, {
+				error: parseInt(errors.message, 10),
+				member: null,
+				sessionID: '',
+				valid: false
+			});
+		}
 	});
 };

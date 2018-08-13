@@ -22,7 +22,7 @@ export default class Account implements AccountObject {
 			parts.shift();
 		}
 
-		if (parts.length === 1 && Configuration.testing) {
+		if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
 			accountID = 'mdx89';
 		} else if (parts.length === 2) {
 			accountID = 'sales';
@@ -31,7 +31,7 @@ export default class Account implements AccountObject {
 			if (accountID === 'capeventmanager') {
 				accountID = 'mdx89';
 			}
-		} else if (parts.length === 4 && Configuration.testing) {
+		} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
 			accountID = 'mdx89';
 		} else {
 			res.status(400);
@@ -152,7 +152,7 @@ export default class Account implements AccountObject {
 	}
 
 	public buildURI(...identifiers: string[]) {
-		let uri = Configuration.testing
+		let uri = process.env.NODE_ENV !== 'production'
 			? `/`
 			: `https://${this.id}.capunit.com/`;
 

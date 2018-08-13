@@ -1,6 +1,7 @@
 import { join } from 'path';
+import conf from './conf';
 
-export const Configuration = {
+const conftest: typeof conf = {
 	testing: true,
 	clientStorage: '/home/andrew/Desktop/react-capunit/client',
 	database: {
@@ -19,6 +20,4 @@ export const Configuration = {
 	schemaPath: join(__dirname, '..', 'schemas')
 };
 
-const conf = Configuration;
-
-export default conf;
+export default conftest;

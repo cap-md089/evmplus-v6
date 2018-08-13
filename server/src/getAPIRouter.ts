@@ -16,7 +16,7 @@ import Account from './lib/Account';
 import Member from './lib/members/NHQMember';
 import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 
-export default async (conf: typeof Configuration) => {
+export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	const router: express.Router = express.Router();
 
 	const {
@@ -27,12 +27,14 @@ export default async (conf: typeof Configuration) => {
 		user
 	} = conf.database.connection;
 
-	const session = await mysql.getSession({
-		host,
-		password,
-		port: mysqlPort,
-		user
-	});
+	if (typeof session === 'undefined') {
+		session = await mysql.getSession({
+			host,
+			password,
+			port: mysqlPort,
+			user
+		});
+	}
 
 	const eventManagementSchema = session.getSchema(schema);
 
@@ -51,7 +53,10 @@ export default async (conf: typeof Configuration) => {
 			req.originalUrl;
 		next();
 	});
-	router.use(logger('dev'));
+
+	if (!conf.testing) {
+		router.use(logger('dev'));
+	}
 
 	router.use('/files', filerouter);
 
