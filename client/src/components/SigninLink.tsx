@@ -1,5 +1,5 @@
-import { MemberCreateError } from 'common-lib/index';
 import * as React from 'react';
+import { MemberCreateError } from 'src/enums';
 import { AuthorizeUserArgument, MessageEventListener } from '../App';
 import Dialogue from './Dialogue';
 import './Signin.css';

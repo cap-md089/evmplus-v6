@@ -1,7 +1,7 @@
-import { MemberCreateError } from 'common-lib/index';
 import * as $ from 'jquery';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { MemberCreateError } from 'src/enums';
 import { AuthorizeUserArgument } from '../App';
 import SigninLink from './SigninLink';
 

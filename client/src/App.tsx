@@ -1,6 +1,6 @@
-import { MemberCreateError } from 'common-lib/index';
 import * as React from 'react';
 import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
+import { MemberCreateError } from 'src/enums';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import Loader from './components/Loader';
 import PageRouter from './components/PageRouter';

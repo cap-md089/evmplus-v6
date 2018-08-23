@@ -1,5 +1,5 @@
-import { PointOfContactType } from 'common-lib/index';
 import * as React from 'react';
+import { PointOfContactType } from 'src/enums';
 import { Checkbox, FormBlock, Label, TextInput } from '../Form';
 import { InputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
