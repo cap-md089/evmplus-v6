@@ -11,6 +11,7 @@ import Form, {
 	MultCheckbox,
 	MultiRange,
 	RadioButton,
+	Selector,
 	TextArea,
 	TextInput,
 	Title
@@ -20,6 +21,11 @@ import Page, { PageProps } from './Page';
 enum Test1 {
 	Opt1,
 	Opt2
+}
+
+interface Complex extends Identifiable {
+	id: number;
+	value: string;
 }
 
 interface Props {
@@ -41,6 +47,7 @@ interface Props {
 		'test15-1': string;
 		'test15-2': string;
 	};
+	test16: Complex[];
 }
 
 export default class Test extends Page<
@@ -66,7 +73,8 @@ export default class Test extends Page<
 		test15: {
 			'test15-1': '',
 			'test15-2': ''
-		}
+		},
+		test16: []
 	};
 
 	public render() {
@@ -80,6 +88,8 @@ export default class Test extends Page<
 				hi: boolean;
 			}
 		>;
+
+		const TestSelector = Selector as new () => Selector<Complex>;
 
 		return (
 			<div>
@@ -204,6 +214,45 @@ export default class Test extends Page<
 							value={this.state.test15['test15-2']}
 						/>
 					</FormBlock>
+					<Label>Selector</Label>
+					<TestSelector
+						values={[
+							{
+								id: 0,
+								value: 'val1'
+							},
+							{
+								id: 1,
+								value: 'val2'
+							},
+							{
+								id: 2,
+								value: 'val3'
+							}
+						]}
+						name="test16"
+						value={this.state.test16}
+						displayValue={val => val.value}
+						onChange={console.log}
+						// @ts-ignore
+						filters={[
+							{
+								displayText: 'Value: ',
+								filterInput: TextInput,
+								check: (val, input) => {
+									if (input === '') {
+										return true;
+									}
+
+									const ret = !!val.value.match(new RegExp(input, 'i'));
+
+									return ret;
+								}
+							}
+						]}
+						multiple={true}
+						showIDField={false}
+					/>
 				</TestForm>
 				<TestButton
 					data={{

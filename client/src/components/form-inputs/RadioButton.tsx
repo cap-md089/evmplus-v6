@@ -49,7 +49,7 @@ export default class RadioButton<
 								type="radio"
 								value={i}
 								onChange={this.getChangeHandler(i)}
-								checked={i === this.state.currentChecked}
+								checked={i === this.props.value[0]}
 							/>
 							<label htmlFor={`${this.props.name}-${i}`}>
 								{label}
@@ -75,7 +75,7 @@ export default class RadioButton<
 								)}
 								checked={
 									this.props.labels.length ===
-									this.state.currentChecked
+									this.props.value[0]
 								}
 							/>
 							<label

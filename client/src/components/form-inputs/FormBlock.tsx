@@ -3,7 +3,6 @@ import { isInput, isLabel, Label, Title } from '../SimpleForm';
 
 interface FormBlockProps extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
-	style?: React.CSSProperties;
 	onUpdate?: (
 		e: {
 			name: string;
@@ -31,8 +30,17 @@ export default class FormBlock<T extends object> extends React.Component<
 	}
 
 	public render() {
+		const props = Object.assign({}, this.props);
+
+		// @ts-ignore
+		delete props.onInitialize;
+		// @ts-ignore
+		delete props.onUpdate;
+		// @ts-ignore
+		delete props.name;
+
 		return (
-			<div {...this.props}>
+			<div {...props}>
 				{React.Children.map(this.props.children, (child, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||

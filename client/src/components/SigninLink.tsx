@@ -1,34 +1,44 @@
+import { MemberCreateError } from 'common-lib/index';
 import * as React from 'react';
 import { AuthorizeUserArgument, MessageEventListener } from '../App';
 import Dialogue from './Dialogue';
-import './Signin.css'
+import './Signin.css';
+
+// tslint:disable-next-line
+console.log(MemberCreateError);
+
+const errorMessages = {
+	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'Incorrect credentials',
+	[MemberCreateError.INVALID_SESSION_ID]: 'Invalid session',
+	[MemberCreateError.NONE]: '',
+	[MemberCreateError.PASSWORD_EXPIRED]: 'eServices password has expired',
+	[MemberCreateError.SERVER_ERROR]: 'Server error'
+};
 
 interface SigninLinkState {
 	open: boolean;
-	error: -1 | string;
+	error: number;
 }
 
 class SigninLink extends React.Component<
 	AuthorizeUserArgument & {
-		authorizeUser: (
-			arg: AuthorizeUserArgument
-		) => void;
+		authorizeUser: (arg: AuthorizeUserArgument) => void;
 	},
 	SigninLinkState
 > {
 	public state: SigninLinkState = {
 		open: false,
-		error: ''
+		error: MemberCreateError.NONE
 	};
 
 	private key: number;
 	private iframeRef: HTMLIFrameElement;
 
-	constructor(props: AuthorizeUserArgument & {
-		authorizeUser: (
-			arg: AuthorizeUserArgument
-		) => void;
-	}) {
+	constructor(
+		props: AuthorizeUserArgument & {
+			authorizeUser: (arg: AuthorizeUserArgument) => void;
+		}
+	) {
 		super(props);
 
 		this.openDialogue = this.openDialogue.bind(this);
@@ -37,8 +47,10 @@ class SigninLink extends React.Component<
 	}
 
 	public componentDidUpdate(
-		props: AuthorizeUserArgument & { authorizeUser: (arg: AuthorizeUserArgument) => void},
-		state: { open: boolean; error: string }
+		props: AuthorizeUserArgument & {
+			authorizeUser: (arg: AuthorizeUserArgument) => void;
+		},
+		state: { open: boolean; error: number }
 	) {
 		// check if new user is valid, if so update state to close dialogue
 		if (state.open && props.valid) {
@@ -46,11 +58,15 @@ class SigninLink extends React.Component<
 				open: false
 			});
 			if (this.iframeRef.contentWindow) {
-				this.iframeRef.contentWindow.postMessage('done submitting', '*');
+				this.iframeRef.contentWindow.postMessage(
+					'done submitting',
+					'*'
+				);
 			}
 		} else if (
 			state.open &&
-			(typeof props.error !== 'undefined' && props.error !== '') &&
+			(typeof props.error !== 'undefined' &&
+				props.error !== MemberCreateError.NONE) &&
 			// Check if things actually changed, as otherwise it's an infinite loop
 			props.error !== state.error
 		) {
@@ -58,7 +74,10 @@ class SigninLink extends React.Component<
 				error: props.error
 			});
 			if (this.iframeRef.contentWindow) {
-				this.iframeRef.contentWindow.postMessage('done submitting', '*');
+				this.iframeRef.contentWindow.postMessage(
+					'done submitting',
+					'*'
+				);
 			}
 		}
 	}
@@ -96,9 +115,9 @@ class SigninLink extends React.Component<
 							https://www.capunit.com/eula
 						</a>
 						<div className="signin-error">
-							{
-								this.state.error === -1 ? null : this.state.error
-							}
+							{this.state.error !== MemberCreateError.NONE
+								? errorMessages[this.state.error]
+								: null}
 						</div>
 						<br />
 						<br />
@@ -111,7 +130,7 @@ class SigninLink extends React.Component<
 								margin: 0,
 								border: 'none'
 							}}
-							ref={(el) => {
+							ref={el => {
 								this.iframeRef = el as HTMLIFrameElement;
 							}}
 						/>
@@ -152,8 +171,7 @@ class SigninLink extends React.Component<
 				});
 			}
 		} catch (e) {
-			// tslint:disable-next-line:no-console
-			console.log(e.data);
+			// ignore
 		}
 	}
 }

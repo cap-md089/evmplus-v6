@@ -1,5 +1,6 @@
 import * as React from 'react';
 import myFetch from '../lib/myFetch';
+// Form inputs
 import Checkbox from './form-inputs/Checkbox';
 import DateTimeInput from './form-inputs/DateTimeInput';
 import FileInput from './form-inputs/FileInput';
@@ -7,8 +8,12 @@ import FormBlock from './form-inputs/FormBlock';
 import ListEditor from './form-inputs/ListEditor';
 import MultCheckbox from './form-inputs/MultCheckbox';
 import MultiRange from './form-inputs/MultiRange';
+import NumberInput from './form-inputs/NumberInput';
 import RadioButton from './form-inputs/RadioButton';
+import Selector from './form-inputs/Selector';
+import SimpleRadioButton from './form-inputs/SimpleRadioButton';
 import TextArea from './form-inputs/TextArea';
+import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
 
 /**
@@ -79,7 +84,11 @@ export function isInput(
 		el.type === MultCheckbox ||
 		el.type === Checkbox ||
 		el.type === ListEditor ||
-		el.type === FormBlock
+		el.type === FormBlock ||
+		el.type === SimpleRadioButton ||
+		el.type === TextBox ||
+		el.type === NumberInput ||
+		el.type === Selector
 	);
 }
 
@@ -373,6 +382,13 @@ class SimpleForm<
 						/>
 					</div>
 				</div>
+				<div
+					style={{
+						overflow: 'auto',
+						clear: 'both',
+						height: 1
+					}}
+				/>
 			</form>
 		);
 	}
@@ -418,5 +434,9 @@ export {
 	MultCheckbox,
 	Checkbox,
 	ListEditor,
-	FormBlock
+	FormBlock,
+	SimpleRadioButton,
+	TextBox,
+	NumberInput,
+	Selector
 };

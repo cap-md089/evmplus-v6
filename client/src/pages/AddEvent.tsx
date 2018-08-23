@@ -7,22 +7,20 @@ import {
 	Label,
 	ListEditor,
 	MultCheckbox,
+	NumberInput,
+	RadioButton,
+	SimpleRadioButton,
 	TextInput,
 	Title
 } from '../components/Form';
-import { InputProps } from '../components/form-inputs/Input';
+import POCInput from '../components/form-inputs/POCInput';
+import { FileInput, TextBox } from '../components/SimpleForm';
 import SimpleRequestForm from '../components/SimpleRequestForm';
 import { PageProps } from './Page';
 
-class POCInput extends React.Component<
-	InputProps<InternalPointOfContact | ExternalPointOfContact>
-> {
-	public render () {
-		return <div />;
-	}
-}
+const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
 
-interface CreateEventState {
+interface AddEventState {
 	event: NewEventFormValues;
 	valid: boolean;
 	errors: {};
@@ -43,9 +41,9 @@ interface NewEventFormValues extends NewEventObject {
 
 export default class AddEvent extends React.Component<
 	PageProps,
-	CreateEventState
+	AddEventState
 > {
-	public state: CreateEventState = {
+	public state: AddEventState = {
 		event: {
 			timeCreated: Math.round(+DateTime.utc() / 1000),
 			timeModified: Math.round(+DateTime.utc() / 1000),
@@ -89,7 +87,7 @@ export default class AddEvent extends React.Component<
 			signUpDenyMessage: '',
 			publishToWingCalendar: false,
 			showUpcoming: true,
-			groupEventNumber: 0,
+			groupEventNumber: [0, undefined],
 			wingEventNumber: 0,
 			complete: false,
 			administrationComments: '',
@@ -98,7 +96,8 @@ export default class AddEvent extends React.Component<
 			pointsOfContact: [],
 			author: 0,
 			signUpPartTime: false,
-			teamID: 0
+			teamID: 0,
+			fileIDs: []
 		},
 		valid: false,
 		errors: {}
@@ -123,7 +122,7 @@ export default class AddEvent extends React.Component<
 
 		const event = this.state.event;
 
-		return (
+		return this.props.member.valid ? (
 			<NewEventForm
 				url="/api/event"
 				id="newEventForm"
@@ -152,7 +151,7 @@ export default class AddEvent extends React.Component<
 					originalTimeZoneOffset={'America/New_York'}
 				/>
 				<Label>Event location</Label>
-				<TextInput name="name" value={event.name} />
+				<TextInput name="location" value={event.location} />
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
@@ -292,6 +291,9 @@ export default class AddEvent extends React.Component<
 					/>
 				</FormBlock>
 
+				<Label>Accept signups</Label>
+				<Checkbox name="acceptSignups" value={event.acceptSignups} />
+
 				<Label>Use participation fee</Label>
 				<Checkbox
 					name="useParticipationFee"
@@ -307,12 +309,9 @@ export default class AddEvent extends React.Component<
 					name="participationFee"
 				>
 					<Label>Participation fee</Label>
-					<TextInput
+					<NumberInput
 						name="feeAmount"
-						value={(
-							this.state.event.participationFee.feeAmount || ''
-						).toString()}
-						onChange={value => !!value.match(/^\$?\d*\.?\d*$/)}
+						value={this.state.event.participationFee.feeAmount}
 					/>
 
 					<Label>Participation fee due</Label>
@@ -342,13 +341,14 @@ export default class AddEvent extends React.Component<
 				/>
 
 				<Title>Point of Contact</Title>
+
 				<POCListEditor
 					name="pointsOfContact"
 					value={this.state.event.pointsOfContact}
 					// @ts-ignore
 					inputComponent={POCInput}
 					addNew={() => ({
-						type: 'internal',
+						type: PointOfContactType.INTERNAL,
 						email: '',
 						id: 0,
 						phone: '',
@@ -358,8 +358,82 @@ export default class AddEvent extends React.Component<
 						receiveUpdates: false
 					})}
 					buttonText="Add point of contact"
+					fullWidth={true}
 				/>
+
+				<Title>Extra information</Title>
+
+				<Label>Desired number of participants</Label>
+				<NumberInput
+					name="desiredNumberOfParticipants"
+					value={event.desiredNumberOfParticipants}
+				/>
+
+				<Label>Group event number</Label>
+				<RadioButton
+					name="groupEventNumber"
+					value={event.groupEventNumber}
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For'
+					]}
+					other={true}
+				/>
+
+				<Label>Event status</Label>
+				<SimpleRadioButton
+					name="status"
+					value={event.status}
+					labels={[
+						'Draft',
+						'Tentative',
+						'Confirmed',
+						'Complete',
+						'Cancelled',
+						'Information Only'
+					]}
+				/>
+
+				<Label>Entry complete</Label>
+				<Checkbox name="complete" value={event.complete} />
+
+				<Label>Publish to wing</Label>
+				<Checkbox
+					name="publishToWingCalendar"
+					value={event.publishToWingCalendar}
+				/>
+
+				<Label>Show upcoming</Label>
+				<Checkbox name="showUpcoming" value={event.showUpcoming} />
+
+				<Label>Administration comments</Label>
+				<TextInput
+					name="administratitonComments"
+					value={event.administrationComments}
+				/>
+
+				<TextBox name="null" value={null}>
+					Select a team
+				</TextBox>
+
+				<Label>Team</Label>
+				<TextInput
+					disabled={true}
+					name="teamID"
+					value={this.state.event.teamID.toString()}
+				/>
+
+				<Label>Event files</Label>
+				<FileInput name="fileIDs" value={this.state.event.fileIDs} />
+
+				<Title>Debrief information</Title>
+
+				<Label>Debrief</Label>
+				<TextInput name="debrief" value={this.state.event.debrief} />
 			</NewEventForm>
+		) : (
+			<div>Please sign in</div>
 		);
 	}
 

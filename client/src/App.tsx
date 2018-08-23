@@ -1,3 +1,4 @@
+import { MemberCreateError } from 'common-lib/index';
 import * as React from 'react';
 import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
@@ -12,14 +13,14 @@ import Registry from './registry';
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
 interface AuthorizeUserArgumentSuccess {
-	error: -1;
+	error: MemberCreateError.NONE;
 	valid: true;
 	member: MemberObject;
 	sessionID: string;
 }
 
 interface AuthorizeUserArgumentFailure {
-	error: string;
+	error: MemberCreateError;
 	valid: false;
 	member: null;
 	sessionID: string;
@@ -116,7 +117,7 @@ export default class App extends React.Component<
 	public state: AppState = {
 		member: {
 			valid: false,
-			error: '',
+			error: MemberCreateError.NONE,
 			member: null,
 			sessionID: ''
 		},
@@ -172,6 +173,17 @@ export default class App extends React.Component<
 						localStorage.removeItem('sessionID');
 					}
 					this.setState({ member, tryingMember: false });
+				})
+				.catch(() => {
+					this.setState({
+						member: {
+							error: MemberCreateError.INVALID_SESSION_ID,
+							member: null,
+							sessionID: '',
+							valid: false
+						},
+						tryingMember: false
+					});
 				});
 		}
 	}
@@ -225,7 +237,9 @@ export default class App extends React.Component<
 								</div>
 								<div className="servings">
 									<span className="servingsTitle">
-										Citizens Serving<br />Communities
+										Citizens Serving
+										<br />
+										Communities
 									</span>
 								</div>
 								<nav id="mainNavigation">
@@ -459,8 +473,8 @@ export default class App extends React.Component<
 										fontSize: '12px'
 									}}
 								>
-									&copy; 2017-{new Date().getFullYear()}{' '}
-									CAPUnit.com
+									&copy; 2017-
+									{new Date().getFullYear()} CAPUnit.com
 								</div>
 								<div
 									style={{

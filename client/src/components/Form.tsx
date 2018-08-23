@@ -10,7 +10,10 @@ import {
 	ListEditor,
 	MultCheckbox,
 	MultiRange,
+	NumberInput,
 	RadioButton,
+	Selector,
+	SimpleRadioButton,
 	TextArea,
 	TextInput
 } from './SimpleForm';
@@ -26,7 +29,10 @@ export {
 	MultCheckbox,
 	Checkbox,
 	ListEditor,
-	FormBlock
+	FormBlock,
+	SimpleRadioButton,
+	NumberInput,
+	Selector
 };
 
 /**

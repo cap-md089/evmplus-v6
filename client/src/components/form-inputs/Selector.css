@@ -1,0 +1,47 @@
+.selector-filters {
+	background: white;
+	border: 1px solid black;
+	border-bottom: none;
+	overflow: auto;
+	clear: both;
+}
+
+.desktop #mother .selector-filters ul {
+	list-style-type: none;
+	margin: 0;
+}
+
+.desktop #mother .selector-filters ul li {
+	display: flex;
+}
+
+.desktop #mother .selector-filters ul li .selector-left-filter {
+	flex-basis: 220px;
+	order: 1;
+	padding-top: 9px;
+	padding-left: 9px;
+	box-sizing: border-box;
+}
+
+.desktop #mother .selector-filters ul li .selector-right-filter {
+	flex: 1;
+	order: 2;
+}
+
+.desktop #mother .selector-values {
+	margin: 0;
+	background: white;
+	border: 1px solid black;
+	padding-left: 0;
+}
+
+.desktop #mother .selector-values li {
+	display: block;
+	list-style-type: none;
+	padding: 5px;
+	box-sizing: border-box;
+}
+
+.selector-values li.selected {
+	background: blue;
+}

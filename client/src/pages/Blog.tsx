@@ -9,6 +9,8 @@ import * as React from 'react';
 import { Link, Route, RouteComponentProps, withRouter } from 'react-router-dom';
 import Loader from '../components/Loader';
 import { TextArea, TextInput } from '../components/SimpleForm';
+/// <reference path="../../../lib/index.d.ts" />
+
 import RequestForm from '../components/SimpleRequestForm';
 import myFetch from '../lib/myFetch';
 import './blog.css';
@@ -17,7 +19,7 @@ import Page, { PageProps } from './Page';
 class BlogList extends React.Component<
 	{},
 	{
-		posts: BlogPost[];
+		posts: BlogPostObject[];
 		displayLeft: boolean;
 		displayRight: boolean;
 		page: number;
@@ -40,7 +42,7 @@ class BlogList extends React.Component<
 			.then(val => val.json())
 			.then(
 				(posts: {
-					posts: BlogPost[];
+					posts: BlogPostObject[];
 					displayLeft: boolean;
 					displayRight: boolean;
 					page: number;
@@ -88,7 +90,7 @@ class BlogPostCreate extends React.Component<RouteComponentProps<any>> {
 				postname: string;
 				content: RawDraftContentState;
 			},
-			BlogPost
+			BlogPostObject
 		>;
 
 		return (
@@ -147,7 +149,7 @@ class BlogView extends React.Component<
 		id: string;
 	}>,
 	{
-		post?: BlogPost;
+		post?: BlogPostObject;
 	}
 > {
 	constructor(
@@ -164,7 +166,7 @@ class BlogView extends React.Component<
 	public componentDidMount() {
 		myFetch('/api/blog/post/' + this.props.match.params.id)
 			.then(val => val.json())
-			.then((post: BlogPost) => this.setState({ post }));
+			.then((post: BlogPostObject) => this.setState({ post }));
 	}
 
 	public render() {

@@ -1,3 +1,4 @@
+import { MemberCreateError } from 'common-lib/index';
 import * as $ from 'jquery';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -48,7 +49,7 @@ export interface SideNavigationState {
 }
 
 export class SideNavigation extends React.Component<SideNavigationState> {
-	constructor (props: SideNavigationState) {
+	constructor(props: SideNavigationState) {
 		super(props);
 
 		this.signOut = this.signOut.bind(this);
@@ -59,8 +60,15 @@ export class SideNavigation extends React.Component<SideNavigationState> {
 		let memberName = '';
 		if (this.props.member.valid) {
 			memberRank = this.props.member.member.memberRank;
-			const { nameFirst, nameLast, nameMiddle, nameSuffix } = this.props.member.member;
-			memberName = [nameFirst, nameMiddle, nameLast, nameSuffix].filter(i => i !== '').join(' ')
+			const {
+				nameFirst,
+				nameLast,
+				nameMiddle,
+				nameSuffix
+			} = this.props.member.member;
+			memberName = [nameFirst, nameMiddle, nameLast, nameSuffix]
+				.filter(i => i !== '')
+				.join(' ');
 		}
 		return (
 			<div id="sidenav">
@@ -70,8 +78,7 @@ export class SideNavigation extends React.Component<SideNavigationState> {
 							<a onClick={this.signOut}>
 								<span className="arrow" />
 								<span>
-									Sign out{' '}
-									{`${memberRank} ${memberName}`}
+									Sign out {`${memberRank} ${memberName}`}
 								</span>
 							</a>
 						) : (
@@ -84,16 +91,18 @@ export class SideNavigation extends React.Component<SideNavigationState> {
 							</SigninLink>
 						)}
 					</li>
-					{this.props.links.map((link, i) => <li key={i}>{link}</li>)}
+					{this.props.links.map((link, i) => (
+						<li key={i}>{link}</li>
+					))}
 				</ul>
 			</div>
 		);
 	}
 
-	private signOut () {
+	private signOut() {
 		this.props.authorizeUser({
 			valid: false,
-			error: '',
+			error: MemberCreateError.NONE,
 			member: null,
 			sessionID: ''
 		});

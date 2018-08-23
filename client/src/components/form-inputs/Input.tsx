@@ -52,4 +52,8 @@ export interface InputProps<V> {
 	 * Used to style the input itself, not always used
 	 */
 	inputStyles?: React.CSSProperties;
+	/**
+	 * Used by ListEditor. Useful for when handling multiple radio fields
+	 */
+	index?: number;
 }

@@ -11,18 +11,13 @@ interface TextInputProps extends InputProps<string> {
 	onChange?: (val: string) => boolean | void;
 	fullWidth?: boolean;
 	placeholder?: string;
+	disabled?: boolean;
 }
 
 /**
  * A text input that can be used by a Form
  */
-export default class TextInput extends React.Component<TextInputProps, {
-	value: string
-}> {
-	public state = {
-		value: ''
-	};
-	
+export default class TextInput extends React.Component<TextInputProps> {
 	constructor(props: TextInputProps) {
 		super(props);
 
@@ -69,7 +64,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 			>
 				<input
 					type="text"
-					value={this.props.value}
+					value={this.props.value || ''}
 					onChange={this.onChange}
 					name={this.props.name}
 					style={{
@@ -77,6 +72,7 @@ export default class TextInput extends React.Component<TextInputProps, {
 						...this.props.inputStyles
 					}}
 					placeholder={this.props.placeholder}
+					disabled={this.props.disabled}
 				/>
 			</div>
 		);
