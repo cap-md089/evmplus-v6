@@ -2,7 +2,7 @@ import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
+import { MemberRequest } from '../../../lib/MemberBase';
 
 export default async (req: AccountRequest & MemberRequest, res: express.Response) => {
 	if (
@@ -22,7 +22,7 @@ export default async (req: AccountRequest & MemberRequest, res: express.Response
 				fileName: req.params.name,
 				forDisplay: false,
 				forSlideshow: false,
-				id: `${req.account.id}-${id}`,
+				id,
 				kind: 'drive#file',
 				memberOnly: false,
 				uploaderID: req.member.id,

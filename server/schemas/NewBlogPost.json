@@ -215,9 +215,6 @@
             },
             "type": "array"
         },
-        "posted": {
-            "type": "number"
-        },
         "title": {
             "type": "string"
         }
@@ -226,7 +223,6 @@
         "authorid",
         "content",
         "fileIDs",
-        "posted",
         "title"
     ],
     "type": "object"

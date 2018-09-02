@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
+import { MemberRequest } from '../../../lib/MemberBase';
 import { collectResults } from '../../../lib/MySQLUtil';
 import { json } from '../../../lib/Util';
 

@@ -2,17 +2,25 @@ import { load } from 'cheerio';
 import getCAPID from './nhq-getcapid';
 import req from './nhq-request';
 
-export default async (cookie: string, username: string): Promise<{
-	rank: string,
-	seniorMember: boolean,
-	squadron: string,
-	capid: number,
-	nameFirst: string,
-	nameMiddle: string,
-	nameLast: string,
-	nameSuffix: string
+export default async (
+	cookie: string,
+	username: string
+): Promise<{
+	rank: string;
+	seniorMember: boolean;
+	squadron: string;
+	capid: number;
+	nameFirst: string;
+	nameMiddle: string;
+	nameLast: string;
+	nameSuffix: string;
+	name: string;
+	orgid: number;
 }> => {
-	const body = await req('/CAP.eServices.Web/MyAccount/GeneralInfo.aspx', cookie);
+	const body = await req(
+		'/CAP.eServices.Web/MyAccount/GeneralInfo.aspx',
+		cookie
+	);
 
 	const $ = load(body);
 
@@ -27,21 +35,22 @@ export default async (cookie: string, username: string): Promise<{
 
 	const squadron = $('#txtSquadron').val();
 
-	let capid;
-	if (username.toString().match(/\d{6}/)) {
-		capid = parseInt(username, 10);
-	} else {
-		capid = await getCAPID(`${rank} ${name}`, cookie);
-	}
+	const name = [nameFirst, nameMiddle, nameLast, nameSuffix]
+		.filter(x => x !== '' && typeof x !== 'undefined' && x !== null)
+		.join(' ');
+
+	const { capid, orgid } = await getCAPID(`${rank} ${name}`, cookie, username.toString());
 
 	return {
-		capid,
 		nameFirst,
 		nameLast,
 		nameMiddle,
 		nameSuffix,
 		rank,
 		seniorMember,
-		squadron
+		squadron,
+		name,
+		capid,
+		orgid
 	};
 };

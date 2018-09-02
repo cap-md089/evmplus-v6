@@ -1,6 +1,6 @@
 import * as rp from 'request-promise-native';
 
-export default async (url: string, cookies: string, simple: boolean = true) => {
+export default (url: string, cookies: string, simple: boolean = true) => {
 	if (!url.match(/http\:\/\/www\.capnhq\.gov\//)) {
 		url = `https://www.capnhq.gov${url}`;
 	}
@@ -16,6 +16,7 @@ export default async (url: string, cookies: string, simple: boolean = true) => {
 			'Upgrade-Insecure-Requests': '1',
 			'User-Agent': 'EventManagementLoginBot/2.0',
 		},
+		resolveWithFullResponse: !simple,
 		simple
 	});
 };

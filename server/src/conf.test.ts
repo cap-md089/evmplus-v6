@@ -6,7 +6,7 @@ const conftest: typeof conf = {
 	clientStorage: '/home/andrew/Desktop/react-capunit/client',
 	database: {
 		connection: {
-			database: 'EventManagement4',
+			database: 'EventManagementTest',
 			host: '127.0.0.1',
 			password: 'alongpassword2017',
 			port: 33060,

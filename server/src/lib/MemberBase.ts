@@ -1,73 +1,63 @@
 import { Schema } from '@mysql/xdevapi';
-import { DateTime } from 'luxon';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class MemberBase implements MemberObject {
 	public static IsRioux = (cm: MemberBase | number): boolean =>
-		typeof cm === 'number' ? (cm === 542488 || cm === 546319) : cm.isRioux;
+		typeof cm === 'number' ? cm === 542488 || cm === 546319 : cm.isRioux;
 
-	protected static GetDutypositions = async (
+	protected static GetRegularDutypositions = async (
 		capid: number,
 		schema: Schema,
 		account: Account
-	): Promise<string[]> => [
-		/**
-		 * Get the duty positions from the CAPWATCH database
-		 */
-		...(await Promise.all([
+	): Promise<string[]> =>
+		(await Promise.all([
 			collectResults(
 				schema
-					.getTable<{ capid: number, Duty: string }>(
-						'Data_DutyPosition'
-					)
-					.select('Duty')
-					.where('CAPID = :capid')
-					.bind('capid', capid)
+					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
+					.find('CAPID = :CAPID')
+					.bind('CAPID', capid)
 			),
 			collectResults(
 				schema
-					.getTable<{ capid: number, Duty: string }>(
-						'Data_CadetDutyPosition'
+					.getCollection<NHQ.CadetDutyPosition>(
+						'NHQ_CadetDutyPosition'
 					)
-					.select('Duty')
-					.where('CAPID = :capid')
-					.bind('capid', capid)
+					.find('CAPID = :CAPID')
+					.bind('CAPID', capid)
 			)
 		]))
-			// Flatten the array
-			.reduce((prev, curr) => [...prev, ...curr], [])
-			.map(dutyItem => dutyItem.Duty),
+			.reduce((prev, curr) => [...prev, ...curr])
+			.map(item => item.Duty);
 
-		/**
-		 * Get the temporary duty positions from our database
-		 */
-		...(await (async (): Promise<string[]> => {
-			const results = await collectResults(
-				findAndBind(
-					schema.getCollection<ExtraMemberInformation>(
-						'ExtraMemberInformation'
-					),
-					{
-						id: capid
-					}
-				)
-			);
+	protected static async LoadExtraMemberInformation(
+		id: number,
+		schema: Schema,
+		account: Account
+	): Promise<ExtraMemberInformation> {
+		const results = await collectResults(
+			findAndBind(
+				schema.getCollection<ExtraMemberInformation>(
+					'ExtraMemberInformation'
+				),
+				{
+					id,
+					accountID: account.id
+				}
+			)
+		);
 
-			if (results.length === 0) {
-				return [];
-			}
+		if (results.length === 0) {
+			return {
+				accessLevel: 'Member',
+				accountID: account.id,
+				id,
+				temporaryDutyPositions: []
+			};
+		}
 
-			// Get the valid temporary duty positions, mapping to the string representation
-			return results[0]
-				.temporaryDutyPositions
-				.filter(
-					temporaryDutyPositions =>
-						temporaryDutyPositions.validUntil > +DateTime.utc()
-				)
-				.map(item => item.Duty)
-		})())
-	];
+		return results[0];
+	}
 
 	/**
 	 * CAPID
@@ -130,11 +120,19 @@ export default class MemberBase implements MemberObject {
 	 */
 	public nameSuffix: string = '';
 	/**
+	 * The organization ID the user belongs to
+	 */
+	public orgid: number = 0;
+	/**
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
 
-	public constructor(data: MemberObject) {
+	public constructor(
+		data: MemberObject,
+		protected schema: Schema,
+		protected requestingAccount: Account
+	) {
 		Object.assign(this, data);
 
 		this.memberRankName = `${this.memberRank} ${this.getName()}`;
@@ -154,7 +152,7 @@ export default class MemberBase implements MemberObject {
 
 	public getName(): string {
 		return [this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
-			.filter(s => s !== '' && s !== undefined)
+			.filter(s => !!s)
 			.join(' ');
 	}
 
@@ -169,7 +167,8 @@ export default class MemberBase implements MemberObject {
 			nameMiddle: this.nameMiddle,
 			nameSuffix: this.nameSuffix,
 			seniorMember: this.seniorMember,
-			squadron: this.squadron
+			squadron: this.squadron,
+			orgid: this.orgid
 		};
 	}
 }

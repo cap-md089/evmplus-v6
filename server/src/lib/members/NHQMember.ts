@@ -1,18 +1,15 @@
 import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
+import { MemberCAPWATCHErrors, MemberCreateError } from 'common-lib/index';
 import { RequestHandler } from 'express';
-import { existsSync, unlinkSync, writeFile } from 'fs';
+import { existsSync, unlink, writeFile } from 'fs';
 import { sign, verify } from 'jsonwebtoken';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
 import Account, { AccountRequest } from '../Account';
-import Member from '../BaseMember';
-import { collectResults, findAndBind, MySQLRequest } from '../MySQLUtil';
-import {
-	getPermissions,
-	Member as MemberPermissionsLevel
-} from '../Permissions';
+import Member from '../MemberBase';
+import { getPermissions } from '../Permissions';
 import { nhq as auth } from './pam';
 import request from './pam/nhq-request';
 
@@ -29,11 +26,12 @@ interface MemberSession extends Identifiable {
 	nameSuffix: string;
 	seniorMember: boolean;
 	squadron: string;
+	orgid: number;
 }
 
 export { MemberCreateError };
 
-export interface MemberRequest extends MySQLRequest {
+export interface MemberRequest extends AccountRequest {
 	member: NHQMember | null;
 }
 
@@ -41,7 +39,7 @@ export default class NHQMember extends Member {
 	public static async Create(
 		username: string | number,
 		password: string,
-		pool: Schema,
+		schema: Schema,
 		account: Account
 	): Promise<NHQMember> {
 		let cookie;
@@ -82,7 +80,8 @@ export default class NHQMember extends Member {
 					nameMiddle: memberInfo[0].nameMiddle,
 					nameSuffix: memberInfo[0].nameSuffix,
 					seniorMember: memberInfo[0].seniorMember,
-					squadron: memberInfo[0].squadron
+					squadron: memberInfo[0].squadron,
+					orgid: memberInfo[0].orgid
 				};
 				NHQMember.memberSessions.push(sess);
 			} else {
@@ -102,9 +101,9 @@ export default class NHQMember extends Member {
 			);
 		}
 
-		const [pinfo, dutyPositions] = await Promise.all([
-			NHQMember.GetPermissions(id, pool, account),
-			NHQMember.GetDutypositions(id, pool, account)
+		const [dutyPositions, extraInfo] = await Promise.all([
+			NHQMember.GetRegularDutypositions(id, schema, account),
+			NHQMember.LoadExtraMemberInformation(id, schema, account)
 		]);
 
 		return new NHQMember(
@@ -118,12 +117,14 @@ export default class NHQMember extends Member {
 				nameMiddle: memberInfo[0].nameMiddle,
 				nameSuffix: memberInfo[0].nameSuffix,
 				seniorMember: memberInfo[0].seniorMember,
-				squadron: memberInfo[0].squadron
+				squadron: memberInfo[0].squadron,
+				orgid: memberInfo[0].orgid
 			},
-			pinfo.permissions,
-			pinfo.accessLevel,
 			cookie,
-			sessionID
+			sessionID,
+			schema,
+			account,
+			extraInfo
 		);
 	}
 
@@ -165,13 +166,13 @@ export default class NHQMember extends Member {
 						s => s.id === decoded.id
 					);
 					if (sess.length === 1) {
-						const [pinfo, dutyPositions] = await Promise.all([
-							NHQMember.GetPermissions(
+						const [dutyPositions, extraInfo] = await Promise.all([
+							NHQMember.GetRegularDutypositions(
 								decoded.id,
 								req.mysqlx,
 								req.account
 							),
-							NHQMember.GetDutypositions(
+							NHQMember.LoadExtraMemberInformation(
 								decoded.id,
 								req.mysqlx,
 								req.account
@@ -188,12 +189,14 @@ export default class NHQMember extends Member {
 								nameMiddle: sess[0].nameMiddle,
 								nameSuffix: sess[0].nameSuffix,
 								seniorMember: sess[0].seniorMember,
-								squadron: sess[0].squadron
+								squadron: sess[0].squadron,
+								orgid: sess[0].orgid
 							},
-							pinfo.permissions,
-							pinfo.accessLevel,
 							sess[0].cookieData,
-							header
+							header,
+							req.mysqlx,
+							req.account,
+							extraInfo
 						);
 						next();
 						// 						if (req.member.accessLevel === 'Admin' && !req.member.isRioux) {
@@ -221,42 +224,6 @@ export default class NHQMember extends Member {
 	 */
 	private static secret: string =
 		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
-
-	private static async GetPermissions(
-		capid: number,
-		schema: Schema,
-		account: Account,
-		su?: number
-	): Promise<{
-		accessLevel: MemberAccessLevel;
-		permissions: MemberPermissions;
-	}> {
-		const memberInfo = schema.getCollection('ExtraMemberInformation');
-		const rows = await collectResults(
-			findAndBind(memberInfo, {
-				id: capid,
-				accountID: account.id
-			})
-		);
-
-		if (rows.length === 1 || NHQMember.IsRioux(capid)) {
-			let accessLevel: MemberAccessLevel;
-			if (NHQMember.IsRioux(capid)) {
-				accessLevel = 'Admin';
-			} else {
-				accessLevel = rows[0].AccessLevel as MemberAccessLevel;
-			}
-			return {
-				accessLevel,
-				permissions: getPermissions(accessLevel)
-			};
-		} else {
-			return {
-				accessLevel: 'Member',
-				permissions: MemberPermissionsLevel
-			};
-		}
-	}
 
 	/**
 	 * Permissions for the user
@@ -295,6 +262,9 @@ export default class NHQMember extends Member {
 	 * The ID to for the session of the member
 	 */
 	public sessionID: string = '';
+
+	protected extraInfo: ExtraMemberInformation;
+
 	/**
 	 * The cookie data used to access NHQ
 	 */
@@ -302,16 +272,23 @@ export default class NHQMember extends Member {
 
 	private constructor(
 		data: MemberObject,
-		permissions: MemberPermissions,
-		accessLevel: MemberAccessLevel,
 		cookie: string,
-		sessionID: string
+		sessionID: string,
+		schema: Schema,
+		account: Account,
+		extraInfo: ExtraMemberInformation
 	) {
-		super(data);
-		this.permissions = permissions;
-		this.accessLevel = accessLevel;
+		super(data, schema, account);
+		this.accessLevel = extraInfo.accessLevel;
 		this.cookie = cookie;
 		this.sessionID = sessionID;
+		this.extraInfo = extraInfo;
+
+		if (this.isRioux) {
+			this.permissions = getPermissions('Admin');
+		} else {
+			this.permissions = getPermissions(this.accessLevel);
+		}
 	}
 
 	public async getCAPWATCHList(): Promise<string[]> {
@@ -327,7 +304,9 @@ export default class NHQMember extends Member {
 			data.headers.location ===
 				'/cap.capwatch.web/Modules/CapwatchRequest.aspx'
 		) {
-			throw new Error('User needs permissions to access CAPWATCH');
+			throw new Error(
+				MemberCAPWATCHErrors.INVALID_PERMISSIONS.toString()
+			);
 		}
 
 		data = await request('/cap.capwatch.web/Default.aspx', this.cookie);
@@ -358,7 +337,7 @@ export default class NHQMember extends Member {
 		const body = await request(url, this.cookie);
 
 		if (existsSync(location)) {
-			await promisify(unlinkSync)(location);
+			await promisify(unlink)(location);
 		}
 
 		writeFile(location, body, {}, err => {

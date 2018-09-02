@@ -6,8 +6,6 @@ import * as path from 'path';
 import { Configuration } from './conf';
 import getRouter from './getAPIRouter';
 
-const ports: number[] = [];
-
 export default async (conf: typeof Configuration, port: number = conf.port, mysqlConn?: Session) => {
 	const app: express.Application = express();
 
@@ -57,23 +55,11 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	}
 
 	function onError(error: NodeJS.ErrnoException): void {
-		if (error.syscall !== 'listen') {
-			throw error;
-		}
-		const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
-		switch (error.code) {
-			case 'EACCES':
-				// tslint:disable-next-line:no-console
-				console.error(`${bind} requires elevated privileges`);
-				process.exit(1);
-				break;
-			case 'EADDRINUSE':
-				// tslint:disable-next-line:no-console
-				console.error(`${bind} is already in use`);
-				process.exit(1);
-				break;
-			default:
-				throw error;
+		console.error(error);
+
+		if (error.code === 'EACCES' || error.code === 'EADDRINUSE') {
+			console.log(error.code);
+			process.exit(1);
 		}
 	}
 
@@ -82,7 +68,6 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 		const bind =
 			typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
 		if (!conf.testing) {
-			// tslint:disable-next-line:no-console
 			console.log(`Bound on ${bind}`);
 		}
 	}

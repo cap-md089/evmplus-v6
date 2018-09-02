@@ -1,7 +1,8 @@
 import * as express from 'express';
 import { BlogPostValidator } from '.';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
+import BlogPost from '../../../lib/BlogPost';
+import { MemberRequest } from '../../../lib/MemberBase';
 
 export default (blogPostValidator: BlogPostValidator) => {
 	return async (req: AccountRequest & MemberRequest, res: express.Response) => {
@@ -11,18 +12,26 @@ export default (blogPostValidator: BlogPostValidator) => {
 			// typeof req.member !== 'undefined' &&
 			blogPostValidator(req.body)
 		) {
-			const blogPostCollection = req.mysqlx.getCollection('Blog');
+			try {
+				const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 
-			await blogPostCollection
-				.modify('id = :id AND accountID = :accountID')
-				.bind({
-					id: req.params.id,
-					accountID: req.account.id
-				})
-				.patch(req.body)
-				.execute();
+				blogPost.set(req.body);
 
-			res.send(204);
+				await blogPost.save();
+
+				res.status(204);
+				res.end();
+			} catch (e) {
+				if (e.message === 'Could not get blog post') {
+					res.status(400);
+					res.end();
+				} else {
+					// tslint:disable-next-line:no-console
+					console.log(e);
+					res.status(500);
+					res.end();
+				}
+			}
 		} else {
 			res.status(400);
 			res.end();

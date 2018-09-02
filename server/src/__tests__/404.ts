@@ -19,5 +19,11 @@ describe ('any url that is not an image, build file, or api call', () => {
 			.get('/not/a/real/url')
 			.expect('Content-type', 'text/html; charset=utf-8')
 			.expect(404, done);
+	});
+
+	it('should respond with 404', done => {
+		request(server)
+			.get('/api/not/a/real/api')
+			.expect(404, done);
 	})
 });

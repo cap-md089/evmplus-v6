@@ -19,4 +19,13 @@ describe ('/teapot', () => {
 			.get('/teapot')
 			.expect(418, done);
 	})
+
+	it('should respond to a body of "teapot"', done => {
+		request(server)
+			.post('/api/echo')
+			.set('Accept', 'application/json')
+			.set('Content-type', 'application/json')
+			.send('"teapot"')
+			.expect(418, done);
+	})
 });

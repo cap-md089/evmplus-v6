@@ -405,7 +405,7 @@ declare module '@mysql/xdevapi' {
 		 */
 		public count(): Promise<number>;
 
-		public delete(expr: SearchConditionStr): TableDelete<T>;
+		public delete(): TableDelete<T>;
 
 		public exiistsInDatabase(): Promise<boolean>;
 
@@ -413,7 +413,8 @@ declare module '@mysql/xdevapi' {
 
 		public getSchema(): Schema;
 
-		public insert(fields: string | string[] | T): TableInsert<T>;
+		public insert(...fields: Array<keyof T>): TableInsert<T>;
+		public insert(fields: keyof T | Array<keyof T> | T): TableInsert<T>;
 
 		public inspect(): { schema: string; table: string };
 
@@ -421,7 +422,7 @@ declare module '@mysql/xdevapi' {
 
 		public select(expr?: string | string[]): TableSelect<T>;
 
-		public update(expr: string): TableUpdate<T>;
+		public update(expr?: string): TableUpdate<T>;
 	}
 
 	class TableDelete<T> implements Binding<T>, Limiting, TableOrdering {
@@ -435,11 +436,14 @@ declare module '@mysql/xdevapi' {
 		public offset(value: number): TableDelete<T>;
 
 		public orderBy(SortExprStr: string | string[]): TableDelete<T>;
+
+		public where(expr: string): TableDelete<T>;
 	}
 
 	class TableInsert<T> {
 		public execute(): Promise<Result>;
 
+		public values(...ExprOrLiteral: any[]): TableInsert<T>;
 		public values(ExprOrLiteral: string | string[]): TableInsert<T>;
 	}
 

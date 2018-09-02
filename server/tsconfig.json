@@ -1,8 +1,8 @@
 {
 	"compilerOptions": {
-		"target": "es2015",
+		"target": "es6",
 		"module": "commonjs",
-		"outDir": "dist",
+		"outDir": "server/dist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -18,7 +18,8 @@
 			"./node_modules/@types",
 		],
 		"baseUrl": ".",
-		"rootDir": ".",
+		"rootDir": "..",
+		"allowSyntheticDefaultImports": false
 	},
 	"include": [
 		"src/**/*.ts"
@@ -30,7 +31,8 @@
 		"es2015",
 		"es2017",
 		"es2015.promise",
-		"es5"
+		"es5",
+		"esnext.asynciterable"
 	],
 	"files": [
 		"../lib/index.d.ts"

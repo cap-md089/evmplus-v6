@@ -2,8 +2,8 @@ import * as express from 'express';
 import { join } from 'path';
 import conf from '../../conf';
 import { AccountRequest } from '../../lib/Account';
-import { MemberRequest } from '../../lib/BaseMember';
 import Event from '../../lib/Event';
+import { MemberRequest } from '../../lib/MemberBase';
 import { getSchemaValidator, json } from '../../lib/Util';
 
 // tslint:disable-next-line:no-var-requires
@@ -27,7 +27,10 @@ export default async (
 
 		json<EventObject>(res, newEvent.toRaw());
 	} else {
-		res.send(400);
+		res.status(400);
+		if (privateEventValidator.errors) {
+			res.json(privateEventValidator.errors);
+		}
 		res.end();
 	}
 };

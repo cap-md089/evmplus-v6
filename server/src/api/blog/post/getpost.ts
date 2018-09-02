@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { collectResults } from '../../../lib/MySQLUtil';
+import BlogPost from '../../../lib/BlogPost';
 import { json } from '../../../lib/Util';
 
 export default async (req: AccountRequest, res: express.Response) => {
@@ -8,23 +8,21 @@ export default async (req: AccountRequest, res: express.Response) => {
 		typeof req.params.id !== 'undefined' &&
 		typeof req.account !== 'undefined'
 	) {
-		const blogPosts = req.mysqlx.getCollection<BlogPost>('Blog');
+		try {
+			const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 
-		const results = await collectResults(
-			blogPosts
-				.find('accountID = :accountID AND id = :id')
-				.bind({
-					accountID: req.account.id,
-					id: req.params.id
-				})
-		);
-
-		if (results.length !== 1) {
-			res.send(400);
-			return;
+			json<BlogPostObject>(res, blogPost.toRaw());
+		} catch(e) {
+			if (e.message === 'Could not get blog post') {
+				res.status(400);
+				res.end();
+			} else {
+				// tslint:disable-next-line:no-console
+				console.log(e);
+				res.status(400);
+				res.end();
+			}
 		}
-
-		json<BlogPost>(res, results[0]);
 	} else {
 		res.status(400);
 		res.end();

@@ -8,7 +8,7 @@ const postsPerPage = 15;
 interface BlogPostList {
 	displayLeft: boolean;
 	displayRight: boolean;
-	posts: BlogPost[]
+	posts: BlogPostObject[]
 }
 
 export default async (req: AccountRequest, res: express.Response) => {
@@ -18,7 +18,7 @@ export default async (req: AccountRequest, res: express.Response) => {
 	) {
 		const start = parseInt(req.params.start, 10) * postsPerPage;
 
-		const blogPosts = req.mysqlx.getCollection<BlogPost>('Blog');
+		const blogPosts = req.mysqlx.getCollection<BlogPostObject>('Blog');
 
 		const results = await collectResults(
 			blogPosts

@@ -3,6 +3,7 @@ import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as logger from 'morgan';
 import { join } from 'path';
+import accountcheck from './api/accountcheck';
 import blog from './api/blog';
 import check from './api/check';
 import echo from './api/echo';
@@ -88,6 +89,8 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	);
 
 	router.use('/registry', registry);
+
+	router.get('/accountcheck', Account.ExpressMiddleware, accountcheck);
 
 	router.post('/echo', echo);
 

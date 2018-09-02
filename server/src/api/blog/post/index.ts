@@ -17,7 +17,7 @@ const blogPostSchema = require(join(conf.schemaPath, 'BlogPost.json'));
 
 const privateBlogPostValidator = getSchemaValidator(blogPostSchema);
 
-const blogPostValidator = (val: any): val is BlogPost =>
+const blogPostValidator = (val: any): val is BlogPostObject =>
 	privateBlogPostValidator(val) as boolean;
 
 export type BlogPostValidator = typeof blogPostValidator;

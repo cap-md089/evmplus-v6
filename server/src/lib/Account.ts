@@ -1,11 +1,15 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import { Configuration } from '../conf';
-import { collectResults, findAndBind, MySQLRequest } from './MySQLUtil';
+import CAPWATCHMember from './members/CAPWATCHMember';
+import {
+	collectResults,
+	findAndBind,
+	MySQLRequest,
+} from './MySQLUtil';
 
 export interface AccountRequest extends MySQLRequest {
-	account: Account | null;
+	account: Account;
 }
 
 export default class Account implements AccountObject {
@@ -31,7 +35,10 @@ export default class Account implements AccountObject {
 			if (accountID === 'capeventmanager') {
 				accountID = 'mdx89';
 			}
-		} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+		} else if (
+			parts.length === 4 &&
+			process.env.NODE_ENV !== 'production'
+		) {
 			accountID = 'mdx89';
 		} else {
 			res.status(400);
@@ -43,8 +50,13 @@ export default class Account implements AccountObject {
 			const account = await Account.Get(accountID, req.mysqlx);
 			req.account = account;
 		} catch (e) {
-			res.status(500);
+			if (e.message.startsWith('Unkown account: ')) {
+				res.status(400);
+			} else {
+				res.status(500);
+			}
 			res.end();
+			return;
 		}
 
 		next();
@@ -152,9 +164,10 @@ export default class Account implements AccountObject {
 	}
 
 	public buildURI(...identifiers: string[]) {
-		let uri = process.env.NODE_ENV !== 'production'
-			? `/`
-			: `https://${this.id}.capunit.com/`;
+		let uri =
+			process.env.NODE_ENV !== 'production'
+				? `/`
+				: `https://${this.id}.capunit.com/`;
 
 		for (const i in identifiers) {
 			if (identifiers.hasOwnProperty(i)) {
@@ -163,5 +176,32 @@ export default class Account implements AccountObject {
 		}
 
 		return uri.slice(0, -1);
+	}
+
+	public async *getMembers(): AsyncIterableIterator<CAPWATCHMember> {
+		const memberCollection = this.schema.getCollection<NHQ.Member>('NHQ_Member');
+
+		const promises = [];
+
+		for (const id of this.orgIDs) {
+			promises.push(
+				collectResults(
+					findAndBind(memberCollection, {
+						ORGID: id
+					})
+				)
+			);
+		}
+
+		const mysqlResults = await Promise.all(promises);
+
+		const memberList = mysqlResults.reduce(
+			(prev, curr) => [...prev, ...curr],
+			[]
+		);
+
+		for (const memberID of memberList) {
+			yield CAPWATCHMember.Get(memberID.CAPID, this, this.schema);
+		}
 	}
 }

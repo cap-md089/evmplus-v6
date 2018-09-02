@@ -1,13 +1,14 @@
 import { Schema } from '@mysql/xdevapi';
+import { EventStatus, PointOfContactType } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
-import BaseMember from './BaseMember';
+import BaseMember from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class Event implements EventObject {
 	/**
 	 * Get an event from the database
-	 * 
+	 *
 	 * @param id The ID of the event to get
 	 * @param account The account to get the event from
 	 * @param schema The schema to get the event from
@@ -30,7 +31,7 @@ export default class Event implements EventObject {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param data The new event object to create
 	 * @param account The account to create an event for
 	 * @param schema The schema to insert the event into
@@ -137,7 +138,7 @@ export default class Event implements EventObject {
 
 	public showUpcoming: boolean;
 
-	public groupEventNumber: number;
+	public groupEventNumber: [number, string];
 
 	public wingEventNumber: number;
 
@@ -149,7 +150,9 @@ export default class Event implements EventObject {
 
 	public debrief: string;
 
-	public pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
+	public pointsOfContact: Array<
+		InternalPointOfContact | ExternalPointOfContact
+	>;
 
 	public author: number;
 
@@ -162,13 +165,15 @@ export default class Event implements EventObject {
 		accountID: string;
 	};
 
+	public fileIDs: string[];
+
 	// Documents require it
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
 	/**
 	 * Constructs an event object given the event data
-	 * 
+	 *
 	 * @param data The event object
 	 * @param account The account for the event
 	 * @param schema The schema for the event
@@ -246,11 +251,70 @@ export default class Event implements EventObject {
 	public isPOC(member: BaseMember) {
 		return (
 			this.pointsOfContact.map(
-				poc => poc.type === 'internal' && poc.id === member.id
+				poc =>
+					poc.type === PointOfContactType.INTERNAL &&
+					poc.id === member.id
 			) &&
 			member.id === this.author &&
 			member.isRioux
 		);
+	}
+
+	/**
+	 * Copies the event in such a way as to preserve all information except time,
+	 * 	which is modified to preserve the deltas but start at the specified date time
+	 * 
+	 * @param newStartTime The start time of the new event
+	 */
+	public copy(newStartTime: DateTime, copyStatus = false, copyFiles = true): Promise<Event> {
+		const timeDelta = +newStartTime - this.startDateTime;
+
+		const timeCreated = +DateTime.utc();
+
+		const newEvent: NewEventObject = {
+			acceptSignups: this.acceptSignups,
+			activity: this.activity,
+			administrationComments: this.administrationComments,
+			author: this.author,
+			comments: this.comments,
+			complete: this.complete,
+			debrief: this.debrief,
+			desiredNumberOfParticipants: this.desiredNumberOfParticipants,
+			eventWebsite: this.eventWebsite,
+			groupEventNumber: this.groupEventNumber,
+			highAdventureDescription: this.highAdventureDescription,
+			location: this.location,
+			lodgingArrangments: this.lodgingArrangments,
+			mealsDescription: this.mealsDescription,
+			meetLocation: this.meetLocation,
+			name: this.name,
+			participationFee: this.participationFee,
+			pickupLocation: this.pickupLocation,
+			pointsOfContact: this.pointsOfContact,
+			publishToWingCalendar: this.publishToWingCalendar,
+			registration: this.registration,
+			requiredEquipment: this.requiredEquipment,
+			showUpcoming: this.showUpcoming,
+			signUpDenyMessage: this.signUpDenyMessage,
+			signUpPartTime: this.signUpPartTime,
+			requiredForms: this.requiredForms,
+			fileIDs: copyFiles ? this.fileIDs : [],
+			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
+			teamID: this.teamID,
+			timeCreated,
+			timeModified: timeCreated,
+			transportationDescription: this.transportationDescription,
+			transportationProvided: this.transportationProvided,
+			uniform: this.uniform,
+			wingEventNumber: this.wingEventNumber,
+
+			meetDateTime: this.meetDateTime - timeDelta,
+			startDateTime: this.startDateTime - timeDelta,
+			endDateTime: this.endDateTime - timeDelta,
+			pickupDateTime: this.pickupDateTime - timeDelta
+		};
+
+		return Event.Create(newEvent, this.account, this.schema);
 	}
 
 	/**
@@ -299,7 +363,11 @@ export default class Event implements EventObject {
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
-			wingEventNumber: this.wingEventNumber
+			wingEventNumber: this.wingEventNumber,
+			fileIDs: this.fileIDs
 		};
 	}
 }
+
+export { EventStatus };
+

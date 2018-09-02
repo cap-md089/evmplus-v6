@@ -6,7 +6,7 @@ import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
+import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
 
 const parseHeaders = (lines: string[]) => {
@@ -22,7 +22,7 @@ const parseHeaders = (lines: string[]) => {
 const endingToMime = (ending: string): string =>
 	lookup(ending) || 'application/octet-stream';
 
-const isImage = (ending: string): boolean => {
+export const isImage = (ending: string): boolean => {
 	return ['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(ending) > -1;
 };
 
@@ -104,8 +104,10 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 				contentType = endingToMime(ending);
 			}
 
+			const id = uuid();
+
 			// Start to write to disk
-			const realFilename = `${req.account.id}-${uuid()}`;
+			const realFilename = `${req.account.id}-${id}`;
 			writeStream = fs.createWriteStream(
 				join(config.fileStoragePath, realFilename)
 			);
@@ -121,7 +123,7 @@ export default (req: MemberRequest & AccountRequest, res: express.Response) => {
 
 			const uploadedFile: FileObject = {
 				kind: 'drive#file',
-				id: realFilename,
+				id,
 				accountID: req.account.id,
 				comments: '',
 				contentType,

@@ -54,6 +54,10 @@
             "description": "Whether or not the file is limited to the members",
             "type": "boolean"
         },
+        "parentID": {
+            "description": "ID of the parent for going backwards",
+            "type": "string"
+        },
         "uploaderID": {
             "description": "The id of the uploader",
             "type": "number"
@@ -71,6 +75,7 @@
         "id",
         "kind",
         "memberOnly",
+        "parentID",
         "uploaderID"
     ],
     "type": "object"

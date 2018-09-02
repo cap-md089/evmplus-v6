@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
+import { MemberRequest } from '../../../lib/MemberBase';
 
 const findEnding = (input: Buffer, boundary: string) => {
 	const index = input.length - boundary.length;

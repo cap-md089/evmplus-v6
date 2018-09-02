@@ -1,10 +1,9 @@
 import * as express from 'express';
-import { DateTime } from 'luxon';
 import { join } from 'path';
 import conf from '../../../conf';
 import { AccountRequest } from '../../../lib/Account';
-import { MemberRequest } from '../../../lib/BaseMember';
-import { collectResults } from '../../../lib/MySQLUtil';
+import BlogPost from '../../../lib/BlogPost';
+import { MemberRequest } from '../../../lib/MemberBase';
 import { getSchemaValidator, json } from '../../../lib/Util';
 
 // tslint:disable-next-line:no-var-requires
@@ -24,35 +23,16 @@ export default async (
 		typeof req.member !== 'undefined' && req.member !== null &&
 		blogPostValidator(req.body)
 	) {
-		const blogPosts = req.mysqlx.getCollection<BlogPost>('Blog');
-
-		const results = await collectResults(
-			blogPosts
-				.find('accountID = :accountID')
-				.bind('accountID', req.account.id)
-		);
-
-		const newID =
-			1 +
-			results
-				.map(post => post.id)
-				.reduce((prev, curr) => Math.max(prev, curr), 0);
-
-		const posted = Math.round(+DateTime.utc() / 1000);
-
-		const newPost: BlogPost = {
-			accountID: req.account.id,
+		const newPost: NewBlogPost = {
 			authorid: req.member.id,
 			content: req.body.content,
 			fileIDs: req.body.fileIDs,
-			id: newID,
-			posted,
 			title: req.body.title
 		};
 
-		await blogPosts.add(newPost).execute();
+		const post = await BlogPost.Create(newPost, req.account, req.mysqlx);
 
-		json<BlogPost>(res, newPost);
+		json<BlogPostObject>(res, post.toRaw());
 	} else {
 		res.status(400);
 		res.end();

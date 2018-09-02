@@ -1,25 +1,9 @@
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
-import Member from '../lib/members/NHQMember';
+import Member, { MemberCreateError } from '../lib/members/NHQMember';
 import { json } from '../lib/Util';
 
-interface SuccessfulSigninReturn {
-	error: -1;
-	member: MemberObject;
-	sessionID: string;
-	valid: true;
-}
-
-interface FailedSigninReturn {
-	error: number;
-	member: null;
-	sessionID: string;
-	valid: false;
-}
-
-export type SigninReturn = SuccessfulSigninReturn | FailedSigninReturn;
-
-export default (req: AccountRequest, res: express.Response) => {
+export default async (req: AccountRequest, res: express.Response) => {
 	const {
 		username,
 		password
@@ -30,24 +14,30 @@ export default (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
-	Member.Create(
-		typeof username === 'number' ? username.toString() : username,
-		password,
-		req.mysqlx,
-		req.account
-	).then(member => {
+	try {
+		const member = await Member.Create(
+			typeof username === 'number' ? username.toString() : username,
+			password,
+			req.mysqlx,
+			req.account
+		);
+
 		json<SigninReturn>(res, {
-			error: -1,
+			error: MemberCreateError.NONE,
 			member: member.toRaw(),
 			sessionID: member.sessionID,
 			valid: true
 		});
-	}).catch((errors: Error) => {
-		if (errors.message.match(/^(\d)*$/)) {
-			// tslint:disable-next-line
-			console.log(errors);
+	} catch (errors) {
+		if (!errors.message.match(/^(\d)*$/)) {
+			console.error(errors);
 			res.status(500);
-			res.end();
+			json<SigninReturn>(res, {
+				error: MemberCreateError.UNKOWN_SERVER_ERROR,
+				member: null,
+				sessionID: '',
+				valid: false
+			});
 		} else {
 			res.status(400);
 			json<SigninReturn>(res, {
@@ -57,5 +47,5 @@ export default (req: AccountRequest, res: express.Response) => {
 				valid: false
 			});
 		}
-	});
+	}
 };

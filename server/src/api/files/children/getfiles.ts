@@ -1,7 +1,6 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { collectResults, findAndBind } from '../../../lib/MySQLUtil';
-import { json } from '../../../lib/Util';
+import File from '../../../lib/File';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (typeof req.account === 'undefined') {
@@ -22,29 +21,29 @@ export default async (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
-	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+	try {
+		const folder = await File.Get(parentid, req.account, req.mysqlx);
 
-	if (parentid !== 'root') {
-		const files = await collectResults(
-			findAndBind(filesCollection, {
-				accountID: req.account.id,
-				id: parentid
-			})
-		);
+		let started = false;
 
-		if (files.length === 1) {
-			res.status(404);
-			res.end();
-			return;
+		res.status(200);
+		res.set('Content-type', 'application/json');
+
+		for await (const file of folder.getChildren()) {
+			if (started) {
+				res.write(',' + JSON.stringify(file.toRaw()));
+			} else {
+				res.write('[' + JSON.stringify(file.toRaw()));
+				started = true;
+			}
 		}
+
+		res.write(']');
+		res.end();
+	} catch (e) {
+		// tslint:disable-next-line
+		console.log(e);
+		res.status(500);
+		res.end();
 	}
-
-	const fileList = await collectResults(
-		findAndBind(filesCollection, {
-			accountID: req.account.id,
-			parentID: parentid
-		})
-	);
-
-	json<FileObject[]>(res, fileList);
 };
