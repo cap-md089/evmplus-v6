@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 
-interface TextBoxProps extends InputProps<null> {}
-
-export default class TextBox extends React.Component<TextBoxProps> {
+export default class TextBox extends React.Component<InputProps<null>> {
 	public render () {
 		return (
 			<div className="formbox">

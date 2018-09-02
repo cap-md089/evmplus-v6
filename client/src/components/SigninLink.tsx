@@ -1,11 +1,8 @@
 import * as React from 'react';
 import { MemberCreateError } from 'src/enums';
-import { AuthorizeUserArgument, MessageEventListener } from '../App';
+import { MessageEventListener } from '../App';
 import Dialogue from './Dialogue';
 import './Signin.css';
-
-// tslint:disable-next-line
-console.log(MemberCreateError);
 
 const errorMessages = {
 	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'Incorrect credentials',
@@ -21,8 +18,8 @@ interface SigninLinkState {
 }
 
 class SigninLink extends React.Component<
-	AuthorizeUserArgument & {
-		authorizeUser: (arg: AuthorizeUserArgument) => void;
+	SigninReturn & {
+		authorizeUser: (arg: SigninReturn) => void;
 	},
 	SigninLinkState
 > {
@@ -35,8 +32,8 @@ class SigninLink extends React.Component<
 	private iframeRef: HTMLIFrameElement;
 
 	constructor(
-		props: AuthorizeUserArgument & {
-			authorizeUser: (arg: AuthorizeUserArgument) => void;
+		props: SigninReturn & {
+			authorizeUser: (arg: SigninReturn) => void;
 		}
 	) {
 		super(props);
@@ -47,8 +44,8 @@ class SigninLink extends React.Component<
 	}
 
 	public componentDidUpdate(
-		props: AuthorizeUserArgument & {
-			authorizeUser: (arg: AuthorizeUserArgument) => void;
+		props: SigninReturn & {
+			authorizeUser: (arg: SigninReturn) => void;
 		},
 		state: { open: boolean; error: number }
 	) {
@@ -155,10 +152,11 @@ class SigninLink extends React.Component<
 
 	private windowEvent(e: MessageEvent) {
 		try {
-			const data = JSON.parse(e.data);
+			const data = JSON.parse(e.data) as SigninReturn;
 			if (
 				typeof data.error !== 'undefined' &&
 				typeof data.valid !== 'undefined' &&
+				data.valid === true &&
 				typeof data.sessionID !== 'undefined' &&
 				typeof data.member !== 'undefined'
 			) {

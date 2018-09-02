@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
-import { AuthorizeUserArgument } from '../App';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Main from '../pages/Main';
@@ -43,8 +42,8 @@ const pages: Array<{
 
 const composeElement = (
 	El: typeof Page,
-	member: AuthorizeUserArgument,
-	authorizeUser: (arg: AuthorizeUserArgument) => void
+	member: SigninReturn,
+	authorizeUser: (arg: SigninReturn) => void
 ) => (props: RouteComponentProps<any>) => (
 	<El routeProps={props} member={member} authorizeUser={authorizeUser} />
 );
@@ -52,8 +51,8 @@ const composeElement = (
 export default class PageRouter extends React.Component<{
 	updateSideNav: (links: JSX.Element[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
-	member: AuthorizeUserArgument;
-	authorizeUser: (arg: AuthorizeUserArgument) => void;
+	member: SigninReturn;
+	authorizeUser: (arg: SigninReturn) => void;
 }> {
 	public render() {
 		return (

@@ -1,18 +1,16 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 
-interface CheckboxProps extends InputProps<boolean> {}
-
 interface CheckboxState {
 	value: boolean;
 }
 
-export default class Checkbox extends React.Component<CheckboxProps, CheckboxState> {
+export default class Checkbox extends React.Component<InputProps<boolean>, CheckboxState> {
 	public state = {
 		value: false
 	};
 
-	constructor(props: CheckboxProps) {
+	constructor(props: InputProps<boolean>) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);

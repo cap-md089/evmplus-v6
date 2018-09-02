@@ -307,7 +307,8 @@ class SimpleForm<
 							}
 							ret = [
 								React.cloneElement(child, {
-									onUpdate: this.onChange
+									onUpdate: this.onChange,
+									key: i + 1
 								})
 							];
 						}
@@ -339,7 +340,8 @@ class SimpleForm<
 											this.props.children[i - 1],
 											{
 												onUpdate: this.onChange,
-												onInitialize: this.onInitialize
+												onInitialize: this.onInitialize,
+												key: i
 											}
 										)
 									);

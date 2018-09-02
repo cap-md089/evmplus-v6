@@ -2,7 +2,6 @@ import * as $ from 'jquery';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { MemberCreateError } from 'src/enums';
-import { AuthorizeUserArgument } from '../App';
 import SigninLink from './SigninLink';
 
 export class SideNavigationLink extends React.Component<{ target: string }> {
@@ -44,8 +43,8 @@ export class SideNavigationReferenceLink extends React.Component<{
 
 export interface SideNavigationState {
 	links: JSX.Element[];
-	member: AuthorizeUserArgument;
-	authorizeUser: (arg: AuthorizeUserArgument) => void;
+	member: SigninReturn;
+	authorizeUser: (arg: SigninReturn) => void;
 }
 
 export class SideNavigation extends React.Component<SideNavigationState> {

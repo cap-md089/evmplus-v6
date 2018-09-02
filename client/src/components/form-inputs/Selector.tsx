@@ -111,7 +111,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 							</li>
 						) : null}
 						{(this.props.filters || []).map((value, i) => (
-							<li>
+							<li key={i}>
 								<div className="selector-left-filter">
 									{value.displayText}
 								</div>
@@ -127,8 +127,9 @@ export default class Selector<T extends Identifiable> extends React.Component<
 					</ul>
 				</div>
 				<ul className="selector-values">
-					{filteredValues.map(val => (
+					{filteredValues.map((val, i) => (
 						<li
+							key={i}
 							onClick={this.getSelector(val)}
 							className={
 								(this.props.multiple

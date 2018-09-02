@@ -8,27 +8,10 @@ import SideNavigation from './components/SideNavigation';
 import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
+import Konami from './pages/Konami';
 import Registry from './registry';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
-
-interface AuthorizeUserArgumentSuccess {
-	error: MemberCreateError.NONE;
-	valid: true;
-	member: MemberObject;
-	sessionID: string;
-}
-
-interface AuthorizeUserArgumentFailure {
-	error: MemberCreateError;
-	valid: false;
-	member: null;
-	sessionID: string;
-}
-
-export type AuthorizeUserArgument =
-	| AuthorizeUserArgumentSuccess
-	| AuthorizeUserArgumentFailure;
 
 export class Head extends React.Component {
 	public render() {
@@ -100,12 +83,30 @@ class SearchForm extends React.Component<
 
 const RoutingSearchForm = withRouter(SearchForm);
 
+const konamiCode = [
+	'ArrowUp',
+	'ArrowUp',
+	'ArrowDown',
+	'ArrowDown',
+	'ArrowLeft',
+	'ArrowRight',
+	'ArrowLeft',
+	'ArrowRight',
+	'KeyA',
+	'KeyB',
+	'Enter'
+];
+
 interface AppState {
 	Registry: Registry;
-	member: AuthorizeUserArgument;
+	member: SigninReturn;
 	tryingMember: boolean;
 	sideNavLinks: JSX.Element[];
 	breadCrumbs: BreadCrumb[];
+	konami: {
+		index: number;
+		done: boolean;
+	};
 }
 
 export default class App extends React.Component<
@@ -130,7 +131,11 @@ export default class App extends React.Component<
 			}
 		},
 		sideNavLinks: [],
-		breadCrumbs: []
+		breadCrumbs: [],
+		konami: {
+			index: 0,
+			done: false
+		}
 	};
 
 	private titleElement: HTMLDivElement;
@@ -140,10 +145,12 @@ export default class App extends React.Component<
 
 		// 		const sid = localStorage.getItem('sid');
 		this.authorizeUser = this.authorizeUser.bind(this);
+		this.doneWithKonami = this.doneWithKonami.bind(this);
 	}
 
 	public componentDidMount(): void {
 		// Load registry
+		bestfit(jQuery(this.titleElement));
 		myFetch('/api/registry')
 			.then(res => {
 				return res.json();
@@ -168,7 +175,7 @@ export default class App extends React.Component<
 				}
 			})
 				.then(res => res.json())
-				.then((member: AuthorizeUserArgument) => {
+				.then((member: SigninReturn) => {
 					if (!member.valid) {
 						localStorage.removeItem('sessionID');
 					}
@@ -186,13 +193,15 @@ export default class App extends React.Component<
 					});
 				});
 		}
+
+		window.onkeydown = this.onKeyDown.bind(this);
+	}
+
+	public componentWillUnmount() {
+		window.onkeydown = () => void 0;
 	}
 
 	public render() {
-		setTimeout(() => {
-			bestfit(jQuery(this.titleElement));
-		});
-
 		let countd = 0;
 
 		if (this.state.Registry.Contact.MailingAddress) {
@@ -209,7 +218,13 @@ export default class App extends React.Component<
 			.removeClass('desktop');
 		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
 
-		return (
+		return this.state.konami.done ? (
+			<Konami
+				exit={this.doneWithKonami}
+				authorizeUser={this.authorizeUser}
+				member={this.state.member}
+			/>
+		) : (
 			<div>
 				<div id="mother">
 					<div id="bodyContainer">
@@ -521,7 +536,7 @@ export default class App extends React.Component<
 		this.setState({ breadCrumbs });
 	}
 
-	private authorizeUser(member: AuthorizeUserArgument) {
+	private authorizeUser(member: SigninReturn) {
 		if (!member.valid) {
 			this.setState({
 				member
@@ -531,5 +546,38 @@ export default class App extends React.Component<
 				member
 			});
 		}
+	}
+
+	private onKeyDown(e: KeyboardEvent) {
+		if (konamiCode[this.state.konami.index] === e.code) {
+			let index = this.state.konami.index + 1;
+			const done = index === konamiCode.length || this.state.konami.done;
+			if (done) {
+				index = 0;
+			}
+
+			this.setState({
+				konami: {
+					index,
+					done
+				}
+			});
+		} else {
+			this.setState(prev => ({
+				konami: {
+					done: prev.konami.done,
+					index: 0
+				}
+			}));
+		}
+	}
+
+	private doneWithKonami() {
+		this.setState({
+			konami: {
+				done: false,
+				index: 0
+			}
+		});
 	}
 }
