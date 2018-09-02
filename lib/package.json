@@ -1,10 +1,12 @@
 {
   "name": "common-lib",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Common types for CAPUnit.com to use in TypeScript",
   "author": "Andrew Rioux",
+  "main": "./index.js",
   "dependencies": {
-    "@types/draft-js": "^0.10.24"
+    "@types/draft-js": "0.10.24",
+    "@types/node": "10.7.1"
   },
   "types": "index.d.ts"
 }

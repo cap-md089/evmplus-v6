@@ -2,6 +2,15 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
         "EventStatus": {
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "type": "number"
         },
         "ExternalPointOfContact": {
             "properties": {
@@ -17,11 +26,17 @@
                 "receiveEventUpdates": {
                     "type": "boolean"
                 },
+                "receiveRoster": {
+                    "type": "boolean"
+                },
+                "receiveSignUpUpdates": {
+                    "type": "boolean"
+                },
+                "receiveUpdates": {
+                    "type": "boolean"
+                },
                 "type": {
-                    "enum": [
-                        "external"
-                    ],
-                    "type": "string"
+                    "$ref": "#/definitions/PointOfContactType.EXTERNAL"
                 }
             },
             "required": [
@@ -29,11 +44,14 @@
                 "name",
                 "phone",
                 "receiveEventUpdates",
+                "receiveRoster",
+                "receiveSignUpUpdates",
+                "receiveUpdates",
                 "type"
             ],
             "type": "object"
         },
-        "PointOfContact": {
+        "InternalPointOfContact": {
             "properties": {
                 "email": {
                     "type": "string"
@@ -57,10 +75,7 @@
                     "type": "boolean"
                 },
                 "type": {
-                    "enum": [
-                        "internal"
-                    ],
-                    "type": "string"
+                    "$ref": "#/definitions/PointOfContactType.INTERNAL"
                 }
             },
             "required": [
@@ -75,7 +90,17 @@
             ],
             "type": "object"
         },
-        "Uniform": {
+        "PointOfContactType.EXTERNAL": {
+            "enum": [
+                1
+            ],
+            "type": "number"
+        },
+        "PointOfContactType.INTERNAL": {
+            "enum": [
+                0
+            ],
+            "type": "number"
         }
     },
     "properties": {
@@ -141,17 +166,17 @@
         "eventWebsite": {
             "type": "string"
         },
-        "groupEventNumber": {
-            "type": "number"
+        "fileIDs": {
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
         },
-        "highAdventureDescription": {
+        "groupEventNumber": {
             "additionalItems": {
                 "anyOf": [
                     {
-                        "items": {
-                            "type": "boolean"
-                        },
-                        "type": "array"
+                        "type": "number"
                     },
                     {
                         "type": "string"
@@ -160,10 +185,7 @@
             },
             "items": [
                 {
-                    "items": {
-                        "type": "boolean"
-                    },
-                    "type": "array"
+                    "type": "number"
                 },
                 {
                     "type": "string"
@@ -171,6 +193,9 @@
             ],
             "minItems": 2,
             "type": "array"
+        },
+        "highAdventureDescription": {
+            "type": "string"
         },
         "id": {
             "description": "ID of the Event, can be expressed as the event number",
@@ -269,7 +294,7 @@
             "items": {
                 "anyOf": [
                     {
-                        "$ref": "#/definitions/PointOfContact"
+                        "$ref": "#/definitions/InternalPointOfContact"
                     },
                     {
                         "$ref": "#/definitions/ExternalPointOfContact"
@@ -376,7 +401,32 @@
             "type": "boolean"
         },
         "uniform": {
-            "$ref": "#/definitions/Uniform"
+            "additionalItems": {
+                "anyOf": [
+                    {
+                        "items": {
+                            "type": "boolean"
+                        },
+                        "type": "array"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "items": [
+                {
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "type": "array"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "minItems": 2,
+            "type": "array"
         },
         "wingEventNumber": {
             "type": "number"
@@ -394,6 +444,7 @@
         "desiredNumberOfParticipants",
         "endDateTime",
         "eventWebsite",
+        "fileIDs",
         "groupEventNumber",
         "highAdventureDescription",
         "id",

@@ -7,7 +7,7 @@ typescript-json-schema --refs --required index.d.ts global.MemberObject -o schem
 echo "Building FileObject..."
 typescript-json-schema --refs --required index.d.ts global.FileObject -o schemas/FileObject.json
 echo "Building BlogPost..."
-typescript-json-schema --refs --required index.d.ts global.BlogPost -o schemas/BlogPost.json
+typescript-json-schema --refs --required index.d.ts global.BlogPostObject -o schemas/BlogPost.json
 echo "Building EventObject..."
 typescript-json-schema --refs --required index.d.ts global.EventObject -o schemas/EventObject.json
 echo "Building AccountObject..."
@@ -19,3 +19,6 @@ typescript-json-schema --refs --required index.d.ts global.NewEventObject -o sch
 
 cp -r schemas ./../server
 cp -r schemas ./../client/src
+
+echo "Building enums..."
+tsc

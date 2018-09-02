@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "commonjs",
-		"outDir": "dist",
+		"outDir": ".",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -12,26 +12,12 @@
 		"pretty": true,
 		"removeComments": true,
 		"sourceMap": true,
-		"typeRoots": [
-			"./types",
-			"./node_modules/@types",
-		],
+		"typeRoots": ["./types", "./node_modules/@types"],
 		"baseUrl": ".",
-		"rootDir": ".",
+		"rootDir": "."
 	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"node_modules"
-	],
-	"lib": [
-		"es2015",
-		"es2017",
-		"es2015.promise",
-		"es5"
-	],
-	"files": [
-		"../lib/index.d.ts"
-	]
+	"include": ["src/**/*.ts", "../server/src/__tests__/lib/members/pam/nhq.ts"],
+	"exclude": ["node_modules"],
+	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
+	"files": ["../lib/index.d.ts"]
 }

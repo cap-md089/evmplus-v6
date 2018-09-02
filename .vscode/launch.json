@@ -9,7 +9,7 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"port": 9222,
-			"url": "http://localhost:8080",
+			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/client/src",
 			"runtimeExecutable": "chromium-browser"
 		},
@@ -33,6 +33,18 @@
 				"${workspaceFolder}/server/dist/**/*.js"
 			],
 			"console": "integratedTerminal"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch Test",
+			"program": "${workspaceFolder}/server/dist/test.js",
+			"cwd": "${workspaceFolder}/server",
+			"autoAttachChildProcesses": true,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/server/dist/**/*.js"
+			]
 		}
 	],
 	"compounds": [

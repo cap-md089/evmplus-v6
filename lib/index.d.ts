@@ -1,18 +1,205 @@
 import { RawDraftContentState } from 'draft-js';
+import { PointOfContactType, EventStatus, MemberCreateError } from './index';
 
 declare global {
-	export type MultCheckboxReturn = [boolean[], string | undefined];
+	/**
+	 * Table for SQL definitions for CAP NHQ
+	 */
+	export namespace NHQ {
+		export interface CadetAchv {
+			CAPID: number;
+			CadetAchvID: number;
+			PhyFitTest: string;
+			LeadLabDateP: string;
+			LeadLabScore: number;
+			AEDateP: string;
+			AEScore: number;
+			AEMod: number;
+			AETest: number;
+			MoralLDateP: string;
+			ActivePart: number;
+			OtherReq: number;
+			SDAReport: number;
+			UsrID: string;
+			DateMod: string;
+			FirstUsr: string;
+			DateCreated: string;
+			DrillDate: string;
+			DrillScore: number;
+			LeadCurr: string;
+			CadetOath: number;
+			AEBookValue: string;
+			MileRun: number;
+			ShuttleRun: number;
+			SitAndReach: number;
+			PushUps: number;
+			CurlUps: number;
+		}
 
-	export const enum EventStatus {
-		DRAFT,
-		TENTATIVE,
-		CONFIRMED,
-		COMPLETE,
-		CANCELLED,
-		INFORMATIONONLY
+		export interface CadetAchvAprs {
+			CAPID: number;
+			CadetAchvID: number;
+			Status: string;
+			AprCAPID: number;
+			DspReason: string;
+			AwardNo: number;
+			JROTCWaiver: number;
+			UsrID: number;
+			DateMod: string;
+			FirstUsr: string;
+			DateCreated: string;
+			PrintedCert: number;
+		}
+
+		export interface CadetDutyPosition {
+			CAPID: number;
+			Duty: string;
+			FunctArea: string;
+			Lvl: string;
+			Asst: number;
+			UsrID: string;
+			DateMod: string;
+			ORGID: number;
+		}
+
+		export interface DutyPosition {
+			CAPID: number;
+			Duty: string;
+			FunctArea: string;
+			Lvl: string;
+			Asst: number;
+			UsrID: string;
+			DateMod: string;
+			ORGID: number;
+		}
+
+		export interface MbrContact {
+			CAPID: number;
+			Type: MemberContactType;
+			Priority: MemberContactPriority;
+			Contact: string;
+			UsrID: string;
+			DateMod: string;
+			DoNotContact: number;
+		}
+
+		export interface Member {
+			CAPID: number;
+			SSN: '';
+			NameLast: string;
+			NameFirst: string;
+			NameMiddle: string;
+			NameSuffix: string;
+			Gender: string;
+			DOB: string;
+			Profession: string;
+			EducationLevel: string;
+			Citizen: string;
+			ORGID: number;
+			Wing: string;
+			Unit: string;
+			Rank: string;
+			Joined: string;
+			Expiration: string;
+			OrgJoined: string;
+			UsrID: string;
+			DateMod: string;
+			LSCode: string;
+			Type: 'CADET' | 'SENIOR' | 'PATRON';
+			RankDate: string;
+			Region: string;
+			MbrStatus: string;
+			PicStatus: string;
+			PicDate: string;
+			CdtWaiver: string;
+		}
+
+		export interface OrgAddresses {
+			ORGID: number;
+			Wing: string;
+			Unit: string;
+			Type: string;
+			Priority: string;
+			Addr1: string;
+			Addr2: string;
+			City: string;
+			State: string;
+			Zip: string;
+			Latitude: string;
+			Longitude: string;
+			UsrID: string;
+			DateMod: string;
+		}
+
+		export interface Organization {
+			ORGID: number;
+			Region: string;
+			Wing: string;
+			Unit: string;
+			NextLevel: number;
+			Name: string;
+			Type: string;
+			DateChartered: string;
+			Status: string;
+			Scope: string;
+			UsrID: string;
+			DateMod: string;
+			FirstUsr: string;
+			DateCreated: string;
+			DateReceived: string;
+			OrgNotes: string;
+		}
+
+		export interface OrgContact {
+			ORGID: number;
+			Wing: string;
+			Unit: string;
+			Type: string;
+			Priority: string;
+			Contact: string;
+			UsrID: string;
+			DateMod: string;
+		}
+
+		export interface OrgMeetings {
+			ORGID: number;
+			Wing: string;
+			Unit: string;
+			MeetTime: string;
+			MeetDay: string;
+			ActivityDate: string;
+			Descr: string;
+			UsrID: string;
+			DateMod: string;
+		}
 	}
 
+	export interface AsyncIterableIterator<T> {
+		next(value?: any): Promise<IteratorResult<T>>;
+		return?(value?: any): Promise<IteratorResult<T>>;
+		throw?(e?: any): Promise<IteratorResult<T>>;
+	}
+
+	export type MultCheckboxReturn = [boolean[], string | undefined];
+
+	export interface SuccessfulSigninReturn {
+		error: MemberCreateError.NONE;
+		member: MemberObject;
+		sessionID: string;
+		valid: true;
+	}
+
+	export interface FailedSigninReturn {
+		error: MemberCreateError;
+		member: null;
+		sessionID: string;
+		valid: false;
+	}
+
+	export type SigninReturn = SuccessfulSigninReturn | FailedSigninReturn;
+
 	export interface PointOfContact {
+		type: PointOfContactType;
 		email: string;
 		phone: string;
 		receiveUpdates: boolean;
@@ -22,12 +209,12 @@ declare global {
 	}
 
 	export interface InternalPointOfContact extends PointOfContact {
-		type: 'internal'
+		type: PointOfContactType.INTERNAL;
 		id: number;
 	}
 
 	export interface ExternalPointOfContact extends PointOfContact {
-		type: 'external'
+		type: PointOfContactType.EXTERNAL;
 		name: string;
 	}
 
@@ -38,32 +225,22 @@ declare global {
 	export interface Identifiable {
 		id: string | number;
 	}
-	
+
 	export interface AccountIdentifiable extends Identifiable {
 		/**
 		 * The ID of the account the folder belongs to
 		 */
 		accountID: string;
 	}
-	
-	export enum MemberCreateError {
-		INCORRECT_CREDENTIALS,
-		PASSWORD_EXPIRED
-	}
-	
-	export enum MemberCAPWATCHErrors {
-		INVALID_PERMISSIONS,
-		NO_NHQ_ACTION
-	}
-	
+
 	export interface MemberContactInstance {
 		PRIMARY: string;
 		SECONDARY: string;
 		EMERGENCY: string;
 	}
-	
+
 	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
-	
+
 	/**
 	 * Contains all the contact info for the member, according to NHQ
 	 */
@@ -129,11 +306,11 @@ declare global {
 		 */
 		WORKPHONE: MemberContactInstance;
 	}
-	
+
 	export type MemberContactType = keyof MemberContact;
-	
+
 	export type MemberContactPriority = keyof MemberContactInstance;
-	
+
 	export interface MemberPermissions {
 		// Start the Cadet Staff permissions
 		/**
@@ -164,7 +341,7 @@ declare global {
 		 * Whether or not the user can download the cadet staff guide
 		 */
 		DownloadStaffGuide: number;
-		
+
 		// Start Manager permissions
 		/**
 		 * Whether or not the user can add an event
@@ -173,7 +350,7 @@ declare global {
 		 */
 		AddEvent: number;
 		/**
-		 * Whether or not the user can 
+		 * Whether or not the user can
 		 */
 		EditEvent: number;
 		/**
@@ -200,7 +377,7 @@ declare global {
 		 * Whether or not the user can assign positions
 		 */
 		AssignPosition: number;
-		
+
 		// Admin privileges
 		/**
 		 * Whether or not the user can get the event status page
@@ -234,24 +411,24 @@ declare global {
 		 * Whether or not the user can download CAPWATCH files
 		 */
 		DownloadCAPWATCH: number;
-		
+
 		// Developer/super admin privileges?
 		/**
 		 * Whether or not the user can edit the registry
 		 */
 		RegistryEdit: number;
-	
+
 		// To get it to not throw errors
 		[key: string]: number;
 	}
-	
+
 	export type MemberPermission = keyof MemberPermissions;
-	
+
 	/**
 	 * Describes a CAP member
-	 * 
+	 *
 	 * The member may be created from one of three ways:
-	 * 
+	 *
 	 * Member.Create: Takes sign in data and signs the user in
 	 * Member.Check: Takes a session id and returns the user
 	 * Member.Estimate: Estimates the user based off of CAPWATCH data
@@ -301,6 +478,14 @@ declare global {
 		 * Which flight the user is in. Should only exist if not a senior member
 		 */
 		flight?: string;
+		/**
+		 * The organization the member belongs to
+		 */
+		orgid: number;
+		/**
+		 * Since many accounts can have an ORGID, there is an array containing each one
+		 */
+		// accounts: Account[]
 	}
 
 	interface TemporaryDutyPosition {
@@ -309,7 +494,9 @@ declare global {
 		Duty: string;
 	}
 
-	export interface ExtraMemberInformation extends AccountIdentifiable, NoSQLDocument {
+	export interface ExtraMemberInformation
+		extends AccountIdentifiable,
+			NoSQLDocument {
 		/**
 		 * CAPID
 		 */
@@ -322,8 +509,14 @@ declare global {
 		 * Access level for the member
 		 */
 		accessLevel: MemberAccessLevel;
+		/**
+		 * Member flight
+		 *
+		 * Undefined if the member is a senior member
+		 */
+		flight?: string;
 	}
-	
+
 	export interface AccountObject extends Identifiable, NoSQLDocument {
 		/**
 		 * The Account ID
@@ -347,7 +540,7 @@ declare global {
 		paid: boolean;
 		/**
 		 * Whether the account is a valid paid account
-		 * 
+		 *
 		 * Valid paid means it is paid for and not expired
 		 */
 		validPaid: boolean;
@@ -372,14 +565,14 @@ declare global {
 		 */
 		adminIDs: number[];
 	}
-	
+
 	export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
 		/**
 		 * The kind of object it is, as these pass through JSON requests
 		 */
 		kind: string;
 	}
-	
+
 	export interface FileObject extends DriveObject {
 		/**
 		 * Prevent duck typing to an extent
@@ -430,9 +623,13 @@ declare global {
 		 */
 		parentID: string;
 	}
-	
-	export interface BlogPost extends AccountIdentifiable, NoSQLDocument, NewBlogPost {
+
+	export interface BlogPostObject
+		extends AccountIdentifiable,
+			NoSQLDocument,
+			NewBlogPost {
 		id: number;
+		posted: number;
 	}
 
 	export interface NewBlogPost {
@@ -440,10 +637,12 @@ declare global {
 		authorid: number;
 		content: RawDraftContentState;
 		fileIDs: string[];
-		posted: number;
 	}
 
-	export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
+	export interface EventObject
+		extends AccountIdentifiable,
+			NoSQLDocument,
+			NewEventObject {
 		/**
 		 * ID of the Event, can be expressed as the event number
 		 */
@@ -485,7 +684,7 @@ declare global {
 		signUpDenyMessage: string;
 		publishToWingCalendar: boolean;
 		showUpcoming: boolean;
-		groupEventNumber: number;
+		groupEventNumber: [number, string | undefined];
 		wingEventNumber: number;
 		complete: boolean;
 		administrationComments: string;
@@ -495,6 +694,7 @@ declare global {
 		author: number;
 		signUpPartTime: boolean;
 		teamID: number;
+		fileIDs: string[];
 		sourceEvent?: {
 			id: number;
 			accountID: string;
@@ -513,7 +713,7 @@ declare global {
 		summaryEmailSent: boolean;
 		planToUseCAPTransportation: boolean;
 	}
-	
+
 	export const enum AttendanceStatus {
 		COMMITTEDATTENDED,
 		NOSHOW,

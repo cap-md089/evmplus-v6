@@ -1,0 +1,16 @@
+{
+    "folders": [
+		{
+			"path": "server",
+			"name": "Server"
+		},
+		{
+			"path": "client",
+			"name": "Client"
+		},
+		{
+			"path": "lib",
+			"name": "Common"
+		}
+	]
+}
