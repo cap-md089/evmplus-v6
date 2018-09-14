@@ -1,12 +1,12 @@
 import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
-import { MemberCAPWATCHErrors, MemberCreateError } from 'common-lib/index';
 import { RequestHandler } from 'express';
 import { existsSync, unlink, writeFile } from 'fs';
 import { sign, verify } from 'jsonwebtoken';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
+import { MemberCAPWATCHErrors, MemberCreateError } from '../../enums';
 import Account, { AccountRequest } from '../Account';
 import Member from '../MemberBase';
 import { getPermissions } from '../Permissions';

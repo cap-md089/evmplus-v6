@@ -1,6 +1,6 @@
 import { Schema } from '@mysql/xdevapi';
-import { EventStatus, PointOfContactType } from 'common-lib/index';
 import { DateTime } from 'luxon';
+import { EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
 import BaseMember from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
@@ -263,10 +263,14 @@ export default class Event implements EventObject {
 	/**
 	 * Copies the event in such a way as to preserve all information except time,
 	 * 	which is modified to preserve the deltas but start at the specified date time
-	 * 
+	 *
 	 * @param newStartTime The start time of the new event
 	 */
-	public copy(newStartTime: DateTime, copyStatus = false, copyFiles = true): Promise<Event> {
+	public copy(
+		newStartTime: DateTime,
+		copyStatus = false,
+		copyFiles = true
+	): Promise<Event> {
 		const timeDelta = +newStartTime - this.startDateTime;
 
 		const timeCreated = +DateTime.utc();
@@ -370,4 +374,3 @@ export default class Event implements EventObject {
 }
 
 export { EventStatus };
-

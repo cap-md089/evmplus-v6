@@ -1,4 +1,4 @@
-import { MemberCreateError } from 'common-lib/index';
+import { MemberCreateError } from '../../../../enums';
 import authenticate from '../../../../lib/members/pam/nhq-authenticate';
 import nhqGetcapid from '../../../../lib/members/pam/nhq-getcapid';
 import nhqGetcontact from '../../../../lib/members/pam/nhq-getcontact';

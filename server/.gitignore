@@ -9,6 +9,8 @@ node_modules/*# See https://help.github.com/ignore-files/ for more about ignorin
 # production
 /build
 dist/*
+maps/*
+server/*
 
 # misc
 .DS_Store

@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es6",
 		"module": "commonjs",
-		"outDir": "server/dist",
+		"outDir": "./server/dist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -11,22 +11,17 @@
 		"noUnusedLocals": true,
 		"pretty": true,
 		"removeComments": true,
-		"sourceMap": true,
-		"sourceRoot": "./src",
-		"typeRoots": [
-			"./types",
-			"./node_modules/@types",
-		],
-		"baseUrl": ".",
+		"typeRoots": ["./types", "./node_modules/@types"],
 		"rootDir": "..",
+		"baseUrl": ".",
+		"rootDirs": [
+			"..",
+			"."
+		],
 		"allowSyntheticDefaultImports": false
 	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"node_modules"
-	],
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "src/__tests__/**/*.ts", "../lib/*.ts"],
 	"lib": [
 		"es2015",
 		"es2017",
@@ -34,7 +29,5 @@
 		"es5",
 		"esnext.asynciterable"
 	],
-	"files": [
-		"../lib/index.d.ts"
-	]
+	"files": ["../lib/index.d.ts"]
 }

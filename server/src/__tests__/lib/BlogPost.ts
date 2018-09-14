@@ -47,6 +47,10 @@ describe('BlogPost', async () => {
 		done();
 	});
 
+	it('should get values correctly', () => {
+		expect(blogPost.accountID).toEqual('mdx89');
+	});
+
 	it('should delete successfully', async done => {
 		const { account, schema } = await getTestTools(conftest);
 
@@ -56,9 +60,9 @@ describe('BlogPost', async () => {
 			BlogPost.Get(blogPost.id, account, schema)
 		).rejects.toEqual(expect.any(Error));
 
-		await expect(blogPost.save()).rejects.toEqual(
-			expect.any(Error)
-		);
+		await expect(blogPost.delete()).rejects.toEqual(expect.any(Error));
+
+		await expect(blogPost.save()).rejects.toEqual(expect.any(Error));
 
 		done();
 	});

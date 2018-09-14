@@ -4,8 +4,13 @@ var tslint = require('gulp-tslint');
 var jest = require('gulp-jest').default;
 var sourcemaps = require('gulp-sourcemaps');
 var exec = require('gulp-shell');
+var { existsSync } = require('fs');
 
-var conf = require('./dist/conf');
+var typescriptFiles = [
+	'src/**/*.ts',
+	'!src/__tests__/**/*.ts',
+	'../lib/index.d.ts'
+];
 
 function getDateString() {
 	var date = new Date();
@@ -19,21 +24,20 @@ function getDateString() {
 
 gulp.task('ts', function() {
 	return gulp
-		.src(['src/**/*.ts', '!src/**/*.test.ts', '../lib/index.d.ts'])
+		.src(typescriptFiles, { base: './src' })
 		.pipe(sourcemaps.init())
 		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(
-			sourcemaps.write('./', {
-				sourceRoot: './src',
-				includeContent: false
-			})
-		)
-		.pipe(gulp.dest('dist'));
+		.pipe(sourcemaps.mapSources(sourcePath => sourcePath.slice(9)))
+		.pipe(sourcemaps.write('../maps', {
+			includeContent: false,
+			// sourceRoot: file => '../src'
+		}))
+		.pipe(gulp.dest('./dist'));
 });
 
 gulp.task('tslint', function() {
 	return gulp
-		.src(['src/**/*.ts', '!src/**/*.test.ts'])
+		.src(typescriptFiles)
 		.pipe(tslint({}))
 		.pipe(
 			tslint.report({
@@ -43,61 +47,41 @@ gulp.task('tslint', function() {
 		);
 });
 
-gulp.task('jest', function() {
-	process.env.NODE_ENV = 'test';
+if (existsSync('./dist/conf.js')) {
+	var conf = require('./dist/conf');
 
-	return gulp
-		.src('src/**/*.test.ts')
-		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(gulp.dest('dist'))
-		.pipe(jest());
-});
+	const conn = conf.Configuration.database.connection;
+	gulp.task(
+		'mysql:backup',
+		exec.task(
+			`mysqldump --user=${conn.user} --password=${
+				conn.password
+			} --add-drop-database --result-file=./mysqldumps/current.sql --routines --triggers --databases ${
+				conn.database
+			} && cp mysqldumps/current.sql ./mysqldumps/${getDateString()}.sql`
+		)
+	);
 
-gulp.task('jest:full', function() {
-	process.env.NODE_ENV = 'test';
-
-	return gulp
-		.src('src/**/*.test.ts')
-		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(gulp.dest('dist'))
-		.pipe(
-			jest({
-				converage: true
-			})
-		);
-});
-
-const conn = conf.Configuration.database.connection;
-gulp.task(
-	'mysql:backup',
-	exec.task(
-		`mysqldump --user=${conn.user} --password=${
-			conn.password
-		} --add-drop-database --result-file=./mysqldumps/current.sql --routines --triggers --databases ${
-			conn.database
-		} && cp mysqldumps/current.sql ./mysqldumps/${getDateString()}.sql`
-	)
-);
-
-gulp.task(
-	'mysql:import',
-	exec.task(
-		`mysql --user=${conn.user} --password=${
-			conn.password
-		} < mysqldumps/current.sql`
-	)
-);
+	gulp.task(
+		'mysql:import',
+		exec.task(
+			`mysql --user=${conn.user} --password=${
+				conn.password
+			} < mysqldumps/current.sql`
+		)
+	);
+}
 
 gulp.task('watch', function() {
 	return gulp.watch(
-		['src/**/*.ts', '../lib/index.d.ts'],
-		gulp.series('ts', 'tslint')
+		typescriptFiles,
+		gulp.parallel('ts', 'tslint')
 	);
 });
 
 gulp.task('default', function() {
 	return gulp.watch(
-		['src/**/*.ts', '../lib/index.d.ts'],
-		gulp.series('ts', 'tslint')
+		typescriptFiles,
+		gulp.parallel('ts', 'tslint')
 	);
 });

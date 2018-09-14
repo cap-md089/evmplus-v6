@@ -16,16 +16,12 @@ export default class BlogPost implements BlogPostObject {
 
 		let results;
 
-		try {
-			results = await collectResults(
-				findAndBind(blogPostCollection, {
-					id,
-					accountID: account.id
-				})
-			);
-		} catch (e) {
-			throw new Error('Could not get blog post');
-		}
+		results = await collectResults(
+			findAndBind(blogPostCollection, {
+				id,
+				accountID: account.id
+			})
+		);
 
 		if (results.length !== 1) {
 			throw new Error('Could not get blog post');
@@ -45,15 +41,11 @@ export default class BlogPost implements BlogPostObject {
 
 		let results;
 
-		try {
-			results = await collectResults(
-				findAndBind(blogPostCollection, {
-					accountID: account.id
-				})
-			);
-		} catch (e) {
-			throw new Error('Could not create blog post');
-		}
+		results = await collectResults(
+			findAndBind(blogPostCollection, {
+				accountID: account.id
+			})
+		);
 
 		const id =
 			results

@@ -35,25 +35,27 @@ export default class MemberBase implements MemberObject {
 		schema: Schema,
 		account: Account
 	): Promise<ExtraMemberInformation> {
+		const extraMemberSchema = schema.getCollection<ExtraMemberInformation>(
+			'ExtraMemberInformation'
+		);
 		const results = await collectResults(
-			findAndBind(
-				schema.getCollection<ExtraMemberInformation>(
-					'ExtraMemberInformation'
-				),
-				{
-					id,
-					accountID: account.id
-				}
-			)
+			findAndBind(extraMemberSchema, {
+				id,
+				accountID: account.id
+			})
 		);
 
 		if (results.length === 0) {
-			return {
+			const newInformation: ExtraMemberInformation = {
 				accessLevel: 'Member',
 				accountID: account.id,
 				id,
 				temporaryDutyPositions: []
 			};
+
+			extraMemberSchema.add(newInformation).execute();
+
+			return newInformation;
 		}
 
 		return results[0];

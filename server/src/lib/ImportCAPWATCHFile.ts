@@ -1,8 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
 import { exec } from 'child_process';
-import { CAPWATCHImportErrors } from 'common-lib/index';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
+import { CAPWATCHImportErrors } from '../enums';
 import dutyPosition from './capwatch-modules/dutyposition';
 import memberParse from './capwatch-modules/member';
 
