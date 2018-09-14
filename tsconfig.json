@@ -1,0 +1,31 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+		"outDir": "server/dist",
+		"noImplicitAny": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"alwaysStrict": true,
+		"forceConsistentCasingInFileNames": true,
+		"noUnusedLocals": true,
+		"pretty": true,
+		"removeComments": true,
+		"sourceMap": true,
+		"sourceRoot": "src",
+		"typeRoots": ["./server/types", "./server/node_modules/@types"],
+		"baseUrl": ".",
+		"rootDir": ".",
+		"allowSyntheticDefaultImports": false
+	},
+	"include": ["server/src/**/*.ts"],
+	"exclude": ["server/node_modules"],
+	"lib": [
+		"es2015",
+		"es2017",
+		"es2015.promise",
+		"es5",
+		"esnext.asynciterable"
+	],
+	"files": ["./lib/index.d.ts"]
+}

@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "commonjs",
-		"outDir": ".",
+		"outDir": "./libdist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -11,6 +11,7 @@
 		"noUnusedLocals": true,
 		"pretty": true,
 		"removeComments": true,
+		"preserveSymlinks": true,
 		"sourceMap": true,
 		"typeRoots": ["./types", "./node_modules/@types"],
 		"baseUrl": ".",

@@ -1,5 +1,10 @@
 import { RawDraftContentState } from 'draft-js';
-import { PointOfContactType, EventStatus, MemberCreateError } from './index';
+import {
+	AttendanceStatus,
+	EventStatus,
+	MemberCreateError,
+	PointOfContactType
+} from './index';
 
 declare global {
 	/**
@@ -714,9 +719,15 @@ declare global {
 		planToUseCAPTransportation: boolean;
 	}
 
-	export const enum AttendanceStatus {
-		COMMITTEDATTENDED,
-		NOSHOW,
-		RESCINDEDCOMMITMENTTOATTEND
+	export interface RegistryValues extends NoSQLDocument {
+		accountID: string;
+		contact: {
+			facebook?: string;
+			instagram?: string;
+		},
+		website: {
+			name: string,
+			separator: string;
+		}
 	}
 }

@@ -32,3 +32,9 @@ export enum CAPWATCHImportErrors {
 	INSERT,
 	CLEAR
 }
+
+export enum AttendanceStatus {
+	COMMITTEDATTENDED,
+	NOSHOW,
+	RESCINDEDCOMMITMENTTOATTEND
+}
