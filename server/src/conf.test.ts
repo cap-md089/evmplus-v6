@@ -3,7 +3,7 @@ import conf from './conf';
 
 const conftest: typeof conf = {
 	testing: true,
-	clientStorage: '/home/andrew/Desktop/react-capunit/client',
+	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
 		connection: {
 			database: 'EventManagementTest',

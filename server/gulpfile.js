@@ -27,10 +27,10 @@ gulp.task('ts', function() {
 		.src(typescriptFiles, { base: './src' })
 		.pipe(sourcemaps.init())
 		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(sourcemaps.mapSources(sourcePath => sourcePath.slice(9)))
+		.pipe(sourcemaps.mapSources(sourcePath => sourcePath.slice(16)))
 		.pipe(sourcemaps.write('../maps', {
 			includeContent: false,
-			// sourceRoot: file => '../src'
+			sourceRoot: file => '../src'
 		}))
 		.pipe(gulp.dest('./dist'));
 });

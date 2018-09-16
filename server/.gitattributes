@@ -1,2 +1,3 @@
 src/conf.ts	merge=ours
+src/conf.test.ts merge=ours
 *.js -diff

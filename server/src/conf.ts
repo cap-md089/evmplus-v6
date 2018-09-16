@@ -2,7 +2,7 @@ import { join } from 'path';
 
 export const Configuration = {
 	testing: true,
-	clientStorage: '/home/andrew/Desktop/react-capunit/client',
+	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
 		connection: {
 			database: 'EventManagement4',
