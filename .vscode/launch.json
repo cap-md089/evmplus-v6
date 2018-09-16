@@ -11,7 +11,9 @@
 			"port": 9222,
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/client/src",
-			"runtimeExecutable": "chromium-browser"
+			"linux": {
+				"runtimeExecutable": "/usr/bin/chromium-browser"
+			}
 		},
 		{
 			"type": "chrome",
@@ -52,14 +54,14 @@
 			"name": "Launch Server & Client",
 			"configurations": [
 				"Launch Server",
-				"Launch Client"
+				"Launch Chrome"
 			]
 		},
 		{
 			"name": "Launch Server & Attach to Client",
 			"configurations": [
 				"Launch Server",
-				"Attach to Client"
+				"Attach to Chrome"
 			]
 		}
 	]
