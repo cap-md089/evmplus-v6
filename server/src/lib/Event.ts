@@ -2,7 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import { DateTime } from 'luxon';
 import { EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
-import BaseMember from './MemberBase';
+import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class Event implements EventObject {
@@ -39,7 +39,8 @@ export default class Event implements EventObject {
 	public static async Create(
 		data: NewEventObject,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		member: MemberBase
 	) {
 		const eventsCollection = schema.getCollection<EventObject>('Events');
 
@@ -62,7 +63,8 @@ export default class Event implements EventObject {
 			id: newID,
 			accountID: account.id,
 			timeCreated,
-			timeModified: timeCreated
+			timeModified: timeCreated,
+			author: member.id
 		};
 
 		const results = await eventsCollection.add(newEvent).execute();
@@ -268,18 +270,16 @@ export default class Event implements EventObject {
 	 */
 	public copy(
 		newStartTime: DateTime,
+		member: MemberBase,
 		copyStatus = false,
 		copyFiles = true
 	): Promise<Event> {
 		const timeDelta = +newStartTime - this.startDateTime;
 
-		const timeCreated = +DateTime.utc();
-
 		const newEvent: NewEventObject = {
 			acceptSignups: this.acceptSignups,
 			activity: this.activity,
 			administrationComments: this.administrationComments,
-			author: this.author,
 			comments: this.comments,
 			complete: this.complete,
 			debrief: this.debrief,
@@ -305,8 +305,6 @@ export default class Event implements EventObject {
 			fileIDs: copyFiles ? this.fileIDs : [],
 			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
-			timeCreated,
-			timeModified: timeCreated,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
@@ -318,7 +316,7 @@ export default class Event implements EventObject {
 			pickupDateTime: this.pickupDateTime - timeDelta
 		};
 
-		return Event.Create(newEvent, this.account, this.schema);
+		return Event.Create(newEvent, this.account, this.schema, member);
 	}
 
 	/**

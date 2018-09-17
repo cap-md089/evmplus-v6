@@ -461,8 +461,6 @@
         "requiredEquipment",
         "requiredForms",
         "showUpcoming",
-        "signUpDenyMessage",
-        "signUpPartTime",
         "startDateTime",
         "status",
         "teamID",
@@ -470,8 +468,7 @@
         "timeModified",
         "transportationDescription",
         "transportationProvided",
-        "uniform",
-        "wingEventNumber"
+        "uniform"
     ],
     "type": "object"
 }

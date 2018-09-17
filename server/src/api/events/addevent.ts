@@ -23,7 +23,12 @@ export default async (
 		req.account !== null &&
 		newEventValidator(req.body)
 	) {
-		const newEvent = await Event.Create(req.body, req.account, req.mysqlx);
+		const newEvent = await Event.Create(
+			req.body,
+			req.account,
+			req.mysqlx,
+			req.member
+		);
 
 		json<EventObject>(res, newEvent.toRaw());
 	} else {
