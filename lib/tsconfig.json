@@ -2,7 +2,6 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "commonjs",
-		"outDir": "./libdist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -17,7 +16,7 @@
 		"baseUrl": ".",
 		"rootDir": "."
 	},
-	"include": ["src/**/*.ts", "../server/src/__tests__/lib/members/pam/nhq.ts"],
+	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
 	"files": ["../lib/index.d.ts"]

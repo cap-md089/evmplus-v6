@@ -187,6 +187,8 @@ declare global {
 
 	export type MultCheckboxReturn = [boolean[], string | undefined];
 
+	export type RadioReturn<T extends number> = [T, string | undefined];
+
 	export interface SuccessfulSigninReturn {
 		error: MemberCreateError.NONE;
 		member: MemberObject;
@@ -652,11 +654,12 @@ declare global {
 		 * ID of the Event, can be expressed as the event number
 		 */
 		id: number;
+		timeModified: number;
+		timeCreated: number;
+		author: number;
 	}
 
 	export interface NewEventObject {
-		timeModified: number;
-		timeCreated: number;
 		name: string;
 		meetDateTime: number;
 		meetLocation: string;
@@ -686,18 +689,17 @@ declare global {
 		requiredForms: MultCheckboxReturn;
 		comments: string;
 		acceptSignups: boolean;
-		signUpDenyMessage: string;
+		signUpDenyMessage?: string;
 		publishToWingCalendar: boolean;
 		showUpcoming: boolean;
-		groupEventNumber: [number, string | undefined];
-		wingEventNumber: number;
+		groupEventNumber: RadioReturn<number>;
+		wingEventNumber?: number;
 		complete: boolean;
 		administrationComments: string;
 		status: EventStatus;
 		debrief: string;
 		pointsOfContact: (InternalPointOfContact | ExternalPointOfContact)[];
-		author: number;
-		signUpPartTime: boolean;
+		signUpPartTime?: boolean;
 		teamID: number;
 		fileIDs: string[];
 		sourceEvent?: {

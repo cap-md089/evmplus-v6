@@ -145,6 +145,10 @@
             "description": "Suffix of member",
             "type": "string"
         },
+        "orgid": {
+            "description": "The organization the member belongs to",
+            "type": "number"
+        },
         "seniorMember": {
             "description": "Whether or not the member is a senior member",
             "type": "boolean"
@@ -163,6 +167,7 @@
         "nameLast",
         "nameMiddle",
         "nameSuffix",
+        "orgid",
         "seniorMember",
         "squadron"
     ],
