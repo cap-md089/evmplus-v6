@@ -183,7 +183,7 @@ class SimpleForm<
 		disabled: boolean;
 	}
 > {
-	protected fields: C;
+	protected fields = {} as C;
 
 	protected token: string = '';
 	protected sessionID: string = '';
@@ -300,7 +300,9 @@ class SimpleForm<
 							return;
 						} else {
 							this.fields[child.props.name] =
-								child.props.value || '';
+								typeof child.props.value === 'undefined'
+									? ''
+									: child.props.value;
 							fullWidth = child.props.fullWidth;
 							if (typeof fullWidth === 'undefined') {
 								fullWidth = false;
@@ -308,6 +310,7 @@ class SimpleForm<
 							ret = [
 								React.cloneElement(child, {
 									onUpdate: this.onChange,
+									onInitialize: this.onInitialize,
 									key: i + 1
 								})
 							];

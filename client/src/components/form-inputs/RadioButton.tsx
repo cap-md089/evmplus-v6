@@ -2,7 +2,7 @@ import * as React from 'react';
 import { InputProps } from './Input';
 
 export interface RadioProps<E extends number = number>
-	extends InputProps<[E, string | undefined]> {
+	extends InputProps<RadioReturn<E>> {
 	labels: string[];
 	other?: boolean;
 }

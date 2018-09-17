@@ -39,8 +39,8 @@ interface Props {
 	test8: DateTime;
 	test9: DateTime;
 	test10: DateTime;
-	test11: [Test1, string | undefined];
-	test12: [boolean[], string | undefined];
+	test11: RadioReturn<Test1>;
+	test12: MultCheckboxReturn;
 	test13: boolean;
 	test14: RawDraftContentState;
 	test15: {

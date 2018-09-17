@@ -40,7 +40,7 @@ export default class MultCheckbox extends React.Component<
 					typeof props.value[1] === 'undefined' ? '' : props.value[1]!
 			};
 		}
-
+		
 		if (this.props.onInitialize) {
 			const value = [
 				this.state.currentValue,

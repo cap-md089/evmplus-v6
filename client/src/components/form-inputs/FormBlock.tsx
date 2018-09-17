@@ -20,7 +20,7 @@ interface FormBlockProps extends React.HTMLAttributes<HTMLDivElement> {
 export default class FormBlock<T extends object> extends React.Component<
 	FormBlockProps
 > {
-	private fields: T = {} as T;
+	private fields = {} as T;
 
 	constructor(props: FormBlockProps) {
 		super(props);

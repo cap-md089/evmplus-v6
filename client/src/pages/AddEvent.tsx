@@ -45,8 +45,6 @@ export default class AddEvent extends React.Component<
 > {
 	public state: AddEventState = {
 		event: {
-			timeCreated: Math.round(+DateTime.utc() / 1000),
-			timeModified: Math.round(+DateTime.utc() / 1000),
 			name: '',
 			meetDateTime: Math.round(+DateTime.utc() / 1000),
 			meetLocation: '',
@@ -94,7 +92,6 @@ export default class AddEvent extends React.Component<
 			status: 0,
 			debrief: '',
 			pointsOfContact: [],
-			author: 0,
 			signUpPartTime: false,
 			teamID: 0,
 			fileIDs: []
@@ -127,7 +124,6 @@ export default class AddEvent extends React.Component<
 				url="/api/event"
 				id="newEventForm"
 				onChange={this.updateNewEvent}
-				onSubmit={console.log}
 			>
 				<Title>Create an event</Title>
 				<Label>Event name</Label>
@@ -409,7 +405,7 @@ export default class AddEvent extends React.Component<
 
 				<Label>Administration comments</Label>
 				<TextInput
-					name="administratitonComments"
+					name="administrationComments"
 					value={event.administrationComments}
 				/>
 
@@ -418,10 +414,9 @@ export default class AddEvent extends React.Component<
 				</TextBox>
 
 				<Label>Team</Label>
-				<TextInput
-					disabled={true}
+				<NumberInput
 					name="teamID"
-					value={this.state.event.teamID.toString()}
+					value={this.state.event.teamID}
 				/>
 
 				<Label>Event files</Label>
