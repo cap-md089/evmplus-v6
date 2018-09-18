@@ -208,6 +208,7 @@ class SimpleForm<
 		};
 
 		this.onChange = this.onChange.bind(this);
+		this.onInitialize = this.onInitialize.bind(this);
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as C;
@@ -237,6 +238,7 @@ class SimpleForm<
 
 		const sid = localStorage.getItem('sessionID');
 		if (sid) {
+			this.sessionID = sid;
 			myFetch('/api/token', {
 				headers: {
 					authorization: sid
@@ -299,10 +301,12 @@ class SimpleForm<
 							}
 							return;
 						} else {
-							this.fields[child.props.name] =
-								typeof child.props.value === 'undefined'
-									? ''
-									: child.props.value;
+							if (!this.fields[child.props.name]) {
+								this.fields[child.props.name] =
+									typeof child.props.value === 'undefined'
+										? ''
+										: child.props.value;
+							}
 							fullWidth = child.props.fullWidth;
 							if (typeof fullWidth === 'undefined') {
 								fullWidth = false;
@@ -410,6 +414,9 @@ class SimpleForm<
 
 	protected onInitialize(e: { name: string; value: any }) {
 		this.fields[e.name] = e.value;
+		if (this.props.onChange) {
+			this.props.onChange(this.fields);
+		}
 	}
 
 	/**

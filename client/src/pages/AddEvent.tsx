@@ -57,7 +57,7 @@ export default class AddEvent extends React.Component<
 			transportationDescription: '',
 			uniform: [
 				[false, false, true, false, false, false, false, false, false],
-				undefined
+				''
 			],
 			desiredNumberOfParticipants: 8,
 			useRegistration: false,
@@ -85,7 +85,7 @@ export default class AddEvent extends React.Component<
 			signUpDenyMessage: '',
 			publishToWingCalendar: false,
 			showUpcoming: true,
-			groupEventNumber: [0, undefined],
+			groupEventNumber: [0, ''],
 			wingEventNumber: 0,
 			complete: false,
 			administrationComments: '',
@@ -434,7 +434,7 @@ export default class AddEvent extends React.Component<
 
 	private updateNewEvent(event: NewEventFormValues) {
 		this.setState({
-			event
+			event: Object.assign({}, event)
 		});
 	}
 }

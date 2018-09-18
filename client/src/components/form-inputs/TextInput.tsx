@@ -28,6 +28,13 @@ export default class TextInput extends React.Component<TextInputProps> {
 				value: props.value
 			};
 		}
+
+		if (props.onInitialize) {
+			props.onInitialize({
+				name: props.name,
+				value: props.value
+			})
+		}
 	}
 
 	public onChange (e: React.FormEvent<HTMLInputElement>) {

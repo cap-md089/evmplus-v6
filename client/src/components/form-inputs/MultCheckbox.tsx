@@ -44,11 +44,11 @@ export default class MultCheckbox extends React.Component<
 		if (this.props.onInitialize) {
 			const value = [
 				this.state.currentValue,
-				this.state.currentValue[this.props.labels.length] ? this.state.currentText : undefined
+				this.state.currentValue[this.props.labels.length] ? this.state.currentText : ''
 			];
 			this.props.onInitialize({
 				name: this.props.name,
-				value: value as [boolean[], string | undefined]
+				value: value as [boolean[], string | '']
 			});
 		}
 		
@@ -120,7 +120,7 @@ export default class MultCheckbox extends React.Component<
 				currentValue: currentValues
 			});
 
-			const stringValue = currentValues[this.props.labels.length] ? this.state.currentText : undefined;
+			const stringValue = currentValues[this.props.labels.length] ? this.state.currentText : '';
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({

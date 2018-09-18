@@ -27,6 +27,8 @@ export default class FormBlock<T extends object> extends React.Component<
 
 		this.onUpdate = this.onUpdate.bind(this);
 		this.onInitialize = this.onInitialize.bind(this);
+
+		this.render = this.render.bind(this);
 	}
 
 	public render() {
@@ -59,7 +61,12 @@ export default class FormBlock<T extends object> extends React.Component<
 						}
 						return;
 					} else {
-						this.fields[child.props.name] = child.props.value || '';
+						if (!this.fields[child.props.name]) {
+							this.fields[child.props.name] =
+								typeof child.props.value === 'undefined'
+									? ''
+									: child.props.value;
+						}
 						fullWidth = child.props.fullWidth;
 						if (typeof fullWidth === 'undefined') {
 							fullWidth = false;

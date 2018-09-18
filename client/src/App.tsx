@@ -97,16 +97,17 @@ const konamiCode = [
 	'Enter'
 ];
 
+const konami = {
+	index: 0,
+	done: false
+}
+
 interface AppState {
 	Registry: Registry;
 	member: SigninReturn;
 	tryingMember: boolean;
 	sideNavLinks: JSX.Element[];
 	breadCrumbs: BreadCrumb[];
-	konami: {
-		index: number;
-		done: boolean;
-	};
 }
 
 export default class App extends React.Component<
@@ -132,10 +133,6 @@ export default class App extends React.Component<
 		},
 		sideNavLinks: [],
 		breadCrumbs: [],
-		konami: {
-			index: 0,
-			done: false
-		}
 	};
 
 	private titleElement: HTMLDivElement;
@@ -218,7 +215,7 @@ export default class App extends React.Component<
 			.removeClass('desktop');
 		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
 
-		return this.state.konami.done ? (
+		return konami.done ? (
 			<Konami
 				exit={this.doneWithKonami}
 				authorizeUser={this.authorizeUser}
@@ -549,35 +546,18 @@ export default class App extends React.Component<
 	}
 
 	private onKeyDown(e: KeyboardEvent) {
-		if (konamiCode[this.state.konami.index] === e.code) {
-			let index = this.state.konami.index + 1;
-			const done = index === konamiCode.length || this.state.konami.done;
+		if (konamiCode[konami.index] === e.code) {
+			let index = konami.index + 1;
+			const done = index === konamiCode.length || konami.done;
 			if (done) {
 				index = 0;
+				this.forceUpdate();
 			}
-
-			this.setState({
-				konami: {
-					index,
-					done
-				}
-			});
-		} else {
-			this.setState(prev => ({
-				konami: {
-					done: prev.konami.done,
-					index: 0
-				}
-			}));
 		}
 	}
 
 	private doneWithKonami() {
-		this.setState({
-			konami: {
-				done: false,
-				index: 0
-			}
-		});
+		konami.done = false;
+		this.forceUpdate();
 	}
 }

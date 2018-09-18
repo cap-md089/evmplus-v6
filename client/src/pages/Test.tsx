@@ -66,8 +66,8 @@ export default class Test extends Page<
 		test8: DateTime.utc(),
 		test9: DateTime.utc(),
 		test10: DateTime.utc(),
-		test11: [-1, undefined],
-		test12: [[false, false, false], undefined],
+		test11: [-1, ''],
+		test12: [[false, false, false], ''],
 		test13: false,
 		test14: convertToRaw(EditorState.createEmpty().getCurrentContent()),
 		test15: {

@@ -16,11 +16,11 @@ const TimeZoneDisplays = {
 	'Pacific/Hawaii': 'Hawaii'
 };
 
-type SupportedTimeZones = 'America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles' | 'America/Arizona' | 'America/Anchorage' | 'Pacific/Hawaii';
+type SupportedTimeZones = keyof typeof TimeZoneDisplays;
 
 // We don't want it to throw an error with value being a moment or a number
 // @ts-ignore
-export interface DateTimeInputProps extends InputProps<DateTime> {
+export interface DateTimeInputProps extends InputProps<number> {
 	value?: DateTime | number;
 	date: boolean;
 	time: boolean;
@@ -95,8 +95,8 @@ export default class DateTimeInput extends React.Component<
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
-				name: this.props.name,
-				value: start
+			 	name: this.props.name,
+				value: Math.round(+start / 1000)
 			});
 		}
 
@@ -271,7 +271,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -316,7 +316,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -354,7 +354,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -397,7 +397,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -440,7 +440,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -484,7 +484,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 
@@ -519,7 +519,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newInput
+				value: Math.round(+newInput / 1000)
 			});
 		}
 

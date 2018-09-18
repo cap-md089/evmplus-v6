@@ -107,6 +107,7 @@ class Form<
 
 		const sid = localStorage.getItem('sessionID');
 		if (sid) {
+			this.sessionID = sid;
 			myFetch('/api/token', {
 				headers: {
 					authorization: sid

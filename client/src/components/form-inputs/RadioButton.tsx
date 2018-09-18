@@ -30,7 +30,7 @@ export default class RadioButton<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: this.props.value || [-1, undefined]
+				value: this.props.value || [-1, '']
 			});
 		}
 
@@ -122,7 +122,7 @@ export default class RadioButton<
 					index as E,
 					index === this.props.labels.length
 						? this.state.otherText
-						: undefined
+						: ''
 				]);
 			}
 
@@ -133,7 +133,7 @@ export default class RadioButton<
 						index as E,
 						index === this.props.labels.length
 							? this.state.otherText
-							: undefined
+							: ''
 					]
 				});
 			}
