@@ -185,9 +185,9 @@ declare global {
 		throw?(e?: any): Promise<IteratorResult<T>>;
 	}
 
-	export type MultCheckboxReturn = [boolean[], string | undefined];
+	export type MultCheckboxReturn = [boolean[], string];
 
-	export type RadioReturn<T extends number> = [T, string | undefined];
+	export type RadioReturn<T extends number> = [T, string];
 
 	export interface SuccessfulSigninReturn {
 		error: MemberCreateError.NONE;
@@ -227,6 +227,10 @@ declare global {
 
 	export interface NoSQLDocument {
 		_id?: string;
+	}
+
+	export interface DatabaseInterface<T extends NoSQLDocument> {
+		toRaw(): T
 	}
 
 	export interface Identifiable {
