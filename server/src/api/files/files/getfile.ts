@@ -2,13 +2,11 @@ import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
+import File from '../../../lib/File';
+import { MemberRequest } from '../../../lib/MemberBase';
 
-import { AccountRequest } from '../../../lib/Account';
-import { collectResults } from '../../../lib/MySQLUtil';
-
-export default async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
+export default async (req: MemberRequest, res: express.Response) => {
 	if (
-		typeof req.account === 'undefined' ||
 		typeof req.params === 'undefined' ||
 		typeof req.params.fileid === 'undefined'
 	) {
@@ -17,29 +15,29 @@ export default async (req: AccountRequest, res: express.Response, next: express.
 		return;
 	}
 
-	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+	let file: File;
 
-	const results = await collectResults(
-		filesCollection
-			.find('id = :id AND accountID = :accountID')
-			.bind({
-				id: req.params.fileid,
-				accountID: req.account.id
-			})
-	);
-
-	if (results.length !== 1) {
+	try {
+		file = await File.Get(req.params.fileid, req.account, req.mysqlx);
+	} catch (e) {
 		res.status(404);
 		res.end();
 		return;
 	}
 
-	const fileRequestedData = results[0];
-	const fileRequested = fs.createReadStream(join(config.fileStoragePath, fileRequestedData.id));
+	if (file.memberOnly && req.member === null) {
+		res.status(403);
+		res.end();
+		return;
+	}
 
-	res.contentType(fileRequestedData.contentType);
+	const fileRequested = fs.createReadStream(
+		join(config.fileStoragePath, file.id)
+	);
+
+	res.contentType(file.contentType);
 	res.header({
-		'Content-Disposition': 'attachment; filename="' + fileRequestedData.fileName + '"'
+		'Content-Disposition': 'attachment; filename="' + file.fileName + '"'
 	});
 
 	fileRequested.on('data', data => {

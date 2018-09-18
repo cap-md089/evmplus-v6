@@ -4,7 +4,6 @@ import { modifyAndBind } from '../../../lib/MySQLUtil';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (
-		typeof req.account === 'undefined' ||
 		typeof req.params.parentid === 'undefined' ||
 		typeof req.body === 'undefined' ||
 		typeof req.body.id === 'undefined'

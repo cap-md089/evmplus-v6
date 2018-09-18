@@ -7,7 +7,7 @@ import { collectResults, findAndBind } from '../MySQLUtil'
 export default class CAPWATCHMember extends MemberBase {
 	public static readonly tableNames = {
 		member: 'NHQ_Member',
-		contact: ''
+		contact: 'NHQ_MbrContact'
 	}
 
 	public static async Get(
@@ -40,7 +40,7 @@ export default class CAPWATCHMember extends MemberBase {
 			CAPWATCHMember.LoadExtraMemberInformation(id, schema, account)
 		])
 
-		if (results.length !== 1) {
+		if (results.length !== 1 || capwatchContact.length !== 1) {
 			throw new Error('Cannot select member')
 		}
 

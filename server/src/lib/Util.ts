@@ -31,13 +31,9 @@ export async function orderlyExecute<T, S>(
 	return ret;
 }
 
-export function json<T>(res: express.Response, values: T): void {
-	res.json(values);
-}
+export const json = <T>(res: express.Response, values: T) => res.json(values);
 
-export function getSchemaValidator(schema: any) {
-	return new ajv({ allErrors: true }).compile(schema);
-}
+export const getSchemaValidator = (schema: any) => new ajv({ allErrors: true }).compile(schema);
 
 export function getFullSchemaValidator<T>(schemaName: string) {
 	const schema = require(join(conf.schemaPath, schemaName));
@@ -47,22 +43,27 @@ export function getFullSchemaValidator<T>(schemaName: string) {
 	return (val: any): val is T => privateValidator(val) as boolean;
 }
 
-export async function streamAsyncGeneratorAsJSON<T>(
+export async function streamAsyncGeneratorAsJSONArray<T>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,
-	functionHandle: (val: T) => string
+	functionHandle: (val: T) => string | false
 ): Promise<void> {
 	res.header('Content-type', 'application/json');
 
 	let started = false;
 
 	for await (const i of iterator) {
-		if (started) {
-			res.write(', ' + functionHandle(i));
-		} else {
-			res.write('[' + functionHandle(i));
+		const value = functionHandle(i);
+		if (value !== false) {
+			res.write(started ? ',' : '[ ' + value);
 			started = true;
 		}
+	}
+
+	// Will happen if the iterator returned nothing, or the map
+	// function returned false for every item
+	if (!started) {
+		res.write('[');
 	}
 
 	res.write(']');

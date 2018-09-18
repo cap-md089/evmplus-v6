@@ -2,9 +2,9 @@ import { Schema } from '@mysql/xdevapi';
 import { RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import Account from './Account';
-import { collectResults, findAndBind } from './MySQLUtil';
+import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
-export default class BlogPost implements BlogPostObject {
+export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogPostObject> {
 	public static async Get(
 		id: number,
 		account: Account,
@@ -41,16 +41,20 @@ export default class BlogPost implements BlogPostObject {
 
 		let results;
 
-		results = await collectResults(
+		results = await generateResults(
 			findAndBind(blogPostCollection, {
 				accountID: account.id
 			})
 		);
 
-		const id =
-			results
-				.map(post => post.id)
-				.reduce((prev, curr) => Math.max(prev, curr), 0) + 1;
+		let id = 0;
+
+		for await (const post of results) {
+			id = Math.max(id, post.id);
+		}
+
+		// Make sure it's not just the biggest post ID, but the one after
+		id++;
 
 		const posted = +DateTime.utc();
 

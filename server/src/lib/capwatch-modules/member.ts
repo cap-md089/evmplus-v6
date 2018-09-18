@@ -39,7 +39,7 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (
 
 	const promises = [];
 
-	for (const member of fileData) {
+	for await (const member of fileData) {
 		try {
 			const values = {
 				CAPID: parseInt(member.CAPID + '', 10),

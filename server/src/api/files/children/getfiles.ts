@@ -1,14 +1,9 @@
 import * as express from 'express';
-import { AccountRequest } from '../../../lib/Account';
 import File from '../../../lib/File';
+import { MemberRequest } from '../../../lib/MemberBase';
+import { streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: express.Response) => {
-	if (typeof req.account === 'undefined') {
-		res.status(400);
-		res.end();
-		return;
-	}
-
+export default async (req: MemberRequest, res: express.Response) => {
 	const parentid =
 		typeof req.params.parentid === 'undefined'
 			? 'root'
@@ -21,29 +16,21 @@ export default async (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
+	let folder;
+
 	try {
-		const folder = await File.Get(parentid, req.account, req.mysqlx);
+		folder = await File.Get(parentid, req.account, req.mysqlx);
 
-		let started = false;
-
-		res.status(200);
-		res.set('Content-type', 'application/json');
-
-		for await (const file of folder.getChildren()) {
-			if (started) {
-				res.write(',' + JSON.stringify(file.toRaw()));
-			} else {
-				res.write('[' + JSON.stringify(file.toRaw()));
-				started = true;
-			}
-		}
-
-		res.write(']');
-		res.end();
 	} catch (e) {
 		// tslint:disable-next-line
 		console.log(e);
-		res.status(500);
+		res.status(404);
 		res.end();
 	}
+
+	streamAsyncGeneratorAsJSONArray<FileObject>(
+		res,
+		folder.getChildren(),
+		JSON.stringify
+	);
 };

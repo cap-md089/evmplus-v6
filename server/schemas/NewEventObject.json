@@ -138,9 +138,6 @@
         "administrationComments": {
             "type": "string"
         },
-        "author": {
-            "type": "number"
-        },
         "comments": {
             "type": "string"
         },
@@ -377,12 +374,6 @@
         "teamID": {
             "type": "number"
         },
-        "timeCreated": {
-            "type": "number"
-        },
-        "timeModified": {
-            "type": "number"
-        },
         "transportationDescription": {
             "type": "string"
         },
@@ -425,7 +416,6 @@
         "acceptSignups",
         "activity",
         "administrationComments",
-        "author",
         "comments",
         "complete",
         "debrief",
@@ -448,17 +438,12 @@
         "requiredEquipment",
         "requiredForms",
         "showUpcoming",
-        "signUpDenyMessage",
-        "signUpPartTime",
         "startDateTime",
         "status",
         "teamID",
-        "timeCreated",
-        "timeModified",
         "transportationDescription",
         "transportationProvided",
-        "uniform",
-        "wingEventNumber"
+        "uniform"
     ],
     "type": "object"
 }

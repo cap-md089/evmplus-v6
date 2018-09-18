@@ -5,8 +5,7 @@ import { json } from '../../../lib/Util';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (
-		typeof req.params.id !== 'undefined' &&
-		typeof req.account !== 'undefined'
+		typeof req.params.id !== 'undefined'
 	) {
 		try {
 			const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
@@ -14,7 +13,7 @@ export default async (req: AccountRequest, res: express.Response) => {
 			json<BlogPostObject>(res, blogPost.toRaw());
 		} catch(e) {
 			if (e.message === 'Could not get blog post') {
-				res.status(400);
+				res.status(404);
 				res.end();
 			} else {
 				// tslint:disable-next-line:no-console

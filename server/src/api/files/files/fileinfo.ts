@@ -1,15 +1,10 @@
 import * as express from 'express';
-import { AccountRequest } from '../../../lib/Account';
+import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { collectResults } from '../../../lib/MySQLUtil';
 import { json } from '../../../lib/Util';
 
-export default async (
-	req: AccountRequest & MemberRequest,
-	res: express.Response
-) => {
+export default async (req: MemberRequest, res: express.Response) => {
 	if (
-		typeof req.account === 'undefined' ||
 		typeof req.params === 'undefined' ||
 		typeof req.params.fileid === 'undefined'
 	) {
@@ -18,26 +13,21 @@ export default async (
 		return;
 	}
 
-	const filesCollection = req.mysqlx.getCollection<FileObject>('Files');
+	let file: File;
 
-	const results = await collectResults(
-		filesCollection.find(':accountID = :id AND id = :id').bind({
-			accountID: req.account.id,
-			id: req.params.fileid
-		})
-	);
-
-	if (results.length !== 1) {
-		res.send(404);
+	try {
+		file = await File.Get(req.params.fileid, req.account, req.mysqlx);
+	} catch (e) {
+		res.status(404);
+		res.end();
 		return;
 	}
 
-	const file = results[0];
-
-	if (file.memberOnly && typeof req.member === 'undefined') {
-		res.send(400);
+	if (file.memberOnly && req.member === null) {
+		res.send(403);
+		res.end();
 		return;
 	}
 
-	json<FileObject>(res, results[0]);
+	json<FileObject>(res, file.toRaw());
 };

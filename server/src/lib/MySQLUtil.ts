@@ -40,6 +40,47 @@ export const collectResults = async <T>(
 	return ret;
 };
 
+export const generateResults = async function*<T>(
+	find: mysql.CollectionFind<T> | mysql.TableSelect<T>
+): AsyncIterableIterator<T> {
+	const results = {
+		queue: [] as T[],
+		callback: void 0 as ((item: T) => void | undefined),
+		doCallback: (callback: (item: T) => void): void => {
+			if (results.queue.length > 0) {
+				callback(results.queue.shift());
+			} else {
+				results.callback = callback;
+			}
+		},
+		execute: (): void => {
+			if (results.callback) {
+				results.callback(results.queue.shift());
+				results.callback = void 0;
+			}
+		},
+		push: (item: T) => {
+			results.queue.push(item);
+			results.execute();
+		}
+	};
+	let done = false;
+	let reallyDone = false;
+
+	find.execute(o => results.push(o)).then(() => {
+		done = true;
+	});
+
+	while (!reallyDone) {
+		yield new Promise<T>(res => {
+			results.doCallback(res);
+
+			// Prevent off by one errors that truncate the last item
+			reallyDone = done;
+		});
+	}
+};
+
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
 	bind: Partial<T>

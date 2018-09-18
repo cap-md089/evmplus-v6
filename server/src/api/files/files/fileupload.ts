@@ -5,7 +5,6 @@ import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
-import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
 
@@ -43,12 +42,9 @@ fs.exists(config.fileStoragePath, exists => {
 	}
 });
 
-export default (req: MemberRequest & AccountRequest, res: express.Response) => {
-	if (
-		typeof req.account === 'undefined' ||
-		typeof req.member === 'undefined'
-	) {
-		res.status(400);
+export default (req: MemberRequest, res: express.Response) => {
+	if (typeof req.member === 'undefined') {
+		res.status(403);
 		res.end();
 		return;
 	}

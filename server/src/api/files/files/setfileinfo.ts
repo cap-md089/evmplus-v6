@@ -1,38 +1,41 @@
 import * as express from 'express';
 import { FileObjectValidator } from '..';
-import { AccountRequest } from '../../../lib/Account';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 
-export default (fileValidator: FileObjectValidator) => (async (req: AccountRequest & MemberRequest, res: express.Response) => {
+export default (fileValidator: FileObjectValidator) => (async (req: MemberRequest, res: express.Response) => {
 	if (
-		req.is('json') &&
-		typeof req.account !== 'undefined' &&
-		// typeof req.member !== 'undefined' &&
-		typeof req.params.fileid !== 'undefined' &&
-		fileValidator(req.body)
+		typeof req.member === null
 	) {
-		try {
-			const file = await File.Get(req.params.fileid, req.account, req.mysqlx);
+		res.status(403);
+		res.end();
+		return;
+	}
 
-			file.set(req.body);
-
-			await file.save();
-
-			res.status(204);
-			res.end();
-		} catch (e) {
-			if (e.message === 'Could not get file') {
-				res.status(400);
-				res.end();
-			} else {
-				res.status(500);
-				res.end();
-			}
-		}
-
-	} else {
+	if (
+		typeof req.params.fileid === 'undefined' ||
+		!fileValidator(req.body)
+	) {
 		res.status(400);
 		res.end();
+	}
+
+	try {
+		const file = await File.Get(req.params.fileid, req.account, req.mysqlx);
+
+		file.set(req.body);
+
+		await file.save();
+
+		res.status(204);
+		res.end();
+	} catch (e) {
+		if (e.message === 'Could not get file') {
+			res.status(404);
+			res.end();
+		} else {
+			res.status(500);
+			res.end();
+		}
 	}
 });

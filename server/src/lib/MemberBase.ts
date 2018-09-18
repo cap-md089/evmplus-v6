@@ -142,37 +142,32 @@ export default class MemberBase implements MemberObject {
 		this.isRioux = data.id === 542488 || data.id === 546319;
 	}
 
-	public hasDutyPosition(dutyPosition: string | string[]): boolean {
-		if (typeof dutyPosition === 'string') {
-			return this.dutyPositions.indexOf(dutyPosition) > -1;
-		} else {
-			return dutyPosition
-				.map(this.hasDutyPosition)
-				.reduce((a, b) => a || b);
-		}
-	}
+	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
+		typeof dutyPosition === 'string'
+			? this.dutyPositions.indexOf(dutyPosition) > -1
+			: dutyPosition
+					.map(this.hasDutyPosition)
+					.reduce((a, b) => a || b, false);
 
-	public getName(): string {
-		return [this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
+	public getName = (): string =>
+		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
 			.filter(s => !!s)
 			.join(' ');
-	}
 
-	public toRaw(): MemberObject {
-		return {
-			id: this.id,
-			contact: this.contact,
-			dutyPositions: this.dutyPositions,
-			memberRank: this.memberRank,
-			nameFirst: this.nameFirst,
-			nameLast: this.nameLast,
-			nameMiddle: this.nameMiddle,
-			nameSuffix: this.nameSuffix,
-			seniorMember: this.seniorMember,
-			squadron: this.squadron,
-			orgid: this.orgid
-		};
-	}
+	public toRaw = (): MemberObject => ({
+		id: this.id,
+		contact: this.contact,
+		dutyPositions: this.dutyPositions,
+		memberRank: this.memberRank,
+		nameFirst: this.nameFirst,
+		nameLast: this.nameLast,
+		nameMiddle: this.nameMiddle,
+		nameSuffix: this.nameSuffix,
+		seniorMember: this.seniorMember,
+		squadron: this.squadron,
+		orgid: this.orgid
+	});
 }
 
 export { default as NHQMember, MemberRequest } from './members/NHQMember';
+export { default as CAPWATCHMember } from './members/CAPWATCHMember';

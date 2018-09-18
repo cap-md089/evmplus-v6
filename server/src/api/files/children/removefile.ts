@@ -1,10 +1,9 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
-import { collectResults, findAndBind } from '../../../lib/MySQLUtil';
+import File from '../../../lib/File';
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (
-		typeof req.account === 'undefined' ||
 		typeof req.params.parentid === 'undefined' ||
 		typeof req.params.childid === 'undefined'
 	) {
@@ -13,34 +12,32 @@ export default async (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
-	// The `{_id: string}` is from every document. It is how MySQL manages them
-	const filesCollection = req.mysqlx.getCollection<
-		FileObject & { _id: string }
-	>('Files');
-
 	const parentid = req.params.parentid;
 	const childid = req.params.childid;
 
-	const results = await collectResults(
-		findAndBind(filesCollection, {
-			accountID: req.account.id,
-			id: parentid
-		})
-	);
+	let file: File;
 
-	if (results.length !== 1) {
-		res.send(400);
+	try {
+		file = await File.Get(parentid, req.account, req.mysqlx);
+	} catch (e) {
+		res.send(404);
+		res.end();
 		return;
 	}
 
-	const fileChildren = results[0].fileChildren.filter(id => id !== childid);
+	const fileChildren = file.fileChildren.filter(id => id !== childid);
 
-	const newFile = {
-		...results[0],
+	file.set({
 		fileChildren
-	};
+	});
 
-	filesCollection.addOrReplaceOne(newFile._id, newFile);
+	try {
+		await file.save();
+	} catch (e) {
+		res.send(500);
+		res.end(0);
+		return;
+	}
 
 	res.status(204);
 	res.end();

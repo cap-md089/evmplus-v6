@@ -10,11 +10,12 @@ import echo from './api/echo';
 import events from './api/events';
 import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
+import getSlideshowImageIDs from './api/getSlideshowImageIDs';
 import registry from './api/registry';
 import signin from './api/signin';
 import { Configuration } from './conf';
 import Account from './lib/Account';
-import Member from './lib/members/NHQMember';
+import NHQMember from './lib/members/NHQMember';
 import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
@@ -84,8 +85,15 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.get(
 		'/token',
 		Account.ExpressMiddleware,
-		Member.ExpressMiddleware,
+		NHQMember.ExpressMiddleware,
 		getFormToken
+	);
+
+	router.get(
+		'/banner',
+		Account.ExpressMiddleware,
+		NHQMember.ExpressMiddleware,
+		getSlideshowImageIDs
 	);
 
 	router.use('/registry', registry);
@@ -97,7 +105,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.use(
 		'/check',
 		Account.ExpressMiddleware,
-		Member.ExpressMiddleware,
+		NHQMember.ExpressMiddleware,
 		check
 	);
 

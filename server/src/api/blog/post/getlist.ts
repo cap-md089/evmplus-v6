@@ -13,8 +13,7 @@ interface BlogPostList {
 
 export default async (req: AccountRequest, res: express.Response) => {
 	if (
-		typeof req.params.start !== 'undefined' &&
-		typeof req.account !== 'undefined'
+		typeof req.params.start !== 'undefined'
 	) {
 		const start = parseInt(req.params.start, 10) * postsPerPage;
 

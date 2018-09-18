@@ -2,7 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
-export default class Registry {
+export default class Registry implements DatabaseInterface<RegistryValues> {
 	public static async Get(
 		account: Account,
 		schema: Schema
@@ -60,4 +60,6 @@ export default class Registry {
 
 		await registryCollection.replaceOne(this.values._id, this.values);
 	}
+
+	public toRaw = (): RegistryValues => ({...this.values});
 }

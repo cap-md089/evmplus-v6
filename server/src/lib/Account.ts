@@ -1,18 +1,22 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
+import File from './File';
 import CAPWATCHMember from './members/CAPWATCHMember';
 import {
 	collectResults,
 	findAndBind,
-	MySQLRequest,
+	generateResults,
+	MySQLRequest
 } from './MySQLUtil';
+import Event from './Event';
 
 export interface AccountRequest extends MySQLRequest {
 	account: Account;
 }
 
-export default class Account implements AccountObject {
+export default class Account
+	implements AccountObject, DatabaseInterface<AccountObject> {
 	public static ExpressMiddleware: express.RequestHandler = async (
 		req: AccountRequest,
 		res,
@@ -179,29 +183,64 @@ export default class Account implements AccountObject {
 	}
 
 	public async *getMembers(): AsyncIterableIterator<CAPWATCHMember> {
-		const memberCollection = this.schema.getCollection<NHQ.Member>('NHQ_Member');
-
-		const promises = [];
-
-		for (const id of this.orgIDs) {
-			promises.push(
-				collectResults(
-					findAndBind(memberCollection, {
-						ORGID: id
-					})
-				)
-			);
-		}
-
-		const mysqlResults = await Promise.all(promises);
-
-		const memberList = mysqlResults.reduce(
-			(prev, curr) => [...prev, ...curr],
-			[]
+		const memberCollection = this.schema.getCollection<NHQ.Member>(
+			'NHQ_Member'
 		);
 
-		for (const memberID of memberList) {
-			yield CAPWATCHMember.Get(memberID.CAPID, this, this.schema);
+		for (const ORGID of this.orgIDs) {
+			const memberFind = findAndBind(memberCollection, {
+				ORGID
+			});
+
+			for await (const member of generateResults(memberFind)) {
+				yield CAPWATCHMember.Get(member.CAPID, this, this.schema);
+			}
 		}
 	}
+
+	public async *getFiles(includeWWW = true): AsyncIterableIterator<File> {
+		const fileCollection = this.schema.getCollection<FileObject>('Files');
+
+		let fileFind;
+
+		if (includeWWW) {
+			fileFind = fileCollection
+				.find('accountID = :accountID OR accountID = "www"')
+				.bind({ accountID: this.id });
+		} else {
+			fileFind = findAndBind(fileCollection, {
+				accountID: this.id
+			});
+		}
+
+		for await (const file of generateResults(fileFind)) {
+			yield File.Get(file.id, this, this.schema);
+		}
+	}
+
+	public async *getEvents(): AsyncIterableIterator<Event> {
+		const eventCollection = this.schema.getCollection<EventObject>('Events');
+
+		const eventIterator = findAndBind(eventCollection, {
+			accountID: this.id
+		});
+
+		for await (const event of generateResults(eventIterator)) {
+			yield Event.Get(event.id, this, this.schema);
+		}
+	}
+
+	public toRaw = (): AccountObject => ({
+		adminIDs: this.adminIDs,
+		echelon: this.echelon,
+		expired: this.expired,
+		expires: this.expires,
+		id: this.id,
+		mainOrg: this.mainOrg,
+		orgIDs: this.orgIDs,
+		paid: this.paid,
+		paidEventLimit: this.paidEventLimit,
+		unpaidEventLimit: this.unpaidEventLimit,
+		validPaid: this.validPaid
+	});
 }

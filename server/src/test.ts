@@ -1,6 +1,6 @@
 import { getSession } from '@mysql/xdevapi';
 import conf from './conf';
-import importCAPWATCHFile, { CAPWATCHError } from './lib/ImportCAPWATCHFile';
+import { generateResults } from './lib/MySQLUtil';
 
 const {
 	database: schema,
@@ -18,18 +18,21 @@ getSession({
 }).then(async sess => {
 	const mysqlSchema = sess.getSchema(schema);
 
-	const capwatchIterator = importCAPWATCHFile(
-		'/home/arioux/Downloads/2018-04-11_546319-089.zip',
-		mysqlSchema,
-		916
-	)
+	const collection = mysqlSchema.getCollection<NHQ.Member>('NHQ_Member');
 
-	for await (const result of capwatchIterator) {
-		console.log({
-			...result,
-			errorCode: CAPWATCHError[result.error]
-		});
+	const find = collection.find('true');
+
+	const mysqlIterator = generateResults(find);
+
+	let count = 0;
+
+	for await (const result of mysqlIterator) {
+		console.log(result.CAPID);
+		count++;
 	}
+
+	console.log('Verify against `SELECT COUNT(*) FROM NHQ_Member;`');
+	console.log(count);
 
 	process.exit();
 });

@@ -7,14 +7,17 @@ import conf from '../conf';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
-export default class File implements FileObject {
+const promisedUnlink = promisify(unlink);
+
+export default class File implements FileObject, DatabaseInterface<FileObject> {
 	public static async Get(
 		id: string,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		includeWWW = true
 	): Promise<File> {
 		if (id === 'root') {
-			return File.GetRoot(id, account, schema);
+			return File.GetRoot(account, schema);
 		}
 
 		const fileCollection = schema.getCollection<FileObject>(
@@ -24,12 +27,22 @@ export default class File implements FileObject {
 		let results;
 
 		try {
-			results = await collectResults(
-				findAndBind(fileCollection, {
-					id,
-					accountID: account.id
-				})
-			);
+			if (includeWWW) {
+				results = await collectResults(
+					fileCollection
+						.find(
+							'id = :id AND (accountID = :accountID OR accountID = "www")'
+						)
+						.bind({ id, accountID: account.id })
+				);
+			} else {
+				results = await collectResults(
+					findAndBind(fileCollection, {
+						id,
+						accountID: account.id
+					})
+				);
+			}
 		} catch (e) {
 			throw new Error('Could not get file');
 		}
@@ -44,7 +57,6 @@ export default class File implements FileObject {
 	private static collectionName = 'Files';
 
 	private static async GetRoot(
-		id: string,
 		account: Account,
 		schema: Schema
 	): Promise<File> {
@@ -57,7 +69,7 @@ export default class File implements FileObject {
 		try {
 			results = await collectResults(
 				findAndBind(fileCollection, {
-					parentID: id,
+					parentID: 'root',
 					accountID: account.id
 				})
 			);
@@ -182,7 +194,7 @@ export default class File implements FileObject {
 		forDisplay: this.forDisplay,
 		forSlideshow: this.forSlideshow,
 		id: this.id,
-		kind: this.kind,
+		kind: 'drive#file',
 		memberOnly: this.memberOnly,
 		parentID: this.parentID,
 		uploaderID: this.uploaderID
@@ -194,8 +206,6 @@ export default class File implements FileObject {
 		);
 
 		if (!this.deleted) {
-			const promisedUnlink = promisify(unlink);
-
 			await Promise.all([
 				filesCollection.removeOne(this._id),
 				promisedUnlink(
@@ -207,9 +217,15 @@ export default class File implements FileObject {
 		}
 	}
 
-	public async *getChildren() {
+	public async *getChildren(includeWWW = true) {
 		for (const i of this.fileChildren) {
-			yield File.Get(i, this.account, this.schema);
+			try {
+				const file = File.Get(i, this.account, this.schema, includeWWW);
+
+				yield file;
+			} catch(e) {
+				// must be a WWW file and includeWWW was false
+			}
 		}
 	}
 }

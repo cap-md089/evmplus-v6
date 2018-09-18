@@ -2,7 +2,6 @@ import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
-import { AccountRequest } from '../../../lib/Account';
 import { MemberRequest } from '../../../lib/MemberBase';
 
 const findEnding = (input: Buffer, boundary: string) => {
@@ -16,12 +15,19 @@ const findEnding = (input: Buffer, boundary: string) => {
 	return input.length;
 };
 
-export default (req: MemberRequest & AccountRequest, res: express.Response) => {
+export default (req: MemberRequest, res: express.Response) => {
 	if (
-		typeof req.account === 'undefined' ||
 		typeof req.params.fileid === 'undefined'
 	) {
 		res.status(400);
+		res.end();
+		return;
+	}
+
+	if (
+		req.member === null
+	) {
+		res.status(403);
 		res.end();
 		return;
 	}
