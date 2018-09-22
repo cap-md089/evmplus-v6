@@ -1,9 +1,9 @@
 import * as express from 'express';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default async (req: ConditionalMemberRequest, res: express.Response) => {
 	const parentid =
 		typeof req.params.parentid === 'undefined'
 			? 'root'
@@ -31,6 +31,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 	streamAsyncGeneratorAsJSONArray<FileObject>(
 		res,
 		folder.getChildren(),
-		JSON.stringify
+		file =>
+			file.memberOnly && req.member === null ? false : JSON.stringify(file)
 	);
 };

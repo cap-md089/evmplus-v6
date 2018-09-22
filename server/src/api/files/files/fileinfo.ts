@@ -1,9 +1,9 @@
 import * as express from 'express';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default async (req: ConditionalMemberRequest, res: express.Response) => {
 	if (
 		typeof req.params === 'undefined' ||
 		typeof req.params.fileid === 'undefined'

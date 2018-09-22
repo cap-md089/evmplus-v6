@@ -1,10 +1,24 @@
 import { Schema } from '@mysql/xdevapi';
 import Account from './Account';
-import { collectResults, findAndBind } from './MySQLUtil';
+import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
-export default class MemberBase implements MemberObject {
-	public static IsRioux = (cm: MemberBase | number): boolean =>
-		typeof cm === 'number' ? cm === 542488 || cm === 546319 : cm.isRioux;
+export default abstract class MemberBase implements MemberObject {
+	public static IsRioux = (cm: MemberBase | number | string): boolean =>
+		typeof cm === 'string' ? false : typeof cm === 'number' ? cm === 542488 || cm === 546319 : cm.isRioux;
+
+	public static GetUserID(name: string[]) {
+		let usrID = '';
+
+		usrID = name[2] + name[0] + name[1];
+
+		return usrID;
+	}
+
+	/**
+	 * Used to sign JWTs
+	 */
+	protected static secret: string =
+		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
 
 	protected static GetRegularDutypositions = async (
 		capid: number,
@@ -126,9 +140,21 @@ export default class MemberBase implements MemberObject {
 	 */
 	public orgid: number = 0;
 	/**
+	 * The User ID, usually can be used for logins
+	 */
+	public usrID: string;
+	/**
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
+
+	/**
+	 * Used to differentiate when using polymorphism
+	 * 
+	 * Another method is the instanceof operator, but to each their own
+	 * That method would probably work better however
+	 */
+	public abstract kind: MemberType;
 
 	public constructor(
 		data: MemberObject,
@@ -165,9 +191,26 @@ export default class MemberBase implements MemberObject {
 		nameSuffix: this.nameSuffix,
 		seniorMember: this.seniorMember,
 		squadron: this.squadron,
-		orgid: this.orgid
+		orgid: this.orgid,
+		usrID: this.usrID,
+		kind: this.kind
 	});
+
+	public async *getAccounts(): AsyncIterableIterator<Account> {
+		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');
+
+		const accountFind = accountsCollection.find(':orgIDs in orgIDs').bind({
+			orgIDs: [this.orgid]
+		});
+
+		const generator = generateResults(accountFind);
+
+		for await (const i of generator) {
+			yield Account.Get(i.id, this.schema);
+		}
+	}
 }
 
-export { default as NHQMember, MemberRequest } from './members/NHQMember';
+export { default as NHQMember, MemberRequest, ConditionalMemberRequest } from './members/NHQMember';
 export { default as CAPWATCHMember } from './members/CAPWATCHMember';
+export { default as ProspectiveMember } from './members/ProspectiveMember';

@@ -43,12 +43,6 @@ fs.exists(config.fileStoragePath, exists => {
 });
 
 export default (req: MemberRequest, res: express.Response) => {
-	if (typeof req.member === 'undefined') {
-		res.status(403);
-		res.end();
-		return;
-	}
-
 	let collectingData = false;
 	let fileName = '';
 	let boundary = '';

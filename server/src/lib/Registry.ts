@@ -28,8 +28,12 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	public values: RegistryValues = {} as RegistryValues;
 
-	private account: Account;
+	public get accountID(): string {
+		return this.account.id;
+	}
 
+	private account: Account;
+	
 	private schema: Schema;
 
 	private constructor(

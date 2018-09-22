@@ -11,6 +11,7 @@ import events from './api/events';
 import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
+import su from './api/member/su';
 import registry from './api/registry';
 import signin from './api/signin';
 import { Configuration } from './conf';
@@ -92,7 +93,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.get(
 		'/banner',
 		Account.ExpressMiddleware,
-		NHQMember.ExpressMiddleware,
+		NHQMember.ConditionalExpressMiddleware,
 		getSlideshowImageIDs
 	);
 
@@ -105,13 +106,20 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.use(
 		'/check',
 		Account.ExpressMiddleware,
-		NHQMember.ExpressMiddleware,
+		NHQMember.ConditionalExpressMiddleware,
 		check
 	);
 
 	router.use('/blog', Account.ExpressMiddleware, blog);
 
 	router.use('/event', events);
+
+	router.use(
+		'/su',
+		Account.ExpressMiddleware,
+		NHQMember.ExpressMiddleware,
+		su
+	);
 
 	router.use('*', (req, res) => {
 		res.status(404);

@@ -1,8 +1,8 @@
 import * as express from 'express';
-import { AccountRequest } from '../../../lib/Account';
 import File from '../../../lib/File';
+import { MemberRequest } from '../../../lib/MemberBase';
 
-export default async (req: AccountRequest, res: express.Response) => {
+export default async (req: MemberRequest, res: express.Response) => {
 	if (
 		typeof req.params.parentid === 'undefined' ||
 		typeof req.params.childid === 'undefined'

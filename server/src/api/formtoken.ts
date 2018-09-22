@@ -1,9 +1,10 @@
 import * as express from 'express';
 import * as uuid from 'uuid/v4';
-import Member, { MemberRequest } from '../lib/members/NHQMember';
+import MemberBase from '../lib/MemberBase';
+import { MemberRequest } from '../lib/members/NHQMember';
 
 let validTokens: Array<{
-	member: Member;
+	member: MemberBase;
 	token: string;
 }> = [];
 
@@ -11,41 +12,32 @@ export const getFormToken: express.RequestHandler = (
 	req: MemberRequest,
 	res
 ) => {
-	if (req.member) {
-		const token = uuid();
-		validTokens.push({
-			member: req.member,
-			token
-		});
-		res.json({
-			token
-		});
-	} else {
-		res.status(403);
-		res.end();
-	}
+	const token = uuid();
+	validTokens.push({
+		member: req.member,
+		token
+	});
+	res.json({
+		token
+	});
 };
 
 export const validToken = (req: MemberRequest): boolean => {
-	if (req.member) {
-		if (
-			validTokens.filter(
-				tokens =>
+	if (
+		validTokens.filter(
+			tokens =>
+				req.member.id === tokens.member.id &&
+				req.body.token === tokens.token
+		).length === 1
+	) {
+		validTokens = validTokens.filter(
+			tokens =>
+				!(
 					req.member.id === tokens.member.id &&
 					req.body.token === tokens.token
-			).length === 1
-		) {
-			validTokens = validTokens.filter(
-				tokens =>
-					!(
-						req.member.id === tokens.member.id &&
-						req.body.token === tokens.token
-					)
-			);
-			return true;
-		} else {
-			return false;
-		}
+				)
+		);
+		return true;
 	} else {
 		return false;
 	}

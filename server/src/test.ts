@@ -1,6 +1,7 @@
 import { getSession } from '@mysql/xdevapi';
 import conf from './conf';
-import { generateResults } from './lib/MySQLUtil';
+import Account from './lib/Account';
+import ProspectiveMember from './lib/members/ProspectiveMember';
 
 const {
 	database: schema,
@@ -18,21 +19,43 @@ getSession({
 }).then(async sess => {
 	const mysqlSchema = sess.getSchema(schema);
 
-	const collection = mysqlSchema.getCollection<NHQ.Member>('NHQ_Member');
+	const newMem: MemberObject = {
+		contact: {
+			ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			CADETPARENTEMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			CADETPARENTPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			CELLPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			DIGITALPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			EMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			HOMEFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			HOMEPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			INSTANTMESSAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			ISDN: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			RADIO: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			TELEX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			WORKFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
+			WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
+		},
+		dutyPositions: [],
+		id: 0,
+		memberRank: 'C/AB',
+		nameFirst: 'Andrew',
+		nameLast: 'Rioux',
+		nameMiddle: 'D',
+		nameSuffix: '',
+		orgid: 916,
+		seniorMember: false,
+		squadron: 'md089',
+		usrID: 'riouxad',
+		kind: 'ProspectiveMember'
+	};
 
-	const find = collection.find('true');
+	const account = await Account.Get('mdx89', mysqlSchema);
 
-	const mysqlIterator = generateResults(find);
+	const mem = await ProspectiveMember.Create(newMem, 'appNODE303931', account, mysqlSchema);
 
-	let count = 0;
-
-	for await (const result of mysqlIterator) {
-		console.log(result.CAPID);
-		count++;
-	}
-
-	console.log('Verify against `SELECT COUNT(*) FROM NHQ_Member;`');
-	console.log(count);
+	console.log(mem);
 
 	process.exit();
 });

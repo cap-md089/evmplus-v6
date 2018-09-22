@@ -55,7 +55,7 @@ export async function streamAsyncGeneratorAsJSONArray<T>(
 	for await (const i of iterator) {
 		const value = functionHandle(i);
 		if (value !== false) {
-			res.write(started ? ',' : '[ ' + value);
+			res.write((started ? ',' : '[') + value);
 			started = true;
 		}
 	}

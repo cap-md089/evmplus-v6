@@ -1,9 +1,9 @@
 import * as express from 'express';
 import { MemberCreateError } from '../enums';
-import { MemberRequest } from '../lib/MemberBase';
+import { ConditionalMemberRequest } from '../lib/MemberBase';
 import { json } from '../lib/Util';
 
-export default (req: MemberRequest, res: express.Response) => {
+export default (req: ConditionalMemberRequest, res: express.Response) => {
 	if (!!req.member) {
 		json<SigninReturn>(res, {
 			error: MemberCreateError.NONE,

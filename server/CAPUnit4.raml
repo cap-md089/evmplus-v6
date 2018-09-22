@@ -3,24 +3,6 @@ title: CAPUnit
 version: v4
 baseUri: https://capunit.com/api
 mediaType: application/json
-types:
-	Member:
-		type: object
-		properties:
-			id: number
-	FileObject:
-		type: object
-		properties:
-			id: number
-			fileName: string
-	FileChildObject:
-		type: object
-		properties:
-			kind: string
-			id: string
-			selfLink: string
-			childLink: string
-
 /files:
 	/{fileid}:
 		get:
@@ -97,3 +79,76 @@ types:
 					body:
 						application/json:
 							type: FileChildObject
+
+/events:
+	/:
+		get:
+			responses:
+				200:
+					body:
+						application/json:
+							type: EventObject[]
+		post:
+			body:
+				type: NewEventObject
+			responses:
+				200:
+					body:
+						application/json:
+							type: EventObject
+	/{id}:
+		get:
+			responses:
+				404:
+					description: Event not found
+				200:
+					body:
+						application/json:
+							type: EventObject
+		post:
+			body:
+				type: object
+				properties:
+					id: string
+			responses:
+				404:
+					description: Event not found
+				204:
+					description: It worked
+		delete:
+			responses:
+				404:
+					description: Event not found
+				204:
+					description: It worked
+		put:
+			body:
+				type: EventObject
+			responses:
+				204:
+					description: It worked
+		
+		/attendance:
+			get:
+				responses:
+					200:
+						body:
+							application/json:
+								type: AttendanceRecord[]
+					403:
+						description: Need to be signed in
+			post:
+				body:
+					application/json:
+						type: object
+						properties:
+							id?: string
+								description: Person to sign up. If invalid permissions, this is ignored and the user making the request is used instead
+				responses:
+					204:
+						description: It worked
+					403:
+						description: Need to be signed in
+			put:
+
+			delete:

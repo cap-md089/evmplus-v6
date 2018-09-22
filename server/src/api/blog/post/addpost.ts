@@ -14,12 +14,6 @@ const blogPostValidator = (val: any): val is NewBlogPost =>
 	privateBlogPostValidator(val) as boolean;
 
 export default async (req: MemberRequest, res: express.Response) => {
-	if (req.member === null) {
-		res.status(403);
-		res.end();
-		return;
-	}
-
 	if (blogPostValidator(req.body)) {
 		const newPost: NewBlogPost = {
 			authorid: req.member.id,

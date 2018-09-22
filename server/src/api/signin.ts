@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
 import Member, { MemberCreateError } from '../lib/members/NHQMember';
+import ProspectiveMember from '../lib/members/ProspectiveMember';
 import { json } from '../lib/Util';
 
 export default async (req: AccountRequest, res: express.Response) => {
@@ -15,12 +16,25 @@ export default async (req: AccountRequest, res: express.Response) => {
 	}
 
 	try {
-		const member = await Member.Create(
-			typeof username === 'number' ? username.toString() : username,
-			password,
-			req.mysqlx,
-			req.account
-		);
+		let member;
+
+		const userID = username.toString();
+		
+		if (userID.match(/([0-9]{6})/)) {
+			member = await Member.Create(
+				userID,
+				password,
+				req.mysqlx,
+				req.account
+			);
+		} else {
+			member = await ProspectiveMember.Signin(
+				userID,
+				password,
+				req.account,
+				req.mysqlx
+			)
+		}
 
 		json<SigninReturn>(res, {
 			error: MemberCreateError.NONE,

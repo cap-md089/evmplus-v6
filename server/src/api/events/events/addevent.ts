@@ -1,9 +1,9 @@
 import * as express from 'express';
 import { join } from 'path';
-import conf from '../../conf';
-import Event from '../../lib/Event';
-import { MemberRequest } from '../../lib/MemberBase';
-import { getSchemaValidator, json } from '../../lib/Util';
+import conf from '../../../conf';
+import Event from '../../../lib/Event';
+import { MemberRequest } from '../../../lib/MemberBase';
+import { getSchemaValidator, json } from '../../../lib/Util';
 
 // tslint:disable-next-line:no-var-requires
 const eventSchema = require(join(conf.schemaPath, 'NewEventObject.json'));
@@ -14,12 +14,6 @@ const newEventValidator = (val: any): val is NewEventObject =>
 	privateEventValidator(val) as boolean;
 
 export default async (req: MemberRequest, res: express.Response) => {
-	if (req.member === null) {
-		res.status(403);
-		res.end();
-		return;
-	}
-
 	if (newEventValidator(req.body)) {
 		const newEvent = await Event.Create(
 			req.body,

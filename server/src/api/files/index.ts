@@ -31,25 +31,36 @@ export type FileObjectValidator = typeof fileObjectValidator;
 const filerouter: express.Router = express.Router();
 
 filerouter.use(Account.ExpressMiddleware);
-filerouter.use(Member.ExpressMiddleware);
 
 // Only client will need this, but I'm going to make files a folder with a MIME type of application/folder
 
 /// https://developers.google.com/drive/v2/reference/files#methods
 // The following two have to be first, as they can't have bodyParser taking the data
 // and ending the data stream
-filerouter.post('/upload', upload); // insert
-filerouter.put('/upload/:fileid', setfiledata); // update
+filerouter.post('/upload', Member.ExpressMiddleware, upload); // insert
+filerouter.put('/upload/:fileid', Member.ExpressMiddleware, setfiledata); // update
 filerouter.use(bodyParser.json());
-filerouter.get('/:fileid', fileinfo); // get
-filerouter.get('/:fileid/export', getfile); // export, functions differently and downloads data for file
-filerouter.delete('/:fileid', deletefile); // delete
-filerouter.put('/:fileid', setfileinfo(fileObjectValidator)); // update
-filerouter.post('/create/:name', createfolder);
+filerouter.get('/:fileid', Member.ConditionalExpressMiddleware, fileinfo); // get
+filerouter.get('/:fileid/export', Member.ConditionalExpressMiddleware, getfile); // export, functions differently and downloads data for file
+filerouter.delete('/:fileid', Member.ExpressMiddleware, deletefile); // delete
+filerouter.put(
+	'/:fileid',
+	Member.ExpressMiddleware,
+	setfileinfo(fileObjectValidator)
+); // update
+filerouter.post('/create/:name', Member.ExpressMiddleware, createfolder);
 
 /// https://developers.google.com/drive/v2/reference/children#methods
-filerouter.delete('/:parentid/children/:childid', removefile); // delete
-filerouter.post('/:parentid/children', insertchild); // insert
-filerouter.get('/:parentid/children', getfiles);
+filerouter.delete(
+	'/:parentid/children/:childid',
+	Member.ExpressMiddleware,
+	removefile
+); // delete
+filerouter.post(
+	'/:parentid/children',
+	Member.ExpressMiddleware,
+	insertchild
+); // insert
+filerouter.get('/:parentid/children', Member.ConditionalExpressMiddleware, getfiles);
 
 export default filerouter;

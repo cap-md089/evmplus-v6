@@ -3,14 +3,6 @@ import BlogPost from '../../../lib/BlogPost';
 import { MemberRequest } from '../../../lib/MemberBase';
 
 export default async (req: MemberRequest, res: Response) => {
-	if (
-		req.member === null
-	) {
-		res.status(403);
-		res.end();
-		return;
-	}
-
 	try {
 		const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 	

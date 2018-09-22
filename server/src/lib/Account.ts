@@ -1,6 +1,7 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
+import Event from './Event';
 import File from './File';
 import CAPWATCHMember from './members/CAPWATCHMember';
 import {
@@ -9,7 +10,6 @@ import {
 	generateResults,
 	MySQLRequest
 } from './MySQLUtil';
-import Event from './Event';
 
 export interface AccountRequest extends MySQLRequest {
 	account: Account;
@@ -219,7 +219,9 @@ export default class Account
 	}
 
 	public async *getEvents(): AsyncIterableIterator<Event> {
-		const eventCollection = this.schema.getCollection<EventObject>('Events');
+		const eventCollection = this.schema.getCollection<EventObject>(
+			'Events'
+		);
 
 		const eventIterator = findAndBind(eventCollection, {
 			accountID: this.id
@@ -228,6 +230,30 @@ export default class Account
 		for await (const event of generateResults(eventIterator)) {
 			yield Event.Get(event.id, this, this.schema);
 		}
+	}
+
+	public set(values: Partial<AccountObject>): void {
+		const keys: Array<keyof AccountObject> = [
+			'adminIDs',
+			'echelon',
+			'mainOrg',
+			'orgIDs'
+		];
+
+		// tslint:disable-next-line:forin
+		for (const _ in keys) {
+			const key = _ as keyof AccountObject;
+
+			if (typeof values[key] === typeof this[key]) {
+				this[key] = values[key];
+			}
+		}
+	}
+
+	public async save(): Promise<void> {
+		const accountCollection = this.schema.getCollection<AccountObject>('Accounts');
+
+		await accountCollection.replaceOne(this._id, this.toRaw());
 	}
 
 	public toRaw = (): AccountObject => ({
@@ -243,4 +269,8 @@ export default class Account
 		unpaidEventLimit: this.unpaidEventLimit,
 		validPaid: this.validPaid
 	});
+	
+	public getSquadronName(): string {
+		return this.id.replace(/([a-zA-Z]*)-([0-9]*)/, '$1-$2').toUpperCase();
+	}
 }

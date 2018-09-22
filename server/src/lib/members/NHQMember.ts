@@ -8,10 +8,12 @@ import { promisify } from 'util';
 import conf from '../../conf';
 import { MemberCAPWATCHErrors, MemberCreateError } from '../../enums';
 import Account, { AccountRequest } from '../Account';
-import Member from '../MemberBase';
+import { default as Member, default as MemberBase } from '../MemberBase';
 import { getPermissions } from '../Permissions';
+import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
 import request from './pam/nhq-request';
+import ProspectiveMember from './ProspectiveMember';
 
 interface MemberSession extends Identifiable {
 	id: number;
@@ -31,8 +33,12 @@ interface MemberSession extends Identifiable {
 
 export { MemberCreateError };
 
+export interface ConditionalMemberRequest extends AccountRequest {
+	member: NHQMember | ProspectiveMember | null;
+}
+
 export interface MemberRequest extends AccountRequest {
-	member: NHQMember | null;
+	member: NHQMember | ProspectiveMember;
 }
 
 export default class NHQMember extends Member {
@@ -118,7 +124,14 @@ export default class NHQMember extends Member {
 				nameSuffix: memberInfo[0].nameSuffix,
 				seniorMember: memberInfo[0].seniorMember,
 				squadron: memberInfo[0].squadron,
-				orgid: memberInfo[0].orgid
+				orgid: memberInfo[0].orgid,
+				usrID: this.GetUserID([
+					memberInfo[0].nameFirst,
+					memberInfo[0].nameMiddle,
+					memberInfo[0].nameLast,
+					memberInfo[0].nameSuffix
+				]),
+				kind: 'NHQMember'
 			},
 			cookie,
 			sessionID,
@@ -128,8 +141,8 @@ export default class NHQMember extends Member {
 		);
 	}
 
-	public static ExpressMiddleware: RequestHandler = (
-		req: MemberRequest & AccountRequest,
+	public static ConditionalExpressMiddleware: RequestHandler = (
+		req: MemberRequest,
 		res,
 		next
 	) => {
@@ -151,7 +164,7 @@ export default class NHQMember extends Member {
 				async (
 					err,
 					decoded: {
-						id: number;
+						id: number | string;
 					}
 				) => {
 					if (err) {
@@ -159,21 +172,29 @@ export default class NHQMember extends Member {
 						next();
 						return;
 					}
+					const id = decoded.id;
+
+					if (typeof id === 'string') {
+						ProspectiveMember.ExpressMiddleware(req, res, next, id);
+						return;
+					}
+
 					NHQMember.memberSessions = NHQMember.memberSessions.filter(
 						s => s.expireTime > Date.now() / 1000
 					);
 					const sess = NHQMember.memberSessions.filter(
 						s => s.id === decoded.id
 					);
+					// const sess = await NHQMember.GetMemberSessions(decoded.id, req.mysqlx);
 					if (sess.length === 1) {
 						const [dutyPositions, extraInfo] = await Promise.all([
 							NHQMember.GetRegularDutypositions(
-								decoded.id,
+								id,
 								req.mysqlx,
 								req.account
 							),
 							NHQMember.LoadExtraMemberInformation(
-								decoded.id,
+								id,
 								req.mysqlx,
 								req.account
 							)
@@ -182,7 +203,7 @@ export default class NHQMember extends Member {
 							{
 								contact: sess[0].contact,
 								dutyPositions,
-								id: sess[0].id,
+								id,
 								memberRank: sess[0].memberRank,
 								nameFirst: sess[0].nameFirst,
 								nameLast: sess[0].nameLast,
@@ -190,7 +211,14 @@ export default class NHQMember extends Member {
 								nameSuffix: sess[0].nameSuffix,
 								seniorMember: sess[0].seniorMember,
 								squadron: sess[0].squadron,
-								orgid: sess[0].orgid
+								orgid: sess[0].orgid,
+								usrID: NHQMember.GetUserID([
+									sess[0].nameFirst,
+									sess[0].nameMiddle,
+									sess[0].nameLast,
+									sess[0].nameSuffix
+								]),
+								kind: 'NHQMember'
 							},
 							sess[0].cookieData,
 							header,
@@ -214,16 +242,25 @@ export default class NHQMember extends Member {
 		}
 	};
 
+	public static ExpressMiddleware: RequestHandler = (
+		req: MemberRequest,
+		res,
+		next
+	) => {
+		NHQMember.ConditionalExpressMiddleware(req, res, () => {
+			if (req.member === null) {
+				res.status(403);
+				res.end();
+			} else {
+				next();
+			}
+		});
+	};
+
 	/**
 	 * Stores the member sessions in memory as it is faster than a database
 	 */
 	protected static memberSessions: MemberSession[] = [];
-
-	/**
-	 * Used to sign JWTs
-	 */
-	private static secret: string =
-		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
 
 	/**
 	 * Permissions for the user
@@ -262,6 +299,12 @@ export default class NHQMember extends Member {
 	 * The ID to for the session of the member
 	 */
 	public sessionID: string = '';
+	/**
+	 * Used to differentiate between members
+	 *
+	 * The instanceof operator may work as well
+	 */
+	public kind: MemberType = 'NHQMember';
 
 	protected extraInfo: ExtraMemberInformation;
 
@@ -346,5 +389,77 @@ export default class NHQMember extends Member {
 				console.log('Error in writing CAPWATCH file: ', err);
 			}
 		});
+	}
+
+	public hasPermission = (
+		permission: MemberPermission | MemberPermission[],
+		threshold = 1
+	): boolean =>
+		typeof permission === 'string'
+			? this.permissions[permission] > threshold || this.isRioux
+			: permission
+					.map(p => this.hasPermission(p, threshold))
+					.reduce((prev, curr) => prev || curr);
+
+	public async su(targetMember: MemberBase | number | string): Promise<string> {
+		let su =
+			typeof targetMember === 'number' || typeof targetMember === 'string'
+				? targetMember
+				: targetMember.id;
+
+		if (typeof su === 'string' && su.match(/([0-9]{6})/)) {
+			su = parseInt(su, 10);
+		}
+
+		if (!this.isRioux) {
+			throw new Error('Invalid permissions')
+		}
+
+		const sessionID = sign(
+			{
+				id: su
+			},
+			NHQMember.secret,
+			{
+				algorithm: 'HS512',
+				expiresIn: '10min'
+			}
+		);
+
+		let member;
+
+		if (typeof su === 'number') {
+			member = await CAPWATCHMember.Get(su, this.requestingAccount, this.schema);
+
+			let memberIndex = 0;
+
+			for (let i = 0; i < NHQMember.memberSessions.length; i++) {
+				if (NHQMember.memberSessions[i].id === this.id) {
+					memberIndex = i;
+					break;
+				}
+			}
+
+			NHQMember.memberSessions[memberIndex] = {
+				contact: member.contact,
+				cookieData: this.cookie,
+				expireTime: Date.now() + 60 * 10,
+				id: su,
+				memberRank: member.memberRank,
+				nameFirst: member.nameFirst,
+				nameLast: member.nameLast,
+				nameMiddle: member.nameMiddle,
+				nameSuffix: member.nameSuffix,
+				orgid: member.orgid,
+				seniorMember: member.seniorMember,
+				squadron: member.squadron
+			};
+		} else {
+			member = await ProspectiveMember.Get(su, this.requestingAccount, this.schema);
+
+			ProspectiveMember.Su(member);
+		}
+
+		return sessionID;
 	}
 }

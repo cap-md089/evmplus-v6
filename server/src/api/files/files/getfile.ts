@@ -3,9 +3,9 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default async (req: ConditionalMemberRequest, res: express.Response) => {
 	if (
 		typeof req.params === 'undefined' ||
 		typeof req.params.fileid === 'undefined'

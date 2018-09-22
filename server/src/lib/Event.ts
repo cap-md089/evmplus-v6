@@ -5,7 +5,8 @@ import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
 
-export default class Event implements EventObject, DatabaseInterface<EventObject> {
+export default class Event
+	implements EventObject, DatabaseInterface<EventObject> {
 	/**
 	 * Get an event from the database
 	 *
@@ -13,7 +14,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param account The account to get the event from
 	 * @param schema The schema to get the event from
 	 */
-	public static async Get(id: number, account: Account, schema: Schema) {
+	public static async Get(id: number | string, account: Account, schema: Schema) {
+		if (typeof id === 'string') {
+			id = parseInt(id, 10);
+		}
+
 		const eventsCollection = schema.getCollection<EventObject>('Events');
 
 		const results = await collectResults(
@@ -64,7 +69,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			accountID: account.id,
 			timeCreated,
 			timeModified: timeCreated,
-			author: member.id
+			author: member.id,
+			attendance: []
 		};
 
 		const results = await eventsCollection.add(newEvent).execute();
@@ -169,6 +175,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public fileIDs: string[];
 
+	public attendance: AttendanceRecord[] = [];
+
 	// Documents require it
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -202,7 +210,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		);
 
 		await eventsCollection.replaceOne(this._id, {
-			...this.toRaw(),
+			...this.toFullRaw(),
 			timeModified,
 			accountID: account.id
 		});
@@ -256,8 +264,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
 					poc.id === member.id
-			) &&
-			member.id === this.author &&
+			) ||
+			member.id === this.author ||
 			member.isRioux
 		);
 	}
@@ -320,55 +328,230 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	}
 
 	/**
+	 * Links the event to another account
+	 *
+	 * @param targetAccount The account to link to
+	 * @param member The member linking the event
+	 */
+	public linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
+		const newEvent = Object.assign<{}, EventObject, Partial<EventObject>>(
+			{},
+			this,
+			{
+				accountID: targetAccount.id,
+				author: member.id
+			}
+		);
+
+		return Event.Create(newEvent, targetAccount, this.schema, member);
+	}
+
+	/**
+	 * Deletes the current event
+	 */
+	public async delete(): Promise<void> {
+		const eventsCollection = this.schema.getCollection<EventObject>(
+			'Events'
+		);
+
+		await eventsCollection.removeOne(this._id);
+	}
+
+	/**
+	 * Updates the values in a secure manner
+	 *
+	 * @param values The values to set
+	 */
+	public set(values: Partial<EventObject>): void {
+		const keys: Array<keyof EventObject> = [
+			'acceptSignups',
+			'accountID',
+			'activity',
+			'administrationComments',
+			'author',
+			'comments',
+			'complete',
+			'debrief',
+			'desiredNumberOfParticipants',
+			'endDateTime',
+			'eventWebsite',
+			'fileIDs',
+			'groupEventNumber',
+			'highAdventureDescription',
+			'location',
+			'lodgingArrangments',
+			'mealsDescription',
+			'meetDateTime',
+			'meetLocation',
+			'name',
+			'participationFee',
+			'pickupDateTime',
+			'pickupLocation',
+			'pointsOfContact',
+			'publishToWingCalendar',
+			'registration',
+			'requiredEquipment',
+			'requiredForms',
+			'showUpcoming',
+			'signUpDenyMessage',
+			'signUpPartTime',
+			'sourceEvent',
+			'startDateTime',
+			'status',
+			'teamID',
+			'transportationDescription',
+			'transportationProvided',
+			'uniform',
+			'wingEventNumber'
+		];
+
+		for (const key of keys) {
+			if (typeof values[key] === typeof this[key]) {
+				this[key] = values[key];
+			}
+		}
+	}
+
+	/**
 	 * Converts the current event to a transferable object
 	 */
-	public toRaw(): EventObject {
-		return {
-			_id: this._id,
-			id: this.id,
-			accountID: this.accountID,
-			acceptSignups: this.acceptSignups,
-			activity: this.activity,
-			administrationComments: this.administrationComments,
-			author: this.author,
-			comments: this.comments,
-			complete: this.complete,
-			debrief: this.debrief,
-			desiredNumberOfParticipants: this.desiredNumberOfParticipants,
-			endDateTime: this.endDateTime,
-			eventWebsite: this.eventWebsite,
-			groupEventNumber: this.groupEventNumber,
-			highAdventureDescription: this.highAdventureDescription,
-			location: this.location,
-			lodgingArrangments: this.lodgingArrangments,
-			mealsDescription: this.mealsDescription,
-			meetDateTime: this.meetDateTime,
-			meetLocation: this.meetLocation,
-			name: this.name,
-			participationFee: this.participationFee,
-			pickupDateTime: this.pickupDateTime,
-			pickupLocation: this.pickupLocation,
-			pointsOfContact: this.pointsOfContact,
-			publishToWingCalendar: this.publishToWingCalendar,
-			registration: this.registration,
-			requiredEquipment: this.requiredEquipment,
-			requiredForms: this.requiredForms,
-			showUpcoming: this.showUpcoming,
-			signUpDenyMessage: this.signUpDenyMessage,
-			signUpPartTime: this.signUpPartTime,
-			sourceEvent: this.sourceEvent,
-			startDateTime: this.startDateTime,
-			status: this.status,
-			teamID: this.teamID,
-			timeCreated: this.timeCreated,
-			timeModified: this.timeModified,
-			transportationDescription: this.transportationDescription,
-			transportationProvided: this.transportationProvided,
-			uniform: this.uniform,
-			wingEventNumber: this.wingEventNumber,
-			fileIDs: this.fileIDs
-		};
-	}
+	public toRaw = (member?: MemberBase): EventObject => ({
+		_id: this._id,
+		id: this.id,
+		accountID: this.accountID,
+		acceptSignups: this.acceptSignups,
+		activity: this.activity,
+		administrationComments: this.administrationComments,
+		author: this.author,
+		comments: this.comments,
+		complete: this.complete,
+		debrief: this.debrief,
+		desiredNumberOfParticipants: this.desiredNumberOfParticipants,
+		endDateTime: this.endDateTime,
+		eventWebsite: this.eventWebsite,
+		groupEventNumber: this.groupEventNumber,
+		highAdventureDescription: this.highAdventureDescription,
+		location: this.location,
+		lodgingArrangments: this.lodgingArrangments,
+		mealsDescription: this.mealsDescription,
+		meetDateTime: this.meetDateTime,
+		meetLocation: this.meetLocation,
+		name: this.name,
+		participationFee: this.participationFee,
+		pickupDateTime: this.pickupDateTime,
+		pickupLocation: this.pickupLocation,
+		pointsOfContact: this.pointsOfContact,
+		publishToWingCalendar: this.publishToWingCalendar,
+		registration: this.registration,
+		requiredEquipment: this.requiredEquipment,
+		requiredForms: this.requiredForms,
+		showUpcoming: this.showUpcoming,
+		signUpDenyMessage: this.signUpDenyMessage ? this.signUpDenyMessage : null,
+		signUpPartTime: !!this.signUpPartTime,
+		sourceEvent: this.sourceEvent ? this.sourceEvent : null,
+		startDateTime: this.startDateTime,
+		status: this.status,
+		teamID: this.teamID,
+		timeCreated: this.timeCreated,
+		timeModified: this.timeModified,
+		transportationDescription: this.transportationDescription,
+		transportationProvided: this.transportationProvided,
+		uniform: this.uniform,
+		wingEventNumber: this.wingEventNumber ? this.wingEventNumber : null,
+		fileIDs: this.fileIDs,
+		attendance:
+			member === null || member === undefined ? [] : this.getAttendance()
+	});
+
+	/**
+	 * toRaw conditionally provides the attendance based on parameters
+	 *
+	 * This method returns the full, raw object unconditionally
+	 */
+	public toFullRaw = (): EventObject => ({
+		...(this.toRaw()),
+		attendance: this.getAttendance()
+	});
+
+	// ----------------------------------------------------
+	// 					Attendance code
+	// ----------------------------------------------------
+
+	/**
+	 * Returns the attendance for the event
+	 */
+	public getAttendance = (): AttendanceRecord[] => this.attendance.map(v => ({
+		...v,
+		arrivalTime: v.arrivalTime ? v.arrivalTime : null,
+		departureTime: v.departureTime ? v.departureTime : null
+	}));
+
+	/**
+	 * Add member to attendance
+	 *
+	 * @param newAttendanceRecord The record to add. Contains partial details
+	 * @param member The member to add to the records
+	 */
+	public addMemberToAttendance = (
+		newAttendanceRecord: NewAttendanceRecord,
+		member: BaseMember
+	): AttendanceRecord[] =>
+		(this.attendance = [
+			...this.attendance,
+			{
+				comments: newAttendanceRecord.comments,
+				memberID: member.id,
+				memberRankName: member.memberRankName,
+				planToUseCAPTransportation:
+					newAttendanceRecord.planToUseCAPTransportation,
+				requirements: newAttendanceRecord.requirements,
+				status: newAttendanceRecord.status,
+				summaryEmailSent: false,
+				timestamp: +DateTime.utc(),
+
+				// If these are undefined, they are staying for the whole event
+				arrivalTime: newAttendanceRecord.arrivalTime,
+				departureTime: newAttendanceRecord.departureTime
+			}
+		]);
+
+	/**
+	 * Modifies a current attendance record
+	 *
+	 * @param newAttendanceRecord The record to set
+	 * @param member The member to modify for
+	 */
+	public modifyAttendanceRecord = (
+		newAttendanceRecord: NewAttendanceRecord,
+		member: BaseMember
+	): AttendanceRecord[] =>
+		(this.attendance = this.attendance.map(
+			record =>
+				record.memberID === member.id
+					? {
+							comments: newAttendanceRecord.comments,
+							memberID: member.id,
+							memberRankName: member.memberRankName,
+							planToUseCAPTransportation:
+								newAttendanceRecord.planToUseCAPTransportation,
+							requirements: newAttendanceRecord.requirements,
+							status: newAttendanceRecord.status,
+							summaryEmailSent: false,
+							timestamp: +DateTime.utc(),
+
+							// If these are undefined, they are staying for the whole event
+							arrivalTime: newAttendanceRecord.arrivalTime,
+							departureTime: newAttendanceRecord.departureTime
+					  }
+					: record
+		));
+
+	public removeMemberFromAttendance = (
+		member: BaseMember
+	): AttendanceRecord[] =>
+		(this.attendance = this.attendance.filter(
+			record => record.memberID !== member.id
+		));
 }
 
 export { EventStatus };

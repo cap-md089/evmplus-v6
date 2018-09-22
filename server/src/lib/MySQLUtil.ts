@@ -45,8 +45,8 @@ export const generateResults = async function*<T>(
 ): AsyncIterableIterator<T> {
 	const results = {
 		queue: [] as T[],
-		callback: void 0 as ((item: T) => void | undefined),
-		doCallback: (callback: (item: T) => void): void => {
+		callback: void 0 as ((item?: T) => void | undefined),
+		doCallback: (callback: (item?: T) => void): void => {
 			if (results.queue.length > 0) {
 				callback(results.queue.shift());
 			} else {
@@ -62,22 +62,38 @@ export const generateResults = async function*<T>(
 		push: (item: T) => {
 			results.queue.push(item);
 			results.execute();
+		},
+		finish: () => {
+			if (results.callback) {
+				results.callback();
+			}
 		}
 	};
 	let done = false;
-	let reallyDone = false;
 
 	find.execute(o => results.push(o)).then(() => {
 		done = true;
+		results.finish();
 	});
 
-	while (!reallyDone) {
-		yield new Promise<T>(res => {
-			results.doCallback(res);
+	while (!done || results.queue.length > 0) {
+		try {
+			const value = await new Promise<T>((res, rej) => {
+				results.doCallback((item) => {
+					if (!item) {
+						rej();
+					} else {
+						res(item);
+					}
+				});
+			});
 
-			// Prevent off by one errors that truncate the last item
-			reallyDone = done;
-		});
+			if (value) {
+				yield value
+			}
+		} catch (e) {
+			done = true;
+		}
 	}
 };
 

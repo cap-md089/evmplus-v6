@@ -5,12 +5,6 @@ import { MemberRequest } from '../../../lib/MemberBase';
 
 export default (blogPostValidator: BlogPostValidator) => {
 	return async (req: MemberRequest, res: express.Response) => {
-		if (req.member === null) {
-			res.status(403);
-			res.end();
-			return;
-		}
-
 		if (!blogPostValidator(req.body)) {
 			res.status(400);
 			res.end();
