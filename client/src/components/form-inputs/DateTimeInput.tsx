@@ -7,7 +7,7 @@ import { InputProps } from './Input';
 import { DateTime } from 'luxon';
 
 const TimeZoneDisplays = {
-	'America/New_York' : 'EST',
+	'America/New_York': 'EST',
 	'America/Chicago': 'CST',
 	'America/Denver': 'MST',
 	'America/Los_Angeles': 'PST',
@@ -60,7 +60,6 @@ interface DateTimeState {
 	guiOpen: boolean;
 	guiCurrentMonth: number;
 	guiCurrentYear: number;
-	currentInput: DateTime;
 	focused: boolean;
 }
 
@@ -72,6 +71,29 @@ const getMonth = (month: number, year: number) =>
 		})
 		.startOf('month');
 
+const normalizeInput = (
+	value: number | DateTime | undefined,
+	offset: SupportedTimeZones
+) =>
+	typeof value !== 'undefined'
+		? typeof value === 'number'
+			? DateTime.fromMillis(value * 1000, {
+					zone: offset
+			  })
+			: value
+		: DateTime.utc();
+
+const FIVE_MINUTES = 5 * 60 * 1000;
+
+const roundInput = (
+	input: DateTime,
+	interval: number,
+	offset: SupportedTimeZones
+) =>
+	DateTime.fromMillis(Math.round(+input / interval) * interval, {
+		zone: offset
+	});
+
 export default class DateTimeInput extends React.Component<
 	DateTimeInputProps | TimeInputProps | DateInputProps,
 	DateTimeState
@@ -79,23 +101,15 @@ export default class DateTimeInput extends React.Component<
 	constructor(props: DateTimeInputProps | TimeInputProps | DateInputProps) {
 		super(props);
 
-		let start =
-			typeof this.props.value !== 'undefined'
-				? typeof this.props.value === 'number'
-					? DateTime.fromMillis(this.props.value * 1000, {
-							zone: this.props.originalTimeZoneOffset
-					  })
-					: this.props.value
-				: DateTime.utc();
-
-		const interval = this.props.minuteInterval || 5 * 60 * 1000;
-		start = DateTime.fromMillis(Math.round(+start / interval) * interval, {
-			zone: this.props.originalTimeZoneOffset
-		});
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
-			 	name: this.props.name,
+				name: this.props.name,
 				value: Math.round(+start / 1000)
 			});
 		}
@@ -104,8 +118,7 @@ export default class DateTimeInput extends React.Component<
 			guiOpen: false,
 			guiCurrentMonth: start.month,
 			guiCurrentYear: start.year,
-			currentInput: start,
-			focused: false,
+			focused: false
 		};
 
 		this.updateDateDay = this.updateDateDay.bind(this);
@@ -126,7 +139,14 @@ export default class DateTimeInput extends React.Component<
 	}
 
 	public render() {
-		const sameTimezone = DateTime.local().offset === this.state.currentInput.offset;
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
+		const sameTimezone =
+			DateTime.local().offset === start.offset;
 
 		const className =
 			(this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
@@ -145,7 +165,7 @@ export default class DateTimeInput extends React.Component<
 								<input
 									className="date-input-year"
 									placeholder="----"
-									value={this.state.currentInput.year}
+									value={start.year}
 									onChange={this.updateDateYear}
 									onFocus={this.onFocus}
 									onBlur={() => {
@@ -159,7 +179,7 @@ export default class DateTimeInput extends React.Component<
 								<input
 									className="date-input-month"
 									placeholder="--"
-									value={this.state.currentInput.month}
+									value={start.month}
 									onChange={this.updateDateMonth}
 									onFocus={this.onFocus}
 									onBlur={this.onBlur}
@@ -170,7 +190,7 @@ export default class DateTimeInput extends React.Component<
 								<input
 									className="date-input-day"
 									placeholder="--"
-									value={this.state.currentInput.day}
+									value={start.day}
 									onChange={this.updateDateDay}
 									onFocus={this.onFocus}
 									onBlur={this.onBlur}
@@ -187,7 +207,7 @@ export default class DateTimeInput extends React.Component<
 								<input
 									className="time-input-hour"
 									placeholder="--"
-									value={this.state.currentInput.hour}
+									value={start.hour}
 									onChange={this.updateTimeHours}
 									onFocus={this.onFocus}
 									onBlur={this.onBlur}
@@ -198,7 +218,7 @@ export default class DateTimeInput extends React.Component<
 								<input
 									className="time-input-minute"
 									placeholder="--"
-									value={this.state.currentInput.minute}
+									value={start.minute}
 									onChange={this.updateTimeMinutes}
 									onFocus={this.onFocus}
 									onBlur={() => {
@@ -225,16 +245,19 @@ export default class DateTimeInput extends React.Component<
 							/>
 						) : null}
 					</div>
-					{
-						!sameTimezone ?
-							<>
-								<br />
-								<div className="original-time">
-									Time displayed in {TimeZoneDisplays[this.props.originalTimeZoneOffset]}
-								</div>
-							</>
-							: null
-					}
+					{!sameTimezone ? (
+						<>
+							<br />
+							<div className="original-time">
+								Time displayed in{' '}
+								{
+									TimeZoneDisplays[
+										this.props.originalTimeZoneOffset
+									]
+								}
+							</div>
+						</>
+					) : null}
 					{this.state.guiOpen ? this.renderCalendar() : null}
 				</div>
 			</div>
@@ -242,10 +265,19 @@ export default class DateTimeInput extends React.Component<
 	}
 
 	private updateDateYear(e: React.ChangeEvent<HTMLInputElement>) {
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
 		if (e.target.value === '') {
-			this.setState(prev => ({
-				currentInput: prev.currentInput.set({year: 0})
-			}));
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: +(start.set({ year: 0 }))
+				})
+			}
 			return;
 		}
 
@@ -262,9 +294,7 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		const { currentInput } = this.state;
-
-		const newInput = currentInput.set({
+		const newInput = start.set({
 			year: test
 		});
 
@@ -274,17 +304,22 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private updateDateMonth(e: React.ChangeEvent<HTMLInputElement>) {
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
 		if (e.target.value === '') {
-			this.setState(prev => ({
-				currentInput: prev.currentInput.set({ month: 0 })
-			}));
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: +(start.set({ year: 0 }))
+				})
+			}
 			return;
 		}
 
@@ -301,13 +336,11 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		const { currentInput } = this.state;
-
-		let newInput = currentInput.set({
+		let newInput = start.set({
 			month: test
 		});
 
-		if (newInput.daysInMonth < this.state.currentInput.day) {
+		if (newInput.daysInMonth < start.day) {
 			newInput = newInput.set({
 				day: newInput.daysInMonth
 			});
@@ -319,21 +352,26 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput
-		});
 	}
 
 	private updateDateDay(e: React.ChangeEvent<HTMLInputElement>) {
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
 		if (e.target.value === '') {
-			this.setState(prev => ({
-				currentInput: prev.currentInput.set({ day: 0 })
-			}));
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: +(start.set({ year: 0 }))
+				})
+			}
 			return;
 		}
 
-		const { currentInput } = this.state;
+		const currentInput = start;
 		const test = parseInt(e.target.value, 10);
 
 		if (test !== test) {
@@ -357,17 +395,22 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private updateTimeHours(e: React.ChangeEvent<HTMLInputElement>) {
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
 		if (e.target.value === '') {
-			this.setState(prev => ({
-				currentInput: prev.currentInput.set({ hour: 0 })
-			}));
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: +(start.set({ year: 0 }))
+				})
+			}
 			return;
 		}
 
@@ -388,9 +431,7 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		const { currentInput } = this.state;
-
-		const newInput = currentInput.set({
+		const newInput = start.set({
 			hour: test
 		});
 
@@ -400,17 +441,22 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private updateTimeMinutes(e: React.ChangeEvent<HTMLInputElement>) {
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
 		if (e.target.value === '') {
-			this.setState(prev => ({
-				currentInput: prev.currentInput.set({ minute: 0 })
-			}));
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: +(start.set({ year: 0 }))
+				})
+			}
 			return;
 		}
 
@@ -427,13 +473,11 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		const { currentInput } = this.state;
-
 		if (test >= 10) {
 			test = Math.round(test / 5) * 5;
 		}
 
-		const newInput = currentInput.set({
+		const newInput = start.set({
 			minute: test
 		});
 
@@ -443,10 +487,6 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private onFocus() {
@@ -462,7 +502,13 @@ export default class DateTimeInput extends React.Component<
 	}
 
 	private onMinuteBlur() {
-		const test = this.state.currentInput.minute;
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
+		const test = start.minute;
 
 		if (test !== test) {
 			// NaN
@@ -475,9 +521,7 @@ export default class DateTimeInput extends React.Component<
 			return;
 		}
 
-		const { currentInput } = this.state;
-
-		const newInput = currentInput.set({
+		const newInput = start.set({
 			minute: test
 		});
 
@@ -487,22 +531,22 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private onYearBlur() {
-		let test = this.state.currentInput.year;
+		const start = roundInput(
+			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
+			this.props.minuteInterval || FIVE_MINUTES,
+			this.props.originalTimeZoneOffset
+		);
+
+		let test = start.year;
 
 		if (test !== test) {
 			// NaN
 			this.forceUpdate();
 			return;
 		}
-
-		const { currentInput } = this.state;
 
 		if (test >= 0 && test < 100) {
 			if (test >= DateTime.local().plus({ years: 2 }).year) {
@@ -512,7 +556,7 @@ export default class DateTimeInput extends React.Component<
 			}
 		}
 
-		const newInput = currentInput.set({
+		const newInput = start.set({
 			year: test
 		});
 
@@ -522,10 +566,6 @@ export default class DateTimeInput extends React.Component<
 				value: Math.round(+newInput / 1000)
 			});
 		}
-
-		this.setState({
-			currentInput: newInput
-		});
 	}
 
 	private openGui() {

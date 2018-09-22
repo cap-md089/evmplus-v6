@@ -2,16 +2,19 @@ import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
+import LinkList from '../pages/EventLinkList';
+import EventViewer from '../pages/EventViewer';
 import Main from '../pages/Main';
+import ModifyEvent from '../pages/ModifyEvent';
 import Page from '../pages/Page';
 import RackBuilder from '../pages/RibbonRack';
 import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
 
 const pages: Array<{
-	url: string,
-	component: typeof Page,
-	exact: boolean
+	url: string;
+	component: typeof Page;
+	exact: boolean;
 }> = [
 	{
 		url: '/',
@@ -36,6 +39,21 @@ const pages: Array<{
 	{
 		url: '/eventform',
 		component: AddEvent as typeof Page,
+		exact: true
+	},
+	{
+		url: '/eventviewer/:id',
+		component: EventViewer as typeof Page,
+		exact: false
+	},
+	{
+		url: '/eventlinklist',
+		component: LinkList as typeof Page,
+		exact: false
+	},
+	{
+		url: '/eventform/:id',
+		component: ModifyEvent as typeof Page,
 		exact: false
 	}
 ];
@@ -63,7 +81,11 @@ export default class PageRouter extends React.Component<{
 							key={i}
 							path={value.url}
 							exact={value.exact}
-							component={composeElement(value.component, this.props.member, this.props.authorizeUser)}
+							component={composeElement(
+								value.component,
+								this.props.member,
+								this.props.authorizeUser
+							)}
 						/>
 					);
 				})}

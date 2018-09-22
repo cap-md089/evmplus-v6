@@ -16,14 +16,16 @@ import {
 import POCInput from '../components/form-inputs/POCInput';
 import { FileInput, TextBox } from '../components/SimpleForm';
 import SimpleRequestForm from '../components/SimpleRequestForm';
+import myFetch from '../lib/myFetch';
 import { PageProps } from './Page';
 
 const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
 
-interface AddEventState {
+interface ModifyEventState {
 	event: NewEventFormValues;
 	valid: boolean;
 	errors: {};
+	changed: { [K in keyof NewEventFormValues]: boolean };
 }
 
 interface NewEventFormValues extends NewEventObject {
@@ -39,11 +41,11 @@ interface NewEventFormValues extends NewEventObject {
 	};
 }
 
-export default class AddEvent extends React.Component<
-	PageProps,
-	AddEventState
+export default class ModifyEvent extends React.Component<
+	PageProps<{ id: string }>,
+	ModifyEventState
 > {
-	public state: AddEventState = {
+	public state: ModifyEventState = {
 		event: {
 			name: '',
 			meetDateTime: Math.round(+DateTime.utc() / 1000),
@@ -97,13 +99,67 @@ export default class AddEvent extends React.Component<
 			fileIDs: []
 		},
 		valid: false,
-		errors: {}
+		errors: {},
+		changed: {
+			acceptSignups: false,
+			activity: false,
+			administrationComments: false,
+			comments: false,
+			complete: false,
+			debrief: false,
+			desiredNumberOfParticipants: false,
+			endDateTime: false,
+			eventWebsite: false,
+			fileIDs: false,
+			groupEventNumber: false,
+			highAdventureDescription: false,
+			location: false,
+			lodgingArrangments: false,
+			mealsDescription: false,
+			meetDateTime: false,
+			meetLocation: false,
+			name: false,
+			participationFee: false,
+			pickupDateTime: false,
+			pickupLocation: false,
+			pointsOfContact: false,
+			publishToWingCalendar: false,
+			registration: false,
+			requiredEquipment: false,
+			requiredForms: false,
+			showUpcoming: false,
+			signUpDenyMessage: false,
+			signUpPartTime: false,
+			sourceEvent: false,
+			startDateTime: false,
+			status: false,
+			teamID: false,
+			transportationDescription: false,
+			transportationProvided: false,
+			uniform: false,
+			useParticipationFee: false,
+			useRegistration: false,
+			wingEventNumber: false
+		}
 	};
 
-	constructor(props: PageProps) {
+	constructor(props: PageProps<{ id: string }>) {
 		super(props);
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
+	}
+
+	public componentDidMount() {
+		myFetch('/api/event/' + this.props.routeProps.match.params.id)
+			.then(val => val.json())
+			.then((event: EventObject) => {
+				this.setState(prev => ({
+					event: {
+						...prev.event,
+						...event
+					}
+				}));
+			});
 	}
 
 	public render() {
@@ -121,12 +177,12 @@ export default class AddEvent extends React.Component<
 
 		return this.props.member.valid ? (
 			<NewEventForm
-				url="/api/event"
+				url={'/api/event/' + this.props.routeProps.match.params.id}
 				id="newEventForm"
 				onChange={this.updateNewEvent}
 				onSubmit={this.handleSubmit}
 			>
-				<Title>Create an event</Title>
+				<Title>Modify event</Title>
 				<Label>Event name</Label>
 				<TextInput name="name" value={event.name} />
 				<Label>Meet date and time</Label>
@@ -136,6 +192,24 @@ export default class AddEvent extends React.Component<
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={value => {
+						this.setState(prev => {
+							const startDateTime = prev.changed.startDateTime
+								? prev.event.startDateTime
+								: value + 5 * 60;
+							return {
+								event: {
+									...prev.event,
+									startDateTime,
+									endDateTime:
+										prev.changed.startDateTime ||
+										prev.changed.endDateTime
+											? prev.event.endDateTime
+											: startDateTime + 3600
+								}
+							};
+						});
+					}}
 				/>
 				<Label>Meet location</Label>
 				<TextInput name="meetLocation" value={event.meetLocation} />
@@ -146,9 +220,28 @@ export default class AddEvent extends React.Component<
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								endDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Event location</Label>
-				<TextInput name="location" value={event.location} />
+				<TextInput
+					name="location"
+					value={event.location}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								location: true
+							}
+						}));
+					}}
+				/>
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
@@ -156,6 +249,14 @@ export default class AddEvent extends React.Component<
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								endDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Pickup date and time</Label>
 				<DateTimeInput
@@ -415,10 +516,7 @@ export default class AddEvent extends React.Component<
 				</TextBox>
 
 				<Label>Team</Label>
-				<NumberInput
-					name="teamID"
-					value={this.state.event.teamID}
-				/>
+				<NumberInput name="teamID" value={this.state.event.teamID} />
 
 				<Label>Event files</Label>
 				<FileInput name="fileIDs" value={this.state.event.fileIDs} />
@@ -445,7 +543,7 @@ export default class AddEvent extends React.Component<
 		if (!event.useParticipationFee) {
 			delete newEvent.participationFee;
 		}
-		delete newEvent.useParticipationFee
+		delete newEvent.useParticipationFee;
 
 		if (!event.useRegistration) {
 			delete newEvent.registration;

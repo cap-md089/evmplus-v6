@@ -8,7 +8,6 @@ import SideNavigation from './components/SideNavigation';
 import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
-import Konami from './pages/Konami';
 import Registry from './registry';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
@@ -83,25 +82,6 @@ class SearchForm extends React.Component<
 
 const RoutingSearchForm = withRouter(SearchForm);
 
-const konamiCode = [
-	'ArrowUp',
-	'ArrowUp',
-	'ArrowDown',
-	'ArrowDown',
-	'ArrowLeft',
-	'ArrowRight',
-	'ArrowLeft',
-	'ArrowRight',
-	'KeyA',
-	'KeyB',
-	'Enter'
-];
-
-const konami = {
-	index: 0,
-	done: false
-}
-
 interface AppState {
 	Registry: Registry;
 	member: SigninReturn;
@@ -132,7 +112,7 @@ export default class App extends React.Component<
 			}
 		},
 		sideNavLinks: [],
-		breadCrumbs: [],
+		breadCrumbs: []
 	};
 
 	private titleElement: HTMLDivElement;
@@ -142,7 +122,6 @@ export default class App extends React.Component<
 
 		// 		const sid = localStorage.getItem('sid');
 		this.authorizeUser = this.authorizeUser.bind(this);
-		this.doneWithKonami = this.doneWithKonami.bind(this);
 	}
 
 	public componentDidMount(): void {
@@ -190,8 +169,6 @@ export default class App extends React.Component<
 					});
 				});
 		}
-
-		window.onkeydown = this.onKeyDown.bind(this);
 	}
 
 	public componentWillUnmount() {
@@ -215,13 +192,7 @@ export default class App extends React.Component<
 			.removeClass('desktop');
 		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
 
-		return konami.done ? (
-			<Konami
-				exit={this.doneWithKonami}
-				authorizeUser={this.authorizeUser}
-				member={this.state.member}
-			/>
-		) : (
+		return (
 			<div>
 				<div id="mother">
 					<div id="bodyContainer">
@@ -543,21 +514,5 @@ export default class App extends React.Component<
 				member
 			});
 		}
-	}
-
-	private onKeyDown(e: KeyboardEvent) {
-		if (konamiCode[konami.index] === e.code) {
-			let index = konami.index + 1;
-			const done = index === konamiCode.length || konami.done;
-			if (done) {
-				index = 0;
-				this.forceUpdate();
-			}
-		}
-	}
-
-	private doneWithKonami() {
-		konami.done = false;
-		this.forceUpdate();
 	}
 }

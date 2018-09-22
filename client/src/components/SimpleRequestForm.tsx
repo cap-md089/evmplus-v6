@@ -59,12 +59,12 @@ export default class SimpleRequestForm<C extends object, S> extends Form<
 					});
 					return;
 				}
-				const clickResolve = this.props.onSubmit(this.fields);
+				const submitResolve = this.props.onSubmit(this.fields);
 				if (
-					typeof clickResolve !== 'undefined' &&
-					typeof clickResolve.then !== 'undefined'
+					typeof submitResolve !== 'undefined' &&
+					typeof submitResolve.then !== 'undefined'
 				) {
-					clickResolve.then((data: any) => {
+					submitResolve.then((data: any) => {
 						if (typeof data === 'boolean') {
 							res({
 								push: data,
@@ -80,15 +80,15 @@ export default class SimpleRequestForm<C extends object, S> extends Form<
 							});
 						}
 					});
-				} else if (typeof clickResolve === 'boolean') {
+				} else if (typeof submitResolve === 'boolean') {
 					res({
-						push: clickResolve,
+						push: submitResolve,
 						data: formFields
 					});
 				} else {
 					res({
 						push: true,
-						data: clickResolve
+						data: submitResolve
 					});
 				}
 			}
