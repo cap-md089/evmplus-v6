@@ -9,6 +9,8 @@ import {
 declare global {
 	/**
 	 * Table for SQL definitions for CAP NHQ
+	 * 
+	 * Documentation is not provided by NHQ
 	 */
 	export namespace NHQ {
 		export interface CadetAchv {
@@ -179,64 +181,183 @@ declare global {
 		}
 	}
 
+	/**
+	 * Allows for compiling of for-await-of loops
+	 */
 	export interface AsyncIterableIterator<T> {
 		next(value?: any): Promise<IteratorResult<T>>;
 		return?(value?: any): Promise<IteratorResult<T>>;
 		throw?(e?: any): Promise<IteratorResult<T>>;
 	}
 
+	/**
+	 * As the return types are complex, keeping them consistent is key
+	 */
 	export type MultCheckboxReturn = [boolean[], string];
-
 	export type RadioReturn<T extends number> = [T, string];
 
+	/**
+	 * The object that represents a successful session, as signing in
+	 * returns a session
+	 */
 	export interface SuccessfulSigninReturn {
+		/**
+		 * No error with this session
+		 */
 		error: MemberCreateError.NONE;
+		/**
+		 * The member details
+		 */
 		member: MemberObject;
+		/**
+		 * The ID for the session
+		 */
 		sessionID: string;
+		/**
+		 * Used by TypeScript/JavaScript to allow for type inference
+		 * between success and failure
+		 */
 		valid: true;
 	}
 
 	export interface FailedSigninReturn {
+		/**
+		 * May contain error details
+		 */
 		error: MemberCreateError;
+		/**
+		 * The member cannot exist as the signin failed
+		 */
 		member: null;
-		sessionID: string;
+		/**
+		 * Session ID for an invalid session is empty
+		 */
+		sessionID: '';
+		/**
+		 * Used by TypeScript/JavaScript to allow for type inference
+		 * between success and failure
+		 */
 		valid: false;
 	}
 
+	/**
+	 * Allows for multiplexing the data together but still have type inference and
+	 * not use try/catch
+	 */
 	export type SigninReturn = SuccessfulSigninReturn | FailedSigninReturn;
 
+	/**
+	 * A basic point of contact
+	 */
 	export interface PointOfContact {
+		/**
+		 * Used by TypeScript/JavaScript to differentiate between different
+		 * points of contact
+		 */
 		type: PointOfContactType;
+		/**
+		 * All points of contact have an email
+		 */
 		email: string;
+		/**
+		 * All of them should have a phone number
+		 */
 		phone: string;
+
+		// Email settings for a POC
+		/**
+		 * Receive a notification for them being a POC
+		 */
 		receiveUpdates: boolean;
+		/**
+		 * Email the roster to the POC at some point in time
+		 */
 		receiveRoster: boolean;
+		/**
+		 * Email updates for the event
+		 */
 		receiveEventUpdates: boolean;
+		/**
+		 * Email whenever someone signs up
+		 */
 		receiveSignUpUpdates: boolean;
 	}
 
 	export interface InternalPointOfContact extends PointOfContact {
+		/**
+		 * Used for differentiating CAP points of contact
+		 */
 		type: PointOfContactType.INTERNAL;
+		/**
+		 * CAP ID
+		 */
 		id: number;
 	}
 
 	export interface ExternalPointOfContact extends PointOfContact {
+		/**
+		 * Used for differentiating non CAP points of contact
+		 */
 		type: PointOfContactType.EXTERNAL;
+		/**
+		 * As we don't have CAP ID, we can't pull name or rank
+		 */
 		name: string;
 	}
 
+	/**
+	 * Mark documents as NoSQL, for interaction with the database
+	 * 
+	 * But not too close, because an object may not have been created and
+	 * therefore not have an _id
+	 */
 	export interface NoSQLDocument {
+		/**
+		 * The ID assigned by NoSQL/MySQL
+		 */
 		_id?: string;
 	}
 
+	/**
+	 * Most classes interact with the database in some way; just define some
+	 * common ground for them
+	 */
 	export interface DatabaseInterface<T extends NoSQLDocument> {
-		toRaw(): T
+		/**
+		 * Return the object in a manner that is safe for JSON transfer
+		 * 
+		 * Useful for when making sure the wrong data doesn't get transferred
+		 * to the client
+		 */
+		toRaw(): T;
+		/**
+		 * Checks all the values coming in, making sure they are the right type and
+		 * setting them if they are the right type and defined
+		 * 
+		 * @param values The values to set
+		 */
+		set(values: Partial<T>): void;
+		/**
+		 * Save the document to the database
+		 */
+		save(): Promise<void>;
 	}
 
+	/**
+	 * Most objects are identifiable; this also allows for general purpose libraries
+	 * to filter or perform other operations on generally identifiable objects
+	 */
 	export interface Identifiable {
+		/**
+		 * The ID an object has. This is different from a NoSQL ID, as most of these
+		 * are set by NHQ or by us
+		 */
 		id: string | number;
 	}
 
+	/**
+	 * Says that there is another ID to listen to, the account ID
+	 */
 	export interface AccountIdentifiable extends Identifiable {
 		/**
 		 * The ID of the account the folder belongs to
@@ -244,12 +365,32 @@ declare global {
 		accountID: string;
 	}
 
+	/**
+	 * The member contact info for a user
+	 * 
+	 * We think it can only be a string, as it is hard (impossible?) to input
+	 * multiple contacts of a certain type through the UI provided on NHQ
+	 */
 	export interface MemberContactInstance {
+		/**
+		 * First contact to try and raise
+		 */
 		PRIMARY: string;
+		/**
+		 * Second contact to try and raise
+		 */
 		SECONDARY: string;
+		/**
+		 * Only used for emergency; go through the primary and secondary
+		 * contacts first
+		 */
 		EMERGENCY: string;
 	}
 
+	/**
+	 * Currently, there are only 4 member access levels and for some reason
+	 * they are a list of strings vs an enum (why?)
+	 */
 	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
 
 	/**
@@ -318,10 +459,19 @@ declare global {
 		WORKPHONE: MemberContactInstance;
 	}
 
+	/**
+	 * Used for looping through the contact types
+	 */
 	export type MemberContactType = keyof MemberContact;
 
+	/**
+	 * Used for getting priorities and such
+	 */
 	export type MemberContactPriority = keyof MemberContactInstance;
 
+	/**
+	 * The permissions list for various members
+	 */
 	export interface MemberPermissions {
 		// Start the Cadet Staff permissions
 		/**
@@ -428,21 +578,37 @@ declare global {
 		 * Whether or not the user can edit the registry
 		 */
 		RegistryEdit: number;
-
-		// To get it to not throw errors
-		[key: string]: number;
 	}
 
+	/**
+	 * String representation of permissions
+	 */
 	export type MemberPermission = keyof MemberPermissions;
+
+	/**
+	 * String representation of the member type, as there needs to be a way to differentiate
+	 */
+	export type MemberType = 'CAPWATCHMember' | 'NHQMember' | 'ProspectiveMember';
 
 	/**
 	 * Describes a CAP member
 	 *
-	 * The member may be created from one of three ways:
-	 *
-	 * Member.Create: Takes sign in data and signs the user in
-	 * Member.Check: Takes a session id and returns the user
-	 * Member.Estimate: Estimates the user based off of CAPWATCH data
+	 * The member may be created from one of many ways:
+	 * 
+	 * NHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:
+	 * 		Takes sign in data or a session and signs the user in. Best data
+	 * CAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as
+	 * 		the CAPWATCH updates are frequent
+	 * ProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/
+	 * NHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for
+	 * 		managing prospective members
+	 * 
+	 * NHQMember.Create and ProspectiveMember.Signin are used when signing people in
+	 * ProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from
+	 * 		our database
+	 * 
+	 * CAPWATCHMember and NHQMember have their sources in NHQ
+	 * ProspectiveMember is located in our database
 	 */
 	export interface MemberObject extends Identifiable {
 		/**
@@ -495,16 +661,67 @@ declare global {
 		orgid: number;
 		/**
 		 * Since many accounts can have an ORGID, there is an array containing each one
+		 * 
+		 * @deprecated Let's go with a member method to use an async generator to get each one
 		 */
 		// accounts: Account[]
+		/**
+		 * User login ID
+		 */
+		usrID: string;
+		/**
+		 * The Kind of user, as there are multiple
+		 */
+		kind: MemberType;
 	}
 
+	/**
+	 * Used when referring to members, as numerical CAPIDs do not work as well with
+	 * ProspectiveMembers
+	 */
+	interface MemberReferenceBase {
+		kind: MemberType;
+	}
+
+	export interface ProspectiveMemberReference extends MemberReferenceBase {
+		kind: 'ProspectiveMember';
+		id: string;
+	}
+
+	export interface NHQMemberReference extends MemberReferenceBase {
+		kind: 'NHQMember';
+		id: number;
+	}
+
+	export type MemberReference = NHQMemberReference | ProspectiveMemberReference;
+
+	/**
+	 * In the case that it doesn't like MemberBase, try using Member
+	 */
+	export type Member = ProspectiveMemberAccount | MemberObject;
+
+	/**
+	 * Records temporary duty positions that we assign
+	 */
 	interface TemporaryDutyPosition {
+		/**
+		 * How long the temporary duty position is valid for; they are temporary
+		 * because someone may only need to have a position for a single meeting week
+		 */
 		validUntil: number;
 
+		/**
+		 * Following NHQ naming, as this is used by Member to in a slick
+		 * MapReduce way
+		 */
 		Duty: string;
 	}
 
+	/**
+	 * Extra member information that may need to be stored for the user that
+	 * our website uses and NHQ doesn't, for instance temporary duty positions and
+	 * permissions
+	 */
 	export interface ExtraMemberInformation
 		extends AccountIdentifiable,
 			NoSQLDocument {
@@ -528,6 +745,10 @@ declare global {
 		flight?: string;
 	}
 
+	/**
+	 * The object that splits all of the data used by different people to limit their views
+	 * to what they want and what they have permissions for
+	 */
 	export interface AccountObject extends Identifiable, NoSQLDocument {
 		/**
 		 * The Account ID
@@ -577,6 +798,11 @@ declare global {
 		adminIDs: number[];
 	}
 
+	/**
+	 * Used by the different files to indicate what they are
+	 * 
+	 * Follows the example of Google APIs
+	 */
 	export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
 		/**
 		 * The kind of object it is, as these pass through JSON requests
@@ -584,6 +810,10 @@ declare global {
 		kind: string;
 	}
 
+	/**
+	 * Represents a file. Metadata (shown) is stored in the database, other file
+	 * data is stored on disk to take advantage of Node.js
+	 */
 	export interface FileObject extends DriveObject {
 		/**
 		 * Prevent duck typing to an extent
@@ -626,7 +856,7 @@ declare global {
 		 */
 		forSlideshow: boolean;
 		/**
-		 * Child ids
+		 * Children ids for folder
 		 */
 		fileChildren: string[];
 		/**
@@ -635,21 +865,48 @@ declare global {
 		parentID: string;
 	}
 
+	/**
+	 * A blog post for peoplle to read
+	 */
 	export interface BlogPostObject
 		extends AccountIdentifiable,
 			NoSQLDocument,
 			NewBlogPost {
+		/**
+		 * The ID of the blog post itself
+		 */
 		id: number;
+		/**
+		 * When it was published
+		 */
 		posted: number;
 	}
 
 	export interface NewBlogPost {
+		/**
+		 * The title of the blog post
+		 */
 		title: string;
+		/**
+		 * The blog post author
+		 */
 		authorid: number;
+		/**
+		 * What the author is trying to say
+		 */
 		content: RawDraftContentState;
+		/**
+		 * Pictures that will be presented below the post; if there
+		 * are photos that will be embedded in the content, it will be in the `content`
+		 * property and handled by Draft.js
+		 */
 		fileIDs: string[];
 	}
 
+	/**
+	 * The meat of what this website is designed for; events can be signed up for
+	 * and hold information to facilitate easy information distribution
+	 */
 	export interface EventObject
 		extends AccountIdentifiable,
 			NoSQLDocument,
@@ -658,82 +915,336 @@ declare global {
 		 * ID of the Event, can be expressed as the event number
 		 */
 		id: number;
+		/**
+		 * Last modify time
+		 */
 		timeModified: number;
+		/**
+		 * When the object was created
+		 */
 		timeCreated: number;
+		/**
+		 * Who made the event
+		 */
 		author: number;
+		/**
+		 * New events start with no attendance, but there can be procedurally
+		 * generated attendance on the client side to include internal POCs
+		 */
+		attendance: AttendanceRecord[];
 	}
 
+	/**
+	 * Used for transfer when creating a new event object, as it cannot know what
+	 * some of the details are until the server handles it
+	 */
 	export interface NewEventObject {
+		/**
+		 * The name of the event (used to be EventName, dropped)
+		 */
 		name: string;
+		/**
+		 * When the event meets
+		 */
 		meetDateTime: number;
+		/**
+		 * Where the event meets
+		 */
 		meetLocation: string;
+		/**
+		 * When the event starts; this differs from meet time, as the event may
+		 * have a place for people to gather to carpool
+		 */
 		startDateTime: number;
+		/**
+		 * The location of the event itself, differs from meet as stated above
+		 */
 		location: string;
+		/**
+		 * When the event finishes. Different from pickup the same way start and
+		 * meet times are different. End location is implied to be the start
+		 * location
+		 */
 		endDateTime: number;
+		/**
+		 * When cadets can be picked up from the event
+		 */
 		pickupDateTime: number;
+		/**
+		 * Where cadets will be, most likely will happen to be the meet location
+		 * or event location
+		 */
 		pickupLocation: string;
+		/**
+		 * Whether or not transportation is provided from the meet location to
+		 * the event location
+		 */
 		transportationProvided: boolean;
+		/**
+		 * Description; e.g., using a van
+		 */
 		transportationDescription: string;
+		/**
+		 * The uniforms that can be worn
+		 */
 		uniform: MultCheckboxReturn;
+		/**
+		 * How many people we want at the event
+		 */
 		desiredNumberOfParticipants: number;
+		/**
+		 * If there is a registration deadline, this is present
+		 * As it is partial, not required information, this may be
+		 * excluded
+		 */
 		registration?: {
+			/**
+			 * When the registration closes
+			 */
 			deadline: number;
+			/**
+			 * What information there is regarding registration closing
+			 */
 			information: string;
 		};
+		/**
+		 * Same as registration deadline but for fees
+		 */
 		participationFee?: {
+			/**
+			 * When the fee is due
+			 */
 			feeDue: number;
+			/**
+			 * How much is due before showing up to the event
+			 */
 			feeAmount: number;
 		};
+		/**
+		 * Describes the options for meals
+		 */
 		mealsDescription: MultCheckboxReturn;
+		/**
+		 * Describes where cadets may be sleeping
+		 */
 		lodgingArrangments: MultCheckboxReturn;
+		/**
+		 * Describes how strenuous the activity may be to cadets
+		 */
 		activity: MultCheckboxReturn;
+		/**
+		 * Describes how hard the activity may be
+		 */
 		highAdventureDescription: string;
+		/**
+		 * A list of things that will be required
+		 * 
+		 * Should this only be shown to certain members? E.g., team members,
+		 * signed in members, or just all?
+		 */
 		requiredEquipment: string[];
+		/**
+		 * External websites
+		 */
 		eventWebsite: string;
+		/**
+		 * Forms include CAP ID, CAPF 31, etc.
+		 */
 		requiredForms: MultCheckboxReturn;
+		/**
+		 * Comments from the event author, description, etc.
+		 */
 		comments: string;
+		/**
+		 * Whether or not signups are accepted
+		 */
 		acceptSignups: boolean;
+		/**
+		 * What to say if sign ups are denied; may be dropped if 
+		 * acceptSignups is true
+		 */
 		signUpDenyMessage?: string;
+		/**
+		 * If the wing calendar needs to have this event, publish to the Google calendar
+		 */
 		publishToWingCalendar: boolean;
+		/**
+		 * Show on the upcoming events portion of the main page
+		 */
 		showUpcoming: boolean;
+		/**
+		 * Is there a valid group number available?
+		 */
 		groupEventNumber: RadioReturn<number>;
+		/**
+		 * What is the wing event number
+		 */
 		wingEventNumber?: number;
+		/**
+		 * If all the details are completely filled in
+		 */
 		complete: boolean;
+		/**
+		 * Comments for/from administrators
+		 */
 		administrationComments: string;
+		/**
+		 * Tentative, complete, cancelled, etc.
+		 */
 		status: EventStatus;
+		/**
+		 * After action reports
+		 */
 		debrief: string;
+		/**
+		 * Who to contact for more event information
+		 */
 		pointsOfContact: (InternalPointOfContact | ExternalPointOfContact)[];
+		/**
+		 * Can cadets sign up for only a portion of the event?
+		 */
 		signUpPartTime?: boolean;
+		/**
+		 * If this is a team event, a team can be specified for future features
+		 */
 		teamID: number;
+		/**
+		 * Files that may be associated with the event; e.g. forms
+		 */
 		fileIDs: string[];
+		/**
+		 * If this is a linked event this will be present
+		 * 
+		 * Linking events allows for one account to copy an event of another account
+		 * and receive updates and such
+		 */
 		sourceEvent?: {
+			/**
+			 * ID of the event it came from
+			 */
 			id: number;
+			/**
+			 * The account linked from
+			 */
 			accountID: string;
 		};
 	}
 
-	export interface AttendanceRecord {
-		timestamp: number;
-		eventID: number;
-		accountID: string;
-		memberID: number;
-		memberRankName: string;
+	/**
+	 * Used by the Event class to handle safely adding new records
+	 */
+	export interface NewAttendanceRecord {
+		/**
+		 * Comments from the cadet
+		 */
 		comments: string;
+		/**
+		 * Committed, rescindend commitment to attend, etc
+		 */
 		status: AttendanceStatus;
+		/**
+		 * ?
+		 */
 		requirements: string;
-		summaryEmailSent: boolean;
+		/**
+		 * If they plan to use transportation provided
+		 */
 		planToUseCAPTransportation: boolean;
+
+		// If these are undefined, they are staying for the whole event
+		/**
+		 * If they are comming part time, this shows when they arrive
+		 */
+		arrivalTime?: number;
+		/**
+		 * If they are comming part time, this shows when they depart
+		 */
+		departureTime?: number;
 	}
 
-	export interface RegistryValues extends NoSQLDocument {
-		accountID: string;
+	/**
+	 * A full attendance record that has been inserted in the database
+	 */
+	export interface AttendanceRecord extends NewAttendanceRecord {
+		/**
+		 * When they signed up
+		 */
+		timestamp: number;
+		/**
+		 * Who they are
+		 */
+		memberID: number;
+		/**
+		 * Record member rank and name to show what rank they were when
+		 * they participated
+		 */
+		memberRankName: string;
+		/**
+		 * Whether or not the emails for this cadet/for the POCs have been sent
+		 */
+		summaryEmailSent: boolean;
+	}
+
+	/**
+	 * Each account has a registry, stores configuration
+	 */
+	export interface RegistryValues extends NoSQLDocument, AccountIdentifiable {
+		/**
+		 * How to contact the account; email, social media, etc;
+		 */
 		contact: {
+			/**
+			 * Facebook page for the account
+			 */
 			facebook?: string;
+			/**
+			 * Instagram page for the account
+			 */
 			instagram?: string;
 		},
+		/**
+		 * Website naming details
+		 */
 		website: {
+			/**
+			 * What the website is called
+			 */
 			name: string,
+			/**
+			 * -, ::, etc. Personal taste, used in the title of the page
+			 */
 			separator: string;
 		}
+	}
+
+	/**
+	 * Manages accounts on the website
+	 * 
+	 * Ignored because there are conflicting id types
+	 */
+	export interface ProspectiveMemberAccount extends AccountIdentifiable, NoSQLDocument, MemberObject {
+		/**
+		 * Used to resolve compile errors, as AccountIdentifiable and NoSQLDocument inherit Identifiable which
+		 * says id must be `number | string`
+		 * 
+		 * Can be set to something else to 'link' it to a real CAP account
+		 */
+		id: number;
+		/**
+		 * User IDs will be something alphanumeric, e.g. P123456
+		 */
+		prospectiveID: string;
+		/**
+		 * The password for the user, hashed
+		 */
+		password: string;
+		/**
+		 * The salt used to compute the password
+		 */
+		salt: string;
+		/**
+		 * The kind is specifically a prospective member
+		 */
+		kind: 'ProspectiveMember';
 	}
 }
