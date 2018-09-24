@@ -22,9 +22,11 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 
 	let isValidMember = false;
 
-	for await (const account of req.member.getAccounts()) {
-		if (account.id === req.account.id) {
-			isValidMember = true;
+	if (req.member) {
+		for await (const account of req.member.getAccounts()) {
+			if (account.id === req.account.id) {
+				isValidMember = true;
+			}
 		}
 	}
 
