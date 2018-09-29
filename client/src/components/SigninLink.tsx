@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { MemberCreateError } from 'src/enums';
 import { MessageEventListener } from '../App';
-import Dialogue from './Dialogue';
+import Dialogue, { DialogueButtons } from './Dialogue';
 import './Signin.css';
 
 const errorMessages = {
@@ -14,7 +14,7 @@ const errorMessages = {
 
 interface SigninLinkState {
 	open: boolean;
-	error: number;
+	error: MemberCreateError;
 }
 
 class SigninLink extends React.Component<
@@ -47,28 +47,13 @@ class SigninLink extends React.Component<
 		props: SigninReturn & {
 			authorizeUser: (arg: SigninReturn) => void;
 		},
-		state: { open: boolean; error: number }
+		state: SigninLinkState
 	) {
 		// check if new user is valid, if so update state to close dialogue
-		if (state.open && props.valid) {
+		if (state.open && state.error !== MemberCreateError.NONE) {
 			this.setState({
-				open: false
-			});
-			if (this.iframeRef.contentWindow) {
-				this.iframeRef.contentWindow.postMessage(
-					'done submitting',
-					'*'
-				);
-			}
-		} else if (
-			state.open &&
-			(typeof props.error !== 'undefined' &&
-				props.error !== MemberCreateError.NONE) &&
-			// Check if things actually changed, as otherwise it's an infinite loop
-			props.error !== state.error
-		) {
-			this.setState({
-				error: props.error
+				open: false,
+				error: MemberCreateError.NONE
 			});
 			if (this.iframeRef.contentWindow) {
 				this.iframeRef.contentWindow.postMessage(
@@ -95,13 +80,13 @@ class SigninLink extends React.Component<
 				</a>
 				<Dialogue
 					title={'Sign in'}
-					displayButton={false}
+					displayButtons={DialogueButtons.NONE}
 					open={this.state.open}
 					onClose={this.closeDialogue}
 				>
 					<div
 						style={{
-							width: 614
+							maxWidth: 614
 						}}
 					>
 						Enter your eServices login information below to sign
@@ -154,19 +139,34 @@ class SigninLink extends React.Component<
 		try {
 			const data = JSON.parse(e.data) as SigninReturn;
 			if (
-				typeof data.error !== 'undefined' &&
-				typeof data.valid !== 'undefined' &&
-				data.valid === true &&
-				typeof data.sessionID !== 'undefined' &&
-				typeof data.member !== 'undefined'
+				typeof data.error === 'number' &&
+				typeof data.valid === 'boolean' &&
+				typeof data.sessionID === 'string' &&
+				// typeof null === 'object'
+				typeof data.member === 'object' &&
+				this.state.open
 			) {
-				localStorage.setItem('sessionID', data.sessionID);
-				this.props.authorizeUser({
-					valid: data.valid,
-					error: data.error,
-					member: data.member,
-					sessionID: data.sessionID
-				});
+				if (data.valid && data.member !== null) {
+					localStorage.setItem('sessionID', data.sessionID);
+					this.setState(
+						{
+							error: MemberCreateError.NONE,
+							open: false
+						},
+						() => {
+							this.props.authorizeUser({
+								valid: data.valid,
+								error: data.error,
+								member: data.member,
+								sessionID: data.sessionID
+							});
+						}
+					);
+				} else {
+					this.setState({
+						error: data.error
+					});
+				}
 			}
 		} catch (e) {
 			// ignore

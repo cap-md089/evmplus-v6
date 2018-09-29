@@ -96,6 +96,7 @@ export default class FileInput extends React.Component<
 			});
 		} else {
 			this.setState({
+				files: [],
 				loaded: true
 			});
 		}

@@ -9,6 +9,8 @@
 # production
 /build
 
+/src/schemas
+
 # misc
 .DS_Store
 .env.local

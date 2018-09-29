@@ -1,16 +1,14 @@
-import {
-	convertFromRaw,
-	convertToRaw,
-	Editor,
-	EditorState,
-	RawDraftContentState
-} from 'draft-js';
+import { convertFromRaw, convertToRaw, Editor, EditorState } from 'draft-js';
 import * as React from 'react';
-import { Link, Route, RouteComponentProps, withRouter } from 'react-router-dom';
+import { Link, Route, RouteComponentProps } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { TextArea, TextInput } from '../components/SimpleForm';
+import {
+	FileInput,
+	Label,
+	TextArea,
+	TextInput
+} from '../components/SimpleForm';
 /// <reference path="../../../lib/index.d.ts" />
-
 import RequestForm from '../components/SimpleRequestForm';
 import myFetch from '../lib/myFetch';
 import './blog.css';
@@ -83,28 +81,50 @@ class BlogList extends React.Component<
 	}
 }
 
-class BlogPostCreate extends React.Component<RouteComponentProps<any>> {
+class BlogPostCreate extends React.Component<
+	PageProps<any>,
+	{
+		title: string;
+		content: EditorState;
+		fileIDs: string[];
+	}
+> {
+	public state = {
+		title: '',
+		content: EditorState.createEmpty(),
+		fileIDs: []
+	};
+
 	public render() {
 		const PostCreateForm = RequestForm as new () => RequestForm<
 			{
-				postname: string;
-				content: RawDraftContentState;
+				title: string;
+				content: EditorState;
+				fileIDs: string[];
 			},
 			BlogPostObject
 		>;
 
-		return (
+		return this.props.member.valid === true ? (
 			<>
 				<h2>Create blog post</h2>
 				<PostCreateForm
-					url="/api/blog/post/add"
+					url="/api/blog/post"
 					id="blogPostCreate"
 					submitInfo={{
 						text: 'Create blog post',
 						className: 'floatAllthewayRight'
 					}}
+					onSubmit={post => ({
+						title: post.title,
+						content: convertToRaw(post.content.getCurrentContent()),
+						authorid: this.props.member.member!.object.id,
+						fileIDs: post.fileIDs
+					})}
 					onReceiveData={post => {
-						this.props.history.push('/blog/view/' + post.id);
+						this.props.routeProps.history.push(
+							'/blog/view/' + post.id
+						);
 					}}
 				>
 					<TextInput
@@ -123,17 +143,31 @@ class BlogPostCreate extends React.Component<RouteComponentProps<any>> {
 							borderBottomWidth: 0,
 							borderColor: '#aaa'
 						}}
-						value={''}
+						value={this.state.title}
+						onChange={title => {
+							this.setState({ title });
+						}}
 					/>
 					<TextArea
 						name="content"
 						fullWidth={true}
-						value={convertToRaw(
-							EditorState.createEmpty().getCurrentContent()
-						)}
+						value={this.state.content}
+						onChange={content => {
+							this.setState({ content });
+						}}
+					/>
+					<Label>Photos to display</Label>
+					<FileInput
+						name="fileIDs"
+						value={this.state.fileIDs}
+						onChange={fileIDs => {
+							this.setState({ fileIDs });
+						}}
 					/>
 				</PostCreateForm>
 			</>
+		) : (
+			<h2>Please sign in</h2>
 		);
 	}
 }
@@ -187,14 +221,14 @@ class BlogView extends React.Component<
 	}
 }
 
-export default class Blog extends Page<PageProps<{}>> {
+export default class Blog extends Page {
 	public render() {
 		return (
 			<>
 				<Route exact={true} path="/blog" component={BlogList} />
 				<Route
 					path="/blog/post"
-					component={withRouter(BlogPostCreate)}
+					component={() => <BlogPostCreate {...this.props} />}
 				/>
 				<Route path="/blog/view/:id" component={BlogView} />
 				<Route path="/blog/edit/:id" component={BlogEdit} />

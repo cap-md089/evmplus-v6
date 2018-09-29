@@ -55,15 +55,16 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: this.props.value
+				value: (this.props.value || [])
 			});
 		} else if (
 			typeof this.props.onInitialize !== 'undefined' &&
-			!this.props.multiple
+			!this.props.multiple &&
+			typeof this.props.value !== 'undefined'
 		) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: this.props.value
+				value: this.props.value || this.props
 			});
 		}
 	}
@@ -133,10 +134,10 @@ export default class Selector<T extends Identifiable> extends React.Component<
 							onClick={this.getSelector(val)}
 							className={
 								(this.props.multiple
-								? this.props.value
+								? (this.props.value || [])
 										.map(value => value.id)
 										.indexOf(val.id) > -1
-								: this.props.value.id === val.id)
+								: typeof this.props.value !== 'undefined' && this.props.value.id === val.id)
 									? 'selected'
 									: ''
 							}
@@ -176,12 +177,12 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				return;
 			}
 
-			const index = this.props.value
+			const index = (this.props.value || [])
 				.map(value => value.id)
 				.indexOf(val.id);
 
 			if (index > -1) {
-				const newList = this.props.value.slice();
+				const newList = (this.props.value || []).slice();
 
 				newList.splice(index, 1);
 
@@ -196,7 +197,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 					});
 				}
 			} else {
-				const newList = [...this.props.value, val];
+				const newList = [...(this.props.value || []), val];
 
 				if (this.props.onChange) {
 					this.props.onChange(newList);

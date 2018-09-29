@@ -114,64 +114,17 @@ const Spacer = (props: { size: number }) => (
 	/>
 );
 
-class RibbonRack extends React.Component<Partial<Ribbons>, Ribbons> {
-	public state = {
-		SilverValor: false,
-		BronzeValor: false,
-		DistinguishedService: false,
-		ExceptionalService: false,
-		MeritoriousService: false,
-		CommandersCommendation: false,
-		CAPAchievement: false,
-		Lifesaving: false,
-		NatCommanderUnitCitation: false,
-		UnitCitation: false,
-		Spaatz: false,
-		Eaker: false,
-		Earhart: false,
-		Mitchell: false,
-		Armstrong: false,
-		Goddard: false,
-		Doolittle: false,
-		Lindbergh: false,
-		Rickenbacker: false,
-		Wright: false,
-		Feik: false,
-		Arnold: false,
-		Curry: false,
-		AFA: false,
-		SegwartsAssociation: false,
-		ForeignWarVet: false,
-		RedService: false,
-		SearchFind: false,
-		AirSAR: false,
-		DisasterRelief: false,
-		CommunityService: false,
-		IACE: false,
-		CadetCompetition: false,
-		ColorGuard: false,
-		CAC: false,
-		NCSA: false,
-		Encampment: false,
-		Recruiter: false
-	};
-
+class RibbonRack extends React.Component<Partial<Ribbons>> {
 	constructor(props: Partial<Ribbons>) {
 		super(props);
-
-		for (const i in this.state) {
-			if (props.hasOwnProperty(i)) {
-				this.state[i] = Boolean(props[i]);
-			}
-		}
 	}
 
 	public render() {
 		const ribbons: JSX.Element[] = [];
 
-		for (const i in this.state) {
-			if (this.state.hasOwnProperty(i)) {
-				if (this.state[i]) {
+		for (const i in this.props) {
+			if (this.props.hasOwnProperty(i)) {
+				if (this.props[i]) {
 					ribbons.push(<Ribbon key={i} source={i} />);
 				}
 			}

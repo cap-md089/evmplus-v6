@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
+import Calendar from '../pages/Calendar';
 import LinkList from '../pages/EventLinkList';
 import EventViewer from '../pages/EventViewer';
 import Main from '../pages/Main';
@@ -18,42 +19,47 @@ const pages: Array<{
 }> = [
 	{
 		url: '/',
-		component: Main as typeof Page,
+		component: Main,
 		exact: true
 	},
 	{
 		url: '/test',
-		component: Test as typeof Page,
+		component: Test,
 		exact: false
 	},
 	{
 		url: '/blog',
-		component: Blog as typeof Page,
+		component: Blog,
 		exact: false
 	},
 	{
 		url: '/rack',
-		component: RackBuilder as typeof Page,
+		component: RackBuilder,
 		exact: false
 	},
 	{
 		url: '/eventform',
-		component: AddEvent as typeof Page,
+		component: AddEvent,
 		exact: true
 	},
 	{
 		url: '/eventviewer/:id',
-		component: EventViewer as typeof Page,
+		component: EventViewer,
 		exact: false
 	},
 	{
 		url: '/eventlinklist',
-		component: LinkList as typeof Page,
+		component: LinkList,
 		exact: false
 	},
 	{
 		url: '/eventform/:id',
-		component: ModifyEvent as typeof Page,
+		component: ModifyEvent,
+		exact: false
+	},
+	{
+		url: '/calendar/:month?/:year?',
+		component: Calendar,
 		exact: false
 	}
 ];

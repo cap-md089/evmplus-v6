@@ -10,20 +10,8 @@ export interface RadioProps<E extends number = number>
 export default class RadioButton<
 	E extends number = number
 > extends React.Component<
-	RadioProps<E | -1>,
-	{ currentChecked: number; otherText: string }
+	RadioProps<E | -1>
 > {
-	public state = {
-		currentChecked:
-			this.props.value && typeof this.props.value[0] !== 'undefined'
-				? this.props.value[0]
-				: -1,
-		otherText:
-			this.props.value && !!this.props.value[1]
-				? this.props.value[1]!
-				: ''
-	};
-
 	constructor(props: RadioProps<E | -1>) {
 		super(props);
 
@@ -49,7 +37,7 @@ export default class RadioButton<
 								type="radio"
 								value={i}
 								onChange={this.getChangeHandler(i)}
-								checked={i === this.props.value[0]}
+								checked={i === (this.props.value || [-1])[0]}
 							/>
 							<label htmlFor={`${this.props.name}-${i}`}>
 								{label}
@@ -75,7 +63,7 @@ export default class RadioButton<
 								)}
 								checked={
 									this.props.labels.length ===
-									this.props.value[0]
+									(this.props.value || [-1])[0]
 								}
 							/>
 							<label
@@ -88,7 +76,7 @@ export default class RadioButton<
 								Other:
 								<input
 									id={this.props.name + 'Other'}
-									value={this.state.otherText}
+									value={(this.props.value || [null, ''])[1]}
 									className="otherRadioInput otherInput"
 									onChange={this.updateOtherText}
 									onClick={this.selectOther}
@@ -121,7 +109,7 @@ export default class RadioButton<
 				this.props.onChange([
 					index as E,
 					index === this.props.labels.length
-						? this.state.otherText
+						? (this.props.value || [null, ''])[1]
 						: ''
 				]);
 			}
@@ -132,7 +120,7 @@ export default class RadioButton<
 					value: [
 						index as E,
 						index === this.props.labels.length
-							? this.state.otherText
+							? (this.props.value || [null, ''])[1]
 							: ''
 					]
 				});
@@ -162,7 +150,7 @@ export default class RadioButton<
 
 	private selectOther() {
 		const currentChecked = this.props.labels.length;
-		const otherText = this.state.otherText;
+		const otherText = (this.props.value || [null, ''])[1];
 		this.setState({
 			currentChecked
 		});

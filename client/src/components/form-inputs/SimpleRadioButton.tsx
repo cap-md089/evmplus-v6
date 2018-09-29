@@ -29,7 +29,7 @@ export default class SimpleRadioButton<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: this.props.value
+				value: (this.props.value || -1)
 			});
 		}
 	}

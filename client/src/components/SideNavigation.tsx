@@ -58,13 +58,13 @@ export class SideNavigation extends React.Component<SideNavigationState> {
 		let memberRank = '';
 		let memberName = '';
 		if (this.props.member.valid) {
-			memberRank = this.props.member.member.memberRank;
+			memberRank = this.props.member.member.object.memberRank;
 			const {
 				nameFirst,
 				nameLast,
 				nameMiddle,
 				nameSuffix
-			} = this.props.member.member;
+			} = this.props.member.member.object;
 			memberName = [nameFirst, nameMiddle, nameLast, nameSuffix]
 				.filter(i => i !== '')
 				.join(' ');

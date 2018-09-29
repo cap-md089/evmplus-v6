@@ -10,10 +10,10 @@ export interface PageProps<R = {}> {
 	authorizeUser: (arg: SigninReturn) => void;
 }
 
-export default class Page<
+export default abstract class Page<
 	P extends PageProps = PageProps,
 	S = {},
 	SS = {}
-> extends React.Component<P, S> {
-	public render (): JSX.Element | null {return null;}
+> extends React.Component<P, S, SS> {
+	public abstract render (): JSX.Element | null;
 }

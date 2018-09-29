@@ -147,6 +147,7 @@ export default class ModifyEvent extends React.Component<
 		super(props);
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
+		this.checkIfValid = this.checkIfValid.bind(this);
 	}
 
 	public componentDidMount() {
@@ -181,42 +182,23 @@ export default class ModifyEvent extends React.Component<
 				id="newEventForm"
 				onChange={this.updateNewEvent}
 				onSubmit={this.handleSubmit}
+				values={event}
 			>
 				<Title>Modify event</Title>
 				<Label>Event name</Label>
-				<TextInput name="name" value={event.name} />
+				<TextInput name="name" />
 				<Label>Meet date and time</Label>
 				<DateTimeInput
 					name="meetDateTime"
-					value={event.meetDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
-					onChange={value => {
-						this.setState(prev => {
-							const startDateTime = prev.changed.startDateTime
-								? prev.event.startDateTime
-								: value + 5 * 60;
-							return {
-								event: {
-									...prev.event,
-									startDateTime,
-									endDateTime:
-										prev.changed.startDateTime ||
-										prev.changed.endDateTime
-											? prev.event.endDateTime
-											: startDateTime + 3600
-								}
-							};
-						});
-					}}
 				/>
 				<Label>Meet location</Label>
-				<TextInput name="meetLocation" value={event.meetLocation} />
+				<TextInput name="meetLocation" />
 				<Label>Start date and time</Label>
 				<DateTimeInput
 					name="startDateTime"
-					value={event.startDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
@@ -224,7 +206,7 @@ export default class ModifyEvent extends React.Component<
 						this.setState(prev => ({
 							changed: {
 								...prev.changed,
-								endDateTime: true
+								startDateTime: true
 							}
 						}));
 					}}
@@ -232,7 +214,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>Event location</Label>
 				<TextInput
 					name="location"
-					value={event.location}
 					onChange={() => {
 						this.setState(prev => ({
 							changed: {
@@ -245,7 +226,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
-					value={event.endDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
@@ -261,23 +241,35 @@ export default class ModifyEvent extends React.Component<
 				<Label>Pickup date and time</Label>
 				<DateTimeInput
 					name="pickupDateTime"
-					value={event.pickupDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								pickupDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Pickup location</Label>
-				<TextInput name="pickupLocation" value={event.pickupLocation} />
-				<Label>Transportation provided</Label>
-				<Checkbox
-					name="transportationProvided"
-					value={event.transportationProvided}
-				/>
-				<Label>Transportation description</Label>
 				<TextInput
-					name="transportationDescription"
-					value={event.transportationDescription}
+					name="pickupLocation"
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								pickupLocation: true
+							}
+						}));
+					}}
 				/>
+				<Label>Transportation provided</Label>
+				<Checkbox name="transportationProvided" />
+				<Label>Transportation description</Label>
+				<TextInput name="transportationDescription" />
+
 				<Title>Activity Information</Title>
 				<Label>Comments</Label>
 				<TextInput
@@ -285,12 +277,10 @@ export default class ModifyEvent extends React.Component<
 						height: '50px'
 					}}
 					name="comments"
-					value={event.comments}
 				/>
 				<Label>Activity type</Label>
 				<MultCheckbox
 					name="activity"
-					value={event.activity}
 					labels={[
 						'Squadron Meeting',
 						'Classroom/Tour/Light',
@@ -303,7 +293,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>Lodging arrangement</Label>
 				<MultCheckbox
 					name="lodgingArrangments"
-					value={event.lodgingArrangments}
 					labels={[
 						'Hotel or individual room',
 						'Open bay building',
@@ -313,17 +302,13 @@ export default class ModifyEvent extends React.Component<
 					other={true}
 				/>
 				<Label>Event website</Label>
-				<TextInput name="eventWebsite" value={event.eventWebsite} />
+				<TextInput name="eventWebsite" />
 				<Label>High adventure decsription</Label>
-				<TextInput
-					name="highAdventureDescription"
-					value={event.highAdventureDescription}
-				/>
+				<TextInput name="highAdventureDescription" />
 				<Title>Logistics Information</Title>
 				<Label>Uniform</Label>
 				<MultCheckbox
 					name="uniform"
-					value={event.uniform}
 					labels={[
 						'Dress Blue A',
 						'Dress Blue B',
@@ -339,7 +324,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>Required forms</Label>
 				<MultCheckbox
 					name="requiredForms"
-					value={event.requiredForms}
 					labels={[
 						'CAP Identification Card',
 						'CAPF 31 Application For CAP Encampment Or Special Activity',
@@ -354,16 +338,12 @@ export default class ModifyEvent extends React.Component<
 				<Label>Required equipment</Label>
 				<StringListEditor
 					name="requiredEquipment"
-					value={event.requiredEquipment}
 					addNew={() => ''}
 					// @ts-ignore
 					inputComponent={TextInput}
 				/>
 				<Label>Use registration deadline</Label>
-				<Checkbox
-					name="useRegistration"
-					value={this.state.event.useRegistration}
-				/>
+				<Checkbox name="useRegistration" />
 
 				<FormBlock
 					style={{
@@ -374,15 +354,11 @@ export default class ModifyEvent extends React.Component<
 					name="registration"
 				>
 					<Label>Registration information</Label>
-					<TextInput
-						name="information"
-						value={this.state.event.registration.information}
-					/>
+					<TextInput name="information" />
 
 					<Label>Registration deadline</Label>
 					<DateTimeInput
 						name="deadline"
-						value={this.state.event.registration.deadline}
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
@@ -390,13 +366,10 @@ export default class ModifyEvent extends React.Component<
 				</FormBlock>
 
 				<Label>Accept signups</Label>
-				<Checkbox name="acceptSignups" value={event.acceptSignups} />
+				<Checkbox name="acceptSignups" />
 
 				<Label>Use participation fee</Label>
-				<Checkbox
-					name="useParticipationFee"
-					value={this.state.event.useParticipationFee}
-				/>
+				<Checkbox name="useParticipationFee" />
 
 				<FormBlock
 					style={{
@@ -407,18 +380,11 @@ export default class ModifyEvent extends React.Component<
 					name="participationFee"
 				>
 					<Label>Participation fee</Label>
-					<NumberInput
-						name="feeAmount"
-						value={this.state.event.participationFee.feeAmount}
-					/>
+					<NumberInput name="feeAmount" />
 
 					<Label>Participation fee due</Label>
 					<DateTimeInput
 						name="feeDue"
-						value={
-							this.state.event.participationFee.feeDue ||
-							DateTime.utc()
-						}
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
@@ -428,7 +394,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>Meals</Label>
 				<MultCheckbox
 					name="mealsDescription"
-					value={this.state.event.mealsDescription}
 					labels={[
 						'No meals provided',
 						'Meals provided',
@@ -442,7 +407,6 @@ export default class ModifyEvent extends React.Component<
 
 				<POCListEditor
 					name="pointsOfContact"
-					value={this.state.event.pointsOfContact}
 					// @ts-ignore
 					inputComponent={POCInput}
 					addNew={() => ({
@@ -462,15 +426,11 @@ export default class ModifyEvent extends React.Component<
 				<Title>Extra information</Title>
 
 				<Label>Desired number of participants</Label>
-				<NumberInput
-					name="desiredNumberOfParticipants"
-					value={event.desiredNumberOfParticipants}
-				/>
+				<NumberInput name="desiredNumberOfParticipants" />
 
 				<Label>Group event number</Label>
 				<RadioButton
 					name="groupEventNumber"
-					value={event.groupEventNumber}
 					labels={[
 						'Not Required',
 						'To Be Applied For',
@@ -482,7 +442,6 @@ export default class ModifyEvent extends React.Component<
 				<Label>Event status</Label>
 				<SimpleRadioButton
 					name="status"
-					value={event.status}
 					labels={[
 						'Draft',
 						'Tentative',
@@ -494,37 +453,29 @@ export default class ModifyEvent extends React.Component<
 				/>
 
 				<Label>Entry complete</Label>
-				<Checkbox name="complete" value={event.complete} />
+				<Checkbox name="complete" />
 
 				<Label>Publish to wing</Label>
-				<Checkbox
-					name="publishToWingCalendar"
-					value={event.publishToWingCalendar}
-				/>
+				<Checkbox name="publishToWingCalendar" />
 
 				<Label>Show upcoming</Label>
-				<Checkbox name="showUpcoming" value={event.showUpcoming} />
+				<Checkbox name="showUpcoming" />
 
 				<Label>Administration comments</Label>
-				<TextInput
-					name="administrationComments"
-					value={event.administrationComments}
-				/>
+				<TextInput name="administrationComments" />
 
-				<TextBox name="null" value={null}>
-					Select a team
-				</TextBox>
+				<TextBox name="null">Select a team</TextBox>
 
 				<Label>Team</Label>
-				<NumberInput name="teamID" value={this.state.event.teamID} />
+				<NumberInput name="teamID" />
 
 				<Label>Event files</Label>
-				<FileInput name="fileIDs" value={this.state.event.fileIDs} />
+				<FileInput name="fileIDs" />
 
 				<Title>Debrief information</Title>
 
 				<Label>Debrief</Label>
-				<TextInput name="debrief" value={this.state.event.debrief} />
+				<TextInput name="debrief" />
 			</NewEventForm>
 		) : (
 			<div>Please sign in</div>
@@ -532,8 +483,10 @@ export default class ModifyEvent extends React.Component<
 	}
 
 	private updateNewEvent(event: NewEventFormValues) {
+		this.checkIfValid(event);
+
 		this.setState({
-			event: Object.assign({}, event)
+			event
 		});
 	}
 
@@ -551,5 +504,31 @@ export default class ModifyEvent extends React.Component<
 		delete newEvent.useRegistration;
 
 		return newEvent;
+	}
+
+	private checkIfValid(event: NewEventFormValues) {
+		if (
+			!(
+				event.meetDateTime <= event.startDateTime &&
+				event.startDateTime <= event.endDateTime &&
+				event.endDateTime <= event.pickupDateTime
+			)
+		) {
+			this.setState({
+				valid: false
+			});
+			return;
+		}
+
+		if (event.name.length === 0) {
+			this.setState({
+				valid: false
+			});
+			return;
+		}
+
+		this.setState({
+			valid: true
+		});
 	}
 }

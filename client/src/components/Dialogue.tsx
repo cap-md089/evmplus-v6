@@ -3,49 +3,97 @@ import { createPortal } from 'react-dom';
 
 import * as $ from 'jquery';
 
-interface DialogueWithButton {
-	open: boolean,
-	title: string,
-	buttonText: string,
-	displayButton: true,
-	onClose: () => void,
-}
-
-interface DialogueWithoutButton {
+interface DialogueWithOK {
 	open: boolean;
 	title: string;
-	displayButton: false;
+	displayButtons: DialogueButtons.OK;
 	onClose: () => void;
 }
 
-export default class Dialogue extends React.Component<
-DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithoutButton> {
-	private mainDiv: HTMLDivElement;
-	
-	constructor(props: DialogueWithButton | DialogueWithoutButton) {
-		super(props);
+interface DialogueWithOKCancel {
+	open: boolean;
+	title: string;
+	displayButtons: DialogueButtons.OK_CANCEL;
+	onClose: () => void;
+	onOk: () => void;
+	onCancel: () => void;
+}
 
-		this.state = {
-			open: this.props.open,
-			title: '',
-			displayButton: false
-		} as DialogueWithButton | DialogueWithoutButton;
+interface DialogueWithYesNoCancel {
+	open: boolean;
+	title: string;
+	displayButtons: DialogueButtons.YES_NO_CANCEL;
+	onClose: () => void;
+	onYes: () => void;
+	onNo: () => void;
+	onCancel: () => void;
+}
+
+interface DialogueWithCustom {
+	open: boolean;
+	title: string;
+	displayButtons: DialogueButtons.CUSTOM;
+	onClose: () => void;
+}
+
+interface DialogueWithoutButtons {
+	open: boolean;
+	title: string;
+	displayButtons: DialogueButtons.NONE;
+	onClose: () => void;
+}
+
+export enum DialogueButtons {
+	OK,
+	OK_CANCEL,
+	YES_NO_CANCEL,
+	CUSTOM,
+	NONE
+}
+
+type DialogueProps =
+	| DialogueWithOK
+	| DialogueWithOKCancel
+	| DialogueWithYesNoCancel
+	| DialogueWithCustom
+	| DialogueWithoutButtons;
+
+interface DialogueState {
+	open: boolean;
+}
+
+export default class Dialogue extends React.Component<
+	DialogueProps,
+	DialogueState
+> {
+	public state = {
+		open: false
+	};
+
+	private mainDiv: HTMLDivElement;
+
+	constructor(props: DialogueProps) {
+		super(props);
 	}
 
 	public componentDidMount() {
 		const div: JQuery = $(this.mainDiv).css({
-			'zIndex': 5010,
-			'position': 'fixed'
+			zIndex: 5010,
+			position: 'fixed'
 		});
 
 		const mobile = $('body').hasClass('mobile');
 
 		if (!mobile) {
 			div.css({
-				'left': '50%',
-				'top': '50%',
-				'margin-left'() { return -($(this).outerWidth() as number) / 2; },
-				'margin-top'() { return -($(this).outerHeight() as number) / 2; }
+				left: '50%',
+				top: '50%',
+				'margin-left'() {
+					return -($(this).outerWidth() as number) / 2;
+				},
+				'margin-top'() {
+					return -($(this).outerHeight() as number) / 2;
+				}
 			});
 		} else {
 			div.css({
@@ -56,11 +104,10 @@ DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithout
 			});
 		}
 
-
 		return true;
 	}
 
-	public componentDidUpdate () {
+	public componentDidUpdate() {
 		const div = $(this.mainDiv);
 
 		if (div.find('input[type=text]')[0]) {
@@ -75,7 +122,9 @@ DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithout
 				250,
 				'swing'
 			);
-			this.setState(this.props);
+			this.setState({
+				open: true
+			});
 		} else if (!this.props.open && this.state.open) {
 			div.animate(
 				{
@@ -92,7 +141,7 @@ DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithout
 		}
 	}
 
-	public render () {
+	public render() {
 		return createPortal(
 			<div
 				id="cover"
@@ -106,48 +155,143 @@ DialogueWithButton | DialogueWithoutButton, DialogueWithButton | DialogueWithout
 					display: 'block',
 					backgroundColor: 'rgba(0, 0, 0, 0.5)'
 				}}
-				onClick={
-					() => {
-						this.props.onClose();
-					}
-				}
+				onClick={() => {
+					this.props.onClose();
+				}}
 			>
 				<div
-					ref={
-						(el: HTMLDivElement) => {
-							this.mainDiv = el as HTMLDivElement;
-						}
-					}
+					ref={(el: HTMLDivElement) => {
+						this.mainDiv = el as HTMLDivElement;
+					}}
 					id="alert_box"
 					key="main_alert"
-					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
-				>
-					{this.state.title ? <h2>{this.state.title}</h2> : null}
-					<div className="content">
-						{this.props.children}
-					</div>
-					{
-						this.state.displayButton ? 
-							<div className="closeButton">
-								<a
-									style={{
-										float: 'right'
-									}}
-									className="primaryButton"
-									id="ok"
-									href="#"
-									onClick={
-										(e: React.MouseEvent<HTMLAnchorElement>) => {
-											e.preventDefault();
-											this.props.onClose();
-										}
-									}
-								>
-									{this.state.buttonText}
-								</a>
-							</div> :
-							null
+					onClick={e =>
+						!e.isPropagationStopped() && e.stopPropagation()
 					}
+				>
+					{this.props.title ? <h2>{this.props.title}</h2> : null}
+					<div className="content">{this.props.children}</div>
+					{this.props.displayButtons === DialogueButtons.OK ? (
+						<div className="closeButton">
+							<a
+								style={{
+									float: 'right'
+								}}
+								className="primaryButton"
+								id="ok"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+								}}
+							>
+								OK
+							</a>
+						</div>
+					) : this.props.displayButtons ===
+					DialogueButtons.OK_CANCEL ? (
+						<div className="closeButton">
+							<a
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="cancel"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+									// @ts-ignore
+									this.props.onCancel();
+								}}
+							>
+								Cancel
+							</a>
+							<a
+								style={{
+									float: 'right'
+								}}
+								className="primaryButton"
+								id="ok"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+									// @ts-ignore
+									this.props.onOk();
+								}}
+							>
+								OK
+							</a>
+						</div>
+					) : this.props.displayButtons ===
+					DialogueButtons.YES_NO_CANCEL ? (
+						<div className="closeButton">
+							<a
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="cancel"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+									// @ts-ignore
+									this.props.onCancel();
+								}}
+							>
+								Cancel
+							</a>
+							<a
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="no"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+									// @ts-ignore
+									this.props.onNo();
+								}}
+							>
+								No
+							</a>
+							<a
+								style={{
+									float: 'right'
+								}}
+								className="primaryButton"
+								id="yes"
+								href="#"
+								onClick={(
+									e: React.MouseEvent<HTMLAnchorElement>
+								) => {
+									e.preventDefault();
+									this.props.onClose();
+									// @ts-ignore
+									this.props.onYes();
+								}}
+							>
+								Yes
+							</a>
+						</div>
+					) : null}
 				</div>
 			</div>,
 			document.getElementById('dialogue-box') as HTMLElement

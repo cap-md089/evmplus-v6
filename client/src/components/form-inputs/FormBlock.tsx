@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { isInput, isLabel, Label, Title } from '../SimpleForm';
 
-interface FormBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
 	onUpdate?: (
 		e: {
@@ -15,14 +15,15 @@ interface FormBlockProps extends React.HTMLAttributes<HTMLDivElement> {
 			value: any;
 		}
 	) => void;
+	value?: V;
 }
 
 export default class FormBlock<T extends object> extends React.Component<
-	FormBlockProps
+	FormBlockProps<T>
 > {
 	private fields = {} as T;
 
-	constructor(props: FormBlockProps) {
+	constructor(props: FormBlockProps<T>) {
 		super(props);
 
 		this.onUpdate = this.onUpdate.bind(this);
@@ -61,11 +62,18 @@ export default class FormBlock<T extends object> extends React.Component<
 						}
 						return;
 					} else {
-						if (!this.fields[child.props.name]) {
-							this.fields[child.props.name] =
-								typeof child.props.value === 'undefined'
+						const value =
+							typeof this.props.value !== 'undefined'
+								? typeof this.props.value[
+										child.props.name
+									] === 'undefined'
+									? ''
+									: this.props.value[child.props.name]
+								: typeof child.props.value === 'undefined'
 									? ''
 									: child.props.value;
+						if (!this.fields[child.props.name]) {
+							this.fields[child.props.name] = value;
 						}
 						fullWidth = child.props.fullWidth;
 						if (typeof fullWidth === 'undefined') {
@@ -75,7 +83,8 @@ export default class FormBlock<T extends object> extends React.Component<
 							React.cloneElement(child, {
 								key: i,
 								onUpdate: this.onUpdate,
-								onInitialize: this.onInitialize
+								onInitialize: this.onInitialize,
+								value
 							})
 						];
 					}

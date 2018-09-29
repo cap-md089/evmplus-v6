@@ -163,6 +163,10 @@ export interface FormProps<F> {
 	 * Type checking for children!
 	 */
 	children?: JSX.Element[] | JSX.Element;
+	/**
+	 * Sets the values given the name. Allows for not having to set form values repeatedly
+	 */
+	values?: F;
 }
 
 /**
@@ -301,11 +305,18 @@ class SimpleForm<
 							}
 							return;
 						} else {
-							if (!this.fields[child.props.name]) {
-								this.fields[child.props.name] =
-									typeof child.props.value === 'undefined'
+							const value =
+								typeof this.props.values !== 'undefined'
+									? typeof this.props.values[
+											child.props.name
+									  ] === 'undefined'
+										? ''
+										: this.props.values[child.props.name]
+									: typeof child.props.value === 'undefined'
 										? ''
 										: child.props.value;
+							if (!this.fields[child.props.name]) {
+								this.fields[child.props.name] = value;
 							}
 							fullWidth = child.props.fullWidth;
 							if (typeof fullWidth === 'undefined') {
@@ -315,7 +326,8 @@ class SimpleForm<
 								React.cloneElement(child, {
 									onUpdate: this.onChange,
 									onInitialize: this.onInitialize,
-									key: i + 1
+									key: i + 1,
+									value
 								})
 							];
 						}
@@ -386,7 +398,8 @@ class SimpleForm<
 							value={submitInfo.text}
 							className={submitInfo.className}
 							disabled={
-								this.state.disabled || submitInfo.disabled
+								this.state.disabled ||
+								submitInfo.disabled
 							}
 						/>
 					</div>

@@ -15,7 +15,9 @@ export default class Subscribe<E> {
 
 	public publish (event: E) {
 		for (const subscriber of this.subscribers) {
-			subscriber(event);
+			if (subscriber) {
+				subscriber(event);
+			}
 		}
 	}
 }

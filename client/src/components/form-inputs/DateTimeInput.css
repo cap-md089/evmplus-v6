@@ -2,6 +2,7 @@
 	clear: both;
 	padding-top: 10px;
 	position: relative;
+	padding-right: 2px;
 }
 
 .datetime-input-box input, .date-input-box input, .time-input-box input {
@@ -33,93 +34,26 @@
 	border-top: 1px solid black;
 	border-bottom: 1px solid black;
 	padding: 5px 0;
+	width: 0;
 	height: 15px;
 	line-height: 14px;
 	float: left;
 }
 
-.datetime-input-root .date-input-year {
+.datetime-input-root .date-input {
 	border-top-left-radius: 10px;
 	border-bottom-left-radius: 10px;
 	border-right-width: 0px;
-	width: 34px;
 	float: left;
 }
 
-.datetime-input-box.gui-open .date-input-year, .date-input-box.gui-open .date-input-year {
-	border-bottom-left-radius: 0px;
-}
-
-.time-input-box.gui-open .time-input-hour {
-	border-bottom-left-radius: 0px;
-}
-
-.datetime-input-root .date-input-month {
-	border-left-width: 0px;
-	border-right-width: 0px;
-	width: 17px;
-	float: left;
-}
-
-.datetime-input-root .date-input-day {
-	border-left-width: 0px;
-	border-right-width: 0px;
-	width: 17px;
-	float: left;
-}
-
-.datetime-input-box .time-input-hour {
+.datetime-input-box .time-input {
 	border-right-width: 0px;
 	border-left-width: 0px;
-	width: 17px;
 	float: left;
-}
-
-.datetime-input-root .time-input-minute {
-	border-right-width: 0px;
-	border-left-width: 0px;
-	width: 17px;
-	float: left;
-}
-
-.time-input-box .time-input-hour {
-	border-top-left-radius: 10px;
-	border-bottom-left-radius: 10px;
-	border-right-width: 0px;
-	width: 17px;
-	float: left;
-}
-
-.datetime-input-root .date-input-opendialogue, .datetime-input-root .time-input-opendialogue {
-	background: transparent;
-	width: 17px;
-	border: 1px solid black;
-	border-left-width: 0px;
-	height: 15px;
-	line-height: 15px;
-	cursor: pointer;
-	padding: 5px;
-	box-sizing: content-box;
-	float: left;
-}
-
-.datetime-input-box .date-input-opendialogue {
-	border-right-width: 0px;
-}
-
-.datetime-input-box .time-input-opendialogue {
 	border-top-right-radius: 10px;
 	border-bottom-right-radius: 10px;
-}
-
-.date-input-box .date-input-opendialogue {
-	border-top-right-radius: 10px;
-	border-bottom-right-radius: 10px;
-}
-
-.time-input-box .time-input-opendialogue {
-	border-top-right-radius: 10px;
-	border-bottom-right-radius: 10px;
+	margin-right: 2px;
 }
 
 .datetime-input-gui-root {

@@ -50,15 +50,15 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 			value
 		});
 
-		if (this.props.onChange) {
-			this.props.onChange(value)
-		}
-
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
 				value
 			});
+		}
+
+		if (this.props.onChange) {
+			this.props.onChange(value)
 		}
 	}
 }

@@ -2,6 +2,7 @@ import { convertToRaw, EditorState, RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
+import SigninLink from '../components/SigninLink';
 import Form, {
 	Checkbox,
 	DateTimeInput,
@@ -10,9 +11,9 @@ import Form, {
 	Label,
 	MultCheckbox,
 	MultiRange,
+	NumberInput,
 	RadioButton,
 	Selector,
-	TextArea,
 	TextInput,
 	Title
 } from '../components/SimpleForm';
@@ -93,9 +94,12 @@ export default class Test extends Page<
 
 		return (
 			<div>
-				{this.props.member.valid
-					? JSON.stringify(this.props.member)
-					: 'false'}
+				<SigninLink
+					authorizeUser={this.props.authorizeUser}
+					{...this.props.member}
+				>
+					Sign in
+				</SigninLink>
 				<TestForm
 					onSubmit={data => {
 						// tslint:disable-next-line:no-console
@@ -108,7 +112,7 @@ export default class Test extends Page<
 						text: 'Click me'
 					}}
 					onChange={data => {
-						this.setState({ ...data });
+						this.setState(data);
 					}}
 				>
 					<Label>Time input</Label>
@@ -167,13 +171,6 @@ export default class Test extends Page<
 						}}
 						value={this.state.test6}
 					/>
-					<TextArea
-						name="test5"
-						fullWidth={true}
-						value={this.state.test5}
-					/>
-					<Label>Not full width textarea</Label>
-					<TextArea name="test14" value={this.state.test14} />
 					<MultiRange
 						name="test7"
 						min={100}
@@ -244,9 +241,24 @@ export default class Test extends Page<
 										return true;
 									}
 
-									const ret = !!val.value.match(new RegExp(input, 'i'));
+									try {
+										return !!val.value.match(
+											new RegExp(input, 'i')
+										);
+									} catch(e) {
+										return true;
+									}
+								}
+							},
+							{
+								displayText: 'ID: ',
+								filterInput: NumberInput,
+								check: (val, input) => {
+									if (isNaN(input)) {
+										return true;
+									}
 
-									return ret;
+									return val.id === input;
 								}
 							}
 						]}

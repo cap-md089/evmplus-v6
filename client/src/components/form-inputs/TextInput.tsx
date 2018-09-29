@@ -8,10 +8,11 @@ interface TextInputProps extends InputProps<string> {
 	 * 
 	 * If it returns a boolean, it changes whether or not the change is accepted
 	 */
-	onChange?: (val: string) => boolean | void;
+	onChange?: (val: string) => void;
 	fullWidth?: boolean;
 	placeholder?: string;
 	disabled?: boolean;
+	shouldUpdate?: (val: string) => boolean;
 }
 
 /**
@@ -32,7 +33,7 @@ export default class TextInput extends React.Component<TextInputProps> {
 		if (props.onInitialize) {
 			props.onInitialize({
 				name: props.name,
-				value: props.value
+				value: props.value || ''
 			})
 		}
 	}
@@ -42,11 +43,9 @@ export default class TextInput extends React.Component<TextInputProps> {
 
 		let change = true;
 
-		if (typeof this.props.onChange !== 'undefined') {
-			const newChange = this.props.onChange(text);
-			if (typeof newChange === 'boolean') {
-				change = newChange;
-			}
+		if (typeof this.props.shouldUpdate !== 'undefined') {
+			const newChange = this.props.shouldUpdate(text);
+			change = newChange;
 		}
 
 		if (change) {
@@ -55,6 +54,10 @@ export default class TextInput extends React.Component<TextInputProps> {
 					name: this.props.name,
 					value: text
 				});
+			}
+
+			if (typeof this.props.onChange !== 'undefined') {
+				this.props.onChange(text);
 			}
 		}
 	}
@@ -71,7 +74,7 @@ export default class TextInput extends React.Component<TextInputProps> {
 			>
 				<input
 					type="text"
-					value={this.props.value || ''}
+					value={this.props.value}
 					onChange={this.onChange}
 					name={this.props.name}
 					style={{

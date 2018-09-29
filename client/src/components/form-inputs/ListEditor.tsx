@@ -55,7 +55,7 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 					)).map((item, i) => (
 						<>
 							{item}
-							{i === this.props.value.length - 1 ? null : <div className="divider" />}
+							{i === (this.props.value || []).length - 1 ? null : <div className="divider" />}
 						</>
 					))}
 				</div>
@@ -122,7 +122,7 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 
 	private getRemoveItem(index: number) {
 		return (() => {
-			const value = this.props.value.slice();
+			const value = (this.props.value || []).slice();
 
 			value.splice(index, 1);
 

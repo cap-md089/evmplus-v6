@@ -88,6 +88,7 @@ interface AppState {
 	tryingMember: boolean;
 	sideNavLinks: JSX.Element[];
 	breadCrumbs: BreadCrumb[];
+	allowedSlideshowIDs: string[];
 }
 
 export default class App extends React.Component<
@@ -96,6 +97,8 @@ export default class App extends React.Component<
 	},
 	AppState
 > {
+	public key: number;
+
 	public state: AppState = {
 		member: {
 			valid: false,
@@ -112,7 +115,8 @@ export default class App extends React.Component<
 			}
 		},
 		sideNavLinks: [],
-		breadCrumbs: []
+		breadCrumbs: [],
+		allowedSlideshowIDs: []
 	};
 
 	private titleElement: HTMLDivElement;
@@ -133,12 +137,15 @@ export default class App extends React.Component<
 			})
 			.then((res: { value: Registry }) => {
 				this.setState({
-					...this.state,
-					Registry: {
-						...res.value
-					}
+					Registry: res.value
 				});
 			});
+
+		myFetch('/api/banner')
+			.then(res => res.json())
+			.then((allowedSlideshowIDs: string[]) => {
+				this.setState({ allowedSlideshowIDs });
+			})
 
 		const sessionID = localStorage.getItem('sessionID');
 		if (sessionID) {
@@ -505,14 +512,6 @@ export default class App extends React.Component<
 	}
 
 	private authorizeUser(member: SigninReturn) {
-		if (!member.valid) {
-			this.setState({
-				member
-			});
-		} else {
-			this.setState({
-				member
-			});
-		}
+		this.setState({ member });
 	}
 }

@@ -1,16 +1,8 @@
-import {
-	convertFromRaw,
-	convertToRaw,
-	DraftHandleValue,
-	Editor,
-	EditorState,
-	RawDraftContentState,
-	RichUtils
-} from 'draft-js';
+import { DraftHandleValue, Editor, EditorState, RichUtils } from 'draft-js';
 import * as React from 'react';
 import { InputProps } from './Input';
 
-interface TextAreaProps extends InputProps<RawDraftContentState> {
+interface TextAreaProps extends InputProps<EditorState> {
 	/**
 	 * Whether or not to make the input span the entire width of the row.
 	 */
@@ -28,34 +20,9 @@ interface TextAreaProps extends InputProps<RawDraftContentState> {
  * 			onChange={() => null}
  * 		/>
  */
-export default class TextArea extends React.Component<
-	TextAreaProps,
-	{
-		editorState: EditorState;
-	}
-> {
-	public static getDerivedStateFromProps(
-		props: TextAreaProps
-	): {
-		editorState: EditorState;
-	} {
-		return {
-			editorState:
-				typeof props.value === 'undefined'
-					? EditorState.createEmpty()
-					: EditorState.createWithContent(convertFromRaw(props.value))
-		};
-	}
-
+export default class TextArea extends React.Component<TextAreaProps> {
 	constructor(props: TextAreaProps) {
 		super(props);
-
-		this.state = {
-			editorState:
-				typeof props.value !== 'undefined'
-					? EditorState.createWithContent(convertFromRaw(props.value))
-					: EditorState.createEmpty()
-		};
 
 		this.onChange = this.onChange.bind(this);
 		this.handleKeyCommand = this.handleKeyCommand.bind(this);
@@ -75,12 +42,14 @@ export default class TextArea extends React.Component<
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: convertToRaw(this.state.editorState.getCurrentContent())
+				value: (this.props.value || EditorState.createEmpty())
 			});
 		}
 	}
 
 	public render() {
+		const editorState = this.editorState;
+
 		return (
 			<div
 				className="formbox"
@@ -186,7 +155,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleBold}
 							style={{
-								fontWeight: this.state.editorState
+								fontWeight: editorState
 									.getCurrentInlineStyle()
 									.has('BOLD')
 									? 'bold'
@@ -198,7 +167,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleItalic}
 							style={{
-								fontStyle: this.state.editorState
+								fontStyle: editorState
 									.getCurrentInlineStyle()
 									.has('ITALIC')
 									? 'italic'
@@ -210,7 +179,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleUnderline}
 							style={{
-								textDecoration: this.state.editorState
+								textDecoration: editorState
 									.getCurrentInlineStyle()
 									.has('UNDERLINE')
 									? 'underline'
@@ -229,7 +198,7 @@ export default class TextArea extends React.Component<
 					>
 						<Editor
 							{...this.props}
-							editorState={this.state.editorState}
+							editorState={editorState}
 							handleKeyCommand={this.handleKeyCommand}
 							onChange={this.onChange}
 						/>
@@ -239,86 +208,80 @@ export default class TextArea extends React.Component<
 		);
 	}
 
+	private get editorState() {
+		return (this.props.value || EditorState.createEmpty());
+	}
+
 	private toggleBold(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleInlineStyle(this.state.editorState, 'BOLD')
-		);
+		this.onChange(RichUtils.toggleInlineStyle(this.editorState, 'BOLD'));
 	}
 
 	private toggleItalic(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleInlineStyle(this.state.editorState, 'ITALIC')
-		);
+		this.onChange(RichUtils.toggleInlineStyle(this.editorState, 'ITALIC'));
 	}
 
 	private toggleUnderline(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleInlineStyle(this.state.editorState, 'UNDERLINE')
+			RichUtils.toggleInlineStyle(this.editorState, 'UNDERLINE')
 		);
 	}
 
 	private toggleHeading1(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-one')
+			RichUtils.toggleBlockType(this.editorState, 'header-one')
 		);
 	}
 
 	private toggleHeading2(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-two')
+			RichUtils.toggleBlockType(this.editorState, 'header-two')
 		);
 	}
 
 	private toggleHeading3(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-three')
+			RichUtils.toggleBlockType(this.editorState, 'header-three')
 		);
 	}
 
 	private toggleHeading4(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-four')
+			RichUtils.toggleBlockType(this.editorState, 'header-four')
 		);
 	}
 
 	private toggleHeading5(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-five')
+			RichUtils.toggleBlockType(this.editorState, 'header-five')
 		);
 	}
 
 	private toggleHeading6(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(this.state.editorState, 'header-six')
+			RichUtils.toggleBlockType(this.editorState, 'header-six')
 		);
 	}
 
 	private toggleUL(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(
-				this.state.editorState,
-				'unordered-list-item'
-			)
+			RichUtils.toggleBlockType(this.editorState, 'unordered-list-item')
 		);
 	}
 
 	private toggleOL(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
 		this.onChange(
-			RichUtils.toggleBlockType(
-				this.state.editorState,
-				'ordered-list-item'
-			)
+			RichUtils.toggleBlockType(this.editorState, 'ordered-list-item')
 		);
 	}
 
@@ -326,19 +289,19 @@ export default class TextArea extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: convertToRaw(editorState.getCurrentContent())
+				value: editorState
 			});
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(convertToRaw(editorState.getCurrentContent()));
+			this.props.onChange(editorState);
 		}
 	}
 
 	private getBlockType() {
-		return this.state.editorState
+		return this.editorState
 			.getCurrentContent()
-			.getBlockForKey(this.state.editorState.getSelection().getStartKey())
+			.getBlockForKey(this.editorState.getSelection().getStartKey())
 			.getType();
 	}
 

@@ -34,6 +34,10 @@ export default class POCInput extends React.Component<
 			PointOfContactType
 		>;
 
+		if (!this.props.value) {
+			throw new Error('Invalid properties');
+		}
+
 		return (
 			<FormBlock
 				name="pocInput"

@@ -1,0 +1,26 @@
+.calendar, .calendar table, .calendar tbody, .calendar caption {
+	width: 100%;
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+
+.calendar .left-link {
+	float: left;
+}
+
+.calendar .right-link {
+	float: right;
+}
+
+.calendar tbody td {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+
+td.calendar-inmonth {
+	
+}
+
+td.calendar-outmonth {
+	color: gray
+}

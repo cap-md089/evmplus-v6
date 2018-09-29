@@ -22,6 +22,11 @@ window.addEventListener(
 		if (event.data.source && event.data.source.indexOf('react-devtools') > -1) {
 			return;
 		}
+		try {
+			JSON.parse(event.data);
+		} catch(e) {
+			return;
+		}
 		MessageEventListener.publish(event);
 	},
 	false

@@ -24,6 +24,7 @@ interface AddEventState {
 	event: NewEventFormValues;
 	valid: boolean;
 	errors: {};
+	changed: { [P in keyof NewEventFormValues]: boolean };
 }
 
 interface NewEventFormValues extends NewEventObject {
@@ -48,10 +49,10 @@ export default class AddEvent extends React.Component<
 			name: '',
 			meetDateTime: Math.round(+DateTime.utc() / 1000),
 			meetLocation: '',
-			startDateTime: Math.round(+DateTime.utc() / 1000),
+			startDateTime: Math.round(+DateTime.utc() / 1000) + 300,
 			location: '',
-			endDateTime: Math.round(+DateTime.utc() / 1000),
-			pickupDateTime: Math.round(+DateTime.utc() / 1000),
+			endDateTime: Math.round(+DateTime.utc() / 1000) + 3900,
+			pickupDateTime: Math.round(+DateTime.utc() / 1000) + 4200,
 			pickupLocation: '',
 			transportationProvided: false,
 			transportationDescription: '',
@@ -97,13 +98,55 @@ export default class AddEvent extends React.Component<
 			fileIDs: []
 		},
 		valid: false,
-		errors: {}
+		errors: {},
+		changed: {
+			acceptSignups: false,
+			activity: false,
+			administrationComments: false,
+			comments: false,
+			complete: false,
+			debrief: false,
+			desiredNumberOfParticipants: false,
+			endDateTime: false,
+			eventWebsite: false,
+			fileIDs: false,
+			groupEventNumber: false,
+			highAdventureDescription: false,
+			location: false,
+			lodgingArrangments: false,
+			mealsDescription: false,
+			meetDateTime: false,
+			meetLocation: false,
+			name: false,
+			participationFee: false,
+			pickupDateTime: false,
+			pickupLocation: false,
+			pointsOfContact: false,
+			publishToWingCalendar: false,
+			registration: false,
+			requiredEquipment: false,
+			requiredForms: false,
+			showUpcoming: false,
+			signUpDenyMessage: false,
+			signUpPartTime: false,
+			sourceEvent: false,
+			startDateTime: false,
+			status: false,
+			teamID: false,
+			transportationDescription: false,
+			transportationProvided: false,
+			uniform: false,
+			useParticipationFee: false,
+			useRegistration: false,
+			wingEventNumber: false
+		}
 	};
 
 	constructor(props: PageProps) {
 		super(props);
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
+		this.checkIfValid = this.checkIfValid.bind(this);
 	}
 
 	public render() {
@@ -125,58 +168,105 @@ export default class AddEvent extends React.Component<
 				id="newEventForm"
 				onChange={this.updateNewEvent}
 				onSubmit={this.handleSubmit}
+				submitInfo={{
+					text: 'Submit',
+					disabled: !this.state.valid
+				}}
+				values={event}
 			>
 				<Title>Create an event</Title>
 				<Label>Event name</Label>
-				<TextInput name="name" value={event.name} />
+				<TextInput name="name" />
 				<Label>Meet date and time</Label>
 				<DateTimeInput
 					name="meetDateTime"
-					value={event.meetDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
 				/>
 				<Label>Meet location</Label>
-				<TextInput name="meetLocation" value={event.meetLocation} />
+				<TextInput name="meetLocation" />
 				<Label>Start date and time</Label>
 				<DateTimeInput
 					name="startDateTime"
-					value={event.startDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								startDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Event location</Label>
-				<TextInput name="location" value={event.location} />
+				<TextInput
+					name="location"
+					onChange={location => {
+						this.setState(prev => ({
+							event: {
+								...prev.event,
+								location
+							},
+							changed: {
+								...prev.changed,
+								location: true
+							}
+						}));
+					}}
+				/>
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
-					value={event.endDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								endDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Pickup date and time</Label>
 				<DateTimeInput
 					name="pickupDateTime"
-					value={event.pickupDateTime}
 					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
+					onChange={() => {
+						this.setState(prev => ({
+							changed: {
+								...prev.changed,
+								pickupDateTime: true
+							}
+						}));
+					}}
 				/>
 				<Label>Pickup location</Label>
-				<TextInput name="pickupLocation" value={event.pickupLocation} />
-				<Label>Transportation provided</Label>
-				<Checkbox
-					name="transportationProvided"
-					value={event.transportationProvided}
-				/>
-				<Label>Transportation description</Label>
 				<TextInput
-					name="transportationDescription"
-					value={event.transportationDescription}
+					name="pickupLocation"
+					onChange={pickupLocation => {
+						this.setState(prev => ({
+							event: {
+								...prev.event,
+								pickupLocation
+							},
+							changed: {
+								...prev.changed,
+								pickupLocation: true
+							}
+						}));
+					}}
 				/>
+				<Label>Transportation provided</Label>
+				<Checkbox name="transportationProvided" />
+				<Label>Transportation description</Label>
+				<TextInput name="transportationDescription" />
 				<Title>Activity Information</Title>
 				<Label>Comments</Label>
 				<TextInput
@@ -184,12 +274,10 @@ export default class AddEvent extends React.Component<
 						height: '50px'
 					}}
 					name="comments"
-					value={event.comments}
 				/>
 				<Label>Activity type</Label>
 				<MultCheckbox
 					name="activity"
-					value={event.activity}
 					labels={[
 						'Squadron Meeting',
 						'Classroom/Tour/Light',
@@ -202,7 +290,6 @@ export default class AddEvent extends React.Component<
 				<Label>Lodging arrangement</Label>
 				<MultCheckbox
 					name="lodgingArrangments"
-					value={event.lodgingArrangments}
 					labels={[
 						'Hotel or individual room',
 						'Open bay building',
@@ -212,17 +299,13 @@ export default class AddEvent extends React.Component<
 					other={true}
 				/>
 				<Label>Event website</Label>
-				<TextInput name="eventWebsite" value={event.eventWebsite} />
+				<TextInput name="eventWebsite" />
 				<Label>High adventure decsription</Label>
-				<TextInput
-					name="highAdventureDescription"
-					value={event.highAdventureDescription}
-				/>
+				<TextInput name="highAdventureDescription" />
 				<Title>Logistics Information</Title>
 				<Label>Uniform</Label>
 				<MultCheckbox
 					name="uniform"
-					value={event.uniform}
 					labels={[
 						'Dress Blue A',
 						'Dress Blue B',
@@ -238,7 +321,6 @@ export default class AddEvent extends React.Component<
 				<Label>Required forms</Label>
 				<MultCheckbox
 					name="requiredForms"
-					value={event.requiredForms}
 					labels={[
 						'CAP Identification Card',
 						'CAPF 31 Application For CAP Encampment Or Special Activity',
@@ -253,16 +335,12 @@ export default class AddEvent extends React.Component<
 				<Label>Required equipment</Label>
 				<StringListEditor
 					name="requiredEquipment"
-					value={event.requiredEquipment}
 					addNew={() => ''}
 					// @ts-ignore
 					inputComponent={TextInput}
 				/>
 				<Label>Use registration deadline</Label>
-				<Checkbox
-					name="useRegistration"
-					value={this.state.event.useRegistration}
-				/>
+				<Checkbox name="useRegistration" />
 
 				<FormBlock
 					style={{
@@ -273,15 +351,11 @@ export default class AddEvent extends React.Component<
 					name="registration"
 				>
 					<Label>Registration information</Label>
-					<TextInput
-						name="information"
-						value={this.state.event.registration.information}
-					/>
+					<TextInput name="information" />
 
 					<Label>Registration deadline</Label>
 					<DateTimeInput
 						name="deadline"
-						value={this.state.event.registration.deadline}
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
@@ -289,13 +363,10 @@ export default class AddEvent extends React.Component<
 				</FormBlock>
 
 				<Label>Accept signups</Label>
-				<Checkbox name="acceptSignups" value={event.acceptSignups} />
+				<Checkbox name="acceptSignups" />
 
 				<Label>Use participation fee</Label>
-				<Checkbox
-					name="useParticipationFee"
-					value={this.state.event.useParticipationFee}
-				/>
+				<Checkbox name="useParticipationFee" />
 
 				<FormBlock
 					style={{
@@ -306,18 +377,11 @@ export default class AddEvent extends React.Component<
 					name="participationFee"
 				>
 					<Label>Participation fee</Label>
-					<NumberInput
-						name="feeAmount"
-						value={this.state.event.participationFee.feeAmount}
-					/>
+					<NumberInput name="feeAmount" />
 
 					<Label>Participation fee due</Label>
 					<DateTimeInput
 						name="feeDue"
-						value={
-							this.state.event.participationFee.feeDue ||
-							DateTime.utc()
-						}
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
@@ -327,7 +391,6 @@ export default class AddEvent extends React.Component<
 				<Label>Meals</Label>
 				<MultCheckbox
 					name="mealsDescription"
-					value={this.state.event.mealsDescription}
 					labels={[
 						'No meals provided',
 						'Meals provided',
@@ -341,7 +404,6 @@ export default class AddEvent extends React.Component<
 
 				<POCListEditor
 					name="pointsOfContact"
-					value={this.state.event.pointsOfContact}
 					// @ts-ignore
 					inputComponent={POCInput}
 					addNew={() => ({
@@ -361,15 +423,11 @@ export default class AddEvent extends React.Component<
 				<Title>Extra information</Title>
 
 				<Label>Desired number of participants</Label>
-				<NumberInput
-					name="desiredNumberOfParticipants"
-					value={event.desiredNumberOfParticipants}
-				/>
+				<NumberInput name="desiredNumberOfParticipants" />
 
 				<Label>Group event number</Label>
 				<RadioButton
 					name="groupEventNumber"
-					value={event.groupEventNumber}
 					labels={[
 						'Not Required',
 						'To Be Applied For',
@@ -381,7 +439,6 @@ export default class AddEvent extends React.Component<
 				<Label>Event status</Label>
 				<SimpleRadioButton
 					name="status"
-					value={event.status}
 					labels={[
 						'Draft',
 						'Tentative',
@@ -393,50 +450,33 @@ export default class AddEvent extends React.Component<
 				/>
 
 				<Label>Entry complete</Label>
-				<Checkbox name="complete" value={event.complete} />
+				<Checkbox name="complete" />
 
 				<Label>Publish to wing</Label>
-				<Checkbox
-					name="publishToWingCalendar"
-					value={event.publishToWingCalendar}
-				/>
+				<Checkbox name="publishToWingCalendar" />
 
 				<Label>Show upcoming</Label>
-				<Checkbox name="showUpcoming" value={event.showUpcoming} />
+				<Checkbox name="showUpcoming" />
 
 				<Label>Administration comments</Label>
-				<TextInput
-					name="administrationComments"
-					value={event.administrationComments}
-				/>
+				<TextInput name="administrationComments" />
 
-				<TextBox name="null" value={null}>
-					Select a team
-				</TextBox>
+				<TextBox name="null">Select a team</TextBox>
 
 				<Label>Team</Label>
-				<NumberInput
-					name="teamID"
-					value={this.state.event.teamID}
-				/>
+				<NumberInput name="teamID" />
 
 				<Label>Event files</Label>
-				<FileInput name="fileIDs" value={this.state.event.fileIDs} />
+				<FileInput name="fileIDs" />
 
 				<Title>Debrief information</Title>
 
 				<Label>Debrief</Label>
-				<TextInput name="debrief" value={this.state.event.debrief} />
+				<TextInput name="debrief" />
 			</NewEventForm>
 		) : (
 			<div>Please sign in</div>
 		);
-	}
-
-	private updateNewEvent(event: NewEventFormValues) {
-		this.setState({
-			event: Object.assign({}, event)
-		});
 	}
 
 	private handleSubmit(event: NewEventFormValues): NewEventObject {
@@ -445,7 +485,7 @@ export default class AddEvent extends React.Component<
 		if (!event.useParticipationFee) {
 			delete newEvent.participationFee;
 		}
-		delete newEvent.useParticipationFee
+		delete newEvent.useParticipationFee;
 
 		if (!event.useRegistration) {
 			delete newEvent.registration;
@@ -453,5 +493,70 @@ export default class AddEvent extends React.Component<
 		delete newEvent.useRegistration;
 
 		return newEvent;
+	}
+
+	private updateNewEvent(event: NewEventFormValues) {
+		this.checkIfValid(event);
+
+		const dateTimesHaveBeenModified =
+			this.state.changed.startDateTime ||
+			this.state.changed.endDateTime ||
+			this.state.changed.pickupDateTime;
+
+		if (!dateTimesHaveBeenModified) {
+			event.startDateTime = event.meetDateTime + 300; // Five minutes
+			event.endDateTime = event.meetDateTime + 300 + 3600; // 65 minutes
+			event.pickupDateTime = event.meetDateTime + 300 + 3600 + 300; // 70 minutes
+		}
+
+		const locationsHaveBeenModified =
+			this.state.changed.location || this.state.changed.pickupLocation;
+
+		if (!locationsHaveBeenModified) {
+			event.location = event.meetLocation;
+			event.pickupLocation = event.meetLocation;
+		}
+
+		this.setState({
+			event
+		});
+	}
+
+	private checkIfValid(event: NewEventFormValues) {
+		const fail = (() => this.setState({ valid: false })).bind(this);
+
+		if (
+			!(
+				event.meetDateTime <= event.startDateTime &&
+				event.startDateTime <= event.endDateTime &&
+				event.endDateTime <= event.pickupDateTime
+			)
+		) {
+			return fail();
+		}
+
+		if (event.name.length === 0) {
+			return fail();
+		}
+
+		if (
+			event.name === '' ||
+			event.meetLocation === '' ||
+			event.location === '' ||
+			event.pickupLocation === ''
+		) {
+			return fail();
+		}
+
+		if (
+			event.transportationProvided === true &&
+			event.transportationDescription === ''
+		) {
+			return fail();
+		}
+
+		this.setState({
+			valid: true
+		});
 	}
 }

@@ -41,7 +41,7 @@ export interface InputProps<V> {
 	 * 
 	 * Denoted as required because all components need to be controlled
 	 */
-	value: V;
+	value?: V;
 
 	// Pass on styles to children
 	/**
