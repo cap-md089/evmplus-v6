@@ -10,6 +10,7 @@ import {
 	generateResults,
 	modifyAndBind
 } from '../MySQLUtil';
+import { Member as NoPermissions } from '../Permissions';
 import { MemberCreateError, MemberRequest } from './NHQMember';
 
 const generateHash = (password: string, secret: string) =>
@@ -21,7 +22,7 @@ const generateHash = (password: string, secret: string) =>
 const hashPassword = (
 	password: string,
 	salt: string,
-	revolutions = 512
+	revolutions = 2048
 ): string =>
 	revolutions === 0
 		? generateHash(password, salt)
@@ -282,6 +283,8 @@ export default class ProspectiveMember extends MemberBase
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
+	public permissions: MemberPermissions = NoPermissions;
+
 	private constructor(
 		member: ProspectiveMemberAccount & Required<NoSQLDocument>,
 		account: Account,
@@ -331,7 +334,8 @@ export default class ProspectiveMember extends MemberBase
 		seniorMember: false,
 		squadron: this.requestingAccount.getSquadronName(),
 		usrID: this.usrID,
-		kind: 'ProspectiveMember'
+		kind: 'ProspectiveMember',
+		permissions: this.permissions
 	});
 
 	public hasPermission = (
@@ -362,4 +366,9 @@ export default class ProspectiveMember extends MemberBase
 			.set('password', hashPassword(password, row[0].salt))
 			.execute();
 	}
+
+	public getReference = (): ProspectiveMemberReference => ({
+		kind: 'ProspectiveMember',
+		id: this.prospectiveID
+	});
 }

@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import Account from '../Account';
 import MemberBase from '../MemberBase';
 import { collectResults, findAndBind } from '../MySQLUtil';
+import { getPermissions } from '../Permissions';
 
 export default class CAPWATCHMember extends MemberBase {
 	public static readonly tableNames = {
@@ -84,6 +85,8 @@ export default class CAPWATCHMember extends MemberBase {
 			.filter(val => val.validUntil > +DateTime.utc())
 			.map(val => val.Duty);
 
+		const permissions = getPermissions(extraInformation.accessLevel);
+
 		return new CAPWATCHMember(
 			{
 				id,
@@ -106,12 +109,15 @@ export default class CAPWATCHMember extends MemberBase {
 					results[0].NameLast,
 					results[0].NameSuffix
 				]),
-				kind: 'CAPWATCHMember'
+				kind: 'CAPWATCHMember',
+				permissions
 			},
 			schema,
 			account
 		);
 	}
+
+	public permissions: MemberPermissions;
 
 	public kind: MemberType = 'CAPWATCHMember';
 

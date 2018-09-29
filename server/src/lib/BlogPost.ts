@@ -80,7 +80,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 
 	private static collectionName = 'Blog';
 
-	public authorid: number;
+	public authorid: MemberReference;
 
 	public content: RawDraftContentState;
 

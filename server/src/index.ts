@@ -1,6 +1,6 @@
 import conf from './conf';
 import getServer from './getServer';
 
-getServer(conf);
-
-console.log('Server bound');
+getServer(conf).then(val => {
+	console.log('Server bound');
+});

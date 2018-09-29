@@ -1,7 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
 import { RequestHandler } from 'express';
-import { existsSync, unlink, writeFile } from 'fs';
+import { createWriteStream, existsSync, unlink } from 'fs';
+import { request as httpRequest } from 'https';
 import { sign, verify } from 'jsonwebtoken';
 import { join } from 'path';
 import { promisify } from 'util';
@@ -112,6 +113,8 @@ export default class NHQMember extends Member {
 			NHQMember.LoadExtraMemberInformation(id, schema, account)
 		]);
 
+		const permissions = getPermissions(extraInfo.accessLevel);
+
 		return new NHQMember(
 			{
 				contact: memberInfo[1],
@@ -131,7 +134,8 @@ export default class NHQMember extends Member {
 					memberInfo[0].nameLast,
 					memberInfo[0].nameSuffix
 				]),
-				kind: 'NHQMember'
+				kind: 'NHQMember',
+				permissions
 			},
 			cookie,
 			sessionID,
@@ -199,6 +203,9 @@ export default class NHQMember extends Member {
 								req.account
 							)
 						]);
+
+						const permissions = getPermissions(extraInfo.accessLevel);
+
 						req.member = new NHQMember(
 							{
 								contact: sess[0].contact,
@@ -218,7 +225,8 @@ export default class NHQMember extends Member {
 									sess[0].nameLast,
 									sess[0].nameSuffix
 								]),
-								kind: 'NHQMember'
+								kind: 'NHQMember',
+								permissions
 							},
 							sess[0].cookieData,
 							header,
@@ -249,7 +257,7 @@ export default class NHQMember extends Member {
 	) => {
 		NHQMember.ConditionalExpressMiddleware(req, res, () => {
 			if (req.member === null) {
-				res.status(403);
+				res.status(401);
 				res.end();
 			} else {
 				next();
@@ -363,6 +371,42 @@ export default class NHQMember extends Member {
 		return retData;
 	}
 
+	public async streamCAPWATCHFile(
+		id: number,
+		stream: NodeJS.WritableStream
+	) {
+		const path = `/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
+
+		return new Promise<void>(resolve => {
+			httpRequest(
+				{
+					hostname: 'www.capnhq.gov',
+					protocol: 'https:',
+					port: 443,
+					path,
+					method: 'GET',
+					headers: {
+						Accept:
+							'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
+						'Accept-Encoding': 'gzip, deflate, br',
+						'Accept-Language': 'en-US,en;q=0.5',
+						Connection: 'keep-alive',
+						Cookie: this.cookie,
+						Host: 'www.capnhq.gov',
+						'Upgrade-Insecure-Requests': '1',
+						'User-Agent': 'EventManagementLoginBot/2.0'
+					}
+				},
+				res => {
+					res.pipe(stream);
+					res.on('end', () => {
+						resolve();
+					});
+				}
+			);
+		});
+	}
+
 	public async getCAPWATCHFile(id: number, location?: string) {
 		if (location === undefined) {
 			const date = new Date();
@@ -375,20 +419,11 @@ export default class NHQMember extends Member {
 			);
 		}
 
-		const url = `https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
-
-		const body = await request(url, this.cookie);
-
 		if (existsSync(location)) {
 			await promisify(unlink)(location);
 		}
 
-		writeFile(location, body, {}, err => {
-			if (err) {
-				// tslint:disable-next-line:no-console
-				console.log('Error in writing CAPWATCH file: ', err);
-			}
-		});
+		await this.streamCAPWATCHFile(id, createWriteStream(location));
 	}
 
 	public hasPermission = (
@@ -401,7 +436,9 @@ export default class NHQMember extends Member {
 					.map(p => this.hasPermission(p, threshold))
 					.reduce((prev, curr) => prev || curr);
 
-	public async su(targetMember: MemberBase | number | string): Promise<string> {
+	public async su(
+		targetMember: MemberBase | number | string
+	): Promise<string> {
 		let su =
 			typeof targetMember === 'number' || typeof targetMember === 'string'
 				? targetMember
@@ -412,7 +449,7 @@ export default class NHQMember extends Member {
 		}
 
 		if (!this.isRioux) {
-			throw new Error('Invalid permissions')
+			throw new Error('Invalid permissions');
 		}
 
 		const sessionID = sign(
@@ -429,7 +466,11 @@ export default class NHQMember extends Member {
 		let member;
 
 		if (typeof su === 'number') {
-			member = await CAPWATCHMember.Get(su, this.requestingAccount, this.schema);
+			member = await CAPWATCHMember.Get(
+				su,
+				this.requestingAccount,
+				this.schema
+			);
 
 			let memberIndex = 0;
 
@@ -455,11 +496,20 @@ export default class NHQMember extends Member {
 				squadron: member.squadron
 			};
 		} else {
-			member = await ProspectiveMember.Get(su, this.requestingAccount, this.schema);
+			member = await ProspectiveMember.Get(
+				su,
+				this.requestingAccount,
+				this.schema
+			);
 
 			ProspectiveMember.Su(member);
 		}
 
 		return sessionID;
 	}
+
+	public getReference = (): NHQMemberReference => ({
+		kind: 'NHQMember',
+		id: this.id
+	})
 }

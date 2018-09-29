@@ -16,7 +16,7 @@ const blogPostValidator = (val: any): val is NewBlogPost =>
 export default async (req: MemberRequest, res: express.Response) => {
 	if (blogPostValidator(req.body)) {
 		const newPost: NewBlogPost = {
-			authorid: req.member.id,
+			authorid: req.member.getReference(),
 			content: req.body.content,
 			fileIDs: req.body.fileIDs,
 			title: req.body.title

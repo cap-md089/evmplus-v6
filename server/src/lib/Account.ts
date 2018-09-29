@@ -1,6 +1,8 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
+import BlogPage from './BlogPage';
+import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
 import CAPWATCHMember from './members/CAPWATCHMember';
@@ -10,6 +12,7 @@ import {
 	generateResults,
 	MySQLRequest
 } from './MySQLUtil';
+import Team from './Team';
 
 export interface AccountRequest extends MySQLRequest {
 	account: Account;
@@ -150,7 +153,7 @@ export default class Account
 	/**
 	 * CAP IDs of the admins of this account
 	 */
-	public adminIDs: number[];
+	public adminIDs: MemberReference[];
 	/**
 	 * Whether or not this account is an echelon account
 	 */
@@ -232,6 +235,46 @@ export default class Account
 		}
 	}
 
+	public async *getTeams(): AsyncIterableIterator<Team> {
+		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+
+		const teamIterator = findAndBind(teamsCollection, {
+			accountID: this.id
+		});
+
+		for await (const team of generateResults(teamIterator)) {
+			yield Team.Get(team.id, this, this.schema);
+		}
+	}
+
+	public async *getBlogPosts(): AsyncIterableIterator<BlogPost> {
+		const blogPostCollection = this.schema.getCollection<BlogPostObject>(
+			'BlogPost'
+		);
+
+		const blogPostIterator = findAndBind(blogPostCollection, {
+			accountID: this.id
+		});
+
+		for await (const post of generateResults(blogPostIterator)) {
+			yield BlogPost.Get(post.id, this, this.schema);
+		}
+	}
+
+	public async *getBlogPages(): AsyncIterableIterator<BlogPage> {
+		const blogPageCollection = this.schema.getCollection<BlogPageObject>(
+			'BlogPage'
+		);
+
+		const blogPageIterator = findAndBind(blogPageCollection, {
+			accountID: this.id
+		});
+
+		for await (const page of generateResults(blogPageIterator)) {
+			yield BlogPage.Get(page.id, this, this.schema);
+		}
+	}
+
 	public set(values: Partial<AccountObject>): void {
 		const keys: Array<keyof AccountObject> = [
 			'adminIDs',
@@ -251,7 +294,9 @@ export default class Account
 	}
 
 	public async save(): Promise<void> {
-		const accountCollection = this.schema.getCollection<AccountObject>('Accounts');
+		const accountCollection = this.schema.getCollection<AccountObject>(
+			'Accounts'
+		);
 
 		await accountCollection.replaceOne(this._id, this.toRaw());
 	}
@@ -269,7 +314,7 @@ export default class Account
 		unpaidEventLimit: this.unpaidEventLimit,
 		validPaid: this.validPaid
 	});
-	
+
 	public getSquadronName(): string {
 		return this.id.replace(/([a-zA-Z]*)-([0-9]*)/, '$1-$2').toUpperCase();
 	}

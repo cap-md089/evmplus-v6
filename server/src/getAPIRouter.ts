@@ -11,9 +11,10 @@ import events from './api/events';
 import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
-import su from './api/member/su';
+import members from './api/member';
 import registry from './api/registry';
 import signin from './api/signin';
+import team from './api/team';
 import { Configuration } from './conf';
 import Account from './lib/Account';
 import NHQMember from './lib/members/NHQMember';
@@ -114,11 +115,12 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.use('/event', events);
 
+	router.use('/team', team);
+
 	router.use(
-		'/su',
+		'/member',
 		Account.ExpressMiddleware,
-		NHQMember.ExpressMiddleware,
-		su
+		members
 	);
 
 	router.use('*', (req, res) => {

@@ -46,7 +46,7 @@ export function getFullSchemaValidator<T>(schemaName: string) {
 export async function streamAsyncGeneratorAsJSONArray<T>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,
-	functionHandle: (val: T) => string | false
+	functionHandle: (val: T) => string | false = JSON.stringify
 ): Promise<void> {
 	res.header('Content-type', 'application/json');
 

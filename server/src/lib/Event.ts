@@ -203,7 +203,7 @@ export default class Event
 	 * 		it uses the account ID the object was created with
 	 */
 	public async save(account: Account = this.account) {
-		const timeModified = +DateTime.utc();
+		const timeModified = Math.round(+DateTime.utc() / 1000);
 
 		const eventsCollection = this.schema.getCollection<EventObject>(
 			'Events'

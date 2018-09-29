@@ -1,3 +1,7 @@
+type UndefinedToNull<T> = {
+	[P in keyof T]: T[P] extends undefined ? null : T[P]
+}
+
 declare module '@mysql/xdevapi' {
 	type DataModel = number;
 	type DocumentOrJSON = any | string;
@@ -178,14 +182,12 @@ declare module '@mysql/xdevapi' {
 
 	class CollectionModify<T> implements Binding<T>, CollectionOrdering, Limiting {
 		public arrayAppend<
-			K extends keyof T = keyof T,
-			J extends keyof T[K] = keyof T[K]
-		>(field: K, any: T[K][J]): CollectionModify<T>;
+			K extends keyof T = keyof T
+		>(field: K, any: T[K] extends Array<infer U> ? U : never): CollectionModify<T>;
 
 		public arrayInsert<
-			K extends keyof T = keyof T,
-			J extends keyof T[K] = keyof T[K]
-		>(field: K, any: T[K][J]): CollectionModify<T>;
+			K extends keyof T = keyof T
+		>(field: K, any: T[K] extends Array<infer U> ? U : never): CollectionModify<T>;
 
 		public execute(): Promise<Result>;
 
@@ -248,15 +250,15 @@ declare module '@mysql/xdevapi' {
 
 		public getClassName(): string;
 
-		public getCollection<T = any>(name: string): Collection<T>;
+		public getCollection<T = any>(name: string): Collection<UndefinedToNull<T>>;
 
-		public getCollectionAsTable<T = any>(name: string): Table<T>;
+		public getCollectionAsTable<T = any>(name: string): Table<UndefinedToNull<T>>;
 
 		public getCollections(): Promise<Collection[]>;
 
 		public getName(): string;
 
-		public getTable<T = any>(name: string): Table<T>;
+		public getTable<T = any>(name: string): Table<UndefinedToNull<T>>;
 
 		public getTables(): Promise<Table[]>;
 

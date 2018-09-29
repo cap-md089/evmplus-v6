@@ -1,13 +1,60 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "NHQMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "number"
+                },
+                "kind": {
+                    "enum": [
+                        "NHQMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        },
+        "ProspectiveMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "ProspectiveMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        }
+    },
+    "description": "The object that splits all of the data used by different people to limit their views\nto what they want and what they have permissions for",
     "properties": {
         "_id": {
+            "description": "The ID assigned by NoSQL/MySQL",
             "type": "string"
         },
         "adminIDs": {
             "description": "CAP IDs of the admins of this account",
             "items": {
-                "type": "number"
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/ProspectiveMemberReference"
+                    },
+                    {
+                        "$ref": "#/definitions/NHQMemberReference"
+                    }
+                ]
             },
             "type": "array"
         },

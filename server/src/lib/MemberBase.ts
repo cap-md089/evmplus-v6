@@ -147,6 +147,10 @@ export default abstract class MemberBase implements MemberObject {
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
+	/**
+	 * Checks for if a user has permissions
+	 */
+	public abstract permissions: MemberPermissions;
 
 	/**
 	 * Used to differentiate when using polymorphism
@@ -193,7 +197,8 @@ export default abstract class MemberBase implements MemberObject {
 		squadron: this.squadron,
 		orgid: this.orgid,
 		usrID: this.usrID,
-		kind: this.kind
+		kind: this.kind,
+		permissions: this.permissions
 	});
 
 	public async *getAccounts(): AsyncIterableIterator<Account> {

@@ -188,6 +188,24 @@
             ],
             "type": "object"
         },
+        "NHQMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "number"
+                },
+                "kind": {
+                    "enum": [
+                        "NHQMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        },
         "Object": {
             "description": "Provides functionality common to all JavaScript objects.",
             "properties": {
@@ -200,10 +218,30 @@
                 "constructor"
             ],
             "type": "object"
+        },
+        "ProspectiveMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "ProspectiveMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
         }
     },
+    "description": "A blog post for peoplle to read",
     "properties": {
         "_id": {
+            "description": "The ID assigned by NoSQL/MySQL",
             "type": "string"
         },
         "accountID": {
@@ -211,24 +249,37 @@
             "type": "string"
         },
         "authorid": {
-            "type": "number"
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ProspectiveMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NHQMemberReference"
+                }
+            ],
+            "description": "The blog post author"
         },
         "content": {
-            "$ref": "#/definitions/Draft.RawDraftContentState"
+            "$ref": "#/definitions/Draft.RawDraftContentState",
+            "description": "What the author is trying to say"
         },
         "fileIDs": {
+            "description": "Pictures that will be presented below the post; if there\nare photos that will be embedded in the content, it will be in the `content`\nproperty and handled by Draft.js",
             "items": {
                 "type": "string"
             },
             "type": "array"
         },
         "id": {
+            "description": "The ID of the blog post itself",
             "type": "number"
         },
         "posted": {
+            "description": "When it was published",
             "type": "number"
         },
         "title": {
+            "description": "The title of the blog post",
             "type": "string"
         }
     },

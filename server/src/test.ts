@@ -2,6 +2,7 @@ import { getSession } from '@mysql/xdevapi';
 import conf from './conf';
 import Account from './lib/Account';
 import ProspectiveMember from './lib/members/ProspectiveMember';
+import { Member as NoPermissions } from './lib/Permissions';
 
 const {
 	database: schema,
@@ -48,7 +49,8 @@ getSession({
 		seniorMember: false,
 		squadron: 'md089',
 		usrID: 'riouxad',
-		kind: 'ProspectiveMember'
+		kind: 'ProspectiveMember',
+		permissions: NoPermissions
 	};
 
 	const account = await Account.Get('mdx89', mysqlSchema);

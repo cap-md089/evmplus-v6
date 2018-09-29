@@ -3,6 +3,8 @@ node_modules/*# See https://help.github.com/ignore-files/ for more about ignorin
 # dependencies
 /node_modules
 
+/schemas
+
 # testing
 /coverage
 

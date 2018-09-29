@@ -100,24 +100,26 @@
 					username: form.username.value,
 					password: form.password.value
 				})
-			}).then(res => {
-				if (res.status >= 200 && res.status < 300) {
-					return res;
-				}
-				let err = new Error(res.statusText);
-				err.response = res;
-				throw err;
-			}).then(res => {
-				return res.json();
-			}).then(json => {
-				parent.postMessage(JSON.stringify(json), '*');
-				form[2].disabled = false;
-				form[2].value = "submit";
-			}).catch(err => {
-				console.log(err);
-			});
+			})
+				.then(res => res.json())
+				.then(json => {
+					parent.postMessage(JSON.stringify(json), '*');
+					form[2].disabled = false;
+					form[2].value = "submit";
+				}).catch(err => {
+					console.log(err);
+				});
 			return false;
 		}
+
+		window.addEventListener('message', function (e) {
+			if (e.data === 'done submitting') {
+				const submit = document.getElementById('submit');
+
+				submit.disabled = false;
+				submit.value = 'submit';
+			}
+		});
 	</script>
 </head>
 

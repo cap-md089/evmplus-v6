@@ -1,6 +1,10 @@
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
-import Member, { MemberCreateError } from '../lib/members/NHQMember';
+import {
+	default as Member,
+	default as NHQMember,
+	MemberCreateError
+} from '../lib/members/NHQMember';
 import ProspectiveMember from '../lib/members/ProspectiveMember';
 import { json } from '../lib/Util';
 
@@ -19,7 +23,7 @@ export default async (req: AccountRequest, res: express.Response) => {
 		let member;
 
 		const userID = username.toString();
-		
+
 		if (userID.match(/([0-9]{6})/)) {
 			member = await Member.Create(
 				userID,
@@ -33,15 +37,30 @@ export default async (req: AccountRequest, res: express.Response) => {
 				password,
 				req.account,
 				req.mysqlx
-			)
+			);
 		}
 
-		json<SigninReturn>(res, {
-			error: MemberCreateError.NONE,
-			member: member.toRaw(),
-			sessionID: member.sessionID,
-			valid: true
-		});
+		if (member.kind === 'ProspectiveMember') {
+			json<SigninReturn>(res, {
+				error: MemberCreateError.NONE,
+				member: {
+					kind: 'ProspectiveMember',
+					object: (member as ProspectiveMember).toRaw()
+				},
+				sessionID: member.sessionID,
+				valid: true
+			});
+		} else {
+			json<SigninReturn>(res, {
+				error: MemberCreateError.NONE,
+				member: {
+					kind: 'NHQMember',
+					object: (member as NHQMember).toRaw()
+				},
+				sessionID: member.sessionID,
+				valid: true
+			});
+		}
 	} catch (errors) {
 		if (!errors.message.match(/^(\d)*$/)) {
 			console.error(errors);
