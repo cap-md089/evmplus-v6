@@ -3,13 +3,14 @@ import {
 	AttendanceStatus,
 	EventStatus,
 	MemberCreateError,
-	PointOfContactType
+	PointOfContactType,
+	TeamPublicity
 } from './index';
 
 declare global {
 	/**
 	 * Table for SQL definitions for CAP NHQ
-	 * 
+	 *
 	 * Documentation is not provided by NHQ
 	 */
 	export namespace NHQ {
@@ -196,6 +197,16 @@ declare global {
 	export type MultCheckboxReturn = [boolean[], string];
 	export type RadioReturn<T extends number> = [T, string];
 
+	export interface NHQMemberObjectReturn {
+		kind: 'NHQMember';
+		object: MemberObject;
+	}
+
+	export interface ProspectiveMemberReturn {
+		kind: 'ProspectiveMember';
+		object: ProspectiveMemberAccount;
+	}
+
 	/**
 	 * The object that represents a successful session, as signing in
 	 * returns a session
@@ -208,7 +219,7 @@ declare global {
 		/**
 		 * The member details
 		 */
-		member: MemberObject;
+		member: NHQMemberObjectReturn | ProspectiveMemberReturn;
 		/**
 		 * The ID for the session
 		 */
@@ -307,7 +318,7 @@ declare global {
 
 	/**
 	 * Mark documents as NoSQL, for interaction with the database
-	 * 
+	 *
 	 * But not too close, because an object may not have been created and
 	 * therefore not have an _id
 	 */
@@ -319,13 +330,21 @@ declare global {
 	}
 
 	/**
+	 * Used by certain classes to say this object can't be undefined. NoSQLDocument
+	 * is used when the object is being created and information cannot be known about
+	 * it
+	 */
+	export type FullDBObject<T extends NoSQLDocument> = T &
+		Required<NoSQLDocument>;
+
+	/**
 	 * Most classes interact with the database in some way; just define some
 	 * common ground for them
 	 */
 	export interface DatabaseInterface<T extends NoSQLDocument> {
 		/**
 		 * Return the object in a manner that is safe for JSON transfer
-		 * 
+		 *
 		 * Useful for when making sure the wrong data doesn't get transferred
 		 * to the client
 		 */
@@ -333,7 +352,7 @@ declare global {
 		/**
 		 * Checks all the values coming in, making sure they are the right type and
 		 * setting them if they are the right type and defined
-		 * 
+		 *
 		 * @param values The values to set
 		 */
 		set(values: Partial<T>): void;
@@ -367,7 +386,7 @@ declare global {
 
 	/**
 	 * The member contact info for a user
-	 * 
+	 *
 	 * We think it can only be a string, as it is hard (impossible?) to input
 	 * multiple contacts of a certain type through the UI provided on NHQ
 	 */
@@ -588,13 +607,16 @@ declare global {
 	/**
 	 * String representation of the member type, as there needs to be a way to differentiate
 	 */
-	export type MemberType = 'CAPWATCHMember' | 'NHQMember' | 'ProspectiveMember';
+	export type MemberType =
+		| 'CAPWATCHMember'
+		| 'NHQMember'
+		| 'ProspectiveMember';
 
 	/**
 	 * Describes a CAP member
 	 *
 	 * The member may be created from one of many ways:
-	 * 
+	 *
 	 * NHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:
 	 * 		Takes sign in data or a session and signs the user in. Best data
 	 * CAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as
@@ -602,11 +624,11 @@ declare global {
 	 * ProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/
 	 * NHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for
 	 * 		managing prospective members
-	 * 
+	 *
 	 * NHQMember.Create and ProspectiveMember.Signin are used when signing people in
 	 * ProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from
 	 * 		our database
-	 * 
+	 *
 	 * CAPWATCHMember and NHQMember have their sources in NHQ
 	 * ProspectiveMember is located in our database
 	 */
@@ -661,7 +683,7 @@ declare global {
 		orgid: number;
 		/**
 		 * Since many accounts can have an ORGID, there is an array containing each one
-		 * 
+		 *
 		 * @deprecated Let's go with a member method to use an async generator to get each one
 		 */
 		// accounts: Account[]
@@ -673,6 +695,10 @@ declare global {
 		 * The Kind of user, as there are multiple
 		 */
 		kind: MemberType;
+		/**
+		 * Both the client and server will want a handle on permissions
+		 */
+		permissions: MemberPermissions;
 	}
 
 	/**
@@ -693,7 +719,12 @@ declare global {
 		id: number;
 	}
 
-	export type MemberReference = NHQMemberReference | ProspectiveMemberReference;
+	/**
+	 * Union type to allow for referring to both NHQMembers and ProspectiveMembers
+	 */
+	export type MemberReference =
+		| NHQMemberReference
+		| ProspectiveMemberReference;
 
 	/**
 	 * In the case that it doesn't like MemberBase, try using Member
@@ -795,12 +826,12 @@ declare global {
 		/**
 		 * CAP IDs of the admins of this account
 		 */
-		adminIDs: number[];
+		adminIDs: MemberReference[];
 	}
 
 	/**
 	 * Used by the different files to indicate what they are
-	 * 
+	 *
 	 * Follows the example of Google APIs
 	 */
 	export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
@@ -890,7 +921,7 @@ declare global {
 		/**
 		 * The blog post author
 		 */
-		authorid: number;
+		authorid: MemberReference;
 		/**
 		 * What the author is trying to say
 		 */
@@ -901,6 +932,33 @@ declare global {
 		 * property and handled by Draft.js
 		 */
 		fileIDs: string[];
+	}
+
+	export interface NewBlogPage {
+		/**
+		 * The title of the page
+		 */
+		title: string;
+		/**
+		 * The page content
+		 */
+		content: RawDraftContentState;
+	}
+
+	export interface BlogPageObject
+		extends AccountIdentifiable,
+			NewBlogPage,
+			NoSQLDocument {
+		/**
+		 * The id of the page, to get it by
+		 */
+		id: string;
+		/**
+		 * Each blog page can have a set of children
+		 * 
+		 * This contains an array to references of BlogPages
+		 */
+		children: string[];
 	}
 
 	/**
@@ -1038,7 +1096,7 @@ declare global {
 		highAdventureDescription: string;
 		/**
 		 * A list of things that will be required
-		 * 
+		 *
 		 * Should this only be shown to certain members? E.g., team members,
 		 * signed in members, or just all?
 		 */
@@ -1060,7 +1118,7 @@ declare global {
 		 */
 		acceptSignups: boolean;
 		/**
-		 * What to say if sign ups are denied; may be dropped if 
+		 * What to say if sign ups are denied; may be dropped if
 		 * acceptSignups is true
 		 */
 		signUpDenyMessage?: string;
@@ -1114,7 +1172,7 @@ declare global {
 		fileIDs: string[];
 		/**
 		 * If this is a linked event this will be present
-		 * 
+		 *
 		 * Linking events allows for one account to copy an event of another account
 		 * and receive updates and such
 		 */
@@ -1201,7 +1259,7 @@ declare global {
 			 * Instagram page for the account
 			 */
 			instagram?: string;
-		},
+		};
 		/**
 		 * Website naming details
 		 */
@@ -1209,24 +1267,27 @@ declare global {
 			/**
 			 * What the website is called
 			 */
-			name: string,
+			name: string;
 			/**
 			 * -, ::, etc. Personal taste, used in the title of the page
 			 */
 			separator: string;
-		}
+		};
 	}
 
 	/**
 	 * Manages accounts on the website
-	 * 
+	 *
 	 * Ignored because there are conflicting id types
 	 */
-	export interface ProspectiveMemberAccount extends AccountIdentifiable, NoSQLDocument, MemberObject {
+	export interface ProspectiveMemberAccount
+		extends AccountIdentifiable,
+			NoSQLDocument,
+			MemberObject {
 		/**
 		 * Used to resolve compile errors, as AccountIdentifiable and NoSQLDocument inherit Identifiable which
 		 * says id must be `number | string`
-		 * 
+		 *
 		 * Can be set to something else to 'link' it to a real CAP account
 		 */
 		id: number;
@@ -1246,5 +1307,82 @@ declare global {
 		 * The kind is specifically a prospective member
 		 */
 		kind: 'ProspectiveMember';
+	}
+
+	/**
+	 * Describes errors that are stored in the database
+	 */
+	export interface ErrorObject extends NoSQLDocument {
+		/**
+		 * Taken from the Error object
+		 */
+		stack: string;
+		/**
+		 * Requested path, used to recreate the error
+		 */
+		requestPath: string;
+		/**
+		 * User information
+		 *
+		 * Null if not signed in
+		 */
+		requestedUser: MemberReference | null;
+		/**
+		 * When did the error occur?
+		 */
+		timestamp: number;
+		/**
+		 * What is the error message?
+		 */
+		message: string;
+	}
+
+	/**
+	 * For creating teams of cadets
+	 */
+	export interface NewTeamObject {
+		/**
+		 * All teams need a name, right?
+		 */
+		name: string;
+		/**
+		 * Who is on the team
+		 */
+		members: MemberReference[];
+		/**
+		 * Describe what the team does
+		 */
+		description: string;
+		/**
+		 * Who will be leading the team?
+		 */
+		cadetLeader: MemberReference | null;
+		/**
+		 * Who will mentor the team?
+		 */
+		seniorMentor: MemberReference | null;
+		/**
+		 * Who coaches the team?
+		 */
+		seniorCoach: MemberReference | null;
+		/**
+		 * Visbility of team; each one is described by the enum declaration
+		 */
+		visiblity: TeamPublicity;
+	}
+
+	/**
+	 * Allows for teams of cadets
+	 */
+	export interface TeamObject
+		extends NewTeamObject,
+			AccountIdentifiable,
+			NoSQLDocument {
+		/**
+		 * Teams use numerical IDs
+		 *
+		 * Allows for incrementation
+		 */
+		id: number;
 	}
 }

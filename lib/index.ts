@@ -21,6 +21,11 @@ export enum PointOfContactType {
 	EXTERNAL
 }
 
+export enum TeamPublicity {
+	PRIVATE, // Nothing visible, not shown on Browse unless signed in and member of team
+	PUBLIC // Full visibility
+}
+
 export enum MemberCAPWATCHErrors {
 	INVALID_PERMISSIONS,
 	NO_NHQ_ACTION

@@ -16,6 +16,16 @@ echo "Building NewBlogPost..."
 typescript-json-schema --refs --required index.d.ts global.NewBlogPost -o schemas/NewBlogPost.json
 echo "Building NewEvent..."
 typescript-json-schema --refs --required index.d.ts global.NewEventObject -o schemas/NewEventObject.json
+echo "Building NewTeamObject..."
+typescript-json-schema --refs --required index.d.ts global.NewTeamObject -o schemas/NewTeamObject.json
+echo "Building TeamObject..."
+typescript-json-schema --refs --required index.d.ts global.TeamObject -o schemas/TeamObject.json
+echo "Building NewBlogPage..."
+typescript-json-schema --refs --required index.d.ts global.NewBlogPage -o schemas/NewBlogPage.json
+echo "Building BlogPage..."
+typescript-json-schema --refs --required index.d.ts global.BlogPageObject -o schemas/BlogPageObject.json
+echo "Building RegistryValues..."
+typescript-json-schema --refs --required index.d.ts global.RegistryValues -o schemas/RegistryValues.json
 
 cp -r schemas ./../server
 cp -r schemas ./../client/src

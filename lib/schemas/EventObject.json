@@ -1,6 +1,70 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
+        "AttendanceRecord": {
+            "description": "A full attendance record that has been inserted in the database",
+            "properties": {
+                "arrivalTime": {
+                    "description": "If they are comming part time, this shows when they arrive",
+                    "type": "number"
+                },
+                "comments": {
+                    "description": "Comments from the cadet",
+                    "type": "string"
+                },
+                "departureTime": {
+                    "description": "If they are comming part time, this shows when they depart",
+                    "type": "number"
+                },
+                "memberID": {
+                    "description": "Who they are",
+                    "type": "number"
+                },
+                "memberRankName": {
+                    "description": "Record member rank and name to show what rank they were when\nthey participated",
+                    "type": "string"
+                },
+                "planToUseCAPTransportation": {
+                    "description": "If they plan to use transportation provided",
+                    "type": "boolean"
+                },
+                "requirements": {
+                    "description": "?",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/AttendanceStatus",
+                    "description": "Committed, rescindend commitment to attend, etc"
+                },
+                "summaryEmailSent": {
+                    "description": "Whether or not the emails for this cadet/for the POCs have been sent",
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "description": "When they signed up",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "comments",
+                "memberID",
+                "memberRankName",
+                "planToUseCAPTransportation",
+                "requirements",
+                "status",
+                "summaryEmailSent",
+                "timestamp"
+            ],
+            "type": "object"
+        },
+        "AttendanceStatus": {
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "type": "number"
+        },
         "EventStatus": {
             "enum": [
                 0,
@@ -15,28 +79,36 @@
         "ExternalPointOfContact": {
             "properties": {
                 "email": {
+                    "description": "All points of contact have an email",
                     "type": "string"
                 },
                 "name": {
+                    "description": "As we don't have CAP ID, we can't pull name or rank",
                     "type": "string"
                 },
                 "phone": {
+                    "description": "All of them should have a phone number",
                     "type": "string"
                 },
                 "receiveEventUpdates": {
+                    "description": "Email updates for the event",
                     "type": "boolean"
                 },
                 "receiveRoster": {
+                    "description": "Email the roster to the POC at some point in time",
                     "type": "boolean"
                 },
                 "receiveSignUpUpdates": {
+                    "description": "Email whenever someone signs up",
                     "type": "boolean"
                 },
                 "receiveUpdates": {
+                    "description": "Receive a notification for them being a POC",
                     "type": "boolean"
                 },
                 "type": {
-                    "$ref": "#/definitions/PointOfContactType.EXTERNAL"
+                    "$ref": "#/definitions/PointOfContactType.EXTERNAL",
+                    "description": "Used for differentiating non CAP points of contact"
                 }
             },
             "required": [
@@ -54,28 +126,36 @@
         "InternalPointOfContact": {
             "properties": {
                 "email": {
+                    "description": "All points of contact have an email",
                     "type": "string"
                 },
                 "id": {
+                    "description": "CAP ID",
                     "type": "number"
                 },
                 "phone": {
+                    "description": "All of them should have a phone number",
                     "type": "string"
                 },
                 "receiveEventUpdates": {
+                    "description": "Email updates for the event",
                     "type": "boolean"
                 },
                 "receiveRoster": {
+                    "description": "Email the roster to the POC at some point in time",
                     "type": "boolean"
                 },
                 "receiveSignUpUpdates": {
+                    "description": "Email whenever someone signs up",
                     "type": "boolean"
                 },
                 "receiveUpdates": {
+                    "description": "Receive a notification for them being a POC",
                     "type": "boolean"
                 },
                 "type": {
-                    "$ref": "#/definitions/PointOfContactType.INTERNAL"
+                    "$ref": "#/definitions/PointOfContactType.INTERNAL",
+                    "description": "Used for differentiating CAP points of contact"
                 }
             },
             "required": [
@@ -103,11 +183,14 @@
             "type": "number"
         }
     },
+    "description": "The meat of what this website is designed for; events can be signed up for\nand hold information to facilitate easy information distribution",
     "properties": {
         "_id": {
+            "description": "The ID assigned by NoSQL/MySQL",
             "type": "string"
         },
         "acceptSignups": {
+            "description": "Whether or not signups are accepted",
             "type": "boolean"
         },
         "accountID": {
@@ -128,6 +211,7 @@
                     }
                 ]
             },
+            "description": "Describes how strenuous the activity may be to cadets",
             "items": [
                 {
                     "items": {
@@ -143,30 +227,46 @@
             "type": "array"
         },
         "administrationComments": {
+            "description": "Comments for/from administrators",
             "type": "string"
         },
+        "attendance": {
+            "description": "New events start with no attendance, but there can be procedurally\ngenerated attendance on the client side to include internal POCs",
+            "items": {
+                "$ref": "#/definitions/AttendanceRecord"
+            },
+            "type": "array"
+        },
         "author": {
+            "description": "Who made the event",
             "type": "number"
         },
         "comments": {
+            "description": "Comments from the event author, description, etc.",
             "type": "string"
         },
         "complete": {
+            "description": "If all the details are completely filled in",
             "type": "boolean"
         },
         "debrief": {
+            "description": "After action reports",
             "type": "string"
         },
         "desiredNumberOfParticipants": {
+            "description": "How many people we want at the event",
             "type": "number"
         },
         "endDateTime": {
+            "description": "When the event finishes. Different from pickup the same way start and\nmeet times are different. End location is implied to be the start\nlocation",
             "type": "number"
         },
         "eventWebsite": {
+            "description": "External websites",
             "type": "string"
         },
         "fileIDs": {
+            "description": "Files that may be associated with the event; e.g. forms",
             "items": {
                 "type": "string"
             },
@@ -183,6 +283,7 @@
                     }
                 ]
             },
+            "description": "Is there a valid group number available?",
             "items": [
                 {
                     "type": "number"
@@ -195,6 +296,7 @@
             "type": "array"
         },
         "highAdventureDescription": {
+            "description": "Describes how hard the activity may be",
             "type": "string"
         },
         "id": {
@@ -202,6 +304,7 @@
             "type": "number"
         },
         "location": {
+            "description": "The location of the event itself, differs from meet as stated above",
             "type": "string"
         },
         "lodgingArrangments": {
@@ -218,6 +321,7 @@
                     }
                 ]
             },
+            "description": "Describes where cadets may be sleeping",
             "items": [
                 {
                     "items": {
@@ -246,6 +350,7 @@
                     }
                 ]
             },
+            "description": "Describes the options for meals",
             "items": [
                 {
                     "items": {
@@ -261,20 +366,26 @@
             "type": "array"
         },
         "meetDateTime": {
+            "description": "When the event meets",
             "type": "number"
         },
         "meetLocation": {
+            "description": "Where the event meets",
             "type": "string"
         },
         "name": {
+            "description": "The name of the event (used to be EventName, dropped)",
             "type": "string"
         },
         "participationFee": {
+            "description": "Same as registration deadline but for fees",
             "properties": {
                 "feeAmount": {
+                    "description": "How much is due before showing up to the event",
                     "type": "number"
                 },
                 "feeDue": {
+                    "description": "When the fee is due",
                     "type": "number"
                 }
             },
@@ -285,12 +396,15 @@
             "type": "object"
         },
         "pickupDateTime": {
+            "description": "When cadets can be picked up from the event",
             "type": "number"
         },
         "pickupLocation": {
+            "description": "Where cadets will be, most likely will happen to be the meet location\nor event location",
             "type": "string"
         },
         "pointsOfContact": {
+            "description": "Who to contact for more event information",
             "items": {
                 "anyOf": [
                     {
@@ -304,14 +418,18 @@
             "type": "array"
         },
         "publishToWingCalendar": {
+            "description": "If the wing calendar needs to have this event, publish to the Google calendar",
             "type": "boolean"
         },
         "registration": {
+            "description": "If there is a registration deadline, this is present\nAs it is partial, not required information, this may be\nexcluded",
             "properties": {
                 "deadline": {
+                    "description": "When the registration closes",
                     "type": "number"
                 },
                 "information": {
+                    "description": "What information there is regarding registration closing",
                     "type": "string"
                 }
             },
@@ -322,6 +440,7 @@
             "type": "object"
         },
         "requiredEquipment": {
+            "description": "A list of things that will be required\n\nShould this only be shown to certain members? E.g., team members,\nsigned in members, or just all?",
             "items": {
                 "type": "string"
             },
@@ -341,6 +460,7 @@
                     }
                 ]
             },
+            "description": "Forms include CAP ID, CAPF 31, etc.",
             "items": [
                 {
                     "items": {
@@ -356,20 +476,26 @@
             "type": "array"
         },
         "showUpcoming": {
+            "description": "Show on the upcoming events portion of the main page",
             "type": "boolean"
         },
         "signUpDenyMessage": {
+            "description": "What to say if sign ups are denied; may be dropped if\nacceptSignups is true",
             "type": "string"
         },
         "signUpPartTime": {
+            "description": "Can cadets sign up for only a portion of the event?",
             "type": "boolean"
         },
         "sourceEvent": {
+            "description": "If this is a linked event this will be present\n\nLinking events allows for one account to copy an event of another account\nand receive updates and such",
             "properties": {
                 "accountID": {
+                    "description": "The account linked from",
                     "type": "string"
                 },
                 "id": {
+                    "description": "ID of the event it came from",
                     "type": "number"
                 }
             },
@@ -380,24 +506,31 @@
             "type": "object"
         },
         "startDateTime": {
+            "description": "When the event starts; this differs from meet time, as the event may\nhave a place for people to gather to carpool",
             "type": "number"
         },
         "status": {
-            "$ref": "#/definitions/EventStatus"
+            "$ref": "#/definitions/EventStatus",
+            "description": "Tentative, complete, cancelled, etc."
         },
         "teamID": {
+            "description": "If this is a team event, a team can be specified for future features",
             "type": "number"
         },
         "timeCreated": {
+            "description": "When the object was created",
             "type": "number"
         },
         "timeModified": {
+            "description": "Last modify time",
             "type": "number"
         },
         "transportationDescription": {
+            "description": "Description; e.g., using a van",
             "type": "string"
         },
         "transportationProvided": {
+            "description": "Whether or not transportation is provided from the meet location to\nthe event location",
             "type": "boolean"
         },
         "uniform": {
@@ -414,6 +547,7 @@
                     }
                 ]
             },
+            "description": "The uniforms that can be worn",
             "items": [
                 {
                     "items": {
@@ -429,6 +563,7 @@
             "type": "array"
         },
         "wingEventNumber": {
+            "description": "What is the wing event number",
             "type": "number"
         }
     },
@@ -437,6 +572,7 @@
         "accountID",
         "activity",
         "administrationComments",
+        "attendance",
         "author",
         "comments",
         "complete",

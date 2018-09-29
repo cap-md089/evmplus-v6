@@ -85,14 +85,18 @@
             "type": "object"
         },
         "MemberContactInstance": {
+            "description": "The member contact info for a user\n\nWe think it can only be a string, as it is hard (impossible?) to input\nmultiple contacts of a certain type through the UI provided on NHQ",
             "properties": {
                 "EMERGENCY": {
+                    "description": "Only used for emergency; go through the primary and secondary\ncontacts first",
                     "type": "string"
                 },
                 "PRIMARY": {
+                    "description": "First contact to try and raise",
                     "type": "string"
                 },
                 "SECONDARY": {
+                    "description": "Second contact to try and raise",
                     "type": "string"
                 }
             },
@@ -102,9 +106,146 @@
                 "SECONDARY"
             ],
             "type": "object"
+        },
+        "MemberPermissions": {
+            "description": "The permissions list for various members",
+            "properties": {
+                "AddEvent": {
+                    "description": "Whether or not the user can add an event\n1 for they can add a draft event only\n2 for full access",
+                    "type": "number"
+                },
+                "AddTeam": {
+                    "description": "Whether or not the user can add a team",
+                    "type": "number"
+                },
+                "AdministerPT": {
+                    "description": "Whether or not the user can administer PT",
+                    "type": "number"
+                },
+                "AssignPosition": {
+                    "description": "Whether or not the user can assign positions",
+                    "type": "number"
+                },
+                "AssignTasks": {
+                    "description": "Whether or not the user can assign tasks",
+                    "type": "number"
+                },
+                "CopyEvent": {
+                    "description": "Whether or not the user can copy events",
+                    "type": "number"
+                },
+                "DeleteEvent": {
+                    "description": "Whether or not the user can delete events",
+                    "type": "number"
+                },
+                "DownloadCAPWATCH": {
+                    "description": "Whether or not the user can download CAPWATCH files",
+                    "type": "number"
+                },
+                "DownloadStaffGuide": {
+                    "description": "Whether or not the user can download the cadet staff guide",
+                    "type": "number"
+                },
+                "EditEvent": {
+                    "description": "Whether or not the user can",
+                    "type": "number"
+                },
+                "EditTeam": {
+                    "description": "Whether or not the user can edit a team",
+                    "type": "number"
+                },
+                "EventContactSheet": {
+                    "description": "Whether or not the user can get event contact information",
+                    "type": "number"
+                },
+                "EventLinkList": {
+                    "description": "Whether or not the user can view a list of all events",
+                    "type": "number"
+                },
+                "EventStatusPage": {
+                    "description": "Whether or not the user can get the event status page",
+                    "type": "number"
+                },
+                "FileManagement": {
+                    "description": "Whether or not the user can manage files",
+                    "type": "number"
+                },
+                "FlightAssign": {
+                    "description": "Whether or not the user can assign flight members",
+                    "type": "number"
+                },
+                "MusterSheet": {
+                    "description": "Whether or not the user can get the muster sheet",
+                    "type": "number"
+                },
+                "ORMOPORD": {
+                    "description": "Whether or not the user can get ORM OPORD information",
+                    "type": "number"
+                },
+                "PTSheet": {
+                    "description": "Whether or not the user can get PT sheets",
+                    "type": "number"
+                },
+                "PermissionManagement": {
+                    "description": "Whether or not the user can manage permissions of others",
+                    "type": "number"
+                },
+                "PromotionManagement": {
+                    "description": "Whether or not the user can manage promotions",
+                    "type": "number"
+                },
+                "ProspectiveMemberManagment": {
+                    "description": "Whether or not the user can manage prospective members",
+                    "type": "number"
+                },
+                "RegistryEdit": {
+                    "description": "Whether or not the user can edit the registry",
+                    "type": "number"
+                },
+                "SignUpEdit": {
+                    "description": "Whether or not the user can edit sign up information",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "AddEvent",
+                "AddTeam",
+                "AdministerPT",
+                "AssignPosition",
+                "AssignTasks",
+                "CopyEvent",
+                "DeleteEvent",
+                "DownloadCAPWATCH",
+                "DownloadStaffGuide",
+                "EditEvent",
+                "EditTeam",
+                "EventContactSheet",
+                "EventLinkList",
+                "EventStatusPage",
+                "FileManagement",
+                "FlightAssign",
+                "MusterSheet",
+                "ORMOPORD",
+                "PTSheet",
+                "PermissionManagement",
+                "PromotionManagement",
+                "ProspectiveMemberManagment",
+                "RegistryEdit",
+                "SignUpEdit"
+            ],
+            "type": "object"
+        },
+        "global.MemberType": {
+            "description": "String representation of the member type, as there needs to be a way to differentiate",
+            "enum": [
+                "CAPWATCHMember",
+                "NHQMember",
+                "ProspectiveMember"
+            ],
+            "type": "string"
         }
     },
-    "description": "Describes a CAP member\n\nThe member may be created from one of three ways:\n\nMember.Create: Takes sign in data and signs the user in\nMember.Check: Takes a session id and returns the user\nMember.Estimate: Estimates the user based off of CAPWATCH data",
+    "description": "Describes a CAP member\n\nThe member may be created from one of many ways:\n\nNHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:\n \t\tTakes sign in data or a session and signs the user in. Best data\nCAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as\n \t\tthe CAPWATCH updates are frequent\nProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/\nNHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for\n \t\tmanaging prospective members\n\nNHQMember.Create and ProspectiveMember.Signin are used when signing people in\nProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from\n \t\tour database\n\nCAPWATCHMember and NHQMember have their sources in NHQ\nProspectiveMember is located in our database",
     "properties": {
         "contact": {
             "$ref": "#/definitions/MemberContact",
@@ -124,6 +265,10 @@
         "id": {
             "description": "The CAPID of the member",
             "type": "number"
+        },
+        "kind": {
+            "$ref": "#/definitions/global.MemberType",
+            "description": "The Kind of user, as there are multiple"
         },
         "memberRank": {
             "description": "The rank of the member provided",
@@ -149,6 +294,10 @@
             "description": "The organization the member belongs to",
             "type": "number"
         },
+        "permissions": {
+            "$ref": "#/definitions/MemberPermissions",
+            "description": "Both the client and server will want a handle on permissions"
+        },
         "seniorMember": {
             "description": "Whether or not the member is a senior member",
             "type": "boolean"
@@ -156,20 +305,27 @@
         "squadron": {
             "description": "The Squadron a member belongs to",
             "type": "string"
+        },
+        "usrID": {
+            "description": "Since many accounts can have an ORGID, there is an array containing each one\nUser login ID",
+            "type": "string"
         }
     },
     "required": [
         "contact",
         "dutyPositions",
         "id",
+        "kind",
         "memberRank",
         "nameFirst",
         "nameLast",
         "nameMiddle",
         "nameSuffix",
         "orgid",
+        "permissions",
         "seniorMember",
-        "squadron"
+        "squadron",
+        "usrID"
     ],
     "type": "object"
 }
