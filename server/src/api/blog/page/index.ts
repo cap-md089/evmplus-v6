@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import Account from '../../../lib/Account';
-import { NHQMember } from '../../../lib/MemberBase';
+import NHQMember from '../../../lib/members/NHQMember';
 // API calls
 import add from './add';
 import deletePage from './deletePage';

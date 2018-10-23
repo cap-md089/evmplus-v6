@@ -2,9 +2,15 @@ import { Schema } from '@mysql/xdevapi';
 import { unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
+import {
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType
+} from '../../../lib/index';
 import { isImage } from '../api/files/files/fileupload';
 import conf from '../conf';
 import Account from './Account';
+import NHQMember from './members/NHQMember';
+import ProspectiveMember from './members/ProspectiveMember';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 const promisedUnlink = promisify(unlink);
@@ -20,7 +26,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			return File.GetRoot(account, schema);
 		}
 
-		const fileCollection = schema.getCollection<FileObject>(
+		const fileCollection = schema.getCollection<RawFileObject>(
 			File.collectionName
 		);
 
@@ -51,7 +57,36 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			throw new Error('Could not get file');
 		}
 
-		return new File(results[0], account, schema);
+		let folderPath: Array<{ id: string; name: string }> = [
+			{
+				id: 'root',
+				name: 'Drive'
+			},
+			{
+				id: results[0].id,
+				name: results[0].fileName
+			}
+		];
+
+		if (results[0].parentID !== 'root') {
+			const parent = await File.Get(results[0].parentID, account, schema);
+			folderPath = [
+				...parent.folderPath,
+				{
+					id: results[0].id,
+					name: results[0].fileName
+				}
+			];
+		}
+
+		return new File(
+			{
+				...results[0],
+				folderPath
+			},
+			account,
+			schema
+		);
 	}
 
 	private static collectionName = 'Files';
@@ -85,37 +120,51 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			contentType: 'application/folder',
 			created: 0,
 			fileChildren,
-			fileName: 'root',
+			fileName: 'Drive',
 			forDisplay: false,
 			forSlideshow: false,
 			kind: 'drive#file',
-			memberOnly: false,
+			permissions: [
+				{
+					permission: FileUserAccessControlPermissions.READ,
+					type: FileUserAccessControlType.OTHER
+				}
+			],
 			id: 'root',
 			parentID: '',
-			uploaderID: 542488
+			owner: {
+				id: 542488,
+				kind: 'NHQMember'
+			},
+			folderPath: [
+				{
+					id: 'root',
+					name: 'Drive'
+				}
+			]
 		};
 
 		return new File(rootFile, account, schema);
 	}
 
 	// tslint:disable-next-line:variable-name
-	public _id: string;
+	public _id: string = '';
 
-	public id: string;
+	public id: string = '';
 
 	public get accountID() {
 		return this.account.id;
 	}
 
-	public comments: string;
+	public comments: string = '';
 
-	public contentType: string;
+	public contentType: string = '';
 
-	public created: number;
+	public created: number = 0;
 
-	public fileChildren: string[];
+	public fileChildren: string[] = [];
 
-	public fileName: string;
+	public fileName: string = '';
 
 	public forDisplay: boolean = false;
 
@@ -123,11 +172,13 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public readonly kind = 'drive#file';
 
-	public memberOnly: boolean = false;
+	public permissions: FileControlListItem[] = [];
 
-	public parentID: string;
+	public parentID: string = '';
 
-	public uploaderID: number;
+	public owner: MemberReference;
+
+	public folderPath: Array<{ id: string; name: string }> = [];
 
 	private account: Account;
 
@@ -137,6 +188,8 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	private constructor(data: FileObject, account: Account, schema: Schema) {
 		this.set(data);
+		this.id = data.id;
+		this._id = data._id;
 
 		this.account = account;
 		this.schema = schema;
@@ -151,9 +204,11 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			'fileName',
 			'forDisplay',
 			'forSlideshow',
-			'memberOnly',
 			'parentID',
-			'uploaderID'
+			'owner',
+			'folderPath',
+			'permissions',
+			'_id'
 		];
 
 		for (const i of keys) {
@@ -162,7 +217,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			}
 		}
 
-		const fileNameParts = data.fileName.split('.');
+		const fileNameParts = this.fileName.split('.');
 
 		// Don't mark it for display if it is not an image
 		if (!isImage(fileNameParts[fileNameParts.length - 1])) {
@@ -172,19 +227,18 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	}
 
 	public async save(): Promise<void> {
-		const filesCollection = this.schema.getCollection<FileObject>(
+		const filesCollection = this.schema.getCollection<RawFileObject>(
 			File.collectionName
 		);
 
 		if (!this.deleted) {
-			filesCollection.replaceOne(this._id, this.toRaw());
+			filesCollection.replaceOne(this._id, this.toRealRaw());
 		} else {
 			throw new Error('Cannot operate on a deleted file');
 		}
 	}
 
-	public toRaw = (): FileObject => ({
-		_id: this._id,
+	public toRealRaw = (): RawFileObject => ({
 		accountID: this.accountID,
 		comments: this.comments,
 		contentType: this.contentType,
@@ -195,9 +249,14 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		forSlideshow: this.forSlideshow,
 		id: this.id,
 		kind: 'drive#file',
-		memberOnly: this.memberOnly,
+		permissions: this.permissions,
 		parentID: this.parentID,
-		uploaderID: this.uploaderID
+		owner: this.owner,
+	})
+
+	public toRaw = (): FileObject => ({
+		...this.toRealRaw(),
+		folderPath: this.folderPath
 	});
 
 	public async delete(): Promise<void> {
@@ -208,24 +267,158 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		if (!this.deleted) {
 			await Promise.all([
 				filesCollection.removeOne(this._id),
-				promisedUnlink(
-					join(conf.fileStoragePath, `${this.account.id}-${this.id}`)
-				)
+				(async () => {
+					const parent = await File.Get(
+						this.parentID,
+						this.account,
+						this.schema
+					);
+
+					parent.fileChildren = parent.fileChildren.filter(
+						x => x !== this.id
+					);
+
+					await parent.save();
+				})(),
+				(async () => {
+					if (this.contentType === 'application/folder') {
+						return;
+					}
+
+					await promisedUnlink(
+						join(
+							conf.fileStoragePath,
+							`${this.account.id}-${this.id}`
+						)
+					);
+				})()
 			]);
 		} else {
 			throw new Error('Cannot operate on a deleted file');
 		}
 	}
 
-	public async *getChildren(includeWWW = true) {
+	public async *getChildren(includeWWW = true): AsyncIterableIterator<File> {
 		for (const i of this.fileChildren) {
 			try {
-				const file = File.Get(i, this.account, this.schema, includeWWW);
+				const file = await File.Get(i, this.account, this.schema, includeWWW);
 
 				yield file;
-			} catch(e) {
+			} catch (e) {
 				// must be a WWW file and includeWWW was false
 			}
 		}
+	}
+
+	public hasPermission(
+		member: NHQMember | ProspectiveMember | null,
+		permission: FileUserAccessControlPermissions
+	): boolean {
+		if (member) {
+			if (member.hasPermission('FileManagement')) {
+				return true;
+			}
+
+			if (member instanceof ProspectiveMember) {
+				if (
+					this.owner.kind === 'ProspectiveMember' &&
+					member.prospectiveID === this.owner.id
+				) {
+					return true;
+				}
+				if (
+					this.owner.kind === 'NHQMember' &&
+					member.id === this.owner.id
+				) {
+					return true;
+				}
+			}
+		}
+
+		const otherPermissions = this.permissions.filter(
+			perm => perm.type === FileUserAccessControlType.OTHER
+		);
+		const signedInPermissions = this.permissions.filter(
+			perm => perm.type === FileUserAccessControlType.SIGNEDIN
+		);
+		const accountPermissions = this.permissions.filter(
+			perm => perm.type === FileUserAccessControlType.ACCOUNTMEMBER
+		);
+		const teamPermissions = this.permissions.filter(
+			perm => perm.type === FileUserAccessControlType.TEAM
+		) as FileTeamControlList[];
+		const memberPermissions = this.permissions.filter(
+			perm => perm.type === FileUserAccessControlType.USER
+		) as FileUserControlList[];
+
+		let valid = false;
+
+		if (member === null) {
+			otherPermissions.forEach(
+				perm =>
+					// tslint:disable-next-line:no-bitwise
+					(valid = valid || (perm.permission & permission) > 0)
+			);
+
+			return valid;
+		}
+
+		signedInPermissions.forEach(
+			perm =>
+				// tslint:disable-next-line:no-bitwise
+				(valid = valid || (perm.permission & permission) > 0)
+		);
+
+		if (valid) {
+			return true;
+		}
+
+		accountPermissions.forEach(
+			perm =>
+				// tslint:disable-next-line:no-bitwise
+				(valid = valid || (perm.permission & permission) > 0)
+		);
+
+		if (valid) {
+			return true;
+		}
+
+		memberPermissions.forEach(
+			perm =>
+				(valid =
+					valid ||
+					(
+						// tslint:disable-next-line:no-bitwise
+						(perm.permission & permission) > 0 &&
+						perm.reference.kind !== 'Null' &&
+						perm.reference.id ===
+							(member instanceof ProspectiveMember
+								? member.prospectiveID
+								: member.id) &&
+						perm.reference.kind === member.kind
+					)
+				)
+		);
+
+		if (valid) {
+			return true;
+		}
+
+		if (teamPermissions.length === 0) {
+			return false;
+		}
+
+		member.teamIDs.forEach(i => 
+			teamPermissions.forEach(
+				perm =>
+					(valid =
+						valid ||
+						(perm.teamID === i &&
+							// tslint:disable-next-line:no-bitwise
+							(perm.permission & permission) > 0))
+			)
+		);
+
+		return valid;
 	}
 }

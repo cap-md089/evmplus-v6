@@ -235,6 +235,20 @@ export default class Account
 		}
 	}
 
+	public async *getSortedEvents(): AsyncIterableIterator<Event> {
+		const eventCollection = this.schema.getCollection<EventObject>(
+			'Events'
+		);
+
+		const eventIterator = findAndBind(eventCollection, {
+			accountID: this.id
+		}).sort('pickupDateTime ASC');
+
+		for await (const event of generateResults(eventIterator)) {
+			yield Event.Get(event.id, this, this.schema);
+		}
+	}
+
 	public async *getTeams(): AsyncIterableIterator<Team> {
 		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
 

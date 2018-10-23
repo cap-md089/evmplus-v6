@@ -27,7 +27,7 @@ const router = express.Router();
 router.get('/:id', getpost);
 router.put('/:id', Member.ExpressMiddleware, setpost(blogPostValidator));
 router.post('/', Member.ExpressMiddleware, addpost);
-router.get('/list/:start', getlist);
+router.get('/list', getlist);
 router.delete('/:id', Member.ExpressMiddleware, deletePost);
 
 export default router;

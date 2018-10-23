@@ -105,7 +105,8 @@ export default class ProspectiveMember extends MemberBase
 				kind: 'ProspectiveMember'
 			},
 			account,
-			schema
+			schema,
+			''
 		);
 	}
 
@@ -194,7 +195,8 @@ export default class ProspectiveMember extends MemberBase
 		req: MemberRequest,
 		res: Response,
 		next: NextFunction,
-		id: string
+		id: string,
+		sessionID: string
 	) {
 		const sessions = this.GetSessions().filter(sess => sess.id === id);
 
@@ -204,6 +206,8 @@ export default class ProspectiveMember extends MemberBase
 				req.account,
 				req.mysqlx
 			);
+
+			req.member.sessionID = id;
 		}
 
 		next();
@@ -229,7 +233,7 @@ export default class ProspectiveMember extends MemberBase
 			throw new Error(MemberCreateError.UNKOWN_SERVER_ERROR.toString());
 		}
 
-		return new ProspectiveMember(rows[0], account, schema);
+		return new ProspectiveMember(rows[0], account, schema, '');
 	}
 
 	public static Su(target: ProspectiveMember) {
@@ -280,6 +284,8 @@ export default class ProspectiveMember extends MemberBase
 
 	public sessionID: string = '';
 
+	public flight: null | string;
+
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
@@ -288,9 +294,12 @@ export default class ProspectiveMember extends MemberBase
 	private constructor(
 		member: ProspectiveMemberAccount & Required<NoSQLDocument>,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		sessionID: string
 	) {
 		super(member, schema, account);
+
+		this.sessionID = sessionID;
 	}
 
 	public set(values: Partial<ProspectiveMemberAccount>) {
@@ -335,7 +344,9 @@ export default class ProspectiveMember extends MemberBase
 		squadron: this.requestingAccount.getSquadronName(),
 		usrID: this.usrID,
 		kind: 'ProspectiveMember',
-		permissions: this.permissions
+		permissions: this.permissions,
+		flight: this.flight,
+		teamIDs: this.teamIDs
 	});
 
 	public hasPermission = (

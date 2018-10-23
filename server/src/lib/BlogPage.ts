@@ -89,7 +89,9 @@ export default class BlogPage
 		data: FullDBObject<BlogPageObject>,
 		private account: Account,
 		private schema: Schema
-	) {}
+	) {
+		this.set(data);
+	}
 
 	public set(values: Partial<BlogPageObject>) {
 		const keys: Array<keyof BlogPageObject> = ['title', 'id', 'content'];

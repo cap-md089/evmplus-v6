@@ -46,14 +46,14 @@ export function getFullSchemaValidator<T>(schemaName: string) {
 export async function streamAsyncGeneratorAsJSONArray<T>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,
-	functionHandle: (val: T) => string | false = JSON.stringify
+	functionHandle: (val: T) => Promise<string | false> | string | false = JSON.stringify
 ): Promise<void> {
 	res.header('Content-type', 'application/json');
 
 	let started = false;
 
 	for await (const i of iterator) {
-		const value = functionHandle(i);
+		const value = await functionHandle(i);
 		if (value !== false) {
 			res.write((started ? ',' : '[') + value);
 			started = true;
@@ -68,6 +68,25 @@ export async function streamAsyncGeneratorAsJSONArray<T>(
 
 	res.write(']');
 	res.end();
+}
+
+export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
+	res: express.Response,
+	iterator: AsyncIterableIterator<T>,
+	functionHandle: (val: T) => Promise<R | false> | R | false
+): Promise<void>  {
+	streamAsyncGeneratorAsJSONArray(
+		res,
+		iterator,
+		async val => {
+			const x = await functionHandle(val) as any;
+			if (x === false) {
+				return x;
+			} else {
+				return JSON.stringify(x);
+			}
+		}
+	)
 }
 
 export async function getTestTools(testconf: typeof Configuration) {

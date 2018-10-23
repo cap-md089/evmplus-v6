@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { NHQMember } from '../../lib/MemberBase';
+import NHQMember from '../../lib/members/NHQMember';
 // CRUD functions
 import get from './get';
 import set from './set';

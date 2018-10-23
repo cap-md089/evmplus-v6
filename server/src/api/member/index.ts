@@ -1,6 +1,6 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
-import { NHQMember } from '../../lib/MemberBase';
+import NHQMember from '../../lib/members/NHQMember';
 // API routes
 import getmembers from './getmembers';
 import su from './su';

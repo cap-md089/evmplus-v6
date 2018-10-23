@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase, {
-	CAPWATCHMember,
-	MemberRequest
-} from '../../../lib/MemberBase';
+import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
+import CAPWATCHMember from '../../../lib/members/CAPWATCHMember';
 import { json } from '../../../lib/Util';
 
 export default async (req: MemberRequest, res: Response) => {

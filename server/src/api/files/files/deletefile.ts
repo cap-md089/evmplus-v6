@@ -25,6 +25,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 		res.status(204);
 		res.end();
 	} catch (e) {
+		console.log(e);
 		res.status(500);
 		res.end();
 	}

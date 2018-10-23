@@ -13,8 +13,7 @@ export default (fileValidator: FileObjectValidator) => (async (req: MemberReques
 	}
 
 	if (
-		typeof req.params.fileid === 'undefined' ||
-		!fileValidator(req.body)
+		typeof req.params.fileid === 'undefined'
 	) {
 		res.status(400);
 		res.end();

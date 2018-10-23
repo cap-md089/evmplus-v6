@@ -39,6 +39,26 @@ export default async (req: MemberRequest, res: express.Response) => {
 		return;
 	}
 
+	try {
+		file = await File.Get(childid, req.account, req.mysqlx);
+	} catch(e) {
+		res.send(404);
+		res.end();
+		return;
+	}
+
+	file.set({
+		parentID: 'root'
+	});
+
+	try {
+		await file.save();
+	} catch (e) {
+		res.send(500);
+		res.end(0);
+		return;
+	}
+
 	res.status(204);
 	res.end();
 };

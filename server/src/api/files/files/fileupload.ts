@@ -4,8 +4,13 @@ import { DateTime } from 'luxon';
 import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
+import {
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType
+} from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
 import { MemberRequest } from '../../../lib/MemberBase';
+import ProspectiveMember from '../../../lib/members/ProspectiveMember';
 import { json } from '../../../lib/Util';
 
 const parseHeaders = (lines: string[]) => {
@@ -21,9 +26,8 @@ const parseHeaders = (lines: string[]) => {
 const endingToMime = (ending: string): string =>
 	lookup(ending) || 'application/octet-stream';
 
-export const isImage = (ending: string): boolean => {
-	return ['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(ending) > -1;
-};
+export const isImage = (ending: string): boolean =>
+	['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(ending) > -1;
 
 const findEnding = (input: Buffer, boundary: string) => {
 	const index = input.length - boundary.length;
@@ -107,11 +111,22 @@ export default (req: MemberRequest, res: express.Response) => {
 
 			const created = Math.floor(+DateTime.utc() / 1000);
 
-			const filesCollection = req.mysqlx.getCollection<FileObject>(
+			const filesCollection = req.mysqlx.getCollection<RawFileObject>(
 				'Files'
 			);
 
-			const uploadedFile: FileObject = {
+			const reference: MemberReference =
+				req.member instanceof ProspectiveMember
+					? {
+							id: req.member.prospectiveID,
+							kind: 'ProspectiveMember'
+					  }
+					: {
+							id: req.member.id,
+							kind: 'NHQMember'
+					  };
+
+			const uploadedFile: RawFileObject = {
 				kind: 'drive#file',
 				id,
 				accountID: req.account.id,
@@ -121,8 +136,19 @@ export default (req: MemberRequest, res: express.Response) => {
 				fileName,
 				forDisplay: isImage(ending),
 				forSlideshow: false,
-				memberOnly: false,
-				uploaderID: req.member.id,
+				permissions: [
+					{
+						type: FileUserAccessControlType.USER,
+						permission:
+							FileUserAccessControlPermissions.FULLCONTROL,
+						reference
+					},
+					{
+						type: FileUserAccessControlType.OTHER,
+						permission: FileUserAccessControlPermissions.READ
+					}
+				],
+				owner: reference,
 				fileChildren: [],
 				parentID: 'root'
 			};
@@ -140,7 +166,7 @@ export default (req: MemberRequest, res: express.Response) => {
 			])
 				.then(() => {
 					// Return results
-					json<FileObject>(res, uploadedFile);
+					json<RawFileObject>(res, uploadedFile);
 				})
 				.catch(err => {
 					// tslint:disable-next-line:no-console

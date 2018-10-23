@@ -17,7 +17,7 @@ import signin from './api/signin';
 import team from './api/team';
 import { Configuration } from './conf';
 import Account from './lib/Account';
-import NHQMember from './lib/members/NHQMember';
+import { NHQMember } from './lib/Members';
 import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 
 export default async (conf: typeof Configuration, session?: mysql.Session) => {

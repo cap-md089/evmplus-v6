@@ -4,6 +4,7 @@ import * as csv from 'csv-parse';
 import { promisify } from 'util';
 import { CAPWATCHImportErrors } from '../enums';
 import dutyPosition from './capwatch-modules/dutyposition';
+import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
@@ -25,6 +26,10 @@ const modules: Array<{
 	{
 		module: dutyPosition,
 		file: 'DutyPosition.txt'
+	},
+	{
+		module: mbrContact,
+		file: 'MbrContact.txt'
 	}
 ];
 

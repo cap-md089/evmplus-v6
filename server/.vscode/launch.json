@@ -15,6 +15,10 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Test",
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"sourceMaps": true,
 			"program": "${workspaceFolder}/dist/test.js"
 		}
 	]

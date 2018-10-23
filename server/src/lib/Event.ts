@@ -31,6 +31,21 @@ export default class Event
 		if (results.length !== 1) {
 			throw new Error('There was a problem getting the event');
 		}
+		
+		const internalPointsOfContact = (results[0].pointsOfContact.filter(s => s.type === PointOfContactType.INTERNAL) as DisplayInternalPointOfContact[])
+
+		const members = await Promise.all(
+			internalPointsOfContact
+				.map(poc => MemberBase.ResolveReference(poc.id, account, schema, true)))
+
+		internalPointsOfContact.forEach((mem, i) => {
+			for (const member of members) {
+				if (member.id) {
+					internalPointsOfContact[i].name = member.memberRankName;
+				}
+				break;
+			}
+		});
 
 		return new Event(results[0], account, schema);
 	}
@@ -64,7 +79,7 @@ export default class Event
 		const timeCreated = Math.round(+DateTime.utc() / 1000);
 
 		const newEvent: EventObject = {
-			...data,
+			...(data as EventObject),
 			id: newID,
 			accountID: account.id,
 			timeCreated,
@@ -112,12 +127,12 @@ export default class Event
 
 	public desiredNumberOfParticipants: number;
 
-	public registration?: {
+	public registration: null | {
 		deadline: number;
 		information: string;
 	};
 
-	public participationFee?: {
+	public participationFee: null | {
 		feeDue: number;
 		feeAmount: number;
 	};
@@ -154,12 +169,12 @@ export default class Event
 
 	public administrationComments: string;
 
-	public status: EventStatus;
+	public status: RadioReturn<EventStatus>;
 
 	public debrief: string;
 
 	public pointsOfContact: Array<
-		InternalPointOfContact | ExternalPointOfContact
+		DisplayInternalPointOfContact | ExternalPointOfContact
 	>;
 
 	public author: number;
@@ -168,7 +183,7 @@ export default class Event
 
 	public teamID: number;
 
-	public sourceEvent?: {
+	public sourceEvent: null | {
 		id: number;
 		accountID: string;
 	};
@@ -209,10 +224,33 @@ export default class Event
 			'Events'
 		);
 
+		const displayInternalPointsOfContact = (this.pointsOfContact
+			.filter(i => i.type === PointOfContactType.INTERNAL) as DisplayInternalPointOfContact[])
+		const internalPointsOfContact = displayInternalPointsOfContact
+			.map(i => ({
+				type: PointOfContactType.INTERNAL,
+				email: i.email,
+				phone: i.phone,
+				receiveUpdates: i.receiveUpdates,
+				receiveRoster: i.receiveRoster,
+				receiveEventUpdates: i.receiveEventUpdates,
+				receiveSignUpUpdates: i.receiveSignUpUpdates,
+				id: i.id
+			})) as InternalPointOfContact[];
+
+		const externalPointsOfContact = this.pointsOfContact
+			.filter(i => i.type !== PointOfContactType.EXTERNAL);
+
+		const pointsOfContact = [
+			...internalPointsOfContact,
+			...externalPointsOfContact
+		];
+
 		await eventsCollection.replaceOne(this._id, {
 			...this.toFullRaw(),
 			timeModified,
-			accountID: account.id
+			accountID: account.id,
+			pointsOfContact: pointsOfContact as Array<DisplayInternalPointOfContact | ExternalPointOfContact>
 		});
 	}
 
@@ -263,7 +301,7 @@ export default class Event
 			this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
-					poc.id === member.id
+					MemberBase.AreMemberReferencesTheSame(member.getReference(), poc.id)
 			) ||
 			member.id === this.author ||
 			member.isRioux
@@ -311,12 +349,13 @@ export default class Event
 			signUpPartTime: this.signUpPartTime,
 			requiredForms: this.requiredForms,
 			fileIDs: copyFiles ? this.fileIDs : [],
-			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
+			status: copyStatus ? this.status : [EventStatus.INFORMATIONONLY, ''],
 			teamID: this.teamID,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
+			sourceEvent: this.sourceEvent,
 
 			meetDateTime: this.meetDateTime - timeDelta,
 			startDateTime: this.startDateTime - timeDelta,
@@ -339,7 +378,11 @@ export default class Event
 			this,
 			{
 				accountID: targetAccount.id,
-				author: member.id
+				author: member.id,
+				sourceEvent: {
+					accountID: this.accountID,
+					id: this.id
+				}
 			}
 		);
 
@@ -402,11 +445,14 @@ export default class Event
 			'transportationDescription',
 			'transportationProvided',
 			'uniform',
-			'wingEventNumber'
+			'wingEventNumber',
+			'id'
 		];
 
 		for (const key of keys) {
-			if (typeof values[key] === typeof this[key]) {
+			if (
+					typeof values[key] === typeof this[key]
+			) {
 				this[key] = values[key];
 			}
 		}
@@ -416,7 +462,6 @@ export default class Event
 	 * Converts the current event to a transferable object
 	 */
 	public toRaw = (member?: MemberBase): EventObject => ({
-		_id: this._id,
 		id: this.id,
 		accountID: this.accountID,
 		acceptSignups: this.acceptSignups,
@@ -437,18 +482,18 @@ export default class Event
 		meetDateTime: this.meetDateTime,
 		meetLocation: this.meetLocation,
 		name: this.name,
-		participationFee: this.participationFee,
+		participationFee: !!this.participationFee ? this.participationFee : null,
 		pickupDateTime: this.pickupDateTime,
 		pickupLocation: this.pickupLocation,
 		pointsOfContact: this.pointsOfContact,
 		publishToWingCalendar: this.publishToWingCalendar,
-		registration: this.registration,
+		registration: !!this.registration ? this.registration : null,
 		requiredEquipment: this.requiredEquipment,
 		requiredForms: this.requiredForms,
 		showUpcoming: this.showUpcoming,
-		signUpDenyMessage: this.signUpDenyMessage ? this.signUpDenyMessage : null,
+		signUpDenyMessage: !!this.signUpDenyMessage ? this.signUpDenyMessage : null,
 		signUpPartTime: !!this.signUpPartTime,
-		sourceEvent: this.sourceEvent ? this.sourceEvent : null,
+		sourceEvent: !!this.sourceEvent ? this.sourceEvent : null,
 		startDateTime: this.startDateTime,
 		status: this.status,
 		teamID: this.teamID,
@@ -457,7 +502,7 @@ export default class Event
 		transportationDescription: this.transportationDescription,
 		transportationProvided: this.transportationProvided,
 		uniform: this.uniform,
-		wingEventNumber: this.wingEventNumber ? this.wingEventNumber : null,
+		wingEventNumber: !!this.wingEventNumber ? this.wingEventNumber : null,
 		fileIDs: this.fileIDs,
 		attendance:
 			member === null || member === undefined ? [] : this.getAttendance()

@@ -1,10 +1,15 @@
 import { Schema } from '@mysql/xdevapi';
 import Account from './Account';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import Team from './Team';
 
 export default abstract class MemberBase implements MemberObject {
 	public static IsRioux = (cm: MemberBase | number | string): boolean =>
-		typeof cm === 'string' ? false : typeof cm === 'number' ? cm === 542488 || cm === 546319 : cm.isRioux;
+		typeof cm === 'string'
+			? false
+			: typeof cm === 'number'
+				? cm === 542488 || cm === 546319
+				: cm.isRioux;
 
 	public static GetUserID(name: string[]) {
 		let usrID = '';
@@ -12,6 +17,35 @@ export default abstract class MemberBase implements MemberObject {
 		usrID = name[2] + name[0] + name[1];
 
 		return usrID;
+	}
+
+	public static ResolveReference(
+			ref: MemberReference,
+			account: Account,
+			schema: Schema,
+			errOnNull = false
+	): Promise<MemberBase | null> {
+		switch (ref.kind) {
+			case 'Null' :
+				if (errOnNull) {
+					throw new Error('Null member');
+				}
+				return null;
+
+			case 'NHQMember' :
+				return CAPWATCHMember.Get(ref.id, account, schema);
+
+			case 'ProspectiveMember' :
+				return ProspectiveMember.Get(ref.id, account, schema);
+		}
+	}
+
+	public static AreMemberReferencesTheSame(ref1: MemberReference, ref2: MemberReference) {
+		if (ref1.kind === 'Null' || ref2.kind === 'Null') {
+			return false;
+		}
+
+		return ref1.id === ref2.id;
 	}
 
 	/**
@@ -64,7 +98,9 @@ export default abstract class MemberBase implements MemberObject {
 				accessLevel: 'Member',
 				accountID: account.id,
 				id,
-				temporaryDutyPositions: []
+				temporaryDutyPositions: [],
+				flight: null,
+				teamIDs: []
 			};
 
 			extraMemberSchema.add(newInformation).execute();
@@ -142,7 +178,15 @@ export default abstract class MemberBase implements MemberObject {
 	/**
 	 * The User ID, usually can be used for logins
 	 */
-	public usrID: string;
+	public usrID: string = '';
+	/**
+	 * The flight for a member, if a cadet
+	 */
+	public flight: null | string;
+	/**
+	 * The IDs of teams the member is a part of
+	 */
+	public teamIDs: number[] = [];
 	/**
 	 * Whether or not the user is Rioux
 	 */
@@ -151,10 +195,14 @@ export default abstract class MemberBase implements MemberObject {
 	 * Checks for if a user has permissions
 	 */
 	public abstract permissions: MemberPermissions;
+	/**
+	 * Cheap way to produce references
+	 */
+	public abstract getReference: () => MemberReference;
 
 	/**
 	 * Used to differentiate when using polymorphism
-	 * 
+	 *
 	 * Another method is the instanceof operator, but to each their own
 	 * That method would probably work better however
 	 */
@@ -198,11 +246,15 @@ export default abstract class MemberBase implements MemberObject {
 		orgid: this.orgid,
 		usrID: this.usrID,
 		kind: this.kind,
-		permissions: this.permissions
+		permissions: this.permissions,
+		flight: this.flight,
+		teamIDs: this.teamIDs
 	});
 
 	public async *getAccounts(): AsyncIterableIterator<Account> {
-		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');
+		const accountsCollection = this.schema.getCollection<AccountObject>(
+			'Accounts'
+		);
 
 		const accountFind = accountsCollection.find(':orgIDs in orgIDs').bind({
 			orgIDs: [this.orgid]
@@ -214,8 +266,24 @@ export default abstract class MemberBase implements MemberObject {
 			yield Account.Get(i.id, this.schema);
 		}
 	}
+
+	public async *getTeams(): AsyncIterableIterator<Team> {
+		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+
+		const reference = this.getReference();
+
+		const teamFind = teamsCollection.find(':members in members').bind({
+			members: [reference]
+		});
+
+		const generator = generateResults(teamFind);
+
+		for await (const i of generator) {
+			yield Team.Get(i.id, this.requestingAccount, this.schema);
+		}
+	}
 }
 
-export { default as NHQMember, MemberRequest, ConditionalMemberRequest } from './members/NHQMember';
-export { default as CAPWATCHMember } from './members/CAPWATCHMember';
-export { default as ProspectiveMember } from './members/ProspectiveMember';
+import CAPWATCHMember from './members/CAPWATCHMember';
+import ProspectiveMember from "./members/ProspectiveMember";
+export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

@@ -40,15 +40,16 @@ filerouter.use(Account.ExpressMiddleware);
 filerouter.post('/upload', Member.ExpressMiddleware, upload); // insert
 filerouter.put('/upload/:fileid', Member.ExpressMiddleware, setfiledata); // update
 filerouter.use(bodyParser.json());
-filerouter.get('/:fileid', Member.ConditionalExpressMiddleware, fileinfo); // get
 filerouter.get('/:fileid/export', Member.ConditionalExpressMiddleware, getfile); // export, functions differently and downloads data for file
+filerouter.get('/:fileid/:method?', Member.ConditionalExpressMiddleware, fileinfo); // get
+filerouter.get('/:fileid', Member.ConditionalExpressMiddleware, fileinfo); // get
 filerouter.delete('/:fileid', Member.ExpressMiddleware, deletefile); // delete
 filerouter.put(
 	'/:fileid',
 	Member.ExpressMiddleware,
 	setfileinfo(fileObjectValidator)
 ); // update
-filerouter.post('/create/:name', Member.ExpressMiddleware, createfolder);
+filerouter.post('/create', Member.ExpressMiddleware, createfolder);
 
 /// https://developers.google.com/drive/v2/reference/children#methods
 filerouter.delete(
@@ -61,6 +62,7 @@ filerouter.post(
 	Member.ExpressMiddleware,
 	insertchild
 ); // insert
+filerouter.get('/:parentid/children/:method?', Member.ConditionalExpressMiddleware, getfiles);
 filerouter.get('/:parentid/children', Member.ConditionalExpressMiddleware, getfiles);
 
 export default filerouter;

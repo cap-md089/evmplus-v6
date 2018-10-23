@@ -78,7 +78,9 @@ export default class CAPWATCHMember extends MemberBase {
 		const contact = (memberContact as any) as MemberContact;
 
 		capwatchContact.forEach(val => {
-			contact[val.Type][val.Priority] = val.Contact;
+			contact[
+				val.Type.toUpperCase().replace(/ /g, '') as MemberContactType
+			][val.Priority] = val.Contact;
 		});
 
 		const temporaryDutyPositions = extraInformation.temporaryDutyPositions
@@ -110,7 +112,8 @@ export default class CAPWATCHMember extends MemberBase {
 					results[0].NameSuffix
 				]),
 				kind: 'CAPWATCHMember',
-				permissions
+				permissions,
+				teamIDs: extraInformation.teamIDs
 			},
 			schema,
 			account
@@ -128,4 +131,9 @@ export default class CAPWATCHMember extends MemberBase {
 	) {
 		super(data, schema, requestingAccount);
 	}
+
+	public getReference = (): MemberReference => ({
+		id: this.id,
+		kind: 'NHQMember'
+	});
 }

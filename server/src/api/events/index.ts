@@ -13,12 +13,14 @@ import getevent from './events/getevent';
 import linkevent from './events/linkevent';
 import list from './events/list';
 import setevent from './events/setevent';
+import timelist from './events/timelist';
 
 const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
 router.get('/', NHQMember.ConditionalExpressMiddleware, list);
+router.get('/:start/:end', NHQMember.ConditionalExpressMiddleware, timelist);
 router.post('/', NHQMember.ExpressMiddleware, addevent);
 router.post('/:parent', NHQMember.ExpressMiddleware, linkevent);
 router.delete('/:id', NHQMember.ExpressMiddleware, deleteevent);

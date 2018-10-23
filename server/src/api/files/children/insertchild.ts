@@ -34,4 +34,5 @@ export default async (req: MemberRequest, res: express.Response) => {
 	]);
 
 	res.status(204);
+	res.end();
 };

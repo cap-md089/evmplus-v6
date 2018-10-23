@@ -30,6 +30,7 @@ interface MemberSession extends Identifiable {
 	seniorMember: boolean;
 	squadron: string;
 	orgid: number;
+	flight: null | string;
 }
 
 export { MemberCreateError };
@@ -62,6 +63,10 @@ export default class NHQMember extends Member {
 		]);
 
 		const id = memberInfo[0].capid;
+		const [dutyPositions, extraInfo] = await Promise.all([
+			NHQMember.GetRegularDutypositions(id, schema, account),
+			NHQMember.LoadExtraMemberInformation(id, schema, account)
+		]);
 		let sessionID;
 
 		// Set session
@@ -88,7 +93,8 @@ export default class NHQMember extends Member {
 					nameSuffix: memberInfo[0].nameSuffix,
 					seniorMember: memberInfo[0].seniorMember,
 					squadron: memberInfo[0].squadron,
-					orgid: memberInfo[0].orgid
+					orgid: memberInfo[0].orgid,
+					flight: extraInfo.flight
 				};
 				NHQMember.memberSessions.push(sess);
 			} else {
@@ -107,11 +113,6 @@ export default class NHQMember extends Member {
 				}
 			);
 		}
-
-		const [dutyPositions, extraInfo] = await Promise.all([
-			NHQMember.GetRegularDutypositions(id, schema, account),
-			NHQMember.LoadExtraMemberInformation(id, schema, account)
-		]);
 
 		const permissions = getPermissions(extraInfo.accessLevel);
 
@@ -135,7 +136,9 @@ export default class NHQMember extends Member {
 					memberInfo[0].nameSuffix
 				]),
 				kind: 'NHQMember',
-				permissions
+				permissions,
+				flight: extraInfo.flight,
+				teamIDs: extraInfo.teamIDs
 			},
 			cookie,
 			sessionID,
@@ -179,7 +182,7 @@ export default class NHQMember extends Member {
 					const id = decoded.id;
 
 					if (typeof id === 'string') {
-						ProspectiveMember.ExpressMiddleware(req, res, next, id);
+						ProspectiveMember.ExpressMiddleware(req, res, next, id, header);
 						return;
 					}
 
@@ -226,7 +229,9 @@ export default class NHQMember extends Member {
 									sess[0].nameSuffix
 								]),
 								kind: 'NHQMember',
-								permissions
+								permissions,
+								flight: sess[0].flight,
+								teamIDs: extraInfo.teamIDs
 							},
 							sess[0].cookieData,
 							header,
@@ -493,7 +498,8 @@ export default class NHQMember extends Member {
 				nameSuffix: member.nameSuffix,
 				orgid: member.orgid,
 				seniorMember: member.seniorMember,
-				squadron: member.squadron
+				squadron: member.squadron,
+				flight: member.flight
 			};
 		} else {
 			member = await ProspectiveMember.Get(

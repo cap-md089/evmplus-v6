@@ -1,10 +1,8 @@
 import * as express from 'express';
 import { MemberCreateError } from '../enums';
-import {
-	ConditionalMemberRequest,
-	NHQMember,
-	ProspectiveMember
-} from '../lib/MemberBase';
+import { ConditionalMemberRequest } from '../lib/MemberBase';
+import NHQMember from '../lib/members/NHQMember';
+import ProspectiveMember from '../lib/members/ProspectiveMember';
 import { json } from '../lib/Util';
 
 export default (req: ConditionalMemberRequest, res: express.Response) => {
