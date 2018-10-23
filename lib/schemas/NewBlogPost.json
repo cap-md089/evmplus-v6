@@ -206,6 +206,20 @@
             ],
             "type": "object"
         },
+        "NullMemberReference": {
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "Null"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
+            ],
+            "type": "object"
+        },
         "Object": {
             "description": "Provides functionality common to all JavaScript objects.",
             "properties": {
@@ -246,6 +260,9 @@
                 },
                 {
                     "$ref": "#/definitions/NHQMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NullMemberReference"
                 }
             ],
             "description": "The blog post author"

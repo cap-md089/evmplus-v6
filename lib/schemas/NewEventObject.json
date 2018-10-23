@@ -66,8 +66,18 @@
                     "type": "string"
                 },
                 "id": {
-                    "description": "CAP ID",
-                    "type": "number"
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ProspectiveMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NHQMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NullMemberReference"
+                        }
+                    ],
+                    "description": "CAP ID"
                 },
                 "phone": {
                     "description": "All of them should have a phone number",
@@ -106,6 +116,38 @@
             ],
             "type": "object"
         },
+        "NHQMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "number"
+                },
+                "kind": {
+                    "enum": [
+                        "NHQMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        },
+        "NullMemberReference": {
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "Null"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
+            ],
+            "type": "object"
+        },
         "PointOfContactType.EXTERNAL": {
             "enum": [
                 1
@@ -117,6 +159,24 @@
                 0
             ],
             "type": "number"
+        },
+        "ProspectiveMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "ProspectiveMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
         }
     },
     "description": "Used for transfer when creating a new event object, as it cannot know what\nsome of the details are until the server handles it",
@@ -423,8 +483,27 @@
             "type": "number"
         },
         "status": {
-            "$ref": "#/definitions/EventStatus",
-            "description": "Tentative, complete, cancelled, etc."
+            "additionalItems": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/EventStatus"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "description": "Tentative, complete, cancelled, etc.",
+            "items": [
+                {
+                    "$ref": "#/definitions/EventStatus"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "minItems": 2,
+            "type": "array"
         },
         "teamID": {
             "description": "If this is a team event, a team can be specified for future features",
@@ -491,19 +570,25 @@
         "meetDateTime",
         "meetLocation",
         "name",
+        "participationFee",
         "pickupDateTime",
         "pickupLocation",
         "pointsOfContact",
         "publishToWingCalendar",
+        "registration",
         "requiredEquipment",
         "requiredForms",
         "showUpcoming",
+        "signUpDenyMessage",
+        "signUpPartTime",
+        "sourceEvent",
         "startDateTime",
         "status",
         "teamID",
         "transportationDescription",
         "transportationProvided",
-        "uniform"
+        "uniform",
+        "wingEventNumber"
     ],
     "type": "object"
 }

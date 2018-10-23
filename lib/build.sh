@@ -10,6 +10,8 @@ echo "Building BlogPost..."
 typescript-json-schema --refs --required index.d.ts global.BlogPostObject -o schemas/BlogPost.json
 echo "Building EventObject..."
 typescript-json-schema --refs --required index.d.ts global.EventObject -o schemas/EventObject.json
+echo "Building PartialEventObject..."
+typescript-json-schema --refs --required index.d.ts global.PartialEventObject -o schemas/PartialEventObject.json
 echo "Building AccountObject..."
 typescript-json-schema --refs --required index.d.ts global.AccountObject -o schemas/AccountObject.json
 echo "Building NewBlogPost..."

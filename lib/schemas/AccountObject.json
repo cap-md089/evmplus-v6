@@ -19,6 +19,20 @@
             ],
             "type": "object"
         },
+        "NullMemberReference": {
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "Null"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
+            ],
+            "type": "object"
+        },
         "ProspectiveMemberReference": {
             "properties": {
                 "id": {
@@ -53,6 +67,9 @@
                     },
                     {
                         "$ref": "#/definitions/NHQMemberReference"
+                    },
+                    {
+                        "$ref": "#/definitions/NullMemberReference"
                     }
                 ]
             },

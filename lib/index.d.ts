@@ -4,7 +4,9 @@ import {
 	EventStatus,
 	MemberCreateError,
 	PointOfContactType,
-	TeamPublicity
+	TeamPublicity,
+	FileUserAccessControlType,
+	FileUserAccessControlPermissions
 } from './index';
 
 declare global {
@@ -302,7 +304,22 @@ declare global {
 		/**
 		 * CAP ID
 		 */
-		id: number;
+		id: MemberReference;
+	}
+
+	export interface DisplayInternalPointOfContact extends PointOfContact {
+		/**
+		 * Used for differentiating CAP points of contact
+		 */
+		type: PointOfContactType.INTERNAL;
+		/**
+		 * CAP ID
+		 */
+		id: MemberReference;
+		/**
+		 * Used for compound documentation
+		 */
+		name: string;
 	}
 
 	export interface ExternalPointOfContact extends PointOfContact {
@@ -348,7 +365,7 @@ declare global {
 		 * Useful for when making sure the wrong data doesn't get transferred
 		 * to the client
 		 */
-		toRaw(): T;
+		toRaw(): { [P in Exclude<keyof T, '_id'>]: T[P] };
 		/**
 		 * Checks all the values coming in, making sure they are the right type and
 		 * setting them if they are the right type and defined
@@ -676,7 +693,7 @@ declare global {
 		/**
 		 * Which flight the user is in. Should only exist if not a senior member
 		 */
-		flight?: string;
+		flight: null | string;
 		/**
 		 * The organization the member belongs to
 		 */
@@ -699,6 +716,10 @@ declare global {
 		 * Both the client and server will want a handle on permissions
 		 */
 		permissions: MemberPermissions;
+		/**
+		 * Used to easily reference teams
+		 */
+		teamIDs: number[];
 	}
 
 	/**
@@ -719,12 +740,17 @@ declare global {
 		id: number;
 	}
 
+	export interface NullMemberReference {
+		kind: 'Null';
+	}
+
 	/**
 	 * Union type to allow for referring to both NHQMembers and ProspectiveMembers
 	 */
 	export type MemberReference =
 		| NHQMemberReference
-		| ProspectiveMemberReference;
+		| ProspectiveMemberReference
+		| NullMemberReference;
 
 	/**
 	 * In the case that it doesn't like MemberBase, try using Member
@@ -773,7 +799,11 @@ declare global {
 		 *
 		 * Undefined if the member is a senior member
 		 */
-		flight?: string;
+		flight: null | string;
+		/**
+		 * IDs of teams the member is a part of
+		 */
+		teamIDs: number[]
 	}
 
 	/**
@@ -842,10 +872,101 @@ declare global {
 	}
 
 	/**
+	 * Used for denoting user permissions
+	 */
+	interface FileUserControlList {
+		/**
+		 * 
+		 * Descriminant, used for determining who this applies to
+		 */
+		type: FileUserAccessControlType.USER;
+		/**
+		 * The actual member reference
+		 */
+		reference: MemberReference;
+		/**
+		 * What the permission is they have
+		 */
+		permission: FileUserAccessControlPermissions;
+	}
+
+	/**
+	 * Used for denoting team permissions
+	 */
+	interface FileTeamControlList {
+		/**
+		 * 
+		 * Descriminant, used for determining who this applies to
+		 */
+		type: FileUserAccessControlType.TEAM;
+		/**
+		 * Which team does this apply to?
+		 */
+		teamID: number;
+		/**
+		 * The permission that is assigned
+		 */
+		permission: FileUserAccessControlPermissions;
+	}
+	
+	/**
+	 * Used for denoting permissions for those who are signed in, but still
+	 * other
+	 */
+	interface FileAccountControlList {
+		/**
+		 * 
+		 * Descriminant, used for determining who this applies to
+		 */
+		type: FileUserAccessControlType.ACCOUNTMEMBER;
+		/**
+		 * The permission that is assigned
+		 */
+		permission: FileUserAccessControlPermissions;
+	}
+	/**
+	 * Used for denoting permissions for those who are signed in, but still
+	 * other
+	 */
+	interface FileSignedInControlList {
+		/**
+		 * 
+		 * Descriminant, used for determining who this applies to
+		 */
+		type: FileUserAccessControlType.SIGNEDIN;
+		/**
+		 * The permission that is assigned
+		 */
+		permission: FileUserAccessControlPermissions;
+	}
+	
+	/**
+	 * Used for denoting other permissions
+	 */
+	interface FileOtherControlList {
+		/**
+		 * 
+		 * Descriminant, used for determining who this applies to
+		 */
+		type: FileUserAccessControlType.OTHER;
+		/**
+		 * The permission that is assigned
+		 */
+		permission: FileUserAccessControlPermissions;
+	}
+
+	export type FileControlListItem =
+		FileUserControlList |
+		FileTeamControlList |
+		FileAccountControlList |
+		FileSignedInControlList |
+		FileOtherControlList;
+
+	/**
 	 * Represents a file. Metadata (shown) is stored in the database, other file
 	 * data is stored on disk to take advantage of Node.js
 	 */
-	export interface FileObject extends DriveObject {
+	export interface RawFileObject extends DriveObject {
 		/**
 		 * Prevent duck typing to an extent
 		 */
@@ -857,7 +978,7 @@ declare global {
 		/**
 		 * The id of the uploader
 		 */
-		uploaderID: number;
+		owner: MemberReference;
 		/**
 		 * The name of the file
 		 */
@@ -875,10 +996,6 @@ declare global {
 		 */
 		created: number;
 		/**
-		 * Whether or not the file is limited to the members
-		 */
-		memberOnly: boolean;
-		/**
 		 * Whether or not the file is displayed in the photo library (only works with photos)
 		 */
 		forDisplay: boolean;
@@ -894,6 +1011,24 @@ declare global {
 		 * ID of the parent for going backwards
 		 */
 		parentID: string;
+		/**
+		 * The permissions for the file
+		 */
+		permissions: FileControlListItem[];
+	}
+
+	export interface FileObject extends RawFileObject {
+		/**
+		 * Provided by the file class, not actually stored in the database
+		 */
+		folderPath: Array<{
+			id: string;
+			name: string;
+		}>
+	}
+
+	export interface FullFileObject extends FileObject {
+		uploader: ProspectiveMemberReturn | NHQMemberObjectReturn;
 	}
 
 	/**
@@ -912,6 +1047,9 @@ declare global {
 		 */
 		posted: number;
 	}
+
+	// Make a type the JSON schema generator recognizes
+	export type PartialBlogPost = Partial<BlogPostObject>;
 
 	export interface NewBlogPost {
 		/**
@@ -990,7 +1128,14 @@ declare global {
 		 * generated attendance on the client side to include internal POCs
 		 */
 		attendance: AttendanceRecord[];
+		/**
+		 * Who to contact for more event information
+		 */
+		pointsOfContact: (DisplayInternalPointOfContact | ExternalPointOfContact)[];
 	}
+
+	// Make a type the JSON schema generator can recognize
+	export type PartialEventObject = Partial<EventObject>;
 
 	/**
 	 * Used for transfer when creating a new event object, as it cannot know what
@@ -1055,7 +1200,7 @@ declare global {
 		 * As it is partial, not required information, this may be
 		 * excluded
 		 */
-		registration?: {
+		registration: null | {
 			/**
 			 * When the registration closes
 			 */
@@ -1068,7 +1213,7 @@ declare global {
 		/**
 		 * Same as registration deadline but for fees
 		 */
-		participationFee?: {
+		participationFee: null | {
 			/**
 			 * When the fee is due
 			 */
@@ -1121,7 +1266,7 @@ declare global {
 		 * What to say if sign ups are denied; may be dropped if
 		 * acceptSignups is true
 		 */
-		signUpDenyMessage?: string;
+		signUpDenyMessage: null | string;
 		/**
 		 * If the wing calendar needs to have this event, publish to the Google calendar
 		 */
@@ -1137,7 +1282,7 @@ declare global {
 		/**
 		 * What is the wing event number
 		 */
-		wingEventNumber?: number;
+		wingEventNumber: null | number;
 		/**
 		 * If all the details are completely filled in
 		 */
@@ -1149,7 +1294,7 @@ declare global {
 		/**
 		 * Tentative, complete, cancelled, etc.
 		 */
-		status: EventStatus;
+		status: RadioReturn<EventStatus>;
 		/**
 		 * After action reports
 		 */
@@ -1161,7 +1306,7 @@ declare global {
 		/**
 		 * Can cadets sign up for only a portion of the event?
 		 */
-		signUpPartTime?: boolean;
+		signUpPartTime: null | boolean;
 		/**
 		 * If this is a team event, a team can be specified for future features
 		 */
@@ -1176,7 +1321,7 @@ declare global {
 		 * Linking events allows for one account to copy an event of another account
 		 * and receive updates and such
 		 */
-		sourceEvent?: {
+		sourceEvent: null | {
 			/**
 			 * ID of the event it came from
 			 */

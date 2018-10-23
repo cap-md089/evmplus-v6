@@ -306,6 +306,13 @@
             "description": "The Squadron a member belongs to",
             "type": "string"
         },
+        "teamIDs": {
+            "description": "Used to easily reference teams",
+            "items": {
+                "type": "number"
+            },
+            "type": "array"
+        },
         "usrID": {
             "description": "Since many accounts can have an ORGID, there is an array containing each one\nUser login ID",
             "type": "string"
@@ -314,6 +321,7 @@
     "required": [
         "contact",
         "dutyPositions",
+        "flight",
         "id",
         "kind",
         "memberRank",
@@ -325,6 +333,7 @@
         "permissions",
         "seniorMember",
         "squadron",
+        "teamIDs",
         "usrID"
     ],
     "type": "object"

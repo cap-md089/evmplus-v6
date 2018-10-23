@@ -12,12 +12,11 @@
 		"removeComments": true,
 		"preserveSymlinks": true,
 		"sourceMap": true,
-		"typeRoots": ["./types", "./node_modules/@types"],
 		"baseUrl": ".",
-		"rootDir": "."
+		"rootDir": ".",
+		"composite": true
 	},
-	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
-	"files": ["../lib/index.d.ts"]
+	"files": ["./index.ts"]
 }
