@@ -1,22 +1,10 @@
-import { convertToRaw, EditorState, RawDraftContentState } from 'draft-js';
+import { EditorState } from 'draft-js';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
 import SigninLink from '../components/SigninLink';
-import Form, {
-	Checkbox,
-	DateTimeInput,
-	FileInput,
-	FormBlock,
-	Label,
-	MultCheckbox,
-	MultiRange,
-	NumberInput,
-	RadioButton,
-	Selector,
-	TextInput,
-	Title
-} from '../components/SimpleForm';
+import Form, { Checkbox, DateTimeInput, FileInput, FormBlock, Label, LoadingTextArea, MultCheckbox, MultiRange, NumberInput, RadioButton, Selector, TextInput, Title } from '../components/SimpleForm';
+import slowEmptyEditorState from '../lib/slowEmptyEditorState';
 import Page, { PageProps } from './Page';
 
 enum Test1 {
@@ -35,7 +23,6 @@ interface Props {
 	test3: string;
 	test4: string[];
 	test6: string;
-	test5: RawDraftContentState;
 	test7: [number, number];
 	test8: DateTime;
 	test9: DateTime;
@@ -43,7 +30,7 @@ interface Props {
 	test11: RadioReturn<Test1>;
 	test12: MultCheckboxReturn;
 	test13: boolean;
-	test14: RawDraftContentState;
+	test14: EditorState | null;
 	test15: {
 		'test15-1': string;
 		'test15-2': string;
@@ -61,7 +48,6 @@ export default class Test extends Page<
 		test2: '',
 		test3: '',
 		test4: [],
-		test5: convertToRaw(EditorState.createEmpty().getCurrentContent()),
 		test6: '',
 		test7: [100, 200],
 		test8: DateTime.utc(),
@@ -70,13 +56,19 @@ export default class Test extends Page<
 		test11: [-1, ''],
 		test12: [[false, false, false], ''],
 		test13: false,
-		test14: convertToRaw(EditorState.createEmpty().getCurrentContent()),
+		test14: null,
 		test15: {
 			'test15-1': '',
 			'test15-2': ''
 		},
 		test16: []
 	};
+
+	public componentDidMount() {
+		slowEmptyEditorState().then(test14 => {
+			this.setState({ test14 });
+		});
+	}
 
 	public render() {
 		const TestForm = Form as new () => Form<Props>;
@@ -92,7 +84,7 @@ export default class Test extends Page<
 
 		const TestSelector = Selector as new () => Selector<Complex>;
 
-		return (
+		return this.state.test14 !== null ? (
 			<div>
 				<SigninLink
 					authorizeUser={this.props.authorizeUser}
@@ -115,6 +107,7 @@ export default class Test extends Page<
 						this.setState(data);
 					}}
 				>
+					<LoadingTextArea name="test14" value={this.state.test14} />
 					<Label>Time input</Label>
 					<DateTimeInput
 						name="test8"
@@ -231,12 +224,11 @@ export default class Test extends Page<
 						value={this.state.test16}
 						displayValue={val => val.value}
 						onChange={console.log}
-						// @ts-ignore
 						filters={[
 							{
 								displayText: 'Value: ',
 								filterInput: TextInput,
-								check: (val, input) => {
+								check: (val, input: string) => {
 									if (input === '') {
 										return true;
 									}
@@ -245,7 +237,7 @@ export default class Test extends Page<
 										return !!val.value.match(
 											new RegExp(input, 'i')
 										);
-									} catch(e) {
+									} catch (e) {
 										return true;
 									}
 								}
@@ -253,7 +245,7 @@ export default class Test extends Page<
 							{
 								displayText: 'ID: ',
 								filterInput: NumberInput,
-								check: (val, input) => {
+								check: (val, input: number) => {
 									if (isNaN(input)) {
 										return true;
 									}
@@ -277,6 +269,6 @@ export default class Test extends Page<
 					Submit
 				</TestButton>
 			</div>
-		);
+		) : null;
 	}
 }

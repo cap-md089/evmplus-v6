@@ -1,11 +1,11 @@
-import { convertFromRaw, convertToRaw, Editor, EditorState } from 'draft-js';
+import { EditorState } from 'draft-js';
 import * as React from 'react';
-import { Link, Route, RouteComponentProps } from 'react-router-dom';
+import { Link, Route } from 'react-router-dom';
 import Loader from '../components/Loader';
 import {
 	FileInput,
 	Label,
-	TextArea,
+	LoadingTextArea,
 	TextInput
 } from '../components/SimpleForm';
 /// <reference path="../../../lib/index.d.ts" />
@@ -14,49 +14,75 @@ import myFetch from '../lib/myFetch';
 import './blog.css';
 import Page, { PageProps } from './Page';
 
+type DraftJS = typeof import('draft-js');
+
+interface BlogListState1 {
+	posts: null;
+	displayLeft: boolean;
+	displayRight: boolean;
+	page: number;
+	loaded: false;
+	draft: null;
+}
+
+interface BlogListState2 {
+	posts: BlogPostObject[];
+	displayLeft: boolean;
+	displayRight: boolean;
+	page: number;
+	loaded: true;
+	draft: DraftJS;
+}
+
 class BlogList extends React.Component<
-	{},
-	{
-		posts: BlogPostObject[];
-		displayLeft: boolean;
-		displayRight: boolean;
-		page: number;
-		loaded: boolean;
-	}
+	PageProps,
+	BlogListState1 | BlogListState2
 > {
-	constructor(props: {}) {
+	constructor(props: PageProps) {
 		super(props);
 		this.state = {
-			posts: [],
+			posts: null,
 			page: 0,
 			displayLeft: false,
 			displayRight: false,
-			loaded: false
+			loaded: false,
+			draft: null
 		};
 	}
 
 	public componentDidMount() {
-		myFetch('/api/blog/post/list/' + this.state.page)
-			.then(val => val.json())
-			.then(
-				(posts: {
-					posts: BlogPostObject[];
-					displayLeft: boolean;
-					displayRight: boolean;
-					page: number;
-				}) => {
-					this.setState({
-						...posts,
-						loaded: true
-					});
-				}
-			);
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/news',
+				text: 'News'
+			}
+		]);
+		Promise.all([
+			myFetch('/api/blog/post/list').then(val =>
+				val.json()
+			),
+			import('draft-js')
+		]).then(([posts, draft]) => {
+			this.setState({
+				loaded: true,
+				posts,
+				draft
+			});
+		});
 	}
 
 	public render() {
-		return !this.state.loaded ? (
-			<Loader />
-		) : this.state.posts.length === 0 ? (
+		if (!this.state.loaded) {
+			return <Loader />;
+		}
+		const draft = this.state.draft;
+		const Editor = draft.Editor;
+
+		return this.state.posts.length === 0 ? (
 			<h1>No blog posts</h1>
 		) : (
 			<div>
@@ -67,8 +93,8 @@ class BlogList extends React.Component<
 								<h1>{post.title}</h1>
 							</Link>
 							<Editor
-								editorState={EditorState.createWithContent(
-									convertFromRaw(post.content)
+								editorState={draft.EditorState.createWithContent(
+									draft.convertFromRaw(post.content)
 								)}
 								readOnly={true}
 								onChange={() => null}
@@ -81,21 +107,54 @@ class BlogList extends React.Component<
 	}
 }
 
+interface BlogPostCreateNotReady {
+	loaded: false;
+	draft: null;
+	content: null;
+	fileIDs: never[];
+	title: null;
+}
+
+interface ReadyBlogPostCreate {
+	loaded: true;
+	draft: DraftJS;
+	content: EditorState;
+	fileIDs: string[];
+	title: string;
+}
+
 class BlogPostCreate extends React.Component<
 	PageProps<any>,
-	{
-		title: string;
-		content: EditorState;
-		fileIDs: string[];
-	}
+	ReadyBlogPostCreate | BlogPostCreateNotReady
 > {
-	public state = {
-		title: '',
-		content: EditorState.createEmpty(),
-		fileIDs: []
+	public state: ReadyBlogPostCreate | BlogPostCreateNotReady = {
+		loaded: false,
+		draft: null,
+		fileIDs: [],
+		content: null,
+		title: null
 	};
 
+	public componentDidMount() {
+		import('draft-js').then(draft => {
+			this.setState({
+				loaded: true,
+				draft,
+				fileIDs: [],
+				content: draft.EditorState.createEmpty(),
+				title: ''
+			});
+		});
+	}
+
 	public render() {
+		if (this.props.member.valid === false) {
+			return <h2>Please sign in</h2>;
+		}
+
+		if (this.state.loaded === false) {
+			return <Loader />;
+		}
 		const PostCreateForm = RequestForm as new () => RequestForm<
 			{
 				title: string;
@@ -105,7 +164,9 @@ class BlogPostCreate extends React.Component<
 			BlogPostObject
 		>;
 
-		return this.props.member.valid === true ? (
+		const { draft, content, title, fileIDs } = this.state;
+
+		return (
 			<>
 				<h2>Create blog post</h2>
 				<PostCreateForm
@@ -117,7 +178,9 @@ class BlogPostCreate extends React.Component<
 					}}
 					onSubmit={post => ({
 						title: post.title,
-						content: convertToRaw(post.content.getCurrentContent()),
+						content: draft.convertToRaw(
+							post.content.getCurrentContent()
+						),
 						authorid: this.props.member.member!.object.id,
 						fileIDs: post.fileIDs
 					})}
@@ -125,6 +188,11 @@ class BlogPostCreate extends React.Component<
 						this.props.routeProps.history.push(
 							'/blog/view/' + post.id
 						);
+					}}
+					values={{
+						content,
+						title,
+						fileIDs
 					}}
 				>
 					<TextInput
@@ -143,75 +211,68 @@ class BlogPostCreate extends React.Component<
 							borderBottomWidth: 0,
 							borderColor: '#aaa'
 						}}
-						value={this.state.title}
-						onChange={title => {
-							this.setState({ title });
-						}}
 					/>
-					<TextArea
-						name="content"
-						fullWidth={true}
-						value={this.state.content}
-						onChange={content => {
-							this.setState({ content });
-						}}
-					/>
+					<LoadingTextArea name="content" fullWidth={true} />
 					<Label>Photos to display</Label>
-					<FileInput
-						name="fileIDs"
-						value={this.state.fileIDs}
-						onChange={fileIDs => {
-							this.setState({ fileIDs });
-						}}
-					/>
+					<FileInput name="fileIDs" />
 				</PostCreateForm>
 			</>
-		) : (
-			<h2>Please sign in</h2>
 		);
 	}
 }
 
-class BlogEdit extends React.Component<
-	RouteComponentProps<{
-		id: string;
-	}>
-> {}
+class BlogEdit extends React.Component<PageProps> {}
+
+interface ReadyBlogView {
+	loaded: true;
+	draft: typeof import('draft-js');
+	post: BlogPostObject;
+}
+
+interface UnreadyBlogView {
+	loaded: false;
+	draft: null;
+	post: null;
+}
 
 class BlogView extends React.Component<
-	RouteComponentProps<{
+	PageProps<{
 		id: string;
 	}>,
-	{
-		post?: BlogPostObject;
-	}
+	UnreadyBlogView | ReadyBlogView
 > {
+	public state: UnreadyBlogView | ReadyBlogView = {
+		post: null,
+		draft: null,
+		loaded: false
+	};
 	constructor(
-		props: RouteComponentProps<{
+		props: PageProps<{
 			id: string;
 		}>
 	) {
 		super(props);
-		this.state = {
-			post: undefined
-		};
 	}
 
 	public componentDidMount() {
-		myFetch('/api/blog/post/' + this.props.match.params.id)
+		myFetch('/api/blog/post/' + this.props.routeProps.match.params.id)
 			.then(val => val.json())
 			.then((post: BlogPostObject) => this.setState({ post }));
 	}
 
 	public render() {
-		return typeof this.state.post === 'undefined' ? (
-			<Loader />
-		) : (
+		if (this.state.loaded === false) {
+			return <Loader />;
+		}
+
+		const { post, draft } = this.state;
+
+		return (
 			<div>
-				<h1>{this.state.post.title}</h1>
-				<Editor
+				<h1>{post.title}</h1>
+				<draft.Editor
 					editorState={EditorState.createWithContent(
-						convertFromRaw(this.state.post.content)
+						draft.convertFromRaw(post.content)
 					)}
 					onChange={() => null}
 					readOnly={true}
@@ -221,17 +282,44 @@ class BlogView extends React.Component<
 	}
 }
 
-export default class Blog extends Page {
+export default class Blog extends Page<PageProps<{ id: string }>> {
 	public render() {
 		return (
 			<>
-				<Route exact={true} path="/blog" component={BlogList} />
+				<Route
+					exact={true}
+					path="/blog"
+					component={() => <BlogList {...this.props} />}
+				/>
 				<Route
 					path="/blog/post"
 					component={() => <BlogPostCreate {...this.props} />}
 				/>
-				<Route path="/blog/view/:id" component={BlogView} />
-				<Route path="/blog/edit/:id" component={BlogEdit} />
+				<Route
+					path="/blog/view/:id"
+					component={() => <BlogView {...this.props} />}
+				/>
+				<Route
+					path="/blog/edit/:id"
+					component={() => <BlogEdit {...this.props} />}
+				/>
+				<Route
+					exact={true}
+					path="/news"
+					component={() => <BlogList {...this.props} />}
+				/>
+				<Route
+					path="/news/post"
+					component={() => <BlogPostCreate {...this.props} />}
+				/>
+				<Route
+					path="/news/view/:id"
+					component={() => <BlogView {...this.props} />}
+				/>
+				<Route
+					path="/news/edit/:id"
+					component={() => <BlogEdit {...this.props} />}
+				/>
 			</>
 		);
 	}

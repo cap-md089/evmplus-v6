@@ -39,8 +39,16 @@ const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
 	</div>
 );
 
+interface FileInputProps extends InputProps<string[]> {
+	filter?: (
+		element: FileObject,
+		index: number,
+		array: FileObject[]
+	) => boolean;
+}
+
 export default class FileInput extends React.Component<
-	InputProps<string[]>,
+	FileInputProps,
 	FileInputState
 > {
 	public static getDerivedStateFromProps(
@@ -62,7 +70,7 @@ export default class FileInput extends React.Component<
 
 	private previousFiles: string[] = [];
 
-	constructor(props: InputProps<string[]>) {
+	constructor(props: FileInputProps) {
 		super(props);
 
 		this.handleFileSelect = this.handleFileSelect.bind(this);
@@ -137,6 +145,7 @@ export default class FileInput extends React.Component<
 					<FileDialogue
 						open={this.state.dialogueOpen}
 						onReturn={this.handleFileSelect}
+						filter={this.props.filter}
 					/>
 					<Button
 						onClick={() => {

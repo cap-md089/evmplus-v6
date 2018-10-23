@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { MemberCreateError } from 'src/enums';
 import { MessageEventListener } from '../App';
+import { MemberCreateError } from '../enums';
 import Dialogue, { DialogueButtons } from './Dialogue';
 import './Signin.css';
 

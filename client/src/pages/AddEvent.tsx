@@ -90,12 +90,13 @@ export default class AddEvent extends React.Component<
 			wingEventNumber: 0,
 			complete: false,
 			administrationComments: '',
-			status: 0,
+			status: [0, ''],
 			debrief: '',
 			pointsOfContact: [],
 			signUpPartTime: false,
 			teamID: 0,
-			fileIDs: []
+			fileIDs: [],
+			sourceEvent: null
 		},
 		valid: false,
 		errors: {},
@@ -409,7 +410,10 @@ export default class AddEvent extends React.Component<
 					addNew={() => ({
 						type: PointOfContactType.INTERNAL,
 						email: '',
-						id: 0,
+						name: '',
+						id: {
+							kind: 'null'
+						},
 						phone: '',
 						receiveEventUpdates: false,
 						receiveRoster: false,

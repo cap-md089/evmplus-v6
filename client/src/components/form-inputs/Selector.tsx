@@ -4,16 +4,22 @@ import { InputProps } from './Input';
 
 import './Selector.css';
 
+export interface CheckInput<I, T = any> {
+	displayText: string;
+	filterInput: React.ComponentType<InputProps<T>>;
+	check: (value: I, input: T) => boolean;
+}
+
 export interface SelectorProps<T extends Identifiable> {
 	showIDField: boolean;
 	returnIDs?: boolean;
-	filters?: Array<{
-		check: (value: T, input: any) => boolean;
-		filterInput: new () => React.Component<InputProps<any>>;
-		displayText: string;
-	}>;
+	filters?: Array<CheckInput<T>>;
 	displayValue: (val: T) => React.ReactChild;
 	values: T[];
+	onChangeVisible?: (visible: T[]) => void;
+	overflow?: number;
+	filterValues?: any[];
+	onFilterValuesChange?: (filterValues: any[]) => void;
 }
 
 interface SelectorPropsSingle<T extends Identifiable>
@@ -55,7 +61,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: (this.props.value || [])
+				value: this.props.value || []
 			});
 		} else if (
 			typeof this.props.onInitialize !== 'undefined' &&
@@ -67,6 +73,9 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				value: this.props.value || this.props
 			});
 		}
+
+		this.state.filterValues =
+			this.props.filterValues || new Array((props.filters || []).length);
 	}
 
 	public render() {
@@ -75,15 +84,16 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				? this.props.values.slice()
 				: this.props.values.filter(
 						val =>
-							typeof val.id === 'number'
-								? val.id ===
-								  parseInt(this.state.filterID.toString(), 10)
-								: val.id === this.state.filterID
+							!!new RegExp(this.state.filterID, 'ig').exec(
+								val.id.toString()
+							)
 				  );
+		
+		const filterValues = this.props.filterValues || this.state.filterValues;
 
 		const filteredValues = filteredIDValues.filter(val =>
 			(this.props.filters || [])
-				.map(({ check }, i) => check(val, this.state.filterValues[i]))
+				.map(({ check }, i) => check(val, filterValues[i]))
 				.reduce((prev, curr) => prev && curr, true)
 		);
 
@@ -118,26 +128,39 @@ export default class Selector<T extends Identifiable> extends React.Component<
 								</div>
 								<div className="selector-right-filter">
 									<value.filterInput
-										value={this.state.filterValues[i] || ''}
+										value={
+											typeof filterValues[i] ===
+											'undefined'
+												? ''
+												: filterValues[i]
+										}
 										name="null"
 										onChange={this.getFilterValueUpdater(i)}
+										// onInitialize={this.getInitializer(i)}
 									/>
 								</div>
 							</li>
 						))}
 					</ul>
 				</div>
-				<ul className="selector-values">
+				<ul
+					className="selector-values"
+					style={{
+						overflow: this.props.overflow ? 'auto' : 'initial',
+						height: this.props.overflow
+					}}
+				>
 					{filteredValues.map((val, i) => (
 						<li
 							key={i}
-							onClick={this.getSelector(val)}
+							onClick={this.getSelectHandler(val)}
 							className={
 								(this.props.multiple
 								? (this.props.value || [])
 										.map(value => value.id)
 										.indexOf(val.id) > -1
-								: typeof this.props.value !== 'undefined' && this.props.value.id === val.id)
+								: typeof this.props.value !== 'undefined' &&
+								  this.props.value.id === val.id)
 									? 'selected'
 									: ''
 							}
@@ -152,15 +175,79 @@ export default class Selector<T extends Identifiable> extends React.Component<
 
 	private getFilterValueUpdater(i: number) {
 		return ((e: any) => {
-			const filterValues = this.state.filterValues.slice();
+			const filterValues = (
+				this.props.filterValues || this.state.filterValues
+			).slice();
 
 			filterValues[i] = e;
 
-			this.setState({ filterValues });
+			if (
+				typeof this.props.filterValues !== 'undefined' &&
+				typeof this.props.onFilterValuesChange !== 'undefined'
+			) {
+				this.props.onFilterValuesChange(filterValues);
+			} else {
+				this.setState({ filterValues });
+			}
+
+			if (this.props.onChangeVisible) {
+				const filteredIDValues =
+					this.state.filterID === ''
+						? this.props.values.slice()
+						: this.props.values.filter(
+								val =>
+									!!new RegExp(this.state.filterID, 'ig').exec(
+										val.id.toString()
+									)
+						);
+				
+				const inputFilterValues = this.props.filterValues || this.state.filterValues;
+
+				const filteredValues = filteredIDValues.filter(val =>
+					(this.props.filters || [])
+						.map(({ check }, j) => check(val, inputFilterValues[j]))
+						.reduce((prev, curr) => prev && curr, true)
+				);
+
+				this.props.onChangeVisible(filteredValues);
+			}
 		}).bind(this);
 	}
 
-	private getSelector(val: T) {
+	// private getInitializer(i: number) {
+	// 	return ((e: {name: string, value: any}) => {
+	// 		const filterValues = this.state.filterValues.slice();
+
+	// 		filterValues[i] = e.value;
+
+	// 		this.setState({ filterValues });
+
+	// 		if (this.props.onChangeVisible) {
+	// 			const filteredIDValues =
+	// 				this.state.filterID === ''
+	// 					? this.props.values.slice()
+	// 					: this.props.values.filter(
+	// 							val =>
+	// 								!!new RegExp(
+	// 									this.state.filterID,
+	// 									'ig'
+	// 								).exec(val.id.toString())
+	// 					  );
+
+	// 			const filteredValues = filteredIDValues.filter(val =>
+	// 				(this.props.filters || [])
+	// 					.map(({ check }, j) =>
+	// 						check(val, this.state.filterValues[j])
+	// 					)
+	// 					.reduce((prev, curr) => prev && curr, true)
+	// 			);
+
+	// 			this.props.onChangeVisible(filteredValues);
+	// 		}
+	// 	}).bind(this);
+	// }
+
+	private getSelectHandler(val: T) {
 		return ((e: any) => {
 			if (!this.props.multiple) {
 				if (this.props.onChange) {

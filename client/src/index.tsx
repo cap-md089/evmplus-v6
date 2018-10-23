@@ -31,3 +31,7 @@ window.addEventListener(
 	},
 	false
 );
+
+if (module.hot) {
+	module.hot.accept();
+}

@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import myFetch from '../lib/myFetch';
 
-import Form, { FormProps } from './Form';
+import Form, { BasicFormProps } from './Form';
 
-interface RequestFormProps<C, S> extends FormProps<C> {
+interface RequestFormProps<C, S> extends BasicFormProps<C> {
 	/**
 	 * URL to submit the form request to
 	 */

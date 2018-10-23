@@ -5,6 +5,15 @@ interface MultCheckboxProps
 	extends InputProps<MultCheckboxReturn> {
 	labels: string[];
 	other?: boolean;
+	}
+
+export const parseMultCheckboxReturn = (value: MultCheckboxReturn, labels: string[], other: boolean, separator = ',') => {
+	const arrayValue = labels.filter((label, i) => value[0][i]);
+	if (other && value[0][labels.length]) {
+		arrayValue.push(value[1]);
+	}
+
+	return arrayValue.join(separator);
 }
 
 export default class MultCheckbox extends React.Component<

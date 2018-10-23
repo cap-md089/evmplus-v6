@@ -6,12 +6,12 @@
 	clear: both;
 }
 
-.desktop #mother .selector-filters ul {
+.desktop .selector-filters ul {
 	list-style-type: none;
 	margin: 0;
 }
 
-.desktop #mother .selector-filters ul li {
+.desktop .selector-filters ul li {
 	display: flex;
 }
 
@@ -39,9 +39,11 @@
 	display: block;
 	list-style-type: none;
 	padding: 5px;
+	cursor: pointer;
 	box-sizing: border-box;
 }
 
 .selector-values li.selected {
 	background: blue;
+	color: white !important;
 }

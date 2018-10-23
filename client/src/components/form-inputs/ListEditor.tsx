@@ -4,7 +4,7 @@ import { InputProps } from './Input';
 import './ListEditor.css';
 
 interface ListEditorProps<T> extends InputProps<T[]> {
-	inputComponent: new () => React.Component<InputProps<T>>;
+	inputComponent: React.ComponentType<InputProps<T>>;
 	addNew: () => T;
 	allowChange?: boolean;
 	buttonText?: string;

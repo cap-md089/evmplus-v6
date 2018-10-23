@@ -8,15 +8,17 @@ interface DialogueWithOK {
 	title: string;
 	displayButtons: DialogueButtons.OK;
 	onClose: () => void;
+	labels?: [string];
 }
 
-interface DialogueWithOKCancel {
+export interface DialogueWithOKCancel {
 	open: boolean;
 	title: string;
 	displayButtons: DialogueButtons.OK_CANCEL;
 	onClose: () => void;
 	onOk: () => void;
 	onCancel: () => void;
+	labels?: [string, string];
 }
 
 interface DialogueWithYesNoCancel {
@@ -27,6 +29,7 @@ interface DialogueWithYesNoCancel {
 	onYes: () => void;
 	onNo: () => void;
 	onCancel: () => void;
+	labels?: [string, string, string];
 }
 
 interface DialogueWithCustom {
@@ -34,6 +37,7 @@ interface DialogueWithCustom {
 	title: string;
 	displayButtons: DialogueButtons.CUSTOM;
 	onClose: () => void;
+	labels: string[]
 }
 
 interface DialogueWithoutButtons {
@@ -41,6 +45,7 @@ interface DialogueWithoutButtons {
 	title: string;
 	displayButtons: DialogueButtons.NONE;
 	onClose: () => void;
+	labels?: never[]
 }
 
 export enum DialogueButtons {
@@ -51,7 +56,7 @@ export enum DialogueButtons {
 	NONE
 }
 
-type DialogueProps =
+export type DialogueProps =
 	| DialogueWithOK
 	| DialogueWithOKCancel
 	| DialogueWithYesNoCancel
@@ -187,7 +192,7 @@ export default class Dialogue extends React.Component<
 									this.props.onClose();
 								}}
 							>
-								OK
+								{this.props.labels ? this.props.labels[0] : 'OK'}
 							</a>
 						</div>
 					) : this.props.displayButtons ===
@@ -210,7 +215,7 @@ export default class Dialogue extends React.Component<
 									this.props.onCancel();
 								}}
 							>
-								Cancel
+								{this.props.labels ? this.props.labels[1] : 'Cancel'}
 							</a>
 							<a
 								style={{
@@ -228,7 +233,7 @@ export default class Dialogue extends React.Component<
 									this.props.onOk();
 								}}
 							>
-								OK
+								{this.props.labels ? this.props.labels[0] : 'OK'}
 							</a>
 						</div>
 					) : this.props.displayButtons ===
@@ -251,7 +256,7 @@ export default class Dialogue extends React.Component<
 									this.props.onCancel();
 								}}
 							>
-								Cancel
+								{this.props.labels ? this.props.labels[2] : 'Cancel'}
 							</a>
 							<a
 								style={{
@@ -270,7 +275,7 @@ export default class Dialogue extends React.Component<
 									this.props.onNo();
 								}}
 							>
-								No
+								{this.props.labels ? this.props.labels[1] : 'No'}
 							</a>
 							<a
 								style={{
@@ -288,7 +293,7 @@ export default class Dialogue extends React.Component<
 									this.props.onYes();
 								}}
 							>
-								Yes
+								{this.props.labels ? this.props.labels[0] : 'Yes'}
 							</a>
 						</div>
 					) : null}

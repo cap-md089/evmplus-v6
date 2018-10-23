@@ -1,13 +1,17 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
+import { BreadCrumb } from '../components/BreadCrumbs';
+import { SideNavigationItem } from '../components/SideNavigation';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition
 
 export interface PageProps<R = {}> {
-	member: SigninReturn,
+	member: SigninReturn;
 	routeProps: RouteComponentProps<R>;
 	authorizeUser: (arg: SigninReturn) => void;
+	updateSideNav: (links: SideNavigationItem[]) => void;
+	updateBreadCrumbs: (links: BreadCrumb[]) => void;
 }
 
 export default abstract class Page<
@@ -15,5 +19,5 @@ export default abstract class Page<
 	S = {},
 	SS = {}
 > extends React.Component<P, S, SS> {
-	public abstract render (): JSX.Element | null;
+	public abstract render(): JSX.Element | null;
 }

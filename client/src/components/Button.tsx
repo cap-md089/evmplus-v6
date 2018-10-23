@@ -59,6 +59,14 @@ export interface ButtonProps<C, S> {
 	fetch?: (url: string, options: RequestInit) => Promise<Response>;
 
 	buttonType?: 'primaryButton' | 'secondaryButton' | ('none' | '');
+
+	method?: 'POST' | 'PUT' | 'DELETE' | 'GET';
+
+	/**
+	 * Some methods (PUT, DELETE) don't provide results and crash the program
+	 * when trying to parse them
+	 */
+	parseReturn?: boolean;
 }
 
 export default class Button<C, S> extends React.Component<
@@ -129,26 +137,40 @@ export default class Button<C, S> extends React.Component<
 			}
 		).then(pushData => {
 			if (pushData.push && this.props.url) {
+				const sessionID = localStorage.getItem('sessionID');
+				const headers: { [key: string]: string } = {
+					'Content-type': 'application/json'
+				};
+				if (sessionID) {
+					headers.authorization = sessionID;
+				}
 				(this.props.fetch || myFetch)(this.props.url, {
 					body: JSON.stringify(pushData.data),
-					method: 'POST',
+					method: this.props.method || 'PUT',
 					credentials: 'same-origin',
-					headers: {
-						'Content-type': 'application/json'
-					}
+					headers
 				})
-					.then(res => {
-						return res.json();
-					})
+					.then(
+						res =>
+							typeof this.props.parseReturn === 'undefined' ||
+							this.props.parseReturn
+								? res.json()
+								: res
+					)
 					.then((serverData: S) => {
 						this.setState({
 							disabled: false
 						});
 						if (typeof this.props.onReceiveData !== 'undefined') {
-							this.props.onReceiveData(serverData);
+							this.props.onReceiveData(
+								this.props.parseReturn ? serverData : undefined
+							);
 						}
 						if (typeof this.props.onFinish !== 'undefined') {
-							this.props.onFinish(this.props.data, serverData);
+							this.props.onFinish(
+								this.props.data,
+								this.props.parseReturn ? serverData : undefined
+							);
 						}
 					})
 					.catch((err: Error) => {

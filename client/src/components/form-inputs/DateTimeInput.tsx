@@ -221,7 +221,7 @@ export default class DateTimeInput extends React.Component<
 
 		const result = input.set({
 			year: parseInt(value[0], 10),
-			month: parseInt(value[1], 10) - 1,
+			month: parseInt(value[1], 10),
 			day: parseInt(value[2], 10)
 		});
 

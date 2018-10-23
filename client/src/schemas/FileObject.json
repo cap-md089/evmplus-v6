@@ -1,6 +1,209 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "Represents a file. Metadata (shown) is stored in the database, other file\ndata is stored on disk to take advantage of Node.js",
+    "definitions": {
+        "FileAccountControlList": {
+            "description": "Used for denoting permissions for those who are signed in, but still\nother",
+            "properties": {
+                "permission": {
+                    "$ref": "#/definitions/FileUserAccessControlPermissions",
+                    "description": "The permission that is assigned"
+                },
+                "type": {
+                    "$ref": "#/definitions/FileUserAccessControlType.ACCOUNTMEMBER",
+                    "description": "Descriminant, used for determining who this applies to"
+                }
+            },
+            "required": [
+                "permission",
+                "type"
+            ],
+            "type": "object"
+        },
+        "FileOtherControlList": {
+            "description": "Used for denoting other permissions",
+            "properties": {
+                "permission": {
+                    "$ref": "#/definitions/FileUserAccessControlPermissions",
+                    "description": "The permission that is assigned"
+                },
+                "type": {
+                    "$ref": "#/definitions/FileUserAccessControlType.OTHER",
+                    "description": "Descriminant, used for determining who this applies to"
+                }
+            },
+            "required": [
+                "permission",
+                "type"
+            ],
+            "type": "object"
+        },
+        "FileSignedInControlList": {
+            "description": "Used for denoting permissions for those who are signed in, but still\nother",
+            "properties": {
+                "permission": {
+                    "$ref": "#/definitions/FileUserAccessControlPermissions",
+                    "description": "The permission that is assigned"
+                },
+                "type": {
+                    "$ref": "#/definitions/FileUserAccessControlType.SIGNEDIN",
+                    "description": "Descriminant, used for determining who this applies to"
+                }
+            },
+            "required": [
+                "permission",
+                "type"
+            ],
+            "type": "object"
+        },
+        "FileTeamControlList": {
+            "description": "Used for denoting team permissions",
+            "properties": {
+                "permission": {
+                    "$ref": "#/definitions/FileUserAccessControlPermissions",
+                    "description": "The permission that is assigned"
+                },
+                "teamID": {
+                    "description": "Which team does this apply to?",
+                    "type": "number"
+                },
+                "type": {
+                    "$ref": "#/definitions/FileUserAccessControlType.TEAM",
+                    "description": "Descriminant, used for determining who this applies to"
+                }
+            },
+            "required": [
+                "permission",
+                "teamID",
+                "type"
+            ],
+            "type": "object"
+        },
+        "FileUserAccessControlPermissions": {
+            "enum": [
+                1,
+                16,
+                2,
+                255,
+                32,
+                4,
+                8
+            ],
+            "type": "number"
+        },
+        "FileUserAccessControlType.ACCOUNTMEMBER": {
+            "enum": [
+                2
+            ],
+            "type": "number"
+        },
+        "FileUserAccessControlType.OTHER": {
+            "enum": [
+                4
+            ],
+            "type": "number"
+        },
+        "FileUserAccessControlType.SIGNEDIN": {
+            "enum": [
+                3
+            ],
+            "type": "number"
+        },
+        "FileUserAccessControlType.TEAM": {
+            "enum": [
+                1
+            ],
+            "type": "number"
+        },
+        "FileUserAccessControlType.USER": {
+            "enum": [
+                0
+            ],
+            "type": "number"
+        },
+        "FileUserControlList": {
+            "description": "Used for denoting user permissions",
+            "properties": {
+                "permission": {
+                    "$ref": "#/definitions/FileUserAccessControlPermissions",
+                    "description": "What the permission is they have"
+                },
+                "reference": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ProspectiveMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NHQMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NullMemberReference"
+                        }
+                    ],
+                    "description": "The actual member reference"
+                },
+                "type": {
+                    "$ref": "#/definitions/FileUserAccessControlType.USER",
+                    "description": "Descriminant, used for determining who this applies to"
+                }
+            },
+            "required": [
+                "permission",
+                "reference",
+                "type"
+            ],
+            "type": "object"
+        },
+        "NHQMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "number"
+                },
+                "kind": {
+                    "enum": [
+                        "NHQMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        },
+        "NullMemberReference": {
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "Null"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
+            ],
+            "type": "object"
+        },
+        "ProspectiveMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "ProspectiveMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
+        }
+    },
     "properties": {
         "_id": {
             "description": "The ID assigned by NoSQL/MySQL",
@@ -33,6 +236,25 @@
             "description": "The name of the file",
             "type": "string"
         },
+        "folderPath": {
+            "description": "Provided by the file class, not actually stored in the database",
+            "items": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
         "forDisplay": {
             "description": "Whether or not the file is displayed in the photo library (only works with photos)",
             "type": "boolean"
@@ -52,17 +274,46 @@
             ],
             "type": "string"
         },
-        "memberOnly": {
-            "description": "Whether or not the file is limited to the members",
-            "type": "boolean"
+        "owner": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ProspectiveMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NHQMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NullMemberReference"
+                }
+            ],
+            "description": "The id of the uploader"
         },
         "parentID": {
             "description": "ID of the parent for going backwards",
             "type": "string"
         },
-        "uploaderID": {
-            "description": "The id of the uploader",
-            "type": "number"
+        "permissions": {
+            "description": "The permissions for the file",
+            "items": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/FileUserControlList"
+                    },
+                    {
+                        "$ref": "#/definitions/FileTeamControlList"
+                    },
+                    {
+                        "$ref": "#/definitions/FileAccountControlList"
+                    },
+                    {
+                        "$ref": "#/definitions/FileSignedInControlList"
+                    },
+                    {
+                        "$ref": "#/definitions/FileOtherControlList"
+                    }
+                ]
+            },
+            "type": "array"
         }
     },
     "required": [
@@ -72,13 +323,14 @@
         "created",
         "fileChildren",
         "fileName",
+        "folderPath",
         "forDisplay",
         "forSlideshow",
         "id",
         "kind",
-        "memberOnly",
+        "owner",
         "parentID",
-        "uploaderID"
+        "permissions"
     ],
     "type": "object"
 }

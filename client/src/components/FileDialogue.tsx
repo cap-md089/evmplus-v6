@@ -40,11 +40,12 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 						forSlideshow,
 						id,
 						kind,
-						memberOnly,
-						uploaderID,
+						owner,
 						_id,
 						fileChildren,
-						parentID
+						parentID,
+						folderPath,
+						permissions
 					} = this.props;
 					this.props.onClick(
 						{
@@ -57,11 +58,12 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 							forSlideshow,
 							id,
 							kind,
-							memberOnly,
-							uploaderID,
+							owner,
 							_id,
 							fileChildren,
-							parentID
+							parentID,
+							folderPath,
+							permissions
 						},
 						this.props.selected
 					);
@@ -98,11 +100,12 @@ export class FileDisplayer extends React.Component<ItemProps> {
 						forSlideshow,
 						id,
 						kind,
-						memberOnly,
-						uploaderID,
+						owner,
 						_id,
 						fileChildren,
-						parentID
+						parentID,
+						folderPath,
+						permissions
 					} = this.props;
 					this.props.onClick(
 						{
@@ -115,11 +118,12 @@ export class FileDisplayer extends React.Component<ItemProps> {
 							forSlideshow,
 							id,
 							kind,
-							memberOnly,
-							uploaderID,
+							owner,
 							_id,
 							fileChildren,
-							parentID
+							parentID,
+							folderPath,
+							permissions
 						},
 						this.props.selected
 					);
@@ -155,11 +159,12 @@ class SelectedFileDisplayer extends React.Component<
 						forSlideshow,
 						id,
 						kind,
-						memberOnly,
-						uploaderID,
+						permissions,
+						owner,
 						_id,
 						fileChildren,
-						parentID
+						parentID,
+						folderPath
 					} = this.props;
 					this.props.onClick(
 						{
@@ -172,11 +177,12 @@ class SelectedFileDisplayer extends React.Component<
 							forSlideshow,
 							id,
 							kind,
-							memberOnly,
-							uploaderID,
+							permissions,
+							owner,
 							_id,
 							fileChildren,
-							parentID
+							parentID,
+							folderPath
 						},
 						this.props.selected
 					);
@@ -201,6 +207,7 @@ interface FileUploaderProps {
 	files: File[];
 	onUploadedFile: (file: FileObject) => void;
 	clearFileList: () => void;
+	currentFolder: string;
 }
 
 interface FileUploaderState {
@@ -293,17 +300,25 @@ class FileUploader extends React.Component<
 			if (this.readyState === 4) {
 				try {
 					const resp = JSON.parse(this.responseText) as FileObject;
-					myFetch(urlFormat('api', 'files', 'root', 'children'), {
-						method: 'POST',
-						body: JSON.stringify({
-							id: resp.id
-						}),
-						headers: {
-							authorization: !!sid ? sid : '',
-							'content-type': 'application/json'
-						},
-						cache: 'no-cache'
-					});
+					myFetch(
+						urlFormat(
+							'api',
+							'files',
+							self.props.currentFolder,
+							'children'
+						),
+						{
+							method: 'POST',
+							body: JSON.stringify({
+								id: resp.id
+							}),
+							headers: {
+								authorization: !!sid ? sid : '',
+								'content-type': 'application/json'
+							},
+							cache: 'no-cache'
+						}
+					);
 					self.props.onUploadedFile(resp);
 					self.setState(prev => ({
 						files: prev.files.slice(1),
@@ -360,6 +375,13 @@ export default class FileDialogue extends React.Component<
 			index: number,
 			array: FileObject[]
 		) => boolean;
+		/**
+		 * Whether or not one file is to be returned
+		 *
+		 * This causes the onReturn function to be called with an
+		 * array with one element in it
+		 */
+		multiple?: boolean;
 	},
 	{
 		view: FileDialogueView;
@@ -373,6 +395,7 @@ export default class FileDialogue extends React.Component<
 		selectedFolder: string;
 		selectedFiles: FileObject[];
 		uploadingFiles: File[];
+		currentFolder: null | FullFileObject;
 	}
 > {
 	public state = {
@@ -386,7 +409,8 @@ export default class FileDialogue extends React.Component<
 		hovering: false,
 		selectedFolder: '',
 		selectedFiles: [] as FileObject[],
-		uploadingFiles: [] as File[]
+		uploadingFiles: [] as File[],
+		currentFolder: null as null | FullFileObject
 	};
 
 	private mainDiv: HTMLDivElement;
@@ -413,6 +437,23 @@ export default class FileDialogue extends React.Component<
 
 		this.clearFileList = this.clearFileList.bind(this);
 		this.addFile = this.addFile.bind(this);
+		this.goToFolder = this.goToFolder.bind(this);
+	}
+
+	private get multiple() {
+		return typeof this.props.multiple === 'undefined'
+			? true
+			: this.props.multiple;
+	}
+
+	private get sessionID() {
+		const sid = localStorage.getItem('sessionID');
+
+		if (!sid) {
+			return '';
+		}
+
+		return sid;
 	}
 
 	public componentDidMount() {
@@ -453,27 +494,7 @@ export default class FileDialogue extends React.Component<
 				open: true
 			});
 
-			myFetch('/api/files/' + this.state.folder + '/children')
-				.then(
-					res =>
-						res.ok
-							? Promise.resolve(res)
-							: Promise.reject(new Error('404'))
-				)
-				.then(res => res.json())
-				.then((folderFiles: FileObject[]) => {
-					this.setState({
-						loaded: true,
-						error: false,
-						folderFiles
-					});
-				})
-				.catch(err => {
-					this.setState({
-						error: true,
-						loaded: true
-					});
-				});
+			this.goToFolder(this.state.folder);
 
 			jQuery(div).animate(
 				{
@@ -535,30 +556,11 @@ export default class FileDialogue extends React.Component<
 
 		if (this.props.open && !this.state.open) {
 			this.setState({
-				open: true
+				open: true,
+				selectedFiles: []
 			});
 
-			myFetch('/api/files/' + this.state.folder + '/children')
-				.then(
-					res =>
-						res.ok
-							? Promise.resolve(res)
-							: Promise.reject(new Error('404'))
-				)
-				.then(res => res.json())
-				.then((folderFiles: FileObject[]) => {
-					this.setState({
-						loaded: true,
-						error: false,
-						folderFiles
-					});
-				})
-				.catch(err => {
-					this.setState({
-						error: true,
-						loaded: true
-					});
-				});
+			this.goToFolder('root');
 
 			jQuery(div).animate(
 				{
@@ -674,13 +676,12 @@ export default class FileDialogue extends React.Component<
 								}
 							/>
 						))}
-						{
-							<FileUploader
-								files={this.state.uploadingFiles}
-								onUploadedFile={this.addFile}
-								clearFileList={this.clearFileList}
-							/>
-						}
+						<FileUploader
+							currentFolder={this.state.folder}
+							files={this.state.uploadingFiles}
+							onUploadedFile={this.addFile}
+							clearFileList={this.clearFileList}
+						/>
 						{!this.state.loaded ? (
 							<Loader />
 						) : this.state.error ? (
@@ -697,11 +698,42 @@ export default class FileDialogue extends React.Component<
 								No files to select
 							</div>
 						) : this.state.view === FileDialogueView.MYDRIVE ? (
-							[
-								folderFolders.length > 0 ? (
+							<>
+								<br />
+								<div>
+									{this.state.currentFolder !== null
+										? this.state.currentFolder.folderPath.map(
+												path => (
+													<>
+														<a
+															onClick={e => {
+																e.preventDefault();
+																this.goToFolder(
+																	path.id
+																);
+																return false;
+															}}
+															href="#"
+															style={{
+																color:
+																	'#2875d7',
+																cursor:
+																	'pointer'
+															}}
+														>
+															{path.name}
+														</a>
+														&nbsp;/&nbsp;
+													</>
+												)
+										  )
+										: null}
+								</div>
+								<br />
+								{folderFolders.length > 0 ? (
 									<div key={0}>Folders</div>
-								) : null,
-								folderFolders
+								) : null}
+								{folderFolders
 									.sort((a, b) =>
 										a.fileName.localeCompare(b.fileName)
 									)
@@ -715,11 +747,11 @@ export default class FileDialogue extends React.Component<
 												folder.id
 											}
 										/>
-									)),
-								folderFiles.length > 0 ? (
+									))}
+								{folderFiles.length > 0 ? (
 									<div key={1}>Files</div>
-								) : null,
-								folderFiles
+								) : null}
+								{folderFiles
 									.sort((a, b) =>
 										a.fileName.localeCompare(b.fileName)
 									)
@@ -739,8 +771,8 @@ export default class FileDialogue extends React.Component<
 													.indexOf(file.id) > -1
 											}
 										/>
-									))
-							]
+									))}
+							</>
 						) : (
 							<>
 								<div
@@ -771,8 +803,10 @@ export default class FileDialogue extends React.Component<
 										}}
 										className="verticalCenter"
 									>
-										Drag here to upload<br />
-										or<br />
+										Drag here to upload
+										<br />
+										or
+										<br />
 										<label
 											htmlFor="fileUpload"
 											id="fileUploadLabel"
@@ -832,27 +866,7 @@ export default class FileDialogue extends React.Component<
 	private getViewChanger(view: FileDialogueView) {
 		return ((e: React.MouseEvent<HTMLAnchorElement>) => {
 			if (view === FileDialogueView.MYDRIVE) {
-				myFetch('/api/files/' + this.state.folder + '/children')
-					.then(
-						res =>
-							res.ok
-								? Promise.resolve(res)
-								: Promise.reject(new Error('404'))
-					)
-					.then(res => res.json())
-					.then((folderFiles: FileObject[]) => {
-						this.setState({
-							loaded: true,
-							error: false,
-							folderFiles
-						});
-					})
-					.catch(err => {
-						this.setState({
-							error: true,
-							loaded: true
-						});
-					});
+				this.goToFolder(this.state.folder);
 				this.setState({
 					loaded: false,
 					error: false,
@@ -872,9 +886,10 @@ export default class FileDialogue extends React.Component<
 		// basically set state with folder id
 		if (selected) {
 			this.setState({
-				folder: folder.id,
 				selectedFolder: ''
 			});
+
+			this.goToFolder(folder.id);
 		} else {
 			this.setState({
 				selectedFolder: folder.id
@@ -892,7 +907,9 @@ export default class FileDialogue extends React.Component<
 				selectedFiles
 			});
 		} else {
-			const selectedFiles = [...this.state.selectedFiles, file];
+			const selectedFiles = this.multiple
+				? [...this.state.selectedFiles, file]
+				: [file];
 			this.setState({
 				selectedFiles
 			});
@@ -945,7 +962,7 @@ export default class FileDialogue extends React.Component<
 		// upload file and add to selected files
 		// upload to root folder
 
-		const uploadingFiles = [] as File[];
+		const uploadingFiles = this.state.uploadingFiles.slice();
 
 		// I don't think a for-of loop would work here
 		// tslint:disable-next-line:prefer-for-of
@@ -967,9 +984,23 @@ export default class FileDialogue extends React.Component<
 	}
 
 	private addFile(file: FileObject) {
-		this.setState(prev => ({
-			selectedFiles: [...prev.selectedFiles, file]
-		}));
+		if (this.props.multiple) {
+			this.setState(prev => ({
+				selectedFiles: [...prev.selectedFiles, file].filter(
+					this.props.filter || (() => true)
+				)
+			}));
+		} else if (this.props.filter === undefined) {
+			this.setState({
+				selectedFiles: [file]
+			});
+		} else {
+			if (this.props.filter(file, 0, [file])) {
+				this.setState({
+					selectedFiles: [file]
+				});
+			}
+		}
 	}
 
 	private clearFileList() {
@@ -978,5 +1009,45 @@ export default class FileDialogue extends React.Component<
 				uploadingFiles: []
 			});
 		}
+	}
+
+	private goToFolder(id: string) {
+		this.setState({
+			folder: id,
+			loaded: false,
+			folderFiles: []
+		});
+		Promise.all([
+			myFetch('/api/files/' + id + '/children/dirty', {
+				headers: {
+					authorization: this.sessionID
+				}
+			}).then(res => res.json()),
+
+			myFetch('/api/files/' + id, {
+				headers: {
+					authorization: this.sessionID
+				}
+			}).then(res => res.json())
+		])
+			.then(
+				([folderFiles, currentFolder]: [
+					FileObject[],
+					FullFileObject
+				]) => {
+					this.setState({
+						loaded: true,
+						error: false,
+						folderFiles,
+						currentFolder
+					});
+				}
+			)
+			.catch(err => {
+				this.setState({
+					error: true,
+					loaded: true
+				});
+			});
 	}
 }

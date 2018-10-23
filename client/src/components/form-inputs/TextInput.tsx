@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { InputProps } from './Input';
 
-interface TextInputProps extends InputProps<string> {
+export interface TextInputProps extends InputProps<string> {
 	/**
 	 * Called when the file is changed
 	 * 
@@ -23,12 +23,6 @@ export default class TextInput extends React.Component<TextInputProps> {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
-
-		if (props.value) {
-			this.state = {
-				value: props.value
-			};
-		}
 
 		if (props.onInitialize) {
 			props.onInitialize({

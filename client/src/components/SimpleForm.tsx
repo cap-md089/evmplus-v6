@@ -1,20 +1,29 @@
 import * as React from 'react';
 import myFetch from '../lib/myFetch';
+import BigTextBox from './form-inputs/BigTextBox';
 // Form inputs
 import Checkbox from './form-inputs/Checkbox';
 import DateTimeInput from './form-inputs/DateTimeInput';
 import FileInput from './form-inputs/FileInput';
 import FormBlock from './form-inputs/FormBlock';
+import { InputProps } from './form-inputs/Input';
 import ListEditor from './form-inputs/ListEditor';
+import LoadingTextArea from './form-inputs/LoadingTextArea';
 import MultCheckbox from './form-inputs/MultCheckbox';
 import MultiRange from './form-inputs/MultiRange';
 import NumberInput from './form-inputs/NumberInput';
 import RadioButton from './form-inputs/RadioButton';
 import Selector from './form-inputs/Selector';
 import SimpleRadioButton from './form-inputs/SimpleRadioButton';
-import TextArea from './form-inputs/TextArea';
 import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
+import DisabledMappedText from './form-inputs/DisabledMappedText';
+
+let TextArea: typeof import('./form-inputs/TextArea').default;
+
+import('./form-inputs/TextArea').then(textArea => {
+	TextArea = textArea.default;
+});
 
 /**
  * Creates a label to be used in the form
@@ -70,8 +79,8 @@ class Title extends React.Component<{ fullWidth?: boolean }> {
  */
 export function isInput(
 	el: React.ReactChild | React.ReactElement<any>
-): el is React.ReactElement<any> {
-	if (typeof el === 'string' || typeof el === 'number') {
+): el is React.ReactElement<InputProps<any>> {
+	if (typeof el === 'string' || typeof el === 'number' || el === null) {
 		return false;
 	}
 	return (
@@ -88,9 +97,18 @@ export function isInput(
 		el.type === SimpleRadioButton ||
 		el.type === TextBox ||
 		el.type === NumberInput ||
-		el.type === Selector
+		el.type === Selector ||
+		el.type === LoadingTextArea ||
+		el.type === BigTextBox ||
+		el.type === DisabledMappedText
 	);
 }
+
+export const isFullWidthableElement = (
+	el: React.ReactElement<InputProps<any>>
+): el is React.ReactElement<InputProps<any> & { fullWidth: boolean }> =>
+	// @ts-ignore
+	typeof el.props.fullWidth !== 'undefined';
 
 /**
  * Similar helper function
@@ -98,7 +116,7 @@ export function isInput(
  * @param el
  */
 export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
-	if (typeof el === 'string' || typeof el === 'number') {
+	if (typeof el === 'string' || typeof el === 'number' || el === null) {
 		return false;
 	}
 	return el.type === Title || el.type === Label;
@@ -167,6 +185,11 @@ export interface FormProps<F> {
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
 	 */
 	values?: F;
+	/**
+	 * Whether or not to show a submit button. This is nice for when a submit button is not
+	 * nessecary
+	 */
+	showSubmitButton?: boolean;
 }
 
 /**
@@ -318,7 +341,9 @@ class SimpleForm<
 							if (!this.fields[child.props.name]) {
 								this.fields[child.props.name] = value;
 							}
-							fullWidth = child.props.fullWidth;
+							if (isFullWidthableElement(child)) {
+								fullWidth = child.props.fullWidth;
+							}
 							if (typeof fullWidth === 'undefined') {
 								fullWidth = false;
 							}
@@ -355,6 +380,7 @@ class SimpleForm<
 							} else {
 								if (this.props.children[i - 1].type !== Title) {
 									ret.unshift(
+										// @ts-ignore
 										React.cloneElement(
 											this.props.children[i - 1],
 											{
@@ -385,25 +411,26 @@ class SimpleForm<
 						);
 					}
 				)}
-				<div className="formbar">
-					<div
-						className="formbox"
-						style={{
-							height: '2px'
-						}}
-					/>
-					<div className="formbox">
-						<input
-							type="submit"
-							value={submitInfo.text}
-							className={submitInfo.className}
-							disabled={
-								this.state.disabled ||
-								submitInfo.disabled
-							}
+				{this.props.showSubmitButton ? (
+					<div className="formbar">
+						<div
+							className="formbox"
+							style={{
+								height: '2px'
+							}}
 						/>
+						<div className="formbox">
+							<input
+								type="submit"
+								value={submitInfo.text}
+								className={submitInfo.className}
+								disabled={
+									this.state.disabled || submitInfo.disabled
+								}
+							/>
+						</div>
 					</div>
-				</div>
+				) : null}
 				<div
 					style={{
 						overflow: 'auto',
@@ -453,7 +480,6 @@ export {
 	FileInput,
 	MultiRange,
 	TextInput,
-	TextArea,
 	DateTimeInput,
 	RadioButton,
 	MultCheckbox,
@@ -463,5 +489,7 @@ export {
 	SimpleRadioButton,
 	TextBox,
 	NumberInput,
-	Selector
+	Selector,
+	LoadingTextArea,
+	DisabledMappedText
 };

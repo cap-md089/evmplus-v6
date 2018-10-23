@@ -1,7 +1,7 @@
 import * as $ from 'jquery';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { MemberCreateError } from 'src/enums';
+import { MemberCreateError } from '../enums';
 import SigninLink from './SigninLink';
 
 export class SideNavigationLink extends React.Component<{ target: string }> {
@@ -41,14 +41,16 @@ export class SideNavigationReferenceLink extends React.Component<{
 	}
 }
 
-export interface SideNavigationState {
-	links: JSX.Element[];
+export type SideNavigationItem = SideNavigationLink | SideNavigationReferenceLink;
+
+export interface SideNavigationProps {
+	links: SideNavigationItem[];
 	member: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
 }
 
-export class SideNavigation extends React.Component<SideNavigationState> {
-	constructor(props: SideNavigationState) {
+export class SideNavigation extends React.Component<SideNavigationProps> {
+	constructor(props: SideNavigationProps) {
 		super(props);
 
 		this.signOut = this.signOut.bind(this);

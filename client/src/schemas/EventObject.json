@@ -65,6 +65,68 @@
             ],
             "type": "number"
         },
+        "DisplayInternalPointOfContact": {
+            "properties": {
+                "email": {
+                    "description": "All points of contact have an email",
+                    "type": "string"
+                },
+                "id": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ProspectiveMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NHQMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NullMemberReference"
+                        }
+                    ],
+                    "description": "CAP ID"
+                },
+                "name": {
+                    "description": "Used for compound documentation",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "All of them should have a phone number",
+                    "type": "string"
+                },
+                "receiveEventUpdates": {
+                    "description": "Email updates for the event",
+                    "type": "boolean"
+                },
+                "receiveRoster": {
+                    "description": "Email the roster to the POC at some point in time",
+                    "type": "boolean"
+                },
+                "receiveSignUpUpdates": {
+                    "description": "Email whenever someone signs up",
+                    "type": "boolean"
+                },
+                "receiveUpdates": {
+                    "description": "Receive a notification for them being a POC",
+                    "type": "boolean"
+                },
+                "type": {
+                    "$ref": "#/definitions/PointOfContactType.INTERNAL",
+                    "description": "Used for differentiating CAP points of contact"
+                }
+            },
+            "required": [
+                "email",
+                "id",
+                "name",
+                "phone",
+                "receiveEventUpdates",
+                "receiveRoster",
+                "receiveSignUpUpdates",
+                "receiveUpdates",
+                "type"
+            ],
+            "type": "object"
+        },
         "EventStatus": {
             "enum": [
                 0,
@@ -123,50 +185,35 @@
             ],
             "type": "object"
         },
-        "InternalPointOfContact": {
+        "NHQMemberReference": {
             "properties": {
-                "email": {
-                    "description": "All points of contact have an email",
-                    "type": "string"
-                },
                 "id": {
-                    "description": "CAP ID",
                     "type": "number"
                 },
-                "phone": {
-                    "description": "All of them should have a phone number",
+                "kind": {
+                    "enum": [
+                        "NHQMember"
+                    ],
                     "type": "string"
-                },
-                "receiveEventUpdates": {
-                    "description": "Email updates for the event",
-                    "type": "boolean"
-                },
-                "receiveRoster": {
-                    "description": "Email the roster to the POC at some point in time",
-                    "type": "boolean"
-                },
-                "receiveSignUpUpdates": {
-                    "description": "Email whenever someone signs up",
-                    "type": "boolean"
-                },
-                "receiveUpdates": {
-                    "description": "Receive a notification for them being a POC",
-                    "type": "boolean"
-                },
-                "type": {
-                    "$ref": "#/definitions/PointOfContactType.INTERNAL",
-                    "description": "Used for differentiating CAP points of contact"
                 }
             },
             "required": [
-                "email",
                 "id",
-                "phone",
-                "receiveEventUpdates",
-                "receiveRoster",
-                "receiveSignUpUpdates",
-                "receiveUpdates",
-                "type"
+                "kind"
+            ],
+            "type": "object"
+        },
+        "NullMemberReference": {
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "Null"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
             ],
             "type": "object"
         },
@@ -181,6 +228,24 @@
                 0
             ],
             "type": "number"
+        },
+        "ProspectiveMemberReference": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "ProspectiveMember"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "kind"
+            ],
+            "type": "object"
         }
     },
     "description": "The meat of what this website is designed for; events can be signed up for\nand hold information to facilitate easy information distribution",
@@ -408,7 +473,7 @@
             "items": {
                 "anyOf": [
                     {
-                        "$ref": "#/definitions/InternalPointOfContact"
+                        "$ref": "#/definitions/DisplayInternalPointOfContact"
                     },
                     {
                         "$ref": "#/definitions/ExternalPointOfContact"
@@ -510,8 +575,27 @@
             "type": "number"
         },
         "status": {
-            "$ref": "#/definitions/EventStatus",
-            "description": "Tentative, complete, cancelled, etc."
+            "additionalItems": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/EventStatus"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "description": "Tentative, complete, cancelled, etc.",
+            "items": [
+                {
+                    "$ref": "#/definitions/EventStatus"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "minItems": 2,
+            "type": "array"
         },
         "teamID": {
             "description": "If this is a team event, a team can be specified for future features",
@@ -590,13 +674,18 @@
         "meetDateTime",
         "meetLocation",
         "name",
+        "participationFee",
         "pickupDateTime",
         "pickupLocation",
         "pointsOfContact",
         "publishToWingCalendar",
+        "registration",
         "requiredEquipment",
         "requiredForms",
         "showUpcoming",
+        "signUpDenyMessage",
+        "signUpPartTime",
+        "sourceEvent",
         "startDateTime",
         "status",
         "teamID",
@@ -604,7 +693,8 @@
         "timeModified",
         "transportationDescription",
         "transportationProvided",
-        "uniform"
+        "uniform",
+        "wingEventNumber"
     ],
     "type": "object"
 }

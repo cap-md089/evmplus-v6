@@ -1,5 +1,5 @@
 export default function (...args: string[]): string {
-	let url: string = '';
+	let url: string = '/';
 
 	if (process && process.env && process.env.NODE_ENV === 'test') {
 		url = 'http://localhost:3001/';
@@ -9,5 +9,5 @@ export default function (...args: string[]): string {
 		url += `${arg}/`;
 	}
 
-	return url;
+	return url.slice(0, -1);
 }

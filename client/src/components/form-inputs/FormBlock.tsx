@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { isInput, isLabel, Label, Title } from '../SimpleForm';
+import {
+	isFullWidthableElement,
+	isInput,
+	isLabel,
+	Label,
+	Title
+} from '../SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
@@ -63,10 +69,9 @@ export default class FormBlock<T extends object> extends React.Component<
 						return;
 					} else {
 						const value =
-							typeof this.props.value !== 'undefined'
-								? typeof this.props.value[
-										child.props.name
-									] === 'undefined'
+							typeof this.props.value !== 'undefined' && this.props.value !== null
+								? typeof this.props.value[child.props.name] ===
+								  'undefined'
 									? ''
 									: this.props.value[child.props.name]
 								: typeof child.props.value === 'undefined'
@@ -75,7 +80,9 @@ export default class FormBlock<T extends object> extends React.Component<
 						if (!this.fields[child.props.name]) {
 							this.fields[child.props.name] = value;
 						}
-						fullWidth = child.props.fullWidth;
+						if (isFullWidthableElement(child)) {
+							fullWidth = child.props.fullWidth;
+						}
 						if (typeof fullWidth === 'undefined') {
 							fullWidth = false;
 						}
@@ -93,9 +100,7 @@ export default class FormBlock<T extends object> extends React.Component<
 						typeof (this.props.children as React.ReactChild[])[
 							i - 1
 						] !== 'undefined' &&
-						!isInput(
-							(this.props.children as React.ReactChild[])[i - 1]
-						)
+						!isInput(this.props.children[i - 1])
 					) {
 						if (
 							typeof this.props.children[i - 1] === 'string' ||
@@ -109,6 +114,7 @@ export default class FormBlock<T extends object> extends React.Component<
 						} else {
 							if (this.props.children[i - 1].type !== Title) {
 								ret.unshift(
+									// @ts-ignore
 									React.cloneElement(
 										this.props.children[i - 1],
 										{

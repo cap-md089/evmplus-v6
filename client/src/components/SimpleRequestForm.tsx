@@ -35,6 +35,14 @@ interface RequestFormProps<C, S> extends FormProps<C> {
 	 * @returns {Promise<boolean | any> | boolean | any} Data to control the request
 	 */
 	onSubmit?: (fields: C) => Promise<boolean | any> | boolean | any;
+	/**
+	 * The method used to submit the form
+	 */
+	method?: 'POST' | 'PUT';
+	/**
+	 * For PUT calls, to not try to parse the results
+	 */
+	parseReturn?: boolean;
 }
 
 export default class SimpleRequestForm<C extends object, S> extends Form<
@@ -96,16 +104,20 @@ export default class SimpleRequestForm<C extends object, S> extends Form<
 			if (pushData.push && this.props.url) {
 				myFetch(this.props.url, {
 					body: JSON.stringify(pushData.data),
-					method: 'POST',
+					method: this.props.method || 'POST',
 					credentials: 'same-origin',
 					headers: {
 						'Content-type': 'application/json',
 						Authorization: this.sessionID
 					}
 				})
-					.then(res => {
-						return res.json();
-					})
+					.then(
+						res =>
+							typeof this.props.parseReturn === 'undefined' ||
+							this.props.parseReturn
+								? res.json()
+								: res
+					)
 					.then((serverData: S) => {
 						this.setState({
 							disabled: false
@@ -114,9 +126,10 @@ export default class SimpleRequestForm<C extends object, S> extends Form<
 							this.props.onReceiveData(serverData, this.fields);
 						}
 					})
-					.catch((err: Error) => {
-						// tslint:disable-next-line:no-console
-						console.log(err);
+					.catch(err => {
+						this.setState({
+							disabled: false
+						});
 					});
 			} else {
 				this.setState({

@@ -1,26 +1,105 @@
-.calendar, .calendar table, .calendar tbody, .calendar caption {
+.calendar tbody, .calendar {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.calendar table, .calendar caption {
 	width: 100%;
 	border: 1px solid black;
 	border-collapse: collapse;
+	box-sizing: border-box;
+}
+
+.calendar caption {
+	padding: 5px;
+	font-size: 1.2em;
+}
+
+.calendar caption {
+	border-bottom-width: 0;
 }
 
 .calendar .left-link {
 	float: left;
+	font-size: calc(1em / 1.2em);
 }
 
 .calendar .right-link {
 	float: right;
+	font-size: calc(1em / 1.2em);
 }
 
-.calendar tbody td {
+.calendar tbody td, .calendar tbody th {
 	border: 1px solid black;
+	width: calc(100% / 7);
 	border-collapse: collapse;
+	box-sizing: border-box;
+	padding: 0;
+	max-width: 101px;
 }
 
-td.calendar-inmonth {
-	
+.calendar td.calendar-outmonth .date-name {
+	color: gray;
 }
 
-td.calendar-outmonth {
-	color: gray
+.calendar .date-name {
+	box-sizing: border-box;
+	padding: 2px;
+	margin: 0;
+	border-bottom: 1px solid black;
+}
+
+.calendar .events-list {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	height: 100px;
+}
+
+.calendar .events-list .event-item {
+	box-sizing: border-box;
+	width: calc(100% - 2.5px);
+	margin: 0px;
+	font-size: 12px;
+	padding: 1.5px;
+	padding-left: 2px;
+	height: 22.5px;
+	margin: calc(2.5px / 2);
+	background-color: #0f407d;
+	color: white;
+	border-radius: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.calendar .event-item.mergeRight {
+	border-top-right-radius: 0px;
+	border-bottom-right-radius: 0px;
+	margin-right: 0;
+	width: calc(100% - 1.25px);
+	text-overflow: unset;
+	overflow: visible;
+}
+
+.calendar .event-item.mergeLeft {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	margin-left: 0;
+	width: calc(100% - 1.25px);
+}
+
+.calendar .event-item.mergeLeft.mergeRight {
+	width: 100%;
+}
+
+.calendar .event-link {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	text-decoration: none;
+}
+
+.calendar .event-item.first-event-name {
+	padding-left: 5px;
 }

@@ -16,7 +16,7 @@ interface DownloadSelectorState<T extends Identifiable> {
 	error: boolean;
 }
 
-type CombinedDownloadSelectorProps<
+export type CombinedDownloadSelectorProps<
 	T extends Identifiable
 > = CombinedSelectorProps<T> & DownloadSelectorProps;
 

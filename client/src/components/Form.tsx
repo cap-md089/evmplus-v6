@@ -8,21 +8,21 @@ import {
 	FormProps,
 	isInput,
 	ListEditor,
+	LoadingTextArea,
 	MultCheckbox,
 	MultiRange,
 	NumberInput,
 	RadioButton,
 	Selector,
 	SimpleRadioButton,
-	TextArea,
 	TextInput
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
 export {
+	LoadingTextArea,
 	FileInput,
 	TextInput,
-	TextArea,
 	MultiRange,
 	DateTimeInput,
 	RadioButton,
@@ -35,6 +35,10 @@ export {
 	Selector
 };
 
+export interface BasicFormProps<T> extends FormProps<T> {
+	rowClassName?: string;
+}
+
 /**
  * The form itself
  *
@@ -46,7 +50,7 @@ export {
  */
 class Form<
 	C = {},
-	P extends FormProps<C> = FormProps<C>
+	P extends BasicFormProps<C> = BasicFormProps<C>
 > extends React.Component<
 	P,
 	{
@@ -78,6 +82,7 @@ class Form<
 		};
 
 		this.onChange = this.onChange.bind(this);
+		this.onInitialize = this.onInitialize.bind(this);
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as C;
@@ -152,37 +157,44 @@ class Form<
 			<form onSubmit={this.submit} className="asyncForm">
 				{React.Children.map(
 					this.props.children,
-					(child: React.ReactChild, i) =>
-						isInput(child)
-							? React.cloneElement(
-									child as React.ReactElement<{
-										onUpdate: (
-											e: { name: string; value: any }
-										) => void;
-									}>,
-									{
-										onUpdate: this.onChange
+					(child: React.ReactChild, i) => {
+						if (isInput(child)) {
+							const value =
+								typeof this.props.values !== 'undefined'
+									? typeof this.props.values[
+											child.props.name
+									  ] === 'undefined'
+										? ''
+										: this.props.values[child.props.name]
+									: typeof child.props.value === 'undefined'
+										? ''
+										: child.props.value;
+							return (
+								<div
+									className={
+										this.props.rowClassName ||
+										'basic-form-bar'
 									}
-							  )
-							: child
+								>
+									{React.cloneElement(child, {
+										onUpdate: this.onChange,
+										onInitialize: this.onInitialize,
+										value,
+										key: i
+									})}
+								</div>
+							);
+						}
+						return child;
+					}
 				)}
-				<div className="formbar">
-					<div
-						className="formbox"
-						style={{
-							height: '2px'
-						}}
+				<div className={this.props.rowClassName || 'basic-form-bar'}>
+					<input
+						type="submit"
+						value={submitInfo.text}
+						className={submitInfo.className}
+						disabled={this.state.disabled || submitInfo.disabled}
 					/>
-					<div className="formbox">
-						<input
-							type="submit"
-							value={submitInfo.text}
-							className={submitInfo.className}
-							disabled={
-								this.state.disabled || submitInfo.disabled
-							}
-						/>
-					</div>
 				</div>
 			</form>
 		);
@@ -192,6 +204,16 @@ class Form<
 	 * What is used to describe when a form element changes
 	 */
 	protected onChange(e: { name: string; value: any }) {
+		this.fields[e.name] = e.value;
+		if (this.props.onChange) {
+			this.props.onChange(this.fields);
+		}
+	}
+
+	/**
+	 * Initialization of form components
+	 */
+	protected onInitialize(e: { name: string; value: any }) {
 		this.fields[e.name] = e.value;
 		if (this.props.onChange) {
 			this.props.onChange(this.fields);

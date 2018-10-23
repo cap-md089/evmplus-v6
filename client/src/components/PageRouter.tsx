@@ -3,6 +3,8 @@ import { Route, RouteComponentProps } from 'react-router-dom';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Calendar from '../pages/Calendar';
+import Drive from '../pages/Drive';
+import EmailList from '../pages/EmailList';
 import LinkList from '../pages/EventLinkList';
 import EventViewer from '../pages/EventViewer';
 import Main from '../pages/Main';
@@ -11,6 +13,7 @@ import Page from '../pages/Page';
 import RackBuilder from '../pages/RibbonRack';
 import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
+import { SideNavigationItem } from './SideNavigation';
 
 const pages: Array<{
 	url: string;
@@ -29,6 +32,11 @@ const pages: Array<{
 	},
 	{
 		url: '/blog',
+		component: Blog,
+		exact: false
+	},
+	{
+		url: '/news',
 		component: Blog,
 		exact: false
 	},
@@ -61,19 +69,42 @@ const pages: Array<{
 		url: '/calendar/:month?/:year?',
 		component: Calendar,
 		exact: false
+	},
+	{
+		url: '/emailselector',
+		component: EmailList,
+		exact: false
+	},
+	{
+		url: '/filemanagement',
+		component: Drive,
+		exact: false
+	},
+	{
+		url: '/drive',
+		component: Drive,
+		exact: false
 	}
 ];
 
 const composeElement = (
 	El: typeof Page,
 	member: SigninReturn,
-	authorizeUser: (arg: SigninReturn) => void
+	authorizeUser: (arg: SigninReturn) => void,
+	updateSideNav: (links: SideNavigationItem[]) => void,
+	updateBreadcrumbs: (links: BreadCrumb[]) => void
 ) => (props: RouteComponentProps<any>) => (
-	<El routeProps={props} member={member} authorizeUser={authorizeUser} />
+	<El
+		routeProps={props}
+		member={member}
+		authorizeUser={authorizeUser}
+		updateSideNav={updateSideNav}
+		updateBreadCrumbs={updateBreadcrumbs}
+	/>
 );
 
 export default class PageRouter extends React.Component<{
-	updateSideNav: (links: JSX.Element[]) => void;
+	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
 	member: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
@@ -90,7 +121,9 @@ export default class PageRouter extends React.Component<{
 							component={composeElement(
 								value.component,
 								this.props.member,
-								this.props.authorizeUser
+								this.props.authorizeUser,
+								this.props.updateSideNav,
+								this.props.updateBreadcrumbs
 							)}
 						/>
 					);

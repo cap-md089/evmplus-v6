@@ -1,8 +1,80 @@
-import { DraftHandleValue, Editor, EditorState, RichUtils } from 'draft-js';
+import {
+	AtomicBlockUtils,
+	ContentBlock,
+	ContentState,
+	DraftHandleValue,
+	Editor,
+	EditorState,
+	RichUtils
+} from 'draft-js';
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import urlFormat from '../../lib/urlFormat';
+import FileDialogue from '../FileDialogue';
 import { InputProps } from './Input';
 
-interface TextAreaProps extends InputProps<EditorState> {
+export const mediaRenderFunction = (
+	block: ContentBlock,
+	contentState: ContentState
+) => {
+	if (block.getType() === 'atomic') {
+		const entity = block.getEntityAt(0);
+		if (!entity) {
+			return null;
+		}
+		const type = contentState.getEntity(entity).getType();
+		if (type === 'IMAGE') {
+			return {
+				component: Media,
+				editable: false
+			};
+		}
+		if (type === 'HYPERLINK') {
+			return {
+				component: HyperLink,
+				editable: false
+			};
+		}
+		return null;
+	}
+	return null;
+};
+
+const HyperLink: React.SFC<any> = ({ block, contentState }) => {
+	const { href, text } = contentState
+		.getEntity(block.getEntityAt(0))
+		.getData();
+
+	if (
+		!!href.match(/^(https?\:\/\/)?(www\.)?capunit\.com\/?/) ||
+		href[0] === '/'
+	) {
+		return <Link to={href}>{text}</Link>;
+	} else {
+		return (
+			<a href={href} target="_blank">
+				{text}
+			</a>
+		);
+	}
+};
+
+const Media: React.SFC<any> = ({ block, contentState }) => {
+	const { src } = contentState.getEntity(block.getEntityAt(0)).getData();
+
+	return (
+		<div>
+			<img
+				style={{
+					width: '100%'
+				}}
+				src={src}
+			/>
+		</div>
+	);
+};
+
+export interface TextAreaProps extends InputProps<EditorState> {
 	/**
 	 * Whether or not to make the input span the entire width of the row.
 	 */
@@ -20,7 +92,28 @@ interface TextAreaProps extends InputProps<EditorState> {
  * 			onChange={() => null}
  * 		/>
  */
-export default class TextArea extends React.Component<TextAreaProps> {
+export default class TextArea extends React.Component<
+	TextAreaProps,
+	{
+		fileDialogueOpen: boolean;
+	}
+> {
+	public state = {
+		fileDialogueOpen: false,
+		draft: null
+	};
+
+	private imagePromise = {
+		resolve: null as null | ((obj: FileObject[]) => void),
+		getPromise: () =>
+			new Promise<FileObject[]>((res, rej) => {
+				this.imagePromise.resolve = (data: FileObject[]) => {
+					res(data);
+					this.imagePromise.resolve = null;
+				};
+			})
+	};
+
 	constructor(props: TextAreaProps) {
 		super(props);
 
@@ -38,11 +131,15 @@ export default class TextArea extends React.Component<TextAreaProps> {
 		this.toggleHeading6 = this.toggleHeading6.bind(this);
 		this.toggleUL = this.toggleUL.bind(this);
 		this.toggleOL = this.toggleOL.bind(this);
+		this.addImage = this.addImage.bind(this);
+
+		this.onFileSelect = this.onFileSelect.bind(this);
+		this.filterImageFiles = this.filterImageFiles.bind(this);
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: (this.props.value || EditorState.createEmpty())
+				value: this.props.value || EditorState.createEmpty()
 			});
 		}
 	}
@@ -60,6 +157,12 @@ export default class TextArea extends React.Component<TextAreaProps> {
 					...this.props.boxStyles
 				}}
 			>
+				<FileDialogue
+					open={this.state.fileDialogueOpen}
+					onReturn={this.onFileSelect}
+					filter={this.filterImageFiles}
+					multiple={false}
+				/>
 				<div className="textarea-box">
 					<div className="textarea-box-controls">
 						<span
@@ -188,6 +291,17 @@ export default class TextArea extends React.Component<TextAreaProps> {
 						>
 							U
 						</span>
+						<span
+							onMouseDown={this.addImage}
+							style={{
+								backgroundImage: 'url(/images/image.png)',
+								display: 'inline-block',
+								width: 29,
+								height: 25,
+								backgroundSize: '29px 25px',
+								float: 'left'
+							}}
+						/>
 					</div>
 					<div
 						className="textarea-box-editor"
@@ -201,6 +315,12 @@ export default class TextArea extends React.Component<TextAreaProps> {
 							editorState={editorState}
 							handleKeyCommand={this.handleKeyCommand}
 							onChange={this.onChange}
+							blockRendererFn={(block: ContentBlock) =>
+								mediaRenderFunction(
+									block,
+									this.editorState.getCurrentContent()
+								)
+							}
 						/>
 					</div>
 				</div>
@@ -209,7 +329,7 @@ export default class TextArea extends React.Component<TextAreaProps> {
 	}
 
 	private get editorState() {
-		return (this.props.value || EditorState.createEmpty());
+		return this.props.value || EditorState.createEmpty();
 	}
 
 	private toggleBold(e: React.MouseEvent<HTMLSpanElement>) {
@@ -285,6 +405,49 @@ export default class TextArea extends React.Component<TextAreaProps> {
 		);
 	}
 
+	private async addImage(e: React.MouseEvent<HTMLSpanElement>) {
+		e.preventDefault();
+		this.setState({
+			fileDialogueOpen: true
+		});
+
+		const fileObject = await this.imagePromise.getPromise();
+
+		if (fileObject.length !== 1) {
+			return;
+		}
+
+		const contentState = this.editorState.getCurrentContent();
+
+		const contentStateWithEntityKey = contentState.createEntity(
+			'IMAGE',
+			'IMMUTABLE',
+			{
+				src: urlFormat('api', 'files', fileObject[0].id, 'export'),
+				width: '100%',
+				height: '100%',
+				float: 'left'
+			}
+		);
+
+		const entityKey = contentStateWithEntityKey.getLastCreatedEntityKey();
+
+		const newState = AtomicBlockUtils.insertAtomicBlock(
+			EditorState.set(this.editorState, {
+				currentContent: contentStateWithEntityKey
+			}),
+			entityKey,
+			' '
+		);
+
+		this.onChange(
+			EditorState.forceSelection(
+				newState,
+				newState.getCurrentContent().getSelectionAfter()
+			)
+		);
+	}
+
 	private onChange(editorState: EditorState): void {
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
@@ -315,5 +478,22 @@ export default class TextArea extends React.Component<TextAreaProps> {
 			return 'handled';
 		}
 		return 'not-handled';
+	}
+
+	private onFileSelect(file: [FileObject]) {
+		this.setState({
+			fileDialogueOpen: false
+		});
+		if (this.imagePromise.resolve) {
+			this.imagePromise.resolve(file);
+		}
+	}
+
+	private filterImageFiles(
+		file: FileObject,
+		index: number,
+		array: FileObject[]
+	) {
+		return !!file.contentType.match(/image\//);
 	}
 }

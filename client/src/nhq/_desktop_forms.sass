@@ -67,6 +67,9 @@ form.asyncForm
 		input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus, input[type="time"]:focus, input[type="datetime"]:focus, input[type="datetime-local"]:focus, input[type="url"]:focus
 			@include box-shadows(inset 0 0 1em #258eea)
 
+		input[type="text"]:disabled
+			background: #aaa
+
 		input[type="file"]
 			width: 0.1px
 			height: 0.1px
