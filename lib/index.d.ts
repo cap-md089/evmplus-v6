@@ -1130,6 +1130,10 @@ declare global {
 		 */
 		sessionID: string;
 		/**
+		 * Cookies used to log into CAP NHQ
+		 */
+		cookie: string;
+		/**
 		 * Descriminant
 		 */
 		type: 'CAPNHQMember';
