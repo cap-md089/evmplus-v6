@@ -3,8 +3,8 @@ import req from './nhq-request';
 
 export default async (
 	cookie: string
-): Promise<MemberContact> => {
-	const contact: MemberContact = {
+): Promise<CAPMemberContact> => {
+	const contact: CAPMemberContact = {
 		ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		CADETPARENTEMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
@@ -46,8 +46,8 @@ export default async (
 		}
 
 		if (texts[4] === 'False' || texts[4] === '') {
-			contact[texts[0] as MemberContactType][
-				texts[1] as MemberContactPriority
+			contact[texts[0] as CAPMemberContactType][
+				texts[1] as CAPMemberContactPriority
 			] = texts[2];
 		}
 	});

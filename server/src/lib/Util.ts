@@ -33,7 +33,8 @@ export async function orderlyExecute<T, S>(
 
 export const json = <T>(res: express.Response, values: T) => res.json(values);
 
-export const getSchemaValidator = (schema: any) => new ajv({ allErrors: true }).compile(schema);
+export const getSchemaValidator = (schema: any) =>
+	new ajv({ allErrors: true }).compile(schema);
 
 export function getFullSchemaValidator<T>(schemaName: string) {
 	const schema = require(join(conf.schemaPath, schemaName));
@@ -46,7 +47,9 @@ export function getFullSchemaValidator<T>(schemaName: string) {
 export async function streamAsyncGeneratorAsJSONArray<T>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,
-	functionHandle: (val: T) => Promise<string | false> | string | false = JSON.stringify
+	functionHandle: (
+		val: T
+	) => Promise<string | false> | string | false = JSON.stringify
 ): Promise<void> {
 	res.header('Content-type', 'application/json');
 
@@ -74,19 +77,15 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,
 	functionHandle: (val: T) => Promise<R | false> | R | false
-): Promise<void>  {
-	streamAsyncGeneratorAsJSONArray(
-		res,
-		iterator,
-		async val => {
-			const x = await functionHandle(val) as any;
-			if (x === false) {
-				return x;
-			} else {
-				return JSON.stringify(x);
-			}
+): Promise<void> {
+	streamAsyncGeneratorAsJSONArray(res, iterator, async val => {
+		const x = (await functionHandle(val)) as any;
+		if (x === false) {
+			return x;
+		} else {
+			return JSON.stringify(x);
 		}
-	)
+	});
 }
 
 export async function getTestTools(testconf: typeof Configuration) {
@@ -108,3 +107,19 @@ export async function getTestTools(testconf: typeof Configuration) {
 		schema
 	};
 }
+
+export interface ExtendedResponse extends express.Response {
+	sjson: <T>(obj: T | HTTPError) => ExtendedResponse;
+}
+
+const convertResponse = (res: express.Response): ExtendedResponse => {
+	(res as ExtendedResponse).sjson = <T>(obj: T | HTTPError) => convertResponse(res.json(obj));
+	return res as ExtendedResponse;
+}
+
+// tslint:disable-next-line:ban-types
+export const extraTypes = (
+	func: (req: express.Request, res: ExtendedResponse) => void
+) => (req: express.Request, res: express.Response) => {
+	func(req, convertResponse(res));
+};

@@ -10,7 +10,6 @@ import {
 } from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
 import { MemberRequest } from '../../../lib/MemberBase';
-import ProspectiveMember from '../../../lib/members/ProspectiveMember';
 import { json } from '../../../lib/Util';
 
 const parseHeaders = (lines: string[]) => {
@@ -115,16 +114,7 @@ export default (req: MemberRequest, res: express.Response) => {
 				'Files'
 			);
 
-			const reference: MemberReference =
-				req.member instanceof ProspectiveMember
-					? {
-							id: req.member.prospectiveID,
-							kind: 'ProspectiveMember'
-					  }
-					: {
-							id: req.member.id,
-							kind: 'NHQMember'
-					  };
+			const reference: MemberReference = req.member.getReference();
 
 			const uploadedFile: RawFileObject = {
 				kind: 'drive#file',

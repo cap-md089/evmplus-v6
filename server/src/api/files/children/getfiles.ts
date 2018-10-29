@@ -1,9 +1,10 @@
 import * as express from 'express';
-import { FileUserAccessControlPermissions } from '../../../../../lib/index';
+import {
+	FileUserAccessControlPermissions,
+	MemberCreateError
+} from '../../../../../lib/index';
 import File from '../../../lib/File';
-import { ConditionalMemberRequest } from '../../../lib/MemberBase';
-import CAPWATCHMember from '../../../lib/members/CAPWATCHMember';
-import ProspectiveMember from '../../../lib/members/ProspectiveMember';
+import MemberBase, { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
 
 export default async (req: ConditionalMemberRequest, res: express.Response) => {
@@ -59,30 +60,20 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 					return false;
 				}
 
-				let uploader;
-				if (file.owner.kind === 'ProspectiveMember') {
-					uploader = {
-						kind: 'ProspectiveMember' as 'ProspectiveMember',
-						object: await ProspectiveMember.Get(
-							file.owner.id,
-							req.account,
-							req.mysqlx
-						)
-					};
-				} else if (file.owner.kind === 'NHQMember') {
-					uploader = {
-						kind: 'NHQMember' as 'NHQMember',
-						object: await CAPWATCHMember.Get(
-							file.owner.id,
-							req.account,
-							req.mysqlx
-						)
-					};
-				}
+				const uploaderObject = await MemberBase.ResolveReference(
+					file.owner,
+					req.account,
+					req.mysqlx
+				);
 
 				const fullFile: FullFileObject = {
 					...file.toRaw(),
-					uploader
+					uploader: {
+						error: MemberCreateError.NONE,
+						member: uploaderObject,
+						sessionID: '',
+						valid: true
+					}
 				};
 
 				return fullFile;

@@ -79,7 +79,7 @@ export const generateResults = async function*<T>(
 	while (!done || results.queue.length > 0) {
 		try {
 			const value = await new Promise<T>((res, rej) => {
-				results.doCallback((item) => {
+				results.doCallback(item => {
 					if (!item) {
 						rej();
 					} else {
@@ -89,7 +89,7 @@ export const generateResults = async function*<T>(
 			});
 
 			if (value) {
-				yield value
+				yield value;
 			}
 		} catch (e) {
 			done = true;
@@ -99,7 +99,7 @@ export const generateResults = async function*<T>(
 
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
-	bind: Partial<T>
+	bind: Bound<T>
 ): mysql.CollectionFind<T> =>
 	find
 		.find(
@@ -111,12 +111,12 @@ export const findAndBind = <T>(
 
 export const selectAndBind = <T>(
 	find: mysql.Table<T>,
-	bind: Partial<T>
+	bind: Bound<T>
 ): mysql.TableSelect<T> => find.select().bind(bind);
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
-	bind: Partial<T>
+	bind: Bound<T>
 ): mysql.CollectionModify<T> =>
 	modify
 		.modify(
@@ -128,8 +128,15 @@ export const modifyAndBind = <T>(
 
 export const updatetAndBind = <T>(
 	modify: mysql.Table<T>,
-	bind: Partial<T>
-): mysql.TableUpdate<T> => modify.update().bind(bind);
+	bind: Bound<T>
+): mysql.TableUpdate<T> =>
+	modify
+		.update(
+			Object.keys(bind)
+				.map(val => `${val} = :${val}`)
+				.join(' AND ')
+		)
+		.bind(bind);
 
 export const convertMySQLDateToDateTime = (datestring: string) =>
 	convertMySQLTimestampToDateTime(datestring + ' 00:00:00');

@@ -134,7 +134,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			parentID: '',
 			owner: {
 				id: 542488,
-				kind: 'NHQMember'
+				type: 'CAPNHQMember'
 			},
 			folderPath: [
 				{
@@ -319,19 +319,22 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 				return true;
 			}
 
-			if (member instanceof ProspectiveMember) {
-				if (
-					this.owner.kind === 'ProspectiveMember' &&
-					member.prospectiveID === this.owner.id
-				) {
-					return true;
-				}
-				if (
-					this.owner.kind === 'NHQMember' &&
-					member.id === this.owner.id
-				) {
-					return true;
-				}
+			// if (member instanceof ProspectiveMember) {
+			// 	if (
+			// 		this.owner.type === 'ProspectiveMember' &&
+			// 		member.prospectiveID === this.owner.id
+			// 	) {
+			// 		return true;
+			// 	}
+			// 	if (
+			// 		this.owner.kind === 'NHQMember' &&
+			// 		member.id === this.owner.id
+			// 	) {
+			// 		return true;
+			// 	}
+			// }
+			if (member.matchesReference(this.owner)) {
+				return true;
 			}
 		}
 
@@ -382,23 +385,20 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		if (valid) {
 			return true;
 		}
-
-		memberPermissions.forEach(
-			perm =>
-				(valid =
-					valid ||
-					(
-						// tslint:disable-next-line:no-bitwise
-						(perm.permission & permission) > 0 &&
-						perm.reference.kind !== 'Null' &&
-						perm.reference.id ===
-							(member instanceof ProspectiveMember
-								? member.prospectiveID
-								: member.id) &&
-						perm.reference.kind === member.kind
+		
+		if (member) {
+			memberPermissions.forEach(
+				perm =>
+					(valid =
+						valid ||
+						(
+							// tslint:disable-next-line:no-bitwise
+							(perm.permission & permission) > 0 &&
+							member.matchesReference(perm.reference)
+						)
 					)
-				)
-		);
+			);
+		}
 
 		if (valid) {
 			return true;

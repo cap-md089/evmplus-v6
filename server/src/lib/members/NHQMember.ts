@@ -9,7 +9,7 @@ import { promisify } from 'util';
 import conf from '../../conf';
 import { MemberCAPWATCHErrors, MemberCreateError } from '../../enums';
 import Account, { AccountRequest } from '../Account';
-import { default as Member, default as MemberBase } from '../MemberBase';
+import { default as MemberBase } from '../MemberBase';
 import { getPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
@@ -20,7 +20,7 @@ interface MemberSession extends Identifiable {
 	id: number;
 	expireTime: number;
 
-	contact: MemberContact;
+	contact: CAPMemberContact;
 	memberRank: string;
 	cookieData: string;
 	nameFirst: string;
@@ -43,7 +43,7 @@ export interface MemberRequest extends AccountRequest {
 	member: NHQMember | ProspectiveMember;
 }
 
-export default class NHQMember extends Member {
+export default class NHQMember extends CAPWATCHMember implements CAPMemberObject {
 	public static async Create(
 		username: string | number,
 		password: string,
@@ -135,13 +135,13 @@ export default class NHQMember extends Member {
 					memberInfo[0].nameLast,
 					memberInfo[0].nameSuffix
 				]),
-				kind: 'NHQMember',
+				type: 'CAPNHQMember',
 				permissions,
 				flight: extraInfo.flight,
-				teamIDs: extraInfo.teamIDs
+				teamIDs: extraInfo.teamIDs,
+				sessionID
 			},
 			cookie,
-			sessionID,
 			schema,
 			account,
 			extraInfo
@@ -182,7 +182,13 @@ export default class NHQMember extends Member {
 					const id = decoded.id;
 
 					if (typeof id === 'string') {
-						ProspectiveMember.ExpressMiddleware(req, res, next, id, header);
+						ProspectiveMember.ExpressMiddleware(
+							req,
+							res,
+							next,
+							id,
+							header
+						);
 						return;
 					}
 
@@ -207,7 +213,9 @@ export default class NHQMember extends Member {
 							)
 						]);
 
-						const permissions = getPermissions(extraInfo.accessLevel);
+						const permissions = getPermissions(
+							extraInfo.accessLevel
+						);
 
 						req.member = new NHQMember(
 							{
@@ -228,12 +236,12 @@ export default class NHQMember extends Member {
 									sess[0].nameLast,
 									sess[0].nameSuffix
 								]),
-								kind: 'NHQMember',
+								type: 'CAPNHQMember',
 								permissions,
 								flight: sess[0].flight,
-								teamIDs: extraInfo.teamIDs
+								teamIDs: extraInfo.teamIDs,
+								sessionID: sess[0].cookieData
 							},
-							sess[0].cookieData,
 							header,
 							req.mysqlx,
 							req.account,
@@ -274,6 +282,11 @@ export default class NHQMember extends Member {
 	 * Stores the member sessions in memory as it is faster than a database
 	 */
 	protected static memberSessions: MemberSession[] = [];
+
+	/**
+	 * Limit IDs to CAP IDs
+	 */
+	public id: number = 0;
 
 	/**
 	 * Permissions for the user
@@ -317,7 +330,7 @@ export default class NHQMember extends Member {
 	 *
 	 * The instanceof operator may work as well
 	 */
-	public kind: MemberType = 'NHQMember';
+	public type: CAPMemberType = 'CAPNHQMember';
 
 	protected extraInfo: ExtraMemberInformation;
 
@@ -327,9 +340,8 @@ export default class NHQMember extends Member {
 	private cookie: string = '';
 
 	private constructor(
-		data: MemberObject,
+		data: NHQMemberObject,
 		cookie: string,
-		sessionID: string,
 		schema: Schema,
 		account: Account,
 		extraInfo: ExtraMemberInformation
@@ -337,7 +349,7 @@ export default class NHQMember extends Member {
 		super(data, schema, account);
 		this.accessLevel = extraInfo.accessLevel;
 		this.cookie = cookie;
-		this.sessionID = sessionID;
+		this.sessionID = data.sessionID;
 		this.extraInfo = extraInfo;
 
 		if (this.isRioux) {
@@ -376,10 +388,7 @@ export default class NHQMember extends Member {
 		return retData;
 	}
 
-	public async streamCAPWATCHFile(
-		id: number,
-		stream: NodeJS.WritableStream
-	) {
+	public async streamCAPWATCHFile(id: number, stream: NodeJS.WritableStream) {
 		const path = `/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
 
 		return new Promise<void>(resolve => {
@@ -502,7 +511,7 @@ export default class NHQMember extends Member {
 				flight: member.flight
 			};
 		} else {
-			member = await ProspectiveMember.Get(
+			member = await ProspectiveMember.GetProspective(
 				su,
 				this.requestingAccount,
 				this.schema
@@ -515,7 +524,7 @@ export default class NHQMember extends Member {
 	}
 
 	public getReference = (): NHQMemberReference => ({
-		kind: 'NHQMember',
+		type: 'CAPNHQMember',
 		id: this.id
-	})
+	});
 }

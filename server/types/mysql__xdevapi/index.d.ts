@@ -1,5 +1,9 @@
 type UndefinedToNull<T> = {
 	[P in keyof T]: T[P] extends undefined ? null : T[P]
+};
+
+type Bound<T> = {
+	[P in keyof T]?: T[P] extends Array<infer U> ? U : T[P];
 }
 
 declare module '@mysql/xdevapi' {
@@ -59,8 +63,11 @@ declare module '@mysql/xdevapi' {
 	}
 
 	interface Binding<T> {
-		bind(parameter: Partial<T>): Binding<T>;
-		bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): Binding<T>;
+		bind(parameter: Bound<T>): Binding<T>;
+		bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): Binding<T>;
 	}
 
 	interface CollectionOrdering {
@@ -160,8 +167,11 @@ declare module '@mysql/xdevapi' {
 
 		public fields(projections: string[] | string): CollectionFind<T>;
 
-		public bind(parameter: Partial<T>): CollectionFind<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionFind<T>;
+		public bind(parameter: Bound<T>): CollectionFind<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): CollectionFind<T>;
 
 		public sort(...SortExprStr: string[]): CollectionFind<T>;
 		public sort(SortExprStr: string | string[]): CollectionFind<T>;
@@ -180,14 +190,17 @@ declare module '@mysql/xdevapi' {
 		public lockShared(mode: LockContention): CollectionFind<T>;
 	}
 
-	class CollectionModify<T> implements Binding<T>, CollectionOrdering, Limiting {
-		public arrayAppend<
-			K extends keyof T = keyof T
-		>(field: K, any: T[K] extends Array<infer U> ? U : never): CollectionModify<T>;
+	class CollectionModify<T>
+		implements Binding<T>, CollectionOrdering, Limiting {
+		public arrayAppend<K extends keyof T = keyof T>(
+			field: K,
+			any: T[K] extends Array<infer U> ? U : never
+		): CollectionModify<T>;
 
-		public arrayInsert<
-			K extends keyof T = keyof T
-		>(field: K, any: T[K] extends Array<infer U> ? U : never): CollectionModify<T>;
+		public arrayInsert<K extends keyof T = keyof T>(
+			field: K,
+			any: T[K] extends Array<infer U> ? U : never
+		): CollectionModify<T>;
 
 		public execute(): Promise<Result>;
 
@@ -195,12 +208,18 @@ declare module '@mysql/xdevapi' {
 
 		public patch(properties: Partial<T>): CollectionModify<T>;
 
-		public set<K extends keyof T = keyof T>(field: K, any: T[K]): CollectionModify<T>;
+		public set<K extends keyof T = keyof T>(
+			field: K,
+			any: T[K]
+		): CollectionModify<T>;
 
 		public unset(fields: string | string[]): CollectionModify<T>;
 
-		public bind(parameter: Partial<T>): CollectionModify<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionModify<T>;
+		public bind(parameter: Bound<T>): CollectionModify<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): CollectionModify<T>;
 
 		public sort(...SortExprStr: string[]): CollectionModify<T>;
 		public sort(SortExprStr: string | string[]): CollectionModify<T>;
@@ -210,11 +229,15 @@ declare module '@mysql/xdevapi' {
 		public offset(value: number): CollectionModify<T>;
 	}
 
-	class CollectionRemove<T> implements Binding<T>, CollectionOrdering, Limiting {
+	class CollectionRemove<T>
+		implements Binding<T>, CollectionOrdering, Limiting {
 		public execute(): Promise<Result>;
 
-		public bind(parameter: Partial<T>): CollectionRemove<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): CollectionRemove<T>;
+		public bind(parameter: Bound<T>): CollectionRemove<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): CollectionRemove<T>;
 
 		public sort(...SortExprStr: string[]): CollectionRemove<T>;
 		public sort(SortExprStr: string | string[]): CollectionRemove<T>;
@@ -250,9 +273,13 @@ declare module '@mysql/xdevapi' {
 
 		public getClassName(): string;
 
-		public getCollection<T = any>(name: string): Collection<UndefinedToNull<T>>;
+		public getCollection<T = any>(
+			name: string
+		): Collection<UndefinedToNull<T>>;
 
-		public getCollectionAsTable<T = any>(name: string): Table<UndefinedToNull<T>>;
+		public getCollectionAsTable<T = any>(
+			name: string
+		): Table<UndefinedToNull<T>>;
 
 		public getCollections(): Promise<Collection[]>;
 
@@ -402,7 +429,7 @@ declare module '@mysql/xdevapi' {
 	class Table<T = any> {
 		/**
 		 * Retrieve the total number of rows in the table
-		 * 
+		 *
 		 * @deprecated since version 8.0.12. Will be removed in future versions
 		 */
 		public count(): Promise<number>;
@@ -430,8 +457,11 @@ declare module '@mysql/xdevapi' {
 	class TableDelete<T> implements Binding<T>, Limiting, TableOrdering {
 		public execute(): Promise<Result>;
 
-		public bind(parameters: Partial<T>): TableDelete<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableDelete<T>;
+		public bind(parameter: Bound<T>): TableDelete<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): TableDelete<T>;
 
 		public limit(count: number, offset?: number): TableDelete<T>;
 
@@ -450,7 +480,13 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class TableSelect<T>
-		implements Binding<T>, Grouping, Limiting, Locking, TableFiltering, TableOrdering {
+		implements
+			Binding<T>,
+			Grouping,
+			Limiting,
+			Locking,
+			TableFiltering,
+			TableOrdering {
 		public execute(
 			rowcb?: (item: T) => void,
 			metacb?: (metadata: any) => void
@@ -458,8 +494,11 @@ declare module '@mysql/xdevapi' {
 
 		public getViewDefinition(): string;
 
-		public bind(parameter: Partial<T>): TableSelect<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableSelect<T>;
+		public bind(parameter: Bound<T>): TableSelect<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): TableSelect<T>;
 
 		public sort(...SortExprStr: string[]): TableSelect<T>;
 		public sort(SortExprStr: string | string[]): TableSelect<T>;
@@ -489,8 +528,11 @@ declare module '@mysql/xdevapi' {
 
 		public set(field: string, expr: string): TableUpdate<T>;
 
-		public bind(parameter: Partial<T>): TableUpdate<T>;
-		public bind<K extends keyof T = keyof T>(parameter: K, value: T[K]): TableUpdate<T>;
+		public bind(parameter: Bound<T>): TableUpdate<T>;
+		public bind<K extends keyof T = keyof T>(
+			parameter: K,
+			value: T[K] extends Array<infer U> ? U : T[K]
+		): TableUpdate<T>;
 
 		public limit(count: number, offset?: number): TableUpdate<T>;
 
@@ -498,7 +540,6 @@ declare module '@mysql/xdevapi' {
 
 		public orderBy(SortExprStr: string | string[]): TableUpdate<T>;
 	}
-
 
 	/**
 	 * Load a new or existing session

@@ -6,7 +6,6 @@ import {
 	FileUserAccessControlType
 } from '../../../../../lib/index';
 import { MemberRequest } from '../../../lib/MemberBase';
-import ProspectiveMember from '../../../lib/members/ProspectiveMember';
 
 export default async (req: MemberRequest, res: express.Response) => {
 	if (
@@ -23,16 +22,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 	const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 
-	const reference: MemberReference =
-		req.member instanceof ProspectiveMember
-			? {
-					id: req.member.prospectiveID,
-					kind: 'ProspectiveMember'
-			  }
-			: {
-					id: req.member.id,
-					kind: 'NHQMember'
-			  };
+	const reference = req.member.getReference();
 
 	await fileCollection
 		.add({
@@ -49,8 +39,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 				{
 					type: FileUserAccessControlType.USER,
 					reference,
-					permission:
-						FileUserAccessControlPermissions.FULLCONTROL
+					permission: FileUserAccessControlPermissions.FULLCONTROL
 				}
 			],
 			owner: reference,

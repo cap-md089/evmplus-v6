@@ -20,7 +20,7 @@ getSession({
 }).then(async sess => {
 	const mysqlSchema = sess.getSchema(schema);
 
-	const newMem: MemberObject = {
+	const newMem: ProspectiveMemberObject = {
 		contact: {
 			ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 			ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
@@ -39,7 +39,7 @@ getSession({
 			WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 		},
 		dutyPositions: [],
-		id: 0,
+		id: '',
 		memberRank: 'C/AB',
 		nameFirst: 'Andrew',
 		nameLast: 'Rioux',
@@ -49,8 +49,13 @@ getSession({
 		seniorMember: false,
 		squadron: 'md089',
 		usrID: 'riouxad',
-		kind: 'ProspectiveMember',
-		permissions: NoPermissions
+		type: 'CAPProspectiveMember',
+		permissions: NoPermissions,
+		password: '',
+		salt: '',
+		flight: 'Charlie',
+		accountID: 'mdx89',
+		teamIDs: []
 	};
 
 	const account = await Account.Get('mdx89', mysqlSchema);

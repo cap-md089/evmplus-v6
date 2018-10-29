@@ -4,6 +4,15 @@ import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 import Team from './Team';
 
 export default abstract class MemberBase implements MemberObject {
+	public static GetMemberTypeFromID(inputID: string): MemberType {
+		if (inputID.match(/[a-z0-9]{1,15}-\d*/i)) {
+			return 'CAPProspectiveMember';
+		}
+		if (inputID.match(/(([a-z]*)|(\d{6}))/i)) {
+			return 'CAPNHQMember';
+		}
+	}
+
 	public static IsRioux = (cm: MemberBase | number | string): boolean =>
 		typeof cm === 'string'
 			? false
@@ -20,28 +29,48 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public static ResolveReference(
-			ref: MemberReference,
-			account: Account,
-			schema: Schema,
-			errOnNull = false
-	): Promise<MemberBase | null> {
-		switch (ref.kind) {
-			case 'Null' :
+		ref: MemberReference,
+		account: Account,
+		schema: Schema,
+		errOnNull?: false 
+	): Promise<CAPWATCHMember | ProspectiveMember | null>;
+	public static ResolveReference(
+		ref: MemberReference,
+		account: Account,
+		schema: Schema,
+		errOnNull: true
+	): Promise<CAPWATCHMember | ProspectiveMember>;
+
+	public static ResolveReference(
+		ref: MemberReference,
+		account: Account,
+		schema: Schema,
+		errOnNull: boolean = false
+	): Promise<CAPWATCHMember | ProspectiveMember | null> {
+		switch (ref.type) {
+			case 'Null':
 				if (errOnNull) {
 					throw new Error('Null member');
 				}
 				return null;
 
-			case 'NHQMember' :
+			case 'CAPNHQMember':
 				return CAPWATCHMember.Get(ref.id, account, schema);
 
-			case 'ProspectiveMember' :
-				return ProspectiveMember.Get(ref.id, account, schema);
+			case 'CAPProspectiveMember':
+				return ProspectiveMember.GetProspective(
+					ref.id,
+					account,
+					schema
+				);
 		}
 	}
 
-	public static AreMemberReferencesTheSame(ref1: MemberReference, ref2: MemberReference) {
-		if (ref1.kind === 'Null' || ref2.kind === 'Null') {
+	public static AreMemberReferencesTheSame(
+		ref1: MemberReference,
+		ref2: MemberReference
+	) {
+		if (ref1.type === 'Null' || ref2.type === 'Null') {
 			return false;
 		}
 
@@ -53,30 +82,6 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	protected static secret: string =
 		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
-
-	protected static GetRegularDutypositions = async (
-		capid: number,
-		schema: Schema,
-		account: Account
-	): Promise<string[]> =>
-		(await Promise.all([
-			collectResults(
-				schema
-					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			),
-			collectResults(
-				schema
-					.getCollection<NHQ.CadetDutyPosition>(
-						'NHQ_CadetDutyPosition'
-					)
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			)
-		]))
-			.reduce((prev, curr) => [...prev, ...curr])
-			.map(item => item.Duty);
 
 	protected static async LoadExtraMemberInformation(
 		id: number,
@@ -114,23 +119,11 @@ export default abstract class MemberBase implements MemberObject {
 	/**
 	 * CAPID
 	 */
-	public id: number = 0;
-	/**
-	 * The rank of the member
-	 */
-	public memberRank: string = '';
-	/**
-	 * Whether or not the member is a senior member
-	 */
-	public seniorMember: boolean = false;
-	/**
-	 * The member name + the member rank
-	 */
-	public memberRankName: string = '';
+	public id: number | string = 0;
 	/**
 	 * Contact information
 	 */
-	public contact: MemberContact = {
+	public contact: CAPMemberContact = {
 		ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		CADETPARENTEMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
@@ -147,10 +140,6 @@ export default abstract class MemberBase implements MemberObject {
 		WORKFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 	};
-	/**
-	 * Duty positions
-	 */
-	public dutyPositions: string[] = [];
 	/**
 	 * Member squardon
 	 */
@@ -172,17 +161,9 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	public nameSuffix: string = '';
 	/**
-	 * The organization ID the user belongs to
-	 */
-	public orgid: number = 0;
-	/**
 	 * The User ID, usually can be used for logins
 	 */
 	public usrID: string = '';
-	/**
-	 * The flight for a member, if a cadet
-	 */
-	public flight: null | string;
 	/**
 	 * The IDs of teams the member is a part of
 	 */
@@ -206,7 +187,7 @@ export default abstract class MemberBase implements MemberObject {
 	 * Another method is the instanceof operator, but to each their own
 	 * That method would probably work better however
 	 */
-	public abstract kind: MemberType;
+	public abstract type: MemberType;
 
 	public constructor(
 		data: MemberObject,
@@ -215,17 +196,8 @@ export default abstract class MemberBase implements MemberObject {
 	) {
 		Object.assign(this, data);
 
-		this.memberRankName = `${this.memberRank} ${this.getName()}`;
-
 		this.isRioux = data.id === 542488 || data.id === 546319;
 	}
-
-	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
-		typeof dutyPosition === 'string'
-			? this.dutyPositions.indexOf(dutyPosition) > -1
-			: dutyPosition
-					.map(this.hasDutyPosition)
-					.reduce((a, b) => a || b, false);
 
 	public getName = (): string =>
 		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
@@ -235,37 +207,15 @@ export default abstract class MemberBase implements MemberObject {
 	public toRaw = (): MemberObject => ({
 		id: this.id,
 		contact: this.contact,
-		dutyPositions: this.dutyPositions,
-		memberRank: this.memberRank,
 		nameFirst: this.nameFirst,
 		nameLast: this.nameLast,
 		nameMiddle: this.nameMiddle,
 		nameSuffix: this.nameSuffix,
-		seniorMember: this.seniorMember,
-		squadron: this.squadron,
-		orgid: this.orgid,
 		usrID: this.usrID,
-		kind: this.kind,
+		type: this.type,
 		permissions: this.permissions,
-		flight: this.flight,
 		teamIDs: this.teamIDs
 	});
-
-	public async *getAccounts(): AsyncIterableIterator<Account> {
-		const accountsCollection = this.schema.getCollection<AccountObject>(
-			'Accounts'
-		);
-
-		const accountFind = accountsCollection.find(':orgIDs in orgIDs').bind({
-			orgIDs: [this.orgid]
-		});
-
-		const generator = generateResults(accountFind);
-
-		for await (const i of generator) {
-			yield Account.Get(i.id, this.schema);
-		}
-	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
 		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
@@ -273,7 +223,7 @@ export default abstract class MemberBase implements MemberObject {
 		const reference = this.getReference();
 
 		const teamFind = teamsCollection.find(':members in members').bind({
-			members: [reference]
+			members: reference
 		});
 
 		const generator = generateResults(teamFind);
@@ -282,8 +232,13 @@ export default abstract class MemberBase implements MemberObject {
 			yield Team.Get(i.id, this.requestingAccount, this.schema);
 		}
 	}
+
+	public matchesReference(ref: MemberReference): boolean {
+		return ref.type === this.type && ref.id === this.id;
+	}
 }
 
 import CAPWATCHMember from './members/CAPWATCHMember';
-import ProspectiveMember from "./members/ProspectiveMember";
+import ProspectiveMember from './members/ProspectiveMember';
+
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

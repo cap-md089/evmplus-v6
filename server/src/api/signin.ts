@@ -1,10 +1,7 @@
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
-import {
-	default as Member,
-	default as NHQMember,
-	MemberCreateError
-} from '../lib/members/NHQMember';
+import MemberBase from '../lib/Members';
+import { default as Member, MemberCreateError } from '../lib/members/NHQMember';
 import ProspectiveMember from '../lib/members/ProspectiveMember';
 import { json } from '../lib/Util';
 
@@ -24,43 +21,32 @@ export default async (req: AccountRequest, res: express.Response) => {
 
 		const userID = username.toString();
 
-		if (userID.match(/([0-9]{6})/)) {
-			member = await Member.Create(
-				userID,
-				password,
-				req.mysqlx,
-				req.account
-			);
-		} else {
-			member = await ProspectiveMember.Signin(
-				userID,
-				password,
-				req.account,
-				req.mysqlx
-			);
+		switch (MemberBase.GetMemberTypeFromID(userID)) {
+			case 'CAPNHQMember':
+				member = await Member.Create(
+					userID,
+					password,
+					req.mysqlx,
+					req.account
+				);
+				break;
+
+			case 'CAPProspectiveMember':
+				member = await ProspectiveMember.Signin(
+					userID,
+					password,
+					req.account,
+					req.mysqlx
+				);
+				break;
 		}
 
-		if (member.kind === 'ProspectiveMember') {
-			json<SigninReturn>(res, {
-				error: MemberCreateError.NONE,
-				member: {
-					kind: 'ProspectiveMember',
-					object: (member as ProspectiveMember).toRaw()
-				},
-				sessionID: member.sessionID,
-				valid: true
-			});
-		} else {
-			json<SigninReturn>(res, {
-				error: MemberCreateError.NONE,
-				member: {
-					kind: 'NHQMember',
-					object: (member as NHQMember).toRaw()
-				},
-				sessionID: member.sessionID,
-				valid: true
-			});
-		}
+		json<SigninReturn>(res, {
+			error: MemberCreateError.NONE,
+			member,
+			sessionID: member.sessionID,
+			valid: true
+		});
 	} catch (errors) {
 		if (!errors.message.match(/^(\d)*$/)) {
 			console.error(errors);

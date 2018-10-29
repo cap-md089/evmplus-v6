@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import { EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
+import { CAPWATCHMember } from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class Event
@@ -14,7 +15,11 @@ export default class Event
 	 * @param account The account to get the event from
 	 * @param schema The schema to get the event from
 	 */
-	public static async Get(id: number | string, account: Account, schema: Schema) {
+	public static async Get(
+		id: number | string,
+		account: Account,
+		schema: Schema
+	) {
 		if (typeof id === 'string') {
 			id = parseInt(id, 10);
 		}
@@ -31,19 +36,30 @@ export default class Event
 		if (results.length !== 1) {
 			throw new Error('There was a problem getting the event');
 		}
-		
-		const internalPointsOfContact = (results[0].pointsOfContact.filter(s => s.type === PointOfContactType.INTERNAL) as DisplayInternalPointOfContact[])
+
+		const internalPointsOfContact = results[0].pointsOfContact.filter(
+			s => s.type === PointOfContactType.INTERNAL
+		) as DisplayInternalPointOfContact[];
 
 		const members = await Promise.all(
-			internalPointsOfContact
-				.map(poc => MemberBase.ResolveReference(poc.id, account, schema, true)))
+			internalPointsOfContact.map(poc =>
+				MemberBase.ResolveReference(poc.id, account, schema, true)
+			)
+		);
 
 		internalPointsOfContact.forEach((mem, i) => {
 			for (const member of members) {
-				if (member.id) {
-					internalPointsOfContact[i].name = member.memberRankName;
+				if (mem.id.type === 'Null') {
+					continue;
 				}
-				break;
+
+				if (member.id === mem.id.id) {
+					internalPointsOfContact[i].name =
+						member instanceof CAPWATCHMember
+							? member.memberRankName
+							// @ts-ignore
+							: member.getName();
+				}
 			}
 		});
 
@@ -84,7 +100,7 @@ export default class Event
 			accountID: account.id,
 			timeCreated,
 			timeModified: timeCreated,
-			author: member.id,
+			author: member.getReference(),
 			attendance: []
 		};
 
@@ -177,7 +193,7 @@ export default class Event
 		DisplayInternalPointOfContact | ExternalPointOfContact
 	>;
 
-	public author: number;
+	public author: MemberReference;
 
 	public signUpPartTime: boolean;
 
@@ -224,10 +240,11 @@ export default class Event
 			'Events'
 		);
 
-		const displayInternalPointsOfContact = (this.pointsOfContact
-			.filter(i => i.type === PointOfContactType.INTERNAL) as DisplayInternalPointOfContact[])
-		const internalPointsOfContact = displayInternalPointsOfContact
-			.map(i => ({
+		const displayInternalPointsOfContact = this.pointsOfContact.filter(
+			i => i.type === PointOfContactType.INTERNAL
+		) as DisplayInternalPointOfContact[];
+		const internalPointsOfContact = displayInternalPointsOfContact.map(
+			i => ({
 				type: PointOfContactType.INTERNAL,
 				email: i.email,
 				phone: i.phone,
@@ -236,10 +253,12 @@ export default class Event
 				receiveEventUpdates: i.receiveEventUpdates,
 				receiveSignUpUpdates: i.receiveSignUpUpdates,
 				id: i.id
-			})) as InternalPointOfContact[];
+			})
+		) as InternalPointOfContact[];
 
-		const externalPointsOfContact = this.pointsOfContact
-			.filter(i => i.type !== PointOfContactType.EXTERNAL);
+		const externalPointsOfContact = this.pointsOfContact.filter(
+			i => i.type === PointOfContactType.EXTERNAL
+		);
 
 		const pointsOfContact = [
 			...internalPointsOfContact,
@@ -250,7 +269,9 @@ export default class Event
 			...this.toFullRaw(),
 			timeModified,
 			accountID: account.id,
-			pointsOfContact: pointsOfContact as Array<DisplayInternalPointOfContact | ExternalPointOfContact>
+			pointsOfContact: pointsOfContact as Array<
+				DisplayInternalPointOfContact | ExternalPointOfContact
+			>
 		});
 	}
 
@@ -301,9 +322,12 @@ export default class Event
 			this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
-					MemberBase.AreMemberReferencesTheSame(member.getReference(), poc.id)
+					MemberBase.AreMemberReferencesTheSame(
+						member.getReference(),
+						poc.id
+					)
 			) ||
-			member.id === this.author ||
+			member.matchesReference(this.author) ||
 			member.isRioux
 		);
 	}
@@ -349,7 +373,9 @@ export default class Event
 			signUpPartTime: this.signUpPartTime,
 			requiredForms: this.requiredForms,
 			fileIDs: copyFiles ? this.fileIDs : [],
-			status: copyStatus ? this.status : [EventStatus.INFORMATIONONLY, ''],
+			status: copyStatus
+				? this.status
+				: [EventStatus.INFORMATIONONLY, ''],
 			teamID: this.teamID,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
@@ -378,7 +404,7 @@ export default class Event
 			this,
 			{
 				accountID: targetAccount.id,
-				author: member.id,
+				author: member.getReference(),
 				sourceEvent: {
 					accountID: this.accountID,
 					id: this.id
@@ -450,9 +476,7 @@ export default class Event
 		];
 
 		for (const key of keys) {
-			if (
-					typeof values[key] === typeof this[key]
-			) {
+			if (typeof values[key] === typeof this[key]) {
 				this[key] = values[key];
 			}
 		}
@@ -482,7 +506,9 @@ export default class Event
 		meetDateTime: this.meetDateTime,
 		meetLocation: this.meetLocation,
 		name: this.name,
-		participationFee: !!this.participationFee ? this.participationFee : null,
+		participationFee: !!this.participationFee
+			? this.participationFee
+			: null,
 		pickupDateTime: this.pickupDateTime,
 		pickupLocation: this.pickupLocation,
 		pointsOfContact: this.pointsOfContact,
@@ -491,7 +517,9 @@ export default class Event
 		requiredEquipment: this.requiredEquipment,
 		requiredForms: this.requiredForms,
 		showUpcoming: this.showUpcoming,
-		signUpDenyMessage: !!this.signUpDenyMessage ? this.signUpDenyMessage : null,
+		signUpDenyMessage: !!this.signUpDenyMessage
+			? this.signUpDenyMessage
+			: null,
 		signUpPartTime: !!this.signUpPartTime,
 		sourceEvent: !!this.sourceEvent ? this.sourceEvent : null,
 		startDateTime: this.startDateTime,
@@ -514,7 +542,7 @@ export default class Event
 	 * This method returns the full, raw object unconditionally
 	 */
 	public toFullRaw = (): EventObject => ({
-		...(this.toRaw()),
+		...this.toRaw(),
 		attendance: this.getAttendance()
 	});
 
@@ -525,11 +553,12 @@ export default class Event
 	/**
 	 * Returns the attendance for the event
 	 */
-	public getAttendance = (): AttendanceRecord[] => this.attendance.map(v => ({
-		...v,
-		arrivalTime: v.arrivalTime ? v.arrivalTime : null,
-		departureTime: v.departureTime ? v.departureTime : null
-	}));
+	public getAttendance = (): AttendanceRecord[] =>
+		this.attendance.map(v => ({
+			...v,
+			arrivalTime: v.arrivalTime ? v.arrivalTime : null,
+			departureTime: v.departureTime ? v.departureTime : null
+		}));
 
 	/**
 	 * Add member to attendance
@@ -545,8 +574,11 @@ export default class Event
 			...this.attendance,
 			{
 				comments: newAttendanceRecord.comments,
-				memberID: member.id,
-				memberRankName: member.memberRankName,
+				memberID: member.getReference(),
+				memberName:
+					member instanceof CAPWATCHMember
+						? member.memberRankName
+						: member.getName(),
 				planToUseCAPTransportation:
 					newAttendanceRecord.planToUseCAPTransportation,
 				requirements: newAttendanceRecord.requirements,
@@ -572,11 +604,14 @@ export default class Event
 	): AttendanceRecord[] =>
 		(this.attendance = this.attendance.map(
 			record =>
-				record.memberID === member.id
+				member.matchesReference(record.memberID)
 					? {
 							comments: newAttendanceRecord.comments,
-							memberID: member.id,
-							memberRankName: member.memberRankName,
+							memberID: member.getReference(),
+							memberName:
+								member instanceof CAPWATCHMember
+									? member.memberRankName
+									: member.getName(),
 							planToUseCAPTransportation:
 								newAttendanceRecord.planToUseCAPTransportation,
 							requirements: newAttendanceRecord.requirements,
@@ -594,8 +629,8 @@ export default class Event
 	public removeMemberFromAttendance = (
 		member: BaseMember
 	): AttendanceRecord[] =>
-		(this.attendance = this.attendance.filter(
-			record => record.memberID !== member.id
+		(this.attendance = this.attendance.filter(record =>
+			member.matchesReference(record.memberID)
 		));
 }
 

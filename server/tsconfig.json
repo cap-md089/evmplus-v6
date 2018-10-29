@@ -18,7 +18,8 @@
 			"..",
 			"."
 		],
-		"allowSyntheticDefaultImports": false
+		"allowSyntheticDefaultImports": false,
+		"experimentalDecorators": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "src/__tests__/**/*.ts", "../lib/*.ts"],
@@ -29,5 +30,7 @@
 		"es5",
 		"esnext.asynciterable"
 	],
-	"files": ["../lib/index.d.ts"]
+	"files": [
+		"../lib/index.d.ts"
+	]
 }

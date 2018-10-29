@@ -2,10 +2,10 @@ import { Schema } from '@mysql/xdevapi';
 import { DateTime } from 'luxon';
 import Account from '../Account';
 import MemberBase from '../MemberBase';
-import { collectResults, findAndBind } from '../MySQLUtil';
+import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
 
-export default class CAPWATCHMember extends MemberBase {
+export default class CAPWATCHMember extends MemberBase implements CAPMemberObject {
 	public static readonly tableNames = {
 		member: 'NHQ_Member',
 		contact: 'NHQ_MbrContact'
@@ -75,11 +75,11 @@ export default class CAPWATCHMember extends MemberBase {
 			}
 		}
 
-		const contact = (memberContact as any) as MemberContact;
+		const contact = (memberContact as any) as CAPMemberContact;
 
 		capwatchContact.forEach(val => {
 			contact[
-				val.Type.toUpperCase().replace(/ /g, '') as MemberContactType
+				val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType
 			][val.Priority] = val.Contact;
 		});
 
@@ -94,7 +94,6 @@ export default class CAPWATCHMember extends MemberBase {
 				id,
 				contact,
 				dutyPositions: [...dutyPositions, ...temporaryDutyPositions],
-				flight: extraInformation.flight,
 				memberRank: results[0].Rank,
 				nameFirst: results[0].NameFirst,
 				nameLast: results[0].NameLast,
@@ -111,29 +110,111 @@ export default class CAPWATCHMember extends MemberBase {
 					results[0].NameLast,
 					results[0].NameSuffix
 				]),
-				kind: 'CAPWATCHMember',
+				type: 'CAPWATCHMember',
 				permissions,
-				teamIDs: extraInformation.teamIDs
+				teamIDs: extraInformation.teamIDs,
+				flight: extraInformation.flight
 			},
 			schema,
 			account
 		);
 	}
 
+	protected static GetRegularDutypositions = async (
+		capid: number,
+		schema: Schema,
+		account: Account
+	): Promise<string[]> =>
+		(await Promise.all([
+			collectResults(
+				schema
+					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
+					.find('CAPID = :CAPID')
+					.bind('CAPID', capid)
+			),
+			collectResults(
+				schema
+					.getCollection<NHQ.CadetDutyPosition>(
+						'NHQ_CadetDutyPosition'
+					)
+					.find('CAPID = :CAPID')
+					.bind('CAPID', capid)
+			)
+		]))
+			.reduce((prev, curr) => [...prev, ...curr])
+			.map(item => item.Duty);
+
 	public permissions: MemberPermissions;
 
-	public kind: MemberType = 'CAPWATCHMember';
+	public type: CAPMemberType = 'CAPWATCHMember';
 
-	private constructor(
-		data: MemberObject,
+	public id: number | string = 0;
+	/**
+	 * The rank of the member
+	 */
+	public memberRank: string = '';
+	/**
+	 * Whether or not the member is a senior member
+	 */
+	public seniorMember: boolean = false;
+	/**
+	 * The member name + the member rank
+	 */
+	public memberRankName: string = '';
+	/**
+	 * Duty positions
+	 */
+	public dutyPositions: string[] = [];
+	/**
+	 * The organization ID the user belongs to
+	 */
+	public orgid: number = 0;
+	/**
+	 * The flight for a member, if a cadet
+	 */
+	public flight: null | string;
+
+	protected constructor(
+		data: CAPMemberObject,
 		schema: Schema,
 		requestingAccount: Account
 	) {
 		super(data, schema, requestingAccount);
+
+		this.memberRankName = `${this.memberRank} ${this.getName()}`;
 	}
 
-	public getReference = (): MemberReference => ({
-		id: this.id,
-		kind: 'NHQMember'
-	});
+	public getReference = (): MemberReference =>
+		typeof this.id === 'string'
+			? {
+					id: this.id,
+					type: 'CAPProspectiveMember'
+			  }
+			: {
+					id: this.id,
+					type: 'CAPNHQMember'
+			  };
+
+	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
+		typeof dutyPosition === 'string'
+			? this.dutyPositions.indexOf(dutyPosition) > -1
+			: dutyPosition
+					.map(this.hasDutyPosition)
+					.reduce((a, b) => a || b, false);
+
+	public async *getAccounts(): AsyncIterableIterator<Account> {
+		const accountsCollection = this.schema.getCollection<AccountObject>(
+			'Accounts'
+		);
+
+		const accountFind = accountsCollection
+			.find(':orgIDs in orgIDs')
+			.bind('orgIDs', this.orgid);
+
+		const generator = generateResults(accountFind);
+
+		for await (const i of generator) {
+			yield Account.Get(i.id, this.schema);
+		}
+	}
 }

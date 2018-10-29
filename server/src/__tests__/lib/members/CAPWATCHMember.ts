@@ -1,7 +1,7 @@
 import { join } from 'path';
 import conftest from '../../../conf.test';
 import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
-import CAPWATCHMember from '../../../lib/members/CAPWATCHMember';
+import { CAPWATCHMember } from '../../../lib/Members';
 import { getTestTools } from '../../../lib/Util';
 
 describe('CAPWATCHMember', async () => {

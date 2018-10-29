@@ -3,7 +3,6 @@ import { createHmac, randomBytes } from 'crypto';
 import { NextFunction, Response } from 'express';
 import { sign } from 'jsonwebtoken';
 import Account from '../Account';
-import MemberBase from '../MemberBase';
 import {
 	collectResults,
 	findAndBind,
@@ -11,6 +10,7 @@ import {
 	modifyAndBind
 } from '../MySQLUtil';
 import { Member as NoPermissions } from '../Permissions';
+import CAPWATCHMember from './CAPWATCHMember';
 import { MemberCreateError, MemberRequest } from './NHQMember';
 
 const generateHash = (password: string, secret: string) =>
@@ -32,7 +32,7 @@ interface MemberSession {
 	id: string;
 	expireTime: number;
 
-	contact: MemberContact;
+	contact: CAPMemberContact;
 	memberRank: string;
 	nameFirst: string;
 	nameMiddle: string;
@@ -43,19 +43,19 @@ interface MemberSession {
 	orgid: number;
 }
 
-export default class ProspectiveMember extends MemberBase
+export default class ProspectiveMember extends CAPWATCHMember
 	implements
-		ProspectiveMemberAccount,
+		ProspectiveMemberObject,
 		Required<NoSQLDocument>,
-		DatabaseInterface<ProspectiveMemberAccount> {
+		DatabaseInterface<ProspectiveMemberObject> {
 	public static async Create(
-		newMember: MemberObject,
+		newMember: ProspectiveMemberObject,
 		password: string,
 		account: Account,
 		schema: Schema
 	): Promise<ProspectiveMember> {
 		const prospectiveCollection = schema.getCollection<
-			ProspectiveMemberAccount
+			RawProspectiveMemberObject
 		>(this.collectionName);
 
 		let id: string = `${account.getSquadronName()}-`;
@@ -69,7 +69,7 @@ export default class ProspectiveMember extends MemberBase
 
 		for await (const prospect of iterator) {
 			const numberPortion = parseInt(
-				prospect.prospectiveID.match(/([0-9])*/)[1],
+				prospect.id.match(/([0-9])*/)[1],
 				10
 			);
 
@@ -88,9 +88,9 @@ export default class ProspectiveMember extends MemberBase
 				...newMember,
 				salt,
 				password: hashedPassword,
+				id,
 				accountID: account.id,
-				prospectiveID: id,
-				kind: 'ProspectiveMember'
+				type: 'CAPProspectiveMember'
 			})
 			.execute()).getGeneratedIds()[0];
 
@@ -101,8 +101,7 @@ export default class ProspectiveMember extends MemberBase
 				salt,
 				password: hashedPassword,
 				accountID: account.id,
-				prospectiveID: id,
-				kind: 'ProspectiveMember'
+				type: 'CAPProspectiveMember'
 			},
 			account,
 			schema,
@@ -117,11 +116,11 @@ export default class ProspectiveMember extends MemberBase
 		schema: Schema
 	): Promise<ProspectiveMember> {
 		const prospectiveCollection = schema.getCollection<
-			ProspectiveMemberAccount
+			RawProspectiveMemberObject
 		>(this.collectionName);
 
 		const find = findAndBind(prospectiveCollection, {
-			prospectiveID: id,
+			id,
 			accountID: account.id
 		});
 
@@ -142,7 +141,11 @@ export default class ProspectiveMember extends MemberBase
 			);
 		}
 
-		const member = await ProspectiveMember.Get(id, account, schema);
+		const member = await ProspectiveMember.GetProspective(
+			id,
+			account,
+			schema
+		);
 		let sessionID;
 		{
 			let memberIndex = -1;
@@ -201,7 +204,7 @@ export default class ProspectiveMember extends MemberBase
 		const sessions = this.GetSessions().filter(sess => sess.id === id);
 
 		if (sessions.length === 1) {
-			req.member = await ProspectiveMember.Get(
+			req.member = await ProspectiveMember.GetProspective(
 				id,
 				req.account,
 				req.mysqlx
@@ -213,17 +216,17 @@ export default class ProspectiveMember extends MemberBase
 		next();
 	}
 
-	public static async Get(
+	public static async GetProspective(
 		id: string,
 		account: Account,
 		schema: Schema
 	): Promise<ProspectiveMember> {
 		const prospectiveCollection = schema.getCollection<
-			ProspectiveMemberAccount & Required<NoSQLDocument>
+			RawProspectiveMemberObject & Required<NoSQLDocument>
 		>(ProspectiveMember.collectionName);
 
 		const find = findAndBind(prospectiveCollection, {
-			prospectiveID: id,
+			id,
 			accountID: account.id
 		});
 
@@ -233,7 +236,15 @@ export default class ProspectiveMember extends MemberBase
 			throw new Error(MemberCreateError.UNKOWN_SERVER_ERROR.toString());
 		}
 
-		return new ProspectiveMember(rows[0], account, schema, '');
+		return new ProspectiveMember(
+			{
+				...rows[0],
+				dutyPositions: []
+			},
+			account,
+			schema,
+			''
+		);
 	}
 
 	public static Su(target: ProspectiveMember) {
@@ -241,7 +252,7 @@ export default class ProspectiveMember extends MemberBase
 			expireTime: Date.now() / 1000 + 60 * 10,
 
 			contact: target.contact,
-			id: target.prospectiveID,
+			id: target.id,
 			memberRank: target.memberRank,
 			nameFirst: target.nameFirst,
 			nameLast: target.nameLast,
@@ -270,9 +281,9 @@ export default class ProspectiveMember extends MemberBase
 
 	private static collectionName = 'ProspectiveMembers';
 
-	public kind: 'ProspectiveMember' = 'ProspectiveMember';
+	public id: string = '';
 
-	public prospectiveID: string;
+	public type: 'CAPProspectiveMember' = 'CAPProspectiveMember';
 
 	public password: '' = '';
 
@@ -292,7 +303,7 @@ export default class ProspectiveMember extends MemberBase
 	public permissions: MemberPermissions = NoPermissions;
 
 	private constructor(
-		member: ProspectiveMemberAccount & Required<NoSQLDocument>,
+		member: ProspectiveMemberObject & Required<NoSQLDocument>,
 		account: Account,
 		schema: Schema,
 		sessionID: string
@@ -302,14 +313,14 @@ export default class ProspectiveMember extends MemberBase
 		this.sessionID = sessionID;
 	}
 
-	public set(values: Partial<ProspectiveMemberAccount>) {
-		const keys: Array<keyof ProspectiveMemberAccount> = [
+	public set(values: Partial<ProspectiveMemberObject>) {
+		const keys: Array<keyof ProspectiveMemberObject> = [
 			'contact',
 			'flight'
 		];
 
 		for (const key of keys) {
-			const i = key as keyof ProspectiveMemberAccount;
+			const i = key as keyof ProspectiveMemberObject;
 			const j = key as keyof ProspectiveMember;
 			// isRioux is readonly, can't set to it...
 			if (typeof this[j] === typeof values[i] && j !== 'isRioux') {
@@ -320,17 +331,17 @@ export default class ProspectiveMember extends MemberBase
 
 	public async save(): Promise<void> {
 		const prospectiveCollection = this.schema.getCollection<
-			ProspectiveMemberAccount
+			RawProspectiveMemberObject
 		>(ProspectiveMember.collectionName);
 
 		await prospectiveCollection.replaceOne(this._id, this.toRaw());
 	}
 
-	public toRaw = (): ProspectiveMemberAccount => ({
+	public toRaw = (): ProspectiveMemberObject => ({
 		accountID: this.requestingAccount.id,
 		contact: this.contact,
 		dutyPositions: [],
-		id: 0,
+		id: this.id,
 		memberRank: this.memberRank,
 		nameFirst: this.nameFirst,
 		nameLast: this.nameLast,
@@ -338,15 +349,14 @@ export default class ProspectiveMember extends MemberBase
 		nameSuffix: this.nameSuffix,
 		orgid: this.requestingAccount.mainOrg,
 		password: '',
-		prospectiveID: this.prospectiveID,
 		salt: '',
 		seniorMember: false,
 		squadron: this.requestingAccount.getSquadronName(),
 		usrID: this.usrID,
-		kind: 'ProspectiveMember',
+		type: 'CAPProspectiveMember',
 		permissions: this.permissions,
-		flight: this.flight,
-		teamIDs: this.teamIDs
+		teamIDs: this.teamIDs,
+		flight: this.flight
 	});
 
 	public hasPermission = (
@@ -356,12 +366,12 @@ export default class ProspectiveMember extends MemberBase
 
 	public async updatePassword(password: string): Promise<void> {
 		const prospectiveCollection = this.schema.getCollection<
-			ProspectiveMemberAccount
+			RawProspectiveMemberObject
 		>(ProspectiveMember.collectionName);
 
 		const row = await collectResults(
 			findAndBind(prospectiveCollection, {
-				prospectiveID: this.prospectiveID,
+				id: this.id,
 				accountID: this.accountID
 			})
 		);
@@ -372,14 +382,14 @@ export default class ProspectiveMember extends MemberBase
 
 		await modifyAndBind(prospectiveCollection, {
 			accountID: this.accountID,
-			prospectiveID: this.prospectiveID
+			id: this.id
 		})
 			.set('password', hashPassword(password, row[0].salt))
 			.execute();
 	}
 
 	public getReference = (): ProspectiveMemberReference => ({
-		kind: 'ProspectiveMember',
-		id: this.prospectiveID
+		type: 'CAPProspectiveMember',
+		id: this.id
 	});
 }

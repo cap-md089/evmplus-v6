@@ -9,7 +9,7 @@ var { existsSync } = require('fs');
 var typescriptFiles = [
 	'src/**/*.ts',
 	'!src/__tests__/**/*.ts',
-	'../lib/index.d.ts'
+	'../lib/*.d.ts'
 ];
 
 function getDateString() {

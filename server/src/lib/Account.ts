@@ -5,7 +5,7 @@ import BlogPage from './BlogPage';
 import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
-import CAPWATCHMember from './members/CAPWATCHMember';
+import { CAPWATCHMember } from './Members';
 import {
 	collectResults,
 	findAndBind,

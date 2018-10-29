@@ -15,4 +15,4 @@ export default async (req: MemberRequest, res: Response) => {
 	const newTeam = await Team.Create(req.body, req.account, req.mysqlx);
 
 	json<TeamObject>(res, newTeam.toRaw(req.member));
-}
+};

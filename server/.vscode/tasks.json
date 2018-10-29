@@ -6,7 +6,9 @@
 		{
 			"type": "gulp",
 			"task": "ts",
-			"problemMatcher": [],
+			"problemMatcher": [
+				"$tsc"
+			],
 			"group": {
 				"kind": "build",
 				"isDefault": true
@@ -15,6 +17,14 @@
 		{
 			"type": "gulp",
 			"task": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
+		},
+		{
+			"type": "gulp",
+			"task": "default",
 			"problemMatcher": [
 				"$tsc-watch"
 			],
