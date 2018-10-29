@@ -217,4 +217,23 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			yield Account.Get(i.id, this.schema);
 		}
 	}
+	
+	public toRaw = (): CAPMemberObject => ({
+		contact: this.contact,
+		dutyPositions: this.dutyPositions,
+		flight: this.flight,
+		id: this.id,
+		memberRank: this.memberRank,
+		nameFirst: this.nameFirst,
+		nameLast: this.nameLast,
+		nameMiddle: this.nameMiddle,
+		nameSuffix: this.nameSuffix,
+		orgid: this.orgid,
+		permissions: this.permissions,
+		seniorMember: this.seniorMember,
+		squadron: this.squadron,
+		teamIDs: this.teamIDs,
+		type: 'CAPNHQMember',
+		usrID: this.usrID
+	})
 }

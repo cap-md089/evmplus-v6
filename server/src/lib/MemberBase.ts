@@ -32,7 +32,7 @@ export default abstract class MemberBase implements MemberObject {
 		ref: MemberReference,
 		account: Account,
 		schema: Schema,
-		errOnNull?: false 
+		errOnNull?: false
 	): Promise<CAPWATCHMember | ProspectiveMember | null>;
 	public static ResolveReference(
 		ref: MemberReference,
@@ -112,6 +112,10 @@ export default abstract class MemberBase implements MemberObject {
 
 			return newInformation;
 		}
+
+		results[0].temporaryDutyPositions = results[0].temporaryDutyPositions.filter(
+			v => v.validUntil > +new Date() / 1000
+		);
 
 		return results[0];
 	}

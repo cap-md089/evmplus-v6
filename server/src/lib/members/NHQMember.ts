@@ -43,7 +43,8 @@ export interface MemberRequest extends AccountRequest {
 	member: NHQMember | ProspectiveMember;
 }
 
-export default class NHQMember extends CAPWATCHMember implements CAPMemberObject {
+export default class NHQMember extends CAPWATCHMember
+	implements CAPMemberObject {
 	public static async Create(
 		username: string | number,
 		password: string,
@@ -119,7 +120,10 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 		return new NHQMember(
 			{
 				contact: memberInfo[1],
-				dutyPositions,
+				dutyPositions: [
+					...dutyPositions,
+					...extraInfo.temporaryDutyPositions.map(v => v.Duty)
+				],
 				id,
 				memberRank: memberInfo[0].rank,
 				nameFirst: memberInfo[0].nameFirst,
@@ -139,9 +143,9 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 				permissions,
 				flight: extraInfo.flight,
 				teamIDs: extraInfo.teamIDs,
-				sessionID
+				sessionID,
+				cookie
 			},
-			cookie,
 			schema,
 			account,
 			extraInfo
@@ -220,7 +224,10 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 						req.member = new NHQMember(
 							{
 								contact: sess[0].contact,
-								dutyPositions,
+								dutyPositions: [
+									...dutyPositions,
+									...(extraInfo.temporaryDutyPositions.map(v => v.Duty))
+								],
 								id,
 								memberRank: sess[0].memberRank,
 								nameFirst: sess[0].nameFirst,
@@ -240,9 +247,9 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 								permissions,
 								flight: sess[0].flight,
 								teamIDs: extraInfo.teamIDs,
-								sessionID: sess[0].cookieData
+								sessionID: header,
+								cookie: sess[0].cookieData
 							},
-							header,
 							req.mysqlx,
 							req.account,
 							extraInfo
@@ -331,24 +338,21 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 	 * The instanceof operator may work as well
 	 */
 	public type: CAPMemberType = 'CAPNHQMember';
-
-	protected extraInfo: ExtraMemberInformation;
-
 	/**
 	 * The cookie data used to access NHQ
 	 */
-	private cookie: string = '';
+	public cookie: string = '';
+
+	protected extraInfo: ExtraMemberInformation;
 
 	private constructor(
 		data: NHQMemberObject,
-		cookie: string,
 		schema: Schema,
 		account: Account,
 		extraInfo: ExtraMemberInformation
 	) {
 		super(data, schema, account);
 		this.accessLevel = extraInfo.accessLevel;
-		this.cookie = cookie;
 		this.sessionID = data.sessionID;
 		this.extraInfo = extraInfo;
 
@@ -527,4 +531,12 @@ export default class NHQMember extends CAPWATCHMember implements CAPMemberObject
 		type: 'CAPNHQMember',
 		id: this.id
 	});
+
+	public toRaw = (): NHQMemberObject => ({
+		...super.toRaw(),
+		type: 'CAPNHQMember',
+		id: this.id,
+		cookie: '',
+		sessionID: this.sessionID
+	})
 }

@@ -148,9 +148,9 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 		description: this.description,
 		id: this.id,
 		members:
-			!member && this.visiblity !== TeamPublicity.PUBLIC
-				? null
-				: this.members,
+			!!member || this.visiblity === TeamPublicity.PUBLIC
+				? this.members
+				: [],
 		name: this.name,
 		seniorCoach: this.seniorCoach,
 		seniorMentor: this.seniorMentor,

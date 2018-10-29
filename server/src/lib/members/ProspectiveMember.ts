@@ -101,11 +101,13 @@ export default class ProspectiveMember extends CAPWATCHMember
 				salt,
 				password: hashedPassword,
 				accountID: account.id,
-				type: 'CAPProspectiveMember'
+				type: 'CAPProspectiveMember',
+				squadron: account.getSquadronName()
 			},
 			account,
 			schema,
-			''
+			'',
+			account
 		);
 	}
 
@@ -146,6 +148,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			account,
 			schema
 		);
+
 		let sessionID;
 		{
 			let memberIndex = -1;
@@ -236,6 +239,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 			throw new Error(MemberCreateError.UNKOWN_SERVER_ERROR.toString());
 		}
 
+		const homeAccount = await Account.Get(rows[0].accountID, schema);
+
 		return new ProspectiveMember(
 			{
 				...rows[0],
@@ -243,7 +248,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 			},
 			account,
 			schema,
-			''
+			'',
+			homeAccount
 		);
 	}
 
@@ -306,7 +312,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 		member: ProspectiveMemberObject & Required<NoSQLDocument>,
 		account: Account,
 		schema: Schema,
-		sessionID: string
+		sessionID: string,
+		protected homeAccount: Account
 	) {
 		super(member, schema, account);
 
@@ -338,25 +345,13 @@ export default class ProspectiveMember extends CAPWATCHMember
 	}
 
 	public toRaw = (): ProspectiveMemberObject => ({
-		accountID: this.requestingAccount.id,
-		contact: this.contact,
-		dutyPositions: [],
+		...super.toRaw(),
+		accountID: this.accountID,
 		id: this.id,
-		memberRank: this.memberRank,
-		nameFirst: this.nameFirst,
-		nameLast: this.nameLast,
-		nameMiddle: this.nameMiddle,
-		nameSuffix: this.nameSuffix,
-		orgid: this.requestingAccount.mainOrg,
 		password: '',
 		salt: '',
-		seniorMember: false,
 		squadron: this.requestingAccount.getSquadronName(),
-		usrID: this.usrID,
-		type: 'CAPProspectiveMember',
-		permissions: this.permissions,
-		teamIDs: this.teamIDs,
-		flight: this.flight
+		type: 'CAPProspectiveMember'
 	});
 
 	public hasPermission = (
