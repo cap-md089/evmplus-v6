@@ -95,4 +95,8 @@ export default class Account extends APIInterface implements AccountObject {
 	public setSessionID(value: SigninReturn) {
 		this.sessionID = value.sessionID;
 	}
+
+	public getSessionID() {
+		return this.sessionID || '';
+	}
 }

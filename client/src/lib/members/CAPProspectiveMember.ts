@@ -1,11 +1,20 @@
 import Account from '../Account';
-import MemberBase from '../MemberBase';
+import MemberBase from '../Members';
 
-export default class CAPMember extends MemberBase implements CAPMemberObject {
+export default class CAPProspectiveMember extends MemberBase
+	implements ProspectiveMemberObject {
 	/**
-	 * This class uses 6 digit CAP IDs
+	 * The ID of the user
 	 */
-	public id: number = 0;
+	public id: string = '';
+	/**
+	 * The password, ignored because the password is never sent to the clients
+	 */
+	public password: '' = '';
+	/**
+	 * The password salt, ignored because the password is never sent to the clients
+	 */
+	public salt: '' = '';
 	/**
 	 * The rank of the member
 	 */
@@ -27,7 +36,7 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 	 */
 	public flight: string;
 
-	public type: CAPMemberType = 'CAPNHQMember';
+	public type: 'CAPProspectiveMember' = 'CAPProspectiveMember';
 
 	public constructor(
 		data: CAPMemberObject,
@@ -39,6 +48,6 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 
 	public getReference = (): MemberReference => ({
 		id: this.id,
-		type: 'CAPNHQMember'
+		type: 'CAPProspectiveMember'
 	});
 }

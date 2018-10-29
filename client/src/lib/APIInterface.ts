@@ -6,7 +6,7 @@ export default class APIInterface {
 			? 'capunit.com'
 			: 'localcapunit.com';
 
-	public constructor(private accountID: string) {}
+	public constructor(public accountID: string) {}
 
 	public buildURI(...components: string[]): string {
 		let uri = `https://${this.accountID}.${APIInterface.REQUEST_URI}/`;
