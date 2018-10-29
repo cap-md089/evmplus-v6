@@ -7,7 +7,7 @@
 			"name": "Attach to Chrome",
 			"port": 9222,
 			"webRoot": "${workspaceFolder}/src",
-			"url": "http://localhost:3000",
+			"url": "http://localhost:3000"
 		},
 		{
 			"type": "chrome",

@@ -69,10 +69,10 @@ enum SortFunction {
 	CAPID
 }
 
-const sortFunctions: Array<(a: MemberObject, b: MemberObject) => number> = [
+const sortFunctions: Array<(a: Member, b: Member) => number> = [
 	(a, b) => a.nameLast.localeCompare(b.nameLast),
 	(a, b) => a.nameFirst.localeCompare(b.nameFirst),
-	(a, b) => a.id - b.id
+	(a, b) => a.id.toString().localeCompare(b.id.toString())
 ];
 
 enum MemberList {
@@ -81,18 +81,27 @@ enum MemberList {
 	ALL
 }
 
-const flightInput: CheckInput<MemberObject, string> = {
+const flightInput: CheckInput<Member, string> = {
 	check: (mem, input) => {
 		if (input === undefined || input === '') {
 			return true;
 		}
 
 		if (!!input.match(/senior/i)) {
-			return mem.seniorMember;
+			if (
+				mem.type === 'CAPNHQMember' ||
+				mem.type === 'CAPProspectiveMember'
+			) {
+				return mem.seniorMember;
+			}
 		}
 
 		try {
-			return mem.flight ? false : !!input.match(new RegExp(input, 'i'));
+			if (mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') {
+				return !!mem.flight.match(new RegExp(input, 'i'));
+			} else {
+				return false;
+			}
 		} catch (e) {
 			return true;
 		}
@@ -122,7 +131,7 @@ const nameInput: CheckInput<MemberObject, string> = {
 	filterInput: TextInput
 };
 
-const rankGreaterThan: CheckInput<MemberObject, string> = {
+const rankGreaterThan: CheckInput<Member, string> = {
 	check: (mem, input) => {
 		if (input === undefined || input === '') {
 			return true;
@@ -132,16 +141,23 @@ const rankGreaterThan: CheckInput<MemberObject, string> = {
 			return true;
 		}
 
-		return (
-			memberRanks.indexOf(normalizeRankInput(mem.memberRank)) >=
-			memberRanks.indexOf(normalizeRankInput(input))
-		);
+		if (
+			mem.type === 'CAPNHQMember' ||
+			mem.type === 'CAPProspectiveMember'
+		) {
+			return (
+				memberRanks.indexOf(normalizeRankInput(mem.memberRank)) >=
+				memberRanks.indexOf(normalizeRankInput(input))
+			);
+		} else {
+			return false;
+		}
 	},
 	displayText: 'Rank greater than:',
 	filterInput: TextInput
 };
 
-const rankLessThan: CheckInput<MemberObject, string> = {
+const rankLessThan: CheckInput<Member, string> = {
 	check: (mem, input) => {
 		if (input === undefined || input === '') {
 			return true;
@@ -151,16 +167,23 @@ const rankLessThan: CheckInput<MemberObject, string> = {
 			return true;
 		}
 
-		return (
-			memberRanks.indexOf(normalizeRankInput(mem.memberRank)) <=
-			memberRanks.indexOf(normalizeRankInput(input))
-		);
+		if (
+			mem.type === 'CAPNHQMember' ||
+			mem.type === 'CAPProspectiveMember'
+		) {
+			return (
+				memberRanks.indexOf(normalizeRankInput(mem.memberRank)) <=
+				memberRanks.indexOf(normalizeRankInput(input))
+			);
+		} else {
+			return false;
+		}
 	},
 	displayText: 'Rank less than:',
 	filterInput: TextInput
 };
 
-const memberFilter: CheckInput<MemberObject, MemberList> = {
+const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
 		return memberFilters[
 			typeof input === 'undefined' || input === -1
@@ -185,10 +208,16 @@ const memberFilter: CheckInput<MemberObject, MemberList> = {
 	displayText: 'Member type'
 };
 
-const memberFilters: Array<(a: MemberObject) => boolean> = [
-	a => !a.seniorMember,
-	a => a.seniorMember,
-	a => true
+const memberFilters: Array<(a: Member) => boolean> = [
+	a =>
+		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
+			? a.seniorMember
+			: false,
+	a =>
+		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
+			? !a.seniorMember
+			: true,
+	() => true
 ];
 
 export default class EmailList extends React.Component<
@@ -219,7 +248,7 @@ export default class EmailList extends React.Component<
 	}
 
 	public componentDidMount() {
-		if (this.props.member.valid) {
+		if (this.props.member) {
 			myFetch('/api/member', {
 				headers: {
 					authorization: this.props.member.sessionID
@@ -247,7 +276,7 @@ export default class EmailList extends React.Component<
 
 		const filterValues = this.state.filterValues;
 
-		return this.props.member.valid ? (
+		return this.props.member ? (
 			this.state.availableMembers === null ? (
 				<Loader />
 			) : (
@@ -398,9 +427,12 @@ export default class EmailList extends React.Component<
 		);
 	}
 
-	private displayMemberName(member: MemberObject): string {
+	private displayMemberName(member: Member): string {
 		return (
-			member.memberRank +
+			(member.type === 'CAPNHQMember' ||
+			member.type === 'CAPProspectiveMember'
+				? member.memberRank
+				: '') +
 			' ' +
 			[
 				member.nameFirst,

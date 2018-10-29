@@ -148,7 +148,7 @@ class BlogPostCreate extends React.Component<
 	}
 
 	public render() {
-		if (this.props.member.valid === false) {
+		if (!this.props.member) {
 			return <h2>Please sign in</h2>;
 		}
 
@@ -181,7 +181,7 @@ class BlogPostCreate extends React.Component<
 						content: draft.convertToRaw(
 							post.content.getCurrentContent()
 						),
-						authorid: this.props.member.member!.object.id,
+						authorid: this.props.member!.id,
 						fileIDs: post.fileIDs
 					})}
 					onReceiveData={post => {

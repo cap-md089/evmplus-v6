@@ -43,20 +43,21 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 						<div>
 							<Input
 								value={item}
-								name=""
 								key={i}
+								name=""
 								onUpdate={this.getChangeHandler(i)}
 								index={i}
+								member={this.props.member}
 							/>
 							<Button buttonType="secondaryButton" onClick={this.getRemoveItem(i)} className="listEditor-removeItem">
 								{this.props.removeText || 'Remove item'}
 							</Button>
 						</div>
 					)).map((item, i) => (
-						<>
+						<div key={i}>
 							{item}
 							{i === (this.props.value || []).length - 1 ? null : <div className="divider" />}
-						</>
+						</div>
 					))}
 				</div>
 				<div style={{

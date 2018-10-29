@@ -6,16 +6,16 @@
 	clear: both;
 }
 
-.desktop .selector-filters ul {
+.selector-filters ul {
 	list-style-type: none;
 	margin: 0;
 }
 
-.desktop .selector-filters ul li {
+.selector-filters ul li {
 	display: flex;
 }
 
-.desktop #mother .selector-filters ul li .selector-left-filter {
+.selector-filters ul li .selector-left-filter {
 	flex-basis: 220px;
 	order: 1;
 	padding-top: 9px;
@@ -23,19 +23,19 @@
 	box-sizing: border-box;
 }
 
-.desktop #mother .selector-filters ul li .selector-right-filter {
+.selector-filters ul li .selector-right-filter {
 	flex: 1;
 	order: 2;
 }
 
-.desktop #mother .selector-values {
+.selector-values {
 	margin: 0;
 	background: white;
 	border: 1px solid black;
 	padding-left: 0;
 }
 
-.desktop #mother .selector-values li {
+.selector-values li {
 	display: block;
 	list-style-type: none;
 	padding: 5px;

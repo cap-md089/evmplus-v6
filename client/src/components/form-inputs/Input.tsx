@@ -1,4 +1,5 @@
 import * as React from 'react';
+import MemberBase from 'src/lib/Members';
 
 export interface InputProps<V> {
 	// Callback handler
@@ -56,4 +57,8 @@ export interface InputProps<V> {
 	 * Used by ListEditor. Useful for when handling multiple radio fields
 	 */
 	index?: number;
+	/**
+	 * Used by some components. They should throw an error if they are not defined
+	 */
+	member?: MemberBase;
 }

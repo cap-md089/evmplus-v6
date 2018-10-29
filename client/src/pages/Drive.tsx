@@ -1,5 +1,6 @@
 import * as $ from 'jquery';
 import * as React from 'react';
+import MemberBase from 'src/lib/Members';
 import Button from '../components/Button';
 import { Label, TextInput } from '../components/Form';
 import BigTextBox from '../components/form-inputs/BigTextBox';
@@ -8,7 +9,8 @@ import RequestForm from '../components/RequestForm';
 import SimpleRequestForm from '../components/SimpleRequestForm';
 import {
 	FileUserAccessControlPermissions,
-	FileUserAccessControlType
+	FileUserAccessControlType,
+	MemberCreateError
 } from '../enums';
 import myFetch from '../lib/myFetch';
 import urlFormat from '../lib/urlFormat';
@@ -37,17 +39,15 @@ interface FileDisplayProps {
 	file: FileObject;
 	onSelect: (file: FileObject) => void;
 	selected: boolean;
-	member: SigninReturn;
+	member: MemberBase | null;
 }
 
 const memberHasPermission = (
 	file: FileObject,
-	signin: ProspectiveMemberReturn | NHQMemberObjectReturn | null,
+	member: MemberBase | null,
 	permission: FileUserAccessControlPermissions
 ): boolean => {
 	let valid = false;
-
-	const member = !!signin ? signin.object : null;
 
 	const otherItems = file.permissions.filter(
 		i => i.type === FileUserAccessControlType.OTHER
@@ -77,15 +77,9 @@ const memberHasPermission = (
 	signedInItems.forEach(item => {
 		if (
 			item.type === FileUserAccessControlType.USER &&
-			item.reference.kind === member.kind
+			item.reference.type === member.type
 		) {
-			if (
-				(item.reference.kind === 'ProspectiveMember' &&
-					item.reference.id ===
-						(member as ProspectiveMemberAccount).prospectiveID) ||
-				(item.reference.kind === 'NHQMember' &&
-					item.reference.id === member.id)
-			) {
+			if (member.id === item.reference.id) {
 				// tslint:disable-next-line:no-bitwise
 				valid = valid || (permission & item.permission) > 0;
 			}
@@ -143,7 +137,7 @@ class FolderDisplay extends React.Component<
 	public render() {
 		return memberHasPermission(
 			this.props.file,
-			this.props.member.member,
+			this.props.member,
 			FileUserAccessControlPermissions.WRITE
 		) ? (
 			<div
@@ -205,7 +199,9 @@ class FolderDisplay extends React.Component<
 			{
 				method: 'DELETE',
 				headers: {
-					authorization: this.props.member.sessionID
+					authorization: this.props.member
+						? this.props.member.sessionID
+						: ''
 				}
 			}
 		);
@@ -215,7 +211,9 @@ class FolderDisplay extends React.Component<
 			{
 				method: 'POST',
 				headers: {
-					authorization: this.props.member.sessionID,
+					authorization: this.props.member
+						? this.props.member.sessionID
+						: '',
 					'content-type': 'application/json'
 				},
 				body: JSON.stringify({
@@ -262,7 +260,7 @@ const FileDisplay = (props: FileDisplayProps) => (
 
 interface ExtraDisplayProps {
 	file: FileObject;
-	member: SigninReturn;
+	member: MemberBase | null;
 	childRef: React.RefObject<HTMLDivElement>;
 	fileDelete: (file: FileObject) => void;
 	fileModify: (file: FileObject) => void;
@@ -304,7 +302,7 @@ class ExtraFolderDisplay extends React.Component<
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
 				{memberHasPermission(
 					this.props.file,
-					this.props.member.member,
+					this.props.member,
 					FileUserAccessControlPermissions.DELETE
 				) ? (
 					<>
@@ -329,7 +327,7 @@ class ExtraFolderDisplay extends React.Component<
 				<h3>Comments:</h3>
 				{memberHasPermission(
 					this.props.file,
-					this.props.member.member,
+					this.props.member,
 					// tslint:disable-next-line:no-bitwise
 					FileUserAccessControlPermissions.COMMENT |
 						FileUserAccessControlPermissions.MODIFY
@@ -377,7 +375,9 @@ class ExtraFolderDisplay extends React.Component<
 					{
 						method: 'POST',
 						headers: {
-							authorization: this.props.member.sessionID,
+							authorization: this.props.member
+								? this.props.member.sessionID
+								: '',
 							'content-type': 'application/json'
 						},
 						body: JSON.stringify({
@@ -416,7 +416,7 @@ class ExtraFileDisplay extends React.Component<
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
 				{memberHasPermission(
 					this.props.file,
-					this.props.member.member,
+					this.props.member,
 					FileUserAccessControlPermissions.DELETE
 				) ? (
 					<>
@@ -440,7 +440,7 @@ class ExtraFileDisplay extends React.Component<
 				<h3>Comments:</h3>
 				{memberHasPermission(
 					this.props.file,
-					this.props.member.member,
+					this.props.member,
 					// tslint:disable-next-line:no-bitwise
 					FileUserAccessControlPermissions.COMMENT |
 						FileUserAccessControlPermissions.MODIFY
@@ -879,9 +879,8 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 
 		return (
 			<div>
-				{this.props.member.valid &&
-				this.props.member.member.object.permissions.FileManagement ===
-					1 ? (
+				{this.props.member &&
+				this.props.member.permissions.FileManagement === 1 ? (
 					<div>
 						<NewFolderRequestForm
 							id=""
@@ -930,7 +929,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 						</React.Fragment>
 					))}
 				</div>
-				{this.props.member.valid ? (
+				{this.props.member ? (
 					<FileUploader
 						onFileUpload={this.addFile}
 						currentFolderID={
@@ -1012,7 +1011,9 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 	private receiveData({ id }: { id: string }) {
 		myFetch('/api/files/' + this.folderID + '/children', {
 			headers: {
-				authorization: this.props.member.sessionID,
+				authorization: this.props.member
+					? this.props.member.sessionID
+					: '',
 				'content-type': 'application/json'
 			},
 			method: 'POST',
@@ -1028,7 +1029,9 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		return Promise.all([
 			myFetch('/api/files/' + id + '/children/dirty', {
 				headers: {
-					authorization: this.props.member.sessionID
+					authorization: this.props.member
+						? this.props.member.sessionID
+						: ''
 				}
 			})
 				.then(res => res.json())
@@ -1038,7 +1041,9 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 
 			myFetch('/api/files/' + id + '/dirty', {
 				headers: {
-					authorization: this.props.member.sessionID
+					authorization: this.props.member
+						? this.props.member.sessionID
+						: ''
 				}
 			})
 				.then(res => res.json())
@@ -1057,12 +1062,14 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 							),
 							{
 								headers: {
-									authorization: this.props.member.sessionID
+									authorization: this.props.member
+										? this.props.member.sessionID
+										: ''
 								}
 							}
 					  );
 			})
-			.then(res => res === null ? res : res.json())
+			.then(res => (res === null ? res : res.json()))
 			.then((parent: FileObject) => {
 				this.setState(
 					prev => ({
@@ -1106,9 +1113,16 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 	}
 
 	private addFile(file: FileObject) {
+		// @ts-ignore
 		const fileObject: FullFileObject = {
 			...file,
-			uploader: this.props.member.member!
+			uploader: {
+				error: MemberCreateError.NONE,
+				sessionID: this.props.member!.sessionID,
+				// @ts-ignore
+				member: this.props.member!,
+				valid: true
+			}
 		};
 
 		this.setState(prev => ({

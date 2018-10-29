@@ -1,12 +1,12 @@
 import * as React from 'react';
+import MemberBase from 'src/lib/Members';
 import myFetch from '../lib/myFetch';
-import urlFormat from '../lib/urlFormat';
 import Dialogue, { DialogueButtons } from './Dialogue';
 import Selector, { CheckInput } from './form-inputs/Selector';
 
 interface DownloadProps<T extends Identifiable> {
 	// Request properties
-	member: SigninReturn;
+	member: MemberBase | null;
 	requestProperties?: RequestInit;
 	errorMessage?: string;
 	url: string;
@@ -18,7 +18,6 @@ interface DownloadProps<T extends Identifiable> {
 	// Properties for the selector
 	showIDField?: boolean;
 	filters?: Array<CheckInput<T>>;
-	values: T[];
 	onChangeVisible?: (visible: T[]) => void;
 	overflow?: number;
 	filterValues?: any[];
@@ -30,7 +29,7 @@ interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
 	multiple: false;
 	onValueClick: (value: T | null) => void;
 	onValueSelect: (value: T | null) => void;
-	selectedValue: T;
+	selectedValue?: T;
 }
 
 interface DownloadPropsMultiple<T extends Identifiable>
@@ -38,7 +37,7 @@ interface DownloadPropsMultiple<T extends Identifiable>
 	multiple: true;
 	onValuesClick: (values: T[]) => void;
 	onValuesSelect: (values: T[]) => void;
-	selectedValues: T[];
+	selectedValues?: T[];
 }
 
 type DownloadDialogueProps<T extends Identifiable> =
@@ -63,51 +62,69 @@ export default class DownloadDialogue<
 
 		this.onOk = this.onOk.bind(this);
 		this.onCancel = this.onCancel.bind(this);
+		this.onChange = this.onChange.bind(this);
+		this.onSingleChange = this.onSingleChange.bind(this);
+		this.onMultipleChange = this.onMultipleChange.bind(this);
 	}
 
 	public componentDidMount() {
-		if (this.props.member.valid) {
-			myFetch(urlFormat('api', this.props.url), {
+		if (this.props.member) {
+			myFetch(this.props.url, {
 				headers: {
 					authorization: this.props.member.sessionID
 				}
-			});
+			})
+				.then(res => res.json())
+				.then(res => {
+					// tslint:disable-next-line:no-console
+					console.log(res);
+					return res;
+				})
+				.then(values => this.setState({ values }));
 		}
 	}
 
 	public render() {
 		if (this.state.values === null) {
-			return;
+			return null;
 		}
-		
+
+		if (this.props.open === false) {
+			return null;
+		}
+
 		let selector;
+		const selectorProps = {
+			name: 'selector',
+			showIDField: !!this.props.showIDField,
+			displayValue: this.props.displayValue,
+			values: this.state.values,
+			filters: this.props.filters,
+			filterValues: this.props.filterValues,
+			overflow: this.props.overflow,
+			onFilterValuesChange: this.props.onFilterValuesChange
+		};
 
 		if (this.props.multiple) {
 			selector = (
 				<Selector
+					{...selectorProps}
 					multiple={true}
-					name="selector"
-					showIDField={!!this.props.showIDField}
-					displayValue={this.props.displayValue}
-					values={this.state.values}
-					filters={this.props.filters}
-					filterValues={this.props.filterValues}
 					value={
-						this.state.selectedValues
+						this.props.selectedValues || this.state.selectedValues
 					}
+					onChange={this.onMultipleChange}
 				/>
 			);
 		} else {
 			selector = (
 				<Selector
+					{...selectorProps}
 					multiple={false}
-					name="selector"
-					showIDField={!!this.props.showIDField}
-					displayValue={this.props.displayValue}
-					values={this.state.values}
-					filters={this.props.filters}
-					filterValues={this.props.filterValues}
-					value={this.state.selectedValues[0]}
+					value={
+						this.props.selectedValue || this.state.selectedValues[0]
+					}
+					onChange={this.onSingleChange}
 				/>
 			);
 		}
@@ -131,13 +148,15 @@ export default class DownloadDialogue<
 		let ret = false;
 
 		if (this.props.multiple) {
-			this.props.selectedValues.forEach(selected => {
+			(this.props.selectedValues || []).forEach(selected => {
 				if (value.id === selected.id) {
 					ret = true;
 				}
 			});
 		} else {
-			ret = this.props.selectedValue.id === value.id;
+			ret =
+				!!this.props.selectedValue &&
+				this.props.selectedValue.id === value.id;
 		}
 
 		return ret;
@@ -149,7 +168,9 @@ export default class DownloadDialogue<
 				this.state.values!.filter(val => this.hasValue(val))
 			);
 		} else {
-			this.props.onValueSelect(this.props.selectedValue);
+			this.props.onValueSelect(
+				this.props.selectedValue ? this.props.selectedValue : null
+			);
 		}
 	}
 
@@ -159,5 +180,27 @@ export default class DownloadDialogue<
 		} else {
 			this.props.onValueSelect(null);
 		}
+	}
+
+	private onSingleChange(value: T) {
+		this.onChange([value]);
+
+		if (!this.props.multiple) {
+			this.props.onValueClick(value);
+		}
+	}
+
+	private onMultipleChange(values: T[]) {
+		this.onChange(values);
+
+		if (this.props.multiple) {
+			this.props.onValuesClick(values);
+		}
+	}
+
+	private onChange(selectedValues: T[]) {
+		this.setState({
+			selectedValues
+		});
 	}
 }

@@ -163,7 +163,7 @@ export default class AddEvent extends React.Component<
 
 		const event = this.state.event;
 
-		return this.props.member.valid ? (
+		return this.props.member ? (
 			<NewEventForm
 				url="/api/event"
 				id="newEventForm"
@@ -407,6 +407,7 @@ export default class AddEvent extends React.Component<
 					name="pointsOfContact"
 					// @ts-ignore
 					inputComponent={POCInput}
+					member={this.props.member}
 					addNew={() => ({
 						type: PointOfContactType.INTERNAL,
 						email: '',

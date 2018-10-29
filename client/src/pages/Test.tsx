@@ -88,7 +88,7 @@ export default class Test extends Page<
 			<div>
 				<SigninLink
 					authorizeUser={this.props.authorizeUser}
-					{...this.props.member}
+					{...this.props.fullMemberDetails}
 				>
 					Sign in
 				</SigninLink>

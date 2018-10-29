@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
+import Account from 'src/lib/Account';
+import MemberBase from 'src/lib/Members';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Calendar from '../pages/Calendar';
@@ -90,23 +92,35 @@ const pages: Array<{
 const composeElement = (
 	El: typeof Page,
 	member: SigninReturn,
+	account: Account,
 	authorizeUser: (arg: SigninReturn) => void,
 	updateSideNav: (links: SideNavigationItem[]) => void,
 	updateBreadcrumbs: (links: BreadCrumb[]) => void
 ) => (props: RouteComponentProps<any>) => (
 	<El
 		routeProps={props}
-		member={member}
+		account={account}
+		fullMemberDetails={member}
+		member={
+			member.member === null
+				? null
+				: MemberBase.CreateCorrectObject(
+						member.member,
+						account,
+						member.sessionID
+				  )
+		}
 		authorizeUser={authorizeUser}
 		updateSideNav={updateSideNav}
 		updateBreadCrumbs={updateBreadcrumbs}
 	/>
 );
 
-export default class PageRouter extends React.Component<{
+export default class PageRouter extends React.PureComponent<{
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
 	member: SigninReturn;
+	account: Account;
 	authorizeUser: (arg: SigninReturn) => void;
 }> {
 	public render() {
@@ -121,6 +135,7 @@ export default class PageRouter extends React.Component<{
 							component={composeElement(
 								value.component,
 								this.props.member,
+								this.props.account,
 								this.props.authorizeUser,
 								this.props.updateSideNav,
 								this.props.updateBreadcrumbs

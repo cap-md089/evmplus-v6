@@ -11,7 +11,7 @@ export default class Autocomplete<
 > extends React.Component<AutocompleteProps<T>> {
 	public render() {
 		return (
-			
+			<div />
 		);
 	}
 }

@@ -16,13 +16,15 @@ export default class LinkList extends React.Component<
 	};
 
 	public componentDidMount() {
-		myFetch('/api/event', {
-			headers: {
-				authorization: this.props.member.sessionID
-			}
-		})
-			.then(val => val.json())
-			.then((list: EventObject[]) => this.setState({ list }));
+		if (this.props.member) {
+			myFetch('/api/event', {
+				headers: {
+					authorization: this.props.member.sessionID
+				}
+			})
+				.then(val => val.json())
+				.then((list: EventObject[]) => this.setState({ list }));
+		}
 	}
 
 	public render() {

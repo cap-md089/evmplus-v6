@@ -41,7 +41,9 @@ export class SideNavigationReferenceLink extends React.Component<{
 	}
 }
 
-export type SideNavigationItem = SideNavigationLink | SideNavigationReferenceLink;
+export type SideNavigationItem =
+	| SideNavigationLink
+	| SideNavigationReferenceLink;
 
 export interface SideNavigationProps {
 	links: SideNavigationItem[];
@@ -60,13 +62,18 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 		let memberRank = '';
 		let memberName = '';
 		if (this.props.member.valid) {
-			memberRank = this.props.member.member.object.memberRank;
+			if (
+				this.props.member.member.type === 'CAPNHQMember' ||
+				this.props.member.member.type === 'CAPProspectiveMember'
+			) {
+				memberRank = this.props.member.member.memberRank;
+			}
 			const {
 				nameFirst,
 				nameLast,
 				nameMiddle,
 				nameSuffix
-			} = this.props.member.member.object;
+			} = this.props.member.member;
 			memberName = [nameFirst, nameMiddle, nameLast, nameSuffix]
 				.filter(i => i !== '')
 				.join(' ');

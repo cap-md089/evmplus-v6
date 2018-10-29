@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { parseMultCheckboxReturn } from "../components/form-inputs/MultCheckbox";
+import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
 import Loader from '../components/Loader';
 import myFetch from '../lib/myFetch';
-import { Uniforms, Activities, RequiredForms } from "./ModifyEvent";
+import { Uniforms, Activities, RequiredForms } from './ModifyEvent';
 import { PageProps } from './Page';
-import { EventStatus } from '../enums';
+import { EventStatus, PointOfContactType } from '../enums';
 
 interface EventViewerState {
 	event: EventObject | null;
@@ -25,24 +25,25 @@ const formatDate = (date: number) => {
 	const month = dateObject.getMonth();
 	const year = dateObject.getFullYear();
 
-	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(month + 1)}/${zeroPad(day)}/${year}`;
+	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(
+		month + 1
+	)}/${zeroPad(day)}/${year}`;
 };
 
 const eventStatus = (stat: EventStatus): string =>
-	stat === EventStatus.COMPLETE ?
-		'Complete' :
-	stat === EventStatus.CANCELLED ?
-		'Cancelled' :
-	stat === EventStatus.CONFIRMED ?
-		'Confirmed' :
-	stat === EventStatus.DRAFT ?
-		'Draft' : 
-	stat === EventStatus.INFORMATIONONLY ?
-		'Information Only' :
-	stat === EventStatus.TENTATIVE ?
-		'Tentative' :
-		''
-
+	stat === EventStatus.COMPLETE
+		? 'Complete'
+		: stat === EventStatus.CANCELLED
+			? 'Cancelled'
+			: stat === EventStatus.CONFIRMED
+				? 'Confirmed'
+				: stat === EventStatus.DRAFT
+					? 'Draft'
+					: stat === EventStatus.INFORMATIONONLY
+						? 'Information Only'
+						: stat === EventStatus.TENTATIVE
+							? 'Tentative'
+							: '';
 
 export default class EventViewer extends React.Component<
 	EventViewerProps,
@@ -60,7 +61,7 @@ export default class EventViewer extends React.Component<
 	public componentDidMount() {
 		myFetch('/api/event/' + this.props.routeProps.match.params.id, {
 			headers: {
-				authorization: this.props.member.sessionID
+				authorization: this.props.member ? this.props.member.sessionID : ''
 			}
 		})
 			.then(val => val.json())
@@ -78,8 +79,8 @@ export default class EventViewer extends React.Component<
 						target: '/eventviewer/' + event.id,
 						text: `View ${event.name}`
 					}
-				])
-				this.setState({ event })
+				]);
+				this.setState({ event });
 			});
 	}
 
@@ -91,33 +92,127 @@ export default class EventViewer extends React.Component<
 		return (
 			<div>
 				<div>
-					<strong>Event: </strong> {this.state.event.name}<br />
-					<strong>Event ID: </strong> {this.state.event.accountID.toUpperCase()}-{this.state.event.id}<br />
-					<strong>Meet</strong> at {formatDate(this.state.event.meetDateTime)} at {this.state.event.location}<br />
-					<strong>Start</strong> at {formatDate(this.state.event.startDateTime)} at {this.state.event.location}<br />
-					<strong>End</strong> at {formatDate(this.state.event.endDateTime)}<br />
-					<strong>Pickup</strong> at {formatDate(this.state.event.pickupDateTime)} at {this.state.event.pickupLocation}<br />
+					<strong>Event: </strong> {this.state.event.name}
 					<br />
-					<strong>Transportation provided:</strong> {this.state.event.transportationProvided ? 'YES' : 'NO'}<br />
-					{this.state.event.transportationProvided ? <><strong>Transportation Description:</strong> {this.state.event.transportationDescription}</> : null}
-					<strong>Uniform:</strong> {parseMultCheckboxReturn(this.state.event.uniform, Uniforms, false)}<br />
-					<strong>Comments:</strong> {this.state.event.comments}<br />
-					<strong>Activity:</strong> {parseMultCheckboxReturn(this.state.event.activity, Activities, true)}<br />
-					<strong>Required forms:</strong> {parseMultCheckboxReturn(this.state.event.requiredForms, RequiredForms, true)}<br />
-					<strong>Event status:</strong> {eventStatus(this.state.event.status[0])}<br />
+					<strong>Event ID: </strong>{' '}
+					{this.state.event.accountID.toUpperCase()}-
+					{this.state.event.id}
+					<br />
+					<strong>Meet</strong> at{' '}
+					{formatDate(this.state.event.meetDateTime)} at{' '}
+					{this.state.event.location}
+					<br />
+					<strong>Start</strong> at{' '}
+					{formatDate(this.state.event.startDateTime)} at{' '}
+					{this.state.event.location}
+					<br />
+					<strong>End</strong> at{' '}
+					{formatDate(this.state.event.endDateTime)}
+					<br />
+					<strong>Pickup</strong> at{' '}
+					{formatDate(this.state.event.pickupDateTime)} at{' '}
+					{this.state.event.pickupLocation}
+					<br />
+					<br />
+					<strong>Transportation provided:</strong>{' '}
+					{this.state.event.transportationProvided ? 'YES' : 'NO'}
+					<br />
+					{this.state.event.transportationProvided ? (
+						<>
+							<strong>Transportation Description:</strong>{' '}
+							{this.state.event.transportationDescription}
+						</>
+					) : null}
+					<strong>Uniform:</strong>{' '}
+					{parseMultCheckboxReturn(
+						this.state.event.uniform,
+						Uniforms,
+						false
+					)}
+					<br />
+					<strong>Comments:</strong> {this.state.event.comments}
+					<br />
+					<strong>Activity:</strong>{' '}
+					{parseMultCheckboxReturn(
+						this.state.event.activity,
+						Activities,
+						true
+					)}
+					<br />
+					<strong>Required forms:</strong>{' '}
+					{parseMultCheckboxReturn(
+						this.state.event.requiredForms,
+						RequiredForms,
+						true
+					)}
+					<br />
+					<strong>Event status:</strong>{' '}
+					{eventStatus(this.state.event.status[0])}
+					<br />
 					<br />
 					<div>
-						{this.state.event.pointsOfContact.map((poc, i) => (
-							<React.Fragment key={i}>
-								<b>Point of Contact Email: </b>{poc.email}
-							</React.Fragment>
-						))}
+						{this.state.event.pointsOfContact.map(
+							(poc, i) =>
+								poc.type === PointOfContactType.INTERNAL ? (
+									<div key={i}>
+										<b>CAP Point of Contact: </b>
+										{poc.name}
+										<br />
+										{poc.email !== '' ? (
+											<>
+												<b>
+													CAP Point of Contact Email:{' '}
+												</b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{poc.phone !== '' ? (
+											<>
+												<b>
+													CAP Point of Contact Phone:{' '}
+												</b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								) : (
+									<div key={i}>
+										<b>External Point of Contact: </b>
+										{poc.name}
+										<br />
+										{poc.email !== '' ? (
+											<>
+												<b>
+													External Point of Contact
+													Email:{' '}
+												</b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{poc.phone !== '' ? (
+											<>
+												<b>
+													External Point of Contact
+													Phone:{' '}
+												</b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								)
+						)}
 					</div>
 				</div>
 				<div>
 					<h2>Attendance</h2>
 					{this.state.event.attendance.map((val, i) => (
-						<div key={i}>{val.memberRankName}</div>
+						<div key={i}>{val.memberName}</div>
 					))}
 				</div>
 			</div>

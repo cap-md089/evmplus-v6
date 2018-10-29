@@ -72,7 +72,7 @@ export default class Calendar extends Page<
 			)}/${Math.round(+endOfNextMonth / 1000)}`,
 			{
 				headers: {
-					authorization: this.props.member.sessionID
+					authorization: this.props.member ? this.props.member.sessionID : ''
 				}
 			}
 		)

@@ -7,6 +7,8 @@ import App, { MessageEventListener } from './App';
 import './nhq.css';
 import './polyfills';
 
+import './lib/MemberBase';
+
 ReactDOM.render(
 	<Router>
 		<App isMobile={false} />

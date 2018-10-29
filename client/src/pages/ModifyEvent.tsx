@@ -85,7 +85,7 @@ export default class ModifyEvent extends React.Component<
 	}
 
 	public componentDidMount() {
-		if (this.props.member.valid) {
+		if (this.props.member) {
 			myFetch('/api/event/' + this.props.routeProps.match.params.id)
 				.then(val => val.json())
 				.then((eventObject: EventObject) => {
@@ -128,7 +128,7 @@ export default class ModifyEvent extends React.Component<
 
 		const event = this.state.event;
 
-		return this.props.member.valid ? (
+		return this.props.member ? (
 			event === null ? (
 				<Loader />
 			) : (
@@ -294,6 +294,7 @@ export default class ModifyEvent extends React.Component<
 
 					<POCListEditor
 						name="pointsOfContact"
+						member={this.props.member}
 						// @ts-ignore
 						inputComponent={POCInput}
 						addNew={() => ({
@@ -301,7 +302,7 @@ export default class ModifyEvent extends React.Component<
 							email: '',
 							name: '',
 							id: {
-								kind: 'Null'
+								type: 'Null'
 							},
 							phone: '',
 							receiveEventUpdates: false,

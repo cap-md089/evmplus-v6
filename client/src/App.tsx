@@ -11,6 +11,7 @@ import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
 import Registry from './registry';
+import Account from './lib/Account';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
@@ -87,18 +88,12 @@ const RoutingSearchForm = withRouter(
 interface AppState {
 	Registry: Registry;
 	member: SigninReturn;
-	tryingMember: boolean;
+	loading: boolean;
+	account: Account | null;
 	sideNavLinks: SideNavigationItem[];
 	breadCrumbs: BreadCrumb[];
-	allowedSlideshowIDs: string[];
+	allowedSlideshowIDs: FileObject[];
 }
-
-export const MemberContext = React.createContext<SigninReturn>({
-	error: MemberCreateError.NONE,
-	valid: false,
-	member: null,
-	sessionID: ''
-});
 
 export default class App extends React.Component<
 	{
@@ -115,7 +110,8 @@ export default class App extends React.Component<
 			member: null,
 			sessionID: ''
 		},
-		tryingMember: false,
+		loading: false,
+		account: null,
 		Registry: {
 			Contact: {},
 			Website: {
@@ -130,6 +126,8 @@ export default class App extends React.Component<
 
 	private titleElement: HTMLDivElement;
 
+	private timer: NodeJS.Timer;
+
 	constructor(props: { isMobile: boolean }) {
 		super(props);
 
@@ -137,6 +135,7 @@ export default class App extends React.Component<
 		this.authorizeUser = this.authorizeUser.bind(this);
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
+		this.onStorageChange = this.onStorageChange.bind(this);
 	}
 
 	public componentDidMount(): void {
@@ -154,43 +153,55 @@ export default class App extends React.Component<
 
 		myFetch('/api/banner')
 			.then(res => res.json())
-			.then((allowedSlideshowIDs: string[]) => {
+			.then((allowedSlideshowIDs: FileObject[]) => {
 				this.setState({ allowedSlideshowIDs });
 			});
 
 		const sessionID = localStorage.getItem('sessionID');
-		if (sessionID) {
-			this.setState({
-				tryingMember: true
-			});
+
+		this.setState({
+			loading: true
+		});
+
+		Promise.all([
+			Account.Get(sessionID || ''),
 			myFetch('/api/check', {
 				headers: {
-					authorization: sessionID
+					authorization: sessionID || ''
 				}
 			})
-				.then(res => res.json())
-				.then((member: SigninReturn) => {
-					if (!member.valid) {
-						localStorage.removeItem('sessionID');
-					}
-					this.setState({ member, tryingMember: false });
-				})
-				.catch(() => {
-					this.setState({
-						member: {
-							error: MemberCreateError.INVALID_SESSION_ID,
-							member: null,
-							sessionID: '',
-							valid: false
-						},
-						tryingMember: false
-					});
-				});
-		}
+				.then(res => res.json() as Promise<SigninReturn>)
+				.catch(e =>
+					Promise.resolve<SigninReturn>({
+						error: MemberCreateError.INVALID_SESSION_ID,
+						member: null,
+						sessionID: '',
+						valid: false
+					})
+				)
+		]).then(([account, member]) => {
+			if (!member.valid) {
+				localStorage.removeItem('sessionID');
+			}
+			if (member.valid) {
+				account.setSessionID(member);
+			}
+			this.setState({
+				account,
+				member,
+				loading: false
+			});
+		});
+
+		this.timer = setInterval(() => void 0, 5000);
+
+		window.addEventListener('storage', this.onStorageChange);
 	}
 
 	public componentWillUnmount() {
-		window.onkeydown = () => void 0;
+		clearInterval(this.timer);
+
+		window.removeEventListener('storage', this.onStorageChange);
 	}
 
 	public render() {
@@ -207,321 +218,309 @@ export default class App extends React.Component<
 
 		jQuery('body')
 			.removeClass('mobile')
-			.removeClass('desktop');
-		jQuery('body').addClass(this.props.isMobile ? 'mobile' : 'desktop');
+			.removeClass('desktop')
+			.addClass(this.props.isMobile ? 'mobile' : 'desktop');
 
 		return (
-			<MemberContext.Provider value={this.state.member}>
-				<div>
-					<div id="mother">
-						<div id="bodyContainer">
-							<div id="page">
-								<header>
-									<div id="logo">
-										<a>
-											<img
-												src="/images/logo.png"
-												alt="Civil Air Patrol"
-												height="127"
-											/>
-										</a>
-									</div>
-									<div className="headerDivider" />
-									<div
-										className="pagetitle"
-										ref={div => {
-											if (div) {
-												this.titleElement = div;
-											}
-										}}
-									>
-										{this.state.Registry.Website.Name}
-									</div>
-									<div className="servings">
-										<span className="servingsTitle">
-											Citizens Serving
-											<br />
-											Communities
-										</span>
-									</div>
-									<nav id="mainNavigation">
-										<ul>
-											<li>
-												<NavLink
-													to="/"
-													exact={true}
-													activeClassName="selected"
-												>
-													Home
-												</NavLink>
-											</li>
-											<li>
-												<NavLink
-													to="/news"
-													activeClassName="selected"
-												>
-													News
-												</NavLink>
-											</li>
-											<li>
-												<NavLink
-													to="/calendar"
-													activeClassName="selected"
-												>
-													Calendar
-												</NavLink>
-											</li>
-											<li>
-												<NavLink
-													to="/photolibrary"
-													activeClassName="selected"
-												>
-													Photo Library
-												</NavLink>
-											</li>
-										</ul>
-										<div className="search">
-											<RoutingSearchForm />
-										</div>
-									</nav>
-								</header>
-								<div id="pageContent">
-									<div className="contentBorder" />
-									<div className="mainContent">
-										<div className="slideshowTop" />
-										<div className="slideshow">
-											<div className="image" />
-										</div>
-										<div className="slideshowBottom" />
-										<div id="body">
-											<div id="content">
-												<div id="fb-root" />
-												<BreadCrumbs
-													links={
-														this.state.breadCrumbs
-													}
-												/>
-												{this.state.tryingMember ? (
-													<Loader />
-												) : (
-													<PageRouter
-														updateSideNav={
-															this.updateSideNav
-														}
-														updateBreadcrumbs={
-															this
-																.updateBreadCrumbs
-														}
-														member={
-															this.state.member
-														}
-														authorizeUser={
-															this.authorizeUser
-														}
-													/>
-												)}
-											</div>
-											<SideNavigation
-												links={this.state.sideNavLinks}
-												member={this.state.member}
-												authorizeUser={
-													this.authorizeUser
-												}
-											/>
-										</div>
-										<div className="mainContentBottom" />
-									</div>
-									<div className="contentBorder" />
+			<div>
+				<div id="mother">
+					<div id="bodyContainer">
+						<div id="page">
+							<header>
+								<div id="logo">
+									<a>
+										<img
+											src="/images/logo.png"
+											alt="Civil Air Patrol"
+											height="127"
+										/>
+									</a>
 								</div>
-							</div>
-						</div>
-						<div id="footer">
-							<div className="page">
-								<div className={count + 'Box'}>
-									<div className="footerBoxTitle">
-										Connect With Us
-									</div>
-									<p>
-										{[
-											this.state.Registry.Contact
-												.FaceBook ? (
-												<a
-													href={
-														'https://www.facebook.com/' +
-														this.state.Registry
-															.Contact.FaceBook
-													}
-													target="_blank"
-													className="socialMedia fb"
-												/>
-											) : null,
-											this.state.Registry.Contact
-												.Twitter ? (
-												<a
-													href={
-														'https://www.twitter.com/' +
-														this.state.Registry
-															.Contact.Twitter
-													}
-													target="_blank"
-													className="socialMedia twitter"
-												/>
-											) : null,
-											this.state.Registry.Contact
-												.YouTube ? (
-												<a
-													href={
-														'https://www.youtube.com/channel/' +
-														this.state.Registry
-															.Contact.YouTube
-													}
-													target="_blank"
-													className="socialMedia youtube"
-												/>
-											) : null,
-											this.state.Registry.Contact
-												.LinkedIn ? (
-												<a
-													href={
-														'https://in.linkedin.com/in/' +
-														this.state.Registry
-															.Contact.LinkedIn
-													}
-													target="_blank"
-													className="socialMedia linkedin"
-												/>
-											) : null,
-											this.state.Registry.Contact
-												.Instagram ? (
-												<a
-													href={
-														'https://www.instagram.com/' +
-														this.state.Registry
-															.Contact.Instagram
-													}
-													target="_blank"
-													className="socialMedia instagram"
-												/>
-											) : null,
-											this.state.Registry.Contact
-												.Flickr ? (
-												<a
-													href={
-														'https://www.flickr.com/photos/' +
-														this.state.Registry
-															.Contact.Flickr
-													}
-													target="_blank"
-													className="socialMedia flickr"
-												/>
-											) : null
-										]}
-									</p>
+								<div className="headerDivider" />
+								<div
+									className="pagetitle"
+									ref={div => {
+										if (div) {
+											this.titleElement = div;
+										}
+									}}
+								>
+									{this.state.Registry.Website.Name}
 								</div>
-								{this.state.Registry.Contact.MeetingAddress ? (
-									<div className={count + 'Box'}>
-										<div className="footerBoxTitle">
-											Meeting Address
-										</div>
-										<p>
-											{`${
-												this.state.Registry.Contact
-													.MeetingAddress.Name
-											}<br />
-												${this.state.Registry.Contact.MeetingAddress.FirstLine}<br />
-												${this.state.Registry.Contact.MeetingAddress.SecondLine}`}
-										</p>
-									</div>
-								) : null}
-								{this.state.Registry.Contact.MailingAddress ? (
-									<div className={count + 'Box'}>
-										<div className="footerBoxTitle">
-											Mailing Address
-										</div>
-										<p>
-											{`${
-												this.state.Registry.Contact
-													.MailingAddress.Name
-											}<br />
-												${this.state.Registry.Contact.MailingAddress.FirstLine}<br />
-												${this.state.Registry.Contact.MailingAddress.SecondLine}`}
-										</p>
-									</div>
-								) : null}
-								<div className={count + 'Box'}>
-									<div className="footerBoxTitle">
-										Resources
-									</div>
-									<ul
-										style={{
-											listStyleType: 'none',
-											margin: '0px',
-											padding: '0px'
-										}}
-									>
+								<div className="servings">
+									<span className="servingsTitle">
+										Citizens Serving
+										<br />
+										Communities
+									</span>
+								</div>
+								<nav id="mainNavigation">
+									<ul>
 										<li>
-											<a
-												target="_blank"
-												href="https://www.capnhq.gov/"
+											<NavLink
+												to="/"
+												exact={true}
+												activeClassName="selected"
 											>
-												eServices
-											</a>
+												Home
+											</NavLink>
 										</li>
 										<li>
-											<a
-												target="_blank"
-												href="http://www.cap.news/"
+											<NavLink
+												to="/news"
+												activeClassName="selected"
 											>
-												Latest CAP News
-											</a>
+												News
+											</NavLink>
+										</li>
+										<li>
+											<NavLink
+												to="/calendar"
+												activeClassName="selected"
+											>
+												Calendar
+											</NavLink>
+										</li>
+										<li>
+											<NavLink
+												to="/photolibrary"
+												activeClassName="selected"
+											>
+												Photo Library
+											</NavLink>
 										</li>
 									</ul>
-								</div>
-								<div
-									style={{
-										color: 'white'
-									}}
-									className="onlyBox"
-								>
-									<div
-										style={{
-											float: 'left',
-											fontSize: '12px'
-										}}
-									>
-										&copy; 2017-
-										{new Date().getFullYear()} CAPUnit.com
+									<div className="search">
+										<RoutingSearchForm />
 									</div>
-									<div
-										style={{
-											float: 'right',
-											fontSize: '12px'
-										}}
-									>
+								</nav>
+							</header>
+							<div id="pageContent">
+								<div className="contentBorder" />
+								<div className="mainContent">
+									<div className="slideshowTop" />
+									<div className="slideshow">
+										<div className="image" />
+									</div>
+									<div className="slideshowBottom" />
+									<div id="body">
+										<div id="content">
+											<div id="fb-root" />
+											<BreadCrumbs
+												links={this.state.breadCrumbs}
+											/>
+											{this.state.loading ? (
+												<Loader />
+											) : (
+												<PageRouter
+													updateSideNav={
+														this.updateSideNav
+													}
+													updateBreadcrumbs={
+														this.updateBreadCrumbs
+													}
+													member={this.state.member}
+													account={
+														this.state.account!
+													}
+													authorizeUser={
+														this.authorizeUser
+													}
+													key="pagerouter"
+												/>
+											)}
+										</div>
+										<SideNavigation
+											links={this.state.sideNavLinks}
+											member={this.state.member}
+											authorizeUser={this.authorizeUser}
+										/>
+									</div>
+									<div className="mainContentBottom" />
+								</div>
+								<div className="contentBorder" />
+							</div>
+						</div>
+					</div>
+					<div id="footer">
+						<div className="page">
+							<div className={count + 'Box'}>
+								<div className="footerBoxTitle">
+									Connect With Us
+								</div>
+								<p>
+									{[
+										this.state.Registry.Contact.FaceBook ? (
+											<a
+												href={
+													'https://www.facebook.com/' +
+													this.state.Registry.Contact
+														.FaceBook
+												}
+												target="_blank"
+												className="socialMedia fb"
+											/>
+										) : null,
+										this.state.Registry.Contact.Twitter ? (
+											<a
+												href={
+													'https://www.twitter.com/' +
+													this.state.Registry.Contact
+														.Twitter
+												}
+												target="_blank"
+												className="socialMedia twitter"
+											/>
+										) : null,
+										this.state.Registry.Contact.YouTube ? (
+											<a
+												href={
+													'https://www.youtube.com/channel/' +
+													this.state.Registry.Contact
+														.YouTube
+												}
+												target="_blank"
+												className="socialMedia youtube"
+											/>
+										) : null,
+										this.state.Registry.Contact.LinkedIn ? (
+											<a
+												href={
+													'https://in.linkedin.com/in/' +
+													this.state.Registry.Contact
+														.LinkedIn
+												}
+												target="_blank"
+												className="socialMedia linkedin"
+											/>
+										) : null,
+										this.state.Registry.Contact
+											.Instagram ? (
+											<a
+												href={
+													'https://www.instagram.com/' +
+													this.state.Registry.Contact
+														.Instagram
+												}
+												target="_blank"
+												className="socialMedia instagram"
+											/>
+										) : null,
+										this.state.Registry.Contact.Flickr ? (
+											<a
+												href={
+													'https://www.flickr.com/photos/' +
+													this.state.Registry.Contact
+														.Flickr
+												}
+												target="_blank"
+												className="socialMedia flickr"
+											/>
+										) : null
+									]}
+								</p>
+							</div>
+							{this.state.Registry.Contact.MeetingAddress ? (
+								<div className={count + 'Box'}>
+									<div className="footerBoxTitle">
+										Meeting Address
+									</div>
+									<p>
+										{`${
+											this.state.Registry.Contact
+												.MeetingAddress.Name
+										}<br />
+											${this.state.Registry.Contact.MeetingAddress.FirstLine}<br />
+											${this.state.Registry.Contact.MeetingAddress.SecondLine}`}
+									</p>
+								</div>
+							) : null}
+							{this.state.Registry.Contact.MailingAddress ? (
+								<div className={count + 'Box'}>
+									<div className="footerBoxTitle">
+										Mailing Address
+									</div>
+									<p>
+										{`${
+											this.state.Registry.Contact
+												.MailingAddress.Name
+										}<br />
+											${this.state.Registry.Contact.MailingAddress.FirstLine}<br />
+											${this.state.Registry.Contact.MailingAddress.SecondLine}`}
+									</p>
+								</div>
+							) : null}
+							<div className={count + 'Box'}>
+								<div className="footerBoxTitle">Resources</div>
+								<ul
+									style={{
+										listStyleType: 'none',
+										margin: '0px',
+										padding: '0px'
+									}}
+								>
+									<li>
 										<a
 											target="_blank"
-											href="http://www.capmembers.com/"
+											href="https://www.capnhq.gov/"
 										>
-											CAP Members.com
-										</a>{' '}
-										|
+											eServices
+										</a>
+									</li>
+									<li>
 										<a
 											target="_blank"
 											href="http://www.cap.news/"
 										>
-											CAP News
-										</a>{' '}
-										|
-										<a href="#" onClick={this.scrollTop}>
-											Top
+											Latest CAP News
 										</a>
-									</div>
+									</li>
+								</ul>
+							</div>
+							<div
+								style={{
+									color: 'white'
+								}}
+								className="onlyBox"
+							>
+								<div
+									style={{
+										float: 'left',
+										fontSize: '12px'
+									}}
+								>
+									&copy; 2017-
+									{new Date().getFullYear()} CAPUnit.com
+								</div>
+								<div
+									style={{
+										float: 'right',
+										fontSize: '12px'
+									}}
+								>
+									<a
+										target="_blank"
+										href="http://www.capmembers.com/"
+									>
+										CAP Members.com
+									</a>{' '}
+									|
+									<a
+										target="_blank"
+										href="http://www.cap.news/"
+									>
+										CAP News
+									</a>{' '}
+									|
+									<a href="#" onClick={this.scrollTop}>
+										Top
+									</a>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</MemberContext.Provider>
+			</div>
 		);
 	}
 
@@ -569,5 +568,45 @@ export default class App extends React.Component<
 	private authorizeUser(member: SigninReturn) {
 		this.setState({ member });
 		localStorage.setItem('sessionID', member.sessionID);
+	}
+
+	private onStorageChange(e: StorageEvent) {
+		if (e.key === 'sessionID' && e.newValue !== '') {
+			this.setState({
+				loading: true
+			});
+			myFetch('/api/check', {
+				headers: {
+					authorization: e.newValue || ''
+				}
+			})
+				.then(res => res.json())
+				.then((member: SigninReturn) => {
+					if (!member.valid) {
+						localStorage.removeItem('sessionID');
+					}
+					this.setState({ member, loading: false });
+				})
+				.catch(() => {
+					this.setState({
+						member: {
+							error: MemberCreateError.INVALID_SESSION_ID,
+							member: null,
+							sessionID: '',
+							valid: false
+						},
+						loading: false
+					});
+				});
+		} else if (e.key === 'sessionID') {
+			this.setState({
+				member: {
+					error: MemberCreateError.NONE,
+					member: null,
+					sessionID: '',
+					valid: false
+				}
+			});
+		}
 	}
 }
