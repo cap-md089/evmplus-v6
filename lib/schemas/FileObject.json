@@ -158,22 +158,22 @@
                 "id": {
                     "type": "number"
                 },
-                "kind": {
+                "type": {
                     "enum": [
-                        "NHQMember"
+                        "CAPNHQMember"
                     ],
                     "type": "string"
                 }
             },
             "required": [
                 "id",
-                "kind"
+                "type"
             ],
             "type": "object"
         },
         "NullMemberReference": {
             "properties": {
-                "kind": {
+                "type": {
                     "enum": [
                         "Null"
                     ],
@@ -181,7 +181,7 @@
                 }
             },
             "required": [
-                "kind"
+                "type"
             ],
             "type": "object"
         },
@@ -190,16 +190,16 @@
                 "id": {
                     "type": "string"
                 },
-                "kind": {
+                "type": {
                     "enum": [
-                        "ProspectiveMember"
+                        "CAPProspectiveMember"
                     ],
                     "type": "string"
                 }
             },
             "required": [
                 "id",
-                "kind"
+                "type"
             ],
             "type": "object"
         }

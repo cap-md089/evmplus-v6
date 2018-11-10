@@ -71,3 +71,11 @@ export enum FileUserAccessControlType {
 	SIGNEDIN,
 	OTHER
 }
+
+export enum HTTPError {
+	NONE,
+	ERR404,
+	ERR403,
+	ERR500,
+	UNKNOWN
+}

@@ -681,11 +681,11 @@ declare global {
 		/**
 		 * If they are comming part time, this shows when they arrive
 		 */
-		arrivalTime?: number;
+		arrivalTime: number | null;
 		/**
 		 * If they are comming part time, this shows when they depart
 		 */
-		departureTime?: number;
+		departureTime: number | null;
 	}
 
 	/**
@@ -1520,6 +1520,12 @@ declare global {
 		};
 	}
 
+	export interface TeamMember {
+		reference: MemberReference;
+		job: string;
+		joined: number;
+	}
+
 	/**
 	 * For creating teams of cadets
 	 */
@@ -1531,7 +1537,7 @@ declare global {
 		/**
 		 * Who is on the team
 		 */
-		members: MemberReference[];
+		members: TeamMember[];
 		/**
 		 * Describe what the team does
 		 */

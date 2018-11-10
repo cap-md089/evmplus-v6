@@ -12,5 +12,8 @@
 			"path": "lib",
 			"name": "Common"
 		}
-	]
+	],
+	"settings": {
+		"typescript.tsdk": "Server/node_modules/typescript/lib"
+	}
 }

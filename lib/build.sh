@@ -28,6 +28,10 @@ echo "Building BlogPage..."
 typescript-json-schema --refs --required index.d.ts global.BlogPageObject -o schemas/BlogPageObject.json
 echo "Building RegistryValues..."
 typescript-json-schema --refs --required index.d.ts global.RegistryValues -o schemas/RegistryValues.json
+echo "Building TeamMember..."
+typescript-json-schema --refs --required index.d.ts global.TeamMember -o schemas/TeamMember.json
+echo "Building NewTeamMember..."
+typescript-json-schema --refs --required index.d.ts global.TeamMember -o schemas/NewTeamMember.json
 
 cp -r schemas ./../server
 cp -r schemas ./../client/src
