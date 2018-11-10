@@ -56,7 +56,9 @@
                 }
             },
             "required": [
+                "arrivalTime",
                 "comments",
+                "departureTime",
                 "memberID",
                 "memberName",
                 "planToUseCAPTransportation",
