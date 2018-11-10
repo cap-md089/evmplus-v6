@@ -132,7 +132,7 @@ export default class DownloadDialogue<
 			);
 		}
 
-		return (
+		return this.props.open ? (
 			<Dialogue
 				open={this.props.open && this.state.values !== null}
 				displayButtons={DialogueButtons.OK_CANCEL}
@@ -144,7 +144,7 @@ export default class DownloadDialogue<
 			>
 				{selector}
 			</Dialogue>
-		);
+		) : null;
 	}
 
 	protected hasValue(value: T): boolean {

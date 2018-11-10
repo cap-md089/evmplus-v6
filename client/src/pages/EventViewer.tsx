@@ -60,10 +60,14 @@ export default class EventViewer extends React.Component<
 
 	public async componentDidMount() {
 		const event = await Event.Get(
-			parseInt(this.props.routeProps.match.params.id, 10),
+			parseInt(this.props.routeProps.match.params.id.split('-')[0], 10),
 			this.props.member,
 			this.props.account
 		);
+
+		const eventURL = `/eventviewer/${event.id}-${event.name.toLocaleLowerCase().replace(' ', '-')}`
+
+		this.props.routeProps.history.replace(eventURL)
 
 		this.props.updateBreadCrumbs([
 			{
@@ -75,7 +79,7 @@ export default class EventViewer extends React.Component<
 				text: 'Calendar'
 			},
 			{
-				target: `/eventviewer/${event.id}`,
+				target: eventURL,
 				text: `View ${event.name}`
 			}
 		]);
