@@ -472,7 +472,11 @@ export default class AddEvent extends React.Component<
 				<NumberInput name="teamID" />
 
 				<Label>Event files</Label>
-				<FileInput name="fileIDs" />
+				<FileInput
+					name="fileIDs"
+					account={this.props.account}
+					member={this.props.member}
+				/>
 
 				<Title>Debrief information</Title>
 
