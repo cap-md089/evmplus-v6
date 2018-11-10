@@ -116,7 +116,7 @@ const composeElement = (
 	/>
 );
 
-export default class PageRouter extends React.PureComponent<{
+export default class PageRouter extends React.Component<{
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
 	member: SigninReturn;

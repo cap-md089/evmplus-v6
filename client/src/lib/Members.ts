@@ -39,14 +39,9 @@ export async function getMember(sessionID: string): Promise<SigninReturn> {
 		};
 	}
 
-	const json = await result.json();
+	const json = await result.json() as SigninReturn;
 
-	return {
-		error: MemberCreateError.NONE,
-		member: json,
-		sessionID,
-		valid: true
-	};
+	return json;
 }
 
 export default MemberBase;

@@ -34,6 +34,6 @@
 		"src/setupTests.ts"
 	],
 	"files": [
-		"../lib/index.d.ts"
+		"../lib/types.d.ts"
 	]
 }

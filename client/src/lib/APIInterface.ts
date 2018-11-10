@@ -5,12 +5,15 @@ export default abstract class APIInterface<T> {
 	protected static REQUEST_URI =
 		process.env.NODE_ENV === 'production'
 			? 'capunit.com'
-			: 'localhost:3001';
+			: 'localcapunit.com:3001';
 
 	public constructor(public accountID: string) {}
 
 	public buildURI(...components: string[]): string {
-		let uri = `https://${this.accountID}.${APIInterface.REQUEST_URI}/`;
+		let uri =
+			process.env.NODE_ENV === 'production'
+				? `https://${this.accountID}.${APIInterface.REQUEST_URI}/`
+				: '/';
 
 		for (const i in components) {
 			if (components.hasOwnProperty(i)) {
@@ -21,7 +24,11 @@ export default abstract class APIInterface<T> {
 		return uri.slice(0, -1);
 	}
 
-	public fetch(uri: string, options: RequestInit = {}, member?: MemberBase | null) {
+	public fetch(
+		uri: string,
+		options: RequestInit = {},
+		member?: MemberBase | null
+	) {
 		if (uri[0] === '/') {
 			uri = uri.slice(1);
 		}
@@ -45,5 +52,5 @@ export default abstract class APIInterface<T> {
 		});
 	}
 
-	public abstract toRaw(): T
+	public abstract toRaw(): T;
 }

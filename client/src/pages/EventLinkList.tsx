@@ -4,7 +4,7 @@ import Event from '../lib/Event';
 import { PageProps } from './Page';
 
 interface LinkListState {
-	list: Event[] | null;
+	eventList: Event[] | null;
 }
 
 export default class LinkList extends React.Component<
@@ -12,28 +12,37 @@ export default class LinkList extends React.Component<
 	LinkListState
 > {
 	public state: LinkListState = {
-		list: null
+		eventList: null
 	};
 
 	public async componentDidMount() {
 		if (this.props.member) {
-			const list = await this.props.account.getEvents(this.props.member);
+			let eventList = await this.props.account.getEvents(
+				this.props.member
+			);
 
-			this.setState({ list });
+			eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
+
+			eventList = eventList.filter(
+				event => event.startDateTime < ((Date.now() / 1000) + (60*60*24*30))
+			);
+
+			this.setState({ eventList });
 		}
 	}
 
 	public render() {
-		return this.state.list === null ? (
+		return this.state.eventList === null ? (
 			<Loader />
-		) : this.state.list.length === 0 ? (
+		) : this.state.eventList.length === 0 ? (
 			<div>No events to list</div>
 		) : (
-			<div>
-				{this.state.list.map((event, i) => (
-					<div key={i}>Name: {event.name}</div>
-				))}
-			</div>
+			<table>
+				<tr><th>Name:</th><th>id:</th></tr>
+				{this.state.eventList.map((event, i) => (
+					<tr key={i}>{event.name}</tr>
+					))}
+			</table>
 		);
 	}
 }
