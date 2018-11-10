@@ -11,7 +11,6 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 
 	app.set('port', port);
 	app.disable('x-powered-by');
-
 	const server = http.createServer(app);
 	server.listen(port);
 	server.on('error', onError);
@@ -20,6 +19,12 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	const { router, session } = await getRouter(conf, mysqlConn);
 
 	mysqlConn = session;
+
+	app.use((req, res, next) => {
+		res.removeHeader('X-Powered-By');
+		next();
+	});
+	app.disable('x-powered-by');
 
 	app.use('/api', router);
 
