@@ -22,34 +22,12 @@ mediaType: application/json
 		put:
 			body:
 				application/json:
-					type: object
-					properties:
-						fileName: string
-						comments: string
-						memberOnly: boolean
-						forDisplay: boolean
-						forSlideshow: boolean
+					type: FileObject
 			responses:
 				204:
 					description: It succeeded
 				400:
 					description: One or more of the properties were not present
-		patch:
-			body:
-				application/json:
-					type: object
-					properties:
-						fileName?: string
-						comments?: string
-						memberOnly?: boolean
-						forSlideshow?: boolean
-						forDisplay?: boolean
-			responses:
-				204:
-					description: It succeeded
-				400:
-					description: No body was sent, no account, no file ID
-
 	/{fileid}/children:
 		get:
 			responses:
@@ -79,6 +57,16 @@ mediaType: application/json
 					body:
 						application/json:
 							type: FileChildObject
+		delete:
+			responses:
+				500:
+					description: Some error occurred
+				404:
+					description: Either file could not be found
+				400:
+					description: Account, parent ID, or child ID could not be found
+				204:
+					description: Successful
 
 /events:
 	/:

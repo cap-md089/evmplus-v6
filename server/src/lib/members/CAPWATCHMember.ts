@@ -181,6 +181,12 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	) {
 		super(data, schema, requestingAccount);
 
+		this.memberRank = data.memberRank;
+		this.seniorMember = data.seniorMember;
+		this.dutyPositions = data.dutyPositions;
+		this.orgid = data.orgid;
+		this.flight = data.flight;
+
 		this.memberRankName = `${this.memberRank} ${this.getName()}`;
 	}
 
@@ -218,22 +224,16 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		}
 	}
 	
-	public toRaw = (): CAPMemberObject => ({
-		contact: this.contact,
-		dutyPositions: this.dutyPositions,
-		flight: this.flight,
-		id: this.id,
-		memberRank: this.memberRank,
-		nameFirst: this.nameFirst,
-		nameLast: this.nameLast,
-		nameMiddle: this.nameMiddle,
-		nameSuffix: this.nameSuffix,
-		orgid: this.orgid,
-		permissions: this.permissions,
-		seniorMember: this.seniorMember,
-		squadron: this.squadron,
-		teamIDs: this.teamIDs,
-		type: 'CAPNHQMember',
-		usrID: this.usrID
-	})
+	public toRaw (): CAPMemberObject {
+		return ({
+			...super.toRaw(),
+			dutyPositions: this.dutyPositions,
+			flight: this.flight,
+			memberRank: this.memberRank,
+			orgid: this.orgid,
+			seniorMember: this.seniorMember,
+			squadron: this.squadron,
+			type: 'CAPNHQMember',
+		});
+	}
 }

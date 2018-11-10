@@ -85,7 +85,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 
 	public description: string;
 
-	public members: MemberReference[] = [];
+	public members: TeamMember[] = [];
 
 	public cadetLeader: MemberReference | null;
 
@@ -104,6 +104,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 		private schema: Schema
 	) {
 		this.set(data);
+		this.members = data.members;
 	}
 
 	public set(values: Partial<TeamObject>) {
@@ -111,7 +112,6 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 			'cadetLeader',
 			'description',
 			'id',
-			'members',
 			'name',
 			'seniorCoach',
 			'seniorMentor',
@@ -161,4 +161,30 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 		...this.toRaw(),
 		members: this.members
 	});
+
+	public addTeamMember(member: MemberReference, job: string) {
+		this.members.push({
+			job,
+			joined: Math.round(Date.now() / 1000),
+			reference: member
+		});
+	}
+
+	public removeTeamMember(member: MemberReference) {
+		this.members = this.members.filter(
+			f => !MemberBase.AreMemberReferencesTheSame(member, f.reference)
+		);
+	}
+
+	public modifyTeamMember(member: MemberReference, job: string) {
+		let index;
+		
+		for (let i = 0; i < this.members.length; i++) {
+			if (MemberBase.AreMemberReferencesTheSame(member, this.members[i].reference)) {
+				index = i;
+			}
+		}
+
+		this.members[index].job = job;
+	}
 }

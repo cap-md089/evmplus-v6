@@ -3,17 +3,26 @@ import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import {
 	FileUserAccessControlPermissions,
-	FileUserAccessControlType
+	FileUserAccessControlType,
+	MemberCreateError
 } from '../../../../../lib/index';
+import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { json } from '../../../lib/Util';
 
 export default async (req: MemberRequest, res: express.Response) => {
+	const root = await File.Get('root', req.account, req.mysqlx);
+
 	if (
-		req.member === null ||
-		req.body === undefined ||
-		req.body.name === undefined
+		!root.hasPermission(req.member, FileUserAccessControlPermissions.MODIFY)
 	) {
 		res.status(403);
+		res.end();
+		return;
+	}
+
+	if (req.body === undefined || req.body.name === undefined) {
+		res.status(400);
 		res.end();
 		return;
 	}
@@ -48,7 +57,15 @@ export default async (req: MemberRequest, res: express.Response) => {
 		})
 		.execute();
 
-	res.json({
-		id
+	const file = await File.Get(id, req.account, req.mysqlx);
+
+	json<FullFileObject>(res, {
+		...file.toRaw(),
+		uploader: {
+			error: MemberCreateError.NONE,
+			member: req.member.toRaw(),
+			sessionID: '',
+			valid: true
+		}
 	});
 };

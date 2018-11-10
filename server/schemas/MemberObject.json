@@ -1,67 +1,67 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
-        "MemberContact": {
+        "CAPMemberContact": {
             "description": "Contains all the contact info for the member, according to NHQ",
             "properties": {
                 "ALPHAPAGER": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "ASSISTANT": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "CADETPARENTEMAIL": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "CADETPARENTPHONE": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "CELLPHONE": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "DIGITALPAGER": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "EMAIL": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "HOMEFAX": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "HOMEPHONE": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "INSTANTMESSAGER": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "ISDN": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "RADIO": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "TELEX": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "WORKFAX": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 },
                 "WORKPHONE": {
-                    "$ref": "#/definitions/MemberContactInstance",
+                    "$ref": "#/definitions/CAPMemberContactInstance",
                     "description": "A contact method to use to get in touch with the member"
                 }
             },
@@ -84,7 +84,7 @@
             ],
             "type": "object"
         },
-        "MemberContactInstance": {
+        "CAPMemberContactInstance": {
             "description": "The member contact info for a user\n\nWe think it can only be a string, as it is hard (impossible?) to input\nmultiple contacts of a certain type through the UI provided on NHQ",
             "properties": {
                 "EMERGENCY": {
@@ -238,41 +238,26 @@
         "global.MemberType": {
             "description": "String representation of the member type, as there needs to be a way to differentiate",
             "enum": [
-                "CAPWATCHMember",
-                "NHQMember",
-                "ProspectiveMember"
+                "Anchor",
+                "CAPNHQMember",
+                "CAPProspectiveMember",
+                "CAPWATCHMember"
             ],
             "type": "string"
         }
     },
-    "description": "Describes a CAP member\n\nThe member may be created from one of many ways:\n\nNHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:\n \t\tTakes sign in data or a session and signs the user in. Best data\nCAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as\n \t\tthe CAPWATCH updates are frequent\nProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/\nNHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for\n \t\tmanaging prospective members\n\nNHQMember.Create and ProspectiveMember.Signin are used when signing people in\nProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from\n \t\tour database\n\nCAPWATCHMember and NHQMember have their sources in NHQ\nProspectiveMember is located in our database",
+    "description": "Describes a member\n\nThe member may be created from one of many ways:\n\nNHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:\n \t\tTakes sign in data or a session and signs the user in. Best data\nCAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as\n \t\tthe CAPWATCH updates are frequent\nProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/\nNHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for\n \t\tmanaging prospective members\n\nNHQMember.Create and ProspectiveMember.Signin are used when signing people in\nProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from\n \t\tour database\n\nCAPWATCHMember and NHQMember have their sources in NHQ\nProspectiveMember is located in our database",
     "properties": {
         "contact": {
-            "$ref": "#/definitions/MemberContact",
+            "$ref": "#/definitions/CAPMemberContact",
             "description": "Contact information for the user"
-        },
-        "dutyPositions": {
-            "description": "Duty positions listed on CAP NHQ, along with temporary ones assigned here",
-            "items": {
-                "type": "string"
-            },
-            "type": "array"
-        },
-        "flight": {
-            "description": "Which flight the user is in. Should only exist if not a senior member",
-            "type": "string"
         },
         "id": {
             "description": "The CAPID of the member",
-            "type": "number"
-        },
-        "kind": {
-            "$ref": "#/definitions/global.MemberType",
-            "description": "The Kind of user, as there are multiple"
-        },
-        "memberRank": {
-            "description": "The rank of the member provided",
-            "type": "string"
+            "type": [
+                "string",
+                "number"
+            ]
         },
         "nameFirst": {
             "description": "First name of member",
@@ -290,21 +275,9 @@
             "description": "Suffix of member",
             "type": "string"
         },
-        "orgid": {
-            "description": "The organization the member belongs to",
-            "type": "number"
-        },
         "permissions": {
             "$ref": "#/definitions/MemberPermissions",
             "description": "Both the client and server will want a handle on permissions"
-        },
-        "seniorMember": {
-            "description": "Whether or not the member is a senior member",
-            "type": "boolean"
-        },
-        "squadron": {
-            "description": "The Squadron a member belongs to",
-            "type": "string"
         },
         "teamIDs": {
             "description": "Used to easily reference teams",
@@ -313,27 +286,25 @@
             },
             "type": "array"
         },
+        "type": {
+            "$ref": "#/definitions/global.MemberType",
+            "description": "The type of user, as there are multiple"
+        },
         "usrID": {
-            "description": "Since many accounts can have an ORGID, there is an array containing each one\nUser login ID",
+            "description": "User login ID",
             "type": "string"
         }
     },
     "required": [
         "contact",
-        "dutyPositions",
-        "flight",
         "id",
-        "kind",
-        "memberRank",
         "nameFirst",
         "nameLast",
         "nameMiddle",
         "nameSuffix",
-        "orgid",
         "permissions",
-        "seniorMember",
-        "squadron",
         "teamIDs",
+        "type",
         "usrID"
     ],
     "type": "object"

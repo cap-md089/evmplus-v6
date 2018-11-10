@@ -444,16 +444,6 @@ export default class NHQMember extends CAPWATCHMember
 		await this.streamCAPWATCHFile(id, createWriteStream(location));
 	}
 
-	public hasPermission = (
-		permission: MemberPermission | MemberPermission[],
-		threshold = 1
-	): boolean =>
-		typeof permission === 'string'
-			? this.permissions[permission] > threshold || this.isRioux
-			: permission
-					.map(p => this.hasPermission(p, threshold))
-					.reduce((prev, curr) => prev || curr);
-
 	public async su(
 		targetMember: MemberBase | number | string
 	): Promise<string> {
@@ -532,11 +522,13 @@ export default class NHQMember extends CAPWATCHMember
 		id: this.id
 	});
 
-	public toRaw = (): NHQMemberObject => ({
-		...super.toRaw(),
-		type: 'CAPNHQMember',
-		id: this.id,
-		cookie: '',
-		sessionID: this.sessionID
-	})
+	public toRaw (): NHQMemberObject {
+		return ({
+			...super.toRaw(),
+			type: 'CAPNHQMember',
+			id: this.id,
+			cookie: '',
+			sessionID: this.sessionID
+		})
+	}
 }

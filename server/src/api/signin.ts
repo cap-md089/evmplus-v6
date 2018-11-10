@@ -43,7 +43,7 @@ export default async (req: AccountRequest, res: express.Response) => {
 
 		json<SigninReturn>(res, {
 			error: MemberCreateError.NONE,
-			member,
+			member: member.toRaw(),
 			sessionID: member.sessionID,
 			valid: true
 		});

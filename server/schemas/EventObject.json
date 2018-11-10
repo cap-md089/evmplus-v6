@@ -17,10 +17,20 @@
                     "type": "number"
                 },
                 "memberID": {
-                    "description": "Who they are",
-                    "type": "number"
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ProspectiveMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NHQMemberReference"
+                        },
+                        {
+                            "$ref": "#/definitions/NullMemberReference"
+                        }
+                    ],
+                    "description": "Who they are"
                 },
-                "memberRankName": {
+                "memberName": {
                     "description": "Record member rank and name to show what rank they were when\nthey participated",
                     "type": "string"
                 },
@@ -48,7 +58,7 @@
             "required": [
                 "comments",
                 "memberID",
-                "memberRankName",
+                "memberName",
                 "planToUseCAPTransportation",
                 "requirements",
                 "status",
@@ -190,22 +200,22 @@
                 "id": {
                     "type": "number"
                 },
-                "kind": {
+                "type": {
                     "enum": [
-                        "NHQMember"
+                        "CAPNHQMember"
                     ],
                     "type": "string"
                 }
             },
             "required": [
                 "id",
-                "kind"
+                "type"
             ],
             "type": "object"
         },
         "NullMemberReference": {
             "properties": {
-                "kind": {
+                "type": {
                     "enum": [
                         "Null"
                     ],
@@ -213,7 +223,7 @@
                 }
             },
             "required": [
-                "kind"
+                "type"
             ],
             "type": "object"
         },
@@ -234,16 +244,16 @@
                 "id": {
                     "type": "string"
                 },
-                "kind": {
+                "type": {
                     "enum": [
-                        "ProspectiveMember"
+                        "CAPProspectiveMember"
                     ],
                     "type": "string"
                 }
             },
             "required": [
                 "id",
-                "kind"
+                "type"
             ],
             "type": "object"
         }
@@ -303,8 +313,18 @@
             "type": "array"
         },
         "author": {
-            "description": "Who made the event",
-            "type": "number"
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ProspectiveMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NHQMemberReference"
+                },
+                {
+                    "$ref": "#/definitions/NullMemberReference"
+                }
+            ],
+            "description": "Who made the event"
         },
         "comments": {
             "description": "Comments from the event author, description, etc.",

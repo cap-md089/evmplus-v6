@@ -4,6 +4,7 @@
         "interface-name": false,
         "object-literal-sort-keys": false,
         "max-classes-per-file": false,
-        "no-console": false
+        "no-console": false,
+        "one-variable-per-declaration": false
     }
 }

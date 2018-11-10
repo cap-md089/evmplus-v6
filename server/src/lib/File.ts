@@ -319,20 +319,6 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 				return true;
 			}
 
-			// if (member instanceof ProspectiveMember) {
-			// 	if (
-			// 		this.owner.type === 'ProspectiveMember' &&
-			// 		member.prospectiveID === this.owner.id
-			// 	) {
-			// 		return true;
-			// 	}
-			// 	if (
-			// 		this.owner.kind === 'NHQMember' &&
-			// 		member.id === this.owner.id
-			// 	) {
-			// 		return true;
-			// 	}
-			// }
 			if (member.matchesReference(this.owner)) {
 				return true;
 			}

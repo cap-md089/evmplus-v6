@@ -225,6 +225,8 @@ export default class Event
 		private schema: Schema
 	) {
 		Object.assign(this, data);
+
+		this.attendance = data.attendance;
 	}
 
 	/**

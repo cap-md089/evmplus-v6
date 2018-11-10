@@ -6,9 +6,11 @@ import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import {
 	FileUserAccessControlPermissions,
-	FileUserAccessControlType
+	FileUserAccessControlType,
+	MemberCreateError
 } from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
+import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
 
@@ -154,9 +156,22 @@ export default (req: MemberRequest, res: express.Response) => {
 				// Insert into the database metadata
 				filesCollection.add(uploadedFile).execute()
 			])
-				.then(() => {
+				.then(async () => {
+					const fullFileObject = await File.Get(
+						id,
+						req.account,
+						req.mysqlx
+					);
 					// Return results
-					json<RawFileObject>(res, uploadedFile);
+					json<FullFileObject>(res, {
+						...fullFileObject.toRaw(),
+						uploader: {
+							error: MemberCreateError.NONE,
+							member: req.member,
+							sessionID: '',
+							valid: true
+						}
+					});
 				})
 				.catch(err => {
 					// tslint:disable-next-line:no-console

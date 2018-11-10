@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
-import { CAPWATCHMember } from '../../../lib/Members';
 import { json } from '../../../lib/Util';
 
 export default async (req: MemberRequest, res: Response) => {
@@ -16,8 +15,11 @@ export default async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	if (req.body.id !== undefined && req.member.hasPermission('SignUpEdit')) {
-		member = await CAPWATCHMember.Get(req.body.id, req.account, req.mysqlx);
+	if (
+		MemberBase.isReference(req.body) &&
+		req.member.hasPermission('SignUpEdit')
+	) {
+		member = await MemberBase.ResolveReference(req.body, req.account, req.mysqlx, true);
 	} else {
 		member = req.member;
 	}

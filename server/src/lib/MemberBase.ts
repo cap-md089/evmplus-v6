@@ -17,8 +17,8 @@ export default abstract class MemberBase implements MemberObject {
 		typeof cm === 'string'
 			? false
 			: typeof cm === 'number'
-				? cm === 542488 || cm === 546319
-				: cm.isRioux;
+			? cm === 542488 || cm === 546319
+			: cm.isRioux;
 
 	public static GetUserID(name: string[]) {
 		let usrID = '';
@@ -26,6 +26,17 @@ export default abstract class MemberBase implements MemberObject {
 		usrID = name[2] + name[0] + name[1];
 
 		return usrID;
+	}
+
+	public static isReference(value: any): value is MemberReference {
+		return (
+			typeof value === 'object' &&
+			(typeof value.id === 'string' || typeof value.id === 'number') &&
+			typeof value.kind !== undefined &&
+			(value.kind === 'Null' ||
+				value.kind === 'CAPNHQMember' ||
+				value.kind === 'CAPNHQMember')
+		);
 	}
 
 	public static ResolveReference(
@@ -208,37 +219,77 @@ export default abstract class MemberBase implements MemberObject {
 			.filter(s => !!s)
 			.join(' ');
 
-	public toRaw = (): MemberObject => ({
-		id: this.id,
-		contact: this.contact,
-		nameFirst: this.nameFirst,
-		nameLast: this.nameLast,
-		nameMiddle: this.nameMiddle,
-		nameSuffix: this.nameSuffix,
-		usrID: this.usrID,
-		type: this.type,
-		permissions: this.permissions,
-		teamIDs: this.teamIDs
-	});
+	public toRaw(): MemberObject {
+		return {
+			id: this.id,
+			contact: this.contact,
+			nameFirst: this.nameFirst,
+			nameLast: this.nameLast,
+			nameMiddle: this.nameMiddle,
+			nameSuffix: this.nameSuffix,
+			usrID: this.usrID,
+			type: this.type,
+			permissions: this.permissions,
+			teamIDs: this.teamIDs
+		};
+	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
 		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
 
 		const reference = this.getReference();
 
-		const teamFind = teamsCollection.find(':members in members').bind({
-			members: reference
-		});
+		const teamFind = teamsCollection.find('true');
 
 		const generator = generateResults(teamFind);
 
 		for await (const i of generator) {
-			yield Team.Get(i.id, this.requestingAccount, this.schema);
+			let found =
+				MemberBase.AreMemberReferencesTheSame(
+					i.cadetLeader,
+					reference
+				) ||
+				MemberBase.AreMemberReferencesTheSame(
+					i.seniorCoach,
+					reference
+				) ||
+				MemberBase.AreMemberReferencesTheSame(
+					i.seniorMentor,
+					reference
+				);
+
+			if (found === false) {
+				for (const ref of i.members) {
+					if (
+						MemberBase.AreMemberReferencesTheSame(
+							ref.reference,
+							reference
+						)
+					) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				yield Team.Get(i.id, this.requestingAccount, this.schema);
+			}
 		}
 	}
 
 	public matchesReference(ref: MemberReference): boolean {
 		return ref.type === this.type && ref.id === this.id;
+	}
+
+	public hasPermission(
+		permission: MemberPermission | MemberPermission[],
+		threshold = 1
+	): boolean {
+		return typeof permission === 'string'
+			? this.permissions[permission] > threshold || this.isRioux
+			: permission
+					.map(p => this.hasPermission(p, threshold))
+					.reduce((prev, curr) => prev || curr);
 	}
 }
 

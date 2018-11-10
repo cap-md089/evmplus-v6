@@ -73,10 +73,10 @@ export default class ProspectiveMember extends CAPWATCHMember
 				10
 			);
 
-			highestNumber = Math.max(numberPortion, highestNumber) + 1;
+			highestNumber = Math.max(numberPortion, highestNumber);
 		}
 
-		id += highestNumber;
+		id += (highestNumber + 1);
 
 		const salt = randomBytes(64).toString();
 
@@ -317,6 +317,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 	) {
 		super(member, schema, account);
 
+		this.accountID = member.accountID;
 		this.sessionID = sessionID;
 	}
 
@@ -344,20 +345,17 @@ export default class ProspectiveMember extends CAPWATCHMember
 		await prospectiveCollection.replaceOne(this._id, this.toRaw());
 	}
 
-	public toRaw = (): ProspectiveMemberObject => ({
-		...super.toRaw(),
-		accountID: this.accountID,
-		id: this.id,
-		password: '',
-		salt: '',
-		squadron: this.requestingAccount.getSquadronName(),
-		type: 'CAPProspectiveMember'
-	});
-
-	public hasPermission = (
-		permission: MemberPermission | MemberPermission[],
-		threshold = 1
-	) => false;
+	public toRaw (): ProspectiveMemberObject {
+		return ({
+			...super.toRaw(),
+			accountID: this.accountID,
+			id: this.id,
+			password: '',
+			salt: '',
+			squadron: this.requestingAccount.getSquadronName(),
+			type: 'CAPProspectiveMember'
+		});
+	}
 
 	public async updatePassword(password: string): Promise<void> {
 		const prospectiveCollection = this.schema.getCollection<
