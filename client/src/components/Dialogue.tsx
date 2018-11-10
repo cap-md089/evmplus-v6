@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 
 import * as $ from 'jquery';
 
-interface DialogueWithOK {
+export interface DialogueWithOK {
 	open: boolean;
 	title: string;
 	displayButtons: DialogueButtons.OK;
@@ -21,7 +21,7 @@ export interface DialogueWithOKCancel {
 	labels?: [string, string];
 }
 
-interface DialogueWithYesNoCancel {
+export interface DialogueWithYesNoCancel {
 	open: boolean;
 	title: string;
 	displayButtons: DialogueButtons.YES_NO_CANCEL;
@@ -32,7 +32,7 @@ interface DialogueWithYesNoCancel {
 	labels?: [string, string, string];
 }
 
-interface DialogueWithCustom {
+export interface DialogueWithCustom {
 	open: boolean;
 	title: string;
 	displayButtons: DialogueButtons.CUSTOM;
@@ -40,7 +40,7 @@ interface DialogueWithCustom {
 	labels: string[]
 }
 
-interface DialogueWithoutButtons {
+export interface DialogueWithoutButtons {
 	open: boolean;
 	title: string;
 	displayButtons: DialogueButtons.NONE;

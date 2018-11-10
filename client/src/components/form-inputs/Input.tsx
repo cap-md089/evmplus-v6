@@ -1,5 +1,6 @@
 import * as React from 'react';
 import MemberBase from 'src/lib/Members';
+import Account from '../../lib/Account';
 
 export interface InputProps<V> {
 	// Callback handler
@@ -60,5 +61,6 @@ export interface InputProps<V> {
 	/**
 	 * Used by some components. They should throw an error if they are not defined
 	 */
-	member?: MemberBase;
+	member?: MemberBase | null;
+	account?: Account | null;
 }

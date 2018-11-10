@@ -1,21 +1,21 @@
 import * as React from 'react';
-import myFetch from '../../lib/myFetch';
-import urlFormat from '../../lib/urlFormat';
+import FileInterface from '../../lib/File';
 import Button from '../Button';
+import Dialogue, { DialogueButtons } from '../Dialogue';
 import FileDialogue from '../FileDialogue';
 import Loader from '../Loader';
 import './FileInput.css';
 import { InputProps } from './Input';
 
 interface FileInputState {
-	files: FileObject[];
+	files: FileInterface[];
 	dialogueOpen: boolean;
 	loaded: boolean;
 }
 
 interface FileDisplayProps {
 	onClick: (file: FileObject) => void;
-	file: FileObject;
+	file: FileInterface;
 }
 
 const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
@@ -62,10 +62,10 @@ export default class FileInput extends React.Component<
 		}
 	}
 
-	public state = {
+	public state: FileInputState = {
 		loaded: false,
 		dialogueOpen: false,
-		files: [] as FileObject[]
+		files: []
 	};
 
 	private previousFiles: string[] = [];
@@ -75,6 +75,7 @@ export default class FileInput extends React.Component<
 
 		this.handleFileSelect = this.handleFileSelect.bind(this);
 		this.onFileRemove = this.onFileRemove.bind(this);
+		this.closeErrorDialogue = this.closeErrorDialogue.bind(this);
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
@@ -85,16 +86,12 @@ export default class FileInput extends React.Component<
 	}
 
 	public async componentDidMount() {
-		const sid = localStorage.getItem('sessionID');
+		if (this.props.value && this.props.account && this.props.member) {
+			const account = this.props.account;
 
-		if (this.props.value) {
-			const files: FileObject[] = await Promise.all(
+			const files = await Promise.all(
 				this.props.value.map(id =>
-					myFetch(urlFormat('api', 'files', id), {
-						headers: {
-							authorization: !!sid ? sid : ''
-						}
-					}).then(res => res.json())
+					FileInterface.Get(id, this.props.member, account)
 				)
 			);
 
@@ -139,14 +136,31 @@ export default class FileInput extends React.Component<
 	}
 
 	public render() {
+		if (!this.props.account) {
+			throw new Error('Account not provided');
+		}
+
 		return this.state.loaded ? (
 			<div className="formbox" style={this.props.boxStyles}>
 				<div className="fileInput">
-					<FileDialogue
-						open={this.state.dialogueOpen}
-						onReturn={this.handleFileSelect}
-						filter={this.props.filter}
-					/>
+					{this.props.member ? (
+						<FileDialogue
+							open={this.state.dialogueOpen}
+							onReturn={this.handleFileSelect}
+							filter={this.props.filter}
+							member={this.props.member}
+							account={this.props.account}
+						/>
+					) : this.state.dialogueOpen ? (
+						<Dialogue
+							open={this.state.dialogueOpen}
+							displayButtons={DialogueButtons.OK}
+							onClose={this.closeErrorDialogue}
+							title="Sign in error"
+						>
+							Please sign in
+						</Dialogue>
+					) : null}
 					<Button
 						onClick={() => {
 							this.setState({
@@ -172,7 +186,7 @@ export default class FileInput extends React.Component<
 		);
 	}
 
-	private handleFileSelect(files: FileObject[]) {
+	private handleFileSelect(files: FileInterface[]) {
 		const newFiles = this.state.files.slice(0);
 
 		for (const file of files) {
@@ -194,11 +208,17 @@ export default class FileInput extends React.Component<
 		});
 	}
 
-	private onFileRemove(file: FileObject) {
+	private onFileRemove(file: FileInterface) {
 		let files = this.state.files.slice(0);
 
 		files = files.filter(f => f.id !== file.id);
 
 		this.setState({ files });
+	}
+
+	private closeErrorDialogue() {
+		this.setState({
+			dialogueOpen: false
+		});
 	}
 }

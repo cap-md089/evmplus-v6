@@ -12,6 +12,7 @@ import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
 import Registry from './registry';
 import Account from './lib/Account';
+import { getMember } from './lib/Members';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
@@ -164,27 +165,11 @@ export default class App extends React.Component<
 		});
 
 		Promise.all([
-			Account.Get(sessionID || ''),
-			myFetch('/api/check', {
-				headers: {
-					authorization: sessionID || ''
-				}
-			})
-				.then(res => res.json() as Promise<SigninReturn>)
-				.catch(e =>
-					Promise.resolve<SigninReturn>({
-						error: MemberCreateError.INVALID_SESSION_ID,
-						member: null,
-						sessionID: '',
-						valid: false
-					})
-				)
+			Account.Get(),
+			getMember(sessionID || '')
 		]).then(([account, member]) => {
 			if (!member.valid) {
 				localStorage.removeItem('sessionID');
-			}
-			if (member.valid) {
-				account.setSessionID(member);
 			}
 			this.setState({
 				account,
@@ -575,13 +560,8 @@ export default class App extends React.Component<
 			this.setState({
 				loading: true
 			});
-			myFetch('/api/check', {
-				headers: {
-					authorization: e.newValue || ''
-				}
-			})
-				.then(res => res.json())
-				.then((member: SigninReturn) => {
+			getMember(e.newValue || '')
+				.then(member => {
 					if (!member.valid) {
 						localStorage.removeItem('sessionID');
 					}

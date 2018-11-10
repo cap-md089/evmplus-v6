@@ -16,6 +16,7 @@ import myFetch from '../lib/myFetch';
 import urlFormat from '../lib/urlFormat';
 import './Drive.css';
 import { PageProps } from './Page';
+import FileInterface from '../lib/File';
 
 enum ErrorReason {
 	NONE,
@@ -26,10 +27,10 @@ enum ErrorReason {
 }
 
 interface DriveState {
-	files: null | Array<FileObject | FullFileObject>;
+	files: null | FileInterface[];
 	currentlySelected: string;
 	newFoldername: string;
-	currentFolder: null | FileObject | FullFileObject;
+	currentFolder: null | FileInterface;
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: ErrorReason;
@@ -194,21 +195,28 @@ class FolderDisplay extends React.Component<
 			return;
 		}
 
-		await myFetch(
-			urlFormat('api', 'files', this.props.file.id, 'children', id),
-			{
-				method: 'DELETE',
-				headers: {
-					authorization: this.props.member
-						? this.props.member.sessionID
-						: ''
-				}
-			}
-		);
+		if (
+			!id.match(
+				/^(.){1,15}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+			)
+		) {
+			return;
+		}
 
-		await myFetch(
-			urlFormat('api', 'files', this.props.file.id, 'children'),
-			{
+		await Promise.all([
+			myFetch(
+				urlFormat('api', 'files', this.props.file.id, 'children', id),
+				{
+					method: 'DELETE',
+					headers: {
+						authorization: this.props.member
+							? this.props.member.sessionID
+							: ''
+					}
+				}
+			),
+
+			myFetch(urlFormat('api', 'files', this.props.file.id, 'children'), {
 				method: 'POST',
 				headers: {
 					authorization: this.props.member
@@ -219,8 +227,8 @@ class FolderDisplay extends React.Component<
 				body: JSON.stringify({
 					id
 				})
-			}
-		);
+			})
+		]);
 
 		this.props.refresh();
 	}
@@ -988,17 +996,16 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 	}
 
 	private onFileClick(file: FileObject) {
-		this.setState(
-			prev =>
-				prev.currentlySelected === file.id
-					? {
-							currentlySelected: '',
-							showingExtraInfo: true
-					  }
-					: {
-							currentlySelected: file.id,
-							showingExtraInfo: false
-					  }
+		this.setState(prev =>
+			prev.currentlySelected === file.id
+				? {
+						currentlySelected: '',
+						showingExtraInfo: true
+				  }
+				: {
+						currentlySelected: file.id,
+						showingExtraInfo: false
+				  }
 		);
 	}
 
@@ -1008,108 +1015,57 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		});
 	}
 
-	private receiveData({ id }: { id: string }) {
-		myFetch('/api/files/' + this.folderID + '/children', {
-			headers: {
-				authorization: this.props.member
-					? this.props.member.sessionID
-					: '',
-				'content-type': 'application/json'
-			},
-			method: 'POST',
-			body: JSON.stringify({
-				id
-			})
-		}).then(() => {
+	private async receiveData({ id }: { id: string }) {
+		if (this.state.currentFolder) {
+			await this.state.currentFolder.addChild(this.props.member, id);
+
 			this.goToFolder(id, true);
-		});
+		}
 	}
 
-	private goToFolder(id: string, update = true) {
-		return Promise.all([
-			myFetch('/api/files/' + id + '/children/dirty', {
-				headers: {
-					authorization: this.props.member
-						? this.props.member.sessionID
-						: ''
-				}
-			})
-				.then(res => res.json())
-				.then((files: FullFileObject[]) => {
-					this.setState({ files });
-				}),
-
-			myFetch('/api/files/' + id + '/dirty', {
-				headers: {
-					authorization: this.props.member
-						? this.props.member.sessionID
-						: ''
-				}
-			})
-				.then(res => res.json())
-				.then((currentFolder: FullFileObject | FileObject) => {
-					this.setState({ currentFolder });
-				})
-		])
-			.then(() => {
-				return this.state.currentFolder!.id === 'root'
-					? Promise.resolve(null)
-					: myFetch(
-							urlFormat(
-								'api',
-								'files',
-								this.state.currentFolder!.parentID
-							),
-							{
-								headers: {
-									authorization: this.props.member
-										? this.props.member.sessionID
-										: ''
-								}
-							}
-					  );
-			})
-			.then(res => (res === null ? res : res.json()))
-			.then((parent: FileObject) => {
-				this.setState(
-					prev => ({
-						files: parent
-							? [...(prev.files || []), parent]
-							: prev.files
-					}),
-					() => {
-						if (update) {
-							this.props.routeProps.history.push(
-								'/' + this.path + '/' + id
-							);
-						}
-						if (this.state.currentFolder) {
-							this.props.updateBreadCrumbs(
-								this.state.currentFolder.folderPath.map(
-									folder => ({
-										text: folder.name,
-										target:
-											'/' + this.path + '/' + folder.id
-									})
-								)
-							);
-						}
+	private async goToFolder(id: string, update = true) {
+		try {
+			const [files, currentFolder] = await Promise.all([
+				this.props.account.getFiles(id, this.props.member),
+				FileInterface.Get(id, this.props.member, this.props.account)
+			]);
+			let parentFolder = null;
+			if (currentFolder.id !== 'root') {
+				parentFolder = await currentFolder.getParent(this.props.member);
+			}
+			this.setState(
+				{
+					files: parentFolder ? [...files, parentFolder] : files,
+					currentFolder
+				},
+				() => {
+					if (update) {
+						this.props.routeProps.history.push(
+							'/' + this.path + '/' + id
+						);
 					}
-				);
-			})
-			.catch(err => {
-				this.setState({
-					error: true,
-					errorReason:
-						err.status === 403
-							? ErrorReason.ERR403
-							: err.status === 404
-								? ErrorReason.ERR404
-								: err.status === 500
-									? ErrorReason.ERR500
-									: ErrorReason.UNKNOWN
-				});
+
+					this.props.updateBreadCrumbs(
+						currentFolder.folderPath.map(folder => ({
+							text: folder.name,
+							target: `/${this.path}/${folder.id}`
+						}))
+					);
+				}
+			);
+		} catch (err) {
+			this.setState({
+				error: true,
+				errorReason:
+					err.status === 403
+						? ErrorReason.ERR403
+						: err.status === 404
+						? ErrorReason.ERR404
+						: err.status === 500
+						? ErrorReason.ERR500
+						: ErrorReason.UNKNOWN
 			});
+		}
 	}
 
 	private addFile(file: FileObject) {
@@ -1119,14 +1075,16 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 			uploader: {
 				error: MemberCreateError.NONE,
 				sessionID: this.props.member!.sessionID,
-				// @ts-ignore
-				member: this.props.member!,
+				member: this.props.member!.toRaw(),
 				valid: true
 			}
 		};
 
 		this.setState(prev => ({
-			files: [...prev.files!, fileObject]
+			files: [
+				...prev.files!,
+				new FileInterface(fileObject, this.props.account)
+			]
 		}));
 	}
 
@@ -1136,7 +1094,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		}));
 	}
 
-	private fileModified(file: FileObject) {
+	private fileModified(file: FullFileObject) {
 		const files = (this.state.files || []).slice();
 
 		let index = 0;
@@ -1147,14 +1105,14 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 			}
 		}
 
-		files[index] = file;
+		files[index] = new FileInterface(file, this.props.account);
 
 		this.setState({ files });
 	}
 
 	private refresh() {
 		if (this.state.currentFolder) {
-			this.goToFolder(this.state.currentFolder.id);
+			this.goToFolder(this.state.currentFolder.id, false);
 		}
 	}
 }

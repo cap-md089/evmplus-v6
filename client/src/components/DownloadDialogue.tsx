@@ -1,5 +1,5 @@
 import * as React from 'react';
-import MemberBase from 'src/lib/Members';
+import MemberBase from 'src/lib/MemberBase';
 import myFetch from '../lib/myFetch';
 import Dialogue, { DialogueButtons } from './Dialogue';
 import Selector, { CheckInput } from './form-inputs/Selector';
@@ -23,6 +23,9 @@ interface DownloadProps<T extends Identifiable> {
 	filterValues?: any[];
 	onFilterValuesChange?: (filterValues: any[]) => void;
 	displayValue: (value: T) => React.ReactChild;
+
+	// Testing
+	fetch?: (url: string, options: RequestInit) => Promise<Response>;
 }
 
 interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
@@ -69,7 +72,7 @@ export default class DownloadDialogue<
 
 	public componentDidMount() {
 		if (this.props.member) {
-			myFetch(this.props.url, {
+			(this.props.fetch || myFetch)(this.props.url, {
 				headers: {
 					authorization: this.props.member.sessionID
 				}

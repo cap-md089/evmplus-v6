@@ -1,21 +1,18 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
-import CAPMember from './members/CAPMember';
+import Team from './Team';
 
-export default abstract class MemberBase extends APIInterface
+export default abstract class MemberBase extends APIInterface<MemberObject>
 	implements MemberObject {
-	public static CreateCorrectObject(obj: Member, acc: Account, sid: string) {
-		switch (obj.type) {
-			case 'CAPNHQMember' :
-				return new CAPMember(obj, acc, sid);
-
-			case 'CAPProspectiveMember' :
-				return null;
-		}
-
-		return null;
+	public static AreMemberReferencesTheSame(
+		ref1: MemberReference,
+		ref2: MemberReference
+	) {
+		return ref1.type === 'Null' || ref2.type === 'Null'
+			? false
+			: ref1.id === ref2.id;
 	}
-	
+
 	/**
 	 * User ID
 	 */
@@ -106,20 +103,32 @@ export default abstract class MemberBase extends APIInterface
 		return ref.type === this.type && ref.id === this.id;
 	}
 
-	public async getTeams(): Promise<TeamObject[]> {
+	public async getTeams(): Promise<Team[]> {
 		const responses = await Promise.all(
-			this.teamIDs.map(teamID => this.fetch('/api/team/' + teamID))
+			this.teamIDs.map(teamID =>
+				Team.Get(teamID, this.requestingAccount, this)
+			)
 		);
 
-		const json = await Promise.all(
-			responses.map(team => team.json() as Promise<TeamObject>)
-		);
-
-		return json;
+		return responses;
 	}
 
 	public getName = (): string =>
 		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
 			.filter(s => !!s)
 			.join(' ');
+
+	public hasPermission = (
+		permission: MemberPermission | MemberPermission[],
+		threshold = 1
+	): boolean =>
+		typeof permission === 'string'
+			? this.permissions[permission] >= threshold
+			: permission
+					.map(perm => this.hasPermission(perm, threshold))
+					.reduce((a, b) => a || b, false);
+
+	public is(mem: MemberBase) {
+		return this.matchesReference(mem.getReference());
+	}
 }

@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
 import Loader from '../components/Loader';
-import myFetch from '../lib/myFetch';
-import { Uniforms, Activities, RequiredForms } from './ModifyEvent';
-import { PageProps } from './Page';
 import { EventStatus, PointOfContactType } from '../enums';
+import Event from '../lib/Event';
+import { Activities, RequiredForms, Uniforms } from './ModifyEvent';
+import { PageProps } from './Page';
 
 interface EventViewerState {
-	event: EventObject | null;
+	event: Event | null;
 	error?: string;
 }
 
@@ -34,16 +34,16 @@ const eventStatus = (stat: EventStatus): string =>
 	stat === EventStatus.COMPLETE
 		? 'Complete'
 		: stat === EventStatus.CANCELLED
-			? 'Cancelled'
-			: stat === EventStatus.CONFIRMED
-				? 'Confirmed'
-				: stat === EventStatus.DRAFT
-					? 'Draft'
-					: stat === EventStatus.INFORMATIONONLY
-						? 'Information Only'
-						: stat === EventStatus.TENTATIVE
-							? 'Tentative'
-							: '';
+		? 'Cancelled'
+		: stat === EventStatus.CONFIRMED
+		? 'Confirmed'
+		: stat === EventStatus.DRAFT
+		? 'Draft'
+		: stat === EventStatus.INFORMATIONONLY
+		? 'Information Only'
+		: stat === EventStatus.TENTATIVE
+		? 'Tentative'
+		: '';
 
 export default class EventViewer extends React.Component<
 	EventViewerProps,
@@ -58,30 +58,28 @@ export default class EventViewer extends React.Component<
 		super(props);
 	}
 
-	public componentDidMount() {
-		myFetch('/api/event/' + this.props.routeProps.match.params.id, {
-			headers: {
-				authorization: this.props.member ? this.props.member.sessionID : ''
+	public async componentDidMount() {
+		const event = await Event.Get(
+			parseInt(this.props.routeProps.match.params.id, 10),
+			this.props.member,
+			this.props.account
+		);
+
+		this.props.updateBreadCrumbs([
+			{
+				text: 'Home',
+				target: '/'
+			},
+			{
+				target: '/calendar',
+				text: 'Calendar'
+			},
+			{
+				target: `/eventviewer/${event.id}`,
+				text: `View ${event.name}`
 			}
-		})
-			.then(val => val.json())
-			.then((event: EventObject) => {
-				this.props.updateBreadCrumbs([
-					{
-						text: 'Home',
-						target: '/'
-					},
-					{
-						target: '/calendar',
-						text: 'Calendar'
-					},
-					{
-						target: '/eventviewer/' + event.id,
-						text: `View ${event.name}`
-					}
-				]);
-				this.setState({ event });
-			});
+		]);
+		this.setState({ event });
 	}
 
 	public render() {
@@ -151,61 +149,54 @@ export default class EventViewer extends React.Component<
 					<br />
 					<br />
 					<div>
-						{this.state.event.pointsOfContact.map(
-							(poc, i) =>
-								poc.type === PointOfContactType.INTERNAL ? (
-									<div key={i}>
-										<b>CAP Point of Contact: </b>
-										{poc.name}
-										<br />
-										{poc.email !== '' ? (
-											<>
-												<b>
-													CAP Point of Contact Email:{' '}
-												</b>
-												{poc.email}
-												<br />
-											</>
-										) : null}
-										{poc.phone !== '' ? (
-											<>
-												<b>
-													CAP Point of Contact Phone:{' '}
-												</b>
-												{poc.phone}
-												<br />
-											</>
-										) : null}
-										<br />
-									</div>
-								) : (
-									<div key={i}>
-										<b>External Point of Contact: </b>
-										{poc.name}
-										<br />
-										{poc.email !== '' ? (
-											<>
-												<b>
-													External Point of Contact
-													Email:{' '}
-												</b>
-												{poc.email}
-												<br />
-											</>
-										) : null}
-										{poc.phone !== '' ? (
-											<>
-												<b>
-													External Point of Contact
-													Phone:{' '}
-												</b>
-												{poc.phone}
-												<br />
-											</>
-										) : null}
-										<br />
-									</div>
-								)
+						{this.state.event.pointsOfContact.map((poc, i) =>
+							poc.type === PointOfContactType.INTERNAL ? (
+								<div key={i}>
+									<b>CAP Point of Contact: </b>
+									{poc.name}
+									<br />
+									{poc.email !== '' ? (
+										<>
+											<b>CAP Point of Contact Email: </b>
+											{poc.email}
+											<br />
+										</>
+									) : null}
+									{poc.phone !== '' ? (
+										<>
+											<b>CAP Point of Contact Phone: </b>
+											{poc.phone}
+											<br />
+										</>
+									) : null}
+									<br />
+								</div>
+							) : (
+								<div key={i}>
+									<b>External Point of Contact: </b>
+									{poc.name}
+									<br />
+									{poc.email !== '' ? (
+										<>
+											<b>
+												External Point of Contact Email:{' '}
+											</b>
+											{poc.email}
+											<br />
+										</>
+									) : null}
+									{poc.phone !== '' ? (
+										<>
+											<b>
+												External Point of Contact Phone:{' '}
+											</b>
+											{poc.phone}
+											<br />
+										</>
+									) : null}
+									<br />
+								</div>
+							)
 						)}
 					</div>
 				</div>

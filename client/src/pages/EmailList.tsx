@@ -11,7 +11,6 @@ import SimpleForm, {
 	SimpleRadioButton,
 	TextInput
 } from '../components/SimpleForm';
-import myFetch from '../lib/myFetch';
 import { PageProps } from './Page';
 
 const memberRanks = [
@@ -97,7 +96,10 @@ const flightInput: CheckInput<Member, string> = {
 		}
 
 		try {
-			if (mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') {
+			if (
+				mem.type === 'CAPProspectiveMember' ||
+				mem.type === 'CAPNHQMember'
+			) {
 				return !!mem.flight.match(new RegExp(input, 'i'));
 			} else {
 				return false;
@@ -247,17 +249,15 @@ export default class EmailList extends React.Component<
 		this.selectText = this.selectText.bind(this);
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
 		if (this.props.member) {
-			myFetch('/api/member', {
-				headers: {
-					authorization: this.props.member.sessionID
-				}
-			})
-				.then(res => res.json())
-				.then((availableMembers: MemberObject[]) =>
-					this.setState({ availableMembers })
-				);
+			const members = await this.props.account.getMembers(
+				this.props.member
+			);
+
+			this.setState({
+				availableMembers: members
+			});
 		}
 	}
 

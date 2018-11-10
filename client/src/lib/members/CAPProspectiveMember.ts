@@ -1,5 +1,5 @@
 import Account from '../Account';
-import MemberBase from '../Members';
+import MemberBase from '../MemberBase';
 
 export default class CAPProspectiveMember extends MemberBase
 	implements ProspectiveMemberObject {
@@ -50,4 +50,28 @@ export default class CAPProspectiveMember extends MemberBase
 		id: this.id,
 		type: 'CAPProspectiveMember'
 	});
+
+	public toRaw(): ProspectiveMemberObject {
+		return {
+			contact: this.contact,
+			password: '',
+			salt: '',
+			dutyPositions: this.dutyPositions,
+			flight: this.flight,
+			id: this.id,
+			memberRank: this.memberRank,
+			nameFirst: this.nameFirst,
+			nameLast: this.nameLast,
+			nameMiddle: this.nameMiddle,
+			nameSuffix: this.nameSuffix,
+			orgid: this.orgid,
+			permissions: this.permissions,
+			seniorMember: this.seniorMember,
+			squadron: this.squadron,
+			teamIDs: this.teamIDs,
+			type: 'CAPProspectiveMember',
+			usrID: this.usrID,
+			accountID: this.accountID
+		};
+	}
 }

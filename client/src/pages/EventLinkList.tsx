@@ -1,10 +1,10 @@
 import * as React from 'react';
 import Loader from '../components/Loader';
-import myFetch from '../lib/myFetch';
+import Event from '../lib/Event';
 import { PageProps } from './Page';
 
 interface LinkListState {
-	list: EventObject[] | null;
+	list: Event[] | null;
 }
 
 export default class LinkList extends React.Component<
@@ -15,15 +15,11 @@ export default class LinkList extends React.Component<
 		list: null
 	};
 
-	public componentDidMount() {
+	public async componentDidMount() {
 		if (this.props.member) {
-			myFetch('/api/event', {
-				headers: {
-					authorization: this.props.member.sessionID
-				}
-			})
-				.then(val => val.json())
-				.then((list: EventObject[]) => this.setState({ list }));
+			const list = await this.props.account.getEvents(this.props.member);
+
+			this.setState({ list });
 		}
 	}
 

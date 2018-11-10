@@ -1,10 +1,11 @@
 import myFetch from './myFetch';
+import MemberBase from './Members';
 
-export default class APIInterface {
+export default abstract class APIInterface<T> {
 	protected static REQUEST_URI =
 		process.env.NODE_ENV === 'production'
 			? 'capunit.com'
-			: 'localcapunit.com';
+			: 'localhost:3001';
 
 	public constructor(public accountID: string) {}
 
@@ -20,11 +21,29 @@ export default class APIInterface {
 		return uri.slice(0, -1);
 	}
 
-	public fetch(uri: string, options: RequestInit = {}) {
+	public fetch(uri: string, options: RequestInit = {}, member?: MemberBase | null) {
 		if (uri[0] === '/') {
 			uri = uri.slice(1);
 		}
 
-		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
+		let headers = options.headers || {};
+
+		if (options.body) {
+			headers['content-type'] = 'application/json';
+		}
+
+		if (member) {
+			headers = {
+				...options.headers,
+				authorization: member.sessionID
+			};
+		}
+
+		return myFetch(this.buildURI.apply(this, uri.split('/')), {
+			...options,
+			headers
+		});
 	}
+
+	public abstract toRaw(): T
 }

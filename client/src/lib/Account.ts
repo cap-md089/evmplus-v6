@@ -1,19 +1,27 @@
-import myFetch from "./myFetch";
-import APIInterface from "./APIInterface";
+import APIInterface from './APIInterface';
+import Event from './Event';
+import FileInterface from './File';
+import MemberBase from './MemberBase';
+import { createCorrectMemberObject, MemberClasses } from './Members';
+import myFetch from './myFetch';
+import Team from './Team';
 
-export default class Account extends APIInterface implements AccountObject {
-	public static async Get(sessionID?: string, id?: string) {
+export default class Account extends APIInterface<AccountObject>
+	implements AccountObject {
+	public static async Get(id?: string) {
 		let promise;
 
 		if (id) {
-			promise = await myFetch(`https://${id}.${Account.REQUEST_URI}/api/accountcheck`);
+			promise = await myFetch(
+				`https://${id}.${Account.REQUEST_URI}/api/accountcheck`
+			);
 		} else {
 			promise = await myFetch('/api/accountcheck');
 		}
 
-		const json = await promise.json() as AccountObject;
+		const json = (await promise.json()) as AccountObject;
 
-		return new this(json, sessionID);
+		return new this(json);
 	}
 
 	public adminIDs: MemberReference[];
@@ -38,65 +46,91 @@ export default class Account extends APIInterface implements AccountObject {
 
 	public validPaid: boolean;
 
-	protected constructor(data: AccountObject, private sessionID?: string) {
+	protected constructor(data: AccountObject) {
 		super(data.id);
 
 		Object.assign(this, data);
 	}
 
-	public async getMembers(): Promise<MemberObject[]> {
+	public async getMembers(member?: MemberBase): Promise<MemberClasses[]> {
 		const url = this.buildURI('api', 'members');
 
 		const headers: any = {};
 
-		if (this.sessionID) {
-			headers.authorization = this.sessionID;
+		if (member) {
+			headers.authorization = member.sessionID;
 		}
 
 		const results = await myFetch(url, {
 			headers
 		});
 
-		return results.json();
+		const json = (await results.json()) as Member[];
+
+		return json
+			.map(v => createCorrectMemberObject(v, this, ''))
+			.filter(v => !!v) as MemberClasses[];
 	}
 
-	public async getEvents(): Promise<EventObject[]> {
+	public async getEvents(member?: MemberBase): Promise<Event[]> {
 		const url = this.buildURI('api', 'event');
 
-		const headers: any = {};
+		const results = await this.fetch(url, {}, member);
 
-		if (this.sessionID) {
-			headers.authorization = this.sessionID;
-		}
+		const events = await results.json();
 
-		const results = await myFetch(url, {
-			headers
-		});
-
-		return results.json();
+		return events.map((e: EventObject) => new Event(e, this));;
 	}
 
-	public async getTeams(): Promise<TeamObject[]> {
+	public async getTeams(member?: MemberBase): Promise<Team[]> {
 		const url = this.buildURI('api', 'team');
 
-		const headers: any = {};
+		const results = await this.fetch(url, {}, member);
 
-		if (this.sessionID) {
-			headers.authorization = this.sessionID;
+		const teams = await results.json();
+
+		return teams.map((t: TeamObject) => new Team(t, this));
+	}
+
+	public async getBasicFiles(target: FileInterface | string, member?: MemberBase | null) {
+		if (target instanceof FileInterface) {
+			target = target.id;
 		}
 
-		const results = await myFetch(url, {
-			headers
-		});
+		const url = this.buildURI('api', 'files', target, 'children');
 
-		return results.json();
+		const results = await this.fetch(url, {}, member);
+
+		return results.json() as Promise<FileObject[]>;
 	}
 
-	public setSessionID(value: SigninReturn) {
-		this.sessionID = value.sessionID;
+	public async getFiles(target: FileInterface | string, member?: MemberBase | null): Promise<FileInterface[]> {
+		if (target instanceof FileInterface) {
+			target = target.id;
+		}
+
+		const url = this.buildURI('api', 'files', target, 'children', 'dirty');
+
+		const results = await this.fetch(url, {}, member);
+
+		const files = await results.json();
+
+		return files.map((f: FullFileObject) => new FileInterface(f, this));
 	}
 
-	public getSessionID() {
-		return this.sessionID || '';
+	public toRaw(): AccountObject {
+		return {
+			adminIDs: this.adminIDs,
+			echelon: this.echelon,
+			expired: this.expired,
+			id: this.id,
+			expires: this.expires,
+			mainOrg: this.mainOrg,
+			orgIDs: this.orgIDs,
+			paid: this.paid,
+			paidEventLimit: this.paidEventLimit,
+			unpaidEventLimit: this.unpaidEventLimit,
+			validPaid: this.validPaid
+		};
 	}
 }

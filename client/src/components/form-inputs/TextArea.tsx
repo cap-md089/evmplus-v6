@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import urlFormat from '../../lib/urlFormat';
 import FileDialogue from '../FileDialogue';
 import { InputProps } from './Input';
+import Dialogue, { DialogueButtons } from '../Dialogue';
 
 export const mediaRenderFunction = (
 	block: ContentBlock,
@@ -136,6 +137,8 @@ export default class TextArea extends React.Component<
 		this.onFileSelect = this.onFileSelect.bind(this);
 		this.filterImageFiles = this.filterImageFiles.bind(this);
 
+		this.closeErrorDialogue = this.closeErrorDialogue.bind(this);
+
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
@@ -145,6 +148,10 @@ export default class TextArea extends React.Component<
 	}
 
 	public render() {
+		if (!this.props.account) {
+			throw new Error('Account not specified');
+		}
+
 		const editorState = this.editorState;
 
 		return (
@@ -157,12 +164,25 @@ export default class TextArea extends React.Component<
 					...this.props.boxStyles
 				}}
 			>
-				<FileDialogue
-					open={this.state.fileDialogueOpen}
-					onReturn={this.onFileSelect}
-					filter={this.filterImageFiles}
-					multiple={false}
-				/>
+				{this.props.member ? (
+					<FileDialogue
+						open={this.state.fileDialogueOpen}
+						onReturn={this.onFileSelect}
+						filter={this.filterImageFiles}
+						multiple={false}
+						member={this.props.member}
+						account={this.props.account}
+					/>
+				) : (
+					<Dialogue
+						open={this.state.fileDialogueOpen}
+						displayButtons={DialogueButtons.OK}
+						onClose={this.closeErrorDialogue}
+						title="Please sign in"
+					>
+						Please sign in
+					</Dialogue>
+				)}
 				<div className="textarea-box">
 					<div className="textarea-box-controls">
 						<span
@@ -495,5 +515,11 @@ export default class TextArea extends React.Component<
 		array: FileObject[]
 	) {
 		return !!file.contentType.match(/image\//);
+	}
+
+	private closeErrorDialogue() {
+		this.setState({
+			fileDialogueOpen: false
+		})
 	}
 }

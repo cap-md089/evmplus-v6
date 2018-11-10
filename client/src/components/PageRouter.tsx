@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
 import Account from 'src/lib/Account';
-import MemberBase from 'src/lib/Members';
+import { createCorrectMemberObject } from 'src/lib/Members';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Calendar from '../pages/Calendar';
@@ -104,7 +104,7 @@ const composeElement = (
 		member={
 			member.member === null
 				? null
-				: MemberBase.CreateCorrectObject(
+				: createCorrectMemberObject(
 						member.member,
 						account,
 						member.sessionID

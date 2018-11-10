@@ -41,4 +41,25 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 		id: this.id,
 		type: 'CAPNHQMember'
 	});
+
+	public toRaw(): CAPMemberObject {
+		return {
+			contact: this.contact,
+			dutyPositions: this.dutyPositions,
+			flight: this.flight,
+			id: this.id,
+			memberRank: this.memberRank,
+			nameFirst: this.nameFirst,
+			nameLast: this.nameLast,
+			nameMiddle: this.nameMiddle,
+			nameSuffix: this.nameSuffix,
+			orgid: this.orgid,
+			permissions: this.permissions,
+			seniorMember: this.seniorMember,
+			squadron: this.squadron,
+			teamIDs: this.teamIDs,
+			type: 'CAPNHQMember',
+			usrID: this.usrID
+		};
+	}
 }

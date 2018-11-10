@@ -23,6 +23,10 @@ export default class LoadingTextArea extends React.Component<
 	}
 
 	public render() {
+		if (!this.props.account) {
+			throw new Error('Account not specified');
+		}
+
 		return this.state.textArea === null ? (
 			<Loader />
 		) : (

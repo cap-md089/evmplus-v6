@@ -17,7 +17,7 @@ import Loader from '../components/Loader';
 import { FileInput, TextBox } from '../components/SimpleForm';
 import SimpleRequestForm from '../components/SimpleRequestForm';
 import { PointOfContactType } from '../enums';
-import myFetch from '../lib/myFetch';
+import Event from '../lib/Event';
 import { PageProps } from './Page';
 
 interface ModifyEventState {
@@ -84,23 +84,37 @@ export default class ModifyEvent extends React.Component<
 		this.checkIfValid = this.checkIfValid.bind(this);
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
 		if (this.props.member) {
-			myFetch('/api/event/' + this.props.routeProps.match.params.id)
-				.then(val => val.json())
-				.then((eventObject: EventObject) => {
-					// For some reason, it is seeing the function as
-					// the state and that it is missing values
-					// @ts-ignore
-					this.setState(prev => ({
-						event: {
-							...prev.event,
-							...eventObject,
-							useParticipationFee: !!eventObject.participationFee,
-							useRegistration: !!eventObject.registration
-						}
-					}));
-				});
+			const event = await Event.Get(
+				parseInt(this.props.routeProps.match.params.id, 10),
+				this.props.member,
+				this.props.account
+			);
+
+			const newState = {
+				event: {
+					...event.toRaw(),
+					useParticipationFee: !!event.participationFee,
+					useRegistration: !!event.registration
+				}
+			};
+
+			if (!newState.event.participationFee) {
+				newState.event.participationFee = {
+					feeAmount: 0,
+					feeDue: (Date.now() / 1000)
+				};
+			}
+
+			if (!newState.event.registration) {
+				newState.event.registration = {
+					information: '',
+					deadline: (Date.now() / 1000)
+				};
+			}
+
+			this.setState(newState as Pick<ModifyEventState, 'event'>);
 		}
 	}
 
@@ -214,10 +228,7 @@ export default class ModifyEvent extends React.Component<
 					<TextInput name="highAdventureDescription" />
 					<Title>Logistics Information</Title>
 					<Label>Uniform</Label>
-					<MultCheckbox
-						name="uniform"
-						labels={Uniforms}
-					/>
+					<MultCheckbox name="uniform" labels={Uniforms} />
 					<Label>Required forms</Label>
 					<MultCheckbox
 						name="requiredForms"
