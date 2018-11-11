@@ -7,6 +7,14 @@ export enum EventStatus {
 	INFORMATIONONLY
 }
 
+export enum EchelonEventNumber {
+	NOT_REQUIRED = 0,
+	TO_BE_APPLIED_FOR = 1,
+	APPLIED_FOR = 2,
+	DENIED = 3,
+	APPROVED = 4
+}
+
 export enum MemberCreateError {
 	NONE = -1,
 	INCORRRECT_CREDENTIALS = 0,
