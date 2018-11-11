@@ -1,0 +1,7 @@
+.eventlinklist table, .eventlinklist caption, .eventlinklist td, .eventlinklist th {
+	width: 100%;
+	border: 1px solid black;
+	border-collapse: collapse;
+	box-sizing: border-box;
+}
+
