@@ -5,8 +5,8 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Server",
-			"sourceMaps": true,
 			"program": "${workspaceFolder}/dist/index.js",
+			"sourceMaps": true,
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			]
@@ -20,6 +20,34 @@
 			],
 			"sourceMaps": true,
 			"program": "${workspaceFolder}/dist/test.js"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Jest All",
+			"args": [
+				"--inspect-brk",
+				"${workspaceFolder}/node_modules/.bin/jest",
+				"--runInBand"
+			],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Jest Current File",
+			"args": [
+				"--inspect-brk",
+				"${workspaceFolder}/node_modules/.bin/jest",
+				"--runInBand",
+				"${relativeFile}"
+			],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"windows": {
+				"program": "${workspaceFolder}/node_modules/jest/bin/jest",
+			}
 		}
 	]
 }

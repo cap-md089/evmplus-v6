@@ -263,7 +263,7 @@ export default class Account
 
 	public async *getBlogPosts(): AsyncIterableIterator<BlogPost> {
 		const blogPostCollection = this.schema.getCollection<BlogPostObject>(
-			'BlogPost'
+			'Blog'
 		);
 
 		const blogPostIterator = findAndBind(blogPostCollection, {
@@ -277,7 +277,7 @@ export default class Account
 
 	public async *getBlogPages(): AsyncIterableIterator<BlogPage> {
 		const blogPageCollection = this.schema.getCollection<BlogPageObject>(
-			'BlogPage'
+			'BlogPages'
 		);
 
 		const blogPageIterator = findAndBind(blogPageCollection, {

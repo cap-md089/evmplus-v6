@@ -58,7 +58,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 		console.error(error);
 
 		if (error.code === 'EACCES' || error.code === 'EADDRINUSE') {
-			console.log(error.code);
+			console.error(error.code);
 			process.exit(1);
 		}
 	}

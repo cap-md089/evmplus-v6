@@ -88,19 +88,21 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 	});
 }
 
+let testSession: mysql.Session, testAccount: Account;
+
 export async function getTestTools(testconf: typeof Configuration) {
 	const conn = testconf.database.connection;
 
-	const session = await mysql.getSession({
+	testSession = testSession || await mysql.getSession({
 		user: conn.user,
 		password: conn.password,
 		host: conn.host,
 		port: conn.port
 	});
 
-	const schema = session.getSchema(testconf.database.connection.database);
+	const schema = testSession.getSchema(testconf.database.connection.database);
 
-	const testAccount = await Account.Get('mdx89', schema);
+	testAccount = testAccount || await Account.Get('mdx89', schema);
 
 	return {
 		account: testAccount,

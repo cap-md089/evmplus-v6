@@ -293,45 +293,20 @@ export default class NHQMember extends CAPWATCHMember
 	/**
 	 * Limit IDs to CAP IDs
 	 */
-	public id: number = 0;
+	public id: number;
 
 	/**
 	 * Permissions for the user
 	 */
-	public permissions: MemberPermissions = {
-		AddEvent: 0,
-		AddTeam: 0,
-		AdministerPT: 0,
-		AssignPosition: 0,
-		AssignTasks: 0,
-		CopyEvent: 0,
-		DeleteEvent: 0,
-		DownloadCAPWATCH: 0,
-		DownloadStaffGuide: 0,
-		EditEvent: 0,
-		EditTeam: 0,
-		EventContactSheet: 0,
-		EventLinkList: 0,
-		EventStatusPage: 0,
-		FileManagement: 0,
-		FlightAssign: 0,
-		MusterSheet: 0,
-		ORMOPORD: 0,
-		PTSheet: 0,
-		PermissionManagement: 0,
-		PromotionManagement: 0,
-		ProspectiveMemberManagment: 0,
-		RegistryEdit: 0,
-		SignUpEdit: 0
-	};
+	public permissions: MemberPermissions;
 	/**
 	 * The access level which determines the permissions
 	 */
-	public accessLevel: MemberAccessLevel = 'Member';
+	public accessLevel: MemberAccessLevel;
 	/**
 	 * The ID to for the session of the member
 	 */
-	public sessionID: string = '';
+	public sessionID: string;
 	/**
 	 * Used to differentiate between members
 	 *
@@ -341,7 +316,7 @@ export default class NHQMember extends CAPWATCHMember
 	/**
 	 * The cookie data used to access NHQ
 	 */
-	public cookie: string = '';
+	public cookie: string;
 
 	protected extraInfo: ExtraMemberInformation;
 

@@ -17,8 +17,8 @@ describe ('any url that is not an image, build file, or api call', () => {
 	it ('should respond with an HTML file', done => {
 		request(server)
 			.get('/not/a/real/url')
-			.expect('Content-type', 'text/html; charset=utf-8')
-			.expect(404, done);
+			.expect('Content-type', 'text/html; charset=UTF-8')
+			.expect(200, done);
 	});
 
 	it('should respond with 404', done => {

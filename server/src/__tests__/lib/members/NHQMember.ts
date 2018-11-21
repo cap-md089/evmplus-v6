@@ -1,11 +1,7 @@
 import conftest from '../../../conf.test';
-import { NHQMember } from '../../../lib/MemberBase';
+import { NHQMember } from '../../../lib/Members';
 import { getTestTools } from '../../../lib/Util';
-
-const signinInformation = {
-	username: 542488,
-	password: 'app/xPHP091101'
-};
+import { signinInformation } from '../../consts';
 
 describe('NHQ Member', () => {
 	let mem: NHQMember;
@@ -24,7 +20,7 @@ describe('NHQ Member', () => {
 			expect(mem.id).toEqual(signinInformation.username);
 
 			done();
-		});
+		}, 8500);
 	});
 
 	describe('Member functions', () => {

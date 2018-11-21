@@ -1,11 +1,15 @@
 import * as express from 'express';
+import conf from '../conf';
 import { AccountRequest } from '../lib/Account';
 import MemberBase from '../lib/Members';
 import { default as Member, MemberCreateError } from '../lib/members/NHQMember';
 import ProspectiveMember from '../lib/members/ProspectiveMember';
 import { json } from '../lib/Util';
 
-export default async (req: AccountRequest, res: express.Response) => {
+export default (config: typeof conf) => async (
+	req: AccountRequest,
+	res: express.Response
+) => {
 	const {
 		username,
 		password
@@ -16,9 +20,9 @@ export default async (req: AccountRequest, res: express.Response) => {
 		return;
 	}
 
-	try {
-		let member;
+	let member;
 
+	try {
 		const userID = username.toString();
 
 		switch (MemberBase.GetMemberTypeFromID(userID)) {

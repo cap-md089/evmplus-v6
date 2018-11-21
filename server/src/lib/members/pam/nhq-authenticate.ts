@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import * as rp from 'request-promise-native';
-import { MemberCreateError } from '../NHQMember';
+import { MemberCreateError } from '../../../enums';
 
 const GET_SIGNIN_VALUES_URL =
 	'https://www.capnhq.gov/CAP.eServices.Web/default.aspx';

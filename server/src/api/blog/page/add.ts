@@ -6,7 +6,7 @@ import { getFullSchemaValidator, json } from '../../../lib/Util';
 const validator = getFullSchemaValidator<NewBlogPage>('NewBlogPage.json');
 
 export default async (req: MemberRequest, res: Response) => {
-	if (!validator(req.body.page) && typeof req.body.id !== 'number') {
+	if (!validator(req.body.page) && typeof req.body.id !== 'string') {
 		res.status(400);
 		res.end();
 		return;

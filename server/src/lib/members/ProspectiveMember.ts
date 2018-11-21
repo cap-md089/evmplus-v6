@@ -13,16 +13,16 @@ import { Member as NoPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { MemberCreateError, MemberRequest } from './NHQMember';
 
-const generateHash = (password: string, secret: string) =>
+export const generateHash = (password: string, secret: string) =>
 	createHmac('sha512', secret)
 		.update(password)
 		.digest()
 		.toString('hex');
 
-const hashPassword = (
+export const hashPassword = (
 	password: string,
 	salt: string,
-	revolutions = 2048
+	revolutions = 1024
 ): string =>
 	revolutions === 0
 		? generateHash(password, salt)
@@ -98,6 +98,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			{
 				_id,
 				...newMember,
+				id,
 				salt,
 				password: hashedPassword,
 				accountID: account.id,
@@ -129,7 +130,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 		const rows = await collectResults(find);
 
 		if (rows.length !== 1) {
-			throw new Error(MemberCreateError.UNKOWN_SERVER_ERROR.toString());
+			throw new Error(MemberCreateError.INCORRRECT_CREDENTIALS.toString());
 		}
 
 		const { password: hash, salt } = rows[0];
@@ -287,7 +288,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 	private static collectionName = 'ProspectiveMembers';
 
-	public id: string = '';
+	public id: string;
 
 	public type: 'CAPProspectiveMember' = 'CAPProspectiveMember';
 
@@ -299,7 +300,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 	public accountID: string;
 
-	public sessionID: string = '';
+	public sessionID: string;
 
 	public flight: null | string;
 

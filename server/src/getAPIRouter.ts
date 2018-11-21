@@ -82,7 +82,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		}
 	});
 
-	router.post('/signin', Account.ExpressMiddleware, signin);
+	router.post('/signin', Account.ExpressMiddleware, signin(conf));
 
 	router.get(
 		'/token',

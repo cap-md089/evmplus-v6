@@ -48,7 +48,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 	}
 
 	public set(values: Partial<RegistryValues>) {
-		const keys: Array<keyof RegistryValues> = ['contact', 'website'];
+		const keys: Array<keyof RegistryValues> = ['Contact', 'Website'];
 
 		for (const i of keys) {
 			if (typeof values[i] !== 'undefined') {
@@ -65,5 +65,9 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 		await registryCollection.replaceOne(this.values._id, this.values);
 	}
 
-	public toRaw = (): RegistryValues => ({...this.values});
+	public toRaw = (): RegistryValues => ({
+		...this.values,
+		accountID: this.account.id,
+		id: this.account.id
+	});
 }

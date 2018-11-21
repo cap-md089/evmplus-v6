@@ -70,20 +70,22 @@ export default class BlogPage
 
 	private static collectionName = 'BlogPages';
 
-	public title: string;
+	public title: string = '';
 
-	public content: RawDraftContentState;
+	public content: RawDraftContentState = {} as RawDraftContentState;
 
-	public id: string;
+	public id: string = '';
 
 	// tslint:disable-next-line:variable-name
-	public _id: string;
+	public _id: string = '';
 
-	public children: string[];
+	public children: string[] = [];
 
 	public get accountID() {
 		return this.account.id;
 	}
+
+	private deleted: boolean = false;
 
 	private constructor(
 		data: FullDBObject<BlogPageObject>,
@@ -91,10 +93,12 @@ export default class BlogPage
 		private schema: Schema
 	) {
 		this.set(data);
+
+		this._id = data._id;
 	}
 
 	public set(values: Partial<BlogPageObject>) {
-		const keys: Array<keyof BlogPageObject> = ['title', 'id', 'content'];
+		const keys: Array<keyof BlogPageObject> = ['title', 'id', 'content', 'children'];
 
 		for (const i of keys) {
 			if (typeof values[i] === typeof this[i] && i !== 'accountID') {
@@ -104,6 +108,10 @@ export default class BlogPage
 	}
 
 	public async save() {
+		if (this.deleted) {
+			throw new Error('Cannot save a blog page that is deleted');
+		}
+
 		const collection = this.schema.getCollection<
 			FullDBObject<BlogPageObject>
 		>(BlogPage.collectionName);
@@ -127,6 +135,12 @@ export default class BlogPage
 	}
 
 	public async delete(): Promise<void> {
+		if (this.deleted) {
+			throw new Error('Blog page already deleted');
+		}
+
+		this.deleted = true;
+
 		const collection = this.schema.getCollection<BlogPageObject>(BlogPage.collectionName);
 
 		await collection.removeOne(this._id);

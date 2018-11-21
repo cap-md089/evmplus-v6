@@ -42,3 +42,16 @@ export const validToken = (req: MemberRequest): boolean => {
 		return false;
 	}
 };
+
+export const tokenMiddleware = (
+	req: MemberRequest,
+	res: express.Response,
+	next: express.NextFunction
+) => {
+	if (validToken(req)) {
+		next();
+	} else {
+		res.status(403);
+		res.end();
+	}
+};

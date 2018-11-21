@@ -43,17 +43,17 @@ export default class Event
 
 		const members = await Promise.all(
 			internalPointsOfContact.map(poc =>
-				MemberBase.ResolveReference(poc.id, account, schema, true)
+				MemberBase.ResolveReference(poc.memberReference, account, schema, true)
 			)
 		);
 
 		internalPointsOfContact.forEach((mem, i) => {
 			for (const member of members) {
-				if (mem.id.type === 'Null') {
+				if (mem.memberReference.type === 'Null') {
 					continue;
 				}
 
-				if (member.id === mem.id.id) {
+				if (member.id === mem.memberReference.id) {
 					internalPointsOfContact[i].name =
 						member instanceof CAPWATCHMember
 							? member.memberRankName
@@ -254,7 +254,7 @@ export default class Event
 				receiveRoster: i.receiveRoster,
 				receiveEventUpdates: i.receiveEventUpdates,
 				receiveSignUpUpdates: i.receiveSignUpUpdates,
-				id: i.id
+				memberReference: i.memberReference
 			})
 		) as InternalPointOfContact[];
 
@@ -326,7 +326,7 @@ export default class Event
 					poc.type === PointOfContactType.INTERNAL &&
 					MemberBase.AreMemberReferencesTheSame(
 						member.getReference(),
-						poc.id
+						poc.memberReference
 					)
 			) ||
 			member.matchesReference(this.author) ||

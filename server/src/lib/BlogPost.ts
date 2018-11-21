@@ -6,13 +6,15 @@ import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
 export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogPostObject> {
 	public static async Get(
-		id: number,
+		id: number | string,
 		account: Account,
 		schema: Schema
 	): Promise<BlogPost> {
 		const blogPostCollection = schema.getCollection<BlogPostObject>(
 			BlogPost.collectionName
 		);
+
+		id = parseInt(id.toString(), 10);
 
 		let results;
 

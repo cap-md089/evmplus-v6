@@ -1,20 +1,49 @@
 import conftest from '../../conf.test';
-import BlogPost from '../../lib/BlogPost';
+import BlogPage from '../../lib/BlogPage';
 import { getTestTools } from '../../lib/Util';
-import { blogPostData } from '../consts';
+import { blogPageData } from '../consts';
 
 describe('BlogPost', async () => {
-	let blogPost: BlogPost;
-	let id: number;
+	let blogPost: BlogPage;
+	let id: string;
 
-	it('should create a blog post successfully', async done => {
+	beforeAll(async () => {
+		const { schema } = await getTestTools(conftest);
+
+		await schema
+			.getCollection('BlogPages')
+			.remove('true')
+			.execute();
+	});
+
+	it('should create a blog page successfully', async done => {
 		const { account, schema } = await getTestTools(conftest);
 
-		blogPost = await BlogPost.Create(blogPostData, account, schema);
+		blogPost = await BlogPage.Create(
+			'test-blog-post',
+			blogPageData,
+			account,
+			schema
+		);
 
 		id = blogPost.id;
 
 		expect(blogPost.title).toEqual('Test blog post');
+
+		done();
+	});
+
+	it('should fail to create a blog post that has a used id', async done => {
+		const { account, schema } = await getTestTools(conftest);
+
+		await expect(
+			BlogPage.Create(
+				'test-blog-post',
+				blogPageData,
+				account,
+				schema
+			)
+		).rejects.toEqual(expect.any(Error));
 
 		done();
 	});
@@ -28,7 +57,7 @@ describe('BlogPost', async () => {
 
 		await blogPost.save();
 
-		const savedPost = await BlogPost.Get(id, account, schema);
+		const savedPost = await BlogPage.Get(id, account, schema);
 
 		expect(savedPost.id).toEqual(blogPost.id);
 		expect(savedPost.title).toEqual('New blog post title');
@@ -46,7 +75,7 @@ describe('BlogPost', async () => {
 		await blogPost.delete();
 
 		await expect(
-			BlogPost.Get(blogPost.id, account, schema)
+			BlogPage.Get(blogPost.id, account, schema)
 		).rejects.toEqual(expect.any(Error));
 
 		await expect(blogPost.delete()).rejects.toEqual(expect.any(Error));

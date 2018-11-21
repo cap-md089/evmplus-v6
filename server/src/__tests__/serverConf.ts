@@ -1,32 +1,36 @@
-import * as request from 'supertest';
-import conftest from '../conf.test';
-import getServer from '../getServer';
+import conftest from "../conf.test";
+import getServer from "../getServer";
 
-console = {
- 	log: (...values: any[]): void => void 0,
-	error: (...values: any[]): void => void 0
-} as typeof console
+const exit = jest.spyOn(process, "exit").mockImplementation((num: number) => num);
+const error = jest.spyOn(console, "error").mockImplementation((num: number) => num);
 
 describe('getServer', () => {
-	it('should use loggers when told it is not testing', async done => {
-		const { server } = await getServer(
-			{
-				...conftest,
-				testing: false
-			},
-			3007
-		);
+	it('should create a server', async done => {
+		const serverPromise = getServer(conftest, 3007);
+
+		const { server } = await serverPromise;
+
+		expect(server.address().port).toEqual(3007);
 
 		server.close();
 
 		done();
 	});
 
-	it('should return an image successfully', async done => {
-		const { server } = await getServer(conftest, 3007);
+	it('should throw an error if the port is in use', async done => {
+		const { server: server1 } = await getServer(conftest, 3007);
 
-		request(server)
-			.get('/images/banner')
-			.expect(200, done);
+		try {
+			await getServer(conftest, 3007);
+		} catch(e) {
+			// nothing
+		}
+
+		server1.close();
+
+		expect(exit).toHaveBeenCalled();
+		expect(error).toHaveBeenCalled();
+
+		done();
 	});
 });

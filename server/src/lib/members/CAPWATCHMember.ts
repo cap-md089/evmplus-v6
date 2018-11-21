@@ -110,7 +110,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 					results[0].NameLast,
 					results[0].NameSuffix
 				]),
-				type: 'CAPWATCHMember',
+				type: 'CAPNHQMember',
 				permissions,
 				teamIDs: extraInformation.teamIDs,
 				flight: extraInformation.flight
@@ -146,29 +146,29 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 
 	public permissions: MemberPermissions;
 
-	public type: CAPMemberType = 'CAPWATCHMember';
+	public type: CAPMemberType = 'CAPNHQMember';
 
-	public id: number | string = 0;
+	public id: number | string;
 	/**
 	 * The rank of the member
 	 */
-	public memberRank: string = '';
+	public memberRank: string;
 	/**
 	 * Whether or not the member is a senior member
 	 */
-	public seniorMember: boolean = false;
+	public seniorMember: boolean;
 	/**
 	 * The member name + the member rank
 	 */
-	public memberRankName: string = '';
+	public memberRankName: string;
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[] = [];
+	public dutyPositions: string[];
 	/**
 	 * The organization ID the user belongs to
 	 */
-	public orgid: number = 0;
+	public orgid: number;
 	/**
 	 * The flight for a member, if a cadet
 	 */

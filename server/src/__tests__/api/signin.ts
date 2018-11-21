@@ -1,23 +1,43 @@
 import { Server } from 'http';
 import * as request from 'supertest';
-import conf from '../../conf.test';
+import { default as conf, default as conftest } from '../../conf.test';
 import getServer from '../../getServer';
-
-const signinInformation = {
-	username: 542488,
-	password: 'app/xPHP091101'
-};
+import { ProspectiveMember } from '../../lib/Members';
+import { getTestTools } from '../../lib/Util';
+import { signinInformation } from '../consts';
+import { newMem, password } from '../consts';
 
 describe('/api', () => {
 	describe('/signin', () => {
 		let server: Server;
+		let pmember: ProspectiveMember;
+
+		beforeAll(async () => {
+			const { account, schema } = await getTestTools(conftest);
+
+			pmember = await ProspectiveMember.Create(
+				newMem,
+				password,
+				account,
+				schema
+			);
+		});
 
 		beforeEach(async () => {
 			server = (await getServer(conf, 3004)).server;
 		});
 
-		afterEach(() => {
+		afterEach(async () => {
 			server.close();
+		});
+
+		afterAll(async () => {
+			const { schema } = await getTestTools(conftest);
+
+			await schema
+				.getCollection('ProspectiveMembers')
+				.remove('true')
+				.execute();
 		});
 
 		it('should sign in correctly', done => {
@@ -42,7 +62,7 @@ describe('/api', () => {
 
 					done();
 				});
-		});
+		}, 8000);
 
 		it('should return an error when using incorrect credentials', done => {
 			request(server)
@@ -82,7 +102,6 @@ describe('/api', () => {
 				})
 				.set('Accept', 'application/json')
 				.set('Content-type', 'application/json')
-				.expect(200)
 				.end((err, res) => {
 					if (err) {
 						throw err;
@@ -98,7 +117,7 @@ describe('/api', () => {
 
 					done();
 				});
-		});
+		}, 8000);
 
 		it('should be able to get a user after signing in', done => {
 			request(server)
@@ -106,7 +125,6 @@ describe('/api', () => {
 				.send(signinInformation)
 				.set('Accept', 'application/json')
 				.set('Content-type', 'application/json')
-				.expect(200)
 				.end((err, res) => {
 					if (err) {
 						throw err;
@@ -127,12 +145,40 @@ describe('/api', () => {
 							expect(ret.error).toEqual(-1);
 							expect(ret.sessionID).not.toEqual('');
 							expect(ret.valid).toEqual(true);
-							expect(ret.member.id).toEqual(signinInformation.username);
+							expect(ret.member.id).toEqual(
+								signinInformation.username
+							);
 
 							done();
 						});
 				});
-		})
+		}, 8000);
+
+		it('should allow signing in as a prospective member', done => {
+			request(server)
+				.post('/api/signin')
+				.send({
+					username: pmember.id,
+					password
+				})
+				.set('Accept', 'application/json')
+				.set('Content-type', 'application/json')
+				.end((err, res) => {
+					if (err) {
+						throw err;
+					}
+
+					const ret: SigninReturn = res.body;
+
+					// -1 means no error
+					expect(ret.error).toEqual(-1);
+					expect(ret.sessionID).not.toEqual('');
+					expect(ret.valid).toEqual(true);
+					expect(ret.member.id).toEqual(pmember.id);
+
+					done();
+				});
+		});
 
 		it('should return a signin form to sign in with', done => {
 			request(server)

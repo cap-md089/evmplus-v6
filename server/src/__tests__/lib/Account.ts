@@ -62,9 +62,7 @@ describe ('Account', () => {
 		const { account } = await getTestTools(conftest);
 
 		for await (const mem of account.getMembers()) {
-			expect(mem.orgid).toEqual({
-				asymetricMatcher: (val: number) => account.orgIDs.indexOf(val) > -1
-			});
+			expect(account.orgIDs).toContain(mem.orgid);
 		}
 
 		done();

@@ -1,13 +1,33 @@
+import { Server } from 'http';
+import * as request from 'supertest';
 import conftest from '../../conf.test';
-import Registry from '../../lib/Registry';
-import { getTestTools } from '../../lib/Util';
+import getServer from '../../getServer';
 
-describe('registry', async () => {
-	const { account, schema } = await getTestTools(conftest);
+describe('/api', () => {
+	describe('/registry', () => {
+		let server: Server;
 
-	it('should get successfully', async done => {
-		const registry = await Registry.Get(account, schema);
+		beforeEach(async () => {
+			server = (await getServer(conftest, 3009)).server
+		});
 
-		expect(registry.values.accountID).toEqual(expect.any(String));
+		afterEach(() => {
+			server.close();
+		});
+
+		it('should get the registry for the developer account', done => {
+			request('http://mdx89.localcapunit.com:3009')
+				.get('/api/registry')
+				.expect(200)
+				.expect('content-type', 'application/json; charset=utf-8')
+				.end(done);
+		});
+
+		it('should give a 400 for a non existant account', done => {
+			request('http://noacc.localcapunit.com:3009')
+				.get('/api/registry')
+				.expect(400)
+				.end(done);
+		});
 	});
 });
