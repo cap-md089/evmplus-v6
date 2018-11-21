@@ -8,5 +8,9 @@
     "@types/draft-js": "0.10.24",
     "@types/node": "10.7.1"
   },
-  "types": "index.d.ts"
+  "types": "index.d.ts",
+  "devDependencies": {
+    "jest": "^21.2.1",
+    "ts-jest": "^21.2.4"
+  }
 }

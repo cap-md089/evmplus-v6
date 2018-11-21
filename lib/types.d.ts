@@ -7,7 +7,7 @@ import {
 	TeamPublicity,
 	FileUserAccessControlType,
 	FileUserAccessControlPermissions
-} from './index';
+} from '.';
 
 declare global {
 	/**
@@ -756,7 +756,7 @@ declare global {
 		/**
 		 * CAP ID
 		 */
-		id: MemberReference;
+		memberReference: MemberReference;
 	}
 
 	export interface DisplayInternalPointOfContact extends PointOfContact {
@@ -767,7 +767,7 @@ declare global {
 		/**
 		 * CAP ID
 		 */
-		id: MemberReference;
+		memberReference: MemberReference;
 		/**
 		 * Used for compound documentation
 		 */
@@ -1488,6 +1488,36 @@ declare global {
 		uploader: SigninReturn;
 	}
 
+	export interface WebsiteInformation {
+		/**
+		 * What the website is called
+		 */
+		Name: string;
+		/**
+		 * -, ::, etc. Personal taste, used in the title of the page
+		 */
+		Separator: string;
+	}
+
+	export interface WebsiteContact {
+		FaceBook: null | string
+		Twitter: null | string,
+		YouTube: null | string,
+		LinkedIn: null | string,
+		Instagram: null | string,
+		Flickr: null | string
+		MeetingAddress: null | {
+			Name: string,
+			FirstLine: string,
+			SecondLine: string
+		},
+		MailingAddress: null | {
+			Name: string,
+			FirstLine: string,
+			SecondLine: string
+		}
+	}
+
 	/**
 	 * Each account has a registry, stores configuration
 	 */
@@ -1495,29 +1525,11 @@ declare global {
 		/**
 		 * How to contact the account; email, social media, etc;
 		 */
-		contact: {
-			/**
-			 * Facebook page for the account
-			 */
-			facebook: null | string;
-			/**
-			 * Instagram page for the account
-			 */
-			instagram: null | string;
-		};
+		Contact: WebsiteContact;
 		/**
 		 * Website naming details
 		 */
-		website: {
-			/**
-			 * What the website is called
-			 */
-			name: string;
-			/**
-			 * -, ::, etc. Personal taste, used in the title of the page
-			 */
-			separator: string;
-		};
+		Website: WebsiteInformation;
 	}
 
 	export interface TeamMember {
