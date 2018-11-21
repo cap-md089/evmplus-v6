@@ -119,31 +119,31 @@ export default class Dialogue extends React.Component<
 			div.find('input[type=text]')[0].focus();
 		}
 
-		if (this.props.open && !this.state.open) {
-			div.animate(
-				{
-					opacity: 1
-				},
-				250,
-				'swing'
-			);
-			this.setState({
-				open: true
-			});
-		} else if (!this.props.open && this.state.open) {
-			div.animate(
-				{
-					opacity: 0
-				},
-				250,
-				'swing',
-				() => {
-					this.setState({
-						open: false
-					});
-				}
-			);
-		}
+		// if (this.props.open && !this.state.open) {
+		// 	div.animate(
+		// 		{
+		// 			opacity: 1
+		// 		},
+		// 		250,
+		// 		'swing'
+		// 	);
+		// 	this.setState({
+		// 		open: true
+		// 	});
+		// } else if (!this.props.open && this.state.open) {
+		// 	div.animate(
+		// 		{
+		// 			opacity: 0
+		// 		},
+		// 		250,
+		// 		'swing',
+		// 		() => {
+		// 			this.setState({
+		// 				open: false
+		// 			});
+		// 		}
+		// 	);
+		// }
 	}
 
 	public render() {
@@ -156,7 +156,7 @@ export default class Dialogue extends React.Component<
 					left: 0,
 					right: 0,
 					position: 'fixed',
-					zIndex: this.state.open ? 5010 : -5010,
+					zIndex: this.props.open ? 5010 : -5010,
 					display: 'block',
 					backgroundColor: 'rgba(0, 0, 0, 0.5)'
 				}}

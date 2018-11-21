@@ -10,7 +10,7 @@ import { MemberCreateError } from './enums';
 import jQuery, { bestfit } from './jquery.textfit';
 import myFetch from './lib/myFetch';
 import Subscribe from './lib/subscribe';
-import Registry from './registry';
+import Registry from './lib/Registry';
 import Account from './lib/Account';
 import { getMember } from './lib/Members';
 
@@ -87,7 +87,7 @@ const RoutingSearchForm = withRouter(
 );
 
 interface AppState {
-	Registry: Registry;
+	Registry: Registry | null;
 	member: SigninReturn;
 	loading: boolean;
 	account: Account | null;
@@ -113,13 +113,7 @@ export default class App extends React.Component<
 		},
 		loading: false,
 		account: null,
-		Registry: {
-			Contact: {},
-			Website: {
-				Name: '',
-				Separator: ''
-			}
-		},
+		Registry: null,
 		sideNavLinks: [],
 		breadCrumbs: [],
 		allowedSlideshowIDs: []
@@ -139,19 +133,9 @@ export default class App extends React.Component<
 		this.onStorageChange = this.onStorageChange.bind(this);
 	}
 
-	public componentDidMount(): void {
+	public async componentDidMount(): Promise<void> {
 		// Load registry
 		bestfit(jQuery(this.titleElement));
-		myFetch('/api/registry')
-			.then(res => {
-				return res.json();
-			})
-			.then((res: { value: Registry }) => {
-				this.setState({
-					Registry: res.value
-				});
-			});
-
 		myFetch('/api/banner')
 			.then(res => res.json())
 			.then((allowedSlideshowIDs: FileObject[]) => {
@@ -164,23 +148,34 @@ export default class App extends React.Component<
 			loading: true
 		});
 
-		Promise.all([
-			Account.Get(),
-			getMember(sessionID || '')
-		]).then(([account, member]) => {
-			if (!member.valid) {
-				localStorage.removeItem('sessionID');
-			}
-			this.setState({
-				account,
-				member,
-				loading: false
-			});
-		});
-
 		this.timer = setInterval(() => void 0, 5000);
 
 		window.addEventListener('storage', this.onStorageChange);
+
+		const [account, member] = await Promise.all([
+			Account.Get(),
+			getMember(sessionID || '')
+		]);
+
+		if (!member.valid) {
+			localStorage.removeItem('sessionID');
+		}
+		this.setState({
+			account,
+			member,
+			loading: false
+		});
+
+		const registry = await Registry.Get(account);
+
+		this.setState(
+			{
+				Registry: registry
+			},
+			() => {
+				bestfit(jQuery(this.titleElement));
+			}
+		);
 	}
 
 	public componentWillUnmount() {
@@ -192,11 +187,13 @@ export default class App extends React.Component<
 	public render() {
 		let countd = 0;
 
-		if (this.state.Registry.Contact.MailingAddress) {
-			countd++;
-		}
-		if (this.state.Registry.Contact.MeetingAddress) {
-			countd++;
+		if (this.state.Registry) {
+			if (this.state.Registry.Contact.MailingAddress) {
+				countd++;
+			}
+			if (this.state.Registry.Contact.MeetingAddress) {
+				countd++;
+			}
 		}
 
 		const count = ['half', 'third', 'fourth'][countd];
@@ -230,7 +227,9 @@ export default class App extends React.Component<
 										}
 									}}
 								>
-									{this.state.Registry.Website.Name}
+									{this.state.Registry
+										? this.state.Registry.Website.Name
+										: ''}
 								</div>
 								<div className="servings">
 									<span className="servingsTitle">
@@ -334,7 +333,7 @@ export default class App extends React.Component<
 									Connect With Us
 								</div>
 								<p>
-									{[
+									{this.state.Registry ? [
 										this.state.Registry.Contact.FaceBook ? (
 											<a
 												href={
@@ -402,10 +401,10 @@ export default class App extends React.Component<
 												className="socialMedia flickr"
 											/>
 										) : null
-									]}
+									] : null}
 								</p>
 							</div>
-							{this.state.Registry.Contact.MeetingAddress ? (
+							{this.state.Registry && this.state.Registry.Contact.MeetingAddress ? (
 								<div className={count + 'Box'}>
 									<div className="footerBoxTitle">
 										Meeting Address
@@ -420,7 +419,7 @@ export default class App extends React.Component<
 									</p>
 								</div>
 							) : null}
-							{this.state.Registry.Contact.MailingAddress ? (
+							{this.state.Registry && this.state.Registry.Contact.MailingAddress ? (
 								<div className={count + 'Box'}>
 									<div className="footerBoxTitle">
 										Mailing Address

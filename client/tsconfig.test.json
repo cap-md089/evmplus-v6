@@ -3,8 +3,5 @@
 	"compilerOptions": {
 		"module": "commonjs",
 		"baseUrl": "."
-	},
-	"files": [
-		"../lib/index.d.ts"
-	]
+	}
 }

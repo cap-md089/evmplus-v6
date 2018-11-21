@@ -65,9 +65,11 @@ export default class EventViewer extends React.Component<
 			this.props.account
 		);
 
-		const eventURL = `/eventviewer/${event.id}-${event.name.toLocaleLowerCase().replace(' ', '-')}`
+		const eventURL = `/eventviewer/${event.id}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`
 
-		this.props.routeProps.history.replace(eventURL)
+		if (this.props.routeProps.location.pathname !== eventURL) {
+			this.props.routeProps.history.replace(eventURL)
+		}
 
 		this.props.updateBreadCrumbs([
 			{

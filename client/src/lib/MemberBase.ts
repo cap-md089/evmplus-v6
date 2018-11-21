@@ -131,4 +131,20 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	public is(mem: MemberBase) {
 		return this.matchesReference(mem.getReference());
 	}
+
+	public getBestEmail = () =>
+		this.contact.EMAIL.PRIMARY ||
+		this.contact.CADETPARENTEMAIL.PRIMARY ||
+		this.contact.EMAIL.SECONDARY ||
+		this.contact.CADETPARENTEMAIL.SECONDARY ||
+		this.contact.EMAIL.EMERGENCY ||
+		this.contact.CADETPARENTEMAIL.EMERGENCY;
+
+	public getBestPhone = () =>
+		this.contact.CELLPHONE.PRIMARY ||
+		this.contact.CADETPARENTPHONE.PRIMARY ||
+		this.contact.CELLPHONE.SECONDARY ||
+		this.contact.CADETPARENTPHONE.SECONDARY ||
+		this.contact.CELLPHONE.EMERGENCY ||
+		this.contact.CADETPARENTPHONE.EMERGENCY;
 }

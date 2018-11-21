@@ -53,7 +53,7 @@ export default class Account extends APIInterface<AccountObject>
 	}
 
 	public async getMembers(member?: MemberBase): Promise<MemberClasses[]> {
-		const url = this.buildURI('api', 'members');
+		const url = this.buildURI('api', 'member');
 
 		const headers: any = {};
 

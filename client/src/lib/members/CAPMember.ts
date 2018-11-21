@@ -5,23 +5,23 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 	/**
 	 * This class uses 6 digit CAP IDs
 	 */
-	public id: number = 0;
+	public id: number;
 	/**
 	 * The rank of the member
 	 */
-	public memberRank: string = '';
+	public memberRank: string;
 	/**
 	 * The member name + the member rank
 	 */
-	public memberRankName: string = '';
+	public memberRankName: string;
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[] = [];
+	public dutyPositions: string[];
 	/**
 	 * The organization ID the user belongs to
 	 */
-	public orgid: number = 0;
+	public orgid: number;
 	/**
 	 * The flight for a member, if a cadet
 	 */

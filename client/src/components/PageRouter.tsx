@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
-import Account from 'src/lib/Account';
-import { createCorrectMemberObject } from 'src/lib/Members';
+import Account from '../lib/Account';
+import { createCorrectMemberObject } from '../lib/Members';
 import AddEvent from '../pages/AddEvent';
 import Blog from '../pages/Blog';
 import Calendar from '../pages/Calendar';

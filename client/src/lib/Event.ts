@@ -353,7 +353,7 @@ export default class Event extends APIInterface<EventObject>
 					poc.type === PointOfContactType.INTERNAL &&
 					MemberBase.AreMemberReferencesTheSame(
 						member.getReference(),
-						poc.id
+						poc.memberReference
 					)
 			) ||
 			member.matchesReference(this.author) ||

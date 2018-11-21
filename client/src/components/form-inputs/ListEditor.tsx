@@ -48,6 +48,7 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 								onUpdate={this.getChangeHandler(i)}
 								index={i}
 								member={this.props.member}
+								account={this.props.account}
 							/>
 							<Button buttonType="secondaryButton" onClick={this.getRemoveItem(i)} className="listEditor-removeItem">
 								{this.props.removeText || 'Remove item'}
