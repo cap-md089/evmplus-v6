@@ -14,8 +14,7 @@
 		"sourceMap": true,
 		"baseUrl": ".",
 		"rootDir": ".",
-		"composite": true,
-		"declaration": false
+		"composite": true
 	},
 	"exclude": ["node_modules"],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
