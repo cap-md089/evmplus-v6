@@ -29,6 +29,11 @@
 				"$tsc-watch"
 			],
 			"isBackground": true
+		},
+		{
+			"type": "gulp",
+			"task": "mysql:import",
+			"problemMatcher": []
 		}
 	]
 }
