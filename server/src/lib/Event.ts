@@ -1,6 +1,6 @@
 import { Schema } from '@mysql/xdevapi';
 import { DateTime } from 'luxon';
-import { EventStatus, PointOfContactType } from '../enums';
+import { EchelonEventNumber, EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { CAPWATCHMember } from './Members';
@@ -177,9 +177,11 @@ export default class Event
 
 	public showUpcoming: boolean;
 
-	public groupEventNumber: [number, string];
+	public groupEventNumber: RadioReturn<EchelonEventNumber>;
 
-	public wingEventNumber: number;
+	public wingEventNumber: RadioReturn<EchelonEventNumber>;
+
+	public regionEventNumber: RadioReturn<EchelonEventNumber>;
 
 	public complete: boolean;
 
@@ -368,6 +370,7 @@ export default class Event
 			pickupLocation: this.pickupLocation,
 			pointsOfContact: this.pointsOfContact,
 			publishToWingCalendar: this.publishToWingCalendar,
+			regionEventNumber: this.regionEventNumber,
 			registration: this.registration,
 			requiredEquipment: this.requiredEquipment,
 			showUpcoming: this.showUpcoming,
@@ -515,6 +518,7 @@ export default class Event
 		pickupLocation: this.pickupLocation,
 		pointsOfContact: this.pointsOfContact,
 		publishToWingCalendar: this.publishToWingCalendar,
+		regionEventNumber: this.regionEventNumber,
 		registration: !!this.registration ? this.registration : null,
 		requiredEquipment: this.requiredEquipment,
 		requiredForms: this.requiredForms,
@@ -532,7 +536,7 @@ export default class Event
 		transportationDescription: this.transportationDescription,
 		transportationProvided: this.transportationProvided,
 		uniform: this.uniform,
-		wingEventNumber: !!this.wingEventNumber ? this.wingEventNumber : null,
+		wingEventNumber: this.wingEventNumber,
 		fileIDs: this.fileIDs,
 		attendance:
 			member === null || member === undefined ? [] : this.getAttendance()
@@ -637,3 +641,4 @@ export default class Event
 }
 
 export { EventStatus };
+
