@@ -34,6 +34,11 @@
 			"type": "gulp",
 			"task": "mysql:import",
 			"problemMatcher": []
+		},
+		{
+			"type": "gulp",
+			"task": "mysql:backup",
+			"problemMatcher": []
 		}
 	]
 }
