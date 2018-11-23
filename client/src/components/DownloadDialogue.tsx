@@ -1,16 +1,9 @@
 import * as React from 'react';
-import MemberBase from 'src/lib/MemberBase';
-import myFetch from '../lib/myFetch';
 import Dialogue, { DialogueButtons } from './Dialogue';
 import Selector, { CheckInput } from './form-inputs/Selector';
 
 interface DownloadProps<T extends Identifiable> {
-	// Request properties
-	member: MemberBase | null;
-	requestProperties?: RequestInit;
-	errorMessage?: string;
-	url: string;
-
+	valuePromise: Promise<T[]>;
 	// Properties for the dialogue
 	open: boolean;
 	title: string;
@@ -23,16 +16,13 @@ interface DownloadProps<T extends Identifiable> {
 	filterValues?: any[];
 	onFilterValuesChange?: (filterValues: any[]) => void;
 	displayValue: (value: T) => React.ReactChild;
-
-	// Testing
-	fetch?: (url: string, options: RequestInit) => Promise<Response>;
 }
 
 interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
 	multiple: false;
 	onValueClick: (value: T | null) => void;
 	onValueSelect: (value: T | null) => void;
-	selectedValue?: T;
+	selectedValue?: T | null;
 }
 
 interface DownloadPropsMultiple<T extends Identifiable>
@@ -71,20 +61,7 @@ export default class DownloadDialogue<
 	}
 
 	public componentDidMount() {
-		if (this.props.member) {
-			(this.props.fetch || myFetch)(this.props.url, {
-				headers: {
-					authorization: this.props.member.sessionID
-				}
-			})
-				.then(res => res.json())
-				.then(res => {
-					// tslint:disable-next-line:no-console
-					console.log(res);
-					return res;
-				})
-				.then(values => this.setState({ values }));
-		}
+		this.props.valuePromise.then(values => this.setState({ values }));
 	}
 
 	public render() {

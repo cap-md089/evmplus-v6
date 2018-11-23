@@ -1,4 +1,3 @@
-import { EditorState } from 'draft-js';
 import * as React from 'react';
 import { Link, Route } from 'react-router-dom';
 import Loader from '../components/Loader';
@@ -11,6 +10,7 @@ import {
 /// <reference path="../../../lib/index.d.ts" />
 import RequestForm from '../components/SimpleRequestForm';
 import myFetch from '../lib/myFetch';
+import { EditorState } from '../lib/slowEmptyEditorState';
 import './blog.css';
 import Page, { PageProps } from './Page';
 
@@ -62,9 +62,7 @@ class BlogList extends React.Component<
 			}
 		]);
 		Promise.all([
-			myFetch('/api/blog/post/list').then(val =>
-				val.json()
-			),
+			myFetch('/api/blog/post/list').then(val => val.json()),
 			import('draft-js')
 		]).then(([posts, draft]) => {
 			this.setState({

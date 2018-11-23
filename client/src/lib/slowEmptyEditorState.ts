@@ -20,3 +20,5 @@ export default (): Promise<EditorState> => {
 		});
 	}
 }
+
+export { EditorState };

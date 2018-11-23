@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { PointOfContactType } from '../../enums';
+import { createCorrectMemberObject, MemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../DownloadDialogue';
 import { Checkbox, FormBlock, Label, TextInput } from '../Form';
@@ -12,55 +13,18 @@ const isInternalPOC = (
 ): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;
 
-const getBestEmail = (member: MemberObject) =>
-	member.contact.EMAIL.PRIMARY ||
-	member.contact.CADETPARENTEMAIL.PRIMARY ||
-	member.contact.EMAIL.SECONDARY ||
-	member.contact.CADETPARENTEMAIL.SECONDARY ||
-	member.contact.EMAIL.EMERGENCY ||
-	member.contact.CADETPARENTEMAIL.EMERGENCY;
-
-const getBestPhone = (member: MemberObject) =>
-	member.contact.CELLPHONE.PRIMARY ||
-	member.contact.CADETPARENTPHONE.PRIMARY ||
-	member.contact.CELLPHONE.SECONDARY ||
-	member.contact.CADETPARENTPHONE.SECONDARY ||
-	member.contact.CELLPHONE.EMERGENCY ||
-	member.contact.CADETPARENTPHONE.EMERGENCY;
-
-const getName = (member: MemberObject) =>
-	[
-		member.nameFirst,
-		(member.nameMiddle || '')[0],
-		member.nameLast,
-		member.nameSuffix
-	]
-		.filter(x => x !== '' && typeof x === 'string')
-		.join(' ');
-
-const getReference = (member: MemberObject): MemberReference =>
-	member.type === 'CAPProspectiveMember'
-		? {
-				type: 'CAPProspectiveMember',
-				id: member.id as string
-		  }
-		: {
-				type: 'CAPNHQMember',
-				id: member.id as number
-		  };
-
 export default class POCInput extends React.Component<
 	InputProps<DisplayInternalPointOfContact | ExternalPointOfContact>,
 	{
 		memberSelectOpen: boolean;
 		filterValues: any[];
-		selectedValue: undefined | MemberObject;
+		selectedValue: null | MemberObject;
 	}
 > {
 	public state = {
 		memberSelectOpen: false,
 		filterValues: [],
-		selectedValue: undefined
+		selectedValue: null
 	};
 
 	public constructor(
@@ -77,7 +41,7 @@ export default class POCInput extends React.Component<
 					type: PointOfContactType.INTERNAL,
 					email: '',
 					name: '',
-					id: {
+					memberReference: {
 						type: 'Null'
 					},
 					phone: '',
@@ -97,16 +61,12 @@ export default class POCInput extends React.Component<
 	}
 
 	public render() {
-		if (!this.props.value || !this.props.member) {
+		if (!this.props.value || !this.props.member || !this.props.account) {
 			throw new Error('Invalid properties');
 		}
 
 		const POCType = SimpleRadioButton as new () => SimpleRadioButton<
 			PointOfContactType
-		>;
-
-		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<
-			MemberObject
 		>;
 
 		const value = this.props.value;
@@ -130,77 +90,9 @@ export default class POCInput extends React.Component<
 					key="type"
 				/>
 
-				{isInternalPOC(value) ? (
-					<TextBox name="ignore" value={null}>
-						<Button onClick={this.onMemberSelectClick}>
-							Select a member
-						</Button>
-						<MemberDialogue
-							open={this.state.memberSelectOpen}
-							multiple={false}
-							overflow={400}
-							url="/api/member"
-							title="Select Point of Contact"
-							showIDField={true}
-							displayValue={this.displayMemberValue}
-							member={this.props.member}
-							errorMessage="Could not get members"
-							filters={[
-								{
-									check: (memberToCheck, input) => {
-										if (
-											input === '' ||
-											typeof input !== 'string'
-										) {
-											return true;
-										}
+				{this.getMemberSelector()}
 
-										const memberName = [
-											memberToCheck.nameFirst,
-											(memberToCheck.nameMiddle || '')[0],
-											memberToCheck.nameLast,
-											memberToCheck.nameSuffix
-										]
-											.filter(
-												x => x !== undefined && x !== ''
-											)
-											.join(' ');
-
-										try {
-											return !!memberName.match(
-												new RegExp(input, 'gi')
-											);
-										} catch (e) {
-											return false;
-										}
-									},
-									displayText: 'Member name',
-									filterInput: TextInput
-								}
-							]}
-							filterValues={this.state.filterValues}
-							onFilterValuesChange={this.updateFilterValues}
-							onValueClick={this.setSelectedValue}
-							onValueSelect={this.selectMember}
-							selectedValue={this.state.selectedValue}
-						/>
-					</TextBox>
-				) : null}
-
-				{isInternalPOC(value) ? <Label>ID</Label> : null}
-
-				{isInternalPOC(value) ? (
-					<TextInput
-						name="id"
-						value={(
-							(value.id as
-								| NHQMemberReference
-								| ProspectiveMemberReference).id || ''
-						).toString()}
-						disabled={true}
-						key="id"
-					/>
-				) : null}
+				{this.getIDViewer()}
 
 				<Label>Name</Label>
 				<TextInput
@@ -240,11 +132,24 @@ export default class POCInput extends React.Component<
 		);
 	}
 
-	private onUpdate(e: { name: string; value: any }) {
+	private onUpdate(e: {
+		name: string;
+		value: DisplayInternalPointOfContact | ExternalPointOfContact;
+	}) {
 		if (this.props.onUpdate) {
 			if (
 				e.value.type === PointOfContactType.INTERNAL &&
 				this.props.value!.type === PointOfContactType.EXTERNAL
+			) {
+				(e.value.name = ''), (e.value.email = '');
+				e.value.phone = '';
+				e.value.memberReference = {
+					type: 'Null'
+				};
+			}
+			if (
+				e.value.type === PointOfContactType.EXTERNAL &&
+				this.props.value!.type === PointOfContactType.INTERNAL
 			) {
 				(e.value.name = ''), (e.value.email = '');
 				e.value.phone = '';
@@ -259,35 +164,41 @@ export default class POCInput extends React.Component<
 		});
 	}
 
-	private displayMemberValue(member: MemberObject) {
-		const parts = [
-			member.nameFirst,
-			(member.nameMiddle || '')[0],
-			member.nameLast,
-			member.nameSuffix
-		].filter(x => x !== '' && x !== undefined);
-
+	private displayMemberValue(member: MemberClasses) {
 		let rank = '';
 
-		if (member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') {
+		if (
+			member.type === 'CAPNHQMember' ||
+			member.type === 'CAPProspectiveMember'
+		) {
 			rank = (member as CAPMemberObject).memberRank + ' ';
 		}
 
-		return `${rank }${parts.join(' ')}`;
+		return `${rank}${member.getName()}`;
 	}
 
 	private updateFilterValues(filterValues: any[]) {
 		this.setState({ filterValues });
 	}
 
-	private selectMember(member: MemberObject) {
+	private selectMember(member: Member | null) {
 		if (member !== null) {
+			const mem = createCorrectMemberObject(
+				member,
+				this.props.account!,
+				''
+			);
+
+			if (mem === null) {
+				throw new Error('Invalid member object');
+			}
+
 			const value: DisplayInternalPointOfContact = {
 				...(this.props.value as DisplayInternalPointOfContact)!,
-				email: getBestEmail(member),
-				name: getName(member),
-				id: getReference(member),
-				phone: getBestPhone(member)
+				email: mem.getBestEmail(),
+				name: mem.getName(),
+				memberReference: mem.getReference(),
+				phone: mem.getBestPhone()
 			};
 
 			this.onUpdate({ name: this.props.name, value });
@@ -298,9 +209,97 @@ export default class POCInput extends React.Component<
 		});
 	}
 
-	private setSelectedValue(selectedValue: MemberObject) {
+	private setSelectedValue(selectedValue: MemberObject | null) {
 		this.setState({
 			selectedValue
 		});
+	}
+
+	private getIDViewer() {
+		const value = this.props.value!;
+
+		let id = '';
+
+		if (value.type !== PointOfContactType.INTERNAL) {
+			return null;
+		}
+
+		if (value.memberReference.type !== 'Null') {
+			id = value.memberReference.id.toString();
+		}
+
+		return isInternalPOC(value) ? (
+			<FormBlock
+				name="memberReference"
+				value={value.memberReference}
+			>
+				<Label>ID</Label>
+				<TextInput
+					disabled={true}
+					name="id"
+					value={id}
+				/>
+			</FormBlock>
+		) : null;
+	}
+
+	private getMemberSelector() {
+		const value = this.props.value!;
+		const account = this.props.account!;
+		const member = this.props.member!;
+
+		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<
+			MemberClasses
+		>;
+
+		return isInternalPOC(value) ? (
+			<TextBox name="ignore" value={null}>
+				<Button onClick={this.onMemberSelectClick}>
+					Select a member
+				</Button>
+				<MemberDialogue
+					open={this.state.memberSelectOpen}
+					multiple={false}
+					overflow={400}
+					title="Select Point of Contact"
+					showIDField={true}
+					displayValue={this.displayMemberValue}
+					valuePromise={account.getMembers(member)}
+					filters={[
+						{
+							check: (memberToCheck, input) => {
+								if (input === '' || typeof input !== 'string') {
+									return true;
+								}
+
+								const memberName = [
+									memberToCheck.nameFirst,
+									(memberToCheck.nameMiddle || '')[0],
+									memberToCheck.nameLast,
+									memberToCheck.nameSuffix
+								]
+									.filter(x => x !== undefined && x !== '')
+									.join(' ');
+
+								try {
+									return !!memberName.match(
+										new RegExp(input, 'gi')
+									);
+								} catch (e) {
+									return false;
+								}
+							},
+							displayText: 'Member name',
+							filterInput: TextInput
+						}
+					]}
+					filterValues={this.state.filterValues}
+					onFilterValuesChange={this.updateFilterValues}
+					onValueClick={this.setSelectedValue}
+					onValueSelect={this.selectMember}
+					selectedValue={this.state.selectedValue}
+				/>
+			</TextBox>
+		) : null;
 	}
 }

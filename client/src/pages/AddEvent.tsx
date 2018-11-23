@@ -412,7 +412,7 @@ export default class AddEvent extends React.Component<
 						type: PointOfContactType.INTERNAL,
 						email: '',
 						name: '',
-						id: {
+						memberReference: {
 							kind: 'null'
 						},
 						phone: '',

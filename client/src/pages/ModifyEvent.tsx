@@ -103,14 +103,14 @@ export default class ModifyEvent extends React.Component<
 			if (!newState.event.participationFee) {
 				newState.event.participationFee = {
 					feeAmount: 0,
-					feeDue: (Date.now() / 1000)
+					feeDue: Date.now() / 1000
 				};
 			}
 
 			if (!newState.event.registration) {
 				newState.event.registration = {
 					information: '',
-					deadline: (Date.now() / 1000)
+					deadline: Date.now() / 1000
 				};
 			}
 
@@ -306,13 +306,14 @@ export default class ModifyEvent extends React.Component<
 					<POCListEditor
 						name="pointsOfContact"
 						member={this.props.member}
+						account={this.props.account}
 						// @ts-ignore
 						inputComponent={POCInput}
 						addNew={() => ({
 							type: PointOfContactType.INTERNAL,
 							email: '',
 							name: '',
-							id: {
+							memberReference: {
 								type: 'Null'
 							},
 							phone: '',
@@ -372,7 +373,11 @@ export default class ModifyEvent extends React.Component<
 					<NumberInput name="teamID" />
 
 					<Label>Event files</Label>
-					<FileInput name="fileIDs" />
+					<FileInput
+						name="fileIDs"
+						account={this.props.account}
+						member={this.props.member}
+					/>
 
 					<Title>Debrief information</Title>
 

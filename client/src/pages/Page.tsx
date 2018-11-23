@@ -2,8 +2,8 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { BreadCrumb } from '../components/BreadCrumbs';
 import { SideNavigationItem } from '../components/SideNavigation';
-import Account from 'src/lib/Account';
-import MemberBase from 'src/lib/MemberBase';
+import Account from '../lib/Account';
+import MemberBase from '../lib/MemberBase';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition

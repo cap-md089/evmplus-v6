@@ -36,6 +36,8 @@ export default class FormBlock<T extends object> extends React.Component<
 		this.onInitialize = this.onInitialize.bind(this);
 
 		this.render = this.render.bind(this);
+
+		this.fields = this.props.value || this.fields;
 	}
 
 	public render() {
