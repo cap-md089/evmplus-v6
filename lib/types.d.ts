@@ -6,7 +6,8 @@ import {
 	PointOfContactType,
 	TeamPublicity,
 	FileUserAccessControlType,
-	FileUserAccessControlPermissions
+	FileUserAccessControlPermissions,
+	EchelonEventNumber
 } from '.';
 
 declare global {
@@ -601,11 +602,15 @@ declare global {
 		/**
 		 * Is there a valid group number available?
 		 */
-		groupEventNumber: RadioReturn<number>;
+		groupEventNumber: RadioReturn<EchelonEventNumber>;
 		/**
 		 * What is the wing event number
 		 */
-		wingEventNumber: null | number;
+		wingEventNumber: RadioReturn<EchelonEventNumber>;
+		/**
+		 * What is the region event number
+		 */
+		regionEventNumber: RadioReturn<EchelonEventNumber>;
 		/**
 		 * If all the details are completely filled in
 		 */
