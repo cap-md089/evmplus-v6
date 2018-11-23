@@ -411,7 +411,7 @@ class SimpleForm<
 						);
 					}
 				)}
-				{this.props.showSubmitButton ? (
+				{(typeof this.props.showSubmitButton === 'undefined' ? true : this.props.showSubmitButton )? (
 					<div className="formbar">
 						<div
 							className="formbox"

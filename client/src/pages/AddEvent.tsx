@@ -87,7 +87,8 @@ export default class AddEvent extends React.Component<
 			publishToWingCalendar: false,
 			showUpcoming: true,
 			groupEventNumber: [0, ''],
-			wingEventNumber: 0,
+			wingEventNumber: [0, ''],
+			regionEventNumber: [0, ''],
 			complete: false,
 			administrationComments: '',
 			status: [0, ''],
@@ -124,6 +125,7 @@ export default class AddEvent extends React.Component<
 			pickupLocation: false,
 			pointsOfContact: false,
 			publishToWingCalendar: false,
+			regionEventNumber: false,
 			registration: false,
 			requiredEquipment: false,
 			requiredForms: false,
@@ -433,6 +435,28 @@ export default class AddEvent extends React.Component<
 				<Label>Group event number</Label>
 				<RadioButton
 					name="groupEventNumber"
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For'
+					]}
+					other={true}
+				/>
+
+				<Label>Wing event number</Label>
+				<RadioButton
+					name="wingEventNumber"
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For'
+					]}
+					other={true}
+				/>
+
+				<Label>Region event number</Label>
+				<RadioButton
+					name="regionEventNumber"
 					labels={[
 						'Not Required',
 						'To Be Applied For',

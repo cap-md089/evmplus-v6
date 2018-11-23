@@ -3,6 +3,7 @@ import { EventStatus } from '../enums';
 import MemberBase from './MemberBase';
 import Account from './Account';
 import { PointOfContactType } from '../enums';
+import { EchelonEventNumber } from '../../../lib';
 
 export default class Event extends APIInterface<EventObject>
 	implements EventObject {
@@ -125,9 +126,11 @@ export default class Event extends APIInterface<EventObject>
 
 	public showUpcoming: boolean;
 
-	public groupEventNumber: [number, string];
+	public groupEventNumber: RadioReturn<EchelonEventNumber>;
 
-	public wingEventNumber: number;
+	public wingEventNumber: RadioReturn<EchelonEventNumber>;
+
+	public regionEventNumber: RadioReturn<EchelonEventNumber>;
 
 	public complete: boolean;
 
@@ -192,6 +195,7 @@ export default class Event extends APIInterface<EventObject>
 			pointsOfContact: this.pointsOfContact,
 			publishToWingCalendar: this.publishToWingCalendar,
 			registration: !!this.registration ? this.registration : null,
+			regionEventNumber: this.regionEventNumber,
 			requiredEquipment: this.requiredEquipment,
 			requiredForms: this.requiredForms,
 			showUpcoming: this.showUpcoming,
@@ -208,9 +212,7 @@ export default class Event extends APIInterface<EventObject>
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
-			wingEventNumber: !!this.wingEventNumber
-				? this.wingEventNumber
-				: null,
+			wingEventNumber: this.wingEventNumber,
 			fileIDs: this.fileIDs,
 			attendance: this.attendance
 		};

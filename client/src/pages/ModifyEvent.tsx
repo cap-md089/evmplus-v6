@@ -337,7 +337,35 @@ export default class ModifyEvent extends React.Component<
 						labels={[
 							'Not Required',
 							'To Be Applied For',
-							'Applied For'
+							'Applied For',
+							'Denied',
+							'Approved'
+						]}
+						other={true}
+					/>
+
+					<Label>Wing event number</Label>
+					<RadioButton
+						name="wingEventNumber"
+						labels={[
+							'Not Required',
+							'To Be Applied For',
+							'Applied For',
+							'Denied',
+							'Approved'
+						]}
+						other={true}
+					/>
+
+					<Label>Region event number</Label>
+					<RadioButton
+						name="regionEventNumber"
+						labels={[
+							'Not Required',
+							'To Be Applied For',
+							'Applied For',
+							'Denied',
+							'Approved'
 						]}
 						other={true}
 					/>

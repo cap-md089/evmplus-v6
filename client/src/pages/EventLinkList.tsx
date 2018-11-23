@@ -5,7 +5,7 @@ import { PageProps } from './Page';
 import { Link } from 'react-router-dom';
 import './EventLinkList.css';
 import { EventStatus } from '../enums';
-// import { numberTypeAnnotation } from 'babel-types';
+import { EchelonEventNumber } from '../enums';
 
 
 interface LinkListState {
@@ -30,10 +30,10 @@ function getEventStatus(status: RadioReturn<EventStatus>) {
 	return null;
 }
 
-function getEchelonEventNumber(gen: RadioReturn<number>) {
-	switch (true) {
-		case true:
-			return <span style={{ color: 'blue' }}>Not Req</span>;
+function getEventNumber(gen: RadioReturn<EchelonEventNumber>) {
+	switch (gen[0]) {
+		case EchelonEventNumber.APPLIED_FOR:
+			return <span style={{ color: 'blue' }}>N/R</span>;
 	}
 	return null;
 }
@@ -65,6 +65,9 @@ export default class LinkList extends React.Component<
 
 	public render() {
 		// need to check for sessionid here and return login error if not current
+		if (!this.props.member) {
+			return <div>Please sign in to view this content</div>
+		}
 
 		return this.state.eventList === null ? (
 			<Loader />
@@ -76,27 +79,25 @@ export default class LinkList extends React.Component<
 					<tr>
 						<th>Event ID :: Name, Start Date</th>
 						<th>Status</th>
-						<th>
-							<span style={{ color: 'green' }}>GP</span>/
-							<span style={{ color: 'gray' }}>WG</span>/
-							<span style={{ color: 'red' }}>RG</span> Event No.
-						</th>
+						<th><span style={{ color: 'green' }}>GP</span> Evt No.</th>
+						<th><span style={{ color: 'gray' }}>WG</span> Evt No.</th>
+						<th><span style={{ color: 'red' }}>RG</span> Evt No.</th>
 						<th>Wing Cal</th>
 						<th>Debrief</th>
 					</tr>
 					{this.state.eventList.map((event, i) => (
 						<tr key={i}>
 							<td>
-								{event.accountID}-{event.id} ::{' '}
+								{event.accountID}-{event.id} ::{'  '}
 								<Link to={`/eventviewer/${event.id}`}>
 									{event.name}
 								</Link>
 								, {event.startDateTime}
 							</td>
 							<td>{getEventStatus(event.status)}</td>
-							<td>
-								{getEchelonEventNumber(event.groupEventNumber)}
-							</td>
+							<td>{getEventNumber(event.groupEventNumber)}</td>
+							<td>{getEventNumber(event.wingEventNumber)}</td>
+							<td>{getEventNumber(event.regionEventNumber)}</td>
 							<td>{event.publishToWingCalendar}</td>
 							<td>{event.debrief}</td>
 						</tr>
