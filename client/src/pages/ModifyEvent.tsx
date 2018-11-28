@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import * as React from 'react';
 import {
 	Checkbox,
@@ -103,14 +104,14 @@ export default class ModifyEvent extends React.Component<
 			if (!newState.event.participationFee) {
 				newState.event.participationFee = {
 					feeAmount: 0,
-					feeDue: Date.now() / 1000
+					feeDue: +DateTime.utc()
 				};
 			}
 
 			if (!newState.event.registration) {
 				newState.event.registration = {
 					information: '',
-					deadline: Date.now() / 1000
+					deadline: +DateTime.utc()
 				};
 			}
 

@@ -1,6 +1,7 @@
-import APIInterface from './APIInterface';
+import { DateTime } from 'luxon';
 import { TeamPublicity } from '../enums';
 import Account from './Account';
+import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 
 export default class Team extends APIInterface<TeamObject>
@@ -147,7 +148,7 @@ export default class Team extends APIInterface<TeamObject>
 		const teamMember: TeamMember = {
 			reference: memberToAdd.getReference(),
 			job,
-			joined: Date.now() / 1000
+			joined: +DateTime.utc()
 		};
 
 		this.members.push(teamMember);
@@ -178,7 +179,7 @@ export default class Team extends APIInterface<TeamObject>
 		const teamMember: TeamMember = {
 			reference: memberToAdd.getReference(),
 			job: '',
-			joined: Date.now() / 1000
+			joined: +DateTime.utc()
 		};
 
 		await this.fetch(

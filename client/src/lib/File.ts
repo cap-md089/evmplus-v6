@@ -17,6 +17,7 @@ class FileUploader {
 	public uploadTo(
 		target: FileInterface,
 		member: MemberBase,
+		token: string,
 		errOnInvalidPermissions = false
 	) {
 		if (
@@ -39,6 +40,7 @@ class FileUploader {
 		xhr.open('POST', urlFormat('api', 'files', 'upload'));
 
 		xhr.setRequestHeader('authorization', member.sessionID);
+		xhr.setRequestHeader('token', token);
 
 		xhr.upload.addEventListener('progress', ev => {
 			if (ev.lengthComputable) {
@@ -48,7 +50,7 @@ class FileUploader {
 
 		xhr.upload.addEventListener('loadend', () => {
 			this.progressListeners.forEach(l => l(1));
-		})
+		});
 
 		return new Promise<FullFileObject>((res, rej) => {
 			xhr.addEventListener('readystatechange', function(evt: Event) {
@@ -77,7 +79,14 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		const fileUploader = new FileUploader(file);
 
 		setTimeout(async () => {
-			const results = await fileUploader.uploadTo(parent, member, false);
+			const token = await FileInterface.getToken(account.id, member);
+
+			const results = await fileUploader.uploadTo(
+				parent,
+				member,
+				token,
+				false
+			);
 
 			if (!results) {
 				throw new Error('Could not upload file');
@@ -95,15 +104,18 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	public static async CreateFolder(
 		name: string,
-		member: MemberBase | null,
+		member: MemberBase,
 		account: Account
 	) {
+		const token = await APIInterface.getToken(account.id, member);
+
 		const results = await account.fetch(
 			`/api/files/create`,
 			{
 				method: 'POST',
 				body: JSON.stringify({
-					name
+					name,
+					token
 				})
 			},
 			member

@@ -67,9 +67,9 @@ export default class Calendar extends Page<
 		const endOfNextMonth = nextMonth.endOf('week');
 
 		myFetch(
-			`/api/event/${Math.round(
-				+startOfLastMonthWeek / 1000
-			)}/${Math.round(+endOfNextMonth / 1000)}`,
+			`/api/event/${
+				+startOfLastMonthWeek
+			}/${+endOfNextMonth}`,
 			{
 				headers: {
 					authorization: this.props.member ? this.props.member.sessionID : ''

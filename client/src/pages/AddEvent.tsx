@@ -47,12 +47,12 @@ export default class AddEvent extends React.Component<
 	public state: AddEventState = {
 		event: {
 			name: '',
-			meetDateTime: Math.round(+DateTime.utc() / 1000),
+			meetDateTime: +DateTime.utc(),
 			meetLocation: '',
-			startDateTime: Math.round(+DateTime.utc() / 1000) + 300,
+			startDateTime: +DateTime.utc(),
 			location: '',
-			endDateTime: Math.round(+DateTime.utc() / 1000) + 3900,
-			pickupDateTime: Math.round(+DateTime.utc() / 1000) + 4200,
+			endDateTime: +DateTime.utc(),
+			pickupDateTime: +DateTime.utc(),
 			pickupLocation: '',
 			transportationProvided: false,
 			transportationDescription: '',
@@ -63,13 +63,13 @@ export default class AddEvent extends React.Component<
 			desiredNumberOfParticipants: 8,
 			useRegistration: false,
 			registration: {
-				deadline: Math.round(+DateTime.utc() / 1000),
+				deadline: +DateTime.utc(),
 				information: ''
 			},
 			useParticipationFee: false,
 			participationFee: {
 				feeAmount: 0,
-				feeDue: Math.round(+DateTime.utc() / 1000)
+				feeDue: +DateTime.utc()
 			},
 			mealsDescription: [[false, false, false, false, false], ''],
 			lodgingArrangments: [[false, false, false, false, false], ''],

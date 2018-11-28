@@ -20,12 +20,17 @@ export default class Event extends APIInterface<EventObject>
 			account = await Account.Get();
 		}
 
+		const token = await Event.getToken(account.id, member);
+
 		let result;
 		try {
 			result = await account.fetch(
 				'/api/event',
 				{
-					body: JSON.stringify(obj),
+					body: JSON.stringify({
+						...obj,
+						token
+					}),
 					method: 'POST'
 				},
 				member

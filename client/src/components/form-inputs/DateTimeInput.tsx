@@ -122,7 +122,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: Math.round(+start / 1000)
+				value: +start
 			});
 		}
 
@@ -228,12 +228,12 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: Math.round(+result / 1000)
+				value: +result
 			});
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(Math.round(+result / 1000));
+			this.props.onChange(+result);
 		}
 	}
 
@@ -254,12 +254,12 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: Math.round(+result / 1000)
+				value: +result
 			});
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(Math.round(+result / 1000));
+			this.props.onChange(+result);
 		}
 	}
 }

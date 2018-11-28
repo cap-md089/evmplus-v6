@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import './EventLinkList.css';
 import { EventStatus } from '../enums';
 import { EchelonEventNumber } from '../enums';
-
+import { DateTime } from 'luxon';
 
 interface LinkListState {
 	eventList: Event[] | null;
@@ -56,7 +56,7 @@ export default class LinkList extends React.Component<
 
 			eventList = eventList.filter(
 				event =>
-					event.startDateTime < Date.now() / 1000 + 60 * 60 * 24 * 30
+					event.startDateTime < +DateTime.utc() + 60 * 60 * 24 * 30
 			);
 
 			this.setState({ eventList });
@@ -66,7 +66,7 @@ export default class LinkList extends React.Component<
 	public render() {
 		// need to check for sessionid here and return login error if not current
 		if (!this.props.member) {
-			return <div>Please sign in to view this content</div>
+			return <div>Please sign in to view this content</div>;
 		}
 
 		return this.state.eventList === null ? (
@@ -79,9 +79,15 @@ export default class LinkList extends React.Component<
 					<tr>
 						<th>Event ID :: Name, Start Date</th>
 						<th>Status</th>
-						<th><span style={{ color: 'green' }}>GP</span> Evt No.</th>
-						<th><span style={{ color: 'gray' }}>WG</span> Evt No.</th>
-						<th><span style={{ color: 'red' }}>RG</span> Evt No.</th>
+						<th>
+							<span style={{ color: 'green' }}>GP</span> Evt No.
+						</th>
+						<th>
+							<span style={{ color: 'gray' }}>WG</span> Evt No.
+						</th>
+						<th>
+							<span style={{ color: 'red' }}>RG</span> Evt No.
+						</th>
 						<th>Wing Cal</th>
 						<th>Debrief</th>
 					</tr>

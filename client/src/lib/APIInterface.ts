@@ -7,6 +7,26 @@ export default abstract class APIInterface<T> {
 			? 'capunit.com'
 			: 'localcapunit.com:3001';
 
+	protected static async getToken(
+		accountID: string,
+		member: MemberBase
+	): Promise<string> {
+		const uri =
+			process.env.NODE_ENV === 'production'
+				? `https://${accountID}.${APIInterface.REQUEST_URI}/`
+				: '/';
+
+		const response = await myFetch(`${uri}api/token`, {
+			headers: {
+				authorization: member.sessionID
+			}
+		});
+
+		const json = await response.json();
+
+		return json.token;
+	}
+
 	public constructor(public accountID: string) {}
 
 	public buildURI(...components: string[]): string {
@@ -53,4 +73,8 @@ export default abstract class APIInterface<T> {
 	}
 
 	public abstract toRaw(): T;
+
+	protected getToken(member: MemberBase) {
+		return APIInterface.getToken(this.accountID, member);
+	}
 }
