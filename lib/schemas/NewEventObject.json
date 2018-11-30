@@ -1,6 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
+        "EchelonEventNumber": {
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "type": "number"
+        },
         "EventStatus": {
             "enum": [
                 0,
@@ -65,7 +75,7 @@
                     "description": "All points of contact have an email",
                     "type": "string"
                 },
-                "id": {
+                "memberReference": {
                     "anyOf": [
                         {
                             "$ref": "#/definitions/ProspectiveMemberReference"
@@ -106,7 +116,7 @@
             },
             "required": [
                 "email",
-                "id",
+                "memberReference",
                 "phone",
                 "receiveEventUpdates",
                 "receiveRoster",
@@ -253,7 +263,7 @@
             "additionalItems": {
                 "anyOf": [
                     {
-                        "type": "number"
+                        "$ref": "#/definitions/EchelonEventNumber"
                     },
                     {
                         "type": "string"
@@ -263,7 +273,7 @@
             "description": "Is there a valid group number available?",
             "items": [
                 {
-                    "type": "number"
+                    "$ref": "#/definitions/EchelonEventNumber"
                 },
                 {
                     "type": "string"
@@ -393,6 +403,29 @@
         "publishToWingCalendar": {
             "description": "If the wing calendar needs to have this event, publish to the Google calendar",
             "type": "boolean"
+        },
+        "regionEventNumber": {
+            "additionalItems": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/EchelonEventNumber"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "description": "What is the region event number",
+            "items": [
+                {
+                    "$ref": "#/definitions/EchelonEventNumber"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "minItems": 2,
+            "type": "array"
         },
         "registration": {
             "description": "If there is a registration deadline, this is present\nAs it is partial, not required information, this may be\nexcluded",
@@ -547,8 +580,27 @@
             "type": "array"
         },
         "wingEventNumber": {
+            "additionalItems": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/EchelonEventNumber"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
             "description": "What is the wing event number",
-            "type": "number"
+            "items": [
+                {
+                    "$ref": "#/definitions/EchelonEventNumber"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "minItems": 2,
+            "type": "array"
         }
     },
     "required": [
@@ -575,6 +627,7 @@
         "pickupLocation",
         "pointsOfContact",
         "publishToWingCalendar",
+        "regionEventNumber",
         "registration",
         "requiredEquipment",
         "requiredForms",

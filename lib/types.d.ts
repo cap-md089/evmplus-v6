@@ -239,7 +239,7 @@ declare global {
 		 *
 		 * @param values The values to set
 		 */
-		set(values: Partial<T>): void;
+		set(values: Partial<T>): boolean;
 		/**
 		 * Save the document to the database
 		 */
@@ -303,11 +303,7 @@ declare global {
 		errorMessage: string;
 	}
 
-	/**
-	 * The object that splits all of the data used by different people to limit their views
-	 * to what they want and what they have permissions for
-	 */
-	export interface AccountObject extends Identifiable, NoSQLDocument {
+	export interface RawAccountObject extends Identifiable, NoSQLDocument {
 		/**
 		 * The Account ID
 		 */
@@ -329,16 +325,6 @@ declare global {
 		 */
 		paid: boolean;
 		/**
-		 * Whether the account is a valid paid account
-		 *
-		 * Valid paid means it is paid for and not expired
-		 */
-		validPaid: boolean;
-		/**
-		 * Whether the account is expired
-		 */
-		expired: boolean;
-		/**
 		 * Datetime when the account expires in
 		 */
 		expires: number;
@@ -354,6 +340,23 @@ declare global {
 		 * CAP IDs of the admins of this account
 		 */
 		adminIDs: MemberReference[];
+	}
+
+	/**
+	 * The object that splits all of the data used by different people to limit their views
+	 * to what they want and what they have permissions for
+	 */
+	export interface AccountObject extends RawAccountObject {
+		/**
+		 * Whether the account is a valid paid account
+		 *
+		 * Valid paid means it is paid for and not expired
+		 */
+		validPaid: boolean;
+		/**
+		 * Whether the account is expired
+		 */
+		expired: boolean;
 	}
 
 	/**
