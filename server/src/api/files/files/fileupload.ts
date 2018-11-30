@@ -13,6 +13,7 @@ import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
+import { validToken } from '../../formtoken';
 
 const parseHeaders = (lines: string[]) => {
 	const headers: { [key: string]: string } = {};
@@ -52,6 +53,25 @@ export default (req: MemberRequest, res: express.Response) => {
 	let fileName = '';
 	let boundary = '';
 	let writeStream: fs.WriteStream;
+
+	if (typeof req.headers.token !== 'undefined') {
+		let token;
+		if (typeof req.headers.token === 'string') {
+			token = req.headers.token;
+		} else {
+			token = req.headers.token[0];
+		}
+
+		if (!validToken(token)) {
+			res.status(403);
+			res.end();
+			return;
+		}
+	} else {
+		res.status(403);
+		res.end();
+		return;
+	}
 
 	/*
 		File data plan:
@@ -110,7 +130,7 @@ export default (req: MemberRequest, res: express.Response) => {
 
 			collectingData = true;
 
-			const created = Math.floor(+DateTime.utc() / 1000);
+			const created = +DateTime.utc();
 
 			const filesCollection = req.mysqlx.getCollection<RawFileObject>(
 				'Files'

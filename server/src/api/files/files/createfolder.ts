@@ -38,7 +38,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 			accountID: req.account.id,
 			comments: '',
 			contentType: 'application/folder',
-			created: Math.floor(+DateTime.utc() / 1000),
+			created: +DateTime.utc(),
 			fileName: req.body.name,
 			forDisplay: false,
 			forSlideshow: false,

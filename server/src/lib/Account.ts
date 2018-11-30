@@ -5,7 +5,7 @@ import BlogPage from './BlogPage';
 import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
-import { CAPWATCHMember } from './Members';
+import { CAPWATCHMember, ProspectiveMember } from './Members';
 import {
 	collectResults,
 	findAndBind,
@@ -73,7 +73,7 @@ export default class Account
 		id: string,
 		schema: mysql.Schema
 	): Promise<Account> {
-		const accountCollection = schema.getCollection<AccountObject>(
+		const accountCollection = schema.getCollection<RawAccountObject>(
 			'Accounts'
 		);
 
@@ -89,26 +89,50 @@ export default class Account
 
 		const result = results[0];
 
-		const expires = result.expires;
-		const expired = +DateTime.utc() > expires;
-
-		// let adminIDs: number[] = (await pool.query(
-		// 	`
-		// 		SELECT
-		// 			id
-		// 		FROM
-		// 			UserAccessLevels
-		// 		WHERE
-		// 			AccountID = ?
-		// 	`,
-		// 	[id]
-		// )).map((result: {id: number}) => result.id);
+		const expired = +DateTime.utc() > result.expires;
+		const validPaid = !expired && result.paid;
 
 		return new this(
 			{
 				...result,
-				validPaid: !expired && result.paid,
+				validPaid,
 				expired
+			},
+			schema
+		);
+	}
+
+	public static async Create(values: RawAccountObject, schema: mysql.Schema) {
+		const accountCollection = schema.getCollection<RawAccountObject>(
+			'Accounts'
+		);
+
+		const newValues: RawAccountObject = {
+			adminIDs: values.adminIDs,
+			echelon: values.echelon,
+			expires: values.expires,
+			id: values.id,
+			mainOrg: values.mainOrg,
+			orgIDs: values.orgIDs,
+			paid: values.paid,
+			paidEventLimit: values.paidEventLimit,
+			unpaidEventLimit: values.unpaidEventLimit
+		};
+
+		const expired = +DateTime.utc() > values.expires;
+		const validPaid = !expired && newValues.paid;
+
+		// tslint:disable-next-line:variable-name
+		const _id = (await accountCollection
+			.add(newValues)
+			.execute()).getGeneratedIds()[0];
+
+		return new this(
+			{
+				...newValues,
+				expired,
+				validPaid,
+				_id
 			},
 			schema
 		);
@@ -198,6 +222,22 @@ export default class Account
 			for await (const member of generateResults(memberFind)) {
 				yield CAPWATCHMember.Get(member.CAPID, this, this.schema);
 			}
+		}
+
+		const prospectiveMemberCollection = this.schema.getCollection<
+			ProspectiveMemberObject
+		>('ProspectiveMembers');
+
+		const prospectiveMemberFind = findAndBind(prospectiveMemberCollection, {
+			accountID: this.id
+		});
+
+		for await (const member of generateResults(prospectiveMemberFind)) {
+			yield ProspectiveMember.GetProspective(
+				member.id,
+				this,
+				this.schema
+			);
 		}
 	}
 
@@ -289,30 +329,56 @@ export default class Account
 		}
 	}
 
-	public set(values: Partial<AccountObject>): void {
-		const keys: Array<keyof AccountObject> = [
-			'adminIDs',
-			'echelon',
-			'mainOrg',
-			'orgIDs'
-		];
+	public set(values: Partial<AccountObject>): boolean {
+		if (typeof values.echelon === 'boolean') {
+			this.echelon = values.echelon;
+		}
 
-		// tslint:disable-next-line:forin
-		for (const _ in keys) {
-			const key = _ as keyof AccountObject;
+		if (typeof values.expires === 'number') {
+			this.expires = values.expires;
+		}
 
-			if (typeof values[key] === typeof this[key]) {
-				this[key] = values[key];
+		if (typeof values.paidEventLimit === 'number') {
+			this.paidEventLimit = values.paidEventLimit;
+		}
+
+		if (typeof values.unpaidEventLimit === 'number') {
+			this.unpaidEventLimit = values.unpaidEventLimit;
+		}
+
+		if (Array.isArray(values.adminIDs)) {
+			if (values.adminIDs.every(CAPWATCHMember.isReference)) {
+				this.adminIDs = values.adminIDs.slice(0);
 			}
 		}
+
+		if (Array.isArray(values.orgIDs)) {
+			if (values.orgIDs.every(num => typeof num === 'number')) {
+				this.orgIDs = values.orgIDs.slice(0);
+			}
+		}
+
+		if (typeof values.paid === 'boolean') {
+			this.paid = values.paid;
+		}
+
+		return true;
 	}
 
 	public async save(): Promise<void> {
-		const accountCollection = this.schema.getCollection<AccountObject>(
-			'Accounts'
-		);
+		const accountCollection = this.schema.getCollection('Accounts');
 
-		await accountCollection.replaceOne(this._id, this.toRaw());
+		await accountCollection.replaceOne(this._id, {
+			adminIDs: this.adminIDs,
+			echelon: this.echelon,
+			expires: this.expires,
+			id: this.id,
+			mainOrg: this.mainOrg,
+			orgIDs: this.orgIDs,
+			paid: this.paid,
+			paidEventLimit: this.paidEventLimit,
+			unpaidEventLimit: this.unpaidEventLimit
+		});
 	}
 
 	public toRaw = (): AccountObject => ({
@@ -330,6 +396,6 @@ export default class Account
 	});
 
 	public getSquadronName(): string {
-		return this.id.replace(/([a-zA-Z]*)-([0-9]*)/, '$1-$2').toUpperCase();
+		return this.id.replace(/([a-zA-Z]*)([0-9]*)/, '$1-$2').toUpperCase();
 	}
 }

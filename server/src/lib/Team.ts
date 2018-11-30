@@ -1,4 +1,5 @@
 import { Schema } from '@mysql/xdevapi';
+import { DateTime } from 'luxon';
 import { TeamPublicity } from '../../../lib/index';
 import Account from './Account';
 import MemberBase from './MemberBase';
@@ -98,6 +99,8 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
+	private deleted = false;
+
 	private constructor(
 		data: FullDBObject<TeamObject>,
 		private account: Account,
@@ -107,26 +110,22 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 		this.members = data.members;
 	}
 
-	public set(values: Partial<TeamObject>) {
-		const keys: Array<keyof TeamObject> = [
-			'cadetLeader',
-			'description',
-			'id',
-			'name',
-			'seniorCoach',
-			'seniorMentor',
-			'visiblity',
-			'_id'
-		];
-
-		for (const i of keys) {
-			if (typeof this[i] === typeof values[i] && i !== 'accountID') {
-				this[i] = values[i];
+	public set(values: Partial<TeamObject>): boolean {
+		for (const i in values) {
+			if (values.hasOwnProperty(i) && i !== 'accountID') {
+				const key = i as Exclude<keyof TeamObject, 'accountID'>;
+				this[key] = values[key];
 			}
 		}
+
+		return true;
 	}
 
 	public async save(): Promise<void> {
+		if (this.deleted) {
+			throw new Error('Cannot operate on a deleted event');
+		}
+
 		const teamCollection = this.schema.getCollection<TeamObject>(
 			Team.collectionName
 		);
@@ -135,11 +134,17 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 	}
 
 	public async delete(): Promise<void> {
+		if (this.deleted) {
+			throw new Error('Cannot operate on a deleted event'):
+		}
+
 		const teamCollection = this.schema.getCollection<TeamObject>(
 			Team.collectionName
 		);
 
 		await teamCollection.removeOne(this._id);
+
+		this.deleted = true;
 	}
 
 	public toRaw = (member?: MemberBase): TeamObject => ({
@@ -165,7 +170,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 	public addTeamMember(member: MemberReference, job: string) {
 		this.members.push({
 			job,
-			joined: Math.round(Date.now() / 1000),
+			joined: +DateTime.utc(),
 			reference: member
 		});
 	}
@@ -178,10 +183,17 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 
 	public modifyTeamMember(member: MemberReference, job: string) {
 		let index;
-		
+
 		for (let i = 0; i < this.members.length; i++) {
-			if (MemberBase.AreMemberReferencesTheSame(member, this.members[i].reference)) {
+			if (
+				MemberBase.AreMemberReferencesTheSame(
+					member,
+					this.members[i].reference
+				)
+			) {
 				index = i;
+
+				break;
 			}
 		}
 

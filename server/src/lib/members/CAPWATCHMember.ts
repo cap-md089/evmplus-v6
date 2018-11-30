@@ -1,6 +1,5 @@
 import { Schema } from '@mysql/xdevapi';
 import { DateTime } from 'luxon';
-import Account from '../Account';
 import MemberBase from '../MemberBase';
 import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
@@ -39,7 +38,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 					CAPID: id
 				})
 			),
-			CAPWATCHMember.GetRegularDutypositions(id, schema, account),
+			CAPWATCHMember.GetRegularDutypositions(id, schema),
 			CAPWATCHMember.LoadExtraMemberInformation(id, schema, account)
 		]);
 
@@ -123,7 +122,6 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	protected static GetRegularDutypositions = async (
 		capid: number,
 		schema: Schema,
-		account: Account
 	): Promise<string[]> =>
 		(await Promise.all([
 			collectResults(
@@ -190,6 +188,10 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		this.memberRankName = `${this.memberRank} ${this.getName()}`;
 	}
 
+	public getFullName() {
+		return `${this.memberRank} ${this.getName()}`;
+	}
+
 	public getReference = (): MemberReference =>
 		typeof this.id === 'string'
 			? {
@@ -237,3 +239,5 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		});
 	}
 }
+
+import Account from '../Account';

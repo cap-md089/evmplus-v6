@@ -17,8 +17,12 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			})
 		);
 
-		if (results.length !== 1) {
+		if (results.length > 1) {
 			throw new Error('Cannot get the registry values for an account');
+		}
+
+		if (results.length === 0) {
+			return Registry.Create(account, schema);
 		}
 
 		return new Registry(results[0], account, schema);
@@ -26,14 +30,60 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	private static collectionName = 'Registry';
 
+	private static async Create(
+		account: Account,
+		schema: Schema
+	): Promise<Registry> {
+		const registryValues: RegistryValues = {
+			Contact: {
+				FaceBook: null,
+				Flickr: null,
+				Instagram: null,
+				LinkedIn: null,
+				MailingAddress: null,
+				MeetingAddress: null,
+				Twitter: null,
+				YouTube: null
+			},
+			Website: {
+				Name: '',
+				Separator: ' - '
+			},
+			accountID: account.id,
+			id: account.id
+		};
+
+		const registryCollection = schema.getCollection<RegistryValues>(
+			Registry.collectionName
+		);
+
+		// tslint:disable-next-line:variable-name
+		const _id = (await registryCollection
+			.add(registryValues)
+			.execute()).getGeneratedIds()[0];
+
+		return new Registry(
+			{
+				...registryValues,
+				_id
+			},
+			account,
+			schema
+		);
+	}
+
 	public values: RegistryValues = {} as RegistryValues;
 
 	public get accountID(): string {
 		return this.account.id;
 	}
 
+	public get id(): string {
+		return this.accountID;
+	}
+
 	private account: Account;
-	
+
 	private schema: Schema;
 
 	private constructor(
@@ -47,14 +97,15 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 		this.schema = schema;
 	}
 
-	public set(values: Partial<RegistryValues>) {
-		const keys: Array<keyof RegistryValues> = ['Contact', 'Website'];
-
-		for (const i of keys) {
-			if (typeof values[i] !== 'undefined') {
-				this.values[i] = values[i];
+	public set(values: Partial<RegistryValues>): boolean {
+		for (const i in values) {
+			if (values.hasOwnProperty(i)) {
+				const key = i as keyof RegistryValues;
+				this.values[key] = values[key];
 			}
 		}
+
+		return true;
 	}
 
 	public async save() {

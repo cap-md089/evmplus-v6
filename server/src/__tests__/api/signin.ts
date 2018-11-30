@@ -1,26 +1,25 @@
+import { Schema } from '@mysql/xdevapi';
 import { Server } from 'http';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
 import getServer from '../../getServer';
+import Account from '../../lib/Account';
 import { ProspectiveMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
-import { signinInformation } from '../consts';
-import { newMem, password } from '../consts';
+import { newMem, password, signinInformation } from '../consts';
 
 describe('/api', () => {
 	describe('/signin', () => {
 		let server: Server;
 		let pmember: ProspectiveMember;
+		let account: Account;
+		let schema: Schema;
 
 		beforeAll(async () => {
-			const { account, schema } = await getTestTools(conftest);
+			const results = await getTestTools(conftest);
 
-			pmember = await ProspectiveMember.Create(
-				newMem,
-				password,
-				account,
-				schema
-			);
+			account = results.account;
+			schema = results.schema;
 		});
 
 		beforeEach(async () => {
@@ -32,8 +31,6 @@ describe('/api', () => {
 		});
 
 		afterAll(async () => {
-			const { schema } = await getTestTools(conftest);
-
 			await schema
 				.getCollection('ProspectiveMembers')
 				.remove('true')
@@ -154,7 +151,14 @@ describe('/api', () => {
 				});
 		}, 8000);
 
-		it('should allow signing in as a prospective member', done => {
+		it('should allow signing in as a prospective member', async done => {
+			pmember = await ProspectiveMember.Create(
+				newMem,
+				password,
+				account,
+				schema
+			);
+
 			request(server)
 				.post('/api/signin')
 				.send({
@@ -175,6 +179,64 @@ describe('/api', () => {
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
 					expect(ret.member.id).toEqual(pmember.id);
+
+					done();
+				});
+		});
+
+		it('should allow signing in as a prospective member case insensitive', async done => {
+			pmember = await ProspectiveMember.Create(
+				newMem,
+				password,
+				account,
+				schema
+			);
+
+			request(server)
+				.post('/api/signin')
+				.send({
+					username: pmember.id.toUpperCase(),
+					password
+				})
+				.set('Accept', 'application/json')
+				.set('Content-type', 'application/json')
+				.end((err, res) => {
+					if (err) {
+						throw err;
+					}
+
+					const ret: SigninReturn = res.body;
+
+					// -1 means no error
+					expect(ret.error).toEqual(-1);
+					expect(ret.sessionID).not.toEqual('');
+					expect(ret.valid).toEqual(true);
+					expect(ret.member.id).toEqual(pmember.id);
+
+					done();
+				});
+		});
+
+		it('should return an error for incorrect credentials for a prospective member', async done => {
+			request(server)
+				.post('/api/signin')
+				.send({
+					username: 'nothing-12',
+					password: 'no-user'
+				})
+				.set('Accept', 'application/json')
+				.set('Content-type', 'application/json')
+				.end((err, res) => {
+					if (err) {
+						throw err;
+					}
+
+					const ret: SigninReturn = res.body;
+
+					expect(ret.error).toEqual(0);
+					expect(ret.sessionID).toEqual('');
+					expect(ret.valid).toEqual(false);
+					expect(ret.member).toEqual(null);
 
 					done();
 				});

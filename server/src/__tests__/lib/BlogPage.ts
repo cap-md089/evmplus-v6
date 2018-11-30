@@ -1,4 +1,6 @@
+import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
+import Account from '../../lib/Account';
 import BlogPage from '../../lib/BlogPage';
 import { getTestTools } from '../../lib/Util';
 import { blogPageData } from '../consts';
@@ -6,19 +8,24 @@ import { blogPageData } from '../consts';
 describe('BlogPost', async () => {
 	let blogPost: BlogPage;
 	let id: string;
+	let schema: Schema;
+	let account: Account;
 
-	beforeAll(async () => {
-		const { schema } = await getTestTools(conftest);
+	beforeAll(async done => {
+		const results = await getTestTools(conftest);
+
+		schema = results.schema;
+		account = results.account;
 
 		await schema
 			.getCollection('BlogPages')
 			.remove('true')
 			.execute();
+
+		done();
 	});
 
 	it('should create a blog page successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		blogPost = await BlogPage.Create(
 			'test-blog-post',
 			blogPageData,
@@ -34,8 +41,6 @@ describe('BlogPost', async () => {
 	});
 
 	it('should fail to create a blog post that has a used id', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		await expect(
 			BlogPage.Create(
 				'test-blog-post',
@@ -49,8 +54,6 @@ describe('BlogPost', async () => {
 	});
 
 	it('should update successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		blogPost.set({
 			title: 'New blog post title'
 		});
@@ -70,8 +73,6 @@ describe('BlogPost', async () => {
 	});
 
 	it('should delete successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		await blogPost.delete();
 
 		await expect(

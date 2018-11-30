@@ -1,4 +1,6 @@
+import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
+import Account from '../../lib/Account';
 import BlogPost from '../../lib/BlogPost';
 import { getTestTools } from '../../lib/Util';
 import { blogPostData } from '../consts';
@@ -6,9 +8,28 @@ import { blogPostData } from '../consts';
 describe('BlogPost', async () => {
 	let blogPost: BlogPost;
 	let id: number;
+	let account: Account;
+	let schema: Schema;
+
+	beforeAll(async done => {
+		const results = await getTestTools(conftest);
+
+		account = results.account;
+		schema = results.schema;
+
+		done();
+	});
+
+	afterAll(async done => {
+		await schema
+			.getCollection('Blog')
+			.remove('true')
+			.execute();
+
+		done();
+	});
 
 	it('should create a blog post successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
 
 		blogPost = await BlogPost.Create(blogPostData, account, schema);
 
@@ -20,8 +41,6 @@ describe('BlogPost', async () => {
 	});
 
 	it('should update successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		blogPost.set({
 			title: 'New blog post title'
 		});
@@ -41,8 +60,6 @@ describe('BlogPost', async () => {
 	});
 
 	it('should delete successfully', async done => {
-		const { account, schema } = await getTestTools(conftest);
-
 		await blogPost.delete();
 
 		await expect(

@@ -2,6 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import { createHmac, randomBytes } from 'crypto';
 import { NextFunction, Response } from 'express';
 import { sign } from 'jsonwebtoken';
+import { DateTime } from 'luxon';
 import Account from '../Account';
 import {
 	collectResults,
@@ -58,7 +59,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			RawProspectiveMemberObject
 		>(this.collectionName);
 
-		let id: string = `${account.getSquadronName()}-`;
+		let id: string = `${account.id}-`;
 		let highestNumber: number = 0;
 
 		const iterator = generateResults(
@@ -68,15 +69,13 @@ export default class ProspectiveMember extends CAPWATCHMember
 		);
 
 		for await (const prospect of iterator) {
-			const numberPortion = parseInt(
-				prospect.id.match(/([0-9])*/)[1],
-				10
-			);
+			const match = prospect.id.match(/([0-9])*$/)[1];
+			const numberPortion = parseInt(match, 10);
 
 			highestNumber = Math.max(numberPortion, highestNumber);
 		}
 
-		id += (highestNumber + 1);
+		id += highestNumber + 1;
 
 		const salt = randomBytes(64).toString();
 
@@ -118,6 +117,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 		account: Account,
 		schema: Schema
 	): Promise<ProspectiveMember> {
+		id = id.toLocaleLowerCase();
+
 		const prospectiveCollection = schema.getCollection<
 			RawProspectiveMemberObject
 		>(this.collectionName);
@@ -130,7 +131,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 		const rows = await collectResults(find);
 
 		if (rows.length !== 1) {
-			throw new Error(MemberCreateError.INCORRRECT_CREDENTIALS.toString());
+			throw new Error(
+				MemberCreateError.INCORRRECT_CREDENTIALS.toString()
+			);
 		}
 
 		const { password: hash, salt } = rows[0];
@@ -163,7 +166,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 			if (memberIndex === -1) {
 				const sess: MemberSession = {
-					expireTime: Date.now() / 1000 + 60 * 10,
+					expireTime: +DateTime.utc() + 60 * 10,
 
 					contact: member.contact,
 					id,
@@ -256,7 +259,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 	public static Su(target: ProspectiveMember) {
 		this.AddSession({
-			expireTime: Date.now() / 1000 + 60 * 10,
+			expireTime: +DateTime.utc() + 60 * 10,
 
 			contact: target.contact,
 			id: target.id,
@@ -278,12 +281,12 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 	protected static GetSessions = () =>
 		(ProspectiveMember.MemberSessions = ProspectiveMember.MemberSessions.filter(
-			v => v.expireTime > Date.now() / 1000
+			v => v.expireTime > +DateTime.utc()
 		));
 
 	protected static ResetSession = (index: number) => {
 		ProspectiveMember.MemberSessions[index].expireTime =
-			Date.now() / 1000 + 10 * 60;
+			+DateTime.utc() + 10 * 60;
 	};
 
 	private static collectionName = 'ProspectiveMembers';
@@ -336,6 +339,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 				this[j] = values[i];
 			}
 		}
+
+		return true;
 	}
 
 	public async save(): Promise<void> {
@@ -346,8 +351,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 		await prospectiveCollection.replaceOne(this._id, this.toRaw());
 	}
 
-	public toRaw (): ProspectiveMemberObject {
-		return ({
+	public toRaw(): ProspectiveMemberObject {
+		return {
 			...super.toRaw(),
 			accountID: this.accountID,
 			id: this.id,
@@ -355,7 +360,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			salt: '',
 			squadron: this.requestingAccount.getSquadronName(),
 			type: 'CAPProspectiveMember'
-		});
+		};
 	}
 
 	public async updatePassword(password: string): Promise<void> {

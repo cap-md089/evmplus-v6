@@ -8,35 +8,46 @@ export default abstract class MemberBase implements MemberObject {
 		if (inputID.match(/[a-z0-9]{1,15}-\d*/i)) {
 			return 'CAPProspectiveMember';
 		}
-		if (inputID.match(/(([a-z]*)|(\d{6}))/i)) {
+		if (inputID.match(/(([a-zA-Z]*)|(\d{6}))/i)) {
 			return 'CAPNHQMember';
 		}
 	}
 
 	public static IsRioux = (cm: MemberBase | number | string): boolean =>
-		typeof cm === 'string'
-			? false
-			: typeof cm === 'number'
+		typeof cm === 'number' || typeof cm === 'string'
 			? cm === 542488 || cm === 546319
 			: cm.isRioux;
 
 	public static GetUserID(name: string[]) {
 		let usrID = '';
 
-		usrID = name[2] + name[0] + name[1];
+		usrID = name[2] + name[0][0] + name[1][0];
 
-		return usrID;
+		return usrID.toLocaleLowerCase();
 	}
 
 	public static isReference(value: any): value is MemberReference {
-		return (
-			typeof value === 'object' &&
-			(typeof value.id === 'string' || typeof value.id === 'number') &&
-			typeof value.kind !== undefined &&
-			(value.kind === 'Null' ||
-				value.kind === 'CAPNHQMember' ||
-				value.kind === 'CAPNHQMember')
-		);
+		if (typeof value !== 'object') {
+			return false;
+		}
+
+		if (value.type === 'undefined') {
+			return false;
+		}
+
+		if (value.type === 'Null') {
+			return true;
+		}
+
+		if (value.type === 'CAPNHQMember' && typeof value.id === 'number') {
+			return true;
+		}
+
+		if (value.type === 'CAPProspectiveMember' && typeof value.id === 'string') {
+			return true;
+		}
+
+		return false;
 	}
 
 	public static ResolveReference(
@@ -56,7 +67,7 @@ export default abstract class MemberBase implements MemberObject {
 		ref: MemberReference,
 		account: Account,
 		schema: Schema,
-		errOnNull: boolean = false
+		errOnNull = false
 	): Promise<CAPWATCHMember | ProspectiveMember | null> {
 		switch (ref.type) {
 			case 'Null':
@@ -125,7 +136,7 @@ export default abstract class MemberBase implements MemberObject {
 		}
 
 		results[0].temporaryDutyPositions = results[0].temporaryDutyPositions.filter(
-			v => v.validUntil > +new Date() / 1000
+			v => v.validUntil > +DateTime.utc()
 		);
 
 		return results[0];
@@ -184,7 +195,6 @@ export default abstract class MemberBase implements MemberObject {
 	 * Used to differentiate when using polymorphism
 	 *
 	 * Another method is the instanceof operator, but to each their own
-	 * That method would probably work better however
 	 */
 	public abstract type: MemberType;
 
@@ -201,6 +211,10 @@ export default abstract class MemberBase implements MemberObject {
 	public getName = (): string =>
 		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
 			.filter(s => !!s)
+			.map(value => value.trimLeft().trimRight())
+			.map(value => value.replace(/\r\n/gm, ''))
+			.map(value => value.replace(/(  +)/g, ' '))
+			.map((value, i) => (i === 1 ? value.charAt(0) : value))
 			.join(' ');
 
 	public toRaw(): MemberObject {
@@ -275,9 +289,14 @@ export default abstract class MemberBase implements MemberObject {
 					.map(p => this.hasPermission(p, threshold))
 					.reduce((prev, curr) => prev || curr);
 	}
+
+	public getFullName() {
+		return this.getName();
+	}
 }
 
 import CAPWATCHMember from './members/CAPWATCHMember';
 import ProspectiveMember from './members/ProspectiveMember';
+import { DateTime } from 'luxon';
 
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

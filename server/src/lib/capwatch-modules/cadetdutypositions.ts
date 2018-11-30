@@ -1,7 +1,7 @@
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 import { convertNHQDate } from '../MySQLUtil';
 
-const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
+const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (
 	fileData,
 	schema,
 	orgid
@@ -16,7 +16,7 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
 	let values;
 
 	try {
-		const dutyPositionCollection = schema.getCollection<NHQ.DutyPosition>(
+		const dutyPositionCollection = schema.getCollection<NHQ.CadetDutyPosition>(
 			'NHQ_DutyPosition'
 		);
 
@@ -56,4 +56,4 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
 	}
 };
 
-export default dutyPosition;
+export default cadetDutyPosition;

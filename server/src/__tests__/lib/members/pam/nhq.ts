@@ -4,11 +4,7 @@ import nhqGetcapid from '../../../../lib/members/pam/nhq-getcapid';
 import nhqGetcontact from '../../../../lib/members/pam/nhq-getcontact';
 import nhqGetname from '../../../../lib/members/pam/nhq-getname';
 import nhqRequest from '../../../../lib/members/pam/nhq-request';
-
-const signinInformation = {
-	username: '542488',
-	password: 'app/xPHP091101'
-};
+import { signinInformation } from '../../../consts';
 
 describe('pluggable authentication modules', () => {
 	describe('nhq', () => {
@@ -18,7 +14,7 @@ describe('pluggable authentication modules', () => {
 		describe('authentication', () => {
 			it('should use correct credentials and return the cookies for a user', async done => {
 				const results = await authenticate(
-					signinInformation.username,
+					signinInformation.username.toString(),
 					signinInformation.password
 				);
 
@@ -31,7 +27,7 @@ describe('pluggable authentication modules', () => {
 
 			it('should throw an error with bad credentials', async done => {
 				await expect(
-					authenticate(signinInformation.username, 'bad password')
+					authenticate(signinInformation.username.toString(), 'bad password')
 				).rejects.toEqual(
 					new Error(
 						MemberCreateError.INCORRRECT_CREDENTIALS.toString()
@@ -54,7 +50,7 @@ describe('pluggable authentication modules', () => {
 			});
 
 			it('should get the correct capid if the username is not numerical', async done => {
-				const results = await nhqGetname(cookie, '542488');
+				const results = await nhqGetname(cookie, 'riouxad');
 
 				expect(results.capid).toEqual(542488);
 

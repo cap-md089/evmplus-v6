@@ -1,7 +1,9 @@
+import { Schema } from '@mysql/xdevapi';
 import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
+import Account from '../../lib/Account';
 import BlogPage from '../../lib/BlogPage';
 import { NHQMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
@@ -13,9 +15,14 @@ describe('/api', () => {
 			let server: Server;
 			let member: NHQMember;
 			let signinData: SigninReturn;
+			let schema: Schema;
+			let account: Account;
 
 			beforeAll(async done => {
-				const { schema, account } = await getTestTools(conftest);
+				const results = await getTestTools(conftest);
+
+				schema = results.schema;
+				account = results.account;
 
 				server = (await getServer(conftest, 3011)).server;
 
@@ -47,10 +54,8 @@ describe('/api', () => {
 			}, 10000);
 
 			afterAll(async () => {
-				const { schema } = await getTestTools(conftest);
-
 				await schema
-					.getCollection('Blog')
+					.getCollection('BlogPages')
 					.remove('true')
 					.execute();
 
@@ -58,8 +63,6 @@ describe('/api', () => {
 			});
 
 			it('should get a blog page', async done => {
-				const { account, schema } = await getTestTools(conftest);
-
 				const id = 'a-test-page';
 
 				const bp = await BlogPage.Create(
@@ -168,19 +171,16 @@ describe('/api', () => {
 
 						const { token } = result.body;
 
-						const [, { account, schema }] = await Promise.all([
-							request(server)
-								.put('/api/blog/page/a-test-page')
-								.set('authorization', signinData.sessionID)
-								.set('content-type', 'application/json')
-								.send(
-									Object.assign({ token }, blogPageData, {
-										title: newTitle
-									})
-								)
-								.expect(204),
-							getTestTools(conftest)
-						]);
+						await request(server)
+							.put('/api/blog/page/a-test-page')
+							.set('authorization', signinData.sessionID)
+							.set('content-type', 'application/json')
+							.send(
+								Object.assign({ token }, blogPageData, {
+									title: newTitle
+								})
+							)
+							.expect(204);
 
 						const bp = await BlogPage.Get(
 							'a-test-page',
@@ -221,17 +221,14 @@ describe('/api', () => {
 			it('should fail to edit a blog page without a token', async done => {
 				const newTitle = 'a new title 2';
 
-				const [, { account, schema }] = await Promise.all([
-					request(server)
-						.put('/api/blog/page/a-test-page')
-						.set('authorization', signinData.sessionID)
-						.set('content-type', 'application/json')
-						.send({
-							title: newTitle
-						})
-						.expect(403),
-					getTestTools(conftest)
-				]);
+				await request(server)
+					.put('/api/blog/page/a-test-page')
+					.set('authorization', signinData.sessionID)
+					.set('content-type', 'application/json')
+					.send({
+						title: newTitle
+					})
+					.expect(403);
 
 				const bp = await BlogPage.Get('a-test-page', account, schema);
 
@@ -241,14 +238,11 @@ describe('/api', () => {
 			});
 
 			it('should fail to delete a blog page without a token', async done => {
-				const [, { account, schema }] = await Promise.all([
-					request(server)
-						.delete('/api/blog/page/a-test-page')
-						.set('authorization', signinData.sessionID)
-						.set('content-type', 'application/json')
-						.expect(403),
-					getTestTools(conftest)
-				]);
+				await request(server)
+					.delete('/api/blog/page/a-test-page')
+					.set('authorization', signinData.sessionID)
+					.set('content-type', 'application/json')
+					.expect(403);
 
 				await expect(
 					BlogPage.Get('a-test-page', account, schema)
@@ -266,15 +260,12 @@ describe('/api', () => {
 							throw err;
 						}
 
-						const [, { account, schema }] = await Promise.all([
-							request(server)
-								.delete('/api/blog/page/a-test-page')
-								.set('authorization', signinData.sessionID)
-								.set('content-type', 'application/json')
-								.send(result.body)
-								.expect(204),
-							getTestTools(conftest)
-						]);
+						await request(server)
+							.delete('/api/blog/page/a-test-page')
+							.set('authorization', signinData.sessionID)
+							.set('content-type', 'application/json')
+							.send(result.body)
+							.expect(204);
 
 						await expect(
 							BlogPage.Get('a-test-page', account, schema)

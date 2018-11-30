@@ -4,6 +4,7 @@ import { RequestHandler } from 'express';
 import { createWriteStream, existsSync, unlink } from 'fs';
 import { request as httpRequest } from 'https';
 import { sign, verify } from 'jsonwebtoken';
+import { DateTime } from 'luxon';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
@@ -65,7 +66,7 @@ export default class NHQMember extends CAPWATCHMember
 
 		const id = memberInfo[0].capid;
 		const [dutyPositions, extraInfo] = await Promise.all([
-			NHQMember.GetRegularDutypositions(id, schema, account),
+			NHQMember.GetRegularDutypositions(id, schema),
 			NHQMember.LoadExtraMemberInformation(id, schema, account)
 		]);
 		let sessionID;
@@ -82,7 +83,7 @@ export default class NHQMember extends CAPWATCHMember
 
 			if (memberIndex === -1) {
 				const sess: MemberSession = {
-					expireTime: Date.now() / 1000 + 60 * 10,
+					expireTime: +DateTime.utc() + 60 * 10,
 
 					contact: memberInfo[1],
 					cookieData: cookie,
@@ -100,7 +101,7 @@ export default class NHQMember extends CAPWATCHMember
 				NHQMember.memberSessions.push(sess);
 			} else {
 				NHQMember.memberSessions[memberIndex].expireTime =
-					Date.now() / 1000 + 60 * 10;
+					+DateTime.utc() + 60 * 10;
 			}
 
 			sessionID = sign(
@@ -197,7 +198,7 @@ export default class NHQMember extends CAPWATCHMember
 					}
 
 					NHQMember.memberSessions = NHQMember.memberSessions.filter(
-						s => s.expireTime > Date.now() / 1000
+						s => s.expireTime > +DateTime.utc()
 					);
 					const sess = NHQMember.memberSessions.filter(
 						s => s.id === decoded.id
@@ -207,8 +208,7 @@ export default class NHQMember extends CAPWATCHMember
 						const [dutyPositions, extraInfo] = await Promise.all([
 							NHQMember.GetRegularDutypositions(
 								id,
-								req.mysqlx,
-								req.account
+								req.mysqlx
 							),
 							NHQMember.LoadExtraMemberInformation(
 								id,
@@ -226,7 +226,9 @@ export default class NHQMember extends CAPWATCHMember
 								contact: sess[0].contact,
 								dutyPositions: [
 									...dutyPositions,
-									...(extraInfo.temporaryDutyPositions.map(v => v.Duty))
+									...extraInfo.temporaryDutyPositions.map(
+										v => v.Duty
+									)
 								],
 								id,
 								memberRank: sess[0].memberRank,
@@ -497,13 +499,13 @@ export default class NHQMember extends CAPWATCHMember
 		id: this.id
 	});
 
-	public toRaw (): NHQMemberObject {
-		return ({
+	public toRaw(): NHQMemberObject {
+		return {
 			...super.toRaw(),
 			type: 'CAPNHQMember',
 			id: this.id,
 			cookie: '',
 			sessionID: this.sessionID
-		})
+		};
 	}
 }

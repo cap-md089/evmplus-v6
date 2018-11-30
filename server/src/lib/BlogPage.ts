@@ -97,14 +97,15 @@ export default class BlogPage
 		this._id = data._id;
 	}
 
-	public set(values: Partial<BlogPageObject>) {
-		const keys: Array<keyof BlogPageObject> = ['title', 'id', 'content', 'children'];
-
-		for (const i of keys) {
-			if (typeof values[i] === typeof this[i] && i !== 'accountID') {
-				this[i] = values[i];
+	public set(values: Partial<BlogPageObject>): boolean {
+		for (const i in values) {
+			if (values.hasOwnProperty(i) && i !== 'accountID') {
+				const key = i as Exclude<keyof BlogPageObject, 'accountID'>;
+				this[key] = values[key];
 			}
 		}
+
+		return true;
 	}
 
 	public async save() {
@@ -141,7 +142,9 @@ export default class BlogPage
 
 		this.deleted = true;
 
-		const collection = this.schema.getCollection<BlogPageObject>(BlogPage.collectionName);
+		const collection = this.schema.getCollection<BlogPageObject>(
+			BlogPage.collectionName
+		);
 
 		await collection.removeOne(this._id);
 	}

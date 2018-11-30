@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
 import { CAPWATCHImportErrors } from '../enums';
+import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
@@ -30,6 +31,10 @@ const modules: Array<{
 	{
 		module: mbrContact,
 		file: 'MbrContact.txt'
+	},
+	{
+		module: cadetDutyPosition,
+		file: 'CadetDutyPositions.txt'
 	}
 ];
 
@@ -44,10 +49,18 @@ export default async function*(
 	orgid: number,
 	files: string[] = modules.map(mod => mod.file)
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
+	const foundModules: {[key: string]: boolean} = {};
+
+	for (const i of files) {
+		foundModules[i] = false;
+	}
+
 	for (const mod of modules) {
 		if (files.indexOf(mod.file) === -1) {
 			continue;
 		}
+
+		foundModules[mod.file] = true;
 
 		const { stdout } = await promisify(exec)(
 			`unzip -op ${zipFileLocation} ${mod.file}`
@@ -68,5 +81,11 @@ export default async function*(
 				}
 			});
 		});
+	}
+
+	for (const i in foundModules) {
+		if (foundModules.hasOwnProperty(i) && !foundModules[i]) {
+			console.error('Invalid file passed to ImportCAPWATCHFile:', i);
+		}
 	}
 }

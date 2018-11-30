@@ -1,7 +1,9 @@
+import { Schema } from '@mysql/xdevapi';
 import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
+import Account from '../../lib/Account';
 import BlogPost from '../../lib/BlogPost';
 import { NHQMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
@@ -13,9 +15,14 @@ describe('/api', () => {
 			let server: Server;
 			let member: NHQMember;
 			let signinData: SigninReturn;
+			let account: Account;
+			let schema: Schema;
 
 			beforeAll(async done => {
-				const { schema, account } = await getTestTools(conftest);
+				const results = await getTestTools(conftest);
+
+				account = results.account;
+				schema = results.schema;
 
 				server = (await getServer(conftest, 3010)).server;
 
@@ -44,11 +51,9 @@ describe('/api', () => {
 				]);
 
 				done();
-			}, 10000);
+			}, 15000);
 
 			afterAll(async () => {
-				const { schema } = await getTestTools(conftest);
-
 				await schema
 					.getCollection('Blog')
 					.remove('true')
@@ -58,8 +63,6 @@ describe('/api', () => {
 			});
 
 			it('should get a blog post', async done => {
-				const { account, schema } = await getTestTools(conftest);
-
 				const bp = await BlogPost.Create(blogPostData, account, schema);
 
 				request(server)
@@ -162,19 +165,16 @@ describe('/api', () => {
 
 						const { token } = result.body;
 
-						const [, { account, schema }] = await Promise.all([
-							request(server)
-								.put('/api/blog/post/1')
-								.set('authorization', signinData.sessionID)
-								.set('content-type', 'application/json')
-								.send(
-									Object.assign({ token }, blogPostData, {
-										title: newTitle
-									})
-								)
-								.expect(204),
-							getTestTools(conftest)
-						]);
+						await request(server)
+							.put('/api/blog/post/1')
+							.set('authorization', signinData.sessionID)
+							.set('content-type', 'application/json')
+							.send(
+								Object.assign({ token }, blogPostData, {
+									title: newTitle
+								})
+							)
+							.expect(204);
 
 						const bp = await BlogPost.Get(1, account, schema);
 
@@ -211,18 +211,14 @@ describe('/api', () => {
 			it('should fail to edit a blog post without a token', async done => {
 				const newTitle = 'a new title 2';
 
-				const [, { account, schema }] = await Promise.all([
-					request(server)
-						.put('/api/blog/post/1')
-						.set('authorization', signinData.sessionID)
-						.set('content-type', 'application/json')
-						.send({
-							title: newTitle,
-							testme: true
-						})
-						.expect(403),
-					getTestTools(conftest)
-				]);
+				await request(server)
+					.put('/api/blog/post/1')
+					.set('authorization', signinData.sessionID)
+					.set('content-type', 'application/json')
+					.send({
+						title: newTitle
+					})
+					.expect(403);
 
 				const bp = await BlogPost.Get(1, account, schema);
 
@@ -232,14 +228,11 @@ describe('/api', () => {
 			});
 
 			it('should fail to delete a blog post without a token', async done => {
-				const [, { account, schema }] = await Promise.all([
-					request(server)
-						.delete('/api/blog/post/1')
-						.set('authorization', signinData.sessionID)
-						.set('content-type', 'application/json')
-						.expect(403),
-					getTestTools(conftest)
-				]);
+				await request(server)
+					.delete('/api/blog/post/1')
+					.set('authorization', signinData.sessionID)
+					.set('content-type', 'application/json')
+					.expect(403);
 
 				await expect(BlogPost.Get(1, account, schema)).resolves.toEqual(
 					expect.any(BlogPost)
@@ -257,19 +250,15 @@ describe('/api', () => {
 							throw err;
 						}
 
-						const [, { account, schema }] = await Promise.all([
-							request(server)
-								.delete('/api/blog/post/1')
-								.set('authorization', signinData.sessionID)
-								.set('content-type', 'application/json')
-								.send(result.body)
-								.expect(204),
-							getTestTools(conftest)
-						]);
-
-						await expect(
-							BlogPost.Get(1, account, schema)
-						).rejects.toEqual(expect.any(Error));
+						await request(server)
+							.delete('/api/blog/post/1')
+							.set('authorization', signinData.sessionID)
+							.set('content-type', 'application/json')
+							.send(result.body)
+							.expect(204),
+							await expect(
+								BlogPost.Get(1, account, schema)
+							).rejects.toEqual(expect.any(Error));
 
 						done();
 					});
@@ -289,9 +278,8 @@ describe('/api', () => {
 							.set('authorization', signinData.sessionID)
 							.set('content-type', 'application/json')
 							.send(result.body)
-							.expect(404);
-
-						done();
+							.expect(404)
+							.end(done);
 					});
 			});
 		});

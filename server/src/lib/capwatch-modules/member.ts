@@ -53,7 +53,7 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (
 				Profession: member.Profession,
 				EducationLevel: member.EducationLevel,
 				Citizen: member.Citizen,
-				ORGID: parseInt(member.ORGID + '', 10),
+				ORGID: orgid,
 				Wing: member.Wing,
 				Unit: member.Unit,
 				Rank: member.Rank,

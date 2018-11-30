@@ -1,15 +1,26 @@
+import { Schema } from '@mysql/xdevapi';
 import conftest from '../../../conf.test';
+import Account from '../../../lib/Account';
 import { NHQMember } from '../../../lib/Members';
 import { getTestTools } from '../../../lib/Util';
 import { signinInformation } from '../../consts';
 
 describe('NHQ Member', () => {
 	let mem: NHQMember;
+	let account: Account;
+	let schema: Schema;
+
+	beforeAll(async done => {
+		const results = await getTestTools(conftest);
+
+		account = results.account;
+		schema = results.schema;
+
+		done();
+	});
 
 	describe('Member fetch operations', () => {
 		it('should create a member successfully', async done => {
-			const { account, schema } = await getTestTools(conftest);
-
 			mem = await NHQMember.Create(
 				signinInformation.username,
 				signinInformation.password,

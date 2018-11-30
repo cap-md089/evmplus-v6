@@ -3,8 +3,10 @@ import { DateTime } from 'luxon';
 import { EchelonEventNumber, EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
-import { CAPWATCHMember } from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
+
+type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
+type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
 export default class Event
 	implements EventObject, DatabaseInterface<EventObject> {
@@ -37,31 +39,11 @@ export default class Event
 			throw new Error('There was a problem getting the event');
 		}
 
-		const internalPointsOfContact = results[0].pointsOfContact.filter(
-			s => s.type === PointOfContactType.INTERNAL
-		) as DisplayInternalPointOfContact[];
-
-		const members = await Promise.all(
-			internalPointsOfContact.map(poc =>
-				MemberBase.ResolveReference(poc.memberReference, account, schema, true)
-			)
+		results[0].pointsOfContact = await this.ConvertPointsOfContact(
+			results[0].pointsOfContact,
+			account,
+			schema
 		);
-
-		internalPointsOfContact.forEach((mem, i) => {
-			for (const member of members) {
-				if (mem.memberReference.type === 'Null') {
-					continue;
-				}
-
-				if (member.id === mem.memberReference.id) {
-					internalPointsOfContact[i].name =
-						member instanceof CAPWATCHMember
-							? member.memberRankName
-							// @ts-ignore
-							: member.getName();
-				}
-			}
-		});
 
 		return new Event(results[0], account, schema);
 	}
@@ -92,10 +74,17 @@ export default class Event
 				.map(post => post.id)
 				.reduce((prev, curr) => Math.max(prev, curr), 0);
 
-		const timeCreated = Math.round(+DateTime.utc() / 1000);
+		const timeCreated = +DateTime.utc();
+
+		const pointsOfContact = await this.ConvertPointsOfContact(
+			data.pointsOfContact,
+			account,
+			schema
+		);
 
 		const newEvent: EventObject = {
-			...(data as EventObject),
+			...data,
+			pointsOfContact,
 			id: newID,
 			accountID: account.id,
 			timeCreated,
@@ -111,9 +100,60 @@ export default class Event
 		return new Event(newEvent, account, schema);
 	}
 
-	public id: number = 0;
+	private static async ConvertPointsOfContact(
+		pocs: POCRaw,
+		account: Account,
+		schema: Schema
+	): Promise<POCFull> {
+		const internalPointsOfContact = pocs.filter(
+			p => p.type === PointOfContactType.INTERNAL
+		) as InternalPointOfContact[];
 
-	public accountID: string = '';
+		const members = await Promise.all(
+			internalPointsOfContact.map(p =>
+				MemberBase.ResolveReference(p.memberReference, account, schema)
+			)
+		);
+
+		const newPOCs = pocs as POCFull;
+
+		newPOCs.forEach(poc => {
+			if (poc.type === PointOfContactType.INTERNAL) {
+				for (const mem of members) {
+					if (mem.matchesReference(poc.memberReference)) {
+						poc.name = mem.getFullName();
+					}
+				}
+			}
+		});
+
+		return newPOCs;
+	}
+
+	private static DownconvertPointsOfContact(pocs: POCFull): POCRaw {
+		const newPOCs = pocs as POCRaw;
+
+		newPOCs.forEach((poc, i) => {
+			if (poc.type === PointOfContactType.INTERNAL) {
+				newPOCs[i] = {
+					email: poc.email,
+					memberReference: poc.memberReference,
+					phone: poc.phone,
+					receiveEventUpdates: poc.receiveEventUpdates,
+					receiveRoster: poc.receiveRoster,
+					receiveSignUpUpdates: poc.receiveSignUpUpdates,
+					receiveUpdates: poc.receiveUpdates,
+					type: PointOfContactType.INTERNAL
+				};
+			}
+		});
+
+		return newPOCs;
+	}
+
+	public id: number;
+
+	public accountID: string;
 
 	public timeCreated: number;
 
@@ -208,7 +248,7 @@ export default class Event
 
 	public fileIDs: string[];
 
-	public attendance: AttendanceRecord[] = [];
+	public attendance: AttendanceRecord[];
 
 	// Documents require it
 	// tslint:disable-next-line:variable-name
@@ -238,36 +278,15 @@ export default class Event
 	 * 		it uses the account ID the object was created with
 	 */
 	public async save(account: Account = this.account) {
-		const timeModified = Math.round(+DateTime.utc() / 1000);
+		const timeModified = +DateTime.utc();
 
 		const eventsCollection = this.schema.getCollection<EventObject>(
 			'Events'
 		);
 
-		const displayInternalPointsOfContact = this.pointsOfContact.filter(
-			i => i.type === PointOfContactType.INTERNAL
-		) as DisplayInternalPointOfContact[];
-		const internalPointsOfContact = displayInternalPointsOfContact.map(
-			i => ({
-				type: PointOfContactType.INTERNAL,
-				email: i.email,
-				phone: i.phone,
-				receiveUpdates: i.receiveUpdates,
-				receiveRoster: i.receiveRoster,
-				receiveEventUpdates: i.receiveEventUpdates,
-				receiveSignUpUpdates: i.receiveSignUpUpdates,
-				memberReference: i.memberReference
-			})
-		) as InternalPointOfContact[];
-
-		const externalPointsOfContact = this.pointsOfContact.filter(
-			i => i.type === PointOfContactType.EXTERNAL
+		const pointsOfContact = Event.DownconvertPointsOfContact(
+			this.pointsOfContact
 		);
-
-		const pointsOfContact = [
-			...internalPointsOfContact,
-			...externalPointsOfContact
-		];
 
 		await eventsCollection.replaceOne(this._id, {
 			...this.toFullRaw(),
@@ -406,7 +425,7 @@ export default class Event
 	public linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
 		const newEvent = Object.assign<{}, EventObject, Partial<EventObject>>(
 			{},
-			this,
+			this.toRaw(),
 			{
 				accountID: targetAccount.id,
 				author: member.getReference(),
@@ -463,6 +482,7 @@ export default class Event
 			'pickupLocation',
 			'pointsOfContact',
 			'publishToWingCalendar',
+			'regionEventNumber',
 			'registration',
 			'requiredEquipment',
 			'requiredForms',
@@ -552,6 +572,19 @@ export default class Event
 		attendance: this.getAttendance()
 	});
 
+	public async getSourceEvent(): Promise<Event> {
+		if (this.sourceEvent === null) {
+			return Promise.reject('There is no source event');
+		}
+
+		const sourceAccount = await Account.Get(
+			this.sourceEvent.accountID,
+			this.schema
+		);
+
+		return Event.Get(this.sourceEvent.id, sourceAccount, this.schema);
+	}
+
 	// ----------------------------------------------------
 	// 					Attendance code
 	// ----------------------------------------------------
@@ -559,12 +592,7 @@ export default class Event
 	/**
 	 * Returns the attendance for the event
 	 */
-	public getAttendance = (): AttendanceRecord[] =>
-		this.attendance.map(v => ({
-			...v,
-			arrivalTime: v.arrivalTime ? v.arrivalTime : null,
-			departureTime: v.departureTime ? v.departureTime : null
-		}));
+	public getAttendance = (): AttendanceRecord[] => this.attendance
 
 	/**
 	 * Add member to attendance
@@ -581,10 +609,7 @@ export default class Event
 			{
 				comments: newAttendanceRecord.comments,
 				memberID: member.getReference(),
-				memberName:
-					member instanceof CAPWATCHMember
-						? member.memberRankName
-						: member.getName(),
+				memberName: member.getFullName(),
 				planToUseCAPTransportation:
 					newAttendanceRecord.planToUseCAPTransportation,
 				requirements: newAttendanceRecord.requirements,
@@ -592,7 +617,7 @@ export default class Event
 				summaryEmailSent: false,
 				timestamp: +DateTime.utc(),
 
-				// If these are undefined, they are staying for the whole event
+				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime,
 				departureTime: newAttendanceRecord.departureTime
 			}
@@ -608,37 +633,32 @@ export default class Event
 		newAttendanceRecord: NewAttendanceRecord,
 		member: BaseMember
 	): AttendanceRecord[] =>
-		(this.attendance = this.attendance.map(
-			record =>
-				member.matchesReference(record.memberID)
-					? {
-							comments: newAttendanceRecord.comments,
-							memberID: member.getReference(),
-							memberName:
-								member instanceof CAPWATCHMember
-									? member.memberRankName
-									: member.getName(),
-							planToUseCAPTransportation:
-								newAttendanceRecord.planToUseCAPTransportation,
-							requirements: newAttendanceRecord.requirements,
-							status: newAttendanceRecord.status,
-							summaryEmailSent: false,
-							timestamp: +DateTime.utc(),
+		(this.attendance = this.attendance.map(record =>
+			member.matchesReference(record.memberID)
+				? {
+						comments: newAttendanceRecord.comments,
+						memberID: member.getReference(),
+						memberName: member.getFullName(),
+						planToUseCAPTransportation:
+							newAttendanceRecord.planToUseCAPTransportation,
+						requirements: newAttendanceRecord.requirements,
+						status: newAttendanceRecord.status,
+						summaryEmailSent: false,
+						timestamp: +DateTime.utc(),
 
-							// If these are undefined, they are staying for the whole event
-							arrivalTime: newAttendanceRecord.arrivalTime,
-							departureTime: newAttendanceRecord.departureTime
-					  }
-					: record
+						// If these are undefined, they are staying for the whole event
+						arrivalTime: newAttendanceRecord.arrivalTime,
+						departureTime: newAttendanceRecord.departureTime
+				  }
+				: record
 		));
 
 	public removeMemberFromAttendance = (
 		member: BaseMember
 	): AttendanceRecord[] =>
 		(this.attendance = this.attendance.filter(record =>
-			member.matchesReference(record.memberID)
+			!member.matchesReference(record.memberID)
 		));
 }
 
 export { EventStatus };
-

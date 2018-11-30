@@ -5,8 +5,30 @@ import { join } from 'path';
 import conf, { Configuration } from '../conf';
 import Account from './Account';
 
-export function extend<T>(obj1: T, obj2: Partial<T>): T {
-	const ret = {} as T;
+export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
+	if (typeof obj2 !== typeof obj1) {
+		return false;
+	}
+
+	if (typeof obj1 !== 'object') {
+		return true;
+	}
+
+	for (const i in obj1) {
+		if (obj1.hasOwnProperty(i)) {
+			if (typeof obj1[i] !== typeof obj2[i]) {
+				return false;
+			}
+
+			if(!deepTypeEqual(obj1[i], obj2[i])) {
+				return false;
+			}
+		}
+	}
+}
+
+export function extend<T, S>(obj1: T, obj2: S): T & S {
+	const ret = {} as any;
 	for (const i in obj1) {
 		if (obj1.hasOwnProperty(i)) {
 			ret[i] = obj1[i];
@@ -36,8 +58,11 @@ export const json = <T>(res: express.Response, values: T) => res.json(values);
 export const getSchemaValidator = (schema: any) =>
 	new ajv({ allErrors: true }).compile(schema);
 
-export function getFullSchemaValidator<T>(schemaName: string) {
-	const schema = require(join(conf.schemaPath, schemaName));
+export function getFullSchemaValidator<T>(
+	schemaName: string,
+	config: typeof conf = conf
+) {
+	const schema = require(join(config.schemaPath, schemaName));
 
 	const privateValidator = new ajv({ allErrors: true }).compile(schema);
 
@@ -91,18 +116,41 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 let testSession: mysql.Session, testAccount: Account;
 
 export async function getTestTools(testconf: typeof Configuration) {
+	const devAccount: RawAccountObject = {
+		adminIDs: [
+			{
+				id: 542488,
+				type: 'CAPNHQMember'
+			}
+		],
+		echelon: false,
+		expires: 0,
+		id: 'mdx89',
+		mainOrg: 916,
+		orgIDs: [916, 2529],
+		paid: false,
+		paidEventLimit: 500,
+		unpaidEventLimit: 5
+	};
+
 	const conn = testconf.database.connection;
 
-	testSession = testSession || await mysql.getSession({
-		user: conn.user,
-		password: conn.password,
-		host: conn.host,
-		port: conn.port
-	});
+	testSession =
+		testSession ||
+		(await mysql.getSession({
+			user: conn.user,
+			password: conn.password,
+			host: conn.host,
+			port: conn.port
+		}));
 
 	const schema = testSession.getSchema(testconf.database.connection.database);
 
-	testAccount = testAccount || await Account.Get('mdx89', schema);
+	try {
+		testAccount = await Account.Get('mdx89', schema);
+	} catch (e) {
+		testAccount = await Account.Create(devAccount, schema);
+	}
 
 	return {
 		account: testAccount,
@@ -110,16 +158,24 @@ export async function getTestTools(testconf: typeof Configuration) {
 	};
 }
 
+export async function getTestTools2(
+	testconf: typeof Configuration
+): Promise<[Account, mysql.Schema]> {
+	const results = await getTestTools(testconf);
+
+	return [results.account, results.schema];
+}
+
 export interface ExtendedResponse extends express.Response {
 	sjson: <T>(obj: T | HTTPError) => ExtendedResponse;
 }
 
 const convertResponse = (res: express.Response): ExtendedResponse => {
-	(res as ExtendedResponse).sjson = <T>(obj: T | HTTPError) => convertResponse(res.json(obj));
+	(res as ExtendedResponse).sjson = <T>(obj: T | HTTPError) =>
+		convertResponse(res.json(obj));
 	return res as ExtendedResponse;
-}
+};
 
-// tslint:disable-next-line:ban-types
 export const extraTypes = (
 	func: (req: express.Request, res: ExtendedResponse) => void
 ) => (req: express.Request, res: express.Response) => {
