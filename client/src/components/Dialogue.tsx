@@ -70,7 +70,7 @@ interface DialogueState {
 export default class Dialogue extends React.Component<
 	DialogueProps,
 	DialogueState
-> {
+	> {
 	public state = {
 		open: false
 	};
@@ -196,107 +196,112 @@ export default class Dialogue extends React.Component<
 							</a>
 						</div>
 					) : this.props.displayButtons ===
-					DialogueButtons.OK_CANCEL ? (
-						<div className="closeButton">
-							<a
-								style={{
-									float: 'right',
-									marginLeft: 10
-								}}
-								className="primaryButton"
-								id="cancel"
-								href="#"
-								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
-								) => {
-									e.preventDefault();
-									this.props.onClose();
-									// @ts-ignore
-									this.props.onCancel();
-								}}
-							>
-								{this.props.labels ? this.props.labels[1] : 'Cancel'}
-							</a>
-							<a
-								style={{
-									float: 'right'
-								}}
-								className="primaryButton"
-								id="ok"
-								href="#"
-								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
-								) => {
-									e.preventDefault();
-									this.props.onClose();
-									// @ts-ignore
-									this.props.onOk();
-								}}
-							>
-								{this.props.labels ? this.props.labels[0] : 'OK'}
-							</a>
-						</div>
-					) : this.props.displayButtons ===
-					DialogueButtons.YES_NO_CANCEL ? (
-						<div className="closeButton">
-							<a
-								style={{
-									float: 'right',
-									marginLeft: 10
-								}}
-								className="primaryButton"
-								id="cancel"
-								href="#"
-								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
-								) => {
-									e.preventDefault();
-									this.props.onClose();
-									// @ts-ignore
-									this.props.onCancel();
-								}}
-							>
-								{this.props.labels ? this.props.labels[2] : 'Cancel'}
-							</a>
-							<a
-								style={{
-									float: 'right',
-									marginLeft: 10
-								}}
-								className="primaryButton"
-								id="no"
-								href="#"
-								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
-								) => {
-									e.preventDefault();
-									this.props.onClose();
-									// @ts-ignore
-									this.props.onNo();
-								}}
-							>
-								{this.props.labels ? this.props.labels[1] : 'No'}
-							</a>
-							<a
-								style={{
-									float: 'right'
-								}}
-								className="primaryButton"
-								id="yes"
-								href="#"
-								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
-								) => {
-									e.preventDefault();
-									this.props.onClose();
-									// @ts-ignore
-									this.props.onYes();
-								}}
-							>
-								{this.props.labels ? this.props.labels[0] : 'Yes'}
-							</a>
-						</div>
-					) : null}
+						DialogueButtons.OK_CANCEL ? (
+								<div className="closeButton">
+									<a
+										style={{
+											float: 'right',
+											marginLeft: 10
+										}}
+										className="primaryButton"
+										id="cancel"
+										href="#"
+										onClick={(
+											e: React.MouseEvent<HTMLAnchorElement>
+										) => {
+											e.preventDefault();
+											this.props.onClose();
+											if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
+												this.props.onCancel();
+											}
+										}}
+									>
+										{this.props.labels ? this.props.labels[1] : 'Cancel'}
+									</a>
+									<a
+										style={{
+											float: 'right'
+										}}
+										className="primaryButton"
+										id="ok"
+										href="#"
+										onClick={(
+											e: React.MouseEvent<HTMLAnchorElement>
+										) => {
+											e.preventDefault();
+											this.props.onClose();
+											if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
+												this.props.onOk();
+											}
+										}}
+									>
+										{this.props.labels ? this.props.labels[0] : 'OK'}
+									</a>
+								</div>
+							) : this.props.displayButtons ===
+								DialogueButtons.YES_NO_CANCEL ? (
+									<div className="closeButton">
+										<a
+											style={{
+												float: 'right',
+												marginLeft: 10
+											}}
+											className="primaryButton"
+											id="cancel"
+											href="#"
+											onClick={(
+												e: React.MouseEvent<HTMLAnchorElement>
+											) => {
+												e.preventDefault();
+												this.props.onClose();
+												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
+													this.props.onCancel();
+												}
+											}}
+										>
+											{this.props.labels ? this.props.labels[2] : 'Cancel'}
+										</a>
+										<a
+											style={{
+												float: 'right',
+												marginLeft: 10
+											}}
+											className="primaryButton"
+											id="no"
+											href="#"
+											onClick={(
+												e: React.MouseEvent<HTMLAnchorElement>
+											) => {
+												e.preventDefault();
+												this.props.onClose();
+												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
+													this.props.onNo();
+												}
+											}}
+										>
+											{this.props.labels ? this.props.labels[1] : 'No'}
+										</a>
+										<a
+											style={{
+												float: 'right'
+											}}
+											className="primaryButton"
+											id="yes"
+											href="#"
+											onClick={(
+												e: React.MouseEvent<HTMLAnchorElement>
+											) => {
+												e.preventDefault();
+												this.props.onClose();
+												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
+													this.props.onYes();
+												}
+											}}
+										>
+											{this.props.labels ? this.props.labels[0] : 'Yes'}
+										</a>
+									</div>
+								) : null}
 				</div>
 			</div>,
 			document.getElementById('dialogue-box') as HTMLElement

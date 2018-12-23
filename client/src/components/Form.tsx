@@ -15,24 +15,27 @@ import {
 	RadioButton,
 	Selector,
 	SimpleRadioButton,
-	TextInput
+	TextInput,
+	BigTextBox
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
 export {
-	LoadingTextArea,
-	FileInput,
-	TextInput,
-	MultiRange,
-	DateTimeInput,
-	RadioButton,
-	MultCheckbox,
 	Checkbox,
-	ListEditor,
+	DateTimeInput,
+	FileInput,
 	FormBlock,
-	SimpleRadioButton,
+	isInput,
+	ListEditor,
+	LoadingTextArea,
+	MultCheckbox,
+	MultiRange,
 	NumberInput,
-	Selector
+	RadioButton,
+	Selector,
+	SimpleRadioButton,
+	TextInput,
+	BigTextBox
 };
 
 export interface BasicFormProps<T> extends FormProps<T> {

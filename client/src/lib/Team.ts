@@ -4,8 +4,21 @@ import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 
+/**
+ * A Team is a collection of people with a team leader, a mentor, and a coach
+ * 
+ * Each person has a role, and this collection allows for gathering information provided
+ * and parsing it, e.g. for a team leader to get the emails to communicate with their team
+ */
 export default class Team extends APIInterface<TeamObject>
 	implements TeamObject {
+	/**
+	 * Constructs a team object
+	 * 
+	 * @param id The ID of the team
+	 * @param account The Account the team belongs to
+	 * @param member A member, for where a team has restrictions
+	 */
 	public static async Get(id: number, account: Account, member?: MemberBase) {
 		let result;
 		try {
@@ -19,6 +32,13 @@ export default class Team extends APIInterface<TeamObject>
 		return new Team(json, account);
 	}
 
+	/**
+	 * Creates a new team
+	 * 
+	 * @param data The new team that is going to be created
+	 * @param member The member creating the team
+	 * @param account The Account the team belongs to
+	 */
 	public static async Create(
 		data: NewTeamObject,
 		member: MemberBase,
@@ -32,6 +52,8 @@ export default class Team extends APIInterface<TeamObject>
 			account = await Account.Get();
 		}
 
+		const token = await Team.getToken(account.id, member);
+
 		let result;
 		try {
 			result = await account.fetch(
@@ -40,7 +62,10 @@ export default class Team extends APIInterface<TeamObject>
 					headers: {
 						'content-type': 'application/json'
 					},
-					body: JSON.stringify(data),
+					body: JSON.stringify({
+						...data,
+						token
+					}),
 					method: 'POST'
 				},
 				member
@@ -87,11 +112,16 @@ export default class Team extends APIInterface<TeamObject>
 			throw new Error('Member does not have permissions to delete team');
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				'/api/delete',
 				{
-					method: 'DELETE'
+					method: 'DELETE',
+					body: JSON.stringify({
+						token
+					})
 				},
 				member
 			);
@@ -105,12 +135,17 @@ export default class Team extends APIInterface<TeamObject>
 			throw new Error('Member does not have permissions to modify team');
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				'/api/team',
 				{
 					method: 'PUT',
-					body: JSON.stringify(this.toRaw()),
+					body: JSON.stringify({
+						...this.toRaw(),
+						token
+					}),
 					headers: {
 						'content-type': 'application/json'
 					}
@@ -153,17 +188,22 @@ export default class Team extends APIInterface<TeamObject>
 
 		this.members.push(teamMember);
 
+		const token = await this.getToken(member);
+
 		await this.fetch(
 			`/api/team/${this.id}/members`,
 			{
 				method: 'POST',
-				body: JSON.stringify(teamMember)
+				body: JSON.stringify({
+					...teamMember,
+					token
+				})
 			},
 			member
 		);
 	}
 
-	public async removeMember(member: MemberBase, memberToAdd: MemberBase) {
+	public async removeMember(member: MemberBase, memberToRemove: MemberBase) {
 		if (!member.hasPermission('EditTeam')) {
 			throw new Error('Member does not have permission to modify team');
 		}
@@ -171,22 +211,27 @@ export default class Team extends APIInterface<TeamObject>
 		this.members = this.members.filter(
 			f =>
 				!MemberBase.AreMemberReferencesTheSame(
-					memberToAdd.getReference(),
+					memberToRemove.getReference(),
 					f.reference
 				)
 		);
 
 		const teamMember: TeamMember = {
-			reference: memberToAdd.getReference(),
+			reference: memberToRemove.getReference(),
 			job: '',
 			joined: +DateTime.utc()
 		};
+
+		const token = await this.getToken(member);
 
 		await this.fetch(
 			`/api/team/${this.id}/members`,
 			{
 				method: 'DELETE',
-				body: JSON.stringify(teamMember)
+				body: JSON.stringify({
+					...teamMember,
+					token
+				})
 			},
 			member
 		);

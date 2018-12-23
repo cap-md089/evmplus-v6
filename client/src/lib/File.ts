@@ -7,6 +7,9 @@ import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 import urlFormat from './urlFormat';
 
+/**
+ * Simple private class used to handle uploading the files
+ */
 class FileUploader {
 	public progressListeners: Array<(progress: number) => void>;
 
@@ -14,6 +17,16 @@ class FileUploader {
 
 	public constructor(private file: File) {}
 
+	/**
+	 * Uploads the file the class was constructed with to the location
+	 * specified
+	 * 
+	 * @param target The folder to upload the file to
+	 * @param member The member that is uploading the file
+	 * @param token The token required for all non-GET tasks
+	 * @param errOnInvalidPermissions Throw an error or silently fail
+	 * 		if the member doesn't have the required permissions
+	 */
 	public uploadTo(
 		target: FileInterface,
 		member: MemberBase,
@@ -70,6 +83,18 @@ class FileUploader {
 
 export default class FileInterface extends APIInterface<FullFileObject>
 	implements FullFileObject {
+
+	/**
+	 * Uploads a file and moves it to its requested place
+	 * 
+	 * Also returns a file uploader class that allows for listening to progress
+	 * and finish events
+	 * 
+	 * @param file The file to upload
+	 * @param parent The folder to upload the file to
+	 * @param member The member taking responsibility for uploading the file
+	 * @param account The Account that is responsible for the file
+	 */
 	public static Create(
 		file: File,
 		parent: FileInterface,
@@ -102,6 +127,20 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		return fileUploader;
 	}
 
+	/**
+	 * Creates a folder in the `root` folder
+	 * 
+	 * To create a folder in another folder, create a folder
+	 * and call the moveTo method on the returned file
+	 * 
+	 * A folder is nothing more than a file that has a different MIME type
+	 * It can technically have contents, but here the folder is created without
+	 * any contents
+	 * 
+	 * @param name The name of the folder
+	 * @param member The member creating the folder
+	 * @param account The account responsible for the folder
+	 */
 	public static async CreateFolder(
 		name: string,
 		member: MemberBase,
@@ -126,6 +165,13 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		return new FileInterface(json, account);
 	}
 
+	/**
+	 * Gets the file metadata for the requested file ID
+	 * 
+	 * @param id The ID of the file/folder to get
+	 * @param member The member getting the file, checking for permissions
+	 * @param account The Account of the file
+	 */
 	public static async Get(
 		id: string,
 		member: MemberBase | null | undefined,
@@ -177,7 +223,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	public folderPath: Array<{ id: string; name: string }> = [];
 
-	public uploader: SigninReturn;
+	public uploader: MemberObject;
 
 	public constructor(data: FullFileObject, public account: Account) {
 		super(account.id);
@@ -185,6 +231,9 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		Object.assign(this, data);
 	}
 
+	/**
+	 * Converts this class to a transferable object
+	 */
 	public toRaw(): FullFileObject {
 		return {
 			accountID: this.accountID,
@@ -205,6 +254,12 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		};
 	}
 
+	/**
+	 * Checks if a member has requested permission for this file
+	 * 
+	 * @param member The member to check
+	 * @param permission The permission to check for
+	 */
 	public hasPermission(
 		member: MemberBase | null,
 		permission: FileUserAccessControlPermissions
@@ -237,13 +292,13 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 		let valid = false;
 
-		if (member === null) {
-			otherPermissions.forEach(
-				perm =>
-					// tslint:disable-next-line:no-bitwise
-					(valid = valid || (perm.permission & permission) > 0)
-			);
+		otherPermissions.forEach(
+			perm =>
+				// tslint:disable-next-line:no-bitwise
+				(valid = valid || (perm.permission & permission) > 0)
+		);
 
+		if (member === null || valid) {
 			return valid;
 		}
 
@@ -267,16 +322,14 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			return true;
 		}
 
-		if (member) {
-			memberPermissions.forEach(
-				perm =>
-					(valid =
-						valid ||
-						// tslint:disable-next-line:no-bitwise
-						((perm.permission & permission) > 0 &&
-							member.matchesReference(perm.reference)))
-			);
-		}
+		memberPermissions.forEach(
+			perm =>
+				(valid =
+					valid ||
+					// tslint:disable-next-line:no-bitwise
+					((perm.permission & permission) > 0 &&
+						member.matchesReference(perm.reference)))
+		);
 
 		if (valid) {
 			return true;
@@ -300,14 +353,31 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		return valid;
 	}
 
+	/**
+	 * Get the file/folder that has this file as a child
+	 * 
+	 * If the current file or folder is the root folder, this will return a promise
+	 * resolving to itself as it has no parent
+	 * 
+	 * @param member The member to use to get the file info of the parent file
+	 */
 	public getParent(member: MemberBase | null): Promise<FileInterface> {
 		return this.id === 'root'
 			? Promise.resolve(this)
 			: FileInterface.Get(this.parentID, member, this.account);
 	}
 
+	/**
+	 * Adds the file given as a child to the current file/folder
+	 * 
+	 * @param member The member that needs to have permission to do so
+	 * @param child The child file to add
+	 * @param errOnInvalidPermissions If true, this function will throw an error if
+	 * 		the member doesn't have the proper permissions. Otherwise, it will
+	 * 		silently fail
+	 */
 	public async addChild(
-		member: MemberBase | null,
+		member: MemberBase,
 		child: FileInterface | string,
 		errOnInvalidPermissions = false
 	) {
@@ -325,11 +395,14 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			child = child.id;
 		}
 
+		const token = await this.getToken(member);
+
 		await this.fetch(
 			`/api/files/${this.id}/children`,
 			{
 				body: JSON.stringify({
-					id: child
+					id: child,
+					token
 				}),
 				method: 'POST'
 			},
@@ -337,6 +410,14 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		);
 	}
 
+	/**
+	 * 
+	 * @param member The member that needs to have permission to remove the file
+	 * @param child The child to remove
+	 * @param errOnInvalidPermissions If true, this function will throw an error if
+	 * 		the member doesn't have the proper permissions. Otherwise, it will
+	 * 		silently fail
+	 */
 	public async removeChild(
 		member: MemberBase,
 		child: FileInterface | string,
@@ -356,29 +437,56 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			child = child.id;
 		}
 
+		const token = await this.getToken(member);
+
 		await this.fetch(
 			`/api/files/${this.id}/children/${child}`,
 			{
-				method: 'DELETE'
+				method: 'DELETE',
+				body: JSON.stringify({
+					token
+				})
 			},
 			member
 		);
 	}
 
+	/**
+	 * Saves the current file
+	 * 
+	 * @param member The member to save the file
+	 */
 	public async save(member: MemberBase) {
+		const token = await this.getToken(member);
+
 		await this.fetch(
 			`/api/files/${this.id}`,
 			{
-				body: JSON.stringify(this.toRaw()),
+				body: JSON.stringify({
+					...this.toRaw(),
+					token
+				}),
 				method: 'PUT'
 			},
 			member
 		);
 	}
 
+	/**
+	 * Moves the file to the specified location
+	 * 
+	 * This is an operation that requires a save to be made, as it cannot do so without
+	 * risking saving the wrong data
+	 * 
+	 * @param target The place to move the file to
+	 * @param member The member moving the file
+	 * @param errOnInvalidPermissions If true, this function will throw an error if
+	 * 		the member doesn't have the proper permissions. Otherwise, it will
+	 * 		silently fail
+	 */
 	public async moveTo(
 		target: FileInterface,
-		member: MemberBase | null,
+		member: MemberBase,
 		errOnInvalidPermissions = false
 	) {
 		if (
@@ -394,22 +502,34 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			}
 		}
 
+		const [token1, token2] = await Promise.all([
+			this.getToken(member),
+			this.getToken(member)
+		]);
+
 		await this.fetch(
 			`/api/files/${this.parentID}/children/${this.id}`,
 			{
-				method: 'DELETE'
+				method: 'DELETE',
+				body: JSON.stringify({
+					token: token1
+				})
 			},
 			member
 		);
+
 		await this.fetch(
 			`/api/files/${target.id}/children`,
 			{
 				method: 'POST',
 				body: JSON.stringify({
-					id: this.id
+					id: this.id,
+					token: token2
 				})
 			},
 			member
 		);
+
+		this.parentID = target.id;
 	}
 }

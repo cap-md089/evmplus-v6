@@ -1,9 +1,18 @@
 import APIInterface from './APIInterface';
 import Account from './Account';
 
+/**
+ * A class to use to make changes to and read information from the database/server
+ */
 export default class Registry extends APIInterface<RegistryValues> implements RegistryValues {
+	/**
+	 * Gets the Registry values for an account
+	 * 
+	 * @param account The Account to get the registry for
+	 */
 	public static async Get(account: Account) {
 		let result;
+
 		try {
 			result = await account.fetch(`/api/registry`);
 		} catch (e) {
@@ -15,8 +24,14 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 		return new Registry(registry, account);
 	}
 
+	/**
+	 * Holds the Contact information in the Registry
+	 */
 	public Contact: WebsiteContact;
 
+	/**
+	 * Holds website information such as the name of the account
+	 */
 	public Website: WebsiteInformation;
 
 	public constructor(values: RegistryValues, account: Account) {

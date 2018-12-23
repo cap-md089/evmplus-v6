@@ -5,8 +5,18 @@ import Account from './Account';
 import { PointOfContactType } from '../enums';
 import { EchelonEventNumber } from '../../../lib';
 
+/**
+ * Represents an event for the squadron calendar
+ */
 export default class Event extends APIInterface<EventObject>
 	implements EventObject {
+	/**
+	 * Creates an event object for the event calendar of the specified calendar
+	 * 
+	 * @param obj The event details
+	 * @param member The event author
+	 * @param account The account the event belongs to
+	 */
 	public static async Create(
 		obj: NewEventObject,
 		member: MemberBase,
@@ -246,11 +256,16 @@ export default class Event extends APIInterface<EventObject>
 			body.member = memberToAdd;
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				`/api/event/${this.id}/attendance`,
 				{
-					body: JSON.stringify(body),
+					body: JSON.stringify({
+						...body,
+						token
+					}),
 					method: 'POST'
 				},
 				member
@@ -275,11 +290,16 @@ export default class Event extends APIInterface<EventObject>
 			}
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				`/api/event/${this.id}/attendance`,
 				{
-					body: JSON.stringify(memberToRemove),
+					body: JSON.stringify({
+						...memberToRemove,
+						token
+					}),
 					method: 'DELETE'
 				},
 				member
@@ -306,13 +326,16 @@ export default class Event extends APIInterface<EventObject>
 			}
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				`/api/event/${this.id}/attendance`,
 				{
 					body: JSON.stringify({
 						...record,
-						member: memberToModify
+						member: memberToModify,
+						token
 					}),
 					method: 'PUT'
 				},
@@ -334,11 +357,16 @@ export default class Event extends APIInterface<EventObject>
 			}
 		}
 
+		const token = await this.getToken(member);
+
 		try {
 			await this.fetch(
 				`/api/event/${this.id}`,
 				{
-					body: JSON.stringify(this.toRaw()),
+					body: JSON.stringify({
+						...this.toRaw(),
+						token
+					}),
 					method: 'PUT'
 				},
 				member

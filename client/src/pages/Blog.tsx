@@ -10,7 +10,7 @@ import {
 /// <reference path="../../../lib/index.d.ts" />
 import RequestForm from '../components/SimpleRequestForm';
 import myFetch from '../lib/myFetch';
-import { EditorState } from '../lib/slowEmptyEditorState';
+import { EditorState } from '../lib/slowEditorState';
 import './blog.css';
 import Page, { PageProps } from './Page';
 
@@ -37,7 +37,7 @@ interface BlogListState2 {
 class BlogList extends React.Component<
 	PageProps,
 	BlogListState1 | BlogListState2
-> {
+	> {
 	constructor(props: PageProps) {
 		super(props);
 		this.state = {
@@ -83,25 +83,25 @@ class BlogList extends React.Component<
 		return this.state.posts.length === 0 ? (
 			<h1>No blog posts</h1>
 		) : (
-			<div>
-				{this.state.posts.map((post, i) => {
-					return (
-						<div key={i} className="blog-post">
-							<Link to={'/blog/view/' + post.id}>
-								<h1>{post.title}</h1>
-							</Link>
-							<Editor
-								editorState={draft.EditorState.createWithContent(
-									draft.convertFromRaw(post.content)
-								)}
-								readOnly={true}
-								onChange={() => null}
-							/>
-						</div>
-					);
-				})}
-			</div>
-		);
+				<div>
+					{this.state.posts.map((post, i) => {
+						return (
+							<div key={i} className="blog-post">
+								<Link to={'/blog/view/' + post.id}>
+									<h1>{post.title}</h1>
+								</Link>
+								<Editor
+									editorState={draft.EditorState.createWithContent(
+										draft.convertFromRaw(post.content)
+									)}
+									readOnly={true}
+									onChange={() => null}
+								/>
+							</div>
+						);
+					})}
+				</div>
+			);
 	}
 }
 
@@ -124,7 +124,7 @@ interface ReadyBlogPostCreate {
 class BlogPostCreate extends React.Component<
 	PageProps<any>,
 	ReadyBlogPostCreate | BlogPostCreateNotReady
-> {
+	> {
 	public state: ReadyBlogPostCreate | BlogPostCreateNotReady = {
 		loaded: false,
 		draft: null,
@@ -160,7 +160,7 @@ class BlogPostCreate extends React.Component<
 				fileIDs: string[];
 			},
 			BlogPostObject
-		>;
+			>;
 
 		const { draft, content, title, fileIDs } = this.state;
 
@@ -219,17 +219,19 @@ class BlogPostCreate extends React.Component<
 	}
 }
 
-class BlogEdit extends React.Component<PageProps> {}
+class BlogEdit extends React.Component<PageProps> { }
 
 interface ReadyBlogView {
 	loaded: true;
 	draft: typeof import('draft-js');
+	editorState: EditorState;
 	post: BlogPostObject;
 }
 
 interface UnreadyBlogView {
 	loaded: false;
 	draft: null;
+	editorState: null;
 	post: null;
 }
 
@@ -238,10 +240,11 @@ class BlogView extends React.Component<
 		id: string;
 	}>,
 	UnreadyBlogView | ReadyBlogView
-> {
+	> {
 	public state: UnreadyBlogView | ReadyBlogView = {
 		post: null,
 		draft: null,
+		editorState: null,
 		loaded: false
 	};
 	constructor(
@@ -252,10 +255,18 @@ class BlogView extends React.Component<
 		super(props);
 	}
 
-	public componentDidMount() {
-		myFetch('/api/blog/post/' + this.props.routeProps.match.params.id)
-			.then(val => val.json())
-			.then((post: BlogPostObject) => this.setState({ post }));
+	public async componentDidMount() {
+		const [post, draft] = await Promise.all([
+			myFetch('/api/blog/post/' + this.props.routeProps.match.params.id)
+				.then(res => res.json()),
+			import('draft-js')
+		])
+
+		this.setState({
+			loaded: true,
+			post,
+			editorState: draft.EditorState.createWithContent(draft.convertFromRaw(post))
+		});
 	}
 
 	public render() {
@@ -269,9 +280,7 @@ class BlogView extends React.Component<
 			<div>
 				<h1>{post.title}</h1>
 				<draft.Editor
-					editorState={EditorState.createWithContent(
-						draft.convertFromRaw(post.content)
-					)}
+					editorState={this.state.editorState}
 					onChange={() => null}
 					readOnly={true}
 				/>

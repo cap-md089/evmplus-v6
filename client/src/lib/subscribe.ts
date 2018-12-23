@@ -1,3 +1,6 @@
+/**
+ * Basic event emitter
+ */
 export default class Subscribe<E> {
 	private subscribers: Array<((event: E) => void)> = [];
 

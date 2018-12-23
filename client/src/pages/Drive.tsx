@@ -1,22 +1,18 @@
 import * as $ from 'jquery';
 import * as React from 'react';
-import MemberBase from 'src/lib/Members';
-import Button from '../components/Button';
-import { Label, TextInput } from '../components/Form';
-import BigTextBox from '../components/form-inputs/BigTextBox';
+
+import ExtraFileDisplay from '../components/DriveExtraFileDisplay';
+import ExtraFolderDisplay from '../components/DriveExtraFolderDisplay';
+import DriveFileDisplay from '../components/DriveFileDisplay';
+import DriveFolderDisplay from '../components/DriveFolderDisplay';
+import FileUploader from '../components/FileUploader';
+import { TextInput } from '../components/Form';
 import Loader from '../components/Loader';
 import RequestForm from '../components/RequestForm';
-import SimpleRequestForm from '../components/SimpleRequestForm';
-import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType,
-	MemberCreateError
-} from '../enums';
-import myFetch from '../lib/myFetch';
-import urlFormat from '../lib/urlFormat';
+import FileInterface from '../lib/File';
+
 import './Drive.css';
 import { PageProps } from './Page';
-import FileInterface from '../lib/File';
 
 enum ErrorReason {
 	NONE,
@@ -26,716 +22,27 @@ enum ErrorReason {
 	UNKNOWN
 }
 
-interface DriveState {
-	files: null | FileInterface[];
-	currentlySelected: string;
+interface UnloadedDriveState {
+	files: null;
+	currentlySelected: '';
 	newFoldername: string;
-	currentFolder: null | FileInterface;
+	currentFolder: null;
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: ErrorReason;
 }
 
-interface FileDisplayProps {
-	file: FileObject;
-	onSelect: (file: FileObject) => void;
-	selected: boolean;
-	member: MemberBase | null;
+interface LoadedDriveState {
+	files: FileInterface[];
+	currentlySelected: string;
+	newFoldername: string;
+	currentFolder: FileInterface;
+	showingExtraInfo: boolean;
+	error: boolean;
+	errorReason: ErrorReason;
 }
 
-const memberHasPermission = (
-	file: FileObject,
-	member: MemberBase | null,
-	permission: FileUserAccessControlPermissions
-): boolean => {
-	let valid = false;
-
-	const otherItems = file.permissions.filter(
-		i => i.type === FileUserAccessControlType.OTHER
-	);
-
-	otherItems.forEach(item => {
-		// tslint:disable-next-line:no-bitwise
-		if ((item.permission & permission) > 0) {
-			valid = true;
-		}
-	});
-
-	if (!member || valid) {
-		return valid;
-	}
-
-	if (member.permissions.FileManagement > 0) {
-		return true;
-	}
-
-	const signedInItems = file.permissions.filter(
-		i =>
-			i.type === FileUserAccessControlType.SIGNEDIN ||
-			i.type === FileUserAccessControlType.USER
-	);
-
-	signedInItems.forEach(item => {
-		if (
-			item.type === FileUserAccessControlType.USER &&
-			item.reference.type === member.type
-		) {
-			if (member.id === item.reference.id) {
-				// tslint:disable-next-line:no-bitwise
-				valid = valid || (permission & item.permission) > 0;
-			}
-		} else {
-			// tslint:disable-next-line:no-bitwise
-			valid = valid || (permission & item.permission) > 0;
-		}
-	});
-
-	if (valid) {
-		return valid;
-	}
-
-	const teamItems = file.permissions.filter(
-		i => i.type === FileUserAccessControlType.TEAM
-	);
-
-	for (const item of teamItems) {
-		let valid2 = false;
-		for (const id of member.teamIDs) {
-			if ((item as FileTeamControlList).teamID === id) {
-				// tslint:disable-next-line:no-bitwise
-				valid2 = valid2 || (permission & item.permission) > 0;
-			}
-			if (valid2) {
-				break;
-			}
-		}
-		valid = valid || valid2;
-		if (valid) {
-			break;
-		}
-	}
-
-	return valid;
-};
-
-class FolderDisplay extends React.Component<
-	FileDisplayProps & { refresh: () => void },
-	{ hovering: boolean }
-> {
-	public state = {
-		hovering: false
-	};
-
-	constructor(props: FileDisplayProps & { refresh: () => void }) {
-		super(props);
-
-		this.handleDrop = this.handleDrop.bind(this);
-		this.handleOff = this.handleOff.bind(this);
-		this.handleOver = this.handleOver.bind(this);
-		this.handleDragStart = this.handleDragStart.bind(this);
-	}
-
-	public render() {
-		return memberHasPermission(
-			this.props.file,
-			this.props.member,
-			FileUserAccessControlPermissions.WRITE
-		) ? (
-			<div
-				className={`drive-folder-display ${
-					this.props.selected ? 'selected' : ''
-				} ${this.state.hovering ? 'hovering' : ''}`}
-				onClick={() => this.props.onSelect(this.props.file)}
-				onDragOver={this.handleOver}
-				onDragEnd={this.handleOff}
-				onDragLeave={this.handleOff}
-				onDragEnter={this.handleOver}
-				onDrop={this.handleDrop}
-				draggable={true}
-				onDragStart={this.handleDragStart}
-			>
-				{this.props.file.fileName}
-			</div>
-		) : (
-			<div
-				className={`drive-folder-display ${
-					this.props.selected ? 'selected' : ''
-				}`}
-				onClick={() => this.props.onSelect(this.props.file)}
-				draggable={true}
-				onDragStart={this.handleDragStart}
-			>
-				{this.props.file.fileName}
-			</div>
-		);
-	}
-
-	private handleOver(e: React.DragEvent<HTMLDivElement>) {
-		e.stopPropagation();
-		e.preventDefault();
-
-		this.setState({
-			hovering: true
-		});
-	}
-
-	private handleOff() {
-		this.setState({
-			hovering: false
-		});
-	}
-
-	private async handleDrop(e: React.DragEvent<HTMLDivElement>) {
-		e.preventDefault();
-		e.stopPropagation();
-
-		const id = e.dataTransfer.getData('text');
-
-		if (id === this.props.file.parentID) {
-			return;
-		}
-
-		if (
-			!id.match(
-				/^(.){1,15}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-			)
-		) {
-			return;
-		}
-
-		await Promise.all([
-			myFetch(
-				urlFormat('api', 'files', this.props.file.id, 'children', id),
-				{
-					method: 'DELETE',
-					headers: {
-						authorization: this.props.member
-							? this.props.member.sessionID
-							: ''
-					}
-				}
-			),
-
-			myFetch(urlFormat('api', 'files', this.props.file.id, 'children'), {
-				method: 'POST',
-				headers: {
-					authorization: this.props.member
-						? this.props.member.sessionID
-						: '',
-					'content-type': 'application/json'
-				},
-				body: JSON.stringify({
-					id
-				})
-			})
-		]);
-
-		this.props.refresh();
-	}
-
-	private handleDragStart(e: React.DragEvent<HTMLDivElement>) {
-		e.dataTransfer.setData('text', this.props.file.id);
-	}
-}
-
-const FileDisplay = (props: FileDisplayProps) => (
-	<div
-		className={`drive-file-display ${props.selected ? 'selected' : ''}`}
-		onClick={() => props.onSelect(props.file)}
-		draggable={true}
-		onDragStart={e => {
-			e.dataTransfer.setData('text', props.file.id);
-		}}
-	>
-		<div className="display-image">
-			{!!props.file.contentType.match(/image\//) ? (
-				<div
-					style={{
-						backgroundImage:
-							'url(' +
-							urlFormat('api', 'files', props.file.id, 'export') +
-							')'
-					}}
-				/>
-			) : null}
-		</div>
-		<div className="info-display">
-			{props.file.fileName} (
-			<a href={`/api/files/${props.file.id}/export`}>Download</a>)
-		</div>
-	</div>
-);
-
-interface ExtraDisplayProps {
-	file: FileObject;
-	member: MemberBase | null;
-	childRef: React.RefObject<HTMLDivElement>;
-	fileDelete: (file: FileObject) => void;
-	fileModify: (file: FileObject) => void;
-}
-
-interface CommentsForm {
-	comments: string;
-}
-
-class ExtraFolderDisplay extends React.Component<
-	ExtraDisplayProps & { currentFolderID: string },
-	CommentsForm
-> {
-	public static getDerivedStateFromProps(props: ExtraDisplayProps) {
-		return {
-			comments: props.file.comments
-		};
-	}
-
-	public state = {
-		comments: this.props.file.comments
-	};
-
-	constructor(props: ExtraDisplayProps & { currentFolderID: string }) {
-		super(props);
-
-		this.onFormChange = this.onFormChange.bind(this);
-
-		this.saveFilesFirst = this.saveFilesFirst.bind(this);
-	}
-
-	public render() {
-		const FileChangeForm = SimpleRequestForm as new () => SimpleRequestForm<
-			CommentsForm,
-			null
-		>;
-
-		return (
-			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{memberHasPermission(
-					this.props.file,
-					this.props.member,
-					FileUserAccessControlPermissions.DELETE
-				) ? (
-					<>
-						<Button
-							buttonType="none"
-							url={'/api/files/' + this.props.file.id}
-							method="DELETE"
-							onReceiveData={() => {
-								if (this.props.fileDelete) {
-									this.props.fileDelete(this.props.file);
-								}
-							}}
-							onClick={this.saveFilesFirst}
-							parseReturn={false}
-						>
-							Delete file
-						</Button>
-						<br />
-						<br />
-					</>
-				) : null}
-				<h3>Comments:</h3>
-				{memberHasPermission(
-					this.props.file,
-					this.props.member,
-					// tslint:disable-next-line:no-bitwise
-					FileUserAccessControlPermissions.COMMENT |
-						FileUserAccessControlPermissions.MODIFY
-				) ? (
-					<FileChangeForm
-						id=""
-						method="PUT"
-						url={'/api/files/' + this.props.file.id}
-						onReceiveData={() => {
-							if (this.props.fileModify) {
-								this.props.fileModify(this.props.file);
-							}
-						}}
-						values={{ comments: this.props.file.comments }}
-						onChange={this.onFormChange}
-						showSubmitButton={true}
-					>
-						<Label>Comments</Label>
-						<BigTextBox name="comments" />
-					</FileChangeForm>
-				) : (
-					this.props.file.comments
-				)}
-			</div>
-		);
-	}
-
-	private onFormChange(formState: CommentsForm) {
-		this.props.file.comments = formState.comments;
-		this.props.fileModify(this.props.file);
-	}
-
-	private async saveFilesFirst() {
-		const promises = [];
-
-		for (const id of this.props.file.fileChildren) {
-			promises.push(
-				myFetch(
-					urlFormat(
-						'api',
-						'files',
-						this.props.currentFolderID,
-						'children'
-					),
-					{
-						method: 'POST',
-						headers: {
-							authorization: this.props.member
-								? this.props.member.sessionID
-								: '',
-							'content-type': 'application/json'
-						},
-						body: JSON.stringify({
-							id
-						})
-					}
-				)
-			);
-		}
-
-		await Promise.all(promises);
-	}
-}
-
-class ExtraFileDisplay extends React.Component<
-	ExtraDisplayProps,
-	CommentsForm
-> {
-	public state = {
-		comments: this.props.file.comments
-	};
-
-	constructor(props: ExtraDisplayProps) {
-		super(props);
-
-		this.onFormChange = this.onFormChange.bind(this);
-	}
-
-	public render() {
-		const FileChangeForm = SimpleRequestForm as new () => SimpleRequestForm<
-			CommentsForm,
-			null
-		>;
-
-		return (
-			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{memberHasPermission(
-					this.props.file,
-					this.props.member,
-					FileUserAccessControlPermissions.DELETE
-				) ? (
-					<>
-						<Button
-							buttonType="none"
-							url={'/api/files/' + this.props.file.id}
-							method="DELETE"
-							onReceiveData={() => {
-								if (this.props.fileDelete) {
-									this.props.fileDelete(this.props.file);
-								}
-							}}
-							parseReturn={false}
-						>
-							Delete file
-						</Button>
-						<br />
-						<br />
-					</>
-				) : null}
-				<h3>Comments:</h3>
-				{memberHasPermission(
-					this.props.file,
-					this.props.member,
-					// tslint:disable-next-line:no-bitwise
-					FileUserAccessControlPermissions.COMMENT |
-						FileUserAccessControlPermissions.MODIFY
-				) ? (
-					<FileChangeForm
-						id=""
-						method="PUT"
-						url={'/api/files/' + this.props.file.id}
-						onReceiveData={() => {
-							if (this.props.fileModify) {
-								this.props.fileModify(this.props.file);
-							}
-						}}
-						values={{ comments: this.props.file.comments }}
-						onChange={this.onFormChange}
-						showSubmitButton={true}
-					>
-						<Label>Comments</Label>
-						<BigTextBox name="comments" />
-					</FileChangeForm>
-				) : (
-					this.props.file.comments
-				)}
-			</div>
-		);
-	}
-
-	private onFormChange(formState: CommentsForm) {
-		this.props.file.comments = formState.comments;
-		this.props.fileModify(this.props.file);
-	}
-}
-
-interface FileUploaderProps {
-	onFileUpload: (file: FileObject) => void;
-	currentFolderID: string;
-}
-
-interface FileUploaderState {
-	files: File[];
-	hovering: boolean;
-	progress: number;
-	doneWithCurrentFile: boolean;
-	error: ErrorReason;
-}
-
-class FileUploader extends React.Component<
-	FileUploaderProps,
-	FileUploaderState
-> {
-	public state: FileUploaderState = {
-		files: [],
-		hovering: false,
-		progress: 0,
-		doneWithCurrentFile: true,
-		error: ErrorReason.NONE
-	};
-
-	constructor(props: FileUploaderProps) {
-		super(props);
-		this.onDragOver = this.onDragOver.bind(this);
-		this.onDragOff = this.onDragOff.bind(this);
-		this.onDrop = this.onDrop.bind(this);
-
-		this.handleSelectChange = this.handleSelectChange.bind(this);
-	}
-
-	public componentDidUpdate() {
-		// Don't start uploading if it is currently uploading the first file
-		// This may seem like it will never execute with the next statement
-		// (files.length > 0 || files.length === 0, fail) BUT they work because
-		// the first part only fails if the program is currently uploading a file
-		if (!this.state.doneWithCurrentFile && this.state.files.length > 0) {
-			return;
-		}
-
-		// Don't try to upload if there aren't files to upload
-		if (this.state.files.length === 0) {
-			return;
-		}
-
-		const fd = new FormData();
-		fd.append('file', this.state.files[0], this.state.files[0].name);
-
-		const xhr = new XMLHttpRequest();
-		xhr.open('POST', urlFormat('api', 'files', 'upload'));
-
-		const sid = localStorage.getItem('sessionID');
-
-		if (!sid) {
-			// @TODO: Create error message. This dialogue should not show up in a
-			// well designed program anyway
-			return;
-		}
-
-		xhr.setRequestHeader('authorization', sid);
-
-		xhr.upload.addEventListener('progress', ev => {
-			if (ev.lengthComputable) {
-				this.setState({
-					progress: ev.loaded / ev.total
-				});
-			}
-		});
-
-		xhr.upload.addEventListener('loadend', () => {
-			this.setState({
-				progress: 1
-			});
-		});
-
-		const self = this;
-		xhr.addEventListener('readystatechange', function(evt) {
-			if (this.readyState === 4) {
-				if (this.status === 403) {
-					self.setState({
-						error: ErrorReason.ERR403
-					});
-					return;
-				}
-				if (this.status === 500) {
-					self.setState({
-						error: ErrorReason.ERR500
-					});
-					return;
-				}
-				const resp = JSON.parse(this.responseText) as FileObject;
-				myFetch(
-					urlFormat(
-						'api',
-						'files',
-						self.props.currentFolderID,
-						'children'
-					),
-					{
-						method: 'POST',
-						body: JSON.stringify({
-							id: resp.id
-						}),
-						headers: {
-							authorization: sid,
-							'content-type': 'application/json'
-						},
-						cache: 'no-cache'
-					}
-				);
-				self.props.onFileUpload(resp);
-				self.setState(prev => ({
-					files: prev.files.slice(1),
-					doneWithCurrentFile: true,
-					progress: 0
-				}));
-			}
-		});
-
-		xhr.send(fd);
-
-		this.setState({
-			doneWithCurrentFile: false
-		});
-	}
-
-	public render() {
-		if (this.state.error !== ErrorReason.NONE) {
-			switch (this.state.error) {
-				case ErrorReason.ERR403:
-					return (
-						<div>
-							You were signed out while trying to upload files
-						</div>
-					);
-				case ErrorReason.ERR500:
-					return <div>There was an error while uploading files</div>;
-			}
-		}
-
-		return (
-			<div
-				onDrop={this.onDrop}
-				onDragEnd={this.onDragOff}
-				onDragExit={this.onDragOff}
-				onDragLeave={this.onDragOff}
-				onDragOver={this.onDragOver}
-				onDragEnter={this.onDragOver}
-				style={{
-					backgroundColor: this.state.hovering ? '#b4d1ff' : '#fff',
-					borderColor: this.state.hovering ? '#3079ed' : '#999',
-					borderWidth: 2,
-					borderStyle: 'dashed',
-					padding: 30,
-					boxSizing: 'border-box',
-					margin: 5
-				}}
-			>
-				<div
-					style={{
-						margin: '0px auto',
-						overflow: 'auto',
-						textAlign: 'center',
-						clear: 'both'
-					}}
-				>
-					Drag here to upload
-					<br />
-					or
-					<br />
-					<label
-						htmlFor="driveFileUpload"
-						className="primaryButton"
-						style={{
-							display: 'inline-block',
-							margin: '2px auto'
-						}}
-					>
-						Select files to upload
-					</label>
-					<input
-						id="driveFileUpload"
-						type="file"
-						multiple={true}
-						style={{
-							width: 0.1,
-							height: 0.1,
-							opacity: 0,
-							overflow: 'hidden',
-							position: 'fixed',
-							left: -20,
-							zIndex: -1
-						}}
-						onChange={this.handleSelectChange}
-					/>
-				</div>
-			</div>
-		);
-	}
-
-	private onDragOver(e: React.DragEvent<HTMLDivElement>) {
-		e.preventDefault();
-		this.setState({
-			hovering: true
-		});
-	}
-
-	private onDragOff() {
-		this.setState({
-			hovering: false
-		});
-	}
-
-	private onDrop(ev: React.DragEvent<HTMLDivElement>) {
-		ev.preventDefault();
-		ev.stopPropagation();
-
-		const dataTransfer = ev.dataTransfer;
-
-		if (dataTransfer.files) {
-			this.setState(prev => ({
-				files: [...prev.files, ...Array.from(dataTransfer.files)]
-			}));
-		} else if (dataTransfer.items) {
-			this.setState(prev => ({
-				files: [
-					...prev.files,
-					...(Array.from(dataTransfer.items, item =>
-						item.getAsFile()
-					).filter(f => f !== null) as File[])
-				]
-			}));
-		}
-
-		this.setState({
-			hovering: false
-		});
-	}
-
-	private handleSelectChange(ev: React.FormEvent<HTMLInputElement>) {
-		const files = ev.currentTarget.files;
-
-		if (files === null || typeof files === 'undefined') {
-			return;
-		}
-
-		this.setState(prev => ({
-			files: [...prev.files, ...Array.from(files)]
-		}));
-	}
-}
+type DriveState = UnloadedDriveState | LoadedDriveState;
 
 export default class Drive extends React.Component<PageProps, DriveState> {
 	public state: DriveState = {
@@ -817,7 +124,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 			}
 		}
 
-		if (this.state.files === null) {
+		if (this.state.files === null || this.state.currentFolder === null) {
 			return <Loader />;
 		}
 
@@ -826,7 +133,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		const folders = this.state.files.filter(
 			file => file.contentType === 'application/folder'
 		);
-		const rowedFolders: FileObject[][] = [];
+		const rowedFolders: FileInterface[][] = [];
 		folders.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
 			if (rowedFolders[realIndex] === undefined) {
@@ -839,7 +146,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		const files = this.state.files.filter(
 			file => file.contentType !== 'application/folder'
 		);
-		const rowedFiles: FileObject[][] = [];
+		const rowedFiles: FileInterface[][] = [];
 		files.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
 			if (rowedFiles[realIndex] === undefined) {
@@ -883,33 +190,33 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		const NewFolderRequestForm = RequestForm as new () => RequestForm<
 			{ name: string },
 			{ id: string }
-		>;
+			>;
 
 		return (
 			<div>
 				{this.props.member &&
-				this.props.member.permissions.FileManagement === 1 ? (
-					<div>
-						<NewFolderRequestForm
-							id=""
-							url="/api/files/create"
-							values={{
-								name: this.state.newFoldername
-							}}
-							onChange={this.updateNewFolderForm}
-							rowClassName="drive-newfoldername-row"
-							onReceiveData={this.receiveData}
-						>
-							<TextInput name="name" />
-						</NewFolderRequestForm>
-					</div>
-				) : null}
+					this.props.member.permissions.FileManagement === 1 ? (
+						<div>
+							<NewFolderRequestForm
+								id=""
+								url="/api/files/create"
+								values={{
+									name: this.state.newFoldername
+								}}
+								onChange={this.updateNewFolderForm}
+								rowClassName="drive-newfoldername-row"
+								onReceiveData={this.receiveData}
+							>
+								<TextInput name="name" />
+							</NewFolderRequestForm>
+						</div>
+					) : null}
 				<div className="drive-folders">
 					{rowedFolders.map((folderList, i) => (
 						<React.Fragment key={i}>
 							<div className="drive-folder-row">
 								{folderList.map((f, j) => (
-									<FolderDisplay
+									<DriveFolderDisplay
 										key={j}
 										file={f}
 										onSelect={this.onFolderClick}
@@ -940,11 +247,10 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 				{this.props.member ? (
 					<FileUploader
 						onFileUpload={this.addFile}
-						currentFolderID={
-							this.state.currentFolder
-								? this.state.currentFolder.id
-								: 'root'
-						}
+						member={this.props.member}
+						account={this.props.account}
+						currentFolder={this.state.currentFolder!}
+						display={true}
 					/>
 				) : null}
 				<div className="drive-files">
@@ -952,7 +258,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 						<React.Fragment key={i}>
 							<div className="drive-file-row">
 								{fileList.map((f, j) => (
-									<FileDisplay
+									<DriveFileDisplay
 										key={j}
 										file={f}
 										onSelect={this.onFileClick}
@@ -999,13 +305,13 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		this.setState(prev =>
 			prev.currentlySelected === file.id
 				? {
-						currentlySelected: '',
-						showingExtraInfo: true
-				  }
+					currentlySelected: '',
+					showingExtraInfo: true
+				}
 				: {
-						currentlySelected: file.id,
-						showingExtraInfo: false
-				  }
+					currentlySelected: file.id,
+					showingExtraInfo: false
+				}
 		);
 	}
 
@@ -1016,7 +322,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 	}
 
 	private async receiveData({ id }: { id: string }) {
-		if (this.state.currentFolder) {
+		if (this.state.currentFolder && this.props.member) {
 			await this.state.currentFolder.addChild(this.props.member, id);
 
 			this.goToFolder(id, true);
@@ -1060,24 +366,18 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 					err.status === 403
 						? ErrorReason.ERR403
 						: err.status === 404
-						? ErrorReason.ERR404
-						: err.status === 500
-						? ErrorReason.ERR500
-						: ErrorReason.UNKNOWN
+							? ErrorReason.ERR404
+							: err.status === 500
+								? ErrorReason.ERR500
+								: ErrorReason.UNKNOWN
 			});
 		}
 	}
 
 	private addFile(file: FileObject) {
-		// @ts-ignore
 		const fileObject: FullFileObject = {
 			...file,
-			uploader: {
-				error: MemberCreateError.NONE,
-				sessionID: this.props.member!.sessionID,
-				member: this.props.member!.toRaw(),
-				valid: true
-			}
+			uploader: this.props.member!.toRaw()
 		};
 
 		this.setState(prev => ({

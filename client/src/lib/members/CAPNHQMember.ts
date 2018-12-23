@@ -1,7 +1,10 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
 
-export default class CAPMember extends MemberBase implements CAPMemberObject {
+/**
+ * A class to represent the members that sign in to CAPNHQ.gov
+ */
+export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	/**
 	 * This class uses 6 digit CAP IDs
 	 */
@@ -26,9 +29,24 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 	 * The flight for a member, if a cadet
 	 */
 	public flight: string;
+	/**
+	 * Filler value
+	 */
+	public cookie: string = '';
 
-	public type: CAPMemberType = 'CAPNHQMember';
+	/**
+	 * Descriminator
+	 */
+	public type: 'CAPNHQMember' = 'CAPNHQMember';
 
+	/**
+	 * A basic member that holds information that this site doesn't manage
+	 * 
+	 * @param data The full member object
+	 * @param requestingAccount The account that is used to create this member,
+	 * 		not the account the member is a part of!
+	 * @param sessionID The session ID for this member
+	 */
 	public constructor(
 		data: CAPMemberObject,
 		requestingAccount: Account,
@@ -37,12 +55,19 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 		super(data, requestingAccount, sessionID);
 	}
 
+	/**
+	 * Returns the reference for the current member,
+	 * as they are cheaper to move around then full member objects
+	 */
 	public getReference = (): MemberReference => ({
 		id: this.id,
 		type: 'CAPNHQMember'
 	});
 
-	public toRaw(): CAPMemberObject {
+	/**
+	 * Converts the member to a full data transfer object
+	 */
+	public toRaw(): NHQMemberObject {
 		return {
 			contact: this.contact,
 			dutyPositions: this.dutyPositions,
@@ -59,7 +84,9 @@ export default class CAPMember extends MemberBase implements CAPMemberObject {
 			squadron: this.squadron,
 			teamIDs: this.teamIDs,
 			type: 'CAPNHQMember',
-			usrID: this.usrID
+			usrID: this.usrID,
+			cookie: '',
+			sessionID: this.sessionID
 		};
 	}
 }

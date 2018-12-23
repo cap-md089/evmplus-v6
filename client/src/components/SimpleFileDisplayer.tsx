@@ -1,7 +1,7 @@
 import { ItemProps } from './FileDialogue';
 import * as React from 'react';
 
-export class FileDisplayer extends React.Component<ItemProps> {
+export class SimpleFileDisplayer extends React.Component<ItemProps> {
 	constructor(props: ItemProps) {
 		super(props);
 	}

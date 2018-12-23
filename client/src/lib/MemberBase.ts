@@ -4,6 +4,12 @@ import Team from './Team';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
 	implements MemberObject {
+	/**
+	 * Checks that two member references point to the same person
+	 * 
+	 * @param ref1 The first member reference
+	 * @param ref2 The second memeber reference
+	 */
 	public static AreMemberReferencesTheSame(
 		ref1: MemberReference,
 		ref2: MemberReference
@@ -12,6 +18,11 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 			? false
 			: ref1.id === ref2.id;
 	}
+
+	/**
+	 * Whether or not members marked isRioux are super admins
+	 */
+	private static readonly useRiouxPermission = false;
 
 	/**
 	 * User ID
@@ -89,6 +100,16 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public abstract type: MemberType;
 
+	/**
+	 * Initializes the fields for a member object
+	 * 
+	 * TODO: Don't use Object#assign()
+	 * 
+	 * @param data The member object that this member represents
+	 * @param requestingAccount The account that is used to get this member,
+	 * 		not the account the member belongs to!
+	 * @param sessionID The session ID for the member
+	 */
 	public constructor(
 		data: MemberObject,
 		protected requestingAccount: Account,
@@ -99,10 +120,18 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		Object.assign(this, data);
 	}
 
+	/**
+	 * Similar to MemberBase#AreMemberReferencesTheSame
+	 * 
+	 * @param ref The reference to check
+	 */
 	public matchesReference(ref: MemberReference): boolean {
 		return ref.type === this.type && ref.id === this.id;
 	}
 
+	/**
+	 * Gets the teams the member is a part of
+	 */
 	public async getTeams(): Promise<Team[]> {
 		const responses = await Promise.all(
 			this.teamIDs.map(teamID =>
@@ -113,25 +142,57 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		return responses;
 	}
 
+	/**
+	 * Convenient function for getting the name of a person
+	 * 
+	 * It used to try to standardize the input, but it does not do as much anymore
+	 * Names are stupidly inconsistent...
+	 */
 	public getName = (): string =>
 		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
+			.map(value => value.trimLeft().trimRight())
+			.map(value => value.replace(/\r\n/gm, ''))
+			.map(value => value.replace(/(  +)/g, ' '))
+			.map((value, i) => (i === 1 ? value.charAt(0) : value))
 			.filter(s => !!s)
 			.join(' ');
 
+	/**
+	 * Checks if the user has permission to do what is requested
+	 * 
+	 * Allows for a threshold to be given, but most permissions are boolean
+	 * However, there are some permissions with multiple levels
+	 * 
+	 * Also checks for if the member is marked isRioux, allowing for super
+	 * admins
+	 */
 	public hasPermission = (
 		permission: MemberPermission | MemberPermission[],
 		threshold = 1
 	): boolean =>
-		typeof permission === 'string'
-			? this.permissions[permission] >= threshold
-			: permission
+		(MemberBase.useRiouxPermission && this.isRioux)
+			? true
+			: typeof permission === 'string'
+				? this.permissions[permission] >= threshold
+				: permission
 					.map(perm => this.hasPermission(perm, threshold))
 					.reduce((a, b) => a || b, false);
 
+	/**
+	 * Checks if the member matches without using the == operator, as that
+	 * checks JavaScript references vs. Member references
+	 * 
+	 * @param mem The member to check
+	 */
 	public is(mem: MemberBase) {
 		return this.matchesReference(mem.getReference());
 	}
 
+	/**
+	 * Returns the best email for the member
+	 * 
+	 * There is an order of priority and email vs parent emails
+	 */
 	public getBestEmail = () =>
 		this.contact.EMAIL.PRIMARY ||
 		this.contact.CADETPARENTEMAIL.PRIMARY ||
@@ -140,6 +201,11 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		this.contact.EMAIL.EMERGENCY ||
 		this.contact.CADETPARENTEMAIL.EMERGENCY;
 
+	/**
+	 * Returns the best phone number for the member
+	 * 
+	 * There is an order of priority and email vs parent emails
+	 */
 	public getBestPhone = () =>
 		this.contact.CELLPHONE.PRIMARY ||
 		this.contact.CADETPARENTPHONE.PRIMARY ||

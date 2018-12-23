@@ -8,7 +8,7 @@ import Dialogue, {
 	DialogueWithOKCancel
 } from './Dialogue';
 import './FileDialogue.css';
-import { FileDisplayer } from './FileDisplayer';
+import { SimpleFileDisplayer } from './SimpleFileDisplayer';
 import FileUploader from './FileUploader';
 import { FolderDisplayer } from './FolderDisplayer';
 import Loader from './Loader';
@@ -270,7 +270,7 @@ export default class FileDialogue extends React.Component<
 										: () => true
 								)
 								.map((file, i) => (
-									<FileDisplayer
+									<SimpleFileDisplayer
 										{...file}
 										key={i}
 										onClick={this.onFileClick}

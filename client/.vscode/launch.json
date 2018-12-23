@@ -16,7 +16,17 @@
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/src",
 			"linux": {
-				"runtimeExecutable": "/usr/bin/chromium-browser"
+				"runtimeExecutable": "/usr/bin/chromium"
+			}
+		},
+		{
+			"type": "firefox",
+			"request": "launch",
+			"name": "Launch Firefox",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/src",
+			"linux": {
+				"runtimeExecutable": "/usr/bin/firefox"
 			}
 		}
 	]

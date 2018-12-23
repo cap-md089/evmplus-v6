@@ -4,7 +4,7 @@ import * as React from 'react';
 import Button from '../components/Button';
 import SigninLink from '../components/SigninLink';
 import Form, { Checkbox, DateTimeInput, FileInput, FormBlock, Label, LoadingTextArea, MultCheckbox, MultiRange, NumberInput, RadioButton, Selector, TextInput, Title } from '../components/SimpleForm';
-import slowEmptyEditorState from '../lib/slowEmptyEditorState';
+import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
 
 enum Test1 {
@@ -66,8 +66,10 @@ export default class Test extends Page<
 
 	public componentDidMount() {
 		slowEmptyEditorState().then(test14 => {
-			this.setState({ test14 });
+			this.setState({ test14: test14.state });
 		});
+
+		JSON.parse('not good');
 	}
 
 	public render() {
@@ -107,7 +109,7 @@ export default class Test extends Page<
 						this.setState(data);
 					}}
 				>
-					<LoadingTextArea name="test14" value={this.state.test14} />
+					<LoadingTextArea name="test14" value={this.state.test14} account={this.props.account} />
 					<Label>Time input</Label>
 					<DateTimeInput
 						name="test8"
@@ -145,7 +147,7 @@ export default class Test extends Page<
 					<TextInput name="test2" value={this.state.test2} />
 					<TextInput name="test3" value={this.state.test3} />
 					<Label>File label</Label>
-					<FileInput name="test4" value={this.state.test4} />
+					<FileInput name="test4" value={this.state.test4} account={this.props.account} />
 					<TextInput
 						name="test6"
 						fullWidth={true}

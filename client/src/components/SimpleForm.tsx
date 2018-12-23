@@ -491,5 +491,6 @@ export {
 	NumberInput,
 	Selector,
 	LoadingTextArea,
-	DisabledMappedText
+	DisabledMappedText,
+	BigTextBox
 };

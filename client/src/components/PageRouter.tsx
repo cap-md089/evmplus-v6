@@ -16,78 +16,79 @@ import RackBuilder from '../pages/RibbonRack';
 import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
 import { SideNavigationItem } from './SideNavigation';
+import ErrorHandler from './ErrorHandler';
 
 const pages: Array<{
 	url: string;
 	component: typeof Page;
 	exact: boolean;
 }> = [
-	{
-		url: '/',
-		component: Main,
-		exact: true
-	},
-	{
-		url: '/test',
-		component: Test,
-		exact: false
-	},
-	{
-		url: '/blog',
-		component: Blog,
-		exact: false
-	},
-	{
-		url: '/news',
-		component: Blog,
-		exact: false
-	},
-	{
-		url: '/rack',
-		component: RackBuilder,
-		exact: false
-	},
-	{
-		url: '/eventform',
-		component: AddEvent,
-		exact: true
-	},
-	{
-		url: '/eventviewer/:id',
-		component: EventViewer,
-		exact: false
-	},
-	{
-		url: '/eventlinklist',
-		component: LinkList,
-		exact: false
-	},
-	{
-		url: '/eventform/:id',
-		component: ModifyEvent,
-		exact: false
-	},
-	{
-		url: '/calendar/:month?/:year?',
-		component: Calendar,
-		exact: false
-	},
-	{
-		url: '/emailselector',
-		component: EmailList,
-		exact: false
-	},
-	{
-		url: '/filemanagement',
-		component: Drive,
-		exact: false
-	},
-	{
-		url: '/drive',
-		component: Drive,
-		exact: false
-	}
-];
+		{
+			url: '/',
+			component: Main,
+			exact: true
+		},
+		{
+			url: '/test',
+			component: Test,
+			exact: false
+		},
+		{
+			url: '/blog',
+			component: Blog,
+			exact: false
+		},
+		{
+			url: '/news',
+			component: Blog,
+			exact: false
+		},
+		{
+			url: '/rack',
+			component: RackBuilder,
+			exact: false
+		},
+		{
+			url: '/eventform',
+			component: AddEvent,
+			exact: true
+		},
+		{
+			url: '/eventviewer/:id',
+			component: EventViewer,
+			exact: false
+		},
+		{
+			url: '/eventlinklist',
+			component: LinkList,
+			exact: false
+		},
+		{
+			url: '/eventform/:id',
+			component: ModifyEvent,
+			exact: false
+		},
+		{
+			url: '/calendar/:month?/:year?',
+			component: Calendar,
+			exact: false
+		},
+		{
+			url: '/emailselector',
+			component: EmailList,
+			exact: false
+		},
+		{
+			url: '/filemanagement',
+			component: Drive,
+			exact: false
+		},
+		{
+			url: '/drive',
+			component: Drive,
+			exact: false
+		}
+	];
 
 const composeElement = (
 	El: typeof Page,
@@ -96,25 +97,29 @@ const composeElement = (
 	authorizeUser: (arg: SigninReturn) => void,
 	updateSideNav: (links: SideNavigationItem[]) => void,
 	updateBreadcrumbs: (links: BreadCrumb[]) => void
-) => (props: RouteComponentProps<any>) => (
-	<El
-		routeProps={props}
-		account={account}
-		fullMemberDetails={member}
-		member={
-			member.member === null
-				? null
-				: createCorrectMemberObject(
-						member.member,
-						account,
-						member.sessionID
-				  )
-		}
-		authorizeUser={authorizeUser}
-		updateSideNav={updateSideNav}
-		updateBreadCrumbs={updateBreadcrumbs}
-	/>
-);
+) => (props: RouteComponentProps<any>) => {
+	const memObject = member.member === null
+		? null
+		: createCorrectMemberObject(
+			member.member,
+			account,
+			member.sessionID
+		);
+
+	return (
+		<ErrorHandler member={memObject} account={account}>
+			<El
+				routeProps={props}
+				account={account}
+				fullMemberDetails={member}
+				member={memObject}
+				authorizeUser={authorizeUser}
+				updateSideNav={updateSideNav}
+				updateBreadCrumbs={updateBreadcrumbs}
+			/>
+		</ErrorHandler>
+	);
+};
 
 export default class PageRouter extends React.Component<{
 	updateSideNav: (links: SideNavigationItem[]) => void;

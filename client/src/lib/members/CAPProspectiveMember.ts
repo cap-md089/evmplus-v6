@@ -1,6 +1,9 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
 
+/**
+ * A class to represent those wanting to join a CAP squadron
+ */
 export default class CAPProspectiveMember extends MemberBase
 	implements ProspectiveMemberObject {
 	/**
@@ -36,10 +39,20 @@ export default class CAPProspectiveMember extends MemberBase
 	 */
 	public flight: string;
 
+	/**
+	 * Descriminator for TypeScript
+	 */
 	public type: 'CAPProspectiveMember' = 'CAPProspectiveMember';
 
+	/**
+	 * 
+	 * 
+	 * @param data 
+	 * @param requestingAccount 
+	 * @param sessionID 
+	 */
 	public constructor(
-		data: CAPMemberObject,
+		data: ProspectiveMemberObject,
 		requestingAccount: Account,
 		sessionID: string
 	) {

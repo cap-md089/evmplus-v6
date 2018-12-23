@@ -8,11 +8,11 @@ import SideNavigation, {
 } from './components/SideNavigation';
 import { MemberCreateError } from './enums';
 import jQuery, { bestfit } from './jquery.textfit';
-import myFetch from './lib/myFetch';
-import Subscribe from './lib/subscribe';
-import Registry from './lib/Registry';
 import Account from './lib/Account';
-import { getMember } from './lib/Members';
+import { createCorrectMemberObject, getMember } from './lib/Members';
+import myFetch from './lib/myFetch';
+import Registry from './lib/Registry';
+import Subscribe from './lib/subscribe';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
@@ -99,6 +99,9 @@ interface AppState {
 export default class App extends React.Component<
 	{
 		isMobile: boolean;
+		basicInfo: {
+			member: MemberObject | null;
+		};
 	},
 	AppState
 > {
@@ -123,7 +126,12 @@ export default class App extends React.Component<
 
 	private timer: NodeJS.Timer;
 
-	constructor(props: { isMobile: boolean }) {
+	constructor(props: {
+		isMobile: boolean;
+		basicInfo: {
+			member: MemberObject | null;
+		};
+	}) {
 		super(props);
 
 		// 		const sid = localStorage.getItem('sid');
@@ -160,6 +168,16 @@ export default class App extends React.Component<
 		if (!member.valid) {
 			localStorage.removeItem('sessionID');
 		}
+
+		this.props.basicInfo.member =
+			member.member === null
+				? null
+				: createCorrectMemberObject(
+						member.member,
+						account,
+						member.sessionID
+				  );
+
 		this.setState({
 			account,
 			member,
@@ -333,78 +351,89 @@ export default class App extends React.Component<
 									Connect With Us
 								</div>
 								<p>
-									{this.state.Registry ? [
-										this.state.Registry.Contact.FaceBook ? (
-											<a
-												href={
-													'https://www.facebook.com/' +
-													this.state.Registry.Contact
-														.FaceBook
-												}
-												target="_blank"
-												className="socialMedia fb"
-											/>
-										) : null,
-										this.state.Registry.Contact.Twitter ? (
-											<a
-												href={
-													'https://www.twitter.com/' +
-													this.state.Registry.Contact
-														.Twitter
-												}
-												target="_blank"
-												className="socialMedia twitter"
-											/>
-										) : null,
-										this.state.Registry.Contact.YouTube ? (
-											<a
-												href={
-													'https://www.youtube.com/channel/' +
-													this.state.Registry.Contact
-														.YouTube
-												}
-												target="_blank"
-												className="socialMedia youtube"
-											/>
-										) : null,
-										this.state.Registry.Contact.LinkedIn ? (
-											<a
-												href={
-													'https://in.linkedin.com/in/' +
-													this.state.Registry.Contact
-														.LinkedIn
-												}
-												target="_blank"
-												className="socialMedia linkedin"
-											/>
-										) : null,
-										this.state.Registry.Contact
-											.Instagram ? (
-											<a
-												href={
-													'https://www.instagram.com/' +
-													this.state.Registry.Contact
-														.Instagram
-												}
-												target="_blank"
-												className="socialMedia instagram"
-											/>
-										) : null,
-										this.state.Registry.Contact.Flickr ? (
-											<a
-												href={
-													'https://www.flickr.com/photos/' +
-													this.state.Registry.Contact
-														.Flickr
-												}
-												target="_blank"
-												className="socialMedia flickr"
-											/>
-										) : null
-									] : null}
+									{this.state.Registry
+										? [
+												this.state.Registry.Contact
+													.FaceBook ? (
+													<a
+														href={
+															'https://www.facebook.com/' +
+															this.state.Registry
+																.Contact
+																.FaceBook
+														}
+														target="_blank"
+														className="socialMedia fb"
+													/>
+												) : null,
+												this.state.Registry.Contact
+													.Twitter ? (
+													<a
+														href={
+															'https://www.twitter.com/' +
+															this.state.Registry
+																.Contact.Twitter
+														}
+														target="_blank"
+														className="socialMedia twitter"
+													/>
+												) : null,
+												this.state.Registry.Contact
+													.YouTube ? (
+													<a
+														href={
+															'https://www.youtube.com/channel/' +
+															this.state.Registry
+																.Contact.YouTube
+														}
+														target="_blank"
+														className="socialMedia youtube"
+													/>
+												) : null,
+												this.state.Registry.Contact
+													.LinkedIn ? (
+													<a
+														href={
+															'https://in.linkedin.com/in/' +
+															this.state.Registry
+																.Contact
+																.LinkedIn
+														}
+														target="_blank"
+														className="socialMedia linkedin"
+													/>
+												) : null,
+												this.state.Registry.Contact
+													.Instagram ? (
+													<a
+														href={
+															'https://www.instagram.com/' +
+															this.state.Registry
+																.Contact
+																.Instagram
+														}
+														target="_blank"
+														className="socialMedia instagram"
+													/>
+												) : null,
+												this.state.Registry.Contact
+													.Flickr ? (
+													<a
+														href={
+															'https://www.flickr.com/photos/' +
+															this.state.Registry
+																.Contact.Flickr
+														}
+														target="_blank"
+														className="socialMedia flickr"
+													/>
+												) : null
+										  ]
+										: null}
 								</p>
 							</div>
-							{this.state.Registry && this.state.Registry.Contact.MeetingAddress ? (
+							{this.state.Registry &&
+							this.state.Registry.Contact.MeetingAddress ? (
 								<div className={count + 'Box'}>
 									<div className="footerBoxTitle">
 										Meeting Address
@@ -419,7 +448,8 @@ export default class App extends React.Component<
 									</p>
 								</div>
 							) : null}
-							{this.state.Registry && this.state.Registry.Contact.MailingAddress ? (
+							{this.state.Registry &&
+							this.state.Registry.Contact.MailingAddress ? (
 								<div className={count + 'Box'}>
 									<div className="footerBoxTitle">
 										Mailing Address
