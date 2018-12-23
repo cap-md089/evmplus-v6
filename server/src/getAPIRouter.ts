@@ -7,6 +7,8 @@ import accountcheck from './api/accountcheck';
 import blog from './api/blog';
 import check from './api/check';
 import echo from './api/echo';
+import clienterror from './api/errors/clienterror';
+import servererror from './api/errors/servererror';
 import events from './api/events';
 import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
@@ -82,7 +84,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		}
 	});
 
-	router.post('/signin', Account.ExpressMiddleware, signin(conf));
+	router.post('/signin', Account.ExpressMiddleware, signin);
 
 	router.get(
 		'/token',
@@ -117,16 +119,21 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.use('/team', team);
 
-	router.use(
-		'/member',
+	router.use('/member', Account.ExpressMiddleware, members);
+
+	router.post(
+		'/clienterror',
 		Account.ExpressMiddleware,
-		members
+		NHQMember.ConditionalExpressMiddleware,
+		clienterror
 	);
 
 	router.use('*', (req, res) => {
 		res.status(404);
 		res.end();
 	});
+
+	router.use(servererror);
 
 	return {
 		router,

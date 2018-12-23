@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
-import { streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
+import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
 
-export default async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	// In JavaScript, true === (NaN !== NaN) for some reason
 
 	if (
@@ -18,7 +18,7 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 	const start = parseInt(req.params.start, 10);
 	const end = parseInt(req.params.end, 10);
 
-	streamAsyncGeneratorAsJSONArray<Event>(
+	await streamAsyncGeneratorAsJSONArray<Event>(
 		res,
 		req.account.getSortedEvents(),
 		event => {
@@ -29,4 +29,4 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 				: false;
 		}
 	);
-};
+});

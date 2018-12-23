@@ -1,8 +1,9 @@
 import * as express from 'express';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	if (
 		typeof req.params.parentid === 'undefined' ||
 		typeof req.params.childid === 'undefined'
@@ -41,7 +42,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 	try {
 		file = await File.Get(childid, req.account, req.mysqlx);
-	} catch(e) {
+	} catch (e) {
 		res.send(404);
 		res.end();
 		return;
@@ -61,4 +62,4 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 	res.status(204);
 	res.end();
-};
+});

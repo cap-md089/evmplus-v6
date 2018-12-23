@@ -146,7 +146,14 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 		};
 	}
 
-	public set(values: Partial<BlogPostObject>): void {
+	/**
+	 * Updates the values in a secure manner
+	 * 
+	 * TODO: Implement actual type checking, either return false or throw an error on failure
+	 *
+	 * @param values The values to set
+	 */
+	public set(values: Partial<BlogPostObject>): boolean {
 		const keys: Array<keyof BlogPostObject> = [
 			'_id',
 			'id',
@@ -162,6 +169,8 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 				this[i] = values[i];
 			}
 		}
+
+		return true;
 	}
 
 	public async delete(): Promise<void> {

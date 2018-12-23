@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import BlogPage from '../../../lib/BlogPage';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { getFullSchemaValidator, json } from '../../../lib/Util';
+import { asyncErrorHandler, getFullSchemaValidator, json } from '../../../lib/Util';
 
 const validator = getFullSchemaValidator<NewBlogPage>('NewBlogPage.json');
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	if (!validator(req.body.page) && typeof req.body.id !== 'string') {
 		res.status(400);
 		res.end();
@@ -28,4 +28,4 @@ export default async (req: MemberRequest, res: Response) => {
 	}
 
 	json<BlogPageObject>(res, page.toRaw());
-};
+});

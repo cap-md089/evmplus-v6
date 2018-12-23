@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import BlogPage from '../../../lib/BlogPage';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: Response) => {
+export default asyncErrorHandler(async (req: AccountRequest, res: Response) => {
 	let page: BlogPage;
 
 	try {
@@ -26,4 +27,4 @@ export default async (req: AccountRequest, res: Response) => {
 
 	res.status(204);
 	res.end();
-}
+})

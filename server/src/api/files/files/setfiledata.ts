@@ -2,6 +2,8 @@ import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
+import { FileUserAccessControlPermissions } from '../../../enums';
+import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 
 const findEnding = (input: Buffer, boundary: string) => {
@@ -15,7 +17,7 @@ const findEnding = (input: Buffer, boundary: string) => {
 	return input.length;
 };
 
-export default (req: MemberRequest, res: express.Response) => {
+export default async (req: MemberRequest, res: express.Response) => {
 	if (
 		typeof req.params.fileid === 'undefined'
 	) {
@@ -24,10 +26,30 @@ export default (req: MemberRequest, res: express.Response) => {
 		return;
 	}
 
-	if (
-		req.member === null
-	) {
+	let file: File;
+
+	try {
+		file = await File.Get(req.params.fileid, req.account, req.mysqlx, false);
+	} catch (e) {
+		res.status(404);
+		res.end();
+		return;
+	}
+
+	if (!file.hasPermission(
+		req.member,
+		// tslint:disable-next-line:no-bitwise
+		FileUserAccessControlPermissions.MODIFY | FileUserAccessControlPermissions.WRITE
+	)) {
 		res.status(403);
+		res.end();
+		return;
+	}
+
+	// Don't write data to a file that doesn't exist,
+	// as during creation folders are not assigned a file
+	if (file.contentType === 'application/folder') {
+		res.status(400);
 		res.end();
 		return;
 	}
@@ -35,19 +57,19 @@ export default (req: MemberRequest, res: express.Response) => {
 	let collectingData = false;
 	let boundary = '';
 	let writeStream: fs.WriteStream;
-	
+
 	/*
 		File data plan:
 
 		1. Store FILE on disk
-		2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
+		2. Stored filename will be a UUID (there already happens to be a UUID library for tokens...)
 		3. MySQL database will store METADATA (Author, filename, etc)
 	*/
 	req.on('data', info => {
 		if (typeof info === 'string') {
 			// Handle binary data
 			info = new Buffer(info);
-		}	
+		}
 		// Start looking for headers
 		if (!collectingData) {
 			// Record headers
@@ -63,13 +85,13 @@ export default (req: MemberRequest, res: express.Response) => {
 			// when there is a double \r\n
 			const firstLines = headerString.split('\r\n');
 			boundary = '\r\n' + firstLines[0] + '--\r\n';
-			
+
 			writeStream = fs.createWriteStream(join(config.fileStoragePath, req.params.fileid));
 			writeStream.write(info.slice(i, findEnding(info, boundary)));
 
 			collectingData = true;
 
-			// Wait until query is finished and data is written before closing file and connection
+			// Wait until data is written before closing file and connection
 			req.on('end', () => {
 				writeStream.close();
 				res.status(204);

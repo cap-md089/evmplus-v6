@@ -20,7 +20,7 @@ export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
 				return false;
 			}
 
-			if(!deepTypeEqual(obj1[i], obj2[i])) {
+			if (!deepTypeEqual(obj1[i], obj2[i])) {
 				return false;
 			}
 		}
@@ -181,3 +181,8 @@ export const extraTypes = (
 ) => (req: express.Request, res: express.Response) => {
 	func(req, convertResponse(res));
 };
+
+type ExpressHandler = (req: express.Request, res: express.Response, next: express.NextFunction) => any;
+
+export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler =>
+	(req, res, next) => fn(req, res, next).catch(next);

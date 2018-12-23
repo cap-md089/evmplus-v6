@@ -1,13 +1,10 @@
 import * as express from 'express';
-import {
-	FileUserAccessControlPermissions,
-	MemberCreateError
-} from '../../../../../lib/index';
+import { FileUserAccessControlPermissions } from '../../../../../lib/index';
 import File from '../../../lib/File';
 import MemberBase, { ConditionalMemberRequest } from '../../../lib/MemberBase';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: ConditionalMemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: express.Response) => {
 	if (
 		typeof req.params === 'undefined' ||
 		typeof req.params.fileid === 'undefined'
@@ -51,14 +48,9 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 
 		json<FullFileObject>(res, {
 			...file.toRaw(),
-			uploader: {
-				error: MemberCreateError.NONE,
-				member,
-				sessionID: '',
-				valid: true
-			}
+			uploader: member.toRaw()
 		});
 	} else {
 		json<FileObject>(res, file.toRaw());
 	}
-};
+});

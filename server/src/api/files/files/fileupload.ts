@@ -6,8 +6,7 @@ import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import {
 	FileUserAccessControlPermissions,
-	FileUserAccessControlType,
-	MemberCreateError
+	FileUserAccessControlType
 } from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
@@ -48,21 +47,14 @@ fs.exists(config.fileStoragePath, exists => {
 	}
 });
 
-export default (req: MemberRequest, res: express.Response) => {
+export default async (req: MemberRequest, res: express.Response) => {
 	let collectingData = false;
 	let fileName = '';
 	let boundary = '';
 	let writeStream: fs.WriteStream;
 
 	if (typeof req.headers.token !== 'undefined') {
-		let token;
-		if (typeof req.headers.token === 'string') {
-			token = req.headers.token;
-		} else {
-			token = req.headers.token[0];
-		}
-
-		if (!validToken(token)) {
+		if (!validToken(req)) {
 			res.status(403);
 			res.end();
 			return;
@@ -185,12 +177,7 @@ export default (req: MemberRequest, res: express.Response) => {
 					// Return results
 					json<FullFileObject>(res, {
 						...fullFileObject.toRaw(),
-						uploader: {
-							error: MemberCreateError.NONE,
-							member: req.member,
-							sessionID: '',
-							valid: true
-						}
+						uploader: req.member.toRaw()
 					});
 				})
 				.catch(err => {

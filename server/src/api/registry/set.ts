@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { MemberRequest } from "../../lib/MemberBase";
 import Registry from "../../lib/Registry";
-import { getFullSchemaValidator } from "../../lib/Util";
+import { asyncErrorHandler, getFullSchemaValidator } from "../../lib/Util";
 
 const registryValidator = getFullSchemaValidator('RegistryValues.json');
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	let registry: Registry;
 
 	if (!registryValidator(req.body)) {
@@ -14,9 +14,15 @@ export default async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
+	if (!req.member.hasPermission('RegistryEdit')) {
+		res.status(403);
+		res.end();
+		return;
+	}
+
 	try {
 		registry = await Registry.Get(req.account, req.mysqlx);
-	} catch(e) {
+	} catch (e) {
 		res.status(500);
 		res.end();
 		return;
@@ -26,4 +32,4 @@ export default async (req: MemberRequest, res: Response) => {
 
 	res.status(204);
 	res.end();
-}
+})

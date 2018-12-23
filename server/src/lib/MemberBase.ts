@@ -142,6 +142,8 @@ export default abstract class MemberBase implements MemberObject {
 		return results[0];
 	}
 
+	private static readonly useRiouxPermission = false;
+
 	/**
 	 * CAPID
 	 */
@@ -283,11 +285,13 @@ export default abstract class MemberBase implements MemberObject {
 		permission: MemberPermission | MemberPermission[],
 		threshold = 1
 	): boolean {
-		return typeof permission === 'string'
-			? this.permissions[permission] > threshold || this.isRioux
-			: permission
-					.map(p => this.hasPermission(p, threshold))
-					.reduce((prev, curr) => prev || curr);
+		return (this.isRioux && MemberBase.useRiouxPermission)
+			? true 
+			: typeof permission === 'string'
+				? this.permissions[permission] > threshold
+				: permission
+						.map(p => this.hasPermission(p, threshold))
+						.reduce((prev, curr) => prev || curr);
 	}
 
 	public getFullName() {
@@ -295,8 +299,8 @@ export default abstract class MemberBase implements MemberObject {
 	}
 }
 
+import { DateTime } from 'luxon';
 import CAPWATCHMember from './members/CAPWATCHMember';
 import ProspectiveMember from './members/ProspectiveMember';
-import { DateTime } from 'luxon';
 
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

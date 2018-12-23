@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	if (req.params.id === 'undefined' || req.body === 'undefined') {
 		res.status(400);
 		res.end();
@@ -31,4 +32,4 @@ export default async (req: MemberRequest, res: Response) => {
 
 	res.status(204);
 	res.end();
-};
+});

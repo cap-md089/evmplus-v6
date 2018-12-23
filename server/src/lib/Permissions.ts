@@ -114,7 +114,7 @@ export const Admin: MemberPermissions = {
 	RegistryEdit: 1
 };
 
-export const getPermissions = (lvl: MemberAccessLevel) =>
+export const getPermissions = (lvl: MemberAccessLevel): MemberPermissions =>
 	lvl === 'Member' ? Member : 
 	lvl === 'Staff' ? Staff :
 	lvl === 'Manager' ? Manager :

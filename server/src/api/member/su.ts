@@ -1,9 +1,9 @@
 import { Response } from 'express';
-import { MemberRequest } from '../../lib/MemberBase';
-import ProspectiveMember from '../../lib/members/ProspectiveMember';
+import { MemberRequest, NHQMember } from '../../lib/Members';
+import { asyncErrorHandler } from '../../lib/Util';
 
-export default async (req: MemberRequest, res: Response) => {
-	if (!req.member.isRioux || req.member instanceof ProspectiveMember) {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
+	if (!req.member.isRioux || !(req.member instanceof NHQMember)) {
 		res.status(403);
 		res.end();
 		return;
@@ -20,4 +20,4 @@ export default async (req: MemberRequest, res: Response) => {
 	res.json({
 		sessionID
 	});
-};
+});

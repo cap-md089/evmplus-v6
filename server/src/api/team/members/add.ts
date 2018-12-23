@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import Team from '../../../lib/Team';
-import { getFullSchemaValidator } from '../../../lib/Util';
+import { asyncErrorHandler, getFullSchemaValidator } from '../../../lib/Util';
 
 const validator = getFullSchemaValidator<TeamMember>('TeamMember');
 
-export default async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	let team: Team;
 
 	if (!validator(req.body)) {
@@ -16,7 +16,7 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 
 	try {
 		team = await Team.Get(req.params.id, req.account, req.mysqlx);
-	} catch(e) {
+	} catch (e) {
 		res.status(404);
 		res.end();
 		return;
@@ -26,7 +26,7 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 
 	try {
 		await team.save();
-	} catch(e) {
+	} catch (e) {
 		res.status(500);
 		res.end();
 		return;
@@ -34,4 +34,4 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 
 	res.status(204);
 	res.end();
-}
+})

@@ -45,7 +45,7 @@ export interface MemberRequest extends AccountRequest {
 }
 
 export default class NHQMember extends CAPWATCHMember
-	implements CAPMemberObject {
+	implements NHQMemberObject {
 	public static async Create(
 		username: string | number,
 		password: string,
@@ -314,7 +314,7 @@ export default class NHQMember extends CAPWATCHMember
 	 *
 	 * The instanceof operator may work as well
 	 */
-	public type: CAPMemberType = 'CAPNHQMember';
+	public type: 'CAPNHQMember' = 'CAPNHQMember';
 	/**
 	 * The cookie data used to access NHQ
 	 */

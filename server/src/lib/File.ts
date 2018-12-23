@@ -195,7 +195,14 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		this.schema = schema;
 	}
 
-	public set(data: Partial<FileObject>): void {
+	/**
+	 * Updates the values in a secure manner
+	 * 
+	 * TODO: Implement actual type checking, either return false or throw an error on failure
+	 *
+	 * @param values The values to set
+	 */
+	public set(data: Partial<FileObject>): boolean {
 		const keys: Array<keyof FileObject> = [
 			'comments',
 			'contentType',
@@ -224,6 +231,8 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			this.forDisplay = false;
 			this.forSlideshow = false;
 		}
+
+		return true;
 	}
 
 	public async save(): Promise<void> {

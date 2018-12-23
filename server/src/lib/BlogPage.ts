@@ -97,6 +97,13 @@ export default class BlogPage
 		this._id = data._id;
 	}
 
+	/**
+	 * Updates the values in a secure manner
+	 * 
+	 * TODO: Implement actual type checking, either return false or throw an error on failure
+	 *
+	 * @param values The values to set
+	 */
 	public set(values: Partial<BlogPageObject>): boolean {
 		for (const i in values) {
 			if (values.hasOwnProperty(i) && i !== 'accountID') {

@@ -135,7 +135,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 
 	public async delete(): Promise<void> {
 		if (this.deleted) {
-			throw new Error('Cannot operate on a deleted event'):
+			throw new Error('Cannot operate on a deleted event');
 		}
 
 		const teamCollection = this.schema.getCollection<TeamObject>(

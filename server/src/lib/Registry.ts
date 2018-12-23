@@ -97,6 +97,13 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 		this.schema = schema;
 	}
 
+	/**
+	 * Updates the values in a secure manner
+	 * 
+	 * TODO: Implement actual type checking, either return false or throw an error on failure
+	 *
+	 * @param values The values to set
+	 */
 	public set(values: Partial<RegistryValues>): boolean {
 		for (const i in values) {
 			if (values.hasOwnProperty(i)) {
@@ -114,6 +121,14 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 		);
 
 		await registryCollection.replaceOne(this.values._id, this.values);
+	}
+
+	public async delete() {
+		const registryCollection = this.schema.getCollection<RegistryValues>(
+			Registry.collectionName
+		);
+
+		await registryCollection.removeOne(this.values._id);
 	}
 
 	public toRaw = (): RegistryValues => ({

@@ -3,7 +3,7 @@ import { join } from 'path';
 import conf from '../../../conf';
 import Event from '../../../lib/Event';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { getSchemaValidator, json } from '../../../lib/Util';
+import { asyncErrorHandler, getSchemaValidator, json } from '../../../lib/Util';
 
 // tslint:disable-next-line:no-var-requires
 const eventSchema = require(join(conf.schemaPath, 'NewEventObject.json'));
@@ -13,7 +13,7 @@ const privateEventValidator = getSchemaValidator(eventSchema);
 const newEventValidator = (val: any): val is NewEventObject =>
 	privateEventValidator(val) as boolean;
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	if (newEventValidator(req.body)) {
 		const newEvent = await Event.Create(
 			req.body,
@@ -30,4 +30,4 @@ export default async (req: MemberRequest, res: express.Response) => {
 		}
 		res.end();
 	}
-};
+});

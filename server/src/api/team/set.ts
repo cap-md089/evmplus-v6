@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import { MemberRequest } from '../../lib/MemberBase';
 import Team from '../../lib/Team';
+import { asyncErrorHandler } from '../../lib/Util';
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	let team: Team;
 
 	try {
@@ -25,4 +26,4 @@ export default async (req: MemberRequest, res: Response) => {
 
 	res.status(204);
 	res.end();
-}
+})

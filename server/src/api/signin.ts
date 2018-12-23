@@ -1,12 +1,11 @@
 import * as express from 'express';
-import conf from '../conf';
 import { AccountRequest } from '../lib/Account';
 import MemberBase from '../lib/Members';
 import { default as Member, MemberCreateError } from '../lib/members/NHQMember';
 import ProspectiveMember from '../lib/members/ProspectiveMember';
-import { json } from '../lib/Util';
+import { asyncErrorHandler, json } from '../lib/Util';
 
-export default (config: typeof conf) => async (
+export default asyncErrorHandler(async (
 	req: AccountRequest,
 	res: express.Response
 ) => {
@@ -71,4 +70,4 @@ export default (config: typeof conf) => async (
 			});
 		}
 	}
-};
+});

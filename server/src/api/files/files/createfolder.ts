@@ -1,16 +1,12 @@
 import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
-import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType,
-	MemberCreateError
-} from '../../../../../lib/index';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from '../../../../../lib/index';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	const root = await File.Get('root', req.account, req.mysqlx);
 
 	if (
@@ -61,11 +57,6 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 	json<FullFileObject>(res, {
 		...file.toRaw(),
-		uploader: {
-			error: MemberCreateError.NONE,
-			member: req.member.toRaw(),
-			sessionID: '',
-			valid: true
-		}
+		uploader: req.member.toRaw()
 	});
-};
+});

@@ -342,14 +342,14 @@ export default class Event
 	 */
 	public isPOC(member: BaseMember) {
 		return (
-			this.pointsOfContact.map(
+			!!(this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
 					MemberBase.AreMemberReferencesTheSame(
 						member.getReference(),
 						poc.memberReference
 					)
-			) ||
+			)) ||
 			member.matchesReference(this.author) ||
 			member.isRioux
 		);
@@ -452,10 +452,12 @@ export default class Event
 
 	/**
 	 * Updates the values in a secure manner
+	 * 
+	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
-	public set(values: Partial<EventObject>): void {
+	public set(values: Partial<EventObject>): boolean {
 		const keys: Array<keyof EventObject> = [
 			'acceptSignups',
 			'accountID',
@@ -505,6 +507,8 @@ export default class Event
 				this[key] = values[key];
 			}
 		}
+
+		return true;
 	}
 
 	/**

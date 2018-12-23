@@ -1,9 +1,9 @@
 import * as express from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import BlogPost from '../../../lib/BlogPost';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
 	if (
 		typeof req.params.id !== 'undefined'
 	) {
@@ -11,7 +11,7 @@ export default async (req: AccountRequest, res: express.Response) => {
 			const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 
 			json<BlogPostObject>(res, blogPost.toRaw());
-		} catch(e) {
+		} catch (e) {
 			if (e.message === 'Could not get blog post') {
 				res.status(404);
 				res.end();
@@ -26,4 +26,4 @@ export default async (req: AccountRequest, res: express.Response) => {
 		res.status(400);
 		res.end();
 	}
-};
+});

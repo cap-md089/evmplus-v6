@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	if (req.params.id === undefined) {
 		res.status(400);
 		res.end();
@@ -31,4 +31,4 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 	}
 
 	json<EventObject>(res, event.toRaw(isValidMember ? req.member : null));
-};
+});

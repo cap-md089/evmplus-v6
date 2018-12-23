@@ -1,8 +1,9 @@
 import * as express from 'express';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	if (
 		typeof req.params.parentid === 'undefined' ||
 		typeof req.body === 'undefined' ||
@@ -36,4 +37,4 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 	res.status(204);
 	res.end();
-};
+});

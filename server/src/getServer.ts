@@ -26,6 +26,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	});
 	app.disable('x-powered-by');
 
+	app.use('/api/v1', router);
 	app.use('/api', router);
 
 	app.get('/images/banner', (req, res) => {

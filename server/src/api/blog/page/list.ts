@@ -1,12 +1,12 @@
 import { Response } from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import BlogPage from '../../../lib/BlogPage';
-import { streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
+import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: Response) => {
-	streamAsyncGeneratorAsJSONArray<BlogPage>(
+export default asyncErrorHandler(async (req: AccountRequest, res: Response) => {
+	await streamAsyncGeneratorAsJSONArray<BlogPage>(
 		res,
 		req.account.getBlogPages(),
 		val => JSON.stringify(val.toRaw())
 	);
-};
+});

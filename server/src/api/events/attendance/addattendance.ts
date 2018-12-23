@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	let event: Event;
 	let member: MemberBase;
 
@@ -66,4 +66,4 @@ export default async (req: MemberRequest, res: Response) => {
 	await event.save();
 
 	json<AttendanceRecord[]>(res, event.attendance);
-};
+});

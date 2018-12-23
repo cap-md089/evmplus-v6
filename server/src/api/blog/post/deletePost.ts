@@ -1,8 +1,9 @@
 import { Response } from 'express';
 import BlogPost from '../../../lib/BlogPost';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	try {
 		const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 	
@@ -21,4 +22,4 @@ export default async (req: MemberRequest, res: Response) => {
 			res.end();
 		}
 	}
-};
+});

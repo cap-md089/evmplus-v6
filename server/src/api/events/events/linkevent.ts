@@ -2,9 +2,9 @@ import { Response } from "express";
 import Account from "../../../lib/Account";
 import Event from "../../../lib/Event";
 import { MemberRequest } from "../../../lib/MemberBase";
-import { json } from "../../../lib/Util";
+import { asyncErrorHandler, json } from "../../../lib/Util";
 
-export default async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	if (
 		req.body === undefined ||
 		req.body.id === undefined ||
@@ -41,4 +41,4 @@ export default async (req: MemberRequest, res: Response) => {
 
 	res.status(200)
 	json<EventObject>(res, newEvent.toRaw());
-}
+})

@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import BlogPage from '../../../lib/BlogPage';
-import { json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default async (req: AccountRequest, res: Response) => {
+export default asyncErrorHandler(async (req: AccountRequest, res: Response) => {
 	let page: BlogPage;
 
 	try {
@@ -15,4 +15,4 @@ export default async (req: AccountRequest, res: Response) => {
 	}
 
 	json<BlogPageObject>(res, page.toRaw());
-}
+})

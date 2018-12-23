@@ -3,7 +3,7 @@ import { join } from 'path';
 import conf from '../../../conf';
 import BlogPost from '../../../lib/BlogPost';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { getSchemaValidator, json } from '../../../lib/Util';
+import { asyncErrorHandler, getSchemaValidator, json } from '../../../lib/Util';
 
 // tslint:disable-next-line:no-var-requires
 const blogPostSchema = require(join(conf.schemaPath, 'NewBlogPost.json'));
@@ -13,7 +13,7 @@ const privateBlogPostValidator = getSchemaValidator(blogPostSchema);
 const blogPostValidator = (val: any): val is NewBlogPost =>
 	privateBlogPostValidator(val) as boolean;
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	if (blogPostValidator(req.body)) {
 		const newPost: NewBlogPost = {
 			authorid: req.member.getReference(),
@@ -29,4 +29,4 @@ export default async (req: MemberRequest, res: express.Response) => {
 		res.status(400);
 		res.end();
 	}
-};
+});

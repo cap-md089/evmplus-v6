@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import { ConditionalMemberRequest } from '../../lib/MemberBase';
 import Team from '../../lib/Team';
-import { json } from '../../lib/Util';
+import { asyncErrorHandler, json } from '../../lib/Util';
 
-export default async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	let team: Team;
 
 	try {
@@ -15,4 +15,4 @@ export default async (req: ConditionalMemberRequest, res: Response) => {
 	}
 
 	json<TeamObject>(res, team.toRaw(req.member));
-};
+});
