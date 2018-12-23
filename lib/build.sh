@@ -38,3 +38,5 @@ cp -r schemas ./../client/src
 
 echo "Building enums..."
 tsc
+
+rm index.d.ts

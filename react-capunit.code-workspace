@@ -17,12 +17,18 @@
 		"search.usePCRE2": true
 	},
 	"launch": {
-		"configurations": [],
 		"compounds": [
 			{
 				"name": "Launch Chrome & Server",
 				"configurations": [
 					"Launch Chrome",
+					"Launch Server"
+				]
+			},
+			{
+				"name": "Launch Firefox & Server",
+				"configurations": [
+					"Launch Firefox",
 					"Launch Server"
 				]
 			}

@@ -185,6 +185,8 @@ declare global {
 		}
 	}
 
+	export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
 	/**
 	 * Allows for compiling of for-await-of loops
 	 */
@@ -269,23 +271,37 @@ declare global {
 	}
 
 	/**
+	 * A stack that is used when providing error information
+	 */
+	interface Stack {
+		/**
+		 * The name of the function being called
+		 */
+		name: string;
+		/**
+		 * The filename that contains where the function has stopped
+		 */
+		filename: string;
+		/**
+		 * Ditto filename
+		 */
+		line: number;
+		/**
+		 * Ditto line
+		 */
+		column: number;
+	}
+
+	export type ErrorType = 'Server' | 'Client';
+
+	/**
 	 * Describes errors that are stored in the database
 	 */
-	export interface ErrorObject extends NoSQLDocument {
+	export interface ErrorObject {
 		/**
-		 * Taken from the Error object
+		 * Stack trace of the error
 		 */
-		stack: string;
-		/**
-		 * Requested path, used to recreate the error
-		 */
-		requestPath: string;
-		/**
-		 * User information
-		 *
-		 * Null if not signed in
-		 */
-		requestedUser: MemberReference | null;
+		stack: Stack[];
 		/**
 		 * When did the error occur?
 		 */
@@ -294,7 +310,98 @@ declare global {
 		 * What is the error message?
 		 */
 		message: string;
+		/**
+		 * If resolved, it does not display
+		 */
+		resolved: boolean;
+		/**
+		 * TypeScript descriminator
+		 */
+		type: ErrorType;
 	}
+
+	/**
+	 * Describes errors that are stored in the database
+	 * 
+	 * These errors apply to the server, as it contains information such as
+	 * the request method and path which the client doesn't get
+	 */
+	export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifiable  {
+		/**
+		 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
+		 */
+		id: number;
+		/**
+		 * Requested path, used to recreate the error
+		 */
+		requestedPath: string;
+		/**
+		 * User information
+		 *
+		 * Null if not signed in
+		 */
+		requestedUser: MemberReference | null;
+		/**
+		 * Is it a GET, POST, PUT, DELETE, etc request
+		 */
+		requestMethod: HTTPRequestMethod;
+		/**
+		 * The file location of the error
+		 */
+		filename: string;
+		/**
+		 * The payload that caused the error for the API path
+		 */
+		payload: any;
+		/**
+		 * Account ID of page where error occurred
+		 */
+		accountID: string;
+		/**
+		 * TypeScript descriminator
+		 */
+		type: 'Server'
+	}
+
+	export interface NewClientErrorObject extends ErrorObject {
+		/**
+		 * What page was the user on?
+		 * 
+		 * Not going to take the time to figure out the component,
+		 * that can be done by the developer looking in PageRouter.tsx
+		 * rather simply
+		 */
+		pageURL: string;
+		/**
+		 * Component stack
+		 * 
+		 * Unfortunately, React doesn't seem to provide too much info about this...
+		 */
+		componentStack: string;
+		/**
+		 * TypeScript descriminator
+		 */
+		type: 'Client'
+	}
+
+	export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, Identifiable {
+		/**
+		 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
+		 */
+		id: number;
+		/**
+		 * Account ID of page where error occurred
+		 */
+		accountID: string;
+		/**
+		 * If the user was signed in, this is where they would go
+		 * 
+		 * Null if not signed in
+		 */
+		user: MemberReference | null
+	}
+
+	export type Errors = ClientErrorObject | ServerErrorObject;
 
 	export interface HTTPError {
 		/**
@@ -711,6 +818,9 @@ declare global {
 		/**
 		 * Record member rank and name to show what rank they were when
 		 * they participated
+		 * 
+		 * SHOULD use the MemberBase.getFullName() function to calculate this,
+		 * as this works across the different classes
 		 */
 		memberName: string;
 		/**
@@ -767,15 +877,7 @@ declare global {
 		memberReference: MemberReference;
 	}
 
-	export interface DisplayInternalPointOfContact extends PointOfContact {
-		/**
-		 * Used for differentiating CAP points of contact
-		 */
-		type: PointOfContactType.INTERNAL;
-		/**
-		 * CAP ID
-		 */
-		memberReference: MemberReference;
+	export interface DisplayInternalPointOfContact extends InternalPointOfContact {
 		/**
 		 * Used for compound documentation
 		 */
@@ -1016,7 +1118,7 @@ declare global {
 	/**
 	 * String representation of the member type, as there needs to be a way to differentiate
 	 */
-	export type MemberType = CAPMemberType | 'Anchor';
+	export type MemberType = CAPMemberType;
 
 	/**
 	 * Describes a member
@@ -1032,8 +1134,10 @@ declare global {
 	 * 		managing prospective members
 	 *
 	 * NHQMember.Create and ProspectiveMember.Signin are used when signing people in
-	 * ProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from
-	 * 		our database
+	 * ProspectiveMember.GetProspective and CAPWATCHMember.Get are used when pulling
+	 * 		information from our database
+	 * 
+	 * ProspectiveMember.Create creates a prospective member in our database
 	 *
 	 * CAPWATCHMember and NHQMember have their sources in NHQ
 	 * ProspectiveMember is located in our database
@@ -1213,17 +1317,9 @@ declare global {
 		| NullMemberReference;
 
 	/**
-	 * Used to sink type unions to match those of MemberObject, while still providing the power of
-	 * type unions and descriminants
-	 */
-	interface AnchorMember extends MemberObject {
-		type: 'Anchor'
-	}
-
-	/**
 	 * In the case that it doesn't like MemberBase, try using Member
 	 */
-	export type Member = ProspectiveMemberObject | CAPMemberObject | AnchorMember;
+	export type Member = ProspectiveMemberObject | NHQMemberObject;
 
 	/**
 	 * Records temporary duty positions that we assign
@@ -1493,7 +1589,7 @@ declare global {
 	}
 
 	export interface FullFileObject extends FileObject {
-		uploader: SigninReturn;
+		uploader: MemberObject;
 	}
 
 	export interface WebsiteInformation {
