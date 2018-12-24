@@ -17,6 +17,8 @@ import { nhq as auth } from './pam';
 import request from './pam/nhq-request';
 import ProspectiveMember from './ProspectiveMember';
 
+const TEN_MINUTES = 10 * 60 * 1000;
+
 interface MemberSession extends Identifiable {
 	id: number;
 	expireTime: number;
@@ -198,7 +200,7 @@ export default class NHQMember extends CAPWATCHMember
 					}
 
 					NHQMember.memberSessions = NHQMember.memberSessions.filter(
-						s => s.expireTime > +DateTime.utc()
+						s => s.expireTime > Date.now() + TEN_MINUTES
 					);
 					const sess = NHQMember.memberSessions.filter(
 						s => s.id === decoded.id
