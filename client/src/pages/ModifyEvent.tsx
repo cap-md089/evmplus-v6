@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Form, {
+import {
 	Checkbox,
 	DateTimeInput,
 	FormBlock,
@@ -14,7 +14,7 @@ import Form, {
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
 import Loader from '../components/Loader';
-import { FileInput, TextBox } from '../components/SimpleForm';
+import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
 import { PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import { PageProps } from './Page';
@@ -105,7 +105,6 @@ const convertToFormValues = (event: Event): NewEventFormValues => ({
 	showUpcoming: event.showUpcoming,
 	signUpDenyMessage: event.signUpDenyMessage,
 	signUpPartTime: event.signUpPartTime,
-	sourceEvent: null,
 	startDateTime: event.startDateTime,
 	status: event.status,
 	teamID: event.teamID,
@@ -212,7 +211,9 @@ export default class ModifyEvent extends React.Component<
 			return <Loader />;
 		}
 
-		const ModifyEventForm = Form as new () => Form<NewEventFormValues>;
+		const ModifyEventForm = SimpleForm as new () => SimpleForm<
+			NewEventFormValues
+		>;
 
 		const StringListEditor = ListEditor as new () => ListEditor<string>;
 		const POCListEditor = ListEditor as new () => ListEditor<
@@ -343,6 +344,12 @@ export default class ModifyEvent extends React.Component<
 
 				<Label>Accept signups</Label>
 				<Checkbox name="acceptSignups" />
+
+				<Label>Sign up deny message</Label>
+				<TextInput name="signUpDenyMessage" />
+
+				<Label>Allow signing up part time</Label>
+				<Checkbox name="signUpPartTime" />
 
 				<Label>Use participation fee</Label>
 				<Checkbox name="useParticipationFee" />

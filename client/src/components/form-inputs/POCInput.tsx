@@ -61,8 +61,16 @@ export default class POCInput extends React.Component<
 	}
 
 	public render() {
-		if (!this.props.value || !this.props.member || !this.props.account) {
-			throw new Error('Invalid properties');
+		if (!this.props.value) {
+			throw new Error('Value required');
+		}
+
+		if (!this.props.member) {
+			throw new Error('Member required');
+		}
+
+		if (!this.props.account) {
+			throw new Error('Account required');
 		}
 
 		const POCType = SimpleRadioButton as new () => SimpleRadioButton<

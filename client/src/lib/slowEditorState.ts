@@ -1,10 +1,10 @@
-import { EditorState } from 'draft-js';
+import { ContentState, EditorState, RawDraftContentState } from 'draft-js';
 
 let draft: typeof import('draft-js') | null = null;
 
 interface Returns {
-	state: EditorState,
-	creator: typeof EditorState.createWithContent
+	state: EditorState;
+	creator: typeof EditorState.createWithContent;
 }
 
 const queue: Array<(value: Returns) => void> = [];
@@ -20,7 +20,13 @@ import('draft-js').then(mod => {
 });
 
 // tslint:disable-next-line:no-empty-interface
-interface MyEditorState extends EditorState { }
+interface MyEditorState extends EditorState {}
+
+// tslint:disable-next-line:no-empty-interface
+interface MyContentState extends ContentState {}
+
+// tslint:disable-next-line:no-empty-interface
+interface MyRawDraftContentState extends RawDraftContentState {}
 
 export default (): Promise<Returns> => {
 	if (draft !== null) {
@@ -33,7 +39,11 @@ export default (): Promise<Returns> => {
 			queue.push(res);
 		});
 	}
-}
+};
 
 // Export only an interface so that we can use code splitting
-export { MyEditorState as EditorState };
+export {
+	MyEditorState as EditorState,
+	MyContentState as ContentState,
+	MyRawDraftContentState as RawDraftContentState
+};

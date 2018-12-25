@@ -127,4 +127,33 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 			throw new Error('Could not save blog post');
 		}
 	}
+
+	public async delete(member: MemberBase, errOnInvalidPermission = false) {
+		if (
+			!member.canManageBlog()
+		) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
+		}
+
+		const token = await this.getToken(member);
+
+		try {
+			await this.fetch(
+				`/api/blog/post/${this.id}`,
+				{
+					body: JSON.stringify({
+						token
+					}),
+					method: 'DELETE'
+				},
+				member
+			);
+		} catch(e) {
+			throw new Error('Could not save blog post');
+		}
+	}
 }

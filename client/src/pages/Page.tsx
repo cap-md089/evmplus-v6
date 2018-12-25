@@ -4,6 +4,7 @@ import { BreadCrumb } from '../components/BreadCrumbs';
 import { SideNavigationItem } from '../components/SideNavigation';
 import Account from '../lib/Account';
 import MemberBase from '../lib/MemberBase';
+import Registry from 'src/lib/Registry';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition
@@ -13,6 +14,7 @@ export interface PageProps<R = {}> {
 	fullMemberDetails: SigninReturn;
 	account: Account;
 	routeProps: RouteComponentProps<R>;
+	registry: Registry;
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;

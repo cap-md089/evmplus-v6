@@ -5,7 +5,8 @@ import {
 	DraftHandleValue,
 	Editor,
 	EditorState,
-	RichUtils
+	RichUtils,
+	CompositeDecorator
 } from 'draft-js';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -14,7 +15,7 @@ import Dialogue, { DialogueButtons } from '../Dialogue';
 import FileDialogue from '../FileDialogue';
 import { InputProps } from './Input';
 
-let index = 0;
+export let index = 0;
 
 export const mediaRenderFunction = (
 	block: ContentBlock,
@@ -44,46 +45,7 @@ export const mediaRenderFunction = (
 				return null;
 		}
 	} else {
-		switch (block.getType()) {
-			case 'header-one':
-				return {
-					component: H1(index++, block.getText())
-				};
-
-			case 'header-two':
-				// return {
-				// 	component: H2(index++, block.getText()),
-				// 	editable: true
-				// };
-				return null;
-
-			case 'header-three':
-				return {
-					component: H3(index++, block.getText()),
-					editable: true
-				};
-
-			case 'header-four':
-				return {
-					component: H4(index++, block.getText()),
-					editable: true
-				};
-
-			case 'header-five':
-				return {
-					component: H5(index++, block.getText()),
-					editable: true
-				};
-
-			case 'header-six':
-				return {
-					component: H6(index++, block.getText()),
-					editable: true
-				};
-
-			default:
-				return null;
-		}
+		return null;
 	}
 };
 
@@ -134,39 +96,26 @@ const Media: React.SFC<any> = ({ block, contentState }) => {
 	);
 };
 
-const H1 = (id: number, text: string): React.SFC<any> => props => {
-	// tslint:disable-next-line:no-console
-	console.log(props);
-	return (
-		<div data-offset-key={props.offsetKey} className="public-DraftStyleDefault-block public-DraftStyleDefault-ltr">
-			<span data-offset-key={props.offsetKey}>
-				<span data-text="true" id={`content-${id}`}>
-					{text}
-				</span>
-			</span>
-		</div>
-	);
+const headerID: React.SFC<any> = props => {
+	return <span id={`content-${props.offsetKey}`}>{props.children}</span>;
 };
 
-// const H2 = (id: number, text: string): React.SFC<any> => () => {
-// 	return <h2 id={`content-${id}`}>{text}</h2>;
-// };
-
-const H3 = (id: number, text: string): React.SFC<any> => () => {
-	return <h3 id={`content-${id}`}>{text}</h3>;
+const headerStrategy: (
+	block: ContentBlock,
+	callback: (start: number, end: number) => void,
+	contentState: ContentState
+) => void = (block, callback) => {
+	if (block.getType().substr(0, 6) === 'header') {
+		callback(0, block.getText().length);
+	}
 };
 
-const H4 = (id: number, text: string): React.SFC<any> => () => {
-	return <h4 id={`content-${id}`}>{text}</h4>;
-};
-
-const H5 = (id: number, text: string): React.SFC<any> => () => {
-	return <h5 id={`content-${id}`}>{text}</h5>;
-};
-
-const H6 = (id: number, text: string): React.SFC<any> => () => {
-	return <h6 id={`content-${id}`}>{text}</h6>;
-};
+export const HeaderDecorator = new CompositeDecorator([
+	{
+		strategy: headerStrategy,
+		component: headerID
+	}
+]);
 
 export interface TextAreaProps extends InputProps<EditorState> {
 	/**
@@ -257,7 +206,9 @@ export default class TextArea extends React.Component<
 
 		index = 0;
 
-		const editorState = this.editorState;
+		const editorState = EditorState.set(this.editorState, {
+			decorator: HeaderDecorator
+		});
 
 		return (
 			<div

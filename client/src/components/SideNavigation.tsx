@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { MemberCreateError } from '../enums';
 import SigninLink from './SigninLink';
 
-export class SideNavigationLink extends React.Component<{ target: string }> {
+class SideNavigationLink extends React.Component<{ target: string }> {
 	public render() {
 		return (
 			<Link to={this.props.target}>
@@ -14,7 +14,7 @@ export class SideNavigationLink extends React.Component<{ target: string }> {
 		);
 	}
 }
-export class SideNavigationReferenceLink extends React.Component<{
+class SideNavigationReferenceLink extends React.Component<{
 	target: string;
 }> {
 	public render() {
@@ -42,8 +42,8 @@ export class SideNavigationReferenceLink extends React.Component<{
 }
 
 export type SideNavigationItem =
-	| SideNavigationLink
-	| SideNavigationReferenceLink;
+	| { type: 'Reference'; target: string; text: React.ReactChild }
+	| { type: 'Link'; target: string; text: React.ReactChild };
 
 export interface SideNavigationProps {
 	links: SideNavigationItem[];
@@ -100,7 +100,19 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 						)}
 					</li>
 					{this.props.links.map((link, i) => (
-						<li key={i}>{link}</li>
+						<li key={i}>
+							{link.type === 'Link' ? (
+								<SideNavigationLink target={link.target}>
+									{link.text}
+								</SideNavigationLink>
+							) : (
+								<SideNavigationReferenceLink
+									target={link.target}
+								>
+									{link.text}
+								</SideNavigationReferenceLink>
+							)}
+						</li>
 					))}
 				</ul>
 			</div>

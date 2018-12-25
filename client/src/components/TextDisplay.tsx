@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { EditorState } from 'src/lib/slowEditorState';
+import { ContentState, EditorState, RawDraftContentState } from 'src/lib/slowEditorState';
 import Loader from './Loader';
 
 interface LoadingTextState {
@@ -15,6 +15,32 @@ interface LoadedTextState {
 }
 
 type TextState = LoadingTextState | LoadedTextState;
+
+interface ParsedID {
+	id: string;
+	text: string;
+}
+
+export const getIDs = (editorState: EditorState, convertor: (es: ContentState) => RawDraftContentState) => {
+	const raw = convertor(editorState.getCurrentContent());
+
+	return getIDsFromRaw(raw);
+};
+
+export const getIDsFromRaw = (content: RawDraftContentState) => {
+	const parsedIDs: ParsedID[] = [];
+
+	for (const i of content.blocks) {
+		if (i.type.substr(0, 6) === 'header') {
+			parsedIDs.push({
+				id: `content-${i.key}-0-0`,
+				text: i.text
+			})
+		}
+	}
+
+	return parsedIDs;
+}
 
 export default class TextDisplay extends React.Component<
 	{
@@ -51,15 +77,17 @@ export default class TextDisplay extends React.Component<
 		const { mediaRenderFunction } = text;
 		const { Editor } = draft;
 
+		const editorState = draft.EditorState.set(this.props.editorState, {
+			decorator: text.HeaderDecorator
+		});
+
 		return (
 			<Editor
 				{...this.props}
 				blockRendererFn={block =>
-					mediaRenderFunction(
-						block,
-						this.props.editorState.getCurrentContent()
-					)
+					mediaRenderFunction(block, editorState.getCurrentContent())
 				}
+				editorState={editorState}
 				readOnly={true}
 				onChange={() => void 0}
 			/>

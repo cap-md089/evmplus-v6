@@ -12,7 +12,7 @@ interface LinkListState {
 	eventList: Event[] | null;
 }
 
-function getEventStatus(status: RadioReturn<EventStatus>) {
+function getEventStatus(status: EventStatus) {
 	switch (status[0]) {
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;

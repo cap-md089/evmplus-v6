@@ -36,19 +36,15 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 			renderDataset.push(this.props.dataset[i]);
 		}
 
-		const pageCount = Math.ceil(this.props.dataset.length / this.props.dataCountPerPage);
+		const pageCount = Math.ceil(
+			this.props.dataset.length / this.props.dataCountPerPage
+		);
 
 		return (
 			<div>
-				{this.renderPageControls(
-					this.props.page,
-					pageCount
-				)}
+				{this.renderPageControls(this.props.page, pageCount)}
 				{renderDataset.map(this.props.renderFunction)}
-				{this.renderPageControls(
-					this.props.page,
-					pageCount
-				)}
+				{this.renderPageControls(this.props.page, pageCount)}
 			</div>
 		);
 	}
@@ -184,22 +180,26 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							1
 						</span>
-						{page > 2 ? <span
-							onMouseDown={this.controlClick(page - 1)}
-						>
-							{page - 1}
-						</span> : null}
-						{page > 1 && page < pageCount ? <span
-							className="highlighted"
-							onMouseDown={this.controlClick(page)}
-						>
-							{page}
-						</span> : null}
-						{page < pageCount - 1 ? <span
-							onMouseDown={this.controlClick(page + 1)}
-						>
-							{page + 1}
-						</span> : null}
+						{page > 3 ? ' ... ' : null}
+						{page > 2 ? (
+							<span onMouseDown={this.controlClick(page - 1)}>
+								{page - 1}
+							</span>
+						) : null}
+						{page > 1 && page < pageCount ? (
+							<span
+								className="highlighted"
+								onMouseDown={this.controlClick(page)}
+							>
+								{page}
+							</span>
+						) : null}
+						{page < pageCount - 1 ? (
+							<span onMouseDown={this.controlClick(page + 1)}>
+								{page + 1}
+							</span>
+						) : null}
+						{page < pageCount - 2 ? ' ... ' : null}
 						<span
 							className={page === pageCount ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(pageCount)}

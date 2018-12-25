@@ -34,9 +34,17 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 	 */
 	public Website: WebsiteInformation;
 
+	/**
+	 * Holds blog information
+	 * 
+	 * Also configures photo library
+	 */
+	public Blog: BlogInformation;
+
 	public constructor(values: RegistryValues, account: Account) {
 		super(account.id);
 
+		this.Blog = values.Blog;
 		this.Contact = values.Contact;
 		this.Website = values.Website;
 	}
@@ -50,7 +58,8 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			accountID: this.accountID,
 			Contact: this.Contact,
 			id: this.id,
-			Website: this.Website
+			Website: this.Website,
+			Blog: this.Blog
 		}
 	}
 }

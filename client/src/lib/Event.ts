@@ -151,7 +151,7 @@ export default class Event extends APIInterface<EventObject>
 
 	public administrationComments: string;
 
-	public status: RadioReturn<EventStatus>;
+	public status: EventStatus;
 
 	public debrief: string;
 

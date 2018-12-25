@@ -18,6 +18,7 @@ import { BreadCrumb } from './BreadCrumbs';
 import { SideNavigationItem } from './SideNavigation';
 import ErrorHandler from './ErrorHandler';
 import Pages from 'src/pages/Pages';
+import Registry from 'src/lib/Registry';
 
 const pages: Array<{
 	url: string;
@@ -102,7 +103,8 @@ const composeElement = (
 	account: Account,
 	authorizeUser: (arg: SigninReturn) => void,
 	updateSideNav: (links: SideNavigationItem[]) => void,
-	updateBreadcrumbs: (links: BreadCrumb[]) => void
+	updateBreadcrumbs: (links: BreadCrumb[]) => void,
+	registry: Registry
 ) => (props: RouteComponentProps<any>) => {
 	const memObject =
 		member.member === null
@@ -123,6 +125,8 @@ const composeElement = (
 				authorizeUser={authorizeUser}
 				updateSideNav={updateSideNav}
 				updateBreadCrumbs={updateBreadcrumbs}
+				key="mainpage"
+				registry={registry}
 			/>
 		</ErrorHandler>
 	);
@@ -134,6 +138,7 @@ export default class PageRouter extends React.Component<{
 	member: SigninReturn;
 	account: Account;
 	authorizeUser: (arg: SigninReturn) => void;
+	registry: Registry;
 }> {
 	public render() {
 		return (
@@ -150,7 +155,8 @@ export default class PageRouter extends React.Component<{
 								this.props.account,
 								this.props.authorizeUser,
 								this.props.updateSideNav,
-								this.props.updateBreadcrumbs
+								this.props.updateBreadcrumbs,
+								this.props.registry
 							)}
 						/>
 					);

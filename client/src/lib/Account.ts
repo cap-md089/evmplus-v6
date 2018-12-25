@@ -6,6 +6,7 @@ import { createCorrectMemberObject, MemberClasses } from './Members';
 import myFetch from './myFetch';
 import Team from './Team';
 import BlogPost from './BlogPost';
+import BlogPage from './BlogPage';
 
 /**
  * Holds the account information for a provided account
@@ -160,6 +161,16 @@ export default class Account extends APIInterface<AccountObject>
 		const posts = await results.json() as BlogPostObject[];
 
 		return posts.map(post => new BlogPost(post, this));
+	}
+
+	public async getBlogPages(): Promise<BlogPage[]> {
+		const url = this.buildURI('api', 'blog', 'page');
+
+		const results = await this.fetch(url);
+
+		const pages = await results.json() as FullBlogPageObject[]
+
+		return pages.map(page => new BlogPage(page, this));
 	}
 
 	public toRaw(): AccountObject {

@@ -114,7 +114,7 @@ export default class App extends React.Component<
 			member: null,
 			sessionID: ''
 		},
-		loading: false,
+		loading: true,
 		account: null,
 		Registry: null,
 		sideNavLinks: [],
@@ -142,7 +142,6 @@ export default class App extends React.Component<
 	}
 
 	public async componentDidMount(): Promise<void> {
-		// Load registry
 		bestfit(jQuery(this.titleElement));
 		myFetch('/api/banner')
 			.then(res => res.json())
@@ -155,8 +154,6 @@ export default class App extends React.Component<
 		this.setState({
 			loading: true
 		});
-
-		this.timer = setInterval(() => void 0, 5000);
 
 		window.addEventListener('storage', this.onStorageChange);
 
@@ -178,22 +175,16 @@ export default class App extends React.Component<
 						member.sessionID
 				  );
 
+		const registry = await Registry.Get(account);
+
 		this.setState({
+			Registry: registry,
 			account,
 			member,
 			loading: false
+		}, () => {
+			bestfit(jQuery(this.titleElement));
 		});
-
-		const registry = await Registry.Get(account);
-
-		this.setState(
-			{
-				Registry: registry
-			},
-			() => {
-				bestfit(jQuery(this.titleElement));
-			}
-		);
 	}
 
 	public componentWillUnmount() {
@@ -328,6 +319,7 @@ export default class App extends React.Component<
 													authorizeUser={
 														this.authorizeUser
 													}
+													registry={this.state.Registry!}
 													key="pagerouter"
 												/>
 											)}
@@ -556,18 +548,12 @@ export default class App extends React.Component<
 						break;
 					}
 
-					if (
-						(this.state.sideNavLinks[i].props.children || [])[0] !==
-						(links[i].props.children || [])[0]
-					) {
+					if (this.state.sideNavLinks[i].text !== links[i].text) {
 						changed = true;
 						break;
 					}
 
-					if (
-						this.state.sideNavLinks[i].props.target !==
-						links[i].props.target
-					) {
+					if (this.state.sideNavLinks[i].target !== links[i].target) {
 						changed = true;
 						break;
 					}
@@ -575,7 +561,7 @@ export default class App extends React.Component<
 			}
 		}
 
-		if (changed || force) {
+		if (changed) {
 			this.setState({ sideNavLinks: links });
 		}
 	}

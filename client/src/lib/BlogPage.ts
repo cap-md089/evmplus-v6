@@ -63,21 +63,22 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 	public children: string[];
 
-	public get accountID() {
-		return this.account.id;
-	}
-
 	public ancestry: BlogPageAncestryItem[];
+
+	public fullChildren: BlogPageAncestryItem[];
 
 	public parentID: string | null;
 
-	constructor(data: BlogPageObject, private account: Account) {
+	constructor(data: FullBlogPageObject, account: Account) {
 		super(account.id);
 
 		this.id = data.id;
 		this.content = data.content;
 		this.title = data.title;
 		this.children = data.children;
+		this.fullChildren = data.fullChildren;
+		this.parentID = data.parentID;
+		this.ancestry = data.ancestry;
 	}
 
 	public toRaw(): FullBlogPageObject {
@@ -88,7 +89,8 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 			id: this.id,
 			title: this.title,
 			parentID: this.parentID,
-			ancestry: this.ancestry
+			ancestry: this.ancestry,
+			fullChildren: this.fullChildren
 		};
 	}
 
@@ -113,7 +115,7 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 		try {
 			await this.fetch(
-				`/api/blog/post/${this.id}`,
+				`/api/blog/page/${this.id}`,
 				{
 					body: JSON.stringify({
 						...this.toRaw(),
@@ -130,5 +132,32 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 	public getChildren() {
 		return Promise.all(this.children.map(id => BlogPage.Get(id)));
+	}
+
+	public async delete(member: MemberBase, errOnInvalidPermission = false) {
+		if (!member.canManageBlog()) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
+		}
+
+		const token = await this.getToken(member);
+
+		try {
+			await this.fetch(
+				`/api/blog/page/${this.id}`,
+				{
+					body: JSON.stringify({
+						token
+					}),
+					method: 'DELETE'
+				},
+				member
+			);
+		} catch (e) {
+			throw new Error('Could not delete blog page');
+		}
 	}
 }

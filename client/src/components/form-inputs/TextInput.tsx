@@ -4,7 +4,7 @@ import { InputProps } from './Input';
 
 export interface TextInputProps extends InputProps<string> {
 	/**
-	 * Called when the file is changed
+	 * Called when the text is changed
 	 * 
 	 * If it returns a boolean, it changes whether or not the change is accepted
 	 */

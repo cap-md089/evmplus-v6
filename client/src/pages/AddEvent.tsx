@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import Form, {
+import Event from 'src/lib/Event';
+import {
 	Checkbox,
 	DateTimeInput,
 	FormBlock,
@@ -14,9 +15,8 @@ import Form, {
 	Title
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
-import { FileInput, TextBox } from '../components/SimpleForm';
+import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
 import { PageProps } from './Page';
-import Event from 'src/lib/Event';
 
 const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
 
@@ -91,13 +91,12 @@ export default class AddEvent extends React.Component<
 			regionEventNumber: [0, ''],
 			complete: false,
 			administrationComments: '',
-			status: [0, ''],
+			status: 0,
 			debrief: '',
 			pointsOfContact: [],
 			signUpPartTime: false,
 			teamID: 0,
-			fileIDs: [],
-			sourceEvent: null
+			fileIDs: []
 		},
 		valid: false,
 		errors: {},
@@ -132,7 +131,6 @@ export default class AddEvent extends React.Component<
 			showUpcoming: false,
 			signUpDenyMessage: false,
 			signUpPartTime: false,
-			sourceEvent: false,
 			startDateTime: false,
 			status: false,
 			teamID: false,
@@ -150,10 +148,13 @@ export default class AddEvent extends React.Component<
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	public render() {
-		const NewEventForm = Form as new () => Form<NewEventFormValues>;
+		const NewEventForm = SimpleForm as new () => SimpleForm<
+			NewEventFormValues
+		>;
 
 		const StringListEditor = ListEditor as new () => ListEditor<string>;
 		const POCListEditor = ListEditor as new () => ListEditor<
@@ -364,6 +365,12 @@ export default class AddEvent extends React.Component<
 				<Label>Accept signups</Label>
 				<Checkbox name="acceptSignups" />
 
+				<Label>Sign up deny message</Label>
+				<TextInput name="signUpDenyMessage" />
+
+				<Label>Allow signing up part time</Label>
+				<Checkbox name="signUpPartTime" />
+
 				<Label>Use participation fee</Label>
 				<Checkbox name="useParticipationFee" />
 
@@ -405,6 +412,7 @@ export default class AddEvent extends React.Component<
 					name="pointsOfContact"
 					// @ts-ignore
 					inputComponent={POCInput}
+					account={this.props.account}
 					member={this.props.member}
 					addNew={() => ({
 						type: PointOfContactType.INTERNAL,
@@ -528,7 +536,9 @@ export default class AddEvent extends React.Component<
 			meetDateTime: event.meetDateTime,
 			meetLocation: event.meetLocation,
 			name: event.name,
-			participationFee: event.useParticipationFee ? event.participationFee : null,
+			participationFee: event.useParticipationFee
+				? event.participationFee
+				: null,
 			pickupDateTime: event.pickupDateTime,
 			pickupLocation: event.pickupLocation,
 			pointsOfContact: event.pointsOfContact,
@@ -540,7 +550,6 @@ export default class AddEvent extends React.Component<
 			showUpcoming: event.showUpcoming,
 			signUpDenyMessage: event.signUpDenyMessage,
 			signUpPartTime: event.signUpPartTime,
-			sourceEvent: null,
 			startDateTime: event.startDateTime,
 			status: event.status,
 			teamID: event.teamID,
@@ -548,7 +557,7 @@ export default class AddEvent extends React.Component<
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
 			wingEventNumber: event.wingEventNumber
-		}
+		};
 
 		if (!this.props.member) {
 			return;
