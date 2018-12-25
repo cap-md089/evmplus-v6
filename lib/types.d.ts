@@ -559,6 +559,10 @@ declare global {
 		 * Used for advanced navigation
 		 */
 		ancestry: BlogPageAncestryItem[];
+		/**
+		 * Used for advanced navigation
+		 */
+		fullChildren: BlogPageAncestryItem[];
 	}
 
 	/**
@@ -596,6 +600,22 @@ declare global {
 		pointsOfContact: Array<
 			DisplayInternalPointOfContact | ExternalPointOfContact
 		>;
+		/**
+		 * If this is a linked event this will be present
+		 *
+		 * Linking events allows for one account to copy an event of another account
+		 * and receive updates and such
+		 */
+		sourceEvent: null | {
+			/**
+			 * ID of the event it came from
+			 */
+			id: number;
+			/**
+			 * The account linked from
+			 */
+			accountID: string;
+		};
 	}
 
 	/**
@@ -759,7 +779,7 @@ declare global {
 		/**
 		 * Tentative, complete, cancelled, etc.
 		 */
-		status: RadioReturn<EventStatus>;
+		status: EventStatus;
 		/**
 		 * After action reports
 		 */
@@ -780,22 +800,6 @@ declare global {
 		 * Files that may be associated with the event; e.g. forms
 		 */
 		fileIDs: string[];
-		/**
-		 * If this is a linked event this will be present
-		 *
-		 * Linking events allows for one account to copy an event of another account
-		 * and receive updates and such
-		 */
-		sourceEvent: null | {
-			/**
-			 * ID of the event it came from
-			 */
-			id: number;
-			/**
-			 * The account linked from
-			 */
-			accountID: string;
-		};
 	}
 
 	/**
@@ -1655,6 +1659,10 @@ declare global {
 		}
 	}
 
+	export interface BlogInformation {
+		BlogPostsPerPage: number;
+	}
+
 	/**
 	 * Each account has a registry, stores configuration
 	 */
@@ -1667,6 +1675,10 @@ declare global {
 		 * Website naming details
 		 */
 		Website: WebsiteInformation;
+		/**
+		 * Controls blog presentation, which includes the photo library
+		 */
+		Blog: BlogInformation;
 	}
 
 	export interface TeamMember {
