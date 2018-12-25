@@ -90,7 +90,8 @@ export default class Event
 			timeCreated,
 			timeModified: timeCreated,
 			author: member.getReference(),
-			attendance: []
+			attendance: [],
+			sourceEvent: null
 		};
 
 		const results = await eventsCollection.add(newEvent).execute();
@@ -227,7 +228,7 @@ export default class Event
 
 	public administrationComments: string;
 
-	public status: RadioReturn<EventStatus>;
+	public status: EventStatus;
 
 	public debrief: string;
 
@@ -399,14 +400,12 @@ export default class Event
 			fileIDs: copyFiles ? this.fileIDs : [],
 			status: copyStatus
 				? this.status
-				: [EventStatus.INFORMATIONONLY, ''],
+				: EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
-			sourceEvent: this.sourceEvent,
-
 			meetDateTime: this.meetDateTime - timeDelta,
 			startDateTime: this.startDateTime - timeDelta,
 			endDateTime: this.endDateTime - timeDelta,
@@ -422,21 +421,15 @@ export default class Event
 	 * @param targetAccount The account to link to
 	 * @param member The member linking the event
 	 */
-	public linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
-		const newEvent = Object.assign<{}, EventObject, Partial<EventObject>>(
-			{},
-			this.toRaw(),
-			{
-				accountID: targetAccount.id,
-				author: member.getReference(),
-				sourceEvent: {
-					accountID: this.accountID,
-					id: this.id
-				}
-			}
-		);
+	public async linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
+		const linkedEvent = await Event.Create(this.toRaw(), targetAccount, this.schema, member);
 
-		return Event.Create(newEvent, targetAccount, this.schema, member);
+		linkedEvent.sourceEvent = {
+			accountID: this.account.id,
+			id: this.id
+		};
+
+		return linkedEvent;
 	}
 
 	/**

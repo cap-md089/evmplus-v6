@@ -1,33 +1,29 @@
 import * as express from 'express';
-import { join } from 'path';
 import conf from '../../../conf';
 import Event from '../../../lib/Event';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { asyncErrorHandler, getSchemaValidator, json } from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
+import EventValidator from '../../../lib/validator/validators/EventValidator';
 
-// tslint:disable-next-line:no-var-requires
-const eventSchema = require(join(conf.schemaPath, 'NewEventObject.json'));
+const eventValidator = new EventValidator();
 
-const privateEventValidator = getSchemaValidator(eventSchema);
+export default asyncErrorHandler(
+	async (req: MemberRequest, res: express.Response) => {
+		if (eventValidator.validate(req.body)) {
+			const newEvent = await Event.Create(
+				req.body,
+				req.account,
+				req.mysqlx,
+				req.member
+			);
 
-const newEventValidator = (val: any): val is NewEventObject =>
-	privateEventValidator(val) as boolean;
-
-export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	if (newEventValidator(req.body)) {
-		const newEvent = await Event.Create(
-			req.body,
-			req.account,
-			req.mysqlx,
-			req.member
-		);
-
-		json<EventObject>(res, newEvent.toRaw());
-	} else {
-		res.status(400);
-		if (conf.testing && privateEventValidator.errors) {
-			res.json(privateEventValidator.errors);
+			json<EventObject>(res, newEvent.toRaw());
+		} else {
+			res.status(400);
+			if (conf.testing) {
+				res.json(eventValidator.getErrors());
+			}
+			res.end();
 		}
-		res.end();
 	}
-});
+);

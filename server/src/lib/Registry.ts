@@ -49,6 +49,9 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 				Name: '',
 				Separator: ' - '
 			},
+			Blog: {
+				BlogPostsPerPage: 15
+			},
 			accountID: account.id,
 			id: account.id
 		};
@@ -73,6 +76,9 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 	}
 
 	public values: RegistryValues = {} as RegistryValues;
+
+	// tslint:disable-next-line:variable-name
+	public _id: string;
 
 	public get accountID(): string {
 		return this.account.id;

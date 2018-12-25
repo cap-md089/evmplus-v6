@@ -1,7 +1,7 @@
 import { join } from 'path';
 
 export const Configuration = {
-	testing: false,
+	testing: true,
 	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
 		connection: {

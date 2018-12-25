@@ -36,13 +36,39 @@ export default class BlogPage
 					id: parent.id,
 					title: parent.title
 				}
-			]
+			];
 		}
 
-		return new BlogPage({
-			...results[0],
-			ancestry
-		}, account, schema);
+		const fullChildren = await Promise.all(
+			results[0].children.map(
+				async (child): Promise<BlogPageAncestryItem> => {
+					const childResults = await collectResults(
+						findAndBind(blogPageCollection, {
+							id: child
+						})
+					);
+
+					if (childResults.length > 1) {
+						throw new Error('Could not get child page');
+					}
+
+					return {
+						title: childResults[0].title,
+						id: child
+					};
+				}
+			)
+		);
+
+		return new BlogPage(
+			{
+				...results[0],
+				ancestry,
+				fullChildren
+			},
+			account,
+			schema
+		);
 	}
 
 	public static async Create(
@@ -83,7 +109,8 @@ export default class BlogPage
 				children: [],
 				accountID: account.id,
 				_id,
-				ancestry: []
+				ancestry: [],
+				fullChildren: []
 			},
 			account,
 			schema
@@ -111,6 +138,8 @@ export default class BlogPage
 
 	public parentID: string | null;
 
+	public fullChildren: BlogPageAncestryItem[];
+
 	private deleted: boolean = false;
 
 	private constructor(
@@ -118,22 +147,28 @@ export default class BlogPage
 		private account: Account,
 		private schema: Schema
 	) {
-		this.set(data);
-
 		this._id = data._id;
+
+		this.ancestry = data.ancestry;
+		this.children = data.children;
+		this.content = data.content;
+		this.fullChildren = data.fullChildren;
+		this.id = data.id;
+		this.parentID = data.parentID;
+		this.title = data.title;
 	}
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
+	 *
 	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
-	public set(values: Partial<BlogPageObject>): boolean {
+	public set(values: Partial<NewBlogPage>): boolean {
 		for (const i in values) {
 			if (values.hasOwnProperty(i) && i !== 'accountID') {
-				const key = i as Exclude<keyof BlogPageObject, 'accountID'>;
+				const key = i as Exclude<keyof NewBlogPage, 'accountID'>;
 				this[key] = values[key];
 			}
 		}
@@ -153,7 +188,7 @@ export default class BlogPage
 		await collection.replaceOne(this._id, this.toRaw());
 	}
 
-	public toRaw = () => ({
+	public toRaw = (): FullDBObject<BlogPageObject> => ({
 		id: this.id,
 		title: this.title,
 		content: this.content,
@@ -161,6 +196,12 @@ export default class BlogPage
 		accountID: this.accountID,
 		children: this.children,
 		parentID: this.parentID
+	});
+
+	public toFullRaw = (): FullBlogPageObject => ({
+		...this.toRaw(),
+		fullChildren: this.fullChildren,
+		ancestry: this.ancestry
 	});
 
 	public async *getChildren(): AsyncIterableIterator<BlogPage> {
@@ -181,5 +222,31 @@ export default class BlogPage
 		);
 
 		await collection.removeOne(this._id);
+	}
+
+	public async addChild(blogPage: BlogPage) {
+		this.children.push(blogPage.id);
+		this.fullChildren.push({
+			id: blogPage.id,
+			title: blogPage.title
+		});
+
+		if (blogPage.parentID !== null) {
+			const parent = await BlogPage.Get(
+				blogPage.parentID,
+				this.account,
+				this.schema
+			);
+			parent.removeChild(blogPage);
+			await parent.save();
+		}
+
+		blogPage.parentID = this.id;
+	}
+
+	public removeChild(blogPage: BlogPage) {
+		this.children = this.children.filter(id => id !== blogPage.id);
+
+		blogPage.parentID = null;
 	}
 }

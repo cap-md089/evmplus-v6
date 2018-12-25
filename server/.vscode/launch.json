@@ -14,6 +14,16 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"name": "Launch Test",
+			"program": "${workspaceFolder}/dist/test.js",
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
 			"name": "Jest All",
 			"args": [
 				"--inspect-brk",

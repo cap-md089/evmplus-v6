@@ -4,28 +4,37 @@ import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	let page: BlogPage;
+	let parentPage: BlogPage;
+	let childPage: BlogPage;
 
-	if (typeof req.params.id !== 'string') {
+	if (
+		typeof req.params.id !== 'string' ||
+		typeof req.body !== 'object' ||
+		typeof req.body.id !== 'string'
+	) {
 		res.status(400);
 		res.end();
 		return;
 	}
 
 	try {
-		page = await BlogPage.Get(req.params.id, req.account, req.mysqlx);
+		[parentPage, childPage] = await Promise.all([
+			BlogPage.Get(req.params.id, req.account, req.mysqlx),
+			BlogPage.Get(req.body.id, req.account, req.mysqlx)
+		]);
 	} catch (e) {
 		res.status(404);
 		res.end();
 		return;
 	}
 
-	page.set({
-		children: page.children.filter(id => id !== req.params.id)
-	});
+	parentPage.removeChild(childPage);
 
 	try {
-		await page.save();
+		await Promise.all([
+			parentPage.save(),
+			childPage.save()
+		]);
 	} catch (e) {
 		res.status(500);
 		res.end();
