@@ -4,7 +4,7 @@ import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class BlogPage
-	implements BlogPageObject, DatabaseInterface<BlogPageObject> {
+	implements FullBlogPageObject, DatabaseInterface<BlogPageObject> {
 	public static async Get(id: string, account: Account, schema: Schema) {
 		const blogPageCollection = schema.getCollection<
 			FullDBObject<BlogPageObject>
@@ -21,7 +21,28 @@ export default class BlogPage
 			throw new Error('Could not get blog page');
 		}
 
-		return new BlogPage(results[0], account, schema);
+		let ancestry: BlogPageAncestryItem[] = [];
+
+		if (results[0].parentID !== null) {
+			const parent = await BlogPage.Get(
+				results[0].parentID,
+				account,
+				schema
+			);
+
+			ancestry = [
+				...parent.ancestry,
+				{
+					id: parent.id,
+					title: parent.title
+				}
+			]
+		}
+
+		return new BlogPage({
+			...results[0],
+			ancestry
+		}, account, schema);
 	}
 
 	public static async Create(
@@ -61,7 +82,8 @@ export default class BlogPage
 				id,
 				children: [],
 				accountID: account.id,
-				_id
+				_id,
+				ancestry: []
 			},
 			account,
 			schema
@@ -85,10 +107,14 @@ export default class BlogPage
 		return this.account.id;
 	}
 
+	public ancestry: BlogPageAncestryItem[];
+
+	public parentID: string | null;
+
 	private deleted: boolean = false;
 
 	private constructor(
-		data: FullDBObject<BlogPageObject>,
+		data: FullDBObject<FullBlogPageObject>,
 		private account: Account,
 		private schema: Schema
 	) {
@@ -133,7 +159,8 @@ export default class BlogPage
 		content: this.content,
 		_id: this._id,
 		accountID: this.accountID,
-		children: this.children
+		children: this.children,
+		parentID: this.parentID
 	});
 
 	public async *getChildren(): AsyncIterableIterator<BlogPage> {

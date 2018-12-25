@@ -20,6 +20,7 @@ export const Member: MemberPermissions = {
 	EventStatusPage: 0,
 	ORMOPORD: 0,
 	ProspectiveMemberManagment: 0,
+	ManageBlog: 0,
 	SignUpEdit: 0,
 
 	DownloadCAPWATCH: 0,
@@ -49,6 +50,7 @@ export const Staff: MemberPermissions = {
 	EventStatusPage: 0,
 	ORMOPORD: 0,
 	ProspectiveMemberManagment: 0,
+	ManageBlog: 0,
 	SignUpEdit: 0,
 
 	DownloadCAPWATCH: 0,
@@ -78,6 +80,7 @@ export const Manager: MemberPermissions = {
 	EventStatusPage: 1,
 	ORMOPORD: 1,
 	ProspectiveMemberManagment: 1,
+	ManageBlog: 1,
 	SignUpEdit: 1,
 
 	DownloadCAPWATCH: 0,
@@ -107,6 +110,7 @@ export const Admin: MemberPermissions = {
 	EventStatusPage: 1,
 	ORMOPORD: 1,
 	ProspectiveMemberManagment: 1,
+	ManageBlog: 1,
 	SignUpEdit: 1,
 
 	DownloadCAPWATCH: 1,

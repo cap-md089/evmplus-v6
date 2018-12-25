@@ -2,6 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import { RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import Account from './Account';
+import MemberBase from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
 export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogPostObject> {
@@ -34,6 +35,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 
 	public static async Create(
 		data: NewBlogPost,
+		member: MemberBase,
 		account: Account,
 		schema: Schema
 	): Promise<BlogPost> {
@@ -64,6 +66,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 			...data,
 			id,
 			posted,
+			author: member.getReference(),
 			accountID: account.id
 		};
 
@@ -82,7 +85,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 
 	private static collectionName = 'Blog';
 
-	public authorid: MemberReference;
+	public author: MemberReference;
 
 	public content: RawDraftContentState;
 
@@ -137,7 +140,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 		return {
 			_id: this._id,
 			id: this.id,
-			authorid: this.authorid,
+			author: this.author,
 			content: this.content,
 			fileIDs: this.fileIDs,
 			posted: this.posted,
@@ -158,7 +161,7 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 			'_id',
 			'id',
 			'title',
-			'authorid',
+			'author',
 			'content',
 			'fileIDs',
 			'posted'

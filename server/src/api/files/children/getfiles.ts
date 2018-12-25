@@ -45,7 +45,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 		req.params.method === 'dirty' &&
 		req.member !== null
 	) {
-		streamAsyncGeneratorAsJSONArrayTyped<File, FullFileObject>(
+		await streamAsyncGeneratorAsJSONArrayTyped<File, FullFileObject>(
 			res,
 			folder.getChildren(),
 			async file => {
@@ -53,6 +53,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 					req.member,
 					FileUserAccessControlPermissions.READ
 				);
+
 				if (!canRead) {
 					return false;
 				}
@@ -72,7 +73,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 			}
 		);
 	} else {
-		streamAsyncGeneratorAsJSONArrayTyped<File, FileObject>(
+		await streamAsyncGeneratorAsJSONArrayTyped<File, FileObject>(
 			res,
 			folder.getChildren(),
 			async file =>

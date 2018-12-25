@@ -297,6 +297,10 @@ export default abstract class MemberBase implements MemberObject {
 	public getFullName() {
 		return this.getName();
 	}
+
+	public canManageBlog() {
+		return this.hasPermission('ManageBlog');
+	}
 }
 
 import { DateTime } from 'luxon';

@@ -200,7 +200,7 @@ export default class NHQMember extends CAPWATCHMember
 					}
 
 					NHQMember.memberSessions = NHQMember.memberSessions.filter(
-						s => s.expireTime > Date.now() + TEN_MINUTES
+						s => s.expireTime < Date.now() + TEN_MINUTES
 					);
 					const sess = NHQMember.memberSessions.filter(
 						s => s.id === decoded.id
@@ -208,10 +208,7 @@ export default class NHQMember extends CAPWATCHMember
 					// const sess = await NHQMember.GetMemberSessions(decoded.id, req.mysqlx);
 					if (sess.length === 1) {
 						const [dutyPositions, extraInfo] = await Promise.all([
-							NHQMember.GetRegularDutypositions(
-								id,
-								req.mysqlx
-							),
+							NHQMember.GetRegularDutypositions(id, req.mysqlx),
 							NHQMember.LoadExtraMemberInformation(
 								id,
 								req.mysqlx,
@@ -509,5 +506,16 @@ export default class NHQMember extends CAPWATCHMember
 			cookie: '',
 			sessionID: this.sessionID
 		};
+	}
+
+	public canManageBlog() {
+		return (
+			super.canManageBlog() ||
+			this.hasDutyPosition([
+				'Cadet Public Affairs Officer',
+				'Cadet Public Affairs NCO',
+				'Public Affairs officer'
+			])
+		);
 	}
 }

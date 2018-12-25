@@ -12,7 +12,7 @@ import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
-import { validToken } from '../../formtoken';
+import { validRawToken } from '../../formtoken';
 
 const parseHeaders = (lines: string[]) => {
 	const headers: { [key: string]: string } = {};
@@ -53,8 +53,11 @@ export default async (req: MemberRequest, res: express.Response) => {
 	let boundary = '';
 	let writeStream: fs.WriteStream;
 
-	if (typeof req.headers.token !== 'undefined') {
-		if (!validToken(req)) {
+	if (
+		typeof req.headers !== 'undefined' &&
+		typeof req.headers.token === 'string'
+	) {
+		if (!validRawToken(req.headers.token, req.member)) {
 			res.status(403);
 			res.end();
 			return;

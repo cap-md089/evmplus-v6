@@ -13,20 +13,27 @@ const privateBlogPostValidator = getSchemaValidator(blogPostSchema);
 const blogPostValidator = (val: any): val is NewBlogPost =>
 	privateBlogPostValidator(val) as boolean;
 
-export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	if (blogPostValidator(req.body)) {
-		const newPost: NewBlogPost = {
-			authorid: req.member.getReference(),
-			content: req.body.content,
-			fileIDs: req.body.fileIDs,
-			title: req.body.title
-		};
+export default asyncErrorHandler(
+	async (req: MemberRequest, res: express.Response) => {
+		if (blogPostValidator(req.body)) {
+			const newPost: NewBlogPost = {
+				content: req.body.content,
+				fileIDs: req.body.fileIDs,
+				title: req.body.title
+			};
 
-		const post = await BlogPost.Create(newPost, req.account, req.mysqlx);
+			const post = await BlogPost.Create(
+				newPost,
+				req.member,
+				req.account,
+				req.mysqlx
+			);
 
-		json<BlogPostObject>(res, post.toRaw());
-	} else {
-		res.status(400);
-		res.end();
+			json<BlogPostObject>(res, post.toRaw());
+		} else {
+			res.status(400);
+			res.json(privateBlogPostValidator.errors);
+			res.end();
+		}
 	}
-});
+);

@@ -27,7 +27,7 @@ export default (fileValidator: FileObjectValidator) =>
 				req.mysqlx
 			);
 
-			file.set(req.body);
+			file.set(req.body)
 
 			await file.save();
 

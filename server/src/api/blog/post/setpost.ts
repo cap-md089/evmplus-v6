@@ -15,7 +15,6 @@ const blogPostValidator = (val: any): val is BlogPostObject =>
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	const blogPostData: NewBlogPost = {
-		authorid: req.body.authorid,
 		content: req.body.content,
 		fileIDs: req.body.fileIDs,
 		title: req.body.title
@@ -46,10 +45,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 			res.status(404);
 			res.end();
 		} else {
-			// tslint:disable-next-line:no-console
-			console.log(e);
-			res.status(500);
-			res.end();
+			throw e;
 		}
 	}
 });
