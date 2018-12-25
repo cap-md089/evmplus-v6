@@ -140,6 +140,13 @@ export default class FileInput extends React.Component<
 			throw new Error('Account not provided');
 		}
 
+		if (typeof this.props.member === 'undefined') {
+			throw new Error(
+				'No member variable passed, will not work when people are signed in. ' +
+					'If this is intentional, pass `null` to member'
+			);
+		}
+
 		return this.state.loaded ? (
 			<div className="formbox" style={this.props.boxStyles}>
 				<div className="fileInput">
@@ -206,6 +213,17 @@ export default class FileInput extends React.Component<
 			files: newFiles,
 			dialogueOpen: false
 		});
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: newFiles.map(f => f.id)
+			});
+		}
+
+		if (this.props.onChange) {
+			this.props.onChange(newFiles.map(f => f.id));
+		}
 	}
 
 	private onFileRemove(file: FileInterface) {
@@ -214,6 +232,17 @@ export default class FileInput extends React.Component<
 		files = files.filter(f => f.id !== file.id);
 
 		this.setState({ files });
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: files.map(f => f.id)
+			});
+		}
+
+		if (this.props.onChange) {
+			this.props.onChange(files.map(f => f.id));
+		}
 	}
 
 	private closeErrorDialogue() {

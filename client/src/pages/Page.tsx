@@ -14,7 +14,7 @@ export interface PageProps<R = {}> {
 	account: Account;
 	routeProps: RouteComponentProps<R>;
 	authorizeUser: (arg: SigninReturn) => void;
-	updateSideNav: (links: SideNavigationItem[]) => void;
+	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
 }
 

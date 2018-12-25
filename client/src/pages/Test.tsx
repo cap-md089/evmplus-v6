@@ -68,8 +68,6 @@ export default class Test extends Page<
 		slowEmptyEditorState().then(test14 => {
 			this.setState({ test14: test14.state });
 		});
-
-		JSON.parse('not good');
 	}
 
 	public render() {
@@ -109,7 +107,12 @@ export default class Test extends Page<
 						this.setState(data);
 					}}
 				>
-					<LoadingTextArea name="test14" value={this.state.test14} account={this.props.account} />
+					<LoadingTextArea
+						name="test14"
+						value={this.state.test14}
+						account={this.props.account}
+						member={this.props.member}
+					/>
 					<Label>Time input</Label>
 					<DateTimeInput
 						name="test8"
@@ -147,7 +150,12 @@ export default class Test extends Page<
 					<TextInput name="test2" value={this.state.test2} />
 					<TextInput name="test3" value={this.state.test3} />
 					<Label>File label</Label>
-					<FileInput name="test4" value={this.state.test4} account={this.props.account} />
+					<FileInput
+						name="test4"
+						value={this.state.test4}
+						account={this.props.account}
+						member={this.props.member}
+					/>
 					<TextInput
 						name="test6"
 						fullWidth={true}
@@ -264,9 +272,7 @@ export default class Test extends Page<
 					data={{
 						hi: true
 					}}
-					url={'/api/echo'}
 					onClick={console.log}
-					onReceiveData={console.log}
 				>
 					Submit
 				</TestButton>

@@ -99,6 +99,10 @@ export default class FileDialogue extends React.Component<
 		this.onDialogueCloseCancel = this.onDialogueCloseCancel.bind(this);
 	}
 
+	public componentDidMount() {
+		this.goToFolder('root');
+	}
+
 	private get multiple() {
 		return typeof this.props.multiple === 'undefined'
 			? true
@@ -119,7 +123,7 @@ export default class FileDialogue extends React.Component<
 			props = {
 				displayButtons: DialogueButtons.OK,
 				labels: ['Cancel'],
-				onClose: this.onDialogueClose,
+				onClose: this.onDialogueCloseCancel,
 				open: this.props.open,
 				title: ''
 			};
@@ -129,7 +133,7 @@ export default class FileDialogue extends React.Component<
 				labels: ['Select Files', 'Cancel'],
 				onCancel: this.onDialogueCloseCancel,
 				onOk: this.onDialogueClose,
-				onClose: this.onDialogueClose,
+				onClose: () => void 0,
 				open: this.props.open,
 				title: ''
 			};
@@ -182,6 +186,7 @@ export default class FileDialogue extends React.Component<
 							}
 						/>
 					))}
+					<div className="divider10px" />
 					{this.state.currentFolder ? (
 						<FileUploader
 							currentFolder={this.state.currentFolder}
@@ -396,9 +401,17 @@ export default class FileDialogue extends React.Component<
 				this.props.filter ? this.props.filter : () => true
 			)
 		);
+
+		this.setState({
+			selectedFiles: []
+		});
 	}
 
 	private onDialogueCloseCancel() {
 		this.props.onReturn([]);
+
+		this.setState({
+			selectedFiles: []
+		});
 	}
 }

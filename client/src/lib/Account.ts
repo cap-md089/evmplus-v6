@@ -5,6 +5,7 @@ import MemberBase from './MemberBase';
 import { createCorrectMemberObject, MemberClasses } from './Members';
 import myFetch from './myFetch';
 import Team from './Team';
+import BlogPost from './BlogPost';
 
 /**
  * Holds the account information for a provided account
@@ -149,6 +150,16 @@ export default class Account extends APIInterface<AccountObject>
 		const files = await results.json();
 
 		return files.map((f: FullFileObject) => new FileInterface(f, this));
+	}
+
+	public async getBlogPosts(): Promise<BlogPost[]> {
+		const url = this.buildURI('api', 'blog', 'post');
+
+		const results = await this.fetch(url);
+
+		const posts = await results.json() as BlogPostObject[];
+
+		return posts.map(post => new BlogPost(post, this));
 	}
 
 	public toRaw(): AccountObject {

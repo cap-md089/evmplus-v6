@@ -84,21 +84,23 @@ export default abstract class APIInterface<T> {
 
 		let headers = options.headers || {};
 
-		if (options.body) {
-			headers['content-type'] = 'application/json';
+		if (options.body !== undefined) {
+			headers = {
+				...headers,
+				'content-type': 'application/json'
+			};
 		}
 
 		if (member) {
 			headers = {
-				...options.headers,
+				...headers,
 				authorization: member.sessionID
 			};
 		}
 
-		return myFetch(this.buildURI.apply(this, uri.split('/')), {
-			...options,
-			headers
-		});
+		options.headers = headers;
+
+		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
 	}
 
 	/**

@@ -10,9 +10,11 @@ import {
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import urlFormat from '../../lib/urlFormat';
+import Dialogue, { DialogueButtons } from '../Dialogue';
 import FileDialogue from '../FileDialogue';
 import { InputProps } from './Input';
-import Dialogue, { DialogueButtons } from '../Dialogue';
+
+let index = 0;
 
 export const mediaRenderFunction = (
 	block: ContentBlock,
@@ -24,20 +26,77 @@ export const mediaRenderFunction = (
 			return null;
 		}
 		const type = contentState.getEntity(entity).getType();
-		if (type === 'IMAGE') {
-			return {
-				component: Media,
-				editable: false
-			};
+
+		switch (type) {
+			case 'IMAGE':
+				return {
+					component: Media,
+					editable: false
+				};
+
+			case 'HYPERLINK':
+				return {
+					component: HyperLink,
+					editable: true
+				};
+
+			default:
+				return null;
 		}
-		if (type === 'HYPERLINK') {
-			return {
-				component: HyperLink,
-				editable: false
-			};
+	} else {
+		switch (block.getType()) {
+			case 'header-one':
+				return {
+					component: H1(index++, block.getText())
+				};
+
+			case 'header-two':
+				// return {
+				// 	component: H2(index++, block.getText()),
+				// 	editable: true
+				// };
+				return null;
+
+			case 'header-three':
+				return {
+					component: H3(index++, block.getText()),
+					editable: true
+				};
+
+			case 'header-four':
+				return {
+					component: H4(index++, block.getText()),
+					editable: true
+				};
+
+			case 'header-five':
+				return {
+					component: H5(index++, block.getText()),
+					editable: true
+				};
+
+			case 'header-six':
+				return {
+					component: H6(index++, block.getText()),
+					editable: true
+				};
+
+			default:
+				return null;
 		}
-		return null;
 	}
+};
+
+export const blockStyleFunction = (block: ContentBlock) => {
+	switch (block.getType() as string) {
+		case 'leftalign':
+			return 'textarea-leftalign';
+		case 'centeralign':
+			return 'textarea-centeralign';
+		case 'rightalign':
+			return 'textarea-rightalign';
+	}
+
 	return null;
 };
 
@@ -73,6 +132,40 @@ const Media: React.SFC<any> = ({ block, contentState }) => {
 			/>
 		</div>
 	);
+};
+
+const H1 = (id: number, text: string): React.SFC<any> => props => {
+	// tslint:disable-next-line:no-console
+	console.log(props);
+	return (
+		<div data-offset-key={props.offsetKey} className="public-DraftStyleDefault-block public-DraftStyleDefault-ltr">
+			<span data-offset-key={props.offsetKey}>
+				<span data-text="true" id={`content-${id}`}>
+					{text}
+				</span>
+			</span>
+		</div>
+	);
+};
+
+// const H2 = (id: number, text: string): React.SFC<any> => () => {
+// 	return <h2 id={`content-${id}`}>{text}</h2>;
+// };
+
+const H3 = (id: number, text: string): React.SFC<any> => () => {
+	return <h3 id={`content-${id}`}>{text}</h3>;
+};
+
+const H4 = (id: number, text: string): React.SFC<any> => () => {
+	return <h4 id={`content-${id}`}>{text}</h4>;
+};
+
+const H5 = (id: number, text: string): React.SFC<any> => () => {
+	return <h5 id={`content-${id}`}>{text}</h5>;
+};
+
+const H6 = (id: number, text: string): React.SFC<any> => () => {
+	return <h6 id={`content-${id}`}>{text}</h6>;
 };
 
 export interface TextAreaProps extends InputProps<EditorState> {
@@ -133,6 +226,9 @@ export default class TextArea extends React.Component<
 		this.toggleUL = this.toggleUL.bind(this);
 		this.toggleOL = this.toggleOL.bind(this);
 		this.addImage = this.addImage.bind(this);
+		this.toggleLeftAlign = this.toggleLeftAlign.bind(this);
+		this.toggleCenterAlign = this.toggleCenterAlign.bind(this);
+		this.toggleRightAlign = this.toggleRightAlign.bind(this);
 
 		this.onFileSelect = this.onFileSelect.bind(this);
 		this.filterImageFiles = this.filterImageFiles.bind(this);
@@ -151,6 +247,15 @@ export default class TextArea extends React.Component<
 		if (!this.props.account) {
 			throw new Error('Account not specified');
 		}
+
+		if (typeof this.props.member === 'undefined') {
+			throw new Error(
+				'No member variable passed, will not work when people are signed in. ' +
+					'If this is intentional, pass `null` to member'
+			);
+		}
+
+		index = 0;
 
 		const editorState = this.editorState;
 
@@ -322,6 +427,22 @@ export default class TextArea extends React.Component<
 								float: 'left'
 							}}
 						/>
+						<br />
+						{/* <span
+							onMouseDown={this.toggleLeftAlign}
+						>
+							LA
+						</span>
+						<span
+							onMouseDown={this.toggleCenterAlign}
+						>
+							CA
+						</span>
+						<span
+							onMouseDown={this.toggleRightAlign}
+						>
+							RA
+						</span> */}
 					</div>
 					<div
 						className="textarea-box-editor"
@@ -468,6 +589,25 @@ export default class TextArea extends React.Component<
 		);
 	}
 
+	private toggleLeftAlign(e: React.MouseEvent<HTMLSpanElement>) {
+		e.preventDefault();
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'leftalign'));
+	}
+
+	private toggleCenterAlign(e: React.MouseEvent<HTMLSpanElement>) {
+		e.preventDefault();
+		this.onChange(
+			RichUtils.toggleBlockType(this.editorState, 'centeralign')
+		);
+	}
+
+	private toggleRightAlign(e: React.MouseEvent<HTMLSpanElement>) {
+		e.preventDefault();
+		this.onChange(
+			RichUtils.toggleBlockType(this.editorState, 'rightalign')
+		);
+	}
+
 	private onChange(editorState: EditorState): void {
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
@@ -509,17 +649,13 @@ export default class TextArea extends React.Component<
 		}
 	}
 
-	private filterImageFiles(
-		file: FileObject,
-		index: number,
-		array: FileObject[]
-	) {
+	private filterImageFiles(file: FileObject) {
 		return !!file.contentType.match(/image\//);
 	}
 
 	private closeErrorDialogue() {
 		this.setState({
 			fileDialogueOpen: false
-		})
+		});
 	}
 }

@@ -28,12 +28,15 @@ export default class FileUploader extends React.Component<
 		files: [],
 		hovering: false,
 		progress: 0,
-		doneWithCurrentFile: false,
+		doneWithCurrentFile: true,
 		error: HTTPError.NONE
 	};
 
 	public constructor(props: FileUploaderProps) {
 		super(props);
+
+		this.handleSelectChange = this.handleSelectChange.bind(this);
+		this.handleDrop = this.handleDrop.bind(this);
 	}
 
 	public async componentDidUpdate() {

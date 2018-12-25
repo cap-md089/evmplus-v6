@@ -4,7 +4,8 @@ import MemberBase from '../MemberBase';
 /**
  * A class to represent the members that sign in to CAPNHQ.gov
  */
-export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
+export default class CAPNHQMember extends MemberBase
+	implements NHQMemberObject {
 	/**
 	 * This class uses 6 digit CAP IDs
 	 */
@@ -41,7 +42,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 
 	/**
 	 * A basic member that holds information that this site doesn't manage
-	 * 
+	 *
 	 * @param data The full member object
 	 * @param requestingAccount The account that is used to create this member,
 	 * 		not the account the member is a part of!
@@ -88,5 +89,22 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			cookie: '',
 			sessionID: this.sessionID
 		};
+	}
+
+	public hasDutyPosition(dutyPosition: string | string[]): boolean {
+		return typeof dutyPosition === 'string'
+			? this.dutyPositions.filter(s => s === dutyPosition).length > 0
+			: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b);
+	}
+
+	public canManageBlog() {
+		return (
+			super.canManageBlog() ||
+			this.hasDutyPosition([
+				'Cadet Public Affairs Officer',
+				'Cadet Public Affairs NCO',
+				'Public Affairs Officer'
+			])
+		);
 	}
 }

@@ -543,8 +543,41 @@ export default class App extends React.Component<
 		return false;
 	}
 
-	private updateSideNav(links: SideNavigationItem[]) {
-		this.setState({ sideNavLinks: links });
+	private updateSideNav(links: SideNavigationItem[], force = false) {
+		let changed = false;
+
+		if (links.length !== this.state.sideNavLinks.length) {
+			changed = true;
+		} else {
+			for (const i in links) {
+				if (links.hasOwnProperty(i)) {
+					if (this.state.sideNavLinks[i] === undefined) {
+						changed = true;
+						break;
+					}
+
+					if (
+						(this.state.sideNavLinks[i].props.children || [])[0] !==
+						(links[i].props.children || [])[0]
+					) {
+						changed = true;
+						break;
+					}
+
+					if (
+						this.state.sideNavLinks[i].props.target !==
+						links[i].props.target
+					) {
+						changed = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (changed || force) {
+			this.setState({ sideNavLinks: links });
+		}
 	}
 
 	private updateBreadCrumbs(breadCrumbs: BreadCrumb[]) {

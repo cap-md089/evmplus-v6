@@ -75,7 +75,7 @@ export default class Event extends APIInterface<EventObject>
 		return new Event(event, account);
 	}
 
-	public id: number = 0;
+	public id: number;
 
 	public accountID: string = '';
 
@@ -172,7 +172,7 @@ export default class Event extends APIInterface<EventObject>
 
 	public fileIDs: string[];
 
-	public attendance: AttendanceRecord[] = [];
+	public attendance: AttendanceRecord[];
 
 	public constructor(data: EventObject, account: Account) {
 		super(account.id);
@@ -394,5 +394,13 @@ export default class Event extends APIInterface<EventObject>
 			member.matchesReference(this.author) ||
 			member.hasPermission('SignUpEdit')
 		);
+	}
+
+	public set(values: Partial<NewEventObject>) {
+		for (const i in values) {
+			if (values.hasOwnProperty(i)) {
+				this[i] = values[i];
+			}
+		}
 	}
 }

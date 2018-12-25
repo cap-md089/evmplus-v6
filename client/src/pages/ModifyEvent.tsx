@@ -1,6 +1,5 @@
-import { DateTime } from 'luxon';
 import * as React from 'react';
-import {
+import Form, {
 	Checkbox,
 	DateTimeInput,
 	FormBlock,
@@ -16,13 +15,12 @@ import {
 import POCInput from '../components/form-inputs/POCInput';
 import Loader from '../components/Loader';
 import { FileInput, TextBox } from '../components/SimpleForm';
-import SimpleRequestForm from '../components/SimpleRequestForm';
 import { PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import { PageProps } from './Page';
 
 interface ModifyEventState {
-	event: null | NewEventFormValues;
+	event: null | Event;
 	valid: boolean;
 	errors: {};
 }
@@ -68,6 +66,96 @@ export const RequiredForms = [
 	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
 ];
 
+const convertToFormValues = (event: Event): NewEventFormValues => ({
+	acceptSignups: event.acceptSignups,
+	activity: event.activity,
+	administrationComments: event.administrationComments,
+	comments: event.comments,
+	complete: event.complete,
+	debrief: event.debrief,
+	desiredNumberOfParticipants: event.desiredNumberOfParticipants,
+	endDateTime: event.endDateTime,
+	eventWebsite: event.eventWebsite,
+	fileIDs: event.fileIDs,
+	groupEventNumber: event.groupEventNumber,
+	highAdventureDescription: event.highAdventureDescription,
+	location: event.location,
+	lodgingArrangments: event.lodgingArrangments,
+	mealsDescription: event.mealsDescription,
+	meetDateTime: event.meetDateTime,
+	meetLocation: event.meetLocation,
+	name: event.name,
+	participationFee: event.participationFee || {
+		feeAmount: 0,
+		feeDue: Date.now()
+	},
+	useParticipationFee: !!event.participationFee,
+	pickupDateTime: event.pickupDateTime,
+	pickupLocation: event.pickupLocation,
+	pointsOfContact: event.pointsOfContact,
+	publishToWingCalendar: event.publishToWingCalendar,
+	regionEventNumber: event.regionEventNumber,
+	registration: event.registration || {
+		deadline: Date.now(),
+		information: ''
+	},
+	useRegistration: !!event.registration,
+	requiredEquipment: event.requiredEquipment,
+	requiredForms: event.requiredForms,
+	showUpcoming: event.showUpcoming,
+	signUpDenyMessage: event.signUpDenyMessage,
+	signUpPartTime: event.signUpPartTime,
+	sourceEvent: null,
+	startDateTime: event.startDateTime,
+	status: event.status,
+	teamID: event.teamID,
+	transportationDescription: event.transportationDescription,
+	transportationProvided: event.transportationProvided,
+	uniform: event.uniform,
+	wingEventNumber: event.wingEventNumber
+});
+
+const convertFormValuesToEvent = (event: NewEventFormValues) => ({
+	acceptSignups: event.acceptSignups,
+	activity: event.activity,
+	administrationComments: event.administrationComments,
+	comments: event.comments,
+	complete: event.complete,
+	debrief: event.debrief,
+	desiredNumberOfParticipants: event.desiredNumberOfParticipants,
+	endDateTime: event.endDateTime,
+	eventWebsite: event.eventWebsite,
+	fileIDs: event.fileIDs,
+	groupEventNumber: event.groupEventNumber,
+	highAdventureDescription: event.highAdventureDescription,
+	location: event.location,
+	lodgingArrangments: event.lodgingArrangments,
+	mealsDescription: event.mealsDescription,
+	meetDateTime: event.meetDateTime,
+	meetLocation: event.meetLocation,
+	name: event.name,
+	participationFee: event.useParticipationFee ? event.participationFee : null,
+	pickupDateTime: event.pickupDateTime,
+	pickupLocation: event.pickupLocation,
+	pointsOfContact: event.pointsOfContact,
+	publishToWingCalendar: event.publishToWingCalendar,
+	regionEventNumber: event.regionEventNumber,
+	registration: event.useRegistration ? event.registration : null,
+	requiredEquipment: event.requiredEquipment,
+	requiredForms: event.requiredForms,
+	showUpcoming: event.showUpcoming,
+	signUpDenyMessage: event.signUpDenyMessage,
+	signUpPartTime: event.signUpPartTime,
+	sourceEvent: null,
+	startDateTime: event.startDateTime,
+	status: event.status,
+	teamID: event.teamID,
+	transportationDescription: event.transportationDescription,
+	transportationProvided: event.transportationProvided,
+	uniform: event.uniform,
+	wingEventNumber: event.wingEventNumber
+});
+
 export default class ModifyEvent extends React.Component<
 	PageProps<{ id: string }>,
 	ModifyEventState
@@ -93,29 +181,14 @@ export default class ModifyEvent extends React.Component<
 				this.props.account
 			);
 
-			const newState = {
-				event: {
-					...event.toRaw(),
-					useParticipationFee: !!event.participationFee,
-					useRegistration: !!event.registration
-				}
-			};
-
-			if (!newState.event.participationFee) {
-				newState.event.participationFee = {
-					feeAmount: 0,
-					feeDue: +DateTime.utc()
-				};
+			if (!event.isPOC(this.props.member)) {
+				// TODO: Show error message
+				return;
 			}
 
-			if (!newState.event.registration) {
-				newState.event.registration = {
-					information: '',
-					deadline: +DateTime.utc()
-				};
-			}
-
-			this.setState(newState as Pick<ModifyEventState, 'event'>);
+			this.setState({
+				event
+			});
 		}
 	}
 
@@ -131,316 +204,315 @@ export default class ModifyEvent extends React.Component<
 			}
 		]);
 
-		const NewEventForm = SimpleRequestForm as new () => SimpleRequestForm<
-			NewEventFormValues,
-			EventObject
-		>;
+		if (!this.props.member) {
+			return <h2>Please sign in</h2>;
+		}
+
+		if (!this.state.event) {
+			return <Loader />;
+		}
+
+		const ModifyEventForm = Form as new () => Form<NewEventFormValues>;
 
 		const StringListEditor = ListEditor as new () => ListEditor<string>;
 		const POCListEditor = ListEditor as new () => ListEditor<
 			InternalPointOfContact | ExternalPointOfContact
 		>;
 
-		const event = this.state.event;
+		const event = convertToFormValues(this.state.event);
 
-		return this.props.member ? (
-			event === null ? (
-				<Loader />
-			) : (
-				<NewEventForm
-					url={'/api/event/' + this.props.routeProps.match.params.id}
-					id="newEventForm"
-					onChange={this.updateNewEvent}
-					onSubmit={this.handleSubmit}
-					values={event}
-					method="PUT"
-					showSubmitButton={true}
+		return (
+			<ModifyEventForm
+				id="newEventForm"
+				onChange={this.updateNewEvent}
+				onSubmit={this.handleSubmit}
+				values={event}
+				submitInfo={{
+					text: 'Update event',
+					disabled: !!this.props.member && this.state.valid
+				}}
+				showSubmitButton={true}
+			>
+				<Title>Modify event</Title>
+				<Label>Event name</Label>
+				<TextInput name="name" />
+				<Label>Meet date and time</Label>
+				<DateTimeInput
+					name="meetDateTime"
+					date={true}
+					time={true}
+					originalTimeZoneOffset={'America/New_York'}
+				/>
+				<Label>Meet location</Label>
+				<TextInput name="meetLocation" />
+				<Label>Start date and time</Label>
+				<DateTimeInput
+					name="startDateTime"
+					date={true}
+					time={true}
+					originalTimeZoneOffset={'America/New_York'}
+				/>
+				<Label>Event location</Label>
+				<TextInput name="location" />
+				<Label>End date and time</Label>
+				<DateTimeInput
+					name="endDateTime"
+					date={true}
+					time={true}
+					originalTimeZoneOffset={'America/New_York'}
+				/>
+				<Label>Pickup date and time</Label>
+				<DateTimeInput
+					name="pickupDateTime"
+					date={true}
+					time={true}
+					originalTimeZoneOffset={'America/New_York'}
+				/>
+				<Label>Pickup location</Label>
+				<TextInput name="pickupLocation" />
+				<Label>Transportation provided</Label>
+				<Checkbox name="transportationProvided" />
+				<Label>Transportation description</Label>
+				<TextInput name="transportationDescription" />
+
+				<Title>Activity Information</Title>
+				<Label>Comments</Label>
+				<TextInput
+					boxStyles={{
+						height: '50px'
+					}}
+					name="comments"
+				/>
+				<Label>Activity type</Label>
+				<MultCheckbox
+					name="activity"
+					labels={Activities}
+					other={true}
+				/>
+				<Label>Lodging arrangement</Label>
+				<MultCheckbox
+					name="lodgingArrangments"
+					labels={[
+						'Hotel or individual room',
+						'Open bay building',
+						'Large tent',
+						'Individual tent'
+					]}
+					other={true}
+				/>
+				<Label>Event website</Label>
+				<TextInput name="eventWebsite" />
+				<Label>High adventure decsription</Label>
+				<TextInput name="highAdventureDescription" />
+				<Title>Logistics Information</Title>
+				<Label>Uniform</Label>
+				<MultCheckbox name="uniform" labels={Uniforms} />
+				<Label>Required forms</Label>
+				<MultCheckbox
+					name="requiredForms"
+					labels={RequiredForms}
+					other={true}
+				/>
+				<Label>Required equipment</Label>
+				<StringListEditor
+					name="requiredEquipment"
+					addNew={() => ''}
+					// @ts-ignore
+					inputComponent={TextInput}
+				/>
+				<Label>Use registration deadline</Label>
+				<Checkbox name="useRegistration" />
+
+				<FormBlock
+					style={{
+						display: event.useRegistration ? 'block' : 'none'
+					}}
+					name="registration"
 				>
-					<Title>Modify event</Title>
-					<Label>Event name</Label>
-					<TextInput name="name" />
-					<Label>Meet date and time</Label>
+					<Label>Registration information</Label>
+					<TextInput name="information" />
+
+					<Label>Registration deadline</Label>
 					<DateTimeInput
-						name="meetDateTime"
+						name="deadline"
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
-					<Label>Meet location</Label>
-					<TextInput name="meetLocation" />
-					<Label>Start date and time</Label>
+				</FormBlock>
+
+				<Label>Accept signups</Label>
+				<Checkbox name="acceptSignups" />
+
+				<Label>Use participation fee</Label>
+				<Checkbox name="useParticipationFee" />
+
+				<FormBlock
+					style={{
+						display: event.useParticipationFee ? 'block' : 'none'
+					}}
+					name="participationFee"
+				>
+					<Label>Participation fee</Label>
+					<NumberInput name="feeAmount" />
+
+					<Label>Participation fee due</Label>
 					<DateTimeInput
-						name="startDateTime"
+						name="feeDue"
 						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
-					<Label>Event location</Label>
-					<TextInput name="location" />
-					<Label>End date and time</Label>
-					<DateTimeInput
-						name="endDateTime"
-						date={true}
-						time={true}
-						originalTimeZoneOffset={'America/New_York'}
-					/>
-					<Label>Pickup date and time</Label>
-					<DateTimeInput
-						name="pickupDateTime"
-						date={true}
-						time={true}
-						originalTimeZoneOffset={'America/New_York'}
-					/>
-					<Label>Pickup location</Label>
-					<TextInput name="pickupLocation" />
-					<Label>Transportation provided</Label>
-					<Checkbox name="transportationProvided" />
-					<Label>Transportation description</Label>
-					<TextInput name="transportationDescription" />
+				</FormBlock>
 
-					<Title>Activity Information</Title>
-					<Label>Comments</Label>
-					<TextInput
-						boxStyles={{
-							height: '50px'
-						}}
-						name="comments"
-					/>
-					<Label>Activity type</Label>
-					<MultCheckbox
-						name="activity"
-						labels={Activities}
-						other={true}
-					/>
-					<Label>Lodging arrangement</Label>
-					<MultCheckbox
-						name="lodgingArrangments"
-						labels={[
-							'Hotel or individual room',
-							'Open bay building',
-							'Large tent',
-							'Individual tent'
-						]}
-						other={true}
-					/>
-					<Label>Event website</Label>
-					<TextInput name="eventWebsite" />
-					<Label>High adventure decsription</Label>
-					<TextInput name="highAdventureDescription" />
-					<Title>Logistics Information</Title>
-					<Label>Uniform</Label>
-					<MultCheckbox name="uniform" labels={Uniforms} />
-					<Label>Required forms</Label>
-					<MultCheckbox
-						name="requiredForms"
-						labels={RequiredForms}
-						other={true}
-					/>
-					<Label>Required equipment</Label>
-					<StringListEditor
-						name="requiredEquipment"
-						addNew={() => ''}
-						// @ts-ignore
-						inputComponent={TextInput}
-					/>
-					<Label>Use registration deadline</Label>
-					<Checkbox name="useRegistration" />
+				<Label>Meals</Label>
+				<MultCheckbox
+					name="mealsDescription"
+					labels={[
+						'No meals provided',
+						'Meals provided',
+						'Bring own food',
+						'Bring money'
+					]}
+					other={true}
+				/>
 
-					<FormBlock
-						style={{
-							display: event.useRegistration ? 'block' : 'none'
-						}}
-						name="registration"
-					>
-						<Label>Registration information</Label>
-						<TextInput name="information" />
+				<Title>Point of Contact</Title>
 
-						<Label>Registration deadline</Label>
-						<DateTimeInput
-							name="deadline"
-							date={true}
-							time={true}
-							originalTimeZoneOffset={'America/New_York'}
-						/>
-					</FormBlock>
+				<POCListEditor
+					name="pointsOfContact"
+					member={this.props.member}
+					account={this.props.account}
+					// @ts-ignore
+					inputComponent={POCInput}
+					addNew={() => ({
+						type: PointOfContactType.INTERNAL,
+						email: '',
+						name: '',
+						memberReference: {
+							type: 'Null'
+						},
+						phone: '',
+						receiveEventUpdates: false,
+						receiveRoster: false,
+						receiveSignUpUpdates: false,
+						receiveUpdates: false
+					})}
+					buttonText="Add point of contact"
+					fullWidth={true}
+				/>
 
-					<Label>Accept signups</Label>
-					<Checkbox name="acceptSignups" />
+				<Title>Extra information</Title>
 
-					<Label>Use participation fee</Label>
-					<Checkbox name="useParticipationFee" />
+				<Label>Desired number of participants</Label>
+				<NumberInput name="desiredNumberOfParticipants" />
 
-					<FormBlock
-						style={{
-							display: event.useParticipationFee
-								? 'block'
-								: 'none'
-						}}
-						name="participationFee"
-					>
-						<Label>Participation fee</Label>
-						<NumberInput name="feeAmount" />
+				<Label>Group event number</Label>
+				<RadioButton
+					name="groupEventNumber"
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For',
+						'Denied',
+						'Approved'
+					]}
+					other={true}
+				/>
 
-						<Label>Participation fee due</Label>
-						<DateTimeInput
-							name="feeDue"
-							date={true}
-							time={true}
-							originalTimeZoneOffset={'America/New_York'}
-						/>
-					</FormBlock>
+				<Label>Wing event number</Label>
+				<RadioButton
+					name="wingEventNumber"
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For',
+						'Denied',
+						'Approved'
+					]}
+					other={true}
+				/>
 
-					<Label>Meals</Label>
-					<MultCheckbox
-						name="mealsDescription"
-						labels={[
-							'No meals provided',
-							'Meals provided',
-							'Bring own food',
-							'Bring money'
-						]}
-						other={true}
-					/>
+				<Label>Region event number</Label>
+				<RadioButton
+					name="regionEventNumber"
+					labels={[
+						'Not Required',
+						'To Be Applied For',
+						'Applied For',
+						'Denied',
+						'Approved'
+					]}
+					other={true}
+				/>
 
-					<Title>Point of Contact</Title>
+				<Label>Event status</Label>
+				<SimpleRadioButton
+					name="status"
+					labels={[
+						'Draft',
+						'Tentative',
+						'Confirmed',
+						'Complete',
+						'Cancelled',
+						'Information Only'
+					]}
+				/>
 
-					<POCListEditor
-						name="pointsOfContact"
-						member={this.props.member}
-						account={this.props.account}
-						// @ts-ignore
-						inputComponent={POCInput}
-						addNew={() => ({
-							type: PointOfContactType.INTERNAL,
-							email: '',
-							name: '',
-							memberReference: {
-								type: 'Null'
-							},
-							phone: '',
-							receiveEventUpdates: false,
-							receiveRoster: false,
-							receiveSignUpUpdates: false,
-							receiveUpdates: false
-						})}
-						buttonText="Add point of contact"
-						fullWidth={true}
-					/>
+				<Label>Entry complete</Label>
+				<Checkbox name="complete" />
 
-					<Title>Extra information</Title>
+				<Label>Publish to wing</Label>
+				<Checkbox name="publishToWingCalendar" />
 
-					<Label>Desired number of participants</Label>
-					<NumberInput name="desiredNumberOfParticipants" />
+				<Label>Show upcoming</Label>
+				<Checkbox name="showUpcoming" />
 
-					<Label>Group event number</Label>
-					<RadioButton
-						name="groupEventNumber"
-						labels={[
-							'Not Required',
-							'To Be Applied For',
-							'Applied For',
-							'Denied',
-							'Approved'
-						]}
-						other={true}
-					/>
+				<Label>Administration comments</Label>
+				<TextInput name="administrationComments" />
 
-					<Label>Wing event number</Label>
-					<RadioButton
-						name="wingEventNumber"
-						labels={[
-							'Not Required',
-							'To Be Applied For',
-							'Applied For',
-							'Denied',
-							'Approved'
-						]}
-						other={true}
-					/>
+				<TextBox name="null">Select a team</TextBox>
 
-					<Label>Region event number</Label>
-					<RadioButton
-						name="regionEventNumber"
-						labels={[
-							'Not Required',
-							'To Be Applied For',
-							'Applied For',
-							'Denied',
-							'Approved'
-						]}
-						other={true}
-					/>
+				<Label>Team</Label>
+				<NumberInput name="teamID" />
 
-					<Label>Event status</Label>
-					<SimpleRadioButton
-						name="status"
-						labels={[
-							'Draft',
-							'Tentative',
-							'Confirmed',
-							'Complete',
-							'Cancelled',
-							'Information Only'
-						]}
-					/>
+				<Label>Event files</Label>
+				<FileInput
+					name="fileIDs"
+					account={this.props.account}
+					member={this.props.member}
+				/>
 
-					<Label>Entry complete</Label>
-					<Checkbox name="complete" />
+				<Title>Debrief information</Title>
 
-					<Label>Publish to wing</Label>
-					<Checkbox name="publishToWingCalendar" />
-
-					<Label>Show upcoming</Label>
-					<Checkbox name="showUpcoming" />
-
-					<Label>Administration comments</Label>
-					<TextInput name="administrationComments" />
-
-					<TextBox name="null">Select a team</TextBox>
-
-					<Label>Team</Label>
-					<NumberInput name="teamID" />
-
-					<Label>Event files</Label>
-					<FileInput
-						name="fileIDs"
-						account={this.props.account}
-						member={this.props.member}
-					/>
-
-					<Title>Debrief information</Title>
-
-					<Label>Debrief</Label>
-					<TextInput name="debrief" />
-				</NewEventForm>
-			)
-		) : (
-			<div>Please sign in</div>
+				<Label>Debrief</Label>
+				<TextInput name="debrief" />
+			</ModifyEventForm>
 		);
 	}
 
 	private updateNewEvent(event: NewEventFormValues) {
 		this.checkIfValid(event);
 
+		this.state.event!.set(convertFormValuesToEvent(event));
+
 		this.setState({
-			event
+			event: this.state.event
 		});
 	}
 
-	private handleSubmit(event: NewEventFormValues): NewEventObject {
-		const newEvent = Object.assign({}, event);
-
-		if (!event.useParticipationFee) {
-			delete newEvent.participationFee;
+	private handleSubmit(event: NewEventFormValues) {
+		if (!this.props.member) {
+			return;
 		}
-		delete newEvent.useParticipationFee;
 
-		if (!event.useRegistration) {
-			delete newEvent.registration;
-		}
-		delete newEvent.useRegistration;
+		this.state.event!.set(convertFormValuesToEvent(event));
 
-		return newEvent;
+		this.state.event!.save(this.props.member).then(() => {
+			this.props.routeProps.history.push(
+				`/eventviewer/${this.state.event!.id}`
+			);
+		});
 	}
 
 	private checkIfValid(event: NewEventFormValues) {
@@ -479,5 +551,7 @@ export default class ModifyEvent extends React.Component<
 		this.setState({
 			valid: true
 		});
+
+		return true;
 	}
 }

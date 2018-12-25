@@ -1,5 +1,5 @@
-import { EditorProps } from 'draft-js';
 import * as React from 'react';
+import { EditorState } from 'src/lib/slowEditorState';
 import Loader from './Loader';
 
 interface LoadingTextState {
@@ -16,8 +16,10 @@ interface LoadedTextState {
 
 type TextState = LoadingTextState | LoadedTextState;
 
-export default class LoadingText extends React.Component<
-	EditorProps,
+export default class TextDisplay extends React.Component<
+	{
+		editorState: EditorState;
+	},
 	TextState
 > {
 	public state: TextState = {
@@ -58,6 +60,8 @@ export default class LoadingText extends React.Component<
 						this.props.editorState.getCurrentContent()
 					)
 				}
+				readOnly={true}
+				onChange={() => void 0}
 			/>
 		);
 	}

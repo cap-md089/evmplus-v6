@@ -1,10 +1,9 @@
 import * as React from 'react';
+import { FileUserAccessControlPermissions } from '../enums';
 import FileInterface from '../lib/File';
 import MemberBase from '../lib/Members';
 import Button from './Button';
-import SimpleRequestForm from './SimpleRequestForm';
-import { Label, BigTextBox } from './Form';
-import { FileUserAccessControlPermissions } from '../enums';
+import Form, { BigTextBox, Label } from './Form';
 
 export interface ExtraDisplayProps {
 	file: FileInterface;
@@ -21,7 +20,7 @@ export interface CommentsForm {
 export default class ExtraFileDisplay extends React.Component<
 	ExtraDisplayProps,
 	CommentsForm
-	> {
+> {
 	public state = {
 		comments: this.props.file.comments
 	};
@@ -30,13 +29,13 @@ export default class ExtraFileDisplay extends React.Component<
 		super(props);
 
 		this.onFormChange = this.onFormChange.bind(this);
+		this.onFileChangeFormSubmit = this.onFileChangeFormSubmit.bind(this);
+
+		this.onDeleteFileClick = this.onDeleteFileClick.bind(this);
 	}
 
 	public render() {
-		const FileChangeForm = SimpleRequestForm as new () => SimpleRequestForm<
-			CommentsForm,
-			null
-			>;
+		const FileChangeForm = Form as new () => Form<CommentsForm>;
 
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
@@ -44,50 +43,37 @@ export default class ExtraFileDisplay extends React.Component<
 					this.props.member,
 					FileUserAccessControlPermissions.DELETE
 				) ? (
-						<>
-							<Button
-								buttonType="none"
-								url={'/api/files/' + this.props.file.id}
-								method="DELETE"
-								onReceiveData={() => {
-									if (this.props.fileDelete) {
-										this.props.fileDelete(this.props.file);
-									}
-								}}
-								parseReturn={false}
-							>
-								Delete file
+					<>
+						<Button
+							buttonType="none"
+							onClick={this.onDeleteFileClick}
+						>
+							Delete file
 						</Button>
-							<br />
-							<br />
-						</>
-					) : null}
+						<br />
+						<br />
+					</>
+				) : null}
 				<h3>Comments:</h3>
 				{this.props.file.hasPermission(
 					this.props.member,
 					// tslint:disable-next-line:no-bitwise
 					FileUserAccessControlPermissions.COMMENT |
-					FileUserAccessControlPermissions.MODIFY
+						FileUserAccessControlPermissions.MODIFY
 				) ? (
-						<FileChangeForm
-							id=""
-							method="PUT"
-							url={'/api/files/' + this.props.file.id}
-							onReceiveData={() => {
-								if (this.props.fileModify) {
-									this.props.fileModify(this.props.file);
-								}
-							}}
-							values={{ comments: this.props.file.comments }}
-							onChange={this.onFormChange}
-							showSubmitButton={true}
-						>
-							<Label>Comments</Label>
-							<BigTextBox name="comments" />
-						</FileChangeForm>
-					) : (
-						this.props.file.comments
-					)}
+					<FileChangeForm
+						id=""
+						values={{ comments: this.props.file.comments }}
+						onChange={this.onFormChange}
+						onSubmit={this.onFileChangeFormSubmit}
+						showSubmitButton={true}
+					>
+						<Label>Comments</Label>
+						<BigTextBox name="comments" />
+					</FileChangeForm>
+				) : (
+					this.props.file.comments
+				)}
 			</div>
 		);
 	}
@@ -95,5 +81,21 @@ export default class ExtraFileDisplay extends React.Component<
 	private onFormChange(formState: CommentsForm) {
 		this.props.file.comments = formState.comments;
 		this.props.fileModify(this.props.file);
+	}
+
+	private onDeleteFileClick() {
+		if (this.props.member) {
+			this.props.file.delete(this.props.member);
+		}
+	}
+
+	private onFileChangeFormSubmit(formState: CommentsForm) {
+		this.props.file.comments = formState.comments;
+
+		if (this.props.member) {
+			this.props.file.save(this.props.member).then(() => {
+				this.props.fileModify(this.props.file);
+			});
+		}
 	}
 }

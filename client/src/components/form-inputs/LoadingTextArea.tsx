@@ -27,10 +27,29 @@ export default class LoadingTextArea extends React.Component<
 			throw new Error('Account not specified');
 		}
 
+		if (typeof this.props.member === 'undefined') {
+			throw new Error(
+				'No member variable passed, will not work when people are signed in. ' +
+					'If this is intentional, pass `null` to member'
+			);
+		}
+
 		return this.state.textArea === null ? (
 			<Loader />
 		) : (
-			<this.state.textArea.default {...this.props} />
+			<this.state.textArea.default
+				account={this.props.account}
+				boxStyles={this.props.boxStyles}
+				fullWidth={this.props.fullWidth}
+				index={this.props.index}
+				inputStyles={this.props.inputStyles}
+				member={this.props.member}
+				name={this.props.name}
+				onChange={this.props.onChange}
+				onInitialize={this.props.onInitialize}
+				onUpdate={this.props.onUpdate}
+				value={this.props.value}
+			/>
 		);
 	}
 }

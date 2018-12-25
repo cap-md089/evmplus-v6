@@ -1,6 +1,7 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
 import Team from './Team';
+import Event from './Event';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
 	implements MemberObject {
@@ -27,55 +28,39 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	/**
 	 * User ID
 	 */
-	public id: number | string = 0;
+	public id: number | string;
 	/**
 	 * Whether or not the member is a senior member
 	 */
-	public seniorMember: boolean = false;
+	public seniorMember: boolean;
 	/**
 	 * Contact information
 	 */
-	public contact: CAPMemberContact = {
-		ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CADETPARENTEMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CADETPARENTPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		CELLPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		DIGITALPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		EMAIL: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		HOMEFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		HOMEPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		INSTANTMESSAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		ISDN: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		RADIO: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		TELEX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		WORKFAX: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
-		WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
-	};
+	public contact: CAPMemberContact;
 	/**
 	 * Member squardon
 	 */
-	public squadron: string = '';
+	public squadron: string;
 	/**
 	 * The first name of the member
 	 */
-	public nameFirst: string = '';
+	public nameFirst: string;
 	/**
 	 * The middle name of the member
 	 */
-	public nameMiddle: string = '';
+	public nameMiddle: string;
 	/**
 	 * The last name of the member
 	 */
-	public nameLast: string = '';
+	public nameLast: string;
 	/**
 	 * The suffix of the user
 	 */
-	public nameSuffix: string = '';
+	public nameSuffix: string;
 	/**
 	 * The IDs of teams the member is a part of
 	 */
-	public teamIDs: number[] = [];
+	public teamIDs: number[];
 	/**
 	 * The User ID
 	 */
@@ -83,7 +68,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	/**
 	 * Whether or not the user is Rioux
 	 */
-	public readonly isRioux: boolean = false;
+	public readonly isRioux: boolean;
 	/**
 	 * Checks for if a user has permissions
 	 */
@@ -118,6 +103,8 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		super(requestingAccount.id);
 
 		Object.assign(this, data);
+
+		this.isRioux = (this.id === 542488 || this.id === 546319)
 	}
 
 	/**
@@ -213,4 +200,12 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		this.contact.CADETPARENTPHONE.SECONDARY ||
 		this.contact.CELLPHONE.EMERGENCY ||
 		this.contact.CADETPARENTPHONE.EMERGENCY;
+
+	public canManageBlog() {
+		return this.hasPermission('ManageBlog') || this.isRioux;
+	}
+
+	public isPOCOf(event: Event) {
+		return event.isPOC(this);
+	}
 }

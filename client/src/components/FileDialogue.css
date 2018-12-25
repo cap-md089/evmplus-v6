@@ -7,6 +7,7 @@
 	display: block;
 	margin: 0;
 	padding: 0 15px !important;
+	margin-bottom: 10px;
 }
 
 #fileDialogueControls a {
@@ -93,4 +94,8 @@
 #fileDialogue .selectedFile .box.selected.red {
 	border-color: #ee4444;
 	box-shadow: 0 0 4px #ee4444;
+}
+
+#fileDialogueBody .divider10px {
+	padding: 5px;
 }

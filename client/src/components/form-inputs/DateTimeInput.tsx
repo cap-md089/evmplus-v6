@@ -77,7 +77,7 @@ const normalizeInput = (
 ) =>
 	typeof value !== 'undefined'
 		? typeof value === 'number'
-			? DateTime.fromMillis(value * 1000, {
+			? DateTime.fromMillis(value, {
 					zone: offset
 			  })
 			: value
@@ -98,10 +98,7 @@ const roundInput = (
 	input: DateTime,
 	interval: number,
 	offset: SupportedTimeZones
-) =>
-	DateTime.fromMillis(Math.round(+input / interval) * interval, {
-		zone: offset
-	});
+) => input
 
 // short left pad
 const lp = (v: string | number, amount = 2) => ('0000' + v).substr(-amount);

@@ -1,18 +1,17 @@
 import * as $ from 'jquery';
 import * as React from 'react';
-
 import ExtraFileDisplay from '../components/DriveExtraFileDisplay';
 import ExtraFolderDisplay from '../components/DriveExtraFolderDisplay';
 import DriveFileDisplay from '../components/DriveFileDisplay';
 import DriveFolderDisplay from '../components/DriveFolderDisplay';
 import FileUploader from '../components/FileUploader';
-import { TextInput } from '../components/Form';
+import Form, { TextInput } from '../components/Form';
 import Loader from '../components/Loader';
-import RequestForm from '../components/RequestForm';
 import FileInterface from '../lib/File';
-
 import './Drive.css';
 import { PageProps } from './Page';
+
+
 
 enum ErrorReason {
 	NONE,
@@ -187,10 +186,9 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 			}
 		}
 
-		const NewFolderRequestForm = RequestForm as new () => RequestForm<
-			{ name: string },
-			{ id: string }
-			>;
+		const NewFolderRequestForm = Form as new () => Form<
+			{ name: string }
+		>;
 
 		return (
 			<div>
@@ -199,13 +197,12 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 						<div>
 							<NewFolderRequestForm
 								id=""
-								url="/api/files/create"
 								values={{
 									name: this.state.newFoldername
 								}}
 								onChange={this.updateNewFolderForm}
+								onSubmit={this.createFolder}
 								rowClassName="drive-newfoldername-row"
-								onReceiveData={this.receiveData}
 							>
 								<TextInput name="name" />
 							</NewFolderRequestForm>
@@ -413,6 +410,16 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 	private refresh() {
 		if (this.state.currentFolder) {
 			this.goToFolder(this.state.currentFolder.id, false);
+		}
+	}
+
+	private createFolder() {
+		if (this.props.member) {
+			FileInterface.CreateFolder(
+				this.state.newFoldername,
+				this.props.member,
+				this.props.account
+			)
 		}
 	}
 }

@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import {
+import Form, {
 	Checkbox,
 	DateTimeInput,
 	FormBlock,
@@ -15,8 +15,8 @@ import {
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
 import { FileInput, TextBox } from '../components/SimpleForm';
-import SimpleRequestForm from '../components/SimpleRequestForm';
 import { PageProps } from './Page';
+import Event from 'src/lib/Event';
 
 const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
 
@@ -153,10 +153,7 @@ export default class AddEvent extends React.Component<
 	}
 
 	public render() {
-		const NewEventForm = SimpleRequestForm as new () => SimpleRequestForm<
-			NewEventFormValues,
-			EventObject
-		>;
+		const NewEventForm = Form as new () => Form<NewEventFormValues>;
 
 		const StringListEditor = ListEditor as new () => ListEditor<string>;
 		const POCListEditor = ListEditor as new () => ListEditor<
@@ -167,7 +164,6 @@ export default class AddEvent extends React.Component<
 
 		return this.props.member ? (
 			<NewEventForm
-				url="/api/event"
 				id="newEventForm"
 				onChange={this.updateNewEvent}
 				onSubmit={this.handleSubmit}
@@ -512,20 +508,59 @@ export default class AddEvent extends React.Component<
 		);
 	}
 
-	private handleSubmit(event: NewEventFormValues): NewEventObject {
-		const newEvent = Object.assign({}, event);
-
-		if (!event.useParticipationFee) {
-			delete newEvent.participationFee;
+	private async handleSubmit(event: NewEventFormValues) {
+		const eventData: NewEventObject = {
+			acceptSignups: event.acceptSignups,
+			activity: event.activity,
+			administrationComments: event.administrationComments,
+			comments: event.comments,
+			complete: event.complete,
+			debrief: event.debrief,
+			desiredNumberOfParticipants: event.desiredNumberOfParticipants,
+			endDateTime: event.endDateTime,
+			eventWebsite: event.eventWebsite,
+			fileIDs: event.fileIDs,
+			groupEventNumber: event.groupEventNumber,
+			highAdventureDescription: event.highAdventureDescription,
+			location: event.location,
+			lodgingArrangments: event.lodgingArrangments,
+			mealsDescription: event.mealsDescription,
+			meetDateTime: event.meetDateTime,
+			meetLocation: event.meetLocation,
+			name: event.name,
+			participationFee: event.useParticipationFee ? event.participationFee : null,
+			pickupDateTime: event.pickupDateTime,
+			pickupLocation: event.pickupLocation,
+			pointsOfContact: event.pointsOfContact,
+			publishToWingCalendar: event.publishToWingCalendar,
+			regionEventNumber: event.regionEventNumber,
+			registration: event.useRegistration ? event.registration : null,
+			requiredEquipment: event.requiredEquipment,
+			requiredForms: event.requiredForms,
+			showUpcoming: event.showUpcoming,
+			signUpDenyMessage: event.signUpDenyMessage,
+			signUpPartTime: event.signUpPartTime,
+			sourceEvent: null,
+			startDateTime: event.startDateTime,
+			status: event.status,
+			teamID: event.teamID,
+			transportationDescription: event.transportationDescription,
+			transportationProvided: event.transportationProvided,
+			uniform: event.uniform,
+			wingEventNumber: event.wingEventNumber
 		}
-		delete newEvent.useParticipationFee;
 
-		if (!event.useRegistration) {
-			delete newEvent.registration;
+		if (!this.props.member) {
+			return;
 		}
-		delete newEvent.useRegistration;
 
-		return newEvent;
+		const eventObject = await Event.Create(
+			eventData,
+			this.props.member,
+			this.props.account
+		);
+
+		this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
 	}
 
 	private updateNewEvent(event: NewEventFormValues) {

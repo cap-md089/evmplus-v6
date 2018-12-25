@@ -11,9 +11,9 @@ import urlFormat from './urlFormat';
  * Simple private class used to handle uploading the files
  */
 class FileUploader {
-	public progressListeners: Array<(progress: number) => void>;
+	public progressListeners: Array<(progress: number) => void> = [];
 
-	public finishListeners: Array<(file: FileInterface) => void>;
+	public finishListeners: Array<(file: FileInterface) => void> = [];
 
 	public constructor(private file: File) {}
 
@@ -459,7 +459,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	public async save(member: MemberBase) {
 		const token = await this.getToken(member);
 
-		await this.fetch(
+		const result = await this.fetch(
 			`/api/files/${this.id}`,
 			{
 				body: JSON.stringify({
@@ -470,6 +470,8 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			},
 			member
 		);
+
+		return result.status;
 	}
 
 	/**
@@ -507,7 +509,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			this.getToken(member)
 		]);
 
-		await this.fetch(
+		const deleteResult = await this.fetch(
 			`/api/files/${this.parentID}/children/${this.id}`,
 			{
 				method: 'DELETE',
@@ -518,7 +520,11 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			member
 		);
 
-		await this.fetch(
+		if (deleteResult.status !== 200) {
+			return deleteResult.status;
+		}
+
+		const moveResult = await this.fetch(
 			`/api/files/${target.id}/children`,
 			{
 				method: 'POST',
@@ -531,5 +537,35 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		);
 
 		this.parentID = target.id;
+
+		return moveResult.status;
+	}
+	
+	/**
+	 * Deletes the current file
+	 * 
+	 * @param member The member that will delete the ifle
+	 * @param errOnInvalidPermissions If true, this function will throw an error if
+	 * 		the member doesn't have the proper permissions. Otherwise, it will
+	 * 		silently fail
+	 */
+	public async delete(
+		member: MemberBase,
+		errOnInvalidPermissions = false
+	) {
+		const token = await this.getToken(member);
+
+		const result = await this.fetch(
+			`/api/files/${this.id}`,
+			{
+				method: 'DELETE',
+				body: JSON.stringify({
+					token
+				})
+			},
+			member
+		);
+
+		return result.status;
 	}
 }

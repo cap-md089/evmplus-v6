@@ -188,38 +188,6 @@
             ],
             "type": "object"
         },
-        "NHQMemberReference": {
-            "properties": {
-                "id": {
-                    "type": "number"
-                },
-                "type": {
-                    "enum": [
-                        "CAPNHQMember"
-                    ],
-                    "type": "string"
-                }
-            },
-            "required": [
-                "id",
-                "type"
-            ],
-            "type": "object"
-        },
-        "NullMemberReference": {
-            "properties": {
-                "type": {
-                    "enum": [
-                        "Null"
-                    ],
-                    "type": "string"
-                }
-            },
-            "required": [
-                "type"
-            ],
-            "type": "object"
-        },
         "Object": {
             "description": "Provides functionality common to all JavaScript objects.",
             "properties": {
@@ -232,41 +200,9 @@
                 "constructor"
             ],
             "type": "object"
-        },
-        "ProspectiveMemberReference": {
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "enum": [
-                        "CAPProspectiveMember"
-                    ],
-                    "type": "string"
-                }
-            },
-            "required": [
-                "id",
-                "type"
-            ],
-            "type": "object"
         }
     },
     "properties": {
-        "authorid": {
-            "anyOf": [
-                {
-                    "$ref": "#/definitions/ProspectiveMemberReference"
-                },
-                {
-                    "$ref": "#/definitions/NHQMemberReference"
-                },
-                {
-                    "$ref": "#/definitions/NullMemberReference"
-                }
-            ],
-            "description": "The blog post author"
-        },
         "content": {
             "$ref": "#/definitions/Draft.RawDraftContentState",
             "description": "What the author is trying to say"
@@ -284,7 +220,6 @@
         }
     },
     "required": [
-        "authorid",
         "content",
         "fileIDs",
         "title"
