@@ -170,6 +170,7 @@ export default class ModifyEvent extends React.Component<
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	public async componentDidMount() {

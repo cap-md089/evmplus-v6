@@ -10,18 +10,23 @@ import { DateTime } from 'luxon';
 
 interface LinkListState {
 	eventList: Event[] | null;
+	eventsThatAreLinked: Event[] | null;
 }
 
 function getEventStatus(status: EventStatus) {
+<<<<<<< HEAD
 	switch (status[0]) {
+=======
+	switch (status) {
+>>>>>>> 4581a261b01ae42db2d0d31ee86c3a6150bd11b3
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;
 		case EventStatus.CANCELLED:
 			return <span style={{ color: 'red' }}>Cancelled</span>;
 		case EventStatus.CONFIRMED:
-			return <span style={{ color: 'blue' }}>Confirmed</span>;
+			return <span style={{ color: 'magenta' }}>Confirmed</span>;
 		case EventStatus.DRAFT:
-			return <span style={{ color: 'orange' }}>Draft</span>;
+			return <span style={{ color: '#bb0' }}>Draft</span>;
 		case EventStatus.INFORMATIONONLY:
 			return <span style={{ color: 'blue' }}>Info Only</span>;
 		case EventStatus.TENTATIVE:
@@ -43,7 +48,8 @@ export default class LinkList extends React.Component<
 	LinkListState
 > {
 	public state: LinkListState = {
-		eventList: null
+		eventList: null,
+		eventsThatAreLinked: null
 	};
 
 	public async componentDidMount() {
@@ -52,14 +58,22 @@ export default class LinkList extends React.Component<
 				this.props.member
 			);
 
-			eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
+			// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
+			eventList = eventList.sort(
+				(a, b) => a.startDateTime - b.startDateTime
+			);
 
 			eventList = eventList.filter(
 				event =>
-					event.startDateTime < +DateTime.utc() + 60 * 60 * 24 * 30
+					event.startDateTime >
+					+DateTime.utc() - (13 * 60 * 60 * 24 * 30 * 1000)
 			);
 
-			this.setState({ eventList });
+			const eventsThatAreLinked = eventList.filter(
+				event => !!event.sourceEvent
+			);
+
+			this.setState({ eventList, eventsThatAreLinked });
 		}
 	}
 
@@ -69,15 +83,31 @@ export default class LinkList extends React.Component<
 			return <div>Please sign in to view this content</div>;
 		}
 
-		return this.state.eventList === null ? (
-			<Loader />
-		) : this.state.eventList.length === 0 ? (
+		if (
+			this.state.eventList === null ||
+			this.state.eventsThatAreLinked === null
+		) {
+			return <Loader />;
+		}
+
+		const eventsAreLinked = this.state.eventsThatAreLinked.length > 0;
+
+		return this.state.eventList.length === 0 ? (
 			<div>No events to list</div>
 		) : (
 			<div className="eventlinklist">
+				<h3>
+					Click '<span style={{ color: 'magenta' }}>Confirmed</span>'
+					Status to set Status to '
+					<span style={{ color: 'green' }}>Complete</span>'
+				</h3>
 				<table>
 					<tr>
-						<th>Event ID :: Name, Start Date</th>
+						<th>
+							Event ID :: Name
+							{eventsAreLinked ? ' - [Source Event]' : null}
+						</th>
+						<th>Start Date</th>
 						<th>Status</th>
 						<th>
 							<span style={{ color: 'green' }}>GP</span> Evt No.
@@ -98,7 +128,36 @@ export default class LinkList extends React.Component<
 								<Link to={`/eventviewer/${event.id}`}>
 									{event.name}
 								</Link>
-								, {event.startDateTime}
+								{` `}
+								{event.sourceEvent ? (
+									<>
+										{` - [`}
+										<a
+											href={`https://${
+												event.sourceEvent.accountID
+											}.capunit.com/eventviewer/${
+												event.sourceEvent.id
+											}`}
+											target="_blank"
+										>
+											{event.sourceEvent.accountID}-
+											{event.sourceEvent.id}
+										</a>
+										{`]`}
+									</>
+								) : null}
+							</td>
+							<td
+								style={{
+									whiteSpace: 'nowrap'
+								}}
+							>
+								{DateTime.fromMillis(
+									event.startDateTime
+								).toLocaleString({
+									...DateTime.DATETIME_SHORT,
+									hour12: false
+								})}
 							</td>
 							<td>{getEventStatus(event.status)}</td>
 							<td>{getEventNumber(event.groupEventNumber)}</td>
