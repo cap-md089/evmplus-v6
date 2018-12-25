@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Form, {
+import {
 	Checkbox,
 	DateTimeInput,
 	FormBlock,
@@ -14,7 +14,7 @@ import Form, {
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
 import Loader from '../components/Loader';
-import { FileInput, TextBox } from '../components/SimpleForm';
+import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
 import { PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import { PageProps } from './Page';
@@ -171,6 +171,7 @@ export default class ModifyEvent extends React.Component<
 
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -212,7 +213,9 @@ export default class ModifyEvent extends React.Component<
 			return <Loader />;
 		}
 
-		const ModifyEventForm = Form as new () => Form<NewEventFormValues>;
+		const ModifyEventForm = SimpleForm as new () => SimpleForm<
+			NewEventFormValues
+		>;
 
 		const StringListEditor = ListEditor as new () => ListEditor<string>;
 		const POCListEditor = ListEditor as new () => ListEditor<
