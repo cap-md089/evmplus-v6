@@ -14,7 +14,7 @@ const newEventValidator = (val: any): val is NewEventObject =>
 	privateEventValidator(val) as boolean;
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	if (newEventValidator(req.body)) {
+	// if (newEventValidator(req.body)) {
 		const newEvent = await Event.Create(
 			req.body,
 			req.account,
@@ -23,11 +23,11 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 		);
 
 		json<EventObject>(res, newEvent.toRaw());
-	} else {
-		res.status(400);
-		if (conf.testing && privateEventValidator.errors) {
-			res.json(privateEventValidator.errors);
-		}
-		res.end();
-	}
+	// } else {
+	// 	res.status(400);
+	// 	if (conf.testing && privateEventValidator.errors) {
+	// 		res.json(privateEventValidator.errors);
+	// 	}
+	// 	res.end();
+	// }
 });

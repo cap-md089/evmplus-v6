@@ -227,7 +227,7 @@ export default class Event
 
 	public administrationComments: string;
 
-	public status: RadioReturn<EventStatus>;
+	public status: EventStatus;
 
 	public debrief: string;
 
@@ -399,7 +399,7 @@ export default class Event
 			fileIDs: copyFiles ? this.fileIDs : [],
 			status: copyStatus
 				? this.status
-				: [EventStatus.INFORMATIONONLY, ''],
+				: EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
