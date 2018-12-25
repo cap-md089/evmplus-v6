@@ -10,16 +10,14 @@ class ParticipationFeeValidator extends Validator<{
 	feeAmount: number;
 }> {
 	constructor() {
-		super([
-			{
-				key: 'feeAmount',
+		super({
+			feeAmount: {
 				validator: Validator.Number
 			},
-			{
-				key: 'feeDue',
+			feeDue: {
 				validator: Validator.Number
 			}
-		]);
+		});
 	}
 }
 
@@ -28,191 +26,151 @@ class RegistrationValidator extends Validator<{
 	information: string;
 }> {
 	constructor() {
-		super([
-			{
-				key: 'deadline',
+		super({
+			deadline: {
 				validator: Validator.Number
 			},
-			{
-				key: 'information',
+			information: {
 				validator: Validator.String
 			}
-		]);
+		});
 	}
 }
 
 class InternalPOCValidator extends Validator<InternalPointOfContact> {
 	constructor() {
-		super([
-			{
-				key: 'memberReference',
+		super({
+			memberReference: {
 				validator: Validator.MemberReference
 			},
-			{
-				key: 'email',
+			email: {
 				validator: Validator.String,
 				required: false
 			},
-			{
-				key: 'phone',
+			phone: {
 				validator: Validator.String,
 				required: false
 			},
-			{
-				key: 'receiveEventUpdates',
+			receiveEventUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveRoster',
+			receiveRoster: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveSignUpUpdates',
+			receiveSignUpUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveUpdates',
+			receiveUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'type',
+			type: {
 				validator: Validator.StrictValue(PointOfContactType.INTERNAL)
 			}
-		]);
+		});
 	}
 }
 
 class ExternalPOCValidator extends Validator<ExternalPointOfContact> {
 	constructor() {
-		super([
-			{
-				key: 'email',
+		super({
+			email: {
 				validator: Validator.String,
 				required: false
 			},
-			{
-				key: 'name',
+			name: {
 				validator: Validator.String
 			},
-			{
-				key: 'phone',
+			phone: {
 				validator: Validator.String,
 				required: false
 			},
-			{
-				key: 'receiveEventUpdates',
+			receiveEventUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveRoster',
+			receiveRoster: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveSignUpUpdates',
+			receiveSignUpUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'receiveUpdates',
+			receiveUpdates: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'type',
+			type: {
 				validator: Validator.StrictValue(PointOfContactType.EXTERNAL)
 			}
-		]);
+		});
 	}
 }
 
 export default class EventValidator extends Validator<NewEventObject> {
 	constructor() {
-		super([
-			{
-				key: 'acceptSignups',
+		super({
+			acceptSignups: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'activity',
+			activity: {
 				validator: Validator.CheckboxReturn
 			},
-			{
-				key: 'administrationComments',
+			administrationComments: {
 				validator: Validator.String
 			},
-			{
-				key: 'comments',
+			comments: {
 				validator: Validator.String
 			},
-			{
-				key: 'complete',
+			complete: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'debrief',
+			debrief: {
 				validator: Validator.String
 			},
-			{
-				key: 'desiredNumberOfParticipants',
+			desiredNumberOfParticipants: {
 				validator: Validator.Number
 			},
-			{
-				key: 'endDateTime',
+			endDateTime: {
 				validator: Validator.Number
 			},
-			{
-				key: 'eventWebsite',
+			eventWebsite: {
 				validator: Validator.String
 			},
-			{
-				key: 'fileIDs',
+			fileIDs: {
 				validator: Validator.ArrayOf(Validator.String)
 			},
-			{
-				key: 'groupEventNumber',
+			groupEventNumber: {
 				validator: Validator.RadioReturn(EchelonEventNumber)
 			},
-			{
-				key: 'highAdventureDescription',
+			highAdventureDescription: {
 				validator: Validator.String
 			},
-			{
-				key: 'location',
+			location: {
 				validator: Validator.String
 			},
-			{
-				key: 'lodgingArrangments',
+			lodgingArrangments: {
 				validator: Validator.CheckboxReturn
 			},
-			{
-				key: 'mealsDescription',
+			mealsDescription: {
 				validator: Validator.CheckboxReturn
 			},
-			{
-				key: 'meetDateTime',
+			meetDateTime: {
 				validator: Validator.Number
 			},
-			{
-				key: 'meetLocation',
+			meetLocation: {
 				validator: Validator.String
 			},
-			{
-				key: 'name',
+			name: {
 				validator: Validator.String
 			},
-			{
-				key: 'participationFee',
+			participationFee: {
 				validator: new ParticipationFeeValidator(),
 				required: false
 			},
-			{
-				key: 'pickupDateTime',
+			pickupDateTime: {
 				validator: Validator.Number
 			},
-			{
-				key: 'pickupLocation',
+			pickupLocation: {
 				validator: Validator.String
 			},
-			{
-				key: 'pointsOfContact',
+			pointsOfContact: {
 				validator: Validator.ArrayOf(
 					Validator.Or(
 						new InternalPOCValidator(),
@@ -220,67 +178,52 @@ export default class EventValidator extends Validator<NewEventObject> {
 					)
 				)
 			},
-			{
-				key: 'publishToWingCalendar',
+			publishToWingCalendar: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'regionEventNumber',
+			regionEventNumber: {
 				validator: Validator.RadioReturn(EchelonEventNumber)
 			},
-			{
-				key: 'registration',
+			registration: {
 				validator: new RegistrationValidator(),
 				required: false
 			},
-			{
-				key: 'requiredEquipment',
+			requiredEquipment: {
 				validator: Validator.ArrayOf(Validator.String)
 			},
-			{
-				key: 'requiredForms',
+			requiredForms: {
 				validator: Validator.CheckboxReturn
 			},
-			{
-				key: 'showUpcoming',
+			showUpcoming: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'signUpDenyMessage',
+			signUpDenyMessage: {
 				validator: Validator.String
 			},
-			{
-				key: 'signUpPartTime',
+			signUpPartTime: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'startDateTime',
+			startDateTime: {
 				validator: Validator.Number
 			},
-			{
-				key: 'status',
+			status: {
 				validator: Validator.RadioReturn(EventStatus)
 			},
-			{
-				key: 'teamID',
+			teamID: {
 				validator: Validator.Or(Validator.Number, Validator.Nothing)
 			},
-			{
-				key: 'transportationDescription',
+			transportationDescription: {
 				validator: Validator.String
 			},
-			{
-				key: 'transportationProvided',
+			transportationProvided: {
 				validator: Validator.Boolean
 			},
-			{
-				key: 'uniform',
+			uniform: {
 				validator: Validator.CheckboxReturn
 			},
-			{
-				key: 'wingEventNumber',
+			wingEventNumber: {
 				validator: Validator.RadioReturn(EchelonEventNumber)
 			}
-		]);
+		});
 	}
 }

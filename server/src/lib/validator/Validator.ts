@@ -17,11 +17,14 @@ type ValidatorFunction = (obj: unknown) => ValidatorFail | ValidatorPass;
 
 type RequiredCheckFunction = (value: any, baseObj: any) => boolean;
 
-interface ValidateRule<T> {
-	key: keyof T;
+interface ValidateRule {
 	validator: ValidatorFunction | Validator<any>;
 	required?: boolean;
 	requiredIf?: RequiredCheckFunction;
+}
+
+type ValidateRuleSet<T> = {
+	[P in keyof T]: ValidateRule;
 }
 
 interface ValidateError<T> {
@@ -205,11 +208,11 @@ export default class Validator<T> {
 					message: 'does not equal ' + value
 			  };
 
-	private rules: Array<ValidateRule<T>> = [];
+	private rules: ValidateRuleSet<T>;
 
 	private errors: Array<ValidateError<T>> = [];
 
-	protected constructor(rules: Array<ValidateRule<T>>) {
+	protected constructor(rules: ValidateRuleSet<T>) {
 		this.rules = rules;
 	}
 
@@ -220,38 +223,41 @@ export default class Validator<T> {
 			return false;
 		}
 
-		for (const rule of this.rules) {
-			const value = obj[rule.key];
+		for (const key in this.rules) {
+			if (this.rules.hasOwnProperty(key)) {
+				const value = obj[key];
+				const rule = this.rules[key];
 
-			if (value === undefined || value === null) {
-				if (rule.required !== false) {
-					this.errors.push({
-						property: rule.key,
-						message: 'property is required'
-					});
+				if (value === undefined || value === null) {
+					if (rule.required !== false) {
+						this.errors.push({
+							property: key,
+							message: 'property is required'
+						});
+					}
+					continue;
 				}
-				continue;
-			}
 
-			if (rule.validator instanceof Validator) {
-				if (!rule.validator.validate(value)) {
-					console.log(rule.validator.getErrors());
-					this.errors.push({
-						property: rule.key,
-						message: rule.validator
-							.getErrors()
-							.map(e => `${String(e.property)}: ${e.message}`)
-							.join(', ')
-					});
-				}
-			} else {
-				const validateResult = rule.validator(value);
+				if (rule.validator instanceof Validator) {
+					if (!rule.validator.validate(value)) {
+						console.log(rule.validator.getErrors());
+						this.errors.push({
+							property: key,
+							message: rule.validator
+								.getErrors()
+								.map(e => `${String(e.property)}: ${e.message}`)
+								.join(', ')
+						});
+					}
+				} else {
+					const validateResult = rule.validator(value);
 
-				if (!validateResult.valid) {
-					this.errors.push({
-						message: (validateResult as ValidatorFail).message,
-						property: rule.key
-					});
+					if (!validateResult.valid) {
+						this.errors.push({
+							message: (validateResult as ValidatorFail).message,
+							property: key
+						});
+					}
 				}
 			}
 		}
@@ -262,8 +268,10 @@ export default class Validator<T> {
 	public prune<S extends T>(obj: S): T {
 		const newObject = {} as T;
 
-		for (const rule of this.rules) {
-			newObject[rule.key as keyof T] = obj[rule.key as keyof T];
+		for (const key in this.rules) {
+			if (this.rules.hasOwnProperty(key)) {
+				newObject[key] = obj[key];
+			}
 		}
 
 		return newObject;
