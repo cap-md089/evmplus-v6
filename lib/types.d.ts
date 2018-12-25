@@ -759,7 +759,7 @@ declare global {
 		/**
 		 * Tentative, complete, cancelled, etc.
 		 */
-		status: RadioReturn<EventStatus>;
+		status: EventStatus;
 		/**
 		 * After action reports
 		 */
