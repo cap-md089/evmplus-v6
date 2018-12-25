@@ -174,6 +174,10 @@
                     "description": "Whether or not the user can assign flight members",
                     "type": "number"
                 },
+                "ManageBlog": {
+                    "description": "Whether or not the user can manage the blog, irrespective of if they\nare a PAO on CAPNHQ",
+                    "type": "number"
+                },
                 "MusterSheet": {
                     "description": "Whether or not the user can get the muster sheet",
                     "type": "number"
@@ -224,6 +228,7 @@
                 "EventStatusPage",
                 "FileManagement",
                 "FlightAssign",
+                "ManageBlog",
                 "MusterSheet",
                 "ORMOPORD",
                 "PTSheet",
@@ -238,7 +243,6 @@
         "global.MemberType": {
             "description": "String representation of the member type, as there needs to be a way to differentiate",
             "enum": [
-                "Anchor",
                 "CAPNHQMember",
                 "CAPProspectiveMember",
                 "CAPWATCHMember"
@@ -246,7 +250,7 @@
             "type": "string"
         }
     },
-    "description": "Describes a member\n\nThe member may be created from one of many ways:\n\nNHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:\n \t\tTakes sign in data or a session and signs the user in. Best data\nCAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as\n \t\tthe CAPWATCH updates are frequent\nProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/\nNHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for\n \t\tmanaging prospective members\n\nNHQMember.Create and ProspectiveMember.Signin are used when signing people in\nProspectiveMember.Get and CAPWATCHMember.Get are used when pulling information from\n \t\tour database\n\nCAPWATCHMember and NHQMember have their sources in NHQ\nProspectiveMember is located in our database",
+    "description": "Describes a member\n\nThe member may be created from one of many ways:\n\nNHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:\n \t\tTakes sign in data or a session and signs the user in. Best data\nCAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as\n \t\tthe CAPWATCH updates are frequent\nProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/\nNHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for\n \t\tmanaging prospective members\n\nNHQMember.Create and ProspectiveMember.Signin are used when signing people in\nProspectiveMember.GetProspective and CAPWATCHMember.Get are used when pulling\n \t\tinformation from our database\n\nProspectiveMember.Create creates a prospective member in our database\n\nCAPWATCHMember and NHQMember have their sources in NHQ\nProspectiveMember is located in our database",
     "properties": {
         "contact": {
             "$ref": "#/definitions/CAPMemberContact",

@@ -31,7 +31,7 @@
                     "description": "Who they are"
                 },
                 "memberName": {
-                    "description": "Record member rank and name to show what rank they were when\nthey participated",
+                    "description": "Record member rank and name to show what rank they were when\nthey participated\n\nSHOULD use the MemberBase.getFullName() function to calculate this,\nas this works across the different classes",
                     "type": "string"
                 },
                 "planToUseCAPTransportation": {

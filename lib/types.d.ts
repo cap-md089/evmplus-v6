@@ -246,6 +246,11 @@ declare global {
 		 * Save the document to the database
 		 */
 		save(): Promise<void>;
+		/**
+		 * All database interfaces should implement the object they
+		 * are interfaces for, and need a standard for `_id`s
+		 */
+		_id: string;
 	}
 
 	/**
@@ -481,6 +486,10 @@ declare global {
 		 * When it was published
 		 */
 		posted: number;
+		/**
+		 * The author of the blog post
+		 */
+		author: MemberReference;
 	}
 
 	// Make a type the JSON schema generator recognizes
@@ -491,10 +500,6 @@ declare global {
 		 * The title of the blog post
 		 */
 		title: string;
-		/**
-		 * The blog post author
-		 */
-		authorid: MemberReference;
 		/**
 		 * What the author is trying to say
 		 */
@@ -507,6 +512,17 @@ declare global {
 		fileIDs: string[];
 	}
 
+	export interface BlogPageAncestryItem {
+		/**
+		 * The name of the ancestor, for display
+		 */
+		title: string;
+		/**
+		 * The ID of the ancestor, for linking to the page
+		 */
+		id: string;
+	}
+
 	export interface NewBlogPage {
 		/**
 		 * The title of the page
@@ -516,6 +532,10 @@ declare global {
 		 * The page content
 		 */
 		content: RawDraftContentState;
+		/**
+		 * The page that has this as a child
+		 */
+		parentID: string | null;
 	}
 
 	export interface BlogPageObject
@@ -532,6 +552,13 @@ declare global {
 		 * This contains an array to references of BlogPages
 		 */
 		children: string[];
+	}
+
+	export interface FullBlogPageObject extends BlogPageObject {
+		/**
+		 * Used for advanced navigation
+		 */
+		ancestry: BlogPageAncestryItem[];
 	}
 
 	/**
@@ -1102,8 +1129,14 @@ declare global {
 		 * Whether or not the user can download CAPWATCH files
 		 */
 		DownloadCAPWATCH: number;
+		/**
+		 * Whether or not the user can manage the blog, irrespective of if they
+		 * are a PAO on CAPNHQ
+		 */
+		ManageBlog: number;
 
 		// Developer/super admin privileges?
+		// Will change when utilities are more user friendly
 		/**
 		 * Whether or not the user can edit the registry
 		 */

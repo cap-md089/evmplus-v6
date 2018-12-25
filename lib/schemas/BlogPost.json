@@ -262,7 +262,7 @@
             "description": "The ID of the account the folder belongs to",
             "type": "string"
         },
-        "authorid": {
+        "author": {
             "anyOf": [
                 {
                     "$ref": "#/definitions/ProspectiveMemberReference"
@@ -274,7 +274,7 @@
                     "$ref": "#/definitions/NullMemberReference"
                 }
             ],
-            "description": "The blog post author"
+            "description": "The author of the blog post"
         },
         "content": {
             "$ref": "#/definitions/Draft.RawDraftContentState",
@@ -302,7 +302,7 @@
     },
     "required": [
         "accountID",
-        "authorid",
+        "author",
         "content",
         "fileIDs",
         "id",
