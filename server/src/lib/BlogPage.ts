@@ -2,9 +2,13 @@ import { Schema } from '@mysql/xdevapi';
 import { RawDraftContentState } from 'draft-js';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
+import NewBlogPageValidator from './validator/validators/NewBlogPage';
 
 export default class BlogPage
 	implements FullBlogPageObject, DatabaseInterface<BlogPageObject> {
+
+	public static Validator = new NewBlogPageValidator();
+	
 	public static async Get(id: string, account: Account, schema: Schema) {
 		const blogPageCollection = schema.getCollection<
 			FullDBObject<BlogPageObject>
@@ -98,7 +102,8 @@ export default class BlogPage
 				...content,
 				id,
 				children: [],
-				accountID: account.id
+				accountID: account.id,
+				parentID: null
 			})
 			.execute()).getGeneratedIds()[0];
 
@@ -110,7 +115,8 @@ export default class BlogPage
 				accountID: account.id,
 				_id,
 				ancestry: [],
-				fullChildren: []
+				fullChildren: [],
+				parentID: null 
 			},
 			account,
 			schema
@@ -148,14 +154,13 @@ export default class BlogPage
 		private schema: Schema
 	) {
 		this._id = data._id;
-
 		this.ancestry = data.ancestry;
 		this.children = data.children;
-		this.content = data.content;
 		this.fullChildren = data.fullChildren;
 		this.id = data.id;
 		this.parentID = data.parentID;
-		this.title = data.title;
+
+		this.set(data);
 	}
 
 	/**
@@ -166,14 +171,13 @@ export default class BlogPage
 	 * @param values The values to set
 	 */
 	public set(values: Partial<NewBlogPage>): boolean {
-		for (const i in values) {
-			if (values.hasOwnProperty(i) && i !== 'accountID') {
-				const key = i as Exclude<keyof NewBlogPage, 'accountID'>;
-				this[key] = values[key];
-			}
-		}
+		if (BlogPage.Validator.validate(values, true)) {
+			BlogPage.Validator.partialPrune(values, this);
 
-		return true;
+			return true;
+		} else {
+			throw new Error(BlogPage.Validator.getErrorString());
+		}
 	}
 
 	public async save() {

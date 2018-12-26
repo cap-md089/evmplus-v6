@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import Account from '../../../lib/Account';
+import BlogPage from '../../../lib/BlogPage';
 import NHQMember from '../../../lib/members/NHQMember';
+import Validator from '../../../lib/validator/Validator';
 import { tokenMiddleware } from '../../formtoken';
-// API calls
 import add from './add';
 import addchild from './addchild';
 import deletePage from './deletePage';
@@ -16,9 +17,29 @@ const router = Router();
 router.use(Account.ExpressMiddleware);
 
 router.get('/', list);
-router.post('/', NHQMember.ExpressMiddleware, tokenMiddleware, add);
-router.delete('/:id', NHQMember.ExpressMiddleware, tokenMiddleware, deletePage);
-router.put('/:id', NHQMember.ExpressMiddleware, tokenMiddleware, set);
+router.post(
+	'/',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.BlogPermissionMiddleware,
+	Validator.BodyExpressMiddleware(BlogPage.Validator),
+	add
+);
+router.delete(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.BlogPermissionMiddleware,
+	deletePage
+);
+router.put(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.BlogPermissionMiddleware,
+	Validator.PartialBodyExpressMiddleware(BlogPage.Validator),
+	set
+);
 router.get('/:id', get);
 
 router.delete(

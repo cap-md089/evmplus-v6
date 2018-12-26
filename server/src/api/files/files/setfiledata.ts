@@ -5,6 +5,7 @@ import { Configuration as config } from '../../../conf';
 import { FileUserAccessControlPermissions } from '../../../enums';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
+import { validRawToken } from '../../formtoken'
 
 const findEnding = (input: Buffer, boundary: string) => {
 	const index = input.length - boundary.length;
@@ -18,6 +19,21 @@ const findEnding = (input: Buffer, boundary: string) => {
 };
 
 export default async (req: MemberRequest, res: express.Response) => {
+	if (
+		typeof req.headers !== 'undefined' &&
+		typeof req.headers.token === 'string'
+	) {
+		if (!validRawToken(req.headers.token, req.member)) {
+			res.status(403);
+			res.end();
+			return;
+		}
+	} else {
+		res.status(403);
+		res.end();
+		return;
+	}
+
 	if (
 		typeof req.params.fileid === 'undefined'
 	) {

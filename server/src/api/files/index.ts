@@ -1,10 +1,11 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
-import { join } from 'path';
-import conf from '../../conf';
 import Account from '../../lib/Account';
+import File from '../../lib/File';
 import Member from '../../lib/members/NHQMember';
-import { getSchemaValidator } from '../../lib/Util';
+import { replaceUndefinedWithNull } from '../../lib/Util';
+import Validator from '../../lib/validator/Validator';
+import { tokenMiddleware } from '../formtoken';
 // Children methods
 import getfiles from './children/getfiles';
 import insertchild from './children/insertchild';
@@ -12,21 +13,12 @@ import removefile from './children/removefile';
 // File methods
 import createfolder from './files/createfolder';
 import deletefile from './files/deletefile';
+import downloadfile from './files/downloadfile';
 import fileinfo from './files/fileinfo';
 import upload from './files/fileupload';
 import getfile from './files/getfile';
 import setfiledata from './files/setfiledata';
 import setfileinfo from './files/setfileinfo';
-
-// tslint:disable-next-line:no-var-requires
-const fileObjectSchema = require(join(conf.schemaPath, 'FileObject.json'));
-
-const fileValidator = getSchemaValidator(fileObjectSchema);
-
-const fileObjectValidator = (val: any): val is FileObject =>
-	fileValidator(val) as boolean;
-
-export type FileObjectValidator = typeof fileObjectValidator;
 
 const filerouter: express.Router = express.Router();
 
@@ -40,14 +32,33 @@ filerouter.use(Account.ExpressMiddleware);
 filerouter.post('/upload', Member.ExpressMiddleware, upload); // insert
 filerouter.put('/upload/:fileid', Member.ExpressMiddleware, setfiledata); // update
 filerouter.use(bodyParser.json());
-filerouter.get('/:fileid/export', Member.ConditionalExpressMiddleware, getfile); // export, functions differently and downloads data for file
-filerouter.get('/:fileid/:method?', Member.ConditionalExpressMiddleware, fileinfo); // get
+// export, functions differently and downloads data for file without download headers
+filerouter.get('/:fileid/export', Member.ConditionalExpressMiddleware, getfile);
+// export, functions differently and downloads data for file with download headers
+filerouter.get(
+	'/:fileid/download',
+	Member.ConditionalExpressMiddleware,
+	downloadfile
+);
+filerouter.get(
+	'/:fileid/:method?',
+	Member.ConditionalExpressMiddleware,
+	fileinfo
+); // get
 filerouter.get('/:fileid', Member.ConditionalExpressMiddleware, fileinfo); // get
-filerouter.delete('/:fileid', Member.ExpressMiddleware, deletefile); // delete
+filerouter.delete(
+	'/:fileid',
+	Member.ExpressMiddleware,
+	tokenMiddleware,
+	deletefile
+); // delete
 filerouter.put(
 	'/:fileid',
 	Member.ExpressMiddleware,
-	setfileinfo(fileObjectValidator)
+	tokenMiddleware,
+	replaceUndefinedWithNull,
+	Validator.PartialBodyExpressMiddleware(File.Validator),
+	setfileinfo
 ); // update
 filerouter.post('/create', Member.ExpressMiddleware, createfolder);
 
@@ -55,14 +66,24 @@ filerouter.post('/create', Member.ExpressMiddleware, createfolder);
 filerouter.delete(
 	'/:parentid/children/:childid',
 	Member.ExpressMiddleware,
+	tokenMiddleware,
 	removefile
 ); // delete
 filerouter.post(
 	'/:parentid/children',
 	Member.ExpressMiddleware,
+	tokenMiddleware,
 	insertchild
 ); // insert
-filerouter.get('/:parentid/children/:method?', Member.ConditionalExpressMiddleware, getfiles);
-filerouter.get('/:parentid/children', Member.ConditionalExpressMiddleware, getfiles);
+filerouter.get(
+	'/:parentid/children/:method?',
+	Member.ConditionalExpressMiddleware,
+	getfiles
+);
+filerouter.get(
+	'/:parentid/children',
+	Member.ConditionalExpressMiddleware,
+	getfiles
+);
 
 export default filerouter;

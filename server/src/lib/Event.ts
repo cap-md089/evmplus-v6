@@ -4,12 +4,17 @@ import { EchelonEventNumber, EventStatus, PointOfContactType } from '../enums';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
+import EventValidator from './validator/validators/EventValidator';
+import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRecord';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
 export default class Event
 	implements EventObject, DatabaseInterface<EventObject> {
+	public static Validator = new EventValidator();
+	public static AttendanceValidator = new NewAttendanceRecordValidator();
+
 	/**
 	 * Get an event from the database
 	 *
@@ -343,14 +348,14 @@ export default class Event
 	 */
 	public isPOC(member: BaseMember) {
 		return (
-			!!(this.pointsOfContact.map(
+			!!this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
 					MemberBase.AreMemberReferencesTheSame(
 						member.getReference(),
 						poc.memberReference
 					)
-			)) ||
+			) ||
 			member.matchesReference(this.author) ||
 			member.isRioux
 		);
@@ -398,9 +403,7 @@ export default class Event
 			signUpPartTime: this.signUpPartTime,
 			requiredForms: this.requiredForms,
 			fileIDs: copyFiles ? this.fileIDs : [],
-			status: copyStatus
-				? this.status
-				: EventStatus.INFORMATIONONLY,
+			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
@@ -421,8 +424,16 @@ export default class Event
 	 * @param targetAccount The account to link to
 	 * @param member The member linking the event
 	 */
-	public async linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
-		const linkedEvent = await Event.Create(this.toRaw(), targetAccount, this.schema, member);
+	public async linkTo(
+		targetAccount: Account,
+		member: MemberBase
+	): Promise<Event> {
+		const linkedEvent = await Event.Create(
+			this.toRaw(),
+			targetAccount,
+			this.schema,
+			member
+		);
 
 		linkedEvent.sourceEvent = {
 			accountID: this.account.id,
@@ -445,63 +456,17 @@ export default class Event
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
-	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
-	public set(values: Partial<EventObject>): boolean {
-		const keys: Array<keyof EventObject> = [
-			'acceptSignups',
-			'accountID',
-			'activity',
-			'administrationComments',
-			'author',
-			'comments',
-			'complete',
-			'debrief',
-			'desiredNumberOfParticipants',
-			'endDateTime',
-			'eventWebsite',
-			'fileIDs',
-			'groupEventNumber',
-			'highAdventureDescription',
-			'location',
-			'lodgingArrangments',
-			'mealsDescription',
-			'meetDateTime',
-			'meetLocation',
-			'name',
-			'participationFee',
-			'pickupDateTime',
-			'pickupLocation',
-			'pointsOfContact',
-			'publishToWingCalendar',
-			'regionEventNumber',
-			'registration',
-			'requiredEquipment',
-			'requiredForms',
-			'showUpcoming',
-			'signUpDenyMessage',
-			'signUpPartTime',
-			'sourceEvent',
-			'startDateTime',
-			'status',
-			'teamID',
-			'transportationDescription',
-			'transportationProvided',
-			'uniform',
-			'wingEventNumber',
-			'id'
-		];
+	public set(values: Partial<NewEventObject>): boolean {
+		if (Event.Validator.validate(values, true)) {
+			Event.Validator.partialPrune(values, this);
 
-		for (const key of keys) {
-			if (typeof values[key] === typeof this[key]) {
-				this[key] = values[key];
-			}
+			return true;
+		} else {
+			throw new Error(Event.Validator.getErrorString());
 		}
-
-		return true;
 	}
 
 	/**
@@ -589,7 +554,7 @@ export default class Event
 	/**
 	 * Returns the attendance for the event
 	 */
-	public getAttendance = (): AttendanceRecord[] => this.attendance
+	public getAttendance = (): AttendanceRecord[] => this.attendance;
 
 	/**
 	 * Add member to attendance
@@ -653,8 +618,8 @@ export default class Event
 	public removeMemberFromAttendance = (
 		member: BaseMember
 	): AttendanceRecord[] =>
-		(this.attendance = this.attendance.filter(record =>
-			!member.matchesReference(record.memberID)
+		(this.attendance = this.attendance.filter(
+			record => !member.matchesReference(record.memberID)
 		));
 }
 

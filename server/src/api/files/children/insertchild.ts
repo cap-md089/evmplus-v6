@@ -30,8 +30,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 		return;
 	}
 
-	child.parentID = parentid;
-	parent.fileChildren.push(childid);
+	await parent.addChild(child);
 
 	await Promise.all([child.save(), parent.save()]);
 

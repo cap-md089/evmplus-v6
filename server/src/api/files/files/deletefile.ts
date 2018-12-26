@@ -4,12 +4,6 @@ import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	if (typeof req.params.fileid === 'undefined') {
-		res.status(400);
-		res.end();
-		return;
-	}
-
 	let file;
 
 	try {
@@ -20,14 +14,8 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 		return;
 	}
 
-	try {
-		await file.delete();
+	await file.delete();
 
-		res.status(204);
-		res.end();
-	} catch (e) {
-		console.log(e);
-		res.status(500);
-		res.end();
-	}
+	res.status(204);
+	res.end();
 });

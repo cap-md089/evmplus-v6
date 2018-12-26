@@ -1,45 +1,28 @@
 import * as express from 'express';
-import { FileObjectValidator } from '..';
+import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler } from '../../../lib/Util';
 
-export default (fileValidator: FileObjectValidator) =>
-	asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-		if (typeof req.member === null) {
-			res.status(403);
+export default asyncErrorHandler(
+	async (
+		req: MemberValidatedRequest<Partial<EditableFileObjectProperties>>,
+		res: express.Response
+	) => {
+		let file: File;
+
+		try {
+			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
+		} catch (e) {
+			res.status(404);
 			res.end();
 			return;
 		}
 
-		if (
-			typeof req.params.fileid === 'undefined' ||
-			!fileValidator(req.body)
-		) {
-			res.status(400);
-			res.end();
-		}
+		file.set(req.body);
 
-		try {
-			const file = await File.Get(
-				req.params.fileid,
-				req.account,
-				req.mysqlx
-			);
+		await file.save();
 
-			file.set(req.body)
-
-			await file.save();
-
-			res.status(204);
-			res.end();
-		} catch (e) {
-			if (e.message === 'Could not get file') {
-				res.status(404);
-				res.end();
-			} else {
-				res.status(500);
-				res.end();
-			}
-		}
-	});
+		res.status(204);
+		res.end();
+	}
+);

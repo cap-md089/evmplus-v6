@@ -20,13 +20,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	try {
-		await event.delete();
-	} catch(e) {
-		res.status(500);
-		res.end();
-		return;
-	}
+	await event.delete();
 
 	res.status(204);
 	res.end();

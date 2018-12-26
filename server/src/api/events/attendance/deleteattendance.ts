@@ -10,7 +10,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	try {
 		event = await Event.Get(req.params.id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(500);
+		res.status(404);
 		res.end();
 		return;
 	}

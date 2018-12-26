@@ -33,6 +33,12 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 		join(config.fileStoragePath, file.accountID + '-' + file.id)
 	);
 
+	res.contentType(file.contentType);
+	res.setHeader(
+		'Content-Disposition',
+		'attachment; filename="' + file.fileName + '"'
+	);
+
 	fileRequested
 		.on('data', data => {
 			res.write(data);

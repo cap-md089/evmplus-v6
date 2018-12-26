@@ -1,7 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
+import { NextFunction, Response } from 'express';
+import { DateTime } from 'luxon';
 import Account from './Account';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
-import Team from './Team';
 
 export default abstract class MemberBase implements MemberObject {
 	public static GetMemberTypeFromID(inputID: string): MemberType {
@@ -43,7 +44,10 @@ export default abstract class MemberBase implements MemberObject {
 			return true;
 		}
 
-		if (value.type === 'CAPProspectiveMember' && typeof value.id === 'string') {
+		if (
+			value.type === 'CAPProspectiveMember' &&
+			typeof value.id === 'string'
+		) {
 			return true;
 		}
 
@@ -98,6 +102,38 @@ export default abstract class MemberBase implements MemberObject {
 
 		return ref1.id === ref2.id;
 	}
+
+	public static BlogPermissionMiddleware(req: MemberRequest, res: Response, next: NextFunction) {
+		if (!req.member) {
+			res.status(401);
+			res.end();
+		}
+
+		if (!req.member.canManageBlog()) {
+			res.status(403);
+			res.end();
+		}
+
+		next();
+	} 
+
+	public static PermissionMiddleware = (permission: MemberPermission) => (
+		req: MemberRequest,
+		res: Response,
+		next: NextFunction
+	) => {
+		if (!req.member) {
+			res.status(401);
+			res.end();
+		}
+
+		if (!req.member.hasPermission(permission)) {
+			res.status(403);
+			res.end();
+		}
+
+		next();
+	};
 
 	/**
 	 * Used to sign JWTs
@@ -285,13 +321,13 @@ export default abstract class MemberBase implements MemberObject {
 		permission: MemberPermission | MemberPermission[],
 		threshold = 1
 	): boolean {
-		return (this.isRioux && MemberBase.useRiouxPermission)
-			? true 
+		return this.isRioux && MemberBase.useRiouxPermission
+			? true
 			: typeof permission === 'string'
-				? this.permissions[permission] > threshold
-				: permission
-						.map(p => this.hasPermission(p, threshold))
-						.reduce((prev, curr) => prev || curr);
+			? this.permissions[permission] > threshold
+			: permission
+					.map(p => this.hasPermission(p, threshold))
+					.reduce((prev, curr) => prev || curr);
 	}
 
 	public getFullName() {
@@ -299,12 +335,18 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public canManageBlog() {
-		return this.hasPermission('ManageBlog');
+		return this.isRioux || this.hasPermission('ManageBlog');
+	}
+
+	public isPOCOf(event: Event) {
+		return event.isPOC(this);
 	}
 }
 
-import { DateTime } from 'luxon';
+import Event from './Event';
 import CAPWATCHMember from './members/CAPWATCHMember';
+import { MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
+import Team from './Team';
 
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

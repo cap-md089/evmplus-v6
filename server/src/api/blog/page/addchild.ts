@@ -30,16 +30,10 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 
 	parentPage.addChild(childPage);
 
-	try {
-		await Promise.all([
-			parentPage.save(),
-			childPage.save()
-		]);
-	} catch (e) {
-		res.status(500);
-		res.end();
-		return;
-	}
+	await Promise.all([
+		parentPage.save(),
+		childPage.save()
+	]);
 
 	res.status(204);
 	res.end();

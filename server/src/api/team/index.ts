@@ -1,6 +1,9 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
 import NHQMember from '../../lib/members/NHQMember';
+import Team from '../../lib/Team';
+import Validator from '../../lib/validator/Validator';
+import { tokenMiddleware } from '../formtoken';
 // API routes
 import create from './create';
 import deleteTeam from './delete';
@@ -15,9 +18,29 @@ router.use(Account.ExpressMiddleware);
 
 router.get('/', NHQMember.ConditionalExpressMiddleware, list);
 router.get('/:id', NHQMember.ConditionalExpressMiddleware, get);
-router.post('/', NHQMember.ExpressMiddleware, create);
-router.put('/:id', NHQMember.ExpressMiddleware, set);
-router.delete('/:id', NHQMember.ExpressMiddleware, deleteTeam);
+router.post(
+	'/',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.PermissionMiddleware('AddTeam'),
+	Validator.BodyExpressMiddleware(Team.Validator),
+	create
+);
+router.put(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.PermissionMiddleware('EditTeam'),
+	Validator.PartialBodyExpressMiddleware(Team.Validator),
+	set
+);
+router.delete(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	NHQMember.PermissionMiddleware('EditTeam'),
+	deleteTeam
+);
 
 router.use('/:id/members', NHQMember.ExpressMiddleware, members);
 

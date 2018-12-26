@@ -1,6 +1,10 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
+import Event from '../../lib/Event';
 import NHQMember from '../../lib/members/NHQMember';
+import { replaceUndefinedWithNull } from '../../lib/Util';
+import Validator from '../../lib/validator/Validator';
+import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
 import deleteattendance from './attendance/deleteattendance';
@@ -21,15 +25,42 @@ router.use(Account.ExpressMiddleware);
 
 router.get('/', NHQMember.ConditionalExpressMiddleware, list);
 router.get('/:start/:end', NHQMember.ConditionalExpressMiddleware, timelist);
-router.post('/', NHQMember.ExpressMiddleware, addevent);
+router.post(
+	'/',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(Event.Validator),
+	NHQMember.PermissionMiddleware('AddEvent'),
+	addevent
+);
 router.post('/:parent', NHQMember.ExpressMiddleware, linkevent);
 router.delete('/:id', NHQMember.ExpressMiddleware, deleteevent);
-router.put('/:id', NHQMember.ExpressMiddleware, setevent);
+router.put(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	Validator.PartialBodyExpressMiddleware(Event.Validator),
+	setevent
+);
 router.get('/:id', NHQMember.ConditionalExpressMiddleware, getevent);
 
 router.get('/:id/attendance', NHQMember.ExpressMiddleware, getattendance);
-router.post('/:id/attendance', NHQMember.ExpressMiddleware, addattendance);
-router.put('/:id/attendance', NHQMember.ExpressMiddleware, modifyattendance);
+router.post(
+	'/:id/attendance',
+	NHQMember.ExpressMiddleware,
+	replaceUndefinedWithNull,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
+	addattendance
+);
+router.put(
+	'/:id/attendance',
+	NHQMember.ExpressMiddleware,
+	replaceUndefinedWithNull,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
+	modifyattendance
+);
 router.delete('/:id/attendance', NHQMember.ExpressMiddleware, deleteattendance);
 
 export default router;

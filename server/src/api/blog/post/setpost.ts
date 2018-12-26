@@ -1,51 +1,31 @@
 import * as express from 'express';
-import { join } from 'path';
-import conf from '../../../conf';
+import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPost from '../../../lib/BlogPost';
-import { MemberRequest } from '../../../lib/MemberBase';
-import { asyncErrorHandler, getSchemaValidator } from '../../../lib/Util';
+import { asyncErrorHandler } from '../../../lib/Util';
 
-// tslint:disable-next-line:no-var-requires
-const blogPostSchema = require(join(conf.schemaPath, 'NewBlogPost.json'));
+export default asyncErrorHandler(
+	async (
+		req: MemberValidatedRequest<Partial<NewBlogPost>>,
+		res: express.Response
+	) => {
+		let blogPost;
 
-const privateBlogPostValidator = getSchemaValidator(blogPostSchema);
+		try {
+			blogPost = await BlogPost.Get(
+				req.params.id,
+				req.account,
+				req.mysqlx
+			);
+		} catch (e) {
+			res.status(404);
+			res.end();
+		}
 
-const blogPostValidator = (val: any): val is BlogPostObject =>
-	privateBlogPostValidator(val) as boolean;
-
-export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	const blogPostData: NewBlogPost = {
-		content: req.body.content,
-		fileIDs: req.body.fileIDs,
-		title: req.body.title
-	};
-
-	if (!blogPostValidator(blogPostData)) {
-		console.log(privateBlogPostValidator.errors);
-		res.status(400);
-		res.end();
-		return;
-	}
-
-	try {
-		const blogPost = await BlogPost.Get(
-			req.params.id,
-			req.account,
-			req.mysqlx
-		);
-
-		blogPost.set(blogPostData);
+		blogPost.set(req.body);
 
 		await blogPost.save();
 
 		res.status(204);
 		res.end();
-	} catch (e) {
-		if (e.message === 'Could not get blog post') {
-			res.status(404);
-			res.end();
-		} else {
-			throw e;
-		}
 	}
-});
+);

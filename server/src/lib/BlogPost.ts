@@ -4,8 +4,12 @@ import { DateTime } from 'luxon';
 import Account from './Account';
 import MemberBase from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import NewBlogPostValidator from './validator/validators/NewBlogPost';
 
-export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogPostObject> {
+export default class BlogPost
+	implements BlogPostObject, DatabaseInterface<BlogPostObject> {
+	public static Validator = new NewBlogPostValidator();
+
 	public static async Get(
 		id: number | string,
 		account: Account,
@@ -89,8 +93,6 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 
 	public content: RawDraftContentState;
 
-	public fileIDs: string[];
-
 	public id: number;
 
 	public posted: number;
@@ -115,6 +117,11 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 		account: Account,
 		schema: Schema
 	) {
+		this._id = data._id;
+		this.id = data.id;
+		this.author = data.author;
+		this.posted = data.posted;
+
 		this.set(data);
 
 		this.account = account;
@@ -142,7 +149,6 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 			id: this.id,
 			author: this.author,
 			content: this.content,
-			fileIDs: this.fileIDs,
 			posted: this.posted,
 			title: this.title,
 			accountID: this.account.id
@@ -151,29 +157,17 @@ export default class BlogPost implements BlogPostObject, DatabaseInterface<BlogP
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
-	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
-	public set(values: Partial<BlogPostObject>): boolean {
-		const keys: Array<keyof BlogPostObject> = [
-			'_id',
-			'id',
-			'title',
-			'author',
-			'content',
-			'fileIDs',
-			'posted'
-		];
+	public set(values: Partial<BlogPostObject>) {
+		if (BlogPost.Validator.validate(values, true)) {
+			BlogPost.Validator.partialPrune(values, this);
 
-		for (const i of keys) {
-			if (values[i] && i !== 'accountID') {
-				this[i] = values[i];
-			}
+			return true;
+		} else {
+			throw new Error(BlogPost.Validator.getErrorString());
 		}
-
-		return true;
 	}
 
 	public async delete(): Promise<void> {

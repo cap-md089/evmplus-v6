@@ -6,16 +6,17 @@ import {
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType
 } from '../../../lib/index';
-import { isImage } from '../api/files/files/fileupload';
 import conf from '../conf';
 import Account from './Account';
-import NHQMember from './members/NHQMember';
-import ProspectiveMember from './members/ProspectiveMember';
+import MemberBase from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
+import FileObjectValidator from './validator/validators/FileObjectValidator';
 
 const promisedUnlink = promisify(unlink);
 
 export default class File implements FileObject, DatabaseInterface<FileObject> {
+	public static Validator = new FileObjectValidator();
+
 	public static async Get(
 		id: string,
 		account: Account,
@@ -131,7 +132,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 				}
 			],
 			id: 'root',
-			parentID: '',
+			parentID: null,
 			owner: {
 				id: 542488,
 				type: 'CAPNHQMember'
@@ -188,8 +189,14 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	private constructor(data: FileObject, account: Account, schema: Schema) {
 		this.set(data);
+
 		this.id = data.id;
 		this._id = data._id;
+		this.fileChildren = data.fileChildren;
+		this.contentType = data.contentType;
+		this.created = data.created;
+		this.parentID = data.parentID;
+		this.folderPath = data.folderPath;
 
 		this.account = account;
 		this.schema = schema;
@@ -197,48 +204,28 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
-	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
 	public set(data: Partial<FileObject>): boolean {
-		const keys: Array<keyof FileObject> = [
-			'comments',
-			'contentType',
-			'created',
-			'fileChildren',
-			'fileName',
-			'forDisplay',
-			'forSlideshow',
-			'parentID',
-			'owner',
-			'folderPath',
-			'permissions',
-			'_id'
-		];
+		if (File.Validator.validate(data, true)) {
+			File.Validator.partialPrune(data, this);
 
-		for (const i of keys) {
-			if (data[i] && (i !== 'accountID' && i !== 'kind')) {
-				this[i] = data[i];
-			}
+			return true;
+		} else {
+			throw new Error(File.Validator.getErrorString());
 		}
-
-		const fileNameParts = this.fileName.split('.');
-
-		// Don't mark it for display if it is not an image
-		if (!isImage(fileNameParts[fileNameParts.length - 1])) {
-			this.forDisplay = false;
-			this.forSlideshow = false;
-		}
-
-		return true;
 	}
 
 	public async save(): Promise<void> {
 		const filesCollection = this.schema.getCollection<RawFileObject>(
 			File.collectionName
 		);
+
+		// Root is an imaginary imaginary file
+		if (this.id === 'root') {
+			return;
+		}
 
 		if (!this.deleted) {
 			filesCollection.replaceOne(this._id, this.toRealRaw());
@@ -260,12 +247,21 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		kind: 'drive#file',
 		permissions: this.permissions,
 		parentID: this.parentID,
-		owner: this.owner,
-	})
+		owner: this.owner
+	});
 
 	public toRaw = (): FileObject => ({
 		...this.toRealRaw(),
 		folderPath: this.folderPath
+	});
+
+	public toFullRaw = async (): Promise<FullFileObject> => ({
+		...this.toRaw(),
+		uploader: await MemberBase.ResolveReference(
+			this.owner,
+			this.account,
+			this.schema
+		)
 	});
 
 	public async delete(): Promise<void> {
@@ -310,7 +306,12 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	public async *getChildren(includeWWW = true): AsyncIterableIterator<File> {
 		for (const i of this.fileChildren) {
 			try {
-				const file = await File.Get(i, this.account, this.schema, includeWWW);
+				const file = await File.Get(
+					i,
+					this.account,
+					this.schema,
+					includeWWW
+				);
 
 				yield file;
 			} catch (e) {
@@ -320,7 +321,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	}
 
 	public hasPermission(
-		member: NHQMember | ProspectiveMember | null,
+		member: MemberBase | null,
 		permission: FileUserAccessControlPermissions
 	): boolean {
 		if (member) {
@@ -380,18 +381,15 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		if (valid) {
 			return true;
 		}
-		
+
 		if (member) {
 			memberPermissions.forEach(
 				perm =>
 					(valid =
 						valid ||
-						(
-							// tslint:disable-next-line:no-bitwise
-							(perm.permission & permission) > 0 &&
-							member.matchesReference(perm.reference)
-						)
-					)
+						// tslint:disable-next-line:no-bitwise
+						((perm.permission & permission) > 0 &&
+							member.matchesReference(perm.reference)))
 			);
 		}
 
@@ -403,7 +401,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			return false;
 		}
 
-		member.teamIDs.forEach(i => 
+		member.teamIDs.forEach(i =>
 			teamPermissions.forEach(
 				perm =>
 					(valid =
@@ -415,5 +413,23 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		);
 
 		return valid;
+	}
+
+	public async addChild(file: File) {
+		this.fileChildren.push(file.id);
+
+		if (file.parentID !== 'root') {
+			const parent = await File.Get(file.id, this.account, this.schema);
+			parent.removeChild(file);
+			await parent.save();
+		}
+
+		this.parentID = file.id;
+	}
+
+	public removeChild(file: File) {
+		this.fileChildren = this.fileChildren.filter(id => id !== file.id);
+
+		file.parentID = 'root';
 	}
 }

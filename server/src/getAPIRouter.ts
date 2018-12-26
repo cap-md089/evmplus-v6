@@ -113,7 +113,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		check
 	);
 
-	router.use('/blog', Account.ExpressMiddleware, blog);
+	router.use('/blog', blog);
 
 	router.use('/event', events);
 

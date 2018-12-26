@@ -53,7 +53,12 @@ export async function orderlyExecute<T, S>(
 	return ret;
 }
 
-export const json = <T>(res: express.Response, values: T) => res.json(values);
+export const json = <T>(res: express.Response, values: T | Promise<T>) =>
+	values instanceof Promise
+		? values.then(val => {
+				res.json(values);
+		  })
+		: res.json(values);
 
 export const getSchemaValidator = (schema: any) =>
 	new ajv({ allErrors: true }).compile(schema);
@@ -182,7 +187,28 @@ export const extraTypes = (
 	func(req, convertResponse(res));
 };
 
-type ExpressHandler = (req: express.Request, res: express.Response, next: express.NextFunction) => any;
+type ExpressHandler = (
+	req: express.Request,
+	res: express.Response,
+	next: express.NextFunction
+) => any;
 
-export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler =>
-	(req, res, next) => fn(req, res, next).catch(next);
+export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (
+	req,
+	res,
+	next
+) => fn(req, res, next).catch(next);
+
+export const replaceUndefinedWithNull: express.RequestHandler = (
+	req,
+	res,
+	next
+) => {
+	for (const i in req.body) {
+		if (req.body[i] === undefined) {
+			req.body[i] = null;
+		}
+	}
+
+	next();
+};

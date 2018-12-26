@@ -4,8 +4,14 @@ import { TeamPublicity } from '../../../lib/index';
 import Account from './Account';
 import MemberBase from './MemberBase';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import NewTeamMemberValidator from './validator/validators/NewTeamMember';
+import NewTeamObjectValidator from './validator/validators/NewTeamObject';
 
 export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
+
+	public static Validator = new NewTeamObjectValidator();
+	public static MemberValidator = new NewTeamMemberValidator();
+
 	public static async Get(
 		id: number,
 		account: Account,
@@ -111,14 +117,13 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 	}
 
 	public set(values: Partial<TeamObject>): boolean {
-		for (const i in values) {
-			if (values.hasOwnProperty(i) && i !== 'accountID') {
-				const key = i as Exclude<keyof TeamObject, 'accountID'>;
-				this[key] = values[key];
-			}
-		}
+		if (Team.Validator.validate(values, true)) {
+			Team.Validator.partialPrune(values, this);
 
-		return true;
+			return true;
+		} else {
+			throw new Error(Team.Validator.getErrorString());
+		}
 	}
 
 	public async save(): Promise<void> {

@@ -3,12 +3,14 @@ import { AccountRequest } from '../../../lib/Account';
 import BlogPost from '../../../lib/BlogPost';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
-	if (
-		typeof req.params.id !== 'undefined'
-	) {
+export default asyncErrorHandler(
+	async (req: AccountRequest, res: express.Response) => {
 		try {
-			const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
+			const blogPost = await BlogPost.Get(
+				req.params.id,
+				req.account,
+				req.mysqlx
+			);
 
 			json<BlogPostObject>(res, blogPost.toRaw());
 		} catch (e) {
@@ -16,14 +18,8 @@ export default asyncErrorHandler(async (req: AccountRequest, res: express.Respon
 				res.status(404);
 				res.end();
 			} else {
-				// tslint:disable-next-line:no-console
-				console.log(e);
-				res.status(400);
-				res.end();
+				throw e;
 			}
 		}
-	} else {
-		res.status(400);
-		res.end();
 	}
-});
+);

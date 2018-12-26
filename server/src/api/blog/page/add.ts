@@ -1,44 +1,29 @@
 import { Response } from 'express';
+import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPage from '../../../lib/BlogPage';
-import { MemberRequest } from '../../../lib/MemberBase';
-import {
-	asyncErrorHandler,
-	getFullSchemaValidator,
-	json
-} from '../../../lib/Util';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
-const validator = getFullSchemaValidator<NewBlogPage>('NewBlogPage.json');
+export default asyncErrorHandler(
+	async (req: MemberValidatedRequest<NewBlogPage>, res: Response) => {
+		const id = req.body.title
+			.replace(/ +/g, ' ')
+			.replace(' ', '-')
+			.toLowerCase();
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	if (!validator(req.body)) {
-		res.status(400);
-		res.end();
-		return;
+		let page: BlogPage;
+
+		try {
+			page = await BlogPage.Create(id, req.body, req.account, req.mysqlx);
+		} catch (e) {
+			if (e.message === 'ID already taken') {
+				res.status(400);
+				res.end();
+				return;
+			}
+
+			throw e;
+		}
+
+		json<BlogPageObject>(res, page.toRaw());
 	}
-
-	const id = req.body.title
-		.replace(/ +/g, ' ')
-		.replace(' ', '-')
-		.toLowerCase();
-
-	let page: BlogPage;
-
-	try {
-		page = await BlogPage.Create(
-			id,
-			{
-				content: req.body.content,
-				parentID: req.body.parentID,
-				title: req.body.title
-			},
-			req.account,
-			req.mysqlx
-		);
-	} catch (e) {
-		res.status(e.message === 'ID already taken' ? 400 : 500);
-		res.end();
-		return;
-	}
-
-	json<BlogPageObject>(res, page.toRaw());
-});
+);

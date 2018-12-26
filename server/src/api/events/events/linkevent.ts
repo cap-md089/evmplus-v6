@@ -1,8 +1,8 @@
-import { Response } from "express";
-import Account from "../../../lib/Account";
-import Event from "../../../lib/Event";
-import { MemberRequest } from "../../../lib/MemberBase";
-import { asyncErrorHandler, json } from "../../../lib/Util";
+import { Response } from 'express';
+import Account from '../../../lib/Account';
+import Event from '../../../lib/Event';
+import MemberBase, { MemberRequest } from '../../../lib/Members';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	if (
@@ -29,16 +29,20 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	let newEvent: Event;
+	const memCopy = await MemberBase.ResolveReference(
+		req.member.getReference(),
+		targetAccount,
+		req.mysqlx
+	);
 
-	try {
-		newEvent = await event.linkTo(targetAccount, req.member);
-	} catch (e) {
-		res.status(500);
+	if (!memCopy.hasPermission('AddEvent', 2)) {
+		res.status(403);
 		res.end();
 		return;
 	}
 
-	res.status(200)
+	const newEvent = await event.linkTo(targetAccount, req.member);
+
+	res.status(200);
 	json<EventObject>(res, newEvent.toRaw());
-})
+});

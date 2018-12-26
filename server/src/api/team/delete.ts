@@ -14,13 +14,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	try {
-		await team.delete();
-	} catch (e) {
-		res.status(500);
-		res.end();
-		return;
-	}
+	await team.delete();
 
 	res.status(204);
 	res.end();

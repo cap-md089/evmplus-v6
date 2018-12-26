@@ -1,88 +1,85 @@
 import * as express from 'express';
 import { FileUserAccessControlPermissions } from '../../../../../lib/index';
 import File from '../../../lib/File';
-import MemberBase, { ConditionalMemberRequest } from '../../../lib/MemberBase';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
+import { ConditionalMemberRequest } from '../../../lib/MemberBase';
+import {
+	asyncErrorHandler,
+	streamAsyncGeneratorAsJSONArrayTyped
+} from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: express.Response) => {
-	const parentid =
-		typeof req.params.parentid === 'undefined'
-			? 'root'
-			: req.params.parentid;
-	const method =
-		typeof req.params.method === 'undefined' ? 'clean' : req.params.method;
-	if (['clean', 'dirty'].indexOf(method) === -1) {
-		res.status(400);
-		res.end();
-		return;
-	}
+export default asyncErrorHandler(
+	async (req: ConditionalMemberRequest, res: express.Response) => {
+		const parentid =
+			typeof req.params.parentid === 'undefined'
+				? 'root'
+				: req.params.parentid;
+		const method =
+			typeof req.params.method === 'undefined'
+				? 'clean'
+				: req.params.method;
 
-	let folder;
+		if (['clean', 'dirty'].indexOf(method) === -1) {
+			res.status(400);
+			res.end();
+			return;
+		}
 
-	try {
-		folder = await File.Get(parentid, req.account, req.mysqlx);
-	} catch (e) {
-		// tslint:disable-next-line
-		console.log(e);
-		res.status(404);
-		res.end();
-		return;
-	}
+		let folder;
 
-	if (
-		!(await folder.hasPermission(
-			req.member,
-			FileUserAccessControlPermissions.READ
-		))
-	) {
-		res.status(403);
-		res.end();
-		return;
-	}
+		try {
+			folder = await File.Get(parentid, req.account, req.mysqlx);
+		} catch (e) {
+			res.status(404);
+			res.end();
+			return;
+		}
 
-	if (
-		req.params.method !== undefined &&
-		req.params.method === 'dirty' &&
-		req.member !== null
-	) {
-		await streamAsyncGeneratorAsJSONArrayTyped<File, FullFileObject>(
-			res,
-			folder.getChildren(),
-			async file => {
-				const canRead = await file.hasPermission(
-					req.member,
-					FileUserAccessControlPermissions.READ
-				);
+		if (
+			!folder.hasPermission(
+				req.member,
+				FileUserAccessControlPermissions.READ
+			)
+		) {
+			res.status(403);
+			res.end();
+			return;
+		}
 
-				if (!canRead) {
-					return false;
+		if (
+			req.params.method !== undefined &&
+			req.params.method === 'dirty' &&
+			req.member !== null
+		) {
+			await streamAsyncGeneratorAsJSONArrayTyped<File, FullFileObject>(
+				res,
+				folder.getChildren(),
+				async file => {
+					const canRead = file.hasPermission(
+						req.member,
+						FileUserAccessControlPermissions.READ
+					);
+
+					if (!canRead) {
+						return false;
+					}
+
+					const fullFile = await file.toFullRaw();
+
+					return fullFile;
 				}
-
-				const uploaderObject = await MemberBase.ResolveReference(
-					file.owner,
-					req.account,
-					req.mysqlx
-				);
-
-				const fullFile: FullFileObject = {
-					...file.toRaw(),
-					uploader: uploaderObject.toRaw()
-				};
-
-				return fullFile;
-			}
-		);
-	} else {
-		await streamAsyncGeneratorAsJSONArrayTyped<File, FileObject>(
-			res,
-			folder.getChildren(),
-			async file =>
-				(await file.hasPermission(
-					req.member,
-					FileUserAccessControlPermissions.READ
-				))
-					? file.toRaw()
-					: false
-		);
+			);
+		} else {
+			await streamAsyncGeneratorAsJSONArrayTyped<File, FileObject>(
+				res,
+				folder.getChildren(),
+				file =>
+					file.hasPermission(
+						req.member,
+						FileUserAccessControlPermissions.READ
+					)
+						? file.toRaw()
+						: false
+			);
+		}
 	}
-});
+);
