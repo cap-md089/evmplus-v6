@@ -415,7 +415,14 @@ declare global {
 		errorMessage: string;
 	}
 
-	export interface RawAccountObject extends Identifiable, NoSQLDocument {
+	export interface NewAccountObject {
+		/**
+		 * CAP IDs of the admins of this account
+		 */
+		adminIDs: MemberReference[];
+	}
+
+	export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccountObject {
 		/**
 		 * The Account ID
 		 */
@@ -448,10 +455,6 @@ declare global {
 		 * How many events can be used if this account is unpaid for
 		 */
 		unpaidEventLimit: number;
-		/**
-		 * CAP IDs of the admins of this account
-		 */
-		adminIDs: MemberReference[];
 	}
 
 	/**
@@ -504,12 +507,6 @@ declare global {
 		 * What the author is trying to say
 		 */
 		content: RawDraftContentState;
-		/**
-		 * Pictures that will be presented below the post; if there
-		 * are photos that will be embedded in the content, it will be in the `content`
-		 * property and handled by Draft.js
-		 */
-		fileIDs: string[];
 	}
 
 	export interface BlogPageAncestryItem {
@@ -532,10 +529,6 @@ declare global {
 		 * The page content
 		 */
 		content: RawDraftContentState;
-		/**
-		 * The page that has this as a child
-		 */
-		parentID: string | null;
 	}
 
 	export interface BlogPageObject
@@ -552,6 +545,10 @@ declare global {
 		 * This contains an array to references of BlogPages
 		 */
 		children: string[];
+		/**
+		 * The page that has this as a child
+		 */
+		parentID: string | null;
 	}
 
 	export interface FullBlogPageObject extends BlogPageObject {
@@ -832,6 +829,13 @@ declare global {
 		 * If they are comming part time, this shows when they depart
 		 */
 		departureTime: number | null;
+		/**
+		 * A new attendance record may contain this if someone tries to
+		 * add someone else
+		 * 
+		 * Only succeeds if they have the permission to do so
+		 */
+		memberID?: MemberReference;
 	}
 
 	/**
@@ -1561,18 +1565,9 @@ declare global {
 		| FileOtherControlList;
 
 	/**
-	 * Represents a file. Metadata (shown) is stored in the database, other file
-	 * data is stored on disk to take advantage of Node.js
+	 * Shows what can be edited by the client
 	 */
-	export interface RawFileObject extends DriveObject {
-		/**
-		 * Prevent duck typing to an extent
-		 */
-		kind: 'drive#file';
-		/**
-		 * The file identifier
-		 */
-		id: string;
+	export interface EditableFileObjectProperties {
 		/**
 		 * The id of the uploader
 		 */
@@ -1586,14 +1581,6 @@ declare global {
 		 */
 		comments: string;
 		/**
-		 * The MIME type for the file
-		 */
-		contentType: string;
-		/**
-		 * The UTC unix time stamp of when the file was created
-		 */
-		created: number;
-		/**
 		 * Whether or not the file is displayed in the photo library (only works with photos)
 		 */
 		forDisplay: boolean;
@@ -1602,6 +1589,33 @@ declare global {
 		 */
 		forSlideshow: boolean;
 		/**
+		 * The permissions for the file
+		 */
+		permissions: FileControlListItem[];
+	}
+
+	/**
+	 * Represents a file. Metadata (shown) is stored in the database, other file
+	 * data is stored on disk to take advantage of Node.js
+	 */
+	export interface RawFileObject extends DriveObject, EditableFileObjectProperties {
+		/**
+		 * Mimicing Google Drive API
+		 */
+		kind: 'drive#file';
+		/**
+		 * The file identifier
+		 */
+		id: string;
+		/**
+		 * The MIME type for the file
+		 */
+		contentType: string;
+		/**
+		 * The UTC unix time stamp of when the file was created
+		 */
+		created: number;
+		/**
 		 * Children ids for folder
 		 */
 		fileChildren: string[];
@@ -1609,10 +1623,6 @@ declare global {
 		 * ID of the parent for going backwards
 		 */
 		parentID: string;
-		/**
-		 * The permissions for the file
-		 */
-		permissions: FileControlListItem[];
 	}
 
 	export interface FileObject extends RawFileObject {
