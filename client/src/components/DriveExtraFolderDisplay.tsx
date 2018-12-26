@@ -126,7 +126,7 @@ export default class ExtraFolderDisplay extends React.Component<
 
 		const moveSuccess = moveResults
 			.map(c => c === 200 || c === 204)
-			.reduce((a, b) => a && b);
+			.reduce((a, b) => a && b, true);
 
 		if (!moveSuccess) {
 			// TODO: Show error message
@@ -139,5 +139,7 @@ export default class ExtraFolderDisplay extends React.Component<
 			// TODO: Show error message
 			return;
 		}
+
+		this.props.fileDelete(this.props.file);
 	}
 }

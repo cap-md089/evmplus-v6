@@ -11,8 +11,6 @@ import FileInterface from '../lib/File';
 import './Drive.css';
 import { PageProps } from './Page';
 
-
-
 enum ErrorReason {
 	NONE,
 	ERR404,
@@ -62,6 +60,7 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		this.onFileClick = this.onFileClick.bind(this);
 		this.onFolderClick = this.onFolderClick.bind(this);
 
+		this.createFolder = this.createFolder.bind(this);
 		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
 		this.receiveData = this.receiveData.bind(this);
 		this.addFile = this.addFile.bind(this);
@@ -186,28 +185,26 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 			}
 		}
 
-		const NewFolderRequestForm = Form as new () => Form<
-			{ name: string }
-		>;
+		const NewFolderRequestForm = Form as new () => Form<{ name: string }>;
 
 		return (
 			<div>
 				{this.props.member &&
-					this.props.member.permissions.FileManagement === 1 ? (
-						<div>
-							<NewFolderRequestForm
-								id=""
-								values={{
-									name: this.state.newFoldername
-								}}
-								onChange={this.updateNewFolderForm}
-								onSubmit={this.createFolder}
-								rowClassName="drive-newfoldername-row"
-							>
-								<TextInput name="name" />
-							</NewFolderRequestForm>
-						</div>
-					) : null}
+				this.props.member.permissions.FileManagement === 1 ? (
+					<div>
+						<NewFolderRequestForm
+							id=""
+							values={{
+								name: this.state.newFoldername
+							}}
+							onChange={this.updateNewFolderForm}
+							onSubmit={this.createFolder}
+							rowClassName="drive-newfoldername-row"
+						>
+							<TextInput name="name" />
+						</NewFolderRequestForm>
+					</div>
+				) : null}
 				<div className="drive-folders">
 					{rowedFolders.map((folderList, i) => (
 						<React.Fragment key={i}>
@@ -302,13 +299,13 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 		this.setState(prev =>
 			prev.currentlySelected === file.id
 				? {
-					currentlySelected: '',
-					showingExtraInfo: true
-				}
+						currentlySelected: '',
+						showingExtraInfo: true
+				  }
 				: {
-					currentlySelected: file.id,
-					showingExtraInfo: false
-				}
+						currentlySelected: file.id,
+						showingExtraInfo: false
+				  }
 		);
 	}
 
@@ -363,10 +360,10 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 					err.status === 403
 						? ErrorReason.ERR403
 						: err.status === 404
-							? ErrorReason.ERR404
-							: err.status === 500
-								? ErrorReason.ERR500
-								: ErrorReason.UNKNOWN
+						? ErrorReason.ERR404
+						: err.status === 500
+						? ErrorReason.ERR500
+						: ErrorReason.UNKNOWN
 			});
 		}
 	}
@@ -419,7 +416,9 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 				this.state.newFoldername,
 				this.props.member,
 				this.props.account
-			)
+			).then(folder => {
+				this.addFile(folder);
+			});
 		}
 	}
 }

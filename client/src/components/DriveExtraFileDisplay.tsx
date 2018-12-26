@@ -85,7 +85,9 @@ export default class ExtraFileDisplay extends React.Component<
 
 	private onDeleteFileClick() {
 		if (this.props.member) {
-			this.props.file.delete(this.props.member);
+			this.props.file.delete(this.props.member).then(() => {
+				this.props.fileDelete(this.props.file);
+			});
 		}
 	}
 
