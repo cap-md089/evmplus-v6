@@ -819,6 +819,10 @@ declare global {
 		 * If they plan to use transportation provided
 		 */
 		planToUseCAPTransportation: boolean;
+		/**
+		 * Whether or not PAOs can use the photos of the attendee
+		 */
+		canUsePhotos: boolean;
 
 		// If these are undefined, they are staying for the whole event
 		/**
