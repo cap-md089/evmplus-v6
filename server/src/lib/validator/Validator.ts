@@ -260,7 +260,7 @@ export default class Validator<T> {
 			  }
 			: {
 					valid: false,
-					message: 'not a valid checkbox return value'
+					message: 'not a valid radio return value'
 			  };
 
 	public static MemberReference: ValidatorFunction = input =>

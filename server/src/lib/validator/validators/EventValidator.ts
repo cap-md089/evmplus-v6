@@ -207,7 +207,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Number
 			},
 			status: {
-				validator: Validator.RadioReturn(EventStatus)
+				validator: Validator.Enum(EventStatus)
 			},
 			teamID: {
 				validator: Validator.Or(Validator.Number, Validator.Nothing)

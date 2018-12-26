@@ -39,8 +39,9 @@ export default asyncErrorHandler(
 				comments: req.body.comments,
 				departureTime: req.body.departureTime,
 				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				requirements: req.body.requirements,
-				status: req.body.status
+				requirements: '',
+				status: req.body.status,
+				canUsePhotos: req.body.canUsePhotos
 			},
 			member
 		);

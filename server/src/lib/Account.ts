@@ -20,6 +20,7 @@ export interface AccountRequest extends MySQLRequest {
 
 export default class Account
 	implements AccountObject, DatabaseInterface<AccountObject> {
+
 	public static ExpressMiddleware: express.RequestHandler = async (
 		req: AccountRequest,
 		res,
