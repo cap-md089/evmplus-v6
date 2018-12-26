@@ -14,11 +14,7 @@ interface LinkListState {
 }
 
 function getEventStatus(status: EventStatus) {
-<<<<<<< HEAD
-	switch (status[0]) {
-=======
 	switch (status) {
->>>>>>> 4581a261b01ae42db2d0d31ee86c3a6150bd11b3
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;
 		case EventStatus.CANCELLED:

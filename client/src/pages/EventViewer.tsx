@@ -16,7 +16,7 @@ type EventViewerProps = PageProps<{ id: string }>;
 const zeroPad = (n: number, a = 2) => ('00' + n).substr(-a);
 
 const formatDate = (date: number) => {
-	const dateObject = new Date(date * 1000);
+	const dateObject = new Date(date);
 
 	const hour = dateObject.getHours();
 	const minute = dateObject.getMinutes();
