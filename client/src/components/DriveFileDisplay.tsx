@@ -34,7 +34,7 @@ export default (props: FileDisplayProps) => (
 		</div>
 		<div className="info-display">
 			{props.file.fileName} (
-			<a href={`/api/files/${props.file.id}/export`}>Download</a>)
+			<a href={`/api/files/${props.file.id}/download`}>Download</a>)
 		</div>
 	</div>
 );
