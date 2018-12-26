@@ -231,7 +231,7 @@ export default class ModifyEvent extends React.Component<
 				values={event}
 				submitInfo={{
 					text: 'Update event',
-					disabled: !!this.props.member && this.state.valid
+					disabled: !this.props.member || !this.state.valid
 				}}
 				showSubmitButton={true}
 			>

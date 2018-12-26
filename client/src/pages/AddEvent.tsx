@@ -581,9 +581,10 @@ export default class AddEvent extends React.Component<
 			this.state.changed.pickupDateTime;
 
 		if (!dateTimesHaveBeenModified) {
-			event.startDateTime = event.meetDateTime + 300; // Five minutes
-			event.endDateTime = event.meetDateTime + 300 + 3600; // 65 minutes
-			event.pickupDateTime = event.meetDateTime + 300 + 3600 + 300; // 70 minutes
+			event.startDateTime = event.meetDateTime + 300 * 1000; // Five minutes
+			event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
+			event.pickupDateTime =
+				event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
 		}
 
 		const locationsHaveBeenModified =

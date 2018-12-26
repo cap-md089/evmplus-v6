@@ -1,0 +1,21 @@
+.partTimeSignupDisplay {
+	padding-top: 20px;
+	margin: 20px;
+}
+
+.partTimeSignupDisplay div {
+	height: 20px;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	border-width: 0;
+	float: left;
+}
+
+.partTimeSignupDisplay .timeBefore, .partTimeSignupDisplay .timeAfter {
+	background: gray;
+}
+
+.partTimeSignupDisplay .timeDuring {
+	background: #0b375b;
+}

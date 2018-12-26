@@ -56,6 +56,11 @@ const pages: Array<{
 		exact: true
 	},
 	{
+		url: '/addevent',
+		component: AddEvent,
+		exact: true
+	},
+	{
 		url: '/eventviewer/:id',
 		component: EventViewer,
 		exact: false
@@ -67,6 +72,11 @@ const pages: Array<{
 	},
 	{
 		url: '/eventform/:id',
+		component: ModifyEvent,
+		exact: false
+	},
+	{
+		url: '/modifyevent/:id',
 		component: ModifyEvent,
 		exact: false
 	},
@@ -132,14 +142,32 @@ const composeElement = (
 	);
 };
 
-export default class PageRouter extends React.Component<{
+interface PageRouterProps {
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
 	member: SigninReturn;
 	account: Account;
 	authorizeUser: (arg: SigninReturn) => void;
 	registry: Registry;
-}> {
+}
+
+export default class PageRouter extends React.Component<PageRouterProps> {
+	public shouldComponentUpdate(nextProps: PageRouterProps) {
+		if (this.props.account === null && nextProps.account !== null) {
+			return true;
+		}
+
+		if (this.props.registry === null && nextProps.registry !== null) {
+			return true;
+		}
+
+		if (nextProps.member.sessionID !== this.props.member.sessionID) {
+			return true;
+		}
+
+		return false;
+	}
+
 	public render() {
 		return (
 			<div id="pageblock">

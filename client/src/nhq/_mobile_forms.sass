@@ -53,13 +53,18 @@ form.asyncForm
 			width: 100%
 			height: 30px
 			float: left
-			line-height: 30px
 			margin: 0
 			padding: 0
 			position: relative
 
 			&.flat
 				height: 2px
+
+			&:nth-of-type(2)
+				line-height: 30px
+				min-width: 400px
+				line-height: 50px
+				width: calc(90% - 220px)
 
 		input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="url"]
 			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif
@@ -128,6 +133,7 @@ form.asyncForm
 		.checkboxDiv
 			position: relative
 			margin: 10px 0
+			margin-top: 0
 			line-height: normal !important
 			clear: both
 			height: 22px

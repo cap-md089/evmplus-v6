@@ -43,16 +43,17 @@ form.asyncForm
 			display: inline-block
 			width: 220px
 			float: left
-			line-height: 50px
 			margin: 0
 			padding: 0
 			position: relative
+			min-height: 50px
 
 			&.flat
 				height: 2px
 
 			&:nth-of-type(2)
 				min-width: 400px
+				line-height: 50px
 				width: calc(90% - 220px)
 
 		input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="url"]
@@ -195,6 +196,7 @@ form.asyncForm
 		.checkboxDiv
 			position: relative
 			margin: 10px 0
+			margin-top: 0
 			line-height: normal !important
 			clear: both
 			height: 22px
