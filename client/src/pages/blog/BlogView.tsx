@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from 'src/components/Button';
 import TextDisplay from 'src/components/TextDisplay';
@@ -5,7 +6,6 @@ import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import { EditorState } from '../../lib/slowEditorState';
 import { PageProps } from '../Page';
-import * as React from 'react';
 
 interface ReadyBlogView {
 	loaded: true;
@@ -21,26 +21,38 @@ interface UnreadyBlogView {
 	post: null;
 }
 
-export class BlogView extends React.Component<PageProps<{
-	id: string;
-}>, UnreadyBlogView | ReadyBlogView> {
+export class BlogView extends React.Component<
+	PageProps<{
+		id: string;
+	}>,
+	UnreadyBlogView | ReadyBlogView
+> {
 	public state: UnreadyBlogView | ReadyBlogView = {
 		post: null,
 		draft: null,
 		editorState: null,
 		loaded: false
 	};
-	constructor(props: PageProps<{
-		id: string;
-	}>) {
+	constructor(
+		props: PageProps<{
+			id: string;
+		}>
+	) {
 		super(props);
 		this.deletePost = this.deletePost.bind(this);
 	}
+
 	public async componentDidMount() {
 		const [post, draft] = await Promise.all([
-			BlogPost.Get(parseInt(this.props.routeProps.match.params.id.split('-')[0], 10)),
+			BlogPost.Get(
+				parseInt(
+					this.props.routeProps.match.params.id.split('-')[0],
+					10
+				)
+			),
 			import('draft-js')
 		]);
+
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -56,42 +68,50 @@ export class BlogView extends React.Component<PageProps<{
 			}
 		]);
 		this.props.updateSideNav([]);
-		const postURL = `/news/view/${post.id}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;
+		const postURL = `/news/view/${
+			post.id
+		}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;
 		if (this.props.routeProps.location.pathname !== postURL) {
 			this.props.routeProps.history.replace(postURL);
 		}
 		this.setState({
 			loaded: true,
 			post,
-			editorState: draft.EditorState.createWithContent(draft.convertFromRaw(post.content)),
+			editorState: draft.EditorState.createWithContent(
+				draft.convertFromRaw(post.content)
+			),
 			draft
 		});
 	}
+
 	public render() {
 		if (this.state.loaded === false) {
 			return <Loader />;
 		}
 		const { post, editorState } = this.state;
-		return (<div>
-			<h1>{post.title}</h1>
-			{this.props.member && this.props.member.canManageBlog() ? (<>
-				<Link to={`/news/edit/${this.state.post.id}`}>
-					Edit Post
+		return (
+			<div>
+				<h1>{post.title}</h1>
+				{this.props.member && this.props.member.canManageBlog() ? (
+					<>
+						<Link to={`/news/edit/${this.state.post.id}`}>
+							Edit Post
 						</Link>
-				{' | '}
-				<Button buttonType="none" onClick={this.deletePost} className="underline-button">
-					Delete post
+						{' | '}
+						<Button
+							buttonType="none"
+							onClick={this.deletePost}
+							className="underline-button"
+						>
+							Delete post
 						</Button>
-			</>) : null}
-			<TextDisplay editorState={editorState} />
-			<div id="photobank">{post.fileIDs.map(this.photoView)}</div>
-		</div>);
+					</>
+				) : null}
+				<TextDisplay editorState={editorState} />
+			</div>
+		);
 	}
-	public photoView(id: string) {
-		return (<div className="photo-view">
-			<img src={`/api/files/${id}/export`} />
-		</div>);
-	}
+
 	private deletePost() {
 		if (!this.state.loaded || !this.props.member) {
 			return;

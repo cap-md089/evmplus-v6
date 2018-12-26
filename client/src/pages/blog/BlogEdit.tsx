@@ -1,10 +1,13 @@
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
-import SimpleForm, { FileInput, Label, LoadingTextArea, TextInput } from '../../components/SimpleForm';
+import SimpleForm, {
+	LoadingTextArea,
+	TextInput
+} from '../../components/SimpleForm';
 import { EditorState } from '../../lib/slowEditorState';
 import { PageProps } from '../Page';
-import * as React from 'react';
 
 interface ReadyBlogEdit {
 	loaded: true;
@@ -20,25 +23,35 @@ interface UnreadyBlogEdit {
 	post: null;
 }
 
-export class BlogEdit extends React.Component<PageProps<{
-	id: string;
-}>, ReadyBlogEdit | UnreadyBlogEdit> {
+export class BlogEdit extends React.Component<
+	PageProps<{
+		id: string;
+	}>,
+	ReadyBlogEdit | UnreadyBlogEdit
+> {
 	public state: UnreadyBlogEdit | ReadyBlogEdit = {
 		draft: null,
 		editorState: null,
 		loaded: false,
 		post: null
 	};
-	constructor(props: PageProps<{
-		id: string;
-	}>) {
+	constructor(
+		props: PageProps<{
+			id: string;
+		}>
+	) {
 		super(props);
 		this.onFormChange = this.onFormChange.bind(this);
 		this.submitForm = this.submitForm.bind(this);
 	}
 	public async componentDidMount() {
 		const [post, draft] = await Promise.all([
-			BlogPost.Get(parseInt(this.props.routeProps.match.params.id.split('-')[0], 10)),
+			BlogPost.Get(
+				parseInt(
+					this.props.routeProps.match.params.id.split('-')[0],
+					10
+				)
+			),
 			import('draft-js')
 		]);
 		this.props.updateBreadCrumbs([
@@ -56,14 +69,18 @@ export class BlogEdit extends React.Component<PageProps<{
 			}
 		]);
 		this.props.updateSideNav([]);
-		const postURL = `/news/edit/${post.id}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;
+		const postURL = `/news/edit/${
+			post.id
+		}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;
 		if (this.props.routeProps.location.pathname !== postURL) {
 			this.props.routeProps.history.replace(postURL);
 		}
 		this.setState({
 			loaded: true,
 			post,
-			editorState: draft.EditorState.createWithContent(draft.convertFromRaw(post.content)),
+			editorState: draft.EditorState.createWithContent(
+				draft.convertFromRaw(post.content)
+			),
 			draft
 		});
 	}
@@ -80,39 +97,56 @@ export class BlogEdit extends React.Component<PageProps<{
 		const PostEditForm = SimpleForm as new () => SimpleForm<{
 			title: string;
 			content: EditorState;
-			fileIDs: string[];
 		}>;
 		const { post, editorState: content } = this.state;
-		const { title, fileIDs } = post;
-		return (<>
-			<h2>Create blog post</h2>
-			<Link to={`/news/view/${this.props.routeProps.match.params.id}`}>
-				View post
+		const { title } = post;
+		return (
+			<>
+				<h2>Create blog post</h2>
+				<Link
+					to={`/news/view/${this.props.routeProps.match.params.id}`}
+				>
+					View post
 				</Link>
-			<PostEditForm id="blogPostCreate" submitInfo={{
-				text: 'Save blog post',
-				className: 'floatAllthewayRight'
-			}} onSubmit={this.submitForm} onChange={this.onFormChange} values={{
-				content,
-				title,
-				fileIDs
-			}}>
-				<TextInput name="title" fullWidth={true} placeholder="Post title..." boxStyles={{
-					margin: 0,
-					padding: 0,
-					marginBottom: -11
-				}} inputStyles={{
-					backgroundColor: '#fff',
-					borderRadius: 0,
-					padding: 10,
-					borderBottomWidth: 0,
-					borderColor: '#aaa'
-				}} />
-				<LoadingTextArea name="content" fullWidth={true} account={this.props.account} member={this.props.member} />
-				<Label>Photos to display</Label>
-				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} />
-			</PostEditForm>
-		</>);
+				<PostEditForm
+					id="blogPostCreate"
+					submitInfo={{
+						text: 'Save blog post',
+						className: 'floatAllthewayRight'
+					}}
+					onSubmit={this.submitForm}
+					onChange={this.onFormChange}
+					values={{
+						content,
+						title
+					}}
+				>
+					<TextInput
+						name="title"
+						fullWidth={true}
+						placeholder="Post title..."
+						boxStyles={{
+							margin: 0,
+							padding: 0,
+							marginBottom: -11
+						}}
+						inputStyles={{
+							backgroundColor: '#fff',
+							borderRadius: 0,
+							padding: 10,
+							borderBottomWidth: 0,
+							borderColor: '#aaa'
+						}}
+					/>
+					<LoadingTextArea
+						name="content"
+						fullWidth={true}
+						account={this.props.account}
+						member={this.props.member}
+					/>
+				</PostEditForm>
+			</>
+		);
 	}
 	private submitForm(postData: {
 		title: string;
@@ -123,8 +157,9 @@ export class BlogEdit extends React.Component<PageProps<{
 			return;
 		}
 		const newPost: NewBlogPost = {
-			content: this.state.draft.convertToRaw(postData.content.getCurrentContent()),
-			fileIDs: postData.fileIDs,
+			content: this.state.draft.convertToRaw(
+				postData.content.getCurrentContent()
+			),
 			title: postData.title
 		};
 		this.state.post.set(newPost);
@@ -140,8 +175,9 @@ export class BlogEdit extends React.Component<PageProps<{
 			return;
 		}
 		const newPost: NewBlogPost = {
-			content: this.state.draft.convertToRaw(postData.content.getCurrentContent()),
-			fileIDs: postData.fileIDs,
+			content: this.state.draft.convertToRaw(
+				postData.content.getCurrentContent()
+			),
 			title: postData.title
 		};
 		this.state.post.set(newPost);

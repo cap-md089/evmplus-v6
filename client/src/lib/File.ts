@@ -504,25 +504,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 			}
 		}
 
-		const [token1, token2] = await Promise.all([
-			this.getToken(member),
-			this.getToken(member)
-		]);
-
-		const deleteResult = await this.fetch(
-			`/api/files/${this.parentID}/children/${this.id}`,
-			{
-				method: 'DELETE',
-				body: JSON.stringify({
-					token: token1
-				})
-			},
-			member
-		);
-
-		if (deleteResult.status !== 200) {
-			return deleteResult.status;
-		}
+		const token = await this.getToken(member);
 
 		const moveResult = await this.fetch(
 			`/api/files/${target.id}/children`,
@@ -530,7 +512,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 				method: 'POST',
 				body: JSON.stringify({
 					id: this.id,
-					token: token2
+					token
 				})
 			},
 			member

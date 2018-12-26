@@ -164,7 +164,6 @@ export default class PageCreate extends Page<PageProps, State> {
 				content: this.state.draft!.convertToRaw(
 					values.content.getCurrentContent()
 				),
-				parentID: null,
 				title: values.title
 			},
 			this.props.member,

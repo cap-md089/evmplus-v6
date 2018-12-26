@@ -2,8 +2,6 @@ import * as React from 'react';
 import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import SimpleForm, {
-	FileInput,
-	Label,
 	LoadingTextArea,
 	TextInput
 } from '../../components/SimpleForm';
@@ -15,7 +13,6 @@ interface BlogPostCreateNotReady {
 	loaded: false;
 	draft: null;
 	content: null;
-	fileIDs: never[];
 	title: null;
 }
 
@@ -23,7 +20,6 @@ interface ReadyBlogPostCreate {
 	loaded: true;
 	draft: DraftJS;
 	content: EditorState;
-	fileIDs: string[];
 	title: string;
 }
 
@@ -34,7 +30,6 @@ export class BlogPostCreate extends React.Component<
 	public state: ReadyBlogPostCreate | BlogPostCreateNotReady = {
 		loaded: false,
 		draft: null,
-		fileIDs: [],
 		content: null,
 		title: null
 	};
@@ -63,7 +58,6 @@ export class BlogPostCreate extends React.Component<
 			this.setState({
 				loaded: true,
 				draft,
-				fileIDs: [],
 				content: draft.EditorState.createEmpty(),
 				title: ''
 			});
@@ -85,10 +79,9 @@ export class BlogPostCreate extends React.Component<
 		const PostCreateForm = SimpleForm as new () => SimpleForm<{
 			title: string;
 			content: EditorState;
-			fileIDs: string[];
 		}>;
 
-		const { content, title, fileIDs } = this.state;
+		const { content, title } = this.state;
 
 		return (
 			<>
@@ -103,8 +96,7 @@ export class BlogPostCreate extends React.Component<
 					onChange={this.onFormChange}
 					values={{
 						content,
-						title,
-						fileIDs
+						title
 					}}
 				>
 					<TextInput
@@ -130,21 +122,11 @@ export class BlogPostCreate extends React.Component<
 						account={this.props.account}
 						member={this.props.member}
 					/>
-					<Label>Photos to display</Label>
-					<FileInput
-						name="fileIDs"
-						account={this.props.account}
-						member={this.props.member}
-					/>
 				</PostCreateForm>
 			</>
 		);
 	}
-	private submitForm(postData: {
-		title: string;
-		content: EditorState;
-		fileIDs: string[];
-	}) {
+	private submitForm(postData: { title: string; content: EditorState }) {
 		if (!this.props.member || !this.state.loaded) {
 			return;
 		}
@@ -153,7 +135,6 @@ export class BlogPostCreate extends React.Component<
 			content: this.state.draft.convertToRaw(
 				postData.content.getCurrentContent()
 			),
-			fileIDs: postData.fileIDs,
 			title: postData.title
 		};
 
@@ -166,12 +147,10 @@ export class BlogPostCreate extends React.Component<
 	private onFormChange(postData: {
 		title: string;
 		content: EditorState;
-		fileIDs: string[];
 	}) {
 		this.setState({
 			title: postData.title,
 			content: postData.content,
-			fileIDs: postData.fileIDs
 		});
 	}
 }

@@ -59,8 +59,6 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 	public content: RawDraftContentState;
 
-	public fileIDs: string[];
-
 	public id: number;
 
 	public posted: number;
@@ -72,7 +70,6 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 		this.author = data.author;
 		this.content = data.content;
-		this.fileIDs = data.fileIDs;
 		this.id = data.id;
 		this.posted = data.posted;
 		this.title = data.title;
@@ -83,7 +80,6 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 			accountID: this.account.id,
 			author: this.author,
 			content: this.content,
-			fileIDs: this.fileIDs,
 			id: this.id,
 			posted: this.posted,
 			title: this.title
