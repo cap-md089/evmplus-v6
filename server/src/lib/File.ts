@@ -424,12 +424,16 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			await parent.save();
 		}
 
-		this.parentID = file.id;
+		file.parentID = this.id;
 	}
 
 	public removeChild(file: File) {
 		this.fileChildren = this.fileChildren.filter(id => id !== file.id);
 
 		file.parentID = 'root';
+	}
+
+	public getParent() {
+		return File.Get(this.parentID, this.account, this.schema);
 	}
 }

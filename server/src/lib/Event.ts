@@ -578,6 +578,7 @@ export default class Event
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp: +DateTime.utc(),
+				canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime,
@@ -607,6 +608,7 @@ export default class Event
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp: +DateTime.utc(),
+						canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 						// If these are undefined, they are staying for the whole event
 						arrivalTime: newAttendanceRecord.arrivalTime,

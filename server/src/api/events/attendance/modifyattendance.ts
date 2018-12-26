@@ -37,7 +37,8 @@ export default asyncErrorHandler(
 				departureTime: req.body.departureTime,
 				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
 				requirements: req.body.requirements,
-				status: req.body.status
+				status: req.body.status,
+				canUsePhotos: req.body.canUsePhotos
 			},
 			member
 		);
