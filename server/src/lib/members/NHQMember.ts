@@ -1,27 +1,25 @@
 import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
-import { RequestHandler } from 'express';
 import { createWriteStream, existsSync, unlink } from 'fs';
 import { request as httpRequest } from 'https';
-import { sign, verify } from 'jsonwebtoken';
-import { DateTime } from 'luxon';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
 import { MemberCAPWATCHErrors, MemberCreateError } from '../../enums';
 import Account, { AccountRequest } from '../Account';
-import { default as MemberBase } from '../MemberBase';
+import {
+	default as MemberBase,
+	MemberSession,
+	SESSION_TIME
+} from '../MemberBase';
 import { getPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
 import request from './pam/nhq-request';
 import ProspectiveMember from './ProspectiveMember';
 
-const TEN_MINUTES = 10 * 60 * 1000;
-
-interface MemberSession extends Identifiable {
-	id: number;
-	expireTime: number;
+interface NHQMemberSession extends MemberSession {
+	memberID: NHQMemberReference;
 
 	contact: CAPMemberContact;
 	memberRank: string;
@@ -39,11 +37,12 @@ interface MemberSession extends Identifiable {
 export { MemberCreateError };
 
 export interface ConditionalMemberRequest extends AccountRequest {
-	member: NHQMember | ProspectiveMember | null;
+	member: ProspectiveMember | NHQMember | null;
+	newSessionID: string | null;
 }
-
 export interface MemberRequest extends AccountRequest {
 	member: NHQMember | ProspectiveMember;
+	newSessionID: string;
 }
 
 export default class NHQMember extends CAPWATCHMember
@@ -54,12 +53,7 @@ export default class NHQMember extends CAPWATCHMember
 		schema: Schema,
 		account: Account
 	): Promise<NHQMember> {
-		let cookie;
-		try {
-			cookie = await auth.getCookies(username.toString(), password);
-		} catch (e) {
-			throw e;
-		}
+		const cookie = await auth.getCookies(username.toString(), password);
 
 		const memberInfo = await Promise.all([
 			auth.getName(cookie, username.toString()),
@@ -69,54 +63,38 @@ export default class NHQMember extends CAPWATCHMember
 		const id = memberInfo[0].capid;
 		const [dutyPositions, extraInfo] = await Promise.all([
 			NHQMember.GetRegularDutypositions(id, schema),
-			NHQMember.LoadExtraMemberInformation(id, schema, account)
-		]);
-		let sessionID;
-
-		// Set session
-		{
-			let memberIndex = -1;
-
-			for (const i in this.memberSessions) {
-				if (NHQMember.memberSessions[i].id === id) {
-					memberIndex = parseInt(i, 10);
-				}
-			}
-
-			if (memberIndex === -1) {
-				const sess: MemberSession = {
-					expireTime: +DateTime.utc() + 60 * 10,
-
-					contact: memberInfo[1],
-					cookieData: cookie,
+			NHQMember.LoadExtraMemberInformation(
+				{
 					id,
-					memberRank: memberInfo[0].rank,
-					nameFirst: memberInfo[0].nameFirst,
-					nameLast: memberInfo[0].nameLast,
-					nameMiddle: memberInfo[0].nameMiddle,
-					nameSuffix: memberInfo[0].nameSuffix,
-					seniorMember: memberInfo[0].seniorMember,
-					squadron: memberInfo[0].squadron,
-					orgid: memberInfo[0].orgid,
-					flight: extraInfo.flight
-				};
-				NHQMember.memberSessions.push(sess);
-			} else {
-				NHQMember.memberSessions[memberIndex].expireTime =
-					+DateTime.utc() + 60 * 10;
-			}
-
-			sessionID = sign(
-				{
-					id
+					type: 'CAPNHQMember'
 				},
-				NHQMember.secret,
-				{
-					algorithm: 'HS512',
-					expiresIn: '10min'
-				}
-			);
-		}
+				schema,
+				account
+			)
+		]);
+
+		const sess: NHQMemberSession = {
+			accountID: account.id,
+			expireTime: Date.now() + SESSION_TIME,
+			memberID: {
+				type: 'CAPNHQMember',
+				id
+			},
+
+			contact: memberInfo[1],
+			cookieData: cookie,
+			memberRank: memberInfo[0].rank,
+			nameFirst: memberInfo[0].nameFirst,
+			nameLast: memberInfo[0].nameLast,
+			nameMiddle: memberInfo[0].nameMiddle,
+			nameSuffix: memberInfo[0].nameSuffix,
+			seniorMember: memberInfo[0].seniorMember,
+			squadron: memberInfo[0].squadron,
+			orgid: memberInfo[0].orgid,
+			flight: extraInfo.flight
+		};
+
+		const sessionID = await MemberBase.AddSession(sess, account, schema);
 
 		const permissions = getPermissions(extraInfo.accessLevel);
 
@@ -155,141 +133,62 @@ export default class NHQMember extends CAPWATCHMember
 		);
 	}
 
-	public static ConditionalExpressMiddleware: RequestHandler = (
-		req: MemberRequest,
-		res,
-		next
-	) => {
-		if (
-			typeof req.headers !== 'undefined' &&
-			typeof req.headers.authorization !== 'undefined' &&
-			typeof req.account !== 'undefined'
-		) {
-			let header: string = req.headers.authorization as string;
-			if (typeof header !== 'string') {
-				header = (header as string[])[0];
-			}
-			verify(
-				header,
-				NHQMember.secret,
+	public static async LoadMemberFromSession(
+		session: MemberSession,
+		account: Account,
+		schema: Schema,
+		sessionID: string
+	): Promise<NHQMember> {
+		const sess = session as NHQMemberSession;
+
+		const [dutyPositions, extraInfo] = await Promise.all([
+			NHQMember.GetRegularDutypositions(sess.memberID.id, schema),
+			NHQMember.LoadExtraMemberInformation(
 				{
-					algorithms: ['HS512']
+					id: sess.memberID.id,
+					type: 'CAPNHQMember'
 				},
-				async (
-					err,
-					decoded: {
-						id: number | string;
-					}
-				) => {
-					if (err) {
-						req.member = null;
-						next();
-						return;
-					}
-					const id = decoded.id;
+				schema,
+				account
+			)
+		]);
 
-					if (typeof id === 'string') {
-						ProspectiveMember.ExpressMiddleware(
-							req,
-							res,
-							next,
-							id,
-							header
-						);
-						return;
-					}
+		const permissions = getPermissions(extraInfo.accessLevel);
 
-					NHQMember.memberSessions = NHQMember.memberSessions.filter(
-						s => s.expireTime < Date.now() + TEN_MINUTES
-					);
-					const sess = NHQMember.memberSessions.filter(
-						s => s.id === decoded.id
-					);
-					// const sess = await NHQMember.GetMemberSessions(decoded.id, req.mysqlx);
-					if (sess.length === 1) {
-						const [dutyPositions, extraInfo] = await Promise.all([
-							NHQMember.GetRegularDutypositions(id, req.mysqlx),
-							NHQMember.LoadExtraMemberInformation(
-								id,
-								req.mysqlx,
-								req.account
-							)
-						]);
-
-						const permissions = getPermissions(
-							extraInfo.accessLevel
-						);
-
-						req.member = new NHQMember(
-							{
-								contact: sess[0].contact,
-								dutyPositions: [
-									...dutyPositions,
-									...extraInfo.temporaryDutyPositions.map(
-										v => v.Duty
-									)
-								],
-								id,
-								memberRank: sess[0].memberRank,
-								nameFirst: sess[0].nameFirst,
-								nameLast: sess[0].nameLast,
-								nameMiddle: sess[0].nameMiddle,
-								nameSuffix: sess[0].nameSuffix,
-								seniorMember: sess[0].seniorMember,
-								squadron: sess[0].squadron,
-								orgid: sess[0].orgid,
-								usrID: NHQMember.GetUserID([
-									sess[0].nameFirst,
-									sess[0].nameMiddle,
-									sess[0].nameLast,
-									sess[0].nameSuffix
-								]),
-								type: 'CAPNHQMember',
-								permissions,
-								flight: sess[0].flight,
-								teamIDs: extraInfo.teamIDs,
-								sessionID: header,
-								cookie: sess[0].cookieData
-							},
-							req.mysqlx,
-							req.account,
-							extraInfo
-						);
-						next();
-						// 						if (req.member.accessLevel === 'Admin' && !req.member.isRioux) {
-
-						// 						}
-					} else {
-						req.member = null;
-						next();
-					}
-				}
-			);
-		} else {
-			req.member = null;
-			next();
-		}
-	};
-
-	public static ExpressMiddleware: RequestHandler = (
-		req: MemberRequest,
-		res,
-		next
-	) => {
-		NHQMember.ConditionalExpressMiddleware(req, res, () => {
-			if (req.member === null) {
-				res.status(401);
-				res.end();
-			} else {
-				next();
-			}
-		});
-	};
-
-	/**
-	 * Stores the member sessions in memory as it is faster than a database
-	 */
-	protected static memberSessions: MemberSession[] = [];
+		return new NHQMember(
+			{
+				contact: sess.contact,
+				dutyPositions: [
+					...dutyPositions,
+					...extraInfo.temporaryDutyPositions.map(v => v.Duty)
+				],
+				id: sess.memberID.id,
+				memberRank: sess.memberRank,
+				nameFirst: sess.nameFirst,
+				nameLast: sess.nameLast,
+				nameMiddle: sess.nameMiddle,
+				nameSuffix: sess.nameSuffix,
+				seniorMember: sess.seniorMember,
+				squadron: sess.squadron,
+				orgid: sess.orgid,
+				usrID: NHQMember.GetUserID([
+					sess.nameFirst,
+					sess.nameMiddle,
+					sess.nameLast,
+					sess.nameSuffix
+				]),
+				type: 'CAPNHQMember',
+				permissions,
+				flight: sess.flight,
+				teamIDs: extraInfo.teamIDs,
+				sessionID,
+				cookie: sess.cookieData
+			},
+			schema,
+			account,
+			extraInfo
+		);
+	}
 
 	/**
 	 * Limit IDs to CAP IDs
@@ -420,77 +319,10 @@ export default class NHQMember extends CAPWATCHMember
 		await this.streamCAPWATCHFile(id, createWriteStream(location));
 	}
 
-	public async su(
-		targetMember: MemberBase | number | string
-	): Promise<string> {
-		let su =
-			typeof targetMember === 'number' || typeof targetMember === 'string'
-				? targetMember
-				: targetMember.id;
-
-		if (typeof su === 'string' && su.match(/([0-9]{6})/)) {
-			su = parseInt(su, 10);
-		}
-
+	public async su(targetMember: MemberBase) {
 		if (!this.isRioux) {
 			throw new Error('Invalid permissions');
 		}
-
-		const sessionID = sign(
-			{
-				id: su
-			},
-			NHQMember.secret,
-			{
-				algorithm: 'HS512',
-				expiresIn: '10min'
-			}
-		);
-
-		let member;
-
-		if (typeof su === 'number') {
-			member = await CAPWATCHMember.Get(
-				su,
-				this.requestingAccount,
-				this.schema
-			);
-
-			let memberIndex = 0;
-
-			for (let i = 0; i < NHQMember.memberSessions.length; i++) {
-				if (NHQMember.memberSessions[i].id === this.id) {
-					memberIndex = i;
-					break;
-				}
-			}
-
-			NHQMember.memberSessions[memberIndex] = {
-				contact: member.contact,
-				cookieData: this.cookie,
-				expireTime: Date.now() + 60 * 10,
-				id: su,
-				memberRank: member.memberRank,
-				nameFirst: member.nameFirst,
-				nameLast: member.nameLast,
-				nameMiddle: member.nameMiddle,
-				nameSuffix: member.nameSuffix,
-				orgid: member.orgid,
-				seniorMember: member.seniorMember,
-				squadron: member.squadron,
-				flight: member.flight
-			};
-		} else {
-			member = await ProspectiveMember.GetProspective(
-				su,
-				this.requestingAccount,
-				this.schema
-			);
-
-			ProspectiveMember.Su(member);
-		}
-
-		return sessionID;
 	}
 
 	public getReference = (): NHQMemberReference => ({

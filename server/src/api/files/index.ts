@@ -3,7 +3,7 @@ import * as express from 'express';
 import Account from '../../lib/Account';
 import File from '../../lib/File';
 import Member from '../../lib/members/NHQMember';
-import { replaceUndefinedWithNull } from '../../lib/Util';
+import { replaceUndefinedWithNullMiddleware } from '../../lib/Util';
 import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
 // Children methods
@@ -56,7 +56,7 @@ filerouter.put(
 	'/:fileid',
 	Member.ExpressMiddleware,
 	tokenMiddleware,
-	replaceUndefinedWithNull,
+	replaceUndefinedWithNullMiddleware,
 	Validator.PartialBodyExpressMiddleware(File.Validator),
 	setfileinfo
 ); // update

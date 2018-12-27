@@ -12,7 +12,7 @@ export default asyncErrorHandler(
 				req.mysqlx
 			);
 
-			json<BlogPostObject>(res, blogPost.toRaw());
+			json<FullBlogPostObject>(res, blogPost.toRaw());
 		} catch (e) {
 			if (e.message === 'Could not get blog post') {
 				res.status(404);

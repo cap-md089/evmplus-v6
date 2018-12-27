@@ -39,7 +39,10 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 				})
 			),
 			CAPWATCHMember.GetRegularDutypositions(id, schema),
-			CAPWATCHMember.LoadExtraMemberInformation(id, schema, account)
+			CAPWATCHMember.LoadExtraMemberInformation({
+				type: 'CAPNHQMember',
+				id
+			}, schema, account)
 		]);
 
 		if (results.length !== 1) {

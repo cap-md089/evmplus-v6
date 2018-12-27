@@ -1,11 +1,34 @@
 import { Schema } from '@mysql/xdevapi';
 import { NextFunction, Response } from 'express';
+import { sign, verify, VerifyOptions } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
+import { promisify } from 'util';
 import Account from './Account';
+import Event from './Event';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
+const promisedVerify = promisify(verify) as (
+	token: string,
+	key: string,
+	options: VerifyOptions
+) => Promise<object>;
+
+const TEN_MINUTES = 10 * 60 * 1000;
+
+export const SESSION_TIME = TEN_MINUTES;
+
+export interface MemberSession {
+	memberID: MemberReference;
+	accountID: string;
+	expireTime: number;
+}
+
 export default abstract class MemberBase implements MemberObject {
-	public static GetMemberTypeFromID(inputID: string): MemberType {
+	public static GetMemberTypeFromID(inputID: string | number): MemberType {
+		if (typeof inputID === 'number') {
+			return 'CAPNHQMember';
+		}
+
 		if (inputID.match(/[a-z0-9]{1,15}-\d*/i)) {
 			return 'CAPProspectiveMember';
 		}
@@ -103,7 +126,11 @@ export default abstract class MemberBase implements MemberObject {
 		return ref1.id === ref2.id;
 	}
 
-	public static BlogPermissionMiddleware(req: MemberRequest, res: Response, next: NextFunction) {
+	public static BlogPermissionMiddleware(
+		req: MemberRequest,
+		res: Response,
+		next: NextFunction
+	) {
 		if (!req.member) {
 			res.status(401);
 			res.end();
@@ -115,7 +142,7 @@ export default abstract class MemberBase implements MemberObject {
 		}
 
 		next();
-	} 
+	}
 
 	public static PermissionMiddleware = (permission: MemberPermission) => (
 		req: MemberRequest,
@@ -135,6 +162,99 @@ export default abstract class MemberBase implements MemberObject {
 		next();
 	};
 
+	public static async ConditionalExpressMiddleware(
+		req: ConditionalMemberRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		if (
+			typeof req.headers !== 'undefined' &&
+			typeof req.headers.authorization !== 'undefined' &&
+			typeof req.account !== 'undefined'
+		) {
+			let header: string = req.headers.authorization as string;
+			if (typeof header !== 'string') {
+				header = (header as string[])[0];
+			}
+
+			let memRef: MemberReference;
+
+			try {
+				const decoded = (await promisedVerify(
+					header,
+					MemberBase.secret,
+					{ algorithms: ['HS512'] }
+				)) as { id: MemberReference };
+
+				memRef = decoded.id as MemberReference;
+			} catch (e) {
+				req.member = null;
+				return next();
+			}
+
+			const sessInfo = await MemberBase.CheckSession(
+				memRef,
+				req.account,
+				req.mysqlx
+			);
+
+			req.member = null;
+			if (sessInfo === null) {
+				return next();
+			}
+
+			switch (memRef.type) {
+				case 'CAPNHQMember':
+					// Doesn't work if you directly assign req.member to function
+					// return value, but does work through proxy variable
+					// Don't question it and everything works out fine
+					const nhqmem = await NHQMember.LoadMemberFromSession(
+						sessInfo.sess,
+						req.account,
+						req.mysqlx,
+						sessInfo.newSessID
+					);
+					req.member = nhqmem;
+					break;
+
+				case 'CAPProspectiveMember':
+					// Haven't tested no proxy variable, assumed similar to above
+					const pmem = await ProspectiveMember.LoadMemberFromSession(
+						sessInfo.sess,
+						req.account,
+						req.mysqlx
+					);
+					req.member = pmem;
+					break;
+			}
+
+			if (req.member !== null) {
+				req.newSessionID = sessInfo.newSessID;
+			}
+
+			res.header('x-new-sessionid', sessInfo.newSessID);
+
+			return next();
+		} else {
+			return next();
+		}
+	}
+
+	public static ExpressMiddleware(
+		req: ConditionalMemberRequest,
+		res: Response,
+		next: NextFunction
+	) {
+		MemberBase.ConditionalExpressMiddleware(req, res, () => {
+			if (req.member === null) {
+				res.status(401);
+				res.end();
+			} else {
+				next();
+			}
+		});
+	}
+
 	/**
 	 * Used to sign JWTs
 	 */
@@ -142,16 +262,21 @@ export default abstract class MemberBase implements MemberObject {
 		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
 
 	protected static async LoadExtraMemberInformation(
-		id: number,
+		memberID: MemberReference,
 		schema: Schema,
 		account: Account
 	): Promise<ExtraMemberInformation> {
+		if (memberID.type === 'Null') {
+			throw new Error('Null member reference');
+		}
+
 		const extraMemberSchema = schema.getCollection<ExtraMemberInformation>(
 			'ExtraMemberInformation'
 		);
+
 		const results = await collectResults(
 			findAndBind(extraMemberSchema, {
-				id,
+				...memberID,
 				accountID: account.id
 			})
 		);
@@ -160,7 +285,7 @@ export default abstract class MemberBase implements MemberObject {
 			const newInformation: ExtraMemberInformation = {
 				accessLevel: 'Member',
 				accountID: account.id,
-				id,
+				...memberID,
 				temporaryDutyPositions: [],
 				flight: null,
 				teamIDs: []
@@ -177,6 +302,103 @@ export default abstract class MemberBase implements MemberObject {
 
 		return results[0];
 	}
+
+	/**
+	 * Adds a user session to the database
+	 *
+	 * @param info The session to add
+	 */
+	protected static async AddSession(
+		info: MemberSession,
+		account: Account,
+		schema: Schema
+	): Promise<string> {
+		// BEGIN WHAT NEEDS TO BE REPLACED
+
+		let memberIndex = -1;
+
+		for (const i in this.Sessions) {
+			if (
+				MemberBase.AreMemberReferencesTheSame(
+					info.memberID,
+					this.Sessions[i].memberID
+				)
+			) {
+				memberIndex = parseInt(i, 10);
+			}
+		}
+
+		if (memberIndex === -1) {
+			MemberBase.Sessions.push(info);
+		} else {
+			MemberBase.Sessions[memberIndex].expireTime =
+				Date.now() + SESSION_TIME;
+		}
+
+		// END WHAT NEEDS TO BE REPLACED
+
+		const sessionID = sign(
+			{
+				id: info.memberID
+			},
+			MemberBase.secret,
+			{
+				algorithm: 'HS512',
+				expiresIn: '10min'
+			}
+		);
+
+		return sessionID;
+	}
+
+	/**
+	 * Checks the database to see if the member has a session
+	 *
+	 * @param ref The member reference to check for a session
+	 */
+	protected static async CheckSession(
+		ref: MemberReference,
+		account: Account,
+		schema: Schema
+	): Promise<{
+		sess: MemberSession;
+		newSessID: string;
+	} | null> {
+		// BEGIN WHAT NEEDS TO BE REPLACED
+		MemberBase.Sessions = MemberBase.Sessions.filter(
+			s => s.expireTime > Date.now()
+		);
+		const sess = MemberBase.Sessions.filter(s =>
+			MemberBase.AreMemberReferencesTheSame(s.memberID, ref)
+		);
+		// END WHAT SHOULD BE REPLACED
+
+		if (sess.length !== 1) {
+			return null;
+		}
+
+		// BEGIN WHAT NEEDS TO BE REPLACED
+		sess[0].expireTime = Date.now() + SESSION_TIME;
+		// END WHAT NEEDS TO BE REPLACED
+
+		const newSessID = sign(
+			{
+				id: ref
+			},
+			MemberBase.secret,
+			{
+				algorithm: 'HS512',
+				expiresIn: '10min'
+			}
+		);
+
+		return {
+			sess: sess[0],
+			newSessID
+		};
+	}
+
+	private static Sessions: MemberSession[] = [];
 
 	private static readonly useRiouxPermission = false;
 
@@ -343,10 +565,11 @@ export default abstract class MemberBase implements MemberObject {
 	}
 }
 
-import Event from './Event';
 import CAPWATCHMember from './members/CAPWATCHMember';
-import { MemberRequest } from './members/NHQMember';
+import NHQMember, {
+	ConditionalMemberRequest,
+	MemberRequest
+} from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
-
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

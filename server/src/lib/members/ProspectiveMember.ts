@@ -1,9 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import { createHmac, randomBytes } from 'crypto';
-import { NextFunction, Response } from 'express';
-import { sign } from 'jsonwebtoken';
-import { DateTime } from 'luxon';
 import Account from '../Account';
+import { MemberSession, SESSION_TIME } from '../MemberBase';
 import {
 	collectResults,
 	findAndBind,
@@ -12,7 +10,21 @@ import {
 } from '../MySQLUtil';
 import { Member as NoPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
-import { MemberCreateError, MemberRequest } from './NHQMember';
+import { MemberCreateError } from './NHQMember';
+
+interface ProspectiveMemberSession extends MemberSession {
+	memberID: ProspectiveMemberReference;
+
+	contact: CAPMemberContact;
+	memberRank: string;
+	nameFirst: string;
+	nameMiddle: string;
+	nameLast: string;
+	nameSuffix: string;
+	seniorMember: boolean;
+	squadron: string;
+	orgid: number;
+}
 
 export const generateHash = (password: string, secret: string) =>
 	createHmac('sha512', secret)
@@ -29,28 +41,13 @@ export const hashPassword = (
 		? generateHash(password, salt)
 		: hashPassword(generateHash(password, salt), salt, revolutions - 1);
 
-interface MemberSession {
-	id: string;
-	expireTime: number;
-
-	contact: CAPMemberContact;
-	memberRank: string;
-	nameFirst: string;
-	nameMiddle: string;
-	nameLast: string;
-	nameSuffix: string;
-	seniorMember: boolean;
-	squadron: string;
-	orgid: number;
-}
-
 export default class ProspectiveMember extends CAPWATCHMember
 	implements
 		ProspectiveMemberObject,
 		Required<NoSQLDocument>,
 		DatabaseInterface<ProspectiveMemberObject> {
 	public static async Create(
-		newMember: ProspectiveMemberObject,
+		newMember: RawProspectiveMemberObject,
 		password: string,
 		account: Account,
 		schema: Schema
@@ -93,6 +90,15 @@ export default class ProspectiveMember extends CAPWATCHMember
 			})
 			.execute()).getGeneratedIds()[0];
 
+		const extraInformation = await ProspectiveMember.LoadExtraMemberInformation(
+			{
+				id,
+				type: 'CAPProspectiveMember'
+			},
+			schema,
+			account
+		);
+
 		return new ProspectiveMember(
 			{
 				_id,
@@ -107,7 +113,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 			account,
 			schema,
 			'',
-			account
+			account,
+			extraInformation
 		);
 	}
 
@@ -153,74 +160,54 @@ export default class ProspectiveMember extends CAPWATCHMember
 			schema
 		);
 
-		let sessionID;
-		{
-			let memberIndex = -1;
-			const memberSessions = this.GetSessions();
+		const sess: ProspectiveMemberSession = {
+			accountID: account.id,
+			expireTime: Date.now() + SESSION_TIME,
+			memberID: {
+				type: 'CAPProspectiveMember',
+				id
+			},
 
-			for (const i in memberSessions) {
-				if (memberSessions[i].id === id) {
-					memberIndex = parseInt(i, 10);
-				}
-			}
+			contact: member.contact,
+			memberRank: member.memberRank,
+			nameFirst: member.nameFirst,
+			nameLast: member.nameLast,
+			nameMiddle: member.nameMiddle,
+			nameSuffix: member.nameSuffix,
+			seniorMember: member.seniorMember,
+			squadron: member.squadron,
+			orgid: member.orgid
+		};
 
-			if (memberIndex === -1) {
-				const sess: MemberSession = {
-					expireTime: +DateTime.utc() + 60 * 10,
-
-					contact: member.contact,
-					id,
-					memberRank: member.memberRank,
-					nameFirst: member.nameFirst,
-					nameLast: member.nameLast,
-					nameMiddle: member.nameMiddle,
-					nameSuffix: member.nameSuffix,
-					seniorMember: member.seniorMember,
-					squadron: member.squadron,
-					orgid: member.orgid
-				};
-				this.AddSession(sess);
-			} else {
-				this.ResetSession(memberIndex);
-			}
-
-			sessionID = sign(
-				{
-					id
-				},
-				this.secret,
-				{
-					algorithm: 'HS512',
-					expiresIn: '10min'
-				}
-			);
-		}
+		const sessionID = await ProspectiveMember.AddSession(
+			sess,
+			account,
+			schema
+		);
 
 		member.sessionID = sessionID;
 
 		return member;
 	}
 
-	public static async ExpressMiddleware(
-		req: MemberRequest,
-		res: Response,
-		next: NextFunction,
-		id: string,
-		sessionID: string
+	public static async LoadMemberFromSession(
+		session: MemberSession,
+		account: Account,
+		schema: Schema
 	) {
-		const sessions = this.GetSessions().filter(sess => sess.id === id);
+		const ref = session.memberID as ProspectiveMemberReference;
 
-		if (sessions.length === 1) {
-			req.member = await ProspectiveMember.GetProspective(
-				id,
-				req.account,
-				req.mysqlx
+		try {
+			const member = await ProspectiveMember.GetProspective(
+				ref.id,
+				account,
+				schema
 			);
 
-			req.member.sessionID = id;
+			return member;
+		} catch (e) {
+			return null;
 		}
-
-		next();
 	}
 
 	public static async GetProspective(
@@ -245,6 +232,15 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 		const homeAccount = await Account.Get(rows[0].accountID, schema);
 
+		const extraInformation = await ProspectiveMember.LoadExtraMemberInformation(
+			{
+				id,
+				type: 'CAPProspectiveMember'
+			},
+			schema,
+			account
+		);
+
 		return new ProspectiveMember(
 			{
 				...rows[0],
@@ -253,41 +249,10 @@ export default class ProspectiveMember extends CAPWATCHMember
 			account,
 			schema,
 			'',
-			homeAccount
+			homeAccount,
+			extraInformation
 		);
 	}
-
-	public static Su(target: ProspectiveMember) {
-		this.AddSession({
-			expireTime: +DateTime.utc() + 60 * 10,
-
-			contact: target.contact,
-			id: target.id,
-			memberRank: target.memberRank,
-			nameFirst: target.nameFirst,
-			nameLast: target.nameLast,
-			nameMiddle: target.nameMiddle,
-			nameSuffix: target.nameSuffix,
-			seniorMember: target.seniorMember,
-			squadron: target.squadron,
-			orgid: target.orgid
-		});
-	}
-
-	protected static MemberSessions: MemberSession[] = [];
-
-	protected static AddSession = (sess: MemberSession) =>
-		ProspectiveMember.MemberSessions.push(sess);
-
-	protected static GetSessions = () =>
-		(ProspectiveMember.MemberSessions = ProspectiveMember.MemberSessions.filter(
-			v => v.expireTime > +DateTime.utc()
-		));
-
-	protected static ResetSession = (index: number) => {
-		ProspectiveMember.MemberSessions[index].expireTime =
-			+DateTime.utc() + 10 * 60;
-	};
 
 	private static collectionName = 'ProspectiveMembers';
 
@@ -317,7 +282,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 		account: Account,
 		schema: Schema,
 		sessionID: string,
-		protected homeAccount: Account
+		protected homeAccount: Account,
+		protected extraInformation: ExtraMemberInformation
 	) {
 		super(member, schema, account);
 

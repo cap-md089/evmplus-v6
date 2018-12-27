@@ -199,16 +199,24 @@ export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (
 	next
 ) => fn(req, res, next).catch(next);
 
-export const replaceUndefinedWithNull: express.RequestHandler = (
+export const replaceUndefinedWithNull = (obj: any) => {
+	for (const i in obj) {
+		if (obj.hasOwnProperty(i)) {
+			if (obj[i] === undefined) {
+				obj[i] = null;
+			} else if (typeof obj[i] === 'object') {
+				replaceUndefinedWithNull(obj[i]);
+			}
+		}
+	}
+};
+
+export const replaceUndefinedWithNullMiddleware: express.RequestHandler = (
 	req,
 	res,
 	next
 ) => {
-	for (const i in req.body) {
-		if (req.body[i] === undefined) {
-			req.body[i] = null;
-		}
-	}
+	replaceUndefinedWithNull(req.body);
 
 	next();
 };

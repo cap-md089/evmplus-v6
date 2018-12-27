@@ -3,7 +3,7 @@ type UndefinedToNull<T> = {
 };
 
 type Bound<T> = {
-	[P in keyof T]?: T[P] extends Array<infer U> ? U : T[P] | T[P] | T[P][];
+	[P in keyof T]?: T[P] extends Array<infer U> ? U : T[P];
 }
 
 declare module '@mysql/xdevapi' {

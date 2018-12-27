@@ -300,7 +300,7 @@ export default class Validator<T> {
 	public validate(obj: any, partial?: false): obj is T;
 	public validate(obj: any, partial: true): obj is Partial<T>;
 
-	public validate(obj: any, partial = false): obj is T {
+	public validate(obj: any, partial?: boolean) {
 		this.errors = [];
 
 		if (obj === undefined || obj === null) {

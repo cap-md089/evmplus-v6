@@ -2,7 +2,7 @@ import * as express from 'express';
 import Account from '../../lib/Account';
 import Event from '../../lib/Event';
 import NHQMember from '../../lib/members/NHQMember';
-import { replaceUndefinedWithNull } from '../../lib/Util';
+import { replaceUndefinedWithNullMiddleware } from '../../lib/Util';
 import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
 // Attendance
@@ -48,7 +48,7 @@ router.get('/:id/attendance', NHQMember.ExpressMiddleware, getattendance);
 router.post(
 	'/:id/attendance',
 	NHQMember.ExpressMiddleware,
-	replaceUndefinedWithNull,
+	replaceUndefinedWithNullMiddleware,
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
 	addattendance
@@ -56,7 +56,7 @@ router.post(
 router.put(
 	'/:id/attendance',
 	NHQMember.ExpressMiddleware,
-	replaceUndefinedWithNull,
+	replaceUndefinedWithNullMiddleware,
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
 	modifyattendance

@@ -7,7 +7,7 @@ import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 import NewBlogPostValidator from './validator/validators/NewBlogPost';
 
 export default class BlogPost
-	implements BlogPostObject, DatabaseInterface<BlogPostObject> {
+	implements FullBlogPostObject, DatabaseInterface<FullBlogPostObject> {
 	public static Validator = new NewBlogPostValidator();
 
 	public static async Get(
@@ -34,7 +34,20 @@ export default class BlogPost
 			throw new Error('Could not get blog post');
 		}
 
-		return new BlogPost(results[0], account, schema);
+		const author = await MemberBase.ResolveReference(
+			results[0].author,
+			account,
+			schema
+		);
+
+		return new BlogPost(
+			{
+				...results[0],
+				authorName: author.getFullName()
+			},
+			account,
+			schema
+		);
 	}
 
 	public static async Create(
@@ -66,12 +79,13 @@ export default class BlogPost
 
 		const posted = +DateTime.utc();
 
-		let newPost: BlogPostObject = {
+		let newPost: FullBlogPostObject = {
 			...data,
 			id,
 			posted,
 			author: member.getReference(),
-			accountID: account.id
+			accountID: account.id,
+			authorName: member.getFullName()
 		};
 
 		// tslint:disable-next-line:variable-name
@@ -106,14 +120,16 @@ export default class BlogPost
 		return this.account.id;
 	}
 
-	public deleted = false;
+	public authorName: string;
+
+	private deleted = false;
 
 	private account: Account;
 
 	private schema: Schema;
 
 	private constructor(
-		data: BlogPostObject,
+		data: FullBlogPostObject,
 		account: Account,
 		schema: Schema
 	) {
@@ -121,6 +137,7 @@ export default class BlogPost
 		this.id = data.id;
 		this.author = data.author;
 		this.posted = data.posted;
+		this.authorName = data.authorName;
 
 		this.set(data);
 
@@ -143,7 +160,7 @@ export default class BlogPost
 		}
 	}
 
-	public toRaw(): BlogPostObject {
+	public toRaw(): FullBlogPostObject {
 		return {
 			_id: this._id,
 			id: this.id,
@@ -151,7 +168,8 @@ export default class BlogPost
 			content: this.content,
 			posted: this.posted,
 			title: this.title,
-			accountID: this.account.id
+			accountID: this.account.id,
+			authorName: this.authorName
 		};
 	}
 
