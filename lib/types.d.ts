@@ -495,6 +495,13 @@ declare global {
 		author: MemberReference;
 	}
 
+	export interface FullBlogPostObject extends BlogPostObject {
+		/**
+		 * Full author name for display 
+		 */
+		authorName: string;
+	}
+
 	// Make a type the JSON schema generator recognizes
 	export type PartialBlogPost = Partial<BlogPostObject>;
 
@@ -1389,12 +1396,13 @@ declare global {
 	 * permissions
 	 */
 	export interface ExtraMemberInformation
-		extends AccountIdentifiable,
-			NoSQLDocument {
+		extends NoSQLDocument {
 		/**
-		 * CAPID
+		 * As full MemberReferences are not allowed for searching,
+		 * expand the object
 		 */
-		id: number;
+		id: number | string;
+		type: MemberType;
 		/**
 		 * Extra duty positions that are assigned to the member
 		 */
@@ -1413,6 +1421,10 @@ declare global {
 		 * IDs of teams the member is a part of
 		 */
 		teamIDs: number[];
+		/**
+		 * The Account this information belongs to
+		 */
+		accountID: string;
 	}
 
 	/**
