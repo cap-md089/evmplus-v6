@@ -4,7 +4,7 @@ import MemberBase from './Members';
 import Account from './Account';
 
 export default class BlogPost extends APIInterface<BlogPostObject>
-	implements BlogPostObject {
+	implements FullBlogPostObject {
 	public static async Create(
 		data: NewBlogPost,
 		member: MemberBase,
@@ -50,7 +50,7 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 			throw new Error('Could not get blog post');
 		}
 
-		const blogData = await result.json();
+		const blogData = await result.json() as FullBlogPostObject;
 
 		return new BlogPost(blogData, account);
 	}
@@ -65,7 +65,9 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 	public title: string;
 
-	constructor(data: BlogPostObject, private account: Account) {
+	public authorName: string;
+
+	constructor(data: FullBlogPostObject, private account: Account) {
 		super(account.accountID);
 
 		this.author = data.author;
@@ -73,6 +75,7 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 		this.id = data.id;
 		this.posted = data.posted;
 		this.title = data.title;
+		this.authorName = data.authorName;
 	}
 
 	public toRaw(): BlogPostObject {

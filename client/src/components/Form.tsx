@@ -1,5 +1,4 @@
 import * as React from 'react';
-import myFetch from '../lib/myFetch';
 import {
 	Checkbox,
 	DateTimeInput,
@@ -112,26 +111,6 @@ class Form<
 		} else {
 			this.displayLoadFields = true;
 		}
-
-		const sid = localStorage.getItem('sessionID');
-		if (sid) {
-			this.sessionID = sid;
-			myFetch('/api/token', {
-				headers: {
-					authorization: sid
-				}
-			})
-				.then(res => {
-					if (res.status !== 403) {
-						return Promise.resolve(res);
-					} else {
-						return Promise.reject(new Error('User not signed in'));
-					}
-				})
-				.then(res => res.json())
-				.then(tokenObj => (this.token = tokenObj.token))
-				.catch(e => undefined);
-		}
 	}
 
 	/**
@@ -231,7 +210,7 @@ class Form<
 	protected submit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			this.props.onSubmit(this.fields, this.token);
+			this.props.onSubmit(this.fields);
 		}
 	}
 }

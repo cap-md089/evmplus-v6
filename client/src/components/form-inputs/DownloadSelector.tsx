@@ -1,12 +1,10 @@
 import * as React from 'react';
-import myFetch from '../../lib/myFetch';
 import { Selector } from '../Form';
 import Loader from '../Loader';
 import { CombinedSelectorProps } from './Selector';
 
-interface DownloadSelectorProps {
-	valueUrl: string;
-	requestProperties?: RequestInit;
+interface DownloadSelectorProps<T extends Identifiable> {
+	values: Promise<T[]>;
 	errorMessage?: string;
 }
 
@@ -18,7 +16,7 @@ interface DownloadSelectorState<T extends Identifiable> {
 
 export type CombinedDownloadSelectorProps<
 	T extends Identifiable
-> = CombinedSelectorProps<T> & DownloadSelectorProps;
+> = CombinedSelectorProps<T> & DownloadSelectorProps<T>;
 
 export default class DownloadSelector<
 	T extends Identifiable
@@ -34,12 +32,7 @@ export default class DownloadSelector<
 
 	public async componentDidMount() {
 		try {
-			const result = await myFetch(
-				this.props.valueUrl,
-				this.props.requestProperties
-			);
-
-			const values = await result.json();
+			const values = await this.props.values;
 
 			this.setState({
 				values,

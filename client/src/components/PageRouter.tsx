@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route, RouteComponentProps } from 'react-router-dom';
+import { Route, RouteComponentProps, withRouter } from 'react-router-dom';
 import Account from '../lib/Account';
 import { createCorrectMemberObject } from '../lib/Members';
 import AddEvent from '../pages/AddEvent';
@@ -142,7 +142,7 @@ const composeElement = (
 	);
 };
 
-interface PageRouterProps {
+interface PageRouterProps extends RouteComponentProps<any> {
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadcrumbs: (links: BreadCrumb[]) => void;
 	member: SigninReturn;
@@ -151,7 +151,7 @@ interface PageRouterProps {
 	registry: Registry;
 }
 
-export default class PageRouter extends React.Component<PageRouterProps> {
+class PageRouter extends React.Component<PageRouterProps> {
 	public shouldComponentUpdate(nextProps: PageRouterProps) {
 		if (this.props.account === null && nextProps.account !== null) {
 			return true;
@@ -165,7 +165,31 @@ export default class PageRouter extends React.Component<PageRouterProps> {
 			return true;
 		}
 
+		if (nextProps.location.pathname !== this.props.location.pathname) {
+			return true;
+		}
+
+		if (nextProps.location.hash !== this.props.location.hash) {
+			return true;
+		}
+
 		return false;
+	}
+
+	public componentDidUpdate() {
+		const { member, account } = this.props;
+		const memObject =
+			member.member === null
+				? null
+				: createCorrectMemberObject(
+						member.member,
+						account,
+						member.sessionID
+				);
+
+		if (memObject) {
+			memObject.fetch(`/api/check`, {}, memObject);
+		}
 	}
 
 	public render() {
@@ -193,3 +217,6 @@ export default class PageRouter extends React.Component<PageRouterProps> {
 		);
 	}
 }
+
+
+export default withRouter(PageRouter);

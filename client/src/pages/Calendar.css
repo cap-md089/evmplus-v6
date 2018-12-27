@@ -21,17 +21,17 @@
 
 .calendar .left-link {
 	float: left;
-	font-size: calc(1em / 1.2em);
+	font-size: 0.8333em;
 }
 
 .calendar .right-link {
 	float: right;
-	font-size: calc(1em / 1.2em);
+	font-size: 0.8333em;
 }
 
 .calendar tbody td, .calendar tbody th {
 	border: 1px solid black;
-	width: calc(100% / 7);
+	width: 14.28%;
 	border-collapse: collapse;
 	box-sizing: border-box;
 	padding: 0;

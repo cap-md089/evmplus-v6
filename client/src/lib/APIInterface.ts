@@ -15,10 +15,10 @@ export default abstract class APIInterface<T> {
 
 	/**
 	 * Requests a token on the account for the member provided
-	 * 
+	 *
 	 * This token lasts for 1 use, and is required to be required for
 	 * all POST, PUT and DELETE operations
-	 * 
+	 *
 	 * @param accountID The account to get the token for
 	 * @param member The member to get a token for
 	 */
@@ -47,7 +47,7 @@ export default abstract class APIInterface<T> {
 	/**
 	 * In production it uses a full URL, for testing it will only use
 	 * an absolute url to the server
-	 * 
+	 *
 	 * @param components The URI parts
 	 */
 	public buildURI(...components: string[]): string {
@@ -67,7 +67,7 @@ export default abstract class APIInterface<T> {
 
 	/**
 	 * A simple method to allow for calling myFetch and allowing for authentication
-	 * 
+	 *
 	 * @param uri The uri to request to
 	 * @param options Fetch options
 	 * @param member A member that can be used to set the session ID for the
@@ -100,7 +100,23 @@ export default abstract class APIInterface<T> {
 
 		options.headers = headers;
 
-		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
+		const result = myFetch(
+			this.buildURI.apply(this, uri.split('/')),
+			options
+		);
+
+		return result.then(item => {
+			const newSessionID = (item.headers.get('x-new-sessionid') ||
+				localStorage.getItem('sessionID'))!;
+
+			localStorage.setItem('sessionID', newSessionID);
+
+			if (member) {
+				member.sessionID = newSessionID;
+			}
+
+			return item;
+		});
 	}
 
 	/**
@@ -110,7 +126,7 @@ export default abstract class APIInterface<T> {
 
 	/**
 	 * Similar to APIInterface#GetToken, except bound to an account
-	 * 
+	 *
 	 * @param member The member to get a token for
 	 */
 	protected getToken(member: MemberBase) {

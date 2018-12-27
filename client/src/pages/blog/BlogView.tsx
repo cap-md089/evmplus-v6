@@ -6,6 +6,7 @@ import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import { EditorState } from '../../lib/slowEditorState';
 import { PageProps } from '../Page';
+import { DateTime } from 'luxon';
 
 interface ReadyBlogView {
 	loaded: true;
@@ -92,6 +93,20 @@ export class BlogView extends React.Component<
 		return (
 			<div>
 				<h1>{post.title}</h1>
+				<div className="blog-post-information">
+					<div className="blog-post-author">
+						Posted by {post.authorName}
+					</div>
+					<div className="blog-post-timestamp">
+						Posted on{' '}
+						{DateTime.fromMillis(post.posted).toLocaleString({
+							weekday: 'long',
+							year: 'numeric',
+							month: 'long',
+							day: '2-digit'
+						})}
+					</div>
+				</div>
 				{this.props.member && this.props.member.canManageBlog() ? (
 					<>
 						<Link to={`/news/edit/${this.state.post.id}`}>

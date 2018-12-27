@@ -78,15 +78,7 @@ export default class Account extends APIInterface<AccountObject>
 	public async getMembers(member?: MemberBase): Promise<MemberClasses[]> {
 		const url = this.buildURI('api', 'member');
 
-		const headers: any = {};
-
-		if (member) {
-			headers.authorization = member.sessionID;
-		}
-
-		const results = await myFetch(url, {
-			headers
-		});
+		const results = await this.fetch(url, {}, member);
 
 		const json = (await results.json()) as Member[];
 
@@ -158,7 +150,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const results = await this.fetch(url);
 
-		const posts = await results.json() as BlogPostObject[];
+		const posts = await results.json() as FullBlogPostObject[];
 
 		return posts.map(post => new BlogPost(post, this));
 	}

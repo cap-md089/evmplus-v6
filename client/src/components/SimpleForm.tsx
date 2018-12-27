@@ -1,5 +1,4 @@
 import * as React from 'react';
-import myFetch from '../lib/myFetch';
 import BigTextBox from './form-inputs/BigTextBox';
 // Form inputs
 import Checkbox from './form-inputs/Checkbox';
@@ -31,10 +30,11 @@ import('./form-inputs/TextArea').then(textArea => {
 class Label extends React.Component<{
 	fullWidth?: boolean;
 	style?: React.CSSProperties;
+	id?: string;
 }> {
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean; style?: React.CSSProperties }) {
+	constructor(props: { fullWidth: boolean; style?: React.CSSProperties; id: string }) {
 		super(props);
 
 		this.IsLabel = true;
@@ -42,7 +42,7 @@ class Label extends React.Component<{
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.style}>
+			<div className="formbox" style={this.props.style} id={this.props.id}>
 				{this.props.children}
 			</div>
 		);
@@ -52,10 +52,10 @@ class Label extends React.Component<{
 /**
  * Creates a title to use in the form
  */
-class Title extends React.Component<{ fullWidth?: boolean }> {
+class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean }) {
+	constructor(props: { fullWidth: boolean; id: string }) {
 		super(props);
 
 		this.IsLabel = true;
@@ -65,7 +65,7 @@ class Title extends React.Component<{ fullWidth?: boolean }> {
 		return (
 			<div className="formbar fheader">
 				<div className="formbox">
-					<h3>{this.props.children}</h3>
+					<h3 id={this.props.id}>{this.props.children}</h3>
 				</div>
 			</div>
 		);
@@ -131,7 +131,7 @@ export interface FormProps<F> {
 	 *
 	 * @param fields The fields of the form
 	 */
-	onSubmit?: (fields: F, token: string) => void;
+	onSubmit?: (fields: F) => void;
 	/**
 	 * Styles the submit button
 	 */
@@ -261,26 +261,6 @@ class SimpleForm<
 			}
 		} else {
 			this.displayLoadFields = true;
-		}
-
-		const sid = localStorage.getItem('sessionID');
-		if (sid) {
-			this.sessionID = sid;
-			myFetch('/api/token', {
-				headers: {
-					authorization: sid
-				}
-			})
-				.then(res => {
-					if (res.status !== 403) {
-						return Promise.resolve(res);
-					} else {
-						return Promise.reject(new Error('User not signed in'));
-					}
-				})
-				.then(res => res.json())
-				.then(tokenObj => (this.token = tokenObj.token))
-				.catch(e => undefined);
 		}
 	}
 
@@ -467,7 +447,7 @@ class SimpleForm<
 	protected submit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			this.props.onSubmit(this.fields, this.token);
+			this.props.onSubmit(this.fields);
 		}
 	}
 }
