@@ -1,14 +1,14 @@
 import * as React from 'react';
 import Loader from '../components/Loader';
 import Event from '../lib/Event';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
 import { Link } from 'react-router-dom';
 import './EventLinkList.css';
 import { EventStatus } from '../enums';
 import { EchelonEventNumber } from '../enums';
 import { DateTime } from 'luxon';
 
-interface LinkListState {
+interface EventLinkListState {
 	eventList: Event[] | null;
 	eventsThatAreLinked: Event[] | null;
 }
@@ -39,11 +39,11 @@ function getEventNumber(gen: RadioReturn<EchelonEventNumber>) {
 	return null;
 }
 
-export default class LinkList extends React.Component<
+export default class EventLinkList extends Page<
 	PageProps,
-	LinkListState
+	EventLinkListState
 > {
-	public state: LinkListState = {
+	public state: EventLinkListState = {
 		eventList: null,
 		eventsThatAreLinked: null
 	};

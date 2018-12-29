@@ -6,8 +6,9 @@ import SimpleForm, {
 	TextInput
 } from '../../components/SimpleForm';
 import { EditorState } from '../../lib/slowEditorState';
-import { DraftJS } from '../Blog';
-import { PageProps } from '../Page';
+import Page, { PageProps } from '../Page';
+
+type DraftJS = typeof import('draft-js');
 
 interface BlogPostCreateNotReady {
 	loaded: false;
@@ -23,7 +24,7 @@ interface ReadyBlogPostCreate {
 	title: string;
 }
 
-export class BlogPostCreate extends React.Component<
+export class BlogPostCreate extends Page<
 	PageProps<any>,
 	ReadyBlogPostCreate | BlogPostCreateNotReady
 > {

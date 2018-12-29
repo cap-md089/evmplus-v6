@@ -43,7 +43,11 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 		return (
 			<div>
 				{this.renderPageControls(this.props.page, pageCount)}
-				{renderDataset.map(this.props.renderFunction)}
+				{renderDataset.map((val, i) => (
+					<React.Fragment key={i}>
+						{this.props.renderFunction(val)}
+					</React.Fragment>
+				))}
 				{this.renderPageControls(this.props.page, pageCount)}
 			</div>
 		);
@@ -212,7 +216,7 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 	}
 
 	private controlClick(page: number) {
-		return ((e: React.MouseEvent<HTMLSpanElement>) => {
+		return (() => {
 			const start = (page - 1) * this.props.dataCountPerPage;
 
 			if (start > this.props.dataset.length) {

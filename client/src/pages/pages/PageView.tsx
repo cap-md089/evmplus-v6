@@ -4,8 +4,32 @@ import Loader from 'src/components/Loader';
 import TextDisplay from 'src/components/TextDisplay';
 import BlogPage from 'src/lib/BlogPage';
 import Page, { PageProps } from '../Page';
-import { PageState } from '../Pages';
 import Button from 'src/components/Button';
+
+type DraftJS = typeof import('draft-js');
+
+interface UnloadedPageClass {
+	page: null;
+	loaded: false;
+	draft: null;
+	error: false;
+}
+
+interface LoadedPageClass {
+	page: BlogPage;
+	loaded: true;
+	draft: DraftJS;
+	error: false;
+}
+
+interface ErrorPageClass {
+	page: null;
+	loaded: true;
+	draft: null;
+	error: number;
+}
+
+export type PageState = UnloadedPageClass | LoadedPageClass | ErrorPageClass;
 
 export default class PageView extends Page<
 	PageProps<{ id: string }>,
@@ -32,6 +56,9 @@ export default class PageView extends Page<
 					BlogPage.Get(id),
 					import('draft-js')
 				]);
+
+				// TODO: Add an implementation for side nav to
+				// navigate to children and to headers in page
 
 				this.props.updateBreadCrumbs([]);
 				this.props.updateSideNav([]);

@@ -16,7 +16,7 @@ import {
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
 import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
 
 const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
 
@@ -40,10 +40,7 @@ interface NewEventFormValues extends NewEventObject {
 	};
 }
 
-export default class AddEvent extends React.Component<
-	PageProps,
-	AddEventState
-> {
+export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
 		event: {
 			name: '',
@@ -573,7 +570,7 @@ export default class AddEvent extends React.Component<
 	}
 
 	private updateNewEvent(event: NewEventFormValues) {
-		this.checkIfValid(event);
+		const valid = this.checkIfValid(event);
 
 		const dateTimesHaveBeenModified =
 			this.state.changed.startDateTime ||
@@ -596,13 +593,12 @@ export default class AddEvent extends React.Component<
 		}
 
 		this.setState({
-			event
+			event,
+			valid
 		});
 	}
 
 	private checkIfValid(event: NewEventFormValues) {
-		const fail = (() => this.setState({ valid: false })).bind(this);
-
 		if (
 			!(
 				event.meetDateTime <= event.startDateTime &&
@@ -610,11 +606,11 @@ export default class AddEvent extends React.Component<
 				event.endDateTime <= event.pickupDateTime
 			)
 		) {
-			return fail();
+			return false;
 		}
 
 		if (event.name.length === 0) {
-			return fail();
+			return false;
 		}
 
 		if (
@@ -623,18 +619,16 @@ export default class AddEvent extends React.Component<
 			event.location === '' ||
 			event.pickupLocation === ''
 		) {
-			return fail();
+			return false;
 		}
 
 		if (
 			event.transportationProvided === true &&
 			event.transportationDescription === ''
 		) {
-			return fail();
+			return false;
 		}
 
-		this.setState({
-			valid: true
-		});
+		return true;
 	}
 }

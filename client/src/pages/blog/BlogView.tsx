@@ -5,8 +5,9 @@ import TextDisplay from 'src/components/TextDisplay';
 import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import { EditorState } from '../../lib/slowEditorState';
-import { PageProps } from '../Page';
+import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
+import '../blog.css';
 
 interface ReadyBlogView {
 	loaded: true;
@@ -22,7 +23,7 @@ interface UnreadyBlogView {
 	post: null;
 }
 
-export class BlogView extends React.Component<
+export class BlogView extends Page<
 	PageProps<{
 		id: string;
 	}>,
@@ -92,21 +93,6 @@ export class BlogView extends React.Component<
 		const { post, editorState } = this.state;
 		return (
 			<div>
-				<h1>{post.title}</h1>
-				<div className="blog-post-information">
-					<div className="blog-post-author">
-						Posted by {post.authorName}
-					</div>
-					<div className="blog-post-timestamp">
-						Posted on{' '}
-						{DateTime.fromMillis(post.posted).toLocaleString({
-							weekday: 'long',
-							year: 'numeric',
-							month: 'long',
-							day: '2-digit'
-						})}
-					</div>
-				</div>
 				{this.props.member && this.props.member.canManageBlog() ? (
 					<>
 						<Link to={`/news/edit/${this.state.post.id}`}>
@@ -122,7 +108,24 @@ export class BlogView extends React.Component<
 						</Button>
 					</>
 				) : null}
-				<TextDisplay editorState={editorState} />
+				<h1>{post.title}</h1>
+				<div className="blog-post-information">
+					<div className="blog-post-author">
+						Posted by {post.authorName}
+					</div>
+					<div className="blog-post-timestamp">
+						Posted on{' '}
+						{DateTime.fromMillis(post.posted).toLocaleString({
+							weekday: 'long',
+							year: 'numeric',
+							month: 'long',
+							day: '2-digit'
+						})}
+					</div>
+				</div>
+				<div className="blog-post-content">
+					<TextDisplay editorState={editorState} />
+				</div>
 			</div>
 		);
 	}

@@ -4,7 +4,7 @@ import MemberBase from 'src/lib/Members';
 import Account from 'src/lib/Account';
 import ErrorMessage from 'src/lib/ErrorMessage';
 
-export default class ErrorHandler extends React.Component<
+export default class ErrorHandler extends React.PureComponent<
 	{
 		member: MemberBase | null;
 		account: Account;
@@ -28,7 +28,7 @@ export default class ErrorHandler extends React.Component<
 
 	public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
 		// tslint:disable-next-line:no-console
-		console.log('Error logged');
+		console.log(error);
 
 		const stacks = esp.parse.bind(esp)(error) as StackFrame[];
 
@@ -47,7 +47,10 @@ export default class ErrorHandler extends React.Component<
 			type: 'Client'
 		};
 
-		ErrorMessage.Create(errorObject, this.props.member, this.props.account);
+		ErrorMessage.Create(errorObject, this.props.member, this.props.account).then(() => {
+			// tslint:disable-next-line:no-console
+			console.log('Error logged');
+		});
 
 		this.setState({
 			crash: true

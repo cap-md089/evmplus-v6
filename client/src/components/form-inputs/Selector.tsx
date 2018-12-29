@@ -34,7 +34,7 @@ interface SelectorPropsMultiple<T extends Identifiable>
 	multiple: true;
 }
 
-interface SelectorState<T extends Identifiable> {
+interface SelectorState {
 	filterID: string;
 	filterValues: any;
 }
@@ -45,9 +45,9 @@ export type CombinedSelectorProps<T extends Identifiable> =
 
 export default class Selector<T extends Identifiable> extends React.Component<
 	CombinedSelectorProps<T>,
-	SelectorState<T>
+	SelectorState
 > {
-	public state: SelectorState<T> = {
+	public state: SelectorState = {
 		filterID: '',
 		filterValues: []
 	};
@@ -79,19 +79,9 @@ export default class Selector<T extends Identifiable> extends React.Component<
 	}
 
 	public render() {
-		const filteredIDValues =
-			this.state.filterID === ''
-				? this.props.values.slice()
-				: this.props.values.filter(
-						val =>
-							!!new RegExp(this.state.filterID, 'ig').exec(
-								val.id.toString()
-							)
-				  );
-		
 		const filterValues = this.props.filterValues || this.state.filterValues;
 
-		const filteredValues = filteredIDValues.filter(val =>
+		const filteredValues = this.filteredIDValues.filter(val =>
 			(this.props.filters || [])
 				.map(({ check }, i) => check(val, filterValues[i]))
 				.reduce((prev, curr) => prev && curr, true)
@@ -191,21 +181,9 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			}
 
 			if (this.props.onChangeVisible) {
-				const filteredIDValues =
-					this.state.filterID === ''
-						? this.props.values.slice()
-						: this.props.values.filter(
-								val =>
-									!!new RegExp(this.state.filterID, 'ig').exec(
-										val.id.toString()
-									)
-						);
-				
-				const inputFilterValues = this.props.filterValues || this.state.filterValues;
-
-				const filteredValues = filteredIDValues.filter(val =>
+				const filteredValues = this.filteredIDValues.filter(val =>
 					(this.props.filters || [])
-						.map(({ check }, j) => check(val, inputFilterValues[j]))
+						.map(({ check }, j) => check(val, filterValues[j]))
 						.reduce((prev, curr) => prev && curr, true)
 				);
 
@@ -298,5 +276,23 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				}
 			}
 		}).bind(this);
+	}
+
+	private get filteredIDValues () {
+		try {
+			const filteredIDValues =
+				this.state.filterID === ''
+					? this.props.values.slice()
+					: this.props.values.filter(
+							val =>
+								!!new RegExp(this.state.filterID, 'ig').exec(
+									val.id.toString()
+								)
+					);
+
+			return filteredIDValues;
+		} catch (e) {
+			return this.props.values.slice();
+		}
 	}
 }

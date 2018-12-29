@@ -9,7 +9,11 @@ import SideNavigation, {
 import { MemberCreateError } from './enums';
 import jQuery, { bestfit } from './jquery.textfit';
 import Account from './lib/Account';
-import { createCorrectMemberObject, getMember } from './lib/Members';
+import {
+	createCorrectMemberObject,
+	getMember,
+	MemberClasses
+} from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
 import Subscribe from './lib/subscribe';
@@ -89,6 +93,7 @@ const RoutingSearchForm = withRouter(
 interface AppState {
 	Registry: Registry | null;
 	member: SigninReturn;
+	fullMember: MemberClasses | null;
 	loading: boolean;
 	account: Account | null;
 	sideNavLinks: SideNavigationItem[];
@@ -119,7 +124,8 @@ export default class App extends React.Component<
 		Registry: null,
 		sideNavLinks: [],
 		breadCrumbs: [],
-		allowedSlideshowIDs: []
+		allowedSlideshowIDs: [],
+		fullMember: null
 	};
 
 	private titleElement: HTMLDivElement;
@@ -134,7 +140,6 @@ export default class App extends React.Component<
 	}) {
 		super(props);
 
-		// 		const sid = localStorage.getItem('sid');
 		this.authorizeUser = this.authorizeUser.bind(this);
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
@@ -177,14 +182,17 @@ export default class App extends React.Component<
 
 		const registry = await Registry.Get(account);
 
-		this.setState({
-			Registry: registry,
-			account,
-			member,
-			loading: false
-		}, () => {
-			bestfit(jQuery(this.titleElement));
-		});
+		this.setState(
+			{
+				Registry: registry,
+				account,
+				member,
+				loading: false
+			},
+			() => {
+				bestfit(jQuery(this.titleElement));
+			}
+		);
 	}
 
 	public componentWillUnmount() {
@@ -309,24 +317,34 @@ export default class App extends React.Component<
 													updateSideNav={
 														this.updateSideNav
 													}
-													updateBreadcrumbs={
+													updateBreadCrumbs={
 														this.updateBreadCrumbs
 													}
-													member={this.state.member}
+													member={
+														this.state.fullMember
+													}
+													fullMemberDetails={
+														this.state.member
+													}
 													account={
 														this.state.account!
 													}
 													authorizeUser={
 														this.authorizeUser
 													}
-													registry={this.state.Registry!}
+													registry={
+														this.state.Registry!
+													}
 													key="pagerouter"
 												/>
 											)}
 										</div>
 										<SideNavigation
 											links={this.state.sideNavLinks}
-											member={this.state.member}
+											member={this.state.fullMember}
+											fullMemberDetails={
+												this.state.member
+											}
 											authorizeUser={this.authorizeUser}
 										/>
 									</div>
@@ -535,71 +553,39 @@ export default class App extends React.Component<
 		return false;
 	}
 
-	private updateSideNav(links: SideNavigationItem[], force = false) {
-		let changed = false;
-
-		if (links.length !== this.state.sideNavLinks.length) {
-			changed = true;
-		} else {
-			for (const i in links) {
-				if (links.hasOwnProperty(i)) {
-					if (this.state.sideNavLinks[i] === undefined) {
-						changed = true;
-						break;
-					}
-
-					if (this.state.sideNavLinks[i].text !== links[i].text) {
-						changed = true;
-						break;
-					}
-
-					if (this.state.sideNavLinks[i].target !== links[i].target) {
-						changed = true;
-						break;
-					}
-				}
-			}
-		}
-
-		if (changed) {
-			this.setState({ sideNavLinks: links });
-		}
+	private updateSideNav(sideNavLinks: SideNavigationItem[], force = false) {
+		this.setState({ sideNavLinks });
 	}
 
 	private updateBreadCrumbs(breadCrumbs: BreadCrumb[]) {
-		let changed = false;
-		if (breadCrumbs.length !== this.state.breadCrumbs.length) {
-			changed = true;
-		} else {
-			for (const i in breadCrumbs) {
-				if (breadCrumbs.hasOwnProperty(i)) {
-					if (this.state.breadCrumbs[i] === undefined) {
-						changed = true;
-						break;
-					}
-					if (
-						this.state.breadCrumbs[i].target !==
-						breadCrumbs[i].target
-					) {
-						changed = true;
-						break;
-					}
-					if (
-						this.state.breadCrumbs[i].text !== breadCrumbs[i].text
-					) {
-						changed = true;
-						break;
-					}
-				}
-			}
-		}
-		if (changed) {
-			this.setState({ breadCrumbs });
-		}
+		this.setState({ breadCrumbs });
 	}
 
 	private authorizeUser(member: SigninReturn) {
-		this.setState({ member });
+		let fullMember = this.state.fullMember;
+
+		if (member.member && fullMember) {
+			if (member.member.id !== fullMember.id) {
+				fullMember = createCorrectMemberObject(
+					member.member,
+					this.state.account!,
+					member.sessionID
+				);
+			}
+		} else if (member.member) {
+			fullMember = createCorrectMemberObject(
+				member.member,
+				this.state.account!,
+				member.sessionID
+			);
+		} else if (!member.valid) {
+			fullMember = null;
+		}
+
+		this.setState({
+			member,
+			fullMember
+		});
 		localStorage.setItem('sessionID', member.sessionID);
 	}
 

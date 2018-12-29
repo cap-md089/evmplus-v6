@@ -13,7 +13,7 @@ import { AttendanceStatus, EventStatus, PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import './EventViewer.css';
 import { Activities, RequiredForms, Uniforms } from './ModifyEvent';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
 
 const clamp = (min: number, max: number, input: number) =>
 	Math.max(min, Math.min(max, input));
@@ -65,7 +65,7 @@ const eventStatus = (stat: EventStatus): string =>
 // 	'Rescinded commitment to attend'
 // ];
 
-export default class EventViewer extends React.Component<
+export default class EventViewer extends Page<
 	EventViewerProps,
 	EventViewerState
 > {

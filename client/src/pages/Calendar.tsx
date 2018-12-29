@@ -66,16 +66,13 @@ export default class Calendar extends Page<
 				: lastMonth.startOf('week');
 		const endOfNextMonth = nextMonth.endOf('week');
 
-		myFetch(
-			`/api/event/${
-				+startOfLastMonthWeek
-			}/${+endOfNextMonth}`,
-			{
-				headers: {
-					authorization: this.props.member ? this.props.member.sessionID : ''
-				}
+		myFetch(`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`, {
+			headers: {
+				authorization: this.props.member
+					? this.props.member.sessionID
+					: ''
 			}
-		)
+		})
 			.then(res => res.json())
 			.then((events: EventObject[]) => this.setState({ events }));
 	}
@@ -215,8 +212,7 @@ export default class Calendar extends Page<
 			if (endDate > nextMonth) {
 				const nextWeek = +nextMonth + 7 * 24 * 3600 * 1000;
 				endWeek = calendar.length - 1;
-				endDay =
-					+endDate > nextWeek ? 6 : endDate.weekday;
+				endDay = +endDate > nextWeek ? 6 : endDate.weekday;
 			} else if (endDate > thisMonth) {
 				endWeek = Math.ceil((endDate.day - endDate.weekday) / 7);
 				endDay = endDate.weekday;
@@ -259,6 +255,10 @@ export default class Calendar extends Page<
 
 		return (
 			<div className="calendar">
+				{this.props.member &&
+				this.props.member.hasPermission('AddEvent') ? (
+					<Link to="/addevent">Add event</Link>
+				) : null}
 				<table>
 					<caption>
 						<Link

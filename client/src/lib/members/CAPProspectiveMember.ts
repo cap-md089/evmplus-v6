@@ -9,7 +9,7 @@ export default class CAPProspectiveMember extends MemberBase
 	/**
 	 * The ID of the user
 	 */
-	public id: string = '';
+	public id: string;
 	/**
 	 * The password, ignored because the password is never sent to the clients
 	 */
@@ -21,19 +21,19 @@ export default class CAPProspectiveMember extends MemberBase
 	/**
 	 * The rank of the member
 	 */
-	public memberRank: string = '';
+	public memberRank: string;
 	/**
 	 * The member name + the member rank
 	 */
-	public memberRankName: string = '';
+	public memberRankName: string;
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[] = [];
+	public dutyPositions: string[];
 	/**
 	 * The organization ID the user belongs to
 	 */
-	public orgid: number = 0;
+	public orgid: number;
 	/**
 	 * The flight for a member, if a cadet
 	 */
@@ -86,5 +86,9 @@ export default class CAPProspectiveMember extends MemberBase
 			usrID: this.usrID,
 			accountID: this.accountID
 		};
+	}
+
+	public getFullName() {
+		return `${this.memberRank} ${super.getFullName()}`
 	}
 }

@@ -212,7 +212,7 @@ export default class TextArea extends React.Component<
 
 		return (
 			<div
-				className="formbox"
+				className={`formbox${this.props.fullWidth ? ' fullWidth' : ''}`}
 				style={{
 					marginBottom: 10,
 					width: this.props.fullWidth ? '90%' : undefined,

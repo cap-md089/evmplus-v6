@@ -208,4 +208,8 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	public isPOCOf(event: Event) {
 		return event.isPOC(this);
 	}
+
+	public getFullName() {
+		return this.getName();
+	}
 }

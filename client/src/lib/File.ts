@@ -20,7 +20,7 @@ class FileUploader {
 	/**
 	 * Uploads the file the class was constructed with to the location
 	 * specified
-	 * 
+	 *
 	 * @param target The folder to upload the file to
 	 * @param member The member that is uploading the file
 	 * @param token The token required for all non-GET tasks
@@ -42,7 +42,7 @@ class FileUploader {
 			if (errOnInvalidPermissions) {
 				throw new Error('Invalid permissions');
 			} else {
-				return;
+				return new Promise<undefined>(res => res());
 			}
 		}
 
@@ -83,13 +83,12 @@ class FileUploader {
 
 export default class FileInterface extends APIInterface<FullFileObject>
 	implements FullFileObject {
-
 	/**
 	 * Uploads a file and moves it to its requested place
-	 * 
+	 *
 	 * Also returns a file uploader class that allows for listening to progress
 	 * and finish events
-	 * 
+	 *
 	 * @param file The file to upload
 	 * @param parent The folder to upload the file to
 	 * @param member The member taking responsibility for uploading the file
@@ -103,40 +102,34 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	) {
 		const fileUploader = new FileUploader(file);
 
-		setTimeout(async () => {
-			const token = await FileInterface.getToken(account.id, member);
+		FileInterface.getToken(account.id, member)
+			.then(async token => {
+				const results = await fileUploader.uploadTo(parent, member, token, false);
 
-			const results = await fileUploader.uploadTo(
-				parent,
-				member,
-				token,
-				false
-			);
+				if (!results) {
+					throw new Error('Could not upload file');
+				}
 
-			if (!results) {
-				throw new Error('Could not upload file');
-			}
+				const fileInterface = new FileInterface(results, account!);
 
-			const fileInterface = new FileInterface(results, account!);
+				await fileInterface.moveTo(parent, member);
 
-			fileInterface.moveTo(parent, member);
-
-			fileUploader.finishListeners.forEach(l => l(fileInterface));
-		});
+				fileUploader.finishListeners.forEach(l => l(fileInterface));
+			});
 
 		return fileUploader;
 	}
 
 	/**
 	 * Creates a folder in the `root` folder
-	 * 
+	 *
 	 * To create a folder in another folder, create a folder
 	 * and call the moveTo method on the returned file
-	 * 
+	 *
 	 * A folder is nothing more than a file that has a different MIME type
 	 * It can technically have contents, but here the folder is created without
 	 * any contents
-	 * 
+	 *
 	 * @param name The name of the folder
 	 * @param member The member creating the folder
 	 * @param account The account responsible for the folder
@@ -167,7 +160,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Gets the file metadata for the requested file ID
-	 * 
+	 *
 	 * @param id The ID of the file/folder to get
 	 * @param member The member getting the file, checking for permissions
 	 * @param account The Account of the file
@@ -256,7 +249,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Checks if a member has requested permission for this file
-	 * 
+	 *
 	 * @param member The member to check
 	 * @param permission The permission to check for
 	 */
@@ -355,10 +348,10 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Get the file/folder that has this file as a child
-	 * 
+	 *
 	 * If the current file or folder is the root folder, this will return a promise
 	 * resolving to itself as it has no parent
-	 * 
+	 *
 	 * @param member The member to use to get the file info of the parent file
 	 */
 	public getParent(member: MemberBase | null): Promise<FileInterface> {
@@ -369,7 +362,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Adds the file given as a child to the current file/folder
-	 * 
+	 *
 	 * @param member The member that needs to have permission to do so
 	 * @param child The child file to add
 	 * @param errOnInvalidPermissions If true, this function will throw an error if
@@ -411,7 +404,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	}
 
 	/**
-	 * 
+	 *
 	 * @param member The member that needs to have permission to remove the file
 	 * @param child The child to remove
 	 * @param errOnInvalidPermissions If true, this function will throw an error if
@@ -453,7 +446,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Saves the current file
-	 * 
+	 *
 	 * @param member The member to save the file
 	 */
 	public async save(member: MemberBase) {
@@ -476,10 +469,10 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	/**
 	 * Moves the file to the specified location
-	 * 
+	 *
 	 * This is an operation that requires a save to be made, as it cannot do so without
 	 * risking saving the wrong data
-	 * 
+	 *
 	 * @param target The place to move the file to
 	 * @param member The member moving the file
 	 * @param errOnInvalidPermissions If true, this function will throw an error if
@@ -522,19 +515,16 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 		return moveResult.status;
 	}
-	
+
 	/**
 	 * Deletes the current file
-	 * 
+	 *
 	 * @param member The member that will delete the ifle
 	 * @param errOnInvalidPermissions If true, this function will throw an error if
 	 * 		the member doesn't have the proper permissions. Otherwise, it will
 	 * 		silently fail
 	 */
-	public async delete(
-		member: MemberBase,
-		errOnInvalidPermissions = false
-	) {
+	public async delete(member: MemberBase, errOnInvalidPermissions = false) {
 		const token = await this.getToken(member);
 
 		const result = await this.fetch(

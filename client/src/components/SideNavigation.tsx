@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { MemberCreateError } from '../enums';
 import SigninLink from './SigninLink';
+import MemberBase from 'src/lib/Members';
 
 class SideNavigationLink extends React.Component<{ target: string }> {
 	public render() {
@@ -47,7 +48,8 @@ export type SideNavigationItem =
 
 export interface SideNavigationProps {
 	links: SideNavigationItem[];
-	member: SigninReturn;
+	member: MemberBase | null;
+	fullMemberDetails: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
 }
 
@@ -59,39 +61,20 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 	}
 
 	public render() {
-		let memberRank = '';
-		let memberName = '';
-		if (this.props.member.valid) {
-			if (
-				this.props.member.member.type === 'CAPNHQMember' ||
-				this.props.member.member.type === 'CAPProspectiveMember'
-			) {
-				memberRank = this.props.member.member.memberRank;
-			}
-			const {
-				nameFirst,
-				nameLast,
-				nameMiddle,
-				nameSuffix
-			} = this.props.member.member;
-			memberName = [nameFirst, nameMiddle, nameLast, nameSuffix]
-				.filter(i => i !== '')
-				.join(' ');
-		}
 		return (
 			<div id="sidenav">
 				<ul id="nav">
 					<li>
-						{this.props.member.valid ? (
+						{this.props.member ? (
 							<a onClick={this.signOut}>
 								<span className="arrow" />
 								<span>
-									Sign out {`${memberRank} ${memberName}`}
+									Sign out {this.props.member.getFullName()}
 								</span>
 							</a>
 						) : (
 							<SigninLink
-								{...this.props.member}
+								{...this.props.fullMemberDetails}
 								authorizeUser={this.props.authorizeUser}
 							>
 								<span className="arrow" />

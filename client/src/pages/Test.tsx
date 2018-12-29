@@ -82,7 +82,7 @@ export default class Test extends Page<
 			}
 		>;
 
-		const TestSelector = Selector as new () => Selector<Complex>;
+		const TestSelector = Selector as unknown as new () => Selector<Complex>;
 
 		return this.state.test14 !== null ? (
 			<div>

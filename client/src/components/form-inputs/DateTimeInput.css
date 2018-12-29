@@ -2,6 +2,7 @@
 	clear: both;
 	position: relative;
 	padding-right: 2px;
+	padding-top: 10px;
 }
 
 .datetime-input-box input, .date-input-box input, .time-input-box input {

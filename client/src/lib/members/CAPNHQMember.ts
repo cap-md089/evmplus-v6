@@ -107,4 +107,8 @@ export default class CAPNHQMember extends MemberBase
 			])
 		);
 	}
+
+	public getFullName() {
+		return `${this.memberRank} ${super.getFullName()}`
+	}
 }

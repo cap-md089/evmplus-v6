@@ -9,7 +9,7 @@ import Form, { TextInput } from '../components/Form';
 import Loader from '../components/Loader';
 import FileInterface from '../lib/File';
 import './Drive.css';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
 
 enum ErrorReason {
 	NONE,
@@ -41,7 +41,7 @@ interface LoadedDriveState {
 
 type DriveState = UnloadedDriveState | LoadedDriveState;
 
-export default class Drive extends React.Component<PageProps, DriveState> {
+export default class Drive extends Page<PageProps, DriveState> {
 	public state: DriveState = {
 		files: null,
 		currentlySelected: '',
@@ -416,9 +416,15 @@ export default class Drive extends React.Component<PageProps, DriveState> {
 				this.state.newFoldername,
 				this.props.member,
 				this.props.account
-			).then(folder => {
-				this.addFile(folder);
-			});
+			)
+				.then(folder => {
+					return folder
+						.moveTo(this.state.currentFolder!, this.props.member!)
+						.then(() => folder);
+				})
+				.then(folder => {
+					this.addFile(folder);
+				});
 		}
 	}
 }

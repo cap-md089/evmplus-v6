@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import Pager from 'src/components/Pager';
 import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
-import { DraftJS } from '../Blog';
-import { PageProps } from '../Page';
+import Page, { PageProps } from '../Page';
+
+type DraftJS = typeof import('draft-js');
 
 export interface BlogListState1 {
 	posts: null;
@@ -26,7 +27,7 @@ export interface BlogListState2 {
 
 type BlogListProps = PageProps<{ page?: string }>;
 
-export class BlogList extends React.Component<
+export class BlogList extends Page<
 	BlogListProps,
 	BlogListState1 | BlogListState2
 > {

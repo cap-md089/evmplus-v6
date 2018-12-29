@@ -11,7 +11,8 @@ import SimpleForm, {
 	SimpleRadioButton,
 	TextInput
 } from '../components/SimpleForm';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
+import { MemberClasses } from 'src/lib/Members';
 
 const memberRanks = [
 	'cab',
@@ -48,10 +49,10 @@ const normalizeRankInput = (rank: string) =>
 		.replace(' ', '');
 
 interface EmailListState {
-	selectedMembers: MemberObject[];
-	availableMembers: null | (MemberObject[]);
+	selectedMembers: MemberClasses[];
+	availableMembers: null | (MemberClasses[]);
 	sortFunction: RadioReturn<SortFunction>;
-	visibleItems: MemberObject[];
+	visibleItems: MemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
 		flightInput: string;
@@ -213,19 +214,26 @@ const memberFilter: CheckInput<Member, MemberList> = {
 const memberFilters: Array<(a: Member) => boolean> = [
 	a =>
 		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
-			? a.seniorMember
+			? !a.seniorMember
 			: false,
 	a =>
 		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
-			? !a.seniorMember
+			? a.seniorMember
 			: true,
 	() => true
 ];
 
-export default class EmailList extends React.Component<
-	PageProps,
-	EmailListState
-> {
+const advancedFilters = [
+	flightInput,
+	nameInput,
+	rankGreaterThan,
+	rankLessThan,
+	memberFilter
+];
+
+const simpleFilters = [nameInput, memberFilter];
+
+export default class EmailList extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
 		selectedMembers: [],
 		availableMembers: null,
@@ -262,10 +270,12 @@ export default class EmailList extends React.Component<
 	}
 
 	public render() {
-		const MemberSelector = Selector as new () => Selector<MemberObject>;
+		const MemberSelector = (Selector as unknown) as new () => Selector<
+			MemberClasses
+		>;
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
-			members: MemberObject[];
+			members: MemberClasses[];
 			sortFunction: RadioReturn<SortFunction>;
 			displayAdvanced: boolean;
 		}>;
@@ -296,7 +306,7 @@ export default class EmailList extends React.Component<
 					<Button
 						onClick={() => {
 							this.setState(prev => ({
-								selectedMembers: prev.visibleItems.slice(0)
+								selectedMembers: prev.visibleItems
 							}));
 						}}
 					>
@@ -349,20 +359,16 @@ export default class EmailList extends React.Component<
 							displayValue={this.displayMemberName}
 							multiple={true}
 							showIDField={this.state.displayAdvanced}
-							onChangeVisible={visibleItems => {
-								this.setState({ visibleItems });
+							onChangeVisible={newVisibleItems => {
+								this.setState({
+									visibleItems: newVisibleItems
+								});
 							}}
 							overflow={750}
 							filters={
 								this.state.displayAdvanced
-									? [
-											flightInput,
-											nameInput,
-											rankGreaterThan,
-											rankLessThan,
-											memberFilter
-									  ]
-									: [nameInput, memberFilter]
+									? advancedFilters
+									: simpleFilters
 							}
 							onFilterValuesChange={values => {
 								if (!this.state.displayAdvanced) {
@@ -402,6 +408,14 @@ export default class EmailList extends React.Component<
 						/>
 					</SelectorForm>
 					<h2>Emails:</h2>
+					{this.state.selectedMembers
+						.map(mem => this.getEmail(mem))
+						.filter(email => !email).length > 0 ? (
+						<div className="warning">
+							Warning: Some selected members do not have an email
+							stored
+						</div>
+					) : null}
 					<div
 						style={{
 							height: 400,
@@ -418,6 +432,7 @@ export default class EmailList extends React.Component<
 					>
 						{this.state.selectedMembers
 							.map(mem => this.getEmail(mem))
+							.filter(email => !!email)
 							.join('; ')}
 					</div>
 				</>
@@ -427,22 +442,8 @@ export default class EmailList extends React.Component<
 		);
 	}
 
-	private displayMemberName(member: Member): string {
-		return (
-			(member.type === 'CAPNHQMember' ||
-			member.type === 'CAPProspectiveMember'
-				? member.memberRank
-				: '') +
-			' ' +
-			[
-				member.nameFirst,
-				member.nameMiddle,
-				member.nameLast,
-				member.nameSuffix
-			]
-				.filter(x => x !== null && x !== undefined && x !== '')
-				.join(' ')
-		);
+	private displayMemberName(member: MemberClasses): string {
+		return member.getFullName();
 	}
 
 	private getEmail(member: MemberObject): string {

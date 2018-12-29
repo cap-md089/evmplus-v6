@@ -17,7 +17,7 @@ import Loader from '../components/Loader';
 import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
 import { PointOfContactType } from '../enums';
 import Event from '../lib/Event';
-import { PageProps } from './Page';
+import Page, { PageProps } from './Page';
 
 interface ModifyEventState {
 	event: null | Event;
@@ -155,7 +155,7 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	wingEventNumber: event.wingEventNumber
 });
 
-export default class ModifyEvent extends React.Component<
+export default class ModifyEvent extends Page<
 	PageProps<{ id: string }>,
 	ModifyEventState
 > {

@@ -7,7 +7,7 @@ import SimpleForm, {
 	TextInput
 } from '../../components/SimpleForm';
 import { EditorState } from '../../lib/slowEditorState';
-import { PageProps } from '../Page';
+import Page, { PageProps } from '../Page';
 
 interface ReadyBlogEdit {
 	loaded: true;
@@ -23,7 +23,7 @@ interface UnreadyBlogEdit {
 	post: null;
 }
 
-export class BlogEdit extends React.Component<
+export class BlogEdit extends Page<
 	PageProps<{
 		id: string;
 	}>,

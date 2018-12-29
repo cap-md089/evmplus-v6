@@ -155,7 +155,11 @@ export default class PageCreate extends Page<PageProps, State> {
 	}
 
 	private async submitForm(values: FormValues) {
-		if (!this.props.member || !this.state.loaded) {
+		if (
+			!this.props.member ||
+			!this.props.member.canManageBlog() ||
+			!this.state.loaded
+		) {
 			return;
 		}
 
@@ -170,6 +174,6 @@ export default class PageCreate extends Page<PageProps, State> {
 			this.props.account
 		);
 
-		this.props.routeProps.history.push(`/page/view/${newBlogPage.id}`)
+		this.props.routeProps.history.push(`/page/view/${newBlogPage.id}`);
 	}
 }

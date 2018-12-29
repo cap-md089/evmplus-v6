@@ -34,7 +34,11 @@ class Label extends React.Component<{
 }> {
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean; style?: React.CSSProperties; id: string }) {
+	constructor(props: {
+		fullWidth: boolean;
+		style?: React.CSSProperties;
+		id: string;
+	}) {
 		super(props);
 
 		this.IsLabel = true;
@@ -42,7 +46,11 @@ class Label extends React.Component<{
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.style} id={this.props.id}>
+			<div
+				className="formbox"
+				style={this.props.style}
+				id={this.props.id}
+			>
 				{this.props.children}
 			</div>
 		);
@@ -64,7 +72,7 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	public render() {
 		return (
 			<div className="formbar fheader">
-				<div className="formbox">
+				<div className="formbox header">
 					<h3 id={this.props.id}>{this.props.children}</h3>
 				</div>
 			</div>
@@ -316,8 +324,8 @@ class SimpleForm<
 										? ''
 										: this.props.values[child.props.name]
 									: typeof child.props.value === 'undefined'
-										? ''
-										: child.props.value;
+									? ''
+									: child.props.value;
 							if (!this.fields[child.props.name]) {
 								this.fields[child.props.name] = value;
 							}
@@ -336,62 +344,81 @@ class SimpleForm<
 								})
 							];
 						}
-						if (
-							i > 0 &&
-							typeof (this.props.children as React.ReactChild[])[
-								i - 1
-							] !== 'undefined' &&
-							!isInput(
-								(this.props.children as React.ReactChild[])[
-									i - 1
-								]
-							)
-						) {
+						if (!fullWidth) {
 							if (
-								typeof this.props.children[i - 1] ===
-									'string' ||
-								typeof this.props.children[i - 1] === 'number'
+								i > 0 &&
+								typeof (this.props
+									.children as React.ReactChild[])[i - 1] !==
+									'undefined' &&
+								!isInput(
+									(this.props.children as React.ReactChild[])[
+										i - 1
+									]
+								)
 							) {
-								ret.unshift(
-									<Label key={i - 1} fullWidth={fullWidth}>
-										{this.props.children[i - 1]}
-									</Label>
-								);
-							} else {
-								if (this.props.children[i - 1].type !== Title) {
+								if (
+									typeof this.props.children[i - 1] ===
+										'string' ||
+									typeof this.props.children[i - 1] ===
+										'number'
+								) {
 									ret.unshift(
-										// @ts-ignore
-										React.cloneElement(
-											this.props.children[i - 1],
-											{
-												onUpdate: this.onChange,
-												onInitialize: this.onInitialize,
-												key: i
-											}
-										)
+										<Label
+											key={i - 1}
+											fullWidth={fullWidth}
+										>
+											{this.props.children[i - 1]}
+										</Label>
 									);
+								} else {
+									if (
+										this.props.children[i - 1].type !==
+										Title
+									) {
+										ret.unshift(
+											// @ts-ignore
+											React.cloneElement(
+												this.props.children[i - 1],
+												{
+													onUpdate: this.onChange,
+													onInitialize: this
+														.onInitialize,
+													key: i
+												}
+											)
+										);
+									}
 								}
+							} else {
+								ret.unshift(
+									<div
+										className="formbox"
+										style={{
+											height: 2
+										}}
+										key={i - 1}
+									/>
+								);
 							}
-						} else {
-							ret.unshift(
-								<div
-									className="formbox"
-									style={{
-										height: 2
-									}}
-									key={i - 1}
-								/>
-							);
 						}
 
 						return (
-							<div key={i} className="formbar">
+							<div
+								key={i}
+								className={`formbar${
+									fullWidth ? ' fullwidth' : ''
+								}`}
+							>
 								{ret}
 							</div>
 						);
 					}
 				)}
-				{(typeof this.props.showSubmitButton === 'undefined' ? true : this.props.showSubmitButton )? (
+				{(typeof this.props.showSubmitButton === 'undefined' ? (
+					true
+				) : (
+					this.props.showSubmitButton
+				)) ? (
 					<div className="formbar">
 						<div
 							className="formbox"
