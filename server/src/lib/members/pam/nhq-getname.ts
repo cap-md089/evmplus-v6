@@ -24,16 +24,16 @@ export default async (
 
 	const $ = load(body);
 
-	const nameFirst = $('#txtFirstName').val();
-	const nameMiddle = $('#txtMI').val();
-	const nameLast = $('#txtLastName').val();
-	const nameSuffix = $('#txtSuffix').val();
+	const nameFirst = $('#txtFirstName').val() || '';
+	const nameMiddle = $('#txtMI').val() || '';
+	const nameLast = $('#txtLastName').val() || '';
+	const nameSuffix = $('#txtSuffix').val() || '';
 
-	const rank = $('#txtRank').val();
+	const rank = $('#txtRank').val() || '';
 
 	const seniorMember = $('#txtType').val() !== 'Cadet';
 
-	const squadron = $('#txtSquadron').val();
+	const squadron = $('#txtSquadron').val() || '';
 
 	const name = [nameFirst, nameMiddle, nameLast, nameSuffix]
 		.filter(x => x !== '' && typeof x !== 'undefined' && x !== null)
