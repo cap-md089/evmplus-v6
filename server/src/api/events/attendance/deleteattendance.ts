@@ -17,7 +17,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 
 	if (
 		MemberBase.isReference(req.body) &&
-		req.member.hasPermission('SignUpEdit')
+		req.member.isPOCOf(event)
 	) {
 		member = await MemberBase.ResolveReference(req.body, req.account, req.mysqlx, true);
 	} else {

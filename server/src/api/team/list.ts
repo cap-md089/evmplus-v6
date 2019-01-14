@@ -4,7 +4,10 @@ import Team from '../../lib/Team';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../lib/Util';
 
 export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
-	await streamAsyncGeneratorAsJSONArray<Team>(res, req.account.getTeams(), team =>
-		JSON.stringify(team.toRaw(req.member))
+	await streamAsyncGeneratorAsJSONArray<Team>(res, req.account.getTeams(), team => {
+		team.toRaw();
+
+		return JSON.stringify(team.toRaw(req.member))
+	}
 	);
 });

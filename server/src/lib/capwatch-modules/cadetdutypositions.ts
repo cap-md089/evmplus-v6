@@ -17,7 +17,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (
 
 	try {
 		const dutyPositionCollection = schema.getCollection<NHQ.CadetDutyPosition>(
-			'NHQ_DutyPosition'
+			'NHQ_CadetDutyPosition'
 		);
 
 		try {

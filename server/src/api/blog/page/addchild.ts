@@ -9,8 +9,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 
 	if (
 		typeof req.params.id !== 'string' ||
-		typeof req.body !== 'object' ||
-		typeof req.body.id !== 'string'
+		typeof req.params.child !== 'string'
 	) {
 		res.status(400);
 		res.end();
@@ -20,7 +19,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	try {
 		[parentPage, childPage] = await Promise.all([
 			BlogPage.Get(req.params.id, req.account, req.mysqlx),
-			BlogPage.Get(req.body.id, req.account, req.mysqlx)
+			BlogPage.Get(req.params.child, req.account, req.mysqlx)
 		]);
 	} catch (e) {
 		res.status(404);
@@ -28,7 +27,13 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	parentPage.addChild(childPage);
+	try {
+		await parentPage.addChild(childPage);
+	} catch(e) {
+		res.status(400);
+		res.end();
+		return;
+	}
 
 	await Promise.all([
 		parentPage.save(),

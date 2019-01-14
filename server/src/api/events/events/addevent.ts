@@ -1,29 +1,44 @@
 import * as express from 'express';
-import conf from '../../../conf';
+import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
-import { MemberRequest } from '../../../lib/MemberBase';
-import { asyncErrorHandler, json } from '../../../lib/Util';
-import EventValidator from '../../../lib/validator/validators/EventValidator';
-
-const eventValidator = new EventValidator();
+import {
+	asyncErrorHandler,
+	getTargetMonth,
+	getTargetYear,
+	json
+} from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberRequest, res: express.Response) => {
-		if (eventValidator.validate(req.body)) {
-			const newEvent = await Event.Create(
-				req.body,
-				req.account,
-				req.mysqlx,
-				req.member
-			);
+	async (
+		req: MemberValidatedRequest<NewEventObject>,
+		res: express.Response
+	) => {
+		const eventCount1 = await req.account.getEventCountForMonth(
+			getTargetMonth(req.body.pickupDateTime),
+			getTargetYear(req.body.pickupDateTime)
+		);
 
-			json<EventObject>(res, newEvent.toRaw());
-		} else {
-			res.status(400);
-			if (conf.testing) {
-				res.json(eventValidator.getErrors());
-			}
-			res.end();
+		const eventCount2 = await req.account.getEventCountForMonth(
+			getTargetMonth(req.body.meetDateTime),
+			getTargetYear(req.body.meetDateTime)
+		);
+
+		if (
+			!req.account.validPaid &&
+			(eventCount1 > req.account.unpaidEventLimit ||
+				eventCount2 > req.account.unpaidEventLimit)
+		) {
+			res.status(402);
+			return res.end();
 		}
+
+		const newEvent = await Event.Create(
+			req.body,
+			req.account,
+			req.mysqlx,
+			req.member
+		);
+
+		json<EventObject>(res, newEvent.toRaw());
 	}
 );

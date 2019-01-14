@@ -1,7 +1,9 @@
-import { AttendanceStatus } from "../../../enums";
-import Validator from "../Validator";
+import { AttendanceStatus } from '../../../enums';
+import Validator from '../Validator';
 
-export default class NewAttendanceRecordValidator extends Validator<NewAttendanceRecord> {
+export default class NewAttendanceRecordValidator extends Validator<
+	NewAttendanceRecord
+> {
 	constructor() {
 		super({
 			comments: {
@@ -9,9 +11,6 @@ export default class NewAttendanceRecordValidator extends Validator<NewAttendanc
 			},
 			planToUseCAPTransportation: {
 				validator: Validator.Boolean
-			},
-			requirements: {
-				validator: Validator.String
 			},
 			status: {
 				validator: Validator.Enum(AttendanceStatus)
@@ -23,21 +22,27 @@ export default class NewAttendanceRecordValidator extends Validator<NewAttendanc
 
 			memberID: {
 				required: false,
-				validator: Validator.MemberReference,
+				validator: Validator.MemberReference
 			},
 
 			arrivalTime: {
 				validator: Validator.Number,
-				requiredIf: (value: number | null, obj: NewAttendanceRecord) => {
+				requiredIf: (
+					value: number | null,
+					obj: NewAttendanceRecord
+				) => {
 					return obj.departureTime !== null;
 				}
 			},
 			departureTime: {
 				validator: Validator.Number,
-				requiredIf: (value: number | null, obj: NewAttendanceRecord) => {
+				requiredIf: (
+					value: number | null,
+					obj: NewAttendanceRecord
+				) => {
 					return obj.arrivalTime !== null;
 				}
 			}
-		})
+		});
 	}
 }

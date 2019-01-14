@@ -103,7 +103,10 @@ export default class NHQMember extends CAPWATCHMember
 				contact: memberInfo[1],
 				dutyPositions: [
 					...dutyPositions,
-					...extraInfo.temporaryDutyPositions.map(v => v.Duty)
+					...extraInfo.temporaryDutyPositions.map(v => ({
+						duty: v.Duty,
+						date: v.assigned
+					}))
 				],
 				id,
 				memberRank: memberInfo[0].rank,
@@ -160,7 +163,10 @@ export default class NHQMember extends CAPWATCHMember
 				contact: sess.contact,
 				dutyPositions: [
 					...dutyPositions,
-					...extraInfo.temporaryDutyPositions.map(v => v.Duty)
+					...extraInfo.temporaryDutyPositions.map(v => ({
+						duty: v.Duty,
+						date: v.assigned
+					}))
 				],
 				id: sess.memberID.id,
 				memberRank: sess.memberRank,

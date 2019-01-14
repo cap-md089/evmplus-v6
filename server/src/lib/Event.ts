@@ -305,26 +305,6 @@ export default class Event
 	}
 
 	/**
-	 * Save a copy of the event to database
-	 *
-	 * @param {Account} account The account to save to
-	 */
-	public async saveCopy(account: Account) {
-		const timeCreated = +DateTime.utc();
-
-		const eventsCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
-
-		await eventsCollection.add({
-			...this.toRaw(),
-			timeCreated,
-			timeModified: timeCreated,
-			accountID: account.id
-		});
-	}
-
-	/**
 	 * Remove the event from the database
 	 */
 	public async remove() {
@@ -409,10 +389,11 @@ export default class Event
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
-			meetDateTime: this.meetDateTime - timeDelta,
-			startDateTime: this.startDateTime - timeDelta,
-			endDateTime: this.endDateTime - timeDelta,
-			pickupDateTime: this.pickupDateTime - timeDelta
+
+			meetDateTime: this.meetDateTime + timeDelta,
+			startDateTime: this.startDateTime + timeDelta,
+			endDateTime: this.endDateTime + timeDelta,
+			pickupDateTime: this.pickupDateTime + timeDelta
 		};
 
 		return Event.Create(newEvent, this.account, this.schema, member);
@@ -574,7 +555,6 @@ export default class Event
 				memberName: member.getFullName(),
 				planToUseCAPTransportation:
 					newAttendanceRecord.planToUseCAPTransportation,
-				requirements: newAttendanceRecord.requirements,
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp: +DateTime.utc(),
@@ -604,7 +584,6 @@ export default class Event
 						memberName: member.getFullName(),
 						planToUseCAPTransportation:
 							newAttendanceRecord.planToUseCAPTransportation,
-						requirements: newAttendanceRecord.requirements,
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp: +DateTime.utc(),

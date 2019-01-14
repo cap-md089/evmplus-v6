@@ -163,7 +163,9 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public created: number = 0;
 
-	public fileChildren: string[] = [];
+	public get fileChildren() {
+		return this.trueChildren;
+	}
 
 	public fileName: string = '';
 
@@ -175,7 +177,9 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public permissions: FileControlListItem[] = [];
 
-	public parentID: string = '';
+	public get parentID() {
+		return this.trueParentID;
+	}
 
 	public owner: MemberReference;
 
@@ -187,15 +191,19 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	private deleted: boolean = false;
 
+	private trueParentID: string = '';
+
+	private trueChildren: string[] = [];
+
 	private constructor(data: FileObject, account: Account, schema: Schema) {
 		this.set(data);
 
 		this.id = data.id;
 		this._id = data._id;
-		this.fileChildren = data.fileChildren;
+		this.trueChildren = data.fileChildren;
 		this.contentType = data.contentType;
 		this.created = data.created;
-		this.parentID = data.parentID;
+		this.trueParentID = data.parentID;
 		this.folderPath = data.folderPath;
 
 		this.account = account;
@@ -279,7 +287,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 						this.schema
 					);
 
-					parent.fileChildren = parent.fileChildren.filter(
+					parent.trueChildren = parent.fileChildren.filter(
 						x => x !== this.id
 					);
 
@@ -424,13 +432,13 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			await parent.save();
 		}
 
-		file.parentID = this.id;
+		file.trueParentID = this.id;
 	}
 
 	public removeChild(file: File) {
-		this.fileChildren = this.fileChildren.filter(id => id !== file.id);
+		this.trueChildren = this.fileChildren.filter(id => id !== file.id);
 
-		file.parentID = 'root';
+		file.trueParentID = 'root';
 	}
 
 	public getParent() {

@@ -116,7 +116,7 @@ export default class BlogPage
 				_id,
 				ancestry: [],
 				fullChildren: [],
-				parentID: null 
+				parentID: null
 			},
 			account,
 			schema
@@ -134,7 +134,9 @@ export default class BlogPage
 	// tslint:disable-next-line:variable-name
 	public _id: string = '';
 
-	public children: string[] = [];
+	public get children() {
+		return this.trueChildren.slice();
+	}
 
 	public get accountID() {
 		return this.account.id;
@@ -142,23 +144,29 @@ export default class BlogPage
 
 	public ancestry: BlogPageAncestryItem[];
 
-	public parentID: string | null;
+	public get parentID(): string | null {
+		return this.trueParentID;
+	}
 
 	public fullChildren: BlogPageAncestryItem[];
 
 	private deleted: boolean = false;
 
-	private constructor(
+	private trueChildren: string[] = [];
+
+	private trueParentID: string | null;
+
+	protected constructor(
 		data: FullDBObject<FullBlogPageObject>,
 		private account: Account,
 		private schema: Schema
 	) {
 		this._id = data._id;
 		this.ancestry = data.ancestry;
-		this.children = data.children;
+		this.trueChildren = data.children;
 		this.fullChildren = data.fullChildren;
 		this.id = data.id;
-		this.parentID = data.parentID;
+		this.trueParentID = data.parentID;
 
 		this.set(data);
 	}
@@ -228,29 +236,37 @@ export default class BlogPage
 		await collection.removeOne(this._id);
 	}
 
-	public async addChild(blogPage: BlogPage) {
-		this.children.push(blogPage.id);
+	public async addChild(newChild: BlogPage) {
+		for (const ancestor of this.ancestry) {
+			if (ancestor.id === newChild.id) {
+				throw new Error('Cannot move parent to child');
+			}
+		}
+
+		this.trueChildren.push(newChild.id);
 		this.fullChildren.push({
-			id: blogPage.id,
-			title: blogPage.title
+			id: newChild.id,
+			title: newChild.title
 		});
 
-		if (blogPage.parentID !== null) {
+		if (newChild.parentID !== null) {
 			const parent = await BlogPage.Get(
-				blogPage.parentID,
+				newChild.parentID,
 				this.account,
 				this.schema
 			);
-			parent.removeChild(blogPage);
+			parent.removeChild(newChild);
 			await parent.save();
 		}
 
-		blogPage.parentID = this.id;
+		newChild.trueParentID = this.id;
+
+		return true;
 	}
 
 	public removeChild(blogPage: BlogPage) {
-		this.children = this.children.filter(id => id !== blogPage.id);
+		this.trueChildren = this.children.filter(id => id !== blogPage.id);
 
-		blogPage.parentID = null;
+		blogPage.trueParentID = null;
 	}
 }

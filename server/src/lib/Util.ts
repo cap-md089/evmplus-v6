@@ -220,3 +220,17 @@ export const replaceUndefinedWithNullMiddleware: express.RequestHandler = (
 
 	next();
 };
+
+export type MonthNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+
+export const getTargetMonth = (timestamp: number): MonthNumber => {
+	const date = new Date(timestamp);
+
+	return date.getMonth() as MonthNumber;
+}
+
+export const getTargetYear = (timestamp: number): number => {
+	const date = new Date(timestamp);
+
+	return date.getFullYear();
+}

@@ -141,15 +141,9 @@ export default async (req: MemberRequest, res: express.Response) => {
 				contentType,
 				created,
 				fileName,
-				forDisplay: isImage(ending),
+				forDisplay: false,
 				forSlideshow: false,
 				permissions: [
-					{
-						type: FileUserAccessControlType.USER,
-						permission:
-							FileUserAccessControlPermissions.FULLCONTROL,
-						reference
-					},
 					{
 						type: FileUserAccessControlType.OTHER,
 						permission: FileUserAccessControlPermissions.READ
