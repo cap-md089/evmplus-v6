@@ -799,7 +799,7 @@ declare global {
 		/**
 		 * If this is a team event, a team can be specified for future features
 		 */
-		teamID: number;
+		teamID: number | null;
 		/**
 		 * Files that may be associated with the event; e.g. forms
 		 */
@@ -818,10 +818,6 @@ declare global {
 		 * Committed, rescindend commitment to attend, etc
 		 */
 		status: AttendanceStatus;
-		/**
-		 * ?
-		 */
-		requirements: string;
 		/**
 		 * If they plan to use transportation provided
 		 */
@@ -1269,7 +1265,10 @@ declare global {
 		/**
 		 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
 		 */
-		dutyPositions: string[];
+		dutyPositions: {
+			duty: string;
+			date: number;
+		}[];
 		/**
 		 * The Squadron a member belongs to
 		 */
@@ -1332,7 +1331,10 @@ declare global {
 		 * 
 		 * There is no way to modify this
 		 */
-		dutyPositions: string[];
+		dutyPositions: {
+			duty: string;
+			date: number;
+		}[];
 	}
 
 	export type ProspectiveMemberObject = RawProspectiveMemberObject &
@@ -1388,6 +1390,11 @@ declare global {
 		 * MapReduce way
 		 */
 		Duty: string;
+
+		/**
+		 * When the duty position was assigned
+		 */
+		assigned: number;
 	}
 
 	/**
@@ -1713,6 +1720,13 @@ declare global {
 		joined: number;
 	}
 
+	export interface PreviousTeamMember {
+		reference: MemberReference;
+		job: string;
+		joined: number;
+		left: number;
+	}
+
 	/**
 	 * For creating teams of cadets
 	 */
@@ -1732,15 +1746,15 @@ declare global {
 		/**
 		 * Who will be leading the team?
 		 */
-		cadetLeader: MemberReference | null;
+		cadetLeader: MemberReference | NullMemberReference;
 		/**
 		 * Who will mentor the team?
 		 */
-		seniorMentor: MemberReference | null;
+		seniorMentor: MemberReference | NullMemberReference;
 		/**
 		 * Who coaches the team?
 		 */
-		seniorCoach: MemberReference | null;
+		seniorCoach: MemberReference | NullMemberReference;
 		/**
 		 * Visbility of team; each one is described by the enum declaration
 		 */
@@ -1760,5 +1774,10 @@ declare global {
 		 * Allows for incrementation
 		 */
 		id: number;
+		/**
+		 * Maintain a history of those who have gone through
+		 * a team
+		 */
+		teamHistory: PreviousTeamMember[];
 	}
 }
