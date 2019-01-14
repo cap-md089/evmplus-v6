@@ -237,16 +237,9 @@ export default class POCInput extends React.Component<
 		}
 
 		return isInternalPOC(value) ? (
-			<FormBlock
-				name="memberReference"
-				value={value.memberReference}
-			>
+			<FormBlock name="memberReference" value={value.memberReference}>
 				<Label>ID</Label>
-				<TextInput
-					disabled={true}
-					name="id"
-					value={id}
-				/>
+				<TextInput disabled={true} name="id" value={id} />
 			</FormBlock>
 		) : null;
 	}
@@ -280,19 +273,10 @@ export default class POCInput extends React.Component<
 									return true;
 								}
 
-								const memberName = [
-									memberToCheck.nameFirst,
-									(memberToCheck.nameMiddle || '')[0],
-									memberToCheck.nameLast,
-									memberToCheck.nameSuffix
-								]
-									.filter(x => x !== undefined && x !== '')
-									.join(' ');
-
 								try {
-									return !!memberName.match(
-										new RegExp(input, 'gi')
-									);
+									return !!memberToCheck
+										.getFullName()
+										.match(new RegExp(input, 'gi'));
 								} catch (e) {
 									return false;
 								}

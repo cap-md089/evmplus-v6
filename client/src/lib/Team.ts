@@ -20,12 +20,7 @@ export default class Team extends APIInterface<TeamObject>
 	 * @param member A member, for where a team has restrictions
 	 */
 	public static async Get(id: number, account: Account, member?: MemberBase) {
-		let result;
-		try {
-			result = await account.fetch('/api/team/' + id, {}, member);
-		} catch (e) {
-			throw new Error('Could not get team');
-		}
+		const result = await account.fetch('/api/team/' + id, {}, member);
 
 		const json = await result.json();
 
@@ -54,36 +49,29 @@ export default class Team extends APIInterface<TeamObject>
 
 		const token = await Team.getToken(account.id, member);
 
-		let result;
-		try {
-			result = await account.fetch(
-				'/api/team',
-				{
-					headers: {
-						'content-type': 'application/json'
-					},
-					body: JSON.stringify({
-						...data,
-						token
-					}),
-					method: 'POST'
+		const result = await account.fetch(
+			'/api/team',
+			{
+				headers: {
+					'content-type': 'application/json'
 				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not create team');
-		}
+				body: JSON.stringify({
+					...data,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 
 		const json = await result.json();
 
 		return new Team(json, account);
 	}
 
-	public get accountID() {
-		return this.account.id;
-	}
+	public accountID: string;
 
-	public cadetLeader: MemberReference | null;
+	public cadetLeader: MemberReference;
 
 	public description: string;
 
@@ -99,7 +87,7 @@ export default class Team extends APIInterface<TeamObject>
 
 	public visiblity: TeamPublicity = TeamPublicity.PUBLIC;
 
-	private account: Account;
+	public teamHistory: PreviousTeamMember[];
 
 	public constructor(obj: TeamObject, account: Account) {
 		super(account.id);
@@ -114,20 +102,16 @@ export default class Team extends APIInterface<TeamObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				'/api/delete',
-				{
-					method: 'DELETE',
-					body: JSON.stringify({
-						token
-					})
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not delete team');
-		}
+		await this.fetch(
+			'/api/delete',
+			{
+				method: 'DELETE',
+				body: JSON.stringify({
+					token
+				})
+			},
+			member
+		);
 	}
 
 	public async save(member: MemberBase): Promise<void> {
@@ -137,24 +121,17 @@ export default class Team extends APIInterface<TeamObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				'/api/team',
-				{
-					method: 'PUT',
-					body: JSON.stringify({
-						...this.toRaw(),
-						token
-					}),
-					headers: {
-						'content-type': 'application/json'
-					}
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not save team information');
-		}
+		await this.fetch(
+			'/api/team',
+			{
+				method: 'PUT',
+				body: JSON.stringify({
+					...this.toRaw(),
+					token
+				})
+			},
+			member
+		);
 	}
 
 	public toRaw(): TeamObject {
@@ -167,7 +144,8 @@ export default class Team extends APIInterface<TeamObject>
 			name: this.name,
 			seniorCoach: this.seniorCoach,
 			seniorMentor: this.seniorMentor,
-			visiblity: this.visiblity
+			visiblity: this.visiblity,
+			teamHistory: this.teamHistory
 		};
 	}
 

@@ -27,7 +27,7 @@ export default abstract class Page<
 > extends React.Component<P, S, SS> {
 	protected isShallowOk = false;
 
-	private force = false;
+	protected updatingState = false;
 
 	public shouldComponentUpdate(nextProps: P, nextState: S) {
 		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
@@ -38,7 +38,7 @@ export default abstract class Page<
 			: deepCompare(nextState, this.state);
 
 		const shouldUpdate =
-			this.force ||
+			this.updatingState ||
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
@@ -48,7 +48,7 @@ export default abstract class Page<
 				this.props.routeProps.location.hash ||
 			!areStatesEqual;
 
-		this.force = false;
+		this.updatingState = false;
 
 		return shouldUpdate;
 	}
@@ -62,14 +62,20 @@ export default abstract class Page<
 			| (Pick<S, K> | S | null),
 		callback?: () => void
 	) {
-		this.force = true;
+		this.updatingState = true;
 		super.setState(state, callback);
 	}
 
 	public abstract render(): JSX.Element | null;
+
+	protected updateTitle(...text: string[]) {
+		document.title = `${[this.props.registry.Website.Name, ...text].join(
+			` ${this.props.registry.Website.Separator} `
+		)}`;
+	}
 }
 
-const shallowCompare = <T extends {}>(a: T, b: T) => {
+export const shallowCompare = <T extends {}>(a: T, b: T) => {
 	let same = true;
 
 	if (a === null && b !== null) {
@@ -94,7 +100,7 @@ const shallowCompare = <T extends {}>(a: T, b: T) => {
 	return same;
 };
 
-const deepCompare = <T extends {}>(a: T, b: T) => {
+export const deepCompare = <T extends {}>(a: T, b: T) => {
 	let same = true;
 
 	if (a === null && b !== null) {

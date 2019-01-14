@@ -54,6 +54,7 @@ export class BlogPostCreate extends Page<
 				text: 'Create post'
 			}
 		]);
+		this.updateTitle('Create post');
 		this.props.updateSideNav([]);
 		import('draft-js').then(draft => {
 			this.setState({

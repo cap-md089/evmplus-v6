@@ -1,9 +1,13 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
+import Button from 'src/components/Button';
+import DownloadDialogue from 'src/components/DownloadDialogue';
 import Event from 'src/lib/Event';
+import Team from 'src/lib/Team';
 import {
 	Checkbox,
 	DateTimeInput,
+	DisabledText,
 	FormBlock,
 	Label,
 	ListEditor,
@@ -25,6 +29,13 @@ interface AddEventState {
 	valid: boolean;
 	errors: {};
 	changed: { [P in keyof NewEventFormValues]: boolean };
+	createError: null | number;
+	teamDialogue: {
+		open: boolean;
+		filterValues: any[];
+		selectedValue: Team | null;
+	};
+	teamPromise: Promise<Team[]>;
 }
 
 interface NewEventFormValues extends NewEventObject {
@@ -42,6 +53,7 @@ interface NewEventFormValues extends NewEventObject {
 
 export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
+		createError: null,
 		event: {
 			name: '',
 			meetDateTime: +DateTime.utc(),
@@ -92,7 +104,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			debrief: '',
 			pointsOfContact: [],
 			signUpPartTime: false,
-			teamID: 0,
+			teamID: null,
 			fileIDs: []
 		},
 		valid: false,
@@ -137,8 +149,18 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			useParticipationFee: false,
 			useRegistration: false,
 			wingEventNumber: false
-		}
+		},
+		teamDialogue: {
+			filterValues: [],
+			open: false,
+			selectedValue: null,
+		},
+		teamPromise: this.props.account
+			.getTeams()
+			.then(teams => (this.teams = teams))
 	};
+
+	private teams: Team[] | null = null;
 
 	constructor(props: PageProps) {
 		super(props);
@@ -146,6 +168,63 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
+
+		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(
+			this
+		);
+		this.selectTeam = this.selectTeam.bind(this);
+		this.setSelectedTeam = this.setSelectedTeam.bind(this);
+		this.openTeamDialogue = this.openTeamDialogue.bind(this);
+	}
+
+	public componentDidMount() {
+		this.props.updateSideNav([
+			{
+				target: 'modify-event',
+				text: 'Basic information',
+				type: 'Reference'
+			},
+			{
+				target: 'activity-information',
+				text: 'Activity Information',
+				type: 'Reference'
+			},
+			{
+				target: 'logistics-information',
+				text: 'Logistics Information',
+				type: 'Reference'
+			},
+			{
+				target: 'point-of-contact',
+				text: 'Point of Contact',
+				type: 'Reference'
+			},
+			{
+				target: 'extra-information',
+				text: 'Extra Information',
+				type: 'Reference'
+			},
+			{
+				target: 'team-information',
+				text: 'Team Information',
+				type: 'Reference'
+			}
+		]);
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/calendar',
+				text: 'Calendar'
+			},
+			{
+				target: '/eventform',
+				text: 'Create event'
+			}
+		]);
+		this.updateTitle('Create event');
 	}
 
 	public render() {
@@ -159,6 +238,14 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		>;
 
 		const event = this.state.event;
+
+		const targetTeam = this.teams
+			? this.teams.filter(
+					team =>
+						team.id.toString() ===
+						(event.teamID === null ? '' : event.teamID).toString()
+			  )[0]
+			: undefined;
 
 		return this.props.member ? (
 			<NewEventForm
@@ -491,17 +578,68 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				<Label>Administration comments</Label>
 				<TextInput name="administrationComments" />
 
-				<TextBox name="null">Select a team</TextBox>
-
-				<Label>Team</Label>
-				<NumberInput name="teamID" />
-
 				<Label>Event files</Label>
 				<FileInput
 					name="fileIDs"
 					account={this.props.account}
 					member={this.props.member}
 				/>
+
+				<Title>Team information</Title>
+
+				<Label />
+
+				<TextBox name="null">
+					<Button onClick={this.openTeamDialogue} buttonType="none">
+						Select a team
+					</Button>
+					<DownloadDialogue<Team>
+						open={this.state.teamDialogue.open}
+						multiple={false}
+						overflow={400}
+						title="Select a team"
+						showIDField={false}
+						displayValue={this.displayTeam}
+						valuePromise={this.state.teamPromise}
+						filters={[
+							{
+								check: (team, input) => {
+									if (
+										input === '' ||
+										typeof input !== 'string'
+									) {
+										return true;
+									}
+
+									try {
+										return !!team.name.match(
+											new RegExp(input, 'gi')
+										);
+									} catch (e) {
+										return false;
+									}
+								},
+								displayText: 'Team name',
+								filterInput: TextInput
+							}
+						]}
+						onValueClick={this.setSelectedTeam}
+						onValueSelect={this.selectTeam}
+						selectedValue={this.state.teamDialogue.selectedValue}
+					/>
+				</TextBox>
+
+				<Label>Team ID</Label>
+				<NumberInput disabled={true} name="teamID" />
+
+				<Label>Team Name</Label>
+				<DisabledText
+					name="teamName"
+					value={targetTeam ? targetTeam.name : ''}
+				/>
+
+				<Label>Limit sign ups to team members</Label>
+				<Checkbox name="limitTeamSignups" />
 
 				<Title>Debrief information</Title>
 
@@ -560,11 +698,21 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			return;
 		}
 
-		const eventObject = await Event.Create(
-			eventData,
-			this.props.member,
-			this.props.account
-		);
+		let eventObject;
+
+		try {
+			eventObject = await Event.Create(
+				eventData,
+				this.props.member,
+				this.props.account
+			);
+		} catch (e) {
+			this.setState({
+				createError: e.status
+			});
+
+			return;
+		}
 
 		this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
 	}
@@ -582,6 +730,8 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
 			event.pickupDateTime =
 				event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
+		} else if (!this.state.changed.pickupDateTime) {
+			event.pickupDateTime = event.endDateTime + 300 * 1000; // Five minutes
 		}
 
 		const locationsHaveBeenModified =
@@ -599,36 +749,148 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 	}
 
 	private checkIfValid(event: NewEventFormValues) {
-		if (
-			!(
-				event.meetDateTime <= event.startDateTime &&
-				event.startDateTime <= event.endDateTime &&
-				event.endDateTime <= event.pickupDateTime
-			)
-		) {
-			return false;
+		let valid = true;
+
+		if (event.meetDateTime >= event.startDateTime) {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					meetDateTime: true
+				}
+			}));
+			valid = false;
 		}
 
-		if (event.name.length === 0) {
-			return false;
+		if (event.startDateTime >= event.endDateTime) {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					startDateTime: true
+				}
+			}));
+			valid = false;
 		}
 
-		if (
-			event.name === '' ||
-			event.meetLocation === '' ||
-			event.location === '' ||
-			event.pickupLocation === ''
-		) {
-			return false;
+		if (event.endDateTime >= event.pickupDateTime) {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					endDateTime: true
+				}
+			}));
+			valid = false;
+		}
+
+		if (event.name === '') {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					name: true
+				}
+			}));
+			valid = false;
+		}
+
+		if (event.meetLocation === '') {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					meetLocation: true
+				}
+			}));
+			valid = false;
+		}
+
+		if (event.location === '') {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					location: true
+				}
+			}));
+			valid = false;
+		}
+
+		if (event.pickupLocation === '') {
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					pickupLocation: true
+				}
+			}));
+			valid = false;
 		}
 
 		if (
 			event.transportationProvided === true &&
 			event.transportationDescription === ''
 		) {
-			return false;
+			this.setState(prev => ({
+				errors: {
+					...prev.errors,
+					transportationDescription: true
+				}
+			}));
+			valid = false;
 		}
 
-		return true;
+		return valid;
+	}
+
+	private displayTeam(team: Team) {
+		return team.name;
+	}
+
+	private onTeamDialogueFilterValueChange(filterValues: any[]) {
+		this.setState(prev => ({
+			teamDialogue: {
+				filterValues,
+				open: prev.teamDialogue.open,
+				selectedValue: prev.teamDialogue.selectedValue,
+			}
+		}));
+	}
+
+	private setSelectedTeam(selectedValue: Team) {
+		this.setState(prev => ({
+			teamDialogue: {
+				selectedValue,
+				open: prev.teamDialogue.open,
+				filterValues: prev.teamDialogue.filterValues,
+			}
+		}));
+	}
+
+	private selectTeam(team: Team) {
+		const prevValues = this.state.event;
+
+
+		if (team === null) {
+			prevValues.teamID = null;
+		} else {
+			prevValues.teamID = team.id;
+		}
+
+		this.setState(prev => ({
+			teamDialogue: {
+				selectedValue: null,
+				open: false,
+				filterValues: prev.teamDialogue.filterValues,
+			}
+		}));
+
+		this.setState({
+			event: prevValues
+		});
+	}
+
+	private openTeamDialogue() {
+		this.setState(prev => ({
+			teamDialogue: {
+				open: true,
+				filterValues: prev.teamDialogue.filterValues,
+				selectedValue: prev.teamDialogue.selectedValue,
+			}
+		}));
 	}
 }

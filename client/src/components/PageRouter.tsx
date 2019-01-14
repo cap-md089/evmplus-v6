@@ -7,6 +7,7 @@ import { BlogPostCreate } from 'src/pages/blog/BlogPostCreate';
 import { BlogView } from 'src/pages/blog/BlogView';
 import PageCreate from 'src/pages/pages/PageCreate';
 import PageEdit from 'src/pages/pages/PageEdit';
+import PageList from 'src/pages/pages/PageList';
 import PageView from 'src/pages/pages/PageView';
 import Account from '../lib/Account';
 import MemberBase from '../lib/Members';
@@ -25,6 +26,7 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './SideNavigation';
+import AttendanceMultiAdd from 'src/pages/AttendanceMultiAdd';
 
 const pages: Array<{
 	url: string;
@@ -160,6 +162,16 @@ const pages: Array<{
 		url: '/page/create',
 		component: PageCreate,
 		exact: false
+	},
+	{
+		url: '/page/list',
+		component: PageList,
+		exact: false
+	},
+	{
+		url: '/multiadd/:id',
+		component: AttendanceMultiAdd,
+		exact: false
 	}
 ];
 
@@ -261,8 +273,20 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 	public state = {
 		loading: false,
 		previousHash: '',
-		previousPath: ''
+		previousPath: '',
 	};
+
+	constructor(props: PageRouterProps) {
+		super(props);
+
+		if (props.member) {
+			this.state = {
+				loading: false,
+				previousHash: '',
+				previousPath: '',
+			}
+		}
+	}
 
 	public shouldComponentUpdate(
 		nextProps: PageRouterProps,
@@ -290,11 +314,11 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		// It's only supposed to run if the page changes and the component
 		// hasn't finished updating the session ID
 		if (
-			currentSID !== '' &&
+			(currentSID !== '' &&
 			currentSID !== null &&
 			this.state.loading === false &&
 			(this.props.location.hash !== this.state.previousHash ||
-				this.props.location.pathname !== this.state.previousPath)
+				this.props.location.pathname !== this.state.previousPath))
 		) {
 			// tslint:disable-next-line:no-console
 			console.log('Refreshing session ID');
@@ -315,7 +339,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 						this.props.authorizeUser(sr);
 
 						this.setState({
-							loading: false
+							loading: false,
 						});
 					});
 			}
@@ -323,14 +347,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 	}
 
 	public render() {
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
-
-		const loading =
-			this.state.loading ||
-			(currentSID !== '' &&
-				currentSID !== null &&
-				(this.props.location.hash !== this.state.previousHash ||
-					this.props.location.pathname !== this.state.previousPath));
+		const loading = this.state.loading;
 
 		if (!loading) {
 			// tslint:disable-next-line:no-console
@@ -343,25 +360,27 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			<Loader />
 		) : (
 			<div id="pageblock">
-				{pages.map((value, i) => {
-					return (
-						<Route
-							key={i}
-							path={value.url}
-							exact={value.exact}
-							component={composeElement(
-								value.component,
-								this.props.account,
-								this.props.authorizeUser,
-								this.props.updateSideNav,
-								this.props.updateBreadCrumbs,
-								this.props.registry,
-								this.props.member,
-								this.props.fullMemberDetails
-							)}
-						/>
-					);
-				})}
+				{/*<Switch>*/}
+					{pages.map((value, i) => {
+						return (
+							<Route
+								key={i}
+								path={value.url}
+								exact={value.exact}
+								component={composeElement(
+									value.component,
+									this.props.account,
+									this.props.authorizeUser,
+									this.props.updateSideNav,
+									this.props.updateBreadCrumbs,
+									this.props.registry,
+									this.props.member,
+									this.props.fullMemberDetails
+								)}
+							/>
+						);
+					})}
+				{/*</Switch>*/}
 			</div>
 		);
 	}

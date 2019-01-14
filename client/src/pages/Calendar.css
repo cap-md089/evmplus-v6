@@ -36,6 +36,7 @@
 	box-sizing: border-box;
 	padding: 0;
 	max-width: 101px;
+	vertical-align: top;
 }
 
 .calendar td.calendar-outmonth .date-name {
@@ -53,7 +54,7 @@
 	box-sizing: border-box;
 	padding: 0;
 	margin: 0;
-	height: 100px;
+	min-height: 100px;
 }
 
 .calendar .events-list .event-item {
@@ -63,14 +64,28 @@
 	font-size: 12px;
 	padding: 1.5px;
 	padding-left: 2px;
-	height: 22.5px;
+	height: 26.5px;
 	margin: calc(2.5px / 2);
 	background-color: #0f407d;
 	color: white;
 	border-radius: 5px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	border: 2px solid #071d31;
 	overflow: hidden;
+}
+
+.events-list a {
+	display: inline-block;
+	width: 100%;
+}
+
+.events-list .block {
+	height: 30px;
+	margin: 1px;
+	padding: 0px;
+	box-sizing: border-box;
+	border: 2px solid rgba(0,0,0,0);
 }
 
 .calendar .event-item.mergeRight {
@@ -78,15 +93,16 @@
 	border-bottom-right-radius: 0px;
 	margin-right: 0;
 	width: calc(100% - 1.25px);
-	text-overflow: unset;
-	overflow: visible;
+	border-right-width: 0;
 }
 
 .calendar .event-item.mergeLeft {
 	border-top-left-radius: 0px;
 	border-bottom-left-radius: 0px;
 	margin-left: 0;
+	padding-left: 3px;
 	width: calc(100% - 1.25px);
+	border-left-width: 0;
 }
 
 .calendar .event-item.mergeLeft.mergeRight {
@@ -102,4 +118,42 @@
 
 .calendar .event-item.first-event-name {
 	padding-left: 5px;
+}
+
+.calendar .events-list .event-item.draft {
+	background-color: #151;
+	background-image: repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px);
+	border-color: #131;
+	color: #FFF;
+}
+
+.calendar .events-list .event-item.team {
+	background-color: #51B749;
+	border-color: #113;
+	color: #FFF;
+}
+
+.calendar .events-list .event-item.draft.team {
+	background-color: #7AE7BF;
+	background-image: repeating-linear-gradient(-45deg, #51B749, #51B749 10px, #55da5e 10px, #55da5e 20px);
+	color: #000;
+}
+
+.calendar .events-list .event-item.tentative {
+	background-color: #46D6DB;
+	border-color: #113;
+	color: #000;
+}
+
+.calendar .events-list .event-item.cancelled {
+	background-color: #DC2127;
+	background-image: repeating-linear-gradient(-45deg, #DC2127, #DC2127 10px, #f77 10px, #f77 20px);
+	border-color: #FAA;
+	color: #FFF;
+}
+
+.calendar .events-list .event-item.info {
+	background-color: #A4BDFC;
+	border-color: #000;
+	color: #000;
 }

@@ -95,6 +95,22 @@ export default class PageEdit extends Page<
 			)
 		});
 
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			...page.ancestry.map(item => ({
+				target: `/page/view/${item.id}`,
+				text: item.title
+			})),
+			{
+				target: `/page/view/${page.id}`,
+				text: page.title
+			}
+		]);
+		this.updateTitle(page.title);
+		this.props.updateSideNav([]);
 	}
 
 	public render() {

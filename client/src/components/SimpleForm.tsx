@@ -17,6 +17,7 @@ import SimpleRadioButton from './form-inputs/SimpleRadioButton';
 import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
 import DisabledMappedText from './form-inputs/DisabledMappedText';
+import DisabledText from './form-inputs/DisabledText';
 
 let TextArea: typeof import('./form-inputs/TextArea').default;
 
@@ -70,10 +71,18 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 
 	public render() {
+		const id =
+			this.props.id || typeof this.props.children === 'string'
+				? this.props
+						.children!.toString()
+						.toLocaleLowerCase()
+						.replace(/ +/g, '-')
+				: '';
+
 		return (
 			<div className="formbar fheader">
 				<div className="formbox header">
-					<h3 id={this.props.id}>{this.props.children}</h3>
+					<h3 id={id}>{this.props.children}</h3>
 				</div>
 			</div>
 		);
@@ -108,7 +117,8 @@ export function isInput(
 		el.type === Selector ||
 		el.type === LoadingTextArea ||
 		el.type === BigTextBox ||
-		el.type === DisabledMappedText
+		el.type === DisabledMappedText ||
+		el.type === DisabledText
 	);
 }
 
@@ -133,7 +143,7 @@ export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
 /**
  * The properties a form itself requires
  */
-export interface FormProps<F> {
+export interface FormProps<F extends {}> {
 	/**
 	 * The function that is called when the user submits the form
 	 *
@@ -161,8 +171,10 @@ export interface FormProps<F> {
 	 * The ID to identify the form with CSS
 	 *
 	 * Also used to 'save' the form; make it long so that it is unique!
+	 *
+	 * @deprecated Never implemented nor will ever be used
 	 */
-	id: string;
+	id?: string;
 	/**
 	 * Determines whether or not to load a previously saved form
 	 *
@@ -186,10 +198,6 @@ export interface FormProps<F> {
 	 */
 	onChange?: (fields: F) => void;
 	/**
-	 * Type checking for children!
-	 */
-	children?: JSX.Element[] | JSX.Element;
-	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
 	 */
 	values?: F;
@@ -208,9 +216,11 @@ export interface FormProps<F> {
  * type SampleForm = new () => Form<{x: string}>
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
+ * <Form<{x: string}> />
+ * // With TypeScript 2.8 Generics work with React components
  */
 class SimpleForm<
-	C = {},
+	C extends {} = {},
 	P extends FormProps<C> = FormProps<C>
 > extends React.Component<
 	P,
@@ -321,7 +331,10 @@ class SimpleForm<
 									? typeof this.props.values[
 											child.props.name
 									  ] === 'undefined'
-										? ''
+										? typeof child.props.value ===
+										  'undefined'
+											? ''
+											: child.props.value
 										: this.props.values[child.props.name]
 									: typeof child.props.value === 'undefined'
 									? ''
@@ -350,6 +363,9 @@ class SimpleForm<
 								typeof (this.props
 									.children as React.ReactChild[])[i - 1] !==
 									'undefined' &&
+								(this.props.children as React.ReactChild[])[
+									i - 1
+								] !== null &&
 								!isInput(
 									(this.props.children as React.ReactChild[])[
 										i - 1
@@ -499,5 +515,6 @@ export {
 	Selector,
 	LoadingTextArea,
 	DisabledMappedText,
-	BigTextBox
+	BigTextBox,
+	DisabledText
 };

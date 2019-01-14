@@ -17,10 +17,7 @@ export default class ErrorHandler extends React.PureComponent<
 		crash: false
 	};
 
-	constructor(props: {
-		member: MemberBase | null;
-		account: Account;
-	}) {
+	constructor(props: { member: MemberBase | null; account: Account }) {
 		super(props);
 
 		this.tryAgain = this.tryAgain.bind(this);
@@ -47,7 +44,11 @@ export default class ErrorHandler extends React.PureComponent<
 			type: 'Client'
 		};
 
-		ErrorMessage.Create(errorObject, this.props.member, this.props.account).then(() => {
+		ErrorMessage.Create(
+			errorObject,
+			this.props.member,
+			this.props.account
+		).then(() => {
 			// tslint:disable-next-line:no-console
 			console.log('Error logged');
 		});
@@ -62,8 +63,13 @@ export default class ErrorHandler extends React.PureComponent<
 			<div>
 				<h1>Uh oh! Something bad happened on our end...</h1>
 				The page appears to have crashed. The developers have been
-				notified so that they may fix the issue. Please refresh the page
-				and <a href="#" onClick={this.tryAgain}>try again</a>. {/*If you want to provide feedback, please submit feedback
+				notified so that they may fix the issue. If you want to try
+				again,
+				<a href="#" onClick={this.tryAgain}>
+					please refresh the page
+				</a>
+				.{' '}
+				{/*If you want to provide feedback, please submit feedback
 				through our feedback form */}
 			</div>
 		) : (
@@ -72,6 +78,6 @@ export default class ErrorHandler extends React.PureComponent<
 	}
 
 	private tryAgain() {
-		this.setState({crash: false});
+		this.setState({ crash: false });
 	}
 }

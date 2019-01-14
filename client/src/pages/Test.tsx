@@ -76,9 +76,6 @@ export default class Test extends Page<
 		const TestButton = Button as new () => Button<
 			{
 				hi: boolean;
-			},
-			{
-				hi: boolean;
 			}
 		>;
 

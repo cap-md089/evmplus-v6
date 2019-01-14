@@ -21,7 +21,10 @@ export default class CAPNHQMember extends MemberBase
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[];
+	public dutyPositions: Array<{
+		duty: string,
+		date: number
+	}>;
 	/**
 	 * The organization ID the user belongs to
 	 */
@@ -93,7 +96,7 @@ export default class CAPNHQMember extends MemberBase
 
 	public hasDutyPosition(dutyPosition: string | string[]): boolean {
 		return typeof dutyPosition === 'string'
-			? this.dutyPositions.filter(s => s === dutyPosition).length > 0
+			? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
 			: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b);
 	}
 

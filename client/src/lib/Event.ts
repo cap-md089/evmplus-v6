@@ -4,6 +4,7 @@ import MemberBase from './MemberBase';
 import Account from './Account';
 import { PointOfContactType } from '../enums';
 import { EchelonEventNumber } from '../../../lib';
+import { MemberClasses } from './Members';
 
 /**
  * Represents an event for the squadron calendar
@@ -12,7 +13,7 @@ export default class Event extends APIInterface<EventObject>
 	implements EventObject {
 	/**
 	 * Creates an event object for the event calendar of the specified calendar
-	 * 
+	 *
 	 * @param obj The event details
 	 * @param member The event author
 	 * @param account The account the event belongs to
@@ -32,22 +33,17 @@ export default class Event extends APIInterface<EventObject>
 
 		const token = await Event.getToken(account.id, member);
 
-		let result;
-		try {
-			result = await account.fetch(
-				'/api/event',
-				{
-					body: JSON.stringify({
-						...obj,
-						token
-					}),
-					method: 'POST'
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not create new event');
-		}
+		const result = await account.fetch(
+			'/api/event',
+			{
+				body: JSON.stringify({
+					...obj,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 
 		const newEvent = await result.json();
 
@@ -63,12 +59,7 @@ export default class Event extends APIInterface<EventObject>
 			account = await Account.Get();
 		}
 
-		let result;
-		try {
-			result = await account.fetch(`/api/event/${id}`, {}, member);
-		} catch (e) {
-			throw new Error('Could not get event');
-		}
+		const result = await account.fetch(`/api/event/${id}`, {}, member);
 
 		const event = await result.json();
 
@@ -174,7 +165,7 @@ export default class Event extends APIInterface<EventObject>
 
 	public attendance: AttendanceRecord[];
 
-	public constructor(data: EventObject, account: Account) {
+	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
 
 		Object.assign(this, data);
@@ -239,10 +230,7 @@ export default class Event extends APIInterface<EventObject>
 		record: NewAttendanceRecord,
 		errOnInvalidPermission = false
 	) {
-		if (
-			!member.matchesReference(memberToAdd) &&
-			!this.isPOC(member)
-		) {
+		if (!member.matchesReference(memberToAdd) && !this.isPOC(member)) {
 			if (errOnInvalidPermission) {
 				throw new Error('Cannot add someone else');
 			} else {
@@ -258,21 +246,73 @@ export default class Event extends APIInterface<EventObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/event/${this.id}/attendance`,
-				{
-					body: JSON.stringify({
-						...body,
-						token
-					}),
-					method: 'POST'
-				},
-				member
-			);
-		} catch(e) {
-			throw new Error('Could not add attendee');
+		this.attendance.push({
+			...record,
+			memberName: member.getFullName(),
+			memberID: memberToAdd,
+			timestamp: Date.now(),
+			summaryEmailSent: false
+		});
+
+		await this.fetch(
+			`/api/event/${this.id}/attendance`,
+			{
+				body: JSON.stringify({
+					...body,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
+	}
+
+	public async addAttendees(
+		member: MemberBase,
+		records: NewAttendanceRecord[],
+		members: MemberClasses[],
+		errOnInvalidPermission = false
+	) {
+		if (!this.isPOC(member)) {
+			if (errOnInvalidPermission) {
+				throw new Error('Cannot bulk add attendance');
+			} else {
+				return;
+			}
 		}
+
+		const token = await this.getToken(member);
+
+		const sendableRecords: NewAttendanceRecord[] = [];
+
+		for (const i in records) {
+			if (records.hasOwnProperty(i) && members.hasOwnProperty(i)) {
+				sendableRecords.push({
+					...records[i],
+					memberID: members[i].getReference()
+				});
+
+				this.attendance.push({
+					...records[i],
+					memberID: members[i].getReference(),
+					memberName: members[i].getFullName(),
+					timestamp: Date.now(),
+					summaryEmailSent: false
+				});
+			}
+		}
+
+		await this.fetch(
+			`/api/event/${this.id}/attendance/bulk`,
+			{
+				body: JSON.stringify({
+					members: sendableRecords,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 	}
 
 	public async removeAttendee(
@@ -280,9 +320,7 @@ export default class Event extends APIInterface<EventObject>
 		memberToRemove: MemberReference,
 		errOnInvalidPermission = false
 	) {
-		if (
-			!this.isPOC(member)
-		) {
+		if (!this.isPOC(member)) {
 			if (errOnInvalidPermission) {
 				throw new Error('Invalid permissions for removing attendee');
 			} else {
@@ -292,21 +330,25 @@ export default class Event extends APIInterface<EventObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/event/${this.id}/attendance`,
-				{
-					body: JSON.stringify({
-						...memberToRemove,
-						token
-					}),
-					method: 'DELETE'
-				},
-				member
-			);
-		} catch(e) {
-			throw new Error('Could not delete attendee');
-		}
+		await this.fetch(
+			`/api/event/${this.id}/attendance`,
+			{
+				body: JSON.stringify({
+					...memberToRemove,
+					token
+				}),
+				method: 'DELETE'
+			},
+			member
+		);
+
+		this.attendance = this.attendance.filter(
+			record =>
+				!MemberBase.AreMemberReferencesTheSame(
+					record.memberID,
+					memberToRemove
+				)
+		);
 	}
 
 	public async modifyAttendee(
@@ -315,10 +357,7 @@ export default class Event extends APIInterface<EventObject>
 		record: NewAttendanceRecord,
 		errOnInvalidPermission = false
 	) {
-		if (
-			!this.isPOC(member) ||
-			!member.matchesReference(memberToModify)
-		) {
+		if (!this.isPOC(member) || !member.matchesReference(memberToModify)) {
 			if (errOnInvalidPermission) {
 				throw new Error('Invalid permissions for removing attendee');
 			} else {
@@ -328,28 +367,42 @@ export default class Event extends APIInterface<EventObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/event/${this.id}/attendance`,
-				{
-					body: JSON.stringify({
-						...record,
-						member: memberToModify,
-						token
-					}),
-					method: 'PUT'
-				},
-				member
-			)
-		} catch(e) {
-			throw new Error('Could not modify attendance record');
+		await this.fetch(
+			`/api/event/${this.id}/attendance`,
+			{
+				body: JSON.stringify({
+					...record,
+					member: memberToModify,
+					token
+				}),
+				method: 'PUT'
+			},
+			member
+		);
+
+		let attendanceIndex = '';
+
+		for (const i in this.attendance) {
+			if (
+				MemberBase.AreMemberReferencesTheSame(
+					this.attendance[i].memberID,
+					memberToModify
+				)
+			) {
+				attendanceIndex = i;
+			}
+		}
+
+		if (attendanceIndex !== '') {
+			this.attendance[attendanceIndex] = {
+				...this.attendance[attendanceIndex],
+				...record
+			};
 		}
 	}
 
 	public async save(member: MemberBase, errOnInvalidPermission = false) {
-		if (
-			!this.isPOC(member)
-		) {
+		if (!this.isPOC(member)) {
 			if (errOnInvalidPermission) {
 				throw new Error('Invalid permissions');
 			} else {
@@ -359,21 +412,53 @@ export default class Event extends APIInterface<EventObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/event/${this.id}`,
-				{
-					body: JSON.stringify({
-						...this.toRaw(),
-						token
-					}),
-					method: 'PUT'
-				},
-				member
-			)
-		} catch(e) {
-			throw new Error('Could not save event');
+		await this.fetch(
+			`/api/event/${this.id}`,
+			{
+				body: JSON.stringify({
+					...this.toRaw(),
+					token
+				}),
+				method: 'PUT'
+			},
+			member
+		);
+	}
+
+	public async copy(
+		newTime: number,
+		member: MemberBase,
+		copyFiles = false,
+		copyStatus = false,
+		errOnInvalidPermission = false
+	): Promise<Event | undefined> {
+		if (!this.isPOC(member)) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
 		}
+
+		const token = await this.getToken(member);
+
+		const body = await this.fetch(
+			`/api/event/${this.id}/copy`,
+			{
+				body: JSON.stringify({
+					newTime,
+					copyFiles,
+					copyStatus,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
+
+		const json = await body.json();
+
+		return new Event(json, this.account);
 	}
 
 	/**
@@ -383,6 +468,8 @@ export default class Event extends APIInterface<EventObject>
 	 */
 	public isPOC(member: MemberBase) {
 		return (
+			member.matchesReference(this.author) ||
+			member.hasPermission('SignUpEdit') ||
 			this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
@@ -390,9 +477,7 @@ export default class Event extends APIInterface<EventObject>
 						member.getReference(),
 						poc.memberReference
 					)
-			) ||
-			member.matchesReference(this.author) ||
-			member.hasPermission('SignUpEdit')
+			)
 		);
 	}
 
@@ -402,5 +487,38 @@ export default class Event extends APIInterface<EventObject>
 				this[i] = values[i];
 			}
 		}
+	}
+
+	public async delete(member: MemberBase, errOnInvalidPermission = false) {
+		if (!this.isPOC(member)) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
+		}
+
+		const token = await this.getToken(member);
+
+		await this.fetch(
+			`/api/event/${this.id}`,
+			{
+				body: JSON.stringify({
+					token
+				}),
+				method: 'DELETE'
+			},
+			member
+		);
+	}
+
+	public hasMember(member: MemberReference): boolean {
+		for (const i of this.attendance) {
+			if (MemberBase.AreMemberReferencesTheSame(i.memberID, member)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

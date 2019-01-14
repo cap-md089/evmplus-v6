@@ -71,6 +71,21 @@ export default class EventLinkList extends Page<
 
 			this.setState({ eventList, eventsThatAreLinked });
 		}
+
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/eventlinklist',
+				text: 'Event list'
+			}
+		]);
+
+		this.props.updateSideNav([]);
+
+		this.updateTitle('Event list');
 	}
 
 	public render() {

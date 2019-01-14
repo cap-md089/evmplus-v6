@@ -1,28 +1,27 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import SimpleForm, {
-	BigTextBox,
-	Checkbox,
-	DateTimeInput,
-	Label,
-	TextBox
-} from 'src/components/SimpleForm';
+import AttendanceForm from 'src/components/AttendanceForm';
+import { DialogueButtons } from 'src/components/Dialogue';
+import DialogueButtonForm from 'src/components/DialogueButtonForm';
+import { DateTimeInput, Label } from 'src/components/Form';
+import { TextBox } from 'src/components/SimpleForm';
+import MemberBase from 'src/lib/Members';
 import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
 import Loader from '../components/Loader';
-import { AttendanceStatus, EventStatus, PointOfContactType } from '../enums';
+import { EventStatus, PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import './EventViewer.css';
 import { Activities, RequiredForms, Uniforms } from './ModifyEvent';
 import Page, { PageProps } from './Page';
+import DialogueButton from 'src/components/DialogueButton';
 
-const clamp = (min: number, max: number, input: number) =>
-	Math.max(min, Math.min(max, input));
+const noop = () => void 0;
 
 interface EventViewerState {
 	event: Event | null;
 	error?: string;
-	attendanceSignup: NewAttendanceRecord;
-	usePartTime: boolean;
+	previousUpdatedMember: MemberReference;
+	newTime: number;
 }
 
 type EventViewerProps = PageProps<{ id: string }>;
@@ -59,11 +58,11 @@ const eventStatus = (stat: EventStatus): string =>
 		? 'Tentative'
 		: '';
 
-// const attendanceStatusLabels = [
-// 	'Commited/Attended',
-// 	'No show',
-// 	'Rescinded commitment to attend'
-// ];
+export const attendanceStatusLabels = [
+	'Commited/Attended',
+	'No show',
+	'Rescinded commitment to attend'
+];
 
 export default class EventViewer extends Page<
 	EventViewerProps,
@@ -72,31 +71,45 @@ export default class EventViewer extends Page<
 	public state: EventViewerState = {
 		event: null,
 		error: '',
-		attendanceSignup: {
-			arrivalTime: null,
-			comments: '',
-			departureTime: null,
-			planToUseCAPTransportation: false,
-			requirements: '',
-			status: AttendanceStatus.COMMITTEDATTENDED,
-			canUsePhotos: true
+		previousUpdatedMember: {
+			type: 'Null'
 		},
-		usePartTime: false
+		newTime: 0
 	};
 
 	constructor(props: EventViewerProps) {
 		super(props);
 
-		this.onAttendanceFormChange = this.onAttendanceFormChange.bind(this);
-		this.onAttendanceFormSubmit = this.onAttendanceFormSubmit.bind(this);
+		this.addAttendanceRecord = this.addAttendanceRecord.bind(this);
+		this.clearPreviousMember = this.clearPreviousMember.bind(this);
+		this.removeAttendanceRecord = this.removeAttendanceRecord.bind(this);
+
+		this.moveEvent = this.moveEvent.bind(this);
+		this.copyMoveEvent = this.copyMoveEvent.bind(this);
+		this.copyEvent = this.copyEvent.bind(this);
+		this.deleteEvent = this.deleteEvent.bind(this);
 	}
 
 	public async componentDidMount() {
-		const event = await Event.Get(
-			parseInt(this.props.routeProps.match.params.id.split('-')[0], 10),
-			this.props.member,
-			this.props.account
-		);
+		let event: Event;
+
+		try {
+			event =
+				this.state.event ||
+				(await Event.Get(
+					parseInt(
+						this.props.routeProps.match.params.id.split('-')[0],
+						10
+					),
+					this.props.member,
+					this.props.account
+				));
+		} catch (e) {
+			this.setState({
+				error: 'Could not find event'
+			});
+			return;
+		}
 
 		const eventURL = `/eventviewer/${
 			event.id
@@ -120,59 +133,22 @@ export default class EventViewer extends Page<
 				text: `View ${event.name}`
 			}
 		]);
-		this.setState(prev => ({
-			event,
-			attendanceSignup: {
-				...prev.attendanceSignup,
-				arrivalTime: event.meetDateTime,
-				departureTime: event.pickupDateTime
-			}
-		}));
+
+		this.updateTitle(`View event ${event.name}`);
+
+		this.setState({
+			event
+		});
 	}
 
 	public render() {
+		if (this.state.error !== '') {
+			return <div>{this.state.error}</div>;
+		}
+
 		if (this.state.event === null) {
 			return <Loader />;
 		}
-
-		// Can use part time
-		const cupt = this.state.event.signUpPartTime;
-
-		// Use part time
-		const upt = cupt && this.state.usePartTime;
-
-		const eventLength =
-			this.state.event.pickupDateTime - this.state.event.meetDateTime;
-
-		const arrival =
-			this.state.attendanceSignup.arrivalTime ||
-			this.state.event.meetDateTime;
-		const departure =
-			this.state.attendanceSignup.departureTime ||
-			this.state.event.pickupDateTime;
-
-		const beforeArrival =
-			clamp(
-				this.state.event.meetDateTime,
-				this.state.event.pickupDateTime,
-				arrival
-			) - this.state.event.meetDateTime;
-		const afterDeparture =
-			this.state.event.pickupDateTime -
-			clamp(
-				this.state.event.meetDateTime,
-				this.state.event.pickupDateTime,
-				departure
-			);
-
-		const timeDuring = eventLength - (beforeArrival + afterDeparture);
-
-		const percentBeforeArrival =
-			arrival > departure ? 1 : beforeArrival / eventLength;
-		const percentAfterDeparture =
-			arrival > departure ? 0 : afterDeparture / eventLength;
-		const percentDuring =
-			1 - (percentBeforeArrival + percentAfterDeparture);
 
 		return (
 			<div>
@@ -181,6 +157,89 @@ export default class EventViewer extends Page<
 					<>
 						<Link to={`/eventform/${this.state.event.id}`}>
 							Edit event "{this.state.event.name}"
+						</Link>
+						{' | '}
+						<DialogueButtonForm<{ newTime: number }>
+							buttonText="Move event"
+							buttonClass="underline-button"
+							buttonType="none"
+							displayButtons={DialogueButtons.YES_NO_CANCEL}
+							onYes={this.moveEvent}
+							onNo={this.copyMoveEvent}
+							title="Move event"
+							labels={['Move event', 'Copy move event', 'Cancel']}
+							values={{
+								newTime: this.state.event.startDateTime
+							}}
+						>
+							<TextBox name="null">
+								<span
+									style={{
+										lineHeight: '1px'
+									}}
+								>
+									<span style={{ color: 'red' }}>
+										WARNING:
+									</span>{' '}
+									moving this event may cause confusion.
+									<br />
+									Consider instead copying this event, and
+									marking
+									<br />
+									this event as cancelled.
+									<br />
+									<br />
+									Or, click the 'Copy move button' to perform
+									this
+									<br />
+									action automatically
+								</span>
+							</TextBox>
+
+							<Label>New start time of event</Label>
+							<DateTimeInput
+								name="newTime"
+								date={true}
+								time={true}
+								originalTimeZoneOffset={'America/New_York'}
+							/>
+						</DialogueButtonForm>
+						{' | '}
+						<DialogueButtonForm<{ newTime: number }>
+							buttonText="Copy event"
+							buttonType="none"
+							buttonClass="underline-button"
+							displayButtons={DialogueButtons.OK_CANCEL}
+							onOk={this.copyEvent}
+							title="Move event"
+							labels={['Copy event', 'Cancel']}
+							values={{
+								newTime: this.state.event.startDateTime
+							}}
+						>
+							<Label>Start time of new event</Label>
+							<DateTimeInput
+								name="newTime"
+								date={true}
+								time={true}
+								originalTimeZoneOffset={'America/New_York'}
+							/>
+						</DialogueButtonForm>
+						{' | '}
+						<DialogueButton
+							buttonText="Delete event"
+							buttonType="none"
+							buttonClass="underline-button"
+							displayButtons={DialogueButtons.OK_CANCEL}
+							onOk={this.deleteEvent}
+							title="Delete event"
+							labels={['Yes', 'No']}
+						>
+							Really delete event?
+						</DialogueButton>
+						{' | '}
+						<Link to={`/multiadd/${this.state.event.id}`}>
+							Add attendance
 						</Link>
 						<br />
 						<br />
@@ -300,229 +359,158 @@ export default class EventViewer extends Page<
 				</div>
 				{this.props.member !== null ? (
 					<div>
-						<h2>Attendance</h2>
 						{this.state.event.attendance.filter(val =>
 							this.props.member!.matchesReference(val.memberID)
 						).length === 0 ? (
-							upt ? (
-								<SimpleForm
-									id="attendanceSingupForm"
-									values={{
-										...this.state.attendanceSignup,
-										usePartTime: this.state.usePartTime
-									}}
-									onChange={this.onAttendanceFormChange}
-									onSubmit={this.onAttendanceFormSubmit}
-									submitInfo={{
-										text: 'Sign up'
-									}}
-								>
-									<Label>Comments</Label>
-									<BigTextBox name="comments" />
-
-									<Label>
-										Are you using CAP transportation?
-									</Label>
-									<Checkbox name="planToUseCAPTransportation" />
-
-									<Label>Sign up part time?</Label>
-									<Checkbox name="usePartTime" />
-
-									<TextBox name="null">
-										<div className="partTimeSignupDisplay">
-											<div
-												className="timeBefore"
-												style={{
-													width: `${percentBeforeArrival *
-														100}%`
-												}}
-											/>
-											<div
-												className="timeDuring"
-												style={{
-													width: `${percentDuring *
-														100}%`
-												}}
-											/>
-											<div
-												className="timeAfter"
-												style={{
-													width: `${percentAfterDeparture *
-														100}%`
-												}}
-											/>
-											Duration:{' '}
-											{timeDuring >= 3600 * 1000
-												? `${Math.round(
-														timeDuring /
-															(3600 * 1000)
-												  )} hrs `
-												: null}
-											{`${Math.round(
-												(timeDuring % (3600 * 1000)) /
-													(1000 * 60)
-											)} mins`}
-										</div>
-									</TextBox>
-
-									<Label>Arrival time</Label>
-									<DateTimeInput
-										name="arrivalTime"
-										date={true}
-										time={true}
-										originalTimeZoneOffset={
-											'America/New_York'
-										}
-									/>
-
-									<Label>Departure time</Label>
-									<DateTimeInput
-										name="departureTime"
-										date={true}
-										time={true}
-										originalTimeZoneOffset={
-											'America/New_York'
-										}
-									/>
-
-									<Label>
-										Can your photo be used on social media
-										to promote Civil Air Patrol?
-									</Label>
-									<Checkbox name="canUsePhotos" />
-								</SimpleForm>
-							) : cupt ? (
-								<SimpleForm
-									id="attendanceSingupForm"
-									values={{
-										...this.state.attendanceSignup,
-										usePartTime: this.state.usePartTime
-									}}
-									onChange={this.onAttendanceFormChange}
-									onSubmit={this.onAttendanceFormSubmit}
-									submitInfo={{
-										text: 'Sign up'
-									}}
-								>
-									<Label>Comments</Label>
-									<BigTextBox name="comments" />
-
-									<Label>
-										Are you using CAP transportation?
-									</Label>
-									<Checkbox name="planToUseCAPTransportation" />
-
-									<Label>Sign up part time?</Label>
-									<Checkbox name="usePartTime" />
-
-									<Label>
-										Can your photo be used on social media
-										to promote Civil Air Patrol?
-									</Label>
-									<Checkbox name="canUsePhotos" />
-								</SimpleForm>
-							) : (
-								<SimpleForm
-									id="attendanceSingupForm"
-									values={{
-										...this.state.attendanceSignup,
-										usePartTime: this.state.usePartTime
-									}}
-									onChange={this.onAttendanceFormChange}
-									onSubmit={this.onAttendanceFormSubmit}
-									submitInfo={{
-										text: 'Sign up'
-									}}
-								>
-									<Label>Comments</Label>
-									<BigTextBox name="comments" />
-
-									<Label>
-										Are you using CAP transportation?
-									</Label>
-									<Checkbox name="planToUseCAPTransportation" />
-
-									<Label>
-										Can your photo be used on social media
-										to promote Civil Air Patrol?
-									</Label>
-									<Checkbox name="canUsePhotos" />
-								</SimpleForm>
-							)
+							<AttendanceForm
+								account={this.props.account}
+								event={this.state.event}
+								member={this.props.member}
+								updateRecord={this.addAttendanceRecord}
+								updated={false}
+								clearUpdated={this.clearPreviousMember}
+								removeRecord={noop}
+							/>
 						) : null}
-						{this.state.event.attendance.map((val, i) => (
-							<div key={i}>{val.memberName}</div>
-						))}
+						<h2>Attendance</h2>
+						{this.state.event.attendance.map((val, i) =>
+							this.props.member &&
+							(this.props.member.matchesReference(val.memberID) ||
+								this.state.event!.isPOC(this.props.member)) ? (
+								<AttendanceForm
+									account={this.props.account}
+									event={this.state.event!}
+									member={this.props.member}
+									updateRecord={this.addAttendanceRecord}
+									record={val}
+									key={i}
+									updated={MemberBase.AreMemberReferencesTheSame(
+										this.state.previousUpdatedMember,
+										val.memberID
+									)}
+									clearUpdated={this.clearPreviousMember}
+									removeRecord={this.removeAttendanceRecord}
+								/>
+							) : (
+								<div key={i}>{val.memberName}</div>
+							)
+						)}
+						{this.state.event.attendance.length === 0 ? (
+							<div>No attendance records</div>
+						) : null}
 					</div>
 				) : null}
 			</div>
 		);
 	}
 
-	private onAttendanceFormChange(
-		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
+	private addAttendanceRecord(
+		record: NewAttendanceRecord,
+		member: MemberReference
 	) {
-		let arrivalTime = attendanceSignup.arrivalTime || this.state.event!.meetDateTime;
-		let departureTime = attendanceSignup.departureTime || this.state.event!.pickupDateTime;
-
-		if (arrivalTime > departureTime) {
-			[arrivalTime, departureTime] = [departureTime, arrivalTime];
-		}
-
 		this.setState({
-			attendanceSignup: {
-				arrivalTime,
-				comments: attendanceSignup.comments,
-				departureTime,
-				planToUseCAPTransportation:
-					attendanceSignup.planToUseCAPTransportation,
-				requirements: attendanceSignup.requirements || '',
-				status: AttendanceStatus.COMMITTEDATTENDED,
-				canUsePhotos: attendanceSignup.canUsePhotos
-			},
-			usePartTime: attendanceSignup.usePartTime
+			previousUpdatedMember: member
 		});
 	}
 
-	private onAttendanceFormSubmit(
-		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
+	private removeAttendanceRecord(
+		record: AttendanceRecord
 	) {
-		let arrivalTime = attendanceSignup.arrivalTime || this.state.event!.meetDateTime;
-		let departureTime = attendanceSignup.departureTime || this.state.event!.pickupDateTime;
+		this.forceUpdate();
+	}
 
-		if (arrivalTime > departureTime) {
-			[arrivalTime, departureTime] = [departureTime, arrivalTime];
+	private clearPreviousMember() {
+		this.setState({
+			previousUpdatedMember: {
+				type: 'Null'
+			}
+		});
+	}
+
+	private async moveEvent({ newTime }: { newTime: number }) {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
 		}
 
-		this.state
-			.event!.addAttendee(
-				this.props.member!,
-				this.props.member!.getReference(),
-				{
-					arrivalTime: attendanceSignup.usePartTime
-						? clamp(
-								this.state.event!.meetDateTime,
-								this.state.event!.pickupDateTime,
-								arrivalTime
-						  )
-						: null,
-					comments: attendanceSignup.comments,
-					departureTime: attendanceSignup.usePartTime
-						? clamp(
-								this.state.event!.meetDateTime,
-								this.state.event!.pickupDateTime,
-								departureTime
-						  )
-						: null,
-					planToUseCAPTransportation:
-						attendanceSignup.planToUseCAPTransportation,
-					requirements: attendanceSignup.requirements,
-					status: AttendanceStatus.COMMITTEDATTENDED,
-					canUsePhotos: attendanceSignup.canUsePhotos
-				}
-			)
-			.then(() => {
-				this.forceUpdate();
-			});
+		if (!this.props.member) {
+			throw new Error(
+				'Attempting to mvoe an event without authorization'
+			);
+		}
+
+		const event = this.state.event;
+
+		const timeDelta = newTime - event.startDateTime;
+
+		event.meetDateTime += timeDelta;
+		event.startDateTime = newTime;
+		event.endDateTime += timeDelta;
+		event.pickupDateTime += timeDelta;
+
+		await event.save(this.props.member);
+
+		this.forceUpdate();
+	}
+
+	private async copyMoveEvent({ newTime }: { newTime: number }) {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			throw new Error(
+				'Attempting to mvoe an event without authorization'
+			);
+		}
+
+		const newEvent = await this.state.event.copy(
+			newTime,
+			this.props.member
+		);
+
+		this.state.event.status = EventStatus.CANCELLED;
+
+		await this.state.event.save(this.props.member);
+
+		if (newEvent) {
+			this.props.routeProps.history.push(`/eventviewer/${newEvent.id}`);
+		}
+	}
+
+	private async copyEvent({ newTime }: { newTime: number }) {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			throw new Error(
+				'Attempting to move an event without authorization'
+			);
+		}
+
+		const newEvent = await this.state.event.copy(
+			newTime,
+			this.props.member
+		);
+
+		if (newEvent) {
+			this.props.routeProps.history.push(`/eventviewer/${newEvent.id}`);
+		}
+	}
+
+	private async deleteEvent() {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			throw new Error(
+				'Attempting to delete an event without authorization'
+			);
+		}
+
+		await this.state.event.delete(this.props.member);
+
+		this.props.routeProps.history.push(`/calendar`);
 	}
 }

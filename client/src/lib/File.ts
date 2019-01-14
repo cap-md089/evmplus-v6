@@ -179,13 +179,9 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		// 	throw new Error('Invalid File ID');
 		// }
 
-		try {
-			const results = await account.fetch(`/api/files/${id}`, {}, member);
+		const results = await account.fetch(`/api/files/${id}`, {}, member);
 
-			file = await results.json();
-		} catch (e) {
-			throw new Error('Could not find file');
-		}
+		file = await results.json();
 
 		return new FileInterface(file, account);
 	}

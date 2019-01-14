@@ -15,7 +15,9 @@ import {
 	Selector,
 	SimpleRadioButton,
 	TextInput,
-	BigTextBox
+	BigTextBox,
+	DisabledMappedText,
+	DisabledText
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
@@ -34,7 +36,9 @@ export {
 	Selector,
 	SimpleRadioButton,
 	TextInput,
-	BigTextBox
+	BigTextBox,
+	DisabledText,
+	DisabledMappedText
 };
 
 export interface BasicFormProps<T> extends FormProps<T> {
