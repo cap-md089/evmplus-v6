@@ -639,7 +639,7 @@ export default class Validator<T> {
 				const rule = this.rules[key];
 
 				if (value === undefined || value === null) {
-					if (rule.required !== false && !partial) {
+					if (rule.required && !partial) {
 						if (rule.requiredIf) {
 							if (rule.requiredIf(value, obj)) {
 								this.errors.push({

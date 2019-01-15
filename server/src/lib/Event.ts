@@ -247,6 +247,8 @@ export default class Event
 
 	public teamID: number;
 
+	public limitSignupsToTeam: boolean | null;
+
 	public sourceEvent: null | {
 		id: number;
 		accountID: string;
@@ -385,6 +387,7 @@ export default class Event
 			fileIDs: copyFiles ? this.fileIDs : [],
 			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
+			limitSignupsToTeam: this.limitSignupsToTeam,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
@@ -494,6 +497,7 @@ export default class Event
 		startDateTime: this.startDateTime,
 		status: this.status,
 		teamID: this.teamID,
+		limitSignupsToTeam: this.teamID !== null ? this.limitSignupsToTeam : null,
 		timeCreated: this.timeCreated,
 		timeModified: this.timeModified,
 		transportationDescription: this.transportationDescription,
@@ -512,7 +516,8 @@ export default class Event
 	 */
 	public toFullRaw = (): EventObject => ({
 		...this.toRaw(),
-		attendance: this.getAttendance()
+		attendance: this.getAttendance(),
+		limitSignupsToTeam: this.limitSignupsToTeam
 	});
 
 	public async getSourceEvent(): Promise<Event> {
