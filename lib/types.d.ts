@@ -801,6 +801,12 @@ declare global {
 		 */
 		teamID: number | null;
 		/**
+		 * Limit sign ups to team members
+		 * 
+		 * Only required if a team is selected
+		 */
+		limitSignupsToTeam: boolean | null;
+		/**
 		 * Files that may be associated with the event; e.g. forms
 		 */
 		fileIDs: string[];
