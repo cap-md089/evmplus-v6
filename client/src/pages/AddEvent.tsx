@@ -153,11 +153,15 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		teamDialogue: {
 			filterValues: [],
 			open: false,
-			selectedValue: null,
+			selectedValue: null
 		},
 		teamPromise: this.props.account
 			.getTeams()
-			.then(teams => (this.teams = teams))
+			.then(teams => {
+				this.teams = teams
+				this.forceUpdate();
+				return teams;
+			})
 	};
 
 	private teams: Team[] | null = null;
@@ -630,7 +634,15 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				</TextBox>
 
 				<Label>Team ID</Label>
-				<NumberInput disabled={true} name="teamID" />
+				<TextInput
+					disabled={true}
+					name="teamID"
+					value={
+						this.state.event.teamID === null
+							? ''
+							: this.state.event.teamID.toString()
+					}
+				/>
 
 				<Label>Team Name</Label>
 				<DisabledText
@@ -687,7 +699,10 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			signUpPartTime: event.signUpPartTime,
 			startDateTime: event.startDateTime,
 			status: event.status,
-			teamID: event.teamID,
+			teamID:
+				event.teamID === null
+					? null
+					: parseInt(event.teamID.toString(), 10),
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
@@ -846,7 +861,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			teamDialogue: {
 				filterValues,
 				open: prev.teamDialogue.open,
-				selectedValue: prev.teamDialogue.selectedValue,
+				selectedValue: prev.teamDialogue.selectedValue
 			}
 		}));
 	}
@@ -856,14 +871,13 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			teamDialogue: {
 				selectedValue,
 				open: prev.teamDialogue.open,
-				filterValues: prev.teamDialogue.filterValues,
+				filterValues: prev.teamDialogue.filterValues
 			}
 		}));
 	}
 
 	private selectTeam(team: Team) {
 		const prevValues = this.state.event;
-
 
 		if (team === null) {
 			prevValues.teamID = null;
@@ -875,7 +889,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			teamDialogue: {
 				selectedValue: null,
 				open: false,
-				filterValues: prev.teamDialogue.filterValues,
+				filterValues: prev.teamDialogue.filterValues
 			}
 		}));
 
@@ -889,7 +903,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			teamDialogue: {
 				open: true,
 				filterValues: prev.teamDialogue.filterValues,
-				selectedValue: prev.teamDialogue.selectedValue,
+				selectedValue: prev.teamDialogue.selectedValue
 			}
 		}));
 	}

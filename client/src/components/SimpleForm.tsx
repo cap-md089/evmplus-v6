@@ -327,18 +327,25 @@ class SimpleForm<
 							return;
 						} else {
 							const value =
-								typeof this.props.values !== 'undefined'
-									? typeof this.props.values[
-											child.props.name
-									  ] === 'undefined'
-										? typeof child.props.value ===
-										  'undefined'
-											? ''
-											: child.props.value
-										: this.props.values[child.props.name]
-									: typeof child.props.value === 'undefined'
-									? ''
-									: child.props.value;
+								typeof child.props.value !== 'undefined' ?
+									child.props.value :
+									typeof this.props.values === 'undefined' ?
+										'' :
+									typeof this.props.values[child.props.name] === 'undefined' ?
+										'' : this.props.values[child.props.name];
+
+								// typeof this.props.values !== 'undefined'
+								// 	? typeof this.props.values[
+								// 			child.props.name
+								// 	  ] === 'undefined'
+								// 		? typeof child.props.value ===
+								// 		  'undefined'
+								// 			? ''
+								// 			: child.props.value
+								// 		: this.props.values[child.props.name]
+								// 	: typeof child.props.value === 'undefined'
+								// 	? ''
+								// 	: child.props.value;
 							if (!this.fields[child.props.name]) {
 								this.fields[child.props.name] = value;
 							}
