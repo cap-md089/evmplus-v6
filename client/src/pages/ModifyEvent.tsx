@@ -61,8 +61,8 @@ export default class ModifyEvent extends Page<
 
 			this.props.updateSideNav([
 				{
-					target: 'modify-event',
-					text: 'Basic information',
+					target: 'main-information',
+					text: 'Main information',
 					type: 'Reference'
 				},
 				{

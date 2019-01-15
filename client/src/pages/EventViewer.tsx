@@ -11,9 +11,9 @@ import Loader from '../components/Loader';
 import { EventStatus, PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import './EventViewer.css';
-import { Activities, RequiredForms, Uniforms } from './ModifyEvent';
 import Page, { PageProps } from './Page';
 import DialogueButton from 'src/components/DialogueButton';
+import { Uniforms, Activities, RequiredForms } from 'src/components/EventForm';
 
 const noop = () => void 0;
 

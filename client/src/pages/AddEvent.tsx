@@ -3,8 +3,6 @@ import EventForm, { emptyEvent } from 'src/components/EventForm';
 import Event from 'src/lib/Event';
 import Page, { PageProps } from './Page';
 
-const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
-
 interface AddEventState {
 	event: NewEventObject;
 	createError: null | number;
@@ -26,8 +24,8 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 	public componentDidMount() {
 		this.props.updateSideNav([
 			{
-				target: 'modify-event',
-				text: 'Basic information',
+				target: 'main-information',
+				text: 'Main information',
 				type: 'Reference'
 			},
 			{
