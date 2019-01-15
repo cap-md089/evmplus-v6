@@ -1,11 +1,8 @@
 import * as React from 'react';
-import Button from 'src/components/Button';
-import DownloadDialogue from 'src/components/DownloadDialogue';
-import Team from 'src/lib/Team';
+import TeamSelector from 'src/components/form-inputs/TeamSelector';
 import {
 	Checkbox,
 	DateTimeInput,
-	DisabledText,
 	FormBlock,
 	Label,
 	ListEditor,
@@ -18,7 +15,7 @@ import {
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
 import Loader from '../components/Loader';
-import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
+import SimpleForm, { FileInput } from '../components/SimpleForm';
 import { PointOfContactType } from '../enums';
 import Event from '../lib/Event';
 import Page, { PageProps } from './Page';
@@ -27,12 +24,6 @@ interface ModifyEventState {
 	event: null | Event;
 	valid: boolean;
 	errors: {};
-	teamDialogue: {
-		open: boolean;
-		filterValues: any[];
-		selectedValue: Team | null;
-	};
-	teamPromise: Promise<Team[]>;
 }
 
 interface NewEventFormValues extends NewEventObject {
@@ -121,7 +112,8 @@ export const convertToFormValues = (event: Event): NewEventFormValues => ({
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber
+	wingEventNumber: event.wingEventNumber,
+	limitSignupsToTeam: event.limitSignupsToTeam
 });
 
 export const convertFormValuesToEvent = (event: NewEventFormValues) => ({
@@ -158,7 +150,14 @@ export const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	sourceEvent: null,
 	startDateTime: event.startDateTime,
 	status: event.status,
-	teamID: event.teamID,
+	teamID:
+		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
+			? null
+			: parseInt(event.teamID.toString(), 10),
+	limitSignupsToTeam:
+		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
+			? null
+			: event.limitSignupsToTeam,
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
@@ -172,18 +171,8 @@ export default class ModifyEvent extends Page<
 	public state: ModifyEventState = {
 		event: null,
 		valid: false,
-		errors: {},
-		teamDialogue: {
-			filterValues: [],
-			open: false,
-			selectedValue: null
-		},
-		teamPromise: this.props.account
-			.getTeams()
-			.then(teams => (this.teams = teams))
+		errors: {}
 	};
-
-	private teams: Team[] | null = null;
 
 	constructor(props: PageProps<{ id: string }>) {
 		super(props);
@@ -191,13 +180,6 @@ export default class ModifyEvent extends Page<
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
-
-		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(
-			this
-		);
-		this.selectTeam = this.selectTeam.bind(this);
-		this.setSelectedTeam = this.setSelectedTeam.bind(this);
-		this.openTeamDialogue = this.openTeamDialogue.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -290,14 +272,6 @@ export default class ModifyEvent extends Page<
 		>;
 
 		const event = convertToFormValues(this.state.event);
-
-		const targetTeam = this.teams
-			? this.teams.filter(
-					team =>
-						team.id.toString() ===
-						(event.teamID === null ? '' : event.teamID).toString()
-			  )[0]
-			: undefined;
 
 		return (
 			<ModifyEventForm
@@ -564,59 +538,14 @@ export default class ModifyEvent extends Page<
 
 				<Title>Team information</Title>
 
-				<Label />
-
-				<TextBox name="null">
-					<Button onClick={this.openTeamDialogue} buttonType="none">
-						Select a team
-					</Button>
-					<DownloadDialogue<Team>
-						open={this.state.teamDialogue.open}
-						multiple={false}
-						overflow={400}
-						title="Select a team"
-						showIDField={false}
-						displayValue={this.displayTeam}
-						valuePromise={this.state.teamPromise}
-						filters={[
-							{
-								check: (team, input) => {
-									if (
-										input === '' ||
-										typeof input !== 'string'
-									) {
-										return true;
-									}
-
-									try {
-										return !!team.name.match(
-											new RegExp(input, 'gi')
-										);
-									} catch (e) {
-										return false;
-									}
-								},
-								displayText: 'Team name',
-								filterInput: TextInput
-							}
-						]}
-						onValueClick={this.setSelectedTeam}
-						onValueSelect={this.selectTeam}
-						selectedValue={this.state.teamDialogue.selectedValue}
-					/>
-				</TextBox>
-
-				<Label>Team ID</Label>
-				<NumberInput disabled={true} name="teamID" />
-
-				<Label>Team Name</Label>
-				<DisabledText
-					name="teamName"
-					value={targetTeam ? targetTeam.name : ''}
+				<TeamSelector
+					name="teamID"
+					account={this.props.account}
+					member={this.props.member}
 				/>
 
 				<Label>Limit sign ups to team members</Label>
-				<Checkbox name="limitTeamSignups" />
+				<Checkbox name="limitSignupsToTeam" />
 
 				<Title>Debrief information</Title>
 
@@ -629,7 +558,9 @@ export default class ModifyEvent extends Page<
 	private updateNewEvent(event: NewEventFormValues) {
 		const valid = this.checkIfValid(event);
 
-		this.state.event!.set(convertFormValuesToEvent(event));
+		const newValues = convertFormValuesToEvent(event);
+
+		this.state.event!.set(newValues);
 
 		this.setState({
 			event: this.state.event,
@@ -642,7 +573,9 @@ export default class ModifyEvent extends Page<
 			return;
 		}
 
-		this.state.event!.set(convertFormValuesToEvent(event));
+		const newValues = convertFormValuesToEvent(event);
+
+		this.state.event!.set(newValues);
 
 		this.state.event!.save(this.props.member).then(() => {
 			this.props.routeProps.history.push(
@@ -738,59 +671,5 @@ export default class ModifyEvent extends Page<
 		}
 
 		return valid;
-	}
-
-	private displayTeam(team: Team) {
-		return team.name;
-	}
-
-	private onTeamDialogueFilterValueChange(filterValues: any[]) {
-		this.setState(prev => ({
-			teamDialogue: {
-				filterValues,
-				open: prev.teamDialogue.open,
-				selectedValue: prev.teamDialogue.selectedValue,
-			}
-		}));
-	}
-
-	private setSelectedTeam(selectedValue: Team) {
-		this.setState(prev => ({
-			teamDialogue: {
-				selectedValue,
-				open: prev.teamDialogue.open,
-				filterValues: prev.teamDialogue.filterValues,
-			}
-		}));
-	}
-
-	private selectTeam(team: Team) {
-		const prevValues = convertToFormValues(this.state.event!);
-
-		if (team === null) {
-			prevValues.teamID = null;
-		} else {
-			prevValues.teamID = team.id;
-		}
-
-		this.setState(prev => ({
-			teamDialogue: {
-				selectedValue: null,
-				open: false,
-				filterValues: prev.teamDialogue.filterValues,
-			}
-		}));
-
-		this.updateNewEvent(prevValues);
-	}
-
-	private openTeamDialogue() {
-		this.setState(prev => ({
-			teamDialogue: {
-				open: true,
-				filterValues: prev.teamDialogue.filterValues,
-				selectedValue: prev.teamDialogue.selectedValue,
-			}
-		}));
 	}
 }

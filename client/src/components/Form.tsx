@@ -17,7 +17,8 @@ import {
 	TextInput,
 	BigTextBox,
 	DisabledMappedText,
-	DisabledText
+	DisabledText,
+	TeamSelector
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
@@ -38,7 +39,8 @@ export {
 	TextInput,
 	BigTextBox,
 	DisabledText,
-	DisabledMappedText
+	DisabledMappedText,
+	TeamSelector
 };
 
 export interface BasicFormProps<T> extends FormProps<T> {

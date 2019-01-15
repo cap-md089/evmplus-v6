@@ -1,13 +1,9 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import Button from 'src/components/Button';
-import DownloadDialogue from 'src/components/DownloadDialogue';
 import Event from 'src/lib/Event';
-import Team from 'src/lib/Team';
 import {
 	Checkbox,
 	DateTimeInput,
-	DisabledText,
 	FormBlock,
 	Label,
 	ListEditor,
@@ -15,11 +11,12 @@ import {
 	NumberInput,
 	RadioButton,
 	SimpleRadioButton,
+	TeamSelector,
 	TextInput,
 	Title
 } from '../components/Form';
 import POCInput from '../components/form-inputs/POCInput';
-import SimpleForm, { FileInput, TextBox } from '../components/SimpleForm';
+import SimpleForm, { FileInput } from '../components/SimpleForm';
 import Page, { PageProps } from './Page';
 
 const PointOfContactType = { INTERNAL: 0, EXTERNAL: 1 };
@@ -30,12 +27,6 @@ interface AddEventState {
 	errors: {};
 	changed: { [P in keyof NewEventFormValues]: boolean };
 	createError: null | number;
-	teamDialogue: {
-		open: boolean;
-		filterValues: any[];
-		selectedValue: Team | null;
-	};
-	teamPromise: Promise<Team[]>;
 }
 
 interface NewEventFormValues extends NewEventObject {
@@ -105,6 +96,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			pointsOfContact: [],
 			signUpPartTime: false,
 			teamID: null,
+			limitSignupsToTeam: false,
 			fileIDs: []
 		},
 		valid: false,
@@ -143,28 +135,15 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			startDateTime: false,
 			status: false,
 			teamID: false,
+			limitSignupsToTeam: false,
 			transportationDescription: false,
 			transportationProvided: false,
 			uniform: false,
 			useParticipationFee: false,
 			useRegistration: false,
 			wingEventNumber: false
-		},
-		teamDialogue: {
-			filterValues: [],
-			open: false,
-			selectedValue: null
-		},
-		teamPromise: this.props.account
-			.getTeams()
-			.then(teams => {
-				this.teams = teams
-				this.forceUpdate();
-				return teams;
-			})
+		}
 	};
-
-	private teams: Team[] | null = null;
 
 	constructor(props: PageProps) {
 		super(props);
@@ -172,13 +151,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		this.updateNewEvent = this.updateNewEvent.bind(this);
 		this.checkIfValid = this.checkIfValid.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
-
-		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(
-			this
-		);
-		this.selectTeam = this.selectTeam.bind(this);
-		this.setSelectedTeam = this.setSelectedTeam.bind(this);
-		this.openTeamDialogue = this.openTeamDialogue.bind(this);
 	}
 
 	public componentDidMount() {
@@ -242,14 +214,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		>;
 
 		const event = this.state.event;
-
-		const targetTeam = this.teams
-			? this.teams.filter(
-					team =>
-						team.id.toString() ===
-						(event.teamID === null ? '' : event.teamID).toString()
-			  )[0]
-			: undefined;
 
 		return this.props.member ? (
 			<NewEventForm
@@ -593,65 +557,14 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 
 				<Label />
 
-				<TextBox name="null">
-					<Button onClick={this.openTeamDialogue} buttonType="none">
-						Select a team
-					</Button>
-					<DownloadDialogue<Team>
-						open={this.state.teamDialogue.open}
-						multiple={false}
-						overflow={400}
-						title="Select a team"
-						showIDField={false}
-						displayValue={this.displayTeam}
-						valuePromise={this.state.teamPromise}
-						filters={[
-							{
-								check: (team, input) => {
-									if (
-										input === '' ||
-										typeof input !== 'string'
-									) {
-										return true;
-									}
-
-									try {
-										return !!team.name.match(
-											new RegExp(input, 'gi')
-										);
-									} catch (e) {
-										return false;
-									}
-								},
-								displayText: 'Team name',
-								filterInput: TextInput
-							}
-						]}
-						onValueClick={this.setSelectedTeam}
-						onValueSelect={this.selectTeam}
-						selectedValue={this.state.teamDialogue.selectedValue}
-					/>
-				</TextBox>
-
-				<Label>Team ID</Label>
-				<TextInput
-					disabled={true}
+				<TeamSelector
+					account={this.props.account}
+					member={this.props.member}
 					name="teamID"
-					value={
-						this.state.event.teamID === null
-							? ''
-							: this.state.event.teamID.toString()
-					}
-				/>
-
-				<Label>Team Name</Label>
-				<DisabledText
-					name="teamName"
-					value={targetTeam ? targetTeam.name : ''}
 				/>
 
 				<Label>Limit sign ups to team members</Label>
-				<Checkbox name="limitTeamSignups" />
+				<Checkbox name="limitSignupsToTeam" />
 
 				<Title>Debrief information</Title>
 
@@ -706,7 +619,9 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
-			wingEventNumber: event.wingEventNumber
+			wingEventNumber: event.wingEventNumber,
+			limitSignupsToTeam:
+				event.teamID === null ? null : event.limitSignupsToTeam
 		};
 
 		if (!this.props.member) {
@@ -850,61 +765,5 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		}
 
 		return valid;
-	}
-
-	private displayTeam(team: Team) {
-		return team.name;
-	}
-
-	private onTeamDialogueFilterValueChange(filterValues: any[]) {
-		this.setState(prev => ({
-			teamDialogue: {
-				filterValues,
-				open: prev.teamDialogue.open,
-				selectedValue: prev.teamDialogue.selectedValue
-			}
-		}));
-	}
-
-	private setSelectedTeam(selectedValue: Team) {
-		this.setState(prev => ({
-			teamDialogue: {
-				selectedValue,
-				open: prev.teamDialogue.open,
-				filterValues: prev.teamDialogue.filterValues
-			}
-		}));
-	}
-
-	private selectTeam(team: Team) {
-		const prevValues = this.state.event;
-
-		if (team === null) {
-			prevValues.teamID = null;
-		} else {
-			prevValues.teamID = team.id;
-		}
-
-		this.setState(prev => ({
-			teamDialogue: {
-				selectedValue: null,
-				open: false,
-				filterValues: prev.teamDialogue.filterValues
-			}
-		}));
-
-		this.setState({
-			event: prevValues
-		});
-	}
-
-	private openTeamDialogue() {
-		this.setState(prev => ({
-			teamDialogue: {
-				open: true,
-				filterValues: prev.teamDialogue.filterValues,
-				selectedValue: prev.teamDialogue.selectedValue
-			}
-		}));
 	}
 }

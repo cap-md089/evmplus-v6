@@ -18,6 +18,7 @@ import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
 import DisabledMappedText from './form-inputs/DisabledMappedText';
 import DisabledText from './form-inputs/DisabledText';
+import TeamSelector from './form-inputs/TeamSelector';
 
 let TextArea: typeof import('./form-inputs/TextArea').default;
 
@@ -118,7 +119,8 @@ export function isInput(
 		el.type === LoadingTextArea ||
 		el.type === BigTextBox ||
 		el.type === DisabledMappedText ||
-		el.type === DisabledText
+		el.type === DisabledText ||
+		el.type === TeamSelector
 	);
 }
 
@@ -523,5 +525,6 @@ export {
 	LoadingTextArea,
 	DisabledMappedText,
 	BigTextBox,
-	DisabledText
+	DisabledText,
+	TeamSelector
 };

@@ -134,6 +134,8 @@ export default class EventViewer extends Page<
 			}
 		]);
 
+		this.props.updateSideNav([]);
+
 		this.updateTitle(`View event ${event.name}`);
 
 		this.setState({

@@ -64,3 +64,8 @@ export interface InputProps<V> {
 	member?: MemberBase | null;
 	account?: Account | null;
 }
+
+export interface NotOptionalInputProps<V> extends InputProps<V> {
+	member: MemberBase;
+	account: Account;
+}

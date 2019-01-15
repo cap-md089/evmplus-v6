@@ -156,6 +156,8 @@ export default class Event extends APIInterface<EventObject>
 
 	public teamID: number;
 
+	public limitSignupsToTeam: boolean | null;
+
 	public sourceEvent: null | {
 		id: number;
 		accountID: string;
@@ -213,6 +215,7 @@ export default class Event extends APIInterface<EventObject>
 			startDateTime: this.startDateTime,
 			status: this.status,
 			teamID: this.teamID,
+			limitSignupsToTeam: this.limitSignupsToTeam,
 			timeCreated: this.timeCreated,
 			timeModified: this.timeModified,
 			transportationDescription: this.transportationDescription,
