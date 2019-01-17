@@ -1,27 +1,29 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Account from 'src/lib/Account';
-import MemberBase from 'src/lib/Members';
-import SimpleForm, {
-	Title,
-	Label,
-	DateTimeInput,
-	MultCheckbox,
-	ListEditor,
-	RadioButton
-} from './SimpleForm';
+import MemberBase, { MemberClasses } from 'src/lib/Members';
+import Registry from 'src/lib/Registry';
+import Team from 'src/lib/Team';
+import { PointOfContactType } from '../../../lib';
 import {
-	TextInput,
 	Checkbox,
+	FileInput,
 	FormBlock,
 	NumberInput,
 	SimpleRadioButton,
-	FileInput,
-	TeamSelector
+	TeamSelector,
+	TextInput
 } from './Form';
-import Registry from 'src/lib/Registry';
-import POCInput from './form-inputs/POCInput';
-import { PointOfContactType } from '../../../lib';
+import { InputProps } from './form-inputs/Input';
+import POCInput, { POCInputProps } from './form-inputs/POCInput';
+import SimpleForm, {
+	DateTimeInput,
+	Label,
+	ListEditor,
+	MultCheckbox,
+	RadioButton,
+	Title
+} from './SimpleForm';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -77,6 +79,8 @@ interface EventFormProps {
 	isEventUpdate?: boolean;
 	account: Account;
 	member: MemberBase;
+	teamList: Promise<Team[]>;
+	memberList: Promise<MemberClasses[]>;
 	onEventChange: (event: NewEventObject, valid: boolean) => void;
 	onEventFormSubmit: (event: NewEventObject, valid: boolean) => void;
 }
@@ -468,10 +472,11 @@ export default class EventForm extends React.Component<
 				/>
 
 				<Label>Required equipment</Label>
-				<ListEditor<string>
+				<ListEditor<string, InputProps<string>>
 					name="requiredEquipment"
 					addNew={() => ''}
 					inputComponent={TextInput}
+					extraProps={{}}
 				/>
 
 				<Label>Use registration deadline</Label>
@@ -535,12 +540,11 @@ export default class EventForm extends React.Component<
 				<Title>Point of Contact</Title>
 
 				<ListEditor<
-					DisplayInternalPointOfContact | ExternalPointOfContact
+					DisplayInternalPointOfContact | ExternalPointOfContact,
+					POCInputProps
 				>
 					name="pointsOfContact"
 					inputComponent={POCInput}
-					account={this.props.account}
-					member={this.props.member}
 					addNew={() => ({
 						type: PointOfContactType.INTERNAL,
 						email: '',
@@ -556,6 +560,11 @@ export default class EventForm extends React.Component<
 					})}
 					buttonText="Add point of contact"
 					fullWidth={true}
+					extraProps={{
+						account: this.props.account,
+						member: this.props.member,
+						memberList: this.props.memberList
+					}}
 				/>
 
 				<Title>Extra information</Title>
@@ -623,8 +632,7 @@ export default class EventForm extends React.Component<
 				<Label />
 
 				<TeamSelector
-					account={this.props.account}
-					member={this.props.member}
+					teamList={this.props.teamList}
 					name="teamID"
 				/>
 

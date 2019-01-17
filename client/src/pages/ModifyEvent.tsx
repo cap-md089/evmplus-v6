@@ -1,5 +1,7 @@
 import * as React from 'react';
 import EventForm from 'src/components/EventForm';
+import { MemberClasses } from 'src/lib/Members';
+import Team from 'src/lib/Team';
 import Loader from '../components/Loader';
 import Event from '../lib/Event';
 import Page, { PageProps } from './Page';
@@ -7,6 +9,8 @@ import Page, { PageProps } from './Page';
 interface ModifyEventState {
 	event: null | Event;
 	valid: boolean;
+	memberList: Promise<MemberClasses[]>;
+	teamList: Promise<Team[]>;
 }
 
 export default class ModifyEvent extends Page<
@@ -15,7 +19,9 @@ export default class ModifyEvent extends Page<
 > {
 	public state: ModifyEventState = {
 		event: null,
-		valid: false
+		valid: false,
+		memberList: this.props.account.getMembers(this.props.member),
+		teamList: this.props.account.getTeams(this.props.member)
 	};
 
 	constructor(props: PageProps<{ id: string }>) {
@@ -108,12 +114,15 @@ export default class ModifyEvent extends Page<
 		return (
 			<EventForm
 				account={this.props.account}
-				event={this.state.event}
+				// Create a copy so that the form doesn't modify the reference
+				event={this.state.event.toRaw()}
 				isEventUpdate={true}
 				member={this.props.member}
 				onEventChange={this.updateNewEvent}
 				onEventFormSubmit={this.handleSubmit}
 				registry={this.props.registry}
+				teamList={this.state.teamList}
+				memberList={this.state.memberList}
 			/>
 		);
 	}

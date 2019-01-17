@@ -2,16 +2,22 @@ import * as React from 'react';
 import EventForm, { emptyEvent } from 'src/components/EventForm';
 import Event from 'src/lib/Event';
 import Page, { PageProps } from './Page';
+import Team from 'src/lib/Team';
+import { MemberClasses } from 'src/lib/Members';
 
 interface AddEventState {
 	event: NewEventObject;
 	createError: null | number;
+	memberList: Promise<MemberClasses[]>;
+	teamList: Promise<Team[]>;
 }
 
 export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
 		createError: null,
-		event: emptyEvent()
+		event: emptyEvent(),
+		memberList: this.props.account.getMembers(this.props.member),
+		teamList: this.props.account.getTeams(this.props.member)
 	};
 
 	constructor(props: PageProps) {
@@ -81,6 +87,8 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				onEventChange={this.updateNewEvent}
 				onEventFormSubmit={this.handleSubmit}
 				registry={this.props.registry}
+				teamList={this.state.teamList}
+				memberList={this.state.memberList}
 			/>
 		) : (
 			<div>Please sign in</div>
