@@ -546,7 +546,7 @@ export default abstract class MemberBase implements MemberObject {
 		return this.isRioux && MemberBase.useRiouxPermission
 			? true
 			: typeof permission === 'string'
-			? this.permissions[permission] > threshold
+			? this.permissions[permission] >= threshold
 			: permission
 					.map(p => this.hasPermission(p, threshold))
 					.reduce((prev, curr) => prev || curr);

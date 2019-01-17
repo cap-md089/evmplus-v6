@@ -67,7 +67,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 				type: 'Null'
 			},
 			teamHistory: [],
-			visiblity: TeamPublicity.PUBLIC
+			visibility: TeamPublicity.PUBLIC
 		};
 
 		const cadetGenerator = generateResults(
@@ -173,6 +173,10 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 
 		const newTeam: TeamObject = {
 			...data,
+			members: data.members.map(member => ({
+				...member,
+				joined: Date.now()
+			})),
 			id,
 			teamHistory: [],
 			accountID: account.id
@@ -209,7 +213,7 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 
 	public seniorMentor: MemberReference | null;
 
-	public visiblity: TeamPublicity;
+	public visibility: TeamPublicity;
 
 	public teamHistory: PreviousTeamMember[] = [];
 
@@ -279,15 +283,15 @@ export default class Team implements TeamObject, DatabaseInterface<TeamObject> {
 		description: this.description,
 		id: this.id,
 		members:
-			!!member || this.visiblity === TeamPublicity.PUBLIC
+			!!member || this.visibility === TeamPublicity.PUBLIC
 				? this.members
 				: [],
 		name: this.name,
 		seniorCoach: this.seniorCoach,
 		seniorMentor: this.seniorMentor,
-		visiblity: this.visiblity,
+		visibility: this.visibility,
 		teamHistory:
-			!!member || this.visiblity === TeamPublicity.PUBLIC
+			!!member || this.visibility === TeamPublicity.PUBLIC
 				? this.teamHistory
 				: []
 	});
