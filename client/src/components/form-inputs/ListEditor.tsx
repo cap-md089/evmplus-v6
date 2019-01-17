@@ -5,15 +5,24 @@ import './ListEditor.css';
 
 type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
 
-interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
-	extends InputProps<T[]> {
+const clearFix: React.CSSProperties = {
+	content: '',
+	clear: 'both',
+	height: 15
+};
+
+interface ListEditorProps<
+	T,
+	P extends InputProps<T>,
+	R extends React.ComponentType<P>
+> extends InputProps<T[]> {
 	inputComponent: R;
 	addNew: () => T;
 	allowChange?: boolean;
 	buttonText?: string;
 	removeText?: string;
 	fullWidth?: boolean;
-	extraProps: Omit<P, ProvidedKeys>
+	extraProps: Omit<P, ProvidedKeys>;
 }
 
 export default class ListEditor<
@@ -49,7 +58,8 @@ export default class ListEditor<
 				<div className="listitems-edit">
 					{(this.props.value || [])
 						.map((value, index) => {
-							const extraProps: Omit<P, ProvidedKeys> = this.props.extraProps;
+							const extraProps: Omit<P, ProvidedKeys> = this.props
+								.extraProps;
 							const knownProps: Pick<P, ProvidedKeys> = {
 								// Don't know why T doesn't equal P["value"]
 								// @ts-ignore
@@ -69,13 +79,30 @@ export default class ListEditor<
 							return (
 								<div key={index}>
 									<Input {...props} />
-									<Button
-										buttonType="secondaryButton"
-										onClick={this.getRemoveItem(index)}
-										className="listEditor-removeItem"
-									>
-										{this.props.removeText || 'Remove item'}
-									</Button>
+									{this.props.fullWidth ? (
+										<div
+											style={{
+												width: 220,
+												height: 2,
+												float: 'left'
+											}}
+										/>
+									) : null}
+									<div className="add-item">
+										<Button
+											buttonType="secondaryButton"
+											onClick={this.getRemoveItem(index)}
+											className="listEditor-removeItem"
+										>
+											{this.props.removeText ||
+												'Remove item'}
+										</Button>
+									</div>
+									{this.props.fullWidth ? (
+										<div
+											style={clearFix}
+										/>
+									) : null}
 								</div>
 							);
 						})
@@ -109,6 +136,7 @@ export default class ListEditor<
 						{this.props.buttonText || 'Add item'}
 					</Button>
 				</div>
+				<div style={clearFix} />
 			</div>
 		);
 	}

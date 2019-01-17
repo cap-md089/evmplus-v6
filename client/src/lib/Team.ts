@@ -85,7 +85,7 @@ export default class Team extends APIInterface<TeamObject>
 
 	public seniorMentor: MemberReference;
 
-	public visiblity: TeamPublicity = TeamPublicity.PUBLIC;
+	public visibility: TeamPublicity = TeamPublicity.PUBLIC;
 
 	public teamHistory: PreviousTeamMember[];
 
@@ -144,7 +144,7 @@ export default class Team extends APIInterface<TeamObject>
 			name: this.name,
 			seniorCoach: this.seniorCoach,
 			seniorMentor: this.seniorMentor,
-			visiblity: this.visiblity,
+			visibility: this.visibility,
 			teamHistory: this.teamHistory
 		};
 	}

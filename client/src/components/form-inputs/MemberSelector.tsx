@@ -2,9 +2,8 @@ import * as React from 'react';
 import { MemberClasses } from 'src/lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../DownloadDialogue';
-import { FormBlock } from '../Form';
 import Loader from '../Loader';
-import { Label, TextBox, TextInput } from '../SimpleForm';
+import { FormBlock, Label, TextBox, TextInput } from '../SimpleForm';
 import { InputProps } from './Input';
 
 interface MemberInputProps extends InputProps<MemberReference> {
@@ -22,8 +21,19 @@ export default class MemberSelector extends React.Component<
 	MemberInputProps,
 	MemberInputState
 > {
+	public state: MemberInputState = {
+		members: null,
+		open: false,
+		selectedValue: null,
+		filterValues: []
+	};
+
 	constructor(props: MemberInputProps) {
 		super(props);
+
+		this.openDialogue = this.openDialogue.bind(this);
+		this.setSelectedMember = this.setSelectedMember.bind(this);
+		this.selectMember = this.selectMember.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -100,7 +110,7 @@ export default class MemberSelector extends React.Component<
 				<TextInput
 					disabled={true}
 					name="name"
-					value={targetMember.getFullName()}
+					value={targetMember ? targetMember.getFullName() : ''}
 				/>
 			</FormBlock>
 		);

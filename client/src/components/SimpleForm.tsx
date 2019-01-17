@@ -61,6 +61,16 @@ class Label extends React.Component<{
 	}
 }
 
+class Divider extends React.Component {
+	constructor(props: {}) {
+		super(props);
+	}
+
+	public render() {
+		return <div className="divider" />;
+	}
+}
+
 /**
  * Creates a title to use in the form
  */
@@ -143,13 +153,17 @@ export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
 	if (typeof el === 'string' || typeof el === 'number' || el === null) {
 		return false;
 	}
-	return el.type === Title || el.type === Label;
+	return el.type === Title || el.type === Label || el.type === Divider;
 }
 
 /**
  * Helper type used to represent the tracking of errors and changed fields
  */
 export type BooleanFields<T> = { [K in keyof T]: boolean };
+
+export type FormValidator<T> = {
+	[K in keyof T]?: (value: T[K], allValues: T) => boolean
+};
 
 /**
  * The properties a form itself requires
@@ -230,7 +244,7 @@ export interface FormProps<F extends {}> {
 	/**
 	 * Validator for the form
 	 */
-	validator?: { [K in keyof F]?: (value: F[K], allValues: F) => boolean };
+	validator?: FormValidator<F>;
 }
 
 /**
@@ -314,7 +328,10 @@ class SimpleForm<
 							// This algorithm handles labels for inputs by handling inputs
 							// Puts out titles on their own line
 							// Disregards spare labels and such
-							if (isLabel(child) && child.type === Title) {
+							if (
+								isLabel(child) &&
+								(child.type === Title || child.type === Divider)
+							) {
 								return child;
 							}
 							return;
@@ -509,14 +526,33 @@ class SimpleForm<
 	protected onInitialize(e: { name: string; value: any }) {
 		this.fields[e.name] = e.value;
 		this.fieldsChanged[e.name] = false;
-		this.fieldsError[e.name] = false;
 
-		if (this.props.onChange) {
-			this.props.onChange(
+		let error = false;
+		if (this.props.validator && this.props.validator[e.name]) {
+			error = this.props.validator[e.name](e.value, this.fields);
+		}
+		this.fieldsError[e.name] = error;
+
+		let hasError = false;
+		for (const i in this.fieldsError) {
+			if (this.fieldsError.hasOwnProperty(i)) {
+				hasError = this.fieldsError[i];
+				if (hasError) {
+					break;
+				}
+			}
+		}
+
+		// DO NOT TOUCH
+		// If this is moved into the conditional TypeScript gets upset
+		const onChange = this.props.onChange;
+
+		if (onChange !== undefined) {
+			onChange(
 				this.fields,
 				this.fieldsError,
 				this.fieldsChanged,
-				false
+				hasError
 			);
 		}
 	}
@@ -554,6 +590,7 @@ export default SimpleForm;
 export {
 	Title,
 	Label,
+	Divider,
 	FileInput,
 	MultiRange,
 	TextInput,
