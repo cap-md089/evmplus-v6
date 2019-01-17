@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { TextInput } from '../Form';
 import { InputProps } from './Input';
-
 import './Selector.css';
+import TextInput from './TextInput';
 
 export interface CheckInput<I, T = any> {
 	displayText: string;

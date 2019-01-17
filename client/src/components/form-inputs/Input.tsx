@@ -63,6 +63,18 @@ export interface InputProps<V> {
 	 */
 	member?: MemberBase | null;
 	account?: Account | null;
+	/**
+	 * Whether or not there is an error with this component
+	 * 
+	 * Not all components implement this
+	 */
+	hasError?: boolean;
+	/**
+	 * An error message to display if this component has an error
+	 * 
+	 * Not all components implement this
+	 */
+	errorMessage?: string;
 }
 
 export interface NotOptionalInputProps<V> extends InputProps<V> {

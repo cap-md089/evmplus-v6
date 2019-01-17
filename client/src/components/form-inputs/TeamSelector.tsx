@@ -2,7 +2,7 @@ import * as React from 'react';
 import Team from 'src/lib/Team';
 import Button from '../Button';
 import DownloadDialogue from '../DownloadDialogue';
-import { TextInput } from '../Form';
+import TextInput from './TextInput';
 import { DisabledText, FormBlock, Label, TextBox } from '../SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import Loader from '../Loader';

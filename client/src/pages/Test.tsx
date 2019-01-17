@@ -100,8 +100,10 @@ export default class Test extends Page<
 					submitInfo={{
 						text: 'Click me'
 					}}
-					onChange={data => {
+					onChange={(data, errors, changed) => {
 						this.setState(data);
+						// tslint:disable-next-line:no-console
+						console.log(errors, changed);
 					}}
 				>
 					<LoadingTextArea
