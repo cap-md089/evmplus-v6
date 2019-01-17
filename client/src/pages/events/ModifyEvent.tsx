@@ -2,9 +2,9 @@ import * as React from 'react';
 import EventForm from 'src/components/EventForm';
 import { MemberClasses } from 'src/lib/Members';
 import Team from 'src/lib/Team';
-import Loader from '../components/Loader';
-import Event from '../lib/Event';
-import Page, { PageProps } from './Page';
+import Loader from '../../components/Loader';
+import Event from '../../lib/Event';
+import Page, { PageProps } from '../Page';
 
 interface ModifyEventState {
 	event: null | Event;

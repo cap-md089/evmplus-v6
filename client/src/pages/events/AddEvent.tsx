@@ -1,7 +1,7 @@
 import * as React from 'react';
 import EventForm, { emptyEvent } from 'src/components/EventForm';
 import Event from 'src/lib/Event';
-import Page, { PageProps } from './Page';
+import Page, { PageProps } from '../Page';
 import Team from 'src/lib/Team';
 import { MemberClasses } from 'src/lib/Members';
 

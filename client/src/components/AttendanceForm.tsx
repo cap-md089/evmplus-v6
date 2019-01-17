@@ -5,7 +5,7 @@ import Event from 'src/lib/Event';
 import MemberBase from 'src/lib/Members';
 import { BigTextBox, Checkbox, SimpleRadioButton } from './Form';
 import SimpleForm, { Label, TextBox, DateTimeInput } from './SimpleForm';
-import { attendanceStatusLabels } from 'src/pages/EventViewer';
+import { attendanceStatusLabels } from 'src/pages/events/EventViewer';
 import Button from './Button';
 
 const clamp = (min: number, max: number, input: number) =>

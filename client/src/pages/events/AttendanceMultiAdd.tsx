@@ -13,9 +13,9 @@ import Loader from 'src/components/Loader';
 import SimpleForm from 'src/components/SimpleForm';
 import Event from 'src/lib/Event';
 import { MemberClasses } from 'src/lib/Members';
-import Page, { PageProps } from './Page';
+import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
-import { AttendanceStatus } from '../enums';
+import { AttendanceStatus } from '../../enums';
 
 enum SortFunction {
 	LASTNAME,

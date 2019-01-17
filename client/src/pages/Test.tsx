@@ -105,6 +105,11 @@ export default class Test extends Page<
 						// tslint:disable-next-line:no-console
 						console.log(errors, changed);
 					}}
+					validator={{
+						test2: text => {
+							return !text.match(/a/g);
+						}
+					}}
 				>
 					<LoadingTextArea
 						name="test14"

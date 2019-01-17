@@ -6,12 +6,12 @@ import DialogueButtonForm from 'src/components/DialogueButtonForm';
 import { DateTimeInput, Label } from 'src/components/Form';
 import { TextBox } from 'src/components/SimpleForm';
 import MemberBase from 'src/lib/Members';
-import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
-import Loader from '../components/Loader';
-import { EventStatus, PointOfContactType } from '../enums';
-import Event from '../lib/Event';
+import { parseMultCheckboxReturn } from '../../components/form-inputs/MultCheckbox';
+import Loader from '../../components/Loader';
+import { EventStatus, PointOfContactType } from '../../enums';
+import Event from '../../lib/Event';
 import './EventViewer.css';
-import Page, { PageProps } from './Page';
+import Page, { PageProps } from '../Page';
 import DialogueButton from 'src/components/DialogueButton';
 import { Uniforms, Activities, RequiredForms } from 'src/components/EventForm';
 

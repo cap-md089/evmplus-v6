@@ -11,14 +11,14 @@ import PageList from 'src/pages/pages/PageList';
 import PageView from 'src/pages/pages/PageView';
 import Account from '../lib/Account';
 import MemberBase from '../lib/Members';
-import AddEvent from '../pages/AddEvent';
+import AddEvent from '../pages/events/AddEvent';
 import Calendar from '../pages/Calendar';
 import Drive from '../pages/Drive';
 import EmailList from '../pages/EmailList';
 import LinkList from '../pages/EventLinkList';
-import EventViewer from '../pages/EventViewer';
+import EventViewer from '../pages/events/EventViewer';
 import Main from '../pages/Main';
-import ModifyEvent from '../pages/ModifyEvent';
+import ModifyEvent from '../pages/events/ModifyEvent';
 import Page from '../pages/Page';
 import RackBuilder from '../pages/RibbonRack';
 import Test from '../pages/Test';
@@ -26,7 +26,8 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './SideNavigation';
-import AttendanceMultiAdd from 'src/pages/AttendanceMultiAdd';
+import AttendanceMultiAdd from 'src/pages/events/AttendanceMultiAdd';
+import TeamAdd from 'src/pages/team/TeamAdd';
 
 const pages: Array<{
 	url: string;
@@ -171,6 +172,11 @@ const pages: Array<{
 	{
 		url: '/multiadd/:id',
 		component: AttendanceMultiAdd,
+		exact: false
+	},
+	{
+		url: '/team/create',
+		component: TeamAdd,
 		exact: false
 	}
 ];
