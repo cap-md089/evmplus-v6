@@ -18,7 +18,9 @@ import SimpleForm, {
 	BigTextBox,
 	DisabledMappedText,
 	DisabledText,
-	TeamSelector
+	TeamSelector,
+	MemberSelector,
+	TeamMemberInput
 } from './SimpleForm';
 
 export { FormProps, Label, Title } from './SimpleForm';
@@ -40,7 +42,9 @@ export {
 	BigTextBox,
 	DisabledText,
 	DisabledMappedText,
-	TeamSelector
+	TeamSelector,
+	MemberSelector,
+	TeamMemberInput
 };
 
 export interface BasicFormProps<T> extends FormProps<T> {

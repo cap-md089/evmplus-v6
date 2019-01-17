@@ -10,12 +10,14 @@ import FormBlock from './form-inputs/FormBlock';
 import { InputProps } from './form-inputs/Input';
 import ListEditor from './form-inputs/ListEditor';
 import LoadingTextArea from './form-inputs/LoadingTextArea';
+import MemberSelector from './form-inputs/MemberSelector';
 import MultCheckbox from './form-inputs/MultCheckbox';
 import MultiRange from './form-inputs/MultiRange';
 import NumberInput from './form-inputs/NumberInput';
 import RadioButton from './form-inputs/RadioButton';
 import Selector from './form-inputs/Selector';
 import SimpleRadioButton from './form-inputs/SimpleRadioButton';
+import TeamMemberInput from './form-inputs/TeamMemberInput';
 import TeamSelector from './form-inputs/TeamSelector';
 import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
@@ -120,7 +122,9 @@ export function isInput(
 		el.type === BigTextBox ||
 		el.type === DisabledMappedText ||
 		el.type === DisabledText ||
-		el.type === TeamSelector
+		el.type === TeamSelector ||
+		el.type === MemberSelector ||
+		el.type === TeamMemberInput
 	);
 }
 
@@ -142,7 +146,10 @@ export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
 	return el.type === Title || el.type === Label;
 }
 
-type BooleanFields<T> = { [K in keyof T]: boolean };
+/**
+ * Helper type used to represent the tracking of errors and changed fields
+ */
+export type BooleanFields<T> = { [K in keyof T]: boolean };
 
 /**
  * The properties a form itself requires
@@ -208,7 +215,8 @@ export interface FormProps<F extends {}> {
 	onChange?: (
 		fields: F,
 		error: BooleanFields<F>,
-		changed: BooleanFields<F>
+		changed: BooleanFields<F>,
+		hasError: boolean
 	) => void;
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
@@ -253,9 +261,6 @@ class SimpleForm<
 	protected token: string = '';
 	protected sessionID: string = '';
 
-	protected displayLoadFields: boolean = false;
-	protected loadedFields: C = {} as C;
-
 	/**
 	 * Create a form
 	 *
@@ -277,29 +282,6 @@ class SimpleForm<
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as C;
-
-		if (typeof localStorage !== 'undefined') {
-			const fields = localStorage.getItem(`${this.props.id}-storage`);
-			let time = 0;
-
-			const saveTime = localStorage.getItem(`${this.props.id}-savetime`);
-			if (saveTime) {
-				time = Date.now() - parseInt(saveTime, 10);
-
-				if (this.props.shouldLoadPreviousFields) {
-					this.displayLoadFields = this.props.shouldLoadPreviousFields(
-						time,
-						fields ? JSON.parse(fields) : {}
-					);
-				} else if (typeof this.props.saveCheckTime !== 'undefined') {
-					this.displayLoadFields = time < 1000 * 60 * 60 * 5;
-				}
-			} else {
-				this.displayLoadFields = false;
-			}
-		} else {
-			this.displayLoadFields = true;
-		}
 	}
 
 	/**
@@ -515,7 +497,12 @@ class SimpleForm<
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged);
+			onChange(
+				this.fields,
+				this.fieldsError,
+				this.fieldsChanged,
+				hasError
+			);
 		}
 	}
 
@@ -528,7 +515,8 @@ class SimpleForm<
 			this.props.onChange(
 				this.fields,
 				this.fieldsError,
-				this.fieldsChanged
+				this.fieldsChanged,
+				false
 			);
 		}
 	}
@@ -583,5 +571,7 @@ export {
 	DisabledMappedText,
 	BigTextBox,
 	DisabledText,
-	TeamSelector
+	TeamSelector,
+	MemberSelector,
+	TeamMemberInput
 };

@@ -2,10 +2,14 @@ import * as React from 'react';
 import Team from 'src/lib/Team';
 import Button from '../Button';
 import DownloadDialogue from '../DownloadDialogue';
-import TextInput from './TextInput';
-import { DisabledText, FormBlock, Label, TextBox } from '../SimpleForm';
-import { NotOptionalInputProps } from './Input';
 import Loader from '../Loader';
+import { DisabledText, FormBlock, Label, TextBox } from '../SimpleForm';
+import { InputProps } from './Input';
+import TextInput from './TextInput';
+
+interface TeamSelectorProps extends InputProps<number | null> {
+	teamList: Promise<Team[]>;
+}
 
 interface TeamSelectorState {
 	teams: Team[] | null;
@@ -15,7 +19,7 @@ interface TeamSelectorState {
 }
 
 export default class TeamSelector extends React.Component<
-	NotOptionalInputProps<number | null>,
+	TeamSelectorProps,
 	TeamSelectorState
 > {
 	public state: TeamSelectorState = {
@@ -25,7 +29,7 @@ export default class TeamSelector extends React.Component<
 		teams: null
 	};
 
-	public constructor(props: NotOptionalInputProps<number>) {
+	public constructor(props: TeamSelectorProps) {
 		super(props);
 
 		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(
@@ -37,7 +41,7 @@ export default class TeamSelector extends React.Component<
 	}
 
 	public async componentDidMount() {
-		const teams = await this.props.account.getTeams(this.props.member);
+		const teams = await this.props.teamList;
 		this.setState({
 			teams
 		});
@@ -131,10 +135,7 @@ export default class TeamSelector extends React.Component<
 
 	private selectTeam(selectedValue: Team | null) {
 		this.setState({
-			selectedValue
-		});
-
-		this.setState({
+			selectedValue,
 			open: false
 		});
 
