@@ -185,6 +185,9 @@ declare global {
 		}
 	}
 
+	// Omit taken from https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html
+	export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+
 	export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 	/**
@@ -1720,17 +1723,17 @@ declare global {
 		Blog: BlogInformation;
 	}
 
-	export interface TeamMember {
+	export interface NewTeamMember {
 		reference: MemberReference;
 		job: string;
+	}
+
+	export interface TeamMember extends NewTeamMember{
 		joined: number;
 	}
 
-	export interface PreviousTeamMember {
-		reference: MemberReference;
-		job: string;
-		joined: number;
-		left: number;
+	export interface PreviousTeamMember extends TeamMember {
+		removed: number;
 	}
 
 	/**
@@ -1744,7 +1747,7 @@ declare global {
 		/**
 		 * Who is on the team
 		 */
-		members: TeamMember[];
+		members: NewTeamMember[];
 		/**
 		 * Describe what the team does
 		 */
@@ -1764,7 +1767,7 @@ declare global {
 		/**
 		 * Visbility of team; each one is described by the enum declaration
 		 */
-		visiblity: TeamPublicity;
+		visibility: TeamPublicity;
 	}
 
 	/**
@@ -1774,6 +1777,10 @@ declare global {
 		extends NewTeamObject,
 			AccountIdentifiable,
 			NoSQLDocument {
+		/**
+		 * Solidifies the types for the full team object
+		 */
+		members: TeamMember[];
 		/**
 		 * Teams use numerical IDs
 		 *
