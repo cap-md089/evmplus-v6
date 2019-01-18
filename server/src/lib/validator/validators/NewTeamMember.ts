@@ -1,6 +1,6 @@
 import Validator from "../Validator";
 
-export default class NewTeamMemberValidator extends Validator<TeamMember> {
+export default class NewTeamMemberValidator extends Validator<NewTeamMember> {
 	constructor() {
 		super({
 			reference: {
@@ -8,9 +8,6 @@ export default class NewTeamMemberValidator extends Validator<TeamMember> {
 			},
 			job: {
 				validator: Validator.String
-			},
-			joined: {
-				validator: Validator.Number
 			}
 		})
 	}

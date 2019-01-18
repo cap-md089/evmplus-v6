@@ -493,7 +493,7 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
-		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
 
 		const reference = this.getReference();
 

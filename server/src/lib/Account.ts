@@ -312,7 +312,7 @@ export default class Account
 	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
-		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
 		
 		// This needs to be included to include the staff team, which does not directly
 		// exist in the database and is more dynamic

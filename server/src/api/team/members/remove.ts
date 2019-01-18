@@ -4,7 +4,7 @@ import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<TeamMember>, res: Response) => {
+	async (req: MemberValidatedRequest<NewTeamMember>, res: Response) => {
 		let team: Team;
 
 		try {
@@ -15,7 +15,11 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		team.removeTeamMember(req.body.reference);
+		await team.removeTeamMember(
+			req.body.reference,
+			req.account,
+			req.mysqlx
+		);
 
 		await team.save();
 

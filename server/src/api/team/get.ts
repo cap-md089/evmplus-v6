@@ -14,5 +14,5 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Resp
 		return;
 	}
 
-	json<TeamObject>(res, team.toRaw(req.member));
+	json<FullTeamObject>(res, team.toFullRaw(req.member));
 });

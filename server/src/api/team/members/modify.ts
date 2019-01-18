@@ -4,7 +4,7 @@ import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<TeamMember>, res: Response) => {
+	async (req: MemberValidatedRequest<NewTeamMember>, res: Response) => {
 		let team: Team;
 
 		try {
