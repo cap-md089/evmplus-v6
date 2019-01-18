@@ -85,9 +85,14 @@ export default class CAPWATCHMember extends MemberBase
 		const contact = (memberContact as any) as CAPMemberContact;
 
 		capwatchContact.forEach(val => {
-			contact[
-				val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType
-			][val.Priority] = val.Contact;
+			if ((val.Type as string) !== '') {
+				contact[
+					val.Type.toUpperCase().replace(
+						/ /g,
+						''
+					) as CAPMemberContactType
+				][val.Priority] = val.Contact;
+			}
 		});
 
 		const temporaryDutyPositions = extraInformation.temporaryDutyPositions

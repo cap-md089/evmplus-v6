@@ -358,8 +358,6 @@ export default class Account
 	/**
 	 * Updates the values in a secure manner
 	 *
-	 * TODO: Implement actual type checking, either return false or throw an error on failure
-	 *
 	 * @param values The values to set
 	 */
 	public set(values: Partial<AccountObject>): boolean {

@@ -37,9 +37,7 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (
 		return CAPWATCHError.NONE;
 	}
 
-	const promises = [];
-
-	for await (const member of fileData) {
+	for (const member of fileData) {
 		try {
 			const values = {
 				CAPID: parseInt(member.CAPID + '', 10),
@@ -72,20 +70,16 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (
 				CdtWaiver: member.CdtWaiver
 			};
 
-			promises.push(memberCollection.add(values).execute());
+			await memberCollection.add(values).execute();
+
+			console.log(`Added ${values.CAPID} of ${values.ORGID}`);
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;
 		}
 	}
 
-	try {
-		await Promise.all(promises);
-		return CAPWATCHError.NONE;
-	} catch (e) {
-		console.warn(e);
-		return CAPWATCHError.INSERT;
-	}
+	return CAPWATCHError.NONE;
 };
 
 export default memberParse;

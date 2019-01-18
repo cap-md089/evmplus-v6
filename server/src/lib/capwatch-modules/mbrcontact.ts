@@ -29,9 +29,7 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (
 			return CAPWATCHError.CLEAR;
 		}
 
-		const promises = [];
-
-		for await (const duties of fileData) {
+		for (const duties of fileData) {
 			values = {
 				CAPID: parseInt(duties.CAPID.toString(), 10),
 				Type: duties.Type,
@@ -43,10 +41,8 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (
 				orgid
 			};
 
-			promises.push(mbrContactCollection.add(values).execute());
+			await (mbrContactCollection.add(values).execute());
 		}
-
-		await Promise.all(promises);
 
 		return CAPWATCHError.NONE;
 	} catch (e) {

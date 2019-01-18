@@ -30,9 +30,7 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
 			return CAPWATCHError.CLEAR;
 		}
 
-		const promises = [];
-
-		for await (const duties of fileData) {
+		for (const duties of fileData) {
 			values = {
 				CAPID: parseInt(duties.CAPID + '', 10),
 				Duty: duties.Duty,
@@ -44,10 +42,8 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
 				ORGID: orgid
 			};
 
-			promises.push(dutyPositionCollection.add(values).execute());
+			await dutyPositionCollection.add(values).execute();
 		}
-
-		await Promise.all(promises);
 
 		return CAPWATCHError.NONE;
 	} catch (e) {

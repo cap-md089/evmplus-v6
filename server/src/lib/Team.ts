@@ -253,11 +253,16 @@ export default class Team implements FullTeamObject {
 		const members: FullTeamMember[] = [];
 
 		for (const member of raw.members) {
-			const fullMember = await MemberBase.ResolveReference(
-				member.reference,
-				account,
-				schema
-			);
+			let fullMember;
+			try {
+				fullMember = await MemberBase.ResolveReference(
+					member.reference,
+					account,
+					schema
+				);
+			} catch (e) {
+				console.log('Could not get member ', member.reference);
+			}
 
 			if (fullMember) {
 				members.push({
