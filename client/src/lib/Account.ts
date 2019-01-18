@@ -104,7 +104,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const teams = await results.json();
 
-		return teams.map((t: TeamObject) => new Team(t, this));
+		return teams.map((t: RawTeamObject) => new Team(t, this));
 	}
 
 	/**

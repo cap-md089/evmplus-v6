@@ -28,6 +28,7 @@ import Loader from './Loader';
 import { SideNavigationItem } from './SideNavigation';
 import AttendanceMultiAdd from 'src/pages/events/AttendanceMultiAdd';
 import TeamAdd from 'src/pages/team/TeamAdd';
+import TeamList from 'src/pages/team/TeamList';
 
 const pages: Array<{
 	url: string;
@@ -177,6 +178,21 @@ const pages: Array<{
 	{
 		url: '/team/create',
 		component: TeamAdd,
+		exact: false
+	},
+	{
+		url: '/team',
+		component: TeamList,
+		exact: true
+	},
+	{
+		url: '/teamlist',
+		component: TeamList,
+		exact: false
+	},
+	{
+		url: '/team/list',
+		component: TeamList,
 		exact: false
 	}
 ];

@@ -10,8 +10,8 @@ import MemberBase from './MemberBase';
  * Each person has a role, and this collection allows for gathering information provided
  * and parsing it, e.g. for a team leader to get the emails to communicate with their team
  */
-export default class Team extends APIInterface<TeamObject>
-	implements TeamObject {
+export default class Team extends APIInterface<RawTeamObject>
+	implements RawTeamObject {
 	/**
 	 * Constructs a team object
 	 * 
@@ -77,7 +77,7 @@ export default class Team extends APIInterface<TeamObject>
 
 	public id: number;
 
-	public members: TeamMember[];
+	public members: RawTeamMember[];
 
 	public name: string;
 
@@ -85,11 +85,11 @@ export default class Team extends APIInterface<TeamObject>
 
 	public seniorMentor: MemberReference;
 
-	public visibility: TeamPublicity = TeamPublicity.PUBLIC;
+	public visibility: TeamPublicity;
 
-	public teamHistory: PreviousTeamMember[];
+	public teamHistory: RawPreviousTeamMember[];
 
-	public constructor(obj: TeamObject, account: Account) {
+	public constructor(obj: RawTeamObject, account: Account) {
 		super(account.id);
 
 		Object.assign(this, obj);
@@ -134,7 +134,7 @@ export default class Team extends APIInterface<TeamObject>
 		);
 	}
 
-	public toRaw(): TeamObject {
+	public toRaw(): RawTeamObject {
 		return {
 			accountID: this.accountID,
 			cadetLeader: this.cadetLeader,
@@ -158,7 +158,7 @@ export default class Team extends APIInterface<TeamObject>
 			throw new Error('Member does not have permissions to modify team');
 		}
 
-		const teamMember: TeamMember = {
+		const teamMember: RawTeamMember = {
 			reference: memberToAdd.getReference(),
 			job,
 			joined: +DateTime.utc()
@@ -194,7 +194,7 @@ export default class Team extends APIInterface<TeamObject>
 				)
 		);
 
-		const teamMember: TeamMember = {
+		const teamMember: RawTeamMember = {
 			reference: memberToRemove.getReference(),
 			job: '',
 			joined: +DateTime.utc()
