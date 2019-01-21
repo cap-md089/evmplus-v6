@@ -96,6 +96,7 @@ export default class Event
 			timeModified: timeCreated,
 			author: member.getReference(),
 			attendance: [],
+			debrief: [],
 			sourceEvent: null
 		};
 
@@ -235,7 +236,7 @@ export default class Event
 
 	public status: EventStatus;
 
-	public debrief: string;
+	public debrief: DebriefItem[];
 
 	public pointsOfContact: Array<
 		DisplayInternalPointOfContact | ExternalPointOfContact
@@ -381,7 +382,6 @@ export default class Event
 			administrationComments: this.administrationComments,
 			comments: this.comments,
 			complete: this.complete,
-			debrief: this.debrief,
 			desiredNumberOfParticipants: this.desiredNumberOfParticipants,
 			eventWebsite: this.eventWebsite,
 			groupEventNumber: this.groupEventNumber,
@@ -554,7 +554,7 @@ export default class Event
 	/**
 	 * Returns the attendance for the event
 	 */
-	public getAttendance = (): AttendanceRecord[] => this.attendance;
+	public getAttendance = (): AttendanceRecord[] => this.attendance.slice();
 
 	/**
 	 * Add member to attendance
@@ -623,6 +623,51 @@ export default class Event
 		(this.attendance = this.attendance.filter(
 			record => !member.matchesReference(record.memberID)
 		));
-}
 
+	// ----------------------------------------------------
+	// 					Debrief code
+	// ----------------------------------------------------
+
+	/**
+	 * Returns the debriefs for the event
+	 */
+	public getDebriefs = (): DebriefItem[] => this.debrief.slice();
+
+	/**
+	 * Add item to debrief
+	 *
+	 * @param newDebriefItem The text of the record to add
+	 * @param member The member to add to the records
+	 */
+	public addItemToDebrief = (
+		newDebriefItem: string,
+		member: BaseMember
+	): DebriefItem[] =>
+		(this.debrief = [
+			...this.debrief,
+			{
+				memberRef: member.getReference(),
+				timeSubmitted: +DateTime.utc(),
+				debriefText: newDebriefItem
+			}
+		]);
+
+	/**
+	 * Removes a debrief item
+	 *
+	 * @param member The member who submitted the debrief item
+	 * @param timeSubmitted The time the member submitted it
+	 */
+	public removeItemFromDebrief = (
+		member: BaseMember,
+		timeOfRecord: number
+	): DebriefItem[] =>
+		(this.debrief = this.debrief.filter(
+			record =>
+				!(
+					member.matchesReference(record.memberRef) &&
+					timeOfRecord === record.timeSubmitted
+				)
+		));
+}
 export { EventStatus };
