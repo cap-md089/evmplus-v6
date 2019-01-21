@@ -31,6 +31,8 @@ export enum PointOfContactType {
 
 export enum TeamPublicity {
 	PRIVATE, // Nothing visible, not shown on Browse unless signed in and member of team
+	// Names are visible to those signed in
+	PROTECTED, // Names and contact information available to those who sign in
 	PUBLIC // Full visibility
 }
 

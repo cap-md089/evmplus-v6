@@ -1728,11 +1728,21 @@ declare global {
 		job: string;
 	}
 
-	export interface TeamMember extends NewTeamMember{
+	export interface RawTeamMember extends NewTeamMember{
 		joined: number;
 	}
 
-	export interface PreviousTeamMember extends TeamMember {
+	export interface RawPreviousTeamMember extends RawTeamMember {
+		removed: number;
+	}
+
+	export interface FullTeamMember extends NewTeamMember{
+		name: string;
+		joined: number;
+	}
+
+	export interface FullPreviousTeamMember extends RawTeamMember {
+		name: string;
 		removed: number;
 	}
 
@@ -1773,14 +1783,14 @@ declare global {
 	/**
 	 * Allows for teams of cadets
 	 */
-	export interface TeamObject
+	export interface RawTeamObject
 		extends NewTeamObject,
 			AccountIdentifiable,
 			NoSQLDocument {
 		/**
 		 * Solidifies the types for the full team object
 		 */
-		members: TeamMember[];
+		members: RawTeamMember[];
 		/**
 		 * Teams use numerical IDs
 		 *
@@ -1791,6 +1801,14 @@ declare global {
 		 * Maintain a history of those who have gone through
 		 * a team
 		 */
-		teamHistory: PreviousTeamMember[];
+		teamHistory: RawPreviousTeamMember[];
+	}
+
+	export interface FullTeamObject extends RawTeamObject {
+		members: FullTeamMember[];
+		teamHistory: FullPreviousTeamMember[];
+		cadetLeaderName: string;
+		seniorMentorName: string;
+		seniorCoachName: string;
 	}
 }
