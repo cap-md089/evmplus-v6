@@ -185,6 +185,9 @@ declare global {
 		}
 	}
 
+	// Omit taken from https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html
+	export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+
 	export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 	/**
@@ -815,7 +818,13 @@ declare global {
 		/**
 		 * If this is a team event, a team can be specified for future features
 		 */
-		teamID: number;
+		teamID: number | null;
+		/**
+		 * Limit sign ups to team members
+		 * 
+		 * Only required if a team is selected
+		 */
+		limitSignupsToTeam: boolean | null;
 		/**
 		 * Files that may be associated with the event; e.g. forms
 		 */
@@ -834,10 +843,6 @@ declare global {
 		 * Committed, rescindend commitment to attend, etc
 		 */
 		status: AttendanceStatus;
-		/**
-		 * ?
-		 */
-		requirements: string;
 		/**
 		 * If they plan to use transportation provided
 		 */
@@ -1285,7 +1290,10 @@ declare global {
 		/**
 		 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
 		 */
-		dutyPositions: string[];
+		dutyPositions: {
+			duty: string;
+			date: number;
+		}[];
 		/**
 		 * The Squadron a member belongs to
 		 */
@@ -1348,7 +1356,10 @@ declare global {
 		 * 
 		 * There is no way to modify this
 		 */
-		dutyPositions: string[];
+		dutyPositions: {
+			duty: string;
+			date: number;
+		}[];
 	}
 
 	export type ProspectiveMemberObject = RawProspectiveMemberObject &
@@ -1404,6 +1415,11 @@ declare global {
 		 * MapReduce way
 		 */
 		Duty: string;
+
+		/**
+		 * When the duty position was assigned
+		 */
+		assigned: number;
 	}
 
 	/**
@@ -1723,10 +1739,27 @@ declare global {
 		Blog: BlogInformation;
 	}
 
-	export interface TeamMember {
+	export interface NewTeamMember {
 		reference: MemberReference;
 		job: string;
+	}
+
+	export interface RawTeamMember extends NewTeamMember{
 		joined: number;
+	}
+
+	export interface RawPreviousTeamMember extends RawTeamMember {
+		removed: number;
+	}
+
+	export interface FullTeamMember extends NewTeamMember{
+		name: string;
+		joined: number;
+	}
+
+	export interface FullPreviousTeamMember extends RawTeamMember {
+		name: string;
+		removed: number;
 	}
 
 	/**
@@ -1740,7 +1773,7 @@ declare global {
 		/**
 		 * Who is on the team
 		 */
-		members: TeamMember[];
+		members: NewTeamMember[];
 		/**
 		 * Describe what the team does
 		 */
@@ -1748,33 +1781,50 @@ declare global {
 		/**
 		 * Who will be leading the team?
 		 */
-		cadetLeader: MemberReference | null;
+		cadetLeader: MemberReference | NullMemberReference;
 		/**
 		 * Who will mentor the team?
 		 */
-		seniorMentor: MemberReference | null;
+		seniorMentor: MemberReference | NullMemberReference;
 		/**
 		 * Who coaches the team?
 		 */
-		seniorCoach: MemberReference | null;
+		seniorCoach: MemberReference | NullMemberReference;
 		/**
 		 * Visbility of team; each one is described by the enum declaration
 		 */
-		visiblity: TeamPublicity;
+		visibility: TeamPublicity;
 	}
 
 	/**
 	 * Allows for teams of cadets
 	 */
-	export interface TeamObject
+	export interface RawTeamObject
 		extends NewTeamObject,
 			AccountIdentifiable,
 			NoSQLDocument {
+		/**
+		 * Solidifies the types for the full team object
+		 */
+		members: RawTeamMember[];
 		/**
 		 * Teams use numerical IDs
 		 *
 		 * Allows for incrementation
 		 */
 		id: number;
+		/**
+		 * Maintain a history of those who have gone through
+		 * a team
+		 */
+		teamHistory: RawPreviousTeamMember[];
+	}
+
+	export interface FullTeamObject extends RawTeamObject {
+		members: FullTeamMember[];
+		teamHistory: FullPreviousTeamMember[];
+		cadetLeaderName: string;
+		seniorMentorName: string;
+		seniorCoachName: string;
 	}
 }
