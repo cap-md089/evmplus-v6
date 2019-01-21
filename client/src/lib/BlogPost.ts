@@ -16,22 +16,17 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 		const token = await BlogPost.getToken(account.id, member);
 
-		let result;
-		try {
-			result = await account.fetch(
-				`/api/blog/post`,
-				{
-					body: JSON.stringify({
-						...data,
-						token
-					}),
-					method: 'POST'
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not create new blog post');
-		}
+		const result = await account.fetch(
+			`/api/blog/post`,
+			{
+				body: JSON.stringify({
+					...data,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 
 		const newBlogPost = await result.json();
 
@@ -43,12 +38,7 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 			account = await Account.Get();
 		}
 
-		let result;
-		try {
-			result = await account.fetch(`/api/blog/post/${id}`);
-		} catch (e) {
-			throw new Error('Could not get blog post');
-		}
+		const result = await account.fetch(`/api/blog/post/${id}`);
 
 		const blogData = await result.json() as FullBlogPostObject;
 
@@ -110,21 +100,17 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/blog/post/${this.id}`,
-				{
-					body: JSON.stringify({
-						...this.toRaw(),
-						token
-					}),
-					method: 'PUT'
-				},
-				member
-			);
-		} catch(e) {
-			throw new Error('Could not save blog post');
-		}
+		await this.fetch(
+			`/api/blog/post/${this.id}`,
+			{
+				body: JSON.stringify({
+					...this.toRaw(),
+					token
+				}),
+				method: 'PUT'
+			},
+			member
+		);
 	}
 
 	public async delete(member: MemberBase, errOnInvalidPermission = false) {
@@ -140,19 +126,15 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/blog/post/${this.id}`,
-				{
-					body: JSON.stringify({
-						token
-					}),
-					method: 'DELETE'
-				},
-				member
-			);
-		} catch(e) {
-			throw new Error('Could not save blog post');
-		}
+		await this.fetch(
+			`/api/blog/post/${this.id}`,
+			{
+				body: JSON.stringify({
+					token
+				}),
+				method: 'DELETE'
+			},
+			member
+		);
 	}
 }

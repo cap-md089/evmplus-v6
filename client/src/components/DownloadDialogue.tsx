@@ -3,7 +3,7 @@ import Dialogue, { DialogueButtons } from './Dialogue';
 import Selector, { CheckInput } from './form-inputs/Selector';
 
 interface DownloadProps<T extends Identifiable> {
-	valuePromise: Promise<T[]>;
+	valuePromise: Promise<T[]> | T[];
 	// Properties for the dialogue
 	open: boolean;
 	title: string;
@@ -61,7 +61,13 @@ export default class DownloadDialogue<
 	}
 
 	public componentDidMount() {
-		this.props.valuePromise.then(values => this.setState({ values }));
+		if (this.props.valuePromise instanceof Promise) {
+			this.props.valuePromise.then(values => this.setState({ values }));
+		} else {
+			this.setState({
+				values: this.props.valuePromise
+			});
+		}
 	}
 
 	public render() {

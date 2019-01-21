@@ -1,22 +1,26 @@
 import * as React from 'react';
-import BigTextBox from './form-inputs/BigTextBox';
 // Form inputs
+import BigTextBox from './form-inputs/BigTextBox';
 import Checkbox from './form-inputs/Checkbox';
 import DateTimeInput from './form-inputs/DateTimeInput';
+import DisabledMappedText from './form-inputs/DisabledMappedText';
+import DisabledText from './form-inputs/DisabledText';
 import FileInput from './form-inputs/FileInput';
 import FormBlock from './form-inputs/FormBlock';
 import { InputProps } from './form-inputs/Input';
 import ListEditor from './form-inputs/ListEditor';
 import LoadingTextArea from './form-inputs/LoadingTextArea';
+import MemberSelector from './form-inputs/MemberSelector';
 import MultCheckbox from './form-inputs/MultCheckbox';
 import MultiRange from './form-inputs/MultiRange';
 import NumberInput from './form-inputs/NumberInput';
 import RadioButton from './form-inputs/RadioButton';
 import Selector from './form-inputs/Selector';
 import SimpleRadioButton from './form-inputs/SimpleRadioButton';
+import TeamMemberInput from './form-inputs/TeamMemberInput';
+import TeamSelector from './form-inputs/TeamSelector';
 import TextBox from './form-inputs/TextBox';
 import TextInput from './form-inputs/TextInput';
-import DisabledMappedText from './form-inputs/DisabledMappedText';
 
 let TextArea: typeof import('./form-inputs/TextArea').default;
 
@@ -57,6 +61,16 @@ class Label extends React.Component<{
 	}
 }
 
+class Divider extends React.Component {
+	constructor(props: {}) {
+		super(props);
+	}
+
+	public render() {
+		return <div className="divider" />;
+	}
+}
+
 /**
  * Creates a title to use in the form
  */
@@ -70,10 +84,18 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 
 	public render() {
+		const id =
+			this.props.id || typeof this.props.children === 'string'
+				? this.props
+						.children!.toString()
+						.toLocaleLowerCase()
+						.replace(/ +/g, '-')
+				: '';
+
 		return (
 			<div className="formbar fheader">
 				<div className="formbox header">
-					<h3 id={this.props.id}>{this.props.children}</h3>
+					<h3 id={id}>{this.props.children}</h3>
 				</div>
 			</div>
 		);
@@ -108,7 +130,11 @@ export function isInput(
 		el.type === Selector ||
 		el.type === LoadingTextArea ||
 		el.type === BigTextBox ||
-		el.type === DisabledMappedText
+		el.type === DisabledMappedText ||
+		el.type === DisabledText ||
+		el.type === TeamSelector ||
+		el.type === MemberSelector ||
+		el.type === TeamMemberInput
 	);
 }
 
@@ -127,19 +153,33 @@ export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
 	if (typeof el === 'string' || typeof el === 'number' || el === null) {
 		return false;
 	}
-	return el.type === Title || el.type === Label;
+	return el.type === Title || el.type === Label || el.type === Divider;
 }
+
+/**
+ * Helper type used to represent the tracking of errors and changed fields
+ */
+export type BooleanFields<T> = { [K in keyof T]: boolean };
+
+export type FormValidator<T> = {
+	[K in keyof T]?: (value: T[K], allValues: T) => boolean
+};
 
 /**
  * The properties a form itself requires
  */
-export interface FormProps<F> {
+export interface FormProps<F extends {}> {
 	/**
 	 * The function that is called when the user submits the form
 	 *
 	 * @param fields The fields of the form
 	 */
-	onSubmit?: (fields: F) => void;
+	onSubmit?: (
+		fields: F,
+		error: BooleanFields<F>,
+		changed: BooleanFields<F>,
+		hasError: boolean
+	) => void;
 	/**
 	 * Styles the submit button
 	 */
@@ -161,8 +201,10 @@ export interface FormProps<F> {
 	 * The ID to identify the form with CSS
 	 *
 	 * Also used to 'save' the form; make it long so that it is unique!
+	 *
+	 * @deprecated Never implemented nor will ever be used
 	 */
-	id: string;
+	id?: string;
 	/**
 	 * Determines whether or not to load a previously saved form
 	 *
@@ -184,11 +226,12 @@ export interface FormProps<F> {
 	 *
 	 * Can be used to help with checking if a form field should be disabled
 	 */
-	onChange?: (fields: F) => void;
-	/**
-	 * Type checking for children!
-	 */
-	children?: JSX.Element[] | JSX.Element;
+	onChange?: (
+		fields: F,
+		error: BooleanFields<F>,
+		changed: BooleanFields<F>,
+		hasError: boolean
+	) => void;
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
 	 */
@@ -198,6 +241,10 @@ export interface FormProps<F> {
 	 * nessecary
 	 */
 	showSubmitButton?: boolean;
+	/**
+	 * Validator for the form
+	 */
+	validator?: FormValidator<F>;
 }
 
 /**
@@ -208,9 +255,11 @@ export interface FormProps<F> {
  * type SampleForm = new () => Form<{x: string}>
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
+ * <Form<{x: string}> />
+ * // With TypeScript 2.8 Generics work with React components
  */
 class SimpleForm<
-	C = {},
+	C extends {} = {},
 	P extends FormProps<C> = FormProps<C>
 > extends React.Component<
 	P,
@@ -219,12 +268,12 @@ class SimpleForm<
 	}
 > {
 	protected fields = {} as C;
+	protected fieldsChanged = {} as { [K in keyof C]: boolean };
+	protected fieldsError = {} as { [K in keyof C]: boolean };
+	protected hasError: boolean = false;
 
 	protected token: string = '';
 	protected sessionID: string = '';
-
-	protected displayLoadFields: boolean = false;
-	protected loadedFields: C = {} as C;
 
 	/**
 	 * Create a form
@@ -247,29 +296,6 @@ class SimpleForm<
 		this.submit = this.submit.bind(this);
 
 		this.fields = {} as C;
-
-		if (typeof localStorage !== 'undefined') {
-			const fields = localStorage.getItem(`${this.props.id}-storage`);
-			let time = 0;
-
-			const saveTime = localStorage.getItem(`${this.props.id}-savetime`);
-			if (saveTime) {
-				time = Date.now() - parseInt(saveTime, 10);
-
-				if (this.props.shouldLoadPreviousFields) {
-					this.displayLoadFields = this.props.shouldLoadPreviousFields(
-						time,
-						fields ? JSON.parse(fields) : {}
-					);
-				} else if (typeof this.props.saveCheckTime !== 'undefined') {
-					this.displayLoadFields = time < 1000 * 60 * 60 * 5;
-				}
-			} else {
-				this.displayLoadFields = false;
-			}
-		} else {
-			this.displayLoadFields = true;
-		}
 	}
 
 	/**
@@ -278,21 +304,12 @@ class SimpleForm<
 	 * @returns {JSX.Element} A form
 	 */
 	public render(): JSX.Element {
-		const submitInfo =
-			this.props.submitInfo === undefined
-				? {
-						text: 'Submit',
-						className: 'submit',
-						disabled: false
-				  }
-				: Object.assign(
-						{
-							text: 'Submit',
-							className: 'submit',
-							disabled: false
-						},
-						this.props.submitInfo
-				  );
+		const submitInfo = {
+			text: 'Submit',
+			className: 'submit',
+			disabled: this.hasError,
+			...(this.props.submitInfo || {})
+		};
 
 		return (
 			<form onSubmit={this.submit} className="asyncForm">
@@ -311,21 +328,37 @@ class SimpleForm<
 							// This algorithm handles labels for inputs by handling inputs
 							// Puts out titles on their own line
 							// Disregards spare labels and such
-							if (isLabel(child) && child.type === Title) {
+							if (
+								isLabel(child) &&
+								(child.type === Title || child.type === Divider)
+							) {
 								return child;
 							}
 							return;
 						} else {
 							const value =
-								typeof this.props.values !== 'undefined'
-									? typeof this.props.values[
+								typeof child.props.value !== 'undefined'
+									? child.props.value
+									: typeof this.props.values === 'undefined'
+									? ''
+									: typeof this.props.values[
 											child.props.name
 									  ] === 'undefined'
-										? ''
-										: this.props.values[child.props.name]
-									: typeof child.props.value === 'undefined'
 									? ''
-									: child.props.value;
+									: this.props.values[child.props.name];
+
+							// typeof this.props.values !== 'undefined'
+							// 	? typeof this.props.values[
+							// 			child.props.name
+							// 	  ] === 'undefined'
+							// 		? typeof child.props.value ===
+							// 		  'undefined'
+							// 			? ''
+							// 			: child.props.value
+							// 		: this.props.values[child.props.name]
+							// 	: typeof child.props.value === 'undefined'
+							// 	? ''
+							// 	: child.props.value;
 							if (!this.fields[child.props.name]) {
 								this.fields[child.props.name] = value;
 							}
@@ -340,7 +373,8 @@ class SimpleForm<
 									onUpdate: this.onChange,
 									onInitialize: this.onInitialize,
 									key: i + 1,
-									value
+									value,
+									hasError: this.fieldsError[child.props.name]
 								})
 							];
 						}
@@ -350,6 +384,9 @@ class SimpleForm<
 								typeof (this.props
 									.children as React.ReactChild[])[i - 1] !==
 									'undefined' &&
+								(this.props.children as React.ReactChild[])[
+									i - 1
+								] !== null &&
 								!isInput(
 									(this.props.children as React.ReactChild[])[
 										i - 1
@@ -454,15 +491,69 @@ class SimpleForm<
 	 */
 	protected onChange(e: { name: string; value: any }) {
 		this.fields[e.name] = e.value;
-		if (this.props.onChange) {
-			this.props.onChange(this.fields);
+		this.fieldsChanged[e.name] = true;
+
+		let error = false;
+		if (this.props.validator && this.props.validator[e.name]) {
+			error = this.props.validator[e.name](e.value, this.fields);
+		}
+		this.fieldsError[e.name] = error;
+
+		let hasError = false;
+		for (const i in this.fieldsError) {
+			if (this.fieldsError.hasOwnProperty(i)) {
+				hasError = this.fieldsError[i];
+				if (hasError) {
+					break;
+				}
+			}
+		}
+
+		// DO NOT TOUCH
+		// If this is moved into the conditional TypeScript gets upset
+		const onChange = this.props.onChange;
+
+		if (onChange !== undefined) {
+			onChange(
+				this.fields,
+				this.fieldsError,
+				this.fieldsChanged,
+				hasError
+			);
 		}
 	}
 
 	protected onInitialize(e: { name: string; value: any }) {
 		this.fields[e.name] = e.value;
-		if (this.props.onChange) {
-			this.props.onChange(this.fields);
+		this.fieldsChanged[e.name] = false;
+
+		let error = false;
+		if (this.props.validator && this.props.validator[e.name]) {
+			error = this.props.validator[e.name](e.value, this.fields);
+		}
+		this.fieldsError[e.name] = error;
+
+		let hasError = false;
+		for (const i in this.fieldsError) {
+			if (this.fieldsError.hasOwnProperty(i)) {
+				hasError = this.fieldsError[i];
+				if (hasError) {
+					break;
+				}
+			}
+		}
+
+		// DO NOT TOUCH
+		// If this is moved into the conditional TypeScript gets upset
+		const onChange = this.props.onChange;
+
+		if (onChange !== undefined) {
+			onChange(
+				this.fields,
+				this.fieldsError,
+				this.fieldsChanged,
+				hasError
+			);
 		}
 	}
 
@@ -474,7 +565,22 @@ class SimpleForm<
 	protected submit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			this.props.onSubmit(this.fields);
+			let hasError = false;
+			for (const i in this.fieldsError) {
+				if (this.fieldsError.hasOwnProperty(i)) {
+					hasError = this.fieldsError[i];
+					if (hasError) {
+						break;
+					}
+				}
+			}
+
+			this.props.onSubmit(
+				this.fields,
+				this.fieldsError,
+				this.fieldsChanged,
+				hasError
+			);
 		}
 	}
 }
@@ -484,6 +590,7 @@ export default SimpleForm;
 export {
 	Title,
 	Label,
+	Divider,
 	FileInput,
 	MultiRange,
 	TextInput,
@@ -499,5 +606,9 @@ export {
 	Selector,
 	LoadingTextArea,
 	DisabledMappedText,
-	BigTextBox
+	BigTextBox,
+	DisabledText,
+	TeamSelector,
+	MemberSelector,
+	TeamMemberInput
 };

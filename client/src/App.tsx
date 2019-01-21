@@ -171,7 +171,7 @@ export default class App extends React.Component<
 			localStorage.removeItem('sessionID');
 		}
 
-		this.props.basicInfo.member =
+		const fullMember =
 			member.member === null
 				? null
 				: createCorrectMemberObject(
@@ -187,7 +187,8 @@ export default class App extends React.Component<
 				Registry: registry,
 				account,
 				member,
-				loading: false
+				loading: false,
+				fullMember 
 			},
 			() => {
 				bestfit(jQuery(this.titleElement));

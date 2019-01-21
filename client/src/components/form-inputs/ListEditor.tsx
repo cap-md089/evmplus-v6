@@ -3,17 +3,34 @@ import Button from '../Button';
 import { InputProps } from './Input';
 import './ListEditor.css';
 
-interface ListEditorProps<T> extends InputProps<T[]> {
-	inputComponent: React.ComponentType<InputProps<T>>;
+type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
+
+const clearFix: React.CSSProperties = {
+	content: '',
+	clear: 'both',
+	height: 15
+};
+
+interface ListEditorProps<
+	T,
+	P extends InputProps<T>,
+	R extends React.ComponentType<P>
+> extends InputProps<T[]> {
+	inputComponent: R;
 	addNew: () => T;
 	allowChange?: boolean;
 	buttonText?: string;
 	removeText?: string;
 	fullWidth?: boolean;
+	extraProps: Omit<P, ProvidedKeys>;
 }
 
-export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
-	constructor(props: ListEditorProps<T>) {
+export default class ListEditor<
+	T,
+	P extends InputProps<T> = InputProps<T>,
+	R extends React.ComponentType<P> = React.ComponentType<P>
+> extends React.Component<ListEditorProps<T, P, R>> {
+	constructor(props: ListEditorProps<T, P, R>) {
 		super(props);
 
 		this.addItem = this.addItem.bind(this);
@@ -39,45 +56,87 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 				}}
 			>
 				<div className="listitems-edit">
-					{(this.props.value || []).map((item, i) => (
-						<div>
-							<Input
-								value={item}
-								key={i}
-								name=""
-								onUpdate={this.getChangeHandler(i)}
-								index={i}
-								member={this.props.member}
-								account={this.props.account}
-							/>
-							<Button buttonType="secondaryButton" onClick={this.getRemoveItem(i)} className="listEditor-removeItem">
-								{this.props.removeText || 'Remove item'}
-							</Button>
-						</div>
-					)).map((item, i) => (
-						<div key={i}>
-							{item}
-							{i === (this.props.value || []).length - 1 ? null : <div className="divider" />}
-						</div>
-					))}
+					{(this.props.value || [])
+						.map((value, index) => {
+							const extraProps: Omit<P, ProvidedKeys> = this.props
+								.extraProps;
+							const knownProps: Pick<P, ProvidedKeys> = {
+								// Don't know why T doesn't equal P["value"]
+								// @ts-ignore
+								value,
+								name: '',
+								onUpdate: this.getChangeHandler(index),
+								index
+							};
+
+							// Don't know why Omit<P, T> & Pick<P, T> doesn't equal P
+							// @ts-ignore
+							const props: P = {
+								...knownProps,
+								...extraProps
+							};
+
+							return (
+								<div key={index}>
+									<Input {...props} />
+									{this.props.fullWidth ? (
+										<div
+											style={{
+												width: 220,
+												height: 2,
+												float: 'left'
+											}}
+										/>
+									) : null}
+									<div className="add-item">
+										<Button
+											buttonType="secondaryButton"
+											onClick={this.getRemoveItem(index)}
+											className="listEditor-removeItem"
+										>
+											{this.props.removeText ||
+												'Remove item'}
+										</Button>
+									</div>
+									{this.props.fullWidth ? (
+										<div
+											style={clearFix}
+										/>
+									) : null}
+								</div>
+							);
+						})
+						.map((item, i) => (
+							<div key={i}>
+								{item}
+								{i ===
+								(this.props.value || []).length - 1 ? null : (
+									<div className="divider" />
+								)}
+							</div>
+						))}
 				</div>
-				<div style={{
-					clear: 'both',
-					overflow: 'auto'
-				}} />
-				{
-					this.props.fullWidth ?
-						<div style={{
+				<div
+					style={{
+						clear: 'both',
+						overflow: 'auto'
+					}}
+				/>
+				{this.props.fullWidth ? (
+					<div
+						style={{
 							width: 220,
 							height: 2,
 							float: 'left'
-						}} /> : null
-				}
+						}}
+					/>
+				) : null}
 				<div className="add-item">
 					<Button buttonType="primaryButton" onClick={this.addItem}>
 						{this.props.buttonText || 'Add item'}
 					</Button>
 				</div>
+				<div style={clearFix} />
 			</div>
 		);
 	}
@@ -131,7 +190,7 @@ export default class ListEditor<T> extends React.Component<ListEditorProps<T>> {
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value 
+					value
 				});
 			}
 

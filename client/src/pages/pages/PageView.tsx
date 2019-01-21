@@ -60,7 +60,21 @@ export default class PageView extends Page<
 				// TODO: Add an implementation for side nav to
 				// navigate to children and to headers in page
 
-				this.props.updateBreadCrumbs([]);
+				this.props.updateBreadCrumbs([
+					{
+						target: '/',
+						text: 'Home'
+					},
+					...page.ancestry.map(item => ({
+						target: `/page/view/${item.id}`,
+						text: item.title
+					})),
+					{
+						target: `/page/view/${page.id}`,
+						text: page.title
+					}
+				]);
+				this.updateTitle(page.title);
 				this.props.updateSideNav([]);
 
 				this.setState({

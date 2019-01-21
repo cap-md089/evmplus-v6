@@ -100,6 +100,31 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 			$(this.extraInfoRef.current).slideDown(250);
 		}
+
+		if (this.state.currentFolder) {
+			this.props.updateBreadCrumbs([
+				{
+					target: '/',
+					text: 'Home'
+				},
+				{
+					target: '/drive',
+					text: 'Drive'
+				},
+				...this.state.currentFolder.folderPath.map(item => ({
+					target: `/drive/${item.id}`,
+					text: `View folder ${item.name}`
+				})),
+				{
+					target: `/drive/${this.state.currentFolder.id}`,
+					text: `View folder ${this.state.currentFolder.fileName}`
+				}
+			]);
+
+			this.updateTitle(`View folder ${this.state.currentFolder.fileName}`);
+
+			this.props.updateSideNav([]);
+		}
 	}
 
 	public render() {

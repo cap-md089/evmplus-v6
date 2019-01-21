@@ -69,6 +69,7 @@ export class BlogEdit extends Page<
 			}
 		]);
 		this.props.updateSideNav([]);
+		this.updateTitle('Edit post "' + post.title + '"');
 		const postURL = `/news/edit/${
 			post.id
 		}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;

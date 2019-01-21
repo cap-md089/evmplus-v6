@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { TextInput } from '../Form';
 import { InputProps } from './Input';
-
 import './Selector.css';
+import TextInput from './TextInput';
 
 export interface CheckInput<I, T = any> {
 	displayText: string;
@@ -17,6 +16,7 @@ export interface SelectorProps<T extends Identifiable> {
 	displayValue: (val: T) => React.ReactChild;
 	values: T[];
 	onChangeVisible?: (visible: T[]) => void;
+	blacklistFunction?: (member: T) => boolean;
 	overflow?: number;
 	filterValues?: any[];
 	onFilterValuesChange?: (filterValues: any[]) => void;
@@ -227,6 +227,13 @@ export default class Selector<T extends Identifiable> extends React.Component<
 
 	private getSelectHandler(val: T) {
 		return ((e: any) => {
+			if (
+				this.props.blacklistFunction &&
+				!this.props.blacklistFunction(val)
+			) {
+				return;
+			}
+
 			if (!this.props.multiple) {
 				if (this.props.onChange) {
 					this.props.onChange(val);
@@ -278,7 +285,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		}).bind(this);
 	}
 
-	private get filteredIDValues () {
+	private get filteredIDValues() {
 		try {
 			const filteredIDValues =
 				this.state.filterID === ''
@@ -288,7 +295,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 								!!new RegExp(this.state.filterID, 'ig').exec(
 									val.id.toString()
 								)
-					);
+					  );
 
 			return filteredIDValues;
 		} catch (e) {

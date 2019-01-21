@@ -14,6 +14,7 @@ export interface BlogListState1 {
 	page: number;
 	loaded: false;
 	draft: null;
+	error: null;
 }
 
 export interface BlogListState2 {
@@ -23,6 +24,7 @@ export interface BlogListState2 {
 	page: number;
 	loaded: true;
 	draft: DraftJS;
+	error: number | null;
 }
 
 type BlogListProps = PageProps<{ page?: string }>;
@@ -39,7 +41,8 @@ export class BlogList extends Page<
 			displayLeft: false,
 			displayRight: false,
 			loaded: false,
-			draft: null
+			draft: null,
+			error: null
 		};
 		this.changePageNumber = this.changePageNumber.bind(this);
 	}
@@ -60,6 +63,7 @@ export class BlogList extends Page<
 					text: 'Page ' + page
 				}
 			]);
+			this.updateTitle('News', 'Page ' + page);
 			const pageURL = `/news/page/${page}`;
 			if (this.props.routeProps.location.pathname !== pageURL) {
 				this.props.routeProps.history.replace(pageURL);
@@ -78,7 +82,9 @@ export class BlogList extends Page<
 					text: 'News'
 				}
 			]);
+			this.updateTitle('News');
 		}
+
 		Promise.all([
 			this.props.account.getBlogPosts(),
 			import('draft-js')
@@ -111,15 +117,32 @@ export class BlogList extends Page<
 				})),
 				true
 			);
+		}, blogpostserror => {
+			this.setState({
+				error: blogpostserror.status
+			})
 		});
 	}
+
 	public render() {
 		if (!this.state.loaded) {
 			return <Loader />;
 		}
+
+		if (this.state.error !== null) {
+			if (this.state.error === 402) {
+				return <div>This account currently does not have a news page</div>
+			} else {
+				throw new Error('Unknown error ' + this.state.error);
+			}
+		}
+
 		const draft = this.state.draft;
+
 		const Editor = draft.Editor;
+
 		const PostPager = Pager as new () => Pager<BlogPost>;
+
 		return (
 			<div>
 				{this.props.member && this.props.member.canManageBlog() ? (

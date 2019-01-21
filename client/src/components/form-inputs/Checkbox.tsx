@@ -5,7 +5,10 @@ interface CheckboxState {
 	value: boolean;
 }
 
-export default class Checkbox extends React.Component<InputProps<boolean>, CheckboxState> {
+export default class Checkbox extends React.Component<
+	InputProps<boolean>,
+	CheckboxState
+> {
 	public state = {
 		value: false
 	};
@@ -14,9 +17,13 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
-		
+
 		this.state = {
-			value: typeof props.value === 'undefined' ? false : props.value
+			value:
+				typeof props.value === 'undefined' ||
+				(props.value as any) === ''
+					? false
+					: props.value
 		};
 
 		if (this.props.onInitialize) {
@@ -27,7 +34,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 		}
 	}
 
-	public render () {
+	public render() {
 		return (
 			<div className="formbox" style={this.props.boxStyles}>
 				<div className="checkboxDiv">
@@ -44,7 +51,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 		);
 	}
 
-	private onChange (e: React.ChangeEvent<HTMLInputElement>) {
+	private onChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const value = e.currentTarget.checked;
 		this.setState({
 			value
@@ -58,7 +65,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(value)
+			this.props.onChange(value);
 		}
 	}
 }

@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../components/Loader';
+import { EventStatus } from '../enums';
 import myFetch from '../lib/myFetch';
 import './Calendar.css';
 import Page, { PageProps } from './Page';
@@ -29,6 +30,76 @@ export const MONTHS = [
 	'December'
 ];
 
+type CalendarData = Array<
+	Array<{
+		day: number;
+		month: number;
+		year: number;
+		events: Array<
+			| {
+					event: EventObject;
+					width: number;
+					block: boolean;
+					mergeLeft: boolean;
+					mergeRight: boolean;
+			  }
+			| undefined
+		>;
+	}>
+>;
+
+const isIndexFree = (
+	calendar: CalendarData,
+	startDay: number,
+	endDay: number,
+	week: number,
+	index: number
+) => {
+	for (let i = startDay; i <= endDay; i++) {
+		if (calendar[week][i].events[index] !== undefined) {
+			return false;
+		}
+	}
+
+	return true;
+};
+
+const findIndex = (
+	calendar: CalendarData,
+	startDay: number,
+	endDay: number,
+	week: number
+) => {
+	let testIndex = 0;
+
+	while (!isIndexFree(calendar, startDay, endDay, week, testIndex)) {
+		testIndex++;
+	}
+
+	return testIndex;
+};
+
+const getClassNameFromEvent = (obj: EventObject) => {
+	switch (obj.status) {
+		case EventStatus.CANCELLED:
+			return ' cancelled';
+
+		case EventStatus.DRAFT:
+			return obj.teamID !== null ? ' draft team' : ' draft';
+
+		case EventStatus.INFORMATIONONLY:
+			return ' info';
+
+		case EventStatus.TENTATIVE:
+			return ' tentative';
+
+		case EventStatus.COMPLETE:
+		case EventStatus.CONFIRMED:
+		default:
+			return obj.teamID !== null ? ' team' : '';
+	}
+};
+
 export default class Calendar extends Page<
 	PageProps<{ month?: string; year?: string }>,
 	{
@@ -47,7 +118,22 @@ export default class Calendar extends Page<
 		);
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/calendar',
+				text: 'Calendar'
+			}
+		]);
+
+		this.updateTitle('Calendar');
+
+		this.props.updateSideNav([]);
+
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
 				? new Date().getUTCFullYear()
@@ -66,15 +152,22 @@ export default class Calendar extends Page<
 				: lastMonth.startOf('week');
 		const endOfNextMonth = nextMonth.endOf('week');
 
-		myFetch(`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`, {
-			headers: {
-				authorization: this.props.member
-					? this.props.member.sessionID
-					: ''
+		const res = await myFetch(
+			`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`,
+			{
+				headers: {
+					authorization: this.props.member
+						? this.props.member.sessionID
+						: ''
+				}
 			}
-		})
-			.then(res => res.json())
-			.then((events: EventObject[]) => this.setState({ events }));
+		);
+
+		const events = (await res.json()) as EventObject[];
+
+		this.setState({
+			events
+		});
 	}
 
 	private renderCalendar(events: EventObject[]) {
@@ -97,19 +190,7 @@ export default class Calendar extends Page<
 			Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) +
 			1;
 
-		const calendar: Array<
-			Array<{
-				day: number;
-				month: number;
-				year: number;
-				events: Array<{
-					event: EventObject;
-					mergeLeft: boolean;
-					mergeRight: boolean;
-					first: boolean;
-				}>;
-			}>
-		> = [];
+		const calendar: CalendarData = [];
 
 		const weird = lastMonth.startOf('week').day === lastMonth.day - 6;
 
@@ -117,8 +198,8 @@ export default class Calendar extends Page<
 			? lastMonth
 			: lastMonth.startOf('week');
 
-		let j;
 		let i;
+		let j;
 
 		calendar[0] = [];
 		for (i = 0; i < firstDay; i++) {
@@ -186,8 +267,8 @@ export default class Calendar extends Page<
 		events = events.reverse();
 
 		events.forEach(val => {
-			const startDate = DateTime.fromMillis(val.meetDateTime * 1000);
-			const endDate = DateTime.fromMillis(val.pickupDateTime * 1000);
+			const startDate = DateTime.fromMillis(val.meetDateTime);
+			const endDate = DateTime.fromMillis(val.pickupDateTime);
 
 			let startWeek = 0;
 			let startDay = 0;
@@ -202,7 +283,9 @@ export default class Calendar extends Page<
 						? 0
 						: startDate.weekday;
 			} else if (startDate < nextMonth) {
-				startWeek = Math.ceil((startDate.day - startDate.weekday) / 7);
+				startWeek =
+					Math.ceil((startDate.day - startDate.weekday) / 7) +
+					(startDate.weekday === 7 ? 1 : 0);
 				startDay = startDate.weekday;
 			} else {
 				startWeek = calendar.length - 1;
@@ -212,52 +295,121 @@ export default class Calendar extends Page<
 			if (endDate > nextMonth) {
 				const nextWeek = +nextMonth + 7 * 24 * 3600 * 1000;
 				endWeek = calendar.length - 1;
-				endDay = +endDate > nextWeek ? 6 : endDate.weekday;
+				endDay = +endDate > nextWeek ? 7 : endDate.weekday;
 			} else if (endDate > thisMonth) {
-				endWeek = Math.ceil((endDate.day - endDate.weekday) / 7);
+				endWeek =
+					Math.ceil((endDate.day - endDate.weekday) / 7) +
+					(endDate.weekday === 7 ? 1 : 0);
 				endDay = endDate.weekday;
 			} else {
 				endWeek = 0;
 				endDay = endDate.weekday;
 			}
 
-			let eventIndex: number = 0;
-			const eventList = calendar[startWeek][startDay].events;
-
-			for (let k = 0; k < eventList.length; k++) {
-				if (eventList[k] === undefined || eventList[k] === null) {
-					eventIndex = k;
-					break;
-				}
-			}
-
-			if (eventIndex === 0) {
-				eventIndex = eventList.length;
-			}
-
 			for (let k = startWeek; k <= endWeek; k++) {
-				let startOfWeek = true;
-				for (
-					let l = k === startWeek ? startDay : 0;
-					l <= (k === endWeek ? endDay : 6);
-					l++
-				) {
-					calendar[k][l].events[eventIndex] = {
+				if (k === startWeek && k === endWeek) {
+					const index = findIndex(
+						calendar,
+						startDay % 7,
+						endDay % 7,
+						k
+					);
+
+					calendar[k][startDay % 7].events[index] = {
+						block: false,
 						event: val,
-						mergeLeft: !startOfWeek,
-						mergeRight: l !== (k === endWeek ? endDay : 6),
-						first: startOfWeek
+						width: Math.max(0, (endDay % 7) - (startDay % 7)) + 1,
+						mergeLeft: false,
+						mergeRight: false
 					};
-					startOfWeek = false;
+
+					for (let l = (startDay % 7) + 1; l <= endDay % 7; l++) {
+						calendar[k][l].events[index] = {
+							block: true,
+							event: val,
+							width: 0,
+							mergeLeft: false,
+							mergeRight: false
+						};
+					}
+				} else if (k === startWeek) {
+					const index = findIndex(calendar, startDay % 7, 6, k);
+
+					calendar[k][startDay % 7].events[index] = {
+						block: false,
+						event: val,
+						width: Math.max(0, 6 - (startDay % 7)) + 1,
+						mergeLeft: false,
+						mergeRight: true
+					};
+
+					for (let l = (startDay % 7) + 1; l < 7; l++) {
+						calendar[k][l].events[index] = {
+							block: true,
+							event: val,
+							width: 0,
+							mergeLeft: false,
+							mergeRight: false
+						};
+					}
+				} else if (k === endWeek) {
+					const index = findIndex(calendar, 0, endDay % 7, k);
+
+					calendar[k][0].events[index] = {
+						block: false,
+						event: val,
+						width: Math.max(0, endDay % 7) + 1,
+						mergeLeft: true,
+						mergeRight: false
+					};
+
+					for (let l = 1; l < endDay % 7; l++) {
+						calendar[k][l].events[index] = {
+							block: true,
+							event: val,
+							width: 0,
+							mergeLeft: false,
+							mergeRight: false
+						};
+					}
+				} else {
+					const index = findIndex(calendar, 0, 6, k);
+
+					calendar[k][0].events[index] = {
+						block: false,
+						event: val,
+						width: 7,
+						mergeLeft: true,
+						mergeRight: true
+					};
+
+					for (let l = 1; l < 7; l++) {
+						calendar[k][l].events[index] = {
+							block: true,
+							event: val,
+							width: 0,
+							mergeLeft: false,
+							mergeRight: false
+						};
+					}
 				}
 			}
 		});
+
+		for (const k of calendar) {
+			for (const l of k) {
+				for (let m = 0; m < l.events.length; m++) {
+					l.events[m] =
+						l.events[m] === undefined ? undefined : l.events[m];
+				}
+			}
+		}
 
 		return (
 			<div className="calendar">
 				{this.props.member &&
 				this.props.member.hasPermission('AddEvent') ? (
-					<Link to="/addevent">Add event</Link>
+					<Link to="/eventform">Add event</Link>
 				) : null}
 				<table>
 					<caption>
@@ -305,36 +457,47 @@ export default class Calendar extends Page<
 											{item.day}
 										</div>
 										<div className="events-list">
-											{item.events.map((val, m) => (
-												<Link
-													to={
-														'/eventviewer/' +
-														val.event.id
-													}
-													key={m}
-													className="event-link"
-												>
+											{item.events.map((val, m) =>
+												val === undefined ||
+												val.block === true ? (
+													<div className="block" />
+												) : (
 													<div
-														className={`event-item ${
-															val.mergeLeft
-																? 'mergeLeft'
-																: ''
-														} ${
-															val.mergeRight
-																? 'mergeRight'
-																: ''
-														} ${
-															val.first
-																? 'first-event-name'
-																: ''
-														}`}
+														className="event-container"
+														style={{
+															width: `calc(${val.width *
+																100}% + ${
+																val.width
+															}px)`
+														}}
 													>
-														{val.first
-															? val.event.name
-															: null}
+														<Link
+															to={
+																'/eventviewer/' +
+																val.event.id
+															}
+															key={m}
+															className="event-link"
+														>
+															<div
+																className={`event-item${
+																	val.mergeLeft
+																		? ' mergeLeft'
+																		: ''
+																}${
+																	val.mergeRight
+																		? ' mergeRight'
+																		: ''
+																}${getClassNameFromEvent(
+																	val.event
+																)}`}
+															>
+																{val.event.name}
+															</div>
+														</Link>
 													</div>
-												</Link>
-											))}
+												)
+											)}
 										</div>
 									</td>
 								))}

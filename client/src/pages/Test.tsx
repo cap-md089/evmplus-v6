@@ -76,9 +76,6 @@ export default class Test extends Page<
 		const TestButton = Button as new () => Button<
 			{
 				hi: boolean;
-			},
-			{
-				hi: boolean;
 			}
 		>;
 
@@ -103,8 +100,15 @@ export default class Test extends Page<
 					submitInfo={{
 						text: 'Click me'
 					}}
-					onChange={data => {
+					onChange={(data, errors, changed) => {
 						this.setState(data);
+						// tslint:disable-next-line:no-console
+						console.log(errors, changed);
+					}}
+					validator={{
+						test2: text => {
+							return !text.match(/a/g);
+						}
 					}}
 				>
 					<LoadingTextArea

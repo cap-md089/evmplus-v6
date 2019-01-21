@@ -267,6 +267,21 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 				availableMembers: members
 			});
 		}
+
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/emailselector',
+				text: 'Email selector'
+			}
+		]);
+
+		this.props.updateSideNav([]);
+
+		this.updateTitle('Email selector');
 	}
 
 	public render() {
@@ -459,10 +474,16 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 
 	private selectText() {
 		if (this.selectableDiv.current) {
-			const range = document.createRange();
-			range.selectNode(this.selectableDiv.current);
-			window.getSelection().removeAllRanges();
-			window.getSelection().addRange(range);
+			try {
+				const range = document.createRange();
+				range.selectNode(this.selectableDiv.current);
+				window.getSelection().removeAllRanges();
+				window.getSelection().addRange(range);
+			} catch(e) {
+				// Probably an old browser
+				// (Looking at you, IE)
+				return;
+			}
 		}
 	}
 }

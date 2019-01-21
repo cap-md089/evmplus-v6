@@ -18,27 +18,37 @@ class SideNavigationLink extends React.Component<{ target: string }> {
 class SideNavigationReferenceLink extends React.Component<{
 	target: string;
 }> {
+	constructor(props: {target: string}) {
+		super(props);
+
+		this.navigateTo = this.navigateTo.bind(this);
+	}
+
 	public render() {
 		return (
 			<a
 				href={`#${this.props.target}`}
-				onClick={(e: React.MouseEvent<HTMLElement>) => {
-					e.preventDefault();
-					const offset = $(e.target).offset();
-					if (offset) {
-						$('html').animate(
-							{
-								scrollTop: offset.top
-							},
-							2000
-						);
-					}
-				}}
+				onClick={this.navigateTo}
 			>
 				<span className="arrow" />
 				<span>{this.props.children}</span>
 			</a>
 		);
+	}
+
+	private navigateTo(e: React.MouseEvent<HTMLAnchorElement>) {
+		e.preventDefault();
+
+		const offset = $(`#${this.props.target}`).offset();
+
+		if (offset) {
+			$('html').animate(
+				{
+					scrollTop: offset.top - 100
+				},
+				1000
+			);
+		}
 	}
 }
 

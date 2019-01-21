@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export interface ButtonProps<C, S> {
+export interface ButtonProps<C> {
 	className?: string;
 	id?: string;
 
@@ -26,13 +26,13 @@ export interface ButtonProps<C, S> {
 	buttonType?: 'primaryButton' | 'secondaryButton' | ('none' | '');
 }
 
-export default class Button<C, S> extends React.Component<
-	ButtonProps<C, S>,
+export default class Button<C> extends React.Component<
+	ButtonProps<C>,
 	{
 		disabled: boolean;
 	}
 > {
-	constructor(props: ButtonProps<C, S>) {
+	constructor(props: ButtonProps<C>) {
 		super(props);
 
 		this.handleClick = this.handleClick.bind(this);

@@ -59,6 +59,8 @@ export async function getMember(sessionID: string): Promise<SigninReturn> {
 		json.member.sessionID = result.headers.get('x-new-sessionid')!;
 	}
 
+	localStorage.setItem('sessionID', json.sessionID);
+
 	return json;
 }
 

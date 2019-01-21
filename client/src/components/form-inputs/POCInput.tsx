@@ -4,7 +4,7 @@ import { createCorrectMemberObject, MemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../DownloadDialogue';
 import { Checkbox, FormBlock, Label, TextInput } from '../Form';
-import { InputProps } from './Input';
+import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
 
@@ -13,8 +13,15 @@ const isInternalPOC = (
 ): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;
 
+export interface POCInputProps
+	extends NotOptionalInputProps<
+		DisplayInternalPointOfContact | ExternalPointOfContact
+	> {
+	memberList: Promise<MemberClasses[]>;
+}
+
 export default class POCInput extends React.Component<
-	InputProps<DisplayInternalPointOfContact | ExternalPointOfContact>,
+	POCInputProps,
 	{
 		memberSelectOpen: boolean;
 		filterValues: any[];
@@ -28,9 +35,7 @@ export default class POCInput extends React.Component<
 	};
 
 	public constructor(
-		props: InputProps<
-			DisplayInternalPointOfContact | ExternalPointOfContact
-		>
+		props: POCInputProps
 	) {
 		super(props);
 
@@ -237,31 +242,22 @@ export default class POCInput extends React.Component<
 		}
 
 		return isInternalPOC(value) ? (
-			<FormBlock
-				name="memberReference"
-				value={value.memberReference}
-			>
+			<FormBlock name="memberReference" value={value.memberReference}>
 				<Label>ID</Label>
-				<TextInput
-					disabled={true}
-					name="id"
-					value={id}
-				/>
+				<TextInput disabled={true} name="id" value={id} />
 			</FormBlock>
 		) : null;
 	}
 
 	private getMemberSelector() {
 		const value = this.props.value!;
-		const account = this.props.account!;
-		const member = this.props.member!;
 
 		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<
 			MemberClasses
 		>;
 
 		return isInternalPOC(value) ? (
-			<TextBox name="ignore" value={null}>
+			<TextBox>
 				<Button onClick={this.onMemberSelectClick}>
 					Select a member
 				</Button>
@@ -272,7 +268,7 @@ export default class POCInput extends React.Component<
 					title="Select Point of Contact"
 					showIDField={true}
 					displayValue={this.displayMemberValue}
-					valuePromise={account.getMembers(member)}
+					valuePromise={this.props.memberList}
 					filters={[
 						{
 							check: (memberToCheck, input) => {
@@ -280,19 +276,10 @@ export default class POCInput extends React.Component<
 									return true;
 								}
 
-								const memberName = [
-									memberToCheck.nameFirst,
-									(memberToCheck.nameMiddle || '')[0],
-									memberToCheck.nameLast,
-									memberToCheck.nameSuffix
-								]
-									.filter(x => x !== undefined && x !== '')
-									.join(' ');
-
 								try {
-									return !!memberName.match(
-										new RegExp(input, 'gi')
-									);
+									return !!memberToCheck
+										.getFullName()
+										.match(new RegExp(input, 'gi'));
 								} catch (e) {
 									return false;
 								}

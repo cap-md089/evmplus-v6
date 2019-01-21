@@ -29,7 +29,10 @@ export default class CAPProspectiveMember extends MemberBase
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[];
+	public dutyPositions: Array<{
+		duty: string,
+		date: number
+	}>;
 	/**
 	 * The organization ID the user belongs to
 	 */

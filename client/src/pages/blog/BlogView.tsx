@@ -8,12 +8,14 @@ import { EditorState } from '../../lib/slowEditorState';
 import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
 import '../blog.css';
+import PayWall from 'src/components/PayWall';
 
 interface ReadyBlogView {
 	loaded: true;
 	draft: typeof import('draft-js');
 	editorState: EditorState;
 	post: BlogPost;
+	error: null | number;
 }
 
 interface UnreadyBlogView {
@@ -21,6 +23,7 @@ interface UnreadyBlogView {
 	draft: null;
 	editorState: null;
 	post: null;
+	error: null;
 }
 
 export class BlogView extends Page<
@@ -33,7 +36,8 @@ export class BlogView extends Page<
 		post: null,
 		draft: null,
 		editorState: null,
-		loaded: false
+		loaded: false,
+		error: null
 	};
 	constructor(
 		props: PageProps<{
@@ -45,15 +49,24 @@ export class BlogView extends Page<
 	}
 
 	public async componentDidMount() {
-		const [post, draft] = await Promise.all([
-			BlogPost.Get(
-				parseInt(
-					this.props.routeProps.match.params.id.split('-')[0],
-					10
-				)
-			),
-			import('draft-js')
-		]);
+		let post: BlogPost;
+		let draft: typeof import('draft-js');
+		try {
+			[post, draft] = await Promise.all([
+				BlogPost.Get(
+					parseInt(
+						this.props.routeProps.match.params.id.split('-')[0],
+						10
+					)
+				),
+				import('draft-js')
+			]);
+		} catch(e) {
+			this.setState({
+				error: e.status
+			})
+			return;
+		}
 
 		this.props.updateBreadCrumbs([
 			{
@@ -69,13 +82,19 @@ export class BlogView extends Page<
 				text: 'View post "' + post.title + '"'
 			}
 		]);
+
+		this.updateTitle('View post "' + post.title + '"')
+
 		this.props.updateSideNav([]);
+
 		const postURL = `/news/view/${
 			post.id
 		}-${post.title.toLocaleLowerCase().replace(/ /g, '-')}`;
+
 		if (this.props.routeProps.location.pathname !== postURL) {
 			this.props.routeProps.history.replace(postURL);
 		}
+
 		this.setState({
 			loaded: true,
 			post,
@@ -90,7 +109,17 @@ export class BlogView extends Page<
 		if (this.state.loaded === false) {
 			return <Loader />;
 		}
+
+		if (this.state.error === 404) {
+			return <div>Could not find post</div>;
+		} else if (this.state.error === 402) {
+			return <PayWall />;
+		} else if (this.state.error !== null) {
+			throw new Error('Unknown error: ' + this.state.error);
+		}
+
 		const { post, editorState } = this.state;
+
 		return (
 			<div>
 				{this.props.member && this.props.member.canManageBlog() ? (

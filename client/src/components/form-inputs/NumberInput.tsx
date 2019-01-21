@@ -8,6 +8,10 @@ interface NumberInputProps extends InputProps<number> {
 	 */
 	radix?: number;
 	/**
+	 * Should the input be disabled?
+	 */
+	disabled?: boolean;
+	/**
 	 * Repeat text input property
 	 */
 	shouldUpdate?: (value: number) => boolean;
@@ -16,7 +20,7 @@ interface NumberInputProps extends InputProps<number> {
 export default (props: NumberInputProps) => (
 	<TextInput
 		name={props.name}
-		value={(props.value || 0).toString()}
+		value={props.value === null ? '' : (props.value || 0).toString()}
 		shouldUpdate={val =>
 			parseInt(val, props.radix || 10) ===
 				parseInt(val, props.radix || 10) &&
@@ -37,6 +41,7 @@ export default (props: NumberInputProps) => (
 				});
 			}
 		}}
+		disabled={props.disabled}
 		onInitialize={e => {
 			if (props.onInitialize && e) {
 				props.onInitialize({

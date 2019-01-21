@@ -1,6 +1,5 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
-import Team from './Team';
 import Event from './Event';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
@@ -114,19 +113,6 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public matchesReference(ref: MemberReference): boolean {
 		return ref.type === this.type && ref.id === this.id;
-	}
-
-	/**
-	 * Gets the teams the member is a part of
-	 */
-	public async getTeams(): Promise<Team[]> {
-		const responses = await Promise.all(
-			this.teamIDs.map(teamID =>
-				Team.Get(teamID, this.requestingAccount, this)
-			)
-		);
-
-		return responses;
 	}
 
 	/**

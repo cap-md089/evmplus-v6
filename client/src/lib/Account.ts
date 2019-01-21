@@ -75,7 +75,7 @@ export default class Account extends APIInterface<AccountObject>
 		Object.assign(this, data);
 	}
 
-	public async getMembers(member?: MemberBase): Promise<MemberClasses[]> {
+	public async getMembers(member?: MemberBase | null): Promise<MemberClasses[]> {
 		const url = this.buildURI('api', 'member');
 
 		const results = await this.fetch(url, {}, member);
@@ -87,7 +87,7 @@ export default class Account extends APIInterface<AccountObject>
 			.filter(v => !!v) as MemberClasses[];
 	}
 
-	public async getEvents(member?: MemberBase): Promise<Event[]> {
+	public async getEvents(member?: MemberBase | null): Promise<Event[]> {
 		const url = this.buildURI('api', 'event');
 
 		const results = await this.fetch(url, {}, member);
@@ -97,14 +97,14 @@ export default class Account extends APIInterface<AccountObject>
 		return events.map((e: EventObject) => new Event(e, this));;
 	}
 
-	public async getTeams(member?: MemberBase): Promise<Team[]> {
+	public async getTeams(member?: MemberBase | null): Promise<Team[]> {
 		const url = this.buildURI('api', 'team');
 
 		const results = await this.fetch(url, {}, member);
 
 		const teams = await results.json();
 
-		return teams.map((t: TeamObject) => new Team(t, this));
+		return teams.map((t: RawTeamObject) => new Team(t, this));
 	}
 
 	/**

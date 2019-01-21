@@ -66,6 +66,7 @@ export default class PageCreate extends Page<PageProps, State> {
 				text: 'Create page'
 			}
 		]);
+		this.updateTitle('Create page');
 		this.props.updateSideNav([]);
 
 		import('draft-js').then(

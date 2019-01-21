@@ -16,22 +16,17 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 		const token = await BlogPage.getToken(account.id, member);
 
-		let result;
-		try {
-			result = await account.fetch(
-				`/api/blog/page`,
-				{
-					body: JSON.stringify({
-						...data,
-						token
-					}),
-					method: 'POST'
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not create blog page');
-		}
+		const result = await account.fetch(
+			`/api/blog/page`,
+			{
+				body: JSON.stringify({
+					...data,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 
 		const newBlogPage = await result.json();
 
@@ -43,12 +38,7 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 			account = await Account.Get();
 		}
 
-		let result;
-		try {
-			result = await account.fetch(`/api/blog/page/${id}`);
-		} catch (e) {
-			throw new Error('Could not get blog page');
-		}
+		const result = await account.fetch(`/api/blog/page/${id}`);
 
 		const blogPageData = await result.json();
 
@@ -113,21 +103,17 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/blog/page/${this.id}`,
-				{
-					body: JSON.stringify({
-						...this.toRaw(),
-						token
-					}),
-					method: 'PUT'
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not save blog page');
-		}
+		await this.fetch(
+			`/api/blog/page/${this.id}`,
+			{
+				body: JSON.stringify({
+					...this.toRaw(),
+					token
+				}),
+				method: 'PUT'
+			},
+			member
+		);
 	}
 
 	public getChildren() {
@@ -145,19 +131,91 @@ export default class BlogPage extends APIInterface<FullBlogPageObject>
 
 		const token = await this.getToken(member);
 
-		try {
-			await this.fetch(
-				`/api/blog/page/${this.id}`,
-				{
-					body: JSON.stringify({
-						token
-					}),
-					method: 'DELETE'
-				},
-				member
-			);
-		} catch (e) {
-			throw new Error('Could not delete blog page');
+		await this.fetch(
+			`/api/blog/page/${this.id}`,
+			{
+				body: JSON.stringify({
+					token
+				}),
+				method: 'DELETE'
+			},
+			member
+		);
+	}
+
+	public async moveTo(
+		targetPage: BlogPage,
+		member: MemberBase,
+		errOnInvalidPermission = false
+	) {
+		if (!member.canManageBlog()) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
 		}
+
+		const token = await this.getToken(member);
+
+		this.ancestry = [
+			...targetPage.ancestry,
+			{
+				id: targetPage.id,
+				title: targetPage.title
+			}
+		];
+
+		this.parentID = targetPage.id;
+
+		targetPage.fullChildren.push({
+			id: this.id,
+			title: this.title
+		});
+
+		await this.fetch(
+			`/api/blog/page/${targetPage.id}/children/${this.id}`,
+			{
+				body: JSON.stringify({
+					id: this.id,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
+	}
+
+	public async removeChild(
+		childPage: BlogPage,
+		member: MemberBase,
+		errOnInvalidPermission = false
+	) {
+		if (!member.canManageBlog()) {
+			if (errOnInvalidPermission) {
+				throw new Error('Invalid permissions');
+			} else {
+				return;
+			}
+		}
+
+		this.children = this.children.filter(child => child !== childPage.id);
+		this.fullChildren = this.fullChildren.filter(
+			child => child.id !== childPage.id
+		);
+
+		const token = await this.getToken(member);
+
+		await this.fetch(
+			`/api/blog/page/${this.id}/children/${childPage.id}`,
+			{
+				body: JSON.stringify({
+					id: this.id,
+					token
+				}),
+				method: 'POST'
+			},
+			member
+		);
 	}
 }
