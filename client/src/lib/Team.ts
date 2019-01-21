@@ -2,24 +2,31 @@ import { DateTime } from 'luxon';
 import { TeamPublicity } from '../enums';
 import Account from './Account';
 import APIInterface from './APIInterface';
-import MemberBase from './MemberBase';
+import MemberBase, {
+	createCorrectMemberObject,
+	MemberClasses
+} from './Members';
 
 /**
  * A Team is a collection of people with a team leader, a mentor, and a coach
- * 
+ *
  * Each person has a role, and this collection allows for gathering information provided
  * and parsing it, e.g. for a team leader to get the emails to communicate with their team
  */
 export default class Team extends APIInterface<RawTeamObject>
-	implements RawTeamObject {
+	implements FullTeamObject {
 	/**
 	 * Constructs a team object
-	 * 
+	 *
 	 * @param id The ID of the team
 	 * @param account The Account the team belongs to
 	 * @param member A member, for where a team has restrictions
 	 */
-	public static async Get(id: number, account: Account, member?: MemberBase) {
+	public static async Get(
+		id: number,
+		account: Account,
+		member?: MemberBase | null
+	) {
 		const result = await account.fetch('/api/team/' + id, {}, member);
 
 		const json = await result.json();
@@ -29,7 +36,7 @@ export default class Team extends APIInterface<RawTeamObject>
 
 	/**
 	 * Creates a new team
-	 * 
+	 *
 	 * @param data The new team that is going to be created
 	 * @param member The member creating the team
 	 * @param account The Account the team belongs to
@@ -73,23 +80,29 @@ export default class Team extends APIInterface<RawTeamObject>
 
 	public cadetLeader: MemberReference;
 
+	public cadetLeaderName: string;
+
 	public description: string;
 
 	public id: number;
 
-	public members: RawTeamMember[];
+	public members: FullTeamMember[];
 
 	public name: string;
 
 	public seniorCoach: MemberReference;
 
+	public seniorCoachName: string;
+
 	public seniorMentor: MemberReference;
+
+	public seniorMentorName: string;
 
 	public visibility: TeamPublicity;
 
-	public teamHistory: RawPreviousTeamMember[];
+	public teamHistory: FullPreviousTeamMember[];
 
-	public constructor(obj: RawTeamObject, account: Account) {
+	public constructor(obj: RawTeamObject, private account: Account) {
 		super(account.id);
 
 		Object.assign(this, obj);
@@ -158,10 +171,11 @@ export default class Team extends APIInterface<RawTeamObject>
 			throw new Error('Member does not have permissions to modify team');
 		}
 
-		const teamMember: RawTeamMember = {
+		const teamMember: FullTeamMember = {
 			reference: memberToAdd.getReference(),
 			job,
-			joined: +DateTime.utc()
+			joined: +DateTime.utc(),
+			name: member.getFullName()
 		};
 
 		this.members.push(teamMember);
@@ -213,5 +227,59 @@ export default class Team extends APIInterface<RawTeamObject>
 			},
 			member
 		);
+	}
+
+	public isMember(member: MemberReference): boolean {
+		if (MemberBase.AreMemberReferencesTheSame(member, this.cadetLeader)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorCoach)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorMentor)) {
+			return true;
+		}
+
+		return (
+			this.members.filter(
+				mem =>
+					!MemberBase.AreMemberReferencesTheSame(
+						member,
+						mem.reference
+					)
+			).length > 0
+		);
+	}
+
+	public async getFullMembers(member?: MemberBase | null): Promise<MemberClasses[]> {
+		const result = await this.fetch(
+			`/api/team/${this.id}/members`,
+			{},
+			member
+		);
+
+		const json = (await result.json()) as Member[];
+
+		const returnValue: MemberClasses[] = [];
+
+		json.forEach(value => {
+			const mem = createCorrectMemberObject(value, this.account, '');
+
+			if (mem !== null) {
+				returnValue.push(mem);
+			}
+		});
+
+		return returnValue;
+	}
+
+	public canGetFullMembers(member?: MemberBase | null) {
+		if (this.visibility === TeamPublicity.PRIVATE) {
+			return member && this.isMember(member.getReference());
+		} else if (this.visibility === TeamPublicity.PROTECTED) {
+			return !!member;
+		} else {
+			return true;
+		}
 	}
 }

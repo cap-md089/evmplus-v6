@@ -82,6 +82,6 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			this.props.account
 		);
 
-		this.props.routeProps.history.push(`/team/view/${newTeam.id}`);
+		this.props.routeProps.history.push(`/team/${newTeam.id}`);
 	}
 }

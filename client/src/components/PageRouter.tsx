@@ -29,6 +29,7 @@ import { SideNavigationItem } from './SideNavigation';
 import AttendanceMultiAdd from 'src/pages/events/AttendanceMultiAdd';
 import TeamAdd from 'src/pages/team/TeamAdd';
 import TeamList from 'src/pages/team/TeamList';
+import TeamView from 'src/pages/team/TeamView';
 
 const pages: Array<{
 	url: string;
@@ -193,6 +194,21 @@ const pages: Array<{
 	{
 		url: '/team/list',
 		component: TeamList,
+		exact: false
+	},
+	{
+		url: '/teamview/:id',
+		component: TeamView,
+		exact: false
+	},
+	{
+		url: '/team/view/:id',
+		component: TeamView,
+		exact: false
+	},
+	{
+		url: '/team/:id',
+		component: TeamView,
 		exact: false
 	}
 ];

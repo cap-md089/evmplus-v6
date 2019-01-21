@@ -13,7 +13,8 @@ import SimpleForm, {
 	SimpleRadioButton,
 	TextInput,
 	FormValidator,
-	Divider
+	Divider,
+	TextBox
 } from './SimpleForm';
 
 interface TeamFormProps {
@@ -85,9 +86,23 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 
 				<Divider />
 
+				<TextBox>
+					Team visibility impacts how the members are viewed
+					<br />
+					Private means members have to sign in to see member names,
+					but can only see contact information if they are part of the
+					team
+					<br />
+					Protected means that the names and contact information
+					require being signed in to see
+					<br />
+					Public means that people can see names and contact
+					information
+				</TextBox>
+
 				<Label>Team visibility</Label>
 				<SimpleRadioButton<TeamPublicity>
-					labels={['Private', 'Public']}
+					labels={['Private', 'Protected', 'Public']}
 					name="visibility"
 					errorMessage="Please select a publicity"
 				/>
