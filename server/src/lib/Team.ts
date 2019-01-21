@@ -341,6 +341,9 @@ export default class Team implements FullTeamObject {
 		this.members = data.members;
 		this.teamHistory = data.teamHistory;
 		this.accountID = data.accountID;
+		this.seniorCoachName = data.seniorCoachName;
+		this.seniorMentorName = data.seniorMentorName;
+		this.cadetLeaderName = data.cadetLeaderName;
 
 		this.set(data);
 	}
@@ -462,6 +465,19 @@ export default class Team implements FullTeamObject {
 				f => !MemberBase.AreMemberReferencesTheSame(member, f.reference)
 			).length > 0
 		);
+	}
+
+	public isMemberOrLeader(member: MemberReference) {
+		if (MemberBase.AreMemberReferencesTheSame(member, this.cadetLeader)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorCoach)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorMentor)) {
+			return true;
+		}
+		return this.hasMember(member);
 	}
 
 	public async addTeamMember(
