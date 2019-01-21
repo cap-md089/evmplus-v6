@@ -89,7 +89,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			complete: false,
 			administrationComments: '',
 			status: 0,
-			debrief: '',
 			pointsOfContact: [],
 			signUpPartTime: false,
 			teamID: 0,
@@ -103,7 +102,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			administrationComments: false,
 			comments: false,
 			complete: false,
-			debrief: false,
 			desiredNumberOfParticipants: false,
 			endDateTime: false,
 			eventWebsite: false,
@@ -502,11 +500,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 					account={this.props.account}
 					member={this.props.member}
 				/>
-
-				<Title>Debrief information</Title>
-
-				<Label>Debrief</Label>
-				<TextInput name="debrief" />
 			</NewEventForm>
 		) : (
 			<div>Please sign in</div>
@@ -520,7 +513,6 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			administrationComments: event.administrationComments,
 			comments: event.comments,
 			complete: event.complete,
-			debrief: event.debrief,
 			desiredNumberOfParticipants: event.desiredNumberOfParticipants,
 			endDateTime: event.endDateTime,
 			eventWebsite: event.eventWebsite,

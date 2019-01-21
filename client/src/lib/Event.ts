@@ -153,7 +153,7 @@ export default class Event extends APIInterface<EventObject>
 
 	public status: EventStatus;
 
-	public debrief: string;
+	public debrief: DebriefItem[];
 
 	public pointsOfContact: Array<
 		DisplayInternalPointOfContact | ExternalPointOfContact
