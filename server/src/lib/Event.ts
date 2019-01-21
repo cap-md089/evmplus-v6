@@ -248,6 +248,8 @@ export default class Event
 
 	public teamID: number;
 
+	public limitSignupsToTeam: boolean | null;
+
 	public sourceEvent: null | {
 		id: number;
 		accountID: string;
@@ -302,26 +304,6 @@ export default class Event
 			pointsOfContact: pointsOfContact as Array<
 				DisplayInternalPointOfContact | ExternalPointOfContact
 			>
-		});
-	}
-
-	/**
-	 * Save a copy of the event to database
-	 *
-	 * @param {Account} account The account to save to
-	 */
-	public async saveCopy(account: Account) {
-		const timeCreated = +DateTime.utc();
-
-		const eventsCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
-
-		await eventsCollection.add({
-			...this.toRaw(),
-			timeCreated,
-			timeModified: timeCreated,
-			accountID: account.id
 		});
 	}
 
@@ -405,14 +387,16 @@ export default class Event
 			fileIDs: copyFiles ? this.fileIDs : [],
 			status: copyStatus ? this.status : EventStatus.INFORMATIONONLY,
 			teamID: this.teamID,
+			limitSignupsToTeam: this.limitSignupsToTeam,
 			transportationDescription: this.transportationDescription,
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
-			meetDateTime: this.meetDateTime - timeDelta,
-			startDateTime: this.startDateTime - timeDelta,
-			endDateTime: this.endDateTime - timeDelta,
-			pickupDateTime: this.pickupDateTime - timeDelta
+
+			meetDateTime: this.meetDateTime + timeDelta,
+			startDateTime: this.startDateTime + timeDelta,
+			endDateTime: this.endDateTime + timeDelta,
+			pickupDateTime: this.pickupDateTime + timeDelta
 		};
 
 		return Event.Create(newEvent, this.account, this.schema, member);
@@ -513,6 +497,7 @@ export default class Event
 		startDateTime: this.startDateTime,
 		status: this.status,
 		teamID: this.teamID,
+		limitSignupsToTeam: this.teamID !== null ? this.limitSignupsToTeam : null,
 		timeCreated: this.timeCreated,
 		timeModified: this.timeModified,
 		transportationDescription: this.transportationDescription,
@@ -531,7 +516,8 @@ export default class Event
 	 */
 	public toFullRaw = (): EventObject => ({
 		...this.toRaw(),
-		attendance: this.getAttendance()
+		attendance: this.getAttendance(),
+		limitSignupsToTeam: this.limitSignupsToTeam
 	});
 
 	public async getSourceEvent(): Promise<Event> {
@@ -574,7 +560,6 @@ export default class Event
 				memberName: member.getFullName(),
 				planToUseCAPTransportation:
 					newAttendanceRecord.planToUseCAPTransportation,
-				requirements: newAttendanceRecord.requirements,
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp: +DateTime.utc(),
@@ -604,7 +589,6 @@ export default class Event
 						memberName: member.getFullName(),
 						planToUseCAPTransportation:
 							newAttendanceRecord.planToUseCAPTransportation,
-						requirements: newAttendanceRecord.requirements,
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp: +DateTime.utc(),

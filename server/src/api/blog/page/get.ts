@@ -14,5 +14,5 @@ export default asyncErrorHandler(async (req: AccountRequest, res: Response) => {
 		return;
 	}
 
-	json<BlogPageObject>(res, page.toRaw());
+	json<FullBlogPageObject>(res, page.toFullRaw());
 })

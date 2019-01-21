@@ -2,26 +2,34 @@ interface ValidatorResult {
 	valid: boolean;
 }
 
-interface ValidatorFail extends ValidatorResult {
+interface ValidatorFail<T> extends ValidatorResult {
 	valid: false;
 	message: string;
+	// IGNORE!! DO NOT USE!! IT WILL NEVER BE SET, IT'S JUST
+	// FOR ENFORCING TYPE CHECKING WITH GENERIC TYPES
+	ret?: T;
 }
 
-interface ValidatorPass extends ValidatorResult {
+interface ValidatorPass<T> extends ValidatorResult {
 	valid: true;
+	// IGNORE!! DO NOT USE!! IT WILL NEVER BE SET, IT'S JUST
+	// FOR ENFORCING TYPE CHECKING WITH GENERIC TYPES
+	ret?: T;
 }
 
-type ValidatorFunction = (obj: unknown) => ValidatorFail | ValidatorPass;
+export type ValidatorFunction<T> = (
+	obj: unknown
+) => ValidatorFail<T> | ValidatorPass<T>;
 
 type RequiredCheckFunction = (value: any, baseObj: any) => boolean;
 
-interface ValidateRule {
-	validator: ValidatorFunction | Validator<any>;
+interface ValidateRule<T> {
+	validator: ValidatorFunction<T> | Validator<T>;
 	required?: boolean;
 	requiredIf?: RequiredCheckFunction;
 }
 
-type ValidateRuleSet<T> = { [P in keyof T]: ValidateRule };
+export type ValidateRuleSet<T> = { [P in keyof T]: ValidateRule<T[P]> };
 
 interface ValidateError<T> {
 	property: keyof T;
@@ -43,7 +51,7 @@ export interface ConditionalMemberValidatedRequest<T>
 
 export default class Validator<T> {
 	public static BodyExpressMiddleware = (
-		validator: Validator<any>
+		validator: Validator<any> | ValidatorFunction<any>
 	): express.RequestHandler => (req, res, next) => {
 		if (req.body === undefined || req.body === null) {
 			res.status(400);
@@ -51,13 +59,24 @@ export default class Validator<T> {
 			return;
 		}
 
-		if (validator.validate(req.body)) {
-			req.body = validator.prune(req.body);
+		if (validator instanceof Validator) {
+			if (validator.validate(req.body)) {
+				req.body = validator.prune(req.body);
 
-			next();
+				next();
+			} else {
+				res.status(400);
+				res.json(validator.getErrors());
+			} 
 		} else {
-			res.status(400);
-			res.json(validator.getErrors());
+			const results = validator(req.body);
+
+			if (results.valid) {
+				next();
+			} else {
+				res.status(400);
+				res.json((results as ValidatorFail<any>).message)
+			}
 		}
 	};
 
@@ -80,7 +99,9 @@ export default class Validator<T> {
 		}
 	};
 
-	public static Nothing: ValidatorFunction = (input: unknown) =>
+	public static Nothing: ValidatorFunction<undefined | null> = (
+		input: unknown
+	) =>
 		input === undefined || input === null
 			? {
 					valid: true
@@ -90,11 +111,21 @@ export default class Validator<T> {
 					message: 'must be null or undefined'
 			  };
 
-	public static Anything: ValidatorFunction = (input: unknown) => ({
+	public static Null: ValidatorFunction<null> = (input: unknown) =>
+		input === null
+			? {
+					valid: true
+			  }
+			: {
+					valid: false,
+					message: 'must be null'
+			  };
+
+	public static Anything: ValidatorFunction<any> = (input: unknown) => ({
 		valid: true
 	});
 
-	public static Number: ValidatorFunction = (input: unknown) =>
+	public static Number: ValidatorFunction<number> = (input: unknown) =>
 		typeof input === 'number'
 			? {
 					valid: true
@@ -104,7 +135,7 @@ export default class Validator<T> {
 					message: 'must be a number'
 			  };
 
-	public static String: ValidatorFunction = (input: unknown) =>
+	public static String: ValidatorFunction<string> = (input: unknown) =>
 		typeof input === 'string'
 			? {
 					valid: true
@@ -114,7 +145,7 @@ export default class Validator<T> {
 					message: 'must be a string'
 			  };
 
-	public static Boolean: ValidatorFunction = (input: unknown) =>
+	public static Boolean: ValidatorFunction<boolean> = (input: unknown) =>
 		typeof input === 'boolean'
 			? {
 					valid: true
@@ -124,7 +155,7 @@ export default class Validator<T> {
 					message: 'must be a boolean'
 			  };
 
-	public static Array: ValidatorFunction = (input: unknown) =>
+	public static Array: ValidatorFunction<any[]> = (input: unknown) =>
 		Array.isArray(input)
 			? {
 					valid: true
@@ -134,8 +165,10 @@ export default class Validator<T> {
 					message: 'must be an array'
 			  };
 
-	public static Enum = (value: any): ValidatorFunction => (input: unknown) =>
-		value[input as any] === undefined
+	public static Enum = (value: any): ValidatorFunction<typeof value> => (
+		input: unknown
+	) =>
+		typeof value[input as any] !== 'string'
 			? {
 					valid: false,
 					message: 'not a proper enum variable'
@@ -144,9 +177,9 @@ export default class Validator<T> {
 					valid: true
 			  };
 
-	public static ArrayOf = (
-		validator: ValidatorFunction | Validator<any>
-	): ValidatorFunction => (input: unknown) => {
+	public static ArrayOf = <S>(
+		validator: ValidatorFunction<S> | Validator<S>
+	): ValidatorFunction<S[]> => (input: unknown) => {
 		if (!Array.isArray(input)) {
 			return {
 				valid: false,
@@ -181,65 +214,227 @@ export default class Validator<T> {
 			  };
 	};
 
-	public static Or = (
-		...validators: Array<Validator<any> | ValidatorFunction>
-	): ValidatorFunction => (input: unknown) => {
-		const errors = [];
+	public static Or<S1>(
+		validator1: Validator<S1> | ValidatorFunction<S1>
+	): ValidatorFunction<S1>;
+	public static Or<S1, S2>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>
+	): ValidatorFunction<S1 | S2>;
+	public static Or<S1, S2, S3>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>
+	): ValidatorFunction<S1 | S2 | S3>;
+	public static Or<S1, S2, S3, S4>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>
+	): ValidatorFunction<S1 | S2 | S3 | S4>;
+	public static Or<S1, S2, S3, S4, S5>(
+		validator1: Validator<S1> | ValidatorFunction<S5>,
+		validator2: Validator<S2> | ValidatorFunction<S5>,
+		validator3: Validator<S3> | ValidatorFunction<S5>,
+		validator4: Validator<S4> | ValidatorFunction<S5>,
+		validator5: Validator<S5> | ValidatorFunction<S5>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5>;
+	public static Or<S1, S2, S3, S4, S5, S6>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6>;
+	public static Or<S1, S2, S3, S4, S5, S6, S7>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7>;
+	public static Or<S1, S2, S3, S4, S5, S6, S7, S8>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8>;
+	public static Or<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>,
+		validator9: Validator<S9> | ValidatorFunction<S9>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9>;
+	public static Or<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>,
+		validator9: Validator<S9> | ValidatorFunction<S9>,
+		validator10: Validator<S10> | ValidatorFunction<S10>
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
 
-		for (const validator of validators) {
-			if (validator instanceof Validator) {
-				const result = validator.validate(input);
-				if (!result) {
-					errors.push(validator.getErrorString());
+	public static Or(
+		...validators: Array<Validator<any> | ValidatorFunction<any>>
+	): ValidatorFunction<any> {
+		return (input: unknown) => {
+			const errors = [];
+
+			for (const validator of validators) {
+				if (!validator) {
+					continue;
 				}
-			} else {
-				const result = validator(input);
-				if (!result.valid) {
-					errors.push((result as ValidatorFail).message);
+
+				if (validator instanceof Validator) {
+					const result = validator.validate(input);
+					if (!result) {
+						errors.push(validator.getErrorString());
+					}
+				} else {
+					const result = validator(input);
+					if (!result.valid) {
+						errors.push((result as ValidatorFail<any>).message);
+					}
 				}
 			}
-		}
 
-		return errors.length !== validators.length
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: errors.join('; ')
-			  };
-	};
+			return errors.length !== validators.length
+				? {
+						valid: true
+				  }
+				: {
+						valid: false,
+						message: errors.join('; ')
+				  };
+		};
+	}
 
-	public static And = (
-		...validators: Array<Validator<any> | ValidatorFunction>
-	): ValidatorFunction => (input: unknown) => {
-		const errors = [];
+	public static And<S1>(
+		validator1: Validator<S1> | ValidatorFunction<S1>
+	): ValidatorFunction<S1>;
+	public static And<S1, S2>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S1> | ValidatorFunction<S2>
+	): ValidatorFunction<S1 & S2>;
+	public static And<S1, S2, S3>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>
+	): ValidatorFunction<S1 & S2 & S3>;
+	public static And<S1, S2, S3, S4>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>
+	): ValidatorFunction<S1 & S2 & S3 & S4>;
+	public static And<S1, S2, S3, S4, S5>(
+		validator1: Validator<S1> | ValidatorFunction<S5>,
+		validator2: Validator<S2> | ValidatorFunction<S5>,
+		validator3: Validator<S3> | ValidatorFunction<S5>,
+		validator4: Validator<S4> | ValidatorFunction<S5>,
+		validator5: Validator<S5> | ValidatorFunction<S5>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5>;
+	public static And<S1, S2, S3, S4, S5, S6>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6>;
+	public static And<S1, S2, S3, S4, S5, S6, S7>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7>;
+	public static And<S1, S2, S3, S4, S5, S6, S7, S8>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8>;
+	public static And<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>,
+		validator9: Validator<S9> | ValidatorFunction<S9>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9>;
+	public static And<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
+		validator1: Validator<S1> | ValidatorFunction<S1>,
+		validator2: Validator<S2> | ValidatorFunction<S2>,
+		validator3: Validator<S3> | ValidatorFunction<S3>,
+		validator4: Validator<S4> | ValidatorFunction<S4>,
+		validator5: Validator<S5> | ValidatorFunction<S5>,
+		validator6: Validator<S6> | ValidatorFunction<S6>,
+		validator7: Validator<S7> | ValidatorFunction<S7>,
+		validator8: Validator<S8> | ValidatorFunction<S8>,
+		validator9: Validator<S9> | ValidatorFunction<S9>,
+		validator10: Validator<S10> | ValidatorFunction<S10>
+	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10>;
 
-		for (const validator of validators) {
-			if (validator instanceof Validator) {
-				const result = validator.validate(input);
-				if (!result) {
-					errors.push(validator.getErrorString());
-				}
-			} else {
-				const result = validator(input);
-				if (!result.valid) {
-					errors.push((result as ValidatorFail).message);
+	public static And(
+		...validators: Array<Validator<any> | ValidatorFunction<any>>
+	): ValidatorFunction<any> {
+		return (input: unknown) => {
+			const errors = [];
+
+			for (const validator of validators) {
+				if (validator instanceof Validator) {
+					const result = validator.validate(input);
+					if (!result) {
+						errors.push(validator.getErrorString());
+					}
+				} else {
+					const result = validator(input);
+					if (!result.valid) {
+						errors.push((result as ValidatorFail<any>).message);
+					}
 				}
 			}
-		}
 
-		return errors.length !== 0
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: errors.join('; ')
-			  };
-	};
+			return errors.length !== 0
+				? {
+						valid: true
+				  }
+				: {
+						valid: false,
+						message: errors.join('; ')
+				  };
+		};
+	}
 
-	public static CheckboxReturn: ValidatorFunction = input =>
+	public static CheckboxReturn: ValidatorFunction<
+		[boolean[], string]
+	> = input =>
 		Validator.Array(input).valid &&
 		Validator.ArrayOf(Validator.Boolean)((input as any[])[0]).valid &&
 		Validator.String((input as any[])[1]).valid
@@ -251,7 +446,9 @@ export default class Validator<T> {
 					message: 'not a valid checkbox return value'
 			  };
 
-	public static RadioReturn = (rrEnum: any): ValidatorFunction => input =>
+	public static RadioReturn = (
+		rrEnum: any
+	): ValidatorFunction<[typeof rrEnum, string]> => input =>
 		Validator.Array(input).valid &&
 		Validator.Enum(rrEnum)((input as any[])[0]).valid &&
 		Validator.String((input as any[])[1]).valid
@@ -263,7 +460,7 @@ export default class Validator<T> {
 					message: 'not a valid radio return value'
 			  };
 
-	public static MemberReference: ValidatorFunction = input =>
+	public static MemberReference: ValidatorFunction<MemberReference> = input =>
 		MemberBase.isReference(input)
 			? {
 					valid: true
@@ -273,7 +470,9 @@ export default class Validator<T> {
 					message: 'not a valid member reference'
 			  };
 
-	public static StrictValue = (value: any): ValidatorFunction => input =>
+	public static StrictValue = (
+		value: any
+	): ValidatorFunction<typeof value> => input =>
 		input === value
 			? {
 					valid: true
@@ -283,17 +482,144 @@ export default class Validator<T> {
 					message: 'does not equal ' + value
 			  };
 
-	public static OneOfStrict = (...values: any[]): ValidatorFunction =>
-		Validator.Or.apply(
+	public static OneOfStrict<S1>(validator1: S1): ValidatorFunction<S1>;
+	public static OneOfStrict<S1, S2>(
+		validator1: S1,
+		validator2: S2
+	): ValidatorFunction<S1 | S2>;
+	public static OneOfStrict<S1, S2, S3>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3
+	): ValidatorFunction<S1 | S2 | S3>;
+	public static OneOfStrict<S1, S2, S3, S4>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4
+	): ValidatorFunction<S1 | S2 | S3 | S4>;
+	public static OneOfStrict<S1, S2, S3, S4, S5>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5>;
+	public static OneOfStrict<S1, S2, S3, S4, S5, S6>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5,
+		validator6: S6
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6>;
+	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5,
+		validator6: S6,
+		validator7: S7
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7>;
+	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5,
+		validator6: S6,
+		validator7: S7,
+		validator8: S8
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8>;
+	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5,
+		validator6: S6,
+		validator7: S7,
+		validator8: S8,
+		validator9: S9
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9>;
+	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
+		validator1: S1,
+		validator2: S2,
+		validator3: S3,
+		validator4: S4,
+		validator5: S5,
+		validator6: S6,
+		validator7: S7,
+		validator8: S8,
+		validator9: S9,
+		validator10: S10
+	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
+	public static OneOfStrict<T extends any>(
+		...values: T[]
+	): ValidatorFunction<T>;
+
+	public static OneOfStrict<T extends any[]>(
+		...values: T
+	): ValidatorFunction<any> {
+		return Validator.Or.apply(
 			{},
 			values.map(value => Validator.StrictValue(value))
 		);
+	}
+
+	public static Values<T>(
+		valueValidator: Validator<T> | ValidatorFunction<T>
+	): ValidatorFunction<{ [key: string]: T }> {
+		return (input: unknown) => {
+			if (input === undefined || input === null) {
+				return {
+					valid: false,
+					message: 'not defined'
+				};
+			}
+
+			if (typeof input !== 'object') {
+				return {
+					valid: false,
+					message: 'not an object'
+				};
+			}
+
+			let good = true;
+			const values = Object.values(input as any);
+
+			for (const i of values) {
+				if (valueValidator instanceof Validator) {
+					if (!valueValidator.validate(i)) {
+						good = false;
+						break;
+					}
+				} else {
+					if (!valueValidator(i).valid) {
+						good = false;
+						break;
+					}
+				}
+			}
+
+			return good
+				? {
+						valid: true
+				  }
+				: {
+						valid: false,
+						message:
+							'values in object do not match the required type'
+				  };
+		};
+	}
 
 	private rules: ValidateRuleSet<T>;
 
 	private errors: Array<ValidateError<T>> = [];
 
-	protected constructor(rules: ValidateRuleSet<T>) {
+	public constructor(rules: ValidateRuleSet<T>) {
 		this.rules = rules;
 	}
 
@@ -313,8 +639,15 @@ export default class Validator<T> {
 				const rule = this.rules[key];
 
 				if (value === undefined || value === null) {
-					if (rule.required !== false && !partial) {
-						if (rule.requiredIf && rule.requiredIf(value, obj)) {
+					if (rule.required && !partial) {
+						if (rule.requiredIf) {
+							if (rule.requiredIf(value, obj)) {
+								this.errors.push({
+									property: key,
+									message: 'property is required'
+								});
+							}
+						} else {
 							this.errors.push({
 								property: key,
 								message: 'property is required'
@@ -336,7 +669,8 @@ export default class Validator<T> {
 
 					if (!validateResult.valid) {
 						this.errors.push({
-							message: (validateResult as ValidatorFail).message,
+							message: (validateResult as ValidatorFail<any>)
+								.message,
 							property: key
 						});
 					}
@@ -374,7 +708,7 @@ export default class Validator<T> {
 	}
 
 	public getErrors(): Array<ValidateError<T>> {
-		return this.errors;
+		return this.errors.slice();
 	}
 
 	public getErrorString(): string {

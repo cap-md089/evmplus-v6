@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import Account from '../../../lib/Account';
 import BlogPage from '../../../lib/BlogPage';
 import NHQMember from '../../../lib/members/NHQMember';
 import Validator from '../../../lib/validator/Validator';
@@ -13,8 +12,6 @@ import removechild from './removechild';
 import set from './set';
 
 const router = Router();
-
-router.use(Account.ExpressMiddleware);
 
 router.get('/', list);
 router.post(

@@ -7,6 +7,9 @@ import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
+import addattendancebulk, {
+	attendanceBulkValidator
+} from './attendance/addattendancebulk';
 import deleteattendance from './attendance/deleteattendance';
 import getattendance from './attendance/getattendance';
 import modifyattendance from './attendance/modifyattendance';
@@ -15,6 +18,7 @@ import adddebrief from './debrief/adddebrief';
 import deletedebrief from './debrief/deletedebrief';
 // Event handlers
 import addevent from './events/addevent';
+import copy from './events/copy';
 import deleteevent from './events/deleteevent';
 import getevent from './events/getevent';
 import linkevent from './events/linkevent';
@@ -36,8 +40,18 @@ router.post(
 	NHQMember.PermissionMiddleware('AddEvent'),
 	addevent
 );
-router.post('/:parent', NHQMember.ExpressMiddleware, linkevent);
-router.delete('/:id', NHQMember.ExpressMiddleware, deleteevent);
+router.post(
+	'/:parent',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	linkevent
+);
+router.delete(
+	'/:id',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	deleteevent
+);
 router.put(
 	'/:id',
 	NHQMember.ExpressMiddleware,
@@ -46,8 +60,17 @@ router.put(
 	setevent
 );
 router.get('/:id', NHQMember.ConditionalExpressMiddleware, getevent);
+router.post('/:id/copy', NHQMember.ExpressMiddleware, tokenMiddleware, copy);
 
 router.get('/:id/attendance', NHQMember.ExpressMiddleware, getattendance);
+router.post(
+	'/:id/attendance/bulk',
+	NHQMember.ExpressMiddleware,
+	replaceUndefinedWithNullMiddleware,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(attendanceBulkValidator),
+	addattendancebulk
+);
 router.post(
 	'/:id/attendance',
 	NHQMember.ExpressMiddleware,

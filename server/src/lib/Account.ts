@@ -13,6 +13,7 @@ import {
 	MySQLRequest
 } from './MySQLUtil';
 import Team from './Team';
+import { MonthNumber } from './Util';
 
 export interface AccountRequest extends MySQLRequest {
 	account: Account;
@@ -63,6 +64,26 @@ export default class Account
 			} else {
 				res.status(500);
 			}
+			res.end();
+			return;
+		}
+
+		next();
+	};
+
+	public static PayWall = (
+		req: AccountRequest,
+		res: express.Response,
+		next: express.NextFunction
+	) => {
+		if (!req.account) {
+			res.status(400);
+			res.end();
+			return;
+		}
+
+		if (!req.account.validPaid) {
+			res.status(402);
 			res.end();
 			return;
 		}
@@ -291,7 +312,11 @@ export default class Account
 	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
-		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
+		
+		// This needs to be included to include the staff team, which does not directly
+		// exist in the database and is more dynamic
+		yield Team.Get(0, this, this.schema);
 
 		const teamIterator = findAndBind(teamsCollection, {
 			accountID: this.id
@@ -332,8 +357,6 @@ export default class Account
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
-	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set
 	 */
@@ -405,5 +428,31 @@ export default class Account
 
 	public getSquadronName(): string {
 		return this.id.replace(/([a-zA-Z]*)([0-9]*)/, '$1-$2').toUpperCase();
+	}
+
+	public async getEventCountForMonth(month: MonthNumber, year: number) {
+		const start = new Date(year, month).getTime();
+		const end = new Date(year, month + 1).getTime();
+
+		const eventCollection = this.schema.getCollection('Events');
+
+		const generator = generateResults(
+			eventCollection.find(
+				'(pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end && meetDateTime > :start)'
+			)
+			// @ts-ignore
+			.bind({
+				start,
+				end
+			})
+		);
+
+		let eventCount = 0;
+
+		for await (const _ of generator) {
+			eventCount++;
+		}
+
+		return eventCount;
 	}
 }

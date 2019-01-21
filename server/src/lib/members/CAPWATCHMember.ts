@@ -4,7 +4,8 @@ import MemberBase from '../MemberBase';
 import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
 
-export default class CAPWATCHMember extends MemberBase implements CAPMemberObject {
+export default class CAPWATCHMember extends MemberBase
+	implements CAPMemberObject {
 	public static readonly tableNames = {
 		member: 'NHQ_Member',
 		contact: 'NHQ_MbrContact'
@@ -39,10 +40,14 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 				})
 			),
 			CAPWATCHMember.GetRegularDutypositions(id, schema),
-			CAPWATCHMember.LoadExtraMemberInformation({
-				type: 'CAPNHQMember',
-				id
-			}, schema, account)
+			CAPWATCHMember.LoadExtraMemberInformation(
+				{
+					type: 'CAPNHQMember',
+					id
+				},
+				schema,
+				account
+			)
 		]);
 
 		if (results.length !== 1) {
@@ -80,14 +85,22 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		const contact = (memberContact as any) as CAPMemberContact;
 
 		capwatchContact.forEach(val => {
-			contact[
-				val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType
-			][val.Priority] = val.Contact;
+			if ((val.Type as string) !== '') {
+				contact[
+					val.Type.toUpperCase().replace(
+						/ /g,
+						''
+					) as CAPMemberContactType
+				][val.Priority] = val.Contact;
+			}
 		});
 
 		const temporaryDutyPositions = extraInformation.temporaryDutyPositions
 			.filter(val => val.validUntil > +DateTime.utc())
-			.map(val => val.Duty);
+			.map(val => ({
+				duty: val.Duty,
+				date: val.assigned
+			}));
 
 		const permissions = getPermissions(extraInformation.accessLevel);
 
@@ -124,8 +137,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 
 	protected static GetRegularDutypositions = async (
 		capid: number,
-		schema: Schema,
-	): Promise<string[]> =>
+		schema: Schema
+	): Promise<Array<{ duty: string; date: number }>> =>
 		(await Promise.all([
 			collectResults(
 				schema
@@ -143,7 +156,10 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			)
 		]))
 			.reduce((prev, curr) => [...prev, ...curr])
-			.map(item => item.Duty);
+			.map(item => ({
+				duty: item.Duty,
+				date: +DateTime.fromISO(item.DateMod)
+			}));
 
 	public permissions: MemberPermissions;
 
@@ -165,7 +181,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: string[];
+	public dutyPositions: Array<{ date: number; duty: string }>;
 	/**
 	 * The organization ID the user belongs to
 	 */
@@ -208,7 +224,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 
 	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
 		typeof dutyPosition === 'string'
-			? this.dutyPositions.indexOf(dutyPosition) > -1
+			? this.dutyPositions.filter(duty => duty.duty === dutyPosition)
+					.length > 0
 			: dutyPosition
 					.map(this.hasDutyPosition)
 					.reduce((a, b) => a || b, false);
@@ -228,9 +245,9 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			yield Account.Get(i.id, this.schema);
 		}
 	}
-	
-	public toRaw (): CAPMemberObject {
-		return ({
+
+	public toRaw(): CAPMemberObject {
+		return {
 			...super.toRaw(),
 			dutyPositions: this.dutyPositions,
 			flight: this.flight,
@@ -238,8 +255,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			orgid: this.orgid,
 			seniorMember: this.seniorMember,
 			squadron: this.squadron,
-			type: 'CAPNHQMember',
-		});
+			type: 'CAPNHQMember'
+		};
 	}
 }
 

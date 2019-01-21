@@ -1,4 +1,6 @@
 import {
+	DraftBlockType,
+	DraftInlineStyleType,
 	RawDraftContentBlock,
 	RawDraftContentState,
 	RawDraftEntity,
@@ -54,7 +56,7 @@ class RawDraftInlineStyleRangeValidator extends Validator<
 	constructor() {
 		super({
 			style: {
-				validator: Validator.OneOfStrict(
+				validator: Validator.OneOfStrict<DraftInlineStyleType>(
 					'BOLD',
 					'CODE',
 					'ITALIC',
@@ -94,7 +96,7 @@ class RawDraftContentBlockValidator extends Validator<RawDraftContentBlock> {
 				validator: Validator.String
 			},
 			type: {
-				validator: Validator.OneOfStrict(
+				validator: Validator.OneOfStrict<DraftBlockType>(
 					'unstyled',
 					'paragraph',
 					'header-one',
@@ -128,10 +130,7 @@ export default class RawDraftContentStateValidator extends Validator<
 				)
 			},
 			entityMap: {
-				validator: (input: any) =>
-					Validator.ArrayOf(new RawDraftEntityValidator())(
-						Object.values(input)
-					)
+				validator: Validator.Values(new RawDraftEntityValidator())
 			}
 		});
 	}

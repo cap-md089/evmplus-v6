@@ -1,10 +1,11 @@
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
+import MemberBase from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<TeamMember>, res: Response) => {
+	async (req: MemberValidatedRequest<RawTeamMember>, res: Response) => {
 		let team: Team;
 
 		try {
@@ -15,7 +16,21 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		team.addTeamMember(req.body.reference, req.body.job);
+		let fullMember;
+
+		try {
+			fullMember = await MemberBase.ResolveReference(
+				req.body.reference,
+				req.account,
+				req.mysqlx,
+				true
+			);
+		} catch (e) {
+			res.status(404);
+			res.end();
+		}
+
+		team.addTeamMember(fullMember, req.body.job, req.account, req.mysqlx);
 
 		await team.save();
 

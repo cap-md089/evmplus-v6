@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import * as rp from 'request-promise-native';
 import { MemberCreateError } from '../../../enums';
+import { USERAGENT } from './nhq-request';
 
 const GET_SIGNIN_VALUES_URL =
 	'https://www.capnhq.gov/CAP.eServices.Web/default.aspx';
@@ -37,7 +38,7 @@ export default async (
 			Connection: 'keep-alive',
 			Host: 'www.capnhq.gov',
 			'Upgrade-Insecure-Requests': '1',
-			'User-Agent': 'EventManagementLoginBot/3.0'
+			'User-Agent': USERAGENT
 		},
 		method: 'POST',
 		resolveWithFullResponse: true,

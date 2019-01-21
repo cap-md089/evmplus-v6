@@ -17,7 +17,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (
 
 	try {
 		const dutyPositionCollection = schema.getCollection<NHQ.CadetDutyPosition>(
-			'NHQ_DutyPosition'
+			'NHQ_CadetDutyPosition'
 		);
 
 		try {
@@ -30,9 +30,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (
 			return CAPWATCHError.CLEAR;
 		}
 
-		const promises = [];
-
-		for await (const duties of fileData) {
+		for (const duties of fileData) {
 			values = {
 				CAPID: parseInt(duties.CAPID + '', 10),
 				Duty: duties.Duty,
@@ -44,10 +42,8 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (
 				ORGID: orgid
 			};
 
-			promises.push(dutyPositionCollection.add(values).execute());
+			await (dutyPositionCollection.add(values).execute());
 		}
-
-		await Promise.all(promises);
 
 		return CAPWATCHError.NONE;
 	} catch (e) {

@@ -4,7 +4,7 @@ import Team from '../../lib/Team';
 import { asyncErrorHandler } from '../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<Partial<TeamObject>>, res: Response) => {
+	async (req: MemberValidatedRequest<Partial<RawTeamObject>>, res: Response) => {
 		let team: Team;
 
 		try {
@@ -16,6 +16,13 @@ export default asyncErrorHandler(
 		}
 
 		team.set(req.body);
+
+		await team.updateMembers(
+			team.members.slice(),
+			req.body.members,
+			req.account,
+			req.mysqlx
+		);
 
 		await team.save();
 

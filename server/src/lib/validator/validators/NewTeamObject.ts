@@ -23,7 +23,7 @@ export default class NewTeamObjectValidator extends Validator<NewTeamObject> {
 			seniorCoach: {
 				validator: Validator.MemberReference
 			},
-			visiblity: {
+			visibility: {
 				validator: Validator.Enum(TeamPublicity)
 			}
 		});

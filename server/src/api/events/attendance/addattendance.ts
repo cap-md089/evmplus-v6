@@ -17,11 +17,15 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		if (
+		// DO NOT MOVE THIS INTO THE IF STATEMENT
+		// For some reason it does not work, it needs to be
+		// stored in a variable first
+		const canAddOtherMembers =
 			req.body.memberID &&
 			MemberBase.isReference(req.body.memberID) &&
-			req.member.hasPermission('SignUpEdit')
-		) {
+			req.member.isPOCOf(event);
+
+		if (canAddOtherMembers) {
 			member =
 				(await MemberBase.ResolveReference(
 					req.body.memberID,
@@ -39,7 +43,6 @@ export default asyncErrorHandler(
 				comments: req.body.comments,
 				departureTime: req.body.departureTime,
 				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				requirements: '',
 				status: req.body.status,
 				canUsePhotos: req.body.canUsePhotos
 			},

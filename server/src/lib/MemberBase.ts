@@ -493,7 +493,7 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
-		const teamsCollection = this.schema.getCollection<TeamObject>('Teams');
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
 
 		const reference = this.getReference();
 
@@ -546,7 +546,7 @@ export default abstract class MemberBase implements MemberObject {
 		return this.isRioux && MemberBase.useRiouxPermission
 			? true
 			: typeof permission === 'string'
-			? this.permissions[permission] > threshold
+			? this.permissions[permission] >= threshold
 			: permission
 					.map(p => this.hasPermission(p, threshold))
 					.reduce((prev, curr) => prev || curr);

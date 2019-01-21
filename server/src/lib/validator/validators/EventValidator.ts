@@ -209,6 +209,12 @@ export default class EventValidator extends Validator<NewEventObject> {
 			teamID: {
 				validator: Validator.Or(Validator.Number, Validator.Nothing)
 			},
+			limitSignupsToTeam: {
+				validator: Validator.Or(Validator.Boolean, Validator.Nothing),
+				requiredIf: (_, event) => {
+					return typeof (event as any).teamID === 'number';
+				}
+			},
 			transportationDescription: {
 				validator: Validator.String
 			},

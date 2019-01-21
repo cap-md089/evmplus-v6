@@ -2,7 +2,6 @@ import * as express from 'express';
 /**
  * Blog post validator
  */
-import Account from '../../../lib/Account';
 import BlogPost from '../../../lib/BlogPost';
 import Member from '../../../lib/members/NHQMember';
 import Validator from '../../../lib/validator/Validator';
@@ -17,8 +16,6 @@ import getpost from './getpost';
 import setpost from './setpost';
 
 const router = express.Router();
-
-router.use(Account.ExpressMiddleware);
 
 router.get('/:id', getpost);
 router.put(

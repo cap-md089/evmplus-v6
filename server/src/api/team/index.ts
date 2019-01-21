@@ -1,5 +1,6 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
+import MemberBase from '../../lib/Members';
 import NHQMember from '../../lib/members/NHQMember';
 import Team from '../../lib/Team';
 import Validator from '../../lib/validator/Validator';
@@ -9,7 +10,10 @@ import create from './create';
 import deleteTeam from './delete';
 import get from './get';
 import list from './list';
-import members from './members';
+import add from './members/add';
+import listmembers from './members/list';
+import modify from './members/modify';
+import remove from './members/remove';
 import set from './set';
 
 const router = express.Router();
@@ -42,6 +46,34 @@ router.delete(
 	deleteTeam
 );
 
-router.use('/:id/members', NHQMember.ExpressMiddleware, members);
+router.put(
+	'/:id/members',
+	tokenMiddleware,
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('EditTeam'),
+	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	modify
+);
+router.delete(
+	'/:id/members',
+	tokenMiddleware,
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('EditTeam'),
+	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	remove
+);
+router.post(
+	'/:id/members',
+	tokenMiddleware,
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('EditTeam'),
+	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	add
+);
+router.get(
+	'/:id/members',
+	MemberBase.ConditionalExpressMiddleware,
+	listmembers
+);
 
 export default router;
