@@ -85,7 +85,7 @@ export default class CAPWATCHMember extends MemberBase
 		const contact = (memberContact as any) as CAPMemberContact;
 
 		capwatchContact.forEach(val => {
-			if ((val.Type as string) !== '') {
+			if ((val.Type as string) !== '' && (val.Type as string !== '--Select Type--')) {
 				contact[
 					val.Type.toUpperCase().replace(
 						/ /g,
