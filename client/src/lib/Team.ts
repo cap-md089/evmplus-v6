@@ -2,10 +2,7 @@ import { DateTime } from 'luxon';
 import { TeamPublicity } from '../enums';
 import Account from './Account';
 import APIInterface from './APIInterface';
-import MemberBase, {
-	createCorrectMemberObject,
-	MemberClasses
-} from './Members';
+import MemberBase, { createCorrectMemberObject, MemberClasses } from './Members';
 
 /**
  * A Team is a collection of people with a team leader, a mentor, and a coach
@@ -13,8 +10,7 @@ import MemberBase, {
  * Each person has a role, and this collection allows for gathering information provided
  * and parsing it, e.g. for a team leader to get the emails to communicate with their team
  */
-export default class Team extends APIInterface<RawTeamObject>
-	implements FullTeamObject {
+export default class Team extends APIInterface<RawTeamObject> implements FullTeamObject {
 	/**
 	 * Constructs a team object
 	 *
@@ -22,11 +18,7 @@ export default class Team extends APIInterface<RawTeamObject>
 	 * @param account The Account the team belongs to
 	 * @param member A member, for where a team has restrictions
 	 */
-	public static async Get(
-		id: number,
-		account: Account,
-		member?: MemberBase | null
-	) {
+	public static async Get(id: number, account: Account, member?: MemberBase | null) {
 		const result = await account.fetch('/api/team/' + id, {}, member);
 
 		const json = await result.json();
@@ -41,11 +33,7 @@ export default class Team extends APIInterface<RawTeamObject>
 	 * @param member The member creating the team
 	 * @param account The Account the team belongs to
 	 */
-	public static async Create(
-		data: NewTeamObject,
-		member: MemberBase,
-		account?: Account
-	) {
+	public static async Create(data: NewTeamObject, member: MemberBase, account?: Account) {
 		if (!member.hasPermission('AddTeam')) {
 			throw new Error('Invalid permissions');
 		}
@@ -116,7 +104,7 @@ export default class Team extends APIInterface<RawTeamObject>
 		const token = await this.getToken(member);
 
 		await this.fetch(
-			'/api/delete',
+			`/api/team/${this.id}`,
 			{
 				method: 'DELETE',
 				body: JSON.stringify({
@@ -135,7 +123,7 @@ export default class Team extends APIInterface<RawTeamObject>
 		const token = await this.getToken(member);
 
 		await this.fetch(
-			'/api/team',
+			`/api/team/${this.id}`,
 			{
 				method: 'PUT',
 				body: JSON.stringify({
@@ -201,11 +189,7 @@ export default class Team extends APIInterface<RawTeamObject>
 		}
 
 		this.members = this.members.filter(
-			f =>
-				!MemberBase.AreMemberReferencesTheSame(
-					memberToRemove.getReference(),
-					f.reference
-				)
+			f => !MemberBase.AreMemberReferencesTheSame(memberToRemove.getReference(), f.reference)
 		);
 
 		const teamMember: RawTeamMember = {
@@ -230,33 +214,15 @@ export default class Team extends APIInterface<RawTeamObject>
 	}
 
 	public isMember(member: MemberReference): boolean {
-		if (MemberBase.AreMemberReferencesTheSame(member, this.cadetLeader)) {
-			return true;
-		}
-		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorCoach)) {
-			return true;
-		}
-		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorMentor)) {
-			return true;
-		}
-
-		return (
+		return this.isLeader(member) || (
 			this.members.filter(
-				mem =>
-					!MemberBase.AreMemberReferencesTheSame(
-						member,
-						mem.reference
-					)
+				mem => !MemberBase.AreMemberReferencesTheSame(member, mem.reference)
 			).length > 0
 		);
 	}
 
 	public async getFullMembers(member?: MemberBase | null): Promise<MemberClasses[]> {
-		const result = await this.fetch(
-			`/api/team/${this.id}/members`,
-			{},
-			member
-		);
+		const result = await this.fetch(`/api/team/${this.id}/members`, {}, member);
 
 		const json = (await result.json()) as Member[];
 
@@ -281,5 +247,35 @@ export default class Team extends APIInterface<RawTeamObject>
 		} else {
 			return true;
 		}
+	}
+
+	public set(values: Partial<NewTeamObject>) {
+		for (const i in values) {
+			if (values.hasOwnProperty(i)) {
+				this[i] = values[i];
+			}
+		}
+	}
+
+	public isLeader(member?: MemberReference) {
+		if (!member) {
+			return false;
+		}
+
+		if (MemberBase.IsRioux(member)) {
+			return true;
+		}
+
+		if (MemberBase.AreMemberReferencesTheSame(member, this.cadetLeader)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorCoach)) {
+			return true;
+		}
+		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorMentor)) {
+			return true;
+		}
+
+		return false;
 	}
 }

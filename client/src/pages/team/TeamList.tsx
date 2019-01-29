@@ -19,7 +19,28 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 	}
 
 	public async componentDidMount() {
-		const teams = await this.props.account.getTeams();
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/team/list',
+				text: 'Team list'
+			}
+		]);
+		this.props.updateSideNav([]);
+		this.updateTitle('Team list');
+
+		const teams = await this.props.account.getTeams(this.props.member);
+
+		this.props.updateSideNav(
+			teams.map(team => ({
+				target: team.id.toString(),
+				text: team.name,
+				type: 'Reference' as 'Reference'
+			}))
+		);
 
 		this.setState({
 			teams
@@ -33,19 +54,17 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 
 		return (
 			<div>
+				{this.props.member && this.props.member.hasPermission('AddTeam') ? (
+					<Link to="/team/create">Add team</Link>
+				) : null}
 				{this.state.teams.map((team, i) => (
 					<div key={i}>
 						<Link to={`/team/${team.id}`}>
-							<h1>{team.name}</h1>
+							<h1 id={team.id.toString()}>{team.name}</h1>
 						</Link>
-						<p>
-							{team.description || <i>Team has no description</i>}
-						</p>
-						{team.visibility === TeamPublicity.PUBLIC ||
-						this.props.member ? (
-							<div>
-								This team has {team.members.length} member(s)
-							</div>
+						<p>{team.description || <i>Team has no description</i>}</p>
+						{team.visibility === TeamPublicity.PUBLIC || this.props.member ? (
+							<div>This team has {team.members.length} member(s)</div>
 						) : null}
 					</div>
 				))}
