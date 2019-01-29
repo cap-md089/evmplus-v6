@@ -41,16 +41,17 @@ export default class PageEdit extends Page<
 	PageProps<{ id: string }>,
 	UnloadedPageClass | LoadedPageClass | ErrorPageClass
 > {
-	public constructor(props: PageProps<{ id: string }>) {
-		super(props);
-
-		this.state = {
+	public state: UnloadedPageClass | LoadedPageClass | ErrorPageClass = {
 			page: null,
 			loaded: false,
 			draft: null,
 			error: false,
 			content: null
-		};
+
+	};
+	
+	public constructor(props: PageProps<{ id: string }>) {
+		super(props);
 
 		this.onFormChange = this.onFormChange.bind(this);
 		this.onFormSubmit = this.onFormSubmit.bind(this);

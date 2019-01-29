@@ -31,19 +31,16 @@ interface ErrorPageClass {
 
 export type PageState = UnloadedPageClass | LoadedPageClass | ErrorPageClass;
 
-export default class PageView extends Page<
-	PageProps<{ id: string }>,
-	PageState
-> {
+export default class PageView extends Page<PageProps<{ id: string }>, PageState> {
+	public state: PageState = {
+		page: null,
+		loaded: false,
+		draft: null,
+		error: false
+	};
+
 	public constructor(props: PageProps<{ id: string }>) {
 		super(props);
-
-		this.state = {
-			page: null,
-			loaded: false,
-			draft: null,
-			error: false
-		};
 
 		this.deletePage = this.deletePage.bind(this);
 	}
@@ -52,10 +49,7 @@ export default class PageView extends Page<
 		const id = this.props.routeProps.match.params.id;
 		if (id) {
 			try {
-				const [page, draft] = await Promise.all([
-					BlogPage.Get(id),
-					import('draft-js')
-				]);
+				const [page, draft] = await Promise.all([BlogPage.Get(id), import('draft-js')]);
 
 				// TODO: Add an implementation for side nav to
 				// navigate to children and to headers in page
@@ -139,7 +133,7 @@ export default class PageView extends Page<
 
 	private deletePage() {
 		if (this.state.page && this.props.member) {
-			this.state.page.delete(this.props.member)
+			this.state.page.delete(this.props.member);
 		}
 	}
 }
