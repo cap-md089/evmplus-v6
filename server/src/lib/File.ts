@@ -2,11 +2,8 @@ import { Schema } from '@mysql/xdevapi';
 import { unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType
-} from '../../../lib/index';
 import conf from '../conf';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from '../enums';
 import Account from './Account';
 import MemberBase from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
@@ -27,9 +24,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			return File.GetRoot(account, schema);
 		}
 
-		const fileCollection = schema.getCollection<RawFileObject>(
-			File.collectionName
-		);
+		const fileCollection = schema.getCollection<RawFileObject>(File.collectionName);
 
 		let results;
 
@@ -37,9 +32,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 			if (includeWWW) {
 				results = await collectResults(
 					fileCollection
-						.find(
-							'id = :id AND (accountID = :accountID OR accountID = "www")'
-						)
+						.find('id = :id AND (accountID = :accountID OR accountID = "www")')
 						.bind({ id, accountID: account.id })
 				);
 			} else {
@@ -92,13 +85,8 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	private static collectionName = 'Files';
 
-	private static async GetRoot(
-		account: Account,
-		schema: Schema
-	): Promise<File> {
-		const fileCollection = schema.getCollection<FileObject>(
-			File.collectionName
-		);
+	private static async GetRoot(account: Account, schema: Schema): Promise<File> {
+		const fileCollection = schema.getCollection<FileObject>(File.collectionName);
 
 		let results;
 
@@ -226,9 +214,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	}
 
 	public async save(): Promise<void> {
-		const filesCollection = this.schema.getCollection<RawFileObject>(
-			File.collectionName
-		);
+		const filesCollection = this.schema.getCollection<RawFileObject>(File.collectionName);
 
 		// Root is an imaginary imaginary file
 		if (this.id === 'root') {
@@ -265,31 +251,19 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public toFullRaw = async (): Promise<FullFileObject> => ({
 		...this.toRaw(),
-		uploader: await MemberBase.ResolveReference(
-			this.owner,
-			this.account,
-			this.schema
-		)
+		uploader: await MemberBase.ResolveReference(this.owner, this.account, this.schema)
 	});
 
 	public async delete(): Promise<void> {
-		const filesCollection = this.schema.getCollection<FileObject>(
-			File.collectionName
-		);
+		const filesCollection = this.schema.getCollection<FileObject>(File.collectionName);
 
 		if (!this.deleted) {
 			await Promise.all([
 				filesCollection.removeOne(this._id),
 				(async () => {
-					const parent = await File.Get(
-						this.parentID,
-						this.account,
-						this.schema
-					);
+					const parent = await File.Get(this.parentID, this.account, this.schema);
 
-					parent.trueChildren = parent.fileChildren.filter(
-						x => x !== this.id
-					);
+					parent.trueChildren = parent.fileChildren.filter(x => x !== this.id);
 
 					await parent.save();
 				})(),
@@ -299,10 +273,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 					}
 
 					await promisedUnlink(
-						join(
-							conf.fileStoragePath,
-							`${this.account.id}-${this.id}`
-						)
+						join(conf.fileStoragePath, `${this.account.id}-${this.id}`)
 					);
 				})()
 			]);
@@ -314,12 +285,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	public async *getChildren(includeWWW = true): AsyncIterableIterator<File> {
 		for (const i of this.fileChildren) {
 			try {
-				const file = await File.Get(
-					i,
-					this.account,
-					this.schema,
-					includeWWW
-				);
+				const file = await File.Get(i, this.account, this.schema, includeWWW);
 
 				yield file;
 			} catch (e) {
@@ -360,13 +326,13 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 		let valid = false;
 
-		if (member === null) {
-			otherPermissions.forEach(
-				perm =>
-					// tslint:disable-next-line:no-bitwise
-					(valid = valid || (perm.permission & permission) > 0)
-			);
+		otherPermissions.forEach(
+			perm =>
+				// tslint:disable-next-line:no-bitwise
+				(valid = valid || (perm.permission & permission) > 0)
+		);
 
+		if (member === null || valid) {
 			return valid;
 		}
 
