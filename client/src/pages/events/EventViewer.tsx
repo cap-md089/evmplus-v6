@@ -14,6 +14,7 @@ import './EventViewer.css';
 import Page, { PageProps } from '../Page';
 import DialogueButton from 'src/components/DialogueButton';
 import { Uniforms, Activities, RequiredForms } from 'src/components/EventForm';
+import SigninLink from 'src/components/SigninLink';
 
 const noop = () => void 0;
 
@@ -38,9 +39,7 @@ const formatDate = (date: number) => {
 	const month = dateObject.getMonth();
 	const year = dateObject.getFullYear();
 
-	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(
-		month + 1
-	)}/${zeroPad(day)}/${year}`;
+	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(month + 1)}/${zeroPad(day)}/${year}`;
 };
 
 const eventStatus = (stat: EventStatus): string =>
@@ -64,10 +63,7 @@ export const attendanceStatusLabels = [
 	'Rescinded commitment to attend'
 ];
 
-export default class EventViewer extends Page<
-	EventViewerProps,
-	EventViewerState
-> {
+export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
 	public state: EventViewerState = {
 		event: null,
 		error: '',
@@ -97,10 +93,7 @@ export default class EventViewer extends Page<
 			event =
 				this.state.event ||
 				(await Event.Get(
-					parseInt(
-						this.props.routeProps.match.params.id.split('-')[0],
-						10
-					),
+					parseInt(this.props.routeProps.match.params.id.split('-')[0], 10),
 					this.props.member,
 					this.props.account
 				));
@@ -111,13 +104,11 @@ export default class EventViewer extends Page<
 			return;
 		}
 
-		const eventURL = `/eventviewer/${
-			event.id
-		}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`;
-
-		if (this.props.routeProps.location.pathname !== eventURL) {
-			this.props.routeProps.history.replace(eventURL);
-		}
+		// Make this work sometime?
+		// With this uncommented, the page rerenders an extra time
+		// This causes there to be two web requests
+		// If this can be done without unmounting/remounting, that would be great
+		// this.updateURL(event.getEventURL());
 
 		this.props.updateBreadCrumbs([
 			{
@@ -129,7 +120,7 @@ export default class EventViewer extends Page<
 				text: 'Calendar'
 			},
 			{
-				target: eventURL,
+				target: event.getEventURL(),
 				text: `View ${event.name}`
 			}
 		]);
@@ -154,8 +145,7 @@ export default class EventViewer extends Page<
 
 		return (
 			<div>
-				{this.props.member &&
-				this.props.member.isPOCOf(this.state.event) ? (
+				{this.props.member && this.props.member.isPOCOf(this.state.event) ? (
 					<>
 						<Link to={`/eventform/${this.state.event.id}`}>
 							Edit event "{this.state.event.name}"
@@ -180,19 +170,15 @@ export default class EventViewer extends Page<
 										lineHeight: '1px'
 									}}
 								>
-									<span style={{ color: 'red' }}>
-										WARNING:
-									</span>{' '}
-									moving this event may cause confusion.
+									<span style={{ color: 'red' }}>WARNING:</span> moving this event
+									may cause confusion.
 									<br />
-									Consider instead copying this event, and
-									marking
+									Consider instead copying this event, and marking
 									<br />
 									this event as cancelled.
 									<br />
 									<br />
-									Or, click the 'Copy move button' to perform
-									this
+									Or, click the 'Copy move button' to perform this
 									<br />
 									action automatically
 								</span>
@@ -240,9 +226,7 @@ export default class EventViewer extends Page<
 							Really delete event?
 						</DialogueButton>
 						{' | '}
-						<Link to={`/multiadd/${this.state.event.id}`}>
-							Add attendance
-						</Link>
+						<Link to={`/multiadd/${this.state.event.id}`}>Add attendance</Link>
 						<br />
 						<br />
 					</>
@@ -250,23 +234,18 @@ export default class EventViewer extends Page<
 				<div>
 					<strong>Event: </strong> {this.state.event.name}
 					<br />
-					<strong>Event ID: </strong>{' '}
-					{this.state.event.accountID.toUpperCase()}-
+					<strong>Event ID: </strong> {this.state.event.accountID.toUpperCase()}-
 					{this.state.event.id}
 					<br />
-					<strong>Meet</strong> at{' '}
-					{formatDate(this.state.event.meetDateTime)} at{' '}
+					<strong>Meet</strong> at {formatDate(this.state.event.meetDateTime)} at{' '}
 					{this.state.event.location}
 					<br />
-					<strong>Start</strong> at{' '}
-					{formatDate(this.state.event.startDateTime)} at{' '}
+					<strong>Start</strong> at {formatDate(this.state.event.startDateTime)} at{' '}
 					{this.state.event.location}
 					<br />
-					<strong>End</strong> at{' '}
-					{formatDate(this.state.event.endDateTime)}
+					<strong>End</strong> at {formatDate(this.state.event.endDateTime)}
 					<br />
-					<strong>Pickup</strong> at{' '}
-					{formatDate(this.state.event.pickupDateTime)} at{' '}
+					<strong>Pickup</strong> at {formatDate(this.state.event.pickupDateTime)} at{' '}
 					{this.state.event.pickupLocation}
 					<br />
 					<br />
@@ -281,30 +260,17 @@ export default class EventViewer extends Page<
 						</>
 					) : null}
 					<strong>Uniform:</strong>{' '}
-					{parseMultCheckboxReturn(
-						this.state.event.uniform,
-						Uniforms,
-						false
-					)}
+					{parseMultCheckboxReturn(this.state.event.uniform, Uniforms, false)}
 					<br />
 					<strong>Comments:</strong> {this.state.event.comments}
 					<br />
 					<strong>Activity:</strong>{' '}
-					{parseMultCheckboxReturn(
-						this.state.event.activity,
-						Activities,
-						true
-					)}
+					{parseMultCheckboxReturn(this.state.event.activity, Activities, true)}
 					<br />
 					<strong>Required forms:</strong>{' '}
-					{parseMultCheckboxReturn(
-						this.state.event.requiredForms,
-						RequiredForms,
-						true
-					)}
+					{parseMultCheckboxReturn(this.state.event.requiredForms, RequiredForms, true)}
 					<br />
-					<strong>Event status:</strong>{' '}
-					{eventStatus(this.state.event.status)}
+					<strong>Event status:</strong> {eventStatus(this.state.event.status)}
 					<br />
 					<br />
 					<div>
@@ -337,18 +303,14 @@ export default class EventViewer extends Page<
 									<br />
 									{poc.email !== '' ? (
 										<>
-											<b>
-												External Point of Contact Email:{' '}
-											</b>
+											<b>External Point of Contact Email: </b>
 											{poc.email}
 											<br />
 										</>
 									) : null}
 									{poc.phone !== '' ? (
 										<>
-											<b>
-												External Point of Contact Phone:{' '}
-											</b>
+											<b>External Point of Contact Phone: </b>
 											{poc.phone}
 											<br />
 										</>
@@ -361,9 +323,7 @@ export default class EventViewer extends Page<
 				</div>
 				{this.props.member !== null ? (
 					<div>
-						{this.state.event.attendance.filter(val =>
-							this.props.member!.matchesReference(val.memberID)
-						).length === 0 ? (
+						{this.state.event.canSignUpForEvent(this.props.member) ? (
 							<AttendanceForm
 								account={this.props.account}
 								event={this.state.event}
@@ -401,23 +361,25 @@ export default class EventViewer extends Page<
 							<div>No attendance records</div>
 						) : null}
 					</div>
-				) : null}
+				) : (
+					<SigninLink
+						authorizeUser={this.props.authorizeUser}
+						{...this.props.fullMemberDetails}
+					>
+						Sign in to see more information
+					</SigninLink>
+				)}
 			</div>
 		);
 	}
 
-	private addAttendanceRecord(
-		record: NewAttendanceRecord,
-		member: MemberReference
-	) {
+	private addAttendanceRecord(record: NewAttendanceRecord, member: MemberReference) {
 		this.setState({
 			previousUpdatedMember: member
 		});
 	}
 
-	private removeAttendanceRecord(
-		record: AttendanceRecord
-	) {
+	private removeAttendanceRecord(record: AttendanceRecord) {
 		this.forceUpdate();
 	}
 
@@ -435,9 +397,7 @@ export default class EventViewer extends Page<
 		}
 
 		if (!this.props.member) {
-			throw new Error(
-				'Attempting to mvoe an event without authorization'
-			);
+			throw new Error('Attempting to mvoe an event without authorization');
 		}
 
 		const event = this.state.event;
@@ -460,15 +420,10 @@ export default class EventViewer extends Page<
 		}
 
 		if (!this.props.member) {
-			throw new Error(
-				'Attempting to mvoe an event without authorization'
-			);
+			throw new Error('Attempting to mvoe an event without authorization');
 		}
 
-		const newEvent = await this.state.event.copy(
-			newTime,
-			this.props.member
-		);
+		const newEvent = await this.state.event.copy(newTime, this.props.member);
 
 		this.state.event.status = EventStatus.CANCELLED;
 
@@ -485,15 +440,10 @@ export default class EventViewer extends Page<
 		}
 
 		if (!this.props.member) {
-			throw new Error(
-				'Attempting to move an event without authorization'
-			);
+			throw new Error('Attempting to move an event without authorization');
 		}
 
-		const newEvent = await this.state.event.copy(
-			newTime,
-			this.props.member
-		);
+		const newEvent = await this.state.event.copy(newTime, this.props.member);
 
 		if (newEvent) {
 			this.props.routeProps.history.push(`/eventviewer/${newEvent.id}`);
@@ -506,9 +456,7 @@ export default class EventViewer extends Page<
 		}
 
 		if (!this.props.member) {
-			throw new Error(
-				'Attempting to delete an event without authorization'
-			);
+			throw new Error('Attempting to delete an event without authorization');
 		}
 
 		await this.state.event.delete(this.props.member);
