@@ -39,7 +39,7 @@ export default class Team implements FullTeamObject {
 
 		const fullTeam = await Team.Expand(results[0], account, schema);
 
-		return new Team(fullTeam, schema);
+		return new Team(fullTeam, account, schema);
 	}
 
 	public static async GetStaffTeam(
@@ -58,7 +58,7 @@ export default class Team implements FullTeamObject {
 			cadetLeader: {
 				type: 'Null'
 			},
-			description: 'Cadet Staff for this account',
+			description: 'Cadet Staff',
 			id: 0,
 			members: [],
 			name: 'Cadet Staff',
@@ -150,7 +150,7 @@ export default class Team implements FullTeamObject {
 			schema
 		);
 
-		return new Team(fullTeam, schema);
+		return new Team(fullTeam, account, schema);
 	}
 
 	public static async Create(
@@ -201,7 +201,7 @@ export default class Team implements FullTeamObject {
 			schema
 		);
 
-		const teamObject = new Team(fullNewTeam, schema);
+		const teamObject = new Team(fullNewTeam, account, schema);
 
 		for (const i of data.members) {
 			const fullMember = await MemberBase.ResolveReference(
@@ -334,6 +334,7 @@ export default class Team implements FullTeamObject {
 
 	private constructor(
 		data: FullDBObject<FullTeamObject>,
+		private account: Account,
 		private schema: Schema
 	) {
 		this.id = data.id;
@@ -391,6 +392,15 @@ export default class Team implements FullTeamObject {
 		if (this.id === 0) {
 			throw new Error('Cannot operate on a dynamic team');
 		}
+
+		for (const teamMember of this.members) {
+			await this.removeTeamMember(teamMember.reference, this.account, this.schema);
+		}
+		await Promise.all([
+			this.removeTeamLeader(this.seniorCoach, this.account, this.schema),
+			this.removeTeamLeader(this.seniorMentor, this.account, this.schema),
+			this.removeTeamLeader(this.cadetLeader, this.account, this.schema),
+		]);
 
 		const teamCollection = this.schema.getCollection<RawTeamObject>(
 			Team.collectionName
@@ -462,7 +472,7 @@ export default class Team implements FullTeamObject {
 	public hasMember(member: MemberReference) {
 		return (
 			this.members.filter(
-				f => !MemberBase.AreMemberReferencesTheSame(member, f.reference)
+				f => MemberBase.AreMemberReferencesTheSame(member, f.reference)
 			).length > 0
 		);
 	}
@@ -509,6 +519,53 @@ export default class Team implements FullTeamObject {
 			reference: member.getReference(),
 			name: member.getFullName()
 		});
+	}
+
+	public async removeTeamLeader(
+		member: MemberReference,
+		account: Account,
+		schema: Schema
+	) {
+		if (!this.isMemberOrLeader(member) && this.hasMember(member)) {
+			return;
+		}
+
+		if (member.type === 'Null') {
+			return;
+		}
+
+		const extraInformation = schema.getCollection<
+			FullDBObject<ExtraMemberInformation>
+		>('ExtraMemberInformation');
+
+		const results = await collectResults(
+			findAndBind(extraInformation, {
+				...member,
+				accountID: account.id
+			})
+		);
+
+		if (results.length === 0) {
+			const newInformation: ExtraMemberInformation = {
+				accessLevel: 'Member',
+				accountID: account.id,
+				...member,
+				temporaryDutyPositions: [],
+				flight: null,
+				teamIDs: []
+			};
+
+			await extraInformation
+				.add(newInformation as FullDBObject<ExtraMemberInformation>)
+				.execute();
+		} else {
+			const index = results[0].teamIDs.indexOf(this.id);
+			if (index !== -1) {
+				results[0].teamIDs.splice(index, 1);
+			}
+
+			await extraInformation.replaceOne(results[0]._id, results[0]);
+		}
 	}
 
 	public async removeTeamMember(

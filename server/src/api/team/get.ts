@@ -16,22 +16,19 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		let teamObj: FullTeamObject;
-
 		if (team.visibility === TeamPublicity.PRIVATE) {
 			if (
 				req.member &&
 				team.isMemberOrLeader(req.member.getReference())
 			) {
-				teamObj = team.toFullRaw(req.member);
+				json<FullTeamObject>(res, team.toFullRaw(req.member));
 			} else {
 				res.status(403);
 				return res.end();
 			}
 		} else {
-			teamObj = team.toFullRaw(req.member);
+			json<FullTeamObject>(res, team.toFullRaw(req.member));
 		}
 
-		json<FullTeamObject>(res, teamObj);
 	}
 );

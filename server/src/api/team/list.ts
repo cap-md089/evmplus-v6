@@ -9,7 +9,7 @@ import {
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest, res: Response) => {
-		const memRef: MemberReference = !!req.member
+		const memRef: MemberReference = !req.member
 			? { type: 'Null' }
 			: req.member.getReference();
 
