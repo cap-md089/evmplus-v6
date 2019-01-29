@@ -16,7 +16,7 @@ const margin10 = {
 
 const block = {
 	display: 'block',
-	margin: 10
+	margin: '10px auto'
 };
 
 const center: React.CSSProperties = {
