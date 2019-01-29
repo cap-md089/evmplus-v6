@@ -41,7 +41,8 @@ export const Activities = [
 	'Classroom/Tour/Light',
 	'Backcountry',
 	'Flying',
-	'Physically Rigorous'
+	'Physically Rigorous',
+	'Recurring Meeting'
 ];
 export const RequiredForms = [
 	'CAP Identification Card',
@@ -436,13 +437,7 @@ export default class EventForm extends React.Component<
 				<Label>Activity type</Label>
 				<MultCheckbox
 					name="activity"
-					labels={[
-						'Squadron Meeting',
-						'Classroom/Tour/Light',
-						'Backcountry',
-						'Flying',
-						'Physically Rigorous'
-					]}
+					labels={Activities}
 					other={true}
 				/>
 
