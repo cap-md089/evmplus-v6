@@ -36,11 +36,11 @@ interface NHQMemberSession extends MemberSession {
 
 export { MemberCreateError };
 
-export interface ConditionalMemberRequest extends AccountRequest {
+export interface ConditionalMemberRequest<P = any> extends AccountRequest<P> {
 	member: ProspectiveMember | NHQMember | null;
 	newSessionID: string | null;
 }
-export interface MemberRequest extends AccountRequest {
+export interface MemberRequest<P = any> extends AccountRequest<P> {
 	member: NHQMember | ProspectiveMember;
 	newSessionID: string;
 }

@@ -15,7 +15,7 @@ import {
 import Team from './Team';
 import { MonthNumber } from './Util';
 
-export interface AccountRequest extends MySQLRequest {
+export interface AccountRequest<P = any> extends MySQLRequest<P> {
 	account: Account;
 }
 
