@@ -18,6 +18,13 @@ export interface PageProps<R = {}> {
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
+
+	/**
+	 * IGNORE, DO NOT USE
+	 * 
+	 * It is used by Page.updateURL to prevent unnecessary calls to componentDidMount
+	 */
+	prepareURL: (url: string) => void;
 }
 
 export default abstract class Page<
@@ -25,11 +32,19 @@ export default abstract class Page<
 	S = {},
 	SS = {}
 > extends React.Component<P, S, SS> {
+	public abstract state: S;
+
 	protected isShallowOk = false;
 
-	protected updatingState = false;
+	private updatingState = false;
+	private okURL = '';
 
 	public shouldComponentUpdate(nextProps: P, nextState: S) {
+		const urlChanged =
+			nextProps.routeProps.location.pathname !== this.okURL &&
+			nextProps.routeProps.location.pathname !==
+				this.props.routeProps.location.pathname;
+
 		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
 		const currentSID = this.props.member ? this.props.member.sessionID : '';
 
@@ -42,8 +57,7 @@ export default abstract class Page<
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
-			nextProps.routeProps.location.pathname !==
-				this.props.routeProps.location.pathname ||
+			urlChanged ||
 			nextProps.routeProps.location.hash !==
 				this.props.routeProps.location.hash ||
 			!areStatesEqual;
@@ -72,6 +86,12 @@ export default abstract class Page<
 		document.title = `${[this.props.registry.Website.Name, ...text].join(
 			` ${this.props.registry.Website.Separator} `
 		)}`;
+	}
+
+	protected updateURL(text: string) {
+		this.okURL = text;
+		this.props.prepareURL(text);
+		this.props.routeProps.history.replace(text);
 	}
 }
 
