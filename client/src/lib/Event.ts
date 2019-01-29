@@ -9,8 +9,7 @@ import { MemberClasses } from './Members';
 /**
  * Represents an event for the squadron calendar
  */
-export default class Event extends APIInterface<EventObject>
-	implements EventObject {
+export default class Event extends APIInterface<EventObject> implements EventObject {
 	/**
 	 * Creates an event object for the event calendar of the specified calendar
 	 *
@@ -18,11 +17,7 @@ export default class Event extends APIInterface<EventObject>
 	 * @param member The event author
 	 * @param account The account the event belongs to
 	 */
-	public static async Create(
-		obj: NewEventObject,
-		member: MemberBase,
-		account: Account
-	) {
+	public static async Create(obj: NewEventObject, member: MemberBase, account: Account) {
 		if (!member.hasPermission('AddEvent')) {
 			throw new Error('Member cannot create event');
 		}
@@ -50,11 +45,7 @@ export default class Event extends APIInterface<EventObject>
 		return new Event(newEvent, account);
 	}
 
-	public static async Get(
-		id: number,
-		member?: MemberBase | null,
-		account?: Account
-	) {
+	public static async Get(id: number, member?: MemberBase | null, account?: Account) {
 		if (!account) {
 			account = await Account.Get();
 		}
@@ -146,9 +137,7 @@ export default class Event extends APIInterface<EventObject>
 
 	public debrief: string;
 
-	public pointsOfContact: Array<
-		DisplayInternalPointOfContact | ExternalPointOfContact
-	>;
+	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
 	public author: MemberReference;
 
@@ -195,9 +184,7 @@ export default class Event extends APIInterface<EventObject>
 			meetDateTime: this.meetDateTime,
 			meetLocation: this.meetLocation,
 			name: this.name,
-			participationFee: !!this.participationFee
-				? this.participationFee
-				: null,
+			participationFee: !!this.participationFee ? this.participationFee : null,
 			pickupDateTime: this.pickupDateTime,
 			pickupLocation: this.pickupLocation,
 			pointsOfContact: this.pointsOfContact,
@@ -207,9 +194,7 @@ export default class Event extends APIInterface<EventObject>
 			requiredEquipment: this.requiredEquipment,
 			requiredForms: this.requiredForms,
 			showUpcoming: this.showUpcoming,
-			signUpDenyMessage: !!this.signUpDenyMessage
-				? this.signUpDenyMessage
-				: null,
+			signUpDenyMessage: !!this.signUpDenyMessage ? this.signUpDenyMessage : null,
 			signUpPartTime: !!this.signUpPartTime,
 			sourceEvent: !!this.sourceEvent ? this.sourceEvent : null,
 			startDateTime: this.startDateTime,
@@ -346,11 +331,7 @@ export default class Event extends APIInterface<EventObject>
 		);
 
 		this.attendance = this.attendance.filter(
-			record =>
-				!MemberBase.AreMemberReferencesTheSame(
-					record.memberID,
-					memberToRemove
-				)
+			record => !MemberBase.AreMemberReferencesTheSame(record.memberID, memberToRemove)
 		);
 	}
 
@@ -387,10 +368,7 @@ export default class Event extends APIInterface<EventObject>
 
 		for (const i in this.attendance) {
 			if (
-				MemberBase.AreMemberReferencesTheSame(
-					this.attendance[i].memberID,
-					memberToModify
-				)
+				MemberBase.AreMemberReferencesTheSame(this.attendance[i].memberID, memberToModify)
 			) {
 				attendanceIndex = i;
 			}
@@ -523,5 +501,25 @@ export default class Event extends APIInterface<EventObject>
 		}
 
 		return false;
+	}
+
+	public getEventURL() {
+		return `/eventviewer/${this.id}-${this.name.toLocaleLowerCase().replace(/ /g, '-')}`;
+	}
+
+	public canSignUpForEvent(member?: MemberBase | null) {
+		if (!member) {
+			return false;
+		}
+
+		if (this.attendance.filter(val => member.matchesReference(val.memberID)).length !== 0) {
+			return false;
+		}
+
+		if (this.teamID === null || !this.limitSignupsToTeam) {
+			return true;
+		}
+
+		return member.teamIDs.indexOf(this.teamID) !== -1;
 	}
 }
