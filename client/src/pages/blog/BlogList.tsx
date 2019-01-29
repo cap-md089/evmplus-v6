@@ -153,8 +153,8 @@ export class BlogList extends Page<BlogListProps, BlogListState1 | BlogListState
 						dataset={this.state.posts}
 						onChangePageNumber={this.changePageNumber}
 						page={this.state.page}
-						renderFunction={post => (
-							<div className="blog-post">
+						renderFunction={(post, index) => (
+							<div className="blog-post" id={index.toString()}>
 								<Link to={`/news/view/${post.id}`}>
 									<h1>{post.title}</h1>
 								</Link>

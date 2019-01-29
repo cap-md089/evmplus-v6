@@ -9,7 +9,7 @@ interface PagerProps<T> {
 	page: number;
 	onChangePageNumber: (newPageNumber: number, currentPageItems: T[]) => void;
 	dataset: T[];
-	renderFunction: (datum: T) => React.ReactChild;
+	renderFunction: (datum: T, index: number) => React.ReactChild;
 	dataCountPerPage: number;
 }
 
@@ -45,7 +45,7 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 				{this.renderPageControls(this.props.page, pageCount)}
 				{renderDataset.map((val, i) => (
 					<React.Fragment key={i}>
-						{this.props.renderFunction(val)}
+						{this.props.renderFunction(val, i)}
 					</React.Fragment>
 				))}
 				{this.renderPageControls(this.props.page, pageCount)}
