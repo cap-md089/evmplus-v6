@@ -223,8 +223,7 @@ declare global {
 	 * is used when the object is being created and information cannot be known about
 	 * it
 	 */
-	export type FullDBObject<T extends NoSQLDocument> = T &
-		Required<NoSQLDocument>;
+	export type FullDBObject<T extends NoSQLDocument> = T & Required<NoSQLDocument>;
 
 	/**
 	 * Most classes interact with the database in some way; just define some
@@ -281,7 +280,7 @@ declare global {
 	/**
 	 * A stack that is used when providing error information
 	 */
-	interface Stack {
+	export interface ErrorStack {
 		/**
 		 * The name of the function being called
 		 */
@@ -309,7 +308,7 @@ declare global {
 		/**
 		 * Stack trace of the error
 		 */
-		stack: Stack[];
+		stack: ErrorStack[];
 		/**
 		 * When did the error occur?
 		 */
@@ -330,11 +329,11 @@ declare global {
 
 	/**
 	 * Describes errors that are stored in the database
-	 * 
+	 *
 	 * These errors apply to the server, as it contains information such as
 	 * the request method and path which the client doesn't get
 	 */
-	export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifiable  {
+	export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifiable {
 		/**
 		 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
 		 */
@@ -368,30 +367,38 @@ declare global {
 		/**
 		 * TypeScript descriminator
 		 */
-		type: 'Server'
+		type: 'Server';
 	}
 
+	/**
+	 * The error information that a client can gather and send to the server
+	 */
 	export interface NewClientErrorObject extends ErrorObject {
 		/**
 		 * What page was the user on?
-		 * 
+		 *
 		 * Not going to take the time to figure out the component,
 		 * that can be done by the developer looking in PageRouter.tsx
 		 * rather simply
+		 * It can also be reasoned, 'oh, the crash was at /photolibrary? The
+		 * crash probably happened in PhotoLibrary.tsx'
 		 */
 		pageURL: string;
 		/**
 		 * Component stack
-		 * 
+		 *
 		 * Unfortunately, React doesn't seem to provide too much info about this...
 		 */
 		componentStack: string;
 		/**
 		 * TypeScript descriminator
 		 */
-		type: 'Client'
+		type: 'Client';
 	}
 
+	/**
+	 * The errors the client sends towards the server to be saved
+	 */
 	export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, Identifiable {
 		/**
 		 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
@@ -403,10 +410,10 @@ declare global {
 		accountID: string;
 		/**
 		 * If the user was signed in, this is where they would go
-		 * 
+		 *
 		 * Null if not signed in
 		 */
-		user: MemberReference | null
+		user: MemberReference | null;
 	}
 
 	export type Errors = ClientErrorObject | ServerErrorObject;
@@ -418,6 +425,9 @@ declare global {
 		errorMessage: string;
 	}
 
+	/**
+	 * Used when requesting or editing an account
+	 */
 	export interface NewAccountObject {
 		/**
 		 * CAP IDs of the admins of this account
@@ -425,6 +435,12 @@ declare global {
 		adminIDs: MemberReference[];
 	}
 
+	/**
+	 * The raw account object stored in the database
+	 * 
+	 * Doesn't contain simple boolean values for if it has expired and such, these are
+	 * put in the FullAccountObject that gets expanded upon and used more in practice
+	 */
 	export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccountObject {
 		/**
 		 * The Account ID
@@ -480,10 +496,7 @@ declare global {
 	/**
 	 * A blog post for peoplle to read
 	 */
-	export interface BlogPostObject
-		extends AccountIdentifiable,
-			NoSQLDocument,
-			NewBlogPost {
+	export interface BlogPostObject extends AccountIdentifiable, NoSQLDocument, NewBlogPost {
 		/**
 		 * The ID of the blog post itself
 		 */
@@ -498,16 +511,19 @@ declare global {
 		author: MemberReference;
 	}
 
+	/**
+	 * The blog post object that is sent to the client that can be used to its fullest
+	 */
 	export interface FullBlogPostObject extends BlogPostObject {
 		/**
-		 * Full author name for display 
+		 * Full author name for display
 		 */
 		authorName: string;
 	}
 
-	// Make a type the JSON schema generator recognizes
-	export type PartialBlogPost = Partial<BlogPostObject>;
-
+	/**
+	 * This is what the client and the server use to create and edit blog posts
+	 */
 	export interface NewBlogPost {
 		/**
 		 * The title of the blog post
@@ -519,6 +535,10 @@ declare global {
 		content: RawDraftContentState;
 	}
 
+	/**
+	 * Used by full blog pages to represent provide enough representation of parents that
+	 * can be used for better rendering
+	 */
 	export interface BlogPageAncestryItem {
 		/**
 		 * The name of the ancestor, for display
@@ -530,6 +550,11 @@ declare global {
 		id: string;
 	}
 
+	/**
+	 * Used when creating a blog page
+	 * 
+	 * Really simple, not much is needed
+	 */
 	export interface NewBlogPage {
 		/**
 		 * The title of the page
@@ -541,10 +566,10 @@ declare global {
 		content: RawDraftContentState;
 	}
 
-	export interface BlogPageObject
-		extends AccountIdentifiable,
-			NewBlogPage,
-			NoSQLDocument {
+	/**
+	 * The raw blog page object stored in the Database
+	 */
+	export interface BlogPageObject extends AccountIdentifiable, NewBlogPage, NoSQLDocument {
 		/**
 		 * The id of the page, to get it by
 		 */
@@ -561,6 +586,11 @@ declare global {
 		parentID: string | null;
 	}
 
+	/**
+	 * The full blog page object transfered from the server to the client
+	 * 
+	 * It contains extra information pertinent to rendering
+	 */
 	export interface FullBlogPageObject extends BlogPageObject {
 		/**
 		 * Used for advanced navigation
@@ -572,7 +602,13 @@ declare global {
 		fullChildren: BlogPageAncestryItem[];
 	}
 
-	export interface DebriefItem  {
+	/**
+	 * Debriefs for the various events that every member can submit
+	 * 
+	 * This allows for others to look back on an event and ask what went
+	 * well, what could have gone better, etc
+	 */
+	export interface DebriefItem {
 		/**
 		 * Reference for the member submitting the debrief item
 		 */
@@ -591,10 +627,7 @@ declare global {
 	 * The meat of what this website is designed for; events can be signed up for
 	 * and hold information to facilitate easy information distribution
 	 */
-	export interface EventObject
-		extends AccountIdentifiable,
-			NoSQLDocument,
-			NewEventObject {
+	export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
 		/**
 		 * ID of the Event, can be expressed as the event number
 		 */
@@ -624,9 +657,7 @@ declare global {
 		/**
 		 * Who to contact for more event information
 		 */
-		pointsOfContact: Array<
-			DisplayInternalPointOfContact | ExternalPointOfContact
-		>;
+		pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 		/**
 		 * If this is a linked event this will be present
 		 *
@@ -660,6 +691,8 @@ declare global {
 		meetDateTime: number;
 		/**
 		 * Where the event meets
+		 * 
+		 * TODO: Change this to be a Google places reference
 		 */
 		meetLocation: string;
 		/**
@@ -669,6 +702,8 @@ declare global {
 		startDateTime: number;
 		/**
 		 * The location of the event itself, differs from meet as stated above
+		 * 
+		 * TODO: Change this to be a Google places reference
 		 */
 		location: string;
 		/**
@@ -684,6 +719,8 @@ declare global {
 		/**
 		 * Where cadets will be, most likely will happen to be the meet location
 		 * or event location
+		 * 
+		 * TODO: Change this to be a Google places reference
 		 */
 		pickupLocation: string;
 		/**
@@ -821,7 +858,7 @@ declare global {
 		teamID: number | null;
 		/**
 		 * Limit sign ups to team members
-		 * 
+		 *
 		 * Only required if a team is selected
 		 */
 		limitSignupsToTeam: boolean | null;
@@ -864,7 +901,7 @@ declare global {
 		/**
 		 * A new attendance record may contain this if someone tries to
 		 * add someone else
-		 * 
+		 *
 		 * Only succeeds if they have the permission to do so
 		 */
 		memberID?: MemberReference;
@@ -885,7 +922,7 @@ declare global {
 		/**
 		 * Record member rank and name to show what rank they were when
 		 * they participated
-		 * 
+		 *
 		 * SHOULD use the MemberBase.getFullName() function to calculate this,
 		 * as this works across the different classes
 		 */
@@ -933,6 +970,10 @@ declare global {
 		receiveSignUpUpdates: boolean;
 	}
 
+	/**
+	 * This is a point of contact specific to CAP, or at least those we can have
+	 * references to (ProspectiveMembers)
+	 */
 	export interface InternalPointOfContact extends PointOfContact {
 		/**
 		 * Used for differentiating CAP points of contact
@@ -944,6 +985,10 @@ declare global {
 		memberReference: MemberReference;
 	}
 
+	/**
+	 * As the InternalPointOfContact does not store the name to prevent stale data,
+	 * and the client may need that information, here it is
+	 */
 	export interface DisplayInternalPointOfContact extends InternalPointOfContact {
 		/**
 		 * Used for compound documentation
@@ -951,6 +996,9 @@ declare global {
 		name: string;
 	}
 
+	/**
+	 * External POCs don't have member references, just a name
+	 */
 	export interface ExternalPointOfContact extends PointOfContact {
 		/**
 		 * Used for differentiating non CAP points of contact
@@ -983,12 +1031,6 @@ declare global {
 		 */
 		EMERGENCY: string;
 	}
-
-	/**
-	 * Currently, there are only 4 member access levels and for some reason
-	 * they are a list of strings vs an enum (why?)
-	 */
-	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
 
 	/**
 	 * Contains all the contact info for the member, according to NHQ
@@ -1184,6 +1226,12 @@ declare global {
 	}
 
 	/**
+	 * Currently, there are only 4 member access levels and for some reason
+	 * they are a list of strings vs an enum (why?)
+	 */
+	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
+
+	/**
 	 * String representation of permissions
 	 */
 	export type MemberPermission = keyof MemberPermissions;
@@ -1198,22 +1246,23 @@ declare global {
 	 *
 	 * The member may be created from one of many ways:
 	 *
-	 * NHQMember.Create/NHQMember.ExpressMiddleware/NHQMember.ConditionalExpressMiddleware:
+	 * MemberBase.Create/MemberBase.ExpressMiddleware/MemberBase.ConditionalExpressMiddleware:
 	 * 		Takes sign in data or a session and signs the user in. Best data
+	 * 		This data may represent either a full NHQMember or a full ProspectiveMember
+	 * ProspectiveMember.Get/ProspectiveMember.Create:
+	 * 		Used for the ProspectiveMembers
+	 * 		As we store the information, this is also a 'pure form' of data like NHQMember
 	 * CAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as
 	 * 		the CAPWATCH updates are frequent
-	 * ProspectiveMember.Get/ProspectiveMember.Create/ProspectiveMember.Signin/
-	 * NHQMember.ConditionalExpressMiddleware/NHQMember.ExpressMiddleware: Used for
-	 * 		managing prospective members
 	 *
 	 * NHQMember.Create and ProspectiveMember.Signin are used when signing people in
 	 * ProspectiveMember.GetProspective and CAPWATCHMember.Get are used when pulling
 	 * 		information from our database
-	 * 
+	 *
 	 * ProspectiveMember.Create creates a prospective member in our database
 	 *
 	 * CAPWATCHMember and NHQMember have their sources in NHQ
-	 * ProspectiveMember is located in our database
+	 * ProspectiveMembers are located in our database
 	 */
 	export interface MemberObject extends Identifiable {
 		/**
@@ -1258,11 +1307,14 @@ declare global {
 		teamIDs: number[];
 	}
 
-	export type CAPMemberType =
-		| 'CAPNHQMember'
-		| 'CAPWATCHMember'
-		| 'CAPProspectiveMember';
+	/**
+	 * A descriminator type used to help determine what the type of object is
+	 */
+	export type CAPMemberType = 'CAPNHQMember' | 'CAPWATCHMember' | 'CAPProspectiveMember';
 
+	/**
+	 * These are common to all CAPMembers, not necessarily all members
+	 */
 	export interface RawCAPMember extends MemberObject {
 		/**
 		 * Descriminant
@@ -1286,6 +1338,9 @@ declare global {
 		orgid: number;
 	}
 
+	/**
+	 * A more full CAP member
+	 */
 	export interface CAPMemberObject extends RawCAPMember {
 		/**
 		 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
@@ -1327,6 +1382,9 @@ declare global {
 		type: 'CAPNHQMember';
 	}
 
+	/**
+	 * The information we store in our database is represented as such
+	 */
 	export interface RawProspectiveMemberObject
 		extends RawCAPMember,
 			AccountIdentifiable,
@@ -1353,7 +1411,7 @@ declare global {
 		flight: string;
 		/**
 		 * Prospective member duty positions are stored in the database
-		 * 
+		 *
 		 * There is no way to modify this
 		 */
 		dutyPositions: {
@@ -1362,27 +1420,44 @@ declare global {
 		}[];
 	}
 
-	export type ProspectiveMemberObject = RawProspectiveMemberObject &
-		CAPMemberObject;
+	/**
+	 * A full ProspectiveMember is similar to a CAPMember
+	 */
+	export type ProspectiveMemberObject = RawProspectiveMemberObject & CAPMemberObject;
 
 	/**
 	 * Used when referring to members, as numerical CAPIDs do not work as well with
 	 * ProspectiveMembers
+	 * 
+	 * Type unions are also not preferred
 	 */
 	interface MemberReferenceBase {
 		type: MemberType;
 	}
 
+	/**
+	 * ProspectiveMemberReference refers to a ProspectiveMember
+	 */
 	export interface ProspectiveMemberReference extends MemberReferenceBase {
 		type: 'CAPProspectiveMember';
 		id: string;
 	}
 
+	/**
+	 * NHQMemberReference refers to a NHQMember
+	 */
 	export interface NHQMemberReference extends MemberReferenceBase {
 		type: 'CAPNHQMember';
 		id: number;
 	}
 
+	/**
+	 * The NullMemberReference is used when for initial form values
+	 * 
+	 * Should be filtered out
+	 * The various createCorrectMemberObject functions handle this,
+	 * returning null or throwing an error
+	 */
 	export interface NullMemberReference {
 		type: 'Null';
 	}
@@ -1427,8 +1502,7 @@ declare global {
 	 * our website uses and NHQ doesn't, for instance temporary duty positions and
 	 * permissions
 	 */
-	export interface ExtraMemberInformation
-		extends NoSQLDocument {
+	export interface ExtraMemberInformation extends NoSQLDocument {
 		/**
 		 * As full MemberReferences are not allowed for searching,
 		 * expand the object
@@ -1483,6 +1557,10 @@ declare global {
 		valid: true;
 	}
 
+	/**
+	 * Can't simply return null, need to return information as to why
+	 * things failed
+	 */
 	export interface FailedSigninReturn {
 		/**
 		 * May contain error details
@@ -1605,6 +1683,9 @@ declare global {
 		permission: FileUserAccessControlPermissions;
 	}
 
+	/**
+	 * Union type of different File permissions
+	 */
 	export type FileControlListItem =
 		| FileUserControlList
 		| FileTeamControlList
@@ -1673,6 +1754,9 @@ declare global {
 		parentID: string;
 	}
 
+	/**
+	 * A FileObject the client may like to use
+	 */
 	export interface FileObject extends RawFileObject {
 		/**
 		 * Provided by the file class, not actually stored in the database
@@ -1683,6 +1767,10 @@ declare global {
 		}>;
 	}
 
+	/**
+	 * A more expensive File object that may provide needed information
+	 * to the client
+	 */
 	export interface FullFileObject extends FileObject {
 		uploader: MemberObject;
 	}
@@ -1706,26 +1794,66 @@ declare global {
 		PhotoLibraryImagesPerPage: number;
 	}
 
+	/**
+	 * The website contact information the webmaster may want to set
+	 * 
+	 * All of this information is currently only used on the footer of
+	 * the website
+	 */
 	export interface WebsiteContact {
-		FaceBook: null | string
-		Twitter: null | string,
-		YouTube: null | string,
-		LinkedIn: null | string,
-		Instagram: null | string,
-		Flickr: null | string
+		/**
+		 * A Facebook handle that may want to be used
+		 */
+		FaceBook: null | string;
+		/**
+		 * A Twitter handle
+		 */
+		Twitter: null | string;
+		/**
+		 * A link to a YouTube account a squadron may have
+		 */
+		YouTube: null | string;
+		/**
+		 * A link to a LinkedIn account that can be used
+		 */
+		LinkedIn: null | string;
+		/**
+		 * ditto Instagram
+		 */
+		Instagram: null | string;
+		/**
+		 * ditto Flickr
+		 */
+		Flickr: null | string;
+		/**
+		 * This is the place where normal meetings take place
+		 * 
+		 * Only used for style at the bottom of the page, nothing else actually uses this
+		 * 
+		 * Maybe could be the default place for Events?
+		 */
 		MeetingAddress: null | {
-			Name: string,
-			FirstLine: string,
-			SecondLine: string
-		},
+			Name: string;
+			FirstLine: string;
+			SecondLine: string;
+		};
+		/**
+		 * The place to mail stuff to, may not necessarily match the meeting address
+		 */
 		MailingAddress: null | {
-			Name: string,
-			FirstLine: string,
-			SecondLine: string
-		}
+			Name: string;
+			FirstLine: string;
+			SecondLine: string;
+		};
 	}
 
+	/**
+	 * Used by the registry to configure the blog
+	 */
 	export interface BlogInformation {
+		/**
+		 * How many blog posts should show up per page
+		 */
 		BlogPostsPerPage: number;
 	}
 
@@ -1747,27 +1875,58 @@ declare global {
 		Blog: BlogInformation;
 	}
 
+	/**
+	 * A team member being added or modified
+	 */
 	export interface NewTeamMember {
+		/**
+		 * Who is the member?
+		 */
 		reference: MemberReference;
+		/**
+		 * What job do they hold?
+		 */
 		job: string;
 	}
 
-	export interface RawTeamMember extends NewTeamMember{
+	/**
+	 * The team member being stored in the database
+	 */
+	export interface RawTeamMember extends NewTeamMember {
+		/**
+		 * When did they join?
+		 */
 		joined: number;
 	}
 
+	/**
+	 * Stores a team member who was removed
+	 */
 	export interface RawPreviousTeamMember extends RawTeamMember {
+		/**
+		 * When were they removed?
+		 */
 		removed: number;
 	}
 
-	export interface FullTeamMember extends NewTeamMember{
+	/**
+	 * The full team member sent to the client for display
+	 */
+	export interface FullTeamMember extends RawTeamMember {
+		/**
+		 * Contains the name of the said member
+		 */
 		name: string;
-		joined: number;
 	}
 
-	export interface FullPreviousTeamMember extends RawTeamMember {
+	/**
+	 * The full team member that was removed, sent to the client for display
+	 */
+	export interface FullPreviousTeamMember extends RawPreviousTeamMember {
+		/**
+		 * The name of the team member removed (shame on them)
+		 */
 		name: string;
-		removed: number;
 	}
 
 	/**
@@ -1807,10 +1966,7 @@ declare global {
 	/**
 	 * Allows for teams of cadets
 	 */
-	export interface RawTeamObject
-		extends NewTeamObject,
-			AccountIdentifiable,
-			NoSQLDocument {
+	export interface RawTeamObject extends NewTeamObject, AccountIdentifiable, NoSQLDocument {
 		/**
 		 * Solidifies the types for the full team object
 		 */
@@ -1828,11 +1984,32 @@ declare global {
 		teamHistory: RawPreviousTeamMember[];
 	}
 
+	/**
+	 * A change to the RawTeamObject that can be better used for display
+	 */
 	export interface FullTeamObject extends RawTeamObject {
+		/**
+		 * Full team members that contains names
+		 */
 		members: FullTeamMember[];
+		/**
+		 * Full team member history that contains names
+		 */
 		teamHistory: FullPreviousTeamMember[];
+		/**
+		 * As the cadet leader is not technically a team member,
+		 * and their name needs to be sent, this is included
+		 */
 		cadetLeaderName: string;
+		/**
+		 * As the senior mentor is not technically a team member,
+		 * and their name needs to be sent, this is included
+		 */
 		seniorMentorName: string;
+		/**
+		 * As the senior coach is not technically a team member,
+		 * and their name needs to be sent, this is included
+		 */
 		seniorCoachName: string;
 	}
 }
