@@ -529,14 +529,14 @@ export default class App extends React.Component<
 									>
 										CAP Members.com
 									</a>{' '}
-									|
+									{' | '}
 									<a
 										target="_blank"
 										href="http://www.cap.news/"
 									>
 										CAP News
 									</a>{' '}
-									|
+									{' | '}
 									<a href="#" onClick={this.scrollTop}>
 										Top
 									</a>
