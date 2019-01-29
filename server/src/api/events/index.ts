@@ -11,6 +11,9 @@ import addattendancebulk, { attendanceBulkValidator } from './attendance/addatte
 import deleteattendance from './attendance/deleteattendance';
 import getattendance from './attendance/getattendance';
 import modifyattendance from './attendance/modifyattendance';
+// Debrief
+import adddebrief from './debrief/adddebrief';
+import deletedebrief from './debrief/deletedebrief';
 // Event handlers
 import addevent from './events/addevent';
 import copy from './events/copy';
@@ -87,5 +90,18 @@ router.put(
 	modifyattendance
 );
 router.delete('/:id/attendance', NHQMember.ExpressMiddleware, deleteattendance);
+
+router.post(
+	'/:id/debrief',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	adddebrief
+);
+router.delete(
+	'/:id/debrief/:timestamp',
+	NHQMember.ExpressMiddleware,
+	tokenMiddleware,
+	deletedebrief
+);
 
 export default router;

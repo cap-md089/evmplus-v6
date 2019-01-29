@@ -121,9 +121,6 @@ export default class EventValidator extends Validator<NewEventObject> {
 			complete: {
 				validator: Validator.Boolean
 			},
-			debrief: {
-				validator: Validator.String
-			},
 			desiredNumberOfParticipants: {
 				validator: Validator.Number
 			},
