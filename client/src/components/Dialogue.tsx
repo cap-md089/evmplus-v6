@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 
 import * as $ from 'jquery';
 
+import './Dialogue.css';
+
 export interface DialogueWithOK {
 	open: boolean;
 	title: string;
