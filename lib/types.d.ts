@@ -1680,6 +1680,14 @@ declare global {
 		 * -, ::, etc. Personal taste, used in the title of the page
 		 */
 		Separator: string;
+		/**
+		 * Controls how many events will show up in the 'upcoming' page
+		 */
+		ShowUpcomingEventCount: number;
+		/**
+		 * How many images are downloaded when scrolling in the photo library
+		 */
+		PhotoLibraryImagesPerPage: number;
 	}
 
 	export interface WebsiteContact {
