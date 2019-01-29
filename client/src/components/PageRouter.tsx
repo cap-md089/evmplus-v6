@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route, RouteComponentProps, withRouter } from 'react-router-dom';
+import { Route, RouteComponentProps, withRouter, Switch } from 'react-router-dom';
 import Registry from 'src/lib/Registry';
 import { BlogEdit } from 'src/pages/blog/BlogEdit';
 import { BlogList } from 'src/pages/blog/BlogList';
@@ -30,6 +30,9 @@ import AttendanceMultiAdd from 'src/pages/events/AttendanceMultiAdd';
 import TeamAdd from 'src/pages/team/TeamAdd';
 import TeamList from 'src/pages/team/TeamList';
 import TeamView from 'src/pages/team/TeamView';
+import TeamEdit from 'src/pages/team/TeamEdit';
+import NotFound from 'src/pages/NotFound';
+import PhotoLibrary from 'src/pages/PhotoLibrary';
 
 const pages: Array<{
 	url: string;
@@ -167,6 +170,11 @@ const pages: Array<{
 		exact: false
 	},
 	{
+		url: '/page/:id',
+		component: PageView,
+		exact: false
+	},
+	{
 		url: '/page/list',
 		component: PageList,
 		exact: false
@@ -207,8 +215,28 @@ const pages: Array<{
 		exact: false
 	},
 	{
+		url: '/team/edit/:id',
+		component: TeamEdit,
+		exact: false
+	},
+	{
 		url: '/team/:id',
 		component: TeamView,
+		exact: false
+	},
+	{
+		url: '/photolibrary',
+		component: PhotoLibrary,
+		exact: false
+	},
+
+
+
+	// THIS GOES LAST
+	// Otherwise, have fun debugging why you get a 404 for every page
+	{
+		url: '/',
+		component: NotFound,
 		exact: false
 	}
 ];
@@ -251,16 +279,28 @@ interface PageDisplayerProps {
 }
 
 class PageDisplayer extends React.Component<PageDisplayerProps> {
+	private okURL = '';
+
+	public constructor(props: PageDisplayerProps) {
+		super(props);
+
+		this.prepareURL = this.prepareURL.bind(this);
+	}
+
 	public shouldComponentUpdate(nextProps: PageDisplayerProps) {
 		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
 		const currentSID = this.props.member ? this.props.member.sessionID : '';
+
+		const urlChanged =
+			nextProps.routeProps.location.pathname !== this.okURL &&
+			nextProps.routeProps.location.pathname !==
+				this.props.routeProps.location.pathname;
 
 		const shouldUpdate =
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
-			nextProps.routeProps.location.pathname !==
-				this.props.routeProps.location.pathname ||
+			urlChanged ||
 			nextProps.routeProps.location.hash !==
 				this.props.routeProps.location.hash;
 
@@ -285,9 +325,14 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 					updateBreadCrumbs={this.props.updateBreadCrumbs}
 					key="mainpage"
 					registry={this.props.registry}
+					prepareURL={this.prepareURL}
 				/>
 			</ErrorHandler>
 		);
+	}
+
+	private prepareURL(url: string) {
+		this.okURL = url;
 	}
 }
 
@@ -311,7 +356,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 	public state = {
 		loading: false,
 		previousHash: '',
-		previousPath: '',
+		previousPath: ''
 	};
 
 	constructor(props: PageRouterProps) {
@@ -321,8 +366,8 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			this.state = {
 				loading: false,
 				previousHash: '',
-				previousPath: '',
-			}
+				previousPath: ''
+			};
 		}
 	}
 
@@ -352,11 +397,11 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		// It's only supposed to run if the page changes and the component
 		// hasn't finished updating the session ID
 		if (
-			(currentSID !== '' &&
+			currentSID !== '' &&
 			currentSID !== null &&
 			this.state.loading === false &&
 			(this.props.location.hash !== this.state.previousHash ||
-				this.props.location.pathname !== this.state.previousPath))
+				this.props.location.pathname !== this.state.previousPath)
 		) {
 			// tslint:disable-next-line:no-console
 			console.log('Refreshing session ID');
@@ -377,7 +422,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 						this.props.authorizeUser(sr);
 
 						this.setState({
-							loading: false,
+							loading: false
 						});
 					});
 			}
@@ -385,7 +430,16 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 	}
 
 	public render() {
-		const loading = this.state.loading;
+		const currentSID = this.props.member ? this.props.member.sessionID : '';
+
+		const loading =
+			this.state.loading ||
+			(currentSID !== '' &&
+				currentSID !== null &&
+				this.state.loading === false &&
+				(this.props.location.hash !== this.state.previousHash ||
+					(this.props.location.pathname !== this.state.previousPath &&
+						this.state.previousPath !== '')));
 
 		if (!loading) {
 			// tslint:disable-next-line:no-console
@@ -398,7 +452,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			<Loader />
 		) : (
 			<div id="pageblock">
-				{/*<Switch>*/}
+				<Switch>
 					{pages.map((value, i) => {
 						return (
 							<Route
@@ -418,7 +472,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 							/>
 						);
 					})}
-				{/*</Switch>*/}
+				</Switch>
 			</div>
 		);
 	}
