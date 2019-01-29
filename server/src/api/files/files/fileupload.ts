@@ -4,11 +4,8 @@ import { DateTime } from 'luxon';
 import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
-import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType
-} from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from '../../../enums';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
@@ -24,8 +21,7 @@ const parseHeaders = (lines: string[]) => {
 	return headers;
 };
 
-const endingToMime = (ending: string): string =>
-	lookup(ending) || 'application/octet-stream';
+const endingToMime = (ending: string): string => lookup(ending) || 'application/octet-stream';
 
 export const isImage = (ending: string): boolean =>
 	['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(ending) > -1;
@@ -53,10 +49,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 	let boundary = '';
 	let writeStream: fs.WriteStream;
 
-	if (
-		typeof req.headers !== 'undefined' &&
-		typeof req.headers.token === 'string'
-	) {
+	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
 		if (!validRawToken(req.headers.token, req.member)) {
 			res.status(403);
 			res.end();
@@ -118,18 +111,14 @@ export default async (req: MemberRequest, res: express.Response) => {
 
 			// Start to write to disk
 			const realFilename = `${req.account.id}-${id}`;
-			writeStream = fs.createWriteStream(
-				join(config.fileStoragePath, realFilename)
-			);
+			writeStream = fs.createWriteStream(join(config.fileStoragePath, realFilename));
 			writeStream.write(info.slice(i, findEnding(info, boundary)));
 
 			collectingData = true;
 
 			const created = +DateTime.utc();
 
-			const filesCollection = req.mysqlx.getCollection<RawFileObject>(
-				'Files'
-			);
+			const filesCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 
 			const reference: MemberReference = req.member.getReference();
 
@@ -166,11 +155,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 				filesCollection.add(uploadedFile).execute()
 			])
 				.then(async () => {
-					const fullFileObject = await File.Get(
-						id,
-						req.account,
-						req.mysqlx
-					);
+					const fullFileObject = await File.Get(id, req.account, req.mysqlx);
 					// Return results
 					json<FullFileObject>(res, {
 						...fullFileObject.toRaw(),

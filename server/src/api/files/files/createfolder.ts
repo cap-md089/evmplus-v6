@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from '../../../../../lib/index';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from '../../../enums';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';

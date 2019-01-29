@@ -17,6 +17,7 @@ import downloadfile from './files/downloadfile';
 import fileinfo from './files/fileinfo';
 import upload from './files/fileupload';
 import getfile from './files/getfile';
+import photolibrary from './files/photolibrary';
 import setfiledata from './files/setfiledata';
 import setfileinfo from './files/setfileinfo';
 
@@ -34,24 +35,12 @@ filerouter.put('/upload/:fileid', Member.ExpressMiddleware, setfiledata); // upd
 filerouter.use(bodyParser.json());
 // export, functions differently and downloads data for file without download headers
 filerouter.get('/:fileid/export', Member.ConditionalExpressMiddleware, getfile);
+filerouter.get('/photolibrary/:page', Member.ConditionalExpressMiddleware, photolibrary);
 // export, functions differently and downloads data for file with download headers
-filerouter.get(
-	'/:fileid/download',
-	Member.ConditionalExpressMiddleware,
-	downloadfile
-);
-filerouter.get(
-	'/:fileid/:method?',
-	Member.ConditionalExpressMiddleware,
-	fileinfo
-); // get
+filerouter.get('/:fileid/download', Member.ConditionalExpressMiddleware, downloadfile);
+filerouter.get('/:fileid/:method?', Member.ConditionalExpressMiddleware, fileinfo); // get
 filerouter.get('/:fileid', Member.ConditionalExpressMiddleware, fileinfo); // get
-filerouter.delete(
-	'/:fileid',
-	Member.ExpressMiddleware,
-	tokenMiddleware,
-	deletefile
-); // delete
+filerouter.delete('/:fileid', Member.ExpressMiddleware, tokenMiddleware, deletefile); // delete
 filerouter.put(
 	'/:fileid',
 	Member.ExpressMiddleware,
@@ -69,21 +58,8 @@ filerouter.delete(
 	tokenMiddleware,
 	removefile
 ); // delete
-filerouter.post(
-	'/:parentid/children',
-	Member.ExpressMiddleware,
-	tokenMiddleware,
-	insertchild
-); // insert
-filerouter.get(
-	'/:parentid/children/:method?',
-	Member.ConditionalExpressMiddleware,
-	getfiles
-);
-filerouter.get(
-	'/:parentid/children',
-	Member.ConditionalExpressMiddleware,
-	getfiles
-);
+filerouter.post('/:parentid/children', Member.ExpressMiddleware, tokenMiddleware, insertchild); // insert
+filerouter.get('/:parentid/children/:method?', Member.ConditionalExpressMiddleware, getfiles);
+filerouter.get('/:parentid/children', Member.ConditionalExpressMiddleware, getfiles);
 
 export default filerouter;
