@@ -47,7 +47,9 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			},
 			Website: {
 				Name: '',
-				Separator: ' - '
+				Separator: ' - ',
+				ShowUpcomingEventCount: 7,
+				PhotoLibraryImagesPerPage: 20
 			},
 			Blog: {
 				BlogPostsPerPage: 15
