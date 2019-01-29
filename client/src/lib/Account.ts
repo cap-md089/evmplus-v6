@@ -97,6 +97,34 @@ export default class Account extends APIInterface<AccountObject>
 		return events.map((e: EventObject) => new Event(e, this));;
 	}
 
+	public async getNextRecurringEvent(): Promise<Event | null> {
+		const url = this.buildURI('api', 'event', 'recurring');
+
+		try {
+			const results = await this.fetch(url);
+
+			const event = await results.json();
+
+			return new Event(event, this);
+		} catch(e) {
+			if (e.status === 404) {
+				return null;
+			}
+
+			throw e;
+		}
+	}
+
+	public async getUpcomingEvents(): Promise<Event[]> {
+		const url = this.buildURI('api', 'event', 'upcoming');
+
+		const results = await this.fetch(url);
+
+		const events = await results.json();
+
+		return events.map((e: EventObject) => new Event(e, this));
+	}
+
 	public async getTeams(member?: MemberBase | null): Promise<Team[]> {
 		const url = this.buildURI('api', 'team');
 
