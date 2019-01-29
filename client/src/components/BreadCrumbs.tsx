@@ -6,6 +6,12 @@ export interface BreadCrumb {
 	target: string;
 }
 
+const dividerStyle: React.CSSProperties = {
+	margin: '2px 10px',
+	padding: '0 1px 0 1px',
+	color: '#999'
+};
+
 export class BreadCrumbsPresentation extends React.Component<{
 	links: BreadCrumb[]
 }, {}> {
@@ -25,7 +31,7 @@ export class BreadCrumbsPresentation extends React.Component<{
 								);
 							} else {
 								return [
-									<li key={'d' + i} className="divider" />,
+									<li key={'d' + i} style={dividerStyle}>/</li>,
 									<li key={i}>
 										<Link to={link.target}>
 											{link.text}
