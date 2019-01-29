@@ -29,23 +29,22 @@ export interface BlogListState2 {
 
 type BlogListProps = PageProps<{ page?: string }>;
 
-export class BlogList extends Page<
-	BlogListProps,
-	BlogListState1 | BlogListState2
-> {
+export class BlogList extends Page<BlogListProps, BlogListState1 | BlogListState2> {
+	public state: BlogListState1 | BlogListState2 = {
+		posts: null,
+		page: parseInt(this.props.routeProps.match.params.page || '1', 10),
+		displayLeft: false,
+		displayRight: false,
+		loaded: false,
+		draft: null,
+		error: null
+	};
+
 	constructor(props: BlogListProps) {
 		super(props);
-		this.state = {
-			posts: null,
-			page: parseInt(this.props.routeProps.match.params.page || '1', 10),
-			displayLeft: false,
-			displayRight: false,
-			loaded: false,
-			draft: null,
-			error: null
-		};
 		this.changePageNumber = this.changePageNumber.bind(this);
 	}
+
 	public componentDidMount() {
 		const page = this.props.routeProps.match.params.page;
 		if (page) {
@@ -85,43 +84,41 @@ export class BlogList extends Page<
 			this.updateTitle('News');
 		}
 
-		Promise.all([
-			this.props.account.getBlogPosts(),
-			import('draft-js')
-		]).then(([posts, draft]) => {
-			this.setState({
-				loaded: true,
-				posts,
-				draft
-			});
-			const start =
-				(parseInt(page || '1', 10) - 1) *
-				this.props.registry.Blog.BlogPostsPerPage;
-			if (start > posts.length || start < 0) {
-				return;
+		Promise.all([this.props.account.getBlogPosts(), import('draft-js')]).then(
+			([posts, draft]) => {
+				this.setState({
+					loaded: true,
+					posts,
+					draft
+				});
+				const start =
+					(parseInt(page || '1', 10) - 1) * this.props.registry.Blog.BlogPostsPerPage;
+				if (start > posts.length || start < 0) {
+					return;
+				}
+				const renderDataset: BlogPost[] = [];
+				for (
+					let i = start;
+					i < posts.length && i < this.props.registry.Blog.BlogPostsPerPage + start;
+					i++
+				) {
+					renderDataset.push(posts[i]);
+				}
+				this.props.updateSideNav(
+					renderDataset.map((post, i) => ({
+						target: i.toString(),
+						type: 'Reference' as 'Reference',
+						text: post.title
+					})),
+					true
+				);
+			},
+			blogpostserror => {
+				this.setState({
+					error: blogpostserror.status
+				});
 			}
-			const renderDataset: BlogPost[] = [];
-			for (
-				let i = start;
-				i < posts.length &&
-				i < this.props.registry.Blog.BlogPostsPerPage + start;
-				i++
-			) {
-				renderDataset.push(posts[i]);
-			}
-			this.props.updateSideNav(
-				renderDataset.map((post, i) => ({
-					target: i.toString(),
-					type: 'Reference' as 'Reference',
-					text: post.title
-				})),
-				true
-			);
-		}, blogpostserror => {
-			this.setState({
-				error: blogpostserror.status
-			})
-		});
+		);
 	}
 
 	public render() {
@@ -131,7 +128,7 @@ export class BlogList extends Page<
 
 		if (this.state.error !== null) {
 			if (this.state.error === 402) {
-				return <div>This account currently does not have a news page</div>
+				return <div>This account currently does not have a news page</div>;
 			} else {
 				throw new Error('Unknown error ' + this.state.error);
 			}
