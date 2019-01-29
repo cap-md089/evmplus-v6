@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import AttendanceForm from 'src/components/AttendanceForm';
-import { DialogueButtons } from 'src/components/Dialogue';
-import DialogueButtonForm from 'src/components/DialogueButtonForm';
-import { DateTimeInput, Label } from 'src/components/Form';
-import { TextBox } from 'src/components/SimpleForm';
+import { DialogueButtons } from 'src/components/dialogues/Dialogue';
+import DialogueButtonForm from 'src/components/dialogues/DialogueButtonForm';
+import { DateTimeInput, Label } from 'src/components/forms/Form';
+import { TextBox } from 'src/components/forms/SimpleForm';
 import MemberBase from 'src/lib/Members';
 import { parseMultCheckboxReturn } from '../../components/form-inputs/MultCheckbox';
 import Loader from '../../components/Loader';
@@ -12,8 +12,8 @@ import { EventStatus, PointOfContactType } from '../../enums';
 import Event from '../../lib/Event';
 import './EventViewer.css';
 import Page, { PageProps } from '../Page';
-import DialogueButton from 'src/components/DialogueButton';
-import { Uniforms, Activities, RequiredForms } from 'src/components/EventForm';
+import DialogueButton from 'src/components/dialogues/DialogueButton';
+import { Uniforms, Activities, RequiredForms } from 'src/components/forms/usable-forms/EventForm';
 import SigninLink from 'src/components/SigninLink';
 
 const noop = () => void 0;

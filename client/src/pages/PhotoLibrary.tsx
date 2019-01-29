@@ -5,7 +5,7 @@ import * as jQuery from 'jquery';
 import myFetch from 'src/lib/myFetch';
 
 import './PhotoLibrary.css';
-import Dialogue, { DialogueButtons } from 'src/components/Dialogue';
+import Dialogue, { DialogueButtons } from 'src/components/dialogues/Dialogue';
 
 interface PhotoLibraryState {
 	imageIDs: string[];

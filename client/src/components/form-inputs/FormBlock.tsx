@@ -5,7 +5,7 @@ import {
 	isLabel,
 	Label,
 	Title
-} from '../SimpleForm';
+} from '../forms/SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DialogueButtons } from './Dialogue';
 import DialogueButton from './DialogueButton';
-import SimpleForm from './SimpleForm';
+import SimpleForm from '../forms/SimpleForm';
 
 interface DialogueButtonPropsBase {
 	title: string;

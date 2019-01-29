@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { MessageEventListener } from '../App';
 import { MemberCreateError } from '../enums';
-import Dialogue, { DialogueButtons } from './Dialogue';
+import Dialogue, { DialogueButtons } from './dialogues/Dialogue';
 import './Signin.css';
 
 const errorMessages = {

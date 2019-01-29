@@ -4,7 +4,7 @@ import Loader from '../../components/Loader';
 import SimpleForm, {
 	LoadingTextArea,
 	TextInput
-} from '../../components/SimpleForm';
+} from '../../components/forms/SimpleForm';
 import { EditorState } from '../../lib/slowEditorState';
 import Page, { PageProps } from '../Page';
 

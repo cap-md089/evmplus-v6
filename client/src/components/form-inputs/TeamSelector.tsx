@@ -1,9 +1,9 @@
 import * as React from 'react';
 import Team from 'src/lib/Team';
 import Button from '../Button';
-import DownloadDialogue from '../DownloadDialogue';
+import DownloadDialogue from '../dialogues/DownloadDialogue';
 import Loader from '../Loader';
-import { DisabledText, FormBlock, Label, TextBox } from '../SimpleForm';
+import { DisabledText, FormBlock, Label, TextBox } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 import TextInput from './TextInput';
 

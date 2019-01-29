@@ -11,8 +11,8 @@ import {
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import urlFormat from '../../lib/urlFormat';
-import Dialogue, { DialogueButtons } from '../Dialogue';
-import FileDialogue from '../FileDialogue';
+import Dialogue, { DialogueButtons } from '../dialogues/Dialogue';
+import FileDialogue from '../dialogues/FileDialogue';
 import { InputProps } from './Input';
 
 export let index = 0;

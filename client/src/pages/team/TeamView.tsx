@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { DialogueButtons } from 'src/components/Dialogue';
-import DialogueButton from 'src/components/DialogueButton';
+import { DialogueButtons } from 'src/components/dialogues/Dialogue';
+import DialogueButton from 'src/components/dialogues/DialogueButton';
 import Loader from 'src/components/Loader';
 import MemberBase, { MemberClasses } from 'src/lib/Members';
 import Team from 'src/lib/Team';

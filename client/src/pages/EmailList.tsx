@@ -10,7 +10,7 @@ import SimpleForm, {
 	Selector,
 	SimpleRadioButton,
 	TextInput
-} from '../components/SimpleForm';
+} from '../components/forms/SimpleForm';
 import Page, { PageProps } from './Page';
 import { MemberClasses } from 'src/lib/Members';
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import TeamForm from 'src/components/TeamForm';
+import TeamForm from 'src/components/forms/usable-forms/TeamForm';
 import { MemberClasses } from 'src/lib/Members';
 import { TeamPublicity } from '../../enums';
 import Page, { PageProps } from '../Page';

@@ -1,30 +1,30 @@
 import * as React from 'react';
 // Form inputs
-import BigTextBox from './form-inputs/BigTextBox';
-import Checkbox from './form-inputs/Checkbox';
-import DateTimeInput from './form-inputs/DateTimeInput';
-import DisabledMappedText from './form-inputs/DisabledMappedText';
-import DisabledText from './form-inputs/DisabledText';
-import FileInput from './form-inputs/FileInput';
-import FormBlock from './form-inputs/FormBlock';
-import { InputProps } from './form-inputs/Input';
-import ListEditor from './form-inputs/ListEditor';
-import LoadingTextArea from './form-inputs/LoadingTextArea';
-import MemberSelector from './form-inputs/MemberSelector';
-import MultCheckbox from './form-inputs/MultCheckbox';
-import MultiRange from './form-inputs/MultiRange';
-import NumberInput from './form-inputs/NumberInput';
-import RadioButton from './form-inputs/RadioButton';
-import Selector from './form-inputs/Selector';
-import SimpleRadioButton from './form-inputs/SimpleRadioButton';
-import TeamMemberInput from './form-inputs/TeamMemberInput';
-import TeamSelector from './form-inputs/TeamSelector';
-import TextBox from './form-inputs/TextBox';
-import TextInput from './form-inputs/TextInput';
+import BigTextBox from '../form-inputs/BigTextBox';
+import Checkbox from '../form-inputs/Checkbox';
+import DateTimeInput from '../form-inputs/DateTimeInput';
+import DisabledMappedText from '../form-inputs/DisabledMappedText';
+import DisabledText from '../form-inputs/DisabledText';
+import FileInput from '../form-inputs/FileInput';
+import FormBlock from '../form-inputs/FormBlock';
+import { InputProps } from '../form-inputs/Input';
+import ListEditor from '../form-inputs/ListEditor';
+import LoadingTextArea from '../form-inputs/LoadingTextArea';
+import MemberSelector from '../dialogues/MemberSelector';
+import MultCheckbox from '../form-inputs/MultCheckbox';
+import MultiRange from '../form-inputs/MultiRange';
+import NumberInput from '../form-inputs/NumberInput';
+import RadioButton from '../form-inputs/RadioButton';
+import Selector from '../form-inputs/Selector';
+import SimpleRadioButton from '../form-inputs/SimpleRadioButton';
+import TeamMemberInput from '../form-inputs/TeamMemberInput';
+import TeamSelector from '../form-inputs/TeamSelector';
+import TextBox from '../form-inputs/TextBox';
+import TextInput from '../form-inputs/TextInput';
 
-let TextArea: typeof import('./form-inputs/TextArea').default;
+let TextArea: typeof import('../form-inputs/TextArea').default;
 
-import('./form-inputs/TextArea').then(textArea => {
+import('../form-inputs/TextArea').then(textArea => {
 	TextArea = textArea.default;
 });
 

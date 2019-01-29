@@ -3,7 +3,7 @@ import Loader from 'src/components/Loader';
 import SimpleForm, {
 	LoadingTextArea,
 	TextInput
-} from 'src/components/SimpleForm';
+} from 'src/components/forms/SimpleForm';
 import BlogPage from 'src/lib/BlogPage';
 import { EditorState } from 'src/lib/slowEditorState';
 import Page, { PageProps } from '../Page';

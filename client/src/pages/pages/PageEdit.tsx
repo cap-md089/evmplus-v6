@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { LoadingTextArea, TextInput } from 'src/components/Form';
+import { LoadingTextArea, TextInput } from 'src/components/forms/Form';
 import Loader from 'src/components/Loader';
-import SimpleForm from 'src/components/SimpleForm';
+import SimpleForm from 'src/components/forms/SimpleForm';
 import BlogPage from 'src/lib/BlogPage';
 import { EditorState } from 'src/lib/slowEditorState';
 import Page, { PageProps } from '../Page';

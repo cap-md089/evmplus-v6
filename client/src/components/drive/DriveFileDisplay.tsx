@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import urlFormat from '../lib/urlFormat';
-import FileInterface from '../lib/File';
-import MemberBase from '../lib/Members';
+import urlFormat from '../../lib/urlFormat';
+import FileInterface from '../../lib/File';
+import MemberBase from '../../lib/Members';
 
 export interface FileDisplayProps {
 	file: FileInterface;

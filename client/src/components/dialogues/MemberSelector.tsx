@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { MemberClasses } from 'src/lib/Members';
 import Button from '../Button';
-import DownloadDialogue from '../DownloadDialogue';
+import DownloadDialogue from './DownloadDialogue';
 import Loader from '../Loader';
-import { FormBlock, Label, TextBox, TextInput } from '../SimpleForm';
-import { InputProps } from './Input';
+import { FormBlock, Label, TextBox, TextInput } from '../forms/SimpleForm';
+import { InputProps } from '../form-inputs/Input';
 
 interface MemberInputProps extends InputProps<MemberReference> {
 	memberList: Promise<MemberClasses[]>;

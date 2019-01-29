@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { TextInput } from '../SimpleForm';
+import { TextInput } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 
 interface NumberInputProps extends InputProps<number> {

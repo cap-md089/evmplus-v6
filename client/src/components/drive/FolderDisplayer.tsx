@@ -1,15 +1,13 @@
-import { ItemProps } from './FileDialogue';
+import { ItemProps } from '../dialogues/FileDialogue';
 import * as React from 'react';
-
-export class SelectedFileDisplayer extends React.Component<
-	ItemProps & {
-		red: boolean;
+export class FolderDisplayer extends React.Component<ItemProps> {
+	constructor(props: ItemProps) {
+		super(props);
 	}
-> {
 	public render() {
 		return (
 			<div
-				className="selectedFile"
+				className="folderDisplayer"
 				onClick={e => {
 					e.stopPropagation();
 					const {
@@ -22,12 +20,12 @@ export class SelectedFileDisplayer extends React.Component<
 						forSlideshow,
 						id,
 						kind,
-						permissions,
 						owner,
 						_id,
 						fileChildren,
 						parentID,
-						folderPath
+						folderPath,
+						permissions
 					} = this.props;
 					this.props.onClick(
 						{
@@ -40,24 +38,19 @@ export class SelectedFileDisplayer extends React.Component<
 							forSlideshow,
 							id,
 							kind,
-							permissions,
 							owner,
 							_id,
 							fileChildren,
 							parentID,
-							folderPath
+							folderPath,
+							permissions
 						},
 						this.props.selected
 					);
 				}}
 			>
 				<div
-					className={'box selected' + (this.props.red ? ' red' : '')}
-					title={
-						this.props.red
-							? 'Invalid file selected'
-							: this.props.fileName
-					}
+					className={'box' + (this.props.selected ? ' selected' : '')}
 				>
 					{this.props.fileName}
 				</div>

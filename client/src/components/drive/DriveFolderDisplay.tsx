@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FileUserAccessControlPermissions } from '../enums';
+import { FileUserAccessControlPermissions } from '../../enums';
 import { FileDisplayProps } from './DriveFileDisplay';
 
 export default class DriveFolderDisplay extends React.Component<

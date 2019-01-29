@@ -1,18 +1,18 @@
 import * as React from 'react';
-import Account from '../lib/Account';
-import FileInterface from '../lib/File';
-import MemberBase from '../lib/Members';
+import Account from '../../lib/Account';
+import FileInterface from '../../lib/File';
+import MemberBase from '../../lib/Members';
 import Dialogue, {
 	DialogueButtons,
 	DialogueWithOK,
 	DialogueWithOKCancel
 } from './Dialogue';
 import './FileDialogue.css';
-import { SimpleFileDisplayer } from './SimpleFileDisplayer';
-import FileUploader from './FileUploader';
-import { FolderDisplayer } from './FolderDisplayer';
-import Loader from './Loader';
-import { SelectedFileDisplayer } from './SelectedFileDisplayer';
+import { SimpleFileDisplayer } from './dialogue-components/SimpleFileDisplayer';
+import FileUploader from '../FileUploader';
+import { FolderDisplayer } from '../drive/FolderDisplayer';
+import Loader from '../Loader';
+import { SelectedFileDisplayer } from './dialogue-components/SelectedFileDisplayer';
 
 enum FileDialogueView {
 	MYDRIVE,

@@ -1,4 +1,4 @@
-import { ItemProps } from './FileDialogue';
+import { ItemProps } from '../FileDialogue';
 import * as React from 'react';
 
 export class SimpleFileDisplayer extends React.Component<ItemProps> {

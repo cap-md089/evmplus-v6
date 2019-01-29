@@ -3,8 +3,8 @@ import { AttendanceStatus } from 'src/enums';
 import Account from 'src/lib/Account';
 import Event from 'src/lib/Event';
 import MemberBase from 'src/lib/Members';
-import { BigTextBox, Checkbox, SimpleRadioButton } from './Form';
-import SimpleForm, { Label, TextBox, DateTimeInput } from './SimpleForm';
+import { BigTextBox, Checkbox, SimpleRadioButton } from './forms/Form';
+import SimpleForm, { Label, TextBox, DateTimeInput } from './forms/SimpleForm';
 import { attendanceStatusLabels } from 'src/pages/events/EventViewer';
 import Button from './Button';
 

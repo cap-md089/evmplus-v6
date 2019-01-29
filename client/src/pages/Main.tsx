@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Uniforms } from 'src/components/EventForm';
+import { Uniforms } from 'src/components/forms/usable-forms/EventForm';
 import { parseMultCheckboxReturn } from 'src/components/form-inputs/MultCheckbox';
 import Loader from 'src/components/Loader';
 import { SideNavigationItem } from 'src/components/SideNavigation';

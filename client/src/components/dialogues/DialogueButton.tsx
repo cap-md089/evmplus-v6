@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Button from './Button';
+import Button from '../Button';
 import Dialogue, { DialogueButtons } from './Dialogue';
 
 const noop = () => void 0;

@@ -3,7 +3,7 @@ import Page, { PageProps } from '../Page';
 import Team from 'src/lib/Team';
 import { MemberClasses } from 'src/lib/Members';
 import Loader from 'src/components/Loader';
-import TeamForm from 'src/components/TeamForm';
+import TeamForm from 'src/components/forms/usable-forms/TeamForm';
 
 interface TeamEditState {
 	team: Team | null;

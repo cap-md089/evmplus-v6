@@ -4,7 +4,7 @@ import Account from 'src/lib/Account';
 import MemberBase, { MemberClasses } from 'src/lib/Members';
 import Registry from 'src/lib/Registry';
 import Team from 'src/lib/Team';
-import { PointOfContactType } from '../../../lib';
+import { PointOfContactType } from '../../../../../lib';
 import {
 	Checkbox,
 	FileInput,
@@ -13,9 +13,9 @@ import {
 	SimpleRadioButton,
 	TeamSelector,
 	TextInput
-} from './Form';
-import { InputProps } from './form-inputs/Input';
-import POCInput, { POCInputProps } from './form-inputs/POCInput';
+} from '../Form';
+import { InputProps } from '../../form-inputs/Input';
+import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
 import SimpleForm, {
 	DateTimeInput,
 	Label,
@@ -23,7 +23,7 @@ import SimpleForm, {
 	MultCheckbox,
 	RadioButton,
 	Title
-} from './SimpleForm';
+} from '../SimpleForm';
 
 export const Uniforms = [
 	'Dress Blue A',

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { InputProps } from './Input';
-import { FormBlock, Label, MemberSelector, TextInput } from '../SimpleForm';
+import { FormBlock, Label, MemberSelector, TextInput } from '../forms/SimpleForm';
 import { MemberClasses } from 'src/lib/Members';
 
 export interface TeamMemberInputProps extends InputProps<NewTeamMember> {

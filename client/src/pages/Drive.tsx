@@ -1,11 +1,11 @@
 import * as $ from 'jquery';
 import * as React from 'react';
-import ExtraFileDisplay from '../components/DriveExtraFileDisplay';
-import ExtraFolderDisplay from '../components/DriveExtraFolderDisplay';
-import DriveFileDisplay from '../components/DriveFileDisplay';
-import DriveFolderDisplay from '../components/DriveFolderDisplay';
+import ExtraFileDisplay from '../components/drive/DriveExtraFileDisplay';
+import ExtraFolderDisplay from '../components/drive/DriveExtraFolderDisplay';
+import DriveFileDisplay from '../components/drive/DriveFileDisplay';
+import DriveFolderDisplay from '../components/drive/DriveFolderDisplay';
 import FileUploader from '../components/FileUploader';
-import Form, { TextInput } from '../components/Form';
+import Form, { TextInput } from '../components/forms/Form';
 import Loader from '../components/Loader';
 import FileInterface from '../lib/File';
 import './Drive.css';

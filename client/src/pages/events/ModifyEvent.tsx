@@ -1,5 +1,5 @@
 import * as React from 'react';
-import EventForm from 'src/components/EventForm';
+import EventForm from 'src/components/forms/usable-forms/EventForm';
 import { MemberClasses } from 'src/lib/Members';
 import Team from 'src/lib/Team';
 import Loader from '../../components/Loader';

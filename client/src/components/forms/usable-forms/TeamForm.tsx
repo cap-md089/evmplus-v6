@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { MemberClasses } from 'src/lib/Members';
-import { TeamPublicity } from '../enums';
-import MemberSelector from './form-inputs/MemberSelector';
+import { TeamPublicity } from '../../../enums';
+import MemberSelector from '../../dialogues/MemberSelector';
 import TeamMemberInput, {
 	TeamMemberInputProps
-} from './form-inputs/TeamMemberInput';
+} from '../../form-inputs/TeamMemberInput';
 import SimpleForm, {
 	BigTextBox,
 	BooleanFields,
@@ -15,7 +15,7 @@ import SimpleForm, {
 	FormValidator,
 	Divider,
 	TextBox
-} from './SimpleForm';
+} from '../SimpleForm';
 
 interface TeamFormProps {
 	team: NewTeamObject;

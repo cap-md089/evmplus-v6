@@ -6,11 +6,11 @@ import {
 	Selector,
 	SimpleRadioButton,
 	TextInput
-} from 'src/components/Form';
+} from 'src/components/forms/Form';
 import { CheckInput } from 'src/components/form-inputs/Selector';
 import { SimpleRadioProps } from 'src/components/form-inputs/SimpleRadioButton';
 import Loader from 'src/components/Loader';
-import SimpleForm from 'src/components/SimpleForm';
+import SimpleForm from 'src/components/forms/SimpleForm';
 import Event from 'src/lib/Event';
 import { MemberClasses } from 'src/lib/Members';
 import Page, { PageProps } from '../Page';

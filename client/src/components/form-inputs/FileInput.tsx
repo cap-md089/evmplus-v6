@@ -1,8 +1,8 @@
 import * as React from 'react';
 import FileInterface from '../../lib/File';
 import Button from '../Button';
-import Dialogue, { DialogueButtons } from '../Dialogue';
-import FileDialogue from '../FileDialogue';
+import Dialogue, { DialogueButtons } from '../dialogues/Dialogue';
+import FileDialogue from '../dialogues/FileDialogue';
 import Loader from '../Loader';
 import './FileInput.css';
 import { InputProps } from './Input';

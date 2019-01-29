@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
 import SigninLink from '../components/SigninLink';
-import Form, { Checkbox, DateTimeInput, FileInput, FormBlock, Label, LoadingTextArea, MultCheckbox, MultiRange, NumberInput, RadioButton, Selector, TextInput, Title } from '../components/SimpleForm';
+import Form, { Checkbox, DateTimeInput, FileInput, FormBlock, Label, LoadingTextArea, MultCheckbox, MultiRange, NumberInput, RadioButton, Selector, TextInput, Title } from '../components/forms/SimpleForm';
 import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
 

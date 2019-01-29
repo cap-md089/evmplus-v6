@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { FileUserAccessControlPermissions } from '../enums';
-import FileInterface from '../lib/File';
-import MemberBase from '../lib/Members';
-import Button from './Button';
-import Form, { BigTextBox, Label } from './Form';
+import { FileUserAccessControlPermissions } from '../../enums';
+import FileInterface from '../../lib/File';
+import MemberBase from '../../lib/Members';
+import Button from '../Button';
+import Form, { BigTextBox, Label } from '../forms/Form';
 
 export interface ExtraDisplayProps {
 	file: FileInterface;
