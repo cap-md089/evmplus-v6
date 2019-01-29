@@ -135,7 +135,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public status: EventStatus;
 
-	public debrief: string;
+	public debrief: DebriefItem[];
 
 	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
