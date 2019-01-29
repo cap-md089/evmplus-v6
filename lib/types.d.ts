@@ -572,6 +572,21 @@ declare global {
 		fullChildren: BlogPageAncestryItem[];
 	}
 
+	export interface DebriefItem  {
+		/**
+		 * Reference for the member submitting the debrief item
+		 */
+		memberRef: MemberReference;
+		/**
+		 * The date and time the item was submitted
+		 */
+		timeSubmitted: number;
+		/**
+		 * The debrief item text
+		 */
+		debriefText: string;
+	}
+
 	/**
 	 * The meat of what this website is designed for; events can be signed up for
 	 * and hold information to facilitate easy information distribution
@@ -601,6 +616,11 @@ declare global {
 		 * generated attendance on the client side to include internal POCs
 		 */
 		attendance: AttendanceRecord[];
+		/**
+		 * New events start with no debrief items.  Each item is a separate
+		 * comment provided by a member
+		 */
+		debrief: DebriefItem[];
 		/**
 		 * Who to contact for more event information
 		 */
@@ -787,10 +807,6 @@ declare global {
 		 * Tentative, complete, cancelled, etc.
 		 */
 		status: EventStatus;
-		/**
-		 * After action reports
-		 */
-		debrief: string;
 		/**
 		 * Who to contact for more event information
 		 */
