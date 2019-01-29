@@ -4,6 +4,17 @@ import Page, { PageProps } from './Page';
 export default class NotFound extends Page<PageProps> {
 	public state: {} = {};
 
+	public componentDidMount() {
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			}
+		]);
+		this.props.updateSideNav([]);
+		this.updateTitle('Not found');
+	}
+
 	public render () {
 		return <div>
 			<h2>This is not the page you are looking for</h2>

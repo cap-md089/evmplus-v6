@@ -125,7 +125,46 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			}
 		]);
 
-		this.props.updateSideNav([]);
+		if (this.props.member && event.canSignUpForEvent(this.props.member)) {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				},
+				{
+					target: 'signup',
+					text: 'Sign up',
+					type: 'Reference'
+				},
+				{
+					target: 'attendance',
+					text: 'Attendance',
+					type: 'Reference'
+				}
+			]);
+		} else if (this.props.member) {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				},
+				{
+					target: 'attendance',
+					text: 'Attendance',
+					type: 'Reference'
+				}
+			]);
+		} else {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				}
+			]);
+		}
 
 		this.updateTitle(`View event ${event.name}`);
 
@@ -231,7 +270,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 					</>
 				) : null}
-				<div>
+				<div id="information">
 					<strong>Event: </strong> {this.state.event.name}
 					<br />
 					<strong>Event ID: </strong> {this.state.event.accountID.toUpperCase()}-
@@ -322,7 +361,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					</div>
 				</div>
 				{this.props.member !== null ? (
-					<div>
+					<div id="signup">
 						{this.state.event.canSignUpForEvent(this.props.member) ? (
 							<AttendanceForm
 								account={this.props.account}
@@ -334,7 +373,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								removeRecord={noop}
 							/>
 						) : null}
-						<h2>Attendance</h2>
+						<h2 id="attendance">Attendance</h2>
 						{this.state.event.attendance.map((val, i) =>
 							this.props.member &&
 							(this.props.member.matchesReference(val.memberID) ||
