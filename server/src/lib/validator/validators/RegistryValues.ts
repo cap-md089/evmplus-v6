@@ -67,6 +67,12 @@ class WebsiteValidator extends Validator<WebsiteInformation> {
 			},
 			Separator: {
 				validator: Validator.String
+			},
+			ShowUpcomingEventCount: {
+				validator: Validator.Number
+			},
+			PhotoLibraryImagesPerPage: {
+				validator: Validator.Number
 			}
 		});
 	}

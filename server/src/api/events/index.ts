@@ -7,9 +7,7 @@ import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
-import addattendancebulk, {
-	attendanceBulkValidator
-} from './attendance/addattendancebulk';
+import addattendancebulk, { attendanceBulkValidator } from './attendance/addattendancebulk';
 import deleteattendance from './attendance/deleteattendance';
 import getattendance from './attendance/getattendance';
 import modifyattendance from './attendance/modifyattendance';
@@ -18,8 +16,10 @@ import addevent from './events/addevent';
 import copy from './events/copy';
 import deleteevent from './events/deleteevent';
 import getevent from './events/getevent';
+import getnextrecurring from './events/getnextrecurring';
 import linkevent from './events/linkevent';
 import list from './events/list';
+import listupcoming from './events/listupcoming';
 import setevent from './events/setevent';
 import timelist from './events/timelist';
 
@@ -28,6 +28,8 @@ const router = express.Router();
 router.use(Account.ExpressMiddleware);
 
 router.get('/', NHQMember.ConditionalExpressMiddleware, list);
+router.get('/upcoming', listupcoming);
+router.get('/recurring', getnextrecurring);
 router.get('/:start/:end', NHQMember.ConditionalExpressMiddleware, timelist);
 router.post(
 	'/',
