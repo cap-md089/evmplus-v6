@@ -53,7 +53,7 @@ class Ribbon extends React.Component<{
 			DistinguishedService: 'Distinguished Service Award',
 			ExceptionalService: 'Exceptional Service Award',
 			MeritoriousService: 'Meritorious Service Award',
-			CommandersCommendation: "Commander' Commendation Award",
+			CommandersCommendation: "Commander's Commendation Award",
 			CAPAchievement: 'CAP Achievement Award',
 			Lifesaving: 'Certificate of Recognition For Life Saving',
 			NatCommanderUnitCitation: 'National Commanders Unit Citation Award',
@@ -154,9 +154,12 @@ class RibbonRack extends React.Component<Partial<Ribbons>> {
 }
 
 export default class RibbonRackBuilder extends Page {
+	public state: {} = {};
+
 	public render() {
 		return (
 			<RibbonRack
+				Earhart={true}
 				Mitchell={true}
 				Armstrong={true}
 				Goddard={true}
