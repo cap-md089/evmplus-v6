@@ -144,7 +144,6 @@ export const emptyEvent = (): NewEventObject => ({
 	complete: false,
 	administrationComments: '',
 	status: 0,
-	debrief: '',
 	pointsOfContact: [],
 	signUpPartTime: false,
 	teamID: null,
@@ -158,7 +157,6 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	administrationComments: event.administrationComments,
 	comments: event.comments,
 	complete: event.complete,
-	debrief: event.debrief,
 	desiredNumberOfParticipants: event.desiredNumberOfParticipants,
 	endDateTime: event.endDateTime,
 	eventWebsite: event.eventWebsite,
@@ -207,7 +205,6 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	administrationComments: event.administrationComments,
 	comments: event.comments,
 	complete: event.complete,
-	debrief: event.debrief,
 	desiredNumberOfParticipants: event.desiredNumberOfParticipants,
 	endDateTime: event.endDateTime,
 	eventWebsite: event.eventWebsite,
@@ -265,7 +262,6 @@ export default class EventForm extends React.Component<
 			administrationComments: false,
 			comments: false,
 			complete: false,
-			debrief: false,
 			desiredNumberOfParticipants: false,
 			endDateTime: false,
 			eventWebsite: false,
@@ -305,7 +301,6 @@ export default class EventForm extends React.Component<
 			administrationComments: false,
 			comments: false,
 			complete: false,
-			debrief: false,
 			desiredNumberOfParticipants: false,
 			endDateTime: false,
 			eventWebsite: false,
@@ -633,11 +628,6 @@ export default class EventForm extends React.Component<
 
 				<Label>Limit sign ups to team members</Label>
 				<Checkbox name="limitSignupsToTeam" />
-
-				<Title>Debrief information</Title>
-
-				<Label>Debrief</Label>
-				<TextInput name="debrief" />
 			</SimpleForm>
 		);
 	}
