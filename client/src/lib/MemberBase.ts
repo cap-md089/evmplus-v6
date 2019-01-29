@@ -19,6 +19,16 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 			: ref1.id === ref2.id;
 	}
 
+	public static IsRioux(
+		ref: MemberReference | number | string | MemberBase
+	): boolean {
+		if (typeof ref === 'number' || typeof ref === 'string') {
+			return ref === 542488 || ref === 546319;
+		} else {
+			return ref.type === 'Null' ? false : MemberBase.IsRioux(ref.id);
+		}
+	}
+
 	/**
 	 * Whether or not members marked isRioux are super admins
 	 */
