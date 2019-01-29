@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, withRouter, RouteComponentProps } from 'react-router-dom';
 import { MemberCreateError } from '../enums';
 import SigninLink from './SigninLink';
 import MemberBase from 'src/lib/Members';
@@ -56,7 +56,7 @@ export type SideNavigationItem =
 	| { type: 'Reference'; target: string; text: React.ReactChild }
 	| { type: 'Link'; target: string; text: React.ReactChild };
 
-export interface SideNavigationProps {
+export interface SideNavigationProps extends RouteComponentProps<{}> {
 	links: SideNavigationItem[];
 	member: MemberBase | null;
 	fullMemberDetails: SigninReturn;
@@ -68,6 +68,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 		super(props);
 
 		this.signOut = this.signOut.bind(this);
+		this.goBack = this.goBack.bind(this);
 	}
 
 	public render() {
@@ -91,6 +92,12 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 								<span>Sign in</span>
 							</SigninLink>
 						)}
+					</li>
+					<li>
+						<a onClick={this.goBack}>
+							<span className="arrow" />
+							<span>Go back</span>
+						</a>
 					</li>
 					{this.props.links.map((link, i) => (
 						<li key={i}>
@@ -121,6 +128,10 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 		});
 		localStorage.removeItem('sessionID');
 	}
+
+	private goBack() {
+		this.props.history.goBack();
+	}
 }
 
-export default SideNavigation;
+export default withRouter(SideNavigation);
