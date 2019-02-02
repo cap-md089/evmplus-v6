@@ -18,6 +18,7 @@ const memberRanks = [
 	'cab',
 	'camn',
 	'ca1c',
+	'csra',
 	'cssgt',
 	'ctsgt',
 	'cmsgt',
@@ -315,6 +316,16 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 					>
 						Deselect all
 					</Button>
+					<br />
+					<br />
+					{this.state.displayAdvanced ? (
+						<div>
+							Available ranks include: <br />
+							C/Amn, C/A1C, C/SrA, C/SSgt, C/MSgt, C/SMSgt, C/CMSgt, C/2dLt, C/1stLt,
+							C/Capt, C/Maj, C/LtCol, C/Col, 2dLt, 1stLt, Capt, Maj, LtCol, Col,
+							BrigGen, MajGen, LtGen, Gen
+						</div>
+					) : null}
 					<br />
 					<br />
 					<SelectorForm
