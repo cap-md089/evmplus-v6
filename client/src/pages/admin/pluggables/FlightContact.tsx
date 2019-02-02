@@ -331,9 +331,21 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				&nbsp; &nbsp; &nbsp;
 				<Button
 					onClick={() => {
-						this.setState(prev => ({
-							selectedMembers: prev.visibleItems
-						}));
+						this.setState(prev => {
+							const selectedMembers: MemberClasses[] = prev.selectedMembers.slice(0);
+
+							prev.visibleItems.forEach(item => {
+								if (
+									selectedMembers.filter(i =>
+										i.matchesReference(item.getReference())
+									).length === 0
+								) {
+									selectedMembers.push(item);
+								}
+							});
+
+							return { selectedMembers };
+						});
 					}}
 				>
 					Select all visible

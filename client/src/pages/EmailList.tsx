@@ -88,19 +88,13 @@ const flightInput: CheckInput<Member, string> = {
 		}
 
 		if (!!input.match(/senior/i)) {
-			if (
-				mem.type === 'CAPNHQMember' ||
-				mem.type === 'CAPProspectiveMember'
-			) {
+			if (mem.type === 'CAPNHQMember' || mem.type === 'CAPProspectiveMember') {
 				return mem.seniorMember;
 			}
 		}
 
 		try {
-			if (
-				mem.type === 'CAPProspectiveMember' ||
-				mem.type === 'CAPNHQMember'
-			) {
+			if (mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') {
 				return !!mem.flight.match(new RegExp(input, 'i'));
 			} else {
 				return false;
@@ -144,10 +138,7 @@ const rankGreaterThan: CheckInput<Member, string> = {
 			return true;
 		}
 
-		if (
-			mem.type === 'CAPNHQMember' ||
-			mem.type === 'CAPProspectiveMember'
-		) {
+		if (mem.type === 'CAPNHQMember' || mem.type === 'CAPProspectiveMember') {
 			return (
 				memberRanks.indexOf(normalizeRankInput(mem.memberRank)) >=
 				memberRanks.indexOf(normalizeRankInput(input))
@@ -170,10 +161,7 @@ const rankLessThan: CheckInput<Member, string> = {
 			return true;
 		}
 
-		if (
-			mem.type === 'CAPNHQMember' ||
-			mem.type === 'CAPProspectiveMember'
-		) {
+		if (mem.type === 'CAPNHQMember' || mem.type === 'CAPProspectiveMember') {
 			return (
 				memberRanks.indexOf(normalizeRankInput(mem.memberRank)) <=
 				memberRanks.indexOf(normalizeRankInput(input))
@@ -188,21 +176,15 @@ const rankLessThan: CheckInput<Member, string> = {
 
 const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
-		return memberFilters[
-			typeof input === 'undefined' || input === -1
-				? MemberList.ALL
-				: input
-		](mem);
+		return memberFilters[typeof input === 'undefined' || input === -1 ? MemberList.ALL : input](
+			mem
+		);
 	},
 	filterInput: (props: SimpleRadioProps<MemberList>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={
-				typeof props.value === 'undefined'
-					? MemberList.ALL
-					: props.value
-			}
+			value={typeof props.value === 'undefined' ? MemberList.ALL : props.value}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -212,24 +194,12 @@ const memberFilter: CheckInput<Member, MemberList> = {
 };
 
 const memberFilters: Array<(a: Member) => boolean> = [
-	a =>
-		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
-			? !a.seniorMember
-			: false,
-	a =>
-		a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember'
-			? a.seniorMember
-			: true,
+	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? !a.seniorMember : false),
+	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? a.seniorMember : true),
 	() => true
 ];
 
-const advancedFilters = [
-	flightInput,
-	nameInput,
-	rankGreaterThan,
-	rankLessThan,
-	memberFilter
-];
+const advancedFilters = [flightInput, nameInput, rankGreaterThan, rankLessThan, memberFilter];
 
 const simpleFilters = [nameInput, memberFilter];
 
@@ -259,9 +229,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 
 	public async componentDidMount() {
 		if (this.props.member) {
-			const members = await this.props.account.getMembers(
-				this.props.member
-			);
+			const members = await this.props.account.getMembers(this.props.member);
 
 			this.setState({
 				availableMembers: members
@@ -285,9 +253,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 	}
 
 	public render() {
-		const MemberSelector = (Selector as unknown) as new () => Selector<
-			MemberClasses
-		>;
+		const MemberSelector = (Selector as unknown) as new () => Selector<MemberClasses>;
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
 			members: MemberClasses[];
@@ -309,9 +275,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 					<Button
 						onClick={() => {
 							this.setState(prev => ({
-								selectedMembers: (
-									prev.availableMembers || []
-								).slice(0)
+								selectedMembers: (prev.availableMembers || []).slice(0)
 							}));
 						}}
 					>
@@ -320,9 +284,23 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 					&nbsp; &nbsp; &nbsp;
 					<Button
 						onClick={() => {
-							this.setState(prev => ({
-								selectedMembers: prev.visibleItems
-							}));
+							this.setState(prev => {
+								const selectedMembers: MemberClasses[] = prev.selectedMembers.slice(
+									0
+								);
+
+								prev.visibleItems.forEach(item => {
+									if (
+										selectedMembers.filter(i =>
+											i.matchesReference(item.getReference())
+										).length === 0
+									) {
+										selectedMembers.push(item);
+									}
+								});
+
+								return { selectedMembers };
+							});
 						}}
 					>
 						Select all visible
@@ -346,11 +324,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 							sortFunction: this.state.sortFunction,
 							displayAdvanced: this.state.displayAdvanced
 						}}
-						onChange={({
-							members,
-							sortFunction,
-							displayAdvanced
-						}) => {
+						onChange={({ members, sortFunction, displayAdvanced }) => {
 							this.setState({
 								selectedMembers: members,
 								sortFunction,
@@ -368,9 +342,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						<Checkbox name="displayAdvanced" />
 						<MemberSelector
 							name="members"
-							values={this.state.availableMembers
-								.slice(0)
-								.sort(currentSortFunction)}
+							values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
 							displayValue={this.displayMemberName}
 							multiple={true}
 							showIDField={this.state.displayAdvanced}
@@ -380,11 +352,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 								});
 							}}
 							overflow={750}
-							filters={
-								this.state.displayAdvanced
-									? advancedFilters
-									: simpleFilters
-							}
+							filters={this.state.displayAdvanced ? advancedFilters : simpleFilters}
 							onFilterValuesChange={values => {
 								if (!this.state.displayAdvanced) {
 									this.setState(prev => ({
@@ -415,10 +383,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 											filterValues.rankLessThan,
 											filterValues.memberFilter
 									  ]
-									: [
-											filterValues.nameInput,
-											filterValues.memberFilter
-									  ]
+									: [filterValues.nameInput, filterValues.memberFilter]
 							}
 						/>
 					</SelectorForm>
@@ -427,8 +392,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						.map(mem => this.getEmail(mem))
 						.filter(email => !email).length > 0 ? (
 						<div className="warning">
-							Warning: Some selected members do not have an email
-							stored
+							Warning: Some selected members do not have an email stored
 						</div>
 					) : null}
 					<div
@@ -479,7 +443,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 				range.selectNode(this.selectableDiv.current);
 				window.getSelection().removeAllRanges();
 				window.getSelection().addRange(range);
-			} catch(e) {
+			} catch (e) {
 				// Probably an old browser
 				// (Looking at you, IE)
 				return;
