@@ -1,11 +1,11 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
+import { createCorrectMemberObject, MemberClasses } from '../Members';
 
 /**
  * A class to represent the members that sign in to CAPNHQ.gov
  */
-export default class CAPNHQMember extends MemberBase
-	implements NHQMemberObject {
+export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	/**
 	 * This class uses 6 digit CAP IDs
 	 */
@@ -22,8 +22,8 @@ export default class CAPNHQMember extends MemberBase
 	 * Duty positions
 	 */
 	public dutyPositions: Array<{
-		duty: string,
-		date: number
+		duty: string;
+		date: number;
 	}>;
 	/**
 	 * The organization ID the user belongs to
@@ -51,11 +51,7 @@ export default class CAPNHQMember extends MemberBase
 	 * 		not the account the member is a part of!
 	 * @param sessionID The session ID for this member
 	 */
-	public constructor(
-		data: CAPMemberObject,
-		requestingAccount: Account,
-		sessionID: string
-	) {
+	public constructor(data: CAPMemberObject, requestingAccount: Account, sessionID: string) {
 		super(data, requestingAccount, sessionID);
 	}
 
@@ -95,9 +91,12 @@ export default class CAPNHQMember extends MemberBase
 	}
 
 	public hasDutyPosition(dutyPosition: string | string[]): boolean {
-		return typeof dutyPosition === 'string'
-			? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
-			: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b);
+		return (
+			this.isRioux ||
+			(typeof dutyPosition === 'string'
+				? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
+				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b))
+		);
 	}
 
 	public canManageBlog() {
@@ -112,6 +111,34 @@ export default class CAPNHQMember extends MemberBase
 	}
 
 	public getFullName() {
-		return `${this.memberRank} ${super.getFullName()}`
+		return `${this.memberRank} ${super.getFullName()}`;
+	}
+
+	public async getFlightMembers(): Promise<MemberClasses[]> {
+		if (
+			!this.hasDutyPosition([
+				'Cadet Flight Commander',
+				'Cadet Flight Sergeant',
+				'Cadet Commander',
+				'Cadet Deputy Commander'
+			])
+		) {
+			throw new Error('Invalid permissions');
+		}
+
+		const results = await this.fetch('/api/member/flight', {}, this);
+		const json = (await results.json()) as CAPNHQMember[];
+
+		const returnValue = [];
+
+		for (const memObj of json) {
+			const newObj = createCorrectMemberObject(memObj, this.requestingAccount, '');
+
+			if (newObj !== null) {
+				returnValue.push(newObj);
+			}
+		}
+
+		return returnValue;
 	}
 }

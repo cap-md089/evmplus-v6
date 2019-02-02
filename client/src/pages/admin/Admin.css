@@ -1,0 +1,7 @@
+.widget-holder {
+	display: flex;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	flex-direction: row;
+	align-items: flex-start;
+}

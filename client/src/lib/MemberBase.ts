@@ -20,9 +20,11 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	}
 
 	public static IsRioux(
-		ref: MemberReference | number | string | MemberBase
+		ref: MemberReference | number | string | MemberBase | null
 	): boolean {
-		if (typeof ref === 'number' || typeof ref === 'string') {
+		if (ref === null) {
+			return false;
+		} else if (typeof ref === 'number' || typeof ref === 'string') {
 			return ref === 542488 || ref === 546319;
 		} else {
 			return ref.type === 'Null' ? false : MemberBase.IsRioux(ref.id);

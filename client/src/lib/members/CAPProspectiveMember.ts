@@ -94,4 +94,13 @@ export default class CAPProspectiveMember extends MemberBase
 	public getFullName() {
 		return `${this.memberRank} ${super.getFullName()}`
 	}
+
+	public hasDutyPosition(dutyPosition: string | string[]): boolean {
+		return (
+			this.isRioux ||
+			(typeof dutyPosition === 'string'
+				? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
+				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b))
+		);
+	}
 }

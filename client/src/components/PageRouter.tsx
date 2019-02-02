@@ -33,6 +33,7 @@ import TeamView from 'src/pages/team/TeamView';
 import TeamEdit from 'src/pages/team/TeamEdit';
 import NotFound from 'src/pages/NotFound';
 import PhotoLibrary from 'src/pages/PhotoLibrary';
+import Admin from 'src/pages/admin/Admin';
 
 const pages: Array<{
 	url: string;
@@ -227,6 +228,11 @@ const pages: Array<{
 	{
 		url: '/photolibrary',
 		component: PhotoLibrary,
+		exact: false
+	},
+	{
+		url: '/admin',
+		component: Admin,
 		exact: false
 	},
 
