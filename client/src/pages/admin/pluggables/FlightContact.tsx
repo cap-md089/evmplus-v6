@@ -8,6 +8,8 @@ import Page, { PageProps } from 'src/pages/Page';
 import Button from 'src/components/Button';
 import SimpleForm, { Label, RadioButton, Checkbox } from 'src/components/forms/SimpleForm';
 
+import './FlightContact.css';
+
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
 		props.member instanceof CAPNHQMember &&
@@ -457,6 +459,20 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						.filter(email => !!email)
 						.join('; ')}
 				</div>
+				<h2>Phone numbers:</h2>
+				<div
+					style={{
+						height: 400,
+						width: '98%',
+						overflow: 'auto',
+						border: '1px solid black',
+						boxSizing: 'border-box',
+						margin: 0,
+						fontStyle: 'italic'
+					}}
+				>
+					{this.getPhoneNumbers()}
+				</div>
 			</>
 		);
 	}
@@ -497,5 +513,85 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		} else {
 			throw new Error('Weird');
 		}
+	}
+
+	private getPhoneNumbers() {
+		return this.state
+			.selectedMembers!.map(this.renderMember)
+			.filter(item => item.phoneCount > 0)
+			.map(item => item.element);
+	}
+
+	private renderMember(member: MemberClasses) {
+		const phoneCount = [
+			member.contact.CADETPARENTEMAIL.PRIMARY,
+			member.contact.CADETPARENTEMAIL.SECONDARY,
+			member.contact.CADETPARENTEMAIL.EMERGENCY,
+			member.contact.CELLPHONE.PRIMARY,
+			member.contact.CELLPHONE.SECONDARY,
+			member.contact.CELLPHONE.EMERGENCY,
+			member.contact.HOMEPHONE.PRIMARY,
+			member.contact.HOMEPHONE.SECONDARY,
+			member.contact.HOMEPHONE.EMERGENCY,
+			member.contact.WORKPHONE.PRIMARY,
+			member.contact.WORKPHONE.SECONDARY,
+			member.contact.WORKPHONE.EMERGENCY
+		].filter(item => item !== '').length;
+
+		return {
+			phoneCount,
+			element: (
+				<div className="flightcontactlist-item">
+					<div className="flightcontactlist-name">{member.getFullName()}</div>
+					<div className="flightcontactlist-phones">
+						{member.contact.CADETPARENTPHONE.PRIMARY !== '' ? (
+							<p>
+								{member.contact.CADETPARENTPHONE.PRIMARY} (Primary Cadet Parent
+								Phone)
+							</p>
+						) : null}
+						{member.contact.CADETPARENTPHONE.SECONDARY !== '' ? (
+							<p>
+								{member.contact.CADETPARENTPHONE.SECONDARY} (Secondary Cadet Parent
+								Phone)
+							</p>
+						) : null}
+						{member.contact.CADETPARENTPHONE.EMERGENCY !== '' ? (
+							<p>
+								{member.contact.CADETPARENTPHONE.EMERGENCY} (Emergency Cadet Parent
+								Phone)
+							</p>
+						) : null}
+						{member.contact.CELLPHONE.PRIMARY !== '' ? (
+							<p>{member.contact.CELLPHONE.PRIMARY} (Primary Cell Phone)</p>
+						) : null}
+						{member.contact.CELLPHONE.SECONDARY !== '' ? (
+							<p>{member.contact.CELLPHONE.SECONDARY} (Secondary Cell Phone)</p>
+						) : null}
+						{member.contact.CELLPHONE.EMERGENCY !== '' ? (
+							<p>{member.contact.CELLPHONE.EMERGENCY} (Emergency Cell Phone)</p>
+						) : null}
+						{member.contact.HOMEPHONE.PRIMARY !== '' ? (
+							<p>{member.contact.HOMEPHONE.PRIMARY} (Primary Home Phone)</p>
+						) : null}
+						{member.contact.HOMEPHONE.SECONDARY !== '' ? (
+							<p>{member.contact.HOMEPHONE.SECONDARY} (Secondary Home Phone)</p>
+						) : null}
+						{member.contact.HOMEPHONE.EMERGENCY !== '' ? (
+							<p>{member.contact.HOMEPHONE.EMERGENCY} (Emergency Home Phone)</p>
+						) : null}
+						{member.contact.WORKPHONE.PRIMARY !== '' ? (
+							<p>{member.contact.WORKPHONE.PRIMARY} (Primary Work Phone)</p>
+						) : null}
+						{member.contact.WORKPHONE.SECONDARY !== '' ? (
+							<p>{member.contact.WORKPHONE.SECONDARY} (Secondary Work Phone)</p>
+						) : null}
+						{member.contact.WORKPHONE.EMERGENCY !== '' ? (
+							<p>{member.contact.WORKPHONE.EMERGENCY} (Emergency Work Phone)</p>
+						) : null}
+					</div>
+				</div>
+			)
+		};
 	}
 }
