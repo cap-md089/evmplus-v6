@@ -43,7 +43,7 @@ export default async (err: Error, req: MaybeMemberRequest, res: Response, next: 
 				filename: stack.getFileName(),
 				line: stack.getLineNumber(),
 				column: stack.getColumnNumber(),
-				name: stack.getFunctionName()
+				name: stack.getFunctionName() || '<unknown>'
 			})),
 			filename: stacks[0].getFileName(),
 

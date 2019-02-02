@@ -246,7 +246,7 @@ export default abstract class MemberBase implements MemberObject {
 		next: NextFunction
 	) {
 		MemberBase.ConditionalExpressMiddleware(req, res, () => {
-			if (req.member === null) {
+			if (req.member === null || req.member === undefined) {
 				res.status(401);
 				res.end();
 			} else {
