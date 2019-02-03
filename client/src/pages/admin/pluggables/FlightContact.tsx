@@ -207,7 +207,10 @@ const flightInput: CheckInput<Member, string> = {
 		}
 
 		try {
-			if (mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') {
+			if (
+				(mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') &&
+				mem.flight !== null
+			) {
 				return !!mem.flight.match(new RegExp(input, 'i'));
 			} else {
 				return false;

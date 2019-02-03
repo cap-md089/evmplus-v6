@@ -32,11 +32,15 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	/**
 	 * The flight for a member, if a cadet
 	 */
-	public flight: string;
+	public flight: string | null;
 	/**
 	 * Filler value
 	 */
 	public cookie: string = '';
+	/**
+	 * How long the member is absent for
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
 
 	/**
 	 * Descriminator
@@ -86,7 +90,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			type: 'CAPNHQMember',
 			usrID: this.usrID,
 			cookie: '',
-			sessionID: this.sessionID
+			sessionID: this.sessionID,
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 

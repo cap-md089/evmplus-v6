@@ -41,6 +41,10 @@ export default class CAPProspectiveMember extends MemberBase
 	 * The flight for a member, if a cadet
 	 */
 	public flight: string;
+	/**
+	 * Describes how long the member is absent for
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
 
 	/**
 	 * Descriminator for TypeScript
@@ -87,7 +91,8 @@ export default class CAPProspectiveMember extends MemberBase
 			teamIDs: this.teamIDs,
 			type: 'CAPProspectiveMember',
 			usrID: this.usrID,
-			accountID: this.accountID
+			accountID: this.accountID,
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 

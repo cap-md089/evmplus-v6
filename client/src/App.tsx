@@ -572,6 +572,8 @@ export default class App extends React.Component<
 					this.state.account!,
 					member.sessionID
 				);
+			} else {
+				fullMember.sessionID = member.sessionID;
 			}
 		} else if (member.member) {
 			fullMember = createCorrectMemberObject(
