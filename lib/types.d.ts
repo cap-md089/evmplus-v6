@@ -1230,6 +1230,21 @@ declare global {
 	 * they are a list of strings vs an enum (why?)
 	 */
 	export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
+	
+	/**
+	 * This information is used to store if a member has said they will be absent until a date,
+	 * and comments associated with it
+	 */
+	export interface AbsenteeInformation {
+		/**
+		 * Used by the member to describe why a cadet will be absent
+		 */
+		comments: string;
+		/**
+		 * Used to say how long the cadet is absent for
+		 */
+		absentUntil: number;
+	}
 
 	/**
 	 * String representation of permissions
@@ -1356,7 +1371,13 @@ declare global {
 		/**
 		 * The flight of the member
 		 */
-		flight: string;
+		flight: string | null;
+		/**
+		 * Shows how long the member is absent for
+		 * 
+		 * Should not be used if null or if the time has passed
+		 */
+		absenteeInformation: AbsenteeInformation | null;
 	}
 
 	/**
@@ -1408,7 +1429,7 @@ declare global {
 		/**
 		 * Flights are stored in the raw database object for prospective members
 		 */
-		flight: string;
+		flight: string | null;
 		/**
 		 * Prospective member duty positions are stored in the database
 		 *
@@ -1423,7 +1444,16 @@ declare global {
 	/**
 	 * A full ProspectiveMember is similar to a CAPMember
 	 */
-	export type ProspectiveMemberObject = RawProspectiveMemberObject & CAPMemberObject;
+	export interface ProspectiveMemberObject extends RawProspectiveMemberObject, CAPMemberObject {
+		/**
+		 * Prospective members have string IDs
+		 */
+		id: string;
+		/**
+		 * Typescript deliminator
+		 */
+		type: 'CAPProspectiveMember';
+	}
 
 	/**
 	 * Used when referring to members, as numerical CAPIDs do not work as well with
@@ -1473,7 +1503,7 @@ declare global {
 	/**
 	 * In the case that it doesn't like MemberBase, try using Member
 	 */
-	export type Member = ProspectiveMemberObject | NHQMemberObject;
+	export type Member = ProspectiveMemberObject | CAPMemberObject;
 
 	/**
 	 * Records temporary duty positions that we assign
@@ -1531,6 +1561,12 @@ declare global {
 		 * The Account this information belongs to
 		 */
 		accountID: string;
+		/**
+		 * Declares the absentee information
+		 * 
+		 * Null if non existant
+		 */
+		absentee: AbsenteeInformation | null;
 	}
 
 	/**
