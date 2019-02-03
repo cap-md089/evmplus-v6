@@ -552,7 +552,8 @@ export default class Team implements FullTeamObject {
 				...member,
 				temporaryDutyPositions: [],
 				flight: null,
-				teamIDs: []
+				teamIDs: [],
+				absentee: null
 			};
 
 			await extraInformation
@@ -613,7 +614,8 @@ export default class Team implements FullTeamObject {
 				...member,
 				temporaryDutyPositions: [],
 				flight: null,
-				teamIDs: []
+				teamIDs: [],
+				absentee: null
 			};
 
 			await extraInformation
@@ -733,7 +735,8 @@ export default class Team implements FullTeamObject {
 				...member,
 				temporaryDutyPositions: [],
 				flight: null,
-				teamIDs: [this.id]
+				teamIDs: [this.id],
+				absentee: null
 			};
 
 			await extraInformation

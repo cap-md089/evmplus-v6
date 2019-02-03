@@ -128,7 +128,8 @@ export default class NHQMember extends CAPWATCHMember
 				flight: extraInfo.flight,
 				teamIDs: extraInfo.teamIDs,
 				sessionID,
-				cookie
+				cookie,
+				absenteeInformation: extraInfo.absentee
 			},
 			schema,
 			account,
@@ -188,7 +189,8 @@ export default class NHQMember extends CAPWATCHMember
 				flight: sess.flight,
 				teamIDs: extraInfo.teamIDs,
 				sessionID,
-				cookie: sess.cookieData
+				cookie: sess.cookieData,
+				absenteeInformation: extraInfo.absentee
 			},
 			schema,
 			account,
@@ -213,6 +215,10 @@ export default class NHQMember extends CAPWATCHMember
 	 * The ID to for the session of the member
 	 */
 	public sessionID: string;
+	/**
+	 * How long the member is absent for
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
 	/**
 	 * Used to differentiate between members
 	 *

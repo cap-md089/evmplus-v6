@@ -288,7 +288,8 @@ export default abstract class MemberBase implements MemberObject {
 				...memberID,
 				temporaryDutyPositions: [],
 				flight: null,
-				teamIDs: []
+				teamIDs: [],
+				absentee: null
 			};
 
 			extraMemberSchema.add(newInformation).execute();

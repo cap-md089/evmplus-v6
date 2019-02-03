@@ -108,7 +108,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 				password: hashedPassword,
 				accountID: account.id,
 				type: 'CAPProspectiveMember',
-				squadron: account.getSquadronName()
+				squadron: account.getSquadronName(),
+				absenteeInformation: null
 			},
 			account,
 			schema,
@@ -244,7 +245,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 		return new ProspectiveMember(
 			{
 				...rows[0],
-				dutyPositions: []
+				dutyPositions: [],
+				absenteeInformation: extraInformation.absentee
 			},
 			account,
 			schema,
@@ -271,6 +273,8 @@ export default class ProspectiveMember extends CAPWATCHMember
 	public sessionID: string;
 
 	public flight: null | string;
+
+	public absenteeInformation: AbsenteeInformation | null;
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;

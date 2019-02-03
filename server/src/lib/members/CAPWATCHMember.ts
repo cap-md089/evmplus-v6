@@ -128,7 +128,8 @@ export default class CAPWATCHMember extends MemberBase
 				type: 'CAPNHQMember',
 				permissions,
 				teamIDs: extraInformation.teamIDs,
-				flight: extraInformation.flight
+				flight: extraInformation.flight,
+				absenteeInformation: extraInformation.absentee
 			},
 			schema,
 			account
@@ -190,6 +191,10 @@ export default class CAPWATCHMember extends MemberBase
 	 * The flight for a member, if a cadet
 	 */
 	public flight: null | string;
+	/**
+	 * How long the member is absent for
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
 
 	protected constructor(
 		data: CAPMemberObject,
@@ -255,7 +260,8 @@ export default class CAPWATCHMember extends MemberBase
 			orgid: this.orgid,
 			seniorMember: this.seniorMember,
 			squadron: this.squadron,
-			type: 'CAPNHQMember'
+			type: 'CAPNHQMember',
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 }
