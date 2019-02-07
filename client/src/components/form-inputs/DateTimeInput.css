@@ -48,7 +48,7 @@
 }
 
 .datetime-input-box .time-input {
-	border-right-width: 0px;
+	border-right-width: 1px;
 	border-left-width: 0px;
 	float: left;
 	border-top-right-radius: 10px;

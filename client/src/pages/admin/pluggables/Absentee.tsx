@@ -1,7 +1,9 @@
 import * as React from 'react';
-import Page, { PageProps } from 'src/pages/Page';
-import Loader from 'src/components/Loader';
+import Form from 'src/components/forms/Form';
+import { DateTimeInput, TextInput, Label } from 'src/components/forms/SimpleForm';
 import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from 'src/lib/Members';
+import Page, { PageProps } from 'src/pages/Page';
+import './Absentee.css';
 
 interface AbsenteeState {
 	absentee: AbsenteeInformation;
@@ -43,7 +45,24 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			<div className="widget">
 				<div className="widget-title">Absent?</div>
 				<div className="widget-body">
-					{this.state.absentee === null ? <Loader /> : <div>40</div>}
+					<Form
+						className="absentee-form"
+						submitInfo={{
+							text: 'Submit',
+							className: 'primaryButton submit'
+						}}
+					>
+						<Label>When will you be absent until?</Label>
+						<DateTimeInput
+							name="absentUntil"
+							date={true}
+							time={true}
+							originalTimeZoneOffset={'America/New_York'}
+						/>
+
+						<Label>Is there a reason?</Label>
+						<TextInput name="comments" />
+					</Form>
 				</div>
 			</div>
 		);

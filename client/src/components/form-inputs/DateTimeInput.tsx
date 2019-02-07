@@ -71,10 +71,7 @@ interface DateTimeState {
 // 		})
 // 		.startOf('month');
 
-const normalizeInput = (
-	value: number | DateTime | undefined,
-	offset: SupportedTimeZones
-) =>
+const normalizeInput = (value: number | DateTime | undefined, offset: SupportedTimeZones) =>
 	typeof value !== 'undefined'
 		? typeof value === 'number'
 			? DateTime.fromMillis(value, {
@@ -83,9 +80,7 @@ const normalizeInput = (
 			: value
 		: DateTime.utc();
 
-const quickNormalize = (
-	props: DateTimeInputProps | TimeInputProps | DateInputProps
-) =>
+const quickNormalize = (props: DateTimeInputProps | TimeInputProps | DateInputProps) =>
 	roundInput(
 		normalizeInput(props.value, props.originalTimeZoneOffset),
 		props.minuteInterval || FIVE_MINUTES,
@@ -94,11 +89,7 @@ const quickNormalize = (
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 
-const roundInput = (
-	input: DateTime,
-	interval: number,
-	offset: SupportedTimeZones
-) => input
+const roundInput = (input: DateTime, interval: number, offset: SupportedTimeZones) => input;
 
 // short left pad
 const lp = (v: string | number, amount = 2) => ('0000' + v).substr(-amount);
@@ -146,8 +137,7 @@ export default class DateTimeInput extends React.Component<
 
 		const sameTimezone = DateTime.local().offset === start.offset;
 
-		const className =
-			(this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
+		const className = (this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
 
 		return (
 			<div className="formbox" style={this.props.boxStyles}>
@@ -156,17 +146,13 @@ export default class DateTimeInput extends React.Component<
 						{this.props.date ? (
 							<input
 								className="date-input"
-								value={`${lp(start.year, 4)}-${lp(
-									start.month
-								)}-${lp(start.day)}`}
+								value={`${lp(start.year, 4)}-${lp(start.month)}-${lp(start.day)}`}
 								type="date"
 								onChange={this.onChangeDate}
 							/>
 						) : null}
 						{this.props.date && this.props.time ? (
-							<span className="datetime-input-seperator">
-								&nbsp;
-							</span>
+							<span className="datetime-input-seperator">&nbsp;</span>
 						) : null}
 						{this.props.time ? (
 							<input
@@ -181,12 +167,10 @@ export default class DateTimeInput extends React.Component<
 						<>
 							<br />
 							<div className="original-time">
-								Time displayed in{' '}
-								{
-									TimeZoneDisplays[
-										this.props.originalTimeZoneOffset
-									]
-								}
+								<i>
+									Time displayed in{' '}
+									{TimeZoneDisplays[this.props.originalTimeZoneOffset]}
+								</i>
 							</div>
 						</>
 					) : null}

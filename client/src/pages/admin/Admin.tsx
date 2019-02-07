@@ -3,7 +3,7 @@ import { Route, Switch } from 'react-router';
 import MemberBase from 'src/lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
-import { AbsenteeWidget } from './pluggables/Absentee';
+import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
 import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget
@@ -35,11 +35,11 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 	},
 	{
 		canuse,
-		widget: AbsenteeWidget
+		widget: DriveWidget
 	},
 	{
-		canuse,
-		widget: DriveWidget
+		canuse: canUseAbsentee,
+		widget: AbsenteeWidget
 	}
 ];
 

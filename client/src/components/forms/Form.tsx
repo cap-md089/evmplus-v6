@@ -47,6 +47,10 @@ export {
 	TeamMemberInput
 };
 
+const clearFix: React.CSSProperties = {
+	clear: 'both'
+};
+
 export interface BasicFormProps<T> extends FormProps<T> {
 	/**
 	 * Class names for each row
@@ -126,6 +130,7 @@ class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends Simp
 						disabled={this.state.disabled || submitInfo.disabled}
 					/>
 				</div>
+				<div style={clearFix} />
 			</form>
 		);
 	}
