@@ -1503,7 +1503,7 @@ declare global {
 	/**
 	 * In the case that it doesn't like MemberBase, try using Member
 	 */
-	export type Member = ProspectiveMemberObject | CAPMemberObject;
+	export type Member = ProspectiveMemberObject | NHQMemberObject;
 
 	/**
 	 * Records temporary duty positions that we assign
