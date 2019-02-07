@@ -6,6 +6,7 @@ import AbsenteeValidator from '../../lib/validator/validators/AbsenteeValidator'
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
+import flightbasic from './flightbasic';
 import flightmembers from './flightmembers';
 import getmembers from './getmembers';
 import su from './su';
@@ -17,6 +18,7 @@ router.use(Account.ExpressMiddleware);
 router.get('/', MemberBase.ExpressMiddleware, getmembers);
 router.post('/su', MemberBase.ExpressMiddleware, su);
 router.get('/flight', MemberBase.ExpressMiddleware, flightmembers);
+router.get('/flight/basic', MemberBase.ExpressMiddleware, flightbasic);
 router.post(
 	'/absent',
 	MemberBase.ExpressMiddleware,
