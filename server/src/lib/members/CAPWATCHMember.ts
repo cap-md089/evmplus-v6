@@ -4,31 +4,17 @@ import MemberBase from '../MemberBase';
 import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
 
-export default class CAPWATCHMember extends MemberBase
-	implements CAPMemberObject {
+export default class CAPWATCHMember extends MemberBase implements CAPMemberObject {
 	public static readonly tableNames = {
 		member: 'NHQ_Member',
 		contact: 'NHQ_MbrContact'
 	};
 
-	public static async Get(
-		id: number,
-		account: Account,
-		schema: Schema
-	): Promise<CAPWATCHMember> {
-		const memberTable = schema.getCollection<NHQ.Member>(
-			this.tableNames.member
-		);
-		const memberContactTable = schema.getCollection<NHQ.MbrContact>(
-			this.tableNames.contact
-		);
+	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPWATCHMember> {
+		const memberTable = schema.getCollection<NHQ.Member>(this.tableNames.member);
+		const memberContactTable = schema.getCollection<NHQ.MbrContact>(this.tableNames.contact);
 
-		const [
-			results,
-			capwatchContact,
-			dutyPositions,
-			extraInformation
-		] = await Promise.all([
+		const [results, capwatchContact, dutyPositions, extraInformation] = await Promise.all([
 			collectResults(
 				findAndBind(memberTable, {
 					CAPID: id
@@ -85,13 +71,10 @@ export default class CAPWATCHMember extends MemberBase
 		const contact = (memberContact as any) as CAPMemberContact;
 
 		capwatchContact.forEach(val => {
-			if ((val.Type as string) !== '' && (val.Type as string !== '--Select Type--')) {
-				contact[
-					val.Type.toUpperCase().replace(
-						/ /g,
-						''
-					) as CAPMemberContactType
-				][val.Priority] = val.Contact;
+			if ((val.Type as string) !== '' && (val.Type as string) !== '--Select Type--') {
+				contact[val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType][
+					val.Priority
+				] = val.Contact;
 			}
 		});
 
@@ -115,9 +98,7 @@ export default class CAPWATCHMember extends MemberBase
 				nameMiddle: results[0].NameMiddle,
 				nameSuffix: results[0].NameSuffix,
 				seniorMember: results[0].Type !== 'CADET',
-				squadron: `${results[0].Region}-${results[0].Wing}-${
-					results[0].Unit
-				}`,
+				squadron: `${results[0].Region}-${results[0].Wing}-${results[0].Unit}`,
 				orgid: results[0].ORGID,
 				usrID: CAPWATCHMember.GetUserID([
 					results[0].NameFirst,
@@ -132,7 +113,8 @@ export default class CAPWATCHMember extends MemberBase
 				absenteeInformation: extraInformation.absentee
 			},
 			schema,
-			account
+			account,
+			extraInformation
 		);
 	}
 
@@ -149,9 +131,7 @@ export default class CAPWATCHMember extends MemberBase
 			),
 			collectResults(
 				schema
-					.getCollection<NHQ.CadetDutyPosition>(
-						'NHQ_CadetDutyPosition'
-					)
+					.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
 					.find('CAPID = :CAPID')
 					.bind('CAPID', capid)
 			)
@@ -199,7 +179,8 @@ export default class CAPWATCHMember extends MemberBase
 	protected constructor(
 		data: CAPMemberObject,
 		schema: Schema,
-		requestingAccount: Account
+		requestingAccount: Account,
+		protected extraInformation: ExtraMemberInformation
 	) {
 		super(data, schema, requestingAccount);
 
@@ -229,20 +210,13 @@ export default class CAPWATCHMember extends MemberBase
 
 	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
 		typeof dutyPosition === 'string'
-			? this.dutyPositions.filter(duty => duty.duty === dutyPosition)
-					.length > 0
-			: dutyPosition
-					.map(this.hasDutyPosition)
-					.reduce((a, b) => a || b, false);
+			? this.dutyPositions.filter(duty => duty.duty === dutyPosition).length > 0
+			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false);
 
 	public async *getAccounts(): AsyncIterableIterator<Account> {
-		const accountsCollection = this.schema.getCollection<AccountObject>(
-			'Accounts'
-		);
+		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');
 
-		const accountFind = accountsCollection
-			.find(':orgIDs in orgIDs')
-			.bind('orgIDs', this.orgid);
+		const accountFind = accountsCollection.find(':orgIDs in orgIDs').bind('orgIDs', this.orgid);
 
 		const generator = generateResults(accountFind);
 
@@ -263,6 +237,25 @@ export default class CAPWATCHMember extends MemberBase
 			type: 'CAPNHQMember',
 			absenteeInformation: this.absenteeInformation
 		};
+	}
+
+	public async saveExtraMemberInformation(schema: Schema) {
+		const extraInfoCollection = schema.getCollection<ExtraMemberInformation>(
+			'ExtraMemberInformation'
+		);
+
+		await extraInfoCollection
+			.modify('id = :id AND type = :type')
+			.bind({
+				id: this.id,
+				type: this.type
+			})
+			.patch(this.extraInformation)
+			.execute();
+	}
+
+	public setAbsenteeInformation(info: AbsenteeInformation) {
+		this.extraInformation.absentee = info;
 	}
 }
 

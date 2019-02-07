@@ -287,9 +287,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 		schema: Schema,
 		sessionID: string,
 		protected homeAccount: Account,
-		protected extraInformation: ExtraMemberInformation
+		extraInformation: ExtraMemberInformation
 	) {
-		super(member, schema, account);
+		super(member, schema, account, extraInformation);
 
 		this.accountID = member.accountID;
 		this.sessionID = sessionID;

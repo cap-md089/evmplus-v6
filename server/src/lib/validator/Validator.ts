@@ -17,9 +17,7 @@ interface ValidatorPass<T> extends ValidatorResult {
 	ret?: T;
 }
 
-export type ValidatorFunction<T> = (
-	obj: unknown
-) => ValidatorFail<T> | ValidatorPass<T>;
+export type ValidatorFunction<T> = (obj: unknown) => ValidatorFail<T> | ValidatorPass<T>;
 
 type RequiredCheckFunction = (value: any, baseObj: any) => boolean;
 
@@ -36,16 +34,15 @@ interface ValidateError<T> {
 	message: string;
 }
 
-export interface BasicValidatedRequest<T> extends AccountRequest {
+export interface BasicValidatedRequest<T, P = any> extends AccountRequest<P> {
 	body: T;
 }
 
-export interface MemberValidatedRequest<T> extends MemberRequest {
+export interface MemberValidatedRequest<T, P = any> extends MemberRequest<P> {
 	body: T;
 }
 
-export interface ConditionalMemberValidatedRequest<T>
-	extends ConditionalMemberRequest {
+export interface ConditionalMemberValidatedRequest<T, P = any> extends ConditionalMemberRequest<P> {
 	body: T;
 }
 
@@ -67,7 +64,7 @@ export default class Validator<T> {
 			} else {
 				res.status(400);
 				res.json(validator.getErrors());
-			} 
+			}
 		} else {
 			const results = validator(req.body);
 
@@ -75,7 +72,7 @@ export default class Validator<T> {
 				next();
 			} else {
 				res.status(400);
-				res.json((results as ValidatorFail<any>).message)
+				res.json((results as ValidatorFail<any>).message);
 			}
 		}
 	};
@@ -99,9 +96,7 @@ export default class Validator<T> {
 		}
 	};
 
-	public static Nothing: ValidatorFunction<undefined | null> = (
-		input: unknown
-	) =>
+	public static Nothing: ValidatorFunction<undefined | null> = (input: unknown) =>
 		input === undefined || input === null
 			? {
 					valid: true
@@ -165,9 +160,7 @@ export default class Validator<T> {
 					message: 'must be an array'
 			  };
 
-	public static Enum = (value: any): ValidatorFunction<typeof value> => (
-		input: unknown
-	) =>
+	public static Enum = (value: any): ValidatorFunction<typeof value> => (input: unknown) =>
 		typeof value[input as any] !== 'string'
 			? {
 					valid: false,
@@ -209,14 +202,11 @@ export default class Validator<T> {
 			  }
 			: {
 					valid: false,
-					message:
-						'elements in the array do not match the required type'
+					message: 'elements in the array do not match the required type'
 			  };
 	};
 
-	public static Or<S1>(
-		validator1: Validator<S1> | ValidatorFunction<S1>
-	): ValidatorFunction<S1>;
+	public static Or<S1>(validator1: Validator<S1> | ValidatorFunction<S1>): ValidatorFunction<S1>;
 	public static Or<S1, S2>(
 		validator1: Validator<S1> | ValidatorFunction<S1>,
 		validator2: Validator<S2> | ValidatorFunction<S2>
@@ -325,9 +315,7 @@ export default class Validator<T> {
 		};
 	}
 
-	public static And<S1>(
-		validator1: Validator<S1> | ValidatorFunction<S1>
-	): ValidatorFunction<S1>;
+	public static And<S1>(validator1: Validator<S1> | ValidatorFunction<S1>): ValidatorFunction<S1>;
 	public static And<S1, S2>(
 		validator1: Validator<S1> | ValidatorFunction<S1>,
 		validator2: Validator<S1> | ValidatorFunction<S2>
@@ -432,9 +420,7 @@ export default class Validator<T> {
 		};
 	}
 
-	public static CheckboxReturn: ValidatorFunction<
-		[boolean[], string]
-	> = input =>
+	public static CheckboxReturn: ValidatorFunction<[boolean[], string]> = input =>
 		Validator.Array(input).valid &&
 		Validator.ArrayOf(Validator.Boolean)((input as any[])[0]).valid &&
 		Validator.String((input as any[])[1]).valid
@@ -470,9 +456,7 @@ export default class Validator<T> {
 					message: 'not a valid member reference'
 			  };
 
-	public static StrictValue = (
-		value: any
-	): ValidatorFunction<typeof value> => input =>
+	public static StrictValue = (value: any): ValidatorFunction<typeof value> => input =>
 		input === value
 			? {
 					valid: true
@@ -483,10 +467,7 @@ export default class Validator<T> {
 			  };
 
 	public static OneOfStrict<S1>(validator1: S1): ValidatorFunction<S1>;
-	public static OneOfStrict<S1, S2>(
-		validator1: S1,
-		validator2: S2
-	): ValidatorFunction<S1 | S2>;
+	public static OneOfStrict<S1, S2>(validator1: S1, validator2: S2): ValidatorFunction<S1 | S2>;
 	public static OneOfStrict<S1, S2, S3>(
 		validator1: S1,
 		validator2: S2,
@@ -555,17 +536,10 @@ export default class Validator<T> {
 		validator9: S9,
 		validator10: S10
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
-	public static OneOfStrict<T extends any>(
-		...values: T[]
-	): ValidatorFunction<T>;
+	public static OneOfStrict<T extends any>(...values: T[]): ValidatorFunction<T>;
 
-	public static OneOfStrict<T extends any[]>(
-		...values: T
-	): ValidatorFunction<any> {
-		return Validator.Or.apply(
-			{},
-			values.map(value => Validator.StrictValue(value))
-		);
+	public static OneOfStrict<T extends any[]>(...values: T): ValidatorFunction<any> {
+		return Validator.Or.apply({}, values.map(value => Validator.StrictValue(value)));
 	}
 
 	public static Values<T>(
@@ -609,8 +583,7 @@ export default class Validator<T> {
 				  }
 				: {
 						valid: false,
-						message:
-							'values in object do not match the required type'
+						message: 'values in object do not match the required type'
 				  };
 		};
 	}
@@ -669,8 +642,7 @@ export default class Validator<T> {
 
 					if (!validateResult.valid) {
 						this.errors.push({
-							message: (validateResult as ValidatorFail<any>)
-								.message,
+							message: (validateResult as ValidatorFail<any>).message,
 							property: key
 						});
 					}
@@ -712,9 +684,7 @@ export default class Validator<T> {
 	}
 
 	public getErrorString(): string {
-		return this.errors
-			.map(err => `${err.property}: (${err.message})`)
-			.join('; ');
+		return this.errors.map(err => `${err.property}: (${err.message})`).join('; ');
 	}
 }
 

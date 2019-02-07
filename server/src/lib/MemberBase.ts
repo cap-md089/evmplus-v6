@@ -440,6 +440,12 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	public teamIDs: number[] = [];
 	/**
+	 * Shows how long the member is absent for
+	 * 
+	 * Should not be used if null or if the time has passed
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
+	/**
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
@@ -489,7 +495,8 @@ export default abstract class MemberBase implements MemberObject {
 			usrID: this.usrID,
 			type: this.type,
 			permissions: this.permissions,
-			teamIDs: this.teamIDs
+			teamIDs: this.teamIDs,
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 

@@ -230,18 +230,15 @@ export default class NHQMember extends CAPWATCHMember
 	 */
 	public cookie: string;
 
-	protected extraInfo: ExtraMemberInformation;
-
 	private constructor(
 		data: NHQMemberObject,
 		schema: Schema,
 		account: Account,
 		extraInfo: ExtraMemberInformation
 	) {
-		super(data, schema, account);
+		super(data, schema, account, extraInfo);
 		this.accessLevel = extraInfo.accessLevel;
 		this.sessionID = data.sessionID;
-		this.extraInfo = extraInfo;
 
 		if (this.isRioux) {
 			this.permissions = getPermissions('Admin');
