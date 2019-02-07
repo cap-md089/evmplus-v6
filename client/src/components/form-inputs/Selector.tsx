@@ -74,6 +74,20 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			});
 		}
 
+		if (this.props.onChangeVisible) {
+			const filterValues = (
+				this.props.filterValues || this.state.filterValues
+			).slice();
+
+			const filteredValues = this.filteredIDValues.filter(val =>
+				(this.props.filters || [])
+					.map(({ check }, j) => check(val, filterValues[j]))
+					.reduce((prev, curr) => prev && curr, true)
+			);
+
+			this.props.onChangeVisible(filteredValues);
+		}
+
 		this.state.filterValues =
 			this.props.filterValues || new Array((props.filters || []).length);
 	}

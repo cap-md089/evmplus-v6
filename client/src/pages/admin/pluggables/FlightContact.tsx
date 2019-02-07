@@ -24,7 +24,7 @@ export const shouldRenderFlightContactWidget = (props: PageProps) => {
 };
 
 interface FlightContactState {
-	members: CAPMemberClasses[] | null;
+	members: MemberReference[] | null;
 }
 
 export class FlightContactWidget extends Page<PageProps, FlightContactState> {
@@ -43,7 +43,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 				'Cadet Deputy Commander'
 			])
 		) {
-			const members = await this.props.member.getFlightMembers();
+			const members = await this.props.member.getFlightMemberReferences();
 
 			this.setState({
 				members
@@ -262,6 +262,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		super(props);
 
 		this.selectText = this.selectText.bind(this);
+		this.selectAllVisible = this.selectAllVisible.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -341,29 +342,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					Select all
 				</Button>
 				&nbsp; &nbsp; &nbsp;
-				<Button
-					onClick={() => {
-						this.setState(prev => {
-							const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(
-								0
-							);
-
-							prev.visibleItems.forEach(item => {
-								if (
-									selectedMembers.filter(i =>
-										i.matchesReference(item.getReference())
-									).length === 0
-								) {
-									selectedMembers.push(item);
-								}
-							});
-
-							return { selectedMembers };
-						});
-					}}
-				>
-					Select all visible
-				</Button>
+				<Button onClick={this.selectAllVisible}>Select all visible</Button>
 				&nbsp; &nbsp; &nbsp;
 				<Button
 					onClick={() => {
@@ -455,6 +434,10 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						}
 					/>
 				</SimpleForm>
+				<div>
+					{this.state.selectedMembers.length} member
+					{this.state.selectedMembers.length === 1 ? '' : 's'} selected
+				</div>
 				<h2>Emails:</h2>
 				{this.state.selectedMembers.map(mem => this.getEmail(mem)).filter(email => !email)
 					.length > 0 ? (
@@ -543,7 +526,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			.map(item => item.element);
 	}
 
-	private renderMember(member: CAPMemberClasses) {
+	private renderMember(member: CAPMemberClasses, index: number) {
 		const phoneCount = [
 			member.contact.CADETPARENTEMAIL.PRIMARY,
 			member.contact.CADETPARENTEMAIL.SECONDARY,
@@ -570,7 +553,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		return {
 			phoneCount,
 			element: (
-				<div className="flightcontactlist-item">
+				<div className="flightcontactlist-item" key={index}>
 					<div className="flightcontactlist-name">
 						{member.getFullName()}
 						<br />
@@ -626,5 +609,21 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				</div>
 			)
 		};
+	}
+
+	private selectAllVisible() {
+		this.setState(prev => {
+			const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(0);
+
+			prev.visibleItems.forEach(item => {
+				if (
+					selectedMembers.filter(i => i.matchesReference(item.getReference())).length < 1
+				) {
+					selectedMembers.push(item);
+				}
+			});
+
+			return { selectedMembers };
+		});
 	}
 }

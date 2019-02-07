@@ -147,6 +147,24 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		return returnValue;
 	}
 
+	public async getFlightMemberReferences(): Promise<MemberReference[]> {
+		if (
+			!this.hasDutyPosition([
+				'Cadet Flight Commander',
+				'Cadet Flight Sergeant',
+				'Cadet Commander',
+				'Cadet Deputy Commander'
+			])
+		) {
+			throw new Error('Invalid permissions');
+		}
+
+		const results = await this.fetch('/api/member/flight/basic', {}, this);
+		const json = (await results.json()) as MemberReference[];
+
+		return json;
+	}
+
 	public async saveAbsenteeInformation(): Promise<void> {
 		const token = await this.getToken(this);
 
