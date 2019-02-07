@@ -3,6 +3,7 @@ import Account from '../../lib/Account';
 import MemberBase from '../../lib/Members';
 import Validator from '../../lib/validator/Validator';
 import AbsenteeValidator from '../../lib/validator/validators/AbsenteeValidator';
+import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
 import flightmembers from './flightmembers';
@@ -19,6 +20,7 @@ router.get('/flight', MemberBase.ExpressMiddleware, flightmembers);
 router.post(
 	'/absent',
 	MemberBase.ExpressMiddleware,
+	tokenMiddleware,
 	Validator.BodyExpressMiddleware(AbsenteeValidator),
 	absent
 );
