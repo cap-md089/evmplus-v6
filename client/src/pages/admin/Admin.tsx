@@ -3,11 +3,13 @@ import { Route, Switch } from 'react-router';
 import MemberBase from 'src/lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
-import './Widget.css';
+import { AbsenteeWidget } from './pluggables/Absentee';
 import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget
 } from './pluggables/FlightContact';
+import './Widget.css';
+import { DriveWidget } from './pluggables/Drive';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -24,10 +26,20 @@ interface LoadedAdminState {
 
 type AdminState = LoadedAdminState | UnloadedAdminState;
 
+const canuse = () => true;
+
 const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
 	{
 		canuse: shouldRenderFlightContactWidget,
 		widget: FlightContactWidget
+	},
+	{
+		canuse,
+		widget: AbsenteeWidget
+	},
+	{
+		canuse,
+		widget: DriveWidget
 	}
 ];
 
@@ -44,6 +56,10 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	public render() {
+		if (!this.props.member) {
+			return <div>Please sign in</div>;
+		}
+
 		return (
 			<Switch>
 				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />

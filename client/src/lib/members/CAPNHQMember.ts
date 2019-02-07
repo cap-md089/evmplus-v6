@@ -1,6 +1,6 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
-import { createCorrectMemberObject, MemberClasses } from '../Members';
+import { createCorrectMemberObject, CAPMemberClasses } from '../Members';
 
 /**
  * A class to represent the members that sign in to CAPNHQ.gov
@@ -119,7 +119,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		return `${this.memberRank} ${super.getFullName()}`;
 	}
 
-	public async getFlightMembers(): Promise<MemberClasses[]> {
+	public async getFlightMembers(): Promise<CAPMemberClasses[]> {
 		if (
 			!this.hasDutyPosition([
 				'Cadet Flight Commander',

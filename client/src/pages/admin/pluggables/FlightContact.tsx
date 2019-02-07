@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Selector, { CheckInput } from 'src/components/form-inputs/Selector';
 import { TextInput } from 'src/components/forms/Form';
 import Loader from 'src/components/Loader';
-import { CAPNHQMember, MemberClasses, CAPProspectiveMember } from 'src/lib/Members';
+import { CAPNHQMember, CAPMemberClasses, CAPProspectiveMember } from 'src/lib/Members';
 import Page, { PageProps } from 'src/pages/Page';
 import Button from 'src/components/Button';
 import SimpleForm, { Label, RadioButton, Checkbox } from 'src/components/forms/SimpleForm';
@@ -23,7 +23,7 @@ export const shouldRenderFlightContactWidget = (props: PageProps) => {
 };
 
 interface FlightContactState {
-	members: MemberClasses[] | null;
+	members: CAPMemberClasses[] | null;
 }
 
 export class FlightContactWidget extends Page<PageProps, FlightContactState> {
@@ -60,7 +60,12 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 					{this.state.members === null ? (
 						<Loader />
 					) : (
-						<div>There are {this.state.members.length} members in your flight</div>
+						<div>
+							There are {this.state.members.length} members in your flight
+							<br />
+							<br />
+							<Link to="/admin/flightcontact">Connect with them</Link>
+						</div>
 					)}
 				</div>
 			</div>
@@ -104,10 +109,10 @@ const normalizeRankInput = (rank: string) =>
 		.replace(' ', '');
 
 interface EmailListState {
-	selectedMembers: MemberClasses[];
-	availableMembers: null | (MemberClasses[]);
+	selectedMembers: CAPMemberClasses[];
+	availableMembers: null | (CAPMemberClasses[]);
 	sortFunction: RadioReturn<SortFunction>;
-	visibleItems: MemberClasses[];
+	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
 		nameInput: string;
@@ -230,7 +235,7 @@ const simpleFilters1 = [nameInput, flightInput];
 const simpleFilters2 = [nameInput];
 
 interface SelectorFormValues {
-	members: MemberClasses[];
+	members: CAPMemberClasses[];
 	sortFunction: RadioReturn<SortFunction>;
 	displayAdvanced: boolean;
 }
@@ -338,7 +343,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				<Button
 					onClick={() => {
 						this.setState(prev => {
-							const selectedMembers: MemberClasses[] = prev.selectedMembers.slice(0);
+							const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(0);
 
 							prev.visibleItems.forEach(item => {
 								if (
@@ -402,7 +407,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					<Label>Show advanced filters</Label>
 					<Checkbox name="displayAdvanced" />
 
-					<Selector<MemberClasses>
+					<Selector<CAPMemberClasses>
 						name="members"
 						values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
 						displayValue={this.displayMemberName}
@@ -491,11 +496,11 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		);
 	}
 
-	private displayMemberName(member: MemberClasses): string {
+	private displayMemberName(member: CAPMemberClasses): string {
 		return member.getFullName();
 	}
 
-	private getEmail(member: MemberClasses): string {
+	private getEmail(member: CAPMemberClasses): string {
 		return member.getBestEmail();
 	}
 
@@ -536,7 +541,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			.map(item => item.element);
 	}
 
-	private renderMember(member: MemberClasses) {
+	private renderMember(member: CAPMemberClasses) {
 		const phoneCount = [
 			member.contact.CADETPARENTEMAIL.PRIMARY,
 			member.contact.CADETPARENTEMAIL.SECONDARY,

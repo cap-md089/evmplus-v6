@@ -2,7 +2,7 @@ import APIInterface from './APIInterface';
 import Event from './Event';
 import FileInterface from './File';
 import MemberBase from './MemberBase';
-import { createCorrectMemberObject, MemberClasses } from './Members';
+import { createCorrectMemberObject, CAPMemberClasses } from './Members';
 import myFetch from './myFetch';
 import Team from './Team';
 import BlogPost from './BlogPost';
@@ -75,7 +75,7 @@ export default class Account extends APIInterface<AccountObject>
 		Object.assign(this, data);
 	}
 
-	public async getMembers(member?: MemberBase | null): Promise<MemberClasses[]> {
+	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
 		const url = this.buildURI('api', 'member');
 
 		const results = await this.fetch(url, {}, member);
@@ -84,7 +84,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		return json
 			.map(v => createCorrectMemberObject(v, this, ''))
-			.filter(v => !!v) as MemberClasses[];
+			.filter(v => !!v) as CAPMemberClasses[];
 	}
 
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {

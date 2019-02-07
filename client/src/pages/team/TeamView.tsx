@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { DialogueButtons } from 'src/components/dialogues/Dialogue';
 import DialogueButton from 'src/components/dialogues/DialogueButton';
 import Loader from 'src/components/Loader';
-import MemberBase, { MemberClasses } from 'src/lib/Members';
+import MemberBase, { CAPMemberClasses } from 'src/lib/Members';
 import Team from 'src/lib/Team';
 import Page, { PageProps } from '../Page';
 
 interface TeamViewState {
-	members: MemberClasses[] | null;
+	members: CAPMemberClasses[] | null;
 	team: Team | null;
 	error: number;
 }

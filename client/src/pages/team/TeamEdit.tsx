@@ -1,13 +1,13 @@
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
 import Team from 'src/lib/Team';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 import Loader from 'src/components/Loader';
 import TeamForm from 'src/components/forms/usable-forms/TeamForm';
 
 interface TeamEditState {
 	team: Team | null;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 }
 
 export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditState> {

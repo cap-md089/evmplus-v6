@@ -3,12 +3,12 @@ import EventForm, { emptyEvent } from 'src/components/forms/usable-forms/EventFo
 import Event from 'src/lib/Event';
 import Page, { PageProps } from '../Page';
 import Team from 'src/lib/Team';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 
 interface AddEventState {
 	event: NewEventObject;
 	createError: null | number;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
 }
 

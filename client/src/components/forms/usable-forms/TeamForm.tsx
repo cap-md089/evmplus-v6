@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 import { TeamPublicity } from '../../../enums';
 import MemberSelector from '../../dialogues/MemberSelector';
 import TeamMemberInput, {
@@ -20,7 +20,7 @@ import SimpleForm, {
 interface TeamFormProps {
 	team: NewTeamObject;
 	isTeamUpdate?: boolean;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 	onTeamChange: (event: NewTeamObject, valid: boolean) => void;
 	onTeamFormSubmit: (event: NewTeamObject, valid: boolean) => void;
 }

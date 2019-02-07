@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Account from 'src/lib/Account';
-import MemberBase, { MemberClasses } from 'src/lib/Members';
+import MemberBase, { CAPMemberClasses } from 'src/lib/Members';
 import Registry from 'src/lib/Registry';
 import Team from 'src/lib/Team';
 import { PointOfContactType } from '../../../../../lib';
@@ -81,7 +81,7 @@ interface EventFormProps {
 	account: Account;
 	member: MemberBase;
 	teamList: Promise<Team[]>;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 	onEventChange: (event: NewEventObject, valid: boolean) => void;
 	onEventFormSubmit: (event: NewEventObject, valid: boolean) => void;
 }

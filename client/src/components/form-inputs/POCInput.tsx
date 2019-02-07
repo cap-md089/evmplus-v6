@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PointOfContactType } from '../../enums';
-import { createCorrectMemberObject, MemberClasses } from '../../lib/Members';
+import { createCorrectMemberObject, CAPMemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
 import { Checkbox, FormBlock, Label, TextInput } from '../forms/Form';
@@ -17,7 +17,7 @@ export interface POCInputProps
 	extends NotOptionalInputProps<
 		DisplayInternalPointOfContact | ExternalPointOfContact
 	> {
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 }
 
 export default class POCInput extends React.Component<
@@ -177,7 +177,7 @@ export default class POCInput extends React.Component<
 		});
 	}
 
-	private displayMemberValue(member: MemberClasses) {
+	private displayMemberValue(member: CAPMemberClasses) {
 		let rank = '';
 
 		if (
@@ -253,7 +253,7 @@ export default class POCInput extends React.Component<
 		const value = this.props.value!;
 
 		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<
-			MemberClasses
+			CAPMemberClasses
 		>;
 
 		return isInternalPOC(value) ? (

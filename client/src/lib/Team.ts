@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 import { TeamPublicity } from '../enums';
 import Account from './Account';
 import APIInterface from './APIInterface';
-import MemberBase, { createCorrectMemberObject, MemberClasses } from './Members';
+import MemberBase, { createCorrectMemberObject, CAPMemberClasses } from './Members';
 
 /**
  * A Team is a collection of people with a team leader, a mentor, and a coach
@@ -221,12 +221,12 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 		);
 	}
 
-	public async getFullMembers(member?: MemberBase | null): Promise<MemberClasses[]> {
+	public async getFullMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
 		const result = await this.fetch(`/api/team/${this.id}/members`, {}, member);
 
 		const json = (await result.json()) as Member[];
 
-		const returnValue: MemberClasses[] = [];
+		const returnValue: CAPMemberClasses[] = [];
 
 		json.forEach(value => {
 			const mem = createCorrectMemberObject(value, this.account, '');

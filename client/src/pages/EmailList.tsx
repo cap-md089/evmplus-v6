@@ -12,7 +12,7 @@ import SimpleForm, {
 	TextInput
 } from '../components/forms/SimpleForm';
 import Page, { PageProps } from './Page';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 
 const memberRanks = [
 	'cab',
@@ -50,10 +50,10 @@ const normalizeRankInput = (rank: string) =>
 		.replace(' ', '');
 
 interface EmailListState {
-	selectedMembers: MemberClasses[];
-	availableMembers: null | (MemberClasses[]);
+	selectedMembers: CAPMemberClasses[];
+	availableMembers: null | (CAPMemberClasses[]);
 	sortFunction: RadioReturn<SortFunction>;
-	visibleItems: MemberClasses[];
+	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
 		flightInput: string;
@@ -257,10 +257,10 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 	}
 
 	public render() {
-		const MemberSelector = (Selector as unknown) as new () => Selector<MemberClasses>;
+		const MemberSelector = (Selector as unknown) as new () => Selector<CAPMemberClasses>;
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
-			members: MemberClasses[];
+			members: CAPMemberClasses[];
 			sortFunction: RadioReturn<SortFunction>;
 			displayAdvanced: boolean;
 		}>;
@@ -289,7 +289,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 					<Button
 						onClick={() => {
 							this.setState(prev => {
-								const selectedMembers: MemberClasses[] = prev.selectedMembers.slice(
+								const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(
 									0
 								);
 
@@ -435,7 +435,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		);
 	}
 
-	private displayMemberName(member: MemberClasses): string {
+	private displayMemberName(member: CAPMemberClasses): string {
 		return member.getFullName();
 	}
 

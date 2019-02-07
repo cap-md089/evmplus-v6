@@ -12,7 +12,7 @@ import Account from './lib/Account';
 import {
 	createCorrectMemberObject,
 	getMember,
-	MemberClasses
+	CAPMemberClasses
 } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
@@ -93,7 +93,7 @@ const RoutingSearchForm = withRouter(
 interface AppState {
 	Registry: Registry | null;
 	member: SigninReturn;
-	fullMember: MemberClasses | null;
+	fullMember: CAPMemberClasses | null;
 	loading: boolean;
 	account: Account | null;
 	sideNavLinks: SideNavigationItem[];

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import EventForm from 'src/components/forms/usable-forms/EventForm';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 import Team from 'src/lib/Team';
 import Loader from '../../components/Loader';
 import Event from '../../lib/Event';
@@ -9,7 +9,7 @@ import Page, { PageProps } from '../Page';
 interface ModifyEventState {
 	event: null | Event;
 	valid: boolean;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
 }
 

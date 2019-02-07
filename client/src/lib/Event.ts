@@ -4,7 +4,7 @@ import MemberBase from './MemberBase';
 import Account from './Account';
 import { PointOfContactType } from '../enums';
 import { EchelonEventNumber } from '../../../lib';
-import { MemberClasses } from './Members';
+import { CAPMemberClasses } from './Members';
 
 /**
  * Represents an event for the squadron calendar
@@ -258,7 +258,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	public async addAttendees(
 		member: MemberBase,
 		records: NewAttendanceRecord[],
-		members: MemberClasses[],
+		members: CAPMemberClasses[],
 		errOnInvalidPermission = false
 	) {
 		if (!this.isPOC(member)) {

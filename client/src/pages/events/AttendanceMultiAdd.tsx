@@ -6,7 +6,7 @@ import { SimpleRadioProps } from 'src/components/form-inputs/SimpleRadioButton';
 import Loader from 'src/components/Loader';
 import SimpleForm from 'src/components/forms/SimpleForm';
 import Event from 'src/lib/Event';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
 import { AttendanceStatus } from '../../enums';
@@ -24,18 +24,18 @@ enum MemberList {
 }
 
 interface SelectorFormValues {
-	members: MemberClasses[];
+	members: CAPMemberClasses[];
 	sortFunction: SortFunction;
 	displayAdvanced: boolean;
 }
 
 interface MultiAddState {
-	members: MemberClasses[] | null;
+	members: CAPMemberClasses[] | null;
 	event: Event | null;
 	error: number;
-	selectedMembers: MemberClasses[];
+	selectedMembers: CAPMemberClasses[];
 	sortFunction: SortFunction;
-	visibleItems: MemberClasses[];
+	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
 		flightInput: string;
@@ -322,7 +322,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			return <Loader />;
 		}
 
-		const MemberSelector = (Selector as unknown) as new () => Selector<MemberClasses>;
+		const MemberSelector = (Selector as unknown) as new () => Selector<CAPMemberClasses>;
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<SelectorFormValues>;
 
@@ -384,7 +384,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		);
 	}
 
-	private renderMember(member: MemberClasses) {
+	private renderMember(member: CAPMemberClasses) {
 		if (!this.state.event) {
 			return <div>{member.getFullName()}</div>;
 		}
@@ -400,7 +400,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		}
 	}
 
-	private filterMembers(members: MemberClasses[]) {
+	private filterMembers(members: CAPMemberClasses[]) {
 		return members.filter(member => !this.state.event!.hasMember(member));
 	}
 
@@ -450,7 +450,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		});
 	}
 
-	private handleDifferentVisibleItems(visibleItems: MemberClasses[]) {
+	private handleDifferentVisibleItems(visibleItems: CAPMemberClasses[]) {
 		this.setState({
 			visibleItems
 		});

@@ -20,14 +20,14 @@ export const createCorrectMemberObject = (
 	mem: Member,
 	acc: Account,
 	sid: string
-): MemberClasses | null =>
+): CAPMemberClasses | null =>
 	mem.type === 'CAPNHQMember'
 		? new CAPNHQMember(mem, acc, sid)
 		: mem.type === 'CAPProspectiveMember'
 			? new CAPProspectiveMember(mem, acc, sid)
 			: null;
 
-export type MemberClasses = CAPNHQMember | CAPProspectiveMember;
+export type CAPMemberClasses = CAPNHQMember | CAPProspectiveMember;
 
 /**
  * Given a session ID, queries the server for the member that the session ID belongs to

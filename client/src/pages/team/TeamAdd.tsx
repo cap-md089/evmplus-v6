@@ -1,13 +1,13 @@
 import * as React from 'react';
 import TeamForm from 'src/components/forms/usable-forms/TeamForm';
-import { MemberClasses } from 'src/lib/Members';
+import { CAPMemberClasses } from 'src/lib/Members';
 import { TeamPublicity } from '../../enums';
 import Page, { PageProps } from '../Page';
 import Team from 'src/lib/Team';
 
 interface TeamAddState {
 	team: NewTeamObject;
-	memberList: Promise<MemberClasses[]>;
+	memberList: Promise<CAPMemberClasses[]>;
 }
 
 export default class TeamAdd extends Page<PageProps, TeamAddState> {
