@@ -1320,6 +1320,12 @@ declare global {
 		 * Used to easily reference teams
 		 */
 		teamIDs: number[];
+		/**
+		 * Shows how long the member is absent for
+		 * 
+		 * Should not be used if null or if the time has passed
+		 */
+		absenteeInformation: AbsenteeInformation | null;
 	}
 
 	/**
@@ -1372,12 +1378,6 @@ declare global {
 		 * The flight of the member
 		 */
 		flight: string | null;
-		/**
-		 * Shows how long the member is absent for
-		 * 
-		 * Should not be used if null or if the time has passed
-		 */
-		absenteeInformation: AbsenteeInformation | null;
 	}
 
 	/**
