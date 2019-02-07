@@ -48,7 +48,14 @@ export {
 };
 
 export interface BasicFormProps<T> extends FormProps<T> {
+	/**
+	 * Class names for each row
+	 */
 	rowClassName?: string;
+	/**
+	 * Class for the form
+	 */
+	className?: string;
 }
 
 /**
@@ -60,10 +67,7 @@ export interface BasicFormProps<T> extends FormProps<T> {
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
  * // <SampleForm /> now works as Form<{x: string}>
  */
-class Form<
-	C = {},
-	P extends BasicFormProps<C> = BasicFormProps<C>
-> extends SimpleForm<C, P> {
+class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends SimpleForm<C, P> {
 	/**
 	 * Render function for a React Component
 	 *
@@ -87,40 +91,33 @@ class Form<
 				  );
 
 		return (
-			<form onSubmit={this.submit} className="asyncForm">
-				{React.Children.map(
-					this.props.children,
-					(child: React.ReactChild, i) => {
-						if (isInput(child)) {
-							const value =
-								typeof this.props.values !== 'undefined'
-									? typeof this.props.values[
-											child.props.name
-									  ] === 'undefined'
-										? ''
-										: this.props.values[child.props.name]
-									: typeof child.props.value === 'undefined'
+			<form
+				onSubmit={this.submit}
+				className={`${this.props.className ? `${this.props.className} ` : ''}`}
+			>
+				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+					if (isInput(child)) {
+						const value =
+							typeof this.props.values !== 'undefined'
+								? typeof this.props.values[child.props.name] === 'undefined'
 									? ''
-									: child.props.value;
-							return (
-								<div
-									className={
-										this.props.rowClassName ||
-										'basic-form-bar'
-									}
-								>
-									{React.cloneElement(child, {
-										onUpdate: this.onChange,
-										onInitialize: this.onInitialize,
-										value,
-										key: i
-									})}
-								</div>
-							);
-						}
-						return child;
+									: this.props.values[child.props.name]
+								: typeof child.props.value === 'undefined'
+								? ''
+								: child.props.value;
+						return (
+							<div className={this.props.rowClassName || 'basic-form-bar'}>
+								{React.cloneElement(child, {
+									onUpdate: this.onChange,
+									onInitialize: this.onInitialize,
+									value,
+									key: i
+								})}
+							</div>
+						);
 					}
-				)}
+					return child;
+				})}
 				<div className={this.props.rowClassName || 'basic-form-bar'}>
 					<input
 						type="submit"
