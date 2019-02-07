@@ -4,6 +4,10 @@
 	border-top: 1px solid black;
 }
 
+.flightcontactlist-phones p {
+	margin-top: -10px !important;
+}
+
 .flightcontactlist-item:nth-of-type(1) {
 	border-top-width: 0;
 }
@@ -15,4 +19,9 @@
 
 .flightcontactlist-phones {
 	float: left;
+}
+
+.flightcontactlist-item .absent {
+	font-style: italic;
+	color: red;
 }

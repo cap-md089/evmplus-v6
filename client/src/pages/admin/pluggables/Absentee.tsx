@@ -38,6 +38,9 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 				}
 			};
 		}
+		
+		this.onFormChange = this.onFormChange.bind(this);
+		this.onSubmit = this.onSubmit.bind(this);
 	}
 
 	public render() {
@@ -51,6 +54,9 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 							text: 'Submit',
 							className: 'primaryButton submit'
 						}}
+						values={this.state.absentee}
+						onChange={this.onFormChange}
+						onSubmit={this.onSubmit}
 					>
 						<Label>When will you be absent until?</Label>
 						<DateTimeInput
@@ -66,5 +72,16 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 				</div>
 			</div>
 		);
+	}
+
+	public onFormChange(absentee: AbsenteeInformation) {
+		this.setState({
+			absentee
+		});
+	}
+
+	public async onSubmit() {
+		this.props.member.absenteeInformation = this.state.absentee;
+		await this.props.member.saveAbsenteeInformation();
 	}
 }

@@ -146,4 +146,20 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 
 		return returnValue;
 	}
+
+	public async saveAbsenteeInformation(): Promise<void> {
+		const token = await this.getToken(this);
+
+		await this.fetch(
+			`/api/member/absent`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token,
+					...this.absenteeInformation
+				})
+			},
+			this
+		);
+	}
 }

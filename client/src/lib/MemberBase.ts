@@ -85,6 +85,12 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public permissions: MemberPermissions;
 	/**
+	 * Shows how long the member is absent for
+	 * 
+	 * Should not be used if null or if the time has passed
+	 */
+	public absenteeInformation: AbsenteeInformation | null;
+	/**
 	 * Cheap way to produce references
 	 */
 	public abstract getReference: () => MemberReference;

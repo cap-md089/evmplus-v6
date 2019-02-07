@@ -108,4 +108,20 @@ export default class CAPProspectiveMember extends MemberBase
 				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b))
 		);
 	}
+
+	public async saveAbsenteeInformation(): Promise<void> {
+		const token = await this.getToken(this);
+
+		await this.fetch(
+			`/api/member/absent`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token,
+					...this.absenteeInformation
+				})
+			},
+			this
+		);
+	}
 }

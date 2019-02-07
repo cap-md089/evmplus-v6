@@ -9,6 +9,7 @@ import Button from 'src/components/Button';
 import SimpleForm, { Label, RadioButton, Checkbox } from 'src/components/forms/SimpleForm';
 
 import './FlightContact.css';
+import { DateTime } from 'luxon';
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
@@ -343,7 +344,9 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				<Button
 					onClick={() => {
 						this.setState(prev => {
-							const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(0);
+							const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(
+								0
+							);
 
 							prev.visibleItems.forEach(item => {
 								if (
@@ -486,8 +489,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						overflow: 'auto',
 						border: '1px solid black',
 						boxSizing: 'border-box',
-						margin: 0,
-						fontStyle: 'italic'
+						margin: 0
 					}}
 				>
 					{this.getPhoneNumbers()}
@@ -557,11 +559,23 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			member.contact.WORKPHONE.EMERGENCY
 		].filter(item => item !== '').length;
 
+		const absent =
+			member.absenteeInformation && member.absenteeInformation.absentUntil > Date.now() ? (
+				<span className="flightcontactlist-absent">
+					Absent until{' '}
+					{DateTime.fromMillis(member.absenteeInformation.absentUntil).toLocaleString()}
+				</span>
+			) : null;
+
 		return {
 			phoneCount,
 			element: (
 				<div className="flightcontactlist-item">
-					<div className="flightcontactlist-name">{member.getFullName()}</div>
+					<div className="flightcontactlist-name">
+						{member.getFullName()}
+						<br />
+						{absent}
+					</div>
 					<div className="flightcontactlist-phones">
 						{member.contact.CADETPARENTPHONE.PRIMARY !== '' ? (
 							<p>
