@@ -21,7 +21,9 @@
 	float: left;
 }
 
-.flightcontactlist-item .absent {
+.flightcontactlist-item .flightcontactlist-absent {
+	display: inline-block;
+	padding-top: 10px;
 	font-style: italic;
 	color: red;
 }
