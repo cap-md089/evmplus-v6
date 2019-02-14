@@ -14,6 +14,8 @@ export default asyncErrorHandler(
 
 		registry.set(req.body);
 
+		await registry.save();
+
 		res.status(204);
 		res.end();
 	}
