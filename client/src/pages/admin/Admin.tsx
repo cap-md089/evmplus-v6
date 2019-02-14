@@ -4,12 +4,14 @@ import MemberBase from 'src/lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
+import { canUseCreate, CreateWidget } from './pluggables/Create';
+import { DriveWidget } from './pluggables/Drive';
 import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget
 } from './pluggables/FlightContact';
+import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
-import { DriveWidget } from './pluggables/Drive';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -40,6 +42,14 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 	{
 		canuse: canUseAbsentee,
 		widget: AbsenteeWidget
+	},
+	{
+		canuse: canUseCreate,
+		widget: CreateWidget
+	},
+	{
+		canuse: shouldRenderSiteAdmin,
+		widget: SiteAdminWidget
 	}
 ];
 
@@ -62,7 +72,17 @@ export default class Admin extends Page<PageProps, AdminState> {
 
 		return (
 			<Switch>
+				{/* <Route path="/regedit" render={this.pageRenderer()} />*/}
+				{/* <Route path="/admin/regedit" render={this.pageRenderer()} /> */}
+
+				{/* <Route path="/flightassign" render={this.pageRenderer()} />*/}
+				{/* <Route path="/admin/flightassign" render={this.pageRenderer()} /> */}
+
+				{/* <Route path="/permmgmt" render={this.pageRenderer()} />*/}
+				{/* <Route path="/admin/permissions" render={this.pageRenderer()} /> */}
+
 				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />
+
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>
 		);
