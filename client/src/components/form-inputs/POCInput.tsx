@@ -3,20 +3,16 @@ import { PointOfContactType } from '../../enums';
 import { createCorrectMemberObject, CAPMemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import { Checkbox, FormBlock, Label, TextInput } from '../forms/Form';
+import { Checkbox, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
 
-const isInternalPOC = (
-	poc: PointOfContact
-): poc is DisplayInternalPointOfContact =>
+const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;
 
 export interface POCInputProps
-	extends NotOptionalInputProps<
-		DisplayInternalPointOfContact | ExternalPointOfContact
-	> {
+	extends NotOptionalInputProps<DisplayInternalPointOfContact | ExternalPointOfContact> {
 	memberList: Promise<CAPMemberClasses[]>;
 }
 
@@ -34,9 +30,7 @@ export default class POCInput extends React.Component<
 		selectedValue: null
 	};
 
-	public constructor(
-		props: POCInputProps
-	) {
+	public constructor(props: POCInputProps) {
 		super(props);
 
 		if (this.props.onInitialize) {
@@ -78,9 +72,7 @@ export default class POCInput extends React.Component<
 			throw new Error('Account required');
 		}
 
-		const POCType = SimpleRadioButton as new () => SimpleRadioButton<
-			PointOfContactType
-		>;
+		const POCType = SimpleRadioButton as new () => SimpleRadioButton<PointOfContactType>;
 
 		const value = this.props.value;
 
@@ -122,25 +114,16 @@ export default class POCInput extends React.Component<
 				<TextInput name="phone" value={value.phone} />
 
 				<Label>Receive event updates</Label>
-				<Checkbox
-					name="receiveEventUpdates"
-					value={!!value.receiveEventUpdates}
-				/>
+				<Checkbox name="receiveEventUpdates" value={!!value.receiveEventUpdates} />
 
 				<Label>Receive roster</Label>
 				<Checkbox name="receiveRoster" value={!!value.receiveRoster} />
 
 				<Label>Receive signup updates</Label>
-				<Checkbox
-					name="receiveSignUpUpdates"
-					value={!!value.receiveSignUpUpdates}
-				/>
+				<Checkbox name="receiveSignUpUpdates" value={!!value.receiveSignUpUpdates} />
 
 				<Label>Receive updates</Label>
-				<Checkbox
-					name="receiveUpdates"
-					value={!!value.receiveUpdates}
-				/>
+				<Checkbox name="receiveUpdates" value={!!value.receiveUpdates} />
 			</FormBlock>
 		);
 	}
@@ -164,9 +147,12 @@ export default class POCInput extends React.Component<
 				e.value.type === PointOfContactType.EXTERNAL &&
 				this.props.value!.type === PointOfContactType.INTERNAL
 			) {
-				(e.value.name = ''), (e.value.email = '');
-				e.value.phone = '';
+				// @ts-ignore
+				delete e.value.memberReference
 			}
+
+			// @ts-ignore
+			delete e.value.undefined;
 			this.props.onUpdate(e);
 		}
 	}
@@ -180,10 +166,7 @@ export default class POCInput extends React.Component<
 	private displayMemberValue(member: CAPMemberClasses) {
 		let rank = '';
 
-		if (
-			member.type === 'CAPNHQMember' ||
-			member.type === 'CAPProspectiveMember'
-		) {
+		if (member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') {
 			rank = (member as CAPMemberObject).memberRank + ' ';
 		}
 
@@ -196,11 +179,7 @@ export default class POCInput extends React.Component<
 
 	private selectMember(member: Member | null) {
 		if (member !== null) {
-			const mem = createCorrectMemberObject(
-				member,
-				this.props.account!,
-				''
-			);
+			const mem = createCorrectMemberObject(member, this.props.account!, '');
 
 			if (mem === null) {
 				throw new Error('Invalid member object');
@@ -252,15 +231,11 @@ export default class POCInput extends React.Component<
 	private getMemberSelector() {
 		const value = this.props.value!;
 
-		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<
-			CAPMemberClasses
-		>;
+		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<CAPMemberClasses>;
 
 		return isInternalPOC(value) ? (
 			<TextBox>
-				<Button onClick={this.onMemberSelectClick}>
-					Select a member
-				</Button>
+				<Button onClick={this.onMemberSelectClick}>Select a member</Button>
 				<MemberDialogue
 					open={this.state.memberSelectOpen}
 					multiple={false}

@@ -3,9 +3,26 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
 import SigninLink from '../components/SigninLink';
-import Form, { Checkbox, DateTimeInput, FileInput, FormBlock, Label, LoadingTextArea, MultCheckbox, MultiRange, NumberInput, RadioButton, Selector, TextInput, Title } from '../components/forms/SimpleForm';
+import Form, {
+	Checkbox,
+	DateTimeInput,
+	FileInput,
+	FormBlock,
+	Label,
+	LoadingTextArea,
+	MultCheckbox,
+	MultiRange,
+	NumberInput,
+	RadioButton,
+	Selector,
+	TextInput,
+	Title
+} from '../components/forms/SimpleForm';
 import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
+import { PointOfContactType } from '../enums';
+import POCInput from 'src/components/form-inputs/POCInput';
+import { CAPMemberClasses } from 'src/lib/Members';
 
 enum Test1 {
 	Opt1,
@@ -36,13 +53,11 @@ interface Props {
 		'test15-2': string;
 	};
 	test16: Complex[];
+	test17: DisplayInternalPointOfContact | ExternalPointOfContact;
 }
 
-export default class Test extends Page<
-	PageProps<{}>,
-	{ open: boolean } & Props
-> {
-	public state: Props & { open: boolean } = {
+export default class Test extends Page<PageProps<{}>, { open: boolean } & Props> {
+	public state: Props & { open: boolean; memberList: Promise<CAPMemberClasses[]> } = {
 		open: true,
 		test1: '',
 		test2: '',
@@ -61,7 +76,21 @@ export default class Test extends Page<
 			'test15-1': '',
 			'test15-2': ''
 		},
-		test16: []
+		test16: [],
+		test17: {
+			type: PointOfContactType.INTERNAL,
+			email: '',
+			memberReference: {
+				type: 'Null'
+			},
+			name: '',
+			phone: '',
+			receiveEventUpdates: false,
+			receiveRoster: false,
+			receiveSignUpUpdates: false,
+			receiveUpdates: false
+		},
+		memberList: this.props.account.getMembers(this.props.member)
 	};
 
 	public componentDidMount() {
@@ -73,15 +102,13 @@ export default class Test extends Page<
 	public render() {
 		const TestForm = Form as new () => Form<Props>;
 
-		const TestButton = Button as new () => Button<
-			{
-				hi: boolean;
-			}
-		>;
+		const TestButton = Button as new () => Button<{
+			hi: boolean;
+		}>;
 
-		const TestSelector = Selector as unknown as new () => Selector<Complex>;
+		const TestSelector = (Selector as unknown) as new () => Selector<Complex>;
 
-		return this.state.test14 !== null ? (
+		return this.state.test14 !== null && this.props.member !== null ? (
 			<div>
 				<SigninLink
 					authorizeUser={this.props.authorizeUser}
@@ -144,9 +171,7 @@ export default class Test extends Page<
 					<Label>Input label</Label>
 					<TextInput
 						value={this.state.test1}
-						onChange={text =>
-							text.startsWith('a') || text.length === 0
-						}
+						onChange={text => text.startsWith('a') || text.length === 0}
 						name="test1"
 					/>
 					<Title>A title</Title>
@@ -209,14 +234,8 @@ export default class Test extends Page<
 					<Label>Single checkbox</Label>
 					<Checkbox name="test13" value={this.state.test13} />
 					<FormBlock name="test15">
-						<TextInput
-							name="test15-1"
-							value={this.state.test15['test15-1']}
-						/>
-						<TextInput
-							name="test15-2"
-							value={this.state.test15['test15-2']}
-						/>
+						<TextInput name="test15-1" value={this.state.test15['test15-1']} />
+						<TextInput name="test15-2" value={this.state.test15['test15-2']} />
 					</FormBlock>
 					<Label>Selector</Label>
 					<TestSelector
@@ -248,9 +267,7 @@ export default class Test extends Page<
 									}
 
 									try {
-										return !!val.value.match(
-											new RegExp(input, 'i')
-										);
+										return !!val.value.match(new RegExp(input, 'i'));
 									} catch (e) {
 										return true;
 									}
@@ -270,6 +287,14 @@ export default class Test extends Page<
 						]}
 						multiple={true}
 						showIDField={false}
+					/>
+					<POCInput
+						member={this.props.member}
+						index={0}
+						memberList={this.state.memberList}
+						account={this.props.account}
+						name="pocInput-0"
+						value={this.state.test17}
 					/>
 				</TestForm>
 				<TestButton

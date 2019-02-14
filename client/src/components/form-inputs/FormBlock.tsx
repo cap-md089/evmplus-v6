@@ -88,6 +88,10 @@ export default class FormBlock<T extends object> extends React.Component<
 						if (typeof fullWidth === 'undefined') {
 							fullWidth = false;
 						}
+						if (child.type === FormBlock) {
+							fullWidth = true;
+						}
+
 						ret = [
 							React.cloneElement(child, {
 								key: i,

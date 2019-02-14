@@ -1,4 +1,5 @@
 import * as React from 'react';
+import MemberSelector from '../dialogues/MemberSelector';
 // Form inputs
 import BigTextBox from '../form-inputs/BigTextBox';
 import Checkbox from '../form-inputs/Checkbox';
@@ -10,10 +11,10 @@ import FormBlock from '../form-inputs/FormBlock';
 import { InputProps } from '../form-inputs/Input';
 import ListEditor from '../form-inputs/ListEditor';
 import LoadingTextArea from '../form-inputs/LoadingTextArea';
-import MemberSelector from '../dialogues/MemberSelector';
 import MultCheckbox from '../form-inputs/MultCheckbox';
 import MultiRange from '../form-inputs/MultiRange';
 import NumberInput from '../form-inputs/NumberInput';
+import POCInput from '../form-inputs/POCInput';
 import RadioButton from '../form-inputs/RadioButton';
 import Selector from '../form-inputs/Selector';
 import SimpleRadioButton from '../form-inputs/SimpleRadioButton';
@@ -38,11 +39,7 @@ class Label extends React.Component<{
 }> {
 	public readonly IsLabel = true;
 
-	constructor(props: {
-		fullWidth: boolean;
-		style?: React.CSSProperties;
-		id: string;
-	}) {
+	constructor(props: { fullWidth: boolean; style?: React.CSSProperties; id: string }) {
 		super(props);
 
 		this.IsLabel = true;
@@ -50,11 +47,7 @@ class Label extends React.Component<{
 
 	public render() {
 		return (
-			<div
-				className="formbox"
-				style={this.props.style}
-				id={this.props.id}
-			>
+			<div className="formbox" style={this.props.style} id={this.props.id}>
 				{this.props.children}
 			</div>
 		);
@@ -134,7 +127,8 @@ export function isInput(
 		el.type === DisabledText ||
 		el.type === TeamSelector ||
 		el.type === MemberSelector ||
-		el.type === TeamMemberInput
+		el.type === TeamMemberInput ||
+		el.type === POCInput
 	);
 }
 
@@ -161,9 +155,7 @@ export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
  */
 export type BooleanFields<T> = { [K in keyof T]: boolean };
 
-export type FormValidator<T> = {
-	[K in keyof T]?: (value: T[K], allValues: T) => boolean
-};
+export type FormValidator<T> = { [K in keyof T]?: (value: T[K], allValues: T) => boolean };
 
 /**
  * The properties a form itself requires
@@ -258,10 +250,7 @@ export interface FormProps<F extends {}> {
  * <Form<{x: string}> />
  * // With TypeScript 2.8 Generics work with React components
  */
-class SimpleForm<
-	C extends {} = {},
-	P extends FormProps<C> = FormProps<C>
-> extends React.Component<
+class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> extends React.Component<
 	P,
 	{
 		disabled: boolean;
@@ -313,144 +302,116 @@ class SimpleForm<
 
 		return (
 			<form onSubmit={this.submit} className="asyncForm">
-				{React.Children.map(
-					this.props.children,
-					(child: React.ReactChild, i) => {
-						if (
-							typeof this.props.children === 'undefined' ||
-							this.props.children === null
-						) {
-							throw new TypeError('Some error occurred');
-						}
-						let ret;
-						let fullWidth = false;
-						if (!isInput(child)) {
-							// This algorithm handles labels for inputs by handling inputs
-							// Puts out titles on their own line
-							// Disregards spare labels and such
-							if (
-								isLabel(child) &&
-								(child.type === Title || child.type === Divider)
-							) {
-								return child;
-							}
-							return;
-						} else {
-							const value =
-								typeof child.props.value !== 'undefined'
-									? child.props.value
-									: typeof this.props.values === 'undefined'
-									? ''
-									: typeof this.props.values[
-											child.props.name
-									  ] === 'undefined'
-									? ''
-									: this.props.values[child.props.name];
-
-							// typeof this.props.values !== 'undefined'
-							// 	? typeof this.props.values[
-							// 			child.props.name
-							// 	  ] === 'undefined'
-							// 		? typeof child.props.value ===
-							// 		  'undefined'
-							// 			? ''
-							// 			: child.props.value
-							// 		: this.props.values[child.props.name]
-							// 	: typeof child.props.value === 'undefined'
-							// 	? ''
-							// 	: child.props.value;
-							if (!this.fields[child.props.name]) {
-								this.fields[child.props.name] = value;
-							}
-							if (isFullWidthableElement(child)) {
-								fullWidth = child.props.fullWidth;
-							}
-							if (typeof fullWidth === 'undefined') {
-								fullWidth = false;
-							}
-							ret = [
-								React.cloneElement(child, {
-									onUpdate: this.onChange,
-									onInitialize: this.onInitialize,
-									key: i + 1,
-									value,
-									hasError: this.fieldsError[child.props.name]
-								})
-							];
-						}
-						if (!fullWidth) {
-							if (
-								i > 0 &&
-								typeof (this.props
-									.children as React.ReactChild[])[i - 1] !==
-									'undefined' &&
-								(this.props.children as React.ReactChild[])[
-									i - 1
-								] !== null &&
-								!isInput(
-									(this.props.children as React.ReactChild[])[
-										i - 1
-									]
-								)
-							) {
-								if (
-									typeof this.props.children[i - 1] ===
-										'string' ||
-									typeof this.props.children[i - 1] ===
-										'number'
-								) {
-									ret.unshift(
-										<Label
-											key={i - 1}
-											fullWidth={fullWidth}
-										>
-											{this.props.children[i - 1]}
-										</Label>
-									);
-								} else {
-									if (
-										this.props.children[i - 1].type !==
-										Title
-									) {
-										ret.unshift(
-											// @ts-ignore
-											React.cloneElement(
-												this.props.children[i - 1],
-												{
-													onUpdate: this.onChange,
-													onInitialize: this
-														.onInitialize,
-													key: i
-												}
-											)
-										);
-									}
-								}
-							} else {
-								ret.unshift(
-									<div
-										className="formbox"
-										style={{
-											height: 2
-										}}
-										key={i - 1}
-									/>
-								);
-							}
-						}
-
-						return (
-							<div
-								key={i}
-								className={`formbar${
-									fullWidth ? ' fullwidth' : ''
-								}`}
-							>
-								{ret}
-							</div>
-						);
+				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+					if (
+						typeof this.props.children === 'undefined' ||
+						this.props.children === null
+					) {
+						throw new TypeError('Some error occurred');
 					}
-				)}
+					let ret;
+					let fullWidth = false;
+					if (!isInput(child)) {
+						// This algorithm handles labels for inputs by handling inputs
+						// Puts out titles on their own line
+						// Disregards spare labels and such
+						if (isLabel(child) && (child.type === Title || child.type === Divider)) {
+							return child;
+						}
+						return;
+					} else {
+						const value =
+							typeof child.props.value !== 'undefined'
+								? child.props.value
+								: typeof this.props.values === 'undefined'
+								? ''
+								: typeof this.props.values[child.props.name] === 'undefined'
+								? ''
+								: this.props.values[child.props.name];
+
+						// typeof this.props.values !== 'undefined'
+						// 	? typeof this.props.values[
+						// 			child.props.name
+						// 	  ] === 'undefined'
+						// 		? typeof child.props.value ===
+						// 		  'undefined'
+						// 			? ''
+						// 			: child.props.value
+						// 		: this.props.values[child.props.name]
+						// 	: typeof child.props.value === 'undefined'
+						// 	? ''
+						// 	: child.props.value;
+						if (!this.fields[child.props.name]) {
+							this.fields[child.props.name] = value;
+						}
+						if (isFullWidthableElement(child)) {
+							fullWidth = child.props.fullWidth;
+						}
+						if (typeof fullWidth === 'undefined') {
+							fullWidth = false;
+						}
+						if (child.type === FormBlock) {
+							fullWidth = true;
+						}
+
+						ret = [
+							React.cloneElement(child, {
+								onUpdate: this.onChange,
+								onInitialize: this.onInitialize,
+								key: i + 1,
+								value,
+								hasError: this.fieldsError[child.props.name]
+							})
+						];
+					}
+					if (!fullWidth) {
+						if (
+							i > 0 &&
+							typeof (this.props.children as React.ReactChild[])[i - 1] !==
+								'undefined' &&
+							(this.props.children as React.ReactChild[])[i - 1] !== null &&
+							!isInput((this.props.children as React.ReactChild[])[i - 1])
+						) {
+							if (
+								typeof this.props.children[i - 1] === 'string' ||
+								typeof this.props.children[i - 1] === 'number'
+							) {
+								ret.unshift(
+									<Label key={i - 1} fullWidth={fullWidth}>
+										{this.props.children[i - 1]}
+									</Label>
+								);
+							} else {
+								if (this.props.children[i - 1].type !== Title) {
+									ret.unshift(
+										// @ts-ignore
+										React.cloneElement(this.props.children[i - 1], {
+											onUpdate: this.onChange,
+											onInitialize: this.onInitialize,
+											key: i
+										})
+									);
+								}
+							}
+						} else {
+							ret.unshift(
+								<div
+									className="formbox"
+									style={{
+										height: 2
+									}}
+									key={i - 1}
+								/>
+							);
+						}
+					}
+
+					return (
+						<div key={i} className={`formbar${fullWidth ? ' fullwidth' : ''}`}>
+							{ret}
+						</div>
+					);
+				})}
 				{(typeof this.props.showSubmitButton === 'undefined' ? (
 					true
 				) : (
@@ -468,9 +429,7 @@ class SimpleForm<
 								type="submit"
 								value={submitInfo.text}
 								className={submitInfo.className}
-								disabled={
-									this.state.disabled || submitInfo.disabled
-								}
+								disabled={this.state.disabled || submitInfo.disabled}
 							/>
 						</div>
 					</div>
@@ -514,12 +473,7 @@ class SimpleForm<
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(
-				this.fields,
-				this.fieldsError,
-				this.fieldsChanged,
-				hasError
-			);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
 		}
 	}
 
@@ -548,12 +502,7 @@ class SimpleForm<
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(
-				this.fields,
-				this.fieldsError,
-				this.fieldsChanged,
-				hasError
-			);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
 		}
 	}
 
@@ -575,12 +524,7 @@ class SimpleForm<
 				}
 			}
 
-			this.props.onSubmit(
-				this.fields,
-				this.fieldsError,
-				this.fieldsChanged,
-				hasError
-			);
+			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, hasError);
 		}
 	}
 }
