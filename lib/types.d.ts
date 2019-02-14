@@ -1894,6 +1894,16 @@ declare global {
 	}
 
 	/**
+	 * Used to configure the different flights
+	 */
+	export interface RankAndFileInformation {
+		/**
+		 * Describes the flights that an account may field, e.g. Alpha Bravo Charlie Delta
+		 */
+		Flights: string[];
+	}
+
+	/**
 	 * Each account has a registry, stores configuration
 	 */
 	export interface RegistryValues extends NoSQLDocument, AccountIdentifiable {
@@ -1909,6 +1919,10 @@ declare global {
 		 * Controls blog presentation, which includes the photo library
 		 */
 		Blog: BlogInformation;
+		/**
+		 * Contains information about the different flights
+		 */
+		RankAndFile: RankAndFileInformation;
 	}
 
 	/**
