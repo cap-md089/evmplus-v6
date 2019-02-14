@@ -54,6 +54,9 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			Blog: {
 				BlogPostsPerPage: 15
 			},
+			RankAndFile: {
+				Flights: ['Alpha', 'Bravo', 'Charlie']
+			},
 			accountID: account.id,
 			id: account.id
 		};

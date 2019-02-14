@@ -88,6 +88,12 @@ class BlogValidator extends Validator<BlogInformation> {
 	}
 }
 
+const RankAndFileValidator = new Validator<RankAndFileInformation>({
+	Flights: {
+		validator: Validator.ArrayOf(Validator.String)
+	}
+});
+
 export default class RegistryValueValidator extends Validator<RegistryValues> {
 	constructor() {
 		super({
@@ -99,6 +105,9 @@ export default class RegistryValueValidator extends Validator<RegistryValues> {
 			},
 			Website: {
 				validator: new WebsiteValidator()
+			},
+			RankAndFile: {
+				validator: RankAndFileValidator
 			},
 			_id: {
 				validator: Validator.String
