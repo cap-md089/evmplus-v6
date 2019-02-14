@@ -28,10 +28,14 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 				</div>
 				<div className="widget-body">
 					<Link to="/admin/flightassign">Assign flight members</Link>
-					<br />
-					<Link to="/admin/regedit">Site configuration</Link>
-					<br />
-					<Link to="/admin/permissions">Permission management</Link>
+					{this.props.member.hasPermission('RegistryEdit') ? (
+						<>
+							<br />
+							<Link to="/admin/regedit">Site configuration</Link>
+							<br />
+							<Link to="/admin/permissions">Permission management</Link>
+						</>
+					) : null}
 				</div>
 			</div>
 		);
