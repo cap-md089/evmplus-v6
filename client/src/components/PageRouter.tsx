@@ -171,13 +171,13 @@ const pages: Array<{
 		exact: false
 	},
 	{
-		url: '/page/:id',
-		component: PageView,
+		url: '/page/list',
+		component: PageList,
 		exact: false
 	},
 	{
-		url: '/page/list',
-		component: PageList,
+		url: '/page/:id',
+		component: PageView,
 		exact: false
 	},
 	{
