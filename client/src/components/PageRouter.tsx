@@ -236,8 +236,6 @@ const pages: Array<{
 		exact: false
 	},
 
-
-
 	// THIS GOES LAST
 	// Otherwise, have fun debugging why you get a 404 for every page
 	{
@@ -255,10 +253,12 @@ const composeElement = (
 	updateBreadcrumbs: (links: BreadCrumb[]) => void,
 	registry: Registry,
 	member: MemberBase | null,
-	fullMemberDetails: SigninReturn
+	fullMemberDetails: SigninReturn,
+	updateApp: () => void
 ) => (props: RouteComponentProps<any>) => {
 	return (
 		<PageDisplayer
+			updateApp={updateApp}
 			El={El}
 			account={account}
 			authorizeUser={authorizeUser}
@@ -282,6 +282,7 @@ interface PageDisplayerProps {
 	member: MemberBase | null;
 	fullMemberDetails: SigninReturn;
 	routeProps: RouteComponentProps<any>;
+	updateApp: () => void;
 }
 
 class PageDisplayer extends React.Component<PageDisplayerProps> {
@@ -299,16 +300,14 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 
 		const urlChanged =
 			nextProps.routeProps.location.pathname !== this.okURL &&
-			nextProps.routeProps.location.pathname !==
-				this.props.routeProps.location.pathname;
+			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
 
 		const shouldUpdate =
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
 			urlChanged ||
-			nextProps.routeProps.location.hash !==
-				this.props.routeProps.location.hash;
+			nextProps.routeProps.location.hash !== this.props.routeProps.location.hash;
 
 		return shouldUpdate;
 	}
@@ -317,11 +316,9 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 		// tslint:disable-next-line:no-console
 		console.log('Rendering component');
 		return (
-			<ErrorHandler
-				member={this.props.member}
-				account={this.props.account}
-			>
+			<ErrorHandler member={this.props.member} account={this.props.account}>
 				<this.props.El
+					updateApp={this.props.updateApp}
 					fullMemberDetails={this.props.fullMemberDetails}
 					routeProps={this.props.routeProps}
 					account={this.props.account}
@@ -350,6 +347,7 @@ interface PageRouterProps extends RouteComponentProps<any> {
 	authorizeUser: (arg: SigninReturn) => void;
 	registry: Registry;
 	fullMemberDetails: SigninReturn;
+	updateApp: () => void;
 }
 
 interface PageRouterState {
@@ -377,10 +375,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		}
 	}
 
-	public shouldComponentUpdate(
-		nextProps: PageRouterProps,
-		nextState: PageRouterState
-	) {
+	public shouldComponentUpdate(nextProps: PageRouterProps, nextState: PageRouterState) {
 		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
 		const currentSID = this.props.member ? this.props.member.sessionID : '';
 
@@ -473,7 +468,8 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 									this.props.updateBreadCrumbs,
 									this.props.registry,
 									this.props.member,
-									this.props.fullMemberDetails
+									this.props.fullMemberDetails,
+									this.props.updateApp
 								)}
 							/>
 						);

@@ -3,17 +3,11 @@ import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import Loader from './components/Loader';
 import PageRouter from './components/PageRouter';
-import SideNavigation, {
-	SideNavigationItem
-} from './components/SideNavigation';
+import SideNavigation, { SideNavigationItem } from './components/SideNavigation';
 import { MemberCreateError } from './enums';
 import jQuery, { bestfit } from './jquery.textfit';
 import Account from './lib/Account';
-import {
-	createCorrectMemberObject,
-	getMember,
-	CAPMemberClasses
-} from './lib/Members';
+import { createCorrectMemberObject, getMember, CAPMemberClasses } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
 import Subscribe from './lib/subscribe';
@@ -144,6 +138,7 @@ export default class App extends React.Component<
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
 		this.onStorageChange = this.onStorageChange.bind(this);
+		this.update = this.update.bind(this);
 	}
 
 	public async componentDidMount(): Promise<void> {
@@ -162,10 +157,7 @@ export default class App extends React.Component<
 
 		window.addEventListener('storage', this.onStorageChange);
 
-		const [account, member] = await Promise.all([
-			Account.Get(),
-			getMember(sessionID || '')
-		]);
+		const [account, member] = await Promise.all([Account.Get(), getMember(sessionID || '')]);
 
 		if (!member.valid) {
 			localStorage.removeItem('sessionID');
@@ -174,11 +166,7 @@ export default class App extends React.Component<
 		const fullMember =
 			member.member === null
 				? null
-				: createCorrectMemberObject(
-						member.member,
-						account,
-						member.sessionID
-				  );
+				: createCorrectMemberObject(member.member, account, member.sessionID);
 
 		const registry = await Registry.Get(account);
 
@@ -188,7 +176,7 @@ export default class App extends React.Component<
 				account,
 				member,
 				loading: false,
-				fullMember 
+				fullMember
 			},
 			() => {
 				bestfit(jQuery(this.titleElement));
@@ -245,9 +233,7 @@ export default class App extends React.Component<
 										}
 									}}
 								>
-									{this.state.Registry
-										? this.state.Registry.Website.Name
-										: ''}
+									{this.state.Registry ? this.state.Registry.Website.Name : ''}
 								</div>
 								<div className="servings">
 									<span className="servingsTitle">
@@ -259,35 +245,22 @@ export default class App extends React.Component<
 								<nav id="mainNavigation">
 									<ul>
 										<li>
-											<NavLink
-												to="/"
-												exact={true}
-												activeClassName="selected"
-											>
+											<NavLink to="/" exact={true} activeClassName="selected">
 												Home
 											</NavLink>
 										</li>
 										<li>
-											<NavLink
-												to="/news"
-												activeClassName="selected"
-											>
+											<NavLink to="/news" activeClassName="selected">
 												News
 											</NavLink>
 										</li>
 										<li>
-											<NavLink
-												to="/calendar"
-												activeClassName="selected"
-											>
+											<NavLink to="/calendar" activeClassName="selected">
 												Calendar
 											</NavLink>
 										</li>
 										<li>
-											<NavLink
-												to="/photolibrary"
-												activeClassName="selected"
-											>
+											<NavLink to="/photolibrary" activeClassName="selected">
 												Photo Library
 											</NavLink>
 										</li>
@@ -308,34 +281,19 @@ export default class App extends React.Component<
 									<div id="body">
 										<div id="content">
 											<div id="fb-root" />
-											<BreadCrumbs
-												links={this.state.breadCrumbs}
-											/>
+											<BreadCrumbs links={this.state.breadCrumbs} />
 											{this.state.loading ? (
 												<Loader />
 											) : (
 												<PageRouter
-													updateSideNav={
-														this.updateSideNav
-													}
-													updateBreadCrumbs={
-														this.updateBreadCrumbs
-													}
-													member={
-														this.state.fullMember
-													}
-													fullMemberDetails={
-														this.state.member
-													}
-													account={
-														this.state.account!
-													}
-													authorizeUser={
-														this.authorizeUser
-													}
-													registry={
-														this.state.Registry!
-													}
+													updateApp={this.update}
+													updateSideNav={this.updateSideNav}
+													updateBreadCrumbs={this.updateBreadCrumbs}
+													member={this.state.fullMember}
+													fullMemberDetails={this.state.member}
+													account={this.state.account!}
+													authorizeUser={this.authorizeUser}
+													registry={this.state.Registry!}
 													key="pagerouter"
 												/>
 											)}
@@ -343,9 +301,7 @@ export default class App extends React.Component<
 										<SideNavigation
 											links={this.state.sideNavLinks}
 											member={this.state.fullMember}
-											fullMemberDetails={
-												this.state.member
-											}
+											fullMemberDetails={this.state.member}
 											authorizeUser={this.authorizeUser}
 										/>
 									</div>
@@ -358,82 +314,65 @@ export default class App extends React.Component<
 					<div id="footer">
 						<div className="page">
 							<div className={count + 'Box'}>
-								<div className="footerBoxTitle">
-									Connect With Us
-								</div>
+								<div className="footerBoxTitle">Connect With Us</div>
 								<p>
 									{this.state.Registry
 										? [
-												this.state.Registry.Contact
-													.FaceBook ? (
+												this.state.Registry.Contact.FaceBook ? (
 													<a
 														href={
 															'https://www.facebook.com/' +
-															this.state.Registry
-																.Contact
-																.FaceBook
+															this.state.Registry.Contact.FaceBook
 														}
 														target="_blank"
 														className="socialMedia fb"
 													/>
 												) : null,
-												this.state.Registry.Contact
-													.Twitter ? (
+												this.state.Registry.Contact.Twitter ? (
 													<a
 														href={
 															'https://www.twitter.com/' +
-															this.state.Registry
-																.Contact.Twitter
+															this.state.Registry.Contact.Twitter
 														}
 														target="_blank"
 														className="socialMedia twitter"
 													/>
 												) : null,
-												this.state.Registry.Contact
-													.YouTube ? (
+												this.state.Registry.Contact.YouTube ? (
 													<a
 														href={
 															'https://www.youtube.com/channel/' +
-															this.state.Registry
-																.Contact.YouTube
+															this.state.Registry.Contact.YouTube
 														}
 														target="_blank"
 														className="socialMedia youtube"
 													/>
 												) : null,
-												this.state.Registry.Contact
-													.LinkedIn ? (
+												this.state.Registry.Contact.LinkedIn ? (
 													<a
 														href={
 															'https://in.linkedin.com/in/' +
-															this.state.Registry
-																.Contact
-																.LinkedIn
+															this.state.Registry.Contact.LinkedIn
 														}
 														target="_blank"
 														className="socialMedia linkedin"
 													/>
 												) : null,
-												this.state.Registry.Contact
-													.Instagram ? (
+												this.state.Registry.Contact.Instagram ? (
 													<a
 														href={
 															'https://www.instagram.com/' +
-															this.state.Registry
-																.Contact
-																.Instagram
+															this.state.Registry.Contact.Instagram
 														}
 														target="_blank"
 														className="socialMedia instagram"
 													/>
 												) : null,
-												this.state.Registry.Contact
-													.Flickr ? (
+												this.state.Registry.Contact.Flickr ? (
 													<a
 														href={
 															'https://www.flickr.com/photos/' +
-															this.state.Registry
-																.Contact.Flickr
+															this.state.Registry.Contact.Flickr
 														}
 														target="_blank"
 														className="socialMedia flickr"
@@ -443,33 +382,21 @@ export default class App extends React.Component<
 										: null}
 								</p>
 							</div>
-							{this.state.Registry &&
-							this.state.Registry.Contact.MeetingAddress ? (
+							{this.state.Registry && this.state.Registry.Contact.MeetingAddress ? (
 								<div className={count + 'Box'}>
-									<div className="footerBoxTitle">
-										Meeting Address
-									</div>
+									<div className="footerBoxTitle">Meeting Address</div>
 									<p>
-										{`${
-											this.state.Registry.Contact
-												.MeetingAddress.Name
-										}<br />
+										{`${this.state.Registry.Contact.MeetingAddress.Name}<br />
 											${this.state.Registry.Contact.MeetingAddress.FirstLine}<br />
 											${this.state.Registry.Contact.MeetingAddress.SecondLine}`}
 									</p>
 								</div>
 							) : null}
-							{this.state.Registry &&
-							this.state.Registry.Contact.MailingAddress ? (
+							{this.state.Registry && this.state.Registry.Contact.MailingAddress ? (
 								<div className={count + 'Box'}>
-									<div className="footerBoxTitle">
-										Mailing Address
-									</div>
+									<div className="footerBoxTitle">Mailing Address</div>
 									<p>
-										{`${
-											this.state.Registry.Contact
-												.MailingAddress.Name
-										}<br />
+										{`${this.state.Registry.Contact.MailingAddress.Name}<br />
 											${this.state.Registry.Contact.MailingAddress.FirstLine}<br />
 											${this.state.Registry.Contact.MailingAddress.SecondLine}`}
 									</p>
@@ -485,18 +412,12 @@ export default class App extends React.Component<
 									}}
 								>
 									<li>
-										<a
-											target="_blank"
-											href="https://www.capnhq.gov/"
-										>
+										<a target="_blank" href="https://www.capnhq.gov/">
 											eServices
 										</a>
 									</li>
 									<li>
-										<a
-											target="_blank"
-											href="http://www.cap.news/"
-										>
+										<a target="_blank" href="http://www.cap.news/">
 											Latest CAP News
 										</a>
 									</li>
@@ -523,17 +444,11 @@ export default class App extends React.Component<
 										fontSize: '12px'
 									}}
 								>
-									<a
-										target="_blank"
-										href="http://www.capmembers.com/"
-									>
+									<a target="_blank" href="http://www.capmembers.com/">
 										CAP Members.com
 									</a>{' '}
 									{' | '}
-									<a
-										target="_blank"
-										href="http://www.cap.news/"
-									>
+									<a target="_blank" href="http://www.cap.news/">
 										CAP News
 									</a>{' '}
 									{' | '}
@@ -625,5 +540,9 @@ export default class App extends React.Component<
 				}
 			});
 		}
+	}
+
+	private update() {
+		this.forceUpdate();
 	}
 }

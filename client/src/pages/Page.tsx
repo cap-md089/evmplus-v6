@@ -18,6 +18,7 @@ export interface PageProps<R = {}> {
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
+	updateApp: () => void;
 
 	/**
 	 * IGNORE, DO NOT USE

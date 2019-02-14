@@ -1,5 +1,6 @@
 import APIInterface from './APIInterface';
 import Account from './Account';
+import MemberBase from './Members';
 
 /**
  * A class to use to make changes to and read information from the database/server
@@ -41,11 +42,18 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 	 */
 	public Blog: BlogInformation;
 
+
+	/**
+	 * Contains information such as the flights in the account
+	 */
+	public RankAndFile: RankAndFileInformation;
+
 	public constructor(values: RegistryValues, account: Account) {
 		super(account.id);
 
 		this.Blog = values.Blog;
 		this.Contact = values.Contact;
+		this.RankAndFile = values.RankAndFile;
 		this.Website = values.Website;
 	}
 
@@ -59,7 +67,31 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			Contact: this.Contact,
 			id: this.id,
 			Website: this.Website,
-			Blog: this.Blog
+			Blog: this.Blog,
+			RankAndFile: this.RankAndFile
 		}
+	}
+
+	public async save(member: MemberBase) {
+		if (!member.hasPermission('RegistryEdit')) {
+			throw new Error(`Member doesn't have permission to update registry`);
+		}
+
+		const token = await this.getToken(member);
+
+		await this.fetch(
+			'/api/registry',
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token,
+					Contact: this.Contact,
+					Website: this.Website,
+					Blog: this.Blog,
+					RankAndFile: this.RankAndFile
+				})
+			},
+			member
+		);
 	}
 }
