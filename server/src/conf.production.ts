@@ -2,7 +2,8 @@ import { join } from 'path';
 import conf from './conf';
 
 const confproduction: typeof conf = {
-	testing: true,
+	production: true,
+	testing: false,
 	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
 		connection: {

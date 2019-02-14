@@ -26,7 +26,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	});
 	app.disable('x-powered-by');
 
-	app.use('/api/v1', router);
+	app.use('/api/v4', router);
 	app.use('/api', router);
 
 	app.get('/images/banner', (req, res) => {
@@ -55,7 +55,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 		res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
 	});
 
-	if (!conf.testing) {
+	if (conf.production) {
 		// tslint:disable-next-line:no-console
 		console.log('Server set up');
 	}
@@ -73,7 +73,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 		const addr = server.address();
 		const bind =
 			typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-		if (!conf.testing) {
+		if (conf.production) {
 			console.log(`Bound on ${bind}`);
 		}
 	}

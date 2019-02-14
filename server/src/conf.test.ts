@@ -2,6 +2,7 @@ import { join } from 'path';
 import conf from './conf';
 
 const conftest: typeof conf = {
+	production: false,
 	testing: true,
 	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
