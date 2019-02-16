@@ -98,6 +98,10 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 			return <div>Please sign in</div>;
 		}
 
+		if (!this.props.member.hasPermission('RegistryEdit')) {
+			return <div>You do not have permission to do that</div>
+		}
+
 		return (
 			<SimpleForm
 				onChange={this.onFormChange}
