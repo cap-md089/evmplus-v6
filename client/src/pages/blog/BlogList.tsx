@@ -63,10 +63,10 @@ export class BlogList extends Page<BlogListProps, BlogListState1 | BlogListState
 				}
 			]);
 			this.updateTitle('News', 'Page ' + page);
-			const pageURL = `/news/page/${page}`;
-			if (this.props.routeProps.location.pathname !== pageURL) {
-				this.props.routeProps.history.replace(pageURL);
-			}
+			// const pageURL = `/news/page/${page}`;
+			// if (this.props.routeProps.location.pathname !== pageURL) {
+			// 	this.props.routeProps.history.replace(pageURL);
+			// }
 			this.setState({
 				page: parseInt(page.toString(), 10)
 			});
@@ -187,10 +187,10 @@ export class BlogList extends Page<BlogListProps, BlogListState1 | BlogListState
 				text: 'Page ' + page
 			}
 		]);
-		const pageURL = `/news/page/${page}`;
-		if (this.props.routeProps.location.pathname !== pageURL) {
-			this.props.routeProps.history.replace(pageURL);
-		}
+		// const pageURL = `/news/page/${page}`;
+		// if (this.props.routeProps.location.pathname !== pageURL) {
+		// 	this.props.routeProps.history.replace(pageURL);
+		// }
 		this.setState({
 			page
 		});
