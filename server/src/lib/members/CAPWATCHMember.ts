@@ -257,6 +257,10 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	public setAbsenteeInformation(info: AbsenteeInformation) {
 		this.extraInformation.absentee = info;
 	}
+
+	public setFlight(flight: string) {
+		this.extraInformation.flight = flight;
+	}
 }
 
 import Account from '../Account';
