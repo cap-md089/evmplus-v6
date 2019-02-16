@@ -34,6 +34,7 @@ import TeamEdit from 'src/pages/team/TeamEdit';
 import NotFound from 'src/pages/NotFound';
 import PhotoLibrary from 'src/pages/PhotoLibrary';
 import Admin from 'src/pages/admin/Admin';
+import RegEdit from 'src/pages/admin/pages/RegEdit';
 
 const pages: Array<{
 	url: string;
@@ -51,14 +52,14 @@ const pages: Array<{
 		exact: false
 	},
 	{
-		url: '/blog',
-		component: BlogList,
-		exact: true
-	},
-	{
 		url: '/blog/page/:id',
 		component: BlogList,
 		exact: false
+	},
+	{
+		url: '/blog',
+		component: BlogList,
+		exact: true
 	},
 	{
 		url: '/blog/view/:id',
@@ -76,14 +77,14 @@ const pages: Array<{
 		exact: false
 	},
 	{
-		url: '/news',
-		component: BlogList,
-		exact: true
-	},
-	{
 		url: '/news/page/:id',
 		component: BlogList,
 		exact: false
+	},
+	{
+		url: '/news',
+		component: BlogList,
+		exact: true
 	},
 	{
 		url: '/news/view/:id',
@@ -233,6 +234,11 @@ const pages: Array<{
 	{
 		url: '/admin',
 		component: Admin,
+		exact: false
+	},
+	{
+		url: '/regedit',
+		component: RegEdit,
 		exact: false
 	},
 
