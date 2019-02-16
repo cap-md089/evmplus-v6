@@ -71,6 +71,11 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 				return (
 					<div className="pagination-controls">
 						<span
+							onMouseDown={this.controlClick(1)}
+						>
+							&lt;
+						</span>
+						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
 						>
@@ -82,12 +87,22 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							2
 						</span>
+						<span
+							onMouseDown={this.controlClick(2)}
+						>
+							&gt;
+						</span>
 					</div>
 				);
 
 			case 3:
 				return (
 					<div className="pagination-controls">
+						<span
+							onMouseDown={this.controlClick(Math.max(1, page - 1))}
+						>
+							&lt;
+						</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -106,12 +121,22 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							3
 						</span>
+						<span
+							onMouseDown={this.controlClick(Math.min(3, page + 1))}
+						>
+							&gt;
+						</span>
 					</div>
 				);
 
 			case 4:
 				return (
 					<div className="pagination-controls">
+						<span
+							onMouseDown={this.controlClick(Math.max(1, page - 1))}
+						>
+							&lt;
+						</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -136,12 +161,22 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							4
 						</span>
+						<span
+							onMouseDown={this.controlClick(Math.min(4, page + 1))}
+						>
+							&gt;
+						</span>
 					</div>
 				);
 
 			case 5:
 				return (
 					<div className="pagination-controls">
+						<span
+							onMouseDown={this.controlClick(Math.max(1, page - 1))}
+						>
+							&lt;
+						</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -172,12 +207,22 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							5
 						</span>
+						<span
+							onMouseDown={this.controlClick(Math.min(5, page + 1))}
+						>
+							&gt;
+						</span>
 					</div>
 				);
 
 			default:
 				return (
 					<div className="pagination-controls">
+						<span
+							onMouseDown={this.controlClick(Math.max(1, page - 1))}
+						>
+							&lt;
+						</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -209,6 +254,11 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 							onMouseDown={this.controlClick(pageCount)}
 						>
 							{pageCount}
+						</span>
+						<span
+							onMouseDown={this.controlClick(pageCount)}
+						>
+							&gt; &gt;
 						</span>
 					</div>
 				);
