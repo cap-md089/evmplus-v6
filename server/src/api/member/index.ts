@@ -1,10 +1,10 @@
 import * as express from 'express';
-import FlightAssignBulkValidator from 'src/lib/validator/validators/FlightAssignBulkValidator';
-import FlightAssignValidator from 'src/lib/validator/validators/FlightAssignValidator';
 import Account from '../../lib/Account';
 import MemberBase from '../../lib/Members';
 import Validator from '../../lib/validator/Validator';
 import AbsenteeValidator from '../../lib/validator/validators/AbsenteeValidator';
+import FlightAssignBulkValidator from '../../lib/validator/validators/FlightAssignBulkValidator';
+import FlightAssignValidator from '../../lib/validator/validators/FlightAssignValidator';
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
