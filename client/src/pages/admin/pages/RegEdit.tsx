@@ -53,6 +53,46 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		this.onFormSubmit = this.onFormSubmit.bind(this);
 	}
 
+	public componentDidMount() {
+		this.props.updateSideNav([
+			{
+				target: 'blog',
+				text: 'Blog',
+				type: 'Reference'
+			},
+			{
+				target: 'contact',
+				text: 'Contact',
+				type: 'Reference'
+			},
+			{
+				target: 'rank-&-file',
+				text: 'Rank & File',
+				type: 'Reference'
+			},
+			{
+				target: 'website',
+				text: 'Website',
+				type: 'Reference'
+			}
+		]);
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/admin',
+				text: 'Administration'
+			},
+			{
+				target: '/admin/regedit',
+				text: 'Site configuration'
+			}
+		]);
+		this.updateTitle('Site configuration');
+	}
+
 	public render() {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;

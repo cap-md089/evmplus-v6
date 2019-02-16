@@ -66,6 +66,28 @@ export default class Admin extends Page<PageProps, AdminState> {
 		this.defaultPage = this.defaultPage.bind(this);
 	}
 
+	public componentDidMount() {
+		if (!(
+			document.location.pathname === '/admin/regedit' ||
+			document.location.pathname === '/admin/flightcontact' ||
+			document.location.pathname === '/admin/flightassign' ||
+			document.location.pathname === '/admin/permissions'
+		)) {
+			this.props.updateSideNav([]);
+			this.props.updateBreadCrumbs([
+				{
+					target: '/',
+					text: 'Home'
+				},
+				{
+					target: '/admin',
+					text: 'Administration'
+				}
+			]);
+			this.updateTitle('Administration');
+		}
+	}
+
 	public render() {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
@@ -73,7 +95,6 @@ export default class Admin extends Page<PageProps, AdminState> {
 
 		return (
 			<Switch>
-				<Route path="/regedit" render={this.pageRenderer(RegEdit)} />
 				<Route path="/admin/regedit" render={this.pageRenderer(RegEdit)} />
 
 				{/* <Route path="/flightassign" render={this.pageRenderer()} />*/}
