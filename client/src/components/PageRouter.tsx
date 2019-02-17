@@ -35,6 +35,7 @@ import NotFound from 'src/pages/NotFound';
 import PhotoLibrary from 'src/pages/PhotoLibrary';
 import Admin from 'src/pages/admin/Admin';
 import RegEdit from 'src/pages/admin/pages/RegEdit';
+import FlightAssign from 'src/pages/admin/pages/FlightAssign';
 
 const pages: Array<{
 	url: string;
@@ -239,6 +240,11 @@ const pages: Array<{
 	{
 		url: '/regedit',
 		component: RegEdit,
+		exact: false
+	},
+	{
+		url: '/flightassign',
+		component: FlightAssign,
 		exact: false
 	},
 

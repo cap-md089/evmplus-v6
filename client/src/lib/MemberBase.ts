@@ -216,4 +216,24 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	public getFullName() {
 		return this.getName();
 	}
+
+	public async updateFlights(flights: Array<{member: MemberReference, newFlight: string | null}>) {
+		if (!this.hasPermission('FlightAssign')) {
+			throw new Error('Invalid permissions');
+		}
+
+		const token = await this.getToken(this);
+
+		await this.fetch(
+			'/api/member/flight/bulk',
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token,
+					members: flights
+				})
+			},
+			this
+		);
+	}
 }

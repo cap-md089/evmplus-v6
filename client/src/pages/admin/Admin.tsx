@@ -13,6 +13,7 @@ import FlightContact, {
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
 import RegEdit from './pages/RegEdit';
+import FlightAssign from './pages/FlightAssign';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -97,8 +98,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 			<Switch>
 				<Route path="/admin/regedit" render={this.pageRenderer(RegEdit)} />
 
-				{/* <Route path="/flightassign" render={this.pageRenderer()} />*/}
-				{/* <Route path="/admin/flightassign" render={this.pageRenderer()} /> */}
+				<Route path="/admin/flightassign" render={this.pageRenderer(FlightAssign)} />
 
 				{/* <Route path="/permmgmt" render={this.pageRenderer()} />*/}
 				{/* <Route path="/admin/permissions" render={this.pageRenderer()} /> */}

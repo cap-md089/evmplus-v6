@@ -1,6 +1,13 @@
 import * as React from 'react';
 import Page, { PageProps } from 'src/pages/Page';
-import SimpleForm, { Title, Label, NumberInput, FormBlock, TextInput, ListEditor } from 'src/components/forms/SimpleForm';
+import SimpleForm, {
+	Title,
+	Label,
+	NumberInput,
+	FormBlock,
+	TextInput,
+	ListEditor
+} from 'src/components/forms/SimpleForm';
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 
@@ -99,7 +106,7 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		}
 
 		if (!this.props.member.hasPermission('RegistryEdit')) {
-			return <div>You do not have permission to do that</div>
+			return <div>You do not have permission to do that</div>;
 		}
 
 		return (
@@ -156,7 +163,7 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 
 						<Label>The second line for the mailing address</Label>
 						<TextInput name="SecondLine" />
-					</FormBlock> 
+					</FormBlock>
 				</FormBlock>
 
 				<Title>Rank &amp; File</Title>
@@ -195,6 +202,22 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 	}
 
 	private async onFormSubmit(values: RegEditValues) {
+		if (
+			values.Contact.MailingAddress &&
+			values.Contact.MailingAddress.FirstLine === '' &&
+			values.Contact.MailingAddress.SecondLine === '' &&
+			values.Contact.MailingAddress.Name === ''
+		) {
+			values.Contact.MailingAddress = null;
+		}
+		if (
+			values.Contact.MeetingAddress &&
+			values.Contact.MeetingAddress.FirstLine === '' &&
+			values.Contact.MeetingAddress.SecondLine === '' &&
+			values.Contact.MeetingAddress.Name === ''
+		) {
+			values.Contact.MeetingAddress = null;
+		}
 		this.props.registry.Blog = values.Blog;
 		this.props.registry.Contact = values.Contact;
 		this.props.registry.RankAndFile = values.RankAndFile;
