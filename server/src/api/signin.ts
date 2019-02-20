@@ -48,7 +48,8 @@ export default asyncErrorHandler(async (
 			error: MemberCreateError.NONE,
 			member: member.toRaw(),
 			sessionID: member.sessionID,
-			valid: true
+			valid: true,
+			notificationCount: await member.getNotificationCount()
 		});
 	} catch (errors) {
 		if (!errors.message.match(/^(\d)*$/)) {
@@ -58,7 +59,8 @@ export default asyncErrorHandler(async (
 				error: MemberCreateError.UNKOWN_SERVER_ERROR,
 				member: null,
 				sessionID: '',
-				valid: false
+				valid: false,
+				notificationCount: 0
 			});
 		} else {
 			res.status(400);
@@ -66,7 +68,8 @@ export default asyncErrorHandler(async (
 				error: parseInt(errors.message, 10),
 				member: null,
 				sessionID: '',
-				valid: false
+				valid: false,
+				notificationCount: 0
 			});
 		}
 	}

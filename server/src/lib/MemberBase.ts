@@ -571,6 +571,10 @@ export default abstract class MemberBase implements MemberObject {
 	public isPOCOf(event: Event) {
 		return event.isPOC(this);
 	}
+
+	public async getNotificationCount() {
+		return 0;
+	}
 }
 
 import CAPWATCHMember from './members/CAPWATCHMember';
