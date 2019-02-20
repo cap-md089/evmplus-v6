@@ -1,8 +1,5 @@
-import {
-	EchelonEventNumber,
-	EventStatus,
-	PointOfContactType
-} from '../../../enums';
+import { ExternalPointOfContact, InternalPointOfContact, NewEventObject } from 'common-lib';
+import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
 import Validator from '../Validator';
 
 class ParticipationFeeValidator extends Validator<{
@@ -169,10 +166,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 			},
 			pointsOfContact: {
 				validator: Validator.ArrayOf(
-					Validator.Or(
-						new InternalPOCValidator(),
-						new ExternalPOCValidator()
-					)
+					Validator.Or(new InternalPOCValidator(), new ExternalPOCValidator())
 				)
 			},
 			publishToWingCalendar: {

@@ -68,7 +68,7 @@
     "ts-jest": "^21.2.4",
     "tslint": "5.9.1",
     "tslint-config-prettier": "1.13.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.3.3"
   },
   "jest": {
     "globals": {

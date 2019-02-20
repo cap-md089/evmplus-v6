@@ -1,7 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import { join } from 'path';
 import conftest from '../../../conf.test';
-import { CAPWATCHImportErrors } from '../../../enums';
+import { CAPWATCHImportErrors } from 'common-lib/index';
 import Account from '../../../lib/Account';
 import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
 import MemberBase, { CAPWATCHMember } from '../../../lib/Members';

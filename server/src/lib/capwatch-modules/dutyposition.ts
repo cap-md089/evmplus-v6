@@ -1,24 +1,16 @@
+import { NHQ } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 import { convertNHQDate } from '../MySQLUtil';
 
-const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (
-	fileData,
-	schema,
-	orgid
-) => {
-	if (
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].Duty === 'undefined'
-	) {
+const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (fileData, schema, orgid) => {
+	if (typeof fileData[0].CAPID === 'undefined' || typeof fileData[0].Duty === 'undefined') {
 		return CAPWATCHError.BADDATA;
 	}
 
 	let values;
 
 	try {
-		const dutyPositionCollection = schema.getCollection<NHQ.DutyPosition>(
-			'NHQ_DutyPosition'
-		);
+		const dutyPositionCollection = schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition');
 
 		try {
 			await dutyPositionCollection

@@ -1,4 +1,5 @@
-import { TeamPublicity } from '../../../enums';
+import { NewTeamObject } from 'common-lib';
+import { TeamPublicity } from 'common-lib/index';
 import Validator from '../Validator';
 import NewTeamMemberValidator from './NewTeamMember';
 

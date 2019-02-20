@@ -2,7 +2,7 @@ import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
-import { FileUserAccessControlPermissions } from '../../../enums';
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { validRawToken } from '../../formtoken'

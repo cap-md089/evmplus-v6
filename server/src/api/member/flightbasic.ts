@@ -1,3 +1,4 @@
+import { MemberReference } from 'common-lib';
 import { CAPWATCHMember, MemberRequest } from '../../lib/Members';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../lib/Util';
 

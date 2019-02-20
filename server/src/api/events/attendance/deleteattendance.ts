@@ -1,3 +1,4 @@
+import { AttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
@@ -15,10 +16,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		return;
 	}
 
-	if (
-		MemberBase.isReference(req.body) &&
-		req.member.isPOCOf(event)
-	) {
+	if (MemberBase.isReference(req.body) && req.member.isPOCOf(event)) {
 		member = await MemberBase.ResolveReference(req.body, req.account, req.mysqlx, true);
 	} else {
 		member = req.member;

@@ -40,8 +40,5 @@
 		"es2015.promise",
 		"es5",
 		"esnext.asynciterable"
-	],
-	"files": [
-		"../lib/types.d.ts"
 	]
 }

@@ -4,6 +4,7 @@ import * as express from 'express';
 import { join } from 'path';
 import conf, { Configuration } from '../conf';
 import Account from './Account';
+import { RawAccountObject, HTTPError } from 'common-lib';
 
 export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
 	if (typeof obj2 !== typeof obj1) {

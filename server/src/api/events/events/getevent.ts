@@ -1,3 +1,4 @@
+import { EventObject } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';

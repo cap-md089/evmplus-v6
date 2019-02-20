@@ -1,3 +1,4 @@
+import { DebriefItem } from 'common-lib';
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';

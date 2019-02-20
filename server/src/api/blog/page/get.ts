@@ -1,3 +1,4 @@
+import { FullBlogPageObject } from 'common-lib';
 import { Response } from 'express';
 import { AccountRequest } from '../../../lib/Account';
 import BlogPage from '../../../lib/BlogPage';
@@ -15,4 +16,4 @@ export default asyncErrorHandler(async (req: AccountRequest, res: Response) => {
 	}
 
 	json<FullBlogPageObject>(res, page.toFullRaw());
-})
+});

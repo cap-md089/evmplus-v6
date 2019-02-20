@@ -2,7 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import { exec } from 'child_process';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
-import { CAPWATCHImportErrors } from '../enums';
+import { CAPWATCHImportErrors } from 'common-lib/index';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';

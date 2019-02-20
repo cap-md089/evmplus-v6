@@ -1,3 +1,4 @@
+import { AbsenteeInformation } from 'common-lib';
 import { asyncErrorHandler } from '../../lib/Util';
 import { MemberValidatedRequest } from '../../lib/validator/Validator';
 

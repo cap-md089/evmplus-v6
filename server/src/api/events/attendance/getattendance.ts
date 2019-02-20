@@ -1,7 +1,8 @@
-import { Response } from "express";
-import Event from "../../../lib/Event";
-import { MemberRequest } from "../../../lib/MemberBase";
-import { asyncErrorHandler, json } from "../../../lib/Util";
+import { AttendanceRecord } from 'common-lib';
+import { Response } from 'express';
+import Event from '../../../lib/Event';
+import { MemberRequest } from '../../../lib/MemberBase';
+import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	let event: Event;
@@ -15,4 +16,4 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	}
 
 	json<AttendanceRecord[]>(res, event.attendance);
-})
+});

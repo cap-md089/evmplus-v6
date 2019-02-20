@@ -1,3 +1,5 @@
+import { MemberPermissions, MemberAccessLevel } from "common-lib";
+
 export const Member: MemberPermissions = {
 	AddEvent: 0,
 	AdministerPT: 0,

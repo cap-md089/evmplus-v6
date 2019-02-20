@@ -1,3 +1,4 @@
+import { NewTeamMember } from 'common-lib';
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Team from '../../../lib/Team';

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Team from '../../lib/Team';
 import { asyncErrorHandler } from '../../lib/Util';
+import { RawTeamObject } from 'common-lib';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<Partial<RawTeamObject>>, res: Response) => {

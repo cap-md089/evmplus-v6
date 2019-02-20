@@ -1,13 +1,11 @@
+import { NewEventObject } from 'common-lib';
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
 import { asyncErrorHandler, getTargetMonth, getTargetYear } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (
-		req: MemberValidatedRequest<Partial<NewEventObject>>,
-		res: Response
-	) => {
+	async (req: MemberValidatedRequest<Partial<NewEventObject>>, res: Response) => {
 		const eventCount1 = await req.account.getEventCountForMonth(
 			getTargetMonth(req.body.pickupDateTime),
 			getTargetYear(req.body.pickupDateTime)

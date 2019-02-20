@@ -1,7 +1,8 @@
+import { HTTPRequestMethod, ServerErrorObject } from 'common-lib';
 import { parse } from 'error-stack-parser';
-import { NextFunction, Response } from "express";
-import MemberBase, { ConditionalMemberRequest } from "../../lib/Members";
-import { generateResults } from "../../lib/MySQLUtil";
+import { NextFunction, Response } from 'express';
+import MemberBase, { ConditionalMemberRequest } from '../../lib/Members';
+import { generateResults } from '../../lib/MySQLUtil';
 
 // @ts-ignore
 interface MaybeMemberRequest extends ConditionalMemberRequest {
@@ -63,4 +64,4 @@ export default async (err: Error, req: MaybeMemberRequest, res: Response, next: 
 	res.status(500);
 	res.set('x-error-handled', 'true');
 	res.end();
-}
+};

@@ -1,3 +1,4 @@
+import { AccountObject } from 'common-lib';
 import { Response } from 'express';
 import { AccountRequest } from '../lib/Account';
 import { json } from '../lib/Util';

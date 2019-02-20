@@ -1,5 +1,6 @@
 import { load } from 'cheerio';
 import req from './nhq-request';
+import { CAPMemberContact, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
 
 export default async (
 	cookie: string

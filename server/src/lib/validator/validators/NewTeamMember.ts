@@ -1,4 +1,5 @@
-import Validator from "../Validator";
+import { NewTeamMember } from 'common-lib';
+import Validator from '../Validator';
 
 export default class NewTeamMemberValidator extends Validator<NewTeamMember> {
 	constructor() {
@@ -9,6 +10,6 @@ export default class NewTeamMemberValidator extends Validator<NewTeamMember> {
 			job: {
 				validator: Validator.String
 			}
-		})
+		});
 	}
 }

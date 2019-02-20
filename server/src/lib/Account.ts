@@ -1,4 +1,17 @@
 import * as mysql from '@mysql/xdevapi';
+import {
+	AccountObject,
+	BlogPageObject,
+	BlogPostObject,
+	DatabaseInterface,
+	EventObject,
+	FileObject,
+	MemberReference,
+	NHQ,
+	ProspectiveMemberObject,
+	RawAccountObject,
+	RawTeamObject
+} from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
 import BlogPage from './BlogPage';
@@ -6,12 +19,7 @@ import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
 import { CAPWATCHMember, ProspectiveMember } from './Members';
-import {
-	collectResults,
-	findAndBind,
-	generateResults,
-	MySQLRequest
-} from './MySQLUtil';
+import { collectResults, findAndBind, generateResults, MySQLRequest } from './MySQLUtil';
 import Team from './Team';
 import { MonthNumber } from './Util';
 
@@ -19,9 +27,7 @@ export interface AccountRequest<P = any> extends MySQLRequest<P> {
 	account: Account;
 }
 
-export default class Account
-	implements AccountObject, DatabaseInterface<AccountObject> {
-
+export default class Account implements AccountObject, DatabaseInterface<AccountObject> {
 	public static ExpressMiddleware: express.RequestHandler = async (
 		req: AccountRequest,
 		res,
@@ -44,10 +50,7 @@ export default class Account
 			if (accountID === 'capeventmanager') {
 				accountID = 'mdx89';
 			}
-		} else if (
-			parts.length === 4 &&
-			process.env.NODE_ENV !== 'production'
-		) {
+		} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
 			accountID = 'mdx89';
 		} else {
 			res.status(400);
@@ -91,13 +94,8 @@ export default class Account
 		next();
 	};
 
-	public static async Get(
-		id: string,
-		schema: mysql.Schema
-	): Promise<Account> {
-		const accountCollection = schema.getCollection<RawAccountObject>(
-			'Accounts'
-		);
+	public static async Get(id: string, schema: mysql.Schema): Promise<Account> {
+		const accountCollection = schema.getCollection<RawAccountObject>('Accounts');
 
 		const results = await collectResults(
 			findAndBind(accountCollection, {
@@ -125,9 +123,7 @@ export default class Account
 	}
 
 	public static async Create(values: RawAccountObject, schema: mysql.Schema) {
-		const accountCollection = schema.getCollection<RawAccountObject>(
-			'Accounts'
-		);
+		const accountCollection = schema.getCollection<RawAccountObject>('Accounts');
 
 		const newValues: RawAccountObject = {
 			adminIDs: values.adminIDs,
@@ -145,9 +141,7 @@ export default class Account
 		const validPaid = !expired && newValues.paid;
 
 		// tslint:disable-next-line:variable-name
-		const _id = (await accountCollection
-			.add(newValues)
-			.execute()).getGeneratedIds()[0];
+		const _id = (await accountCollection.add(newValues).execute()).getGeneratedIds()[0];
 
 		return new this(
 			{
@@ -217,10 +211,7 @@ export default class Account
 	}
 
 	public buildURI(...identifiers: string[]) {
-		let uri =
-			process.env.NODE_ENV !== 'production'
-				? `/`
-				: `https://${this.id}.capunit.com/`;
+		let uri = process.env.NODE_ENV !== 'production' ? `/` : `https://${this.id}.capunit.com/`;
 
 		for (const i in identifiers) {
 			if (identifiers.hasOwnProperty(i)) {
@@ -232,9 +223,7 @@ export default class Account
 	}
 
 	public async *getMembers(): AsyncIterableIterator<CAPWATCHMember> {
-		const memberCollection = this.schema.getCollection<NHQ.Member>(
-			'NHQ_Member'
-		);
+		const memberCollection = this.schema.getCollection<NHQ.Member>('NHQ_Member');
 
 		for (const ORGID of this.orgIDs) {
 			const memberFind = findAndBind(memberCollection, {
@@ -246,20 +235,16 @@ export default class Account
 			}
 		}
 
-		const prospectiveMemberCollection = this.schema.getCollection<
-			ProspectiveMemberObject
-		>('ProspectiveMembers');
+		const prospectiveMemberCollection = this.schema.getCollection<ProspectiveMemberObject>(
+			'ProspectiveMembers'
+		);
 
 		const prospectiveMemberFind = findAndBind(prospectiveMemberCollection, {
 			accountID: this.id
 		});
 
 		for await (const member of generateResults(prospectiveMemberFind)) {
-			yield ProspectiveMember.GetProspective(
-				member.id,
-				this,
-				this.schema
-			);
+			yield ProspectiveMember.GetProspective(member.id, this, this.schema);
 		}
 	}
 
@@ -284,9 +269,7 @@ export default class Account
 	}
 
 	public async *getEvents(): AsyncIterableIterator<Event> {
-		const eventCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
+		const eventCollection = this.schema.getCollection<EventObject>('Events');
 
 		const eventIterator = findAndBind(eventCollection, {
 			accountID: this.id
@@ -298,9 +281,7 @@ export default class Account
 	}
 
 	public async *getSortedEvents(): AsyncIterableIterator<Event> {
-		const eventCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
+		const eventCollection = this.schema.getCollection<EventObject>('Events');
 
 		const eventIterator = findAndBind(eventCollection, {
 			accountID: this.id
@@ -313,7 +294,7 @@ export default class Account
 
 	public async *getTeams(): AsyncIterableIterator<Team> {
 		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
-		
+
 		// This needs to be included to include the staff team, which does not directly
 		// exist in the database and is more dynamic
 		yield Team.Get(0, this, this.schema);
@@ -328,9 +309,7 @@ export default class Account
 	}
 
 	public async *getBlogPosts(): AsyncIterableIterator<BlogPost> {
-		const blogPostCollection = this.schema.getCollection<BlogPostObject>(
-			'Blog'
-		);
+		const blogPostCollection = this.schema.getCollection<BlogPostObject>('Blog');
 
 		const blogPostIterator = findAndBind(blogPostCollection, {
 			accountID: this.id
@@ -342,9 +321,7 @@ export default class Account
 	}
 
 	public async *getBlogPages(): AsyncIterableIterator<BlogPage> {
-		const blogPageCollection = this.schema.getCollection<BlogPageObject>(
-			'BlogPages'
-		);
+		const blogPageCollection = this.schema.getCollection<BlogPageObject>('BlogPages');
 
 		const blogPageIterator = findAndBind(blogPageCollection, {
 			accountID: this.id
@@ -437,14 +414,15 @@ export default class Account
 		const eventCollection = this.schema.getCollection('Events');
 
 		const generator = generateResults(
-			eventCollection.find(
-				'(pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end && meetDateTime > :start)'
-			)
-			// @ts-ignore
-			.bind({
-				start,
-				end
-			})
+			eventCollection
+				.find(
+					'(pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end && meetDateTime > :start)'
+				)
+				// @ts-ignore
+				.bind({
+					start,
+					end
+				})
 		);
 
 		let eventCount = 0;

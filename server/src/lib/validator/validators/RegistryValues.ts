@@ -1,9 +1,16 @@
-import Validator from "../Validator";
+import {
+	BlogInformation,
+	RankAndFileInformation,
+	RegistryValues,
+	WebsiteContact,
+	WebsiteInformation
+} from 'common-lib';
+import Validator from '../Validator';
 
 class AddressValidator extends Validator<{
-	Name: string,
-	FirstLine: string,
-	SecondLine: string
+	Name: string;
+	FirstLine: string;
+	SecondLine: string;
 }> {
 	constructor() {
 		super({
@@ -16,7 +23,7 @@ class AddressValidator extends Validator<{
 			SecondLine: {
 				validator: Validator.String
 			}
-		})
+		});
 	}
 }
 
@@ -55,7 +62,7 @@ class ContactValidator extends Validator<WebsiteContact> {
 				required: false,
 				validator: Validator.String
 			}
-		})
+		});
 	}
 }
 
@@ -84,7 +91,7 @@ class BlogValidator extends Validator<BlogInformation> {
 			BlogPostsPerPage: {
 				validator: Validator.Number
 			}
-		})
+		});
 	}
 }
 
@@ -118,6 +125,6 @@ export default class RegistryValueValidator extends Validator<RegistryValues> {
 			id: {
 				validator: Validator.String
 			}
-		})
+		});
 	}
 }

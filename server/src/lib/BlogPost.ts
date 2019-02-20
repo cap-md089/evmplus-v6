@@ -1,4 +1,11 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	BlogPostObject,
+	DatabaseInterface,
+	FullBlogPostObject,
+	MemberReference,
+	NewBlogPost
+} from 'common-lib';
 import { RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import Account from './Account';
@@ -6,8 +13,7 @@ import MemberBase from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 import NewBlogPostValidator from './validator/validators/NewBlogPost';
 
-export default class BlogPost
-	implements FullBlogPostObject, DatabaseInterface<FullBlogPostObject> {
+export default class BlogPost implements FullBlogPostObject, DatabaseInterface<FullBlogPostObject> {
 	public static Validator = new NewBlogPostValidator();
 
 	public static async Get(
@@ -15,9 +21,7 @@ export default class BlogPost
 		account: Account,
 		schema: Schema
 	): Promise<BlogPost> {
-		const blogPostCollection = schema.getCollection<BlogPostObject>(
-			BlogPost.collectionName
-		);
+		const blogPostCollection = schema.getCollection<BlogPostObject>(BlogPost.collectionName);
 
 		id = parseInt(id.toString(), 10);
 
@@ -34,11 +38,7 @@ export default class BlogPost
 			throw new Error('Could not get blog post');
 		}
 
-		const author = await MemberBase.ResolveReference(
-			results[0].author,
-			account,
-			schema
-		);
+		const author = await MemberBase.ResolveReference(results[0].author, account, schema);
 
 		return new BlogPost(
 			{
@@ -56,9 +56,7 @@ export default class BlogPost
 		account: Account,
 		schema: Schema
 	): Promise<BlogPost> {
-		const blogPostCollection = schema.getCollection<BlogPostObject>(
-			BlogPost.collectionName
-		);
+		const blogPostCollection = schema.getCollection<BlogPostObject>(BlogPost.collectionName);
 
 		let results;
 
@@ -89,9 +87,7 @@ export default class BlogPost
 		};
 
 		// tslint:disable-next-line:variable-name
-		const _id = (await blogPostCollection
-			.add(newPost)
-			.execute()).getGeneratedIds()[0];
+		const _id = (await blogPostCollection.add(newPost).execute()).getGeneratedIds()[0];
 
 		newPost = {
 			...newPost,
@@ -128,11 +124,7 @@ export default class BlogPost
 
 	private schema: Schema;
 
-	private constructor(
-		data: FullBlogPostObject,
-		account: Account,
-		schema: Schema
-	) {
+	private constructor(data: FullBlogPostObject, account: Account, schema: Schema) {
 		this._id = data._id;
 		this.id = data.id;
 		this.author = data.author;

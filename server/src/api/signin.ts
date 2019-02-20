@@ -1,3 +1,4 @@
+import { SigninReturn } from 'common-lib';
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
 import MemberBase from '../lib/Members';

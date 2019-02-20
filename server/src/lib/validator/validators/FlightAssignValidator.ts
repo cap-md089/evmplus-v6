@@ -1,4 +1,5 @@
-import Validator from "../Validator";
+import { MemberReference } from 'common-lib';
+import Validator from '../Validator';
 
 export interface FlightAssign {
 	member: MemberReference;

@@ -1,18 +1,11 @@
+import { EventObject, NewEventObject } from 'common-lib';
 import * as express from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
-import {
-	asyncErrorHandler,
-	getTargetMonth,
-	getTargetYear,
-	json
-} from '../../../lib/Util';
+import { asyncErrorHandler, getTargetMonth, getTargetYear, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (
-		req: MemberValidatedRequest<NewEventObject>,
-		res: express.Response
-	) => {
+	async (req: MemberValidatedRequest<NewEventObject>, res: express.Response) => {
 		const eventCount1 = await req.account.getEventCountForMonth(
 			getTargetMonth(req.body.pickupDateTime),
 			getTargetYear(req.body.pickupDateTime)
@@ -32,12 +25,7 @@ export default asyncErrorHandler(
 			return res.end();
 		}
 
-		const newEvent = await Event.Create(
-			req.body,
-			req.account,
-			req.mysqlx,
-			req.member
-		);
+		const newEvent = await Event.Create(req.body, req.account, req.mysqlx, req.member);
 
 		json<EventObject>(res, newEvent.toRaw());
 	}

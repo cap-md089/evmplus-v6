@@ -1,3 +1,4 @@
+import { BlogPageObject, NewBlogPage } from 'common-lib';
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPage from '../../../lib/BlogPage';

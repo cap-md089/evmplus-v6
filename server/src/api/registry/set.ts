@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Registry from '../../lib/Registry';
 import { asyncErrorHandler } from '../../lib/Util';
+import { RegistryValues } from 'common-lib';
 
 export default asyncErrorHandler(
 	async (

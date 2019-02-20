@@ -1,11 +1,8 @@
+import { NHQ } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 import { convertNHQDate } from '../MySQLUtil';
 
-const memberParse: CAPWATCHModule<NHQ.Member> = async (
-	fileData,
-	schema,
-	orgid
-) => {
+const memberParse: CAPWATCHModule<NHQ.Member> = async (fileData, schema, orgid) => {
 	if (
 		typeof fileData[0].CAPID === 'undefined' ||
 		typeof fileData[0].DOB === 'undefined' ||

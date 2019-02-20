@@ -1,6 +1,20 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	AttendanceRecord,
+	DatabaseInterface,
+	DebriefItem,
+	DisplayInternalPointOfContact,
+	EventObject,
+	ExternalPointOfContact,
+	InternalPointOfContact,
+	MemberReference,
+	MultCheckboxReturn,
+	NewAttendanceRecord,
+	NewEventObject,
+	RadioReturn
+} from 'common-lib';
 import { DateTime } from 'luxon';
-import { EchelonEventNumber, EventStatus, PointOfContactType } from '../enums';
+import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';
@@ -10,8 +24,7 @@ import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRe
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
-export default class Event
-	implements EventObject, DatabaseInterface<EventObject> {
+export default class Event implements EventObject, DatabaseInterface<EventObject> {
 	public static Validator = new EventValidator();
 	public static AttendanceValidator = new NewAttendanceRecordValidator();
 
@@ -22,11 +35,7 @@ export default class Event
 	 * @param account The account to get the event from
 	 * @param schema The schema to get the event from
 	 */
-	public static async Get(
-		id: number | string,
-		account: Account,
-		schema: Schema
-	) {
+	public static async Get(id: number | string, account: Account, schema: Schema) {
 		if (typeof id === 'string') {
 			id = parseInt(id, 10);
 		}
@@ -74,10 +83,7 @@ export default class Event
 		);
 
 		const newID =
-			1 +
-			idResults
-				.map(post => post.id)
-				.reduce((prev, curr) => Math.max(prev, curr), 0);
+			1 + idResults.map(post => post.id).reduce((prev, curr) => Math.max(prev, curr), 0);
 
 		const timeCreated = +DateTime.utc();
 
@@ -238,9 +244,7 @@ export default class Event
 
 	public debrief: DebriefItem[];
 
-	public pointsOfContact: Array<
-		DisplayInternalPointOfContact | ExternalPointOfContact
-	>;
+	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
 	public author: MemberReference;
 
@@ -270,11 +274,7 @@ export default class Event
 	 * @param account The account for the event
 	 * @param schema The schema for the event
 	 */
-	private constructor(
-		data: EventObject,
-		private account: Account,
-		private schema: Schema
-	) {
+	private constructor(data: EventObject, private account: Account, private schema: Schema) {
 		Object.assign(this, data);
 
 		this.attendance = data.attendance;
@@ -289,13 +289,9 @@ export default class Event
 	public async save(account: Account = this.account) {
 		const timeModified = +DateTime.utc();
 
-		const eventsCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
+		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
-		const pointsOfContact = Event.DownconvertPointsOfContact(
-			this.pointsOfContact
-		);
+		const pointsOfContact = Event.DownconvertPointsOfContact(this.pointsOfContact);
 
 		await eventsCollection.replaceOne(this._id, {
 			...this.toFullRaw(),
@@ -311,9 +307,7 @@ export default class Event
 	 * Remove the event from the database
 	 */
 	public async remove() {
-		const eventsCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
+		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
 		await eventsCollection
 			.remove('accountID = :accountID AND id = :id')
@@ -408,16 +402,8 @@ export default class Event
 	 * @param targetAccount The account to link to
 	 * @param member The member linking the event
 	 */
-	public async linkTo(
-		targetAccount: Account,
-		member: MemberBase
-	): Promise<Event> {
-		const linkedEvent = await Event.Create(
-			this.toRaw(),
-			targetAccount,
-			this.schema,
-			member
-		);
+	public async linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
+		const linkedEvent = await Event.Create(this.toRaw(), targetAccount, this.schema, member);
 
 		linkedEvent.sourceEvent = {
 			accountID: this.account.id,
@@ -431,9 +417,7 @@ export default class Event
 	 * Deletes the current event
 	 */
 	public async delete(): Promise<void> {
-		const eventsCollection = this.schema.getCollection<EventObject>(
-			'Events'
-		);
+		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
 		await eventsCollection.removeOne(this._id);
 	}
@@ -477,9 +461,7 @@ export default class Event
 		meetDateTime: this.meetDateTime,
 		meetLocation: this.meetLocation,
 		name: this.name,
-		participationFee: !!this.participationFee
-			? this.participationFee
-			: null,
+		participationFee: !!this.participationFee ? this.participationFee : null,
 		pickupDateTime: this.pickupDateTime,
 		pickupLocation: this.pickupLocation,
 		pointsOfContact: this.pointsOfContact,
@@ -489,9 +471,7 @@ export default class Event
 		requiredEquipment: this.requiredEquipment,
 		requiredForms: this.requiredForms,
 		showUpcoming: this.showUpcoming,
-		signUpDenyMessage: !!this.signUpDenyMessage
-			? this.signUpDenyMessage
-			: null,
+		signUpDenyMessage: !!this.signUpDenyMessage ? this.signUpDenyMessage : null,
 		signUpPartTime: !!this.signUpPartTime,
 		sourceEvent: !!this.sourceEvent ? this.sourceEvent : null,
 		startDateTime: this.startDateTime,
@@ -505,8 +485,7 @@ export default class Event
 		uniform: this.uniform,
 		wingEventNumber: this.wingEventNumber,
 		fileIDs: this.fileIDs,
-		attendance:
-			member === null || member === undefined ? [] : this.getAttendance()
+		attendance: member === null || member === undefined ? [] : this.getAttendance()
 	});
 
 	/**
@@ -525,10 +504,7 @@ export default class Event
 			return Promise.reject('There is no source event');
 		}
 
-		const sourceAccount = await Account.Get(
-			this.sourceEvent.accountID,
-			this.schema
-		);
+		const sourceAccount = await Account.Get(this.sourceEvent.accountID, this.schema);
 
 		return Event.Get(this.sourceEvent.id, sourceAccount, this.schema);
 	}
@@ -558,8 +534,7 @@ export default class Event
 				comments: newAttendanceRecord.comments,
 				memberID: member.getReference(),
 				memberName: member.getFullName(),
-				planToUseCAPTransportation:
-					newAttendanceRecord.planToUseCAPTransportation,
+				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp: +DateTime.utc(),
@@ -587,8 +562,7 @@ export default class Event
 						comments: newAttendanceRecord.comments,
 						memberID: member.getReference(),
 						memberName: member.getFullName(),
-						planToUseCAPTransportation:
-							newAttendanceRecord.planToUseCAPTransportation,
+						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp: +DateTime.utc(),
@@ -601,9 +575,7 @@ export default class Event
 				: record
 		));
 
-	public removeMemberFromAttendance = (
-		member: BaseMember
-	): AttendanceRecord[] =>
+	public removeMemberFromAttendance = (member: BaseMember): AttendanceRecord[] =>
 		(this.attendance = this.attendance.filter(
 			record => !member.matchesReference(record.memberID)
 		));
@@ -623,10 +595,7 @@ export default class Event
 	 * @param newDebriefItem The text of the record to add
 	 * @param member The member to add to the records
 	 */
-	public addItemToDebrief = (
-		newDebriefItem: string,
-		member: BaseMember
-	): DebriefItem[] =>
+	public addItemToDebrief = (newDebriefItem: string, member: BaseMember): DebriefItem[] =>
 		(this.debrief = [
 			...this.debrief,
 			{
@@ -642,10 +611,7 @@ export default class Event
 	 * @param member The member who submitted the debrief item
 	 * @param timeSubmitted The time the member submitted it
 	 */
-	public removeItemFromDebrief = (
-		member: BaseMember,
-		timeOfRecord: number
-	): DebriefItem[] =>
+	public removeItemFromDebrief = (member: BaseMember, timeOfRecord: number): DebriefItem[] =>
 		(this.debrief = this.debrief.filter(
 			record =>
 				!(

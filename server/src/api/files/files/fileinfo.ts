@@ -3,6 +3,7 @@ import { FileUserAccessControlPermissions } from '../../../../../lib/index';
 import File from '../../../lib/File';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
+import { FullFileObject, FileObject } from 'common-lib';
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest, res: express.Response) => {

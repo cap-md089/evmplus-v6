@@ -1,4 +1,5 @@
-import Validator from "../Validator";
+import { NewAccountObject } from 'common-lib';
+import Validator from '../Validator';
 
 export default class AccountObjectValidator extends Validator<NewAccountObject> {
 	constructor() {

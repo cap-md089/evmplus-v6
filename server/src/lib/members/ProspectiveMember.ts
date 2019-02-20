@@ -1,13 +1,19 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	AbsenteeInformation,
+	CAPMemberContact,
+	DatabaseInterface,
+	ExtraMemberInformation,
+	MemberPermissions,
+	NoSQLDocument,
+	ProspectiveMemberObject,
+	ProspectiveMemberReference,
+	RawProspectiveMemberObject
+} from 'common-lib';
 import { createHmac, randomBytes } from 'crypto';
 import Account from '../Account';
 import { MemberSession, SESSION_TIME } from '../MemberBase';
-import {
-	collectResults,
-	findAndBind,
-	generateResults,
-	modifyAndBind
-} from '../MySQLUtil';
+import { collectResults, findAndBind, generateResults, modifyAndBind } from '../MySQLUtil';
 import { Member as NoPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { MemberCreateError } from './NHQMember';
@@ -32,11 +38,7 @@ export const generateHash = (password: string, secret: string) =>
 		.digest()
 		.toString('hex');
 
-export const hashPassword = (
-	password: string,
-	salt: string,
-	revolutions = 1024
-): string =>
+export const hashPassword = (password: string, salt: string, revolutions = 1024): string =>
 	revolutions === 0
 		? generateHash(password, salt)
 		: hashPassword(generateHash(password, salt), salt, revolutions - 1);
@@ -52,9 +54,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 		account: Account,
 		schema: Schema
 	): Promise<ProspectiveMember> {
-		const prospectiveCollection = schema.getCollection<
-			RawProspectiveMemberObject
-		>(this.collectionName);
+		const prospectiveCollection = schema.getCollection<RawProspectiveMemberObject>(
+			this.collectionName
+		);
 
 		let id: string = `${account.id}-`;
 		let highestNumber: number = 0;
@@ -127,9 +129,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 	): Promise<ProspectiveMember> {
 		id = id.toLocaleLowerCase();
 
-		const prospectiveCollection = schema.getCollection<
-			RawProspectiveMemberObject
-		>(this.collectionName);
+		const prospectiveCollection = schema.getCollection<RawProspectiveMemberObject>(
+			this.collectionName
+		);
 
 		const find = findAndBind(prospectiveCollection, {
 			id,
@@ -139,9 +141,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 		const rows = await collectResults(find);
 
 		if (rows.length !== 1) {
-			throw new Error(
-				MemberCreateError.INCORRRECT_CREDENTIALS.toString()
-			);
+			throw new Error(MemberCreateError.INCORRRECT_CREDENTIALS.toString());
 		}
 
 		const { password: hash, salt } = rows[0];
@@ -150,16 +150,10 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 		// Failed login
 		if (hash !== hashedPassword) {
-			throw new Error(
-				MemberCreateError.INCORRRECT_CREDENTIALS.toString()
-			);
+			throw new Error(MemberCreateError.INCORRRECT_CREDENTIALS.toString());
 		}
 
-		const member = await ProspectiveMember.GetProspective(
-			id,
-			account,
-			schema
-		);
+		const member = await ProspectiveMember.GetProspective(id, account, schema);
 
 		const sess: ProspectiveMemberSession = {
 			accountID: account.id,
@@ -180,11 +174,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			orgid: member.orgid
 		};
 
-		const sessionID = await ProspectiveMember.AddSession(
-			sess,
-			account,
-			schema
-		);
+		const sessionID = await ProspectiveMember.AddSession(sess, account, schema);
 
 		member.sessionID = sessionID;
 
@@ -199,11 +189,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 		const ref = session.memberID as ProspectiveMemberReference;
 
 		try {
-			const member = await ProspectiveMember.GetProspective(
-				ref.id,
-				account,
-				schema
-			);
+			const member = await ProspectiveMember.GetProspective(ref.id, account, schema);
 
 			return member;
 		} catch (e) {
@@ -296,10 +282,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 	}
 
 	public set(values: Partial<ProspectiveMemberObject>) {
-		const keys: Array<keyof ProspectiveMemberObject> = [
-			'contact',
-			'flight'
-		];
+		const keys: Array<keyof ProspectiveMemberObject> = ['contact', 'flight'];
 
 		for (const key of keys) {
 			const i = key as keyof ProspectiveMemberObject;
@@ -314,9 +297,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 	}
 
 	public async save(): Promise<void> {
-		const prospectiveCollection = this.schema.getCollection<
-			RawProspectiveMemberObject
-		>(ProspectiveMember.collectionName);
+		const prospectiveCollection = this.schema.getCollection<RawProspectiveMemberObject>(
+			ProspectiveMember.collectionName
+		);
 
 		await prospectiveCollection.replaceOne(this._id, this.toRaw());
 	}
@@ -334,9 +317,9 @@ export default class ProspectiveMember extends CAPWATCHMember
 	}
 
 	public async updatePassword(password: string): Promise<void> {
-		const prospectiveCollection = this.schema.getCollection<
-			RawProspectiveMemberObject
-		>(ProspectiveMember.collectionName);
+		const prospectiveCollection = this.schema.getCollection<RawProspectiveMemberObject>(
+			ProspectiveMember.collectionName
+		);
 
 		const row = await collectResults(
 			findAndBind(prospectiveCollection, {

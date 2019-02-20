@@ -1,3 +1,4 @@
+import { NewBlogPost } from 'common-lib';
 import Validator from '../Validator';
 import RawDraftContentStateValidator from './RawDraftContentState';
 

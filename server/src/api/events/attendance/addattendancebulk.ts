@@ -1,10 +1,9 @@
+import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
-import Validator, {
-	MemberValidatedRequest
-} from '../../../lib/validator/Validator';
+import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 import NewAttendanceRecordValidator from '../../../lib/validator/validators/NewAttendanceRecord';
 
 /**
@@ -22,10 +21,7 @@ export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 });
 
 export default asyncErrorHandler(
-	async (
-		req: MemberValidatedRequest<BulkAttendanceRequest>,
-		res: Response
-	) => {
+	async (req: MemberValidatedRequest<BulkAttendanceRequest>, res: Response) => {
 		let event: Event;
 		let member: MemberBase;
 
@@ -48,11 +44,7 @@ export default asyncErrorHandler(
 		}
 
 		for (const i of req.body.members) {
-			member = await MemberBase.ResolveReference(
-				i.memberID,
-				req.account,
-				req.mysqlx
-			);
+			member = await MemberBase.ResolveReference(i.memberID, req.account, req.mysqlx);
 
 			event.addMemberToAttendance(
 				{

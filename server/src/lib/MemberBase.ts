@@ -1,10 +1,19 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	AbsenteeInformation,
+	CAPMemberContact,
+	ExtraMemberInformation,
+	MemberObject,
+	MemberPermission,
+	MemberPermissions,
+	MemberReference,
+	MemberType,
+	RawTeamObject
+} from 'common-lib';
 import { NextFunction, Response } from 'express';
 import { sign, verify, VerifyOptions } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import { promisify } from 'util';
-import Account from './Account';
-import Event from './Event';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
 const promisedVerify = promisify(verify) as (
@@ -67,10 +76,7 @@ export default abstract class MemberBase implements MemberObject {
 			return true;
 		}
 
-		if (
-			value.type === 'CAPProspectiveMember' &&
-			typeof value.id === 'string'
-		) {
+		if (value.type === 'CAPProspectiveMember' && typeof value.id === 'string') {
 			return true;
 		}
 
@@ -107,18 +113,11 @@ export default abstract class MemberBase implements MemberObject {
 				return CAPWATCHMember.Get(ref.id, account, schema);
 
 			case 'CAPProspectiveMember':
-				return ProspectiveMember.GetProspective(
-					ref.id,
-					account,
-					schema
-				);
+				return ProspectiveMember.GetProspective(ref.id, account, schema);
 		}
 	}
 
-	public static AreMemberReferencesTheSame(
-		ref1: MemberReference,
-		ref2: MemberReference
-	) {
+	public static AreMemberReferencesTheSame(ref1: MemberReference, ref2: MemberReference) {
 		if (ref1.type === 'Null' || ref2.type === 'Null') {
 			return false;
 		}
@@ -126,11 +125,7 @@ export default abstract class MemberBase implements MemberObject {
 		return ref1.id === ref2.id;
 	}
 
-	public static BlogPermissionMiddleware(
-		req: MemberRequest,
-		res: Response,
-		next: NextFunction
-	) {
+	public static BlogPermissionMiddleware(req: MemberRequest, res: Response, next: NextFunction) {
 		if (!req.member) {
 			res.status(401);
 			res.end();
@@ -180,11 +175,9 @@ export default abstract class MemberBase implements MemberObject {
 			let memRef: MemberReference;
 
 			try {
-				const decoded = (await promisedVerify(
-					header,
-					MemberBase.secret,
-					{ algorithms: ['HS512'] }
-				)) as { id: MemberReference };
+				const decoded = (await promisedVerify(header, MemberBase.secret, {
+					algorithms: ['HS512']
+				})) as { id: MemberReference };
 
 				memRef = decoded.id as MemberReference;
 			} catch (e) {
@@ -192,11 +185,7 @@ export default abstract class MemberBase implements MemberObject {
 				return next();
 			}
 
-			const sessInfo = await MemberBase.CheckSession(
-				memRef,
-				req.account,
-				req.mysqlx
-			);
+			const sessInfo = await MemberBase.CheckSession(memRef, req.account, req.mysqlx);
 
 			req.member = null;
 			if (sessInfo === null) {
@@ -258,8 +247,7 @@ export default abstract class MemberBase implements MemberObject {
 	/**
 	 * Used to sign JWTs
 	 */
-	protected static secret: string =
-		'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
+	protected static secret: string = 'MIIJKAIBAAKCAgEAo+cX1jG057if3MHajFmd5DR0h6e';
 
 	protected static async LoadExtraMemberInformation(
 		memberID: MemberReference,
@@ -319,12 +307,7 @@ export default abstract class MemberBase implements MemberObject {
 		let memberIndex = -1;
 
 		for (const i in this.Sessions) {
-			if (
-				MemberBase.AreMemberReferencesTheSame(
-					info.memberID,
-					this.Sessions[i].memberID
-				)
-			) {
+			if (MemberBase.AreMemberReferencesTheSame(info.memberID, this.Sessions[i].memberID)) {
 				memberIndex = parseInt(i, 10);
 			}
 		}
@@ -332,8 +315,7 @@ export default abstract class MemberBase implements MemberObject {
 		if (memberIndex === -1) {
 			MemberBase.Sessions.push(info);
 		} else {
-			MemberBase.Sessions[memberIndex].expireTime =
-				Date.now() + SESSION_TIME;
+			MemberBase.Sessions[memberIndex].expireTime = Date.now() + SESSION_TIME;
 		}
 
 		// END WHAT NEEDS TO BE REPLACED
@@ -366,9 +348,7 @@ export default abstract class MemberBase implements MemberObject {
 		newSessID: string;
 	} | null> {
 		// BEGIN WHAT NEEDS TO BE REPLACED
-		MemberBase.Sessions = MemberBase.Sessions.filter(
-			s => s.expireTime > Date.now()
-		);
+		MemberBase.Sessions = MemberBase.Sessions.filter(s => s.expireTime > Date.now());
 		const sess = MemberBase.Sessions.filter(s =>
 			MemberBase.AreMemberReferencesTheSame(s.memberID, ref)
 		);
@@ -441,7 +421,7 @@ export default abstract class MemberBase implements MemberObject {
 	public teamIDs: number[] = [];
 	/**
 	 * Shows how long the member is absent for
-	 * 
+	 *
 	 * Should not be used if null or if the time has passed
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
@@ -511,27 +491,13 @@ export default abstract class MemberBase implements MemberObject {
 
 		for await (const i of generator) {
 			let found =
-				MemberBase.AreMemberReferencesTheSame(
-					i.cadetLeader,
-					reference
-				) ||
-				MemberBase.AreMemberReferencesTheSame(
-					i.seniorCoach,
-					reference
-				) ||
-				MemberBase.AreMemberReferencesTheSame(
-					i.seniorMentor,
-					reference
-				);
+				MemberBase.AreMemberReferencesTheSame(i.cadetLeader, reference) ||
+				MemberBase.AreMemberReferencesTheSame(i.seniorCoach, reference) ||
+				MemberBase.AreMemberReferencesTheSame(i.seniorMentor, reference);
 
 			if (found === false) {
 				for (const ref of i.members) {
-					if (
-						MemberBase.AreMemberReferencesTheSame(
-							ref.reference,
-							reference
-						)
-					) {
+					if (MemberBase.AreMemberReferencesTheSame(ref.reference, reference)) {
 						found = true;
 						break;
 					}
@@ -577,11 +543,10 @@ export default abstract class MemberBase implements MemberObject {
 	}
 }
 
+import Account from './Account';
+import Event from './Event';
 import CAPWATCHMember from './members/CAPWATCHMember';
-import NHQMember, {
-	ConditionalMemberRequest,
-	MemberRequest
-} from './members/NHQMember';
+import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';

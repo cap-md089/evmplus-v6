@@ -1,17 +1,22 @@
 import { Schema } from '@mysql/xdevapi';
 import { load } from 'cheerio';
+import {
+	AbsenteeInformation,
+	CAPMemberContact,
+	ExtraMemberInformation,
+	MemberAccessLevel,
+	MemberPermissions,
+	NHQMemberObject,
+	NHQMemberReference
+} from 'common-lib';
+import { MemberCAPWATCHErrors, MemberCreateError } from 'common-lib/index';
 import { createWriteStream, existsSync, unlink } from 'fs';
 import { request as httpRequest } from 'https';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
-import { MemberCAPWATCHErrors, MemberCreateError } from '../../enums';
 import Account, { AccountRequest } from '../Account';
-import {
-	default as MemberBase,
-	MemberSession,
-	SESSION_TIME
-} from '../MemberBase';
+import { default as MemberBase, MemberSession, SESSION_TIME } from '../MemberBase';
 import { getPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
@@ -45,8 +50,7 @@ export interface MemberRequest<P = any> extends AccountRequest<P> {
 	newSessionID: string;
 }
 
-export default class NHQMember extends CAPWATCHMember
-	implements NHQMemberObject {
+export default class NHQMember extends CAPWATCHMember implements NHQMemberObject {
 	public static async Create(
 		username: string | number,
 		password: string,
@@ -249,20 +253,13 @@ export default class NHQMember extends CAPWATCHMember
 
 	public async getCAPWATCHList(): Promise<string[]> {
 		const retData: string[] = [];
-		let data = await request(
-			'/cap.capwatch.web/splash.aspx',
-			this.cookie,
-			true
-		);
+		let data = await request('/cap.capwatch.web/splash.aspx', this.cookie, true);
 
 		if (
 			typeof data.headers.location !== 'undefined' &&
-			data.headers.location ===
-				'/cap.capwatch.web/Modules/CapwatchRequest.aspx'
+			data.headers.location === '/cap.capwatch.web/Modules/CapwatchRequest.aspx'
 		) {
-			throw new Error(
-				MemberCAPWATCHErrors.INVALID_PERMISSIONS.toString()
-			);
+			throw new Error(MemberCAPWATCHErrors.INVALID_PERMISSIONS.toString());
 		}
 
 		data = await request('/cap.capwatch.web/Default.aspx', this.cookie);
@@ -288,8 +285,7 @@ export default class NHQMember extends CAPWATCHMember
 					path,
 					method: 'GET',
 					headers: {
-						Accept:
-							'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
+						Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
 						'Accept-Encoding': 'gzip, deflate, br',
 						'Accept-Language': 'en-US,en;q=0.5',
 						Connection: 'keep-alive',
@@ -312,13 +308,8 @@ export default class NHQMember extends CAPWATCHMember
 	public async getCAPWATCHFile(id: number, location?: string) {
 		if (location === undefined) {
 			const date = new Date();
-			const datestring = `${date.getFullYear()}-${date.getMonth() +
-				1}-${date.getHours()}`;
-			location = join(
-				conf.path,
-				'capwatch-zips',
-				`CAPWATCH-${datestring}.zip`
-			);
+			const datestring = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getHours()}`;
+			location = join(conf.path, 'capwatch-zips', `CAPWATCH-${datestring}.zip`);
 		}
 
 		if (existsSync(location)) {

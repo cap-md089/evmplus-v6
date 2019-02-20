@@ -1,4 +1,5 @@
-import { FileUserAccessControlPermissions } from '../../../enums';
+import { FullFileObject, RawFileObject } from 'common-lib';
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import File from '../../../lib/File';
 import { ConditionalMemberRequest } from '../../../lib/Members';
 import { generateResults } from '../../../lib/MySQLUtil';

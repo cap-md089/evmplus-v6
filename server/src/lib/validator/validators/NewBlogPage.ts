@@ -1,5 +1,6 @@
-import Validator from "../Validator";
-import RawDraftContentStateValidator from "./RawDraftContentState";
+import { NewBlogPage } from 'common-lib';
+import Validator from '../Validator';
+import RawDraftContentStateValidator from './RawDraftContentState';
 
 export default class NewBlogPageValidator extends Validator<NewBlogPage> {
 	constructor() {
@@ -10,6 +11,6 @@ export default class NewBlogPageValidator extends Validator<NewBlogPage> {
 			title: {
 				validator: Validator.String
 			}
-		})
+		});
 	}
 }

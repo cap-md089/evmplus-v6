@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { TeamPublicity } from '../../../enums';
+import { TeamPublicity } from 'common-lib/index';
 import MemberBase, { ConditionalMemberRequest } from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';

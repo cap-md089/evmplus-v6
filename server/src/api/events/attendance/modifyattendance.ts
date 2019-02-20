@@ -1,3 +1,4 @@
+import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
@@ -21,11 +22,7 @@ export default asyncErrorHandler(
 			MemberBase.isReference(req.body.memberID) &&
 			(req.member.hasPermission('SignUpEdit') || event.isPOC(req.member))
 		) {
-			member = await MemberBase.ResolveReference(
-				req.body.memberID,
-				req.account,
-				req.mysqlx
-			);
+			member = await MemberBase.ResolveReference(req.body.memberID, req.account, req.mysqlx);
 		} else {
 			member = req.member;
 		}

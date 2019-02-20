@@ -1,15 +1,11 @@
 import { Schema } from '@mysql/xdevapi';
+import { DatabaseInterface, RegistryValues } from 'common-lib';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class Registry implements DatabaseInterface<RegistryValues> {
-	public static async Get(
-		account: Account,
-		schema: Schema
-	): Promise<Registry> {
-		const registryCollection = schema.getCollection<RegistryValues>(
-			Registry.collectionName
-		);
+	public static async Get(account: Account, schema: Schema): Promise<Registry> {
+		const registryCollection = schema.getCollection<RegistryValues>(Registry.collectionName);
 
 		const results = await collectResults(
 			findAndBind(registryCollection, {
@@ -30,10 +26,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	private static collectionName = 'Registry';
 
-	private static async Create(
-		account: Account,
-		schema: Schema
-	): Promise<Registry> {
+	private static async Create(account: Account, schema: Schema): Promise<Registry> {
 		const registryValues: RegistryValues = {
 			Contact: {
 				FaceBook: null,
@@ -61,14 +54,10 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			id: account.id
 		};
 
-		const registryCollection = schema.getCollection<RegistryValues>(
-			Registry.collectionName
-		);
+		const registryCollection = schema.getCollection<RegistryValues>(Registry.collectionName);
 
 		// tslint:disable-next-line:variable-name
-		const _id = (await registryCollection
-			.add(registryValues)
-			.execute()).getGeneratedIds()[0];
+		const _id = (await registryCollection.add(registryValues).execute()).getGeneratedIds()[0];
 
 		return new Registry(
 			{
@@ -97,11 +86,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	private schema: Schema;
 
-	private constructor(
-		values: RegistryValues,
-		account: Account,
-		schema: Schema
-	) {
+	private constructor(values: RegistryValues, account: Account, schema: Schema) {
 		this.set(values);
 
 		this.account = account;
@@ -110,7 +95,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	/**
 	 * Updates the values in a secure manner
-	 * 
+	 *
 	 * TODO: Implement actual type checking, either return false or throw an error on failure
 	 *
 	 * @param values The values to set

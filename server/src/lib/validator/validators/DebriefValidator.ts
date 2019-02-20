@@ -1,4 +1,4 @@
-
+import { DebriefItem } from 'common-lib';
 import Validator from '../Validator';
 export default class DebriefValidator extends Validator<DebriefItem> {
 	constructor() {

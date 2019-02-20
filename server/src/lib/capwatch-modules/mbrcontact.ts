@@ -1,21 +1,16 @@
+import { NHQ } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 import { convertNHQDate } from '../MySQLUtil';
 
-const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (
-	fileData,
-	schema,
-	orgid
-) => {
-	if (
-		typeof fileData[0].CAPID === 'undefined'
-	) {
+const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema, orgid) => {
+	if (typeof fileData[0].CAPID === 'undefined') {
 		return CAPWATCHError.BADDATA;
 	}
 
-	let values: NHQ.MbrContact & {orgid: number};
+	let values: NHQ.MbrContact & { orgid: number };
 
 	try {
-		const mbrContactCollection = schema.getCollection<NHQ.MbrContact & {orgid: number}>(
+		const mbrContactCollection = schema.getCollection<NHQ.MbrContact & { orgid: number }>(
 			'NHQ_MbrContact'
 		);
 
@@ -36,12 +31,12 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (
 				Priority: duties.Priority,
 				Contact: duties.Contact,
 				UsrID: duties.UsrID,
-				DateMod: convertNHQDate(duties.DateMod) as any as string,
+				DateMod: (convertNHQDate(duties.DateMod) as any) as string,
 				DoNotContact: duties.DoNotContact,
 				orgid
 			};
 
-			await (mbrContactCollection.add(values).execute());
+			await mbrContactCollection.add(values).execute();
 		}
 
 		return CAPWATCHError.NONE;

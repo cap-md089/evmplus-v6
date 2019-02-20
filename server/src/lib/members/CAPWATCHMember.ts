@@ -1,4 +1,16 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	AbsenteeInformation,
+	AccountObject,
+	CAPMemberContact,
+	CAPMemberContactType,
+	CAPMemberObject,
+	CAPMemberType,
+	ExtraMemberInformation,
+	MemberPermissions,
+	MemberReference,
+	NHQ
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import MemberBase from '../MemberBase';
 import { collectResults, findAndBind, generateResults } from '../MySQLUtil';

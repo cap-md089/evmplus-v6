@@ -1,3 +1,4 @@
+import { FullTeamObject } from 'common-lib';
 import { Response } from 'express';
 import { MemberRequest } from '../../lib/MemberBase';
 import Team from '../../lib/Team';

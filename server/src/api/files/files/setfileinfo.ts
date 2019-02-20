@@ -1,3 +1,4 @@
+import { EditableFileObjectProperties } from 'common-lib';
 import * as express from 'express';
 import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import File from '../../../lib/File';

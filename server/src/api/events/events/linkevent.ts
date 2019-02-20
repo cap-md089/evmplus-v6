@@ -1,3 +1,4 @@
+import { EventObject } from 'common-lib';
 import { Response } from 'express';
 import Account from '../../../lib/Account';
 import Event from '../../../lib/Event';
@@ -5,11 +6,7 @@ import MemberBase, { MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	if (
-		req.body === undefined ||
-		req.body.id === undefined ||
-		req.params.parent === undefined
-	) {
+	if (req.body === undefined || req.body.id === undefined || req.params.parent === undefined) {
 		res.status(400);
 		res.end();
 		return;

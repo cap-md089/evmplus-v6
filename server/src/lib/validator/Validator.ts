@@ -691,4 +691,5 @@ export default class Validator<T> {
 import * as express from 'express';
 import { AccountRequest } from '../Account';
 import MemberBase from '../Members';
-import { ConditionalMemberRequest, MemberRequest } from '../members/NHQMember';
+import { ConditionalMemberRequest, MemberRequest } from '../members/NHQMember';import { MemberReference } from 'common-lib';
+

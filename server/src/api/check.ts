@@ -1,5 +1,6 @@
+import { SigninReturn } from 'common-lib';
+import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
-import { MemberCreateError } from '../enums';
 import { ConditionalMemberRequest } from '../lib/MemberBase';
 import { json } from '../lib/Util';
 

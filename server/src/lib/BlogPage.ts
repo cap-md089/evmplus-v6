@@ -1,18 +1,24 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	BlogPageAncestryItem,
+	BlogPageObject,
+	DatabaseInterface,
+	FullBlogPageObject,
+	FullDBObject,
+	NewBlogPage
+} from 'common-lib';
 import { RawDraftContentState } from 'draft-js';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 import NewBlogPageValidator from './validator/validators/NewBlogPage';
 
-export default class BlogPage
-	implements FullBlogPageObject, DatabaseInterface<BlogPageObject> {
-
+export default class BlogPage implements FullBlogPageObject, DatabaseInterface<BlogPageObject> {
 	public static Validator = new NewBlogPageValidator();
-	
+
 	public static async Get(id: string, account: Account, schema: Schema) {
-		const blogPageCollection = schema.getCollection<
-			FullDBObject<BlogPageObject>
-		>(BlogPage.collectionName);
+		const blogPageCollection = schema.getCollection<FullDBObject<BlogPageObject>>(
+			BlogPage.collectionName
+		);
 
 		const results = await collectResults(
 			findAndBind(blogPageCollection, {
@@ -28,11 +34,7 @@ export default class BlogPage
 		let ancestry: BlogPageAncestryItem[] = [];
 
 		if (results[0].parentID !== null) {
-			const parent = await BlogPage.Get(
-				results[0].parentID,
-				account,
-				schema
-			);
+			const parent = await BlogPage.Get(results[0].parentID, account, schema);
 
 			ancestry = [
 				...parent.ancestry,
@@ -75,15 +77,8 @@ export default class BlogPage
 		);
 	}
 
-	public static async Create(
-		id: string,
-		content: NewBlogPage,
-		account: Account,
-		schema: Schema
-	) {
-		const blogPageCollection = schema.getCollection<BlogPageObject>(
-			BlogPage.collectionName
-		);
+	public static async Create(id: string, content: NewBlogPage, account: Account, schema: Schema) {
+		const blogPageCollection = schema.getCollection<BlogPageObject>(BlogPage.collectionName);
 
 		const results = await collectResults(
 			findAndBind(blogPageCollection, {
@@ -193,9 +188,9 @@ export default class BlogPage
 			throw new Error('Cannot save a blog page that is deleted');
 		}
 
-		const collection = this.schema.getCollection<
-			FullDBObject<BlogPageObject>
-		>(BlogPage.collectionName);
+		const collection = this.schema.getCollection<FullDBObject<BlogPageObject>>(
+			BlogPage.collectionName
+		);
 
 		await collection.replaceOne(this._id, this.toRaw());
 	}
@@ -229,9 +224,7 @@ export default class BlogPage
 
 		this.deleted = true;
 
-		const collection = this.schema.getCollection<BlogPageObject>(
-			BlogPage.collectionName
-		);
+		const collection = this.schema.getCollection<BlogPageObject>(BlogPage.collectionName);
 
 		await collection.removeOne(this._id);
 	}
@@ -250,11 +243,7 @@ export default class BlogPage
 		});
 
 		if (newChild.parentID !== null) {
-			const parent = await BlogPage.Get(
-				newChild.parentID,
-				this.account,
-				this.schema
-			);
+			const parent = await BlogPage.Get(newChild.parentID, this.account, this.schema);
 			parent.removeChild(newChild);
 			await parent.save();
 		}

@@ -1,7 +1,11 @@
 import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType
-} from '../../../enums';
+	EditableFileObjectProperties,
+	FileAccountControlList,
+	FileOtherControlList,
+	FileTeamControlList,
+	FileUserControlList
+} from 'common-lib';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import Validator from '../Validator';
 
 class FileUserControlListValidator extends Validator<FileUserControlList> {
@@ -32,7 +36,7 @@ class FileTeamControlListValidator extends Validator<FileTeamControlList> {
 			permission: {
 				validator: Validator.Enum(FileUserAccessControlPermissions)
 			}
-		})
+		});
 	}
 }
 
@@ -45,7 +49,7 @@ class FileAccountControlListValidator extends Validator<FileAccountControlList> 
 			permission: {
 				validator: Validator.Enum(FileUserAccessControlPermissions)
 			}
-		})
+		});
 	}
 }
 
@@ -58,7 +62,7 @@ class FileSignedInControlListValidator extends Validator<FileOtherControlList> {
 			permission: {
 				validator: Validator.Enum(FileUserAccessControlPermissions)
 			}
-		})
+		});
 	}
 }
 
@@ -71,13 +75,11 @@ class FileOtherControlListValidator extends Validator<FileOtherControlList> {
 			permission: {
 				validator: Validator.Enum(FileUserAccessControlPermissions)
 			}
-		})
+		});
 	}
 }
 
-export default class FileObjectValidator extends Validator<
-	EditableFileObjectProperties
-> {
+export default class FileObjectValidator extends Validator<EditableFileObjectProperties> {
 	constructor() {
 		super({
 			owner: {
@@ -102,7 +104,7 @@ export default class FileObjectValidator extends Validator<
 						new FileTeamControlListValidator(),
 						new FileAccountControlListValidator(),
 						new FileSignedInControlListValidator(),
-						new FileOtherControlListValidator(),
+						new FileOtherControlListValidator()
 					)
 				)
 			}

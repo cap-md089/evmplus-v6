@@ -1,3 +1,4 @@
+import { EventObject } from 'common-lib';
 import { DateTime } from 'luxon';
 import Event from '../../../lib/Event';
 import { MemberRequest } from '../../../lib/Members';
