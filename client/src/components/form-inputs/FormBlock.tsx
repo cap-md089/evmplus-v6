@@ -1,32 +1,14 @@
 import * as React from 'react';
-import {
-	isFullWidthableElement,
-	isInput,
-	isLabel,
-	Label,
-	Title
-} from '../forms/SimpleForm';
+import { isFullWidthableElement, isInput, isLabel, Label, Title } from '../forms/SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
-	onUpdate?: (
-		e: {
-			name: string;
-			value: any;
-		}
-	) => void;
-	onInitialize?: (
-		e: {
-			name: string;
-			value: any;
-		}
-	) => void;
+	onUpdate?: (e: { name: string; value: any }) => void;
+	onInitialize?: (e: { name: string; value: any }) => void;
 	value?: V;
 }
 
-export default class FormBlock<T extends object> extends React.Component<
-	FormBlockProps<T>
-> {
+export default class FormBlock<T extends object> extends React.Component<FormBlockProps<T>> {
 	private fields = {} as T;
 
 	constructor(props: FormBlockProps<T>) {
@@ -70,17 +52,17 @@ export default class FormBlock<T extends object> extends React.Component<
 						}
 						return;
 					} else {
+						const childName: keyof T = child.props.name as keyof T;
 						const value =
-							typeof this.props.value !== 'undefined' && this.props.value !== null
-								? typeof this.props.value[child.props.name] ===
-								  'undefined'
-									? ''
-									: this.props.value[child.props.name]
-								: typeof child.props.value === 'undefined'
-									? ''
-									: child.props.value;
-						if (!this.fields[child.props.name]) {
-							this.fields[child.props.name] = value;
+							typeof child.props.value !== 'undefined'
+								? child.props.value
+								: typeof this.props.value === 'undefined'
+								? ''
+								: typeof (this.props.value as T)[childName] === 'undefined'
+								? ''
+								: (this.props.value as T)[childName];
+						if (typeof this.fields[childName] === 'undefined') {
+							this.fields[childName] = value;
 						}
 						if (isFullWidthableElement(child)) {
 							fullWidth = child.props.fullWidth;
@@ -103,32 +85,46 @@ export default class FormBlock<T extends object> extends React.Component<
 					}
 					if (
 						i > 0 &&
-						typeof (this.props.children as React.ReactChild[])[
-							i - 1
-						] !== 'undefined' &&
-						!isInput(this.props.children[i - 1])
+						typeof (this.props.children as React.ReactChild[])[i - 1] !== 'undefined' &&
+						(this.props.children as React.ReactChild[])[i - 1] !== null &&
+						!isInput((this.props.children as React.ReactChild[])[i - 1])
 					) {
+						const children = this.props.children;
 						if (
-							typeof this.props.children[i - 1] === 'string' ||
-							typeof this.props.children[i - 1] === 'number'
+							typeof children === 'string' ||
+							typeof children === 'number' ||
+							typeof children === 'boolean'
+						) {
+							return;
+						}
+
+						if (!Array.isArray(children)) {
+							return;
+						}
+
+						const child = children[i - 1];
+
+						if (
+							typeof child === 'string' ||
+							typeof child === 'number' ||
+							typeof child === undefined ||
+							typeof child === null
 						) {
 							ret.unshift(
 								<Label key={i - 1} fullWidth={fullWidth}>
-									{this.props.children[i - 1]}
+									{child}
 								</Label>
 							);
 						} else {
-							if (this.props.children[i - 1].type !== Title) {
+							// @ts-ignore
+							if (isInput(child!) && child!.type !== Title) {
 								ret.unshift(
 									// @ts-ignore
-									React.cloneElement(
-										this.props.children[i - 1],
-										{
-											key: i - 1,
-											onUpdate: this.onUpdate,
-											onInitialize: this.onInitialize
-										}
-									)
+									React.cloneElement(child, {
+										key: i - 1,
+										onUpdate: this.onUpdate,
+										onInitialize: this.onInitialize
+									})
 								);
 							}
 						}
@@ -155,7 +151,8 @@ export default class FormBlock<T extends object> extends React.Component<
 	}
 
 	private onUpdate(e: { name: string; value: any }) {
-		this.fields[e.name] = e.value;
+		const name = e.name as keyof T;
+		this.fields[name] = e.value;
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
@@ -165,7 +162,8 @@ export default class FormBlock<T extends object> extends React.Component<
 	}
 
 	private onInitialize(e: { name: string; value: any }) {
-		this.fields[e.name] = e.value;
+		const name = e.name as keyof T;
+		this.fields[name] = e.value;
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,

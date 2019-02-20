@@ -1,15 +1,17 @@
 import * as React from 'react';
-import Button from 'src/components/Button';
-import { Checkbox, Label, Selector, SimpleRadioButton, TextInput } from 'src/components/forms/Form';
-import { CheckInput } from 'src/components/form-inputs/Selector';
-import { SimpleRadioProps } from 'src/components/form-inputs/SimpleRadioButton';
-import Loader from 'src/components/Loader';
-import SimpleForm from 'src/components/forms/SimpleForm';
-import Event from 'src/lib/Event';
-import { CAPMemberClasses } from 'src/lib/Members';
 import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
-import { AttendanceStatus } from '../../enums';
+import { AttendanceStatus } from 'common-lib/index';
+import { CAPMemberClasses } from '../../lib/Members';
+import { Member, MemberObject } from 'common-lib';
+import Selector, { CheckInput } from '../../components/form-inputs/Selector';
+import { TextInput } from '../../components/forms/Form';
+import SimpleRadioButton, { SimpleRadioProps } from '../../components/form-inputs/SimpleRadioButton';
+import Event from '../../lib/Event';
+import Loader from '../../components/Loader';
+import SimpleForm, { Label, Checkbox } from '../../components/forms/SimpleForm';
+import Button from '../../components/Button';
+import { InputProps } from '../../components/form-inputs/Input';
 
 enum SortFunction {
 	LASTNAME,
@@ -194,7 +196,7 @@ const memberFilter: CheckInput<Member, MemberList> = {
 			mem
 		);
 	},
-	filterInput: (props: SimpleRadioProps<MemberList>) => (
+	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""

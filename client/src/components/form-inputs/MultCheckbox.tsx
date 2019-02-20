@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { InputProps } from './Input';
+import { MultCheckboxReturn } from 'common-lib';
 
 interface MultCheckboxProps extends InputProps<MultCheckboxReturn> {
 	labels: string[];

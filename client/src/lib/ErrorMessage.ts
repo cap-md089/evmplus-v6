@@ -1,6 +1,7 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './Members';
+import { ErrorObject, NewClientErrorObject, ClientErrorObject, ServerErrorObject } from 'common-lib';
 
 export default class ErrorMessage extends APIInterface<ErrorObject> {
 	public static async Create(

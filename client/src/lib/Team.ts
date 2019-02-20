@@ -1,8 +1,18 @@
+import {
+	FullPreviousTeamMember,
+	FullTeamMember,
+	FullTeamObject,
+	Member,
+	MemberReference,
+	NewTeamObject,
+	RawTeamMember,
+	RawTeamObject
+} from 'common-lib';
+import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
-import { TeamPublicity } from '../enums';
 import Account from './Account';
 import APIInterface from './APIInterface';
-import MemberBase, { createCorrectMemberObject, CAPMemberClasses } from './Members';
+import MemberBase, { CAPMemberClasses, createCorrectMemberObject } from './Members';
 
 /**
  * A Team is a collection of people with a team leader, a mentor, and a coach
@@ -90,10 +100,22 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 
 	public teamHistory: FullPreviousTeamMember[];
 
-	public constructor(obj: RawTeamObject, private account: Account) {
+	public constructor(obj: FullTeamObject, private account: Account) {
 		super(account.id);
 
-		Object.assign(this, obj);
+		this.accountID = account.id;
+		this.id = obj.id;
+		this.members = obj.members;
+		this.name = obj.name;
+		this.seniorCoach = obj.seniorCoach;
+		this.seniorCoachName = obj.seniorCoachName;
+		this.seniorMentor = obj.seniorMentor;
+		this.seniorMentorName = obj.seniorMentorName;
+		this.visibility = obj.visibility;
+		this.teamHistory = obj.teamHistory;
+		this.cadetLeader = obj.cadetLeader;
+		this.cadetLeaderName = obj.cadetLeaderName;
+		this.description = obj.description;
 	}
 
 	public async delete(member: MemberBase): Promise<void> {
@@ -214,7 +236,8 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	}
 
 	public isMember(member: MemberReference): boolean {
-		return this.isLeader(member) || (
+		return (
+			this.isLeader(member) ||
 			this.members.filter(
 				mem => !MemberBase.AreMemberReferencesTheSame(member, mem.reference)
 			).length > 0
@@ -252,7 +275,9 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	public set(values: Partial<NewTeamObject>) {
 		for (const i in values) {
 			if (values.hasOwnProperty(i)) {
-				this[i] = values[i];
+				const _ = i as keyof Partial<NewTeamObject>;
+				// @ts-ignore
+				this[_] = values[_];
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Loader from 'src/components/Loader';
-import TextDisplay from 'src/components/TextDisplay';
-import BlogPage from 'src/lib/BlogPage';
 import Page, { PageProps } from '../Page';
-import Button from 'src/components/Button';
+import BlogPage from '../../lib/BlogPage';
+import Loader from '../../components/Loader';
+import Button from '../../components/Button';
+import TextDisplay from '../../components/TextDisplay';
 
 type DraftJS = typeof import('draft-js');
 

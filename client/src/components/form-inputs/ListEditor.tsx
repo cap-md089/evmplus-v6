@@ -2,6 +2,7 @@ import * as React from 'react';
 import Button from '../Button';
 import { InputProps } from './Input';
 import './ListEditor.css';
+import { Omit } from 'react-router';
 
 type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
 
@@ -76,9 +77,12 @@ export default class ListEditor<
 								...extraProps
 							};
 
+							// @ts-ignore
+							const input = <Input {...props} />;
+
 							return (
 								<div key={index}>
-									<Input {...props} />
+									{input}
 									{this.props.fullWidth ? (
 										<div
 											style={{

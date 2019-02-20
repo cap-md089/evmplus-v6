@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Pager from 'src/components/Pager';
-import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import Page, { PageProps } from '../Page';
+import BlogPost from '../../lib/BlogPost';
+import Pager from '../../components/Pager';
 
 type DraftJS = typeof import('draft-js');
 

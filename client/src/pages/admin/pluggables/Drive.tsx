@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Loader from 'src/components/Loader';
-import FileInterface from 'src/lib/File';
-import Page, { PageProps } from 'src/pages/Page';
+import Page, { PageProps } from '../../Page';
+import FileInterface from '../../../lib/File';
+import Loader from '../../../components/Loader';
 
 export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
 	public state: { list: string[] | null } = {

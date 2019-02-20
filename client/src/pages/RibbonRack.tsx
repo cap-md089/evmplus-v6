@@ -44,10 +44,10 @@ interface Ribbons {
 }
 
 class Ribbon extends React.Component<{
-	source: string;
+	source: keyof Ribbons;
 }> {
 	public render() {
-		const names = {
+		const names: { [P in keyof Ribbons]: string } = {
 			SilverValor: 'Silver Medal of Valor',
 			BronzeValor: 'Bronze Medal of Valor',
 			DistinguishedService: 'Distinguished Service Award',
@@ -83,7 +83,9 @@ class Ribbon extends React.Component<{
 			CAC: 'Cadet advisory Council',
 			NCSA: 'National Cadet Special Activity Ribbon',
 			Encampment: 'Encampment Ribbon',
-			Recruiter: 'Cadet Recruiter Ribbon'
+			Recruiter: 'Cadet Recruiter Ribbon',
+			ForeignWarVet: 'Foreign War Veteran',
+			SegwartsAssociation: 'Segwarts Association Award'
 		};
 
 		return (
@@ -92,9 +94,7 @@ class Ribbon extends React.Component<{
 				style={{
 					flex: `2 1 ${100 / 3}%`,
 					width: `${100 / 3}%`,
-					backgroundImage: `url(/images/cadet-ribbons/${
-						this.props.source
-					}.png)`,
+					backgroundImage: `url(/images/cadet-ribbons/${this.props.source}.png)`,
 					backgroundSize: '100%',
 					backgroundPosition: 'center',
 					height: 20
@@ -124,8 +124,8 @@ class RibbonRack extends React.Component<Partial<Ribbons>> {
 
 		for (const i in this.props) {
 			if (this.props.hasOwnProperty(i)) {
-				if (this.props[i]) {
-					ribbons.push(<Ribbon key={i} source={i} />);
+				if (this.props[i as keyof Ribbons]) {
+					ribbons.push(<Ribbon key={i} source={i as keyof Ribbons} />);
 				}
 			}
 		}

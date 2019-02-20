@@ -11,50 +11,17 @@ export class SimpleFileDisplayer extends React.Component<ItemProps> {
 				className="fileDisplayer"
 				onClick={e => {
 					e.stopPropagation();
-					const {
-						fileName,
-						accountID,
-						comments,
-						contentType,
-						created,
-						forDisplay,
-						forSlideshow,
-						id,
-						kind,
-						owner,
-						_id,
-						fileChildren,
-						parentID,
-						folderPath,
-						permissions
-					} = this.props;
 					this.props.onClick(
-						{
-							fileName,
-							accountID,
-							comments,
-							contentType,
-							created,
-							forDisplay,
-							forSlideshow,
-							id,
-							kind,
-							owner,
-							_id,
-							fileChildren,
-							parentID,
-							folderPath,
-							permissions
-						},
+						this.props.file,
 						this.props.selected
 					);
 				}}
 			>
 				<div
 					className={'box' + (this.props.selected ? ' selected' : '')}
-					title={this.props.fileName}
+					title={this.props.file.fileName}
 				>
-					{this.props.fileName}
+					{this.props.file.fileName}
 				</div>
 			</div>
 		);

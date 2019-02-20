@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { DialogueButtons } from 'src/components/dialogues/Dialogue';
-import DialogueButton from 'src/components/dialogues/DialogueButton';
-import Loader from 'src/components/Loader';
-import MemberBase, { CAPMemberClasses } from 'src/lib/Members';
-import Team from 'src/lib/Team';
 import Page, { PageProps } from '../Page';
+import MemberBase, { CAPMemberClasses } from '../../lib/Members';
+import Team from '../../lib/Team';
+import Loader from '../../components/Loader';
+import DialogueButton from '../../components/dialogues/DialogueButton';
+import { DialogueButtons } from '../../components/dialogues/Dialogue';
 
 interface TeamViewState {
 	members: CAPMemberClasses[] | null;

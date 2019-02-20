@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Page, { PageProps } from 'src/pages/Page';
+import Page, { PageProps } from '../../Page';
 
 interface NotificationsState {
 	notifications: Array<{}> | null;

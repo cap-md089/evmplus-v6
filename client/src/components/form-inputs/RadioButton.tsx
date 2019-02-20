@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { InputProps } from './Input';
+import { RadioReturn } from 'common-lib';
 
 export interface RadioProps<E extends number = number>
 	extends InputProps<RadioReturn<E>> {

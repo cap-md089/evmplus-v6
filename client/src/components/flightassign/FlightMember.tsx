@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { CAPMemberClasses } from 'src/lib/Members';
 
 import './FlightMember.css';
+import { CAPMemberClasses } from '../../lib/Members';
 
 interface FlightMemberProps {
 	onDragStart: () => void;

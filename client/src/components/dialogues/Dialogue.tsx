@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 import './Dialogue.css';
 
@@ -77,75 +77,79 @@ export default class Dialogue extends React.Component<
 		open: false
 	};
 
-	private mainDiv: HTMLDivElement;
+	private mainDiv: HTMLDivElement | null = null;
 
 	constructor(props: DialogueProps) {
 		super(props);
 	}
 
 	public componentDidMount() {
-		const div: JQuery = $(this.mainDiv).css({
-			zIndex: 5010,
-			position: 'fixed'
-		});
-
-		const mobile = $('body').hasClass('mobile');
-
-		if (!mobile) {
-			div.css({
-				left: '50%',
-				top: '50%',
-				'margin-left'() {
-					return -($(this).outerWidth() as number) / 2;
-				},
-				'margin-top'() {
-					return -($(this).outerHeight() as number) / 2;
-				}
+		if (this.mainDiv) {
+			const div: JQuery = $(this.mainDiv).css({
+				zIndex: 5010,
+				position: 'fixed'
 			});
-		} else {
-			div.css({
-				left: 0,
-				top: 0,
-				right: 0,
-				bottom: 0
-			});
+
+			const mobile = $('body').hasClass('mobile');
+
+			if (!mobile) {
+				div.css({
+					left: '50%',
+					top: '50%',
+					'margin-left'() {
+						return -($(this).outerWidth() as number) / 2;
+					},
+					'margin-top'() {
+						return -($(this).outerHeight() as number) / 2;
+					}
+				});
+			} else {
+				div.css({
+					left: 0,
+					top: 0,
+					right: 0,
+					bottom: 0
+				});
+			}
 		}
 
 		return true;
 	}
 
 	public componentDidUpdate() {
-		const div = $(this.mainDiv);
+		if (this.mainDiv) {
+			const div = $(this.mainDiv);
 
-		if (div.find('input[type=text]')[0]) {
-			div.find('input[type=text]')[0].focus();
+			if (div.find('input[type=text]')[0]) {
+				div.find('input[type=text]')[0].focus();
+			}
+
+			// if (this.props.open && !this.state.open) {
+			// 	div.animate(
+			// 		{
+			// 			opacity: 1
+			// 		},
+			// 		250,
+			// 		'swing'
+			// 	);
+			// 	this.setState({
+			// 		open: true
+			// 	});
+			// } else if (!this.props.open && this.state.open) {
+			// 	div.animate(
+			// 		{
+			// 			opacity: 0
+			// 		},
+			// 		250,
+			// 		'swing',
+			// 		() => {
+			// 			this.setState({
+			// 				open: false
+			// 			});
+			// 		}
+			// 	);
+			// }
 		}
-
-		// if (this.props.open && !this.state.open) {
-		// 	div.animate(
-		// 		{
-		// 			opacity: 1
-		// 		},
-		// 		250,
-		// 		'swing'
-		// 	);
-		// 	this.setState({
-		// 		open: true
-		// 	});
-		// } else if (!this.props.open && this.state.open) {
-		// 	div.animate(
-		// 		{
-		// 			opacity: 0
-		// 		},
-		// 		250,
-		// 		'swing',
-		// 		() => {
-		// 			this.setState({
-		// 				open: false
-		// 			});
-		// 		}
-		// 	);
-		// }
 	}
 
 	public render() {

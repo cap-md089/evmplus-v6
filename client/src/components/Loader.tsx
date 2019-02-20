@@ -9,19 +9,23 @@ export default class Loader extends React.Component<
 		display: false
 	};
 
-	private handle: NodeJS.Timer;
+	private handle: NodeJS.Timer | null = null;
 
 	public componentDidMount() {
 		this.handle = setInterval(() => {
 			this.setState({
 				display: true
 			});
-			clearInterval(this.handle);
+			if (this.handle) {
+				clearInterval(this.handle);
+			}
 		}, 200);
 	}
 
 	public componentWillUnmount() {
-		clearInterval(this.handle);
+		if (this.handle) {
+			clearInterval(this.handle);
+		}
 	}
 
 	public render() {

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Dialogue, { DialogueButtons } from './Dialogue';
 import Selector, { CheckInput } from '../form-inputs/Selector';
+import { Identifiable } from 'common-lib';
 
 interface DownloadProps<T extends Identifiable> {
 	valuePromise: Promise<T[]> | T[];

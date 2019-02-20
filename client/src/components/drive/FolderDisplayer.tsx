@@ -10,41 +10,8 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 				className="folderDisplayer"
 				onClick={e => {
 					e.stopPropagation();
-					const {
-						fileName,
-						accountID,
-						comments,
-						contentType,
-						created,
-						forDisplay,
-						forSlideshow,
-						id,
-						kind,
-						owner,
-						_id,
-						fileChildren,
-						parentID,
-						folderPath,
-						permissions
-					} = this.props;
 					this.props.onClick(
-						{
-							fileName,
-							accountID,
-							comments,
-							contentType,
-							created,
-							forDisplay,
-							forSlideshow,
-							id,
-							kind,
-							owner,
-							_id,
-							fileChildren,
-							parentID,
-							folderPath,
-							permissions
-						},
+						this.props.file,
 						this.props.selected
 					);
 				}}
@@ -52,7 +19,7 @@ export class FolderDisplayer extends React.Component<ItemProps> {
 				<div
 					className={'box' + (this.props.selected ? ' selected' : '')}
 				>
-					{this.props.fileName}
+					{this.props.file.fileName}
 				</div>
 			</div>
 		);

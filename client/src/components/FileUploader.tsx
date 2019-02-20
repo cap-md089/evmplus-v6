@@ -1,4 +1,4 @@
-import { HTTPError } from '../enums';
+import { HTTPError } from 'common-lib/index';
 import * as React from 'react';
 import FileInterface from '../lib/File';
 import MemberBase from '../lib/Members';

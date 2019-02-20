@@ -9,7 +9,7 @@
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-import * as $ from 'jquery/dist/jquery.slim';
+import $ from 'jquery/dist/jquery.slim';
 
 export const innerWrap = ( el: JQuery ) => {
 	// Wrap the content of the target element in a div with

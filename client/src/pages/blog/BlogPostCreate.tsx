@@ -1,12 +1,13 @@
 import * as React from 'react';
-import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
 import SimpleForm, {
 	LoadingTextArea,
 	TextInput
 } from '../../components/forms/SimpleForm';
-import { EditorState } from '../../lib/slowEditorState';
+import { EditorState } from 'draft-js';
 import Page, { PageProps } from '../Page';
+import { NewBlogPost } from 'common-lib';
+import BlogPost from '../../lib/BlogPost';
 
 type DraftJS = typeof import('draft-js');
 

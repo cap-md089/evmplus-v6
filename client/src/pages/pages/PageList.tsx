@@ -1,8 +1,8 @@
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
-import BlogPage from 'src/lib/BlogPage';
-import Loader from 'src/components/Loader';
-import DraggableBlogPage from 'src/components/DraggableBlogPage';
+import BlogPage from '../../lib/BlogPage';
+import Loader from '../../components/Loader';
+import DraggableBlogPage from '../../components/DraggableBlogPage';
 
 interface PagesLoading {
 	loading: true;

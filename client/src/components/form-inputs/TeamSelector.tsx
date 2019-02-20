@@ -1,11 +1,11 @@
 import * as React from 'react';
-import Team from 'src/lib/Team';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
 import Loader from '../Loader';
 import { DisabledText, FormBlock, Label, TextBox } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 import TextInput from './TextInput';
+import Team from '../../lib/Team';
 
 interface TeamSelectorProps extends InputProps<number | null> {
 	teamList: Promise<Team[]>;
@@ -127,7 +127,7 @@ export default class TeamSelector extends React.Component<
 		});
 	}
 
-	private setSelectedTeam(selectedValue: Team) {
+	private setSelectedTeam(selectedValue: Team | null) {
 		this.setState({
 			selectedValue
 		});

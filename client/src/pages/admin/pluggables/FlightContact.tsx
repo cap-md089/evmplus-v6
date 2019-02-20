@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Selector, { CheckInput } from 'src/components/form-inputs/Selector';
-import { TextInput } from 'src/components/forms/Form';
-import Loader from 'src/components/Loader';
-import { CAPNHQMember, CAPMemberClasses, CAPProspectiveMember } from 'src/lib/Members';
-import Page, { PageProps } from 'src/pages/Page';
-import Button from 'src/components/Button';
-import SimpleForm, { Label, RadioButton, Checkbox } from 'src/components/forms/SimpleForm';
 
 import './FlightContact.css';
 import { DateTime } from 'luxon';
+import Page, { PageProps } from '../../Page';
+import { CAPNHQMember, CAPMemberClasses, CAPProspectiveMember } from '../../../lib/Members';
+import { MemberReference, RadioReturn, Member, MemberObject } from 'common-lib';
+import Loader from '../../../components/Loader';
+import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
+import { TextInput } from '../../../components/forms/Form';
+import Button from '../../../components/Button';
+import SimpleForm, { Label, RadioButton, Checkbox } from '../../../components/forms/SimpleForm';
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (

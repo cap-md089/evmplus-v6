@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FileUserAccessControlPermissions } from '../../enums';
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
 import Button from '../Button';
@@ -9,8 +9,8 @@ export interface ExtraDisplayProps {
 	file: FileInterface;
 	member: MemberBase | null;
 	childRef: React.RefObject<HTMLDivElement>;
-	fileDelete: (file: FileObject) => void;
-	fileModify: (file: FileObject) => void;
+	fileDelete: (file: FileInterface) => void;
+	fileModify: (file: FileInterface) => void;
 }
 
 export interface CommentsForm {

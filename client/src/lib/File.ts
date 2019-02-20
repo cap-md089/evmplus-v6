@@ -1,11 +1,12 @@
 import {
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType
-} from '../enums';
+} from 'common-lib/index';
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 import urlFormat from './urlFormat';
+import { FullFileObject, FileControlListItem, MemberReference, MemberObject, FileTeamControlList, FileUserControlList } from 'common-lib';
 
 /**
  * Simple private class used to handle uploading the files
@@ -217,7 +218,18 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	public constructor(data: FullFileObject, public account: Account) {
 		super(account.id);
 
-		Object.assign(this, data);
+		this.id = data.id;
+		this.comments = data.comments;
+		this.created = data.created;
+		this.fileChildren = data.fileChildren;
+		this.fileName = data.fileName;
+		this.forDisplay = data.forDisplay;
+		this.forSlideshow = data.forSlideshow;
+		this.permissions = data.permissions;
+		this.parentID = data.parentID;
+		this.folderPath = data.folderPath;
+		this.owner = data.owner;
+		this.uploader = data.uploader;
 	}
 
 	/**

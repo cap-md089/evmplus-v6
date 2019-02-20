@@ -1,8 +1,9 @@
 import esp, { StackFrame } from 'error-stack-parser';
 import * as React from 'react';
-import MemberBase from 'src/lib/Members';
-import Account from 'src/lib/Account';
-import ErrorMessage from 'src/lib/ErrorMessage';
+import MemberBase from '../lib/Members';
+import { NewClientErrorObject } from 'common-lib';
+import ErrorMessage from '../lib/ErrorMessage';
+import Account from '../lib/Account';
 
 export default class ErrorHandler extends React.PureComponent<
 	{

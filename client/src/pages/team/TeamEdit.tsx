@@ -1,9 +1,10 @@
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
-import Team from 'src/lib/Team';
-import { CAPMemberClasses } from 'src/lib/Members';
-import Loader from 'src/components/Loader';
-import TeamForm from 'src/components/forms/usable-forms/TeamForm';
+import Team from '../../lib/Team';
+import { CAPMemberClasses } from '../../lib/Members';
+import Loader from '../../components/Loader';
+import TeamForm from '../../components/forms/usable-forms/TeamForm';
+import { NewTeamObject } from 'common-lib';
 
 interface TeamEditState {
 	team: Team | null;

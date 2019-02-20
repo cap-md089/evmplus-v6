@@ -101,14 +101,13 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
  * @param el
  */
 export function isInput(
-	el: React.ReactChild | React.ReactElement<any>
+	el: React.ReactChild | React.ReactElement<any> | boolean
 ): el is React.ReactElement<InputProps<any>> {
-	if (typeof el === 'string' || typeof el === 'number' || el === null) {
+	if (typeof el !== 'object') {
 		return false;
 	}
 	return (
 		el.type === TextInput ||
-		el.type === FileInput ||
 		el.type === TextArea ||
 		el.type === MultiRange ||
 		el.type === DateTimeInput ||
@@ -128,12 +127,16 @@ export function isInput(
 		el.type === TeamSelector ||
 		el.type === MemberSelector ||
 		el.type === TeamMemberInput ||
-		el.type === POCInput
+		el.type === POCInput ||
+		// @ts-ignore
+		el.type === FileInput
 	);
 }
 
 export const isFullWidthableElement = (
-	el: React.ReactElement<InputProps<any>>
+	el:
+		| React.ReactElement<InputProps<any>>
+		| React.ReactElement<InputProps<any> & { fullWidth: boolean }>
 ): el is React.ReactElement<InputProps<any> & { fullWidth: boolean }> =>
 	// @ts-ignore
 	typeof el.props.fullWidth !== 'undefined';
@@ -160,7 +163,7 @@ export type FormValidator<T> = { [K in keyof T]?: (value: T[K], allValues: T) =>
 /**
  * The properties a form itself requires
  */
-export interface FormProps<F extends {}> {
+export interface FormProps<F> {
 	/**
 	 * The function that is called when the user submits the form
 	 *
@@ -204,6 +207,8 @@ export interface FormProps<F extends {}> {
 	 * @param fields The fields to look at
 	 *
 	 * @returns Whether or not to load a previous save
+	 *
+	 * @deprecated Never implemented nor will ever be used
 	 */
 	shouldLoadPreviousFields?: (saveTime: number, fields: F) => boolean;
 	/**
@@ -256,9 +261,9 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		disabled: boolean;
 	}
 > {
-	protected fields = {} as C;
-	protected fieldsChanged = {} as { [K in keyof C]: boolean };
-	protected fieldsError = {} as { [K in keyof C]: boolean };
+	protected fields: C = {} as C;
+	protected fieldsChanged: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
+	protected fieldsError: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
 	protected hasError: boolean = false;
 
 	protected token: string = '';
@@ -320,14 +325,15 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 						}
 						return;
 					} else {
+						const childName: keyof C = child.props.name as keyof C;
 						const value =
 							typeof child.props.value !== 'undefined'
 								? child.props.value
 								: typeof this.props.values === 'undefined'
 								? ''
-								: typeof this.props.values[child.props.name] === 'undefined'
+								: typeof (this.props.values as C)[childName] === 'undefined'
 								? ''
-								: this.props.values[child.props.name];
+								: (this.props.values as C)[childName];
 
 						// typeof this.props.values !== 'undefined'
 						// 	? typeof this.props.values[
@@ -341,8 +347,8 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 						// 	: typeof child.props.value === 'undefined'
 						// 	? ''
 						// 	: child.props.value;
-						if (!this.fields[child.props.name]) {
-							this.fields[child.props.name] = value;
+						if (typeof this.fields[childName] === 'undefined') {
+							this.fields[childName] = value;
 						}
 						if (isFullWidthableElement(child)) {
 							fullWidth = child.props.fullWidth;
@@ -360,7 +366,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								onInitialize: this.onInitialize,
 								key: i + 1,
 								value,
-								hasError: this.fieldsError[child.props.name]
+								hasError: this.fieldsError[childName]
 							})
 						];
 					}
@@ -372,17 +378,35 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 							(this.props.children as React.ReactChild[])[i - 1] !== null &&
 							!isInput((this.props.children as React.ReactChild[])[i - 1])
 						) {
+							const children = this.props.children;
 							if (
-								typeof this.props.children[i - 1] === 'string' ||
-								typeof this.props.children[i - 1] === 'number'
+								typeof children === 'string' ||
+								typeof children === 'number' ||
+								typeof children === 'boolean'
+							) {
+								return;
+							}
+
+							if (!Array.isArray(children)) {
+								return;
+							}
+
+							const child = children[i - 1];
+
+							if (
+								typeof child === 'string' ||
+								typeof child === 'number' ||
+								typeof child === undefined ||
+								typeof child === null
 							) {
 								ret.unshift(
 									<Label key={i - 1} fullWidth={fullWidth}>
-										{this.props.children[i - 1]}
+										{child}
 									</Label>
 								);
 							} else {
-								if (this.props.children[i - 1].type !== Title) {
+								// @ts-ignore
+								if (isInput(child!) && child!.type !== Title) {
 									ret.unshift(
 										// @ts-ignore
 										React.cloneElement(this.props.children[i - 1], {
@@ -449,14 +473,16 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 	 * What is used to describe when a form element changes
 	 */
 	protected onChange(e: { name: string; value: any }) {
-		this.fields[e.name] = e.value;
-		this.fieldsChanged[e.name] = true;
+		const name = e.name as keyof C;
+		this.fields[name] = e.value;
+		this.fieldsChanged[e.name as keyof C] = true;
 
 		let error = false;
-		if (this.props.validator && this.props.validator[e.name]) {
-			error = this.props.validator[e.name](e.value, this.fields);
+		const validator = this.props.validator ? this.props.validator[name] : null;
+		if (validator) {
+			error = validator(e.value, this.fields);
 		}
-		this.fieldsError[e.name] = error;
+		this.fieldsError[e.name as keyof C] = error;
 
 		let hasError = false;
 		for (const i in this.fieldsError) {
@@ -478,14 +504,16 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 	}
 
 	protected onInitialize(e: { name: string; value: any }) {
-		this.fields[e.name] = e.value;
-		this.fieldsChanged[e.name] = false;
+		const name = e.name as keyof C;
+		this.fields[name] = e.value;
+		this.fieldsChanged[e.name as keyof C] = false;
 
 		let error = false;
-		if (this.props.validator && this.props.validator[e.name]) {
-			error = this.props.validator[e.name](e.value, this.fields);
+		const validator = this.props.validator ? this.props.validator[name] : null;
+		if (validator) {
+			error = validator(e.value, this.fields);
 		}
-		this.fieldsError[e.name] = error;
+		this.fieldsError[e.name as keyof C] = error;
 
 		let hasError = false;
 		for (const i in this.fieldsError) {

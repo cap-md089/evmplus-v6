@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { InputProps } from './Input'
+import { Identifiable } from 'common-lib';
 
 interface AutocompleteProps<T> extends InputProps<T> {
 	items: T[];

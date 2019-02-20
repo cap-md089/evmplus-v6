@@ -1,6 +1,7 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
 import { createCorrectMemberObject, CAPMemberClasses } from '../Members';
+import { NHQMemberObject, AbsenteeInformation, CAPMemberObject, MemberReference } from 'common-lib';
 
 /**
  * A class to represent the members that sign in to CAPNHQ.gov
@@ -41,6 +42,14 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	 * How long the member is absent for
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
+	/**
+	 * Whether or not the member is a senior member
+	 */
+	public seniorMember: boolean;
+	/**
+	 * Member squardon
+	 */
+	public squadron: string;
 
 	/**
 	 * Descriminator
@@ -57,6 +66,20 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	 */
 	public constructor(data: CAPMemberObject, requestingAccount: Account, sessionID: string) {
 		super(data, requestingAccount, sessionID);
+
+		if (typeof data.id === 'string') {
+			throw new Error('Invalid id');
+		}
+
+		this.id = data.id;
+		this.dutyPositions = data.dutyPositions;
+		this.orgid = data.orgid;
+		this.flight = data.flight;
+		this.absenteeInformation = data.absenteeInformation;
+		this.seniorMember = data.seniorMember;
+		this.squadron = data.squadron;
+		this.memberRank= data.memberRank
+		this.memberRankName = `${data.memberRank} ${this.getName()}`;
 	}
 
 	/**

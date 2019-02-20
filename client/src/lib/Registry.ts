@@ -1,5 +1,12 @@
-import APIInterface from './APIInterface';
+import {
+	BlogInformation,
+	RankAndFileInformation,
+	RegistryValues,
+	WebsiteContact,
+	WebsiteInformation
+} from 'common-lib';
 import Account from './Account';
+import APIInterface from './APIInterface';
 import MemberBase from './Members';
 
 /**
@@ -8,7 +15,7 @@ import MemberBase from './Members';
 export default class Registry extends APIInterface<RegistryValues> implements RegistryValues {
 	/**
 	 * Gets the Registry values for an account
-	 * 
+	 *
 	 * @param account The Account to get the registry for
 	 */
 	public static async Get(account: Account) {
@@ -37,11 +44,10 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 
 	/**
 	 * Holds blog information
-	 * 
+	 *
 	 * Also configures photo library
 	 */
 	public Blog: BlogInformation;
-
 
 	/**
 	 * Contains information such as the flights in the account
@@ -69,7 +75,7 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			Website: this.Website,
 			Blog: this.Blog,
 			RankAndFile: this.RankAndFile
-		}
+		};
 	}
 
 	public async save(member: MemberBase) {

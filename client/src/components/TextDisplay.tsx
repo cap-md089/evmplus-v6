@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { ContentState, EditorState, RawDraftContentState } from 'src/lib/slowEditorState';
 import Loader from './Loader';
+import { EditorState, ContentState, RawDraftContentState } from 'draft-js';
 
 interface LoadingTextState {
 	loaded: false;

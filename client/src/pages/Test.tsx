@@ -20,9 +20,10 @@ import Form, {
 } from '../components/forms/SimpleForm';
 import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
-import { PointOfContactType } from '../enums';
-import POCInput from 'src/components/form-inputs/POCInput';
-import { CAPMemberClasses } from 'src/lib/Members';
+import { PointOfContactType } from 'common-lib/index';
+import { Identifiable, MultCheckboxReturn, DisplayInternalPointOfContact, ExternalPointOfContact, RadioReturn } from 'common-lib';
+import { CAPMemberClasses } from '../lib/Members';
+import POCInput from '../components/form-inputs/POCInput';
 
 enum Test1 {
 	Opt1,

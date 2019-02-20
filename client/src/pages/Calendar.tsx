@@ -2,10 +2,11 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { EventStatus } from '../enums';
+import { EventStatus } from 'common-lib/index';
 import myFetch from '../lib/myFetch';
 import './Calendar.css';
 import Page, { PageProps } from './Page';
+import { EventObject } from 'common-lib';
 
 const getMonth = (month: number, year: number) =>
 	DateTime.utc()
@@ -64,12 +65,7 @@ const isIndexFree = (
 	return true;
 };
 
-const findIndex = (
-	calendar: CalendarData,
-	startDay: number,
-	endDay: number,
-	week: number
-) => {
+const findIndex = (calendar: CalendarData, startDay: number, endDay: number, week: number) => {
 	let testIndex = 0;
 
 	while (!isIndexFree(calendar, startDay, endDay, week, testIndex)) {
@@ -111,11 +107,7 @@ export default class Calendar extends Page<
 	};
 
 	public render() {
-		return this.state.events === null ? (
-			<Loader />
-		) : (
-			this.renderCalendar(this.state.events!)
-		);
+		return this.state.events === null ? <Loader /> : this.renderCalendar(this.state.events!);
 	}
 
 	public async componentDidMount() {
@@ -152,16 +144,11 @@ export default class Calendar extends Page<
 				: lastMonth.startOf('week');
 		const endOfNextMonth = nextMonth.endOf('week');
 
-		const res = await myFetch(
-			`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`,
-			{
-				headers: {
-					authorization: this.props.member
-						? this.props.member.sessionID
-						: ''
-				}
+		const res = await myFetch(`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`, {
+			headers: {
+				authorization: this.props.member ? this.props.member.sessionID : ''
 			}
-		);
+		});
 
 		const events = (await res.json()) as EventObject[];
 
@@ -186,17 +173,13 @@ export default class Calendar extends Page<
 
 		const firstDay = thisMonth.weekday % 7;
 
-		const numberWeeks =
-			Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) +
-			1;
+		const numberWeeks = Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) + 1;
 
 		const calendar: CalendarData = [];
 
 		const weird = lastMonth.startOf('week').day === lastMonth.day - 6;
 
-		const startOfLastMonthWeek = weird
-			? lastMonth
-			: lastMonth.startOf('week');
+		const startOfLastMonthWeek = weird ? lastMonth : lastMonth.startOf('week');
 
 		let i;
 		let j;
@@ -258,10 +241,7 @@ export default class Calendar extends Page<
 		}
 
 		events.sort(
-			(a, b) =>
-				b.endDateTime -
-				b.pickupDateTime -
-				(a.endDateTime - a.pickupDateTime)
+			(a, b) => b.endDateTime - b.pickupDateTime - (a.endDateTime - a.pickupDateTime)
 		);
 
 		events = events.reverse();
@@ -278,10 +258,7 @@ export default class Calendar extends Page<
 
 			if (startDate < thisMonth) {
 				startWeek = 0;
-				startDay =
-					+startDate + 7 * 24 * 3600 * 1000 < +thisMonth
-						? 0
-						: startDate.weekday;
+				startDay = +startDate + 7 * 24 * 3600 * 1000 < +thisMonth ? 0 : startDate.weekday;
 			} else if (startDate < nextMonth) {
 				startWeek =
 					Math.ceil((startDate.day - startDate.weekday) / 7) +
@@ -308,12 +285,7 @@ export default class Calendar extends Page<
 
 			for (let k = startWeek; k <= endWeek; k++) {
 				if (k === startWeek && k === endWeek) {
-					const index = findIndex(
-						calendar,
-						startDay % 7,
-						endDay % 7,
-						k
-					);
+					const index = findIndex(calendar, startDay % 7, endDay % 7, k);
 
 					calendar[k][startDay % 7].events[index] = {
 						block: false,
@@ -399,33 +371,27 @@ export default class Calendar extends Page<
 		for (const k of calendar) {
 			for (const l of k) {
 				for (let m = 0; m < l.events.length; m++) {
-					l.events[m] =
-						l.events[m] === undefined ? undefined : l.events[m];
+					l.events[m] = l.events[m] === undefined ? undefined : l.events[m];
 				}
 			}
 		}
 
 		return (
 			<div className="calendar">
-				{this.props.member &&
-				this.props.member.hasPermission('AddEvent') ? (
+				{this.props.member && this.props.member.hasPermission('AddEvent') ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
 				<table>
 					<caption>
 						<Link
-							to={`/calendar/${lastMonth.month}/${
-								lastMonth.year
-							}`}
+							to={`/calendar/${lastMonth.month}/${lastMonth.year}`}
 							className="left-link"
 						>
 							{MONTHS[lastMonth.month - 1]}
 						</Link>
 						{MONTHS[month - 1]} {year}
 						<Link
-							to={`/calendar/${nextMonth.month}/${
-								nextMonth.year
-							}`}
+							to={`/calendar/${nextMonth.month}/${nextMonth.year}`}
 							className="right-link"
 						>
 							{MONTHS[nextMonth.month - 1]}
@@ -447,35 +413,27 @@ export default class Calendar extends Page<
 									<td
 										key={l}
 										className={
-											item.month ===
-											thisMonth.get('month')
+											item.month === thisMonth.get('month')
 												? 'calendar-inmonth'
 												: 'calendar-outmonth'
 										}
 									>
-										<div className="date-name">
-											{item.day}
-										</div>
+										<div className="date-name">{item.day}</div>
 										<div className="events-list">
 											{item.events.map((val, m) =>
-												val === undefined ||
-												val.block === true ? (
+												val === undefined || val.block === true ? (
 													<div className="block" />
 												) : (
 													<div
 														className="event-container"
 														style={{
-															width: `calc(${val.width *
-																100}% + ${
+															width: `calc(${val.width * 100}% + ${
 																val.width
 															}px)`
 														}}
 													>
 														<Link
-															to={
-																'/eventviewer/' +
-																val.event.id
-															}
+															to={'/eventviewer/' + val.event.id}
 															key={m}
 															className="event-link"
 														>

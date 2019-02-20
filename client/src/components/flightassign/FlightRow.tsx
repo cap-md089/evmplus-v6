@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { CAPMemberClasses } from 'src/lib/Members';
-import * as jQuery from 'jquery';
+import jQuery from 'jquery';
 
 import './FlightRow.css';
 import FlightMember from './FlightMember';
+import { MemberReference } from 'common-lib';
+import { CAPMemberClasses } from '../../lib/Members';
 
 interface FlightRowProps {
 	open: boolean;

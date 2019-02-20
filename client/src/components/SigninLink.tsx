@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { MessageEventListener } from '../App';
-import { MemberCreateError } from '../enums';
+import { MemberCreateError } from 'common-lib/index';
 import Dialogue, { DialogueButtons } from './dialogues/Dialogue';
 import './Signin.css';
+import { SigninReturn } from 'common-lib';
 
 const errorMessages = {
 	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'Incorrect credentials',
@@ -28,8 +29,8 @@ class SigninLink extends React.Component<
 		error: MemberCreateError.NONE
 	};
 
-	private key: number;
-	private iframeRef: HTMLIFrameElement;
+	private key: number | null= null;
+	private iframeRef: HTMLIFrameElement | null = null;
 
 	constructor(
 		props: SigninReturn & {
@@ -55,8 +56,8 @@ class SigninLink extends React.Component<
 				open: false,
 				error: MemberCreateError.NONE
 			});
-			if (this.iframeRef.contentWindow) {
-				this.iframeRef.contentWindow.postMessage(
+			if (this.iframeRef!.contentWindow) {
+				this.iframeRef!.contentWindow.postMessage(
 					'done submitting',
 					'*'
 				);
@@ -69,7 +70,7 @@ class SigninLink extends React.Component<
 	}
 
 	public componentWillUnmount() {
-		MessageEventListener.unsubscribe(this.key);
+		MessageEventListener.unsubscribe(this.key!);
 	}
 
 	public render() {
@@ -98,7 +99,7 @@ class SigninLink extends React.Component<
 						</a>
 						<div className="signin-error">
 							{this.state.error !== MemberCreateError.NONE
-								? errorMessages[this.state.error]
+								? errorMessages[this.state.error as keyof typeof errorMessages]
 								: null}
 						</div>
 						<br />

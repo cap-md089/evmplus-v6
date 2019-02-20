@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { CAPMemberClasses } from 'src/lib/Members';
-import { TeamPublicity } from '../../../enums';
+import { TeamPublicity } from 'common-lib/index';
 import MemberSelector from '../../dialogues/MemberSelector';
 import TeamMemberInput, {
 	TeamMemberInputProps
@@ -16,6 +15,8 @@ import SimpleForm, {
 	Divider,
 	TextBox
 } from '../SimpleForm';
+import { NewTeamObject, NewTeamMember } from 'common-lib';
+import { CAPMemberClasses } from '../../../lib/Members';
 
 interface TeamFormProps {
 	team: NewTeamObject;

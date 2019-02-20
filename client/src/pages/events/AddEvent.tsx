@@ -1,9 +1,10 @@
 import * as React from 'react';
-import EventForm, { emptyEvent } from 'src/components/forms/usable-forms/EventForm';
-import Event from 'src/lib/Event';
 import Page, { PageProps } from '../Page';
-import Team from 'src/lib/Team';
-import { CAPMemberClasses } from 'src/lib/Members';
+import { NewEventObject } from 'common-lib';
+import { CAPMemberClasses } from '../../lib/Members';
+import Team from '../../lib/Team';
+import EventForm, { emptyEvent } from '../../components/forms/usable-forms/EventForm';
+import Event from '../../lib/Event';
 
 interface AddEventState {
 	event: NewEventObject;

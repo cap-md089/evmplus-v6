@@ -1,4 +1,4 @@
-import * as fetch2 from 'isomorphic-fetch';
+import fetch2 from 'isomorphic-fetch';
 import 'whatwg-fetch';
 
 // import { APIURL } from '../../../src/types';

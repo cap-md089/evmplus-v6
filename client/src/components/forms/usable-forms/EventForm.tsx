@@ -1,10 +1,6 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import Account from 'src/lib/Account';
-import MemberBase, { CAPMemberClasses } from 'src/lib/Members';
-import Registry from 'src/lib/Registry';
-import Team from 'src/lib/Team';
-import { PointOfContactType } from '../../../../../lib';
+import { PointOfContactType } from 'common-lib/index';
 import {
 	Checkbox,
 	FileInput,
@@ -24,6 +20,11 @@ import SimpleForm, {
 	RadioButton,
 	Title
 } from '../SimpleForm';
+import Registry from '../../../lib/Registry';
+import { NewEventObject, ExternalPointOfContact, DisplayInternalPointOfContact } from 'common-lib';
+import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
+import Team from '../../../lib/Team';
+import Account from '../../../lib/Account';
 
 export const Uniforms = [
 	'Dress Blue A',

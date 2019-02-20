@@ -1,13 +1,13 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Uniforms } from 'src/components/forms/usable-forms/EventForm';
-import { parseMultCheckboxReturn } from 'src/components/form-inputs/MultCheckbox';
-import Loader from 'src/components/Loader';
-import { SideNavigationItem } from 'src/components/SideNavigation';
-import Event from 'src/lib/Event';
 import Page, { PageProps } from './Page';
-import { EventStatus } from '../../../lib';
+import { SideNavigationItem } from '../components/SideNavigation';
+import Event from '../lib/Event';
+import Loader from '../components/Loader';
+import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
+import { Uniforms } from '../components/forms/usable-forms/EventForm';
+import { EventStatus } from 'common-lib/index';
 
 const margin10 = {
 	margin: '10px auto',

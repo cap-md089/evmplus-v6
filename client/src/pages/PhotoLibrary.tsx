@@ -1,11 +1,12 @@
 import * as React from 'react';
 import Page, { PageProps } from './Page';
-import urlFormat from 'src/lib/urlFormat';
-import * as jQuery from 'jquery';
-import myFetch from 'src/lib/myFetch';
+import jQuery from 'jquery';
 
 import './PhotoLibrary.css';
-import Dialogue, { DialogueButtons } from 'src/components/dialogues/Dialogue';
+import Dialogue, { DialogueButtons } from '../components/dialogues/Dialogue';
+import urlFormat from '../lib/urlFormat';
+import myFetch from '../lib/myFetch';
+import { FullFileObject } from 'common-lib';
 
 interface PhotoLibraryState {
 	imageIDs: string[];

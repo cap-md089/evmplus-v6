@@ -19,15 +19,6 @@ import('draft-js').then(mod => {
 	}
 });
 
-// tslint:disable-next-line:no-empty-interface
-interface MyEditorState extends EditorState {}
-
-// tslint:disable-next-line:no-empty-interface
-interface MyContentState extends ContentState {}
-
-// tslint:disable-next-line:no-empty-interface
-interface MyRawDraftContentState extends RawDraftContentState {}
-
 export default (): Promise<Returns> => {
 	if (draft !== null) {
 		return Promise.resolve({
@@ -39,11 +30,4 @@ export default (): Promise<Returns> => {
 			queue.push(res);
 		});
 	}
-};
-
-// Export only an interface so that we can use code splitting
-export {
-	MyEditorState as EditorState,
-	MyContentState as ContentState,
-	MyRawDraftContentState as RawDraftContentState
 };

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
-import MemberBase from 'src/lib/Members';
+import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';

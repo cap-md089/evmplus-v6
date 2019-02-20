@@ -1,9 +1,10 @@
 import * as React from 'react';
-import FlightRow from 'src/components/flightassign/FlightRow';
-import Loader from 'src/components/Loader';
-import { CAPMemberClasses } from 'src/lib/Members';
-import Page, { PageProps } from 'src/pages/Page';
-import Button from 'src/components/Button';
+import Page, { PageProps } from '../../Page';
+import Loader from '../../../components/Loader';
+import { CAPMemberClasses } from '../../../lib/Members';
+import FlightRow from '../../../components/flightassign/FlightRow';
+import Button from '../../../components/Button';
+import { MemberReference } from 'common-lib';
 
 interface FlightAssignStateLoaded {
 	members: CAPMemberClasses[];

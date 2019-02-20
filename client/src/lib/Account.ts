@@ -7,6 +7,7 @@ import myFetch from './myFetch';
 import Team from './Team';
 import BlogPost from './BlogPost';
 import BlogPage from './BlogPage';
+import { AccountObject, MemberReference, Member, EventObject, RawTeamObject, FullTeamObject, FileObject, FullFileObject, FullBlogPostObject, FullBlogPageObject } from 'common-lib';
 
 /**
  * Holds the account information for a provided account
@@ -72,7 +73,17 @@ export default class Account extends APIInterface<AccountObject>
 	protected constructor(data: AccountObject) {
 		super(data.id);
 
-		Object.assign(this, data);
+		this.adminIDs = data.adminIDs;
+		this.echelon = data.echelon;
+		this.expired = data.expired;
+		this.expires = data.expires;
+		this.id = data.id;
+		this.mainOrg = data.mainOrg;
+		this.orgIDs = data.orgIDs
+		this.paid = data.paid;
+		this.paidEventLimit = data.paidEventLimit;
+		this.unpaidEventLimit = data.unpaidEventLimit;
+		this.validPaid = data.validPaid;
 	}
 
 	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
@@ -132,7 +143,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const teams = await results.json();
 
-		return teams.map((t: RawTeamObject) => new Team(t, this));
+		return teams.map((t: FullTeamObject) => new Team(t, this));
 	}
 
 	/**

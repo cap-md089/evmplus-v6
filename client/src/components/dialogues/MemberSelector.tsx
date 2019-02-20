@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { CAPMemberClasses } from 'src/lib/Members';
 import Button from '../Button';
 import DownloadDialogue from './DownloadDialogue';
 import Loader from '../Loader';
 import { FormBlock, Label, TextBox, TextInput } from '../forms/SimpleForm';
 import { InputProps } from '../form-inputs/Input';
+import { MemberReference } from 'common-lib';
+import { CAPMemberClasses } from '../../lib/Members';
 
 interface MemberInputProps extends InputProps<MemberReference> {
 	memberList: Promise<CAPMemberClasses[]>;
@@ -126,7 +127,7 @@ export default class MemberSelector extends React.Component<
 		return member.getFullName();
 	}
 
-	private setSelectedMember(selectedValue: CAPMemberClasses) {
+	private setSelectedMember(selectedValue: CAPMemberClasses | null) {
 		this.setState({
 			selectedValue
 		});

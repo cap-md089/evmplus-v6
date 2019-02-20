@@ -14,6 +14,7 @@ import urlFormat from '../../lib/urlFormat';
 import Dialogue, { DialogueButtons } from '../dialogues/Dialogue';
 import FileDialogue from '../dialogues/FileDialogue';
 import { InputProps } from './Input';
+import { FileObject } from 'common-lib';
 
 export let index = 0;
 
@@ -591,12 +592,12 @@ export default class TextArea extends React.Component<
 		return 'not-handled';
 	}
 
-	private onFileSelect(file: [FileObject]) {
+	private onFileSelect(file: FileObject[]) {
 		this.setState({
 			fileDialogueOpen: false
 		});
 		if (this.imagePromise.resolve) {
-			this.imagePromise.resolve(file);
+			this.imagePromise.resolve([file[0]]);
 		}
 	}
 

@@ -12,41 +12,8 @@ export class SelectedFileDisplayer extends React.Component<
 				className="selectedFile"
 				onClick={e => {
 					e.stopPropagation();
-					const {
-						fileName,
-						accountID,
-						comments,
-						contentType,
-						created,
-						forDisplay,
-						forSlideshow,
-						id,
-						kind,
-						permissions,
-						owner,
-						_id,
-						fileChildren,
-						parentID,
-						folderPath
-					} = this.props;
 					this.props.onClick(
-						{
-							fileName,
-							accountID,
-							comments,
-							contentType,
-							created,
-							forDisplay,
-							forSlideshow,
-							id,
-							kind,
-							permissions,
-							owner,
-							_id,
-							fileChildren,
-							parentID,
-							folderPath
-						},
+						this.props.file,
 						this.props.selected
 					);
 				}}
@@ -56,10 +23,10 @@ export class SelectedFileDisplayer extends React.Component<
 					title={
 						this.props.red
 							? 'Invalid file selected'
-							: this.props.fileName
+							: this.props.file.fileName
 					}
 				>
-					{this.props.fileName}
+					{this.props.file.fileName}
 				</div>
 			</div>
 		);

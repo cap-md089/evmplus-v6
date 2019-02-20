@@ -1,20 +1,20 @@
+import { AttendanceRecord, MemberReference, NewAttendanceRecord } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import AttendanceForm from 'src/components/AttendanceForm';
-import { DialogueButtons } from 'src/components/dialogues/Dialogue';
-import DialogueButtonForm from 'src/components/dialogues/DialogueButtonForm';
-import { DateTimeInput, Label } from 'src/components/forms/Form';
-import { TextBox } from 'src/components/forms/SimpleForm';
-import MemberBase from 'src/lib/Members';
+import AttendanceForm from '../../components/AttendanceForm';
+import { DialogueButtons } from '../../components/dialogues/Dialogue';
+import DialogueButton from '../../components/dialogues/DialogueButton';
+import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import { parseMultCheckboxReturn } from '../../components/form-inputs/MultCheckbox';
+import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
+import { Activities, RequiredForms, Uniforms } from '../../components/forms/usable-forms/EventForm';
 import Loader from '../../components/Loader';
-import { EventStatus, PointOfContactType } from '../../enums';
+import SigninLink from '../../components/SigninLink';
+import { EventStatus, PointOfContactType } from 'common-lib/index';
 import Event from '../../lib/Event';
-import './EventViewer.css';
+import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
-import DialogueButton from 'src/components/dialogues/DialogueButton';
-import { Uniforms, Activities, RequiredForms } from 'src/components/forms/usable-forms/EventForm';
-import SigninLink from 'src/components/SigninLink';
+import './EventViewer.css';
 
 const noop = () => void 0;
 

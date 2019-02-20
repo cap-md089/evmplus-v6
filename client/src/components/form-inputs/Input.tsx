@@ -1,5 +1,5 @@
 import * as React from 'react';
-import MemberBase from 'src/lib/Members';
+import MemberBase from '../../lib/Members';
 import Account from '../../lib/Account';
 
 export interface InputProps<V> {
@@ -17,7 +17,7 @@ export interface InputProps<V> {
 	 * 
 	 * @param {{name: string, value: V}} event The form event
 	 */
-	onUpdate?: (e?: {
+	onUpdate?: (e: {
 		name: string,
 		value: V
 	}) => void;
@@ -28,7 +28,7 @@ export interface InputProps<V> {
 	 * 
 	 * @param {{name: string, value: V}} event The form event
 	 */
-	onInitialize?: (e?: {
+	onInitialize?: (e: {
 		name: string,
 		value: V
 	}) => void;

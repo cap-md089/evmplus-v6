@@ -13,6 +13,7 @@ import FileUploader from '../FileUploader';
 import { FolderDisplayer } from '../drive/FolderDisplayer';
 import Loader from '../Loader';
 import { SelectedFileDisplayer } from './dialogue-components/SelectedFileDisplayer';
+import { FileObject } from 'common-lib';
 
 enum FileDialogueView {
 	MYDRIVE,
@@ -21,8 +22,9 @@ enum FileDialogueView {
 	UPLOAD
 }
 
-export interface ItemProps extends FileObject {
-	onClick: (file: FileObject, selected: boolean) => void;
+export interface ItemProps {
+	file: FileInterface;
+	onClick: (file: FileInterface, selected: boolean) => void;
 	selected: boolean;
 }
 
@@ -47,7 +49,7 @@ export interface FileDialogueProps {
 	 *
 	 * If it returns a boolean value, it stays open; otherwise it closes
 	 */
-	onReturn: (ids: FileObject[]) => void;
+	onReturn: (ids: FileInterface[]) => void;
 	/**
 	 * Used to filter all the files to show only the desired ones to be selected
 	 *
@@ -57,7 +59,7 @@ export interface FileDialogueProps {
 	filter?: (
 		element: FileObject,
 		index: number,
-		array: FileObject[]
+		array: FileInterface[]
 	) => boolean;
 	/**
 	 * Whether or not one file is to be returned
@@ -172,7 +174,7 @@ export default class FileDialogue extends React.Component<
 					{this.state.selectedFiles.map((file, i) => (
 						<SelectedFileDisplayer
 							key={i}
-							{...file}
+							file={file}
 							onClick={this.handleSelectedFileDelete}
 							selected={true}
 							red={
@@ -253,7 +255,7 @@ export default class FileDialogue extends React.Component<
 								)
 								.map((folder, i) => (
 									<FolderDisplayer
-										{...folder}
+										file={folder}
 										key={i}
 										onClick={this.onFolderClick}
 										selected={
@@ -276,7 +278,7 @@ export default class FileDialogue extends React.Component<
 								)
 								.map((file, i) => (
 									<SimpleFileDisplayer
-										{...file}
+										file={file}
 										key={i}
 										onClick={this.onFileClick}
 										selected={

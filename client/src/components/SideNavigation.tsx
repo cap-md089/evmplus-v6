@@ -1,9 +1,10 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 import * as React from 'react';
 import { Link, withRouter, RouteComponentProps } from 'react-router-dom';
-import { MemberCreateError } from '../enums';
+import { MemberCreateError } from 'common-lib/index';
 import SigninLink from './SigninLink';
-import MemberBase from 'src/lib/Members';
+import MemberBase from '../lib/Members';
+import { SigninReturn } from 'common-lib';
 
 class SideNavigationLink extends React.Component<{ target: string }> {
 	public render() {
@@ -129,6 +130,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 			</div>
 		);
 	}
+
 
 	private signOut() {
 		this.props.authorizeUser({

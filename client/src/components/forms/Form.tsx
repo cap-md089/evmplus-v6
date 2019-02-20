@@ -23,7 +23,7 @@ import SimpleForm, {
 	TeamMemberInput
 } from './SimpleForm';
 
-export { FormProps, Label, Title } from './SimpleForm';
+export { Label, Title } from './SimpleForm';
 export {
 	Checkbox,
 	DateTimeInput,
@@ -101,11 +101,12 @@ class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends Simp
 			>
 				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
 					if (isInput(child)) {
+						const childName: keyof C = child.props.name as keyof C;
 						const value =
 							typeof this.props.values !== 'undefined'
-								? typeof this.props.values[child.props.name] === 'undefined'
+								? typeof (this.props.values as C)[childName] === 'undefined'
 									? ''
-									: this.props.values[child.props.name]
+									: (this.props.values as C)[childName]
 								: typeof child.props.value === 'undefined'
 								? ''
 								: child.props.value;

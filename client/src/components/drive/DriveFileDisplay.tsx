@@ -1,8 +1,8 @@
+import { FileObject } from 'common-lib';
 import * as React from 'react';
-
-import urlFormat from '../../lib/urlFormat';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
+import urlFormat from '../../lib/urlFormat';
 
 export interface FileDisplayProps {
 	file: FileInterface;
@@ -25,16 +25,13 @@ export default (props: FileDisplayProps) => (
 				<div
 					style={{
 						backgroundImage:
-							'url(' +
-							urlFormat('api', 'files', props.file.id, 'export') +
-							')'
+							'url(' + urlFormat('api', 'files', props.file.id, 'export') + ')'
 					}}
 				/>
 			) : null}
 		</div>
 		<div className="info-display">
-			{props.file.fileName} (
-			<a href={`/api/files/${props.file.id}/download`}>Download</a>)
+			{props.file.fileName} (<a href={`/api/files/${props.file.id}/download`}>Download</a>)
 		</div>
 	</div>
 );

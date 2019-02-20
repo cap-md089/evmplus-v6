@@ -1,12 +1,9 @@
 import * as React from 'react';
-import Loader from 'src/components/Loader';
-import SimpleForm, {
-	LoadingTextArea,
-	TextInput
-} from 'src/components/forms/SimpleForm';
-import BlogPage from 'src/lib/BlogPage';
-import { EditorState } from 'src/lib/slowEditorState';
 import Page, { PageProps } from '../Page';
+import { EditorState } from 'draft-js';
+import Loader from '../../components/Loader';
+import SimpleForm, { TextInput, LoadingTextArea } from '../../components/forms/SimpleForm';
+import BlogPage from '../../lib/BlogPage';
 
 interface UnloadedCreateState {
 	loaded: false;

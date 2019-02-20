@@ -7,7 +7,9 @@ import App, { MessageEventListener } from './App';
 import './lib/MemberBase';
 import MemberBase from './lib/MemberBase';
 import './nhq.css';
-import './polyfills';
+import polyfill from './polyfills';
+
+polyfill();
 
 const basicInfo: {
 	member: MemberBase | null;

@@ -1,5 +1,6 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
+import { ProspectiveMemberObject, AbsenteeInformation, MemberReference } from 'common-lib';
 
 /**
  * A class to represent those wanting to join a CAP squadron
@@ -40,11 +41,19 @@ export default class CAPProspectiveMember extends MemberBase
 	/**
 	 * The flight for a member, if a cadet
 	 */
-	public flight: string;
+	public flight: string | null;
 	/**
 	 * Describes how long the member is absent for
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
+	/**
+	 * Member squardon
+	 */
+	public squadron: string;
+	/**
+	 * Whether or not the member is a senior member
+	 */
+	public seniorMember: boolean;
 
 	/**
 	 * Descriminator for TypeScript
@@ -64,6 +73,16 @@ export default class CAPProspectiveMember extends MemberBase
 		sessionID: string
 	) {
 		super(data, requestingAccount, sessionID);
+
+		this.id = data.id;
+		this.memberRank = data.memberRank;
+		this.memberRankName = `${this.memberRank} ${this.getName()}`;
+		this.dutyPositions = data.dutyPositions;
+		this.orgid = data.orgid;
+		this.flight = data.flight;
+		this.absenteeInformation = data.absenteeInformation;
+		this.squadron = data.squadron;
+		this.seniorMember = data.seniorMember;
 	}
 
 	public getReference = (): MemberReference => ({

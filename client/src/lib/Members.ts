@@ -4,7 +4,8 @@ import Account from './Account';
 import CAPNHQMember from './members/CAPNHQMember';
 import CAPProspectiveMember from './members/CAPProspectiveMember';
 import myFetch from './myFetch';
-import { MemberCreateError } from '../enums';
+import { MemberCreateError } from 'common-lib/index';
+import { Member, SigninReturn } from 'common-lib';
 
 export { CAPProspectiveMember, CAPNHQMember };
 

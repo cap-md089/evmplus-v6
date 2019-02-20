@@ -1,10 +1,11 @@
 import * as React from 'react';
-import EventForm from 'src/components/forms/usable-forms/EventForm';
-import { CAPMemberClasses } from 'src/lib/Members';
-import Team from 'src/lib/Team';
 import Loader from '../../components/Loader';
 import Event from '../../lib/Event';
 import Page, { PageProps } from '../Page';
+import { CAPMemberClasses } from '../../lib/Members';
+import Team from '../../lib/Team';
+import EventForm from '../../components/forms/usable-forms/EventForm';
+import { NewEventObject } from 'common-lib';
 
 interface ModifyEventState {
 	event: null | Event;

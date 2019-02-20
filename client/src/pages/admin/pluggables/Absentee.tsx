@@ -1,9 +1,9 @@
 import * as React from 'react';
-import Form from 'src/components/forms/Form';
-import { DateTimeInput, TextInput, Label } from 'src/components/forms/SimpleForm';
-import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from 'src/lib/Members';
-import Page, { PageProps } from 'src/pages/Page';
 import './Absentee.css';
+import { AbsenteeInformation } from 'common-lib';
+import Page, { PageProps } from '../../Page';
+import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
+import Form, { Label, DateTimeInput, TextInput } from '../../../components/forms/Form';
 
 interface AbsenteeState {
 	absentee: AbsenteeInformation;
@@ -48,7 +48,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			<div className="widget">
 				<div className="widget-title">Absent?</div>
 				<div className="widget-body">
-					<Form
+					<Form<AbsenteeInformation>
 						className="absentee-form"
 						submitInfo={{
 							text: 'Submit',

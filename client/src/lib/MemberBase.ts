@@ -1,27 +1,30 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
 import Event from './Event';
+import {
+	MemberObject,
+	CAPMemberContact,
+	MemberReference,
+	MemberType,
+	Omit,
+	MemberPermission,
+	MemberPermissions,
+	AbsenteeInformation
+} from 'common-lib';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
 	implements MemberObject {
 	/**
 	 * Checks that two member references point to the same person
-	 * 
+	 *
 	 * @param ref1 The first member reference
 	 * @param ref2 The second memeber reference
 	 */
-	public static AreMemberReferencesTheSame(
-		ref1: MemberReference,
-		ref2: MemberReference
-	) {
-		return ref1.type === 'Null' || ref2.type === 'Null'
-			? false
-			: ref1.id === ref2.id;
+	public static AreMemberReferencesTheSame(ref1: MemberReference, ref2: MemberReference) {
+		return ref1.type === 'Null' || ref2.type === 'Null' ? false : ref1.id === ref2.id;
 	}
 
-	public static IsRioux(
-		ref: MemberReference | number | string | MemberBase | null
-	): boolean {
+	public static IsRioux(ref: MemberReference | number | string | MemberBase | null): boolean {
 		if (ref === null) {
 			return false;
 		} else if (typeof ref === 'number' || typeof ref === 'string') {
@@ -41,17 +44,9 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public id: number | string;
 	/**
-	 * Whether or not the member is a senior member
-	 */
-	public seniorMember: boolean;
-	/**
 	 * Contact information
 	 */
 	public contact: CAPMemberContact;
-	/**
-	 * Member squardon
-	 */
-	public squadron: string;
 	/**
 	 * The first name of the member
 	 */
@@ -86,7 +81,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	public permissions: MemberPermissions;
 	/**
 	 * Shows how long the member is absent for
-	 * 
+	 *
 	 * Should not be used if null or if the time has passed
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
@@ -100,13 +95,13 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 * Another method is the instanceof operator, but to each their own
 	 * That method would probably work better however
 	 */
-	public abstract type: MemberType;
+	public abstract type: Exclude<MemberType, 'Null'>;
 
 	/**
 	 * Initializes the fields for a member object
-	 * 
+	 *
 	 * TODO: Don't use Object#assign()
-	 * 
+	 *
 	 * @param data The member object that this member represents
 	 * @param requestingAccount The account that is used to get this member,
 	 * 		not the account the member belongs to!
@@ -119,14 +114,24 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	) {
 		super(requestingAccount.id);
 
-		Object.assign(this, data);
+		this.id = data.id;
+		this.nameFirst = data.nameFirst;
+		this.nameLast = data.nameLast;
+		this.nameMiddle = data.nameMiddle;
+		this.nameSuffix = data.nameSuffix;
+		this.permissions = data.permissions;
+		this.absenteeInformation = data.absenteeInformation;
+		this.permissions = data.permissions;
+		this.contact = data.contact;
+		this.teamIDs = data.teamIDs;
+		this.usrID = data.usrID;
 
-		this.isRioux = (this.id === 542488 || this.id === 546319)
+		this.isRioux = this.id === 542488 || this.id === 546319;
 	}
 
 	/**
 	 * Similar to MemberBase#AreMemberReferencesTheSame
-	 * 
+	 *
 	 * @param ref The reference to check
 	 */
 	public matchesReference(ref: MemberReference): boolean {
@@ -135,7 +140,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 	/**
 	 * Convenient function for getting the name of a person
-	 * 
+	 *
 	 * It used to try to standardize the input, but it does not do as much anymore
 	 * Names are stupidly inconsistent...
 	 */
@@ -150,10 +155,10 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 	/**
 	 * Checks if the user has permission to do what is requested
-	 * 
+	 *
 	 * Allows for a threshold to be given, but most permissions are boolean
 	 * However, there are some permissions with multiple levels
-	 * 
+	 *
 	 * Also checks for if the member is marked isRioux, allowing for super
 	 * admins
 	 */
@@ -161,18 +166,18 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		permission: MemberPermission | MemberPermission[],
 		threshold = 1
 	): boolean =>
-		(MemberBase.useRiouxPermission && this.isRioux)
+		MemberBase.useRiouxPermission && this.isRioux
 			? true
 			: typeof permission === 'string'
-				? this.permissions[permission] >= threshold
-				: permission
+			? this.permissions[permission] >= threshold
+			: permission
 					.map(perm => this.hasPermission(perm, threshold))
 					.reduce((a, b) => a || b, false);
 
 	/**
 	 * Checks if the member matches without using the == operator, as that
 	 * checks JavaScript references vs. Member references
-	 * 
+	 *
 	 * @param mem The member to check
 	 */
 	public is(mem: MemberBase) {
@@ -181,7 +186,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 	/**
 	 * Returns the best email for the member
-	 * 
+	 *
 	 * There is an order of priority and email vs parent emails
 	 */
 	public getBestEmail = () =>
@@ -194,7 +199,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 	/**
 	 * Returns the best phone number for the member
-	 * 
+	 *
 	 * There is an order of priority and email vs parent emails
 	 */
 	public getBestPhone = () =>
@@ -217,7 +222,9 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		return this.getName();
 	}
 
-	public async updateFlights(flights: Array<{member: MemberReference, newFlight: string | null}>) {
+	public async updateFlights(
+		flights: Array<{ member: MemberReference; newFlight: string | null }>
+	) {
 		if (!this.hasPermission('FlightAssign')) {
 			throw new Error('Invalid permissions');
 		}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PointOfContactType } from '../../enums';
+import { PointOfContactType } from 'common-lib/index';
 import { createCorrectMemberObject, CAPMemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
@@ -7,6 +7,7 @@ import { Checkbox, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
+import { PointOfContact, DisplayInternalPointOfContact, ExternalPointOfContact, MemberObject, CAPMemberObject, Member } from 'common-lib';
 
 const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;

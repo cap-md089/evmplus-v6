@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import MemberBase from 'src/lib/Members';
-import Page, { PageProps } from 'src/pages/Page';
+import Page, { PageProps } from '../../Page';
+import MemberBase from '../../../lib/Members';
 
 export const shouldRenderSiteAdmin = (props: PageProps) => {
 	return (

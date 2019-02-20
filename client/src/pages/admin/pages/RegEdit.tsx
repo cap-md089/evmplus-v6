@@ -1,13 +1,7 @@
 import * as React from 'react';
-import Page, { PageProps } from 'src/pages/Page';
-import SimpleForm, {
-	Title,
-	Label,
-	NumberInput,
-	FormBlock,
-	TextInput,
-	ListEditor
-} from 'src/components/forms/SimpleForm';
+import { Omit, RegistryValues } from 'common-lib';
+import Page, { PageProps } from '../../Page';
+import SimpleForm, { Title, FormBlock, Label, NumberInput, TextInput, ListEditor } from '../../../components/forms/SimpleForm';
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 
@@ -110,7 +104,7 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		}
 
 		return (
-			<SimpleForm
+			<SimpleForm<RegEditValues>
 				onChange={this.onFormChange}
 				onSubmit={this.onFormSubmit}
 				values={this.state}

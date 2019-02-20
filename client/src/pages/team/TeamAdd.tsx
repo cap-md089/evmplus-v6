@@ -1,9 +1,10 @@
 import * as React from 'react';
-import TeamForm from 'src/components/forms/usable-forms/TeamForm';
-import { CAPMemberClasses } from 'src/lib/Members';
-import { TeamPublicity } from '../../enums';
+import { TeamPublicity } from 'common-lib/index';
 import Page, { PageProps } from '../Page';
-import Team from 'src/lib/Team';
+import { NewTeamObject } from 'common-lib';
+import { CAPMemberClasses } from '../../lib/Members';
+import TeamForm from '../../components/forms/usable-forms/TeamForm';
+import Team from '../../lib/Team';
 
 interface TeamAddState {
 	team: NewTeamObject;

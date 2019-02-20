@@ -2,6 +2,7 @@ import * as React from 'react';
 import { InputProps } from './Input';
 import './Selector.css';
 import TextInput from './TextInput';
+import { Identifiable } from 'common-lib';
 
 export interface CheckInput<I, T = any> {
 	displayText: string;

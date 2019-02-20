@@ -2,6 +2,7 @@ import APIInterface from './APIInterface';
 import { RawDraftContentState } from 'draft-js';
 import MemberBase from './Members';
 import Account from './Account';
+import { BlogPostObject, FullBlogPostObject, NewBlogPost, MemberReference } from 'common-lib';
 
 export default class BlogPost extends APIInterface<BlogPostObject>
 	implements FullBlogPostObject {
@@ -82,6 +83,7 @@ export default class BlogPost extends APIInterface<BlogPostObject>
 	public set(values: Partial<NewBlogPost>) {
 		for (const i in values) {
 			if (values.hasOwnProperty(i)) {
+				// @ts-ignore
 				this[i] = values[i];
 			}
 		}

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import BlogPage from 'src/lib/BlogPage';
 import './DraggableBlogPage.css';
+import BlogPage from '../lib/BlogPage';
 
 interface DraggableBlogPageProps {
 	page: BlogPage;

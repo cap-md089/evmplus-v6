@@ -1,9 +1,9 @@
 import * as React from 'react';
-import FileInterface from 'src/lib/File';
-import { FileUserAccessControlPermissions } from '../../enums';
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import Button from '../Button';
 import { CommentsForm, ExtraDisplayProps } from './DriveExtraFileDisplay';
 import Form, { BigTextBox, Label } from '../forms/Form';
+import FileInterface from '../../lib/File';
 
 export default class ExtraFolderDisplay extends React.Component<
 	ExtraDisplayProps & { currentFolderID: string },

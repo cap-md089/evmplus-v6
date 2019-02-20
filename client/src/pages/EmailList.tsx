@@ -1,8 +1,8 @@
+import { Member, MemberObject, RadioReturn } from 'common-lib';
 import * as React from 'react';
 import Button from '../components/Button';
+import { InputProps } from '../components/form-inputs/Input';
 import { CheckInput } from '../components/form-inputs/Selector';
-import { SimpleRadioProps } from '../components/form-inputs/SimpleRadioButton';
-import Loader from '../components/Loader';
 import SimpleForm, {
 	Checkbox,
 	Label,
@@ -11,8 +11,9 @@ import SimpleForm, {
 	SimpleRadioButton,
 	TextInput
 } from '../components/forms/SimpleForm';
+import Loader from '../components/Loader';
+import { CAPMemberClasses } from '../lib/Members';
 import Page, { PageProps } from './Page';
-import { CAPMemberClasses } from 'src/lib/Members';
 
 const memberRanks = [
 	'cab',
@@ -184,7 +185,7 @@ const memberFilter: CheckInput<Member, MemberList> = {
 			mem
 		);
 	},
-	filterInput: (props: SimpleRadioProps<MemberList>) => (
+	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""

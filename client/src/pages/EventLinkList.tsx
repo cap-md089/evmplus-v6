@@ -1,12 +1,12 @@
+import { EchelonEventNumber, EventStatus } from 'common-lib/index';
+import { DateTime } from 'luxon';
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import Loader from '../components/Loader';
 import Event from '../lib/Event';
-import Page, { PageProps } from './Page';
-import { Link } from 'react-router-dom';
 import './EventLinkList.css';
-import { EventStatus } from '../enums';
-import { EchelonEventNumber } from '../enums';
-import { DateTime } from 'luxon';
+import Page, { PageProps } from './Page';
+import { RadioReturn } from 'common-lib';
 
 interface EventLinkListState {
 	eventList: Event[] | null;

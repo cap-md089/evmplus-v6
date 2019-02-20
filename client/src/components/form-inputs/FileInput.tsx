@@ -6,6 +6,7 @@ import FileDialogue from '../dialogues/FileDialogue';
 import Loader from '../Loader';
 import './FileInput.css';
 import { InputProps } from './Input';
+import { FileObject } from 'common-lib';
 
 interface FileInputState {
 	files: FileInterface[];
@@ -226,7 +227,7 @@ export default class FileInput extends React.Component<
 		}
 	}
 
-	private onFileRemove(file: FileInterface) {
+	private onFileRemove(file: FileObject) {
 		let files = this.state.files.slice(0);
 
 		files = files.filter(f => f.id !== file.id);

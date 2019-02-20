@@ -1,10 +1,21 @@
 import APIInterface from './APIInterface';
-import { EventStatus } from '../enums';
+import { EventStatus } from 'common-lib/index';
 import MemberBase from './MemberBase';
 import Account from './Account';
-import { PointOfContactType } from '../enums';
-import { EchelonEventNumber } from '../../../lib';
+import { PointOfContactType, EchelonEventNumber } from 'common-lib/index';
 import { CAPMemberClasses } from './Members';
+import {
+	EventObject,
+	NewEventObject,
+	RadioReturn,
+	DisplayInternalPointOfContact,
+	ExternalPointOfContact,
+	MemberReference,
+	AttendanceRecord,
+	NewAttendanceRecord,
+	MultCheckboxReturn,
+	DebriefItem
+} from 'common-lib';
 
 /**
  * Represents an event for the squadron calendar
@@ -117,7 +128,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public acceptSignups: boolean;
 
-	public signUpDenyMessage: string;
+	public signUpDenyMessage: string | null;
 
 	public publishToWingCalendar: boolean;
 
@@ -143,7 +154,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public signUpPartTime: boolean;
 
-	public teamID: number;
+	public teamID: number | null;
 
 	public limitSignupsToTeam: boolean | null;
 
@@ -159,7 +170,51 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
 
-		Object.assign(this, data);
+		this.id = data.id;
+		this.limitSignupsToTeam = data.limitSignupsToTeam;
+		this.location = data.location;
+		this.lodgingArrangments = data.lodgingArrangments;
+		this.mealsDescription = data.mealsDescription;
+		this.meetDateTime = data.meetDateTime;
+		this.meetLocation = data.meetLocation;
+		this.name = data.name;
+		this.participationFee = data.participationFee;
+		this.pickupDateTime = data.pickupDateTime;
+		this.pickupLocation = data.pickupLocation;
+		this.pointsOfContact = data.pointsOfContact;
+		this.publishToWingCalendar = data.publishToWingCalendar;
+		this.regionEventNumber = data.regionEventNumber;
+		this.registration = data.registration;
+		this.requiredEquipment = data.requiredEquipment;
+		this.requiredForms = data.requiredForms;
+		this.showUpcoming = data.showUpcoming;
+		this.signUpDenyMessage = data.signUpDenyMessage;
+		this.signUpPartTime = data.signUpPartTime;
+		this.sourceEvent = data.sourceEvent;
+		this.startDateTime = data.startDateTime;
+		this.status = data.status;
+		this.teamID = data.teamID;
+		this.timeCreated = data.timeCreated;
+		this.timeModified = data.timeModified;
+		this.transportationDescription = data.transportationDescription;
+		this.transportationProvided = data.transportationProvided;
+		this.uniform = data.uniform;
+		this.wingEventNumber = data.wingEventNumber;
+		this.fileIDs = data.fileIDs;
+		this.attendance = data.attendance;
+		this.administrationComments = data.administrationComments;
+		this.activity = data.activity;
+		this.acceptSignups = data.acceptSignups;
+		this.accountID = data.accountID;
+		this.author = data.author;
+		this.comments = data.comments;
+		this.complete = data.complete;
+		this.debrief = data.debrief;
+		this.desiredNumberOfParticipants = data.desiredNumberOfParticipants;
+		this.endDateTime = data.endDateTime;
+		this.eventWebsite = data.eventWebsite;
+		this.groupEventNumber = data.groupEventNumber;
+		this.highAdventureDescription = data.highAdventureDescription;
 	}
 
 	public toRaw(): EventObject {
@@ -375,8 +430,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		}
 
 		if (attendanceIndex !== '') {
-			this.attendance[attendanceIndex] = {
-				...this.attendance[attendanceIndex],
+			this.attendance[parseInt(attendanceIndex, 10)] = {
+				...this.attendance[parseInt(attendanceIndex, 10)],
 				...record
 			};
 		}
@@ -465,6 +520,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	public set(values: Partial<NewEventObject>) {
 		for (const i in values) {
 			if (values.hasOwnProperty(i)) {
+				// @ts-ignore
 				this[i] = values[i];
 			}
 		}

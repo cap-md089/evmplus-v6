@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Selector } from '../forms/Form';
 import Loader from '../Loader';
 import { CombinedSelectorProps } from './Selector';
+import { Identifiable } from 'common-lib';
 
 interface DownloadSelectorProps<T extends Identifiable> {
 	values: Promise<T[]>;

@@ -1,4 +1,4 @@
-import * as $ from 'jquery';
+import $ from 'jquery';
 import * as React from 'react';
 import ExtraFileDisplay from '../components/drive/DriveExtraFileDisplay';
 import ExtraFolderDisplay from '../components/drive/DriveExtraFolderDisplay';
@@ -10,6 +10,7 @@ import Loader from '../components/Loader';
 import FileInterface from '../lib/File';
 import './Drive.css';
 import Page, { PageProps } from './Page';
+import { FileObject, FullFileObject } from 'common-lib';
 
 enum ErrorReason {
 	NONE,

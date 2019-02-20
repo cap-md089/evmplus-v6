@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Loader from 'src/components/Loader';
-import Team from 'src/lib/Team';
-import { TeamPublicity } from '../../../../lib';
 import Page, { PageProps } from '../Page';
+import Team from '../../lib/Team';
+import Loader from '../../components/Loader';
+import { TeamPublicity } from 'common-lib/index';
 
 interface TeamListState {
 	teams: Team[] | null;

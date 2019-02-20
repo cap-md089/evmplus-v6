@@ -19,7 +19,7 @@ export default class MultiRange extends React.Component<
 		high: number;
 	}
 > {
-	private range: HTMLInputElement | null;
+	private range: HTMLInputElement | null = null;
 
 	constructor(props: MultiRangeProps) {
 		super(props);

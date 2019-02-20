@@ -1,7 +1,7 @@
 import * as React from 'react';
-import Page, { PageProps } from 'src/pages/Page';
 import { Link } from 'react-router-dom';
-import MemberBase from 'src/lib/Members';
+import Page, { PageProps } from '../../Page';
+import MemberBase from '../../../lib/Members';
 
 export const canUseCreate = (props: PageProps) => {
 	if (!props.member) {

@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Button from 'src/components/Button';
-import TextDisplay from 'src/components/TextDisplay';
-import BlogPost from 'src/lib/BlogPost';
 import Loader from '../../components/Loader';
-import { EditorState } from '../../lib/slowEditorState';
+import { EditorState } from 'draft-js';
 import Page, { PageProps } from '../Page';
 import { DateTime } from 'luxon';
 import '../blog.css';
-import PayWall from 'src/components/PayWall';
+import BlogPost from '../../lib/BlogPost';
+import PayWall from '../../components/PayWall';
+import Button from '../../components/Button';
+import TextDisplay from '../../components/TextDisplay';
 
 interface ReadyBlogView {
 	loaded: true;

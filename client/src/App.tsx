@@ -4,13 +4,14 @@ import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import Loader from './components/Loader';
 import PageRouter from './components/PageRouter';
 import SideNavigation, { SideNavigationItem } from './components/SideNavigation';
-import { MemberCreateError } from './enums';
+import { MemberCreateError } from 'common-lib/index';
 import jQuery, { bestfit } from './jquery.textfit';
 import Account from './lib/Account';
 import { createCorrectMemberObject, getMember, CAPMemberClasses } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
 import Subscribe from './lib/subscribe';
+import { SigninReturn, FileObject, MemberObject } from 'common-lib';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
@@ -104,7 +105,7 @@ export default class App extends React.Component<
 	},
 	AppState
 > {
-	public key: number;
+	public key: number | null = null;
 
 	public state: AppState = {
 		member: {
@@ -123,9 +124,9 @@ export default class App extends React.Component<
 		fullMember: null
 	};
 
-	private titleElement: HTMLDivElement;
+	private titleElement: HTMLDivElement | null = null;
 
-	private timer: NodeJS.Timer;
+	private timer: NodeJS.Timer | null = null;
 
 	constructor(props: {
 		isMobile: boolean;
@@ -143,7 +144,9 @@ export default class App extends React.Component<
 	}
 
 	public async componentDidMount(): Promise<void> {
-		bestfit(jQuery(this.titleElement));
+		if (this.titleElement) {
+			bestfit(jQuery(this.titleElement));
+		}
 		myFetch('/api/banner')
 			.then(res => res.json())
 			.then((allowedSlideshowIDs: FileObject[]) => {
@@ -180,13 +183,17 @@ export default class App extends React.Component<
 				fullMember
 			},
 			() => {
-				bestfit(jQuery(this.titleElement));
+				if (this.titleElement) {
+					bestfit(jQuery(this.titleElement));
+				}
 			}
 		);
 	}
 
 	public componentWillUnmount() {
-		clearInterval(this.timer);
+		if (this.timer) {
+			clearInterval(this.timer);
+		}
 
 		window.removeEventListener('storage', this.onStorageChange);
 	}
@@ -546,6 +553,10 @@ export default class App extends React.Component<
 	}
 
 	private update() {
-		this.forceUpdate();
+		this.forceUpdate(() => {
+			if (this.titleElement) {
+				bestfit(jQuery(this.titleElement))
+			}
+		});
 	}
 }

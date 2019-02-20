@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
-import Registry from 'src/lib/Registry';
 import { BreadCrumb } from '../components/BreadCrumbs';
 import { SideNavigationItem } from '../components/SideNavigation';
 import Account from '../lib/Account';
 import MemberBase from '../lib/MemberBase';
+import Registry from '../lib/Registry';
+import { SigninReturn } from 'common-lib';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition
@@ -93,6 +94,23 @@ export default abstract class Page<
 		this.okURL = text;
 		this.props.prepareURL(text);
 		this.props.routeProps.history.replace(text);
+	}
+
+	protected async refreshSession() {
+		// tslint:disable-next-line:no-console
+		console.log('Refreshing session ID');
+
+		const { member } = this.props;
+
+		if (member) {
+			await member
+				.fetch(`/api/check`, {}, member)
+				.then(res => res.json())
+				.then((sr: SigninReturn) => {
+					this.props.authorizeUser(sr);
+
+				});
+		}
 	}
 }
 
