@@ -63,6 +63,10 @@ export interface SideNavigationProps extends RouteComponentProps<{}> {
 	authorizeUser: (arg: SigninReturn) => void;
 }
 
+const cursor: React.CSSProperties = {
+	cursor: 'pointer'
+};
+
 export class SideNavigation extends React.Component<SideNavigationProps> {
 	constructor(props: SideNavigationProps) {
 		super(props);
@@ -77,7 +81,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 				<ul id="nav">
 					<li>
 						{this.props.member ? (
-							<a onClick={this.signOut}>
+							<a onClick={this.signOut} style={cursor}>
 								<span className="arrow" />
 								<span>
 									Sign out {this.props.member.getFullName()}
@@ -93,8 +97,15 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 							</SigninLink>
 						)}
 					</li>
+					{this.props.member ? (
+						<li>
+							<SideNavigationLink target={'/admin/notifications'}>
+								Notifications: {this.props.fullMemberDetails.notificationCount}
+							</SideNavigationLink>
+						</li>
+					) : null}
 					<li>
-						<a onClick={this.goBack}>
+						<a onClick={this.goBack} style={cursor}>
 							<span className="arrow" />
 							<span>Go back</span>
 						</a>
@@ -124,7 +135,8 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 			valid: false,
 			error: MemberCreateError.NONE,
 			member: null,
-			sessionID: ''
+			sessionID: '',
+			notificationCount: 0
 		});
 		localStorage.removeItem('sessionID');
 	}

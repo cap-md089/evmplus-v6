@@ -158,7 +158,8 @@ class SigninLink extends React.Component<
 								valid: data.valid,
 								error: data.error,
 								member: data.member,
-								sessionID: data.sessionID
+								sessionID: data.sessionID,
+								notificationCount: 0
 							});
 						}
 					);

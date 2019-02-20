@@ -34,12 +34,12 @@ const canuse = () => true;
 
 const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
 	{
-		canuse: shouldRenderFlightContactWidget,
-		widget: FlightContactWidget
-	},
-	{
 		canuse,
 		widget: DriveWidget
+	},
+	{
+		canuse: shouldRenderSiteAdmin,
+		widget: SiteAdminWidget
 	},
 	{
 		canuse: canUseAbsentee,
@@ -50,8 +50,8 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 		widget: CreateWidget
 	},
 	{
-		canuse: shouldRenderSiteAdmin,
-		widget: SiteAdminWidget
+		canuse: shouldRenderFlightContactWidget,
+		widget: FlightContactWidget
 	}
 ];
 
@@ -68,12 +68,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	public componentDidMount() {
-		if (!(
-			document.location.pathname === '/admin/regedit' ||
-			document.location.pathname === '/admin/flightcontact' ||
-			document.location.pathname === '/admin/flightassign' ||
-			document.location.pathname === '/admin/permissions'
-		)) {
+		if (!document.location.pathname.match(/\/admin\/.*/)) {
 			this.props.updateSideNav([]);
 			this.props.updateBreadCrumbs([
 				{

@@ -111,7 +111,8 @@ export default class App extends React.Component<
 			valid: false,
 			error: MemberCreateError.NONE,
 			member: null,
-			sessionID: ''
+			sessionID: '',
+			notificationCount: 0
 		},
 		loading: true,
 		account: null,
@@ -525,7 +526,8 @@ export default class App extends React.Component<
 							error: MemberCreateError.INVALID_SESSION_ID,
 							member: null,
 							sessionID: '',
-							valid: false
+							valid: false,
+							notificationCount: 0
 						},
 						loading: false
 					});
@@ -536,7 +538,8 @@ export default class App extends React.Component<
 					error: MemberCreateError.NONE,
 					member: null,
 					sessionID: '',
-					valid: false
+					valid: false,
+					notificationCount: 0
 				}
 			});
 		}

@@ -48,12 +48,12 @@ export async function getMember(sessionID: string): Promise<SigninReturn> {
 			error: MemberCreateError.INVALID_SESSION_ID,
 			member: null,
 			sessionID: '',
-			valid: false
+			valid: false,
+			notificationCount: 0
 		};
 	}
 
 	const json = await result.json() as SigninReturn;
-
 	json.sessionID = result.headers.get('x-new-sessionid')!;
 	if (json.member && json.member.type === 'CAPNHQMember') {
 		json.member.sessionID = result.headers.get('x-new-sessionid')!;
