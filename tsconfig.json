@@ -1,31 +1,39 @@
 {
 	"compilerOptions": {
-		"target": "es6",
-		"module": "commonjs",
-		"outDir": "server/dist",
-		"noImplicitAny": true,
-		"allowUnreachableCode": false,
-		"allowUnusedLabels": false,
-		"alwaysStrict": true,
-		"forceConsistentCasingInFileNames": true,
-		"noUnusedLocals": true,
-		"pretty": true,
-		"removeComments": true,
+		"outDir": "build/dist",
+		"module": "esnext",
+		"target": "es5",
+		"lib": ["es6", "dom"],
 		"sourceMap": true,
-		"sourceRoot": "src",
-		"typeRoots": ["./server/types", "./server/node_modules/@types"],
+		"allowJs": true,
+		"jsx": "react",
+		"moduleResolution": "node",
+		"preserveConstEnums": false,
+		"rootDir": "src",
+		"forceConsistentCasingInFileNames": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"suppressImplicitAnyIndexErrors": true,
+		"noUnusedLocals": true,
 		"baseUrl": ".",
-		"rootDir": ".",
-		"allowSyntheticDefaultImports": false
+		"allowSyntheticDefaultImports": true
 	},
-	"include": ["server/src/**/*.ts"],
-	"exclude": ["server/node_modules"],
-	"lib": [
-		"es2015",
-		"es2017",
-		"es2015.promise",
-		"es5",
-		"esnext.asynciterable"
+	"include": [
+		"src/**/*.tsx",
+		"src/**/*.ts"
 	],
-	"files": ["./lib/index.d.ts"]
+	"exclude": [
+		"node_modules",
+		"build",
+		"scripts",
+		"acceptance-tests",
+		"webpack",
+		"jest",
+		"src/setupTests.ts"
+	],
+	"files": [
+		"../lib/types.d.ts"
+	]
 }
