@@ -1591,6 +1591,10 @@ declare global {
 		 * between success and failure
 		 */
 		valid: true;
+		/**
+		 * Returns the amount of notifications the member has
+		 */
+		notificationCount: number;
 	}
 
 	/**
@@ -1615,6 +1619,10 @@ declare global {
 		 * between success and failure
 		 */
 		valid: false;
+		/**
+		 * As the member sign in failed, this should be 0
+		 */
+		notificationCount: 0;
 	}
 
 	/**
