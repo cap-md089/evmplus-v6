@@ -1,8 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
 import { exec } from 'child_process';
+import { CAPWATCHImportErrors } from 'common-lib/index';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
-import { CAPWATCHImportErrors } from 'common-lib/index';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';
@@ -49,7 +49,7 @@ export default async function*(
 	orgid: number,
 	files: string[] = modules.map(mod => mod.file)
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
-	const foundModules: {[key: string]: boolean} = {};
+	const foundModules: { [key: string]: boolean } = {};
 
 	for (const i of files) {
 		foundModules[i] = false;
@@ -62,9 +62,7 @@ export default async function*(
 
 		foundModules[mod.file] = true;
 
-		const { stdout } = await promisify(exec)(
-			`unzip -op ${zipFileLocation} ${mod.file}`
-		);
+		const { stdout } = await promisify(exec)(`unzip -op ${zipFileLocation} ${mod.file}`);
 
 		yield new Promise<CAPWATCHModuleResult>(res => {
 			csv(stdout, { columns: true }, async (err, values) => {

@@ -1,11 +1,11 @@
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
-import { FileUserAccessControlPermissions } from 'common-lib/index';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
-import { validRawToken } from '../../formtoken'
+import { validRawToken } from '../../formtoken';
 
 const findEnding = (input: Buffer, boundary: string) => {
 	const index = input.length - boundary.length;
@@ -19,10 +19,7 @@ const findEnding = (input: Buffer, boundary: string) => {
 };
 
 export default async (req: MemberRequest, res: express.Response) => {
-	if (
-		typeof req.headers !== 'undefined' &&
-		typeof req.headers.token === 'string'
-	) {
+	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
 		if (!validRawToken(req.headers.token, req.member)) {
 			res.status(403);
 			res.end();
@@ -34,9 +31,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 		return;
 	}
 
-	if (
-		typeof req.params.fileid === 'undefined'
-	) {
+	if (typeof req.params.fileid === 'undefined') {
 		res.status(400);
 		res.end();
 		return;
@@ -52,11 +47,13 @@ export default async (req: MemberRequest, res: express.Response) => {
 		return;
 	}
 
-	if (!file.hasPermission(
-		req.member,
-		// tslint:disable-next-line:no-bitwise
-		FileUserAccessControlPermissions.MODIFY | FileUserAccessControlPermissions.WRITE
-	)) {
+	if (
+		!file.hasPermission(
+			req.member,
+			// tslint:disable-next-line:no-bitwise
+			FileUserAccessControlPermissions.MODIFY | FileUserAccessControlPermissions.WRITE
+		)
+	) {
 		res.status(403);
 		res.end();
 		return;
@@ -91,9 +88,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 			// Record headers
 			let i = 0;
 			let headerString = '';
-			while (!(
-				info.slice(i, i + 4).toString() === '\r\n\r\n'
-			)) {
+			while (!(info.slice(i, i + 4).toString() === '\r\n\r\n')) {
 				headerString += String.fromCharCode(info[i++]);
 			}
 			i += 4;
@@ -115,10 +110,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 			});
 		} else {
 			// Adds more data to file. If it finds the ending, it will not get to this section again
-			const newData = info.slice(
-				0,
-				findEnding(info, boundary)
-			);
+			const newData = info.slice(0, findEnding(info, boundary));
 			writeStream.write(newData);
 		}
 	});

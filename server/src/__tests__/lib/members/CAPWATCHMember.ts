@@ -1,14 +1,11 @@
 import { Schema } from '@mysql/xdevapi';
+import { CAPWATCHImportErrors } from 'common-lib/index';
 import { join } from 'path';
 import conftest from '../../../conf.test';
-import { CAPWATCHImportErrors } from 'common-lib/index';
 import Account from '../../../lib/Account';
 import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
 import MemberBase, { CAPWATCHMember } from '../../../lib/Members';
-import {
-	Admin as AdminPermissions,
-	Member as NoPermissions
-} from '../../../lib/Permissions';
+import { Admin as AdminPermissions, Member as NoPermissions } from '../../../lib/Permissions';
 import { getTestTools } from '../../../lib/Util';
 
 describe('CAPWATCHMember', async () => {
@@ -46,11 +43,7 @@ describe('CAPWATCHMember', async () => {
 	it('should create the correct reference', async () => {
 		const reference = mem.getReference();
 
-		const newMem = await MemberBase.ResolveReference(
-			reference,
-			account,
-			schema
-		);
+		const newMem = await MemberBase.ResolveReference(reference, account, schema);
 
 		expect(newMem.matchesReference(reference)).toBeTruthy();
 	});
@@ -68,11 +61,7 @@ describe('CAPWATCHMember', async () => {
 	it('should check for permissions', async done => {
 		expect(mem.hasPermission('AddEvent')).toBe(true);
 
-		const permissionLessMember = await CAPWATCHMember.Get(
-			535799,
-			account,
-			schema
-		);
+		const permissionLessMember = await CAPWATCHMember.Get(535799, account, schema);
 
 		permissionLessMember.permissions = NoPermissions;
 
@@ -84,30 +73,36 @@ describe('CAPWATCHMember', async () => {
 	});
 
 	it('should get the correct user id', () => {
-		expect(CAPWATCHMember.GetUserID(['Andrew', 'D', 'Rioux'])).toEqual(
-			'riouxad'
-		);
+		expect(CAPWATCHMember.GetUserID(['Andrew', 'D', 'Rioux'])).toEqual('riouxad');
 	});
 
 	it('should verify references correctly', () => {
-		expect(CAPWATCHMember.isReference({
-			id: 'string',
-			type: 'CAPNHQMember'
-		})).toBe(false);
+		expect(
+			CAPWATCHMember.isReference({
+				id: 'string',
+				type: 'CAPNHQMember'
+			})
+		).toBe(false);
 
-		expect(CAPWATCHMember.isReference({
-			id: 'string',
-			type: 'CAPProspectiveMember'
-		})).toBe(true);
+		expect(
+			CAPWATCHMember.isReference({
+				id: 'string',
+				type: 'CAPProspectiveMember'
+			})
+		).toBe(true);
 
-		expect(CAPWATCHMember.isReference({
-			id: 4,
-			type: 'CAPNHQMember'
-		})).toBe(true);
+		expect(
+			CAPWATCHMember.isReference({
+				id: 4,
+				type: 'CAPNHQMember'
+			})
+		).toBe(true);
 
-		expect(CAPWATCHMember.isReference({
-			id: 'whatever',
-			type: 'Null'
-		})).toBe(true);
+		expect(
+			CAPWATCHMember.isReference({
+				id: 'whatever',
+				type: 'Null'
+			})
+		).toBe(true);
 	});
 });

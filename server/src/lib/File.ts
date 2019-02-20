@@ -1,14 +1,23 @@
 import { Schema } from '@mysql/xdevapi';
+import {
+	DatabaseInterface,
+	FileControlListItem,
+	FileObject,
+	FileTeamControlList,
+	FileUserControlList,
+	FullFileObject,
+	MemberReference,
+	RawFileObject
+} from 'common-lib';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import { unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../conf';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import Account from './Account';
 import MemberBase from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
 import FileObjectValidator from './validator/validators/FileObjectValidator';
-import { FileObject, DatabaseInterface, RawFileObject, FileControlListItem, MemberReference, FullFileObject, FileTeamControlList, FileUserControlList } from 'common-lib';
 
 const promisedUnlink = promisify(unlink);
 

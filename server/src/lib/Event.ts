@@ -13,8 +13,8 @@ import {
 	NewEventObject,
 	RadioReturn
 } from 'common-lib';
-import { DateTime } from 'luxon';
 import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
+import { DateTime } from 'luxon';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
 import { collectResults, findAndBind } from './MySQLUtil';

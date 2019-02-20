@@ -1,4 +1,5 @@
 import { FullFileObject, MemberReference, RawFileObject } from 'common-lib';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import * as express from 'express';
 import * as fs from 'fs';
 import { DateTime } from 'luxon';
@@ -6,7 +7,6 @@ import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import File from '../../../lib/File';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { json } from '../../../lib/Util';
