@@ -86,8 +86,8 @@ describe('Event', () => {
 				comments: '',
 				departureTime: null,
 				planToUseCAPTransportation: false,
-				requirements: '',
-				status: 0
+				status: 0,
+				canUsePhotos: true
 			},
 			mem
 		);
@@ -103,8 +103,8 @@ describe('Event', () => {
 				comments: 'new record',
 				departureTime: null,
 				planToUseCAPTransportation: true,
-				requirements: '',
-				status: 0
+				status: 0,
+				canUsePhotos: true
 			},
 			mem
 		);
@@ -134,7 +134,23 @@ describe('Event', () => {
 	});
 
 	it('should allow for linking to an event', async done => {
-		const targetAccount = await Account.Get('md089', schema);
+		let targetAccount: Account;
+		
+		try {
+			targetAccount = await Account.Get('linktarget', schema);
+		} catch(e) {
+			targetAccount = await Account.Create({
+				adminIDs: [],
+				echelon: false,
+				expires: 0,
+				id: 'linktarget',
+				mainOrg: 916,
+				orgIDs: [916],
+				paid: true,
+				paidEventLimit: 5,
+				unpaidEventLimit: 500
+			}, schema);
+		}
 
 		const linkedEventCreated = await event.linkTo(targetAccount, mem);
 

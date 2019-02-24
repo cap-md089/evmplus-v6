@@ -1,4 +1,4 @@
-import { MemberPermissions, MemberAccessLevel } from "common-lib";
+import { MemberAccessLevel, MemberPermissions } from 'common-lib';
 
 export const Member: MemberPermissions = {
 	AddEvent: 0,
@@ -121,8 +121,12 @@ export const Admin: MemberPermissions = {
 };
 
 export const getPermissions = (lvl: MemberAccessLevel): MemberPermissions =>
-	lvl === 'Member' ? Member : 
-	lvl === 'Staff' ? Staff :
-	lvl === 'Manager' ? Manager :
-	lvl === 'Admin' ? Admin :
-		null;
+	lvl === 'Member'
+		? Member
+		: lvl === 'Staff'
+		? Staff
+		: lvl === 'Manager'
+		? Manager
+		: lvl === 'Admin'
+		? Admin
+		: null;

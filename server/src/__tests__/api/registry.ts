@@ -2,13 +2,16 @@ import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
+import { getTestTools } from '../../lib/Util';
 
 describe('/api', () => {
 	describe('/registry', () => {
 		let server: Server;
 
 		beforeEach(async () => {
-			server = (await getServer(conftest, 3009)).server
+			server = (await getServer(conftest, 3009)).server;
+
+			await getTestTools(conftest);
 		});
 
 		afterEach(() => {

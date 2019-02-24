@@ -2,6 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
 import Account from '../../lib/Account';
 import BlogPost from '../../lib/BlogPost';
+import { CAPWATCHMember, ProspectiveMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
 import { blogPostData } from '../consts';
 
@@ -10,12 +11,15 @@ describe('BlogPost', async () => {
 	let id: number;
 	let account: Account;
 	let schema: Schema;
+	let member: CAPWATCHMember;
 
 	beforeAll(async done => {
 		const results = await getTestTools(conftest);
 
 		account = results.account;
 		schema = results.schema;
+
+		member = await ProspectiveMember.GetProspective('mdx89-1', account, schema);
 
 		done();
 	});
@@ -30,8 +34,7 @@ describe('BlogPost', async () => {
 	});
 
 	it('should create a blog post successfully', async done => {
-
-		blogPost = await BlogPost.Create(blogPostData, account, schema);
+		blogPost = await BlogPost.Create(blogPostData, member, account, schema);
 
 		id = blogPost.id;
 
@@ -62,9 +65,7 @@ describe('BlogPost', async () => {
 	it('should delete successfully', async done => {
 		await blogPost.delete();
 
-		await expect(
-			BlogPost.Get(blogPost.id, account, schema)
-		).rejects.toEqual(expect.any(Error));
+		await expect(BlogPost.Get(blogPost.id, account, schema)).rejects.toEqual(expect.any(Error));
 
 		await expect(blogPost.delete()).rejects.toEqual(expect.any(Error));
 

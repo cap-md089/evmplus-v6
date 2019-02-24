@@ -1,4 +1,5 @@
 import { Schema } from '@mysql/xdevapi';
+import { SigninReturn } from 'common-lib';
 import { Server } from 'http';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
@@ -142,9 +143,7 @@ describe('/api', () => {
 							expect(ret.error).toEqual(-1);
 							expect(ret.sessionID).not.toEqual('');
 							expect(ret.valid).toEqual(true);
-							expect(ret.member.id).toEqual(
-								signinInformation.username
-							);
+							expect(ret.member.id).toEqual(signinInformation.username);
 
 							done();
 						});
@@ -152,12 +151,7 @@ describe('/api', () => {
 		}, 8000);
 
 		it('should allow signing in as a prospective member', async done => {
-			pmember = await ProspectiveMember.Create(
-				newMem,
-				password,
-				account,
-				schema
-			);
+			pmember = await ProspectiveMember.Create(newMem, password, account, schema);
 
 			request(server)
 				.post('/api/signin')
@@ -185,12 +179,7 @@ describe('/api', () => {
 		});
 
 		it('should allow signing in as a prospective member case insensitive', async done => {
-			pmember = await ProspectiveMember.Create(
-				newMem,
-				password,
-				account,
-				schema
-			);
+			pmember = await ProspectiveMember.Create(newMem, password, account, schema);
 
 			request(server)
 				.post('/api/signin')

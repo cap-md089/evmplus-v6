@@ -46,7 +46,8 @@ describe('Team', () => {
 	it('should get team information', async done => {
 		const teamGet = await Team.Get(team.id, account, schema);
 
-		expect(teamGet.members).toEqual(newTeam.members);
+		expect(teamGet.seniorCoach).toEqual(newTeam.seniorCoach);
+		expect(teamGet.cadetLeader).toEqual(newTeam.cadetLeader);
 
 		done();
 	});
@@ -66,7 +67,7 @@ describe('Team', () => {
 	});
 
 	it('should add a team member', () => {
-		team.addTeamMember(member.getReference(), 'Eh');
+		team.addTeamMember(member, 'Eh', account, schema);
 
 		expect(team.members.length).toEqual(2);
 		expect(team.members[1].reference).toEqual(member.getReference());
@@ -81,7 +82,7 @@ describe('Team', () => {
 	});
 
 	it('should remove a team member', () => {
-		team.removeTeamMember(member.getReference());
+		team.removeTeamMember(member.getReference(), account, schema);
 
 		expect(team.members.length).toEqual(1);
 	});

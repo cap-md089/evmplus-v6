@@ -82,6 +82,7 @@ describe('Account', () => {
 			.get('/api/accountcheck')
 			.expect(400)
 			.end(err => {
+				done();
 				if (err) {
 					throw err;
 				}

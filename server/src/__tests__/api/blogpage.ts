@@ -1,4 +1,5 @@
 import { Schema } from '@mysql/xdevapi';
+import { BlogPageObject, SigninReturn } from 'common-lib';
 import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
@@ -13,10 +14,10 @@ describe('/api', () => {
 	describe('/blog', () => {
 		describe('/page', () => {
 			let server: Server;
-			let member: NHQMember;
 			let signinData: SigninReturn;
 			let schema: Schema;
 			let account: Account;
+			let member: NHQMember;
 
 			beforeAll(async done => {
 				const results = await getTestTools(conftest);

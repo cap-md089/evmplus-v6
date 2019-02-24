@@ -59,7 +59,7 @@ describe('CAPWATCHMember', async () => {
 	});
 
 	it('should check for permissions', async done => {
-		expect(mem.hasPermission('AddEvent')).toBe(true);
+		expect(mem.hasPermission('AddEvent')).toBe(MemberBase.useRiouxPermission);
 
 		const permissionLessMember = await CAPWATCHMember.Get(535799, account, schema);
 

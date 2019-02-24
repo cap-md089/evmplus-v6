@@ -1,4 +1,5 @@
 import { Schema } from '@mysql/xdevapi';
+import { BlogPostObject, SigninReturn } from 'common-lib';
 import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
@@ -63,7 +64,7 @@ describe('/api', () => {
 			});
 
 			it('should get a blog post', async done => {
-				const bp = await BlogPost.Create(blogPostData, account, schema);
+				const bp = await BlogPost.Create(blogPostData, member, account, schema);
 
 				request(server)
 					.get('/api/blog/post/' + bp.id)
@@ -105,10 +106,7 @@ describe('/api', () => {
 								token
 							})
 							.set('content-type', 'application/json')
-							.expect(
-								'content-type',
-								'application/json; charset=utf-8'
-							)
+							.expect('content-type', 'application/json; charset=utf-8')
 							.expect(200)
 							.end(async (err2, result2) => {
 								if (err2) {
@@ -117,9 +115,7 @@ describe('/api', () => {
 
 								const bpObj = result2.body as BlogPostObject;
 
-								expect(bpObj.authorid).toEqual(
-									member.getReference()
-								);
+								expect(bpObj.author).toEqual(member.getReference());
 								expect(bpObj.title).toEqual(blogPostData.title);
 
 								done();
@@ -256,9 +252,9 @@ describe('/api', () => {
 							.set('content-type', 'application/json')
 							.send(result.body)
 							.expect(204),
-							await expect(
-								BlogPost.Get(1, account, schema)
-							).rejects.toEqual(expect.any(Error));
+							await expect(BlogPost.Get(1, account, schema)).rejects.toEqual(
+								expect.any(Error)
+							);
 
 						done();
 					});

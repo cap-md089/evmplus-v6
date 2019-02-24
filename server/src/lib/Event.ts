@@ -410,6 +410,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			id: this.id
 		};
 
+		await linkedEvent.save();
+
 		return linkedEvent;
 	}
 

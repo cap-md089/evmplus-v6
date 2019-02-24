@@ -68,8 +68,6 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (fileData, schema, orgid) 
 			};
 
 			await memberCollection.add(values).execute();
-
-			console.log(`Added ${values.CAPID} of ${values.ORGID}`);
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;

@@ -79,6 +79,9 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		if (typeof req.body !== 'undefined' && req.body === 'teapot') {
 			res.status(418);
 			res.end();
+		} else if (typeof req.body !== 'object') {
+			res.status(400);
+			res.end();
 		} else {
 			next();
 		}

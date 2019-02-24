@@ -36,10 +36,10 @@ export default async (err: Error, req: MaybeMemberRequest, res: Response, next: 
 			requestedPath: req._originalUrl,
 			requestedUser: req.member ? req.member.getReference() : null,
 			requestMethod: req.method.toUpperCase() as HTTPRequestMethod,
-			payload: req.body,
+			payload: JSON.stringify(req.body) || '<none>',
 			accountID: req.account.id,
 
-			message: err.message,
+			message: err.message || '<none>',
 			stack: stacks.map(stack => ({
 				filename: stack.getFileName(),
 				line: stack.getLineNumber(),

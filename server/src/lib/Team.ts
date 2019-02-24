@@ -519,8 +519,6 @@ export default class Team implements FullTeamObject {
 	}
 
 	public async removeTeamMember(member: MemberReference, account: Account, schema: Schema) {
-		// TODO: Change Extra Member Information to remove team ID
-
 		if (!this.hasMember(member)) {
 			return;
 		}

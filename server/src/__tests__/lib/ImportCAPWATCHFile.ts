@@ -97,7 +97,9 @@ describe('Import CAPWATCH File', () => {
 			})
 		);
 
-		expect(results[0].Duty).toBe('Testing Officer');
+		const result = results[0];
+
+		expect(result.Duty).toBe('Testing Officer');
 
 		done();
 	});
@@ -110,7 +112,7 @@ describe('Import CAPWATCH File', () => {
 		}
 
 		const results = await collectResults(
-			findAndBind(schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition'), {
+			findAndBind(schema.getCollection<NHQ.DutyPosition>('NHQ_CadetDutyPosition'), {
 				CAPID: 542488
 			})
 		);

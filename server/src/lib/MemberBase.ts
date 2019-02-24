@@ -33,6 +33,8 @@ export interface MemberSession {
 }
 
 export default abstract class MemberBase implements MemberObject {
+	public static readonly useRiouxPermission = true;
+
 	public static GetMemberTypeFromID(inputID: string | number): MemberType {
 		if (typeof inputID === 'number') {
 			return 'CAPNHQMember';
@@ -380,8 +382,6 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	private static Sessions: MemberSession[] = [];
-
-	private static readonly useRiouxPermission = false;
 
 	/**
 	 * CAPID
