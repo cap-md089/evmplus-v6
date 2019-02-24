@@ -9,9 +9,11 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"port": 9222,
-			"url": "http://localhost:8080",
+			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/client/src",
-			"runtimeExecutable": "chromium-browser"
+			"linux": {
+				"runtimeExecutable": "/usr/bin/chromium-browser"
+			}
 		},
 		{
 			"type": "chrome",
@@ -33,6 +35,18 @@
 				"${workspaceFolder}/server/dist/**/*.js"
 			],
 			"console": "integratedTerminal"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch Test",
+			"program": "${workspaceFolder}/server/dist/test.js",
+			"cwd": "${workspaceFolder}/server",
+			"autoAttachChildProcesses": true,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/server/dist/**/*.js"
+			]
 		}
 	],
 	"compounds": [
@@ -40,14 +54,14 @@
 			"name": "Launch Server & Client",
 			"configurations": [
 				"Launch Server",
-				"Launch Client"
+				"Launch Chrome"
 			]
 		},
 		{
 			"name": "Launch Server & Attach to Client",
 			"configurations": [
 				"Launch Server",
-				"Attach to Client"
+				"Attach to Chrome"
 			]
 		}
 	]

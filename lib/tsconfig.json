@@ -2,7 +2,6 @@
 	"compilerOptions": {
 		"target": "es2015",
 		"module": "commonjs",
-		"outDir": "dist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -11,27 +10,13 @@
 		"noUnusedLocals": true,
 		"pretty": true,
 		"removeComments": true,
+		"preserveSymlinks": true,
 		"sourceMap": true,
-		"typeRoots": [
-			"./types",
-			"./node_modules/@types",
-		],
 		"baseUrl": ".",
 		"rootDir": ".",
+		"composite": true
 	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"node_modules"
-	],
-	"lib": [
-		"es2015",
-		"es2017",
-		"es2015.promise",
-		"es5"
-	],
-	"files": [
-		"../lib/index.d.ts"
-	]
+	"exclude": ["node_modules"],
+	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
+	"files": ["./index.ts"]
 }

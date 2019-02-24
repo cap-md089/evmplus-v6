@@ -1,0 +1,37 @@
+{
+    "folders": [
+		{
+			"path": "server",
+			"name": "Server"
+		},
+		{
+			"path": "client",
+			"name": "Client"
+		},
+		{
+			"path": "lib",
+			"name": "Common"
+		}
+	],
+	"settings": {
+		"search.usePCRE2": true
+	},
+	"launch": {
+		"compounds": [
+			{
+				"name": "Launch Chrome & Server",
+				"configurations": [
+					"Launch Chrome",
+					"Launch Server"
+				]
+			},
+			{
+				"name": "Launch Firefox & Server",
+				"configurations": [
+					"Launch Firefox",
+					"Launch Server"
+				]
+			}
+		]
+	}
+}
