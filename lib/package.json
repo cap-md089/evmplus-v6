@@ -5,6 +5,7 @@
   "author": "Andrew Rioux",
   "main": "./index.js",
   "dependencies": {
+  	"@types/react": "16.8.4",
     "@types/draft-js": "0.10.24",
     "@types/node": "10.7.1"
   },
