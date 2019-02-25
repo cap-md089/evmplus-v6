@@ -21,6 +21,10 @@ interface OptionalDependent2 {
 	item: number;
 }
 
+interface ComplexArrayThing {
+	things: BasicType[];
+}
+
 type OptionalDependent = OptionalDependent1 | OptionalDependent2;
 
 const basicValidator = new Validator<BasicType>({
@@ -40,6 +44,12 @@ const optionalValidator = new Validator<OptionalThing>({
 const complexValidator = new Validator<ComplexThing>({
 	basicThing: {
 		validator: basicValidator
+	}
+});
+
+const complexArrayValidator = new Validator<ComplexArrayThing>({
+	things: {
+		validator: Validator.ArrayOf(basicValidator)
 	}
 });
 
@@ -79,6 +89,19 @@ describe('Validator', () => {
 		expect(complexValidator.validate({ basicThing: { otherThing: 1 } })).toEqual(false);
 		expect(complexValidator.validate({ basicThing: null })).toEqual(false);
 		expect(complexValidator.validate({ thing: 'string' })).toEqual(false);
+
+		expect(
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, { thing: 'string2' }] })
+		).toEqual(true);
+		expect(
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, { thing: 1 }] })
+		).toEqual(false);
+		expect(complexArrayValidator.validate({ things: [{ thing: 'string' }, null] })).toEqual(
+			false
+		);
+		expect(
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, undefined] })
+		).toEqual(false);
 	});
 
 	it('should prune basic types', () => {
@@ -124,6 +147,32 @@ describe('Validator', () => {
 				thing: 'string'
 			}
 		});
+
+		expect(
+			expect(
+				complexArrayValidator.prune({
+					things: [
+						{
+							thing: 'fdsa',
+							anotherThing: 1
+						},
+						{
+							thing: 'asdf'
+						}
+					],
+					fdsa: 1
+				})
+			).toEqual({
+				things: [
+					{
+						thing: 'fdsa'
+					},
+					{
+						thing: 'asdf'
+					}
+				]
+			})
+		);
 	});
 
 	describe('built in validator functions', () => {
@@ -384,8 +433,12 @@ describe('Validator', () => {
 			it('should validate radio return values', () => {
 				expect(Validator.RadioReturn(TestEnum)([TestEnum.ITEMONE, '']).valid).toEqual(true);
 				expect(Validator.RadioReturn(TestEnum)([[false, 1], '']).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)([[TestEnum.ITEMTWO], 0]).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)([[false, true], false]).valid).toEqual(false);
+				expect(Validator.RadioReturn(TestEnum)([[TestEnum.ITEMTWO], 0]).valid).toEqual(
+					false
+				);
+				expect(Validator.RadioReturn(TestEnum)([[false, true], false]).valid).toEqual(
+					false
+				);
 				expect(Validator.RadioReturn(TestEnum)([false, false]).valid).toEqual(false);
 				expect(Validator.RadioReturn(TestEnum)([{}, false]).valid).toEqual(false);
 				expect(Validator.RadioReturn(TestEnum)(null).valid).toEqual(false);
@@ -394,9 +447,9 @@ describe('Validator', () => {
 
 			it('should validate member references', () => {
 				// NHQMember checks MemberBase.isReference
-				expect(Validator.MemberReference({ id: 542488, type: 'CAPNHQMember' }).valid).toEqual(
-					true
-				);
+				expect(
+					Validator.MemberReference({ id: 542488, type: 'CAPNHQMember' }).valid
+				).toEqual(true);
 				expect(Validator.MemberReference(null).valid).toEqual(false);
 				expect(Validator.MemberReference(undefined).valid).toEqual(false);
 			});

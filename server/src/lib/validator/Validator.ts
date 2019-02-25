@@ -172,38 +172,45 @@ export default class Validator<T> {
 
 	public static ArrayOf = <S>(
 		validator: ValidatorFunction<S> | Validator<S>
-	): ValidatorFunction<S[]> => (input: unknown) => {
-		if (!Array.isArray(input)) {
-			return {
-				valid: false,
-				message: 'must be an array'
-			};
-		}
+	): ValidatorFunction<S[]> => {
+		const valid: ValidatorFunction<S[]> = (input: unknown) => {
+			if (!Array.isArray(input)) {
+				return {
+					valid: false,
+					message: 'must be an array'
+				};
+			}
 
-		let good = true;
+			let good = true;
 
-		for (const i of input) {
-			if (validator instanceof Validator) {
-				if (!validator.validate(i)) {
-					good = false;
-					break;
-				}
-			} else {
-				if (!validator(i).valid) {
-					good = false;
-					break;
+			for (const i of input) {
+				if (validator instanceof Validator) {
+					if (!validator.validate(i)) {
+						good = false;
+						break;
+					}
+				} else {
+					if (!validator(i).valid) {
+						good = false;
+						break;
+					}
 				}
 			}
-		}
 
-		return good
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: 'elements in the array do not match the required type'
-			  };
+			return good
+				? {
+						valid: true
+				}
+				: {
+						valid: false,
+						message: 'elements in the array do not match the required type'
+				};
+		};
+
+		// @ts-ignore
+		valid.validator = validator;
+
+		return valid;
 	};
 
 	public static Or<S1>(validator1: Validator<S1> | ValidatorFunction<S1>): ValidatorFunction<S1>;
@@ -664,7 +671,20 @@ export default class Validator<T> {
 					if (valid instanceof Validator) {
 						newObject[key] = valid.prune(obj[key]);
 					} else {
-						newObject[key] = obj[key];
+						const arr = obj[key];
+						if (Array.isArray(arr)) {
+							let validator: Validator<any>;
+							// @ts-ignore
+							validator = valid.validator;
+							const newArray = [];
+							for (const i of arr) {
+								newArray.push(validator.prune(i));
+							}
+							// @ts-ignore
+							newObject[key] = newArray;
+						} else {
+							newObject[key] = obj[key];
+						}
 					}
 				}
 			}
@@ -678,11 +698,29 @@ export default class Validator<T> {
 
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
+				if (obj[key] === undefined || obj[key] === null) {
+					target[key] = null;
+					continue;
+				}
+
 				const valid = this.rules[key].validator;
 				if (valid instanceof Validator) {
 					newObject[key] = valid.prune(obj[key]);
 				} else {
-					newObject[key] = obj[key];
+					const arr = obj[key];
+					if (Array.isArray(arr)) {
+						let validator: Validator<any>;
+						// @ts-ignore
+						validator = valid.validator;
+						const newArray = [];
+						for (const i of arr) {
+							newArray.push(validator.prune(i));
+						}
+						// @ts-ignore
+						newObject[key] = newArray;
+					} else {
+						newObject[key] = obj[key];
+					}
 				}
 			}
 		}
