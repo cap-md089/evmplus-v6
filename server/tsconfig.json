@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es2018",
 		"module": "commonjs",
-		"outDir": "./server/dist",
+		"outDir": "dist",
 		"noImplicitAny": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
@@ -23,22 +23,11 @@
 		"pretty": true,
 		"removeComments": true,
 		"typeRoots": ["./types", "./node_modules/@types"],
-		"rootDir": "..",
-		"baseUrl": ".",
-		"rootDirs": [
-			"..",
-			"."
-		],
 		"allowSyntheticDefaultImports": false,
-		"experimentalDecorators": true
+		"experimentalDecorators": true,
+		"sourceMap": true
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules", "../lib/*.ts"],
-	"lib": [
-		"es2015",
-		"es2017",
-		"es2015.promise",
-		"es5",
-		"esnext.asynciterable"
-	]
+	"exclude": ["node_modules/**/*.ts"],
+	"lib": ["es2015", "es2017", "es2015.promise", "es5", "esnext.asynciterable"]
 }

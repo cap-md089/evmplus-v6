@@ -24,6 +24,12 @@ import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRe
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
+interface RawAttendanceDBRecord {
+	accountID: string;
+	memberReference: MemberReference;
+	
+}
+
 export default class Event implements EventObject, DatabaseInterface<EventObject> {
 	public static Validator = new EventValidator();
 	public static AttendanceValidator = new NewAttendanceRecordValidator();

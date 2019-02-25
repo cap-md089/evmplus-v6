@@ -1,7 +1,7 @@
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
-import { FileUserAccessControlPermissions } from '../../../../../lib/index';
 import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
@@ -18,12 +18,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 		return;
 	}
 
-	if (
-		!(file.hasPermission(
-			req.member,
-			FileUserAccessControlPermissions.READ
-		))
-	) {
+	if (!file.hasPermission(req.member, FileUserAccessControlPermissions.READ)) {
 		res.status(403);
 		res.end();
 		return;
@@ -34,10 +29,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: expr
 	);
 
 	res.contentType(file.contentType);
-	res.setHeader(
-		'Content-Disposition',
-		'attachment; filename="' + file.fileName + '"'
-	);
+	res.setHeader('Content-Disposition', 'attachment; filename="' + file.fileName + '"');
 
 	fileRequested
 		.on('data', data => {

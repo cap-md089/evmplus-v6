@@ -1,6 +1,6 @@
 import { FileObject, FullFileObject } from 'common-lib';
+import { FileUserAccessControlPermissions } from 'common-lib/index';
 import * as express from 'express';
-import { FileUserAccessControlPermissions } from '../../../../../lib/index';
 import File from '../../../lib/File';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';

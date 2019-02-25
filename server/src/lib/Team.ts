@@ -11,8 +11,8 @@ import {
 	RawTeamMember,
 	RawTeamObject
 } from 'common-lib';
+import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
-import { TeamPublicity } from '../../../lib/index';
 import Account from './Account';
 import MemberBase from './MemberBase';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';

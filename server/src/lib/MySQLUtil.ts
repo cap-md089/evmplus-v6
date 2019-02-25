@@ -98,6 +98,31 @@ export const generateResults = async function*<T>(
 	}
 };
 
+export const generateFindStatement = <T>(find: T, scope: string | null = null): string =>
+	Object.keys(find)
+		.map(val =>
+			typeof find[val as keyof T] === 'object'
+				? '(' +
+				  generateFindStatement(
+						find[val as keyof T],
+						scope === null ? val : `${scope}.${val}`
+				  ) +
+				  ')'
+				: scope === null
+				? `${val} = :${val}`
+				: `${scope}.${val} = :${val}`
+		)
+		.join(' AND ');
+
+export const generateBindObject = <T>(bind: T): any =>
+	Object.keys(bind)
+		.map(key =>
+			typeof bind[key as keyof T] === 'object'
+				? generateBindObject(bind[key as keyof T])
+				: { [key]: bind[key as keyof T] }
+		)
+		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));
+
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
 	bind: Bound<T>
@@ -110,10 +135,8 @@ export const findAndBind = <T>(
 		)
 		.bind(bind);
 
-export const selectAndBind = <T>(
-	find: mysql.Table<T>,
-	bind: Bound<T>
-): mysql.TableSelect<T> => find.select().bind(bind);
+export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.TableSelect<T> =>
+	find.select().bind(bind);
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
@@ -127,10 +150,7 @@ export const modifyAndBind = <T>(
 		)
 		.bind(bind);
 
-export const updatetAndBind = <T>(
-	modify: mysql.Table<T>,
-	bind: Bound<T>
-): mysql.TableUpdate<T> =>
+export const updatetAndBind = <T>(modify: mysql.Table<T>, bind: Bound<T>): mysql.TableUpdate<T> =>
 	modify
 		.update(
 			Object.keys(bind)
@@ -149,19 +169,11 @@ export const convertNHQDate = (datestring: string): Date => {
 		throw new Error('Invalid date format');
 	}
 
-	return new Date(
-		parseInt(values[3], 10),
-		parseInt(values[0], 10) - 1,
-		parseInt(values[1], 10)
-	);
+	return new Date(parseInt(values[3], 10), parseInt(values[0], 10) - 1, parseInt(values[1], 10));
 };
 
-export const convertMySQLTimestampToDateTime = (
-	datestring: string
-): DateTime => {
-	const values = datestring.match(
-		/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/
-	);
+export const convertMySQLTimestampToDateTime = (datestring: string): DateTime => {
+	const values = datestring.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
 
 	if (!values) {
 		throw new Error('Invalid date format');

@@ -15,6 +15,14 @@
 			}
 		},
 		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"group": "build",
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
 			"type": "gulp",
 			"task": "watch",
 			"problemMatcher": [
@@ -39,6 +47,14 @@
 			"type": "gulp",
 			"task": "mysql:backup",
 			"problemMatcher": []
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			]
 		}
 	]
 }
