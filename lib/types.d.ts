@@ -622,11 +622,7 @@ export interface DebriefItem {
 	debriefText: string;
 }
 
-/**
- * The meat of what this website is designed for; events can be signed up for
- * and hold information to facilitate easy information distribution
- */
-export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
+export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
 	/**
 	 * ID of the Event, can be expressed as the event number
 	 */
@@ -644,11 +640,6 @@ export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEven
 	 */
 	author: MemberReference;
 	/**
-	 * New events start with no attendance, but there can be procedurally
-	 * generated attendance on the client side to include internal POCs
-	 */
-	attendance: AttendanceRecord[];
-	/**
 	 * New events start with no debrief items.  Each item is a separate
 	 * comment provided by a member
 	 */
@@ -656,7 +647,7 @@ export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEven
 	/**
 	 * Who to contact for more event information
 	 */
-	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
+	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
 	/**
 	 * If this is a linked event this will be present
 	 *
@@ -673,6 +664,23 @@ export interface EventObject extends AccountIdentifiable, NoSQLDocument, NewEven
 		 */
 		accountID: string;
 	};
+
+}
+
+/**
+ * The meat of what this website is designed for; events can be signed up for
+ * and hold information to facilitate easy information distribution
+ */
+export interface EventObject extends RawEventObject {
+	/**
+	 * New events start with no attendance, but there can be procedurally
+	 * generated attendance on the client side to include internal POCs
+	 */
+	attendance: AttendanceRecord[];
+	/**
+	 * Who to contact for more event information
+	 */
+	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 }
 
 /**
