@@ -11,23 +11,34 @@ import {
 	MultCheckboxReturn,
 	NewAttendanceRecord,
 	NewEventObject,
-	RadioReturn
+	NoSQLDocument,
+	RadioReturn,
+	RawEventObject
 } from 'common-lib';
 import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
-import { collectResults, findAndBind } from './MySQLUtil';
+import {
+	collectResults,
+	findAndBind,
+	generateBindObject,
+	generateFindStatement,
+	generateResults
+} from './MySQLUtil';
 import EventValidator from './validator/validators/EventValidator';
 import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRecord';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
-interface RawAttendanceDBRecord {
+interface RawAttendanceDBRecord extends AttendanceRecord {
 	accountID: string;
-	memberReference: MemberReference;
-	
+	eventID: number;
+}
+
+interface AlmostRaw extends RawEventObject {
+	pointsOfContact: POCFull;
 }
 
 export default class Event implements EventObject, DatabaseInterface<EventObject> {
@@ -46,7 +57,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			id = parseInt(id, 10);
 		}
 
-		const eventsCollection = schema.getCollection<EventObject>('Events');
+		const eventsCollection = schema.getCollection<RawEventObject>('Events');
 
 		const results = await collectResults(
 			findAndBind(eventsCollection, {
@@ -59,13 +70,23 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			throw new Error('There was a problem getting the event');
 		}
 
-		results[0].pointsOfContact = await this.ConvertPointsOfContact(
+		const pointsOfContact = await this.ConvertPointsOfContact(
 			results[0].pointsOfContact,
 			account,
 			schema
 		);
 
-		return new Event(results[0], account, schema);
+		const attendance = await this.GetAttendance(id, account, schema);
+
+		return new Event(
+			{
+				...results[0],
+				attendance,
+				pointsOfContact
+			},
+			account,
+			schema
+		);
 	}
 
 	/**
@@ -80,7 +101,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		schema: Schema,
 		member: MemberBase
 	) {
-		const eventsCollection = schema.getCollection<EventObject>('Events');
+		const eventsCollection = schema.getCollection<RawEventObject>('Events');
 
 		const idResults = await collectResults(
 			findAndBind(eventsCollection, {
@@ -99,15 +120,13 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			schema
 		);
 
-		const newEvent: EventObject = {
+		const newEvent: RawEventObject = {
 			...data,
-			pointsOfContact,
 			id: newID,
 			accountID: account.id,
 			timeCreated,
 			timeModified: timeCreated,
 			author: member.getReference(),
-			attendance: [],
 			debrief: [],
 			sourceEvent: null
 		};
@@ -116,7 +135,49 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		newEvent._id = results.getGeneratedIds()[0];
 
-		return new Event(newEvent, account, schema);
+		return new Event(
+			{
+				...newEvent,
+				attendance: [] as AttendanceRecord[],
+				pointsOfContact
+			},
+			account,
+			schema
+		);
+	}
+
+	private static async GetAttendance(
+		id: number,
+		account: Account,
+		schema: Schema
+	): Promise<AttendanceRecord[]> {
+		const returnValue: AttendanceRecord[] = [];
+
+		const attendanceCollection = schema.getCollection<RawAttendanceDBRecord>('Attendance');
+
+		const generator = generateResults(
+			findAndBind(attendanceCollection, {
+				eventID: id,
+				accountID: account.id
+			})
+		);
+
+		for await (const record of generator) {
+			returnValue.push({
+				arrivalTime: record.arrivalTime,
+				canUsePhotos: record.canUsePhotos,
+				comments: record.comments,
+				departureTime: record.departureTime,
+				memberID: record.memberID,
+				memberName: record.memberName,
+				planToUseCAPTransportation: record.planToUseCAPTransportation,
+				status: record.status,
+				summaryEmailSent: record.summaryEmailSent,
+				timestamp: record.timestamp
+			});
+		}
+
+		return returnValue;
 	}
 
 	private static async ConvertPointsOfContact(
@@ -150,11 +211,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	}
 
 	private static DownconvertPointsOfContact(pocs: POCFull): POCRaw {
-		const newPOCs = pocs as POCRaw;
+		const newPOCs: POCRaw = [];
 
-		newPOCs.forEach((poc, i) => {
+		pocs.forEach(poc => {
 			if (poc.type === PointOfContactType.INTERNAL) {
-				newPOCs[i] = {
+				newPOCs.push({
 					email: poc.email,
 					memberReference: poc.memberReference,
 					phone: poc.phone,
@@ -163,7 +224,9 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
 					receiveUpdates: poc.receiveUpdates,
 					type: PointOfContactType.INTERNAL
-				};
+				});
+			} else {
+				newPOCs.push(poc);
 			}
 		});
 
@@ -281,9 +344,53 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param schema The schema for the event
 	 */
 	private constructor(data: EventObject, private account: Account, private schema: Schema) {
-		Object.assign(this, data);
-
+		this.id = data.id;
+		this.limitSignupsToTeam = data.limitSignupsToTeam;
+		this.location = data.location;
+		this.lodgingArrangments = data.lodgingArrangments;
+		this.mealsDescription = data.mealsDescription;
+		this.meetDateTime = data.meetDateTime;
+		this.meetLocation = data.meetLocation;
+		this.name = data.name;
+		this.participationFee = data.participationFee;
+		this.pickupDateTime = data.pickupDateTime;
+		this.pickupLocation = data.pickupLocation;
+		this.pointsOfContact = data.pointsOfContact;
+		this.publishToWingCalendar = data.publishToWingCalendar;
+		this.regionEventNumber = data.regionEventNumber;
+		this.registration = data.registration;
+		this.requiredEquipment = data.requiredEquipment;
+		this.requiredForms = data.requiredForms;
+		this.showUpcoming = data.showUpcoming;
+		this.signUpDenyMessage = data.signUpDenyMessage;
+		this.signUpPartTime = data.signUpPartTime;
+		this.sourceEvent = data.sourceEvent;
+		this.startDateTime = data.startDateTime;
+		this.status = data.status;
+		this.teamID = data.teamID;
+		this.timeCreated = data.timeCreated;
+		this.timeModified = data.timeModified;
+		this.transportationDescription = data.transportationDescription;
+		this.transportationProvided = data.transportationProvided;
+		this.uniform = data.uniform;
+		this.wingEventNumber = data.wingEventNumber;
+		this.fileIDs = data.fileIDs;
 		this.attendance = data.attendance;
+		this.administrationComments = data.administrationComments;
+		this.activity = data.activity;
+		this.acceptSignups = data.acceptSignups;
+		this.accountID = data.accountID;
+		this.author = data.author;
+		this.comments = data.comments;
+		this.complete = data.complete;
+		this.debrief = data.debrief;
+		this.desiredNumberOfParticipants = data.desiredNumberOfParticipants;
+		this.endDateTime = data.endDateTime;
+		this.eventWebsite = data.eventWebsite;
+		this.groupEventNumber = data.groupEventNumber;
+		this.highAdventureDescription = data.highAdventureDescription;
+
+		this._id = data._id;
 	}
 
 	/**
@@ -295,17 +402,15 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public async save(account: Account = this.account) {
 		const timeModified = +DateTime.utc();
 
-		const eventsCollection = this.schema.getCollection<EventObject>('Events');
+		const eventsCollection = this.schema.getCollection<RawEventObject>('Events');
 
 		const pointsOfContact = Event.DownconvertPointsOfContact(this.pointsOfContact);
 
 		await eventsCollection.replaceOne(this._id, {
-			...this.toFullRaw(),
+			...this.toSaveRaw(),
 			timeModified,
 			accountID: account.id,
-			pointsOfContact: pointsOfContact as Array<
-				DisplayInternalPointOfContact | ExternalPointOfContact
-			>
+			pointsOfContact
 		});
 	}
 
@@ -449,6 +554,244 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * Converts the current event to a transferable object
 	 */
 	public toRaw = (member?: MemberBase): EventObject => ({
+		...this.toSaveRaw(),
+		attendance: member === null || member === undefined ? [] : this.getAttendance()
+	});
+
+	/**
+	 * toRaw conditionally provides the attendance based on parameters
+	 *
+	 * This method returns the full, raw object unconditionally
+	 */
+	public toFullRaw = (): EventObject => ({
+		...this.toRaw(),
+		attendance: this.getAttendance(),
+		limitSignupsToTeam: this.limitSignupsToTeam
+	});
+
+	public async getSourceEvent(): Promise<Event> {
+		if (this.sourceEvent === null) {
+			return Promise.reject('There is no source event');
+		}
+
+		const sourceAccount = await Account.Get(this.sourceEvent.accountID, this.schema);
+
+		return Event.Get(this.sourceEvent.id, sourceAccount, this.schema);
+	}
+
+	// ----------------------------------------------------
+	// 					Attendance code
+	// ----------------------------------------------------
+
+	/**
+	 * Returns the attendance for the event
+	 */
+	public getAttendance = (): AttendanceRecord[] => this.attendance.slice();
+
+	/**
+	 * Add member to attendance
+	 *
+	 * @param newAttendanceRecord The record to add. Contains partial details
+	 * @param member The member to add to the records
+	 */
+	public async addMemberToAttendance(
+		newAttendanceRecord: NewAttendanceRecord,
+		member: BaseMember
+	): Promise<boolean> {
+		for (const index in this.attendance) {
+			if (
+				MemberBase.AreMemberReferencesTheSame(
+					this.attendance[index].memberID,
+					member.getReference()
+				)
+			) {
+				return this.modifyAttendanceRecord(newAttendanceRecord, member);
+			}
+		}
+
+		this.attendance = [
+			...this.attendance,
+			{
+				comments: newAttendanceRecord.comments,
+				memberID: member.getReference(),
+				memberName: member.getFullName(),
+				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+				status: newAttendanceRecord.status,
+				summaryEmailSent: false,
+				timestamp: +DateTime.utc(),
+				canUsePhotos: newAttendanceRecord.canUsePhotos,
+
+				// If these are null, they are staying for the whole event
+				arrivalTime: newAttendanceRecord.arrivalTime,
+				departureTime: newAttendanceRecord.departureTime
+			}
+		];
+
+		const attendanceCollection = this.schema.getCollection<RawAttendanceDBRecord>('Attendance');
+
+		await attendanceCollection
+			.add({
+				comments: newAttendanceRecord.comments,
+				memberID: member.getReference(),
+				memberName: member.getFullName(),
+				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+				status: newAttendanceRecord.status,
+				summaryEmailSent: false,
+				timestamp: +DateTime.utc(),
+				canUsePhotos: newAttendanceRecord.canUsePhotos,
+
+				// If these are null, they are staying for the whole event
+				arrivalTime: newAttendanceRecord.arrivalTime,
+				departureTime: newAttendanceRecord.departureTime,
+
+				accountID: this.account.id,
+				eventID: this.id
+			})
+			.execute();
+
+		return true;
+	}
+
+	/**
+	 * Modifies a current attendance record
+	 *
+	 * @param newAttendanceRecord The record to set
+	 * @param member The member to modify for
+	 */
+	public async modifyAttendanceRecord(
+		newAttendanceRecord: NewAttendanceRecord,
+		member: BaseMember
+	): Promise<boolean> {
+		const attendanceCollection = this.schema.getCollection<
+			RawAttendanceDBRecord & Required<NoSQLDocument>
+		>('Attendance');
+
+		for (const index in this.attendance) {
+			if (
+				MemberBase.AreMemberReferencesTheSame(
+					this.attendance[index].memberID,
+					member.getReference()
+				)
+			) {
+				const attendance = await collectResults(
+					findAndBind(attendanceCollection, {
+						eventID: this.id,
+						accountID: this.account.id
+					})
+				);
+
+				let otherIndex: string | number;
+
+				// As far as I can tell, I have to get
+				for (otherIndex in attendance) {
+					if (member.matchesReference(attendance[otherIndex].memberID)) {
+						break;
+					}
+				}
+
+				const _id = attendance[otherIndex as number]._id;
+
+				await attendanceCollection.replaceOne(_id, {
+					_id,
+					comments: newAttendanceRecord.comments,
+					memberName: member.getFullName(),
+					planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+					status: newAttendanceRecord.status,
+					summaryEmailSent: false,
+					timestamp: +DateTime.utc(),
+					canUsePhotos: newAttendanceRecord.canUsePhotos,
+					arrivalTime: newAttendanceRecord.arrivalTime,
+					departureTime: newAttendanceRecord.departureTime,
+
+					accountID: this.account.id,
+					eventID: this.id,
+					memberID: member.getReference()
+				});
+
+				this.attendance[index] = {
+					comments: newAttendanceRecord.comments,
+					memberID: member.getReference(),
+					memberName: member.getFullName(),
+					planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+					status: newAttendanceRecord.status,
+					summaryEmailSent: false,
+					timestamp: +DateTime.utc(),
+					canUsePhotos: newAttendanceRecord.canUsePhotos,
+
+					// If these are undefined, they are staying for the whole event
+					arrivalTime: newAttendanceRecord.arrivalTime,
+					departureTime: newAttendanceRecord.departureTime
+				};
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public async removeMemberFromAttendance(member: BaseMember): Promise<AttendanceRecord[]> {
+		const attendanceCollection = this.schema.getCollection<RawAttendanceDBRecord>('Attendance');
+
+		this.attendance = this.attendance.filter(
+			record => !member.matchesReference(record.memberID)
+		);
+
+		const search = {
+			accountID: this.account.id,
+			eventID: this.id,
+			memberID: member.getReference()
+		};
+
+		await attendanceCollection
+			.remove(generateFindStatement<RawAttendanceDBRecord>(search))
+			.bind(generateBindObject(search))
+			.execute();
+
+		return this.attendance;
+	}
+
+	// ----------------------------------------------------
+	// 					Debrief code
+	// ----------------------------------------------------
+
+	/**
+	 * Returns the debriefs for the event
+	 */
+	public getDebriefs = (): DebriefItem[] => this.debrief.slice();
+
+	/**
+	 * Add item to debrief
+	 *
+	 * @param newDebriefItem The text of the record to add
+	 * @param member The member to add to the records
+	 */
+	public addItemToDebrief = (newDebriefItem: string, member: BaseMember): DebriefItem[] =>
+		(this.debrief = [
+			...this.debrief,
+			{
+				memberRef: member.getReference(),
+				timeSubmitted: +DateTime.utc(),
+				debriefText: newDebriefItem
+			}
+		]);
+
+	/**
+	 * Removes a debrief item
+	 *
+	 * @param member The member who submitted the debrief item
+	 * @param timeSubmitted The time the member submitted it
+	 */
+	public removeItemFromDebrief = (member: BaseMember, timeOfRecord: number): DebriefItem[] =>
+		(this.debrief = this.debrief.filter(
+			record =>
+				!(
+					member.matchesReference(record.memberRef) &&
+					timeOfRecord === record.timeSubmitted
+				)
+		));
+
+	private toSaveRaw = (): AlmostRaw => ({
 		id: this.id,
 		accountID: this.accountID,
 		acceptSignups: this.acceptSignups,
@@ -492,140 +835,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		transportationProvided: this.transportationProvided,
 		uniform: this.uniform,
 		wingEventNumber: this.wingEventNumber,
-		fileIDs: this.fileIDs,
-		attendance: member === null || member === undefined ? [] : this.getAttendance()
+		fileIDs: this.fileIDs
 	});
-
-	/**
-	 * toRaw conditionally provides the attendance based on parameters
-	 *
-	 * This method returns the full, raw object unconditionally
-	 */
-	public toFullRaw = (): EventObject => ({
-		...this.toRaw(),
-		attendance: this.getAttendance(),
-		limitSignupsToTeam: this.limitSignupsToTeam
-	});
-
-	public async getSourceEvent(): Promise<Event> {
-		if (this.sourceEvent === null) {
-			return Promise.reject('There is no source event');
-		}
-
-		const sourceAccount = await Account.Get(this.sourceEvent.accountID, this.schema);
-
-		return Event.Get(this.sourceEvent.id, sourceAccount, this.schema);
-	}
-
-	// ----------------------------------------------------
-	// 					Attendance code
-	// ----------------------------------------------------
-
-	/**
-	 * Returns the attendance for the event
-	 */
-	public getAttendance = (): AttendanceRecord[] => this.attendance.slice();
-
-	/**
-	 * Add member to attendance
-	 *
-	 * @param newAttendanceRecord The record to add. Contains partial details
-	 * @param member The member to add to the records
-	 */
-	public addMemberToAttendance = (
-		newAttendanceRecord: NewAttendanceRecord,
-		member: BaseMember
-	): AttendanceRecord[] =>
-		(this.attendance = [
-			...this.attendance,
-			{
-				comments: newAttendanceRecord.comments,
-				memberID: member.getReference(),
-				memberName: member.getFullName(),
-				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
-				status: newAttendanceRecord.status,
-				summaryEmailSent: false,
-				timestamp: +DateTime.utc(),
-				canUsePhotos: newAttendanceRecord.canUsePhotos,
-
-				// If these are null, they are staying for the whole event
-				arrivalTime: newAttendanceRecord.arrivalTime,
-				departureTime: newAttendanceRecord.departureTime
-			}
-		]);
-
-	/**
-	 * Modifies a current attendance record
-	 *
-	 * @param newAttendanceRecord The record to set
-	 * @param member The member to modify for
-	 */
-	public modifyAttendanceRecord = (
-		newAttendanceRecord: NewAttendanceRecord,
-		member: BaseMember
-	): AttendanceRecord[] =>
-		(this.attendance = this.attendance.map(record =>
-			member.matchesReference(record.memberID)
-				? {
-						comments: newAttendanceRecord.comments,
-						memberID: member.getReference(),
-						memberName: member.getFullName(),
-						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
-						status: newAttendanceRecord.status,
-						summaryEmailSent: false,
-						timestamp: +DateTime.utc(),
-						canUsePhotos: newAttendanceRecord.canUsePhotos,
-
-						// If these are undefined, they are staying for the whole event
-						arrivalTime: newAttendanceRecord.arrivalTime,
-						departureTime: newAttendanceRecord.departureTime
-				  }
-				: record
-		));
-
-	public removeMemberFromAttendance = (member: BaseMember): AttendanceRecord[] =>
-		(this.attendance = this.attendance.filter(
-			record => !member.matchesReference(record.memberID)
-		));
-
-	// ----------------------------------------------------
-	// 					Debrief code
-	// ----------------------------------------------------
-
-	/**
-	 * Returns the debriefs for the event
-	 */
-	public getDebriefs = (): DebriefItem[] => this.debrief.slice();
-
-	/**
-	 * Add item to debrief
-	 *
-	 * @param newDebriefItem The text of the record to add
-	 * @param member The member to add to the records
-	 */
-	public addItemToDebrief = (newDebriefItem: string, member: BaseMember): DebriefItem[] =>
-		(this.debrief = [
-			...this.debrief,
-			{
-				memberRef: member.getReference(),
-				timeSubmitted: +DateTime.utc(),
-				debriefText: newDebriefItem
-			}
-		]);
-
-	/**
-	 * Removes a debrief item
-	 *
-	 * @param member The member who submitted the debrief item
-	 * @param timeSubmitted The time the member submitted it
-	 */
-	public removeItemFromDebrief = (member: BaseMember, timeOfRecord: number): DebriefItem[] =>
-		(this.debrief = this.debrief.filter(
-			record =>
-				!(
-					member.matchesReference(record.memberRef) &&
-					timeOfRecord === record.timeSubmitted
-				)
-		));
 }
 export { EventStatus };

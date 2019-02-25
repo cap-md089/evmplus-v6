@@ -42,18 +42,8 @@ router.post(
 	NHQMember.PermissionMiddleware('AddEvent'),
 	addevent
 );
-router.post(
-	'/:parent',
-	NHQMember.ExpressMiddleware,
-	tokenMiddleware,
-	linkevent
-);
-router.delete(
-	'/:id',
-	NHQMember.ExpressMiddleware,
-	tokenMiddleware,
-	deleteevent
-);
+router.post('/:parent', NHQMember.ExpressMiddleware, tokenMiddleware, linkevent);
+router.delete('/:id', NHQMember.ExpressMiddleware, tokenMiddleware, deleteevent);
 router.put(
 	'/:id',
 	NHQMember.ExpressMiddleware,
@@ -91,12 +81,7 @@ router.put(
 );
 router.delete('/:id/attendance', NHQMember.ExpressMiddleware, deleteattendance);
 
-router.post(
-	'/:id/debrief',
-	NHQMember.ExpressMiddleware,
-	tokenMiddleware,
-	adddebrief
-);
+router.post('/:id/debrief', NHQMember.ExpressMiddleware, tokenMiddleware, adddebrief);
 router.delete(
 	'/:id/debrief/:timestamp',
 	NHQMember.ExpressMiddleware,

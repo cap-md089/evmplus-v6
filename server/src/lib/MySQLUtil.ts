@@ -98,7 +98,7 @@ export const generateResults = async function*<T>(
 	}
 };
 
-export const generateFindStatement = <T>(find: T, scope: string | null = null): string =>
+export const generateFindStatement = <T>(find: Partial<T>, scope: string | null = null): string =>
 	Object.keys(find)
 		.map(val =>
 			typeof find[val as keyof T] === 'object'
@@ -114,7 +114,7 @@ export const generateFindStatement = <T>(find: T, scope: string | null = null): 
 		)
 		.join(' AND ');
 
-export const generateBindObject = <T>(bind: T): any =>
+export const generateBindObject = <T>(bind: Partial<T>): any =>
 	Object.keys(bind)
 		.map(key =>
 			typeof bind[key as keyof T] === 'object'
@@ -125,30 +125,17 @@ export const generateBindObject = <T>(bind: T): any =>
 
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
-	bind: Bound<T>
-): mysql.CollectionFind<T> =>
-	find
-		.find(
-			Object.keys(bind)
-				.map(val => `${val} = :${val}`)
-				.join(' AND ')
-		)
-		.bind(bind);
+	bind: Partial<Bound<T>>
+): mysql.CollectionFind<T> => find.find(generateFindStatement(bind)).bind(generateBindObject(bind));
 
 export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.TableSelect<T> =>
 	find.select().bind(bind);
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
-	bind: Bound<T>
+	bind: Partial<Bound<T>>
 ): mysql.CollectionModify<T> =>
-	modify
-		.modify(
-			Object.keys(bind)
-				.map(val => `${val} = :${val}`)
-				.join(' AND ')
-		)
-		.bind(bind);
+	modify.modify(generateFindStatement(bind)).bind(generateBindObject(bind));
 
 export const updatetAndBind = <T>(modify: mysql.Table<T>, bind: Bound<T>): mysql.TableUpdate<T> =>
 	modify

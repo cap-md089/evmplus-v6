@@ -699,7 +699,7 @@ export default class Validator<T> {
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
 				if (obj[key] === undefined || obj[key] === null) {
-					target[key] = null;
+					newObject[key] = null;
 					continue;
 				}
 

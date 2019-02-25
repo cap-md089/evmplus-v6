@@ -1,8 +1,8 @@
-import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
+import { NewAttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase from '../../../lib/MemberBase';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
@@ -41,6 +41,7 @@ export default asyncErrorHandler(
 
 		await event.save();
 
-		json<AttendanceRecord[]>(res, event.attendance);
+		res.status(204);
+		res.end();
 	}
 );

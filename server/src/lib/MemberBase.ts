@@ -62,11 +62,11 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public static isReference(value: any): value is MemberReference {
-		if (typeof value !== 'object') {
+		if (typeof value !== 'object' || value === null) {
 			return false;
 		}
 
-		if (value.type === 'undefined') {
+		if (typeof value.type === 'undefined') {
 			return false;
 		}
 
