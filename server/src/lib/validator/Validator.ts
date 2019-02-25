@@ -2,7 +2,7 @@ interface ValidatorResult {
 	valid: boolean;
 }
 
-interface ValidatorFail<T> extends ValidatorResult {
+export interface ValidatorFail<T> extends ValidatorResult {
 	valid: false;
 	message: string;
 	// IGNORE!! DO NOT USE!! IT WILL NEVER BE SET, IT'S JUST
@@ -10,7 +10,7 @@ interface ValidatorFail<T> extends ValidatorResult {
 	ret?: T;
 }
 
-interface ValidatorPass<T> extends ValidatorResult {
+export interface ValidatorPass<T> extends ValidatorResult {
 	valid: true;
 	// IGNORE!! DO NOT USE!! IT WILL NEVER BE SET, IT'S JUST
 	// FOR ENFORCING TYPE CHECKING WITH GENERIC TYPES
@@ -318,7 +318,7 @@ export default class Validator<T> {
 	public static And<S1>(validator1: Validator<S1> | ValidatorFunction<S1>): ValidatorFunction<S1>;
 	public static And<S1, S2>(
 		validator1: Validator<S1> | ValidatorFunction<S1>,
-		validator2: Validator<S1> | ValidatorFunction<S2>
+		validator2: Validator<S2> | ValidatorFunction<S2>
 	): ValidatorFunction<S1 & S2>;
 	public static And<S1, S2, S3>(
 		validator1: Validator<S1> | ValidatorFunction<S1>,
@@ -409,7 +409,7 @@ export default class Validator<T> {
 				}
 			}
 
-			return errors.length !== 0
+			return errors.length === 0
 				? {
 						valid: true
 				  }
@@ -447,6 +447,7 @@ export default class Validator<T> {
 			  };
 
 	public static MemberReference: ValidatorFunction<MemberReference> = input =>
+		!Validator.Nothing(input).valid &&
 		MemberBase.isReference(input)
 			? {
 					valid: true
@@ -599,7 +600,7 @@ export default class Validator<T> {
 	public validate(obj: any, partial?: false): obj is T;
 	public validate(obj: any, partial: true): obj is Partial<T>;
 
-	public validate(obj: any, partial?: boolean) {
+	public validate(obj: any, partial: boolean = false) {
 		this.errors = [];
 
 		if (obj === undefined || obj === null) {
@@ -612,7 +613,7 @@ export default class Validator<T> {
 				const rule = this.rules[key];
 
 				if (value === undefined || value === null) {
-					if (rule.required && !partial) {
+					if ((typeof rule.required === 'undefined' ? true : rule.required) && !partial) {
 						if (rule.requiredIf) {
 							if (rule.requiredIf(value, obj)) {
 								this.errors.push({
@@ -659,7 +660,12 @@ export default class Validator<T> {
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
 				if (obj[key] !== undefined) {
-					newObject[key] = obj[key];
+					const valid = this.rules[key].validator;
+					if (valid instanceof Validator) {
+						newObject[key] = valid.prune(obj[key]);
+					} else {
+						newObject[key] = obj[key];
+					}
 				}
 			}
 		}
@@ -672,7 +678,12 @@ export default class Validator<T> {
 
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
-				newObject[key] = obj[key];
+				const valid = this.rules[key].validator;
+				if (valid instanceof Validator) {
+					newObject[key] = valid.prune(obj[key]);
+				} else {
+					newObject[key] = obj[key];
+				}
 			}
 		}
 
