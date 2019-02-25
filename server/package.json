@@ -13,6 +13,7 @@
   "main": "dist/index.js",
   "dependencies": {
     "@mysql/xdevapi": "8.0.12",
+    "@types/react": "^16.8.4",
     "ajv": "6.5.2",
     "aws-sdk": "2.300.0",
     "body-parser": "1.18.2",
@@ -74,7 +75,7 @@
     "globals": {
       "ts-jest": {
         "tsConfig": "tsconfig.test.json",
-		"diagnostics": false
+        "diagnostics": false
       }
     },
     "testRegex": "(/src/__tests__/.*\\.ts)",

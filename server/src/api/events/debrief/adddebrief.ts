@@ -1,9 +1,9 @@
 import { DebriefItem } from 'common-lib';
 import { Response } from 'express';
-import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
 import MemberBase from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
+import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<DebriefItem>, res: Response) => {

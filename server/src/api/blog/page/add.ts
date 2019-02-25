@@ -1,8 +1,8 @@
 import { BlogPageObject, NewBlogPage } from 'common-lib';
 import { Response } from 'express';
-import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPage from '../../../lib/BlogPage';
 import { asyncErrorHandler, json } from '../../../lib/Util';
+import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewBlogPage>, res: Response) => {

@@ -1,8 +1,8 @@
 import { NewBlogPage } from 'common-lib';
 import { Response } from 'express';
-import { BasicValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPage from '../../../lib/BlogPage';
 import { asyncErrorHandler } from '../../../lib/Util';
+import { BasicValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(async (req: BasicValidatedRequest<NewBlogPage>, res: Response) => {
 	let page: BlogPage;

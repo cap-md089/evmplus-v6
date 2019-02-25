@@ -1,8 +1,8 @@
+import { RawTeamObject } from 'common-lib';
 import { Response } from 'express';
-import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Team from '../../lib/Team';
 import { asyncErrorHandler } from '../../lib/Util';
-import { RawTeamObject } from 'common-lib';
+import { MemberValidatedRequest } from '../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<Partial<RawTeamObject>>, res: Response) => {
@@ -18,12 +18,7 @@ export default asyncErrorHandler(
 
 		team.set(req.body);
 
-		await team.updateMembers(
-			team.members.slice(),
-			req.body.members,
-			req.account,
-			req.mysqlx
-		);
+		await team.updateMembers(team.members.slice(), req.body.members, req.account, req.mysqlx);
 
 		await team.save();
 

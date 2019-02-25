@@ -1,8 +1,8 @@
 import { NewBlogPost } from 'common-lib';
 import * as express from 'express';
-import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import BlogPost from '../../../lib/BlogPost';
 import { asyncErrorHandler } from '../../../lib/Util';
+import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<Partial<NewBlogPost>>, res: express.Response) => {

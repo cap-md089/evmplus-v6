@@ -1,8 +1,8 @@
 import { EventObject, NewEventObject } from 'common-lib';
 import * as express from 'express';
-import { MemberValidatedRequest } from 'src/lib/validator/Validator';
 import Event from '../../../lib/Event';
 import { asyncErrorHandler, getTargetMonth, getTargetYear, json } from '../../../lib/Util';
+import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewEventObject>, res: express.Response) => {
