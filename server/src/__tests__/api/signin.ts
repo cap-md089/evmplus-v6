@@ -56,7 +56,7 @@ describe('/api', () => {
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
-					expect(ret.member.id).toEqual(signinInformation.username);
+					expect(ret.member ? ret.member.id : 0).toEqual(signinInformation.username);
 
 					done();
 				});
@@ -111,7 +111,7 @@ describe('/api', () => {
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
-					expect(ret.member.id).toEqual(signinInformation.username);
+					expect(ret.member ? ret.member.id : 0).toEqual(signinInformation.username);
 
 					done();
 				});
@@ -143,7 +143,9 @@ describe('/api', () => {
 							expect(ret.error).toEqual(-1);
 							expect(ret.sessionID).not.toEqual('');
 							expect(ret.valid).toEqual(true);
-							expect(ret.member.id).toEqual(signinInformation.username);
+							expect(ret.member ? ret.member.id : 0).toEqual(
+								signinInformation.username
+							);
 
 							done();
 						});
@@ -172,7 +174,7 @@ describe('/api', () => {
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
-					expect(ret.member.id).toEqual(pmember.id);
+					expect(ret.member ? ret.member.id : 0).toEqual(pmember.id);
 
 					done();
 				});
@@ -200,7 +202,7 @@ describe('/api', () => {
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
-					expect(ret.member.id).toEqual(pmember.id);
+					expect(ret.member ? ret.member.id : 0).toEqual(pmember.id);
 
 					done();
 				});

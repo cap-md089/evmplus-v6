@@ -43,7 +43,7 @@ describe('CAPWATCHMember', async () => {
 	it('should create the correct reference', async () => {
 		const reference = mem.getReference();
 
-		const newMem = await MemberBase.ResolveReference(reference, account, schema);
+		const newMem = await MemberBase.ResolveReference(reference, account, schema, true);
 
 		expect(newMem.matchesReference(reference)).toBeTruthy();
 	});
