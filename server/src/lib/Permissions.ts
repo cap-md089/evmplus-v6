@@ -129,4 +129,6 @@ export const getPermissions = (lvl: MemberAccessLevel): MemberPermissions =>
 		? Manager
 		: lvl === 'Admin'
 		? Admin
-		: null;
+		: (() => {
+				throw new Error('Invalid member access level');
+		  })();

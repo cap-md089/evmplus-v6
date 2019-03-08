@@ -155,7 +155,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.String
 			},
 			participationFee: {
-				validator: new ParticipationFeeValidator(),
+				validator: Validator.Or(new ParticipationFeeValidator(), Validator.Null),
 				required: false
 			},
 			pickupDateTime: {
@@ -176,7 +176,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.RadioReturn(EchelonEventNumber)
 			},
 			registration: {
-				validator: new RegistrationValidator(),
+				validator: Validator.Or(new RegistrationValidator(), Validator.Null),
 				required: false
 			},
 			requiredEquipment: {
@@ -201,10 +201,10 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Enum(EventStatus)
 			},
 			teamID: {
-				validator: Validator.Or(Validator.Number, Validator.Nothing)
+				validator: Validator.Or(Validator.Number, Validator.Null)
 			},
 			limitSignupsToTeam: {
-				validator: Validator.Or(Validator.Boolean, Validator.Nothing),
+				validator: Validator.Or(Validator.Boolean, Validator.Null),
 				requiredIf: (_, event) => {
 					return typeof (event as any).teamID === 'number';
 				}

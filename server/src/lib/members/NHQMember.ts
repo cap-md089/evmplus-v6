@@ -241,6 +241,11 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 		extraInfo: ExtraMemberInformation
 	) {
 		super(data, schema, account, extraInfo);
+
+		this.id = data.id;
+		this.cookie = data.cookie;
+		this.absenteeInformation = extraInfo.absentee;
+
 		this.accessLevel = extraInfo.accessLevel;
 		this.sessionID = data.sessionID;
 

@@ -26,6 +26,8 @@ export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
 			}
 		}
 	}
+
+	return true;
 }
 
 export function extend<T, S>(obj1: T, obj2: S): T & S {

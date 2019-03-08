@@ -1,10 +1,8 @@
 import { load } from 'cheerio';
+import { CAPMemberContact, CAPMemberContactPriority, CAPMemberContactType } from 'common-lib';
 import req from './nhq-request';
-import { CAPMemberContact, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
 
-export default async (
-	cookie: string
-): Promise<CAPMemberContact> => {
+export default async (cookie: string): Promise<CAPMemberContact> => {
 	const contact: CAPMemberContact = {
 		ALPHAPAGER: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
 		ASSISTANT: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' },
@@ -23,19 +21,18 @@ export default async (
 		WORKPHONE: { PRIMARY: '', SECONDARY: '', EMERGENCY: '' }
 	};
 
-	const page = await req(
-		'/CAP.eServices.Web/MyAccount/ContactInfo.aspx',
-		cookie
-	);
+	const page = await req('/CAP.eServices.Web/MyAccount/ContactInfo.aspx', cookie);
 
 	const $ = load(page);
 
 	const table = $('#gvContactInformation');
 
 	table.find('tr').each(function() {
+		// @ts-ignore
 		const texts = $(this)
 			.children()
 			.map(function(i: number, el: CheerioElement) {
+				// @ts-ignore
 				return $(this)
 					.text()
 					.replace(/[ \n\r]/g, '');
@@ -47,13 +44,10 @@ export default async (
 		}
 
 		if (texts[4] === 'False' || texts[4] === '') {
-			contact[texts[0] as CAPMemberContactType][
-				texts[1] as CAPMemberContactPriority
-			] = texts[2];
+			contact[texts[0] as CAPMemberContactType][texts[1] as CAPMemberContactPriority] =
+				texts[2];
 		}
 	});
-
-	
 
 	return contact;
 };

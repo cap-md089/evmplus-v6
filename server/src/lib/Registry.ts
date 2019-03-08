@@ -1,11 +1,11 @@
 import { Schema } from '@mysql/xdevapi';
-import { DatabaseInterface, RegistryValues } from 'common-lib';
+import { DatabaseInterface, NoSQLDocument, RegistryValues } from 'common-lib';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 
 export default class Registry implements DatabaseInterface<RegistryValues> {
 	public static async Get(account: Account, schema: Schema): Promise<Registry> {
-		const registryCollection = schema.getCollection<RegistryValues>(Registry.collectionName);
+		const registryCollection = schema.getCollection<RegistryValues & Required<NoSQLDocument>>(Registry.collectionName);
 
 		const results = await collectResults(
 			findAndBind(registryCollection, {
@@ -86,9 +86,13 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 
 	private schema: Schema;
 
-	private constructor(values: RegistryValues, account: Account, schema: Schema) {
-		this.set(values);
-
+	private constructor(
+		values: RegistryValues & Required<NoSQLDocument>,
+		account: Account,
+		schema: Schema
+	) {
+		this._id = values._id;
+		this.values = values;
 		this.account = account;
 		this.schema = schema;
 	}
@@ -116,7 +120,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			Registry.collectionName
 		);
 
-		await registryCollection.replaceOne(this.values._id, this.values);
+		await registryCollection.replaceOne(this._id, this.values);
 	}
 
 	public async delete() {
@@ -124,7 +128,7 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 			Registry.collectionName
 		);
 
-		await registryCollection.removeOne(this.values._id);
+		await registryCollection.removeOne(this._id);
 	}
 
 	public toRaw = (): RegistryValues => ({

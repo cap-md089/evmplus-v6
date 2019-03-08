@@ -547,6 +547,7 @@ export default class Validator<T> {
 	public static OneOfStrict<T extends any>(...values: T[]): ValidatorFunction<T>;
 
 	public static OneOfStrict<T extends any[]>(...values: T): ValidatorFunction<any> {
+		// @ts-ignore
 		return Validator.Or.apply({}, values.map(value => Validator.StrictValue(value)));
 	}
 
@@ -669,7 +670,8 @@ export default class Validator<T> {
 				if (obj[key] !== undefined) {
 					const valid = this.rules[key].validator;
 					if (valid instanceof Validator) {
-						newObject[key] = valid.prune(obj[key]);
+						// @ts-ignore
+						newObject[key] = valid.partialPrune(obj[key]);
 					} else {
 						const arr = obj[key];
 						if (Array.isArray(arr)) {
@@ -678,7 +680,7 @@ export default class Validator<T> {
 							validator = valid.validator;
 							const newArray = [];
 							for (const i of arr) {
-								newArray.push(validator.prune(i));
+								newArray.push(validator.partialPrune(i));
 							}
 							// @ts-ignore
 							newObject[key] = newArray;
@@ -699,6 +701,8 @@ export default class Validator<T> {
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
 				if (obj[key] === undefined || obj[key] === null) {
+					// Standardize to null, as MySQLX doesn't like undefined
+					// @ts-ignore
 					newObject[key] = null;
 					continue;
 				}

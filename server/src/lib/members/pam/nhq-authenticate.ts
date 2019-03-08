@@ -45,7 +45,7 @@ export default async (Login1$UserName: string, Login1$Password: string): Promise
 			throw new Error(MemberCreateError.PASSWORD_EXPIRED.toString());
 		} else {
 			const cookies = results.headers['set-cookie']
-				.map((ctext: string) => ctext.match(/(.*?\=.*?);/)[1])
+				.map((ctext: string) => (ctext.match(/(.*?\=.*?);/) || [])[1])
 				.join('; ');
 
 			return cookies;

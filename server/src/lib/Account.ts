@@ -8,6 +8,7 @@ import {
 	FileObject,
 	MemberReference,
 	NHQ,
+	NoSQLDocument,
 	ProspectiveMemberObject,
 	RawAccountObject,
 	RawTeamObject
@@ -28,10 +29,10 @@ export interface AccountRequest<P = any> extends MySQLRequest<P> {
 }
 
 export default class Account implements AccountObject, DatabaseInterface<AccountObject> {
-	public static ExpressMiddleware: express.RequestHandler = async (
+	public static ExpressMiddleware = async (
 		req: AccountRequest,
-		res,
-		next
+		res: express.Response,
+		next: express.NextFunction
 	) => {
 		const host = req.hostname;
 		const parts = host.split('.');
@@ -95,7 +96,9 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	};
 
 	public static async Get(id: string, schema: mysql.Schema): Promise<Account> {
-		const accountCollection = schema.getCollection<RawAccountObject>('Accounts');
+		const accountCollection = schema.getCollection<RawAccountObject & Required<NoSQLDocument>>(
+			'Accounts'
+		);
 
 		const results = await collectResults(
 			findAndBind(accountCollection, {
@@ -159,10 +162,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 */
 	public id: string;
 	/**
-	 * The SQL used to select all organizations that are in the account
-	 */
-	public orgSQL: string;
-	/**
 	 * The ids of the organizations
 	 */
 	public orgIDs: number[];
@@ -206,8 +205,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
-	private constructor(data: AccountObject, private schema: mysql.Schema) {
-		Object.assign(this, data);
+	private constructor(
+		data: AccountObject & Required<NoSQLDocument>,
+		private schema: mysql.Schema
+	) {
+		this._id = data._id;
+		this.mainOrg = data.mainOrg;
+		this.adminIDs = data.adminIDs;
+		this.unpaidEventLimit = data.unpaidEventLimit;
+		this.echelon = data.echelon;
+		this.paidEventLimit = data.paidEventLimit;
+		this.paid = data.paid;
+		this.expired = data.expired;
+		this.expires = data.expires;
+		this.validPaid = data.validPaid;
+		this.orgIDs = data.orgIDs;
+		this.id = data.id;
 	}
 
 	public buildURI(...identifiers: string[]) {

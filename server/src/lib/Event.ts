@@ -57,7 +57,9 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			id = parseInt(id, 10);
 		}
 
-		const eventsCollection = schema.getCollection<RawEventObject>('Events');
+		const eventsCollection = schema.getCollection<RawEventObject & Required<NoSQLDocument>>(
+			'Events'
+		);
 
 		const results = await collectResults(
 			findAndBind(eventsCollection, {
@@ -133,13 +135,12 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		const results = await eventsCollection.add(newEvent).execute();
 
-		newEvent._id = results.getGeneratedIds()[0];
-
 		return new Event(
 			{
 				...newEvent,
 				attendance: [] as AttendanceRecord[],
-				pointsOfContact
+				pointsOfContact,
+				_id: results.getGeneratedIds()[0]
 			},
 			account,
 			schema
@@ -200,7 +201,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		newPOCs.forEach(poc => {
 			if (poc.type === PointOfContactType.INTERNAL) {
 				for (const mem of members) {
-					if (mem.matchesReference(poc.memberReference)) {
+					if (mem && mem.matchesReference(poc.memberReference)) {
 						poc.name = mem.getFullName();
 					}
 				}
@@ -293,7 +294,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public acceptSignups: boolean;
 
-	public signUpDenyMessage: string;
+	public signUpDenyMessage: string | null;
 
 	public publishToWingCalendar: boolean;
 
@@ -319,7 +320,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public signUpPartTime: boolean;
 
-	public teamID: number;
+	public teamID: number | null;
 
 	public limitSignupsToTeam: boolean | null;
 
@@ -343,7 +344,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param account The account for the event
 	 * @param schema The schema for the event
 	 */
-	private constructor(data: EventObject, private account: Account, private schema: Schema) {
+	private constructor(
+		data: EventObject & Required<NoSQLDocument>,
+		private account: Account,
+		private schema: Schema
+	) {
 		this.id = data.id;
 		this.limitSignupsToTeam = data.limitSignupsToTeam;
 		this.location = data.location;
@@ -680,48 +685,51 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 					})
 				);
 
-				let otherIndex: string | number;
+				// tslint:disable-next-line:variable-name
+				let _id: string | null = null;
 
-				// As far as I can tell, I have to get
-				for (otherIndex in attendance) {
+				// As far as I can tell, I have to get the _id of the document
+				for (const otherIndex in attendance) {
 					if (member.matchesReference(attendance[otherIndex].memberID)) {
-						break;
+						_id = attendance[otherIndex]._id;
 					}
 				}
 
-				const _id = attendance[otherIndex as number]._id;
+				if (_id) {
+					await attendanceCollection.replaceOne(_id, {
+						_id,
+						comments: newAttendanceRecord.comments,
+						memberName: member.getFullName(),
+						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+						status: newAttendanceRecord.status,
+						summaryEmailSent: false,
+						timestamp: +DateTime.utc(),
+						canUsePhotos: newAttendanceRecord.canUsePhotos,
+						arrivalTime: newAttendanceRecord.arrivalTime,
+						departureTime: newAttendanceRecord.departureTime,
 
-				await attendanceCollection.replaceOne(_id, {
-					_id,
-					comments: newAttendanceRecord.comments,
-					memberName: member.getFullName(),
-					planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
-					status: newAttendanceRecord.status,
-					summaryEmailSent: false,
-					timestamp: +DateTime.utc(),
-					canUsePhotos: newAttendanceRecord.canUsePhotos,
-					arrivalTime: newAttendanceRecord.arrivalTime,
-					departureTime: newAttendanceRecord.departureTime,
+						accountID: this.account.id,
+						eventID: this.id,
+						memberID: member.getReference()
+					});
 
-					accountID: this.account.id,
-					eventID: this.id,
-					memberID: member.getReference()
-				});
+					this.attendance[index] = {
+						comments: newAttendanceRecord.comments,
+						memberID: member.getReference(),
+						memberName: member.getFullName(),
+						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
+						status: newAttendanceRecord.status,
+						summaryEmailSent: false,
+						timestamp: +DateTime.utc(),
+						canUsePhotos: newAttendanceRecord.canUsePhotos,
 
-				this.attendance[index] = {
-					comments: newAttendanceRecord.comments,
-					memberID: member.getReference(),
-					memberName: member.getFullName(),
-					planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
-					status: newAttendanceRecord.status,
-					summaryEmailSent: false,
-					timestamp: +DateTime.utc(),
-					canUsePhotos: newAttendanceRecord.canUsePhotos,
-
-					// If these are undefined, they are staying for the whole event
-					arrivalTime: newAttendanceRecord.arrivalTime,
-					departureTime: newAttendanceRecord.departureTime
-				};
+						// If these are undefined, they are staying for the whole event
+						arrivalTime: newAttendanceRecord.arrivalTime,
+						departureTime: newAttendanceRecord.departureTime
+					};
+				} else {
+					return false;
+				}
 
 				return true;
 			}

@@ -8,8 +8,8 @@ export interface MySQLRequest<P = any> extends express.Request {
 	params: P;
 }
 
-export default (pool: mysql.Schema): express.RequestHandler => {
-	return (req: MySQLRequest, res, next) => {
+export default (pool: mysql.Schema) => {
+	return (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
 		req.mysqlx = pool;
 		next();
 	};
@@ -46,7 +46,7 @@ export const generateResults = async function*<T>(
 ): AsyncIterableIterator<T> {
 	const results = {
 		queue: [] as T[],
-		callback: void 0 as ((item?: T) => void | undefined),
+		callback: void 0 as ((item?: T) => void) | undefined,
 		doCallback: (callback: (item?: T) => void): void => {
 			if (results.queue.length > 0) {
 				callback(results.queue.shift());
@@ -104,7 +104,7 @@ export const generateFindStatement = <T>(find: Partial<T>, scope: string | null 
 			typeof find[val as keyof T] === 'object'
 				? '(' +
 				  generateFindStatement(
-						find[val as keyof T],
+						find[val as keyof T]!,
 						scope === null ? val : `${scope}.${val}`
 				  ) +
 				  ')'
@@ -118,7 +118,7 @@ export const generateBindObject = <T>(bind: Partial<T>): any =>
 	Object.keys(bind)
 		.map(key =>
 			typeof bind[key as keyof T] === 'object'
-				? generateBindObject(bind[key as keyof T])
+				? generateBindObject(bind[key as keyof T]!)
 				: { [key]: bind[key as keyof T] }
 		)
 		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));

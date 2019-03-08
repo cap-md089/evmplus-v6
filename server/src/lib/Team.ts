@@ -287,11 +287,11 @@ export default class Team implements FullTeamObject {
 
 	public members: FullTeamMember[] = [];
 
-	public cadetLeader: MemberReference | null;
+	public cadetLeader: MemberReference;
 
-	public seniorCoach: MemberReference | null;
+	public seniorCoach: MemberReference;
 
-	public seniorMentor: MemberReference | null;
+	public seniorMentor: MemberReference;
 
 	public visibility: TeamPublicity;
 
@@ -315,6 +315,12 @@ export default class Team implements FullTeamObject {
 	) {
 		this.id = data.id;
 		this._id = data._id;
+		this.name = data.name;
+		this.description = data.description;
+		this.cadetLeader = data.cadetLeader;
+		this.seniorCoach = data.seniorCoach;
+		this.seniorMentor = data.seniorMentor;
+		this.visibility = data.visibility;
 		this.members = data.members;
 		this.teamHistory = data.teamHistory;
 		this.accountID = data.accountID;
@@ -575,17 +581,12 @@ export default class Team implements FullTeamObject {
 	}
 
 	public modifyTeamMember(member: MemberReference, job: string) {
-		let index;
-
 		for (let i = 0; i < this.members.length; i++) {
 			if (MemberBase.AreMemberReferencesTheSame(member, this.members[i].reference)) {
-				index = i;
-
+				this.members[i].job = job;
 				break;
 			}
 		}
-
-		this.members[index].job = job;
 	}
 
 	public async updateMembers(
@@ -613,7 +614,8 @@ export default class Team implements FullTeamObject {
 				const fullMember = await MemberBase.ResolveReference(
 					newMembers[i].reference,
 					account,
-					schema
+					schema,
+					true
 				);
 
 				await this.addTeamMember(fullMember, newMembers[i].job, account, schema);
@@ -622,15 +624,15 @@ export default class Team implements FullTeamObject {
 	}
 
 	public async updateTeamLeaders(account: Account, schema: Schema) {
-		if (this.cadetLeader.type !== 'Null') {
+		if (this.cadetLeader && this.cadetLeader.type !== 'Null') {
 			this.updateMember(this.cadetLeader, account, schema);
 		}
 
-		if (this.seniorCoach.type !== 'Null') {
+		if (this.seniorCoach && this.seniorCoach.type !== 'Null') {
 			this.updateMember(this.seniorCoach, account, schema);
 		}
 
-		if (this.seniorMentor.type !== 'Null') {
+		if (this.seniorMentor && this.seniorMentor.type !== 'Null') {
 			this.updateMember(this.seniorMentor, account, schema);
 		}
 	}

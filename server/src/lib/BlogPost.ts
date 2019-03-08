@@ -4,7 +4,8 @@ import {
 	DatabaseInterface,
 	FullBlogPostObject,
 	MemberReference,
-	NewBlogPost
+	NewBlogPost,
+	NoSQLDocument
 } from 'common-lib';
 import { RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
@@ -21,7 +22,9 @@ export default class BlogPost implements FullBlogPostObject, DatabaseInterface<F
 		account: Account,
 		schema: Schema
 	): Promise<BlogPost> {
-		const blogPostCollection = schema.getCollection<BlogPostObject>(BlogPost.collectionName);
+		const blogPostCollection = schema.getCollection<BlogPostObject & Required<NoSQLDocument>>(
+			BlogPost.collectionName
+		);
 
 		id = parseInt(id.toString(), 10);
 
@@ -38,7 +41,7 @@ export default class BlogPost implements FullBlogPostObject, DatabaseInterface<F
 			throw new Error('Could not get blog post');
 		}
 
-		const author = await MemberBase.ResolveReference(results[0].author, account, schema);
+		const author = await MemberBase.ResolveReference(results[0].author, account, schema, true);
 
 		return new BlogPost(
 			{
@@ -77,7 +80,7 @@ export default class BlogPost implements FullBlogPostObject, DatabaseInterface<F
 
 		const posted = +DateTime.utc();
 
-		let newPost: FullBlogPostObject = {
+		const newPost: FullBlogPostObject = {
 			...data,
 			id,
 			posted,
@@ -89,12 +92,14 @@ export default class BlogPost implements FullBlogPostObject, DatabaseInterface<F
 		// tslint:disable-next-line:variable-name
 		const _id = (await blogPostCollection.add(newPost).execute()).getGeneratedIds()[0];
 
-		newPost = {
-			...newPost,
-			_id
-		};
-
-		return new BlogPost(newPost, account, schema);
+		return new BlogPost(
+			{
+				...newPost,
+				_id
+			},
+			account,
+			schema
+		);
 	}
 
 	private static collectionName = 'Blog';
@@ -124,14 +129,18 @@ export default class BlogPost implements FullBlogPostObject, DatabaseInterface<F
 
 	private schema: Schema;
 
-	private constructor(data: FullBlogPostObject, account: Account, schema: Schema) {
+	private constructor(
+		data: FullBlogPostObject & Required<NoSQLDocument>,
+		account: Account,
+		schema: Schema
+	) {
 		this._id = data._id;
+		this.content = data.content;
+		this.title = data.title;
 		this.id = data.id;
 		this.author = data.author;
 		this.posted = data.posted;
 		this.authorName = data.authorName;
-
-		this.set(data);
 
 		this.account = account;
 		this.schema = schema;

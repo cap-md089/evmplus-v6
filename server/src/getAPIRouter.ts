@@ -25,13 +25,7 @@ import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	const router: express.Router = express.Router();
 
-	const {
-		database: schema,
-		host,
-		password,
-		port: mysqlPort,
-		user
-	} = conf.database.connection;
+	const { database: schema, host, password, port: mysqlPort, user } = conf.database.connection;
 
 	if (typeof session === 'undefined') {
 		session = await mysql.getSession({
@@ -47,16 +41,11 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	/**
 	 * Use API Routers
 	 */
-	router.use(MySQLMiddleware(eventManagementSchema));
+	router.use('*', MySQLMiddleware(eventManagementSchema));
 
 	router.use((req: MySQLRequest, _, next) => {
 		req._originalUrl = req.originalUrl;
-		req.originalUrl =
-			'http' +
-			(req.secure ? 's' : '') +
-			'://' +
-			req.hostname +
-			req.originalUrl;
+		req.originalUrl = 'http' + (req.secure ? 's' : '') + '://' + req.hostname + req.originalUrl;
 		next();
 	});
 
@@ -89,12 +78,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/signin', Account.ExpressMiddleware, signin);
 
-	router.get(
-		'/token',
-		Account.ExpressMiddleware,
-		NHQMember.ExpressMiddleware,
-		getFormToken
-	);
+	router.get('/token', Account.ExpressMiddleware, NHQMember.ExpressMiddleware, getFormToken);
 
 	router.get(
 		'/banner',
@@ -109,12 +93,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/echo', echo);
 
-	router.use(
-		'/check',
-		Account.ExpressMiddleware,
-		NHQMember.ConditionalExpressMiddleware,
-		check
-	);
+	router.use('/check', Account.ExpressMiddleware, NHQMember.ConditionalExpressMiddleware, check);
 
 	router.use('/blog', blog);
 

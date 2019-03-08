@@ -190,13 +190,15 @@ describe('Validator', () => {
 
 			it('should provide the correct error message', () => {
 				expect(
-					(Validator.Nothing(null) as ValidatorFail<null | undefined>).message!
+					((Validator.Nothing(null) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).not.toBeDefined();
 				expect(
-					(Validator.Nothing(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.Nothing(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).not.toBeDefined();
 				expect(
-					(Validator.Nothing('') as ValidatorFail<null | undefined>).message!
+					((Validator.Nothing('') as unknown) as ValidatorFail<null | undefined>).message!
 				).toBeDefined();
 			});
 		});
@@ -215,13 +217,14 @@ describe('Validator', () => {
 
 			it('should provide the correct error message', () => {
 				expect(
-					(Validator.Null(null) as ValidatorFail<null | undefined>).message!
+					((Validator.Null(null) as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 				expect(
-					(Validator.Null(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.Null(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.Null('') as ValidatorFail<null | undefined>).message!
+					((Validator.Null('') as unknown) as ValidatorFail<null | undefined>).message!
 				).toBeDefined();
 			});
 		});
@@ -240,13 +243,15 @@ describe('Validator', () => {
 
 			it('should provide the correct error message', () => {
 				expect(
-					(Validator.String(null) as ValidatorFail<null | undefined>).message!
+					((Validator.String(null) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.String(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.String(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.String('') as ValidatorFail<null | undefined>).message!
+					((Validator.String('') as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 			});
 		});
@@ -264,10 +269,11 @@ describe('Validator', () => {
 
 			it('should provide the correct error message', () => {
 				expect(
-					(Validator.Number(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.Number(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.Number(1) as ValidatorFail<null | undefined>).message!
+					((Validator.Number(1) as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 			});
 		});
@@ -286,10 +292,12 @@ describe('Validator', () => {
 
 			it('should provide the correct error message', () => {
 				expect(
-					(Validator.Boolean(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.Boolean(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.Boolean(false) as ValidatorFail<null | undefined>).message!
+					((Validator.Boolean(false) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).not.toBeDefined();
 			});
 		});
@@ -308,10 +316,11 @@ describe('Validator', () => {
 
 			it('should return the correct error message in general', () => {
 				expect(
-					(Validator.Array(undefined) as ValidatorFail<null | undefined>).message!
+					((Validator.Array(undefined) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(Validator.Array([]) as ValidatorFail<null | undefined>).message!
+					((Validator.Array([]) as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 			});
 
@@ -329,10 +338,10 @@ describe('Validator', () => {
 
 			it('should return the correct error message for validators', () => {
 				expect(
-					(arrayValidator(null) as ValidatorFail<null | undefined>).message!
+					((arrayValidator(null) as unknown) as ValidatorFail<null | undefined>).message!
 				).toBeDefined();
 				expect(
-					(arrayValidator([]) as ValidatorFail<null | undefined>).message!
+					((arrayValidator([]) as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 			});
 		});
@@ -353,11 +362,13 @@ describe('Validator', () => {
 
 			it('should return the correct error message', () => {
 				expect(
-					(testEnumValidator(null) as ValidatorFail<null | undefined>).message!
+					((testEnumValidator(null) as unknown) as ValidatorFail<null | undefined>)
+						.message!
 				).toBeDefined();
 				expect(
-					(testEnumValidator(TestEnum.ITEMONE) as ValidatorFail<null | undefined>)
-						.message!
+					((testEnumValidator(TestEnum.ITEMONE) as unknown) as ValidatorFail<
+						null | undefined
+					>).message!
 				).not.toBeDefined();
 			});
 		});
@@ -381,8 +392,12 @@ describe('Validator', () => {
 			});
 
 			it('should provide the correct error message', () => {
-				expect((or(null) as ValidatorFail<null | undefined>).message!).toBeDefined();
-				expect((or(1) as ValidatorFail<null | undefined>).message!).not.toBeDefined();
+				expect(
+					((or(null) as unknown) as ValidatorFail<null | undefined>).message!
+				).toBeDefined();
+				expect(
+					((or(1) as unknown) as ValidatorFail<null | undefined>).message!
+				).not.toBeDefined();
 			});
 		});
 
@@ -409,11 +424,14 @@ describe('Validator', () => {
 			});
 
 			it('should provide the correct error messages', () => {
-				expect((and(null) as ValidatorFail<null | undefined>).message!).toBeDefined();
 				expect(
-					(and2({ thing: 'string', basicThing: { thing: 'string' } }) as ValidatorFail<
-						null | undefined
-					>).message!
+					((and(null) as unknown) as ValidatorFail<null | undefined>).message!
+				).toBeDefined();
+				expect(
+					((and2({
+						thing: 'string',
+						basicThing: { thing: 'string' }
+					}) as unknown) as ValidatorFail<null | undefined>).message!
 				).not.toBeDefined();
 			});
 		});

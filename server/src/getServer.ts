@@ -79,7 +79,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	}
 
 	process.on('beforeExit', () => {
-		mysqlConn.close();
+		mysqlConn!.close();
 		server.close();
 	});
 

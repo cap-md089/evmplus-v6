@@ -48,11 +48,11 @@ class ContactValidator extends Validator<WebsiteContact> {
 			},
 			MailingAddress: {
 				required: false,
-				validator: new AddressValidator()
+				validator: Validator.Or(new AddressValidator(), Validator.Null)
 			},
 			MeetingAddress: {
 				required: false,
-				validator: new AddressValidator()
+				validator: Validator.Or(new AddressValidator(), Validator.Null)
 			},
 			Twitter: {
 				required: false,

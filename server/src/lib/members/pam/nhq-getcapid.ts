@@ -16,7 +16,9 @@ export default async (namerank: string, cookie: string, username: string): Promi
 		const testNR = namerank.replace(/ /g, '');
 
 		table.find('tr').each(function () {
+			// @ts-ignore
 			const texts = $(this).children().map(function () {
+				// @ts-ignore
 				return $(this).text().replace(/[ \n\r]/g, '');
 			}).get();
 
@@ -30,23 +32,25 @@ export default async (namerank: string, cookie: string, username: string): Promi
 
 	const menu = $('#nav');
 
-	let orgid;
+	let orgid: number;
 
 	menu.find('li').each(function() {
+		// @ts-ignore
 		const id = $(this).attr('data-popout-id');
 
 		if (id === 'popout-Reports') {
+			// @ts-ignore
 			const otherResources = ($($($(this).children()[1]).children()[1]).children());
 			const link = $($(otherResources).children()[2]).children();
 
-			const href = link.attr('href');
+			const href = link.attr('href') || '';
 
-			orgid = parseInt(href.match(/OID=(\d{1,4})/)[1], 10);
+			orgid = parseInt((href.match(/OID=(\d{1,4})/) || [])[1], 10);
 		}
 	});
 
 	return {
-		capid,
-		orgid
+		capid: capid!,
+		orgid: orgid!
 	};
 };

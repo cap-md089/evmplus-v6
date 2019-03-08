@@ -184,6 +184,10 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	 */
 	public flight: null | string;
 	/**
+	 * Member squardon
+	 */
+	public squadron: string;
+	/**
 	 * How long the member is absent for
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
@@ -195,6 +199,12 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		protected extraInformation: ExtraMemberInformation
 	) {
 		super(data, schema, requestingAccount);
+
+		this.id = data.id;
+		this.absenteeInformation = extraInformation.absentee;
+		this.memberRank = data.memberRank;
+		this.permissions = data.permissions;
+		this.squadron = data.squadron;
 
 		this.memberRank = data.memberRank;
 		this.seniorMember = data.seniorMember;

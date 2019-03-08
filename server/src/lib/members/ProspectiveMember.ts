@@ -68,7 +68,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 		);
 
 		for await (const prospect of iterator) {
-			const match = prospect.id.match(/([0-9])*$/)[1];
+			const match = (prospect.id.match(/([0-9])*$/) || [])[1];
 			const numberPortion = parseInt(match, 10);
 
 			highestNumber = Math.max(numberPortion, highestNumber);
@@ -277,6 +277,12 @@ export default class ProspectiveMember extends CAPWATCHMember
 	) {
 		super(member, schema, account, extraInformation);
 
+		this.id = member.id;
+		this._id = member._id;
+		this.memberRank = member.memberRank;
+		this.flight = member.flight;
+		this.absenteeInformation = extraInformation.absentee;
+
 		this.accountID = member.accountID;
 		this.sessionID = sessionID;
 	}
@@ -289,6 +295,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 			const j = key as keyof ProspectiveMember;
 			// isRioux is readonly, can't set to it...
 			if (typeof this[j] === typeof values[i] && j !== 'isRioux') {
+				// @ts-ignore
 				this[j] = values[i];
 			}
 		}
