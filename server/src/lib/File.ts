@@ -7,6 +7,7 @@ import {
 	FileUserControlList,
 	FullFileObject,
 	MemberReference,
+	NoSQLDocument,
 	RawFileObject
 } from 'common-lib';
 import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
@@ -25,16 +26,22 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	public static Validator = new FileObjectValidator();
 
 	public static async Get(
-		id: string,
+		id: string | null,
 		account: Account,
 		schema: Schema,
 		includeWWW = true
 	): Promise<File> {
+		if (id === null) {
+			throw new Error('Cannot get file with null file ID');
+		}
+
 		if (id === 'root') {
 			return File.GetRoot(account, schema);
 		}
 
-		const fileCollection = schema.getCollection<RawFileObject>(File.collectionName);
+		const fileCollection = schema.getCollection<RawFileObject & Required<NoSQLDocument>>(
+			File.collectionName
+		);
 
 		let results;
 
@@ -96,7 +103,9 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	private static collectionName = 'Files';
 
 	private static async GetRoot(account: Account, schema: Schema): Promise<File> {
-		const fileCollection = schema.getCollection<FileObject>(File.collectionName);
+		const fileCollection = schema.getCollection<FileObject & Required<NoSQLDocument>>(
+			File.collectionName
+		);
 
 		let results;
 
@@ -113,7 +122,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 		const fileChildren = results.map(file => file.id);
 
-		const rootFile: FileObject = {
+		const rootFile: FileObject & Required<NoSQLDocument> = {
 			accountID: account.id,
 			comments: '',
 			contentType: 'application/folder',
@@ -140,7 +149,8 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 					id: 'root',
 					name: 'Drive'
 				}
-			]
+			],
+			_id: ''
 		};
 
 		return new File(rootFile, account, schema);
@@ -189,13 +199,15 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	private deleted: boolean = false;
 
-	private trueParentID: string = '';
+	private trueParentID: string | null = null;
 
 	private trueChildren: string[] = [];
 
-	private constructor(data: FileObject, account: Account, schema: Schema) {
-		this.set(data);
-
+	private constructor(
+		data: FileObject & Required<NoSQLDocument>,
+		account: Account,
+		schema: Schema
+	) {
 		this.id = data.id;
 		this._id = data._id;
 		this.trueChildren = data.fileChildren;
@@ -203,6 +215,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		this.created = data.created;
 		this.trueParentID = data.parentID;
 		this.folderPath = data.folderPath;
+		this.owner = data.owner;
 
 		this.account = account;
 		this.schema = schema;
@@ -261,7 +274,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public toFullRaw = async (): Promise<FullFileObject> => ({
 		...this.toRaw(),
-		uploader: await MemberBase.ResolveReference(this.owner, this.account, this.schema)
+		uploader: await MemberBase.ResolveReference(this.owner, this.account, this.schema, true)
 	});
 
 	public async delete(): Promise<void> {
