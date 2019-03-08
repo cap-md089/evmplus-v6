@@ -46,6 +46,8 @@ export default abstract class MemberBase implements MemberObject {
 		if (inputID.match(/(([a-zA-Z]*)|(\d{6}))/i)) {
 			return 'CAPNHQMember';
 		}
+
+		throw new Error('Invalid member ID type');
 	}
 
 	public static IsRioux = (cm: MemberBase | number | string): boolean =>
@@ -109,7 +111,7 @@ export default abstract class MemberBase implements MemberObject {
 				if (errOnNull) {
 					throw new Error('Null member');
 				}
-				return null;
+				return Promise.resolve(null);
 
 			case 'CAPNHQMember':
 				return CAPWATCHMember.Get(ref.id, account, schema);
@@ -392,10 +394,6 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	public contact: CAPMemberContact;
 	/**
-	 * Member squardon
-	 */
-	public squadron: string;
-	/**
 	 * The first name of the member
 	 */
 	public nameFirst: string;
@@ -450,9 +448,16 @@ export default abstract class MemberBase implements MemberObject {
 		protected schema: Schema,
 		protected requestingAccount: Account
 	) {
-		Object.assign(this, data);
+		this.isRioux = (data.id === 542488 || data.id === 546319) && data.type === 'CAPNHQMember';;
 
-		this.isRioux = data.id === 542488 || data.id === 546319;
+		this.id = data.id;
+		this.contact = data.contact;
+		this.nameFirst = data.nameFirst;
+		this.nameLast = data.nameLast;
+		this.nameMiddle = data.nameMiddle;
+		this.nameSuffix = data.nameSuffix;
+		this.usrID = data.usrID;
+		this.absenteeInformation = data.absenteeInformation;
 	}
 
 	public getName = (): string =>
