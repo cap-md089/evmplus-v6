@@ -1,13 +1,15 @@
 import { RawDraftContentState } from 'draft-js';
 import {
 	AttendanceStatus,
+	EchelonEventNumber,
 	EventStatus,
-	MemberCreateError,
-	PointOfContactType,
-	TeamPublicity,
-	FileUserAccessControlType,
 	FileUserAccessControlPermissions,
-	EchelonEventNumber
+	FileUserAccessControlType,
+	MemberCreateError,
+	NotificationCauseType,
+	NotificationTargetType,
+	PointOfContactType,
+	TeamPublicity
 } from './index';
 
 /**
@@ -436,7 +438,7 @@ export interface NewAccountObject {
 
 /**
  * The raw account object stored in the database
- * 
+ *
  * Doesn't contain simple boolean values for if it has expired and such, these are
  * put in the FullAccountObject that gets expanded upon and used more in practice
  */
@@ -551,7 +553,7 @@ export interface BlogPageAncestryItem {
 
 /**
  * Used when creating a blog page
- * 
+ *
  * Really simple, not much is needed
  */
 export interface NewBlogPage {
@@ -587,7 +589,7 @@ export interface BlogPageObject extends AccountIdentifiable, NewBlogPage, NoSQLD
 
 /**
  * The full blog page object transfered from the server to the client
- * 
+ *
  * It contains extra information pertinent to rendering
  */
 export interface FullBlogPageObject extends BlogPageObject {
@@ -603,7 +605,7 @@ export interface FullBlogPageObject extends BlogPageObject {
 
 /**
  * Debriefs for the various events that every member can submit
- * 
+ *
  * This allows for others to look back on an event and ask what went
  * well, what could have gone better, etc
  */
@@ -664,7 +666,6 @@ export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewE
 		 */
 		accountID: string;
 	};
-
 }
 
 /**
@@ -698,7 +699,7 @@ export interface NewEventObject {
 	meetDateTime: number;
 	/**
 	 * Where the event meets
-	 * 
+	 *
 	 * TODO: Change this to be a Google places reference
 	 */
 	meetLocation: string;
@@ -709,7 +710,7 @@ export interface NewEventObject {
 	startDateTime: number;
 	/**
 	 * The location of the event itself, differs from meet as stated above
-	 * 
+	 *
 	 * TODO: Change this to be a Google places reference
 	 */
 	location: string;
@@ -726,7 +727,7 @@ export interface NewEventObject {
 	/**
 	 * Where cadets will be, most likely will happen to be the meet location
 	 * or event location
-	 * 
+	 *
 	 * TODO: Change this to be a Google places reference
 	 */
 	pickupLocation: string;
@@ -1329,7 +1330,7 @@ export interface MemberObject extends Identifiable {
 	teamIDs: number[];
 	/**
 	 * Shows how long the member is absent for
-	 * 
+	 *
 	 * Should not be used if null or if the time has passed
 	 */
 	absenteeInformation: AbsenteeInformation | null;
@@ -1465,7 +1466,7 @@ export interface ProspectiveMemberObject extends RawProspectiveMemberObject, CAP
 /**
  * Used when referring to members, as numerical CAPIDs do not work as well with
  * ProspectiveMembers
- * 
+ *
  * Type unions are also not preferred
  */
 interface MemberReferenceBase {
@@ -1490,7 +1491,7 @@ export interface NHQMemberReference extends MemberReferenceBase {
 
 /**
  * The NullMemberReference is used when for initial form values
- * 
+ *
  * Should be filtered out
  * The various createCorrectMemberObject functions handle this,
  * returning null or throwing an error
@@ -1502,10 +1503,7 @@ export interface NullMemberReference {
 /**
  * Union type to allow for referring to both NHQMembers and ProspectiveMembers
  */
-export type MemberReference =
-	| NHQMemberReference
-	| ProspectiveMemberReference
-	| NullMemberReference;
+export type MemberReference = NHQMemberReference | ProspectiveMemberReference | NullMemberReference;
 
 /**
  * In the case that it doesn't like MemberBase, try using Member
@@ -1570,7 +1568,7 @@ export interface ExtraMemberInformation extends NoSQLDocument {
 	accountID: string;
 	/**
 	 * Declares the absentee information
-	 * 
+	 *
 	 * Null if non existant
 	 */
 	absentee: AbsenteeInformation | null;
@@ -1802,7 +1800,7 @@ export interface RawFileObject extends DriveObject, EditableFileObjectProperties
 	/**
 	 * ID of the parent for going backwards
 	 */
-	parentID: string;
+	parentID: string | null;
 }
 
 /**
@@ -1847,7 +1845,7 @@ export interface WebsiteInformation {
 
 /**
  * The website contact information the webmaster may want to set
- * 
+ *
  * All of this information is currently only used on the footer of
  * the website
  */
@@ -1878,9 +1876,9 @@ export interface WebsiteContact {
 	Flickr: null | string;
 	/**
 	 * This is the place where normal meetings take place
-	 * 
+	 *
 	 * Only used for style at the bottom of the page, nothing else actually uses this
-	 * 
+	 *
 	 * Maybe could be the default place for Events?
 	 */
 	MeetingAddress: null | {
@@ -2077,3 +2075,132 @@ export interface FullTeamObject extends RawTeamObject {
 	 */
 	seniorCoachName: string;
 }
+
+/**
+ * Used to start to send a notification
+ */
+export interface NewNotificationObject {
+	/**
+	 * What caused this notification?
+	 */
+	cause: NotificationCause;
+	/**
+	 * What should the notification say?
+	 */
+	text: string;
+}
+
+/**
+ * A raw notification object is what is stored directly in the database
+ */
+export interface RawNotificationObject
+	extends NewNotificationObject,
+		AccountIdentifiable,
+		NoSQLDocument {
+	/**
+	 * Used to identify notifications
+	 */
+	id: number;
+	/**
+	 * Who is the notification for?
+	 */
+	target: NotificationTarget;
+	/**
+	 * Is the notification handled?
+	 */
+	archived: boolean;
+	/**
+	 * Has it been read?
+	 */
+	read: boolean;
+	/**
+	 * Whether or not it is ok to send an email
+	 */
+	emailSent: boolean;
+	/**
+	 * When the notification was sent
+	 */
+	created: number;
+}
+
+/**
+ * Notifications are used to tell members that they need to check stuff
+ */
+export interface NotificationObject extends RawNotificationObject {}
+
+/**
+ * This is a notification that comes from another member, e.g. a task
+ */
+interface NotificationMemberCause {
+	/**
+	 * Determines who caused the notification
+	 */
+	from: MemberReference;
+	/**
+	 * Determines the type of cause
+	 */
+	type: NotificationCauseType.MEMBER;
+}
+
+/**
+ * This is a notification that comes from the system, e.g. CAPWATCH imports
+ */
+interface NotificationSystemCause {
+	/**
+	 * Determines the type of cause
+	 */
+	type: NotificationCauseType.SYSTEM;
+}
+
+/**
+ * This is to determine from who the notification is coming from
+ */
+export type NotificationCause = NotificationMemberCause | NotificationSystemCause;
+
+/**
+ * These are for things like being assigned a task
+ */
+interface NotificationMemberTarget {
+	/**
+	 * This is meant for a single member
+	 */
+	to: MemberReference;
+	/**
+	 * Determines the group of people to go to
+	 */
+	type: NotificationTargetType.MEMBER;
+}
+
+/**
+ * These are notifications for things like personnel file approval
+ */
+interface NotificationAdminTarget {
+	/**
+	 * Determines the group of people to go to
+	 */
+	type: NotificationTargetType.ADMINS;
+}
+
+/**
+ * A banner notification that will show up under breadcrumbs for all users
+ *
+ * These notifications should be used sparingly
+ */
+interface NotificationEveryoneTarget {
+	/**
+	 * As this is a banner type of notification, this is when the notification expires
+	 */
+	expires: number;
+	/**
+	 * Determines the group of people to go to
+	 */
+	type: NotificationTargetType.EVERYONE;
+}
+
+/**
+ * This is to determine who should get the notification
+ */
+export type NotificationTarget =
+	| NotificationMemberTarget
+	| NotificationAdminTarget
+	| NotificationEveryoneTarget;

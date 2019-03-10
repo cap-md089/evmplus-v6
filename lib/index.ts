@@ -89,3 +89,14 @@ export enum HTTPError {
 	ERR500,
 	UNKNOWN
 }
+
+export enum NotificationTargetType {
+	MEMBER,
+	ADMINS,
+	EVERYONE
+}
+
+export enum NotificationCauseType {
+	MEMBER,
+	SYSTEM
+}
