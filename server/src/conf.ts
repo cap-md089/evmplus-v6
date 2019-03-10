@@ -1,5 +1,3 @@
-import { join } from 'path';
-
 export const Configuration = {
 	production: false,
 	testing: false,
@@ -16,8 +14,7 @@ export const Configuration = {
 	},
 	fileStoragePath: '/uploads',
 	path: __dirname,
-	port: 3001,
-	schemaPath: join(__dirname, '..', 'schemas')
+	port: 3001
 };
 
 const conf = Configuration;

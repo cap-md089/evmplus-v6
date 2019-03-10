@@ -1,9 +1,7 @@
 import * as mysql from '@mysql/xdevapi';
-import * as ajv from 'ajv';
 import { HTTPError, RawAccountObject } from 'common-lib';
 import * as express from 'express';
-import { join } from 'path';
-import conf, { Configuration } from '../conf';
+import { Configuration } from '../conf';
 import Account from './Account';
 
 export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
@@ -62,16 +60,6 @@ export const json = <T>(res: express.Response, values: T | Promise<T>) =>
 				res.json(values);
 		  })
 		: res.json(values);
-
-export const getSchemaValidator = (schema: any) => new ajv({ allErrors: true }).compile(schema);
-
-export function getFullSchemaValidator<T>(schemaName: string, config: typeof conf = conf) {
-	const schema = require(join(config.schemaPath, schemaName));
-
-	const privateValidator = new ajv({ allErrors: true }).compile(schema);
-
-	return (val: any): val is T => privateValidator(val) as boolean;
-}
 
 export async function streamAsyncGeneratorAsJSONArray<T>(
 	res: express.Response,

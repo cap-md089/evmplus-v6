@@ -1,4 +1,3 @@
-import { join } from 'path';
 import conf from './conf';
 
 const confproduction: typeof conf = {
@@ -17,8 +16,7 @@ const confproduction: typeof conf = {
 	},
 	fileStoragePath: '/uploads',
 	path: __dirname,
-	port: 3001,
-	schemaPath: join(__dirname, '..', 'schemas')
+	port: 3001
 };
 
 export default confproduction;
