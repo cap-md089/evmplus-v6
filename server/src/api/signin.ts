@@ -50,7 +50,7 @@ export default asyncErrorHandler(async (
 			member: member.toRaw(),
 			sessionID: member.sessionID,
 			valid: true,
-			notificationCount: await member.getNotificationCount()
+			notificationCount: await member.getUnreadNotificationCount()
 		});
 	} catch (errors) {
 		if (!errors.message.match(/^(\d)*$/)) {

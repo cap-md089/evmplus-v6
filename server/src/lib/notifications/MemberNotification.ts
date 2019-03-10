@@ -1,12 +1,13 @@
 import { Schema } from '@mysql/xdevapi';
-import { NoSQLDocument, NotificationCause, NotificationObject } from 'common-lib';
+import { MemberReference, NoSQLDocument, NotificationCause, NotificationObject } from 'common-lib';
 import { NotificationTargetType } from 'common-lib/index';
 import Account from '../Account';
 import { Notification } from '../Notification';
 
-export default class AdminNotification extends Notification {
+export default class MemberNotification extends Notification {
 	public static async CreateNotification(
 		text: string,
+		to: MemberReference,
 		from: NotificationCause,
 		account: Account,
 		schema: Schema
@@ -17,14 +18,14 @@ export default class AdminNotification extends Notification {
 				text
 			},
 			{
-				type: NotificationTargetType.ADMINS,
-				accountID: account.id
+				type: NotificationTargetType.MEMBER,
+				to
 			},
 			account,
 			schema
 		);
 
-		return new AdminNotification(results, account, schema);
+		return new MemberNotification(results, account, schema);
 	}
 
 	public constructor(

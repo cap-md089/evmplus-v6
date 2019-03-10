@@ -19,7 +19,7 @@ import BlogPage from './BlogPage';
 import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
-import { CAPWATCHMember, ProspectiveMember } from './Members';
+import MemberBase, { CAPWATCHMember, ProspectiveMember } from './Members';
 import { collectResults, findAndBind, generateResults, MySQLRequest } from './MySQLUtil';
 import Team from './Team';
 import { MonthNumber } from './Util';
@@ -445,5 +445,15 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 
 		return eventCount;
+	}
+
+	public isAdmin(member: MemberReference) {
+		for (const i of this.adminIDs) {
+			if (MemberBase.AreMemberReferencesTheSame(member, i)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

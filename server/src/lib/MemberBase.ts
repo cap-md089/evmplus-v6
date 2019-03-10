@@ -8,8 +8,11 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
-	RawTeamObject
+	RawTeamObject,
+	RawNotificationObject,
+	NoSQLDocument
 } from 'common-lib';
+import { NotificationTargetType } from 'common-lib/index';
 import { NextFunction, Response } from 'express';
 import { sign, verify, VerifyOptions } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
@@ -448,7 +451,7 @@ export default abstract class MemberBase implements MemberObject {
 		protected schema: Schema,
 		protected requestingAccount: Account
 	) {
-		this.isRioux = (data.id === 542488 || data.id === 546319) && data.type === 'CAPNHQMember';;
+		this.isRioux = (data.id === 542488 || data.id === 546319) && data.type === 'CAPNHQMember';
 
 		this.id = data.id;
 		this.contact = data.contact;
@@ -543,8 +546,74 @@ export default abstract class MemberBase implements MemberObject {
 		return event.isPOC(this);
 	}
 
+	public async getUnreadNotificationCount() {
+		const notificationCollection = this.schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		let count = 0;
+
+		const generator = generateResults(findAndBind(notificationCollection, {
+			target: {
+				to: this.getReference(),
+				type: NotificationTargetType.MEMBER
+			},
+			read: false
+		}));
+
+		for await (const _ of generator) {
+			count++;
+		}
+
+		if (this.requestingAccount.isAdmin(this.getReference())) {
+			const accountGenerator = generateResults(findAndBind(notificationCollection, {
+				target: {
+					type: NotificationTargetType.ADMINS,
+					accountID: this.requestingAccount.id
+				},
+				read: false
+			}));
+
+			for await (const _ of accountGenerator) {
+				count++;
+			}
+		}
+
+		return count;
+	}
+
 	public async getNotificationCount() {
-		return 0;
+		const notificationCollection = this.schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		let count = 0;
+
+		const generator = generateResults(findAndBind(notificationCollection, {
+			target: {
+				to: this.getReference(),
+				type: NotificationTargetType.MEMBER
+			}
+		}));
+
+		for await (const _ of generator) {
+			count++;
+		}
+
+		if (this.requestingAccount.isAdmin(this.getReference())) {
+			const accountGenerator = generateResults(findAndBind(notificationCollection, {
+				target: {
+					type: NotificationTargetType.ADMINS,
+					accountID: this.requestingAccount.id
+				}
+			}));
+
+			for await (const _ of accountGenerator) {
+				count++;
+			}
+		}
+
+		return count;
 	}
 }
 

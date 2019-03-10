@@ -2,22 +2,125 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	NewNotificationObject,
 	NoSQLDocument,
+	NotificationAdminTarget,
 	NotificationCause,
+	NotificationMemberTarget,
 	NotificationObject,
 	NotificationTarget,
 	RawNotificationObject
 } from 'common-lib';
+import { NotificationTargetType } from 'common-lib/index';
 import Account from './Account';
+import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
 export abstract class Notification implements NotificationObject {
+	public static async Get(
+		id: number,
+		target: NotificationAdminTarget,
+		account: Account,
+		schema: Schema
+	): Promise<AdminNotification>;
+	public static async Get(
+		id: number,
+		target: NotificationMemberTarget,
+		account: Account,
+		schema: Schema
+	): Promise<MemberNotification>;
+
+	public static async Get(
+		id: number,
+		target: NotificationTarget,
+		account: Account,
+		schema: Schema
+	): Promise<AdminNotification | MemberNotification> {
+		const notificationCollection = schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		const results = await collectResults(
+			findAndBind(notificationCollection, {
+				target,
+				id
+			})
+		);
+
+		if (results.length !== 1) {
+			throw new Error('Could not get notification');
+		}
+
+		switch (results[0].target.type) {
+			case NotificationTargetType.ADMINS :
+				return new AdminNotification(results[0], account, schema);
+
+			case NotificationTargetType.MEMBER :
+				return new MemberNotification(results[0], account, schema);
+		}
+	}
+
+	public static async GetFor(
+		target: NotificationAdminTarget,
+		account: Account,
+		schema: Schema
+	): Promise<AdminNotification[]>;
+	public static async GetFor(
+		target: NotificationMemberTarget,
+		account: Account,
+		schema: Schema
+	): Promise<MemberNotification[]>;
+
+	public static async GetFor(
+		target: NotificationTarget,
+		account: Account,
+		schema: Schema
+	): Promise<Array<AdminNotification | MemberNotification>> {
+		const notificationCollection = schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		const results = await collectResults(
+			findAndBind(notificationCollection, {
+				target
+			})
+		);
+
+		const returnValue: Array<AdminNotification | MemberNotification> = [];
+
+		for (const i of results) {
+			switch (i.target.type) {
+				case NotificationTargetType.ADMINS :
+					returnValue.push(new AdminNotification(i, account, schema));
+				break;
+
+				case NotificationTargetType.MEMBER :
+					returnValue.push(new MemberNotification(i, account, schema));
+				break;
+			}
+		}
+
+		return returnValue;
+	}
+
 	protected static async Create(
 		data: NewNotificationObject,
-		id: number,
 		target: NotificationTarget,
 		account: Account,
 		schema: Schema
 	): Promise<RawNotificationObject & Required<NoSQLDocument>> {
 		const notificationCollection = schema.getCollection<RawNotificationObject>('Notifications');
+
+		let id: number = 0;
+
+		const notifGenerator = generateResults(
+			findAndBind(notificationCollection, {
+				accountID: account.id
+			})
+		);
+
+		for await (const notif of notifGenerator) {
+			id = Math.max(notif.id, id);
+		}
+
+		id++;
 
 		const rawNotification: RawNotificationObject = {
 			...data,
@@ -52,12 +155,16 @@ export abstract class Notification implements NotificationObject {
 
 	public text: string;
 
-	public read: boolean;
+	public get read(): boolean {
+		return this.wasRead;
+	};
 
 	public emailSent: boolean;
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;
+
+	private wasRead: boolean;
 
 	protected constructor(
 		data: NotificationObject & Required<NoSQLDocument>,
@@ -68,7 +175,7 @@ export abstract class Notification implements NotificationObject {
 		this.cause = data.cause;
 		this.target = data.target;
 		this.text = data.text;
-		this.read = data.read;
+		this.wasRead = data.read;
 		this.emailSent = data.emailSent;
 		this._id = data._id;
 		this.accountID = data.accountID;
@@ -76,7 +183,9 @@ export abstract class Notification implements NotificationObject {
 	}
 
 	public async save() {
-		const notificationCollection = this.schema.getCollection<RawNotificationObject>('Notifications');
+		const notificationCollection = this.schema.getCollection<RawNotificationObject>(
+			'Notifications'
+		);
 
 		await notificationCollection.replaceOne(this._id, this.toRaw());
 	}
@@ -94,4 +203,19 @@ export abstract class Notification implements NotificationObject {
 			text: this.text
 		};
 	}
+
+	public markAsRead() {
+		this.wasRead = true;
+	}
+
+	public async delete() {
+		const notificationCollection = this.schema.getCollection<RawNotificationObject>(
+			'Notifications'
+		);
+
+		await notificationCollection.removeOne(this._id);
+	}
 }
+
+import AdminNotification from './notifications/AdminNotification';
+import MemberNotification from './notifications/MemberNotification';

@@ -28,7 +28,7 @@ describe('Import CAPWATCH File', () => {
 		const importFiles = ['Member.txt'];
 		let resultCount = 0;
 
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, importFiles)) {
+		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, 916, importFiles)) {
 			resultCount++;
 		}
 
@@ -41,7 +41,7 @@ describe('Import CAPWATCH File', () => {
 		const errorStub = jest.spyOn(console, 'error');
 		let resultCount = 0;
 
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, ['notafile.txt'])) {
+		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, 916, ['notafile.txt'])) {
 			resultCount++;
 		}
 

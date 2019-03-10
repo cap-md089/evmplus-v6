@@ -431,6 +431,10 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	}
 
 	public getParent() {
+		if (!this.parentID) {
+			throw new Error('File does not have a parent');
+		}
+
 		return File.Get(this.parentID, this.account, this.schema);
 	}
 }

@@ -11,7 +11,7 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 			sessionID: req.member.sessionID,
 			member: req.member.toRaw(),
 			valid: true,
-			notificationCount: await req.member.getNotificationCount()
+			notificationCount: await req.member.getUnreadNotificationCount()
 		});
 	} else {
 		json<SigninReturn>(res, {

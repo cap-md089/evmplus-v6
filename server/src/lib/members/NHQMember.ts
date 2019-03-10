@@ -271,6 +271,9 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 
 		const $ = load(data.body);
 
+		// Temporary fix until I actually use select
+		// REMOVE ONCE CODE IS IMPLEMENTED
+		// @ts-ignore
 		const select = $('#OrgChooser');
 
 		// don't know what to do here. I don't know cheerio well

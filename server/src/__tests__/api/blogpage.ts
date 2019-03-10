@@ -6,7 +6,6 @@ import conftest from '../../conf.test';
 import getServer from '../../getServer';
 import Account from '../../lib/Account';
 import BlogPage from '../../lib/BlogPage';
-import { NHQMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
 import { blogPageData, signinInformation } from '../consts';
 
@@ -17,7 +16,7 @@ describe('/api', () => {
 			let signinData: SigninReturn;
 			let schema: Schema;
 			let account: Account;
-			let member: NHQMember;
+			// let member: NHQMember;
 
 			beforeAll(async done => {
 				const results = await getTestTools(conftest);
@@ -27,29 +26,44 @@ describe('/api', () => {
 
 				server = (await getServer(conftest, 3011)).server;
 
-				[member, signinData] = await Promise.all([
-					NHQMember.Create(
-						signinInformation.username,
-						signinInformation.password,
-						schema,
-						account
-					),
-					new Promise<SigninReturn>(res => {
-						request(server)
-							.post('/api/signin')
-							.send(signinInformation)
-							.set('Accept', 'application/json')
-							.set('Content-type', 'application/json')
-							.expect(200)
-							.end((err, result) => {
-								if (err) {
-									throw err;
-								}
+				signinData = await new Promise<SigninReturn>(res => {
+					request(server)
+						.post('/api/signin')
+						.send(signinInformation)
+						.set('Accept', 'application/json')
+						.set('Content-type', 'application/json')
+						.end((err, result) => {
+							if (err) {
+								throw err;
+							}
 
-								res(result.body);
-							});
-					})
-				]);
+							res(result.body);
+						});
+				});
+
+				// [member, signinData] = await Promise.all([
+				// 	NHQMember.Create(
+				// 		signinInformation.username,
+				// 		signinInformation.password,
+				// 		schema,
+				// 		account
+				// 	),
+				// 	new Promise<SigninReturn>(res => {
+				// 		request(server)
+				// 			.post('/api/signin')
+				// 			.send(signinInformation)
+				// 			.set('Accept', 'application/json')
+				// 			.set('Content-type', 'application/json')
+				// 			.expect(200)
+				// 			.end((err, result) => {
+				// 				if (err) {
+				// 					throw err;
+				// 				}
+
+				// 				res(result.body);
+				// 			});
+				// 	})
+				// ]);
 
 				done();
 			}, 10000);
@@ -66,12 +80,7 @@ describe('/api', () => {
 			it('should get a blog page', async done => {
 				const id = 'a-test-page';
 
-				const bp = await BlogPage.Create(
-					id,
-					blogPageData,
-					account,
-					schema
-				);
+				const bp = await BlogPage.Create(id, blogPageData, account, schema);
 
 				request(server)
 					.get('/api/blog/page/' + bp.id)
@@ -114,10 +123,7 @@ describe('/api', () => {
 								token
 							})
 							.set('content-type', 'application/json')
-							.expect(
-								'content-type',
-								'application/json; charset=utf-8'
-							)
+							.expect('content-type', 'application/json; charset=utf-8')
 							.expect(200)
 							.end(async (err2, result2) => {
 								if (err2) {
@@ -183,11 +189,7 @@ describe('/api', () => {
 							)
 							.expect(204);
 
-						const bp = await BlogPage.Get(
-							'a-test-page',
-							account,
-							schema
-						);
+						const bp = await BlogPage.Get('a-test-page', account, schema);
 
 						expect(bp.title).toEqual(newTitle);
 
@@ -245,9 +247,9 @@ describe('/api', () => {
 					.set('content-type', 'application/json')
 					.expect(403);
 
-				await expect(
-					BlogPage.Get('a-test-page', account, schema)
-				).resolves.toEqual(expect.any(BlogPage));
+				await expect(BlogPage.Get('a-test-page', account, schema)).resolves.toEqual(
+					expect.any(BlogPage)
+				);
 
 				done();
 			});
@@ -268,9 +270,9 @@ describe('/api', () => {
 							.send(result.body)
 							.expect(204);
 
-						await expect(
-							BlogPage.Get('a-test-page', account, schema)
-						).rejects.toEqual(expect.any(Error));
+						await expect(BlogPage.Get('a-test-page', account, schema)).rejects.toEqual(
+							expect.any(Error)
+						);
 
 						done();
 					});
