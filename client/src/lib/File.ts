@@ -207,7 +207,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 
 	public permissions: FileControlListItem[] = [];
 
-	public parentID: string = '';
+	public parentID: string | null = '';
 
 	public owner: MemberReference;
 
@@ -363,6 +363,10 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	 * @param member The member to use to get the file info of the parent file
 	 */
 	public getParent(member: MemberBase | null): Promise<FileInterface> {
+		if (this.parentID === null) {
+			throw new Error('Cannot get parent of file with no parent ID');
+		}
+
 		return this.id === 'root'
 			? Promise.resolve(this)
 			: FileInterface.Get(this.parentID, member, this.account);
