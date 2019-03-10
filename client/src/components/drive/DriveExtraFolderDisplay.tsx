@@ -93,11 +93,7 @@ export default class ExtraFolderDisplay extends React.Component<
 		let parent;
 
 		try {
-			parent = await FileInterface.Get(
-				this.props.file.parentID,
-				this.props.member,
-				this.props.file.account
-			);
+			parent = await this.props.file.getParent(this.props.member);
 		} catch (e) {
 			// TODO: Show error message
 			return;
