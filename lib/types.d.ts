@@ -2179,6 +2179,10 @@ interface NotificationAdminTarget {
 	 * Determines the group of people to go to
 	 */
 	type: NotificationTargetType.ADMINS;
+	/**
+	 * Records to which account the notification goes to
+	 */
+	accountID: string;
 }
 
 /**
