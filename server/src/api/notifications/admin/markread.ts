@@ -17,7 +17,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	const id = parseInt(req.params.id, 10);
 
 	try {
-		const notification = await Notification.Get(
+		const notification = await Notification.GetOfTarget(
 			id,
 			{
 				type: NotificationTargetType.ADMINS,

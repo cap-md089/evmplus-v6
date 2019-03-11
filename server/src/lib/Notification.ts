@@ -4,6 +4,7 @@ import {
 	NoSQLDocument,
 	NotificationAdminTarget,
 	NotificationCause,
+	NotificationEveryoneTarget,
 	NotificationMemberTarget,
 	NotificationObject,
 	NotificationTarget,
@@ -16,31 +17,17 @@ import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 export abstract class Notification implements NotificationObject {
 	public static async Get(
 		id: number,
-		target: NotificationAdminTarget,
 		account: Account,
 		schema: Schema
-	): Promise<AdminNotification>;
-	public static async Get(
-		id: number,
-		target: NotificationMemberTarget,
-		account: Account,
-		schema: Schema
-	): Promise<MemberNotification>;
-
-	public static async Get(
-		id: number,
-		target: NotificationTarget,
-		account: Account,
-		schema: Schema
-	): Promise<AdminNotification | MemberNotification> {
+	): Promise<AdminNotification | MemberNotification | GlobalNotification> {
 		const notificationCollection = schema.getCollection<
 			RawNotificationObject & Required<NoSQLDocument>
 		>('Notifications');
 
 		const results = await collectResults(
 			findAndBind(notificationCollection, {
-				target,
-				id
+				id,
+				accountID: account.id
 			})
 		);
 
@@ -54,6 +41,62 @@ export abstract class Notification implements NotificationObject {
 
 			case NotificationTargetType.MEMBER :
 				return new MemberNotification(results[0], account, schema);
+
+			case NotificationTargetType.EVERYONE :
+				return new GlobalNotification(results[0], account, schema);
+		}
+	}
+
+	public static async GetOfTarget(
+		id: number,
+		target: NotificationAdminTarget,
+		account: Account,
+		schema: Schema
+	): Promise<AdminNotification>;
+	public static async GetOfTarget(
+		id: number,
+		target: NotificationMemberTarget,
+		account: Account,
+		schema: Schema
+	): Promise<MemberNotification>;
+	public static async GetOfTarget(
+		id: number,
+		target: NotificationEveryoneTarget,
+		account: Account,
+		schema: Schema
+	): Promise<GlobalNotification>;
+
+	public static async GetOfTarget(
+		id: number,
+		target: NotificationTarget,
+		account: Account,
+		schema: Schema
+	): Promise<AdminNotification | MemberNotification | GlobalNotification> {
+		const notificationCollection = schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		const results = await collectResults(
+			findAndBind(notificationCollection, {
+				target,
+				id,
+				accountID: account.id
+			})
+		);
+
+		if (results.length !== 1) {
+			throw new Error('Could not get notification');
+		}
+
+		switch (results[0].target.type) {
+			case NotificationTargetType.ADMINS :
+				return new AdminNotification(results[0], account, schema);
+
+			case NotificationTargetType.MEMBER :
+				return new MemberNotification(results[0], account, schema);
+
+			case NotificationTargetType.EVERYONE :
+				return new GlobalNotification(results[0], account, schema);
 		}
 	}
 
@@ -79,7 +122,8 @@ export abstract class Notification implements NotificationObject {
 
 		const results = await collectResults(
 			findAndBind(notificationCollection, {
-				target
+				target,
+				accountID: account.id
 			})
 		);
 
@@ -93,6 +137,12 @@ export abstract class Notification implements NotificationObject {
 
 				case NotificationTargetType.MEMBER :
 					returnValue.push(new MemberNotification(i, account, schema));
+				break;
+
+				case NotificationTargetType.EVERYONE :
+					if (i.target.expires > Date.now()) {
+						returnValue.push(new GlobalNotification(i, account, schema));
+					}
 				break;
 			}
 		}
@@ -218,4 +268,5 @@ export abstract class Notification implements NotificationObject {
 }
 
 import AdminNotification from './notifications/AdminNotification';
+import GlobalNotification from './notifications/GlobalNotification';
 import MemberNotification from './notifications/MemberNotification';
