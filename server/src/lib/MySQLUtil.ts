@@ -98,7 +98,7 @@ export const generateResults = async function*<T>(
 	}
 };
 
-export const generateFindStatement = <T>(find: Partial<T>, scope: string | null = null): string =>
+export const generateFindStatement = <T>(find: RecursivePartial<T>, scope: string | null = null): string =>
 	Object.keys(find)
 		.map(val =>
 			typeof find[val as keyof T] === 'object'
@@ -114,7 +114,7 @@ export const generateFindStatement = <T>(find: Partial<T>, scope: string | null 
 		)
 		.join(' AND ');
 
-export const generateBindObject = <T>(bind: Partial<T>): any =>
+export const generateBindObject = <T>(bind: RecursivePartial<T>): any =>
 	Object.keys(bind)
 		.map(key =>
 			typeof bind[key as keyof T] === 'object'
@@ -123,9 +123,16 @@ export const generateBindObject = <T>(bind: Partial<T>): any =>
 		)
 		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));
 
+type RecursivePartial<T> = {
+	[P in keyof T]?:
+		T[P] extends Array<infer U> ? Array<RecursivePartial<U>> :
+		T[P] extends object ? RecursivePartial<T[P]> :
+		T[P];
+};
+
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
-	bind: Partial<Bound<T>>
+	bind: RecursivePartial<Bound<T>>
 ): mysql.CollectionFind<T> => find.find(generateFindStatement(bind)).bind(generateBindObject(bind));
 
 export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.TableSelect<T> =>
@@ -133,7 +140,7 @@ export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.Ta
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
-	bind: Partial<Bound<T>>
+	bind: RecursivePartial<Bound<T>>
 ): mysql.CollectionModify<T> =>
 	modify.modify(generateFindStatement(bind)).bind(generateBindObject(bind));
 

@@ -24,6 +24,7 @@ export const Member: MemberPermissions = {
 	ProspectiveMemberManagment: 0,
 	ManageBlog: 0,
 	SignUpEdit: 0,
+	CreateNotifications: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -54,6 +55,7 @@ export const Staff: MemberPermissions = {
 	ProspectiveMemberManagment: 0,
 	ManageBlog: 0,
 	SignUpEdit: 0,
+	CreateNotifications: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -84,6 +86,7 @@ export const Manager: MemberPermissions = {
 	ProspectiveMemberManagment: 1,
 	ManageBlog: 1,
 	SignUpEdit: 1,
+	CreateNotifications: 1,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -114,6 +117,7 @@ export const Admin: MemberPermissions = {
 	ProspectiveMemberManagment: 1,
 	ManageBlog: 1,
 	SignUpEdit: 1,
+	CreateNotifications: 1,
 
 	DownloadCAPWATCH: 1,
 	PermissionManagement: 1,
