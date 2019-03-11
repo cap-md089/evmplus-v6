@@ -2145,7 +2145,10 @@ export interface RawNotificationObject
 /**
  * Notifications are used to tell members that they need to check stuff
  */
-export interface NotificationObject extends RawNotificationObject { }
+export interface NotificationObject extends RawNotificationObject {
+	fromMemberName: string | null;
+	toMemberName: string | null;
+}
 
 /**
  * This is a notification that comes from another member, e.g. a task
@@ -2231,3 +2234,36 @@ export type NotificationTarget =
 	| NotificationMemberTarget
 	| NotificationAdminTarget
 	| NotificationEveryoneTarget;
+
+/**
+ * Audit log item stored in the database
+ */
+export interface RawAuditLogItem {
+	/**
+	 * What method was it?
+	 * 
+	 * Useful for determining the action
+	 */
+	method: HTTPRequestMethod;
+	/**
+	 * Where to?
+	 */
+	target: string;
+	/**
+	 * What account was it for?
+	 */
+	accountID: string;
+	/**
+	 * Who did it?
+	 */
+	actor: MemberReference;
+	/**
+	 * When did he/she do it?
+	 */
+	timestamp: number;
+}
+
+/**
+ * A full audit log item that is expanded upon
+ */
+export interface AuditLogItem extends RawAuditLogItem {}
