@@ -1239,6 +1239,10 @@ export interface MemberPermissions {
 	 * are a PAO on CAPNHQ
 	 */
 	ManageBlog: number;
+	/**
+	 * Whether or not the member can create banner notifications
+	 */
+	CreateNotifications: number;
 
 	// Developer/super admin privileges?
 	// Will change when utilities are more user friendly
@@ -1528,7 +1532,7 @@ export type Member = ProspectiveMemberObject | NHQMemberObject;
 /**
  * Records temporary duty positions that we assign
  */
-interface TemporaryDutyPosition {
+export interface TemporaryDutyPosition {
 	/**
 	 * How long the temporary duty position is valid for; they are temporary
 	 * because someone may only need to have a position for a single meeting week
@@ -2205,7 +2209,7 @@ export interface NotificationAdminTarget {
  *
  * These notifications should be used sparingly
  */
-interface NotificationEveryoneTarget {
+export interface NotificationEveryoneTarget {
 	/**
 	 * As this is a banner type of notification, this is when the notification expires
 	 */
@@ -2214,6 +2218,10 @@ interface NotificationEveryoneTarget {
 	 * Determines the group of people to go to
 	 */
 	type: NotificationTargetType.EVERYONE;
+	/**
+	 * The account "everyone" refers to
+	 */
+	accountID: string;
 }
 
 /**
