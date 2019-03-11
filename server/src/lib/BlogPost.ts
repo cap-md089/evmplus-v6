@@ -5,9 +5,9 @@ import {
 	FullBlogPostObject,
 	MemberReference,
 	NewBlogPost,
-	NoSQLDocument
+	NoSQLDocument,
+	RawDraftContentState
 } from 'common-lib';
-import { RawDraftContentState } from 'draft-js';
 import { DateTime } from 'luxon';
 import Account from './Account';
 import MemberBase from './Members';

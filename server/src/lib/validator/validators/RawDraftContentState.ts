@@ -1,15 +1,7 @@
-import {
-	DraftBlockType,
-	DraftInlineStyleType,
-	RawDraftContentBlock,
-	RawDraftContentState,
-	RawDraftEntity,
-	RawDraftEntityRange,
-	RawDraftInlineStyleRange
-} from 'draft-js';
+import { Draft, RawDraftContentState } from 'common-lib';
 import Validator from '../Validator';
 
-export class RawDraftEntityValidator extends Validator<RawDraftEntity> {
+export class RawDraftEntityValidator extends Validator<Draft.RawDraftEntity> {
 	constructor() {
 		super({
 			data: {
@@ -34,7 +26,7 @@ export class RawDraftEntityValidator extends Validator<RawDraftEntity> {
 	}
 }
 
-class RawDraftEntityRangeValidator extends Validator<RawDraftEntityRange> {
+class RawDraftEntityRangeValidator extends Validator<Draft.RawDraftEntityRange> {
 	constructor() {
 		super({
 			key: {
@@ -51,12 +43,12 @@ class RawDraftEntityRangeValidator extends Validator<RawDraftEntityRange> {
 }
 
 class RawDraftInlineStyleRangeValidator extends Validator<
-	RawDraftInlineStyleRange
+	Draft.RawDraftInlineStyleRange
 > {
 	constructor() {
 		super({
 			style: {
-				validator: Validator.OneOfStrict<DraftInlineStyleType>(
+				validator: Validator.OneOfStrict<Draft.DraftInlineStyleType>(
 					'BOLD',
 					'CODE',
 					'ITALIC',
@@ -74,7 +66,7 @@ class RawDraftInlineStyleRangeValidator extends Validator<
 	}
 }
 
-class RawDraftContentBlockValidator extends Validator<RawDraftContentBlock> {
+class RawDraftContentBlockValidator extends Validator<Draft.RawDraftContentBlock> {
 	constructor() {
 		super({
 			data: {
@@ -96,7 +88,7 @@ class RawDraftContentBlockValidator extends Validator<RawDraftContentBlock> {
 				validator: Validator.String
 			},
 			type: {
-				validator: Validator.OneOfStrict<DraftBlockType>(
+				validator: Validator.OneOfStrict<Draft.DraftBlockType>(
 					'unstyled',
 					'paragraph',
 					'header-one',

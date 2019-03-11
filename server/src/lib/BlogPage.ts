@@ -5,9 +5,9 @@ import {
 	DatabaseInterface,
 	FullBlogPageObject,
 	FullDBObject,
-	NewBlogPage
+	NewBlogPage,
+	RawDraftContentState
 } from 'common-lib';
-import { RawDraftContentState } from 'draft-js';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
 import NewBlogPageValidator from './validator/validators/NewBlogPage';
