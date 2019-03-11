@@ -179,7 +179,7 @@ type ExpressHandler = (
 ) => any;
 
 export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (req, res, next) =>
-	fn(req, res, next).catch(next);
+	fn(req, res, next).then(next, next);
 
 export const replaceUndefinedWithNull = (obj: any) => {
 	for (const i in obj) {

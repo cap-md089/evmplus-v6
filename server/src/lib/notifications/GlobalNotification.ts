@@ -1,7 +1,14 @@
 import { Schema } from '@mysql/xdevapi';
-import { NoSQLDocument, NotificationCause, NotificationObject } from 'common-lib';
-import { NotificationTargetType } from 'common-lib/index';
+import {
+	NoSQLDocument,
+	NotificationCause,
+	NotificationMemberCause,
+	NotificationObject,
+	NotificationSystemCause
+} from 'common-lib';
+import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from '../Account';
+import MemberBase from '../Members';
 import { findAndBind, generateResults } from '../MySQLUtil';
 import { Notification } from '../Notification';
 
@@ -64,9 +71,26 @@ export default class GlobalNotification extends Notification {
 	public static async CreateNotification(
 		text: string,
 		expires: number,
-		from: NotificationCause,
+		from: NotificationSystemCause,
 		account: Account,
 		schema: Schema
+	): Promise<GlobalNotification>;
+	public static async CreateNotification(
+		text: string,
+		expires: number,
+		from: NotificationMemberCause,
+		account: Account,
+		schema: Schema,
+		fromMember: MemberBase
+	): Promise<GlobalNotification>;
+
+	public static async CreateNotification(
+		text: string,
+		expires: number,
+		from: NotificationCause,
+		account: Account,
+		schema: Schema,
+		fromMember?: MemberBase
 	) {
 		if (await GlobalNotification.AccountHasGlobalNotificationActive(account, schema)) {
 			throw new Error('Cannot create a global notification with one active');
@@ -86,7 +110,16 @@ export default class GlobalNotification extends Notification {
 			schema
 		);
 
-		return new GlobalNotification(results, account, schema);
+		return new GlobalNotification(
+			{
+				...results,
+				toMemberName: null,
+				fromMemberName:
+					from.type === NotificationCauseType.MEMBER ? fromMember.getFullName() : null
+			},
+			account,
+			schema
+		);
 	}
 
 	public constructor(

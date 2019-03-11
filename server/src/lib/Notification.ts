@@ -10,9 +10,13 @@ import {
 	NotificationTarget,
 	RawNotificationObject
 } from 'common-lib';
-import { NotificationTargetType } from 'common-lib/index';
+import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from './Account';
+import MemberBase from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import AdminNotification from './notifications/AdminNotification';
+import GlobalNotification from './notifications/GlobalNotification';
+import MemberNotification from './notifications/MemberNotification';
 
 export abstract class Notification implements NotificationObject {
 	public static async Get(
@@ -35,15 +39,48 @@ export abstract class Notification implements NotificationObject {
 			throw new Error('Could not get notification');
 		}
 
+		let fromMemberName = null;
+		if (results[0].cause.type === NotificationCauseType.MEMBER) {
+			const fromMember = await MemberBase.ResolveReference(
+				results[0].cause.from,
+				account,
+				schema
+			);
+
+			fromMemberName = fromMember.getFullName();
+		}
+
 		switch (results[0].target.type) {
-			case NotificationTargetType.ADMINS :
-				return new AdminNotification(results[0], account, schema);
+			case NotificationTargetType.ADMINS:
+				return new AdminNotification(
+					{
+						...results[0],
+						fromMemberName,
+						toMemberName: null
+					},
+					account,
+					schema
+				);
 
-			case NotificationTargetType.MEMBER :
-				return new MemberNotification(results[0], account, schema);
+			case NotificationTargetType.MEMBER:
+				const toMember = await MemberBase.ResolveReference(
+					results[0].target.to,
+					account,
+					schema
+				);
 
-			case NotificationTargetType.EVERYONE :
-				return new GlobalNotification(results[0], account, schema);
+				return new MemberNotification(
+					{ ...results[0], toMemberName: toMember.getFullName(), fromMemberName },
+					account,
+					schema
+				);
+
+			case NotificationTargetType.EVERYONE:
+				return new GlobalNotification(
+					{ ...results[0], fromMemberName, toMemberName: null },
+					account,
+					schema
+				);
 		}
 	}
 
@@ -88,15 +125,48 @@ export abstract class Notification implements NotificationObject {
 			throw new Error('Could not get notification');
 		}
 
+		let fromMemberName = null;
+		if (results[0].cause.type === NotificationCauseType.MEMBER) {
+			const fromMember = await MemberBase.ResolveReference(
+				results[0].cause.from,
+				account,
+				schema
+			);
+
+			fromMemberName = fromMember.getFullName();
+		}
+
 		switch (results[0].target.type) {
-			case NotificationTargetType.ADMINS :
-				return new AdminNotification(results[0], account, schema);
+			case NotificationTargetType.ADMINS:
+				return new AdminNotification(
+					{
+						...results[0],
+						fromMemberName,
+						toMemberName: null
+					},
+					account,
+					schema
+				);
 
-			case NotificationTargetType.MEMBER :
-				return new MemberNotification(results[0], account, schema);
+			case NotificationTargetType.MEMBER:
+				const toMember = await MemberBase.ResolveReference(
+					results[0].target.to,
+					account,
+					schema
+				);
 
-			case NotificationTargetType.EVERYONE :
-				return new GlobalNotification(results[0], account, schema);
+				return new MemberNotification(
+					{ ...results[0], toMemberName: toMember.getFullName(), fromMemberName },
+					account,
+					schema
+				);
+
+			case NotificationTargetType.EVERYONE:
+				return new GlobalNotification(
+					{ ...results[0], fromMemberName, toMemberName: null },
+					account,
+					schema
+				);
 		}
 	}
 
@@ -130,20 +200,62 @@ export abstract class Notification implements NotificationObject {
 		const returnValue: Array<AdminNotification | MemberNotification> = [];
 
 		for (const i of results) {
+			let fromMemberName: string | null = null;
+			if (i.cause.type === NotificationCauseType.MEMBER) {
+				const member = await MemberBase.ResolveReference(i.cause.from, account, schema);
+
+				fromMemberName = member.getFullName();
+			}
+
 			switch (i.target.type) {
-				case NotificationTargetType.ADMINS :
-					returnValue.push(new AdminNotification(i, account, schema));
-				break;
+				case NotificationTargetType.ADMINS:
+					returnValue.push(
+						new AdminNotification(
+							{
+								...i,
+								toMemberName: null,
+								fromMemberName
+							},
+							account,
+							schema
+						)
+					);
+					break;
 
-				case NotificationTargetType.MEMBER :
-					returnValue.push(new MemberNotification(i, account, schema));
-				break;
+				case NotificationTargetType.MEMBER:
+					const toMember = await MemberBase.ResolveReference(
+						i.target.to,
+						account,
+						schema
+					);
+					returnValue.push(
+						new MemberNotification(
+							{
+								...i,
+								toMemberName: toMember.getFullName(),
+								fromMemberName
+							},
+							account,
+							schema
+						)
+					);
+					break;
 
-				case NotificationTargetType.EVERYONE :
+				case NotificationTargetType.EVERYONE:
 					if (i.target.expires > Date.now()) {
-						returnValue.push(new GlobalNotification(i, account, schema));
+						returnValue.push(
+							new GlobalNotification(
+								{
+									...i,
+									fromMemberName,
+									toMemberName: null
+								},
+								account,
+								schema
+							)
+						);
 					}
-				break;
+					break;
 			}
 		}
 
@@ -205,9 +317,13 @@ export abstract class Notification implements NotificationObject {
 
 	public text: string;
 
+	public fromMemberName: string | null;
+
+	public toMemberName: string | null;
+
 	public get read(): boolean {
 		return this.wasRead;
-	};
+	}
 
 	public emailSent: boolean;
 
@@ -230,6 +346,8 @@ export abstract class Notification implements NotificationObject {
 		this._id = data._id;
 		this.accountID = data.accountID;
 		this.id = data.id;
+		this.fromMemberName = data.fromMemberName;
+		this.toMemberName = data.toMemberName;
 	}
 
 	public async save() {
@@ -266,7 +384,3 @@ export abstract class Notification implements NotificationObject {
 		await notificationCollection.removeOne(this._id);
 	}
 }
-
-import AdminNotification from './notifications/AdminNotification';
-import GlobalNotification from './notifications/GlobalNotification';
-import MemberNotification from './notifications/MemberNotification';
