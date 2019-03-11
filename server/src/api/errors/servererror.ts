@@ -10,6 +10,10 @@ interface MaybeMemberRequest extends ConditionalMemberRequest {
 }
 
 export default async (err: Error, req: MaybeMemberRequest, res: Response, next: NextFunction) => {
+	if (!(err instanceof Error)) {
+		return next();
+	}
+
 	console.error(err);
 
 	const errorCollection = req.mysqlx.getCollection<ServerErrorObject>('ServerErrors');

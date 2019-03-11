@@ -133,7 +133,19 @@ type RecursivePartial<T> = {
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
 	bind: RecursivePartial<Bound<T>>
-): mysql.CollectionFind<T> => find.find(generateFindStatement(bind)).bind(generateBindObject(bind));
+): mysql.CollectionFind<T> => {
+	const findWithStatement = find.find(generateFindStatement(bind))
+
+	const bound = generateBindObject(bind);
+
+	for (const i in bound) {
+		if (bound.hasOwnProperty(i)) {
+			findWithStatement.bind(i as keyof T, bound[i]);
+		}
+	}
+
+	return findWithStatement;
+};
 
 export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.TableSelect<T> =>
 	find.select().bind(bind);
@@ -141,8 +153,19 @@ export const selectAndBind = <T>(find: mysql.Table<T>, bind: Bound<T>): mysql.Ta
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
 	bind: RecursivePartial<Bound<T>>
-): mysql.CollectionModify<T> =>
-	modify.modify(generateFindStatement(bind)).bind(generateBindObject(bind));
+): mysql.CollectionModify<T> => {
+	const modifyWithStatement = modify.modify(generateFindStatement(bind))
+
+	const bound = generateBindObject(bind);
+
+	for (const i of bound) {
+		if (bound.hasOwnProperty(i)) {
+			modifyWithStatement.bind(i as keyof T, bound[i]);
+		}
+	}
+
+	return modifyWithStatement;
+};
 
 export const updatetAndBind = <T>(modify: mysql.Table<T>, bind: Bound<T>): mysql.TableUpdate<T> =>
 	modify

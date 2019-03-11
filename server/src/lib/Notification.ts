@@ -14,9 +14,6 @@ import { NotificationCauseType, NotificationTargetType } from 'common-lib/index'
 import Account from './Account';
 import MemberBase from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
-import AdminNotification from './notifications/AdminNotification';
-import GlobalNotification from './notifications/GlobalNotification';
-import MemberNotification from './notifications/MemberNotification';
 
 export abstract class Notification implements NotificationObject {
 	public static async Get(
@@ -392,3 +389,7 @@ export abstract class Notification implements NotificationObject {
 		await notificationCollection.removeOne(this._id);
 	}
 }
+
+import AdminNotification from './notifications/AdminNotification';
+import GlobalNotification from './notifications/GlobalNotification';
+import MemberNotification from './notifications/MemberNotification';

@@ -8,9 +8,9 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
-	RawTeamObject,
+	NoSQLDocument,
 	RawNotificationObject,
-	NoSQLDocument
+	RawTeamObject
 } from 'common-lib';
 import { NotificationTargetType } from 'common-lib/index';
 import { NextFunction, Response } from 'express';
@@ -37,6 +37,76 @@ export interface MemberSession {
 
 export default abstract class MemberBase implements MemberObject {
 	public static readonly useRiouxPermission = true;
+
+	public static ConditionalExpressMiddleware = asyncErrorHandler(
+		async (req: ConditionalMemberRequest, res, next) => {
+			if (
+				typeof req.headers !== 'undefined' &&
+				typeof req.headers.authorization !== 'undefined' &&
+				typeof req.account !== 'undefined'
+			) {
+				let header: string = req.headers.authorization as string;
+				if (typeof header !== 'string') {
+					header = (header as string[])[0];
+				}
+
+				let memRef: MemberReference;
+
+				try {
+					const decoded = (await promisedVerify(header, MemberBase.secret, {
+						algorithms: ['HS512']
+					})) as { id: MemberReference };
+
+					memRef = decoded.id as MemberReference;
+				} catch (e) {
+					req.member = null;
+					return next();
+				}
+
+				const sessInfo = await MemberBase.CheckSession(memRef, req.account, req.mysqlx);
+
+				req.member = null;
+				if (sessInfo === null) {
+					return next();
+				}
+
+				switch (memRef.type) {
+					case 'CAPNHQMember':
+						// Doesn't work if you directly assign req.member to function
+						// return value, but does work through proxy variable
+						// Don't question it and everything works out fine
+						const nhqmem = await NHQMember.LoadMemberFromSession(
+							sessInfo.sess,
+							req.account,
+							req.mysqlx,
+							sessInfo.newSessID
+						);
+						req.member = nhqmem;
+						break;
+
+					case 'CAPProspectiveMember':
+						// Haven't tested no proxy variable, assumed similar to above
+						const pmem = await ProspectiveMember.LoadMemberFromSession(
+							sessInfo.sess,
+							req.account,
+							req.mysqlx
+						);
+						req.member = pmem;
+						break;
+				}
+
+				if (req.member !== null) {
+					req.newSessionID = sessInfo.newSessID;
+				}
+
+				res.header('x-new-sessionid', sessInfo.newSessID);
+
+				return next();
+			} else {
+				return next();
+			}
+		}
+	);
 
 	public static GetMemberTypeFromID(inputID: string | number): MemberType {
 		if (typeof inputID === 'number') {
@@ -163,78 +233,6 @@ export default abstract class MemberBase implements MemberObject {
 
 		next();
 	};
-
-	public static async ConditionalExpressMiddleware(
-		req: ConditionalMemberRequest,
-		res: Response,
-		next: NextFunction
-	) {
-		if (
-			typeof req.headers !== 'undefined' &&
-			typeof req.headers.authorization !== 'undefined' &&
-			typeof req.account !== 'undefined'
-		) {
-			let header: string = req.headers.authorization as string;
-			if (typeof header !== 'string') {
-				header = (header as string[])[0];
-			}
-
-			let memRef: MemberReference;
-
-			try {
-				const decoded = (await promisedVerify(header, MemberBase.secret, {
-					algorithms: ['HS512']
-				})) as { id: MemberReference };
-
-				memRef = decoded.id as MemberReference;
-			} catch (e) {
-				req.member = null;
-				return next();
-			}
-
-			const sessInfo = await MemberBase.CheckSession(memRef, req.account, req.mysqlx);
-
-			req.member = null;
-			if (sessInfo === null) {
-				return next();
-			}
-
-			switch (memRef.type) {
-				case 'CAPNHQMember':
-					// Doesn't work if you directly assign req.member to function
-					// return value, but does work through proxy variable
-					// Don't question it and everything works out fine
-					const nhqmem = await NHQMember.LoadMemberFromSession(
-						sessInfo.sess,
-						req.account,
-						req.mysqlx,
-						sessInfo.newSessID
-					);
-					req.member = nhqmem;
-					break;
-
-				case 'CAPProspectiveMember':
-					// Haven't tested no proxy variable, assumed similar to above
-					const pmem = await ProspectiveMember.LoadMemberFromSession(
-						sessInfo.sess,
-						req.account,
-						req.mysqlx
-					);
-					req.member = pmem;
-					break;
-			}
-
-			if (req.member !== null) {
-				req.newSessionID = sessInfo.newSessID;
-			}
-
-			res.header('x-new-sessionid', sessInfo.newSessID);
-
-			return next();
-		} else {
-			return next();
-		}
-	}
 
 	public static ExpressMiddleware(
 		req: ConditionalMemberRequest,
@@ -553,29 +551,34 @@ export default abstract class MemberBase implements MemberObject {
 
 		let count = 0;
 
-		const generator = generateResults(findAndBind(notificationCollection, {
-			target: {
-				to: this.getReference(),
-				type: NotificationTargetType.MEMBER
-			},
-			read: false
-		}));
+		const generator = generateResults(
+			findAndBind(notificationCollection, {
+				target: {
+					to: this.getReference()
+				}
+			})
+		);
 
-		for await (const _ of generator) {
-			count++;
+		for await (const notif of generator) {
+			if (notif.read === false) {
+				count++;
+			}
 		}
 
 		if (this.requestingAccount.isAdmin(this.getReference())) {
-			const accountGenerator = generateResults(findAndBind(notificationCollection, {
-				target: {
-					type: NotificationTargetType.ADMINS,
-					accountID: this.requestingAccount.id
-				},
-				read: false
-			}));
+			const accountGenerator = generateResults(
+				findAndBind(notificationCollection, {
+					target: {
+						type: NotificationTargetType.ADMINS,
+						accountID: this.requestingAccount.id
+					}
+				})
+			);
 
-			for await (const _ of accountGenerator) {
-				count++;
+			for await (const notif of accountGenerator) {
+				if (notif.read === false) {
+					count++;
+				}
 			}
 		}
 
@@ -589,24 +592,27 @@ export default abstract class MemberBase implements MemberObject {
 
 		let count = 0;
 
-		const generator = generateResults(findAndBind(notificationCollection, {
-			target: {
-				to: this.getReference(),
-				type: NotificationTargetType.MEMBER
-			}
-		}));
+		const generator = generateResults(
+			findAndBind(notificationCollection, {
+				target: {
+					to: this.getReference()
+				}
+			})
+		);
 
 		for await (const _ of generator) {
 			count++;
 		}
 
 		if (this.requestingAccount.isAdmin(this.getReference())) {
-			const accountGenerator = generateResults(findAndBind(notificationCollection, {
-				target: {
-					type: NotificationTargetType.ADMINS,
-					accountID: this.requestingAccount.id
-				}
-			}));
+			const accountGenerator = generateResults(
+				findAndBind(notificationCollection, {
+					target: {
+						type: NotificationTargetType.ADMINS,
+						accountID: this.requestingAccount.id
+					}
+				})
+			);
 
 			for await (const _ of accountGenerator) {
 				count++;
@@ -617,10 +623,11 @@ export default abstract class MemberBase implements MemberObject {
 	}
 }
 
+export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import Account from './Account';
 import Event from './Event';
 import CAPWATCHMember from './members/CAPWATCHMember';
 import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
-export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
+import { asyncErrorHandler } from './Util';

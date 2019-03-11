@@ -22,58 +22,56 @@ import File from './File';
 import MemberBase, { CAPWATCHMember, ProspectiveMember } from './Members';
 import { collectResults, findAndBind, generateResults, MySQLRequest } from './MySQLUtil';
 import Team from './Team';
-import { MonthNumber } from './Util';
+import { asyncErrorHandler, MonthNumber } from './Util';
 
 export interface AccountRequest<P = any> extends MySQLRequest<P> {
 	account: Account;
 }
 
 export default class Account implements AccountObject, DatabaseInterface<AccountObject> {
-	public static ExpressMiddleware = async (
-		req: AccountRequest,
-		res: express.Response,
-		next: express.NextFunction
-	) => {
-		const host = req.hostname;
-		const parts = host.split('.');
-		let accountID: string;
+	public static ExpressMiddleware = asyncErrorHandler(
+		async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
+			const host = req.hostname;
+			const parts = host.split('.');
+			let accountID: string;
 
-		if (parts[0] === 'www') {
-			parts.shift();
-		}
+			if (parts[0] === 'www') {
+				parts.shift();
+			}
 
-		if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
-			accountID = 'mdx89';
-		} else if (parts.length === 2) {
-			accountID = 'sales';
-		} else if (parts.length === 3) {
-			accountID = parts[0];
-			if (accountID === 'capeventmanager') {
+			if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
 				accountID = 'mdx89';
-			}
-		} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
-			accountID = 'mdx89';
-		} else {
-			res.status(400);
-			res.end();
-			return;
-		}
-
-		try {
-			const account = await Account.Get(accountID, req.mysqlx);
-			req.account = account;
-		} catch (e) {
-			if (e.message.startsWith('Unkown account: ')) {
-				res.status(400);
+			} else if (parts.length === 2) {
+				accountID = 'sales';
+			} else if (parts.length === 3) {
+				accountID = parts[0];
+				if (accountID === 'capeventmanager') {
+					accountID = 'mdx89';
+				}
+			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+				accountID = 'mdx89';
 			} else {
-				res.status(500);
+				res.status(400);
+				res.end();
+				return;
 			}
-			res.end();
-			return;
-		}
 
-		next();
-	};
+			try {
+				const account = await Account.Get(accountID, req.mysqlx);
+				req.account = account;
+			} catch (e) {
+				if (e.message.startsWith('Unkown account: ')) {
+					res.status(400);
+				} else {
+					res.status(500);
+				}
+				res.end();
+				return;
+			}
+
+			next();
+		}
+	);
 
 	public static PayWall = (
 		req: AccountRequest,
