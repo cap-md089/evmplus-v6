@@ -7,6 +7,10 @@ import admindelete from './admin/delete';
 import adminget from './admin/get';
 import adminlist from './admin/list';
 import adminmarkread from './admin/markread';
+// Global notifications
+import globalcreate from './global/createglobal';
+import globalget from './global/get';
+import globalmarkread from './global/markread';
 // Member Notification APIs
 import memberdelete from './member/delete';
 import memberget from './member/get';
@@ -28,3 +32,7 @@ router.get('/member', memberlist);
 router.get('/member/:id', memberget);
 router.post('/member/:id', membermarkread);
 router.delete('/member/:id', memberdelete);
+
+router.get('/global', globalget);
+router.post('/global', globalcreate);
+router.delete('/global', globalmarkread);
