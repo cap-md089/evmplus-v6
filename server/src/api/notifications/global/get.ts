@@ -7,7 +7,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	try {
 		const notification = await GlobalNotification.GetCurrent(req.account, req.mysqlx);
 
-		json<NotificationObject>(res, notification.toRaw());
+		json<NotificationObject>(res, notification.toFullRaw());
 	} catch (e) {
 		res.status(404);
 		res.end();

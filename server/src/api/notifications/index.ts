@@ -21,18 +21,19 @@ const router = Router();
 
 router.use(Account.ExpressMiddleware);
 router.use(MemberBase.ExpressMiddleware);
-router.use(tokenMiddleware);
 
 router.get('/admin', adminlist);
 router.get('/admin/:id', adminget);
-router.post('/admin/:id', adminmarkread);
-router.delete('/admin/:id', admindelete);
+router.post('/admin/:id', tokenMiddleware, adminmarkread);
+router.delete('/admin/:id', tokenMiddleware, admindelete);
 
 router.get('/member', memberlist);
 router.get('/member/:id', memberget);
-router.post('/member/:id', membermarkread);
-router.delete('/member/:id', memberdelete);
+router.post('/member/:id', tokenMiddleware, membermarkread);
+router.delete('/member/:id', tokenMiddleware, memberdelete);
 
 router.get('/global', globalget);
-router.post('/global', globalcreate);
-router.delete('/global', globalmarkread);
+router.post('/global', tokenMiddleware, globalcreate);
+router.delete('/global', tokenMiddleware, globalmarkread);
+
+export default router;

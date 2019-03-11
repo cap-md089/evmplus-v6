@@ -14,6 +14,7 @@ import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
 import members from './api/member';
+import notifications from './api/notifications';
 import registry from './api/registry';
 import signin from './api/signin';
 import team from './api/team';
@@ -102,6 +103,8 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.use('/team', team);
 
 	router.use('/member', Account.ExpressMiddleware, members);
+
+	router.use('/notifications', notifications);
 
 	router.post(
 		'/clienterror',

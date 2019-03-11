@@ -14,7 +14,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		req.mysqlx
 	);
 
-	const easyReturn = notifications.map(notification => notification.toRaw());
+	const easyReturn = notifications.map(notification => notification.toFullRaw());
 
 	json<NotificationObject[]>(res, easyReturn);
 });

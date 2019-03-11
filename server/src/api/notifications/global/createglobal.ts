@@ -29,10 +29,11 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 				type: NotificationCauseType.MEMBER
 			},
 			req.account,
-			req.mysqlx
+			req.mysqlx,
+			req.member
 		);
 
-		json<NotificationObject>(res, notification.toRaw());
+		json<NotificationObject>(res, notification.toFullRaw());
 	} catch (e) {
 		res.status(404);
 		res.end();

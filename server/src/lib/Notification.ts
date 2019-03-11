@@ -372,6 +372,14 @@ export abstract class Notification implements NotificationObject {
 		};
 	}
 
+	public toFullRaw(): NotificationObject {
+		return {
+			...this.toRaw(),
+			fromMemberName: this.fromMemberName,
+			toMemberName: this.toMemberName
+		}
+	}
+
 	public markAsRead() {
 		this.wasRead = true;
 	}
