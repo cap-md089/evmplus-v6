@@ -1,4 +1,4 @@
-import { RawDraftContentState } from 'draft-js';
+import * as DraftJS from 'draft-js';
 import {
 	AttendanceStatus,
 	EchelonEventNumber,
@@ -11,6 +11,21 @@ import {
 	PointOfContactType,
 	TeamPublicity
 } from './index';
+
+
+type RawDraftContentState = DraftJS.RawDraftContentState;
+// Export it so the server can use it and not have to depend on @types/draft-js
+// Depending on @types/draft-js causes dependency hell
+export { RawDraftContentState };
+export namespace Draft {
+	export type DraftBlockType = DraftJS.DraftBlockType;
+	export type DraftInlineStyleType = DraftJS.DraftInlineStyleType;
+	export type RawDraftContentBlock = DraftJS.RawDraftContentBlock;
+	export type RawDraftContentState = DraftJS.RawDraftContentState;
+	export type RawDraftEntity = DraftJS.RawDraftEntity;
+	export type RawDraftEntityRange = DraftJS.RawDraftEntityRange;
+	export type RawDraftInlineStyleRange = DraftJS.RawDraftInlineStyleRange;
+}
 
 /**
  * Table for SQL definitions for CAP NHQ
@@ -1416,8 +1431,8 @@ export interface NHQMemberObject extends CAPMemberObject {
  */
 export interface RawProspectiveMemberObject
 	extends RawCAPMember,
-		AccountIdentifiable,
-		NoSQLDocument {
+	AccountIdentifiable,
+	NoSQLDocument {
 	/**
 	 * We use string IDs for this account type
 	 */
@@ -1651,7 +1666,7 @@ export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
 /**
  * Used for denoting user permissions
  */
-interface FileUserControlList {
+export interface FileUserControlList {
 	/**
 	 *
 	 * Descriminant, used for determining who this applies to
@@ -1670,7 +1685,7 @@ interface FileUserControlList {
 /**
  * Used for denoting team permissions
  */
-interface FileTeamControlList {
+export interface FileTeamControlList {
 	/**
 	 *
 	 * Descriminant, used for determining who this applies to
@@ -1690,7 +1705,7 @@ interface FileTeamControlList {
  * Used for denoting permissions for those who are signed in, but still
  * other
  */
-interface FileAccountControlList {
+export interface FileAccountControlList {
 	/**
 	 *
 	 * Descriminant, used for determining who this applies to
@@ -1705,7 +1720,7 @@ interface FileAccountControlList {
  * Used for denoting permissions for those who are signed in, but still
  * other
  */
-interface FileSignedInControlList {
+export interface FileSignedInControlList {
 	/**
 	 *
 	 * Descriminant, used for determining who this applies to
@@ -1720,7 +1735,7 @@ interface FileSignedInControlList {
 /**
  * Used for denoting other permissions
  */
-interface FileOtherControlList {
+export interface FileOtherControlList {
 	/**
 	 *
 	 * Descriminant, used for determining who this applies to
@@ -2095,8 +2110,8 @@ export interface NewNotificationObject {
  */
 export interface RawNotificationObject
 	extends NewNotificationObject,
-		AccountIdentifiable,
-		NoSQLDocument {
+	AccountIdentifiable,
+	NoSQLDocument {
 	/**
 	 * Used to identify notifications
 	 */
@@ -2126,12 +2141,12 @@ export interface RawNotificationObject
 /**
  * Notifications are used to tell members that they need to check stuff
  */
-export interface NotificationObject extends RawNotificationObject {}
+export interface NotificationObject extends RawNotificationObject { }
 
 /**
  * This is a notification that comes from another member, e.g. a task
  */
-interface NotificationMemberCause {
+export interface NotificationMemberCause {
 	/**
 	 * Determines who caused the notification
 	 */
@@ -2145,7 +2160,7 @@ interface NotificationMemberCause {
 /**
  * This is a notification that comes from the system, e.g. CAPWATCH imports
  */
-interface NotificationSystemCause {
+export interface NotificationSystemCause {
 	/**
 	 * Determines the type of cause
 	 */
@@ -2160,7 +2175,7 @@ export type NotificationCause = NotificationMemberCause | NotificationSystemCaus
 /**
  * These are for things like being assigned a task
  */
-interface NotificationMemberTarget {
+export interface NotificationMemberTarget {
 	/**
 	 * This is meant for a single member
 	 */
@@ -2174,7 +2189,7 @@ interface NotificationMemberTarget {
 /**
  * These are notifications for things like personnel file approval
  */
-interface NotificationAdminTarget {
+export interface NotificationAdminTarget {
 	/**
 	 * Determines the group of people to go to
 	 */
