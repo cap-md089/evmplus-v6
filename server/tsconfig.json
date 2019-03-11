@@ -28,6 +28,9 @@
 		"sourceMap": true
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules/**/*.ts"],
+	"exclude": [
+		"node_modules/**/*.ts",
+		"node_modules"
+	],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5", "esnext.asynciterable"]
 }
