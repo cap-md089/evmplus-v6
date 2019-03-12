@@ -1,6 +1,7 @@
 .calendar tbody, .calendar {
 	width: 100%;
 	box-sizing: border-box;
+	table-layout: fixed;
 }
 
 .calendar table, .calendar caption {

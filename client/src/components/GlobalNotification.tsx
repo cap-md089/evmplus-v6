@@ -49,7 +49,6 @@ export default class GlobalNotification extends React.Component<
 
 		return (
 			<div className="banner">
-				{this.state.notification.fromMemberName} {this.state.notification.text}
 				<Button
 					onClick={this.onButtonClick}
 					buttonType="none"
@@ -57,6 +56,7 @@ export default class GlobalNotification extends React.Component<
 				>
 					&#10006;
 				</Button>
+				{this.state.notification.fromMemberName} {this.state.notification.text}
 			</div>
 		);
 	}

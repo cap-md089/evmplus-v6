@@ -49,6 +49,21 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				target: `notification-${notif.id}`
 			}))
 		);
+
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/admin',
+				text: 'Administration'
+			},
+			{
+				target: '/admin/notifications',
+				text: 'Notifications'
+			}
+		]);
 	}
 
 	public render() {

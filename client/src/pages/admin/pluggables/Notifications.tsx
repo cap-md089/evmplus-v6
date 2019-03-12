@@ -1,6 +1,7 @@
+import * as React from 'react';
+import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
 import { RequiredMember } from './SiteAdmin';
-import * as React from 'react';
 
 export const shouldRenderNotifications = (props: PageProps) => {
 	return !!props.member;
@@ -17,6 +18,9 @@ export default class NotificationsPlug extends Page<RequiredMember> {
 					<div>
 						You have {this.props.fullMemberDetails.notificationCount} unread
 						notifications
+						<br />
+						<br />
+						<Link to="/admin/notifications">View all</Link>
 					</div>
 				</div>
 			</div>
