@@ -4,6 +4,7 @@ import {
 	NoSQLDocument,
 	NotificationCause,
 	NotificationMemberCause,
+	NotificationMemberTarget,
 	NotificationObject,
 	NotificationSystemCause
 } from 'common-lib';
@@ -72,11 +73,17 @@ export default class MemberNotification extends Notification {
 		);
 	}
 
+	public target: NotificationMemberTarget;
+
 	public constructor(
 		data: NotificationObject & Required<NoSQLDocument>,
 		account: Account,
 		schema: Schema
 	) {
 		super(data, account, schema);
+	}
+
+	public canSee(member: MemberBase, account: Account) {
+		return member.matchesReference(this.target.to);
 	}
 }

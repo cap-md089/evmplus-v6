@@ -1,8 +1,7 @@
 import { NotificationObject } from 'common-lib';
-import { NotificationTargetType } from 'common-lib/index';
-import { MemberRequest } from '../../../lib/Members';
-import { Notification } from '../../../lib/Notification';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { MemberRequest } from '../../lib/Members';
+import { Notification } from '../../lib/Notification';
+import { asyncErrorHandler, json } from '../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
@@ -13,15 +12,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	const id = parseInt(req.params.id, 10);
 
 	try {
-		const notification = await Notification.GetOfTarget(
-			id,
-			{
-				type: NotificationTargetType.ADMINS,
-				accountID: req.account.id
-			},
-			req.account,
-			req.mysqlx
-		);
+		const notification = await Notification.Get(id, req.account, req.mysqlx);
 
 		if (!notification.canSee(req.member, req.account)) {
 			res.status(403);

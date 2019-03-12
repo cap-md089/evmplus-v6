@@ -177,12 +177,21 @@ export abstract class Notification implements NotificationObject {
 		account: Account,
 		schema: Schema
 	): Promise<MemberNotification[]>;
+	public static async GetFor(
+		target: NotificationEveryoneTarget,
+		account: Account,
+		schema: Schema
+	): Promise<GlobalNotification>;
 
 	public static async GetFor(
 		target: NotificationTarget,
 		account: Account,
 		schema: Schema
-	): Promise<Array<AdminNotification | MemberNotification>> {
+	): Promise<Array<AdminNotification | MemberNotification> | GlobalNotification> {
+		if (target.type === NotificationTargetType.EVERYONE) {
+			return GlobalNotification.GetCurrent(account, schema);
+		}
+
 		const notificationCollection = schema.getCollection<
 			RawNotificationObject & Required<NoSQLDocument>
 		>('Notifications');
@@ -236,22 +245,6 @@ export abstract class Notification implements NotificationObject {
 							schema
 						)
 					);
-					break;
-
-				case NotificationTargetType.EVERYONE:
-					if (i.target.expires > Date.now()) {
-						returnValue.push(
-							new GlobalNotification(
-								{
-									...i,
-									fromMemberName,
-									toMemberName: null
-								},
-								account,
-								schema
-							)
-						);
-					}
 					break;
 			}
 		}
@@ -374,7 +367,7 @@ export abstract class Notification implements NotificationObject {
 			...this.toRaw(),
 			fromMemberName: this.fromMemberName,
 			toMemberName: this.toMemberName
-		}
+		};
 	}
 
 	public markAsRead() {
@@ -388,6 +381,8 @@ export abstract class Notification implements NotificationObject {
 
 		await notificationCollection.removeOne(this._id);
 	}
+
+	public abstract canSee(member: MemberBase, account: Account): boolean;
 }
 
 import AdminNotification from './notifications/AdminNotification';

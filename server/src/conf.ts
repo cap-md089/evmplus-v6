@@ -1,7 +1,7 @@
 export const Configuration = {
 	production: false,
 	testing: false,
-	clientStorage: '/home/arioux/Desktop/react-capunit/client',
+	clientStorage: '/home/arioux/react-capunit/client',
 	database: {
 		connection: {
 			database: 'EventManagement4',

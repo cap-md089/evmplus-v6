@@ -4,7 +4,8 @@ import {
 	NotificationCause,
 	NotificationMemberCause,
 	NotificationObject,
-	NotificationSystemCause
+	NotificationSystemCause,
+	NotificationEveryoneTarget
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from '../Account';
@@ -122,11 +123,17 @@ export default class GlobalNotification extends Notification {
 		);
 	}
 
+	public target: NotificationEveryoneTarget;
+
 	public constructor(
 		data: NotificationObject & Required<NoSQLDocument>,
 		account: Account,
 		schema: Schema
 	) {
 		super(data, account, schema);
+	}
+
+	public canSee(member: MemberBase, account: Account) {
+		return true;
 	}
 }

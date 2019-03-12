@@ -7,6 +7,10 @@ import admindelete from './admin/delete';
 import adminget from './admin/get';
 import adminlist from './admin/list';
 import adminmarkread from './admin/markread';
+// Notification APIs for all the notification types
+import allget from './allget';
+import alllist from './alllist';
+import allmarkread from './allmarkread';
 // Global notifications
 import globalcreate from './global/createglobal';
 import globalget from './global/get';
@@ -34,5 +38,9 @@ router.delete('/member/:id', MemberBase.ExpressMiddleware, tokenMiddleware, memb
 router.get('/global', globalget);
 router.post('/global', MemberBase.ExpressMiddleware, tokenMiddleware, globalcreate);
 router.delete('/global', MemberBase.ExpressMiddleware, tokenMiddleware, globalmarkread);
+
+router.get('/', MemberBase.ExpressMiddleware, alllist);
+router.get('/:id', MemberBase.ExpressMiddleware, allget);
+router.post('/:id', MemberBase.ExpressMiddleware, allmarkread);
 
 export default router;

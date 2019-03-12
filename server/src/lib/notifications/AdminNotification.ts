@@ -1,6 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	NoSQLDocument,
+	NotificationAdminTarget,
 	NotificationCause,
 	NotificationMemberCause,
 	NotificationObject,
@@ -58,11 +59,17 @@ export default class AdminNotification extends Notification {
 		);
 	}
 
+	public target: NotificationAdminTarget;
+
 	public constructor(
 		data: NotificationObject & Required<NoSQLDocument>,
 		account: Account,
 		schema: Schema
 	) {
 		super(data, account, schema);
+	}
+
+	public canSee(member: MemberBase, account: Account) {
+		return account.isAdmin(member.getReference());
 	}
 }

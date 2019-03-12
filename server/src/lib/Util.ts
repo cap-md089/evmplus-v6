@@ -1,9 +1,3 @@
-import * as mysql from '@mysql/xdevapi';
-import { HTTPError, RawAccountObject } from 'common-lib';
-import * as express from 'express';
-import { Configuration } from '../conf';
-import Account from './Account';
-
 export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
 	if (typeof obj2 !== typeof obj1) {
 		return false;
@@ -179,7 +173,7 @@ type ExpressHandler = (
 ) => any;
 
 export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (req, res, next) =>
-	fn(req, res, next).then(next, next);
+	fn(req, res, next).catch(next);
 
 export const replaceUndefinedWithNull = (obj: any) => {
 	for (const i in obj) {
@@ -212,3 +206,10 @@ export const getTargetYear = (timestamp: number): number => {
 
 	return date.getFullYear();
 };
+
+// Imports go at the end to help with circular dependencies
+import * as mysql from '@mysql/xdevapi';
+import { HTTPError, RawAccountObject } from 'common-lib';
+import * as express from 'express';
+import { Configuration } from '../conf';
+import Account from './Account';

@@ -18,6 +18,7 @@ import { sign, verify, VerifyOptions } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import { promisify } from 'util';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import { asyncErrorHandler } from './Util';
 
 const promisedVerify = promisify(verify) as (
 	token: string,
@@ -630,4 +631,3 @@ import CAPWATCHMember from './members/CAPWATCHMember';
 import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
-import { asyncErrorHandler } from './Util';
