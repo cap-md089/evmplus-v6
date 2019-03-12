@@ -4,6 +4,9 @@
   "description": "Common types for CAPUnit.com to use in TypeScript",
   "author": "Andrew Rioux",
   "main": "./index.js",
+  "scripts": {
+    "build": "tsc && rm index.d.ts"
+  },
   "dependencies": {
     "@types/react": "16.8.4",
     "@types/draft-js": "0.10.24",

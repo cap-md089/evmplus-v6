@@ -90,13 +90,15 @@ export enum HTTPError {
 	UNKNOWN
 }
 
+// For some reason MySQL doesn't like 0...
 export enum NotificationTargetType {
-	MEMBER,
+	MEMBER = 1,
 	ADMINS,
 	EVERYONE
 }
 
+// For some reason MySQL doesn't like 0...
 export enum NotificationCauseType {
-	MEMBER,
+	MEMBER = 1,
 	SYSTEM
 }
