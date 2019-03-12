@@ -102,3 +102,9 @@ export enum NotificationCauseType {
 	MEMBER = 1,
 	SYSTEM
 }
+
+export enum NotificationDataType {
+	PROSPECTIVEMEMBER,
+	PERSONNELFILES,
+	EVENT
+}

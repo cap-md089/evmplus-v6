@@ -9,7 +9,8 @@ import {
 	NotificationCauseType,
 	NotificationTargetType,
 	PointOfContactType,
-	TeamPublicity
+	TeamPublicity,
+	NotificationDataType
 } from './index';
 
 
@@ -2107,6 +2108,10 @@ export interface NewNotificationObject {
 	 * What should the notification say?
 	 */
 	text: string;
+	/**
+	 * Some extra data to make the viewer more accessible
+	 */
+	extraData: NotificationData | null;
 }
 
 /**
@@ -2234,6 +2239,35 @@ export type NotificationTarget =
 	| NotificationMemberTarget
 	| NotificationAdminTarget
 	| NotificationEveryoneTarget;
+
+/**
+ * 
+ */
+export interface NotificationDataProspectiveMember {
+	type: NotificationDataType.PROSPECTIVEMEMBER
+}
+
+/**
+ * 
+ */
+export interface NotificationDataPersonnelFile {
+	type: NotificationDataType.PERSONNELFILES
+}
+
+/**
+ * 
+ */
+export interface NotificationDataEvent {
+	type: NotificationDataType.EVENT
+}
+
+/**
+ * Union of all
+ */
+export type NotificationData =
+	| NotificationDataProspectiveMember
+	| NotificationDataPersonnelFile
+	| NotificationDataEvent
 
 /**
  * Audit log item stored in the database
