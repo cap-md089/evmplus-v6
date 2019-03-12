@@ -12,6 +12,7 @@ import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
 import Subscribe from './lib/subscribe';
 import { SigninReturn, FileObject, MemberObject } from 'common-lib';
+import GlobalNotification from './components/GlobalNotification';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 
@@ -290,6 +291,9 @@ export default class App extends React.Component<
 										<div id="content">
 											<div id="fb-root" />
 											<BreadCrumbs links={this.state.breadCrumbs} />
+											{this.state.loading ? null : (
+												<GlobalNotification account={this.state.account!} />
+											)}
 											{this.state.loading ? (
 												<Loader />
 											) : (
@@ -555,7 +559,7 @@ export default class App extends React.Component<
 	private update() {
 		this.forceUpdate(() => {
 			if (this.titleElement) {
-				bestfit(jQuery(this.titleElement))
+				bestfit(jQuery(this.titleElement));
 			}
 		});
 	}

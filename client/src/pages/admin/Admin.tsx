@@ -14,6 +14,7 @@ import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
 import RegEdit from './pages/RegEdit';
 import FlightAssign from './pages/FlightAssign';
+import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -48,6 +49,10 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 	{
 		canuse: canUseCreate,
 		widget: CreateWidget
+	},
+	{
+		canuse: shouldRenderNotifications,
+		widget: NotificationsPlug
 	},
 	{
 		canuse: shouldRenderFlightContactWidget,
