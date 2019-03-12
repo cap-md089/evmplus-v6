@@ -103,7 +103,7 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 export function isInput(
 	el: React.ReactChild | React.ReactElement<any> | boolean
 ): el is React.ReactElement<InputProps<any>> {
-	if (typeof el !== 'object') {
+	if (typeof el !== 'object' || el === null) {
 		return false;
 	}
 	return (

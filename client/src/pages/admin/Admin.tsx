@@ -15,6 +15,7 @@ import './Widget.css';
 import RegEdit from './pages/RegEdit';
 import FlightAssign from './pages/FlightAssign';
 import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
+import Notifications from './pages/Notifications';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -99,6 +100,8 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route path="/admin/regedit" render={this.pageRenderer(RegEdit)} />
 
 				<Route path="/admin/flightassign" render={this.pageRenderer(FlightAssign)} />
+
+				<Route path="/admin/notifications" render={this.pageRenderer(Notifications)} />
 
 				{/* <Route path="/permmgmt" render={this.pageRenderer()} />*/}
 				{/* <Route path="/admin/permissions" render={this.pageRenderer()} /> */}

@@ -2,7 +2,8 @@ import {
 	NotificationCause,
 	NotificationObject,
 	NotificationTarget,
-	RawNotificationObject
+	RawNotificationObject,
+	NotificationData
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -21,9 +22,9 @@ export default class Notification extends APIInterface<RawNotificationObject>
 	public static async GetList(account: Account, member: MemberBase) {
 		const response = await account.fetch(`/api/notifications`, {}, member);
 
-		const json = await response.json();
+		const json = (await response.json()) as NotificationObject[];
 
-		return new Notification(json, account);
+		return json.map(notif => new Notification(notif, account));
 	}
 
 	public static async GetGlobal(account: Account): Promise<Notification | null> {
@@ -31,7 +32,7 @@ export default class Notification extends APIInterface<RawNotificationObject>
 
 		try {
 			response = await account.fetch(`/api/notifications/global`, {});
-		} catch(e) {
+		} catch (e) {
 			// Will throw 404 if there is no global notification
 			return null;
 		}
@@ -87,6 +88,8 @@ export default class Notification extends APIInterface<RawNotificationObject>
 
 	public toMemberName: string | null;
 
+	public extraData: NotificationData | null;
+
 	public constructor(data: NotificationObject, private account: Account) {
 		super(account.id);
 
@@ -100,6 +103,7 @@ export default class Notification extends APIInterface<RawNotificationObject>
 		this.created = data.created;
 		this.fromMemberName = data.fromMemberName;
 		this.toMemberName = data.toMemberName;
+		this.extraData = data.extraData;
 	}
 
 	public toRaw(): NotificationObject {
@@ -114,7 +118,18 @@ export default class Notification extends APIInterface<RawNotificationObject>
 			created: this.created,
 			emailSent: this.emailSent,
 			fromMemberName: this.fromMemberName,
-			toMemberName: this.toMemberName
+			toMemberName: this.toMemberName,
+			extraData: this.extraData
 		};
+	}
+
+	public async markRead(member: MemberBase) {
+		if (this.read === true) {
+			return;
+		}
+
+		await this.fetch(`/api/notifications/${this.id}`, { method: 'POST' }, member);
+
+		this.read = true;
 	}
 }
