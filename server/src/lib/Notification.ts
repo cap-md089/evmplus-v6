@@ -4,6 +4,7 @@ import {
 	NoSQLDocument,
 	NotificationAdminTarget,
 	NotificationCause,
+	NotificationData,
 	NotificationEveryoneTarget,
 	NotificationMemberTarget,
 	NotificationObject,
@@ -385,6 +386,8 @@ export abstract class Notification implements NotificationObject {
 
 	public emailSent: boolean;
 
+	public extraData: NotificationData | null;
+
 	// tslint:disable-next-line:variable-name
 	public _id: string;
 
@@ -407,6 +410,7 @@ export abstract class Notification implements NotificationObject {
 		this.id = data.id;
 		this.fromMemberName = data.fromMemberName;
 		this.toMemberName = data.toMemberName;
+		this.extraData = data.extraData;
 	}
 
 	public async save() {
@@ -427,7 +431,8 @@ export abstract class Notification implements NotificationObject {
 			id: this.id,
 			read: this.read,
 			target: this.target,
-			text: this.text
+			text: this.text,
+			extraData: this.extraData
 		};
 	}
 

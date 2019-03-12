@@ -101,7 +101,8 @@ export default class GlobalNotification extends Notification {
 		const results = await this.Create(
 			{
 				cause: from,
-				text
+				text,
+				extraData: null
 			},
 			{
 				type: NotificationTargetType.EVERYONE,
@@ -123,6 +124,7 @@ export default class GlobalNotification extends Notification {
 					text,
 					member,
 					{ type: NotificationCauseType.SYSTEM },
+					null,
 					account,
 					schema
 				);
@@ -131,6 +133,7 @@ export default class GlobalNotification extends Notification {
 					text,
 					member,
 					{ type: NotificationCauseType.MEMBER, from: fromMember.getReference() },
+					null,
 					account,
 					schema,
 					fromMember

@@ -19,7 +19,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 
 	for await (const i of memberNotificationsGenerator) {
 		if (i.canSee(req.member, req.account)) {
-			res.write((started ? ',' : '[') + JSON.stringify(i.toRaw()));
+			res.write((started ? ',' : '[') + JSON.stringify(i.toFullRaw()));
 			started = true;
 		}
 	}
@@ -46,7 +46,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 
 	for await (const i of adminNotificationsGenerator) {
 		if (i.canSee(req.member, req.account)) {
-			res.write((started ? ',' : '[') + JSON.stringify(i.toRaw()));
+			res.write((started ? ',' : '[') + JSON.stringify(i.toFullRaw()));
 			started = true;
 		}
 	}

@@ -3,6 +3,7 @@ import {
 	NoSQLDocument,
 	NotificationAdminTarget,
 	NotificationCause,
+	NotificationData,
 	NotificationMemberCause,
 	NotificationObject,
 	NotificationSystemCause
@@ -16,12 +17,14 @@ export default class AdminNotification extends Notification {
 	public static async CreateNotification(
 		text: string,
 		from: NotificationSystemCause,
+		extraData: NotificationData | null,
 		account: Account,
 		schema: Schema
 	): Promise<AdminNotification>;
 	public static async CreateNotification(
 		text: string,
 		from: NotificationMemberCause,
+		extraData: NotificationData | null,
 		account: Account,
 		schema: Schema,
 		fromMember: MemberBase
@@ -30,6 +33,7 @@ export default class AdminNotification extends Notification {
 	public static async CreateNotification(
 		text: string,
 		from: NotificationCause,
+		extraData: NotificationData | null,
 		account: Account,
 		schema: Schema,
 		fromMember?: MemberBase
@@ -37,7 +41,8 @@ export default class AdminNotification extends Notification {
 		const results = await this.Create(
 			{
 				cause: from,
-				text
+				text,
+				extraData
 			},
 			{
 				type: NotificationTargetType.ADMINS,

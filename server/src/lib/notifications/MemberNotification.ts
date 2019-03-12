@@ -3,6 +3,7 @@ import {
 	MemberReference,
 	NoSQLDocument,
 	NotificationCause,
+	NotificationData,
 	NotificationMemberCause,
 	NotificationMemberTarget,
 	NotificationObject,
@@ -18,6 +19,7 @@ export default class MemberNotification extends Notification {
 		text: string,
 		to: MemberReference | MemberBase,
 		from: NotificationSystemCause,
+		extraData: NotificationData,
 		account: Account,
 		schema: Schema
 	): Promise<MemberNotification>;
@@ -25,6 +27,7 @@ export default class MemberNotification extends Notification {
 		text: string,
 		to: MemberReference | MemberBase,
 		from: NotificationMemberCause,
+		extraData: NotificationData,
 		account: Account,
 		schema: Schema,
 		fromMember: MemberBase
@@ -34,6 +37,7 @@ export default class MemberNotification extends Notification {
 		text: string,
 		to: MemberReference | MemberBase,
 		from: NotificationCause,
+		extraData: NotificationData,
 		account: Account,
 		schema: Schema,
 		fromMember?: MemberBase
@@ -41,7 +45,8 @@ export default class MemberNotification extends Notification {
 		const results = await this.Create(
 			{
 				cause: from,
-				text
+				text,
+				extraData
 			},
 			{
 				type: NotificationTargetType.MEMBER,

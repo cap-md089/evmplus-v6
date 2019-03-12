@@ -10,20 +10,24 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 
 	const id = parseInt(req.params.id, 10);
 
+	let notification;
+
 	try {
-		const notification = await Notification.Get(id, req.account, req.mysqlx);
-
-		if (!notification.canSee(req.member, req.account)) {
-			res.status(403);
-			return res.end();
-		}
-
-		notification.markAsRead();
-
-		res.status(204);
-		res.end();
+		notification = await Notification.Get(id, req.account, req.mysqlx);
 	} catch (e) {
 		res.status(404);
 		res.end();
 	}
+
+	if (!notification.canSee(req.member, req.account)) {
+		res.status(403);
+		return res.end();
+	}
+
+	notification.markAsRead();
+
+	await notification.save();
+
+	res.status(204);
+	res.end();
 });
