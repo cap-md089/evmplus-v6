@@ -98,43 +98,50 @@ export const generateResults = async function*<T>(
 	}
 };
 
-export const generateFindStatement = <T>(find: RecursivePartial<T>, scope: string | null = null): string =>
+export const generateFindStatement = <T>(
+	find: RecursivePartial<T>,
+	scope: string | null = null
+): string =>
 	Object.keys(find)
 		.map(val =>
 			typeof find[val as keyof T] === 'object'
 				? '(' +
 				  generateFindStatement(
 						find[val as keyof T]!,
-						scope === null ? val : `${scope}.${val}`
+						scope === null ? val : `${scope.replace('.', '')}.${val}`
 				  ) +
 				  ')'
 				: scope === null
 				? `${val} = :${val}`
-				: `${scope}.${val} = :${val}`
+				: `${scope}.${val} = :${scope.replace('.', '')}${val}`
 		)
 		.join(' AND ');
 
-export const generateBindObject = <T>(bind: RecursivePartial<T>): any =>
+export const generateBindObject = <T>(
+	bind: RecursivePartial<T>,
+	scope: string | null = null
+): any =>
 	Object.keys(bind)
 		.map(key =>
 			typeof bind[key as keyof T] === 'object'
-				? generateBindObject(bind[key as keyof T]!)
-				: { [key]: bind[key as keyof T] }
+				? generateBindObject(bind[key as keyof T]!, scope === null ? key : `${scope}${key}`)
+				: { [scope === null ? key : `${scope}${key}`]: bind[key as keyof T] }
 		)
 		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));
 
 type RecursivePartial<T> = {
-	[P in keyof T]?:
-		T[P] extends Array<infer U> ? Array<RecursivePartial<U>> :
-		T[P] extends object ? RecursivePartial<T[P]> :
-		T[P];
+	[P in keyof T]?: T[P] extends Array<infer U>
+		? Array<RecursivePartial<U>>
+		: T[P] extends object
+		? RecursivePartial<T[P]>
+		: T[P]
 };
 
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
 	bind: RecursivePartial<Bound<T>>
 ): mysql.CollectionFind<T> => {
-	const findWithStatement = find.find(generateFindStatement(bind))
+	const findWithStatement = find.find(generateFindStatement(bind));
 
 	const bound = generateBindObject(bind);
 
@@ -154,7 +161,7 @@ export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
 	bind: RecursivePartial<Bound<T>>
 ): mysql.CollectionModify<T> => {
-	const modifyWithStatement = modify.modify(generateFindStatement(bind))
+	const modifyWithStatement = modify.modify(generateFindStatement(bind));
 
 	const bound = generateBindObject(bind);
 

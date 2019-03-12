@@ -1,19 +1,14 @@
-import { NotificationObject } from 'common-lib';
 import { NotificationTargetType } from 'common-lib/index';
 import { MemberRequest } from '../../lib/Members';
 import GlobalNotification from '../../lib/notifications/GlobalNotification';
-import { asyncErrorHandler, json } from '../../lib/Util';
+import MemberNotification from '../../lib/notifications/MemberNotification';
+import { asyncErrorHandler } from '../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
-	const notifications = [];
+	res.header('Content-type', 'application/json');
+	let started = false;
 
-	try {
-		notifications.push(await GlobalNotification.GetCurrent(req.account, req.mysqlx));
-	} catch (e) {
-		// There is no current global notification
-	}
-
-	const memberNotifications = await GlobalNotification.GetFor(
+	const memberNotificationsGenerator = MemberNotification.StreamFor(
 		{
 			type: NotificationTargetType.MEMBER,
 			to: req.member.getReference()
@@ -22,17 +17,25 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		req.mysqlx
 	);
 
-	for (const i of memberNotifications) {
+	for await (const i of memberNotificationsGenerator) {
 		if (i.canSee(req.member, req.account)) {
-			notifications.push(i);
+			res.write((started ? ',' : '[') + JSON.stringify(i.toRaw()));
+			started = true;
 		}
 	}
 
 	if (!req.account.isAdmin(req.member)) {
-		return json<NotificationObject[]>(res, notifications.map(notif => notif.toFullRaw()));
+		if (!started) {
+			res.write('[');
+		}
+
+		res.write(']');
+		res.end();
+
+		return;
 	}
 
-	const adminNotifications = await GlobalNotification.GetFor(
+	const adminNotificationsGenerator = GlobalNotification.StreamFor(
 		{
 			type: NotificationTargetType.ADMINS,
 			accountID: req.account.id
@@ -41,11 +44,17 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		req.mysqlx
 	);
 
-	for (const i of adminNotifications) {
+	for await (const i of adminNotificationsGenerator) {
 		if (i.canSee(req.member, req.account)) {
-			notifications.push(i);
+			res.write((started ? ',' : '[') + JSON.stringify(i.toRaw()));
+			started = true;
 		}
 	}
 
-	json<NotificationObject[]>(res, notifications.map(notif => notif.toFullRaw()));
+	if (!started) {
+		res.write('[');
+	}
+
+	res.write(']');
+	res.end();
 });

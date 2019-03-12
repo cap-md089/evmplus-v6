@@ -82,6 +82,17 @@ export async function streamAsyncGeneratorAsJSONArray<T>(
 	res.end();
 }
 
+// Maybe can be used to help with JSON serialization? Doesn't seem to work...
+// type FunctionLess<R> = {
+// 	[P in keyof R]: R[P] extends () => void
+// 		? never
+// 		: R[P] extends Array<infer U>
+// 		? Array<FunctionLess<U>>
+// 		: R[P] extends object
+// 		? FunctionLess<R[P]>
+// 		: R[P]
+// };
+
 export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 	res: express.Response,
 	iterator: AsyncIterableIterator<T>,

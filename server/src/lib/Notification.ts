@@ -167,6 +167,74 @@ export abstract class Notification implements NotificationObject {
 		}
 	}
 
+	public static StreamFor(
+		target: NotificationAdminTarget,
+		account: Account,
+		schema: Schema
+	): AsyncIterableIterator<AdminNotification>;
+	public static StreamFor(
+		target: NotificationMemberTarget,
+		account: Account,
+		schema: Schema
+	): AsyncIterableIterator<MemberNotification>;
+
+	public static async *StreamFor(
+		target: NotificationTarget,
+		account: Account,
+		schema: Schema
+	): AsyncIterableIterator<AdminNotification | MemberNotification> {
+		const notificationCollection = schema.getCollection<
+			RawNotificationObject & Required<NoSQLDocument>
+		>('Notifications');
+
+		const results = generateResults(
+			findAndBind(notificationCollection, {
+				target,
+				accountID: account.id
+			})
+		);
+
+		for await (const i of results) {
+			let fromMemberName: string | null = null;
+			if (i.cause.type === NotificationCauseType.MEMBER) {
+				const member = await MemberBase.ResolveReference(i.cause.from, account, schema);
+
+				fromMemberName = member.getFullName();
+			}
+
+			switch (i.target.type) {
+				case NotificationTargetType.ADMINS:
+					yield new AdminNotification(
+						{
+							...i,
+							toMemberName: null,
+							fromMemberName
+						},
+						account,
+						schema
+					);
+					break;
+
+				case NotificationTargetType.MEMBER:
+					const toMember = await MemberBase.ResolveReference(
+						i.target.to,
+						account,
+						schema
+					);
+					yield new MemberNotification(
+						{
+							...i,
+							toMemberName: toMember.getFullName(),
+							fromMemberName
+						},
+						account,
+						schema
+					);
+					break;
+			}
+		}
+	}
+
 	public static async GetFor(
 		target: NotificationAdminTarget,
 		account: Account,
@@ -327,6 +395,7 @@ export abstract class Notification implements NotificationObject {
 		private account: Account,
 		private schema: Schema
 	) {
+		this.created = data.created;
 		this.archived = data.archived;
 		this.cause = data.cause;
 		this.target = data.target;

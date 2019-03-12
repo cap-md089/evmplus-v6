@@ -3,7 +3,6 @@ import * as express from 'express';
 import * as uuid from 'uuid/v4';
 import MemberBase from '../lib/Members';
 import { MemberRequest } from '../lib/members/NHQMember';
-import { asyncErrorHandler } from '../lib/Util';
 
 let validTokens: Array<{
 	member: MemberReference;
@@ -44,10 +43,10 @@ export const validToken = (req: MemberRequest): boolean => {
 	}
 };
 
-export const tokenMiddleware = asyncErrorHandler((
+export const tokenMiddleware = (
 	req: MemberRequest,
-	res,
-	next
+	res: express.Response,
+	next: express.NextFunction
 ) => {
 	if (validToken(req)) {
 		next();
@@ -55,4 +54,4 @@ export const tokenMiddleware = asyncErrorHandler((
 		res.status(403);
 		res.end();
 	}
-});
+};

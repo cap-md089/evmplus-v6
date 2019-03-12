@@ -2,16 +2,17 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	NoSQLDocument,
 	NotificationCause,
+	NotificationEveryoneTarget,
 	NotificationMemberCause,
 	NotificationObject,
-	NotificationSystemCause,
-	NotificationEveryoneTarget
+	NotificationSystemCause
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from '../Account';
 import MemberBase from '../Members';
 import { findAndBind, generateResults } from '../MySQLUtil';
 import { Notification } from '../Notification';
+import MemberNotification from './MemberNotification';
 
 export default class GlobalNotification extends Notification {
 	public static async AccountHasGlobalNotificationActive(
@@ -110,6 +111,32 @@ export default class GlobalNotification extends Notification {
 			account,
 			schema
 		);
+
+		/**
+		 * This creates notifications for each member so that they can mark it as read
+		 *
+		 * This will not prevent it from showing up on the client as a banner
+		 */
+		for await (const member of account.getMembers()) {
+			if (from.type === NotificationCauseType.SYSTEM) {
+				await MemberNotification.CreateNotification(
+					text,
+					member,
+					{ type: NotificationCauseType.SYSTEM },
+					account,
+					schema
+				);
+			} else {
+				await MemberNotification.CreateNotification(
+					text,
+					member,
+					{ type: NotificationCauseType.MEMBER, from: fromMember.getReference() },
+					account,
+					schema,
+					fromMember
+				);
+			}
+		}
 
 		return new GlobalNotification(
 			{

@@ -102,9 +102,9 @@ export default abstract class MemberBase implements MemberObject {
 
 				res.header('x-new-sessionid', sessInfo.newSessID);
 
-				return next();
+				next();
 			} else {
-				return next();
+				next();
 			}
 		}
 	);
