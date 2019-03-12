@@ -101,7 +101,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 					{this.props.member ? (
 						<li>
 							<SideNavigationLink target={'/admin/notifications'}>
-								Notifications: {this.props.fullMemberDetails.notificationCount}
+								Unread Notifications: {this.props.fullMemberDetails.notificationCount}
 							</SideNavigationLink>
 						</li>
 					) : null}

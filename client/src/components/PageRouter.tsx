@@ -37,6 +37,7 @@ import FlightAssign from '../pages/admin/pages/FlightAssign';
 import NotFound from '../pages/NotFound';
 import { SigninReturn } from 'common-lib';
 import Registry from '../lib/Registry';
+import Notifications from '../pages/admin/pages/Notifications';
 
 const pages: Array<{
 	url: string;
@@ -246,6 +247,11 @@ const pages: Array<{
 	{
 		url: '/flightassign',
 		component: FlightAssign,
+		exact: false
+	},
+	{
+		url: '/notifications',
+		component: Notifications,
 		exact: false
 	},
 

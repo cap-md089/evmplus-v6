@@ -98,6 +98,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 						))}
 					</tbody>
 				</table>
+				{this.state.notifications.length === 0 ? <h3>No notifications</h3> : null}
 			</div>
 		);
 	}
