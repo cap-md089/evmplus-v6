@@ -406,7 +406,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								);
 							} else {
 								// @ts-ignore
-								if (isInput(child!) && child!.type !== Title) {
+								if (isLabel(child!) && child!.type !== Title) {
 									ret.unshift(
 										// @ts-ignore
 										React.cloneElement(this.props.children[i - 1], {

@@ -117,7 +117,7 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 							);
 						} else {
 							// @ts-ignore
-							if (isInput(child!) && child!.type !== Title) {
+							if (isLabel(child!) && child!.type !== Title) {
 								ret.unshift(
 									// @ts-ignore
 									React.cloneElement(child, {
