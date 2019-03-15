@@ -111,7 +111,8 @@ export default class CAPProspectiveMember extends MemberBase
 			type: 'CAPProspectiveMember',
 			usrID: this.usrID,
 			accountID: this.accountID,
-			absenteeInformation: this.absenteeInformation
+			absenteeInformation: this.absenteeInformation,
+			accessLevel: this.accessLevel
 		};
 	}
 

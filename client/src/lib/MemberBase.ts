@@ -9,7 +9,8 @@ import {
 	Omit,
 	MemberPermission,
 	MemberPermissions,
-	AbsenteeInformation
+	AbsenteeInformation,
+	MemberAccessLevel
 } from 'common-lib';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
@@ -86,6 +87,10 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
 	/**
+	 * Represents the access level a member may have
+	 */
+	public accessLevel: MemberAccessLevel;
+	/**
 	 * Cheap way to produce references
 	 */
 	public abstract getReference: () => MemberReference;
@@ -125,6 +130,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		this.contact = data.contact;
 		this.teamIDs = data.teamIDs;
 		this.usrID = data.usrID;
+		this.accessLevel = data.accessLevel;
 
 		this.isRioux = this.id === 542488 || this.id === 546319;
 	}
