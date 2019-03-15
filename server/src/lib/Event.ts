@@ -15,7 +15,12 @@ import {
 	RadioReturn,
 	RawEventObject
 } from 'common-lib';
-import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
+import {
+	EchelonEventNumber,
+	EventStatus,
+	NotificationCauseType,
+	PointOfContactType
+} from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
 import { default as BaseMember, default as MemberBase } from './MemberBase';
@@ -26,6 +31,7 @@ import {
 	generateFindStatement,
 	generateResults
 } from './MySQLUtil';
+import MemberNotification from './notifications/MemberNotification';
 import EventValidator from './validator/validators/EventValidator';
 import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRecord';
 
@@ -545,8 +551,81 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 *
 	 * @param values The values to set
 	 */
-	public set(values: Partial<NewEventObject>): boolean {
+	public async set(
+		values: Partial<NewEventObject>,
+		account: Account,
+		schema: Schema
+	): Promise<boolean> {
 		if (Event.Validator.validate(values, true)) {
+			const previousPOCs = this.pointsOfContact.slice(0);
+			const newPOCs = values.pointsOfContact.slice(0);
+
+			for (let i: number = newPOCs.length - 1; i >= 0; i--) {
+				for (const poc of this.pointsOfContact) {
+					const pPOC = newPOCs[i];
+					if (pPOC.type === PointOfContactType.EXTERNAL) {
+						newPOCs.splice(i, 1);
+						continue;
+					}
+
+					if (
+						poc.type === PointOfContactType.INTERNAL &&
+						MemberBase.AreMemberReferencesTheSame(
+							poc.memberReference,
+							pPOC.memberReference
+						)
+					) {
+						newPOCs.splice(i, 1);
+					}
+				}
+			}
+
+			for (let i: number = previousPOCs.length - 1; i >= 0; i--) {
+				for (const poc of values.pointsOfContact) {
+					const pPOC = previousPOCs[i];
+					if (pPOC.type === PointOfContactType.EXTERNAL) {
+						previousPOCs.splice(i, 1);
+						continue;
+					}
+
+					if (
+						poc.type === PointOfContactType.INTERNAL &&
+						MemberBase.AreMemberReferencesTheSame(
+							poc.memberReference,
+							pPOC.memberReference
+						)
+					) {
+						previousPOCs.splice(i, 1);
+					}
+				}
+			}
+
+			for (const poc of previousPOCs) {
+				await MemberNotification.CreateNotification(
+					'You are no longer a POC of an event',
+					(poc as DisplayInternalPointOfContact).memberReference,
+					{
+						type: NotificationCauseType.SYSTEM
+					},
+					null,
+					account,
+					schema
+				);
+			}
+
+			for (const poc of newPOCs) {
+				await MemberNotification.CreateNotification(
+					'You are now a POC of an event',
+					(poc as DisplayInternalPointOfContact).memberReference,
+					{
+						type: NotificationCauseType.SYSTEM
+					},
+					null,
+					account,
+					schema
+				);
+			}
+
 			Event.Validator.partialPrune(values, this);
 
 			return true;
