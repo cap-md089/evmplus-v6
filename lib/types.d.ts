@@ -255,13 +255,6 @@ export interface DatabaseInterface<T extends NoSQLDocument> {
 	 */
 	toRaw(): { [P in Exclude<keyof T, '_id'>]: T[P] };
 	/**
-	 * Checks all the values coming in, making sure they are the right type and
-	 * setting them if they are the right type and defined
-	 *
-	 * @param values The values to set
-	 */
-	set(values: Partial<T>): boolean;
-	/**
 	 * Save the document to the database
 	 */
 	save(): Promise<void>;
@@ -2258,7 +2251,13 @@ export interface NotificationDataPersonnelFile {
  * 
  */
 export interface NotificationDataEvent {
-	type: NotificationDataType.EVENT
+	type: NotificationDataType.EVENT;
+	
+	eventID: number;
+	accountID: string;
+
+	delta: 'ADDED' | 'REMOVED';
+	eventName: string;
 }
 
 /**
