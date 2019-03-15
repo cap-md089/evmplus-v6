@@ -24,7 +24,11 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 		return res.end();
 	}
 
-	notification.markAsRead();
+	if (notification.read) {
+		notification.markAsUnread();
+	} else {
+		notification.markAsRead();
+	}
 
 	await notification.save();
 

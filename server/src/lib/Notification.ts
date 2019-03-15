@@ -448,6 +448,10 @@ export abstract class Notification implements NotificationObject {
 		this.wasRead = true;
 	}
 
+	public markAsUnread() {
+		this.wasRead = false;
+	}
+
 	public async delete() {
 		const notificationCollection = this.schema.getCollection<RawNotificationObject>(
 			'Notifications'

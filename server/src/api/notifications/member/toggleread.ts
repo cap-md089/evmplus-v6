@@ -22,7 +22,11 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 			req.mysqlx
 		);
 
-		notification.markAsRead();
+		if (notification.read) {
+			notification.markAsUnread();
+		} else {
+			notification.markAsRead();
+		}
 
 		await notification.save();
 

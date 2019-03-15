@@ -19,6 +19,7 @@ import {
 	EchelonEventNumber,
 	EventStatus,
 	NotificationCauseType,
+	NotificationDataType,
 	PointOfContactType
 } from 'common-lib/index';
 import { DateTime } from 'luxon';
@@ -554,7 +555,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public async set(
 		values: Partial<NewEventObject>,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		updater: MemberBase
 	): Promise<boolean> {
 		if (Event.Validator.validate(values, true)) {
 			const previousPOCs = this.pointsOfContact.slice(0);
@@ -605,11 +607,20 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 					'You are no longer a POC of an event',
 					(poc as DisplayInternalPointOfContact).memberReference,
 					{
-						type: NotificationCauseType.SYSTEM
+						type: NotificationCauseType.MEMBER,
+						from: updater.getReference()
 					},
-					null,
+					{
+						type: NotificationDataType.EVENT,
+
+						accountID: this.accountID,
+						eventID: this.id,
+						delta: 'REMOVED',
+						eventName: this.name
+					},
 					account,
-					schema
+					schema,
+					updater
 				);
 			}
 
@@ -618,11 +629,20 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 					'You are now a POC of an event',
 					(poc as DisplayInternalPointOfContact).memberReference,
 					{
-						type: NotificationCauseType.SYSTEM
+						type: NotificationCauseType.MEMBER,
+						from: updater.getReference()
 					},
-					null,
+					{
+						type: NotificationDataType.EVENT,
+
+						accountID: this.accountID,
+						eventID: this.id,
+						delta: 'ADDED',
+						eventName: this.name
+					},
 					account,
-					schema
+					schema,
+					updater
 				);
 			}
 

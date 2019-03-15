@@ -35,7 +35,7 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		await event.set(req.body, req.account, req.mysqlx);
+		await event.set(req.body, req.account, req.mysqlx, req.member);
 
 		await event.save();
 
