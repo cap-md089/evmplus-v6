@@ -3,6 +3,7 @@ import {
 	AbsenteeInformation,
 	CAPMemberContact,
 	ExtraMemberInformation,
+	MemberAccessLevel,
 	MemberObject,
 	MemberPermission,
 	MemberPermissions,
@@ -426,6 +427,10 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
 	/**
+	 * The level that controls the permissions
+	 */
+	public accessLevel: MemberAccessLevel = 'Member';
+	/**
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
@@ -460,6 +465,8 @@ export default abstract class MemberBase implements MemberObject {
 		this.nameSuffix = data.nameSuffix;
 		this.usrID = data.usrID;
 		this.absenteeInformation = data.absenteeInformation;
+		this.teamIDs = data.teamIDs;
+		this.accessLevel = data.accessLevel;
 	}
 
 	public getName = (): string =>
@@ -474,6 +481,7 @@ export default abstract class MemberBase implements MemberObject {
 	public toRaw(): MemberObject {
 		return {
 			id: this.id,
+			accessLevel: this.accessLevel,
 			contact: this.contact,
 			nameFirst: this.nameFirst,
 			nameLast: this.nameLast,

@@ -7,9 +7,10 @@ import {
 	CAPMemberObject,
 	CAPMemberType,
 	ExtraMemberInformation,
+	MemberAccessLevel,
 	MemberPermissions,
 	MemberReference,
-	NHQ
+	NHQ,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import MemberBase from '../MemberBase';
@@ -122,7 +123,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 				permissions,
 				teamIDs: extraInformation.teamIDs,
 				flight: extraInformation.flight,
-				absenteeInformation: extraInformation.absentee
+				absenteeInformation: extraInformation.absentee,
+				accessLevel: extraInformation.accessLevel
 			},
 			schema,
 			account,
@@ -261,7 +263,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		};
 	}
 
-	public async saveExtraMemberInformation(schema: Schema) {
+	public async saveExtraMemberInformation(schema: Schema, account: Account) {
 		const extraInfoCollection = schema.getCollection<ExtraMemberInformation>(
 			'ExtraMemberInformation'
 		);
@@ -270,7 +272,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			.modify('id = :id AND type = :type')
 			.bind({
 				id: this.id,
-				type: this.type
+				type: this.type,
+				accountID: account.id
 			})
 			.patch(this.extraInformation)
 			.execute();
@@ -278,6 +281,12 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 
 	public setAbsenteeInformation(info: AbsenteeInformation) {
 		this.extraInformation.absentee = info;
+	}
+
+	public setAccessLevel(level: MemberAccessLevel) {
+		this.extraInformation.accessLevel = level;
+		this.accessLevel = level;
+		this.permissions = getPermissions(level);
 	}
 
 	public setFlight(flight: string) {

@@ -1,6 +1,6 @@
-import { CAPMemberObject } from 'common-lib';
-import { CAPWATCHMember, MemberRequest } from '../../lib/Members';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../lib/Util';
+import { MemberReference } from 'common-lib';
+import { CAPWATCHMember, MemberRequest } from '../../../lib/Members';
+import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	if (
@@ -15,7 +15,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		return res.end();
 	}
 
-	await streamAsyncGeneratorAsJSONArrayTyped<CAPWATCHMember, CAPMemberObject>(
+	await streamAsyncGeneratorAsJSONArrayTyped<CAPWATCHMember, MemberReference>(
 		res,
 		req.account.getMembers(),
 		mem => {
@@ -24,7 +24,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 					!mem.seniorMember) ||
 				(mem.flight === req.member.flight && mem.flight !== null)
 			) {
-				return mem.toRaw();
+				return mem.getReference();
 			}
 			return false;
 		}

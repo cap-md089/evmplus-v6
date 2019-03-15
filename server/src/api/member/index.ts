@@ -8,11 +8,12 @@ import FlightAssignValidator from '../../lib/validator/validators/FlightAssignVa
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
-import flightassign from './flightassign';
-import flightassignbulk from './flightassignbulk';
-import flightbasic from './flightbasic';
-import flightmembers from './flightmembers';
+import flightassign from './flights/flightassign';
+import flightassignbulk from './flights/flightassignbulk';
+import flightbasic from './flights/flightbasic';
+import flightmembers from './flights/flightmembers';
 import getmembers from './getmembers';
+import getpermissions from './permissions/getpermissions';
 import su from './su';
 
 const router = express.Router();
@@ -45,6 +46,13 @@ router.post(
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(FlightAssignBulkValidator),
 	flightassignbulk
+);
+
+router.get(
+	'/permissions',
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('PermissionManagement'),
+	getpermissions
 );
 
 export default router;

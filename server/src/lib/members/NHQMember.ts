@@ -133,7 +133,8 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 				teamIDs: extraInfo.teamIDs,
 				sessionID,
 				cookie,
-				absenteeInformation: extraInfo.absentee
+				absenteeInformation: extraInfo.absentee,
+				accessLevel: extraInfo.accessLevel
 			},
 			schema,
 			account,
@@ -194,7 +195,8 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 				teamIDs: extraInfo.teamIDs,
 				sessionID,
 				cookie: sess.cookieData,
-				absenteeInformation: extraInfo.absentee
+				absenteeInformation: extraInfo.absentee,
+				accessLevel: extraInfo.accessLevel
 			},
 			schema,
 			account,
