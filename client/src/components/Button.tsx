@@ -1,38 +1,44 @@
 import * as React from 'react';
 
-export interface ButtonProps<C> {
+export interface ButtonProps {
 	className?: string;
 	id?: string;
 
+	useData?: false;
+
+	/**
+	 * Called when the button is clicked, passes the data given to it
+	 */
+	onClick?: () => void;
+
+	buttonType?: 'primaryButton' | 'secondaryButton' | ('none' | '');
+}
+
+export interface ButtonPropsWithData<C> {
+	className?: string;
+	id?: string;
+
+	useData: true;
 	/**
 	 * Data to use on button press
 	 */
-	data?: C;
+	data: C;
 
 	/**
-	 * The function to handle data before a request is sent.
-	 *
-	 * Action is determined by return data
-	 * If a promise, it will wait until it resolves. If it is an object, it will send the object
-	 * If boolean (or a Promise that resolves to a boolean), it will send if true
-	 * If anything else, it sends the object
-	 *
-	 * @param data The data currently being sent
-	 *
-	 * @returns {Promise<any> | boolean | any} Data to control the request
+	 * Called when the button is clicked, passes the data given to it
 	 */
-	onClick?: (data?: C) => Promise<any> | boolean | any;
+	onClick?: (data: C) => void;
 
 	buttonType?: 'primaryButton' | 'secondaryButton' | ('none' | '');
 }
 
 export default class Button<C> extends React.Component<
-	ButtonProps<C>,
+	ButtonPropsWithData<C> | ButtonProps,
 	{
 		disabled: boolean;
 	}
 > {
-	constructor(props: ButtonProps<C>) {
+	constructor(props: ButtonPropsWithData<C> | ButtonProps) {
 		super(props);
 
 		this.handleClick = this.handleClick.bind(this);
@@ -43,7 +49,11 @@ export default class Button<C> extends React.Component<
 
 	public handleClick(e: React.MouseEvent<HTMLAnchorElement>): void {
 		if (this.props.onClick) {
-			this.props.onClick(this.props.data);
+			if (this.props.useData) {
+				this.props.onClick(this.props.data);
+			} else {
+				this.props.onClick();
+			}
 		}
 	}
 

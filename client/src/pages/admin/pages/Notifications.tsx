@@ -1,4 +1,4 @@
-import { NotificationCauseType } from 'common-lib/index';
+import { NotificationCauseType, NotificationDataType } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Loader from '../../../components/Loader';
@@ -7,6 +7,9 @@ import MemberBase from '../../../lib/Members';
 import Notification from '../../../lib/Notification';
 import Page, { PageProps } from '../../Page';
 import './Notifications.css';
+import { NotificationDataEvent } from 'common-lib';
+import { Link } from 'react-router-dom';
+import Button from '../../../components/Button';
 
 interface NotificationsState {
 	notifications: Array<Notification> | null;
@@ -22,6 +25,53 @@ const renderers: NotificationRenderer[] = [
 	{
 		shouldRender: notif => notif.extraData === null,
 		render: notif => <div>{notif.text}</div>
+	},
+	{
+		shouldRender: notif =>
+			notif.extraData !== null && notif.extraData.type === NotificationDataType.EVENT,
+		render: notif => (
+			<div>
+				{(notif.extraData as NotificationDataEvent).delta === 'ADDED' ? (
+					<div>
+						You are now a Point of Contact for of the event{' '}
+						<Link
+							to={`/eventviewer/${
+								(notif.extraData as NotificationDataEvent).eventID
+							}`}
+						>
+							{(notif.extraData as NotificationDataEvent).eventName}
+						</Link>
+						.
+						<br />
+						<br />
+						This was done by {notif.fromMemberName} on{' '}
+						{DateTime.fromMillis(notif.created).toLocaleString({
+							...DateTime.DATETIME_SHORT,
+							hour12: false
+						})}
+					</div>
+				) : (
+					<div>
+						You are no longer a Point of Contact for the event{' '}
+						<Link
+							to={`/eventviewer/${
+								(notif.extraData as NotificationDataEvent).eventID
+							}`}
+						>
+							{(notif.extraData as NotificationDataEvent).eventName}
+						</Link>
+						.
+						<br />
+						<br />
+						This was done by {notif.fromMemberName} on{' '}
+						{DateTime.fromMillis(notif.created).toLocaleString({
+							...DateTime.DATETIME_SHORT,
+							hour12: false
+						})}
+					</div>
+				)}
+			</div>
+		)
 	}
 ];
 
@@ -31,6 +81,12 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		currentViewed: null
 	};
 
+	public constructor(props: PageProps) {
+		super(props);
+
+		this.markUnread = this.markUnread.bind(this);
+	}
+
 	public async componentDidMount() {
 		if (!this.props.member) {
 			return;
@@ -38,18 +94,14 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 
 		const notifications = await Notification.GetList(this.props.account, this.props.member);
 
+		notifications.reverse();
+
 		this.setState({
 			notifications
 		});
+	}
 
-		this.props.updateSideNav(
-			notifications.map(notif => ({
-				type: 'Reference' as 'Reference',
-				text: notif.text,
-				target: `notification-${notif.id}`
-			}))
-		);
-
+	public componentDidUpdate() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -64,6 +116,20 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				text: 'Notifications'
 			}
 		]);
+
+		if (!this.state.notifications) {
+			return;
+		}
+
+		this.props.updateSideNav(
+			this.state.notifications
+				.filter(notif => !notif.read)
+				.map(notif => ({
+					type: 'Reference' as 'Reference',
+					text: notif.text,
+					target: `notification-${notif.id}`
+				}))
+		);
 	}
 
 	public render() {
@@ -106,7 +172,21 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 								</tr>
 								{i === this.state.currentViewed ? (
 									<tr className="current-notification-view">
-										<td colSpan={3}>{this.renderNotification(notif)}</td>
+										<td colSpan={3}>
+											<span className="current-notification-actions">
+												<Button<number>
+													useData={true}
+													data={i}
+													onClick={this.markUnread}
+													buttonType="none"
+												>
+													Mark unread
+												</Button>
+											</span>
+											<div className="current-notification-text">
+												{this.renderNotification(notif)}
+											</div>
+										</td>
 									</tr>
 								) : null}
 							</React.Fragment>
@@ -136,7 +216,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				return;
 			}
 
-			await this.state.notifications[index].markRead(this.props.member!);
+			await this.state.notifications[index].toggleRead(this.props.member!);
 
 			this.setState(prev => ({
 				currentViewed: prev.currentViewed === index ? null : index
@@ -144,6 +224,18 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 
 			this.forceUpdate();
 		}).bind(this);
+	}
+
+	private async markUnread(index: number) {
+		if (!this.state.notifications) {
+			return;
+		}
+
+		await this.state.notifications[index].toggleRead(this.props.member!);
+
+		this.setState({
+			currentViewed: null
+		});
 	}
 
 	private renderNotification(notif: Notification) {

@@ -45,3 +45,15 @@
 	width: 100%;
 	margin: 0;
 }
+
+#notification-list .current-notification-view .current-notification-actions {
+	float: right;
+	padding-right: 10px;
+	padding-top: 10px;
+}
+
+#notification-list .current-notification-view .current-notification-text {
+	clear: both;
+	padding: 10px;
+	box-sizing: border-box;
+}

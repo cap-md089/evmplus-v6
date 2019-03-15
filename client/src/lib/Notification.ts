@@ -123,13 +123,9 @@ export default class Notification extends APIInterface<RawNotificationObject>
 		};
 	}
 
-	public async markRead(member: MemberBase) {
-		if (this.read === true) {
-			return;
-		}
-
+	public async toggleRead(member: MemberBase) {
 		await this.fetch(`/api/notifications/${this.id}`, { method: 'POST' }, member);
 
-		this.read = true;
+		this.read = !this.read;
 	}
 }
