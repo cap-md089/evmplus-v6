@@ -1338,6 +1338,10 @@ export interface MemberObject extends Identifiable {
 	 */
 	permissions: MemberPermissions;
 	/**
+	 * Short form of above
+	 */
+	accessLevel: MemberAccessLevel;
+	/**
 	 * Used to easily reference teams
 	 */
 	teamIDs: number[];
@@ -1352,7 +1356,7 @@ export interface MemberObject extends Identifiable {
 /**
  * A descriminator type used to help determine what the type of object is
  */
-export type CAPMemberType = 'CAPNHQMember' | 'CAPWATCHMember' | 'CAPProspectiveMember';
+export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember';
 
 /**
  * These are common to all CAPMembers, not necessarily all members
@@ -2247,6 +2251,13 @@ export interface NotificationDataPersonnelFile {
 	type: NotificationDataType.PERSONNELFILES
 }
 
+export interface NotificationDataPermissions {
+	type: NotificationDataType.PERMISSIONCHANGE;
+
+	newLevel: MemberAccessLevel;
+	oldLevel: MemberAccessLevel;
+}
+
 /**
  * 
  */
@@ -2267,6 +2278,7 @@ export type NotificationData =
 	| NotificationDataProspectiveMember
 	| NotificationDataPersonnelFile
 	| NotificationDataEvent
+	| NotificationDataPermissions
 
 /**
  * Audit log item stored in the database

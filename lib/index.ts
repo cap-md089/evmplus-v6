@@ -106,5 +106,6 @@ export enum NotificationCauseType {
 export enum NotificationDataType {
 	PROSPECTIVEMEMBER,
 	PERSONNELFILES,
-	EVENT
+	EVENT,
+	PERMISSIONCHANGE
 }
