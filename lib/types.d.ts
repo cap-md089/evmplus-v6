@@ -1384,6 +1384,12 @@ export interface RawCAPMember extends MemberObject {
 	orgid: number;
 }
 
+export type ShortDutyPosition = {
+	duty: string;
+	date: number;
+	type: 'NHQ' | 'CAPWatch'
+}
+
 /**
  * A more full CAP member
  */
@@ -1391,10 +1397,7 @@ export interface CAPMemberObject extends RawCAPMember {
 	/**
 	 * Duty positions listed on CAP NHQ, along with temporary ones assigned here
 	 */
-	dutyPositions: {
-		duty: string;
-		date: number;
-	}[];
+	dutyPositions: ShortDutyPosition[];
 	/**
 	 * The Squadron a member belongs to
 	 */
@@ -1460,10 +1463,7 @@ export interface RawProspectiveMemberObject
 	 *
 	 * There is no way to modify this
 	 */
-	dutyPositions: {
-		duty: string;
-		date: number;
-	}[];
+	dutyPositions: ShortDutyPosition[];
 }
 
 /**
@@ -1589,6 +1589,19 @@ export interface ExtraMemberInformation extends NoSQLDocument {
 	 * Null if non existant
 	 */
 	absentee: AbsenteeInformation | null;
+}
+
+export interface CAPExtraMemberInformation extends ExtraMemberInformation {
+	/**
+	 * Extra duty positions that are assigned to the member
+	 */
+	temporaryDutyPositions: TemporaryDutyPosition[];
+	/**
+	 * Member flight
+	 *
+	 * Undefined if the member is a senior member
+	 */
+	flight: null | string;
 }
 
 /**
