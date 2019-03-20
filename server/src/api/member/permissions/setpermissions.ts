@@ -17,7 +17,7 @@ interface PermissionsList {
 
 const permissionValidator = new Validator<PermissionItem>({
 	accessLevel: {
-		validator: Validator.OneOfStrict<MemberAccessLevel>('Admin', 'Manager', 'Staff')
+		validator: Validator.OneOfStrict<MemberAccessLevel>('Member', 'Admin', 'Manager', 'Staff')
 	},
 	member: {
 		validator: Validator.MemberReference
@@ -82,6 +82,21 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<PermissionsL
 	 */
 	const promotionRoles: PermissionItem[] = [];
 	const demotionRoles: PermissionItem[] = [];
+
+	for (let i = 0; i < newRoles.length; i++) {
+		let found = false;
+
+		for (let j = 0; j < oldRoles.length; j++) {
+			if (MemberBase.AreMemberReferencesTheSame(newRoles[i].member, refFromInfo(oldRoles[j]))) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			promotionRoles.push(newRoles[i]);
+		}
+	}
 
 	for (let i = oldRoles.length - 1; i >= 0; i--) {
 		let found = false;
@@ -179,7 +194,7 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<PermissionsL
 
 	for (let j = 0; j < demotees.length; j++) {
 		await MemberNotification.CreateNotification(
-			"You've been lower a higher permission level",
+			"You've been assigned a lower permission level",
 			demotees[j].getReference(),
 			{
 				type: NotificationCauseType.MEMBER,

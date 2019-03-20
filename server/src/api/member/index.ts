@@ -14,6 +14,7 @@ import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
 import getmembers from './getmembers';
 import getpermissions from './permissions/getpermissions';
+import setpermissions, { permissionsValidator } from './permissions/setpermissions';
 import su from './su';
 
 const router = express.Router();
@@ -53,6 +54,14 @@ router.get(
 	MemberBase.ExpressMiddleware,
 	MemberBase.PermissionMiddleware('PermissionManagement'),
 	getpermissions
+);
+router.post(
+	'/permissions',
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('PermissionManagement'),
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(permissionsValidator),
+	setpermissions
 );
 
 export default router;
