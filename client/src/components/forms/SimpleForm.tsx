@@ -22,6 +22,7 @@ import TeamMemberInput from '../form-inputs/TeamMemberInput';
 import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
+import Select from '../form-inputs/Select';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -128,6 +129,7 @@ export function isInput(
 		el.type === MemberSelector ||
 		el.type === TeamMemberInput ||
 		el.type === POCInput ||
+		el.type === Select ||
 		// @ts-ignore
 		el.type === FileInput
 	);

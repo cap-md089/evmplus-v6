@@ -23,15 +23,11 @@ export interface SelectorProps<T extends Identifiable> {
 	onFilterValuesChange?: (filterValues: any[]) => void;
 }
 
-interface SelectorPropsSingle<T extends Identifiable>
-	extends InputProps<T>,
-		SelectorProps<T> {
+interface SelectorPropsSingle<T extends Identifiable> extends InputProps<T>, SelectorProps<T> {
 	multiple: false;
 }
 
-interface SelectorPropsMultiple<T extends Identifiable>
-	extends InputProps<T[]>,
-		SelectorProps<T> {
+interface SelectorPropsMultiple<T extends Identifiable> extends InputProps<T[]>, SelectorProps<T> {
 	multiple: true;
 }
 
@@ -56,10 +52,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 	public constructor(props: CombinedSelectorProps<T>) {
 		super(props);
 
-		if (
-			typeof this.props.onInitialize !== 'undefined' &&
-			this.props.multiple
-		) {
+		if (typeof this.props.onInitialize !== 'undefined' && this.props.multiple) {
 			this.props.onInitialize({
 				name: this.props.name,
 				value: this.props.value || []
@@ -76,9 +69,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		}
 
 		if (this.props.onChangeVisible) {
-			const filterValues = (
-				this.props.filterValues || this.state.filterValues
-			).slice();
+			const filterValues = (this.props.filterValues || this.state.filterValues).slice();
 
 			const filteredValues = this.filteredIDValues.filter(val =>
 				(this.props.filters || [])
@@ -119,23 +110,18 @@ export default class Selector<T extends Identifiable> extends React.Component<
 									<TextInput
 										name="null"
 										value={this.state.filterID.toString()}
-										onChange={filterID =>
-											this.setState({ filterID })
-										}
+										onChange={filterID => this.setState({ filterID })}
 									/>
 								</div>
 							</li>
 						) : null}
 						{(this.props.filters || []).map((value, i) => (
 							<li key={i}>
-								<div className="selector-left-filter">
-									{value.displayText}
-								</div>
+								<div className="selector-left-filter">{value.displayText}</div>
 								<div className="selector-right-filter">
 									<value.filterInput
 										value={
-											typeof filterValues[i] ===
-											'undefined'
+											typeof filterValues[i] === 'undefined'
 												? ''
 												: filterValues[i]
 										}
@@ -161,9 +147,8 @@ export default class Selector<T extends Identifiable> extends React.Component<
 							onClick={this.getSelectHandler(val)}
 							className={
 								(this.props.multiple
-								? (this.props.value || [])
-										.map(value => value.id)
-										.indexOf(val.id) > -1
+								? (this.props.value || []).map(value => value.id).indexOf(val.id) >
+								  -1
 								: typeof this.props.value !== 'undefined' &&
 								  this.props.value.id === val.id)
 									? 'selected'
@@ -180,11 +165,23 @@ export default class Selector<T extends Identifiable> extends React.Component<
 
 	private getFilterValueUpdater(i: number) {
 		return ((e: any) => {
-			const filterValues = (
-				this.props.filterValues || this.state.filterValues
-			).slice();
+			const filterValues = (this.props.filterValues || this.state.filterValues).slice();
 
 			filterValues[i] = e;
+
+			const filteredValues = this.filteredIDValues.filter(val =>
+				(this.props.filters || [])
+					.map(({ check }, j) => check(val, filterValues[j]))
+					.reduce((prev, curr) => prev && curr, true)
+			);
+
+			if (filteredValues.length === 1 && this.props.onChange) {
+				if (this.props.multiple) {
+					this.props.onChange([...(this.props.value || []), filteredValues[0]]);
+				} else {
+					this.props.onChange(filteredValues[0]);
+				}
+			}
 
 			if (
 				typeof this.props.filterValues !== 'undefined' &&
@@ -196,12 +193,6 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			}
 
 			if (this.props.onChangeVisible) {
-				const filteredValues = this.filteredIDValues.filter(val =>
-					(this.props.filters || [])
-						.map(({ check }, j) => check(val, filterValues[j]))
-						.reduce((prev, curr) => prev && curr, true)
-				);
-
 				this.props.onChangeVisible(filteredValues);
 			}
 		}).bind(this);
@@ -242,10 +233,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 
 	private getSelectHandler(val: T) {
 		return ((e: any) => {
-			if (
-				this.props.blacklistFunction &&
-				!this.props.blacklistFunction(val)
-			) {
+			if (this.props.blacklistFunction && !this.props.blacklistFunction(val)) {
 				return;
 			}
 
@@ -264,9 +252,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				return;
 			}
 
-			const index = (this.props.value || [])
-				.map(value => value.id)
-				.indexOf(val.id);
+			const index = (this.props.value || []).map(value => value.id).indexOf(val.id);
 
 			if (index > -1) {
 				const newList = (this.props.value || []).slice();
@@ -306,10 +292,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 				this.state.filterID === ''
 					? this.props.values.slice()
 					: this.props.values.filter(
-							val =>
-								!!new RegExp(this.state.filterID, 'ig').exec(
-									val.id.toString()
-								)
+							val => !!new RegExp(this.state.filterID, 'ig').exec(val.id.toString())
 					  );
 
 			return filteredIDValues;

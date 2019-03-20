@@ -68,7 +68,7 @@ interface DialogueWithYesNoCancel {
 	labels?: [string, string, string];
 }
 
-type DialogueButtonProps =
+export type DialogueButtonProps =
 	| DialogueButtonWithOK
 	| DialogueButtonWithOKCancel
 	| DialogueButtonWithYesNoCancel;

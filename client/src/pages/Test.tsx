@@ -24,6 +24,7 @@ import { PointOfContactType } from 'common-lib/index';
 import { Identifiable, MultCheckboxReturn, DisplayInternalPointOfContact, ExternalPointOfContact, RadioReturn } from 'common-lib';
 import { CAPMemberClasses } from '../lib/Members';
 import POCInput from '../components/form-inputs/POCInput';
+import Select from '../components/form-inputs/Select';
 
 enum Test1 {
 	Opt1,
@@ -55,6 +56,7 @@ interface Props {
 	};
 	test16: Complex[];
 	test17: DisplayInternalPointOfContact | ExternalPointOfContact;
+	test18: Test1;
 }
 
 export default class Test extends Page<PageProps<{}>, { open: boolean } & Props> {
@@ -91,6 +93,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 			receiveSignUpUpdates: false,
 			receiveUpdates: false
 		},
+		test18: Test1.Opt1,
 		memberList: this.props.account.getMembers(this.props.member)
 	};
 
@@ -131,13 +134,14 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 					onChange={(data, errors, changed) => {
 						this.setState(data);
 						// tslint:disable-next-line:no-console
-						console.log(errors, changed);
+						console.log(data, errors, changed);
 					}}
 					validator={{
 						test2: text => {
 							return !text.match(/a/g);
 						}
 					}}
+					values={this.state}
 				>
 					<LoadingTextArea
 						name="test14"
@@ -175,6 +179,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						onChange={text => text.startsWith('a') || text.length === 0}
 						name="test1"
 					/>
+					<Select name="test18" labels={['Option 1', 'Option 2']}/>
 					<Title>A title</Title>
 					<Label>A label</Label>
 					<TextInput name="test2" value={this.state.test2} />

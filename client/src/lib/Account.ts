@@ -7,13 +7,23 @@ import myFetch from './myFetch';
 import Team from './Team';
 import BlogPost from './BlogPost';
 import BlogPage from './BlogPage';
-import { AccountObject, MemberReference, Member, EventObject, RawTeamObject, FullTeamObject, FileObject, FullFileObject, FullBlogPostObject, FullBlogPageObject } from 'common-lib';
+import {
+	AccountObject,
+	MemberReference,
+	Member,
+	EventObject,
+	RawTeamObject,
+	FullTeamObject,
+	FileObject,
+	FullFileObject,
+	FullBlogPostObject,
+	FullBlogPageObject
+} from 'common-lib';
 
 /**
  * Holds the account information for a provided account
  */
-export default class Account extends APIInterface<AccountObject>
-	implements AccountObject {
+export default class Account extends APIInterface<AccountObject> implements AccountObject {
 	/**
 	 * Constructs an Account object for the given ID
 	 * @param id The ID of the account to get
@@ -26,9 +36,7 @@ export default class Account extends APIInterface<AccountObject>
 		let json: AccountObject;
 
 		if (id) {
-			const promise = await myFetch(
-				`https://${id}.${Account.REQUEST_URI}/api/accountcheck`
-			);
+			const promise = await myFetch(`https://${id}.${Account.REQUEST_URI}/api/accountcheck`);
 			json = (await promise.json()) as AccountObject;
 		} else {
 			if (!Account.cache) {
@@ -79,7 +87,7 @@ export default class Account extends APIInterface<AccountObject>
 		this.expires = data.expires;
 		this.id = data.id;
 		this.mainOrg = data.mainOrg;
-		this.orgIDs = data.orgIDs
+		this.orgIDs = data.orgIDs;
 		this.paid = data.paid;
 		this.paidEventLimit = data.paidEventLimit;
 		this.unpaidEventLimit = data.unpaidEventLimit;
@@ -98,6 +106,41 @@ export default class Account extends APIInterface<AccountObject>
 			.filter(v => !!v) as CAPMemberClasses[];
 	}
 
+	public async setMemberPermissions(member: MemberBase, members: MemberBase[]) {
+		if (!member.hasPermission('PermissionManagement')) {
+			return;
+		}
+
+		const token = await this.getToken(member);
+
+		await this.fetch(
+			`/api/member/permissions`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					newRoles: members.map(mem => ({
+						member: mem.getReference(),
+						accessLevel: mem.accessLevel
+					})),
+					token
+				})
+			},
+			member
+		);
+	}
+
+	public async getMembersWithPermissions(member: MemberBase): Promise<CAPMemberClasses[]> {
+		const url = this.buildURI('api', 'member', 'permissions');
+
+		const results = await this.fetch(url, {}, member);
+
+		const json = (await results.json()) as Member[];
+
+		return json
+			.map(v => createCorrectMemberObject(v, this, ''))
+			.filter(v => !!v) as CAPMemberClasses[];
+	}
+
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {
 		const url = this.buildURI('api', 'event');
 
@@ -105,7 +148,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const events = await results.json();
 
-		return events.map((e: EventObject) => new Event(e, this));;
+		return events.map((e: EventObject) => new Event(e, this));
 	}
 
 	public async getNextRecurringEvent(): Promise<Event | null> {
@@ -117,7 +160,7 @@ export default class Account extends APIInterface<AccountObject>
 			const event = await results.json();
 
 			return new Event(event, this);
-		} catch(e) {
+		} catch (e) {
 			if (e.status === 404) {
 				return null;
 			}
@@ -148,7 +191,7 @@ export default class Account extends APIInterface<AccountObject>
 
 	/**
 	 * This method does not return fully qualified file objects, it returns basic information
-	 * 
+	 *
 	 * @param target The file to get the children of
 	 * @param member Used for checking the permissions of the file
 	 */
@@ -166,11 +209,14 @@ export default class Account extends APIInterface<AccountObject>
 
 	/**
 	 * This method returns full file objects for the given file, which includes the parent files
-	 * 
+	 *
 	 * @param target The file to get the children of
 	 * @param member Used for checking the permissions of the file
 	 */
-	public async getFiles(target: FileInterface | string, member?: MemberBase | null): Promise<FileInterface[]> {
+	public async getFiles(
+		target: FileInterface | string,
+		member?: MemberBase | null
+	): Promise<FileInterface[]> {
 		if (target instanceof FileInterface) {
 			target = target.id;
 		}
@@ -189,7 +235,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const results = await this.fetch(url);
 
-		const posts = await results.json() as FullBlogPostObject[];
+		const posts = (await results.json()) as FullBlogPostObject[];
 
 		return posts.map(post => new BlogPost(post, this));
 	}
@@ -199,7 +245,7 @@ export default class Account extends APIInterface<AccountObject>
 
 		const results = await this.fetch(url);
 
-		const pages = await results.json() as FullBlogPageObject[]
+		const pages = (await results.json()) as FullBlogPageObject[];
 
 		return pages.map(page => new BlogPage(page, this));
 	}

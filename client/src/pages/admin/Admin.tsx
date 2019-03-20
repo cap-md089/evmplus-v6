@@ -3,6 +3,10 @@ import { Route, Switch } from 'react-router';
 import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
+import FlightAssign from './pages/FlightAssign';
+import Notifications from './pages/Notifications';
+import PermissionAssign from './pages/PermissionAssign';
+import RegEdit from './pages/RegEdit';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
 import { canUseCreate, CreateWidget } from './pluggables/Create';
 import { DriveWidget } from './pluggables/Drive';
@@ -10,12 +14,9 @@ import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget
 } from './pluggables/FlightContact';
+import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
-import RegEdit from './pages/RegEdit';
-import FlightAssign from './pages/FlightAssign';
-import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
-import Notifications from './pages/Notifications';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -104,7 +105,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route path="/admin/notifications" render={this.pageRenderer(Notifications)} />
 
 				{/* <Route path="/permmgmt" render={this.pageRenderer()} />*/}
-				{/* <Route path="/admin/permissions" render={this.pageRenderer()} /> */}
+				<Route path="/admin/permissions" render={this.pageRenderer(PermissionAssign)} />
 
 				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />
 
