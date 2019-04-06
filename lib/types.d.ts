@@ -1384,11 +1384,34 @@ export interface RawCAPMember extends MemberObject {
 	orgid: number;
 }
 
-export type ShortDutyPosition = {
+/**
+ * Descriminant for the short duty position
+ */
+export type ShortDutyPositionType = 'CAPUnit' | 'NHQ';
+
+/**
+ * Short duty positions for use by CAPUnit.com
+ */
+export interface ShortCAPUnitDutyPosition {
 	duty: string;
 	date: number;
-	type: 'NHQ' | 'CAPWatch'
+	type: 'CAPUnit';
+	expires: number;
 }
+
+/**
+ * Short form of duty positions issued by capnhq.gov
+ */
+export interface ShortNHQDutyPosition {
+	duty: string;
+	date: number;
+	type: 'NHQ';
+}
+
+/**
+ * Union type for both CAPUnit and NHQ duty positions
+ */
+export type ShortDutyPosition = ShortNHQDutyPosition | ShortCAPUnitDutyPosition;
 
 /**
  * A more full CAP member
