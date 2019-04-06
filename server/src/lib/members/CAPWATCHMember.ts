@@ -7,12 +7,14 @@ import {
 	CAPMemberObject,
 	CAPMemberType,
 	ExtraMemberInformation,
-	MemberAccessLevel,
 	MemberPermissions,
 	MemberReference,
 	NHQ,
+	ShortDutyPosition,
+	TemporaryDutyPosition
 } from 'common-lib';
 import { DateTime } from 'luxon';
+import Account from '../Account';
 import MemberBase from '../MemberBase';
 import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
@@ -95,7 +97,9 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			.filter(val => val.validUntil > +DateTime.utc())
 			.map(val => ({
 				duty: val.Duty,
-				date: val.assigned
+				date: val.assigned,
+				type: 'CAPUnit' as 'CAPUnit',
+				expires: val.validUntil
 			}));
 
 		const permissions = getPermissions(extraInformation.accessLevel);
@@ -135,7 +139,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	protected static GetRegularDutypositions = async (
 		capid: number,
 		schema: Schema
-	): Promise<Array<{ duty: string; date: number }>> =>
+	): Promise<Array<{ duty: string; date: number; type: 'NHQ' }>> =>
 		(await Promise.all([
 			collectResults(
 				schema
@@ -153,7 +157,8 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 			.reduce((prev, curr) => [...prev, ...curr])
 			.map(item => ({
 				duty: item.Duty,
-				date: +DateTime.fromISO(item.DateMod)
+				date: +DateTime.fromISO(item.DateMod),
+				type: 'NHQ' as 'NHQ'
 			}));
 
 	public permissions: MemberPermissions;
@@ -176,7 +181,7 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: Array<{ date: number; duty: string }>;
+	public dutyPositions: ShortDutyPosition[];
 	/**
 	 * The organization ID the user belongs to
 	 */
@@ -198,9 +203,9 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		data: CAPMemberObject,
 		schema: Schema,
 		requestingAccount: Account,
-		protected extraInformation: ExtraMemberInformation
+		extraInformation: ExtraMemberInformation
 	) {
-		super(data, schema, requestingAccount);
+		super(data, schema, requestingAccount, extraInformation);
 
 		this.id = data.id;
 		this.absenteeInformation = extraInformation.absentee;
@@ -263,35 +268,47 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 		};
 	}
 
-	public async saveExtraMemberInformation(schema: Schema, account: Account) {
-		const extraInfoCollection = schema.getCollection<ExtraMemberInformation>(
-			'ExtraMemberInformation'
-		);
-
-		await extraInfoCollection
-			.modify('id = :id AND type = :type')
-			.bind({
-				id: this.id,
-				type: this.type,
-				accountID: account.id
-			})
-			.patch(this.extraInformation)
-			.execute();
-	}
-
-	public setAbsenteeInformation(info: AbsenteeInformation) {
-		this.extraInformation.absentee = info;
-	}
-
-	public setAccessLevel(level: MemberAccessLevel) {
-		this.extraInformation.accessLevel = level;
-		this.accessLevel = level;
-		this.permissions = getPermissions(level);
-	}
-
 	public setFlight(flight: string) {
 		this.extraInformation.flight = flight;
 	}
-}
 
-import Account from '../Account';
+	public addTemporaryDutyPosition(position: TemporaryDutyPosition) {
+		for (let i = 0; i < this.extraInformation.temporaryDutyPositions.length; i++) {
+			if (this.extraInformation.temporaryDutyPositions[i].Duty === position.Duty) {
+				this.extraInformation.temporaryDutyPositions[i].validUntil = position.validUntil;
+				this.extraInformation.temporaryDutyPositions[i].assigned = position.assigned;
+				return;
+			}
+		}
+
+		this.extraInformation.temporaryDutyPositions.push({
+			Duty: position.Duty,
+			assigned: position.assigned,
+			validUntil: position.validUntil
+		});
+
+		this.updateDutyPositions();
+	}
+
+	public removeDutyPosition(duty: string) {
+		for (let i = this.extraInformation.temporaryDutyPositions.length - 1; i >= 0; i++) {
+			if (this.extraInformation.temporaryDutyPositions[i].Duty === duty) {
+				this.extraInformation.temporaryDutyPositions.splice(i, 1);
+			}
+		}
+
+		this.updateDutyPositions();
+	}
+
+	private updateDutyPositions() {
+		this.dutyPositions = [
+			...this.dutyPositions.filter(v => v.type === 'NHQ'),
+			...this.extraInformation.temporaryDutyPositions.map(v => ({
+				type: 'CAPUnit' as 'CAPUnit',
+				expires: v.validUntil,
+				duty: v.Duty,
+				date: v.assigned
+			}))
+		];
+	}
+}

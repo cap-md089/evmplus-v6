@@ -109,7 +109,9 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 					...dutyPositions,
 					...extraInfo.temporaryDutyPositions.map(v => ({
 						duty: v.Duty,
-						date: v.assigned
+						date: v.assigned,
+						type: 'CAPUnit' as 'CAPUnit',
+						expires: v.validUntil
 					}))
 				],
 				id,
@@ -171,7 +173,9 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 					...dutyPositions,
 					...extraInfo.temporaryDutyPositions.map(v => ({
 						duty: v.Duty,
-						date: v.assigned
+						date: v.assigned,
+						type: 'CAPUnit' as 'CAPUnit',
+						expires: v.validUntil
 					}))
 				],
 				id: sess.memberID.id,

@@ -19,6 +19,7 @@ import { sign, verify, VerifyOptions } from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import { promisify } from 'util';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import { getPermissions } from './Permissions';
 import { asyncErrorHandler } from './Util';
 
 const promisedVerify = promisify(verify) as (
@@ -201,7 +202,7 @@ export default abstract class MemberBase implements MemberObject {
 			return false;
 		}
 
-		return ref1.id === ref2.id;
+		return ref1.id === ref2.id && ref1.type === ref2.type;
 	}
 
 	public static BlogPermissionMiddleware(req: MemberRequest, res: Response, next: NextFunction) {
@@ -453,7 +454,8 @@ export default abstract class MemberBase implements MemberObject {
 	public constructor(
 		data: MemberObject,
 		protected schema: Schema,
-		protected requestingAccount: Account
+		protected requestingAccount: Account,
+		protected extraInformation: ExtraMemberInformation
 	) {
 		this.isRioux = (data.id === 542488 || data.id === 546319) && data.type === 'CAPNHQMember';
 
@@ -630,6 +632,33 @@ export default abstract class MemberBase implements MemberObject {
 
 		return count;
 	}
+
+	public async saveExtraMemberInformation(schema: Schema, account: Account) {
+		const extraInfoCollection = schema.getCollection<ExtraMemberInformation>(
+			'ExtraMemberInformation'
+		);
+
+		await extraInfoCollection
+			.modify('id = :id AND type = :type')
+			.bind({
+				id: this.id,
+				type: this.type,
+				accountID: account.id
+			})
+			.patch(this.extraInformation)
+			.execute();
+	}
+
+	public setAbsenteeInformation(info: AbsenteeInformation) {
+		this.extraInformation.absentee = info;
+	}
+
+	public setAccessLevel(level: MemberAccessLevel) {
+		this.extraInformation.accessLevel = level;
+		this.accessLevel = level;
+		this.permissions = getPermissions(level);
+	}
+
 }
 
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
@@ -639,3 +668,4 @@ import CAPWATCHMember from './members/CAPWATCHMember';
 import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
+
