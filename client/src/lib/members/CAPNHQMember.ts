@@ -1,7 +1,13 @@
+import {
+	AbsenteeInformation,
+	CAPMemberObject,
+	MemberReference,
+	NHQMemberObject,
+	ShortDutyPosition
+} from 'common-lib';
 import Account from '../Account';
 import MemberBase from '../MemberBase';
-import { createCorrectMemberObject, CAPMemberClasses } from '../Members';
-import { NHQMemberObject, AbsenteeInformation, CAPMemberObject, MemberReference } from 'common-lib';
+import { CAPMemberClasses, createCorrectMemberObject } from '../Members';
 
 /**
  * A class to represent the members that sign in to CAPNHQ.gov
@@ -22,10 +28,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: Array<{
-		duty: string;
-		date: number;
-	}>;
+	public dutyPositions: ShortDutyPosition[];
 	/**
 	 * The organization ID the user belongs to
 	 */
@@ -78,7 +81,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		this.absenteeInformation = data.absenteeInformation;
 		this.seniorMember = data.seniorMember;
 		this.squadron = data.squadron;
-		this.memberRank= data.memberRank
+		this.memberRank = data.memberRank;
 		this.memberRankName = `${data.memberRank} ${this.getName()}`;
 	}
 

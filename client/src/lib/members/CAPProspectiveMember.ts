@@ -1,6 +1,6 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
-import { ProspectiveMemberObject, AbsenteeInformation, MemberReference } from 'common-lib';
+import { ProspectiveMemberObject, AbsenteeInformation, MemberReference, ShortDutyPosition } from 'common-lib';
 
 /**
  * A class to represent those wanting to join a CAP squadron
@@ -30,10 +30,7 @@ export default class CAPProspectiveMember extends MemberBase
 	/**
 	 * Duty positions
 	 */
-	public dutyPositions: Array<{
-		duty: string,
-		date: number
-	}>;
+	public dutyPositions: ShortDutyPosition[];
 	/**
 	 * The organization ID the user belongs to
 	 */
