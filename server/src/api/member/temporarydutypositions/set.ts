@@ -1,28 +1,11 @@
-import {
-	MemberReference,
-	ShortCAPUnitDutyPosition,
-	ShortDutyPosition,
-	ShortNHQDutyPosition
-} from 'common-lib';
+import { MemberReference, ShortCAPUnitDutyPosition } from 'common-lib';
 import { CAPWATCHMember } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 interface SetTemporaryDutyPositions {
-	dutyPositions: ShortDutyPosition[];
+	dutyPositions: ShortCAPUnitDutyPosition[];
 }
-
-const shortNHQDutyPositionValidator = new Validator<ShortNHQDutyPosition>({
-	date: {
-		validator: Validator.Number
-	},
-	duty: {
-		validator: Validator.String
-	},
-	type: {
-		validator: Validator.StrictValue('NHQ' as 'NHQ')
-	}
-});
 
 const shortCAPWatchDutyPositionValidator = new Validator<ShortCAPUnitDutyPosition>({
 	date: {
@@ -41,16 +24,12 @@ const shortCAPWatchDutyPositionValidator = new Validator<ShortCAPUnitDutyPositio
 
 export const setDutyPositionsValidator = new Validator<SetTemporaryDutyPositions>({
 	dutyPositions: {
-		validator: Validator.ArrayOf(
-			Validator.Or(shortNHQDutyPositionValidator, shortCAPWatchDutyPositionValidator)
-		)
+		validator: Validator.ArrayOf(shortCAPWatchDutyPositionValidator)
 	}
 });
 
 const areDutiesTheSame = (d1: ShortCAPUnitDutyPosition, d2: ShortCAPUnitDutyPosition) =>
-	d1.date === d2.date &&
-	d1.duty === d2.duty &&
-	d1.expires === d2.expires
+	d1.date === d2.date && d1.duty === d2.duty && d1.expires === d2.expires;
 
 export default asyncErrorHandler(
 	async (
@@ -91,18 +70,17 @@ export default asyncErrorHandler(
 			v => v.type === 'CAPUnit'
 		) as ShortCAPUnitDutyPosition[];
 		const newDutyPositions: ShortCAPUnitDutyPosition[] = [];
-		
+
 		for (let i = 0; i < req.body.dutyPositions.length; i++) {
 			let found = false;
 			const duty = req.body.dutyPositions[i];
 
-			if (duty.type === 'NHQ') {
-				continue;
-			}
-
 			for (let j = 0; j < newDutyPositions.length; j++) {
 				if (newDutyPositions[j].duty === duty.duty) {
-					newDutyPositions[j].expires = Math.max(newDutyPositions[j].expires, duty.expires);
+					newDutyPositions[j].expires = Math.max(
+						newDutyPositions[j].expires,
+						duty.expires
+					);
 					found = true;
 					break;
 				}
