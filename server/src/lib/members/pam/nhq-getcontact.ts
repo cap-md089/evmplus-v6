@@ -25,7 +25,7 @@ export default async (cookie: string): Promise<CAPMemberContact> => {
 
 	const $ = load(page);
 
-	const table = $('#gvContactInformation');
+	const table = $('#gvContacts');
 
 	table.find('tr').each(function() {
 		// @ts-ignore

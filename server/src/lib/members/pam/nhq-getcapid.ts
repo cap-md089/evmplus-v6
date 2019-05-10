@@ -5,7 +5,7 @@ export default async (namerank: string, cookie: string, username: string): Promi
 	capid: number,
 	orgid: number
 }> => {
-	const page = await req('/preview/GatherEmails.aspx?t=a', cookie);
+	const page = await req('/CAP.eServices.Web/GatherEmails.aspx?t=a', cookie);
 
 	const $ = load(page);
 

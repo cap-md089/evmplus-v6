@@ -3,7 +3,7 @@ import Validator from '../Validator';
 
 export interface FlightAssign {
 	member: MemberReference;
-	newFlight: string;
+	newFlight: string | null;
 }
 
 export default new Validator<FlightAssign>({
@@ -11,6 +11,7 @@ export default new Validator<FlightAssign>({
 		validator: Validator.MemberReference
 	},
 	newFlight: {
-		validator: Validator.String
+		required: false,
+		validator: Validator.Or(Validator.String, Validator.Null)
 	}
 });

@@ -6,15 +6,15 @@ import { USERAGENT } from './nhq-request';
 const GET_SIGNIN_VALUES_URL = 'https://www.capnhq.gov/CAP.eServices.Web/default.aspx';
 const SIGNIN_URL = GET_SIGNIN_VALUES_URL;
 
-export default async (Login1$UserName: string, Login1$Password: string): Promise<string> => {
+export default async (Login$UserName: string, Login$Password: string): Promise<string> => {
 	const page = await rp(GET_SIGNIN_VALUES_URL);
 
 	const $ = cheerio.load(page);
 
 	const form = {
-		Login1$LoginButton: 'Sign+in',
-		Login1$Password,
-		Login1$UserName,
+		Login$LoginButton: 'Sign+in',
+		Login$Password,
+		Login$UserName,
 		__EVENTARGUMENT: '',
 		__EVENTTARGET: '',
 		__EVENTVALIDATION: $('input[name=__EVENTVALIDATION]').val(),

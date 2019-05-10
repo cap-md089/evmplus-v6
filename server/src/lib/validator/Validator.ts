@@ -182,11 +182,13 @@ export default class Validator<T> {
 			}
 
 			let good = true;
+			let firstfail: string | null = null;
 
 			for (const i of input) {
 				if (validator instanceof Validator) {
 					if (!validator.validate(i)) {
 						good = false;
+						firstfail = validator.getErrorString();
 						break;
 					}
 				} else {
@@ -203,7 +205,7 @@ export default class Validator<T> {
 				}
 				: {
 						valid: false,
-						message: 'elements in the array do not match the required type'
+						message: `elements in the array do not match the required type (e.g., the first element to fail has message: ${firstfail})`
 				};
 		};
 
