@@ -30,24 +30,12 @@ export default async (namerank: string, cookie: string, username: string): Promi
 		capid = parseInt(username, 10);
 	}
 
-	const menu = $('#nav');
+	const menu = $('#apps-menu');
 
 	let orgid: number;
 
-	menu.find('li').each(function() {
-		// @ts-ignore
-		const id = $(this).attr('data-popout-id');
-
-		if (id === 'popout-Reports') {
-			// @ts-ignore
-			const otherResources = ($($($(this).children()[1]).children()[1]).children());
-			const link = $($(otherResources).children()[2]).children();
-
-			const href = link.attr('href') || '';
-
-			orgid = parseInt((href.match(/OID=(\d{1,4})/) || [])[1], 10);
-		}
-	});
+	const href = $($($($($(menu.children()[14]).children()[1]).children()).children()[7]).children()[0]).attr('href');
+	orgid = parseInt((href.match(/OID=(\d*)/) || [])[1], 10);
 
 	return {
 		capid: capid!,
