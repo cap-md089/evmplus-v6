@@ -91,7 +91,13 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		const members = await this.props.account.getMembers(this.props.member);
 
 		this.setState({
-			members,
+			members: members.map((mem, i) => {
+				mem.nameFirst = 'Member ' + i;
+				mem.nameLast = '';
+				mem.nameMiddle = '';
+				mem.nameSuffix = '';
+				return mem;
+			}),
 			loaded: true,
 		});
 	}

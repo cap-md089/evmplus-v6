@@ -20,6 +20,7 @@ interface FlightRowProps {
 interface FlightRowState {
 	open: boolean;
 	divHeight: number;
+	hidenames: boolean;
 }
 
 const topBorder: React.CSSProperties = {
@@ -29,7 +30,8 @@ const topBorder: React.CSSProperties = {
 export default class FlightRow extends React.Component<FlightRowProps, FlightRowState> {
 	public state: FlightRowState = {
 		open: true,
-		divHeight: 0
+		divHeight: 0,
+		hidenames: false
 	};
 
 	private namesDiv = React.createRef<HTMLDivElement>();
@@ -41,8 +43,6 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		this.onDragStart = this.onDragStart.bind(this);
 		this.onDrop = this.onDrop.bind(this);
 		this.handleOver = this.handleOver.bind(this);
-		this.grow = this.grow.bind(this);
-		this.shrink = this.shrink.bind(this);
 	}
 
 	public shouldComponentUpdate(newProps: FlightRowProps, newState: FlightRowState) {
@@ -71,15 +71,20 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 
 	public componentDidUpdate() {
 		if (this.state.open && !this.props.open && this.namesDiv.current && this.titleDiv.current) {
-			jQuery(this.namesDiv.current).slideUp(() => {
+			setTimeout(() => {
+				jQuery(this.namesDiv.current!).slideUp(() => {
+					this.setState({
+						open: false
+					})
+				});
+				jQuery(this.titleDiv.current!).animate({
+					height: 40,
+					'font-size': 32
+				});
 				this.setState({
-					open: false
-				})
-			});
-			jQuery(this.titleDiv.current).animate({
-				height: 40,
-				'font-size': 32
-			})
+					hidenames: true
+				});
+			}, 100);
 		} else if (!this.state.open && this.props.open && this.namesDiv.current && this.titleDiv.current) {
 			jQuery(this.namesDiv.current).slideDown(() => {
 				this.setState({
@@ -89,7 +94,10 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 			jQuery(this.titleDiv.current).animate({
 				height: 16,
 				'font-size': 14
-			})
+			});
+			this.setState({
+				hidenames: false
+			});
 		}
 		if (this.namesDiv.current && this.state.divHeight !== this.namesDiv.current.scrollHeight) {
 			this.setState({
@@ -132,7 +140,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 					{this.props.name}
 				</div>
 				<div
-					className={(this.state.open && this.props.open) ? 'flightrow-names-open' : ''}
+					className={(this.state.hidenames) ? '' : 'flightrow-names-open'}
 					onDrop={this.onDrop}
 					onDragOver={this.handleOver}
 					onDragEnd={this.handleOver}
@@ -170,41 +178,5 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 	private handleOver(e: React.DragEvent<HTMLDivElement>) {
 		e.preventDefault();
 		e.stopPropagation();
-	}
-
-	private shrink() {
-		if (
-			this.namesDiv.current &&
-			parseInt(this.namesDiv.current.style.maxHeight || '0', 10) > -1
-		) {
-			let height = parseInt(this.namesDiv.current.style.maxHeight || '0', 10);
-			height -= 40;
-
-			this.namesDiv.current.style.maxHeight = height.toString() + 'px';
-
-			setTimeout(this.shrink, 40);
-		} else {
-			this.setState({
-				open: false
-			});
-		}
-	}
-
-	private grow() {
-		if (
-			this.namesDiv.current &&
-			parseInt(this.namesDiv.current.style.maxHeight || '0', 10) < this.state.divHeight
-		) {
-			let height = parseInt(this.namesDiv.current.style.maxHeight || '0', 10);
-			height += 40;
-
-			this.namesDiv.current.style.maxHeight = height.toString() + 'px';
-
-			setTimeout(this.grow, 40);
-		} else {
-			this.setState({
-				open: true
-			});
-		}
 	}
 }
