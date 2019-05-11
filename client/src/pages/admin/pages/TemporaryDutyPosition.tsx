@@ -186,7 +186,7 @@ export default class TemporaryDutyPositions extends Page<
 						{currentTemporaryDutyPositions.map((pos, i) => (
 							<li key={i}>
 								{pos.duty} (Expires{' '}
-								{DateTime.utc(pos.expires).toLocaleString({
+								{DateTime.fromMillis(pos.expires).toLocaleString({
 									...DateTime.DATETIME_SHORT,
 									hour12: false
 								})}
