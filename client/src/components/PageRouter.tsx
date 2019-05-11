@@ -38,6 +38,7 @@ import NotFound from '../pages/NotFound';
 import { SigninReturn } from 'common-lib';
 import Registry from '../lib/Registry';
 import Notifications from '../pages/admin/pages/Notifications';
+import Debug from '../pages/Debug';
 
 const pages: Array<{
 	url: string;
@@ -253,6 +254,11 @@ const pages: Array<{
 		url: '/notifications',
 		component: Notifications,
 		exact: false
+	},
+	{
+		url: '/debug',
+		component: Debug,
+		exact: true
 	},
 
 	// THIS GOES LAST

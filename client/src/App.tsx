@@ -114,7 +114,8 @@ export default class App extends React.Component<
 			error: MemberCreateError.NONE,
 			member: null,
 			sessionID: '',
-			notificationCount: 0
+			notificationCount: 0,
+			taskCount: 0
 		},
 		loading: true,
 		account: null,
@@ -538,7 +539,8 @@ export default class App extends React.Component<
 							member: null,
 							sessionID: '',
 							valid: false,
-							notificationCount: 0
+							notificationCount: 0,
+							taskCount: 0
 						},
 						loading: false
 					});
@@ -550,7 +552,8 @@ export default class App extends React.Component<
 					member: null,
 					sessionID: '',
 					valid: false,
-					notificationCount: 0
+					notificationCount: 0,
+					taskCount: 0
 				}
 			});
 		}
