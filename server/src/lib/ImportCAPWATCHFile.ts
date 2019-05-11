@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { CAPWATCHImportErrors } from 'common-lib/index';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
+import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';
@@ -35,7 +36,64 @@ const modules: Array<{
 	{
 		module: cadetDutyPosition,
 		file: 'CadetDutyPositions.txt'
+	},
+	{
+		module: cadetActivities,
+		file: 'CadetActivities.txt'
 	}
+/*	{
+		module: oFlight,
+		file: 'OFlight.txt'
+	},
+	{
+		module: seniorAwards,
+		file: 'SeniorAwards.txt'
+	},
+	{
+		module: seniorLevel,
+		file: 'SeniorLevel.txt'
+	},
+	{
+		module: mbrAchievements,
+		file: 'MbrAchievements.txt'
+	},
+	{
+		module: mbrAddresses,
+		file: 'MbrAddresses.txt'
+	},
+	{
+		module: mbrChars,
+		file: 'MbrChars.txt'
+	},*/
+	/* the following modules need only be imported occassionally as they do not change often */
+/*	{
+		module: cdtAchvEnum,
+		file: 'CadetAchievementsEnumeration.txt'
+	},
+	{
+		module: achievements,
+		file: 'Achievements.txt'
+	},
+	{
+		module: commanders,
+		file: 'Commanders.txt'
+	},
+	{
+		module: organization,
+		file: 'Organization.txt'
+	},
+	{
+		module: orgAddresses,
+		file: 'OrganizationAddresses.txt'
+	},
+	{
+		module: orgContact,
+		file: 'OrganizationContacts.txt'
+	},
+	{
+		module: orgMeeting,
+		file: 'OrganizationMeetings.txt'
+	}*/
 ];
 
 interface CAPWATCHModuleResult {

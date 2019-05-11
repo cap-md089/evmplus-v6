@@ -84,6 +84,25 @@ describe('Import CAPWATCH File', () => {
 		done();
 	}, 8000);
 
+	it('should import cadet activity information', async done => {
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
+			'CadetActivities.txt'
+		])) {
+			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
+		}
+
+		const results = await collectResults(
+			findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), {
+				CAPID: 546319
+			})
+		);
+
+		expect(results[0].Type).toBe('ENCAMP');
+		expect(results[0].Location).toBe('Fort Devens');
+
+		done();
+	}, 15000);
+
 	it('should import duty positions', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
 			'DutyPosition.txt'
