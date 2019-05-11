@@ -11,7 +11,8 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 			sessionID: req.member.sessionID,
 			member: req.member.toRaw(),
 			valid: true,
-			notificationCount: await req.member.getUnreadNotificationCount()
+			notificationCount: await req.member.getUnreadNotificationCount(),
+			taskCount: 0
 		});
 	} else {
 		json<SigninReturn>(res, {
@@ -19,7 +20,8 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 			valid: false,
 			sessionID: '',
 			member: null,
-			notificationCount: 0
+			notificationCount: 0,
+			taskCount: 0
 		});
 	}
 };

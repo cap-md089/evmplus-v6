@@ -11,7 +11,8 @@ import {
 	MemberType,
 	NoSQLDocument,
 	RawNotificationObject,
-	RawTeamObject
+	RawTeamObject,
+	TaskObject
 } from 'common-lib';
 import { NotificationTargetType } from 'common-lib/index';
 import { NextFunction, Response } from 'express';
@@ -630,6 +631,33 @@ export default abstract class MemberBase implements MemberObject {
 			);
 
 			for await (const _ of accountGenerator) {
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	public async getUnfinishedTaskCount() {
+		const tasksCollection = this.schema.getCollection<TaskObject>('Tasks');
+
+		let count = 0;
+
+		const generator = generateResults(
+			findAndBind(tasksCollection, {
+				accountID: this.requestingAccount.id
+			})
+		);
+
+		for await (const task of generator) {
+			let found = false;
+			for (const i of task.results) {
+				if (this.matchesReference(i.tasked) && !i.done) {
+					found = true;
+					break;
+				}
+			}
+			if (found) {
 				count++;
 			}
 		}

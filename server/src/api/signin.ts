@@ -50,7 +50,8 @@ export default asyncErrorHandler(async (
 			member: member.toRaw(),
 			sessionID: member.sessionID,
 			valid: true,
-			notificationCount: await member.getUnreadNotificationCount()
+			notificationCount: await member.getUnreadNotificationCount(),
+			taskCount: await member.getUnfinishedTaskCount()
 		});
 	} catch (errors) {
 		if (!errors.message.match(/^(\d)*$/)) {
@@ -61,7 +62,8 @@ export default asyncErrorHandler(async (
 				member: null,
 				sessionID: '',
 				valid: false,
-				notificationCount: 0
+				notificationCount: 0,
+				taskCount: 0
 			});
 		} else {
 			res.status(400);
@@ -70,7 +72,8 @@ export default asyncErrorHandler(async (
 				member: null,
 				sessionID: '',
 				valid: false,
-				notificationCount: 0
+				notificationCount: 0,
+				taskCount: 0
 			});
 		}
 	}
