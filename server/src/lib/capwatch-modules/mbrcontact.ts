@@ -31,7 +31,7 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema, orgi
 				Priority: duties.Priority,
 				Contact: duties.Contact,
 				UsrID: duties.UsrID,
-				DateMod: (convertNHQDate(duties.DateMod) as any) as string,
+				DateMod: convertNHQDate(duties.DateMod).toISOString(),
 				DoNotContact: duties.DoNotContact,
 				orgid
 			};

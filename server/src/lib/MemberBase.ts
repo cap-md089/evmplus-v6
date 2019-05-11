@@ -297,6 +297,10 @@ export default abstract class MemberBase implements MemberObject {
 			v => v.validUntil > +DateTime.utc()
 		);
 
+		results[0].temporaryDutyPositions = results[0].temporaryDutyPositions.filter(
+			v => v.validUntil > Date.now()
+		);
+
 		return results[0];
 	}
 
@@ -658,7 +662,6 @@ export default abstract class MemberBase implements MemberObject {
 		this.accessLevel = level;
 		this.permissions = getPermissions(level);
 	}
-
 }
 
 export { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
@@ -668,4 +671,3 @@ import CAPWATCHMember from './members/CAPWATCHMember';
 import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
 import Team from './Team';
-

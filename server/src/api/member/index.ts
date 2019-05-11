@@ -69,13 +69,13 @@ router.post(
 router.get(
 	'/tempdutypositions/:type/:id',
 	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('PermissionManagement'),
+	MemberBase.PermissionMiddleware('AssignPosition'),
 	tokenMiddleware
 );
 router.get(
 	'/tempdutypositions/:type/:id',
 	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('PermissionManagement'),
+	MemberBase.PermissionMiddleware('AssignPosition'),
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(setDutyPositionsValidator),
 	setdutypositions

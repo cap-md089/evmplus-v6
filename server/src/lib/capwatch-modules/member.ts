@@ -31,7 +31,7 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (fileData, schema, orgid) 
 			.execute();
 	} catch (e) {
 		console.warn(e);
-		return CAPWATCHError.NONE;
+		return CAPWATCHError.CLEAR;
 	}
 
 	for (const member of fileData) {

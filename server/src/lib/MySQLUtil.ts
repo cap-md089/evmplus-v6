@@ -193,7 +193,7 @@ export const convertNHQDate = (datestring: string): Date => {
 		throw new Error('Invalid date format');
 	}
 
-	return new Date(parseInt(values[3], 10), parseInt(values[0], 10) - 1, parseInt(values[1], 10));
+	return new Date(parseInt(values[3], 10), parseInt(values[1], 10) - 1, parseInt(values[2], 10));
 };
 
 export const convertMySQLTimestampToDateTime = (datestring: string): DateTime => {
