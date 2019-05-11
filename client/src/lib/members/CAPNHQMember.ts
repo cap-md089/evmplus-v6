@@ -207,4 +207,22 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			this
 		);
 	}
+
+	public async saveTemporaryDutyPositions(member: MemberBase) {
+		const token = await this.getToken(member);
+
+		await this.fetch(
+			`/api/member/tempdutypositions/${this.type}/${this.id}`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					dutyPositions: this.dutyPositions.filter(
+						d => d.type === 'CAPUnit'
+					),
+					token
+				})
+			},
+			member
+		);
+	}
 }

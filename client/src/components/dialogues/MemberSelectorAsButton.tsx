@@ -1,6 +1,6 @@
 import { MemberReference } from 'common-lib';
 import * as React from 'react';
-import { CAPMemberClasses } from '../../lib/Members';
+import MemberBase, { CAPMemberClasses } from '../../lib/Members';
 import Button from '../Button';
 import { FormBlock, Label, TextBox, TextInput } from '../forms/SimpleForm';
 import Loader from '../Loader';
@@ -8,14 +8,14 @@ import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';
 
 type MemberSelectorButtonProps = DialogueButtonProps & {
-	memberList: Promise<CAPMemberClasses[]>;
-	onMemberSelect: (member: CAPMemberClasses | null) => void;
+	memberList: Promise<MemberBase[]>;
+	onMemberSelect: (member: MemberBase | null) => void;
 };
 
 interface MemberSelectorButtonState {
-	members: CAPMemberClasses[] | null;
+	members: MemberBase[] | null;
 	open: boolean;
-	selectedValue: CAPMemberClasses | null;
+	selectedValue: MemberBase | null;
 	filterValues: any[];
 }
 
@@ -54,7 +54,7 @@ export default class MemberSelectorButton extends React.Component<
 		return (
 			<>
 				<Button onClick={this.openDialogue}>{this.props.children}</Button>
-				<DownloadDialogue<CAPMemberClasses>
+				<DownloadDialogue<MemberBase>
 					open={this.state.open}
 					multiple={false}
 					overflow={400}
@@ -93,17 +93,17 @@ export default class MemberSelectorButton extends React.Component<
 		});
 	}
 
-	private displayMember(member: CAPMemberClasses) {
+	private displayMember(member: MemberBase) {
 		return member.getFullName();
 	}
 
-	private setSelectedMember(selectedValue: CAPMemberClasses | null) {
+	private setSelectedMember(selectedValue: MemberBase | null) {
 		this.setState({
 			selectedValue
 		});
 	}
 
-	private selectMember(selectedValue: CAPMemberClasses | null) {
+	private selectMember(selectedValue: MemberBase | null) {
 		this.setState({
 			selectedValue,
 			open: false

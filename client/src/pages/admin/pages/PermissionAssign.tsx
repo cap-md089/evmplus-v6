@@ -7,10 +7,12 @@ import SimpleForm, { Label, TextBox } from '../../../components/forms/SimpleForm
 import Loader from '../../../components/Loader';
 import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
+import Button from '../../../components/Button';
 
 interface PermissionAssignState {
 	members: MemberBase[] | null;
-	promiseOfMembers: Promise<CAPMemberClasses[]>;
+	availableMembers: MemberBase[] | null;
+	submitSuccess: boolean;
 }
 
 type PermissionInformation = { [key: string]: number };
@@ -21,9 +23,8 @@ const level = (level: MemberAccessLevel): number =>
 export default class PermissionAssign extends Page<PageProps, PermissionAssignState> {
 	public state: PermissionAssignState = {
 		members: null,
-		promiseOfMembers: this.props.member
-			? this.props.account.getMembers(this.props.member)
-			: Promise.resolve([])
+		availableMembers: null,
+		submitSuccess: false
 	};
 
 	public constructor(props: PageProps) {
@@ -39,10 +40,23 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		const members = await this.props.account.getMembersWithPermissions(this.props.member);
+		const [members, availableMembers] = await Promise.all([
+			this.props.account.getMembersWithPermissions(this.props.member),
+			this.props.account.getMembers(this.props.member)
+		]);
+
+		for (let i in members) {
+			for (let j in availableMembers) {
+				if (members[i].is(availableMembers[j])) {
+					availableMembers.splice(parseInt(j, 10), 1);
+					break;
+				}
+			}
+		}
 
 		this.setState({
-			members
+			members,
+			availableMembers
 		});
 	}
 
@@ -58,6 +72,9 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		if (!this.state.members) {
 			return <Loader />;
 		}
+		if (!this.state.availableMembers) {
+			return <Loader />;
+		}
 
 		const values: PermissionInformation = {};
 
@@ -71,7 +88,12 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				name={`permissions-${value.getFullName()}`}
 				key={index * 2 + 1}
 				labels={['Member', 'Cadet Staff', 'Manager', 'Admin']}
-			/>
+			/>,
+			<TextBox>
+				<Button onClick={this.getRemover(index)} buttonType={'none'}>
+					Remove {value.getFullName()}
+				</Button>
+			</TextBox>
 		]);
 
 		return (
@@ -79,11 +101,15 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				onChange={this.handleChange}
 				values={values}
 				onSubmit={this.handleSubmit}
+				successMessage={this.state.submitSuccess && 'Saved!'}
+				submitInfo={{
+					text: 'Save changes'
+				}}
 				children={[
 					...children,
 					<TextBox>
 						<MemberSelectorButton
-							memberList={this.state.promiseOfMembers}
+							memberList={Promise.resolve(this.state.availableMembers)}
 							title="Select a member"
 							displayButtons={DialogueButtons.OK_CANCEL}
 							onMemberSelect={this.addMember}
@@ -110,6 +136,10 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			}
 		}
 
+		this.setState({
+			submitSuccess: false
+		});
+
 		this.forceUpdate();
 	}
 
@@ -118,12 +148,15 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		let members = await this.state.promiseOfMembers;
+		let members = this.state.availableMembers;
 
-		members = members.filter(mem => !member.matchesReference(mem));
+		members = members!.filter(mem => !member.is(mem));
+
+		member.accessLevel = 'Manager';
 
 		this.setState(prev => ({
-			promiseOfMembers: Promise.resolve(members),
+			submitSuccess: false,
+			availableMembers: members,
 			members: [...prev.members!, member]
 		}));
 	}
@@ -134,5 +167,23 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		}
 
 		await this.props.account.setMemberPermissions(this.props.member, this.state.members!);
+
+		this.setState({
+			submitSuccess: true
+		});
+	}
+
+	private getRemover(index: number) {
+		return (() => {
+			const availableMembers = this.state.availableMembers!.slice(0);
+			const members = this.state.members!.slice(0);
+
+			availableMembers.push(members.splice(index, 1)[0]);
+
+			this.setState({
+				availableMembers,
+				members
+			});
+		}).bind(this);
 	}
 }

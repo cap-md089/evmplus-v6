@@ -15,6 +15,7 @@ import SimpleForm, { Label, RadioButton, Checkbox } from '../../../components/fo
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
 		props.member instanceof CAPNHQMember &&
+		!props.member.seniorMember &&
 		props.member.hasDutyPosition([
 			'Cadet Flight Commander',
 			'Cadet Flight Sergeant',

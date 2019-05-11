@@ -141,4 +141,22 @@ export default class CAPProspectiveMember extends MemberBase
 			this
 		);
 	}
+
+	public async saveTemporaryDutyPositions() {
+		const token = await this.getToken(this);
+
+		await this.fetch(
+			`/api/member/tempdutypositions/${this.type}/${this.id}`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					dutyPositions: this.dutyPositions.filter(
+						d => d.type === 'CAPUnit'
+					),
+					token
+				})
+			},
+			this
+		);
+	}
 }
