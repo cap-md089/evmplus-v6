@@ -291,7 +291,11 @@ export default class CAPWATCHMember extends MemberBase implements CAPMemberObjec
 	}
 
 	public removeDutyPosition(duty: string) {
-		for (let i = this.extraInformation.temporaryDutyPositions.length - 1; i >= 0; i++) {
+		if (this.extraInformation.temporaryDutyPositions.length === 0) {
+			this.updateDutyPositions();
+			return;
+		}
+		for (let i = this.extraInformation.temporaryDutyPositions.length - 1; i >= 0; i--) {
 			if (this.extraInformation.temporaryDutyPositions[i].Duty === duty) {
 				this.extraInformation.temporaryDutyPositions.splice(i, 1);
 			}

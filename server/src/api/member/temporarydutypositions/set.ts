@@ -4,18 +4,17 @@ import { asyncErrorHandler } from '../../../lib/Util';
 import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 interface SetTemporaryDutyPositions {
-	dutyPositions: ShortCAPUnitDutyPosition[];
+	dutyPositions: Array<Pick<ShortCAPUnitDutyPosition, 'duty' | 'type' | 'expires'>>;
 }
 
-const shortCAPWatchDutyPositionValidator = new Validator<ShortCAPUnitDutyPosition>({
-	date: {
-		validator: Validator.Number
-	},
+const shortCAPWatchDutyPositionValidator = new Validator<
+	Pick<ShortCAPUnitDutyPosition, 'duty' | 'type' | 'expires'>
+>({
 	duty: {
 		validator: Validator.String
 	},
 	type: {
-		validator: Validator.StrictValue('CAPWatch' as 'CAPWatch')
+		validator: Validator.StrictValue('CAPUnit' as 'CAPUnit')
 	},
 	expires: {
 		validator: Validator.Number
@@ -87,23 +86,26 @@ export default asyncErrorHandler(
 			}
 
 			if (!found) {
-				newDutyPositions.push(duty);
+				newDutyPositions.push({
+					...duty,
+					date: Date.now()
+				});
 			}
 		}
 
 		const oldDutyPositionsDiff: ShortCAPUnitDutyPosition[] = oldDutyPositions.slice();
 		const newDutyPositionsDiff: ShortCAPUnitDutyPosition[] = newDutyPositions.slice();
 
-		for (let i = oldDutyPositions.length - 1; i >= 0; i++) {
-			for (let j = newDutyPositions.length - 1; j >= 0; j++) {
+		for (let i = oldDutyPositions.length - 1; i >= 0; i--) {
+			for (let j = newDutyPositions.length - 1; j >= 0; j--) {
 				if (areDutiesTheSame(oldDutyPositions[i], newDutyPositions[j])) {
 					oldDutyPositionsDiff.splice(i, 1);
 				}
 			}
 		}
 
-		for (let i = newDutyPositions.length - 1; i >= 0; i++) {
-			for (let j = oldDutyPositions.length - 1; j >= 0; j++) {
+		for (let i = newDutyPositions.length - 1; i >= 0; i--) {
+			for (let j = oldDutyPositions.length - 1; j >= 0; j--) {
 				if (areDutiesTheSame(oldDutyPositions[i], newDutyPositions[j])) {
 					newDutyPositionsDiff.splice(i, 1);
 				}
@@ -121,6 +123,8 @@ export default asyncErrorHandler(
 		for (let i = 0; i < oldDutyPositionsDiff.length; i++) {
 			member.removeDutyPosition(oldDutyPositionsDiff[i].duty);
 		}
+
+		await member.saveExtraMemberInformation(req.mysqlx, req.account);
 
 		res.status(204);
 		res.end();

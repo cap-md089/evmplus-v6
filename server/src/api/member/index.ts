@@ -72,7 +72,7 @@ router.get(
 	MemberBase.PermissionMiddleware('AssignPosition'),
 	tokenMiddleware
 );
-router.get(
+router.post(
 	'/tempdutypositions/:type/:id',
 	MemberBase.ExpressMiddleware,
 	MemberBase.PermissionMiddleware('AssignPosition'),
