@@ -37,6 +37,10 @@ const canuse = () => true;
 
 const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
 	{
+		canuse: shouldRenderNotifications,
+		widget: NotificationsPlug
+	},
+	{
 		canuse,
 		widget: DriveWidget
 	},
@@ -45,16 +49,12 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 		widget: SiteAdminWidget
 	},
 	{
-		canuse: canUseAbsentee,
-		widget: AbsenteeWidget
-	},
-	{
 		canuse: canUseCreate,
 		widget: CreateWidget
 	},
 	{
-		canuse: shouldRenderNotifications,
-		widget: NotificationsPlug
+		canuse: canUseAbsentee,
+		widget: AbsenteeWidget
 	},
 	{
 		canuse: shouldRenderFlightContactWidget,
