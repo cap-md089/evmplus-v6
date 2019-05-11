@@ -30,6 +30,10 @@ import('../form-inputs/TextArea').then(textArea => {
 	TextArea = textArea.default;
 });
 
+const saveMessage = {
+	marginLeft: 10
+};
+
 /**
  * Creates a label to be used in the form
  */
@@ -244,6 +248,19 @@ export interface FormProps<F> {
 	 * Validator for the form
 	 */
 	validator?: FormValidator<F>;
+	/**
+	 * Submit message
+	 *
+	 * If the value is false, it doesn't dipslay anything
+	 * This allows for stuff like this:
+	 *
+	 * successMessage={this.state.shouldDisplaySubmit && 'Saved!'}
+	 *
+	 * or
+	 *
+	 * successMessage={this.state.shouldDisplaySaved ? 'Saved' : this.state.shouldDisplayError && 'Failed'}
+	 */
+	successMessage?: false | string;
 }
 
 /**
@@ -457,6 +474,9 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								className={submitInfo.className}
 								disabled={this.state.disabled || submitInfo.disabled}
 							/>
+							{this.props.successMessage && (
+								<span style={saveMessage}>{this.props.successMessage}</span>
+							)}
 						</div>
 					</div>
 				) : null}

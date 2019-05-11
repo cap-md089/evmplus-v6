@@ -160,7 +160,8 @@ class SigninLink extends React.Component<
 								error: data.error,
 								member: data.member,
 								sessionID: data.sessionID,
-								notificationCount: 0
+								notificationCount: 0,
+								taskCount: 0
 							});
 						}
 					);

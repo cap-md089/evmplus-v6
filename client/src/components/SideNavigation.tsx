@@ -138,7 +138,8 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 			error: MemberCreateError.NONE,
 			member: null,
 			sessionID: '',
-			notificationCount: 0
+			notificationCount: 0,
+			taskCount: 0
 		});
 		localStorage.removeItem('sessionID');
 	}

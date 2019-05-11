@@ -50,7 +50,8 @@ export async function getMember(sessionID: string): Promise<SigninReturn> {
 			member: null,
 			sessionID: '',
 			valid: false,
-			notificationCount: 0
+			notificationCount: 0,
+			taskCount: 0
 		};
 	}
 
