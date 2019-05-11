@@ -1674,6 +1674,10 @@ export interface SuccessfulSigninReturn {
 	 * Returns the amount of notifications the member has
 	 */
 	notificationCount: number;
+	/**
+	 * Returns the amount of unfinished tasks the member has
+	 */
+	taskCount: number;
 }
 
 /**
@@ -1702,6 +1706,10 @@ export interface FailedSigninReturn {
 	 * As the member sign in failed, this should be 0
 	 */
 	notificationCount: 0;
+	/**
+	 * As the member sign in failed, this should be 0
+	 */
+	taskCount: 0;
 }
 
 /**
@@ -2369,3 +2377,57 @@ export interface RawAuditLogItem {
  * A full audit log item that is expanded upon
  */
 export interface AuditLogItem extends RawAuditLogItem {}
+
+/**
+ * These are objects containing the results of people completing their tasks
+ */
+export interface TaskRecipientsResults {
+	/**
+	 * Whether or not they are done with their task
+	 */
+	done: boolean;
+	/**
+	 * The person tasked
+	 */
+	tasked: MemberReference;
+	/**
+	 * Comments about the task results the tasked person may have
+	 */
+	comments: string;
+}
+
+/**
+ * Tasks are a thing that let people assign each other things to do
+ */
+export interface RawTaskObject {
+	/**
+	 * The name of the task
+	 */
+	name: string;
+	/**
+	 * Who is assigning this task
+	 */
+	tasker: MemberReference;
+	/**
+	 * A description of what is supposed to be done
+	 */
+	description: string;
+	/**
+	 * Whether or not this task should be archived
+	 */
+	archived: boolean;
+}
+
+/**
+ * A full task object including the ID
+ */
+export interface TaskObject extends RawTaskObject, AccountIdentifiable {
+	/**
+	 * The way to identify this task
+	 */
+	id: number;
+	/**
+	 * Results from those tasked with this task
+	 */
+	results: Array<TaskRecipientsResults>
+}
