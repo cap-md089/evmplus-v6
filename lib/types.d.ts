@@ -79,6 +79,17 @@ export namespace NHQ {
 		PrintedCert: number;
 	}
 
+/*  CAPID,Type,Location,Completed,UsrID,DateMod  */
+
+	export interface CadetActivities {
+		CAPID: number;
+		Type: string;
+		Location: string;
+		Completed: string;
+		UsrID: string;
+		DateMod: string;
+	}
+
 	export interface CadetDutyPosition {
 		CAPID: number;
 		Duty: string;
