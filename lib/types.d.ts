@@ -133,7 +133,7 @@ export namespace NHQ {
 		UsrID: string;
 		DateMod: string;
 		LSCode: string;
-		Type: 'CADET' | 'SENIOR' | 'PATRON';
+		Type: 'NULL' | 'CADET' | 'CADET SPONSOR' | 'SENIOR' | 'PATRON' | 'FIFTY YEAR' | 'PATRON' | 'STATE LEG';
 		RankDate: string;
 		Region: string;
 		MbrStatus: string;
@@ -1393,9 +1393,21 @@ export type ShortDutyPositionType = 'CAPUnit' | 'NHQ';
  * Short duty positions for use by CAPUnit.com
  */
 export interface ShortCAPUnitDutyPosition {
+	/**
+	 * Represents the duty assigned
+	 */
 	duty: string;
+	/**
+	 * Represents the date it was assigned
+	 */
 	date: number;
+	/**
+	 * Signifies this is not an official duty from CAPNHQ
+	 */
 	type: 'CAPUnit';
+	/**
+	 * Determines when it expires
+	 */
 	expires: number;
 }
 
@@ -1403,8 +1415,17 @@ export interface ShortCAPUnitDutyPosition {
  * Short form of duty positions issued by capnhq.gov
  */
 export interface ShortNHQDutyPosition {
+	/**
+	 * Represents the duty assigned
+	 */
 	duty: string;
+	/**
+	 * Represents the date it was assigned
+	 */
 	date: number;
+	/**
+	 * Signifies this is an official duty from CAPNHQ
+	 */
 	type: 'NHQ';
 }
 
@@ -2295,7 +2316,7 @@ export interface NotificationDataPermissions {
 }
 
 /**
- * 
+ * Used to denote being added or removed as a POC for an event
  */
 export interface NotificationDataEvent {
 	type: NotificationDataType.EVENT;
