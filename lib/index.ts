@@ -109,3 +109,11 @@ export enum NotificationDataType {
 	EVENT,
 	PERMISSIONCHANGE
 }
+
+export enum CustomAttendanceFieldEntryType {
+	TEXT,
+	NUMBER,
+	DATE,
+	CHECKBOX,
+	FILE
+}

@@ -10,7 +10,8 @@ import {
 	NotificationTargetType,
 	PointOfContactType,
 	TeamPublicity,
-	NotificationDataType
+	NotificationDataType,
+	CustomAttendanceFieldEntryType
 } from './index';
 
 
@@ -88,6 +89,23 @@ export namespace NHQ {
 		Completed: string;
 		UsrID: string;
 		DateMod: string;
+	}
+
+	export interface OFlight {
+		CAPID: number;
+		Wing: string;
+		Unit: string;
+		Amount: number;
+		Syllabus: number;
+		Type: number;
+		FltDate: string;
+		TransDate: string;
+		FltRlsNum: string;
+		AcftTailNum: string;
+		FltTime: number;
+		LstUsr: string;
+		LstDateMod: string;
+		Comments: string;
 	}
 
 	export interface CadetDutyPosition {
@@ -960,6 +978,101 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 	 */
 	summaryEmailSent: boolean;
 }
+
+/**
+ * A Custom Event Attendance Field
+ */
+export interface CustomAttendanceFieldBase {
+	/**
+	 * The Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType;
+	/**
+	 * All custom attendance fields have a title
+	 */
+	title: string;
+	/**
+	 * Custom attendance can fields have a pre-fill value
+	 */
+	preFill: unknown;
+
+	/**
+	 * Display title and value to member (will be visible to POC/Manager)
+	 */
+	displayToMember: boolean;
+	/**
+	 * Allow modify permission by member (will be writable by POC/Manager)
+	 */
+	allowMemberToModify: boolean;
+}
+
+/**
+ * A Checkbox Custom Attendance Field
+ */
+export interface CustomAttendanceFieldCheckbox extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.CHECKBOX;
+	/**
+	 * Set prefill type to boolean
+	 */
+	preFill: boolean;
+}
+
+/**
+ * A Date Custom Attendance Field
+ */
+export interface CustomAttendanceFieldDate extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.DATE;
+	/**
+	 * Set prefill type to accept system date/time
+	 */
+	preFill: number;
+}
+
+/**
+ * A File Custom Attendance Field
+ */
+export interface CustomAttendanceFieldFile extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.FILE;
+}
+
+/**
+ * A Number Custom Attendance Field
+ */
+export interface CustomAttendanceFieldNumber extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.NUMBER;
+	/**
+	 * Set prefill type to number
+	 */
+	preFill: number;
+}
+
+/**
+ * A Textbox Custom Attendance Field
+ */
+export interface CustomAttendanceFieldText extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.TEXT;
+	/**
+	 * Set prefill type to string
+	 */
+	preFill: string;
+}
+
+export type CustomAttendanceField = CustomAttendanceFieldCheckbox | CustomAttendanceFieldDate | CustomAttendanceFieldFile | CustomAttendanceFieldNumber | CustomAttendanceFieldText;
 
 /**
  * A basic point of contact
