@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import { PointOfContactType } from 'common-lib/index';
+import { PointOfContactType, CustomAttendanceFieldEntryType } from 'common-lib/index';
 import {
 	Checkbox,
 	FileInput,
@@ -21,10 +21,11 @@ import SimpleForm, {
 	Title
 } from '../SimpleForm';
 import Registry from '../../../lib/Registry';
-import { NewEventObject, ExternalPointOfContact, DisplayInternalPointOfContact } from 'common-lib';
+import { NewEventObject, ExternalPointOfContact, DisplayInternalPointOfContact, CustomAttendanceField } from 'common-lib';
 import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import Account from '../../../lib/Account';
+import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -528,7 +529,7 @@ export default class EventForm extends React.Component<
 					other={true}
 				/>
 
-				<Title>Point of Contact</Title>
+				<Title>Points of Contact</Title>
 
 				<ListEditor<
 					DisplayInternalPointOfContact | ExternalPointOfContact,
@@ -557,6 +558,27 @@ export default class EventForm extends React.Component<
 						memberList: this.props.memberList
 					}}
 				/>
+
+				<Title>Custom Attendance Fields</Title>
+
+				<ListEditor<
+					CustomAttendanceField,
+					InputProps<CustomAttendanceField>
+				>
+					name="customFields"
+					inputComponent={CustomAttendanceFieldInput}
+					addNew={() => ({
+						type: CustomAttendanceFieldEntryType.TEXT,
+						title: '',
+						preFill: '',
+						displayToMember: false,
+						allowMemberToModify: false
+					})}
+					buttonText="Add Custom Attendance Field"
+					fullWidth={true}
+					extraProps={{}}
+				/>
+
 
 				<Title>Extra information</Title>
 

@@ -46,8 +46,13 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				type: 'Reference'
 			},
 			{
-				target: 'point-of-contact',
-				text: 'Point of Contact',
+				target: 'points-of-contact',
+				text: 'Points of Contact',
+				type: 'Reference'
+			},
+			{
+				target: 'custom-attendance-fields',
+				text: 'Custom Attendance Fields',
 				type: 'Reference'
 			},
 			{
