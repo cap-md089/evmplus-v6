@@ -20,11 +20,11 @@ import BlogPost from './BlogPost';
 import Event from './Event';
 import File from './File';
 import MemberBase, { CAPWATCHMember, ProspectiveMember } from './Members';
-import { collectResults, findAndBind, generateResults, MySQLRequest } from './MySQLUtil';
+import { collectResults, findAndBind, generateResults, MySQLRequest, ParamType } from './MySQLUtil';
 import Team from './Team';
 import { asyncErrorHandler, MonthNumber } from './Util';
 
-export interface AccountRequest<P = any> extends MySQLRequest<P> {
+export interface AccountRequest<P extends ParamType = {}> extends MySQLRequest<P> {
 	account: Account;
 }
 

@@ -6,7 +6,7 @@ import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<RawTeamMember>, res: Response) => {
+	async (req: MemberValidatedRequest<RawTeamMember, { id: string }>, res: Response) => {
 		let team: Team;
 
 		try {

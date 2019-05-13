@@ -17,6 +17,7 @@ import { promisify } from 'util';
 import conf from '../../conf';
 import Account, { AccountRequest } from '../Account';
 import { default as MemberBase, MemberSession, SESSION_TIME } from '../MemberBase';
+import { ParamType } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
@@ -41,11 +42,11 @@ interface NHQMemberSession extends MemberSession {
 
 export { MemberCreateError };
 
-export interface ConditionalMemberRequest<P = any> extends AccountRequest<P> {
+export interface ConditionalMemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
 	member: ProspectiveMember | NHQMember | null;
 	newSessionID: string | null;
 }
-export interface MemberRequest<P = any> extends AccountRequest<P> {
+export interface MemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
 	member: NHQMember | ProspectiveMember;
 	newSessionID: string;
 }

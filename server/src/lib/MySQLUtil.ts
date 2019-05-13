@@ -2,7 +2,11 @@ import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
 
-export interface MySQLRequest<P = any> extends express.Request {
+export interface ParamType {
+	[key: string]: string
+};
+
+export interface MySQLRequest<P extends ParamType = {}> extends express.Request {
 	mysqlx: mysql.Schema;
 	_originalUrl: string;
 	params: P;

@@ -5,7 +5,7 @@ import { asyncErrorHandler, getTargetMonth, getTargetYear } from '../../../lib/U
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<Partial<NewEventObject>>, res: Response) => {
+	async (req: MemberValidatedRequest<Partial<NewEventObject>, { id: string }>, res: Response) => {
 		const eventCount1 = await req.account.getEventCountForMonth(
 			getTargetMonth(req.body.pickupDateTime),
 			getTargetYear(req.body.pickupDateTime)

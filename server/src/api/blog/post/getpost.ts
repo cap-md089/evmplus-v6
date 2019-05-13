@@ -4,7 +4,7 @@ import { AccountRequest } from '../../../lib/Account';
 import BlogPost from '../../../lib/BlogPost';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res: express.Response) => {
 	try {
 		const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
 

@@ -4,7 +4,7 @@ import Event from '../../../lib/Event';
 import { ConditionalMemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
 	if (req.params.id === undefined) {
 		res.status(400);
 		res.end();

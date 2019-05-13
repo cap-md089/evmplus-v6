@@ -34,15 +34,15 @@ interface ValidateError<T> {
 	message: string;
 }
 
-export interface BasicValidatedRequest<T, P = any> extends AccountRequest<P> {
+export interface BasicValidatedRequest<T, P extends ParamType = {}> extends AccountRequest<P> {
 	body: T;
 }
 
-export interface MemberValidatedRequest<T, P = any> extends MemberRequest<P> {
+export interface MemberValidatedRequest<T, P extends ParamType = {}> extends MemberRequest<P> {
 	body: T;
 }
 
-export interface ConditionalMemberValidatedRequest<T, P = any> extends ConditionalMemberRequest<P> {
+export interface ConditionalMemberValidatedRequest<T, P extends ParamType = {}> extends ConditionalMemberRequest<P> {
 	body: T;
 }
 
@@ -754,4 +754,5 @@ import { MemberReference } from 'common-lib';
 import * as express from 'express';
 import { AccountRequest } from '../Account';
 import MemberBase from '../Members';
-import { ConditionalMemberRequest, MemberRequest } from '../members/NHQMember';
+import { ConditionalMemberRequest, MemberRequest } from '../members/NHQMember';import { ParamType } from '../MySQLUtil';
+

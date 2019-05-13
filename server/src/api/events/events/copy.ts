@@ -17,7 +17,7 @@ const validator = new Validator({
 	}
 });
 
-export default asyncErrorHandler(async (req: MemberRequest, res) => {
+export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	if (!validator.validate(req.body)) {
 		res.status(400);
 		res.end();

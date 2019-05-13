@@ -6,7 +6,7 @@ import { asyncErrorHandler, json } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<DebriefItem>, res: Response) => {
+	async (req: MemberValidatedRequest<DebriefItem, { id: string }>, res: Response) => {
 		let event: Event;
 		let member: MemberBase;
 

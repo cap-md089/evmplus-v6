@@ -3,7 +3,7 @@ import Event from "../../../lib/Event";
 import { MemberRequest } from "../../../lib/MemberBase";
 import { asyncErrorHandler } from "../../../lib/Util";
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	let event: Event;
 
 	try {

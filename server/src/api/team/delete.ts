@@ -3,7 +3,7 @@ import { MemberRequest } from '../../lib/MemberBase';
 import Team from '../../lib/Team';
 import { asyncErrorHandler } from '../../lib/Util';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	let team: Team;
 
 	try {

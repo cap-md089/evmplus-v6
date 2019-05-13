@@ -18,7 +18,7 @@ const findEnding = (input: Buffer, boundary: string) => {
 	return input.length;
 };
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default async (req: MemberRequest<{ fileid: string }>, res: express.Response) => {
 	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
 		if (!validRawToken(req.headers.token, req.member)) {
 			res.status(403);

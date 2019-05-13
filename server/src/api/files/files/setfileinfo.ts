@@ -6,7 +6,7 @@ import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
 	async (
-		req: MemberValidatedRequest<Partial<EditableFileObjectProperties>>,
+		req: MemberValidatedRequest<Partial<EditableFileObjectProperties>, { fileid: string }>,
 		res: express.Response
 	) => {
 		let file: File;

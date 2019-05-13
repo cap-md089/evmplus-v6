@@ -4,9 +4,16 @@ import Event from '../../../lib/Event';
 import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest<{ timestamp: string, id: string }>, res: Response) => {
 	let event: Event;
 	let member: MemberBase;
+	const timestamp = parseInt(req.params.timestamp, 10);
+
+	if (timestamp !== timestamp) {
+		res.status(400);
+		res.end();
+		return;
+	}
 
 	try {
 		event = await Event.Get(req.params.id, req.account, req.mysqlx);
@@ -22,7 +29,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 		member = req.member;
 	}
 
-	event.removeItemFromDebrief(member, req.params.timestamp);
+	event.removeItemFromDebrief(member, timestamp);
 
 	await event.save();
 

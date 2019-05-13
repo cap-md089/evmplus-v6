@@ -21,7 +21,7 @@ export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 });
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<BulkAttendanceRequest>, res: Response) => {
+	async (req: MemberValidatedRequest<BulkAttendanceRequest, { id: string }>, res: Response) => {
 		let event: Event;
 		let member: MemberBase;
 

@@ -5,7 +5,10 @@ import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<Partial<NewBlogPost>>, res: express.Response) => {
+	async (
+		req: MemberValidatedRequest<Partial<NewBlogPost>, { id: string }>,
+		res: express.Response
+	) => {
 		let blogPost;
 
 		try {

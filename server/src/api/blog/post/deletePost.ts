@@ -3,10 +3,10 @@ import BlogPost from '../../../lib/BlogPost';
 import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
+export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	try {
 		const blogPost = await BlogPost.Get(req.params.id, req.account, req.mysqlx);
-	
+
 		await blogPost.delete();
 
 		res.status(204);

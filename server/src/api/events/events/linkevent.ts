@@ -5,8 +5,8 @@ import Event from '../../../lib/Event';
 import MemberBase, { MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	if (req.body === undefined || req.body.id === undefined || req.params.parent === undefined) {
+export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, res: Response) => {
+	if (req.body === undefined || typeof req.body.id !== 'string' || req.params.parent === undefined) {
 		res.status(400);
 		res.end();
 		return;

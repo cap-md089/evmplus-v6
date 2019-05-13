@@ -665,6 +665,26 @@ export default abstract class MemberBase implements MemberObject {
 		return count;
 	}
 
+	public async *getTasks(): AsyncIterableIterator<Task> {
+		const tasksCollection = this.schema.getCollection<TaskObject & Required<NoSQLDocument>>(
+			'Tasks'
+		);
+
+		const generator = generateResults(
+			findAndBind(tasksCollection, {
+				accountID: this.requestingAccount.id
+			})
+		);
+
+		for await (const task of generator) {
+			for (const i of task.results) {
+				if (this.matchesReference(i.tasked)) {
+					yield new Task(task, this.requestingAccount, this.schema);
+				}
+			}
+		}
+	}
+
 	public async saveExtraMemberInformation(schema: Schema, account: Account) {
 		const extraInfoCollection = schema.getCollection<ExtraMemberInformation>(
 			'ExtraMemberInformation'
@@ -698,4 +718,5 @@ import Event from './Event';
 import CAPWATCHMember from './members/CAPWATCHMember';
 import NHQMember, { ConditionalMemberRequest, MemberRequest } from './members/NHQMember';
 import ProspectiveMember from './members/ProspectiveMember';
+import Task from './Task';
 import Team from './Team';

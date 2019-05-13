@@ -4,7 +4,7 @@ import { MemberRequest } from '../../../lib/MemberBase';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(
-	async (req: MemberRequest, res: express.Response) => {
+	async (req: MemberRequest<{ parentid: string }>, res: express.Response) => {
 		if (
 			typeof req.params.parentid === 'undefined' ||
 			typeof req.body === 'undefined' ||
