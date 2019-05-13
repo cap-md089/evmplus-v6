@@ -2423,16 +2423,19 @@ export interface RawTaskObject {
 	 * A description of what is supposed to be done
 	 */
 	description: string;
+}
+
+export interface NewTaskObject extends RawTaskObject {
 	/**
-	 * Whether or not this task should be archived
+	 * This is used to determine who should be assigned the task
 	 */
-	archived: boolean;
+	tasked: MemberReference[];
 }
 
 /**
  * A full task object including the ID
  */
-export interface TaskObject extends RawTaskObject, AccountIdentifiable {
+export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDocument {
 	/**
 	 * The way to identify this task
 	 */
@@ -2441,4 +2444,12 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable {
 	 * Results from those tasked with this task
 	 */
 	results: Array<TaskRecipientsResults>
+	/**
+	 * Records when the task was assigned
+	 */
+	assigned: number;
+	/**
+	 * Whether or not this task should be archived
+	 */
+	archived: boolean;
 }
