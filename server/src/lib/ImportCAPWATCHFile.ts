@@ -8,6 +8,7 @@ import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
+import oFlight from './capwatch-modules/oflight';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
@@ -40,12 +41,12 @@ const modules: Array<{
 	{
 		module: cadetActivities,
 		file: 'CadetActivities.txt'
-	}
-/*	{
+	},
+	{
 		module: oFlight,
 		file: 'OFlight.txt'
 	},
-	{
+/*	{
 		module: seniorAwards,
 		file: 'SeniorAwards.txt'
 	},
