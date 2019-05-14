@@ -720,6 +720,10 @@ export interface EventObject extends RawEventObject {
 	 * Who to contact for more event information
 	 */
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
+	/**
+	 * Custom fields for attendance records
+	 */
+	customAttendanceFields: Array<CustomAttendanceField>;
 }
 
 /**
@@ -894,6 +898,10 @@ export interface NewEventObject {
 	 * Who to contact for more event information
 	 */
 	pointsOfContact: (InternalPointOfContact | ExternalPointOfContact)[];
+	/**
+	 * Custom fields for attendance records
+	 */
+	customAttendanceFields: (CustomAttendanceField)[];
 	/**
 	 * Can cadets sign up for only a portion of the event?
 	 */
