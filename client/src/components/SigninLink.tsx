@@ -91,7 +91,7 @@ class SigninLink extends React.Component<
 						}}
 					>
 						Enter your eServices login information below to sign
-						into the site. Your password is not permanently stored.
+						in to the site. Your password is not permanently stored.
 						By providing your eServices information you agree to the
 						terms and conditions located at&nbsp;
 						<a href="https://www.capunit.com/eula" target="_blank">

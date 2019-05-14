@@ -49,7 +49,7 @@ export const Activities = [
 export const RequiredForms = [
 	'CAP Identification Card',
 	'CAPF 31 Application For CAP Encampment Or Special Activity',
-	'CAPF 32 Civil Air Patrol Cadet Activity Permission Slip',
+	'CAPF 60-80 Civil Air Patrol Cadet Activity Permission Slip',
 	'CAPF 101 Specialty Qualification Card',
 	'CAPF 160 CAP Member Health History Form',
 	'CAPF 161 Emergency Information',
@@ -147,6 +147,7 @@ export const emptyEvent = (): NewEventObject => ({
 	administrationComments: '',
 	status: 0,
 	pointsOfContact: [],
+	customAttendanceFields: [],
 	signUpPartTime: false,
 	teamID: null,
 	limitSignupsToTeam: false,
@@ -179,6 +180,7 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	pickupDateTime: event.pickupDateTime,
 	pickupLocation: event.pickupLocation,
 	pointsOfContact: event.pointsOfContact,
+	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
 	regionEventNumber: event.regionEventNumber,
 	registration: event.registration || {
@@ -223,6 +225,7 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	pickupDateTime: event.pickupDateTime,
 	pickupLocation: event.pickupLocation,
 	pointsOfContact: event.pointsOfContact,
+	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
 	regionEventNumber: event.regionEventNumber,
 	registration: event.useRegistration ? event.registration : null,
@@ -280,6 +283,7 @@ export default class EventForm extends React.Component<
 			pickupDateTime: false,
 			pickupLocation: false,
 			pointsOfContact: false,
+			customAttendanceFields: false,
 			publishToWingCalendar: false,
 			regionEventNumber: false,
 			registration: false,
@@ -319,6 +323,7 @@ export default class EventForm extends React.Component<
 			pickupDateTime: false,
 			pickupLocation: false,
 			pointsOfContact: false,
+			customAttendanceFields: false,
 			publishToWingCalendar: false,
 			regionEventNumber: false,
 			registration: false,
@@ -565,7 +570,7 @@ export default class EventForm extends React.Component<
 					CustomAttendanceField,
 					InputProps<CustomAttendanceField>
 				>
-					name="customFields"
+					name="customAttendanceFields"
 					inputComponent={CustomAttendanceFieldInput}
 					addNew={() => ({
 						type: CustomAttendanceFieldEntryType.TEXT,

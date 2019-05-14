@@ -14,7 +14,7 @@ export default class CustomAttendanceFieldInput extends React.Component<
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: props.name,
-				value: this.props.value || {
+				value: {
 					type: CustomAttendanceFieldEntryType.TEXT,
 					title: '',
 					preFill: '',

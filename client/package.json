@@ -24,7 +24,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-	"sass": "sass src/nhq.sass:src/nhq.css --watch"
+    "sass": "sass src/nhq.sass:src/nhq.css --watch"
   },
   "eslintConfig": {
     "extends": "react-app"

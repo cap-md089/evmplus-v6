@@ -138,24 +138,24 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 					<TextInput name="Twitter" />
 
 					<FormBlock name="MeetingAddress">
-						<Label>The name of the meeting address</Label>
+						<Label>Meeting Location</Label>
 						<TextInput name="Name" />
 
-						<Label>The first line for the meeting address</Label>
+						<Label>Meeting Address Line 1</Label>
 						<TextInput name="FirstLine" />
 
-						<Label>The second line for the meeting address</Label>
+						<Label>Meeting Address Line 2</Label>
 						<TextInput name="SecondLine" />
 					</FormBlock>
 
 					<FormBlock name="MailingAddress">
-						<Label>The name of the mailing address</Label>
+						<Label>Mailing Address Location</Label>
 						<TextInput name="Name" />
 
-						<Label>The first line for the mailing address</Label>
+						<Label>Mailing Address Line 1</Label>
 						<TextInput name="FirstLine" />
 
-						<Label>The second line for the mailing address</Label>
+						<Label>Mailing Address Line 2</Label>
 						<TextInput name="SecondLine" />
 					</FormBlock>
 				</FormBlock>

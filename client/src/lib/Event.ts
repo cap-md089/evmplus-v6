@@ -14,7 +14,8 @@ import {
 	AttendanceRecord,
 	NewAttendanceRecord,
 	MultCheckboxReturn,
-	DebriefItem
+	DebriefItem,
+	CustomAttendanceField
 } from 'common-lib';
 
 /**
@@ -150,6 +151,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
+	public customAttendanceFields: Array<CustomAttendanceField>;
+
 	public author: MemberReference;
 
 	public signUpPartTime: boolean;
@@ -182,6 +185,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		this.pickupDateTime = data.pickupDateTime;
 		this.pickupLocation = data.pickupLocation;
 		this.pointsOfContact = data.pointsOfContact;
+		this.customAttendanceFields = data.customAttendanceFields;
 		this.publishToWingCalendar = data.publishToWingCalendar;
 		this.regionEventNumber = data.regionEventNumber;
 		this.registration = data.registration;
@@ -243,6 +247,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			pickupDateTime: this.pickupDateTime,
 			pickupLocation: this.pickupLocation,
 			pointsOfContact: this.pointsOfContact,
+			customAttendanceFields: this.customAttendanceFields,
 			publishToWingCalendar: this.publishToWingCalendar,
 			registration: !!this.registration ? this.registration : null,
 			regionEventNumber: this.regionEventNumber,
