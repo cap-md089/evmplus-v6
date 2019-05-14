@@ -1,6 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	AttendanceRecord,
+	CustomAttendanceField,
 	DatabaseInterface,
 	DebriefItem,
 	DisplayInternalPointOfContact,
@@ -85,13 +86,16 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			schema
 		);
 
+		const customAttendanceFields = await this.GetCustomAttendanceFields();
+
 		const attendance = await this.GetAttendance(id, account, schema);
 
 		return new Event(
 			{
 				...results[0],
 				attendance,
-				pointsOfContact
+				pointsOfContact,
+				customAttendanceFields
 			},
 			account,
 			schema
@@ -152,6 +156,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			account,
 			schema
 		);
+	}
+
+	private static async GetCustomAttendanceFields(
+	): Promise<CustomAttendanceField[]> {
+		return null;
 	}
 
 	private static async GetAttendance(
@@ -323,6 +332,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
+	public customAttendanceFields: CustomAttendanceField[];
+
 	public author: MemberReference;
 
 	public signUpPartTime: boolean;
@@ -493,6 +504,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			participationFee: this.participationFee,
 			pickupLocation: this.pickupLocation,
 			pointsOfContact: this.pointsOfContact,
+			customAttendanceFields: this.customAttendanceFields,
 			publishToWingCalendar: this.publishToWingCalendar,
 			regionEventNumber: this.regionEventNumber,
 			registration: this.registration,
@@ -923,6 +935,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		pickupDateTime: this.pickupDateTime,
 		pickupLocation: this.pickupLocation,
 		pointsOfContact: this.pointsOfContact,
+		customAttendanceFields: this.customAttendanceFields,
 		publishToWingCalendar: this.publishToWingCalendar,
 		regionEventNumber: this.regionEventNumber,
 		registration: !!this.registration ? this.registration : null,
