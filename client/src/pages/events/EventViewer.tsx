@@ -1,7 +1,7 @@
 import { AttendanceRecord, MemberReference, NewAttendanceRecord } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import AttendanceForm from '../../components/AttendanceForm';
+import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
