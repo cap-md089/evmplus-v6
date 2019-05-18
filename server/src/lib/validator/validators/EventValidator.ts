@@ -1,5 +1,5 @@
-import { ExternalPointOfContact, InternalPointOfContact, NewEventObject } from 'common-lib';
-import { EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
+import { CustomAttendanceField, ExternalPointOfContact, InternalPointOfContact, NewEventObject } from 'common-lib';
+import { CustomAttendanceFieldEntryType, EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
 import Validator from '../Validator';
 
 class ParticipationFeeValidator extends Validator<{
@@ -100,6 +100,116 @@ class ExternalPOCValidator extends Validator<ExternalPointOfContact> {
 	}
 }
 
+class CustomAttendanceFieldCheckboxValidator extends Validator<CustomAttendanceField> {
+	constructor() {
+		super({
+			title: {
+				validator: Validator.String
+			},
+			preFill: {
+				validator: Validator.Boolean
+			},
+			displayToMember: {
+				validator: Validator.Boolean
+			},
+			allowMemberToModify: {
+				validator: Validator.Boolean
+			},
+			type: {
+				validator: Validator.StrictValue(CustomAttendanceFieldEntryType.CHECKBOX)
+			}
+		});
+	}
+}
+
+class CustomAttendanceFieldDateValidator extends Validator<CustomAttendanceField> {
+	constructor() {
+		super({
+			title: {
+				validator: Validator.String
+			},
+			preFill: {
+				validator: Validator.Number
+			},
+			displayToMember: {
+				validator: Validator.Boolean
+			},
+			allowMemberToModify: {
+				validator: Validator.Boolean
+			},
+			type: {
+				validator: Validator.StrictValue(CustomAttendanceFieldEntryType.DATE)
+			}
+		});
+	}
+}
+
+class CustomAttendanceFieldFileValidator extends Validator<CustomAttendanceField> {
+	constructor() {
+		super({
+			title: {
+				validator: Validator.String
+			},
+			preFill: {
+				validator: Validator.String
+			},
+			displayToMember: {
+				validator: Validator.Boolean
+			},
+			allowMemberToModify: {
+				validator: Validator.Boolean
+			},
+			type: {
+				validator: Validator.StrictValue(CustomAttendanceFieldEntryType.FILE)
+			}
+		});
+	}
+}
+
+class CustomAttendanceFieldNumberValidator extends Validator<CustomAttendanceField> {
+	constructor() {
+		super({
+			title: {
+				validator: Validator.String
+			},
+			preFill: {
+				validator: Validator.Number
+			},
+			displayToMember: {
+				validator: Validator.Boolean
+			},
+			allowMemberToModify: {
+				validator: Validator.Boolean
+			},
+			type: {
+				validator: Validator.StrictValue(CustomAttendanceFieldEntryType.NUMBER)
+			}
+		});
+	}
+}
+
+class CustomAttendanceFieldTextValidator extends Validator<CustomAttendanceField> {
+	constructor() {
+		super({
+			title: {
+				validator: Validator.String
+			},
+			preFill: {
+				validator: Validator.String
+			},
+			displayToMember: {
+				validator: Validator.Boolean
+			},
+			allowMemberToModify: {
+				validator: Validator.Boolean
+			},
+			type: {
+				validator: Validator.StrictValue(CustomAttendanceFieldEntryType.TEXT)
+			}
+		});
+	}
+}
+
 export default class EventValidator extends Validator<NewEventObject> {
 	constructor() {
 		super({
@@ -167,6 +277,15 @@ export default class EventValidator extends Validator<NewEventObject> {
 			pointsOfContact: {
 				validator: Validator.ArrayOf(
 					Validator.Or(new InternalPOCValidator(), new ExternalPOCValidator())
+				)
+			},
+			customAttendanceFields: {
+				validator: Validator.ArrayOf(
+					Validator.Or(new CustomAttendanceFieldCheckboxValidator(),
+					new CustomAttendanceFieldDateValidator(), 
+					new CustomAttendanceFieldFileValidator(),
+					new CustomAttendanceFieldNumberValidator(),
+					new CustomAttendanceFieldTextValidator())
 				)
 			},
 			publishToWingCalendar: {
