@@ -8,6 +8,7 @@ import FlightAssignValidator from '../../lib/validator/validators/FlightAssignVa
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
+import capwatch from './capwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
 import flightbasic from './flights/flightbasic';
@@ -79,6 +80,13 @@ router.post(
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(setDutyPositionsValidator),
 	setdutypositions
+);
+
+router.use(
+	'/capwatch',
+	MemberBase.ExpressMiddleware,
+	MemberBase.PermissionMiddleware('DownloadCAPWATCH'),
+	capwatch
 );
 
 export default router;
