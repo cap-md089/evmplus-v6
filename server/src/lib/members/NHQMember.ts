@@ -11,7 +11,7 @@ import {
 } from 'common-lib';
 import { MemberCAPWATCHErrors, MemberCreateError } from 'common-lib/index';
 import { createWriteStream, existsSync, unlink } from 'fs';
-import { request as httpRequest } from 'https';
+import { get as httpRequest } from 'https';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../../conf';
@@ -21,7 +21,7 @@ import { ParamType } from '../MySQLUtil';
 import { getPermissions } from '../Permissions';
 import CAPWATCHMember from './CAPWATCHMember';
 import { nhq as auth } from './pam';
-import request from './pam/nhq-request';
+import { USERAGENT } from './pam/nhq-request';
 import ProspectiveMember from './ProspectiveMember';
 
 interface NHQMemberSession extends MemberSession {
@@ -265,7 +265,12 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 
 	public async getCAPWATCHList(): Promise<string[]> {
 		const retData: string[] = [];
-		let data = await request('/cap.capwatch.web/splash.aspx', this.cookie, true);
+		let data;
+		try {
+			data = await auth.request('/cap.capwatch.web/splash.aspx', this.cookie, false);
+		} catch (e) {
+			throw new Error('Member does not have CAPWATCH list available');
+		}
 
 		if (
 			typeof data.headers.location !== 'undefined' &&
@@ -274,7 +279,7 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 			throw new Error(MemberCAPWATCHErrors.INVALID_PERMISSIONS.toString());
 		}
 
-		data = await request('/cap.capwatch.web/Default.aspx', this.cookie);
+		data = await auth.request('/cap.capwatch.web/Default.aspx', this.cookie, false);
 
 		const $ = load(data.body);
 
@@ -283,48 +288,60 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 		// @ts-ignore
 		const select = $('#OrgChooser');
 
-		// don't know what to do here. I don't know cheerio well
+		const ids = select.find('option');
+
+		for (let i = 1; i < ids.length; i++) {
+			retData.push(ids[i].attribs.value);
+		}
 
 		return retData;
 	}
 
-	public async streamCAPWATCHFile(id: number, stream: NodeJS.WritableStream) {
-		const path = `/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
+	public async streamCAPWATCHFile(id: string, stream: NodeJS.WritableStream) {
+		const path = `https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?wa=true&unitOnly=0&ORGID=${id}`;
 
-		return new Promise<void>(resolve => {
+		return new Promise<void>((resolve, reject) => {
+			// @ts-ignore
 			httpRequest(
+				path,
 				{
-					hostname: 'www.capnhq.gov',
-					protocol: 'https:',
-					port: 443,
-					path,
-					method: 'GET',
 					headers: {
-						Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*,q=0.8',
+						Accept: '*/*',
 						'Accept-Encoding': 'gzip, deflate, br',
 						'Accept-Language': 'en-US,en;q=0.5',
 						Connection: 'keep-alive',
 						Cookie: this.cookie,
 						Host: 'www.capnhq.gov',
 						'Upgrade-Insecure-Requests': '1',
-						'User-Agent': 'EventManagementLoginBot/2.0'
+						'User-Agent': USERAGENT,
+						'Content-Type': 'application/json',
+						Referrer: 'https://www.capnhq.gov/cap.capwatch.web/Default.aspx'
 					}
 				},
+				// @ts-ignore
 				res => {
-					res.pipe(stream);
-					res.on('end', () => {
-						resolve();
-					});
+					if (res.statusCode >= 200 && res.statusCode < 300) {
+						res.pipe(stream);
+						res.on('end', () => {
+							resolve();
+						});
+					} else {
+						reject(new Error(MemberCAPWATCHErrors.INVALID_PERMISSIONS.toString()));
+					}
 				}
 			);
 		});
 	}
 
-	public async getCAPWATCHFile(id: number, location?: string) {
+	public async getCAPWATCHFile(id: string, location?: string): Promise<string> {
 		if (location === undefined) {
 			const date = new Date();
-			const datestring = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getHours()}`;
-			location = join(conf.path, 'capwatch-zips', `CAPWATCH-${datestring}.zip`);
+			const datestring = `${date.getFullYear()}-${date.getMonth() +
+				1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
+			location = join(
+				conf.capwatchFileDownloadDirectory,
+				`CAPWATCH-${this.id}-${datestring}.zip`
+			);
 		}
 
 		if (existsSync(location)) {
@@ -332,6 +349,8 @@ export default class NHQMember extends CAPWATCHMember implements NHQMemberObject
 		}
 
 		await this.streamCAPWATCHFile(id, createWriteStream(location));
+
+		return location;
 	}
 
 	public async su(targetMember: MemberBase) {

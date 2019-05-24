@@ -13,6 +13,7 @@ export const Configuration = {
 		connectionCount: 15
 	},
 	fileStoragePath: '/uploads',
+	capwatchFileDownloadDirectory: '/capwatch-zips',
 	path: __dirname,
 	port: 3001
 };

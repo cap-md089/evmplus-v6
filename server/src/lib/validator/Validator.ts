@@ -725,9 +725,13 @@ export default class Validator<T> {
 						let validator: Validator<any>;
 						// @ts-ignore
 						validator = valid.validator;
-						const newArray = [];
-						for (const i of arr) {
-							newArray.push(validator.prune(i));
+						let newArray = [];
+						if (validator instanceof Validator) {
+							for (const i of arr) {
+									newArray.push(validator.prune(i));
+							}
+						} else {
+							newArray = arr;
 						}
 						// @ts-ignore
 						newObject[key] = newArray;

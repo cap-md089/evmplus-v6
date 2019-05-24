@@ -14,6 +14,7 @@ const confproduction: typeof conf = {
 		},
 		connectionCount: 15
 	},
+	capwatchFileDownloadDirectory: '/capwatch-zips',
 	fileStoragePath: '/uploads',
 	path: __dirname,
 	port: 3001

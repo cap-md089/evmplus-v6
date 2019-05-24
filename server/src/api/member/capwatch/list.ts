@@ -7,7 +7,12 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		return res.end();
 	}
 
-	const list = await req.member.getCAPWATCHList();
+	try {
+		const list = await req.member.getCAPWATCHList();
 
-	json<string[]>(res, list);
+		json<string[]>(res, list);
+	} catch(e) {
+		res.status(403);
+		res.end();
+	}
 });

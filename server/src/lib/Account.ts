@@ -45,9 +45,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				accountID = 'sales';
 			} else if (parts.length === 3) {
 				accountID = parts[0];
-				if (accountID === 'capeventmanager') {
-					accountID = 'mdx89';
-				}
 			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
 				accountID = 'mdx89';
 			} else {
