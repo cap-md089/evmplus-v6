@@ -117,3 +117,10 @@ export enum CustomAttendanceFieldEntryType {
 	CHECKBOX,
 	FILE
 }
+
+export enum CAPWATCHImportUpdate {
+	CAPWATCHFileDownloaded,
+	FileImported,
+	CAPWATCHFileDone,
+	ProgressInitialization
+}
