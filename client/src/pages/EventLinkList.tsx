@@ -150,6 +150,7 @@ export default class EventLinkList extends Page<
 												event.sourceEvent.id
 											}`}
 											target="_blank"
+											rel="noopener noreferrer"
 										>
 											{event.sourceEvent.accountID}-
 											{event.sourceEvent.id}
