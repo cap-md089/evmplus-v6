@@ -2,10 +2,10 @@ import { CAPWATCHImportErrors, CAPWATCHImportUpdate } from 'common-lib/index';
 import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
 import { MemberRequest, NHQMember } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
-import { validRawToken } from '../../formtoken';
+import { validRawTokenAlone } from '../../formtoken';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token: string }>, res) => {
-	if (!validRawToken(req.params.token, req.member)) {
+	if (!validRawTokenAlone(req.params.token)) {
 		res.status(403);
 		return res.end();
 	}

@@ -1,19 +1,22 @@
-import { MemberReference } from 'common-lib';
 import * as express from 'express';
 import * as uuid from 'uuid/v4';
-import MemberBase from '../lib/Members';
-import { MemberRequest } from '../lib/members/NHQMember';
+import MemberBase, { ProspectiveMember } from '../lib/Members';
+import NHQMember, { MemberRequest } from '../lib/members/NHQMember';
 
 let validTokens: Array<{
-	member: MemberReference;
+	member: ProspectiveMember | NHQMember;
 	token: string;
+	expire: number;
 }> = [];
+
+const TOKEN_EXPIRE_TIME = 20000;
 
 export const getFormToken: express.RequestHandler = (req: MemberRequest, res) => {
 	const token = uuid();
 	validTokens.push({
-		member: req.member.getReference(),
-		token
+		member: req.member,
+		token,
+		expire: Date.now() + TOKEN_EXPIRE_TIME
 	});
 	res.json({
 		token
@@ -21,6 +24,7 @@ export const getFormToken: express.RequestHandler = (req: MemberRequest, res) =>
 };
 
 export const validRawToken = (token: string, member: MemberBase): boolean => {
+	pruneTokens();
 	if (
 		validTokens.filter(
 			tokens => member.matchesReference(tokens.member) && token === tokens.token
@@ -32,6 +36,18 @@ export const validRawToken = (token: string, member: MemberBase): boolean => {
 		return true;
 	} else {
 		return false;
+	}
+};
+
+export const validRawTokenAlone = (token: string): ProspectiveMember | NHQMember | null => {
+	pruneTokens();
+	const results = validTokens.filter(tokens => tokens.token === token);
+	if (results.length === 1) {
+		const member = results[0].member;
+		validTokens = validTokens.filter(tokens => tokens.token !== token);
+		return member;
+	} else {
+		return null;
 	}
 };
 
@@ -54,4 +70,8 @@ export const tokenMiddleware = (
 		res.status(403);
 		res.end();
 	}
+};
+
+const pruneTokens = () => {
+	validTokens = validTokens.filter(token => token.expire > Date.now());
 };

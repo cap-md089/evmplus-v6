@@ -46,6 +46,7 @@ export interface ConditionalMemberRequest<P extends ParamType = {}> extends Acco
 	member: ProspectiveMember | NHQMember | null;
 	newSessionID: string | null;
 }
+
 export interface MemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
 	member: NHQMember | ProspectiveMember;
 	newSessionID: string;
