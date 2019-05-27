@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PointOfContactType, CustomAttendanceFieldEntryType } from 'common-lib/index';
+import { CustomAttendanceFieldEntryType } from 'common-lib/index';
 import { Checkbox, FormBlock, Label, TextInput, NumberInput, DateTimeInput } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';

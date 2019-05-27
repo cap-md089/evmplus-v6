@@ -166,7 +166,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 				open: true,
 				saved: false
 			});
-		}).bind(this);
+		});
 	}
 
 	private async onSaveClick() {

@@ -1,4 +1,4 @@
-import { ContentState, EditorState, RawDraftContentState } from 'draft-js';
+import { EditorState } from 'draft-js';
 
 let draft: typeof import('draft-js') | null = null;
 

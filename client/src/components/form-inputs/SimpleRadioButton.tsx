@@ -70,6 +70,6 @@ export default class SimpleRadioButton<
 					value: index as E
 				});
 			}
-		}).bind(this);
+		});
 	}
 }

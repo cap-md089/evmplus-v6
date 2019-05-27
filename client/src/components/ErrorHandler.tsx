@@ -33,7 +33,7 @@ export default class ErrorHandler extends React.PureComponent<
 		const errorObject: NewClientErrorObject = {
 			componentStack: errorInfo.componentStack,
 			message: error.message,
-			pageURL: location.href,
+			pageURL: window.location.href,
 			resolved: false,
 			stack: stacks.map(stack => ({
 				filename: stack.getFileName(),
@@ -66,9 +66,9 @@ export default class ErrorHandler extends React.PureComponent<
 				The page appears to have crashed. The developers have been
 				notified so that they may fix the issue. If you want to try
 				again,
-				<a href="#" onClick={this.tryAgain}>
+				<button className="linkButton" onClick={this.tryAgain}>
 					please refresh the page
-				</a>
+				</button>
 				.{' '}
 				{/*If you want to provide feedback, please submit feedback
 				through our feedback form */}

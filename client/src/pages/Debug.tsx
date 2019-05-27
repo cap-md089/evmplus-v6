@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Page, { PageProps } from './Page';
+import Page from './Page';
 
 export default class Debug extends Page {
 	public state: {} = {};

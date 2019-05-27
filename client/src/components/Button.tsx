@@ -47,7 +47,7 @@ export default class Button<C> extends React.Component<
 		};
 	}
 
-	public handleClick(e: React.MouseEvent<HTMLAnchorElement>): void {
+	public handleClick(e: React.MouseEvent<HTMLButtonElement>): void {
 		if (this.props.onClick) {
 			if (this.props.useData) {
 				this.props.onClick(this.props.data);
@@ -59,12 +59,13 @@ export default class Button<C> extends React.Component<
 
 	public render() {
 		return (
-			<a
+			<button
 				onClick={this.handleClick}
 				style={{
 					cursor: 'pointer'
 				}}
 				className={
+					'linkButton' +
 					(typeof this.props.buttonType === 'string'
 						? ` ${this.props.buttonType}`
 						: 'primaryButton') +
@@ -74,7 +75,7 @@ export default class Button<C> extends React.Component<
 				}
 			>
 				{this.props.children}
-			</a>
+			</button>
 		);
 	}
 }

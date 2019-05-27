@@ -79,10 +79,6 @@ export default class Dialogue extends React.Component<
 
 	private mainDiv: HTMLDivElement | null = null;
 
-	constructor(props: DialogueProps) {
-		super(props);
-	}
-
 	public componentDidMount() {
 		if (this.mainDiv) {
 			const div: JQuery = $(this.mainDiv).css({
@@ -184,36 +180,34 @@ export default class Dialogue extends React.Component<
 					<div className="content">{this.props.children}</div>
 					{this.props.displayButtons === DialogueButtons.OK ? (
 						<div className="closeButton">
-							<a
+							<button
 								style={{
 									float: 'right'
 								}}
 								className="primaryButton"
 								id="ok"
-								href="#"
 								onClick={(
-									e: React.MouseEvent<HTMLAnchorElement>
+									e: React.MouseEvent<HTMLButtonElement>
 								) => {
 									e.preventDefault();
 									this.props.onClose();
 								}}
 							>
 								{this.props.labels ? this.props.labels[0] : 'OK'}
-							</a>
+							</button>
 						</div>
 					) : this.props.displayButtons ===
 						DialogueButtons.OK_CANCEL ? (
 								<div className="closeButton">
-									<a
+									<button
 										style={{
 											float: 'right',
 											marginLeft: 10
 										}}
 										className="primaryButton"
 										id="cancel"
-										href="#"
 										onClick={(
-											e: React.MouseEvent<HTMLAnchorElement>
+											e: React.MouseEvent<HTMLButtonElement>
 										) => {
 											e.preventDefault();
 											this.props.onClose();
@@ -223,16 +217,15 @@ export default class Dialogue extends React.Component<
 										}}
 									>
 										{this.props.labels ? this.props.labels[1] : 'Cancel'}
-									</a>
-									<a
+									</button>
+									<button
 										style={{
 											float: 'right'
 										}}
 										className="primaryButton"
 										id="ok"
-										href="#"
 										onClick={(
-											e: React.MouseEvent<HTMLAnchorElement>
+											e: React.MouseEvent<HTMLButtonElement>
 										) => {
 											e.preventDefault();
 											this.props.onClose();
@@ -242,21 +235,20 @@ export default class Dialogue extends React.Component<
 										}}
 									>
 										{this.props.labels ? this.props.labels[0] : 'OK'}
-									</a>
+									</button>
 								</div>
 							) : this.props.displayButtons ===
 								DialogueButtons.YES_NO_CANCEL ? (
 									<div className="closeButton">
-										<a
+										<button
 											style={{
 												float: 'right',
 												marginLeft: 10
 											}}
 											className="primaryButton"
 											id="cancel"
-											href="#"
 											onClick={(
-												e: React.MouseEvent<HTMLAnchorElement>
+												e: React.MouseEvent<HTMLButtonElement>
 											) => {
 												e.preventDefault();
 												this.props.onClose();
@@ -266,17 +258,16 @@ export default class Dialogue extends React.Component<
 											}}
 										>
 											{this.props.labels ? this.props.labels[2] : 'Cancel'}
-										</a>
-										<a
+										</button>
+										<button
 											style={{
 												float: 'right',
 												marginLeft: 10
 											}}
 											className="primaryButton"
 											id="no"
-											href="#"
 											onClick={(
-												e: React.MouseEvent<HTMLAnchorElement>
+												e: React.MouseEvent<HTMLButtonElement>
 											) => {
 												e.preventDefault();
 												this.props.onClose();
@@ -286,16 +277,15 @@ export default class Dialogue extends React.Component<
 											}}
 										>
 											{this.props.labels ? this.props.labels[1] : 'No'}
-										</a>
-										<a
+										</button>
+										<button
 											style={{
 												float: 'right'
 											}}
 											className="primaryButton"
 											id="yes"
-											href="#"
 											onClick={(
-												e: React.MouseEvent<HTMLAnchorElement>
+												e: React.MouseEvent<HTMLButtonElement>
 											) => {
 												e.preventDefault();
 												this.props.onClose();
@@ -305,7 +295,7 @@ export default class Dialogue extends React.Component<
 											}}
 										>
 											{this.props.labels ? this.props.labels[0] : 'Yes'}
-										</a>
+										</button>
 									</div>
 								) : null}
 				</div>

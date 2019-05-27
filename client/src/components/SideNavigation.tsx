@@ -82,12 +82,12 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 				<ul id="nav">
 					<li>
 						{this.props.member ? (
-							<a onClick={this.signOut} style={cursor}>
+							<button onClick={this.signOut} style={cursor}>
 								<span className="arrow" />
 								<span>
 									Sign out {this.props.member.getFullName()}
 								</span>
-							</a>
+							</button>
 						) : (
 							<SigninLink
 								{...this.props.fullMemberDetails}
@@ -106,10 +106,10 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 						</li>
 					) : null}
 					<li>
-						<a onClick={this.goBack} style={cursor}>
+						<button onClick={this.goBack} style={cursor}>
 							<span className="arrow" />
 							<span>Go back</span>
-						</a>
+						</button>
 					</li>
 					{this.props.links.map((link, i) => (
 						<li key={i}>

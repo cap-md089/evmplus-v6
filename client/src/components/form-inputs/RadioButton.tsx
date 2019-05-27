@@ -126,7 +126,7 @@ export default class RadioButton<
 					]
 				});
 			}
-		}).bind(this);
+		});
 	}
 
 	private updateOtherText(e: React.ChangeEvent<HTMLInputElement>) {

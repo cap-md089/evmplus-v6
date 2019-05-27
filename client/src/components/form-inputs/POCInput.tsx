@@ -138,7 +138,8 @@ export default class POCInput extends React.Component<
 				e.value.type === PointOfContactType.INTERNAL &&
 				this.props.value!.type === PointOfContactType.EXTERNAL
 			) {
-				(e.value.name = ''), (e.value.email = '');
+				e.value.name = '';
+				e.value.email = '';
 				e.value.phone = '';
 				e.value.memberReference = {
 					type: 'Null'

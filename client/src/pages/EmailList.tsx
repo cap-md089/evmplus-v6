@@ -456,8 +456,11 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 			try {
 				const range = document.createRange();
 				range.selectNode(this.selectableDiv.current);
-				window.getSelection().removeAllRanges();
-				window.getSelection().addRange(range);
+				const selection = window.getSelection();
+				if (selection) {
+					selection.removeAllRanges();
+					selection.addRange(range);
+				}
 			} catch (e) {
 				// Probably an old browser
 				// (Looking at you, IE)

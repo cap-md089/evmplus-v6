@@ -76,9 +76,9 @@ class SigninLink extends React.Component<
 	public render() {
 		return (
 			<>
-				<a href="#" onClick={this.openDialogue}>
+				<button onClick={this.openDialogue} className="linkButton">
 					{this.props.children}
-				</a>
+				</button>
 				<Dialogue
 					title={'Sign in'}
 					displayButtons={DialogueButtons.NONE}
@@ -94,7 +94,7 @@ class SigninLink extends React.Component<
 						in to the site. Your password is not permanently stored.
 						By providing your eServices information you agree to the
 						terms and conditions located at&nbsp;
-						<a href="https://www.capunit.com/eula" target="_blank">
+						<a href="https://www.capunit.com/eula" target="_blank" rel="noopener noreferrer">
 							https://www.capunit.com/eula
 						</a>
 						<div className="signin-error">
@@ -105,6 +105,7 @@ class SigninLink extends React.Component<
 						<br />
 						<br />
 						<iframe
+							title="Signin Form"
 							src="/api/signin"
 							style={{
 								width: '100%',
@@ -123,7 +124,7 @@ class SigninLink extends React.Component<
 		);
 	}
 
-	private openDialogue(e: React.MouseEvent<HTMLAnchorElement>) {
+	private openDialogue(e: React.MouseEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		this.setState({
 			open: true

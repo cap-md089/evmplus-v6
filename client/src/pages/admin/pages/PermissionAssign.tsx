@@ -5,7 +5,7 @@ import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAs
 import Select from '../../../components/form-inputs/Select';
 import SimpleForm, { Label, TextBox } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
-import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
+import MemberBase from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
 import Button from '../../../components/Button';
 
@@ -184,6 +184,6 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				availableMembers,
 				members
 			});
-		}).bind(this);
+		});
 	}
 }

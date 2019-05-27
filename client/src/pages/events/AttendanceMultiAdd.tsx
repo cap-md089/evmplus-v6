@@ -6,7 +6,7 @@ import { CAPMemberClasses } from '../../lib/Members';
 import { Member, MemberObject } from 'common-lib';
 import Selector, { CheckInput } from '../../components/form-inputs/Selector';
 import { TextInput } from '../../components/forms/Form';
-import SimpleRadioButton, { SimpleRadioProps } from '../../components/form-inputs/SimpleRadioButton';
+import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
 import Event from '../../lib/Event';
 import Loader from '../../components/Loader';
 import SimpleForm, { Label, Checkbox } from '../../components/forms/SimpleForm';
@@ -259,6 +259,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		const eventID = parseInt(this.props.routeProps.match.params.id.split('-')[0], 10);
 
+		// eslint-disable-next-line
 		if (eventID !== eventID) {
 			return this.setState({
 				error: 404

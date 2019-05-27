@@ -226,13 +226,11 @@ export default class App extends React.Component<
 						<div id="page">
 							<header>
 								<div id="logo">
-									<a>
-										<img
-											src="/images/logo.png"
-											alt="Civil Air Patrol"
-											height="127"
-										/>
-									</a>
+									<img
+										src="/images/logo.png"
+										alt="Civil Air Patrol"
+										height="127"
+									/>
 								</div>
 								<div className="headerDivider" />
 								<div
@@ -339,7 +337,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia fb"
-													/>
+														rel="noopener noreferrer"
+													>
+														FaceBook
+													</a>
 												) : null,
 												this.state.Registry.Contact.Twitter ? (
 													<a
@@ -349,7 +350,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia twitter"
-													/>
+														rel="noopener noreferrer"
+													>
+														Twitter
+													</a>
 												) : null,
 												this.state.Registry.Contact.YouTube ? (
 													<a
@@ -359,7 +363,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia youtube"
-													/>
+														rel="noopener noreferrer"
+													>
+														YouTube
+													</a>
 												) : null,
 												this.state.Registry.Contact.LinkedIn ? (
 													<a
@@ -369,7 +376,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia linkedin"
-													/>
+														rel="noopener noreferrer"
+													>
+														LinkedIn
+													</a>
 												) : null,
 												this.state.Registry.Contact.Instagram ? (
 													<a
@@ -379,7 +389,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia instagram"
-													/>
+														rel="noopener noreferrer"
+													>
+														Instagram
+													</a>
 												) : null,
 												this.state.Registry.Contact.Flickr ? (
 													<a
@@ -389,7 +402,10 @@ export default class App extends React.Component<
 														}
 														target="_blank"
 														className="socialMedia flickr"
-													/>
+														rel="noopener noreferrer"
+													>
+														Flickr
+													</a>
 												) : null
 										  ]
 										: null}
@@ -425,12 +441,12 @@ export default class App extends React.Component<
 									}}
 								>
 									<li>
-										<a target="_blank" href="https://www.capnhq.gov/">
+										<a target="_blank" href="https://www.capnhq.gov/" rel="noopener noreferrer">
 											eServices
 										</a>
 									</li>
 									<li>
-										<a target="_blank" href="http://www.cap.news/">
+										<a target="_blank" href="http://www.cap.news/" rel="noopener noreferrer">
 											Latest CAP News
 										</a>
 									</li>
@@ -457,17 +473,17 @@ export default class App extends React.Component<
 										fontSize: '12px'
 									}}
 								>
-									<a target="_blank" href="http://www.capmembers.com/">
+									<a target="_blank" href="http://www.capmembers.com/" rel="noopener noreferrer">
 										CAP Members.com
 									</a>{' '}
 									{' | '}
-									<a target="_blank" href="http://www.cap.news/">
+									<a target="_blank" href="http://www.cap.news/" rel="noopener noreferrer">
 										CAP News
 									</a>{' '}
 									{' | '}
-									<a href="#" onClick={this.scrollTop}>
+									<button className="linkButton" onClick={this.scrollTop}>
 										Top
-									</a>
+									</button>
 								</div>
 							</div>
 						</div>

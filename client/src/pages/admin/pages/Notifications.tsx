@@ -252,7 +252,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			}));
 
 			this.forceUpdate();
-		}).bind(this);
+		});
 	}
 
 	private async markUnread(index: number) {

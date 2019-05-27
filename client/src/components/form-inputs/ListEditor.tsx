@@ -165,7 +165,7 @@ export default class ListEditor<
 			return typeof this.props.allowChange === 'undefined'
 				? true
 				: this.props.allowChange;
-		}).bind(this);
+		});
 	}
 
 	private addItem() {
@@ -201,6 +201,6 @@ export default class ListEditor<
 			if (this.props.onChange) {
 				this.props.onChange(value);
 			}
-		}).bind(this);
+		});
 	}
 }

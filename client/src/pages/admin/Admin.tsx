@@ -124,6 +124,6 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	private pageRenderer(Component: typeof Page) {
-		return (() => <Component {...this.props} />).bind(this);
+		return () => <Component {...this.props} />;
 	}
 }

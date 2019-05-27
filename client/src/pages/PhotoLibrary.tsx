@@ -69,6 +69,7 @@ export default class PhotoLibrary extends Page<PageProps, PhotoLibraryState> {
 							<img
 								className="photolibrary-image-view"
 								src={urlFormat('api', 'files', this.state.currentImage, 'export')}
+								alt=""
 							/>
 						</div>
 					</Dialogue>
@@ -76,6 +77,7 @@ export default class PhotoLibrary extends Page<PageProps, PhotoLibraryState> {
 				{this.state.imageIDs.map((id, i) => (
 					<div key={i} className="photolibrary-box">
 						<img
+							alt=""
 							className="photolibrary-image"
 							src={urlFormat('api', 'files', id, 'export')}
 							onClick={this.getImageViewer(i)}
@@ -142,7 +144,7 @@ export default class PhotoLibrary extends Page<PageProps, PhotoLibraryState> {
 			this.setState(prev => ({
 				currentImage: prev.imageIDs[index]
 			}));
-		}).bind(this);
+		});
 	}
 
 	private closeDialogue() {

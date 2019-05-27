@@ -1,3 +1,5 @@
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 import 'promise-polyfill/src/polyfill';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -7,9 +9,6 @@ import App, { MessageEventListener } from './App';
 import './lib/MemberBase';
 import MemberBase from './lib/MemberBase';
 import './nhq.css';
-import polyfill from './polyfills';
-
-polyfill();
 
 const basicInfo: {
 	member: MemberBase | null;

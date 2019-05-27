@@ -6,7 +6,6 @@ import {
 	CAPMemberContact,
 	MemberReference,
 	MemberType,
-	Omit,
 	MemberPermission,
 	MemberPermissions,
 	AbsenteeInformation,

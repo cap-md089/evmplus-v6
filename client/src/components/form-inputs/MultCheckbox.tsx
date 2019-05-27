@@ -150,7 +150,7 @@ export default class MultCheckbox extends React.Component<
 			if (this.props.onChange) {
 				this.props.onChange([currentValues, stringValue]);
 			}
-		}).bind(this);
+		});
 	}
 
 	private addOther() {

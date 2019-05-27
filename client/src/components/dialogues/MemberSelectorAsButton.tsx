@@ -1,8 +1,7 @@
-import { MemberReference } from 'common-lib';
 import * as React from 'react';
-import MemberBase, { CAPMemberClasses } from '../../lib/Members';
+import MemberBase from '../../lib/Members';
 import Button from '../Button';
-import { FormBlock, Label, TextBox, TextInput } from '../forms/SimpleForm';
+import { TextInput } from '../forms/SimpleForm';
 import Loader from '../Loader';
 import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';

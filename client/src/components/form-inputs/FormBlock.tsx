@@ -107,8 +107,8 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 						if (
 							typeof child === 'string' ||
 							typeof child === 'number' ||
-							typeof child === undefined ||
-							typeof child === null
+							typeof child === 'undefined' ||
+							child === null
 						) {
 							ret.unshift(
 								<Label key={i - 1} fullWidth={fullWidth}>

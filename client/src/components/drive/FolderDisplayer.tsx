@@ -1,9 +1,7 @@
 import { ItemProps } from '../dialogues/FileDialogue';
 import * as React from 'react';
+
 export class FolderDisplayer extends React.Component<ItemProps> {
-	constructor(props: ItemProps) {
-		super(props);
-	}
 	public render() {
 		return (
 			<div

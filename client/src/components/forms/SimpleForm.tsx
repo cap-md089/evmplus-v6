@@ -60,10 +60,6 @@ class Label extends React.Component<{
 }
 
 class Divider extends React.Component {
-	constructor(props: {}) {
-		super(props);
-	}
-
 	public render() {
 		return <div className="divider" />;
 	}
@@ -415,8 +411,8 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 							if (
 								typeof child === 'string' ||
 								typeof child === 'number' ||
-								typeof child === undefined ||
-								typeof child === null
+								typeof child === 'undefined' ||
+								child === null
 							) {
 								ret.unshift(
 									<Label key={i - 1} fullWidth={fullWidth}>

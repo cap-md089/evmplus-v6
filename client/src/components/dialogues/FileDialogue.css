@@ -10,7 +10,7 @@
 	margin-bottom: 10px;
 }
 
-#fileDialogueControls a {
+#fileDialogueControls button {
 	display: inline-block;
 	padding: 12px;
 	box-sizing: border-box;
@@ -19,12 +19,12 @@
 	color: #0b375b;
 }
 
-#fileDialogueControls a.selected {
+#fileDialogueControls button.selected {
 	border-bottom: 1px solid #f6bf22;
 	font-weight: bold;
 }
 
-#fileDialogueControls a:hover {
+#fileDialogueControls button:hover {
 	text-decoration: underline;
 }
 

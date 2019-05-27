@@ -371,7 +371,7 @@ html body #bodyContainer {
   line-height: 22px;
   font-family: "RobotRegular", Arial, Helvetica, sans-serif;
 }
-.desktop #pageContent #body #sidenav ul li a {
+.desktop #pageContent #body #sidenav ul li a, .desktop #pageContent #body #sidenav ul li button {
   font-family: "Myriad Pro", "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
   font-size: 14px;
   line-height: 18px;
@@ -381,8 +381,16 @@ html body #bodyContainer {
   margin: 0 10px 0 10px;
   width: calc(100% - 20px);
   float: left;
+  text-align: left;
+  border: 0;
+  background: #0d3a74;
+  background: -moz-liniear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+  background: -webkit-linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+  background: -o-linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+  background: -ms-linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+  background: linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
 }
-.desktop #pageContent #body #sidenav ul li a span {
+.desktop #pageContent #body #sidenav ul li a span, .desktop #pageContent #body #sidenav ul li button span {
   margin: 0 0 0 8px;
   display: inline-block;
   width: calc(100% - 32px);
@@ -390,7 +398,7 @@ html body #bodyContainer {
   text-overflow: clip;
   word-break: break-word;
 }
-.desktop #pageContent #body #sidenav ul li a .arrow {
+.desktop #pageContent #body #sidenav ul li a .arrow, .desktop #pageContent #body #sidenav ul li button .arrow {
   background-image: url("/images/ic-arrows.png");
   background-repeat: no-repeat;
   width: 4px;
@@ -1406,6 +1414,20 @@ html body #bodyContainer {
   padding: 4px;
   margin: 2.5px 0;
 }
+.desktop button.linkButton {
+  padding: 0;
+  color: #2875d7;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.desktop button.linkButton:hover {
+  text-decoration: underline;
+}
+.desktop .socialMedia {
+  content: "";
+}
 
 .mobile #bodyContainer #page header #logo {
   width: 100%;
@@ -1458,7 +1480,7 @@ html body #bodyContainer {
   width: 25%;
   text-align: center;
 }
-.mobile #bodyContainer #page header nav#mainNavigation ul li a {
+.mobile #bodyContainer #page header nav#mainNavigation ul li a, .mobile #bodyContainer #page header nav#mainNavigation ul li button {
   font-family: "RobotoMedium", Arial, Helvetica, sans-serif;
   font-size: 12px;
   line-height: 18px;
@@ -1478,7 +1500,7 @@ html body #bodyContainer {
   text-align: center;
   padding: 7px 0 7px 0;
 }
-.mobile #bodyContainer #page header nav#mainNavigation ul li a.selected {
+.mobile #bodyContainer #page header nav#mainNavigation ul li a.selected, .mobile #bodyContainer #page header nav#mainNavigation ul li button.selected {
   height: 47px;
   padding: 7px 0 7px 0;
   color: #f6bf22;

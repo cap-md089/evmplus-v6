@@ -195,7 +195,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			if (this.props.onChangeVisible) {
 				this.props.onChangeVisible(filteredValues);
 			}
-		}).bind(this);
+		});
 	}
 
 	// private getInitializer(i: number) {
@@ -283,7 +283,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 					});
 				}
 			}
-		}).bind(this);
+		});
 	}
 
 	private get filteredIDValues() {

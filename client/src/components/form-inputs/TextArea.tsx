@@ -69,13 +69,13 @@ const HyperLink: React.SFC<any> = ({ block, contentState }) => {
 		.getData();
 
 	if (
-		!!href.match(/^(https?\:\/\/)?(www\.)?capunit\.com\/?/) ||
+		!!href.match(/^(https?:\/\/)?(www\.)?capunit\.com\/?/) ||
 		href[0] === '/'
 	) {
 		return <Link to={href}>{text}</Link>;
 	} else {
 		return (
-			<a href={href} target="_blank">
+			<a href={href} target="_blank" rel="noopener noreferrer">
 				{text}
 			</a>
 		);
@@ -92,6 +92,7 @@ const Media: React.SFC<any> = ({ block, contentState }) => {
 					width: '100%'
 				}}
 				src={src}
+				alt=""
 			/>
 		</div>
 	);

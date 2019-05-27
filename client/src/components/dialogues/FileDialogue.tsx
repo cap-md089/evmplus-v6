@@ -144,28 +144,28 @@ export default class FileDialogue extends React.Component<
 		return (
 			<Dialogue {...props}>
 				<div id="fileDialogueControls">
-					<a
-						href="#"
+					<button
 						onClick={this.getViewChanger(FileDialogueView.MYDRIVE)}
 						className={
-							this.state.view === FileDialogueView.MYDRIVE
+							'linkButton ' +
+							(this.state.view === FileDialogueView.MYDRIVE
 								? 'selected'
-								: ''
+								: '')
 						}
 					>
 						Squadron Drive
-					</a>
-					<a
-						href="#"
+					</button>
+					<button
 						onClick={this.getViewChanger(FileDialogueView.UPLOAD)}
 						className={
-							this.state.view === FileDialogueView.UPLOAD
+							'linkButton ' +
+							(this.state.view === FileDialogueView.UPLOAD
 								? 'selected'
-								: ''
+								: '')
 						}
 					>
 						Upload
-					</a>
+					</button>
 				</div>
 				<div id="fileDialogueBody">
 					{this.state.selectedFiles.length > 0 ? (
@@ -223,7 +223,7 @@ export default class FileDialogue extends React.Component<
 									? this.state.currentFolder.folderPath.map(
 											path => (
 												<>
-													<a
+													<button
 														onClick={e => {
 															e.preventDefault();
 															this.goToFolder(
@@ -231,14 +231,14 @@ export default class FileDialogue extends React.Component<
 															);
 															return false;
 														}}
-														href="#"
 														style={{
 															color: '#2875d7',
 															cursor: 'pointer'
 														}}
+														className="linkButton"
 													>
 														{path.name}
-													</a>
+													</button>
 													&nbsp;/&nbsp;
 												</>
 											)
@@ -296,7 +296,7 @@ export default class FileDialogue extends React.Component<
 	}
 
 	private getViewChanger(view: FileDialogueView) {
-		return ((e: React.MouseEvent<HTMLAnchorElement>) => {
+		return ((e: React.MouseEvent<HTMLButtonElement>) => {
 			if (view === FileDialogueView.MYDRIVE) {
 				this.goToFolder(this.state.currentFolder!.id);
 				this.setState({
@@ -310,7 +310,7 @@ export default class FileDialogue extends React.Component<
 				});
 			}
 			e.preventDefault();
-		}).bind(this);
+		});
 	}
 
 	private onFolderClick(folder: FileInterface, selected: boolean) {

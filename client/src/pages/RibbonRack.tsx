@@ -115,10 +115,6 @@ const Spacer = (props: { size: number }) => (
 );
 
 class RibbonRack extends React.Component<Partial<Ribbons>> {
-	constructor(props: Partial<Ribbons>) {
-		super(props);
-	}
-
 	public render() {
 		const ribbons: JSX.Element[] = [];
 

@@ -161,7 +161,7 @@ export default class FileUploader extends React.Component<
 			this.setState({
 				hovering
 			});
-		}).bind(this);
+		});
 	}
 
 	private handleDrop(ev: React.DragEvent<HTMLDivElement>) {

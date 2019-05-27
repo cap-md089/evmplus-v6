@@ -19,7 +19,7 @@ export default class NotFound extends Page<PageProps> {
 		return <div>
 			<h2>This is not the page you are looking for</h2>
 			We're sorry, the page "{this.props.routeProps.location.pathname.split('/')[1]}" cannot be found<br />
-			<a onClick={() => this.props.routeProps.history.goBack()}>Go back a page</a>
+			<button className="linkButton" onClick={() => this.props.routeProps.history.goBack()}>Go back a page</button>
 		</div>
 	}
 }

@@ -22,6 +22,7 @@ export default (props: NumberInputProps) => (
 		name={props.name}
 		value={props.value === null ? '' : (props.value || 0).toString()}
 		shouldUpdate={val =>
+			// eslint-disable-next-line
 			parseInt(val, props.radix || 10) ===
 				parseInt(val, props.radix || 10) &&
 			(typeof props.shouldUpdate !== 'undefined'

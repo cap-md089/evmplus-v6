@@ -12,7 +12,6 @@ import {
 	MemberReference,
 	Member,
 	EventObject,
-	RawTeamObject,
 	FullTeamObject,
 	FileObject,
 	FullFileObject,

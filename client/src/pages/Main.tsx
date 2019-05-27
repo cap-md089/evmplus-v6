@@ -225,19 +225,19 @@ export default class Main extends Page<PageProps, MainState> {
 				<section className="halfSection" style={{ float: 'right' }}>
 					<div style={margin10}>
 						<Link to="/page/aerospaceeducation">
-							<img src="/images/aerospace.png" />
+							<img src="/images/aerospace.png" alt="Aerospace Education" />
 							<p style={center}>Aerospace Education</p>
 						</Link>
 					</div>
 					<div style={margin10}>
 						<Link to="/page/emergencyservices">
-							<img src="/images/emergency.png" style={block} />
+							<img src="/images/emergency.png" style={block} alt="Emergency Services" />
 							<p style={center}>Emergency Services</p>
 						</Link>
 					</div>
 					<div style={margin10}>
 						<Link to="/page/cadetprograms">
-							<img src="/images/programs.png" style={block} />
+							<img src="/images/programs.png" style={block} alt="Cadet Programs" />
 							<p style={center}>Cadet Programs</p>
 						</Link>
 					</div>

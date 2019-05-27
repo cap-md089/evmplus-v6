@@ -252,7 +252,7 @@ export default class TemporaryDutyPositions extends Page<
 			this.state.currentMember.saveTemporaryDutyPositions(this.props.member);
 
 			this.forceUpdate();
-		}).bind(this);
+		});
 	}
 
 	private getDutyPositionListForMember() {

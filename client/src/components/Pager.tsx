@@ -14,10 +14,6 @@ interface PagerProps<T> {
 }
 
 export default class Pager<T> extends React.Component<PagerProps<T>> {
-	constructor(props: PagerProps<T>) {
-		super(props);
-	}
-
 	public render() {
 		const start = (this.props.page - 1) * this.props.dataCountPerPage;
 
@@ -285,6 +281,6 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 			}
 
 			this.props.onChangePageNumber(page, renderDataset);
-		}).bind(this);
+		});
 	}
 }
