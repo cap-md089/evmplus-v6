@@ -38,7 +38,7 @@ export const generateHash = (password: string, secret: string) =>
 		.digest()
 		.toString('hex');
 
-export const hashPassword = (password: string, salt: string, revolutions = 1024): string =>
+export const hashPassword = (password: string, salt: string, revolutions = 65536): string =>
 	revolutions === 0
 		? generateHash(password, salt)
 		: hashPassword(generateHash(password, salt), salt, revolutions - 1);
@@ -76,7 +76,7 @@ export default class ProspectiveMember extends CAPWATCHMember
 
 		id += highestNumber + 1;
 
-		const salt = randomBytes(64).toString();
+		const salt = randomBytes(128).toString();
 
 		const hashedPassword = hashPassword(password, salt);
 
