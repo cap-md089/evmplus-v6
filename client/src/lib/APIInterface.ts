@@ -5,13 +5,16 @@ import MemberBase from './Members';
  * Base class to help handle transmission and tokens
  */
 export default abstract class APIInterface<T> {
+	private static ENV: 'production' | 'staging' | 'test' | 'development' = 'development';
 	/**
 	 * Set where to send requests to
 	 */
 	protected static REQUEST_URI =
-		process.env.NODE_ENV === 'production'
+		APIInterface.ENV === 'production'
 			? 'capunit.com'
-			: 'localcapunit.com:3001';
+			: APIInterface.ENV === 'staging'
+				? 'capunitdev.com'
+				: 'localcapunit.com:3001'
 
 	/**
 	 * Requests a token on the account for the member provided
@@ -27,7 +30,7 @@ export default abstract class APIInterface<T> {
 		member: MemberBase
 	): Promise<string> {
 		const uri =
-			process.env.NODE_ENV === 'production'
+			APIInterface.ENV === 'production' || APIInterface.ENV === 'staging'
 				? `https://${accountID}.${APIInterface.REQUEST_URI}/`
 				: '/';
 
@@ -80,6 +83,10 @@ export default abstract class APIInterface<T> {
 	) {
 		if (uri[0] === '/') {
 			uri = uri.slice(1);
+		}
+
+		if (uri.split('/').length > 3 && uri.split(':').length == 2) {
+			uri = uri.split('/').slice(3).join('/');
 		}
 
 		let headers = options.headers || {};
