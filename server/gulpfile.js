@@ -63,6 +63,15 @@ if (existsSync('./dist/conf.js')) {
 	);
 
 	gulp.task(
+		'mysql:import:127.0.0.1',
+		exec.task(
+			`mysql --user=${conn.user} --host=127.0.0.1 --password=${
+				conn.password
+			} < mysqldumps/current.sql`
+		)
+	);
+
+	gulp.task(
 		'mysql:import',
 		exec.task(
 			`mysql --user=${conn.user} --password=${
