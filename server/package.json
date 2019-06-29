@@ -32,7 +32,7 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "@mysql/xdevapi": "^8.0.12",
+    "@mysql/xdevapi": "^8.0.16",
     "@types/body-parser": "^1.16.8",
     "@types/cheerio": "^0.22.7",
     "@types/cookie-parser": "^1.4.1",
