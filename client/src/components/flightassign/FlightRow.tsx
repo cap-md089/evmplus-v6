@@ -75,7 +75,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 				jQuery(this.namesDiv.current!).slideUp(() => {
 					this.setState({
 						open: false
-					})
+					});
 				});
 				jQuery(this.titleDiv.current!).animate({
 					height: 40,
@@ -85,11 +85,16 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 					hidenames: true
 				});
 			}, 100);
-		} else if (!this.state.open && this.props.open && this.namesDiv.current && this.titleDiv.current) {
+		} else if (
+			!this.state.open &&
+			this.props.open &&
+			this.namesDiv.current &&
+			this.titleDiv.current
+		) {
 			jQuery(this.namesDiv.current).slideDown(() => {
 				this.setState({
 					open: true
-				})
+				});
 			});
 			jQuery(this.titleDiv.current).animate({
 				height: 16,
@@ -137,10 +142,11 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 					onDragEnter={this.handleOver}
 					ref={this.titleDiv}
 				>
-					{this.props.name}
+					{this.props.name} ({this.props.members.length} member
+					{this.props.members.length === 1 ? '' : 's'})
 				</div>
 				<div
-					className={(this.state.hidenames) ? '' : 'flightrow-names-open'}
+					className={this.state.hidenames ? '' : 'flightrow-names-open'}
 					onDrop={this.onDrop}
 					onDragOver={this.handleOver}
 					onDragEnd={this.handleOver}
