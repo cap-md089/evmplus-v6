@@ -42,7 +42,8 @@ export interface MemberValidatedRequest<T, P extends ParamType = {}> extends Mem
 	body: T;
 }
 
-export interface ConditionalMemberValidatedRequest<T, P extends ParamType = {}> extends ConditionalMemberRequest<P> {
+export interface ConditionalMemberValidatedRequest<T, P extends ParamType = {}>
+	extends ConditionalMemberRequest<P> {
 	body: T;
 }
 
@@ -202,11 +203,11 @@ export default class Validator<T> {
 			return good
 				? {
 						valid: true
-				}
+				  }
 				: {
 						valid: false,
 						message: `elements in the array do not match the required type (e.g., the first element to fail has message: ${firstfail})`
-				};
+				  };
 		};
 
 		// @ts-ignore
@@ -456,8 +457,7 @@ export default class Validator<T> {
 			  };
 
 	public static MemberReference: ValidatorFunction<MemberReference> = input =>
-		!Validator.Nothing(input).valid &&
-		MemberBase.isReference(input)
+		!Validator.Nothing(input).valid && isValidMemberReference(input)
 			? {
 					valid: true
 			  }
@@ -694,6 +694,7 @@ export default class Validator<T> {
 							// @ts-ignore
 							newObject[key] = newArray;
 						} else {
+							// @ts-ignore
 							newObject[key] = obj[key];
 						}
 					}
@@ -728,7 +729,7 @@ export default class Validator<T> {
 						let newArray = [];
 						if (validator instanceof Validator) {
 							for (const i of arr) {
-									newArray.push(validator.prune(i));
+								newArray.push(validator.prune(i));
 							}
 						} else {
 							newArray = arr;
@@ -757,6 +758,6 @@ export default class Validator<T> {
 import { MemberReference } from 'common-lib';
 import * as express from 'express';
 import { AccountRequest } from '../Account';
-import MemberBase from '../Members';
-import { ConditionalMemberRequest, MemberRequest } from '../members/NHQMember';import { ParamType } from '../MySQLUtil';
-
+import { ConditionalMemberRequest, MemberRequest } from '../member/pam/Session';
+import { isValidMemberReference } from '../Members';
+import { ParamType } from '../MySQLUtil';

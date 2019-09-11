@@ -1,14 +1,14 @@
 import { MemberReference, ShortCAPUnitDutyPosition } from 'common-lib';
-import { CAPWATCHMember } from '../../../lib/Members';
+import { resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
 interface SetTemporaryDutyPositions {
-	dutyPositions: Array<Pick<ShortCAPUnitDutyPosition, 'duty' | 'type' | 'expires'>>;
+	dutyPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>;
 }
 
 const shortCAPWatchDutyPositionValidator = new Validator<
-	Pick<ShortCAPUnitDutyPosition, 'duty' | 'type' | 'expires'>
+	Omit<ShortCAPUnitDutyPosition, 'date'>
 >({
 	duty: {
 		validator: Validator.String
@@ -56,7 +56,7 @@ export default asyncErrorHandler(
 			return res.end();
 		}
 
-		const member = await CAPWATCHMember.ResolveReference(ref, req.account, req.mysqlx, false);
+		const member = await resolveReference(ref, req.account, req.mysqlx, false);
 
 		if (!member) {
 			res.status(404);
@@ -70,14 +70,13 @@ export default asyncErrorHandler(
 		) as ShortCAPUnitDutyPosition[];
 		const newDutyPositions: ShortCAPUnitDutyPosition[] = [];
 
-		for (let i = 0; i < req.body.dutyPositions.length; i++) {
+		for (const duty of req.body.dutyPositions) {
 			let found = false;
-			const duty = req.body.dutyPositions[i];
 
-			for (let j = 0; j < newDutyPositions.length; j++) {
-				if (newDutyPositions[j].duty === duty.duty) {
-					newDutyPositions[j].expires = Math.max(
-						newDutyPositions[j].expires,
+			for (const newDutyPosition of newDutyPositions) {
+				if (newDutyPosition.duty === duty.duty) {
+					newDutyPosition.expires = Math.max(
+						newDutyPosition.expires,
 						duty.expires
 					);
 					found = true;
@@ -112,16 +111,16 @@ export default asyncErrorHandler(
 			}
 		}
 
-		for (let i = 0; i < newDutyPositions.length; i++) {
+		for (const duty of newDutyPositions) {
 			member.addTemporaryDutyPosition({
-				Duty: newDutyPositions[i].duty,
+				Duty: duty.duty,
 				assigned: now,
-				validUntil: newDutyPositions[i].expires
+				validUntil: duty.expires
 			});
 		}
 
-		for (let i = 0; i < oldDutyPositionsDiff.length; i++) {
-			member.removeDutyPosition(oldDutyPositionsDiff[i].duty);
+		for (const oldDuty of oldDutyPositions) {
+			member.removeDutyPosition(oldDuty.duty);
 		}
 
 		await member.saveExtraMemberInformation(req.mysqlx, req.account);

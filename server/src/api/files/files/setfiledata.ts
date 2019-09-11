@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { MemberRequest } from '../../../lib/Members';
 import { validRawToken } from '../../formtoken';
 
 const findEnding = (input: Buffer, boundary: string) => {
@@ -20,7 +20,7 @@ const findEnding = (input: Buffer, boundary: string) => {
 
 export default async (req: MemberRequest<{ fileid: string }>, res: express.Response) => {
 	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
-		if (!validRawToken(req.headers.token, req.member)) {
+		if (!await validRawToken(req.mysqlx, req.member, req.headers.token)) {
 			res.status(403);
 			res.end();
 			return;
@@ -48,8 +48,10 @@ export default async (req: MemberRequest<{ fileid: string }>, res: express.Respo
 	}
 
 	if (
-		!file.hasPermission(
+		!await file.hasPermission(
 			req.member,
+			req.mysqlx,
+			req.account,
 			// tslint:disable-next-line:no-bitwise
 			FileUserAccessControlPermissions.MODIFY | FileUserAccessControlPermissions.WRITE
 		)

@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { MemberRequest } from '../../lib/MemberBase';
+import { MemberRequest } from '../../lib/Members';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {

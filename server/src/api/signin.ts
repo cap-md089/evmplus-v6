@@ -1,74 +1,53 @@
 import { SigninReturn } from 'common-lib';
+import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
-import MemberBase from '../lib/Members';
-import { default as Member, MemberCreateError } from '../lib/members/NHQMember';
-import ProspectiveMember from '../lib/members/ProspectiveMember';
+import { trySignin } from '../lib/member/pam/Auth';
+import { resolveReference } from '../lib/Members';
 import { asyncErrorHandler, json } from '../lib/Util';
 
-export default asyncErrorHandler(async (
-	req: AccountRequest,
-	res: express.Response
-) => {
+export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
 	const {
 		username,
-		password
-	}: { username: string | number; password: string } = req.body;
+		password,
+		recaptcha
+	}: { username: string | number; password: string; recaptcha: string } = req.body;
 	if (typeof req.account === 'undefined') {
 		res.status(400);
 		res.end();
 		return;
 	}
 
-	let member;
+	username.toString();
+
+	const signinResult = await trySignin(req.mysqlx, username.toString(), password, recaptcha);
 
 	try {
-		const userID = username.toString();
+		if (signinResult.result === MemberCreateError.NONE) {
+			const member = await resolveReference(
+				signinResult.member,
+				req.account,
+				req.mysqlx,
+				true
+			);
 
-		switch (MemberBase.GetMemberTypeFromID(userID)) {
-			case 'CAPNHQMember':
-				member = await Member.Create(
-					userID,
-					password,
-					req.mysqlx,
-					req.account
-				);
-				break;
+			const [notificationCount, taskCount] = await Promise.all([
+				member.getUnreadNotificationCount(),
+				member.getUnfinishedTaskCount()
+			]);
 
-			case 'CAPProspectiveMember':
-				member = await ProspectiveMember.Signin(
-					userID,
-					password,
-					req.account,
-					req.mysqlx
-				);
-				break;
-		}
-
-		json<SigninReturn>(res, {
-			error: MemberCreateError.NONE,
-			member: member.toRaw(),
-			sessionID: member.sessionID,
-			valid: true,
-			notificationCount: await member.getUnreadNotificationCount(),
-			taskCount: await member.getUnfinishedTaskCount()
-		});
-	} catch (errors) {
-		if (!errors.message.match(/^(\d)*$/)) {
-			console.error(errors);
-			res.status(500);
 			json<SigninReturn>(res, {
-				error: MemberCreateError.UNKOWN_SERVER_ERROR,
-				member: null,
-				sessionID: '',
-				valid: false,
-				notificationCount: 0,
-				taskCount: 0
+				error: MemberCreateError.NONE,
+				member,
+				sessionID: signinResult.sessionID,
+				valid: true,
+				notificationCount,
+				taskCount
 			});
 		} else {
 			res.status(400);
 			json<SigninReturn>(res, {
-				error: parseInt(errors.message, 10),
+				error: signinResult.result,
 				member: null,
 				sessionID: '',
 				valid: false,
@@ -76,5 +55,15 @@ export default asyncErrorHandler(async (
 				taskCount: 0
 			});
 		}
+	} catch (e) {
+		res.status(500);
+		json<SigninReturn>(res, {
+			error: MemberCreateError.UNKOWN_SERVER_ERROR,
+			member: null,
+			sessionID: '',
+			valid: false,
+			notificationCount: 0,
+			taskCount: 0
+		});
 	}
 });

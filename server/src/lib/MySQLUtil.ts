@@ -8,13 +8,15 @@ export interface ParamType {
 
 export interface MySQLRequest<P extends ParamType = {}> extends express.Request {
 	mysqlx: mysql.Schema;
+	mysqlxSession: mysql.Session;
 	_originalUrl: string;
 	params: P;
 }
 
-export default (pool: mysql.Schema) => {
+export default (pool: mysql.Schema, session: mysql.Session) => {
 	return (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
 		req.mysqlx = pool;
+		req.mysqlxSession = session;
 		next();
 	};
 };

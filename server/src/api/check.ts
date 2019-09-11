@@ -1,18 +1,25 @@
-import { SigninReturn } from 'common-lib';
+import { NHQMemberObject, ProspectiveMemberObject, SigninReturn } from 'common-lib';
 import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
-import { ConditionalMemberRequest } from '../lib/MemberBase';
+import { ConditionalMemberRequest } from '../lib/Members';
 import { json } from '../lib/Util';
 
 export default async (req: ConditionalMemberRequest, res: express.Response) => {
 	if (!!req.member) {
+		const [taskCount, notificationCount] = await Promise.all([
+			req.member.getUnreadNotificationCount(),
+			req.member.getUnfinishedTaskCount()
+		]);
+
+		const member = req.member.toRaw() as ProspectiveMemberObject | NHQMemberObject;
+
 		json<SigninReturn>(res, {
 			error: MemberCreateError.NONE,
 			sessionID: req.member.sessionID,
-			member: req.member.toRaw(),
+			member,
 			valid: true,
-			notificationCount: await req.member.getUnreadNotificationCount(),
-			taskCount: 0
+			notificationCount,
+			taskCount
 		});
 	} else {
 		json<SigninReturn>(res, {

@@ -1,6 +1,6 @@
 import * as express from 'express';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(

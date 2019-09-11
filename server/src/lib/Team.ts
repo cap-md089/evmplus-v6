@@ -14,7 +14,8 @@ import {
 import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
-import MemberBase from './MemberBase';
+import MemberBase from './member/MemberBase';
+import { areMemberReferencesTheSame, resolveReference } from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 import NewTeamMemberValidator from './validator/validators/NewTeamMember';
 import NewTeamObjectValidator from './validator/validators/NewTeamObject';
@@ -197,7 +198,7 @@ export default class Team implements FullTeamObject {
 		const teamObject = new Team(fullNewTeam, account, schema);
 
 		for (const i of data.members) {
-			const fullMember = await MemberBase.ResolveReference(i.reference, account, schema);
+			const fullMember = await resolveReference(i.reference, account, schema);
 
 			if (fullMember) {
 				await teamObject.addTeamMember(fullMember, i.job, account, schema);
@@ -225,9 +226,9 @@ export default class Team implements FullTeamObject {
 		schema: Schema
 	): Promise<FullTeamObject> {
 		const [cadetLeader, seniorMentor, seniorCoach] = await Promise.all([
-			MemberBase.ResolveReference(raw.cadetLeader, account, schema),
-			MemberBase.ResolveReference(raw.seniorMentor, account, schema),
-			MemberBase.ResolveReference(raw.seniorCoach, account, schema)
+			resolveReference(raw.cadetLeader, account, schema),
+			resolveReference(raw.seniorMentor, account, schema),
+			resolveReference(raw.seniorCoach, account, schema)
 		]);
 
 		const cadetLeaderName = cadetLeader ? cadetLeader.getFullName() : '';
@@ -239,7 +240,7 @@ export default class Team implements FullTeamObject {
 		for (const member of raw.members) {
 			let fullMember;
 			try {
-				fullMember = await MemberBase.ResolveReference(member.reference, account, schema);
+				fullMember = await resolveReference(member.reference, account, schema);
 			} catch (e) {
 				console.log('Could not get member ', member.reference);
 			}
@@ -255,7 +256,7 @@ export default class Team implements FullTeamObject {
 		const teamHistory: FullPreviousTeamMember[] = [];
 
 		for (const member of raw.teamHistory) {
-			const fullMember = await MemberBase.ResolveReference(member.reference, account, schema);
+			const fullMember = await resolveReference(member.reference, account, schema);
 
 			if (fullMember) {
 				teamHistory.push({
@@ -442,20 +443,17 @@ export default class Team implements FullTeamObject {
 	});
 
 	public hasMember(member: MemberReference) {
-		return (
-			this.members.filter(f => MemberBase.AreMemberReferencesTheSame(member, f.reference))
-				.length > 0
-		);
+		return this.members.filter(f => areMemberReferencesTheSame(member, f.reference)).length > 0;
 	}
 
 	public isMemberOrLeader(member: MemberReference) {
-		if (MemberBase.AreMemberReferencesTheSame(member, this.cadetLeader)) {
+		if (areMemberReferencesTheSame(member, this.cadetLeader)) {
 			return true;
 		}
-		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorCoach)) {
+		if (areMemberReferencesTheSame(member, this.seniorCoach)) {
 			return true;
 		}
-		if (MemberBase.AreMemberReferencesTheSame(member, this.seniorMentor)) {
+		if (areMemberReferencesTheSame(member, this.seniorMentor)) {
 			return true;
 		}
 		return this.hasMember(member);
@@ -463,7 +461,7 @@ export default class Team implements FullTeamObject {
 
 	public async addTeamMember(member: MemberBase, job: string, account: Account, schema: Schema) {
 		const oldMember = this.members.filter(
-			f => !MemberBase.AreMemberReferencesTheSame(member.getReference(), f.reference)
+			f => !areMemberReferencesTheSame(member.getReference(), f.reference)
 		)[0];
 		if (oldMember !== undefined) {
 			this.modifyTeamMember(member.getReference(), `${oldMember.job}, ${job}`);
@@ -502,9 +500,8 @@ export default class Team implements FullTeamObject {
 
 		if (results.length === 0) {
 			const newInformation: ExtraMemberInformation = {
-				accessLevel: 'Member',
 				accountID: account.id,
-				...member,
+				member,
 				temporaryDutyPositions: [],
 				flight: null,
 				teamIDs: [],
@@ -534,11 +531,9 @@ export default class Team implements FullTeamObject {
 		}
 
 		const oldMember = this.members.filter(
-			f => !MemberBase.AreMemberReferencesTheSame(member, f.reference)
+			f => !areMemberReferencesTheSame(member, f.reference)
 		)[0];
-		this.members = this.members.filter(
-			f => !MemberBase.AreMemberReferencesTheSame(member, f.reference)
-		);
+		this.members = this.members.filter(f => !areMemberReferencesTheSame(member, f.reference));
 
 		this.teamHistory.push({
 			...oldMember,
@@ -558,9 +553,8 @@ export default class Team implements FullTeamObject {
 
 		if (results.length === 0) {
 			const newInformation: ExtraMemberInformation = {
-				accessLevel: 'Member',
 				accountID: account.id,
-				...member,
+				member,
 				temporaryDutyPositions: [],
 				flight: null,
 				teamIDs: [],
@@ -581,9 +575,9 @@ export default class Team implements FullTeamObject {
 	}
 
 	public modifyTeamMember(member: MemberReference, job: string) {
-		for (let i = 0; i < this.members.length; i++) {
-			if (MemberBase.AreMemberReferencesTheSame(member, this.members[i].reference)) {
-				this.members[i].job = job;
+		for (const teamMember of this.members) {
+			if (areMemberReferencesTheSame(member, teamMember.reference)) {
+				teamMember.job = job;
 				break;
 			}
 		}
@@ -595,30 +589,30 @@ export default class Team implements FullTeamObject {
 		account: Account,
 		schema: Schema
 	) {
-		for (let i = oldMembers.length - 1; i >= 0; i--) {
+		for (const oldMember of oldMembers) {
 			if (
 				newMembers.filter(member =>
-					MemberBase.AreMemberReferencesTheSame(member.reference, oldMembers[i].reference)
+					areMemberReferencesTheSame(member.reference, oldMember.reference)
 				).length === 0
 			) {
-				this.removeTeamMember(oldMembers[i].reference, account, schema);
+				this.removeTeamMember(oldMember.reference, account, schema);
 			}
 		}
 
-		for (let i = newMembers.length - 1; i >= 0; i--) {
+		for (const newMember of newMembers) {
 			if (
 				oldMembers.filter(member =>
-					MemberBase.AreMemberReferencesTheSame(member.reference, newMembers[i].reference)
+					areMemberReferencesTheSame(member.reference, newMember.reference)
 				).length === 0
 			) {
-				const fullMember = await MemberBase.ResolveReference(
-					newMembers[i].reference,
+				const fullMember = await resolveReference(
+					newMember.reference,
 					account,
 					schema,
 					true
 				);
 
-				await this.addTeamMember(fullMember, newMembers[i].job, account, schema);
+				await this.addTeamMember(fullMember, newMember.job, account, schema);
 			}
 		}
 	}
@@ -655,9 +649,8 @@ export default class Team implements FullTeamObject {
 
 		if (results.length === 0) {
 			const newInformation: ExtraMemberInformation = {
-				accessLevel: 'Member',
 				accountID: account.id,
-				...member,
+				member,
 				temporaryDutyPositions: [],
 				flight: null,
 				teamIDs: [this.id],

@@ -1,6 +1,6 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
-import NHQMember from '../../lib/members/NHQMember';
+import { memberMiddleware, permissionMiddleware } from '../../lib/member/pam/Session';
 import RegistryValueValidator from '../../lib/validator/validators/RegistryValues';
 import { tokenMiddleware } from '../formtoken';
 // CRUD functions
@@ -16,9 +16,9 @@ router.use(Account.ExpressMiddleware);
 router.get('/', get);
 router.post(
 	'/',
-	NHQMember.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	NHQMember.PermissionMiddleware('RegistryEdit'),
+	permissionMiddleware('RegistryEdit'),
 	RegistryValueValidator.PartialBodyExpressMiddleware(validator),
 	set
 );

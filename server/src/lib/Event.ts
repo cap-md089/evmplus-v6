@@ -25,7 +25,8 @@ import {
 } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
-import { default as BaseMember, default as MemberBase } from './MemberBase';
+import { default as BaseMember, default as MemberBase } from './member/MemberBase';
+import { areMemberReferencesTheSame, resolveReference } from './Members';
 import {
 	collectResults,
 	findAndBind,
@@ -158,8 +159,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		);
 	}
 
-	private static async GetCustomAttendanceFields(
-	): Promise<CustomAttendanceField[]> {
+	private static async GetCustomAttendanceFields(): Promise<CustomAttendanceField[]> {
 		return null;
 	}
 
@@ -207,9 +207,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		) as InternalPointOfContact[];
 
 		const members = await Promise.all(
-			internalPointsOfContact.map(p =>
-				MemberBase.ResolveReference(p.memberReference, account, schema)
-			)
+			internalPointsOfContact.map(p => resolveReference(p.memberReference, account, schema))
 		);
 
 		const newPOCs = pocs as POCFull;
@@ -462,10 +460,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			!!this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&
-					MemberBase.AreMemberReferencesTheSame(
-						member.getReference(),
-						poc.memberReference
-					)
+					areMemberReferencesTheSame(member.getReference(), poc.memberReference)
 			) ||
 			member.matchesReference(this.author) ||
 			member.isRioux
@@ -571,91 +566,87 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		updater: MemberBase
 	): Promise<boolean> {
 		if (Event.Validator.validate(values, true)) {
-			const previousPOCs = this.pointsOfContact.slice(0);
-			const newPOCs = values.pointsOfContact.slice(0);
+			if (values.pointsOfContact) {
+				const previousPOCs = this.pointsOfContact.slice(0);
+				const newPOCs = values.pointsOfContact.slice(0);
 
-			for (let i: number = newPOCs.length - 1; i >= 0; i--) {
-				for (const poc of this.pointsOfContact) {
-					const pPOC = newPOCs[i];
-					if (pPOC.type === PointOfContactType.EXTERNAL) {
-						newPOCs.splice(i, 1);
-						continue;
-					}
+				for (let i: number = newPOCs.length - 1; i >= 0; i--) {
+					for (const poc of this.pointsOfContact) {
+						const pPOC = newPOCs[i];
+						if (pPOC.type === PointOfContactType.EXTERNAL) {
+							newPOCs.splice(i, 1);
+							continue;
+						}
 
-					if (
-						poc.type === PointOfContactType.INTERNAL &&
-						MemberBase.AreMemberReferencesTheSame(
-							poc.memberReference,
-							pPOC.memberReference
-						)
-					) {
-						newPOCs.splice(i, 1);
-					}
-				}
-			}
-
-			for (let i: number = previousPOCs.length - 1; i >= 0; i--) {
-				for (const poc of values.pointsOfContact) {
-					const pPOC = previousPOCs[i];
-					if (pPOC.type === PointOfContactType.EXTERNAL) {
-						previousPOCs.splice(i, 1);
-						continue;
-					}
-
-					if (
-						poc.type === PointOfContactType.INTERNAL &&
-						MemberBase.AreMemberReferencesTheSame(
-							poc.memberReference,
-							pPOC.memberReference
-						)
-					) {
-						previousPOCs.splice(i, 1);
+						if (
+							poc.type === PointOfContactType.INTERNAL &&
+							areMemberReferencesTheSame(poc.memberReference, pPOC.memberReference)
+						) {
+							newPOCs.splice(i, 1);
+						}
 					}
 				}
-			}
 
-			for (const poc of previousPOCs) {
-				await MemberNotification.CreateNotification(
-					'You are no longer a POC of an event',
-					(poc as DisplayInternalPointOfContact).memberReference,
-					{
-						type: NotificationCauseType.MEMBER,
-						from: updater.getReference()
-					},
-					{
-						type: NotificationDataType.EVENT,
+				for (let i: number = previousPOCs.length - 1; i >= 0; i--) {
+					for (const poc of values.pointsOfContact) {
+						const pPOC = previousPOCs[i];
+						if (pPOC.type === PointOfContactType.EXTERNAL) {
+							previousPOCs.splice(i, 1);
+							continue;
+						}
 
-						accountID: this.accountID,
-						eventID: this.id,
-						delta: 'REMOVED',
-						eventName: this.name
-					},
-					account,
-					schema,
-					updater
-				);
-			}
+						if (
+							poc.type === PointOfContactType.INTERNAL &&
+							areMemberReferencesTheSame(poc.memberReference, pPOC.memberReference)
+						) {
+							previousPOCs.splice(i, 1);
+						}
+					}
+				}
 
-			for (const poc of newPOCs) {
-				await MemberNotification.CreateNotification(
-					'You are now a POC of an event',
-					(poc as DisplayInternalPointOfContact).memberReference,
-					{
-						type: NotificationCauseType.MEMBER,
-						from: updater.getReference()
-					},
-					{
-						type: NotificationDataType.EVENT,
+				for (const poc of previousPOCs) {
+					await MemberNotification.CreateNotification(
+						'You are no longer a POC of an event',
+						(poc as DisplayInternalPointOfContact).memberReference,
+						{
+							type: NotificationCauseType.MEMBER,
+							from: updater.getReference()
+						},
+						{
+							type: NotificationDataType.EVENT,
 
-						accountID: this.accountID,
-						eventID: this.id,
-						delta: 'ADDED',
-						eventName: this.name
-					},
-					account,
-					schema,
-					updater
-				);
+							accountID: this.accountID,
+							eventID: this.id,
+							delta: 'REMOVED',
+							eventName: this.name
+						},
+						account,
+						schema,
+						updater
+					);
+				}
+
+				for (const poc of newPOCs) {
+					await MemberNotification.CreateNotification(
+						'You are now a POC of an event',
+						(poc as DisplayInternalPointOfContact).memberReference,
+						{
+							type: NotificationCauseType.MEMBER,
+							from: updater.getReference()
+						},
+						{
+							type: NotificationDataType.EVENT,
+
+							accountID: this.accountID,
+							eventID: this.id,
+							delta: 'ADDED',
+							eventName: this.name
+						},
+						account,
+						schema,
+						updater
+					);
+				}
 			}
 
 			Event.Validator.partialPrune(values, this);
@@ -716,10 +707,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	): Promise<boolean> {
 		for (const index in this.attendance) {
 			if (
-				MemberBase.AreMemberReferencesTheSame(
-					this.attendance[index].memberID,
-					member.getReference()
-				)
+				areMemberReferencesTheSame(this.attendance[index].memberID, member.getReference())
 			) {
 				return this.modifyAttendanceRecord(newAttendanceRecord, member);
 			}
@@ -784,10 +772,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		for (const index in this.attendance) {
 			if (
-				MemberBase.AreMemberReferencesTheSame(
-					this.attendance[index].memberID,
-					member.getReference()
-				)
+				areMemberReferencesTheSame(this.attendance[index].memberID, member.getReference())
 			) {
 				const attendance = await collectResults(
 					findAndBind(attendanceCollection, {

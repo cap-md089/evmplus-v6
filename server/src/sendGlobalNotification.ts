@@ -5,7 +5,7 @@ import { NotificationCause, RawAccountObject } from 'common-lib';
 import { NotificationCauseType } from 'common-lib/index';
 import conf from './conf';
 import Account from './lib/Account';
-import MemberBase from './lib/Members';
+import { resolveReference } from './lib/Members';
 import { collectResults } from './lib/MySQLUtil';
 import GlobalNotification from './lib/notifications/GlobalNotification';
 
@@ -20,7 +20,7 @@ const argError = () => {
 		'node sendGlobalNotification.js [CAPID|SYS] [Account ID|ALL] [YYYY-MM-DD] [HH:MM] [message...]'
 	);
 	process.exit(1);
-}
+};
 
 // Simple check before going on further
 if (process.argv.length < 7) {
@@ -67,20 +67,14 @@ const alertAccount = async (account: Account, schema: Schema) => {
 			const current = await GlobalNotification.GetCurrent(account, schema);
 			current.markAsRead();
 			await current.save();
-		} catch(e) {
+		} catch (e) {
 			// There is not currently an active notification
 		}
 
 		if (from.type === NotificationCauseType.SYSTEM) {
 			// Create a system notification, doesn't require extra information
 			try {
-				await GlobalNotification.CreateNotification(
-					message,
-					expire,
-					from,
-					account,
-					schema
-				);
+				await GlobalNotification.CreateNotification(message, expire, from, account, schema);
 			} catch (e) {
 				console.error('Unknown error:');
 				console.error(e);
@@ -88,9 +82,9 @@ const alertAccount = async (account: Account, schema: Schema) => {
 		} else {
 			try {
 				// Get the member sending the notification
-				const member = await MemberBase.ResolveReference(from.from, account, schema);
+				const member = await resolveReference(from.from, account, schema);
 
-				// 
+				//
 				try {
 					await GlobalNotification.CreateNotification(
 						message,
@@ -111,7 +105,7 @@ const alertAccount = async (account: Account, schema: Schema) => {
 	} catch (e) {
 		console.error(e);
 	}
-}
+};
 
 (async config => {
 	// Establish a connection

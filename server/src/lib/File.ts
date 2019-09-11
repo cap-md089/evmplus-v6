@@ -16,7 +16,10 @@ import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../conf';
 import Account from './Account';
-import MemberBase from './Members';
+import { CAPNHQUser } from './member/members/CAPNHQMember';
+import { CAPProspectiveUser } from './member/members/CAPProspectiveMember';
+import { getPermissionsForMemberInAccount } from './member/pam/Account';
+import MemberBase, { resolveReference } from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
 import FileObjectValidator from './validator/validators/FileObjectValidator';
 
@@ -274,7 +277,7 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public toFullRaw = async (): Promise<FullFileObject> => ({
 		...this.toRaw(),
-		uploader: await MemberBase.ResolveReference(this.owner, this.account, this.schema, true)
+		uploader: await resolveReference(this.owner, this.account, this.schema, true)
 	});
 
 	public async delete(): Promise<void> {
@@ -317,13 +320,27 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		}
 	}
 
-	public hasPermission(
+	public async hasPermission(
 		member: MemberBase | null,
+		schema: Schema,
+		account: Account,
 		permission: FileUserAccessControlPermissions
-	): boolean {
+	): Promise<boolean> {
 		if (member) {
-			if (member.hasPermission('FileManagement')) {
-				return true;
+			if (member instanceof CAPNHQUser || member instanceof CAPProspectiveUser) {
+				if (member.hasPermission('FileManagement')) {
+					return true;
+				}
+			} else {
+				const permissions = await getPermissionsForMemberInAccount(
+					schema,
+					member.getReference(),
+					account
+				);
+
+				if (permissions.FileManagement >= 1) {
+					return true;
+				}
 			}
 
 			if (member.matchesReference(this.owner)) {

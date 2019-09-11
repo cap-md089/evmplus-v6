@@ -1,27 +1,8 @@
 import * as mysql from '@mysql/xdevapi';
-import {
-	AccountObject,
-	BlogPageObject,
-	BlogPostObject,
-	DatabaseInterface,
-	EventObject,
-	FileObject,
-	MemberReference,
-	NHQ,
-	NoSQLDocument,
-	ProspectiveMemberObject,
-	RawAccountObject,
-	RawTeamObject
-} from 'common-lib';
+import { AccountObject, DatabaseInterface, EventObject, FileObject, MemberReference, NHQ, NoSQLDocument, ProspectiveMemberObject, RawAccountObject, RawTeamObject } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import BlogPage from './BlogPage';
-import BlogPost from './BlogPost';
-import Event from './Event';
-import File from './File';
-import MemberBase, { CAPWATCHMember, ProspectiveMember } from './Members';
 import { collectResults, findAndBind, generateResults, MySQLRequest, ParamType } from './MySQLUtil';
-import Team from './Team';
 import { asyncErrorHandler, MonthNumber } from './Util';
 
 export interface AccountRequest<P extends ParamType = {}> extends MySQLRequest<P> {
@@ -230,7 +211,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		return uri.slice(0, -1);
 	}
 
-	public async *getMembers(): AsyncIterableIterator<CAPWATCHMember> {
+	public async *getMembers(): AsyncIterableIterator<CAPMemberClasses> {
 		const memberCollection = this.schema.getCollection<NHQ.Member>('NHQ_Member');
 
 		for (const ORGID of this.orgIDs) {
@@ -239,7 +220,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			});
 
 			for await (const member of generateResults(memberFind)) {
-				yield CAPWATCHMember.Get(member.CAPID, this, this.schema);
+				yield CAPNHQMember.Get(member.CAPID, this, this.schema);
 			}
 		}
 
@@ -252,7 +233,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		});
 
 		for await (const member of generateResults(prospectiveMemberFind)) {
-			yield ProspectiveMember.GetProspective(member.id, this, this.schema);
+			yield CAPProspectiveMember.Get(member.id, this, this.schema);
 		}
 	}
 
@@ -316,30 +297,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 	}
 
-	public async *getBlogPosts(): AsyncIterableIterator<BlogPost> {
-		const blogPostCollection = this.schema.getCollection<BlogPostObject>('Blog');
-
-		const blogPostIterator = findAndBind(blogPostCollection, {
-			accountID: this.id
-		});
-
-		for await (const post of generateResults(blogPostIterator)) {
-			yield BlogPost.Get(post.id, this, this.schema);
-		}
-	}
-
-	public async *getBlogPages(): AsyncIterableIterator<BlogPage> {
-		const blogPageCollection = this.schema.getCollection<BlogPageObject>('BlogPages');
-
-		const blogPageIterator = findAndBind(blogPageCollection, {
-			accountID: this.id
-		});
-
-		for await (const page of generateResults(blogPageIterator)) {
-			yield BlogPage.Get(page.id, this, this.schema);
-		}
-	}
-
 	/**
 	 * Updates the values in a secure manner
 	 *
@@ -363,7 +320,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 
 		if (Array.isArray(values.adminIDs)) {
-			if (values.adminIDs.every(CAPWATCHMember.isReference)) {
+			if (values.adminIDs.every(isValidMemberReference)) {
 				this.adminIDs = values.adminIDs.slice(0);
 			}
 		}
@@ -444,7 +401,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 	public isAdmin(member: MemberReference) {
 		for (const i of this.adminIDs) {
-			if (MemberBase.AreMemberReferencesTheSame(member, i)) {
+			if (areMemberReferencesTheSame(member, i)) {
 				return true;
 			}
 		}
@@ -452,3 +409,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		return false;
 	}
 }
+
+import Event from './Event';
+import File from './File';
+import { areMemberReferencesTheSame, CAPMemberClasses, CAPNHQMember, CAPProspectiveMember, isValidMemberReference } from './Members';
+import Team from './Team';

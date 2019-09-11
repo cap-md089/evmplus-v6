@@ -1,7 +1,8 @@
 import { NewAttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/MemberBase';
+import MemberBase from '../../../lib/member/MemberBase';
+import { isValidMemberReference, resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
@@ -19,10 +20,10 @@ export default asyncErrorHandler(
 		}
 
 		if (
-			MemberBase.isReference(req.body.memberID) &&
+			isValidMemberReference(req.body.memberID) &&
 			(req.member.hasPermission('SignUpEdit') || event.isPOC(req.member))
 		) {
-			member = await MemberBase.ResolveReference(req.body.memberID, req.account, req.mysqlx);
+			member = await resolveReference(req.body.memberID, req.account, req.mysqlx);
 		} else {
 			member = req.member;
 		}

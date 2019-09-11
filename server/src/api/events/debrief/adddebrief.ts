@@ -1,7 +1,7 @@
 import { DebriefItem } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/MemberBase';
+import MemberBase from '../../../lib/member/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 

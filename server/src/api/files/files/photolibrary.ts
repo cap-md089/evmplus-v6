@@ -25,7 +25,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 		async info => {
 			const fullFile = await File.Get(info.id, req.account, req.mysqlx);
 
-			if (!fullFile.hasPermission(req.member, FileUserAccessControlPermissions.READ)) {
+			if (!await fullFile.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.READ)) {
 				return false;
 			}
 

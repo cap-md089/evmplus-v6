@@ -1,7 +1,11 @@
 import { AttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase, { MemberRequest } from '../../../lib/MemberBase';
+import MemberBase, {
+	isValidMemberReference,
+	MemberRequest,
+	resolveReference
+} from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
@@ -16,8 +20,8 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res:
 		return;
 	}
 
-	if (MemberBase.isReference(req.body) && req.member.isPOCOf(event)) {
-		member = await MemberBase.ResolveReference(req.body, req.account, req.mysqlx, true);
+	if (isValidMemberReference(req.body) && req.member.isPOCOf(event)) {
+		member = await resolveReference(req.body, req.account, req.mysqlx, true);
 	} else {
 		member = req.member;
 	}

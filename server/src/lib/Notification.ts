@@ -1,19 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
-import {
-	NewNotificationObject,
-	NoSQLDocument,
-	NotificationAdminTarget,
-	NotificationCause,
-	NotificationData,
-	NotificationEveryoneTarget,
-	NotificationMemberTarget,
-	NotificationObject,
-	NotificationTarget,
-	RawNotificationObject
-} from 'common-lib';
+import { NewNotificationObject, NoSQLDocument, NotificationAdminTarget, NotificationCause, NotificationData, NotificationEveryoneTarget, NotificationMemberTarget, NotificationObject, NotificationTarget, RawNotificationObject } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from './Account';
-import MemberBase from './Members';
+import MemberBase, { resolveReference } from './Members';
 import { collectResults, findAndBind, generateResults } from './MySQLUtil';
 
 export abstract class Notification implements NotificationObject {
@@ -39,10 +28,11 @@ export abstract class Notification implements NotificationObject {
 
 		let fromMemberName = null;
 		if (results[0].cause.type === NotificationCauseType.MEMBER) {
-			const fromMember = await MemberBase.ResolveReference(
+			const fromMember = await resolveReference(
 				results[0].cause.from,
 				account,
-				schema
+				schema,
+				true
 			);
 
 			fromMemberName = fromMember.getFullName();
@@ -61,10 +51,11 @@ export abstract class Notification implements NotificationObject {
 				);
 
 			case NotificationTargetType.MEMBER:
-				const toMember = await MemberBase.ResolveReference(
+				const toMember = await resolveReference(
 					results[0].target.to,
 					account,
-					schema
+					schema,
+					true
 				);
 
 				return new MemberNotification(
@@ -125,10 +116,11 @@ export abstract class Notification implements NotificationObject {
 
 		let fromMemberName = null;
 		if (results[0].cause.type === NotificationCauseType.MEMBER) {
-			const fromMember = await MemberBase.ResolveReference(
+			const fromMember = await resolveReference(
 				results[0].cause.from,
 				account,
-				schema
+				schema,
+				true
 			);
 
 			fromMemberName = fromMember.getFullName();
@@ -147,10 +139,11 @@ export abstract class Notification implements NotificationObject {
 				);
 
 			case NotificationTargetType.MEMBER:
-				const toMember = await MemberBase.ResolveReference(
+				const toMember = await resolveReference(
 					results[0].target.to,
 					account,
-					schema
+					schema,
+					true
 				);
 
 				return new MemberNotification(
@@ -198,7 +191,7 @@ export abstract class Notification implements NotificationObject {
 		for await (const i of results) {
 			let fromMemberName: string | null = null;
 			if (i.cause.type === NotificationCauseType.MEMBER) {
-				const member = await MemberBase.ResolveReference(i.cause.from, account, schema);
+				const member = await resolveReference(i.cause.from, account, schema, true);
 
 				fromMemberName = member.getFullName();
 			}
@@ -217,10 +210,11 @@ export abstract class Notification implements NotificationObject {
 					break;
 
 				case NotificationTargetType.MEMBER:
-					const toMember = await MemberBase.ResolveReference(
+					const toMember = await resolveReference(
 						i.target.to,
 						account,
-						schema
+						schema,
+						true
 					);
 					yield new MemberNotification(
 						{
@@ -277,7 +271,7 @@ export abstract class Notification implements NotificationObject {
 		for (const i of results) {
 			let fromMemberName: string | null = null;
 			if (i.cause.type === NotificationCauseType.MEMBER) {
-				const member = await MemberBase.ResolveReference(i.cause.from, account, schema);
+				const member = await resolveReference(i.cause.from, account, schema, true);
 
 				fromMemberName = member.getFullName();
 			}
@@ -298,10 +292,11 @@ export abstract class Notification implements NotificationObject {
 					break;
 
 				case NotificationTargetType.MEMBER:
-					const toMember = await MemberBase.ResolveReference(
+					const toMember = await resolveReference(
 						i.target.to,
 						account,
-						schema
+						schema,
+						true
 					);
 					returnValue.push(
 						new MemberNotification(

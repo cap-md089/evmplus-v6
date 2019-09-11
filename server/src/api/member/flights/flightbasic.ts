@@ -1,5 +1,5 @@
 import { MemberReference } from 'common-lib';
-import { CAPWATCHMember, MemberRequest } from '../../../lib/Members';
+import { CAPMemberClasses, MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
@@ -15,7 +15,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		return res.end();
 	}
 
-	await streamAsyncGeneratorAsJSONArrayTyped<CAPWATCHMember, MemberReference>(
+	await streamAsyncGeneratorAsJSONArrayTyped<CAPMemberClasses, MemberReference>(
 		res,
 		req.account.getMembers(),
 		mem => {

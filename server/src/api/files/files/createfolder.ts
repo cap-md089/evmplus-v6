@@ -4,13 +4,13 @@ import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
 import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/MemberBase';
+import { MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	const root = await File.Get('root', req.account, req.mysqlx);
 
-	if (!root.hasPermission(req.member, FileUserAccessControlPermissions.MODIFY)) {
+	if (!await root.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.MODIFY)) {
 		res.status(403);
 		res.end();
 		return;

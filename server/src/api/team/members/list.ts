@@ -1,6 +1,6 @@
 import { TeamPublicity } from 'common-lib/index';
 import { Response } from 'express';
-import MemberBase, { ConditionalMemberRequest } from '../../../lib/Members';
+import { ConditionalMemberRequest, resolveReference } from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';
 
@@ -41,7 +41,7 @@ export default asyncErrorHandler(
 		let started = false;
 
 		for (const mem of team.members) {
-			const fullMember = await MemberBase.ResolveReference(
+			const fullMember = await resolveReference(
 				mem.reference,
 				req.account,
 				req.mysqlx

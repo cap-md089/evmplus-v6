@@ -14,6 +14,11 @@ export default async (err: Error, req: MaybeMemberRequest, res: Response, next: 
 		return next();
 	}
 
+	// There was an error formatting the JSON properly
+	if (err.message.startsWith('Unexpected token ')) {
+		return next();
+	}
+
 	console.error(err);
 
 	const errorCollection = req.mysqlx.getCollection<ServerErrorObject>('ServerErrors');

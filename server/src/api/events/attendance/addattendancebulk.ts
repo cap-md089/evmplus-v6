@@ -1,10 +1,11 @@
 import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/MemberBase';
+import MemberBase from '../../../lib/member/MemberBase';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 import NewAttendanceRecordValidator from '../../../lib/validator/validators/NewAttendanceRecord';
+import { resolveReference } from '../../../lib/Members';
 
 /**
  * Needs to be an object with the property as the token
@@ -44,7 +45,7 @@ export default asyncErrorHandler(
 		}
 
 		for (const i of req.body.members) {
-			member = await MemberBase.ResolveReference(i.memberID, req.account, req.mysqlx);
+			member = await resolveReference(i.memberID, req.account, req.mysqlx);
 
 			event.addMemberToAttendance(
 				{
