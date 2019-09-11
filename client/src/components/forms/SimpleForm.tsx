@@ -229,7 +229,8 @@ export interface FormProps<F> {
 		fields: F,
 		error: BooleanFields<F>,
 		changed: BooleanFields<F>,
-		hasError: boolean
+		hasError: boolean,
+		fieldChanged: keyof F
 	) => void;
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
@@ -517,7 +518,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
 		}
 	}
 
@@ -548,7 +549,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
 		}
 	}
 
