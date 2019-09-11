@@ -406,25 +406,25 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								return;
 							}
 
-							const child = children[i - 1];
+							const previousChild = children[i - 1];
 
 							if (
-								typeof child === 'string' ||
-								typeof child === 'number' ||
-								typeof child === 'undefined' ||
-								child === null
+								typeof previousChild === 'string' ||
+								typeof previousChild === 'number' ||
+								typeof previousChild === 'undefined' ||
+								previousChild === null
 							) {
 								ret.unshift(
 									<Label key={i - 1} fullWidth={fullWidth}>
-										{child}
+										{previousChild}
 									</Label>
 								);
 							} else {
 								// @ts-ignore
-								if (isLabel(child!) && child!.type !== Title) {
+								if (isLabel(previousChild!) && previousChild!.type !== Title) {
 									ret.unshift(
 										// @ts-ignore
-										React.cloneElement(this.props.children[i - 1], {
+										React.cloneElement(previousChild, {
 											onUpdate: this.onChange,
 											onInitialize: this.onInitialize,
 											key: i

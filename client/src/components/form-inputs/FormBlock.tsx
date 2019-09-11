@@ -102,25 +102,25 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 							return;
 						}
 
-						const child = children[i - 1];
+						const previousChild = children[i - 1];
 
 						if (
-							typeof child === 'string' ||
-							typeof child === 'number' ||
-							typeof child === 'undefined' ||
-							child === null
+							typeof previousChild === 'string' ||
+							typeof previousChild === 'number' ||
+							typeof previousChild === 'undefined' ||
+							previousChild === null
 						) {
 							ret.unshift(
 								<Label key={i - 1} fullWidth={fullWidth}>
-									{child}
+									{previousChild}
 								</Label>
 							);
 						} else {
 							// @ts-ignore
-							if (isLabel(child!) && child!.type !== Title) {
+							if (isLabel(previousChild!) && previousChild!.type !== Title) {
 								ret.unshift(
 									// @ts-ignore
-									React.cloneElement(child, {
+									React.cloneElement(previousChild, {
 										key: i - 1,
 										onUpdate: this.onUpdate,
 										onInitialize: this.onInitialize

@@ -5,7 +5,7 @@ import MemberBase from './Members';
  * Base class to help handle transmission and tokens
  */
 export default abstract class APIInterface<T> {
-	private static ENV: 'production' | 'staging' | 'test' | 'development' = 'development';
+	protected static ENV: 'production' | 'staging' | 'test' | 'development' = 'development';
 	/**
 	 * Set where to send requests to
 	 */
@@ -85,7 +85,7 @@ export default abstract class APIInterface<T> {
 			uri = uri.slice(1);
 		}
 
-		if (uri.split('/').length > 3 && uri.split(':').length == 2) {
+		if (uri.split('/').length > 3 && uri.split(':').length === 2) {
 			uri = uri.split('/').slice(3).join('/');
 		}
 
@@ -107,23 +107,10 @@ export default abstract class APIInterface<T> {
 
 		options.headers = headers;
 
-		const result = myFetch(
+		return myFetch(
 			this.buildURI.apply(this, uri.split('/')),
 			options
 		);
-
-		return result.then(item => {
-			const newSessionID = (item.headers.get('x-new-sessionid') ||
-				localStorage.getItem('sessionID'))!;
-
-			localStorage.setItem('sessionID', newSessionID);
-
-			if (member) {
-				member.sessionID = newSessionID;
-			}
-
-			return item;
-		});
 	}
 
 	/**

@@ -488,7 +488,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 	}
 
 	private getEmail(member: CAPMemberClasses): string {
-		return member.getBestEmail();
+		return member.getBestEmail() || '<No email>';
 	}
 
 	private selectText() {
@@ -565,49 +565,49 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						{absent}
 					</div>
 					<div className="flightcontactlist-phones">
-						{member.contact.CADETPARENTPHONE.PRIMARY !== '' ? (
+						{member.contact.CADETPARENTPHONE.PRIMARY !== undefined ? (
 							<p>
 								{member.contact.CADETPARENTPHONE.PRIMARY} (Primary Cadet Parent
 								Phone)
 							</p>
 						) : null}
-						{member.contact.CADETPARENTPHONE.SECONDARY !== '' ? (
+						{member.contact.CADETPARENTPHONE.SECONDARY !== undefined ? (
 							<p>
 								{member.contact.CADETPARENTPHONE.SECONDARY} (Secondary Cadet Parent
 								Phone)
 							</p>
 						) : null}
-						{member.contact.CADETPARENTPHONE.EMERGENCY !== '' ? (
+						{member.contact.CADETPARENTPHONE.EMERGENCY !== undefined ? (
 							<p>
 								{member.contact.CADETPARENTPHONE.EMERGENCY} (Emergency Cadet Parent
 								Phone)
 							</p>
 						) : null}
-						{member.contact.CELLPHONE.PRIMARY !== '' ? (
+						{member.contact.CELLPHONE.PRIMARY !== undefined ? (
 							<p>{member.contact.CELLPHONE.PRIMARY} (Primary Cell Phone)</p>
 						) : null}
-						{member.contact.CELLPHONE.SECONDARY !== '' ? (
+						{member.contact.CELLPHONE.SECONDARY !== undefined ? (
 							<p>{member.contact.CELLPHONE.SECONDARY} (Secondary Cell Phone)</p>
 						) : null}
-						{member.contact.CELLPHONE.EMERGENCY !== '' ? (
+						{member.contact.CELLPHONE.EMERGENCY !== undefined ? (
 							<p>{member.contact.CELLPHONE.EMERGENCY} (Emergency Cell Phone)</p>
 						) : null}
-						{member.contact.HOMEPHONE.PRIMARY !== '' ? (
+						{member.contact.HOMEPHONE.PRIMARY !== undefined ? (
 							<p>{member.contact.HOMEPHONE.PRIMARY} (Primary Home Phone)</p>
 						) : null}
-						{member.contact.HOMEPHONE.SECONDARY !== '' ? (
+						{member.contact.HOMEPHONE.SECONDARY !== undefined ? (
 							<p>{member.contact.HOMEPHONE.SECONDARY} (Secondary Home Phone)</p>
 						) : null}
-						{member.contact.HOMEPHONE.EMERGENCY !== '' ? (
+						{member.contact.HOMEPHONE.EMERGENCY !== undefined ? (
 							<p>{member.contact.HOMEPHONE.EMERGENCY} (Emergency Home Phone)</p>
 						) : null}
-						{member.contact.WORKPHONE.PRIMARY !== '' ? (
+						{member.contact.WORKPHONE.PRIMARY !== undefined ? (
 							<p>{member.contact.WORKPHONE.PRIMARY} (Primary Work Phone)</p>
 						) : null}
-						{member.contact.WORKPHONE.SECONDARY !== '' ? (
+						{member.contact.WORKPHONE.SECONDARY !== undefined ? (
 							<p>{member.contact.WORKPHONE.SECONDARY} (Secondary Work Phone)</p>
 						) : null}
-						{member.contact.WORKPHONE.EMERGENCY !== '' ? (
+						{member.contact.WORKPHONE.EMERGENCY !== undefined ? (
 							<p>{member.contact.WORKPHONE.EMERGENCY} (Emergency Work Phone)</p>
 						) : null}
 					</div>

@@ -440,7 +440,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		return member.getFullName();
 	}
 
-	private getEmail(member: MemberObject): string {
+	private getEmail(member: MemberObject): string | undefined {
 		return (
 			member.contact.EMAIL.PRIMARY ||
 			member.contact.CADETPARENTEMAIL.PRIMARY ||

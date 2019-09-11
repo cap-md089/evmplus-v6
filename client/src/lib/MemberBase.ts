@@ -8,8 +8,7 @@ import {
 	MemberType,
 	MemberPermission,
 	MemberPermissions,
-	AbsenteeInformation,
-	MemberAccessLevel
+	AbsenteeInformation
 } from 'common-lib';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
@@ -37,7 +36,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	/**
 	 * Whether or not members marked isRioux are super admins
 	 */
-	private static readonly useRiouxPermission = false;
+	private static readonly useRiouxPermission = true;
 
 	/**
 	 * User ID
@@ -86,10 +85,6 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
 	/**
-	 * Represents the access level a member may have
-	 */
-	public accessLevel: MemberAccessLevel;
-	/**
 	 * Cheap way to produce references
 	 */
 	public abstract getReference: () => MemberReference;
@@ -129,7 +124,6 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		this.contact = data.contact;
 		this.teamIDs = data.teamIDs;
 		this.usrID = data.usrID;
-		this.accessLevel = data.accessLevel;
 
 		this.isRioux = this.id === 542488 || this.id === 546319;
 	}
@@ -168,16 +162,12 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 * admins
 	 */
 	public hasPermission = (
-		permission: MemberPermission | MemberPermission[],
+		permission: MemberPermission,
 		threshold = 1
 	): boolean =>
 		MemberBase.useRiouxPermission && this.isRioux
 			? true
-			: typeof permission === 'string'
-			? this.permissions[permission] >= threshold
-			: permission
-					.map(perm => this.hasPermission(perm, threshold))
-					.reduce((a, b) => a || b, false);
+			: this.permissions[permission] >= threshold;
 
 	/**
 	 * Checks if the member matches without using the == operator, as that

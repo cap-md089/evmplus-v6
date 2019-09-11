@@ -119,7 +119,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 				body: JSON.stringify({
 					newRoles: members.map(mem => ({
 						member: mem.getReference(),
-						accessLevel: mem.accessLevel
+						permissions: mem.permissions
 					})),
 					token
 				})

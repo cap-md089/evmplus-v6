@@ -7,12 +7,12 @@ import MemberBase from '../../../lib/Members';
 import Notification from '../../../lib/Notification';
 import Page, { PageProps } from '../../Page';
 import './Notifications.css';
-import { NotificationDataEvent, MemberAccessLevel, NotificationDataPermissions } from 'common-lib';
+import { NotificationDataEvent } from 'common-lib';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 
 interface NotificationsState {
-	notifications: Array<Notification> | null;
+	notifications: Notification[] | null;
 	currentViewed: number | null;
 }
 
@@ -20,9 +20,6 @@ interface NotificationRenderer {
 	render: (notification: Notification, member: MemberBase, account: Account) => React.ReactChild;
 	shouldRender: (notification: Notification) => boolean;
 }
-
-const memberAccessLevelNumber = (l: MemberAccessLevel) =>
-	['Member', 'Staff', 'Manager', 'Admin'].indexOf(l);
 
 const renderers: NotificationRenderer[] = [
 	{
@@ -81,16 +78,9 @@ const renderers: NotificationRenderer[] = [
 			notif.extraData !== null &&
 			notif.extraData.type === NotificationDataType.PERMISSIONCHANGE,
 		render: notif => {
-			const extraData = notif.extraData as NotificationDataPermissions;
-
 			return (
 				<div>
-					You've been
-					{memberAccessLevelNumber(extraData.newLevel) >
-					memberAccessLevelNumber(extraData.oldLevel)
-						? ' promoted '
-						: ' demoted '}
-					to {extraData.newLevel}, from {extraData.oldLevel}.
+					Your permission levels have changed
 					<br />
 					<br />
 					This was done by {notif.fromMemberName} on{' '}

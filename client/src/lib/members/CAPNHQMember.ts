@@ -115,10 +115,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			teamIDs: this.teamIDs,
 			type: 'CAPNHQMember',
 			usrID: this.usrID,
-			cookie: '',
-			sessionID: this.sessionID,
-			absenteeInformation: this.absenteeInformation,
-			accessLevel: this.accessLevel
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 

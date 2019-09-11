@@ -90,8 +90,6 @@ export default class CAPProspectiveMember extends MemberBase
 	public toRaw(): ProspectiveMemberObject {
 		return {
 			contact: this.contact,
-			password: '',
-			salt: '',
 			dutyPositions: this.dutyPositions,
 			flight: this.flight,
 			id: this.id,
@@ -109,7 +107,6 @@ export default class CAPProspectiveMember extends MemberBase
 			usrID: this.usrID,
 			accountID: this.accountID,
 			absenteeInformation: this.absenteeInformation,
-			accessLevel: this.accessLevel
 		};
 	}
 

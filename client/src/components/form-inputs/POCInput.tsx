@@ -189,10 +189,10 @@ export default class POCInput extends React.Component<
 
 			const value: DisplayInternalPointOfContact = {
 				...(this.props.value as DisplayInternalPointOfContact)!,
-				email: mem.getBestEmail(),
+				email: mem.getBestEmail() || '',
 				name: mem.getName(),
 				memberReference: mem.getReference(),
-				phone: mem.getBestPhone()
+				phone: mem.getBestPhone() || ''
 			};
 
 			this.onUpdate({ name: this.props.name, value });
