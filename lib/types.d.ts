@@ -14,7 +14,6 @@ import {
 	CustomAttendanceFieldEntryType
 } from './index';
 
-
 type RawDraftContentState = DraftJS.RawDraftContentState;
 // Export it so the server can use it and not have to depend on @types/draft-js
 // Depending on @types/draft-js causes dependency hell
@@ -229,6 +228,31 @@ export namespace NHQ {
 		UsrID: string;
 		DateMod: string;
 	}
+
+	export interface Achievements {
+		AcvhID: string;
+		Achv: string;
+		FunctionalArea: string;
+	}
+
+	export interface MbrAchievements {
+		CAPID: number;
+		AchvID: number;
+		Status: 'ACTIVE' | 'EXPIRED' | 'NOT APPROVED' | 'PENDING' | 'TRAINING';
+		OriginallyAccomplished: number;
+		Completed: number;
+		Expiration: number;
+		AuthByCAPID: number;
+		AuthReason: string;
+		AuthDate: number;
+		Source: string;
+		RecID: number;
+		FirstUsr: string;
+		DateCreated: number;
+		UsrID: string;
+		DateMod: number;
+		ORGID: number;
+	}
 }
 
 // Omit taken from https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html
@@ -250,6 +274,11 @@ export interface AsyncIterableIterator<T> {
  */
 export type MultCheckboxReturn = [boolean[], string];
 export type RadioReturn<T extends number> = [T, string];
+
+/**
+ * Provides some consistency in type information at least
+ */
+export type SessionID = string;
 
 /**
  * Mark documents as NoSQL, for interaction with the database
@@ -1169,16 +1198,16 @@ export interface CAPMemberContactInstance {
 	/**
 	 * First contact to try and raise
 	 */
-	PRIMARY: string;
+	PRIMARY?: string;
 	/**
 	 * Second contact to try and raise
 	 */
-	SECONDARY: string;
+	SECONDARY?: string;
 	/**
 	 * Only used for emergency; go through the primary and secondary
 	 * contacts first
 	 */
-	EMERGENCY: string;
+	EMERGENCY?: string;
 }
 
 /**
@@ -1379,12 +1408,6 @@ export interface MemberPermissions {
 }
 
 /**
- * Currently, there are only 4 member access levels and for some reason
- * they are a list of strings vs an enum (why?)
- */
-export type MemberAccessLevel = 'Member' | 'Staff' | 'Manager' | 'Admin';
-
-/**
  * This information is used to store if a member has said they will be absent until a date,
  * and comments associated with it
  */
@@ -1410,29 +1433,12 @@ export type MemberPermission = keyof MemberPermissions;
 export type MemberType = CAPMemberType;
 
 /**
- * Describes a member
- *
- * The member may be created from one of many ways:
- *
- * MemberBase.Create/MemberBase.ExpressMiddleware/MemberBase.ConditionalExpressMiddleware:
- * 		Takes sign in data or a session and signs the user in. Best data
- * 		This data may represent either a full NHQMember or a full ProspectiveMember
- * ProspectiveMember.Get/ProspectiveMember.Create:
- * 		Used for the ProspectiveMembers
- * 		As we store the information, this is also a 'pure form' of data like NHQMember
- * CAPWATCHMember.Get: Estimates the user based off of CAPWATCH data. As good as
- * 		the CAPWATCH updates are frequent
- *
- * NHQMember.Create and ProspectiveMember.Signin are used when signing people in
- * ProspectiveMember.GetProspective and CAPWATCHMember.Get are used when pulling
- * 		information from our database
- *
- * ProspectiveMember.Create creates a prospective member in our database
- *
- * CAPWATCHMember and NHQMember have their sources in NHQ
- * ProspectiveMembers are located in our database
+ * Information stored about a member in our database
+ * 
+ * Does not include permission information, which is stored seperately
+ * This is so that permissions can be on an account basis
  */
-export interface MemberObject extends Identifiable {
+export interface RawMemberObject extends Identifiable {
 	/**
 	 * The CAPID of the member
 	 */
@@ -1466,14 +1472,6 @@ export interface MemberObject extends Identifiable {
 	 */
 	type: MemberType;
 	/**
-	 * Both the client and server will want a handle on permissions
-	 */
-	permissions: MemberPermissions;
-	/**
-	 * Short form of above
-	 */
-	accessLevel: MemberAccessLevel;
-	/**
 	 * Used to easily reference teams
 	 */
 	teamIDs: number[];
@@ -1485,6 +1483,37 @@ export interface MemberObject extends Identifiable {
 	absenteeInformation: AbsenteeInformation | null;
 }
 
+
+/**
+ * Describes a member
+ *
+ * CAPWATCHMember and NHQMember have their sources in NHQ
+ * ProspectiveMembers are located in our database
+ */
+export interface MemberObject extends RawMemberObject {
+	/**
+	 * Tells what the member can do
+	 */
+	permissions: MemberPermissions;
+}
+
+/**
+ * Users are different in that they are actively using the website right now,
+ * and they have a session. They also have created an account with us
+ * 
+ * This is important because this means they have a session ID and permissions
+ */
+export interface UserObject extends MemberObject {
+	/**
+	 * Permissions a user may have
+	 */
+	permissions: MemberPermissions;
+	/**
+	 * Users have a session and therefore a session ID
+	 */
+	sessionID: string;
+}
+
 /**
  * A descriminator type used to help determine what the type of object is
  */
@@ -1493,7 +1522,7 @@ export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember';
 /**
  * These are common to all CAPMembers, not necessarily all members
  */
-export interface RawCAPMember extends MemberObject {
+export interface RawCAPMember extends RawMemberObject {
 	/**
 	 * Descriminant
 	 */
@@ -1582,6 +1611,10 @@ export interface CAPMemberObject extends RawCAPMember {
 	 * The flight of the member
 	 */
 	flight: string | null;
+	/**
+	 * Shows what the member is allowed to do
+	 */
+	permissions: MemberPermissions;
 }
 
 /**
@@ -1593,14 +1626,6 @@ export interface NHQMemberObject extends CAPMemberObject {
 	 * Strict CAP IDs are six digit numbers
 	 */
 	id: number;
-	/**
-	 * NHQ Session ID
-	 */
-	sessionID: string;
-	/**
-	 * Cookies used to log into CAP NHQ
-	 */
-	cookie: string;
 	/**
 	 * Descriminant
 	 */
@@ -1622,14 +1647,6 @@ export interface RawProspectiveMemberObject
 	 * Descriminant
 	 */
 	type: 'CAPProspectiveMember';
-	/**
-	 * The password for the user. Blank for sending to client
-	 */
-	password: string;
-	/**
-	 * The salt for the user. Blank when sent to client
-	 */
-	salt: string;
 	/**
 	 * Flights are stored in the raw database object for prospective members
 	 */
@@ -1654,6 +1671,10 @@ export interface ProspectiveMemberObject extends RawProspectiveMemberObject, CAP
 	 * Typescript deliminator
 	 */
 	type: 'CAPProspectiveMember';
+	/**
+	 * Shows what the member is allowed to do
+	 */
+	permissions: MemberPermissions;
 }
 
 /**
@@ -1732,19 +1753,13 @@ export interface TemporaryDutyPosition {
  */
 export interface ExtraMemberInformation extends NoSQLDocument {
 	/**
-	 * As full MemberReferences are not allowed for searching,
-	 * expand the object
+	 * The member this information belongs to
 	 */
-	id: number | string;
-	type: MemberType;
+	member: MemberReference;
 	/**
 	 * Extra duty positions that are assigned to the member
 	 */
 	temporaryDutyPositions: TemporaryDutyPosition[];
-	/**
-	 * Access level for the member
-	 */
-	accessLevel: MemberAccessLevel;
 	/**
 	 * Member flight
 	 *
@@ -2450,9 +2465,6 @@ export interface NotificationDataPersonnelFile {
 
 export interface NotificationDataPermissions {
 	type: NotificationDataType.PERMISSIONCHANGE;
-
-	newLevel: MemberAccessLevel;
-	oldLevel: MemberAccessLevel;
 }
 
 /**
@@ -2573,4 +2585,44 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDoc
 	 * Whether or not this task should be archived
 	 */
 	archived: boolean;
+}
+
+/**
+ * Represents the password information stored for a user
+ */
+export interface AccountPasswordInformation {
+	/**
+	 * Records when the password was set
+	 */
+	created: number;
+	/**
+	 * The hashed password
+	 */
+	password: string;
+	/**
+	 * The salt used to generate the password hash, in conjunction with the password iteration count
+	 */
+	salt: string;
+	/**
+	 * The iteration count is used for password stretching
+	 */
+	iterations: number;
+}
+
+/**
+ * Represents how basic account mapping information is stored in our database
+ */
+export interface UserAccountInformation extends NoSQLDocument {
+	/**
+	 * The username of a user
+	 */
+	username: string;
+	/**
+	 * What the user represents
+	 */
+	member: MemberReference;
+	/**
+	 * Store a password history for the user
+	 */
+	passwordHistory: AccountPasswordInformation[];
 }

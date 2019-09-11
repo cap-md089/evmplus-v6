@@ -124,3 +124,16 @@ export enum CAPWATCHImportUpdate {
 	CAPWATCHFileDone,
 	ProgressInitialization
 }
+
+export enum PasswordResult {
+	VALID,
+	VALID_EXPIRED,
+	INVALID
+}
+
+export enum PasswordSetResult {
+	OK,
+	IN_HISTORY,
+	COMPLEXITY,
+	MIN_AGE
+}
