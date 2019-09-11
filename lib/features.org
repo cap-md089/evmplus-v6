@@ -57,18 +57,19 @@
       - [ ] Organization meeting
     - [ ] Logging
     - [X] Unit tests
-*** Notifications [2/3]
+*** Notifications [2/4]
     - [X] API for arbitrary use
     - [X] BREAD
     - [ ] Email
+    - [ ] Unit tests
 *** Integration [0/1]
     - [ ] Google integration [0/1]
       - [ ] Update Google calendar
 *** Audits [0/1]
     - [ ] API for arbitrary use
-** Debugging [1/2]
+** Debugging [2/2]
     - [X] Error handling
-    - [ ] Su
+    - [X] Su
 ** APIs
 *** Events [2/4]
     - [X] BREAD
@@ -80,10 +81,11 @@
         - [ ] Team
         - [ ] Current attendance count
     - [ ] Integration tests
-*** Member [0/3]
-    - [ ] Sign in
-    - [ ] Sessions
+*** Member [2/4]
+    - [X] Sign in
+    - [X] Sessions
     - [ ] Integration tests
+    - [ ] Unit tests
 *** Teams [1/2]
     - [X] BREAD
     - [ ] Integration tests
