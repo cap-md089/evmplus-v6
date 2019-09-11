@@ -12,11 +12,21 @@
 		{
 			"type": "chrome",
 			"request": "launch",
-			"name": "Launch Chrome",
+			"name": "Launch Chrome (Normal Linux)",
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/src",
 			"linux": {
 				"runtimeExecutable": "/usr/bin/chromium"
+			}
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Chrome (Snap Linux)",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/src",
+			"linux": {
+				"runtimeExecutable": "/snap/bin/chromium"
 			}
 		},
 		{
