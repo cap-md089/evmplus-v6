@@ -4,6 +4,7 @@ import {
 	CAPMemberContact,
 	ExtraMemberInformation,
 	MemberObject,
+	MemberPermissions,
 	MemberReference,
 	MemberType,
 	NoSQLDocument,
@@ -108,6 +109,10 @@ export default abstract class MemberBase implements MemberObject {
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
 	/**
+	 * Controls what the user can do
+	 */
+	public permissions: MemberPermissions;
+	/**
 	 * Whether or not the user is Rioux
 	 */
 	public readonly isRioux: boolean = false;
@@ -140,6 +145,7 @@ export default abstract class MemberBase implements MemberObject {
 		this.usrID = data.usrID;
 		this.absenteeInformation = data.absenteeInformation;
 		this.teamIDs = data.teamIDs;
+		this.permissions = data.permissions;
 	}
 
 	public getName = (): string =>
@@ -162,7 +168,8 @@ export default abstract class MemberBase implements MemberObject {
 			usrID: this.usrID,
 			type: this.type,
 			teamIDs: this.teamIDs,
-			absenteeInformation: this.absenteeInformation
+			absenteeInformation: this.absenteeInformation,
+			permissions: this.permissions
 		};
 	}
 

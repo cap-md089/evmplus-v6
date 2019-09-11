@@ -1,4 +1,4 @@
-import { SigninReturn } from 'common-lib';
+import { SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
 import { AccountRequest } from '../lib/Account';
@@ -36,9 +36,9 @@ export default asyncErrorHandler(async (req: AccountRequest, res: express.Respon
 				member.getUnfinishedTaskCount()
 			]);
 
-			json<SigninReturn>(res, {
+			json<SuccessfulSigninReturn>(res, {
 				error: MemberCreateError.NONE,
-				member,
+				member: member.toRaw(),
 				sessionID: signinResult.sessionID,
 				valid: true,
 				notificationCount,

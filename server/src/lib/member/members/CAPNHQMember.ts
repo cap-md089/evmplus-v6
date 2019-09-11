@@ -5,7 +5,6 @@ import {
 	CAPMemberContact,
 	CAPMemberContactType,
 	ExtraMemberInformation,
-	MemberReference,
 	NHQ,
 	NHQMemberObject,
 	NHQMemberReference,
@@ -16,18 +15,19 @@ import { DateTime } from 'luxon';
 import Account from '../../Account';
 import MemberBase, { getUserID } from '../../Members';
 import { collectResults, findAndBind, generateResults } from '../../MySQLUtil';
-import { SessionedUser, su } from '../pam/Session';
-import { getInformationForMember } from '../pam/Account';
+import { getPermissionsForMemberInAccountDefault } from '../pam/Account';
+import { SessionedUser } from '../pam/Session';
 
 export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPNHQMember> {
 		const memberTable = schema.getCollection<NHQ.Member>('NHQ_Member');
 
-		const [results, contact, dutyPositions, extraInformation] = await Promise.all([
+		const [results, contact, dutyPositions, extraInformation, permissions] = await Promise.all([
 			collectResults(findAndBind(memberTable, { CAPID: id })),
 			CAPNHQMember.GetCAPWATCHContactForMember(id, schema),
 			CAPNHQMember.GetRegularDutypositions(id, schema),
-			CAPNHQMember.LoadExtraMemberInformation({ type: 'CAPNHQMember', id }, schema, account)
+			CAPNHQMember.LoadExtraMemberInformation({ type: 'CAPNHQMember', id }, schema, account),
+			getPermissionsForMemberInAccountDefault(schema, { id, type: 'CAPNHQMember' }, account)
 		]);
 
 		if (results.length !== 1) {
@@ -57,7 +57,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 				type: 'CAPNHQMember',
 				teamIDs: extraInformation.teamIDs,
 				flight: extraInformation.flight,
-				absenteeInformation: extraInformation.absentee
+				absenteeInformation: extraInformation.absentee,
+				permissions
 			},
 			schema,
 			account,
@@ -206,7 +207,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			squadron: this.squadron,
 			type: 'CAPNHQMember',
 			id: this.id,
-			absenteeInformation: this.absenteeInformation
+			absenteeInformation: this.absenteeInformation,
+			permissions: this.permissions
 		};
 	}
 

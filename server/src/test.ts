@@ -3,11 +3,12 @@ import ImportCAPWATCHFile from './lib/ImportCAPWATCHFile';
 import { getTestTools } from './lib/Util';
 
 (async () => {
-	const { schema } = await getTestTools(conf);
+	const { schema, session } = await getTestTools(conf);
 
 	const capImport2 = ImportCAPWATCHFile(
 		'/home/arioux/Downloads/2018-12-12_546319-890.zip',
 		schema,
+		session,
 		2529,
 		['Member.txt']
 	);
@@ -19,6 +20,7 @@ import { getTestTools } from './lib/Util';
 	const capImport = ImportCAPWATCHFile(
 		'/home/arioux/Downloads/2018-12-12_546319-089.zip',
 		schema,
+		session,
 		916,
 		['Member.txt']
 	);

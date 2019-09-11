@@ -12,6 +12,7 @@ import {
 import Account from '../../Account';
 import MemberBase from '../../Members';
 import { collectResults, findAndBind, generateResults } from '../../MySQLUtil';
+import { DEFAULT_PERMISSIONS, getPermissionsForMemberInAccountDefault } from '../pam/Account';
 import { SessionedUser } from '../pam/Session';
 
 export default class CAPProspectiveMember extends MemberBase
@@ -69,7 +70,8 @@ export default class CAPProspectiveMember extends MemberBase
 				accountID: account.id,
 				type: 'CAPProspectiveMember',
 				squadron: account.getSquadronName(),
-				absenteeInformation: null
+				absenteeInformation: null,
+				permissions: DEFAULT_PERMISSIONS
 			},
 			schema,
 			account,
@@ -94,6 +96,12 @@ export default class CAPProspectiveMember extends MemberBase
 			throw new Error('Could not get member');
 		}
 
+		const permissions = await getPermissionsForMemberInAccountDefault(
+			schema,
+			{ id, type: 'CAPProspectiveMember' },
+			account
+		);
+
 		const extraInformation = await CAPProspectiveMember.LoadExtraMemberInformation(
 			{
 				id,
@@ -103,7 +111,12 @@ export default class CAPProspectiveMember extends MemberBase
 			account
 		);
 
-		return new CAPProspectiveMember(results[0], schema, account, extraInformation);
+		return new CAPProspectiveMember(
+			{ ...results[0], permissions },
+			schema,
+			account,
+			extraInformation
+		);
 	}
 
 	private static tableName = 'ProspectiveMembers';
@@ -165,7 +178,7 @@ export default class CAPProspectiveMember extends MemberBase
 
 	public getHomeAccount = () => Account.Get(this.accountID, this.schema);
 
-	public async *getAccounts () {
+	public async *getAccounts() {
 		yield this.getHomeAccount();
 	}
 
@@ -179,7 +192,7 @@ export default class CAPProspectiveMember extends MemberBase
 			CAPProspectiveMember.tableName
 		);
 
-		await prospectiveCollection.replaceOne(this._id, this.toRaw());
+		await prospectiveCollection.replaceOne(this._id, this.toRealRaw());
 	}
 
 	public addTemporaryDutyPosition(position: TemporaryDutyPosition) {
@@ -219,11 +232,18 @@ export default class CAPProspectiveMember extends MemberBase
 			? this.dutyPositions.filter(duty => duty.duty === dutyPosition).length > 0
 			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false);
 
-	public toRaw(): RawProspectiveMemberObject {
-		return {
-			...super.toRaw(),
+	public toRealRaw(): RawProspectiveMemberObject {
+		return {	
 			id: this.id,
-			type: 'CAPProspectiveMember',
+			contact: this.contact,
+			nameFirst: this.nameFirst,
+			nameLast: this.nameLast,
+			nameMiddle: this.nameMiddle,
+			nameSuffix: this.nameSuffix,
+			usrID: this.usrID,
+			type: this.type,
+			teamIDs: this.teamIDs,
+			absenteeInformation: this.absenteeInformation,
 			flight: this.flight,
 			dutyPositions: this.dutyPositions,
 			memberRank: this.memberRank,
@@ -231,6 +251,13 @@ export default class CAPProspectiveMember extends MemberBase
 			squadron: this.squadron,
 			orgid: this.orgid,
 			accountID: this.accountID
+		};
+	}
+
+	public toRaw(): ProspectiveMemberObject {
+		return {
+			...this.toRealRaw(),
+			permissions: this.permissions
 		};
 	}
 

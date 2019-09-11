@@ -285,6 +285,47 @@ const getPermissionsRecordForMemberInAccount = async (
 	return permissions[0];
 };
 
+export const DEFAULT_PERMISSIONS: Readonly<MemberPermissions> = {
+	AddEvent: 0,
+	AddTeam: 0,
+	AdministerPT: 0,
+	AssignPosition: 0,
+	AssignTasks: 0,
+	CopyEvent: 0,
+	CreateNotifications: 0,
+	DeleteEvent: 0,
+	DownloadCAPWATCH: 0,
+	DownloadStaffGuide: 0,
+	EditEvent: 0,
+	EditTeam: 0,
+	EventContactSheet: 0,
+	EventLinkList: 0,
+	EventStatusPage: 0,
+	SignUpEdit: 0,
+	FileManagement: 0,
+	FlightAssign: 0,
+	ManageBlog: 0,
+	MusterSheet: 0,
+	RegistryEdit: 0,
+	ORMOPORD: 0,
+	PTSheet: 0,
+	PermissionManagement: 0,
+	PromotionManagement: 0,
+	ProspectiveMemberManagment: 0
+}
+
+export const getPermissionsForMemberInAccountDefault = async (
+	schema: Schema,
+	member: MemberReference,
+	account: Account
+): Promise<MemberPermissions> => {
+	try {
+		return await getPermissionsForMemberInAccount(schema, member, account);
+	} catch (e) {
+		return DEFAULT_PERMISSIONS;
+	}
+}
+
 export const getPermissionsForMemberInAccount = async (
 	schema: Schema,
 	member: MemberReference,
