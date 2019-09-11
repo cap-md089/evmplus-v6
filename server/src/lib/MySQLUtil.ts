@@ -171,7 +171,7 @@ export const modifyAndBind = <T>(
 
 	const bound = generateBindObject(bind);
 
-	for (const i of bound) {
+	for (const i in bound) {
 		if (bound.hasOwnProperty(i)) {
 			modifyWithStatement.bind(i as keyof T, bound[i]);
 		}

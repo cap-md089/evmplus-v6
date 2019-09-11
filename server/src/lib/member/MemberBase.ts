@@ -17,7 +17,7 @@ import { DateTime } from 'luxon';
 import Account from '../Account';
 import Event from '../Event';
 import { areMemberReferencesTheSame } from '../Members';
-import { collectResults, findAndBind, generateResults } from '../MySQLUtil';
+import { collectResults, findAndBind, generateResults, modifyAndBind } from '../MySQLUtil';
 import Task from '../Task';
 import Team from '../Team';
 
@@ -344,12 +344,7 @@ export default abstract class MemberBase implements MemberObject {
 			'ExtraMemberInformation'
 		);
 
-		await extraInfoCollection
-			.modify('id = :id AND type = :type')
-			.bind({
-				member: this.getReference(),
-				accountID: account.id
-			})
+		await modifyAndBind(extraInfoCollection, { member: this.getReference(), accountID: account.id })
 			.patch(this.extraInformation)
 			.execute();
 	}
