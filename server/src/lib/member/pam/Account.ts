@@ -1,11 +1,17 @@
 import { Schema } from '@mysql/xdevapi';
 import { promisify } from 'bluebird';
-import { MemberPermissions, MemberReference, NoSQLDocument, UserAccountInformation } from 'common-lib';
+import {
+	MemberPermissions,
+	MemberReference,
+	NoSQLDocument,
+	UserAccountInformation
+} from 'common-lib';
 import { PasswordSetResult } from 'common-lib/index';
 import { randomBytes } from 'crypto';
 import Account from '../../Account';
 import { resolveReference } from '../../Members';
 import { collectResults, findAndBind } from '../../MySQLUtil';
+import { Member } from '../../Permissions';
 import { addPasswordForUser } from './Password';
 
 //#region Account creation
@@ -51,20 +57,17 @@ const removeAccountToken = async (schema: Schema, token: string): Promise<void> 
 		.execute();
 };
 
-const getTokenCountForUser = async (
-	schema: Schema,
-	member: MemberReference
-) => {
+const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
 	return (await collectResults(findAndBind(collection, { member }))).length;
-}
+};
 
 export const addUserAccountCreationToken = async (
 	schema: Schema,
 	member: MemberReference
 ): Promise<string> => {
-	if (await getTokenCountForUser(schema, member) > 0) {
+	if ((await getTokenCountForUser(schema, member)) > 0) {
 		throw new Error('User already has token');
 	}
 
@@ -132,10 +135,9 @@ export const addUserAccount = async (
 			member
 		})
 	);
-	if (!(
-		resultsForReference.length === 0 ||
-		resultsForReference[0].passwordHistory.length === 0
-	)) {
+	if (
+		!(resultsForReference.length === 0 || resultsForReference[0].passwordHistory.length === 0)
+	) {
 		throw new UserError('Account already exists for member');
 	}
 
@@ -177,7 +179,7 @@ export const addUserAccount = async (
 
 /**
  * Loads information about a user from the database
- * 
+ *
  * @param schema the database to get information from
  * @param member the member to get information for
  */
@@ -251,7 +253,8 @@ export const saveInformationForUser = async (schema: Schema, member: UserAccount
  *
  * @param info the user account info
  */
-export const isUserValid = (info: UserAccountInformation) => !!info && info.passwordHistory.length !== 0;
+export const isUserValid = (info: UserAccountInformation) =>
+	!!info && info.passwordHistory.length !== 0;
 
 //#endregion
 
@@ -285,34 +288,7 @@ const getPermissionsRecordForMemberInAccount = async (
 	return permissions[0];
 };
 
-export const DEFAULT_PERMISSIONS: Readonly<MemberPermissions> = {
-	AddEvent: 0,
-	AddTeam: 0,
-	AdministerPT: 0,
-	AssignPosition: 0,
-	AssignTasks: 0,
-	CopyEvent: 0,
-	CreateNotifications: 0,
-	DeleteEvent: 0,
-	DownloadCAPWATCH: 0,
-	DownloadStaffGuide: 0,
-	EditEvent: 0,
-	EditTeam: 0,
-	EventContactSheet: 0,
-	EventLinkList: 0,
-	EventStatusPage: 0,
-	SignUpEdit: 0,
-	FileManagement: 0,
-	FlightAssign: 0,
-	ManageBlog: 0,
-	MusterSheet: 0,
-	RegistryEdit: 0,
-	ORMOPORD: 0,
-	PTSheet: 0,
-	PermissionManagement: 0,
-	PromotionManagement: 0,
-	ProspectiveMemberManagment: 0
-}
+export const DEFAULT_PERMISSIONS: Readonly<MemberPermissions> = Member;
 
 export const getPermissionsForMemberInAccountDefault = async (
 	schema: Schema,
@@ -324,7 +300,7 @@ export const getPermissionsForMemberInAccountDefault = async (
 	} catch (e) {
 		return DEFAULT_PERMISSIONS;
 	}
-}
+};
 
 export const getPermissionsForMemberInAccount = async (
 	schema: Schema,
@@ -342,15 +318,17 @@ export const setPermissionsForMemberInAccount = async (
 	permissions: MemberPermissions,
 	account: Account
 ): Promise<void> => {
-	const permissionsCollection = schema.getCollection<StoredMemberPermissions>(MEMBER_PERMISSIONS_TABLE);
+	const permissionsCollection = schema.getCollection<StoredMemberPermissions>(
+		MEMBER_PERMISSIONS_TABLE
+	);
 
 	try {
-		const record = (await getPermissionsRecordForMemberInAccount(schema, member, account));
+		const record = await getPermissionsRecordForMemberInAccount(schema, member, account);
 
 		record.permissions = permissions;
 
 		await permissionsCollection.replaceOne(record._id, record);
-	} catch(e) {
+	} catch (e) {
 		// couldn't get permissions to update, they have to be added
 
 		await permissionsCollection
@@ -359,7 +337,7 @@ export const setPermissionsForMemberInAccount = async (
 				member,
 				permissions
 			})
-			.execute()
+			.execute();
 	}
 };
 

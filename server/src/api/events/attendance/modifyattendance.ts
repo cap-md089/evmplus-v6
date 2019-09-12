@@ -5,6 +5,7 @@ import MemberBase from '../../../lib/member/MemberBase';
 import { isValidMemberReference, resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
+import { ManageEvent } from 'common-lib/permissions';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res: Response) => {
@@ -21,7 +22,7 @@ export default asyncErrorHandler(
 
 		if (
 			isValidMemberReference(req.body.memberID) &&
-			(req.member.hasPermission('SignUpEdit') || event.isPOC(req.member))
+			(req.member.hasPermission('ManageEvent', ManageEvent.FULL) || event.isPOC(req.member))
 		) {
 			member = await resolveReference(req.body.memberID, req.account, req.mysqlx);
 		} else {

@@ -12,7 +12,7 @@ export const Member: Readonly<MemberPermissions> = {
 	PromotionManagement: 0,
 
 	AddTeam: 0,
-	AssignPosition: 0,
+	AssignTemporaryDutyPositions: 0,
 	CopyEvent: 0,
 	DeleteEvent: 0,
 	EditEvent: 0,
@@ -43,7 +43,7 @@ export const Staff: Readonly<MemberPermissions> = {
 	PromotionManagement: 1,
 
 	AddTeam: 0,
-	AssignPosition: 0,
+	AssignTemporaryDutyPositions: 0,
 	CopyEvent: 0,
 	DeleteEvent: 0,
 	EditEvent: 0,
@@ -74,7 +74,7 @@ export const Manager: Readonly<MemberPermissions> = {
 	PromotionManagement: 1,
 
 	AddTeam: 1,
-	AssignPosition: 1,
+	AssignTemporaryDutyPositions: 1,
 	CopyEvent: 1,
 	DeleteEvent: 1,
 	EditEvent: 1,
@@ -105,7 +105,7 @@ export const Admin: Readonly<MemberPermissions> = {
 	PromotionManagement: 1,
 
 	AddTeam: 1,
-	AssignPosition: 1,
+	AssignTemporaryDutyPositions: 1,
 	CopyEvent: 1,
 	DeleteEvent: 1,
 	EditEvent: 1,

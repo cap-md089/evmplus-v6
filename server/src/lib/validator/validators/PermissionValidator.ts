@@ -1,83 +1,79 @@
 import { MemberPermissions } from 'common-lib';
+import {
+	AdministerPT,
+	AssignTasks,
+	AssignTemporaryDutyPosition,
+	DownloadCAPWATCH,
+	EventContactSheet,
+	EventLinkList,
+	FileManagement,
+	FlightAssign,
+	ManageEvent,
+	ManageTeam,
+	MusterSheet,
+	Notify,
+	ORMOPORD,
+	PermissionManagement,
+	PromotionManagement,
+	ProspectiveMemberManagement,
+	PTSheet,
+	RegistryEdit
+} from 'common-lib/permissions';
 import Validator from '../Validator';
 
 export default new Validator<MemberPermissions>({
-	AddEvent: {
-		validator: Validator.OneOfStrict(0, 1, 2)
-	},
-	AddTeam: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
 	AdministerPT: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(AdministerPT)
 	},
-	AssignPosition: {
-		validator: Validator.OneOfStrict(0, 1)
+	AssignTemporaryDutyPositions: {
+		validator: Validator.Enum(AssignTemporaryDutyPosition)
 	},
 	AssignTasks: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	CopyEvent: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(AssignTasks)
 	},
 	CreateNotifications: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	DeleteEvent: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(Notify)
 	},
 	DownloadCAPWATCH: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	DownloadStaffGuide: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	EditEvent: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	EditTeam: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(DownloadCAPWATCH)
 	},
 	EventContactSheet: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(EventContactSheet)
 	},
 	EventLinkList: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	EventStatusPage: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(EventLinkList)
 	},
 	FileManagement: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(FileManagement)
 	},
 	FlightAssign: {
-		validator: Validator.OneOfStrict(0, 1)
-	},
-	ManageBlog: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(FlightAssign)
 	},
 	MusterSheet: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(MusterSheet)
 	},
 	ORMOPORD: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(ORMOPORD)
 	},
 	PTSheet: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(PTSheet)
 	},
 	PermissionManagement: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(PermissionManagement)
 	},
 	PromotionManagement: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(PromotionManagement)
 	},
 	ProspectiveMemberManagment: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(ProspectiveMemberManagement)
 	},
 	RegistryEdit: {
-		validator: Validator.OneOfStrict(0, 1)
+		validator: Validator.Enum(RegistryEdit)
 	},
-	SignUpEdit: {
-		validator: Validator.OneOfStrict(0, 1)
+	ManageEvent: {
+		validator: Validator.Enum(ManageEvent)
+	},
+	ManageTeam: {
+		validator: Validator.Enum(ManageTeam)
 	}
 });

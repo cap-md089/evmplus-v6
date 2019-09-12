@@ -37,7 +37,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, 
 		targetAccount
 	);
 
-	if (permissionsForMemberInTargetAccount.AddEvent < 2) {
+	if (permissionsForMemberInTargetAccount.ManageEvent < 2) {
 		res.status(403);
 		res.end();
 		return;

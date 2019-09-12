@@ -29,7 +29,7 @@ router.post(
 	'/',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('AddTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.Validator),
 	create
 );
@@ -37,7 +37,7 @@ router.put(
 	'/:id',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.PartialBodyExpressMiddleware(Team.Validator),
 	set
 );
@@ -45,7 +45,7 @@ router.delete(
 	'/:id',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	deleteTeam
 );
 
@@ -53,7 +53,7 @@ router.put(
 	'/:id/members',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	modify
 );
@@ -61,7 +61,7 @@ router.delete(
 	'/:id/members',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	remove
 );
@@ -69,7 +69,7 @@ router.post(
 	'/:id/members',
 	memberMiddleware,
 	tokenMiddleware,
-	permissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	add
 );

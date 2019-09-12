@@ -1,11 +1,12 @@
 import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
+import { ManageEvent } from 'common-lib/permissions';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
 import MemberBase from '../../../lib/member/MemberBase';
+import { resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
 import NewAttendanceRecordValidator from '../../../lib/validator/validators/NewAttendanceRecord';
-import { resolveReference } from '../../../lib/Members';
 
 /**
  * Needs to be an object with the property as the token
@@ -37,7 +38,8 @@ export default asyncErrorHandler(
 		// DO NOT MOVE THIS INTO THE IF STATEMENT
 		// For some reason it does not work, it needs to be
 		// stored in a variable first
-		const canAddOtherMembers = req.member.isPOCOf(event);
+		const canAddOtherMembers =
+			req.member.isPOCOf(event) || req.member.hasPermission('ManageEvent', ManageEvent.FULL);
 
 		if (!canAddOtherMembers) {
 			res.status(403);

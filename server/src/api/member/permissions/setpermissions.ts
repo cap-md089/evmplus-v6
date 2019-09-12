@@ -42,6 +42,7 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<PermissionsL
 				for (const perm in inputRole.permissions) {
 					if (inputRole.permissions.hasOwnProperty(perm)) {
 						const permission = perm as MemberPermission;
+						// @ts-ignore
 						newRole.permissions[permission] = Math.max(
 							newRole.permissions[permission],
 							inputRole.permissions[permission]

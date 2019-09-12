@@ -1,5 +1,11 @@
 import { Schema } from '@mysql/xdevapi';
-import { MemberPermission, MemberPermissions, MemberReference, SessionID, UserAccountInformation } from 'common-lib';
+import {
+	MemberPermission,
+	MemberPermissions,
+	MemberReference,
+	SessionID,
+	UserAccountInformation
+} from 'common-lib';
 import { randomBytes } from 'crypto';
 import { NextFunction, Response } from 'express';
 import { promisify } from 'util';
@@ -112,36 +118,13 @@ export const SessionedUser = <
 
 			let permissions: MemberPermissions;
 			try {
-				permissions = await getPermissionsForMemberInAccount(schema, session.userAccount.member, account);
-			} catch(e) {
-				permissions = {
-					AddEvent: 0,
-					AddTeam: 0,
-					AdministerPT: 0,
-					AssignPosition: 0,
-					AssignTasks: 0,
-					CopyEvent: 0,
-					CreateNotifications: 0,
-					DeleteEvent: 0,
-					DownloadCAPWATCH: 0,
-					DownloadStaffGuide: 0,
-					EditEvent: 0,
-					EditTeam: 0,
-					EventContactSheet: 0,
-					EventLinkList: 0,
-					EventStatusPage: 0,
-					FlightAssign: 0,
-					FileManagement: 0,
-					ManageBlog: 0,
-					MusterSheet: 0,
-					ORMOPORD: 0,
-					PTSheet: 0,
-					PermissionManagement: 0,
-					PromotionManagement: 0,
-					ProspectiveMemberManagment: 0,
-					RegistryEdit: 0,
-					SignUpEdit: 0
-				};
+				permissions = await getPermissionsForMemberInAccount(
+					schema,
+					session.userAccount.member,
+					account
+				);
+			} catch (e) {
+				permissions = DEFAULT_PERMISSIONS;
 			}
 
 			return new User(
@@ -183,8 +166,18 @@ export const SessionedUser = <
 			this.permissions = p;
 		}
 
-		public hasPermission(permission: MemberPermission, threshold = 1): boolean {
-			return this.isRioux || this.permissions[permission] >= threshold;
+		public hasPermission<T extends keyof MemberPermissions = MemberPermission>(
+			permission: T,
+			compare: MemberPermissions[T] = 0 as MemberPermissions[T]
+		): boolean {
+			return this.isRioux || this.permissions[permission] >= compare;
+		}
+
+		public hasSpecificPermissionLevel<T extends keyof MemberPermissions = MemberPermission>(
+			permission: T,
+			compare: MemberPermissions[T]
+		): boolean {
+			return this.isRioux || this.permissions[permission] === compare;
 		}
 
 		public async su(ref: MemberReference) {
@@ -245,7 +238,7 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 			req.member = null;
 			next();
 		}
-	} 
+	}
 );
 
 export const memberMiddleware = (
@@ -261,7 +254,6 @@ export const memberMiddleware = (
 			next();
 		}
 	});
-
 
 export const permissionMiddleware = (permission: MemberPermission, threshold = 1) => (
 	req: MemberRequest,
@@ -281,11 +273,7 @@ export const permissionMiddleware = (permission: MemberPermission, threshold = 1
 	next();
 };
 
-export const su = async (
-	schema: Schema,
-	sessionID: SessionID,
-	newUser: UserAccountInformation
-) => {
+export const su = async (schema: Schema, sessionID: SessionID, newUser: UserAccountInformation) => {
 	const sessions = schema.getCollection<Session>(SESSION_TABLE);
 
 	await sessions
@@ -293,7 +281,7 @@ export const su = async (
 		.bind({ sessionID })
 		.set('userAccount', newUser)
 		.execute();
-}
+};
 
 //#endregion
 
@@ -468,4 +456,4 @@ export const isSigninTokenValid = async (schema: Schema, token: string) => {
 import MemberBase, { areMemberReferencesTheSame } from '../../Members';
 import { CAPNHQUser } from '../members/CAPNHQMember';
 import { CAPProspectiveUser } from '../members/CAPProspectiveMember';
-import { getPermissionsForMemberInAccount, getInformationForMember } from './Account';
+import { getPermissionsForMemberInAccount, getInformationForMember, DEFAULT_PERMISSIONS } from './Account';

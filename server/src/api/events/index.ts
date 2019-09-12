@@ -43,7 +43,7 @@ router.post(
 	memberMiddleware,
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(Event.Validator),
-	permissionMiddleware('AddEvent'),
+	permissionMiddleware('ManageEvent'),
 	addevent
 );
 router.post('/:parent', memberMiddleware, tokenMiddleware, linkevent);
@@ -83,7 +83,7 @@ router.put(
 	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
 	modifyattendance
 );
-router.delete('/:id/attendance', memberMiddleware, deleteattendance);
+router.delete('/:id/attendance', memberMiddleware, tokenMiddleware, deleteattendance);
 
 router.post('/:id/debrief', memberMiddleware, tokenMiddleware, adddebrief);
 router.delete('/:id/debrief/:timestamp', memberMiddleware, tokenMiddleware, deletedebrief);

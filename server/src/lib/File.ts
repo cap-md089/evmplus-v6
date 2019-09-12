@@ -18,7 +18,7 @@ import conf from '../conf';
 import Account from './Account';
 import { CAPNHQUser } from './member/members/CAPNHQMember';
 import { CAPProspectiveUser } from './member/members/CAPProspectiveMember';
-import { getPermissionsForMemberInAccount, getPermissionsForMemberInAccountDefault } from './member/pam/Account';
+import { getPermissionsForMemberInAccountDefault } from './member/pam/Account';
 import MemberBase, { resolveReference } from './Members';
 import { collectResults, findAndBind } from './MySQLUtil';
 import FileObjectValidator from './validator/validators/FileObjectValidator';
