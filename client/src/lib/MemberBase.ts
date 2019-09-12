@@ -205,10 +205,6 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 		this.contact.CELLPHONE.EMERGENCY ||
 		this.contact.CADETPARENTPHONE.EMERGENCY;
 
-	public canManageBlog() {
-		return this.hasPermission('ManageBlog') || this.isRioux;
-	}
-
 	public isPOCOf(event: Event) {
 		return event.isPOC(this);
 	}

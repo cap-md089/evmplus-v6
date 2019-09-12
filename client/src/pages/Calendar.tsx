@@ -378,7 +378,7 @@ export default class Calendar extends Page<
 
 		return (
 			<div className="calendar">
-				{this.props.member && this.props.member.hasPermission('AddEvent') ? (
+				{this.props.member && this.props.member.hasPermission('ManageEvent') ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
 				<table>

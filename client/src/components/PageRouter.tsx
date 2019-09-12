@@ -17,14 +17,6 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './SideNavigation';
-import { BlogList } from '../pages/blog/BlogList';
-import { BlogView } from '../pages/blog/BlogView';
-import { BlogPostCreate } from '../pages/blog/BlogPostCreate';
-import { BlogEdit } from '../pages/blog/BlogEdit';
-import PageView from '../pages/pages/PageView';
-import PageEdit from '../pages/pages/PageEdit';
-import PageCreate from '../pages/pages/PageCreate';
-import PageList from '../pages/pages/PageList';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamList from '../pages/team/TeamList';
@@ -53,56 +45,6 @@ const pages: Array<{
 	{
 		url: '/test',
 		component: Test,
-		exact: false
-	},
-	{
-		url: '/blog/page/:id',
-		component: BlogList,
-		exact: false
-	},
-	{
-		url: '/blog',
-		component: BlogList,
-		exact: true
-	},
-	{
-		url: '/blog/view/:id',
-		component: BlogView,
-		exact: false
-	},
-	{
-		url: '/blog/post',
-		component: BlogPostCreate,
-		exact: false
-	},
-	{
-		url: '/blog/edit/:id',
-		component: BlogEdit,
-		exact: false
-	},
-	{
-		url: '/news/page/:id',
-		component: BlogList,
-		exact: false
-	},
-	{
-		url: '/news',
-		component: BlogList,
-		exact: true
-	},
-	{
-		url: '/news/view/:id',
-		component: BlogView,
-		exact: false
-	},
-	{
-		url: '/news/post',
-		component: BlogPostCreate,
-		exact: false
-	},
-	{
-		url: '/news/edit/:id',
-		component: BlogEdit,
 		exact: false
 	},
 	{
@@ -158,31 +100,6 @@ const pages: Array<{
 	{
 		url: '/drive',
 		component: Drive,
-		exact: false
-	},
-	{
-		url: '/page/view/:id',
-		component: PageView,
-		exact: false
-	},
-	{
-		url: '/page/edit/:id',
-		component: PageEdit,
-		exact: false
-	},
-	{
-		url: '/page/create',
-		component: PageCreate,
-		exact: false
-	},
-	{
-		url: '/page/list',
-		component: PageList,
-		exact: false
-	},
-	{
-		url: '/page/:id',
-		component: PageView,
 		exact: false
 	},
 	{

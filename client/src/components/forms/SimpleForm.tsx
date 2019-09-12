@@ -65,6 +65,10 @@ class Divider extends React.Component {
 	}
 }
 
+const fullWidth = {
+	width: '100%'
+};
+
 /**
  * Creates a title to use in the form
  */
@@ -87,8 +91,8 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 				: '';
 
 		return (
-			<div className="formbar fheader">
-				<div className="formbox header">
+			<div className="formbar fheader" style={fullWidth}>
+				<div className="formbox header" style={fullWidth}>
 					<h3 id={id}>{this.props.children}</h3>
 				</div>
 			</div>

@@ -128,17 +128,6 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		);
 	}
 
-	public canManageBlog() {
-		return (
-			super.canManageBlog() ||
-			this.hasDutyPosition([
-				'Cadet Public Affairs Officer',
-				'Cadet Public Affairs NCO',
-				'Public Affairs Officer'
-			])
-		);
-	}
-
 	public getFullName() {
 		return `${this.memberRank} ${super.getFullName()}`;
 	}

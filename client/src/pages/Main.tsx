@@ -60,8 +60,7 @@ export default class Main extends Page<PageProps, MainState> {
 		]);
 		this.updateTitle();
 
-		const [pages, events, nextEvent] = await Promise.all([
-			this.props.account.getBlogPages(),
+		const [events, nextEvent] = await Promise.all([
 			this.props.account.getUpcomingEvents(),
 			this.props.account.getNextRecurringEvent()
 		]);
@@ -70,18 +69,6 @@ export default class Main extends Page<PageProps, MainState> {
 			events,
 			nextEvent
 		});
-
-		for (const page of pages) {
-			if (page.parentID === null) {
-				links.push({
-					target: '/page/view/' + page.id,
-					text: page.title,
-					type: 'Link'
-				});
-			}
-		}
-
-		this.props.updateSideNav(links);
 	}
 
 	public render() {
@@ -189,6 +176,7 @@ export default class Main extends Page<PageProps, MainState> {
 						</section>
 					</>
 				)}
+
 				<div className="divider" />
 				<section className="halfSection" style={{ float: 'left' }}>
 					<h4>How to become a Senior Member (Age 18+)</h4>

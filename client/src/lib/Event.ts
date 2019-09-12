@@ -30,7 +30,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	 * @param account The account the event belongs to
 	 */
 	public static async Create(obj: NewEventObject, member: MemberBase, account: Account) {
-		if (!member.hasPermission('AddEvent')) {
+		if (!member.hasPermission('ManageEvent')) {
 			throw new Error('Member cannot create event');
 		}
 
@@ -151,7 +151,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 
-	public customAttendanceFields: Array<CustomAttendanceField>;
+	public customAttendanceFields: CustomAttendanceField[];
 
 	public author: MemberReference;
 
@@ -510,7 +510,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	public isPOC(member: MemberBase) {
 		return (
 			member.matchesReference(this.author) ||
-			member.hasPermission('SignUpEdit') ||
+			member.hasPermission('ManageEvent') ||
 			this.pointsOfContact.map(
 				poc =>
 					poc.type === PointOfContactType.INTERNAL &&

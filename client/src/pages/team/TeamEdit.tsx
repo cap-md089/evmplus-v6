@@ -73,7 +73,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 
 		if (
 			!(
-				this.props.member.hasPermission('EditTeam') ||
+				this.props.member.hasPermission('ManageTeam') ||
 				this.state.team.isLeader(this.props.member.getReference())
 			)
 		) {
