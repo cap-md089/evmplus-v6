@@ -5,7 +5,7 @@
   "author": "Andrew Rioux",
   "main": "./index.js",
   "scripts": {
-    "build": "tsc && rm index.d.ts"
+    "build": "tsc && rm index.d.ts && rm permissions.d.ts"
   },
   "dependencies": {
     "@types/react": "16.8.4",

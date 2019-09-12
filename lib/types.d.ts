@@ -13,6 +13,26 @@ import {
 	NotificationDataType,
 	CustomAttendanceFieldEntryType
 } from './index';
+import {
+	FlightAssign,
+	MusterSheet,
+	PTSheet,
+	PromotionManagement,
+	AssignTasks,
+	AdministerPT,
+	ManageEvent,
+	EventContactSheet,
+	ORMOPORD,
+	AssignTemporaryDutyPosition,
+	ProspectiveMemberManagement,
+	EventLinkList,
+	ManageTeam,
+	FileManagement,
+	PermissionManagement,
+	DownloadCAPWATCH,
+	Notify,
+	RegistryEdit
+} from './permissions';
 
 type RawDraftContentState = DraftJS.RawDraftContentState;
 // Export it so the server can use it and not have to depend on @types/draft-js
@@ -267,6 +287,14 @@ export interface AsyncIterableIterator<T> {
 	next(value?: any): Promise<IteratorResult<T>>;
 	return?(value?: any): Promise<IteratorResult<T>>;
 	throw?(e?: any): Promise<IteratorResult<T>>;
+}
+
+export namespace global {
+	export interface AsyncIterableIterator<T> {
+		next(value?: any): Promise<IteratorResult<T>>;
+		return?(value?: any): Promise<IteratorResult<T>>;
+		throw?(e?: any): Promise<IteratorResult<T>>;
+	}
 }
 
 /**
@@ -1294,117 +1322,82 @@ export interface MemberPermissions {
 	/**
 	 * Whether or not the user can assign flight members
 	 */
-	FlightAssign: number;
+	FlightAssign: FlightAssign;
 	/**
 	 * Whether or not the user can get the muster sheet
 	 */
-	MusterSheet: number;
+	MusterSheet: MusterSheet;
 	/**
 	 * Whether or not the user can get PT sheets
 	 */
-	PTSheet: number;
+	PTSheet: PTSheet;
 	/**
 	 * Whether or not the user can manage promotions
 	 */
-	PromotionManagement: number;
+	PromotionManagement: PromotionManagement;
 	/**
 	 * Whether or not the user can assign tasks
 	 */
-	AssignTasks: number;
+	AssignTasks: AssignTasks;
 	/**
 	 * Whether or not the user can administer PT
 	 */
-	AdministerPT: number;
-	/**
-	 * Whether or not the user can download the cadet staff guide
-	 */
-	DownloadStaffGuide: number;
+	AdministerPT: AdministerPT;
 
 	// Start Manager permissions
 	/**
-	 * Whether or not the user can add an event
-	 * 1 for they can add a draft event only
-	 * 2 for full access
+	 * Whether or not the user can manage events and to what degree
 	 */
-	AddEvent: number;
-	/**
-	 * Whether or not the user can
-	 */
-	EditEvent: number;
+	ManageEvent: ManageEvent;
 	/**
 	 * Whether or not the user can get event contact information
 	 */
-	EventContactSheet: number;
-	/**
-	 * Whether or not the user can edit sign up information
-	 */
-	SignUpEdit: number;
-	/**
-	 * Whether or not the user can copy events
-	 */
-	CopyEvent: number;
+	EventContactSheet: EventContactSheet;
 	/**
 	 * Whether or not the user can get ORM OPORD information
 	 */
-	ORMOPORD: number;
+	ORMOPORD: ORMOPORD;
 	/**
-	 * Whether or not the user can delete events
+	 * Whether or not the user can assign temporary duty positions
 	 */
-	DeleteEvent: number;
-	/**
-	 * Whether or not the user can assign positions
-	 */
-	AssignPosition: number;
+	AssignTemporaryDutyPositions: AssignTemporaryDutyPosition;
 
 	// Admin privileges
 	/**
-	 * Whether or not the user can get the event status page
-	 */
-	EventStatusPage: number;
-	/**
 	 * Whether or not the user can manage prospective members
 	 */
-	ProspectiveMemberManagment: number;
+	ProspectiveMemberManagment: ProspectiveMemberManagement;
 	/**
 	 * Whether or not the user can view a list of all events
 	 */
-	EventLinkList: number;
+	EventLinkList: EventLinkList
 	/**
 	 * Whether or not the user can add a team
 	 */
-	AddTeam: number;
-	/**
-	 * Whether or not the user can edit a team
-	 */
-	EditTeam: number;
+	ManageTeam: ManageTeam;
 	/**
 	 * Whether or not the user can manage files
 	 */
-	FileManagement: number;
+	FileManagement: FileManagement;
 	/**
 	 * Whether or not the user can manage permissions of others
 	 */
-	PermissionManagement: number;
+	PermissionManagement: PermissionManagement;
 	/**
 	 * Whether or not the user can download CAPWATCH files
 	 */
-	DownloadCAPWATCH: number;
-	/**
-	 * Whether or not the user can manage the blog, irrespective of if they
-	 * are a PAO on CAPNHQ
-	 */
-	ManageBlog: number;
+	DownloadCAPWATCH: DownloadCAPWATCH;
 	/**
 	 * Whether or not the member can create banner notifications
 	 */
-	CreateNotifications: number;
+	CreateNotifications: Notify;
 
 	// Developer/super admin privileges?
 	// Will change when utilities are more user friendly
 	/**
 	 * Whether or not the user can edit the registry
 	 */
-	RegistryEdit: number;
+	RegistryEdit: RegistryEdit;
 }
 
 /**

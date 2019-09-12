@@ -9,14 +9,14 @@
 		"forceConsistentCasingInFileNames": true,
 		"noUnusedLocals": true,
 		"pretty": true,
+		"declaration": false,
 		"removeComments": true,
 		"preserveSymlinks": true,
-		"sourceMap": true,
 		"baseUrl": ".",
 		"rootDir": ".",
 		"composite": true
 	},
 	"exclude": ["node_modules"],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
-	"files": ["./index.ts"]
+	"files": ["./index.ts", "./permissions.ts"]
 }

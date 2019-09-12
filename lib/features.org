@@ -85,7 +85,7 @@
     - [X] Sign in
     - [X] Sessions
     - [ ] Integration tests
-    - [ ] Unit tests
+    - [ ] Unit test
 *** Teams [1/2]
     - [X] BREAD
     - [ ] Integration tests
