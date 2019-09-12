@@ -25,6 +25,7 @@ import list from './events/list';
 import listupcoming from './events/listupcoming';
 import setevent from './events/setevent';
 import timelist from './events/timelist';
+import attendancelog from './attendance/attendancelog';
 
 const router = express.Router();
 
@@ -54,7 +55,11 @@ router.put(
 router.get('/:id', NHQMember.ConditionalExpressMiddleware, getevent);
 router.post('/:id/copy', NHQMember.ExpressMiddleware, tokenMiddleware, copy);
 
+
+
 router.get('/:id/attendance', NHQMember.ExpressMiddleware, getattendance);
+
+router.get('/:id/attendance/log', NHQMember.ExpressMiddleware, attendancelog);
 router.post(
 	'/:id/attendance/bulk',
 	NHQMember.ExpressMiddleware,
