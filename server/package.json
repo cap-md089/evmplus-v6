@@ -66,9 +66,9 @@
     "jest-cli": "^24.8.0",
     "supertest": "^3.1.0",
     "ts-jest": "^23.1.4",
-    "tslint": "^5.9.1",
+    "tslint": "^5.19.0",
     "tslint-config-prettier": "^1.13.0",
-    "typescript": "^3.3.3"
+    "typescript": "^3.5.2"
   },
   "jest": {
     "globals": {

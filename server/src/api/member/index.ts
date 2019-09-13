@@ -1,6 +1,6 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
-import MemberBase from '../../lib/Members';
+import { memberMiddleware, permissionMiddleware } from '../../lib/member/pam/Session';
 import Validator from '../../lib/validator/Validator';
 import AbsenteeValidator from '../../lib/validator/validators/AbsenteeValidator';
 import FlightAssignBulkValidator from '../../lib/validator/validators/FlightAssignBulkValidator';
@@ -8,6 +8,7 @@ import FlightAssignValidator from '../../lib/validator/validators/FlightAssignVa
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
+import account from './account';
 import capwatch from './capwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
@@ -17,36 +18,37 @@ import getmembers from './getmembers';
 import getpermissions from './permissions/getpermissions';
 import setpermissions, { permissionsValidator } from './permissions/setpermissions';
 import su from './su';
+import getdutypositions from './temporarydutypositions/get';
 import setdutypositions, { setDutyPositionsValidator } from './temporarydutypositions/set';
 
 const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/', MemberBase.ExpressMiddleware, getmembers);
-router.post('/su', MemberBase.ExpressMiddleware, su);
+router.get('/', memberMiddleware, getmembers);
+router.post('/su', memberMiddleware, tokenMiddleware, su);
 router.post(
 	'/absent',
-	MemberBase.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(AbsenteeValidator),
 	absent
 );
 
-router.get('/flight', MemberBase.ExpressMiddleware, flightmembers);
-router.get('/flight/basic', MemberBase.ExpressMiddleware, flightbasic);
+router.get('/flight', memberMiddleware, flightmembers);
+router.get('/flight/basic', memberMiddleware, flightbasic);
 router.post(
 	'/flight',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('FlightAssign'),
+	memberMiddleware,
+	permissionMiddleware('FlightAssign'),
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(FlightAssignValidator),
 	flightassign
 );
 router.post(
 	'/flight/bulk',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('FlightAssign'),
+	memberMiddleware,
+	permissionMiddleware('FlightAssign'),
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(FlightAssignBulkValidator),
 	flightassignbulk
@@ -54,14 +56,14 @@ router.post(
 
 router.get(
 	'/permissions',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('PermissionManagement'),
+	memberMiddleware,
+	permissionMiddleware('PermissionManagement'),
 	getpermissions
 );
 router.post(
 	'/permissions',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('PermissionManagement'),
+	memberMiddleware,
+	permissionMiddleware('PermissionManagement'),
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(permissionsValidator),
 	setpermissions
@@ -69,24 +71,21 @@ router.post(
 
 router.get(
 	'/tempdutypositions/:type/:id',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('AssignPosition'),
-	tokenMiddleware
+	memberMiddleware,
+	permissionMiddleware('AssignTemporaryDutyPositions'),
+	tokenMiddleware,
+	getdutypositions
 );
 router.post(
 	'/tempdutypositions/:type/:id',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('AssignPosition'),
+	memberMiddleware,
+	permissionMiddleware('AssignTemporaryDutyPositions'),
 	tokenMiddleware,
 	Validator.BodyExpressMiddleware(setDutyPositionsValidator),
 	setdutypositions
 );
 
-router.use(
-	'/capwatch',
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('DownloadCAPWATCH'),
-	capwatch
-);
+router.use('/capwatch', memberMiddleware, permissionMiddleware('DownloadCAPWATCH'), capwatch);
+router.use('/account', account)
 
 export default router;

@@ -1,7 +1,10 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
-import MemberBase from '../../lib/Members';
-import NHQMember from '../../lib/members/NHQMember';
+import {
+	conditionalMemberMiddleware,
+	memberMiddleware,
+	permissionMiddleware
+} from '../../lib/member/pam/Session';
 import Team from '../../lib/Team';
 import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
@@ -20,60 +23,56 @@ const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/', NHQMember.ConditionalExpressMiddleware, list);
-router.get('/:id', NHQMember.ConditionalExpressMiddleware, get);
+router.get('/', memberMiddleware, list);
+router.get('/:id', memberMiddleware, get);
 router.post(
 	'/',
-	NHQMember.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	NHQMember.PermissionMiddleware('AddTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.Validator),
 	create
 );
 router.put(
 	'/:id',
-	NHQMember.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	NHQMember.PermissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.PartialBodyExpressMiddleware(Team.Validator),
 	set
 );
 router.delete(
 	'/:id',
-	NHQMember.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	NHQMember.PermissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	deleteTeam
 );
 
 router.put(
 	'/:id/members',
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	modify
 );
 router.delete(
 	'/:id/members',
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	remove
 );
 router.post(
 	'/:id/members',
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.ExpressMiddleware,
-	MemberBase.PermissionMiddleware('EditTeam'),
+	permissionMiddleware('ManageTeam'),
 	Validator.BodyExpressMiddleware(Team.MemberValidator),
 	add
 );
-router.get(
-	'/:id/members',
-	MemberBase.ConditionalExpressMiddleware,
-	listmembers
-);
+router.get('/:id/members', conditionalMemberMiddleware, listmembers);
 
 export default router;

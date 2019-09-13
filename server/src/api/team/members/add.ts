@@ -1,6 +1,6 @@
 import { RawTeamMember } from 'common-lib';
 import { Response } from 'express';
-import MemberBase from '../../../lib/Members';
+import { resolveReference } from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
@@ -20,7 +20,7 @@ export default asyncErrorHandler(
 		let fullMember;
 
 		try {
-			fullMember = await MemberBase.ResolveReference(
+			fullMember = await resolveReference(
 				req.body.reference,
 				req.account,
 				req.mysqlx,

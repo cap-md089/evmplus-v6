@@ -4,7 +4,7 @@ import { join } from 'path';
 import conftest from '../../../conf.test';
 import Account from '../../../lib/Account';
 import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
-import MemberBase, { CAPWATCHMember } from '../../../lib/Members';
+import MemberBase, { CAPWATCHMember, resolveReference } from '../../../lib/Members';
 import { Admin as AdminPermissions, Member as NoPermissions } from '../../../lib/Permissions';
 import { getTestTools } from '../../../lib/Util';
 
@@ -43,7 +43,7 @@ describe('CAPWATCHMember', async () => {
 	it('should create the correct reference', async () => {
 		const reference = mem.getReference();
 
-		const newMem = await MemberBase.ResolveReference(reference, account, schema, true);
+		const newMem = await resolveReference(reference, account, schema, true);
 
 		expect(newMem.matchesReference(reference)).toBeTruthy();
 	});

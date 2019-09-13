@@ -1,23 +1,22 @@
 import { Response } from 'express';
-import { MemberRequest, NHQMember } from '../../lib/Members';
+import { CAPNHQMember, isValidMemberReference, MemberRequest } from '../../lib/Members';
 import { asyncErrorHandler } from '../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	if (!req.member.isRioux || !(req.member instanceof NHQMember)) {
+	if (!req.member.isRioux || !(req.member instanceof CAPNHQMember)) {
 		res.status(403);
 		res.end();
 		return;
 	}
 
-	if (req.body === undefined || req.body.id === undefined) {
+	if (!isValidMemberReference(req.body)) {
 		res.status(400);
 		res.end();
 		return;
 	}
 
-	const sessionID = await req.member.su(req.body.id)
+	await req.member.su(req.body);
 
-	res.json({
-		sessionID
-	});
+	res.status(204);
+	res.end();
 });

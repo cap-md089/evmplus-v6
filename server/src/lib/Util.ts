@@ -149,7 +149,8 @@ export async function getTestTools(testconf: typeof Configuration) {
 
 	return {
 		account: testAccount,
-		schema
+		schema,
+		session: testSession
 	};
 }
 

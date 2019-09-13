@@ -1,16 +1,20 @@
-import { CAPWATCHImportErrors, CAPWATCHImportUpdate } from 'common-lib/index';
-import ImportCAPWATCHFile from '../../../lib/ImportCAPWATCHFile';
-import { MemberRequest, NHQMember } from '../../../lib/Members';
+import { MemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
-import { validRawTokenAlone } from '../../formtoken';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token: string }>, res) => {
-	if (!validRawTokenAlone(req.params.token)) {
+	// Depends on CAPNHQUser having a getCAPWATCHFile method
+	// It doesn't, we need to program it to be able to interface with the 'API'
+
+	res.status(500);
+	return res.end();
+
+	/*
+	if (!await validRawTokenAlone(req.mysqlx, req.params.token)) {
 		res.status(403);
 		return res.end();
 	}
 
-	if (!(req.member instanceof NHQMember)) {
+	if (!(req.member instanceof CAPNHQUser)) {
 		res.status(403);
 		return res.end();
 	}
@@ -51,17 +55,15 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 
 	let fileLocation = '';
 
-	for (let i = 0; i < orgids.length; i++) {
-		const currentORGID = orgids[i];
-
+	for (const orgid of orgids) {
 		try {
-			fileLocation = await req.member.getCAPWATCHFile(currentORGID.toString());
+			fileLocation = await req.member.getCAPWATCHFile(orgid.toString());
 
 			currentStep++;
 			res.write(
 				JSON.stringify({
 					type: CAPWATCHImportUpdate.CAPWATCHFileDownloaded,
-					id: currentORGID,
+					id: orgid,
 					currentStep
 				})
 			);
@@ -73,7 +75,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 		const importProgress = ImportCAPWATCHFile(
 			fileLocation,
 			req.mysqlx,
-			currentORGID,
+			orgid,
 			filesToImport
 		);
 
@@ -82,7 +84,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 			res.write(
 				JSON.stringify({
 					type: CAPWATCHImportUpdate.FileImported,
-					id: currentORGID,
+					id: orgid,
 					error: progress.error !== CAPWATCHImportErrors.NONE,
 					currentStep,
 					file: progress.file
@@ -98,7 +100,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 		res.write(
 			JSON.stringify({
 				type: CAPWATCHImportUpdate.CAPWATCHFileDone,
-				id: currentORGID,
+				id: orgid,
 				currentStep
 			})
 		);
@@ -106,4 +108,5 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 
 	res.status(200);
 	res.end();
+	*/
 });

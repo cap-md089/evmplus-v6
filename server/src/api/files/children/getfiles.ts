@@ -2,7 +2,7 @@ import { FileObject, FullFileObject } from 'common-lib';
 import { FileUserAccessControlPermissions } from 'common-lib/index';
 import * as express from 'express';
 import File from '../../../lib/File';
-import { ConditionalMemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
 
 export default asyncErrorHandler(
@@ -29,7 +29,14 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		if (!folder.hasPermission(req.member, FileUserAccessControlPermissions.READ)) {
+		if (
+			!(await folder.hasPermission(
+				req.member,
+				req.mysqlx,
+				req.account,
+				FileUserAccessControlPermissions.READ
+			))
+		) {
 			res.status(403);
 			res.end();
 			return;
@@ -44,8 +51,10 @@ export default asyncErrorHandler(
 				res,
 				folder.getChildren(),
 				async file => {
-					const canRead = file.hasPermission(
+					const canRead = await file.hasPermission(
 						req.member,
+						req.mysqlx,
+						req.account,
 						FileUserAccessControlPermissions.READ
 					);
 
@@ -63,7 +72,12 @@ export default asyncErrorHandler(
 				res,
 				folder.getChildren(),
 				file =>
-					file.hasPermission(req.member, FileUserAccessControlPermissions.READ)
+					file.hasPermission(
+						req.member,
+						req.mysqlx,
+						req.account,
+						FileUserAccessControlPermissions.READ
+					)
 						? file.toRaw()
 						: false
 			);

@@ -2,7 +2,7 @@ import {
 	MemberReference,
 	ShortDutyPosition
 } from 'common-lib';
-import { CAPWATCHMember, MemberRequest } from '../../../lib/Members';
+import { MemberRequest, resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(
@@ -31,13 +31,13 @@ export default asyncErrorHandler(
 			return res.end();
 		}
 
-		const member = await CAPWATCHMember.ResolveReference(ref, req.account, req.mysqlx, false);
+		const member = await resolveReference(ref, req.account, req.mysqlx, false);
 
 		if (!member) {
 			res.status(404);
 			return res.end();
 		}
 
-		json<ShortDutyPosition[]>(res, member.dutyPositions);
+		json<ShortDutyPosition[]>(res, member.dutyPositions.filter(d => d.type === 'CAPUnit'));
 	}
 );

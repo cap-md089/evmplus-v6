@@ -1,35 +1,37 @@
 import { EventObject } from 'common-lib';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import { ConditionalMemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
-	if (req.params.id === undefined) {
-		res.status(400);
-		res.end();
-		return;
-	}
+export default asyncErrorHandler(
+	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
+		if (req.params.id === undefined) {
+			res.status(400);
+			res.end();
+			return;
+		}
 
-	let event: Event;
+		let event: Event;
 
-	try {
-		event = await Event.Get(req.params.id, req.account, req.mysqlx);
-	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
-	}
+		try {
+			event = await Event.Get(req.params.id, req.account, req.mysqlx);
+		} catch (e) {
+			res.status(404);
+			res.end();
+			return;
+		}
 
-	let isValidMember = false;
+		let isValidMember = false;
 
-	if (req.member) {
-		for await (const account of req.member.getAccounts()) {
-			if (account.id === req.account.id) {
-				isValidMember = true;
+		if (req.member) {
+			for await (const account of req.member.getAccounts()) {
+				if (account.id === req.account.id) {
+					isValidMember = true;
+				}
 			}
 		}
-	}
 
-	json<EventObject>(res, event.toRaw(isValidMember ? req.member : null));
-});
+		json<EventObject>(res, event.toRaw(isValidMember ? req.member : null));
+	}
+);

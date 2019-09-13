@@ -1,35 +1,43 @@
 import * as express from 'express';
 import Account from '../../lib/Account';
-import MemberBase from '../../lib/Members';
+import { memberMiddleware, permissionMiddleware } from '../../lib/member/pam/Session';
 import Task from '../../lib/Task';
 import Validator from '../../lib/validator/Validator';
 import { tokenMiddleware } from '../formtoken';
+import taskcreate from './taskcreate';
+import taskdelete from './taskdelete';
+import taskedit from './taskedit';
+import taskget from './taskget';
+import tasklist from './tasklist';
 
 const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/', MemberBase.ExpressMiddleware);
-router.get('/:id', MemberBase.ExpressMiddleware);
+router.get('/', memberMiddleware, tasklist);
+router.get('/:id', memberMiddleware, taskget);
 router.post(
 	'/',
-	MemberBase.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.PermissionMiddleware('AssignTasks'),
-	Validator.BodyExpressMiddleware(Task.Validator)
+	permissionMiddleware('AssignTasks'),
+	Validator.BodyExpressMiddleware(Task.Validator),
+	taskcreate
 );
 router.put(
 	'/:id',
-	MemberBase.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.PermissionMiddleware('AssignTasks'),
-	Validator.BodyExpressMiddleware(Task.RawValidator)
+	permissionMiddleware('AssignTasks'),
+	Validator.BodyExpressMiddleware(Task.RawValidator),
+	taskedit
 );
 router.delete(
 	'/:id',
-	MemberBase.ExpressMiddleware,
+	memberMiddleware,
 	tokenMiddleware,
-	MemberBase.PermissionMiddleware('AssignTasks')
+	permissionMiddleware('AssignTasks'),
+	taskdelete
 );
 
 export default router;

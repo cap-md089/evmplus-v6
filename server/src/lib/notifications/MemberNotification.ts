@@ -11,7 +11,7 @@ import {
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import Account from '../Account';
-import MemberBase from '../Members';
+import MemberBase, { resolveReference } from '../Members';
 import { Notification } from '../Notification';
 
 export default class MemberNotification extends Notification {
@@ -61,7 +61,7 @@ export default class MemberNotification extends Notification {
 		if (to instanceof MemberBase) {
 			toMemberName = to.getFullName();
 		} else {
-			const toMember = await MemberBase.ResolveReference(to, account, schema);
+			const toMember = await resolveReference(to, account, schema);
 
 			toMemberName = toMember.getFullName();
 		}

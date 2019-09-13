@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import { ConditionalMemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
 
 export default asyncErrorHandler(

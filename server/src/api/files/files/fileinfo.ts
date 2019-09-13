@@ -2,7 +2,7 @@ import { FileObject, FullFileObject } from 'common-lib';
 import { FileUserAccessControlPermissions } from 'common-lib/index';
 import * as express from 'express';
 import File from '../../../lib/File';
-import { ConditionalMemberRequest } from '../../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../../lib/Members';
 import { asyncErrorHandler, json } from '../../../lib/Util';
 
 export default asyncErrorHandler(
@@ -20,7 +20,7 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		if (!file.hasPermission(req.member, FileUserAccessControlPermissions.READ)) {
+		if (!await file.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.READ)) {
 			res.send(403);
 			res.end();
 			return;

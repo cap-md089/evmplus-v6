@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { MemberRequest } from '../../lib/MemberBase';
+import { MemberRequest } from '../../lib/Members';
 import Team from '../../lib/Team';
 import { asyncErrorHandler } from '../../lib/Util';
 

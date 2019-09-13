@@ -1,7 +1,7 @@
 import { FullTeamObject, MemberReference } from 'common-lib';
 import { TeamPublicity } from 'common-lib/index';
 import { Response } from 'express';
-import { ConditionalMemberRequest } from '../../lib/MemberBase';
+import { ConditionalMemberRequest } from '../../lib/Members';
 import Team from '../../lib/Team';
 import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../lib/Util';
 

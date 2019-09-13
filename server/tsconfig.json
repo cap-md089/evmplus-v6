@@ -25,7 +25,9 @@
 		"typeRoots": ["./types", "./node_modules/@types"],
 		"allowSyntheticDefaultImports": false,
 		"experimentalDecorators": true,
-		"sourceMap": true
+		"sourceMap": true,
+		// "strictNullChecks": true,
+		// "strictPropertyInitialization": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": [

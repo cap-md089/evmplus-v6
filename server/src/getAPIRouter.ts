@@ -4,7 +4,6 @@ import * as express from 'express';
 import * as logger from 'morgan';
 import { join } from 'path';
 import accountcheck from './api/accountcheck';
-import blog from './api/blog';
 import check from './api/check';
 import echo from './api/echo';
 import clienterror from './api/errors/clienterror';
@@ -20,7 +19,7 @@ import signin from './api/signin';
 import team from './api/team';
 import { Configuration } from './conf';
 import Account from './lib/Account';
-import { NHQMember } from './lib/Members';
+import { conditionalMemberMiddleware, memberMiddleware } from './lib/member/pam/Session';
 import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
 
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
@@ -42,7 +41,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	/**
 	 * Use API Routers
 	 */
-	router.use('*', MySQLMiddleware(eventManagementSchema));
+	router.use('*', MySQLMiddleware(eventManagementSchema, session));
 
 	router.use((req: MySQLRequest, _, next) => {
 		req._originalUrl = req.originalUrl;
@@ -79,12 +78,12 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/signin', Account.ExpressMiddleware, signin);
 
-	router.get('/token', Account.ExpressMiddleware, NHQMember.ExpressMiddleware, getFormToken);
+	router.get('/token', Account.ExpressMiddleware, memberMiddleware, getFormToken);
 
 	router.get(
 		'/banner',
 		Account.ExpressMiddleware,
-		NHQMember.ConditionalExpressMiddleware,
+		conditionalMemberMiddleware,
 		getSlideshowImageIDs
 	);
 
@@ -94,9 +93,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/echo', echo);
 
-	router.use('/check', Account.ExpressMiddleware, NHQMember.ConditionalExpressMiddleware, check);
-
-	router.use('/blog', blog);
+	router.use('/check', Account.ExpressMiddleware, conditionalMemberMiddleware, check);
 
 	router.use('/event', events);
 
@@ -109,7 +106,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	router.post(
 		'/clienterror',
 		Account.ExpressMiddleware,
-		NHQMember.ConditionalExpressMiddleware,
+		conditionalMemberMiddleware,
 		clienterror
 	);
 

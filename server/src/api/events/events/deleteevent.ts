@@ -1,7 +1,7 @@
-import { Response } from "express";
-import Event from "../../../lib/Event";
-import { MemberRequest } from "../../../lib/MemberBase";
-import { asyncErrorHandler } from "../../../lib/Util";
+import { Response } from 'express';
+import Event from '../../../lib/Event';
+import { MemberRequest } from '../../../lib/Members';
+import { asyncErrorHandler } from '../../../lib/Util';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	let event: Event;
@@ -24,4 +24,4 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res:
 
 	res.status(204);
 	res.end();
-})
+});

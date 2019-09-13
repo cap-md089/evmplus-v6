@@ -1,0 +1,65 @@
+import {
+	addUserAccount,
+	UserError,
+	validateUserAccountCreationToken
+} from '../../../../lib/member/pam/Account';
+import { createSessionForUser } from '../../../../lib/member/pam/Session';
+import { asyncErrorHandler } from '../../../../lib/Util';
+import Validator, { BasicValidatedRequest } from '../../../../lib/validator/Validator';
+
+interface RequestParameters {
+	password: string;
+	username: string;
+	token: string;
+};
+
+export const nhqFinishValidator = new Validator<RequestParameters>({
+	password: {
+		validator: Validator.String
+	},
+	token: {
+		validator: Validator.String
+	},
+	username: {
+		validator: Validator.String
+	}
+});
+
+export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParameters>, res) => {
+	let memberReference;
+	try {
+		memberReference = await validateUserAccountCreationToken(req.mysqlx, req.body.token);
+	} catch (e) {
+		res.status(404);
+		return res.end();
+	}
+
+	let account;
+	try {
+		account = await addUserAccount(
+			req.mysqlx,
+			req.account,
+			req.body.username,
+			req.body.password,
+			memberReference,
+			req.body.token
+		);
+	} catch (e) {
+		if (e instanceof UserError) {
+			res.status(400);
+			res.json({
+				error: e.message
+			});
+		} else {
+			res.status(500);
+			res.end();
+		}
+		return;
+	}
+
+	const session = await createSessionForUser(req.mysqlx, account);
+
+	res.json({
+		sessionID: session.sessionID
+	});
+});

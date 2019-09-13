@@ -1,4 +1,4 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { exec } from 'child_process';
 import { CAPWATCHImportErrors } from 'common-lib/index';
 import * as csv from 'csv-parse';
@@ -105,9 +105,12 @@ interface CAPWATCHModuleResult {
 export default async function*(
 	zipFileLocation: string,
 	schema: Schema,
+	session: Session,
 	orgid: number,
 	files: string[] = modules.map(mod => mod.file)
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
+	session.startTransaction();
+
 	const foundModules: { [key: string]: boolean } = {};
 
 	for (const i of files) {
@@ -145,4 +148,6 @@ export default async function*(
 			console.error('Invalid file passed to ImportCAPWATCHFile:', i);
 		}
 	}
+
+	session.commit();
 }

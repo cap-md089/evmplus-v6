@@ -1,7 +1,9 @@
 import { NewAttendanceRecord } from 'common-lib';
+import { ManageEvent } from 'common-lib/permissions';
 import { Response } from 'express';
 import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/MemberBase';
+import MemberBase from '../../../lib/member/MemberBase';
+import { isValidMemberReference, resolveReference } from '../../../lib/Members';
 import { asyncErrorHandler } from '../../../lib/Util';
 import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 
@@ -18,22 +20,13 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		// DO NOT MOVE THIS INTO THE IF STATEMENT
-		// For some reason it does not work, it needs to be
-		// stored in a variable first
-		const canAddOtherMembers =
-			req.body.memberID &&
-			MemberBase.isReference(req.body.memberID) &&
-			req.member.isPOCOf(event);
-
-		if (canAddOtherMembers) {
+		if (
+			isValidMemberReference(req.body.memberID) &&
+			(req.member.isPOCOf(event) || req.member.hasPermission('ManageEvent', ManageEvent.FULL))
+		) {
 			member =
-				(await MemberBase.ResolveReference(
-					req.body.memberID,
-					req.account,
-					req.mysqlx,
-					true
-				)) || req.member;
+				(await resolveReference(req.body.memberID, req.account, req.mysqlx, false)) ||
+				req.member;
 		} else {
 			member = req.member;
 		}

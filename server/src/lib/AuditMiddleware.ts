@@ -1,5 +1,5 @@
 import { AuditLogItem, HTTPRequestMethod } from 'common-lib';
-import { ConditionalMemberRequest } from './members/NHQMember';
+import { ConditionalMemberRequest } from './Members';
 import { asyncErrorHandler } from './Util';
 
 export default asyncErrorHandler((req: ConditionalMemberRequest, res, next) => {

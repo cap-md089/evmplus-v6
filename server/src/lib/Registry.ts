@@ -2,6 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import { DatabaseInterface, NoSQLDocument, RegistryValues } from 'common-lib';
 import Account from './Account';
 import { collectResults, findAndBind } from './MySQLUtil';
+import RegistryValueValidator from './validator/validators/RegistryValues';
 
 export default class Registry implements DatabaseInterface<RegistryValues> {
 	public static async Get(account: Account, schema: Schema): Promise<Registry> {
@@ -105,14 +106,15 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 	 * @param values The values to set
 	 */
 	public set(values: Partial<RegistryValues>): boolean {
-		for (const i in values) {
-			if (values.hasOwnProperty(i)) {
-				const key = i as keyof RegistryValues;
-				this.values[key] = values[key];
-			}
-		}
+		const validator = new RegistryValueValidator();
 
-		return true;
+		if (validator.validate(values, true)) {
+			validator.partialPrune(values, this.values);
+
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public async save() {
