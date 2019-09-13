@@ -1623,6 +1623,10 @@ export interface NHQMemberObject extends CAPMemberObject {
 	 * Descriminant
 	 */
 	type: 'CAPNHQMember';
+	/**
+	 * When the membership lapses for this member
+	 */
+	expirationDate: number;
 }
 
 /**

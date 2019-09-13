@@ -26,7 +26,15 @@
         - [X] Su
     - [X] Basic data handling
     - [X] Integration (Express Middleware)
-    - [ ] Unit tests
+    - [-] Unit tests [0/2]
+      - [-] Data class unit tests [1/2]
+        - [X] CAPNHQMember
+        - [ ] CAPProspectiveMember
+      - [-] PAM [2/4]
+        - [X] Account
+        - [ ] Auth
+        - [X] Password
+        - [ ] Session
 *** Account [1/3]
     - [X] Middleware
     - [ ] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
@@ -200,6 +208,9 @@
 *** TODO Signin link
 *** DONE Button
 *** TODO Mobile site
+*** TODO Styles in general
+    They should be redone
+    Preferably using sass modules, as what is currently in place is bloated
 ** Debugging
 *** DONE Error handling
 * Security
