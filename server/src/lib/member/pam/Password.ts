@@ -25,7 +25,7 @@ export const PASSWORD_MIN_AGE = 7 * 24 * 60 * 60 * 1000;
  * @param length the length of the result
  * @param iterationCount the iterations to use
  */
-const hashPassword = async (
+export const hashPassword = async (
 	password: string,
 	salt: string,
 	length = DEFAULT_PASSWORD_STORED_LENGTH,
@@ -38,7 +38,7 @@ const hashPassword = async (
  * @param info the user account to check against
  * @param password the password to check
  */
-const isPasswordValidForUser = async (info: UserAccountInformation, password: string) => {
+export const isPasswordValidForUser = async (info: UserAccountInformation, password: string) => {
 	const pwInfo = info.passwordHistory[0];
 	const iterations = pwInfo.iterations;
 	const salt = pwInfo.salt;
@@ -55,7 +55,7 @@ const isPasswordValidForUser = async (info: UserAccountInformation, password: st
  * @param password the password to check the use for
  * @param passwordHistory the password history to check through
  */
-const hasPasswordBeenUsed = async (
+export const hasPasswordBeenUsed = async (
 	password: string,
 	passwordHistory: AccountPasswordInformation[]
 ): Promise<boolean> =>
@@ -63,7 +63,7 @@ const hasPasswordBeenUsed = async (
 	// are hashed to different parameters
 	(await Promise.all(
 		passwordHistory.map(pw =>
-			hashPassword(password, pw.salt, pw.password.length, pw.iterations)
+			hashPassword(password, pw.salt, pw.password.length / 2, pw.iterations)
 		)
 	))
 		// Check if each one (as a hex string) equals a password in its history
@@ -76,7 +76,7 @@ const hasPasswordBeenUsed = async (
  *
  * @param password the password to check
  */
-const passwordMeetsRequirements = (password: string) =>
+export const passwordMeetsRequirements = (password: string) =>
 	password.length > 10 &&
 	// lowercase letter
 	!!password.match(/[a-z]/g) &&
@@ -96,7 +96,7 @@ const passwordMeetsRequirements = (password: string) =>
  * @param userID the user to update the password for
  * @param password the password to set
  */
-const updatePasswordForUser = async (
+export const updatePasswordForUser = async (
 	schema: Schema,
 	username: string,
 	password: string
