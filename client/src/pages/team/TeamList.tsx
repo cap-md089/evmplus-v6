@@ -54,7 +54,7 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 
 		return (
 			<div>
-				{this.props.member && this.props.member.hasPermission('AddTeam') ? (
+				{this.props.member && this.props.member.hasPermission('ManageTeam') ? (
 					<Link to="/team/create">Add team</Link>
 				) : null}
 				{this.state.teams.map((team, i) => (

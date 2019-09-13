@@ -99,7 +99,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 
 		return (
 			<div>
-				{this.props.member && this.props.member.hasPermission('EditTeam') && this.state.team.id !== 0 ? (
+				{this.props.member && this.props.member.hasPermission('ManageTeam') && this.state.team.id !== 0 ? (
 					<>
 						<Link to={`/team/edit/${this.state.team.id}`}>Edit team</Link>
 						{' | '}
@@ -162,7 +162,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return;
 		}
 
-		if (!this.props.member.hasPermission('EditTeam')) {
+		if (!this.props.member.hasPermission('ManageTeam')) {
 			return;
 		}
 

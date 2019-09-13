@@ -115,10 +115,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			teamIDs: this.teamIDs,
 			type: 'CAPNHQMember',
 			usrID: this.usrID,
-			cookie: '',
-			sessionID: this.sessionID,
-			absenteeInformation: this.absenteeInformation,
-			accessLevel: this.accessLevel
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 
@@ -128,17 +125,6 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			(typeof dutyPosition === 'string'
 				? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
 				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b))
-		);
-	}
-
-	public canManageBlog() {
-		return (
-			super.canManageBlog() ||
-			this.hasDutyPosition([
-				'Cadet Public Affairs Officer',
-				'Cadet Public Affairs NCO',
-				'Public Affairs Officer'
-			])
 		);
 	}
 

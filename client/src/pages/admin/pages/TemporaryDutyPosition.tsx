@@ -133,7 +133,7 @@ export default class TemporaryDutyPositions extends Page<
 			return;
 		}
 
-		if (!this.props.member.hasPermission('AssignPosition')) {
+		if (!this.props.member.hasPermission('AssignTemporaryDutyPositions')) {
 			return;
 		}
 
@@ -198,7 +198,7 @@ export default class TemporaryDutyPositions extends Page<
 			</>
 		);
 
-		const positionsEdit = this.props.member.hasPermission('AssignPosition') ? (
+		const positionsEdit = this.props.member.hasPermission('AssignTemporaryDutyPositions') ? (
 			<div style={highMarginTop}>
 				<h3>Assign temporary duty positions</h3>
 				<MemberSelectorButton

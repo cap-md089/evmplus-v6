@@ -43,7 +43,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (!this.props.member.hasPermission('AddTeam')) {
+		if (!this.props.member.hasPermission('ManageEvent')) {
 			return <div>You do not have permission to do that action</div>;
 		}
 
@@ -73,7 +73,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
-		if (!this.props.member.hasPermission('AddTeam')) {
+		if (!this.props.member.hasPermission('ManageTeam')) {
 			return;
 		}
 

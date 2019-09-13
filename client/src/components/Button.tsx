@@ -65,7 +65,6 @@ export default class Button<C> extends React.Component<
 					cursor: 'pointer'
 				}}
 				className={
-					'linkButton' +
 					(typeof this.props.buttonType === 'string'
 						? ` ${this.props.buttonType}`
 						: 'primaryButton') +

@@ -9,9 +9,8 @@ export const canUseCreate = (props: PageProps) => {
 	}
 
 	return (
-		props.member.hasPermission('AddEvent') ||
-		props.member.canManageBlog() ||
-		props.member.hasPermission('AddTeam')
+		props.member.hasPermission('ManageEvent') ||
+		props.member.hasPermission('ManageTeam')
 	);
 };
 
@@ -26,23 +25,13 @@ export class CreateWidget extends Page<CreateWidgetProps> {
 			<div className="widget">
 				<div className="widget-title">Create something</div>
 				<div className="widget-body">
-					{this.props.member.hasPermission('AddEvent') ? (
+					{this.props.member.hasPermission('ManageEvent') ? (
 						<>
 							<Link to="/addevent">Draft an event</Link>
 							<br />
 						</>
 					) : null}
-					{this.props.member.canManageBlog() ? (
-						<>
-							<Link to="/news/post">Create a blog post</Link>
-							<br />
-							<Link to="/page/create">Or create a page</Link>
-							<br />
-							<Link to="/page/list">View current pages</Link>
-							<br />
-						</>
-					) : null}
-					{this.props.member.hasPermission('AddTeam') ? (
+					{this.props.member.hasPermission('ManageTeam') ? (
 						<>
 							<Link to="/team/create">Add a team</Link>
 							<br />

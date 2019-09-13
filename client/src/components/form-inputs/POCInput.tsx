@@ -7,7 +7,14 @@ import { Checkbox, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
-import { PointOfContact, DisplayInternalPointOfContact, ExternalPointOfContact, MemberObject, CAPMemberObject, Member } from 'common-lib';
+import {
+	PointOfContact,
+	DisplayInternalPointOfContact,
+	ExternalPointOfContact,
+	MemberObject,
+	CAPMemberObject,
+	Member,
+} from 'common-lib';
 
 const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;
@@ -58,6 +65,7 @@ export default class POCInput extends React.Component<
 		this.updateFilterValues = this.updateFilterValues.bind(this);
 		this.selectMember = this.selectMember.bind(this);
 		this.setSelectedValue = this.setSelectedValue.bind(this);
+		this.handlePOCTypeChange = this.handlePOCTypeChange.bind(this);
 	}
 
 	public render() {
@@ -78,9 +86,9 @@ export default class POCInput extends React.Component<
 		const value = this.props.value;
 
 		return (
-			<FormBlock
+			<FormBlock<DisplayInternalPointOfContact | ExternalPointOfContact>
 				name={`pocInput-${this.props.index}`}
-				onUpdate={this.onUpdate}
+				onFormChange={this.onUpdate}
 				onInitialize={this.props.onInitialize}
 			>
 				<Label>POC Type</Label>
@@ -94,6 +102,7 @@ export default class POCInput extends React.Component<
 					}
 					index={this.props.index}
 					key="type"
+					onChange={this.handlePOCTypeChange}
 				/>
 
 				{this.getMemberSelector()}
@@ -129,33 +138,47 @@ export default class POCInput extends React.Component<
 		);
 	}
 
-	private onUpdate(e: {
-		name: string;
-		value: DisplayInternalPointOfContact | ExternalPointOfContact;
-	}) {
-		if (this.props.onUpdate) {
-			if (
-				e.value.type === PointOfContactType.INTERNAL &&
-				this.props.value!.type === PointOfContactType.EXTERNAL
-			) {
-				e.value.name = '';
-				e.value.email = '';
-				e.value.phone = '';
-				e.value.memberReference = {
-					type: 'Null'
+	private onUpdate(
+		poc: DisplayInternalPointOfContact | ExternalPointOfContact,
+		error: any,
+		changed: any,
+		hasError: any,
+		name: keyof (DisplayInternalPointOfContact | ExternalPointOfContact)
+	) {
+		if (name === 'type') {
+			if (poc.type === PointOfContactType.INTERNAL) {
+				poc = {
+					type: PointOfContactType.INTERNAL,
+					email: '',
+					memberReference: {
+						type: 'Null'
+					},
+					name: '',
+					phone: '',
+					receiveEventUpdates: false,
+					receiveRoster: false,
+					receiveSignUpUpdates: false,
+					receiveUpdates: false
+				};
+			} else {
+				poc = {
+					type: PointOfContactType.EXTERNAL,
+					email: '',
+					name: '',
+					phone: '',
+					receiveEventUpdates: false,
+					receiveRoster: false,
+					receiveSignUpUpdates: false,
+					receiveUpdates: false
 				};
 			}
-			if (
-				e.value.type === PointOfContactType.EXTERNAL &&
-				this.props.value!.type === PointOfContactType.INTERNAL
-			) {
-				// @ts-ignore
-				delete e.value.memberReference
-			}
+		}
 
-			// @ts-ignore
-			delete e.value.undefined;
-			this.props.onUpdate(e);
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: `pocInput-${this.props.index}`,
+				value: poc
+			});
 		}
 	}
 
@@ -189,13 +212,13 @@ export default class POCInput extends React.Component<
 
 			const value: DisplayInternalPointOfContact = {
 				...(this.props.value as DisplayInternalPointOfContact)!,
-				email: mem.getBestEmail(),
+				email: mem.getBestEmail() || '',
 				name: mem.getName(),
 				memberReference: mem.getReference(),
-				phone: mem.getBestPhone()
+				phone: mem.getBestPhone() || ''
 			};
 
-			this.onUpdate({ name: this.props.name, value });
+			this.onUpdate(value, null, null, null, 'email');
 		}
 
 		this.setState({
@@ -274,4 +297,6 @@ export default class POCInput extends React.Component<
 			</TextBox>
 		) : null;
 	}
+
+	private handlePOCTypeChange(type: PointOfContactType) {}
 }

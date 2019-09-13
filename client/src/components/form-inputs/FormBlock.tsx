@@ -1,15 +1,29 @@
 import * as React from 'react';
-import { isFullWidthableElement, isInput, isLabel, Label, Title } from '../forms/SimpleForm';
+import { isFullWidthableElement, isInput, isLabel, Label, Title, FormValidator } from '../forms/SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
 	onUpdate?: (e: { name: string; value: any }) => void;
 	onInitialize?: (e: { name: string; value: any }) => void;
 	value?: V;
+
+	validator?: FormValidator<V>
+
+	onFormChange?: (
+		fields: V,
+		error: BooleanForField<V>,
+		changed: BooleanForField<V>,
+		hasError: boolean,
+		fieldChanged: keyof V
+	) => void;
 }
+
+type BooleanForField<T> = { [K in keyof T]: boolean };
 
 export default class FormBlock<T extends object> extends React.Component<FormBlockProps<T>> {
 	private fields = {} as T;
+	private fieldsError: BooleanForField<T> = {} as BooleanForField<T>;
+	private fieldsChanged: BooleanForField<T> = {} as BooleanForField<T>;
 
 	constructor(props: FormBlockProps<T>) {
 		super(props);
@@ -102,25 +116,25 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 							return;
 						}
 
-						const child = children[i - 1];
+						const previousChild = children[i - 1];
 
 						if (
-							typeof child === 'string' ||
-							typeof child === 'number' ||
-							typeof child === 'undefined' ||
-							child === null
+							typeof previousChild === 'string' ||
+							typeof previousChild === 'number' ||
+							typeof previousChild === 'undefined' ||
+							previousChild === null
 						) {
 							ret.unshift(
 								<Label key={i - 1} fullWidth={fullWidth}>
-									{child}
+									{previousChild}
 								</Label>
 							);
 						} else {
 							// @ts-ignore
-							if (isLabel(child!) && child!.type !== Title) {
+							if (isLabel(previousChild!) && previousChild!.type !== Title) {
 								ret.unshift(
 									// @ts-ignore
-									React.cloneElement(child, {
+									React.cloneElement(previousChild, {
 										key: i - 1,
 										onUpdate: this.onUpdate,
 										onInitialize: this.onInitialize
@@ -153,6 +167,33 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 	private onUpdate(e: { name: string; value: any }) {
 		const name = e.name as keyof T;
 		this.fields[name] = e.value;
+		this.fieldsChanged[e.name as keyof T] = true;
+
+		let error = false;
+		const validator = this.props.validator ? this.props.validator[name] : null;
+		if (validator) {
+			error = validator(e.value, this.fields);
+		}
+		this.fieldsError[e.name as keyof T] = error;
+
+		let hasError = false;
+		for (const i in this.fieldsError) {
+			if (this.fieldsError.hasOwnProperty(i)) {
+				hasError = this.fieldsError[i];
+				if (hasError) {
+					break;
+				}
+			}
+		}
+
+		// DO NOT TOUCH
+		// If this is moved into the conditional TypeScript gets upset
+		const onChange = this.props.onFormChange;
+
+		if (onChange !== undefined) {
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
+		}
+
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
@@ -164,11 +205,31 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 	private onInitialize(e: { name: string; value: any }) {
 		const name = e.name as keyof T;
 		this.fields[name] = e.value;
-		if (this.props.onInitialize) {
-			this.props.onInitialize({
-				name: this.props.name,
-				value: this.fields
-			});
+		this.fieldsChanged[e.name as keyof T] = false;
+
+		let error = false;
+		const validator = this.props.validator ? this.props.validator[name] : null;
+		if (validator) {
+			error = validator(e.value, this.fields);
+		}
+		this.fieldsError[e.name as keyof T] = error;
+
+		let hasError = false;
+		for (const i in this.fieldsError) {
+			if (this.fieldsError.hasOwnProperty(i)) {
+				hasError = this.fieldsError[i];
+				if (hasError) {
+					break;
+				}
+			}
+		}
+
+		// DO NOT TOUCH
+		// If this is moved into the conditional TypeScript gets upset
+		const onChange = this.props.onFormChange;
+
+		if (onChange !== undefined) {
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
 		}
 	}
 }

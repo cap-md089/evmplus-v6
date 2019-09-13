@@ -65,6 +65,10 @@ class Divider extends React.Component {
 	}
 }
 
+const fullWidth = {
+	width: '100%'
+};
+
 /**
  * Creates a title to use in the form
  */
@@ -87,8 +91,8 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 				: '';
 
 		return (
-			<div className="formbar fheader">
-				<div className="formbox header">
+			<div className="formbar fheader" style={fullWidth}>
+				<div className="formbox header" style={fullWidth}>
 					<h3 id={id}>{this.props.children}</h3>
 				</div>
 			</div>
@@ -229,7 +233,8 @@ export interface FormProps<F> {
 		fields: F,
 		error: BooleanFields<F>,
 		changed: BooleanFields<F>,
-		hasError: boolean
+		hasError: boolean,
+		fieldChanged: keyof F
 	) => void;
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
@@ -406,25 +411,25 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								return;
 							}
 
-							const child = children[i - 1];
+							const previousChild = children[i - 1];
 
 							if (
-								typeof child === 'string' ||
-								typeof child === 'number' ||
-								typeof child === 'undefined' ||
-								child === null
+								typeof previousChild === 'string' ||
+								typeof previousChild === 'number' ||
+								typeof previousChild === 'undefined' ||
+								previousChild === null
 							) {
 								ret.unshift(
 									<Label key={i - 1} fullWidth={fullWidth}>
-										{child}
+										{previousChild}
 									</Label>
 								);
 							} else {
 								// @ts-ignore
-								if (isLabel(child!) && child!.type !== Title) {
+								if (isLabel(previousChild!) && previousChild!.type !== Title) {
 									ret.unshift(
 										// @ts-ignore
-										React.cloneElement(this.props.children[i - 1], {
+										React.cloneElement(previousChild, {
 											onUpdate: this.onChange,
 											onInitialize: this.onInitialize,
 											key: i
@@ -517,7 +522,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
 		}
 	}
 
@@ -548,7 +553,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
 		}
 	}
 

@@ -44,7 +44,7 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	 * @param account The Account the team belongs to
 	 */
 	public static async Create(data: NewTeamObject, member: MemberBase, account?: Account) {
-		if (!member.hasPermission('AddTeam')) {
+		if (!member.hasPermission('ManageTeam')) {
 			throw new Error('Invalid permissions');
 		}
 
@@ -119,7 +119,7 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	}
 
 	public async delete(member: MemberBase): Promise<void> {
-		if (!member.hasPermission('EditTeam')) {
+		if (!member.hasPermission('ManageTeam')) {
 			throw new Error('Member does not have permissions to delete team');
 		}
 
@@ -138,7 +138,7 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	}
 
 	public async save(member: MemberBase): Promise<void> {
-		if (!member.hasPermission('EditTeam')) {
+		if (!member.hasPermission('ManageTeam')) {
 			throw new Error('Member does not have permissions to modify team');
 		}
 
@@ -177,7 +177,7 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 		memberToAdd: MemberBase,
 		job: string
 	): Promise<void> {
-		if (!member.hasPermission('EditTeam')) {
+		if (!member.hasPermission('ManageTeam')) {
 			throw new Error('Member does not have permissions to modify team');
 		}
 
@@ -206,7 +206,7 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	}
 
 	public async removeMember(member: MemberBase, memberToRemove: MemberBase) {
-		if (!member.hasPermission('EditTeam')) {
+		if (!member.hasPermission('ManageTeam')) {
 			throw new Error('Member does not have permission to modify team');
 		}
 

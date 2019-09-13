@@ -1,4 +1,3 @@
-import { MemberAccessLevel } from 'common-lib';
 import * as React from 'react';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
@@ -8,6 +7,7 @@ import Loader from '../../../components/Loader';
 import MemberBase from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
 import Button from '../../../components/Button';
+import { MemberPermissions } from 'common-lib';
 
 interface PermissionAssignState {
 	members: MemberBase[] | null;
@@ -15,10 +15,9 @@ interface PermissionAssignState {
 	submitSuccess: boolean;
 }
 
-type PermissionInformation = { [key: string]: number };
-
-const level = (level: MemberAccessLevel): number =>
-	['Member', 'Staff', 'Manager', 'Admin'].indexOf(level);
+interface PermissionInformation {
+	[key: string]: MemberPermissions
+};
 
 export default class PermissionAssign extends Page<PageProps, PermissionAssignState> {
 	public state: PermissionAssignState = {
@@ -45,11 +44,13 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			this.props.account.getMembers(this.props.member)
 		]);
 
-		for (let i in members) {
-			for (let j in availableMembers) {
-				if (members[i].is(availableMembers[j])) {
-					availableMembers.splice(parseInt(j, 10), 1);
-					break;
+		for (const i in members) {
+			if (members.hasOwnProperty(i)) {
+				for (const j in availableMembers) {
+					if (members[i].is(availableMembers[j])) {
+						availableMembers.splice(parseInt(j, 10), 1);
+						break;
+					}
 				}
 			}
 		}
@@ -79,17 +80,17 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		const values: PermissionInformation = {};
 
 		for (const member of this.state.members) {
-			values[`permissions-${member.getFullName()}`] = level(member.accessLevel);
+			values[`permissions-${member.getFullName()}`] = member.permissions;
 		}
 
 		const children = this.state.members.flatMap((value, index) => [
-			<Label key={index * 2}>{value.getFullName()}</Label>,
+			<Label key={index * 3}>{value.getFullName()}</Label>,
 			<Select
 				name={`permissions-${value.getFullName()}`}
-				key={index * 2 + 1}
+				key={index * 3 + 1}
 				labels={['Member', 'Cadet Staff', 'Manager', 'Admin']}
 			/>,
-			<TextBox>
+			<TextBox key={index * 3 + 2}>
 				<Button onClick={this.getRemover(index)} buttonType={'none'}>
 					Remove {value.getFullName()}
 				</Button>
@@ -107,7 +108,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				}}
 				children={[
 					...children,
-					<TextBox>
+					<TextBox key={children.length}>
 						<MemberSelectorButton
 							memberList={Promise.resolve(this.state.availableMembers)}
 							title="Select a member"
@@ -126,12 +127,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		for (const member of this.state.members!) {
 			for (const i in values) {
 				if (i === `permissions-${member.getFullName()}`) {
-					member.accessLevel = ([
-						'Member',
-						'Staff',
-						'Manager',
-						'Admin'
-					] as MemberAccessLevel[])[values[i]];
+					member.permissions = values[i];
 				}
 			}
 		}
@@ -151,8 +147,6 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		let members = this.state.availableMembers;
 
 		members = members!.filter(mem => !member.is(mem));
-
-		member.accessLevel = 'Manager';
 
 		this.setState(prev => ({
 			submitSuccess: false,
