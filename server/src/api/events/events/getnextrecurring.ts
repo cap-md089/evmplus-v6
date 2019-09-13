@@ -1,7 +1,5 @@
 import { EventObject } from 'common-lib';
-import { AccountRequest } from '../../../lib/Account';
-import Event from '../../../lib/Event';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { AccountRequest, asyncErrorHandler, Event, json } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: AccountRequest, res) => {
 	let nextEvent: Event | null = null;

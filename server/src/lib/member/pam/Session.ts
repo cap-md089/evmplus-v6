@@ -9,9 +9,21 @@ import {
 import { randomBytes } from 'crypto';
 import { NextFunction, Response } from 'express';
 import { promisify } from 'util';
-import Account, { AccountRequest } from '../../Account';
-import { collectResults, findAndBind, ParamType } from '../../MySQLUtil';
-import { asyncErrorHandler } from '../../Util';
+import {
+	Account,
+	AccountRequest,
+	areMemberReferencesTheSame,
+	asyncErrorHandler,
+	CAPNHQUser,
+	CAPProspectiveUser,
+	collectResults,
+	DEFAULT_PERMISSIONS,
+	findAndBind,
+	getInformationForMember,
+	getPermissionsForMemberInAccount,
+	MemberBase,
+	ParamType
+} from '../../internals';
 
 const promisedRandomBytes = promisify(randomBytes);
 
@@ -452,8 +464,3 @@ export const isSigninTokenValid = async (schema: Schema, token: string) => {
 };
 
 //#endregion
-
-import MemberBase, { areMemberReferencesTheSame } from '../../Members';
-import { CAPNHQUser } from '../members/CAPNHQMember';
-import { CAPProspectiveUser } from '../members/CAPProspectiveMember';
-import { getPermissionsForMemberInAccount, getInformationForMember, DEFAULT_PERMISSIONS } from './Account';

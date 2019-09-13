@@ -1,7 +1,5 @@
 import { NotificationObject } from 'common-lib';
-import { MemberRequest } from '../../../lib/Members';
-import GlobalNotification from '../../../lib/notifications/GlobalNotification';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler, GlobalNotification, json, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	try {

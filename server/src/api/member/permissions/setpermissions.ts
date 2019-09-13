@@ -1,9 +1,12 @@
 import { MemberPermission, MemberPermissions, MemberReference } from 'common-lib';
-import { setPermissionsForMemberInAccount } from '../../../lib/member/pam/Account';
-import { areMemberReferencesTheSame } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
-import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
-import PermissionsValidator from '../../../lib/validator/validators/PermissionValidator';
+import {
+	areMemberReferencesTheSame,
+	asyncErrorHandler,
+	MemberValidatedRequest,
+	PermissionsValidator,
+	setPermissionsForMemberInAccount,
+	Validator
+} from '../../../lib/internals';
 
 interface PermissionItem {
 	member: MemberReference;

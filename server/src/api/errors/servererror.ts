@@ -1,8 +1,7 @@
 import { HTTPRequestMethod, ServerErrorObject } from 'common-lib';
 import { parse } from 'error-stack-parser';
 import { NextFunction, Response } from 'express';
-import MemberBase, { ConditionalMemberRequest } from '../../lib/Members';
-import { generateResults } from '../../lib/MySQLUtil';
+import { ConditionalMemberRequest, generateResults, MemberBase } from '../../lib/internals';
 
 // @ts-ignore
 interface MaybeMemberRequest extends ConditionalMemberRequest {

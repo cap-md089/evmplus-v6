@@ -24,19 +24,19 @@ import {
 	PointOfContactType
 } from 'common-lib/index';
 import { DateTime } from 'luxon';
-import Account from './Account';
-import { default as BaseMember, default as MemberBase } from './member/MemberBase';
-import { areMemberReferencesTheSame, resolveReference } from './Members';
 import {
+	Account,
+	areMemberReferencesTheSame,
 	collectResults,
+	EventValidator,
 	findAndBind,
 	generateBindObject,
 	generateFindStatement,
-	generateResults
-} from './MySQLUtil';
-import MemberNotification from './notifications/MemberNotification';
-import EventValidator from './validator/validators/EventValidator';
-import NewAttendanceRecordValidator from './validator/validators/NewAttendanceRecord';
+	generateResults,
+	MemberBase,
+	MemberNotification,
+	resolveReference
+} from './internals';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
@@ -51,9 +51,6 @@ interface AlmostRaw extends RawEventObject {
 }
 
 export default class Event implements EventObject, DatabaseInterface<EventObject> {
-	public static Validator = new EventValidator();
-	public static AttendanceValidator = new NewAttendanceRecordValidator();
-
 	/**
 	 * Get an event from the database
 	 *
@@ -455,7 +452,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 *
 	 * @param member The member to check
 	 */
-	public isPOC(member: BaseMember) {
+	public isPOC(member: MemberBase) {
 		return (
 			!!this.pointsOfContact.map(
 				poc =>
@@ -565,7 +562,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		schema: Schema,
 		updater: MemberBase
 	): Promise<boolean> {
-		if (Event.Validator.validate(values, true)) {
+		if (EventValidator.validate(values, true)) {
 			if (values.pointsOfContact) {
 				const previousPOCs = this.pointsOfContact.slice(0);
 				const newPOCs = values.pointsOfContact.slice(0);
@@ -649,11 +646,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				}
 			}
 
-			Event.Validator.partialPrune(values, this);
+			EventValidator.partialPrune(values, this);
 
 			return true;
 		} else {
-			throw new Error(Event.Validator.getErrorString());
+			throw new Error(EventValidator.getErrorString());
 		}
 	}
 
@@ -703,7 +700,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public async addMemberToAttendance(
 		newAttendanceRecord: NewAttendanceRecord,
-		member: BaseMember
+		member: MemberBase
 	): Promise<boolean> {
 		for (const index in this.attendance) {
 			if (
@@ -764,7 +761,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public async modifyAttendanceRecord(
 		newAttendanceRecord: NewAttendanceRecord,
-		member: BaseMember
+		member: MemberBase
 	): Promise<boolean> {
 		const attendanceCollection = this.schema.getCollection<
 			RawAttendanceDBRecord & Required<NoSQLDocument>
@@ -834,7 +831,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		return false;
 	}
 
-	public async removeMemberFromAttendance(member: BaseMember): Promise<AttendanceRecord[]> {
+	public async removeMemberFromAttendance(member: MemberBase): Promise<AttendanceRecord[]> {
 		const attendanceCollection = this.schema.getCollection<RawAttendanceDBRecord>('Attendance');
 
 		this.attendance = this.attendance.filter(
@@ -870,7 +867,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param newDebriefItem The text of the record to add
 	 * @param member The member to add to the records
 	 */
-	public addItemToDebrief = (newDebriefItem: string, member: BaseMember): DebriefItem[] =>
+	public addItemToDebrief = (newDebriefItem: string, member: MemberBase): DebriefItem[] =>
 		(this.debrief = [
 			...this.debrief,
 			{
@@ -886,7 +883,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param member The member who submitted the debrief item
 	 * @param timeSubmitted The time the member submitted it
 	 */
-	public removeItemFromDebrief = (member: BaseMember, timeOfRecord: number): DebriefItem[] =>
+	public removeItemFromDebrief = (member: MemberBase, timeOfRecord: number): DebriefItem[] =>
 		(this.debrief = this.debrief.filter(
 			record =>
 				!(

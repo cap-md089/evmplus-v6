@@ -1,6 +1,5 @@
 import { AbsenteeInformation } from 'common-lib';
-import { asyncErrorHandler } from '../../lib/Util';
-import { MemberValidatedRequest } from '../../lib/validator/Validator';
+import { asyncErrorHandler, MemberValidatedRequest } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberValidatedRequest<AbsenteeInformation>, res) => {
 	req.member.setAbsenteeInformation(req.body);

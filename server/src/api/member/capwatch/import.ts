@@ -1,14 +1,14 @@
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
+import { asyncErrorHandler, MemberRequest } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token: string }>, res) => {
-	// Depends on CAPNHQUser having a getCAPWATCHFile method
-	// It doesn't, we need to program it to be able to interface with the 'API'
+export default asyncErrorHandler(
+	async (req: MemberRequest<{ list: string; token: string }>, res) => {
+		// Depends on CAPNHQUser having a getCAPWATCHFile method
+		// It doesn't, we need to program it to be able to interface with the 'API'
 
-	res.status(500);
-	return res.end();
+		res.status(500);
+		return res.end();
 
-	/*
+		/*
 	if (!await validRawTokenAlone(req.mysqlx, req.params.token)) {
 		res.status(403);
 		return res.end();
@@ -109,4 +109,5 @@ export default asyncErrorHandler(async (req: MemberRequest<{ list: string, token
 	res.status(200);
 	res.end();
 	*/
-});
+	}
+);

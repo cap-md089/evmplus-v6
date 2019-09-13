@@ -14,12 +14,17 @@ import {
 } from 'common-lib';
 import { NotificationTargetType } from 'common-lib/index';
 import { DateTime } from 'luxon';
-import Account from '../Account';
-import Event from '../Event';
-import { areMemberReferencesTheSame } from '../Members';
-import { collectResults, findAndBind, generateResults, modifyAndBind } from '../MySQLUtil';
-import Task from '../Task';
-import Team from '../Team';
+import {
+	Account,
+	areMemberReferencesTheSame,
+	collectResults,
+	Event,
+	findAndBind,
+	generateResults,
+	modifyAndBind,
+	Task,
+	Team
+} from '../internals';
 
 export default abstract class MemberBase implements MemberObject {
 	public static readonly useRiouxPermission = true;
@@ -344,7 +349,10 @@ export default abstract class MemberBase implements MemberObject {
 			'ExtraMemberInformation'
 		);
 
-		await modifyAndBind(extraInfoCollection, { member: this.getReference(), accountID: account.id })
+		await modifyAndBind(extraInfoCollection, {
+			member: this.getReference(),
+			accountID: account.id
+		})
 			.patch(this.extraInformation)
 			.execute();
 	}

@@ -1,9 +1,11 @@
 import { RawTeamMember } from 'common-lib';
 import { Response } from 'express';
-import { resolveReference } from '../../../lib/Members';
-import Team from '../../../lib/Team';
-import { asyncErrorHandler } from '../../../lib/Util';
-import { MemberValidatedRequest } from '../../../lib/validator/Validator';
+import {
+	asyncErrorHandler,
+	MemberValidatedRequest,
+	resolveReference,
+	Team
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<RawTeamMember, { id: string }>, res: Response) => {
@@ -20,12 +22,7 @@ export default asyncErrorHandler(
 		let fullMember;
 
 		try {
-			fullMember = await resolveReference(
-				req.body.reference,
-				req.account,
-				req.mysqlx,
-				true
-			);
+			fullMember = await resolveReference(req.body.reference, req.account, req.mysqlx, true);
 		} catch (e) {
 			res.status(404);
 			res.end();

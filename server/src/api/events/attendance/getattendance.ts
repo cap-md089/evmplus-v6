@@ -1,8 +1,6 @@
 import { AttendanceRecord } from 'common-lib';
 import { Response } from 'express';
-import Event from '../../../lib/Event';
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler, Event, json, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	let event: Event;

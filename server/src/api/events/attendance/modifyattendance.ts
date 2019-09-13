@@ -1,11 +1,14 @@
 import { NewAttendanceRecord } from 'common-lib';
-import { Response } from 'express';
-import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/member/MemberBase';
-import { isValidMemberReference, resolveReference } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
-import { MemberValidatedRequest } from '../../../lib/validator/Validator';
 import { ManageEvent } from 'common-lib/permissions';
+import { Response } from 'express';
+import {
+	asyncErrorHandler,
+	Event,
+	isValidMemberReference,
+	MemberBase,
+	MemberValidatedRequest,
+	resolveReference
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res: Response) => {

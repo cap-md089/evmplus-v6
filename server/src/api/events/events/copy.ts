@@ -1,9 +1,6 @@
 import { EventObject } from 'common-lib';
 import { DateTime } from 'luxon';
-import Event from '../../../lib/Event';
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
-import Validator from '../../../lib/validator/Validator';
+import { asyncErrorHandler, Event, json, MemberRequest, Validator } from '../../../lib/internals';
 
 const validator = new Validator({
 	newTime: {

@@ -1,7 +1,5 @@
 import { Response } from 'express';
-import { MemberRequest } from '../../lib/Members';
-import Team from '../../lib/Team';
-import { asyncErrorHandler } from '../../lib/Util';
+import { asyncErrorHandler, MemberRequest, Team } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
 	let team: Team;

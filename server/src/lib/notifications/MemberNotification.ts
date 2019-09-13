@@ -10,9 +10,7 @@ import {
 	NotificationSystemCause
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
-import Account from '../Account';
-import MemberBase, { resolveReference } from '../Members';
-import { Notification } from '../Notification';
+import { Account, MemberBase, Notification, resolveReference } from '../internals';
 
 export default class MemberNotification extends Notification {
 	public static async CreateNotification(

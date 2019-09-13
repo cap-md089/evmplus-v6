@@ -1,7 +1,11 @@
-import { StoredMemberPermissions } from '../../../lib/member/pam/Account';
-import { MemberRequest } from '../../../lib/Members';
-import { findAndBind, generateResults } from '../../../lib/MySQLUtil';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
+import {
+	asyncErrorHandler,
+	findAndBind,
+	generateResults,
+	MemberRequest,
+	StoredMemberPermissions,
+	streamAsyncGeneratorAsJSONArray
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	const permissionsCollection = req.mysqlx.getCollection<StoredMemberPermissions>(

@@ -1,7 +1,5 @@
 import { TaskObject } from 'common-lib';
-import { MemberRequest } from '../../lib/Members';
-import Task from '../../lib/Task';
-import { asyncErrorHandler, json } from '../../lib/Util';
+import { asyncErrorHandler, json, MemberRequest, Task } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	const id = parseInt(req.params.id, 10);
@@ -16,7 +14,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 
 	try {
 		task = await Task.Get(id, req.account, req.mysqlx);
-	} catch(e) {
+	} catch (e) {
 		res.status(404);
 		res.end();
 		return;

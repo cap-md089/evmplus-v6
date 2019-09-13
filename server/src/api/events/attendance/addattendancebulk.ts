@@ -1,12 +1,16 @@
 import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
 import { ManageEvent } from 'common-lib/permissions';
 import { Response } from 'express';
-import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/member/MemberBase';
-import { resolveReference } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
-import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
-import NewAttendanceRecordValidator from '../../../lib/validator/validators/NewAttendanceRecord';
+import {
+	asyncErrorHandler,
+	Event,
+	json,
+	MemberBase,
+	MemberValidatedRequest,
+	NewAttendanceRecordValidator,
+	resolveReference,
+	Validator
+} from '../../../lib/internals';
 
 /**
  * Needs to be an object with the property as the token
@@ -18,7 +22,7 @@ interface BulkAttendanceRequest {
 
 export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 	members: {
-		validator: Validator.ArrayOf(new NewAttendanceRecordValidator())
+		validator: Validator.ArrayOf(NewAttendanceRecordValidator)
 	}
 });
 

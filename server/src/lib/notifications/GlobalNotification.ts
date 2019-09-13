@@ -8,11 +8,14 @@ import {
 	NotificationSystemCause
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
-import Account from '../Account';
-import MemberBase from '../Members';
-import { findAndBind, generateResults } from '../MySQLUtil';
-import { Notification } from '../Notification';
-import MemberNotification from './MemberNotification';
+import {
+	Account,
+	findAndBind,
+	generateResults,
+	MemberBase,
+	MemberNotification,
+	Notification
+} from '../internals';
 
 export default class GlobalNotification extends Notification {
 	public static async AccountHasGlobalNotificationActive(

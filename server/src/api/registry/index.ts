@@ -1,13 +1,15 @@
 import * as express from 'express';
-import Account from '../../lib/Account';
-import { memberMiddleware, permissionMiddleware } from '../../lib/member/pam/Session';
-import RegistryValueValidator from '../../lib/validator/validators/RegistryValues';
+import {
+	Account,
+	memberMiddleware,
+	permissionMiddleware,
+	RegistryValueValidator,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // CRUD functions
 import get from './get';
 import set from './set';
-
-const validator = new RegistryValueValidator();
 
 const router = express.Router();
 
@@ -19,7 +21,7 @@ router.post(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('RegistryEdit'),
-	RegistryValueValidator.PartialBodyExpressMiddleware(validator),
+	Validator.PartialBodyExpressMiddleware(RegistryValueValidator),
 	set
 );
 

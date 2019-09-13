@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import Validator from '../../../lib/validator/Validator';
+import { Validator } from '../../../lib/internals';
 import finishaccount, { nhqFinishValidator } from './nhq/finishaccount';
 import requestaccount, { nhqRequestValidator } from './nhq/requestaccount';
 

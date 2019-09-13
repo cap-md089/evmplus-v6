@@ -4,10 +4,20 @@ import { Server } from 'http';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
 import getServer from '../../getServer';
-import Account from '../../lib/Account';
-import { CAPProspectiveMember } from '../../lib/Members';
-import { getTestTools } from '../../lib/Util';
-import { newMem, password, signinInformation } from '../consts';
+import {
+	Account,
+	addUserAccount,
+	addUserAccountCreationToken,
+	CAPProspectiveMember,
+	getTestTools,
+	validateUserAccountCreationToken
+} from '../../lib/internals';
+import { newMem, password } from '../consts';
+
+const signinInformation = {
+	username: 'ariouxTest',
+	password: 'aPasswordThatSu><'
+}
 
 describe('/api', () => {
 	describe('/signin', () => {
@@ -21,6 +31,24 @@ describe('/api', () => {
 
 			account = results.account;
 			schema = results.schema;
+
+			const token = await addUserAccountCreationToken(schema, {
+				id: 535799,
+				type: 'CAPNHQMember'
+			});
+			const memberReference = await validateUserAccountCreationToken(
+				schema,
+				token
+			);
+
+			await addUserAccount(
+				schema,
+				account,
+				signinInformation.username,
+				signinInformation.password,
+				memberReference,
+				token
+			);
 		});
 
 		beforeEach(async () => {
@@ -32,10 +60,16 @@ describe('/api', () => {
 		});
 
 		afterAll(async () => {
-			await schema
-				.getCollection('ProspectiveMembers')
-				.remove('true')
-				.execute();
+			await Promise.all([
+				schema
+					.getCollection('ProspectiveMembers')
+					.remove('true')
+					.execute(),
+				schema
+					.getCollection('UserAccountInfo')
+					.remove('member.id = 535799')
+					.execute()
+			]);
 		});
 
 		it('should sign in correctly', done => {

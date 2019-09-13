@@ -1,7 +1,10 @@
 import * as express from 'express';
-import Event from '../../../lib/Event';
-import { ConditionalMemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArray } from '../../../lib/Util';
+import {
+	asyncErrorHandler,
+	ConditionalMemberRequest,
+	Event,
+	streamAsyncGeneratorAsJSONArray
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: express.Response) => {
 	await streamAsyncGeneratorAsJSONArray<Event>(res, req.account.getEvents(), e =>

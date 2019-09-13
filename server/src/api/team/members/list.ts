@@ -1,8 +1,11 @@
 import { TeamPublicity } from 'common-lib/index';
 import { Response } from 'express';
-import { ConditionalMemberRequest, resolveReference } from '../../../lib/Members';
-import Team from '../../../lib/Team';
-import { asyncErrorHandler } from '../../../lib/Util';
+import {
+	asyncErrorHandler,
+	ConditionalMemberRequest,
+	resolveReference,
+	Team
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
@@ -41,11 +44,7 @@ export default asyncErrorHandler(
 		let started = false;
 
 		for (const mem of team.members) {
-			const fullMember = await resolveReference(
-				mem.reference,
-				req.account,
-				req.mysqlx
-			);
+			const fullMember = await resolveReference(mem.reference, req.account, req.mysqlx);
 
 			if (fullMember) {
 				res.write((started ? ', ' : '[') + JSON.stringify(fullMember.toRaw()));

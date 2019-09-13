@@ -1,8 +1,11 @@
 import { MemberReference } from 'common-lib';
-import { addUserAccountCreationToken } from '../../../../lib/member/pam/Account';
-import { resolveReference } from '../../../../lib/Members';
-import { asyncErrorHandler } from '../../../../lib/Util';
-import Validator, { BasicValidatedRequest } from '../../../../lib/validator/Validator';
+import {
+	addUserAccountCreationToken,
+	asyncErrorHandler,
+	BasicValidatedRequest,
+	resolveReference,
+	Validator
+} from '../../../../lib/internals';
 
 interface RequestParameters {
 	member: MemberReference;

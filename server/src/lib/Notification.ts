@@ -1,9 +1,28 @@
 import { Schema } from '@mysql/xdevapi';
-import { NewNotificationObject, NoSQLDocument, NotificationAdminTarget, NotificationCause, NotificationData, NotificationEveryoneTarget, NotificationMemberTarget, NotificationObject, NotificationTarget, RawNotificationObject } from 'common-lib';
+import {
+	NewNotificationObject,
+	NoSQLDocument,
+	NotificationAdminTarget,
+	NotificationCause,
+	NotificationData,
+	NotificationEveryoneTarget,
+	NotificationMemberTarget,
+	NotificationObject,
+	NotificationTarget,
+	RawNotificationObject
+} from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
-import Account from './Account';
-import MemberBase, { resolveReference } from './Members';
-import { collectResults, findAndBind, generateResults } from './MySQLUtil';
+import {
+	Account,
+	AdminNotification,
+	collectResults,
+	findAndBind,
+	generateResults,
+	GlobalNotification,
+	MemberBase,
+	MemberNotification,
+	resolveReference
+} from './internals';
 
 export abstract class Notification implements NotificationObject {
 	public static async Get(
@@ -28,12 +47,7 @@ export abstract class Notification implements NotificationObject {
 
 		let fromMemberName = null;
 		if (results[0].cause.type === NotificationCauseType.MEMBER) {
-			const fromMember = await resolveReference(
-				results[0].cause.from,
-				account,
-				schema,
-				true
-			);
+			const fromMember = await resolveReference(results[0].cause.from, account, schema, true);
 
 			fromMemberName = fromMember.getFullName();
 		}
@@ -116,12 +130,7 @@ export abstract class Notification implements NotificationObject {
 
 		let fromMemberName = null;
 		if (results[0].cause.type === NotificationCauseType.MEMBER) {
-			const fromMember = await resolveReference(
-				results[0].cause.from,
-				account,
-				schema,
-				true
-			);
+			const fromMember = await resolveReference(results[0].cause.from, account, schema, true);
 
 			fromMemberName = fromMember.getFullName();
 		}
@@ -210,12 +219,7 @@ export abstract class Notification implements NotificationObject {
 					break;
 
 				case NotificationTargetType.MEMBER:
-					const toMember = await resolveReference(
-						i.target.to,
-						account,
-						schema,
-						true
-					);
+					const toMember = await resolveReference(i.target.to, account, schema, true);
 					yield new MemberNotification(
 						{
 							...i,
@@ -292,12 +296,7 @@ export abstract class Notification implements NotificationObject {
 					break;
 
 				case NotificationTargetType.MEMBER:
-					const toMember = await resolveReference(
-						i.target.to,
-						account,
-						schema,
-						true
-					);
+					const toMember = await resolveReference(i.target.to, account, schema, true);
 					returnValue.push(
 						new MemberNotification(
 							{
@@ -457,7 +456,3 @@ export abstract class Notification implements NotificationObject {
 
 	public abstract canSee(member: MemberBase, account: Account): boolean;
 }
-
-import AdminNotification from './notifications/AdminNotification';
-import GlobalNotification from './notifications/GlobalNotification';
-import MemberNotification from './notifications/MemberNotification';

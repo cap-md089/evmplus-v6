@@ -1,8 +1,7 @@
 import { NHQMemberObject, ProspectiveMemberObject, SigninReturn } from 'common-lib';
 import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
-import { ConditionalMemberRequest } from '../lib/Members';
-import { json } from '../lib/Util';
+import { ConditionalMemberRequest, json } from '../lib/internals';
 
 export default async (req: ConditionalMemberRequest, res: express.Response) => {
 	if (!!req.member) {

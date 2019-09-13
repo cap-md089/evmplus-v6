@@ -8,16 +8,16 @@ import {
 	TaskObject,
 	TaskRecipientsResults
 } from 'common-lib';
-import Account from './Account';
-import MemberBase from './Members';
-import { collectResults, findAndBind, generateResults } from './MySQLUtil';
-import NewTaskObjectValidator from './validator/validators/NewTaskObject';
-import RawTaskObjectValidator from './validator/validators/RawTaskObject';
+import {
+	Account,
+	collectResults,
+	findAndBind,
+	generateResults,
+	MemberBase,
+	RawTaskObjectValidator
+} from './internals';
 
 export default class Task implements TaskObject, DatabaseInterface<TaskObject> {
-	public static Validator = NewTaskObjectValidator;
-	public static RawValidator = RawTaskObjectValidator;
-
 	public static async Get(id: number, account: Account, schema: Schema) {
 		const taskCollection = schema.getCollection<TaskObject & Required<NoSQLDocument>>('Tasks');
 

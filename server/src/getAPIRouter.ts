@@ -18,9 +18,13 @@ import registry from './api/registry';
 import signin from './api/signin';
 import team from './api/team';
 import { Configuration } from './conf';
-import Account from './lib/Account';
-import { conditionalMemberMiddleware, memberMiddleware } from './lib/member/pam/Session';
-import MySQLMiddleware, { MySQLRequest } from './lib/MySQLUtil';
+import {
+	Account,
+	conditionalMemberMiddleware,
+	memberMiddleware,
+	MySQLMiddleware,
+	MySQLRequest
+} from './lib/internals';
 
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	const router: express.Router = express.Router();

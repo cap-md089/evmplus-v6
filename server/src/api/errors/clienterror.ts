@@ -1,8 +1,6 @@
 import { ClientErrorObject, ErrorObject, NewClientErrorObject } from 'common-lib';
 import { Response } from 'express';
-import { ConditionalMemberRequest } from '../../lib/Members';
-import { generateResults } from '../../lib/MySQLUtil';
-import { asyncErrorHandler } from '../../lib/Util';
+import { asyncErrorHandler, ConditionalMemberRequest, generateResults } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	if (

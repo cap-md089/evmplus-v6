@@ -13,17 +13,18 @@ import {
 } from 'common-lib';
 import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
-import Account from './Account';
-import MemberBase from './member/MemberBase';
-import { areMemberReferencesTheSame, resolveReference } from './Members';
-import { collectResults, findAndBind, generateResults } from './MySQLUtil';
-import NewTeamMemberValidator from './validator/validators/NewTeamMember';
-import NewTeamObjectValidator from './validator/validators/NewTeamObject';
+import {
+	Account,
+	areMemberReferencesTheSame,
+	collectResults,
+	findAndBind,
+	generateResults,
+	MemberBase,
+	NewTeamObjectValidator,
+	resolveReference
+} from './internals';
 
 export default class Team implements FullTeamObject {
-	public static Validator = new NewTeamObjectValidator();
-	public static MemberValidator = new NewTeamMemberValidator();
-
 	public static async Get(id: number | string, account: Account, schema: Schema): Promise<Team> {
 		id = parseInt(id.toString(), 10);
 		// Team 0 is reserved for the cadet staff
@@ -342,12 +343,12 @@ export default class Team implements FullTeamObject {
 			seniorMentor: values.seniorMentor,
 			visibility: values.visibility
 		};
-		if (Team.Validator.validate(values, true)) {
-			Team.Validator.partialPrune(values, this);
+		if (NewTeamObjectValidator.validate(values, true)) {
+			NewTeamObjectValidator.partialPrune(values, this);
 
 			return true;
 		} else {
-			throw new Error(Team.Validator.getErrorString());
+			throw new Error(NewTeamObjectValidator.getErrorString());
 		}
 	}
 

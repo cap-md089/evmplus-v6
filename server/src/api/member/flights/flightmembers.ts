@@ -1,6 +1,10 @@
 import { CAPMemberObject } from 'common-lib';
-import { CAPMemberClasses, MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
+import {
+	asyncErrorHandler,
+	CAPMemberClasses,
+	MemberRequest,
+	streamAsyncGeneratorAsJSONArrayTyped
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	if (

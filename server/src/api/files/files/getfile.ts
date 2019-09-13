@@ -3,9 +3,7 @@ import * as express from 'express';
 import * as fs from 'fs';
 import { join } from 'path';
 import { Configuration as config } from '../../../conf';
-import File from '../../../lib/File';
-import { ConditionalMemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
+import { asyncErrorHandler, ConditionalMemberRequest, File } from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest<{ fileid: string }>, res: express.Response) => {
@@ -19,7 +17,14 @@ export default asyncErrorHandler(
 			return;
 		}
 
-		if (!await file.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.READ)) {
+		if (
+			!(await file.hasPermission(
+				req.member,
+				req.mysqlx,
+				req.account,
+				FileUserAccessControlPermissions.READ
+			))
+		) {
 			res.status(403);
 			res.end();
 			return;

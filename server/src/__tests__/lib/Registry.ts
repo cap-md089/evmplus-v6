@@ -1,9 +1,6 @@
 import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
-import Account from '../../lib/Account';
-import { collectResults } from '../../lib/MySQLUtil';
-import Registry from '../../lib/Registry';
-import { getTestTools2 } from '../../lib/Util';
+import { Account, collectResults, getTestTools2, Registry } from '../../lib/internals';
 
 describe('Registry', () => {
 	let account: Account;
@@ -32,9 +29,7 @@ describe('Registry', () => {
 	it(`should create registry values if they don't exist`, async done => {
 		await Registry.Get(account, schema);
 
-		const results = await collectResults(
-			schema.getCollection('Registry').find('true')
-		);
+		const results = await collectResults(schema.getCollection('Registry').find('true'));
 
 		expect(results.length).toEqual(1);
 

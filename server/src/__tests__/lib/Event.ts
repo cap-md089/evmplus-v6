@@ -1,9 +1,6 @@
 import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
-import Account from '../../lib/Account';
-import Event from '../../lib/Event';
-import MemberBase, { CAPNHQMember } from '../../lib/Members';
-import { getTestTools } from '../../lib/Util';
+import { Account, CAPNHQMember, Event, getTestTools, MemberBase } from '../../lib/internals';
 import { newEvent } from '../consts';
 
 describe('Event', () => {

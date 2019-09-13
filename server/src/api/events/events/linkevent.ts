@@ -1,10 +1,13 @@
 import { EventObject } from 'common-lib';
 import { Response } from 'express';
-import Account from '../../../lib/Account';
-import Event from '../../../lib/Event';
-import { getPermissionsForMemberInAccount } from '../../../lib/member/pam/Account';
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import {
+	Account,
+	asyncErrorHandler,
+	Event,
+	getPermissionsForMemberInAccount,
+	json,
+	MemberRequest
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, res: Response) => {
 	if (

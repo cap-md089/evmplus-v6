@@ -1,13 +1,14 @@
 import * as express from 'express';
-import Account from '../../lib/Account';
-import Event from '../../lib/Event';
 import {
+	Account,
 	conditionalMemberMiddleware,
+	EventValidator,
 	memberMiddleware,
-	permissionMiddleware
-} from '../../lib/member/pam/Session';
-import { replaceUndefinedWithNullMiddleware } from '../../lib/Util';
-import Validator from '../../lib/validator/Validator';
+	NewAttendanceRecordValidator,
+	permissionMiddleware,
+	replaceUndefinedWithNullMiddleware,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
@@ -42,7 +43,7 @@ router.post(
 	'/',
 	memberMiddleware,
 	tokenMiddleware,
-	Validator.BodyExpressMiddleware(Event.Validator),
+	Validator.BodyExpressMiddleware(EventValidator),
 	permissionMiddleware('ManageEvent'),
 	addevent
 );
@@ -52,7 +53,7 @@ router.put(
 	'/:id',
 	memberMiddleware,
 	tokenMiddleware,
-	Validator.PartialBodyExpressMiddleware(Event.Validator),
+	Validator.PartialBodyExpressMiddleware(EventValidator),
 	setevent
 );
 router.get('/:id', memberMiddleware, getevent);
@@ -72,7 +73,7 @@ router.post(
 	memberMiddleware,
 	replaceUndefinedWithNullMiddleware,
 	tokenMiddleware,
-	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
+	Validator.BodyExpressMiddleware(NewAttendanceRecordValidator),
 	addattendance
 );
 router.put(
@@ -80,7 +81,7 @@ router.put(
 	memberMiddleware,
 	replaceUndefinedWithNullMiddleware,
 	tokenMiddleware,
-	Validator.BodyExpressMiddleware(Event.AttendanceValidator),
+	Validator.BodyExpressMiddleware(NewAttendanceRecordValidator),
 	modifyattendance
 );
 router.delete('/:id/attendance', memberMiddleware, tokenMiddleware, deleteattendance);

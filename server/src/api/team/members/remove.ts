@@ -1,8 +1,6 @@
 import { NewTeamMember } from 'common-lib';
 import { Response } from 'express';
-import Team from '../../../lib/Team';
-import { asyncErrorHandler } from '../../../lib/Util';
-import { MemberValidatedRequest } from '../../../lib/validator/Validator';
+import { asyncErrorHandler, MemberValidatedRequest, Team } from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewTeamMember, { id: string }>, res: Response) => {

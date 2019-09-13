@@ -7,9 +7,7 @@ import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
-import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/Members';
-import { json } from '../../../lib/Util';
+import { File, json, MemberRequest } from '../../../lib/internals';
 import { validRawToken } from '../../formtoken';
 
 const parseHeaders = (lines: string[]) => {
@@ -51,7 +49,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 	let writeStream: fs.WriteStream;
 
 	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
-		if (!await validRawToken(req.mysqlx, req.member, req.headers.token)) {
+		if (!(await validRawToken(req.mysqlx, req.member, req.headers.token))) {
 			res.status(403);
 			res.end();
 			return;

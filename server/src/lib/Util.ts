@@ -1,3 +1,9 @@
+import * as mysql from '@mysql/xdevapi';
+import { HTTPError, RawAccountObject } from 'common-lib';
+import * as express from 'express';
+import { Configuration } from '../conf';
+import { Account } from './internals';
+
 export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
 	if (typeof obj2 !== typeof obj1) {
 		return false;
@@ -108,7 +114,7 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 	});
 }
 
-let testSession: mysql.Session, testAccount: Account;
+let testSession: mysql.Session;
 
 export async function getTestTools(testconf: typeof Configuration) {
 	const devAccount: RawAccountObject = {
@@ -141,6 +147,7 @@ export async function getTestTools(testconf: typeof Configuration) {
 
 	const schema = testSession.getSchema(testconf.database.connection.database);
 
+	let testAccount: Account;
 	try {
 		testAccount = await Account.Get('mdx89', schema);
 	} catch (e) {
@@ -156,10 +163,10 @@ export async function getTestTools(testconf: typeof Configuration) {
 
 export async function getTestTools2(
 	testconf: typeof Configuration
-): Promise<[Account, mysql.Schema]> {
+): Promise<[Account, mysql.Schema, mysql.Session]> {
 	const results = await getTestTools(testconf);
 
-	return [results.account, results.schema];
+	return [results.account, results.schema, results.session];
 }
 
 export interface ExtendedResponse extends express.Response {
@@ -218,10 +225,3 @@ export const getTargetYear = (timestamp: number): number => {
 
 	return date.getFullYear();
 };
-
-// Imports go at the end to help with circular dependencies
-import * as mysql from '@mysql/xdevapi';
-import { HTTPError, RawAccountObject } from 'common-lib';
-import * as express from 'express';
-import { Configuration } from '../conf';
-import Account from './Account';

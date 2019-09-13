@@ -1,7 +1,5 @@
 import { NewTaskObject } from 'common-lib';
-import Task from '../../lib/Task';
-import { asyncErrorHandler } from '../../lib/Util';
-import { MemberValidatedRequest } from '../../lib/validator/Validator';
+import { asyncErrorHandler, MemberValidatedRequest, Task } from '../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewTaskObject, { id: string }>, res) => {

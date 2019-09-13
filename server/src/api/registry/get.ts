@@ -1,7 +1,5 @@
 import * as express from 'express';
-import { AccountRequest } from '../../lib/Account';
-import Registry from '../../lib/Registry';
-import { asyncErrorHandler } from '../../lib/Util';
+import { AccountRequest, asyncErrorHandler, Registry } from '../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {

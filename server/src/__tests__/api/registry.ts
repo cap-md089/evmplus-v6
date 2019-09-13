@@ -2,7 +2,7 @@ import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
-import { getTestTools } from '../../lib/Util';
+import { getTestTools } from '../../lib/internals';
 
 describe('/api', () => {
 	describe('/registry', () => {

@@ -8,11 +8,14 @@ import {
 } from 'common-lib';
 import { PasswordSetResult } from 'common-lib/index';
 import { randomBytes } from 'crypto';
-import Account from '../../Account';
-import { resolveReference } from '../../Members';
-import { collectResults, findAndBind } from '../../MySQLUtil';
-import { Member } from '../../Permissions';
-import { addPasswordForUser } from './Password';
+import {
+	Account,
+	addPasswordForUser,
+	collectResults,
+	findAndBind,
+	Member,
+	resolveReference
+} from '../../internals';
 
 //#region Account creation
 

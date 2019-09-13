@@ -1,8 +1,6 @@
 import { FullTeamObject } from 'common-lib';
 import { Response } from 'express';
-import { MemberRequest } from '../../lib/Members';
-import Team from '../../lib/Team';
-import { asyncErrorHandler, json } from '../../lib/Util';
+import { asyncErrorHandler, json, MemberRequest, Team } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	const newTeam = await Team.Create(req.body, req.account, req.mysqlx);

@@ -1,9 +1,35 @@
 import * as mysql from '@mysql/xdevapi';
-import { AccountObject, DatabaseInterface, EventObject, FileObject, MemberReference, NHQ, NoSQLDocument, ProspectiveMemberObject, RawAccountObject, RawTeamObject } from 'common-lib';
+import {
+	AccountObject,
+	DatabaseInterface,
+	EventObject,
+	FileObject,
+	MemberReference,
+	NHQ,
+	NoSQLDocument,
+	ProspectiveMemberObject,
+	RawAccountObject,
+	RawTeamObject
+} from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import { collectResults, findAndBind, generateResults, MySQLRequest, ParamType } from './MySQLUtil';
-import { asyncErrorHandler, MonthNumber } from './Util';
+import {
+	areMemberReferencesTheSame,
+	asyncErrorHandler,
+	CAPMemberClasses,
+	CAPNHQMember,
+	CAPProspectiveMember,
+	collectResults,
+	Event,
+	File,
+	findAndBind,
+	generateResults,
+	isValidMemberReference,
+	MonthNumber,
+	MySQLRequest,
+	ParamType,
+	Team
+} from './internals';
 
 export interface AccountRequest<P extends ParamType = {}> extends MySQLRequest<P> {
 	account: Account;
@@ -83,7 +109,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		);
 
 		if (results.length !== 1) {
-			throw new Error('Unkown account: ' + id);
+			throw new Error('Unknown account: ' + id);
 		}
 
 		const result = results[0];
@@ -409,8 +435,3 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		return false;
 	}
 }
-
-import Event from './Event';
-import File from './File';
-import { areMemberReferencesTheSame, CAPMemberClasses, CAPNHQMember, CAPProspectiveMember, isValidMemberReference } from './Members';
-import Team from './Team';

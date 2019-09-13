@@ -1,7 +1,11 @@
 import * as express from 'express';
-import { getMemberForWeakToken, getTokenForUser, isTokenValid } from '../lib/member/pam/Session';
-import { MemberRequest } from '../lib/Members';
-import { asyncErrorHandler } from '../lib/Util';
+import {
+	asyncErrorHandler,
+	getMemberForWeakToken,
+	getTokenForUser,
+	isTokenValid,
+	MemberRequest
+} from '../lib/internals';
 
 export const getFormToken: express.RequestHandler = async (req: MemberRequest, res) => {
 	const token = await getTokenForUser(req.mysqlx, req.member.userAccount);

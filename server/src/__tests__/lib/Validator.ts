@@ -1,4 +1,4 @@
-import Validator, { ValidatorFail } from '../../lib/validator/Validator';
+import { Validator, ValidatorFail } from '../../lib/internals';
 
 interface BasicType {
 	thing: string;

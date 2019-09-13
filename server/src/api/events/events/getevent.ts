@@ -1,8 +1,6 @@
 import { EventObject } from 'common-lib';
 import { Response } from 'express';
-import Event from '../../../lib/Event';
-import { ConditionalMemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler, ConditionalMemberRequest, Event, json } from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {

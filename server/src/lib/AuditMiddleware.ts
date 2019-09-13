@@ -1,6 +1,5 @@
 import { AuditLogItem, HTTPRequestMethod } from 'common-lib';
-import { ConditionalMemberRequest } from './Members';
-import { asyncErrorHandler } from './Util';
+import { asyncErrorHandler, ConditionalMemberRequest } from './internals';
 
 export default asyncErrorHandler((req: ConditionalMemberRequest, res, next) => {
 	const item: AuditLogItem = {

@@ -3,11 +3,14 @@ import { NHQ } from 'common-lib';
 import { CAPWATCHImportErrors } from 'common-lib/index';
 import { resolve } from 'path';
 import conftest from '../../conf.test';
-import Account from '../../lib/Account';
-import ImportCAPWATCHFile from '../../lib/ImportCAPWATCHFile';
-import { CAPNHQMember } from '../../lib/Members';
-import { collectResults, findAndBind } from '../../lib/MySQLUtil';
-import { getTestTools } from '../../lib/Util';
+import {
+	Account,
+	CAPNHQMember,
+	collectResults,
+	findAndBind,
+	getTestTools,
+	ImportCAPWATCHFile
+} from '../../lib/internals';
 
 const zipFileLocation = resolve(__dirname, '../CAPWATCH.zip');
 
@@ -30,7 +33,13 @@ describe('Import CAPWATCH File', () => {
 		const importFiles = ['Member.txt'];
 		let resultCount = 0;
 
-		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, importFiles)) {
+		for await (const _ of ImportCAPWATCHFile(
+			zipFileLocation,
+			schema,
+			session,
+			916,
+			importFiles
+		)) {
 			resultCount++;
 		}
 
@@ -43,7 +52,9 @@ describe('Import CAPWATCH File', () => {
 		const errorStub = jest.spyOn(console, 'error');
 		let resultCount = 0;
 
-		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, ['notafile.txt'])) {
+		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
+			'notafile.txt'
+		])) {
 			resultCount++;
 		}
 
@@ -55,7 +66,9 @@ describe('Import CAPWATCH File', () => {
 	});
 
 	it('should import Member.txt', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, ['Member.txt'])) {
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
+			'Member.txt'
+		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
@@ -118,9 +131,9 @@ describe('Import CAPWATCH File', () => {
 			})
 		);
 
-		const result = results[0];
+		const dutyPositions = results.map(p => p.Duty);
 
-		expect(result.Duty).toBe('Testing Officer');
+		expect(dutyPositions).toContain('Testing Officer');
 
 		done();
 	});
@@ -138,7 +151,9 @@ describe('Import CAPWATCH File', () => {
 			})
 		);
 
-		expect(results[0].Duty).toBe('Cadet Aerospace Education Officer');
+		const dutyPositions = results.map(p => p.Duty);
+
+		expect(dutyPositions).toContain('Cadet IT Officer');
 
 		done();
 	});

@@ -1,7 +1,10 @@
 import { TaskObject } from 'common-lib';
-import { MemberRequest } from '../../lib/Members';
-import Task from '../../lib/Task';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../lib/Util';
+import {
+	asyncErrorHandler,
+	MemberRequest,
+	streamAsyncGeneratorAsJSONArrayTyped,
+	Task
+} from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	await streamAsyncGeneratorAsJSONArrayTyped<Task, TaskObject>(res, req.member.getTasks(), val =>

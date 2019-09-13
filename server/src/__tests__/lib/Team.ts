@@ -1,10 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
+import { RawTeamObject } from 'common-lib';
 import conftest from '../../conf.test';
-import Account from '../../lib/Account';
-import { CAPNHQMember } from '../../lib/Members';
-import { collectResults } from '../../lib/MySQLUtil';
-import Team from '../../lib/Team';
-import { getTestTools2 } from '../../lib/Util';
+import { Account, CAPNHQMember, collectResults, getTestTools2, Team } from '../../lib/internals';
 import { newTeam } from '../consts';
 
 describe('Team', () => {
@@ -29,9 +26,12 @@ describe('Team', () => {
 	it('should create a team', async done => {
 		team = await Team.Create(newTeam, account, schema);
 
-		const results = await collectResults(schema.getCollection('Teams').find('true'));
+		const results = await collectResults(
+			schema.getCollection<RawTeamObject>('Teams').find('true')
+		);
 
 		expect(results.length).toBe(1);
+		expect(results[0].members.length).toBe(1);
 
 		done();
 	});

@@ -1,9 +1,7 @@
 import { FullTeamObject } from 'common-lib';
 import { TeamPublicity } from 'common-lib/index';
 import { Response } from 'express';
-import { ConditionalMemberRequest } from '../../lib/Members';
-import Team from '../../lib/Team';
-import { asyncErrorHandler, json } from '../../lib/Util';
+import { asyncErrorHandler, ConditionalMemberRequest, json, Team } from '../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {

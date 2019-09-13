@@ -9,11 +9,16 @@ import {
 	ShortDutyPosition,
 	TemporaryDutyPosition
 } from 'common-lib';
-import Account from '../../Account';
-import MemberBase from '../../Members';
-import { collectResults, findAndBind, generateResults } from '../../MySQLUtil';
-import { DEFAULT_PERMISSIONS, getPermissionsForMemberInAccountDefault } from '../pam/Account';
-import { SessionedUser } from '../pam/Session';
+import {
+	Account,
+	collectResults,
+	DEFAULT_PERMISSIONS,
+	findAndBind,
+	generateResults,
+	getPermissionsForMemberInAccountDefault,
+	MemberBase,
+	SessionedUser
+} from '../../internals';
 
 export default class CAPProspectiveMember extends MemberBase
 	implements ProspectiveMemberObject, Required<NoSQLDocument> {
@@ -233,7 +238,7 @@ export default class CAPProspectiveMember extends MemberBase
 			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false);
 
 	public toRealRaw(): RawProspectiveMemberObject {
-		return {	
+		return {
 			id: this.id,
 			contact: this.contact,
 			nameFirst: this.nameFirst,

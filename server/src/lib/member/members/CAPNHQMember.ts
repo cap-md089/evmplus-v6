@@ -12,11 +12,16 @@ import {
 	TemporaryDutyPosition
 } from 'common-lib';
 import { DateTime } from 'luxon';
-import Account from '../../Account';
-import MemberBase, { getUserID } from '../../Members';
-import { collectResults, findAndBind, generateResults } from '../../MySQLUtil';
-import { getPermissionsForMemberInAccountDefault } from '../pam/Account';
-import { SessionedUser } from '../pam/Session';
+import {
+	Account,
+	collectResults,
+	findAndBind,
+	generateResults,
+	getPermissionsForMemberInAccountDefault,
+	getUserID,
+	MemberBase,
+	SessionedUser
+} from '../../internals';
 
 export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPNHQMember> {

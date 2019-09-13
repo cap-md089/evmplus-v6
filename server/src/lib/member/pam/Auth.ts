@@ -1,10 +1,13 @@
 import { Schema } from '@mysql/xdevapi';
 import { MemberReference, UserAccountInformation } from 'common-lib';
 import { MemberCreateError, PasswordResult } from 'common-lib/index';
-import { collectResults, findAndBind } from '../../MySQLUtil';
-import { getInformationForUser } from './Account';
-import { checkIfPasswordValid } from './Password';
-import { createSessionForUser } from './Session';
+import {
+	checkIfPasswordValid,
+	collectResults,
+	createSessionForUser,
+	findAndBind,
+	getInformationForUser
+} from '../../internals';
 
 interface SigninSuccess {
 	result: MemberCreateError.NONE;

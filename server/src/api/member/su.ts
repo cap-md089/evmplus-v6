@@ -1,6 +1,10 @@
 import { Response } from 'express';
-import { CAPNHQMember, isValidMemberReference, MemberRequest } from '../../lib/Members';
-import { asyncErrorHandler } from '../../lib/Util';
+import {
+	asyncErrorHandler,
+	CAPNHQMember,
+	isValidMemberReference,
+	MemberRequest
+} from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
 	if (!req.member.isRioux || !(req.member instanceof CAPNHQMember)) {

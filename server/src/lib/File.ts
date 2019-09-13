@@ -15,19 +15,21 @@ import { unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 import conf from '../conf';
-import Account from './Account';
-import { CAPNHQUser } from './member/members/CAPNHQMember';
-import { CAPProspectiveUser } from './member/members/CAPProspectiveMember';
-import { getPermissionsForMemberInAccountDefault } from './member/pam/Account';
-import MemberBase, { resolveReference } from './Members';
-import { collectResults, findAndBind } from './MySQLUtil';
-import FileObjectValidator from './validator/validators/FileObjectValidator';
+import {
+	Account,
+	CAPNHQUser,
+	CAPProspectiveUser,
+	collectResults,
+	FileObjectValidator,
+	findAndBind,
+	getPermissionsForMemberInAccountDefault,
+	MemberBase,
+	resolveReference
+} from './internals';
 
 const promisedUnlink = promisify(unlink);
 
 export default class File implements FileObject, DatabaseInterface<FileObject> {
-	public static Validator = new FileObjectValidator();
-
 	public static async Get(
 		id: string | null,
 		account: Account,
@@ -230,12 +232,12 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	 * @param values The values to set
 	 */
 	public set(data: Partial<FileObject>): boolean {
-		if (File.Validator.validate(data, true)) {
-			File.Validator.partialPrune(data, this);
+		if (FileObjectValidator.validate(data, true)) {
+			FileObjectValidator.partialPrune(data, this);
 
 			return true;
 		} else {
-			throw new Error(File.Validator.getErrorString());
+			throw new Error(FileObjectValidator.getErrorString());
 		}
 	}
 

@@ -1,8 +1,11 @@
 import { EventObject } from 'common-lib';
-import { AccountRequest } from '../../../lib/Account';
-import Event from '../../../lib/Event';
-import Registry from '../../../lib/Registry';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
+import {
+	AccountRequest,
+	asyncErrorHandler,
+	Event,
+	Registry,
+	streamAsyncGeneratorAsJSONArrayTyped
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: AccountRequest, res) => {
 	let count = 0;

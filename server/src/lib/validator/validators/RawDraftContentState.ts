@@ -1,7 +1,7 @@
 import { Draft, RawDraftContentState } from 'common-lib';
 import Validator from '../Validator';
 
-export class RawDraftEntityValidator extends Validator<Draft.RawDraftEntity> {
+class RawDraftEntityValidator extends Validator<Draft.RawDraftEntity> {
 	constructor() {
 		super({
 			data: {

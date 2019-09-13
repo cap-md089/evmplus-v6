@@ -1,12 +1,13 @@
 import * as express from 'express';
-import Account from '../../lib/Account';
 import {
+	Account,
 	conditionalMemberMiddleware,
 	memberMiddleware,
-	permissionMiddleware
-} from '../../lib/member/pam/Session';
-import Team from '../../lib/Team';
-import Validator from '../../lib/validator/Validator';
+	NewTeamMemberValidator,
+	NewTeamObjectValidator,
+	permissionMiddleware,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import create from './create';
@@ -30,7 +31,7 @@ router.post(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(Team.Validator),
+	Validator.BodyExpressMiddleware(NewTeamObjectValidator),
 	create
 );
 router.put(
@@ -38,7 +39,7 @@ router.put(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('ManageTeam'),
-	Validator.PartialBodyExpressMiddleware(Team.Validator),
+	Validator.PartialBodyExpressMiddleware(NewTeamObjectValidator),
 	set
 );
 router.delete(
@@ -54,7 +55,7 @@ router.put(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
 	modify
 );
 router.delete(
@@ -62,7 +63,7 @@ router.delete(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
 	remove
 );
 router.post(
@@ -70,7 +71,7 @@ router.post(
 	memberMiddleware,
 	tokenMiddleware,
 	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(Team.MemberValidator),
+	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
 	add
 );
 router.get('/:id/members', conditionalMemberMiddleware, listmembers);

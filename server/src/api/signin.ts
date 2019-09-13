@@ -1,10 +1,13 @@
 import { SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import { MemberCreateError } from 'common-lib/index';
 import * as express from 'express';
-import { AccountRequest } from '../lib/Account';
-import { trySignin } from '../lib/member/pam/Auth';
-import { resolveReference } from '../lib/Members';
-import { asyncErrorHandler, json } from '../lib/Util';
+import {
+	AccountRequest,
+	asyncErrorHandler,
+	json,
+	resolveReference,
+	trySignin
+} from '../lib/internals';
 
 export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
 	const {

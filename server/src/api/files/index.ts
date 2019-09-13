@@ -1,10 +1,12 @@
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
-import Account from '../../lib/Account';
-import File from '../../lib/File';
-import { memberMiddleware } from '../../lib/member/pam/Session';
-import { replaceUndefinedWithNullMiddleware } from '../../lib/Util';
-import Validator from '../../lib/validator/Validator';
+import {
+	Account,
+	FileObjectValidator,
+	memberMiddleware,
+	replaceUndefinedWithNullMiddleware,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // Children methods
 import getfiles from './children/getfiles';
@@ -46,7 +48,7 @@ filerouter.put(
 	memberMiddleware,
 	tokenMiddleware,
 	replaceUndefinedWithNullMiddleware,
-	Validator.PartialBodyExpressMiddleware(File.Validator),
+	Validator.PartialBodyExpressMiddleware(FileObjectValidator),
 	setfileinfo
 ); // update
 filerouter.post('/create', memberMiddleware, createfolder);

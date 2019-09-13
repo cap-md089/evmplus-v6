@@ -1,10 +1,13 @@
 import * as express from 'express';
-import Account from '../../lib/Account';
-import { memberMiddleware, permissionMiddleware } from '../../lib/member/pam/Session';
-import Validator from '../../lib/validator/Validator';
-import AbsenteeValidator from '../../lib/validator/validators/AbsenteeValidator';
-import FlightAssignBulkValidator from '../../lib/validator/validators/FlightAssignBulkValidator';
-import FlightAssignValidator from '../../lib/validator/validators/FlightAssignValidator';
+import {
+	AbsenteeValidator,
+	Account,
+	FlightAssignBulkValidator,
+	FlightAssignValidator,
+	memberMiddleware,
+	permissionMiddleware,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
@@ -86,6 +89,6 @@ router.post(
 );
 
 router.use('/capwatch', memberMiddleware, permissionMiddleware('DownloadCAPWATCH'), capwatch);
-router.use('/account', account)
+router.use('/account', account);
 
 export default router;

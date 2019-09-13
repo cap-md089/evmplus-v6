@@ -1,7 +1,9 @@
-import { resolveReference } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
-import { MemberValidatedRequest } from '../../../lib/validator/Validator';
-import { FlightAssign } from '../../../lib/validator/validators/FlightAssignValidator';
+import {
+	asyncErrorHandler,
+	FlightAssign,
+	MemberValidatedRequest,
+	resolveReference
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssign>, res) => {
 	const member = await resolveReference(req.body.member, req.account, req.mysqlx);

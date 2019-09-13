@@ -1,7 +1,7 @@
 import { NotificationObject } from 'common-lib';
-import { MemberRequest } from '../../lib/Members';
-import { Notification } from '../../lib/Notification';
-import { asyncErrorHandler, json } from '../../lib/Util';
+import { MemberRequest } from '../../lib/internals';
+import { Notification } from '../../lib/internals';
+import { asyncErrorHandler, json } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {

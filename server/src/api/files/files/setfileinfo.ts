@@ -1,8 +1,6 @@
 import { EditableFileObjectProperties } from 'common-lib';
 import * as express from 'express';
-import File from '../../../lib/File';
-import { asyncErrorHandler } from '../../../lib/Util';
-import { MemberValidatedRequest } from '../../../lib/validator/Validator';
+import { asyncErrorHandler, File, MemberValidatedRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (

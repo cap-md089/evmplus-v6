@@ -1,6 +1,4 @@
-import { MemberRequest } from '../../lib/Members';
-import Task from '../../lib/Task';
-import { asyncErrorHandler } from '../../lib/Util';
+import { asyncErrorHandler, MemberRequest, Task } from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
 	const id = parseInt(req.params.id, 10);

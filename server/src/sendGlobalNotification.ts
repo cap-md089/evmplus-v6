@@ -4,10 +4,7 @@ import { getSession, Schema } from '@mysql/xdevapi';
 import { NotificationCause, RawAccountObject } from 'common-lib';
 import { NotificationCauseType } from 'common-lib/index';
 import conf from './conf';
-import Account from './lib/Account';
-import { resolveReference } from './lib/Members';
-import { collectResults } from './lib/MySQLUtil';
-import GlobalNotification from './lib/notifications/GlobalNotification';
+import { Account, collectResults, GlobalNotification, resolveReference } from './lib/internals';
 
 /**
  * This script is meant to be run from the command line, and provides a way

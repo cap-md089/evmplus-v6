@@ -2,10 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
-import Account from '../../lib/Account';
-import Event from '../../lib/Event';
-import { CAPNHQMember } from '../../lib/Members';
-import { getTestTools } from '../../lib/Util';
+import { Account, CAPNHQMember, Event, getTestTools } from '../../lib/internals';
 import { newEvent, rawAccount } from '../consts';
 
 describe('Account', () => {

@@ -1,8 +1,6 @@
 import { NotificationObject } from 'common-lib';
 import { NotificationCauseType } from 'common-lib/index';
-import { MemberRequest } from '../../../lib/Members';
-import GlobalNotification from '../../../lib/notifications/GlobalNotification';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler, GlobalNotification, json, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	if (!req.account.isAdmin(req.member)) {

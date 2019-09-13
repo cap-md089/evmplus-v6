@@ -1,9 +1,12 @@
 import { FullTeamObject, MemberReference } from 'common-lib';
 import { TeamPublicity } from 'common-lib/index';
 import { Response } from 'express';
-import { ConditionalMemberRequest } from '../../lib/Members';
-import Team from '../../lib/Team';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../lib/Util';
+import {
+	asyncErrorHandler,
+	ConditionalMemberRequest,
+	streamAsyncGeneratorAsJSONArrayTyped,
+	Team
+} from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
 	const memRef: MemberReference = !req.member ? { type: 'Null' } : req.member.getReference();

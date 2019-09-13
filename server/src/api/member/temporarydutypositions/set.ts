@@ -1,15 +1,16 @@
 import { MemberReference, ShortCAPUnitDutyPosition } from 'common-lib';
-import { resolveReference } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
-import Validator, { MemberValidatedRequest } from '../../../lib/validator/Validator';
+import {
+	asyncErrorHandler,
+	MemberValidatedRequest,
+	resolveReference,
+	Validator
+} from '../../../lib/internals';
 
 interface SetTemporaryDutyPositions {
 	dutyPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>;
 }
 
-const shortCAPWatchDutyPositionValidator = new Validator<
-	Omit<ShortCAPUnitDutyPosition, 'date'>
->({
+const shortCAPWatchDutyPositionValidator = new Validator<Omit<ShortCAPUnitDutyPosition, 'date'>>({
 	duty: {
 		validator: Validator.String
 	},
@@ -75,10 +76,7 @@ export default asyncErrorHandler(
 
 			for (const newDutyPosition of newDutyPositions) {
 				if (newDutyPosition.duty === duty.duty) {
-					newDutyPosition.expires = Math.max(
-						newDutyPosition.expires,
-						duty.expires
-					);
+					newDutyPosition.expires = Math.max(newDutyPosition.expires, duty.expires);
 					found = true;
 					break;
 				}

@@ -1,8 +1,6 @@
 import { RegistryValues } from 'common-lib';
 import { Response } from 'express';
-import Registry from '../../lib/Registry';
-import { asyncErrorHandler } from '../../lib/Util';
-import { MemberValidatedRequest } from '../../lib/validator/Validator';
+import { asyncErrorHandler, MemberValidatedRequest, Registry } from '../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<Partial<RegistryValues>>, res: Response) => {

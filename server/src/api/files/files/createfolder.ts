@@ -3,14 +3,19 @@ import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'com
 import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
-import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler, json } from '../../../lib/Util';
+import { asyncErrorHandler, File, json, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	const root = await File.Get('root', req.account, req.mysqlx);
 
-	if (!await root.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.MODIFY)) {
+	if (
+		!(await root.hasPermission(
+			req.member,
+			req.mysqlx,
+			req.account,
+			FileUserAccessControlPermissions.MODIFY
+		))
+	) {
 		res.status(403);
 		res.end();
 		return;

@@ -1,17 +1,18 @@
 import {
 	addUserAccount,
+	asyncErrorHandler,
+	BasicValidatedRequest,
+	createSessionForUser,
 	UserError,
-	validateUserAccountCreationToken
-} from '../../../../lib/member/pam/Account';
-import { createSessionForUser } from '../../../../lib/member/pam/Session';
-import { asyncErrorHandler } from '../../../../lib/Util';
-import Validator, { BasicValidatedRequest } from '../../../../lib/validator/Validator';
+	validateUserAccountCreationToken,
+	Validator
+} from '../../../../lib/internals';
 
 interface RequestParameters {
 	password: string;
 	username: string;
 	token: string;
-};
+}
 
 export const nhqFinishValidator = new Validator<RequestParameters>({
 	password: {

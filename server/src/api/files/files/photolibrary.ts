@@ -1,10 +1,13 @@
 import { FullFileObject, RawFileObject } from 'common-lib';
 import { FileUserAccessControlPermissions } from 'common-lib/index';
-import File from '../../../lib/File';
-import { ConditionalMemberRequest } from '../../../lib/Members';
-import { generateResults } from '../../../lib/MySQLUtil';
-import Registry from '../../../lib/Registry';
-import { asyncErrorHandler, streamAsyncGeneratorAsJSONArrayTyped } from '../../../lib/Util';
+import {
+	asyncErrorHandler,
+	ConditionalMemberRequest,
+	File,
+	generateResults,
+	Registry,
+	streamAsyncGeneratorAsJSONArrayTyped
+} from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: string }>, res) => {
 	const page = parseInt(req.params.page, 10) || 0;
@@ -25,7 +28,14 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 		async info => {
 			const fullFile = await File.Get(info.id, req.account, req.mysqlx);
 
-			if (!await fullFile.hasPermission(req.member, req.mysqlx, req.account, FileUserAccessControlPermissions.READ)) {
+			if (
+				!(await fullFile.hasPermission(
+					req.member,
+					req.mysqlx,
+					req.account,
+					FileUserAccessControlPermissions.READ
+				))
+			) {
 				return false;
 			}
 

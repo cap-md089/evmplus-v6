@@ -1,7 +1,5 @@
 import * as express from 'express';
-import File from '../../../lib/File';
-import { MemberRequest } from '../../../lib/Members';
-import { asyncErrorHandler } from '../../../lib/Util';
+import { asyncErrorHandler, File, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(
 	async (req: MemberRequest<{ parentid: string }>, res: express.Response) => {

@@ -3,7 +3,7 @@ import { AccountPasswordInformation, UserAccountInformation } from 'common-lib';
 import { PasswordResult, PasswordSetResult } from 'common-lib/index';
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
-import { getInformationForUser, isUserValid, saveInformationForUser } from './Account';
+import { getInformationForUser, isUserValid, saveInformationForUser } from '../../internals';
 
 const promisedPbkdf2 = promisify(pbkdf2);
 const promisedRandomBytes = promisify(randomBytes);
@@ -176,7 +176,13 @@ export const checkIfPasswordValid = async (
 	username: string,
 	password: string
 ): Promise<PasswordResult> => {
-	const userInfo = await getInformationForUser(schema, username);
+	let userInfo;
+	try {
+		userInfo = await getInformationForUser(schema, username);
+	} catch(e) {
+		return PasswordResult.INVALID;
+	}
+
 
 	if (!isUserValid(userInfo)) {
 		return PasswordResult.INVALID;

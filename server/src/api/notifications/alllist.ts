@@ -1,8 +1,10 @@
 import { NotificationTargetType } from 'common-lib/index';
-import { MemberRequest } from '../../lib/Members';
-import GlobalNotification from '../../lib/notifications/GlobalNotification';
-import MemberNotification from '../../lib/notifications/MemberNotification';
-import { asyncErrorHandler } from '../../lib/Util';
+import {
+	asyncErrorHandler,
+	GlobalNotification,
+	MemberNotification,
+	MemberRequest
+} from '../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {
 	res.header('Content-type', 'application/json');
