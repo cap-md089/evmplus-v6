@@ -215,6 +215,13 @@ export default abstract class MemberBase implements MemberObject {
 		return this.getName();
 	}
 
+	public getNameLFMI() {
+		let buildName = this.nameLast + ", " + this.nameFirst;
+		if(this.nameMiddle) { buildName += " " + this.nameMiddle[0]; }
+		if(this.nameSuffix) { buildName += ", " + this.nameSuffix; }
+		return buildName;
+	}
+
 	public isPOCOf(event: Event) {
 		return event.isPOC(this);
 	}

@@ -45,7 +45,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	/**
 	 * Use API Routers
 	 */
-	router.use('*', MySQLMiddleware(eventManagementSchema, session));
+	router.use('*', MySQLMiddleware(eventManagementSchema, session, conf));
 
 	router.use((req: MySQLRequest, _, next) => {
 		req._originalUrl = req.originalUrl;
