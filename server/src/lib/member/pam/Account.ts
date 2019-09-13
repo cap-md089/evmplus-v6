@@ -63,14 +63,29 @@ const removeAccountToken = async (schema: Schema, token: string): Promise<void> 
 const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
-	return (await collectResults(findAndBind(collection, { member }))).length;
+	const results = await collectResults(findAndBind(collection, { member }));
+
+	return results.length;
 };
 
 export const addUserAccountCreationToken = async (
 	schema: Schema,
 	member: MemberReference
 ): Promise<string> => {
-	if ((await getTokenCountForUser(schema, member)) > 0) {
+	let info = null;
+	try {
+		info = await getInformationForMember(schema, member);
+	} catch(e) {
+		// If this happens, then everything is ok
+		// An account couldn't be found, which means the request is valid
+	}
+
+	if (info !== null) {
+		throw new Error('User already has an account');
+	}
+
+	const tokenCount = await getTokenCountForUser(schema, member)
+	if ((tokenCount) > 0) {
 		throw new Error('User already has token');
 	}
 
@@ -113,7 +128,7 @@ export const addUserAccount = async (
 	password: string,
 	member: MemberReference,
 	token: string
-) => {
+): Promise<UserAccountInformation> => {
 	const userInformationCollection = schema.getCollection<UserAccountInformation>(
 		'UserAccountInfo'
 	);

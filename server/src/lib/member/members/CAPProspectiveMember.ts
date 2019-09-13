@@ -76,7 +76,8 @@ export default class CAPProspectiveMember extends MemberBase
 				type: 'CAPProspectiveMember',
 				squadron: account.getSquadronName(),
 				absenteeInformation: null,
-				permissions: DEFAULT_PERMISSIONS
+				permissions: DEFAULT_PERMISSIONS,
+				id
 			},
 			schema,
 			account,
@@ -179,6 +180,15 @@ export default class CAPProspectiveMember extends MemberBase
 		extraInformation: ExtraMemberInformation
 	) {
 		super(data, schema, requestingAccount, extraInformation);
+
+		this.id = data.id;
+		this.orgid = data.orgid;
+		this.memberRank = data.memberRank;
+		this.seniorMember = data.seniorMember;
+		this.dutyPositions = data.dutyPositions;
+		this.flight = data.flight;
+		this.squadron = data.squadron;
+		this.absenteeInformation = data.absenteeInformation;
 	}
 
 	public getHomeAccount = () => Account.Get(this.accountID, this.schema);

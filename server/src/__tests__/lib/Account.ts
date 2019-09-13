@@ -2,7 +2,7 @@ import { Schema } from '@mysql/xdevapi';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
-import { Account, CAPNHQMember, Event, getTestTools } from '../../lib/internals';
+import { Account, CAPNHQMember, Event, getTestTools2 } from '../../lib/internals';
 import { newEvent, rawAccount } from '../consts';
 
 describe('Account', () => {
@@ -10,10 +10,7 @@ describe('Account', () => {
 	let account: Account;
 
 	beforeAll(async done => {
-		const results = await getTestTools(conftest);
-
-		schema = results.schema;
-		account = results.account;
+		[account, schema] = await getTestTools2(conftest);
 
 		done();
 	});
@@ -21,17 +18,8 @@ describe('Account', () => {
 	afterAll(async done => {
 		await schema
 			.getCollection('Accounts')
-			.remove('true')
+			.remove(`id = "${rawAccount.id}"`)
 			.execute();
-
-		done();
-	});
-
-	it('should fetch an account', async done => {
-		const testAccount = await Account.Get('mdx89', schema);
-
-		expect(testAccount.id).toEqual('mdx89');
-		expect(testAccount.mainOrg).toEqual(916);
 
 		done();
 	});
@@ -43,6 +31,15 @@ describe('Account', () => {
 
 		expect(testAccount.id).toEqual(testAccountGet.id);
 		expect(testAccount.adminIDs).toEqual(testAccountGet.adminIDs);
+
+		done();
+	});
+
+	it('should fetch an account', async done => {
+		const testAccount = await Account.Get(rawAccount.id, schema);
+
+		expect(testAccount.id).toEqual(rawAccount.id);
+		expect(testAccount.mainOrg).toEqual(rawAccount.mainOrg);
 
 		done();
 	});

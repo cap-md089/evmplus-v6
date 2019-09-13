@@ -64,7 +64,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				const account = await Account.Get(accountID, req.mysqlx);
 				req.account = account;
 			} catch (e) {
-				if (e.message.startsWith('Unkown account: ')) {
+				if (e.message.startsWith('Unknown account: ')) {
 					res.status(400);
 				} else {
 					res.status(500);

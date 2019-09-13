@@ -23,11 +23,26 @@ describe('Team', () => {
 		done();
 	});
 
-	it('should create a team', async done => {
+	beforeEach(async done => {
 		team = await Team.Create(newTeam, account, schema);
 
+		done();
+	});
+
+	afterEach(async done => {
+		await schema
+			.getCollection('Teams')
+			.remove('true')
+			.execute();
+
+		done();
+	});
+
+	it('should create a team', async done => {
+		const newTeamObject = await Team.Create(newTeam, account, schema);
+
 		const results = await collectResults(
-			schema.getCollection<RawTeamObject>('Teams').find('true')
+			schema.getCollection<RawTeamObject>('Teams').find('id = :id').bind({ id: newTeamObject.id })
 		);
 
 		expect(results.length).toBe(1);
@@ -59,19 +74,25 @@ describe('Team', () => {
 		done();
 	});
 
-	it('should add a team member', () => {
-		team.addTeamMember(member, 'Eh', account, schema);
+	it('should add a team member', async done => {
+		await team.addTeamMember(member, 'Eh', account, schema);
 
 		expect(team.members.length).toEqual(2);
 		expect(team.members[1].reference).toEqual(member.getReference());
+
+		done();
 	});
 
-	it('should modify a team member', () => {
+	it('should modify a team member', async done => {
+		await team.addTeamMember(member, 'Eh', account, schema);
+
 		const newJob = 'A new job';
 
-		team.modifyTeamMember(member.getReference(), newJob);
+		await team.modifyTeamMember(member.getReference(), newJob);
 
 		expect(team.members[1].job).toEqual(newJob);
+
+		done();
 	});
 
 	it('should remove a team member', () => {
@@ -91,6 +112,8 @@ describe('Team', () => {
 	});
 
 	it('should fail to save or delete team information for a deleted team', async done => {
+		await team.delete();
+
 		await expect(team.save()).rejects.toEqual(expect.any(Error));
 		await expect(team.delete()).rejects.toEqual(expect.any(Error));
 

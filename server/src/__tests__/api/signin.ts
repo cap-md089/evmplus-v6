@@ -1,4 +1,4 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { SigninReturn } from 'common-lib';
 import { Server } from 'http';
 import * as request from 'supertest';
@@ -8,38 +8,38 @@ import {
 	Account,
 	addUserAccount,
 	addUserAccountCreationToken,
-	CAPProspectiveMember,
-	getTestTools,
+	getTestTools2,
 	validateUserAccountCreationToken
 } from '../../lib/internals';
-import { newMem, password } from '../consts';
 
 const signinInformation = {
 	username: 'ariouxTest',
-	password: 'aPasswordThatSu><'
-}
+	password: 'aPasswordThatSu><10'
+};
 
 describe('/api', () => {
 	describe('/signin', () => {
 		let server: Server;
-		let pmember: CAPProspectiveMember;
 		let account: Account;
 		let schema: Schema;
+		let session: Session;
 
-		beforeAll(async () => {
-			const results = await getTestTools(conftest);
+		beforeAll(async done => {
+			[account, schema, session] = await getTestTools2(conftest);
 
-			account = results.account;
-			schema = results.schema;
+			done();
+		});
+
+		beforeEach(async done => {
+			server = (await getServer(conf, 3004, session)).server;
+
+			await schema.getCollection('UserAccountInfo').remove('true');
 
 			const token = await addUserAccountCreationToken(schema, {
 				id: 535799,
 				type: 'CAPNHQMember'
 			});
-			const memberReference = await validateUserAccountCreationToken(
-				schema,
-				token
-			);
+			const memberReference = await validateUserAccountCreationToken(schema, token);
 
 			await addUserAccount(
 				schema,
@@ -49,24 +49,35 @@ describe('/api', () => {
 				memberReference,
 				token
 			);
+
+			done();
 		});
 
-		beforeEach(async () => {
-			server = (await getServer(conf, 3004)).server;
-		});
-
-		afterEach(async () => {
+		afterEach(async done => {
 			server.close();
+
+			await Promise.all([
+				schema
+					.getCollection('UserAccountInfo')
+					.remove('member.id = 535799')
+					.execute(),
+				schema
+					.getCollection('UserAccountTokens')
+					.remove('member.id = 535799')
+					.execute()
+			]);
+
+			done();
 		});
 
 		afterAll(async () => {
 			await Promise.all([
 				schema
-					.getCollection('ProspectiveMembers')
-					.remove('true')
+					.getCollection('UserAccountInfo')
+					.remove('member.id = 535799')
 					.execute(),
 				schema
-					.getCollection('UserAccountInfo')
+					.getCollection('UserAccountTokens')
 					.remove('member.id = 535799')
 					.execute()
 			]);
@@ -90,7 +101,7 @@ describe('/api', () => {
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
 					expect(ret.valid).toEqual(true);
-					expect(ret.member ? ret.member.id : 0).toEqual(signinInformation.username);
+					expect(ret.member ? ret.member.id : 0).toEqual(535799);
 
 					done();
 				});
@@ -125,32 +136,6 @@ describe('/api', () => {
 				});
 		});
 
-		it('should succeed when using a username instead of id', done => {
-			request(server)
-				.post('/api/signin')
-				.send({
-					...signinInformation,
-					username: 'riouxad'
-				})
-				.set('Accept', 'application/json')
-				.set('Content-type', 'application/json')
-				.end((err, res) => {
-					if (err) {
-						throw err;
-					}
-
-					const ret: SigninReturn = res.body;
-
-					// -1 means no error
-					expect(ret.error).toEqual(-1);
-					expect(ret.sessionID).not.toEqual('');
-					expect(ret.valid).toEqual(true);
-					expect(ret.member ? ret.member.id : 0).toEqual(signinInformation.username);
-
-					done();
-				});
-		}, 8000);
-
 		it('should be able to get a user after signing in', done => {
 			request(server)
 				.post('/api/signin')
@@ -178,94 +163,13 @@ describe('/api', () => {
 							expect(ret.sessionID).not.toEqual('');
 							expect(ret.valid).toEqual(true);
 							expect(ret.member ? ret.member.id : 0).toEqual(
-								signinInformation.username
+								535799
 							);
 
 							done();
 						});
 				});
 		}, 8000);
-
-		it('should allow signing in as a prospective member', async done => {
-			pmember = await CAPProspectiveMember.Create(newMem, account, schema);
-
-			request(server)
-				.post('/api/signin')
-				.send({
-					username: pmember.id,
-					password
-				})
-				.set('Accept', 'application/json')
-				.set('Content-type', 'application/json')
-				.end((err, res) => {
-					if (err) {
-						throw err;
-					}
-
-					const ret: SigninReturn = res.body;
-
-					// -1 means no error
-					expect(ret.error).toEqual(-1);
-					expect(ret.sessionID).not.toEqual('');
-					expect(ret.valid).toEqual(true);
-					expect(ret.member ? ret.member.id : 0).toEqual(pmember.id);
-
-					done();
-				});
-		});
-
-		it('should allow signing in as a prospective member case insensitive', async done => {
-			pmember = await CAPProspectiveMember.Create(newMem, account, schema);
-
-			request(server)
-				.post('/api/signin')
-				.send({
-					username: pmember.id.toUpperCase(),
-					password
-				})
-				.set('Accept', 'application/json')
-				.set('Content-type', 'application/json')
-				.end((err, res) => {
-					if (err) {
-						throw err;
-					}
-
-					const ret: SigninReturn = res.body;
-
-					// -1 means no error
-					expect(ret.error).toEqual(-1);
-					expect(ret.sessionID).not.toEqual('');
-					expect(ret.valid).toEqual(true);
-					expect(ret.member ? ret.member.id : 0).toEqual(pmember.id);
-
-					done();
-				});
-		});
-
-		it('should return an error for incorrect credentials for a prospective member', async done => {
-			request(server)
-				.post('/api/signin')
-				.send({
-					username: 'nothing-12',
-					password: 'no-user'
-				})
-				.set('Accept', 'application/json')
-				.set('Content-type', 'application/json')
-				.end((err, res) => {
-					if (err) {
-						throw err;
-					}
-
-					const ret: SigninReturn = res.body;
-
-					expect(ret.error).toEqual(0);
-					expect(ret.sessionID).toEqual('');
-					expect(ret.valid).toEqual(false);
-					expect(ret.member).toEqual(null);
-
-					done();
-				});
-		});
 
 		it('should return a signin form to sign in with', done => {
 			request(server)

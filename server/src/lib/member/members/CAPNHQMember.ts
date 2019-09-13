@@ -63,7 +63,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 				teamIDs: extraInformation.teamIDs,
 				flight: extraInformation.flight,
 				absenteeInformation: extraInformation.absentee,
-				permissions
+				permissions,
+				expirationDate: +DateTime.fromISO(results[0].Expiration)
 			},
 			schema,
 			account,
@@ -169,6 +170,14 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	 */
 	public squadron: string;
 	/**
+	 * When the membership lapses for this particular user
+	 */
+	public expirationDate: number;
+	/**
+	 * Ditto above but as a more usable DateTime object
+	 */
+	public expirationDateObject: DateTime;
+	/**
 	 * How long a member may be absent for
 	 */
 	public absenteeInformation: AbsenteeInformation | null;
@@ -194,6 +203,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		this.flight = data.flight;
 		this.squadron = data.squadron;
 		this.absenteeInformation = extraInfo.absentee;
+		this.expirationDate = data.expirationDate;
+		this.expirationDateObject = DateTime.fromMillis(data.expirationDate);
 	}
 
 	public getReference = (): NHQMemberReference => ({
@@ -213,7 +224,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			type: 'CAPNHQMember',
 			id: this.id,
 			absenteeInformation: this.absenteeInformation,
-			permissions: this.permissions
+			permissions: this.permissions,
+			expirationDate: this.expirationDate
 		};
 	}
 
