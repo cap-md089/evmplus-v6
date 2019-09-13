@@ -85,7 +85,7 @@ export default abstract class APIInterface<T> {
 			uri = uri.slice(1);
 		}
 
-		if (uri.split('/').length > 3 && uri.split(':').length == 2) {
+		if (uri.split('/').length > 3 && uri.split(':').length === 2) {
 			uri = uri.split('/').slice(3).join('/');
 		}
 
