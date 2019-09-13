@@ -30,6 +30,7 @@ import list from './events/list';
 import listupcoming from './events/listupcoming';
 import setevent from './events/setevent';
 import timelist from './events/timelist';
+import attendancelog from './attendance/attendancelog';
 
 const router = express.Router();
 
@@ -59,7 +60,11 @@ router.put(
 router.get('/:id', memberMiddleware, getevent);
 router.post('/:id/copy', memberMiddleware, tokenMiddleware, copy);
 
+
+
 router.get('/:id/attendance', memberMiddleware, getattendance);
+
+router.get('/:id/attendance/log', memberMiddleware, attendancelog);
 router.post(
 	'/:id/attendance/bulk',
 	memberMiddleware,
