@@ -86,8 +86,8 @@ describe('Event', () => {
 		expect(event.attendance[0].memberID).toEqual(mem.getReference());
 	});
 
-	it('should allow for modifying attendance records', () => {
-		event.modifyAttendanceRecord(
+	it('should allow for modifying attendance records', async done => {
+		await event.modifyAttendanceRecord(
 			{
 				arrivalTime: null,
 				comments: 'new record',
@@ -103,6 +103,8 @@ describe('Event', () => {
 		expect(event.attendance[0].memberID).toEqual(mem.getReference());
 		expect(event.attendance[0].comments).toEqual('new record');
 		expect(event.attendance[0].planToUseCAPTransportation).toEqual(true);
+
+		done();
 	});
 
 	it('should allow for removing from attendance by member', () => {

@@ -462,7 +462,7 @@ export default class Team implements FullTeamObject {
 
 	public async addTeamMember(member: MemberBase, job: string, account: Account, schema: Schema) {
 		const oldMember = this.members.filter(
-			f => !areMemberReferencesTheSame(member.getReference(), f.reference)
+			f => areMemberReferencesTheSame(member.getReference(), f.reference)
 		)[0];
 		if (oldMember !== undefined) {
 			this.modifyTeamMember(member.getReference(), `${oldMember.job}, ${job}`);

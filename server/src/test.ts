@@ -1,8 +1,8 @@
 import conf from './conf';
-import { getTestTools, ImportCAPWATCHFile, resolveReference } from './lib/internals';
+import { getTestTools, ImportCAPWATCHFile } from './lib/internals';
 
 (async () => {
-	const { schema, account, session } = await getTestTools(conf);
+	const { schema, session } = await getTestTools(conf);
 
 	const capImport2 = ImportCAPWATCHFile(
 		'/home/arioux/Downloads/2018-12-12_546319-890.zip',
