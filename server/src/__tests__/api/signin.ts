@@ -5,14 +5,14 @@ import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
 import getServer from '../../getServer';
 import Account from '../../lib/Account';
-import { ProspectiveMember } from '../../lib/Members';
+import { CAPProspectiveMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
 import { newMem, password, signinInformation } from '../consts';
 
 describe('/api', () => {
 	describe('/signin', () => {
 		let server: Server;
-		let pmember: ProspectiveMember;
+		let pmember: CAPProspectiveMember;
 		let account: Account;
 		let schema: Schema;
 
@@ -153,7 +153,7 @@ describe('/api', () => {
 		}, 8000);
 
 		it('should allow signing in as a prospective member', async done => {
-			pmember = await ProspectiveMember.Create(newMem, password, account, schema);
+			pmember = await CAPProspectiveMember.Create(newMem, account, schema);
 
 			request(server)
 				.post('/api/signin')
@@ -181,7 +181,7 @@ describe('/api', () => {
 		});
 
 		it('should allow signing in as a prospective member case insensitive', async done => {
-			pmember = await ProspectiveMember.Create(newMem, password, account, schema);
+			pmember = await CAPProspectiveMember.Create(newMem, account, schema);
 
 			request(server)
 				.post('/api/signin')

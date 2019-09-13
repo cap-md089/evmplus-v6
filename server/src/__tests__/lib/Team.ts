@@ -1,27 +1,22 @@
 import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
 import Account from '../../lib/Account';
-import { NHQMember } from '../../lib/Members';
+import { CAPNHQMember } from '../../lib/Members';
 import { collectResults } from '../../lib/MySQLUtil';
 import Team from '../../lib/Team';
 import { getTestTools2 } from '../../lib/Util';
-import { newTeam, signinInformation } from '../consts';
+import { newTeam } from '../consts';
 
 describe('Team', () => {
 	let schema: Schema;
 	let account: Account;
-	let member: NHQMember;
+	let member: CAPNHQMember;
 	let team: Team;
 
 	beforeAll(async done => {
 		[account, schema] = await getTestTools2(conftest);
 
-		member = await NHQMember.Create(
-			signinInformation.username,
-			signinInformation.password,
-			schema,
-			account
-		);
+		member = await CAPNHQMember.Get(542488, account, schema);
 
 		await schema
 			.getCollection('Teams')
@@ -34,9 +29,7 @@ describe('Team', () => {
 	it('should create a team', async done => {
 		team = await Team.Create(newTeam, account, schema);
 
-		const results = await collectResults(
-			schema.getCollection('Teams').find('true')
-		);
+		const results = await collectResults(schema.getCollection('Teams').find('true'));
 
 		expect(results.length).toBe(1);
 
@@ -90,9 +83,7 @@ describe('Team', () => {
 	it('should delete team information', async done => {
 		await team.delete();
 
-		const results = await collectResults(
-			schema.getCollection('Teams').find('true')
-		);
+		const results = await collectResults(schema.getCollection('Teams').find('true'));
 
 		expect(results.length).toBe(0);
 

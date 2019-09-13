@@ -1,11 +1,11 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { NHQ } from 'common-lib';
 import { CAPWATCHImportErrors } from 'common-lib/index';
 import { resolve } from 'path';
 import conftest from '../../conf.test';
 import Account from '../../lib/Account';
 import ImportCAPWATCHFile from '../../lib/ImportCAPWATCHFile';
-import { CAPWATCHMember } from '../../lib/Members';
+import { CAPNHQMember } from '../../lib/Members';
 import { collectResults, findAndBind } from '../../lib/MySQLUtil';
 import { getTestTools } from '../../lib/Util';
 
@@ -14,12 +14,14 @@ const zipFileLocation = resolve(__dirname, '../CAPWATCH.zip');
 describe('Import CAPWATCH File', () => {
 	let account: Account;
 	let schema: Schema;
+	let session: Session;
 
 	beforeAll(async done => {
 		const results = await getTestTools(conftest);
 
 		account = results.account;
 		schema = results.schema;
+		session = results.session;
 
 		done();
 	});
@@ -28,7 +30,7 @@ describe('Import CAPWATCH File', () => {
 		const importFiles = ['Member.txt'];
 		let resultCount = 0;
 
-		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, 916, importFiles)) {
+		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, importFiles)) {
 			resultCount++;
 		}
 
@@ -41,7 +43,7 @@ describe('Import CAPWATCH File', () => {
 		const errorStub = jest.spyOn(console, 'error');
 		let resultCount = 0;
 
-		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, 916, ['notafile.txt'])) {
+		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, ['notafile.txt'])) {
 			resultCount++;
 		}
 
@@ -53,11 +55,11 @@ describe('Import CAPWATCH File', () => {
 	});
 
 	it('should import Member.txt', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, ['Member.txt'])) {
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, ['Member.txt'])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
-		const member = await CAPWATCHMember.Get(542488, account, schema);
+		const member = await CAPNHQMember.Get(542488, account, schema);
 
 		expect(member.nameFirst).toBe('Andrew');
 
@@ -65,7 +67,7 @@ describe('Import CAPWATCH File', () => {
 	});
 
 	it('should import member contact information', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
 			'MbrContact.txt'
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
@@ -85,7 +87,7 @@ describe('Import CAPWATCH File', () => {
 	}, 8000);
 
 	it('should import cadet activity information', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
 			'CadetActivities.txt'
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
@@ -104,7 +106,7 @@ describe('Import CAPWATCH File', () => {
 	}, 15000);
 
 	it('should import duty positions', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
 			'DutyPosition.txt'
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
@@ -124,7 +126,7 @@ describe('Import CAPWATCH File', () => {
 	});
 
 	it('should import cadet duty positions', async done => {
-		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, 916, [
+		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
 			'CadetDutyPositions.txt'
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);

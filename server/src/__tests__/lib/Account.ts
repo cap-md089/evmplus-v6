@@ -4,9 +4,9 @@ import conftest from '../../conf.test';
 import getServer from '../../getServer';
 import Account from '../../lib/Account';
 import Event from '../../lib/Event';
-import { NHQMember } from '../../lib/Members';
+import { CAPNHQMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
-import { newEvent, rawAccount, signinInformation } from '../consts';
+import { newEvent, rawAccount } from '../consts';
 
 describe('Account', () => {
 	let schema: Schema;
@@ -58,9 +58,7 @@ describe('Account', () => {
 		const previousEnv = process.env.NODE_ENV;
 		process.env.NODE_ENV = 'production';
 
-		expect(account.buildURI('api', 'echo')).toEqual(
-			'https://mdx89.capunit.com/api/echo'
-		);
+		expect(account.buildURI('api', 'echo')).toEqual('https://mdx89.capunit.com/api/echo');
 
 		process.env.NODE_ENV = previousEnv;
 
@@ -68,9 +66,7 @@ describe('Account', () => {
 	});
 
 	it(`should fail to get accounts that don't exist`, async done => {
-		await expect(Account.Get('not an account', schema)).rejects.toEqual(
-			expect.any(Error)
-		);
+		await expect(Account.Get('not an account', schema)).rejects.toEqual(expect.any(Error));
 
 		done();
 	});
@@ -102,12 +98,7 @@ describe('Account', () => {
 	});
 
 	it('should get events only in the account', async done => {
-		const mem = await NHQMember.Create(
-			signinInformation.username,
-			signinInformation.password,
-			schema,
-			account
-		);
+		const mem = await CAPNHQMember.Get(542488, account, schema);
 
 		const testAccount = await Account.Create(rawAccount, schema);
 

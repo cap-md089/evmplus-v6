@@ -2,9 +2,9 @@ import { Schema } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
 import Account from '../../lib/Account';
 import Event from '../../lib/Event';
-import MemberBase, { NHQMember } from '../../lib/Members';
+import MemberBase, { CAPNHQMember } from '../../lib/Members';
 import { getTestTools } from '../../lib/Util';
-import { newEvent, signinInformation } from '../consts';
+import { newEvent } from '../consts';
 
 describe('Event', () => {
 	let event: Event;
@@ -18,12 +18,7 @@ describe('Event', () => {
 		account = results.account;
 		schema = results.schema;
 
-		mem = await NHQMember.Create(
-			signinInformation.username,
-			signinInformation.password,
-			schema,
-			account
-		);
+		mem = await CAPNHQMember.Get(542488, account, schema);
 
 		done();
 	});
@@ -72,9 +67,7 @@ describe('Event', () => {
 		const getEvent = await Event.Get(event.id, account, schema);
 
 		expect(getEvent.pointsOfContact.length).toEqual(1);
-		expect(getEvent.pointsOfContact[0].name).toEqual(
-			'C/2dLt Andrew D Rioux'
-		);
+		expect(getEvent.pointsOfContact[0].name).toEqual('C/2dLt Andrew D Rioux');
 
 		done();
 	});
@@ -135,30 +128,29 @@ describe('Event', () => {
 
 	it('should allow for linking to an event', async done => {
 		let targetAccount: Account;
-		
+
 		try {
 			targetAccount = await Account.Get('linktarget', schema);
-		} catch(e) {
-			targetAccount = await Account.Create({
-				adminIDs: [],
-				echelon: false,
-				expires: 0,
-				id: 'linktarget',
-				mainOrg: 916,
-				orgIDs: [916],
-				paid: true,
-				paidEventLimit: 5,
-				unpaidEventLimit: 500
-			}, schema);
+		} catch (e) {
+			targetAccount = await Account.Create(
+				{
+					adminIDs: [],
+					echelon: false,
+					expires: 0,
+					id: 'linktarget',
+					mainOrg: 916,
+					orgIDs: [916],
+					paid: true,
+					paidEventLimit: 5,
+					unpaidEventLimit: 500
+				},
+				schema
+			);
 		}
 
 		const linkedEventCreated = await event.linkTo(targetAccount, mem);
 
-		const getLinkedEvent = await Event.Get(
-			linkedEventCreated.id,
-			targetAccount,
-			schema
-		);
+		const getLinkedEvent = await Event.Get(linkedEventCreated.id, targetAccount, schema);
 
 		expect(getLinkedEvent.author).toEqual(linkedEventCreated.author);
 		expect(getLinkedEvent.sourceEvent.id).toEqual(event.id);
