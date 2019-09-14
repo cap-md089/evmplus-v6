@@ -1,6 +1,7 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
 import { DateTime } from 'luxon';
+import { Configuration } from '../conf';
 
 export interface ParamType {
 	[key: string]: string
@@ -11,12 +12,14 @@ export interface MySQLRequest<P extends ParamType = {}> extends express.Request 
 	mysqlxSession: mysql.Session;
 	_originalUrl: string;
 	params: P;
+	configuration: typeof Configuration;
 }
 
-export default (pool: mysql.Schema, session: mysql.Session) => {
+export default (pool: mysql.Schema, session: mysql.Session, configuration: typeof Configuration) => {
 	return (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
 		req.mysqlx = pool;
 		req.mysqlxSession = session;
+		req.configuration = configuration;
 		next();
 	};
 };
