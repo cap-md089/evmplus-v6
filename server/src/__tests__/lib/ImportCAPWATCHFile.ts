@@ -8,7 +8,7 @@ import {
 	CAPNHQMember,
 	collectResults,
 	findAndBind,
-	getTestTools,
+	getTestTools2,
 	ImportCAPWATCHFile
 } from '../../lib/internals';
 
@@ -20,11 +20,13 @@ describe('Import CAPWATCH File', () => {
 	let session: Session;
 
 	beforeAll(async done => {
-		const results = await getTestTools(conftest);
+		[account, schema, session] = await getTestTools2(conftest);
 
-		account = results.account;
-		schema = results.schema;
-		session = results.session;
+		done();
+	});
+
+	afterAll(async done => {
+		await session.close();
 
 		done();
 	});

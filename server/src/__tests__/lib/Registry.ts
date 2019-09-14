@@ -1,13 +1,14 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
 import { Account, collectResults, getTestTools2, Registry } from '../../lib/internals';
 
 describe('Registry', () => {
 	let account: Account;
 	let schema: Schema;
+	let session: Session;
 
 	beforeAll(async done => {
-		[account, schema] = await getTestTools2(conftest);
+		[account, schema, session] = await getTestTools2(conftest);
 
 		await schema
 			.getCollection('Registry')
@@ -18,10 +19,13 @@ describe('Registry', () => {
 	});
 
 	afterAll(async done => {
-		await schema
-			.getCollection('Registry')
-			.remove('true')
-			.execute();
+		await Promise.all([
+			schema
+				.getCollection('Registry')
+				.remove('true')
+				.execute(),
+			session.close()
+		]);
 
 		done();
 	});

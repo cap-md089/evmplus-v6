@@ -1,18 +1,22 @@
-import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
-import getServer from '../../getServer';
+import getServer, { ServerConfiguration } from '../../getServer';
 
 describe('/api', () => {
 	describe('/echo', () => {
-		let server: Server;
+		let server: ServerConfiguration;
 
-		beforeEach(async () => {
-			server = (await getServer(conftest, 3005)).server;
+		beforeEach(async done => {
+			server = await getServer(conftest, 3005);
+
+			done();
 		});
 
-		afterEach(() => {
-			server.close();
+		afterEach(async done => {
+			server.server.close();
+			await server.mysqlConn.close();
+
+			done();
 		});
 
 		// Test is important because certain tests for the client depend
@@ -22,7 +26,7 @@ describe('/api', () => {
 				hello: 'world'
 			};
 
-			request(server)
+			request(server.server)
 				.post('/api/echo')
 				.set('Accept', 'application/json')
 				.set('Content-type', 'application/json')

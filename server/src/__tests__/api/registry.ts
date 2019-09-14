@@ -1,21 +1,25 @@
-import { Server } from 'http';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
-import getServer from '../../getServer';
+import getServer, { ServerConfiguration } from '../../getServer';
 import { getTestTools } from '../../lib/internals';
 
 describe('/api', () => {
 	describe('/registry', () => {
-		let server: Server;
+		let server: ServerConfiguration;
 
-		beforeEach(async () => {
-			server = (await getServer(conftest, 3009)).server;
+		beforeEach(async done => {
+			server = await getServer(conftest, 3009);
 
 			await getTestTools(conftest);
+
+			done();
 		});
 
-		afterEach(() => {
-			server.close();
+		afterEach(async done => {
+			server.server.close();
+			await server.mysqlConn.close();
+
+			done();
 		});
 
 		it('should get the registry for the developer account', done => {
