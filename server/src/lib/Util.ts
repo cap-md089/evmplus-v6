@@ -1,5 +1,5 @@
 import * as mysql from '@mysql/xdevapi';
-import { HTTPError, RawAccountObject } from 'common-lib';
+import { HTTPError, RawAccountObject, MultCheckboxReturn } from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
 import { Account } from './internals';
@@ -224,4 +224,18 @@ export const getTargetYear = (timestamp: number): number => {
 	const date = new Date(timestamp);
 
 	return date.getFullYear();
+};
+
+export const presentMultCheckboxReturn = (
+	value: MultCheckboxReturn,
+	labels: string[],
+	other: boolean,
+	separator = ','
+) => {
+	const arrayValue = labels.filter((label, i) => value[0][i]);
+	if (other && value[0][labels.length]) {
+		arrayValue.push(value[1]);
+	}
+
+	return arrayValue.join(separator);
 };
