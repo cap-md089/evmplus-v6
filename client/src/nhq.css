@@ -1421,9 +1421,10 @@ html body #bodyContainer {
   border: 0;
   background: none;
   text-align: left;
+  text-decoration: underline;
 }
 .desktop button.linkButton:hover {
-  text-decoration: underline;
+  color: #f6bf22;
 }
 .desktop .socialMedia {
   content: "";
