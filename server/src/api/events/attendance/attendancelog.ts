@@ -3,7 +3,20 @@ import * as PDFMake from 'pdfmake';
 import { join } from 'path';
 import { AccountRequest, asyncErrorHandler, Event, CAPNHQMember } from '../../../lib/internals';
 import accountcheck from '../../accountcheck';
-import { FileUserAccessControlPermissions } from 'common-lib';
+import { DateTime } from 'luxon';
+
+
+export const Uniforms = [
+	'Dress Blue A',
+	'Dress Blue B',
+	'Battle Dress Uniform or Airman Battle Uniform (BDU/ABU)',
+	'PT Gear',
+	'Polo Shirts (Senior Members)',
+	'Blue Utilities (Senior Members)',
+	'Civilian Attire',
+	'Flight Suit',
+	'Not Applicable'
+];
 
 export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res: Response) => {
 	const fonts = {
@@ -55,12 +68,12 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			{ text: 'Flight', bold: true, fontSize: 11 }
 		],
 		...memberInformation.map((elem, i) => [
-			{ text: elem[0], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' },
-			{ text: elem[1], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' },
-			{ text: elem[2], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' },
-			{ text: elem[3], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' },
-			{ text: elem[4], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' },
-			{ text: elem[5], bold: false, fontSize: 11, fillColor: i % 2 == 0 ? 'lightgrey' : 'white' }
+			{ text: elem[0], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' },
+			{ text: elem[1], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' },
+			{ text: elem[2], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' },
+			{ text: elem[3], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' },
+			{ text: elem[4], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' },
+			{ text: elem[5], bold: false, fontSize: 11, fillColor: i % 2 === 0 ? 'lightgrey' : 'white' }
 		])
 	];
 
@@ -91,9 +104,9 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 										body: [
 											[
 												{ text: 'Date: ', fontSize: 12, bold: true, alignment: 'left' },
-												{ text: 'Wed Sep 11 2019', fontSize: 12, bold: false, alignment: 'left' },
+												{ text: DateTime.fromMillis(event.meetDateTime).toLocaleString(), fontSize: 12, bold: false, alignment: 'left' },
 												{ text: 'Location: ', fontSize: 12, bold: true, alignment: 'left' },
-												{ text: 'Civil Air Patrol St. Mary\'s Composite Squadron', fontSize: 12, bold: false, alignment: 'left' }
+												{ text: event.location, fontSize: 12, bold: false, alignment: 'left' }
 											] //table element array
 										] //body
 									} //table
@@ -106,7 +119,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 										body: [
 											[
 												{ text: 'Uniform: ', fontSize: 12, bold: true, alignment: 'left' },
-												{ text: 'Battle Dress Uniform', fontSize: 12, bold: false, alignment: 'left' }
+												{ text: event.uniform, fontSize: 12, bold: false, alignment: 'left' }
 											], //table element array row 1
 											[
 												{ text: 'Activity: ', fontSize: 12, bold: true, alignment: 'left' },
@@ -132,49 +145,6 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 					widths: [130, 52, 45, 70, '*', 70],
 					body: formattedMemberInformation
 
-					/*					body: [ //table body start
-											[ //header row start
-												{text: 'Member', bold: true},
-												{text: 'Grade', bold: true},
-												{text: 'CAPID', bold: true},
-												{text: 'Expiration', bold: true},
-												{text: 'Signature', bold: true},
-												{text: 'Flight', bold: true}
-											], //header row end
-											[ //content odd row start	
-												{text: 'Baldauff, Isaac W', bold: false},
-												{text: 'C/SSgt', bold: false},
-												{text: '456123', bold: false},
-												{text: '2020-01-31', bold: false},
-												{text: '', bold: false},
-												{text: 'XRay', bold: false}
-											], //content odd row end
-											[ //content even row start	
-												{text: 'Baldauff, Samuel P', bold: false, fillColor: 'lightgrey'},
-												{text: 'C/A1C', bold: false, fillColor: 'lightgrey'},
-												{text: '456123', bold: false, fillColor: 'lightgrey'},
-												{text: '2020-01-31', bold: false, fillColor: 'lightgrey'},
-												{text: '', bold: false, fillColor: 'lightgrey'},
-												{text: 'XRay', bold: false, fillColor: 'lightgrey'}
-											], //content even row end
-											[ //content odd row start	
-												{text: 'Barrett, Amelia A', bold: false},
-												{text: 'C/Amn', bold: false},
-												{text: '456123', bold: false},
-												{text: '2020-01-31', bold: false},
-												{text: '', bold: false},
-												{text: 'XRay', bold: false}
-											], //content odd row end
-											[ //content even row start	
-												{text: 'Benthall, Ashlee', bold: false, fillColor: 'lightgrey'},
-												{text: 'C/AB', bold: false, fillColor: 'lightgrey'},
-												{text: '456123', bold: false, fillColor: 'lightgrey'},
-												{text: '2020-01-31', bold: false, fillColor: 'lightgrey'},
-												{text: '', bold: false, fillColor: 'lightgrey'},
-												{text: 'XRay', bold: false, fillColor: 'lightgrey'}
-											] //content even row end
-										] //table body end
-					*/
 				} //table def end
 			}, //content table end
 
