@@ -1,50 +1,60 @@
 import * as React from 'react';
 import { Omit, RegistryValues } from 'common-lib';
 import Page, { PageProps } from '../../Page';
-import SimpleForm, { Title, FormBlock, Label, NumberInput, TextInput, ListEditor } from '../../../components/forms/SimpleForm';
+import SimpleForm, { Title, FormBlock, Label, NumberInput, TextInput, ListEditor, TextBox } from '../../../components/forms/SimpleForm';
+import Button from '../../../components/Button';
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 
-export default class RegEdit extends Page<PageProps, RegEditValues> {
-	public state: RegEditValues = {
-		Blog: {
-			BlogPostsPerPage: this.props.registry.Blog.BlogPostsPerPage
+interface RegEditState {
+	values: RegEditValues;
+	showSave: boolean;
+}
+
+const saveMessage = {
+	marginLeft: 10
+}
+
+export default class RegEdit extends Page<PageProps, RegEditState> {
+	public state: RegEditState = {
+		values: {
+			Contact: {
+				FaceBook: this.props.registry.Contact.FaceBook || '',
+				Flickr: this.props.registry.Contact.Flickr || '',
+				Instagram: this.props.registry.Contact.Instagram || '',
+				LinkedIn: this.props.registry.Contact.LinkedIn || '',
+				MailingAddress: this.props.registry.Contact.MailingAddress
+					? {
+							...this.props.registry.Contact.MailingAddress
+					}
+					: {
+							FirstLine: '',
+							Name: '',
+							SecondLine: ''
+					},
+				MeetingAddress: this.props.registry.Contact.MeetingAddress
+					? {
+							...this.props.registry.Contact.MeetingAddress
+					}
+					: {
+							FirstLine: '',
+							Name: '',
+							SecondLine: ''
+					},
+				Twitter: this.props.registry.Contact.Twitter || '',
+				YouTube: this.props.registry.Contact.YouTube || ''
+			},
+			RankAndFile: {
+				Flights: this.props.registry.RankAndFile.Flights.slice()
+			},
+			Website: {
+				Name: this.props.registry.Website.Name,
+				PhotoLibraryImagesPerPage: this.props.registry.Website.PhotoLibraryImagesPerPage,
+				Separator: this.props.registry.Website.Separator,
+				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount
+			}
 		},
-		Contact: {
-			FaceBook: this.props.registry.Contact.FaceBook || '',
-			Flickr: this.props.registry.Contact.Flickr || '',
-			Instagram: this.props.registry.Contact.Instagram || '',
-			LinkedIn: this.props.registry.Contact.LinkedIn || '',
-			MailingAddress: this.props.registry.Contact.MailingAddress
-				? {
-						...this.props.registry.Contact.MailingAddress
-				  }
-				: {
-						FirstLine: '',
-						Name: '',
-						SecondLine: ''
-				  },
-			MeetingAddress: this.props.registry.Contact.MeetingAddress
-				? {
-						...this.props.registry.Contact.MeetingAddress
-				  }
-				: {
-						FirstLine: '',
-						Name: '',
-						SecondLine: ''
-				  },
-			Twitter: this.props.registry.Contact.Twitter || '',
-			YouTube: this.props.registry.Contact.YouTube || ''
-		},
-		RankAndFile: {
-			Flights: this.props.registry.RankAndFile.Flights.slice()
-		},
-		Website: {
-			Name: this.props.registry.Website.Name,
-			PhotoLibraryImagesPerPage: this.props.registry.Website.PhotoLibraryImagesPerPage,
-			Separator: this.props.registry.Website.Separator,
-			ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount
-		}
+		showSave: false
 	};
 
 	public constructor(props: PageProps) {
@@ -52,6 +62,7 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 
 		this.onFormChange = this.onFormChange.bind(this);
 		this.onFormSubmit = this.onFormSubmit.bind(this);
+		this.onSaveClick = this.onSaveClick.bind(this);
 	}
 
 	public componentDidMount() {
@@ -106,8 +117,8 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		return (
 			<SimpleForm<RegEditValues>
 				onChange={this.onFormChange}
-				onSubmit={this.onFormSubmit}
-				values={this.state}
+				values={this.state.values}
+				showSubmitButton={false}
 			>
 				<Title>Blog</Title>
 
@@ -187,12 +198,19 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 					<Label>How many photos to show per page on the photo library</Label>
 					<NumberInput name="PhotoLibraryImagesPerPage" />
 				</FormBlock>
+
+				<TextBox>
+					<Button buttonType="primaryButton" onClick={this.onSaveClick}>
+						Save
+					</Button>
+					{this.state.showSave ? <span style={saveMessage}>Saved!</span> : null}
+				</TextBox>
 			</SimpleForm>
 		);
 	}
 
 	private onFormChange(values: RegEditValues) {
-		this.setState(values);
+		this.setState({ values, showSave: false });
 	}
 
 	private async onFormSubmit(values: RegEditValues) {
@@ -212,7 +230,6 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		) {
 			values.Contact.MeetingAddress = null;
 		}
-		this.props.registry.Blog = values.Blog;
 		this.props.registry.Contact = values.Contact;
 		this.props.registry.RankAndFile = values.RankAndFile;
 		this.props.registry.Website = values.Website;
@@ -220,5 +237,13 @@ export default class RegEdit extends Page<PageProps, RegEditValues> {
 		await this.props.registry.save(this.props.member!);
 
 		this.props.updateApp();
+	}
+
+	private async onSaveClick() {
+		await this.onFormSubmit(this.state.values);
+
+		this.setState({
+			showSave: true
+		});
 	}
 }

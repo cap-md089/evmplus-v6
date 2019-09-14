@@ -67,12 +67,13 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 						return;
 					} else {
 						const childName: keyof T = child.props.name as keyof T;
+
 						const value =
 							typeof child.props.value !== 'undefined'
 								? child.props.value
 								: typeof this.props.value === 'undefined'
 								? ''
-								: typeof (this.props.value as T)[childName] === 'undefined'
+								: (this.props.value === null || typeof (this.props.value as T)[childName] === 'undefined')
 								? ''
 								: (this.props.value as T)[childName];
 						if (typeof this.fields[childName] === 'undefined') {

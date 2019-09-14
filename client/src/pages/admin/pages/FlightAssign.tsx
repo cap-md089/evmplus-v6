@@ -118,6 +118,10 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			}
 		}
 
+		unusedMembers.forEach(mem => {
+			mem.flight = null;
+		});
+
 		flights.push(['Unassigned', unusedMembers.filter(mem => !mem.seniorMember)]);
 
 		let first = 0;

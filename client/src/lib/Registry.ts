@@ -1,5 +1,4 @@
 import {
-	BlogInformation,
 	RankAndFileInformation,
 	RegistryValues,
 	WebsiteContact,
@@ -43,13 +42,6 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 	public Website: WebsiteInformation;
 
 	/**
-	 * Holds blog information
-	 *
-	 * Also configures photo library
-	 */
-	public Blog: BlogInformation;
-
-	/**
 	 * Contains information such as the flights in the account
 	 */
 	public RankAndFile: RankAndFileInformation;
@@ -57,7 +49,6 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 	public constructor(values: RegistryValues, account: Account) {
 		super(account.id);
 
-		this.Blog = values.Blog;
 		this.Contact = values.Contact;
 		this.RankAndFile = values.RankAndFile;
 		this.Website = values.Website;
@@ -73,7 +64,6 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			Contact: this.Contact,
 			id: this.id,
 			Website: this.Website,
-			Blog: this.Blog,
 			RankAndFile: this.RankAndFile
 		};
 	}
@@ -93,7 +83,6 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 					token,
 					Contact: this.Contact,
 					Website: this.Website,
-					Blog: this.Blog,
 					RankAndFile: this.RankAndFile
 				})
 			},

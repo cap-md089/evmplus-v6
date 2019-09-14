@@ -1,6 +1,5 @@
 import {
 	AbsenteeInformation,
-	CAPMemberObject,
 	MemberReference,
 	NHQMemberObject,
 	ShortDutyPosition
@@ -53,6 +52,10 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	 * Member squardon
 	 */
 	public squadron: string;
+	/**
+	 * When the membership for this member lapses
+	 */
+	public expirationDate: number;
 
 	/**
 	 * Descriminator
@@ -67,7 +70,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	 * 		not the account the member is a part of!
 	 * @param sessionID The session ID for this member
 	 */
-	public constructor(data: CAPMemberObject, requestingAccount: Account, sessionID: string) {
+	public constructor(data: NHQMemberObject, requestingAccount: Account, sessionID: string) {
 		super(data, requestingAccount, sessionID);
 
 		if (typeof data.id === 'string') {
@@ -83,6 +86,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		this.squadron = data.squadron;
 		this.memberRank = data.memberRank;
 		this.memberRankName = `${data.memberRank} ${this.getName()}`;
+		this.expirationDate = data.expirationDate;
 	}
 
 	/**
@@ -115,7 +119,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			teamIDs: this.teamIDs,
 			type: 'CAPNHQMember',
 			usrID: this.usrID,
-			absenteeInformation: this.absenteeInformation
+			absenteeInformation: this.absenteeInformation,
+			expirationDate: this.expirationDate
 		};
 	}
 
@@ -202,9 +207,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			{
 				method: 'POST',
 				body: JSON.stringify({
-					dutyPositions: this.dutyPositions.filter(
-						d => d.type === 'CAPUnit'
-					),
+					dutyPositions: this.dutyPositions.filter(d => d.type === 'CAPUnit'),
 					token
 				})
 			},
