@@ -9,6 +9,7 @@ import dutyPosition from './capwatch-modules/dutyposition';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
+import organization from './capwatch-modules/organization';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
@@ -78,11 +79,11 @@ const modules: Array<{
 	{
 		module: commanders,
 		file: 'Commanders.txt'
-	},
+	},*/
 	{
 		module: organization,
 		file: 'Organization.txt'
-	},
+	},/*
 	{
 		module: orgAddresses,
 		file: 'OrganizationAddresses.txt'

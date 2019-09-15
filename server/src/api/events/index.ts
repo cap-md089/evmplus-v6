@@ -4,7 +4,9 @@ import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
 import addattendancebulk, { attendanceBulkValidator } from './attendance/addattendancebulk';
-import attendancelog from './attendance/attendancelog';
+import attendancelogcadet from './attendance/attendancelogcadet';
+import attendancelogsenior from './attendance/attendancelogsenior';
+import attendanceroster from './attendance/attendanceroster';
 import deleteattendance from './attendance/deleteattendance';
 import getattendance from './attendance/getattendance';
 import modifyattendance from './attendance/modifyattendance';
@@ -27,7 +29,9 @@ const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/:id/attendance/log', conditionalMemberMiddleware, attendancelog);
+router.get('/:id/attendance/log/cadet', conditionalMemberMiddleware, attendancelogcadet);
+router.get('/:id/attendance/log/senior', conditionalMemberMiddleware, attendancelogsenior);
+router.get('/:id/attendance/roster', conditionalMemberMiddleware, attendanceroster);
 router.get('/:id/attendance', memberMiddleware, getattendance);
 router.post(
 	'/:id/attendance/bulk',
