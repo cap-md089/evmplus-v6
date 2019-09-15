@@ -180,10 +180,46 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		...memberInformation
 	];
 
+	const nowDate = DateTime.utc();
 	const docDefinition = {
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
+		footer: function(currentPage, pageCount) {
+			const footerContent = [
+				{ 
+					layout: 'noBorders',
+					table: {
+						widths: [ 612-72 ],
+						headerRows: 0,
+						body: [
+							[	{
+								layout: 'noBorders',
+								table: {
+									widths: ['*', '*'],
+									headerRows: 0,
+									body: [
+										[
+											{ text: nowDate.toLocaleString({
+												year: 'numeric',
+												month: '2-digit',
+												day: '2-digit'
+												}), alignment: 'left', fontSize: 10
+											},
+											{ text: currentPage.toString() + ' of ' + pageCount, 
+												alignment: 'right', fontSize: 10
+											}
+										]
+									]
+								}}
+							]
+						]
+					}, margin: [36, 2, 36, 2]
+				}
+			];
+			return footerContent;
+		},
+
 		content: [
 			// content array start
 			{

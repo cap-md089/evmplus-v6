@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { DateTime, Duration } from 'luxon';
 import { join } from 'path';
+import { formatPhone } from '../../../lib/Util';
 import * as PDFMake from 'pdfmake';
 import {
 	AccountRequest,
@@ -126,8 +127,8 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 					req.account.orgIDs.includes(member.orgid) ? false : true,
 				fontSize
 			},
-			{ text: getBestPhone(member).source + ' ' + getBestPhone(member).contact, fontSize },
-			{ text: getEmerPhone(member).source + ' ' + getEmerPhone(member).contact, fontSize },
+			{ text: getBestPhone(member).source + ' ' + formatPhone(getBestPhone(member).contact), fontSize },
+			{ text: getEmerPhone(member).source + ' ' + formatPhone(getEmerPhone(member).contact), fontSize },
 			{ text: getBestEmail(member).source + ' ' + getBestEmail(member).contact, fontSize }
 		]);
 	}
@@ -187,10 +188,51 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		...cadetMemberInformation
 	];
 	
+	let codeString = 'Contact information is preceded by two letters.  The first is ';
+	codeString += 'the contact type: P = Parent, C = Cell Phone, E = Email, H = Home Phone, ';
+	codeString += 'or W = Work Phone.  The second letter is the priority: P = Primary, S = Secondary, ';
+	codeString += 'or E = Emergency';
+	const nowDate = DateTime.utc();
 	const docDefinition = {
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
+		footer: function(currentPage, pageCount) {
+			const footerContent = [
+				{ 
+					layout: 'noBorders',
+					table: {
+						widths: [ 612-72 ],
+						headerRows: 0,
+						body: [
+							[ {text: codeString, fontSize: 9 } ],
+							[	{
+								layout: 'noBorders',
+								table: {
+									widths: ['*', '*'],
+									headerRows: 0,
+									body: [
+										[
+											{ text: nowDate.toLocaleString({
+												year: 'numeric',
+												month: '2-digit',
+												day: '2-digit'
+												}), alignment: 'left', fontSize: 10
+											},
+											{ text: currentPage.toString() + ' of ' + pageCount, 
+												alignment: 'right', fontSize: 10
+											}
+										]
+									]
+								}}
+							]
+						]
+					}, margin: [36, 2, 36, 2]
+				}
+			];
+			return footerContent;
+		},
+		
 		content: [
 			// content array start
 			{
@@ -346,7 +388,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 				table: {
 					// table def start
 					headerRows: 1,
-					widths: [88, 29, 32, 53, 65, 65, '*'],
+					widths: [84, 31, 31, 54, 70, 70, '*'],
 					body: formattedCadetMemberInformation
 				} // table def end
 			}] : []), // content table end
