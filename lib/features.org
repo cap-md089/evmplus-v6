@@ -14,9 +14,9 @@
     - [ ] Unit tests
 *** Members [4/6]
     - [X] Listing
-    - [ ] Reports/form generation [0/2]
+    - [-] Reports/form generation [1/2]
       - [ ] QCUA
-      - [ ] Attendance
+      - [X] Attendance
     - [X] PAM [4/4]
       - [X] Account
       - [X] Authentication
@@ -35,10 +35,10 @@
         - [ ] Auth
         - [X] Password
         - [ ] Session
-*** Account [1/3]
+*** Account [2/3]
     - [X] Middleware
     - [ ] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
-    - [ ] Unit tests
+    - [X] Unit tests
 *** Files/Drive [2/3]
     - [X] BREAD
     - [X] Folders
@@ -143,12 +143,12 @@
     - [X] Pluggables [2/2]
       - [X] Link list
       - [X] Absentee
-    - [-] Pages [4/6]
+    - [-] Pages [5/6]
       - [X] Registry edit
       - [X] Flight/squadron contact
       - [X] Flight assignment
       - [X] Permission assignment
-      - [ ] Temporary duty positions
+      - [X] Temporary duty positions
       - [ ] Attendance view
         - [ ] Personal
         - [ ] Flight - for cadet
@@ -180,7 +180,7 @@
     - [ ] Unit tests
 ** Templates
 *** Forms [0/2]
-    - [-] Inputs
+    - [-] Inputs [15/17]
       - [X] Checkbox
       - [-] Datetime input [2/3]
         - [X] Basic operation
@@ -193,7 +193,7 @@
       - [X] MultCheckbox
       - [X] MultiRange
       - [X] Number input
-      - [ ] POC Input
+      - [X] POC Input
       - [X] Radio button
       - [X] Selector
       - [X] Simple Radio button
@@ -202,6 +202,7 @@
         - [X] Display
       - [X] Text input
       - [X] Team selector
+      - [ ] Permissions editor
     - [ ] Unit tests
 *** DONE Dialogue
 *** DONE FileDialogue

@@ -1150,10 +1150,14 @@ export interface PointOfContact {
 	type: PointOfContactType;
 	/**
 	 * All points of contact have an email
+	 * 
+	 * Internal points of contact provide this as the information may be old and updated in this record
 	 */
 	email: string;
 	/**
 	 * All of them should have a phone number
+	 * 
+	 * Reasons for having this are similar to reasons for having email
 	 */
 	phone: string;
 
@@ -2123,16 +2127,6 @@ export interface WebsiteContact {
 }
 
 /**
- * Used by the registry to configure the blog
- */
-export interface BlogInformation {
-	/**
-	 * How many blog posts should show up per page
-	 */
-	BlogPostsPerPage: number;
-}
-
-/**
  * Used to configure the different flights
  */
 export interface RankAndFileInformation {
@@ -2154,10 +2148,6 @@ export interface RegistryValues extends NoSQLDocument, AccountIdentifiable {
 	 * Website naming details
 	 */
 	Website: WebsiteInformation;
-	/**
-	 * Controls blog presentation, which includes the photo library
-	 */
-	Blog: BlogInformation;
 	/**
 	 * Contains information about the different flights
 	 */
