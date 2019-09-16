@@ -348,6 +348,12 @@ export default class EventForm extends React.Component<
 
 		this.onEventChange = this.onEventChange.bind(this);
 		this.onEventSubmit = this.onEventSubmit.bind(this);
+
+		this.endDateTimeInputChange = this.endDateTimeInputChange.bind(this);
+		this.eventLocationInputChange = this.eventLocationInputChange.bind(this);
+		this.startDateTimeInputChange = this.startDateTimeInputChange.bind(this);
+		this.pickupDateTimeInputChange = this.pickupDateTimeInputChange.bind(this);
+		this.pickupLocationInputChange = this.pickupLocationInputChange.bind(this);
 	}
 
 	public render() {
