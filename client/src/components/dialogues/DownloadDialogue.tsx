@@ -17,6 +17,7 @@ interface DownloadProps<T extends Identifiable> {
 	filterValues?: any[];
 	onFilterValuesChange?: (filterValues: any[]) => void;
 	displayValue: (value: T) => React.ReactChild;
+	valueFilter?: (value: T) => boolean;
 }
 
 interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
@@ -26,8 +27,7 @@ interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
 	selectedValue?: T | null;
 }
 
-interface DownloadPropsMultiple<T extends Identifiable>
-	extends DownloadProps<T> {
+interface DownloadPropsMultiple<T extends Identifiable> extends DownloadProps<T> {
 	multiple: true;
 	onValuesClick: (values: T[]) => void;
 	onValuesSelect: (values: T[]) => void;
@@ -43,9 +43,10 @@ interface DownloadDialogueState<T> {
 	selectedValues: T[];
 }
 
-export default class DownloadDialogue<
-	T extends Identifiable
-> extends React.Component<DownloadDialogueProps<T>, DownloadDialogueState<T>> {
+export default class DownloadDialogue<T extends Identifiable> extends React.Component<
+	DownloadDialogueProps<T>,
+	DownloadDialogueState<T>
+> {
 	public state: DownloadDialogueState<T> = {
 		values: null,
 		selectedValues: []
@@ -97,9 +98,7 @@ export default class DownloadDialogue<
 				<Selector
 					{...selectorProps}
 					multiple={true}
-					value={
-						this.props.selectedValues || this.state.selectedValues
-					}
+					value={this.props.selectedValues || this.state.selectedValues}
 					onChange={this.onMultipleChange}
 				/>
 			);
@@ -108,9 +107,7 @@ export default class DownloadDialogue<
 				<Selector
 					{...selectorProps}
 					multiple={false}
-					value={
-						this.props.selectedValue || this.state.selectedValues[0]
-					}
+					value={this.props.selectedValue || this.state.selectedValues[0]}
 					onChange={this.onSingleChange}
 				/>
 			);
@@ -141,9 +138,7 @@ export default class DownloadDialogue<
 				}
 			});
 		} else {
-			ret =
-				!!this.props.selectedValue &&
-				this.props.selectedValue.id === value.id;
+			ret = !!this.props.selectedValue && this.props.selectedValue.id === value.id;
 		}
 
 		return ret;
@@ -151,13 +146,9 @@ export default class DownloadDialogue<
 
 	private onOk() {
 		if (this.props.multiple) {
-			this.props.onValuesSelect(
-				this.state.values!.filter(val => this.hasValue(val))
-			);
+			this.props.onValuesSelect(this.state.values!.filter(val => this.hasValue(val)));
 		} else {
-			this.props.onValueSelect(
-				this.props.selectedValue ? this.props.selectedValue : null
-			);
+			this.props.onValueSelect(this.props.selectedValue ? this.props.selectedValue : null);
 		}
 	}
 

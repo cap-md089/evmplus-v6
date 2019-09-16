@@ -173,7 +173,7 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = validator(e.value, this.fields);
+			error = !validator(e.value, this.fields);
 		}
 		this.fieldsError[e.name as keyof T] = error;
 
@@ -211,7 +211,7 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = validator(e.value, this.fields);
+			error = !validator(e.value, this.fields);
 		}
 		this.fieldsError[e.name as keyof T] = error;
 

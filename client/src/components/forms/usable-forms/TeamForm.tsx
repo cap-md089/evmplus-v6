@@ -27,10 +27,7 @@ interface TeamFormProps {
 }
 
 const teamValidator: FormValidator<NewTeamObject> = {
-	name: name => name === '',
-	visibility: visibility =>
-		visibility !== TeamPublicity.PRIVATE &&
-		visibility !== TeamPublicity.PUBLIC
+	name: name => name !== ''
 };
 
 export default class TeamForm extends React.Component<TeamFormProps> {

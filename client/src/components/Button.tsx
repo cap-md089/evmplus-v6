@@ -48,6 +48,8 @@ export default class Button<C> extends React.Component<
 	}
 
 	public handleClick(e: React.MouseEvent<HTMLButtonElement>): void {
+		e.preventDefault();
+
 		if (this.props.onClick) {
 			if (this.props.useData) {
 				this.props.onClick(this.props.data);
@@ -65,6 +67,7 @@ export default class Button<C> extends React.Component<
 					cursor: 'pointer'
 				}}
 				className={
+					(this.props.buttonType === 'none' ? 'linkButton ' : '') +
 					(typeof this.props.buttonType === 'string'
 						? ` ${this.props.buttonType}`
 						: 'primaryButton') +

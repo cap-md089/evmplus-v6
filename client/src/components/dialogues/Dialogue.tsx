@@ -108,8 +108,6 @@ export default class Dialogue extends React.Component<
 				});
 			}
 		}
-
-		return true;
 	}
 
 	public componentDidUpdate() {

@@ -189,27 +189,29 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			);
 
 			if (memberObj.length === 1) {
-				if (memberObj[0].contact.EMAIL.PRIMARY !== '') {
-					emailList.push(memberObj[0].contact.EMAIL.PRIMARY);
+				const cont = memberObj[0].contact;
+
+				if (cont.EMAIL.PRIMARY && emailList.indexOf(cont.EMAIL.PRIMARY) === -1) {
+					emailList.push(cont.EMAIL.PRIMARY);
 				}
-				if (memberObj[0].contact.EMAIL.SECONDARY !== '') {
+				if (cont.EMAIL.SECONDARY && emailList.indexOf(cont.EMAIL.SECONDARY) === -1) {
 					emailList.push(memberObj[0].contact.EMAIL.SECONDARY);
 				}
-				if (memberObj[0].contact.EMAIL.EMERGENCY !== '') {
+				if (cont.EMAIL.EMERGENCY && emailList.indexOf(cont.EMAIL.EMERGENCY) === -1) {
 					emailList.push(memberObj[0].contact.EMAIL.EMERGENCY);
 				}
-				if (memberObj[0].contact.CADETPARENTEMAIL.PRIMARY !== '') {
+				if (cont.CADETPARENTEMAIL.PRIMARY && emailList.indexOf(cont.CADETPARENTEMAIL.PRIMARY) === -1) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.PRIMARY);
 				}
-				if (memberObj[0].contact.CADETPARENTEMAIL.SECONDARY !== '') {
+				if (cont.CADETPARENTEMAIL.SECONDARY && emailList.indexOf(cont.CADETPARENTEMAIL.SECONDARY) === -1) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.SECONDARY);
 				}
-				if (memberObj[0].contact.CADETPARENTEMAIL.EMERGENCY !== '') {
+				if (cont.CADETPARENTEMAIL.EMERGENCY && emailList.indexOf(cont.CADETPARENTEMAIL.EMERGENCY) === -1) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.EMERGENCY);
 				}
 			}
 		}
 
-		return emailList.join('; ');
+		return emailList.filter(e => !!e).join('; ');
 	}
 }

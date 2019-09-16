@@ -326,7 +326,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		};
 
 		return (
-			<form onSubmit={this.submit} className="asyncForm">
+			<form className="asyncForm">
 				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||
@@ -474,6 +474,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								value={submitInfo.text}
 								className={submitInfo.className}
 								disabled={this.state.disabled || submitInfo.disabled}
+								onClick={this.submit}
 							/>
 							{this.props.successMessage && (
 								<span style={saveMessage}>{this.props.successMessage}</span>
@@ -503,7 +504,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = validator(e.value, this.fields);
+			error = !validator(e.value, this.fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
@@ -534,7 +535,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = validator(e.value, this.fields);
+			error = !validator(e.value, this.fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
@@ -560,9 +561,9 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 	/**
 	 * Function called when the form is submitted
 	 *
-	 * @param {React.FormEvent<HTMLFormEvent>} e Event
+	 * @param {React.MouseEvent<HTMLInputElement>} e Event
 	 */
-	protected submit(e: React.FormEvent<HTMLFormElement>) {
+	protected submit(e: React.MouseEvent<HTMLInputElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
 			let hasError = false;

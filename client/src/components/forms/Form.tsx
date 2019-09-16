@@ -96,7 +96,6 @@ class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends Simp
 
 		return (
 			<form
-				onSubmit={this.submit}
 				className={`${this.props.className ? `${this.props.className} ` : ''}`}
 			>
 				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
@@ -129,6 +128,7 @@ class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends Simp
 						value={submitInfo.text}
 						className={submitInfo.className}
 						disabled={this.state.disabled || submitInfo.disabled}
+						onClick={this.submit}
 					/>
 				</div>
 				<div style={clearFix} />
