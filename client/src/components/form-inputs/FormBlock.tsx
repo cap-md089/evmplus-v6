@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { isFullWidthableElement, isInput, isLabel, Label, Title, FormValidator } from '../forms/SimpleForm';
+import {
+	isFullWidthableElement,
+	isInput,
+	isLabel,
+	Label,
+	Title,
+	FormValidator
+} from '../forms/SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	name: string;
@@ -7,7 +14,7 @@ interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	onInitialize?: (e: { name: string; value: any }) => void;
 	value?: V;
 
-	validator?: FormValidator<V>
+	validator?: FormValidator<V>;
 
 	onFormChange?: (
 		fields: V,
@@ -18,26 +25,66 @@ interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 	) => void;
 }
 
-type BooleanForField<T> = { [K in keyof T]: boolean };
+export type BooleanForField<T> = { [K in keyof T]: boolean };
 
-export default class FormBlock<T extends object> extends React.Component<FormBlockProps<T>> {
-	private fields = {} as T;
-	private fieldsError: BooleanForField<T> = {} as BooleanForField<T>;
-	private fieldsChanged: BooleanForField<T> = {} as BooleanForField<T>;
+interface FormBlockState<V> {
+	fieldsError: BooleanForField<V>;
+	fieldsChanged: BooleanForField<V>;
+}
+
+export default class FormBlock<T extends object> extends React.Component<
+	FormBlockProps<T>,
+	FormBlockState<T>
+> {
+	public static getDerivedStateFromProps<T>(
+		props: FormBlockProps<T>,
+		state: FormBlockState<T>
+	): FormBlockState<T> {
+		if (!props.value) {
+			return {
+				fieldsError: {},
+				fieldsChanged: {}
+			} as FormBlockState<T>;
+		}
+
+		const newState: FormBlockState<T> = {
+			fieldsChanged: { ...state.fieldsChanged },
+			fieldsError: {} as BooleanForField<T>
+		};
+
+		// tslint:disable-next-line: forin
+		for (const _ in props.value) {
+			const i: keyof T = _;
+
+			if (props.validator && props.validator[i]) {
+				const validator = props.validator[i]!;
+
+				if (!validator(props.value[i], props.value)) {
+					newState.fieldsError[i] = true;
+				}
+			}
+		}
+
+		return newState;
+	}
+
+	public state: FormBlockState<T> = {
+		fieldsError: {} as BooleanForField<T>,
+		fieldsChanged: {} as BooleanForField<T>
+	};
 
 	constructor(props: FormBlockProps<T>) {
 		super(props);
 
 		this.onUpdate = this.onUpdate.bind(this);
 		this.onInitialize = this.onInitialize.bind(this);
-
 		this.render = this.render.bind(this);
-
-		this.fields = this.props.value || this.fields;
 	}
 
 	public render() {
 		const props = Object.assign({}, this.props);
+
+		const children = props.children instanceof Array ? props.children.flatMap(f => f) : null;
 
 		// @ts-ignore
 		delete props.onInitialize;
@@ -48,7 +95,7 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 
 		return (
 			<div {...props}>
-				{React.Children.map(this.props.children, (child, i) => {
+				{React.Children.map(children, (child, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||
 						this.props.children === null
@@ -73,18 +120,26 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 								? child.props.value
 								: typeof this.props.value === 'undefined'
 								? ''
-								: (this.props.value === null || typeof (this.props.value as T)[childName] === 'undefined')
+								: this.props.value === null ||
+								  typeof (this.props.value as T)[childName] === 'undefined'
 								? ''
-								: (this.props.value as T)[childName];
-						if (typeof this.fields[childName] === 'undefined') {
-							this.fields[childName] = value;
+								: this.props.value![childName];
+						if (
+							!(this.props.value === null ||
+								typeof this.props.value === 'undefined') &&
+							typeof this.props.value![childName] === 'undefined'
+						) {
+							this.props.value![childName] = value;
 						}
+
 						if (isFullWidthableElement(child)) {
 							fullWidth = child.props.fullWidth;
 						}
 						if (typeof fullWidth === 'undefined') {
 							fullWidth = false;
 						}
+
+						// @ts-ignore
 						if (child.type === FormBlock) {
 							fullWidth = true;
 						}
@@ -104,7 +159,6 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 						(this.props.children as React.ReactChild[])[i - 1] !== null &&
 						!isInput((this.props.children as React.ReactChild[])[i - 1])
 					) {
-						const children = this.props.children;
 						if (
 							typeof children === 'string' ||
 							typeof children === 'number' ||
@@ -166,71 +220,60 @@ export default class FormBlock<T extends object> extends React.Component<FormBlo
 	}
 
 	private onUpdate(e: { name: string; value: any }) {
+		this.handleChange(e, true);
+	}
+
+	private handleChange(e: { name: string; value: any }, hasChanged: boolean) {
 		const name = e.name as keyof T;
-		this.fields[name] = e.value;
-		this.fieldsChanged[e.name as keyof T] = true;
 
-		let error = false;
-		const validator = this.props.validator ? this.props.validator[name] : null;
-		if (validator) {
-			error = !validator(e.value, this.fields);
-		}
-		this.fieldsError[e.name as keyof T] = error;
+		const value: T = { ...this.props.value } as T;
+		const fieldsChanged = { ...this.state.fieldsChanged };
+		const fieldsError = { ...this.state.fieldsError };
 
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
+		value[name] = e.value;
+		fieldsChanged[name] = hasChanged;
+
+		this.setState(
+			{
+				fieldsChanged,
+				fieldsError
+			},
+			() => {
+				let hasError = false;
+				for (const i in this.state.fieldsError) {
+					if (this.state.fieldsError.hasOwnProperty(i)) {
+						hasError = fieldsError[i];
+						if (hasError) {
+							break;
+						}
+					}
+				}
+
+				// DO NOT TOUCH
+				// If this is moved into the conditional TypeScript gets upset
+				const onChange = this.props.onFormChange;
+
+				if (onChange !== undefined) {
+					onChange(
+						value,
+						this.state.fieldsError,
+						this.state.fieldsChanged,
+						hasError,
+						name
+					);
+				}
+
+				if (this.props.onUpdate) {
+					this.props.onUpdate({
+						name: this.props.name,
+						value
+					});
 				}
 			}
-		}
-
-		// DO NOT TOUCH
-		// If this is moved into the conditional TypeScript gets upset
-		const onChange = this.props.onFormChange;
-
-		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
-		}
-
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
-				name: this.props.name,
-				value: this.fields
-			});
-		}
+		);
 	}
 
 	private onInitialize(e: { name: string; value: any }) {
-		const name = e.name as keyof T;
-		this.fields[name] = e.value;
-		this.fieldsChanged[e.name as keyof T] = false;
-
-		let error = false;
-		const validator = this.props.validator ? this.props.validator[name] : null;
-		if (validator) {
-			error = !validator(e.value, this.fields);
-		}
-		this.fieldsError[e.name as keyof T] = error;
-
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
-				}
-			}
-		}
-
-		// DO NOT TOUCH
-		// If this is moved into the conditional TypeScript gets upset
-		const onChange = this.props.onFormChange;
-
-		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
-		}
+		this.handleChange(e, false);
 	}
 }

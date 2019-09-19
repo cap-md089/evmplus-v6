@@ -21,10 +21,12 @@ import Form, {
 import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
 import { PointOfContactType } from 'common-lib/index';
-import { Identifiable, MultCheckboxReturn, DisplayInternalPointOfContact, ExternalPointOfContact, RadioReturn } from 'common-lib';
+import { Identifiable, MultCheckboxReturn, DisplayInternalPointOfContact, ExternalPointOfContact, RadioReturn, MemberPermissions } from 'common-lib';
 import { CAPMemberClasses } from '../lib/Members';
 import POCInput from '../components/form-inputs/POCInput';
 import Select from '../components/form-inputs/Select';
+import PermissionsEdit from '../components/form-inputs/PermissionsEdit';
+import LoaderShort from '../components/LoaderShort';
 
 enum Test1 {
 	Opt1,
@@ -57,6 +59,7 @@ interface Props {
 	test16: Complex[];
 	test17: DisplayInternalPointOfContact | ExternalPointOfContact;
 	test18: Test1;
+	test19: MemberPermissions;
 }
 
 export default class Test extends Page<PageProps<{}>, { open: boolean } & Props> {
@@ -94,6 +97,28 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 			receiveUpdates: false
 		},
 		test18: Test1.Opt1,
+		test19: {
+			AdministerPT: 0,
+			AssignTasks: 0,
+			FileManagement: 0,
+			FlightAssign: 0,
+			MusterSheet: 0,
+			PTSheet: 0,
+			PromotionManagement: 0,
+
+			AssignTemporaryDutyPositions: 0,
+			EventContactSheet: 0,
+			EventLinkList: 0,
+			ORMOPORD: 0,
+			ProspectiveMemberManagement: 0,
+			CreateNotifications: 0,
+			ManageEvent: 0,
+			ManageTeam: 0,
+
+			DownloadCAPWATCH: 0,
+			PermissionManagement: 0,
+			RegistryEdit: 0
+		},
 		memberList: this.props.account.getMembers(this.props.member)
 	};
 
@@ -114,6 +139,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 
 		return this.state.test14 !== null && this.props.member !== null ? (
 			<div>
+				<LoaderShort />
 				<SigninLink
 					authorizeUser={this.props.authorizeUser}
 					{...this.props.fullMemberDetails}
@@ -134,7 +160,6 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 					onChange={(data, errors, changed) => {
 						this.setState(data);
 						// tslint:disable-next-line:no-console
-						console.log(data, errors, changed);
 					}}
 					validator={{
 						test2: text => {
@@ -262,7 +287,6 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						name="test16"
 						value={this.state.test16}
 						displayValue={val => val.value}
-						onChange={console.log}
 						filters={[
 							{
 								displayText: 'Value: ',
@@ -283,7 +307,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 								displayText: 'ID: ',
 								filterInput: NumberInput,
 								check: (val, input: number) => {
-									if (isNaN(input)) {
+									if (isNaN(input) || input === null) {
 										return true;
 									}
 
@@ -302,11 +326,16 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						name="pocInput-0"
 						value={this.state.test17}
 					/>
+					<PermissionsEdit
+						name="test19"
+						value={this.state.test19}
+					/>
 				</TestForm>
 				<TestButton
 					data={{
 						hi: true
 					}}
+					useData={true}
 					onClick={console.log}
 				>
 					Submit

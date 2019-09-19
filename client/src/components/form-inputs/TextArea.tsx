@@ -153,7 +153,7 @@ export default class TextArea extends React.Component<
 		getPromise: () =>
 			new Promise<FileObject[]>((res, rej) => {
 				this.imagePromise.resolve = (data: FileObject[]) => {
-					res(data);
+					res(data.filter(f => !!f));
 					this.imagePromise.resolve = null;
 				};
 			})
@@ -505,7 +505,12 @@ export default class TextArea extends React.Component<
 			fileDialogueOpen: true
 		});
 
-		const fileObject = await this.imagePromise.getPromise();
+		let fileObject;
+		try {
+			fileObject = await this.imagePromise.getPromise();
+		} catch (e) {
+			return;
+		}
 
 		if (fileObject.length !== 1) {
 			return;

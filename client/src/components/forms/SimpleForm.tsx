@@ -23,6 +23,7 @@ import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
 import Select from '../form-inputs/Select';
+import PermissionsEdit from '../form-inputs/PermissionsEdit';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -111,6 +112,7 @@ export function isInput(
 	if (typeof el !== 'object' || el === null) {
 		return false;
 	}
+
 	return (
 		el.type === TextInput ||
 		el.type === TextArea ||
@@ -120,6 +122,7 @@ export function isInput(
 		el.type === MultCheckbox ||
 		el.type === Checkbox ||
 		el.type === ListEditor ||
+		// @ts-ignore
 		el.type === FormBlock ||
 		el.type === SimpleRadioButton ||
 		el.type === TextBox ||
@@ -135,7 +138,8 @@ export function isInput(
 		el.type === POCInput ||
 		el.type === Select ||
 		// @ts-ignore
-		el.type === FileInput
+		el.type === FileInput ||
+		el.type === PermissionsEdit
 	);
 }
 
@@ -335,7 +339,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 						throw new TypeError('Some error occurred');
 					}
 					let ret;
-					let fullWidth = false;
+					let childFullWidth = false;
 					if (!isInput(child)) {
 						// This algorithm handles labels for inputs by handling inputs
 						// Puts out titles on their own line
@@ -371,13 +375,15 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 							this.fields[childName] = value;
 						}
 						if (isFullWidthableElement(child)) {
-							fullWidth = child.props.fullWidth;
+							childFullWidth = child.props.fullWidth;
 						}
-						if (typeof fullWidth === 'undefined') {
-							fullWidth = false;
+						if (typeof childFullWidth === 'undefined') {
+							childFullWidth = false;
 						}
+
+						// @ts-ignore
 						if (child.type === FormBlock) {
-							fullWidth = true;
+							childFullWidth = true;
 						}
 
 						ret = [
@@ -390,7 +396,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 							})
 						];
 					}
-					if (!fullWidth) {
+					if (!childFullWidth) {
 						if (
 							i > 0 &&
 							typeof (this.props.children as React.ReactChild[])[i - 1] !==
@@ -420,7 +426,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 								previousChild === null
 							) {
 								ret.unshift(
-									<Label key={i - 1} fullWidth={fullWidth}>
+									<Label key={i - 1} fullWidth={childFullWidth}>
 										{previousChild}
 									</Label>
 								);
@@ -451,7 +457,7 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 					}
 
 					return (
-						<div key={i} className={`formbar${fullWidth ? ' fullwidth' : ''}`}>
+						<div key={i} className={`formbar${childFullWidth ? ' fullwidth' : ''}`}>
 							{ret}
 						</div>
 					);
@@ -606,5 +612,6 @@ export {
 	DisabledText,
 	TeamSelector,
 	MemberSelector,
-	TeamMemberInput
+	TeamMemberInput,
+	PermissionsEdit
 };

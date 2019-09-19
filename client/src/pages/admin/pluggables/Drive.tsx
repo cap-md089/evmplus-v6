@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Page, { PageProps } from '../../Page';
+import LoaderShort from '../../../components/LoaderShort';
 import FileInterface from '../../../lib/File';
-import Loader from '../../../components/Loader';
+import Page, { PageProps } from '../../Page';
 
 export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
 	public state: { list: string[] | null } = {
@@ -23,7 +23,7 @@ export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
 				<div className="widget-title">Drive information</div>
 				<div className="widget-body">
 					{this.state.list === null ? (
-						<Loader />
+						<LoaderShort />
 					) : (
 						<div>
 							There are {this.state.list.length} file

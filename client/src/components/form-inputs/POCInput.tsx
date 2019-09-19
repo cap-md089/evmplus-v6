@@ -65,7 +65,6 @@ export default class POCInput extends React.Component<
 		this.updateFilterValues = this.updateFilterValues.bind(this);
 		this.selectMember = this.selectMember.bind(this);
 		this.setSelectedValue = this.setSelectedValue.bind(this);
-		this.handlePOCTypeChange = this.handlePOCTypeChange.bind(this);
 	}
 
 	public render() {
@@ -102,7 +101,6 @@ export default class POCInput extends React.Component<
 					}
 					index={this.props.index}
 					key="type"
-					onChange={this.handlePOCTypeChange}
 				/>
 
 				{this.getMemberSelector()}
@@ -297,6 +295,4 @@ export default class POCInput extends React.Component<
 			</TextBox>
 		) : null;
 	}
-
-	private handlePOCTypeChange(type: PointOfContactType) {}
 }

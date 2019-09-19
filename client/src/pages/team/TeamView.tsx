@@ -183,9 +183,16 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 
 		const emailList = [];
 
-		for (const member of this.state.team.members) {
+		const membersToCheck = [
+			this.state.team.cadetLeader,
+			this.state.team.seniorCoach,
+			this.state.team.seniorMentor,
+			...this.state.team.members.map(m => m.reference)
+		].filter(m => m.type !== 'Null');
+
+		for (const member of membersToCheck) {
 			const memberObj = this.state.members.filter(mem =>
-				MemberBase.AreMemberReferencesTheSame(mem, member.reference)
+				MemberBase.AreMemberReferencesTheSame(mem, member)
 			);
 
 			if (memberObj.length === 1) {

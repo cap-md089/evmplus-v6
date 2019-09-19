@@ -1,12 +1,11 @@
 .widget {
-	flex-grow: 1;
-	flex-basis: 0;
-	flex-shrink: 0;
 	min-width: 285px;
-	max-width: 315px;
 	border: 1px solid gray;
 	box-shadow: 0 0 4px 0 gray;
-	margin: 10px;
+	margin: 5px;
+	margin-top: 0;
+	margin-bottom: 10px;
+	break-inside: avoid;
 }
 
 .widget:hover {

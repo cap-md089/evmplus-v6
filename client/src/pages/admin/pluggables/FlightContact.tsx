@@ -1,16 +1,16 @@
+import { Member, MemberObject, MemberReference, RadioReturn } from 'common-lib';
+import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-
-import './FlightContact.css';
-import { DateTime } from 'luxon';
-import Page, { PageProps } from '../../Page';
-import { CAPNHQMember, CAPMemberClasses, CAPProspectiveMember } from '../../../lib/Members';
-import { MemberReference, RadioReturn, Member, MemberObject } from 'common-lib';
-import Loader from '../../../components/Loader';
+import Button from '../../../components/Button';
 import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
 import { TextInput } from '../../../components/forms/Form';
-import Button from '../../../components/Button';
-import SimpleForm, { Label, RadioButton, Checkbox } from '../../../components/forms/SimpleForm';
+import SimpleForm, { Checkbox, Label, RadioButton } from '../../../components/forms/SimpleForm';
+import Loader from '../../../components/Loader';
+import LoaderShort from '../../../components/LoaderShort';
+import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
+import Page, { PageProps } from '../../Page';
+import './FlightContact.css';
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
@@ -61,7 +61,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 				</Link>
 				<div className="widget-body">
 					{this.state.members === null ? (
-						<Loader />
+						<LoaderShort />
 					) : (
 						<div>
 							There are {this.state.members.length} members in your flight
@@ -92,6 +92,7 @@ const memberRanks = [
 	'cmaj',
 	'cltcol',
 	'ccol',
+	'sm',
 	'2dlt',
 	'1stlt',
 	'capt',
@@ -109,7 +110,8 @@ const normalizeRankInput = (rank: string) =>
 		.toLowerCase()
 		.replace('/', '')
 		.replace('2nd', '2d')
-		.replace(' ', '');
+		.replace(' ', '')
+		.replace('.', '');
 
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
@@ -496,7 +498,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			try {
 				const range = document.createRange();
 				range.selectNode(this.selectableDiv.current);
-				const selection = window.getSelection()
+				const selection = window.getSelection();
 				if (selection) {
 					selection.removeAllRanges();
 					selection.addRange(range);

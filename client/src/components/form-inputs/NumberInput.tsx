@@ -2,7 +2,7 @@ import * as React from 'react';
 import { TextInput } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 
-interface NumberInputProps extends InputProps<number> {
+interface NumberInputProps extends InputProps<number | null> {
 	/**
 	 * Defaults to 10
 	 */
@@ -23,22 +23,25 @@ export default (props: NumberInputProps) => (
 		value={props.value === null ? '' : (props.value || 0).toString()}
 		shouldUpdate={val =>
 			// eslint-disable-next-line
-			parseInt(val, props.radix || 10) ===
-				parseInt(val, props.radix || 10) &&
-			(typeof props.shouldUpdate !== 'undefined'
-				? props.shouldUpdate(parseInt(val, props.radix))
-				: true)
+			val === ''
+				? true
+				: !isNaN(parseInt(val, props.radix || 10)) &&
+				  (typeof props.shouldUpdate !== 'undefined'
+						? props.shouldUpdate(parseInt(val, props.radix))
+						: true)
 		}
 		onChange={val =>
 			typeof props.onChange === 'undefined'
 				? void 0
+				: val === ''
+				? props.onChange(null)
 				: props.onChange(parseInt(val, props.radix || 10))
 		}
 		onUpdate={e => {
 			if (props.onUpdate && e) {
 				props.onUpdate({
 					name: e.name,
-					value: parseInt(e.value, props.radix || 10)
+					value: e.value === '' ? null : parseInt(e.value, props.radix || 10)
 				});
 			}
 		}}
@@ -47,7 +50,7 @@ export default (props: NumberInputProps) => (
 			if (props.onInitialize && e) {
 				props.onInitialize({
 					name: e.name,
-					value: parseInt(e.value, props.radix || 10)
+					value: e.value === '' ? null : parseInt(e.value, props.radix || 10)
 				});
 			}
 		}}
