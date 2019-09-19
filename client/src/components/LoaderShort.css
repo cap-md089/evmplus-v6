@@ -1,0 +1,46 @@
+@keyframes svgCircleAnimation {
+	0% {
+		transform: scale(0)
+	}
+	50% {
+		transform: scale(1)
+	}
+	100% {
+		transform: scale(0)
+	}
+}
+
+.svg-loader {
+	margin: 0 auto;
+	height: 55px;
+}
+
+.svg-loader-circle-1 {
+	animation: svgCircleAnimation 1.5s linear infinite;
+	animation-delay: -1.35s;
+	transform-origin: 16.66% center;
+}
+
+.svg-loader-circle-2 {
+	animation: svgCircleAnimation 1.5s linear infinite;
+	animation-delay: -1.2s;
+	transform-origin: 33.33% center;
+}
+
+.svg-loader-circle-3 {
+	animation: svgCircleAnimation 1.5s linear infinite;
+	animation-delay: -1.05s;
+	transform-origin: center center;
+}
+
+.svg-loader-circle-4 {
+	animation: svgCircleAnimation 1.5s linear infinite;
+	animation-delay: -0.9s;
+	transform-origin: 66.66% center;
+}
+
+.svg-loader-circle-5 {
+	animation: svgCircleAnimation 1.5s linear infinite;
+	animation-delay: -0.75s;
+	transform-origin: 83.33% center;
+}
