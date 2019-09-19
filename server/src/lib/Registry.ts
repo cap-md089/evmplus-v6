@@ -45,9 +45,6 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 				ShowUpcomingEventCount: 7,
 				PhotoLibraryImagesPerPage: 20
 			},
-			Blog: {
-				BlogPostsPerPage: 15
-			},
 			RankAndFile: {
 				Flights: ['Alpha', 'Bravo', 'Charlie']
 			},

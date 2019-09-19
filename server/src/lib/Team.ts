@@ -614,6 +614,8 @@ export default class Team implements FullTeamObject {
 				);
 
 				await this.addTeamMember(fullMember, newMember.job, account, schema);
+			} else {
+				this.modifyTeamMember(newMember.reference, newMember.job);
 			}
 		}
 	}
