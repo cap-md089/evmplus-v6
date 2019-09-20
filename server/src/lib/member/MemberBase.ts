@@ -236,7 +236,8 @@ export default abstract class MemberBase implements MemberObject {
 		const generator = generateResults(
 			findAndBind(notificationCollection, {
 				target: {
-					to: this.getReference()
+					to: this.getReference(),
+					type: NotificationTargetType.MEMBER
 				}
 			})
 		);
@@ -277,7 +278,8 @@ export default abstract class MemberBase implements MemberObject {
 		const generator = generateResults(
 			findAndBind(notificationCollection, {
 				target: {
-					to: this.getReference()
+					to: this.getReference(),
+					type: NotificationTargetType.MEMBER
 				}
 			})
 		);

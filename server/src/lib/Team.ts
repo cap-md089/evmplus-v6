@@ -419,7 +419,7 @@ export default class Team implements FullTeamObject {
 				: []
 	});
 
-	public toFullRaw = (member?: MemberBase): FullTeamObject => ({
+	public toFullRaw = (member?: MemberBase | null): FullTeamObject => ({
 		...this.toRaw(),
 		members: !!member || this.visibility === TeamPublicity.PUBLIC ? this.members : [],
 		teamHistory: !!member || this.visibility === TeamPublicity.PUBLIC ? this.teamHistory : [],

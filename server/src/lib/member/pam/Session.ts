@@ -122,7 +122,7 @@ export const SessionedUser = <
 	Member: M
 ) => {
 	abstract class User extends Member {
-		public static async RestoreFromSession(schema: Schema, account: Account, session: Session) {
+		public static async RestoreFromSession(schema: Schema, account: Account, session: Session): Promise<User | null> {
 			if (session.userAccount.member.type === 'Null') {
 				return null;
 			}
@@ -370,6 +370,10 @@ export const isTokenValid = async (
 ): Promise<boolean> => {
 	try {
 		const member = await getMemberForWeakToken(schema, token);
+
+		if (member === null) {
+			return false;
+		}
 
 		return areMemberReferencesTheSame(member.member, user);
 	} catch (e) {

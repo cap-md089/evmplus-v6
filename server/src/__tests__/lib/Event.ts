@@ -153,8 +153,8 @@ describe('Event', () => {
 		const getLinkedEvent = await Event.Get(linkedEventCreated.id, targetAccount, schema);
 
 		expect(getLinkedEvent.author).toEqual(linkedEventCreated.author);
-		expect(getLinkedEvent.sourceEvent.id).toEqual(event.id);
-		expect(getLinkedEvent.sourceEvent.accountID).toEqual('mdx89');
+		expect(getLinkedEvent.sourceEvent!.id).toEqual(event.id);
+		expect(getLinkedEvent.sourceEvent!.accountID).toEqual('mdx89');
 
 		done();
 	});

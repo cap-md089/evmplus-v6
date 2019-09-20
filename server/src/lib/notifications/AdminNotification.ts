@@ -50,12 +50,19 @@ export default class AdminNotification extends Notification {
 			schema
 		);
 
+		let fromMemberName = null;
+
+		if (from.type === NotificationCauseType.MEMBER && fromMember === undefined) {
+			throw new Error('Cannot get name of an undefined member');
+		} else if (from.type === NotificationCauseType.MEMBER) {
+			fromMemberName = fromMember!.getFullName();
+		}
+
 		return new AdminNotification(
 			{
 				...results,
 				toMemberName: null,
-				fromMemberName:
-					from.type === NotificationCauseType.MEMBER ? fromMember.getFullName() : null
+				fromMemberName
 			},
 			account,
 			schema
@@ -70,6 +77,8 @@ export default class AdminNotification extends Notification {
 		schema: Schema
 	) {
 		super(data, account, schema);
+
+		this.target = data.target as NotificationAdminTarget;
 	}
 
 	public canSee(member: MemberBase, account: Account) {

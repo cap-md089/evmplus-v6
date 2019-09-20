@@ -15,6 +15,7 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	} catch (e) {
 		res.status(404);
 		res.end();
+		return;
 	}
 
 	if (!notification.canSee(req.member, req.account)) {

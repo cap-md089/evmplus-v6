@@ -26,8 +26,8 @@
 		"allowSyntheticDefaultImports": false,
 		"experimentalDecorators": true,
 		"sourceMap": true,
-		// "strictNullChecks": true,
-		// "strictPropertyInitialization": true
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": [

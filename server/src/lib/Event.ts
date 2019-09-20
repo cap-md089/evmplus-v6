@@ -58,7 +58,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param account The account to get the event from
 	 * @param schema The schema to get the event from
 	 */
-	public static async Get(id: number | string, account: Account, schema: Schema) {
+	public static async Get(id: number | string, account: Account, schema: Schema): Promise<Event> {
 		if (typeof id === 'string') {
 			id = parseInt(id, 10);
 		}
@@ -84,16 +84,13 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			schema
 		);
 
-		const customAttendanceFields = await this.GetCustomAttendanceFields();
-
 		const attendance = await this.GetAttendance(id, account, schema);
 
 		return new Event(
 			{
 				...results[0],
 				attendance,
-				pointsOfContact,
-				customAttendanceFields
+				pointsOfContact
 			},
 			account,
 			schema
@@ -154,10 +151,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			account,
 			schema
 		);
-	}
-
-	private static async GetCustomAttendanceFields(): Promise<CustomAttendanceField[]> {
-		return null;
 	}
 
 	private static async GetAttendance(
@@ -407,6 +400,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		this.eventWebsite = data.eventWebsite;
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
+		this.customAttendanceFields = data.customAttendanceFields;
 
 		this._id = data._id;
 	}
@@ -657,7 +651,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	/**
 	 * Converts the current event to a transferable object
 	 */
-	public toRaw = (member?: MemberBase): EventObject => ({
+	public toRaw = (member?: MemberBase | null): EventObject => ({
 		...this.toSaveRaw(),
 		attendance: member === null || member === undefined ? [] : this.getAttendance()
 	});
