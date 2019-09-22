@@ -4,6 +4,7 @@ import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
 import addattendancebulk, { attendanceBulkValidator } from './attendance/addattendancebulk';
+import capf6080 from './capf6080';
 import attendancelogcadet from './attendance/attendancelogcadet';
 import attendancelogsenior from './attendance/attendancelogsenior';
 import attendanceroster from './attendance/attendanceroster';
@@ -29,6 +30,7 @@ const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
+router.get('/:id/capf6080', conditionalMemberMiddleware, capf6080);
 router.get('/:id/attendance/log/cadet', conditionalMemberMiddleware, attendancelogcadet);
 router.get('/:id/attendance/log/senior', conditionalMemberMiddleware, attendancelogsenior);
 router.get('/:id/attendance/roster', conditionalMemberMiddleware, attendanceroster);

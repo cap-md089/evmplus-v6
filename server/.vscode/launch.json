@@ -13,6 +13,14 @@
 		},
 		{
 			"type": "node",
+			"request": "attach",
+			"name": "Launch Server (nodemon)",
+			"processId": "${command:PickProcess}",
+			"restart": true,
+			"protocol": "inspector"
+		},
+		{
+			"type": "node",
 			"request": "launch",
 			"name": "Launch Test",
 			"program": "${workspaceFolder}/dist/test.js",

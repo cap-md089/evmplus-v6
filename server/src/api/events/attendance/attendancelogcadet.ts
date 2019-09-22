@@ -76,7 +76,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	];
 	let sqnNum = myOrg[0].Region + '-' + myOrg[0].Wing + '-';
 	let sqnName = '';
-	for (var w = 0; w < myOrg.length; w++) {
+	for (let w = 0; w < myOrg.length; w++) {
 		sqnNum += myOrg[w].Unit + '/';
 		sqnName += myOrg[w].Name + '/';
 	}
@@ -185,7 +185,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
-		footer: function(currentPage, pageCount) {
+		footer: function(currentPage: any, pageCount: any) {
 			const footerContent = [
 				{ 
 					layout: 'noBorders',
@@ -206,7 +206,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 												day: '2-digit'
 												}), alignment: 'left', fontSize: 10
 											},
-											{ text: currentPage.toString() + ' of ' + pageCount, 
+											{ text: 'Page ' + currentPage.toString() + ' of ' + pageCount, 
 												alignment: 'right', fontSize: 10
 											}
 										]
