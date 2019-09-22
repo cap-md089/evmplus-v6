@@ -6,6 +6,11 @@
     - [X] BREAD
     - [X] Dynamic Staff Team
     - [ ] Unit tests
+*** Registry [3/4]
+    - [X] Read
+    - [X] Edit
+    - [X] Add
+    - [ ] Unit tests
 *** Events [3/4]
     - [X] BREAD
     - [X] Link
@@ -21,20 +26,23 @@
       - [X] Account
       - [X] Authentication
       - [X] Password
-      - [X] Session [2/2]
+      - [X] Session [3/3]
         - [X] Basic usage
         - [X] Su
+        - [X] User classes
     - [X] Basic data handling
     - [X] Integration (Express Middleware)
-    - [-] Unit tests [0/2]
-      - [-] Data class unit tests [1/2]
+    - [-] Unit tests [1/2]
+      - [-] Data class unit tests [1/4]
         - [X] CAPNHQMember
         - [ ] CAPProspectiveMember
-      - [-] PAM [2/4]
+        - [ ] User mixin
+        - [ ] MemberBase
+      - [X] PAM [4/4]
         - [X] Account
-        - [ ] Auth
+        - [X] Auth
         - [X] Password
-        - [ ] Session
+        - [X] Session
 *** Account [2/3]
     - [X] Middleware
     - [ ] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
@@ -73,8 +81,9 @@
 *** Integration [0/1]
     - [ ] Google integration [0/1]
       - [ ] Update Google calendar
-*** Audits [0/1]
+*** Audits [0/2]
     - [ ] API for arbitrary use
+    - [ ] Unit tests
 ** Debugging [2/2]
     - [X] Error handling
     - [X] Su
@@ -240,10 +249,12 @@
    - [X] PAM on server
    - [X] Token request for every POST request
    - [ ] Token request for every sign in request
+** TODO Captcha
 ** DONE XSS protection
    Done by React
 ** DONE SQL injection protection
    Done with statements
-** TODO Data-at-rest encryption
+** DONE Data-at-rest encryption
+   Done on server
 ** DONE TLSv1.2, HTTP/2
    Done through Nginx

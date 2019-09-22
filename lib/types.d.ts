@@ -99,7 +99,7 @@ export namespace NHQ {
 		PrintedCert: number;
 	}
 
-/*  CAPID,Type,Location,Completed,UsrID,DateMod  */
+	/*  CAPID,Type,Location,Completed,UsrID,DateMod  */
 
 	export interface CadetActivities {
 		CAPID: number;
@@ -181,7 +181,18 @@ export namespace NHQ {
 		UsrID: string;
 		DateMod: string;
 		LSCode: string;
-		Type: 'NULL' | 'CADET' | 'CADET SPONSOR' | 'SENIOR' | 'PATRON' | 'FIFTY YEAR' | 'PATRON' | 'STATE LEG';
+		Type:
+			| 'NULL'
+			| 'CADET'
+			| 'CADET SPONSOR'
+			| 'SENIOR'
+			| 'PATRON'
+			| 'FIFTY YEAR'
+			| 'FiftyYear'
+			| 'INDEFINITE'
+			| 'LIFE'
+			| 'PATRON'
+			| 'STATE LEG';
 		RankDate: string;
 		Region: string;
 		MbrStatus: string;
@@ -1137,7 +1148,12 @@ export interface CustomAttendanceFieldText extends CustomAttendanceFieldBase {
 	preFill: string;
 }
 
-export type CustomAttendanceField = CustomAttendanceFieldCheckbox | CustomAttendanceFieldDate | CustomAttendanceFieldFile | CustomAttendanceFieldNumber | CustomAttendanceFieldText;
+export type CustomAttendanceField =
+	| CustomAttendanceFieldCheckbox
+	| CustomAttendanceFieldDate
+	| CustomAttendanceFieldFile
+	| CustomAttendanceFieldNumber
+	| CustomAttendanceFieldText;
 
 /**
  * A basic point of contact
@@ -1150,13 +1166,13 @@ export interface PointOfContact {
 	type: PointOfContactType;
 	/**
 	 * All points of contact have an email
-	 * 
+	 *
 	 * Internal points of contact provide this as the information may be old and updated in this record
 	 */
 	email: string;
 	/**
 	 * All of them should have a phone number
-	 * 
+	 *
 	 * Reasons for having this are similar to reasons for having email
 	 */
 	phone: string;
@@ -1370,11 +1386,11 @@ export interface MemberPermissions {
 	/**
 	 * Whether or not the user can manage prospective members
 	 */
-	ProspectiveMemberManagment: ProspectiveMemberManagement;
+	ProspectiveMemberManagement: ProspectiveMemberManagement;
 	/**
 	 * Whether or not the user can view a list of all events
 	 */
-	EventLinkList: EventLinkList
+	EventLinkList: EventLinkList;
 	/**
 	 * Whether or not the user can add a team
 	 */
@@ -1431,7 +1447,7 @@ export type MemberType = CAPMemberType;
 
 /**
  * Information stored about a member in our database
- * 
+ *
  * Does not include permission information, which is stored seperately
  * This is so that permissions can be on an account basis
  */
@@ -1480,7 +1496,6 @@ export interface RawMemberObject extends Identifiable {
 	absenteeInformation: AbsenteeInformation | null;
 }
 
-
 /**
  * Describes a member
  *
@@ -1497,7 +1512,7 @@ export interface MemberObject extends RawMemberObject {
 /**
  * Users are different in that they are actively using the website right now,
  * and they have a session. They also have created an account with us
- * 
+ *
  * This is important because this means they have a session ID and permissions
  */
 export interface UserObject extends MemberObject {
@@ -1638,8 +1653,8 @@ export interface NHQMemberObject extends CAPMemberObject {
  */
 export interface RawProspectiveMemberObject
 	extends RawCAPMember,
-	AccountIdentifiable,
-	NoSQLDocument {
+		AccountIdentifiable,
+		NoSQLDocument {
 	/**
 	 * We use string IDs for this account type
 	 */
@@ -2315,8 +2330,8 @@ export interface NewNotificationObject {
  */
 export interface RawNotificationObject
 	extends NewNotificationObject,
-	AccountIdentifiable,
-	NoSQLDocument {
+		AccountIdentifiable,
+		NoSQLDocument {
 	/**
 	 * Used to identify notifications
 	 */
@@ -2437,17 +2452,17 @@ export type NotificationTarget =
 	| NotificationEveryoneTarget;
 
 /**
- * 
+ *
  */
 export interface NotificationDataProspectiveMember {
-	type: NotificationDataType.PROSPECTIVEMEMBER
+	type: NotificationDataType.PROSPECTIVEMEMBER;
 }
 
 /**
- * 
+ *
  */
 export interface NotificationDataPersonnelFile {
-	type: NotificationDataType.PERSONNELFILES
+	type: NotificationDataType.PERSONNELFILES;
 }
 
 export interface NotificationDataPermissions {
@@ -2459,7 +2474,7 @@ export interface NotificationDataPermissions {
  */
 export interface NotificationDataEvent {
 	type: NotificationDataType.EVENT;
-	
+
 	eventID: number;
 	accountID: string;
 
@@ -2474,7 +2489,7 @@ export type NotificationData =
 	| NotificationDataProspectiveMember
 	| NotificationDataPersonnelFile
 	| NotificationDataEvent
-	| NotificationDataPermissions
+	| NotificationDataPermissions;
 
 /**
  * Audit log item stored in the database
@@ -2482,7 +2497,7 @@ export type NotificationData =
 export interface RawAuditLogItem {
 	/**
 	 * What method was it?
-	 * 
+	 *
 	 * Useful for determining the action
 	 */
 	method: HTTPRequestMethod;
@@ -2573,7 +2588,7 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDoc
 	/**
 	 * Results from those tasked with this task
 	 */
-	results: Array<TaskRecipientsResults>
+	results: Array<TaskRecipientsResults>;
 	/**
 	 * Records when the task was assigned
 	 */
