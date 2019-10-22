@@ -162,33 +162,33 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	}
 
 	// tslint:disable-next-line:variable-name
-	public _id: string = '';
+	public _id: string;
 
-	public id: string = '';
+	public id: string;
 
 	public get accountID() {
 		return this.account.id;
 	}
 
-	public comments: string = '';
+	public comments: string;
 
-	public contentType: string = '';
+	public contentType: string;
 
-	public created: number = 0;
+	public created: number;
 
 	public get fileChildren() {
 		return this.trueChildren;
 	}
 
-	public fileName: string = '';
+	public fileName: string;
 
-	public forDisplay: boolean = false;
+	public forDisplay: boolean;
 
-	public forSlideshow: boolean = false;
+	public forSlideshow: boolean;
 
 	public readonly kind = 'drive#file';
 
-	public permissions: FileControlListItem[] = [];
+	public permissions: FileControlListItem[];
 
 	public get parentID() {
 		return this.trueParentID;
@@ -196,17 +196,17 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 
 	public owner: MemberReference;
 
-	public folderPath: Array<{ id: string; name: string }> = [];
+	public folderPath: Array<{ id: string; name: string }>;
 
-	private account: Account;
+	public readonly account: Account;
 
-	private schema: Schema;
+	public readonly schema: Schema;
 
 	private deleted: boolean = false;
 
-	private trueParentID: string | null = null;
+	private trueParentID: string | null;
 
-	private trueChildren: string[] = [];
+	private trueChildren: string[];
 
 	private constructor(
 		data: FileObject & Required<NoSQLDocument>,
@@ -221,6 +221,11 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		this.trueParentID = data.parentID;
 		this.folderPath = data.folderPath;
 		this.owner = data.owner;
+		this.permissions = data.permissions;
+		this.fileName = data.fileName;
+		this.forDisplay = data.forDisplay;
+		this.forSlideshow = data.forSlideshow;
+		this.comments = data.comments;
 
 		this.account = account;
 		this.schema = schema;
