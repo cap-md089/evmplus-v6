@@ -14,8 +14,9 @@ import { FileObject, FullFileObject } from 'common-lib';
 
 enum ErrorReason {
 	NONE,
-	ERR404,
+	ERR401,
 	ERR403,
+	ERR404,
 	ERR500,
 	UNKNOWN
 }
@@ -75,10 +76,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		const last = parts[parts.length - 1];
 
-		if (
-			last.toLowerCase() === 'drive' ||
-			last.toLowerCase() === 'filemanagement'
-		) {
+		if (last.toLowerCase() === 'drive' || last.toLowerCase() === 'filemanagement') {
 			return 'root';
 		} else {
 			return last;
@@ -109,17 +107,17 @@ export default class Drive extends Page<PageProps, DriveState> {
 					text: 'Home'
 				},
 				{
+					target: '/admin',
+					text: 'Administration'
+				},
+				{
 					target: '/drive',
 					text: 'Drive'
 				},
 				...this.state.currentFolder.folderPath.map(item => ({
 					target: `/drive/${item.id}`,
-					text: `View folder ${item.name}`
-				})),
-				{
-					target: `/drive/${this.state.currentFolder.id}`,
-					text: `View folder ${this.state.currentFolder.fileName}`
-				}
+					text: `View folder '${item.name}'`
+				}))
 			]);
 
 			this.updateTitle(`View folder ${this.state.currentFolder.fileName}`);
@@ -132,12 +130,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 		if (this.state.error) {
 			switch (this.state.errorReason) {
 				case ErrorReason.ERR403:
-					return (
-						<div>
-							You do not have permission to view the requested
-							folder
-						</div>
-					);
+				case ErrorReason.ERR401:
+					return <div>You do not have permission to view the requested folder</div>;
 				case ErrorReason.ERR404:
 					return <div>The requested folder could not be found</div>;
 				case ErrorReason.ERR500:
@@ -154,9 +148,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		const filesPerRow = 4;
 
-		const folders = this.state.files.filter(
-			file => file.contentType === 'application/folder'
-		);
+		const folders = this.state.files.filter(file => file.contentType === 'application/folder');
 		const rowedFolders: FileInterface[][] = [];
 		folders.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
@@ -167,9 +159,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			}
 		});
 
-		const files = this.state.files.filter(
-			file => file.contentType !== 'application/folder'
-		);
+		const files = this.state.files.filter(file => file.contentType !== 'application/folder');
 		const rowedFiles: FileInterface[][] = [];
 		files.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
@@ -180,9 +170,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			}
 		});
 
-		const selectedFile = this.state.files.filter(
-			f => f.id === this.state.currentlySelected
-		);
+		const selectedFile = this.state.files.filter(f => f.id === this.state.currentlySelected);
 		const isFileOrFolderSelected = selectedFile.length > 0;
 		let isFolderSelected = false;
 		let isFileSelected = false;
@@ -211,24 +199,25 @@ export default class Drive extends Page<PageProps, DriveState> {
 			}
 		}
 
-		const NewFolderRequestForm = Form as new () => Form<{ name: string }>;
-
 		return (
 			<div>
-				{this.props.member &&
-				this.props.member.permissions.FileManagement === 1 ? (
+				{this.props.member && this.props.member.hasPermission('FileManagement') ? (
 					<div>
-						<NewFolderRequestForm
+						<Form<{ name: string }>
 							id=""
 							values={{
 								name: this.state.newFoldername
 							}}
 							onChange={this.updateNewFolderForm}
 							onSubmit={this.createFolder}
+							submitInfo={{
+								text: 'Add folder',
+								className: 'primaryButton drive-newfoldername-submit'
+							}}
 							rowClassName="drive-newfoldername-row"
 						>
 							<TextInput name="name" />
-						</NewFolderRequestForm>
+						</Form>
 					</div>
 				) : null}
 				<div className="drive-folders">
@@ -240,10 +229,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 										key={j}
 										file={f}
 										onSelect={this.onFolderClick}
-										selected={
-											f.id ===
-											this.state.currentlySelected
-										}
+										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 										refresh={this.refresh}
 									/>
@@ -251,9 +237,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 							</div>
 							{isFolderSelected && i === indices.row ? (
 								<ExtraFolderDisplay
-									currentFolderID={
-										this.state.currentFolder!.id
-									}
+									currentFolderID={this.state.currentFolder!.id}
 									file={folderList[indices.column]}
 									member={this.props.member}
 									childRef={this.extraInfoRef}
@@ -282,10 +266,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 										key={j}
 										file={f}
 										onSelect={this.onFileClick}
-										selected={
-											f.id ===
-											this.state.currentlySelected
-										}
+										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 									/>
 								))}
@@ -366,9 +347,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 				},
 				() => {
 					if (update) {
-						this.props.routeProps.history.push(
-							'/' + this.path + '/' + id
-						);
+						this.props.routeProps.history.push('/' + this.path + '/' + id);
 					}
 
 					this.props.updateBreadCrumbs(
@@ -389,6 +368,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 						? ErrorReason.ERR404
 						: err.status === 500
 						? ErrorReason.ERR500
+						: err.status === 401
+						? ErrorReason.ERR401
 						: ErrorReason.UNKNOWN
 			});
 		}
@@ -401,10 +382,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		};
 
 		this.setState(prev => ({
-			files: [
-				...prev.files!,
-				new FileInterface(fileObject, this.props.account)
-			]
+			files: [...prev.files!, new FileInterface(fileObject, this.props.account)]
 		}));
 	}
 
@@ -437,7 +415,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 	}
 
 	private createFolder() {
-		if (this.props.member) {
+		if (this.props.member && this.state.newFoldername !== '') {
 			FileInterface.CreateFolder(
 				this.state.newFoldername,
 				this.props.member,

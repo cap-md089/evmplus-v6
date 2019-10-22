@@ -10,8 +10,13 @@
 	line-height: 18px;
 }
 
+.drive-newfoldername-submit {
+	margin-left: 10px;
+}
+
 .drive-newfoldername-row {
 	float: left;
+	margin-bottom: 10px;
 }
 
 .drive-folder-display {
