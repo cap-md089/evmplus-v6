@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Check for master branch
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$branch" = "master" ]; then
+  echo "You can't commit directly to master branch"
+  exit 1
+fi
+
+# Run tests
+if npm test; then
+	# We passed
+else
+	echo "Unit tests have failed"
+	exit 1
+fi
+
+# Check for matching the style guides
+if prettier; then
+	# Everything is styled properly
+else
+	echo "Code is improperly styled"
+	exit 1
+fi
