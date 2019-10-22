@@ -1,4 +1,10 @@
-import { AttendanceRecord, MemberReference, NewAttendanceRecord } from 'common-lib';
+import {
+	AttendanceRecord,
+	MemberReference,
+	NewAttendanceRecord,
+	NHQMemberReference,
+	ProspectiveMemberReference
+} from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
@@ -15,6 +21,8 @@ import Event from '../../lib/Event';
 import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
+import DropDownList from '../../components/DropDownList';
+import AttendanceItemView from '../../components/AttendanceView';
 
 const noop = () => void 0;
 
@@ -178,17 +186,18 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			return <div>{this.state.error}</div>;
 		}
 
-		if (this.state.event === null) {
+		const { event } = this.state;
+		const { member } = this.props;
+
+		if (event === null) {
 			return <Loader />;
 		}
 
 		return (
 			<div>
-				{this.props.member && this.props.member.isPOCOf(this.state.event) ? (
+				{member && member.isPOCOf(event) ? (
 					<>
-						<Link to={`/eventform/${this.state.event.id}`}>
-							Edit event "{this.state.event.name}"
-						</Link>
+						<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
 						{' | '}
 						<DialogueButtonForm<{ newTime: number }>
 							buttonText="Move event"
@@ -200,7 +209,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							title="Move event"
 							labels={['Move event', 'Copy move event', 'Cancel']}
 							values={{
-								newTime: this.state.event.startDateTime
+								newTime: event.startDateTime
 							}}
 						>
 							<TextBox name="null">
@@ -241,7 +250,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							title="Move event"
 							labels={['Copy event', 'Cancel']}
 							values={{
-								newTime: this.state.event.startDateTime
+								newTime: event.startDateTime
 							}}
 						>
 							<Label>Start time of new event</Label>
@@ -265,68 +274,65 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							Really delete event?
 						</DialogueButton>
 						{' | '}
-						<Link to={`/multiadd/${this.state.event.id}`}>Add attendance</Link>
+						<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 						<br />
 						<br />
 					</>
 				) : null}
 				<div id="information">
-					<strong>Event: </strong> {this.state.event.name}
+					<strong>Event: </strong> {event.name}
 					<br />
-					<strong>Event ID: </strong> {this.state.event.accountID.toUpperCase()}-
-					{this.state.event.id}
+					<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 					<br />
-					<strong>Meet</strong> at {formatDate(this.state.event.meetDateTime)} at{' '}
-					{this.state.event.location}
+					<strong>Meet</strong> at {formatDate(event.meetDateTime)} at {event.location}
 					<br />
-					<strong>Start</strong> at {formatDate(this.state.event.startDateTime)} at{' '}
-					{this.state.event.location}
+					<strong>Start</strong> at {formatDate(event.startDateTime)} at {event.location}
 					<br />
-					<strong>End</strong> at {formatDate(this.state.event.endDateTime)}
+					<strong>End</strong> at {formatDate(event.endDateTime)}
 					<br />
-					<strong>Pickup</strong> at {formatDate(this.state.event.pickupDateTime)} at{' '}
-					{this.state.event.pickupLocation}
+					<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
+					{event.pickupLocation}
 					<br />
 					<br />
 					<strong>Transportation provided:</strong>{' '}
-					{this.state.event.transportationProvided ? 'YES' : 'NO'}
+					{event.transportationProvided ? 'YES' : 'NO'}
 					<br />
-					{this.state.event.transportationProvided ? (
+					{event.transportationProvided ? (
 						<>
 							<strong>Transportation Description:</strong>{' '}
-							{this.state.event.transportationDescription}
+							{event.transportationDescription}
 							<br />
 						</>
 					) : null}
 					<strong>Uniform:</strong>{' '}
-					{parseMultCheckboxReturn(this.state.event.uniform, Uniforms, false)}
+					{parseMultCheckboxReturn(event.uniform, Uniforms, false)}
 					<br />
-					<strong>Comments:</strong> {this.state.event.comments}
+					<strong>Comments:</strong> {event.comments}
 					<br />
 					<strong>Activity:</strong>{' '}
-					{parseMultCheckboxReturn(this.state.event.activity, Activities, true)}
+					{parseMultCheckboxReturn(event.activity, Activities, true)}
 					<br />
 					<strong>Required forms:</strong>{' '}
-					{parseMultCheckboxReturn(this.state.event.requiredForms, RequiredForms, true)}
+					{parseMultCheckboxReturn(event.requiredForms, RequiredForms, true)}
 					<br />
-					<strong>Event status:</strong> {eventStatus(this.state.event.status)}
+					<strong>Event status:</strong> {eventStatus(event.status)}
 					<br />
 					<br />
 					<div>
-						{this.state.event.pointsOfContact.map((poc, i) =>
+						{event.pointsOfContact.map((poc, i) =>
 							poc.type === PointOfContactType.INTERNAL ? (
 								<div key={i}>
 									<b>CAP Point of Contact: </b>
 									{poc.name}
 									<br />
-									{poc.email !== '' ? (
+									{!!poc.email ? (
 										<>
 											<b>CAP Point of Contact Email: </b>
 											{poc.email}
 											<br />
 										</>
 									) : null}
-									{poc.phone !== '' ? (
+									{!!poc.phone ? (
 										<>
 											<b>CAP Point of Contact Phone: </b>
 											{poc.phone}
@@ -360,13 +366,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						)}
 					</div>
 				</div>
-				{this.props.member !== null ? (
+				{member !== null ? (
 					<div id="signup">
-						{this.state.event.canSignUpForEvent(this.props.member) ? (
+						{event.canSignUpForEvent(this.props.member) ? (
 							<AttendanceForm
 								account={this.props.account}
-								event={this.state.event}
-								member={this.props.member}
+								event={event}
+								member={member}
 								updateRecord={this.addAttendanceRecord}
 								updated={false}
 								clearUpdated={this.clearPreviousMember}
@@ -374,31 +380,35 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							/>
 						) : null}
 						<h2 id="attendance">Attendance</h2>
-						{this.state.event.attendance.map((val, i) =>
-							this.props.member &&
-							(this.props.member.matchesReference(val.memberID) ||
-								this.state.event!.isPOC(this.props.member)) ? (
-								<AttendanceForm
-									account={this.props.account}
-									event={this.state.event!}
-									member={this.props.member}
-									updateRecord={this.addAttendanceRecord}
-									record={val}
-									key={i}
+						<DropDownList
+							titles={val =>
+								`${
+									(val.memberID as
+										| NHQMemberReference
+										| ProspectiveMemberReference).id
+								}: ${val.memberName}`
+							}
+							values={event.attendance}
+							onlyOneOpen={true}
+						>
+							{(val, i) => (
+								<AttendanceItemView
+									attendanceRecord={val}
+									clearUpdated={this.clearPreviousMember}
+									owningAccount={this.props.account}
+									owningEvent={event}
+									member={member}
+									removeAttendance={this.removeAttendanceRecord}
+									updateAttendance={this.addAttendanceRecord}
 									updated={MemberBase.AreMemberReferencesTheSame(
 										this.state.previousUpdatedMember,
 										val.memberID
 									)}
-									clearUpdated={this.clearPreviousMember}
-									removeRecord={this.removeAttendanceRecord}
+									key={i}
 								/>
-							) : (
-								<div key={i}>{val.memberName}</div>
-							)
-						)}
-						{this.state.event.attendance.length === 0 ? (
-							<div>No attendance records</div>
-						) : null}
+							)}
+						</DropDownList>
+						{event.attendance.length === 0 ? <div>No attendance records</div> : null}
 					</div>
 				) : (
 					<SigninLink
