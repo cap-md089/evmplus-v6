@@ -11,14 +11,16 @@ fi
 # Run tests
 if npm test; then
 	# We passed
+	:
 else
 	echo "Unit tests have failed"
 	exit 1
 fi
 
 # Check for matching the style guides
-if prettier; then
+if prettier --check "src/**/*.tsx?"; then
 	# Everything is styled properly
+	:
 else
 	echo "Code is improperly styled"
 	exit 1
