@@ -1,8 +1,20 @@
+import {
+	DisplayInternalPointOfContact,
+	ExternalPointOfContact,
+	Identifiable,
+	MemberPermissions,
+	MultCheckboxReturn,
+	RadioReturn
+} from 'common-lib';
+import { PointOfContactType } from 'common-lib/index';
 import { EditorState } from 'draft-js';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../components/Button';
-import SigninLink from '../components/SigninLink';
+import DropDownList from '../components/DropDownList';
+import PermissionsEdit from '../components/form-inputs/PermissionsEdit';
+import POCInput from '../components/form-inputs/POCInput';
+import Select from '../components/form-inputs/Select';
 import Form, {
 	Checkbox,
 	DateTimeInput,
@@ -18,15 +30,11 @@ import Form, {
 	TextInput,
 	Title
 } from '../components/forms/SimpleForm';
+import LoaderShort from '../components/LoaderShort';
+import SigninLink from '../components/SigninLink';
+import { CAPMemberClasses } from '../lib/Members';
 import slowEmptyEditorState from '../lib/slowEditorState';
 import Page, { PageProps } from './Page';
-import { PointOfContactType } from 'common-lib/index';
-import { Identifiable, MultCheckboxReturn, DisplayInternalPointOfContact, ExternalPointOfContact, RadioReturn, MemberPermissions } from 'common-lib';
-import { CAPMemberClasses } from '../lib/Members';
-import POCInput from '../components/form-inputs/POCInput';
-import Select from '../components/form-inputs/Select';
-import PermissionsEdit from '../components/form-inputs/PermissionsEdit';
-import LoaderShort from '../components/LoaderShort';
 
 enum Test1 {
 	Opt1,
@@ -140,6 +148,9 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 		return this.state.test14 !== null && this.props.member !== null ? (
 			<div>
 				<LoaderShort />
+				<DropDownList<number> values={[1, 2, 3]} titles={() => 'Number'} onlyOneOpen={true}>
+					{num => <div>{num}</div>}
+				</DropDownList>
 				<SigninLink
 					authorizeUser={this.props.authorizeUser}
 					{...this.props.fullMemberDetails}
@@ -204,7 +215,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						onChange={text => text.startsWith('a') || text.length === 0}
 						name="test1"
 					/>
-					<Select name="test18" labels={['Option 1', 'Option 2']}/>
+					<Select name="test18" labels={['Option 1', 'Option 2']} />
 					<Title>A title</Title>
 					<Label>A label</Label>
 					<TextInput name="test2" value={this.state.test2} />
@@ -326,17 +337,14 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						name="pocInput-0"
 						value={this.state.test17}
 					/>
-					<PermissionsEdit
-						name="test19"
-						value={this.state.test19}
-					/>
+					<PermissionsEdit name="test19" value={this.state.test19} />
 				</TestForm>
 				<TestButton
 					data={{
 						hi: true
 					}}
 					useData={true}
-					onClick={console.log}
+					onClick={alert}
 				>
 					Submit
 				</TestButton>
