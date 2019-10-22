@@ -788,10 +788,6 @@ export interface EventObject extends RawEventObject {
 	 * Who to contact for more event information
 	 */
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
-	/**
-	 * Custom fields for attendance records
-	 */
-	customAttendanceFields: Array<CustomAttendanceField>;
 }
 
 /**
@@ -969,7 +965,7 @@ export interface NewEventObject {
 	/**
 	 * Custom fields for attendance records
 	 */
-	customAttendanceFields: (CustomAttendanceField)[];
+	customAttendanceFields: CustomAttendanceField[];
 	/**
 	 * Can cadets sign up for only a portion of the event?
 	 */
@@ -1044,15 +1040,16 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 	/**
 	 * Record member rank and name to show what rank they were when
 	 * they participated
-	 *
-	 * SHOULD use the MemberBase.getFullName() function to calculate this,
-	 * as this works across the different classes
 	 */
 	memberName: string;
 	/**
 	 * Whether or not the emails for this cadet/for the POCs have been sent
 	 */
 	summaryEmailSent: boolean;
+}
+
+export interface FullAttendanceRecord extends AttendanceRecord {
+	memberEmail: string;
 }
 
 /**
@@ -2489,7 +2486,8 @@ export type NotificationData =
 	| NotificationDataProspectiveMember
 	| NotificationDataPersonnelFile
 	| NotificationDataEvent
-	| NotificationDataPermissions;
+	| NotificationDataPermissions
+	| null;
 
 /**
  * Audit log item stored in the database

@@ -43,9 +43,10 @@
         - [X] Auth
         - [X] Password
         - [X] Session
-*** Account [2/3]
+*** Account [2/4]
     - [X] Middleware
     - [ ] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
+    - [ ] Automatically determine timezone (for now shove in Registry)
     - [X] Unit tests
 *** Files/Drive [2/3]
     - [X] BREAD
@@ -146,7 +147,7 @@
     - [ ] Unit tests
 *** Photo library [1/2]
     - [X] It works
-    - [ ] It loads 20 at a time
+    - [ ] It loads x at a time, x defined in registry
 *** Administration [2/3]
     - [X] Redesign to have better UX
     - [X] Pluggables [2/2]
@@ -224,10 +225,9 @@
 ** Debugging
 *** DONE Error handling
 * Security
-** CSRF [2/3]
+** CSRF [2/2]
    - [X] PAM on server
    - [X] Token request for every POST request
-   - [ ] Token request for every sign in request
 ** TODO Captcha
 ** DONE XSS protection
    Done by React
