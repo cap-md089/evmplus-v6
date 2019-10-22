@@ -104,6 +104,16 @@
     - [X] Sessions
     - [ ] Integration tests
     - [ ] Unit test
+*** Exports [1/2]
+    - [ ] Attendance Log (all members)
+    - [ ] Event Roster (members signed up)
+      - [ ] Catch unregistered member (not in June 2019 MAR CAPWATCH download)
+    - [ ] Spreadsheet Roster
+    - [ ] CAPF 60-80 - Permission slip
+      - [ ] Fix null phone number uncaught error (Coppenbarger Emergency Cell Phone, evt 3)
+      - [ ] calculate 1st page block size to fit comments
+    - [ ] CAPF 31 - Application for Encapment
+    - [ ] CAPF 161 - Emergency Information
 *** Teams [1/2]
     - [X] BREAD
     - [ ] Integration tests
@@ -173,7 +183,18 @@
     - [X] Team delete
 *** Events [4/6]
     - [X] Add event
+      - [ ] Fix bug: clicking 'Receive event updates' or other three checkboxes clears out POC information
+      - [ ] If session expired, 'token 401' error issues and client doesn't respond
+      - [ ] Custom attendance field not saved with event
     - [X] Modify event
+      - [ ] Fix POC checkbox anomoly where 2nd POC changes 1st POC checkbox
+      - [ ] Fix event custom field anomoly where 2nd custom field changes 1st custom field checkbox
+      - [ ] Fix custom field type selector, unable to change to Text or Number type of field
+      - [ ] Remove Region Event Number option
+      - [ ] If session expired, 'token 401' error issues and client doesn't respond
+      - [ ] No notification to user if required information not present (incomplete POC, for example)
+      - [ ] Remove POC button should read 'Remove POC' not 'Remove Item'
+      - [ ] 'UPDATE EVENT' returns error 400
     - [-] Calendar [1/2]
       - [X] Basic use
       - [ ] Context menu for events

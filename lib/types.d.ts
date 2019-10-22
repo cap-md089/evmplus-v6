@@ -2523,6 +2523,16 @@ export interface RawAuditLogItem {
 export interface AuditLogItem extends RawAuditLogItem {}
 
 /**
+ * Organizational data as imported from CAPWATCH files
+ */
+export interface RawOrganizationObject extends NHQ.Organization {}
+
+/**
+ * Organizational data as imported from CAPWATCH files
+ */
+export interface OrganizationObject extends RawOrganizationObject {}
+
+/**
  * These are objects containing the results of people completing their tasks
  */
 export interface TaskRecipientsResults {
