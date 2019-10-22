@@ -221,6 +221,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		this.id = data.id;
 		this.comments = data.comments;
 		this.created = data.created;
+		this.contentType = data.contentType;
 		this.fileChildren = data.fileChildren;
 		this.fileName = data.fileName;
 		this.forDisplay = data.forDisplay;
