@@ -12,6 +12,8 @@ import { tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
 import account from './account';
+import basic from './attendance/basic';
+import forcadet from './attendance/forother';
 import capwatch from './capwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
@@ -90,5 +92,20 @@ router.post(
 
 router.use('/capwatch', memberMiddleware, permissionMiddleware('DownloadCAPWATCH'), capwatch);
 router.use('/account', account);
+
+router.post(
+	'/generateattendance',
+	memberMiddleware,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(Validator.MemberReference),
+	basic
+);
+router.post(
+	'/generateattendance/other',
+	memberMiddleware,
+	tokenMiddleware,
+	Validator.BodyExpressMiddleware(Validator.MemberReference),
+	forcadet
+);
 
 export default router;
