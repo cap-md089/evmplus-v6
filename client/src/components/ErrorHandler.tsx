@@ -45,11 +45,7 @@ export default class ErrorHandler extends React.PureComponent<
 			type: 'Client'
 		};
 
-		ErrorMessage.Create(
-			errorObject,
-			this.props.member,
-			this.props.account
-		).then(() => {
+		ErrorMessage.Create(errorObject, this.props.member, this.props.account).then(() => {
 			// tslint:disable-next-line:no-console
 			console.log('Error logged');
 		});
@@ -63,9 +59,8 @@ export default class ErrorHandler extends React.PureComponent<
 		return this.state.crash ? (
 			<div>
 				<h1>Uh oh! Something bad happened on our end...</h1>
-				The page appears to have crashed. The developers have been
-				notified so that they may fix the issue. If you want to try
-				again,
+				The page appears to have crashed. The developers have been notified so that they may
+				fix the issue. If you want to try again,
 				<button className="linkButton" onClick={this.tryAgain}>
 					please refresh the page
 				</button>

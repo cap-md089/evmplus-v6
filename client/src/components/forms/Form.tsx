@@ -95,9 +95,7 @@ class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends Simp
 				  );
 
 		return (
-			<form
-				className={`${this.props.className ? `${this.props.className} ` : ''}`}
-			>
+			<form className={`${this.props.className ? `${this.props.className} ` : ''}`}>
 				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
 					if (isInput(child)) {
 						const childName: keyof C = child.props.name as keyof C;

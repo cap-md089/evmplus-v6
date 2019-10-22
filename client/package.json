@@ -21,7 +21,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "jest",
+    "test": "react-scripts test --watchAll=false",
     "eject": "react-scripts eject",
     "sass": "sass src/nhq.sass:src/nhq.css --watch",
     "start-quiet": "BROWSER=none npm start"

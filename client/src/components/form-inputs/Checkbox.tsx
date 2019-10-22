@@ -5,10 +5,7 @@ interface CheckboxState {
 	value: boolean;
 }
 
-export default class Checkbox extends React.Component<
-	InputProps<boolean>,
-	CheckboxState
-> {
+export default class Checkbox extends React.Component<InputProps<boolean>, CheckboxState> {
 	public state = {
 		value: false
 	};
@@ -20,8 +17,7 @@ export default class Checkbox extends React.Component<
 
 		this.state = {
 			value:
-				typeof props.value === 'undefined' ||
-				(props.value as any) === ''
+				typeof props.value === 'undefined' || (props.value as any) === ''
 					? false
 					: props.value
 		};

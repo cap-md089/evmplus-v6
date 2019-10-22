@@ -5,7 +5,7 @@ import { InputProps } from './Input';
 export interface TextInputProps extends InputProps<string> {
 	/**
 	 * Called when the text is changed
-	 * 
+	 *
 	 * If it returns a boolean, it changes whether or not the change is accepted
 	 */
 	onChange?: (val: string) => void;
@@ -28,11 +28,11 @@ export default class TextInput extends React.Component<TextInputProps> {
 			props.onInitialize({
 				name: props.name,
 				value: props.value || ''
-			})
+			});
 		}
 	}
 
-	public onChange (e: React.FormEvent<HTMLInputElement>) {
+	public onChange(e: React.FormEvent<HTMLInputElement>) {
 		const text = e.currentTarget.value;
 
 		let change = true;

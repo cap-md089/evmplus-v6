@@ -6,33 +6,27 @@ export interface InputProps<V> {
 	// Callback handler
 	/**
 	 * Function called whenever the user enters something and updates the values
-	 * 
+	 *
 	 * @param {V} val The value of the input
 	 */
 	onChange?: (val: V) => void;
 	/**
 	 * Function called whenever the user enters something and updates the values
-	 * 
+	 *
 	 * Meant to be used by the Form class (and its derivatives)
-	 * 
+	 *
 	 * @param {{name: string, value: V}} event The form event
 	 */
-	onUpdate?: (e: {
-		name: string,
-		value: V
-	}) => void;
+	onUpdate?: (e: { name: string; value: V }) => void;
 	/**
 	 * Function called when the form component initializes
-	 * 
+	 *
 	 * Meant to be used by the Form class (and its derivatives)
-	 * 
+	 *
 	 * @param {{name: string, value: V}} event The form event
 	 */
-	onInitialize?: (e: {
-		name: string,
-		value: V
-	}) => void;
-	
+	onInitialize?: (e: { name: string; value: V }) => void;
+
 	// Implement HTML form stuff
 	/**
 	 * The identifier of the input
@@ -40,7 +34,7 @@ export interface InputProps<V> {
 	name: string;
 	/**
 	 * The value of the input
-	 * 
+	 *
 	 * Denoted as required because all components need to be controlled
 	 */
 	value?: V;
@@ -65,13 +59,13 @@ export interface InputProps<V> {
 	account?: Account | null;
 	/**
 	 * Whether or not there is an error with this component
-	 * 
+	 *
 	 * Not all components implement this
 	 */
 	hasError?: boolean;
 	/**
 	 * An error message to display if this component has an error
-	 * 
+	 *
 	 * Not all components implement this
 	 */
 	errorMessage?: string;

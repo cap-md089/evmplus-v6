@@ -164,7 +164,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 	}
 
 	private getFilterValueUpdater(i: number) {
-		return ((e: any) => {
+		return (e: any) => {
 			const filterValues = (this.props.filterValues || this.state.filterValues).slice();
 
 			filterValues[i] = e;
@@ -195,7 +195,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			if (this.props.onChangeVisible) {
 				this.props.onChangeVisible(filteredValues);
 			}
-		});
+		};
 	}
 
 	// private getInitializer(i: number) {
@@ -232,7 +232,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 	// }
 
 	private getSelectHandler(val: T) {
-		return ((e: any) => {
+		return (e: any) => {
 			if (this.props.blacklistFunction && !this.props.blacklistFunction(val)) {
 				return;
 			}
@@ -283,7 +283,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 					});
 				}
 			}
-		});
+		};
 	}
 
 	private get filteredIDValues() {

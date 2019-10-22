@@ -12,35 +12,34 @@ const dividerStyle: React.CSSProperties = {
 	color: '#999'
 };
 
-export class BreadCrumbsPresentation extends React.Component<{
-	links: BreadCrumb[]
-}, {}> {
-	public render () {
+export class BreadCrumbsPresentation extends React.Component<
+	{
+		links: BreadCrumb[];
+	},
+	{}
+> {
+	public render() {
 		return (
 			<div id="breadcrumbs">
 				<ul>
-					{
-						this.props.links.map((link, i) => {
-							if (i === 0) {
-								return (
-									<li key={i}>
-										<Link to={link.target}>
-											{link.text}
-										</Link>
-									</li>
-								);
-							} else {
-								return [
-									<li key={'d' + i} style={dividerStyle}>/</li>,
-									<li key={i}>
-										<Link to={link.target}>
-											{link.text}
-										</Link>
-									</li>
-								];
-							}
-						})
-					}
+					{this.props.links.map((link, i) => {
+						if (i === 0) {
+							return (
+								<li key={i}>
+									<Link to={link.target}>{link.text}</Link>
+								</li>
+							);
+						} else {
+							return [
+								<li key={'d' + i} style={dividerStyle}>
+									/
+								</li>,
+								<li key={i}>
+									<Link to={link.target}>{link.text}</Link>
+								</li>
+							];
+						}
+					})}
 				</ul>
 			</div>
 		);

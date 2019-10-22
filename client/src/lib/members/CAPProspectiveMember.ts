@@ -1,12 +1,16 @@
 import Account from '../Account';
 import MemberBase from '../MemberBase';
-import { ProspectiveMemberObject, AbsenteeInformation, MemberReference, ShortDutyPosition } from 'common-lib';
+import {
+	ProspectiveMemberObject,
+	AbsenteeInformation,
+	MemberReference,
+	ShortDutyPosition
+} from 'common-lib';
 
 /**
  * A class to represent those wanting to join a CAP squadron
  */
-export default class CAPProspectiveMember extends MemberBase
-	implements ProspectiveMemberObject {
+export default class CAPProspectiveMember extends MemberBase implements ProspectiveMemberObject {
 	/**
 	 * The ID of the user
 	 */
@@ -58,11 +62,11 @@ export default class CAPProspectiveMember extends MemberBase
 	public type: 'CAPProspectiveMember' = 'CAPProspectiveMember';
 
 	/**
-	 * 
-	 * 
-	 * @param data 
-	 * @param requestingAccount 
-	 * @param sessionID 
+	 *
+	 *
+	 * @param data
+	 * @param requestingAccount
+	 * @param sessionID
 	 */
 	public constructor(
 		data: ProspectiveMemberObject,
@@ -106,12 +110,12 @@ export default class CAPProspectiveMember extends MemberBase
 			type: 'CAPProspectiveMember',
 			usrID: this.usrID,
 			accountID: this.accountID,
-			absenteeInformation: this.absenteeInformation,
+			absenteeInformation: this.absenteeInformation
 		};
 	}
 
 	public getFullName() {
-		return `${this.memberRank} ${super.getFullName()}`
+		return `${this.memberRank} ${super.getFullName()}`;
 	}
 
 	public hasDutyPosition(dutyPosition: string | string[]): boolean {
@@ -147,9 +151,7 @@ export default class CAPProspectiveMember extends MemberBase
 			{
 				method: 'POST',
 				body: JSON.stringify({
-					dutyPositions: this.dutyPositions.filter(
-						d => d.type === 'CAPUnit'
-					),
+					dutyPositions: this.dutyPositions.filter(d => d.type === 'CAPUnit'),
 					token
 				})
 			},

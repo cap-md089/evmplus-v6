@@ -258,7 +258,10 @@ export default class Calendar extends Page<
 
 			if (startDate < thisMonth) {
 				startWeek = 0;
-				startDay = +startDate + (thisMonth.weekday % 7) * 24 * 3600 * 1000 < +thisMonth ? 0 : startDate.weekday;
+				startDay =
+					+startDate + (thisMonth.weekday % 7) * 24 * 3600 * 1000 < +thisMonth
+						? 0
+						: startDate.weekday;
 			} else if (startDate < nextMonth) {
 				startWeek = Math.floor(((thisMonth.weekday % 7) + startDate.day) / 7);
 				startDay = startDate.weekday;

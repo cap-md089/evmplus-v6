@@ -218,7 +218,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 	}
 
 	private notificationClick(index: number) {
-		return (async () => {
+		return async () => {
 			if (!this.state.notifications) {
 				this.setState(prev => ({
 					currentViewed: prev.currentViewed === index ? null : index
@@ -242,7 +242,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			}));
 
 			this.forceUpdate();
-		});
+		};
 	}
 
 	private async markUnread(index: number) {

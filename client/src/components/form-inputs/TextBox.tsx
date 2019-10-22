@@ -7,9 +7,12 @@ interface TextBoxProps extends InputProps<undefined> {
 }
 
 export default class TextBox extends React.Component<TextBoxProps> {
-	public render () {
+	public render() {
 		return (
-			<div className="formbox" style={{lineHeight: 'initial', paddingTop: 2, paddingBottom: 5}}>
+			<div
+				className="formbox"
+				style={{ lineHeight: 'initial', paddingTop: 2, paddingBottom: 5 }}
+			>
 				{this.props.children}
 			</div>
 		);

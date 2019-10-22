@@ -1,7 +1,12 @@
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './Members';
-import { ErrorObject, NewClientErrorObject, ClientErrorObject, ServerErrorObject } from 'common-lib';
+import {
+	ErrorObject,
+	NewClientErrorObject,
+	ClientErrorObject,
+	ServerErrorObject
+} from 'common-lib';
 
 export default class ErrorMessage extends APIInterface<ErrorObject> {
 	public static async Create(
@@ -9,19 +14,16 @@ export default class ErrorMessage extends APIInterface<ErrorObject> {
 		member: MemberBase | null,
 		account: Account
 	) {
-		const req = await account.fetch(
-			'/api/clienterror',
-			{
-				body: JSON.stringify(info),
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json',
-					'authorization': member ? member.sessionID : ''
-				}
+		const req = await account.fetch('/api/clienterror', {
+			body: JSON.stringify(info),
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				'authorization': member ? member.sessionID : ''
 			}
-		);
+		});
 
-		const fullError = await req.json() as ClientErrorObject;
+		const fullError = (await req.json()) as ClientErrorObject;
 
 		return new ErrorMessage(fullError);
 	}

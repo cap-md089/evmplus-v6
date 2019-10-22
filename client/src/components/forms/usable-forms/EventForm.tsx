@@ -21,7 +21,12 @@ import SimpleForm, {
 	Title
 } from '../SimpleForm';
 import Registry from '../../../lib/Registry';
-import { NewEventObject, ExternalPointOfContact, DisplayInternalPointOfContact, CustomAttendanceField } from 'common-lib';
+import {
+	NewEventObject,
+	ExternalPointOfContact,
+	DisplayInternalPointOfContact,
+	CustomAttendanceField
+} from 'common-lib';
 import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
 import Team from '../../../lib/Team';
 import Account from '../../../lib/Account';
@@ -55,12 +60,7 @@ export const RequiredForms = [
 	'CAPF 161 Emergency Information',
 	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
 ];
-export const Meals = [
-	'No meals provided',
-	'Meals provided',
-	'Bring own food',
-	'Bring money'
-];
+export const Meals = ['No meals provided', 'Meals provided', 'Bring own food', 'Bring money'];
 export const LodgingArrangments = [
 	'Hotel or individual room',
 	'Open bay building',
@@ -118,10 +118,7 @@ export const emptyEvent = (): NewEventObject => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: [
-		[false, false, true, false, false, false, false, false, false],
-		''
-	],
+	uniform: [[false, false, true, false, false, false, false, false, false], ''],
 	desiredNumberOfParticipants: 8,
 	registration: null,
 	participationFee: null,
@@ -131,10 +128,7 @@ export const emptyEvent = (): NewEventObject => ({
 	highAdventureDescription: '',
 	requiredEquipment: [],
 	eventWebsite: '',
-	requiredForms: [
-		[true, false, false, false, false, false, false, false],
-		''
-	],
+	requiredForms: [[true, false, false, false, false, false, false, false], ''],
 	comments: '',
 	acceptSignups: true,
 	signUpDenyMessage: '',
@@ -238,15 +232,11 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	startDateTime: event.startDateTime,
 	status: event.status,
 	teamID:
-		event.teamID === null ||
-		(event.teamID as any) === '' ||
-		event.teamID === undefined
+		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
 			? null
 			: parseInt(event.teamID.toString(), 10),
 	limitSignupsToTeam:
-		event.teamID === null ||
-		(event.teamID as any) === '' ||
-		event.teamID === undefined
+		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
 			? null
 			: event.limitSignupsToTeam,
 	transportationDescription: event.transportationDescription,
@@ -255,10 +245,7 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	wingEventNumber: event.wingEventNumber
 });
 
-export default class EventForm extends React.Component<
-	EventFormProps,
-	EventFormState
-> {
+export default class EventForm extends React.Component<EventFormProps, EventFormState> {
 	public state: EventFormState = {
 		valid: false,
 		changed: {
@@ -365,9 +352,7 @@ export default class EventForm extends React.Component<
 				onSubmit={this.onEventSubmit}
 				values={values}
 				submitInfo={{
-					text: this.props.isEventUpdate
-						? 'Update event'
-						: 'Create event',
+					text: this.props.isEventUpdate ? 'Update event' : 'Create event',
 					disabled: !this.state.valid
 				}}
 			>
@@ -397,10 +382,7 @@ export default class EventForm extends React.Component<
 				/>
 
 				<Label>Event location</Label>
-				<TextInput
-					name="location"
-					onChange={this.eventLocationInputChange}
-				/>
+				<TextInput name="location" onChange={this.eventLocationInputChange} />
 
 				<Label>End date and time</Label>
 				<DateTimeInput
@@ -421,10 +403,7 @@ export default class EventForm extends React.Component<
 				/>
 
 				<Label>Pickup location</Label>
-				<TextInput
-					name="pickupLocation"
-					onChange={this.pickupLocationInputChange}
-				/>
+				<TextInput name="pickupLocation" onChange={this.pickupLocationInputChange} />
 
 				<Label>Transportation provided</Label>
 				<Checkbox name="transportationProvided" />
@@ -443,18 +422,10 @@ export default class EventForm extends React.Component<
 				/>
 
 				<Label>Activity type</Label>
-				<MultCheckbox
-					name="activity"
-					labels={Activities}
-					other={true}
-				/>
+				<MultCheckbox name="activity" labels={Activities} other={true} />
 
 				<Label>Lodging arrangement</Label>
-				<MultCheckbox
-					name="lodgingArrangments"
-					labels={LodgingArrangments}
-					other={true}
-				/>
+				<MultCheckbox name="lodgingArrangments" labels={LodgingArrangments} other={true} />
 
 				<Label>Event website</Label>
 				<TextInput name="eventWebsite" />
@@ -468,11 +439,7 @@ export default class EventForm extends React.Component<
 				<MultCheckbox name="uniform" labels={Uniforms} />
 
 				<Label>Required forms</Label>
-				<MultCheckbox
-					name="requiredForms"
-					labels={RequiredForms}
-					other={true}
-				/>
+				<MultCheckbox name="requiredForms" labels={RequiredForms} other={true} />
 
 				<Label>Required equipment</Label>
 				<ListEditor<string, InputProps<string>>
@@ -534,18 +501,11 @@ export default class EventForm extends React.Component<
 				</FormBlock>
 
 				<Label>Meals</Label>
-				<MultCheckbox
-					name="mealsDescription"
-					labels={Meals}
-					other={true}
-				/>
+				<MultCheckbox name="mealsDescription" labels={Meals} other={true} />
 
 				<Title>Points of Contact</Title>
 
-				<ListEditor<
-					DisplayInternalPointOfContact | ExternalPointOfContact,
-					POCInputProps
-				>
+				<ListEditor<DisplayInternalPointOfContact | ExternalPointOfContact, POCInputProps>
 					name="pointsOfContact"
 					inputComponent={POCInput}
 					addNew={() => ({
@@ -572,10 +532,7 @@ export default class EventForm extends React.Component<
 
 				<Title>Custom Attendance Fields</Title>
 
-				<ListEditor<
-					CustomAttendanceField,
-					InputProps<CustomAttendanceField>
-				>
+				<ListEditor<CustomAttendanceField, InputProps<CustomAttendanceField>>
 					name="customAttendanceFields"
 					inputComponent={CustomAttendanceFieldInput}
 					addNew={() => ({
@@ -590,7 +547,6 @@ export default class EventForm extends React.Component<
 					extraProps={{}}
 				/>
 
-
 				<Title>Extra information</Title>
 
 				<Label>Desired number of participants</Label>
@@ -599,33 +555,21 @@ export default class EventForm extends React.Component<
 				<Label>Group event number</Label>
 				<RadioButton
 					name="groupEventNumber"
-					labels={[
-						'Not Required',
-						'To Be Applied For',
-						'Applied For'
-					]}
+					labels={['Not Required', 'To Be Applied For', 'Applied For']}
 					other={true}
 				/>
 
 				<Label>Wing event number</Label>
 				<RadioButton
 					name="wingEventNumber"
-					labels={[
-						'Not Required',
-						'To Be Applied For',
-						'Applied For'
-					]}
+					labels={['Not Required', 'To Be Applied For', 'Applied For']}
 					other={true}
 				/>
 
 				<Label>Region event number</Label>
 				<RadioButton
 					name="regionEventNumber"
-					labels={[
-						'Not Required',
-						'To Be Applied For',
-						'Applied For'
-					]}
+					labels={['Not Required', 'To Be Applied For', 'Applied For']}
 					other={true}
 				/>
 
@@ -645,20 +589,13 @@ export default class EventForm extends React.Component<
 				<TextInput name="administrationComments" />
 
 				<Label>Event files</Label>
-				<FileInput
-					name="fileIDs"
-					account={this.props.account}
-					member={this.props.member}
-				/>
+				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} />
 
 				<Title>Team information</Title>
 
 				<Label />
 
-				<TeamSelector
-					teamList={this.props.teamList}
-					name="teamID"
-				/>
+				<TeamSelector teamList={this.props.teamList} name="teamID" />
 
 				<Label>Limit sign ups to team members</Label>
 				<Checkbox name="limitSignupsToTeam" />
@@ -678,15 +615,13 @@ export default class EventForm extends React.Component<
 			if (!dateTimesHaveBeenModified) {
 				event.startDateTime = event.meetDateTime + 300 * 1000; // Five minutes
 				event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
-				event.pickupDateTime =
-					event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
+				event.pickupDateTime = event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
 			} else if (!this.state.changed.pickupDateTime) {
 				event.pickupDateTime = event.endDateTime + 300 * 1000; // Five minutes
 			}
 
 			const locationsHaveBeenModified =
-				this.state.changed.location ||
-				this.state.changed.pickupLocation;
+				this.state.changed.location || this.state.changed.pickupLocation;
 
 			if (!locationsHaveBeenModified) {
 				event.location = event.meetLocation;
@@ -713,15 +648,13 @@ export default class EventForm extends React.Component<
 			if (!dateTimesHaveBeenModified) {
 				event.startDateTime = event.meetDateTime + 300 * 1000; // Five minutes
 				event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
-				event.pickupDateTime =
-					event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
+				event.pickupDateTime = event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
 			} else if (!this.state.changed.pickupDateTime) {
 				event.pickupDateTime = event.endDateTime + 300 * 1000; // Five minutes
 			}
 
 			const locationsHaveBeenModified =
-				this.state.changed.location ||
-				this.state.changed.pickupLocation;
+				this.state.changed.location || this.state.changed.pickupLocation;
 
 			if (!locationsHaveBeenModified) {
 				event.location = event.meetLocation;
@@ -809,10 +742,7 @@ export default class EventForm extends React.Component<
 			valid = false;
 		}
 
-		if (
-			event.transportationProvided === true &&
-			event.transportationDescription === ''
-		) {
+		if (event.transportationProvided === true && event.transportationDescription === '') {
 			this.setState(prev => ({
 				errors: {
 					...prev.errors,

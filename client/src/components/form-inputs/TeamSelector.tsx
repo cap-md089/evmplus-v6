@@ -18,10 +18,7 @@ interface TeamSelectorState {
 	filterValues: any[];
 }
 
-export default class TeamSelector extends React.Component<
-	TeamSelectorProps,
-	TeamSelectorState
-> {
+export default class TeamSelector extends React.Component<TeamSelectorProps, TeamSelectorState> {
 	public state: TeamSelectorState = {
 		open: false,
 		filterValues: [],
@@ -32,9 +29,7 @@ export default class TeamSelector extends React.Component<
 	public constructor(props: TeamSelectorProps) {
 		super(props);
 
-		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(
-			this
-		);
+		this.onTeamDialogueFilterValueChange = this.onTeamDialogueFilterValueChange.bind(this);
 		this.selectTeam = this.selectTeam.bind(this);
 		this.setSelectedTeam = this.setSelectedTeam.bind(this);
 		this.openTeamDialogue = this.openTeamDialogue.bind(this);
@@ -80,17 +75,12 @@ export default class TeamSelector extends React.Component<
 						filters={[
 							{
 								check: (team, input) => {
-									if (
-										input === '' ||
-										typeof input !== 'string'
-									) {
+									if (input === '' || typeof input !== 'string') {
 										return true;
 									}
 
 									try {
-										return !!team.name.match(
-											new RegExp(input, 'gi')
-										);
+										return !!team.name.match(new RegExp(input, 'gi'));
 									} catch (e) {
 										return false;
 									}
@@ -109,10 +99,7 @@ export default class TeamSelector extends React.Component<
 				<TextInput disabled={true} name="teamID" value={teamID} />
 
 				<Label>Team Name</Label>
-				<DisabledText
-					name="teamName"
-					value={targetTeam ? targetTeam.name : ''}
-				/>
+				<DisabledText name="teamName" value={targetTeam ? targetTeam.name : ''} />
 			</FormBlock>
 		);
 	}

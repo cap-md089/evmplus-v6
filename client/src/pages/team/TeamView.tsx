@@ -71,7 +71,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 				text: `View team "${team.name}"`
 			}
 		]);
-		this.updateTitle(`View team "${team.name}"`)
+		this.updateTitle(`View team "${team.name}"`);
 
 		if (team.canGetFullMembers(this.props.member)) {
 			const members = await team.getFullMembers(this.props.member);
@@ -99,7 +99,9 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 
 		return (
 			<div>
-				{this.props.member && this.props.member.hasPermission('ManageTeam') && this.state.team.id !== 0 ? (
+				{this.props.member &&
+				this.props.member.hasPermission('ManageTeam') &&
+				this.state.team.id !== 0 ? (
 					<>
 						<Link to={`/team/edit/${this.state.team.id}`}>Edit team</Link>
 						{' | '}
@@ -207,13 +209,22 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 				if (cont.EMAIL.EMERGENCY && emailList.indexOf(cont.EMAIL.EMERGENCY) === -1) {
 					emailList.push(memberObj[0].contact.EMAIL.EMERGENCY);
 				}
-				if (cont.CADETPARENTEMAIL.PRIMARY && emailList.indexOf(cont.CADETPARENTEMAIL.PRIMARY) === -1) {
+				if (
+					cont.CADETPARENTEMAIL.PRIMARY &&
+					emailList.indexOf(cont.CADETPARENTEMAIL.PRIMARY) === -1
+				) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.PRIMARY);
 				}
-				if (cont.CADETPARENTEMAIL.SECONDARY && emailList.indexOf(cont.CADETPARENTEMAIL.SECONDARY) === -1) {
+				if (
+					cont.CADETPARENTEMAIL.SECONDARY &&
+					emailList.indexOf(cont.CADETPARENTEMAIL.SECONDARY) === -1
+				) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.SECONDARY);
 				}
-				if (cont.CADETPARENTEMAIL.EMERGENCY && emailList.indexOf(cont.CADETPARENTEMAIL.EMERGENCY) === -1) {
+				if (
+					cont.CADETPARENTEMAIL.EMERGENCY &&
+					emailList.indexOf(cont.CADETPARENTEMAIL.EMERGENCY) === -1
+				) {
 					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.EMERGENCY);
 				}
 			}

@@ -71,9 +71,7 @@ export default class Button<C> extends React.Component<
 					(typeof this.props.buttonType === 'string'
 						? ` ${this.props.buttonType}`
 						: 'primaryButton') +
-					(this.props.className
-						? ` ${this.props.className}`
-						: ' asyncButton')
+					(this.props.className ? ` ${this.props.className}` : ' asyncButton')
 				}
 			>
 				{this.props.children}

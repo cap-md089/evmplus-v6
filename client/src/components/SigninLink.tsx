@@ -29,7 +29,7 @@ class SigninLink extends React.Component<
 		error: MemberCreateError.NONE
 	};
 
-	private key: number | null= null;
+	private key: number | null = null;
 	private iframeRef: HTMLIFrameElement | null = null;
 
 	constructor(
@@ -57,10 +57,7 @@ class SigninLink extends React.Component<
 				error: MemberCreateError.NONE
 			});
 			if (this.iframeRef!.contentWindow) {
-				this.iframeRef!.contentWindow.postMessage(
-					'done submitting',
-					'*'
-				);
+				this.iframeRef!.contentWindow.postMessage('done submitting', '*');
 			}
 		}
 	}
@@ -90,11 +87,14 @@ class SigninLink extends React.Component<
 							maxWidth: 614
 						}}
 					>
-						Enter your eServices login information below to sign
-						in to the site. Your password is not permanently stored.
-						By providing your eServices information you agree to the
-						terms and conditions located at&nbsp;
-						<a href="https://www.capunit.com/eula" target="_blank" rel="noopener noreferrer">
+						Enter your eServices login information below to sign in to the site. Your
+						password is not permanently stored. By providing your eServices information
+						you agree to the terms and conditions located at&nbsp;
+						<a
+							href="https://www.capunit.com/eula"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
 							https://www.capunit.com/eula
 						</a>
 						<div className="signin-error">

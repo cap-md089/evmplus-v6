@@ -1,4 +1,4 @@
-export default function (...args: string[]): string {
+export default function(...args: string[]): string {
 	let url: string = '/';
 
 	if (process && process.env && process.env.NODE_ENV === 'test') {

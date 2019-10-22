@@ -1,7 +1,15 @@
 import * as React from 'react';
 import { Omit, RegistryValues } from 'common-lib';
 import Page, { PageProps } from '../../Page';
-import SimpleForm, { Title, FormBlock, Label, NumberInput, TextInput, ListEditor, TextBox } from '../../../components/forms/SimpleForm';
+import SimpleForm, {
+	Title,
+	FormBlock,
+	Label,
+	NumberInput,
+	TextInput,
+	ListEditor,
+	TextBox
+} from '../../../components/forms/SimpleForm';
 import Button from '../../../components/Button';
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
@@ -13,7 +21,7 @@ interface RegEditState {
 
 const saveMessage = {
 	marginLeft: 10
-}
+};
 
 export default class RegEdit extends Page<PageProps, RegEditState> {
 	public state: RegEditState = {
@@ -26,21 +34,21 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				MailingAddress: this.props.registry.Contact.MailingAddress
 					? {
 							...this.props.registry.Contact.MailingAddress
-					}
+					  }
 					: {
 							FirstLine: '',
 							Name: '',
 							SecondLine: ''
-					},
+					  },
 				MeetingAddress: this.props.registry.Contact.MeetingAddress
 					? {
 							...this.props.registry.Contact.MeetingAddress
-					}
+					  }
 					: {
 							FirstLine: '',
 							Name: '',
 							SecondLine: ''
-					},
+					  },
 				Twitter: this.props.registry.Contact.Twitter || '',
 				YouTube: this.props.registry.Contact.YouTube || ''
 			},

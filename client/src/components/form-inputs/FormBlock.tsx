@@ -125,8 +125,9 @@ export default class FormBlock<T extends object> extends React.Component<
 								? ''
 								: this.props.value![childName];
 						if (
-							!(this.props.value === null ||
-								typeof this.props.value === 'undefined') &&
+							!(
+								this.props.value === null || typeof this.props.value === 'undefined'
+							) &&
 							typeof this.props.value![childName] === 'undefined'
 						) {
 							this.props.value![childName] = value;

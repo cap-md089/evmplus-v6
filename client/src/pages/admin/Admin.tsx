@@ -104,7 +104,10 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route path="/admin/notifications" render={this.pageRenderer(Notifications)} />
 				<Route path="/admin/permissions" render={this.pageRenderer(PermissionAssign)} />
 				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />
-				<Route path="/admin/tempdutypositions" render={this.pageRenderer(TemporaryDutyPositions)} />
+				<Route
+					path="/admin/tempdutypositions"
+					render={this.pageRenderer(TemporaryDutyPositions)}
+				/>
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>

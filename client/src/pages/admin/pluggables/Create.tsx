@@ -8,10 +8,7 @@ export const canUseCreate = (props: PageProps) => {
 		return false;
 	}
 
-	return (
-		props.member.hasPermission('ManageEvent') ||
-		props.member.hasPermission('ManageTeam')
-	);
+	return props.member.hasPermission('ManageEvent') || props.member.hasPermission('ManageTeam');
 };
 
 interface CreateWidgetProps extends PageProps {

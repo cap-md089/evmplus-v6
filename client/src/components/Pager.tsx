@@ -25,24 +25,19 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 
 		for (
 			let i = start;
-			i < this.props.dataset.length &&
-			i < this.props.dataCountPerPage + start;
+			i < this.props.dataset.length && i < this.props.dataCountPerPage + start;
 			i++
 		) {
 			renderDataset.push(this.props.dataset[i]);
 		}
 
-		const pageCount = Math.ceil(
-			this.props.dataset.length / this.props.dataCountPerPage
-		);
+		const pageCount = Math.ceil(this.props.dataset.length / this.props.dataCountPerPage);
 
 		return (
 			<div>
 				{this.renderPageControls(this.props.page, pageCount)}
 				{renderDataset.map((val, i) => (
-					<React.Fragment key={i}>
-						{this.props.renderFunction(val, i)}
-					</React.Fragment>
+					<React.Fragment key={i}>{this.props.renderFunction(val, i)}</React.Fragment>
 				))}
 				{this.renderPageControls(this.props.page, pageCount)}
 			</div>
@@ -54,10 +49,7 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 			case 1:
 				return (
 					<div className="pagination-controls">
-						<span
-							className="highlighted"
-							onMouseDown={this.controlClick(1)}
-						>
+						<span className="highlighted" onMouseDown={this.controlClick(1)}>
 							1
 						</span>
 					</div>
@@ -66,11 +58,7 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 			case 2:
 				return (
 					<div className="pagination-controls">
-						<span
-							onMouseDown={this.controlClick(1)}
-						>
-							&lt;
-						</span>
+						<span onMouseDown={this.controlClick(1)}>&lt;</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -83,22 +71,14 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							2
 						</span>
-						<span
-							onMouseDown={this.controlClick(2)}
-						>
-							&gt;
-						</span>
+						<span onMouseDown={this.controlClick(2)}>&gt;</span>
 					</div>
 				);
 
 			case 3:
 				return (
 					<div className="pagination-controls">
-						<span
-							onMouseDown={this.controlClick(Math.max(1, page - 1))}
-						>
-							&lt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.max(1, page - 1))}>&lt;</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -117,22 +97,14 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							3
 						</span>
-						<span
-							onMouseDown={this.controlClick(Math.min(3, page + 1))}
-						>
-							&gt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.min(3, page + 1))}>&gt;</span>
 					</div>
 				);
 
 			case 4:
 				return (
 					<div className="pagination-controls">
-						<span
-							onMouseDown={this.controlClick(Math.max(1, page - 1))}
-						>
-							&lt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.max(1, page - 1))}>&lt;</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -157,22 +129,14 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							4
 						</span>
-						<span
-							onMouseDown={this.controlClick(Math.min(4, page + 1))}
-						>
-							&gt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.min(4, page + 1))}>&gt;</span>
 					</div>
 				);
 
 			case 5:
 				return (
 					<div className="pagination-controls">
-						<span
-							onMouseDown={this.controlClick(Math.max(1, page - 1))}
-						>
-							&lt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.max(1, page - 1))}>&lt;</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -203,22 +167,14 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							5
 						</span>
-						<span
-							onMouseDown={this.controlClick(Math.min(5, page + 1))}
-						>
-							&gt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.min(5, page + 1))}>&gt;</span>
 					</div>
 				);
 
 			default:
 				return (
 					<div className="pagination-controls">
-						<span
-							onMouseDown={this.controlClick(Math.max(1, page - 1))}
-						>
-							&lt;
-						</span>
+						<span onMouseDown={this.controlClick(Math.max(1, page - 1))}>&lt;</span>
 						<span
 							className={page === 1 ? 'highlighted' : ''}
 							onMouseDown={this.controlClick(1)}
@@ -227,22 +183,15 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						</span>
 						{page > 3 ? ' ... ' : null}
 						{page > 2 ? (
-							<span onMouseDown={this.controlClick(page - 1)}>
-								{page - 1}
-							</span>
+							<span onMouseDown={this.controlClick(page - 1)}>{page - 1}</span>
 						) : null}
 						{page > 1 && page < pageCount ? (
-							<span
-								className="highlighted"
-								onMouseDown={this.controlClick(page)}
-							>
+							<span className="highlighted" onMouseDown={this.controlClick(page)}>
 								{page}
 							</span>
 						) : null}
 						{page < pageCount - 1 ? (
-							<span onMouseDown={this.controlClick(page + 1)}>
-								{page + 1}
-							</span>
+							<span onMouseDown={this.controlClick(page + 1)}>{page + 1}</span>
 						) : null}
 						{page < pageCount - 2 ? ' ... ' : null}
 						<span
@@ -251,18 +200,14 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 						>
 							{pageCount}
 						</span>
-						<span
-							onMouseDown={this.controlClick(pageCount)}
-						>
-							&gt; &gt;
-						</span>
+						<span onMouseDown={this.controlClick(pageCount)}>&gt; &gt;</span>
 					</div>
 				);
 		}
 	}
 
 	private controlClick(page: number) {
-		return (() => {
+		return () => {
 			const start = (page - 1) * this.props.dataCountPerPage;
 
 			if (start > this.props.dataset.length) {
@@ -273,14 +218,13 @@ export default class Pager<T> extends React.Component<PagerProps<T>> {
 
 			for (
 				let i = start;
-				i < this.props.dataset.length &&
-				i < this.props.dataCountPerPage + start;
+				i < this.props.dataset.length && i < this.props.dataCountPerPage + start;
 				i++
 			) {
 				renderDataset.push(this.props.dataset[i]);
 			}
 
 			this.props.onChangePageNumber(page, renderDataset);
-		});
+		};
 	}
 }

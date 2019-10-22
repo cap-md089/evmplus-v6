@@ -90,10 +90,7 @@ export default class DialogueButton extends React.Component<
 	}
 
 	public render() {
-		let dialogueProps:
-			| DialogueWithOK
-			| DialogueWithOKCancel
-			| DialogueWithYesNoCancel;
+		let dialogueProps: DialogueWithOK | DialogueWithOKCancel | DialogueWithYesNoCancel;
 
 		const props = this.props;
 

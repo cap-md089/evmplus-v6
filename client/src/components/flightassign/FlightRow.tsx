@@ -78,7 +78,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 					});
 				});
 				jQuery(this.titleDiv.current!).animate({
-					height: 40,
+					'height': 40,
 					'font-size': 32
 				});
 				this.setState({
@@ -97,7 +97,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 				});
 			});
 			jQuery(this.titleDiv.current).animate({
-				height: 16,
+				'height': 16,
 				'font-size': 14
 			});
 			this.setState({

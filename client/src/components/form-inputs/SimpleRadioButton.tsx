@@ -1,15 +1,14 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 
-export interface SimpleRadioProps<E extends number = number>
-	extends InputProps<E | -1> {
+export interface SimpleRadioProps<E extends number = number> extends InputProps<E | -1> {
 	labels: string[];
 	other?: boolean;
 }
 
-export default class SimpleRadioButton<
-	E extends number = number
-> extends React.Component<SimpleRadioProps<E | -1>> {
+export default class SimpleRadioButton<E extends number = number> extends React.Component<
+	SimpleRadioProps<E | -1>
+> {
 	constructor(props: SimpleRadioProps<E | -1>) {
 		super(props);
 
@@ -22,10 +21,7 @@ export default class SimpleRadioButton<
 	}
 
 	public render() {
-		const index =
-			typeof this.props.index === 'undefined'
-				? ''
-				: '-' + this.props.index;
+		const index = typeof this.props.index === 'undefined' ? '' : '-' + this.props.index;
 
 		return (
 			<div className="formbox" style={this.props.boxStyles}>
@@ -41,11 +37,7 @@ export default class SimpleRadioButton<
 									onChange={this.getChangeHandler(i)}
 									checked={checked}
 								/>
-								<label
-									htmlFor={`${this.props.name}-${i}${index}`}
-								>
-									{label}
-								</label>
+								<label htmlFor={`${this.props.name}-${i}${index}`}>{label}</label>
 								<label
 									htmlFor={`${this.props.name}-${i}${index}`}
 									className="check"
@@ -59,7 +51,7 @@ export default class SimpleRadioButton<
 	}
 
 	private getChangeHandler(index: number) {
-		return (() => {
+		return () => {
 			if (this.props.onChange) {
 				this.props.onChange(index as E);
 			}
@@ -70,6 +62,6 @@ export default class SimpleRadioButton<
 					value: index as E
 				});
 			}
-		});
+		};
 	}
 }

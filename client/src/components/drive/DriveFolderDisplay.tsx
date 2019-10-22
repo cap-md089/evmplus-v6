@@ -25,9 +25,9 @@ export default class DriveFolderDisplay extends React.Component<
 			FileUserAccessControlPermissions.WRITE
 		) ? (
 			<div
-				className={`drive-folder-display ${
-					this.props.selected ? 'selected' : ''
-				} ${this.state.hovering ? 'hovering' : ''}`}
+				className={`drive-folder-display ${this.props.selected ? 'selected' : ''} ${
+					this.state.hovering ? 'hovering' : ''
+				}`}
 				onClick={() => this.props.onSelect(this.props.file)}
 				onDragOver={this.handleOver}
 				onDragEnd={this.handleOff}
@@ -41,9 +41,7 @@ export default class DriveFolderDisplay extends React.Component<
 			</div>
 		) : (
 			<div
-				className={`drive-folder-display ${
-					this.props.selected ? 'selected' : ''
-				}`}
+				className={`drive-folder-display ${this.props.selected ? 'selected' : ''}`}
 				onClick={() => this.props.onSelect(this.props.file)}
 				draggable={true}
 				onDragStart={this.handleDragStart}
@@ -82,11 +80,7 @@ export default class DriveFolderDisplay extends React.Component<
 			return;
 		}
 
-		if (
-			!id.match(
-				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-			)
-		) {
+		if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
 			return;
 		}
 

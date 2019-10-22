@@ -27,8 +27,8 @@ export default class MultiRange extends React.Component<
 		const { min, max } = this.props;
 		if (typeof this.props.value !== 'undefined') {
 			this.state = {
-				low: (this.props.value[0] - min) / (max - min) * 100,
-				high: (this.props.value[1] - min) / (max - min) * 100,
+				low: ((this.props.value[0] - min) / (max - min)) * 100,
+				high: ((this.props.value[1] - min) / (max - min)) * 100
 			};
 		} else {
 			this.state = {
@@ -39,7 +39,7 @@ export default class MultiRange extends React.Component<
 		const { low, high } = this.state;
 		const parsedLow = (low / 100) * (max - min) + min;
 		const parsedHigh = (high / 100) * (max - min) + min;
-		
+
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: props.name,
@@ -51,7 +51,7 @@ export default class MultiRange extends React.Component<
 			this.props.onInitialize({
 				name: props.name,
 				value: [parsedLow, parsedHigh]
-			})
+			});
 		}
 	}
 
@@ -69,10 +69,7 @@ export default class MultiRange extends React.Component<
 		input.value = this.state.low.toString();
 		ghost.value = this.state.high.toString();
 
-		(input.parentElement as HTMLDivElement).insertBefore(
-			ghost,
-			input.nextSibling
-		);
+		(input.parentElement as HTMLDivElement).insertBefore(ghost, input.nextSibling);
 
 		const update = () => {
 			const high = Math.max(+input.value, +ghost.value);
@@ -95,7 +92,7 @@ export default class MultiRange extends React.Component<
 			}
 
 			if (this.props.onChange) {
-				this.props.onChange([parsedLow, parsedHigh])
+				this.props.onChange([parsedLow, parsedHigh]);
 			}
 
 			ghost.style.setProperty('--low', low + 1 + '%');

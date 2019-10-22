@@ -81,17 +81,13 @@ export default class DialogueButtonForm<T> extends React.Component<
 	DialogueButtonProps<T> & DialogueButtonPropsBase & UsedFormProps<T>,
 	DialogueButtonFormValues<T>
 > {
-	constructor(
-		props: DialogueButtonProps<T> &
-			DialogueButtonPropsBase &
-			UsedFormProps<T>
-	) {
+	constructor(props: DialogueButtonProps<T> & DialogueButtonPropsBase & UsedFormProps<T>) {
 		super(props);
 
 		this.state = {
 			open: false,
-			formValues: props.values || {} as T
-		}
+			formValues: props.values || ({} as T)
+		};
 
 		this.formChange = this.formChange.bind(this);
 		this.onOK = this.onOK.bind(this);

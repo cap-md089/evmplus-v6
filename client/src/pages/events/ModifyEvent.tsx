@@ -14,10 +14,7 @@ interface ModifyEventState {
 	teamList: Promise<Team[]>;
 }
 
-export default class ModifyEvent extends Page<
-	PageProps<{ id: string }>,
-	ModifyEventState
-> {
+export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyEventState> {
 	public state: ModifyEventState = {
 		event: null,
 		valid: false,
@@ -149,9 +146,7 @@ export default class ModifyEvent extends Page<
 		this.state.event!.set(event);
 
 		this.state.event!.save(this.props.member).then(() => {
-			this.props.routeProps.history.push(
-				`/eventviewer/${this.state.event!.id}`
-			);
+			this.props.routeProps.history.push(`/eventviewer/${this.state.event!.id}`);
 		});
 	}
 }

@@ -240,7 +240,7 @@ export default class TemporaryDutyPositions extends Page<
 	}
 
 	private getRemover(index: number) {
-		return (() => {
+		return () => {
 			if (!this.state.currentMember) {
 				return;
 			}
@@ -252,7 +252,7 @@ export default class TemporaryDutyPositions extends Page<
 			this.state.currentMember.saveTemporaryDutyPositions(this.props.member);
 
 			this.forceUpdate();
-		});
+		};
 	}
 
 	private getDutyPositionListForMember() {

@@ -13,8 +13,8 @@ export default abstract class APIInterface<T> {
 		APIInterface.ENV === 'production'
 			? 'capunit.com'
 			: APIInterface.ENV === 'staging'
-				? 'capunitdev.com'
-				: 'localcapunit.com:3001'
+			? 'capunitdev.com'
+			: 'localcapunit.com:3001';
 
 	/**
 	 * Requests a token on the account for the member provided
@@ -25,10 +25,7 @@ export default abstract class APIInterface<T> {
 	 * @param accountID The account to get the token for
 	 * @param member The member to get a token for
 	 */
-	protected static async getToken(
-		accountID: string,
-		member: MemberBase
-	): Promise<string> {
+	protected static async getToken(accountID: string, member: MemberBase): Promise<string> {
 		const uri =
 			APIInterface.ENV === 'production' || APIInterface.ENV === 'staging'
 				? `https://${accountID}.${APIInterface.REQUEST_URI}/`
@@ -76,17 +73,16 @@ export default abstract class APIInterface<T> {
 	 * @param member A member that can be used to set the session ID for the
 	 * 		request
 	 */
-	public fetch(
-		uri: string,
-		options: RequestInit = {},
-		member?: MemberBase | null
-	) {
+	public fetch(uri: string, options: RequestInit = {}, member?: MemberBase | null) {
 		if (uri[0] === '/') {
 			uri = uri.slice(1);
 		}
 
 		if (uri.split('/').length > 3 && uri.split(':').length === 2) {
-			uri = uri.split('/').slice(3).join('/');
+			uri = uri
+				.split('/')
+				.slice(3)
+				.join('/');
 		}
 
 		let headers = options.headers || {};
@@ -107,10 +103,7 @@ export default abstract class APIInterface<T> {
 
 		options.headers = headers;
 
-		return myFetch(
-			this.buildURI.apply(this, uri.split('/')),
-			options
-		);
+		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
 	}
 
 	/**

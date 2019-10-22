@@ -8,7 +8,7 @@ export default class DisabledText extends React.Component<InputProps<string>> {
 				<input
 					type="text"
 					value={this.props.value || ''}
-					name={"disabledinput"}
+					name={'disabledinput'}
 					disabled={true}
 				/>
 			</div>

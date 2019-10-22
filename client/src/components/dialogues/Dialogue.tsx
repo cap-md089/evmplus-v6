@@ -39,7 +39,7 @@ export interface DialogueWithCustom {
 	title: string;
 	displayButtons: DialogueButtons.CUSTOM;
 	onClose: () => void;
-	labels: string[]
+	labels: string[];
 }
 
 export interface DialogueWithoutButtons {
@@ -47,7 +47,7 @@ export interface DialogueWithoutButtons {
 	title: string;
 	displayButtons: DialogueButtons.NONE;
 	onClose: () => void;
-	labels?: never[]
+	labels?: never[];
 }
 
 export enum DialogueButtons {
@@ -69,10 +69,7 @@ interface DialogueState {
 	open: boolean;
 }
 
-export default class Dialogue extends React.Component<
-	DialogueProps,
-	DialogueState
-	> {
+export default class Dialogue extends React.Component<DialogueProps, DialogueState> {
 	public state = {
 		open: false
 	};
@@ -90,8 +87,8 @@ export default class Dialogue extends React.Component<
 
 			if (!mobile) {
 				div.css({
-					left: '50%',
-					top: '50%',
+					'left': '50%',
+					'top': '50%',
 					'margin-left'() {
 						return -($(this).outerWidth() as number) / 2;
 					},
@@ -170,9 +167,7 @@ export default class Dialogue extends React.Component<
 					}}
 					id="alert_box"
 					key="main_alert"
-					onClick={e =>
-						!e.isPropagationStopped() && e.stopPropagation()
-					}
+					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
 				>
 					{this.props.title ? <h2>{this.props.title}</h2> : null}
 					<div className="content">{this.props.children}</div>
@@ -184,9 +179,7 @@ export default class Dialogue extends React.Component<
 								}}
 								className="primaryButton"
 								id="ok"
-								onClick={(
-									e: React.MouseEvent<HTMLButtonElement>
-								) => {
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
 									e.preventDefault();
 									this.props.onClose();
 								}}
@@ -194,108 +187,102 @@ export default class Dialogue extends React.Component<
 								{this.props.labels ? this.props.labels[0] : 'OK'}
 							</button>
 						</div>
-					) : this.props.displayButtons ===
-						DialogueButtons.OK_CANCEL ? (
-								<div className="closeButton">
-									<button
-										style={{
-											float: 'right',
-											marginLeft: 10
-										}}
-										className="primaryButton"
-										id="cancel"
-										onClick={(
-											e: React.MouseEvent<HTMLButtonElement>
-										) => {
-											e.preventDefault();
-											this.props.onClose();
-											if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
-												this.props.onCancel();
-											}
-										}}
-									>
-										{this.props.labels ? this.props.labels[1] : 'Cancel'}
-									</button>
-									<button
-										style={{
-											float: 'right'
-										}}
-										className="primaryButton"
-										id="ok"
-										onClick={(
-											e: React.MouseEvent<HTMLButtonElement>
-										) => {
-											e.preventDefault();
-											this.props.onClose();
-											if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
-												this.props.onOk();
-											}
-										}}
-									>
-										{this.props.labels ? this.props.labels[0] : 'OK'}
-									</button>
-								</div>
-							) : this.props.displayButtons ===
-								DialogueButtons.YES_NO_CANCEL ? (
-									<div className="closeButton">
-										<button
-											style={{
-												float: 'right',
-												marginLeft: 10
-											}}
-											className="primaryButton"
-											id="cancel"
-											onClick={(
-												e: React.MouseEvent<HTMLButtonElement>
-											) => {
-												e.preventDefault();
-												this.props.onClose();
-												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
-													this.props.onCancel();
-												}
-											}}
-										>
-											{this.props.labels ? this.props.labels[2] : 'Cancel'}
-										</button>
-										<button
-											style={{
-												float: 'right',
-												marginLeft: 10
-											}}
-											className="primaryButton"
-											id="no"
-											onClick={(
-												e: React.MouseEvent<HTMLButtonElement>
-											) => {
-												e.preventDefault();
-												this.props.onClose();
-												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
-													this.props.onNo();
-												}
-											}}
-										>
-											{this.props.labels ? this.props.labels[1] : 'No'}
-										</button>
-										<button
-											style={{
-												float: 'right'
-											}}
-											className="primaryButton"
-											id="yes"
-											onClick={(
-												e: React.MouseEvent<HTMLButtonElement>
-											) => {
-												e.preventDefault();
-												this.props.onClose();
-												if (this.props.displayButtons === DialogueButtons.YES_NO_CANCEL) {
-													this.props.onYes();
-												}
-											}}
-										>
-											{this.props.labels ? this.props.labels[0] : 'Yes'}
-										</button>
-									</div>
-								) : null}
+					) : this.props.displayButtons === DialogueButtons.OK_CANCEL ? (
+						<div className="closeButton">
+							<button
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="cancel"
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+									e.preventDefault();
+									this.props.onClose();
+									if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
+										this.props.onCancel();
+									}
+								}}
+							>
+								{this.props.labels ? this.props.labels[1] : 'Cancel'}
+							</button>
+							<button
+								style={{
+									float: 'right'
+								}}
+								className="primaryButton"
+								id="ok"
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+									e.preventDefault();
+									this.props.onClose();
+									if (this.props.displayButtons === DialogueButtons.OK_CANCEL) {
+										this.props.onOk();
+									}
+								}}
+							>
+								{this.props.labels ? this.props.labels[0] : 'OK'}
+							</button>
+						</div>
+					) : this.props.displayButtons === DialogueButtons.YES_NO_CANCEL ? (
+						<div className="closeButton">
+							<button
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="cancel"
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+									e.preventDefault();
+									this.props.onClose();
+									if (
+										this.props.displayButtons === DialogueButtons.YES_NO_CANCEL
+									) {
+										this.props.onCancel();
+									}
+								}}
+							>
+								{this.props.labels ? this.props.labels[2] : 'Cancel'}
+							</button>
+							<button
+								style={{
+									float: 'right',
+									marginLeft: 10
+								}}
+								className="primaryButton"
+								id="no"
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+									e.preventDefault();
+									this.props.onClose();
+									if (
+										this.props.displayButtons === DialogueButtons.YES_NO_CANCEL
+									) {
+										this.props.onNo();
+									}
+								}}
+							>
+								{this.props.labels ? this.props.labels[1] : 'No'}
+							</button>
+							<button
+								style={{
+									float: 'right'
+								}}
+								className="primaryButton"
+								id="yes"
+								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+									e.preventDefault();
+									this.props.onClose();
+									if (
+										this.props.displayButtons === DialogueButtons.YES_NO_CANCEL
+									) {
+										this.props.onYes();
+									}
+								}}
+							>
+								{this.props.labels ? this.props.labels[0] : 'Yes'}
+							</button>
+						</div>
+					) : null}
 				</div>
 			</div>,
 			document.getElementById('dialogue-box') as HTMLElement

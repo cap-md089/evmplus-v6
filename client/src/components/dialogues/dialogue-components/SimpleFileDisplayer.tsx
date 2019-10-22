@@ -8,10 +8,7 @@ export class SimpleFileDisplayer extends React.Component<ItemProps> {
 				className="fileDisplayer"
 				onClick={e => {
 					e.stopPropagation();
-					this.props.onClick(
-						this.props.file,
-						this.props.selected
-					);
+					this.props.onClick(this.props.file, this.props.selected);
 				}}
 			>
 				<div

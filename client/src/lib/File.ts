@@ -1,12 +1,16 @@
-import {
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType
-} from 'common-lib/index';
+import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 import urlFormat from './urlFormat';
-import { FullFileObject, FileControlListItem, MemberReference, MemberObject, FileTeamControlList, FileUserControlList } from 'common-lib';
+import {
+	FullFileObject,
+	FileControlListItem,
+	MemberReference,
+	MemberObject,
+	FileTeamControlList,
+	FileUserControlList
+} from 'common-lib';
 
 /**
  * Simple private class used to handle uploading the files
@@ -34,12 +38,7 @@ class FileUploader {
 		token: string,
 		errOnInvalidPermissions = false
 	) {
-		if (
-			!target.hasPermission(
-				member,
-				FileUserAccessControlPermissions.MODIFY
-			)
-		) {
+		if (!target.hasPermission(member, FileUserAccessControlPermissions.MODIFY)) {
 			if (errOnInvalidPermissions) {
 				throw new Error('Invalid permissions');
 			} else {
@@ -69,9 +68,7 @@ class FileUploader {
 		return new Promise<FullFileObject>((res, rej) => {
 			xhr.addEventListener('readystatechange', function(evt: Event) {
 				if (this.readyState === 4) {
-					const resp = JSON.parse(
-						this.responseText
-					) as FullFileObject;
+					const resp = JSON.parse(this.responseText) as FullFileObject;
 
 					res(resp);
 				}
@@ -82,8 +79,7 @@ class FileUploader {
 	}
 }
 
-export default class FileInterface extends APIInterface<FullFileObject>
-	implements FullFileObject {
+export default class FileInterface extends APIInterface<FullFileObject> implements FullFileObject {
 	/**
 	 * Uploads a file and moves it to its requested place
 	 *
@@ -95,28 +91,22 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	 * @param member The member taking responsibility for uploading the file
 	 * @param account The Account that is responsible for the file
 	 */
-	public static Create(
-		file: File,
-		parent: FileInterface,
-		member: MemberBase,
-		account: Account
-	) {
+	public static Create(file: File, parent: FileInterface, member: MemberBase, account: Account) {
 		const fileUploader = new FileUploader(file);
 
-		FileInterface.getToken(account.id, member)
-			.then(async token => {
-				const results = await fileUploader.uploadTo(parent, member, token, false);
+		FileInterface.getToken(account.id, member).then(async token => {
+			const results = await fileUploader.uploadTo(parent, member, token, false);
 
-				if (!results) {
-					throw new Error('Could not upload file');
-				}
+			if (!results) {
+				throw new Error('Could not upload file');
+			}
 
-				const fileInterface = new FileInterface(results, account!);
+			const fileInterface = new FileInterface(results, account!);
 
-				await fileInterface.moveTo(parent, member);
+			await fileInterface.moveTo(parent, member);
 
-				fileUploader.finishListeners.forEach(l => l(fileInterface));
-			});
+			fileUploader.finishListeners.forEach(l => l(fileInterface));
+		});
 
 		return fileUploader;
 	}
@@ -135,11 +125,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	 * @param member The member creating the folder
 	 * @param account The account responsible for the folder
 	 */
-	public static async CreateFolder(
-		name: string,
-		member: MemberBase,
-		account: Account
-	) {
+	public static async CreateFolder(name: string, member: MemberBase, account: Account) {
 		const token = await APIInterface.getToken(account.id, member);
 
 		const results = await account.fetch(
@@ -166,11 +152,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	 * @param member The member getting the file, checking for permissions
 	 * @param account The Account of the file
 	 */
-	public static async Get(
-		id: string,
-		member: MemberBase | null | undefined,
-		account: Account
-	) {
+	public static async Get(id: string, member: MemberBase | null | undefined, account: Account) {
 		let file: FullFileObject;
 
 		// if (
@@ -262,10 +244,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 	 * @param member The member to check
 	 * @param permission The permission to check for
 	 */
-	public hasPermission(
-		member: MemberBase | null,
-		permission: FileUserAccessControlPermissions
-	) {
+	public hasPermission(member: MemberBase | null, permission: FileUserAccessControlPermissions) {
 		if (member) {
 			if (member.hasPermission('FileManagement')) {
 				return true;
@@ -329,8 +308,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 				(valid =
 					valid ||
 					// tslint:disable-next-line:no-bitwise
-					((perm.permission & permission) > 0 &&
-						member.matchesReference(perm.reference)))
+					((perm.permission & permission) > 0 && member.matchesReference(perm.reference)))
 		);
 
 		if (valid) {
@@ -387,9 +365,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		child: FileInterface | string,
 		errOnInvalidPermissions = false
 	) {
-		if (
-			!this.hasPermission(member, FileUserAccessControlPermissions.MODIFY)
-		) {
+		if (!this.hasPermission(member, FileUserAccessControlPermissions.MODIFY)) {
 			if (errOnInvalidPermissions) {
 				throw new Error('Invalid permissions');
 			} else {
@@ -429,9 +405,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		child: FileInterface | string,
 		errOnInvalidPermissions = false
 	) {
-		if (
-			!this.hasPermission(member, FileUserAccessControlPermissions.MODIFY)
-		) {
+		if (!this.hasPermission(member, FileUserAccessControlPermissions.MODIFY)) {
 			if (errOnInvalidPermissions) {
 				throw new Error('Invalid permissions');
 			} else {
@@ -497,12 +471,7 @@ export default class FileInterface extends APIInterface<FullFileObject>
 		member: MemberBase,
 		errOnInvalidPermissions = false
 	) {
-		if (
-			!target.hasPermission(
-				member,
-				FileUserAccessControlPermissions.MODIFY
-			)
-		) {
+		if (!target.hasPermission(member, FileUserAccessControlPermissions.MODIFY)) {
 			if (errOnInvalidPermissions) {
 				throw new Error('Invalid permissions');
 			} else {

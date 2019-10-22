@@ -15,13 +15,10 @@ interface DownloadSelectorState<T extends Identifiable> {
 	error: boolean;
 }
 
-export type CombinedDownloadSelectorProps<
-	T extends Identifiable
-> = CombinedSelectorProps<T> & DownloadSelectorProps<T>;
+export type CombinedDownloadSelectorProps<T extends Identifiable> = CombinedSelectorProps<T> &
+	DownloadSelectorProps<T>;
 
-export default class DownloadSelector<
-	T extends Identifiable
-> extends React.Component<
+export default class DownloadSelector<T extends Identifiable> extends React.Component<
 	CombinedDownloadSelectorProps<T>,
 	DownloadSelectorState<T>
 > {

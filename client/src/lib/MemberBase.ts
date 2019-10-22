@@ -161,10 +161,7 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 * Also checks for if the member is marked isRioux, allowing for super
 	 * admins
 	 */
-	public hasPermission = (
-		permission: MemberPermission,
-		threshold = 1
-	): boolean =>
+	public hasPermission = (permission: MemberPermission, threshold = 1): boolean =>
 		MemberBase.useRiouxPermission && this.isRioux
 			? true
 			: this.permissions[permission] >= threshold;

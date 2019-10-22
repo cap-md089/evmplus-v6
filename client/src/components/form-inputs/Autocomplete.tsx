@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { InputProps } from './Input'
+import { InputProps } from './Input';
 import { Identifiable } from 'common-lib';
 
 interface AutocompleteProps<T> extends InputProps<T> {
@@ -7,12 +7,10 @@ interface AutocompleteProps<T> extends InputProps<T> {
 	renderItem: (item: T) => React.ReactChild;
 }
 
-export default class Autocomplete<
-	T extends Identifiable
-> extends React.Component<AutocompleteProps<T>> {
+export default class Autocomplete<T extends Identifiable> extends React.Component<
+	AutocompleteProps<T>
+> {
 	public render() {
-		return (
-			<div />
-		);
+		return <div />;
 	}
 }

@@ -21,7 +21,10 @@ interface ParsedID {
 	text: string;
 }
 
-export const getIDs = (editorState: EditorState, convertor: (es: ContentState) => RawDraftContentState) => {
+export const getIDs = (
+	editorState: EditorState,
+	convertor: (es: ContentState) => RawDraftContentState
+) => {
 	const raw = convertor(editorState.getCurrentContent());
 
 	return getIDsFromRaw(raw);
@@ -35,12 +38,12 @@ export const getIDsFromRaw = (content: RawDraftContentState) => {
 			parsedIDs.push({
 				id: `content-${i.key}-0-0`,
 				text: i.text
-			})
+			});
 		}
 	}
 
 	return parsedIDs;
-}
+};
 
 export default class TextDisplay extends React.Component<
 	{
@@ -55,16 +58,15 @@ export default class TextDisplay extends React.Component<
 	};
 
 	public componentDidMount() {
-		Promise.all([
-			import('draft-js'),
-			import('./form-inputs/TextArea')
-		]).then(([draft, text]) => {
-			this.setState({
-				loaded: true,
-				draft,
-				text
-			});
-		});
+		Promise.all([import('draft-js'), import('./form-inputs/TextArea')]).then(
+			([draft, text]) => {
+				this.setState({
+					loaded: true,
+					draft,
+					text
+				});
+			}
+		);
 	}
 
 	public render() {

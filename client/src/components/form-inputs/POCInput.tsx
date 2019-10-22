@@ -13,7 +13,7 @@ import {
 	ExternalPointOfContact,
 	MemberObject,
 	CAPMemberObject,
-	Member,
+	Member
 } from 'common-lib';
 
 const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>

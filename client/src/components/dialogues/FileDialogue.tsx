@@ -2,11 +2,7 @@ import * as React from 'react';
 import Account from '../../lib/Account';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
-import Dialogue, {
-	DialogueButtons,
-	DialogueWithOK,
-	DialogueWithOKCancel
-} from './Dialogue';
+import Dialogue, { DialogueButtons, DialogueWithOK, DialogueWithOKCancel } from './Dialogue';
 import './FileDialogue.css';
 import { SimpleFileDisplayer } from './dialogue-components/SimpleFileDisplayer';
 import FileUploader from '../FileUploader';
@@ -56,11 +52,7 @@ export interface FileDialogueProps {
 	 * When files are uploaded, a warning is given saying that the provided file
 	 * has been uploaded but is invalid
 	 */
-	filter?: (
-		element: FileObject,
-		index: number,
-		array: FileInterface[]
-	) => boolean;
+	filter?: (element: FileObject, index: number, array: FileInterface[]) => boolean;
 	/**
 	 * Whether or not one file is to be returned
 	 *
@@ -70,10 +62,7 @@ export interface FileDialogueProps {
 	multiple?: boolean;
 }
 
-export default class FileDialogue extends React.Component<
-	FileDialogueProps,
-	FileDialogueState
-> {
+export default class FileDialogue extends React.Component<FileDialogueProps, FileDialogueState> {
 	public state: FileDialogueState = {
 		view: FileDialogueView.MYDRIVE,
 		open: false,
@@ -90,9 +79,7 @@ export default class FileDialogue extends React.Component<
 
 		this.onFileClick = this.onFileClick.bind(this);
 		this.onFolderClick = this.onFolderClick.bind(this);
-		this.handleSelectedFileDelete = this.handleSelectedFileDelete.bind(
-			this
-		);
+		this.handleSelectedFileDelete = this.handleSelectedFileDelete.bind(this);
 
 		this.addFile = this.addFile.bind(this);
 		this.goToFolder = this.goToFolder.bind(this);
@@ -106,9 +93,7 @@ export default class FileDialogue extends React.Component<
 	}
 
 	private get multiple() {
-		return typeof this.props.multiple === 'undefined'
-			? true
-			: this.props.multiple;
+		return typeof this.props.multiple === 'undefined' ? true : this.props.multiple;
 	}
 
 	public render() {
@@ -148,9 +133,7 @@ export default class FileDialogue extends React.Component<
 						onClick={this.getViewChanger(FileDialogueView.MYDRIVE)}
 						className={
 							'linkButton ' +
-							(this.state.view === FileDialogueView.MYDRIVE
-								? 'selected'
-								: '')
+							(this.state.view === FileDialogueView.MYDRIVE ? 'selected' : '')
 						}
 					>
 						Squadron Drive
@@ -159,18 +142,14 @@ export default class FileDialogue extends React.Component<
 						onClick={this.getViewChanger(FileDialogueView.UPLOAD)}
 						className={
 							'linkButton ' +
-							(this.state.view === FileDialogueView.UPLOAD
-								? 'selected'
-								: '')
+							(this.state.view === FileDialogueView.UPLOAD ? 'selected' : '')
 						}
 					>
 						Upload
 					</button>
 				</div>
 				<div id="fileDialogueBody">
-					{this.state.selectedFiles.length > 0 ? (
-						<div>Selected files</div>
-					) : null}
+					{this.state.selectedFiles.length > 0 ? <div>Selected files</div> : null}
 					{this.state.selectedFiles.map((file, i) => (
 						<SelectedFileDisplayer
 							key={i}
@@ -179,11 +158,7 @@ export default class FileDialogue extends React.Component<
 							selected={true}
 							red={
 								this.props.filter
-									? !this.props.filter(
-											file,
-											i,
-											this.state.selectedFiles
-									  )
+									? !this.props.filter(file, i, this.state.selectedFiles)
 									: false
 							}
 						/>
@@ -193,9 +168,7 @@ export default class FileDialogue extends React.Component<
 						<FileUploader
 							currentFolder={this.state.currentFolder}
 							onFileUpload={this.addFile}
-							display={
-								this.state.view === FileDialogueView.UPLOAD
-							}
+							display={this.state.view === FileDialogueView.UPLOAD}
 							member={this.props.member}
 							account={this.props.account}
 						/>
@@ -203,9 +176,7 @@ export default class FileDialogue extends React.Component<
 					{this.state.files === null ? (
 						<Loader />
 					) : this.state.error ? (
-						<div>
-							An error occurred requesting a listing of files
-						</div>
+						<div>An error occurred requesting a listing of files</div>
 					) : this.state.view === FileDialogueView.MYDRIVE &&
 					  this.state.files.length === 0 ? (
 						<div
@@ -220,62 +191,43 @@ export default class FileDialogue extends React.Component<
 							<br />
 							<div>
 								{this.state.currentFolder !== null
-									? this.state.currentFolder.folderPath.map(
-											path => (
-												<>
-													<button
-														onClick={e => {
-															e.preventDefault();
-															this.goToFolder(
-																path.id
-															);
-															return false;
-														}}
-														style={{
-															color: '#2875d7',
-															cursor: 'pointer'
-														}}
-														className="linkButton"
-													>
-														{path.name}
-													</button>
-													&nbsp;/&nbsp;
-												</>
-											)
-									  )
+									? this.state.currentFolder.folderPath.map(path => (
+											<>
+												<button
+													onClick={e => {
+														e.preventDefault();
+														this.goToFolder(path.id);
+														return false;
+													}}
+													style={{
+														color: '#2875d7',
+														cursor: 'pointer'
+													}}
+													className="linkButton"
+												>
+													{path.name}
+												</button>
+												&nbsp;/&nbsp;
+											</>
+									  ))
 									: null}
 							</div>
 							<br />
-							{folderFolders.length > 0 ? (
-								<div key={0}>Folders</div>
-							) : null}
+							{folderFolders.length > 0 ? <div key={0}>Folders</div> : null}
 							{folderFolders
-								.sort((a, b) =>
-									a.fileName.localeCompare(b.fileName)
-								)
+								.sort((a, b) => a.fileName.localeCompare(b.fileName))
 								.map((folder, i) => (
 									<FolderDisplayer
 										file={folder}
 										key={i}
 										onClick={this.onFolderClick}
-										selected={
-											this.state.selectedFolder ===
-											folder.id
-										}
+										selected={this.state.selectedFolder === folder.id}
 									/>
 								))}
-							{folderFiles.length > 0 ? (
-								<div key={1}>Files</div>
-							) : null}
+							{folderFiles.length > 0 ? <div key={1}>Files</div> : null}
 							{folderFiles
-								.sort((a, b) =>
-									a.fileName.localeCompare(b.fileName)
-								)
-								.filter(
-									this.props.filter
-										? this.props.filter
-										: () => true
-								)
+								.sort((a, b) => a.fileName.localeCompare(b.fileName))
+								.filter(this.props.filter ? this.props.filter : () => true)
 								.map((file, i) => (
 									<SimpleFileDisplayer
 										file={file}
@@ -296,7 +248,7 @@ export default class FileDialogue extends React.Component<
 	}
 
 	private getViewChanger(view: FileDialogueView) {
-		return ((e: React.MouseEvent<HTMLButtonElement>) => {
+		return (e: React.MouseEvent<HTMLButtonElement>) => {
 			if (view === FileDialogueView.MYDRIVE) {
 				this.goToFolder(this.state.currentFolder!.id);
 				this.setState({
@@ -310,7 +262,7 @@ export default class FileDialogue extends React.Component<
 				});
 			}
 			e.preventDefault();
-		});
+		};
 	}
 
 	private onFolderClick(folder: FileInterface, selected: boolean) {
@@ -338,9 +290,7 @@ export default class FileDialogue extends React.Component<
 				selectedFiles
 			});
 		} else {
-			const selectedFiles = this.multiple
-				? [...this.state.selectedFiles, file]
-				: [file];
+			const selectedFiles = this.multiple ? [...this.state.selectedFiles, file] : [file];
 			this.setState({
 				selectedFiles
 			});
@@ -349,9 +299,7 @@ export default class FileDialogue extends React.Component<
 
 	private handleSelectedFileDelete(file: FileInterface, selected: boolean) {
 		// delete the file from this.state.selectedFiles
-		const selectedFiles = this.state.selectedFiles.filter(
-			f => f.id !== file.id
-		);
+		const selectedFiles = this.state.selectedFiles.filter(f => f.id !== file.id);
 		this.setState({ selectedFiles });
 	}
 
@@ -399,9 +347,7 @@ export default class FileDialogue extends React.Component<
 
 	private onDialogueClose() {
 		this.props.onReturn(
-			this.state.selectedFiles.filter(
-				this.props.filter ? this.props.filter : () => true
-			)
+			this.state.selectedFiles.filter(this.props.filter ? this.props.filter : () => true)
 		);
 
 		this.setState({

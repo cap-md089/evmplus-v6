@@ -140,11 +140,11 @@ export default class PhotoLibrary extends Page<PageProps, PhotoLibraryState> {
 	}
 
 	private getImageViewer(index: number) {
-		return (() => {
+		return () => {
 			this.setState(prev => ({
 				currentImage: prev.imageIDs[index]
 			}));
-		});
+		};
 	}
 
 	private closeDialogue() {

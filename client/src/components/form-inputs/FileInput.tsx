@@ -41,17 +41,10 @@ const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
 );
 
 interface FileInputProps extends InputProps<string[]> {
-	filter?: (
-		element: FileObject,
-		index: number,
-		array: FileObject[]
-	) => boolean;
+	filter?: (element: FileObject, index: number, array: FileObject[]) => boolean;
 }
 
-export default class FileInput extends React.Component<
-	FileInputProps,
-	FileInputState
-> {
+export default class FileInput extends React.Component<FileInputProps, FileInputState> {
 	public static getDerivedStateFromProps(
 		props: InputProps<string[]>,
 		state: FileInputState
@@ -91,9 +84,7 @@ export default class FileInput extends React.Component<
 			const account = this.props.account;
 
 			const files = await Promise.all(
-				this.props.value.map(id =>
-					FileInterface.Get(id, this.props.member, account)
-				)
+				this.props.value.map(id => FileInterface.Get(id, this.props.member, account))
 			);
 
 			this.setState({
@@ -180,11 +171,7 @@ export default class FileInput extends React.Component<
 					</Button>
 					<div>
 						{this.state.files.map((file, i) => (
-							<FileDisplay
-								key={i}
-								file={file}
-								onClick={this.onFileRemove}
-							/>
+							<FileDisplay key={i} file={file} onClick={this.onFileRemove} />
 						))}
 					</div>
 				</div>

@@ -18,10 +18,7 @@ import { FileObject } from 'common-lib';
 
 export let index = 0;
 
-export const mediaRenderFunction = (
-	block: ContentBlock,
-	contentState: ContentState
-) => {
+export const mediaRenderFunction = (block: ContentBlock, contentState: ContentState) => {
 	if (block.getType() === 'atomic') {
 		const entity = block.getEntityAt(0);
 		if (!entity) {
@@ -64,14 +61,9 @@ export const blockStyleFunction = (block: ContentBlock) => {
 };
 
 const HyperLink: React.SFC<any> = ({ block, contentState }) => {
-	const { href, text } = contentState
-		.getEntity(block.getEntityAt(0))
-		.getData();
+	const { href, text } = contentState.getEntity(block.getEntityAt(0)).getData();
 
-	if (
-		!!href.match(/^(https?:\/\/)?(www\.)?capunit\.com\/?/) ||
-		href[0] === '/'
-	) {
+	if (!!href.match(/^(https?:\/\/)?(www\.)?capunit\.com\/?/) || href[0] === '/') {
 		return <Link to={href}>{text}</Link>;
 	} else {
 		return (
@@ -246,10 +238,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleHeading1}
 							style={{
-								fontWeight:
-									this.getBlockType() === 'header-one'
-										? 'bold'
-										: 'normal'
+								fontWeight: this.getBlockType() === 'header-one' ? 'bold' : 'normal'
 							}}
 						>
 							H1
@@ -257,10 +246,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleHeading2}
 							style={{
-								fontWeight:
-									this.getBlockType() === 'header-two'
-										? 'bold'
-										: 'normal'
+								fontWeight: this.getBlockType() === 'header-two' ? 'bold' : 'normal'
 							}}
 						>
 							H2
@@ -269,9 +255,7 @@ export default class TextArea extends React.Component<
 							onMouseDown={this.toggleHeading3}
 							style={{
 								fontWeight:
-									this.getBlockType() === 'header-three'
-										? 'bold'
-										: 'normal'
+									this.getBlockType() === 'header-three' ? 'bold' : 'normal'
 							}}
 						>
 							H3
@@ -280,9 +264,7 @@ export default class TextArea extends React.Component<
 							onMouseDown={this.toggleHeading4}
 							style={{
 								fontWeight:
-									this.getBlockType() === 'header-four'
-										? 'bold'
-										: 'normal'
+									this.getBlockType() === 'header-four' ? 'bold' : 'normal'
 							}}
 						>
 							H4
@@ -291,9 +273,7 @@ export default class TextArea extends React.Component<
 							onMouseDown={this.toggleHeading5}
 							style={{
 								fontWeight:
-									this.getBlockType() === 'header-five'
-										? 'bold'
-										: 'normal'
+									this.getBlockType() === 'header-five' ? 'bold' : 'normal'
 							}}
 						>
 							H5
@@ -301,10 +281,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleHeading6}
 							style={{
-								fontWeight:
-									this.getBlockType() === 'header-six'
-										? 'bold'
-										: 'normal'
+								fontWeight: this.getBlockType() === 'header-six' ? 'bold' : 'normal'
 							}}
 						>
 							H6
@@ -313,8 +290,7 @@ export default class TextArea extends React.Component<
 							onMouseDown={this.toggleUL}
 							style={{
 								fontWeight:
-									this.getBlockType() ===
-									'unordered-list-item'
+									this.getBlockType() === 'unordered-list-item'
 										? 'bold'
 										: 'normal'
 							}}
@@ -325,9 +301,7 @@ export default class TextArea extends React.Component<
 							onMouseDown={this.toggleOL}
 							style={{
 								fontWeight:
-									this.getBlockType() === 'ordered-list-item'
-										? 'bold'
-										: 'normal'
+									this.getBlockType() === 'ordered-list-item' ? 'bold' : 'normal'
 							}}
 						>
 							OL
@@ -336,9 +310,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleBold}
 							style={{
-								fontWeight: editorState
-									.getCurrentInlineStyle()
-									.has('BOLD')
+								fontWeight: editorState.getCurrentInlineStyle().has('BOLD')
 									? 'bold'
 									: 'normal'
 							}}
@@ -348,9 +320,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleItalic}
 							style={{
-								fontStyle: editorState
-									.getCurrentInlineStyle()
-									.has('ITALIC')
+								fontStyle: editorState.getCurrentInlineStyle().has('ITALIC')
 									? 'italic'
 									: 'normal'
 							}}
@@ -360,9 +330,7 @@ export default class TextArea extends React.Component<
 						<span
 							onMouseDown={this.toggleUnderline}
 							style={{
-								textDecoration: editorState
-									.getCurrentInlineStyle()
-									.has('UNDERLINE')
+								textDecoration: editorState.getCurrentInlineStyle().has('UNDERLINE')
 									? 'underline'
 									: 'none'
 							}}
@@ -410,10 +378,7 @@ export default class TextArea extends React.Component<
 							handleKeyCommand={this.handleKeyCommand}
 							onChange={this.onChange}
 							blockRendererFn={(block: ContentBlock) =>
-								mediaRenderFunction(
-									block,
-									this.editorState.getCurrentContent()
-								)
+								mediaRenderFunction(block, this.editorState.getCurrentContent())
 							}
 						/>
 					</div>
@@ -438,65 +403,47 @@ export default class TextArea extends React.Component<
 
 	private toggleUnderline(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleInlineStyle(this.editorState, 'UNDERLINE')
-		);
+		this.onChange(RichUtils.toggleInlineStyle(this.editorState, 'UNDERLINE'));
 	}
 
 	private toggleHeading1(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-one')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-one'));
 	}
 
 	private toggleHeading2(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-two')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-two'));
 	}
 
 	private toggleHeading3(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-three')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-three'));
 	}
 
 	private toggleHeading4(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-four')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-four'));
 	}
 
 	private toggleHeading5(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-five')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-five'));
 	}
 
 	private toggleHeading6(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'header-six')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'header-six'));
 	}
 
 	private toggleUL(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'unordered-list-item')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'unordered-list-item'));
 	}
 
 	private toggleOL(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'ordered-list-item')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'ordered-list-item'));
 	}
 
 	private async addImage(e: React.MouseEvent<HTMLSpanElement>) {
@@ -518,16 +465,12 @@ export default class TextArea extends React.Component<
 
 		const contentState = this.editorState.getCurrentContent();
 
-		const contentStateWithEntityKey = contentState.createEntity(
-			'IMAGE',
-			'IMMUTABLE',
-			{
-				src: urlFormat('api', 'files', fileObject[0].id, 'export'),
-				width: '100%',
-				height: '100%',
-				float: 'left'
-			}
-		);
+		const contentStateWithEntityKey = contentState.createEntity('IMAGE', 'IMMUTABLE', {
+			src: urlFormat('api', 'files', fileObject[0].id, 'export'),
+			width: '100%',
+			height: '100%',
+			float: 'left'
+		});
 
 		const entityKey = contentStateWithEntityKey.getLastCreatedEntityKey();
 
@@ -540,10 +483,7 @@ export default class TextArea extends React.Component<
 		);
 
 		this.onChange(
-			EditorState.forceSelection(
-				newState,
-				newState.getCurrentContent().getSelectionAfter()
-			)
+			EditorState.forceSelection(newState, newState.getCurrentContent().getSelectionAfter())
 		);
 	}
 
@@ -554,16 +494,12 @@ export default class TextArea extends React.Component<
 
 	private toggleCenterAlign(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'centeralign')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'centeralign'));
 	}
 
 	private toggleRightAlign(e: React.MouseEvent<HTMLSpanElement>) {
 		e.preventDefault();
-		this.onChange(
-			RichUtils.toggleBlockType(this.editorState, 'rightalign')
-		);
+		this.onChange(RichUtils.toggleBlockType(this.editorState, 'rightalign'));
 	}
 
 	private onChange(editorState: EditorState): void {
@@ -586,10 +522,7 @@ export default class TextArea extends React.Component<
 			.getType();
 	}
 
-	private handleKeyCommand(
-		command: string,
-		editorState: EditorState
-	): DraftHandleValue {
+	private handleKeyCommand(command: string, editorState: EditorState): DraftHandleValue {
 		const newState = RichUtils.handleKeyCommand(editorState, command);
 		if (newState) {
 			this.onChange(newState);

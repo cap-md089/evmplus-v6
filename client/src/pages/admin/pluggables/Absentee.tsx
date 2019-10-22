@@ -38,7 +38,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 				}
 			};
 		}
-		
+
 		this.onFormChange = this.onFormChange.bind(this);
 		this.onSubmit = this.onSubmit.bind(this);
 	}

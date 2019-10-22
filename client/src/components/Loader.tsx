@@ -1,10 +1,7 @@
 import * as React from 'react';
 import './loader.css';
 
-export default class Loader extends React.Component<
-	{},
-	{ display: boolean }
-> {
+export default class Loader extends React.Component<{}, { display: boolean }> {
 	public state = {
 		display: false
 	};

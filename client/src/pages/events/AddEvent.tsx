@@ -109,11 +109,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		let eventObject;
 
 		try {
-			eventObject = await Event.Create(
-				event,
-				this.props.member,
-				this.props.account
-			);
+			eventObject = await Event.Create(event, this.props.member, this.props.account);
 		} catch (e) {
 			this.setState({
 				createError: e.status

@@ -26,12 +26,12 @@ type FlightAssignState = FlightAssignStateLoaded | FlightAssignStateUnloaded;
 
 const saveButtonMargin = {
 	margin: 15,
-	marginRight: 35,
+	marginRight: 35
 };
 
 const saveMessage = {
 	marginLeft: 10
-}
+};
 
 export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	public state: FlightAssignState = {
@@ -55,7 +55,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			return;
 		}
 
-		this.updateTitle('Administration', 'Flight Assignment')
+		this.updateTitle('Administration', 'Flight Assignment');
 		this.props.updateSideNav([
 			...this.props.registry.RankAndFile.Flights.map((flight, i) => ({
 				text: flight,
@@ -92,7 +92,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 
 		this.setState({
 			members,
-			loaded: true,
+			loaded: true
 		});
 	}
 
@@ -159,7 +159,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	}
 
 	private onDrop(flight: string) {
-		return ((memRef: MemberReference) => {
+		return (memRef: MemberReference) => {
 			for (const member of this.state.members!) {
 				if (member.matchesReference(memRef)) {
 					member.flight = flight;
@@ -170,7 +170,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 				open: true,
 				saved: false
 			});
-		});
+		};
 	}
 
 	private async onSaveClick() {

@@ -12,19 +12,12 @@ export class SelectedFileDisplayer extends React.Component<
 				className="selectedFile"
 				onClick={e => {
 					e.stopPropagation();
-					this.props.onClick(
-						this.props.file,
-						this.props.selected
-					);
+					this.props.onClick(this.props.file, this.props.selected);
 				}}
 			>
 				<div
 					className={'box selected' + (this.props.red ? ' red' : '')}
-					title={
-						this.props.red
-							? 'Invalid file selected'
-							: this.props.file.fileName
-					}
+					title={this.props.red ? 'Invalid file selected' : this.props.file.fileName}
 				>
 					{this.props.file.fileName}
 				</div>

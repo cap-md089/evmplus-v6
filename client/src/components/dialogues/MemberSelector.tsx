@@ -18,10 +18,7 @@ interface MemberInputState {
 	filterValues: any[];
 }
 
-export default class MemberSelector extends React.Component<
-	MemberInputProps,
-	MemberInputState
-> {
+export default class MemberSelector extends React.Component<MemberInputProps, MemberInputState> {
 	public state: MemberInputState = {
 		members: null,
 		open: false,
@@ -75,10 +72,7 @@ export default class MemberSelector extends React.Component<
 						filters={[
 							{
 								check: (member, input) => {
-									if (
-										input === '' ||
-										typeof input !== 'string'
-									) {
+									if (input === '' || typeof input !== 'string') {
 										return true;
 									}
 

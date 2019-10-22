@@ -36,31 +36,23 @@ export default class MultCheckbox extends React.Component<
 
 		if (typeof props.value === 'undefined') {
 			this.state = {
-				currentValue: arrFromLength(
-					this.props.labels.length + (this.props.other ? 1 : 0)
-				),
+				currentValue: arrFromLength(this.props.labels.length + (this.props.other ? 1 : 0)),
 				currentText: ''
 			};
 		} else {
 			this.state = {
 				currentValue:
 					typeof props.value[0] === 'undefined'
-						? arrFromLength(
-								this.props.labels.length +
-									(this.props.other ? 1 : 0)
-						  )
+						? arrFromLength(this.props.labels.length + (this.props.other ? 1 : 0))
 						: props.value[0],
-				currentText:
-					typeof props.value[1] === 'undefined' ? '' : props.value[1]!
+				currentText: typeof props.value[1] === 'undefined' ? '' : props.value[1]!
 			};
 		}
 
 		if (this.props.onInitialize) {
 			const value = [
 				this.state.currentValue,
-				this.state.currentValue[this.props.labels.length]
-					? this.state.currentText
-					: ''
+				this.state.currentValue[this.props.labels.length] ? this.state.currentText : ''
 			];
 			this.props.onInitialize({
 				name: this.props.name,
@@ -86,25 +78,17 @@ export default class MultCheckbox extends React.Component<
 								onChange={this.onCheckboxChange(i)}
 							/>
 							<label htmlFor={this.props.name + '-' + i} />
-							<label htmlFor={this.props.name + '-' + i}>
-								{label}
-							</label>
+							<label htmlFor={this.props.name + '-' + i}>{label}</label>
 						</div>
 					))}
 					{this.props.other ? (
 						<div className="checkboxDiv checkboxDivMult">
 							<input
 								type="checkbox"
-								checked={
-									this.state.currentValue[
-										this.props.labels.length
-									]
-								}
+								checked={this.state.currentValue[this.props.labels.length]}
 								name={this.props.name + '-Other'}
 								id={this.props.name + '-Other'}
-								onChange={this.onCheckboxChange(
-									this.props.labels.length
-								)}
+								onChange={this.onCheckboxChange(this.props.labels.length)}
 							/>
 							<label htmlFor={this.props.name + '-Other'} />
 							<label htmlFor={this.props.name + '-Other'}>
@@ -125,7 +109,7 @@ export default class MultCheckbox extends React.Component<
 	}
 
 	private onCheckboxChange(index: number) {
-		return ((e: React.ChangeEvent<HTMLInputElement>) => {
+		return (e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.currentTarget.checked;
 
 			const currentValues = this.state.currentValue.slice(0);
@@ -150,7 +134,7 @@ export default class MultCheckbox extends React.Component<
 			if (this.props.onChange) {
 				this.props.onChange([currentValues, stringValue]);
 			}
-		});
+		};
 	}
 
 	private addOther() {

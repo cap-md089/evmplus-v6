@@ -102,13 +102,7 @@ export default class ExtraFolderDisplay extends React.Component<
 		const getFilesPromise = [];
 
 		for (const id of this.props.file.fileChildren) {
-			getFilesPromise.push(
-				FileInterface.Get(
-					id,
-					this.props.member,
-					this.props.file.account
-				)
-			);
+			getFilesPromise.push(FileInterface.Get(id, this.props.member, this.props.file.account));
 		}
 
 		const children = await Promise.all(getFilesPromise);

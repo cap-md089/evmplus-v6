@@ -436,12 +436,20 @@ export default class App extends React.Component<
 									}}
 								>
 									<li>
-										<a target="_blank" href="https://www.capnhq.gov/" rel="noopener noreferrer">
+										<a
+											target="_blank"
+											href="https://www.capnhq.gov/"
+											rel="noopener noreferrer"
+										>
 											eServices
 										</a>
 									</li>
 									<li>
-										<a target="_blank" href="http://www.cap.news/" rel="noopener noreferrer">
+										<a
+											target="_blank"
+											href="http://www.cap.news/"
+											rel="noopener noreferrer"
+										>
 											Latest CAP News
 										</a>
 									</li>
@@ -468,11 +476,19 @@ export default class App extends React.Component<
 										fontSize: '12px'
 									}}
 								>
-									<a target="_blank" href="http://www.capmembers.com/" rel="noopener noreferrer">
+									<a
+										target="_blank"
+										href="http://www.capmembers.com/"
+										rel="noopener noreferrer"
+									>
 										CAP Members.com
 									</a>{' '}
 									{' | '}
-									<a target="_blank" href="http://www.cap.news/" rel="noopener noreferrer">
+									<a
+										target="_blank"
+										href="http://www.cap.news/"
+										rel="noopener noreferrer"
+									>
 										CAP News
 									</a>{' '}
 									{' | '}

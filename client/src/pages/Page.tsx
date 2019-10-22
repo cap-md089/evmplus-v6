@@ -23,7 +23,7 @@ export interface PageProps<R = {}> {
 
 	/**
 	 * IGNORE, DO NOT USE
-	 * 
+	 *
 	 * It is used by Page.updateURL to prevent unnecessary calls to componentDidMount
 	 */
 	prepareURL: (url: string) => void;
@@ -44,8 +44,7 @@ export default abstract class Page<
 	public shouldComponentUpdate(nextProps: P, nextState: S) {
 		const urlChanged =
 			nextProps.routeProps.location.pathname !== this.okURL &&
-			nextProps.routeProps.location.pathname !==
-				this.props.routeProps.location.pathname;
+			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
 
 		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
 		const currentSID = this.props.member ? this.props.member.sessionID : '';
@@ -60,8 +59,7 @@ export default abstract class Page<
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
 			urlChanged ||
-			nextProps.routeProps.location.hash !==
-				this.props.routeProps.location.hash ||
+			nextProps.routeProps.location.hash !== this.props.routeProps.location.hash ||
 			!areStatesEqual;
 
 		this.updatingState = false;
@@ -71,10 +69,7 @@ export default abstract class Page<
 
 	public setState<K extends keyof S>(
 		state:
-			| ((
-					prevState: Readonly<S>,
-					props: Readonly<P>
-			  ) => Pick<S, K> | S | null)
+			| ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null)
 			| (Pick<S, K> | S | null),
 		callback?: () => void
 	) {
@@ -108,7 +103,6 @@ export default abstract class Page<
 				.then(res => res.json())
 				.then((sr: SigninReturn) => {
 					this.props.authorizeUser(sr);
-
 				});
 		}
 	}

@@ -18,10 +18,7 @@ export interface CommentsForm {
 	comments: string;
 }
 
-export default class ExtraFileDisplay extends React.Component<
-	ExtraDisplayProps,
-	CommentsForm
-> {
+export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps, CommentsForm> {
 	public state = {
 		comments: this.props.file.comments
 	};
@@ -43,10 +40,7 @@ export default class ExtraFileDisplay extends React.Component<
 					FileUserAccessControlPermissions.DELETE
 				) ? (
 					<>
-						<Button
-							buttonType="none"
-							onClick={this.onDeleteFileClick}
-						>
+						<Button buttonType="none" onClick={this.onDeleteFileClick}>
 							Delete file
 						</Button>
 						<br />

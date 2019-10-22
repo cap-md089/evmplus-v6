@@ -20,10 +20,7 @@ interface FileUploaderState {
 	error: HTTPError;
 }
 
-export default class FileUploader extends React.Component<
-	FileUploaderProps,
-	FileUploaderState
-> {
+export default class FileUploader extends React.Component<FileUploaderProps, FileUploaderState> {
 	public state: FileUploaderState = {
 		files: [],
 		hovering: false,
@@ -83,9 +80,7 @@ export default class FileUploader extends React.Component<
 		return (
 			<>
 				<div>
-					{this.state.files.length > 0 ? (
-						<div>Uploading files</div>
-					) : null}
+					{this.state.files.length > 0 ? <div>Uploading files</div> : null}
 					{this.state.files.map((f, i) => (
 						<div key={i}>
 							{f.name} {i === 0 ? this.state.progress * 100 : 0}%
@@ -100,9 +95,7 @@ export default class FileUploader extends React.Component<
 					onDragEnd={this.getDropOverChanger(false)}
 					onDragLeave={this.getDropOverChanger(false)}
 					style={{
-						backgroundColor: this.state.hovering
-							? '#b4d1ff'
-							: '#fff',
+						backgroundColor: this.state.hovering ? '#b4d1ff' : '#fff',
 						borderColor: this.state.hovering ? '#3079ed' : '#999',
 						borderWidth: 2,
 						borderStyle: 'dashed',
@@ -156,12 +149,12 @@ export default class FileUploader extends React.Component<
 	}
 
 	private getDropOverChanger(hovering: boolean) {
-		return ((e: React.DragEvent<HTMLDivElement>) => {
+		return (e: React.DragEvent<HTMLDivElement>) => {
 			e.preventDefault();
 			this.setState({
 				hovering
 			});
-		});
+		};
 	}
 
 	private handleDrop(ev: React.DragEvent<HTMLDivElement>) {

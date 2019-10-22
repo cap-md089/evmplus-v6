@@ -77,11 +77,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
-		const newTeam = await Team.Create(
-			team,
-			this.props.member,
-			this.props.account
-		);
+		const newTeam = await Team.Create(team, this.props.member, this.props.account);
 
 		this.props.routeProps.history.push(`/team/${newTeam.id}`);
 	}

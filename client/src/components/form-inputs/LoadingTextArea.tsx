@@ -6,10 +6,7 @@ interface LoadingTextAreaState {
 	textArea: typeof import('./TextArea') | null;
 }
 
-export default class LoadingTextArea extends React.Component<
-	TextAreaProps,
-	LoadingTextAreaState
-> {
+export default class LoadingTextArea extends React.Component<TextAreaProps, LoadingTextAreaState> {
 	public state: LoadingTextAreaState = {
 		textArea: null
 	};

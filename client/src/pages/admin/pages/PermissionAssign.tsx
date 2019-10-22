@@ -16,8 +16,8 @@ interface PermissionAssignState {
 }
 
 interface PermissionInformation {
-	[key: string]: MemberPermissions
-};
+	[key: string]: MemberPermissions;
+}
 
 export default class PermissionAssign extends Page<PageProps, PermissionAssignState> {
 	public state: PermissionAssignState = {
@@ -168,7 +168,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 	}
 
 	private getRemover(index: number) {
-		return (() => {
+		return () => {
 			const availableMembers = this.state.availableMembers!.slice(0);
 			const members = this.state.members!.slice(0);
 
@@ -178,6 +178,6 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				availableMembers,
 				members
 			});
-		});
+		};
 	}
 }

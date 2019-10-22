@@ -1,1 +1,1 @@
-module.exports = require('common-lib/index.json')
+module.exports = require('common-lib/prettier.json')

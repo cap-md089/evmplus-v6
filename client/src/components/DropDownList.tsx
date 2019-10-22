@@ -69,7 +69,7 @@ export default class DropDownList<T> extends PureComponent<
 									this.state.open[ind] ? 'down' : ''
 								}`}
 								onClick={this.getToggleOpener(ind)}
-								ref={ref => this.arrowRefs[ind] = ref}
+								ref={ref => (this.arrowRefs[ind] = ref)}
 							/>
 							<div
 								className="detailedlistplusname"
@@ -91,7 +91,7 @@ export default class DropDownList<T> extends PureComponent<
 	}
 
 	private getToggleOpener(index: number) {
-		return (() => {
+		return () => {
 			if (this.state.open[index]) {
 				const ref = this.divRefs[index];
 				if (ref !== null) {
@@ -149,6 +149,6 @@ export default class DropDownList<T> extends PureComponent<
 					});
 				}
 			}
-		});
+		};
 	}
 }

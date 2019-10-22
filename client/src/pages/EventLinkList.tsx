@@ -39,10 +39,7 @@ function getEventNumber(gen: RadioReturn<EchelonEventNumber>) {
 	return null;
 }
 
-export default class EventLinkList extends Page<
-	PageProps,
-	EventLinkListState
-> {
+export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
 		eventList: null,
 		eventsThatAreLinked: null
@@ -50,24 +47,16 @@ export default class EventLinkList extends Page<
 
 	public async componentDidMount() {
 		if (this.props.member) {
-			let eventList = await this.props.account.getEvents(
-				this.props.member
-			);
+			let eventList = await this.props.account.getEvents(this.props.member);
 
 			// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
-			eventList = eventList.sort(
-				(a, b) => a.startDateTime - b.startDateTime
-			);
+			eventList = eventList.sort((a, b) => a.startDateTime - b.startDateTime);
 
 			eventList = eventList.filter(
-				event =>
-					event.startDateTime >
-					+DateTime.utc() - (13 * 60 * 60 * 24 * 30 * 1000)
+				event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000
 			);
 
-			const eventsThatAreLinked = eventList.filter(
-				event => !!event.sourceEvent
-			);
+			const eventsThatAreLinked = eventList.filter(event => !!event.sourceEvent);
 
 			this.setState({ eventList, eventsThatAreLinked });
 		}
@@ -94,10 +83,7 @@ export default class EventLinkList extends Page<
 			return <div>Please sign in to view this content</div>;
 		}
 
-		if (
-			this.state.eventList === null ||
-			this.state.eventsThatAreLinked === null
-		) {
+		if (this.state.eventList === null || this.state.eventsThatAreLinked === null) {
 			return <Loader />;
 		}
 
@@ -108,9 +94,8 @@ export default class EventLinkList extends Page<
 		) : (
 			<div className="eventlinklist">
 				<h3>
-					Click '<span style={{ color: 'magenta' }}>Confirmed</span>'
-					Status to set Status to '
-					<span style={{ color: 'green' }}>Complete</span>'
+					Click '<span style={{ color: 'magenta' }}>Confirmed</span>' Status to set Status
+					to '<span style={{ color: 'green' }}>Complete</span>'
 				</h3>
 				<table>
 					<tbody>
@@ -137,24 +122,17 @@ export default class EventLinkList extends Page<
 							<tr key={i}>
 								<td>
 									{event.accountID}-{event.id} ::{'  '}
-									<Link to={`/eventviewer/${event.id}`}>
-										{event.name}
-									</Link>
+									<Link to={`/eventviewer/${event.id}`}>{event.name}</Link>
 									{` `}
 									{event.sourceEvent ? (
 										<>
 											{` - [`}
 											<a
-												href={`https://${
-													event.sourceEvent.accountID
-												}.capunit.com/eventviewer/${
-													event.sourceEvent.id
-												}`}
+												href={`https://${event.sourceEvent.accountID}.capunit.com/eventviewer/${event.sourceEvent.id}`}
 												target="_blank"
 												rel="noopener noreferrer"
 											>
-												{event.sourceEvent.accountID}-
-												{event.sourceEvent.id}
+												{event.sourceEvent.accountID}-{event.sourceEvent.id}
 											</a>
 											{`]`}
 										</>
@@ -165,9 +143,7 @@ export default class EventLinkList extends Page<
 										whiteSpace: 'nowrap'
 									}}
 								>
-									{DateTime.fromMillis(
-										event.startDateTime
-									).toLocaleString({
+									{DateTime.fromMillis(event.startDateTime).toLocaleString({
 										...DateTime.DATETIME_SHORT,
 										hour12: false
 									})}

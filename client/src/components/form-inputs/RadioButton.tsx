@@ -2,15 +2,12 @@ import * as React from 'react';
 import { InputProps } from './Input';
 import { RadioReturn } from 'common-lib';
 
-export interface RadioProps<E extends number = number>
-	extends InputProps<RadioReturn<E>> {
+export interface RadioProps<E extends number = number> extends InputProps<RadioReturn<E>> {
 	labels: string[];
 	other?: boolean;
 }
 
-export default class RadioButton<
-	E extends number = number
-> extends React.Component<
+export default class RadioButton<E extends number = number> extends React.Component<
 	RadioProps<E | -1>
 > {
 	constructor(props: RadioProps<E | -1>) {
@@ -40,40 +37,20 @@ export default class RadioButton<
 								onChange={this.getChangeHandler(i)}
 								checked={i === (this.props.value || [-1])[0]}
 							/>
-							<label htmlFor={`${this.props.name}-${i}`}>
-								{label}
-							</label>
-							<label
-								htmlFor={`${this.props.name}-${i}`}
-								className="check"
-							/>
+							<label htmlFor={`${this.props.name}-${i}`}>{label}</label>
+							<label htmlFor={`${this.props.name}-${i}`} className="check" />
 						</div>
 					))}
 					{this.props.other ? (
 						<div className="roundedTwo">
 							<input
-								id={
-									this.props.name +
-									'-' +
-									this.props.labels.length
-								}
+								id={this.props.name + '-' + this.props.labels.length}
 								type="radio"
 								value={this.props.labels.length}
-								onChange={this.getChangeHandler(
-									this.props.labels.length
-								)}
-								checked={
-									this.props.labels.length ===
-									(this.props.value || [-1])[0]
-								}
+								onChange={this.getChangeHandler(this.props.labels.length)}
+								checked={this.props.labels.length === (this.props.value || [-1])[0]}
 							/>
-							<label
-								htmlFor={
-									this.props.name +
-									'-' +
-									this.props.labels.length
-								}
-							>
+							<label htmlFor={this.props.name + '-' + this.props.labels.length}>
 								Other:
 								<input
 									id={this.props.name + 'Other'}
@@ -86,11 +63,7 @@ export default class RadioButton<
 								/>
 							</label>
 							<label
-								htmlFor={
-									this.props.name +
-									'-' +
-									this.props.labels.length
-								}
+								htmlFor={this.props.name + '-' + this.props.labels.length}
 								className="check"
 							/>
 						</div>
@@ -101,7 +74,7 @@ export default class RadioButton<
 	}
 
 	private getChangeHandler(index: number) {
-		return (() => {
+		return () => {
 			this.setState({
 				currentChecked: index
 			});
@@ -109,9 +82,7 @@ export default class RadioButton<
 			if (this.props.onChange) {
 				this.props.onChange([
 					index as E,
-					index === this.props.labels.length
-						? (this.props.value || [null, ''])[1]
-						: ''
+					index === this.props.labels.length ? (this.props.value || [null, ''])[1] : ''
 				]);
 			}
 
@@ -126,7 +97,7 @@ export default class RadioButton<
 					]
 				});
 			}
-		});
+		};
 	}
 
 	private updateOtherText(e: React.ChangeEvent<HTMLInputElement>) {

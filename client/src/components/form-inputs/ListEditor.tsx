@@ -12,11 +12,8 @@ const clearFix: React.CSSProperties = {
 	height: 15
 };
 
-interface ListEditorProps<
-	T,
-	P extends InputProps<T>,
-	R extends React.ComponentType<P>
-> extends InputProps<T[]> {
+interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
+	extends InputProps<T[]> {
 	inputComponent: R;
 	addNew: () => T;
 	allowChange?: boolean;
@@ -59,8 +56,7 @@ export default class ListEditor<
 				<div className="listitems-edit">
 					{(this.props.value || [])
 						.map((value, index) => {
-							const extraProps: Omit<P, ProvidedKeys> = this.props
-								.extraProps;
+							const extraProps: Omit<P, ProvidedKeys> = this.props.extraProps;
 							const knownProps: Pick<P, ProvidedKeys> = {
 								// Don't know why T doesn't equal P["value"]
 								// @ts-ignore
@@ -98,23 +94,17 @@ export default class ListEditor<
 											onClick={this.getRemoveItem(index)}
 											className="listEditor-removeItem"
 										>
-											{this.props.removeText ||
-												'Remove item'}
+											{this.props.removeText || 'Remove item'}
 										</Button>
 									</div>
-									{this.props.fullWidth ? (
-										<div
-											style={clearFix}
-										/>
-									) : null}
+									{this.props.fullWidth ? <div style={clearFix} /> : null}
 								</div>
 							);
 						})
 						.map((item, i) => (
 							<div key={i}>
 								{item}
-								{i ===
-								(this.props.value || []).length - 1 ? null : (
+								{i === (this.props.value || []).length - 1 ? null : (
 									<div className="divider" />
 								)}
 							</div>
@@ -146,7 +136,7 @@ export default class ListEditor<
 	}
 
 	private getChangeHandler(index: number) {
-		return (({ value }: { value: T; name: string }) => {
+		return ({ value }: { value: T; name: string }) => {
 			const oldValues = (this.props.value || []).slice();
 
 			oldValues[index] = value;
@@ -162,10 +152,8 @@ export default class ListEditor<
 				this.props.onChange(oldValues);
 			}
 
-			return typeof this.props.allowChange === 'undefined'
-				? true
-				: this.props.allowChange;
-		});
+			return typeof this.props.allowChange === 'undefined' ? true : this.props.allowChange;
+		};
 	}
 
 	private addItem() {
@@ -186,7 +174,7 @@ export default class ListEditor<
 	}
 
 	private getRemoveItem(index: number) {
-		return (() => {
+		return () => {
 			const value = (this.props.value || []).slice();
 
 			value.splice(index, 1);
@@ -201,6 +189,6 @@ export default class ListEditor<
 			if (this.props.onChange) {
 				this.props.onChange(value);
 			}
-		});
+		};
 	}
 }

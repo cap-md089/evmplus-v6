@@ -19,7 +19,7 @@ class SideNavigationLink extends React.Component<{ target: string }> {
 class SideNavigationReferenceLink extends React.Component<{
 	target: string;
 }> {
-	constructor(props: {target: string}) {
+	constructor(props: { target: string }) {
 		super(props);
 
 		this.navigateTo = this.navigateTo.bind(this);
@@ -27,10 +27,7 @@ class SideNavigationReferenceLink extends React.Component<{
 
 	public render() {
 		return (
-			<a
-				href={`#${this.props.target}`}
-				onClick={this.navigateTo}
-			>
+			<a href={`#${this.props.target}`} onClick={this.navigateTo}>
 				<span className="arrow" />
 				<span>{this.props.children}</span>
 			</a>
@@ -84,9 +81,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 						{this.props.member ? (
 							<button onClick={this.signOut} style={cursor}>
 								<span className="arrow" />
-								<span>
-									Sign out {this.props.member.getFullName()}
-								</span>
+								<span>Sign out {this.props.member.getFullName()}</span>
 							</button>
 						) : (
 							<SigninLink
@@ -101,7 +96,8 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 					{this.props.member ? (
 						<li>
 							<SideNavigationLink target={'/admin/notifications'}>
-								Unread Notifications: {this.props.fullMemberDetails.notificationCount}
+								Unread Notifications:{' '}
+								{this.props.fullMemberDetails.notificationCount}
 							</SideNavigationLink>
 						</li>
 					) : null}
@@ -118,9 +114,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 									{link.text}
 								</SideNavigationLink>
 							) : (
-								<SideNavigationReferenceLink
-									target={link.target}
-								>
+								<SideNavigationReferenceLink target={link.target}>
 									{link.text}
 								</SideNavigationReferenceLink>
 							)}
@@ -130,7 +124,6 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 			</div>
 		);
 	}
-
 
 	private signOut() {
 		this.props.authorizeUser({

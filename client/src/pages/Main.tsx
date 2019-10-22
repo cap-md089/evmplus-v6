@@ -151,10 +151,8 @@ export default class Main extends Page<PageProps, MainState> {
 													day: '2-digit',
 													month: 'long'
 												})}
-											</strong>
-											{' '}
-											<Link to={ev.getEventURL()}>{ev.name}</Link>
-											{' '}
+											</strong>{' '}
+											<Link to={ev.getEventURL()}>{ev.name}</Link>{' '}
 											<strong>!! Cancelled !!</strong>
 										</span>
 									) : (
@@ -166,8 +164,7 @@ export default class Main extends Page<PageProps, MainState> {
 													day: '2-digit',
 													month: 'long'
 												})}
-											</strong>
-											{' '}
+											</strong>{' '}
 											<Link to={ev.getEventURL()}>{ev.name}</Link>
 										</span>
 									)}
@@ -219,7 +216,11 @@ export default class Main extends Page<PageProps, MainState> {
 					</div>
 					<div style={margin10}>
 						<Link to="/page/emergencyservices">
-							<img src="/images/emergency.png" style={block} alt="Emergency Services" />
+							<img
+								src="/images/emergency.png"
+								style={block}
+								alt="Emergency Services"
+							/>
 							<p style={center}>Emergency Services</p>
 						</Link>
 					</div>

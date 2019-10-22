@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { TeamPublicity } from 'common-lib/index';
 import MemberSelector from '../../dialogues/MemberSelector';
-import TeamMemberInput, {
-	TeamMemberInputProps
-} from '../../form-inputs/TeamMemberInput';
+import TeamMemberInput, { TeamMemberInputProps } from '../../form-inputs/TeamMemberInput';
 import SimpleForm, {
 	BigTextBox,
 	BooleanFields,
@@ -44,58 +42,42 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 				onChange={this.onTeamChange}
 				onSubmit={this.onTeamSubmit}
 				submitInfo={{
-					text: this.props.isTeamUpdate
-						? 'Update team'
-						: 'Create team'
+					text: this.props.isTeamUpdate ? 'Update team' : 'Create team'
 				}}
 				values={this.props.team}
 				validator={teamValidator}
 			>
 				<Label>Team name</Label>
-				<TextInput
-					name="name"
-					errorMessage="Team name must not be empty"
-				/>
+				<TextInput name="name" errorMessage="Team name must not be empty" />
 
 				<Label>Team description</Label>
 				<BigTextBox name="description" />
 
 				<Label>Cadet team leader</Label>
-				<MemberSelector
-					memberList={this.props.memberList}
-					name="cadetLeader"
-				/>
+				<MemberSelector memberList={this.props.memberList} name="cadetLeader" />
 
 				<Divider />
 
 				<Label>Senior mentor</Label>
-				<MemberSelector
-					memberList={this.props.memberList}
-					name="seniorMentor"
-				/>
+				<MemberSelector memberList={this.props.memberList} name="seniorMentor" />
 
 				<Divider />
 
 				<Label>Senior coach</Label>
-				<MemberSelector
-					memberList={this.props.memberList}
-					name="seniorCoach"
-				/>
+				<MemberSelector memberList={this.props.memberList} name="seniorCoach" />
 
 				<Divider />
 
 				<TextBox>
 					Team visibility impacts how the members are viewed
 					<br />
-					Private means members have to sign in to see member names,
-					but can only see contact information if they are part of the
-					team
+					Private means members have to sign in to see member names, but can only see
+					contact information if they are part of the team
 					<br />
-					Protected means that the names and contact information
-					require being signed in to see
+					Protected means that the names and contact information require being signed in
+					to see
 					<br />
-					Public means that people can see names and contact
-					information
+					Public means that people can see names and contact information
 				</TextBox>
 
 				<Label>Team visibility</Label>
