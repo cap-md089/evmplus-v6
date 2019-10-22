@@ -258,11 +258,9 @@ export default class Calendar extends Page<
 
 			if (startDate < thisMonth) {
 				startWeek = 0;
-				startDay = +startDate + 7 * 24 * 3600 * 1000 < +thisMonth ? 0 : startDate.weekday;
+				startDay = +startDate + (thisMonth.weekday % 7) * 24 * 3600 * 1000 < +thisMonth ? 0 : startDate.weekday;
 			} else if (startDate < nextMonth) {
-				startWeek =
-					Math.ceil((startDate.day - startDate.weekday) / 7) +
-					(startDate.weekday === 7 ? 1 : 0);
+				startWeek = Math.floor(((thisMonth.weekday % 7) + startDate.day) / 7);
 				startDay = startDate.weekday;
 			} else {
 				startWeek = calendar.length - 1;
@@ -270,13 +268,11 @@ export default class Calendar extends Page<
 			}
 
 			if (endDate > nextMonth) {
-				const nextWeek = +nextMonth + 7 * 24 * 3600 * 1000;
+				const nextWeek = +nextMonth + (nextMonth.weekday % 7) * 24 * 3600 * 1000;
 				endWeek = calendar.length - 1;
 				endDay = +endDate > nextWeek ? 7 : endDate.weekday;
 			} else if (endDate > thisMonth) {
-				endWeek =
-					Math.ceil((endDate.day - endDate.weekday) / 7) +
-					(endDate.weekday === 7 ? 1 : 0);
+				endWeek = Math.floor(((thisMonth.weekday % 7) + endDate.day) / 7);
 				endDay = endDate.weekday;
 			} else {
 				endWeek = 0;

@@ -23,11 +23,13 @@
 .calendar .left-link {
 	float: left;
 	font-size: 0.8333em;
+	margin-left: 10px;
 }
 
 .calendar .right-link {
 	float: right;
 	font-size: 0.8333em;
+	margin-right: 10px;
 }
 
 .calendar tbody td, .calendar tbody th {
