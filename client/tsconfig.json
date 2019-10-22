@@ -18,7 +18,10 @@
     "jsx": "preserve",
     "skipLibCheck": true,
     "strict": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true
   },
   "include": [
     "src"
