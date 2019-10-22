@@ -106,7 +106,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 				contentType = endingToMime(ending);
 			}
 
-			const id = uuid();
+			const id = uuid().replace(/-/g, '');
 
 			// Start to write to disk
 			const realFilename = `${req.account.id}-${id}`;

@@ -27,7 +27,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 		return;
 	}
 
-	const id = uuid();
+	const id = uuid().replace(/-/g, '');
 
 	const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 
