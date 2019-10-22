@@ -3,7 +3,8 @@ import { FileUserAccessControlPermissions } from 'common-lib/index';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
 import Button from '../Button';
-import Form, { BigTextBox, Label } from '../forms/Form';
+import { BigTextBox, Label } from '../forms/Form';
+import SimpleForm from '../forms/SimpleForm';
 
 export interface ExtraDisplayProps {
 	file: FileInterface;
@@ -35,8 +36,6 @@ export default class ExtraFileDisplay extends React.Component<
 	}
 
 	public render() {
-		const FileChangeForm = Form as new () => Form<CommentsForm>;
-
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
 				{this.props.file.hasPermission(
@@ -61,8 +60,7 @@ export default class ExtraFileDisplay extends React.Component<
 					FileUserAccessControlPermissions.COMMENT |
 						FileUserAccessControlPermissions.MODIFY
 				) ? (
-					<FileChangeForm
-						id=""
+					<SimpleForm<CommentsForm>
 						values={{ comments: this.props.file.comments }}
 						onChange={this.onFormChange}
 						onSubmit={this.onFileChangeFormSubmit}
@@ -70,7 +68,7 @@ export default class ExtraFileDisplay extends React.Component<
 					>
 						<Label>Comments</Label>
 						<BigTextBox name="comments" />
-					</FileChangeForm>
+					</SimpleForm>
 				) : (
 					this.props.file.comments
 				)}
