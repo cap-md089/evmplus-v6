@@ -687,6 +687,18 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public getAttendance = (): AttendanceRecord[] => this.attendance.slice();
 
 	/**
+	 * Checks for the sepcified member
+	 */
+	public hasMemberInAttendance = (member: MemberReference) =>
+		this.attendance.find(val => areMemberReferencesTheSame(member, val.memberID)) !== undefined;
+
+	/**
+	 * Gets the records for a member
+	 */
+	public getAttendanceRecordForMember = (member: MemberReference): AttendanceRecord | undefined =>
+		this.attendance.find(val => areMemberReferencesTheSame(member, val.memberID));
+
+	/**
 	 * Add member to attendance
 	 *
 	 * @param newAttendanceRecord The record to add. Contains partial details
