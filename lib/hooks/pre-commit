@@ -8,12 +8,30 @@ if [ "$branch" = "master" ]; then
   exit 1
 fi
 
+# Check for compile errors
+if tsc; then
+	# Everything compiles
+	:
+else
+	echo "Compile failure"
+	exit 1
+fi
+
 # Run tests
 if npm test; then
 	# We passed
 	:
 else
 	echo "Unit tests have failed"
+	exit 1
+fi
+
+# Lint code
+if node_modules/.bin/tslint --project .; then
+	# Code is lint free
+	:
+else
+	echo "Code fails lint check"
 	exit 1
 fi
 
