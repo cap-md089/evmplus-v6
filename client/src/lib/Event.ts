@@ -511,14 +511,16 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		return (
 			member.matchesReference(this.author) ||
 			member.hasPermission('ManageEvent') ||
-			this.pointsOfContact.map(
-				poc =>
-					poc.type === PointOfContactType.INTERNAL &&
-					MemberBase.AreMemberReferencesTheSame(
-						member.getReference(),
-						poc.memberReference
-					)
-			)
+			this.pointsOfContact
+				.map(
+					poc =>
+						poc.type === PointOfContactType.INTERNAL &&
+						MemberBase.AreMemberReferencesTheSame(
+							member.getReference(),
+							poc.memberReference
+						)
+				)
+				.reduce((prev, curr) => prev || curr)
 		);
 	}
 
