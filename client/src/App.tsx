@@ -258,11 +258,6 @@ export default class App extends React.Component<
 											</NavLink>
 										</li>
 										<li>
-											<NavLink to="/news" activeClassName="selected">
-												News
-											</NavLink>
-										</li>
-										<li>
 											<NavLink to="/calendar" activeClassName="selected">
 												Calendar
 											</NavLink>
