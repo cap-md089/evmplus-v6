@@ -26,7 +26,8 @@ export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
 						<LoaderShort />
 					) : (
 						<div>
-							There are {this.state.list.length} file
+							There {this.state.list.length === 1 ? 'is' : 'are'}{' '}
+							{this.state.list.length} file
 							{this.state.list.length !== 1 ? 's' : ''} in the root drive
 							<br />
 							<br />
