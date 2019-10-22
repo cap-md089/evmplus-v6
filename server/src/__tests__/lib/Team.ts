@@ -1,4 +1,4 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { RawTeamObject } from 'common-lib';
 import conftest from '../../conf.test';
 import { Account, CAPNHQMember, collectResults, getTestTools2, Team } from '../../lib/internals';
@@ -7,11 +7,12 @@ import { newTeam } from '../consts';
 describe('Team', () => {
 	let schema: Schema;
 	let account: Account;
+	let session: Session;
 	let member: CAPNHQMember;
 	let team: Team;
 
 	beforeAll(async done => {
-		[account, schema] = await getTestTools2(conftest);
+		[account, schema, session] = await getTestTools2(conftest);
 
 		member = await CAPNHQMember.Get(542488, account, schema);
 
@@ -34,6 +35,12 @@ describe('Team', () => {
 			.getCollection('Teams')
 			.remove('true')
 			.execute();
+
+		done();
+	});
+
+	afterAll(async done => {
+		await session.close();
 
 		done();
 	});

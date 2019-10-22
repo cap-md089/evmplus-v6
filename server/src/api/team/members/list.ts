@@ -43,8 +43,15 @@ export default asyncErrorHandler(
 
 		let started = false;
 
-		for (const mem of team.members) {
-			const fullMember = await resolveReference(mem.reference, req.account, req.mysqlx);
+		const teamMembers = [
+			...team.members.map(m => m.reference),
+			team.seniorCoach,
+			team.seniorMentor,
+			team.cadetLeader
+		].filter(m => m.type !== 'Null');
+
+		for (const mem of teamMembers) {
+			const fullMember = await resolveReference(mem, req.account, req.mysqlx);
 
 			if (fullMember) {
 				res.write((started ? ', ' : '[') + JSON.stringify(fullMember.toRaw()));

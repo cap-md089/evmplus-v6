@@ -18,9 +18,11 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 	const find = imageCollection
 		.find('forDisplay = true')
 		.limit(
-			registry.values.Website.PhotoLibraryImagesPerPage,
+			-1,
 			registry.values.Website.PhotoLibraryImagesPerPage * page
 		);
+
+	let count = 0;
 
 	await streamAsyncGeneratorAsJSONArrayTyped<RawFileObject, FullFileObject>(
 		res,
@@ -29,6 +31,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 			const fullFile = await File.Get(info.id, req.account, req.mysqlx);
 
 			if (
+				count > registry.values.Website.PhotoLibraryImagesPerPage ||
 				!(await fullFile.hasPermission(
 					req.member,
 					req.mysqlx,
@@ -38,6 +41,8 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 			) {
 				return false;
 			}
+
+			count++;
 
 			return fullFile.toFullRaw();
 		}

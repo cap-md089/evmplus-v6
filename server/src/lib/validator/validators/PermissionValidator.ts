@@ -64,7 +64,7 @@ export default new Validator<MemberPermissions>({
 	PromotionManagement: {
 		validator: Validator.Enum(PromotionManagement)
 	},
-	ProspectiveMemberManagment: {
+	ProspectiveMemberManagement: {
 		validator: Validator.Enum(ProspectiveMemberManagement)
 	},
 	RegistryEdit: {

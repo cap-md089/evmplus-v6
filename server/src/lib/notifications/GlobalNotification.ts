@@ -5,7 +5,7 @@ import {
 	NotificationEveryoneTarget,
 	NotificationMemberCause,
 	NotificationObject,
-	NotificationSystemCause
+	NotificationSystemCause,
 } from 'common-lib';
 import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import {
@@ -26,10 +26,7 @@ export default class GlobalNotification extends Notification {
 
 		const generator = generateResults(
 			findAndBind(notificationCollection, {
-				accountID: account.id,
-				target: {
-					type: NotificationTargetType.EVERYONE
-				}
+				accountID: account.id
 			})
 		);
 
@@ -53,10 +50,7 @@ export default class GlobalNotification extends Notification {
 
 		const generator = generateResults(
 			findAndBind(notificationCollection, {
-				accountID: account.id,
-				target: {
-					type: NotificationTargetType.EVERYONE
-				}
+				accountID: account.id
 			})
 		);
 
@@ -132,14 +126,15 @@ export default class GlobalNotification extends Notification {
 					schema
 				);
 			} else {
+				// `fromMember` is not undefined, as required by the overloads above
 				await MemberNotification.CreateNotification(
 					text,
 					member,
-					{ type: NotificationCauseType.MEMBER, from: fromMember.getReference() },
+					{ type: NotificationCauseType.MEMBER, from: fromMember!.getReference() },
 					null,
 					account,
 					schema,
-					fromMember
+					fromMember!
 				);
 			}
 		}
@@ -149,7 +144,8 @@ export default class GlobalNotification extends Notification {
 				...results,
 				toMemberName: null,
 				fromMemberName:
-					from.type === NotificationCauseType.MEMBER ? fromMember.getFullName() : null
+				// `fromMember` is not undefined, as required by the overloads above
+					from.type === NotificationCauseType.MEMBER ? fromMember!.getFullName() : null
 			},
 			account,
 			schema
@@ -164,6 +160,8 @@ export default class GlobalNotification extends Notification {
 		schema: Schema
 	) {
 		super(data, account, schema);
+
+		this.target = data.target as NotificationEveryoneTarget;
 	}
 
 	public canSee(member: MemberBase, account: Account) {

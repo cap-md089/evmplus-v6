@@ -12,5 +12,3 @@
 5. 3006: (Account request)[./lib/Account.ts]
 6. 3007-3008: (Server configuration)[./serverConf.ts]
 7. 3009: (Registry)[./api/registry.ts]
-8. 3010: (Blog posts)[./api/blogpost.ts]
-9. 3011: (Blog pages)[./api/blogpage.ts]

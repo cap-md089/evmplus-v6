@@ -90,9 +90,9 @@ export default class CAPProspectiveMember extends MemberBase
 		account: Account,
 		schema: Schema
 	): Promise<CAPProspectiveMember> {
-		const prospectiveCollection = schema.getCollection<RawProspectiveMemberObject>(
-			CAPProspectiveMember.tableName
-		);
+		const prospectiveCollection = schema.getCollection<
+			RawProspectiveMemberObject & Required<NoSQLDocument>
+		>(CAPProspectiveMember.tableName);
 
 		const results = await collectResults(
 			findAndBind(prospectiveCollection, { id, accountID: account.id })
@@ -174,7 +174,7 @@ export default class CAPProspectiveMember extends MemberBase
 	public _id: string;
 
 	public constructor(
-		data: ProspectiveMemberObject,
+		data: ProspectiveMemberObject & Required<NoSQLDocument>,
 		schema: Schema,
 		requestingAccount: Account,
 		extraInformation: ExtraMemberInformation
@@ -189,6 +189,8 @@ export default class CAPProspectiveMember extends MemberBase
 		this.flight = data.flight;
 		this.squadron = data.squadron;
 		this.absenteeInformation = data.absenteeInformation;
+		this.accountID = data.accountID;
+		this._id = data._id;
 	}
 
 	public getHomeAccount = () => Account.Get(this.accountID, this.schema);

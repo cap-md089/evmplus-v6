@@ -315,9 +315,9 @@ export abstract class Notification implements NotificationObject {
 		return returnValue;
 	}
 
-	protected static async Create(
+	protected static async Create<T extends NotificationTarget>(
 		data: NewNotificationObject,
-		target: NotificationTarget,
+		target: T,
 		account: Account,
 		schema: Schema
 	): Promise<RawNotificationObject & Required<NoSQLDocument>> {

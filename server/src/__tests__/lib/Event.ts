@@ -1,6 +1,6 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import conftest from '../../conf.test';
-import { Account, CAPNHQMember, Event, getTestTools, MemberBase } from '../../lib/internals';
+import { Account, CAPNHQMember, Event, getTestTools2, MemberBase } from '../../lib/internals';
 import { newEvent } from '../consts';
 
 describe('Event', () => {
@@ -8,12 +8,10 @@ describe('Event', () => {
 	let mem: MemberBase;
 	let account: Account;
 	let schema: Schema;
+	let session: Session;
 
 	beforeAll(async done => {
-		const results = await getTestTools(conftest);
-
-		account = results.account;
-		schema = results.schema;
+		[account, schema, session] = await getTestTools2(conftest);
 
 		mem = await CAPNHQMember.Get(542488, account, schema);
 
@@ -21,10 +19,13 @@ describe('Event', () => {
 	});
 
 	afterAll(async done => {
-		await schema
-			.getCollection('Events')
-			.remove('true')
-			.execute();
+		await Promise.all([
+			schema
+				.getCollection('Events')
+				.remove('true')
+				.execute(),
+			session.close()
+		]);
 
 		done();
 	});
@@ -152,8 +153,8 @@ describe('Event', () => {
 		const getLinkedEvent = await Event.Get(linkedEventCreated.id, targetAccount, schema);
 
 		expect(getLinkedEvent.author).toEqual(linkedEventCreated.author);
-		expect(getLinkedEvent.sourceEvent.id).toEqual(event.id);
-		expect(getLinkedEvent.sourceEvent.accountID).toEqual('mdx89');
+		expect(getLinkedEvent.sourceEvent!.id).toEqual(event.id);
+		expect(getLinkedEvent.sourceEvent!.accountID).toEqual('mdx89');
 
 		done();
 	});

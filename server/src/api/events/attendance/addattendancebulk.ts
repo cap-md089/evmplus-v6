@@ -29,7 +29,7 @@ export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<BulkAttendanceRequest, { id: string }>, res: Response) => {
 		let event: Event;
-		let member: MemberBase;
+		let member: MemberBase | null;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
@@ -51,7 +51,15 @@ export default asyncErrorHandler(
 		}
 
 		for (const i of req.body.members) {
+			if (i.memberID === undefined) {
+				continue;
+			}
+
 			member = await resolveReference(i.memberID, req.account, req.mysqlx);
+
+			if (member === null) {
+				continue;
+			}
 
 			event.addMemberToAttendance(
 				{

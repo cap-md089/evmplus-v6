@@ -14,11 +14,15 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssign
 			return res.end();
 		}
 
+		if (request.newFlight === null) {
+			continue;
+		}
+
 		member.setFlight(request.newFlight);
 
 		await member.saveExtraMemberInformation(req.mysqlx, req.account);
-
-		res.status(201);
-		res.end();
 	}
+
+	res.status(201);
+	res.end();
 });

@@ -13,7 +13,7 @@ import {
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res: Response) => {
 		let event: Event;
-		let member: MemberBase;
+		let member: MemberBase | null;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
@@ -28,6 +28,12 @@ export default asyncErrorHandler(
 			(req.member.hasPermission('ManageEvent', ManageEvent.FULL) || event.isPOC(req.member))
 		) {
 			member = await resolveReference(req.body.memberID, req.account, req.mysqlx);
+
+			if (member === null) {
+				res.status(404);
+				res.end();
+				return;
+			}
 		} else {
 			member = req.member;
 		}

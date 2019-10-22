@@ -10,15 +10,21 @@ import {
 
 export default asyncErrorHandler(
 	async (req: MemberValidatedRequest<Partial<NewEventObject>, { id: string }>, res: Response) => {
-		const eventCount1 = await req.account.getEventCountForMonth(
-			getTargetMonth(req.body.pickupDateTime),
-			getTargetYear(req.body.pickupDateTime)
-		);
+		const eventCount1 =
+			req.body.pickupDateTime !== undefined
+				? await req.account.getEventCountForMonth(
+						getTargetMonth(req.body.pickupDateTime),
+						getTargetYear(req.body.pickupDateTime)
+				  )
+				: 0;
 
-		const eventCount2 = await req.account.getEventCountForMonth(
-			getTargetMonth(req.body.meetDateTime),
-			getTargetYear(req.body.meetDateTime)
-		);
+		const eventCount2 =
+			req.body.meetDateTime !== undefined
+				? await req.account.getEventCountForMonth(
+						getTargetMonth(req.body.meetDateTime),
+						getTargetYear(req.body.meetDateTime)
+				  )
+				: 0;
 
 		if (
 			!req.account.validPaid &&

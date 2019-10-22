@@ -30,6 +30,6 @@ export default asyncErrorHandler(
 			}
 		}
 
-		json<EventObject>(res, event.toRaw(isValidMember ? req.member : null));
+		json<EventObject>(res, event.toRaw(isValidMember ? req.member : undefined));
 	}
 );

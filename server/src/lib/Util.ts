@@ -1,34 +1,10 @@
 import * as mysql from '@mysql/xdevapi';
-import { HTTPError, RawAccountObject, MultCheckboxReturn } from 'common-lib';
+import { HTTPError, MultCheckboxReturn, RawAccountObject } from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
 import { Account } from './internals';
 
-export function deepTypeEqual<T>(obj1: T, obj2: any): obj2 is T {
-	if (typeof obj2 !== typeof obj1) {
-		return false;
-	}
-
-	if (typeof obj1 !== 'object') {
-		return true;
-	}
-
-	for (const i in obj1) {
-		if (obj1.hasOwnProperty(i)) {
-			if (typeof obj1[i] !== typeof obj2[i]) {
-				return false;
-			}
-
-			if (!deepTypeEqual(obj1[i], obj2[i])) {
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-export function extend<T, S>(obj1: T, obj2: S): T & S {
+export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
 	for (const i in obj1) {
 		if (obj1.hasOwnProperty(i)) {
@@ -230,7 +206,7 @@ export const presentMultCheckboxReturn = (
 	value: MultCheckboxReturn,
 	labels: string[],
 	other: boolean,
-	separator = ','
+	separator = ', '
 ) => {
 	const arrayValue = labels.filter((label, i) => value[0][i]);
 	if (other && value[0][labels.length]) {
@@ -252,7 +228,7 @@ str = "Lorem Ipsum is simply dummy text of the printing and typesetting industry
 
 str = wordWrap(str, 40);
 
-function wordWrap(str, maxWidth) {
+function commentsBlock(str, maxWidth) {
     var newLineStr = "\n"; done = false; res = '';
     while (str.length > maxWidth) {                 
         found = false;

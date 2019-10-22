@@ -1,5 +1,4 @@
 import {
-	BlogInformation,
 	RankAndFileInformation,
 	RegistryValues,
 	WebsiteContact,
@@ -85,16 +84,6 @@ class WebsiteValidator extends Validator<WebsiteInformation> {
 	}
 }
 
-class BlogValidator extends Validator<BlogInformation> {
-	constructor() {
-		super({
-			BlogPostsPerPage: {
-				validator: Validator.Number
-			}
-		});
-	}
-}
-
 const RankAndFileValidator = new Validator<RankAndFileInformation>({
 	Flights: {
 		validator: Validator.ArrayOf(Validator.String)
@@ -104,9 +93,6 @@ const RankAndFileValidator = new Validator<RankAndFileInformation>({
 export default class RegistryValueValidator extends Validator<RegistryValues> {
 	constructor() {
 		super({
-			Blog: {
-				validator: new BlogValidator()
-			},
 			Contact: {
 				validator: new ContactValidator()
 			},

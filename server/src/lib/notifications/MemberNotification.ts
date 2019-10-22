@@ -59,7 +59,7 @@ export default class MemberNotification extends Notification {
 		if (to instanceof MemberBase) {
 			toMemberName = to.getFullName();
 		} else {
-			const toMember = await resolveReference(to, account, schema);
+			const toMember = await resolveReference(to, account, schema, true);
 
 			toMemberName = toMember.getFullName();
 		}
@@ -68,7 +68,8 @@ export default class MemberNotification extends Notification {
 			{
 				...results,
 				fromMemberName:
-					from.type === NotificationCauseType.MEMBER ? fromMember.getFullName() : null,
+				// fromMember is defined, as required by overloads above
+					from.type === NotificationCauseType.MEMBER ? fromMember!.getFullName() : null,
 				toMemberName
 			},
 			account,
@@ -84,6 +85,8 @@ export default class MemberNotification extends Notification {
 		schema: Schema
 	) {
 		super(data, account, schema);
+
+		this.target = data.target as NotificationMemberTarget;
 	}
 
 	public canSee(member: MemberBase, account: Account) {

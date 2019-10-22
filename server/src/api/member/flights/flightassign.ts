@@ -13,6 +13,11 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssign
 		return res.end();
 	}
 
+	if (req.body.newFlight === null) {
+		res.status(400);
+		return res.end();
+	}
+
 	member.setFlight(req.body.newFlight);
 
 	await member.saveExtraMemberInformation(req.mysqlx, req.account);

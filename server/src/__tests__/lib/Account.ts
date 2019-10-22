@@ -1,4 +1,4 @@
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
@@ -8,18 +8,21 @@ import { newEvent, rawAccount } from '../consts';
 describe('Account', () => {
 	let schema: Schema;
 	let account: Account;
+	let session: Session;
 
 	beforeAll(async done => {
-		[account, schema] = await getTestTools2(conftest);
+		[account, schema, session] = await getTestTools2(conftest);
+
+		await schema
+			.getCollection('Accounts')
+			.remove(`id = "${rawAccount.id}"`)
+			.execute(),
 
 		done();
 	});
 
 	afterAll(async done => {
-		await schema
-			.getCollection('Accounts')
-			.remove(`id = "${rawAccount.id}"`)
-			.execute();
+		await session.close()
 
 		done();
 	});

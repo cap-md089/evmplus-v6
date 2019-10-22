@@ -19,7 +19,6 @@ import {
 	collectResults,
 	DEFAULT_PERMISSIONS,
 	findAndBind,
-	getInformationForMember,
 	getPermissionsForMemberInAccount,
 	MemberBase,
 	ParamType
@@ -123,7 +122,7 @@ export const SessionedUser = <
 	Member: M
 ) => {
 	abstract class User extends Member {
-		public static async RestoreFromSession(schema: Schema, account: Account, session: Session) {
+		public static async RestoreFromSession(schema: Schema, account: Account, session: Session): Promise<User | null> {
 			if (session.userAccount.member.type === 'Null') {
 				return null;
 			}
@@ -197,9 +196,7 @@ export const SessionedUser = <
 				throw new Error('Cannot su if not Rioux');
 			}
 
-			const user = await getInformationForMember(this.schema, ref);
-
-			await su(this.schema, this.sessionID, user);
+			await su(this.schema, this.sessionID, ref);
 		}
 	}
 
@@ -285,13 +282,19 @@ export const permissionMiddleware = (permission: MemberPermission, threshold = 1
 	next();
 };
 
-export const su = async (schema: Schema, sessionID: SessionID, newUser: UserAccountInformation) => {
+export const su = async (schema: Schema, sessionID: SessionID, newUser: MemberReference) => {
 	const sessions = schema.getCollection<Session>(SESSION_TABLE);
+
+	// We can assume there is one session, as otherwise they won't be able to get here
+	const session = (await collectResults(findAndBind(sessions, { sessionID })))[0];
+
+	const userAccount = session.userAccount;
+	userAccount.member = newUser;
 
 	await sessions
 		.modify('sessionID = :sessionID')
 		.bind({ sessionID })
-		.set('userAccount', newUser)
+		.set('userAccount', userAccount)
 		.execute();
 };
 
@@ -316,11 +319,13 @@ const addTokenToDatabase = async (
 ) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
-	await tokenCollection.add({
-		token,
-		member,
-		created: Date.now()
-	});
+	await tokenCollection
+		.add({
+			token,
+			member,
+			created: Date.now()
+		})
+		.execute();
 };
 
 const removeOldTokens = async (schema: Schema) => {
@@ -365,6 +370,10 @@ export const isTokenValid = async (
 ): Promise<boolean> => {
 	try {
 		const member = await getMemberForWeakToken(schema, token);
+
+		if (member === null) {
+			return false;
+		}
 
 		return areMemberReferencesTheSame(member.member, user);
 	} catch (e) {
@@ -421,10 +430,12 @@ const getSigninTokens = async (schema: Schema, token: string) => {
 const addSigninTokenToDatabase = async (schema: Schema, token: string) => {
 	const tokenCollection = schema.getCollection<SigninTokenObject>(SIGNIN_TOKEN_TABLE);
 
-	await tokenCollection.add({
-		token,
-		created: Date.now()
-	});
+	await tokenCollection
+		.add({
+			token,
+			created: Date.now()
+		})
+		.execute();
 };
 
 const removeOldSigninTokens = async (schema: Schema) => {

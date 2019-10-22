@@ -6,6 +6,12 @@ import * as path from 'path';
 import { Configuration } from './conf';
 import getRouter from './getAPIRouter';
 
+export interface ServerConfiguration {
+	mysqlConn: Session;
+	server: http.Server;
+	app: express.Application;
+}
+
 export default async (conf: typeof Configuration, port: number = conf.port, mysqlConn?: Session) => {
 	const app: express.Application = express();
 
@@ -85,6 +91,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 
 	return {
 		app,
-		server
+		server,
+		mysqlConn
 	};
 }

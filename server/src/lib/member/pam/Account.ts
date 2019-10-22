@@ -75,7 +75,7 @@ export const addUserAccountCreationToken = async (
 	let info = null;
 	try {
 		info = await getInformationForMember(schema, member);
-	} catch(e) {
+	} catch (e) {
 		// If this happens, then everything is ok
 		// An account couldn't be found, which means the request is valid
 	}
@@ -84,8 +84,8 @@ export const addUserAccountCreationToken = async (
 		throw new Error('User already has an account');
 	}
 
-	const tokenCount = await getTokenCountForUser(schema, member)
-	if ((tokenCount) > 0) {
+	const tokenCount = await getTokenCountForUser(schema, member);
+	if (tokenCount > 0) {
 		throw new Error('User already has token');
 	}
 
@@ -204,8 +204,8 @@ export const addUserAccount = async (
 export const getInformationForMember = async (
 	schema: Schema,
 	member: MemberReference
-): Promise<UserAccountInformation> => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation>(
+): Promise<UserAccountInformation & Required<NoSQLDocument>> => {
+	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
 		'UserAccountInfo'
 	);
 
@@ -231,8 +231,8 @@ export const getInformationForMember = async (
 export const getInformationForUser = async (
 	schema: Schema,
 	username: string
-): Promise<UserAccountInformation> => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation>(
+): Promise<UserAccountInformation & Required<NoSQLDocument>> => {
+	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
 		'UserAccountInfo'
 	);
 
@@ -258,12 +258,12 @@ export const getInformationForUser = async (
  * @param schema the database to update. assumes the information already exists, just needs to be updated
  * @param member the information to save. this needs to be information previously pulled, just tweaked
  */
-export const saveInformationForUser = async (schema: Schema, member: UserAccountInformation) => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation>(
+export const saveInformationForUser = async (schema: Schema, member: UserAccountInformation & Required<NoSQLDocument>) => {
+	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
 		'UserAccountInfo'
 	);
 
-	await userInformationCollection.replaceOne(member._id!, member);
+	await userInformationCollection.replaceOne(member._id, member);
 };
 
 /**
@@ -271,7 +271,7 @@ export const saveInformationForUser = async (schema: Schema, member: UserAccount
  *
  * @param info the user account info
  */
-export const isUserValid = (info: UserAccountInformation) =>
+export const isUserValid = (info: UserAccountInformation | null) =>
 	!!info && info.passwordHistory.length !== 0;
 
 //#endregion
@@ -290,10 +290,10 @@ const getPermissionsRecordForMemberInAccount = async (
 	schema: Schema,
 	member: MemberReference,
 	account: Account
-): Promise<StoredMemberPermissions> => {
-	const permissionsCollection = schema.getCollection<StoredMemberPermissions>(
-		MEMBER_PERMISSIONS_TABLE
-	);
+): Promise<StoredMemberPermissions & Required<NoSQLDocument>> => {
+	const permissionsCollection = schema.getCollection<
+		StoredMemberPermissions & Required<NoSQLDocument>
+	>(MEMBER_PERMISSIONS_TABLE);
 
 	const permissions = await collectResults(
 		findAndBind(permissionsCollection, { member, accountID: account.id })

@@ -1,9 +1,8 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { SigninReturn } from 'common-lib';
-import { Server } from 'http';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
-import getServer from '../../getServer';
+import getServer, { ServerConfiguration } from '../../getServer';
 import {
 	Account,
 	addUserAccount,
@@ -19,7 +18,7 @@ const signinInformation = {
 
 describe('/api', () => {
 	describe('/signin', () => {
-		let server: Server;
+		let server: ServerConfiguration;
 		let account: Account;
 		let schema: Schema;
 		let session: Session;
@@ -31,7 +30,7 @@ describe('/api', () => {
 		});
 
 		beforeEach(async done => {
-			server = (await getServer(conf, 3004, session)).server;
+			server = await getServer(conf, 3004, session);
 
 			await schema.getCollection('UserAccountInfo').remove('true');
 
@@ -54,7 +53,7 @@ describe('/api', () => {
 		});
 
 		afterEach(async done => {
-			server.close();
+			server.server.close();
 
 			await Promise.all([
 				schema
@@ -72,6 +71,7 @@ describe('/api', () => {
 
 		afterAll(async () => {
 			await Promise.all([
+				session.close(),
 				schema
 					.getCollection('UserAccountInfo')
 					.remove('member.id = 535799')
@@ -84,7 +84,7 @@ describe('/api', () => {
 		});
 
 		it('should sign in correctly', done => {
-			request(server)
+			request(server.server)
 				.post('/api/signin')
 				.send(signinInformation)
 				.set('Accept', 'application/json')
@@ -105,10 +105,10 @@ describe('/api', () => {
 
 					done();
 				});
-		}, 8000);
+		});
 
 		it('should return an error when using incorrect credentials', done => {
-			request(server)
+			request(server.server)
 				.post('/api/signin')
 				.send({
 					...signinInformation,
@@ -137,7 +137,7 @@ describe('/api', () => {
 		});
 
 		it('should be able to get a user after signing in', done => {
-			request(server)
+			request(server.server)
 				.post('/api/signin')
 				.send(signinInformation)
 				.set('Accept', 'application/json')
@@ -147,7 +147,7 @@ describe('/api', () => {
 						throw err;
 					}
 
-					request(server)
+					request(server.server)
 						.post('/api/check')
 						.set('Accept', 'application/json')
 						.set('Authorization', res.body.sessionID)
@@ -162,17 +162,15 @@ describe('/api', () => {
 							expect(ret.error).toEqual(-1);
 							expect(ret.sessionID).not.toEqual('');
 							expect(ret.valid).toEqual(true);
-							expect(ret.member ? ret.member.id : 0).toEqual(
-								535799
-							);
+							expect(ret.member ? ret.member.id : 0).toEqual(535799);
 
 							done();
 						});
 				});
-		}, 8000);
+		});
 
 		it('should return a signin form to sign in with', done => {
-			request(server)
+			request(server.server)
 				.get('/api/signin')
 				.expect(200)
 				.end((err, res) => {

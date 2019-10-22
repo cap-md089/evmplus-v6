@@ -26,6 +26,7 @@ export default asyncErrorHandler(
 		} catch (e) {
 			res.status(404);
 			res.end();
+			return;
 		}
 
 		team.addTeamMember(fullMember, req.body.job, req.account, req.mysqlx);
