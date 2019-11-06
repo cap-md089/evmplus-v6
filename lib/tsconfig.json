@@ -9,14 +9,18 @@
 		"forceConsistentCasingInFileNames": true,
 		"noUnusedLocals": true,
 		"pretty": true,
-		"declaration": false,
+		"declaration": true,
 		"removeComments": true,
 		"preserveSymlinks": true,
-		"baseUrl": ".",
-		"rootDir": ".",
-		"composite": true
+		"outDir": "dist",
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true
 	},
 	"exclude": ["node_modules"],
 	"lib": ["es2015", "es2017", "es2015.promise", "es5"],
-	"files": ["./index.ts", "./permissions.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }

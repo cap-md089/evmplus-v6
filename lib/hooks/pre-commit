@@ -9,7 +9,7 @@ if [ "$branch" = "master" ]; then
 fi
 
 # Check for compile errors
-if tsc; then
+if npm run build; then
 	# Everything compiles
 	:
 else

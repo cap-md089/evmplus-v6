@@ -1,53 +1,3 @@
-import * as DraftJS from 'draft-js';
-import {
-	AttendanceStatus,
-	EchelonEventNumber,
-	EventStatus,
-	FileUserAccessControlPermissions,
-	FileUserAccessControlType,
-	MemberCreateError,
-	NotificationCauseType,
-	NotificationTargetType,
-	PointOfContactType,
-	TeamPublicity,
-	NotificationDataType,
-	CustomAttendanceFieldEntryType
-} from './index';
-import {
-	FlightAssign,
-	MusterSheet,
-	PTSheet,
-	PromotionManagement,
-	AssignTasks,
-	AdministerPT,
-	ManageEvent,
-	EventContactSheet,
-	ORMOPORD,
-	AssignTemporaryDutyPosition,
-	ProspectiveMemberManagement,
-	EventLinkList,
-	ManageTeam,
-	FileManagement,
-	PermissionManagement,
-	DownloadCAPWATCH,
-	Notify,
-	RegistryEdit
-} from './permissions';
-
-type RawDraftContentState = DraftJS.RawDraftContentState;
-// Export it so the server can use it and not have to depend on @types/draft-js
-// Depending on @types/draft-js causes dependency hell
-export { RawDraftContentState };
-export namespace Draft {
-	export type DraftBlockType = DraftJS.DraftBlockType;
-	export type DraftInlineStyleType = DraftJS.DraftInlineStyleType;
-	export type RawDraftContentBlock = DraftJS.RawDraftContentBlock;
-	export type RawDraftContentState = DraftJS.RawDraftContentState;
-	export type RawDraftEntity = DraftJS.RawDraftEntity;
-	export type RawDraftEntityRange = DraftJS.RawDraftEntityRange;
-	export type RawDraftInlineStyleRange = DraftJS.RawDraftInlineStyleRange;
-}
-
 /**
  * Table for SQL definitions for CAP NHQ
  *
@@ -286,10 +236,230 @@ export namespace NHQ {
 	}
 }
 
-// Omit taken from https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+export enum EventStatus {
+	DRAFT,
+	TENTATIVE,
+	CONFIRMED,
+	COMPLETE,
+	CANCELLED,
+	INFORMATIONONLY
+}
 
-export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+export enum EchelonEventNumber {
+	NOT_REQUIRED = 0,
+	TO_BE_APPLIED_FOR = 1,
+	APPLIED_FOR = 2,
+	DENIED = 3,
+	APPROVED = 4
+}
+
+export enum MemberCreateError {
+	NONE = -1,
+	INCORRRECT_CREDENTIALS = 0,
+	SERVER_ERROR = 1,
+	PASSWORD_EXPIRED = 2,
+	INVALID_SESSION_ID = 3,
+	UNKOWN_SERVER_ERROR = 4
+}
+
+export enum PointOfContactType {
+	INTERNAL,
+	EXTERNAL
+}
+
+export enum TeamPublicity {
+	PRIVATE, // Nothing visible, not shown on Browse unless signed in and member of team
+	// Names are visible to those signed in
+	PROTECTED, // Names and contact information available to those who sign in
+	PUBLIC // Full visibility
+}
+
+export enum MemberCAPWATCHErrors {
+	INVALID_PERMISSIONS,
+	NO_NHQ_ACTION
+}
+
+export enum CAPWATCHImportErrors {
+	NONE,
+	BADDATA,
+	INSERT,
+	CLEAR
+}
+
+export enum AttendanceStatus {
+	COMMITTEDATTENDED,
+	NOSHOW,
+	RESCINDEDCOMMITMENTTOATTEND
+}
+
+// http://www.ntfs.com/ntfs-permissions-file-folder.htm
+export enum FileUserAccessControlPermissions {
+	// Read for a folder includes the ability to see files inside of it
+	READ = 1,
+	// Write, for folders, means changing name and uploading files
+	// For files, maybe at some point there will be a way to
+	// overwrite
+	// tslint:disable-next-line:no-bitwise
+	WRITE = 1 << 1,
+	// tslint:disable-next-line:no-bitwise
+	COMMENT = 1 << 2,
+	// tslint:disable-next-line:no-bitwise
+	MODIFY = 1 << 3,
+	// tslint:disable-next-line:no-bitwise
+	DELETE = 1 << 4,
+	// tslint:disable-next-line:no-bitwise
+	ASSIGNPERMISSIONS = 1 << 5,
+	FULLCONTROL = 255
+}
+
+export enum FileUserAccessControlType {
+	USER,
+	TEAM,
+	ACCOUNTMEMBER,
+	SIGNEDIN,
+	OTHER
+}
+
+// For some reason MySQL doesn't like 0...
+export enum NotificationTargetType {
+	MEMBER = 1,
+	ADMINS,
+	EVERYONE
+}
+
+// For some reason MySQL doesn't like 0...
+export enum NotificationCauseType {
+	MEMBER = 1,
+	SYSTEM
+}
+
+export enum NotificationDataType {
+	PROSPECTIVEMEMBER,
+	PERSONNELFILES,
+	EVENT,
+	PERMISSIONCHANGE
+}
+
+export enum CustomAttendanceFieldEntryType {
+	TEXT,
+	NUMBER,
+	DATE,
+	CHECKBOX,
+	FILE
+}
+
+export enum CAPWATCHImportUpdate {
+	CAPWATCHFileDownloaded,
+	FileImported,
+	CAPWATCHFileDone,
+	ProgressInitialization
+}
+
+export enum PasswordResult {
+	VALID,
+	VALID_EXPIRED,
+	INVALID
+}
+
+export enum PasswordSetResult {
+	OK,
+	IN_HISTORY,
+	COMPLEXITY,
+	MIN_AGE
+}
+
+export namespace Permissions {
+	export enum FlightAssign {
+		NO,
+		YES
+	}
+
+	export enum MusterSheet {
+		NO,
+		YES
+	}
+
+	export enum PTSheet {
+		NO,
+		YES
+	}
+
+	export enum PromotionManagement {
+		NONE,
+		FULL
+	}
+
+	export enum AssignTasks {
+		NO,
+		YES
+	}
+
+	export enum AdministerPT {
+		NO,
+		YES
+	}
+
+	export enum ManageEvent {
+		NONE,
+		ADDDRAFTEVENTS,
+		FULL
+	}
+
+	export enum EventContactSheet {
+		NO,
+		YES
+	}
+
+	export enum ORMOPORD {
+		NO,
+		YES
+	}
+
+	export enum AssignTemporaryDutyPosition {
+		NO,
+		YES
+	}
+
+	export enum ProspectiveMemberManagement {
+		NONE,
+		FULL
+	}
+
+	export enum EventLinkList {
+		NO,
+		YES
+	}
+
+	export enum ManageTeam {
+		NONE,
+		FULL
+	}
+
+	export enum FileManagement {
+		NONE,
+		FULL
+	}
+
+	export enum PermissionManagement {
+		NONE,
+		FULL
+	}
+
+	export enum DownloadCAPWATCH {
+		NO,
+		YES
+	}
+
+	export enum Notify {
+		NO,
+		GLOBAL
+	}
+
+	export enum RegistryEdit {
+		NO,
+		YES
+	}
+}
 
 /**
  * Allows for compiling of for-await-of loops
@@ -307,6 +477,9 @@ export namespace global {
 		throw?(e?: any): Promise<IteratorResult<T>>;
 	}
 }
+
+
+export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 /**
  * As the return types are complex, keeping them consistent is key
@@ -598,115 +771,6 @@ export interface AccountObject extends RawAccountObject {
 	 * Whether the account is expired
 	 */
 	expired: boolean;
-}
-
-/**
- * A blog post for peoplle to read
- */
-export interface BlogPostObject extends AccountIdentifiable, NoSQLDocument, NewBlogPost {
-	/**
-	 * The ID of the blog post itself
-	 */
-	id: number;
-	/**
-	 * When it was published
-	 */
-	posted: number;
-	/**
-	 * The author of the blog post
-	 */
-	author: MemberReference;
-}
-
-/**
- * The blog post object that is sent to the client that can be used to its fullest
- */
-export interface FullBlogPostObject extends BlogPostObject {
-	/**
-	 * Full author name for display
-	 */
-	authorName: string;
-}
-
-/**
- * This is what the client and the server use to create and edit blog posts
- */
-export interface NewBlogPost {
-	/**
-	 * The title of the blog post
-	 */
-	title: string;
-	/**
-	 * What the author is trying to say
-	 */
-	content: RawDraftContentState;
-}
-
-/**
- * Used by full blog pages to represent provide enough representation of parents that
- * can be used for better rendering
- */
-export interface BlogPageAncestryItem {
-	/**
-	 * The name of the ancestor, for display
-	 */
-	title: string;
-	/**
-	 * The ID of the ancestor, for linking to the page
-	 */
-	id: string;
-}
-
-/**
- * Used when creating a blog page
- *
- * Really simple, not much is needed
- */
-export interface NewBlogPage {
-	/**
-	 * The title of the page
-	 */
-	title: string;
-	/**
-	 * The page content
-	 */
-	content: RawDraftContentState;
-}
-
-/**
- * The raw blog page object stored in the Database
- */
-export interface BlogPageObject extends AccountIdentifiable, NewBlogPage, NoSQLDocument {
-	/**
-	 * The id of the page, to get it by
-	 */
-	id: string;
-	/**
-	 * Each blog page can have a set of children
-	 *
-	 * This contains an array to references of BlogPages
-	 */
-	children: string[];
-	/**
-	 * The page that has this as a child
-	 */
-	parentID: string | null;
-}
-
-/**
- * The full blog page object transfered from the server to the client
- *
- * It contains extra information pertinent to rendering
- */
-export interface FullBlogPageObject extends BlogPageObject {
-	/**
-	 * Used for advanced navigation
-	 */
-	ancestry: BlogPageAncestryItem[];
-	/**
-	 * Used for advanced navigation
-	 */
-	fullChildren: BlogPageAncestryItem[];
 }
 
 /**
@@ -1339,82 +1403,82 @@ export interface MemberPermissions {
 	/**
 	 * Whether or not the user can assign flight members
 	 */
-	FlightAssign: FlightAssign;
+	FlightAssign: Permissions.FlightAssign;
 	/**
 	 * Whether or not the user can get the muster sheet
 	 */
-	MusterSheet: MusterSheet;
+	MusterSheet: Permissions.MusterSheet;
 	/**
 	 * Whether or not the user can get PT sheets
 	 */
-	PTSheet: PTSheet;
+	PTSheet: Permissions.PTSheet;
 	/**
 	 * Whether or not the user can manage promotions
 	 */
-	PromotionManagement: PromotionManagement;
+	PromotionManagement: Permissions.PromotionManagement;
 	/**
 	 * Whether or not the user can assign tasks
 	 */
-	AssignTasks: AssignTasks;
+	AssignTasks: Permissions.AssignTasks;
 	/**
 	 * Whether or not the user can administer PT
 	 */
-	AdministerPT: AdministerPT;
+	AdministerPT: Permissions.AdministerPT;
 
 	// Start Manager permissions
 	/**
 	 * Whether or not the user can manage events and to what degree
 	 */
-	ManageEvent: ManageEvent;
+	ManageEvent: Permissions.ManageEvent;
 	/**
 	 * Whether or not the user can get event contact information
 	 */
-	EventContactSheet: EventContactSheet;
+	EventContactSheet: Permissions.EventContactSheet;
 	/**
 	 * Whether or not the user can get ORM OPORD information
 	 */
-	ORMOPORD: ORMOPORD;
+	ORMOPORD: Permissions.ORMOPORD;
 	/**
 	 * Whether or not the user can assign temporary duty positions
 	 */
-	AssignTemporaryDutyPositions: AssignTemporaryDutyPosition;
+	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
 
 	// Admin privileges
 	/**
 	 * Whether or not the user can manage prospective members
 	 */
-	ProspectiveMemberManagement: ProspectiveMemberManagement;
+	ProspectiveMemberManagement: Permissions.ProspectiveMemberManagement;
 	/**
 	 * Whether or not the user can view a list of all events
 	 */
-	EventLinkList: EventLinkList;
+	EventLinkList: Permissions.EventLinkList;
 	/**
 	 * Whether or not the user can add a team
 	 */
-	ManageTeam: ManageTeam;
+	ManageTeam: Permissions.ManageTeam;
 	/**
 	 * Whether or not the user can manage files
 	 */
-	FileManagement: FileManagement;
+	FileManagement: Permissions.FileManagement;
 	/**
 	 * Whether or not the user can manage permissions of others
 	 */
-	PermissionManagement: PermissionManagement;
+	PermissionManagement: Permissions.PermissionManagement;
 	/**
 	 * Whether or not the user can download CAPWATCH files
 	 */
-	DownloadCAPWATCH: DownloadCAPWATCH;
+	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
 	/**
 	 * Whether or not the member can create banner notifications
 	 */
-	CreateNotifications: Notify;
+	CreateNotifications: Permissions.Notify;
 
 	// Developer/super admin privileges?
 	// Will change when utilities are more user friendly
 	/**
 	 * Whether or not the user can edit the registry
 	 */
-	RegistryEdit: RegistryEdit;
+	RegistryEdit: Permissions.RegistryEdit;
 }
 
 /**
@@ -1826,11 +1890,6 @@ export interface SuccessfulSigninReturn {
 	 */
 	sessionID: string;
 	/**
-	 * Used by TypeScript/JavaScript to allow for type inference
-	 * between success and failure
-	 */
-	valid: true;
-	/**
 	 * Returns the amount of notifications the member has
 	 */
 	notificationCount: number;
@@ -1841,42 +1900,39 @@ export interface SuccessfulSigninReturn {
 }
 
 /**
+ * Used to create a new password
+ */
+export interface ExpiredSuccessfulSigninReturn {
+	/**
+	 * Just an expired password
+	 */
+	error: MemberCreateError.PASSWORD_EXPIRED;
+	/**
+	 * A session ID to set a new password
+	 */
+	sessionID: string;
+}
+
+/**
  * Can't simply return null, need to return information as to why
  * things failed
  */
 export interface FailedSigninReturn {
 	/**
-	 * May contain error details
+	 * Contains error details
 	 */
-	error: MemberCreateError;
-	/**
-	 * The member cannot exist as the signin failed
-	 */
-	member: null;
-	/**
-	 * Session ID for an invalid session is empty
-	 */
-	sessionID: '';
-	/**
-	 * Used by TypeScript/JavaScript to allow for type inference
-	 * between success and failure
-	 */
-	valid: false;
-	/**
-	 * As the member sign in failed, this should be 0
-	 */
-	notificationCount: 0;
-	/**
-	 * As the member sign in failed, this should be 0
-	 */
-	taskCount: 0;
+	error: 
+		MemberCreateError.INCORRRECT_CREDENTIALS |
+		MemberCreateError.SERVER_ERROR |
+		MemberCreateError.UNKOWN_SERVER_ERROR |
+		MemberCreateError.INVALID_SESSION_ID;
 }
 
 /**
  * Allows for multiplexing the data together but still have type inference and
  * not use try/catch
  */
-export type SigninReturn = SuccessfulSigninReturn | FailedSigninReturn;
+export type SigninReturn = SuccessfulSigninReturn | ExpiredSuccessfulSigninReturn | FailedSigninReturn;
 
 /**
  * Used by the different files to indicate what they are
