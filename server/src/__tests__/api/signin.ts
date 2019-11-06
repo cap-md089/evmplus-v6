@@ -105,7 +105,7 @@ describe('/api', () => {
 
 					done();
 				});
-		});
+		}, 5000);
 
 		it('should return an error when using incorrect credentials', done => {
 			request(server.server)
@@ -134,7 +134,7 @@ describe('/api', () => {
 
 					done();
 				});
-		});
+		}, 5000);
 
 		it('should be able to get a user after signing in', done => {
 			request(server.server)
@@ -167,7 +167,7 @@ describe('/api', () => {
 							done();
 						});
 				});
-		});
+		}, 7500);
 
 		it('should return a signin form to sign in with', done => {
 			request(server.server)
@@ -182,6 +182,6 @@ describe('/api', () => {
 
 					done();
 				});
-		});
+		}, 5000);
 	});
 });

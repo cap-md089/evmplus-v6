@@ -1,6 +1,6 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { exec } from 'child_process';
-import { CAPWATCHImportErrors } from 'common-lib/index';
+import { CAPWATCHImportErrors } from 'common-lib';
 import * as csv from 'csv-parse';
 import { promisify } from 'util';
 import cadetActivities from './capwatch-modules/cadetactivities';
@@ -47,7 +47,7 @@ const modules: Array<{
 		module: oFlight,
 		file: 'OFlight.txt'
 	},
-/*	{
+	/*	{
 		module: seniorAwards,
 		file: 'SeniorAwards.txt'
 	},
@@ -68,7 +68,7 @@ const modules: Array<{
 		file: 'MbrChars.txt'
 	},*/
 	/* the following modules need only be imported occassionally as they do not change often */
-/*	{
+	/*	{
 		module: cdtAchvEnum,
 		file: 'CadetAchievementsEnumeration.txt'
 	},
@@ -83,7 +83,7 @@ const modules: Array<{
 	{
 		module: organization,
 		file: 'Organization.txt'
-	},/*
+	} /*
 	{
 		module: orgAddresses,
 		file: 'OrganizationAddresses.txt'

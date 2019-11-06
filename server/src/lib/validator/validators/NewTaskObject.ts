@@ -1,5 +1,5 @@
-import { NewTaskObject } from "common-lib";
-import Validator from "../Validator";
+import { NewTaskObject } from 'common-lib';
+import Validator from '../Validator';
 
 export default new Validator<NewTaskObject>({
 	description: {

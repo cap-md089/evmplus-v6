@@ -1,5 +1,4 @@
-import { SigninReturn, SuccessfulSigninReturn } from 'common-lib';
-import { MemberCreateError } from 'common-lib/index';
+import { MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as express from 'express';
 import {
 	AccountRequest,

@@ -4,14 +4,15 @@ import {
 	NoSQLDocument,
 	NotificationAdminTarget,
 	NotificationCause,
+	NotificationCauseType,
 	NotificationData,
 	NotificationEveryoneTarget,
 	NotificationMemberTarget,
 	NotificationObject,
 	NotificationTarget,
+	NotificationTargetType,
 	RawNotificationObject
 } from 'common-lib';
-import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import {
 	Account,
 	AdminNotification,

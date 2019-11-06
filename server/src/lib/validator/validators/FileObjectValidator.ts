@@ -3,9 +3,10 @@ import {
 	FileAccountControlList,
 	FileOtherControlList,
 	FileTeamControlList,
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
 	FileUserControlList
 } from 'common-lib';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import Validator from '../Validator';
 
 class FileUserControlListValidator extends Validator<FileUserControlList> {

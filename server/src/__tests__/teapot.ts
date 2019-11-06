@@ -3,7 +3,7 @@ import * as request from 'supertest';
 import conf from '../conf.test';
 import getServer from '../getServer';
 
-describe ('/teapot', () => {
+describe('/teapot', () => {
 	let server: Server;
 
 	beforeEach(async () => {
@@ -14,11 +14,11 @@ describe ('/teapot', () => {
 		server.close();
 	});
 
-	it ('should respond with HTTP 418', done => {
+	it('should respond with HTTP 418', done => {
 		request(server)
 			.get('/teapot')
 			.expect(418, done);
-	})
+	});
 
 	it('should respond to a body of "teapot"', done => {
 		request(server)
@@ -27,5 +27,5 @@ describe ('/teapot', () => {
 			.set('Content-type', 'application/json')
 			.send('"teapot"')
 			.expect(418, done);
-	})
+	});
 });

@@ -1,6 +1,10 @@
 import { Schema } from '@mysql/xdevapi';
-import { AccountPasswordInformation, UserAccountInformation } from 'common-lib';
-import { PasswordResult, PasswordSetResult } from 'common-lib/index';
+import {
+	AccountPasswordInformation,
+	PasswordResult,
+	PasswordSetResult,
+	UserAccountInformation
+} from 'common-lib';
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { getInformationForUser, isUserValid, saveInformationForUser } from '../../internals';
@@ -179,10 +183,9 @@ export const checkIfPasswordValid = async (
 	let userInfo;
 	try {
 		userInfo = await getInformationForUser(schema, username);
-	} catch(e) {
+	} catch (e) {
 		return PasswordResult.INVALID;
 	}
-
 
 	if (!isUserValid(userInfo)) {
 		return PasswordResult.INVALID;

@@ -4,8 +4,8 @@ import { DateTime } from 'luxon';
 import { Configuration } from '../conf';
 
 export interface ParamType {
-	[key: string]: string
-};
+	[key: string]: string;
+}
 
 export interface MySQLRequest<P extends ParamType = {}> extends express.Request {
 	mysqlx: mysql.Schema;
@@ -15,7 +15,11 @@ export interface MySQLRequest<P extends ParamType = {}> extends express.Request 
 	configuration: typeof Configuration;
 }
 
-export default (pool: mysql.Schema, session: mysql.Session, configuration: typeof Configuration) => {
+export default (
+	pool: mysql.Schema,
+	session: mysql.Session,
+	configuration: typeof Configuration
+) => {
 	return (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
 		req.mysqlx = pool;
 		req.mysqlxSession = session;
@@ -143,7 +147,7 @@ type RecursivePartial<T> = {
 		? Array<RecursivePartial<U>>
 		: T[P] extends object
 		? RecursivePartial<T[P]>
-		: T[P]
+		: T[P];
 };
 
 export const findAndBind = <T>(

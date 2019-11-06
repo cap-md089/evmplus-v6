@@ -122,7 +122,11 @@ export const SessionedUser = <
 	Member: M
 ) => {
 	abstract class User extends Member {
-		public static async RestoreFromSession(schema: Schema, account: Account, session: Session): Promise<User | null> {
+		public static async RestoreFromSession(
+			schema: Schema,
+			account: Account,
+			session: Session
+		): Promise<User | null> {
 			if (session.userAccount.member.type === 'Null') {
 				return null;
 			}

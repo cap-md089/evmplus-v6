@@ -28,13 +28,13 @@ describe('/api', () => {
 				.expect(200)
 				.expect('content-type', 'application/json; charset=utf-8')
 				.end(done);
-		});
+		}, 5000);
 
 		it('should give a 400 for a non existant account', done => {
 			request('http://noacc.localcapunit.com:3009')
 				.get('/api/registry')
 				.expect(400)
 				.end(done);
-		});
+		}, 5000);
 	});
 });

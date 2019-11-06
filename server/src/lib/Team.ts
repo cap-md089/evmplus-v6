@@ -9,9 +9,9 @@ import {
 	NewTeamObject,
 	NHQ,
 	RawTeamMember,
-	RawTeamObject
+	RawTeamObject,
+	TeamPublicity
 } from 'common-lib';
-import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import {
 	Account,
@@ -461,8 +461,8 @@ export default class Team implements FullTeamObject {
 	}
 
 	public async addTeamMember(member: MemberBase, job: string, account: Account, schema: Schema) {
-		const oldMember = this.members.filter(
-			f => areMemberReferencesTheSame(member.getReference(), f.reference)
+		const oldMember = this.members.filter(f =>
+			areMemberReferencesTheSame(member.getReference(), f.reference)
 		)[0];
 		if (oldMember !== undefined) {
 			this.modifyTeamMember(member.getReference(), `${oldMember.job}, ${job}`);

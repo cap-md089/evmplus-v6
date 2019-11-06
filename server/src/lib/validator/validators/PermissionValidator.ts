@@ -1,79 +1,59 @@
-import { MemberPermissions } from 'common-lib';
-import {
-	AdministerPT,
-	AssignTasks,
-	AssignTemporaryDutyPosition,
-	DownloadCAPWATCH,
-	EventContactSheet,
-	EventLinkList,
-	FileManagement,
-	FlightAssign,
-	ManageEvent,
-	ManageTeam,
-	MusterSheet,
-	Notify,
-	ORMOPORD,
-	PermissionManagement,
-	PromotionManagement,
-	ProspectiveMemberManagement,
-	PTSheet,
-	RegistryEdit
-} from 'common-lib/permissions';
+import { MemberPermissions, Permissions } from 'common-lib';
 import Validator from '../Validator';
 
 export default new Validator<MemberPermissions>({
 	AdministerPT: {
-		validator: Validator.Enum(AdministerPT)
+		validator: Validator.Enum(Permissions.AdministerPT)
 	},
 	AssignTemporaryDutyPositions: {
-		validator: Validator.Enum(AssignTemporaryDutyPosition)
+		validator: Validator.Enum(Permissions.AssignTemporaryDutyPosition)
 	},
 	AssignTasks: {
-		validator: Validator.Enum(AssignTasks)
+		validator: Validator.Enum(Permissions.AssignTasks)
 	},
 	CreateNotifications: {
-		validator: Validator.Enum(Notify)
+		validator: Validator.Enum(Permissions.Notify)
 	},
 	DownloadCAPWATCH: {
-		validator: Validator.Enum(DownloadCAPWATCH)
+		validator: Validator.Enum(Permissions.DownloadCAPWATCH)
 	},
 	EventContactSheet: {
-		validator: Validator.Enum(EventContactSheet)
+		validator: Validator.Enum(Permissions.EventContactSheet)
 	},
 	EventLinkList: {
-		validator: Validator.Enum(EventLinkList)
+		validator: Validator.Enum(Permissions.EventLinkList)
 	},
 	FileManagement: {
-		validator: Validator.Enum(FileManagement)
+		validator: Validator.Enum(Permissions.FileManagement)
 	},
 	FlightAssign: {
-		validator: Validator.Enum(FlightAssign)
+		validator: Validator.Enum(Permissions.FlightAssign)
 	},
 	MusterSheet: {
-		validator: Validator.Enum(MusterSheet)
+		validator: Validator.Enum(Permissions.MusterSheet)
 	},
 	ORMOPORD: {
-		validator: Validator.Enum(ORMOPORD)
+		validator: Validator.Enum(Permissions.ORMOPORD)
 	},
 	PTSheet: {
-		validator: Validator.Enum(PTSheet)
+		validator: Validator.Enum(Permissions.PTSheet)
 	},
 	PermissionManagement: {
-		validator: Validator.Enum(PermissionManagement)
+		validator: Validator.Enum(Permissions.PermissionManagement)
 	},
 	PromotionManagement: {
-		validator: Validator.Enum(PromotionManagement)
+		validator: Validator.Enum(Permissions.PromotionManagement)
 	},
 	ProspectiveMemberManagement: {
-		validator: Validator.Enum(ProspectiveMemberManagement)
+		validator: Validator.Enum(Permissions.ProspectiveMemberManagement)
 	},
 	RegistryEdit: {
-		validator: Validator.Enum(RegistryEdit)
+		validator: Validator.Enum(Permissions.RegistryEdit)
 	},
 	ManageEvent: {
-		validator: Validator.Enum(ManageEvent)
+		validator: Validator.Enum(Permissions.ManageEvent)
 	},
 	ManageTeam: {
-		validator: Validator.Enum(ManageTeam)
+		validator: Validator.Enum(Permissions.ManageTeam)
 	}
 });

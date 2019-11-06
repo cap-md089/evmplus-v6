@@ -1,5 +1,9 @@
-import { NHQMemberObject, ProspectiveMemberObject, SigninReturn } from 'common-lib';
-import { MemberCreateError } from 'common-lib/index';
+import {
+	MemberCreateError,
+	NHQMemberObject,
+	ProspectiveMemberObject,
+	SigninReturn
+} from 'common-lib';
 import * as express from 'express';
 import { ConditionalMemberRequest, json } from '../lib/internals';
 

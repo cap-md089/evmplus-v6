@@ -1,8 +1,8 @@
-import Validator from "../Validator";
-import FlightAssignValidator, { FlightAssign } from "./FlightAssignValidator";
+import Validator from '../Validator';
+import FlightAssignValidator, { FlightAssign } from './FlightAssignValidator';
 
 export interface FlightAssignBulk {
-	members: FlightAssign[]
+	members: FlightAssign[];
 }
 
 export default new Validator<FlightAssignBulk>({

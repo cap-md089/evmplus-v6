@@ -14,7 +14,9 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 		return CAPWATCHError.BADDATA;
 	}
 
-	const cadetActivitiesCollection = schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities');
+	const cadetActivitiesCollection = schema.getCollection<NHQ.CadetActivities>(
+		'NHQ_CadetActivities'
+	);
 
 	for (const cadetActivitiesConst of fileData) {
 		try {
@@ -34,7 +36,9 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 					CAPID: values.CAPID,
 					Type: values.Type,
 					Completed: values.Completed
-				}).patch(values).execute();
+				})
+					.patch(values)
+					.execute();
 			}
 		} catch (e) {
 			console.warn(e);

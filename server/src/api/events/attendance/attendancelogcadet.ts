@@ -72,13 +72,19 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	// replace this with rec.account.Orgid code once Organization import is complete
 	const myOrg = [
 		{ Orgid: 916, Region: 'MAR', Wing: 'MD', Unit: '089', Name: 'ST MARYS COMPOSITE SQDN' },
-		{ Orgid: 2529, Region: 'MAR', Wing: 'MD', Unit: '890', Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT' }
+		{
+			Orgid: 2529,
+			Region: 'MAR',
+			Wing: 'MD',
+			Unit: '890',
+			Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT'
+		}
 	];
 	let sqnNum = myOrg[0].Region + '-' + myOrg[0].Wing + '-';
 	let sqnName = '';
-	for (var w = 0; w < myOrg.length; w++) {
-		sqnNum += myOrg[w].Unit + '/';
-		sqnName += myOrg[w].Name + '/';
+	for (const org of myOrg) {
+		sqnNum += org.Unit + '/';
+		sqnName += org.Name + '/';
 	}
 	sqnNum = sqnNum.substring(0, sqnNum.length - 1);
 	sqnName = sqnName.substring(0, sqnName.length - 1);
@@ -89,7 +95,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			bold?: boolean;
 			fontSize?: number;
 			fillColor?: string;
-			borderColor?: string[];
+			borderColor?: Array<string | undefined>;
 			decoration?: string; // 'underline', 'overline', 'linethrough'
 			decorationStyle?: string; // 'dashed', 'dotted', 'double', 'wavy'
 			decorationColor?: string; // 'blue', 'red', 'green', etc.
@@ -137,7 +143,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 
 	memberInformation.sort((a, b) => a[0].text.localeCompare(b[0].text));
 
-	let fc = '';
+	let fc: string | undefined = '';
 	const mil = memberInformation.length;
 	for (let i = 0; i < mil; i++) {
 		memberInformation[i][0].fillColor = i % 2 ? 'lightgrey' : 'white';
@@ -185,36 +191,45 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
-		footer: function(currentPage, pageCount) {
+		footer(currentPage: number, pageCount: number) {
 			const footerContent = [
-				{ 
+				{
 					layout: 'noBorders',
 					table: {
-						widths: [ 612-72 ],
+						widths: [612 - 72],
 						headerRows: 0,
 						body: [
-							[	{
-								layout: 'noBorders',
-								table: {
-									widths: ['*', '*'],
-									headerRows: 0,
-									body: [
-										[
-											{ text: nowDate.toLocaleString({
-												year: 'numeric',
-												month: '2-digit',
-												day: '2-digit'
-												}), alignment: 'left', fontSize: 10
-											},
-											{ text: currentPage.toString() + ' of ' + pageCount, 
-												alignment: 'right', fontSize: 10
-											}
+							[
+								{
+									layout: 'noBorders',
+									table: {
+										widths: ['*', '*'],
+										headerRows: 0,
+										body: [
+											[
+												{
+													text: nowDate.toLocaleString({
+														year: 'numeric',
+														month: '2-digit',
+														day: '2-digit'
+													}),
+													alignment: 'left',
+													fontSize: 10
+												},
+												{
+													text:
+														currentPage.toString() + ' of ' + pageCount,
+													alignment: 'right',
+													fontSize: 10
+												}
+											]
 										]
-									]
-								}}
+									}
+								}
 							]
 						]
-					}, margin: [36, 2, 36, 2]
+					},
+					margin: [36, 2, 36, 2]
 				}
 			];
 			return footerContent;

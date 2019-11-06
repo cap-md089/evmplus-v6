@@ -3,7 +3,7 @@ import * as request from 'supertest';
 import conf from '../conf.test';
 import getServer from '../getServer';
 
-describe ('any url that is not an image, build file, or api call', () => {
+describe('any url that is not an image, build file, or api call', () => {
 	let server: Server;
 
 	beforeEach(async () => {
@@ -14,7 +14,7 @@ describe ('any url that is not an image, build file, or api call', () => {
 		server.close();
 	});
 
-	it ('should respond with an HTML file', done => {
+	it('should respond with an HTML file', done => {
 		request(server)
 			.get('/not/a/real/url')
 			.expect('Content-type', 'text/html; charset=utf-8')
@@ -25,5 +25,5 @@ describe ('any url that is not an image, build file, or api call', () => {
 		request(server)
 			.get('/api/not/a/real/api')
 			.expect(404, done);
-	})
+	});
 });

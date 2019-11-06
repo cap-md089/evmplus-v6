@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 import { getSession, Schema } from '@mysql/xdevapi';
-import { NotificationCause, RawAccountObject } from 'common-lib';
-import { NotificationCauseType } from 'common-lib/index';
+import { NotificationCause, NotificationCauseType, RawAccountObject } from 'common-lib';
 import conf from './conf';
 import { Account, collectResults, GlobalNotification, resolveReference } from './lib/internals';
 
@@ -12,7 +11,6 @@ import { Account, collectResults, GlobalNotification, resolveReference } from '.
  */
 
 (async () => {
-
 	const argError = () => {
 		console.error('Please provide a source, account ID, expiration date, and message');
 		console.error(
@@ -42,14 +40,14 @@ import { Account, collectResults, GlobalNotification, resolveReference } from '.
 		check[1].toLowerCase() === 'sys'
 			? {
 					type: NotificationCauseType.SYSTEM
-			}
+			  }
 			: {
 					type: NotificationCauseType.MEMBER,
 					from: {
 						id: parseInt(check[1], 10),
 						type: 'CAPNHQMember'
 					}
-			};
+			  };
 	const accountID = check[2];
 	const expire = new Date(
 		parseInt(check[3], 10), // Year

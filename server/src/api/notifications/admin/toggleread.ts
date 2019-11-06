@@ -1,4 +1,4 @@
-import { NotificationTargetType } from 'common-lib/index';
+import { NotificationTargetType } from 'common-lib';
 import { asyncErrorHandler, MemberRequest, Notification } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {

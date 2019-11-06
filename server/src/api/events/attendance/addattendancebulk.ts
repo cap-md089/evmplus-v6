@@ -1,5 +1,4 @@
-import { AttendanceRecord, NewAttendanceRecord } from 'common-lib';
-import { ManageEvent } from 'common-lib/permissions';
+import { AttendanceRecord, NewAttendanceRecord, Permissions } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
@@ -43,7 +42,8 @@ export default asyncErrorHandler(
 		// For some reason it does not work, it needs to be
 		// stored in a variable first
 		const canAddOtherMembers =
-			req.member.isPOCOf(event) || req.member.hasPermission('ManageEvent', ManageEvent.FULL);
+			req.member.isPOCOf(event) ||
+			req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL);
 
 		if (!canAddOtherMembers) {
 			res.status(403);

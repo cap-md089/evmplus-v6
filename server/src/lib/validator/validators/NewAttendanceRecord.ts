@@ -1,5 +1,4 @@
-import { NewAttendanceRecord } from 'common-lib';
-import { AttendanceStatus } from 'common-lib/index';
+import { AttendanceStatus, NewAttendanceRecord } from 'common-lib';
 import Validator from '../Validator';
 
 export default class NewAttendanceRecordValidator extends Validator<NewAttendanceRecord> {

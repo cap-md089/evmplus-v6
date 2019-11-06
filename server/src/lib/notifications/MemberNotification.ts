@@ -3,13 +3,14 @@ import {
 	MemberReference,
 	NoSQLDocument,
 	NotificationCause,
+	NotificationCauseType,
 	NotificationData,
 	NotificationMemberCause,
 	NotificationMemberTarget,
 	NotificationObject,
-	NotificationSystemCause
+	NotificationSystemCause,
+	NotificationTargetType
 } from 'common-lib';
-import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import { Account, MemberBase, Notification, resolveReference } from '../internals';
 
 export default class MemberNotification extends Notification {
@@ -68,7 +69,7 @@ export default class MemberNotification extends Notification {
 			{
 				...results,
 				fromMemberName:
-				// fromMember is defined, as required by overloads above
+					// fromMember is defined, as required by overloads above
 					from.type === NotificationCauseType.MEMBER ? fromMember!.getFullName() : null,
 				toMemberName
 			},

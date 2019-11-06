@@ -1,5 +1,14 @@
 import * as express from 'express';
-import { Account, conditionalMemberMiddleware, EventValidator, memberMiddleware, NewAttendanceRecordValidator, permissionMiddleware, replaceUndefinedWithNullMiddleware, Validator } from '../../lib/internals';
+import {
+	Account,
+	conditionalMemberMiddleware,
+	EventValidator,
+	memberMiddleware,
+	NewAttendanceRecordValidator,
+	permissionMiddleware,
+	replaceUndefinedWithNullMiddleware,
+	Validator
+} from '../../lib/internals';
 import { tokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';

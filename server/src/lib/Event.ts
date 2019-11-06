@@ -5,7 +5,9 @@ import {
 	DatabaseInterface,
 	DebriefItem,
 	DisplayInternalPointOfContact,
+	EchelonEventNumber,
 	EventObject,
+	EventStatus,
 	ExternalPointOfContact,
 	InternalPointOfContact,
 	MemberReference,
@@ -13,16 +15,12 @@ import {
 	NewAttendanceRecord,
 	NewEventObject,
 	NoSQLDocument,
+	NotificationCauseType,
+	NotificationDataType,
+	PointOfContactType,
 	RadioReturn,
 	RawEventObject
 } from 'common-lib';
-import {
-	EchelonEventNumber,
-	EventStatus,
-	NotificationCauseType,
-	NotificationDataType,
-	PointOfContactType
-} from 'common-lib/index';
 import { DateTime } from 'luxon';
 import {
 	Account,

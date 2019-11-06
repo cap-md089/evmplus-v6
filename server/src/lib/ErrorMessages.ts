@@ -1,3 +1,1 @@
-export default class ErrorMessage {
-	
-}
+export default class ErrorMessage {}

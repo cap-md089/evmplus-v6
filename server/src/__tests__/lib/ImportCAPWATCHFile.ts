@@ -1,6 +1,6 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { NHQ } from 'common-lib';
-import { CAPWATCHImportErrors } from 'common-lib/index';
+import { CAPWATCHImportErrors } from 'common-lib';
 import { resolve } from 'path';
 import conftest from '../../conf.test';
 import {

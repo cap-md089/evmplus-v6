@@ -1,4 +1,4 @@
-import { NotificationTargetType } from 'common-lib/index';
+import { NotificationTargetType } from 'common-lib';
 import {
 	asyncErrorHandler,
 	GlobalNotification,

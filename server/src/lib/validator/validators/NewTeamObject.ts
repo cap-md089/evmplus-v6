@@ -1,5 +1,4 @@
-import { NewTeamObject } from 'common-lib';
-import { TeamPublicity } from 'common-lib/index';
+import { NewTeamObject, TeamPublicity } from 'common-lib';
 import Validator from '../Validator';
 import NewTeamMemberValidator from './NewTeamMember';
 

@@ -4,13 +4,14 @@ import {
 	FileControlListItem,
 	FileObject,
 	FileTeamControlList,
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
 	FileUserControlList,
 	FullFileObject,
 	MemberReference,
 	NoSQLDocument,
 	RawFileObject
 } from 'common-lib';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
 import { unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';

@@ -3,12 +3,13 @@ import {
 	NoSQLDocument,
 	NotificationAdminTarget,
 	NotificationCause,
+	NotificationCauseType,
 	NotificationData,
 	NotificationMemberCause,
 	NotificationObject,
-	NotificationSystemCause
+	NotificationSystemCause,
+	NotificationTargetType
 } from 'common-lib';
-import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import { Account, MemberBase, Notification } from '../internals';
 
 export default class AdminNotification extends Notification {

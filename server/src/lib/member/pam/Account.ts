@@ -4,9 +4,9 @@ import {
 	MemberPermissions,
 	MemberReference,
 	NoSQLDocument,
+	PasswordSetResult,
 	UserAccountInformation
 } from 'common-lib';
-import { PasswordSetResult } from 'common-lib/index';
 import { randomBytes } from 'crypto';
 import {
 	Account,
@@ -205,9 +205,9 @@ export const getInformationForMember = async (
 	schema: Schema,
 	member: MemberReference
 ): Promise<UserAccountInformation & Required<NoSQLDocument>> => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
-		'UserAccountInfo'
-	);
+	const userInformationCollection = schema.getCollection<
+		UserAccountInformation & Required<NoSQLDocument>
+	>('UserAccountInfo');
 
 	const userList = await collectResults(
 		findAndBind(userInformationCollection, {
@@ -232,9 +232,9 @@ export const getInformationForUser = async (
 	schema: Schema,
 	username: string
 ): Promise<UserAccountInformation & Required<NoSQLDocument>> => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
-		'UserAccountInfo'
-	);
+	const userInformationCollection = schema.getCollection<
+		UserAccountInformation & Required<NoSQLDocument>
+	>('UserAccountInfo');
 
 	const userList = await collectResults(
 		findAndBind(userInformationCollection, {
@@ -258,10 +258,13 @@ export const getInformationForUser = async (
  * @param schema the database to update. assumes the information already exists, just needs to be updated
  * @param member the information to save. this needs to be information previously pulled, just tweaked
  */
-export const saveInformationForUser = async (schema: Schema, member: UserAccountInformation & Required<NoSQLDocument>) => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation & Required<NoSQLDocument>>(
-		'UserAccountInfo'
-	);
+export const saveInformationForUser = async (
+	schema: Schema,
+	member: UserAccountInformation & Required<NoSQLDocument>
+) => {
+	const userInformationCollection = schema.getCollection<
+		UserAccountInformation & Required<NoSQLDocument>
+	>('UserAccountInfo');
 
 	await userInformationCollection.replaceOne(member._id, member);
 };

@@ -1,10 +1,10 @@
-import { Schema } from '@mysql/xdevapi';
-import { Organization } from 'common-lib';
+// import { Schema } from '@mysql/xdevapi';
+// import { NHQ } from 'common-lib';
 
 export function getUnitNumber(inOrg: number) {
-	//execute query and return unit Region + '-' + Wing + '-' + Unit
+	// execute query and return unit Region + '-' + Wing + '-' + Unit
 }
 
 export function getUnitName(inOrg: number) {
-	//execute query and return unit Name
+	// execute query and return unit Name
 }

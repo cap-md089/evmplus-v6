@@ -1,5 +1,13 @@
-import { CustomAttendanceField, ExternalPointOfContact, InternalPointOfContact, NewEventObject } from 'common-lib';
-import { CustomAttendanceFieldEntryType, EchelonEventNumber, EventStatus, PointOfContactType } from 'common-lib/index';
+import {
+	CustomAttendanceField,
+	CustomAttendanceFieldEntryType,
+	EchelonEventNumber,
+	EventStatus,
+	ExternalPointOfContact,
+	InternalPointOfContact,
+	NewEventObject,
+	PointOfContactType
+} from 'common-lib';
 import Validator from '../Validator';
 
 class ParticipationFeeValidator extends Validator<{
@@ -281,11 +289,13 @@ export default class EventValidator extends Validator<NewEventObject> {
 			},
 			customAttendanceFields: {
 				validator: Validator.ArrayOf(
-					Validator.Or(new CustomAttendanceFieldCheckboxValidator(),
-					new CustomAttendanceFieldDateValidator(), 
-					new CustomAttendanceFieldFileValidator(),
-					new CustomAttendanceFieldNumberValidator(),
-					new CustomAttendanceFieldTextValidator())
+					Validator.Or(
+						new CustomAttendanceFieldCheckboxValidator(),
+						new CustomAttendanceFieldDateValidator(),
+						new CustomAttendanceFieldFileValidator(),
+						new CustomAttendanceFieldNumberValidator(),
+						new CustomAttendanceFieldTextValidator()
+					)
 				)
 			},
 			publishToWingCalendar: {

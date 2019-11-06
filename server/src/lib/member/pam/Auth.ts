@@ -1,6 +1,10 @@
 import { Schema } from '@mysql/xdevapi';
-import { MemberReference, UserAccountInformation } from 'common-lib';
-import { MemberCreateError, PasswordResult } from 'common-lib/index';
+import {
+	MemberCreateError,
+	MemberReference,
+	PasswordResult,
+	UserAccountInformation
+} from 'common-lib';
 import {
 	checkIfPasswordValid,
 	collectResults,

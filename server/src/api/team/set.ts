@@ -17,7 +17,12 @@ export default asyncErrorHandler(
 		team.set(req.body);
 
 		if (req.body.members) {
-			await team.updateMembers(team.members.slice(), req.body.members, req.account, req.mysqlx);
+			await team.updateMembers(
+				team.members.slice(),
+				req.body.members,
+				req.account,
+				req.mysqlx
+			);
 		}
 
 		await team.save();

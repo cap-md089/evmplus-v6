@@ -1,5 +1,10 @@
-import { FullFileObject, MemberReference, RawFileObject } from 'common-lib';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
+import {
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
+	FullFileObject,
+	MemberReference,
+	RawFileObject
+} from 'common-lib';
 import * as express from 'express';
 import * as fs from 'fs';
 import { DateTime } from 'luxon';
