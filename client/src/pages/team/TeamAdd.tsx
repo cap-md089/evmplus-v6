@@ -1,10 +1,9 @@
+import { NewTeamObject, TeamPublicity } from 'common-lib';
 import * as React from 'react';
-import { TeamPublicity } from 'common-lib/index';
-import Page, { PageProps } from '../Page';
-import { NewTeamObject } from 'common-lib';
-import { CAPMemberClasses } from '../../lib/Members';
 import TeamForm from '../../components/forms/usable-forms/TeamForm';
+import { CAPMemberClasses } from '../../lib/Members';
 import Team from '../../lib/Team';
+import Page, { PageProps } from '../Page';
 
 interface TeamAddState {
 	team: NewTeamObject;

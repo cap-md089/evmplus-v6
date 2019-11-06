@@ -1,5 +1,5 @@
+import { FileUserAccessControlPermissions } from 'common-lib';
 import * as React from 'react';
-import { FileUserAccessControlPermissions } from 'common-lib/index';
 import { FileDisplayProps } from './DriveFileDisplay';
 
 export default class DriveFolderDisplay extends React.Component<

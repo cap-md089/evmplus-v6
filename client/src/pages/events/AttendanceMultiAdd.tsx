@@ -1,17 +1,16 @@
-import * as React from 'react';
-import Page, { PageProps } from '../Page';
+import { AttendanceStatus, Member, MemberObject } from 'common-lib';
 import { DateTime } from 'luxon';
-import { AttendanceStatus } from 'common-lib/index';
-import { CAPMemberClasses } from '../../lib/Members';
-import { Member, MemberObject } from 'common-lib';
-import Selector, { CheckInput } from '../../components/form-inputs/Selector';
-import { TextInput } from '../../components/forms/Form';
-import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
-import Event from '../../lib/Event';
-import Loader from '../../components/Loader';
-import SimpleForm, { Label, Checkbox } from '../../components/forms/SimpleForm';
+import * as React from 'react';
 import Button from '../../components/Button';
 import { InputProps } from '../../components/form-inputs/Input';
+import Selector, { CheckInput } from '../../components/form-inputs/Selector';
+import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
+import { TextInput } from '../../components/forms/Form';
+import SimpleForm, { Checkbox, Label } from '../../components/forms/SimpleForm';
+import Loader from '../../components/Loader';
+import Event from '../../lib/Event';
+import { CAPMemberClasses } from '../../lib/Members';
+import Page, { PageProps } from '../Page';
 
 enum SortFunction {
 	LASTNAME,

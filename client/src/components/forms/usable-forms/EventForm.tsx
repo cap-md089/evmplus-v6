@@ -1,6 +1,20 @@
+import {
+	CustomAttendanceField,
+	CustomAttendanceFieldEntryType,
+	DisplayInternalPointOfContact,
+	ExternalPointOfContact,
+	NewEventObject,
+	PointOfContactType
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import { PointOfContactType, CustomAttendanceFieldEntryType } from 'common-lib/index';
+import Account from '../../../lib/Account';
+import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
+import Registry from '../../../lib/Registry';
+import Team from '../../../lib/Team';
+import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
+import { InputProps } from '../../form-inputs/Input';
+import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
 import {
 	Checkbox,
 	FileInput,
@@ -10,8 +24,6 @@ import {
 	TeamSelector,
 	TextInput
 } from '../Form';
-import { InputProps } from '../../form-inputs/Input';
-import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
 import SimpleForm, {
 	DateTimeInput,
 	Label,
@@ -20,17 +32,6 @@ import SimpleForm, {
 	RadioButton,
 	Title
 } from '../SimpleForm';
-import Registry from '../../../lib/Registry';
-import {
-	NewEventObject,
-	ExternalPointOfContact,
-	DisplayInternalPointOfContact,
-	CustomAttendanceField
-} from 'common-lib';
-import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
-import Team from '../../../lib/Team';
-import Account from '../../../lib/Account';
-import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
 
 export const Uniforms = [
 	'Dress Blue A',

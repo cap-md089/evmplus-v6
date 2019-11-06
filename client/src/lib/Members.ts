@@ -1,11 +1,9 @@
-import MemberBase from './MemberBase';
+import { Member, MemberCreateError, SigninReturn } from 'common-lib';
 import Account from './Account';
-
+import MemberBase from './MemberBase';
 import CAPNHQMember from './members/CAPNHQMember';
 import CAPProspectiveMember from './members/CAPProspectiveMember';
 import myFetch from './myFetch';
-import { MemberCreateError } from 'common-lib/index';
-import { Member, SigninReturn } from 'common-lib';
 
 export { CAPProspectiveMember, CAPNHQMember };
 

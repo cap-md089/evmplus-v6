@@ -6,9 +6,9 @@ import {
 	MemberReference,
 	NewTeamObject,
 	RawTeamMember,
-	RawTeamObject
+	RawTeamObject,
+	TeamPublicity
 } from 'common-lib';
-import { TeamPublicity } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import Account from './Account';
 import APIInterface from './APIInterface';

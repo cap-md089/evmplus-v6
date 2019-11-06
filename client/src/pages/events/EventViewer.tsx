@@ -1,28 +1,29 @@
 import {
 	AttendanceRecord,
+	EventStatus,
 	MemberReference,
 	NewAttendanceRecord,
 	NHQMemberReference,
+	PointOfContactType,
 	ProspectiveMemberReference
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
+import AttendanceItemView from '../../components/AttendanceView';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
+import DropDownList from '../../components/DropDownList';
 import { parseMultCheckboxReturn } from '../../components/form-inputs/MultCheckbox';
 import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
+import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import { Activities, RequiredForms, Uniforms } from '../../components/forms/usable-forms/EventForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
-import { EventStatus, PointOfContactType } from 'common-lib/index';
 import Event from '../../lib/Event';
 import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
-import DropDownList from '../../components/DropDownList';
-import AttendanceItemView from '../../components/AttendanceView';
 
 const noop = () => void 0;
 

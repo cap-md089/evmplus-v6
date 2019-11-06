@@ -1,16 +1,17 @@
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
+import {
+	FileControlListItem,
+	FileTeamControlList,
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
+	FileUserControlList,
+	FullFileObject,
+	MemberObject,
+	MemberReference
+} from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
 import urlFormat from './urlFormat';
-import {
-	FullFileObject,
-	FileControlListItem,
-	MemberReference,
-	MemberObject,
-	FileTeamControlList,
-	FileUserControlList
-} from 'common-lib';
 
 /**
  * Simple private class used to handle uploading the files

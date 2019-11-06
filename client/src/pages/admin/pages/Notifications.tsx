@@ -1,15 +1,14 @@
-import { NotificationCauseType, NotificationDataType } from 'common-lib/index';
+import { NotificationCauseType, NotificationDataEvent, NotificationDataType } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import Button from '../../../components/Button';
 import Loader from '../../../components/Loader';
 import Account from '../../../lib/Account';
 import MemberBase from '../../../lib/Members';
 import Notification from '../../../lib/Notification';
 import Page, { PageProps } from '../../Page';
 import './Notifications.css';
-import { NotificationDataEvent } from 'common-lib';
-import { Link } from 'react-router-dom';
-import Button from '../../../components/Button';
 
 interface NotificationsState {
 	notifications: Notification[] | null;

@@ -1,10 +1,9 @@
+import { MemberCreateError, SigninReturn } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
-import { Link, withRouter, RouteComponentProps } from 'react-router-dom';
-import { MemberCreateError } from 'common-lib/index';
-import SigninLink from './SigninLink';
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import MemberBase from '../lib/Members';
-import { SigninReturn } from 'common-lib';
+import SigninLink from './SigninLink';
 
 class SideNavigationLink extends React.Component<{ target: string }> {
 	public render() {

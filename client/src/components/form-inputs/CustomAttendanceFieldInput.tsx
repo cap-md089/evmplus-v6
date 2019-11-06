@@ -1,16 +1,15 @@
+import { CustomAttendanceField, CustomAttendanceFieldEntryType } from 'common-lib';
 import * as React from 'react';
-import { CustomAttendanceFieldEntryType } from 'common-lib/index';
 import {
 	Checkbox,
+	DateTimeInput,
 	FormBlock,
 	Label,
-	TextInput,
 	NumberInput,
-	DateTimeInput
+	TextInput
 } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
-import { CustomAttendanceField } from 'common-lib';
 
 export default class CustomAttendanceFieldInput extends React.Component<
 	InputProps<CustomAttendanceField>

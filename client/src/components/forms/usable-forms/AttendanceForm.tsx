@@ -1,13 +1,17 @@
+import {
+	AttendanceRecord,
+	AttendanceStatus,
+	MemberReference,
+	NewAttendanceRecord
+} from 'common-lib';
 import * as React from 'react';
-import { AttendanceStatus } from 'common-lib/index';
-import { BigTextBox, Checkbox, SimpleRadioButton } from '../Form';
-import SimpleForm, { Label, TextBox, DateTimeInput } from '../SimpleForm';
-import Button from '../../Button';
-import MemberBase from '../../../lib/Members';
 import Account from '../../../lib/Account';
-import { AttendanceRecord, NewAttendanceRecord, MemberReference } from 'common-lib';
 import Event from '../../../lib/Event';
+import MemberBase from '../../../lib/Members';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
+import Button from '../../Button';
+import { BigTextBox, Checkbox, SimpleRadioButton } from '../Form';
+import SimpleForm, { DateTimeInput, Label, TextBox } from '../SimpleForm';
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
 

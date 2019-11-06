@@ -1,9 +1,8 @@
+import { MemberCreateError, SigninReturn } from 'common-lib';
 import * as React from 'react';
 import { MessageEventListener } from '../App';
-import { MemberCreateError } from 'common-lib/index';
 import Dialogue, { DialogueButtons } from './dialogues/Dialogue';
 import './Signin.css';
-import { SigninReturn } from 'common-lib';
 
 const errorMessages = {
 	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'Incorrect credentials',

@@ -1,24 +1,4 @@
-import { MemberPermissions } from 'common-lib';
-import {
-	AdministerPT,
-	AssignTasks,
-	AssignTemporaryDutyPosition,
-	DownloadCAPWATCH,
-	EventContactSheet,
-	EventLinkList,
-	FileManagement,
-	FlightAssign,
-	ManageEvent,
-	ManageTeam,
-	MusterSheet,
-	Notify,
-	ORMOPORD,
-	PermissionManagement,
-	PromotionManagement,
-	ProspectiveMemberManagement,
-	PTSheet,
-	RegistryEdit
-} from 'common-lib/permissions';
+import { MemberPermissions, Permissions } from 'common-lib';
 import * as React from 'react';
 import { deepCompare } from '../../pages/Page';
 import { FormBlock, Label, Checkbox } from '../forms/Form';
@@ -261,82 +241,82 @@ export default class PermissionsEdit extends React.Component<
 				<Checkbox name="showAdvanced" />
 
 				<Label key="0">Administer PT</Label>
-				<Select<AdministerPT> key="1" name="AdministerPT" labels={['No', 'Yes']} />
+				<Select<Permissions.AdministerPT> key="1" name="AdministerPT" labels={['No', 'Yes']} />
 
 				<Label key="2">Assign tasks</Label>
-				<Select<AssignTasks> key="3" name="AssignTasks" labels={['No', 'Yes']} />
+				<Select<Permissions.AssignTasks> key="3" name="AssignTasks" labels={['No', 'Yes']} />
 
 				<Label key="4">File management</Label>
-				<Select<FileManagement> key="5" name="FileManagement" labels={['No', 'Yes']} />
+				<Select<Permissions.FileManagement> key="5" name="FileManagement" labels={['No', 'Yes']} />
 
 				<Label key="6">Flight Assign</Label>
-				<Select<FlightAssign> key="7" name="FlightAssign" labels={['No', 'Yes']} />
+				<Select<Permissions.FlightAssign> key="7" name="FlightAssign" labels={['No', 'Yes']} />
 
 				<Label key="8">Muster sheet</Label>
-				<Select<MusterSheet> key="9" name="MusterSheet" labels={['No', 'Yes']} />
+				<Select<Permissions.MusterSheet> key="9" name="MusterSheet" labels={['No', 'Yes']} />
 
 				<Label key="10">PT Sheet Management</Label>
-				<Select<PTSheet> key="11" name="PTSheet" labels={['No', 'Yes']} />
+				<Select<Permissions.PTSheet> key="11" name="PTSheet" labels={['No', 'Yes']} />
 
 				<Label key="12">Promotion Management</Label>
-				<Select<PromotionManagement>
+				<Select<Permissions.PromotionManagement>
 					key="13"
 					name="PromotionManagement"
 					labels={['No', 'Yes']}
 				/>
 
 				<Label key="14">Assign temporary duty positions</Label>
-				<Select<AssignTemporaryDutyPosition>
+				<Select<Permissions.AssignTemporaryDutyPosition>
 					key="15"
 					name="AssignTemporaryDutyPositions"
 					labels={['No', 'Yes']}
 				/>
 
 				<Label key="16">Event contact sheet</Label>
-				<Select<EventContactSheet>
+				<Select<Permissions.EventContactSheet>
 					key="17"
 					name="EventContactSheet"
 					labels={['No', 'Yes']}
 				/>
 
 				<Label key="18">Event link list</Label>
-				<Select<EventLinkList> key="19" name="EventLinkList" labels={['No', 'Yes']} />
+				<Select<Permissions.EventLinkList> key="19" name="EventLinkList" labels={['No', 'Yes']} />
 
 				<Label key="20">ORM OPORD</Label>
-				<Select<ORMOPORD> key="21" name="ORMOPORD" labels={['No', 'Yes']} />
+				<Select<Permissions.ORMOPORD> key="21" name="ORMOPORD" labels={['No', 'Yes']} />
 
 				<Label key="22">Prospective Member Management</Label>
-				<Select<ProspectiveMemberManagement>
+				<Select<Permissions.ProspectiveMemberManagement>
 					key="23"
 					name="ProspectiveMemberManagement"
 					labels={['No', 'Yes']}
 				/>
 
 				<Label key="24">Create notifications</Label>
-				<Select<Notify> key="25" name="CreateNotifications" labels={['None', 'Global']} />
+				<Select<Permissions.Notify> key="25" name="CreateNotifications" labels={['None', 'Global']} />
 
 				<Label key="26">Manage events</Label>
-				<Select<ManageEvent>
+				<Select<Permissions.ManageEvent>
 					key="27"
 					name="ManageEvent"
 					labels={['No', 'Add draft events', 'Full']}
 				/>
 
 				<Label key="28">Manage teams</Label>
-				<Select<ManageTeam> key="29" name="ManageTeam" labels={['No', 'Yes']} />
+				<Select<Permissions.ManageTeam> key="29" name="ManageTeam" labels={['No', 'Yes']} />
 
 				<Label key="30">Download CAPWATCH files</Label>
-				<Select<DownloadCAPWATCH> key="31" name="DownloadCAPWATCH" labels={['No', 'Yes']} />
+				<Select<Permissions.DownloadCAPWATCH> key="31" name="DownloadCAPWATCH" labels={['No', 'Yes']} />
 
 				<Label key="32">Permission management</Label>
-				<Select<PermissionManagement>
+				<Select<Permissions.PermissionManagement>
 					key="33"
 					name="PermissionManagement"
 					labels={['No', 'Yes']}
 				/>
 
 				<Label key="34">Configure website</Label>
-				<Select<RegistryEdit> key="35" name="RegistryEdit" labels={['No', 'Yes']} />
+				<Select<Permissions.RegistryEdit> key="35" name="RegistryEdit" labels={['No', 'Yes']} />
 			</FormBlock>
 		) : (
 			<FormBlock<PermissionFormValues>

@@ -1,12 +1,11 @@
+import { EventObject, EventStatus } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { EventStatus } from 'common-lib/index';
 import myFetch from '../lib/myFetch';
 import './Calendar.css';
 import Page, { PageProps } from './Page';
-import { EventObject } from 'common-lib';
 
 const getMonth = (month: number, year: number) =>
 	DateTime.utc()

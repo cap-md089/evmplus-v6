@@ -1,22 +1,23 @@
-import APIInterface from './APIInterface';
-import { EventStatus } from 'common-lib/index';
-import MemberBase from './MemberBase';
-import Account from './Account';
-import { PointOfContactType, EchelonEventNumber } from 'common-lib/index';
-import { CAPMemberClasses } from './Members';
 import {
-	EventObject,
-	NewEventObject,
-	RadioReturn,
+	AttendanceRecord,
+	CustomAttendanceField,
+	DebriefItem,
 	DisplayInternalPointOfContact,
+	EchelonEventNumber,
+	EventObject,
+	EventStatus,
 	ExternalPointOfContact,
 	MemberReference,
-	AttendanceRecord,
-	NewAttendanceRecord,
 	MultCheckboxReturn,
-	DebriefItem,
-	CustomAttendanceField
+	NewAttendanceRecord,
+	NewEventObject,
+	PointOfContactType,
+	RadioReturn
 } from 'common-lib';
+import Account from './Account';
+import APIInterface from './APIInterface';
+import MemberBase from './MemberBase';
+import { CAPMemberClasses } from './Members';
 
 /**
  * Represents an event for the squadron calendar

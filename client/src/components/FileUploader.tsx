@@ -1,8 +1,7 @@
-import { HTTPError } from 'common-lib/index';
 import * as React from 'react';
+import Account from '../lib/Account';
 import FileInterface from '../lib/File';
 import MemberBase from '../lib/Members';
-import Account from '../lib/Account';
 
 interface FileUploaderProps {
 	onFileUpload: (file: FileInterface) => void;
@@ -17,7 +16,6 @@ interface FileUploaderState {
 	hovering: boolean;
 	progress: number;
 	doneWithCurrentFile: boolean;
-	error: HTTPError;
 }
 
 export default class FileUploader extends React.Component<FileUploaderProps, FileUploaderState> {
@@ -25,8 +23,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 		files: [],
 		hovering: false,
 		progress: 0,
-		doneWithCurrentFile: true,
-		error: HTTPError.NONE
+		doneWithCurrentFile: true
 	};
 
 	public constructor(props: FileUploaderProps) {

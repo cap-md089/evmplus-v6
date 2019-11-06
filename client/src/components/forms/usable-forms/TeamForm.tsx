@@ -1,20 +1,19 @@
+import { NewTeamMember, NewTeamObject, TeamPublicity } from 'common-lib';
 import * as React from 'react';
-import { TeamPublicity } from 'common-lib/index';
+import { CAPMemberClasses } from '../../../lib/Members';
 import MemberSelector from '../../dialogues/MemberSelector';
 import TeamMemberInput, { TeamMemberInputProps } from '../../form-inputs/TeamMemberInput';
 import SimpleForm, {
 	BigTextBox,
 	BooleanFields,
+	Divider,
+	FormValidator,
 	Label,
 	ListEditor,
 	SimpleRadioButton,
-	TextInput,
-	FormValidator,
-	Divider,
-	TextBox
+	TextBox,
+	TextInput
 } from '../SimpleForm';
-import { NewTeamObject, NewTeamMember } from 'common-lib';
-import { CAPMemberClasses } from '../../../lib/Members';
 
 interface TeamFormProps {
 	team: NewTeamObject;

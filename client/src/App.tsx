@@ -1,18 +1,17 @@
+import { FileObject, MemberCreateError, MemberObject, SigninReturn } from 'common-lib';
 import * as React from 'react';
 import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
+import GlobalNotification from './components/GlobalNotification';
 import Loader from './components/Loader';
 import PageRouter from './components/PageRouter';
 import SideNavigation, { SideNavigationItem } from './components/SideNavigation';
-import { MemberCreateError } from 'common-lib/index';
 import jQuery, { bestfit } from './jquery.textfit';
 import Account from './lib/Account';
-import { createCorrectMemberObject, getMember, CAPMemberClasses } from './lib/Members';
+import { CAPMemberClasses, createCorrectMemberObject, getMember } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
 import Subscribe from './lib/subscribe';
-import { SigninReturn, FileObject, MemberObject } from 'common-lib';
-import GlobalNotification from './components/GlobalNotification';
 
 export const MessageEventListener = new Subscribe<MessageEvent>();
 

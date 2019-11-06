@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Omit, RegistryValues } from 'common-lib';
+import { RegistryValues } from 'common-lib';
 import Page, { PageProps } from '../../Page';
 import SimpleForm, {
 	Title,
@@ -11,6 +11,8 @@ import SimpleForm, {
 	TextBox
 } from '../../../components/forms/SimpleForm';
 import Button from '../../../components/Button';
+
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 

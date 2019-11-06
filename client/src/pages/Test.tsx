@@ -4,9 +4,9 @@ import {
 	Identifiable,
 	MemberPermissions,
 	MultCheckboxReturn,
+	PointOfContactType,
 	RadioReturn
 } from 'common-lib';
-import { PointOfContactType } from 'common-lib/index';
 import { EditorState } from 'draft-js';
 import { DateTime } from 'luxon';
 import * as React from 'react';

@@ -1,5 +1,5 @@
+import { FileUserAccessControlPermissions } from 'common-lib';
 import * as React from 'react';
-import { FileUserAccessControlPermissions } from 'common-lib/index';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
 import Button from '../Button';
