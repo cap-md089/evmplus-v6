@@ -8,11 +8,11 @@ import {
 	MemberReference,
 	MemberType,
 	NoSQLDocument,
+	NotificationTargetType,
 	RawNotificationObject,
 	RawTeamObject,
 	TaskObject
 } from 'common-lib';
-import { NotificationTargetType } from 'common-lib/index';
 import { DateTime } from 'luxon';
 import {
 	Account,
@@ -216,9 +216,13 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public getNameLFMI() {
-		let buildName = this.nameLast + ", " + this.nameFirst;
-		if(this.nameMiddle) { buildName += " " + this.nameMiddle[0]; }
-		if(this.nameSuffix) { buildName += ", " + this.nameSuffix; }
+		let buildName = this.nameLast + ', ' + this.nameFirst;
+		if (this.nameMiddle) {
+			buildName += ' ' + this.nameMiddle[0];
+		}
+		if (this.nameSuffix) {
+			buildName += ', ' + this.nameSuffix;
+		}
 		return buildName;
 	}
 

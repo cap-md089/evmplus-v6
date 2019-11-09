@@ -1,5 +1,4 @@
-import { FullFileObject, RawFileObject } from 'common-lib';
-import { FileUserAccessControlPermissions } from 'common-lib/index';
+import { FileUserAccessControlPermissions, FullFileObject, RawFileObject } from 'common-lib';
 import {
 	asyncErrorHandler,
 	ConditionalMemberRequest,
@@ -17,10 +16,7 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest<{ page: st
 
 	const find = imageCollection
 		.find('forDisplay = true')
-		.limit(
-			-1,
-			registry.values.Website.PhotoLibraryImagesPerPage * page
-		);
+		.limit(-1, registry.values.Website.PhotoLibraryImagesPerPage * page);
 
 	let count = 0;
 

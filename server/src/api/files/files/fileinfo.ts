@@ -1,5 +1,4 @@
-import { FileObject, FullFileObject } from 'common-lib';
-import { FileUserAccessControlPermissions } from 'common-lib/index';
+import { FileObject, FileUserAccessControlPermissions, FullFileObject } from 'common-lib';
 import * as express from 'express';
 import { asyncErrorHandler, ConditionalMemberRequest, File, json } from '../../../lib/internals';
 

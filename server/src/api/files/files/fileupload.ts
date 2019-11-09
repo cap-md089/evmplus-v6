@@ -1,5 +1,10 @@
-import { FullFileObject, MemberReference, RawFileObject } from 'common-lib';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
+import {
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
+	FullFileObject,
+	MemberReference,
+	RawFileObject
+} from 'common-lib';
 import * as express from 'express';
 import * as fs from 'fs';
 import { DateTime } from 'luxon';
@@ -106,7 +111,7 @@ export default async (req: MemberRequest, res: express.Response) => {
 				contentType = endingToMime(ending);
 			}
 
-			const id = uuid();
+			const id = uuid().replace(/-/g, '');
 
 			// Start to write to disk
 			const realFilename = `${req.account.id}-${id}`;

@@ -1,5 +1,4 @@
-import { FullTeamObject, MemberReference } from 'common-lib';
-import { TeamPublicity } from 'common-lib/index';
+import { FullTeamObject, MemberReference, TeamPublicity } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,

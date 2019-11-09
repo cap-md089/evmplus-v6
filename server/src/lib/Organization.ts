@@ -1,3 +1,4 @@
+/*
 import { Schema } from '@mysql/xdevapi';
 import {
 	NoSQLDocument,

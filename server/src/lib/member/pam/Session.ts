@@ -1,5 +1,9 @@
 import { Schema } from '@mysql/xdevapi';
 import {
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
+	MemberCreateError,
 	MemberPermission,
 	MemberPermissions,
 	MemberReference,
@@ -46,71 +50,82 @@ export interface MemberRequest<P extends ParamType = {}> extends AccountRequest<
 	member: CAPNHQUser | CAPProspectiveUser;
 }
 
-const addSessionToDatabase = async (schema: Schema, session: Session) => {
-	const sessionCollection = schema.getCollection<Session>(SESSION_TABLE);
+const addSessionToDatabase = (
+	schema: Schema,
+	session: Session
+): AsyncEither<MemberCreateError, Session> =>
+	asyncRight<MemberCreateError, Schema>(schema, 5)
+		.map(s => s.getCollection<Session>(SESSION_TABLE))
+		.map(collection => collection.add(session).execute())
+		.map(() => session);
 
-	await sessionCollection.add(session).execute();
-};
+const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void> =>
+	asyncRight<MemberCreateError, Schema>(schema, 6)
+		.map(s => s.getCollection<Session>(SESSION_TABLE))
+		.map(collection =>
+			collection
+				.remove('created < :created')
+				.bind({ created: Date.now() - SESSION_AGE })
+				.execute()
+		)
+		.map(() => void 0);
 
-const removeOldSessions = async (schema: Schema) => {
-	const sessionCollection = schema.getCollection<Session>(SESSION_TABLE);
+const updateSessionExpireTime = (
+	schema: Schema,
+	session: Session
+): AsyncEither<MemberCreateError, Session> =>
+	asyncRight<MemberCreateError, Schema>(schema, 7)
+		.map(s => s.getCollection<Session>(SESSION_TABLE))
+		.map(collection =>
+			collection
+				.modify('sessionID = :sessionID')
+				.bind({
+					sessionID: session.sessionID
+				})
+				.set('created', Date.now())
+				.execute()
+		)
+		.map(() => ({
+			...session,
+			created: Date.now()
+		}));
 
-	await sessionCollection
-		.remove('created < :created')
-		.bind({ created: Date.now() - SESSION_AGE })
-		.execute();
-};
+const getSessionFromID = (
+	schema: Schema,
+	sessionID: SessionID
+): AsyncEither<MemberCreateError, Session[]> =>
+	asyncRight<MemberCreateError, Schema>(schema, 8)
+		.map(s => s.getCollection<Session>(SESSION_TABLE))
+		.map(collection => collectResults(findAndBind(collection, { sessionID })));
 
-const updateSessionExpireTime = async (schema: Schema, session: Session) => {
-	const sessionCollection = schema.getCollection<Session>(SESSION_TABLE);
-
-	await sessionCollection
-		.modify('sessionID = :sessionID')
-		.bind({
-			sessionID: session.sessionID
-		})
-		.set('created', Date.now())
-		.execute();
-};
-
-const getSessionFromID = async (schema: Schema, sessionID: SessionID) => {
-	const sessionCollection = schema.getCollection<Session>(SESSION_TABLE);
-
-	return await collectResults(findAndBind(sessionCollection, { sessionID }));
-};
-
-export const createSessionForUser = async (
+export const createSessionForUser = (
 	schema: Schema,
 	userAccount: UserAccountInformation
-): Promise<Session> => {
-	const sessionID: SessionID = (await promisedRandomBytes(SESSION_ID_BYTE_COUNT)).toString('hex');
+): AsyncEither<MemberCreateError, Session> =>
+	asyncRight<MemberCreateError, Buffer>(
+		promisedRandomBytes(SESSION_ID_BYTE_COUNT),
+		MemberCreateError.UNKOWN_SERVER_ERROR
+	)
+		.map<string>(bytes => bytes.toString('hex'))
+		.map<Session>(sessionID => ({
+			sessionID,
+			created: Date.now(),
+			userAccount
+		}))
+		.flatMap(session => addSessionToDatabase(schema, session));
 
-	const session: Session = {
-		sessionID,
-		created: Date.now(),
-		userAccount
-	};
-
-	await addSessionToDatabase(schema, session);
-
-	return session;
-};
-
-export const validateSession = async (schema: Schema, sessionID: SessionID): Promise<Session> => {
-	await removeOldSessions(schema);
-
-	const sessions = await getSessionFromID(schema, sessionID);
-
-	if (sessions.length !== 1) {
-		throw new Error('Could not find session');
-	}
-
-	const session = sessions[0];
-
-	await updateSessionExpireTime(schema, session);
-
-	return session;
-};
+export const validateSession = (
+	schema: Schema,
+	sessionID: SessionID
+): AsyncEither<MemberCreateError, Session> =>
+	removeOldSessions(schema)
+		.flatMap(() => getSessionFromID(schema, sessionID))
+		.flatMap(sessions =>
+			sessions.length === 1
+				? asyncRight(sessions[0], MemberCreateError.UNKOWN_SERVER_ERROR)
+				: asyncLeft<MemberCreateError, Session>(MemberCreateError.INVALID_SESSION_ID)
+		)
+		.flatMap(session => updateSessionExpireTime(schema, session));
 
 export type MemberConstructor<T = MemberBase> = new (...args: any[]) => T;
 
@@ -122,7 +137,11 @@ export const SessionedUser = <
 	Member: M
 ) => {
 	abstract class User extends Member {
-		public static async RestoreFromSession(schema: Schema, account: Account, session: Session): Promise<User | null> {
+		public static async RestoreFromSession(
+			schema: Schema,
+			account: Account,
+			session: Session
+		): Promise<User | null> {
 			if (session.userAccount.member.type === 'Null') {
 				return null;
 			}
@@ -219,17 +238,17 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 
 			let session;
 			try {
-				session = await validateSession(req.mysqlx, header);
+				session = await validateSession(req.mysqlx, header).toSome();
 			} catch (e) {
 				return next();
 			}
 
-			switch (session.userAccount.member.type) {
+			switch (session!.userAccount.member.type) {
 				case 'CAPNHQMember':
 					req.member = (await CAPNHQUser.RestoreFromSession(
 						req.mysqlx,
 						req.account,
-						session
+						session!
 					)) as CAPNHQUser;
 					break;
 
@@ -237,7 +256,7 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 					req.member = (await CAPProspectiveUser.RestoreFromSession(
 						req.mysqlx,
 						req.account,
-						session
+						session!
 					)) as CAPProspectiveUser;
 					break;
 			}

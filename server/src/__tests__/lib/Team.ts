@@ -49,7 +49,10 @@ describe('Team', () => {
 		const newTeamObject = await Team.Create(newTeam, account, schema);
 
 		const results = await collectResults(
-			schema.getCollection<RawTeamObject>('Teams').find('id = :id').bind({ id: newTeamObject.id })
+			schema
+				.getCollection<RawTeamObject>('Teams')
+				.find('id = :id')
+				.bind({ id: newTeamObject.id })
 		);
 
 		expect(results.length).toBe(1);

@@ -61,7 +61,9 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
 					LstUsr: values.LstUsr,
 					LstDateMod: values.LstDateMod,
 					Comments: values.Comments
-				}).patch(values).execute();
+				})
+					.patch(values)
+					.execute();
 			}
 		} catch (e) {
 			console.warn(e);

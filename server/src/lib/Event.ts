@@ -5,7 +5,9 @@ import {
 	DatabaseInterface,
 	DebriefItem,
 	DisplayInternalPointOfContact,
+	EchelonEventNumber,
 	EventObject,
+	EventStatus,
 	ExternalPointOfContact,
 	InternalPointOfContact,
 	MemberReference,
@@ -13,16 +15,12 @@ import {
 	NewAttendanceRecord,
 	NewEventObject,
 	NoSQLDocument,
+	NotificationCauseType,
+	NotificationDataType,
+	PointOfContactType,
 	RadioReturn,
 	RawEventObject
 } from 'common-lib';
-import {
-	EchelonEventNumber,
-	EventStatus,
-	NotificationCauseType,
-	NotificationDataType,
-	PointOfContactType
-} from 'common-lib/index';
 import { DateTime } from 'luxon';
 import {
 	Account,
@@ -685,6 +683,18 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * Returns the attendance for the event
 	 */
 	public getAttendance = (): AttendanceRecord[] => this.attendance.slice();
+
+	/**
+	 * Checks for the sepcified member
+	 */
+	public hasMemberInAttendance = (member: MemberReference) =>
+		this.attendance.find(val => areMemberReferencesTheSame(member, val.memberID)) !== undefined;
+
+	/**
+	 * Gets the records for a member
+	 */
+	public getAttendanceRecordForMember = (member: MemberReference): AttendanceRecord | undefined =>
+		this.attendance.find(val => areMemberReferencesTheSame(member, val.memberID));
 
 	/**
 	 * Add member to attendance

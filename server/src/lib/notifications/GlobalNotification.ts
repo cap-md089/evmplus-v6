@@ -2,12 +2,13 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	NoSQLDocument,
 	NotificationCause,
+	NotificationCauseType,
 	NotificationEveryoneTarget,
 	NotificationMemberCause,
 	NotificationObject,
 	NotificationSystemCause,
+	NotificationTargetType
 } from 'common-lib';
-import { NotificationCauseType, NotificationTargetType } from 'common-lib/index';
 import {
 	Account,
 	findAndBind,
@@ -144,7 +145,7 @@ export default class GlobalNotification extends Notification {
 				...results,
 				toMemberName: null,
 				fromMemberName:
-				// `fromMember` is not undefined, as required by the overloads above
+					// `fromMember` is not undefined, as required by the overloads above
 					from.type === NotificationCauseType.MEMBER ? fromMember!.getFullName() : null
 			},
 			account,

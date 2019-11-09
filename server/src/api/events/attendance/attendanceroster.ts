@@ -1,7 +1,6 @@
 import { Response } from 'express';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import { join } from 'path';
-import { formatPhone } from '../../../lib/Util';
 import * as PDFMake from 'pdfmake';
 import {
 	AccountRequest,
@@ -14,6 +13,7 @@ import {
 	presentMultCheckboxReturn,
 	resolveReference
 } from '../../../lib/internals';
+import { formatPhone } from '../../../lib/Util';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -35,12 +35,6 @@ export const Activities = [
 	'Physically Rigorous',
 	'Recurring Meeting'
 ];
-
-function expireFlag(dte: DateTime) {
-	const dateFlag = DateTime.utc();
-	dateFlag.plus(Duration.fromObject({ days: 30 }));
-	return dte < dateFlag;
-}
 
 function expiredFlag(dte: DateTime) {
 	const dateFlag = DateTime.utc();
@@ -77,13 +71,25 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	// replace this with rec.account.Orgid code once Organization import is complete
 	const myOrg = [
 		{ Orgid: 916, Region: 'MAR', Wing: 'MD', Unit: '089', Name: 'ST MARYS COMPOSITE SQDN' },
-		{ Orgid: 2529, Region: 'MAR', Wing: 'MD', Unit: '890', Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT' }
+		{
+			Orgid: 2529,
+			Region: 'MAR',
+			Wing: 'MD',
+			Unit: '890',
+			Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT'
+		}
 	];
 	let sqnNum = myOrg[0].Region + '-' + myOrg[0].Wing + '-';
 	let sqnName = '';
+<<<<<<< HEAD
 	for (let w = 0; w < myOrg.length; w++) {
 		sqnNum += myOrg[w].Unit + '/';
 		sqnName += myOrg[w].Name + '/';
+=======
+	for (const org of myOrg) {
+		sqnNum += org.Unit + '/';
+		sqnName += org.Name + '/';
+>>>>>>> 9f095bc0fe16b1cf00e816e9770b2d4cc3507480
 	}
 	sqnNum = sqnNum.substring(0, sqnNum.length - 1);
 	sqnName = sqnName.substring(0, sqnName.length - 1);
@@ -106,7 +112,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 
 	const fontSize = 9;
 	for await (const memberRecord of event.getAttendance()) {
-		const member = await resolveReference(memberRecord.memberID, req.account, req.mysqlx); // need to Estimate member here to access member information *****
+		const member = await resolveReference(memberRecord.memberID, req.account, req.mysqlx, true); // need to Estimate member here to access member information *****
 		(member.seniorMember ? seniorMemberInformation : cadetMemberInformation).push([
 			{
 				text: member.getNameLFMI(),
@@ -121,14 +127,24 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			{ text: member.memberRank, fontSize },
 			{ text: member.id.toString(), fontSize },
 			{
-				text:
-					member.squadron,
-				bold:
-					req.account.orgIDs.includes(member.orgid) ? false : true,
+				text: member.squadron,
+				bold: req.account.orgIDs.includes(member.orgid) ? false : true,
 				fontSize
 			},
-			{ text: getBestPhone(member).source + ' ' + formatPhone(getBestPhone(member).contact), fontSize },
-			{ text: getEmerPhone(member).source + ' ' + formatPhone(getEmerPhone(member).contact), fontSize },
+			{
+				text:
+					getBestPhone(member).source + ' ' + getBestPhone(member).contact == null
+						? ''
+						: formatPhone(getBestPhone(member).contact!),
+				fontSize
+			},
+			{
+				text:
+					getEmerPhone(member).source + ' ' + getEmerPhone(member).contact == null
+						? ''
+						: formatPhone(getEmerPhone(member).contact!),
+				fontSize
+			},
 			{ text: getBestEmail(member).source + ' ' + getBestEmail(member).contact, fontSize }
 		]);
 	}
@@ -136,9 +152,9 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	seniorMemberInformation.sort((a, b) => a[0].text.localeCompare(b[0].text));
 	cadetMemberInformation.sort((a, b) => a[0].text.localeCompare(b[0].text));
 
-	let fc = '';
+	let fc: string | undefined = '';
 	const smil = seniorMemberInformation.length;
-	const smils = smil !== 1 ? "s" : "";
+	const smils = smil !== 1 ? 's' : '';
 	for (let i = 0; i < smil; i++) {
 		seniorMemberInformation[i][0].fillColor = i % 2 ? 'lightgrey' : 'white';
 		fc = seniorMemberInformation[i][0].fillColor;
@@ -150,7 +166,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		seniorMemberInformation[i][6].fillColor = fc;
 	}
 	const cmil = cadetMemberInformation.length;
-	const cmils = cmil !== 1 ? "s" : "";
+	const cmils = cmil !== 1 ? 's' : '';
 	for (let i = 0; i < cmil; i++) {
 		cadetMemberInformation[i][0].fillColor = i % 2 ? 'lightgrey' : 'white';
 		fc = cadetMemberInformation[i][0].fillColor;
@@ -174,7 +190,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		],
 		...seniorMemberInformation
 	];
-	
+
 	const formattedCadetMemberInformation = [
 		[
 			{ text: 'Member', bold: true, fontSize: 10 },
@@ -187,24 +203,30 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		],
 		...cadetMemberInformation
 	];
-	
+
 	let codeString = 'Contact information is preceded by two letters.  The first is ';
 	codeString += 'the contact type: P = Parent, C = Cell Phone, E = Email, H = Home Phone, ';
-	codeString += 'or W = Work Phone.  The second letter is the priority: P = Primary, S = Secondary, ';
+	codeString +=
+		'or W = Work Phone.  The second letter is the priority: P = Primary, S = Secondary, ';
 	codeString += 'or E = Emergency';
 	const nowDate = DateTime.utc();
 	const docDefinition = {
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
+<<<<<<< HEAD
 		footer: function(currentPage: any, pageCount: any) {
+=======
+		footer(currentPage: number, pageCount: number) {
+>>>>>>> 9f095bc0fe16b1cf00e816e9770b2d4cc3507480
 			const footerContent = [
-				{ 
+				{
 					layout: 'noBorders',
 					table: {
-						widths: [ 612-72 ],
+						widths: [612 - 72],
 						headerRows: 0,
 						body: [
+<<<<<<< HEAD
 							[ {text: codeString, fontSize: 9 } ],
 							[	{
 								layout: 'noBorders',
@@ -222,17 +244,45 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 											{ text: 'Page ' + currentPage.toString() + ' of ' + pageCount, 
 												alignment: 'right', fontSize: 10
 											}
+=======
+							[{ text: codeString, fontSize: 9 }],
+							[
+								{
+									layout: 'noBorders',
+									table: {
+										widths: ['*', '*'],
+										headerRows: 0,
+										body: [
+											[
+												{
+													text: nowDate.toLocaleString({
+														year: 'numeric',
+														month: '2-digit',
+														day: '2-digit'
+													}),
+													alignment: 'left',
+													fontSize: 10
+												},
+												{
+													text:
+														currentPage.toString() + ' of ' + pageCount,
+													alignment: 'right',
+													fontSize: 10
+												}
+											]
+>>>>>>> 9f095bc0fe16b1cf00e816e9770b2d4cc3507480
 										]
-									]
-								}}
+									}
+								}
 							]
 						]
-					}, margin: [36, 2, 36, 2]
+					},
+					margin: [36, 2, 36, 2]
 				}
 			];
 			return footerContent;
 		},
-		
+
 		content: [
 			// content array start
 			{
@@ -361,38 +411,52 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 				bold: true
 			},
 
-			...(smil > 0 ? [{
-				text: ' ' }, // spacer
-			{	text: "[" + smil + "] Senior Member" + smils,
-				bold: true, alignment: 'center'
-			},
-			{
-				// content table start
-				layout: 'noBorders',
-				table: {
-					// table def start
-					headerRows: 1,
-					widths: [88, 29, 32, 53, 65, 65, '*'],
-					body: formattedSeniorMemberInformation
-				} // table def end
-			}] : []), // content table end
-			
-			...(cmil > 0 ? [{
-				text: ' ' }, // spacer
-			{	text: "[" + cmil + "] Cadet Member" + cmils,
-				bold: true, alignment: 'center'
-			},
-			{
-				// content table start
-				layout: 'noBorders',
-				table: {
-					// table def start
-					headerRows: 1,
-					widths: [84, 31, 31, 54, 70, 70, '*'],
-					body: formattedCadetMemberInformation
-				} // table def end
-			}] : []), // content table end
-			
+			...(smil > 0
+				? [
+						{
+							text: ' '
+						}, // spacer
+						{
+							text: '[' + smil + '] Senior Member' + smils,
+							bold: true,
+							alignment: 'center'
+						},
+						{
+							// content table start
+							layout: 'noBorders',
+							table: {
+								// table def start
+								headerRows: 1,
+								widths: [88, 29, 32, 53, 65, 65, '*'],
+								body: formattedSeniorMemberInformation
+							} // table def end
+						}
+				  ]
+				: []), // content table end
+
+			...(cmil > 0
+				? [
+						{
+							text: ' '
+						}, // spacer
+						{
+							text: '[' + cmil + '] Cadet Member' + cmils,
+							bold: true,
+							alignment: 'center'
+						},
+						{
+							// content table start
+							layout: 'noBorders',
+							table: {
+								// table def start
+								headerRows: 1,
+								widths: [84, 31, 31, 54, 70, 70, '*'],
+								body: formattedCadetMemberInformation
+							} // table def end
+						}
+				  ]
+				: []), // content table end
+
 			{ text: ' ' }, // spacer
 			{
 				// ending table start

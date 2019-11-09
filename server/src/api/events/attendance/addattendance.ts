@@ -1,5 +1,5 @@
 import { NewAttendanceRecord } from 'common-lib';
-import { ManageEvent } from 'common-lib/permissions';
+import { Permissions } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
@@ -25,7 +25,8 @@ export default asyncErrorHandler(
 
 		if (
 			isValidMemberReference(req.body.memberID) &&
-			(req.member.isPOCOf(event) || req.member.hasPermission('ManageEvent', ManageEvent.FULL))
+			(req.member.isPOCOf(event) ||
+				req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
 		) {
 			member =
 				(await resolveReference(req.body.memberID, req.account, req.mysqlx, false)) ||

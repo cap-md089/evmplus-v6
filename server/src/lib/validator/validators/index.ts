@@ -5,7 +5,6 @@ import _NewAccountObjectValidator from './NewAccountObject';
 import _NewAttendanceRecordValidator from './NewAttendanceRecord';
 import _NewTeamMemberValidator from './NewTeamMember';
 import _NewTeamObjectValidator from './NewTeamObject';
-import _RawDraftContentStateValidator from './RawDraftContentState';
 import _RegistryValueValidator from './RegistryValues';
 
 export { default as AbsenteeValidator } from './AbsenteeValidator';
@@ -15,12 +14,11 @@ export const FileObjectValidator = new _FileObjectValidator();
 export { default as FlightAssignBulkValidator } from './FlightAssignBulkValidator';
 export { default as FlightAssignValidator } from './FlightAssignValidator';
 export const NewAccountObjectValidator = new _NewAccountObjectValidator();
-export const NewAttendanceRecordValidator  = new _NewAttendanceRecordValidator();
+export const NewAttendanceRecordValidator = new _NewAttendanceRecordValidator();
 export { default as NewTaskObjectValidator } from './NewTaskObject';
 export const NewTeamMemberValidator = new _NewTeamMemberValidator();
 export const NewTeamObjectValidator = new _NewTeamObjectValidator();
 export { default as PermissionsValidator } from './PermissionValidator';
-export const RawDraftContentStateValidator = new _RawDraftContentStateValidator();
 export { default as RawTaskObjectValidator } from './RawTaskObject';
 export const RegistryValueValidator = new _RegistryValueValidator();
 

@@ -1,5 +1,4 @@
-import { NotificationObject } from 'common-lib';
-import { NotificationCauseType } from 'common-lib/index';
+import { NotificationCauseType, NotificationObject } from 'common-lib';
 import { asyncErrorHandler, GlobalNotification, json, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: MemberRequest, res) => {

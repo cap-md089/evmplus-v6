@@ -1,4 +1,4 @@
-import { TeamPublicity } from 'common-lib/index';
+import { TeamPublicity } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,

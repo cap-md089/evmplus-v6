@@ -70,7 +70,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			bold?: boolean;
 			fontSize?: number;
 			fillColor?: string;
-			borderColor?: string[];
+			borderColor?: Array<string | undefined>;
 		}>
 	> = [];
 

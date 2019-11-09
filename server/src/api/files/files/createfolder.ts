@@ -1,5 +1,9 @@
-import { FullFileObject, RawFileObject } from 'common-lib';
-import { FileUserAccessControlPermissions, FileUserAccessControlType } from 'common-lib/index';
+import {
+	FileUserAccessControlPermissions,
+	FileUserAccessControlType,
+	FullFileObject,
+	RawFileObject
+} from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
 import { v4 as uuid } from 'uuid';
@@ -27,7 +31,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 		return;
 	}
 
-	const id = uuid();
+	const id = uuid().replace(/-/g, '');
 
 	const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 

@@ -1,5 +1,9 @@
-import { NHQMemberObject, ProspectiveMemberObject, SigninReturn } from 'common-lib';
-import { MemberCreateError } from 'common-lib/index';
+import {
+	MemberCreateError,
+	NHQMemberObject,
+	ProspectiveMemberObject,
+	SigninReturn
+} from 'common-lib';
 import * as express from 'express';
 import { ConditionalMemberRequest, json } from '../lib/internals';
 
@@ -16,18 +20,12 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 			error: MemberCreateError.NONE,
 			sessionID: req.member.sessionID,
 			member,
-			valid: true,
 			notificationCount,
 			taskCount
 		});
 	} else {
 		json<SigninReturn>(res, {
-			error: MemberCreateError.INVALID_SESSION_ID,
-			valid: false,
-			sessionID: '',
-			member: null,
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.INVALID_SESSION_ID
 		});
 	}
 };

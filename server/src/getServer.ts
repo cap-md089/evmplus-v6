@@ -12,7 +12,11 @@ export interface ServerConfiguration {
 	app: express.Application;
 }
 
-export default async (conf: typeof Configuration, port: number = conf.port, mysqlConn?: Session) => {
+export default async (
+	conf: typeof Configuration,
+	port: number = conf.port,
+	mysqlConn?: Session
+) => {
 	const app: express.Application = express();
 
 	app.set('port', port);
@@ -36,18 +40,13 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 	app.use('/api', router);
 
 	app.get('/images/banner', (req, res) => {
-		fs.readdir(
-			path.join(__dirname, '..', 'images', 'banner-images'),
-			(err, data) => {
-				if (err) {
-					throw err;
-				}
-				const image = data[Math.round(Math.random() * (data.length - 1))];
-				res.sendFile(
-					path.join(__dirname, '..', 'images', 'banner-images', image)
-				);
+		fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {
+			if (err) {
+				throw err;
 			}
-		);
+			const image = data[Math.round(Math.random() * (data.length - 1))];
+			res.sendFile(path.join(__dirname, '..', 'images', 'banner-images', image));
+		});
 	});
 	app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 
@@ -77,8 +76,7 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 
 	function onListening(): void {
 		const addr = server.address();
-		const bind =
-			typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+		const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
 		if (conf.production) {
 			console.log(`Bound on ${bind}`);
 		}
@@ -94,4 +92,4 @@ export default async (conf: typeof Configuration, port: number = conf.port, mysq
 		server,
 		mysqlConn
 	};
-}
+};

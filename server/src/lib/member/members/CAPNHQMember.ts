@@ -25,7 +25,7 @@ import {
 
 export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPNHQMember> {
-		const memberTable = schema.getCollection<NHQ.Member>('NHQ_Member');
+		const memberTable = schema.getCollection<NHQ.CAPMember>('NHQ_Member');
 
 		const [results, contact, dutyPositions, extraInformation, permissions] = await Promise.all([
 			collectResults(findAndBind(memberTable, { CAPID: id })),

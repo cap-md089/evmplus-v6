@@ -1,8 +1,8 @@
-import conftest from "../conf.test";
-import getServer from "../getServer";
+import conftest from '../conf.test';
+import getServer from '../getServer';
 
-const exit = jest.spyOn(process, "exit").mockImplementation((num: number) => num);
-const error = jest.spyOn(console, "error").mockImplementation((num: number) => num);
+const exit = jest.spyOn(process, 'exit').mockImplementation((num: number) => num);
+const error = jest.spyOn(console, 'error').mockImplementation((num: number) => num);
 
 describe('getServer', () => {
 	it('should create a server', async done => {
@@ -22,7 +22,7 @@ describe('getServer', () => {
 
 		try {
 			await getServer(conftest, 3007);
-		} catch(e) {
+		} catch (e) {
 			// nothing
 		}
 

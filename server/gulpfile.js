@@ -1,16 +1,6 @@
 var gulp = require('gulp');
-var ts = require('gulp-typescript');
-var tslint = require('gulp-tslint');
-var jest = require('gulp-jest').default;
-var sourcemaps = require('gulp-sourcemaps');
 var exec = require('gulp-shell');
 var { existsSync } = require('fs');
-
-var typescriptFiles = [
-	'src/**/*.ts',
-	'!src/__tests__/**/*.ts',
-	'../lib/*.d.ts'
-];
 
 function getDateString() {
 	var date = new Date();
@@ -21,31 +11,6 @@ function getDateString() {
 		-2
 	)}-${('00' + date.getMinutes()).substr(-2)}`;
 }
-
-gulp.task('ts', function() {
-	return gulp
-		.src(typescriptFiles, { base: './src' })
-		.pipe(sourcemaps.init())
-		.pipe(ts.createProject('tsconfig.json')())
-		.pipe(sourcemaps.mapSources(sourcePath => sourcePath.slice(16)))
-		.pipe(sourcemaps.write('../maps', {
-			includeContent: false,
-			sourceRoot: file => '../src'
-		}))
-		.pipe(gulp.dest('./dist'));
-});
-
-gulp.task('tslint', function() {
-	return gulp
-		.src(typescriptFiles)
-		.pipe(tslint({}))
-		.pipe(
-			tslint.report({
-				emitError: false,
-				summarizeFailureOutput: true
-			})
-		);
-});
 
 if (existsSync('./dist/conf.js')) {
 	var conf = require('./dist/conf');
@@ -80,17 +45,3 @@ if (existsSync('./dist/conf.js')) {
 		)
 	);
 }
-
-gulp.task('watch', function() {
-	return gulp.watch(
-		typescriptFiles,
-		gulp.parallel('ts', 'tslint')
-	);
-});
-
-gulp.task('default', function() {
-	return gulp.watch(
-		typescriptFiles,
-		gulp.parallel('ts', 'tslint')
-	);
-});

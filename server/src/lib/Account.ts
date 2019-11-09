@@ -238,7 +238,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	}
 
 	public async *getMembers(): AsyncIterableIterator<CAPMemberClasses> {
-		const memberCollection = this.schema.getCollection<NHQ.Member>('NHQ_Member');
+		const memberCollection = this.schema.getCollection<NHQ.CAPMember>('NHQ_Member');
 
 		for (const ORGID of this.orgIDs) {
 			const memberFind = findAndBind(memberCollection, {
