@@ -2,7 +2,7 @@ import { NHQ } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 import { convertNHQDate } from '../MySQLUtil';
 
-const memberParse: CAPWATCHModule<NHQ.Member> = async (fileData, schema, orgid) => {
+const memberParse: CAPWATCHModule<NHQ.CAPMember> = async (fileData, schema, orgid) => {
 	if (
 		typeof fileData[0].CAPID === 'undefined' ||
 		typeof fileData[0].DOB === 'undefined' ||
@@ -22,7 +22,7 @@ const memberParse: CAPWATCHModule<NHQ.Member> = async (fileData, schema, orgid) 
 		return CAPWATCHError.BADDATA;
 	}
 
-	const memberCollection = schema.getCollection<NHQ.Member>('NHQ_Member');
+	const memberCollection = schema.getCollection<NHQ.CAPMember>('NHQ_Member');
 
 	try {
 		await memberCollection

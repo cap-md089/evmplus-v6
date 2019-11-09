@@ -58,7 +58,9 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 		return;
 	}
 
-	const session = await createSessionForUser(req.mysqlx, account);
+	const session = (await createSessionForUser(req.mysqlx, account)
+		.toSome()
+		.maybe()).some();
 
 	res.json({
 		sessionID: session.sessionID

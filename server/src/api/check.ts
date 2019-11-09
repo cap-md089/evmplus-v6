@@ -20,18 +20,12 @@ export default async (req: ConditionalMemberRequest, res: express.Response) => {
 			error: MemberCreateError.NONE,
 			sessionID: req.member.sessionID,
 			member,
-			valid: true,
 			notificationCount,
 			taskCount
 		});
 	} else {
 		json<SigninReturn>(res, {
-			error: MemberCreateError.INVALID_SESSION_ID,
-			valid: false,
-			sessionID: '',
-			member: null,
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.INVALID_SESSION_ID
 		});
 	}
 };

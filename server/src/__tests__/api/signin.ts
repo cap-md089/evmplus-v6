@@ -1,5 +1,5 @@
 import { Schema, Session } from '@mysql/xdevapi';
-import { SigninReturn } from 'common-lib';
+import { fromValue, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
 import getServer, { ServerConfiguration } from '../../getServer';
@@ -95,13 +95,16 @@ describe('/api', () => {
 						throw err;
 					}
 
-					const ret: SigninReturn = res.body;
+					const ret: SuccessfulSigninReturn = res.body;
 
 					// -1 means no error
 					expect(ret.error).toEqual(-1);
 					expect(ret.sessionID).not.toEqual('');
-					expect(ret.valid).toEqual(true);
-					expect(ret.member ? ret.member.id : 0).toEqual(535799);
+					expect(
+						fromValue(ret.member)
+							.map(m => m.id)
+							.orNull()
+					).toEqual(535799);
 
 					done();
 				});
@@ -124,13 +127,7 @@ describe('/api', () => {
 
 					const ret: SigninReturn = res.body;
 
-					// See lib/index.d.ts#MemberCreateError
-					// It represents INCORRECT_CREDENTIALS, but unit tests cannot access
-					// global types
 					expect(ret.error).toEqual(0);
-					expect(ret.sessionID).toEqual('');
-					expect(ret.valid).toEqual(false);
-					expect(ret.member).toEqual(null);
 
 					done();
 				});
@@ -160,9 +157,6 @@ describe('/api', () => {
 							const ret: SigninReturn = res.body;
 
 							expect(ret.error).toEqual(-1);
-							expect(ret.sessionID).not.toEqual('');
-							expect(ret.valid).toEqual(true);
-							expect(ret.member ? ret.member.id : 0).toEqual(535799);
 
 							done();
 						});

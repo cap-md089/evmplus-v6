@@ -103,11 +103,11 @@ export const trySignin = async (
 		getInformationForUser(schema, username)
 	]);
 
-	const session = await createSessionForUser(schema, userInformation);
+	const session = await createSessionForUser(schema, userInformation).toSome();
 
 	return {
 		result: MemberCreateError.NONE,
 		member,
-		sessionID: session.sessionID
+		sessionID: session!.sessionID
 	};
 };

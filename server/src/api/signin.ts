@@ -1,12 +1,6 @@
 import { MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as express from 'express';
-import {
-	AccountRequest,
-	asyncErrorHandler,
-	json,
-	resolveReference,
-	trySignin
-} from '../lib/internals';
+import { AccountRequest, asyncErrorHandler, json, resolveReference, trySignin } from '../lib/internals';
 
 export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
 	const {
@@ -42,30 +36,27 @@ export default asyncErrorHandler(async (req: AccountRequest, res: express.Respon
 				error: MemberCreateError.NONE,
 				member: member.toRaw(),
 				sessionID: signinResult.sessionID,
-				valid: true,
 				notificationCount,
 				taskCount
 			});
 		} else {
 			res.status(400);
-			json<SigninReturn>(res, {
-				error: signinResult.result,
-				member: null,
-				sessionID: '',
-				valid: false,
-				notificationCount: 0,
-				taskCount: 0
-			});
+			json<SigninReturn>(
+				res,
+				signinResult.result === MemberCreateError.PASSWORD_EXPIRED
+					? {
+							error: MemberCreateError.PASSWORD_EXPIRED,
+							sessionID: ''
+					  }
+					: {
+							error: signinResult.result
+					  }
+			);
 		}
 	} catch (e) {
 		res.status(500);
 		json<SigninReturn>(res, {
-			error: MemberCreateError.UNKOWN_SERVER_ERROR,
-			member: null,
-			sessionID: '',
-			valid: false,
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.UNKOWN_SERVER_ERROR
 		});
 	}
 });
