@@ -1,4 +1,4 @@
-import { Maybe, none, just } from "./Maybe";
+import { just, Maybe, none } from './Maybe';
 
 export type EitherObj<L, R> = LeftObj<L> | RightObj<R>;
 
@@ -14,47 +14,52 @@ export interface RightObj<R> {
 	value: R;
 }
 
-export type Either<L, R> = Left<L> | Right<R>;
+export type Either<L, R> = Left<L, R> | Right<L, R>;
 
-export class Left<L> implements LeftObj<L> {
+export class Left<L, R> implements LeftObj<L> {
+	public static Left = <L, R>(value: L): Left<L, R> => new Left(value);
+
 	public readonly direction = 'left' as const;
 
-	constructor(public readonly value: L) {}
+	private constructor(public readonly value: L) {}
 
-	public isLeft = () => true;
-	
-	public isRight = () => false;
+	public isLeft = (): this is Left<L, R> => true;
 
-	public map = <R1, R2>(f: (val: R1) => R2): Either<L, R2> => this;
+	public isRight = (): this is Left<L, R> => false;
 
-	public flatMap = <R1, R2>(f: (val: R1) => Either<L, R2>): Either<L, R2> => this;
+	public map = <R2>(f: (val: R) => R2): Either<L, R2> => (this as any) as Left<L, R2>;
 
-	public toSome = <R>(): Maybe<R> => none();
+	public flatMap = <R2>(f: (val: R) => Either<L, R2>): Either<L, R2> =>
+		(this as any) as Left<L, R2>;
 
-	public cata = <R, T>(lf: (v: L) => T, rf: (v: R) => T): T => lf(this.value);
+	public toSome = (): Maybe<R> => none();
+
+	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => lf(this.value);
 }
 
-export class Right<R> implements RightObj<R> {
+export class Right<L, R> implements RightObj<R> {
+	public static Right = <L, R>(value: R): Right<L, R> => new Right(value);
+
 	public readonly direction = 'right' as const;
 
-	constructor(public readonly value: R) {}
+	private constructor(public readonly value: R) {}
 
-	public isLeft = () => false;
+	public isLeft = (): this is Right<L, R> => false;
 
-	public isRight = () => true;
+	public isRight = (): this is Right<L, R> => true;
 
-	public map = <L, R2>(f: (val: R) => R2): Either<L, R2> => new Right(f(this.value));
+	public map = <R2>(f: (val: R) => R2): Either<L, R2> => new Right(f(this.value));
 
-	public flatMap = <L, R2>(f: (val: R) => Either<L, R2>): Either<L, R2> => f(this.value);
+	public flatMap = <R2>(f: (val: R) => Either<L, R2>): Either<L, R2> => f(this.value);
 
 	public toSome = (): Maybe<R> => just(this.value);
 
-	public cata = <L, T>(lf: (v: L) => T, rf: (v: R) => T): T => rf(this.value);
+	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => rf(this.value);
 }
 
-export const left = <R, L>(value: L): Either<L, R> => new Left(value);
+export const left = Left.Left;
 
-export const right = <L, R>(value: R): Either<L, R> => new Right(value);
+export const right = Right.Right;
 
-export const fromObj = <L, R>(value: EitherObj<L, R>): Either<L, R> =>
+export const either = <L, R>(value: EitherObj<L, R>): Either<L, R> =>
 	value.direction === 'left' ? left(value.value) : right(value.value);

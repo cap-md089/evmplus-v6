@@ -3,6 +3,7 @@
  *
  * Documentation is not provided by NHQ
  */
+// tslint:disable-next-line: no-namespace
 export namespace NHQ {
 	export interface CadetAchv {
 		CAPID: number;
@@ -109,7 +110,7 @@ export namespace NHQ {
 		DoNotContact: number;
 	}
 
-	export interface Member {
+	export interface CAPMember {
 		CAPID: number;
 		SSN: '';
 		NameLast: string;
@@ -259,7 +260,8 @@ export enum MemberCreateError {
 	SERVER_ERROR = 1,
 	PASSWORD_EXPIRED = 2,
 	INVALID_SESSION_ID = 3,
-	UNKOWN_SERVER_ERROR = 4
+	UNKOWN_SERVER_ERROR = 4,
+	DATABASE_ERROR = 5
 }
 
 export enum PointOfContactType {
@@ -368,6 +370,7 @@ export enum PasswordSetResult {
 	MIN_AGE
 }
 
+// tslint:disable-next-line: no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
 		NO,
@@ -461,24 +464,6 @@ export namespace Permissions {
 	}
 }
 
-/**
- * Allows for compiling of for-await-of loops
- */
-export interface AsyncIterableIterator<T> {
-	next(value?: any): Promise<IteratorResult<T>>;
-	return?(value?: any): Promise<IteratorResult<T>>;
-	throw?(e?: any): Promise<IteratorResult<T>>;
-}
-
-export namespace global {
-	export interface AsyncIterableIterator<T> {
-		next(value?: any): Promise<IteratorResult<T>>;
-		return?(value?: any): Promise<IteratorResult<T>>;
-		throw?(e?: any): Promise<IteratorResult<T>>;
-	}
-}
-
-
 export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 /**
@@ -518,6 +503,11 @@ export type FullDBObject<T extends NoSQLDocument> = T & Required<NoSQLDocument>;
  */
 export interface DatabaseInterface<T extends NoSQLDocument> {
 	/**
+	 * All database interfaces should implement the object they
+	 * are interfaces for, and need a standard for `_id`s
+	 */
+	_id: string;
+	/**
 	 * Return the object in a manner that is safe for JSON transfer
 	 *
 	 * Useful for when making sure the wrong data doesn't get transferred
@@ -528,11 +518,6 @@ export interface DatabaseInterface<T extends NoSQLDocument> {
 	 * Save the document to the database
 	 */
 	save(): Promise<void>;
-	/**
-	 * All database interfaces should implement the object they
-	 * are interfaces for, and need a standard for `_id`s
-	 */
-	_id: string;
 }
 
 /**
@@ -1025,7 +1010,7 @@ export interface NewEventObject {
 	/**
 	 * Who to contact for more event information
 	 */
-	pointsOfContact: (InternalPointOfContact | ExternalPointOfContact)[];
+	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
 	/**
 	 * Custom fields for attendance records
 	 */
@@ -1921,18 +1906,21 @@ export interface FailedSigninReturn {
 	/**
 	 * Contains error details
 	 */
-	error: 
-		MemberCreateError.INCORRRECT_CREDENTIALS |
-		MemberCreateError.SERVER_ERROR |
-		MemberCreateError.UNKOWN_SERVER_ERROR |
-		MemberCreateError.INVALID_SESSION_ID;
+	error:
+		| MemberCreateError.INCORRRECT_CREDENTIALS
+		| MemberCreateError.SERVER_ERROR
+		| MemberCreateError.UNKOWN_SERVER_ERROR
+		| MemberCreateError.INVALID_SESSION_ID;
 }
 
 /**
  * Allows for multiplexing the data together but still have type inference and
  * not use try/catch
  */
-export type SigninReturn = SuccessfulSigninReturn | ExpiredSuccessfulSigninReturn | FailedSigninReturn;
+export type SigninReturn =
+	| SuccessfulSigninReturn
+	| ExpiredSuccessfulSigninReturn
+	| FailedSigninReturn;
 
 /**
  * Used by the different files to indicate what they are
@@ -2573,20 +2561,15 @@ export interface RawAuditLogItem {
 	timestamp: number;
 }
 
-/**
- * A full audit log item that is expanded upon
- */
-export interface AuditLogItem extends RawAuditLogItem {}
+// /**
+//  * Organizational data as imported from CAPWATCH files
+//  */
+// export interface RawOrganizationObject extends NHQ.Organization {}
 
-/**
- * Organizational data as imported from CAPWATCH files
- */
-export interface RawOrganizationObject extends NHQ.Organization {}
-
-/**
- * Organizational data as imported from CAPWATCH files
- */
-export interface OrganizationObject extends RawOrganizationObject {}
+// /**
+//  * Organizational data as imported from CAPWATCH files
+//  */
+// export interface OrganizationObject extends RawOrganizationObject {}
 
 /**
  * These are objects containing the results of people completing their tasks
@@ -2642,7 +2625,7 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDoc
 	/**
 	 * Results from those tasked with this task
 	 */
-	results: Array<TaskRecipientsResults>;
+	results: TaskRecipientsResults[];
 	/**
 	 * Records when the task was assigned
 	 */
