@@ -3,8 +3,7 @@ import * as React from 'react';
 import FileInterface from '../../lib/File';
 import MemberBase from '../../lib/Members';
 import Button from '../Button';
-import { BigTextBox, Label } from '../forms/Form';
-import SimpleForm from '../forms/SimpleForm';
+import SimpleForm, { BigTextBox, Label } from '../forms/SimpleForm';
 
 export interface ExtraDisplayProps {
 	file: FileInterface;

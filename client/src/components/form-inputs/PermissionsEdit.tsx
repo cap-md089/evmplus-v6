@@ -1,7 +1,7 @@
 import { MemberPermissions, Permissions } from 'common-lib';
 import * as React from 'react';
 import { deepCompare } from '../../pages/Page';
-import { FormBlock, Label, Checkbox } from '../forms/Form';
+import { Checkbox, FormBlock, Label } from '../forms/SimpleForm';
 import { BooleanForField } from './FormBlock';
 import { InputProps } from './Input';
 import Select from './Select';
@@ -241,19 +241,39 @@ export default class PermissionsEdit extends React.Component<
 				<Checkbox name="showAdvanced" />
 
 				<Label key="0">Administer PT</Label>
-				<Select<Permissions.AdministerPT> key="1" name="AdministerPT" labels={['No', 'Yes']} />
+				<Select<Permissions.AdministerPT>
+					key="1"
+					name="AdministerPT"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="2">Assign tasks</Label>
-				<Select<Permissions.AssignTasks> key="3" name="AssignTasks" labels={['No', 'Yes']} />
+				<Select<Permissions.AssignTasks>
+					key="3"
+					name="AssignTasks"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="4">File management</Label>
-				<Select<Permissions.FileManagement> key="5" name="FileManagement" labels={['No', 'Yes']} />
+				<Select<Permissions.FileManagement>
+					key="5"
+					name="FileManagement"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="6">Flight Assign</Label>
-				<Select<Permissions.FlightAssign> key="7" name="FlightAssign" labels={['No', 'Yes']} />
+				<Select<Permissions.FlightAssign>
+					key="7"
+					name="FlightAssign"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="8">Muster sheet</Label>
-				<Select<Permissions.MusterSheet> key="9" name="MusterSheet" labels={['No', 'Yes']} />
+				<Select<Permissions.MusterSheet>
+					key="9"
+					name="MusterSheet"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="10">PT Sheet Management</Label>
 				<Select<Permissions.PTSheet> key="11" name="PTSheet" labels={['No', 'Yes']} />
@@ -280,7 +300,11 @@ export default class PermissionsEdit extends React.Component<
 				/>
 
 				<Label key="18">Event link list</Label>
-				<Select<Permissions.EventLinkList> key="19" name="EventLinkList" labels={['No', 'Yes']} />
+				<Select<Permissions.EventLinkList>
+					key="19"
+					name="EventLinkList"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="20">ORM OPORD</Label>
 				<Select<Permissions.ORMOPORD> key="21" name="ORMOPORD" labels={['No', 'Yes']} />
@@ -293,7 +317,11 @@ export default class PermissionsEdit extends React.Component<
 				/>
 
 				<Label key="24">Create notifications</Label>
-				<Select<Permissions.Notify> key="25" name="CreateNotifications" labels={['None', 'Global']} />
+				<Select<Permissions.Notify>
+					key="25"
+					name="CreateNotifications"
+					labels={['None', 'Global']}
+				/>
 
 				<Label key="26">Manage events</Label>
 				<Select<Permissions.ManageEvent>
@@ -306,7 +334,11 @@ export default class PermissionsEdit extends React.Component<
 				<Select<Permissions.ManageTeam> key="29" name="ManageTeam" labels={['No', 'Yes']} />
 
 				<Label key="30">Download CAPWATCH files</Label>
-				<Select<Permissions.DownloadCAPWATCH> key="31" name="DownloadCAPWATCH" labels={['No', 'Yes']} />
+				<Select<Permissions.DownloadCAPWATCH>
+					key="31"
+					name="DownloadCAPWATCH"
+					labels={['No', 'Yes']}
+				/>
 
 				<Label key="32">Permission management</Label>
 				<Select<Permissions.PermissionManagement>
@@ -316,7 +348,11 @@ export default class PermissionsEdit extends React.Component<
 				/>
 
 				<Label key="34">Configure website</Label>
-				<Select<Permissions.RegistryEdit> key="35" name="RegistryEdit" labels={['No', 'Yes']} />
+				<Select<Permissions.RegistryEdit>
+					key="35"
+					name="RegistryEdit"
+					labels={['No', 'Yes']}
+				/>
 			</FormBlock>
 		) : (
 			<FormBlock<PermissionFormValues>

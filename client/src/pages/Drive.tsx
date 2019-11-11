@@ -5,7 +5,7 @@ import ExtraFolderDisplay from '../components/drive/DriveExtraFolderDisplay';
 import DriveFileDisplay from '../components/drive/DriveFileDisplay';
 import DriveFolderDisplay from '../components/drive/DriveFolderDisplay';
 import FileUploader from '../components/FileUploader';
-import Form, { TextInput } from '../components/forms/Form';
+import { TextInput, Form } from '../components/forms/SimpleForm';
 import Loader from '../components/Loader';
 import FileInterface from '../lib/File';
 import './Drive.css';

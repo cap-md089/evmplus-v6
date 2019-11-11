@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
-import { TextInput } from '../../../components/forms/Form';
+import { TextInput } from '../../../components/forms/SimpleForm';
 import SimpleForm, { Checkbox, Label, RadioButton } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';

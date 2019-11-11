@@ -266,6 +266,10 @@ export interface FormProps<F> {
 	 * successMessage={this.state.shouldDisplaySaved ? 'Saved' : this.state.shouldDisplayError && 'Failed'}
 	 */
 	successMessage?: false | string;
+	/**
+	 * Supplies a CSS class name
+	 */
+	className?: string;
 }
 
 /**
@@ -279,7 +283,10 @@ export interface FormProps<F> {
  * <Form<{x: string}> />
  * // With TypeScript 2.8 Generics work with React components
  */
-class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> extends React.Component<
+export default class SimpleForm<
+	C extends {} = {},
+	P extends FormProps<C> = FormProps<C>
+> extends React.Component<
 	P,
 	{
 		disabled: boolean;
@@ -587,7 +594,99 @@ class SimpleForm<C extends {} = {}, P extends FormProps<C> = FormProps<C>> exten
 	}
 }
 
-export default SimpleForm;
+/**
+ * Adds some extra properties for management of simpler classes
+ */
+export interface BasicFormProps<T> extends FormProps<T> {
+	/**
+	 * Class names for each row
+	 */
+	rowClassName?: string;
+	/**
+	 * Class for the form
+	 */
+	className?: string;
+}
+
+const clearFix: React.CSSProperties = {
+	clear: 'both'
+};
+
+/**
+ * The form itself
+ *
+ * To use with type checking in the submit function, you can do something similar to the following:
+ * @example
+ * type SampleForm = new () => Form<{x: string}>
+ * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
+ * // <SampleForm /> now works as Form<{x: string}>
+ */
+export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> extends SimpleForm<
+	C,
+	P
+> {
+	/**
+	 * Render function for a React Component
+	 *
+	 * @returns {JSX.Element} A form
+	 */
+	public render(): JSX.Element {
+		const submitInfo =
+			this.props.submitInfo === undefined
+				? {
+						text: 'Submit',
+						className: 'submit',
+						disabled: false
+				  }
+				: Object.assign(
+						{
+							text: 'Submit',
+							className: 'submit',
+							disabled: false
+						},
+						this.props.submitInfo
+				  );
+
+		return (
+			<form className={`${this.props.className ? `${this.props.className} ` : ''}`}>
+				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+					if (isInput(child)) {
+						const childName: keyof C = child.props.name as keyof C;
+						const value =
+							typeof this.props.values !== 'undefined'
+								? typeof (this.props.values as C)[childName] === 'undefined'
+									? ''
+									: (this.props.values as C)[childName]
+								: typeof child.props.value === 'undefined'
+								? ''
+								: child.props.value;
+						return (
+							<div className={this.props.rowClassName || 'basic-form-bar'}>
+								{React.cloneElement(child, {
+									onUpdate: this.onChange,
+									onInitialize: this.onInitialize,
+									value,
+									key: i
+								})}
+							</div>
+						);
+					}
+					return child;
+				})}
+				<div className={this.props.rowClassName || 'basic-form-bar'}>
+					<input
+						type="submit"
+						value={submitInfo.text}
+						className={submitInfo.className}
+						disabled={this.state.disabled || submitInfo.disabled}
+						onClick={this.submit}
+					/>
+				</div>
+				<div style={clearFix} />
+			</form>
+		);
+	}
+}
 
 export {
 	Title,

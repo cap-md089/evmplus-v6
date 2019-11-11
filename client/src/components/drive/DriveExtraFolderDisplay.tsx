@@ -2,7 +2,7 @@ import { FileUserAccessControlPermissions } from 'common-lib';
 import * as React from 'react';
 import FileInterface from '../../lib/File';
 import Button from '../Button';
-import Form, { BigTextBox, Label } from '../forms/Form';
+import Form, { BigTextBox, Label } from '../forms/SimpleForm';
 import { CommentsForm, ExtraDisplayProps } from './DriveExtraFileDisplay';
 
 export default class ExtraFolderDisplay extends React.Component<

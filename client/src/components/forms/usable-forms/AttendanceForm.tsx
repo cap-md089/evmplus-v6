@@ -10,8 +10,14 @@ import Event from '../../../lib/Event';
 import MemberBase from '../../../lib/Members';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
 import Button from '../../Button';
-import { BigTextBox, Checkbox, SimpleRadioButton } from '../Form';
-import SimpleForm, { DateTimeInput, Label, TextBox } from '../SimpleForm';
+import SimpleForm, {
+	BigTextBox,
+	Checkbox,
+	DateTimeInput,
+	Label,
+	SimpleRadioButton,
+	TextBox
+} from '../SimpleForm';
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
 

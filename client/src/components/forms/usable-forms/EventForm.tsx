@@ -15,21 +15,19 @@ import Team from '../../../lib/Team';
 import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
 import { InputProps } from '../../form-inputs/Input';
 import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
-import {
+import SimpleForm, {
 	Checkbox,
+	DateTimeInput,
 	FileInput,
 	FormBlock,
-	NumberInput,
-	SimpleRadioButton,
-	TeamSelector,
-	TextInput
-} from '../Form';
-import SimpleForm, {
-	DateTimeInput,
 	Label,
 	ListEditor,
 	MultCheckbox,
+	NumberInput,
 	RadioButton,
+	SimpleRadioButton,
+	TeamSelector,
+	TextInput,
 	Title
 } from '../SimpleForm';
 

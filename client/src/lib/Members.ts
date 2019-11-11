@@ -4,7 +4,6 @@ import MemberBase from './MemberBase';
 import CAPNHQMember from './members/CAPNHQMember';
 import CAPProspectiveMember from './members/CAPProspectiveMember';
 import myFetch from './myFetch';
-
 export { CAPProspectiveMember, CAPNHQMember };
 
 /**
@@ -44,17 +43,16 @@ export async function getMember(sessionID: string): Promise<SigninReturn> {
 		});
 	} catch (e) {
 		return {
-			error: MemberCreateError.INVALID_SESSION_ID,
-			member: null,
-			sessionID: '',
-			valid: false,
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.INVALID_SESSION_ID
 		};
 	}
 
 	const json = (await result.json()) as SigninReturn;
-	localStorage.setItem('sessionID', json.sessionID);
+	if (json.error === MemberCreateError.NONE) {
+		localStorage.setItem('sessionID', json.sessionID);
+	} else {
+		localStorage.removeItem('sessionID');
+	}
 
 	return json;
 }

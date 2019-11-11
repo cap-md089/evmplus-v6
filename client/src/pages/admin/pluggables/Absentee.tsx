@@ -3,7 +3,7 @@ import './Absentee.css';
 import { AbsenteeInformation } from 'common-lib';
 import Page, { PageProps } from '../../Page';
 import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
-import Form, { Label, DateTimeInput, TextInput } from '../../../components/forms/Form';
+import { Label, DateTimeInput, TextInput, Form } from '../../../components/forms/SimpleForm';
 
 interface AbsenteeState {
 	absentee: AbsenteeInformation;

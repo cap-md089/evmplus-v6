@@ -9,7 +9,8 @@ const errorMessages = {
 	[MemberCreateError.INVALID_SESSION_ID]: 'Invalid session',
 	[MemberCreateError.NONE]: '',
 	[MemberCreateError.PASSWORD_EXPIRED]: 'eServices password has expired',
-	[MemberCreateError.SERVER_ERROR]: 'Server error'
+	[MemberCreateError.SERVER_ERROR]: 'Server error',
+	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'Unknown server error'
 };
 
 interface SigninLinkState {
@@ -139,15 +140,14 @@ class SigninLink extends React.Component<
 	private windowEvent(e: MessageEvent) {
 		try {
 			const data = JSON.parse(e.data) as SigninReturn;
-			if (
-				typeof data.error === 'number' &&
-				typeof data.valid === 'boolean' &&
-				typeof data.sessionID === 'string' &&
-				// typeof null === 'object'
-				typeof data.member === 'object' &&
-				this.state.open
-			) {
-				if (data.valid && data.member !== null) {
+			if (typeof data.error === 'number' && this.state.open) {
+				if (
+					data.error === MemberCreateError.NONE &&
+					typeof data.sessionID === 'string' &&
+					typeof data.member === 'object' &&
+					// typeof null === 'object'
+					data.member !== null
+				) {
 					localStorage.setItem('sessionID', data.sessionID);
 					this.setState(
 						{
@@ -156,7 +156,6 @@ class SigninLink extends React.Component<
 						},
 						() => {
 							this.props.authorizeUser({
-								valid: data.valid,
 								error: data.error,
 								member: data.member,
 								sessionID: data.sessionID,

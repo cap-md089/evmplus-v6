@@ -92,7 +92,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 							</SigninLink>
 						)}
 					</li>
-					{this.props.member ? (
+					{this.props.fullMemberDetails.error === MemberCreateError.NONE ? (
 						<li>
 							<SideNavigationLink target={'/admin/notifications'}>
 								Unread Notifications:{' '}
@@ -126,12 +126,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 
 	private signOut() {
 		this.props.authorizeUser({
-			valid: false,
-			error: MemberCreateError.NONE,
-			member: null,
-			sessionID: '',
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.INVALID_SESSION_ID
 		});
 		localStorage.removeItem('sessionID');
 	}

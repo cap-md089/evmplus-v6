@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Selector } from '../forms/Form';
+import { Selector } from '../forms/SimpleForm';
 import Loader from '../Loader';
 import { CombinedSelectorProps } from './Selector';
 import { Identifiable } from 'common-lib';

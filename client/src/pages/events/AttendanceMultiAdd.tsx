@@ -5,7 +5,7 @@ import Button from '../../components/Button';
 import { InputProps } from '../../components/form-inputs/Input';
 import Selector, { CheckInput } from '../../components/form-inputs/Selector';
 import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
-import { TextInput } from '../../components/forms/Form';
+import { TextInput } from '../../components/forms/SimpleForm';
 import SimpleForm, { Checkbox, Label } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import Event from '../../lib/Event';

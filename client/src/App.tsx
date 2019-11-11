@@ -109,12 +109,7 @@ export default class App extends React.Component<
 
 	public state: AppState = {
 		member: {
-			valid: false,
-			error: MemberCreateError.NONE,
-			member: null,
-			sessionID: '',
-			notificationCount: 0,
-			taskCount: 0
+			error: MemberCreateError.INVALID_SESSION_ID
 		},
 		loading: true,
 		account: null,
@@ -164,12 +159,12 @@ export default class App extends React.Component<
 
 		const [account, member] = await Promise.all([Account.Get(), getMember(sessionID || '')]);
 
-		if (!member.valid) {
+		if (member.error !== MemberCreateError.NONE) {
 			localStorage.removeItem('sessionID');
 		}
 
 		const fullMember =
-			member.member === null
+			member.error !== MemberCreateError.NONE
 				? null
 				: createCorrectMemberObject(member.member, account, member.sessionID);
 
@@ -519,7 +514,7 @@ export default class App extends React.Component<
 	private authorizeUser(member: SigninReturn) {
 		let fullMember = this.state.fullMember;
 
-		if (member.member && fullMember) {
+		if (member.error === MemberCreateError.NONE && fullMember) {
 			if (member.member.id !== fullMember.id) {
 				fullMember = createCorrectMemberObject(
 					member.member,
@@ -529,13 +524,13 @@ export default class App extends React.Component<
 			} else {
 				fullMember.sessionID = member.sessionID;
 			}
-		} else if (member.member) {
+		} else if (member.error === MemberCreateError.NONE) {
 			fullMember = createCorrectMemberObject(
 				member.member,
 				this.state.account!,
 				member.sessionID
 			);
-		} else if (!member.valid) {
+		} else {
 			fullMember = null;
 		}
 
@@ -543,7 +538,11 @@ export default class App extends React.Component<
 			member,
 			fullMember
 		});
-		localStorage.setItem('sessionID', member.sessionID);
+		if (member.error === MemberCreateError.NONE) {
+			localStorage.setItem('sessionID', member.sessionID);
+		} else {
+			localStorage.removeItem('sessionID');
+		}
 	}
 
 	private onStorageChange(e: StorageEvent) {
@@ -553,7 +552,7 @@ export default class App extends React.Component<
 			});
 			getMember(e.newValue || '')
 				.then(member => {
-					if (!member.valid) {
+					if (member.error !== MemberCreateError.NONE) {
 						localStorage.removeItem('sessionID');
 					}
 					this.setState({ member, loading: false });
@@ -561,12 +560,7 @@ export default class App extends React.Component<
 				.catch(() => {
 					this.setState({
 						member: {
-							error: MemberCreateError.INVALID_SESSION_ID,
-							member: null,
-							sessionID: '',
-							valid: false,
-							notificationCount: 0,
-							taskCount: 0
+							error: MemberCreateError.INVALID_SESSION_ID
 						},
 						loading: false
 					});
@@ -574,12 +568,7 @@ export default class App extends React.Component<
 		} else if (e.key === 'sessionID') {
 			this.setState({
 				member: {
-					error: MemberCreateError.NONE,
-					member: null,
-					sessionID: '',
-					valid: false,
-					notificationCount: 0,
-					taskCount: 0
+					error: MemberCreateError.INVALID_SESSION_ID
 				}
 			});
 		}
