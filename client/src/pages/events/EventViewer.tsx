@@ -412,12 +412,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						{event.attendance.length === 0 ? <div>No attendance records</div> : null}
 					</div>
 				) : (
-					<SigninLink
-						authorizeUser={this.props.authorizeUser}
-						{...this.props.fullMemberDetails}
-					>
-						Sign in to see more information
-					</SigninLink>
+					<SigninLink>Sign in to see more information</SigninLink>
 				)}
 			</div>
 		);

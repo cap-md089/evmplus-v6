@@ -8,7 +8,7 @@ describe('App', () => {
 	it('should successfully render without crashing', () => {
 		shallow(
 			<BrowserRouter>
-				<App basicInfo={{ member: null }} isMobile={false} />
+				<App isMobile={false} />
 			</BrowserRouter>
 		);
 	});

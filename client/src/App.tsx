@@ -1,4 +1,4 @@
-import { FileObject, MemberCreateError, MemberObject, SigninReturn } from 'common-lib';
+import { FileObject, MemberCreateError, SigninReturn } from 'common-lib';
 import * as React from 'react';
 import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
@@ -11,9 +11,6 @@ import Account from './lib/Account';
 import { CAPMemberClasses, createCorrectMemberObject, getMember } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
-import Subscribe from './lib/subscribe';
-
-export const MessageEventListener = new Subscribe<MessageEvent>();
 
 export class Head extends React.Component {
 	public render() {
@@ -99,9 +96,6 @@ interface AppState {
 export default class App extends React.Component<
 	{
 		isMobile: boolean;
-		basicInfo: {
-			member: MemberObject | null;
-		};
 	},
 	AppState
 > {
@@ -124,12 +118,7 @@ export default class App extends React.Component<
 
 	private timer: NodeJS.Timer | null = null;
 
-	constructor(props: {
-		isMobile: boolean;
-		basicInfo: {
-			member: MemberObject | null;
-		};
-	}) {
+	constructor(props: { isMobile: boolean }) {
 		super(props);
 
 		this.authorizeUser = this.authorizeUser.bind(this);

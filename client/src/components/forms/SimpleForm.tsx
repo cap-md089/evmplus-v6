@@ -24,6 +24,7 @@ import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
 import Select from '../form-inputs/Select';
 import PermissionsEdit from '../form-inputs/PermissionsEdit';
+import ReCAPTCHAInput from '../form-inputs/ReCAPTCHA';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -139,7 +140,8 @@ export function isInput(
 		el.type === Select ||
 		// @ts-ignore
 		el.type === FileInput ||
-		el.type === PermissionsEdit
+		el.type === PermissionsEdit ||
+		el.type === ReCAPTCHAInput
 	);
 }
 
@@ -270,6 +272,10 @@ export interface FormProps<F> {
 	 * Supplies a CSS class name
 	 */
 	className?: string;
+	/**
+	 * Disables the form when inputs are invalid
+	 */
+	disableOnInvalid?: boolean;
 }
 
 /**
@@ -294,8 +300,35 @@ export default class SimpleForm<
 > {
 	protected fields: C = {} as C;
 	protected fieldsChanged: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
-	protected fieldsError: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
-	protected hasError: boolean = false;
+
+	protected get fieldsError(): { [K in keyof C]: boolean } {
+		const fieldsError = { ...this.fieldsChanged };
+
+		for (const i in fieldsError) {
+			if (fieldsError.hasOwnProperty(i)) {
+				fieldsError[i] = false;
+			}
+		}
+
+		if (this.props.validator) {
+			for (const i in this.props.validator) {
+				// @ts-ignore
+				if (this.props.validator.hasOwnProperty(i)) {
+					const field = i as keyof C;
+					// @ts-ignore
+					fieldsError[field] = !this.props.validator[field](this.fields[i], this.fields);
+				}
+			}
+		}
+
+		return fieldsError;
+	}
+	protected get hasError(): boolean {
+		return (Object.values(this.fieldsError) as boolean[]).reduce(
+			(prev, curr) => prev || curr,
+			false
+		);
+	}
 
 	protected token: string = '';
 	protected sessionID: string = '';
@@ -486,7 +519,10 @@ export default class SimpleForm<
 								type="submit"
 								value={submitInfo.text}
 								className={submitInfo.className}
-								disabled={this.state.disabled || submitInfo.disabled}
+								disabled={
+									(this.props.disableOnInvalid && this.hasError) ||
+									submitInfo.disabled
+								}
 								onClick={this.submit}
 							/>
 							{this.props.successMessage && (
@@ -521,22 +557,12 @@ export default class SimpleForm<
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
-				}
-			}
-		}
-
 		// DO NOT TOUCH
 		// If this is moved into the conditional TypeScript gets upset
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 		}
 	}
 
@@ -552,22 +578,12 @@ export default class SimpleForm<
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
-				}
-			}
-		}
-
 		// DO NOT TOUCH
 		// If this is moved into the conditional TypeScript gets upset
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 		}
 	}
 
@@ -579,17 +595,7 @@ export default class SimpleForm<
 	protected submit(e: React.MouseEvent<HTMLInputElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			let hasError = false;
-			for (const i in this.fieldsError) {
-				if (this.fieldsError.hasOwnProperty(i)) {
-					hasError = this.fieldsError[i];
-					if (hasError) {
-						break;
-					}
-				}
-			}
-
-			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, this.hasError);
 		}
 	}
 }
@@ -678,7 +684,9 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 						type="submit"
 						value={submitInfo.text}
 						className={submitInfo.className}
-						disabled={this.state.disabled || submitInfo.disabled}
+						disabled={
+							(this.props.disableOnInvalid && this.hasError) || submitInfo.disabled
+						}
 						onClick={this.submit}
 					/>
 				</div>

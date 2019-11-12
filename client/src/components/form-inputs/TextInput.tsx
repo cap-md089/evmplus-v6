@@ -13,12 +13,18 @@ export interface TextInputProps extends InputProps<string> {
 	placeholder?: string;
 	disabled?: boolean;
 	shouldUpdate?: (val: string) => boolean;
+
+	password?: boolean;
 }
 
 /**
  * A text input that can be used by a Form
  */
-export default class TextInput extends React.Component<TextInputProps> {
+export default class TextInput extends React.Component<TextInputProps, { changed: boolean }> {
+	public state: { changed: boolean } = {
+		changed: false
+	};
+
 	constructor(props: TextInputProps) {
 		super(props);
 
@@ -53,6 +59,8 @@ export default class TextInput extends React.Component<TextInputProps> {
 			if (typeof this.props.onChange !== 'undefined') {
 				this.props.onChange(text);
 			}
+
+			this.setState({ changed: true });
 		}
 	}
 
@@ -67,7 +75,7 @@ export default class TextInput extends React.Component<TextInputProps> {
 				}}
 			>
 				<input
-					type="text"
+					type={this.props.password ? 'password' : 'text'}
 					value={this.props.value}
 					onChange={this.onChange}
 					name={this.props.name}
@@ -78,6 +86,9 @@ export default class TextInput extends React.Component<TextInputProps> {
 					placeholder={this.props.placeholder}
 					disabled={this.props.disabled}
 				/>
+				{this.props.hasError && this.props.errorMessage && this.state.changed ? (
+					<span>{this.props.errorMessage}</span>
+				) : null}
 			</div>
 		);
 	}
