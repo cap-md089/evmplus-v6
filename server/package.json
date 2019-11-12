@@ -7,7 +7,8 @@
     "sass": "sass --watch ./client/src/nhq.sass --style=compressed",
     "test": "jest",
     "test-coverage": "jest --coverage",
-    "build": "tsc"
+    "build": "tsc",
+    "check": "tsc --noEmit"
   },
   "main": "dist/index.js",
   "dependencies": {
