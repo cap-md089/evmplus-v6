@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "@types/node": "10.7.1",
     "@types/react": "16.8.4",
     "typescript": "^3.5.3"
   },

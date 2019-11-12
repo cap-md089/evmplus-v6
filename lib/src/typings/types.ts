@@ -367,7 +367,8 @@ export enum PasswordSetResult {
 	OK,
 	IN_HISTORY,
 	COMPLEXITY,
-	MIN_AGE
+	MIN_AGE,
+	SERVER_ERROR
 }
 
 // tslint:disable-next-line: no-namespace
