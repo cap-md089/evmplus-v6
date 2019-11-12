@@ -1467,6 +1467,12 @@ export interface MemberPermissions {
 	RegistryEdit: Permissions.RegistryEdit;
 }
 
+export interface StoredMemberPermissions extends NoSQLDocument {
+	member: MemberReference;
+	accountID: string;
+	permissions: MemberPermissions;
+}
+
 /**
  * This information is used to store if a member has said they will be absent until a date,
  * and comments associated with it
