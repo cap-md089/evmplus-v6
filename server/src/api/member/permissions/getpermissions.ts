@@ -1,9 +1,9 @@
+import { StoredMemberPermissions } from 'common-lib';
 import {
 	asyncErrorHandler,
 	findAndBind,
 	generateResults,
 	MemberRequest,
-	StoredMemberPermissions,
 	streamAsyncGeneratorAsJSONArray
 } from '../../../lib/internals';
 
@@ -16,5 +16,11 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 		findAndBind(permissionsCollection, { accountID: req.account.id })
 	);
 
-	streamAsyncGeneratorAsJSONArray(res, generator);
+	streamAsyncGeneratorAsJSONArray(res, generator, val =>
+		JSON.stringify({
+			accountID: val.accountID,
+			member: val.member,
+			permissions: val.permissions
+		})
+	);
 });

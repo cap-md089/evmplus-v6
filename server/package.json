@@ -61,6 +61,7 @@
     "gulp-shell": "^0.7.0",
     "jest": "^24.8.0",
     "jest-cli": "^24.8.0",
+    "nodemon": "^1.19.4",
     "supertest": "^3.1.0",
     "ts-jest": "^23.1.4",
     "tslint": "^5.19.0",

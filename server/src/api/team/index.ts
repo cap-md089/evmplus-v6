@@ -24,8 +24,8 @@ const router = express.Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/', memberMiddleware, list);
-router.get('/:id', memberMiddleware, get);
+router.get('/', conditionalMemberMiddleware, list);
+router.get('/:id', conditionalMemberMiddleware, get);
 router.post(
 	'/',
 	memberMiddleware,

@@ -5,6 +5,7 @@ import {
 	MemberReference,
 	NoSQLDocument,
 	PasswordSetResult,
+	StoredMemberPermissions,
 	UserAccountInformation
 } from 'common-lib';
 import { randomBytes } from 'crypto';
@@ -282,12 +283,6 @@ export const isUserValid = (info: UserAccountInformation | null) =>
 //#region Permissions
 
 const MEMBER_PERMISSIONS_TABLE = 'UserPermissions';
-
-export interface StoredMemberPermissions extends NoSQLDocument {
-	member: MemberReference;
-	accountID: string;
-	permissions: MemberPermissions;
-}
 
 const getPermissionsRecordForMemberInAccount = async (
 	schema: Schema,
