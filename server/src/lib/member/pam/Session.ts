@@ -40,6 +40,7 @@ export interface Session {
 	sessionID: SessionID;
 	created: number;
 	userAccount: UserAccountInformation;
+	passwordOnly: boolean;
 }
 
 export interface ConditionalMemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
@@ -54,13 +55,13 @@ const addSessionToDatabase = (
 	schema: Schema,
 	session: Session
 ): AsyncEither<MemberCreateError, Session> =>
-	asyncRight<MemberCreateError, Schema>(schema, 5)
+	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection => collection.add(session).execute())
 		.map(() => session);
 
 const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void> =>
-	asyncRight<MemberCreateError, Schema>(schema, 6)
+	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
 			collection
@@ -74,7 +75,7 @@ const updateSessionExpireTime = (
 	schema: Schema,
 	session: Session
 ): AsyncEither<MemberCreateError, Session> =>
-	asyncRight<MemberCreateError, Schema>(schema, 7)
+	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
 			collection
@@ -94,7 +95,7 @@ const getSessionFromID = (
 	schema: Schema,
 	sessionID: SessionID
 ): AsyncEither<MemberCreateError, Session[]> =>
-	asyncRight<MemberCreateError, Schema>(schema, 8)
+	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection => collectResults(findAndBind(collection, { sessionID })));
 
@@ -110,9 +111,50 @@ export const createSessionForUser = (
 		.map<Session>(sessionID => ({
 			sessionID,
 			created: Date.now(),
-			userAccount
+			userAccount,
+			passwordOnly: false
 		}))
 		.flatMap(session => addSessionToDatabase(schema, session));
+
+export const unmarkSessionForPasswordReset = (
+	schema: Schema,
+	session: Session
+): AsyncEither<MemberCreateError, Session> =>
+	asyncRight<MemberCreateError, Session>(session, MemberCreateError.SERVER_ERROR)
+		.map(sess => ({
+			...sess,
+			passwordOnly: false
+		}))
+		.tap(sess =>
+			schema
+				.getCollection<Session>(SESSION_TABLE)
+				.modify('sessionID = :sessionID')
+				.bind({
+					sessionID: sess.sessionID
+				})
+				.set('passwordOnly', false)
+				.execute()
+		);
+
+export const markSessionForPasswordReset = (
+	schema: Schema,
+	session: Session
+): AsyncEither<MemberCreateError, Session> =>
+	asyncRight<MemberCreateError, Session>(session, MemberCreateError.SERVER_ERROR)
+		.map(sess => ({
+			...sess,
+			passwordOnly: true
+		}))
+		.tap(sess =>
+			schema
+				.getCollection<Session>(SESSION_TABLE)
+				.modify('sessionID = :sessionID')
+				.bind({
+					sessionID: sess.sessionID
+				})
+				.set('passwordOnly', true)
+				.execute()
+		);
 
 export const validateSession = (
 	schema: Schema,
@@ -186,6 +228,10 @@ export const SessionedUser = <
 			return this.sessionInformation.userAccount;
 		}
 
+		public get session() {
+			return { ...this.sessionInformation };
+		}
+
 		private sessionInformation: Session;
 
 		public constructor(...params: any[]) {
@@ -222,8 +268,8 @@ export const SessionedUser = <
 	return User;
 };
 
-export const conditionalMemberMiddleware = asyncErrorHandler(
-	async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
+const conditionalMemberMiddlewareGenerator = (allowPasswordOnly: boolean) =>
+	asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
 		if (
 			typeof req.headers !== 'undefined' &&
 			typeof req.headers.authorization !== 'undefined' &&
@@ -238,17 +284,27 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 
 			let session;
 			try {
-				session = await validateSession(req.mysqlx, header).toSome();
+				const sessionEither = await validateSession(req.mysqlx, header).join();
+
+				if (sessionEither.isRight()) {
+					session = sessionEither.value as Session;
+				} else {
+					return next();
+				}
 			} catch (e) {
 				return next();
 			}
 
-			switch (session!.userAccount.member.type) {
+			if (!allowPasswordOnly && session.passwordOnly) {
+				return next();
+			}
+
+			switch (session.userAccount.member.type) {
 				case 'CAPNHQMember':
 					req.member = (await CAPNHQUser.RestoreFromSession(
 						req.mysqlx,
 						req.account,
-						session!
+						session
 					)) as CAPNHQUser;
 					break;
 
@@ -256,7 +312,7 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 					req.member = (await CAPProspectiveUser.RestoreFromSession(
 						req.mysqlx,
 						req.account,
-						session!
+						session
 					)) as CAPProspectiveUser;
 					break;
 			}
@@ -266,15 +322,19 @@ export const conditionalMemberMiddleware = asyncErrorHandler(
 			req.member = null;
 			next();
 		}
-	}
+	});
+
+export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(false);
+export const conditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
+	true
 );
 
-export const memberMiddleware = (
+const memberMiddlewareGenerator = (allowPasswordOnly: boolean) => (
 	req: ConditionalMemberRequest,
 	res: Response,
 	next: NextFunction
 ) =>
-	conditionalMemberMiddleware(req, res, () => {
+	conditionalMemberMiddlewareGenerator(allowPasswordOnly)(req, res, () => {
 		if (req.member === null) {
 			res.status(401);
 			res.end();
@@ -282,6 +342,9 @@ export const memberMiddleware = (
 			next();
 		}
 	});
+
+export const memberMiddleware = memberMiddlewareGenerator(false);
+export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(true);
 
 export const permissionMiddleware = (permission: MemberPermission, threshold = 1) => (
 	req: MemberRequest,

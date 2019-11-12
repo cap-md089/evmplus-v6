@@ -5,6 +5,7 @@ import {
 	PasswordResult,
 	UserAccountInformation
 } from 'common-lib';
+import * as rp from 'request-promise';
 import {
 	checkIfPasswordValid,
 	collectResults,
@@ -12,6 +13,7 @@ import {
 	findAndBind,
 	getInformationForUser
 } from '../../internals';
+import { markSessionForPasswordReset } from './Session';
 
 interface SigninSuccess {
 	result: MemberCreateError.NONE;
@@ -21,21 +23,27 @@ interface SigninSuccess {
 
 interface SigninPasswordOld {
 	result: MemberCreateError.PASSWORD_EXPIRED;
+	sessionID: string;
 }
 
 interface SigninFailed {
-	result: MemberCreateError.INCORRRECT_CREDENTIALS;
+	result: MemberCreateError.INCORRRECT_CREDENTIALS | MemberCreateError.SERVER_ERROR;
 }
 
 export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
 
-// Client side key is 6Len_7UUAAAAAD51GOFqCxDw4vjlJkoJ4AKfgbZ3
-const captchaSecret = '6Len_7UUAAAAAFsz4wZW6qUpbN_Mirm-guSd4t6a';
+// Client side key is 6LfHMcIUAAAAAJFL5xb0RkgUdc3DcDhTmmdSMYml
+const captchaSecret =
+	process.env.NODE_ENV === 'test'
+		? '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+		: '6LfHMcIUAAAAABw78xmjBJo4guKn0HAOMafh5Nmx';
 
 const verifyCaptcha = async (response: string, secret = captchaSecret): Promise<boolean> => {
-	return true;
+	if (process.env.NODE_ENV === 'test') {
+		return true;
+	}
 
-	/*try {
+	try {
 		const results = await rp('https://www.google.com/recaptcha/api/siteverify', {
 			followRedirect: false,
 			method: 'POST',
@@ -47,10 +55,10 @@ const verifyCaptcha = async (response: string, secret = captchaSecret): Promise<
 			simple: true
 		});
 
-		return results.success;
+		return JSON.parse(results).success;
 	} catch (e) {
 		return false;
-	}*/
+	}
 };
 
 const getUserID = async (schema: Schema, username: string): Promise<MemberReference> => {
@@ -89,12 +97,9 @@ export const trySignin = async (
 	}
 
 	const valid = await checkIfPasswordValid(schema, username, password);
-	if (valid !== PasswordResult.VALID) {
+	if (valid === PasswordResult.INVALID) {
 		return {
-			result:
-				valid === PasswordResult.INVALID
-					? MemberCreateError.INCORRRECT_CREDENTIALS
-					: MemberCreateError.PASSWORD_EXPIRED
+			result: MemberCreateError.INCORRRECT_CREDENTIALS
 		};
 	}
 
@@ -103,11 +108,35 @@ export const trySignin = async (
 		getInformationForUser(schema, username)
 	]);
 
-	const session = await createSessionForUser(schema, userInformation).toSome();
+	const session = await createSessionForUser(schema, userInformation).join();
 
-	return {
-		result: MemberCreateError.NONE,
-		member,
-		sessionID: session!.sessionID
-	};
+	return session.cata<Promise<SigninResult>>(
+		() =>
+			Promise.resolve({
+				result: MemberCreateError.SERVER_ERROR
+			}),
+		async sess => {
+			if (valid === PasswordResult.VALID_EXPIRED) {
+				return markSessionForPasswordReset(schema, sess)
+					.join()
+					.then(eith =>
+						eith.cata<SigninResult>(
+							() => ({
+								result: MemberCreateError.SERVER_ERROR
+							}),
+							() => ({
+								result: MemberCreateError.PASSWORD_EXPIRED,
+								sessionID: sess.sessionID
+							})
+						)
+					);
+			}
+
+			return {
+				result: MemberCreateError.NONE,
+				member,
+				sessionID: sess.sessionID
+			};
+		}
+	);
 };

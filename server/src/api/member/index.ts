@@ -5,6 +5,7 @@ import {
 	FlightAssignBulkValidator,
 	FlightAssignValidator,
 	memberMiddleware,
+	memberMiddlewareWithPassswordOnly,
 	permissionMiddleware,
 	Validator
 } from '../../lib/internals';
@@ -20,6 +21,7 @@ import flightassignbulk from './flights/flightassignbulk';
 import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
 import getmembers from './getmembers';
+import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions, { permissionsValidator } from './permissions/setpermissions';
 import su from './su';
@@ -107,5 +109,7 @@ router.post(
 	Validator.BodyExpressMiddleware(Validator.MemberReference),
 	forcadet
 );
+
+router.post('/passwordreset', memberMiddlewareWithPassswordOnly, tokenMiddleware, passwordreset);
 
 export default router;

@@ -1,5 +1,5 @@
 import { Schema, Session } from '@mysql/xdevapi';
-import { fromValue, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
+import { fromValue, MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../../conf.test';
 import getServer, { ServerConfiguration } from '../../getServer';
@@ -13,7 +13,8 @@ import {
 
 const signinInformation = {
 	username: 'ariouxTest',
-	password: 'aPasswordThatSu><10'
+	password: 'aPasswordThatSu><10',
+	recaptcha: ''
 };
 
 describe('/api', () => {
@@ -144,17 +145,23 @@ describe('/api', () => {
 						throw err;
 					}
 
+					const body: SigninReturn = res.body;
+
+					if (body.error !== MemberCreateError.NONE) {
+						throw new Error('Could not signin');
+					}
+
 					request(server.server)
 						.post('/api/check')
 						.set('Accept', 'application/json')
-						.set('Authorization', res.body.sessionID)
+						.set('Authorization', body.sessionID)
 						.expect(200)
 						.end((err1, res1) => {
 							if (err) {
 								throw err;
 							}
 
-							const ret: SigninReturn = res.body;
+							const ret: SigninReturn = res1.body;
 
 							expect(ret.error).toEqual(-1);
 
@@ -162,20 +169,5 @@ describe('/api', () => {
 						});
 				});
 		}, 7500);
-
-		it('should return a signin form to sign in with', done => {
-			request(server.server)
-				.get('/api/signin')
-				.expect(200)
-				.end((err, res) => {
-					if (err) {
-						throw err;
-					}
-
-					expect(res.get('Content-type')).toMatch('text/html');
-
-					done();
-				});
-		}, 5000);
 	});
 });
