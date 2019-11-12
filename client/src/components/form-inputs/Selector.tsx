@@ -17,7 +17,7 @@ export interface SelectorProps<T extends Identifiable> {
 	displayValue: (val: T) => React.ReactChild;
 	values: T[];
 	onChangeVisible?: (visible: T[]) => void;
-	blacklistFunction?: (member: T) => boolean;
+	blacklistFunction?: (value: T) => boolean;
 	overflow?: number;
 	filterValues?: any[];
 	onFilterValuesChange?: (filterValues: any[]) => void;

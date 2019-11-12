@@ -107,6 +107,10 @@ export default abstract class APIInterface<T> {
 
 		options.headers = headers;
 
+		if (options.body && !options.method) {
+			options.method = 'POST';
+		}
+
 		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
 	}
 

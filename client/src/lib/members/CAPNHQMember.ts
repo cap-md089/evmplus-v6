@@ -87,6 +87,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		this.memberRank = data.memberRank;
 		this.memberRankName = `${data.memberRank} ${this.getName()}`;
 		this.expirationDate = data.expirationDate;
+		this.permissions = data.permissions;
 	}
 
 	/**

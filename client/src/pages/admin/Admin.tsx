@@ -18,6 +18,7 @@ import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notif
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
 import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
+import SuWidget, { canUseSu } from './pluggables/Su';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -60,6 +61,10 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 	{
 		canuse: shouldRenderFlightContactWidget,
 		widget: FlightContactWidget
+	},
+	{
+		canuse: canUseSu,
+		widget: SuWidget
 	}
 ];
 
@@ -104,6 +109,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route path="/admin/notifications" render={this.pageRenderer(Notifications)} />
 				<Route path="/admin/permissions" render={this.pageRenderer(PermissionAssign)} />
 				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />
+				<Route path="/admin/squadroncontact" render={this.pageRenderer(FlightContact)} />
 				<Route
 					path="/admin/tempdutypositions"
 					render={this.pageRenderer(TemporaryDutyPositions)}

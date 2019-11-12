@@ -32,6 +32,7 @@ import Registry from '../lib/Registry';
 import Notifications from '../pages/admin/pages/Notifications';
 import Debug from '../pages/Debug';
 import Signin from '../pages/Signin';
+import FinishSignup from '../pages/FinishSignup';
 
 const pages: Array<{
 	url: string;
@@ -182,6 +183,11 @@ const pages: Array<{
 		url: '/signin',
 		component: Signin,
 		exact: false
+	},
+	{
+		url: '/finishaccount/:token',
+		component: FinishSignup,
+		exact: true
 	},
 
 	// THIS GOES LAST

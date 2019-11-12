@@ -1,4 +1,12 @@
-import { Member, MemberObject, MemberReference, RadioReturn } from 'common-lib';
+import {
+	Member,
+	MemberObject,
+	MemberReference,
+	RadioReturn,
+	just,
+	fromValue,
+	none
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -8,9 +16,27 @@ import { TextInput } from '../../../components/forms/SimpleForm';
 import SimpleForm, { Checkbox, Label, RadioButton } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
-import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
+import MemberBase, {
+	CAPMemberClasses,
+	CAPNHQMember,
+	CAPProspectiveMember
+} from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
 import './FlightContact.css';
+
+const isFlightStaff = (member: MemberBase | undefined | null) =>
+	fromValue(member)
+		.flatMap(mem =>
+			mem instanceof CAPNHQMember || mem instanceof CAPProspectiveMember
+				? just(mem)
+				: none<CAPMemberClasses>()
+		)
+		.filter(
+			mem =>
+				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Commander') ||
+				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Sergeant')
+		)
+		.cata(() => false, () => true);
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
@@ -56,7 +82,11 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 	public render() {
 		return (
 			<div className="widget">
-				<Link to="/admin/flightcontact">
+				<Link
+					to={`/admin/${
+						isFlightStaff(this.props.member) ? 'flightcontact' : 'squadroncontact'
+					}`}
+				>
 					<div className="widget-title">Flight Contact</div>
 				</Link>
 				<div className="widget-body">
@@ -64,10 +94,21 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 						<LoaderShort />
 					) : (
 						<div>
-							There are {this.state.members.length} members in your flight
+							There {this.state.members.length === 1 ? 'is' : 'are'}{' '}
+							{this.state.members.length} member
+							{this.state.members.length === 1 ? '' : 's'} in your{' '}
+							{isFlightStaff(this.props.member) ? 'flight' : 'unit'}
 							<br />
 							<br />
-							<Link to="/admin/flightcontact">Connect with them</Link>
+							<Link
+								to={`/admin/${
+									isFlightStaff(this.props.member)
+										? 'flightcontact'
+										: 'squadroncontact'
+								}`}
+							>
+								Connect with them
+							</Link>
 						</div>
 					)}
 				</div>
@@ -115,7 +156,7 @@ const normalizeRankInput = (rank: string) =>
 
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
-	availableMembers: null | (CAPMemberClasses[]);
+	availableMembers: null | CAPMemberClasses[];
 	sortFunction: RadioReturn<SortFunction>;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
@@ -253,7 +294,16 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: '',
-			flightInput: ''
+			flightInput: fromValue(this.props.member)
+				.flatMap(member =>
+					member instanceof CAPNHQMember || member instanceof CAPProspectiveMember
+						? just(member)
+						: none<CAPMemberClasses>()
+				)
+				.filter(isFlightStaff)
+				.flatMap(member => fromValue(member.flight))
+				.orElse('')
+				.some()
 		},
 		selectedMembers: [],
 		sortFunction: [SortFunction.CAPID, ''],

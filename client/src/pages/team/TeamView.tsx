@@ -6,12 +6,25 @@ import Team from '../../lib/Team';
 import Loader from '../../components/Loader';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
+import { just, fromValue, MemberReference, FullTeamMember } from 'common-lib';
 
 interface TeamViewState {
 	members: CAPMemberClasses[] | null;
 	team: Team | null;
 	error: number;
 }
+
+const findMemberInTeam = (members: FullTeamMember[]) => (memberToCheck: MemberReference) =>
+	fromValue(
+		members.filter(member =>
+			MemberBase.AreMemberReferencesTheSame(memberToCheck, member.reference)
+		)[0]
+	);
+
+const findMember = (members: CAPMemberClasses[]) => (memberToCheck: MemberReference) =>
+	fromValue(
+		members.filter(member => MemberBase.AreMemberReferencesTheSame(memberToCheck, member))[0]
+	);
 
 export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewState> {
 	public state: TeamViewState = {
@@ -91,7 +104,9 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return <div>Team not found</div>;
 		}
 
-		if (this.state.team === null || this.state.members === null) {
+		const { team, members } = this.state;
+
+		if (team === null || members === null) {
 			return <Loader />;
 		}
 
@@ -101,9 +116,9 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			<div>
 				{this.props.member &&
 				this.props.member.hasPermission('ManageTeam') &&
-				this.state.team.id !== 0 ? (
+				team.id !== 0 ? (
 					<>
-						<Link to={`/team/edit/${this.state.team.id}`}>Edit team</Link>
+						<Link to={`/team/edit/${team.id}`}>Edit team</Link>
 						{' | '}
 						<DialogueButton
 							buttonText="Delete team"
@@ -118,34 +133,60 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 						</DialogueButton>
 					</>
 				) : null}
-				<h1>{this.state.team.name}</h1>
-				<p>{this.state.team.description || <i>No team description</i>}</p>
-				{this.state.team.seniorCoachName !== '' ? (
-					<p>Senior member coach: {this.state.team.seniorCoachName}</p>
+				<h1>{team.name}</h1>
+				<p>{team.description || <i>No team description</i>}</p>
+				{team.seniorCoachName !== '' ? (
+					<p>
+						Senior member coach:
+						{just(team.seniorCoach)
+							.flatMap(findMember(members))
+							.flatMap(member => fromValue(member.getBestEmail()))
+							.map(email => <i key={0}> ({email})</i>)
+							.orNull()}{' '}
+						{team.seniorCoachName}
+					</p>
 				) : null}
-				{this.state.team.seniorMentorName !== '' ? (
-					<p>Senior member mentor: {this.state.team.seniorMentorName}</p>
+				{team.seniorMentorName !== '' ? (
+					<p>
+						Senior member mentor:
+						{just(team.seniorMentor)
+							.flatMap(findMember(members))
+							.flatMap(member => fromValue(member.getBestEmail()))
+							.map(email => <i key={0}> ({email})</i>)
+							.orNull()}{' '}
+						{team.seniorMentorName}
+					</p>
 				) : null}
-				{this.state.team.cadetLeaderName !== '' ? (
-					<p>Cadet leader: {this.state.team.cadetLeaderName}</p>
+				{team.cadetLeaderName !== '' ? (
+					<p>
+						Cadet leader:
+						{just(team.cadetLeader)
+							.flatMap(findMember(members))
+							.flatMap(member => fromValue(member.getBestEmail()))
+							.map(email => <i key={0}> ({email})</i>)
+							.orNull()}{' '}
+						{team.cadetLeaderName}
+					</p>
 				) : null}
-				{this.state.team.canGetFullMembers(this.props.member)
-					? this.state.members.map((member, i) => (
-							<div key={i}>
-								{member.getFullName()} (<i>{member.getBestEmail()}</i>):{' '}
-								{
-									this.state.team!.members.filter(mem =>
-										member.matchesReference(mem.reference)
-									)[0].job
-								}
-							</div>
-					  ))
-					: this.state.team.members.map((member, i) => (
+				<h2>Team members</h2>
+				{team.canGetFullMembers(this.props.member)
+					? members.map((member, i) =>
+							just(member)
+								.flatMap(findMemberInTeam(team.members))
+								.map(teamMember => (
+									<div key={i}>
+										{member.getFullName()} (<i>{member.getBestEmail()}</i>):{' '}
+										{teamMember.job}
+									</div>
+								))
+								.orNull()
+					  )
+					: team.members.map((member, i) => (
 							<div key={i}>
 								{member.name}: {member.job}
 							</div>
 					  ))}
-				{this.props.member && this.state.team.isLeader(this.props.member.getReference()) ? (
+				{this.props.member && team.isLeader(this.props.member.getReference()) ? (
 					<>
 						<h2>Team member emails</h2>
 						<div>{emails}</div>

@@ -75,6 +75,12 @@ const fullWidth = {
  * Creates a title to use in the form
  */
 class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
+	public static GenerateID = (id: string) =>
+		id
+			.toLocaleLowerCase()
+			.replace(/ +/g, '-')
+			.replace(/\//g, '');
+
 	public readonly IsLabel = true;
 
 	constructor(props: { fullWidth: boolean; id: string }) {
@@ -84,13 +90,11 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 
 	public render() {
-		const id =
-			this.props.id || typeof this.props.children === 'string'
-				? this.props
-						.children!.toString()
-						.toLocaleLowerCase()
-						.replace(/ +/g, '-')
-				: '';
+		const id = this.props.id
+			? Title.GenerateID(this.props.id)
+			: typeof this.props.children === 'string'
+			? Title.GenerateID(this.props.children)
+			: '';
 
 		return (
 			<div className="formbar fheader" style={fullWidth}>

@@ -169,7 +169,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 					}}
 					validator={{
 						test2: text => {
-							return !text.match(/a/g);
+							return !!text && !text.match(/a/g);
 						}
 					}}
 					values={this.state}

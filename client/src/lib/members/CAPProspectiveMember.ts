@@ -84,6 +84,7 @@ export default class CAPProspectiveMember extends MemberBase implements Prospect
 		this.absenteeInformation = data.absenteeInformation;
 		this.squadron = data.squadron;
 		this.seniorMember = data.seniorMember;
+		this.permissions = data.permissions;
 	}
 
 	public getReference = (): MemberReference => ({
