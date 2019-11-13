@@ -1,32 +1,51 @@
-import { MemberReference } from 'common-lib';
 import {
 	addUserAccountCreationToken,
 	asyncErrorHandler,
 	BasicValidatedRequest,
 	resolveReference,
-	Validator
+	Validator,
+	verifyCaptcha
 } from '../../../../lib/internals';
 
 interface RequestParameters {
-	member: MemberReference;
+	capid: number;
 	email: string;
+	recaptcha: string;
 }
 
 export const nhqRequestValidator = new Validator<RequestParameters>({
-	member: {
-		validator: Validator.MemberReference
+	capid: {
+		validator: Validator.Number
 	},
 	email: {
+		validator: Validator.String
+	},
+	recaptcha: {
 		validator: Validator.String
 	}
 });
 
 export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParameters>, res) => {
-	const member = await resolveReference(req.body.member, req.account, req.mysqlx, false);
+	if (!(await verifyCaptcha(req.body.recaptcha))) {
+		res.status(400);
+		return res.json({
+			error: 'Could not verify reCAPTCHA'
+		});
+	}
 
-	if (member === null) {
-		res.status(404);
-		return res.end();
+	let member;
+	try {
+		member = await resolveReference(
+			{ id: req.body.capid, type: 'CAPNHQMember' },
+			req.account,
+			req.mysqlx,
+			true
+		);
+	} catch (e) {
+		res.status(400);
+		return res.json({
+			error: 'CAPID does not exist or could not be found'
+		});
 	}
 
 	const email = req.body.email.toLowerCase();
@@ -47,21 +66,30 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 				member.contact.EMAIL.EMERGENCY.toLowerCase() === email)
 		)
 	) {
-		res.status(403);
-		return res.end();
+		res.status(400);
+		return res.json({
+			error: 'Email provided does not match email in database'
+		});
 	}
 
 	let token;
 	try {
-		token = await addUserAccountCreationToken(req.mysqlx, req.body.member);
+		token = await addUserAccountCreationToken(req.mysqlx, {
+			id: req.body.capid,
+			type: 'CAPNHQMember'
+		});
 	} catch (e) {
 		res.status(400);
-		return res.end();
+		return res.json({
+			error: e.message
+		});
 	}
 
 	// send email here
 	console.log(token);
 
-	res.status(204);
-	res.end();
+	res.status(200);
+	res.json({
+		error: 'none'
+	});
 });

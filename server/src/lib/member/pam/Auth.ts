@@ -38,7 +38,7 @@ const captchaSecret =
 		? '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 		: '6LfHMcIUAAAAABw78xmjBJo4guKn0HAOMafh5Nmx';
 
-const verifyCaptcha = async (response: string, secret = captchaSecret): Promise<boolean> => {
+export const verifyCaptcha = async (response: string, secret = captchaSecret): Promise<boolean> => {
 	if (process.env.NODE_ENV === 'test') {
 		return true;
 	}

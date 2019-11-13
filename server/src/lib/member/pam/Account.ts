@@ -161,10 +161,7 @@ export const addUserAccount = async (
 	}
 
 	try {
-		const mem = await resolveReference(member, account, schema);
-		if (mem === null) {
-			throw new UserError('Member does not exist');
-		}
+		await resolveReference(member, account, schema, true);
 	} catch (e) {
 		throw new UserError('Member does not exist');
 	}

@@ -31,8 +31,10 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 	try {
 		memberReference = await validateUserAccountCreationToken(req.mysqlx, req.body.token);
 	} catch (e) {
-		res.status(404);
-		return res.end();
+		res.status(400);
+		return res.json({
+			error: 'Could not find token'
+		});
 	}
 
 	let account;
@@ -63,6 +65,7 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 		.maybe()).some();
 
 	res.json({
+		error: 'none',
 		sessionID: session.sessionID
 	});
 });
