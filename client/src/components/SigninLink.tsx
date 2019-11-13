@@ -1,8 +1,7 @@
-import { SigninReturn } from 'common-lib';
 import * as React from 'react';
-import './Signin.css';
+import { RouteComponentProps, withRouter } from 'react-router';
 import Button from './Button';
-import { withRouter, RouteComponentProps } from 'react-router';
+import './Signin.css';
 
 interface SigninLinkProps {
 	returnUrl?: string;

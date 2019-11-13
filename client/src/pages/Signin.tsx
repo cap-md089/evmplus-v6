@@ -12,10 +12,10 @@ import APIInterface from '../lib/APIInterface';
 import { getMember } from '../lib/Members';
 import myFetch, { fetchFunction } from '../lib/myFetch';
 import Page, { PageProps } from './Page';
+import PasswordForm from '../components/form-inputs/PasswordForm';
 
 interface ResetPasswordFormValues {
 	password: string;
-	confirmPassword: string;
 }
 
 interface SigninFormValues {
@@ -54,8 +54,7 @@ const passwordResetErrorMessages = {
 
 const validateNotEmpty = (val: string | null) => !!val;
 
-const validateNewPasswords = (val: string, others: ResetPasswordFormValues) =>
-	!!val && others.password === others.confirmPassword && passwordMeetsRequirements(val);
+const validateNewPasswords = (val: string, others: ResetPasswordFormValues) => !!val;
 
 export default class Signin extends Page<PageProps<{ returnurl?: string }>, SigninState> {
 	public state: SigninState = {
@@ -65,8 +64,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			recaptcha: null
 		},
 		resetFormValues: {
-			password: '',
-			confirmPassword: ''
+			password: ''
 		},
 		error: MemberCreateError.NONE,
 		passwordSetResult: PasswordSetResult.OK,
@@ -143,8 +141,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				<SimpleForm<ResetPasswordFormValues>
 					onSubmit={this.resetPassword}
 					validator={{
-						password: validateNewPasswords,
-						confirmPassword: validateNewPasswords
+						password: validateNewPasswords
 					}}
 					submitInfo={{
 						text: 'Update password',
@@ -166,11 +163,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 						</TextBox>
 					) : null}
 
-					<Label>Enter password:</Label>
-					<TextInput name="password" password={true} />
-
-					<Label>Confirm password</Label>
-					<TextInput name="confirmPassword" password={true} />
+					<PasswordForm name="password" />
 				</SimpleForm>
 			</div>
 		);

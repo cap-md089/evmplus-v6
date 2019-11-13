@@ -14,17 +14,18 @@ import LoadingTextArea from '../form-inputs/LoadingTextArea';
 import MultCheckbox from '../form-inputs/MultCheckbox';
 import MultiRange from '../form-inputs/MultiRange';
 import NumberInput from '../form-inputs/NumberInput';
+import PasswordForm from '../form-inputs/PasswordForm';
+import PermissionsEdit from '../form-inputs/PermissionsEdit';
 import POCInput from '../form-inputs/POCInput';
 import RadioButton from '../form-inputs/RadioButton';
+import ReCAPTCHAInput from '../form-inputs/ReCAPTCHA';
+import Select from '../form-inputs/Select';
 import Selector from '../form-inputs/Selector';
 import SimpleRadioButton from '../form-inputs/SimpleRadioButton';
 import TeamMemberInput from '../form-inputs/TeamMemberInput';
 import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
-import Select from '../form-inputs/Select';
-import PermissionsEdit from '../form-inputs/PermissionsEdit';
-import ReCAPTCHAInput from '../form-inputs/ReCAPTCHA';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -106,17 +107,21 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 }
 
+function isEmpty(v: any): v is {} {
+	return Object.keys(v).length === 0;
+}
+
 /**
  * Helper function
  *
  * @param el
  */
-export function isInput(
-	el: React.ReactChild | React.ReactElement<any> | boolean
-): el is React.ReactElement<InputProps<any>> {
-	if (typeof el !== 'object' || el === null) {
+export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputProps<any>> {
+	if (typeof pel !== 'object' || pel === null) {
 		return false;
 	}
+
+	const el = pel as React.ReactElement<any>;
 
 	return (
 		el.type === TextInput ||
@@ -145,7 +150,8 @@ export function isInput(
 		// @ts-ignore
 		el.type === FileInput ||
 		el.type === PermissionsEdit ||
-		el.type === ReCAPTCHAInput
+		el.type === ReCAPTCHAInput ||
+		el.type === PasswordForm
 	);
 }
 
@@ -162,11 +168,20 @@ export const isFullWidthableElement = (
  *
  * @param el
  */
-export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
-	if (typeof el === 'string' || typeof el === 'number' || el === null) {
+export function isLabel(el: React.ReactNode): el is React.ReactElement<any> {
+	if (
+		typeof el === 'string' ||
+		typeof el === 'number' ||
+		el === null ||
+		el === undefined ||
+		typeof el === 'boolean'
+	) {
 		return false;
 	}
-	return el.type === Title || el.type === Label || el.type === Divider;
+
+	const pel = el as React.ReactElement<any>;
+
+	return pel.type === Title || pel.type === Label || pel.type === Divider;
 }
 
 /**
@@ -375,7 +390,7 @@ export default class SimpleForm<
 
 		return (
 			<form className="asyncForm">
-				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||
 						this.props.children === null
@@ -659,7 +674,7 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 
 		return (
 			<form className={`${this.props.className ? `${this.props.className} ` : ''}`}>
-				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (isInput(child)) {
 						const childName: keyof C = child.props.name as keyof C;
 						const value =
