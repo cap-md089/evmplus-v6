@@ -2,7 +2,6 @@ import * as mysql from '@mysql/xdevapi';
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as logger from 'morgan';
-import { join } from 'path';
 import accountcheck from './api/accountcheck';
 import check from './api/check';
 import echo from './api/echo';
@@ -21,7 +20,7 @@ import { Configuration } from './conf';
 import {
 	Account,
 	conditionalMemberMiddleware,
-	memberMiddleware,
+	memberMiddlewareWithPassswordOnly,
 	MySQLMiddleware,
 	MySQLRequest
 } from './lib/internals';
@@ -59,10 +58,6 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.use('/files', filerouter);
 
-	router.get('/signin', (req, res) => {
-		res.sendFile(join(__dirname, '..', 'signin_form.html'));
-	});
-
 	router.use(
 		bodyParser.json({
 			strict: false
@@ -82,7 +77,12 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/signin', Account.ExpressMiddleware, signin);
 
-	router.get('/token', Account.ExpressMiddleware, memberMiddleware, getFormToken);
+	router.get(
+		'/token',
+		Account.ExpressMiddleware,
+		memberMiddlewareWithPassswordOnly,
+		getFormToken
+	);
 
 	router.get(
 		'/banner',

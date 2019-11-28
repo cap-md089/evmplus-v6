@@ -8,10 +8,12 @@
     "test": "jest",
     "test-coverage": "jest --coverage",
     "build": "tsc",
-    "debug": "nodemon --inspect dist/index.js"
+    "debug": "nodemon --inspect dist/index.js",
+    "check": "tsc --noEmit"
   },
   "main": "dist/index.js",
   "dependencies": {
+    "@types/request-promise": "^4.1.44",
     "aws-sdk": "^2.300.0",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
@@ -59,7 +61,7 @@
     "gulp-shell": "^0.7.0",
     "jest": "^24.8.0",
     "jest-cli": "^24.8.0",
-    "nodemon": "^1.19.2",
+    "nodemon": "^1.19.4",
     "supertest": "^3.1.0",
     "ts-jest": "^23.1.4",
     "tslint": "^5.19.0",

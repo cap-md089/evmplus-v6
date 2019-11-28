@@ -5,6 +5,7 @@ import {
 	MemberReference,
 	NoSQLDocument,
 	PasswordSetResult,
+	StoredMemberPermissions,
 	UserAccountInformation
 } from 'common-lib';
 import { randomBytes } from 'crypto';
@@ -160,10 +161,7 @@ export const addUserAccount = async (
 	}
 
 	try {
-		const mem = await resolveReference(member, account, schema);
-		if (mem === null) {
-			throw new UserError('Member does not exist');
-		}
+		await resolveReference(member, account, schema, true);
 	} catch (e) {
 		throw new UserError('Member does not exist');
 	}
@@ -282,12 +280,6 @@ export const isUserValid = (info: UserAccountInformation | null) =>
 //#region Permissions
 
 const MEMBER_PERMISSIONS_TABLE = 'UserPermissions';
-
-export interface StoredMemberPermissions extends NoSQLDocument {
-	member: MemberReference;
-	accountID: string;
-	permissions: MemberPermissions;
-}
 
 const getPermissionsRecordForMemberInAccount = async (
 	schema: Schema,

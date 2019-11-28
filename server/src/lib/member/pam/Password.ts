@@ -1,6 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	AccountPasswordInformation,
+	passwordMeetsRequirements,
 	PasswordResult,
 	PasswordSetResult,
 	UserAccountInformation
@@ -16,7 +17,7 @@ export const DEFAULT_PASSWORD_ITERATION_COUNT = 32768;
 export const DEFAULT_PASSWORD_STORED_LENGTH = 64;
 export const DEFAULT_SALT_SIZE = 128;
 export const PASSWORD_HISTORY_LENGTH = 5;
-export const PASSWORD_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+export const PASSWORD_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
 export const PASSWORD_MIN_AGE = 7 * 24 * 60 * 60 * 1000;
 
 /**
@@ -74,22 +75,6 @@ export const hasPasswordBeenUsed = async (
 		.map((pw, i) => pw.toString('hex') === passwordHistory[i].password)
 		// Reduce to a single variable
 		.reduce((prev, curr) => prev || curr, false);
-
-/**
- * Verifies that the password meets security requirements
- *
- * @param password the password to check
- */
-export const passwordMeetsRequirements = (password: string) =>
-	password.length > 10 &&
-	// lowercase letter
-	!!password.match(/[a-z]/g) &&
-	// uppercase letter
-	!!password.match(/[A-Z]/g) &&
-	// number
-	!!password.match(/[0-9]/g) &&
-	// symbol
-	!!password.match(/[ \^!@#$%&*(){}+=_\-<>,.?\/\[\]\\\|;'"]/g);
 
 /**
  * Updates the password for the user specified

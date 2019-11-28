@@ -32,6 +32,19 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"name": "Launch Server (Nodemon)",
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"program": "${workspaceFolder}/dist/index.js",
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
+			"runtimeArgs": [
+				"--inspect"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
 			"name": "Jest All",
 			"args": [
 				"--inspect-brk",
