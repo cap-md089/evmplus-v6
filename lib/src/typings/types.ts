@@ -367,7 +367,8 @@ export enum PasswordSetResult {
 	OK,
 	IN_HISTORY,
 	COMPLEXITY,
-	MIN_AGE
+	MIN_AGE,
+	SERVER_ERROR
 }
 
 // tslint:disable-next-line: no-namespace
@@ -1464,6 +1465,12 @@ export interface MemberPermissions {
 	 * Whether or not the user can edit the registry
 	 */
 	RegistryEdit: Permissions.RegistryEdit;
+}
+
+export interface StoredMemberPermissions extends NoSQLDocument {
+	member: MemberReference;
+	accountID: string;
+	permissions: MemberPermissions;
 }
 
 /**

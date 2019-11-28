@@ -54,11 +54,17 @@ export class AsyncEither<L, R> {
 			this.value.then(eith => eith.cata(() => null, val => val)).catch(() => null)
 		);
 
+	public join = (): Promise<Either<L, R>> =>
+		this.value
+
+	public fullJoin = (): Promise<R> =>
+		this.value.then(eith => eith.cata(l => Promise.reject(l), r => Promise.resolve(r)));
+
 	public cata = <T>(lf: (v: L) => Promise<T> | T, rf: (v: R) => Promise<T> | T): Promise<T> =>
 		this.value.then(eith => eith.cata(lf, rf));
 
 	public tap = (
-		rf: (v: R) => Promise<void> | void,
+		rf: (v: R) => Promise<any> | any,
 		errorValue: L = this.errorValue
 	): AsyncEither<L, R> =>
 		new AsyncEither(
