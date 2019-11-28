@@ -151,12 +151,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 				<DropDownList<number> values={[1, 2, 3]} titles={() => 'Number'} onlyOneOpen={true}>
 					{num => <div>{num}</div>}
 				</DropDownList>
-				<SigninLink
-					authorizeUser={this.props.authorizeUser}
-					{...this.props.fullMemberDetails}
-				>
-					Sign in
-				</SigninLink>
+				<SigninLink>Sign in</SigninLink>
 				<TestForm
 					onSubmit={data => {
 						// tslint:disable-next-line:no-console
@@ -174,7 +169,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 					}}
 					validator={{
 						test2: text => {
-							return !text.match(/a/g);
+							return !!text && !text.match(/a/g);
 						}
 					}}
 					values={this.state}

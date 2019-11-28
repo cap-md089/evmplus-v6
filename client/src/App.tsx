@@ -1,6 +1,6 @@
-import { FileObject, MemberCreateError, MemberObject, SigninReturn } from 'common-lib';
+import { FileObject, MemberCreateError, SigninReturn } from 'common-lib';
 import * as React from 'react';
-import { NavLink, RouteComponentProps, withRouter } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import GlobalNotification from './components/GlobalNotification';
 import Loader from './components/Loader';
@@ -11,9 +11,6 @@ import Account from './lib/Account';
 import { CAPMemberClasses, createCorrectMemberObject, getMember } from './lib/Members';
 import myFetch from './lib/myFetch';
 import Registry from './lib/Registry';
-import Subscribe from './lib/subscribe';
-
-export const MessageEventListener = new Subscribe<MessageEvent>();
 
 export class Head extends React.Component {
 	public render() {
@@ -25,65 +22,6 @@ export class Head extends React.Component {
 		);
 	}
 }
-
-const RoutingSearchForm = withRouter(
-	class extends React.Component<
-		RouteComponentProps<any>,
-		{
-			text: string;
-		}
-	> {
-		constructor(props: RouteComponentProps<any>) {
-			super(props);
-			this.handleChange = this.handleChange.bind(this);
-			this.handleSubmit = this.handleSubmit.bind(this);
-			this.state = {
-				text: ''
-			};
-		}
-
-		public render() {
-			return (
-				<form id="search" onSubmit={this.handleSubmit}>
-					<div role="search">
-						<input
-							className="searchInput"
-							name="search"
-							placeholder="Search..."
-							type="text"
-							aria-label="Search through site content"
-							value={this.state.text}
-							onChange={this.handleChange}
-						/>
-						<input
-							className="search-btn submitBt"
-							name="search"
-							placeholder="Search..."
-							type="submit"
-							value=""
-							aria-label="Search through site content"
-						/>
-					</div>
-				</form>
-			);
-		}
-
-		private handleChange(e: React.FormEvent<HTMLInputElement>) {
-			e.preventDefault();
-			this.setState({
-				text: e.currentTarget.value
-			});
-		}
-
-		private handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-			e.preventDefault();
-			this.props.history.push('/search?query=' + this.state.text);
-			this.setState({
-				text: ''
-			});
-		}
-	}
-);
 
 interface AppState {
 	Registry: Registry | null;
@@ -99,9 +37,6 @@ interface AppState {
 export default class App extends React.Component<
 	{
 		isMobile: boolean;
-		basicInfo: {
-			member: MemberObject | null;
-		};
 	},
 	AppState
 > {
@@ -124,12 +59,7 @@ export default class App extends React.Component<
 
 	private timer: NodeJS.Timer | null = null;
 
-	constructor(props: {
-		isMobile: boolean;
-		basicInfo: {
-			member: MemberObject | null;
-		};
-	}) {
+	constructor(props: { isMobile: boolean }) {
 		super(props);
 
 		this.authorizeUser = this.authorizeUser.bind(this);
@@ -262,9 +192,6 @@ export default class App extends React.Component<
 											</NavLink>
 										</li>
 									</ul>
-									<div className="search">
-										<RoutingSearchForm />
-									</div>
 								</nav>
 							</header>
 							<div id="pageContent">

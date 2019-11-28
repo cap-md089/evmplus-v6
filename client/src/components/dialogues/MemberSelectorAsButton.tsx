@@ -3,12 +3,15 @@ import MemberBase from '../../lib/Members';
 import Button from '../Button';
 import { TextInput } from '../forms/SimpleForm';
 import Loader from '../Loader';
+import LoaderShort from '../LoaderShort';
 import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';
 
 type MemberSelectorButtonProps = DialogueButtonProps & {
 	memberList: Promise<MemberBase[]>;
 	onMemberSelect: (member: MemberBase | null) => void;
+	useShortLoader?: boolean;
+	buttonType?: '' | 'primaryButton' | 'secondaryButton' | 'none';
 };
 
 interface MemberSelectorButtonState {
@@ -47,12 +50,14 @@ export default class MemberSelectorButton extends React.Component<
 
 	public render() {
 		if (!this.state.members) {
-			return <Loader />;
+			return this.props.useShortLoader ? <LoaderShort /> : <Loader />;
 		}
 
 		return (
 			<>
-				<Button onClick={this.openDialogue}>{this.props.children}</Button>
+				<Button buttonType={this.props.buttonType} onClick={this.openDialogue}>
+					{this.props.children}
+				</Button>
 				<DownloadDialogue<MemberBase>
 					open={this.state.open}
 					multiple={false}

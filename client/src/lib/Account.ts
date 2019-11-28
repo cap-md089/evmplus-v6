@@ -1,19 +1,21 @@
+import {
+	AccountObject,
+	EventObject,
+	FileObject,
+	FullFileObject,
+	FullTeamObject,
+	Member,
+	MemberPermissions,
+	MemberReference,
+	StoredMemberPermissions
+} from 'common-lib';
 import APIInterface from './APIInterface';
 import Event from './Event';
 import FileInterface from './File';
 import MemberBase from './MemberBase';
-import { createCorrectMemberObject, CAPMemberClasses } from './Members';
+import { CAPMemberClasses, createCorrectMemberObject } from './Members';
 import myFetch from './myFetch';
 import Team from './Team';
-import {
-	AccountObject,
-	MemberReference,
-	Member,
-	EventObject,
-	FullTeamObject,
-	FileObject,
-	FullFileObject
-} from 'common-lib';
 
 /**
  * Holds the account information for a provided account
@@ -124,16 +126,14 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		);
 	}
 
-	public async getMembersWithPermissions(member: MemberBase): Promise<CAPMemberClasses[]> {
+	public async getMembersWithPermissions(member: MemberBase): Promise<StoredMemberPermissions[]> {
 		const url = this.buildURI('api', 'member', 'permissions');
 
 		const results = await this.fetch(url, {}, member);
 
-		const json = (await results.json()) as Member[];
+		const json = (await results.json()) as StoredMemberPermissions[];
 
-		return json
-			.map(v => createCorrectMemberObject(v, this, ''))
-			.filter(v => !!v) as CAPMemberClasses[];
+		return json;
 	}
 
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {

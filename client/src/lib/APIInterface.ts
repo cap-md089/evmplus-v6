@@ -5,6 +5,36 @@ import MemberBase from './Members';
  * Base class to help handle transmission and tokens
  */
 export default abstract class APIInterface<T> {
+	/**
+	 * Requests a token on the account for the member provided
+	 *
+	 * This token lasts for 1 use, and is required to be required for
+	 * all POST, PUT and DELETE operations
+	 *
+	 * @param accountID The account to get the token for
+	 * @param member The member to get a token for
+	 */
+	public static async getToken(accountID: string, member: MemberBase): Promise<string> {
+		return this.getTokenForSession(accountID, member.sessionID);
+	}
+
+	public static async getTokenForSession(accountID: string, sessionID: string): Promise<string> {
+		const uri =
+			APIInterface.ENV === 'production' || APIInterface.ENV === 'staging'
+				? `https://${accountID}.${APIInterface.REQUEST_URI}/`
+				: '/';
+
+		const response = await myFetch(`${uri}api/token`, {
+			headers: {
+				authorization: sessionID
+			}
+		});
+
+		const json = await response.json();
+
+		return json.token;
+	}
+
 	protected static ENV: 'production' | 'staging' | 'test' | 'development' = 'development';
 	/**
 	 * Set where to send requests to
@@ -15,32 +45,6 @@ export default abstract class APIInterface<T> {
 			: APIInterface.ENV === 'staging'
 			? 'capunitdev.com'
 			: 'localcapunit.com:3001';
-
-	/**
-	 * Requests a token on the account for the member provided
-	 *
-	 * This token lasts for 1 use, and is required to be required for
-	 * all POST, PUT and DELETE operations
-	 *
-	 * @param accountID The account to get the token for
-	 * @param member The member to get a token for
-	 */
-	protected static async getToken(accountID: string, member: MemberBase): Promise<string> {
-		const uri =
-			APIInterface.ENV === 'production' || APIInterface.ENV === 'staging'
-				? `https://${accountID}.${APIInterface.REQUEST_URI}/`
-				: '/';
-
-		const response = await myFetch(`${uri}api/token`, {
-			headers: {
-				authorization: member.sessionID
-			}
-		});
-
-		const json = await response.json();
-
-		return json.token;
-	}
 
 	public constructor(public accountID: string) {}
 
@@ -102,6 +106,10 @@ export default abstract class APIInterface<T> {
 		}
 
 		options.headers = headers;
+
+		if (options.body && !options.method) {
+			options.method = 'POST';
+		}
 
 		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
 	}

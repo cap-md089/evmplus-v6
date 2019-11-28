@@ -83,10 +83,7 @@ export class SideNavigation extends React.Component<SideNavigationProps> {
 								<span>Sign out {this.props.member.getFullName()}</span>
 							</button>
 						) : (
-							<SigninLink
-								{...this.props.fullMemberDetails}
-								authorizeUser={this.props.authorizeUser}
-							>
+							<SigninLink>
 								<span className="arrow" />
 								<span>Sign in</span>
 							</SigninLink>

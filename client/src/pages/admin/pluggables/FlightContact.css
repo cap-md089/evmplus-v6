@@ -15,6 +15,7 @@
 .flightcontactlist-name {
 	float: left;
 	width: 50%;
+	padding-bottom: 15px;
 }
 
 .flightcontactlist-phones {

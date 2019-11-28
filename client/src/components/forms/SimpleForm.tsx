@@ -14,16 +14,18 @@ import LoadingTextArea from '../form-inputs/LoadingTextArea';
 import MultCheckbox from '../form-inputs/MultCheckbox';
 import MultiRange from '../form-inputs/MultiRange';
 import NumberInput from '../form-inputs/NumberInput';
+import PasswordForm from '../form-inputs/PasswordForm';
+import PermissionsEdit from '../form-inputs/PermissionsEdit';
 import POCInput from '../form-inputs/POCInput';
 import RadioButton from '../form-inputs/RadioButton';
+import ReCAPTCHAInput from '../form-inputs/ReCAPTCHA';
+import Select from '../form-inputs/Select';
 import Selector from '../form-inputs/Selector';
 import SimpleRadioButton from '../form-inputs/SimpleRadioButton';
 import TeamMemberInput from '../form-inputs/TeamMemberInput';
 import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
-import Select from '../form-inputs/Select';
-import PermissionsEdit from '../form-inputs/PermissionsEdit';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -74,6 +76,12 @@ const fullWidth = {
  * Creates a title to use in the form
  */
 class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
+	public static GenerateID = (id: string) =>
+		id
+			.toLocaleLowerCase()
+			.replace(/ +/g, '-')
+			.replace(/\//g, '');
+
 	public readonly IsLabel = true;
 
 	constructor(props: { fullWidth: boolean; id: string }) {
@@ -83,13 +91,11 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 
 	public render() {
-		const id =
-			this.props.id || typeof this.props.children === 'string'
-				? this.props
-						.children!.toString()
-						.toLocaleLowerCase()
-						.replace(/ +/g, '-')
-				: '';
+		const id = this.props.id
+			? Title.GenerateID(this.props.id)
+			: typeof this.props.children === 'string'
+			? Title.GenerateID(this.props.children)
+			: '';
 
 		return (
 			<div className="formbar fheader" style={fullWidth}>
@@ -101,17 +107,21 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 }
 
+function isEmpty(v: any): v is {} {
+	return Object.keys(v).length === 0;
+}
+
 /**
  * Helper function
  *
  * @param el
  */
-export function isInput(
-	el: React.ReactChild | React.ReactElement<any> | boolean
-): el is React.ReactElement<InputProps<any>> {
-	if (typeof el !== 'object' || el === null) {
+export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputProps<any>> {
+	if (typeof pel !== 'object' || pel === null) {
 		return false;
 	}
+
+	const el = pel as React.ReactElement<any>;
 
 	return (
 		el.type === TextInput ||
@@ -139,7 +149,9 @@ export function isInput(
 		el.type === Select ||
 		// @ts-ignore
 		el.type === FileInput ||
-		el.type === PermissionsEdit
+		el.type === PermissionsEdit ||
+		el.type === ReCAPTCHAInput ||
+		el.type === PasswordForm
 	);
 }
 
@@ -156,11 +168,20 @@ export const isFullWidthableElement = (
  *
  * @param el
  */
-export function isLabel(el: React.ReactChild): el is React.ReactElement<any> {
-	if (typeof el === 'string' || typeof el === 'number' || el === null) {
+export function isLabel(el: React.ReactNode): el is React.ReactElement<any> {
+	if (
+		typeof el === 'string' ||
+		typeof el === 'number' ||
+		el === null ||
+		el === undefined ||
+		typeof el === 'boolean'
+	) {
 		return false;
 	}
-	return el.type === Title || el.type === Label || el.type === Divider;
+
+	const pel = el as React.ReactElement<any>;
+
+	return pel.type === Title || pel.type === Label || pel.type === Divider;
 }
 
 /**
@@ -270,6 +291,10 @@ export interface FormProps<F> {
 	 * Supplies a CSS class name
 	 */
 	className?: string;
+	/**
+	 * Disables the form when inputs are invalid
+	 */
+	disableOnInvalid?: boolean;
 }
 
 /**
@@ -294,8 +319,35 @@ export default class SimpleForm<
 > {
 	protected fields: C = {} as C;
 	protected fieldsChanged: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
-	protected fieldsError: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
-	protected hasError: boolean = false;
+
+	protected get fieldsError(): { [K in keyof C]: boolean } {
+		const fieldsError = { ...this.fieldsChanged };
+
+		for (const i in fieldsError) {
+			if (fieldsError.hasOwnProperty(i)) {
+				fieldsError[i] = false;
+			}
+		}
+
+		if (this.props.validator) {
+			for (const i in this.props.validator) {
+				// @ts-ignore
+				if (this.props.validator.hasOwnProperty(i)) {
+					const field = i as keyof C;
+					// @ts-ignore
+					fieldsError[field] = !this.props.validator[field](this.fields[i], this.fields);
+				}
+			}
+		}
+
+		return fieldsError;
+	}
+	protected get hasError(): boolean {
+		return (Object.values(this.fieldsError) as boolean[]).reduce(
+			(prev, curr) => prev || curr,
+			false
+		);
+	}
 
 	protected token: string = '';
 	protected sessionID: string = '';
@@ -338,7 +390,7 @@ export default class SimpleForm<
 
 		return (
 			<form className="asyncForm">
-				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||
 						this.props.children === null
@@ -486,7 +538,10 @@ export default class SimpleForm<
 								type="submit"
 								value={submitInfo.text}
 								className={submitInfo.className}
-								disabled={this.state.disabled || submitInfo.disabled}
+								disabled={
+									(this.props.disableOnInvalid && this.hasError) ||
+									submitInfo.disabled
+								}
 								onClick={this.submit}
 							/>
 							{this.props.successMessage && (
@@ -521,22 +576,12 @@ export default class SimpleForm<
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
-				}
-			}
-		}
-
 		// DO NOT TOUCH
 		// If this is moved into the conditional TypeScript gets upset
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 		}
 	}
 
@@ -552,22 +597,12 @@ export default class SimpleForm<
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		let hasError = false;
-		for (const i in this.fieldsError) {
-			if (this.fieldsError.hasOwnProperty(i)) {
-				hasError = this.fieldsError[i];
-				if (hasError) {
-					break;
-				}
-			}
-		}
-
 		// DO NOT TOUCH
 		// If this is moved into the conditional TypeScript gets upset
 		const onChange = this.props.onChange;
 
 		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, hasError, name);
+			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 		}
 	}
 
@@ -579,17 +614,7 @@ export default class SimpleForm<
 	protected submit(e: React.MouseEvent<HTMLInputElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			let hasError = false;
-			for (const i in this.fieldsError) {
-				if (this.fieldsError.hasOwnProperty(i)) {
-					hasError = this.fieldsError[i];
-					if (hasError) {
-						break;
-					}
-				}
-			}
-
-			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, hasError);
+			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, this.hasError);
 		}
 	}
 }
@@ -649,7 +674,7 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 
 		return (
 			<form className={`${this.props.className ? `${this.props.className} ` : ''}`}>
-				{React.Children.map(this.props.children, (child: React.ReactChild, i) => {
+				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (isInput(child)) {
 						const childName: keyof C = child.props.name as keyof C;
 						const value =
@@ -678,7 +703,9 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 						type="submit"
 						value={submitInfo.text}
 						className={submitInfo.className}
-						disabled={this.state.disabled || submitInfo.disabled}
+						disabled={
+							(this.props.disableOnInvalid && this.hasError) || submitInfo.disabled
+						}
 						onClick={this.submit}
 					/>
 				</div>

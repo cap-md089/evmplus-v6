@@ -31,6 +31,9 @@ import { SigninReturn } from 'common-lib';
 import Registry from '../lib/Registry';
 import Notifications from '../pages/admin/pages/Notifications';
 import Debug from '../pages/Debug';
+import Signin from '../pages/Signin';
+import FinishSignup from '../pages/FinishSignup';
+import Signup from '../pages/Signup';
 
 const pages: Array<{
 	url: string;
@@ -175,6 +178,21 @@ const pages: Array<{
 	{
 		url: '/debug',
 		component: Debug,
+		exact: true
+	},
+	{
+		url: '/signin',
+		component: Signin,
+		exact: false
+	},
+	{
+		url: '/finishaccount/:token',
+		component: FinishSignup,
+		exact: true
+	},
+	{
+		url: '/create-account',
+		component: Signup,
 		exact: true
 	},
 

@@ -3,15 +3,27 @@
 @import 'nhq/_base'
 
 .desktop
-	@import 'nhq/_desktop_header'
-	@import 'nhq/_desktop_body'
-	@import 'nhq/_desktop_footer'
-	@import 'nhq/_desktop_forms'
-	@import 'nhq/_desktop_elements'
+	@media screen
+		@import 'nhq/_desktop_header'
+		@import 'nhq/_desktop_body'
+		@import 'nhq/_desktop_footer'
+		@import 'nhq/_desktop_forms'
+		@import 'nhq/_desktop_elements'
 
 .mobile
-	@import 'nhq/_mobile_header'
-	@import 'nhq/_mobile_body'
-	@import 'nhq/_mobile_footer'
-	@import 'nhq/_mobile_forms'
-	@import 'nhq/_mobile_elements'
+	@media screen
+		@import 'nhq/_mobile_header'
+		@import 'nhq/_mobile_body'
+		@import 'nhq/_mobile_footer'
+		@import 'nhq/_mobile_forms'
+		@import 'nhq/_mobile_elements'
+
+@media print
+	#mother #bodyContainer #page
+		header
+			display: none !important
+		#pageContent
+			.contentBorder, .slideshowTop, .slideshow, .slideshowBottom, #fb-root, #breadcrumbs, .banner, #sidenav
+				display: none !important
+	#mother #footer
+		display: none !important

@@ -1,179 +1,38 @@
-import { MemberCreateError, SigninReturn } from 'common-lib';
 import * as React from 'react';
-import { MessageEventListener } from '../App';
-import Dialogue, { DialogueButtons } from './dialogues/Dialogue';
+import { RouteComponentProps, withRouter } from 'react-router';
+import Button from './Button';
 import './Signin.css';
 
-const errorMessages = {
-	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'Incorrect credentials',
-	[MemberCreateError.INVALID_SESSION_ID]: 'Invalid session',
-	[MemberCreateError.NONE]: '',
-	[MemberCreateError.PASSWORD_EXPIRED]: 'eServices password has expired',
-	[MemberCreateError.SERVER_ERROR]: 'Server error',
-	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'Unknown server error'
-};
-
-interface SigninLinkState {
-	open: boolean;
-	error: MemberCreateError;
+interface SigninLinkProps {
+	returnUrl?: string;
 }
 
-class SigninLink extends React.Component<
-	SigninReturn & {
-		authorizeUser: (arg: SigninReturn) => void;
-	},
-	SigninLinkState
-> {
-	public state: SigninLinkState = {
-		open: false,
-		error: MemberCreateError.NONE
-	};
+type FullSigninLinkProps = RouteComponentProps<{}> & SigninLinkProps;
 
-	private key: number | null = null;
-	private iframeRef: HTMLIFrameElement | null = null;
+class SigninLink extends React.Component<FullSigninLinkProps> {
+	public get returnUrl(): string {
+		return this.props.returnUrl === null || this.props.returnUrl === undefined
+			? window.location.pathname
+			: this.props.returnUrl;
+	}
 
-	constructor(
-		props: SigninReturn & {
-			authorizeUser: (arg: SigninReturn) => void;
-		}
-	) {
+	constructor(props: FullSigninLinkProps) {
 		super(props);
 
-		this.openDialogue = this.openDialogue.bind(this);
-		this.closeDialogue = this.closeDialogue.bind(this);
-		this.windowEvent = this.windowEvent.bind(this);
-	}
-
-	public componentDidUpdate(
-		props: SigninReturn & {
-			authorizeUser: (arg: SigninReturn) => void;
-		},
-		state: SigninLinkState
-	) {
-		// check if new user is valid, if so update state to close dialogue
-		if (state.open && state.error !== MemberCreateError.NONE) {
-			this.setState({
-				open: false,
-				error: MemberCreateError.NONE
-			});
-			if (this.iframeRef!.contentWindow) {
-				this.iframeRef!.contentWindow.postMessage('done submitting', '*');
-			}
-		}
-	}
-
-	public componentDidMount() {
-		this.key = MessageEventListener.subscribe(this.windowEvent);
-	}
-
-	public componentWillUnmount() {
-		MessageEventListener.unsubscribe(this.key!);
+		this.move = this.move.bind(this);
 	}
 
 	public render() {
 		return (
-			<>
-				<button onClick={this.openDialogue} className="linkButton">
-					{this.props.children}
-				</button>
-				<Dialogue
-					title={'Sign in'}
-					displayButtons={DialogueButtons.NONE}
-					open={this.state.open}
-					onClose={this.closeDialogue}
-				>
-					<div
-						style={{
-							maxWidth: 614
-						}}
-					>
-						Enter your eServices login information below to sign in to the site. Your
-						password is not permanently stored. By providing your eServices information
-						you agree to the terms and conditions located at&nbsp;
-						<a
-							href="https://www.capunit.com/eula"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							https://www.capunit.com/eula
-						</a>
-						<div className="signin-error">
-							{this.state.error !== MemberCreateError.NONE
-								? errorMessages[this.state.error as keyof typeof errorMessages]
-								: null}
-						</div>
-						<br />
-						<br />
-						<iframe
-							title="Signin Form"
-							src="/api/signin"
-							style={{
-								width: '100%',
-								height: 140,
-								padding: 0,
-								margin: 0,
-								border: 'none'
-							}}
-							ref={el => {
-								this.iframeRef = el as HTMLIFrameElement;
-							}}
-						/>
-					</div>
-				</Dialogue>
-			</>
+			<Button buttonType="none" onClick={this.move}>
+				{this.props.children}
+			</Button>
 		);
 	}
 
-	private openDialogue(e: React.MouseEvent<HTMLButtonElement>) {
-		e.preventDefault();
-		this.setState({
-			open: true
-		});
-	}
-
-	private closeDialogue() {
-		this.setState({
-			open: false
-		});
-	}
-
-	private windowEvent(e: MessageEvent) {
-		try {
-			const data = JSON.parse(e.data) as SigninReturn;
-			if (typeof data.error === 'number' && this.state.open) {
-				if (
-					data.error === MemberCreateError.NONE &&
-					typeof data.sessionID === 'string' &&
-					typeof data.member === 'object' &&
-					// typeof null === 'object'
-					data.member !== null
-				) {
-					localStorage.setItem('sessionID', data.sessionID);
-					this.setState(
-						{
-							error: MemberCreateError.NONE,
-							open: false
-						},
-						() => {
-							this.props.authorizeUser({
-								error: data.error,
-								member: data.member,
-								sessionID: data.sessionID,
-								notificationCount: 0,
-								taskCount: 0
-							});
-						}
-					);
-				} else {
-					this.setState({
-						error: data.error
-					});
-				}
-			}
-		} catch (e) {
-			// ignore
-		}
+	private move(): void {
+		this.props.history.push('/signin?returnurl=' + encodeURIComponent(this.returnUrl));
 	}
 }
 
-export default SigninLink;
+export default withRouter(SigninLink);

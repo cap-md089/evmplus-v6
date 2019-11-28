@@ -1,13 +1,18 @@
+import { MemberPermissions } from 'common-lib';
 import * as React from 'react';
+import Button from '../../../components/Button';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
-import Select from '../../../components/form-inputs/Select';
-import SimpleForm, { Label, TextBox } from '../../../components/forms/SimpleForm';
+import SimpleForm, {
+	PermissionsEdit,
+	TextBox,
+	Title,
+	Divider,
+	Label
+} from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import MemberBase from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
-import Button from '../../../components/Button';
-import { MemberPermissions } from 'common-lib';
 
 interface PermissionAssignState {
 	members: MemberBase[] | null;
@@ -39,26 +44,56 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		const [members, availableMembers] = await Promise.all([
-			this.props.account.getMembersWithPermissions(this.props.member),
-			this.props.account.getMembers(this.props.member)
-		]);
+		const availableMembers = await this.props.account.getMembers(this.props.member);
 
-		for (const i in members) {
-			if (members.hasOwnProperty(i)) {
-				for (const j in availableMembers) {
-					if (members[i].is(availableMembers[j])) {
-						availableMembers.splice(parseInt(j, 10), 1);
-						break;
-					}
+		const membersWithPermissions = [];
+
+		for (const j in availableMembers) {
+			if (availableMembers.hasOwnProperty(j)) {
+				const hasPermissions =
+					Object.values(availableMembers[j].permissions).reduce(
+						(prev, curr) => prev + curr,
+						0
+					) !== 0;
+				if (hasPermissions) {
+					const member = availableMembers.splice(parseInt(j, 10), 1)[0];
+					membersWithPermissions.push(member);
 				}
 			}
 		}
 
 		this.setState({
-			members,
+			members: membersWithPermissions,
 			availableMembers
 		});
+
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/admin',
+				text: 'Administration'
+			},
+			{
+				target: '/admin/permissions',
+				text: 'Permission Management'
+			}
+		]);
+
+		this.props.updateSideNav([
+			...membersWithPermissions.map(member => ({
+				target: Title.GenerateID(member.getFullName()),
+				text: member.getFullName(),
+				type: 'Reference' as const
+			})),
+			{
+				target: 'bottom',
+				text: 'Bottom',
+				type: 'Reference'
+			}
+		]);
 	}
 
 	public render() {
@@ -84,12 +119,8 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		}
 
 		const children = this.state.members.flatMap((value, index) => [
-			<Label key={index * 3}>{value.getFullName()}</Label>,
-			<Select
-				name={`permissions-${value.getFullName()}`}
-				key={index * 3 + 1}
-				labels={['Member', 'Cadet Staff', 'Manager', 'Admin']}
-			/>,
+			<Title key={index * 3}>{value.getFullName()}</Title>,
+			<PermissionsEdit name={`permissions-${value.getFullName()}`} key={index * 3 + 1} />,
 			<TextBox key={index * 3 + 2}>
 				<Button onClick={this.getRemover(index)} buttonType={'none'}>
 					Remove {value.getFullName()}
@@ -108,14 +139,20 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				}}
 				children={[
 					...children,
-					<TextBox key={children.length}>
+					<Divider key={children.length} />,
+					<Label key={children.length + 1} />,
+					<TextBox key={children.length + 2}>
 						<MemberSelectorButton
 							memberList={Promise.resolve(this.state.availableMembers)}
 							title="Select a member"
 							displayButtons={DialogueButtons.OK_CANCEL}
 							onMemberSelect={this.addMember}
 						>
-							Select a member
+							<span id="bottom">
+								{children.length === 0
+									? 'Select a member'
+									: 'Select another member'}
+							</span>
 						</MemberSelectorButton>
 					</TextBox>
 				]}
