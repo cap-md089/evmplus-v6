@@ -1,0 +1,19 @@
+@media screen {
+	.instructions {
+		display: block;
+	}
+
+	.signin-sheet {
+		display: none;
+	}
+}
+ 
+@media print {
+	.instructions {
+		display: none;
+	}
+
+	.signin-sheet {
+		display: block;
+	}
+}

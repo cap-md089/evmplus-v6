@@ -19,3 +19,16 @@
 .partTimeSignupDisplay .timeDuring {
 	background: #0b375b;
 }
+
+.cadetroster {
+	background: white;
+	width: 100%;
+}
+
+@media print {
+	header, footer, aside, nav, form, iframe {
+		display: none;
+	}
+	* { color: black; background: white; }
+	table { font-size: 80% }
+}

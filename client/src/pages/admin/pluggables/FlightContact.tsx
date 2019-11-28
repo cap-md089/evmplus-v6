@@ -115,7 +115,7 @@ const normalizeRankInput = (rank: string) =>
 
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
-	availableMembers: null | (CAPMemberClasses[]);
+	availableMembers: null | CAPMemberClasses[];
 	sortFunction: RadioReturn<SortFunction>;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;

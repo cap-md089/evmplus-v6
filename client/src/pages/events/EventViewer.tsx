@@ -5,7 +5,8 @@ import {
 	NewAttendanceRecord,
 	NHQMemberReference,
 	PointOfContactType,
-	ProspectiveMemberReference
+	ProspectiveMemberReference,
+	NullMemberReference
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -21,9 +22,10 @@ import { Activities, RequiredForms, Uniforms } from '../../components/forms/usab
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
 import Event from '../../lib/Event';
-import MemberBase from '../../lib/Members';
+import MemberBase, { CAPMemberClasses } from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
+import Button from '../../components/Button';
 
 const noop = () => void 0;
 
@@ -32,6 +34,9 @@ interface EventViewerState {
 	error?: string;
 	previousUpdatedMember: MemberReference;
 	newTime: number;
+	cadetRoster: CAPMemberClasses[] | null;
+	seniorRoster: CAPMemberClasses[] | null;
+	eventRegistry: boolean;
 }
 
 type EventViewerProps = PageProps<{ id: string }>;
@@ -79,7 +84,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		previousUpdatedMember: {
 			type: 'Null'
 		},
-		newTime: 0
+		newTime: 0,
+		cadetRoster: null,
+		seniorRoster: null,
+		eventRegistry: false
 	};
 
 	constructor(props: EventViewerProps) {
@@ -195,231 +203,270 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		return (
-			<div>
-				{member && member.isPOCOf(event) ? (
-					<>
-						<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
-						{' | '}
-						<DialogueButtonForm<{ newTime: number }>
-							buttonText="Move event"
-							buttonClass="underline-button"
-							buttonType="none"
-							displayButtons={DialogueButtons.YES_NO_CANCEL}
-							onYes={this.moveEvent}
-							onNo={this.copyMoveEvent}
-							title="Move event"
-							labels={['Move event', 'Copy move event', 'Cancel']}
-							values={{
-								newTime: event.startDateTime
-							}}
-						>
-							<TextBox name="null">
-								<span
-									style={{
-										lineHeight: '1px'
-									}}
-								>
-									<span style={{ color: 'red' }}>WARNING:</span> moving this event
-									may cause confusion.
-									<br />
-									Consider instead copying this event, and marking
-									<br />
-									this event as cancelled.
-									<br />
-									<br />
-									Or, click the 'Copy move button' to perform this
-									<br />
-									action automatically
-								</span>
-							</TextBox>
-
-							<Label>New start time of event</Label>
-							<DateTimeInput
-								name="newTime"
-								date={true}
-								time={true}
-								originalTimeZoneOffset={'America/New_York'}
-							/>
-						</DialogueButtonForm>
-						{' | '}
-						<DialogueButtonForm<{ newTime: number }>
-							buttonText="Copy event"
-							buttonType="none"
-							buttonClass="underline-button"
-							displayButtons={DialogueButtons.OK_CANCEL}
-							onOk={this.copyEvent}
-							title="Move event"
-							labels={['Copy event', 'Cancel']}
-							values={{
-								newTime: event.startDateTime
-							}}
-						>
-							<Label>Start time of new event</Label>
-							<DateTimeInput
-								name="newTime"
-								date={true}
-								time={true}
-								originalTimeZoneOffset={'America/New_York'}
-							/>
-						</DialogueButtonForm>
-						{' | '}
-						<DialogueButton
-							buttonText="Delete event"
-							buttonType="none"
-							buttonClass="underline-button"
-							displayButtons={DialogueButtons.OK_CANCEL}
-							onOk={this.deleteEvent}
-							title="Delete event"
-							labels={['Yes', 'No']}
-						>
-							Really delete event?
-						</DialogueButton>
-						{' | '}
-						<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-						<br />
-						<br />
-					</>
-				) : null}
-				<div id="information">
-					<strong>Event: </strong> {event.name}
-					<br />
-					<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
-					<br />
-					<strong>Meet</strong> at {formatDate(event.meetDateTime)} at {event.location}
-					<br />
-					<strong>Start</strong> at {formatDate(event.startDateTime)} at {event.location}
-					<br />
-					<strong>End</strong> at {formatDate(event.endDateTime)}
-					<br />
-					<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
-					{event.pickupLocation}
-					<br />
-					<br />
-					<strong>Transportation provided:</strong>{' '}
-					{event.transportationProvided ? 'YES' : 'NO'}
-					<br />
-					{event.transportationProvided ? (
+			<>
+				<div className="eventviewerroot">
+					{member && member.isPOCOf(event) ? (
 						<>
-							<strong>Transportation Description:</strong>{' '}
-							{event.transportationDescription}
+							<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Move event"
+								buttonClass="underline-button"
+								buttonType="none"
+								displayButtons={DialogueButtons.YES_NO_CANCEL}
+								onYes={this.moveEvent}
+								onNo={this.copyMoveEvent}
+								title="Move event"
+								labels={['Move event', 'Copy move event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<TextBox name="null">
+									<span
+										style={{
+											lineHeight: '1px'
+										}}
+									>
+										<span style={{ color: 'red' }}>WARNING:</span> moving this
+										event may cause confusion.
+										<br />
+										Consider instead copying this event, and marking
+										<br />
+										this event as cancelled.
+										<br />
+										<br />
+										Or, click the 'Copy move button' to perform this
+										<br />
+										action automatically
+									</span>
+								</TextBox>
+
+								<Label>New start time of event</Label>
+								<DateTimeInput
+									name="newTime"
+									date={true}
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Copy event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.copyEvent}
+								title="Move event"
+								labels={['Copy event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<Label>Start time of new event</Label>
+								<DateTimeInput
+									name="newTime"
+									date={true}
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButton
+								buttonText="Delete event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.deleteEvent}
+								title="Delete event"
+								labels={['Yes', 'No']}
+							>
+								Really delete event?
+							</DialogueButton>
+							{' | '}
+							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
+							{' | '}
+							<Button buttonType="none">Print Cadet Roster</Button>
+							{' | '}
+							<Button buttonType="none">Print Senior Roster</Button>
+							{' | '}
+							<Button buttonType="none">Print Event Registry</Button>
+							<br />
 							<br />
 						</>
 					) : null}
-					<strong>Uniform:</strong>{' '}
-					{parseMultCheckboxReturn(event.uniform, Uniforms, false)}
-					<br />
-					<strong>Comments:</strong> {event.comments}
-					<br />
-					<strong>Activity:</strong>{' '}
-					{parseMultCheckboxReturn(event.activity, Activities, true)}
-					<br />
-					<strong>Required forms:</strong>{' '}
-					{parseMultCheckboxReturn(event.requiredForms, RequiredForms, true)}
-					<br />
-					<strong>Event status:</strong> {eventStatus(event.status)}
-					<br />
-					<br />
-					<div>
-						{event.pointsOfContact.map((poc, i) =>
-							poc.type === PointOfContactType.INTERNAL ? (
-								<div key={i}>
-									<b>CAP Point of Contact: </b>
-									{poc.name}
-									<br />
-									{!!poc.email ? (
-										<>
-											<b>CAP Point of Contact Email: </b>
-											{poc.email}
-											<br />
-										</>
-									) : null}
-									{!!poc.phone ? (
-										<>
-											<b>CAP Point of Contact Phone: </b>
-											{poc.phone}
-											<br />
-										</>
-									) : null}
-									<br />
-								</div>
-							) : (
-								<div key={i}>
-									<b>External Point of Contact: </b>
-									{poc.name}
-									<br />
-									{poc.email !== '' ? (
-										<>
-											<b>External Point of Contact Email: </b>
-											{poc.email}
-											<br />
-										</>
-									) : null}
-									{poc.phone !== '' ? (
-										<>
-											<b>External Point of Contact Phone: </b>
-											{poc.phone}
-											<br />
-										</>
-									) : null}
-									<br />
-								</div>
-							)
-						)}
-					</div>
-				</div>
-				{member !== null ? (
-					<div id="signup">
-						{event.canSignUpForEvent(this.props.member) ? (
-							<AttendanceForm
-								account={this.props.account}
-								event={event}
-								member={member}
-								updateRecord={this.addAttendanceRecord}
-								updated={false}
-								clearUpdated={this.clearPreviousMember}
-								removeRecord={noop}
-							/>
+					<div id="information">
+						<strong>Event: </strong> {event.name}
+						<br />
+						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
+						<br />
+						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>Start</strong> at {formatDate(event.startDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>End</strong> at {formatDate(event.endDateTime)}
+						<br />
+						<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
+						{event.pickupLocation}
+						<br />
+						<br />
+						<strong>Transportation provided:</strong>{' '}
+						{event.transportationProvided ? 'YES' : 'NO'}
+						<br />
+						{event.transportationProvided ? (
+							<>
+								<strong>Transportation Description:</strong>{' '}
+								{event.transportationDescription}
+								<br />
+							</>
 						) : null}
-						<h2 id="attendance">Attendance</h2>
-						<DropDownList
-							titles={val =>
-								`${
-									(val.memberID as
-										| NHQMemberReference
-										| ProspectiveMemberReference).id
-								}: ${val.memberName}`
-							}
-							values={event.attendance}
-							onlyOneOpen={true}
-						>
-							{(val, i) => (
-								<AttendanceItemView
-									attendanceRecord={val}
-									clearUpdated={this.clearPreviousMember}
-									owningAccount={this.props.account}
-									owningEvent={event}
-									member={member}
-									removeAttendance={this.removeAttendanceRecord}
-									updateAttendance={this.addAttendanceRecord}
-									updated={MemberBase.AreMemberReferencesTheSame(
-										this.state.previousUpdatedMember,
-										val.memberID
-									)}
-									key={i}
-								/>
+						<strong>Uniform:</strong>{' '}
+						{parseMultCheckboxReturn(event.uniform, Uniforms, false)}
+						<br />
+						<strong>Comments:</strong> {event.comments}
+						<br />
+						<strong>Activity:</strong>{' '}
+						{parseMultCheckboxReturn(event.activity, Activities, true)}
+						<br />
+						<strong>Required forms:</strong>{' '}
+						{parseMultCheckboxReturn(event.requiredForms, RequiredForms, true)}
+						<br />
+						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						<br />
+						<div>
+							{event.pointsOfContact.map((poc, i) =>
+								poc.type === PointOfContactType.INTERNAL ? (
+									<div key={i}>
+										<b>CAP Point of Contact: </b>
+										{poc.name}
+										<br />
+										{!!poc.email ? (
+											<>
+												<b>CAP Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{!!poc.phone ? (
+											<>
+												<b>CAP Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								) : (
+									<div key={i}>
+										<b>External Point of Contact: </b>
+										{poc.name}
+										<br />
+										{poc.email !== '' ? (
+											<>
+												<b>External Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{poc.phone !== '' ? (
+											<>
+												<b>External Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								)
 							)}
-						</DropDownList>
-						{event.attendance.length === 0 ? <div>No attendance records</div> : null}
+						</div>
 					</div>
-				) : (
-					<SigninLink
-						authorizeUser={this.props.authorizeUser}
-						{...this.props.fullMemberDetails}
-					>
-						Sign in to see more information
-					</SigninLink>
-				)}
-			</div>
+					{member !== null ? (
+						<div id="signup">
+							{event.canSignUpForEvent(this.props.member) ? (
+								<AttendanceForm
+									account={this.props.account}
+									event={event}
+									member={member}
+									updateRecord={this.addAttendanceRecord}
+									updated={false}
+									clearUpdated={this.clearPreviousMember}
+									removeRecord={noop}
+								/>
+							) : null}
+							<h2 id="attendance">Attendance</h2>
+							<DropDownList
+								titles={val =>
+									`${
+										(val.memberID as
+											| NHQMemberReference
+											| ProspectiveMemberReference).id
+									}: ${val.memberName}`
+								}
+								values={event.attendance}
+								onlyOneOpen={true}
+							>
+								{(val, i) => (
+									<AttendanceItemView
+										attendanceRecord={val}
+										clearUpdated={this.clearPreviousMember}
+										owningAccount={this.props.account}
+										owningEvent={event}
+										member={member}
+										removeAttendance={this.removeAttendanceRecord}
+										updateAttendance={this.addAttendanceRecord}
+										updated={MemberBase.AreMemberReferencesTheSame(
+											this.state.previousUpdatedMember,
+											val.memberID
+										)}
+										key={i}
+									/>
+								)}
+							</DropDownList>
+							{event.attendance.length === 0 ? (
+								<div>No attendance records</div>
+							) : null}
+						</div>
+					) : (
+						<SigninLink
+							authorizeUser={this.props.authorizeUser}
+							{...this.props.fullMemberDetails}
+						>
+							Sign in to see more information
+						</SigninLink>
+					)}
+				</div>
+				<div className="cadetroster">
+					{this.state.cadetRoster !== null ? (
+						<div>
+							<img
+								className="caplogobw"
+								src="/images/CAP_Seal_Monochrome.PNG"
+								alt="CAP Logo"
+							/>
+							<h2>Cadet Attendance Log</h2>
+							<strong>Date:</strong> {formatDate(event.startDateTime)}{' '}
+							<strong>Location:</strong> CAP St. Marys
+							<strong>Uniform: </strong>
+							<table>
+								<tr>
+									<th>First</th>
+									<th>Second</th>
+									<th>Third</th>
+								</tr>
+								<tr>
+									<td>Data 1</td>
+									<td>Data 2</td>
+									<td>Data 3</td>
+								</tr>
+							</table>
+						</div>
+					) : null}
+				</div>
+			</>
 		);
 	}
 
@@ -512,5 +559,37 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		await this.state.event.delete(this.props.member);
 
 		this.props.routeProps.history.push(`/calendar`);
+	}
+
+	private async fetchCadetRoster() {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			throw new Error('Attempting to delete an event without authorization');
+		}
+		const roster = await this.props.account.getMembers();
+
+		const cadetRoster = roster.filter(member => !member.seniorMember);
+		this.setState({ cadetRoster });
+	}
+
+	private async fetchSeniorRoster() {
+		if (!this.state.event) {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			throw new Error('Attempting to delete an event without authorization');
+		}
+		const roster = await this.props.account.getMembers();
+
+		const seniorRoster = roster.filter(member => member.seniorMember);
+		this.setState({ seniorRoster });
+	}
+
+	private fetchEventRegistry() {
+		// do stuff
 	}
 }
