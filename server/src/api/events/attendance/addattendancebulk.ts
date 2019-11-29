@@ -1,4 +1,4 @@
-import { AttendanceRecord, NewAttendanceRecord, Permissions } from 'common-lib';
+import { api, NewAttendanceRecord, Permissions, right } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
@@ -76,6 +76,6 @@ export default asyncErrorHandler(
 
 		await event.save();
 
-		json<AttendanceRecord[]>(res, event.attendance);
+		json<api.events.attendance.AddBulk>(res, right(event.attendance));
 	}
 );

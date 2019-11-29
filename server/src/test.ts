@@ -1,15 +1,15 @@
-import conf from './conf';
+import conftest from './conf.test';
 import { getTestTools, ImportCAPWATCHFile } from './lib/internals';
 
 (async () => {
-	const { schema, session } = await getTestTools(conf);
+	const { schema, session } = await getTestTools(conftest);
 
 	const capImport2 = ImportCAPWATCHFile(
 		'/home/arioux/Downloads/2018-12-12_546319-890.zip',
 		schema,
 		session,
 		2529,
-		['Member.txt']
+		['Organization.txt', 'OFlight.txt']
 	);
 
 	for await (const i of capImport2) {
@@ -21,7 +21,7 @@ import { getTestTools, ImportCAPWATCHFile } from './lib/internals';
 		schema,
 		session,
 		916,
-		['Member.txt']
+		['Organization.txt', 'OFlight.txt']
 	);
 
 	for await (const i of capImport) {

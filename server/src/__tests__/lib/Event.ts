@@ -142,7 +142,8 @@ describe('Event', () => {
 					orgIDs: [916],
 					paid: true,
 					paidEventLimit: 5,
-					unpaidEventLimit: 500
+					unpaidEventLimit: 500,
+					aliases: []
 				},
 				schema
 			);

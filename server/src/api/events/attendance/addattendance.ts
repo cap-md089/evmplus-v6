@@ -1,6 +1,4 @@
-import { NewAttendanceRecord } from 'common-lib';
-import { Permissions } from 'common-lib';
-import { Response } from 'express';
+import { just, NewAttendanceRecord, none, Permissions } from 'common-lib';
 import {
 	asyncErrorHandler,
 	Event,
@@ -11,7 +9,7 @@ import {
 } from '../../../lib/internals';
 
 export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res: Response) => {
+	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res, next) => {
 		let event: Event;
 		let member: MemberBase;
 
@@ -19,20 +17,26 @@ export default asyncErrorHandler(
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
 			res.status(404);
-			res.end();
+			res.json(just('Could not find event'));
 			return;
 		}
 
-		if (
-			isValidMemberReference(req.body.memberID) &&
-			(req.member.isPOCOf(event) ||
-				req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
-		) {
-			member =
-				(await resolveReference(req.body.memberID, req.account, req.mysqlx, false)) ||
-				req.member;
-		} else {
-			member = req.member;
+		try {
+			if (
+				isValidMemberReference(req.body.memberID) &&
+				(req.member.isPOCOf(event) ||
+					req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
+			) {
+				member =
+					(await resolveReference(req.body.memberID, req.account, req.mysqlx, false)) ||
+					req.member;
+			} else {
+				member = req.member;
+			}
+		} catch (e) {
+			res.status(500);
+			res.json(just('Could not get member specified'));
+			return next(e);
 		}
 
 		event.addMemberToAttendance(
@@ -47,9 +51,14 @@ export default asyncErrorHandler(
 			member
 		);
 
-		await event.save();
+		try {
+			await event.save();
 
-		res.status(204);
-		res.end();
+			res.status(204);
+			res.json(none());
+		} catch (e) {
+			res.status(500);
+			res.json(just('Could not save attendance information'));
+		}
 	}
 );

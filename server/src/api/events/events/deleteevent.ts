@@ -1,3 +1,4 @@
+import { just, none } from 'common-lib';
 import { Response } from 'express';
 import { asyncErrorHandler, Event, MemberRequest } from '../../../lib/internals';
 
@@ -18,8 +19,12 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res:
 		return;
 	}
 
-	await event.delete();
+	try {
+		await event.delete();
 
-	res.status(204);
-	res.end();
+		res.json(none());
+	} catch (e) {
+		res.status(400);
+		res.json(just(e.message || e));
+	}
 });

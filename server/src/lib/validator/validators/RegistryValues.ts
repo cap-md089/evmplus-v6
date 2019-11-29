@@ -79,6 +79,18 @@ class WebsiteValidator extends Validator<WebsiteInformation> {
 			},
 			PhotoLibraryImagesPerPage: {
 				validator: Validator.Number
+			},
+			Timezone: {
+				validator: Validator.OneOfStrict(
+					'America/Anchorage',
+					'America/Arizona',
+					'America/New_York',
+					'America/Chicago',
+					'America/Denver',
+					'America/Los_Angeles',
+					'America/Hawaii',
+					'America/Puerto_Rico'
+				)
 			}
 		});
 	}

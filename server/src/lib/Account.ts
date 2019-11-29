@@ -19,7 +19,6 @@ import {
 	CAPMemberClasses,
 	CAPNHQMember,
 	CAPProspectiveMember,
-	collectResults,
 	Event,
 	File,
 	findAndBind,
@@ -64,7 +63,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				const account = await Account.Get(accountID, req.mysqlx);
 				req.account = account;
 			} catch (e) {
-				if (e.message.startsWith('Unknown account: ')) {
+				if (e.message && e.message.startsWith('Unknown account: ')) {
 					res.status(400);
 				} else {
 					res.status(500);
@@ -102,17 +101,20 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			'Accounts'
 		);
 
-		const results = await collectResults(
-			findAndBind(accountCollection, {
-				id
-			})
-		);
+		let result = null;
+		for await (const account of generateResults(accountCollection.find('true'))) {
+			if (account.id === id || account.aliases.includes(id)) {
+				if (result !== null) {
+					throw new Error('Unknown account: ' + id);
+				}
 
-		if (results.length !== 1) {
-			throw new Error('Unknown account: ' + id);
+				result = account;
+			}
 		}
 
-		const result = results[0];
+		if (result === null) {
+			throw new Error('Unknown account: ' + id);
+		}
 
 		const expired = +DateTime.utc() > result.expires;
 		const validPaid = !expired && result.paid;
@@ -128,6 +130,14 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	}
 
 	public static async Create(values: RawAccountObject, schema: mysql.Schema) {
+		try {
+			await Account.Get(values.id, schema);
+
+			throw new Error('Cannot create duplicate account');
+		} catch (e) {
+			// Do nothing. An error is good
+		}
+
 		const accountCollection = schema.getCollection<RawAccountObject>('Accounts');
 
 		const newValues: RawAccountObject = {
@@ -139,7 +149,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			orgIDs: values.orgIDs,
 			paid: values.paid,
 			paidEventLimit: values.paidEventLimit,
-			unpaidEventLimit: values.unpaidEventLimit
+			unpaidEventLimit: values.unpaidEventLimit,
+			aliases: values.aliases
 		};
 
 		const expired = +DateTime.utc() > values.expires;
@@ -203,6 +214,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 * The main organization for this account
 	 */
 	public mainOrg: number;
+	/**
+	 * The different account IDs that can reference this one
+	 */
+	public aliases: string[];
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -223,6 +238,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.validPaid = data.validPaid;
 		this.orgIDs = data.orgIDs;
 		this.id = data.id;
+		this.aliases = data.aliases;
 	}
 
 	public buildURI(...identifiers: string[]) {
@@ -365,7 +381,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	}
 
 	public async save(): Promise<void> {
-		const accountCollection = this.schema.getCollection('Accounts');
+		const accountCollection = this.schema.getCollection<RawAccountObject>('Accounts');
 
 		await accountCollection.replaceOne(this._id, {
 			adminIDs: this.adminIDs,
@@ -376,7 +392,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			orgIDs: this.orgIDs,
 			paid: this.paid,
 			paidEventLimit: this.paidEventLimit,
-			unpaidEventLimit: this.unpaidEventLimit
+			unpaidEventLimit: this.unpaidEventLimit,
+			aliases: this.aliases
 		});
 	}
 
@@ -391,7 +408,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		paid: this.paid,
 		paidEventLimit: this.paidEventLimit,
 		unpaidEventLimit: this.unpaidEventLimit,
-		validPaid: this.validPaid
+		validPaid: this.validPaid,
+		aliases: this.aliases
 	});
 
 	public getSquadronName(): string {

@@ -107,7 +107,8 @@ export async function getTestTools(testconf: typeof Configuration) {
 		orgIDs: [916, 2529],
 		paid: true,
 		paidEventLimit: 500,
-		unpaidEventLimit: 5
+		unpaidEventLimit: 5,
+		aliases: ['test']
 	};
 
 	const conn = testconf.database.connection;

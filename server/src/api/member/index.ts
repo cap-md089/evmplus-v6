@@ -106,6 +106,7 @@ router.post(
 	'/generateattendance/other',
 	memberMiddleware,
 	tokenMiddleware,
+	permissionMiddleware('PromotionManagement'),
 	Validator.BodyExpressMiddleware(Validator.MemberReference),
 	forcadet
 );

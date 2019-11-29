@@ -1,6 +1,7 @@
 import { Schema } from '@mysql/xdevapi';
 import { DatabaseInterface, NoSQLDocument, RegistryValues } from 'common-lib';
 import { Account, collectResults, findAndBind, RegistryValueValidator } from './internals';
+import { getUnitTimezoneGuess } from './Organizations';
 
 export default class Registry implements DatabaseInterface<RegistryValues> {
 	public static async Get(account: Account, schema: Schema): Promise<Registry> {
@@ -43,7 +44,8 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 				Name: '',
 				Separator: ' - ',
 				ShowUpcomingEventCount: 7,
-				PhotoLibraryImagesPerPage: 20
+				PhotoLibraryImagesPerPage: 20,
+				Timezone: await getUnitTimezoneGuess(schema, account.mainOrg).fullJoin()
 			},
 			RankAndFile: {
 				Flights: ['Alpha', 'Bravo', 'Charlie']

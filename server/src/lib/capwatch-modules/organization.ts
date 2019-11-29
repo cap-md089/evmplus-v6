@@ -20,10 +20,7 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (fileData, sch
 	const organizationCollection = schema.getCollection<NHQ.Organization>('NHQ_Organization');
 
 	try {
-		await organizationCollection
-			.remove('ORGID = :ORGID')
-			.bind('ORGID', orgid)
-			.execute();
+		await organizationCollection.remove('true').execute();
 	} catch (e) {
 		console.warn(e);
 		return CAPWATCHError.CLEAR;
@@ -32,7 +29,7 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (fileData, sch
 	for (const organization of fileData) {
 		try {
 			const values = {
-				ORGID: orgid,
+				ORGID: parseInt(organization.ORGID.toString(), 10),
 				Region: organization.Region,
 				Wing: organization.Wing,
 				Unit: organization.Unit,
