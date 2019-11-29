@@ -36,7 +36,10 @@ const isFlightStaff = (member: MemberBase | undefined | null) =>
 				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Commander') ||
 				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Sergeant')
 		)
-		.cata(() => false, () => true);
+		.cata(
+			() => false,
+			() => true
+		);
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
