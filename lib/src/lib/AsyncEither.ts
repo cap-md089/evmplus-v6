@@ -10,7 +10,10 @@ export class AsyncEither<L, R> {
 	public static Right = <L, R>(value: R | Promise<R>, errorValue: L) => {
 		return new AsyncEither<L, R>(
 			isPromise(value)
-				? value.then(v => right<L, R>(v), () => left(errorValue))
+				? value.then(
+						v => right<L, R>(v),
+						() => left(errorValue)
+				  )
 				: Promise.resolve(right<L, R>(value)),
 			errorValue
 		);
@@ -21,7 +24,11 @@ export class AsyncEither<L, R> {
 		public readonly errorValue: L
 	) {}
 
-	public isLeft = (): Promise<boolean> => this.value.then(eith => eith.isLeft(), () => true);
+	public isLeft = (): Promise<boolean> =>
+		this.value.then(
+			eith => eith.isLeft(),
+			() => true
+		);
 
 	public isRight = (): Promise<boolean> => this.value.then(eith => eith.isRight());
 
@@ -37,28 +44,42 @@ export class AsyncEither<L, R> {
 						: Promise.resolve((val as any) as Either<L, R2>)
 				)
 				.catch(() => left<L, R2>(errorValue)),
-			this.errorValue
+			errorValue
 		);
 
-	public flatMap = <R2>(f: (val: R) => AsyncEither<L, R2>): AsyncEither<L, R2> =>
+	public flatMap = <R2>(
+		f: (val: R) => AsyncEither<L, R2>,
+		errorValue: L = this.errorValue
+	): AsyncEither<L, R2> =>
 		new AsyncEither(
 			this.value
 				.then(val => val.cata(error => asyncLeft<L, R2>(error), f))
 				.then(val => val.value)
-				.catch(() => left<L, R2>(this.errorValue)),
-			this.errorValue
+				.catch(() => left<L, R2>(errorValue)),
+			errorValue
 		);
 
 	public toSome = (): AsyncMaybe<R> =>
 		AsyncMaybe.Maybe(
-			this.value.then(eith => eith.cata(() => null, val => val)).catch(() => null)
+			this.value
+				.then(eith =>
+					eith.cata(
+						() => null,
+						val => val
+					)
+				)
+				.catch(() => null)
 		);
 
-	public join = (): Promise<Either<L, R>> =>
-		this.value
+	public join = (): Promise<Either<L, R>> => this.value;
 
 	public fullJoin = (): Promise<R> =>
-		this.value.then(eith => eith.cata(l => Promise.reject(l), r => Promise.resolve(r)));
+		this.value.then(eith =>
+			eith.cata(
+				l => Promise.reject(l),
+				r => Promise.resolve(r)
+			)
+		);
 
 	public cata = <T>(lf: (v: L) => Promise<T> | T, rf: (v: R) => Promise<T> | T): Promise<T> =>
 		this.value.then(eith => eith.cata(lf, rf));
@@ -76,7 +97,7 @@ export class AsyncEither<L, R> {
 					)
 				)
 				.catch(() => left<L, R>(errorValue)),
-			this.errorValue
+			errorValue
 		);
 }
 

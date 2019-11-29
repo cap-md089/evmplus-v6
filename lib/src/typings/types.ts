@@ -684,13 +684,6 @@ export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, 
 
 export type Errors = ClientErrorObject | ServerErrorObject;
 
-export interface HTTPError {
-	/**
-	 * A simple way to return errors as per the W3C spec
-	 */
-	errorMessage: string;
-}
-
 /**
  * Used when requesting or editing an account
  */

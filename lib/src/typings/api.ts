@@ -22,74 +22,93 @@ import {
 
 // tslint:disable:no-namespace
 
+export const noneHTTPError: api.HTTPError = {
+	code: 200,
+	error: 'Operation successful'
+}
+
 export namespace api {
-	export type ErrorMessage = string;
+	export interface HTTPError {
+		code: number;
+		error: any;
+	}
 
 	export namespace errors {
-		export type ClientError = ClientErrorObject;
+		export type ClientError = EitherObj<HTTPError, ClientErrorObject>;
 	}
 
 	export namespace events {
 		export namespace attendance {
-			export type Add = MaybeObj<ErrorMessage>;
+			export type Add = MaybeObj<HTTPError>;
 
-			export type AddBulk = EitherObj<ErrorMessage, AttendanceRecord[]>;
+			export type AddBulk = EitherObj<HTTPError, AttendanceRecord[]>;
 
-			export type Delete = EitherObj<ErrorMessage, AttendanceRecord[]>;
+			export type Delete = EitherObj<HTTPError, AttendanceRecord[]>;
 
-			export type GetAttendance = EitherObj<ErrorMessage, AttendanceRecord[]>;
+			export type GetAttendance = EitherObj<HTTPError, AttendanceRecord[]>;
 
-			export type ModifyAttendance = MaybeObj<ErrorMessage>;
+			export type ModifyAttendance = MaybeObj<HTTPError>;
 		}
 
 		export namespace debrief {
-			export type Add = EitherObj<ErrorMessage, DebriefItem[]>;
+			export type Add = EitherObj<HTTPError, DebriefItem[]>;
 
-			export type Delete = EitherObj<ErrorMessage, DebriefItem[]>;
+			export type Delete = EitherObj<HTTPError, DebriefItem[]>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
 		export namespace events {
-			export type Add = EitherObj<ErrorMessage, EventObject>;
+			export interface EventViewerData {
+				event: EventObject;
+				attendees: {
+					[key: string]: MaybeObj<Member>;
+				};
+				organizations: {
+					[key: string]: AccountObject;
+				};
+			}
 
-			export type Copy = EitherObj<ErrorMessage, EventObject>;
+			export type Add = EitherObj<HTTPError, EventObject>;
 
-			export type Get = EitherObj<ErrorMessage, EventObject>;
+			export type Copy = EitherObj<HTTPError, EventObject>;
 
-			export type Link = EitherObj<ErrorMessage, EventObject>;
+			export type Get = EitherObj<HTTPError, EventObject>;
 
-			export type ListUpcoming = EitherObj<ErrorMessage, EventObject[]>;
+			export type GetEventViewerData = EitherObj<HTTPError, EventViewerData>;
 
-			// Contains error information
-			export type Delete = MaybeObj<ErrorMessage>;
+			export type Link = EitherObj<HTTPError, EventObject>;
+
+			export type ListUpcoming = EventObject[];
+
+			export type Delete = MaybeObj<HTTPError>;
 		}
 	}
 
 	export namespace files {
 		export namespace children {
-			export type GetFiles<T extends FileObject> = EitherObj<ErrorMessage, T[]>;
+			export type GetFiles<T extends FileObject> = T[];
 
-			export type AddChild = MaybeObj<ErrorMessage>;
+			export type AddChild = MaybeObj<HTTPError>;
 
-			export type RemoveChild = MaybeObj<ErrorMessage>;
+			export type RemoveChild = MaybeObj<HTTPError>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
 		export namespace files {
-			export type CreateFolder = EitherObj<ErrorMessage, FullFileObject>;
+			export type CreateFolder = EitherObj<HTTPError, FullFileObject>;
 
-			export type GetFile<T extends FileObject> = EitherObj<ErrorMessage, T>;
+			export type GetFile<T extends FileObject> = EitherObj<HTTPError, T>;
 
-			export type UploadFile = EitherObj<ErrorMessage, FullFileObject>;
+			export type UploadFile = EitherObj<HTTPError, FullFileObject>;
 
-			export type PhotoLibrary = EitherObj<ErrorMessage, FullFileObject[]>;
+			export type PhotoLibrary = FullFileObject[];
 		}
 	}
 
 	export namespace member {
 		export namespace account {
 			export namespace nhq {
-				export type Finish = EitherObj<ErrorMessage, { sessionID: string }>;
+				export type Finish = EitherObj<HTTPError, { sessionID: string }>;
 			}
 		}
 
@@ -104,9 +123,9 @@ export namespace api {
 				comments: string;
 			}
 
-			export type Basic = EitherObj<ErrorMessage, EventAttendanceRecord[]>;
+			export type Basic = EventAttendanceRecord[];
 
-			export type ForOther = EitherObj<ErrorMessage, EventAttendanceRecord[]>;
+			export type ForOther = EventAttendanceRecord[];
 		}
 
 		export namespace capwatch {
@@ -145,7 +164,7 @@ export namespace api {
 		export namespace permissions {}
 
 		export namespace temporarydutypositions {
-			export type Get = EitherObj<ErrorMessage, ShortDutyPosition[]>;
+			export type Get = ShortDutyPosition[];
 		}
 
 		export type Members = Member;
@@ -154,7 +173,7 @@ export namespace api {
 	export namespace notifications {
 		export namespace admin {
 			// tslint:disable-next-line: no-shadowed-variable
-			export type Get = NotificationObject;
+			export type Get = EitherObj<HTTPError, NotificationObject>;
 
 			// tslint:disable-next-line: no-shadowed-variable
 			export type List = NotificationObject[];
@@ -162,33 +181,33 @@ export namespace api {
 
 		export namespace global {
 			// tslint:disable-next-line: no-shadowed-variable
-			export type Get = NotificationObject;
+			export type Get = EitherObj<HTTPError, NotificationObject>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
 		export namespace member {
 			// tslint:disable-next-line: no-shadowed-variable
-			export type Get = NotificationObject;
+			export type Get = EitherObj<HTTPError, NotificationObject>;
 
 			// tslint:disable-next-line: no-shadowed-variable
 			export type List = NotificationObject[];
 		}
 
-		export type Get = NotificationObject;
+		export type Get = EitherObj<HTTPError, NotificationObject>;
 
 		export type List = NotificationObject[];
 	}
 
 	export namespace registry {
-		export type Get = EitherObj<ErrorMessage, RegistryValues>;
+		export type Get = EitherObj<HTTPError, RegistryValues>;
 	}
 
 	export namespace tasks {
-		export type Create = EitherObj<ErrorMessage, TaskObject>;
+		export type Create = EitherObj<HTTPError, TaskObject>;
 
 		// export type Edit = EitherObj<ErrorMessage, TaskObject>;
 
-		export type Get = EitherObj<ErrorMessage, TaskObject>;
+		export type Get = EitherObj<HTTPError, TaskObject>;
 
 		export type List = TaskObject[];
 	}
