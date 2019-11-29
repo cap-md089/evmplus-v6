@@ -57,16 +57,15 @@ export default class TextDisplay extends React.Component<
 		draft: null
 	};
 
-	public componentDidMount() {
-		Promise.all([import('draft-js'), import('./form-inputs/TextArea')]).then(
-			([draft, text]) => {
-				this.setState({
-					loaded: true,
-					draft,
-					text
-				});
-			}
-		);
+	public async componentDidMount() {
+		const draft = await import('draft-js');
+		const text = await import('./form-inputs/TextArea');
+
+		this.setState({
+			loaded: true,
+			draft,
+			text
+		});
 	}
 
 	public render() {

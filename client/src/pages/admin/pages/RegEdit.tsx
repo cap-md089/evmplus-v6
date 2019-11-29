@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { RegistryValues } from 'common-lib';
+import {
+	RegistryValues,
+	Timezone,
+	WebsiteInformation,
+	WebsiteContact,
+	RankAndFileInformation
+} from 'common-lib';
 import Page, { PageProps } from '../../Page';
 import SimpleForm, {
 	Title,
@@ -11,19 +17,57 @@ import SimpleForm, {
 	TextBox
 } from '../../../components/forms/SimpleForm';
 import Button from '../../../components/Button';
-
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+import Select from '../../../components/form-inputs/Select';
 
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
+
+const timezones: Timezone[] = [
+	'America/Anchorage',
+	'America/Arizona',
+	'America/Chicago',
+	'America/Denver',
+	'America/Hawaii',
+	'America/Los_Angeles',
+	'America/New_York',
+	'America/Puerto_Rico'
+];
 
 interface RegEditState {
 	values: RegEditValues;
 	showSave: boolean;
 }
 
+interface RegEditFormValues {
+	Contact: WebsiteContact;
+	RankAndFile: RankAndFileInformation;
+	Website: {
+		Name: string;
+		PhotoLibraryImagesPerPage: number;
+		ShowUpcomingEventCount: number;
+		Separator: string;
+		Timezone: number;
+	};
+}
+
 const saveMessage = {
 	marginLeft: 10
 };
+
+const convertStateToForm = (values: RegEditValues): RegEditFormValues => ({
+	...values,
+	Website: {
+		...values.Website,
+		Timezone: timezones.indexOf(values.Website.Timezone)
+	}
+});
+
+const convertFormToState = (values: RegEditFormValues): RegEditValues => ({
+	...values,
+	Website: {
+		...values.Website,
+		Timezone: timezones[values.Website.Timezone]
+	}
+});
 
 export default class RegEdit extends Page<PageProps, RegEditState> {
 	public state: RegEditState = {
@@ -61,7 +105,8 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				Name: this.props.registry.Website.Name,
 				PhotoLibraryImagesPerPage: this.props.registry.Website.PhotoLibraryImagesPerPage,
 				Separator: this.props.registry.Website.Separator,
-				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount
+				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount,
+				Timezone: this.props.registry.Website.Timezone
 			}
 		},
 		showSave: false
@@ -125,9 +170,9 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		}
 
 		return (
-			<SimpleForm<RegEditValues>
+			<SimpleForm<RegEditFormValues>
 				onChange={this.onFormChange}
-				values={this.state.values}
+				values={convertStateToForm(this.state.values)}
 				showSubmitButton={false}
 			>
 				<Title>Blog</Title>
@@ -207,6 +252,9 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 
 					<Label>How many photos to show per page on the photo library</Label>
 					<NumberInput name="PhotoLibraryImagesPerPage" />
+
+					<Label>What timezone does the unit primarily operate within?</Label>
+					<Select labels={timezones.map(i => i.replace('_', ' '))} name="Timezone" />
 				</FormBlock>
 
 				<TextBox>
@@ -219,11 +267,14 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		);
 	}
 
-	private onFormChange(values: RegEditValues) {
+	private onFormChange(formValues: RegEditFormValues) {
+		const values = convertFormToState(formValues);
 		this.setState({ values, showSave: false });
 	}
 
-	private async onFormSubmit(values: RegEditValues) {
+	private async onFormSubmit(formValues: RegEditFormValues) {
+		const values = convertFormToState(formValues);
+
 		if (
 			values.Contact.MailingAddress &&
 			values.Contact.MailingAddress.FirstLine === '' &&
@@ -250,7 +301,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 	}
 
 	private async onSaveClick() {
-		await this.onFormSubmit(this.state.values);
+		await this.onFormSubmit(convertStateToForm(this.state.values));
 
 		this.setState({
 			showSave: true

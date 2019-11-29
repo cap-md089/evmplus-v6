@@ -168,7 +168,7 @@ export default class DateTimeInput extends React.Component<
 							<br />
 							<div className="original-time">
 								<i>
-									Time displayed in{' '}
+									Showing time as it would be see in{' '}
 									{TimeZoneDisplays[this.props.originalTimeZoneOffset]}
 								</i>
 							</div>

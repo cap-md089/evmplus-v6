@@ -5,7 +5,7 @@ import {
 	FullFileObject,
 	FullTeamObject,
 	Member,
-	MemberPermissions,
+	Timezone,
 	MemberReference,
 	StoredMemberPermissions
 } from 'common-lib';
@@ -75,6 +75,8 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public validPaid: boolean;
 
+	public aliases: string[];
+
 	protected constructor(data: AccountObject) {
 		super(data.id);
 
@@ -89,6 +91,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		this.paidEventLimit = data.paidEventLimit;
 		this.unpaidEventLimit = data.unpaidEventLimit;
 		this.validPaid = data.validPaid;
+		this.aliases = data.aliases;
 	}
 
 	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
@@ -237,7 +240,8 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			paid: this.paid,
 			paidEventLimit: this.paidEventLimit,
 			unpaidEventLimit: this.unpaidEventLimit,
-			validPaid: this.validPaid
+			validPaid: this.validPaid,
+			aliases: this.aliases
 		};
 	}
 }
