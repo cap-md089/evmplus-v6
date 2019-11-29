@@ -740,6 +740,14 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	 * How many events can be used if this account is unpaid for
 	 */
 	unpaidEventLimit: number;
+	/**
+	 * Allow for website accounts to alias themselves
+	 * 
+	 * Fake account IDs, as it were
+	 * 
+	 * Will not be editable by the public
+	 */
+	aliases: string[]
 }
 
 /**
@@ -2117,6 +2125,16 @@ export interface FullFileObject extends FileObject {
 	uploader: MemberObject;
 }
 
+export type Timezone = 
+	| 'America/New_York'
+	| 'America/Chicago'
+	| 'America/Denver'
+	| 'America/Los_Angeles'
+	| 'America/Arizona'
+	| 'America/Anchorage'
+	| 'America/Hawaii'
+	| 'America/Puerto_Rico';
+
 export interface WebsiteInformation {
 	/**
 	 * What the website is called
@@ -2134,6 +2152,10 @@ export interface WebsiteInformation {
 	 * How many images are downloaded when scrolling in the photo library
 	 */
 	PhotoLibraryImagesPerPage: number;
+	/**
+	 * What timezone the unit is operating within
+	 */
+	Timezone: Timezone
 }
 
 /**

@@ -19,41 +19,46 @@
     - [ ] Unit tests
 *** Members [4/6]
     - [X] Listing
-    - [-] Reports/form generation [1/2]
+    - [-] Reports/form generation [1/3]
       - [ ] QCUA
       - [X] Attendance
-    - [X] PAM [4/4]
+      - [ ] PT sheets
+    - [-] PAM [3/4]
       - [X] Account
       - [X] Authentication
-      - [X] Password
+      - [-] Password [1/2]
+        - [X] Validation
+        - [-] Updating [1/2]
+          - [X] Expired
+          - [ ] Current
       - [X] Session [3/3]
         - [X] Basic usage
         - [X] Su
         - [X] User classes
     - [X] Basic data handling
     - [X] Integration (Express Middleware)
-    - [-] Unit tests [1/2]
-      - [-] Data class unit tests [1/4]
+    - [X] Unit tests [2/2]
+      - [X] Data class unit tests [4/4]
         - [X] CAPNHQMember
-        - [ ] CAPProspectiveMember
-        - [ ] User mixin
-        - [ ] MemberBase
+        - [X] CAPProspectiveMember
+        - [X] User mixin
+        - [X] MemberBase
       - [X] PAM [4/4]
         - [X] Account
         - [X] Auth
         - [X] Password
         - [X] Session
-*** Account [2/4]
+*** Account [4/4]
     - [X] Middleware
-    - [ ] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
-    - [ ] Automatically determine timezone (for now shove in Registry)
+    - [X] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
+    - [X] Automatically determine timezone (for now shove in Registry)
     - [X] Unit tests
 *** Files/Drive [2/3]
     - [X] BREAD
     - [X] Folders
     - [ ] Unit tests
 *** CAPWATCH Import [1/3]
-    - [-] Imports [6/18]
+    - [-] Imports [7/18]
       - [X] Member
       - [X] Senior member duty positions
       - [X] Cadet duty positions
@@ -68,7 +73,7 @@
       - [ ] Cadet achievement Enum
       - [ ] Achievements
       - [ ] Commanders
-      - [ ] Organization
+      - [X] Organization
       - [ ] Organization addresses
       - [ ] Organization contact
       - [ ] Organization meeting
@@ -79,9 +84,11 @@
     - [X] BREAD
     - [ ] Email
     - [ ] Unit tests
-*** Integration [0/1]
+*** Integration [0/2]
     - [ ] Google integration [0/1]
       - [ ] Update Google calendar
+    - [ ] AWS integration [0/1]
+      - [ ] Email
 *** Audits [0/2]
     - [ ] API for arbitrary use
     - [ ] Unit tests
@@ -99,12 +106,18 @@
         - [ ] Team
         - [ ] Current attendance count
     - [ ] Integration tests
-*** Member [2/4]
-    - [X] Sign in
+*** Member [2/5]
+    - [X] Sign in [2/2]
+      - [X] Proper signin
+      - [X] Password expire
     - [X] Sessions
+    - [-] Sign up [2/3]
+      - [X] Sign up session management
+      - [ ] Email
+      - [X] Account create
     - [ ] Integration tests
     - [ ] Unit test
-*** Exports [1/2]
+*** Exports [0/6]
     - [ ] Attendance Log (all members)
     - [ ] Event Roster (members signed up)
       - [ ] Catch unregistered member (not in June 2019 MAR CAPWATCH download)
@@ -134,7 +147,7 @@
     - [X] Read
     - [X] Update
     - [X] Integration tests
-*** Notifications [1/3]
+*** Notifications [1/2]
     - [X] Read
     - [ ] Integration tests
 * Client
@@ -147,7 +160,6 @@
     - [ ] Remove Aerospace Education, Leadership, and Emergency Services links
     - [ ] Facebook feed for account/registry
     - [ ] Twitter feed for account/registry
-    - [ ] Search bar
 *** Drive management [4/6]
     - [X] File view
     - [X] File upload
@@ -155,9 +167,9 @@
     - [X] File movement
     - [ ] File permission management
     - [ ] Unit tests
-*** Photo library [1/2]
+*** Photo library [2/2]
     - [X] It works
-    - [ ] It loads x at a time, x defined in registry
+    - [X] It loads x at a time, x defined in registry
 *** Administration [2/3]
     - [X] Redesign to have better UX
     - [X] Pluggables [2/2]
@@ -181,12 +193,14 @@
     - [X] Team edit
     - [X] Team add
     - [X] Team delete
-*** Events [4/6]
-    - [X] Add event
+*** Events [1/6]
+    - [-] Add event [1/4]
+      - [X] Basic functionality
       - [ ] Fix bug: clicking 'Receive event updates' or other three checkboxes clears out POC information
       - [ ] If session expired, 'token 401' error issues and client doesn't respond
       - [ ] Custom attendance field not saved with event
-    - [X] Modify event
+    - [-] Modify event [1/9]
+      - [X] Basic functionality
       - [ ] Fix POC checkbox anomoly where 2nd POC changes 1st POC checkbox
       - [ ] Fix event custom field anomoly where 2nd custom field changes 1st custom field checkbox
       - [ ] Fix custom field type selector, unable to change to Text or Number type of field
@@ -199,7 +213,7 @@
       - [X] Basic use
       - [ ] Context menu for events
     - [X] Event link list
-    - [X] View event [7/7]
+    - [-] View event [7/8]
       - [X] Move
       - [X] Copy move
       - [X] Copy
@@ -208,15 +222,21 @@
       - [X] Attendance sign up [1/1]
         - [X] Team only events
       - [X] Attendance modify
+      - [-] Attendance view
+        - [X] Basic attendance view
+        - [ ] Extra information for user [0/3]
+          - [ ] Phone number
+          - [ ] Parent organization
+          - [ ] Whether or not they are part of the event organization
     - [ ] Unit tests
 ** Templates
 *** Forms [0/2]
-    - [-] Inputs [15/17]
+    - [-] Inputs [16/17]
       - [X] Checkbox
       - [-] Datetime input [2/3]
         - [X] Basic operation
         - [X] Range
-        - [ ] Timezones
+        - [ ] Cross timezone support
       - [X] Selector
       - [X] File input
       - [X] Form block
@@ -233,7 +253,7 @@
         - [X] Display
       - [X] Text input
       - [X] Team selector
-      - [ ] Permissions editor
+      - [X] Permissions editor
     - [ ] Unit tests
 *** DONE Dialogue
 *** DONE FileDialogue
@@ -246,15 +266,18 @@
 ** Debugging
 *** DONE Error handling
 * Security
-** CSRF [2/2]
+** CSRF [3/3]
    - [X] PAM on server
    - [X] Token request for every POST request
-** TODO Captcha
+   - [X] Login forms requires reCAPTCHA
+** DONE Captcha
+   CLOSED: [2019-11-25 Mon 19:32]
 ** DONE XSS protection
    Done by React
 ** DONE SQL injection protection
    Done with statements
 ** DONE Data-at-rest encryption
-   Done on server
+   Done on MySQL server
 ** DONE TLSv1.2, HTTP/2
    Done through Nginx
+   

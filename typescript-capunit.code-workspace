@@ -14,7 +14,7 @@
 		}
 	],
 	"settings": {
-		"search.usePCRE2": true
+		"typescript.tsdk": "Common/node_modules/typescript/lib"
 	},
 	"launch": {
 		"compounds": [
