@@ -71,7 +71,13 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	// replace this with rec.account.Orgid code once Organization import is complete
 	const myOrg = [
 		{ Orgid: 916, Region: 'MAR', Wing: 'MD', Unit: '089', Name: 'ST MARYS COMPOSITE SQDN' },
-		{ Orgid: 2529, Region: 'MAR', Wing: 'MD', Unit: '890', Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT' }
+		{
+			Orgid: 2529,
+			Region: 'MAR',
+			Wing: 'MD',
+			Unit: '890',
+			Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT'
+		}
 	];
 	let sqnNum = myOrg[0].Region + '-' + myOrg[0].Wing + '-';
 	let sqnName = '';
@@ -185,7 +191,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
 		// footer:  [
-		// 		{ 
+		// 		{
 		// 			layout: 'noBorders',
 		// 			table: {
 		// 				widths: [ 612-72 ],
@@ -204,7 +210,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		// 										day: '2-digit'
 		// 										}), alignment: 'left', fontSize: 10
 		// 									},
-		// 									{ text: 'Page ' + currentPage.toString() + ' of ' + pageCount, 
+		// 									{ text: 'Page ' + currentPage.toString() + ' of ' + pageCount,
 		// 										alignment: 'right', fontSize: 10
 		// 									}
 		// 								]
@@ -215,8 +221,6 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		// 			}, margin: [36, 2, 36, 2]
 		// 		}
 		// 	],
-		
-		
 
 		content: [
 			// content array start
