@@ -8,6 +8,7 @@
     "test": "jest",
     "test-coverage": "jest --coverage",
     "build": "tsc",
+    "debug": "nodemon --inspect dist/index.js",
     "check": "tsc --noEmit"
   },
   "main": "dist/index.js",
@@ -28,7 +29,6 @@
     "mime-types": "^2.1.19",
     "morgan": "^1.9.1",
     "pdfkit": "^0.10.0",
-    "pdfmake": "^0.1.59",
     "promise-mysql": "^3.2.1",
     "request": "^2.87.0",
     "request-promise": "^4.2.2",

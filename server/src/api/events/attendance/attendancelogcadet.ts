@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { DateTime, Duration } from 'luxon';
 import { join } from 'path';
-import * as PDFMake from 'pdfmake';
 import {
 	AccountRequest,
 	asyncErrorHandler,
@@ -43,23 +42,23 @@ function expiredFlag(dte: DateTime) {
 }
 
 export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res: Response) => {
-	const fonts = {
-		Roboto: {
-			normal: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Regular.ttf'),
-			bold: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Medium.ttf'),
-			italics: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Italic.ttf'),
-			bolditalics: join(
-				req.configuration.path,
-				'..',
-				'images',
-				'fonts',
-				'Roboto-MediumItalic.ttf'
-			)
-		}
-	};
+	// const fonts = {
+	// 	Roboto: {
+	// 		normal: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Regular.ttf'),
+	// 		bold: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Medium.ttf'),
+	// 		italics: join(req.configuration.path, '..', 'images', 'fonts', 'Roboto-Italic.ttf'),
+	// 		bolditalics: join(
+	// 			req.configuration.path,
+	// 			'..',
+	// 			'images',
+	// 			'fonts',
+	// 			'Roboto-MediumItalic.ttf'
+	// 		)
+	// 	}
+	// };
 
 	let event: Event;
-	const maker = new PDFMake(fonts);
+	// const maker = new PDFMake(fonts);
 
 	try {
 		event = await Event.Get(req.params.id, req.account, req.mysqlx);
@@ -72,19 +71,13 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	// replace this with rec.account.Orgid code once Organization import is complete
 	const myOrg = [
 		{ Orgid: 916, Region: 'MAR', Wing: 'MD', Unit: '089', Name: 'ST MARYS COMPOSITE SQDN' },
-		{
-			Orgid: 2529,
-			Region: 'MAR',
-			Wing: 'MD',
-			Unit: '890',
-			Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT'
-		}
+		{ Orgid: 2529, Region: 'MAR', Wing: 'MD', Unit: '890', Name: 'ESPERANZA MIDDLE SCHOOL FLIGHT' }
 	];
 	let sqnNum = myOrg[0].Region + '-' + myOrg[0].Wing + '-';
 	let sqnName = '';
-	for (const org of myOrg) {
-		sqnNum += org.Unit + '/';
-		sqnName += org.Name + '/';
+	for (const w of myOrg) {
+		sqnNum += w.Unit + '/';
+		sqnName += w.Name + '/';
 	}
 	sqnNum = sqnNum.substring(0, sqnNum.length - 1);
 	sqnName = sqnName.substring(0, sqnName.length - 1);
@@ -95,7 +88,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			bold?: boolean;
 			fontSize?: number;
 			fillColor?: string;
-			borderColor?: Array<string | undefined>;
+			borderColor?: string[];
 			decoration?: string; // 'underline', 'overline', 'linethrough'
 			decorationStyle?: string; // 'dashed', 'dotted', 'double', 'wavy'
 			decorationColor?: string; // 'blue', 'red', 'green', etc.
@@ -143,36 +136,36 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 
 	memberInformation.sort((a, b) => a[0].text.localeCompare(b[0].text));
 
-	let fc: string | undefined = '';
-	const mil = memberInformation.length;
-	for (let i = 0; i < mil; i++) {
-		memberInformation[i][0].fillColor = i % 2 ? 'lightgrey' : 'white';
-		fc = memberInformation[i][0].fillColor;
-		memberInformation[i][0].borderColor = [fc, fc, fc];
-		memberInformation[i][1].fillColor = fc;
-		memberInformation[i][1].borderColor = [fc, fc, fc];
-		memberInformation[i][2].fillColor = fc;
-		memberInformation[i][2].borderColor = [fc, fc, ,];
-		memberInformation[i][3].fillColor = fc;
-		memberInformation[i][3].borderColor = memberInformation[i][3].bold
-			? ['black', 'black', 'black', 'black']
-			: [fc, fc, fc];
-		memberInformation[i][4].fillColor = fc;
-		memberInformation[i][4].borderColor = [fc, fc, fc];
-		memberInformation[i][5].fillColor = fc;
-		memberInformation[i][5].borderColor = [fc, fc, fc];
-	}
+	// let fc = '';
+	// const mil = memberInformation.length;
+	// for (let i = 0; i < mil; i++) {
+	// 	memberInformation[i][0].fillColor = i % 2 ? 'lightgrey' : 'white';
+	// 	fc = memberInformation[i][0].fillColor;
+	// 	memberInformation[i][0].borderColor = [fc, fc, fc];
+	// 	memberInformation[i][1].fillColor = fc;
+	// 	memberInformation[i][1].borderColor = [fc, fc, fc];
+	// 	memberInformation[i][2].fillColor = fc;
+	// 	memberInformation[i][2].borderColor = [fc, fc, ,];
+	// 	memberInformation[i][3].fillColor = fc;
+	// 	memberInformation[i][3].borderColor = memberInformation[i][3].bold
+	// 		? ['black', 'black', 'black', 'black']
+	// 		: [fc, fc, fc];
+	// 	memberInformation[i][4].fillColor = fc;
+	// 	memberInformation[i][4].borderColor = [fc, fc, fc];
+	// 	memberInformation[i][5].fillColor = fc;
+	// 	memberInformation[i][5].borderColor = [fc, fc, fc];
+	// }
 
-	memberInformation[mil - 1][0].borderColor = [fc, fc, fc, 'white'];
-	memberInformation[mil - 1][1].borderColor = [fc, fc, fc, 'white'];
-	memberInformation[mil - 1][2].borderColor = [
-		fc,
-		fc,
-		memberInformation[mil - 1][3].bold ? 'black' : fc,
-		'white'
-	];
-	memberInformation[mil - 1][4].borderColor = [fc, fc, fc, 'white'];
-	memberInformation[mil - 1][5].borderColor = [fc, fc, fc, 'white'];
+	// memberInformation[mil - 1][0].borderColor = [fc, fc, fc, 'white'];
+	// memberInformation[mil - 1][1].borderColor = [fc, fc, fc, 'white'];
+	// memberInformation[mil - 1][2].borderColor = [
+	// 	fc,
+	// 	fc,
+	// 	memberInformation[mil - 1][3].bold ? 'black' : fc,
+	// 	'white'
+	// ];
+	// memberInformation[mil - 1][4].borderColor = [fc, fc, fc, 'white'];
+	// memberInformation[mil - 1][5].borderColor = [fc, fc, fc, 'white'];
 
 	const formattedMemberInformation = [
 		[
@@ -186,54 +179,44 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 		...memberInformation
 	];
 
-	const nowDate = DateTime.utc();
+	// const nowDate = DateTime.utc();
 	const docDefinition = {
 		pageSize: 'letter',
 		pageOrientation: 'portrait',
 		pageMargins: [36, 36, 36, 54],
-		footer(currentPage: number, pageCount: number) {
-			const footerContent = [
-				{
-					layout: 'noBorders',
-					table: {
-						widths: [612 - 72],
-						headerRows: 0,
-						body: [
-							[
-								{
-									layout: 'noBorders',
-									table: {
-										widths: ['*', '*'],
-										headerRows: 0,
-										body: [
-											[
-												{
-													text: nowDate.toLocaleString({
-														year: 'numeric',
-														month: '2-digit',
-														day: '2-digit'
-													}),
-													alignment: 'left',
-													fontSize: 10
-												},
-												{
-													text:
-														currentPage.toString() + ' of ' + pageCount,
-													alignment: 'right',
-													fontSize: 10
-												}
-											]
-										]
-									}
-								}
-							]
-						]
-					},
-					margin: [36, 2, 36, 2]
-				}
-			];
-			return footerContent;
-		},
+		// footer:  [
+		// 		{ 
+		// 			layout: 'noBorders',
+		// 			table: {
+		// 				widths: [ 612-72 ],
+		// 				headerRows: 0,
+		// 				body: [
+		// 					[	{
+		// 						layout: 'noBorders',
+		// 						table: {
+		// 							widths: ['*', '*'],
+		// 							headerRows: 0,
+		// 							body: [
+		// 								[
+		// 									{ text: nowDate.toLocaleString({
+		// 										year: 'numeric',
+		// 										month: '2-digit',
+		// 										day: '2-digit'
+		// 										}), alignment: 'left', fontSize: 10
+		// 									},
+		// 									{ text: 'Page ' + currentPage.toString() + ' of ' + pageCount, 
+		// 										alignment: 'right', fontSize: 10
+		// 									}
+		// 								]
+		// 							]
+		// 						}}
+		// 					]
+		// 				]
+		// 			}, margin: [36, 2, 36, 2]
+		// 		}
+		// 	],
+		
+		
 
 		content: [
 			// content array start
@@ -426,10 +409,11 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	// res.setHeader('Content-Disposition','attachment:filename=log.pdf');
 
 	try {
-		const doc = maker.createPdfKitDocument(docDefinition);
+		// const doc = maker.createPdfKitDocument(docDefinition);
 		// doc.pipe(createWriteStream('testing.pdf'));
-		doc.pipe(res);
-		doc.end();
+		// doc.pipe(res);
+		// doc.end();
+		res.json(docDefinition);
 	} catch (e) {
 		res.status(500);
 		res.end();
