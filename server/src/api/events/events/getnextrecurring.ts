@@ -1,7 +1,7 @@
-import { EventObject } from 'common-lib';
-import { AccountRequest, asyncErrorHandler, Event, json } from '../../../lib/internals';
+import { api, EitherObj, fromValue, right } from 'common-lib';
+import { asyncEitherHandler, BasicAccountRequest, Event } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: AccountRequest, res) => {
+export default asyncEitherHandler(async (req: BasicAccountRequest) => {
 	let nextEvent: Event | null = null;
 
 	for await (const possibleEvent of req.account.getSortedEvents()) {
@@ -14,10 +14,7 @@ export default asyncErrorHandler(async (req: AccountRequest, res) => {
 		}
 	}
 
-	if (nextEvent === null) {
-		res.status(404);
-		res.end();
-	} else {
-		json<EventObject>(res, nextEvent.toRaw());
-	}
+	const maybeEv = fromValue(nextEvent).map(ev => ev.toRaw());
+
+	return right(maybeEv) as EitherObj<api.ServerError, any>;
 });

@@ -50,14 +50,16 @@ export default class CAPProspectiveMember extends MemberBase
 		id += highestNumber + 1;
 
 		// tslint:disable-next-line:variable-name
-		const _id = (await prospectiveCollection
-			.add({
-				...newMember,
-				id,
-				accountID: account.id,
-				type: 'CAPProspectiveMember'
-			})
-			.execute()).getGeneratedIds()[0];
+		const _id = (
+			await prospectiveCollection
+				.add({
+					...newMember,
+					id,
+					accountID: account.id,
+					type: 'CAPProspectiveMember'
+				})
+				.execute()
+		).getGeneratedIds()[0];
 
 		const extraInformation = await CAPProspectiveMember.LoadExtraMemberInformation(
 			{
@@ -198,6 +200,8 @@ export default class CAPProspectiveMember extends MemberBase
 	public async *getAccounts() {
 		yield this.getHomeAccount();
 	}
+
+	public getMainAccounts = () => this.getAccounts();
 
 	public getReference = (): ProspectiveMemberReference => ({
 		type: 'CAPProspectiveMember',

@@ -116,20 +116,22 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		capid: number,
 		schema: Schema
 	): Promise<Array<{ duty: string; date: number; type: 'NHQ' }>> =>
-		(await Promise.all([
-			collectResults(
-				schema
-					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			),
-			collectResults(
-				schema
-					.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			)
-		]))
+		(
+			await Promise.all([
+				collectResults(
+					schema
+						.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
+						.find('CAPID = :CAPID')
+						.bind('CAPID', capid)
+				),
+				collectResults(
+					schema
+						.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
+						.find('CAPID = :CAPID')
+						.bind('CAPID', capid)
+				)
+			])
+		)
 			.reduce((prev, curr) => [...prev, ...curr])
 			.map(item => ({
 				duty: item.Duty,
@@ -266,7 +268,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	}
 
 	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
-		typeof dutyPosition === 'string'
+		this.isRioux || typeof dutyPosition === 'string'
 			? this.dutyPositions.filter(duty => duty.duty === dutyPosition).length > 0
 			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false);
 
@@ -274,6 +276,20 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');
 
 		const accountFind = accountsCollection.find(':orgIDs in orgIDs').bind('orgIDs', this.orgid);
+
+		const generator = generateResults(accountFind);
+
+		for await (const i of generator) {
+			yield Account.Get(i.id, this.schema);
+		}
+	}
+
+	public async *getMainAccounts(): AsyncIterableIterator<Account> {
+		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');
+
+		const accountFind = findAndBind(accountsCollection, {
+			mainOrg: this.orgid
+		});
 
 		const generator = generateResults(accountFind);
 

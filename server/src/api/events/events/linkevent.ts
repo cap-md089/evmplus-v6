@@ -1,23 +1,24 @@
-import { EventObject } from 'common-lib';
-import { Response } from 'express';
+import { left, none, right } from 'common-lib';
 import {
 	Account,
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberRequest,
 	Event,
-	getPermissionsForMemberInAccount,
-	json,
-	MemberRequest
+	getPermissionsForMemberInAccount
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, res: Response) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ parent: string }>) => {
 	if (
 		req.body === undefined ||
+		req.body === null ||
 		typeof req.body.id !== 'string' ||
 		req.params.parent === undefined
 	) {
-		res.status(400);
-		res.end();
-		return;
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Linked event target and source could not be found'
+		});
 	}
 
 	let event: Event;
@@ -29,9 +30,11 @@ export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, 
 			Account.Get(req.body.id, req.mysqlx)
 		]);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: "Either the account or the event couldn't be found"
+		});
 	}
 
 	const permissionsForMemberInTargetAccount = await getPermissionsForMemberInAccount(
@@ -41,13 +44,14 @@ export default asyncErrorHandler(async (req: MemberRequest<{ parent: string }>, 
 	);
 
 	if (permissionsForMemberInTargetAccount.ManageEvent < 2) {
-		res.status(403);
-		res.end();
-		return;
+		return left({
+			code: 403,
+			error: none<Error>(),
+			message: 'This account does not have permissions to perform this action'
+		});
 	}
 
 	const newEvent = await event.linkTo(targetAccount, req.member);
 
-	res.status(200);
-	json<EventObject>(res, newEvent.toRaw());
+	return right(newEvent.toRaw(req.member));
 });

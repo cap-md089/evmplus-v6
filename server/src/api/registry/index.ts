@@ -1,12 +1,12 @@
 import * as express from 'express';
 import {
 	Account,
-	memberMiddleware,
-	permissionMiddleware,
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware,
 	RegistryValueValidator,
 	Validator
 } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware } from '../formtoken';
 // CRUD functions
 import get from './get';
 import set from './set';
@@ -18,10 +18,10 @@ router.use(Account.ExpressMiddleware);
 router.get('/', get);
 router.post(
 	'/',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('RegistryEdit'),
-	Validator.PartialBodyExpressMiddleware(RegistryValueValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('RegistryEdit'),
+	Validator.LeftyPartialBodyExpressMiddleware(RegistryValueValidator),
 	set
 );
 

@@ -1,55 +1,44 @@
-import { NewEventObject } from 'common-lib';
-import { Response } from 'express';
+import { just, left, NewEventObject, none, right } from 'common-lib';
 import {
-	asyncErrorHandler,
-	Event,
-	getTargetMonth,
-	getTargetYear,
-	MemberValidatedRequest
+	asyncEitherHandler,
+	BasicPartialMemberValidatedRequest,
+	Event
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<Partial<NewEventObject>, { id: string }>, res: Response) => {
-		const eventCount1 =
-			req.body.pickupDateTime !== undefined
-				? await req.account.getEventCountForMonth(
-						getTargetMonth(req.body.pickupDateTime),
-						getTargetYear(req.body.pickupDateTime)
-				  )
-				: 0;
-
-		const eventCount2 =
-			req.body.meetDateTime !== undefined
-				? await req.account.getEventCountForMonth(
-						getTargetMonth(req.body.meetDateTime),
-						getTargetYear(req.body.meetDateTime)
-				  )
-				: 0;
-
-		if (
-			!req.account.validPaid &&
-			(eventCount1 > req.account.unpaidEventLimit ||
-				eventCount2 > req.account.unpaidEventLimit)
-		) {
-			res.status(402);
-			return res.end();
-		}
-
+export default asyncEitherHandler(
+	async (req: BasicPartialMemberValidatedRequest<NewEventObject, { id: string }>) => {
 		let event: Event;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find event'
+			});
 		}
 
-		await event.set(req.body, req.account, req.mysqlx, req.member);
+		try {
+			await event.set(req.body, req.account, req.mysqlx, req.member);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not notify Points of Contact about their status change'
+			});
+		}
 
-		await event.save();
+		try {
+			await event.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save event information'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

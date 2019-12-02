@@ -1,20 +1,29 @@
-import { NotificationCauseType, NotificationObject } from 'common-lib';
-import { asyncErrorHandler, GlobalNotification, json, MemberRequest } from '../../../lib/internals';
+import { just, left, none, NotificationCauseType, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, GlobalNotification } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest, res) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest) => {
 	if (!req.account.isAdmin(req.member)) {
-		res.status(403);
-		return res.end();
+		return left({
+			code: 403,
+			error: none<Error>(),
+			message: 'Member does not have permission to perform the requested action'
+		});
 	}
 
 	if (typeof req.body.text !== 'string' || typeof req.body.expires !== 'number') {
-		res.status(400);
-		return res.end();
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'A global notification requires a valid expire date and message'
+		});
 	}
 
 	if (await GlobalNotification.AccountHasGlobalNotificationActive(req.account, req.mysqlx)) {
-		res.status(400);
-		return res.end();
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'You cannot have multiple global notifications in effect at once'
+		});
 	}
 
 	try {
@@ -30,9 +39,12 @@ export default asyncErrorHandler(async (req: MemberRequest, res) => {
 			req.member
 		);
 
-		json<NotificationObject>(res, notification.toFullRaw());
+		return right(notification.toFullRaw());
 	} catch (e) {
-		res.status(404);
-		res.end();
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not create global notification'
+		});
 	}
 });

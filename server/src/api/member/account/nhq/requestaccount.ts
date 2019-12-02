@@ -1,7 +1,8 @@
+import { left, none, right } from 'common-lib';
 import {
 	addUserAccountCreationToken,
-	asyncErrorHandler,
-	BasicValidatedRequest,
+	asyncEitherHandler,
+	BasicSimpleValidatedRequest,
 	resolveReference,
 	Validator,
 	verifyCaptcha
@@ -25,11 +26,12 @@ export const nhqRequestValidator = new Validator<RequestParameters>({
 	}
 });
 
-export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParameters>, res) => {
+export default asyncEitherHandler(async (req: BasicSimpleValidatedRequest<RequestParameters>) => {
 	if (!(await verifyCaptcha(req.body.recaptcha))) {
-		res.status(400);
-		return res.json({
-			error: 'Could not verify reCAPTCHA'
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Could not verify reCAPTCHA'
 		});
 	}
 
@@ -42,9 +44,10 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 			true
 		);
 	} catch (e) {
-		res.status(400);
-		return res.json({
-			error: 'CAPID does not exist or could not be found'
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'CAPID does not exist or could not be found'
 		});
 	}
 
@@ -66,9 +69,10 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 				member.contact.EMAIL.EMERGENCY.toLowerCase() === email)
 		)
 	) {
-		res.status(400);
-		return res.json({
-			error: 'Email provided does not match email in database'
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Email provided does not match email in database'
 		});
 	}
 
@@ -79,17 +83,15 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 			type: 'CAPNHQMember'
 		});
 	} catch (e) {
-		res.status(400);
-		return res.json({
-			error: e.message
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: e.message
 		});
 	}
 
 	// send email here
 	console.log(token);
 
-	res.status(200);
-	res.json({
-		error: 'none'
-	});
+	return right(void 0);
 });

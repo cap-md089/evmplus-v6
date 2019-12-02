@@ -1,37 +1,16 @@
-import { EventObject, NewEventObject } from 'common-lib';
-import * as express from 'express';
-import {
-	asyncErrorHandler,
-	Event,
-	getTargetMonth,
-	getTargetYear,
-	json,
-	MemberValidatedRequest
-} from '../../../lib/internals';
+import { just, left, NewEventObject, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberValidatedRequest, Event } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<NewEventObject>, res: express.Response) => {
-		const eventCount1 = await req.account.getEventCountForMonth(
-			getTargetMonth(req.body.pickupDateTime),
-			getTargetYear(req.body.pickupDateTime)
-		);
-
-		const eventCount2 = await req.account.getEventCountForMonth(
-			getTargetMonth(req.body.meetDateTime),
-			getTargetYear(req.body.meetDateTime)
-		);
-
-		if (
-			!req.account.validPaid &&
-			(eventCount1 > req.account.unpaidEventLimit ||
-				eventCount2 > req.account.unpaidEventLimit)
-		) {
-			res.status(402);
-			return res.end();
-		}
-
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<NewEventObject>) => {
+	try {
 		const newEvent = await Event.Create(req.body, req.account, req.mysqlx, req.member);
 
-		json<EventObject>(res, newEvent.toRaw());
+		return right(newEvent.toRaw(req.member));
+	} catch (error) {
+		return left({
+			code: 500,
+			error: just(error),
+			message: 'Could not add event'
+		});
 	}
-);
+});

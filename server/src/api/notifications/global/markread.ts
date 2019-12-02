@@ -1,9 +1,13 @@
-import { asyncErrorHandler, GlobalNotification, MemberRequest } from '../../../lib/internals';
+import { just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, GlobalNotification } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	if (!req.account.isAdmin(req.member)) {
-		res.status(403);
-		return res.end();
+		return left({
+			code: 403,
+			error: none<Error>(),
+			message: 'Member does not have permission to perform the requested action'
+		});
 	}
 
 	try {
@@ -11,12 +15,22 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 
 		notification.markAsRead();
 
-		await notification.save();
+		try {
+			await notification.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save notification information'
+			});
+		}
 
-		res.status(200);
-		res.end();
+		return right(void 0);
 	} catch (e) {
-		res.status(404);
-		res.end();
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find global notification'
+		});
 	}
 });

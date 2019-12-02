@@ -1,9 +1,11 @@
+import { left } from 'common-lib';
 import * as express from 'express';
 import {
 	asyncErrorHandler,
 	getMemberForWeakToken,
 	getTokenForUser,
 	isTokenValid,
+	leftyAsyncErrorHandler,
 	MemberRequest
 } from '../lib/internals';
 
@@ -34,6 +36,22 @@ export const tokenMiddleware = asyncErrorHandler(
 		} else {
 			res.status(403);
 			res.end();
+		}
+	}
+);
+
+export const leftyTokenMiddleware = leftyAsyncErrorHandler(
+	async (req: MemberRequest, res, next) => {
+		if (await validToken(req)) {
+			next();
+		} else {
+			res.status(403);
+			res.json(
+				left({
+					code: 403,
+					error: 'Could not validate token'
+				})
+			);
 		}
 	}
 );

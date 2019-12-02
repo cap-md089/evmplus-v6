@@ -1,13 +1,14 @@
-import { EventObject } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, ConditionalMemberRequest, Event, json } from '../../../lib/internals';
+import { api, EventObject, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicConditionalMemberRequest, Event } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
+export default asyncEitherHandler<api.events.events.Get>(
+	async (req: BasicConditionalMemberRequest<{ id: string }>) => {
 		if (req.params.id === undefined) {
-			res.status(400);
-			res.end();
-			return;
+			return left({
+				code: 400,
+				error: none(),
+				message: 'Event ID was not specified'
+			});
 		}
 
 		let event: Event;
@@ -15,9 +16,11 @@ export default asyncErrorHandler(
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none(),
+				message: 'Could not find event'
+			});
 		}
 
 		let isValidMember = false;
@@ -30,6 +33,6 @@ export default asyncErrorHandler(
 			}
 		}
 
-		json<EventObject>(res, event.toRaw(isValidMember ? req.member : undefined));
+		return right<api.HTTPError, EventObject>(event.toRaw(isValidMember ? req.member : null));
 	}
 );

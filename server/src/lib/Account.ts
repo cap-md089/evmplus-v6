@@ -4,6 +4,7 @@ import {
 	DatabaseInterface,
 	EventObject,
 	FileObject,
+	left,
 	MemberReference,
 	NHQ,
 	NoSQLDocument,
@@ -29,8 +30,16 @@ import {
 	ParamType,
 	Team
 } from './internals';
+import { ConditionalMemberRequest } from './member/pam/Session';
+import { BasicMySQLRequest } from './MySQLUtil';
+import saveServerError from './saveServerError';
 
-export interface AccountRequest<P extends ParamType = {}> extends MySQLRequest<P> {
+export interface AccountRequest<P extends ParamType = {}, B = any> extends MySQLRequest<P, B> {
+	account: Account;
+}
+
+export interface BasicAccountRequest<P extends ParamType = {}, B = any>
+	extends BasicMySQLRequest<P, B> {
 	account: Account;
 }
 
@@ -70,6 +79,62 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				}
 				res.end();
 				return;
+			}
+
+			next();
+		}
+	);
+
+	public static LeftyExpressMiddleware = asyncErrorHandler(
+		async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
+			const host = req.hostname;
+			const parts = host.split('.');
+			let accountID: string;
+
+			if (parts[0] === 'www') {
+				parts.shift();
+			}
+
+			if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
+				accountID = 'mdx89';
+			} else if (parts.length === 2) {
+				accountID = 'sales';
+			} else if (parts.length === 3) {
+				accountID = parts[0];
+			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+				accountID = 'mdx89';
+			} else {
+				res.status(400);
+				return res.json(
+					left({
+						code: 400,
+						error: 'Could not get account ID from URL'
+					})
+				);
+			}
+
+			try {
+				const account = await Account.Get(accountID, req.mysqlx);
+				req.account = account;
+			} catch (e) {
+				if (e.message && e.message.startsWith('Unknown account: ')) {
+					res.status(400);
+					return res.json(
+						left({
+							code: 400,
+							error: 'Could not get account with ID ' + accountID
+						})
+					);
+				} else {
+					await saveServerError(e, req as ConditionalMemberRequest);
+					res.status(500);
+					return res.json(
+						left({
+							code: 500,
+							error: 'Unknown server error'
+						})
+					);
+				}
 			}
 
 			next();

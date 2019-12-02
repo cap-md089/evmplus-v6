@@ -1,30 +1,36 @@
-import { just, none } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, Event, MemberRequest } from '../../../lib/internals';
+import { just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Event } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	let event: Event;
 
 	try {
 		event = await Event.Get(req.params.id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find event to delete'
+		});
 	}
 
 	if (!event.isPOC(req.member)) {
-		res.status(403);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Member has invalid permissions to perform that action'
+		});
 	}
 
 	try {
 		await event.delete();
 
-		res.json(none());
+		return right(void 0);
 	} catch (e) {
-		res.status(400);
-		res.json(just(e.message || e));
+		return left({
+			code: 500,
+			error: just<Error>(e),
+			message: 'An unknown server error has occurred'
+		});
 	}
 });

@@ -1,11 +1,18 @@
-import { AbsenteeInformation } from 'common-lib';
-import { asyncErrorHandler, MemberValidatedRequest } from '../../lib/internals';
+import { AbsenteeInformation, just, left, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberValidatedRequest } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<AbsenteeInformation>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<AbsenteeInformation>) => {
 	req.member.setAbsenteeInformation(req.body);
 
-	await req.member.saveExtraMemberInformation(req.mysqlx, req.account);
+	try {
+		await req.member.saveExtraMemberInformation(req.mysqlx, req.account);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not save absentee information'
+		});
+	}
 
-	res.status(200);
-	res.end();
+	return right(void 0);
 });

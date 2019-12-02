@@ -1,10 +1,16 @@
-import { NewTaskObject, TaskObject } from 'common-lib';
-import { Task } from '../../lib/internals';
-import { asyncErrorHandler, json } from '../../lib/internals';
-import { MemberValidatedRequest } from '../../lib/internals';
+import { just, left, NewTaskObject, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberValidatedRequest, Task } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<NewTaskObject>, res) => {
-	const task = await Task.Create(req.body, req.member, req.account, req.mysqlx);
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<NewTaskObject>) => {
+	try {
+		const task = await Task.Create(req.body, req.member, req.account, req.mysqlx);
 
-	json<TaskObject>(res, task.toRaw());
+		return right(task.toRaw());
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not create task'
+		});
+	}
 });

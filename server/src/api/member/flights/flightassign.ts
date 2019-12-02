@@ -1,27 +1,62 @@
+import { just, left, none, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	FlightAssign,
-	MemberValidatedRequest,
+	Registry,
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssign>, res) => {
-	const member = await resolveReference(req.body.member, req.account, req.mysqlx);
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<FlightAssign>) => {
+	let member;
 
-	if (member == null) {
-		res.status(404);
-		return res.end();
+	try {
+		member = await resolveReference(req.body.member, req.account, req.mysqlx, true);
+	} catch (e) {
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find member specified'
+		});
 	}
 
-	if (req.body.newFlight === null) {
-		res.status(400);
-		return res.end();
+	if (typeof req.body.newFlight !== 'string') {
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Flight is required in order to set flight for member'
+		});
+	}
+
+	try {
+		const registry = await Registry.Get(req.account, req.mysqlx);
+
+		if (!registry.values.RankAndFile.Flights.includes(req.body.newFlight)) {
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Flight specified is not a valid flight'
+			});
+		}
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not get registry for account'
+		});
 	}
 
 	member.setFlight(req.body.newFlight);
 
-	await member.saveExtraMemberInformation(req.mysqlx, req.account);
+	try {
+		await member.saveExtraMemberInformation(req.mysqlx, req.account);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not save flight information for member'
+		});
+	}
 
-	res.status(201);
-	res.end();
+	return right(void 0);
 });

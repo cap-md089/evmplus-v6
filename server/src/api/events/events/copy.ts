@@ -1,40 +1,40 @@
-import { EventObject } from 'common-lib';
+import { left, none, right } from 'common-lib';
 import { DateTime } from 'luxon';
-import { asyncErrorHandler, Event, json, MemberRequest, Validator } from '../../../lib/internals';
+import { asyncEitherHandler, BasicMemberRequest, Event, Validator } from '../../../lib/internals';
 
-const validator = new Validator({
+export const copyValidator = new Validator({
 	newTime: {
 		validator: Validator.Number
 	},
 	copyStatus: {
-		validator: Validator.Or(Validator.Boolean, Validator.Nothing)
+		validator: Validator.Or(Validator.Boolean, Validator.Nothing),
+		required: false
 	},
 	copyFiles: {
-		validator: Validator.Or(Validator.Boolean, Validator.Nothing)
+		validator: Validator.Or(Validator.Boolean, Validator.Nothing),
+		required: false
 	}
 });
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
-	if (!validator.validate(req.body)) {
-		res.status(400);
-		res.end();
-		return;
-	}
-
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	let event: Event;
 
 	try {
 		event = await Event.Get(req.params.id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find event'
+		});
 	}
 
 	if (!event.isPOC(req.member)) {
-		res.status(403);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Member has invalid permissions to perform that action'
+		});
 	}
 
 	const newEvent = await event.copy(
@@ -44,5 +44,5 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 		!!req.body.copyFiles
 	);
 
-	json<EventObject>(res, newEvent.toRaw(req.member));
+	return right(newEvent.toRaw(req.member));
 });

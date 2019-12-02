@@ -1,8 +1,15 @@
-import { MemberPermission, MemberPermissions, MemberReference } from 'common-lib';
+import {
+	just,
+	left,
+	MemberPermission,
+	MemberPermissions,
+	MemberReference,
+	right
+} from 'common-lib';
 import {
 	areMemberReferencesTheSame,
-	asyncErrorHandler,
-	MemberValidatedRequest,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	PermissionsValidator,
 	setPermissionsForMemberInAccount,
 	Validator
@@ -32,7 +39,7 @@ export const permissionsValidator = new Validator<PermissionsList>({
 	}
 });
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<PermissionsList>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<PermissionsList>) => {
 	/**
 	 * This just sanitizes user inputs, makes sure there are no duplicates and makes sure each item
 	 * is as high as possible
@@ -62,12 +69,24 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<PermissionsL
 		}
 	}
 
-	await Promise.all(
-		newRoles.map(role =>
-			setPermissionsForMemberInAccount(req.mysqlx, role.member, role.permissions, req.account)
-		)
-	);
+	try {
+		await Promise.all(
+			newRoles.map(role =>
+				setPermissionsForMemberInAccount(
+					req.mysqlx,
+					role.member,
+					role.permissions,
+					req.account
+				)
+			)
+		);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not set permissions for the members provided'
+		});
+	}
 
-	res.status(204);
-	res.end();
+	return right(void 0);
 });

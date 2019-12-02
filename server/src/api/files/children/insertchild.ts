@@ -1,49 +1,56 @@
-import * as express from 'express';
-import { asyncErrorHandler, File, MemberRequest } from '../../../lib/internals';
+import { just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ parentid: string }>, res: express.Response) => {
-		if (
-			typeof req.params.parentid === 'undefined' ||
-			typeof req.body === 'undefined' ||
-			typeof req.body.id === 'undefined'
-		) {
-			res.status(400);
-			res.end();
-			return;
-		}
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ parentid: string }>) => {
+	const parentid = req.params.parentid;
+	const childid = req.body.id;
 
-		const parentid = req.params.parentid;
-		const childid = req.body.id;
+	let child, parent, oldparent;
 
-		let child, parent, oldparent;
-
-		try {
-			[child, parent] = await Promise.all([
-				File.Get(childid, req.account, req.mysqlx),
-				File.Get(parentid, req.account, req.mysqlx)
-			]);
-		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
-		}
-
-		try {
-			oldparent = await child.getParent();
-		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
-		}
-
-		oldparent.removeChild(child);
-
-		await parent.addChild(child);
-
-		await Promise.all([oldparent.save(), child.save(), parent.save()]);
-
-		res.status(204);
-		res.end();
+	try {
+		[child, parent] = await Promise.all([
+			File.Get(childid, req.account, req.mysqlx),
+			File.Get(parentid, req.account, req.mysqlx)
+		]);
+	} catch (e) {
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find either the child or the parent'
+		});
 	}
-);
+
+	try {
+		oldparent = await child.getParent();
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not unlink from old parent'
+		});
+	}
+
+	oldparent.removeChild(child);
+
+	try {
+		await parent.addChild(child);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not add child to parent'
+		});
+	}
+
+	try {
+		await Promise.all([oldparent.save(), child.save(), parent.save()]);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not save information for files'
+		});
+	}
+
+	return right(void 0);
+});

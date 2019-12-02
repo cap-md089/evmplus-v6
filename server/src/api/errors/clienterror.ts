@@ -1,8 +1,18 @@
-import { ClientErrorObject, ErrorObject, NewClientErrorObject } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, ConditionalMemberRequest, generateResults } from '../../lib/internals';
+import {
+	ClientErrorObject,
+	ErrorObject,
+	left,
+	NewClientErrorObject,
+	none,
+	right
+} from 'common-lib';
+import {
+	asyncEitherHandler,
+	BasicConditionalMemberRequest,
+	generateResults
+} from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
+export default asyncEitherHandler(async (req: BasicConditionalMemberRequest) => {
 	if (
 		typeof req.body.timestamp !== 'number' ||
 		typeof req.body.message !== 'string' ||
@@ -21,8 +31,11 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Resp
 		typeof req.body.pageURL !== 'string' ||
 		typeof req.body.componentStack !== 'string'
 	) {
-		res.status(400);
-		return res.end();
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Error object provided is invalid'
+		});
 	}
 
 	const info = req.body as NewClientErrorObject;
@@ -65,6 +78,6 @@ export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Resp
 
 		await errorCollection.add(errorObject).execute();
 
-		res.json(errorObject);
+		return right(errorObject);
 	}
 });

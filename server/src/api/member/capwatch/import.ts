@@ -1,3 +1,4 @@
+import { left, none } from 'common-lib';
 import { asyncErrorHandler, MemberRequest } from '../../../lib/internals';
 
 export default asyncErrorHandler(
@@ -6,7 +7,13 @@ export default asyncErrorHandler(
 		// It doesn't, we need to program it to be able to interface with the 'API'
 
 		res.status(500);
-		return res.end();
+		return res.json(
+			left({
+				code: 500,
+				error: none<Error>(),
+				message: 'Not implemented'
+			})
+		);
 
 		/*
 	if (!await validRawTokenAlone(req.mysqlx, req.params.token)) {

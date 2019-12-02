@@ -1,7 +1,8 @@
 import { HTTPRequestMethod, RawAuditLogItem } from 'common-lib';
-import { asyncErrorHandler, ConditionalMemberRequest } from './internals';
+import { NextFunction, Response } from 'express';
+import { ConditionalMemberRequest } from './internals';
 
-export default asyncErrorHandler((req: ConditionalMemberRequest, res, next) => {
+export default (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
 	const item: RawAuditLogItem = {
 		accountID: req.account.id,
 		actor: req.member ? req.member.getReference() : { type: 'Null' },
@@ -19,4 +20,4 @@ export default asyncErrorHandler((req: ConditionalMemberRequest, res, next) => {
 		.catch(e => console.error('Failed to save audit: ', e));
 
 	next();
-});
+};

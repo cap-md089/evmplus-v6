@@ -1,9 +1,13 @@
-import { asyncErrorHandler, MemberRequest, Notification } from '../../lib/internals';
+import { just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Notification } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
-		res.status(400);
-		return res.end();
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Invalid ID provided as a parameter'
+		});
 	}
 
 	const id = parseInt(req.params.id, 10);
@@ -13,14 +17,19 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	try {
 		notification = await Notification.Get(id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find notification'
+		});
 	}
 
 	if (!notification.canSee(req.member, req.account)) {
-		res.status(403);
-		return res.end();
+		return left({
+			code: 403,
+			error: none<Error>(),
+			message: 'Member does not have permission to view notification'
+		});
 	}
 
 	if (notification.read) {
@@ -29,8 +38,15 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 		notification.markAsRead();
 	}
 
-	await notification.save();
+	try {
+		await notification.save();
 
-	res.status(204);
-	res.end();
+		return right(void 0);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not save notification information'
+		});
+	}
 });

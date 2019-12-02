@@ -1,17 +1,23 @@
+import { right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	FlightAssignBulk,
-	MemberValidatedRequest,
 	resolveReference
 } from '../../../lib/internals';
+import saveServerError from '../../../lib/saveServerError';
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssignBulk>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<FlightAssignBulk>) => {
 	for (const request of req.body.members) {
-		const member = await resolveReference(request.member, req.account, req.mysqlx);
+		let member;
+		try {
+			member = await resolveReference(request.member, req.account, req.mysqlx);
+		} catch (e) {
+			continue;
+		}
 
 		if (member == null) {
-			res.status(404);
-			return res.end();
+			continue;
 		}
 
 		if (request.newFlight === null) {
@@ -20,9 +26,12 @@ export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssign
 
 		member.setFlight(request.newFlight);
 
-		await member.saveExtraMemberInformation(req.mysqlx, req.account);
+		try {
+			await member.saveExtraMemberInformation(req.mysqlx, req.account);
+		} catch (e) {
+			saveServerError(e, req);
+		}
 	}
 
-	res.status(201);
-	res.end();
+	return right(void 0);
 });

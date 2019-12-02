@@ -1,12 +1,16 @@
-import * as express from 'express';
-import { AccountRequest, asyncErrorHandler, Registry } from '../../lib/internals';
+import { just, left, right } from 'common-lib';
+import { asyncEitherHandler, BasicAccountRequest, Registry } from '../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
-		let registry: Registry;
+export default asyncEitherHandler(async (req: BasicAccountRequest) => {
+	try {
+		const registry = await Registry.Get(req.account, req.mysqlx);
 
-		registry = await Registry.Get(req.account, req.mysqlx);
-
-		res.json(registry.toRaw());
+		return right(registry.values);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not get registry'
+		});
 	}
-);
+});

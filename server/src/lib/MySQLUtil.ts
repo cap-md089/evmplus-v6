@@ -1,19 +1,65 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
+import { IncomingHttpHeaders } from 'http';
 import { DateTime } from 'luxon';
 import { Configuration } from '../conf';
 
 export interface ParamType {
-	[key: string]: string;
+	[key: string]: string | undefined;
 }
 
-export interface MySQLRequest<P extends ParamType = {}> extends express.Request {
+export interface MySQLRequest<P extends ParamType = {}, B = any> extends express.Request {
+	/**
+	 * Contains basic properties from express.Request
+	 */
+	body: B;
+	method: string;
+	hostname: string;
+	headers: IncomingHttpHeaders;
+
+	/**
+	 * Contains stuff that is used.
+	 *
+	 * If the 'extends express.Request' bit above were removed, the only compile time errors that would occur
+	 * would be from router.use not accepting this type of request. As such, if deemed necessary, we can
+	 * extract code from asyncErrorHandler or asyncEitherHandler and pass it an object such as this and check
+	 * the output
+	 */
 	mysqlx: mysql.Schema;
 	mysqlxSession: mysql.Session;
+	originalUrl: string;
 	_originalUrl: string;
 	params: P;
 	configuration: typeof Configuration;
 }
+
+export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
+	/**
+	 * Contains basic properties from express.Request
+	 */
+	body: B;
+	method: string;
+	headers: IncomingHttpHeaders;
+	originalUrl: string;
+	_originalUrl: string;
+
+	/**
+	 * Contains stuff that is used.
+	 *
+	 * If the 'extends express.Request' bit above were removed, the only compile time errors that would occur
+	 * would be from router.use not accepting this type of request. As such, if deemed necessary, we can
+	 * extract code from asyncErrorHandler or asyncEitherHandler and pass it an object such as this and check
+	 * the output
+	 */
+	mysqlx: mysql.Schema;
+	mysqlxSession: mysql.Session;
+	params: P;
+	configuration: typeof Configuration;
+}
+
+export const createFakeRequest = <P extends ParamType = {}, B = any>(
+	info: BasicMySQLRequest<P, B>
+): MySQLRequest<P, B> => info as MySQLRequest<P, B>;
 
 export default (
 	pool: mysql.Schema,

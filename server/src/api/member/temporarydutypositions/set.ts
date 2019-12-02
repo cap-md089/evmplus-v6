@@ -1,7 +1,7 @@
-import { MemberReference, ShortCAPUnitDutyPosition } from 'common-lib';
+import { just, left, MemberReference, none, right, ShortCAPUnitDutyPosition } from 'common-lib';
 import {
-	asyncErrorHandler,
-	MemberValidatedRequest,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	resolveReference,
 	Validator
 } from '../../../lib/internals';
@@ -31,16 +31,18 @@ export const setDutyPositionsValidator = new Validator<SetTemporaryDutyPositions
 const areDutiesTheSame = (d1: ShortCAPUnitDutyPosition, d2: ShortCAPUnitDutyPosition) =>
 	d1.date === d2.date && d1.duty === d2.duty && d1.expires === d2.expires;
 
-export default asyncErrorHandler(
+export default asyncEitherHandler(
 	async (
-		req: MemberValidatedRequest<SetTemporaryDutyPositions, { id: string; type: string }>,
-		res
+		req: BasicMemberValidatedRequest<SetTemporaryDutyPositions, { id: string; type: string }>
 	) => {
 		let ref: MemberReference;
 		if (req.params.type === 'CAPNHQMember') {
 			if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
-				res.status(400);
-				return res.end();
+				return left({
+					code: 400,
+					error: none<Error>(),
+					message: 'Invalid CAP ID'
+				});
 			}
 
 			ref = {
@@ -53,15 +55,22 @@ export default asyncErrorHandler(
 				id: req.params.id
 			};
 		} else {
-			res.status(400);
-			return res.end();
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Invalid member type'
+			});
 		}
 
-		const member = await resolveReference(ref, req.account, req.mysqlx, false);
-
-		if (!member) {
-			res.status(404);
-			return res.end();
+		let member;
+		try {
+			member = await resolveReference(ref, req.account, req.mysqlx, true);
+		} catch (e) {
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find member specified'
+			});
 		}
 
 		const now = Date.now();
@@ -121,9 +130,16 @@ export default asyncErrorHandler(
 			member.removeDutyPosition(oldDuty.duty);
 		}
 
-		await member.saveExtraMemberInformation(req.mysqlx, req.account);
+		try {
+			await member.saveExtraMemberInformation(req.mysqlx, req.account);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save member information'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

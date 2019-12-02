@@ -1,3 +1,13 @@
+import { left, MemberReference } from 'common-lib';
+import * as express from 'express';
+import {
+	AccountRequest,
+	ConditionalMemberRequest,
+	isValidMemberReference,
+	MemberRequest,
+	ParamType
+} from '../internals';
+
 interface ValidatorResult {
 	valid: boolean;
 }
@@ -19,12 +29,12 @@ export interface ValidatorPass<T> extends ValidatorResult {
 
 export type ValidatorFunction<T> = (obj: unknown) => ValidatorFail<T> | ValidatorPass<T>;
 
-type RequiredCheckFunction = (value: any, baseObj: any) => boolean;
+type RequiredCheckFunction<T> = (value: T, baseObj: any) => boolean;
 
 interface ValidateRule<T> {
 	validator: ValidatorFunction<T> | Validator<T>;
 	required?: boolean;
-	requiredIf?: RequiredCheckFunction;
+	requiredIf?: RequiredCheckFunction<T>;
 }
 
 export type ValidateRuleSet<T> = { [P in keyof T]: ValidateRule<T[P]> };
@@ -34,18 +44,50 @@ interface ValidateError<T> {
 	message: string;
 }
 
-export interface BasicValidatedRequest<T, P extends ParamType = {}> extends AccountRequest<P> {
-	body: T;
-}
+export type SimpleValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, T>;
 
-export interface MemberValidatedRequest<T, P extends ParamType = {}> extends MemberRequest<P> {
-	body: T;
-}
+export type MemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<P, T>;
 
-export interface ConditionalMemberValidatedRequest<T, P extends ParamType = {}>
-	extends ConditionalMemberRequest<P> {
-	body: T;
-}
+export type ConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, T>;
+
+export type PartialValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, Partial<T>>;
+
+export type PartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<
+	P,
+	Partial<T>
+>;
+
+export type PartialConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, Partial<T>>;
+
+export type BasicSimpleValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, T>;
+
+export type BasicMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<P, T>;
+
+export type BasicConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, T>;
+
+export type BasicPartialValidatedRequest<T, P extends ParamType = {}> = AccountRequest<
+	P,
+	Partial<T>
+>;
+
+export type BasicPartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<
+	P,
+	Partial<T>
+>;
+
+export type BasicPartialConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, Partial<T>>;
 
 export default class Validator<T> {
 	public static BodyExpressMiddleware = (
@@ -78,6 +120,50 @@ export default class Validator<T> {
 		}
 	};
 
+	public static LeftyBodyExpressMiddleware = (
+		validator: Validator<any> | ValidatorFunction<any>
+	): express.RequestHandler => (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json(
+				left({
+					code: 400,
+					error: 'Invalid body provided'
+				})
+			);
+		}
+
+		if (validator instanceof Validator) {
+			if (validator.validate(req.body)) {
+				req.body = validator.prune(req.body);
+
+				next();
+			} else {
+				res.status(400);
+				res.json(
+					left({
+						code: 400,
+						message: validator.getErrors()
+					})
+				);
+			}
+		} else {
+			const results = validator(req.body);
+
+			if (results.valid) {
+				next();
+			} else {
+				res.status(400);
+				res.json(
+					left({
+						code: 400,
+						message: (results as ValidatorFail<any>).message
+					})
+				);
+			}
+		}
+	};
+
 	public static PartialBodyExpressMiddleware = (
 		validator: Validator<any>
 	): express.RequestHandler => (req, res, next) => {
@@ -94,6 +180,30 @@ export default class Validator<T> {
 		} else {
 			res.status(400);
 			res.json(validator.getErrors());
+		}
+	};
+
+	public static LeftyPartialBodyExpressMiddleware = (
+		validator: Validator<any>
+	): express.RequestHandler => (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json({
+				code: 400,
+				error: 'Invalid body provided'
+			});
+		}
+
+		if (validator.validate(req.body, true)) {
+			req.body = validator.partialPrune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json({
+				code: 400,
+				message: validator.getErrors()
+			});
 		}
 	};
 
@@ -550,7 +660,10 @@ export default class Validator<T> {
 
 	public static OneOfStrict<T extends any[]>(...values: T): ValidatorFunction<any> {
 		// @ts-ignore
-		return Validator.Or.apply({}, values.map(value => Validator.StrictValue(value)));
+		return Validator.Or.apply(
+			{},
+			values.map(value => Validator.StrictValue(value))
+		);
 	}
 
 	public static Values<T>(
@@ -753,11 +866,47 @@ export default class Validator<T> {
 	public getErrorString(): string {
 		return this.errors.map(err => `${err.property}: (${err.message})`).join('; ');
 	}
-}
 
-import { MemberReference } from 'common-lib';
-import * as express from 'express';
-import { AccountRequest } from '../Account';
-import { ConditionalMemberRequest, MemberRequest } from '../member/pam/Session';
-import { isValidMemberReference } from '../Members';
-import { ParamType } from '../MySQLUtil';
+	public expressValidator: express.RequestHandler = (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			res.end();
+			return;
+		}
+
+		if (this.validate(req.body)) {
+			req.body = this.prune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json(this.getErrors());
+		}
+	};
+
+	public leftyExpressHandler: express.RequestHandler = (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json(
+				left({
+					code: 400,
+					error: 'Invalid body provided'
+				})
+			);
+		}
+
+		if (this.validate(req.body)) {
+			req.body = this.prune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json(
+				left({
+					code: 400,
+					error: this.getErrors()
+				})
+			);
+		}
+	};
+}

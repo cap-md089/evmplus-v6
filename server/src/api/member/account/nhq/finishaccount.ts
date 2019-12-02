@@ -1,7 +1,8 @@
+import { just, left, none, right } from 'common-lib';
 import {
 	addUserAccount,
-	asyncErrorHandler,
-	BasicValidatedRequest,
+	asyncEitherHandler,
+	BasicSimpleValidatedRequest,
 	createSessionForUser,
 	UserError,
 	validateUserAccountCreationToken,
@@ -26,14 +27,15 @@ export const nhqFinishValidator = new Validator<RequestParameters>({
 	}
 });
 
-export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParameters>, res) => {
+export default asyncEitherHandler(async (req: BasicSimpleValidatedRequest<RequestParameters>) => {
 	let memberReference;
 	try {
 		memberReference = await validateUserAccountCreationToken(req.mysqlx, req.body.token);
 	} catch (e) {
-		res.status(400);
-		return res.json({
-			error: 'Could not find token'
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Could not find token'
 		});
 	}
 
@@ -49,23 +51,27 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 		);
 	} catch (e) {
 		if (e instanceof UserError) {
-			res.status(400);
-			res.json({
-				error: e.message
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: e.message
 			});
 		} else {
-			res.status(500);
-			res.end();
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'An unknown error occurred while trying to finish creating your account'
+			});
 		}
-		return;
 	}
 
-	const session = (await createSessionForUser(req.mysqlx, account)
-		.toSome()
-		.maybe()).some();
+	const session = (
+		await createSessionForUser(req.mysqlx, account)
+			.toSome()
+			.maybe()
+	).some();
 
-	res.json({
-		error: 'none',
+	return right({
 		sessionID: session.sessionID
 	});
 });

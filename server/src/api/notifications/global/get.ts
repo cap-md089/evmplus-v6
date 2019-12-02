@@ -1,13 +1,14 @@
-import { NotificationObject } from 'common-lib';
-import { asyncErrorHandler, GlobalNotification, json, MemberRequest } from '../../../lib/internals';
+import { api, just, none, NotificationObject, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, GlobalNotification } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
-	try {
-		const notification = await GlobalNotification.GetCurrent(req.account, req.mysqlx);
+export default asyncEitherHandler<api.notifications.global.Get>(
+	async (req: BasicMemberRequest<{ id: string }>) => {
+		try {
+			const notification = await GlobalNotification.GetCurrent(req.account, req.mysqlx);
 
-		json<NotificationObject>(res, notification.toFullRaw());
-	} catch (e) {
-		res.status(404);
-		res.end();
+			return right(just(notification.toFullRaw()));
+		} catch (e) {
+			return right(none<NotificationObject>());
+		}
 	}
-});
+);

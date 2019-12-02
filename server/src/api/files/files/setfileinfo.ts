@@ -1,27 +1,38 @@
-import { EditableFileObjectProperties } from 'common-lib';
-import * as express from 'express';
-import { asyncErrorHandler, File, MemberValidatedRequest } from '../../../lib/internals';
+import { EditableFileObjectProperties, just, left, none, right } from 'common-lib';
+import {
+	asyncEitherHandler,
+	BasicPartialMemberValidatedRequest,
+	File
+} from '../../../lib/internals';
 
-export default asyncErrorHandler(
+export default asyncEitherHandler(
 	async (
-		req: MemberValidatedRequest<Partial<EditableFileObjectProperties>, { fileid: string }>,
-		res: express.Response
+		req: BasicPartialMemberValidatedRequest<EditableFileObjectProperties, { fileid: string }>
 	) => {
 		let file: File;
 
 		try {
 			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find file'
+			});
 		}
 
 		file.set(req.body);
 
-		await file.save();
+		try {
+			await file.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save file information'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

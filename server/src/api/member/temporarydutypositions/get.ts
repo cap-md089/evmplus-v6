@@ -1,12 +1,15 @@
-import { MemberReference, ShortDutyPosition } from 'common-lib';
-import { asyncErrorHandler, json, MemberRequest, resolveReference } from '../../../lib/internals';
+import { left, MemberReference, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, resolveReference } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string; type: string }>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string; type: string }>) => {
 	let ref: MemberReference;
 	if (req.params.type === 'CAPNHQMember') {
 		if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
-			res.status(400);
-			return res.end();
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Invalid CAP ID'
+			});
 		}
 
 		ref = {
@@ -19,16 +22,23 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string; type: s
 			id: req.params.id
 		};
 	} else {
-		res.status(400);
-		return res.end();
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Invalid member type'
+		});
 	}
 
-	const member = await resolveReference(ref, req.account, req.mysqlx, false);
-
-	if (!member) {
-		res.status(404);
-		return res.end();
+	let member;
+	try {
+		member = await resolveReference(ref, req.account, req.mysqlx, true);
+	} catch (e) {
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find member specified'
+		});
 	}
 
-	json<ShortDutyPosition[]>(res, member.dutyPositions.filter(d => d.type === 'CAPUnit'));
+	return right(member.dutyPositions.filter(d => d.type === 'CAPUnit'));
 });

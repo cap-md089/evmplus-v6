@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { Account, memberMiddleware } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { Account, leftyMemberMiddleware } from '../../lib/internals';
+import { leftyTokenMiddleware } from '../formtoken';
 // Admin Notification APIs
 import admindelete from './admin/delete';
 import adminget from './admin/get';
@@ -24,22 +24,22 @@ const router = Router();
 
 router.use(Account.ExpressMiddleware);
 
-router.get('/admin', memberMiddleware, adminlist);
-router.get('/admin/:id', memberMiddleware, adminget);
-router.post('/admin/:id', memberMiddleware, tokenMiddleware, adminmarkread);
-router.delete('/admin/:id', memberMiddleware, tokenMiddleware, admindelete);
+router.get('/admin', leftyMemberMiddleware, adminlist);
+router.get('/admin/:id', leftyMemberMiddleware, adminget);
+router.post('/admin/:id', leftyMemberMiddleware, leftyTokenMiddleware, adminmarkread);
+router.delete('/admin/:id', leftyMemberMiddleware, leftyTokenMiddleware, admindelete);
 
-router.get('/member', memberMiddleware, memberlist);
-router.get('/member/:id', memberMiddleware, memberget);
-router.post('/member/:id', memberMiddleware, tokenMiddleware, membertoggleread);
-router.delete('/member/:id', memberMiddleware, tokenMiddleware, memberdelete);
+router.get('/member', leftyMemberMiddleware, memberlist);
+router.get('/member/:id', leftyMemberMiddleware, memberget);
+router.post('/member/:id', leftyMemberMiddleware, leftyTokenMiddleware, membertoggleread);
+router.delete('/member/:id', leftyMemberMiddleware, leftyTokenMiddleware, memberdelete);
 
 router.get('/global', globalget);
-router.post('/global', memberMiddleware, tokenMiddleware, globalcreate);
-router.delete('/global', memberMiddleware, tokenMiddleware, globaltoggleread);
+router.post('/global', leftyMemberMiddleware, leftyTokenMiddleware, globalcreate);
+router.delete('/global', leftyMemberMiddleware, leftyTokenMiddleware, globaltoggleread);
 
-router.get('/', memberMiddleware, alllist);
-router.get('/:id', memberMiddleware, allget);
-router.post('/:id', memberMiddleware, alltoggleread);
+router.get('/', leftyMemberMiddleware, alllist);
+router.get('/:id', leftyMemberMiddleware, allget);
+router.post('/:id', leftyMemberMiddleware, alltoggleread);
 
 export default router;

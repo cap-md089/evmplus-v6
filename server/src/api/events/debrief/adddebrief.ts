@@ -1,38 +1,40 @@
-import { DebriefItem } from 'common-lib';
-import { Response } from 'express';
+import { api, DebriefItem, just, left, none, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	Event,
-	json,
-	MemberBase,
-	MemberValidatedRequest
+	MemberBase
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<DebriefItem, { id: string }>, res: Response) => {
+export default asyncEitherHandler<api.events.debrief.Add>(
+	async (req: BasicMemberValidatedRequest<DebriefItem, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase;
-
-		if (typeof req.body.debriefText !== 'string') {
-			res.status(400);
-			res.end();
-			return;
-		}
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not get debrief item'
+			});
 		}
 
 		member = req.member;
 
 		event.addItemToDebrief(req.body.debriefText, member);
 
-		await event.save();
+		try {
+			await event.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save debrief items'
+			});
+		}
 
-		json<DebriefItem[]>(res, event.debrief);
+		return right(event.debrief);
 	}
 );

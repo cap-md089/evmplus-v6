@@ -88,18 +88,16 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 	sqnNum = sqnNum.substring(0, sqnNum.length - 1);
 	sqnName = sqnName.substring(0, sqnName.length - 1);
 
-	const memberInformation: Array<
-		Array<{
-			text: string;
-			bold?: boolean;
-			fontSize?: number;
-			fillColor?: string;
-			borderColor?: string[];
-			decoration?: string; // 'underline', 'overline', 'linethrough'
-			decorationStyle?: string; // 'dashed', 'dotted', 'double', 'wavy'
-			decorationColor?: string; // 'blue', 'red', 'green', etc.
-		}>
-	> = [];
+	const memberInformation: Array<Array<{
+		text: string;
+		bold?: boolean;
+		fontSize?: number;
+		fillColor?: string;
+		borderColor?: string[];
+		decoration?: string; // 'underline', 'overline', 'linethrough'
+		decorationStyle?: string; // 'dashed', 'dotted', 'double', 'wavy'
+		decorationColor?: string; // 'blue', 'red', 'green', etc.
+	}>> = [];
 
 	const fontSize = 9;
 	for await (const member of req.account.getMembers()) {
@@ -180,7 +178,12 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			{ text: 'CAPID', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
 			{ text: 'Expiration', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
 			{ text: 'Signature', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
-			{ text: 'Flight', bold: true, fontSize: 10, borderColor: ['white', 'white', 'white'] }
+			{
+				text: 'Flight',
+				bold: true,
+				fontSize: 10,
+				borderColor: ['white', 'white', 'white']
+			}
 		],
 		...memberInformation
 	];

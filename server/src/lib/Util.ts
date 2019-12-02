@@ -1,8 +1,19 @@
 import * as mysql from '@mysql/xdevapi';
-import { HTTPError, MultCheckboxReturn, RawAccountObject } from 'common-lib';
+import {
+	api,
+	either,
+	EitherObj,
+	left,
+	MultCheckboxReturn,
+	RawAccountObject,
+	right
+} from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
+import { AccountRequest, BasicAccountRequest } from './Account';
 import { Account } from './internals';
+import { ConditionalMemberRequest } from './member/pam/Session';
+import saveServerError from './saveServerError';
 
 export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
@@ -147,11 +158,11 @@ export async function getTestTools2(
 }
 
 export interface ExtendedResponse extends express.Response {
-	sjson: <T>(obj: T | HTTPError) => ExtendedResponse;
+	sjson: <T>(obj: T) => ExtendedResponse;
 }
 
 const convertResponse = (res: express.Response): ExtendedResponse => {
-	(res as ExtendedResponse).sjson = <T>(obj: T | HTTPError) => convertResponse(res.json(obj));
+	(res as ExtendedResponse).sjson = <T>(obj: T) => convertResponse(res.json(obj));
 	return res as ExtendedResponse;
 };
 
@@ -162,15 +173,121 @@ export const extraTypes = (func: (req: express.Request, res: ExtendedResponse) =
 	func(req, convertResponse(res));
 };
 
-type ExpressHandler = (
-	req: express.Request,
+type ExpressHandler<R = any> = (
+	req: AccountRequest,
 	res: express.Response,
 	next: express.NextFunction
-) => any;
+) => R;
 
-export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (req, res, next) =>
-	fn(req, res, next).catch(next);
+type FunctionalExpressHandler<R = any> = (req: BasicAccountRequest) => R;
 
+type AsyncExpressHandler<R> = ExpressHandler<Promise<R>>;
+type ConvertedAsyncExpressHandler<R> = AsyncExpressHandler<R> & { fn: AsyncExpressHandler<R> };
+
+export const asyncErrorHandler = (
+	fn: AsyncExpressHandler<any>
+): ConvertedAsyncExpressHandler<any> => {
+	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
+		fn(req, res, next).catch(next);
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+export const leftyAsyncErrorHandler: typeof asyncErrorHandler = fn => {
+	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
+		fn(req, res, next).catch(async err => {
+			await saveServerError(err, req as ConditionalMemberRequest);
+
+			res.status(500);
+			res.json(
+				left({
+					code: 500,
+					message: 'Unknown server error'
+				})
+			);
+		});
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+// The complicated conditional type allows for containing EitherObj in the type or a value.
+// If it is a value, the handler expects a wrapped EitherObj that would be equivalent to an
+// EitherObj
+type EitherExpressHandler<R> = FunctionalExpressHandler<
+	Promise<
+		R extends EitherObj<api.ServerError, infer T>
+			? EitherObj<api.ServerError, T>
+			: EitherObj<api.ServerError, R>
+	>
+>;
+type ConvertedEitherExpressHandler<R> = ExpressHandler & { fn: EitherExpressHandler<R> };
+
+export const asyncEitherHandler = <R>(
+	fn: EitherExpressHandler<R>
+): ConvertedEitherExpressHandler<R> => {
+	const handler: ConvertedEitherExpressHandler<R> = (req, res) =>
+		fn(req)
+			.then(eith =>
+				either(eith).cata(
+					async l => {
+						return l.error.cata(
+							() =>
+								Promise.resolve(
+									res.json(
+										left({
+											code: l.code,
+											message: l.message
+										})
+									)
+								),
+							async err => {
+								await saveServerError(err, req as ConditionalMemberRequest);
+
+								return res.json(
+									left({
+										code: l.code,
+										message: l.message
+									})
+								);
+							}
+						);
+					},
+					async r => res.json(right(r))
+				)
+			)
+			.catch(async err => {
+				if (err instanceof Error) {
+					await saveServerError(err, req as ConditionalMemberRequest);
+				}
+
+				res.status(500);
+				return res.json(
+					left({
+						code: 500,
+						message: err instanceof Error ? err.message : err
+					})
+				);
+			});
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+/**
+ * Use whenever taking an object and passing it to MySQL
+ *
+ * MySQL xDevAPI throws cryptic errors when passed undefined instead of null
+ * It gives the impression that the developers that made the connector were
+ * not used to JavaScript, and didn't get to be comfortable enough when
+ * developing the connector
+ *
+ * @param obj The object to replace
+ */
 export const replaceUndefinedWithNull = (obj: any) => {
 	for (const i in obj) {
 		if (obj.hasOwnProperty(i)) {

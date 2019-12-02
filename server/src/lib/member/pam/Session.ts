@@ -3,6 +3,7 @@ import {
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	left,
 	MemberCreateError,
 	MemberPermission,
 	MemberPermissions,
@@ -18,6 +19,7 @@ import {
 	AccountRequest,
 	areMemberReferencesTheSame,
 	asyncErrorHandler,
+	BasicAccountRequest,
 	CAPNHQUser,
 	CAPProspectiveUser,
 	collectResults,
@@ -27,6 +29,7 @@ import {
 	MemberBase,
 	ParamType
 } from '../../internals';
+import { leftyAsyncErrorHandler } from '../../Util';
 
 const promisedRandomBytes = promisify(randomBytes);
 
@@ -43,11 +46,22 @@ export interface Session {
 	passwordOnly: boolean;
 }
 
-export interface ConditionalMemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
+export interface ConditionalMemberRequest<P extends ParamType = {}, B = any>
+	extends AccountRequest<P, B> {
 	member: CAPNHQUser | CAPProspectiveUser | null;
 }
 
-export interface MemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
+export interface MemberRequest<P extends ParamType = {}, B = any> extends AccountRequest<P, B> {
+	member: CAPNHQUser | CAPProspectiveUser;
+}
+
+export interface BasicConditionalMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
+	member: CAPNHQUser | CAPProspectiveUser | null;
+}
+
+export interface BasicMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
 	member: CAPNHQUser | CAPProspectiveUser;
 }
 
@@ -169,15 +183,13 @@ export const validateSession = (
 		)
 		.flatMap(session => updateSessionExpireTime(schema, session));
 
-export type MemberConstructor<T = MemberBase> = new (...args: any[]) => T;
+export type MemberConstructor<T = MemberBase> = (new (...args: any[]) => T) & MemberGetter<T>;
 
-export const SessionedUser = <
-	M extends MemberConstructor & {
-		Get: (id: any, account: Account, schema: Schema) => Promise<MemberBase>;
-	}
->(
-	Member: M
-) => {
+export interface MemberGetter<T> {
+	Get: (id: any, account: Account, schema: Schema) => Promise<T>;
+}
+
+export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 	abstract class User extends Member {
 		public static async RestoreFromSession(
 			schema: Schema,
@@ -268,8 +280,11 @@ export const SessionedUser = <
 	return User;
 };
 
-const conditionalMemberMiddlewareGenerator = (allowPasswordOnly: boolean) =>
-	asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
+const conditionalMemberMiddlewareGenerator = (
+	errorHandler: typeof asyncErrorHandler,
+	allowPasswordOnly: boolean
+) =>
+	errorHandler(async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
 		if (
 			typeof req.headers !== 'undefined' &&
 			typeof req.headers.authorization !== 'undefined' &&
@@ -324,27 +339,59 @@ const conditionalMemberMiddlewareGenerator = (allowPasswordOnly: boolean) =>
 		}
 	});
 
-export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(false);
+export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
+	asyncErrorHandler,
+	false
+);
 export const conditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
+	asyncErrorHandler,
+	true
+);
+export const leftyConditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
+	false
+);
+export const leftyConditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
 	true
 );
 
-const memberMiddlewareGenerator = (allowPasswordOnly: boolean) => (
-	req: ConditionalMemberRequest,
-	res: Response,
-	next: NextFunction
-) =>
-	conditionalMemberMiddlewareGenerator(allowPasswordOnly)(req, res, () => {
+const memberMiddlewareGenerator = (
+	errorHandler: typeof asyncErrorHandler,
+	allowPasswordOnly: boolean,
+	beLefty: boolean
+) => (req: ConditionalMemberRequest, res: Response, next: NextFunction) =>
+	conditionalMemberMiddlewareGenerator(errorHandler, allowPasswordOnly)(req, res, () => {
 		if (req.member === null) {
-			res.status(401);
-			res.end();
+			if (beLefty) {
+				res.status(401);
+				res.json(
+					left({
+						code: 401,
+						error: 'Could not validate session ID'
+					})
+				);
+			} else {
+				res.status(401);
+				res.end();
+			}
 		} else {
 			next();
 		}
 	});
 
-export const memberMiddleware = memberMiddlewareGenerator(false);
-export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(true);
+export const memberMiddleware = memberMiddlewareGenerator(asyncErrorHandler, false, false);
+export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+	asyncErrorHandler,
+	true,
+	false
+);
+export const leftyMemberMiddleware = memberMiddlewareGenerator(leftyAsyncErrorHandler, false, true);
+export const leftyMemberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
+	true,
+	true
+);
 
 export const permissionMiddleware = (permission: MemberPermission, threshold = 1) => (
 	req: MemberRequest,
@@ -359,6 +406,34 @@ export const permissionMiddleware = (permission: MemberPermission, threshold = 1
 	if (!req.member.hasPermission(permission, threshold)) {
 		res.status(403);
 		return res.end();
+	}
+
+	next();
+};
+
+export const leftyPermissionMiddleware = (permission: MemberPermission, threshold = 1) => (
+	req: MemberRequest,
+	res: Response,
+	next: NextFunction
+) => {
+	if (!req.member) {
+		res.status(401);
+		return res.json(
+			left({
+				code: 401,
+				error: 'Member required'
+			})
+		);
+	}
+
+	if (!req.member.hasPermission(permission, threshold)) {
+		res.status(403);
+		return res.json(
+			left({
+				code: 403,
+				error: `Member does not have permission '${permission}'`
+			})
+		);
 	}
 
 	next();

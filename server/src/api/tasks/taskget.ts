@@ -1,13 +1,15 @@
-import { TaskObject } from 'common-lib';
-import { asyncErrorHandler, json, MemberRequest, Task } from '../../lib/internals';
+import { left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Task } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	const id = parseInt(req.params.id, 10);
 
 	if (id !== id) {
-		res.status(400);
-		res.end();
-		return;
+		return left({
+			code: 400,
+			error: none<Error>(),
+			message: 'Invalid ID passed as parameter'
+		});
 	}
 
 	let task: Task;
@@ -15,10 +17,12 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res)
 	try {
 		task = await Task.Get(id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find task'
+		});
 	}
 
-	json<TaskObject>(res, task.toRaw());
+	return right(task.toRaw());
 });

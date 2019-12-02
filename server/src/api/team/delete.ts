@@ -1,19 +1,28 @@
-import { Response } from 'express';
-import { asyncErrorHandler, MemberRequest, Team } from '../../lib/internals';
+import { just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Team } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
+export default asyncEitherHandler(async (req: BasicMemberRequest<{ id: string }>) => {
 	let team: Team;
 
 	try {
 		team = await Team.Get(req.params.id, req.account, req.mysqlx);
 	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
+		return left({
+			code: 404,
+			error: none<Error>(),
+			message: 'Could not find team'
+		});
 	}
 
-	await team.delete();
+	try {
+		await team.delete();
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not delete team'
+		});
+	}
 
-	res.status(204);
-	res.end();
+	return right(void 0);
 });

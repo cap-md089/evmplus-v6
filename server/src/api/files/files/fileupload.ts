@@ -12,7 +12,7 @@ import { lookup } from 'mime-types';
 import { basename, join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../../../conf';
-import { File, json, MemberRequest } from '../../../lib/internals';
+import { asyncErrorHandler, File, json, MemberRequest } from '../../../lib/internals';
 import { validRawToken } from '../../formtoken';
 
 const parseHeaders = (lines: string[]) => {
@@ -47,7 +47,7 @@ fs.exists(config.fileStoragePath, exists => {
 	}
 });
 
-export default async (req: MemberRequest, res: express.Response) => {
+export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
 	let collectingData = false;
 	let fileName = '';
 	let boundary = '';
@@ -179,4 +179,4 @@ export default async (req: MemberRequest, res: express.Response) => {
 		}
 		req.resume();
 	});
-};
+});
