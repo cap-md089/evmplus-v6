@@ -1,7 +1,7 @@
-import { just, left, right } from 'common-lib';
+import { api, just, left, right } from 'common-lib';
 import { asyncEitherHandler, BasicMemberRequest, Team } from '../../lib/internals';
 
-export default asyncEitherHandler(async (req: BasicMemberRequest) => {
+export default asyncEitherHandler<api.team.Create>(async (req: BasicMemberRequest) => {
 	try {
 		const newTeam = await Team.Create(req.body, req.account, req.mysqlx);
 

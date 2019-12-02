@@ -1,4 +1,4 @@
-import { just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
+import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberValidatedRequest,
@@ -23,7 +23,7 @@ export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 	}
 });
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.events.attendance.AddBulk>(
 	async (req: BasicMemberValidatedRequest<BulkAttendanceRequest, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase | null;

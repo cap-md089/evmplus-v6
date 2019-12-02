@@ -1,7 +1,7 @@
-import { just, left, none, right } from 'common-lib';
+import { api, just, left, none, right } from 'common-lib';
 import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.files.children.RemoveChild>(
 	async (req: BasicMemberRequest<{ parentid: string; childid: string }>) => {
 		const parentid = req.params.parentid;
 		const childid = req.params.childid;

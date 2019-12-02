@@ -1,13 +1,19 @@
 import { Schema } from '@mysql/xdevapi';
 import {
+	api,
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	Either,
+	just,
 	left,
+	Maybe,
 	MemberCreateError,
 	MemberPermission,
 	MemberPermissions,
 	MemberReference,
+	none,
+	right,
 	SessionID,
 	UserAccountInformation
 } from 'common-lib';
@@ -29,7 +35,7 @@ import {
 	MemberBase,
 	ParamType
 } from '../../internals';
-import { leftyAsyncErrorHandler } from '../../Util';
+import { leftyAsyncErrorHandler, serverErrorGenerator } from '../../Util';
 
 const promisedRandomBytes = promisify(randomBytes);
 
@@ -63,6 +69,16 @@ export interface BasicConditionalMemberRequest<P extends ParamType = {}, B = any
 export interface BasicMemberRequest<P extends ParamType = {}, B = any>
 	extends BasicAccountRequest<P, B> {
 	member: CAPNHQUser | CAPProspectiveUser;
+}
+
+export interface MaybeMemberRequest<P extends ParamType = {}, B = any>
+	extends AccountRequest<P, B> {
+	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
+}
+
+export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
+	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
 }
 
 const addSessionToDatabase = (
@@ -280,11 +296,107 @@ export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 	return User;
 };
 
+export function memberRequestTransformer(
+	allowPasswordOnly: boolean,
+	memberRequired: false
+): <T extends BasicAccountRequest>(
+	req: T
+) => AsyncEither<api.ServerError, T & BasicMaybeMemberRequest>;
+export function memberRequestTransformer(
+	allowedPasswordOnly: boolean,
+	memberRequired: true
+): <T extends BasicAccountRequest>(req: T) => AsyncEither<api.ServerError, T & BasicMemberRequest>;
+
+export function memberRequestTransformer(
+	allowPasswordOnly: boolean,
+	memberRequired: boolean = false
+) {
+	return <T extends BasicAccountRequest>(
+		req: T
+	): AsyncEither<api.ServerError, (T & BasicMaybeMemberRequest) | (T & BasicMemberRequest)> =>
+		new AsyncEither(
+			(typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined'
+				? asyncRight(req, serverErrorGenerator('Could not get information for session'))
+				: asyncLeft({
+						code: 400,
+						error: none<Error>(),
+						message: 'Authorization header not provided'
+				  })
+			)
+				.flatMap<Session>(() =>
+					validateSession(req.mysqlx, req.headers.authorization!).leftMap(
+						code => ({
+							code: 400,
+							error: none<Error>(),
+							message: code.toString()
+						}),
+						serverErrorGenerator('Could not validate sesion')
+					)
+				)
+				.flatMap<Session>(session =>
+					!allowPasswordOnly && session.passwordOnly
+						? asyncLeft({
+								code: 400,
+								error: none<Error>(),
+								message:
+									'Member is not allowed to perform actions without finishing the password reset process'
+						  })
+						: asyncRight(
+								session,
+								serverErrorGenerator('Could not get information for session')
+						  )
+				)
+				.flatMap<CAPNHQUser | CAPProspectiveUser>(session =>
+					session.userAccount.member.type === 'CAPProspectiveMember'
+						? asyncRight(
+								CAPProspectiveUser.RestoreFromSession(
+									req.mysqlx,
+									req.account,
+									session
+								) as Promise<CAPProspectiveUser>,
+								serverErrorGenerator('Could not get user information')
+						  )
+						: session.userAccount.member.type === 'CAPNHQMember'
+						? asyncRight(
+								CAPNHQUser.RestoreFromSession(
+									req.mysqlx,
+									req.account,
+									session
+								) as Promise<CAPNHQUser>,
+								serverErrorGenerator('Could not get user information')
+						  )
+						: asyncLeft({
+								code: 400,
+								error: none<Error>(),
+								message: 'Could not get user information'
+						  })
+				)
+				.cata<Either<api.ServerError, T & BasicMaybeMemberRequest>>(
+					err =>
+						err.code === 500 || memberRequired
+							? left<api.ServerError, T & BasicMaybeMemberRequest>(err)
+							: right<api.ServerError, T & BasicMaybeMemberRequest>({
+									...req,
+									member: none()
+							  }),
+					user =>
+						right<api.ServerError, T & BasicMaybeMemberRequest>({
+							...req,
+							// Kind of hard to make the types match what is above
+							// Basically the function declaration is enforced, but not easily
+							// This is the only not easy bit
+							member: memberRequired ? user : just(user)
+						} as T & BasicMaybeMemberRequest)
+				),
+			serverErrorGenerator('Could not get user information')
+		);
+}
+
 const conditionalMemberMiddlewareGenerator = (
 	errorHandler: typeof asyncErrorHandler,
 	allowPasswordOnly: boolean
 ) =>
-	errorHandler(async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
+	errorHandler(async (req: ConditionalMemberRequest, res, next) => {
 		if (
 			typeof req.headers !== 'undefined' &&
 			typeof req.headers.authorization !== 'undefined' &&

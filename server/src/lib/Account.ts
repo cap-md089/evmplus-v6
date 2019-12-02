@@ -1,16 +1,23 @@
 import * as mysql from '@mysql/xdevapi';
 import {
 	AccountObject,
+	api,
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
 	DatabaseInterface,
 	EventObject,
 	FileObject,
+	just,
 	left,
 	MemberReference,
 	NHQ,
+	none,
 	NoSQLDocument,
 	ProspectiveMemberObject,
 	RawAccountObject,
-	RawTeamObject
+	RawTeamObject,
+	right
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
@@ -33,6 +40,7 @@ import {
 import { ConditionalMemberRequest } from './member/pam/Session';
 import { BasicMySQLRequest } from './MySQLUtil';
 import saveServerError from './saveServerError';
+import { serverErrorGenerator } from './Util';
 
 export interface AccountRequest<P extends ParamType = {}, B = any> extends MySQLRequest<P, B> {
 	account: Account;
@@ -108,7 +116,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				return res.json(
 					left({
 						code: 400,
-						error: 'Could not get account ID from URL'
+						message: 'Could not get account ID from URL'
 					})
 				);
 			}
@@ -122,7 +130,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 					return res.json(
 						left({
 							code: 400,
-							error: 'Could not get account with ID ' + accountID
+							message: 'Could not get account with ID ' + accountID
 						})
 					);
 				} else {
@@ -131,7 +139,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 					return res.json(
 						left({
 							code: 500,
-							error: 'Unknown server error'
+							message: 'Unknown server error'
 						})
 					);
 				}
@@ -140,6 +148,54 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			next();
 		}
 	);
+
+	public static RequestTransformer = (
+		req: BasicMySQLRequest
+	): AsyncEither<api.ServerError, BasicAccountRequest> =>
+		asyncRight(
+			req.hostname.split('.'),
+			serverErrorGenerator('Could not get organization account information')
+		)
+			.flatMap<string>(parts => {
+				while (parts[0] === 'www') {
+					parts.shift();
+				}
+
+				if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
+					return right('mdx89');
+				} else if (parts.length === 2) {
+					return right('sales');
+				} else if (parts.length === 3) {
+					return right(parts[0]);
+				} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+					return right('mdx89');
+				} else {
+					return asyncLeft({
+						code: 400,
+						error: none<Error>(),
+						message: 'Could not get account ID from URL'
+					});
+				}
+			})
+			.map(
+				id => Account.Get(id, req.mysqlx),
+				err => {
+					if (err.message && err.message.startsWith('Unknown account: ')) {
+						return {
+							code: 400,
+							error: none<Error>(),
+							message: err.message
+						};
+					} else {
+						return {
+							code: 500,
+							error: just(err),
+							message: 'Unknown server error'
+						};
+					}
+				}
+			)
+			.map(account => ({ ...req, account }));
 
 	public static PayWall = (
 		req: AccountRequest,

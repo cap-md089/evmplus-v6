@@ -42,6 +42,7 @@ export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
 	headers: IncomingHttpHeaders;
 	originalUrl: string;
 	_originalUrl: string;
+	hostname: string;
 
 	/**
 	 * Contains stuff that is used.

@@ -6,10 +6,10 @@ import requestaccount, { nhqRequestValidator } from './nhq/requestaccount';
 const router = Router();
 
 router.post(
-	'/nhq/request',
+	'/cap/request',
 	Validator.LeftyBodyExpressMiddleware(nhqRequestValidator),
 	requestaccount
 );
-router.post('/nhq/finish', Validator.LeftyBodyExpressMiddleware(nhqFinishValidator), finishaccount);
+router.post('/cap/finish', Validator.LeftyBodyExpressMiddleware(nhqFinishValidator), finishaccount);
 
 export default router;

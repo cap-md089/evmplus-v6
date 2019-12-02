@@ -1,11 +1,11 @@
-import { just, left, NewEventObject, none, right } from 'common-lib';
+import { api, just, left, NewEventObject, none, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicPartialMemberValidatedRequest,
 	Event
 } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.events.events.Set>(
 	async (req: BasicPartialMemberValidatedRequest<NewEventObject, { id: string }>) => {
 		let event: Event;
 

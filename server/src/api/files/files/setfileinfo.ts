@@ -1,11 +1,11 @@
-import { EditableFileObjectProperties, just, left, none, right } from 'common-lib';
+import { api, EditableFileObjectProperties, just, left, none, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicPartialMemberValidatedRequest,
 	File
 } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.files.files.SetInfo>(
 	async (
 		req: BasicPartialMemberValidatedRequest<EditableFileObjectProperties, { fileid: string }>
 	) => {

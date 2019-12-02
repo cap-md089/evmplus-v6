@@ -1,7 +1,7 @@
-import { just, left, none, RawTeamObject, right } from 'common-lib';
+import { api, just, left, none, RawTeamObject, right } from 'common-lib';
 import { asyncEitherHandler, BasicPartialMemberValidatedRequest, Team } from '../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.team.Set>(
 	async (req: BasicPartialMemberValidatedRequest<RawTeamObject, { id: string }>) => {
 		let team: Team;
 

@@ -1,4 +1,4 @@
-import { api, EventObject, left, none, right } from 'common-lib';
+import { api, left, none, right } from 'common-lib';
 import { asyncEitherHandler, BasicConditionalMemberRequest, Event } from '../../../lib/internals';
 
 export default asyncEitherHandler<api.events.events.Get>(
@@ -6,7 +6,7 @@ export default asyncEitherHandler<api.events.events.Get>(
 		if (req.params.id === undefined) {
 			return left({
 				code: 400,
-				error: none(),
+				error: none<Error>(),
 				message: 'Event ID was not specified'
 			});
 		}
@@ -18,7 +18,7 @@ export default asyncEitherHandler<api.events.events.Get>(
 		} catch (e) {
 			return left({
 				code: 404,
-				error: none(),
+				error: none<Error>(),
 				message: 'Could not find event'
 			});
 		}
@@ -33,6 +33,6 @@ export default asyncEitherHandler<api.events.events.Get>(
 			}
 		}
 
-		return right<api.HTTPError, EventObject>(event.toRaw(isValidMember ? req.member : null));
+		return right(event.toRaw(isValidMember ? req.member : null));
 	}
 );

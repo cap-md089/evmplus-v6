@@ -1,11 +1,11 @@
-import { just, left, RegistryValues, right } from 'common-lib';
+import { api, just, left, RegistryValues, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicPartialMemberValidatedRequest,
 	Registry
 } from '../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.registry.Set>(
 	async (req: BasicPartialMemberValidatedRequest<RegistryValues>) => {
 		try {
 			const registry = await Registry.Get(req.account, req.mysqlx);

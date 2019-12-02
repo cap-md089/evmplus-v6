@@ -14,6 +14,22 @@ import {
 	ParamType
 } from '../lib/internals';
 
+export const getUser = async <U extends typeof CAPNHQUser | typeof CAPProspectiveUser>(
+	reference: MemberReference,
+	schema: Schema,
+	account: Account,
+	constructor: U
+): Promise<InstanceType<U> | null> => {
+	const accountInfo = await getInformationForMember(schema, reference);
+
+	const session = await createSessionForUser(schema, accountInfo).fullJoin();
+
+	// I'm ok forcing here as it gives the right return value when forced
+	return (constructor.RestoreFromSession(schema, account, session) as unknown) as InstanceType<
+		U
+	> | null;
+};
+
 export const addHeader = <
 	R extends BasicMySQLRequest<P, B>,
 	P extends ParamType,
@@ -31,32 +47,17 @@ export const addHeader = <
 	}
 });
 
-export const getUser = async <U extends typeof CAPNHQUser | typeof CAPProspectiveUser>(
-	reference: MemberReference,
-	schema: Schema,
-	account: Account,
-	constructor: U
-): Promise<InstanceType<U> | null> => {
-	const accountInfo = await getInformationForMember(schema, reference);
-
-	const session = await createSessionForUser(schema, accountInfo).fullJoin();
-
-	// I'm ok forcing here as it gives the right return value when forced
-	return (constructor.RestoreFromSession(schema, account, session) as unknown) as InstanceType<
-		U
-	> | null;
-};
-
 export const prepareBasicGetRequest = <P extends ParamType = {}>(
 	configuration: typeof conf,
 	params: P,
 	mysqlxSession: Session,
 	url: string
-): BasicMySQLRequest<P, undefined> => ({
+): BasicMySQLRequest<P, any> => ({
 	body: undefined,
 	params,
 	configuration,
 	headers: {},
+	hostname: 'mdx89.capunit.com',
 	method: 'GET',
 	mysqlx: mysqlxSession.getSchema(conf.database.connection.database),
 	mysqlxSession,
@@ -74,6 +75,7 @@ export const prepareBasicPostRequest = <B = any>(
 	params: {},
 	configuration,
 	headers: {},
+	hostname: 'mdx89.capunit.com',
 	method: 'POST',
 	mysqlx: mysqlxSession.getSchema(conf.database.connection.database),
 	mysqlxSession,

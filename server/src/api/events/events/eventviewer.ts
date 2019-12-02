@@ -21,7 +21,7 @@ export default asyncEitherHandler<api.events.events.GetEventViewerData>(
 		if (req.params.id === undefined) {
 			return left({
 				code: 400,
-				error: none(),
+				error: none<Error>(),
 				message: 'Event ID was not specified'
 			});
 		}
@@ -33,7 +33,7 @@ export default asyncEitherHandler<api.events.events.GetEventViewerData>(
 		} catch (e) {
 			return left({
 				code: 404,
-				error: none(),
+				error: none<Error>(),
 				message: 'Could not find event'
 			});
 		}

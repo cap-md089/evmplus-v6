@@ -1,4 +1,4 @@
-import { just, left, none, right } from 'common-lib';
+import { api, just, left, none, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberRequest,
@@ -8,7 +8,7 @@ import {
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.events.debrief.Delete>(
 	async (req: BasicMemberRequest<{ timestamp: string; id: string }>) => {
 		let event: Event;
 		let member: MemberBase;

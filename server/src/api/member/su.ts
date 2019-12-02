@@ -1,4 +1,4 @@
-import { just, left, none, right } from 'common-lib';
+import { api, just, left, none, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberRequest,
@@ -6,7 +6,7 @@ import {
 	isValidMemberReference
 } from '../../lib/internals';
 
-export default asyncEitherHandler(async (req: BasicMemberRequest) => {
+export default asyncEitherHandler<api.member.Su>(async (req: BasicMemberRequest) => {
 	if (!req.member.isRioux || !(req.member instanceof CAPNHQMember)) {
 		return left({
 			code: 403,

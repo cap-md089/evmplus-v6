@@ -1,7 +1,7 @@
-import { just, left, NewTaskObject, none, right } from 'common-lib';
+import { api, just, left, NewTaskObject, none, right } from 'common-lib';
 import { asyncEitherHandler, BasicMemberValidatedRequest, Task } from '../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.tasks.Edit>(
 	async (req: BasicMemberValidatedRequest<NewTaskObject, { id: string }>) => {
 		const id = parseInt(req.params.id, 10);
 

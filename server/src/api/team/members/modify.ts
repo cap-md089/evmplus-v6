@@ -1,7 +1,7 @@
-import { just, left, NewTeamMember, none, right } from 'common-lib';
+import { api, just, left, NewTeamMember, none, right } from 'common-lib';
 import { asyncEitherHandler, BasicMemberValidatedRequest, Team } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.team.members.Modify>(
 	async (req: BasicMemberValidatedRequest<NewTeamMember, { id: string }>) => {
 		let team: Team;
 

@@ -1,4 +1,4 @@
-import { right } from 'common-lib';
+import { api, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberValidatedRequest,
@@ -7,31 +7,33 @@ import {
 } from '../../../lib/internals';
 import saveServerError from '../../../lib/saveServerError';
 
-export default asyncEitherHandler(async (req: BasicMemberValidatedRequest<FlightAssignBulk>) => {
-	for (const request of req.body.members) {
-		let member;
-		try {
-			member = await resolveReference(request.member, req.account, req.mysqlx);
-		} catch (e) {
-			continue;
+export default asyncEitherHandler<api.member.flights.AssignBulk>(
+	async (req: BasicMemberValidatedRequest<FlightAssignBulk>) => {
+		for (const request of req.body.members) {
+			let member;
+			try {
+				member = await resolveReference(request.member, req.account, req.mysqlx);
+			} catch (e) {
+				continue;
+			}
+
+			if (member == null) {
+				continue;
+			}
+
+			if (request.newFlight === null) {
+				continue;
+			}
+
+			member.setFlight(request.newFlight);
+
+			try {
+				await member.saveExtraMemberInformation(req.mysqlx, req.account);
+			} catch (e) {
+				saveServerError(e, req);
+			}
 		}
 
-		if (member == null) {
-			continue;
-		}
-
-		if (request.newFlight === null) {
-			continue;
-		}
-
-		member.setFlight(request.newFlight);
-
-		try {
-			await member.saveExtraMemberInformation(req.mysqlx, req.account);
-		} catch (e) {
-			saveServerError(e, req);
-		}
+		return right(void 0);
 	}
-
-	return right(void 0);
-});
+);

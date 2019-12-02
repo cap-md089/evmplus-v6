@@ -1,7 +1,7 @@
-import { just, left, none, NotificationTargetType, right } from 'common-lib';
+import { api, just, left, none, NotificationTargetType, right } from 'common-lib';
 import { asyncEitherHandler, BasicMemberRequest, Notification } from '../../../lib/internals';
 
-export default asyncEitherHandler(async (req: BasicMemberRequest) => {
+export default asyncEitherHandler<api.notifications.admin.List>(async (req: BasicMemberRequest) => {
 	if (!req.account.isAdmin(req.member)) {
 		return left({
 			code: 403,

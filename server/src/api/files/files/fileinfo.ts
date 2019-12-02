@@ -1,7 +1,15 @@
-import { FileUserAccessControlPermissions, just, left, none, right } from 'common-lib';
+import {
+	api,
+	FileObject,
+	FileUserAccessControlPermissions,
+	just,
+	left,
+	none,
+	right
+} from 'common-lib';
 import { asyncEitherHandler, BasicConditionalMemberRequest, File } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.files.files.GetFile<FileObject>>(
 	async (req: BasicConditionalMemberRequest<{ method?: string; fileid: string }>) => {
 		let file: File;
 

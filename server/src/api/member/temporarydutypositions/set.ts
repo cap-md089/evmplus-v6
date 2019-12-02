@@ -1,4 +1,12 @@
-import { just, left, MemberReference, none, right, ShortCAPUnitDutyPosition } from 'common-lib';
+import {
+	api,
+	just,
+	left,
+	MemberReference,
+	none,
+	right,
+	ShortCAPUnitDutyPosition
+} from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberValidatedRequest,
@@ -31,7 +39,7 @@ export const setDutyPositionsValidator = new Validator<SetTemporaryDutyPositions
 const areDutiesTheSame = (d1: ShortCAPUnitDutyPosition, d2: ShortCAPUnitDutyPosition) =>
 	d1.date === d2.date && d1.duty === d2.duty && d1.expires === d2.expires;
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.member.temporarydutypositions.Set>(
 	async (
 		req: BasicMemberValidatedRequest<SetTemporaryDutyPositions, { id: string; type: string }>
 	) => {

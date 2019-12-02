@@ -1,4 +1,4 @@
-import { just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
+import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberValidatedRequest,
@@ -8,7 +8,7 @@ import {
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncEitherHandler(
+export default asyncEitherHandler<api.events.attendance.ModifyAttendance>(
 	async (req: BasicMemberValidatedRequest<NewAttendanceRecord, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase | null;

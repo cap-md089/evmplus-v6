@@ -1,8 +1,10 @@
 import * as mysql from '@mysql/xdevapi';
 import {
 	api,
+	AsyncEither,
 	either,
 	EitherObj,
+	just,
 	left,
 	MultCheckboxReturn,
 	RawAccountObject,
@@ -214,23 +216,87 @@ export const leftyAsyncErrorHandler: typeof asyncErrorHandler = fn => {
 	return handler;
 };
 
+export const asyncEitherMiddlewareHandler = <R>(
+	fn: EitherExpressHandler<R>
+): ConvertedEitherExpressHandler<R> => {
+	const handler: ConvertedEitherExpressHandler<R> = (req, res, next) => {
+		const result = fn(req);
+
+		((result instanceof Promise
+			? result
+			: (result as AsyncEither<api.ServerError, EitherResult<R>>).join()) as Promise<
+			EitherObj<api.ServerError, R>
+		>)
+			.then(eith =>
+				either(eith).cata(
+					async l =>
+						l.error.cata(
+							() =>
+								Promise.resolve(
+									res.json(
+										left({
+											code: l.code,
+											message: l.message
+										})
+									)
+								),
+							async err => {
+								await saveServerError(err, req as ConditionalMemberRequest);
+
+								return res.json(
+									left({
+										code: l.code,
+										message: l.message
+									})
+								);
+							}
+						),
+					() => next()
+				)
+			)
+			.catch(async err => {
+				if (err instanceof Error) {
+					await saveServerError(err, req as ConditionalMemberRequest);
+				}
+
+				res.status(500);
+				return res.json(
+					left({
+						code: 500,
+						message: err instanceof Error ? err.message : err
+					})
+				);
+			});
+	};
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+type EitherResult<E> = E extends EitherObj<any, infer R> ? R : never;
+
 // The complicated conditional type allows for containing EitherObj in the type or a value.
 // If it is a value, the handler expects a wrapped EitherObj that would be equivalent to an
 // EitherObj
 type EitherExpressHandler<R> = FunctionalExpressHandler<
-	Promise<
-		R extends EitherObj<api.ServerError, infer T>
-			? EitherObj<api.ServerError, T>
-			: EitherObj<api.ServerError, R>
-	>
+	R extends EitherObj<api.ServerError, infer T>
+		? Promise<EitherObj<api.ServerError, T>> | AsyncEither<api.ServerError, T>
+		: never
 >;
 type ConvertedEitherExpressHandler<R> = ExpressHandler & { fn: EitherExpressHandler<R> };
 
 export const asyncEitherHandler = <R>(
 	fn: EitherExpressHandler<R>
 ): ConvertedEitherExpressHandler<R> => {
-	const handler: ConvertedEitherExpressHandler<R> = (req, res) =>
-		fn(req)
+	const handler: ConvertedEitherExpressHandler<R> = (req, res) => {
+		const result = fn(req);
+
+		((result instanceof Promise
+			? result
+			: (result as AsyncEither<api.ServerError, EitherResult<R>>).join()) as Promise<
+			EitherObj<api.ServerError, R>
+		>)
 			.then(eith =>
 				either(eith).cata(
 					async l => {
@@ -272,11 +338,18 @@ export const asyncEitherHandler = <R>(
 					})
 				);
 			});
+	};
 
 	handler.fn = fn;
 
 	return handler;
 };
+
+export const serverErrorGenerator = (message: string) => (err: Error): api.ServerError => ({
+	code: 500,
+	error: just(err),
+	message
+});
 
 /**
  * Use whenever taking an object and passing it to MySQL
