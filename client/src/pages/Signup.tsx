@@ -106,7 +106,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			// @ts-ignore
 			window.grecaptcha.reset();
 
-			const fetchResult = await fetchFunction('/api/member/account/nhq/request', {
+			const fetchResult = await fetchFunction('/api/member/account/cap/request', {
 				body: JSON.stringify(values),
 				headers: {
 					'content-type': 'application/json'

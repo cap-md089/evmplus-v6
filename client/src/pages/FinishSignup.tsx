@@ -82,7 +82,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		const { username, password } = this.state.form;
 
 		try {
-			const fetchResult = await fetchFunction('/api/member/account/nhq/finish', {
+			const fetchResult = await fetchFunction('/api/member/account/cap/finish', {
 				body: JSON.stringify({
 					token,
 					username,
