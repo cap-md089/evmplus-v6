@@ -6,7 +6,10 @@ import {
 	FileUserControlList,
 	FullFileObject,
 	MemberObject,
-	MemberReference
+	MemberReference,
+	EitherObj,
+	api,
+	either
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -126,11 +129,11 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 	 * @param member The member creating the folder
 	 * @param account The account responsible for the folder
 	 */
-	public static async CreateFolder(name: string, member: MemberBase, account: Account) {
+	public static async CreateFolder(name: string, parent: FileInterface, member: MemberBase, account: Account) {
 		const token = await APIInterface.getToken(account.id, member);
 
 		const results = await account.fetch(
-			`/api/files/create`,
+			`/api/files/${parent.id}/createfolder/${name}`,
 			{
 				method: 'POST',
 				body: JSON.stringify({
@@ -141,9 +144,12 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 			member
 		);
 
-		const json = (await results.json()) as FullFileObject;
+		const json = (await results.json()) as EitherObj<api.HTTPError, FullFileObject>;
 
-		return new FileInterface(json, account);
+		return either(json).cata(
+			e => Promise.reject(e.message),
+			f => Promise.resolve(new FileInterface(f, account))
+		);
 	}
 
 	/**
@@ -154,7 +160,7 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 	 * @param account The Account of the file
 	 */
 	public static async Get(id: string, member: MemberBase | null | undefined, account: Account) {
-		let file: FullFileObject;
+		let file;
 
 		// if (
 		// 	id !== 'root' &&
@@ -165,9 +171,12 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 
 		const results = await account.fetch(`/api/files/${id}`, {}, member);
 
-		file = await results.json();
+		file = await results.json() as api.files.files.GetFile<FullFileObject>;
 
-		return new FileInterface(file, account);
+		return either(file).cata(
+			e => Promise.reject(e.message),
+			f => Promise.resolve(new FileInterface(f, account))
+		);
 	}
 
 	public id: string = '';
@@ -522,5 +531,9 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 		);
 
 		return result.status;
+	}
+
+	public async createFolder(name: string, member: MemberBase, account: Account) {
+		return FileInterface.CreateFolder(name, this, member, account);
 	}
 }

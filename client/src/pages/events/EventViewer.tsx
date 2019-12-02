@@ -5,12 +5,12 @@ import {
 	NewAttendanceRecord,
 	NHQMemberReference,
 	PointOfContactType,
-	ProspectiveMemberReference,
-	NullMemberReference
+	ProspectiveMemberReference
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import AttendanceItemView from '../../components/AttendanceView';
+import Button from '../../components/Button';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
@@ -25,7 +25,6 @@ import Event from '../../lib/Event';
 import MemberBase, { CAPMemberClasses } from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
-import Button from '../../components/Button';
 
 const noop = () => void 0;
 

@@ -9,6 +9,7 @@ import SimpleForm, {
 } from '../components/forms/SimpleForm';
 import { fetchFunction } from '../lib/myFetch';
 import Page, { PageProps } from './Page';
+import { EitherObj, api, either } from 'common-lib';
 
 interface SignupFormValues {
 	capid: number | null;
@@ -50,7 +51,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				disableOnInvalid={true}
 				validator={{
 					capid: id => id !== null && id >= 100000 && id <= 999999,
-					email: email => !!email && !!email.match(/.*?\@.*/),
+					email: email => !!email && !!email.match(/.*?@.*/),
 					recaptcha: val => val !== null
 				}}
 				submitInfo={{
@@ -113,16 +114,21 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				method: 'POST'
 			});
 
-			const { error }: { error: string } = await fetchResult.json();
+			const result: EitherObj<api.HTTPError, void> = await fetchResult.json();
 
-			if (error === 'none') {
-				this.setState({
-					success: true,
-					error: null
-				});
-			} else {
-				this.setState({ error });
-			}
+			either(result).cata(
+				error => {
+					this.setState({
+						error: error.message
+					})
+				},
+				() => {
+					this.setState({
+						success: true,
+						error: null
+					})
+				}
+			)
 		} catch (e) {
 			this.setState({
 				error: 'Could not request account',

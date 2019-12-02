@@ -415,20 +415,15 @@ export default class Drive extends Page<PageProps, DriveState> {
 	}
 
 	private createFolder() {
-		if (this.props.member && this.state.newFoldername !== '') {
+		if (this.props.member && this.state.newFoldername !== '' && this.state.currentFolder) {
 			FileInterface.CreateFolder(
 				this.state.newFoldername,
+				this.state.currentFolder,
 				this.props.member,
 				this.props.account
-			)
-				.then(folder => {
-					return folder
-						.moveTo(this.state.currentFolder!, this.props.member!)
-						.then(() => folder);
-				})
-				.then(folder => {
-					this.addFile(folder);
-				});
+			).then(folder => {
+				this.addFile(folder);
+			});
 		}
 	}
 }

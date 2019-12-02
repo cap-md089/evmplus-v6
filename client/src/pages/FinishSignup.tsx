@@ -2,8 +2,9 @@ import React from 'react';
 import Page, { PageProps } from './Page';
 import SimpleForm, { Label, Title, TextBox, TextInput } from '../components/forms/SimpleForm';
 import PasswordForm from '../components/form-inputs/PasswordForm';
-import myFetch, { fetchFunction } from '../lib/myFetch';
+import { fetchFunction } from '../lib/myFetch';
 import { getMember } from '../lib/Members';
+import { EitherObj, api, either } from 'common-lib';
 
 interface FormValues {
 	username: string;
@@ -93,21 +94,22 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				method: 'POST'
 			});
 
-			const result: { error: string; sessionID?: string } = await fetchResult.json();
+			const result: EitherObj<api.HTTPError, { sessionID: string }> = await fetchResult.json();
 
-			if (result.error === 'none') {
-				const sessionID = result.sessionID!;
+			either(result).cata(
+				e => {
+					this.setState({
+						tryingFinish: false,
+						error: e.message
+					})
+				},
+				async ({ sessionID }) => {
+					const member = await getMember(sessionID);
 
-				const member = await getMember(sessionID);
-
-				this.props.authorizeUser(member);
-				this.props.routeProps.history.push('/admin');
-			} else {
-				this.setState({
-					tryingFinish: false,
-					error: result.error
-				});
-			}
+					this.props.authorizeUser(member);
+					this.props.routeProps.history.push('/admin')
+				}
+			)
 		} catch (e) {
 			this.setState({
 				error: 'Could not connect to server',

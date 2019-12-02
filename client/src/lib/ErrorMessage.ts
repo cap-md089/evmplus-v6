@@ -5,7 +5,10 @@ import {
 	ErrorObject,
 	NewClientErrorObject,
 	ClientErrorObject,
-	ServerErrorObject
+	ServerErrorObject,
+	EitherObj,
+	api,
+	either
 } from 'common-lib';
 
 export default class ErrorMessage extends APIInterface<ErrorObject> {
@@ -23,9 +26,9 @@ export default class ErrorMessage extends APIInterface<ErrorObject> {
 			}
 		});
 
-		const fullError = (await req.json()) as ClientErrorObject;
+		const fullError = (await req.json()) as EitherObj<api.HTTPError, ClientErrorObject>;
 
-		return new ErrorMessage(fullError);
+		return either(fullError).map(e => new ErrorMessage(e));
 	}
 
 	public constructor(public error: ClientErrorObject | ServerErrorObject) {

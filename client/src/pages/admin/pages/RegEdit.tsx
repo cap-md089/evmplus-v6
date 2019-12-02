@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
 	RegistryValues,
 	Timezone,
-	WebsiteInformation,
 	WebsiteContact,
 	RankAndFileInformation
 } from 'common-lib';

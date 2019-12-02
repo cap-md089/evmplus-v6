@@ -5,9 +5,13 @@ import {
 	FullFileObject,
 	FullTeamObject,
 	Member,
-	Timezone,
 	MemberReference,
-	StoredMemberPermissions
+	maybe,
+	EitherObj,
+	api,
+	MaybeObj,
+	either,
+	Maybe
 } from 'common-lib';
 import APIInterface from './APIInterface';
 import Event from './Event';
@@ -129,16 +133,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		);
 	}
 
-	public async getMembersWithPermissions(member: MemberBase): Promise<StoredMemberPermissions[]> {
-		const url = this.buildURI('api', 'member', 'permissions');
-
-		const results = await this.fetch(url, {}, member);
-
-		const json = (await results.json()) as StoredMemberPermissions[];
-
-		return json;
-	}
-
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {
 		const url = this.buildURI('api', 'event');
 
@@ -149,22 +143,17 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		return events.map((e: EventObject) => new Event(e, this));
 	}
 
-	public async getNextRecurringEvent(): Promise<Event | null> {
+	public async getNextRecurringEvent(): Promise<Maybe<Event>> {
 		const url = this.buildURI('api', 'event', 'recurring');
 
-		try {
-			const results = await this.fetch(url);
+		const results = await this.fetch(url);
 
-			const event = await results.json();
+		const event = await results.json() as EitherObj<api.HTTPError, MaybeObj<EventObject>>;
 
-			return new Event(event, this);
-		} catch (e) {
-			if (e.status === 404) {
-				return null;
-			}
-
-			throw e;
-		}
+		return either(event).cata(
+			() => Promise.reject('Could not get event information'),
+			ev => Promise.resolve(maybe(ev).map(e => new Event(e, this)))
+		);
 	}
 
 	public async getUpcomingEvents(): Promise<Event[]> {
