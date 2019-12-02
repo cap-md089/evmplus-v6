@@ -760,13 +760,20 @@ export interface AccountObject extends RawAccountObject {
 	expired: boolean;
 }
 
+export interface NewDebriefItem {
+	/**
+	 * The debrief item text
+	 */
+	debriefText: string;
+}
+
 /**
  * Debriefs for the various events that every member can submit
  *
  * This allows for others to look back on an event and ask what went
  * well, what could have gone better, etc
  */
-export interface DebriefItem {
+export interface DebriefItem extends NewDebriefItem {
 	/**
 	 * Reference for the member submitting the debrief item
 	 */
@@ -775,10 +782,6 @@ export interface DebriefItem {
 	 * The date and time the item was submitted
 	 */
 	timeSubmitted: number;
-	/**
-	 * The debrief item text
-	 */
-	debriefText: string;
 }
 
 export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {

@@ -24,13 +24,19 @@ import {
 
 export const noneHTTPError: api.HTTPError = {
 	code: 200,
-	error: 'Operation successful'
-}
+	message: 'Operation successful'
+};
 
 export namespace api {
 	export interface HTTPError {
 		code: number;
-		error: any;
+		message: any;
+	}
+
+	export interface ServerError {
+		code: number;
+		error: MaybeObj<Error>;
+		message: string;
 	}
 
 	export namespace errors {
@@ -39,7 +45,7 @@ export namespace api {
 
 	export namespace events {
 		export namespace attendance {
-			export type Add = MaybeObj<HTTPError>;
+			export type Add = EitherObj<HTTPError, void>;
 
 			export type AddBulk = EitherObj<HTTPError, AttendanceRecord[]>;
 
@@ -47,7 +53,7 @@ export namespace api {
 
 			export type GetAttendance = EitherObj<HTTPError, AttendanceRecord[]>;
 
-			export type ModifyAttendance = MaybeObj<HTTPError>;
+			export type ModifyAttendance = EitherObj<HTTPError, void>;
 		}
 
 		export namespace debrief {
@@ -76,11 +82,15 @@ export namespace api {
 
 			export type GetEventViewerData = EitherObj<HTTPError, EventViewerData>;
 
+			export type GetNextRecurring = EitherObj<HTTPError, MaybeObj<EventObject>>;
+
 			export type Link = EitherObj<HTTPError, EventObject>;
 
 			export type ListUpcoming = EventObject[];
 
-			export type Delete = MaybeObj<HTTPError>;
+			export type Set = EitherObj<HTTPError, void>;
+
+			export type Delete = EitherObj<HTTPError, void>;
 		}
 	}
 
@@ -88,9 +98,9 @@ export namespace api {
 		export namespace children {
 			export type GetFiles<T extends FileObject> = T[];
 
-			export type AddChild = MaybeObj<HTTPError>;
+			export type AddChild = EitherObj<HTTPError, void>;
 
-			export type RemoveChild = MaybeObj<HTTPError>;
+			export type RemoveChild = EitherObj<HTTPError, void>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
@@ -167,7 +177,9 @@ export namespace api {
 			export type Get = ShortDutyPosition[];
 		}
 
-		export type Members = Member;
+		export type PasswordReset = EitherObj<api.HTTPError, void>;
+
+		export type Members = Member[];
 	}
 
 	export namespace notifications {
@@ -176,12 +188,12 @@ export namespace api {
 			export type Get = EitherObj<HTTPError, NotificationObject>;
 
 			// tslint:disable-next-line: no-shadowed-variable
-			export type List = NotificationObject[];
+			export type List = EitherObj<HTTPError, NotificationObject[]>;
 		}
 
 		export namespace global {
 			// tslint:disable-next-line: no-shadowed-variable
-			export type Get = EitherObj<HTTPError, NotificationObject>;
+			export type Get = EitherObj<HTTPError, MaybeObj<NotificationObject>>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
@@ -190,7 +202,7 @@ export namespace api {
 			export type Get = EitherObj<HTTPError, NotificationObject>;
 
 			// tslint:disable-next-line: no-shadowed-variable
-			export type List = NotificationObject[];
+			export type List = EitherObj<HTTPError, NotificationObject[]>;
 		}
 
 		export type Get = EitherObj<HTTPError, NotificationObject>;
@@ -218,9 +230,9 @@ export namespace api {
 			export type List = Member[];
 		}
 
-		export type Create = FullTeamObject;
+		export type Create = EitherObj<HTTPError, FullTeamObject>;
 
-		export type Get = FullTeamObject;
+		export type Get = EitherObj<HTTPError, FullTeamObject>;
 
 		export type List = FullTeamObject[];
 	}

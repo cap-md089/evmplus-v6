@@ -12,4 +12,4 @@ export const passwordMeetsRequirements = (password: string) =>
 	// number
 	!!password.match(/[0-9]/g) &&
 	// symbol
-	!!password.match(/[ \^!@#$%&*(){}+=_\-<>,.?\/\[\]\\\|;'"]/g);
+	!!password.match(/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/g);

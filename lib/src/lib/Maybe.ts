@@ -107,3 +107,5 @@ export const fromValue = <T>(value?: T | undefined | null): Maybe<T> =>
 	value === undefined || value === null ? none() : just(value);
 
 export const maybe = <T>(obj: MaybeObj<T>): Maybe<T> => (obj.hasValue ? just(obj.value) : none());
+
+export const get = <T, K extends keyof T = keyof T>(prop: K) => (obj: T): T[K] => obj[prop];
