@@ -98,27 +98,33 @@ export namespace api {
 		export namespace children {
 			export type GetFiles<T extends FileObject> = T[];
 
-			export type AddChild = EitherObj<HTTPError, void>;
+			export type AddChild = EitherObj<api.HTTPError, void>;
 
-			export type RemoveChild = EitherObj<HTTPError, void>;
+			export type RemoveChild = EitherObj<api.HTTPError, void>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
 		export namespace files {
-			export type CreateFolder = EitherObj<HTTPError, FullFileObject>;
+			export type CreateFolder = EitherObj<api.HTTPError, FullFileObject>;
 
-			export type GetFile<T extends FileObject> = EitherObj<HTTPError, T>;
+			export type GetFile<T extends FileObject> = EitherObj<api.HTTPError, T>;
 
-			export type UploadFile = EitherObj<HTTPError, FullFileObject>;
+			export type UploadFile = EitherObj<api.HTTPError, FullFileObject>;
 
 			export type PhotoLibrary = FullFileObject[];
+
+			export type SetInfo = EitherObj<api.HTTPError, void>
+
+			export type Delete = EitherObj<api.HTTPError, void>
 		}
 	}
 
 	export namespace member {
 		export namespace account {
-			export namespace nhq {
+			export namespace cap {
 				export type Finish = EitherObj<HTTPError, { sessionID: string }>;
+
+				export type Request = EitherObj<HTTPError, void>;
 			}
 		}
 
@@ -166,20 +172,32 @@ export namespace api {
 		}
 
 		export namespace flights {
+			export type Assign = EitherObj<api.HTTPError, void>;
+
+			export type AssignBulk = EitherObj<api.HTTPError, void>;
+
 			export type FlightBasic = MemberReference[];
 
 			export type FlightMembers = CAPMemberObject[];
 		}
 
-		export namespace permissions {}
+		export namespace permissions {
+			export type Set = EitherObj<api.HTTPError, void>;
+		}
 
 		export namespace temporarydutypositions {
-			export type Get = ShortDutyPosition[];
+			export type Get = EitherObj<api.HTTPError, ShortDutyPosition[]>;
+
+			export type Set = EitherObj<api.HTTPError, void>;
 		}
+
+		export type Absent = EitherObj<api.HTTPError, void>
 
 		export type PasswordReset = EitherObj<api.HTTPError, void>;
 
 		export type Members = Member[];
+
+		export type Su = EitherObj<api.HTTPError, void>;
 	}
 
 	export namespace notifications {
@@ -189,11 +207,21 @@ export namespace api {
 
 			// tslint:disable-next-line: no-shadowed-variable
 			export type List = EitherObj<HTTPError, NotificationObject[]>;
+
+			// tslint:disable-next-line: no-shadowed-variable
+			export type ToggleRead = EitherObj<HTTPError, void>;
+
+			// tslint:disable-next-line: no-shadowed-variable
+			export type Delete = EitherObj<HTTPError, void>;
 		}
 
 		export namespace global {
+			export type Create = EitherObj<HTTPError, NotificationObject>;
+
 			// tslint:disable-next-line: no-shadowed-variable
 			export type Get = EitherObj<HTTPError, MaybeObj<NotificationObject>>;
+
+			export type MarkRead = EitherObj<HTTPError, void>;
 		}
 
 		// tslint:disable-next-line: no-shadowed-variable
@@ -203,15 +231,27 @@ export namespace api {
 
 			// tslint:disable-next-line: no-shadowed-variable
 			export type List = EitherObj<HTTPError, NotificationObject[]>;
+
+			// tslint:disable-next-line: no-shadowed-variable
+			export type ToggleRead = EitherObj<HTTPError, void>;
+
+			// tslint:disable-next-line: no-shadowed-variable
+			export type Delete = EitherObj<HTTPError, void>;
 		}
 
 		export type Get = EitherObj<HTTPError, NotificationObject>;
 
 		export type List = NotificationObject[];
+
+		export type ToggleRead = EitherObj<HTTPError, void>;
+
+		export type Delete = EitherObj<HTTPError, void>;
 	}
 
 	export namespace registry {
 		export type Get = EitherObj<HTTPError, RegistryValues>;
+
+		export type Set = EitherObj<HTTPError, void>;
 	}
 
 	export namespace tasks {
@@ -222,12 +262,20 @@ export namespace api {
 		export type Get = EitherObj<HTTPError, TaskObject>;
 
 		export type List = TaskObject[];
+
+		export type Edit = EitherObj<HTTPError, void>;
+
+		export type Delete = EitherObj<HTTPError, void>;
 	}
 
 	export namespace team {
 		export namespace members {
 			// tslint:disable-next-line: no-shadowed-variable
 			export type List = Member[];
+
+			export type Modify = EitherObj<HTTPError, void>;
+
+			export type Add = EitherObj<HTTPError, void>;
 		}
 
 		export type Create = EitherObj<HTTPError, FullTeamObject>;
@@ -235,6 +283,12 @@ export namespace api {
 		export type Get = EitherObj<HTTPError, FullTeamObject>;
 
 		export type List = FullTeamObject[];
+
+		export type Delete = EitherObj<HTTPError, void>;
+
+		export type Set = EitherObj<HTTPError, void>;
+
+		export type Remove = EitherObj<HTTPError, void>;
 	}
 
 	export type AccountCheckReturn = AccountObject;

@@ -7,12 +7,12 @@ export class AsyncEither<L, R> {
 	public static Left = <L, R>(value: L) =>
 		new AsyncEither<L, R>(Promise.resolve(left<L, R>(value)), value);
 
-	public static Right = <L, R>(value: R | Promise<R>, errorValue: L) => {
+	public static Right = <L, R>(value: R | Promise<R>, errorValue: L | ((err: Error) => L)) => {
 		return new AsyncEither<L, R>(
 			isPromise(value)
 				? value.then(
 						v => right<L, R>(v),
-						() => left(errorValue)
+						err => left(typeof errorValue === 'function' ? (errorValue as (err: Error) => L)(err) : errorValue)
 				  )
 				: Promise.resolve(right<L, R>(value)),
 			errorValue
@@ -21,7 +21,7 @@ export class AsyncEither<L, R> {
 
 	public constructor(
 		public readonly value: Promise<Either<L, R>>,
-		public readonly errorValue: L
+		public readonly errorValue: L | ((err: Error) => L)
 	) {}
 
 	public isLeft = (): Promise<boolean> =>
@@ -32,9 +32,22 @@ export class AsyncEither<L, R> {
 
 	public isRight = (): Promise<boolean> => this.value.then(eith => eith.isRight());
 
+	public leftMap = <L2>(
+		f: (val: L) => L2,
+		errorValue: L2 | ((err: Error) => L2)
+	): AsyncEither<L2, R> =>
+		new AsyncEither(
+			this.value
+				.then(val => 
+					val.isLeft()
+						? Promise.resolve(f(val.value as L)).then(v => left<L2, R>(v))
+						: Promise.resolve((val as any) as Either<L2, R>)),
+			errorValue
+		)
+
 	public map = <R2>(
 		f: (val: R) => Promise<R2> | R2,
-		errorValue: L = this.errorValue
+		errorValue = this.errorValue
 	): AsyncEither<L, R2> =>
 		new AsyncEither(
 			this.value
@@ -43,19 +56,39 @@ export class AsyncEither<L, R> {
 						? Promise.resolve(f(val.value as R)).then(v => right<L, R2>(v))
 						: Promise.resolve((val as any) as Either<L, R2>)
 				)
-				.catch(() => left<L, R2>(errorValue)),
+				.catch(err =>
+					left<L, R2>(
+						typeof errorValue === 'function'
+							? (errorValue as (err: Error) => L)(err)
+							: errorValue
+					)
+				),
 			errorValue
 		);
 
 	public flatMap = <R2>(
-		f: (val: R) => AsyncEither<L, R2>,
-		errorValue: L = this.errorValue
+		f: (val: R) => Either<L, R2> | AsyncEither<L, R2>,
+		errorValue = this.errorValue
 	): AsyncEither<L, R2> =>
 		new AsyncEither(
 			this.value
-				.then(val => val.cata(error => asyncLeft<L, R2>(error), f))
+				.then(eith => eith.cata(error => asyncLeft<L, R2>(error), val => {
+					const newEith = f(val);
+
+					if (newEith instanceof AsyncEither) {
+						return newEith;
+					} else {
+						return new AsyncEither(Promise.resolve(newEith), errorValue);
+					}
+				}))
 				.then(val => val.value)
-				.catch(() => left<L, R2>(errorValue)),
+				.catch(err =>
+					left<L, R2>(
+						typeof errorValue === 'function'
+							? (errorValue as (err: Error) => L)(err)
+							: errorValue
+					)
+				),
 			errorValue
 		);
 
@@ -85,8 +118,8 @@ export class AsyncEither<L, R> {
 		this.value.then(eith => eith.cata(lf, rf));
 
 	public tap = (
-		rf: (v: R) => Promise<any> | any,
-		errorValue: L = this.errorValue
+		rf: (v: R) => Promise<void> | Promise<any> | void | any,
+		errorValue = this.errorValue
 	): AsyncEither<L, R> =>
 		new AsyncEither(
 			this.value
@@ -96,7 +129,13 @@ export class AsyncEither<L, R> {
 						r => Promise.resolve(rf(r)).then(() => eith)
 					)
 				)
-				.catch(() => left<L, R>(errorValue)),
+				.catch(err =>
+					left<L, R>(
+						typeof errorValue === 'function'
+							? (errorValue as (err: Error) => L)(err)
+							: errorValue
+					)
+				),
 			errorValue
 		);
 }
