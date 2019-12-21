@@ -1,15 +1,15 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { fromValue, MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as request from 'supertest';
-import { default as conf, default as conftest } from '../../conf.test';
-import getServer, { ServerConfiguration } from '../../getServer';
+import { default as conf, default as conftest } from '../conf.test';
+import getServer, { ServerConfiguration } from '../getServer';
 import {
 	Account,
 	addUserAccount,
 	addUserAccountCreationToken,
 	getTestTools2,
 	validateUserAccountCreationToken
-} from '../../lib/internals';
+} from '../lib/internals';
 
 const signinInformation = {
 	username: 'ariouxTest',

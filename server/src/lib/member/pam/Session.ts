@@ -301,11 +301,19 @@ export function memberRequestTransformer(
 	memberRequired: false
 ): <T extends BasicAccountRequest>(
 	req: T
-) => AsyncEither<api.ServerError, T & BasicMaybeMemberRequest>;
+) => AsyncEither<
+	api.ServerError,
+	BasicMaybeMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
+>;
 export function memberRequestTransformer(
 	allowedPasswordOnly: boolean,
 	memberRequired: true
-): <T extends BasicAccountRequest>(req: T) => AsyncEither<api.ServerError, T & BasicMemberRequest>;
+): <T extends BasicAccountRequest>(
+	req: T
+) => AsyncEither<
+	api.ServerError,
+	BasicMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
+>;
 
 export function memberRequestTransformer(
 	allowPasswordOnly: boolean,
@@ -313,7 +321,7 @@ export function memberRequestTransformer(
 ) {
 	return <T extends BasicAccountRequest>(
 		req: T
-	): AsyncEither<api.ServerError, (T & BasicMaybeMemberRequest) | (T & BasicMemberRequest)> =>
+	): AsyncEither<api.ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
 		new AsyncEither(
 			(typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined'
 				? asyncRight(req, serverErrorGenerator('Could not get information for session'))
@@ -522,6 +530,18 @@ export const permissionMiddleware = (permission: MemberPermission, threshold = 1
 
 	next();
 };
+
+export const permissionTransformer = <R extends ParamType, B>(
+	permission: MemberPermission,
+	threshold = 1
+) => (req: BasicMemberRequest<R, B>): AsyncEither<api.ServerError, BasicMemberRequest<R, B>> =>
+	!req.member.hasPermission(permission, threshold)
+		? asyncLeft({
+				code: 401,
+				error: none<Error>(),
+				message: `Member does not have permission '${permission}'`
+		  })
+		: asyncRight(req, serverErrorGenerator('Could not get member permissions'));
 
 export const leftyPermissionMiddleware = (permission: MemberPermission, threshold = 1) => (
 	req: MemberRequest,

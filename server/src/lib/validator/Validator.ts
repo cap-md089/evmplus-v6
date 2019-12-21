@@ -1,5 +1,6 @@
-import { left, MemberReference } from 'common-lib';
+import { api, AsyncEither, asyncLeft, asyncRight, left, MemberReference, none } from 'common-lib';
 import * as express from 'express';
+import { BasicAccountRequest } from '../Account';
 import {
 	AccountRequest,
 	ConditionalMemberRequest,
@@ -7,6 +8,8 @@ import {
 	MemberRequest,
 	ParamType
 } from '../internals';
+import { BasicConditionalMemberRequest, BasicMemberRequest } from '../member/pam/Session';
+import { serverErrorGenerator } from '../Util';
 
 interface ValidatorResult {
 	valid: boolean;
@@ -909,4 +912,50 @@ export default class Validator<T> {
 			);
 		}
 	};
+
+	public transform<R extends BasicMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicMemberValidatedRequest<T, R extends BasicMemberRequest<infer P> ? P : never>
+	>;
+	public transform<R extends BasicConditionalMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicConditionalMemberValidatedRequest<
+			T,
+			R extends BasicConditionalMemberRequest<infer P> ? P : never
+		>
+	>;
+	public transform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicSimpleValidatedRequest<T, R extends BasicAccountRequest<infer P> ? P : never>
+	>;
+
+	public transform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<api.ServerError, R & BasicSimpleValidatedRequest<T>> {
+		return asyncRight(req, serverErrorGenerator('Could not validate body'))
+			.flatMap<R>(r =>
+				r.body === undefined || r.body === null
+					? asyncLeft({
+							code: 400,
+							error: none<Error>(),
+							message: 'Invalid body provided'
+					  })
+					: asyncRight(r, serverErrorGenerator('Could not validate body'))
+			)
+			.flatMap(r =>
+				this.validate(r.body)
+					? asyncRight(
+							{ ...r, body: this.prune(r.body) } as R &
+								BasicSimpleValidatedRequest<T>,
+							serverErrorGenerator('Could not validate body')
+					  )
+					: asyncLeft({ code: 400, error: none<Error>(), message: this.getErrorString() })
+			);
+	}
 }

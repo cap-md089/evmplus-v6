@@ -60,3 +60,6 @@ export { default as MemberNotification } from './notifications/MemberNotificatio
 // Very basic things that don't export anything that is required
 export { default as AuditMiddleware } from './AuditMiddleware';
 export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';
+
+// SUPER high level stuff
+export { default as saveServerError } from './saveServerError';

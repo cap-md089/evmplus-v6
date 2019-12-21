@@ -1,22 +1,22 @@
-import { api, fromValue, right } from 'common-lib';
-import { asyncEitherHandler, BasicAccountRequest, Event } from '../../../lib/internals';
+import { api, asyncRight, just, none } from 'common-lib';
+import { Account, asyncEitherHandler2, Event, serverErrorGenerator } from '../../../lib/internals';
 
-export default asyncEitherHandler<api.events.events.GetNextRecurring>(
-	async (req: BasicAccountRequest) => {
-		let nextEvent: Event | null = null;
+export default asyncEitherHandler2<api.events.events.GetNextRecurring>(r =>
+	asyncRight(r, serverErrorGenerator('Could not get event information'))
+		.flatMap(req => Account.RequestTransformer(req))
+		.map(async req => {
+			let nextEvent = none<Event>();
 
-		for await (const possibleEvent of req.account.getSortedEvents()) {
-			if (
-				nextEvent === null &&
-				possibleEvent.activity[0][5] &&
-				possibleEvent.endDateTime > Date.now()
-			) {
-				nextEvent = possibleEvent;
+			for await (const possibleEvent of req.account.getSortedEvents()) {
+				if (
+					nextEvent === null &&
+					possibleEvent.activity[0][5] &&
+					possibleEvent.endDateTime > Date.now()
+				) {
+					nextEvent = just(possibleEvent);
+				}
 			}
-		}
 
-		const maybeEv = fromValue(nextEvent).map(ev => ev.toRaw());
-
-		return right(maybeEv);
-	}
+			return nextEvent.map(ev => ev.toRaw());
+		})
 );

@@ -12,10 +12,9 @@ import {
 } from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
-import { AccountRequest, BasicAccountRequest } from './Account';
-import { Account } from './internals';
-import { ConditionalMemberRequest } from './member/pam/Session';
-import saveServerError from './saveServerError';
+import { AccountRequest } from './Account';
+import { Account, ConditionalMemberRequest, saveServerError } from './internals';
+import { BasicMySQLRequest, ParamType } from './MySQLUtil';
 
 export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
@@ -104,6 +103,11 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 }
 
 let testSession: mysql.Session;
+let testAccount: Account;
+// let testHuckabeeUser: CAPNHQUser;
+// let testHuckabeeUserInfo: UserAccountInformation;
+// let testRiouxUser: CAPNHQUser;
+// let testRiouxUserInfo: UserAccountInformation;
 
 export async function getTestTools(testconf: typeof Configuration) {
 	const devAccount: RawAccountObject = {
@@ -135,14 +139,23 @@ export async function getTestTools(testconf: typeof Configuration) {
 			port: conn.port
 		}));
 
+	if (testSession === undefined) {
+		throw new Error('Could not get MySQL session!');
+	}
+
 	const schema = testSession.getSchema(testconf.database.connection.database);
 
-	let testAccount: Account;
+	if (schema === undefined) {
+		throw new Error('Could not get test schema!');
+	}
+
 	try {
-		testAccount = await Account.Get('mdx89', schema);
+		testAccount = testAccount || (await Account.Get('mdx89', schema));
 	} catch (e) {
 		testAccount = await Account.Create(devAccount, schema);
 	}
+
+	// 626814
 
 	return {
 		account: testAccount,
@@ -181,7 +194,10 @@ type ExpressHandler<R = any> = (
 	next: express.NextFunction
 ) => R;
 
-type FunctionalExpressHandler<R = any> = (req: BasicAccountRequest) => R;
+type FunctionalExpressHandler<R = any> = (req: BasicMySQLRequest) => R;
+type ParameterizedFunctionalExpressHandler<R = any, P extends ParamType = {}> = (
+	req: BasicMySQLRequest<P>
+) => R;
 
 type AsyncExpressHandler<R> = ExpressHandler<Promise<R>>;
 type ConvertedAsyncExpressHandler<R> = AsyncExpressHandler<R> & { fn: AsyncExpressHandler<R> };
@@ -344,6 +360,27 @@ export const asyncEitherHandler = <R>(
 
 	return handler;
 };
+
+type ParameterizedEitherExpressHandler<
+	R,
+	P extends ParamType = {}
+> = ParameterizedFunctionalExpressHandler<
+	R extends EitherObj<api.ServerError, infer T>
+		? Promise<EitherObj<api.ServerError, T>> | AsyncEither<api.ServerError, T>
+		: never,
+	P
+>;
+type ParameterizedConvertedEitherExpressHandler<
+	R,
+	P extends ParamType,
+	F extends ParameterizedEitherExpressHandler<R, P>
+> = ExpressHandler & {
+	fn: F;
+};
+
+export const asyncEitherHandler2 = <R, P extends ParamType = {}>(
+	fn: ParameterizedEitherExpressHandler<R, P>
+): ParameterizedConvertedEitherExpressHandler<R, P, typeof fn> => asyncEitherHandler<R>(fn);
 
 export const serverErrorGenerator = (message: string) => (err: Error): api.ServerError => ({
 	code: 500,

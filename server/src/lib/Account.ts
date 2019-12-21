@@ -149,9 +149,9 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 	);
 
-	public static RequestTransformer = (
-		req: BasicMySQLRequest
-	): AsyncEither<api.ServerError, BasicAccountRequest> =>
+	public static RequestTransformer = <T extends BasicMySQLRequest>(
+		req: T
+	): AsyncEither<api.ServerError, T & BasicAccountRequest> =>
 		asyncRight(
 			req.hostname.split('.'),
 			serverErrorGenerator('Could not get organization account information')
@@ -162,14 +162,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 				}
 
 				if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
+					// localhost
 					return right('mdx89');
 				} else if (parts.length === 2) {
+					// capunit.com
+					return right('sales');
+				} else if (parts.length === 3 && parts[0] === 'www') {
+					// www.capunit.com
 					return right('sales');
 				} else if (parts.length === 3) {
+					// md089.capunit.com
 					return right(parts[0]);
 				} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+					// 192.168.1.128
 					return right('mdx89');
 				} else {
+					// IP/localhost in production, otherwise invalid hostname
 					return asyncLeft({
 						code: 400,
 						error: none<Error>(),

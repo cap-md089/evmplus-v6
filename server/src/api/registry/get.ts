@@ -1,16 +1,12 @@
-import { api, just, left, right } from 'common-lib';
-import { asyncEitherHandler, BasicAccountRequest, Registry } from '../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import { Account, asyncEitherHandler2, Registry, serverErrorGenerator } from '../../lib/internals';
 
-export default asyncEitherHandler<api.registry.Get>(async (req: BasicAccountRequest) => {
-	try {
-		const registry = await Registry.Get(req.account, req.mysqlx);
-
-		return right(registry.values);
-	} catch (e) {
-		return left({
-			code: 500,
-			error: just(e),
-			message: 'Could not get registry'
-		});
-	}
-});
+export default asyncEitherHandler2<api.registry.Get>(r =>
+	asyncRight(r, serverErrorGenerator('Could not get registry information'))
+		.flatMap(req => Account.RequestTransformer(req))
+		.map(
+			req => Registry.Get(req.account, req.mysqlx),
+			serverErrorGenerator('Could not get registry values')
+		)
+		.map(reg => reg.values)
+);

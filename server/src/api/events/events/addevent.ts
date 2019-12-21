@@ -1,18 +1,25 @@
-import { api, just, left, NewEventObject, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberValidatedRequest, Event } from '../../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import {
+	Account,
+	asyncEitherHandler2,
+	Event,
+	EventValidator,
+	memberRequestTransformer,
+	permissionTransformer,
+	serverErrorGenerator
+} from '../../../lib/internals';
+import { tokenTransformer } from '../../formtoken';
 
-export default asyncEitherHandler<api.events.events.Add>(
-	async (req: BasicMemberValidatedRequest<NewEventObject>) => {
-		try {
-			const newEvent = await Event.Create(req.body, req.account, req.mysqlx, req.member);
-
-			return right(newEvent.toRaw(req.member));
-		} catch (error) {
-			return left({
-				code: 500,
-				error: just(error),
-				message: 'Could not add event'
-			});
-		}
-	}
+export default asyncEitherHandler2<api.events.events.Add>(req =>
+	asyncRight(req, serverErrorGenerator('Could not create new event'))
+		.flatMap(r => Account.RequestTransformer(r))
+		.flatMap(r => memberRequestTransformer(false, true)(r))
+		.flatMap(r => tokenTransformer(r))
+		.flatMap(r => permissionTransformer('ManageEvent')(r))
+		.flatMap(r => EventValidator.transform(r))
+		.flatMap(r =>
+			Event.CreateEither(r.body, r.account, r.mysqlx, r.member).map(event =>
+				event.toRaw(r.member)
+			)
+		)
 );

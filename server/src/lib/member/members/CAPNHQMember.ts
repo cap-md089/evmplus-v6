@@ -268,9 +268,10 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	}
 
 	public hasDutyPosition = (dutyPosition: string | string[]): boolean =>
-		this.isRioux || typeof dutyPosition === 'string'
+		this.isRioux ||
+		(typeof dutyPosition === 'string'
 			? this.dutyPositions.filter(duty => duty.duty === dutyPosition).length > 0
-			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false);
+			: dutyPosition.map(this.hasDutyPosition).reduce((a, b) => a || b, false));
 
 	public async *getAccounts(): AsyncIterableIterator<Account> {
 		const accountsCollection = this.schema.getCollection<AccountObject>('Accounts');

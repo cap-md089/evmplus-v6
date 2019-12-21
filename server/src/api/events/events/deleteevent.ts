@@ -1,38 +1,21 @@
-import { api, just, left, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, Event } from '../../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import {
+	Account,
+	asyncEitherHandler2,
+	Event,
+	memberRequestTransformer,
+	serverErrorGenerator
+} from '../../../lib/internals';
+import { tokenTransformer } from '../../formtoken';
 
-export default asyncEitherHandler<api.events.events.Delete>(
-	async (req: BasicMemberRequest<{ id: string }>) => {
-		let event: Event;
-
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event to delete'
-			});
-		}
-
-		if (!event.isPOC(req.member)) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Member has invalid permissions to perform that action'
-			});
-		}
-
-		try {
-			await event.delete();
-
-			return right(void 0);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just<Error>(e),
-				message: 'An unknown server error has occurred'
-			});
-		}
-	}
+export default asyncEitherHandler2<api.events.events.Delete, { id: string }>(r =>
+	asyncRight(r, serverErrorGenerator('Could not delete event'))
+		.flatMap(req => Account.RequestTransformer(req))
+		.flatMap(req => memberRequestTransformer(false, true)(req))
+		.flatMap(req => tokenTransformer(req))
+		.flatMap(req =>
+			Event.GetEither(req.params.id, req.account, req.mysqlx)
+				.setErrorValue(serverErrorGenerator('Could not delete event'))
+				.map(event => event.delete())
+		)
 );

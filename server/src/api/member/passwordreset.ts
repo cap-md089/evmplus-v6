@@ -34,7 +34,9 @@ export default asyncEitherHandler<api.member.PasswordReset>(async (req: BasicMem
 			});
 		}
 
-		await unmarkSessionForPasswordReset(req.mysqlx, req.member.session).fullJoin();
+		if (req.member.session.passwordOnly) {
+			await unmarkSessionForPasswordReset(req.mysqlx, req.member.session).fullJoin();
+		}
 
 		return right(void 0);
 	} catch (e) {

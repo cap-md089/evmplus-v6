@@ -82,7 +82,8 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "<rootDir>/src/__tests__/consts.ts",
-      "<rootDir>/src/__tests__/TestUtils.ts"
+      "<rootDir>/src/__tests__/TestUtils.ts",
+      "<rootDir>/src/__tests__/EitherMatcher.ts"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
