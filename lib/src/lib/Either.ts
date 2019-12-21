@@ -26,7 +26,7 @@ export class Left<L, R> implements LeftObj<L> {
 
 	public isLeft = (): this is Left<L, R> => true;
 
-	public isRight = (): this is Left<L, R> => false;
+	public isRight = (): this is Right<L, R> => false;
 
 	public map = <R2>(f: (val: R) => R2): Either<L, R2> => (this as any) as Left<L, R2>;
 
@@ -52,7 +52,7 @@ export class Right<L, R> implements RightObj<R> {
 
 	private constructor(public readonly value: R) {}
 
-	public isLeft = (): this is Right<L, R> => false;
+	public isLeft = (): this is Left<L, R> => false;
 
 	public isRight = (): this is Right<L, R> => true;
 

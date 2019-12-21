@@ -12,7 +12,12 @@ export class AsyncEither<L, R> {
 			isPromise(value)
 				? value.then(
 						v => right<L, R>(v),
-						err => left(typeof errorValue === 'function' ? (errorValue as (err: Error) => L)(err) : errorValue)
+						err =>
+							left(
+								typeof errorValue === 'function'
+									? (errorValue as (err: Error) => L)(err)
+									: errorValue
+							)
 				  )
 				: Promise.resolve(right<L, R>(value)),
 			errorValue
@@ -37,13 +42,13 @@ export class AsyncEither<L, R> {
 		errorValue: L2 | ((err: Error) => L2)
 	): AsyncEither<L2, R> =>
 		new AsyncEither(
-			this.value
-				.then(val => 
-					val.isLeft()
-						? Promise.resolve(f(val.value as L)).then(v => left<L2, R>(v))
-						: Promise.resolve((val as any) as Either<L2, R>)),
+			this.value.then(val =>
+				val.isLeft()
+					? Promise.resolve(f(val.value as L)).then(v => left<L2, R>(v))
+					: Promise.resolve((val as any) as Either<L2, R>)
+			),
 			errorValue
-		)
+		);
 
 	public map = <R2>(
 		f: (val: R) => Promise<R2> | R2,
@@ -72,16 +77,21 @@ export class AsyncEither<L, R> {
 	): AsyncEither<L, R2> =>
 		new AsyncEither(
 			this.value
-				.then(eith => eith.cata(error => asyncLeft<L, R2>(error), val => {
-					const newEith = f(val);
+				.then(
+					eith =>
+						eith.cata(
+							error => asyncLeft<L, R2>(error),
+							val => {
+								const newEith = f(val);
 
-					if (newEith instanceof AsyncEither) {
-						return newEith;
-					} else {
-						return new AsyncEither(Promise.resolve(newEith), errorValue);
-					}
-				}))
-				.then(val => val.value)
+								if (newEith instanceof AsyncEither) {
+									return newEith;
+								} else {
+									return new AsyncEither(Promise.resolve(newEith), errorValue);
+								}
+							}
+						).value
+				)
 				.catch(err =>
 					left<L, R2>(
 						typeof errorValue === 'function'
@@ -138,6 +148,22 @@ export class AsyncEither<L, R> {
 				),
 			errorValue
 		);
+
+	public setErrorValue = (errorValue: L | ((err: Error) => L)) =>
+		new AsyncEither(this.value, errorValue);
+
+	public then = <TResult1 = Either<L, R>, TResult2 = L>(
+		onfulfilled?: ((value: TResult1) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
+	): PromiseLike<TResult1 | TResult2> => {
+		return this.value.then(
+			val =>
+				onfulfilled
+					? onfulfilled((val as unknown) as TResult1)
+					: Promise.resolve((val as unknown) as TResult1),
+			onrejected
+		);
+	};
 }
 
 export const asyncLeft = AsyncEither.Left;

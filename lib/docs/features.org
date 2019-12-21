@@ -6,31 +6,31 @@
     - [X] BREAD
     - [X] Dynamic Staff Team
     - [ ] Unit tests
-*** Registry [3/4]
+*** Registry [4/4]
     - [X] Read
     - [X] Edit
     - [X] Add
-    - [ ] Unit tests
-*** Events [3/4]
+    - [X] Unit tests
+*** Events [4/4]
     - [X] BREAD
     - [X] Link
     - [X] Attendance [1/1]
       - [X] CRUD
-    - [ ] Unit tests
-*** Members [4/6]
+    - [X] Unit tests
+*** Members [5/6]
     - [X] Listing
     - [-] Reports/form generation [1/3]
       - [ ] QCUA
       - [X] Attendance
       - [ ] PT sheets
-    - [-] PAM [3/4]
+    - [X] PAM [4/4]
       - [X] Account
       - [X] Authentication
-      - [-] Password [1/2]
+      - [X] Password [2/2]
         - [X] Validation
-        - [-] Updating [1/2]
+        - [X] Updating [2/2]
           - [X] Expired
-          - [ ] Current
+          - [X] Current
       - [X] Session [3/3]
         - [X] Basic usage
         - [X] Su
@@ -51,7 +51,9 @@
 *** Account [4/4]
     - [X] Middleware
     - [X] Aliased accounts (e.g., md089, md890, stmarys all point to md089)
-    - [X] Automatically determine timezone (for now shove in Registry)
+    - [X] Automatically determine timezone (for now shove in Registry) [2/2]
+      - [X] Allow configurable timezone
+      - [X] Default to a guess
     - [X] Unit tests
 *** Files/Drive [2/3]
     - [X] BREAD
@@ -96,7 +98,7 @@
     - [X] Error handling
     - [X] Su
 ** APIs
-*** Events [2/4]
+*** Events [3/4]
     - [X] BREAD
     - [X] Link
     - [-] Attendance [1/2]
@@ -105,7 +107,7 @@
         - [ ] Timeline
         - [ ] Team
         - [ ] Current attendance count
-    - [ ] Integration tests
+    - [X] Integration tests
 *** Member [2/5]
     - [X] Sign in [2/2]
       - [X] Proper signin
@@ -119,10 +121,10 @@
     - [ ] Unit test
 *** Exports [0/6]
     - [ ] Attendance Log (all members)
-    - [ ] Event Roster (members signed up)
+    - [ ] Event Roster (members signed up) [0/1]
       - [ ] Catch unregistered member (not in June 2019 MAR CAPWATCH download)
     - [ ] Spreadsheet Roster
-    - [ ] CAPF 60-80 - Permission slip
+    - [ ] CAPF 60-80 - Permission slip [0/2]
       - [ ] Fix null phone number uncaught error (Coppenbarger Emergency Cell Phone, evt 3)
       - [ ] calculate 1st page block size to fit comments
     - [ ] CAPF 31 - Application for Encapment
@@ -134,9 +136,9 @@
     - [X] BREAD
     - [X] Folders/children
     - [ ] Integration tests
-*** CSRF Tokens [1/2]
+*** CSRF Tokens [2/2]
     - [X] PAM tokens sessions
-    - [ ] Unit tests
+    - [X] Unit tests
 *** Events [1/2]
     - [X] BREAD
     - [ ] Integration tests
@@ -152,12 +154,12 @@
     - [ ] Integration tests
 * Client
 ** Pages
-*** Main page [3/8]
+*** Main page [4/7]
     - [X] Notification display
     - [X] Recurring event display
     - [X] Upcoming event display
     - [ ] Promotion requirements display
-    - [ ] Remove Aerospace Education, Leadership, and Emergency Services links
+    - [X] Remove Aerospace Education, Leadership, and Emergency Services links
     - [ ] Facebook feed for account/registry
     - [ ] Twitter feed for account/registry
 *** Drive management [4/6]
