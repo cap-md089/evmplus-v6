@@ -119,16 +119,15 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		(
 			await Promise.all([
 				collectResults(
-					schema
-						.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
-						.find('CAPID = :CAPID')
-						.bind('CAPID', capid)
+					findAndBind(schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition'), {
+						CAPID: capid
+					})
 				),
 				collectResults(
-					schema
-						.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
-						.find('CAPID = :CAPID')
-						.bind('CAPID', capid)
+					findAndBind(
+						schema.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition'),
+						{ CAPID: capid }
+					)
 				)
 			])
 		)

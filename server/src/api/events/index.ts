@@ -2,7 +2,6 @@ import * as express from 'express';
 import {
 	Account,
 	conditionalMemberMiddleware,
-	EventValidator,
 	leftyConditionalMemberMiddleware,
 	leftyMemberMiddleware,
 	NewAttendanceRecordValidator,
@@ -38,11 +37,15 @@ import timelist from './events/timelist';
 
 const router = express.Router();
 
+router.get('/upcoming', Account.LeftyExpressMiddleware, listupcoming);
+router.get('/recurring', Account.LeftyExpressMiddleware, getnextrecurring);
+
 // These APIs use Account transformers, not middleware
 router.get('/:id', getevent);
 router.post('/:id/copy', copy);
 router.post('/', addevent);
 router.get('/:id/viewer', eventviewer);
+router.put('/:id', setevent);
 
 router.use(Account.LeftyExpressMiddleware);
 
@@ -91,17 +94,8 @@ router.delete(
 );
 
 router.get('/', leftyConditionalMemberMiddleware, list);
-router.get('/upcoming', listupcoming);
-router.get('/recurring', getnextrecurring);
 router.get('/:start/:end', conditionalMemberMiddleware, timelist);
 router.post('/:parent', leftyMemberMiddleware, leftyTokenMiddleware, linkevent);
 router.delete('/:id', leftyMemberMiddleware, leftyTokenMiddleware, deleteevent);
-router.put(
-	'/:id',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	Validator.LeftyPartialBodyExpressMiddleware(EventValidator),
-	setevent
-);
 
 export default router;

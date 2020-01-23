@@ -38,7 +38,7 @@ import {
 	Team
 } from './internals';
 import { ConditionalMemberRequest } from './member/pam/Session';
-import { BasicMySQLRequest } from './MySQLUtil';
+import { BasicMySQLRequest, safeBind } from './MySQLUtil';
 import saveServerError from './saveServerError';
 import { serverErrorGenerator } from './Util';
 
@@ -414,9 +414,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		let fileFind;
 
 		if (includeWWW) {
-			fileFind = fileCollection
-				.find('accountID = :accountID OR accountID = "www"')
-				.bind({ accountID: this.id });
+			fileFind = safeBind(
+				fileCollection.find('accountID = :accountID OR accountID = "www"'),
+				{ accountID: this.id }
+			);
 		} else {
 			fileFind = findAndBind(fileCollection, {
 				accountID: this.id
@@ -465,6 +466,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 		for await (const team of generateResults(teamIterator)) {
 			yield Team.Get(team.id, this, this.schema);
+		}
+	}
+
+	public async *getTeamObjects(): AsyncIterableIterator<RawTeamObject> {
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
+
+		// This needs to be included to include the staff team, which does not directly
+		// exist in the database and is more dynamic
+		yield await Team.GetRawStaffTeam(this, this.schema);
+
+		const teamIterator = findAndBind(teamsCollection, {
+			accountID: this.id
+		});
+
+		for await (const team of generateResults(teamIterator)) {
+			yield team;
 		}
 	}
 
@@ -552,15 +569,15 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		const eventCollection = this.schema.getCollection('Events');
 
 		const generator = generateResults(
-			eventCollection
-				.find(
+			safeBind(
+				eventCollection.find(
 					'(pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end && meetDateTime > :start)'
-				)
-				// @ts-ignore
-				.bind({
+				),
+				{
 					start,
 					end
-				})
+				}
+			)
 		);
 
 		let eventCount = 0;

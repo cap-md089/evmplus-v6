@@ -32,10 +32,12 @@ import {
 	DEFAULT_PERMISSIONS,
 	findAndBind,
 	getPermissionsForMemberInAccount,
+	leftyAsyncErrorHandler,
 	MemberBase,
-	ParamType
+	ParamType,
+	safeBind,
+	serverErrorGenerator
 } from '../../internals';
-import { leftyAsyncErrorHandler, serverErrorGenerator } from '../../Util';
 
 const promisedRandomBytes = promisify(randomBytes);
 
@@ -94,10 +96,9 @@ const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
-			collection
-				.remove('created < :created')
-				.bind({ created: Date.now() - SESSION_AGE })
-				.execute()
+			safeBind(collection.remove('created < :created'), {
+				created: Date.now() - SESSION_AGE
+			}).execute()
 		)
 		.map(() => void 0);
 
@@ -108,11 +109,9 @@ const updateSessionExpireTime = (
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
-			collection
-				.modify('sessionID = :sessionID')
-				.bind({
-					sessionID: session.sessionID
-				})
+			safeBind(collection.modify('sessionID = :sessionID'), {
+				sessionID: session.sessionID
+			})
 				.set('created', Date.now())
 				.execute()
 		)
@@ -156,12 +155,12 @@ export const unmarkSessionForPasswordReset = (
 			passwordOnly: false
 		}))
 		.tap(sess =>
-			schema
-				.getCollection<Session>(SESSION_TABLE)
-				.modify('sessionID = :sessionID')
-				.bind({
+			safeBind(
+				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
+				{
 					sessionID: sess.sessionID
-				})
+				}
+			)
 				.set('passwordOnly', false)
 				.execute()
 		);
@@ -176,12 +175,12 @@ export const markSessionForPasswordReset = (
 			passwordOnly: true
 		}))
 		.tap(sess =>
-			schema
-				.getCollection<Session>(SESSION_TABLE)
-				.modify('sessionID = :sessionID')
-				.bind({
+			safeBind(
+				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
+				{
 					sessionID: sess.sessionID
-				})
+				}
+			)
 				.set('passwordOnly', true)
 				.execute()
 		);
@@ -580,9 +579,7 @@ export const su = async (schema: Schema, sessionID: SessionID, newUser: MemberRe
 	const userAccount = session.userAccount;
 	userAccount.member = newUser;
 
-	await sessions
-		.modify('sessionID = :sessionID')
-		.bind({ sessionID })
+	await safeBind(sessions.modify('sessionID = :sessionID'), { sessionID })
 		.set('userAccount', userAccount)
 		.execute();
 };
@@ -620,10 +617,9 @@ const addTokenToDatabase = async (
 const removeOldTokens = async (schema: Schema) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
-	await tokenCollection
-		.remove('created < :created')
-		.bind({ created: Date.now() - TOKEN_AGE })
-		.execute();
+	await safeBind(tokenCollection.remove('created < :created'), {
+		created: Date.now() - TOKEN_AGE
+	}).execute();
 };
 
 const getTokenList = async (schema: Schema, token: string) => {
@@ -635,10 +631,7 @@ const getTokenList = async (schema: Schema, token: string) => {
 const invalidateToken = async (schema: Schema, token: string) => {
 	const collection = schema.getCollection<TokenObject>('Tokens');
 
-	await collection
-		.remove('token = :token')
-		.bind({ token })
-		.execute();
+	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
 export const getTokenForUser = async (

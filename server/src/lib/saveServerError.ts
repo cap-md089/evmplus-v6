@@ -1,9 +1,9 @@
-import { HTTPRequestMethod, ServerErrorObject } from 'common-lib';
+import { api, HTTPRequestMethod, ServerErrorObject } from 'common-lib';
 import { parse } from 'error-stack-parser';
 import { BasicConditionalMemberRequest } from './member/pam/Session';
 import { generateResults } from './MySQLUtil';
 
-export default async (err: Error, req: BasicConditionalMemberRequest) => {
+export default async (err: Error, req: BasicConditionalMemberRequest, l?: api.ServerError) => {
 	console.error(err);
 
 	const errorCollection = req.mysqlx.getCollection<ServerErrorObject>('ServerErrors');

@@ -25,6 +25,7 @@ import {
 	Task,
 	Team
 } from '../internals';
+import { collectGenerator } from '../Util';
 
 export default abstract class MemberBase implements MemberObject {
 	public static readonly useRiouxPermission = true;
@@ -42,12 +43,30 @@ export default abstract class MemberBase implements MemberObject {
 			'ExtraMemberInformation'
 		);
 
-		const results = await collectResults(
-			findAndBind(extraMemberSchema, {
-				member: memberID,
-				accountID: account.id
-			})
-		);
+		const [results, teamIDs] = await Promise.all([
+			collectResults(
+				findAndBind(extraMemberSchema, {
+					member: memberID,
+					accountID: account.id
+				})
+			),
+			collectGenerator(
+				(async function*() {
+					for await (const i of account.getTeamObjects()) {
+						if (
+							areMemberReferencesTheSame(i.seniorCoach, memberID) ||
+							areMemberReferencesTheSame(i.seniorMentor, memberID) ||
+							areMemberReferencesTheSame(i.cadetLeader, memberID) ||
+							i.members.filter(raw =>
+								areMemberReferencesTheSame(raw.reference, memberID)
+							).length > 0
+						) {
+							yield i.id;
+						}
+					}
+				})()
+			)
+		]);
 
 		if (results.length === 0) {
 			const newInformation: ExtraMemberInformation = {
@@ -55,7 +74,7 @@ export default abstract class MemberBase implements MemberObject {
 				member: memberID,
 				temporaryDutyPositions: [],
 				flight: null,
-				teamIDs: [],
+				teamIDs,
 				absentee: null
 			};
 
@@ -72,7 +91,10 @@ export default abstract class MemberBase implements MemberObject {
 			v => v.validUntil > Date.now()
 		);
 
-		return results[0];
+		return {
+			...results[0],
+			teamIDs
+		};
 	}
 
 	/**

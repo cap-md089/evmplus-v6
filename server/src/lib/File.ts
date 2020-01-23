@@ -27,6 +27,7 @@ import {
 	MemberBase,
 	resolveReference
 } from './internals';
+import { safeBind } from './MySQLUtil';
 
 const promisedUnlink = promisify(unlink);
 
@@ -54,9 +55,12 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 		try {
 			if (includeWWW) {
 				results = await collectResults(
-					fileCollection
-						.find('id = :id AND (accountID = :accountID OR accountID = "www")')
-						.bind({ id, accountID: account.id })
+					safeBind(
+						fileCollection.find(
+							'id = :id AND (accountID = :accountID OR accountID = "www")'
+						),
+						{ id, accountID: account.id }
+					)
 				);
 			} else {
 				results = await collectResults(

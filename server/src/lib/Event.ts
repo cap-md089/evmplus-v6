@@ -40,6 +40,7 @@ import {
 	MemberNotification,
 	resolveReference
 } from './internals';
+import { safeBind } from './MySQLUtil';
 import { serverErrorGenerator } from './Util';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
@@ -65,6 +66,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public static async Get(id: number | string, account: Account, schema: Schema): Promise<Event> {
 		if (typeof id === 'string') {
 			id = parseInt(id, 10);
+		}
+
+		// NaN
+		if (id !== id) {
+			throw new Error('There was a problem getting the event');
 		}
 
 		const eventsCollection = schema.getCollection<RawEventObject & Required<NoSQLDocument>>(
@@ -111,7 +117,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				? {
 						code: 404,
 						error: none<Error>(),
-						message: 'Could not find event specified'
+						message: `Could not find event specified with the id '${id}'`
 				  }
 				: {
 						code: 500,
@@ -468,13 +474,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public async remove() {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
-		await eventsCollection
-			.remove('accountID = :accountID AND id = :id')
-			.bind({
-				accountID: this.account.id,
-				id: this.id
-			})
-			.execute();
+		await safeBind(eventsCollection.remove('accountID = :accountID AND id = :id'), {
+			accountID: this.account.id,
+			id: this.id
+		}).execute();
 	}
 
 	/**
@@ -892,10 +895,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			memberID: member.getReference()
 		};
 
-		await attendanceCollection
-			.remove(generateFindStatement<RawAttendanceDBRecord>(search))
-			.bind(generateBindObject(search))
-			.execute();
+		await safeBind(
+			attendanceCollection.remove(generateFindStatement<RawAttendanceDBRecord>(search)),
+			generateBindObject(search)
+		).execute();
 
 		return this.attendance;
 	}

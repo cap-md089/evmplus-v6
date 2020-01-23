@@ -127,7 +127,11 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		res.end();
 	});
 
-	router.use((servererror as unknown) as express.ErrorRequestHandler);
+	router.use(
+		Account.LeftyExpressMiddleware,
+		leftyConditionalMemberMiddleware,
+		(servererror as unknown) as express.ErrorRequestHandler
+	);
 
 	return {
 		router,

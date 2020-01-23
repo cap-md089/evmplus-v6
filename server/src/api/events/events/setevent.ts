@@ -1,44 +1,64 @@
-import { api, just, left, NewEventObject, none, right } from 'common-lib';
+import { api, asyncLeft, asyncRight, EventStatus, none } from 'common-lib';
 import {
-	asyncEitherHandler,
-	BasicPartialMemberValidatedRequest,
-	Event
+	Account,
+	asyncEitherHandler2,
+	BasicMemberRequest,
+	CAPNHQUser,
+	Event,
+	EventValidator,
+	memberRequestTransformer,
+	serverErrorGenerator
 } from '../../../lib/internals';
+import { tokenTransformer } from '../../formtoken';
 
-export default asyncEitherHandler<api.events.events.Set>(
-	async (req: BasicPartialMemberValidatedRequest<NewEventObject, { id: string }>) => {
-		let event: Event;
-
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event'
-			});
-		}
-
-		try {
-			await event.set(req.body, req.account, req.mysqlx, req.member);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not notify Points of Contact about their status change'
-			});
-		}
-
-		try {
-			await event.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save event information'
-			});
-		}
-
-		return right(void 0);
-	}
+export default asyncEitherHandler2<api.events.events.Set, { id: string }>(req =>
+	asyncRight(req, serverErrorGenerator('Could not update event'))
+		.flatMap(r => Account.RequestTransformer(r))
+		.flatMap(r => memberRequestTransformer(false, true)(r))
+		.flatMap(r => tokenTransformer(r))
+		.flatMap<BasicMemberRequest<{ id: string }>>(r =>
+			r.member.hasPermission('ManageEvent') ||
+			(r.member instanceof CAPNHQUser &&
+				r.member.hasDutyPosition([
+					'Operations Officer',
+					'Squadron Activities Officer',
+					'Activities Officer',
+					'Cadet Operations Officer',
+					'Cadet Operations NCO',
+					'Cadet Activities Officer',
+					'Cadet Activities NCO'
+				]))
+				? asyncRight(r, serverErrorGenerator('Could not create new event'))
+				: asyncLeft({
+						error: none<Error>(),
+						message: 'Member does not have permission to perform that action',
+						code: 403
+				  })
+		)
+		.flatMap(r => EventValidator.partialTransform(r))
+		.map(r => ({
+			...r,
+			body: {
+				...r.body,
+				// We don't want those without the proper permissions to publish an event
+				// they don't have the permission to publish
+				// This allows for cadets to have responsibility but still be verified by
+				// senior members
+				status:
+					r.member.hasPermission('ManageEvent') ||
+					(r instanceof CAPNHQUser &&
+						r.member.hasDutyPosition([
+							'Operations Officer',
+							'Squadron Activities Officer',
+							'Activities Officer'
+						]))
+						? r.body.status
+						: EventStatus.DRAFT
+			}
+		}))
+		.flatMap(r =>
+			Event.GetEither(r.params.id, r.account, r.mysqlx)
+				.tap(event => event.set(r.body, r.account, r.mysqlx, r.member))
+				.map(event => event.save())
+		)
 );

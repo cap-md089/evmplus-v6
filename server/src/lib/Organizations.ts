@@ -1,6 +1,6 @@
 import { Collection, Schema } from '@mysql/xdevapi';
 import { AsyncEither, asyncLeft, asyncRight, NHQ, Timezone } from 'common-lib';
-import { collectResults } from './MySQLUtil';
+import { collectResults, safeBind } from './MySQLUtil';
 
 // import { Schema } from '@mysql/xdevapi';
 // import { NHQ } from 'common-lib';
@@ -86,7 +86,7 @@ export const getUnitTimezoneGuess = (
 		'Could not get organization'
 	)
 		.map(collection => collection.find('ORGID = :ORGID'))
-		.map(find => find.bind({ ORGID }))
+		.map(find => safeBind(find, { ORGID }))
 		.map(find => collectResults(find))
 		.flatMap(orgs =>
 			orgs.length === 1

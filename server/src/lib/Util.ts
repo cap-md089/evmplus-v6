@@ -2,6 +2,7 @@ import * as mysql from '@mysql/xdevapi';
 import {
 	api,
 	AsyncEither,
+	asyncRight,
 	either,
 	EitherObj,
 	just,
@@ -12,9 +13,17 @@ import {
 } from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
-import { AccountRequest } from './Account';
-import { Account, ConditionalMemberRequest, saveServerError } from './internals';
-import { BasicMySQLRequest, ParamType } from './MySQLUtil';
+import { BasicAccountRequest } from './Account';
+import {
+	Account,
+	AccountRequest,
+	BasicConditionalMemberRequest,
+	BasicMySQLRequest,
+	memberRequestTransformer,
+	ParamType,
+	saveServerError
+} from './internals';
+import { BasicMaybeMemberRequest } from './member/pam/Session';
 
 export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
@@ -216,7 +225,7 @@ export const asyncErrorHandler = (
 export const leftyAsyncErrorHandler: typeof asyncErrorHandler = fn => {
 	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
 		fn(req, res, next).catch(async err => {
-			await saveServerError(err, req as ConditionalMemberRequest);
+			await saveServerError(err, await convertReqForSavingAsError(req));
 
 			res.status(500);
 			res.json(
@@ -257,7 +266,7 @@ export const asyncEitherMiddlewareHandler = <R>(
 									)
 								),
 							async err => {
-								await saveServerError(err, req as ConditionalMemberRequest);
+								await saveServerError(err, await convertReqForSavingAsError(req));
 
 								return res.json(
 									left({
@@ -272,7 +281,7 @@ export const asyncEitherMiddlewareHandler = <R>(
 			)
 			.catch(async err => {
 				if (err instanceof Error) {
-					await saveServerError(err, req as ConditionalMemberRequest);
+					await saveServerError(err, await convertReqForSavingAsError(req));
 				}
 
 				res.status(500);
@@ -302,6 +311,26 @@ type EitherExpressHandler<R> = FunctionalExpressHandler<
 >;
 type ConvertedEitherExpressHandler<R> = ExpressHandler & { fn: EitherExpressHandler<R> };
 
+const convertReqForSavingAsError = (
+	req: BasicMySQLRequest
+): Promise<BasicConditionalMemberRequest> =>
+	asyncRight(req, serverErrorGenerator('Could not upgrade request information'))
+		.flatMap((r: BasicMySQLRequest | BasicAccountRequest) =>
+			'account' in r
+				? asyncRight(r, serverErrorGenerator('Could not upgrade account information'))
+				: Account.RequestTransformer(r)
+		)
+		.flatMap((r: BasicAccountRequest | BasicMaybeMemberRequest) =>
+			'member' in r
+				? asyncRight(r, serverErrorGenerator('Could not upgrade account information'))
+				: memberRequestTransformer(true, false)(r)
+		)
+		.map(r => ({
+			...r,
+			member: r.member.orNull()
+		}))
+		.fullJoin();
+
 export const asyncEitherHandler = <R>(
 	fn: EitherExpressHandler<R>
 ): ConvertedEitherExpressHandler<R> => {
@@ -327,7 +356,11 @@ export const asyncEitherHandler = <R>(
 									)
 								),
 							async err => {
-								await saveServerError(err, req as ConditionalMemberRequest);
+								await saveServerError(
+									err,
+									await convertReqForSavingAsError(req),
+									l
+								);
 
 								return res.json(
 									left({
@@ -343,7 +376,7 @@ export const asyncEitherHandler = <R>(
 			)
 			.catch(async err => {
 				if (err instanceof Error) {
-					await saveServerError(err, req as ConditionalMemberRequest);
+					await saveServerError(err, await convertReqForSavingAsError(req));
 				}
 
 				res.status(500);
@@ -450,6 +483,16 @@ export function formatPhone(phone: string) {
 	// add 2 dots
 	return phone.substring(0, 3) + '.' + phone.substring(3, 6) + '.' + phone.substring(6, 10);
 }
+
+export const collectGenerator = async <T>(gen: AsyncIterableIterator<T>): Promise<T[]> => {
+	const ret: T[] = [];
+
+	for await (const i of gen) {
+		ret.push(i);
+	}
+
+	return ret;
+};
 
 /*
 str = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It w as popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";

@@ -91,7 +91,7 @@ describe('Account', () => {
 		}
 
 		done();
-	});
+	}, 7500);
 
 	it('should get events only in the account', async done => {
 		const mem = await CAPNHQMember.Get(542488, account, schema);
