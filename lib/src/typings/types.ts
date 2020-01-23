@@ -2661,10 +2661,18 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDoc
 	archived: boolean;
 }
 
+export type AlgorithmType = 'pbkdf2';
+
 /**
  * Represents the password information stored for a user
  */
 export interface AccountPasswordInformation {
+	/**
+	 * Indicates which algorithm to use for the hashing the password
+	 * 
+	 * May not exist for backwards compatibility, defaults to pbkdf2
+	 */
+	algorithm?: AlgorithmType;
 	/**
 	 * Records when the password was set
 	 */
@@ -2699,4 +2707,20 @@ export interface UserAccountInformation extends NoSQLDocument {
 	 * Store a password history for the user
 	 */
 	passwordHistory: AccountPasswordInformation[];
+}
+
+
+export interface PasswordResetTokenInformation extends NoSQLDocument {
+	/**
+	 * When the token expires
+	 */
+	expires: number;
+	/**
+	 * The actual token
+	 */
+	token: string;
+	/**
+	 * For whom the token belongs
+	 */
+	username: string;
 }

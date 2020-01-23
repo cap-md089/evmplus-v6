@@ -79,3 +79,8 @@ export const right = Right.Right;
 
 export const either = <L, R>(value: EitherObj<L, R>): Either<L, R> =>
 	value.direction === 'left' ? left(value.value) : right(value.value);
+
+export const isValidEither = (value: any): value is EitherObj<any, any> =>
+	'direction' in value &&
+	'value' in value &&
+	(value.direction === 'right' || value.direction === 'left');
