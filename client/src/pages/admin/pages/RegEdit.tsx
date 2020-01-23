@@ -18,6 +18,8 @@ import SimpleForm, {
 import Button from '../../../components/Button';
 import Select from '../../../components/form-inputs/Select';
 
+type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
+
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 
 const timezones: Timezone[] = [
