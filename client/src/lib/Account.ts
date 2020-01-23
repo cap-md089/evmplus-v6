@@ -129,16 +129,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		);
 	}
 
-	public async getMembersWithPermissions(member: MemberBase): Promise<StoredMemberPermissions[]> {
-		const url = this.buildURI('api', 'member', 'permissions');
-
-		const results = await this.fetch(url, {}, member);
-
-		const json = (await results.json()) as StoredMemberPermissions[];
-
-		return json;
-	}
-
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {
 		const url = this.buildURI('api', 'event');
 
