@@ -2,7 +2,9 @@ import {
 	RankAndFileInformation,
 	RegistryValues,
 	WebsiteContact,
-	WebsiteInformation
+	WebsiteInformation,
+	api,
+	either
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -26,9 +28,12 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			throw new Error('Could not get registry');
 		}
 
-		const registry = await result.json();
+		const registry = await result.json() as api.registry.Get;
 
-		return new Registry(registry, account);
+		return either(registry).cata(
+			e => Promise.reject(e.message),
+			r => Promise.resolve(new Registry(r, account))
+		);
 	}
 
 	/**

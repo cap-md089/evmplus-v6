@@ -3,7 +3,10 @@ import {
 	NotificationObject,
 	NotificationTarget,
 	RawNotificationObject,
-	NotificationData
+	NotificationData,
+	api,
+	either,
+	maybe
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -14,15 +17,18 @@ export default class Notification extends APIInterface<RawNotificationObject>
 	public static async Get(id: number, account: Account, member: MemberBase) {
 		const response = await account.fetch(`/api/notifications/${id}`, {}, member);
 
-		const json = await response.json();
+		const json = await response.json() as api.notifications.Get;
 
-		return new Notification(json, account);
+		return either(json).cata(
+			e => Promise.reject(e.message),
+			n => Promise.resolve(new Notification(n, account))
+		);
 	}
 
 	public static async GetList(account: Account, member: MemberBase) {
 		const response = await account.fetch(`/api/notifications`, {}, member);
 
-		const json = (await response.json()) as NotificationObject[];
+		const json = (await response.json()) as api.notifications.List;
 
 		return json.map(notif => new Notification(notif, account));
 	}
@@ -41,9 +47,12 @@ export default class Notification extends APIInterface<RawNotificationObject>
 			return null;
 		}
 
-		const json = await response.json();
+		const json = await response.json() as api.notifications.global.Get;
 
-		return new Notification(json, account);
+		return either(json).map(m => maybe(m)).cata(
+			() => Promise.resolve(null),
+			n => Promise.resolve(maybe(n).map(notif => new Notification(notif, account)).join())
+		);
 	}
 
 	public static async GetListForAdmin(

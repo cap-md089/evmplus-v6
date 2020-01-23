@@ -107,10 +107,6 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	}
 }
 
-function isEmpty(v: any): v is {} {
-	return Object.keys(v).length === 0;
-}
-
 /**
  * Helper function
  *

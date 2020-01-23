@@ -1,18 +1,20 @@
 import {
 	MemberCreateError,
-	passwordMeetsRequirements,
 	PasswordSetResult,
-	SigninReturn
+	SigninReturn,
+	EitherObj,
+	api,
+	either
 } from 'common-lib';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PasswordForm from '../components/form-inputs/PasswordForm';
 import ReCAPTCHAInput from '../components/form-inputs/ReCAPTCHA';
 import SimpleForm, { Label, TextBox, TextInput, Title } from '../components/forms/SimpleForm';
 import APIInterface from '../lib/APIInterface';
 import { getMember } from '../lib/Members';
 import myFetch, { fetchFunction } from '../lib/myFetch';
 import Page, { PageProps } from './Page';
-import PasswordForm from '../components/form-inputs/PasswordForm';
 
 interface ResetPasswordFormValues {
 	password: string;
@@ -28,7 +30,7 @@ interface SigninState {
 	signinFormValues: SigninFormValues;
 	resetFormValues: ResetPasswordFormValues;
 	error: MemberCreateError;
-	passwordSetResult: PasswordSetResult;
+	passwordSetResult: string;
 	updatePasswordSessionID: string | null;
 	tryingSignin: boolean;
 	tryingPasswordReset: boolean;
@@ -42,14 +44,6 @@ const signinErrorMessages = {
 	[MemberCreateError.SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in'
-};
-
-const passwordResetErrorMessages = {
-	[PasswordSetResult.COMPLEXITY]: 'Password fails to meet complexity requirements',
-	[PasswordSetResult.IN_HISTORY]: 'Password has been used too recently',
-	[PasswordSetResult.MIN_AGE]: 'Password is not old enough to change',
-	[PasswordSetResult.OK]: '',
-	[PasswordSetResult.SERVER_ERROR]: 'There was an error with the server'
 };
 
 const validateNotEmpty = (val: string | null) => !!val;
@@ -67,7 +61,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			password: ''
 		},
 		error: MemberCreateError.NONE,
-		passwordSetResult: PasswordSetResult.OK,
+		passwordSetResult: '',
 		updatePasswordSessionID: null,
 		tryingSignin: false,
 		tryingPasswordReset: false
@@ -156,11 +150,9 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					<Label />
 					<TextBox>Your password has expired and needs to be reset</TextBox>
 
-					{this.state.passwordSetResult !== PasswordSetResult.OK ? <Label /> : null}
-					{this.state.passwordSetResult !== PasswordSetResult.OK ? (
-						<TextBox>
-							{passwordResetErrorMessages[this.state.passwordSetResult]}
-						</TextBox>
+					{this.state.passwordSetResult !== '' ? <Label /> : null}
+					{this.state.passwordSetResult !== '' ? (
+						<TextBox>{this.state.passwordSetResult}</TextBox>
 					) : null}
 
 					<PasswordForm name="password" />
@@ -212,45 +204,48 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		}
 	}
 
-	private resetPassword() {
+	private async resetPassword() {
 		this.setState({
 			tryingPasswordReset: true
 		});
 
-		APIInterface.getTokenForSession(this.props.account.id, this.state.updatePasswordSessionID!)
-			.then(token => {
-				return myFetch('/api/member/passwordreset', {
-					headers: {
-						'authorization': this.state.updatePasswordSessionID!,
-						'content-type': 'application/json'
-					},
-					body: JSON.stringify({
-						password: this.state.resetFormValues.password,
-						token
-					}),
-					method: 'POST'
-				});
-			})
-			.then(fetchResult => fetchResult.json())
-			.then<SigninReturn | undefined>(({ result }: { result: PasswordSetResult }) => {
-				if (result === PasswordSetResult.OK) {
-					return getMember(this.state.updatePasswordSessionID!);
-				} else {
+		const token = await APIInterface.getTokenForSession(
+			this.props.account.id,
+			this.state.updatePasswordSessionID!
+		);
+		const fetchResult = await myFetch('/api/member/passwordreset', {
+			headers: {
+				'authorization': this.state.updatePasswordSessionID!,
+				'content-type': 'application/json'
+			},
+			body: JSON.stringify({
+				password: this.state.resetFormValues.password,
+				token
+			}),
+			method: 'POST'
+		});
+		const eith: EitherObj<api.HTTPError, PasswordSetResult> = await fetchResult.json();
+
+		either(eith)
+			.cata(
+				async e => {
 					this.setState({
-						passwordSetResult: result,
+						passwordSetResult: e.message,
 						tryingPasswordReset: false
 					});
+				},
+				async () => {
+					const member = await getMember(this.state.updatePasswordSessionID!);
+
+					if (member) {
+						this.props.authorizeUser(member);
+						this.props.routeProps.history.push(this.returnUrl);
+					}
 				}
-			})
-			.then(fullMember => {
-				if (fullMember) {
-					this.props.authorizeUser(fullMember);
-					this.props.routeProps.history.push(this.returnUrl);
-				}
-			})
-			.catch(e => {
+			)
+			.catch(() => {
 				this.setState({
-					passwordSetResult: PasswordSetResult.SERVER_ERROR,
+					passwordSetResult: 'There was an error connecting to the server',
 					tryingPasswordReset: false
 				});
 			});

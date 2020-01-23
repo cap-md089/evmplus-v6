@@ -165,8 +165,8 @@ export default class PasswordForm extends React.Component<
 		}
 
 		if (
-			!!fields.password.match(/[ \^!@#$%&*(){}+=_\-<>,.?\/\[\]\\\|;'"]/) &&
-			!!fields.confirmPassword.match(/[ \^!@#$%&*(){}+=_\-<>,.?\/\[\]\\\|;'"]/)
+			!!fields.password.match(/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/) &&
+			!!fields.confirmPassword.match(/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/)
 		) {
 			update.showSpecialError = ShowLevel.SHOWGOOD;
 		} else {

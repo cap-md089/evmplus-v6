@@ -12,7 +12,9 @@ import {
 	NewAttendanceRecord,
 	NewEventObject,
 	PointOfContactType,
-	RadioReturn
+	RadioReturn,
+	api,
+	either
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -53,9 +55,12 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			member
 		);
 
-		const newEvent = await result.json();
+		const newEvent = either(await result.json() as api.events.events.Add);
 
-		return new Event(newEvent, account);
+		return newEvent.cata(
+			r => Promise.reject(r.message),
+			e => Promise.resolve(new Event(e, account))
+		);
 	}
 
 	public static async Get(id: number, member?: MemberBase | null, account?: Account) {
@@ -65,9 +70,12 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 		const result = await account.fetch(`/api/event/${id}`, {}, member);
 
-		const event = await result.json();
+		const event = either(await result.json() as api.events.events.Get);
 
-		return new Event(event, account);
+		return event.cata(
+			r => Promise.reject(r.message),
+			e => Promise.resolve(new Event(e, account!))
+		);
 	}
 
 	public id: number;
@@ -498,9 +506,12 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			member
 		);
 
-		const json = await body.json();
+		const json = await body.json() as api.events.events.Copy;
 
-		return new Event(json, this.account);
+		return either(json).cata(
+			e => Promise.reject(e.message),
+			e => Promise.resolve(new Event(e, this.account))
+		);
 	}
 
 	/**

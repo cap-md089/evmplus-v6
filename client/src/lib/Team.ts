@@ -7,7 +7,9 @@ import {
 	NewTeamObject,
 	RawTeamMember,
 	RawTeamObject,
-	TeamPublicity
+	TeamPublicity,
+	api,
+	either
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import Account from './Account';
@@ -31,9 +33,12 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 	public static async Get(id: number, account: Account, member?: MemberBase | null) {
 		const result = await account.fetch('/api/team/' + id, {}, member);
 
-		const json = await result.json();
+		const json = await result.json() as api.team.Get;
 
-		return new Team(json, account);
+		return either(json).cata(
+			e => Promise.reject(e),
+			t => Promise.resolve(new Team(t, account))
+		);
 	}
 
 	/**
@@ -69,9 +74,12 @@ export default class Team extends APIInterface<RawTeamObject> implements FullTea
 			member
 		);
 
-		const json = await result.json();
+		const json = await result.json() as api.team.Create;
 
-		return new Team(json, account);
+		return either(json).cata(
+			e => Promise.reject(e.message),
+			t => Promise.resolve(new Team(t, account!))
+		);
 	}
 
 	public accountID: string;

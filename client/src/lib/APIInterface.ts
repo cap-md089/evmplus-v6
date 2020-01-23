@@ -1,5 +1,6 @@
 import myFetch from './myFetch';
 import MemberBase from './Members';
+import { Either, api, EitherObj, either } from 'common-lib';
 
 /**
  * Base class to help handle transmission and tokens
@@ -30,9 +31,13 @@ export default abstract class APIInterface<T> {
 			}
 		});
 
-		const json = await response.json();
+		const json = either((await response.json()) as EitherObj<api.HTTPError, string>);
 
-		return json.token;
+		if (json.isLeft()) {
+			throw new Error(json.value.message);
+		} else {
+			return json.value;
+		}
 	}
 
 	protected static ENV: 'production' | 'staging' | 'test' | 'development' = 'development';
