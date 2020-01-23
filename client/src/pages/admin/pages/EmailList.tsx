@@ -1,8 +1,8 @@
 import { Member, MemberObject, RadioReturn } from 'common-lib';
 import * as React from 'react';
-import Button from '../components/Button';
-import { InputProps } from '../components/form-inputs/Input';
-import { CheckInput } from '../components/form-inputs/Selector';
+import Button from '../../../components/Button';
+import { InputProps } from '../../../components/form-inputs/Input';
+import { CheckInput } from '../../../components/form-inputs/Selector';
 import SimpleForm, {
 	Checkbox,
 	Label,
@@ -10,10 +10,10 @@ import SimpleForm, {
 	Selector,
 	SimpleRadioButton,
 	TextInput
-} from '../components/forms/SimpleForm';
-import Loader from '../components/Loader';
-import { CAPMemberClasses } from '../lib/Members';
-import Page, { PageProps } from './Page';
+} from '../../../components/forms/SimpleForm';
+import Loader from '../../../components/Loader';
+import { CAPMemberClasses } from '../../../lib/Members';
+import Page, { PageProps } from '../../Page';
 
 const memberRanks = [
 	'cab',
@@ -424,10 +424,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						onClick={this.selectText}
 						ref={this.selectableDiv}
 					>
-						{this.state.selectedMembers
-							.map(mem => this.getEmail(mem))
-							.filter(email => !!email)
-							.join('; ')}
+						{this.getEmailText()}
 					</div>
 				</>
 			)
@@ -438,6 +435,16 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 
 	private displayMemberName(member: CAPMemberClasses): string {
 		return member.getFullName();
+	}
+
+	private getEmailText() {
+		const emails: { [key: string]: true } = {};
+
+		(this.state.selectedMembers
+			.map(this.getEmail)
+			.filter(email => !!email) as string[]).forEach(email => (emails[email] = true));
+
+		return Object.keys(emails).join('; ');
 	}
 
 	private getEmail(member: MemberObject): string | undefined {

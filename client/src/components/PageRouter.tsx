@@ -5,7 +5,6 @@ import MemberBase from '../lib/Members';
 import AddEvent from '../pages/events/AddEvent';
 import Calendar from '../pages/Calendar';
 import Drive from '../pages/Drive';
-import EmailList from '../pages/EmailList';
 import LinkList from '../pages/EventLinkList';
 import EventViewer from '../pages/events/EventViewer';
 import Main from '../pages/Main';
@@ -88,11 +87,6 @@ const pages: Array<{
 	{
 		url: '/calendar/:month?/:year?',
 		component: Calendar,
-		exact: false
-	},
-	{
-		url: '/emailselector',
-		component: EmailList,
 		exact: false
 	},
 	{

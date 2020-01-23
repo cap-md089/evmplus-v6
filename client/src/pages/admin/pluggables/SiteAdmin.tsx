@@ -50,7 +50,7 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					{this.props.member instanceof CAPNHQMember && this.props.member.seniorMember ? (
 						<>
 							<br />
-							<Link to="/emailselector">Email selector</Link>
+							<Link to="/admin/emaillist">Email selector</Link>
 						</>
 					) : null}
 				</div>

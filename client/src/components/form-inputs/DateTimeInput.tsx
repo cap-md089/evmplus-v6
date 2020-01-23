@@ -6,6 +6,9 @@ import { InputProps } from './Input';
 
 import { DateTime } from 'luxon';
 
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
 const TimeZoneDisplays = {
 	'America/New_York': 'EST',
 	'America/Chicago': 'CST',
@@ -19,25 +22,15 @@ const TimeZoneDisplays = {
 type SupportedTimeZones = keyof typeof TimeZoneDisplays;
 
 // We don't want it to throw an error with value being a moment or a number
-// @ts-ignore
 export interface DateTimeInputProps extends InputProps<number> {
-	value?: DateTime | number;
-	date: boolean;
+	value?: number;
 	time: boolean;
 	minuteInterval?: number;
 	originalTimeZoneOffset: SupportedTimeZones;
 }
 
 // @ts-ignore
-export interface TimeInputProps extends DateTimeInputProps {
-	value?: DateTime | number; // Make it required to specify day
-	date: false;
-	time: true;
-}
-
-// @ts-ignore
 export interface DateInputProps extends DateTimeInputProps {
-	date: true;
 	time: false;
 }
 
@@ -63,49 +56,23 @@ interface DateTimeState {
 	focused: boolean;
 }
 
-// const getMonth = (month: number, year: number) =>
-// 	DateTime.utc()
-// 		.set({
-// 			year,
-// 			month
-// 		})
-// 		.startOf('month');
-
 const normalizeInput = (value: number | DateTime | undefined, offset: SupportedTimeZones) =>
-	typeof value !== 'undefined'
-		? typeof value === 'number'
-			? DateTime.fromMillis(value, {
-					zone: offset
-			  })
-			: value
-		: DateTime.utc();
+	typeof value !== 'undefined' && value !== null ? DateTime.fromMillis(+value) : DateTime.local();
 
-const quickNormalize = (props: DateTimeInputProps | TimeInputProps | DateInputProps) =>
-	roundInput(
-		normalizeInput(props.value, props.originalTimeZoneOffset),
-		props.minuteInterval || FIVE_MINUTES,
-		props.originalTimeZoneOffset
-	);
-
-const FIVE_MINUTES = 5 * 60 * 1000;
-
-const roundInput = (input: DateTime, interval: number, offset: SupportedTimeZones) => input;
+const quickNormalize = (props: DateTimeInputProps | DateInputProps) =>
+	normalizeInput(props.value, props.originalTimeZoneOffset);
 
 // short left pad
 const lp = (v: string | number, amount = 2) => ('0000' + v).substr(-amount);
 
 export default class DateTimeInput extends React.Component<
-	DateTimeInputProps | TimeInputProps | DateInputProps,
+	DateTimeInputProps | DateInputProps,
 	DateTimeState
 > {
-	constructor(props: DateTimeInputProps | TimeInputProps | DateInputProps) {
+	constructor(props: DateTimeInputProps | DateInputProps) {
 		super(props);
 
-		const start = roundInput(
-			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
-			this.props.minuteInterval || FIVE_MINUTES,
-			this.props.originalTimeZoneOffset
-		);
+		const start = this.props.value ? DateTime.fromMillis(+this.props.value) : DateTime.utc();
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
@@ -126,55 +93,39 @@ export default class DateTimeInput extends React.Component<
 
 		this.onChangeDate = this.onChangeDate.bind(this);
 		this.onChangeTime = this.onChangeTime.bind(this);
+		this.onChange = this.onChange.bind(this);
 	}
 
 	public render() {
-		const start = roundInput(
-			normalizeInput(this.props.value, this.props.originalTimeZoneOffset),
-			this.props.minuteInterval || FIVE_MINUTES,
-			this.props.originalTimeZoneOffset
-		);
+		const start = normalizeInput(this.props.value, this.props.originalTimeZoneOffset);
 
-		const sameTimezone = DateTime.local().offset === start.offset;
+		// @ts-ignore
+		const currentZone: SupportedTimeZones = start.zone.name;
 
-		const className = (this.props.date ? 'date' : '') + (this.props.time ? 'time' : '');
+		// const sameTimezone = start.offsetNameShort === DateTime.local().offsetNameShort;
+		// @ts-ignore
+		const sameTimezone = currentZone === this.props.originalTimeZoneOffset;
 
 		return (
 			<div className="formbox" style={this.props.boxStyles}>
-				<div className={`${className}-input-box datetime-input-root`}>
-					<div>
-						{this.props.date ? (
-							<input
-								className="date-input"
-								value={`${lp(start.year, 4)}-${lp(start.month)}-${lp(start.day)}`}
-								type="date"
-								onChange={this.onChangeDate}
-							/>
-						) : null}
-						{this.props.date && this.props.time ? (
-							<span className="datetime-input-seperator">&nbsp;</span>
-						) : null}
-						{this.props.time ? (
-							<input
-								className="time-input"
-								value={`${lp(start.hour)}:${lp(start.minute)}`}
-								type="time"
-								onChange={this.onChangeTime}
-							/>
-						) : null}
-					</div>
-					{!sameTimezone ? (
-						<>
-							<br />
-							<div className="original-time">
-								<i>
-									Showing time as it would be see in{' '}
-									{TimeZoneDisplays[this.props.originalTimeZoneOffset]}
-								</i>
-							</div>
-						</>
-					) : null}
-				</div>
+				<ReactDatePicker
+					onChange={this.onChange}
+					selected={new Date(+start)}
+					showTimeSelect={this.props.time}
+					timeIntervals={this.props.minuteInterval || 15}
+					dateFormat={this.props.time ? 'MM/dd/yyyy HH:mm' : 'MM/dd/yyyy'}
+				/>
+				{!sameTimezone ? (
+					<>
+						<br />
+						<div className="original-time">
+							<i>
+								Time is for {TimeZoneDisplays[this.props.originalTimeZoneOffset]}.
+								Rendered in local time, {TimeZoneDisplays[currentZone]}
+							</i>
+						</div>
+					</>
+				) : null}
 			</div>
 		);
 	}
@@ -191,56 +142,59 @@ export default class DateTimeInput extends React.Component<
 		});
 	}
 
-	private onChangeDate(e: React.ChangeEvent<HTMLInputElement>) {
-		const input = quickNormalize(this.props);
-
-		if (e.currentTarget.value === '') {
-			this.forceUpdate();
-		}
-
-		const value = e.currentTarget.value.split('-');
-
-		const result = input.set({
-			year: parseInt(value[0], 10),
-			month: parseInt(value[1], 10),
-			day: parseInt(value[2], 10)
-		});
-
+	private onChange(date: Date) {
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: +result
+				value: +date
 			});
 		}
 
 		if (this.props.onChange) {
-			this.props.onChange(+result);
+			this.props.onChange(+date);
 		}
 	}
 
+	private onChangeDate(e: React.ChangeEvent<HTMLInputElement>) {
+		// const input = quickNormalize(this.props);
+		// if (e.currentTarget.value === '') {
+		// 	this.forceUpdate();
+		// }
+		// const value = e.currentTarget.value.split('-');
+		// const result = input.set({
+		// 	year: parseInt(value[0], 10),
+		// 	month: parseInt(value[1], 10),
+		// 	day: parseInt(value[2], 10)
+		// });
+		// if (this.props.onUpdate) {
+		// 	this.props.onUpdate({
+		// 		name: this.props.name,
+		// 		value: +result
+		// 	});
+		// }
+		// if (this.props.onChange) {
+		// 	this.props.onChange(+result);
+		// }
+	}
+
 	private onChangeTime(e: React.ChangeEvent<HTMLInputElement>) {
-		const input = quickNormalize(this.props);
-
-		if (e.currentTarget.value === '') {
-			this.forceUpdate();
-		}
-
-		const value = e.currentTarget.value.split(':');
-
-		const result = input.set({
-			hour: parseInt(value[0], 10),
-			minute: parseInt(value[1], 10)
-		});
-
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
-				name: this.props.name,
-				value: +result
-			});
-		}
-
-		if (this.props.onChange) {
-			this.props.onChange(+result);
-		}
+		// const input = quickNormalize(this.props);
+		// if (e.currentTarget.value === '') {
+		// 	this.forceUpdate();
+		// }
+		// const value = e.currentTarget.value.split(':');
+		// const result = input.set({
+		// 	hour: parseInt(value[0], 10),
+		// 	minute: parseInt(value[1], 10)
+		// });
+		// if (this.props.onUpdate) {
+		// 	this.props.onUpdate({
+		// 		name: this.props.name,
+		// 		value: +result
+		// 	});
+		// }
+		// if (this.props.onChange) {
+		// 	this.props.onChange(+result);
+		// }
 	}
 }

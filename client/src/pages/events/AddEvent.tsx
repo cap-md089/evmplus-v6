@@ -84,7 +84,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 	}
 
 	public render() {
-		return this.props.member ? (
+		return this.props.member && Event.HasBasicPermission(this.props.member) ? (
 			<EventForm
 				account={this.props.account}
 				member={this.props.member}
@@ -102,7 +102,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 	}
 
 	private async handleSubmit(event: NewEventObject) {
-		if (!this.props.member) {
+		if (!this.props.member || !Event.HasBasicPermission(this.props.member)) {
 			return;
 		}
 

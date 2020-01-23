@@ -363,7 +363,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Meet date and time</Label>
 				<DateTimeInput
 					name="meetDateTime"
-					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
 				/>
@@ -374,7 +373,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Start date and time</Label>
 				<DateTimeInput
 					name="startDateTime"
-					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
 					onChange={this.startDateTimeInputChange}
@@ -386,7 +384,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
-					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
 					onChange={this.endDateTimeInputChange}
@@ -395,7 +392,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Pickup date and time</Label>
 				<DateTimeInput
 					name="pickupDateTime"
-					date={true}
 					time={true}
 					originalTimeZoneOffset={'America/New_York'}
 					onChange={this.pickupDateTimeInputChange}
@@ -463,7 +459,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Registration deadline</Label>
 					<DateTimeInput
 						name="deadline"
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
@@ -493,7 +488,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Participation fee due</Label>
 					<DateTimeInput
 						name="feeDue"
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
@@ -612,11 +606,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				this.state.changed.pickupDateTime;
 
 			if (!dateTimesHaveBeenModified) {
-				event.startDateTime = event.meetDateTime + 300 * 1000; // Five minutes
-				event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
-				event.pickupDateTime = event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
+				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
+				event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
+				event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
 			} else if (!this.state.changed.pickupDateTime) {
-				event.pickupDateTime = event.endDateTime + 300 * 1000; // Five minutes
+				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
 			}
 
 			const locationsHaveBeenModified =
@@ -645,11 +639,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				this.state.changed.pickupDateTime;
 
 			if (!dateTimesHaveBeenModified) {
-				event.startDateTime = event.meetDateTime + 300 * 1000; // Five minutes
-				event.endDateTime = event.meetDateTime + (300 + 3600) * 1000; // 65 minutes
-				event.pickupDateTime = event.meetDateTime + (300 + 3600 + 300) * 1000; // 70 minutes
+				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
+				event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
+				event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
 			} else if (!this.state.changed.pickupDateTime) {
-				event.pickupDateTime = event.endDateTime + 300 * 1000; // Five minutes
+				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
 			}
 
 			const locationsHaveBeenModified =

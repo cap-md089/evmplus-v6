@@ -1,6 +1,6 @@
-import myFetch from './myFetch';
+import { api, either, EitherObj } from 'common-lib';
 import MemberBase from './Members';
-import { Either, api, EitherObj, either } from 'common-lib';
+import myFetch from './myFetch';
 
 /**
  * Base class to help handle transmission and tokens

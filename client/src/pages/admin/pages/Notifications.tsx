@@ -143,7 +143,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			this.state.notifications
 				.filter(notif => !notif.read)
 				.map(notif => ({
-					type: 'Reference' as 'Reference',
+					type: 'Reference' as const,
 					text: notif.text,
 					target: `notification-${notif.id}`
 				}))

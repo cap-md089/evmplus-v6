@@ -106,7 +106,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			// @ts-ignore
 			window.grecaptcha.reset();
 
-			const fetchResult = await fetchFunction('/api/member/account/cap/request', {
+			const fetchResult = await fetchFunction('/api/member/account/capnhq/request', {
 				body: JSON.stringify(values),
 				headers: {
 					'content-type': 'application/json'
@@ -120,15 +120,15 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				error => {
 					this.setState({
 						error: error.message
-					})
+					});
 				},
 				() => {
 					this.setState({
 						success: true,
 						error: null
-					})
+					});
 				}
-			)
+			);
 		} catch (e) {
 			this.setState({
 				error: 'Could not request account',

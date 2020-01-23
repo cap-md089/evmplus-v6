@@ -165,7 +165,6 @@ export default class AttendanceForm extends React.Component<
 				{upt ? (
 					<DateTimeInput
 						name="arrivalTime"
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
@@ -175,7 +174,6 @@ export default class AttendanceForm extends React.Component<
 				{upt ? (
 					<DateTimeInput
 						name="departureTime"
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>

@@ -134,7 +134,9 @@ export default class TemporaryDutyPositions extends Page<
 		}
 
 		if (!this.props.member.hasPermission('AssignTemporaryDutyPositions')) {
-			return;
+			return this.setState({
+				memberList: []
+			});
 		}
 
 		const memberList = await this.props.account.getMembers(this.props.member);
@@ -307,7 +309,6 @@ export default class TemporaryDutyPositions extends Page<
 					<Label>Duration of position</Label>
 					<DateTimeInput
 						account={this.props.account}
-						date={true}
 						time={true}
 						name="endDate"
 						originalTimeZoneOffset={'America/New_York'}

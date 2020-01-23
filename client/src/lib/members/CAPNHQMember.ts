@@ -130,7 +130,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			this.isRioux ||
 			(typeof dutyPosition === 'string'
 				? this.dutyPositions.filter(s => s.duty === dutyPosition).length > 0
-				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a && b))
+				: dutyPosition.map(dp => this.hasDutyPosition(dp)).reduce((a, b) => a || b))
 		);
 	}
 

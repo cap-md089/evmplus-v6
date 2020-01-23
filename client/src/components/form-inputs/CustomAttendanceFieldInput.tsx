@@ -108,7 +108,6 @@ export default class CustomAttendanceFieldInput extends React.Component<
 						key="prefill"
 						name="preFill"
 						value={inValue.preFill}
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>

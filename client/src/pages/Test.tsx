@@ -180,29 +180,19 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 						account={this.props.account}
 						member={this.props.member}
 					/>
-					<Label>Time input</Label>
-					<DateTimeInput
-						name="test8"
-						date={false}
-						time={true}
-						value={this.state.test8}
-						originalTimeZoneOffset={'America/New_York'}
-					/>
 					<Label>Date input</Label>
 					<DateTimeInput
 						name="test9"
-						date={true}
 						time={false}
-						value={this.state.test9}
+						value={+this.state.test9}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
 					<Label>Date and time input</Label>
 					<DateTimeInput
 						name="test10"
-						date={true}
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
-						value={this.state.test10}
+						value={+this.state.test10}
 					/>
 					<Label>Input label</Label>
 					<TextInput

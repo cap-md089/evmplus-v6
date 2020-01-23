@@ -1,6 +1,6 @@
 import React from 'react';
 import Page, { PageProps } from '../../Page';
-import MemberBase from '../../../lib/Members';
+import MemberBase, { getMember } from '../../../lib/Members';
 import LoaderShort from '../../../components/LoaderShort';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
@@ -76,5 +76,9 @@ export default class SuWidget extends Page<PageProps, SuState> {
 			},
 			this.props.member
 		);
+
+		const newMember = await getMember(localStorage.getItem('sessionID')!);
+
+		this.props.authorizeUser(newMember);
 	}
 }

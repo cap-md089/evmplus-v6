@@ -138,7 +138,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 					className="selector-values"
 					style={{
 						overflow: this.props.overflow ? 'auto' : 'initial',
-						height: this.props.overflow
+						maxHeight: this.props.overflow
 					}}
 				>
 					{filteredValues.map((val, i) => (

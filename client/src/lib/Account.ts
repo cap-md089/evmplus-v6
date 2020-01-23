@@ -11,7 +11,8 @@ import {
 	api,
 	MaybeObj,
 	either,
-	Maybe
+	Maybe,
+	isValidEither
 } from 'common-lib';
 import APIInterface from './APIInterface';
 import Event from './Event';
@@ -148,7 +149,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 		const results = await this.fetch(url);
 
-		const event = await results.json() as EitherObj<api.HTTPError, MaybeObj<EventObject>>;
+		const event = (await results.json()) as EitherObj<api.HTTPError, MaybeObj<EventObject>>;
 
 		return either(event).cata(
 			() => Promise.reject('Could not get event information'),
@@ -162,6 +163,10 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		const results = await this.fetch(url);
 
 		const events = await results.json();
+
+		if (isValidEither(events)) {
+			throw new Error('Could not get event information');
+		}
 
 		return events.map((e: EventObject) => new Event(e, this));
 	}

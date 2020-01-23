@@ -244,7 +244,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<Label>New start time of event</Label>
 								<DateTimeInput
 									name="newTime"
-									date={true}
 									time={true}
 									originalTimeZoneOffset={'America/New_York'}
 								/>
@@ -265,7 +264,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<Label>Start time of new event</Label>
 								<DateTimeInput
 									name="newTime"
-									date={true}
 									time={true}
 									originalTimeZoneOffset={'America/New_York'}
 								/>
@@ -385,17 +383,22 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					</div>
 					{member !== null ? (
 						<div id="signup">
-							{event.canSignUpForEvent(this.props.member) ? (
-								<AttendanceForm
-									account={this.props.account}
-									event={event}
-									member={member}
-									updateRecord={this.addAttendanceRecord}
-									updated={false}
-									clearUpdated={this.clearPreviousMember}
-									removeRecord={noop}
-								/>
-							) : null}
+							{event.canSignUpForEvent(this.props.member).cata(
+								err => (
+									<p>Cannot sign up for event: {err}</p>
+								),
+								() => (
+									<AttendanceForm
+										account={this.props.account}
+										event={event}
+										member={member}
+										updateRecord={this.addAttendanceRecord}
+										updated={false}
+										clearUpdated={this.clearPreviousMember}
+										removeRecord={noop}
+									/>
+								)
+							)}
 							<h2 id="attendance">Attendance</h2>
 							<DropDownList
 								titles={val =>

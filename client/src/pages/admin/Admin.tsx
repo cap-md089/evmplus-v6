@@ -19,6 +19,7 @@ import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import './Widget.css';
 import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
 import SuWidget, { canUseSu } from './pluggables/Su';
+import EmailList from './pages/EmailList';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -114,6 +115,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 					path="/admin/tempdutypositions"
 					render={this.pageRenderer(TemporaryDutyPositions)}
 				/>
+				<Route path="/admin/emaillist" render={this.pageRenderer(EmailList)} />
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>

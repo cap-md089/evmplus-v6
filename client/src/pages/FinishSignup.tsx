@@ -82,7 +82,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		const { username, password } = this.state.form;
 
 		try {
-			const fetchResult = await fetchFunction('/api/member/account/cap/finish', {
+			const fetchResult = await fetchFunction('/api/member/account/capnhq/finish', {
 				body: JSON.stringify({
 					token,
 					username,
@@ -94,22 +94,25 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				method: 'POST'
 			});
 
-			const result: EitherObj<api.HTTPError, { sessionID: string }> = await fetchResult.json();
+			const result: EitherObj<
+				api.HTTPError,
+				{ sessionID: string }
+			> = await fetchResult.json();
 
 			either(result).cata(
 				e => {
 					this.setState({
 						tryingFinish: false,
 						error: e.message
-					})
+					});
 				},
 				async ({ sessionID }) => {
 					const member = await getMember(sessionID);
 
 					this.props.authorizeUser(member);
-					this.props.routeProps.history.push('/admin')
+					this.props.routeProps.history.push('/admin');
 				}
-			)
+			);
 		} catch (e) {
 			this.setState({
 				error: 'Could not connect to server',

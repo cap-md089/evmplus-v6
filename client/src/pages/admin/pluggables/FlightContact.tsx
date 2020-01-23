@@ -67,6 +67,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 		if (
 			this.props.member &&
 			this.props.member instanceof CAPNHQMember &&
+			!this.props.member.seniorMember &&
 			this.props.member.hasDutyPosition([
 				'Cadet Flight Commander',
 				'Cadet Flight Sergeant',
@@ -256,7 +257,7 @@ const flightInput: CheckInput<Member, string> = {
 			return true;
 		}
 
-		if (mem.flight === null) {
+		if (mem.flight === null || mem.flight === undefined) {
 			return false;
 		}
 
@@ -516,10 +517,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					onClick={this.selectText}
 					ref={this.selectableDiv}
 				>
-					{this.state.selectedMembers
-						.map(mem => this.getEmail(mem))
-						.filter(email => !!email)
-						.join('; ')}
+					{this.getEmails()}
 				</div>
 				<h2>Phone numbers:</h2>
 				<div
@@ -542,8 +540,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		return member.getFullName();
 	}
 
-	private getEmail(member: CAPMemberClasses): string {
-		return member.getBestEmail() || '<No email>';
+	private getEmail(member: CAPMemberClasses): string | undefined {
+		return member.getBestEmail();
 	}
 
 	private selectText() {
@@ -586,11 +584,18 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			.map(item => item.element);
 	}
 
+	private getEmails() {
+		const emails: { [key: string]: true } = {};
+
+		(this.state.selectedMembers
+			.map(this.getEmail)
+			.filter(email => !!email) as string[]).forEach(email => (emails[email] = true));
+
+		return Object.keys(emails).join('; ');
+	}
+
 	private renderMember(member: CAPMemberClasses, index: number) {
 		const phoneCount = [
-			member.contact.CADETPARENTEMAIL.PRIMARY,
-			member.contact.CADETPARENTEMAIL.SECONDARY,
-			member.contact.CADETPARENTEMAIL.EMERGENCY,
 			member.contact.CELLPHONE.PRIMARY,
 			member.contact.CELLPHONE.SECONDARY,
 			member.contact.CELLPHONE.EMERGENCY,

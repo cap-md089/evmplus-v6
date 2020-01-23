@@ -1,9 +1,11 @@
 import {
+	api,
 	AttendanceRecord,
 	CustomAttendanceField,
 	DebriefItem,
 	DisplayInternalPointOfContact,
 	EchelonEventNumber,
+	either,
 	EventObject,
 	EventStatus,
 	ExternalPointOfContact,
@@ -13,13 +15,13 @@ import {
 	NewEventObject,
 	PointOfContactType,
 	RadioReturn,
-	api,
-	either
+	right,
+	left
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
 import MemberBase from './MemberBase';
-import { CAPMemberClasses } from './Members';
+import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from './Members';
 
 /**
  * Represents an event for the squadron calendar
@@ -33,7 +35,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	 * @param account The account the event belongs to
 	 */
 	public static async Create(obj: NewEventObject, member: MemberBase, account: Account) {
-		if (!member.hasPermission('ManageEvent')) {
+		if (!this.HasBasicPermission(member)) {
 			throw new Error('Member cannot create event');
 		}
 
@@ -55,11 +57,27 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			member
 		);
 
-		const newEvent = either(await result.json() as api.events.events.Add);
+		const newEvent = either((await result.json()) as api.events.events.Add);
 
 		return newEvent.cata(
 			r => Promise.reject(r.message),
 			e => Promise.resolve(new Event(e, account))
+		);
+	}
+
+	public static HasBasicPermission(member: MemberBase): boolean {
+		return (
+			member.hasPermission('ManageEvent') ||
+			((member instanceof CAPNHQMember || member instanceof CAPProspectiveMember) &&
+				member.hasDutyPosition([
+					'Operations Officer',
+					'Cadet Operations Officer',
+					'Cadet Operations NCO',
+					'Activities Officer',
+					'Squadron Activities Officer',
+					'Cadet Activities Officer',
+					'Cadet Activities NCO'
+				]))
 		);
 	}
 
@@ -70,7 +88,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 		const result = await account.fetch(`/api/event/${id}`, {}, member);
 
-		const event = either(await result.json() as api.events.events.Get);
+		const event = either((await result.json()) as api.events.events.Get);
 
 		return event.cata(
 			r => Promise.reject(r.message),
@@ -506,7 +524,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			member
 		);
 
-		const json = await body.json() as api.events.events.Copy;
+		const json = (await body.json()) as api.events.events.Copy;
 
 		return either(json).cata(
 			e => Promise.reject(e.message),
@@ -522,7 +540,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	public isPOC(member: MemberBase) {
 		return (
 			member.matchesReference(this.author) ||
-			member.hasPermission('ManageEvent') ||
+			Event.HasBasicPermission(member) ||
 			this.pointsOfContact
 				.map(
 					poc =>
@@ -583,18 +601,40 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 	}
 
 	public canSignUpForEvent(member?: MemberBase | null) {
-		if (!member) {
-			return false;
-		}
-
-		if (this.attendance.filter(val => member.matchesReference(val.memberID)).length !== 0) {
-			return false;
-		}
-
-		if (this.teamID === null || !this.limitSignupsToTeam) {
-			return true;
-		}
-
-		return member.teamIDs.indexOf(this.teamID) !== -1;
+		return right<string, void>(void 0)
+			.flatMap(v =>
+				member
+					? right(member)
+					: left<string, MemberBase>('Cannot sign up without being signed in')
+			)
+			.flatMap(v =>
+				this.attendance.filter(val => v.matchesReference(val.memberID)).length === 0
+					? right(v)
+					: left<string, MemberBase>('Member is already in attendance')
+			)
+			.flatMap(v =>
+				this.teamID !== null && this.limitSignupsToTeam
+					? v.teamIDs.indexOf(this.teamID) !== -1
+						? right(v)
+						: left<string, MemberBase>('Member is required to be a part of the team')
+					: right(v)
+			)
+			.flatMap(v =>
+				this.registration !== null
+					? this.registration.deadline > +new Date()
+						? right(v)
+						: left<string, MemberBase>(
+								'Cannot sign up for event after the event deadline'
+						  )
+					: right(v)
+			)
+			.flatMap(v =>
+				this.acceptSignups
+					? right(v)
+					: left<string, MemberBase>(
+							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
+					  )
+			)
+			.map(() => void 0);
 	}
 }

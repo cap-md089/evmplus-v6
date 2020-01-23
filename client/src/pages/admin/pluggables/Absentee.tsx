@@ -61,7 +61,6 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 						<Label>When will you be absent until?</Label>
 						<DateTimeInput
 							name="absentUntil"
-							date={true}
 							time={true}
 							originalTimeZoneOffset={'America/New_York'}
 						/>
