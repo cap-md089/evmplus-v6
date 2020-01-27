@@ -36,7 +36,7 @@ else
 fi
 
 # Check for matching the style guides
-if prettier --check "src/**/*.ts" "src/**/*.tsx"; then
+if prettier --write "src/**/*.ts" "src/**/*.tsx"; then
 	# Everything is styled properly
 	:
 else
