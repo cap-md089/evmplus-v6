@@ -16,6 +16,8 @@ import {
 	ParamType
 } from '../lib/internals';
 
+jest.setTimeout(30000);
+
 export const testNormalize = (obj: any) => JSON.parse(JSON.stringify(obj));
 export const tNorm = testNormalize;
 
