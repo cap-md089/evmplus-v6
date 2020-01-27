@@ -15,7 +15,7 @@ function getDateString() {
 if (existsSync('./dist/conf.js')) {
 	var conf = require('./dist/conf');
 
-	const conn = conf.Configuration.database.connection;
+	const conn = conf.default.database.connection;
 	gulp.task(
 		'mysql:backup',
 		exec.task(
