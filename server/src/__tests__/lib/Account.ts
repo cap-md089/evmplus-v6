@@ -83,7 +83,7 @@ describe('Account', () => {
 
 				done();
 			});
-	}, 7500);
+	}, 10000);
 
 	it('should generate members in the account', async done => {
 		for await (const mem of account.getMembers()) {
@@ -91,7 +91,7 @@ describe('Account', () => {
 		}
 
 		done();
-	}, 7500);
+	}, 10000);
 
 	it('should get events only in the account', async done => {
 		const mem = await CAPNHQMember.Get(542488, account, schema);
