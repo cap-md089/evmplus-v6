@@ -684,13 +684,6 @@ export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, 
 
 export type Errors = ClientErrorObject | ServerErrorObject;
 
-export interface HTTPError {
-	/**
-	 * A simple way to return errors as per the W3C spec
-	 */
-	errorMessage: string;
-}
-
 /**
  * Used when requesting or editing an account
  */
@@ -767,13 +760,20 @@ export interface AccountObject extends RawAccountObject {
 	expired: boolean;
 }
 
+export interface NewDebriefItem {
+	/**
+	 * The debrief item text
+	 */
+	debriefText: string;
+}
+
 /**
  * Debriefs for the various events that every member can submit
  *
  * This allows for others to look back on an event and ask what went
  * well, what could have gone better, etc
  */
-export interface DebriefItem {
+export interface DebriefItem extends NewDebriefItem {
 	/**
 	 * Reference for the member submitting the debrief item
 	 */
@@ -782,10 +782,6 @@ export interface DebriefItem {
 	 * The date and time the item was submitted
 	 */
 	timeSubmitted: number;
-	/**
-	 * The debrief item text
-	 */
-	debriefText: string;
 }
 
 export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
@@ -2665,10 +2661,18 @@ export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDoc
 	archived: boolean;
 }
 
+export type AlgorithmType = 'pbkdf2';
+
 /**
  * Represents the password information stored for a user
  */
 export interface AccountPasswordInformation {
+	/**
+	 * Indicates which algorithm to use for the hashing the password
+	 * 
+	 * May not exist for backwards compatibility, defaults to pbkdf2
+	 */
+	algorithm?: AlgorithmType;
 	/**
 	 * Records when the password was set
 	 */
@@ -2703,4 +2707,20 @@ export interface UserAccountInformation extends NoSQLDocument {
 	 * Store a password history for the user
 	 */
 	passwordHistory: AccountPasswordInformation[];
+}
+
+
+export interface PasswordResetTokenInformation extends NoSQLDocument {
+	/**
+	 * When the token expires
+	 */
+	expires: number;
+	/**
+	 * The actual token
+	 */
+	token: string;
+	/**
+	 * For whom the token belongs
+	 */
+	username: string;
 }

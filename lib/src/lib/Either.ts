@@ -1,3 +1,4 @@
+import { AsyncEither } from './AsyncEither';
 import { just, Maybe, none } from './Maybe';
 
 export type EitherObj<L, R> = LeftObj<L> | RightObj<R>;
@@ -25,7 +26,7 @@ export class Left<L, R> implements LeftObj<L> {
 
 	public isLeft = (): this is Left<L, R> => true;
 
-	public isRight = (): this is Left<L, R> => false;
+	public isRight = (): this is Right<L, R> => false;
 
 	public map = <R2>(f: (val: R) => R2): Either<L, R2> => (this as any) as Left<L, R2>;
 
@@ -35,6 +36,13 @@ export class Left<L, R> implements LeftObj<L> {
 	public toSome = (): Maybe<R> => none();
 
 	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => lf(this.value);
+
+	public toAsync = (): AsyncEither<L, R> => new AsyncEither(Promise.resolve(this), this.value);
+
+	public toObj = (): LeftObj<L> => ({
+		direction: 'left',
+		value: this.value
+	});
 }
 
 export class Right<L, R> implements RightObj<R> {
@@ -44,7 +52,7 @@ export class Right<L, R> implements RightObj<R> {
 
 	private constructor(public readonly value: R) {}
 
-	public isLeft = (): this is Right<L, R> => false;
+	public isLeft = (): this is Left<L, R> => false;
 
 	public isRight = (): this is Right<L, R> => true;
 
@@ -55,6 +63,14 @@ export class Right<L, R> implements RightObj<R> {
 	public toSome = (): Maybe<R> => just(this.value);
 
 	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => rf(this.value);
+
+	public toAsync = (errorValue: L): AsyncEither<L, R> =>
+		new AsyncEither(Promise.resolve(this), errorValue);
+
+	public toObj = (): RightObj<R> => ({
+		direction: 'right',
+		value: this.value
+	});
 }
 
 export const left = Left.Left;
@@ -63,3 +79,8 @@ export const right = Right.Right;
 
 export const either = <L, R>(value: EitherObj<L, R>): Either<L, R> =>
 	value.direction === 'left' ? left(value.value) : right(value.value);
+
+export const isValidEither = (value: any): value is EitherObj<any, any> =>
+	'direction' in value &&
+	'value' in value &&
+	(value.direction === 'right' || value.direction === 'left');

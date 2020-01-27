@@ -35,11 +35,9 @@ else
 	exit 1
 fi
 
-# Check for matching the style guides
-if prettier --write "src/**/*.ts" "src/**/*.tsx"; then
-	# Everything is styled properly
-	:
-else
-	echo "Code is improperly styled"
-	exit 1
-fi
+# Apply prettier rules
+# This now applies the rules instead of checking, as checking was causing issues
+#	For some reason, when prettier writes it doesn't necessarily pass its own checks
+FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
+echo "$FILES" | xargs node_modules/.bin/prettier --write
+echo "$FILES" | xargs git add
