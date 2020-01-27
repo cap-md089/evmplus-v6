@@ -1,3 +1,4 @@
+import { AddressInfo } from 'net';
 import conftest from '../conf.test';
 import getServer from '../getServer';
 
@@ -12,7 +13,7 @@ describe('getServer', () => {
 
 		const address = server.address();
 
-		expect(address.port).toEqual(3007);
+		expect((address as AddressInfo).port).toEqual(3007);
 
 		server.close();
 
