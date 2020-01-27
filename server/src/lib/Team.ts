@@ -52,7 +52,7 @@ export default class Team implements FullTeamObject {
 		return new Team(fullTeam, account, schema);
 	}
 
-	public static async GetStaffTeam(account: Account, schema: Schema): Promise<Team> {
+	public static async GetRawStaffTeam(account: Account, schema: Schema): Promise<RawTeamObject> {
 		const cadetDutyPositions = schema.getCollection<NHQ.CadetDutyPosition>(
 			'NHQ_CadetDutyPosition'
 		);
@@ -132,13 +132,19 @@ export default class Team implements FullTeamObject {
 		);
 
 		for await (const senior of deputyCommanderDutyPositionGenerator) {
-			if (senior.Asst === 0 && senior.Duty === 'Deputy Commander for Cadets') {
+			if (senior.Asst === 0) {
 				teamObject.seniorMentor = {
 					type: 'CAPNHQMember',
 					id: senior.CAPID
 				};
 			}
 		}
+
+		return teamObject;
+	}
+
+	public static async GetStaffTeam(account: Account, schema: Schema): Promise<Team> {
+		const teamObject = await this.GetRawStaffTeam(account, schema);
 
 		const fullTeam = await Team.Expand(
 			{

@@ -201,6 +201,8 @@ export default class CAPProspectiveMember extends MemberBase
 		yield this.getHomeAccount();
 	}
 
+	public getMainAccounts = () => this.getAccounts();
+
 	public getReference = (): ProspectiveMemberReference => ({
 		type: 'CAPProspectiveMember',
 		id: this.id

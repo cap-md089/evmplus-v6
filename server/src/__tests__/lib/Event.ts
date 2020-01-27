@@ -1,7 +1,29 @@
 import { Schema, Session } from '@mysql/xdevapi';
+import { AttendanceStatus, EventStatus, just, stringifyMemberReference } from 'common-lib';
+import { DateTime } from 'luxon';
+import addevent from '../../api/events/events/addevent';
+import copy from '../../api/events/events/copy';
+import eventviewer from '../../api/events/events/eventviewer';
+import getevent from '../../api/events/events/getevent';
 import conftest from '../../conf.test';
-import { Account, CAPNHQMember, Event, getTestTools2, MemberBase } from '../../lib/internals';
+import {
+	Account,
+	CAPNHQMember,
+	CAPNHQUser,
+	Event,
+	getTestTools2,
+	MemberBase
+} from '../../lib/internals';
 import { newEvent } from '../consts';
+import '../EitherMatcher';
+import {
+	addAccountForTransformer,
+	addUserForTransformer,
+	getUser,
+	prepareBasicGetRequest,
+	prepareBasicPostRequest,
+	resolveToEither
+} from '../TestUtils';
 
 describe('Event', () => {
 	let event: Event;
@@ -168,5 +190,197 @@ describe('Event', () => {
 		}
 
 		done();
+	});
+
+	it('should copy an event', async done => {
+		const testCopy = await event.copy(DateTime.fromMillis(event.startDateTime), mem);
+
+		expect(testCopy.id).not.toEqual(event.id);
+		expect(testCopy.name).toEqual(event.name);
+
+		done();
+	});
+
+	it('should delete a file', async done => {
+		const toDelete = await event.copy(DateTime.fromMillis(event.startDateTime), mem);
+
+		await expect(toDelete.delete()).resolves.toEqual(void 0);
+
+		done();
+	});
+
+	describe('/api/event', () => {
+		it('should get an event', async done => {
+			const req = prepareBasicGetRequest(conftest, { id: '1' }, session, '/api/event/1');
+			const accReq = addAccountForTransformer(req, account);
+
+			const res = await resolveToEither(getevent.fn(accReq));
+
+			expect(res).toEqualRight(event.toRaw());
+
+			done();
+		});
+
+		it('should get an event with attendance', async done => {
+			const rioux = await getUser(
+				{ type: 'CAPNHQMember', id: 542488 },
+				'arioux',
+				schema,
+				account,
+				CAPNHQUser
+			);
+
+			const req = prepareBasicGetRequest(conftest, { id: '1' }, session, '/api/event/1');
+			const accReq = addAccountForTransformer(req, account);
+			const riouxReq = addUserForTransformer(accReq, rioux);
+
+			const res = await resolveToEither(getevent.fn(riouxReq));
+
+			expect(res).toEqualRight(event.toRaw(mem));
+
+			done();
+		});
+
+		it('should allow for creating events', async done => {
+			const rioux = await getUser(
+				{ type: 'CAPNHQMember', id: 542488 },
+				'arioux',
+				schema,
+				account,
+				CAPNHQUser
+			);
+
+			const req = prepareBasicPostRequest(conftest, newEvent, session, '/api/event');
+			const accReq = addAccountForTransformer(req, account);
+			const riouxReq = addUserForTransformer(accReq, rioux);
+
+			const res = await resolveToEither(addevent.fn(riouxReq));
+
+			expect(res).toMatchRight({
+				...newEvent,
+				signUpDenyMessage: null
+			});
+
+			done();
+		});
+
+		it('should allow for copying events', async done => {
+			const rioux = await getUser(
+				{ type: 'CAPNHQMember', id: 542488 },
+				'arioux',
+				schema,
+				account,
+				CAPNHQUser
+			);
+			const gemmel = await getUser(
+				{ type: 'CAPNHQMember', id: 507228 },
+				'mgemmel',
+				schema,
+				account,
+				CAPNHQUser
+			);
+
+			const req = {
+				...prepareBasicPostRequest(
+					conftest,
+					{ newTime: 0 },
+					session,
+					`/api/event/${event.id}/copy`
+				),
+				params: { id: event.id.toString() }
+			};
+			const accReq = addAccountForTransformer(req, account);
+			const riouxReq = addUserForTransformer(accReq, rioux);
+			const gemmelReq = addUserForTransformer(accReq, gemmel);
+
+			const res1 = await resolveToEither(copy.fn(riouxReq));
+
+			// The new event contains the information the copied event contains
+			expect(res1).toMatchRight({
+				...newEvent,
+				status: EventStatus.INFORMATIONONLY,
+				signUpDenyMessage: null,
+				complete: true
+			});
+
+			const res2 = await resolveToEither(copy.fn(gemmelReq));
+
+			expect(res2).toMatchLeft({
+				code: 403
+			});
+
+			done();
+		});
+
+		it('should get event viewer information', async done => {
+			const rioux = await getUser(
+				{ type: 'CAPNHQMember', id: 542488 },
+				'arioux',
+				schema,
+				account,
+				CAPNHQUser
+			);
+
+			const req = {
+				...prepareBasicGetRequest(
+					conftest,
+					{ id: event.id.toString() },
+					session,
+					`/api/event/${event.id}/viewer`
+				),
+				params: { id: event.id.toString() }
+			};
+			const accReq = addAccountForTransformer(req, account);
+			const riouxReq = addUserForTransformer(accReq, rioux);
+
+			const res1 = await eventviewer.fn(accReq);
+
+			// If the member is not a member of the unit, it should return
+			// the basic information about an event
+			expect(res1).toMatchRight({
+				attendees: {},
+				event: event.toRaw(),
+				organizations: {}
+			});
+
+			const res2 = await resolveToEither(eventviewer.fn(riouxReq));
+
+			expect(res2).toEqualRight({
+				attendees: {},
+				event: event.toRaw(),
+				organizations: {}
+			});
+
+			await event.addMemberToAttendance(
+				{
+					comments: '',
+					status: AttendanceStatus.COMMITTEDATTENDED,
+					arrivalTime: null,
+					departureTime: null,
+					canUsePhotos: false,
+					planToUseCAPTransportation: false,
+					memberID: rioux.getReference()
+				},
+				rioux
+			);
+
+			const res3 = await resolveToEither(eventviewer.fn(riouxReq));
+
+			expect(res3).toEqualRight({
+				attendees: {
+					[stringifyMemberReference(rioux)]: just(rioux.toRaw())
+				},
+				event: event.toRaw(rioux),
+				organizations: {
+					[account.id]: account.toRaw(),
+					// The accounts below have to be added because they use 916 as their main ORG id
+					// the Rioux account is in the 916 org, and as such the accounts below
+					'linktarget': (await Account.Get('linktarget', schema)).toRaw(),
+					'md089-test': (await Account.Get('md089-test', schema)).toRaw()
+				}
+			});
+
+			done();
+		});
 	});
 });

@@ -1,17 +1,28 @@
-import { NotificationObject, NotificationTargetType } from 'common-lib';
-import { asyncErrorHandler, json, MemberRequest, Notification } from '../../../lib/internals';
+import { api, just, left, NotificationTargetType, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Notification } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest, res) => {
-	const notifications = await Notification.GetFor(
-		{
-			type: NotificationTargetType.MEMBER,
-			to: req.member.getReference()
-		},
-		req.account,
-		req.mysqlx
-	);
+export default asyncEitherHandler<api.notifications.member.List>(
+	async (req: BasicMemberRequest) => {
+		let notifications;
+		try {
+			notifications = await Notification.GetFor(
+				{
+					type: NotificationTargetType.MEMBER,
+					to: req.member.getReference()
+				},
+				req.account,
+				req.mysqlx
+			);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not get notifications'
+			});
+		}
 
-	const easyReturn = notifications.map(notification => notification.toFullRaw());
+		const easyReturn = notifications.map(notification => notification.toFullRaw());
 
-	json<NotificationObject[]>(res, easyReturn);
-});
+		return right(easyReturn);
+	}
+);

@@ -1,14 +1,16 @@
-import { NewTaskObject } from 'common-lib';
-import { asyncErrorHandler, MemberValidatedRequest, Task } from '../../lib/internals';
+import { api, just, left, NewTaskObject, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberValidatedRequest, Task } from '../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<NewTaskObject, { id: string }>, res) => {
+export default asyncEitherHandler<api.tasks.Edit>(
+	async (req: BasicMemberValidatedRequest<NewTaskObject, { id: string }>) => {
 		const id = parseInt(req.params.id, 10);
 
 		if (id !== id) {
-			res.status(400);
-			res.end();
-			return;
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Invalid ID passed as a parameter'
+			});
 		}
 
 		let task: Task;
@@ -16,15 +18,25 @@ export default asyncErrorHandler(
 		try {
 			task = await Task.Get(id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find task'
+			});
 		}
 
 		task.set(req.body);
 
-		await task.save();
+		try {
+			await task.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save information for task'
+			});
+		}
 
-		res.status(204);
+		return right(void 0);
 	}
 );

@@ -17,6 +17,7 @@ import {
 	Member,
 	resolveReference
 } from '../../internals';
+import { safeBind } from '../../MySQLUtil';
 
 //#region Account creation
 
@@ -46,19 +47,15 @@ const getUserAccountCreationTokens = async (
 const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
-	await collection
-		.remove('created < :created')
-		.bind({ created: Date.now() - ACCOUNT_TOKEN_AGE })
-		.execute();
+	await safeBind(collection.remove('created < :created'), {
+		created: Date.now() - ACCOUNT_TOKEN_AGE
+	}).execute();
 };
 
 const removeAccountToken = async (schema: Schema, token: string): Promise<void> => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
-	await collection
-		.remove('token = :token')
-		.bind({ token })
-		.execute();
+	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
 const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {

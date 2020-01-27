@@ -1,11 +1,9 @@
-import { api, NewAttendanceRecord, Permissions, right } from 'common-lib';
-import { Response } from 'express';
+import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	Event,
-	json,
 	MemberBase,
-	MemberValidatedRequest,
 	NewAttendanceRecordValidator,
 	resolveReference,
 	Validator
@@ -25,17 +23,19 @@ export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
 	}
 });
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<BulkAttendanceRequest, { id: string }>, res: Response) => {
+export default asyncEitherHandler<api.events.attendance.AddBulk>(
+	async (req: BasicMemberValidatedRequest<BulkAttendanceRequest, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase | null;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find event'
+			});
 		}
 
 		// DO NOT MOVE THIS INTO THE IF STATEMENT
@@ -46,8 +46,11 @@ export default asyncErrorHandler(
 			req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL);
 
 		if (!canAddOtherMembers) {
-			res.status(403);
-			res.end();
+			return left({
+				code: 403,
+				error: none<Error>(),
+				message: 'Invalid permissions'
+			});
 		}
 
 		for (const i of req.body.members) {
@@ -74,8 +77,16 @@ export default asyncErrorHandler(
 			);
 		}
 
-		await event.save();
+		try {
+			await event.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save attendance information'
+			});
+		}
 
-		json<api.events.attendance.AddBulk>(res, right(event.attendance));
+		return right(event.attendance);
 	}
 );

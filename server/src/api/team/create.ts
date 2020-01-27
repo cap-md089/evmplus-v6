@@ -1,9 +1,16 @@
-import { FullTeamObject } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, json, MemberRequest, Team } from '../../lib/internals';
+import { api, just, left, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Team } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: Response) => {
-	const newTeam = await Team.Create(req.body, req.account, req.mysqlx);
+export default asyncEitherHandler<api.team.Create>(async (req: BasicMemberRequest) => {
+	try {
+		const newTeam = await Team.Create(req.body, req.account, req.mysqlx);
 
-	json<FullTeamObject>(res, newTeam.toFullRaw(req.member));
+		return right(newTeam.toFullRaw(req.member));
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not create team'
+		});
+	}
 });

@@ -1,27 +1,36 @@
-import { NotificationObject } from 'common-lib';
-import { MemberRequest } from '../../lib/internals';
-import { Notification } from '../../lib/internals';
-import { asyncErrorHandler, json } from '../../lib/internals';
+import { api, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Notification } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res) => {
-	if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
-		res.status(400);
-		return res.end();
-	}
-
-	const id = parseInt(req.params.id, 10);
-
-	try {
-		const notification = await Notification.Get(id, req.account, req.mysqlx);
-
-		if (!notification.canSee(req.member, req.account)) {
-			res.status(403);
-			return res.end();
+export default asyncEitherHandler<api.notifications.Get>(
+	async (req: BasicMemberRequest<{ id: string }>) => {
+		if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Invalid ID passed as parameter'
+			});
 		}
 
-		json<NotificationObject>(res, notification.toFullRaw());
-	} catch (e) {
-		res.status(404);
-		res.end();
+		const id = parseInt(req.params.id, 10);
+
+		try {
+			const notification = await Notification.Get(id, req.account, req.mysqlx);
+
+			if (!notification.canSee(req.member, req.account)) {
+				return left({
+					code: 403,
+					error: none<Error>(),
+					message: 'Member does not have permission to view the event'
+				});
+			}
+
+			return right(notification.toFullRaw());
+		} catch (e) {
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find notification'
+			});
+		}
 	}
-});
+);

@@ -1,30 +1,21 @@
-import { just, none } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, Event, MemberRequest } from '../../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import {
+	Account,
+	asyncEitherHandler2,
+	Event,
+	memberRequestTransformer,
+	serverErrorGenerator
+} from '../../../lib/internals';
+import { tokenTransformer } from '../../formtoken';
 
-export default asyncErrorHandler(async (req: MemberRequest<{ id: string }>, res: Response) => {
-	let event: Event;
-
-	try {
-		event = await Event.Get(req.params.id, req.account, req.mysqlx);
-	} catch (e) {
-		res.status(404);
-		res.end();
-		return;
-	}
-
-	if (!event.isPOC(req.member)) {
-		res.status(403);
-		res.end();
-		return;
-	}
-
-	try {
-		await event.delete();
-
-		res.json(none());
-	} catch (e) {
-		res.status(400);
-		res.json(just(e.message || e));
-	}
-});
+export default asyncEitherHandler2<api.events.events.Delete, { id: string }>(r =>
+	asyncRight(r, serverErrorGenerator('Could not delete event'))
+		.flatMap(req => Account.RequestTransformer(req))
+		.flatMap(req => memberRequestTransformer(false, true)(req))
+		.flatMap(req => tokenTransformer(req))
+		.flatMap(req =>
+			Event.GetEither(req.params.id, req.account, req.mysqlx)
+				.setErrorValue(serverErrorGenerator('Could not delete event'))
+				.map(event => event.delete())
+		)
+);

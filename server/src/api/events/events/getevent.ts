@@ -1,35 +1,32 @@
-import { EventObject } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, ConditionalMemberRequest, Event, json } from '../../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import {
+	Account,
+	asyncEitherHandler2,
+	Event,
+	memberRequestTransformer,
+	serverErrorGenerator
+} from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
-		if (req.params.id === undefined) {
-			res.status(400);
-			res.end();
-			return;
-		}
+export default asyncEitherHandler2<api.events.events.Get, { id: string }>(req =>
+	asyncRight(req, serverErrorGenerator('Could not get event'))
+		.flatMap(r => Account.RequestTransformer(r))
+		.flatMap(r => memberRequestTransformer(false, false)(r))
+		.flatMap(r =>
+			Event.GetEither(r.params.id, r.account, r.mysqlx).flatMap(ev =>
+				asyncRight(ev, serverErrorGenerator('Could not get member information'))
+					.map<boolean>(async () => {
+						if (r.member.isSome()) {
+							const member = r.member.some();
+							for await (const account of member.getAccounts()) {
+								if (account.id === r.account.id) {
+									return true;
+								}
+							}
+						}
 
-		let event: Event;
-
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
-		}
-
-		let isValidMember = false;
-
-		if (req.member) {
-			for await (const account of req.member.getAccounts()) {
-				if (account.id === req.account.id) {
-					isValidMember = true;
-				}
-			}
-		}
-
-		json<EventObject>(res, event.toRaw(isValidMember ? req.member : undefined));
-	}
+						return false;
+					})
+					.map(memberValid => ev.toRaw(memberValid ? r.member.some() : null))
+			)
+		)
 );

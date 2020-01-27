@@ -1,10 +1,10 @@
 import { NextFunction, Response } from 'express';
-import { ConditionalMemberRequest } from '../../lib/internals';
+import { BasicConditionalMemberRequest } from '../../lib/internals';
 import saveServerError from '../../lib/saveServerError';
 
 export default async (
 	err: Error,
-	req: ConditionalMemberRequest,
+	req: BasicConditionalMemberRequest,
 	res: Response,
 	next: NextFunction
 ) => {

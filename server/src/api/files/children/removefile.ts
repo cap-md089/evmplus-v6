@@ -1,17 +1,8 @@
-import * as express from 'express';
-import { asyncErrorHandler, File, MemberRequest } from '../../../lib/internals';
+import { api, just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ parentid: string; childid: string }>, res: express.Response) => {
-		if (
-			typeof req.params.parentid === 'undefined' ||
-			typeof req.params.childid === 'undefined'
-		) {
-			res.status(400);
-			res.end();
-			return;
-		}
-
+export default asyncEitherHandler<api.files.children.RemoveChild>(
+	async (req: BasicMemberRequest<{ parentid: string; childid: string }>) => {
 		const parentid = req.params.parentid;
 		const childid = req.params.childid;
 
@@ -24,16 +15,25 @@ export default asyncErrorHandler(
 				File.Get(childid, req.account, req.mysqlx)
 			]);
 		} catch (e) {
-			res.send(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find either the parent or the child'
+			});
 		}
 
 		parent.removeChild(child);
 
-		await Promise.all([parent.save(), child.save()]);
+		try {
+			await Promise.all([parent.save(), child.save()]);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save information for files'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

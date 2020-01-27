@@ -1,12 +1,19 @@
 import { Schema } from '@mysql/xdevapi';
 import {
+	api,
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	Either,
+	just,
+	left,
+	Maybe,
 	MemberCreateError,
 	MemberPermission,
 	MemberPermissions,
 	MemberReference,
+	none,
+	right,
 	SessionID,
 	UserAccountInformation
 } from 'common-lib';
@@ -18,14 +25,18 @@ import {
 	AccountRequest,
 	areMemberReferencesTheSame,
 	asyncErrorHandler,
+	BasicAccountRequest,
 	CAPNHQUser,
 	CAPProspectiveUser,
 	collectResults,
 	DEFAULT_PERMISSIONS,
 	findAndBind,
 	getPermissionsForMemberInAccount,
+	leftyAsyncErrorHandler,
 	MemberBase,
-	ParamType
+	ParamType,
+	safeBind,
+	serverErrorGenerator
 } from '../../internals';
 
 const promisedRandomBytes = promisify(randomBytes);
@@ -43,12 +54,33 @@ export interface Session {
 	passwordOnly: boolean;
 }
 
-export interface ConditionalMemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
+export interface ConditionalMemberRequest<P extends ParamType = {}, B = any>
+	extends AccountRequest<P, B> {
 	member: CAPNHQUser | CAPProspectiveUser | null;
 }
 
-export interface MemberRequest<P extends ParamType = {}> extends AccountRequest<P> {
+export interface MemberRequest<P extends ParamType = {}, B = any> extends AccountRequest<P, B> {
 	member: CAPNHQUser | CAPProspectiveUser;
+}
+
+export interface BasicConditionalMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
+	member: CAPNHQUser | CAPProspectiveUser | null;
+}
+
+export interface BasicMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
+	member: CAPNHQUser | CAPProspectiveUser;
+}
+
+export interface MaybeMemberRequest<P extends ParamType = {}, B = any>
+	extends AccountRequest<P, B> {
+	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
+}
+
+export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
+	extends BasicAccountRequest<P, B> {
+	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
 }
 
 const addSessionToDatabase = (
@@ -64,10 +96,9 @@ const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
-			collection
-				.remove('created < :created')
-				.bind({ created: Date.now() - SESSION_AGE })
-				.execute()
+			safeBind(collection.remove('created < :created'), {
+				created: Date.now() - SESSION_AGE
+			}).execute()
 		)
 		.map(() => void 0);
 
@@ -78,11 +109,9 @@ const updateSessionExpireTime = (
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
-			collection
-				.modify('sessionID = :sessionID')
-				.bind({
-					sessionID: session.sessionID
-				})
+			safeBind(collection.modify('sessionID = :sessionID'), {
+				sessionID: session.sessionID
+			})
 				.set('created', Date.now())
 				.execute()
 		)
@@ -126,12 +155,12 @@ export const unmarkSessionForPasswordReset = (
 			passwordOnly: false
 		}))
 		.tap(sess =>
-			schema
-				.getCollection<Session>(SESSION_TABLE)
-				.modify('sessionID = :sessionID')
-				.bind({
+			safeBind(
+				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
+				{
 					sessionID: sess.sessionID
-				})
+				}
+			)
 				.set('passwordOnly', false)
 				.execute()
 		);
@@ -146,12 +175,12 @@ export const markSessionForPasswordReset = (
 			passwordOnly: true
 		}))
 		.tap(sess =>
-			schema
-				.getCollection<Session>(SESSION_TABLE)
-				.modify('sessionID = :sessionID')
-				.bind({
+			safeBind(
+				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
+				{
 					sessionID: sess.sessionID
-				})
+				}
+			)
 				.set('passwordOnly', true)
 				.execute()
 		);
@@ -169,15 +198,13 @@ export const validateSession = (
 		)
 		.flatMap(session => updateSessionExpireTime(schema, session));
 
-export type MemberConstructor<T = MemberBase> = new (...args: any[]) => T;
+export type MemberConstructor<T = MemberBase> = (new (...args: any[]) => T) & MemberGetter<T>;
 
-export const SessionedUser = <
-	M extends MemberConstructor & {
-		Get: (id: any, account: Account, schema: Schema) => Promise<MemberBase>;
-	}
->(
-	Member: M
-) => {
+export interface MemberGetter<T> {
+	Get: (id: any, account: Account, schema: Schema) => Promise<T>;
+}
+
+export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 	abstract class User extends Member {
 		public static async RestoreFromSession(
 			schema: Schema,
@@ -268,8 +295,115 @@ export const SessionedUser = <
 	return User;
 };
 
-const conditionalMemberMiddlewareGenerator = (allowPasswordOnly: boolean) =>
-	asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
+export function memberRequestTransformer(
+	allowPasswordOnly: boolean,
+	memberRequired: false
+): <T extends BasicAccountRequest>(
+	req: T
+) => AsyncEither<
+	api.ServerError,
+	BasicMaybeMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
+>;
+export function memberRequestTransformer(
+	allowedPasswordOnly: boolean,
+	memberRequired: true
+): <T extends BasicAccountRequest>(
+	req: T
+) => AsyncEither<
+	api.ServerError,
+	BasicMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
+>;
+
+export function memberRequestTransformer(
+	allowPasswordOnly: boolean,
+	memberRequired: boolean = false
+) {
+	return <T extends BasicAccountRequest>(
+		req: T
+	): AsyncEither<api.ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
+		new AsyncEither(
+			(typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined'
+				? asyncRight(req, serverErrorGenerator('Could not get information for session'))
+				: asyncLeft({
+						code: 400,
+						error: none<Error>(),
+						message: 'Authorization header not provided'
+				  })
+			)
+				.flatMap<Session>(() =>
+					validateSession(req.mysqlx, req.headers.authorization!).leftMap(
+						code => ({
+							code: 400,
+							error: none<Error>(),
+							message: code.toString()
+						}),
+						serverErrorGenerator('Could not validate sesion')
+					)
+				)
+				.flatMap<Session>(session =>
+					!allowPasswordOnly && session.passwordOnly
+						? asyncLeft({
+								code: 400,
+								error: none<Error>(),
+								message:
+									'Member is not allowed to perform actions without finishing the password reset process'
+						  })
+						: asyncRight(
+								session,
+								serverErrorGenerator('Could not get information for session')
+						  )
+				)
+				.flatMap<CAPNHQUser | CAPProspectiveUser>(session =>
+					session.userAccount.member.type === 'CAPProspectiveMember'
+						? asyncRight(
+								CAPProspectiveUser.RestoreFromSession(
+									req.mysqlx,
+									req.account,
+									session
+								) as Promise<CAPProspectiveUser>,
+								serverErrorGenerator('Could not get user information')
+						  )
+						: session.userAccount.member.type === 'CAPNHQMember'
+						? asyncRight(
+								CAPNHQUser.RestoreFromSession(
+									req.mysqlx,
+									req.account,
+									session
+								) as Promise<CAPNHQUser>,
+								serverErrorGenerator('Could not get user information')
+						  )
+						: asyncLeft({
+								code: 400,
+								error: none<Error>(),
+								message: 'Could not get user information'
+						  })
+				)
+				.cata<Either<api.ServerError, T & BasicMaybeMemberRequest>>(
+					err =>
+						err.code === 500 || memberRequired
+							? left<api.ServerError, T & BasicMaybeMemberRequest>(err)
+							: right<api.ServerError, T & BasicMaybeMemberRequest>({
+									...req,
+									member: none()
+							  }),
+					user =>
+						right<api.ServerError, T & BasicMaybeMemberRequest>({
+							...req,
+							// Kind of hard to make the types match what is above
+							// Basically the function declaration is enforced, but not easily
+							// This is the only not easy bit
+							member: memberRequired ? user : just(user)
+						} as T & BasicMaybeMemberRequest)
+				),
+			serverErrorGenerator('Could not get user information')
+		);
+}
+
+const conditionalMemberMiddlewareGenerator = (
+	errorHandler: typeof asyncErrorHandler,
+	allowPasswordOnly: boolean
+) =>
+	errorHandler(async (req: ConditionalMemberRequest, res, next) => {
 		if (
 			typeof req.headers !== 'undefined' &&
 			typeof req.headers.authorization !== 'undefined' &&
@@ -324,27 +458,59 @@ const conditionalMemberMiddlewareGenerator = (allowPasswordOnly: boolean) =>
 		}
 	});
 
-export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(false);
+export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
+	asyncErrorHandler,
+	false
+);
 export const conditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
+	asyncErrorHandler,
+	true
+);
+export const leftyConditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
+	false
+);
+export const leftyConditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
 	true
 );
 
-const memberMiddlewareGenerator = (allowPasswordOnly: boolean) => (
-	req: ConditionalMemberRequest,
-	res: Response,
-	next: NextFunction
-) =>
-	conditionalMemberMiddlewareGenerator(allowPasswordOnly)(req, res, () => {
+const memberMiddlewareGenerator = (
+	errorHandler: typeof asyncErrorHandler,
+	allowPasswordOnly: boolean,
+	beLefty: boolean
+) => (req: ConditionalMemberRequest, res: Response, next: NextFunction) =>
+	conditionalMemberMiddlewareGenerator(errorHandler, allowPasswordOnly)(req, res, () => {
 		if (req.member === null) {
-			res.status(401);
-			res.end();
+			if (beLefty) {
+				res.status(401);
+				res.json(
+					left({
+						code: 401,
+						error: 'Could not validate session ID'
+					})
+				);
+			} else {
+				res.status(401);
+				res.end();
+			}
 		} else {
 			next();
 		}
 	});
 
-export const memberMiddleware = memberMiddlewareGenerator(false);
-export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(true);
+export const memberMiddleware = memberMiddlewareGenerator(asyncErrorHandler, false, false);
+export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+	asyncErrorHandler,
+	true,
+	false
+);
+export const leftyMemberMiddleware = memberMiddlewareGenerator(leftyAsyncErrorHandler, false, true);
+export const leftyMemberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
+	true,
+	true
+);
 
 export const permissionMiddleware = (permission: MemberPermission, threshold = 1) => (
 	req: MemberRequest,
@@ -364,6 +530,46 @@ export const permissionMiddleware = (permission: MemberPermission, threshold = 1
 	next();
 };
 
+export const permissionTransformer = <R extends ParamType, B>(
+	permission: MemberPermission,
+	threshold = 1
+) => (req: BasicMemberRequest<R, B>): AsyncEither<api.ServerError, BasicMemberRequest<R, B>> =>
+	!req.member.hasPermission(permission, threshold)
+		? asyncLeft({
+				code: 401,
+				error: none<Error>(),
+				message: `Member does not have permission '${permission}'`
+		  })
+		: asyncRight(req, serverErrorGenerator('Could not get member permissions'));
+
+export const leftyPermissionMiddleware = (permission: MemberPermission, threshold = 1) => (
+	req: MemberRequest,
+	res: Response,
+	next: NextFunction
+) => {
+	if (!req.member) {
+		res.status(401);
+		return res.json(
+			left({
+				code: 401,
+				error: 'Member required'
+			})
+		);
+	}
+
+	if (!req.member.hasPermission(permission, threshold)) {
+		res.status(403);
+		return res.json(
+			left({
+				code: 403,
+				error: `Member does not have permission '${permission}'`
+			})
+		);
+	}
+
+	next();
+};
+
 export const su = async (schema: Schema, sessionID: SessionID, newUser: MemberReference) => {
 	const sessions = schema.getCollection<Session>(SESSION_TABLE);
 
@@ -373,9 +579,7 @@ export const su = async (schema: Schema, sessionID: SessionID, newUser: MemberRe
 	const userAccount = session.userAccount;
 	userAccount.member = newUser;
 
-	await sessions
-		.modify('sessionID = :sessionID')
-		.bind({ sessionID })
+	await safeBind(sessions.modify('sessionID = :sessionID'), { sessionID })
 		.set('userAccount', userAccount)
 		.execute();
 };
@@ -413,10 +617,9 @@ const addTokenToDatabase = async (
 const removeOldTokens = async (schema: Schema) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
-	await tokenCollection
-		.remove('created < :created')
-		.bind({ created: Date.now() - TOKEN_AGE })
-		.execute();
+	await safeBind(tokenCollection.remove('created < :created'), {
+		created: Date.now() - TOKEN_AGE
+	}).execute();
 };
 
 const getTokenList = async (schema: Schema, token: string) => {
@@ -428,10 +631,7 @@ const getTokenList = async (schema: Schema, token: string) => {
 const invalidateToken = async (schema: Schema, token: string) => {
 	const collection = schema.getCollection<TokenObject>('Tokens');
 
-	await collection
-		.remove('token = :token')
-		.bind({ token })
-		.execute();
+	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
 export const getTokenForUser = async (

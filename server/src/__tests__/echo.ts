@@ -1,6 +1,6 @@
 import * as request from 'supertest';
-import conftest from '../../conf.test';
-import getServer, { ServerConfiguration } from '../../getServer';
+import conftest from '../conf.test';
+import getServer, { ServerConfiguration } from '../getServer';
 
 describe('/api', () => {
 	describe('/echo', () => {

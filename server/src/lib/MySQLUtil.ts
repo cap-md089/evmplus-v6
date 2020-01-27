@@ -1,19 +1,66 @@
 import * as mysql from '@mysql/xdevapi';
 import * as express from 'express';
+import { IncomingHttpHeaders } from 'http';
 import { DateTime } from 'luxon';
 import { Configuration } from '../conf';
 
 export interface ParamType {
-	[key: string]: string;
+	[key: string]: string | undefined;
 }
 
-export interface MySQLRequest<P extends ParamType = {}> extends express.Request {
+export interface MySQLRequest<P extends ParamType = {}, B = any> extends express.Request {
+	/**
+	 * Contains basic properties from express.Request
+	 */
+	body: B;
+	method: string;
+	hostname: string;
+	headers: IncomingHttpHeaders;
+
+	/**
+	 * Contains stuff that is used.
+	 *
+	 * If the 'extends express.Request' bit above were removed, the only compile time errors that would occur
+	 * would be from router.use not accepting this type of request. As such, if deemed necessary, we can
+	 * extract code from asyncErrorHandler or asyncEitherHandler and pass it an object such as this and check
+	 * the output
+	 */
 	mysqlx: mysql.Schema;
 	mysqlxSession: mysql.Session;
+	originalUrl: string;
 	_originalUrl: string;
 	params: P;
 	configuration: typeof Configuration;
 }
+
+export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
+	/**
+	 * Contains basic properties from express.Request
+	 */
+	body: B;
+	method: string;
+	headers: IncomingHttpHeaders;
+	originalUrl: string;
+	_originalUrl: string;
+	hostname: string;
+
+	/**
+	 * Contains stuff that is used.
+	 *
+	 * If the 'extends express.Request' bit above were removed, the only compile time errors that would occur
+	 * would be from router.use not accepting this type of request. As such, if deemed necessary, we can
+	 * extract code from asyncErrorHandler or asyncEitherHandler and pass it an object such as this and check
+	 * the output
+	 */
+	mysqlx: mysql.Schema;
+	mysqlxSession: mysql.Session;
+	params: P;
+	configuration: typeof Configuration;
+}
+
+export const createFakeRequest = <P extends ParamType = {}, B = any>(
+	info: BasicMySQLRequest<P, B>
+): MySQLRequest<P, B> => info as MySQLRequest<P, B>;
 
 export default (
 	pool: mysql.Schema,
@@ -85,10 +132,12 @@ export const generateResults = async function*<T>(
 	};
 	let done = false;
 
-	find.execute(o => results.push(o)).then(() => {
-		done = true;
-		results.finish();
-	});
+	const findResult = find
+		.execute(o => results.push(o))
+		.then(() => {
+			done = true;
+			results.finish();
+		});
 
 	while (!done || results.queue.length > 0) {
 		try {
@@ -109,6 +158,16 @@ export const generateResults = async function*<T>(
 			done = true;
 		}
 	}
+
+	await findResult;
+};
+
+export const safeBind = <T, C extends mysql.Binding<T>>(find: C, bind: any): C => {
+	// Checks for any value being undefined, as MySQL xDevAPI has terrible
+	// error checking
+	generateBindObject(bind);
+
+	return find.bind(bind) as C;
 };
 
 export const generateFindStatement = <T>(
@@ -135,11 +194,15 @@ export const generateBindObject = <T>(
 	scope: string | null = null
 ): any =>
 	Object.keys(bind)
-		.map(key =>
-			typeof bind[key as keyof T] === 'object'
+		.map(key => {
+			if (bind[key as keyof T] === undefined) {
+				throw new Error('Cannot bind with an undefined value');
+			}
+
+			return typeof bind[key as keyof T] === 'object'
 				? generateBindObject(bind[key as keyof T]!, scope === null ? key : `${scope}${key}`)
-				: { [scope === null ? key : `${scope}${key}`]: bind[key as keyof T] }
-		)
+				: { [scope === null ? key : `${scope}${key}`]: bind[key as keyof T] };
+		})
 		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));
 
 type RecursivePartial<T> = {
@@ -186,15 +249,6 @@ export const modifyAndBind = <T>(
 
 	return modifyWithStatement;
 };
-
-export const updatetAndBind = <T>(modify: mysql.Table<T>, bind: Bound<T>): mysql.TableUpdate<T> =>
-	modify
-		.update(
-			Object.keys(bind)
-				.map(val => `${val} = :${val}`)
-				.join(' AND ')
-		)
-		.bind(bind);
 
 export const convertMySQLDateToDateTime = (datestring: string) =>
 	convertMySQLTimestampToDateTime(datestring + ' 00:00:00');

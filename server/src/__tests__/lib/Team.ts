@@ -1,7 +1,14 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { RawTeamObject } from 'common-lib';
 import conftest from '../../conf.test';
-import { Account, CAPNHQMember, collectResults, getTestTools2, Team } from '../../lib/internals';
+import {
+	Account,
+	CAPNHQMember,
+	collectResults,
+	getTestTools2,
+	safeBind,
+	Team
+} from '../../lib/internals';
 import { newTeam } from '../consts';
 
 describe('Team', () => {
@@ -49,10 +56,9 @@ describe('Team', () => {
 		const newTeamObject = await Team.Create(newTeam, account, schema);
 
 		const results = await collectResults(
-			schema
-				.getCollection<RawTeamObject>('Teams')
-				.find('id = :id')
-				.bind({ id: newTeamObject.id })
+			safeBind(schema.getCollection<RawTeamObject>('Teams').find('id = :id'), {
+				id: newTeamObject.id
+			})
 		);
 
 		expect(results.length).toBe(1);

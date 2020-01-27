@@ -178,7 +178,12 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 			{ text: 'CAPID', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
 			{ text: 'Expiration', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
 			{ text: 'Signature', bold: true, fontSize: 10, borderColor: ['white', 'white'] },
-			{ text: 'Flight', bold: true, fontSize: 10, borderColor: ['white', 'white', 'white'] }
+			{
+				text: 'Flight',
+				bold: true,
+				fontSize: 10,
+				borderColor: ['white', 'white', 'white']
+			}
 		],
 		...memberInformation
 	];

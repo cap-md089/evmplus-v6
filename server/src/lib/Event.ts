@@ -1,5 +1,8 @@
 import { Schema } from '@mysql/xdevapi';
 import {
+	api,
+	AsyncEither,
+	asyncRight,
 	AttendanceRecord,
 	CustomAttendanceField,
 	DatabaseInterface,
@@ -10,10 +13,12 @@ import {
 	EventStatus,
 	ExternalPointOfContact,
 	InternalPointOfContact,
+	just,
 	MemberReference,
 	MultCheckboxReturn,
 	NewAttendanceRecord,
 	NewEventObject,
+	none,
 	NoSQLDocument,
 	NotificationCauseType,
 	NotificationDataType,
@@ -35,6 +40,8 @@ import {
 	MemberNotification,
 	resolveReference
 } from './internals';
+import { safeBind } from './MySQLUtil';
+import { serverErrorGenerator } from './Util';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
@@ -59,6 +66,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public static async Get(id: number | string, account: Account, schema: Schema): Promise<Event> {
 		if (typeof id === 'string') {
 			id = parseInt(id, 10);
+		}
+
+		// NaN
+		if (id !== id) {
+			throw new Error('There was a problem getting the event');
 		}
 
 		const eventsCollection = schema.getCollection<RawEventObject & Required<NoSQLDocument>>(
@@ -94,6 +106,25 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			schema
 		);
 	}
+
+	public static GetEither = (
+		id: number | string,
+		account: Account,
+		schema: Schema
+	): AsyncEither<api.ServerError, Event> =>
+		asyncRight(Event.Get(id, account, schema), err =>
+			err.message === 'There was a problem getting the event'
+				? {
+						code: 404,
+						error: none<Error>(),
+						message: `Could not find event specified with the id '${id}'`
+				  }
+				: {
+						code: 500,
+						error: just(err),
+						message: 'Could not get the event specified'
+				  }
+		);
 
 	/**
 	 *
@@ -150,6 +181,17 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			schema
 		);
 	}
+
+	public static CreateEither = (
+		data: NewEventObject,
+		account: Account,
+		schema: Schema,
+		member: MemberBase
+	) =>
+		asyncRight(
+			Event.Create(data, account, schema, member),
+			serverErrorGenerator('Could not create event')
+		);
 
 	private static async GetAttendance(
 		id: number,
@@ -416,6 +458,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		const pointsOfContact = Event.DownconvertPointsOfContact(this.pointsOfContact);
 
+		this.timeModified = timeModified;
+
 		await eventsCollection.replaceOne(this._id, {
 			...this.toSaveRaw(),
 			timeModified,
@@ -430,13 +474,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public async remove() {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
-		await eventsCollection
-			.remove('accountID = :accountID AND id = :id')
-			.bind({
-				accountID: this.account.id,
-				id: this.id
-			})
-			.execute();
+		await safeBind(eventsCollection.remove('accountID = :accountID AND id = :id'), {
+			accountID: this.account.id,
+			id: this.id
+		}).execute();
 	}
 
 	/**
@@ -446,11 +487,13 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public isPOC(member: MemberBase) {
 		return (
-			!!this.pointsOfContact.map(
-				poc =>
-					poc.type === PointOfContactType.INTERNAL &&
-					areMemberReferencesTheSame(member.getReference(), poc.memberReference)
-			) ||
+			!!this.pointsOfContact
+				.map(
+					poc =>
+						poc.type === PointOfContactType.INTERNAL &&
+						areMemberReferencesTheSame(member.getReference(), poc.memberReference)
+				)
+				.reduce((prev, curr) => prev || curr, false) ||
 			member.matchesReference(this.author) ||
 			member.isRioux
 		);
@@ -714,6 +757,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			}
 		}
 
+		const timestamp = +DateTime.utc();
+
 		this.attendance = [
 			...this.attendance,
 			{
@@ -723,7 +768,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
-				timestamp: +DateTime.utc(),
+				timestamp,
 				canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 				// If these are null, they are staying for the whole event
@@ -742,7 +787,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
-				timestamp: +DateTime.utc(),
+				timestamp,
 				canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 				// If these are null, they are staying for the whole event
@@ -793,6 +838,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				}
 
 				if (_id) {
+					const timestamp = +DateTime.utc();
+
 					await attendanceCollection.replaceOne(_id, {
 						_id,
 						comments: newAttendanceRecord.comments,
@@ -800,7 +847,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
-						timestamp: +DateTime.utc(),
+						timestamp,
 						canUsePhotos: newAttendanceRecord.canUsePhotos,
 						arrivalTime: newAttendanceRecord.arrivalTime,
 						departureTime: newAttendanceRecord.departureTime,
@@ -817,7 +864,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						planToUseCAPTransportation: newAttendanceRecord.planToUseCAPTransportation,
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
-						timestamp: +DateTime.utc(),
+						timestamp,
 						canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 						// If these are undefined, they are staying for the whole event
@@ -848,10 +895,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			memberID: member.getReference()
 		};
 
-		await attendanceCollection
-			.remove(generateFindStatement<RawAttendanceDBRecord>(search))
-			.bind(generateBindObject(search))
-			.execute();
+		await safeBind(
+			attendanceCollection.remove(generateFindStatement<RawAttendanceDBRecord>(search)),
+			generateBindObject(search)
+		).execute();
 
 		return this.attendance;
 	}

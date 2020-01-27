@@ -1,28 +1,39 @@
+import { api, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	FlightAssignBulk,
-	MemberValidatedRequest,
 	resolveReference
 } from '../../../lib/internals';
+import saveServerError from '../../../lib/saveServerError';
 
-export default asyncErrorHandler(async (req: MemberValidatedRequest<FlightAssignBulk>, res) => {
-	for (const request of req.body.members) {
-		const member = await resolveReference(request.member, req.account, req.mysqlx);
+export default asyncEitherHandler<api.member.flights.AssignBulk>(
+	async (req: BasicMemberValidatedRequest<FlightAssignBulk>) => {
+		for (const request of req.body.members) {
+			let member;
+			try {
+				member = await resolveReference(request.member, req.account, req.mysqlx);
+			} catch (e) {
+				continue;
+			}
 
-		if (member == null) {
-			res.status(404);
-			return res.end();
+			if (member == null) {
+				continue;
+			}
+
+			if (request.newFlight === null) {
+				continue;
+			}
+
+			member.setFlight(request.newFlight);
+
+			try {
+				await member.saveExtraMemberInformation(req.mysqlx, req.account);
+			} catch (e) {
+				saveServerError(e, req);
+			}
 		}
 
-		if (request.newFlight === null) {
-			continue;
-		}
-
-		member.setFlight(request.newFlight);
-
-		await member.saveExtraMemberInformation(req.mysqlx, req.account);
+		return right(void 0);
 	}
-
-	res.status(201);
-	res.end();
-});
+);

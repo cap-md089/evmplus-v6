@@ -1,28 +1,32 @@
-import { FullTeamObject, TeamPublicity } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, ConditionalMemberRequest, json, Team } from '../../lib/internals';
+import { api, left, none, right, TeamPublicity } from 'common-lib';
+import { asyncEitherHandler, BasicConditionalMemberRequest, Team } from '../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: ConditionalMemberRequest<{ id: string }>, res: Response) => {
+export default asyncEitherHandler<api.team.Get>(
+	async (req: BasicConditionalMemberRequest<{ id: string }>) => {
 		let team: Team;
 
 		try {
 			team = await Team.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find team'
+			});
 		}
 
 		if (team.visibility === TeamPublicity.PRIVATE) {
 			if (req.member && team.isMemberOrLeader(req.member.getReference())) {
-				json<FullTeamObject>(res, team.toFullRaw(req.member));
+				return right(team.toFullRaw(req.member));
 			} else {
-				res.status(403);
-				return res.end();
+				return left({
+					code: 403,
+					error: none<Error>(),
+					message: 'Member does not have permission to perform that action'
+				});
 			}
 		} else {
-			json<FullTeamObject>(res, team.toFullRaw(req.member));
+			return right(team.toFullRaw(req.member));
 		}
 	}
 );

@@ -2,13 +2,14 @@ import * as express from 'express';
 import {
 	Account,
 	conditionalMemberMiddleware,
-	memberMiddleware,
+	leftyConditionalMemberMiddleware,
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware,
 	NewTeamMemberValidator,
 	NewTeamObjectValidator,
-	permissionMiddleware,
 	Validator
 } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware } from '../formtoken';
 // API routes
 import create from './create';
 import deleteTeam from './delete';
@@ -25,53 +26,53 @@ const router = express.Router();
 router.use(Account.ExpressMiddleware);
 
 router.get('/', conditionalMemberMiddleware, list);
-router.get('/:id', conditionalMemberMiddleware, get);
+router.get('/:id', leftyConditionalMemberMiddleware, get);
 router.post(
 	'/',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(NewTeamObjectValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
+	Validator.LeftyBodyExpressMiddleware(NewTeamObjectValidator),
 	create
 );
 router.put(
 	'/:id',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
-	Validator.PartialBodyExpressMiddleware(NewTeamObjectValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
+	Validator.LeftyPartialBodyExpressMiddleware(NewTeamObjectValidator),
 	set
 );
 router.delete(
 	'/:id',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
 	deleteTeam
 );
 
 router.put(
 	'/:id/members',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
+	Validator.LeftyBodyExpressMiddleware(NewTeamMemberValidator),
 	modify
 );
 router.delete(
 	'/:id/members',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
+	Validator.LeftyBodyExpressMiddleware(NewTeamMemberValidator),
 	remove
 );
 router.post(
 	'/:id/members',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('ManageTeam'),
-	Validator.BodyExpressMiddleware(NewTeamMemberValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	leftyPermissionMiddleware('ManageTeam'),
+	Validator.LeftyBodyExpressMiddleware(NewTeamMemberValidator),
 	add
 );
 router.get('/:id/members', conditionalMemberMiddleware, listmembers);

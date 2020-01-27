@@ -1,3 +1,16 @@
+import { api, AsyncEither, asyncLeft, asyncRight, left, MemberReference, none } from 'common-lib';
+import * as express from 'express';
+import { BasicAccountRequest } from '../Account';
+import {
+	AccountRequest,
+	ConditionalMemberRequest,
+	isValidMemberReference,
+	MemberRequest,
+	ParamType
+} from '../internals';
+import { BasicConditionalMemberRequest, BasicMemberRequest } from '../member/pam/Session';
+import { serverErrorGenerator } from '../Util';
+
 interface ValidatorResult {
 	valid: boolean;
 }
@@ -19,12 +32,12 @@ export interface ValidatorPass<T> extends ValidatorResult {
 
 export type ValidatorFunction<T> = (obj: unknown) => ValidatorFail<T> | ValidatorPass<T>;
 
-type RequiredCheckFunction = (value: any, baseObj: any) => boolean;
+type RequiredCheckFunction<T> = (value: T, baseObj: any) => boolean;
 
 interface ValidateRule<T> {
 	validator: ValidatorFunction<T> | Validator<T>;
 	required?: boolean;
-	requiredIf?: RequiredCheckFunction;
+	requiredIf?: RequiredCheckFunction<T>;
 }
 
 export type ValidateRuleSet<T> = { [P in keyof T]: ValidateRule<T[P]> };
@@ -34,18 +47,50 @@ interface ValidateError<T> {
 	message: string;
 }
 
-export interface BasicValidatedRequest<T, P extends ParamType = {}> extends AccountRequest<P> {
-	body: T;
-}
+export type SimpleValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, T>;
 
-export interface MemberValidatedRequest<T, P extends ParamType = {}> extends MemberRequest<P> {
-	body: T;
-}
+export type MemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<P, T>;
 
-export interface ConditionalMemberValidatedRequest<T, P extends ParamType = {}>
-	extends ConditionalMemberRequest<P> {
-	body: T;
-}
+export type ConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, T>;
+
+export type PartialValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, Partial<T>>;
+
+export type PartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<
+	P,
+	Partial<T>
+>;
+
+export type PartialConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, Partial<T>>;
+
+export type BasicSimpleValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, T>;
+
+export type BasicMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<P, T>;
+
+export type BasicConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, T>;
+
+export type BasicPartialValidatedRequest<T, P extends ParamType = {}> = AccountRequest<
+	P,
+	Partial<T>
+>;
+
+export type BasicPartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<
+	P,
+	Partial<T>
+>;
+
+export type BasicPartialConditionalMemberValidatedRequest<
+	T,
+	P extends ParamType = {}
+> = ConditionalMemberRequest<P, Partial<T>>;
 
 export default class Validator<T> {
 	public static BodyExpressMiddleware = (
@@ -78,6 +123,50 @@ export default class Validator<T> {
 		}
 	};
 
+	public static LeftyBodyExpressMiddleware = (
+		validator: Validator<any> | ValidatorFunction<any>
+	): express.RequestHandler => (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json(
+				left({
+					code: 400,
+					error: 'Invalid body provided'
+				})
+			);
+		}
+
+		if (validator instanceof Validator) {
+			if (validator.validate(req.body)) {
+				req.body = validator.prune(req.body);
+
+				next();
+			} else {
+				res.status(400);
+				res.json(
+					left({
+						code: 400,
+						message: validator.getErrors()
+					})
+				);
+			}
+		} else {
+			const results = validator(req.body);
+
+			if (results.valid) {
+				next();
+			} else {
+				res.status(400);
+				res.json(
+					left({
+						code: 400,
+						message: (results as ValidatorFail<any>).message
+					})
+				);
+			}
+		}
+	};
+
 	public static PartialBodyExpressMiddleware = (
 		validator: Validator<any>
 	): express.RequestHandler => (req, res, next) => {
@@ -94,6 +183,30 @@ export default class Validator<T> {
 		} else {
 			res.status(400);
 			res.json(validator.getErrors());
+		}
+	};
+
+	public static LeftyPartialBodyExpressMiddleware = (
+		validator: Validator<any>
+	): express.RequestHandler => (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json({
+				code: 400,
+				error: 'Invalid body provided'
+			});
+		}
+
+		if (validator.validate(req.body, true)) {
+			req.body = validator.partialPrune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json({
+				code: 400,
+				message: validator.getErrors()
+			});
 		}
 	};
 
@@ -756,11 +869,139 @@ export default class Validator<T> {
 	public getErrorString(): string {
 		return this.errors.map(err => `${err.property}: (${err.message})`).join('; ');
 	}
-}
 
-import { MemberReference } from 'common-lib';
-import * as express from 'express';
-import { AccountRequest } from '../Account';
-import { ConditionalMemberRequest, MemberRequest } from '../member/pam/Session';
-import { isValidMemberReference } from '../Members';
-import { ParamType } from '../MySQLUtil';
+	public expressValidator: express.RequestHandler = (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			res.end();
+			return;
+		}
+
+		if (this.validate(req.body)) {
+			req.body = this.prune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json(this.getErrors());
+		}
+	};
+
+	public leftyExpressHandler: express.RequestHandler = (req, res, next) => {
+		if (req.body === undefined || req.body === null) {
+			res.status(400);
+			return res.json(
+				left({
+					code: 400,
+					error: 'Invalid body provided'
+				})
+			);
+		}
+
+		if (this.validate(req.body)) {
+			req.body = this.prune(req.body);
+
+			next();
+		} else {
+			res.status(400);
+			res.json(
+				left({
+					code: 400,
+					error: this.getErrors()
+				})
+			);
+		}
+	};
+
+	public transform<R extends BasicMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicMemberValidatedRequest<T, R extends BasicMemberRequest<infer P> ? P : never>
+	>;
+	public transform<R extends BasicConditionalMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicConditionalMemberValidatedRequest<
+			T,
+			R extends BasicConditionalMemberRequest<infer P> ? P : never
+		>
+	>;
+	public transform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicSimpleValidatedRequest<T, R extends BasicAccountRequest<infer P> ? P : never>
+	>;
+
+	public transform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<api.ServerError, R & BasicSimpleValidatedRequest<T>> {
+		return asyncRight(req, serverErrorGenerator('Could not validate body'))
+			.flatMap<R>(r =>
+				r.body === undefined || r.body === null
+					? asyncLeft({
+							code: 400,
+							error: none<Error>(),
+							message: 'Invalid body provided'
+					  })
+					: asyncRight(r, serverErrorGenerator('Could not validate body'))
+			)
+			.flatMap(r =>
+				this.validate(r.body)
+					? asyncRight(
+							{ ...r, body: this.prune(r.body) } as R &
+								BasicSimpleValidatedRequest<T>,
+							serverErrorGenerator('Could not validate body')
+					  )
+					: asyncLeft({ code: 400, error: none<Error>(), message: this.getErrorString() })
+			);
+	}
+
+	public partialTransform<R extends BasicMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicMemberValidatedRequest<Partial<T>, R extends BasicMemberRequest<infer P> ? P : never>
+	>;
+	public partialTransform<R extends BasicConditionalMemberRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicConditionalMemberValidatedRequest<
+			Partial<T>,
+			R extends BasicConditionalMemberRequest<infer P> ? P : never
+		>
+	>;
+	public partialTransform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<
+		api.ServerError,
+		BasicSimpleValidatedRequest<Partial<T>, R extends BasicAccountRequest<infer P> ? P : never>
+	>;
+
+	public partialTransform<R extends BasicAccountRequest>(
+		req: R
+	): AsyncEither<api.ServerError, R & BasicSimpleValidatedRequest<Partial<T>>> {
+		return asyncRight(req, serverErrorGenerator('Could not validate body'))
+			.flatMap<R>(r =>
+				r.body === undefined || r.body === null
+					? asyncLeft({
+							code: 400,
+							error: none<Error>(),
+							message: 'Invalid body provided'
+					  })
+					: asyncRight(r, serverErrorGenerator('Could not validate body'))
+			)
+			.flatMap(r =>
+				this.validate(r.body, true)
+					? asyncRight(
+							{ ...r, body: this.partialPrune(r.body) } as R &
+								BasicSimpleValidatedRequest<T>,
+							serverErrorGenerator('Could not validate body')
+					  )
+					: asyncLeft({ code: 400, error: none<Error>(), message: this.getErrorString() })
+			);
+	}
+}

@@ -1,24 +1,26 @@
-import { just, NewAttendanceRecord, none, Permissions } from 'common-lib';
+import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	Event,
 	isValidMemberReference,
 	MemberBase,
-	MemberValidatedRequest,
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res, next) => {
+export default asyncEitherHandler<api.events.attendance.Add>(
+	async (req: BasicMemberValidatedRequest<NewAttendanceRecord, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.json(just('Could not find event'));
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find event'
+			});
 		}
 
 		try {
@@ -27,16 +29,16 @@ export default asyncErrorHandler(
 				(req.member.isPOCOf(event) ||
 					req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
 			) {
-				member =
-					(await resolveReference(req.body.memberID, req.account, req.mysqlx, false)) ||
-					req.member;
+				member = await resolveReference(req.body.memberID, req.account, req.mysqlx, true);
 			} else {
 				member = req.member;
 			}
 		} catch (e) {
-			res.status(500);
-			res.json(just('Could not get member specified'));
-			return next(e);
+			return left({
+				code: 404,
+				error: just(e),
+				message: 'Could not get member specified'
+			});
 		}
 
 		event.addMemberToAttendance(
@@ -54,11 +56,13 @@ export default asyncErrorHandler(
 		try {
 			await event.save();
 
-			res.status(204);
-			res.json(none());
+			return right(void 0);
 		} catch (e) {
-			res.status(500);
-			res.json(just('Could not save attendance information'));
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save attendance information'
+			});
 		}
 	}
 );

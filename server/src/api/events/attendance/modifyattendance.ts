@@ -1,25 +1,26 @@
-import { NewAttendanceRecord, Permissions } from 'common-lib';
-import { Response } from 'express';
+import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberValidatedRequest,
 	Event,
 	isValidMemberReference,
 	MemberBase,
-	MemberValidatedRequest,
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<NewAttendanceRecord, { id: string }>, res: Response) => {
+export default asyncEitherHandler<api.events.attendance.ModifyAttendance>(
+	async (req: BasicMemberValidatedRequest<NewAttendanceRecord, { id: string }>) => {
 		let event: Event;
 		let member: MemberBase | null;
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find event'
+			});
 		}
 
 		if (
@@ -27,12 +28,14 @@ export default asyncErrorHandler(
 			(req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL) ||
 				event.isPOC(req.member))
 		) {
-			member = await resolveReference(req.body.memberID, req.account, req.mysqlx);
-
-			if (member === null) {
-				res.status(404);
-				res.end();
-				return;
+			try {
+				member = await resolveReference(req.body.memberID, req.account, req.mysqlx, true);
+			} catch (e) {
+				return left({
+					code: 404,
+					error: none<Error>(),
+					message: 'Could not find member'
+				});
 			}
 		} else {
 			member = req.member;
@@ -50,9 +53,16 @@ export default asyncErrorHandler(
 			member
 		);
 
-		await event.save();
+		try {
+			await event.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save attendance information'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

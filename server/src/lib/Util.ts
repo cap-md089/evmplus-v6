@@ -1,8 +1,29 @@
 import * as mysql from '@mysql/xdevapi';
-import { HTTPError, MultCheckboxReturn, RawAccountObject } from 'common-lib';
+import {
+	api,
+	AsyncEither,
+	asyncRight,
+	either,
+	EitherObj,
+	just,
+	left,
+	MultCheckboxReturn,
+	RawAccountObject,
+	right
+} from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
-import { Account } from './internals';
+import { BasicAccountRequest } from './Account';
+import {
+	Account,
+	AccountRequest,
+	BasicConditionalMemberRequest,
+	BasicMySQLRequest,
+	memberRequestTransformer,
+	ParamType,
+	saveServerError
+} from './internals';
+import { BasicMaybeMemberRequest } from './member/pam/Session';
 
 export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
@@ -91,6 +112,11 @@ export async function streamAsyncGeneratorAsJSONArrayTyped<T, R>(
 }
 
 let testSession: mysql.Session;
+let testAccount: Account;
+// let testHuckabeeUser: CAPNHQUser;
+// let testHuckabeeUserInfo: UserAccountInformation;
+// let testRiouxUser: CAPNHQUser;
+// let testRiouxUserInfo: UserAccountInformation;
 
 export async function getTestTools(testconf: typeof Configuration) {
 	const devAccount: RawAccountObject = {
@@ -122,14 +148,23 @@ export async function getTestTools(testconf: typeof Configuration) {
 			port: conn.port
 		}));
 
+	if (testSession === undefined) {
+		throw new Error('Could not get MySQL session!');
+	}
+
 	const schema = testSession.getSchema(testconf.database.connection.database);
 
-	let testAccount: Account;
+	if (schema === undefined) {
+		throw new Error('Could not get test schema!');
+	}
+
 	try {
-		testAccount = await Account.Get('mdx89', schema);
+		testAccount = testAccount || (await Account.Get('mdx89', schema));
 	} catch (e) {
 		testAccount = await Account.Create(devAccount, schema);
 	}
+
+	// 626814
 
 	return {
 		account: testAccount,
@@ -147,11 +182,11 @@ export async function getTestTools2(
 }
 
 export interface ExtendedResponse extends express.Response {
-	sjson: <T>(obj: T | HTTPError) => ExtendedResponse;
+	sjson: <T>(obj: T) => ExtendedResponse;
 }
 
 const convertResponse = (res: express.Response): ExtendedResponse => {
-	(res as ExtendedResponse).sjson = <T>(obj: T | HTTPError) => convertResponse(res.json(obj));
+	(res as ExtendedResponse).sjson = <T>(obj: T) => convertResponse(res.json(obj));
 	return res as ExtendedResponse;
 };
 
@@ -162,15 +197,240 @@ export const extraTypes = (func: (req: express.Request, res: ExtendedResponse) =
 	func(req, convertResponse(res));
 };
 
-type ExpressHandler = (
-	req: express.Request,
+type ExpressHandler<R = any> = (
+	req: AccountRequest,
 	res: express.Response,
 	next: express.NextFunction
-) => any;
+) => R;
 
-export const asyncErrorHandler = (fn: ExpressHandler): ExpressHandler => (req, res, next) =>
-	fn(req, res, next).catch(next);
+type FunctionalExpressHandler<R = any> = (req: BasicMySQLRequest) => R;
+type ParameterizedFunctionalExpressHandler<R = any, P extends ParamType = {}> = (
+	req: BasicMySQLRequest<P>
+) => R;
 
+type AsyncExpressHandler<R> = ExpressHandler<Promise<R>>;
+type ConvertedAsyncExpressHandler<R> = AsyncExpressHandler<R> & { fn: AsyncExpressHandler<R> };
+
+export const asyncErrorHandler = (
+	fn: AsyncExpressHandler<any>
+): ConvertedAsyncExpressHandler<any> => {
+	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
+		fn(req, res, next).catch(next);
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+export const leftyAsyncErrorHandler: typeof asyncErrorHandler = fn => {
+	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
+		fn(req, res, next).catch(async err => {
+			await saveServerError(err, await convertReqForSavingAsError(req));
+
+			res.status(500);
+			res.json(
+				left({
+					code: 500,
+					message: 'Unknown server error'
+				})
+			);
+		});
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+export const asyncEitherMiddlewareHandler = <R>(
+	fn: EitherExpressHandler<R>
+): ConvertedEitherExpressHandler<R> => {
+	const handler: ConvertedEitherExpressHandler<R> = (req, res, next) => {
+		const result = fn(req);
+
+		((result instanceof Promise
+			? result
+			: (result as AsyncEither<api.ServerError, EitherResult<R>>).join()) as Promise<
+			EitherObj<api.ServerError, R>
+		>)
+			.then(eith =>
+				either(eith).cata(
+					async l =>
+						l.error.cata(
+							() =>
+								Promise.resolve(
+									res.json(
+										left({
+											code: l.code,
+											message: l.message
+										})
+									)
+								),
+							async err => {
+								await saveServerError(err, await convertReqForSavingAsError(req));
+
+								return res.json(
+									left({
+										code: l.code,
+										message: l.message
+									})
+								);
+							}
+						),
+					() => next()
+				)
+			)
+			.catch(async err => {
+				if (err instanceof Error) {
+					await saveServerError(err, await convertReqForSavingAsError(req));
+				}
+
+				res.status(500);
+				return res.json(
+					left({
+						code: 500,
+						message: err instanceof Error ? err.message : err
+					})
+				);
+			});
+	};
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+type EitherResult<E> = E extends EitherObj<any, infer R> ? R : never;
+
+// The complicated conditional type allows for containing EitherObj in the type or a value.
+// If it is a value, the handler expects a wrapped EitherObj that would be equivalent to an
+// EitherObj
+type EitherExpressHandler<R> = FunctionalExpressHandler<
+	R extends EitherObj<api.ServerError, infer T>
+		? Promise<EitherObj<api.ServerError, T>> | AsyncEither<api.ServerError, T>
+		: never
+>;
+type ConvertedEitherExpressHandler<R> = ExpressHandler & { fn: EitherExpressHandler<R> };
+
+const convertReqForSavingAsError = (
+	req: BasicMySQLRequest
+): Promise<BasicConditionalMemberRequest> =>
+	asyncRight(req, serverErrorGenerator('Could not upgrade request information'))
+		.flatMap((r: BasicMySQLRequest | BasicAccountRequest) =>
+			'account' in r
+				? asyncRight(r, serverErrorGenerator('Could not upgrade account information'))
+				: Account.RequestTransformer(r)
+		)
+		.flatMap((r: BasicAccountRequest | BasicMaybeMemberRequest) =>
+			'member' in r
+				? asyncRight(r, serverErrorGenerator('Could not upgrade account information'))
+				: memberRequestTransformer(true, false)(r)
+		)
+		.map(r => ({
+			...r,
+			member: r.member.orNull()
+		}))
+		.fullJoin();
+
+export const asyncEitherHandler = <R>(
+	fn: EitherExpressHandler<R>
+): ConvertedEitherExpressHandler<R> => {
+	const handler: ConvertedEitherExpressHandler<R> = (req, res) => {
+		const result = fn(req);
+
+		((result instanceof Promise
+			? result
+			: (result as AsyncEither<api.ServerError, EitherResult<R>>).join()) as Promise<
+			EitherObj<api.ServerError, R>
+		>)
+			.then(eith =>
+				either(eith).cata(
+					async l => {
+						return l.error.cata(
+							() =>
+								Promise.resolve(
+									res.json(
+										left({
+											code: l.code,
+											message: l.message
+										})
+									)
+								),
+							async err => {
+								await saveServerError(
+									err,
+									await convertReqForSavingAsError(req),
+									l
+								);
+
+								return res.json(
+									left({
+										code: l.code,
+										message: l.message
+									})
+								);
+							}
+						);
+					},
+					async r => res.json(right(r))
+				)
+			)
+			.catch(async err => {
+				if (err instanceof Error) {
+					await saveServerError(err, await convertReqForSavingAsError(req));
+				}
+
+				res.status(500);
+				return res.json(
+					left({
+						code: 500,
+						message: err instanceof Error ? err.message : err
+					})
+				);
+			});
+	};
+
+	handler.fn = fn;
+
+	return handler;
+};
+
+type ParameterizedEitherExpressHandler<
+	R,
+	P extends ParamType = {}
+> = ParameterizedFunctionalExpressHandler<
+	R extends EitherObj<api.ServerError, infer T>
+		? Promise<EitherObj<api.ServerError, T>> | AsyncEither<api.ServerError, T>
+		: never,
+	P
+>;
+type ParameterizedConvertedEitherExpressHandler<
+	R,
+	P extends ParamType,
+	F extends ParameterizedEitherExpressHandler<R, P>
+> = ExpressHandler & {
+	fn: F;
+};
+
+export const asyncEitherHandler2 = <R, P extends ParamType = {}>(
+	fn: ParameterizedEitherExpressHandler<R, P>
+): ParameterizedConvertedEitherExpressHandler<R, P, typeof fn> => asyncEitherHandler<R>(fn);
+
+export const serverErrorGenerator = (message: string) => (err: Error): api.ServerError => ({
+	code: 500,
+	error: just(err),
+	message
+});
+
+/**
+ * Use whenever taking an object and passing it to MySQL
+ *
+ * MySQL xDevAPI throws cryptic errors when passed undefined instead of null
+ * It gives the impression that the developers that made the connector were
+ * not used to JavaScript, and didn't get to be comfortable enough when
+ * developing the connector
+ *
+ * @param obj The object to replace
+ */
 export const replaceUndefinedWithNull = (obj: any) => {
 	for (const i in obj) {
 		if (obj.hasOwnProperty(i)) {
@@ -223,6 +483,16 @@ export function formatPhone(phone: string) {
 	// add 2 dots
 	return phone.substring(0, 3) + '.' + phone.substring(3, 6) + '.' + phone.substring(6, 10);
 }
+
+export const collectGenerator = async <T>(gen: AsyncIterableIterator<T>): Promise<T[]> => {
+	const ret: T[] = [];
+
+	for await (const i of gen) {
+		ret.push(i);
+	}
+
+	return ret;
+};
 
 /*
 str = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It w as popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";

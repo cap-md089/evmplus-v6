@@ -2,14 +2,14 @@ import * as express from 'express';
 import {
 	Account,
 	conditionalMemberMiddleware,
-	EventValidator,
-	memberMiddleware,
+	leftyConditionalMemberMiddleware,
+	leftyMemberMiddleware,
 	NewAttendanceRecordValidator,
-	permissionMiddleware,
+	NewDebriefItemValidator,
 	replaceUndefinedWithNullMiddleware,
 	Validator
 } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware } from '../formtoken';
 // Attendance
 import addattendance from './attendance/addattendance';
 import addattendancebulk, { attendanceBulkValidator } from './attendance/addattendancebulk';
@@ -26,6 +26,7 @@ import deletedebrief from './debrief/deletedebrief';
 import addevent from './events/addevent';
 import copy from './events/copy';
 import deleteevent from './events/deleteevent';
+import eventviewer from './events/eventviewer';
 import getevent from './events/getevent';
 import getnextrecurring from './events/getnextrecurring';
 import linkevent from './events/linkevent';
@@ -36,63 +37,65 @@ import timelist from './events/timelist';
 
 const router = express.Router();
 
-router.use(Account.ExpressMiddleware);
+router.get('/upcoming', Account.LeftyExpressMiddleware, listupcoming);
+router.get('/recurring', Account.LeftyExpressMiddleware, getnextrecurring);
 
-router.get('/:id/attendance/log/cadet', conditionalMemberMiddleware, attendancelogcadet);
+// These APIs use Account transformers, not middleware
+router.get('/:id', getevent);
+router.post('/:id/copy', copy);
+router.post('/', addevent);
+router.get('/:id/viewer', eventviewer);
+router.put('/:id', setevent);
+
+router.use(Account.LeftyExpressMiddleware);
+
+router.get('/:id/attendance/log/cadet', leftyConditionalMemberMiddleware, attendancelogcadet);
 // router.get('/:id/attendance/log/senior', conditionalMemberMiddleware, attendancelogsenior);
 // router.get('/:id/attendance/roster', conditionalMemberMiddleware, attendanceroster);
-router.get('/:id/attendance', memberMiddleware, getattendance);
+router.get('/:id/attendance', leftyMemberMiddleware, getattendance);
 router.post(
 	'/:id/attendance/bulk',
-	memberMiddleware,
+	leftyMemberMiddleware,
 	replaceUndefinedWithNullMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(attendanceBulkValidator),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(attendanceBulkValidator),
 	addattendancebulk
 );
 router.post(
 	'/:id/attendance',
-	memberMiddleware,
+	leftyMemberMiddleware,
 	replaceUndefinedWithNullMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(NewAttendanceRecordValidator),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(NewAttendanceRecordValidator),
 	addattendance
 );
 router.put(
 	'/:id/attendance',
-	memberMiddleware,
+	leftyMemberMiddleware,
 	replaceUndefinedWithNullMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(NewAttendanceRecordValidator),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(NewAttendanceRecordValidator),
 	modifyattendance
 );
-router.delete('/:id/attendance', memberMiddleware, tokenMiddleware, deleteattendance);
+router.delete('/:id/attendance', leftyMemberMiddleware, leftyTokenMiddleware, deleteattendance);
 
-router.post('/:id/debrief', memberMiddleware, tokenMiddleware, adddebrief);
-router.delete('/:id/debrief/:timestamp', memberMiddleware, tokenMiddleware, deletedebrief);
-
-router.get('/', conditionalMemberMiddleware, list);
-router.get('/upcoming', listupcoming);
-router.get('/recurring', getnextrecurring);
-router.get('/:start/:end', conditionalMemberMiddleware, timelist);
 router.post(
-	'/',
-	memberMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(EventValidator),
-	permissionMiddleware('ManageEvent'),
-	addevent
+	'/:id/debrief',
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	NewDebriefItemValidator.leftyExpressHandler,
+	adddebrief
 );
-router.post('/:parent', memberMiddleware, tokenMiddleware, linkevent);
-router.delete('/:id', memberMiddleware, tokenMiddleware, deleteevent);
-router.put(
-	'/:id',
-	memberMiddleware,
-	tokenMiddleware,
-	Validator.PartialBodyExpressMiddleware(EventValidator),
-	setevent
+router.delete(
+	'/:id/debrief/:timestamp',
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	deletedebrief
 );
-router.get('/:id', conditionalMemberMiddleware, getevent);
-router.post('/:id/copy', memberMiddleware, tokenMiddleware, copy);
+
+router.get('/', leftyConditionalMemberMiddleware, list);
+router.get('/:start/:end', conditionalMemberMiddleware, timelist);
+router.post('/:parent', leftyMemberMiddleware, leftyTokenMiddleware, linkevent);
+router.delete('/:id', leftyMemberMiddleware, leftyTokenMiddleware, deleteevent);
 
 export default router;

@@ -1,12 +1,12 @@
-import * as express from 'express';
-import { AccountRequest, asyncErrorHandler, Registry } from '../../lib/internals';
+import { api, asyncRight } from 'common-lib';
+import { Account, asyncEitherHandler2, Registry, serverErrorGenerator } from '../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
-		let registry: Registry;
-
-		registry = await Registry.Get(req.account, req.mysqlx);
-
-		res.json(registry.toRaw());
-	}
+export default asyncEitherHandler2<api.registry.Get>(r =>
+	asyncRight(r, serverErrorGenerator('Could not get registry information'))
+		.flatMap(req => Account.RequestTransformer(req))
+		.map(
+			req => Registry.Get(req.account, req.mysqlx),
+			serverErrorGenerator('Could not get registry values')
+		)
+		.map(reg => reg.values)
 );

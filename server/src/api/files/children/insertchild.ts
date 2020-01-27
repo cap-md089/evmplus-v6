@@ -1,18 +1,8 @@
-import * as express from 'express';
-import { asyncErrorHandler, File, MemberRequest } from '../../../lib/internals';
+import { api, just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ parentid: string }>, res: express.Response) => {
-		if (
-			typeof req.params.parentid === 'undefined' ||
-			typeof req.body === 'undefined' ||
-			typeof req.body.id === 'undefined'
-		) {
-			res.status(400);
-			res.end();
-			return;
-		}
-
+export default asyncEitherHandler<api.files.children.AddChild>(
+	async (req: BasicMemberRequest<{ parentid: string }>) => {
 		const parentid = req.params.parentid;
 		const childid = req.body.id;
 
@@ -24,26 +14,45 @@ export default asyncErrorHandler(
 				File.Get(parentid, req.account, req.mysqlx)
 			]);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find either the child or the parent'
+			});
 		}
 
 		try {
 			oldparent = await child.getParent();
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not unlink from old parent'
+			});
 		}
 
 		oldparent.removeChild(child);
 
-		await parent.addChild(child);
+		try {
+			await parent.addChild(child);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not add child to parent'
+			});
+		}
 
-		await Promise.all([oldparent.save(), child.save(), parent.save()]);
+		try {
+			await Promise.all([oldparent.save(), child.save(), parent.save()]);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save information for files'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

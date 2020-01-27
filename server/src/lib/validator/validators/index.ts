@@ -15,6 +15,7 @@ export { default as FlightAssignBulkValidator } from './FlightAssignBulkValidato
 export { default as FlightAssignValidator } from './FlightAssignValidator';
 export const NewAccountObjectValidator = new _NewAccountObjectValidator();
 export const NewAttendanceRecordValidator = new _NewAttendanceRecordValidator();
+export { default as NewDebriefItemValidator } from './NewDebriefItemValidator';
 export { default as NewTaskObjectValidator } from './NewTaskObject';
 export const NewTeamMemberValidator = new _NewTeamMemberValidator();
 export const NewTeamObjectValidator = new _NewTeamObjectValidator();

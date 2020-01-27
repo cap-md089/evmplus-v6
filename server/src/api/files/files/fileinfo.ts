@@ -1,20 +1,26 @@
-import { FileObject, FileUserAccessControlPermissions, FullFileObject } from 'common-lib';
-import * as express from 'express';
-import { asyncErrorHandler, ConditionalMemberRequest, File, json } from '../../../lib/internals';
+import {
+	api,
+	FileObject,
+	FileUserAccessControlPermissions,
+	just,
+	left,
+	none,
+	right
+} from 'common-lib';
+import { asyncEitherHandler, BasicConditionalMemberRequest, File } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (
-		req: ConditionalMemberRequest<{ method: string; fileid: string }>,
-		res: express.Response
-	) => {
+export default asyncEitherHandler<api.files.files.GetFile<FileObject>>(
+	async (req: BasicConditionalMemberRequest<{ method?: string; fileid: string }>) => {
 		let file: File;
 
 		try {
 			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find file specified'
+			});
 		}
 
 		if (
@@ -25,15 +31,25 @@ export default asyncErrorHandler(
 				FileUserAccessControlPermissions.READ
 			))
 		) {
-			res.send(403);
-			res.end();
-			return;
+			return left({
+				code: 403,
+				error: none<Error>(),
+				message: 'Member does not have permission to do that'
+			});
 		}
 
 		if (req.params.method && req.params.method === 'dirty') {
-			json<FullFileObject>(res, file.toFullRaw());
+			try {
+				return right(await file.toFullRaw());
+			} catch (e) {
+				return left({
+					code: 500,
+					error: just(e),
+					message: 'Could not get owner information about file'
+				});
+			}
 		} else {
-			json<FileObject>(res, file.toRaw());
+			return right(file.toRaw());
 		}
 	}
 );

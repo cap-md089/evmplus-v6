@@ -1,15 +1,23 @@
 import * as mysql from '@mysql/xdevapi';
 import {
 	AccountObject,
+	api,
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
 	DatabaseInterface,
 	EventObject,
 	FileObject,
+	just,
+	left,
 	MemberReference,
 	NHQ,
+	none,
 	NoSQLDocument,
 	ProspectiveMemberObject,
 	RawAccountObject,
-	RawTeamObject
+	RawTeamObject,
+	right
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
@@ -29,8 +37,17 @@ import {
 	ParamType,
 	Team
 } from './internals';
+import { ConditionalMemberRequest } from './member/pam/Session';
+import { BasicMySQLRequest, safeBind } from './MySQLUtil';
+import saveServerError from './saveServerError';
+import { serverErrorGenerator } from './Util';
 
-export interface AccountRequest<P extends ParamType = {}> extends MySQLRequest<P> {
+export interface AccountRequest<P extends ParamType = {}, B = any> extends MySQLRequest<P, B> {
+	account: Account;
+}
+
+export interface BasicAccountRequest<P extends ParamType = {}, B = any>
+	extends BasicMySQLRequest<P, B> {
 	account: Account;
 }
 
@@ -75,6 +92,118 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			next();
 		}
 	);
+
+	public static LeftyExpressMiddleware = asyncErrorHandler(
+		async (req: AccountRequest, res: express.Response, next: express.NextFunction) => {
+			const host = req.hostname;
+			const parts = host.split('.');
+			let accountID: string;
+
+			if (parts[0] === 'www') {
+				parts.shift();
+			}
+
+			if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
+				accountID = 'mdx89';
+			} else if (parts.length === 2) {
+				accountID = 'sales';
+			} else if (parts.length === 3) {
+				accountID = parts[0];
+			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+				accountID = 'mdx89';
+			} else {
+				res.status(400);
+				return res.json(
+					left({
+						code: 400,
+						message: 'Could not get account ID from URL'
+					})
+				);
+			}
+
+			try {
+				const account = await Account.Get(accountID, req.mysqlx);
+				req.account = account;
+			} catch (e) {
+				if (e.message && e.message.startsWith('Unknown account: ')) {
+					res.status(400);
+					return res.json(
+						left({
+							code: 400,
+							message: 'Could not get account with ID ' + accountID
+						})
+					);
+				} else {
+					await saveServerError(e, req as ConditionalMemberRequest);
+					res.status(500);
+					return res.json(
+						left({
+							code: 500,
+							message: 'Unknown server error'
+						})
+					);
+				}
+			}
+
+			next();
+		}
+	);
+
+	public static RequestTransformer = <T extends BasicMySQLRequest>(
+		req: T
+	): AsyncEither<api.ServerError, T & BasicAccountRequest> =>
+		asyncRight(
+			req.hostname.split('.'),
+			serverErrorGenerator('Could not get organization account information')
+		)
+			.flatMap<string>(parts => {
+				while (parts[0] === 'www') {
+					parts.shift();
+				}
+
+				if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
+					// localhost
+					return right('mdx89');
+				} else if (parts.length === 2) {
+					// capunit.com
+					return right('sales');
+				} else if (parts.length === 3 && parts[0] === 'www') {
+					// www.capunit.com
+					return right('sales');
+				} else if (parts.length === 3) {
+					// md089.capunit.com
+					return right(parts[0]);
+				} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
+					// 192.168.1.128
+					return right('mdx89');
+				} else {
+					// IP/localhost in production, otherwise invalid hostname
+					return asyncLeft({
+						code: 400,
+						error: none<Error>(),
+						message: 'Could not get account ID from URL'
+					});
+				}
+			})
+			.map(
+				id => Account.Get(id, req.mysqlx),
+				err => {
+					if (err.message && err.message.startsWith('Unknown account: ')) {
+						return {
+							code: 400,
+							error: none<Error>(),
+							message: err.message
+						};
+					} else {
+						return {
+							code: 500,
+							error: just(err),
+							message: 'Unknown server error'
+						};
+					}
+				}
+			)
+			.map(account => ({ ...req, account }));
 
 	public static PayWall = (
 		req: AccountRequest,
@@ -285,9 +414,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		let fileFind;
 
 		if (includeWWW) {
-			fileFind = fileCollection
-				.find('accountID = :accountID OR accountID = "www"')
-				.bind({ accountID: this.id });
+			fileFind = safeBind(
+				fileCollection.find('accountID = :accountID OR accountID = "www"'),
+				{ accountID: this.id }
+			);
 		} else {
 			fileFind = findAndBind(fileCollection, {
 				accountID: this.id
@@ -336,6 +466,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 		for await (const team of generateResults(teamIterator)) {
 			yield Team.Get(team.id, this, this.schema);
+		}
+	}
+
+	public async *getTeamObjects(): AsyncIterableIterator<RawTeamObject> {
+		const teamsCollection = this.schema.getCollection<RawTeamObject>('Teams');
+
+		// This needs to be included to include the staff team, which does not directly
+		// exist in the database and is more dynamic
+		yield await Team.GetRawStaffTeam(this, this.schema);
+
+		const teamIterator = findAndBind(teamsCollection, {
+			accountID: this.id
+		});
+
+		for await (const team of generateResults(teamIterator)) {
+			yield team;
 		}
 	}
 
@@ -423,15 +569,15 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		const eventCollection = this.schema.getCollection('Events');
 
 		const generator = generateResults(
-			eventCollection
-				.find(
+			safeBind(
+				eventCollection.find(
 					'(pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end && meetDateTime > :start)'
-				)
-				// @ts-ignore
-				.bind({
+				),
+				{
 					start,
 					end
-				})
+				}
+			)
 		);
 
 		let eventCount = 0;

@@ -1,18 +1,26 @@
-import { RegistryValues } from 'common-lib';
-import { Response } from 'express';
-import { asyncErrorHandler, MemberValidatedRequest, Registry } from '../../lib/internals';
+import { api, just, left, RegistryValues, right } from 'common-lib';
+import {
+	asyncEitherHandler,
+	BasicPartialMemberValidatedRequest,
+	Registry
+} from '../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberValidatedRequest<Partial<RegistryValues>>, res: Response) => {
-		let registry: Registry;
+export default asyncEitherHandler<api.registry.Set>(
+	async (req: BasicPartialMemberValidatedRequest<RegistryValues>) => {
+		try {
+			const registry = await Registry.Get(req.account, req.mysqlx);
 
-		registry = await Registry.Get(req.account, req.mysqlx);
+			registry.set(req.body);
 
-		registry.set(req.body);
+			await registry.save();
 
-		await registry.save();
-
-		res.status(204);
-		res.end();
+			return right(void 0);
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save registry information'
+			});
+		}
 	}
 );

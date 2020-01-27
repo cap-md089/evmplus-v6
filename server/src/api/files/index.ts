@@ -3,11 +3,13 @@ import * as express from 'express';
 import {
 	Account,
 	FileObjectValidator,
+	leftyConditionalMemberMiddleware,
+	leftyMemberMiddleware,
 	memberMiddleware,
 	replaceUndefinedWithNullMiddleware,
 	Validator
 } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware } from '../formtoken';
 // Children methods
 import getfiles from './children/getfiles';
 import insertchild from './children/insertchild';
@@ -27,7 +29,7 @@ const filerouter: express.Router = express.Router();
 
 filerouter.use(Account.ExpressMiddleware);
 
-// Only client will need this, but I'm going to make files a folder with a MIME type of application/folder
+// Only client will need this, but I'm going to make folders a file with a MIME type of application/folder
 
 /// https://developers.google.com/drive/v2/reference/files#methods
 // The following two have to be first, as they can't have bodyParser taking the data
@@ -36,27 +38,32 @@ filerouter.post('/upload', memberMiddleware, upload); // insert
 filerouter.put('/upload/:fileid', memberMiddleware, setfiledata); // update
 filerouter.use(bodyParser.json());
 // export, functions differently and downloads data for file without download headers
-filerouter.get('/:fileid/export', memberMiddleware, getfile);
-filerouter.get('/photolibrary/:page', memberMiddleware, photolibrary);
+filerouter.get('/:fileid/export', leftyMemberMiddleware, getfile);
+filerouter.get('/photolibrary/:page', leftyMemberMiddleware, photolibrary);
 // export, functions differently and downloads data for file with download headers
-filerouter.get('/:fileid/download', memberMiddleware, downloadfile);
-filerouter.get('/:fileid/:method?', memberMiddleware, fileinfo); // get
-filerouter.get('/:fileid', memberMiddleware, fileinfo); // get
-filerouter.delete('/:fileid', memberMiddleware, tokenMiddleware, deletefile); // delete
+filerouter.get('/:fileid/download', leftyMemberMiddleware, downloadfile);
+filerouter.get('/:fileid/:method?', leftyConditionalMemberMiddleware, fileinfo); // get
+filerouter.get('/:fileid', leftyConditionalMemberMiddleware, fileinfo); // get
+filerouter.delete('/:fileid', leftyMemberMiddleware, leftyTokenMiddleware, deletefile); // delete
 filerouter.put(
 	'/:fileid',
-	memberMiddleware,
-	tokenMiddleware,
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
 	replaceUndefinedWithNullMiddleware,
-	Validator.PartialBodyExpressMiddleware(FileObjectValidator),
+	Validator.LeftyPartialBodyExpressMiddleware(FileObjectValidator),
 	setfileinfo
 ); // update
-filerouter.post('/create', memberMiddleware, createfolder);
+filerouter.post('/:parentid/createfolder/:name', leftyMemberMiddleware, createfolder);
 
 /// https://developers.google.com/drive/v2/reference/children#methods
-filerouter.delete('/:parentid/children/:childid', memberMiddleware, tokenMiddleware, removefile); // delete
-filerouter.post('/:parentid/children', memberMiddleware, tokenMiddleware, insertchild); // insert
-filerouter.get('/:parentid/children/:method?', memberMiddleware, getfiles);
-filerouter.get('/:parentid/children', memberMiddleware, getfiles);
+filerouter.delete(
+	'/:parentid/children/:childid',
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	removefile
+); // delete
+filerouter.post('/:parentid/children', leftyMemberMiddleware, leftyTokenMiddleware, insertchild); // insert
+filerouter.get('/:parentid/children/:method?', leftyConditionalMemberMiddleware, getfiles);
+filerouter.get('/:parentid/children', leftyConditionalMemberMiddleware, getfiles);
 
 export default filerouter;

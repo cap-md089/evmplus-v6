@@ -1,7 +1,12 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	AccountPasswordInformation,
+	AlgorithmType,
+	api,
+	AsyncEither,
+	asyncRight,
 	passwordMeetsRequirements,
+	PasswordResetTokenInformation,
 	PasswordResult,
 	PasswordSetResult,
 	UserAccountInformation
@@ -9,9 +14,13 @@ import {
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { getInformationForUser, isUserValid, saveInformationForUser } from '../../internals';
+import { collectResults, findAndBind } from '../../MySQLUtil';
+import { serverErrorGenerator } from '../../Util';
 
 const promisedPbkdf2 = promisify(pbkdf2);
 const promisedRandomBytes = promisify(randomBytes);
+
+const PASSWORD_RESET_TOKEN_COLLECTION = 'PasswordResetTokens';
 
 export const DEFAULT_PASSWORD_ITERATION_COUNT = 32768;
 export const DEFAULT_PASSWORD_STORED_LENGTH = 64;
@@ -19,6 +28,20 @@ export const DEFAULT_SALT_SIZE = 128;
 export const PASSWORD_HISTORY_LENGTH = 5;
 export const PASSWORD_MAX_AGE = 180 * 24 * 60 * 60 * 1000;
 export const PASSWORD_MIN_AGE = 7 * 24 * 60 * 60 * 1000;
+export const PASSWORD_NEW_ALGORITHM: AlgorithmType = 'pbkdf2';
+export const PASSWORD_RESET_TOKEN_EXPIRE_TIME = 24 * 60 * 60 * 1000;
+
+const algorithms: {
+	[key: string]: (
+		password: string,
+		salt: string,
+		iterationCount: number,
+		length: number,
+		algorithm: string
+	) => Promise<Buffer>;
+} = {
+	pbkdf2: promisedPbkdf2
+};
 
 /**
  * Hashes the password according to the specified parameters
@@ -33,9 +56,10 @@ export const PASSWORD_MIN_AGE = 7 * 24 * 60 * 60 * 1000;
 export const hashPassword = async (
 	password: string,
 	salt: string,
+	algorithm: AlgorithmType,
 	length = DEFAULT_PASSWORD_STORED_LENGTH,
 	iterationCount = DEFAULT_PASSWORD_ITERATION_COUNT
-): Promise<Buffer> => promisedPbkdf2(password, salt, iterationCount, length, 'sha512');
+): Promise<Buffer> => algorithms[algorithm](password, salt, iterationCount, length, 'sha512');
 
 /**
  * Checks a password against an account
@@ -48,10 +72,29 @@ export const isPasswordValidForUser = async (info: UserAccountInformation, passw
 	const iterations = pwInfo.iterations;
 	const salt = pwInfo.salt;
 	const hashStored = pwInfo.password;
+	const algorithm = pwInfo.algorithm || 'pbkdf2';
 
-	const hashCalced = await hashPassword(password, salt, hashStored.length / 2, iterations);
+	const hashCalced = await hashPassword(
+		password,
+		salt,
+		algorithm,
+		hashStored.length / 2,
+		iterations
+	);
 
-	return hashStored === hashCalced.toString('hex');
+	const calcedHashString = hashCalced.toString('hex');
+
+	// Take time to compare each character, making each comparison similar in length
+
+	let equal = true;
+
+	for (let i = 0; i < hashStored.length; i++) {
+		if (hashStored[i] !== calcedHashString[i]) {
+			equal = false;
+		}
+	}
+
+	return equal;
 };
 
 /**
@@ -69,7 +112,13 @@ export const hasPasswordBeenUsed = async (
 	(
 		await Promise.all(
 			passwordHistory.map(pw =>
-				hashPassword(password, pw.salt, pw.password.length / 2, pw.iterations)
+				hashPassword(
+					password,
+					pw.salt,
+					pw.algorithm || 'pbkdf2',
+					pw.password.length / 2,
+					pw.iterations
+				)
 			)
 		)
 	)
@@ -95,11 +144,12 @@ export const updatePasswordForUser = async (
 	const userInfo = await getInformationForUser(schema, username);
 
 	const salt = (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex');
-	const newHashedPassword = await hashPassword(password, salt);
+	const newHashedPassword = await hashPassword(password, salt, PASSWORD_NEW_ALGORITHM);
 
 	userInfo.passwordHistory[0].password = newHashedPassword.toString('hex');
 	userInfo.passwordHistory[0].iterations = DEFAULT_PASSWORD_ITERATION_COUNT;
 	userInfo.passwordHistory[0].salt = salt;
+	userInfo.passwordHistory[0].algorithm = PASSWORD_NEW_ALGORITHM;
 
 	await saveInformationForUser(schema, userInfo);
 };
@@ -137,13 +187,16 @@ export const addPasswordForUser = async (
 	}
 
 	const salt = (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex');
-	const newPassword = (await hashPassword(password, salt)).toString('hex');
+	const newPassword = (await hashPassword(password, salt, PASSWORD_NEW_ALGORITHM)).toString(
+		'hex'
+	);
 
 	userInfo.passwordHistory.unshift({
 		created: Date.now(),
 		password: newPassword,
 		salt,
-		iterations: DEFAULT_PASSWORD_ITERATION_COUNT
+		iterations: DEFAULT_PASSWORD_ITERATION_COUNT,
+		algorithm: PASSWORD_NEW_ALGORITHM
 	});
 
 	while (userInfo.passwordHistory.length > PASSWORD_HISTORY_LENGTH) {
@@ -197,3 +250,50 @@ export const checkIfPasswordValid = async (
 
 	return PasswordResult.VALID;
 };
+
+export const createPasswordResetToken = (
+	schema: Schema,
+	username: string
+): AsyncEither<api.ServerError, string> =>
+	asyncRight(
+		randomBytes(48),
+		serverErrorGenerator('Could not generate password reset token')
+	).flatMap(token =>
+		asyncRight(
+			schema.getCollection<PasswordResetTokenInformation>(PASSWORD_RESET_TOKEN_COLLECTION),
+			serverErrorGenerator('Could not create password reset token')
+		)
+			.flatMap(collection =>
+				asyncRight(
+					// Verify that the username is valid
+					getInformationForUser(schema, username),
+					serverErrorGenerator('Could not get user information')
+				).map(
+					() =>
+						collection
+							.add({
+								expires: Date.now() + PASSWORD_RESET_TOKEN_EXPIRE_TIME,
+								username,
+								token: token.toString()
+							})
+							.execute(),
+					serverErrorGenerator('Could not save password reset token')
+				)
+			)
+			.map(() => token.toString())
+	);
+
+export const validatePasswordResetToken = (schema: Schema, token: string, username: string) =>
+	asyncRight(
+		schema.getCollection<PasswordResetTokenInformation>(PASSWORD_RESET_TOKEN_COLLECTION),
+		serverErrorGenerator('Could not validate password reset token')
+	)
+		.tap(collection =>
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute()
+		)
+		.map(collection => findAndBind(collection, { token, username }))
+		.map(find => collectResults(find))
+		.map(results => results.length === 1);

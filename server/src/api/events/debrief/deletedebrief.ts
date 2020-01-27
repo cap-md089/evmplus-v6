@@ -1,33 +1,35 @@
-import { DebriefItem } from 'common-lib';
-import { Response } from 'express';
+import { api, just, left, none, right } from 'common-lib';
 import {
-	asyncErrorHandler,
+	asyncEitherHandler,
+	BasicMemberRequest,
 	Event,
 	isValidMemberReference,
-	json,
 	MemberBase,
-	MemberRequest,
 	resolveReference
 } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ timestamp: string; id: string }>, res: Response) => {
+export default asyncEitherHandler<api.events.debrief.Delete>(
+	async (req: BasicMemberRequest<{ timestamp: string; id: string }>) => {
 		let event: Event;
 		let member: MemberBase;
 		const timestamp = parseInt(req.params.timestamp, 10);
 
 		if (timestamp !== timestamp) {
-			res.status(400);
-			res.end();
-			return;
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: 'Invalid timestamp to delete'
+			});
 		}
 
 		try {
 			event = await Event.Get(req.params.id, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find event'
+			});
 		}
 
 		if (isValidMemberReference(req.body) && req.member.isPOCOf(event)) {
@@ -38,8 +40,16 @@ export default asyncErrorHandler(
 
 		event.removeItemFromDebrief(member, timestamp);
 
-		await event.save();
+		try {
+			await event.save();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not save event'
+			});
+		}
 
-		json<DebriefItem[]>(res, event.debrief);
+		return right(event.debrief);
 	}
 );

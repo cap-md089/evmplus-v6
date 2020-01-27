@@ -1,22 +1,34 @@
-import { NotificationObject, NotificationTargetType } from 'common-lib';
-import { asyncErrorHandler, json, MemberRequest, Notification } from '../../../lib/internals';
+import { api, just, left, none, NotificationTargetType, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, Notification } from '../../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest, res) => {
+export default asyncEitherHandler<api.notifications.admin.List>(async (req: BasicMemberRequest) => {
 	if (!req.account.isAdmin(req.member)) {
-		res.status(403);
-		return res.end();
+		return left({
+			code: 403,
+			error: none<Error>(),
+			message: 'Member does not have permission to perform the requested action'
+		});
 	}
 
-	const notifications = await Notification.GetFor(
-		{
-			type: NotificationTargetType.ADMINS,
-			accountID: req.account.id
-		},
-		req.account,
-		req.mysqlx
-	);
+	let notifications;
+	try {
+		notifications = await Notification.GetFor(
+			{
+				type: NotificationTargetType.ADMINS,
+				accountID: req.account.id
+			},
+			req.account,
+			req.mysqlx
+		);
+	} catch (e) {
+		return left({
+			code: 500,
+			error: just(e),
+			message: 'Could not get the notifications'
+		});
+	}
 
 	const easyReturn = notifications.map(notification => notification.toFullRaw());
 
-	json<NotificationObject[]>(res, easyReturn);
+	return right(easyReturn);
 });

@@ -1,21 +1,30 @@
-import * as express from 'express';
-import { asyncErrorHandler, File, MemberRequest } from '../../../lib/internals';
+import { api, just, left, none, right } from 'common-lib';
+import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ fileid: string }>, res: express.Response) => {
+export default asyncEitherHandler<api.files.files.Delete>(
+	async (req: BasicMemberRequest<{ fileid: string }>) => {
 		let file;
 
 		try {
 			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
 		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
+			return left({
+				code: 404,
+				error: none<Error>(),
+				message: 'Could not find file to delete'
+			});
 		}
 
-		await file.delete();
+		try {
+			await file.delete();
+		} catch (e) {
+			return left({
+				code: 500,
+				error: just(e),
+				message: 'Could not delete file'
+			});
+		}
 
-		res.status(204);
-		res.end();
+		return right(void 0);
 	}
 );

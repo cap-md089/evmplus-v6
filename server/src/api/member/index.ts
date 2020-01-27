@@ -4,12 +4,14 @@ import {
 	Account,
 	FlightAssignBulkValidator,
 	FlightAssignValidator,
+	leftyMemberMiddleware,
+	leftyMemberMiddlewareWithPassswordOnly,
+	leftyPermissionMiddleware,
 	memberMiddleware,
-	memberMiddlewareWithPassswordOnly,
 	permissionMiddleware,
 	Validator
 } from '../../lib/internals';
-import { tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware, tokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
 import account from './account';
@@ -22,7 +24,6 @@ import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
 import getmembers from './getmembers';
 import passwordreset from './passwordreset';
-import getpermissions from './permissions/getpermissions';
 import setpermissions, { permissionsValidator } from './permissions/setpermissions';
 import su from './su';
 import getdutypositions from './temporarydutypositions/get';
@@ -30,15 +31,17 @@ import setdutypositions, { setDutyPositionsValidator } from './temporarydutyposi
 
 const router = express.Router();
 
-router.use(Account.ExpressMiddleware);
+router.use('/account', account);
+
+router.use(Account.LeftyExpressMiddleware);
 
 router.get('/', memberMiddleware, getmembers);
-router.post('/su', memberMiddleware, tokenMiddleware, su);
+router.post('/su', leftyMemberMiddleware, leftyTokenMiddleware, su);
 router.post(
 	'/absent',
-	memberMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(AbsenteeValidator),
+	leftyMemberMiddleware,
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(AbsenteeValidator),
 	absent
 );
 
@@ -46,54 +49,52 @@ router.get('/flight', memberMiddleware, flightmembers);
 router.get('/flight/basic', memberMiddleware, flightbasic);
 router.post(
 	'/flight',
-	memberMiddleware,
-	permissionMiddleware('FlightAssign'),
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(FlightAssignValidator),
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('FlightAssign'),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(FlightAssignValidator),
 	flightassign
 );
 router.post(
 	'/flight/bulk',
-	memberMiddleware,
-	permissionMiddleware('FlightAssign'),
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(FlightAssignBulkValidator),
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('FlightAssign'),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(FlightAssignBulkValidator),
 	flightassignbulk
 );
 
-router.get(
-	'/permissions',
-	memberMiddleware,
-	permissionMiddleware('PermissionManagement'),
-	getpermissions
-);
 router.post(
 	'/permissions',
-	memberMiddleware,
-	permissionMiddleware('PermissionManagement'),
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(permissionsValidator),
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('PermissionManagement'),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(permissionsValidator),
 	setpermissions
 );
 
 router.get(
 	'/tempdutypositions/:type/:id',
-	memberMiddleware,
-	permissionMiddleware('AssignTemporaryDutyPositions'),
-	tokenMiddleware,
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('AssignTemporaryDutyPositions'),
+	leftyTokenMiddleware,
 	getdutypositions
 );
 router.post(
 	'/tempdutypositions/:type/:id',
-	memberMiddleware,
-	permissionMiddleware('AssignTemporaryDutyPositions'),
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(setDutyPositionsValidator),
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('AssignTemporaryDutyPositions'),
+	leftyTokenMiddleware,
+	Validator.LeftyBodyExpressMiddleware(setDutyPositionsValidator),
 	setdutypositions
 );
 
-router.use('/capwatch', memberMiddleware, permissionMiddleware('DownloadCAPWATCH'), capwatch);
-router.use('/account', account);
+router.use(
+	'/capwatch',
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('DownloadCAPWATCH'),
+	capwatch
+);
 
 router.post(
 	'/generateattendance',
@@ -111,6 +112,11 @@ router.post(
 	forcadet
 );
 
-router.post('/passwordreset', memberMiddlewareWithPassswordOnly, tokenMiddleware, passwordreset);
+router.post(
+	'/passwordreset',
+	leftyMemberMiddlewareWithPassswordOnly,
+	leftyTokenMiddleware,
+	passwordreset
+);
 
 export default router;
