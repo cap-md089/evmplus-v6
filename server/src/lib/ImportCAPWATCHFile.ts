@@ -1,8 +1,7 @@
 import { Schema, Session } from '@mysql/xdevapi';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import { CAPWATCHImportErrors } from 'common-lib';
 import * as csv from 'csv-parse';
-import { promisify } from 'util';
 import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
@@ -125,22 +124,31 @@ export default async function*(
 
 		foundModules[mod.file] = true;
 
-		const { stdout } = await promisify(exec)(`unzip -op ${zipFileLocation} ${mod.file}`);
+		const rows: any[] = [];
+
+		const zippedFile = spawn('unzip', ['-op', zipFileLocation, mod.file]).stdout;
+
+		const parser = csv({
+			columns: true
+		});
+
+		parser.on('readable', () => {
+			let record;
+			// tslint:disable-next-line: no-conditional-assignment
+			while ((record = parser.read())) {
+				rows.push(record);
+			}
+		});
 
 		yield new Promise<CAPWATCHModuleResult>(res => {
-			csv(stdout, { columns: true }, async (err, values) => {
-				if (err) {
-					res({
-						error: CAPWATCHImportErrors.BADDATA,
-						file: mod.file
-					});
-				} else {
-					res({
-						error: await mod.module(values, schema, orgid),
-						file: mod.file
-					});
-				}
+			parser.on('end', async () => {
+				res({
+					error: await mod.module(rows, schema, orgid),
+					file: mod.file
+				});
 			});
+
+			zippedFile.pipe(parser);
 		});
 	}
 

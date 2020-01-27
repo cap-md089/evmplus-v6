@@ -116,20 +116,22 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		capid: number,
 		schema: Schema
 	): Promise<Array<{ duty: string; date: number; type: 'NHQ' }>> =>
-		(await Promise.all([
-			collectResults(
-				schema
-					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			),
-			collectResults(
-				schema
-					.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
-					.find('CAPID = :CAPID')
-					.bind('CAPID', capid)
-			)
-		]))
+		(
+			await Promise.all([
+				collectResults(
+					schema
+						.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
+						.find('CAPID = :CAPID')
+						.bind('CAPID', capid)
+				),
+				collectResults(
+					schema
+						.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
+						.find('CAPID = :CAPID')
+						.bind('CAPID', capid)
+				)
+			])
+		)
 			.reduce((prev, curr) => [...prev, ...curr])
 			.map(item => ({
 				duty: item.Duty,

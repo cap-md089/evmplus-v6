@@ -30,5 +30,8 @@ export default asyncErrorHandler(async (req: MemberRequest<{ id: string; type: s
 		return res.end();
 	}
 
-	json<ShortDutyPosition[]>(res, member.dutyPositions.filter(d => d.type === 'CAPUnit'));
+	json<ShortDutyPosition[]>(
+		res,
+		member.dutyPositions.filter(d => d.type === 'CAPUnit')
+	);
 });

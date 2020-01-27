@@ -66,11 +66,13 @@ export const hasPasswordBeenUsed = async (
 ): Promise<boolean> =>
 	// Hash the password according to each of the parameters stored, generating multiple passwords that
 	// are hashed to different parameters
-	(await Promise.all(
-		passwordHistory.map(pw =>
-			hashPassword(password, pw.salt, pw.password.length / 2, pw.iterations)
+	(
+		await Promise.all(
+			passwordHistory.map(pw =>
+				hashPassword(password, pw.salt, pw.password.length / 2, pw.iterations)
+			)
 		)
-	))
+	)
 		// Check if each one (as a hex string) equals a password in its history
 		.map((pw, i) => pw.toString('hex') === passwordHistory[i].password)
 		// Reduce to a single variable

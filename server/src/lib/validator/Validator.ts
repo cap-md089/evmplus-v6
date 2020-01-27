@@ -550,7 +550,10 @@ export default class Validator<T> {
 
 	public static OneOfStrict<T extends any[]>(...values: T): ValidatorFunction<any> {
 		// @ts-ignore
-		return Validator.Or.apply({}, values.map(value => Validator.StrictValue(value)));
+		return Validator.Or.apply(
+			{},
+			values.map(value => Validator.StrictValue(value))
+		);
 	}
 
 	public static Values<T>(

@@ -83,7 +83,7 @@ describe('Account', () => {
 
 				done();
 			});
-	}, 5000);
+	}, 7500);
 
 	it('should generate members in the account', async done => {
 		for await (const mem of account.getMembers()) {

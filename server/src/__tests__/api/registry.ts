@@ -35,6 +35,6 @@ describe('/api', () => {
 				.get('/api/registry')
 				.expect(400)
 				.end(done);
-		}, 5000);
+		}, 7500);
 	});
 });

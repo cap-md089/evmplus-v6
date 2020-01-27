@@ -1,4 +1,3 @@
-import { AddressInfo } from 'net';
 import conftest from '../conf.test';
 import getServer from '../getServer';
 
@@ -11,7 +10,9 @@ describe('getServer', () => {
 
 		const { server } = await serverPromise;
 
-		expect((server.address() as AddressInfo).port).toEqual(3007);
+		const address = server.address();
+
+		expect(address.port).toEqual(3007);
 
 		server.close();
 

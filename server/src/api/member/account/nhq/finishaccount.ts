@@ -60,9 +60,11 @@ export default asyncErrorHandler(async (req: BasicValidatedRequest<RequestParame
 		return;
 	}
 
-	const session = (await createSessionForUser(req.mysqlx, account)
-		.toSome()
-		.maybe()).some();
+	const session = (
+		await createSessionForUser(req.mysqlx, account)
+			.toSome()
+			.maybe()
+	).some();
 
 	res.json({
 		error: 'none',
