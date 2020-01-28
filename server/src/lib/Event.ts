@@ -2,6 +2,9 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	api,
 	AsyncEither,
+	asyncJust,
+	AsyncMaybe,
+	asyncNone,
 	asyncRight,
 	AttendanceRecord,
 	CustomAttendanceField,
@@ -14,6 +17,7 @@ import {
 	ExternalPointOfContact,
 	InternalPointOfContact,
 	just,
+	left,
 	MemberReference,
 	MultCheckboxReturn,
 	NewAttendanceRecord,
@@ -24,7 +28,8 @@ import {
 	NotificationDataType,
 	PointOfContactType,
 	RadioReturn,
-	RawEventObject
+	RawEventObject,
+	right
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import {
@@ -716,6 +721,56 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		const sourceAccount = await Account.Get(this.sourceEvent.accountID, this.schema);
 
 		return Event.Get(this.sourceEvent.id, sourceAccount, this.schema);
+	}
+
+	public getMaybeSourceEvent(): AsyncMaybe<Event> {
+		if (this.sourceEvent === null) {
+			return asyncNone();
+		}
+
+		const id = this.sourceEvent.id;
+
+		return asyncJust(Account.Get(this.sourceEvent.accountID, this.schema)).map(account =>
+			Event.Get(id, account, this.schema)
+		);
+	}
+
+	public canSignUpForEvent(member?: MemberBase | null) {
+		return right<string, void>(void 0)
+			.flatMap(v =>
+				member
+					? right(member)
+					: left<string, MemberBase>('Cannot sign up without being signed in')
+			)
+			.flatMap(v =>
+				this.attendance.filter(val => v.matchesReference(val.memberID)).length === 0
+					? right(v)
+					: left<string, MemberBase>('Member is already in attendance')
+			)
+			.flatMap(v =>
+				this.teamID !== null && this.limitSignupsToTeam
+					? v.teamIDs.indexOf(this.teamID) !== -1
+						? right(v)
+						: left<string, MemberBase>('Member is required to be a part of the team')
+					: right(v)
+			)
+			.flatMap(v =>
+				this.registration !== null
+					? this.registration.deadline > +new Date()
+						? right(v)
+						: left<string, MemberBase>(
+								'Cannot sign up for event after the event deadline'
+						  )
+					: right(v)
+			)
+			.flatMap(v =>
+				this.acceptSignups
+					? right(v)
+					: left<string, MemberBase>(
+							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
+					  )
+			)
+			.map(() => void 0);
 	}
 
 	// ----------------------------------------------------

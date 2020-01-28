@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { Account, Validator } from '../../../lib/internals';
 import finishaccount, { nhqFinishValidator } from './nhq/finishaccount';
+import finishpasswordreset from './nhq/finishpasswordreset';
 import requestaccount, { nhqRequestValidator } from './nhq/requestaccount';
+import requestpasswordreset from './nhq/requestpasswordreset';
 import requestusername from './nhq/requestusername';
 
 const router = Router();
 
 router.post('/capnhq/username', requestusername);
+router.post('/capnhq/requestpassword', requestpasswordreset);
+router.post('/capnhq/finishpasswordreset', finishpasswordreset);
 
 router.use(Account.LeftyExpressMiddleware);
 
