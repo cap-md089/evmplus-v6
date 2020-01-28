@@ -113,9 +113,9 @@ export namespace api {
 
 			export type PhotoLibrary = FullFileObject[];
 
-			export type SetInfo = EitherObj<api.HTTPError, void>
+			export type SetInfo = EitherObj<api.HTTPError, void>;
 
-			export type Delete = EitherObj<api.HTTPError, void>
+			export type Delete = EitherObj<api.HTTPError, void>;
 		}
 	}
 
@@ -125,6 +125,12 @@ export namespace api {
 				export type Finish = EitherObj<HTTPError, { sessionID: string }>;
 
 				export type Request = EitherObj<HTTPError, void>;
+
+				export type UsernameRequest = EitherObj<HTTPError, void>;
+
+				export type PasswordResetRequest = EitherObj<HTTPError, void>;
+
+				export type FinishPasswordReset = EitherObj<HTTPError, { sessionID: string }>;
 			}
 		}
 
@@ -191,7 +197,7 @@ export namespace api {
 			export type Set = EitherObj<api.HTTPError, void>;
 		}
 
-		export type Absent = EitherObj<api.HTTPError, void>
+		export type Absent = EitherObj<api.HTTPError, void>;
 
 		export type PasswordReset = EitherObj<api.HTTPError, void>;
 
