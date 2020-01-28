@@ -4,7 +4,9 @@ import {
 	AlgorithmType,
 	api,
 	AsyncEither,
+	asyncLeft,
 	asyncRight,
+	none,
 	passwordMeetsRequirements,
 	PasswordResetTokenInformation,
 	PasswordResult,
@@ -14,7 +16,12 @@ import {
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { getInformationForUser, isUserValid, saveInformationForUser } from '../../internals';
-import { collectResults, findAndBind } from '../../MySQLUtil';
+import {
+	collectResults,
+	findAndBind,
+	generateBindObject,
+	generateFindStatement
+} from '../../MySQLUtil';
 import { serverErrorGenerator } from '../../Util';
 
 const promisedPbkdf2 = promisify(pbkdf2);
@@ -170,14 +177,6 @@ export const addPasswordForUser = async (
 ): Promise<PasswordSetResult> => {
 	const userInfo = await getInformationForUser(schema, username);
 
-	// Necessary for the case that the user doesn't have a password yet
-	if (userInfo.passwordHistory.length > 0) {
-		const passwordMinAge = userInfo.passwordHistory[0].created + PASSWORD_MIN_AGE;
-		if (passwordMinAge > Date.now()) {
-			return PasswordSetResult.MIN_AGE;
-		}
-	}
-
 	if (!passwordMeetsRequirements(password)) {
 		return PasswordSetResult.COMPLEXITY;
 	}
@@ -256,34 +255,41 @@ export const createPasswordResetToken = (
 	username: string
 ): AsyncEither<api.ServerError, string> =>
 	asyncRight(
-		randomBytes(48),
+		promisedRandomBytes(48),
 		serverErrorGenerator('Could not generate password reset token')
-	).flatMap(token =>
-		asyncRight(
-			schema.getCollection<PasswordResetTokenInformation>(PASSWORD_RESET_TOKEN_COLLECTION),
-			serverErrorGenerator('Could not create password reset token')
-		)
-			.flatMap(collection =>
-				asyncRight(
-					// Verify that the username is valid
-					getInformationForUser(schema, username),
-					serverErrorGenerator('Could not get user information')
-				).map(
-					() =>
-						collection
-							.add({
-								expires: Date.now() + PASSWORD_RESET_TOKEN_EXPIRE_TIME,
-								username,
-								token: token.toString()
-							})
-							.execute(),
-					serverErrorGenerator('Could not save password reset token')
-				)
+	)
+		.map(token => token.toString('hex'))
+		.flatMap(token =>
+			asyncRight(
+				schema.getCollection<PasswordResetTokenInformation>(
+					PASSWORD_RESET_TOKEN_COLLECTION
+				),
+				serverErrorGenerator('Could not create password reset token')
 			)
-			.map(() => token.toString())
-	);
+				.flatMap(collection =>
+					asyncRight(
+						// Verify that the username is valid
+						getInformationForUser(schema, username),
+						serverErrorGenerator('Could not get user information')
+					).map(
+						() =>
+							collection
+								.add({
+									expires: Date.now() + PASSWORD_RESET_TOKEN_EXPIRE_TIME,
+									username,
+									token
+								})
+								.execute(),
+						serverErrorGenerator('Could not save password reset token')
+					)
+				)
+				.map(() => token)
+		);
 
-export const validatePasswordResetToken = (schema: Schema, token: string, username: string) =>
+export const validatePasswordResetToken = (
+	schema: Schema,
+	token: string
+): AsyncEither<api.ServerError, string> =>
 	asyncRight(
 		schema.getCollection<PasswordResetTokenInformation>(PASSWORD_RESET_TOKEN_COLLECTION),
 		serverErrorGenerator('Could not validate password reset token')
@@ -294,6 +300,52 @@ export const validatePasswordResetToken = (schema: Schema, token: string, userna
 				.bind('expires', Date.now())
 				.execute()
 		)
-		.map(collection => findAndBind(collection, { token, username }))
-		.map(find => collectResults(find))
-		.map(results => results.length === 1);
+		.flatMap(collection =>
+			asyncRight(
+				findAndBind(collection, { token }),
+				serverErrorGenerator('Could not validate password reset token')
+			)
+				.map(find => collectResults(find))
+				.flatMap(results =>
+					results.length === 1
+						? asyncRight(
+								results[0].username,
+								serverErrorGenerator('Could not handle token')
+						  )
+						: asyncLeft({
+								error: none<Error>(),
+								code: 400,
+								message: 'Could not validate password reset token'
+						  })
+				)
+		);
+
+export const removePasswordValidationToken = (
+	schema: Schema,
+	token: string
+): AsyncEither<api.ServerError, void> =>
+	asyncRight(
+		schema.getCollection<PasswordResetTokenInformation>(PASSWORD_RESET_TOKEN_COLLECTION),
+		serverErrorGenerator('Could not validate password reset token')
+	)
+		.tap(collection =>
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute()
+		)
+		.map(collection =>
+			collection
+				.remove(
+					generateFindStatement<PasswordResetTokenInformation>({
+						token
+					})
+				)
+				.bind(
+					generateBindObject<PasswordResetTokenInformation>({
+						token
+					})
+				)
+				.execute()
+		)
+		.map(() => void 0);
