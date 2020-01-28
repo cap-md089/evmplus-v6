@@ -84,7 +84,7 @@ export const addUserAccountCreationToken = async (
 
 	const tokenCount = await getTokenCountForUser(schema, member);
 	if (tokenCount > 0) {
-		throw new Error('User already has token');
+		// throw new Error('User already has token');
 	}
 
 	const token = (await promisify(randomBytes)(48)).toString('hex');

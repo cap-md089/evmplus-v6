@@ -14,7 +14,7 @@
   },
   "main": "dist/index.js",
   "dependencies": {
-    "aws-sdk": "^2.300.0",
+    "aws-sdk": "^2.610.0",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
     "common-lib": "file:../lib",
