@@ -1,39 +1,42 @@
+import { SigninReturn } from 'common-lib';
 import * as React from 'react';
-import { Route, RouteComponentProps, withRouter, Switch } from 'react-router-dom';
+import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
 import Account from '../lib/Account';
 import MemberBase from '../lib/Members';
-import AddEvent from '../pages/events/AddEvent';
+import Registry from '../lib/Registry';
+import FinishPasswordResetForm from '../pages/account/FinishPasswordReset';
+import FinishSignup from '../pages/account/FinishSignup';
+import RequestPasswordResetForm from '../pages/account/RequestPasswordReset';
+import RequestUsernameForm from '../pages/account/RequestUsername';
+import Signin from '../pages/account/Signin';
+import Signup from '../pages/account/Signup';
+import Admin from '../pages/admin/Admin';
+import FlightAssign from '../pages/admin/pages/FlightAssign';
+import Notifications from '../pages/admin/pages/Notifications';
+import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
+import Debug from '../pages/Debug';
 import Drive from '../pages/Drive';
 import LinkList from '../pages/EventLinkList';
+import AddEvent from '../pages/events/AddEvent';
+import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import EventViewer from '../pages/events/EventViewer';
-import Main from '../pages/Main';
+import { CAPF6080Render } from '../pages/events/forms/CAPF6080';
 import ModifyEvent from '../pages/events/ModifyEvent';
+import Main from '../pages/Main';
+import NotFound from '../pages/NotFound';
 import Page from '../pages/Page';
+import PhotoLibrary from '../pages/PhotoLibrary';
 import RackBuilder from '../pages/RibbonRack';
+import TeamAdd from '../pages/team/TeamAdd';
+import TeamEdit from '../pages/team/TeamEdit';
+import TeamList from '../pages/team/TeamList';
+import TeamView from '../pages/team/TeamView';
 import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './SideNavigation';
-import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
-import TeamAdd from '../pages/team/TeamAdd';
-import TeamList from '../pages/team/TeamList';
-import TeamView from '../pages/team/TeamView';
-import TeamEdit from '../pages/team/TeamEdit';
-import PhotoLibrary from '../pages/PhotoLibrary';
-import Admin from '../pages/admin/Admin';
-import RegEdit from '../pages/admin/pages/RegEdit';
-import FlightAssign from '../pages/admin/pages/FlightAssign';
-import NotFound from '../pages/NotFound';
-import { SigninReturn } from 'common-lib';
-import Registry from '../lib/Registry';
-import Notifications from '../pages/admin/pages/Notifications';
-import Debug from '../pages/Debug';
-import Signin from '../pages/Signin';
-import FinishSignup from '../pages/FinishSignup';
-import Signup from '../pages/Signup';
-import { CAPF6080Render } from '../pages/events/forms/CAPF6080';
 
 const pages: Array<{
 	url: string;
@@ -193,6 +196,21 @@ const pages: Array<{
 	{
 		url: '/test6080',
 		component: CAPF6080Render,
+		exact: true
+	},
+	{
+		url: '/passwordreset',
+		component: RequestPasswordResetForm,
+		exact: true
+	},
+	{
+		url: '/usernamerequest',
+		component: RequestUsernameForm,
+		exact: true
+	},
+	{
+		url: '/finishpasswordreset/:token',
+		component: FinishPasswordResetForm,
 		exact: true
 	},
 

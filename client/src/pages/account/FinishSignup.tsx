@@ -1,9 +1,9 @@
 import React from 'react';
-import Page, { PageProps } from './Page';
-import SimpleForm, { Label, Title, TextBox, TextInput } from '../components/forms/SimpleForm';
-import PasswordForm from '../components/form-inputs/PasswordForm';
-import { fetchFunction } from '../lib/myFetch';
-import { getMember } from '../lib/Members';
+import Page, { PageProps } from '../Page';
+import SimpleForm, { Label, Title, TextBox, TextInput } from '../../components/forms/SimpleForm';
+import PasswordForm from '../../components/form-inputs/PasswordForm';
+import { fetchFunction } from '../../lib/myFetch';
+import { getMember } from '../../lib/Members';
 import { EitherObj, api, either } from 'common-lib';
 
 interface FormValues {
@@ -80,6 +80,12 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 	private async finishAccount() {
 		const token = this.props.routeProps.match.params.token;
 		const { username, password } = this.state.form;
+
+		this.setState({
+			error: null,
+			tryingFinish: true,
+			success: false
+		});
 
 		try {
 			const fetchResult = await fetchFunction('/api/member/account/capnhq/finish', {

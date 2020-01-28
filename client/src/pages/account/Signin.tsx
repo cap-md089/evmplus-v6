@@ -8,13 +8,13 @@ import {
 } from 'common-lib';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PasswordForm from '../components/form-inputs/PasswordForm';
-import ReCAPTCHAInput from '../components/form-inputs/ReCAPTCHA';
-import SimpleForm, { Label, TextBox, TextInput, Title } from '../components/forms/SimpleForm';
-import APIInterface from '../lib/APIInterface';
-import { getMember } from '../lib/Members';
-import myFetch, { fetchFunction } from '../lib/myFetch';
-import Page, { PageProps } from './Page';
+import PasswordForm from '../../components/form-inputs/PasswordForm';
+import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
+import SimpleForm, { Label, TextBox, TextInput, Title } from '../../components/forms/SimpleForm';
+import APIInterface from '../../lib/APIInterface';
+import { getMember } from '../../lib/Members';
+import myFetch, { fetchFunction } from '../../lib/myFetch';
+import Page, { PageProps } from '../Page';
 
 interface ResetPasswordFormValues {
 	password: string;
@@ -97,6 +97,10 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				<br />
 				Don't have an account with us? <Link to="/create-account">Create one here</Link>
 				<br />
+				Forget your username? <Link to="/usernamerequest">Request it here</Link>
+				<br />
+				Forget your password? <Link to="/passwordreset">Reset your password</Link>
+				<br />
 				<SimpleForm<SigninFormValues>
 					onSubmit={this.trySignin}
 					onChange={signinFormValues => this.setState({ signinFormValues })}
@@ -163,7 +167,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 	private async trySignin() {
 		this.setState({
-			tryingSignin: true
+			tryingSignin: true,
+			error: MemberCreateError.NONE
 		});
 
 		try {
