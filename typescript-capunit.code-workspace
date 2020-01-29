@@ -14,7 +14,7 @@
 		}
 	],
 	"settings": {
-		"typescript.tsdk": "Common/node_modules/typescript/lib"
+		"typescript.tsdk": "Server/node_modules/typescript/lib"
 	},
 	"launch": {
 		"compounds": [
