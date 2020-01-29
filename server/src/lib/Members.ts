@@ -1,21 +1,19 @@
 import { Schema } from '@mysql/xdevapi';
-import { MemberReference } from 'common-lib';
-import { MemberObject } from 'common-lib';
+import { api, AsyncEither, asyncRight, fromValue, MemberObject, MemberReference } from 'common-lib';
 import Account from './Account';
-
-export { ConditionalMemberRequest, MemberRequest } from './member/pam/Session';
-
 // Members
 import MemberBase from './member/MemberBase';
-export default MemberBase;
-
 import CAPNHQMember, { CAPNHQUser } from './member/members/CAPNHQMember';
 import CAPProspectiveMember, { CAPProspectiveUser } from './member/members/CAPProspectiveMember';
+import { serverErrorGenerator } from './Util';
 
 export * from './member/MemberBase';
 export * from './member/members/CAPNHQMember';
 export * from './member/members/CAPProspectiveMember';
+export { ConditionalMemberRequest, MemberRequest } from './member/pam/Session';
 export { CAPProspectiveMember, CAPNHQMember };
+
+export default MemberBase;
 
 export type CAPMemberClasses = CAPProspectiveMember | CAPNHQMember;
 export type CAPUserClasses = CAPProspectiveUser | CAPNHQUser;
@@ -58,6 +56,16 @@ export function getEmerPhone(member: MemberObject) {
 		return { contact: null, source: null };
 	}
 }
+
+export const getEmail = (member: MemberObject) =>
+	fromValue(
+		member.contact.EMAIL.PRIMARY ||
+			member.contact.CADETPARENTEMAIL.PRIMARY ||
+			member.contact.EMAIL.PRIMARY ||
+			member.contact.CADETPARENTPHONE.SECONDARY ||
+			member.contact.EMAIL.EMERGENCY ||
+			member.contact.CADETPARENTEMAIL.EMERGENCY
+	);
 
 export function getBestEmail(member: MemberObject) {
 	if (member.contact.EMAIL.PRIMARY) {
@@ -109,6 +117,16 @@ export async function resolveReference(
 			return CAPProspectiveMember.Get(ref.id, account, schema);
 	}
 }
+
+export const resolveReferenceE = (
+	ref: MemberReference,
+	account: Account,
+	schema: Schema
+): AsyncEither<api.ServerError, MemberClasses> =>
+	asyncRight(
+		resolveReference(ref, account, schema, true),
+		serverErrorGenerator('Could not get member specified')
+	);
 
 export function isRioux(cm: MemberBase | number | string): boolean {
 	if (typeof cm === 'number' || typeof cm === 'string') {

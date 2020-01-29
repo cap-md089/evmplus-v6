@@ -1,7 +1,9 @@
 import * as mysql from '@mysql/xdevapi';
+import * as aws from 'aws-sdk';
 import {
 	api,
 	AsyncEither,
+	asyncLeft,
 	asyncRight,
 	either,
 	EitherObj,
@@ -21,9 +23,12 @@ import {
 	BasicMySQLRequest,
 	memberRequestTransformer,
 	ParamType,
+	Registry,
 	saveServerError
 } from './internals';
 import { BasicMaybeMemberRequest } from './member/pam/Session';
+
+aws.config.update({ region: 'us-east-1' });
 
 export function extend<T extends object, S extends object>(obj1: T, obj2: S): T & S {
 	const ret = {} as any;
@@ -528,3 +533,83 @@ function testWhite(x) {
     return white.test(x.charAt(0));
 };
 */
+
+export type EventuallyStringFunction<T> = (param: T) => string;
+export type EventuallyString<T> = string | EventuallyStringFunction<T>;
+
+export const makeString = <T>(eventuallyString: EventuallyString<T>, param: T): string =>
+	typeof eventuallyString === 'string' ? eventuallyString : eventuallyString(param);
+
+export const EMAIL_CHARSET = 'UTF-8';
+
+const formatHtmlEmail = (
+	reg: Registry,
+	body: string
+) => `<div style="background-color:#f0f8ff;padding:20px">
+<header style="background:#28497e;padding:20px;margin:0">
+<a href="https://${reg.accountID}.capunit.com/">
+<h2 style="text-align:center;color:white;">${reg.values.Website.Name}</h3>
+<h3 style="text-align:center;color:white;">CAPUnit.com Action</h4>
+</a>
+</header>
+<div style="border:5px solid #28497e;margin:0;padding:20px">
+${body}<br /><br />
+Sincerely,<br />
+The CAPUnit.com Support Team
+</div>
+<footer style="background:#28497e;padding:25px;color:white">&copy; CAPUnit.com 2017-${new Date().getUTCFullYear()}</footer>
+</div>`;
+
+const formatTextEmail = (reg: Registry, text: string) => `${reg.values.Website.Name}
+CAPUnit.com Action
+
+${text}
+
+Sincerely,
+The CAPUnit.com Support Team`;
+
+export const getEmailMessageBody = (
+	registry: Registry,
+	subject: string,
+	htmlBody: string,
+	textBody: string
+): aws.SES.Message => ({
+	Body: {
+		Html: {
+			Charset: EMAIL_CHARSET,
+			Data: formatHtmlEmail(registry, htmlBody)
+		},
+		Text: {
+			Charset: EMAIL_CHARSET,
+			Data: formatTextEmail(registry, textBody)
+		}
+	},
+	Subject: { Charset: EMAIL_CHARSET, Data: subject }
+});
+
+export const sendEmail = (bccCapStMarys: boolean) => (registry: Registry) => (subject: string) => (
+	email: string | string[]
+) => (htmlBody: string) => (textBody: string): AsyncEither<api.ServerError, void> =>
+	asyncRight(
+		(async () => new aws.SES({ apiVersion: '2010-12-01 ' }))(),
+		serverErrorGenerator('Could not send email')
+	)
+		.map(handle =>
+			handle
+				.sendEmail({
+					Destination: {
+						BccAddresses: bccCapStMarys ? ['capstmarys@gmail.com'] : [],
+						ToAddresses: typeof email === 'string' ? [email] : email
+					},
+					Message: getEmailMessageBody(registry, subject, htmlBody, textBody),
+					Source: `"CAPUnit.com Support" <support@capunit.com>`,
+					ReplyToAddresses: [`"CAPUnit.com Support" <support@capunit.com>`]
+				})
+				.promise()
+		)
+		.tap(console.log)
+		.flatMap(result =>
+			!!result.$response.error
+				? asyncLeft(serverErrorGenerator('Could not send email')(result.$response.error))
+				: asyncRight(void 0, serverErrorGenerator('Could not send email'))
+		);

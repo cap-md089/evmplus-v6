@@ -100,17 +100,36 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 		const thisAccount = req.account.id;
 
 		const subjectmessage = 'CAPUnit.com Account Creation';
-		let htmlmessage = '<h2>You\'re almost there ' + member.memberRank + " " + member.nameFirst + " " + member.nameLast + '!</h2>';
-		htmlmessage += '<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>';
-		htmlmessage += '<p><a href="https://'+ thisAccount +'.capunit.com/finishaccount/' + token + '">Confirm account creation';
-		htmlmessage += '</a><p><h4>Please respond to this email if you have questions regarding your ';
-		htmlmessage += 'CAPUnit.com account.  If you did not request this account, simply disregard this email.</h4></p>';
-		htmlmessage += '<p hidden>Diagnostic information used if \"Reply\" selected: CAPID = ' + req.body.capid + ', email address = ' + email;
+		let htmlmessage =
+			"<h2>You're almost there " +
+			member.memberRank +
+			' ' +
+			member.nameFirst +
+			' ' +
+			member.nameLast +
+			'!</h2>';
+		htmlmessage +=
+			'<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>';
+		htmlmessage +=
+			'<p><a href="https://' +
+			thisAccount +
+			'.capunit.com/finishaccount/' +
+			token +
+			'">Confirm account creation';
+		htmlmessage +=
+			'</a><p><h4>Please respond to this email if you have questions regarding your ';
+		htmlmessage +=
+			'CAPUnit.com account.  If you did not request this account, simply disregard this email.</h4></p>';
+		htmlmessage +=
+			'<p hidden>Diagnostic information used if "Reply" selected: CAPID = ' +
+			req.body.capid +
+			', email address = ' +
+			email;
 		htmlmessage += ',ip address = ' + req.ip + ', original URL' + req.originalUrl + '</p>';
 		htmlmessage += 'Sincerely,<br>The CAPUnit.com Support Team';
-		let textmessage = 'You\'re almost there!\n';
-		textmessage += 'To complete your CAPUnit.com account creation, click or visit the link below:\n';
-		textmessage += `https://`+ thisAccount +`.capunit.com/finishaccount/`+ token +`\n\n`;
+		let textmessage = "You're almost there!\n";
+		textmessage += 'To complete your CAPUnit.com account creation, visit the link below:\n';
+		textmessage += `https://${thisAccount}.capunit.com/finishaccount/${token}\n\n`;
 		textmessage += 'Sincerely,\n';
 		textmessage += 'The CAPUnit.com Support Team';
 		const charsetinuse = 'UTF-8';
@@ -118,8 +137,8 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 		const emailParams = {
 			Destination: {
 				BccAddresses: ['capstmarys@gmail.com'],
-			// 	CcAddresses: [''],
-				ToAddresses: [ email ]
+				// 	CcAddresses: [''],
+				ToAddresses: [email]
 			},
 			Message: {
 				Body: {
