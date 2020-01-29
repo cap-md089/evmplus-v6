@@ -113,13 +113,15 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 			either(result).cata(
 				error => {
 					this.setState({
-						error: error.message
+						error: error.message,
+						tryingSubmit: false
 					});
 				},
 				() => {
 					this.setState({
 						success: true,
-						error: null
+						error: null,
+						tryingSubmit: false
 					});
 				}
 			);

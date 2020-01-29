@@ -172,6 +172,19 @@ export default class App extends React.Component<
 										Citizens Serving
 										<br />
 										Communities
+										{process.env.NODE_ENV === 'test' ? (
+											<>
+												<br />
+												<br />
+												<b style={{ color: 'red' }}>TEST BUILD</b>
+											</>
+										) : process.env.NODE_ENV === 'development' ? (
+											<>
+												<br />
+												<br />
+												<b style={{ color: 'red' }}> DEVELOPMENT BUILD</b>
+											</>
+										) : null}
 									</span>
 								</div>
 								<nav id="mainNavigation">
