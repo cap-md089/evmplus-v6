@@ -291,7 +291,8 @@ export enum CAPWATCHImportErrors {
 export enum AttendanceStatus {
 	COMMITTEDATTENDED,
 	NOSHOW,
-	RESCINDEDCOMMITMENTTOATTEND
+	RESCINDEDCOMMITMENTTOATTEND,
+	NOTPLANNINGTOATTEND
 }
 
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
@@ -1038,6 +1039,10 @@ export interface NewEventObject {
 	 * Files that may be associated with the event; e.g. forms
 	 */
 	fileIDs: string[];
+	/**
+	 * Whether or not attendance view should be displayed to all members or only to Managers and POCs
+	 */
+	privateAttendance: boolean;
 }
 
 /**
@@ -1056,10 +1061,6 @@ export interface NewAttendanceRecord {
 	 * If they plan to use transportation provided
 	 */
 	planToUseCAPTransportation: boolean;
-	/**
-	 * Whether or not PAOs can use the photos of the attendee
-	 */
-	canUsePhotos: boolean;
 
 	// If these are undefined, they are staying for the whole event
 	/**

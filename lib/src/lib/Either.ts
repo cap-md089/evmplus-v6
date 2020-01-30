@@ -16,6 +16,7 @@ export interface RightObj<R> {
 }
 
 export type Either<L, R> = Left<L, R> | Right<L, R>;
+export type EitherFromObj<T> = T extends EitherObj<infer L, infer R> ? Either<L, R> : never;
 
 export class Left<L, R> implements LeftObj<L> {
 	public static Left = <L, R>(value: L): Left<L, R> => new Left(value);
