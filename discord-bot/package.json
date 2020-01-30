@@ -1,0 +1,54 @@
+{
+  "name": "capunit-discord-member-manager",
+  "version": "1.0.0",
+  "description": "Manages members in the Discord server used by CAP St. Mary's",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "awsdev:/mnt/persistent/repositories/discord-bot.git"
+  },
+  "author": "Andrew Rioux",
+  "license": "MIT",
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "tsconfig.test.json",
+        "diagnostics": false
+      }
+    },
+    "testRegex": "(/src/__tests__/.*\\.ts)",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/src/__tests__/consts.ts",
+      "<rootDir>/src/__tests__/TestUtils.ts",
+      "<rootDir>/src/__tests__/EitherMatcher.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json",
+      "node"
+    ]
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.2",
+    "@types/jest": "^25.1.1",
+    "@types/node": "^13.5.2",
+    "jest": "^25.1.0",
+    "jest-cli": "^25.1.0",
+    "ts-jest": "^25.1.0",
+    "tslint": "^6.0.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.7.5"
+  },
+  "dependencies": {
+    "discord.js": "^11.5.1"
+  }
+}
