@@ -70,8 +70,7 @@ export default asyncEitherHandler<api.events.attendance.AddBulk>(
 					comments: i.comments,
 					departureTime: i.departureTime,
 					planToUseCAPTransportation: i.planToUseCAPTransportation,
-					status: i.status,
-					canUsePhotos: i.canUsePhotos
+					status: i.status
 				},
 				member
 			);

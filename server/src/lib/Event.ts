@@ -217,7 +217,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		for await (const record of generator) {
 			returnValue.push({
 				arrivalTime: record.arrivalTime,
-				canUsePhotos: record.canUsePhotos,
 				comments: record.comments,
 				departureTime: record.departureTime,
 				memberID: record.memberID,
@@ -384,6 +383,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public attendance: AttendanceRecord[];
 
+	public privateAttendance: boolean;
+
 	// Documents require it
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -446,6 +447,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
 		this.customAttendanceFields = data.customAttendanceFields;
+		this.privateAttendance = data.privateAttendance;
 
 		this._id = data._id;
 	}
@@ -553,6 +555,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			transportationProvided: this.transportationProvided,
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
+			privateAttendance: this.privateAttendance,
 
 			meetDateTime: this.meetDateTime + timeDelta,
 			startDateTime: this.startDateTime + timeDelta,
@@ -699,7 +702,14 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public toRaw = (member?: MemberBase | null): EventObject => ({
 		...this.toSaveRaw(),
-		attendance: member === null || member === undefined ? [] : this.getAttendance()
+		attendance:
+			member === null || member === undefined
+				? []
+				: this.privateAttendance
+				? this.isPOC(member)
+					? this.getAttendance()
+					: []
+				: this.getAttendance()
 	});
 
 	/**
@@ -738,7 +748,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public canSignUpForEvent(member?: MemberBase | null) {
 		return right<string, void>(void 0)
 			.flatMap(v =>
-				member
+				!!member
 					? right(member)
 					: left<string, MemberBase>('Cannot sign up without being signed in')
 			)
@@ -746,6 +756,13 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				this.attendance.filter(val => v.matchesReference(val.memberID)).length === 0
 					? right(v)
 					: left<string, MemberBase>('Member is already in attendance')
+			)
+			.flatMap(v =>
+				this.acceptSignups
+					? right(v)
+					: left<string, MemberBase>(
+							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
+					  )
 			)
 			.flatMap(v =>
 				this.teamID !== null && this.limitSignupsToTeam
@@ -762,13 +779,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 								'Cannot sign up for event after the event deadline'
 						  )
 					: right(v)
-			)
-			.flatMap(v =>
-				this.acceptSignups
-					? right(v)
-					: left<string, MemberBase>(
-							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
-					  )
 			)
 			.map(() => void 0);
 	}
@@ -824,7 +834,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp,
-				canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime,
@@ -843,7 +852,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp,
-				canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime,
@@ -903,7 +911,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp,
-						canUsePhotos: newAttendanceRecord.canUsePhotos,
 						arrivalTime: newAttendanceRecord.arrivalTime,
 						departureTime: newAttendanceRecord.departureTime,
 
@@ -920,7 +927,6 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp,
-						canUsePhotos: newAttendanceRecord.canUsePhotos,
 
 						// If these are undefined, they are staying for the whole event
 						arrivalTime: newAttendanceRecord.arrivalTime,
@@ -1043,7 +1049,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		transportationProvided: this.transportationProvided,
 		uniform: this.uniform,
 		wingEventNumber: this.wingEventNumber,
-		fileIDs: this.fileIDs
+		fileIDs: this.fileIDs,
+		privateAttendance: this.privateAttendance
 	});
 }
 export { EventStatus };

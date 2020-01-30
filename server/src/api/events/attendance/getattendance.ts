@@ -15,6 +15,10 @@ export default asyncEitherHandler<api.events.attendance.GetAttendance>(
 			});
 		}
 
+		if (event.privateAttendance && !event.isPOC(req.member)) {
+			return right([]);
+		}
+
 		return right(event.attendance);
 	}
 );

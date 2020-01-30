@@ -64,10 +64,23 @@ export default asyncEitherHandler2<api.events.events.GetEventViewerData, { id: s
 					return [isValidMember, event] as [boolean, Event];
 				})
 				.map(async ([isValidMember, event]) => {
-					const attendance = event.getAttendance();
-
 					const attendees: { [key: string]: MaybeObj<Member> } = {};
 					const organizations: { [key: string]: AccountObject } = {};
+
+					if (
+						event.privateAttendance &&
+						!req.member
+							.map(event.isPOC)
+							.orElse(false)
+							.some()
+					) {
+						return {
+							event: event.toRaw(isValidMember ? req.member.some() : null),
+							attendees,
+							organizations
+						};
+					}
+					const attendance = event.getAttendance();
 
 					if (isValidMember) {
 						for (const attendee of attendance) {

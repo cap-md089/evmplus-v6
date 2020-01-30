@@ -41,14 +41,23 @@ export default asyncEitherHandler<api.events.attendance.Add>(
 			});
 		}
 
+		const signupError = event.canSignUpForEvent(member);
+
+		if (signupError.direction === 'left') {
+			return left({
+				code: 400,
+				error: none<Error>(),
+				message: signupError.value
+			});
+		}
+
 		event.addMemberToAttendance(
 			{
 				arrivalTime: req.body.arrivalTime,
 				comments: req.body.comments,
 				departureTime: req.body.departureTime,
 				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				status: req.body.status,
-				canUsePhotos: req.body.canUsePhotos
+				status: req.body.status
 			},
 			member
 		);
