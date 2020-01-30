@@ -11,6 +11,10 @@
 		{
 			"path": "lib",
 			"name": "Common"
+		},
+		{
+			"path": "discord-bot",
+			"name": "Discord Bot"
 		}
 	],
 	"settings": {
