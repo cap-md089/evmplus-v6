@@ -29,6 +29,7 @@ interface AttendanceFormProps {
 	updateRecord: (record: NewAttendanceRecord, member: MemberReference) => void;
 	removeRecord: (record: AttendanceRecord) => void;
 	updated: boolean;
+	signup: boolean;
 	clearUpdated: () => void;
 }
 
@@ -50,7 +51,6 @@ export default class AttendanceForm extends React.Component<
 			this.state = {
 				attendance: {
 					arrivalTime: props.record.arrivalTime,
-					canUsePhotos: props.record.canUsePhotos,
 					comments: props.record.comments,
 					departureTime: props.record.departureTime,
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
@@ -62,7 +62,6 @@ export default class AttendanceForm extends React.Component<
 			this.state = {
 				attendance: {
 					arrivalTime: null,
-					canUsePhotos: true,
 					comments: '',
 					departureTime: null,
 					planToUseCAPTransportation: false,
@@ -78,11 +77,9 @@ export default class AttendanceForm extends React.Component<
 	}
 
 	public render() {
-		// Can use part time
-		const cupt = this.props.event.signUpPartTime;
+		const canUsePartTime = this.props.event.signUpPartTime;
 
-		// Use part time
-		const upt = cupt && this.state.usePartTime;
+		const usePartTime = canUsePartTime && this.state.usePartTime;
 
 		const eventLength = this.props.event.pickupDateTime - this.props.event.meetDateTime;
 
@@ -129,10 +126,10 @@ export default class AttendanceForm extends React.Component<
 					<Checkbox key="2" name="planToUseCAPTransportation" />
 				) : null}
 
-				{cupt ? <Label>Sign up part time?</Label> : null}
-				{cupt ? <Checkbox name="usePartTime" /> : null}
+				{canUsePartTime ? <Label>Sign up part time?</Label> : null}
+				{canUsePartTime ? <Checkbox name="usePartTime" /> : null}
 
-				{upt ? (
+				{usePartTime ? (
 					<TextBox name="null">
 						<div className="partTimeSignupDisplay">
 							<div
@@ -161,8 +158,8 @@ export default class AttendanceForm extends React.Component<
 						</div>
 					</TextBox>
 				) : null}
-				{upt ? <Label>Arrival time</Label> : null}
-				{upt ? (
+				{usePartTime ? <Label>Arrival time</Label> : null}
+				{usePartTime ? (
 					<DateTimeInput
 						name="arrivalTime"
 						time={true}
@@ -170,17 +167,14 @@ export default class AttendanceForm extends React.Component<
 					/>
 				) : null}
 
-				{upt ? <Label>Departure time</Label> : null}
-				{upt ? (
+				{usePartTime ? <Label>Departure time</Label> : null}
+				{usePartTime ? (
 					<DateTimeInput
 						name="departureTime"
 						time={true}
 						originalTimeZoneOffset={'America/New_York'}
 					/>
 				) : null}
-
-				<Label>Can your photo be used on social media to promote Civil Air Patrol?</Label>
-				<Checkbox name="canUsePhotos" />
 
 				{!!this.props.record ? <Label>Attendance status</Label> : null}
 				{!!this.props.record ? (
@@ -219,8 +213,7 @@ export default class AttendanceForm extends React.Component<
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
 				status: this.props.record
 					? attendanceSignup.status
-					: AttendanceStatus.COMMITTEDATTENDED,
-				canUsePhotos: attendanceSignup.canUsePhotos
+					: AttendanceStatus.COMMITTEDATTENDED
 			},
 			usePartTime: attendanceSignup.usePartTime
 		});
@@ -253,10 +246,7 @@ export default class AttendanceForm extends React.Component<
 			planToUseCAPTransportation: this.props.event.transportationProvided
 				? attendanceSignup.planToUseCAPTransportation
 				: false,
-			status: this.props.record
-				? attendanceSignup.status
-				: AttendanceStatus.COMMITTEDATTENDED,
-			canUsePhotos: attendanceSignup.canUsePhotos
+			status: this.props.record ? attendanceSignup.status : AttendanceStatus.COMMITTEDATTENDED
 		};
 
 		if (this.props.record) {

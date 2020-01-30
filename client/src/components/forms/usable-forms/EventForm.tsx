@@ -144,7 +144,8 @@ export const emptyEvent = (): NewEventObject => ({
 	signUpPartTime: false,
 	teamID: null,
 	limitSignupsToTeam: false,
-	fileIDs: []
+	fileIDs: [],
+	privateAttendance: false
 });
 
 const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
@@ -193,7 +194,8 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
 	wingEventNumber: event.wingEventNumber,
-	limitSignupsToTeam: event.limitSignupsToTeam
+	limitSignupsToTeam: event.limitSignupsToTeam,
+	privateAttendance: event.privateAttendance
 });
 
 const convertFormValuesToEvent = (event: NewEventFormValues) => ({
@@ -241,7 +243,8 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber
+	wingEventNumber: event.wingEventNumber,
+	privateAttendance: event.privateAttendance
 });
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -285,7 +288,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			transportationDescription: false,
 			transportationProvided: false,
 			uniform: false,
-			wingEventNumber: false
+			wingEventNumber: false,
+			privateAttendance: false
 		},
 		errors: {
 			acceptSignups: false,
@@ -325,7 +329,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			transportationDescription: false,
 			transportationProvided: false,
 			uniform: false,
-			wingEventNumber: false
+			wingEventNumber: false,
+			privateAttendance: false
 		}
 	};
 
