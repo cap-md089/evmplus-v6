@@ -55,11 +55,6 @@ export default async (
 		res.end();
 	});
 
-	app.use(express.static(path.join(conf.clientStorage, 'build')));
-	app.get('*', (req, res) => {
-		res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
-	});
-
 	if (conf.production) {
 		// tslint:disable-next-line:no-console
 		console.log('Server set up');
@@ -90,6 +85,12 @@ export default async (
 	return {
 		app,
 		server,
-		mysqlConn
+		mysqlConn,
+		finishServerSetup() {
+			app.use(express.static(path.join(conf.clientStorage, 'build')));
+			app.get('*', (req, res) => {
+				res.sendFile(path.join(conf.clientStorage, 'build', 'index.html'));
+			});
+		}
 	};
 };
