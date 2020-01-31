@@ -566,6 +566,11 @@ export interface ErrorStack {
 	column: number;
 }
 
+export enum ErrorResolvedStatus {
+	UNRESOLVED = 1,
+	RESOLVED
+}
+
 export type ErrorType = 'Server' | 'Client';
 
 /**
@@ -587,7 +592,7 @@ export interface ErrorObject {
 	/**
 	 * If resolved, it does not display
 	 */
-	resolved: boolean;
+	resolved: ErrorResolvedStatus;
 	/**
 	 * TypeScript descriminator
 	 */
@@ -626,7 +631,7 @@ export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifia
 	/**
 	 * The payload that caused the error for the API path
 	 */
-	payload: any;
+	payload: string;
 	/**
 	 * Account ID of page where error occurred
 	 */
