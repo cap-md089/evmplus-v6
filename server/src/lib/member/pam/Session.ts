@@ -43,7 +43,7 @@ const promisedRandomBytes = promisify(randomBytes);
 
 //#region Sessions
 
-const SESSION_AGE = 10 * 60 * 1000;
+const SESSION_AGE = 10 * 60 * 1000 * 100;
 const SESSION_ID_BYTE_COUNT = 64;
 const SESSION_TABLE = 'Sessions';
 

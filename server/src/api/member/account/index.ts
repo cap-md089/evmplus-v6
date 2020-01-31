@@ -8,8 +8,8 @@ import requestusername from './nhq/requestusername';
 
 const router = Router();
 
-router.post('/capnhq/username', requestusername);
-router.post('/capnhq/requestpassword', requestpasswordreset);
+router.post('/capnhq/username', requestusername());
+router.post('/capnhq/requestpassword', requestpasswordreset());
 router.post('/capnhq/finishpasswordreset', finishpasswordreset);
 
 router.use(Account.LeftyExpressMiddleware);

@@ -591,7 +591,7 @@ export const sendEmail = (bccCapStMarys: boolean) => (registry: Registry) => (su
 	email: string | string[]
 ) => (htmlBody: string) => (textBody: string): AsyncEither<api.ServerError, void> =>
 	asyncRight(
-		(async () => new aws.SES({ apiVersion: '2010-12-01 ' }))(),
+		(async () => new aws.SES({ apiVersion: '2010-12-01' }))(),
 		serverErrorGenerator('Could not send email')
 	)
 		.map(handle =>

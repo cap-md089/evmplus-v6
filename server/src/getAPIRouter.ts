@@ -7,6 +7,8 @@ import accountcheck from './api/accountcheck';
 import check from './api/check';
 import echo from './api/echo';
 import clienterror from './api/errors/clienterror';
+import geterrors from './api/errors/geterrors';
+import markerrordone from './api/errors/markerrordone';
 import servererror from './api/errors/servererror';
 import events from './api/events';
 import filerouter from './api/files';
@@ -121,6 +123,9 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		leftyConditionalMemberMiddleware,
 		clienterror
 	);
+
+	router.get('/errors', geterrors);
+	router.post('/errors', markerrordone);
 
 	router.use('*', (req, res) => {
 		res.status(404);
