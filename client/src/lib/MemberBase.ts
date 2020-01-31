@@ -10,6 +10,7 @@ import {
 	MemberPermissions,
 	AbsenteeInformation
 } from 'common-lib';
+import myFetch from './myFetch';
 
 export default abstract class MemberBase extends APIInterface<MemberObject>
 	implements MemberObject {
@@ -219,16 +220,16 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 		const token = await this.getToken(this);
 
-		await this.fetch(
-			'/api/member/flight/bulk',
-			{
-				method: 'POST',
-				body: JSON.stringify({
-					token,
-					members: flights
-				})
-			},
-			this
-		);
+		await this.fetch('/api/member/flight/bulk', {
+			method: 'POST',
+			body: JSON.stringify({
+				token,
+				members: flights
+			})
+		});
+	}
+
+	public memberFetch(url: string, options: RequestInit = {}, func: typeof myFetch = myFetch) {
+		return super.fetch(url, options, this, func);
 	}
 }

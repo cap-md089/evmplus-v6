@@ -1,6 +1,6 @@
 import { api, either, EitherObj } from 'common-lib';
 import MemberBase from './Members';
-import myFetch from './myFetch';
+import myFetch, { fetchFunction } from './myFetch';
 
 /**
  * Base class to help handle transmission and tokens
@@ -82,7 +82,12 @@ export default abstract class APIInterface<T> {
 	 * @param member A member that can be used to set the session ID for the
 	 * 		request
 	 */
-	public fetch(uri: string, options: RequestInit = {}, member?: MemberBase | null) {
+	public fetch(
+		uri: string,
+		options: RequestInit = {},
+		member?: MemberBase | null,
+		func: typeof fetchFunction = myFetch
+	) {
 		if (uri[0] === '/') {
 			uri = uri.slice(1);
 		}
@@ -116,7 +121,7 @@ export default abstract class APIInterface<T> {
 			options.method = 'POST';
 		}
 
-		return myFetch(this.buildURI.apply(this, uri.split('/')), options);
+		return func(this.buildURI.apply(this, uri.split('/')), options);
 	}
 
 	/**

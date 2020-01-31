@@ -96,7 +96,6 @@ export default abstract class Page<
 		console.log('Refreshing session ID');
 
 		const { member } = this.props;
-
 		if (member) {
 			await member
 				.fetch(`/api/check`, {}, member)

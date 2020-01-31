@@ -47,10 +47,10 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSubmit,
-					text: 'Request username'
+					text: 'Request login'
 				}}
 			>
-				<Title>Request username</Title>
+				<Title>Request login</Title>
 
 				{this.state.success ? (
 					// Used for spacing
@@ -58,9 +58,8 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				) : null}
 				{this.state.success ? (
 					<TextBox>
-						Username request successful. If there is an account assigned to the username
-						provided, please check your inbox and spam folder for an email with your
-						username in it.
+						Login request successful. Please check the email associated with the CAP ID
+						entered for an email with your CAP account.
 					</TextBox>
 				) : null}
 
@@ -76,9 +75,8 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 
 				<Label />
 				<TextBox>
-					Enter your CAPID. If there is an account associated with the CAPID provided, an
-					email will be sent to the associated account email address containing your
-					username.
+					Enter your CAP ID below. Once your request is submitted, please check the email
+					account associated with your CAP ID in eServices.
 				</TextBox>
 
 				<Label>CAP ID</Label>

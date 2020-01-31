@@ -176,13 +176,18 @@ export default class AttendanceForm extends React.Component<
 					/>
 				) : null}
 
-				{!!this.props.record ? <Label>Attendance status</Label> : null}
+				<Label>Attendance status</Label>
 				{!!this.props.record ? (
 					<SimpleRadioButton<AttendanceStatus>
 						name="status"
 						labels={attendanceStatusLabels}
 					/>
-				) : null}
+				) : (
+					<SimpleRadioButton<AttendanceStatus>
+						name="status"
+						labels={['I will attend', 'I will NOT attend']}
+					/>
+				)}
 
 				{!!this.props.record && this.props.member.isPOCOf(this.props.event) ? (
 					<TextBox name="null">
@@ -213,7 +218,9 @@ export default class AttendanceForm extends React.Component<
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
 				status: this.props.record
 					? attendanceSignup.status
-					: AttendanceStatus.COMMITTEDATTENDED
+					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
+					? AttendanceStatus.COMMITTEDATTENDED
+					: AttendanceStatus.NOTPLANNINGTOATTEND
 			},
 			usePartTime: attendanceSignup.usePartTime
 		});
@@ -246,7 +253,11 @@ export default class AttendanceForm extends React.Component<
 			planToUseCAPTransportation: this.props.event.transportationProvided
 				? attendanceSignup.planToUseCAPTransportation
 				: false,
-			status: this.props.record ? attendanceSignup.status : AttendanceStatus.COMMITTEDATTENDED
+			status: this.props.record
+				? attendanceSignup.status
+				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
+				? AttendanceStatus.COMMITTEDATTENDED
+				: AttendanceStatus.NOTPLANNINGTOATTEND
 		};
 
 		if (this.props.record) {
