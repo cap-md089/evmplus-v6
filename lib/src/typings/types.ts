@@ -2192,6 +2192,10 @@ export interface WebsiteContact {
 	 */
 	Flickr: null | string;
 	/**
+	 * Invite link for a Discord server
+	 */
+	Discord: null | string;
+	/**
 	 * This is the place where normal meetings take place
 	 *
 	 * Only used for style at the bottom of the page, nothing else actually uses this
