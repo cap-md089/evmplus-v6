@@ -18,7 +18,7 @@ import Button from '../../../components/Button';
 import DropDownList from '../../../components/DropDownList';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
-import { SideNavigationItem } from '../../../components/SideNavigation';
+import { SideNavigationItem } from '../../../components/page-elements/SideNavigation';
 import Page, { PageProps } from '../../Page';
 import { RequiredMember } from '../pluggables/SiteAdmin';
 import { fetchFunction } from '../../../lib/myFetch';

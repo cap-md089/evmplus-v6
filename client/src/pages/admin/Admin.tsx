@@ -110,18 +110,47 @@ export default class Admin extends Page<PageProps, AdminState> {
 
 		return (
 			<Switch>
-				<Route path="/admin/regedit" render={this.pageRenderer(RegEdit)} />
-				<Route path="/admin/flightassign" render={this.pageRenderer(FlightAssign)} />
-				<Route path="/admin/notifications" render={this.pageRenderer(Notifications)} />
-				<Route path="/admin/permissions" render={this.pageRenderer(PermissionAssign)} />
-				<Route path="/admin/flightcontact" render={this.pageRenderer(FlightContact)} />
-				<Route path="/admin/squadroncontact" render={this.pageRenderer(FlightContact)} />
+				<Route path="/admin/regedit" render={this.pageRenderer(RegEdit)} exact={false} />
+				<Route
+					path="/admin/flightassign"
+					render={this.pageRenderer(FlightAssign)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/notifications"
+					render={this.pageRenderer(Notifications)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/permissions"
+					render={this.pageRenderer(PermissionAssign)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/flightcontact"
+					render={this.pageRenderer(FlightContact)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/squadroncontact"
+					render={this.pageRenderer(FlightContact)}
+					exact={false}
+				/>
 				<Route
 					path="/admin/tempdutypositions"
 					render={this.pageRenderer(TemporaryDutyPositions)}
+					exact={false}
 				/>
-				<Route path="/admin/emaillist" render={this.pageRenderer(EmailList)} />
-				<Route path="/admin/errorlist" render={this.pageRenderer(ErrorListPage)} />
+				<Route
+					path="/admin/emaillist"
+					render={this.pageRenderer(EmailList)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/errorlist"
+					render={this.pageRenderer(ErrorListPage)}
+					exact={false}
+				/>
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>
