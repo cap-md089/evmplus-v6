@@ -3,7 +3,7 @@ import conf from './conf';
 const conftest: typeof conf = {
 	production: false,
 	testing: true,
-	clientStorage: '/home/arioux/Desktop/react-capunit/client',
+	clientStorage: '/home/arioux/typescript-capunit/client',
 	database: {
 		connection: {
 			database: 'EventManagementTest',

@@ -38,7 +38,8 @@ export default class Registry implements DatabaseInterface<RegistryValues> {
 				MailingAddress: null,
 				MeetingAddress: null,
 				Twitter: null,
-				YouTube: null
+				YouTube: null,
+				Discord: null
 			},
 			Website: {
 				Name: '',

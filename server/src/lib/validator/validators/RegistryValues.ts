@@ -60,6 +60,10 @@ class ContactValidator extends Validator<WebsiteContact> {
 			YouTube: {
 				required: false,
 				validator: Validator.String
+			},
+			Discord: {
+				required: false,
+				validator: Validator.String
 			}
 		});
 	}
