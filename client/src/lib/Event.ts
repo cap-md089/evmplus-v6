@@ -630,8 +630,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		return false;
 	}
 
-	public getEventURL() {
-		return `/eventviewer/${this.id}-${this.name.toLocaleLowerCase().replace(/ /g, '-')}`;
+	public getEventURLComponent() {
+		return `${this.id}-${this.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 	}
 
 	public canSignUpForEvent(member?: MemberBase | null) {

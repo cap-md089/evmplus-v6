@@ -1,0 +1,15 @@
+@import '../../theme';
+
+input[type="text"].otherInput {
+	border: 0px solid $primary-color;
+	color:$primary-color;
+	border-bottom-width: 1px;
+	background-color: transparent;
+	border-radius: 0;
+	padding: 2px;
+	margin-left: 4px;
+
+	&:focus {
+		box-shadow: none;
+	}
+}

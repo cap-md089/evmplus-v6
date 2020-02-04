@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { BreadCrumb } from '../components/BreadCrumbs';
-import { SideNavigationItem } from '../components/SideNavigation';
+import { SideNavigationItem } from '../components/page-elements/SideNavigation';
 import Account from '../lib/Account';
 import MemberBase from '../lib/MemberBase';
 import Registry from '../lib/Registry';

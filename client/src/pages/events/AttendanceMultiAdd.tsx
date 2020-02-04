@@ -285,6 +285,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			return;
 		}
 
+		// this.updateURL(`/multiadd/${event.getEventURLComponent()}`);
+
 		if (!event.isPOC(this.props.member)) {
 			this.setState({
 				error: 403

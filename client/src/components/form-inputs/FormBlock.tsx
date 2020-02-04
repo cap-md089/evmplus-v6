@@ -134,7 +134,7 @@ export default class FormBlock<T extends object> extends React.Component<
 						}
 
 						if (isFullWidthableElement(child)) {
-							fullWidth = child.props.fullWidth;
+							fullWidth = !!child.props.fullWidth;
 						}
 						if (typeof fullWidth === 'undefined') {
 							fullWidth = false;
@@ -201,7 +201,7 @@ export default class FormBlock<T extends object> extends React.Component<
 					} else {
 						ret.unshift(
 							<div
-								className="formbox"
+								className="input-formbox"
 								style={{
 									height: 2
 								}}

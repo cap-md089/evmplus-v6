@@ -68,3 +68,26 @@
 .datetime-input-gui-parent {
 	position: relative;
 }
+
+input[type="date"], input[type="datetime"], input[type="time"], input[type="datetime-local"] {
+	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+	box-sizing: border-box;
+	border: 1px solid black;
+	border-radius: 10px;
+	padding: 5px;
+	color: #0b375b;
+	background: white;
+	z-index: 0;
+}
+
+input[type="date"]:focus, input[type="datetime"]:focus, input[type="time"]:focus, input[type="datetime-local"]:focus {
+	box-shadow: inset 0 0 1em #258eea;
+}
+
+input[type="date"]:disabled, input[type="datetime"]:disabled, input[type="time"]:disabled, input[type="datetime-local"]:disabled {
+	background: #aaa
+}
+
+input[class^="react-datepicker"] {
+	z-index: 0;
+}

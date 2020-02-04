@@ -26,6 +26,7 @@ import TeamMemberInput from '../form-inputs/TeamMemberInput';
 import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
+import './Form.scss';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
 
@@ -36,6 +37,12 @@ import('../form-inputs/TextArea').then(textArea => {
 const saveMessage = {
 	marginLeft: 10
 };
+
+const hiddenStyles = {
+	display: 'none'
+};
+
+export const defaultFullWidthElements = [FormBlock, TeamSelector];
 
 /**
  * Creates a label to be used in the form
@@ -55,7 +62,7 @@ class Label extends React.Component<{
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.style} id={this.props.id}>
+			<div className="label-formbox has-content" style={this.props.style} id={this.props.id}>
 				{this.props.children}
 			</div>
 		);
@@ -98,10 +105,8 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 			: '';
 
 		return (
-			<div className="formbar fheader" style={fullWidth}>
-				<div className="formbox header" style={fullWidth}>
-					<h3 id={id}>{this.props.children}</h3>
-				</div>
+			<div className="form-header" style={fullWidth}>
+				<h3 id={id}>{this.props.children}</h3>
 			</div>
 		);
 	}
@@ -128,7 +133,6 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === MultCheckbox ||
 		el.type === Checkbox ||
 		el.type === ListEditor ||
-		// @ts-ignore
 		el.type === FormBlock ||
 		el.type === SimpleRadioButton ||
 		el.type === TextBox ||
@@ -143,7 +147,6 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === TeamMemberInput ||
 		el.type === POCInput ||
 		el.type === Select ||
-		// @ts-ignore
 		el.type === FileInput ||
 		el.type === PermissionsEdit ||
 		el.type === ReCAPTCHAInput ||
@@ -151,13 +154,13 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 	);
 }
 
+export const isHideableElement = (
+	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>
+): el is React.ReactElement<InputProps<any>> => typeof el.props.hidden !== 'undefined';
+
 export const isFullWidthableElement = (
-	el:
-		| React.ReactElement<InputProps<any>>
-		| React.ReactElement<InputProps<any> & { fullWidth: boolean }>
-): el is React.ReactElement<InputProps<any> & { fullWidth: boolean }> =>
-	// @ts-ignore
-	typeof el.props.fullWidth !== 'undefined';
+	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>
+): el is React.ReactElement<InputProps<any>> => typeof el.props.fullWidth !== 'undefined';
 
 /**
  * Similar helper function
@@ -338,6 +341,7 @@ export default class SimpleForm<
 
 		return fieldsError;
 	}
+
 	protected get hasError(): boolean {
 		return (Object.values(this.fieldsError) as boolean[]).reduce(
 			(prev, curr) => prev || curr,
@@ -385,7 +389,7 @@ export default class SimpleForm<
 		};
 
 		return (
-			<form className="asyncForm">
+			<form className="form-async">
 				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (
 						typeof this.props.children === 'undefined' ||
@@ -395,6 +399,7 @@ export default class SimpleForm<
 					}
 					let ret;
 					let childFullWidth = false;
+					let hidden = false;
 					if (!isInput(child)) {
 						// This algorithm handles labels for inputs by handling inputs
 						// Puts out titles on their own line
@@ -404,6 +409,8 @@ export default class SimpleForm<
 						}
 						return;
 					} else {
+						hidden = isHideableElement(child) && !!child.props.hidden;
+
 						const childName: keyof C = child.props.name as keyof C;
 						const value =
 							typeof child.props.value !== 'undefined'
@@ -430,14 +437,14 @@ export default class SimpleForm<
 							this.fields[childName] = value;
 						}
 						if (isFullWidthableElement(child)) {
-							childFullWidth = child.props.fullWidth;
+							childFullWidth = !!child.props.fullWidth;
 						}
 						if (typeof childFullWidth === 'undefined') {
 							childFullWidth = false;
 						}
 
 						// @ts-ignore
-						if (child.type === FormBlock) {
+						if (defaultFullWidthElements.includes(child.type)) {
 							childFullWidth = true;
 						}
 
@@ -498,21 +505,19 @@ export default class SimpleForm<
 									);
 								}
 							}
-						} else {
-							ret.unshift(
-								<div
-									className="formbox"
-									style={{
-										height: 2
-									}}
-									key={i - 1}
-								/>
-							);
 						}
 					}
 
+					if (ret.length === 1 && !childFullWidth) {
+						ret.unshift(<div key={i - 1} className="label-formbox" />);
+					}
+
 					return (
-						<div key={i} className={`formbar${childFullWidth ? ' fullwidth' : ''}`}>
+						<div
+							key={i}
+							className={`formbar${childFullWidth ? ' fullwidth' : ''}`}
+							style={hidden ? hiddenStyles : undefined}
+						>
 							{ret}
 						</div>
 					);
@@ -523,17 +528,12 @@ export default class SimpleForm<
 					this.props.showSubmitButton
 				)) ? (
 					<div className="formbar">
-						<div
-							className="formbox"
-							style={{
-								height: '2px'
-							}}
-						/>
-						<div className="formbox">
+						<div className="label-formbox" />
+						<div className="input-formbox">
 							<input
 								type="submit"
 								value={submitInfo.text}
-								className={submitInfo.className}
+								className={`primaryButton ${submitInfo.className}`}
 								disabled={
 									(this.props.disableOnInvalid && this.hasError) ||
 									submitInfo.disabled
@@ -698,7 +698,7 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 					<input
 						type="submit"
 						value={submitInfo.text}
-						className={submitInfo.className}
+						className={`primaryButton ${submitInfo.className}`}
 						disabled={
 							(this.props.disableOnInvalid && this.hasError) || submitInfo.disabled
 						}

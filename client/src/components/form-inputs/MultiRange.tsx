@@ -114,7 +114,7 @@ export default class MultiRange extends React.Component<
 		const parsedHigh = (this.state.high / 100) * (max - min) + min;
 
 		return (
-			<div className="formbox">
+			<div className="input-formbox">
 				{this.props.leftDisplay ? (
 					<div className="multirange-leftdisplay">
 						{this.props.leftDisplay(parsedLow, parsedHigh)}

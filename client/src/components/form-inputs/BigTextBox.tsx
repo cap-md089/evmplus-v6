@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { TextInputProps } from './TextInput';
+import './BigTextBox.scss';
 
 export default class BigTextBox extends React.Component<TextInputProps> {
 	constructor(props: TextInputProps) {
@@ -18,7 +19,7 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 	public render() {
 		return (
 			<div
-				className="formbox"
+				className="input-formbox"
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '90%' : undefined,

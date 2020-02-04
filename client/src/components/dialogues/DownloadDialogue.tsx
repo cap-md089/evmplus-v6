@@ -77,10 +77,6 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			return null;
 		}
 
-		if (this.props.open === false) {
-			return null;
-		}
-
 		let selector;
 		const selectorProps = {
 			name: 'selector',
@@ -113,7 +109,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			);
 		}
 
-		return this.props.open ? (
+		return (
 			<Dialogue
 				open={this.props.open && this.state.values !== null}
 				displayButtons={DialogueButtons.OK_CANCEL}
@@ -125,7 +121,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			>
 				{selector}
 			</Dialogue>
-		) : null;
+		);
 	}
 
 	protected hasValue(value: T): boolean {

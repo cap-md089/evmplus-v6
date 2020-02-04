@@ -36,7 +36,7 @@ import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
-import { SideNavigationItem } from './SideNavigation';
+import { SideNavigationItem } from './page-elements/SideNavigation';
 
 const pages: Array<{
 	url: string;
@@ -335,22 +335,14 @@ interface PageRouterState {
 }
 
 class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
-	public state = {
-		loading: false,
-		previousHash: '',
-		previousPath: ''
-	};
-
 	constructor(props: PageRouterProps) {
 		super(props);
 
-		if (props.member) {
-			this.state = {
-				loading: false,
-				previousHash: '',
-				previousPath: ''
-			};
-		}
+		this.state = {
+			loading: false,
+			previousHash: props.location.hash,
+			previousPath: ''
+		};
 	}
 
 	public shouldComponentUpdate(nextProps: PageRouterProps, nextState: PageRouterState) {
@@ -362,7 +354,6 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			(this.props.registry === null && nextProps.registry !== null) ||
 			nextSID !== currentSID ||
 			nextProps.location.pathname !== this.props.location.pathname ||
-			nextProps.location.hash !== this.props.location.hash ||
 			(nextState.loading === false && this.state.loading === true);
 
 		return shouldUpdate;

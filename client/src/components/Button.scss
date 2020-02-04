@@ -1,0 +1,46 @@
+@import '../theme';
+
+%button {
+	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	line-height: 18px;
+	color: white;
+	text-transform: uppercase;
+	border: 0px;
+	border-radius: 8px;
+	padding: 10px 24px 8px 24px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: $secondary-color;
+		color: $h1-color;
+	}
+}
+
+.primaryButton {
+	@extend %button;
+
+	background: $primary-button-color;
+}
+
+.secondaryButton {
+	@extend %button;
+
+	background: $secondary-button-color;
+}
+
+.linkButton {
+	padding: 0;
+	color: $link-color;
+	cursor: pointer;
+	border: 0;
+	background: none;
+	text-align: left;
+	text-decoration: underline;
+	font-size: 14px;
+	line-height: 14px;
+
+	&:hover {
+		color: $secondary-color;
+	}
+}

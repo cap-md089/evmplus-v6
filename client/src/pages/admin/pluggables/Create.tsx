@@ -26,8 +26,12 @@ export class CreateWidget extends Page<CreateWidgetProps> {
 					(this.props.member instanceof CAPNHQMember &&
 						this.props.member.hasDutyPosition([
 							'Operations Officer',
+							'Squadron Activities Officer',
+							'Activities Officer',
 							'Cadet Operations Officer',
-							'Cadet Operations NCO'
+							'Cadet Operations NCO',
+							'Cadet Activities Officer',
+							'Cadet Activities NCO'
 						])) ? (
 						<>
 							<Link to="/addevent">Draft an event</Link>

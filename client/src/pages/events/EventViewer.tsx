@@ -154,7 +154,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		// With this uncommented, the page rerenders an extra time
 		// This causes there to be two web requests
 		// If this can be done without unmounting/remounting, that would be great
-		this.updateURL(eventInformation.value.event.getEventURL());
+		// this.updateURL(`/eventviewer/${eventInformation.value.event.getEventURLComponent()}`);
 
 		this.props.updateBreadCrumbs([
 			{
@@ -166,7 +166,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				text: 'Calendar'
 			},
 			{
-				target: eventInformation.value.event.getEventURL(),
+				target: eventInformation.value.event.getEventURLComponent(),
 				text: `View ${eventInformation.value.event.name}`
 			}
 		]);

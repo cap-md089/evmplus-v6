@@ -20,7 +20,7 @@ export class BreadCrumbsPresentation extends React.Component<
 > {
 	public render() {
 		return (
-			<div id="breadcrumbs">
+			<div className="breadcrumbs">
 				<ul>
 					{this.props.links.map((link, i) => {
 						if (i === 0) {

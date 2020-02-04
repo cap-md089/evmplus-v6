@@ -120,11 +120,6 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 	public componentDidMount() {
 		this.props.updateSideNav([
 			{
-				target: 'blog',
-				text: 'Blog',
-				type: 'Reference'
-			},
-			{
 				target: 'contact',
 				text: 'Contact',
 				type: 'Reference'

@@ -430,7 +430,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Event website</Label>
 				<TextInput name="eventWebsite" />
 
-				<Label>High adventure decsription</Label>
+				<Label>High adventure description</Label>
 				<TextInput name="highAdventureDescription" />
 
 				<Title>Logistics Information</Title>
@@ -452,12 +452,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Use registration deadline</Label>
 				<Checkbox name="useRegistration" />
 
-				<FormBlock
-					style={{
-						display: values.useRegistration ? 'block' : 'none'
-					}}
-					name="registration"
-				>
+				<FormBlock hidden={!values.useRegistration} name="registration">
 					<Label>Registration information</Label>
 					<TextInput name="information" />
 
@@ -481,12 +476,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Use participation fee</Label>
 				<Checkbox name="useParticipationFee" />
 
-				<FormBlock
-					style={{
-						display: values.useParticipationFee ? 'block' : 'none'
-					}}
-					name="participationFee"
-				>
+				<FormBlock hidden={!values.useParticipationFee} name="participationFee">
 					<Label>Participation fee</Label>
 					<NumberInput name="feeAmount" />
 

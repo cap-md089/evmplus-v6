@@ -1,0 +1,69 @@
+@import '../../theme';
+
+.form-async {
+	width: 100%;
+	margin: 0;
+	margin-bottom: 20px;
+	clear: both;
+
+	.form-header {
+		border-bottom: 2px solid $secondary-color;
+		height: 25px;
+		padding-left: 15px;
+		margin: 20px 0;
+	}
+
+	.formbar {
+		display: grid;
+		width: 100%;
+		margin: 0;
+		margin-bottom: 10px;
+		padding: 0;
+		grid-template-areas: "label input";
+		grid-template-columns: 220px auto;
+		min-height: 40px;
+
+		&.fullwidth {
+			grid-template-areas: "input";
+			grid-template-columns: auto;
+		}
+	}
+
+	.label-formbox {
+		grid-area: label;
+		padding-right: 10px;
+		box-sizing: border-box;
+	}
+
+	.input-formbox {
+		grid-area: input;
+		margin: 0;
+		padding: 0;
+	}
+
+	input[type="submit"]:disabled {
+		color: black;
+	}
+}
+
+@media (max-width: 1028px) {
+	.form-async {
+		.formbar {
+			grid-template-areas:
+				"label"
+				"input";
+			grid-template-columns: 100%;
+			grid-template-rows: min-content min-content;
+
+			&.fullwidth {
+				grid-template-areas: "input";
+				grid-template-rows: min-content;
+			}
+		}
+
+		.label-formbox.has-content {
+			border-bottom: 1px solid $normal-text-color;
+			margin-bottom: 10px;
+		}
+	}
+}

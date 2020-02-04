@@ -4,7 +4,7 @@ import { InputProps } from './Input';
 export default class DisabledText extends React.Component<InputProps<string>> {
 	public render() {
 		return (
-			<div className="formbox">
+			<div className="input-formbox">
 				<input
 					type="text"
 					value={this.props.value || ''}

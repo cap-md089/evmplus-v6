@@ -60,6 +60,8 @@ export interface InputProps<V> {
 	/**
 	 * Whether or not there is an error with this component
 	 *
+	 * Used by SimpleForm. Do not pass this value to an input
+	 *
 	 * Not all components implement this
 	 */
 	hasError?: boolean;
@@ -69,6 +71,14 @@ export interface InputProps<V> {
 	 * Not all components implement this
 	 */
 	errorMessage?: string;
+	/**
+	 * Whether or not SimpleForm should render this input
+	 */
+	hidden?: boolean;
+	/**
+	 * Whether or not the input takes up the whole row
+	 */
+	fullWidth?: boolean;
 }
 
 export interface NotOptionalInputProps<V> extends InputProps<V> {
