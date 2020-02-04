@@ -197,6 +197,13 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public attendance: AttendanceRecord[];
 
+	public googleCalendarIds: {
+		mainId: string;
+		wingId: string | null;
+		regId: string | null;
+		feeId: string | null;
+	};
+
 	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
 
@@ -246,6 +253,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		this.eventWebsite = data.eventWebsite;
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
+		this.googleCalendarIds = data.googleCalendarIds;
 	}
 
 	public toRaw(): EventObject {
@@ -295,7 +303,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			uniform: this.uniform,
 			wingEventNumber: this.wingEventNumber,
 			fileIDs: this.fileIDs,
-			attendance: this.attendance
+			attendance: this.attendance,
+			googleCalendarIds: this.googleCalendarIds
 		};
 	}
 

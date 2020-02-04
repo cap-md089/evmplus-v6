@@ -60,6 +60,12 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public adminIDs: MemberReference[];
 
+	public mainCalendarID: string;
+
+	public wingCalendarID: string;
+
+	public serviceAccount: string;
+
 	public echelon: boolean;
 
 	public expired: boolean;
@@ -86,6 +92,9 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		super(data.id);
 
 		this.adminIDs = data.adminIDs;
+		this.mainCalendarID = data.mainCalendarID;
+		this.wingCalendarID = data.wingCalendarID;
+		this.serviceAccount = data.serviceAccount;
 		this.echelon = data.echelon;
 		this.expired = data.expired;
 		this.expires = data.expires;
@@ -225,6 +234,9 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	public toRaw(): AccountObject {
 		return {
 			adminIDs: this.adminIDs,
+			mainCalendarID: this.mainCalendarID,
+			wingCalendarID: this.wingCalendarID,
+			serviceAccount: this.serviceAccount,
 			echelon: this.echelon,
 			expired: this.expired,
 			id: this.id,

@@ -5,7 +5,8 @@ import {
 	NewAttendanceRecord,
 	NHQMemberReference,
 	PointOfContactType,
-	ProspectiveMemberReference
+	ProspectiveMemberReference,
+	formatEventViewerDate as formatDate
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -39,21 +40,6 @@ interface EventViewerState {
 }
 
 type EventViewerProps = PageProps<{ id: string }>;
-
-const zeroPad = (n: number, a = 2) => ('00' + n).substr(-a);
-
-const formatDate = (date: number) => {
-	const dateObject = new Date(date);
-
-	const hour = dateObject.getHours();
-	const minute = dateObject.getMinutes();
-
-	const day = dateObject.getDate();
-	const month = dateObject.getMonth();
-	const year = dateObject.getFullYear();
-
-	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(month + 1)}/${zeroPad(day)}/${year}`;
-};
 
 const eventStatus = (stat: EventStatus): string =>
 	stat === EventStatus.COMPLETE
