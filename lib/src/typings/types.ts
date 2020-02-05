@@ -291,7 +291,8 @@ export enum CAPWATCHImportErrors {
 export enum AttendanceStatus {
 	COMMITTEDATTENDED,
 	NOSHOW,
-	RESCINDEDCOMMITMENTTOATTEND
+	RESCINDEDCOMMITMENTTOATTEND,
+	NOTPLANNINGTOATTEND
 }
 
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
@@ -565,6 +566,11 @@ export interface ErrorStack {
 	column: number;
 }
 
+export enum ErrorResolvedStatus {
+	UNRESOLVED = 1,
+	RESOLVED
+}
+
 export type ErrorType = 'Server' | 'Client';
 
 /**
@@ -586,7 +592,7 @@ export interface ErrorObject {
 	/**
 	 * If resolved, it does not display
 	 */
-	resolved: boolean;
+	resolved: ErrorResolvedStatus;
 	/**
 	 * TypeScript descriminator
 	 */
@@ -625,7 +631,7 @@ export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifia
 	/**
 	 * The payload that caused the error for the API path
 	 */
-	payload: any;
+	payload: string;
 	/**
 	 * Account ID of page where error occurred
 	 */
@@ -1087,6 +1093,10 @@ export interface NewEventObject {
 	 * Files that may be associated with the event; e.g. forms
 	 */
 	fileIDs: string[];
+	/**
+	 * Whether or not attendance view should be displayed to all members or only to Managers and POCs
+	 */
+	privateAttendance: boolean;
 }
 
 /**
@@ -1105,10 +1115,6 @@ export interface NewAttendanceRecord {
 	 * If they plan to use transportation provided
 	 */
 	planToUseCAPTransportation: boolean;
-	/**
-	 * Whether or not PAOs can use the photos of the attendee
-	 */
-	canUsePhotos: boolean;
 
 	// If these are undefined, they are staying for the whole event
 	/**
@@ -2234,6 +2240,10 @@ export interface WebsiteContact {
 	 * ditto Flickr
 	 */
 	Flickr: null | string;
+	/**
+	 * Invite link for a Discord server
+	 */
+	Discord: null | string;
 	/**
 	 * This is the place where normal meetings take place
 	 *

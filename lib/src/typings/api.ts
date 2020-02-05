@@ -5,8 +5,8 @@ import {
 	AttendanceRecord,
 	CAPMemberObject,
 	CAPWATCHImportUpdate,
-	ClientErrorObject,
 	DebriefItem,
+	Errors,
 	EventObject,
 	FileObject,
 	FullFileObject,
@@ -40,7 +40,11 @@ export namespace api {
 	}
 
 	export namespace errors {
-		export type ClientError = EitherObj<HTTPError, ClientErrorObject>;
+		export type ClientError = EitherObj<HTTPError, void>;
+
+		export type GetErrors = EitherObj<HTTPError, Errors[]>;
+
+		export type MarkErrorAsDone = EitherObj<HTTPError, void>;
 	}
 
 	export namespace events {

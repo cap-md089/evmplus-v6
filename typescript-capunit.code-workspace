@@ -11,10 +11,14 @@
 		{
 			"path": "lib",
 			"name": "Common"
+		},
+		{
+			"path": "discord-bot",
+			"name": "Discord Bot"
 		}
 	],
 	"settings": {
-		"typescript.tsdk": "Common/node_modules/typescript/lib"
+		"typescript.tsdk": "Server/node_modules/typescript/lib"
 	},
 	"launch": {
 		"compounds": [
