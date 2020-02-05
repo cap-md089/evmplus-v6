@@ -13,7 +13,10 @@
 			"skipFiles": [
 				"node_modules/**/*.js",
 				"<node_internals>/**/*.js"
-			]
+			],
+			"env": {
+				"NODE_ENV": "development"
+			}
 		},
 		{
 			"type": "node",
@@ -42,7 +45,10 @@
 				"node_modules/**/*.js",
 				"async_hooks.js",
 				"inspector_async_hook.js"
-			]
+			],
+			"env": {
+				"NODE_ENV": "development"
+			}
 		},
 		{
 			"type": "node",
@@ -75,7 +81,10 @@
 				"node_modules/**/*.js",
 				"async_hooks.js",
 				"inspector_async_hook.js"
-			]
+			],
+			"env": {
+				"NODE_ENV": "development"
+			}
 		},
 		{
 			"type": "node",

@@ -13,11 +13,6 @@ export default class NewAttendanceRecordValidator extends Validator<NewAttendanc
 			status: {
 				validator: Validator.Enum(AttendanceStatus)
 			},
-
-			canUsePhotos: {
-				validator: Validator.Boolean
-			},
-
 			memberID: {
 				required: false,
 				validator: Validator.MemberReference

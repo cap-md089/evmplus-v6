@@ -66,23 +66,23 @@ export type PartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberR
 export type PartialConditionalMemberValidatedRequest<
 	T,
 	P extends ParamType = {}
-> = ConditionalMemberRequest<P, Partial<T>>;
+> = BasicConditionalMemberRequest<P, Partial<T>>;
 
-export type BasicSimpleValidatedRequest<T, P extends ParamType = {}> = AccountRequest<P, T>;
+export type BasicSimpleValidatedRequest<T, P extends ParamType = {}> = BasicAccountRequest<P, T>;
 
-export type BasicMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<P, T>;
+export type BasicMemberValidatedRequest<T, P extends ParamType = {}> = BasicMemberRequest<P, T>;
 
 export type BasicConditionalMemberValidatedRequest<
 	T,
 	P extends ParamType = {}
-> = ConditionalMemberRequest<P, T>;
+> = BasicConditionalMemberRequest<P, T>;
 
-export type BasicPartialValidatedRequest<T, P extends ParamType = {}> = AccountRequest<
+export type BasicPartialValidatedRequest<T, P extends ParamType = {}> = BasicAccountRequest<
 	P,
 	Partial<T>
 >;
 
-export type BasicPartialMemberValidatedRequest<T, P extends ParamType = {}> = MemberRequest<
+export type BasicPartialMemberValidatedRequest<T, P extends ParamType = {}> = BasicMemberRequest<
 	P,
 	Partial<T>
 >;
@@ -90,7 +90,7 @@ export type BasicPartialMemberValidatedRequest<T, P extends ParamType = {}> = Me
 export type BasicPartialConditionalMemberValidatedRequest<
 	T,
 	P extends ParamType = {}
-> = ConditionalMemberRequest<P, Partial<T>>;
+> = BasicConditionalMemberRequest<P, Partial<T>>;
 
 export default class Validator<T> {
 	public static BodyExpressMiddleware = (
@@ -721,6 +721,9 @@ export default class Validator<T> {
 
 	public constructor(rules: ValidateRuleSet<T>) {
 		this.rules = rules;
+
+		this.transform = this.transform.bind(this);
+		this.partialTransform = this.partialTransform.bind(this);
 	}
 
 	public validate(obj: any, partial?: false): obj is T;
@@ -913,31 +916,9 @@ export default class Validator<T> {
 		}
 	};
 
-	public transform<R extends BasicMemberRequest>(
-		req: R
-	): AsyncEither<
-		api.ServerError,
-		BasicMemberValidatedRequest<T, R extends BasicMemberRequest<infer P> ? P : never>
-	>;
-	public transform<R extends BasicConditionalMemberRequest>(
-		req: R
-	): AsyncEither<
-		api.ServerError,
-		BasicConditionalMemberValidatedRequest<
-			T,
-			R extends BasicConditionalMemberRequest<infer P> ? P : never
-		>
-	>;
 	public transform<R extends BasicAccountRequest>(
 		req: R
-	): AsyncEither<
-		api.ServerError,
-		BasicSimpleValidatedRequest<T, R extends BasicAccountRequest<infer P> ? P : never>
-	>;
-
-	public transform<R extends BasicAccountRequest>(
-		req: R
-	): AsyncEither<api.ServerError, R & BasicSimpleValidatedRequest<T>> {
+	): AsyncEither<api.ServerError, R & { body: T }> {
 		return asyncRight(req, serverErrorGenerator('Could not validate body'))
 			.flatMap<R>(r =>
 				r.body === undefined || r.body === null

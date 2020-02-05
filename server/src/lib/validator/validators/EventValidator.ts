@@ -349,6 +349,9 @@ export default class EventValidator extends Validator<NewEventObject> {
 			},
 			wingEventNumber: {
 				validator: Validator.RadioReturn(EchelonEventNumber)
+			},
+			privateAttendance: {
+				validator: Validator.Boolean
 			}
 		});
 	}

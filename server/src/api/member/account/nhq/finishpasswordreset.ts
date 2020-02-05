@@ -5,6 +5,7 @@ import {
 	createSessionForUser,
 	getInformationForUser,
 	removePasswordValidationToken,
+	Session,
 	validatePasswordResetToken,
 	Validator
 } from '../../../../lib/internals';
@@ -73,16 +74,19 @@ export default asyncEitherHandler2<api.member.account.cap.FinishPasswordReset>(r
 					removePasswordValidationToken(req.mysqlx, req.body.token).map(() => username)
 				)
 				.map(username => getInformationForUser(req.mysqlx, username))
-				.flatMap(account =>
-					createSessionForUser(req.mysqlx, account).leftMap(
-						memberError => ({
-							error: none<Error>(),
-							code: 400,
-							message: memberCreateErrorMessages[memberError]
-						}),
-						serverErrorGenerator('Could not get session')
+				.map(account =>
+					createSessionForUser(req.mysqlx, account).cata(
+						memberError =>
+							asyncLeft<api.ServerError, Session>({
+								error: none<Error>(),
+								code: 400,
+								message: memberCreateErrorMessages[memberError]
+							}),
+						session =>
+							asyncRight(session, serverErrorGenerator('Could not get session'))
 					)
 				)
+				.flatMap(i => i)
 		)
 		.map(session => ({
 			sessionID: session.sessionID

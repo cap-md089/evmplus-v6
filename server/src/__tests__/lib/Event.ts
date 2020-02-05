@@ -99,8 +99,7 @@ describe('Event', () => {
 				comments: '',
 				departureTime: null,
 				planToUseCAPTransportation: false,
-				status: 0,
-				canUsePhotos: true
+				status: 0
 			},
 			mem
 		);
@@ -116,8 +115,7 @@ describe('Event', () => {
 				comments: 'new record',
 				departureTime: null,
 				planToUseCAPTransportation: true,
-				status: 0,
-				canUsePhotos: true
+				status: 0
 			},
 			mem
 		);
@@ -364,7 +362,6 @@ describe('Event', () => {
 					status: AttendanceStatus.COMMITTEDATTENDED,
 					arrivalTime: null,
 					departureTime: null,
-					canUsePhotos: false,
 					planToUseCAPTransportation: false,
 					memberID: rioux.getReference()
 				},

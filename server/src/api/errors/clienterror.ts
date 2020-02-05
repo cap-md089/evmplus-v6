@@ -2,6 +2,8 @@ import {
 	api,
 	ClientErrorObject,
 	ErrorObject,
+	ErrorResolvedStatus,
+	Errors,
 	left,
 	NewClientErrorObject,
 	none,
@@ -44,7 +46,7 @@ export default asyncEitherHandler<api.errors.ClientError>(
 
 		console.error('Client error!', info.message);
 
-		const errorCollection = req.mysqlx.getCollection<ClientErrorObject>('ClientErrors');
+		const errorCollection = req.mysqlx.getCollection<Errors>('Errors');
 		let id = 0;
 
 		// Get the ID for the new error
@@ -72,7 +74,7 @@ export default asyncEitherHandler<api.errors.ClientError>(
 					line: item.line,
 					column: item.column
 				})),
-				resolved: false,
+				resolved: ErrorResolvedStatus.UNRESOLVED,
 				message: info.message,
 				timestamp: Date.now(),
 				user: req.member ? req.member.getReference() : null
@@ -80,7 +82,7 @@ export default asyncEitherHandler<api.errors.ClientError>(
 
 			await errorCollection.add(errorObject).execute();
 
-			return right(errorObject);
+			return right(void 0);
 		}
 	}
 );

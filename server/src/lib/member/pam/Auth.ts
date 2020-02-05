@@ -34,7 +34,7 @@ export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
 
 // Client side key is 6LfHMcIUAAAAAJFL5xb0RkgUdc3DcDhTmmdSMYml
 const captchaSecret =
-	process.env.NODE_ENV === 'test'
+	process.env.NODE_ENV === 'development'
 		? '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 		: '6LfHMcIUAAAAABw78xmjBJo4guKn0HAOMafh5Nmx';
 
