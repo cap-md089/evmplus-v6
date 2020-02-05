@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 
 import $ from 'jquery';
 
-import './Dialogue.css';
+import './Dialogue.scss';
 
 export interface DialogueWithOK {
 	open: boolean;
@@ -74,99 +74,39 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 		open: false
 	};
 
-	private mainDiv: HTMLDivElement | null = null;
+	private mainDiv = React.createRef<HTMLDivElement>();
+	private cover = React.createRef<HTMLDivElement>();
 
 	public componentDidMount() {
-		if (this.mainDiv) {
-			const div: JQuery = $(this.mainDiv).css({
-				zIndex: 5010,
-				position: 'fixed'
+		if (this.mainDiv.current) {
+			$(this.mainDiv.current).css({
+				opacity: 0
 			});
-
-			const mobile = $('body').hasClass('mobile');
-
-			if (!mobile) {
-				div.css({
-					'left': '50%',
-					'top': '50%',
-					'margin-left'() {
-						return -($(this).outerWidth() as number) / 2;
-					},
-					'margin-top'() {
-						return -($(this).outerHeight() as number) / 2;
-					}
-				});
-			} else {
-				div.css({
-					left: 0,
-					top: 0,
-					right: 0,
-					bottom: 0
-				});
-			}
 		}
+
+		this.displayDialogue();
 	}
 
 	public componentDidUpdate() {
-		if (this.mainDiv) {
-			const div = $(this.mainDiv);
-
-			if (div.find('input[type=text]')[0]) {
-				div.find('input[type=text]')[0].focus();
-			}
-
-			// if (this.props.open && !this.state.open) {
-			// 	div.animate(
-			// 		{
-			// 			opacity: 1
-			// 		},
-			// 		250,
-			// 		'swing'
-			// 	);
-			// 	this.setState({
-			// 		open: true
-			// 	});
-			// } else if (!this.props.open && this.state.open) {
-			// 	div.animate(
-			// 		{
-			// 			opacity: 0
-			// 		},
-			// 		250,
-			// 		'swing',
-			// 		() => {
-			// 			this.setState({
-			// 				open: false
-			// 			});
-			// 		}
-			// 	);
-			// }
-		}
+		this.displayDialogue();
 	}
 
 	public render() {
 		return createPortal(
 			<div
-				id="cover"
+				className="cover"
 				style={{
-					top: 0,
-					bottom: 0,
-					left: 0,
-					right: 0,
-					position: 'fixed',
-					zIndex: this.props.open ? 5010 : -5010,
-					display: 'block',
-					backgroundColor: 'rgba(0, 0, 0, 0.5)'
+					display: this.state.open ? 'flex' : 'none'
 				}}
 				onClick={() => {
 					this.props.onClose();
 				}}
+				ref={this.cover}
 			>
 				<div
-					ref={(el: HTMLDivElement) => {
-						this.mainDiv = el as HTMLDivElement;
-					}}
-					id="alert_box"
-					key="main_alert"
+					ref={this.mainDiv}
+					className="alert-box"
+					key="main-alert"
 					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
 				>
 					{this.props.title ? <h2>{this.props.title}</h2> : null}
@@ -211,7 +151,6 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 									float: 'right'
 								}}
 								className="primaryButton"
-								id="ok"
 								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
 									e.preventDefault();
 									this.props.onClose();
@@ -287,5 +226,60 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			</div>,
 			document.getElementById('dialogue-box') as HTMLElement
 		);
+	}
+
+	private displayDialogue() {
+		if (this.mainDiv.current) {
+			const div = $(this.mainDiv.current);
+			const cover = $(this.cover.current!);
+
+			const firstInput = div.find('input[type=text]')[0];
+			if (
+				firstInput &&
+				!firstInput.classList.contains('react-datepicker-ignore-onclickoutside')
+			) {
+				firstInput.focus();
+			}
+
+			if (this.props.open && !this.state.open) {
+				div.animate(
+					{
+						opacity: 1
+					},
+					250,
+					'swing'
+				);
+				cover.animate(
+					{
+						opacity: 1
+					},
+					250,
+					'swing'
+				);
+				this.setState({
+					open: true
+				});
+			} else if (!this.props.open && this.state.open) {
+				div.animate(
+					{
+						opacity: 0
+					},
+					150,
+					'swing',
+					() => {
+						this.setState({
+							open: false
+						});
+					}
+				);
+				cover.animate(
+					{
+						opacity: 0
+					},
+					150,
+					'swing'
+				);
+			}
+		}
 	}
 }

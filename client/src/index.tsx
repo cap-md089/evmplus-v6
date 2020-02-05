@@ -7,7 +7,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import 'regenerator-runtime/runtime';
 import App from './App';
 import './lib/MemberBase';
-import './nhq.css';
+import './_theme.scss';
 
 ReactDOM.render(
 	<Router>

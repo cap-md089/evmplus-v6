@@ -10,7 +10,7 @@ export default class TextBox extends React.Component<TextBoxProps> {
 	public render() {
 		return (
 			<div
-				className="formbox"
+				className="input-formbox"
 				style={{ lineHeight: 'initial', paddingTop: 2, paddingBottom: 5 }}
 			>
 				{this.props.children}

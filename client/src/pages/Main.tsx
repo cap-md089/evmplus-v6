@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
 import { Uniforms } from '../components/forms/usable-forms/EventForm';
 import Loader from '../components/Loader';
-import { SideNavigationItem } from '../components/SideNavigation';
+import { SideNavigationItem } from '../components/page-elements/SideNavigation';
 import Event from '../lib/Event';
 import Page, { PageProps } from './Page';
 
@@ -100,7 +100,9 @@ export default class Main extends Page<PageProps, MainState> {
 										false
 									)}
 									<br />
-									<Link to={this.state.nextEvent.getEventURL()}>
+									<Link
+										to={`/eventviewer/${this.state.nextEvent.getEventURLComponent()}`}
+									>
 										View details
 									</Link>
 								</>
@@ -138,7 +140,9 @@ export default class Main extends Page<PageProps, MainState> {
 													month: 'long'
 												})}
 											</strong>{' '}
-											<Link to={ev.getEventURL()}>{ev.name}</Link>{' '}
+											<Link to={`/eventviewer/${ev.getEventURLComponent()}`}>
+												{ev.name}
+											</Link>{' '}
 											<strong>!! Cancelled !!</strong>
 										</span>
 									) : (
@@ -151,7 +155,9 @@ export default class Main extends Page<PageProps, MainState> {
 													month: 'long'
 												})}
 											</strong>{' '}
-											<Link to={ev.getEventURL()}>{ev.name}</Link>
+											<Link to={`/eventviewer/${ev.getEventURLComponent()}`}>
+												{ev.name}
+											</Link>
 										</span>
 									)}
 								</div>

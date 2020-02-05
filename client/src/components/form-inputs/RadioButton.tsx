@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 import { RadioReturn } from 'common-lib';
+import './RadioButton.scss';
 
 export interface RadioProps<E extends number = number> extends InputProps<RadioReturn<E>> {
 	labels: string[];
@@ -26,10 +27,10 @@ export default class RadioButton<E extends number = number> extends React.Compon
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
-				<section className="radioDiv">
+			<div className="input-formbox" style={this.props.boxStyles}>
+				<section className="radio-group-container">
 					{this.props.labels.map((label, i) => (
-						<div className="roundedTwo" key={i}>
+						<div className="radio-button-container" key={i}>
 							<input
 								id={`${this.props.name}-${i}`}
 								type="radio"
@@ -42,7 +43,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 						</div>
 					))}
 					{this.props.other ? (
-						<div className="roundedTwo">
+						<div className="radio-button-container">
 							<input
 								id={this.props.name + '-' + this.props.labels.length}
 								type="radio"

@@ -29,6 +29,7 @@ interface AttendanceFormProps {
 	updateRecord: (record: NewAttendanceRecord, member: MemberReference) => void;
 	removeRecord: (record: AttendanceRecord) => void;
 	updated: boolean;
+	signup: boolean;
 	clearUpdated: () => void;
 }
 
@@ -50,7 +51,6 @@ export default class AttendanceForm extends React.Component<
 			this.state = {
 				attendance: {
 					arrivalTime: props.record.arrivalTime,
-					canUsePhotos: props.record.canUsePhotos,
 					comments: props.record.comments,
 					departureTime: props.record.departureTime,
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
@@ -62,7 +62,6 @@ export default class AttendanceForm extends React.Component<
 			this.state = {
 				attendance: {
 					arrivalTime: null,
-					canUsePhotos: true,
 					comments: '',
 					departureTime: null,
 					planToUseCAPTransportation: false,
@@ -78,11 +77,9 @@ export default class AttendanceForm extends React.Component<
 	}
 
 	public render() {
-		// Can use part time
-		const cupt = this.props.event.signUpPartTime;
+		const canUsePartTime = this.props.event.signUpPartTime;
 
-		// Use part time
-		const upt = cupt && this.state.usePartTime;
+		const usePartTime = canUsePartTime && this.state.usePartTime;
 
 		const eventLength = this.props.event.pickupDateTime - this.props.event.meetDateTime;
 
@@ -129,10 +126,10 @@ export default class AttendanceForm extends React.Component<
 					<Checkbox key="2" name="planToUseCAPTransportation" />
 				) : null}
 
-				{cupt ? <Label>Sign up part time?</Label> : null}
-				{cupt ? <Checkbox name="usePartTime" /> : null}
+				{canUsePartTime ? <Label>Sign up part time?</Label> : null}
+				{canUsePartTime ? <Checkbox name="usePartTime" /> : null}
 
-				{upt ? (
+				{usePartTime ? (
 					<TextBox name="null">
 						<div className="partTimeSignupDisplay">
 							<div
@@ -161,8 +158,8 @@ export default class AttendanceForm extends React.Component<
 						</div>
 					</TextBox>
 				) : null}
-				{upt ? <Label>Arrival time</Label> : null}
-				{upt ? (
+				{usePartTime ? <Label>Arrival time</Label> : null}
+				{usePartTime ? (
 					<DateTimeInput
 						name="arrivalTime"
 						time={true}
@@ -170,8 +167,8 @@ export default class AttendanceForm extends React.Component<
 					/>
 				) : null}
 
-				{upt ? <Label>Departure time</Label> : null}
-				{upt ? (
+				{usePartTime ? <Label>Departure time</Label> : null}
+				{usePartTime ? (
 					<DateTimeInput
 						name="departureTime"
 						time={true}
@@ -179,16 +176,18 @@ export default class AttendanceForm extends React.Component<
 					/>
 				) : null}
 
-				<Label>Can your photo be used on social media to promote Civil Air Patrol?</Label>
-				<Checkbox name="canUsePhotos" />
-
-				{!!this.props.record ? <Label>Attendance status</Label> : null}
+				<Label>Attendance status</Label>
 				{!!this.props.record ? (
 					<SimpleRadioButton<AttendanceStatus>
 						name="status"
 						labels={attendanceStatusLabels}
 					/>
-				) : null}
+				) : (
+					<SimpleRadioButton<AttendanceStatus>
+						name="status"
+						labels={['I will attend', 'I will NOT attend']}
+					/>
+				)}
 
 				{!!this.props.record && this.props.member.isPOCOf(this.props.event) ? (
 					<TextBox name="null">
@@ -219,8 +218,9 @@ export default class AttendanceForm extends React.Component<
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
 				status: this.props.record
 					? attendanceSignup.status
-					: AttendanceStatus.COMMITTEDATTENDED,
-				canUsePhotos: attendanceSignup.canUsePhotos
+					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
+					? AttendanceStatus.COMMITTEDATTENDED
+					: AttendanceStatus.NOTPLANNINGTOATTEND
 			},
 			usePartTime: attendanceSignup.usePartTime
 		});
@@ -255,8 +255,9 @@ export default class AttendanceForm extends React.Component<
 				: false,
 			status: this.props.record
 				? attendanceSignup.status
-				: AttendanceStatus.COMMITTEDATTENDED,
-			canUsePhotos: attendanceSignup.canUsePhotos
+				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
+				? AttendanceStatus.COMMITTEDATTENDED
+				: AttendanceStatus.NOTPLANNINGTOATTEND
 		};
 
 		if (this.props.record) {

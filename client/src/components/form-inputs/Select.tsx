@@ -24,7 +24,7 @@ export default class Select<E extends number = number> extends React.Component<S
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
+			<div className="input-formbox" style={this.props.boxStyles}>
 				<select
 					className="select"
 					value={(typeof this.props.value === 'undefined'

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { InputProps } from './Input';
+import './Checkbox.scss';
 
 interface CheckboxState {
 	value: boolean;
@@ -32,7 +33,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
+			<div className="input-formbox" style={this.props.boxStyles}>
 				<div className="checkboxDiv">
 					<input
 						type="checkbox"

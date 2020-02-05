@@ -144,7 +144,8 @@ export const emptyEvent = (): NewEventObject => ({
 	signUpPartTime: false,
 	teamID: null,
 	limitSignupsToTeam: false,
-	fileIDs: []
+	fileIDs: [],
+	privateAttendance: false
 });
 
 const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
@@ -193,7 +194,8 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
 	wingEventNumber: event.wingEventNumber,
-	limitSignupsToTeam: event.limitSignupsToTeam
+	limitSignupsToTeam: event.limitSignupsToTeam,
+	privateAttendance: event.privateAttendance
 });
 
 const convertFormValuesToEvent = (event: NewEventFormValues) => ({
@@ -241,7 +243,8 @@ const convertFormValuesToEvent = (event: NewEventFormValues) => ({
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber
+	wingEventNumber: event.wingEventNumber,
+	privateAttendance: event.privateAttendance
 });
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -285,7 +288,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			transportationDescription: false,
 			transportationProvided: false,
 			uniform: false,
-			wingEventNumber: false
+			wingEventNumber: false,
+			privateAttendance: false
 		},
 		errors: {
 			acceptSignups: false,
@@ -325,7 +329,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			transportationDescription: false,
 			transportationProvided: false,
 			uniform: false,
-			wingEventNumber: false
+			wingEventNumber: false,
+			privateAttendance: false
 		}
 	};
 
@@ -425,7 +430,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Event website</Label>
 				<TextInput name="eventWebsite" />
 
-				<Label>High adventure decsription</Label>
+				<Label>High adventure description</Label>
 				<TextInput name="highAdventureDescription" />
 
 				<Title>Logistics Information</Title>
@@ -447,12 +452,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Use registration deadline</Label>
 				<Checkbox name="useRegistration" />
 
-				<FormBlock
-					style={{
-						display: values.useRegistration ? 'block' : 'none'
-					}}
-					name="registration"
-				>
+				<FormBlock hidden={!values.useRegistration} name="registration">
 					<Label>Registration information</Label>
 					<TextInput name="information" />
 
@@ -476,12 +476,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Use participation fee</Label>
 				<Checkbox name="useParticipationFee" />
 
-				<FormBlock
-					style={{
-						display: values.useParticipationFee ? 'block' : 'none'
-					}}
-					name="participationFee"
-				>
+				<FormBlock hidden={!values.useParticipationFee} name="participationFee">
 					<Label>Participation fee</Label>
 					<NumberInput name="feeAmount" />
 

@@ -107,7 +107,7 @@ export default class DateTimeInput extends React.Component<
 		const sameTimezone = currentZone === this.props.originalTimeZoneOffset;
 
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
+			<div className="input-formbox" style={this.props.boxStyles}>
 				<ReactDatePicker
 					onChange={this.onChange}
 					selected={new Date(+start)}

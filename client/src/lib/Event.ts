@@ -16,7 +16,11 @@ import {
 	PointOfContactType,
 	RadioReturn,
 	right,
-	left
+	left,
+	Maybe,
+	Member,
+	fromValue,
+	maybe
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -94,6 +98,32 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			r => Promise.reject(r.message),
 			e => Promise.resolve(new Event(e, account!))
 		);
+	}
+
+	public static async EventViewerGet(id: number, member?: MemberBase | null, account?: Account) {
+		if (!account) {
+			account = await Account.Get();
+		}
+
+		const result = await account.fetch(`/api/event/${id}/viewer`, {}, member);
+
+		const eventData = either((await result.json()) as api.events.events.GetEventViewerData);
+
+		return eventData.map(data => {
+			const attendees: { [key: string]: Maybe<Member> } = {};
+
+			for (const attendee in data.attendees) {
+				if (data.attendees.hasOwnProperty(attendee)) {
+					attendees[attendee] = maybe(data.attendees[attendee]);
+				}
+			}
+
+			return {
+				organizations: data.organizations,
+				event: new Event(data.event, account!),
+				attendees
+			};
+		});
 	}
 
 	public id: number;
@@ -204,6 +234,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		feeId: string | null;
 	};
 
+	public privateAttendance: boolean;
+
 	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
 
@@ -254,6 +286,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
 		this.googleCalendarIds = data.googleCalendarIds;
+		this.privateAttendance = data.privateAttendance;
 	}
 
 	public toRaw(): EventObject {
@@ -304,7 +337,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			wingEventNumber: this.wingEventNumber,
 			fileIDs: this.fileIDs,
 			attendance: this.attendance,
-			googleCalendarIds: this.googleCalendarIds
+			googleCalendarIds: this.googleCalendarIds,
+			privateAttendance: this.privateAttendance
 		};
 	}
 
@@ -559,7 +593,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 							poc.memberReference
 						)
 				)
-				.reduce((prev, curr) => prev || curr)
+				.reduce((prev, curr) => prev || curr, false)
 		);
 	}
 
@@ -605,14 +639,14 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		return false;
 	}
 
-	public getEventURL() {
-		return `/eventviewer/${this.id}-${this.name.toLocaleLowerCase().replace(/ /g, '-')}`;
+	public getEventURLComponent() {
+		return `${this.id}-${this.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 	}
 
 	public canSignUpForEvent(member?: MemberBase | null) {
 		return right<string, void>(void 0)
 			.flatMap(v =>
-				member
+				!!member
 					? right(member)
 					: left<string, MemberBase>('Cannot sign up without being signed in')
 			)
@@ -620,6 +654,13 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 				this.attendance.filter(val => v.matchesReference(val.memberID)).length === 0
 					? right(v)
 					: left<string, MemberBase>('Member is already in attendance')
+			)
+			.flatMap(v =>
+				this.acceptSignups
+					? right(v)
+					: left<string, MemberBase>(
+							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
+					  )
 			)
 			.flatMap(v =>
 				this.teamID !== null && this.limitSignupsToTeam
@@ -636,13 +677,6 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 								'Cannot sign up for event after the event deadline'
 						  )
 					: right(v)
-			)
-			.flatMap(v =>
-				this.acceptSignups
-					? right(v)
-					: left<string, MemberBase>(
-							this.signUpDenyMessage || 'Sign ups are not allowed for this event'
-					  )
 			)
 			.map(() => void 0);
 	}

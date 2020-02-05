@@ -1,38 +1,38 @@
-.calendar tbody, .calendar {
+.calendar-desktop tbody, .calendar-desktop {
 	width: 100%;
 	box-sizing: border-box;
 	table-layout: fixed;
 }
 
-.calendar table, .calendar caption {
+.calendar-desktop table, .calendar-desktop caption {
 	width: 100%;
 	border: 1px solid black;
 	border-collapse: collapse;
 	box-sizing: border-box;
 }
 
-.calendar caption {
+.calendar-desktop caption {
 	padding: 5px;
 	font-size: 1.2em;
 }
 
-.calendar caption {
+.calendar-desktop caption {
 	border-bottom-width: 0;
 }
 
-.calendar .left-link {
+.calendar-desktop .left-link {
 	float: left;
 	font-size: 0.8333em;
 	margin-left: 10px;
 }
 
-.calendar .right-link {
+.calendar-desktop .right-link {
 	float: right;
 	font-size: 0.8333em;
 	margin-right: 10px;
 }
 
-.calendar tbody td, .calendar tbody th {
+.calendar-desktop tbody td, .calendar-desktop tbody th {
 	border: 1px solid black;
 	width: 14.28%;
 	border-collapse: collapse;
@@ -42,25 +42,25 @@
 	vertical-align: top;
 }
 
-.calendar td.calendar-outmonth .date-name {
+.calendar-desktop td.calendar-outmonth .date-name {
 	color: gray;
 }
 
-.calendar .date-name {
+.calendar-desktop .date-name {
 	box-sizing: border-box;
 	padding: 2px;
 	margin: 0;
 	border-bottom: 1px solid black;
 }
 
-.calendar .events-list {
+.calendar-desktop .events-list {
 	box-sizing: border-box;
 	padding: 0;
 	margin: 0;
 	min-height: 100px;
 }
 
-.calendar .events-list .event-item {
+.calendar-desktop .events-list .event-item {
 	box-sizing: border-box;
 	width: calc(100% - 2.5px);
 	margin: 0px;
@@ -91,7 +91,7 @@
 	border: 2px solid rgba(0,0,0,0);
 }
 
-.calendar .event-item.mergeRight {
+.calendar-desktop .event-item.mergeRight {
 	border-top-right-radius: 0px;
 	border-bottom-right-radius: 0px;
 	margin-right: 0;
@@ -99,7 +99,7 @@
 	border-right-width: 0;
 }
 
-.calendar .event-item.mergeLeft {
+.calendar-desktop .event-item.mergeLeft {
 	border-top-left-radius: 0px;
 	border-bottom-left-radius: 0px;
 	margin-left: 0;
@@ -108,55 +108,17 @@
 	border-left-width: 0;
 }
 
-.calendar .event-item.mergeLeft.mergeRight {
+.calendar-desktop .event-item.mergeLeft.mergeRight {
 	width: 100%;
 }
 
-.calendar .event-link {
+.calendar-desktop .event-link {
 	box-sizing: border-box;
 	padding: 0;
 	margin: 0;
 	text-decoration: none;
 }
 
-.calendar .event-item.first-event-name {
+.calendar-desktop .event-item.first-event-name {
 	padding-left: 5px;
-}
-
-.calendar .events-list .event-item.draft {
-	background-color: #151;
-	background-image: repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px);
-	border-color: #131;
-	color: #FFF;
-}
-
-.calendar .events-list .event-item.team {
-	background-color: #51B749;
-	border-color: #113;
-	color: #FFF;
-}
-
-.calendar .events-list .event-item.draft.team {
-	background-color: #7AE7BF;
-	background-image: repeating-linear-gradient(-45deg, #51B749, #51B749 10px, #55da5e 10px, #55da5e 20px);
-	color: #000;
-}
-
-.calendar .events-list .event-item.tentative {
-	background-color: #46D6DB;
-	border-color: #113;
-	color: #000;
-}
-
-.calendar .events-list .event-item.cancelled {
-	background-color: #DC2127;
-	background-image: repeating-linear-gradient(-45deg, #DC2127, #DC2127 10px, #f77 10px, #f77 20px);
-	border-color: #FAA;
-	color: #FFF;
-}
-
-.calendar .events-list .event-item.info {
-	background-color: #A4BDFC;
-	border-color: #000;
-	color: #000;
 }

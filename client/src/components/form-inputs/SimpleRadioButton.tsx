@@ -24,12 +24,12 @@ export default class SimpleRadioButton<E extends number = number> extends React.
 		const index = typeof this.props.index === 'undefined' ? '' : '-' + this.props.index;
 
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
-				<section className="radioDiv">
+			<div className="input-formbox" style={this.props.boxStyles}>
+				<section className="radio-group-container">
 					{this.props.labels.map((label, i) => {
 						const checked = i === this.props.value;
 						return (
-							<div className="roundedTwo" key={i}>
+							<div className="radio-button-container" key={i}>
 								<input
 									id={`${this.props.name}-${i}${index}`}
 									type="radio"

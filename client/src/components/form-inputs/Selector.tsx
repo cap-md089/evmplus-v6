@@ -95,7 +95,7 @@ export default class Selector<T extends Identifiable> extends React.Component<
 
 		return (
 			<div
-				className="formbox selector-box"
+				className="input-formbox selector-box"
 				style={{
 					clear: 'both',
 					width: '98%'

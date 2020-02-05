@@ -12,6 +12,10 @@ const clearFix: React.CSSProperties = {
 	height: 15
 };
 
+const upperMargin = {
+	marginTop: 10
+};
+
 interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
 	extends InputProps<T[]> {
 	inputComponent: R;
@@ -46,7 +50,7 @@ export default class ListEditor<
 
 		return (
 			<div
-				className="formbox"
+				className="input-formbox list-editor"
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '100%' : undefined,
@@ -58,8 +62,6 @@ export default class ListEditor<
 						.map((value, index) => {
 							const extraProps: Omit<P, ProvidedKeys> = this.props.extraProps;
 							const knownProps: Pick<P, ProvidedKeys> = {
-								// Don't know why T doesn't equal P["value"]
-								// @ts-ignore
 								value,
 								name: '',
 								onUpdate: this.getChangeHandler(index),
@@ -88,11 +90,11 @@ export default class ListEditor<
 											}}
 										/>
 									) : null}
-									<div className="add-item">
+									<div className="remove-item">
 										<Button
 											buttonType="secondaryButton"
 											onClick={this.getRemoveItem(index)}
-											className="listEditor-removeItem"
+											className={`listEditor-removeItem${props.fullWidth}`}
 										>
 											{this.props.removeText || 'Remove item'}
 										</Button>
@@ -105,17 +107,11 @@ export default class ListEditor<
 							<div key={i}>
 								{item}
 								{i === (this.props.value || []).length - 1 ? null : (
-									<div className="divider" />
+									<div className="divider listeditor-divider" />
 								)}
 							</div>
 						))}
 				</div>
-				<div
-					style={{
-						clear: 'both',
-						overflow: 'auto'
-					}}
-				/>
 				{this.props.fullWidth ? (
 					<div
 						style={{
@@ -125,7 +121,10 @@ export default class ListEditor<
 						}}
 					/>
 				) : null}
-				<div className="add-item">
+				<div
+					className="add-item"
+					style={this.props.value?.length ? upperMargin : undefined}
+				>
 					<Button buttonType="primaryButton" onClick={this.addItem}>
 						{this.props.buttonText || 'Add item'}
 					</Button>

@@ -1,6 +1,6 @@
 import * as React from 'react';
-
 import { InputProps } from './Input';
+import './TextInput.scss';
 
 export interface TextInputProps extends InputProps<string> {
 	/**
@@ -67,7 +67,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 	public render() {
 		return (
 			<div
-				className="formbox"
+				className="input-formbox"
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '90%' : undefined,

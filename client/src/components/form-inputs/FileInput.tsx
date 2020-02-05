@@ -140,7 +140,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		}
 
 		return this.state.loaded ? (
-			<div className="formbox" style={this.props.boxStyles}>
+			<div className="input-formbox" style={this.props.boxStyles}>
 				<div className="fileInput">
 					{this.props.member ? (
 						<FileDialogue

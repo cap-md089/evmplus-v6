@@ -1,0 +1,66 @@
+.calendar-mobile {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+
+	.calendar-title {
+		width: 100%;
+		box-sizing: border-box;
+		border: 1px solid black;
+		border-bottom: none;
+		padding: 5px;
+		font-size: 1.2em;
+		text-align: center;
+	}
+
+	.left-link {
+		float: left;
+		font-size: 0.8333em;
+		margin-left: 10px;
+	}
+
+	.right-link {
+		float: right;
+		font-size: 0.8333em;
+		margin-right: 10px;
+	}
+
+	ul.day-list {
+		border: 0 solid black;
+		border-width: 0 0 1px 1px;
+		margin: 0;
+		padding: 0;
+		list-style-type: none;
+	}
+
+	.day-list > li {
+		border: 0 solid black;
+		border-width: 1px 1px 0 0;
+	}
+
+	.day-title {
+		margin: 0;
+		padding: 4px;
+		border-bottom: 1px solid black;
+	}
+
+	.events-list {
+		list-style-type: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.events-list li {
+		overflow-y: hidden;
+		margin: 3px;
+		max-height: 55px;
+		padding: 5px;
+		box-sizing: border-box;
+		border-width: 2px;
+		border-style: solid;
+		font-size: 0.8em;
+		cursor: pointer;
+		text-decoration: none;
+	}
+}

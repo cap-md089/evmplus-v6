@@ -1,10 +1,5 @@
 import * as React from 'react';
-import {
-	RegistryValues,
-	Timezone,
-	WebsiteContact,
-	RankAndFileInformation
-} from 'common-lib';
+import { RegistryValues, Timezone, WebsiteContact, RankAndFileInformation } from 'common-lib';
 import Page, { PageProps } from '../../Page';
 import SimpleForm, {
 	Title,
@@ -97,7 +92,8 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 							SecondLine: ''
 					  },
 				Twitter: this.props.registry.Contact.Twitter || '',
-				YouTube: this.props.registry.Contact.YouTube || ''
+				YouTube: this.props.registry.Contact.YouTube || '',
+				Discord: this.props.registry.Contact.Discord || ''
 			},
 			RankAndFile: {
 				Flights: this.props.registry.RankAndFile.Flights.slice()
@@ -123,11 +119,6 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 
 	public componentDidMount() {
 		this.props.updateSideNav([
-			{
-				target: 'blog',
-				text: 'Blog',
-				type: 'Reference'
-			},
 			{
 				target: 'contact',
 				text: 'Contact',
@@ -176,13 +167,6 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				values={convertStateToForm(this.state.values)}
 				showSubmitButton={false}
 			>
-				<Title>Blog</Title>
-
-				<FormBlock name="Blog">
-					<Label>Blog Posts per Page</Label>
-					<NumberInput name="BlogPostsPerPage" />
-				</FormBlock>
-
 				<Title>Contact</Title>
 
 				<FormBlock name="Contact">
@@ -203,6 +187,9 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 
 					<Label>Twitter handle</Label>
 					<TextInput name="Twitter" />
+
+					<Label>Discord invite</Label>
+					<TextInput name="Discord" />
 
 					<FormBlock name="MeetingAddress">
 						<Label>Meeting Location</Label>
@@ -255,7 +242,10 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 					<NumberInput name="PhotoLibraryImagesPerPage" />
 
 					<Label>What timezone does the unit primarily operate within?</Label>
-					<Select labels={timezones.map(i => i.replace('_', ' '))} name="Timezone" />
+					<Select
+						labels={timezones.map(i => i.substr(8).replace('_', ' '))}
+						name="Timezone"
+					/>
 				</FormBlock>
 
 				<TextBox>

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 import { MultCheckboxReturn } from 'common-lib';
+import './MultCheckbox.scss';
 
 interface MultCheckboxProps extends InputProps<MultCheckboxReturn> {
 	labels: string[];
@@ -66,7 +67,7 @@ export default class MultCheckbox extends React.Component<
 
 	public render() {
 		return (
-			<div className="formbox" style={this.props.boxStyles}>
+			<div className="input-formbox" style={this.props.boxStyles}>
 				<section>
 					{this.props.labels.map((label, i) => (
 						<div className="checkboxDiv checkboxDivMult" key={i}>

@@ -1,14 +1,14 @@
 import React from 'react';
-import ReCAPTCHAInput from '../components/form-inputs/ReCAPTCHA';
+import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
 import SimpleForm, {
 	Label,
 	NumberInput,
 	TextBox,
 	TextInput,
 	Title
-} from '../components/forms/SimpleForm';
-import { fetchFunction } from '../lib/myFetch';
-import Page, { PageProps } from './Page';
+} from '../../components/forms/SimpleForm';
+import { fetchFunction } from '../../lib/myFetch';
+import Page, { PageProps } from '../Page';
 import { EitherObj, api, either } from 'common-lib';
 
 interface SignupFormValues {
@@ -103,6 +103,12 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 
 	private async signup(values: SignupFormValues) {
 		try {
+			this.setState({
+				tryingSignup: true,
+				success: false,
+				error: null
+			});
+
 			// @ts-ignore
 			window.grecaptcha.reset();
 

@@ -5,6 +5,7 @@ import './Signin.css';
 
 interface SigninLinkProps {
 	returnUrl?: string;
+	onClick?: () => void;
 }
 
 type FullSigninLinkProps = RouteComponentProps<{}> & SigninLinkProps;
@@ -32,6 +33,7 @@ class SigninLink extends React.Component<FullSigninLinkProps> {
 
 	private move(): void {
 		this.props.history.push('/signin?returnurl=' + encodeURIComponent(this.returnUrl));
+		this.props.onClick?.();
 	}
 }
 

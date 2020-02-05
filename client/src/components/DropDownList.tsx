@@ -1,5 +1,6 @@
 import React, { ReactNode, PureComponent } from 'react';
 import jQuery from 'jquery';
+import './DropDownList.scss';
 
 interface DropDownListProps<T> {
 	open?: boolean[];

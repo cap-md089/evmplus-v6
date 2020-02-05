@@ -10,7 +10,7 @@ interface MappedTextProps<T, N extends Extract<keyof T, string> = Extract<keyof 
 export default class DisabledMappedText<T> extends React.Component<MappedTextProps<T>> {
 	public render() {
 		return (
-			<div className="formbox">
+			<div className="input-formbox">
 				<input
 					type="text"
 					value={((this.props.value || ({} as T))[this.props.name] as unknown) as string}

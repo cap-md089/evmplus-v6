@@ -15,6 +15,7 @@ import Dialogue, { DialogueButtons } from '../dialogues/Dialogue';
 import FileDialogue from '../dialogues/FileDialogue';
 import { InputProps } from './Input';
 import { FileObject } from 'common-lib';
+import './TextArea.scss';
 
 export let index = 0;
 
@@ -206,7 +207,7 @@ export default class TextArea extends React.Component<
 
 		return (
 			<div
-				className={`formbox${this.props.fullWidth ? ' fullWidth' : ''}`}
+				className={`input-formbox${this.props.fullWidth ? ' fullWidth' : ''}`}
 				style={{
 					marginBottom: 10,
 					width: this.props.fullWidth ? '90%' : undefined,

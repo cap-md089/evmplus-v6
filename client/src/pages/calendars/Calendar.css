@@ -1,0 +1,38 @@
+
+.events-list .event-item.draft {
+	background-color: #151;
+	background-image: repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px);
+	border-color: #131;
+	color: #FFF;
+}
+
+.events-list .event-item.team {
+	background-color: #51B749;
+	border-color: #113;
+	color: #FFF;
+}
+
+.events-list .event-item.draft.team {
+	background-color: #7AE7BF;
+	background-image: repeating-linear-gradient(-45deg, #51B749, #51B749 10px, #55da5e 10px, #55da5e 20px);
+	color: #000;
+}
+
+.events-list .event-item.tentative {
+	background-color: #46D6DB;
+	border-color: #113;
+	color: #000;
+}
+
+.events-list .event-item.cancelled {
+	background-color: #DC2127;
+	background-image: repeating-linear-gradient(-45deg, #DC2127, #DC2127 10px, #f77 10px, #f77 20px);
+	border-color: #FAA;
+	color: #FFF;
+}
+
+.events-list .event-item.info {
+	background-color: #A4BDFC;
+	border-color: #000;
+	color: #000;
+}
