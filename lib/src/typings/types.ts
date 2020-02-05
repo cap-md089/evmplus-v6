@@ -719,6 +719,24 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	 */
 	serviceAccount: string;
 	/**
+	 * The web link used to share the Google Calendar to Wing or others 
+	 * (only contains events with the publishToWingCalendar property true)
+	 */
+	shareLink: string;
+	/**
+	 * The link used to embed the squadron calendar in web pages like
+	 * SiteViz or others
+	 */
+	embedLink: string;
+	/**
+	 * Initial password used to generate Google account for a unit
+	 */
+	initialPassword: string;
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
 	 * Whether or not the account is an echelon account
 	 */
 	echelon: boolean;
@@ -843,7 +861,7 @@ export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewE
 		/**
 		 * UUID of the Google Caldendar event on the main calendar
 		 */
-		mainId: null | string;
+		mainId: string;
 		/**
 		 * UUID of the Google Calendar event on the Wing published calendar
 		 */
