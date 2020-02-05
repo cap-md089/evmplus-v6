@@ -47,6 +47,21 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"name": "Migrate Code",
+			"program": "${workspaceFolder}/dist/migrateCode.js",
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"skipFiles": [
+				"node_modules/**/*.js",
+				"async_hooks.js",
+				"inspector_async_hook.js"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
 			"name": "Launch Server (Nodemon)",
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"

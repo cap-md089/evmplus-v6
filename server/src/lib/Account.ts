@@ -1,42 +1,8 @@
 import * as mysql from '@mysql/xdevapi';
-import {
-	AccountObject,
-	api,
-	AsyncEither,
-	asyncLeft,
-	asyncRight,
-	DatabaseInterface,
-	EventObject,
-	FileObject,
-	just,
-	left,
-	MemberReference,
-	NHQ,
-	none,
-	NoSQLDocument,
-	ProspectiveMemberObject,
-	RawAccountObject,
-	RawTeamObject,
-	right
-} from 'common-lib';
+import { AccountObject, api, AsyncEither, asyncLeft, asyncRight, DatabaseInterface, EventObject, FileObject, just, left, MemberReference, NHQ, none, NoSQLDocument, ProspectiveMemberObject, RawAccountObject, RawTeamObject, right } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import {
-	areMemberReferencesTheSame,
-	asyncErrorHandler,
-	CAPMemberClasses,
-	CAPNHQMember,
-	CAPProspectiveMember,
-	Event,
-	File,
-	findAndBind,
-	generateResults,
-	isValidMemberReference,
-	MonthNumber,
-	MySQLRequest,
-	ParamType,
-	Team
-} from './internals';
+import { areMemberReferencesTheSame, asyncErrorHandler, CAPMemberClasses, CAPNHQMember, CAPProspectiveMember, Event, File, findAndBind, generateResults, isValidMemberReference, MonthNumber, MySQLRequest, ParamType, Registry, Team } from './internals';
 import { ConditionalMemberRequest } from './member/pam/Session';
 import { BasicMySQLRequest, safeBind } from './MySQLUtil';
 import saveServerError from './saveServerError';
@@ -271,6 +237,13 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 		const newValues: RawAccountObject = {
 			adminIDs: values.adminIDs,
+			mainCalendarID: values.mainCalendarID,
+			wingCalendarID: values.wingCalendarID,
+			serviceAccount: values.serviceAccount,
+			shareLink: values.shareLink,
+			embedLink: values.embedLink,
+			initialPassword: values.initialPassword,
+			comments: values.comments,
 			echelon: values.echelon,
 			expires: values.expires,
 			id: values.id,
@@ -336,6 +309,24 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 */
 	public adminIDs: MemberReference[];
 	/**
+	 * The web link used to share the Google Calendar to Wing or others 
+	 * (only contains events with the publishToWingCalendar property true)
+	 */
+	public shareLink: string;
+	/**
+	 * The link used to embed the squadron calendar in web pages like
+	 * SiteViz or others
+	 */
+	public embedLink: string;
+	/**
+	 * Initial password used to generate Google account for a unit
+	 */
+	public initialPassword: string;
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	public comments: string;
+	/**
 	 * Whether or not this account is an echelon account
 	 */
 	public echelon: boolean;
@@ -347,6 +338,19 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 * The different account IDs that can reference this one
 	 */
 	public aliases: string[];
+	/**
+	 * The ID of the main Google calendar
+	 */
+	public mainCalendarID: string;
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	public wingCalendarID: string;
+	/**
+	 * The email address of the Google service account.  Not directly used by
+	 * CAPUnit.com, however it is good to have for configuration.
+	 */
+	public serviceAccount: string;
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -360,6 +364,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.adminIDs = data.adminIDs;
 		this.unpaidEventLimit = data.unpaidEventLimit;
 		this.echelon = data.echelon;
+		this.shareLink = data.shareLink,
+		this.embedLink = data.embedLink,
+		this.initialPassword = data.initialPassword,
+		this.comments = data.comments,
 		this.paidEventLimit = data.paidEventLimit;
 		this.paid = data.paid;
 		this.expired = data.expired;
@@ -368,6 +376,9 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.orgIDs = data.orgIDs;
 		this.id = data.id;
 		this.aliases = data.aliases;
+		this.mainCalendarID = data.mainCalendarID;
+		this.wingCalendarID = data.wingCalendarID;
+		this.serviceAccount = data.serviceAccount;
 	}
 
 	public buildURI(...identifiers: string[]) {
@@ -531,6 +542,13 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 		await accountCollection.replaceOne(this._id, {
 			adminIDs: this.adminIDs,
+			mainCalendarID: this.mainCalendarID,
+			wingCalendarID: this.wingCalendarID,
+			serviceAccount: this.serviceAccount,
+			shareLink: this.shareLink,
+			embedLink: this.embedLink,
+			initialPassword: this.initialPassword,
+			comments: this.comments,
 			echelon: this.echelon,
 			expires: this.expires,
 			id: this.id,
@@ -545,6 +563,13 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 	public toRaw = (): AccountObject => ({
 		adminIDs: this.adminIDs,
+		mainCalendarID: this.mainCalendarID,
+		wingCalendarID: this.wingCalendarID,
+		serviceAccount: this.serviceAccount,
+		shareLink: this.shareLink,
+		embedLink: this.embedLink,
+		initialPassword: this.initialPassword,
+		comments: this.comments,
 		echelon: this.echelon,
 		expired: this.expired,
 		expires: this.expires,
@@ -597,5 +622,9 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 
 		return false;
+	}
+
+	public getRegistry() {
+		return Registry.Get(this, this.schema);
 	}
 }

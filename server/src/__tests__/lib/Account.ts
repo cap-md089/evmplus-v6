@@ -65,7 +65,7 @@ describe('Account', () => {
 		await expect(Account.Get('not an account', schema)).rejects.toEqual(expect.any(Error));
 
 		done();
-	});
+	}, 7500);
 
 	it('should fail to get accounts that do not exist in requests', async done => {
 		const { server } = await getServer(conftest, 3006);
@@ -83,7 +83,7 @@ describe('Account', () => {
 
 				done();
 			});
-	}, 10000);
+	}, 15000);
 
 	it('should generate members in the account', async done => {
 		for await (const mem of account.getMembers()) {

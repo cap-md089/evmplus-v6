@@ -36,6 +36,7 @@ import {
 	Account,
 	areMemberReferencesTheSame,
 	collectResults,
+	createGoogleCalendarEvents,
 	EventValidator,
 	findAndBind,
 	generateBindObject,
@@ -43,7 +44,9 @@ import {
 	generateResults,
 	MemberBase,
 	MemberNotification,
-	resolveReference
+	removeGoogleCalendarEvents,
+	resolveReference,
+	updateGoogleCalendars
 } from './internals';
 import { safeBind } from './MySQLUtil';
 import { serverErrorGenerator } from './Util';
@@ -170,7 +173,22 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			timeModified: timeCreated,
 			author: member.getReference(),
 			debrief: [],
-			sourceEvent: null
+			sourceEvent: null,
+			googleCalendarIds: {
+				mainId: "", 
+				wingId: null, 
+				regId: null, 
+				feeId: null
+			}
+		};
+
+		const googleCalendarEventIds = await createGoogleCalendarEvents(newEvent, account) as [string, null | string, null | string, null | string];
+
+		newEvent.googleCalendarIds = {
+			mainId: googleCalendarEventIds[0], 
+			wingId: googleCalendarEventIds[1], 
+			regId: googleCalendarEventIds[2], 
+			feeId: googleCalendarEventIds[3]
 		};
 
 		const results = await eventsCollection.add(newEvent).execute();
@@ -384,6 +402,13 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public attendance: AttendanceRecord[];
 
+	public googleCalendarIds: {
+		mainId: string;
+		wingId: string | null;
+		regId: string | null;
+		feeId: string | null;
+	}
+
 	// Documents require it
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -446,6 +471,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
 		this.customAttendanceFields = data.customAttendanceFields;
+		this.googleCalendarIds = data.googleCalendarIds;
 
 		this._id = data._id;
 	}
@@ -465,10 +491,18 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		this.timeModified = timeModified;
 
+		const googleCalendarEventIds = await updateGoogleCalendars(this, account) as [string, null | string, null | string, null | string];
+		
 		await eventsCollection.replaceOne(this._id, {
 			...this.toSaveRaw(),
 			timeModified,
 			accountID: account.id,
+			googleCalendarIds: { 
+				mainId: googleCalendarEventIds[0],
+				wingId: googleCalendarEventIds[1],
+				regId: googleCalendarEventIds[2],
+				feeId: googleCalendarEventIds[3]
+			},
 			pointsOfContact
 		});
 	}
@@ -478,6 +512,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public async remove() {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
+
+		removeGoogleCalendarEvents(this, this.account);
 
 		await safeBind(eventsCollection.remove('accountID = :accountID AND id = :id'), {
 			accountID: this.account.id,
@@ -587,6 +623,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 */
 	public async delete(): Promise<void> {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
+
+		removeGoogleCalendarEvents(this, this.account);
 
 		await eventsCollection.removeOne(this._id);
 	}
@@ -1043,7 +1081,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		transportationProvided: this.transportationProvided,
 		uniform: this.uniform,
 		wingEventNumber: this.wingEventNumber,
-		fileIDs: this.fileIDs
+		fileIDs: this.fileIDs,
+		googleCalendarIds: this.googleCalendarIds
 	});
 }
 export { EventStatus };

@@ -14,6 +14,7 @@ export const Configuration = {
 	},
 	fileStoragePath: '/uploads',
 	capwatchFileDownloadDirectory: '/capwatch-zips',
+	googleKeysPath: '/google-keys',
 	path: __dirname,
 	port: 3001
 };
