@@ -105,7 +105,8 @@ import { collectResults, deleteAllGoogleCalendarEvents, findAndBind, getMigrateA
 
 	const runCalendar = false as boolean;
 	const runEmail = false as boolean;
-	const runTableAccount = true as boolean;
+	const runTableAccount = false as boolean;
+	const runTableAttendance = false as boolean;
 
 	if (runCalendar) {
 		await calendarFunction();
@@ -117,6 +118,10 @@ import { collectResults, deleteAllGoogleCalendarEvents, findAndBind, getMigrateA
 
 	if (runTableAccount) {
 		await tableAccountFunction();
+	}
+
+	if (runTableAttendance) {
+		await tableAttendanceFunction();
 	}
 
 	process.exit();
@@ -170,6 +175,72 @@ async function emailerFunction() {
 }
 
 async function tableAccountFunction() {
+	
+	const myConnection = mysql.createConnection({
+		port: 33389,
+		host: 'md089.capunit.com',
+		user: 'em',
+		password: 'alongpassword2017',
+		database: 'EventManagement'
+	});
+	console.log('Connection options created');
+	await new Promise((res, rej) =>
+		myConnection.connect(err => {
+			if (err) {
+				rej(err);
+			}
+			console.log('Connected!');
+			res();
+		})
+	);
+
+	const tableList: any[] = await new Promise((res, rej) => {
+		myConnection.query('SELECT * FROM Accounts WHERE MainOrg = 1;', (err, results) => {
+			if (err) {
+				rej(err);
+			}
+ 			// console.log(results);
+			res(results);
+		})
+	});
+
+// 	console.log(JSON.stringify(tableList[0]));
+	for(const data of tableList) {
+		const inRow = JSON.parse(JSON.stringify(data));
+
+		const { schema } = await getMigrateAccount(conf, 'mdx89');
+		const v4Collection = schema.getCollection<RawAccountObject>('Accounts');
+
+		const myNewAccount: RawAccountObject = {
+			adminIDs: [{ type: 'CAPNHQMember', id: inRow.AdminID }],
+			id: inRow.AccountID,
+			mainCalendarID: inRow.MainID,
+			wingCalendarID: inRow.WingID,
+			serviceAccount: "",
+			shareLink: inRow.ShareLink,
+			embedLink: inRow.EmbedLink,
+			initialPassword: inRow.InitialPassword,
+			comments: inRow.Comments,
+			echelon: false,
+			mainOrg: inRow.UnitID,
+			orgIDs: [ inRow.UnitID ],
+			paid: false,
+			expires: 999999999999,
+			paidEventLimit: 50,
+			unpaidEventLimit: 25,
+			aliases: []
+		} 
+
+		await v4Collection.add(myNewAccount).execute();
+
+		console.log(inRow.AccountID);
+	}
+
+	console.log('end of function');
+
+}
+
+async function tableAttendanceFunction() {
 	
 	const myConnection = mysql.createConnection({
 		port: 33389,
