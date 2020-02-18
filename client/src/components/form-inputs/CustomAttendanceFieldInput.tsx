@@ -45,20 +45,16 @@ export default class CustomAttendanceFieldInput extends React.Component<
 		const value = this.props.value;
 
 		return (
-			<FormBlock
+			<FormBlock<CustomAttendanceField>
 				name={`customAttendanceFieldInput-${this.props.index}`}
 				onUpdate={this.onUpdate}
 				onInitialize={this.props.onInitialize}
+				value={value}
 			>
 				<Label>Custom Field Type</Label>
 				<CAFEntryType
 					name="type"
 					labels={['Text', 'Number', 'Date', 'Checkbox', 'File']}
-					value={
-						typeof value.type === 'string'
-							? CustomAttendanceFieldEntryType.TEXT
-							: value.type
-					}
 					index={this.props.index}
 					key="type"
 				/>
@@ -72,17 +68,13 @@ export default class CustomAttendanceFieldInput extends React.Component<
 				{this.getPreFillInput(value)}
 
 				<Label>Display Field To Member</Label>
-				<Checkbox
-					key="displayToMember"
-					name="displayToMember"
-					value={value.displayToMember}
-				/>
+				<Checkbox key="displayToMember" name="displayToMember" index={this.props.index} />
 
 				<Label>Allow Member To Modify Field Value</Label>
 				<Checkbox
 					key="allowMemberToModify"
 					name="allowMemberToModify"
-					value={value.allowMemberToModify}
+					index={this.props.index}
 				/>
 			</FormBlock>
 		);

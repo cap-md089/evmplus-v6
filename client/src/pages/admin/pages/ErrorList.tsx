@@ -22,6 +22,7 @@ import { SideNavigationItem } from '../../../components/page-elements/SideNaviga
 import Page, { PageProps } from '../../Page';
 import { RequiredMember } from '../pluggables/SiteAdmin';
 import { fetchFunction } from '../../../lib/myFetch';
+import APIInterface from '../../../lib/APIInterface';
 
 export const shouldRenderErrorList = (props: PageProps): boolean => !!props.member?.isRioux;
 
@@ -296,6 +297,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 			throw new Error('No!');
 		}
 
+		const token = await APIInterface.getToken(this.props.account.id, this.props.member);
+
 		const result = await this.props.member.memberFetch(
 			`/api/errors`,
 			{
@@ -304,7 +307,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					line: error.stack[0].line,
 					fileName: error.stack[0].filename,
 					type: error.type,
-					message: error.message
+					message: error.message,
+					token
 				})
 			},
 			fetchFunction
