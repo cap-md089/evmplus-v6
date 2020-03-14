@@ -110,7 +110,7 @@ export default class App extends React.Component<
 		return (
 			<>
 				<Header registry={fromValue(this.state.Registry)} />
-				<Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} />
+				{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
 				<div className="background">
 					<div className="main-content-bottom" />
 				</div>

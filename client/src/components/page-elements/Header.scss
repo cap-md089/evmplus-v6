@@ -4,9 +4,8 @@
 	header {
 		grid-area: header;
 		display: grid;
-		grid-template-areas: 
-			"logo header-divider name servings";
-		grid-template-columns: 362px 8px auto auto;
+		grid-template-areas: 'name servings';
+		grid-template-columns: auto 300px;
 		height: 127px;
 
 		& > img {
@@ -26,7 +25,7 @@
 			font-size: 42px;
 			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 			line-height: 43px;
-			margin: 49px auto 0 auto;
+			margin: 49px 0 0 30px;
 			height: 43px;
 			text-align: left;
 		}
@@ -85,7 +84,11 @@
 				border-right: 1px solid #193e6b;
 				border-top: 1px solid #255187;
 
-				background: linear-gradient(to bottom, rgba(9,59,120,1) 1%, rgba(39,89,149,1) 88%)
+				background: linear-gradient(
+					to bottom,
+					rgba(9, 59, 120, 1) 1%,
+					rgba(39, 89, 149, 1) 88%
+				);
 			}
 		}
 	}
@@ -93,18 +96,20 @@
 
 @media screen and (max-width: 1028px) {
 	header {
-		grid-template-areas: "logo";
+		grid-template-areas: 'name';
 		grid-template-columns: 100%;
 
-		.logo {
-			margin: 0 auto;
+		.page-title {
+			margin: 49px auto 0 auto;
 			box-sizing: border-box;
 			width: auto;
 			max-width: 100%;
 		}
 	}
 
-	.servings, .page-title, .header-divider {
+	.servings,
+	.logo,
+	.header-divider {
 		grid-area: none;
 		display: none;
 	}
