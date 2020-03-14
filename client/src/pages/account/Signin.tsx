@@ -89,7 +89,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 	public render() {
 		return this.state.error !== MemberCreateError.PASSWORD_EXPIRED ? (
 			<div>
-				Enter your CAPUnit.com login information below to sign in to the site. By logging
+				Enter your capunit.com login information below to sign in to the site. By logging
 				into this site you agree to the terms and conditions located{' '}
 				<Link to="/terms-and-conditions">here</Link>. Our Privacy Policy may be accessed at{' '}
 				<Link to="/privacy-policy">this page</Link>.

@@ -562,7 +562,12 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				/>
 
 				<Label>Event status</Label>
-				<SimpleRadioButton name="status" labels={EventStatus} />
+				<SimpleRadioButton
+					name="status"
+					labels={
+						this.props.member.hasPermission('ManageEvent', 2) ? EventStatus : ['Draft']
+					}
+				/>
 
 				<Label>Entry complete</Label>
 				<Checkbox name="complete" />
@@ -579,9 +584,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Label>Event files</Label>
 				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} />
 
-				<Title>Team information</Title>
+				<Label>Keep attendance private</Label>
+				<Checkbox name="privateAttendance" />
 
-				<Label />
+				<Title>Team information</Title>
 
 				<TeamSelector teamList={this.props.teamList} name="teamID" />
 

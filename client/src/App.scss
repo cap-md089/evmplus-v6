@@ -1,6 +1,6 @@
 @import 'theme';
 
-@font-face  {
+@font-face {
 	font-family: 'RobotoRegular';
 	src: url('/images/regular/Roboto-Regular-webfont.eot');
 	src: url('/images/regular/Roboto-Regular-webfont.eot?#iefix') format('embedded-opentype'),
@@ -22,7 +22,7 @@
 	font-style: normal;
 }
 
-@font-face  {
+@font-face {
 	font-family: 'RobotoLight';
 	src: url('/images/Light/Roboto-Light-webfont.eot');
 	src: url('/images/Light/Roboto-Light-webfont.eot?#iefix') format('embedded-opentype'),
@@ -48,7 +48,9 @@ html {
 	scroll-behavior: smooth;
 }
 
-html, body, #root {
+html,
+body,
+#root {
 	width: 100%;
 	height: 100%;
 	padding: 0;
@@ -65,18 +67,18 @@ body {
 	background: #002149 url('/images/bg-body.jpg') top left repeat-x;
 }
 
-@media screen {	
+@media screen {
 	#root {
 		display: grid;
 		grid-template-areas:
-			". header header header header ."
-			". top-nav top-nav top-nav top-nav ."
-			". left-border slideshow slideshow right-border ."
-			". left-border side-nav body right-border ."
-			". left-border background background right-border ."
-			"footer footer footer footer footer footer";
+			'. header header header header .'
+			'. top-nav top-nav top-nav top-nav .'
+			// '. left-border slideshow slideshow right-border .'
+			'. left-border side-nav body right-border .'
+			'. left-border background background right-border .'
+			'footer footer footer footer footer footer';
 		grid-template-columns: 1fr 2px 260px 766px 2px 1fr;
-		grid-template-rows: 136px 46px min-content min-content 35px 267px;
+		grid-template-rows: 136px 46px min-content 35px 267px;
 		justify-content: center;
 	}
 
@@ -118,7 +120,7 @@ body {
 			&.divider {
 				padding: 0 1px 0 1px;
 				color: #999999;
-				content: "/";
+				content: '/';
 			}
 		}
 
@@ -143,7 +145,7 @@ body {
 	z-index: -10;
 	grid-area: body side-nav;
 	grid-column: 3 / 5;
-	grid-row: 4 / 6;
+	grid-row: 3 / 5;
 
 	display: grid;
 	grid-template-rows: auto 35px;
@@ -195,7 +197,6 @@ main {
 		width: 98%;
 		margin: 2px 10px;
 	}
-
 }
 
 h1 {
@@ -260,11 +261,14 @@ ul {
 }
 
 @media print {
-	body, main {
+	body,
+	main {
 		background: none;
 	}
 
-	.content-border, .breadcrumbs, .background {
+	.content-border,
+	.breadcrumbs,
+	.background {
 		display: none;
 	}
 }
@@ -284,8 +288,9 @@ a {
 .warning {
 	color: red;
 
-	&::before, &::after {
-		content: " !! ";
+	&::before,
+	&::after {
+		content: ' !! ';
 	}
 }
 
@@ -296,11 +301,11 @@ a {
 @media (max-width: 1028px) {
 	#root {
 		grid-template-areas:
-			"header"
-			"top-nav"
-			"side-nav"
-			"body"
-			"footer";
+			'header'
+			'top-nav'
+			'side-nav'
+			'body'
+			'footer';
 		grid-template-columns: 100%;
 		grid-template-rows: 136px 46px 45px min-content 267px;
 		// grid-template-rows: 136px 46px min-content min-content 35px 267px;

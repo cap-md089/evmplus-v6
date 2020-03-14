@@ -38,6 +38,7 @@ export const Member: Readonly<MemberPermissions> = {
 	CreateNotifications: 0,
 	ManageEvent: 0,
 	ManageTeam: 0,
+	ScanAdd: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -61,6 +62,7 @@ export const Staff: Readonly<MemberPermissions> = {
 	CreateNotifications: 0,
 	ManageEvent: 1,
 	ManageTeam: 0,
+	ScanAdd: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -84,6 +86,7 @@ export const Manager: Readonly<MemberPermissions> = {
 	CreateNotifications: 1,
 	ManageEvent: 2,
 	ManageTeam: 1,
+	ScanAdd: 1,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -107,6 +110,7 @@ export const Admin: Readonly<MemberPermissions> = {
 	CreateNotifications: 1,
 	ManageEvent: 2,
 	ManageTeam: 1,
+	ScanAdd: 1,
 
 	DownloadCAPWATCH: 1,
 	PermissionManagement: 1,
@@ -131,7 +135,8 @@ const stripPermissionLevel = (values: PermissionFormValues): MemberPermissions =
 	PermissionManagement: values.PermissionManagement,
 	PromotionManagement: values.PromotionManagement,
 	ProspectiveMemberManagement: values.ProspectiveMemberManagement,
-	RegistryEdit: values.RegistryEdit
+	RegistryEdit: values.RegistryEdit,
+	ScanAdd: values.ScanAdd
 });
 
 const permissionLevelFromPermissions = (permissions: MemberPermissions): PermissionLevel =>
@@ -178,6 +183,7 @@ export default class PermissionsEdit extends React.Component<
 				CreateNotifications: 0,
 				ManageEvent: 0,
 				ManageTeam: 0,
+				ScanAdd: 0,
 
 				DownloadCAPWATCH: 0,
 				PermissionManagement: 0,
@@ -211,6 +217,7 @@ export default class PermissionsEdit extends React.Component<
 			CreateNotifications: 0,
 			ManageEvent: 0,
 			ManageTeam: 0,
+			ScanAdd: 0,
 
 			DownloadCAPWATCH: 0,
 			PermissionManagement: 0,
@@ -333,23 +340,26 @@ export default class PermissionsEdit extends React.Component<
 				<Label key="28">Manage teams</Label>
 				<Select<Permissions.ManageTeam> key="29" name="ManageTeam" labels={['No', 'Yes']} />
 
-				<Label key="30">Download CAPWATCH files</Label>
+				<Label key="30">Set up Event Attendance Scanners</Label>
+				<Select<Permissions.ScanAdd> key="31" name="ScanAdd" labels={['No', 'Yes']} />
+
+				<Label key="32">Download CAPWATCH files</Label>
 				<Select<Permissions.DownloadCAPWATCH>
-					key="31"
+					key="33"
 					name="DownloadCAPWATCH"
 					labels={['No', 'Yes']}
 				/>
 
-				<Label key="32">Permission management</Label>
+				<Label key="34">Permission management</Label>
 				<Select<Permissions.PermissionManagement>
-					key="33"
+					key="35"
 					name="PermissionManagement"
 					labels={['No', 'Yes']}
 				/>
 
-				<Label key="34">Configure website</Label>
+				<Label key="36">Configure website</Label>
 				<Select<Permissions.RegistryEdit>
-					key="35"
+					key="37"
 					name="RegistryEdit"
 					labels={['No', 'Yes']}
 				/>

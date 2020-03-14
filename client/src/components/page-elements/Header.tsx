@@ -21,8 +21,8 @@ export default (({ registry }) => {
 	return (
 		<>
 			<header>
-				<img src="/images/logo.png" alt="Civil Air Patrol" height="127" className="logo" />
-				<div className="header-divider" />
+				{/* <img src alt="Civil Air Patrol" height="127" className="logo" /> */}
+				{/* <div className="header-divider" /> */}
 				<div className="page-title" ref={ref}>
 					{registry.map(reg => reg.Website.Name).orNull()}
 				</div>

@@ -4,9 +4,9 @@
 
 .radio-button-container {
 	position: relative;
-	margin: 10px 0;
+	margin: 0 0 10px 0;
 
-	input[type="radio"] {
+	input[type='radio'] {
 		position: absolute;
 		visibility: hidden;
 
@@ -41,7 +41,7 @@
 		top: 0;
 		left: 0;
 		z-index: 5;
-		transition: border .25s linear;
+		transition: border 0.25s linear;
 		padding-left: 0;
 
 		&::before {

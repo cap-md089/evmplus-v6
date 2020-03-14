@@ -109,27 +109,6 @@ export default (({ registry }) => (
 					</div>
 				))
 				.orNull()}
-			<div>
-				<div className="footerBoxTitle">Resources</div>
-				<ul
-					style={{
-						listStyleType: 'none',
-						margin: '0px',
-						padding: '0px'
-					}}
-				>
-					<li>
-						<a target="_blank" href="https://www.capnhq.gov/" rel="noopener noreferrer">
-							eServices
-						</a>
-					</li>
-					<li>
-						<a target="_blank" href="https://www.cap.news/" rel="noopener noreferrer">
-							Latest CAP News
-						</a>
-					</li>
-				</ul>
-			</div>
 		</div>
 		<div
 			style={{
@@ -139,17 +118,9 @@ export default (({ registry }) => (
 		>
 			<div className="info-left">
 				&copy; 2017-
-				{new Date().getFullYear()} CAPUnit.com
+				{new Date().getFullYear()} capunit.com
 			</div>
 			<div className="links-right">
-				<a target="_blank" href="https://www.capmembers.com/" rel="noopener noreferrer">
-					CAP Members.com
-				</a>{' '}
-				{' | '}
-				<a target="_blank" href="https://www.cap.news/" rel="noopener noreferrer">
-					CAP News
-				</a>{' '}
-				{' | '}
 				<a href="#base" onClick={preventClick}>
 					Top
 				</a>
