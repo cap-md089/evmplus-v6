@@ -1,6 +1,6 @@
 import { Either, left, right } from './Either';
 
-export type MaybeObj<T> = Just<T> | None<T>;
+export type MaybeObj<T> = JustObj<T> | NoneObj<T>;
 
 export interface JustObj<T> {
 	hasValue: true;
@@ -110,8 +110,16 @@ export const maybe = <T>(obj: MaybeObj<T>): Maybe<T> => (obj.hasValue ? just(obj
 
 export const get = <T, K extends keyof T = keyof T>(prop: K) => (obj: T): T[K] => obj[prop];
 
-export const isSomething = <T>(value: Maybe<T>): value is Just<T> =>
-	value.hasValue
+export const isSomething = <T>(value: Maybe<T>): value is Just<T> => value.hasValue;
 
-export const isNothing = <T>(value: Maybe<T>): value is None<T> =>
-	!value.hasValue
+export const isNothing = <T>(value: Maybe<T>): value is None<T> => !value.hasValue;
+
+export const asObj = <T>(value: MaybeObj<T>): MaybeObj<T> =>
+	value.hasValue
+		? ({
+				hasValue: true,
+				value: value.value
+		  } as JustObj<T>)
+		: ({
+				hasValue: false
+		  } as NoneObj<T>);

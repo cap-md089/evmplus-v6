@@ -1,3 +1,5 @@
+import { MaybeObj } from '../lib/Maybe';
+
 /**
  * Table for SQL definitions for CAP NHQ
  *
@@ -728,17 +730,12 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	 * The email address of the Google service account.  Not directly used by
 	 * CAPUnit.com, however it is good to have for configuration.
 	 */
-	serviceAccount: string;
+	serviceAccount: MaybeObj<string>;
 	/**
-	 * The web link used to share the Google Calendar to Wing or others 
+	 * The web link used to share the Google Calendar to Wing or others
 	 * (only contains events with the publishToWingCalendar property true)
 	 */
 	shareLink: string;
-	/**
-	 * The link used to embed the squadron calendar in web pages like
-	 * SiteViz or others
-	 */
-	embedLink: string;
 	/**
 	 * Initial password used to generate Google account for a unit
 	 */
@@ -777,12 +774,12 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	unpaidEventLimit: number;
 	/**
 	 * Allow for website accounts to alias themselves
-	 * 
+	 *
 	 * Fake account IDs, as it were
-	 * 
+	 *
 	 * Will not be editable by the public
 	 */
-	aliases: string[]
+	aliases: string[];
 }
 
 /**
@@ -2185,7 +2182,7 @@ export interface FullFileObject extends FileObject {
 	uploader: MemberObject;
 }
 
-export type Timezone = 
+export type Timezone =
 	| 'America/New_York'
 	| 'America/Chicago'
 	| 'America/Denver'
@@ -2215,7 +2212,7 @@ export interface WebsiteInformation {
 	/**
 	 * What timezone the unit is operating within
 	 */
-	Timezone: Timezone
+	Timezone: Timezone;
 }
 
 /**
@@ -2737,7 +2734,7 @@ export type AlgorithmType = 'pbkdf2';
 export interface AccountPasswordInformation {
 	/**
 	 * Indicates which algorithm to use for the hashing the password
-	 * 
+	 *
 	 * May not exist for backwards compatibility, defaults to pbkdf2
 	 */
 	algorithm?: AlgorithmType;
@@ -2776,7 +2773,6 @@ export interface UserAccountInformation extends NoSQLDocument {
 	 */
 	passwordHistory: AccountPasswordInformation[];
 }
-
 
 export interface PasswordResetTokenInformation extends NoSQLDocument {
 	/**

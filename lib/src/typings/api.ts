@@ -1,9 +1,10 @@
 import { EitherObj } from '../lib/Either';
-import { MaybeObj } from '../lib/Maybe';
+import { Maybe, MaybeObj } from '../lib/Maybe';
 import {
 	AccountObject,
 	AttendanceRecord,
 	CAPMemberObject,
+	CAPWATCHImportErrors,
 	CAPWATCHImportUpdate,
 	DebriefItem,
 	Errors,
@@ -17,8 +18,7 @@ import {
 	RegistryValues,
 	ShortDutyPosition,
 	SigninReturn,
-	TaskObject,
-	CAPWATCHImportErrors
+	TaskObject
 } from './types';
 
 // tslint:disable:no-namespace
@@ -36,7 +36,7 @@ export namespace api {
 
 	export interface ServerError {
 		code: number;
-		error: MaybeObj<Error>;
+		error: Maybe<Error>;
 		message: string;
 	}
 
