@@ -175,19 +175,24 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			debrief: [],
 			sourceEvent: null,
 			googleCalendarIds: {
-				mainId: "", 
-				wingId: null, 
-				regId: null, 
+				mainId: '',
+				wingId: null,
+				regId: null,
 				feeId: null
 			}
 		};
 
-		const googleCalendarEventIds = await createGoogleCalendarEvents(newEvent, account) as [string, null | string, null | string, null | string];
+		const googleCalendarEventIds = (await createGoogleCalendarEvents(newEvent, account)) as [
+			string,
+			null | string,
+			null | string,
+			null | string
+		];
 
 		newEvent.googleCalendarIds = {
-			mainId: googleCalendarEventIds[0], 
-			wingId: googleCalendarEventIds[1], 
-			regId: googleCalendarEventIds[2], 
+			mainId: googleCalendarEventIds[0],
+			wingId: googleCalendarEventIds[1],
+			regId: googleCalendarEventIds[2],
 			feeId: googleCalendarEventIds[3]
 		};
 
@@ -406,8 +411,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		wingId: string | null;
 		regId: string | null;
 		feeId: string | null;
-	}
-	
+	};
+
 	public privateAttendance: boolean;
 
 	// Documents require it
@@ -493,13 +498,18 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		this.timeModified = timeModified;
 
-		const googleCalendarEventIds = await updateGoogleCalendars(this, account) as [string, null | string, null | string, null | string];
-		
+		const googleCalendarEventIds = (await updateGoogleCalendars(this, account)) as [
+			string,
+			null | string,
+			null | string,
+			null | string
+		];
+
 		await eventsCollection.replaceOne(this._id, {
 			...this.toSaveRaw(),
 			timeModified,
 			accountID: account.id,
-			googleCalendarIds: { 
+			googleCalendarIds: {
 				mainId: googleCalendarEventIds[0],
 				wingId: googleCalendarEventIds[1],
 				regId: googleCalendarEventIds[2],

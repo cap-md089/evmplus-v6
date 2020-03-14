@@ -1,6 +1,11 @@
 // import { DateTime } from 'luxon';
 // import { Configuration } from '../conf';
-import { EventStatus, formatGoogleCalendarDate, RawAccountObject, RawEventObject } from 'common-lib';
+import {
+	EventStatus,
+	formatGoogleCalendarDate,
+	RawAccountObject,
+	RawEventObject
+} from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
 import { Configuration as config } from '../conf';
@@ -116,12 +121,18 @@ function buildEventDescription(inEvent: RawEventObject): string {
 		description += '--Required equipment: ' + inEvent.requiredEquipment + '\n';
 	}
 	if (!!inEvent.registration) {
-		description += '--Registration deadline: ' + formatGoogleCalendarDate(inEvent.registration.deadline) + '\n';
+		description +=
+			'--Registration deadline: ' +
+			formatGoogleCalendarDate(inEvent.registration.deadline) +
+			'\n';
 		description += '--Registration information: ' + inEvent.registration.information + '\n';
 	}
 	if (!!inEvent.participationFee) {
 		description += '--Participation fee: ' + inEvent.participationFee.feeAmount + '\n';
-		description += '--Participation fee due: ' + formatGoogleCalendarDate(inEvent.participationFee.feeDue) + '\n';
+		description +=
+			'--Participation fee due: ' +
+			formatGoogleCalendarDate(inEvent.participationFee.feeDue) +
+			'\n';
 	}
 	const showMeals = inEvent.mealsDescription[0].reduce((prev, curr) => prev || curr, false);
 	if (showMeals === true) {
@@ -177,14 +188,26 @@ export async function createGoogleCalendarEvents(inEvent: RawEventObject, inAcco
 	// authenticate request
 	const myReg = await inAccount.getRegistry();
 	await jwtClient.authorize();
-	const myCalendar = google.calendar('v3');
+	const myCalendar = google.calendar({ version: 'v3' });
 
 	return Promise.all([
 		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, true),
-		inEvent.publishToWingCalendar ? updateWingEvent(myCalendar, jwtClient, inEvent, inAccount.wingCalendarID, myReg.values.Website.Name): null,
-		(typeof inEvent.registration !== 'undefined') ? updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID) : null,
-		(typeof inEvent.participationFee !== 'undefined') ? updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID) : null
-	])
+		inEvent.publishToWingCalendar
+			? updateWingEvent(
+					myCalendar,
+					jwtClient,
+					inEvent,
+					inAccount.wingCalendarID,
+					myReg.values.Website.Name
+			  )
+			: null,
+		typeof inEvent.registration !== 'undefined'
+			? updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			: null,
+		typeof inEvent.participationFee !== 'undefined'
+			? updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			: null
+	]);
 }
 
 export default async function updateGoogleCalendars(inEvent: RawEventObject, inAccount: Account) {
@@ -203,13 +226,22 @@ export default async function updateGoogleCalendars(inEvent: RawEventObject, inA
 	// 999999999 is there a guarantee that the function return values will always be in the same order???
 	return Promise.all([
 		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, false),
-		updateWingEvent(myCalendar, jwtClient, inEvent, inAccount.wingCalendarID, myReg.values.Website.Name),
+		updateWingEvent(
+			myCalendar,
+			jwtClient,
+			inEvent,
+			inAccount.wingCalendarID,
+			myReg.values.Website.Name
+		),
 		updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 		updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
 	]);
 }
 
-export async function removeGoogleCalendarEvents(inEvent: RawEventObject, inAccount: RawAccountObject) {
+export async function removeGoogleCalendarEvents(
+	inEvent: RawEventObject,
+	inAccount: RawAccountObject
+) {
 	const privatekey = require(config.googleKeysPath + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
@@ -222,7 +254,10 @@ export async function removeGoogleCalendarEvents(inEvent: RawEventObject, inAcco
 	const myCalendar = google.calendar('v3');
 
 	// 999999999 need to catch the deleteCalendarEvents return error and provide notification
-	await deleteCalendarEvents(myCalendar, jwtClient, inEvent, [inAccount.mainCalendarID, inAccount.wingCalendarID]);
+	await deleteCalendarEvents(myCalendar, jwtClient, inEvent, [
+		inAccount.mainCalendarID,
+		inAccount.wingCalendarID
+	]);
 }
 
 export async function deleteAllGoogleCalendarEvents(inAccount: Account) {
@@ -248,11 +283,11 @@ export async function deleteAllGoogleCalendarEvents(inAccount: Account) {
 				auth: jwtClient,
 				calendarId: inAccount.mainCalendarID,
 				eventId: event.id as string
-			})
+			});
 
 			await new Promise(res => {
 				setTimeout(res, 500);
-			})
+			});
 		}
 	}
 	const listWingResponse = await myCalendar.events.list({
@@ -270,7 +305,7 @@ export async function deleteAllGoogleCalendarEvents(inAccount: Account) {
 
 			await new Promise(res => {
 				setTimeout(res, 500);
-			})
+			});
 		}
 	}
 
@@ -293,7 +328,7 @@ async function deleteCalendarEvent(
 	eventUUID: string,
 	id: string
 ) {
-	if(eventUUID.length > 0) {
+	if (eventUUID.length > 0) {
 		let deleteResponse;
 		try {
 			deleteResponse = await myCalendar.events.delete({
@@ -301,14 +336,14 @@ async function deleteCalendarEvent(
 				calendarId: id,
 				eventId: eventUUID
 			});
-		} catch(error) {
-	// 		console.log("delete event error: " + eventUUID);  9999999999 this shouldn't happen.  Should probably log 
-	// 			this occurrence so that leaks can be plugged.
+		} catch (error) {
+			// 		console.log("delete event error: " + eventUUID);  9999999999 this shouldn't happen.  Should probably log
+			// 			this occurrence so that leaks can be plugged.
 			return error;
 		}
 		if (typeof deleteResponse !== 'undefined') {
 			if (deleteResponse.status === 200) {
-	// 			console.log('Response status ' + deleteResponse.statusText); // 99999999 need to look at possible responses and catch errors
+				// 			console.log('Response status ' + deleteResponse.statusText); // 99999999 need to look at possible responses and catch errors
 				return 'Success';
 			} else {
 				return 'Error';
@@ -328,21 +363,57 @@ async function deleteCalendarEvents(
 ) {
 	let errorFlag = false;
 	if (!!inEvent.googleCalendarIds.mainId && inEvent.googleCalendarIds.mainId.length > 0) {
-		if(await deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.mainId, ids[0]) !== 'Success') { errorFlag = true; }
+		if (
+			(await deleteCalendarEvent(
+				myCalendar,
+				jwtClient,
+				inEvent.googleCalendarIds.mainId,
+				ids[0]
+			)) !== 'Success'
+		) {
+			errorFlag = true;
+		}
 	}
 	if (!!inEvent.googleCalendarIds.wingId && inEvent.googleCalendarIds.wingId.length > 0) {
-		if(await deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.wingId, ids[1]) !== 'Success') { errorFlag = true; }
+		if (
+			(await deleteCalendarEvent(
+				myCalendar,
+				jwtClient,
+				inEvent.googleCalendarIds.wingId,
+				ids[1]
+			)) !== 'Success'
+		) {
+			errorFlag = true;
+		}
 	}
 	if (!!inEvent.googleCalendarIds.regId && inEvent.googleCalendarIds.regId.length > 0) {
-		if(await deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.regId, ids[0]) !== 'Success') { errorFlag = true; }
+		if (
+			(await deleteCalendarEvent(
+				myCalendar,
+				jwtClient,
+				inEvent.googleCalendarIds.regId,
+				ids[0]
+			)) !== 'Success'
+		) {
+			errorFlag = true;
+		}
 	}
 	if (!!inEvent.googleCalendarIds.feeId && inEvent.googleCalendarIds.feeId.length > 0) {
-		if(await deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.feeId, ids[0]) !== 'Success') { errorFlag = true; }
+		if (
+			(await deleteCalendarEvent(
+				myCalendar,
+				jwtClient,
+				inEvent.googleCalendarIds.feeId,
+				ids[0]
+			)) !== 'Success'
+		) {
+			errorFlag = true;
+		}
 	}
 	return errorFlag;
 }
 
-function getEventColor(inStatus: EventStatus){
+function getEventColor(inStatus: EventStatus) {
 	let eventColor = 9;
 	switch (inStatus) {
 		case EventStatus.CANCELLED:
@@ -361,7 +432,7 @@ function getEventColor(inStatus: EventStatus){
 	return eventColor;
 }
 
-function buildEvent(inEvent: RawEventObject){
+function buildEvent(inEvent: RawEventObject) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -385,14 +456,14 @@ function buildEvent(inEvent: RawEventObject){
 	return event;
 }
 
-function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string){
+function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
 		eventColor = 10;
 	}
 	const startDate = new Date(inDate).toISOString();
-	const endDate = new Date(inDate + (60 * 1000)).toISOString();
+	const endDate = new Date(inDate + 60 * 1000).toISOString();
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
@@ -415,16 +486,25 @@ async function updateFeeEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	googleId: string,
+	googleId: string
 ) {
 	let response = { status: 200 };
-	if(inEvent.participationFee !== null) {
-		const deadlineNumber = inEvent.participationFee.feeDue ? inEvent.participationFee.feeDue : 0 ;
-		const deadlineInfo: number = (!!inEvent.participationFee ? inEvent.participationFee.feeAmount : 0 );
-		const deadlineString = "This is a fee deadline for event " + inEvent.accountID + "-" + inEvent.id
-			+ "\n" + (deadlineInfo > 0 ? ("The fee amount is $" + deadlineInfo.toFixed(2) + "\n\n") : "\n");
+	if (inEvent.participationFee !== null) {
+		const deadlineNumber = inEvent.participationFee.feeDue
+			? inEvent.participationFee.feeDue
+			: 0;
+		const deadlineInfo: number = !!inEvent.participationFee
+			? inEvent.participationFee.feeAmount
+			: 0;
+		const deadlineString =
+			'This is a fee deadline for event ' +
+			inEvent.accountID +
+			'-' +
+			inEvent.id +
+			'\n' +
+			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
 		const event = buildDeadline(inEvent, deadlineNumber, deadlineString);
-		if(inEvent.googleCalendarIds.feeId === null) {
+		if (inEvent.googleCalendarIds.feeId === null) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
@@ -443,13 +523,13 @@ async function updateFeeEvent(
 
 		if (typeof response !== 'undefined') {
 			if (response.status === 200) {
-	// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+				// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
 			}
 		} else {
 			console.log('Response undefined');
 		}
 		return event.id;
-	} else if(inEvent.googleCalendarIds.feeId !== null) {
+	} else if (inEvent.googleCalendarIds.feeId !== null) {
 		response = await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
@@ -465,16 +545,21 @@ async function updateRegEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	googleId: string,
+	googleId: string
 ) {
 	let response = { status: 200 };
-	if(inEvent.registration !== null) {
-		const deadlineNumber = (!!inEvent.registration ? inEvent.registration.deadline : 0 );
-		const deadlineInfo: string = (!!inEvent.registration ? inEvent.registration.information : "" );
-		const deadlineString = "This is a registration deadline for event " + inEvent.accountID + "-" + inEvent.id
-			+ "\n" + (deadlineInfo.length > 0 ? (deadlineInfo + '\n\n') : "\n");
+	if (inEvent.registration !== null) {
+		const deadlineNumber = !!inEvent.registration ? inEvent.registration.deadline : 0;
+		const deadlineInfo: string = !!inEvent.registration ? inEvent.registration.information : '';
+		const deadlineString =
+			'This is a registration deadline for event ' +
+			inEvent.accountID +
+			'-' +
+			inEvent.id +
+			'\n' +
+			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
 		const event = buildDeadline(inEvent, deadlineNumber, deadlineString);
-		if(inEvent.googleCalendarIds.regId === null) {
+		if (inEvent.googleCalendarIds.regId === null) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
@@ -493,7 +578,7 @@ async function updateRegEvent(
 
 		if (typeof response !== 'undefined') {
 			if (response.status === 200) {
-	// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+				// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
 			}
 		} else {
 			console.log('Response undefined');
@@ -520,7 +605,7 @@ async function updateMainEvent(
 ) {
 	const event = buildEvent(inEvent);
 	let response = { status: 200 };
-	if(newEvent === true) {
+	if (newEvent === true) {
 		response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
@@ -539,7 +624,7 @@ async function updateMainEvent(
 
 	if (typeof response !== 'undefined') {
 		if (response.status === 200) {
-// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+			// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
 		}
 	} else {
 		console.log('Response undefined');
@@ -552,14 +637,14 @@ async function updateWingEvent(
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
 	googleId: string,
-	accountName: string,
+	accountName: string
 ) {
 	let response = { status: 200 };
-	if(inEvent.publishToWingCalendar) {
+	if (inEvent.publishToWingCalendar) {
 		const event = buildEvent(inEvent);
-		event.description = 'A ' + accountName + ' Event\n\n' + event.description
-	
-		if(inEvent.googleCalendarIds.wingId === null) {
+		event.description = 'A ' + accountName + ' Event\n\n' + event.description;
+
+		if (inEvent.googleCalendarIds.wingId === null) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
@@ -578,7 +663,7 @@ async function updateWingEvent(
 
 		if (typeof response !== 'undefined') {
 			if (response.status === 200) {
-	// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+				// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
 			}
 		} else {
 			console.log('Response undefined');
@@ -589,14 +674,13 @@ async function updateWingEvent(
 		response = await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.wingId,
+			eventId: inEvent.googleCalendarIds.wingId
 		});
 		return null;
 	} else {
 		return null;
 	}
 }
-
 
 // export default async function updateCalendarEvent(inEvent: NewEventObject) {
 // 	const privatekey = require('/home/grioux/typescript-capunit/server/src/lib/googleapi-key.json');

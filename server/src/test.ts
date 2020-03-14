@@ -1,6 +1,11 @@
 import { RawEventObject } from 'common-lib';
 import conf from './conf';
-import { collectResults, deleteAllGoogleCalendarEvents, findAndBind, getTestTools } from './lib/internals';
+import {
+	collectResults,
+	deleteAllGoogleCalendarEvents,
+	findAndBind,
+	getTestTools
+} from './lib/internals';
 
 (async () => {
 	const { account, schema } = await getTestTools(conf);
@@ -35,9 +40,7 @@ import { collectResults, deleteAllGoogleCalendarEvents, findAndBind, getTestTool
 			accountID: account.id
 		})
 	);
-	console.log("idResults ", idResults);
-
+	console.log('idResults ', idResults);
 
 	process.exit();
 })();
-

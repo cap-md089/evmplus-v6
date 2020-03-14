@@ -10,6 +10,7 @@
     "build": "tsc",
     "debug": "nodemon --inspect dist/index.js",
     "check": "tsc --noEmit",
+	"clean": "prettier --write 'src/**/*.ts'",
     "clean-watch": "onchange '**/*.ts' -- prettier --write {{changed}}"
   },
   "main": "dist/index.js",

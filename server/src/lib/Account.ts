@@ -1,8 +1,45 @@
 import * as mysql from '@mysql/xdevapi';
-import { AccountObject, api, AsyncEither, asyncLeft, asyncRight, DatabaseInterface, EventObject, FileObject, just, left, MemberReference, NHQ, none, NoSQLDocument, ProspectiveMemberObject, RawAccountObject, RawTeamObject, right } from 'common-lib';
+import {
+	AccountObject,
+	api,
+	asObj,
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
+	DatabaseInterface,
+	EventObject,
+	FileObject,
+	just,
+	left,
+	MaybeObj,
+	MemberReference,
+	NHQ,
+	none,
+	NoSQLDocument,
+	ProspectiveMemberObject,
+	RawAccountObject,
+	RawTeamObject,
+	right
+} from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
-import { areMemberReferencesTheSame, asyncErrorHandler, CAPMemberClasses, CAPNHQMember, CAPProspectiveMember, Event, File, findAndBind, generateResults, isValidMemberReference, MonthNumber, MySQLRequest, ParamType, Registry, Team } from './internals';
+import {
+	areMemberReferencesTheSame,
+	asyncErrorHandler,
+	CAPMemberClasses,
+	CAPNHQMember,
+	CAPProspectiveMember,
+	Event,
+	File,
+	findAndBind,
+	generateResults,
+	isValidMemberReference,
+	MonthNumber,
+	MySQLRequest,
+	ParamType,
+	Registry,
+	Team
+} from './internals';
 import { ConditionalMemberRequest } from './member/pam/Session';
 import { BasicMySQLRequest, safeBind } from './MySQLUtil';
 import saveServerError from './saveServerError';
@@ -239,9 +276,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			adminIDs: values.adminIDs,
 			mainCalendarID: values.mainCalendarID,
 			wingCalendarID: values.wingCalendarID,
-			serviceAccount: values.serviceAccount,
+			serviceAccount: asObj(values.serviceAccount),
 			shareLink: values.shareLink,
-			embedLink: values.embedLink,
 			initialPassword: values.initialPassword,
 			comments: values.comments,
 			echelon: values.echelon,
@@ -309,15 +345,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 */
 	public adminIDs: MemberReference[];
 	/**
-	 * The web link used to share the Google Calendar to Wing or others 
+	 * The web link used to share the Google Calendar to Wing or others
 	 * (only contains events with the publishToWingCalendar property true)
 	 */
 	public shareLink: string;
-	/**
-	 * The link used to embed the squadron calendar in web pages like
-	 * SiteViz or others
-	 */
-	public embedLink: string;
 	/**
 	 * Initial password used to generate Google account for a unit
 	 */
@@ -350,7 +381,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 * The email address of the Google service account.  Not directly used by
 	 * CAPUnit.com, however it is good to have for configuration.
 	 */
-	public serviceAccount: string;
+	public serviceAccount: MaybeObj<string>;
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -364,10 +395,9 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.adminIDs = data.adminIDs;
 		this.unpaidEventLimit = data.unpaidEventLimit;
 		this.echelon = data.echelon;
-		this.shareLink = data.shareLink,
-		this.embedLink = data.embedLink,
-		this.initialPassword = data.initialPassword,
-		this.comments = data.comments,
+		this.shareLink = data.shareLink;
+		this.initialPassword = data.initialPassword;
+		this.comments = data.comments;
 		this.paidEventLimit = data.paidEventLimit;
 		this.paid = data.paid;
 		this.expired = data.expired;
@@ -546,7 +576,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			wingCalendarID: this.wingCalendarID,
 			serviceAccount: this.serviceAccount,
 			shareLink: this.shareLink,
-			embedLink: this.embedLink,
 			initialPassword: this.initialPassword,
 			comments: this.comments,
 			echelon: this.echelon,
@@ -567,7 +596,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		wingCalendarID: this.wingCalendarID,
 		serviceAccount: this.serviceAccount,
 		shareLink: this.shareLink,
-		embedLink: this.embedLink,
 		initialPassword: this.initialPassword,
 		comments: this.comments,
 		echelon: this.echelon,

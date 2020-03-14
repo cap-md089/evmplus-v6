@@ -1,8 +1,12 @@
 import * as aws from 'aws-sdk';
-import { just, left, RawAccountObject } from 'common-lib';
+import { just, left, none, RawAccountObject } from 'common-lib';
 import * as mysql from 'mysql';
 import conf from './conf';
-import { deleteAllGoogleCalendarEvents, getMigrateAccount, updateGoogleCalendars } from './lib/internals';
+import {
+	deleteAllGoogleCalendarEvents,
+	getMigrateAccount,
+	updateGoogleCalendars
+} from './lib/internals';
 
 /*
 
@@ -175,7 +179,6 @@ async function emailerFunction() {
 }
 
 async function tableAccountFunction() {
-	
 	const myConnection = mysql.createConnection({
 		port: 33389,
 		host: 'md089.capunit.com',
@@ -199,13 +202,13 @@ async function tableAccountFunction() {
 			if (err) {
 				rej(err);
 			}
- 			// console.log(results);
+			// console.log(results);
 			res(results);
-		})
+		});
 	});
 
-// 	console.log(JSON.stringify(tableList[0]));
-	for(const data of tableList) {
+	// 	console.log(JSON.stringify(tableList[0]));
+	for (const data of tableList) {
 		const inRow = JSON.parse(JSON.stringify(data));
 
 		const { schema } = await getMigrateAccount(conf, 'mdx89');
@@ -216,20 +219,19 @@ async function tableAccountFunction() {
 			id: inRow.AccountID,
 			mainCalendarID: inRow.MainID,
 			wingCalendarID: inRow.WingID,
-			serviceAccount: "",
+			serviceAccount: none(),
 			shareLink: inRow.ShareLink,
-			embedLink: inRow.EmbedLink,
 			initialPassword: inRow.InitialPassword,
 			comments: inRow.Comments,
 			echelon: false,
 			mainOrg: inRow.UnitID,
-			orgIDs: [ inRow.UnitID ],
+			orgIDs: [inRow.UnitID],
 			paid: false,
 			expires: 999999999999,
 			paidEventLimit: 50,
 			unpaidEventLimit: 25,
 			aliases: []
-		} 
+		};
 
 		await v4Collection.add(myNewAccount).execute();
 
@@ -237,11 +239,9 @@ async function tableAccountFunction() {
 	}
 
 	console.log('end of function');
-
 }
 
 async function tableAttendanceFunction() {
-	
 	const myConnection = mysql.createConnection({
 		port: 33389,
 		host: 'md089.capunit.com',
@@ -265,13 +265,13 @@ async function tableAttendanceFunction() {
 			if (err) {
 				rej(err);
 			}
- 			// console.log(results);
+			// console.log(results);
 			res(results);
-		})
+		});
 	});
 
-// 	console.log(JSON.stringify(tableList[0]));
-	for(const data of tableList) {
+	// 	console.log(JSON.stringify(tableList[0]));
+	for (const data of tableList) {
 		const inRow = JSON.parse(JSON.stringify(data));
 
 		const { schema } = await getMigrateAccount(conf, 'mdx89');
@@ -282,20 +282,19 @@ async function tableAttendanceFunction() {
 			id: inRow.AccountID,
 			mainCalendarID: inRow.MainID,
 			wingCalendarID: inRow.WingID,
-			serviceAccount: "",
+			serviceAccount: none(),
 			shareLink: inRow.ShareLink,
-			embedLink: inRow.EmbedLink,
 			initialPassword: inRow.InitialPassword,
 			comments: inRow.Comments,
 			echelon: false,
 			mainOrg: inRow.UnitID,
-			orgIDs: [ inRow.UnitID ],
+			orgIDs: [inRow.UnitID],
 			paid: false,
 			expires: 999999999999,
 			paidEventLimit: 50,
 			unpaidEventLimit: 25,
 			aliases: []
-		} 
+		};
 
 		await v4Collection.add(myNewAccount).execute();
 
@@ -303,7 +302,6 @@ async function tableAttendanceFunction() {
 	}
 
 	console.log('end of function');
-
 }
 
 async function sendAnnouncementEmails(inAddresses: string[]) {

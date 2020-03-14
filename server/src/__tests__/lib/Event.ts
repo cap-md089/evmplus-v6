@@ -159,13 +159,14 @@ describe('Event', () => {
 			targetAccount = await Account.Create(
 				{
 					adminIDs: [],
-					mainCalendarID: "mci@group.calendar.google.com",
-					wingCalendarID: "wci@group.calendar.google.com",
-					serviceAccount: "md000-capunit-calendar@md000-capunit.iam.gserviceaccount.com",
-					shareLink: "",
-					embedLink: "",
-					initialPassword: "",
-					comments: "",
+					mainCalendarID: 'mci@group.calendar.google.com',
+					wingCalendarID: 'wci@group.calendar.google.com',
+					serviceAccount: just(
+						'md000-capunit-calendar@md000-capunit.iam.gserviceaccount.com'
+					),
+					shareLink: '',
+					initialPassword: '',
+					comments: '',
 					echelon: false,
 					expires: 0,
 					id: 'linktarget',
