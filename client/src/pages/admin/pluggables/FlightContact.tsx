@@ -448,6 +448,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					<Checkbox name="displayAdvanced" />
 
 					<Selector<CAPMemberClasses>
+						fullWidth={true}
 						name="members"
 						values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
 						displayValue={this.displayMemberName}

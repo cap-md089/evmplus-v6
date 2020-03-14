@@ -11,7 +11,14 @@ import * as React from 'react';
 import { CAPMemberClasses, createCorrectMemberObject } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import { Checkbox, FormBlock, Label, TextInput } from '../forms/SimpleForm';
+import {
+	Checkbox,
+	FormBlock,
+	Label,
+	TextInput,
+	DisabledMappedText,
+	DisabledText
+} from '../forms/SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
@@ -89,16 +96,12 @@ export default class POCInput extends React.Component<
 				name={`pocInput-${this.props.index}`}
 				onFormChange={this.onUpdate}
 				onInitialize={this.props.onInitialize}
+				value={value}
 			>
 				<Label>POC Type</Label>
 				<POCType
 					name="type"
 					labels={['Internal', 'External']}
-					value={
-						typeof value.type === 'string'
-							? (PointOfContactType.INTERNAL as PointOfContactType)
-							: value.type
-					}
 					index={this.props.index}
 					key="type"
 				/>
@@ -108,30 +111,25 @@ export default class POCInput extends React.Component<
 				{this.getIDViewer()}
 
 				<Label>Name</Label>
-				<TextInput
-					key="name"
-					name="name"
-					value={value.name}
-					disabled={isInternalPOC(value)}
-				/>
+				<TextInput key="name" name="name" disabled={isInternalPOC(value)} />
 
 				<Label>POC Email</Label>
-				<TextInput key="email" name="email" value={value.email} />
+				<TextInput key="email" name="email" />
 
 				<Label>POC Phone</Label>
-				<TextInput name="phone" value={value.phone} />
+				<TextInput name="phone" />
 
 				<Label>Receive event updates</Label>
-				<Checkbox name="receiveEventUpdates" value={!!value.receiveEventUpdates} />
+				<Checkbox name="receiveEventUpdates" index={this.props.index} />
 
 				<Label>Receive roster</Label>
-				<Checkbox name="receiveRoster" value={!!value.receiveRoster} />
+				<Checkbox name="receiveRoster" index={this.props.index} />
 
 				<Label>Receive signup updates</Label>
-				<Checkbox name="receiveSignUpUpdates" value={!!value.receiveSignUpUpdates} />
+				<Checkbox name="receiveSignUpUpdates" index={this.props.index} />
 
 				<Label>Receive updates</Label>
-				<Checkbox name="receiveUpdates" value={!!value.receiveUpdates} />
+				<Checkbox name="receiveUpdates" index={this.props.index} />
 			</FormBlock>
 		);
 	}
@@ -246,7 +244,7 @@ export default class POCInput extends React.Component<
 		return isInternalPOC(value) ? (
 			<FormBlock name="memberReference" value={value.memberReference}>
 				<Label>ID</Label>
-				<TextInput disabled={true} name="id" value={id} />
+				<DisabledText name="id" />
 			</FormBlock>
 		) : null;
 	}

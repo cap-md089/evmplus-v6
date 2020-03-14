@@ -75,15 +75,13 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 	}
 
 	public componentDidMount() {
-		if (isMobile()) {
-			window.addEventListener('scroll', this.handleScroll);
-		}
+		window.addEventListener('scroll', this.handleScroll);
+		window.addEventListener('resize', () => this.forceUpdate());
 	}
 
 	public componentWillUnmount() {
-		if (isMobile()) {
-			window.removeEventListener('scroll', this.handleScroll);
-		}
+		window.removeEventListener('scroll', this.handleScroll);
+		window.removeEventListener('resize', () => this.forceUpdate());
 	}
 
 	public render() {
