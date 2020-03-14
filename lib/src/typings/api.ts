@@ -17,7 +17,8 @@ import {
 	RegistryValues,
 	ShortDutyPosition,
 	SigninReturn,
-	TaskObject
+	TaskObject,
+	CAPWATCHImportErrors
 } from './types';
 
 // tslint:disable:no-namespace
@@ -163,9 +164,8 @@ export namespace api {
 
 			export interface CAPWATCHFileImportedResult {
 				type: CAPWATCHImportUpdate.FileImported;
-				id: number;
-				error: boolean;
-				currentStep: number;
+				orgID: number;
+				error: CAPWATCHImportErrors;
 				file: string;
 			}
 
@@ -179,6 +179,8 @@ export namespace api {
 				type: CAPWATCHImportUpdate.ProgressInitialization;
 				totalSteps: number;
 			}
+
+			export type RequestImport = EitherObj<api.HTTPError, CAPWATCHFileImportedResult[]>;
 		}
 
 		export namespace flights {

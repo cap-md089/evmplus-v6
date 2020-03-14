@@ -464,6 +464,11 @@ export namespace Permissions {
 		NO,
 		YES
 	}
+
+	export enum ScanAdd {
+		NO,
+		YES
+	}
 }
 
 export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -1468,6 +1473,10 @@ export interface MemberPermissions {
 	 * Whether or not the member can create banner notifications
 	 */
 	CreateNotifications: Permissions.Notify;
+	/**
+	 * Whether or not members can initiate scan add sessions
+	 */
+	ScanAdd: Permissions.ScanAdd;
 
 	// Developer/super admin privileges?
 	// Will change when utilities are more user friendly
