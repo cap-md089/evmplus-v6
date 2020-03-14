@@ -15,6 +15,7 @@ const confproduction: typeof conf = {
 		connectionCount: 15
 	},
 	capwatchFileDownloadDirectory: '/capwatch-zips',
+	googleKeysPath: '/google-keys',
 	fileStoragePath: '/uploads',
 	path: __dirname,
 	port: 3001

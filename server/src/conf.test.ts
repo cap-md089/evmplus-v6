@@ -3,7 +3,7 @@ import conf from './conf';
 const conftest: typeof conf = {
 	production: false,
 	testing: true,
-	clientStorage: '/home/arioux/typescript-capunit/client',
+	clientStorage: '/home/arioux/Desktop/react-capunit/client',
 	database: {
 		connection: {
 			database: 'EventManagementTest',
@@ -16,6 +16,7 @@ const conftest: typeof conf = {
 	},
 	fileStoragePath: '/uploads',
 	capwatchFileDownloadDirectory: '/capwatch-zips',
+	googleKeysPath: '/google-keys',
 	path: __dirname,
 	port: 3001
 };

@@ -124,6 +124,41 @@ let testAccount: Account;
 // let testRiouxUser: CAPNHQUser;
 // let testRiouxUserInfo: UserAccountInformation;
 
+export async function getMigrateAccount(testconf: typeof Configuration, inId: string) {
+	const conn = testconf.database.connection;
+
+	testSession =
+		testSession ||
+		(await mysql.getSession({
+			user: conn.user,
+			password: conn.password,
+			host: conn.host,
+			port: conn.port
+		}));
+
+	if (testSession === undefined) {
+		throw new Error('Could not get MySQL session!');
+	}
+
+	const schema = testSession.getSchema(testconf.database.connection.database);
+
+	if (schema === undefined) {
+		throw new Error('Could not get migrate schema!');
+	}
+
+	try {
+		testAccount = testAccount || (await Account.Get(inId, schema));
+	} catch (e) {
+		throw new Error('Could not get account!');
+	}
+
+	return {
+		account: testAccount,
+		schema,
+		session: testSession
+	};
+}
+
 export async function getTestTools(testconf: typeof Configuration) {
 	const devAccount: RawAccountObject = {
 		adminIDs: [
@@ -132,6 +167,13 @@ export async function getTestTools(testconf: typeof Configuration) {
 				type: 'CAPNHQMember'
 			}
 		],
+		mainCalendarID: "r2lu9p16lh7qa5r69bv14h85i8@group.calendar.google.com",
+		wingCalendarID: "6t22lk6thigsg6udc7rkpap2tg@group.calendar.google.com",
+		serviceAccount: "md089-capunit-calendar@md089-capunit.iam.gserviceaccount.com",
+		shareLink: "",
+		embedLink: "",
+		initialPassword: "",
+		comments: "",
 		echelon: false,
 		expires: 99999999999999,
 		id: 'mdx89',

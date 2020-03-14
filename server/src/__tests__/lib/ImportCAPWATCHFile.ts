@@ -118,7 +118,7 @@ describe('Import CAPWATCH File', () => {
 		expect(results[0].Location).toBe('Fort Devens');
 
 		done();
-	}, 15000);
+	}, 20000);
 
 	it('should import duty positions', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
