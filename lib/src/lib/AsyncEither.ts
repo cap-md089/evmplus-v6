@@ -152,16 +152,24 @@ export class AsyncEither<L, R> {
 	public setErrorValue = (errorValue: L | ((err: Error) => L)) =>
 		new AsyncEither(this.value, errorValue);
 
-	public then = <TResult1 = Either<L, R>, TResult2 = L>(
-		onfulfilled?: ((value: TResult1) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
-	): PromiseLike<TResult1 | TResult2> => {
+	public then = (
+		onfulfilled?:
+			| ((value: Either<L, R>) => Either<L, R> | PromiseLike<Either<L, R>>)
+			| undefined
+			| null,
+		onRejectedWithLongName?:
+			| ((reason: any) => Either<L, R> | PromiseLike<Either<L, R>>)
+			| undefined
+			| null
+	): PromiseLike<Either<L, R>> => {
 		return this.value.then(
-			val =>
-				onfulfilled
-					? onfulfilled((val as unknown) as TResult1)
-					: Promise.resolve((val as unknown) as TResult1),
-			onrejected
+			val => (onfulfilled ? onfulfilled(val) : Promise.resolve(val)),
+			val => {
+				if (onRejectedWithLongName) {
+					return onRejectedWithLongName(left(val));
+				}
+				return left(val);
+			}
 		);
 	};
 }
