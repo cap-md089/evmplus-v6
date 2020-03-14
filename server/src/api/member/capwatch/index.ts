@@ -3,8 +3,8 @@ import _import from './import';
 
 const router = Router();
 
-router.get(
-	'/import/:token/:list',
+router.post(
+	'/import',
 	// import is a reserved JS keyword :/
 	_import
 );

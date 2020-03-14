@@ -47,11 +47,17 @@ const SESSION_AGE = 10 * 60 * 1000 * 100;
 const SESSION_ID_BYTE_COUNT = 64;
 const SESSION_TABLE = 'Sessions';
 
+export enum SessionType {
+	REGULAR = 1,
+	PASSWORD_RESET = 2,
+	SCAN_ADD = 4
+}
+
 export interface Session {
-	sessionID: SessionID;
+	id: SessionID;
 	created: number;
 	userAccount: UserAccountInformation;
-	passwordOnly: boolean;
+	type: SessionType;
 }
 
 export interface ConditionalMemberRequest<P extends ParamType = {}, B = any>
@@ -110,7 +116,7 @@ const updateSessionExpireTime = (
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
 		.map(collection =>
 			safeBind(collection.modify('sessionID = :sessionID'), {
-				sessionID: session.sessionID
+				sessionID: session.id
 			})
 				.set('created', Date.now())
 				.execute()
@@ -126,7 +132,7 @@ const getSessionFromID = (
 ): AsyncEither<MemberCreateError, Session[]> =>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<Session>(SESSION_TABLE))
-		.map(collection => collectResults(findAndBind(collection, { sessionID })));
+		.map(collection => collectResults(findAndBind(collection, { id: sessionID })));
 
 export const createSessionForUser = (
 	schema: Schema,
@@ -138,50 +144,31 @@ export const createSessionForUser = (
 	)
 		.map<string>(bytes => bytes.toString('hex'))
 		.map<Session>(sessionID => ({
-			sessionID,
+			id: sessionID,
 			created: Date.now(),
 			userAccount,
-			passwordOnly: false
+			type: SessionType.REGULAR
 		}))
 		.flatMap(session => addSessionToDatabase(schema, session));
 
-export const unmarkSessionForPasswordReset = (
+export const setSessionType = (
 	schema: Schema,
-	session: Session
+	session: Session,
+	type: SessionType
 ): AsyncEither<MemberCreateError, Session> =>
 	asyncRight<MemberCreateError, Session>(session, MemberCreateError.SERVER_ERROR)
-		.map(sess => ({
+		.map<Session>(sess => ({
 			...sess,
-			passwordOnly: false
+			type
 		}))
 		.tap(sess =>
 			safeBind(
 				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
 				{
-					sessionID: sess.sessionID
+					sessionID: sess.id
 				}
 			)
-				.set('passwordOnly', false)
-				.execute()
-		);
-
-export const markSessionForPasswordReset = (
-	schema: Schema,
-	session: Session
-): AsyncEither<MemberCreateError, Session> =>
-	asyncRight<MemberCreateError, Session>(session, MemberCreateError.SERVER_ERROR)
-		.map(sess => ({
-			...sess,
-			passwordOnly: true
-		}))
-		.tap(sess =>
-			safeBind(
-				schema.getCollection<Session>(SESSION_TABLE).modify('sessionID = :sessionID'),
-				{
-					sessionID: sess.sessionID
-				}
-			)
-				.set('passwordOnly', true)
+				.set('type', type)
 				.execute()
 		);
 
@@ -234,7 +221,7 @@ export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 		}
 
 		public get sessionID() {
-			return this.sessionInformation.sessionID;
+			return this.sessionInformation.id;
 		}
 
 		public permissions: MemberPermissions;
@@ -288,7 +275,7 @@ export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 				throw new Error('Cannot su if not Rioux');
 			}
 
-			await su(this.schema, this.sessionID, ref);
+			await su(this.schema, this.sessionInformation, ref);
 		}
 	}
 
@@ -296,7 +283,7 @@ export const SessionedUser = <M extends MemberConstructor>(Member: M) => {
 };
 
 export function memberRequestTransformer(
-	allowPasswordOnly: boolean,
+	sessionType: SessionType,
 	memberRequired: false
 ): <T extends BasicAccountRequest>(
 	req: T
@@ -305,7 +292,7 @@ export function memberRequestTransformer(
 	BasicMaybeMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
 >;
 export function memberRequestTransformer(
-	allowedPasswordOnly: boolean,
+	sessionType: SessionType,
 	memberRequired: true
 ): <T extends BasicAccountRequest>(
 	req: T
@@ -315,7 +302,7 @@ export function memberRequestTransformer(
 >;
 
 export function memberRequestTransformer(
-	allowPasswordOnly: boolean,
+	sessionType: SessionType,
 	memberRequired: boolean = false
 ) {
 	return <T extends BasicAccountRequest>(
@@ -341,7 +328,8 @@ export function memberRequestTransformer(
 					)
 				)
 				.flatMap<Session>(session =>
-					!allowPasswordOnly && session.passwordOnly
+					// tslint:disable-next-line: no-bitwise
+					(sessionType & session.type) !== session.type
 						? asyncLeft({
 								code: 400,
 								error: none<Error>(),
@@ -401,7 +389,7 @@ export function memberRequestTransformer(
 
 const conditionalMemberMiddlewareGenerator = (
 	errorHandler: typeof asyncErrorHandler,
-	allowPasswordOnly: boolean
+	sessionType: SessionType
 ) =>
 	errorHandler(async (req: ConditionalMemberRequest, res, next) => {
 		if (
@@ -429,7 +417,8 @@ const conditionalMemberMiddlewareGenerator = (
 				return next();
 			}
 
-			if (!allowPasswordOnly && session.passwordOnly) {
+			// tslint:disable-next-line: no-bitwise
+			if ((sessionType & session.type) !== session.type) {
 				return next();
 			}
 
@@ -460,27 +449,27 @@ const conditionalMemberMiddlewareGenerator = (
 
 export const conditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
 	asyncErrorHandler,
-	false
+	SessionType.REGULAR
 );
 export const conditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
 	asyncErrorHandler,
-	true
+	SessionType.PASSWORD_RESET
 );
 export const leftyConditionalMemberMiddleware = conditionalMemberMiddlewareGenerator(
 	leftyAsyncErrorHandler,
-	false
+	SessionType.REGULAR
 );
 export const leftyConditionalMemberMiddlewareWithPasswordOnly = conditionalMemberMiddlewareGenerator(
 	leftyAsyncErrorHandler,
-	true
+	SessionType.PASSWORD_RESET
 );
 
 const memberMiddlewareGenerator = (
 	errorHandler: typeof asyncErrorHandler,
-	allowPasswordOnly: boolean,
+	sessionType: SessionType,
 	beLefty: boolean
 ) => (req: ConditionalMemberRequest, res: Response, next: NextFunction) =>
-	conditionalMemberMiddlewareGenerator(errorHandler, allowPasswordOnly)(req, res, () => {
+	conditionalMemberMiddlewareGenerator(errorHandler, sessionType)(req, res, () => {
 		if (req.member === null) {
 			if (beLefty) {
 				res.status(401);
@@ -499,16 +488,24 @@ const memberMiddlewareGenerator = (
 		}
 	});
 
-export const memberMiddleware = memberMiddlewareGenerator(asyncErrorHandler, false, false);
-export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+export const memberMiddleware = memberMiddlewareGenerator(
 	asyncErrorHandler,
-	true,
+	SessionType.REGULAR,
 	false
 );
-export const leftyMemberMiddleware = memberMiddlewareGenerator(leftyAsyncErrorHandler, false, true);
+export const memberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
+	asyncErrorHandler,
+	SessionType.PASSWORD_RESET,
+	false
+);
+export const leftyMemberMiddleware = memberMiddlewareGenerator(
+	leftyAsyncErrorHandler,
+	SessionType.REGULAR,
+	true
+);
 export const leftyMemberMiddlewareWithPassswordOnly = memberMiddlewareGenerator(
 	leftyAsyncErrorHandler,
-	true,
+	SessionType.PASSWORD_RESET,
 	true
 );
 
@@ -570,16 +567,13 @@ export const leftyPermissionMiddleware = (permission: MemberPermission, threshol
 	next();
 };
 
-export const su = async (schema: Schema, sessionID: SessionID, newUser: MemberReference) => {
+export const su = async (schema: Schema, session: Session, newUser: MemberReference) => {
 	const sessions = schema.getCollection<Session>(SESSION_TABLE);
-
-	// We can assume there is one session, as otherwise they won't be able to get here
-	const session = (await collectResults(findAndBind(sessions, { sessionID })))[0];
 
 	const userAccount = session.userAccount;
 	userAccount.member = newUser;
 
-	await safeBind(sessions.modify('sessionID = :sessionID'), { sessionID })
+	await safeBind(sessions.modify('id = :sessionID'), { sessionID: session.id })
 		.set('userAccount', userAccount)
 		.execute();
 };

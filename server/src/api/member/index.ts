@@ -32,6 +32,7 @@ import setdutypositions, { setDutyPositionsValidator } from './temporarydutyposi
 const router = express.Router();
 
 router.use('/account', account);
+router.use('/capwatch', capwatch);
 
 router.use(Account.LeftyExpressMiddleware);
 
@@ -87,13 +88,6 @@ router.post(
 	leftyTokenMiddleware,
 	Validator.LeftyBodyExpressMiddleware(setDutyPositionsValidator),
 	setdutypositions
-);
-
-router.use(
-	'/capwatch',
-	leftyMemberMiddleware,
-	leftyPermissionMiddleware('DownloadCAPWATCH'),
-	capwatch
 );
 
 router.post(

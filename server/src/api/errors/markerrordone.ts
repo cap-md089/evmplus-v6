@@ -14,8 +14,10 @@ import {
 	BasicSimpleValidatedRequest,
 	memberRequestTransformer,
 	serverErrorGenerator,
+	SessionType,
 	Validator
 } from '../../lib/internals';
+import { tokenTransformer } from '../formtoken';
 import { getErrors } from './geterrors';
 
 interface MarkErrorDoneRequestBody {
@@ -49,7 +51,8 @@ const errorHandler = serverErrorGenerator('Could not mark error as resolved');
 export default asyncEitherHandler2<api.errors.MarkErrorAsDone>(request =>
 	asyncRight(request, errorHandler)
 		.flatMap(Account.RequestTransformer)
-		.flatMap(memberRequestTransformer(false, true))
+		.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
+		.flatMap(tokenTransformer)
 		.flatMap(errorValidator.transform)
 		.flatMap<BasicSimpleValidatedRequest<MarkErrorDoneRequestBody>>(req =>
 			req.member.isRioux

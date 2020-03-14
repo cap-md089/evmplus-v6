@@ -55,5 +55,8 @@ export default new Validator<MemberPermissions>({
 	},
 	ManageTeam: {
 		validator: Validator.Enum(Permissions.ManageTeam)
+	},
+	ScanAdd: {
+		validator: Validator.Enum(Permissions.ScanAdd)
 	}
 });

@@ -11,9 +11,10 @@ import {
 	collectResults,
 	createSessionForUser,
 	findAndBind,
-	getInformationForUser
+	getInformationForUser,
+	setSessionType
 } from '../../internals';
-import { markSessionForPasswordReset } from './Session';
+import { SessionType } from './Session';
 
 interface SigninSuccess {
 	result: MemberCreateError.NONE;
@@ -117,7 +118,7 @@ export const trySignin = async (
 			}),
 		async sess => {
 			if (valid === PasswordResult.VALID_EXPIRED) {
-				return markSessionForPasswordReset(schema, sess)
+				return setSessionType(schema, sess, SessionType.PASSWORD_RESET)
 					.join()
 					.then(eith =>
 						eith.cata<SigninResult>(
@@ -126,7 +127,7 @@ export const trySignin = async (
 							}),
 							() => ({
 								result: MemberCreateError.PASSWORD_EXPIRED,
-								sessionID: sess.sessionID
+								sessionID: sess.id
 							})
 						)
 					);
@@ -135,7 +136,7 @@ export const trySignin = async (
 			return {
 				result: MemberCreateError.NONE,
 				member,
-				sessionID: sess.sessionID
+				sessionID: sess.id
 			};
 		}
 	);

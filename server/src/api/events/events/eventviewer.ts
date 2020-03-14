@@ -14,7 +14,8 @@ import {
 	Event,
 	memberRequestTransformer,
 	resolveReference,
-	serverErrorGenerator
+	serverErrorGenerator,
+	SessionType
 } from '../../../lib/internals';
 
 const inList = (
@@ -44,7 +45,7 @@ const inList = (
 export default asyncEitherHandler2<api.events.events.GetEventViewerData, { id: string }>(r =>
 	asyncRight(r, serverErrorGenerator('Could not get event information'))
 		.flatMap(req => Account.RequestTransformer(req))
-		.flatMap(req => memberRequestTransformer(false, false)(req))
+		.flatMap(req => memberRequestTransformer(SessionType.REGULAR, false)(req))
 		.flatMap<api.events.events.EventViewerData>(req =>
 			Event.GetEither(req.params.id, req.account, req.mysqlx)
 				.setErrorValue(serverErrorGenerator('Could not get event information'))

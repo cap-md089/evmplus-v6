@@ -23,13 +23,7 @@ describe('form tokens', () => {
 	});
 
 	afterAll(async done => {
-		await Promise.all([
-			schema
-				.getCollection('Events')
-				.remove('true')
-				.execute(),
-			session.close()
-		]);
+		await session.close();
 
 		server.close();
 

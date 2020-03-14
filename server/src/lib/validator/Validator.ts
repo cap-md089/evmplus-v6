@@ -918,7 +918,7 @@ export default class Validator<T> {
 
 	public transform<R extends BasicAccountRequest>(
 		req: R
-	): AsyncEither<api.ServerError, R & { body: T }> {
+	): AsyncEither<api.ServerError, Omit<R, 'body'> & { body: T }> {
 		return asyncRight(req, serverErrorGenerator('Could not validate body'))
 			.flatMap<R>(r =>
 				r.body === undefined || r.body === null

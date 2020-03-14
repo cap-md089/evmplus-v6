@@ -1,7 +1,9 @@
+import { join } from 'path';
+
 export const Configuration = {
 	production: false,
 	testing: false,
-	clientStorage: '/home/arioux/typescript-capunit/client',
+	clientStorage: join(__dirname, '..', 'client'),
 	database: {
 		connection: {
 			database: 'EventManagement4',

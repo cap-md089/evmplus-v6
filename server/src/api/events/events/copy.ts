@@ -6,6 +6,7 @@ import {
 	Event,
 	memberRequestTransformer,
 	serverErrorGenerator,
+	SessionType,
 	Validator
 } from '../../../lib/internals';
 import { tokenTransformer } from '../../formtoken';
@@ -34,7 +35,7 @@ export default asyncEitherHandler2<api.events.events.Copy, { id: string }>(req =
 	asyncRight(req, serverErrorGenerator('Could not copy event'))
 		// Middleware
 		.flatMap(r => Account.RequestTransformer(r))
-		.flatMap(r => memberRequestTransformer(false, true)(r))
+		.flatMap(r => memberRequestTransformer(SessionType.REGULAR, true)(r))
 		.flatMap(r => tokenTransformer(r))
 		// For some reason, this causes the type system to work properly, as opposed to just passing in copyValidator.transform
 		.flatMap(r => copyValidator.transform(r))

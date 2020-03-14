@@ -16,7 +16,8 @@ import {
 	collectResults,
 	findAndBind,
 	memberRequestTransformer,
-	serverErrorGenerator
+	serverErrorGenerator,
+	SessionType
 } from '../../lib/internals';
 
 export const getErrors = (
@@ -32,7 +33,7 @@ export const getErrors = (
 export default asyncEitherHandler2<api.errors.GetErrors>(request =>
 	asyncRight(request, serverErrorGenerator('Could not get errors'))
 		.flatMap(Account.RequestTransformer)
-		.flatMap(memberRequestTransformer(false, true))
+		.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
 		.flatMap<BasicMemberRequest>(req =>
 			req.member.isRioux
 				? asyncRight(req, serverErrorGenerator('Could not get errors'))

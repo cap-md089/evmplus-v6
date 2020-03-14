@@ -27,10 +27,6 @@ describe('/api', () => {
 		beforeAll(async done => {
 			[account, schema, session] = await getTestTools2(conftest);
 
-			done();
-		});
-
-		beforeEach(async done => {
 			server = await getServer(conf, 3004, session);
 
 			await schema.getCollection('UserAccountInfo').remove('true');
@@ -53,26 +49,8 @@ describe('/api', () => {
 			done();
 		});
 
-		afterEach(async done => {
-			server.server.close();
-
-			await Promise.all([
-				schema
-					.getCollection('UserAccountInfo')
-					.remove('member.id = 535799')
-					.execute(),
-				schema
-					.getCollection('UserAccountTokens')
-					.remove('member.id = 535799')
-					.execute()
-			]);
-
-			done();
-		});
-
 		afterAll(async () => {
 			await Promise.all([
-				session.close(),
 				schema
 					.getCollection('UserAccountInfo')
 					.remove('member.id = 535799')
@@ -82,6 +60,8 @@ describe('/api', () => {
 					.remove('member.id = 535799')
 					.execute()
 			]);
+
+			await sessionStorage.close();
 		});
 
 		it('should sign in correctly', done => {

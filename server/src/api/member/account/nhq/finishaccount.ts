@@ -74,7 +74,7 @@ export default asyncEitherHandler<api.member.account.cap.Finish>(
 		).some();
 
 		return right({
-			sessionID: session.sessionID
+			sessionID: session.id
 		});
 	}
 );

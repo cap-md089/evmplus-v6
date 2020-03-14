@@ -52,7 +52,7 @@ expect.extend({
 		}
 
 		return {
-			message() {
+			message: () => {
 				return `Value received is ${this.isNot ? 'right' : 'left'}: ${JSON.stringify(
 					received.value
 				)}`;
@@ -159,7 +159,7 @@ expect.extend({
 		}
 
 		return {
-			message() {
+			message: () => {
 				return `Value received is ${this.isNot ? 'left' : 'right'}: ${JSON.stringify(
 					received.value
 				)}`;
@@ -266,7 +266,7 @@ expect.extend({
 		}
 
 		return {
-			message() {
+			message: () => {
 				return `Value does ${this.isNot ? '' : 'not '}have a value`;
 			},
 			pass: this.isNot ? received.hasValue : !received.hasValue
@@ -371,7 +371,7 @@ expect.extend({
 		}
 
 		return {
-			message() {
+			message: () => {
 				return `Value does ${this.isNot ? 'not ' : ''}have a value`;
 			},
 			pass: this.isNot ? !received.hasValue : received.hasValue

@@ -26,7 +26,7 @@ export default async (
 	server.on('error', onError);
 	server.on('listening', onListening);
 
-	const { router, session } = await getRouter(conf, mysqlConn);
+	const { router, session, capwatchEmitter } = await getRouter(conf, mysqlConn);
 
 	mysqlConn = session;
 
@@ -71,7 +71,7 @@ export default async (
 
 	function onListening(): void {
 		const addr = server.address();
-		const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+		const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
 		if (conf.production) {
 			console.log(`Bound on ${bind}`);
 		}
@@ -86,6 +86,7 @@ export default async (
 		app,
 		server,
 		mysqlConn,
+		capwatchEmitter,
 		finishServerSetup() {
 			app.use(express.static(path.join(conf.clientStorage, 'build')));
 			app.get('*', (req, res) => {

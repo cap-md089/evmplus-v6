@@ -11,7 +11,11 @@ import {
 	ShortDutyPosition,
 	TemporaryDutyPosition
 } from 'common-lib';
+import { createWriteStream } from 'fs';
+import { get } from 'https';
 import { DateTime } from 'luxon';
+import { join } from 'path';
+import { Configuration } from '../../../conf';
 import {
 	Account,
 	collectResults,
@@ -296,6 +300,61 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		for await (const i of generator) {
 			yield Account.Get(i.id, this.schema);
 		}
+	}
+
+	public async downloadCAPWATCHFile(
+		orgid: number,
+		password: string,
+		conf: typeof Configuration
+	): Promise<string> {
+		const today = new Date();
+		const fileName = join(
+			conf.capwatchFileDownloadDirectory,
+			`CAPWATCH-${
+				this.id
+			}-${orgid}-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}.zip`
+		);
+
+		const encodedAuth = Buffer.from(`${this.id}:${password}`, 'ascii').toString('base64');
+		const url = `https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?unitOnly=0&ORGID=${orgid}`;
+
+		const storageLocation = createWriteStream(fileName);
+
+		await new Promise((res, rej) => {
+			get(
+				url,
+				{
+					headers: {
+						authorization: `Basic ${encodedAuth}`
+					}
+				},
+				result => {
+					if (!result.statusCode || result.statusCode >= 299) {
+						return rej(
+							new Error(
+								'Member could not download CAPWATCH file: ' + result.statusCode
+							)
+						);
+					}
+
+					result.pipe(storageLocation);
+
+					result.on('end', () => {
+						res();
+					});
+
+					result.on('error', err => {
+						rej(err);
+					});
+
+					storageLocation.on('error', err => {
+						rej(err);
+					});
+				}
+			);
+		});
+
+		return fileName;
 	}
 
 	private updateDutyPositions() {

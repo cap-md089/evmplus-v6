@@ -20,13 +20,14 @@ import {
 	Account,
 	AccountRequest,
 	BasicConditionalMemberRequest,
+	BasicMaybeMemberRequest,
 	BasicMySQLRequest,
 	memberRequestTransformer,
 	ParamType,
 	Registry,
-	saveServerError
+	saveServerError,
+	SessionType
 } from './internals';
-import { BasicMaybeMemberRequest } from './member/pam/Session';
 
 aws.config.update({ region: 'us-east-1' });
 
@@ -328,7 +329,7 @@ const convertReqForSavingAsError = (
 		.flatMap((r: BasicAccountRequest | BasicMaybeMemberRequest) =>
 			'member' in r
 				? asyncRight(r, serverErrorGenerator('Could not upgrade account information'))
-				: memberRequestTransformer(true, false)(r)
+				: memberRequestTransformer(SessionType.REGULAR, false)(r)
 		)
 		.map(r => ({
 			...r,
@@ -422,9 +423,55 @@ export const asyncEitherHandler2 = <R, P extends ParamType = {}>(
 
 export const serverErrorGenerator = (message: string) => (err: Error): api.ServerError => ({
 	code: 500,
-	error: just(err),
+	error: just(err || new Error('Could not get error')),
 	message
 });
+
+export const convertToEitherFunction = <P extends any[], R>(
+	func: (...params: P) => Promise<R>
+): ((...params: P) => AsyncEither<api.ServerError, R>) => (...params) =>
+	asyncRight(func(...params), err => ({
+		message: err.message,
+		code: 500,
+		error: just<Error>(err)
+	}));
+
+type AsyncFunctionThing<T, K extends keyof T, P extends any[], R> = T[K] extends (
+	...params: P
+) => Promise<R>
+	? K
+	: never;
+
+type AsyncFunctionReturn<T, K extends keyof T, P extends any[]> = T[K] extends (
+	...params: P
+) => Promise<infer R>
+	? R
+	: never;
+
+type AsyncMemberFunction<T, K extends keyof T, P extends any[]> = T[K] extends (
+	...params: P
+) => Promise<infer R>
+	? (...params: P) => Promise<R>
+	: never;
+
+export const convertToEitherMethod = <
+	T,
+	K extends keyof T,
+	P extends any[],
+	R extends AsyncFunctionReturn<T, K, P>
+>(
+	obj: T,
+	func: AsyncFunctionThing<T, K, P, R>
+) => (...params: P) =>
+	asyncRight(
+		((obj[func] as unknown) as AsyncMemberFunction<T, K, P>).bind(obj)(...params),
+		err =>
+			({
+				message: err.message,
+				code: 500,
+				error: just<Error>(err)
+			} as api.ServerError)
+	);
 
 /**
  * Use whenever taking an object and passing it to MySQL

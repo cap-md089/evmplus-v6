@@ -5,8 +5,9 @@ import {
 	streamAsyncGeneratorAsJSONArray
 } from '../../lib/internals';
 
-export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	await streamAsyncGeneratorAsJSONArray(res, req.account.getMembers(), mem =>
-		JSON.stringify(mem.toRaw())
-	);
-});
+export default asyncErrorHandler(
+	async (req: MemberRequest, res: express.Response) =>
+		await streamAsyncGeneratorAsJSONArray(res, req.account.getMembers(), mem =>
+			JSON.stringify(mem.toRaw())
+		)
+);

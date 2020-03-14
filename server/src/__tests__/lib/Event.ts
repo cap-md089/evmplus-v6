@@ -37,17 +37,21 @@ describe('Event', () => {
 
 		mem = await CAPNHQMember.Get(542488, account, schema);
 
+		await schema
+			.getCollection('Events')
+			.remove('true')
+			.execute();
+
 		done();
 	});
 
 	afterAll(async done => {
-		await Promise.all([
-			schema
-				.getCollection('Events')
-				.remove('true')
-				.execute(),
-			session.close()
-		]);
+		await schema
+			.getCollection('Events')
+			.remove('true')
+			.execute();
+
+		await session.close();
 
 		done();
 	});
@@ -343,7 +347,7 @@ describe('Event', () => {
 
 			const res2 = await resolveToEither(eventviewer.fn(riouxReq));
 
-			expect(res2).toEqualRight({
+			expect(res2).toMatchRight({
 				attendees: {},
 				event: event.toRaw(),
 				organizations: {}
@@ -363,7 +367,7 @@ describe('Event', () => {
 
 			const res3 = await resolveToEither(eventviewer.fn(riouxReq));
 
-			expect(res3).toEqualRight({
+			expect(res3).toMatchRight({
 				attendees: {
 					[stringifyMemberReference(rioux)]: just(rioux.toRaw())
 				},

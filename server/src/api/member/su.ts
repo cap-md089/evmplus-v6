@@ -1,4 +1,13 @@
-import { api, just, left, none, right } from 'common-lib';
+import {
+	api,
+	just,
+	left,
+	MemberReference,
+	NHQMemberReference,
+	none,
+	ProspectiveMemberReference,
+	right
+} from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicMemberRequest,
@@ -24,7 +33,16 @@ export default asyncEitherHandler<api.member.Su>(async (req: BasicMemberRequest)
 	}
 
 	try {
-		await req.member.su(req.body);
+		await req.member.su(
+			req.body.type === 'Null'
+				? {
+						type: 'Null'
+				  }
+				: ({
+						type: req.body.type,
+						id: (req.body as NHQMemberReference | ProspectiveMemberReference).id
+				  } as MemberReference)
+		);
 	} catch (e) {
 		return left({
 			code: 500,

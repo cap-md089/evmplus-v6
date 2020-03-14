@@ -1,120 +1,145 @@
-import { left, none } from 'common-lib';
-import { asyncErrorHandler, MemberRequest } from '../../../lib/internals';
+import { api, asyncRight, CAPWATCHImportUpdate, fromValue, left, none, right } from 'common-lib';
+import { EventEmitter } from 'events';
+import {
+	Account,
+	asyncEitherHandler2,
+	BasicMemberRequest,
+	CAPNHQMember,
+	CAPNHQUser,
+	ImportCAPWATCHFile,
+	memberRequestTransformer,
+	permissionTransformer,
+	serverErrorGenerator,
+	SessionType,
+	Validator
+} from '../../../lib/internals';
+import { tokenTransformer } from '../../formtoken';
 
-export default asyncErrorHandler(
-	async (req: MemberRequest<{ list: string; token: string }>, res) => {
-		// Depends on CAPNHQUser having a getCAPWATCHFile method
-		// It doesn't, we need to program it to be able to interface with the 'API'
+interface RequestBody {
+	orgIDs: number[];
+	files?: string[];
+	password: string;
+}
 
-		res.status(500);
-		return res.json(
-			left({
-				code: 500,
-				error: none<Error>(),
-				message: 'Not implemented'
-			})
-		);
-
-		/*
-	if (!await validRawTokenAlone(req.mysqlx, req.params.token)) {
-		res.status(403);
-		return res.end();
+const validator = new Validator<RequestBody>({
+	orgIDs: {
+		validator: Validator.ArrayOf(Validator.Number)
+	},
+	files: {
+		validator: Validator.ArrayOf(Validator.String),
+		required: false
+	},
+	password: {
+		validator: Validator.String
 	}
+});
 
-	if (!(req.member instanceof CAPNHQUser)) {
-		res.status(403);
-		return res.end();
+const defaultFiles = [
+	'Member.txt',
+	'DutyPosition.txt',
+	'MbrContact.txt',
+	'CadetDutyPositions.txt',
+	'CadetActivities.txt',
+	'OFlight.txt'
+];
+
+const identity = <T>(a: T): T => a;
+
+const sequentialExecute = async <T, R>(
+	info: T[],
+	mapper: (info: T, index: number) => Promise<R>
+): Promise<R[]> => {
+	const res = [];
+	let index = 0;
+	for (const i of info) {
+		res.push(await mapper(i, index++));
 	}
+	return res;
+};
 
-	const stringORGIDS = req.params.list.split(',');
-	const orgids: number[] = [];
-	for (const i in stringORGIDS) {
-		if (stringORGIDS.hasOwnProperty(i)) {
-			orgids.push(parseInt(stringORGIDS[i], 10));
-			if (orgids[i] !== orgids[i]) {
-				res.status(400);
-				return res.end();
+const collect = async <T>(iter: AsyncIterableIterator<T>): Promise<T[]> => {
+	const res = [];
+	for await (const i of iter) {
+		res.push(i);
+	}
+	return res;
+};
+
+export const capwatchEmitter = new EventEmitter();
+
+export default asyncEitherHandler2<api.member.capwatch.RequestImport>(request =>
+	asyncRight(request, serverErrorGenerator('Could not import CAPWATCH files'))
+		// Validate request
+		.flatMap(Account.RequestTransformer)
+		.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
+		.flatMap(tokenTransformer)
+		.flatMap(permissionTransformer('DownloadCAPWATCH'))
+		.flatMap(r => validator.transform(r))
+		.flatMap<Omit<BasicMemberRequest<{}, RequestBody>, 'member'> & { member: CAPNHQUser }>(
+			req =>
+				req.member instanceof CAPNHQMember
+					? right({
+							...req,
+							member: req.member
+					  })
+					: left({
+							code: 400,
+							message:
+								'Member cannot import CAPWATCH files. Member has to be a CAP NHQ member',
+							error: none<Error>()
+					  })
+		)
+		// Perform import
+		.flatMap(req =>
+			asyncRight(
+				fromValue(req.body.files).cata(() => defaultFiles, identity),
+				serverErrorGenerator('Could not import CAPWATCH files')
+			).flatMap(files =>
+				asyncRight(req.body.orgIDs, serverErrorGenerator('Could not get CAPWATCH files'))
+					// Download CAPWATCH files
+					.map(ids =>
+						Promise.all(
+							ids.map(id =>
+								req.member.downloadCAPWATCHFile(
+									id,
+									req.body.password,
+									req.configuration
+								)
+							)
+						)
+					)
+					// Import files
+					.map(filePaths =>
+						sequentialExecute(filePaths, (path, i) =>
+							collect(
+								ImportCAPWATCHFile(
+									path,
+									req.mysqlx,
+									req.mysqlxSession,
+									req.body.orgIDs[i],
+									files
+								)
+							)
+						)
+					)
+					// Parse results, send them to the client
+					.map(results =>
+						results.map((resultList, index) =>
+							resultList.map<api.member.capwatch.CAPWATCHFileImportedResult>(res => ({
+								type: CAPWATCHImportUpdate.FileImported,
+								orgID: req.body.orgIDs[index],
+								error: res.error,
+								file: res.file
+							}))
+						)
+					)
+					.map(results => results.reduce((prev, curr) => [...prev, ...curr], []))
+			)
+		)
+		.tap(results => {
+			const ids = results.map(res => res.orgID);
+			if (ids.includes(916) || ids.includes(2529)) {
+				capwatchEmitter.emit('capwatch-update');
 			}
-		}
-	}
-
-	const filesToImport = [
-		'Member.txt',
-		'DutyPosition.txt',
-		'MbrContact.txt',
-		'CadetDutyPositions.txt',
-		'CadetActivities.txt',
-		'OFlight.txt'
-	];
-	// Each file imported has an event it fires, plus the download, plus the finish event
-	const totalSteps = (filesToImport.length + 2) * orgids.length;
-	let currentStep = 0;
-
-	res.header('Content-type', 'text/event-stream');
-	res.flushHeaders();
-
-	res.write(
-		JSON.stringify({
-			type: CAPWATCHImportUpdate.ProgressInitialization,
-			totalSteps
 		})
-	);
-
-	let fileLocation = '';
-
-	for (const orgid of orgids) {
-		try {
-			fileLocation = await req.member.getCAPWATCHFile(orgid.toString());
-
-			currentStep++;
-			res.write(
-				JSON.stringify({
-					type: CAPWATCHImportUpdate.CAPWATCHFileDownloaded,
-					id: orgid,
-					currentStep
-				})
-			);
-		} catch (e) {
-			res.status(403);
-			return res.end();
-		}
-
-		const importProgress = ImportCAPWATCHFile(
-			fileLocation,
-			req.mysqlx,
-			orgid,
-			filesToImport
-		);
-
-		for await (const progress of importProgress) {
-			currentStep++;
-			res.write(
-				JSON.stringify({
-					type: CAPWATCHImportUpdate.FileImported,
-					id: orgid,
-					error: progress.error !== CAPWATCHImportErrors.NONE,
-					currentStep,
-					file: progress.file
-				})
-			);
-
-			if (progress.error !== CAPWATCHImportErrors.NONE) {
-				console.log(progress.error, progress.file);
-			}
-		}
-
-		currentStep++;
-		res.write(
-			JSON.stringify({
-				type: CAPWATCHImportUpdate.CAPWATCHFileDone,
-				id: orgid,
-				currentStep
-			})
-		);
-	}
-
-	res.status(200);
-	res.end();
-	*/
-	}
 );

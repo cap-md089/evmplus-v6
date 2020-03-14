@@ -7,14 +7,15 @@ import {
 	Event,
 	EventValidator,
 	memberRequestTransformer,
-	serverErrorGenerator
+	serverErrorGenerator,
+	SessionType
 } from '../../../lib/internals';
 import { tokenTransformer } from '../../formtoken';
 
 export default asyncEitherHandler2<api.events.events.Add>(req =>
 	asyncRight(req, serverErrorGenerator('Could not create new event'))
 		.flatMap(r => Account.RequestTransformer(r))
-		.flatMap(r => memberRequestTransformer(false, true)(r))
+		.flatMap(r => memberRequestTransformer(SessionType.REGULAR, true)(r))
 		.flatMap(r => tokenTransformer(r))
 		.flatMap<BasicMemberRequest>(r =>
 			r.member.hasPermission('ManageEvent') ||

@@ -15,6 +15,7 @@ import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
 import members from './api/member';
+import { capwatchEmitter } from './api/member/capwatch/import';
 import notifications from './api/notifications';
 import registry from './api/registry';
 import signin from './api/signin';
@@ -23,7 +24,6 @@ import { Configuration } from './conf';
 import {
 	Account,
 	leftyConditionalMemberMiddleware,
-	leftyMemberMiddlewareWithPassswordOnly,
 	MySQLMiddleware,
 	MySQLRequest
 } from './lib/internals';
@@ -87,12 +87,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.post('/signin', Account.LeftyExpressMiddleware, signin);
 
-	router.get(
-		'/token',
-		Account.LeftyExpressMiddleware,
-		leftyMemberMiddlewareWithPassswordOnly,
-		getFormToken
-	);
+	router.get('/token', getFormToken);
 
 	router.get(
 		'/banner',
@@ -140,6 +135,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	return {
 		router,
-		session
+		session,
+		capwatchEmitter
 	};
 };

@@ -4,6 +4,7 @@ import { convertNHQDate } from '../MySQLUtil';
 
 const memberParse: CAPWATCHModule<NHQ.CAPMember> = async (fileData, schema, orgid) => {
 	if (
+		fileData.length === 0 ||
 		typeof fileData[0].CAPID === 'undefined' ||
 		typeof fileData[0].DOB === 'undefined' ||
 		typeof fileData[0].Expiration === 'undefined' ||
@@ -36,6 +37,11 @@ const memberParse: CAPWATCHModule<NHQ.CAPMember> = async (fileData, schema, orgi
 
 	for (const member of fileData) {
 		try {
+			await memberCollection
+				.remove('CAPID = :CAPID')
+				.bind({ CAPID: parseInt(member.CAPID + '', 10) })
+				.execute();
+
 			const values = {
 				CAPID: parseInt(member.CAPID + '', 10),
 				SSN: member.SSN,

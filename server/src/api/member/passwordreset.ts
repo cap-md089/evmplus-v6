@@ -3,7 +3,8 @@ import {
 	addPasswordForUser,
 	asyncEitherHandler,
 	BasicMemberRequest,
-	unmarkSessionForPasswordReset
+	SessionType,
+	setSessionType
 } from '../../lib/internals';
 
 const passwordResetErrorMessages = {
@@ -34,8 +35,8 @@ export default asyncEitherHandler<api.member.PasswordReset>(async (req: BasicMem
 			});
 		}
 
-		if (req.member.session.passwordOnly) {
-			await unmarkSessionForPasswordReset(req.mysqlx, req.member.session).fullJoin();
+		if (req.member.session.type === SessionType.PASSWORD_RESET) {
+			await setSessionType(req.mysqlx, req.member.session, SessionType.REGULAR).fullJoin();
 		}
 
 		return right(void 0);

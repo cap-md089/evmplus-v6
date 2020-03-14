@@ -89,6 +89,6 @@ export default asyncEitherHandler2<api.member.account.cap.FinishPasswordReset>(r
 				.flatMap(i => i)
 		)
 		.map(session => ({
-			sessionID: session.sessionID
+			sessionID: session.id
 		}))
 );

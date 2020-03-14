@@ -4,13 +4,14 @@ import {
 	asyncEitherHandler2,
 	Event,
 	memberRequestTransformer,
-	serverErrorGenerator
+	serverErrorGenerator,
+	SessionType
 } from '../../../lib/internals';
 
 export default asyncEitherHandler2<api.events.events.Get, { id: string }>(req =>
 	asyncRight(req, serverErrorGenerator('Could not get event'))
 		.flatMap(r => Account.RequestTransformer(r))
-		.flatMap(r => memberRequestTransformer(false, false)(r))
+		.flatMap(r => memberRequestTransformer(SessionType.REGULAR, false)(r))
 		.flatMap(r =>
 			Event.GetEither(r.params.id, r.account, r.mysqlx).flatMap(ev =>
 				asyncRight(ev, serverErrorGenerator('Could not get member information'))
