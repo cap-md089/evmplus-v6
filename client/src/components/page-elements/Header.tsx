@@ -1,5 +1,5 @@
 import { Maybe } from 'common-lib';
-import React, { forwardRef, useEffect, FunctionComponent } from 'react';
+import React, { useEffect, FunctionComponent } from 'react';
 import { NavLink } from 'react-router-dom';
 import jQuery, { bestfit } from '../../jquery.textfit';
 import Registry from '../../lib/Registry';

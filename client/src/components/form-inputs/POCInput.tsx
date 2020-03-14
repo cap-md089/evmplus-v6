@@ -11,14 +11,7 @@ import * as React from 'react';
 import { CAPMemberClasses, createCorrectMemberObject } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import {
-	Checkbox,
-	FormBlock,
-	Label,
-	TextInput,
-	DisabledMappedText,
-	DisabledText
-} from '../forms/SimpleForm';
+import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import { NotOptionalInputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
@@ -231,14 +224,8 @@ export default class POCInput extends React.Component<
 	private getIDViewer() {
 		const value = this.props.value!;
 
-		let id = '';
-
 		if (value.type !== PointOfContactType.INTERNAL) {
 			return null;
-		}
-
-		if (value.memberReference.type !== 'Null') {
-			id = value.memberReference.id.toString();
 		}
 
 		return isInternalPOC(value) ? (

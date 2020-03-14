@@ -1,15 +1,9 @@
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
-import SimpleForm, {
-	Title,
-	Label,
-	TextBox,
-	TextInput,
-	NumberInput
-} from '../../components/forms/SimpleForm';
+import SimpleForm, { Title, Label, TextBox, TextInput } from '../../components/forms/SimpleForm';
 import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
 import { fetchFunction } from '../../lib/myFetch';
-import { api, EitherObj, either } from 'common-lib';
+import { api, either } from 'common-lib';
 
 interface RequestPasswordResetFormValues {
 	username: string;

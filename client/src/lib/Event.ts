@@ -19,7 +19,6 @@ import {
 	left,
 	Maybe,
 	Member,
-	fromValue,
 	maybe
 } from 'common-lib';
 import Account from './Account';

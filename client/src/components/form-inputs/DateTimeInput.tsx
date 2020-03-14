@@ -59,12 +59,6 @@ interface DateTimeState {
 const normalizeInput = (value: number | DateTime | undefined, offset: SupportedTimeZones) =>
 	typeof value !== 'undefined' && value !== null ? DateTime.fromMillis(+value) : DateTime.local();
 
-const quickNormalize = (props: DateTimeInputProps | DateInputProps) =>
-	normalizeInput(props.value, props.originalTimeZoneOffset);
-
-// short left pad
-const lp = (v: string | number, amount = 2) => ('0000' + v).substr(-amount);
-
 export default class DateTimeInput extends React.Component<
 	DateTimeInputProps | DateInputProps,
 	DateTimeState

@@ -299,7 +299,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 
 		const token = await APIInterface.getToken(this.props.account.id, this.props.member);
 
-		const result = await this.props.member.memberFetch(
+		await this.props.member.memberFetch(
 			`/api/errors`,
 			{
 				body: JSON.stringify({
@@ -314,7 +314,6 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 			fetchFunction
 		);
 
-		const returnValue = either((await result.json()) as api.errors.MarkErrorAsDone);
 		const comparer = areErrorObjectsTheSame(error);
 
 		this.setState(

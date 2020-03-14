@@ -6,12 +6,8 @@ import GlobalNotification from './components/GlobalNotification';
 import Loader from './components/Loader';
 import Footer from './components/page-elements/Footer';
 import Header from './components/page-elements/Header';
-import Slideshow from './components/page-elements/Slideshow';
+import SideNavigation, { SideNavigationItem } from './components/page-elements/SideNavigation';
 import PageRouter from './components/PageRouter';
-import SideNavigation, {
-	SideNavigationItem,
-	isMobile
-} from './components/page-elements/SideNavigation';
 import Account from './lib/Account';
 import { CAPMemberClasses, createCorrectMemberObject, getMember } from './lib/Members';
 import myFetch from './lib/myFetch';

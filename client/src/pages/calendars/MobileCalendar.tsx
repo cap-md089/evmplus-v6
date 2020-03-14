@@ -2,7 +2,7 @@ import React from 'react';
 import Page, { PageProps } from '../Page';
 import { EventObject } from 'common-lib';
 import Loader from '../../components/Loader';
-import { MONTHS, CalendarData, getMonth, getClassNameFromEvent } from './DesktopCalendar';
+import { MONTHS, getMonth, getClassNameFromEvent } from './DesktopCalendar';
 import myFetch from '../../lib/myFetch';
 import { DateTime } from 'luxon';
 import { Link } from 'react-router-dom';
@@ -80,16 +80,6 @@ export default class MobileCalendar extends Page<
 		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
 		const thisMonth = getMonth(month, year);
 		const nextMonth = getMonth(month + 1, year);
-
-		const firstDay = thisMonth.weekday % 7;
-
-		const numberWeeks = Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) + 1;
-
-		const calendar: CalendarData = [];
-
-		const isWeekWeird = lastMonth.startOf('week').day === lastMonth.day - 6;
-
-		const startOfLastMonthWeek = isWeekWeird ? lastMonth : lastMonth.startOf('week');
 
 		const days = Array(thisMonth.daysInMonth);
 		for (let i = 0; i < days.length; i++) {
