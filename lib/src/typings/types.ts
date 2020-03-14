@@ -717,6 +717,37 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	 */
 	id: string;
 	/**
+	 * The ID of the main Google calendar
+	 */
+	mainCalendarID: string;
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	wingCalendarID: string;
+	/**
+	 * The email address of the Google service account.  Not directly used by
+	 * CAPUnit.com, however it is good to have for configuration.
+	 */
+	serviceAccount: string;
+	/**
+	 * The web link used to share the Google Calendar to Wing or others 
+	 * (only contains events with the publishToWingCalendar property true)
+	 */
+	shareLink: string;
+	/**
+	 * The link used to embed the squadron calendar in web pages like
+	 * SiteViz or others
+	 */
+	embedLink: string;
+	/**
+	 * Initial password used to generate Google account for a unit
+	 */
+	initialPassword: string;
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
 	 * Whether or not the account is an echelon account
 	 */
 	echelon: boolean;
@@ -836,6 +867,24 @@ export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewE
 		 * The account linked from
 		 */
 		accountID: string;
+	};
+	googleCalendarIds: {
+		/**
+		 * UUID of the Google Caldendar event on the main calendar
+		 */
+		mainId: string;
+		/**
+		 * UUID of the Google Calendar event on the Wing published calendar
+		 */
+		wingId: null | string;
+		/**
+		 * UUID of the Google Calendar registration deadline event on the main calendar
+		 */
+		regId: null | string;
+		/**
+		 * UUID of the Goodle Calendar fee deadline event on the main calendar
+		 */
+		feeId: null | string;
 	};
 }
 

@@ -6,4 +6,5 @@ export * from './lib/passwordComplexity';
 export * from './typings/types';
 export * from './typings/api';
 export * from './lib/Member';
+export * from './lib/formatDate';
 export * from './lib/errorHandling';
