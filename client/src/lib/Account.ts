@@ -21,6 +21,7 @@ import MemberBase from './MemberBase';
 import { CAPMemberClasses, createCorrectMemberObject } from './Members';
 import myFetch from './myFetch';
 import Team from './Team';
+import Registry from './Registry';
 
 /**
  * Holds the account information for a provided account
@@ -82,6 +83,18 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public aliases: string[];
 
+	public mainCalendarID: string;
+
+	public wingCalendarID: string;
+
+	public comments: string;
+
+	public initialPassword: string;
+
+	public serviceAccount: MaybeObj<string>;
+
+	public shareLink: string;
+
 	protected constructor(data: AccountObject) {
 		super(data.id);
 
@@ -97,6 +110,12 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		this.unpaidEventLimit = data.unpaidEventLimit;
 		this.validPaid = data.validPaid;
 		this.aliases = data.aliases;
+		this.wingCalendarID = data.wingCalendarID;
+		this.mainCalendarID = data.mainCalendarID;
+		this.comments = data.comments;
+		this.initialPassword = data.initialPassword;
+		this.serviceAccount = data.serviceAccount;
+		this.shareLink = data.shareLink;
 	}
 
 	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
@@ -235,7 +254,19 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			paidEventLimit: this.paidEventLimit,
 			unpaidEventLimit: this.unpaidEventLimit,
 			validPaid: this.validPaid,
-			aliases: this.aliases
+			aliases: this.aliases,
+			comments: this.comments,
+			initialPassword: this.initialPassword,
+			mainCalendarID: this.mainCalendarID,
+			serviceAccount: this.serviceAccount,
+			shareLink: this.shareLink,
+			wingCalendarID: this.wingCalendarID
 		};
+	}
+
+	public getEmbedLink(registry: Registry): string {
+		return `<iframe src=\"https://calendar.google.com/calendar/embed?src=${encodeURIComponent(
+			this.mainCalendarID
+		)}&ctz=America%2FNew_York\" style=\"border: 0\" width=\"720\" height=\"540\" frameborder=\"0\" scrolling=\"no\"></iframe>`;
 	}
 }

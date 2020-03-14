@@ -229,6 +229,13 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public privateAttendance: boolean;
 
+	public googleCalendarIds: {
+		mainId: string;
+		wingId: null | string;
+		regId: null | string;
+		feeId: null | string;
+	};
+
 	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
 
@@ -279,6 +286,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
 		this.privateAttendance = data.privateAttendance;
+		this.googleCalendarIds = data.googleCalendarIds;
 	}
 
 	public toRaw(): EventObject {
@@ -329,7 +337,8 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			wingEventNumber: this.wingEventNumber,
 			fileIDs: this.fileIDs,
 			attendance: this.attendance,
-			privateAttendance: this.privateAttendance
+			privateAttendance: this.privateAttendance,
+			googleCalendarIds: this.googleCalendarIds
 		};
 	}
 
