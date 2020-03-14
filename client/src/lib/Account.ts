@@ -61,6 +61,16 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public adminIDs: MemberReference[];
 
+	public mainCalendarID: string;
+
+	public wingCalendarID: string;
+
+	public shareLink: string;
+
+	public initialPassword: string;
+
+	public comments: string;
+
 	public echelon: boolean;
 
 	public expired: boolean;
@@ -83,22 +93,18 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public aliases: string[];
 
-	public mainCalendarID: string;
-
-	public wingCalendarID: string;
-
-	public comments: string;
-
-	public initialPassword: string;
-
 	public serviceAccount: MaybeObj<string>;
-
-	public shareLink: string;
 
 	protected constructor(data: AccountObject) {
 		super(data.id);
 
 		this.adminIDs = data.adminIDs;
+		this.mainCalendarID = data.mainCalendarID;
+		this.wingCalendarID = data.wingCalendarID;
+		this.serviceAccount = data.serviceAccount;
+		this.shareLink = data.shareLink;
+		this.initialPassword = data.initialPassword;
+		this.comments = data.comments;
 		this.echelon = data.echelon;
 		this.expired = data.expired;
 		this.expires = data.expires;
@@ -244,6 +250,12 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	public toRaw(): AccountObject {
 		return {
 			adminIDs: this.adminIDs,
+			mainCalendarID: this.mainCalendarID,
+			wingCalendarID: this.wingCalendarID,
+			serviceAccount: this.serviceAccount,
+			shareLink: this.shareLink,
+			initialPassword: this.initialPassword,
+			comments: this.comments,
 			echelon: this.echelon,
 			expired: this.expired,
 			id: this.id,
@@ -254,13 +266,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			paidEventLimit: this.paidEventLimit,
 			unpaidEventLimit: this.unpaidEventLimit,
 			validPaid: this.validPaid,
-			aliases: this.aliases,
-			comments: this.comments,
-			initialPassword: this.initialPassword,
-			mainCalendarID: this.mainCalendarID,
-			serviceAccount: this.serviceAccount,
-			shareLink: this.shareLink,
-			wingCalendarID: this.wingCalendarID
+			aliases: this.aliases
 		};
 	}
 

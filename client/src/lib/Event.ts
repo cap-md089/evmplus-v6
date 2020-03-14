@@ -227,14 +227,14 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public attendance: AttendanceRecord[];
 
-	public privateAttendance: boolean;
-
 	public googleCalendarIds: {
 		mainId: string;
-		wingId: null | string;
-		regId: null | string;
-		feeId: null | string;
+		wingId: string | null;
+		regId: string | null;
+		feeId: string | null;
 	};
+
+	public privateAttendance: boolean;
 
 	public constructor(data: EventObject, private account: Account) {
 		super(account.id);
@@ -285,6 +285,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		this.eventWebsite = data.eventWebsite;
 		this.groupEventNumber = data.groupEventNumber;
 		this.highAdventureDescription = data.highAdventureDescription;
+		this.googleCalendarIds = data.googleCalendarIds;
 		this.privateAttendance = data.privateAttendance;
 		this.googleCalendarIds = data.googleCalendarIds;
 	}
