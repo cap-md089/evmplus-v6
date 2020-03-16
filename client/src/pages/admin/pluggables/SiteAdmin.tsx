@@ -28,6 +28,8 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					administration
 				</div>
 				<div className="widget-body">
+					<Link to="/admin/attendance">View Attendance</Link>
+					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
 					{this.props.member.hasPermission('FlightAssign') ? (
 						<>

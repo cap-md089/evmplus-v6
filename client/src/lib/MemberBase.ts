@@ -145,11 +145,10 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 	 * Names are stupidly inconsistent...
 	 */
 	public getName = (): string =>
-		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
+		[this.nameFirst, this.nameMiddle.charAt(0), this.nameLast, this.nameSuffix]
 			.map(value => value.trimLeft().trimRight())
 			.map(value => value.replace(/\r\n/gm, ''))
 			.map(value => value.replace(/(  +)/g, ' '))
-			.map((value, i) => (i === 1 ? value.charAt(0) : value))
 			.filter(s => !!s)
 			.join(' ');
 
@@ -220,13 +219,17 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 
 		const token = await this.getToken(this);
 
-		await this.fetch('/api/member/flight/bulk', {
-			method: 'POST',
-			body: JSON.stringify({
-				token,
-				members: flights
-			})
-		});
+		await this.fetch(
+			'/api/member/flight/bulk',
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token,
+					members: flights
+				})
+			},
+			this
+		);
 	}
 
 	public memberFetch(url: string, options: RequestInit = {}, func: typeof myFetch = myFetch) {

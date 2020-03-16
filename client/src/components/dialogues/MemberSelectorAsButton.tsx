@@ -11,6 +11,7 @@ type MemberSelectorButtonProps = DialogueButtonProps & {
 	memberList: Promise<MemberBase[]>;
 	onMemberSelect: (member: MemberBase | null) => void;
 	useShortLoader?: boolean;
+	disabled?: boolean;
 	buttonType?: '' | 'primaryButton' | 'secondaryButton' | 'none';
 };
 
@@ -55,7 +56,11 @@ export default class MemberSelectorButton extends React.Component<
 
 		return (
 			<>
-				<Button buttonType={this.props.buttonType} onClick={this.openDialogue}>
+				<Button
+					buttonType={this.props.buttonType}
+					onClick={this.openDialogue}
+					disabled={this.props.disabled}
+				>
 					{this.props.children}
 				</Button>
 				<DownloadDialogue<MemberBase>

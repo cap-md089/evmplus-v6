@@ -120,7 +120,11 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 
 		const children = this.state.members.flatMap((value, index) => [
 			<Title key={index * 3}>{value.getFullName()}</Title>,
-			<PermissionsEdit name={`permissions-${value.getFullName()}`} key={index * 3 + 1} />,
+			<PermissionsEdit
+				name={`permissions-${value.getFullName()}`}
+				key={index * 3 + 1}
+				index={index}
+			/>,
 			<TextBox key={index * 3 + 2}>
 				<Button onClick={this.getRemover(index)} buttonType={'none'}>
 					Remove {value.getFullName()}

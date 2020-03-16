@@ -35,6 +35,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 		const name = !!this.props.index
 			? `${this.props.name}-${this.props.index}`
 			: this.props.name;
+
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
 				<div className="checkboxDiv">

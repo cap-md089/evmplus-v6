@@ -44,3 +44,9 @@
 		color: $secondary-color;
 	}
 }
+
+.primaryButton.disabled,
+.secondaryButton.disabled {
+	color: black;
+	cursor: progress;
+}

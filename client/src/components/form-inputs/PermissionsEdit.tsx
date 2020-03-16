@@ -39,6 +39,7 @@ export const Member: Readonly<MemberPermissions> = {
 	ManageEvent: 0,
 	ManageTeam: 0,
 	ScanAdd: 0,
+	AttendanceView: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -63,6 +64,7 @@ export const Staff: Readonly<MemberPermissions> = {
 	ManageEvent: 1,
 	ManageTeam: 0,
 	ScanAdd: 0,
+	AttendanceView: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -87,6 +89,7 @@ export const Manager: Readonly<MemberPermissions> = {
 	ManageEvent: 2,
 	ManageTeam: 1,
 	ScanAdd: 1,
+	AttendanceView: 1,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -111,6 +114,7 @@ export const Admin: Readonly<MemberPermissions> = {
 	ManageEvent: 2,
 	ManageTeam: 1,
 	ScanAdd: 1,
+	AttendanceView: 1,
 
 	DownloadCAPWATCH: 1,
 	PermissionManagement: 1,
@@ -136,7 +140,8 @@ const stripPermissionLevel = (values: PermissionFormValues): MemberPermissions =
 	PromotionManagement: values.PromotionManagement,
 	ProspectiveMemberManagement: values.ProspectiveMemberManagement,
 	RegistryEdit: values.RegistryEdit,
-	ScanAdd: values.ScanAdd
+	ScanAdd: values.ScanAdd,
+	AttendanceView: values.AttendanceView
 });
 
 const permissionLevelFromPermissions = (permissions: MemberPermissions): PermissionLevel =>
@@ -184,6 +189,7 @@ export default class PermissionsEdit extends React.Component<
 				ManageEvent: 0,
 				ManageTeam: 0,
 				ScanAdd: 0,
+				AttendanceView: 0,
 
 				DownloadCAPWATCH: 0,
 				PermissionManagement: 0,
@@ -218,6 +224,7 @@ export default class PermissionsEdit extends React.Component<
 			ManageEvent: 0,
 			ManageTeam: 0,
 			ScanAdd: 0,
+			AttendanceView: 0,
 
 			DownloadCAPWATCH: 0,
 			PermissionManagement: 0,
@@ -245,7 +252,7 @@ export default class PermissionsEdit extends React.Component<
 				/>
 
 				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" />
+				<Checkbox name="showAdvanced" index={this.props.index} />
 
 				<Label key="0">Administer PT</Label>
 				<Select<Permissions.AdministerPT>
@@ -343,23 +350,30 @@ export default class PermissionsEdit extends React.Component<
 				<Label key="30">Set up Event Attendance Scanners</Label>
 				<Select<Permissions.ScanAdd> key="31" name="ScanAdd" labels={['No', 'Yes']} />
 
-				<Label key="32">Download CAPWATCH files</Label>
-				<Select<Permissions.DownloadCAPWATCH>
+				<Label key="32">View attendance</Label>
+				<Select<Permissions.AttendanceView>
 					key="33"
+					name="AttendanceView"
+					labels={['Peronsal', 'Others']}
+				/>
+
+				<Label key="33">Download CAPWATCH files</Label>
+				<Select<Permissions.DownloadCAPWATCH>
+					key="34"
 					name="DownloadCAPWATCH"
 					labels={['No', 'Yes']}
 				/>
 
-				<Label key="34">Permission management</Label>
+				<Label key="35">Permission management</Label>
 				<Select<Permissions.PermissionManagement>
-					key="35"
+					key="36"
 					name="PermissionManagement"
 					labels={['No', 'Yes']}
 				/>
 
-				<Label key="36">Configure website</Label>
+				<Label key="37">Configure website</Label>
 				<Select<Permissions.RegistryEdit>
-					key="37"
+					key="38"
 					name="RegistryEdit"
 					labels={['No', 'Yes']}
 				/>
@@ -381,7 +395,7 @@ export default class PermissionsEdit extends React.Component<
 				/>
 
 				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" />
+				<Checkbox name="showAdvanced" index={this.props.index} />
 			</FormBlock>
 		);
 	}

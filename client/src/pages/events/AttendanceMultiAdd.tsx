@@ -372,6 +372,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					<Checkbox name="displayAdvanced" />
 
 					<MemberSelector
+						fullWidth={true}
 						name="members"
 						values={this.state.members!.slice(0).sort(currentSortFunction)}
 						displayValue={this.renderMember}

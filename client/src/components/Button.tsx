@@ -4,6 +4,7 @@ import './Button.scss';
 export interface ButtonProps {
 	className?: string;
 	id?: string;
+	disabled?: boolean;
 
 	useData?: false;
 
@@ -18,6 +19,7 @@ export interface ButtonProps {
 export interface ButtonPropsWithData<C> {
 	className?: string;
 	id?: string;
+	disabled?: boolean;
 
 	useData: true;
 	/**
@@ -64,15 +66,13 @@ export default class Button<C> extends React.Component<
 		return (
 			<button
 				onClick={this.handleClick}
-				style={{
-					cursor: 'pointer'
-				}}
 				className={
 					(this.props.buttonType === 'none' ? 'linkButton ' : '') +
 					(typeof this.props.buttonType === 'string'
 						? ` ${this.props.buttonType}`
 						: 'primaryButton') +
-					(this.props.className ? ` ${this.props.className}` : ' asyncButton')
+					(this.props.className ? ` ${this.props.className}` : ' asyncButton') +
+					(this.props.disabled ? ' disabled' : '')
 				}
 			>
 				{this.props.children}

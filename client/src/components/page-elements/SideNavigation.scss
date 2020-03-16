@@ -25,15 +25,21 @@
 			border-top: 1px solid #1e487f;
 			width: 100%;
 			float: left;
-			background-image: linear-gradient(to bottom, rgba(13,58,116,1) 1%, rgba(5,50,109,1) 100%);
+			background-image: linear-gradient(
+				to bottom,
+				rgba(13, 58, 116, 1) 1%,
+				rgba(5, 50, 109, 1) 100%
+			);
 			color: #0b375b;
 			font-size: 14px;
 			line-height: 22px;
 			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 			z-index: 35;
 
-			a, button {
-				font-family: "Myriad Pro", "Gill Sans", "Gill Sans MT", 'Gill Sans', 'Gill Sans MT', Calibri, sans-serif;
+			a,
+			button {
+				font-family: 'Myriad Pro', 'Gill Sans', 'Gill Sans MT', 'Gill Sans', 'Gill Sans MT',
+					Calibri, sans-serif;
 				font-size: 14px;
 				line-height: 18px;
 				color: white;
@@ -44,7 +50,11 @@
 				float: left;
 				text-align: left;
 				border: 0;
-				background-image: linear-gradient(to bottom, rgba(13,58,116,1) 1%, rgba(5,50,109,1) 100%);
+				background-image: linear-gradient(
+					to bottom,
+					rgba(13, 58, 116, 1) 1%,
+					rgba(5, 50, 109, 1) 100%
+				);
 
 				span {
 					margin: 0 0 0 8px;
@@ -98,7 +108,7 @@
 	}
 
 	.side-nav.parent-closed {
-		z-index: 0;
+		z-index: 40;
 	}
 
 	.side-nav.stuck {

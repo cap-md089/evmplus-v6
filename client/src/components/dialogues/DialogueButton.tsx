@@ -14,6 +14,7 @@ interface DialogueButtonPropsBase {
 	buttonText: string;
 	buttonType?: '' | 'primaryButton' | 'secondaryButton' | 'none';
 	buttonClass?: string;
+	disabled?: boolean;
 }
 
 interface DialogueButtonWithOK {
@@ -137,6 +138,7 @@ export default class DialogueButton extends React.Component<
 					{this.props.children}
 				</Dialogue>
 				<Button
+					disabled={this.props.disabled}
 					buttonType={this.props.buttonType}
 					className={this.props.buttonClass}
 					onClick={this.open}

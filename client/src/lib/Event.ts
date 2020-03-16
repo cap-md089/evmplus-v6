@@ -369,7 +369,9 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			memberName: member.getFullName(),
 			memberID: memberToAdd,
 			timestamp: Date.now(),
-			summaryEmailSent: false
+			summaryEmailSent: false,
+			arrivalTime: record.arrivalTime || this.startDateTime,
+			departureTime: record.departureTime || this.endDateTime
 		});
 
 		await this.fetch(
@@ -415,7 +417,9 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 					memberID: members[i].getReference(),
 					memberName: members[i].getFullName(),
 					timestamp: Date.now(),
-					summaryEmailSent: false
+					summaryEmailSent: false,
+					arrivalTime: records[i].arrivalTime || this.startDateTime,
+					departureTime: records[i].departureTime || this.endDateTime
 				});
 			}
 		}
@@ -507,7 +511,9 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		if (attendanceIndex !== '') {
 			this.attendance[parseInt(attendanceIndex, 10)] = {
 				...this.attendance[parseInt(attendanceIndex, 10)],
-				...record
+				...record,
+				arrivalTime: record.arrivalTime || this.startDateTime,
+				departureTime: record.departureTime || this.endDateTime
 			};
 		}
 	}

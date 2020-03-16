@@ -123,6 +123,7 @@ export default class Test extends Page<PageProps<{}>, { open: boolean } & Props>
 			ManageEvent: 0,
 			ManageTeam: 0,
 			ScanAdd: 0,
+			AttendanceView: 0,
 
 			DownloadCAPWATCH: 0,
 			PermissionManagement: 0,

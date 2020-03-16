@@ -3,10 +3,14 @@ import { Route, Switch } from 'react-router';
 import MemberBase from '../../lib/Members';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
+import AttendanceHistory from './pages/AttendanceHistory';
+import EmailList from './pages/EmailList';
+import ErrorListPage, { ErrorListWidget, shouldRenderErrorList } from './pages/ErrorList';
 import FlightAssign from './pages/FlightAssign';
 import Notifications from './pages/Notifications';
 import PermissionAssign from './pages/PermissionAssign';
 import RegEdit from './pages/RegEdit';
+import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
 import { canUseCreate, CreateWidget } from './pluggables/Create';
 import { DriveWidget } from './pluggables/Drive';
@@ -16,11 +20,8 @@ import FlightContact, {
 } from './pluggables/FlightContact';
 import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
-import './Widget.css';
-import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
 import SuWidget, { canUseSu } from './pluggables/Su';
-import EmailList from './pages/EmailList';
-import ErrorListPage, { shouldRenderErrorList, ErrorListWidget } from './pages/ErrorList';
+import './Widget.css';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -149,6 +150,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route
 					path="/admin/errorlist"
 					render={this.pageRenderer(ErrorListPage)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/attendance/"
+					render={this.pageRenderer(AttendanceHistory)}
 					exact={false}
 				/>
 
