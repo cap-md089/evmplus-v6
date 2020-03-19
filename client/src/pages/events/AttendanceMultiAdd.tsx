@@ -1,4 +1,4 @@
-import { AttendanceStatus, Member, MemberObject } from 'common-lib';
+import { AttendanceStatus, Member, MemberObject, Maybe, none, just } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../../components/Button';
@@ -26,7 +26,7 @@ enum MemberList {
 
 interface SelectorFormValues {
 	members: CAPMemberClasses[];
-	sortFunction: SortFunction;
+	sortFunction: Maybe<SortFunction>;
 	displayAdvanced: boolean;
 }
 
@@ -35,7 +35,7 @@ interface MultiAddState {
 	event: Event | null;
 	error: number;
 	selectedMembers: CAPMemberClasses[];
-	sortFunction: SortFunction;
+	sortFunction: Maybe<SortFunction>;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -43,7 +43,7 @@ interface MultiAddState {
 		nameInput: string;
 		rankGreaterThan: string;
 		rankLessThan: string;
-		memberFilter: MemberList;
+		memberFilter: Maybe<MemberList>;
 	};
 }
 
@@ -189,17 +189,15 @@ const rankLessThan: CheckInput<Member, string> = {
 	filterInput: TextInput
 };
 
-const memberFilter: CheckInput<Member, MemberList> = {
+const memberFilter: CheckInput<Member, Maybe<MemberList>> = {
 	check: (mem, input) => {
-		return memberFilters[typeof input === 'undefined' || input === -1 ? MemberList.ALL : input](
-			mem
-		);
+		return memberFilters[input.orSome(MemberList.ALL)](mem);
 	},
-	filterInput: (props: InputProps<MemberList>) => (
-		<SimpleRadioButton
+	filterInput: (props: InputProps<Maybe<MemberList>>) => (
+		<SimpleRadioButton<MemberList>
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={typeof props.value === 'undefined' ? MemberList.ALL : props.value}
+			value={(props.value || none()).orElse(MemberList.ALL)}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -226,13 +224,13 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		displayAdvanced: false,
 		filterValues: {
 			flightInput: '',
-			memberFilter: MemberList.ALL,
+			memberFilter: just<MemberList>(MemberList.ALL),
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: ''
 		},
 		selectedMembers: [],
-		sortFunction: SortFunction.LASTNAME,
+		sortFunction: just<SortFunction>(SortFunction.LASTNAME),
 		visibleItems: []
 	};
 
@@ -332,7 +330,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		const SortSelector = SimpleRadioButton as new () => SimpleRadioButton<SortFunction>;
 
-		const currentSortFunction = sortFunctions[this.state.sortFunction];
+		const currentSortFunction =
+			sortFunctions[this.state.sortFunction.orSome(SortFunction.LASTNAME)];
 
 		const filterValues = this.state.displayAdvanced
 			? [

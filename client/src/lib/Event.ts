@@ -10,16 +10,16 @@ import {
 	EventStatus,
 	ExternalPointOfContact,
 	MemberReference,
-	MultCheckboxReturn,
 	NewAttendanceRecord,
 	NewEventObject,
 	PointOfContactType,
-	RadioReturn,
 	right,
 	left,
 	Maybe,
 	Member,
-	maybe
+	maybe,
+	OtherMultCheckboxReturn,
+	RadioReturnWithOther
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -153,7 +153,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public transportationDescription: string;
 
-	public uniform: MultCheckboxReturn;
+	public uniform: OtherMultCheckboxReturn;
 
 	public desiredNumberOfParticipants: number;
 
@@ -167,11 +167,11 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 		feeAmount: number;
 	};
 
-	public mealsDescription: MultCheckboxReturn;
+	public mealsDescription: OtherMultCheckboxReturn;
 
-	public lodgingArrangments: MultCheckboxReturn;
+	public lodgingArrangments: OtherMultCheckboxReturn;
 
-	public activity: MultCheckboxReturn;
+	public activity: OtherMultCheckboxReturn;
 
 	public highAdventureDescription: string;
 
@@ -179,7 +179,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public eventWebsite: string;
 
-	public requiredForms: MultCheckboxReturn;
+	public requiredForms: OtherMultCheckboxReturn;
 
 	public comments: string;
 
@@ -191,11 +191,11 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public showUpcoming: boolean;
 
-	public groupEventNumber: RadioReturn<EchelonEventNumber>;
+	public groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
-	public wingEventNumber: RadioReturn<EchelonEventNumber>;
+	public wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
-	public regionEventNumber: RadioReturn<EchelonEventNumber>;
+	public regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
 	public complete: boolean;
 

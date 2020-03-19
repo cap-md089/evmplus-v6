@@ -1,4 +1,4 @@
-import { EchelonEventNumber, EventStatus, RadioReturn } from 'common-lib';
+import { EchelonEventNumber, EventStatus, RadioReturnWithOther } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -30,8 +30,12 @@ function getEventStatus(status: EventStatus) {
 	return null;
 }
 
-function getEventNumber(gen: RadioReturn<EchelonEventNumber>) {
-	switch (gen[0]) {
+function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
+	if (gen.otherValueSelected) {
+		return null;
+	}
+
+	switch (gen.selection) {
 		case EchelonEventNumber.APPLIED_FOR:
 			return <span style={{ color: 'blue' }}>N/R</span>;
 	}

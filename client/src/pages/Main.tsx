@@ -1,8 +1,7 @@
-import { EventStatus } from 'common-lib';
+import { EventStatus, presentMultCheckboxReturn } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { parseMultCheckboxReturn } from '../components/form-inputs/MultCheckbox';
 import { Uniforms } from '../components/forms/usable-forms/EventForm';
 import Loader from '../components/Loader';
 import { SideNavigationItem } from '../components/page-elements/SideNavigation';
@@ -94,11 +93,10 @@ export default class Main extends Page<PageProps, MainState> {
 									<strong>Location</strong>: {this.state.nextEvent.meetLocation}
 									<br />
 									<strong>Uniform of the day</strong>:{' '}
-									{parseMultCheckboxReturn(
-										this.state.nextEvent.uniform,
-										Uniforms,
-										false
-									)}
+									{presentMultCheckboxReturn(this.state.nextEvent.uniform)
+										.map(uniform => <>{uniform}</>)
+										.orElse(<i>No uniform specified</i>)
+										.some()}
 									<br />
 									<Link
 										to={`/eventviewer/${this.state.nextEvent.getEventURLComponent()}`}

@@ -1,19 +1,15 @@
-import {
-	Member,
-	MemberObject,
-	MemberReference,
-	RadioReturn,
-	just,
-	fromValue,
-	none
-} from 'common-lib';
+import { Member, MemberObject, MemberReference, just, fromValue, none, Maybe } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
 import { TextInput } from '../../../components/forms/SimpleForm';
-import SimpleForm, { Checkbox, Label, RadioButton } from '../../../components/forms/SimpleForm';
+import SimpleForm, {
+	Checkbox,
+	Label,
+	SimpleRadioButton
+} from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
 import MemberBase, {
@@ -161,7 +157,7 @@ const normalizeRankInput = (rank: string) =>
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
 	availableMembers: null | CAPMemberClasses[];
-	sortFunction: RadioReturn<SortFunction>;
+	sortFunction: Maybe<SortFunction>;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -286,7 +282,7 @@ const simpleFilters2 = [nameInput];
 
 interface SelectorFormValues {
 	members: CAPMemberClasses[];
-	sortFunction: RadioReturn<SortFunction>;
+	sortFunction: Maybe<SortFunction>;
 	displayAdvanced: boolean;
 }
 
@@ -306,11 +302,10 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				)
 				.filter(isFlightStaff)
 				.flatMap(member => fromValue(member.flight))
-				.orElse('')
-				.some()
+				.orSome('')
 		},
 		selectedMembers: [],
-		sortFunction: [SortFunction.CAPID, ''],
+		sortFunction: just<SortFunction>(SortFunction.CAPID),
 		visibleItems: []
 	};
 
@@ -384,7 +379,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			return <Loader />;
 		}
 
-		const currentSortFunction = sortFunctions[this.state.sortFunction[0]];
+		const currentSortFunction =
+			sortFunctions[this.state.sortFunction.orSome(SortFunction.LASTNAME)];
 
 		const filterValues = this.state.filterValues;
 
@@ -439,7 +435,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					}}
 				>
 					<Label>Select how to sort</Label>
-					<RadioButton<SortFunction>
+					<SimpleRadioButton<SortFunction>
 						name="sortFunction"
 						labels={['Last name', 'First name', 'CAPID']}
 					/>

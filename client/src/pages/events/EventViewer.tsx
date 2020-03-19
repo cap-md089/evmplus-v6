@@ -11,7 +11,9 @@ import {
 	NHQMemberReference,
 	PointOfContactType,
 	ProspectiveMemberReference,
-	formatEventViewerDate as formatDate
+	formatEventViewerDate as formatDate,
+	NullMemberReference,
+	presentMultCheckboxReturn
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -21,7 +23,6 @@ import { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DropDownList from '../../components/DropDownList';
-import { parseMultCheckboxReturn } from '../../components/form-inputs/MultCheckbox';
 import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import { Activities, RequiredForms, Uniforms } from '../../components/forms/usable-forms/EventForm';
@@ -78,6 +79,16 @@ export const attendanceStatusLabels = [
 	'No show',
 	'Rescinded commitment to attend'
 ];
+
+const renderName = (
+	member: AttendanceRecord,
+	attendees: { [key: string]: Maybe<Member> },
+	organizations: { [key: string]: AccountObject }
+) => {
+	return `${(member.memberID as Exclude<MemberReference, NullMemberReference>).id}: ${
+		member.memberName
+	}`;
+};
 
 export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
 	public state: EventViewerState = {
@@ -336,15 +347,24 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									</>
 								) : null}
 								<strong>Uniform:</strong>{' '}
-								{parseMultCheckboxReturn(event.uniform, Uniforms, false)}
+								{presentMultCheckboxReturn(event.uniform)
+									.map(uniform => <>{uniform}</>)
+									.orElse(<i>No uniform specified</i>)
+									.some()}
 								<br />
 								<strong>Comments:</strong> {event.comments}
 								<br />
 								<strong>Activity:</strong>{' '}
-								{parseMultCheckboxReturn(event.activity, Activities, true)}
+								{presentMultCheckboxReturn(event.activity)
+									.map(activities => <>{activities}</>)
+									.orElse(<i>Unknown activity type</i>)
+									.some()}
 								<br />
 								<strong>Required forms:</strong>{' '}
-								{parseMultCheckboxReturn(event.requiredForms, RequiredForms, true)}
+								{presentMultCheckboxReturn(event.requiredForms)
+									.map(forms => <>{forms}</>)
+									.orElse(<i>No forms specified</i>)
+									.some()}
 								<br />
 								<strong>Event status:</strong> {eventStatus(event.status)}
 								<br />
@@ -418,13 +438,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									)}
 									<h2 id="attendance">Attendance</h2>
 									<DropDownList
-										titles={val =>
-											`${
-												(val.memberID as
-													| NHQMemberReference
-													| ProspectiveMemberReference).id
-											}: ${val.memberName}`
-										}
+										titles={val => renderName(val, attendees, organizations)}
 										values={event.attendance}
 										onlyOneOpen={true}
 									>

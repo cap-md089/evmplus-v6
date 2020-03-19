@@ -1,4 +1,4 @@
-import { Member, MemberObject, RadioReturn } from 'common-lib';
+import { Member, MemberObject, Maybe, just, fromValue, none } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
 import { InputProps } from '../../../components/form-inputs/Input';
@@ -6,7 +6,6 @@ import { CheckInput } from '../../../components/form-inputs/Selector';
 import SimpleForm, {
 	Checkbox,
 	Label,
-	RadioButton,
 	Selector,
 	SimpleRadioButton,
 	TextInput
@@ -53,7 +52,7 @@ const normalizeRankInput = (rank: string) =>
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
 	availableMembers: null | CAPMemberClasses[];
-	sortFunction: RadioReturn<SortFunction>;
+	sortFunction: Maybe<SortFunction>;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -61,7 +60,7 @@ interface EmailListState {
 		nameInput: string;
 		rankGreaterThan: string;
 		rankLessThan: string;
-		memberFilter: MemberList;
+		memberFilter: Maybe<MemberList>;
 	};
 }
 
@@ -179,17 +178,15 @@ const rankLessThan: CheckInput<Member, string> = {
 	filterInput: TextInput
 };
 
-const memberFilter: CheckInput<Member, MemberList> = {
+const memberFilter: CheckInput<Member, Maybe<MemberList>> = {
 	check: (mem, input) => {
-		return memberFilters[typeof input === 'undefined' || input === -1 ? MemberList.ALL : input](
-			mem
-		);
+		return memberFilters[input.orSome(MemberList.ALL)](mem);
 	},
-	filterInput: (props: InputProps<MemberList>) => (
+	filterInput: (props: InputProps<Maybe<MemberList>>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={typeof props.value === 'undefined' ? MemberList.ALL : props.value}
+			value={(props.value || none()).orElse(MemberList.ALL)}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -212,12 +209,12 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
 		selectedMembers: [],
 		availableMembers: null,
-		sortFunction: [SortFunction.LASTNAME, ''],
+		sortFunction: just<SortFunction>(SortFunction.LASTNAME),
 		visibleItems: [],
 		displayAdvanced: false,
 		filterValues: {
 			flightInput: '',
-			memberFilter: MemberList.ALL,
+			memberFilter: just<MemberList>(MemberList.ALL),
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: ''
@@ -262,13 +259,12 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
 			members: CAPMemberClasses[];
-			sortFunction: RadioReturn<SortFunction>;
+			sortFunction: Maybe<SortFunction>;
 			displayAdvanced: boolean;
 		}>;
 
-		const SortSelector = RadioButton as new () => RadioButton<SortFunction>;
-
-		const currentSortFunction = sortFunctions[this.state.sortFunction[0]];
+		const currentSortFunction =
+			sortFunctions[this.state.sortFunction.orElse(SortFunction.LASTNAME).some()];
 
 		const filterValues = this.state.filterValues;
 
@@ -349,7 +345,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						id="none"
 					>
 						<Label>Select how to sort</Label>
-						<SortSelector
+						<SimpleRadioButton<SortFunction>
 							name="sortFunction"
 							labels={['Last name', 'First name', 'CAPID']}
 						/>

@@ -3,11 +3,15 @@ import Page, { PageProps } from '../Page';
 import { NewEventObject } from 'common-lib';
 import { CAPMemberClasses } from '../../lib/Members';
 import Team from '../../lib/Team';
-import EventForm, { emptyEvent } from '../../components/forms/usable-forms/EventForm';
+import EventForm, {
+	emptyEventFormValues,
+	NewEventFormValues,
+	convertFormValuesToEvent
+} from '../../components/forms/usable-forms/EventForm';
 import Event from '../../lib/Event';
 
 interface AddEventState {
-	event: NewEventObject;
+	event: NewEventFormValues;
 	createError: null | number;
 	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
@@ -16,7 +20,7 @@ interface AddEventState {
 export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
 		createError: null,
-		event: emptyEvent(),
+		event: emptyEventFormValues(),
 		memberList: this.props.account.getMembers(this.props.member),
 		teamList: this.props.account.getTeams(this.props.member)
 	};
@@ -101,15 +105,30 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		);
 	}
 
-	private async handleSubmit(event: NewEventObject) {
+	private async handleSubmit(event: NewEventFormValues, valid: boolean) {
 		if (!this.props.member || !Event.HasBasicPermission(this.props.member)) {
+			return;
+		}
+
+		if (!valid) {
+			return;
+		}
+
+		let realEvent;
+
+		try {
+			realEvent = convertFormValuesToEvent(event);
+		} catch (e) {
+			this.setState({
+				createError: 400
+			});
 			return;
 		}
 
 		let eventObject;
 
 		try {
-			eventObject = await Event.Create(event, this.props.member, this.props.account);
+			eventObject = await Event.Create(realEvent, this.props.member, this.props.account);
 		} catch (e) {
 			this.setState({
 				createError: e.status
@@ -121,7 +140,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
 	}
 
-	private updateNewEvent(event: NewEventObject) {
+	private updateNewEvent(event: NewEventFormValues) {
 		this.setState({
 			event
 		});

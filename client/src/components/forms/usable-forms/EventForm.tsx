@@ -4,7 +4,16 @@ import {
 	DisplayInternalPointOfContact,
 	ExternalPointOfContact,
 	NewEventObject,
-	PointOfContactType
+	just,
+	none,
+	PointOfContactType,
+	OtherMultCheckboxReturn,
+	EventStatus as EventStatusEnum,
+	InternalPointOfContact,
+	RadioReturnWithOther,
+	EchelonEventNumber,
+	emptyFromLabels,
+	Maybe
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -22,13 +31,13 @@ import SimpleForm, {
 	FormBlock,
 	Label,
 	ListEditor,
-	MultCheckbox,
+	OtherMultCheckbox,
 	NumberInput,
-	RadioButton,
 	SimpleRadioButton,
 	TeamSelector,
 	TextInput,
-	Title
+	Title,
+	RadioButtonWithOther
 } from '../SimpleForm';
 
 export const Uniforms = [
@@ -77,14 +86,14 @@ export const EventStatus = [
 
 interface EventFormProps {
 	registry: Registry;
-	event: NewEventObject;
+	event: NewEventFormValues;
 	isEventUpdate?: boolean;
 	account: Account;
 	member: MemberBase;
 	teamList: Promise<Team[]>;
 	memberList: Promise<CAPMemberClasses[]>;
-	onEventChange: (event: NewEventObject, valid: boolean) => void;
-	onEventFormSubmit: (event: NewEventObject, valid: boolean) => void;
+	onEventChange: (event: NewEventFormValues, valid: boolean) => void;
+	onEventFormSubmit: (event: NewEventFormValues, valid: boolean) => void;
 }
 
 interface EventFormState {
@@ -93,7 +102,43 @@ interface EventFormState {
 	errors: { [P in keyof NewEventObject]: boolean };
 }
 
-interface NewEventFormValues extends NewEventObject {
+export interface NewEventFormValues {
+	name: string;
+	meetDateTime: number;
+	meetLocation: string;
+	startDateTime: number;
+	location: string;
+	endDateTime: number;
+	pickupDateTime: number;
+	pickupLocation: string;
+	transportationProvided: boolean;
+	transportationDescription: string;
+	desiredNumberOfParticipants: number;
+	highAdventureDescription: string;
+	requiredEquipment: string[];
+	eventWebsite: string;
+	comments: string;
+	acceptSignups: boolean;
+	signUpDenyMessage: null | string;
+	publishToWingCalendar: boolean;
+	showUpcoming: boolean;
+	complete: boolean;
+	administrationComments: string;
+	status: EventStatusEnum;
+	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
+	customAttendanceFields: CustomAttendanceField[];
+	signUpPartTime: boolean;
+	uniform: OtherMultCheckboxReturn;
+	mealsDescription: OtherMultCheckboxReturn;
+	lodgingArrangments: OtherMultCheckboxReturn;
+	activity: OtherMultCheckboxReturn;
+	requiredForms: OtherMultCheckboxReturn;
+	teamID: number | null;
+	limitSignupsToTeam: boolean | null;
+	fileIDs: string[];
+	privateAttendance: boolean;
+
+	// These are special values used
 	useRegistration: boolean;
 	registration: {
 		deadline: number;
@@ -104,9 +149,71 @@ interface NewEventFormValues extends NewEventObject {
 		feeAmount: number;
 		feeDue: number;
 	};
+
+	groupEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
+	wingEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
+	regionEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
 }
 
-export const emptyEvent = (): NewEventObject => ({
+export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObject => {
+	if (
+		event.groupEventNumber.isNone() ||
+		event.wingEventNumber.isNone() ||
+		event.regionEventNumber.isNone()
+	) {
+		throw new Error('Form is not complete');
+	}
+
+	return {
+		acceptSignups: event.acceptSignups,
+		activity: event.activity,
+		administrationComments: event.administrationComments,
+		comments: event.comments,
+		complete: event.complete,
+		desiredNumberOfParticipants: event.desiredNumberOfParticipants,
+		endDateTime: event.endDateTime,
+		eventWebsite: event.eventWebsite,
+		fileIDs: event.fileIDs,
+		groupEventNumber: event.groupEventNumber.some(),
+		highAdventureDescription: event.highAdventureDescription,
+		location: event.location,
+		lodgingArrangments: event.lodgingArrangments,
+		mealsDescription: event.mealsDescription,
+		meetDateTime: event.meetDateTime,
+		meetLocation: event.meetLocation,
+		name: event.name,
+		participationFee: event.useParticipationFee ? event.participationFee : null,
+		pickupDateTime: event.pickupDateTime,
+		pickupLocation: event.pickupLocation,
+		pointsOfContact: event.pointsOfContact,
+		customAttendanceFields: event.customAttendanceFields,
+		publishToWingCalendar: event.publishToWingCalendar,
+		regionEventNumber: event.regionEventNumber.some(),
+		registration: event.useRegistration ? event.registration : null,
+		requiredEquipment: event.requiredEquipment,
+		requiredForms: event.requiredForms,
+		showUpcoming: event.showUpcoming,
+		signUpDenyMessage: event.signUpDenyMessage,
+		signUpPartTime: event.signUpPartTime,
+		startDateTime: event.startDateTime,
+		status: event.status,
+		teamID:
+			event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
+				? null
+				: parseInt(event.teamID.toString(), 10),
+		limitSignupsToTeam:
+			event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
+				? null
+				: event.limitSignupsToTeam,
+		transportationDescription: event.transportationDescription,
+		transportationProvided: event.transportationProvided,
+		uniform: event.uniform,
+		wingEventNumber: event.wingEventNumber.some(),
+		privateAttendance: event.privateAttendance
+	};
+};
+
+export const emptyEventFormValues = (): NewEventFormValues => ({
 	name: '',
 	meetDateTime: +DateTime.utc(),
 	meetLocation: '',
@@ -117,25 +224,33 @@ export const emptyEvent = (): NewEventObject => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: [[false, false, true, false, false, false, false, false, false], ''],
+	uniform: emptyFromLabels(Uniforms),
 	desiredNumberOfParticipants: 8,
-	registration: null,
-	participationFee: null,
-	mealsDescription: [[false, false, false, false, false], ''],
-	lodgingArrangments: [[false, false, false, false, false], ''],
-	activity: [[false, false, false, false, false, false], ''],
+	useRegistration: false,
+	registration: {
+		deadline: 0,
+		information: ''
+	},
+	useParticipationFee: false,
+	participationFee: {
+		feeAmount: 0,
+		feeDue: 0
+	},
+	mealsDescription: emptyFromLabels(Meals),
+	lodgingArrangments: emptyFromLabels(LodgingArrangments),
+	activity: emptyFromLabels(Activities),
 	highAdventureDescription: '',
 	requiredEquipment: [],
 	eventWebsite: '',
-	requiredForms: [[true, false, false, false, false, false, false, false], ''],
+	requiredForms: emptyFromLabels(RequiredForms),
 	comments: '',
 	acceptSignups: true,
 	signUpDenyMessage: '',
 	publishToWingCalendar: false,
 	showUpcoming: true,
-	groupEventNumber: [0, ''],
-	wingEventNumber: [0, ''],
-	regionEventNumber: [0, ''],
+	groupEventNumber: none(),
+	wingEventNumber: none(),
+	regionEventNumber: none(),
 	complete: false,
 	administrationComments: '',
 	status: 0,
@@ -148,7 +263,7 @@ export const emptyEvent = (): NewEventObject => ({
 	privateAttendance: false
 });
 
-const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
+export const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	acceptSignups: event.acceptSignups,
 	activity: event.activity,
 	administrationComments: event.administrationComments,
@@ -158,7 +273,7 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	endDateTime: event.endDateTime,
 	eventWebsite: event.eventWebsite,
 	fileIDs: event.fileIDs,
-	groupEventNumber: event.groupEventNumber,
+	groupEventNumber: just(event.groupEventNumber),
 	highAdventureDescription: event.highAdventureDescription,
 	location: event.location,
 	lodgingArrangments: event.lodgingArrangments,
@@ -176,7 +291,7 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	pointsOfContact: event.pointsOfContact,
 	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
-	regionEventNumber: event.regionEventNumber,
+	regionEventNumber: just(event.regionEventNumber),
 	registration: event.registration || {
 		deadline: Date.now(),
 		information: ''
@@ -193,57 +308,8 @@ const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber,
+	wingEventNumber: just(event.wingEventNumber),
 	limitSignupsToTeam: event.limitSignupsToTeam,
-	privateAttendance: event.privateAttendance
-});
-
-const convertFormValuesToEvent = (event: NewEventFormValues) => ({
-	acceptSignups: event.acceptSignups,
-	activity: event.activity,
-	administrationComments: event.administrationComments,
-	comments: event.comments,
-	complete: event.complete,
-	desiredNumberOfParticipants: event.desiredNumberOfParticipants,
-	endDateTime: event.endDateTime,
-	eventWebsite: event.eventWebsite,
-	fileIDs: event.fileIDs,
-	groupEventNumber: event.groupEventNumber,
-	highAdventureDescription: event.highAdventureDescription,
-	location: event.location,
-	lodgingArrangments: event.lodgingArrangments,
-	mealsDescription: event.mealsDescription,
-	meetDateTime: event.meetDateTime,
-	meetLocation: event.meetLocation,
-	name: event.name,
-	participationFee: event.useParticipationFee ? event.participationFee : null,
-	pickupDateTime: event.pickupDateTime,
-	pickupLocation: event.pickupLocation,
-	pointsOfContact: event.pointsOfContact,
-	customAttendanceFields: event.customAttendanceFields,
-	publishToWingCalendar: event.publishToWingCalendar,
-	regionEventNumber: event.regionEventNumber,
-	registration: event.useRegistration ? event.registration : null,
-	requiredEquipment: event.requiredEquipment,
-	requiredForms: event.requiredForms,
-	showUpcoming: event.showUpcoming,
-	signUpDenyMessage: event.signUpDenyMessage,
-	signUpPartTime: event.signUpPartTime,
-	sourceEvent: null,
-	startDateTime: event.startDateTime,
-	status: event.status,
-	teamID:
-		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
-			? null
-			: parseInt(event.teamID.toString(), 10),
-	limitSignupsToTeam:
-		event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
-			? null
-			: event.limitSignupsToTeam,
-	transportationDescription: event.transportationDescription,
-	transportationProvided: event.transportationProvided,
-	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber,
 	privateAttendance: event.privateAttendance
 });
 
@@ -348,7 +414,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 	}
 
 	public render() {
-		const values = convertToFormValues(this.props.event);
+		const values = this.props.event;
 
 		return (
 			<SimpleForm<NewEventFormValues>
@@ -422,10 +488,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				/>
 
 				<Label>Activity type</Label>
-				<MultCheckbox name="activity" labels={Activities} other={true} />
+				<OtherMultCheckbox name="activity" labels={Activities} />
 
 				<Label>Lodging arrangement</Label>
-				<MultCheckbox name="lodgingArrangments" labels={LodgingArrangments} other={true} />
+				<OtherMultCheckbox name="lodgingArrangments" labels={LodgingArrangments} />
 
 				<Label>Event website</Label>
 				<TextInput name="eventWebsite" />
@@ -436,10 +502,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Title>Logistics Information</Title>
 
 				<Label>Uniform</Label>
-				<MultCheckbox name="uniform" labels={Uniforms} />
+				<OtherMultCheckbox name="uniform" labels={Uniforms} />
 
 				<Label>Required forms</Label>
-				<MultCheckbox name="requiredForms" labels={RequiredForms} other={true} />
+				<OtherMultCheckbox name="requiredForms" labels={RequiredForms} />
 
 				<Label>Required equipment</Label>
 				<ListEditor<string, InputProps<string>>
@@ -489,7 +555,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				</FormBlock>
 
 				<Label>Meals</Label>
-				<MultCheckbox name="mealsDescription" labels={Meals} other={true} />
+				<OtherMultCheckbox name="mealsDescription" labels={Meals} />
 
 				<Title>Points of Contact</Title>
 
@@ -541,24 +607,21 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<NumberInput name="desiredNumberOfParticipants" />
 
 				<Label>Group event number</Label>
-				<RadioButton
+				<RadioButtonWithOther<EchelonEventNumber>
 					name="groupEventNumber"
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-					other={true}
 				/>
 
 				<Label>Wing event number</Label>
-				<RadioButton
+				<RadioButtonWithOther<EchelonEventNumber>
 					name="wingEventNumber"
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-					other={true}
 				/>
 
 				<Label>Region event number</Label>
-				<RadioButton
+				<RadioButtonWithOther<EchelonEventNumber>
 					name="regionEventNumber"
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-					other={true}
 				/>
 
 				<Label>Event status</Label>
@@ -627,40 +690,40 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			valid
 		});
 
-		this.props.onEventChange(convertFormValuesToEvent(event), valid);
+		this.props.onEventChange(event, valid);
 	}
 
 	private onEventSubmit(event: NewEventFormValues) {
 		const valid = this.checkIfValid(event);
 
-		if (!this.props.isEventUpdate) {
-			const dateTimesHaveBeenModified =
-				this.state.changed.startDateTime ||
-				this.state.changed.endDateTime ||
-				this.state.changed.pickupDateTime;
+		// if (!this.props.isEventUpdate) {
+		// 	const dateTimesHaveBeenModified =
+		// 		this.state.changed.startDateTime ||
+		// 		this.state.changed.endDateTime ||
+		// 		this.state.changed.pickupDateTime;
 
-			if (!dateTimesHaveBeenModified) {
-				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
-				event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
-				event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
-			} else if (!this.state.changed.pickupDateTime) {
-				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
-			}
+		// 	if (!dateTimesHaveBeenModified) {
+		// 		event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
+		// 		event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
+		// 		event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
+		// 	} else if (!this.state.changed.pickupDateTime) {
+		// 		event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
+		// 	}
 
-			const locationsHaveBeenModified =
-				this.state.changed.location || this.state.changed.pickupLocation;
+		// 	const locationsHaveBeenModified =
+		// 		this.state.changed.location || this.state.changed.pickupLocation;
 
-			if (!locationsHaveBeenModified) {
-				event.location = event.meetLocation;
-				event.pickupLocation = event.meetLocation;
-			}
-		}
+		// 	if (!locationsHaveBeenModified) {
+		// 		event.location = event.meetLocation;
+		// 		event.pickupLocation = event.meetLocation;
+		// 	}
+		// }
 
 		this.setState({
 			valid
 		});
 
-		this.props.onEventFormSubmit(convertFormValuesToEvent(event), valid);
+		this.props.onEventFormSubmit(event, valid);
 	}
 
 	private checkIfValid(event: NewEventFormValues): boolean {

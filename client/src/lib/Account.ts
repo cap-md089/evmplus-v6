@@ -67,8 +67,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public shareLink: string;
 
-	public initialPassword: string;
-
 	public comments: string;
 
 	public echelon: boolean;
@@ -103,7 +101,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		this.wingCalendarID = data.wingCalendarID;
 		this.serviceAccount = data.serviceAccount;
 		this.shareLink = data.shareLink;
-		this.initialPassword = data.initialPassword;
 		this.comments = data.comments;
 		this.echelon = data.echelon;
 		this.expired = data.expired;
@@ -119,7 +116,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		this.wingCalendarID = data.wingCalendarID;
 		this.mainCalendarID = data.mainCalendarID;
 		this.comments = data.comments;
-		this.initialPassword = data.initialPassword;
 		this.serviceAccount = data.serviceAccount;
 		this.shareLink = data.shareLink;
 	}
@@ -254,7 +250,6 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			wingCalendarID: this.wingCalendarID,
 			serviceAccount: this.serviceAccount,
 			shareLink: this.shareLink,
-			initialPassword: this.initialPassword,
 			comments: this.comments,
 			echelon: this.echelon,
 			expired: this.expired,

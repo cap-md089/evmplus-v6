@@ -4,20 +4,35 @@ import Event from '../../lib/Event';
 import Page, { PageProps } from '../Page';
 import { CAPMemberClasses } from '../../lib/Members';
 import Team from '../../lib/Team';
-import EventForm from '../../components/forms/usable-forms/EventForm';
-import { NewEventObject } from 'common-lib';
+import EventForm, {
+	NewEventFormValues,
+	convertToFormValues,
+	convertFormValuesToEvent
+} from '../../components/forms/usable-forms/EventForm';
 
-interface ModifyEventState {
-	event: null | Event;
-	valid: boolean;
+interface ModifyEventUIState {
 	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
+	errorMessage: string | null;
 }
+
+interface ModifyEventStateLoading {
+	stage: 'LOADING';
+}
+
+interface ModifyEventStateLoaded {
+	stage: 'LOADED';
+	event: Event;
+	eventFormValues: NewEventFormValues;
+}
+
+type ModifyEventState = (ModifyEventStateLoaded | ModifyEventStateLoading) & ModifyEventUIState;
 
 export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyEventState> {
 	public state: ModifyEventState = {
-		event: null,
-		valid: false,
+		stage: 'LOADING',
+
+		errorMessage: null,
 		memberList: this.props.account.getMembers(this.props.member),
 		teamList: this.props.account.getTeams(this.props.member)
 	};
@@ -31,22 +46,24 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 
 	public async componentDidMount() {
 		if (this.props.member) {
-			const [event] = await Promise.all([
-				Event.Get(
-					parseInt(this.props.routeProps.match.params.id, 10),
-					this.props.member,
-					this.props.account
-				)
-			]);
+			const event = await Event.Get(
+				parseInt(this.props.routeProps.match.params.id, 10),
+				this.props.member,
+				this.props.account
+			);
 
 			if (!event.isPOC(this.props.member)) {
 				// TODO: Show error message
 				return;
 			}
 
-			this.setState({
-				event
-			});
+			this.setState(prev => ({
+				...prev,
+
+				stage: 'LOADED',
+				event,
+				eventFormValues: convertToFormValues(event)
+			}));
 
 			this.props.updateBreadCrumbs([
 				{
@@ -110,7 +127,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			return <h2>Please sign in</h2>;
 		}
 
-		if (!this.state.event) {
+		if (this.state.stage === 'LOADING') {
 			return <Loader />;
 		}
 
@@ -118,7 +135,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			<EventForm
 				account={this.props.account}
 				// Create a copy so that the form doesn't modify the reference
-				event={this.state.event.toRaw()}
+				event={this.state.eventFormValues}
 				isEventUpdate={true}
 				member={this.props.member}
 				onEventChange={this.updateNewEvent}
@@ -130,23 +147,36 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		);
 	}
 
-	private updateNewEvent(event: NewEventObject) {
-		this.state.event!.set(event);
+	private updateNewEvent(eventFormValues: NewEventFormValues) {
+		if (this.state.stage !== 'LOADED') {
+			return;
+		}
 
-		this.setState({
-			event: this.state.event
-		});
+		this.setState(prev => ({
+			...prev,
+			eventFormValues
+		}));
 	}
 
-	private handleSubmit(event: NewEventObject) {
+	private handleSubmit(event: NewEventFormValues, valid: boolean) {
 		if (!this.props.member) {
 			return;
 		}
 
-		this.state.event!.set(event);
+		if (this.state.stage !== 'LOADED') {
+			return;
+		}
 
-		this.state.event!.save(this.props.member).then(() => {
-			this.props.routeProps.history.push(`/eventviewer/${this.state.event!.id}`);
+		if (!valid) {
+			return;
+		}
+
+		const eventObject = this.state.event;
+
+		eventObject.set(convertFormValuesToEvent(event));
+
+		eventObject.save(this.props.member).then(() => {
+			this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
 		});
 	}
 }

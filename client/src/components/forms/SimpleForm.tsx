@@ -11,13 +11,13 @@ import FormBlock from '../form-inputs/FormBlock';
 import { InputProps } from '../form-inputs/Input';
 import ListEditor from '../form-inputs/ListEditor';
 import LoadingTextArea from '../form-inputs/LoadingTextArea';
-import MultCheckbox from '../form-inputs/MultCheckbox';
+import OtherMultCheckbox from '../form-inputs/OtherMultCheckbox';
 import MultiRange from '../form-inputs/MultiRange';
 import NumberInput from '../form-inputs/NumberInput';
 import PasswordForm from '../form-inputs/PasswordForm';
 import PermissionsEdit from '../form-inputs/PermissionsEdit';
 import POCInput from '../form-inputs/POCInput';
-import RadioButton from '../form-inputs/RadioButton';
+import RadioButtonWithOther from '../form-inputs/RadioButtonWithOther';
 import ReCAPTCHAInput from '../form-inputs/ReCAPTCHA';
 import Select from '../form-inputs/Select';
 import Selector from '../form-inputs/Selector';
@@ -26,6 +26,7 @@ import TeamMemberInput from '../form-inputs/TeamMemberInput';
 import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
+import SimpleMultCheckbox from '../form-inputs/SimpleMultCheckbox';
 import './Form.scss';
 
 let TextArea: typeof import('../form-inputs/TextArea').default;
@@ -129,8 +130,8 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === TextArea ||
 		el.type === MultiRange ||
 		el.type === DateTimeInput ||
-		el.type === RadioButton ||
-		el.type === MultCheckbox ||
+		el.type === RadioButtonWithOther ||
+		el.type === OtherMultCheckbox ||
 		el.type === Checkbox ||
 		el.type === ListEditor ||
 		el.type === FormBlock ||
@@ -150,7 +151,8 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === FileInput ||
 		el.type === PermissionsEdit ||
 		el.type === ReCAPTCHAInput ||
-		el.type === PasswordForm
+		el.type === PasswordForm ||
+		el.type === SimpleMultCheckbox
 	);
 }
 
@@ -719,8 +721,8 @@ export {
 	MultiRange,
 	TextInput,
 	DateTimeInput,
-	RadioButton,
-	MultCheckbox,
+	RadioButtonWithOther,
+	OtherMultCheckbox,
 	Checkbox,
 	ListEditor,
 	FormBlock,
