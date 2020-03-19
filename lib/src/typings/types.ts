@@ -471,6 +471,11 @@ export namespace Permissions {
 		NO,
 		YES
 	}
+
+	export enum AttendanceView {
+		PERSONAL,
+		OTHER
+	}
 }
 
 export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -478,9 +483,43 @@ export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 /**
  * As the return types are complex, keeping them consistent is key
  */
-export type MultCheckboxReturn = [boolean[], string];
-export type RadioReturn<T extends number> = [T, string];
+export interface SimpleMultCheckboxReturn {
+	values: boolean[];
+	labels: string[];
+}
+export interface MultCheckboxWithOtherSelected {
+	values: boolean[];
+	labels: string[];
+	otherSelected: true;
+	otherValue: string;
+}
 
+export interface MultCheckboxWithoutOtherSelected {
+	values: boolean[];
+	labels: string[];
+	otherSelected: false;
+}
+export type OtherMultCheckboxReturn =
+	| MultCheckboxWithOtherSelected
+	| MultCheckboxWithoutOtherSelected;
+
+export interface RadioReturnWithOtherSelected {
+	labels: string[];
+	otherValueSelected: true;
+	otherValue: string;
+}
+export interface RadioReturnWithoutOtherSelected<E extends number> {
+	labels: string[];
+	otherValueSelected: false;
+	selection: E;
+}
+
+export type RadioReturnWithOther<E extends number> =
+	| RadioReturnWithOtherSelected
+	| RadioReturnWithoutOtherSelected<E>;
+
+// type RadioReturn<E> = [E, string];
+// type MultCheckboxReturn = [boolean[], string];
 /**
  * Provides some consistency in type information at least
  */
@@ -737,10 +776,6 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 	 */
 	shareLink: string;
 	/**
-	 * Initial password used to generate Google account for a unit
-	 */
-	initialPassword: string;
-	/**
 	 * Miscellaneous comments regarding the account
 	 */
 	comments: string;
@@ -960,7 +995,7 @@ export interface NewEventObject {
 	/**
 	 * The uniforms that can be worn
 	 */
-	uniform: MultCheckboxReturn;
+	uniform: OtherMultCheckboxReturn;
 	/**
 	 * How many people we want at the event
 	 */
@@ -996,15 +1031,15 @@ export interface NewEventObject {
 	/**
 	 * Describes the options for meals
 	 */
-	mealsDescription: MultCheckboxReturn;
+	mealsDescription: OtherMultCheckboxReturn;
 	/**
 	 * Describes where cadets may be sleeping
 	 */
-	lodgingArrangments: MultCheckboxReturn;
+	lodgingArrangments: OtherMultCheckboxReturn;
 	/**
 	 * Describes how strenuous the activity may be to cadets
 	 */
-	activity: MultCheckboxReturn;
+	activity: OtherMultCheckboxReturn;
 	/**
 	 * Describes how hard the activity may be
 	 */
@@ -1023,7 +1058,7 @@ export interface NewEventObject {
 	/**
 	 * Forms include CAP ID, CAPF 31, etc.
 	 */
-	requiredForms: MultCheckboxReturn;
+	requiredForms: OtherMultCheckboxReturn;
 	/**
 	 * Comments from the event author, description, etc.
 	 */
@@ -1048,15 +1083,15 @@ export interface NewEventObject {
 	/**
 	 * Is there a valid group number available?
 	 */
-	groupEventNumber: RadioReturn<EchelonEventNumber>;
+	groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	/**
 	 * What is the wing event number
 	 */
-	wingEventNumber: RadioReturn<EchelonEventNumber>;
+	wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	/**
 	 * What is the region event number
 	 */
-	regionEventNumber: RadioReturn<EchelonEventNumber>;
+	regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	/**
 	 * If all the details are completely filled in
 	 */
@@ -1099,6 +1134,10 @@ export interface NewEventObject {
 	 * Whether or not attendance view should be displayed to all members or only to Managers and POCs
 	 */
 	privateAttendance: boolean;
+	/**
+	 * Whether or not the event is intended to have special GES qualifications
+	 */
+	// specialEvent: boolean;
 }
 
 /**
@@ -1118,7 +1157,8 @@ export interface NewAttendanceRecord {
 	 */
 	planToUseCAPTransportation: boolean;
 
-	// If these are undefined, they are staying for the whole event
+	// If the member stays for the whole event, this will match the
+	// start/end date times of the event
 	/**
 	 * If they are comming part time, this shows when they arrive
 	 */
@@ -1157,6 +1197,17 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 	 * Whether or not the emails for this cadet/for the POCs have been sent
 	 */
 	summaryEmailSent: boolean;
+
+	// If the member stays for the whole event, this will match the
+	// start/end date times of the event
+	/**
+	 * If they are comming part time, this shows when they arrive
+	 */
+	arrivalTime: number;
+	/**
+	 * If they are comming part time, this shows when they depart
+	 */
+	departureTime: number;
 }
 
 export interface FullAttendanceRecord extends AttendanceRecord {
@@ -1523,6 +1574,10 @@ export interface MemberPermissions {
 	 * Whether or not members can initiate scan add sessions
 	 */
 	ScanAdd: Permissions.ScanAdd;
+	/**
+	 * Whether or not the user can view attendance for other people
+	 */
+	AttendanceView: Permissions.AttendanceView;
 
 	// Developer/super admin privileges?
 	// Will change when utilities are more user friendly

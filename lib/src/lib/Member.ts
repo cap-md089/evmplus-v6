@@ -1,5 +1,5 @@
-import { MemberReference } from '../typings/types';
-import { just, Maybe, none } from './Maybe';
+import { CAPMemberContact, MemberReference } from '../typings/types';
+import { fromValue, just, Maybe, none } from './Maybe';
 
 export const stringifyMemberReference = (ref: MemberReference) =>
 	ref.type === 'Null' ? 'Null' : `${ref.type}-${ref.id}`;
@@ -22,3 +22,13 @@ export const parseStringMemberReference = (ref: string): Maybe<MemberReference> 
 						  })
 						: none()
 				);
+
+export const getMemberEmail = (contact: CAPMemberContact) =>
+	fromValue(
+		contact.EMAIL.PRIMARY ||
+			contact.CADETPARENTEMAIL.PRIMARY ||
+			contact.EMAIL.SECONDARY ||
+			contact.CADETPARENTEMAIL.SECONDARY ||
+			contact.EMAIL.EMERGENCY ||
+			contact.CADETPARENTEMAIL.EMERGENCY
+	);

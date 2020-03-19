@@ -140,19 +140,24 @@ export namespace api {
 		}
 
 		export namespace attendance {
-			export interface EventAttendanceRecord {
-				name: string;
+			export interface EventAttendanceRecordEventInformation {
 				id: number;
+				startDateTime: number;
 				endDateTime: number;
 				location: string;
-				startDateTime: number;
-				planToUseCAPTransportation: boolean;
-				comments: string;
+				name: string;
+				attendanceComments: string;
 			}
 
-			export type Basic = EventAttendanceRecord[];
+			export interface EventAttendanceRecord {
+				member: {
+					reference: MemberReference;
+					name: string;
+				};
+				event: MaybeObj<EventAttendanceRecordEventInformation>;
+			}
 
-			export type ForOther = EventAttendanceRecord[];
+			export type Get = EitherObj<HTTPError, EventAttendanceRecord[]>;
 		}
 
 		export namespace capwatch {

@@ -81,18 +81,18 @@
       - [ ] Organization meeting
     - [ ] Logging
     - [X] Unit tests
-*** Notifications [2/4]
+*** Notifications [3/4]
     - [X] API for arbitrary use
     - [X] BREAD
-    - [ ] Email
+    - [X] Email
     - [ ] Unit tests
-*** Integration [0/2]
-    - [ ] Google integration [0/1]
-      - [ ] Update Google calendar
-    - [ ] AWS integration [0/1]
-      - [ ] Email
-*** Audits [0/2]
-    - [ ] API for arbitrary use
+*** Integration [2/2]
+    - [X] Google integration [1/1]
+      - [X] Update Google calendar
+    - [X] AWS integration [1/1]
+      - [X] Email
+*** Audits [1/2]
+    - [X] API for arbitrary use
     - [ ] Unit tests
 ** Debugging [2/2]
     - [X] Error handling
@@ -103,19 +103,19 @@
     - [X] Link
     - [-] Attendance [1/2]
       - [X] CRUD
-      - [ ] Limit sign ups [0/3]
-        - [ ] Timeline
-        - [ ] Team
+      - [-] Limit sign ups [2/3]
+        - [X] Timeline
+        - [X] Team
         - [ ] Current attendance count
     - [X] Integration tests
-*** Member [2/5]
+*** Member [3/5]
     - [X] Sign in [2/2]
       - [X] Proper signin
       - [X] Password expire
     - [X] Sessions
-    - [-] Sign up [2/3]
+    - [X] Sign up [3/3]
       - [X] Sign up session management
-      - [ ] Email
+      - [X] Email
       - [X] Account create
     - [ ] Integration tests
     - [ ] Unit test
@@ -172,22 +172,22 @@
 *** Photo library [2/2]
     - [X] It works
     - [X] It loads x at a time, x defined in registry
-*** Administration [2/3]
+*** Administration [3/3]
     - [X] Redesign to have better UX
     - [X] Pluggables [2/2]
       - [X] Link list
       - [X] Absentee
-    - [-] Pages [5/6]
+    - [X] Pages [6/6]
       - [X] Registry edit
       - [X] Flight/squadron contact
       - [X] Flight assignment
       - [X] Permission assignment
       - [X] Temporary duty positions
-      - [ ] Attendance view
-        - [ ] Personal
-        - [ ] Flight - for cadet
-        - [ ] Flight - last event for each cadet for flight and time since attendance
-          - Grade | Name | CAPID | Last Event number | Last Event name | Time since event execution | Last Event link
+      - [X] Attendance view [3/3]
+        - [X] Personal
+        - [X] Flight - for cadet
+        - [X] Flight - last event for each cadet for flight and time since attendance
+        - Grade | Name | CAPID | Last Event number | Last Event name | Time since event execution | Last Event link
 *** Teams [5/5]
     - [X] Team list
     - [X] Team view [1/1]
@@ -196,15 +196,15 @@
     - [X] Team add
     - [X] Team delete
 *** Events [1/6]
-    - [-] Add event [1/4]
+    - [-] Add event [2/4]
       - [X] Basic functionality
-      - [ ] Fix bug: clicking 'Receive event updates' or other three checkboxes clears out POC information
+      - [X] Fix bug: clicking 'Receive event updates' or other three checkboxes clears out POC information
       - [ ] If session expired, 'token 401' error issues and client doesn't respond
       - [ ] Custom attendance field not saved with event
-    - [-] Modify event [1/9]
+    - [-] Modify event [3/9]
       - [X] Basic functionality
-      - [ ] Fix POC checkbox anomoly where 2nd POC changes 1st POC checkbox
-      - [ ] Fix event custom field anomoly where 2nd custom field changes 1st custom field checkbox
+      - [X] Fix POC checkbox anomoly where 2nd POC changes 1st POC checkbox
+      - [X] Fix event custom field anomoly where 2nd custom field changes 1st custom field checkbox
       - [ ] Fix custom field type selector, unable to change to Text or Number type of field
       - [ ] Remove Region Event Number option
       - [ ] If session expired, 'token 401' error issues and client doesn't respond
