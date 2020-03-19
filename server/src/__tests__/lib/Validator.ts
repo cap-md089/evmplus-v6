@@ -437,32 +437,6 @@ describe('Validator', () => {
 		});
 
 		describe('CAPUnit.com types', () => {
-			it('should validate checkbox return values', () => {
-				expect(Validator.CheckboxReturn([[true, false], '']).valid).toEqual(true);
-				expect(Validator.CheckboxReturn([[false, 1], '']).valid).toEqual(false);
-				expect(Validator.CheckboxReturn([[false, true], 0]).valid).toEqual(false);
-				expect(Validator.CheckboxReturn([[false, true], false]).valid).toEqual(false);
-				expect(Validator.CheckboxReturn([false, false]).valid).toEqual(false);
-				expect(Validator.CheckboxReturn([{}, false]).valid).toEqual(false);
-				expect(Validator.CheckboxReturn(null).valid).toEqual(false);
-				expect(Validator.CheckboxReturn(undefined).valid).toEqual(false);
-			});
-
-			it('should validate radio return values', () => {
-				expect(Validator.RadioReturn(TestEnum)([TestEnum.ITEMONE, '']).valid).toEqual(true);
-				expect(Validator.RadioReturn(TestEnum)([[false, 1], '']).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)([[TestEnum.ITEMTWO], 0]).valid).toEqual(
-					false
-				);
-				expect(Validator.RadioReturn(TestEnum)([[false, true], false]).valid).toEqual(
-					false
-				);
-				expect(Validator.RadioReturn(TestEnum)([false, false]).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)([{}, false]).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)(null).valid).toEqual(false);
-				expect(Validator.RadioReturn(TestEnum)(undefined).valid).toEqual(false);
-			});
-
 			it('should validate member references', () => {
 				// NHQMember checks MemberBase.isReference
 				expect(

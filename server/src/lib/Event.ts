@@ -19,15 +19,15 @@ import {
 	just,
 	left,
 	MemberReference,
-	MultCheckboxReturn,
 	NewAttendanceRecord,
 	NewEventObject,
 	none,
 	NoSQLDocument,
 	NotificationCauseType,
 	NotificationDataType,
+	OtherMultCheckboxReturn,
 	PointOfContactType,
-	RadioReturn,
+	RadioReturnWithOther,
 	RawEventObject,
 	right
 } from 'common-lib';
@@ -54,7 +54,7 @@ import { serverErrorGenerator } from './Util';
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
-interface RawAttendanceDBRecord extends AttendanceRecord {
+export interface RawAttendanceDBRecord extends AttendanceRecord {
 	accountID: string;
 	eventID: number;
 }
@@ -333,7 +333,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public transportationDescription: string;
 
-	public uniform: MultCheckboxReturn;
+	public uniform: OtherMultCheckboxReturn;
 
 	public desiredNumberOfParticipants: number;
 
@@ -347,11 +347,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		feeAmount: number;
 	};
 
-	public mealsDescription: MultCheckboxReturn;
+	public mealsDescription: OtherMultCheckboxReturn;
 
-	public lodgingArrangments: MultCheckboxReturn;
+	public lodgingArrangments: OtherMultCheckboxReturn;
 
-	public activity: MultCheckboxReturn;
+	public activity: OtherMultCheckboxReturn;
 
 	public highAdventureDescription: string;
 
@@ -359,7 +359,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public eventWebsite: string;
 
-	public requiredForms: MultCheckboxReturn;
+	public requiredForms: OtherMultCheckboxReturn;
 
 	public comments: string;
 
@@ -371,11 +371,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public showUpcoming: boolean;
 
-	public groupEventNumber: RadioReturn<EchelonEventNumber>;
+	public groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
-	public wingEventNumber: RadioReturn<EchelonEventNumber>;
+	public wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
-	public regionEventNumber: RadioReturn<EchelonEventNumber>;
+	public regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
 	public complete: boolean;
 
@@ -653,6 +653,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		schema: Schema,
 		updater: MemberBase
 	): Promise<boolean> {
+		const registry = await account.getRegistry();
+
 		if (EventValidator.validate(values, true)) {
 			if (values.pointsOfContact) {
 				const previousPOCs = this.pointsOfContact.slice(0);
@@ -710,6 +712,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						},
 						account,
 						schema,
+						registry,
 						updater
 					);
 				}
@@ -732,6 +735,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						},
 						account,
 						schema,
+						registry,
 						updater
 					);
 				}
@@ -884,8 +888,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				timestamp,
 
 				// If these are null, they are staying for the whole event
-				arrivalTime: newAttendanceRecord.arrivalTime,
-				departureTime: newAttendanceRecord.departureTime
+				arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
+				departureTime: newAttendanceRecord.departureTime || this.endDateTime
 			}
 		];
 
@@ -902,8 +906,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				timestamp,
 
 				// If these are null, they are staying for the whole event
-				arrivalTime: newAttendanceRecord.arrivalTime,
-				departureTime: newAttendanceRecord.departureTime,
+				arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
+				departureTime: newAttendanceRecord.departureTime || this.endDateTime,
 
 				accountID: this.account.id,
 				eventID: this.id
@@ -959,8 +963,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp,
-						arrivalTime: newAttendanceRecord.arrivalTime,
-						departureTime: newAttendanceRecord.departureTime,
+						arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
+						departureTime: newAttendanceRecord.departureTime || this.endDateTime,
 
 						accountID: this.account.id,
 						eventID: this.id,
@@ -977,8 +981,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						timestamp,
 
 						// If these are undefined, they are staying for the whole event
-						arrivalTime: newAttendanceRecord.arrivalTime,
-						departureTime: newAttendanceRecord.departureTime
+						arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
+						departureTime: newAttendanceRecord.departureTime || this.endDateTime
 					};
 				} else {
 					return false;

@@ -60,33 +60,35 @@ export interface Session {
 	type: SessionType;
 }
 
+export type UserList = CAPNHQUser | CAPProspectiveUser;
+
 export interface ConditionalMemberRequest<P extends ParamType = {}, B = any>
 	extends AccountRequest<P, B> {
-	member: CAPNHQUser | CAPProspectiveUser | null;
+	member: UserList | null;
 }
 
 export interface MemberRequest<P extends ParamType = {}, B = any> extends AccountRequest<P, B> {
-	member: CAPNHQUser | CAPProspectiveUser;
+	member: UserList;
 }
 
 export interface BasicConditionalMemberRequest<P extends ParamType = {}, B = any>
 	extends BasicAccountRequest<P, B> {
-	member: CAPNHQUser | CAPProspectiveUser | null;
+	member: UserList | null;
 }
 
 export interface BasicMemberRequest<P extends ParamType = {}, B = any>
 	extends BasicAccountRequest<P, B> {
-	member: CAPNHQUser | CAPProspectiveUser;
+	member: UserList;
 }
 
 export interface MaybeMemberRequest<P extends ParamType = {}, B = any>
 	extends AccountRequest<P, B> {
-	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
+	member: Maybe<UserList>;
 }
 
 export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
 	extends BasicAccountRequest<P, B> {
-	member: Maybe<CAPNHQUser | CAPProspectiveUser>;
+	member: Maybe<UserList>;
 }
 
 const addSessionToDatabase = (

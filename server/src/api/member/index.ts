@@ -8,15 +8,14 @@ import {
 	leftyMemberMiddlewareWithPassswordOnly,
 	leftyPermissionMiddleware,
 	memberMiddleware,
-	permissionMiddleware,
 	Validator
 } from '../../lib/internals';
-import { leftyTokenMiddleware, tokenMiddleware } from '../formtoken';
+import { leftyTokenMiddleware } from '../formtoken';
 // API routes
 import absent from './absent';
 import account from './account';
 import basic from './attendance/basic';
-import forcadet from './attendance/forother';
+import short from './attendance/short';
 import capwatch from './capwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
@@ -90,20 +89,13 @@ router.post(
 	setdutypositions
 );
 
-router.post(
-	'/generateattendance',
-	memberMiddleware,
-	tokenMiddleware,
-	Validator.BodyExpressMiddleware(Validator.MemberReference),
+router.get('/attendance', leftyMemberMiddleware, basic);
+router.get('/attendance/short', leftyMemberMiddleware, short);
+router.get(
+	'/attendance/:reference',
+	leftyMemberMiddleware,
+	leftyPermissionMiddleware('AttendanceView'),
 	basic
-);
-router.post(
-	'/generateattendance/other',
-	memberMiddleware,
-	tokenMiddleware,
-	permissionMiddleware('PromotionManagement'),
-	Validator.BodyExpressMiddleware(Validator.MemberReference),
-	forcadet
 );
 
 router.post(

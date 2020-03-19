@@ -165,7 +165,6 @@ describe('Event', () => {
 						'md000-capunit-calendar@md000-capunit.iam.gserviceaccount.com'
 					),
 					shareLink: '',
-					initialPassword: '',
 					comments: '',
 					echelon: false,
 					expires: 0,

@@ -18,6 +18,7 @@ export const Member: Readonly<MemberPermissions> = {
 	ManageEvent: 0,
 	ManageTeam: 0,
 	ScanAdd: 0,
+	AttendanceView: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -42,6 +43,7 @@ export const Staff: Readonly<MemberPermissions> = {
 	ManageEvent: 1,
 	ManageTeam: 0,
 	ScanAdd: 0,
+	AttendanceView: 0,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -66,6 +68,7 @@ export const Manager: Readonly<MemberPermissions> = {
 	ManageEvent: 2,
 	ManageTeam: 1,
 	ScanAdd: 1,
+	AttendanceView: 1,
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
@@ -90,6 +93,7 @@ export const Admin: Readonly<MemberPermissions> = {
 	ManageEvent: 2,
 	ManageTeam: 1,
 	ScanAdd: 1,
+	AttendanceView: 1,
 
 	DownloadCAPWATCH: 1,
 	PermissionManagement: 1,

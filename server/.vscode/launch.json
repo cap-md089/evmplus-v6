@@ -7,13 +7,8 @@
 			"name": "Launch Server",
 			"program": "${workspaceFolder}/dist/index.js",
 			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
-			],
-			"skipFiles": [
-				"node_modules/**/*.js",
-				"<node_internals>/**/*.js"
-			],
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"skipFiles": ["node_modules/**/*.js", "<node_internals>/**/*.js"],
 			"env": {
 				"NODE_ENV": "development"
 			}
@@ -25,12 +20,7 @@
 			"processId": "${command:PickProcess}",
 			"restart": true,
 			"protocol": "inspector",
-			"skipFiles": [
-				"node_modules/**/*.js",
-				"async_hooks.js",
-				"inspector_async_hook.js"
-			]
-
+			"skipFiles": ["node_modules/**/*.js", "async_hooks.js", "inspector_async_hook.js"]
 		},
 		{
 			"type": "node",
@@ -38,14 +28,8 @@
 			"name": "Launch Test",
 			"program": "${workspaceFolder}/dist/test.js",
 			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
-			],
-			"skipFiles": [
-				"node_modules/**/*.js",
-				"async_hooks.js",
-				"inspector_async_hook.js"
-			],
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"skipFiles": ["node_modules/**/*.js", "async_hooks.js", "inspector_async_hook.js"],
 			"env": {
 				"NODE_ENV": "development"
 			}
@@ -54,34 +38,20 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Migrate Code",
-			"program": "${workspaceFolder}/dist/migrateCode.js",
+			"program": "${workspaceFolder}/dist/importV3Data.js",
 			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
-			],
-			"skipFiles": [
-				"node_modules/**/*.js",
-				"async_hooks.js",
-				"inspector_async_hook.js"
-			]
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"skipFiles": ["node_modules/**/*.js", "async_hooks.js", "inspector_async_hook.js"]
 		},
 		{
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Server (Nodemon)",
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
-			],
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"program": "${workspaceFolder}/dist/index.js",
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
-			"runtimeArgs": [
-				"--inspect"
-			],
-			"skipFiles": [
-				"node_modules/**/*.js",
-				"async_hooks.js",
-				"inspector_async_hook.js"
-			],
+			"runtimeArgs": ["--inspect"],
+			"skipFiles": ["node_modules/**/*.js", "async_hooks.js", "inspector_async_hook.js"],
 			"env": {
 				"NODE_ENV": "development"
 			}
@@ -90,11 +60,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Jest All",
-			"args": [
-				"--inspect-brk",
-				"${workspaceFolder}/node_modules/.bin/jest",
-				"--runInBand"
-			],
+			"args": ["--inspect-brk", "${workspaceFolder}/node_modules/.bin/jest", "--runInBand"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen"
 		},
@@ -111,7 +77,7 @@
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
 			"windows": {
-				"program": "${workspaceFolder}/node_modules/jest/bin/jest",
+				"program": "${workspaceFolder}/node_modules/jest/bin/jest"
 			}
 		}
 	]

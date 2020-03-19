@@ -51,7 +51,7 @@ export default asyncEitherHandler<api.events.attendance.Add>(
 			});
 		}
 
-		event.addMemberToAttendance(
+		await event.addMemberToAttendance(
 			{
 				arrivalTime: req.body.arrivalTime,
 				comments: req.body.comments,

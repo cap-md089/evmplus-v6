@@ -60,6 +60,8 @@ import { Account, collectResults, GlobalNotification, resolveReference } from '.
 
 	const alertAccount = async (account: Account, db: Schema) => {
 		try {
+			const registry = await account.getRegistry();
+
 			// Allow overriding the accounts notification
 			try {
 				const current = await GlobalNotification.GetCurrent(account, db);
@@ -72,7 +74,14 @@ import { Account, collectResults, GlobalNotification, resolveReference } from '.
 			if (from.type === NotificationCauseType.SYSTEM) {
 				// Create a system notification, doesn't require extra information
 				try {
-					await GlobalNotification.CreateNotification(message, expire, from, account, db);
+					await GlobalNotification.CreateNotification(
+						message,
+						expire,
+						from,
+						account,
+						db,
+						registry
+					);
 				} catch (e) {
 					console.error('Unknown error:');
 					console.error(e);
@@ -94,6 +103,7 @@ import { Account, collectResults, GlobalNotification, resolveReference } from '.
 							from,
 							account,
 							db,
+							registry,
 							member
 						);
 					} catch (e) {

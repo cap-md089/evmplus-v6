@@ -278,7 +278,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			wingCalendarID: values.wingCalendarID,
 			serviceAccount: asObj(values.serviceAccount),
 			shareLink: values.shareLink,
-			initialPassword: values.initialPassword,
 			comments: values.comments,
 			echelon: values.echelon,
 			expires: values.expires,
@@ -350,10 +349,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 */
 	public shareLink: string;
 	/**
-	 * Initial password used to generate Google account for a unit
-	 */
-	public initialPassword: string;
-	/**
 	 * Miscellaneous comments regarding the account
 	 */
 	public comments: string;
@@ -396,7 +391,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.unpaidEventLimit = data.unpaidEventLimit;
 		this.echelon = data.echelon;
 		this.shareLink = data.shareLink;
-		this.initialPassword = data.initialPassword;
 		this.comments = data.comments;
 		this.paidEventLimit = data.paidEventLimit;
 		this.paid = data.paid;
@@ -576,7 +570,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			wingCalendarID: this.wingCalendarID,
 			serviceAccount: this.serviceAccount,
 			shareLink: this.shareLink,
-			initialPassword: this.initialPassword,
 			comments: this.comments,
 			echelon: this.echelon,
 			expires: this.expires,
@@ -596,7 +589,6 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		wingCalendarID: this.wingCalendarID,
 		serviceAccount: this.serviceAccount,
 		shareLink: this.shareLink,
-		initialPassword: this.initialPassword,
 		comments: this.comments,
 		echelon: this.echelon,
 		expired: this.expired,

@@ -58,5 +58,8 @@ export default new Validator<MemberPermissions>({
 	},
 	ScanAdd: {
 		validator: Validator.Enum(Permissions.ScanAdd)
+	},
+	AttendanceView: {
+		validator: Validator.Enum(Permissions.AttendanceView)
 	}
 });

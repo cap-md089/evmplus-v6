@@ -9,7 +9,7 @@ import {
 	EitherObj,
 	just,
 	left,
-	MultCheckboxReturn,
+	OtherMultCheckboxReturn,
 	RawAccountObject,
 	right
 } from 'common-lib';
@@ -171,7 +171,6 @@ export async function getTestTools(testconf: typeof Configuration) {
 		wingCalendarID: '6t22lk6thigsg6udc7rkpap2tg@group.calendar.google.com',
 		serviceAccount: just('md089-capunit-calendar@md089-capunit.iam.gserviceaccount.com'),
 		shareLink: '',
-		initialPassword: '',
 		comments: '',
 		echelon: false,
 		expires: 99999999999999,
@@ -272,6 +271,7 @@ export const asyncErrorHandler = (
 export const leftyAsyncErrorHandler: typeof asyncErrorHandler = fn => {
 	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
 		fn(req, res, next).catch(async err => {
+			console.error(err);
 			await saveServerError(err, await convertReqForSavingAsError(req));
 
 			res.status(500);
@@ -313,6 +313,7 @@ export const asyncEitherMiddlewareHandler = <R>(
 									)
 								),
 							async err => {
+								console.error(err);
 								await saveServerError(err, await convertReqForSavingAsError(req));
 
 								return res.json(
@@ -328,6 +329,7 @@ export const asyncEitherMiddlewareHandler = <R>(
 			)
 			.catch(async err => {
 				if (err instanceof Error) {
+					console.error(err);
 					await saveServerError(err, await convertReqForSavingAsError(req));
 				}
 
@@ -403,6 +405,7 @@ export const asyncEitherHandler = <R>(
 									)
 								),
 							async err => {
+								console.error(err);
 								await saveServerError(
 									err,
 									await convertReqForSavingAsError(req),
@@ -423,6 +426,7 @@ export const asyncEitherHandler = <R>(
 			)
 			.catch(async err => {
 				if (err instanceof Error) {
+					console.error(err);
 					await saveServerError(err, await convertReqForSavingAsError(req));
 				}
 
@@ -556,15 +560,10 @@ export const getTargetYear = (timestamp: number): number => {
 	return date.getFullYear();
 };
 
-export const presentMultCheckboxReturn = (
-	value: MultCheckboxReturn,
-	labels: string[],
-	other: boolean,
-	separator = ', '
-) => {
-	const arrayValue = labels.filter((label, i) => value[0][i]);
-	if (other && value[0][labels.length]) {
-		arrayValue.push(value[1]);
+export const presentMultCheckboxReturn = (value: OtherMultCheckboxReturn, separator = ', ') => {
+	const arrayValue = value.labels.filter((label, i) => value.values[i]);
+	if (value.otherSelected) {
+		arrayValue.push(value.otherValue);
 	}
 
 	return arrayValue.join(separator);

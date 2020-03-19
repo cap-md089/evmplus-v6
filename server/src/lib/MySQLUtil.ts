@@ -196,7 +196,8 @@ export const generateBindObject = <T>(
 	Object.keys(bind)
 		.map(key => {
 			if (bind[key as keyof T] === undefined) {
-				throw new Error('Cannot bind with an undefined value');
+				console.error(bind);
+				throw new Error(`Cannot bind with an undefined value: key is ${key}`);
 			}
 
 			return typeof bind[key as keyof T] === 'object'

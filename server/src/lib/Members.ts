@@ -143,7 +143,7 @@ export function isRioux(cm: MemberBase | number | string): boolean {
 export function getUserID(name: string[]): string {
 	let usrID = '';
 
-	usrID = name[2] + name[0][0] + name[1][0];
+	usrID = name[2] + (name[0][0] || '') + (name[1][0] || '');
 
 	return usrID.toLocaleLowerCase();
 }

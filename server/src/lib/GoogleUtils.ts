@@ -3,6 +3,7 @@
 import {
 	EventStatus,
 	formatGoogleCalendarDate,
+	isOneOfSelected,
 	RawAccountObject,
 	RawEventObject
 } from 'common-lib';
@@ -99,23 +100,16 @@ function buildEventDescription(inEvent: RawEventObject): string {
 		'--Transportation Provided: ' +
 		(inEvent.transportationProvided === true ? 'YES' : 'NO') +
 		'\n';
-	description +=
-		'--Uniform: ' + presentMultCheckboxReturn(inEvent.uniform, Uniforms, false) + '\n';
-	description +=
-		'--Activity: ' + presentMultCheckboxReturn(inEvent.activity, Activities, false) + '\n';
-	const showForms = inEvent.requiredForms[0].reduce((prev, curr) => prev || curr, false);
+	description += '--Uniform: ' + presentMultCheckboxReturn(inEvent.uniform) + '\n';
+	description += '--Activity: ' + presentMultCheckboxReturn(inEvent.activity) + '\n';
+	const showForms = isOneOfSelected(inEvent.requiredForms);
 	if (showForms === true) {
 		description +=
-			'--Required forms: ' +
-			presentMultCheckboxReturn(inEvent.requiredForms, RequiredForms, false) +
-			'\n';
+			'--Required forms: ' + presentMultCheckboxReturn(inEvent.requiredForms) + '\n';
 	}
-	const showLodging = inEvent.lodgingArrangments[0].reduce((prev, curr) => prev || curr, false);
+	const showLodging = isOneOfSelected(inEvent.lodgingArrangments);
 	if (showLodging === true) {
-		description +=
-			'--Lodging: ' +
-			presentMultCheckboxReturn(inEvent.lodgingArrangments, LodgingArrangments, false) +
-			'\n';
+		description += '--Lodging: ' + presentMultCheckboxReturn(inEvent.lodgingArrangments) + '\n';
 	}
 	if (inEvent.requiredEquipment.length > 0) {
 		description += '--Required equipment: ' + inEvent.requiredEquipment + '\n';
@@ -134,10 +128,9 @@ function buildEventDescription(inEvent: RawEventObject): string {
 			formatGoogleCalendarDate(inEvent.participationFee.feeDue) +
 			'\n';
 	}
-	const showMeals = inEvent.mealsDescription[0].reduce((prev, curr) => prev || curr, false);
+	const showMeals = isOneOfSelected(inEvent.mealsDescription);
 	if (showMeals === true) {
-		description +=
-			'--Meals: ' + presentMultCheckboxReturn(inEvent.mealsDescription, Meals, false) + '\n';
+		description += '--Meals: ' + presentMultCheckboxReturn(inEvent.mealsDescription) + '\n';
 	}
 	description +=
 		'--Desired number of participants: ' + inEvent.desiredNumberOfParticipants + '\n';
@@ -612,7 +605,7 @@ async function updateMainEvent(
 			requestBody: event
 		});
 	} else {
-		const inEventId = inEvent.googleCalendarIds.mainId as string;
+		const inEventId = inEvent.googleCalendarIds.mainId;
 		event.id = inEventId;
 		response = await myCalendar.events.patch({
 			auth: jwtClient,

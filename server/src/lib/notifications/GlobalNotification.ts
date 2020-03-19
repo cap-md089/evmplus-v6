@@ -15,7 +15,8 @@ import {
 	generateResults,
 	MemberBase,
 	MemberNotification,
-	Notification
+	Notification,
+	Registry
 } from '../internals';
 
 export default class GlobalNotification extends Notification {
@@ -73,7 +74,8 @@ export default class GlobalNotification extends Notification {
 		expires: number,
 		from: NotificationSystemCause,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		registry: Registry
 	): Promise<GlobalNotification>;
 	public static async CreateNotification(
 		text: string,
@@ -81,6 +83,7 @@ export default class GlobalNotification extends Notification {
 		from: NotificationMemberCause,
 		account: Account,
 		schema: Schema,
+		registry: Registry,
 		fromMember: MemberBase
 	): Promise<GlobalNotification>;
 
@@ -90,6 +93,7 @@ export default class GlobalNotification extends Notification {
 		from: NotificationCause,
 		account: Account,
 		schema: Schema,
+		registry: Registry,
 		fromMember?: MemberBase
 	) {
 		if (await GlobalNotification.AccountHasGlobalNotificationActive(account, schema)) {
@@ -124,7 +128,8 @@ export default class GlobalNotification extends Notification {
 					{ type: NotificationCauseType.SYSTEM },
 					null,
 					account,
-					schema
+					schema,
+					registry
 				);
 			} else {
 				// `fromMember` is not undefined, as required by the overloads above
@@ -135,6 +140,7 @@ export default class GlobalNotification extends Notification {
 					null,
 					account,
 					schema,
+					registry,
 					fromMember!
 				);
 			}

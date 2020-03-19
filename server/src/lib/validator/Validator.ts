@@ -1,4 +1,20 @@
-import { api, AsyncEither, asyncLeft, asyncRight, left, MemberReference, none } from 'common-lib';
+/* tslint:disable:member-ordering */
+import {
+	api,
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
+	left,
+	MemberReference,
+	MultCheckboxWithOtherSelected,
+	MultCheckboxWithoutOtherSelected,
+	none,
+	OtherMultCheckboxReturn,
+	RadioReturnWithOther,
+	RadioReturnWithOtherSelected,
+	RadioReturnWithoutOtherSelected,
+	SimpleMultCheckboxReturn
+} from 'common-lib';
 import * as express from 'express';
 import { BasicAccountRequest } from '../Account';
 import {
@@ -274,7 +290,7 @@ export default class Validator<T> {
 					message: 'must be an array'
 			  };
 
-	public static Enum = (value: any): ValidatorFunction<typeof value> => (input: unknown) =>
+	public static Enum = <E extends number>(value: any): ValidatorFunction<E> => (input: unknown) =>
 		typeof value[input as any] !== 'string'
 			? {
 					valid: false,
@@ -543,42 +559,6 @@ export default class Validator<T> {
 		};
 	}
 
-	public static CheckboxReturn: ValidatorFunction<[boolean[], string]> = input =>
-		Validator.Array(input).valid &&
-		Validator.ArrayOf(Validator.Boolean)((input as any[])[0]).valid &&
-		Validator.String((input as any[])[1]).valid
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: 'not a valid checkbox return value'
-			  };
-
-	public static RadioReturn = (
-		rrEnum: any
-	): ValidatorFunction<[typeof rrEnum, string]> => input =>
-		Validator.Array(input).valid &&
-		Validator.Enum(rrEnum)((input as any[])[0]).valid &&
-		Validator.String((input as any[])[1]).valid
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: 'not a valid radio return value'
-			  };
-
-	public static MemberReference: ValidatorFunction<MemberReference> = input =>
-		!Validator.Nothing(input).valid && isValidMemberReference(input)
-			? {
-					valid: true
-			  }
-			: {
-					valid: false,
-					message: 'not a valid member reference'
-			  };
-
 	public static StrictValue = (value: any): ValidatorFunction<typeof value> => input =>
 		input === value
 			? {
@@ -715,6 +695,83 @@ export default class Validator<T> {
 		};
 	}
 
+	public static SimpleMultCheckboxReturn = new Validator<SimpleMultCheckboxReturn>({
+		values: {
+			validator: Validator.ArrayOf(Validator.Boolean)
+		},
+		labels: {
+			validator: Validator.ArrayOf(Validator.String)
+		}
+	});
+
+	public static OtherMultCheckboxReturn: ValidatorFunction<
+		OtherMultCheckboxReturn
+	> = Validator.Or(
+		new Validator<MultCheckboxWithOtherSelected>({
+			labels: {
+				validator: Validator.ArrayOf(Validator.String)
+			},
+			otherSelected: {
+				validator: Validator.StrictValue(true)
+			},
+			otherValue: {
+				validator: Validator.String
+			},
+			values: {
+				validator: Validator.ArrayOf(Validator.Boolean)
+			}
+		}),
+		new Validator<MultCheckboxWithoutOtherSelected>({
+			labels: {
+				validator: Validator.ArrayOf(Validator.String)
+			},
+			otherSelected: {
+				validator: Validator.StrictValue(false)
+			},
+			values: {
+				validator: Validator.ArrayOf(Validator.Boolean)
+			}
+		})
+	);
+
+	public static OtherRadioReturn = <E extends number>(
+		rrEnum: any
+	): ValidatorFunction<RadioReturnWithOther<E>> =>
+		Validator.Or(
+			new Validator<RadioReturnWithOtherSelected>({
+				labels: {
+					validator: Validator.ArrayOf(Validator.String)
+				},
+				otherValue: {
+					validator: Validator.String
+				},
+				otherValueSelected: {
+					validator: Validator.StrictValue(true)
+				}
+			}),
+			new Validator<RadioReturnWithoutOtherSelected<E>>({
+				labels: {
+					validator: Validator.ArrayOf(Validator.String)
+				},
+				otherValueSelected: {
+					validator: Validator.StrictValue(false)
+				},
+				selection: {
+					validator: Validator.Enum<E>(rrEnum)
+				}
+			})
+		);
+
+	public static MemberReference: ValidatorFunction<MemberReference> = input =>
+		!Validator.Nothing(input).valid && isValidMemberReference(input)
+			? {
+					valid: true
+			  }
+			: {
+					valid: false,
+					message: 'not a valid member reference'
+			  };
+
 	private rules: ValidateRuleSet<T>;
 
 	private errors: Array<ValidateError<T>> = [];
@@ -741,7 +798,17 @@ export default class Validator<T> {
 				const value = obj[key];
 				const rule = this.rules[key];
 
-				if (value === undefined || value === null) {
+				if (value === null && rule.requiredIf) {
+					if (rule.requiredIf(value, obj)) {
+						this.errors.push({
+							property: key,
+							message: 'property is required'
+						});
+					}
+					continue;
+				}
+
+				if (value === undefined) {
 					if ((typeof rule.required === 'undefined' ? true : rule.required) && !partial) {
 						if (rule.requiredIf) {
 							if (rule.requiredIf(value, obj)) {

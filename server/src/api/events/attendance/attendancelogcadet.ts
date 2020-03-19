@@ -308,11 +308,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 													alignment: 'left'
 												},
 												{
-													text: presentMultCheckboxReturn(
-														event.uniform,
-														Uniforms,
-														false
-													),
+													text: presentMultCheckboxReturn(event.uniform),
 													fontSize: 12,
 													bold: false,
 													alignment: 'left'
@@ -326,11 +322,7 @@ export default asyncErrorHandler(async (req: AccountRequest<{ id: string }>, res
 													alignment: 'left'
 												},
 												{
-													text: presentMultCheckboxReturn(
-														event.activity,
-														Activities,
-														false
-													),
+													text: presentMultCheckboxReturn(event.activity),
 													fontSize: 12,
 													bold: false,
 													alignment: 'left'

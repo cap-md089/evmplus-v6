@@ -37,6 +37,7 @@ export default asyncEitherHandler<api.notifications.global.Create>(
 				},
 				req.account,
 				req.mysqlx,
+				await req.account.getRegistry(),
 				req.member
 			);
 

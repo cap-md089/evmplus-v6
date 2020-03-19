@@ -10,7 +10,7 @@
     "build": "tsc",
     "debug": "nodemon --inspect dist/index.js",
     "check": "tsc --noEmit",
-	"clean": "prettier --write 'src/**/*.ts'",
+    "clean": "prettier --write 'src/**/*.ts'",
     "clean-watch": "onchange '**/*.ts' -- prettier --write {{changed}}"
   },
   "main": "dist/index.js",
@@ -29,7 +29,6 @@
     "luxon": "^1.3.1",
     "mime-types": "^2.1.19",
     "morgan": "^1.9.1",
-    "mysql": "^2.18.1",
     "onchange": "^6.1.0",
     "pdfkit": "^0.10.0",
     "prettier": "^1.19.1",
@@ -54,6 +53,7 @@
     "@types/luxon": "^1.2.1",
     "@types/mime-types": "^2.1.0",
     "@types/morgan": "^1.7.35",
+    "@types/mysql": "^2.15.9",
     "@types/node": "^13.7.0",
     "@types/pdfkit": "^0.10.1",
     "@types/react": "^16.8.4",
@@ -66,12 +66,13 @@
     "gulp-shell": "^0.7.0",
     "jest": "^24.8.0",
     "jest-cli": "^24.8.0",
+    "mysql": "^2.18.1",
     "nodemon": "^1.19.4",
     "supertest": "^3.1.0",
     "ts-jest": "^23.1.4",
     "tslint": "^5.19.0",
     "tslint-config-prettier": "^1.13.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.3"
   },
   "jest": {
     "globals": {

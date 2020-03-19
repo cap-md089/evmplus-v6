@@ -225,7 +225,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Boolean
 			},
 			activity: {
-				validator: Validator.CheckboxReturn
+				validator: Validator.OtherMultCheckboxReturn
 			},
 			administrationComments: {
 				validator: Validator.String
@@ -249,7 +249,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.ArrayOf(Validator.String)
 			},
 			groupEventNumber: {
-				validator: Validator.RadioReturn(EchelonEventNumber)
+				validator: Validator.OtherRadioReturn(EchelonEventNumber)
 			},
 			highAdventureDescription: {
 				validator: Validator.String
@@ -258,10 +258,10 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.String
 			},
 			lodgingArrangments: {
-				validator: Validator.CheckboxReturn
+				validator: Validator.OtherMultCheckboxReturn
 			},
 			mealsDescription: {
-				validator: Validator.CheckboxReturn
+				validator: Validator.OtherMultCheckboxReturn
 			},
 			meetDateTime: {
 				validator: Validator.Number
@@ -302,7 +302,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Boolean
 			},
 			regionEventNumber: {
-				validator: Validator.RadioReturn(EchelonEventNumber)
+				validator: Validator.OtherRadioReturn(EchelonEventNumber)
 			},
 			registration: {
 				validator: Validator.Or(new RegistrationValidator(), Validator.Null),
@@ -312,13 +312,18 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.ArrayOf(Validator.String)
 			},
 			requiredForms: {
-				validator: Validator.CheckboxReturn
+				validator: Validator.OtherMultCheckboxReturn
 			},
 			showUpcoming: {
 				validator: Validator.Boolean
 			},
 			signUpDenyMessage: {
-				validator: Validator.String
+				validator: Validator.String,
+				requiredIf: (_, event) => {
+					return (
+						typeof (event as any).acceptSignups === 'boolean' && !event.acceptSignups
+					);
+				}
 			},
 			signUpPartTime: {
 				validator: Validator.Boolean
@@ -345,10 +350,10 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Boolean
 			},
 			uniform: {
-				validator: Validator.CheckboxReturn
+				validator: Validator.OtherMultCheckboxReturn
 			},
 			wingEventNumber: {
-				validator: Validator.RadioReturn(EchelonEventNumber)
+				validator: Validator.OtherRadioReturn(EchelonEventNumber)
 			},
 			privateAttendance: {
 				validator: Validator.Boolean

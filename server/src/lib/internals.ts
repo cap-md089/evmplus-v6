@@ -44,6 +44,7 @@ export { default as Account } from './Account';
 export * from './Account';
 export { default as File } from './File';
 export { default as Event } from './Event';
+export * from './Event';
 export { default as Task } from './Task';
 export { default as Team } from './Team';
 export { default as Registry } from './Registry';

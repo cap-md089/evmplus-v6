@@ -1,4 +1,4 @@
-import { api, asyncRight, just, none } from 'common-lib';
+import { api, asyncRight, isSelected, just, none } from 'common-lib';
 import { Account, asyncEitherHandler2, Event, serverErrorGenerator } from '../../../lib/internals';
 
 export default asyncEitherHandler2<api.events.events.GetNextRecurring>(r =>
@@ -10,7 +10,7 @@ export default asyncEitherHandler2<api.events.events.GetNextRecurring>(r =>
 			for await (const possibleEvent of req.account.getSortedEvents()) {
 				if (
 					nextEvent === null &&
-					possibleEvent.activity[0][5] &&
+					isSelected(possibleEvent.activity, 'Recurring Meeting') &&
 					possibleEvent.endDateTime > Date.now()
 				) {
 					nextEvent = just(possibleEvent);

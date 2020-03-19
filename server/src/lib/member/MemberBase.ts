@@ -176,12 +176,11 @@ export default abstract class MemberBase implements MemberObject {
 	}
 
 	public getName = (): string =>
-		[this.nameFirst, this.nameMiddle, this.nameLast, this.nameSuffix]
+		[this.nameFirst, this.nameMiddle.charAt(0), this.nameLast, this.nameSuffix]
 			.filter(s => !!s)
 			.map(value => value.trimLeft().trimRight())
 			.map(value => value.replace(/\r\n/gm, ''))
 			.map(value => value.replace(/(  +)/g, ' '))
-			.map((value, i) => (i === 1 ? value.charAt(0) : value))
 			.join(' ');
 
 	public toRaw(): MemberObject {

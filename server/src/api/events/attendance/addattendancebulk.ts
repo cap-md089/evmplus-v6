@@ -43,7 +43,8 @@ export default asyncEitherHandler<api.events.attendance.AddBulk>(
 		// stored in a variable first
 		const canAddOtherMembers =
 			req.member.isPOCOf(event) ||
-			req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL);
+			req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL) ||
+			req.member.hasDutyPosition('Personnel Officer');
 
 		if (!canAddOtherMembers) {
 			return left({
