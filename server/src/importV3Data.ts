@@ -350,6 +350,14 @@ function parseRadioValue<E extends number>(
 	}
 }
 
+const getOrCreate = async <T>(schema: Schema, name: string): Promise<Collection<T>> => {
+	try {
+		return schema.getCollection(name);
+	} catch (e) {
+		return schema.createCollection(name, {});
+	}
+};
+
 /* Tables map (V3 -> V4) */
 
 /* Ignored */
@@ -462,7 +470,7 @@ async function clearCollection(collection: Collection) {
 }
 
 async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account[]> {
-	const accountCollection = to.getCollection<RawAccountObject>('Accounts');
+	const accountCollection = await getOrCreate<RawAccountObject>(to, 'Accounts');
 
 	await clearCollection(accountCollection);
 
@@ -548,8 +556,8 @@ async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account
 }
 
 async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[]) {
-	const eventCollection = to.getCollection<RawEventObject>('Events');
-	const attendanceCollection = to.getCollection<RawAttendanceDBRecord>('Attendance');
+	const eventCollection = await getOrCreate<RawEventObject>(to, 'Events');
+	const attendanceCollection = await getOrCreate<RawAttendanceDBRecord>(to, 'Attendance');
 
 	await Promise.all([clearCollection(eventCollection), clearCollection(attendanceCollection)]);
 
@@ -977,7 +985,7 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 }
 
 async function moveFiles(from: mysql.Connection, to: Schema) {
-	const fileCollection = to.getCollection<RawFileObject>('Files');
+	const fileCollection = await getOrCreate<RawFileObject>(to, 'Files');
 
 	await clearCollection(fileCollection);
 
@@ -1029,7 +1037,7 @@ async function moveFiles(from: mysql.Connection, to: Schema) {
 }
 
 async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[]) {
-	const teamsCollection = to.getCollection<RawTeamObject>('Teams');
+	const teamsCollection = await getOrCreate<RawTeamObject>(to, 'Teams');
 
 	await clearCollection(teamsCollection);
 
@@ -1099,7 +1107,10 @@ async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[]
 }
 
 async function moveExtraMemberInfo(from: mysql.Connection, to: Schema) {
-	const extraInfoCollection = to.getCollection<ExtraMemberInformation>('ExtraMemberInformation');
+	const extraInfoCollection = await getOrCreate<ExtraMemberInformation>(
+		to,
+		'ExtraMemberInformation'
+	);
 
 	await clearCollection(extraInfoCollection);
 
@@ -1145,7 +1156,7 @@ async function moveExtraMemberInfo(from: mysql.Connection, to: Schema) {
 }
 
 async function moveUsers(from: mysql.Connection, to: Schema) {
-	const userAccountCollection = to.getCollection<UserAccountInformation>('UserAccountInfo');
+	const userAccountCollection = await getOrCreate<UserAccountInformation>(to, 'UserAccountInfo');
 
 	await clearCollection(userAccountCollection);
 
@@ -1206,7 +1217,7 @@ async function moveUsers(from: mysql.Connection, to: Schema) {
 }
 
 async function movePermissions(from: mysql.Connection, to: Schema) {
-	const permissionsCollection = to.getCollection<StoredMemberPermissions>('UserPermissions');
+	const permissionsCollection = await getOrCreate<StoredMemberPermissions>(to, 'UserPermissions');
 
 	await clearCollection(permissionsCollection);
 
@@ -1247,7 +1258,7 @@ async function movePermissions(from: mysql.Connection, to: Schema) {
 }
 
 async function moveRegistry(from: mysql.Connection, to: Schema) {
-	const registryCollection = to.getCollection<RegistryValues>('Registry');
+	const registryCollection = await getOrCreate<RegistryValues>(to, 'Registry');
 
 	await clearCollection(registryCollection);
 
