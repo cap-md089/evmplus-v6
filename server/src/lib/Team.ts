@@ -267,14 +267,16 @@ export default class Team implements FullTeamObject {
 		const teamHistory: FullPreviousTeamMember[] = [];
 
 		for (const member of raw.teamHistory) {
-			const fullMember = await resolveReference(member.reference, account, schema);
+			try {
+				const fullMember = await resolveReference(member.reference, account, schema);
 
-			if (fullMember) {
-				teamHistory.push({
-					...member,
-					name: fullMember.getFullName()
-				});
-			}
+				if (fullMember) {
+					teamHistory.push({
+						...member,
+						name: fullMember.getFullName()
+					});
+				}
+			} catch (e) {}
 		}
 
 		const full: FullTeamObject = {
