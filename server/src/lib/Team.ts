@@ -205,10 +205,14 @@ export default class Team implements FullTeamObject {
 		const teamObject = new Team(fullNewTeam, account, schema);
 
 		for (const i of data.members) {
-			const fullMember = await resolveReference(i.reference, account, schema);
+			try {
+				const fullMember = await resolveReference(i.reference, account, schema);
 
-			if (fullMember) {
-				await teamObject.addTeamMember(fullMember, i.job, account, schema);
+				if (fullMember) {
+					await teamObject.addTeamMember(fullMember, i.job, account, schema);
+				}
+			} catch (e) {
+				// ignore
 			}
 		}
 

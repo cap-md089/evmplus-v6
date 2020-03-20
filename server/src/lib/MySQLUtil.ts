@@ -94,9 +94,13 @@ export const collectResults = async <T>(
 	const ret: T[] = [];
 
 	// The promise is resolved once the execute callback is called multiple times
-	await find.execute(item => {
-		ret.push(item);
-	});
+	try {
+		await find.execute(item => {
+			ret.push(item);
+		});
+	} catch (e) {
+		throw new Error(e);
+	}
 
 	return ret;
 };
@@ -159,7 +163,11 @@ export const generateResults = async function*<T>(
 		}
 	}
 
-	await findResult;
+	try {
+		await findResult;
+	} catch (e) {
+		throw new Error(e);
+	}
 };
 
 export const safeBind = <T, C extends mysql.Binding<T>>(find: C, bind: any): C => {

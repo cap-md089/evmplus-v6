@@ -33,6 +33,7 @@ import {
 	SimpleMultCheckboxReturn
 } from 'common-lib';
 import { DateTime } from 'luxon';
+import { Configuration } from '../conf';
 import {
 	Account,
 	areMemberReferencesTheSame,
@@ -44,6 +45,7 @@ import {
 	generateFindStatement,
 	generateResults,
 	MemberBase,
+	MemberClasses,
 	MemberNotification,
 	removeGoogleCalendarEvents,
 	resolveReference,
@@ -145,7 +147,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		data: NewEventObject,
 		account: Account,
 		schema: Schema,
-		member: MemberReference
+		member: MemberReference,
+		config = Configuration
 	) {
 		const eventsCollection = schema.getCollection<RawEventObject>('Events');
 
@@ -183,12 +186,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			}
 		};
 
-		const googleCalendarEventIds = (await createGoogleCalendarEvents(newEvent, account)) as [
-			string,
-			null | string,
-			null | string,
-			null | string
-		];
+		const googleCalendarEventIds = (await createGoogleCalendarEvents(
+			newEvent,
+			account,
+			config
+		)) as [string, null | string, null | string, null | string];
 
 		newEvent.googleCalendarIds = {
 			mainId: googleCalendarEventIds[0],
@@ -215,10 +217,11 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		data: NewEventObject,
 		account: Account,
 		schema: Schema,
-		member: MemberBase
+		member: MemberBase,
+		config = Configuration
 	) =>
 		asyncRight(
-			Event.Create(data, account, schema, member.getReference()),
+			Event.Create(data, account, schema, member.getReference(), config),
 			serverErrorGenerator('Could not create event')
 		);
 
@@ -265,9 +268,17 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			p => p.type === PointOfContactType.INTERNAL
 		) as InternalPointOfContact[];
 
-		const members = await Promise.all(
-			internalPointsOfContact.map(p => resolveReference(p.memberReference, account, schema))
-		);
+		const members = (
+			await Promise.all(
+				internalPointsOfContact.map(p =>
+					resolveReference(p.memberReference, account, schema)
+						.then(m => just(m))
+						.catch(() => none<MemberClasses>())
+				)
+			)
+		)
+			.filter(m => m.isSome())
+			.map(m => m.some());
 
 		const newPOCs = pocs as POCFull;
 
@@ -491,7 +502,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param {Account} account The account to save it to. If not provided,
 	 * 		it uses the account ID the object was created with
 	 */
-	public async save(account: Account = this.account) {
+	public async save(account: Account = this.account, config = Configuration) {
 		const timeModified = +DateTime.utc();
 
 		const eventsCollection = this.schema.getCollection<RawEventObject>('Events');
@@ -500,7 +511,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 		this.timeModified = timeModified;
 
-		const googleCalendarEventIds = (await updateGoogleCalendars(this, account)) as [
+		const googleCalendarEventIds = (await updateGoogleCalendars(this, account, config)) as [
 			string,
 			null | string,
 			null | string,
@@ -524,10 +535,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	/**
 	 * Remove the event from the database
 	 */
-	public async remove() {
+	public async remove(config = Configuration) {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
-		removeGoogleCalendarEvents(this, this.account);
+		removeGoogleCalendarEvents(this, this.account, config);
 
 		await safeBind(eventsCollection.remove('accountID = :accountID AND id = :id'), {
 			accountID: this.account.id,
@@ -563,6 +574,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	public copy(
 		newStartTime: DateTime,
 		member: MemberBase,
+		config = Configuration,
 		copyStatus = false,
 		copyFiles = true
 	): Promise<Event> {
@@ -611,7 +623,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			pickupDateTime: this.pickupDateTime + timeDelta
 		};
 
-		return Event.Create(newEvent, this.account, this.schema, member.getReference());
+		return Event.Create(newEvent, this.account, this.schema, member.getReference(), config);
 	}
 
 	/**
@@ -620,12 +632,17 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param targetAccount The account to link to
 	 * @param member The member linking the event
 	 */
-	public async linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
+	public async linkTo(
+		targetAccount: Account,
+		member: MemberBase,
+		config = Configuration
+	): Promise<Event> {
 		const linkedEvent = await Event.Create(
 			this.toRaw(),
 			targetAccount,
 			this.schema,
-			member.getReference()
+			member.getReference(),
+			config
 		);
 
 		linkedEvent.sourceEvent = {
@@ -633,7 +650,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			id: this.id
 		};
 
-		await linkedEvent.save();
+		await linkedEvent.save(linkedEvent.account, config);
 
 		return linkedEvent;
 	}
@@ -641,10 +658,10 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	/**
 	 * Deletes the current event
 	 */
-	public async delete(): Promise<void> {
+	public async delete(config = Configuration): Promise<void> {
 		const eventsCollection = this.schema.getCollection<EventObject>('Events');
 
-		removeGoogleCalendarEvents(this, this.account);
+		removeGoogleCalendarEvents(this, this.account, config);
 
 		await eventsCollection.removeOne(this._id);
 	}

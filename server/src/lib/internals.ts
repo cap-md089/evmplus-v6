@@ -67,6 +67,4 @@ export { default as saveServerError } from './saveServerError';
 
 // new export
 export { default as updateGoogleCalendars } from './GoogleUtils';
-export { createGoogleCalendarEvents } from './GoogleUtils';
-export { deleteAllGoogleCalendarEvents } from './GoogleUtils';
-export { removeGoogleCalendarEvents } from './GoogleUtils';
+export * from './GoogleUtils';

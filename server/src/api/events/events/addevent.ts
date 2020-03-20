@@ -58,7 +58,7 @@ export default asyncEitherHandler2<api.events.events.Add>(req =>
 			}
 		}))
 		.flatMap(r =>
-			Event.CreateEither(r.body, r.account, r.mysqlx, r.member).map(event =>
+			Event.CreateEither(r.body, r.account, r.mysqlx, r.member, r.configuration).map(event =>
 				event.toRaw(r.member)
 			)
 		)

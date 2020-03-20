@@ -57,7 +57,7 @@ describe('Event', () => {
 	});
 
 	it('should create an event successfully', async done => {
-		event = await Event.Create(newEvent, account, schema, mem.getReference());
+		event = await Event.Create(newEvent, account, schema, mem.getReference(), conftest);
 
 		expect(event.accountID).toEqual(account.id);
 		expect(event.name).toEqual(newEvent.name);
@@ -182,7 +182,7 @@ describe('Event', () => {
 			);
 		}
 
-		const linkedEventCreated = await event.linkTo(targetAccount, mem);
+		const linkedEventCreated = await event.linkTo(targetAccount, mem, conftest);
 
 		const getLinkedEvent = await Event.Get(linkedEventCreated.id, targetAccount, schema);
 
@@ -204,7 +204,7 @@ describe('Event', () => {
 	});
 
 	it('should copy an event', async done => {
-		const testCopy = await event.copy(DateTime.fromMillis(event.startDateTime), mem);
+		const testCopy = await event.copy(DateTime.fromMillis(event.startDateTime), mem, conftest);
 
 		expect(testCopy.id).not.toEqual(event.id);
 		expect(testCopy.name).toEqual(event.name);
@@ -213,7 +213,7 @@ describe('Event', () => {
 	});
 
 	it('should delete a file', async done => {
-		const toDelete = await event.copy(DateTime.fromMillis(event.startDateTime), mem);
+		const toDelete = await event.copy(DateTime.fromMillis(event.startDateTime), mem, conftest);
 
 		await expect(toDelete.delete()).resolves.toEqual(void 0);
 

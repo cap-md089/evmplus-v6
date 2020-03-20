@@ -57,6 +57,7 @@ export default asyncEitherHandler2<api.events.events.Copy, { id: string }>(req =
 					event.copy(
 						DateTime.fromMillis(r.body.newTime),
 						r.member,
+						r.configuration,
 						!!r.body.copyStatus,
 						!!r.body.copyFiles
 					)

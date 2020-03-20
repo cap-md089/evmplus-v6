@@ -99,8 +99,8 @@ describe('Account', () => {
 		const testAccount = await Account.Create(rawAccount, schema);
 
 		const [testEvent1, testEvent2] = await Promise.all([
-			Event.Create(newEvent, account, schema, mem),
-			Event.Create(newEvent, testAccount, schema, mem)
+			Event.Create(newEvent, account, schema, mem, conftest),
+			Event.Create(newEvent, testAccount, schema, mem, conftest)
 		]);
 
 		for await (const i of account.getEvents()) {

@@ -16,7 +16,7 @@ const conftest: typeof conf = {
 	},
 	fileStoragePath: '/uploads',
 	capwatchFileDownloadDirectory: '/capwatch-zips',
-	googleKeysPath: '/google-keys',
+	googleKeysPath: '/google-keys-bak',
 	path: __dirname,
 	port: 3001
 };

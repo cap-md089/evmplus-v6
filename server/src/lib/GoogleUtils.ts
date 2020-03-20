@@ -9,7 +9,7 @@ import {
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
-import { Configuration as config } from '../conf';
+import { Configuration } from '../conf';
 import { Account, presentMultCheckboxReturn } from './internals';
 
 // 99999999  these five arrays need to go to a common area between client and server
@@ -170,7 +170,11 @@ function buildDeadlineDescription(inEvent: RawEventObject, inStatement: string):
 	return description;
 }
 
-export async function createGoogleCalendarEvents(inEvent: RawEventObject, inAccount: Account) {
+export async function createGoogleCalendarEvents(
+	inEvent: RawEventObject,
+	inAccount: Account,
+	config = Configuration
+) {
 	const privatekey = require(config.googleKeysPath + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
@@ -203,7 +207,11 @@ export async function createGoogleCalendarEvents(inEvent: RawEventObject, inAcco
 	]);
 }
 
-export default async function updateGoogleCalendars(inEvent: RawEventObject, inAccount: Account) {
+export default async function updateGoogleCalendars(
+	inEvent: RawEventObject,
+	inAccount: Account,
+	config = Configuration
+) {
 	const privatekey = require(config.googleKeysPath + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
@@ -233,7 +241,8 @@ export default async function updateGoogleCalendars(inEvent: RawEventObject, inA
 
 export async function removeGoogleCalendarEvents(
 	inEvent: RawEventObject,
-	inAccount: RawAccountObject
+	inAccount: RawAccountObject,
+	config = Configuration
 ) {
 	const privatekey = require(config.googleKeysPath + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
@@ -253,7 +262,7 @@ export async function removeGoogleCalendarEvents(
 	]);
 }
 
-export async function deleteAllGoogleCalendarEvents(inAccount: Account) {
+export async function deleteAllGoogleCalendarEvents(inAccount: Account, config = Configuration) {
 	const privatekey = require(config.googleKeysPath + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
@@ -431,6 +440,14 @@ function buildEvent(inEvent: RawEventObject) {
 	if (inEvent.teamID !== 0) {
 		eventColor = 10;
 	}
+	const endDateTime = Math.max(inEvent.meetDateTime + 60 * 1000, inEvent.pickupDateTime);
+	if (endDateTime !== inEvent.pickupDateTime) {
+		console.log(
+			`Using different pickup date time (${new Date(endDateTime).toISOString()} vs ${new Date(
+				inEvent.pickupDateTime
+			).toISOString()})`
+		);
+	}
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
@@ -441,7 +458,7 @@ function buildEvent(inEvent: RawEventObject) {
 			timeZone: 'America/New_York'
 		},
 		end: {
-			dateTime: new Date(inEvent.pickupDateTime).toISOString(),
+			dateTime: new Date(endDateTime).toISOString(),
 			timeZone: 'America/New_York'
 		},
 		id: uniqueId
@@ -457,6 +474,8 @@ function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string
 	}
 	const startDate = new Date(inDate).toISOString();
 	const endDate = new Date(inDate + 60 * 1000).toISOString();
+	console.log(startDate);
+	console.log(endDate);
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
@@ -543,7 +562,9 @@ async function updateRegEvent(
 	let response = { status: 200 };
 	if (inEvent.registration !== null) {
 		const deadlineNumber = !!inEvent.registration ? inEvent.registration.deadline : 0;
-		const deadlineInfo: string = !!inEvent.registration ? inEvent.registration.information : '';
+		const deadlineInfo: string = !!inEvent.registration
+			? inEvent.registration.information || ''
+			: '';
 		const deadlineString =
 			'This is a registration deadline for event ' +
 			inEvent.accountID +
