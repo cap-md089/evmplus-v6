@@ -281,7 +281,7 @@ export default class DesktopCalendar extends Page<
 				endDay = endDate.weekday;
 			}
 
-			for (let k = startWeek; k <= endWeek; k++) {
+			for (let k = startWeek; k < endWeek; k++) {
 				if (k === startWeek && k === endWeek) {
 					const index = findIndex(calendar, startDay % 7, endDay % 7, k);
 
