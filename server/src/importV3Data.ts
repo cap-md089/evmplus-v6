@@ -448,6 +448,36 @@ const getOrCreate = async <T>(schema: Schema, name: string): Promise<Collection<
 		});
 	});
 
+	await Promise.all([
+		getOrCreate(targetSchema, 'Accounts'),
+		getOrCreate(targetSchema, 'Attendance'),
+		getOrCreate(targetSchema, 'Audits'),
+		getOrCreate(targetSchema, 'Errors'),
+		getOrCreate(targetSchema, 'Events'),
+		getOrCreate(targetSchema, 'ExtraMemberInformation'),
+		getOrCreate(targetSchema, 'Files'),
+		getOrCreate(targetSchema, 'MemberSessions'),
+		getOrCreate(targetSchema, 'NHQ_CadetActivities'),
+		getOrCreate(targetSchema, 'NHQ_CadetDutyPosition'),
+		getOrCreate(targetSchema, 'NHQ_DutyPosition'),
+		getOrCreate(targetSchema, 'NHQ_MbrContact'),
+		getOrCreate(targetSchema, 'NHQ_Member'),
+		getOrCreate(targetSchema, 'NHQ_OFlight'),
+		getOrCreate(targetSchema, 'NHQ_Organization'),
+		getOrCreate(targetSchema, 'Notifications'),
+		getOrCreate(targetSchema, 'PasswordResetTokens'),
+		getOrCreate(targetSchema, 'ProspectiveMembers'),
+		getOrCreate(targetSchema, 'Registry'),
+		getOrCreate(targetSchema, 'Sessions'),
+		getOrCreate(targetSchema, 'SigninTokens'),
+		getOrCreate(targetSchema, 'Tasks'),
+		getOrCreate(targetSchema, 'Teams'),
+		getOrCreate(targetSchema, 'Tokens'),
+		getOrCreate(targetSchema, 'UserAccountInfo'),
+		getOrCreate(targetSchema, 'UserAccountTokens'),
+		getOrCreate(targetSchema, 'UserPermissions')
+	]);
+
 	const accounts = await moveAccounts(mysqlConnection, targetSchema);
 	await movePermissions(mysqlConnection, targetSchema);
 	await moveRegistry(mysqlConnection, targetSchema);

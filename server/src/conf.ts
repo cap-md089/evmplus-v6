@@ -3,7 +3,7 @@ import { join } from 'path';
 export const Configuration = {
 	production: false,
 	testing: false,
-	clientStorage: join(__dirname, '..', 'client'),
+	clientStorage: join(__dirname, '..', '..', 'client'),
 	database: {
 		connection: {
 			database: 'EventManagement4',
