@@ -1,8 +1,8 @@
+import { EventObject } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
 	ConditionalMemberRequest,
-	Event,
 	streamAsyncGeneratorAsJSONArray
 } from '../../../lib/internals';
 
@@ -22,11 +22,9 @@ export default asyncErrorHandler(
 		const start = parseInt(req.params.start, 10);
 		const end = parseInt(req.params.end, 10);
 
-		await streamAsyncGeneratorAsJSONArray<Event>(res, req.account.getSortedEvents(), event => {
-			return (event.pickupDateTime > start && event.pickupDateTime < end) ||
-				(event.meetDateTime < end && event.meetDateTime > start)
-				? JSON.stringify(event.toRaw(req.member))
-				: false;
-		});
+		await streamAsyncGeneratorAsJSONArray<EventObject>(
+			res,
+			req.account.getEventsInRange(start, end)
+		);
 	}
 );

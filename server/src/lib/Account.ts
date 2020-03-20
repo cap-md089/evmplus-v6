@@ -476,6 +476,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 	}
 
+	public async *getEventsInRange(start: number, end: number): AsyncIterableIterator<EventObject> {
+		const eventCollection = this.schema.getCollection<EventObject>('Events');
+
+		const iterator = eventCollection
+			.find(
+				'accountID = :accountID AND (pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end AND meetDateTime > :start)'
+			)
+			.bind('accountID', this.id)
+			// @ts-ignore
+			.bind('start', start)
+			// @ts-ignore
+			.bind('end', end);
+
+		return generateResults(iterator);
+	}
+
 	public async *getSortedEvents(): AsyncIterableIterator<Event> {
 		const eventCollection = this.schema.getCollection<EventObject>('Events');
 
