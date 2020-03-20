@@ -57,7 +57,7 @@ describe('Event', () => {
 	});
 
 	it('should create an event successfully', async done => {
-		event = await Event.Create(newEvent, account, schema, mem);
+		event = await Event.Create(newEvent, account, schema, mem.getReference());
 
 		expect(event.accountID).toEqual(account.id);
 		expect(event.name).toEqual(newEvent.name);
@@ -103,7 +103,8 @@ describe('Event', () => {
 				comments: '',
 				departureTime: null,
 				planToUseCAPTransportation: false,
-				status: 0
+				status: 0,
+				customAttendanceFieldValues: []
 			},
 			mem
 		);
@@ -119,7 +120,8 @@ describe('Event', () => {
 				comments: 'new record',
 				departureTime: null,
 				planToUseCAPTransportation: true,
-				status: 0
+				status: 0,
+				customAttendanceFieldValues: []
 			},
 			mem
 		);
@@ -367,7 +369,8 @@ describe('Event', () => {
 					arrivalTime: null,
 					departureTime: null,
 					planToUseCAPTransportation: false,
-					memberID: rioux.getReference()
+					memberID: rioux.getReference(),
+					customAttendanceFieldValues: []
 				},
 				rioux
 			);

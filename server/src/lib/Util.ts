@@ -10,8 +10,10 @@ import {
 	just,
 	left,
 	OtherMultCheckboxReturn,
+	presentMultCheckboxReturn as _presentMultCheckboxReturn,
 	RawAccountObject,
-	right
+	right,
+	SimpleMultCheckboxReturn
 } from 'common-lib';
 import * as express from 'express';
 import { Configuration } from '../conf';
@@ -560,13 +562,11 @@ export const getTargetYear = (timestamp: number): number => {
 	return date.getFullYear();
 };
 
-export const presentMultCheckboxReturn = (value: OtherMultCheckboxReturn, separator = ', ') => {
-	const arrayValue = value.labels.filter((label, i) => value.values[i]);
-	if (value.otherSelected) {
-		arrayValue.push(value.otherValue);
-	}
-
-	return arrayValue.join(separator);
+export const presentMultCheckboxReturn = (
+	value: OtherMultCheckboxReturn | SimpleMultCheckboxReturn,
+	separator = ', '
+) => {
+	return _presentMultCheckboxReturn(value, separator).orSome('');
 };
 
 export function formatPhone(phone: string) {

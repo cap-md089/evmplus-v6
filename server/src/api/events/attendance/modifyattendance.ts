@@ -47,7 +47,8 @@ export default asyncEitherHandler<api.events.attendance.ModifyAttendance>(
 				comments: req.body.comments,
 				departureTime: req.body.departureTime,
 				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				status: req.body.status
+				status: req.body.status,
+				customAttendanceFieldValues: req.body.customAttendanceFieldValues
 			},
 			member
 		);

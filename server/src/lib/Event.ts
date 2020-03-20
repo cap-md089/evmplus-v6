@@ -29,7 +29,8 @@ import {
 	PointOfContactType,
 	RadioReturnWithOther,
 	RawEventObject,
-	right
+	right,
+	SimpleMultCheckboxReturn
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import {
@@ -144,7 +145,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		data: NewEventObject,
 		account: Account,
 		schema: Schema,
-		member: MemberBase
+		member: MemberReference
 	) {
 		const eventsCollection = schema.getCollection<RawEventObject>('Events');
 
@@ -171,7 +172,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			accountID: account.id,
 			timeCreated,
 			timeModified: timeCreated,
-			author: member.getReference(),
+			author: member,
 			debrief: [],
 			sourceEvent: null,
 			googleCalendarIds: {
@@ -217,7 +218,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 		member: MemberBase
 	) =>
 		asyncRight(
-			Event.Create(data, account, schema, member),
+			Event.Create(data, account, schema, member.getReference()),
 			serverErrorGenerator('Could not create event')
 		);
 
@@ -247,7 +248,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				planToUseCAPTransportation: record.planToUseCAPTransportation,
 				status: record.status,
 				summaryEmailSent: record.summaryEmailSent,
-				timestamp: record.timestamp
+				timestamp: record.timestamp,
+				customAttendanceFieldValues: record.customAttendanceFieldValues
 			});
 		}
 
@@ -333,7 +335,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 
 	public transportationDescription: string;
 
-	public uniform: OtherMultCheckboxReturn;
+	public uniform: SimpleMultCheckboxReturn;
 
 	public desiredNumberOfParticipants: number;
 
@@ -609,7 +611,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 			pickupDateTime: this.pickupDateTime + timeDelta
 		};
 
-		return Event.Create(newEvent, this.account, this.schema, member);
+		return Event.Create(newEvent, this.account, this.schema, member.getReference());
 	}
 
 	/**
@@ -619,7 +621,12 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 * @param member The member linking the event
 	 */
 	public async linkTo(targetAccount: Account, member: MemberBase): Promise<Event> {
-		const linkedEvent = await Event.Create(this.toRaw(), targetAccount, this.schema, member);
+		const linkedEvent = await Event.Create(
+			this.toRaw(),
+			targetAccount,
+			this.schema,
+			member.getReference()
+		);
 
 		linkedEvent.sourceEvent = {
 			accountID: this.account.id,
@@ -886,6 +893,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp,
+				customAttendanceFieldValues: newAttendanceRecord.customAttendanceFieldValues,
 
 				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
@@ -904,6 +912,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 				status: newAttendanceRecord.status,
 				summaryEmailSent: false,
 				timestamp,
+				customAttendanceFieldValues: newAttendanceRecord.customAttendanceFieldValues,
 
 				// If these are null, they are staying for the whole event
 				arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
@@ -965,6 +974,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						timestamp,
 						arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,
 						departureTime: newAttendanceRecord.departureTime || this.endDateTime,
+						customAttendanceFieldValues:
+							newAttendanceRecord.customAttendanceFieldValues,
 
 						accountID: this.account.id,
 						eventID: this.id,
@@ -979,6 +990,8 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						status: newAttendanceRecord.status,
 						summaryEmailSent: false,
 						timestamp,
+						customAttendanceFieldValues:
+							newAttendanceRecord.customAttendanceFieldValues,
 
 						// If these are undefined, they are staying for the whole event
 						arrivalTime: newAttendanceRecord.arrivalTime || this.startDateTime,

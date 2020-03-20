@@ -30,7 +30,7 @@ const promisedRandomBytes = promisify(randomBytes);
 const PASSWORD_RESET_TOKEN_COLLECTION = 'PasswordResetTokens';
 
 export const DEFAULT_PASSWORD_ITERATION_COUNT = 32768;
-export const DEFAULT_PASSWORD_STORED_LENGTH = 64;
+export const DEFAULT_PASSWORD_STORED_LENGTH = 128;
 export const DEFAULT_SALT_SIZE = 128;
 export const PASSWORD_HISTORY_LENGTH = 5;
 export const PASSWORD_MAX_AGE = 180 * 24 * 60 * 60 * 1000;

@@ -71,7 +71,8 @@ export default asyncEitherHandler<api.events.attendance.AddBulk>(
 					comments: i.comments,
 					departureTime: i.departureTime,
 					planToUseCAPTransportation: i.planToUseCAPTransportation,
-					status: i.status
+					status: i.status,
+					customAttendanceFieldValues: i.customAttendanceFieldValues
 				},
 				member
 			);
