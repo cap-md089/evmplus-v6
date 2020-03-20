@@ -54,7 +54,8 @@ export default class AttendanceForm extends React.Component<
 					comments: props.record.comments,
 					departureTime: props.record.departureTime,
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
-					status: props.record.status
+					status: props.record.status,
+					customAttendanceFieldValues: []
 				},
 				usePartTime: false
 			};
@@ -65,7 +66,8 @@ export default class AttendanceForm extends React.Component<
 					comments: '',
 					departureTime: null,
 					planToUseCAPTransportation: false,
-					status: 0
+					status: 0,
+					customAttendanceFieldValues: []
 				},
 				usePartTime: false
 			};
@@ -228,7 +230,8 @@ export default class AttendanceForm extends React.Component<
 					? attendanceSignup.status
 					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 					? AttendanceStatus.COMMITTEDATTENDED
-					: AttendanceStatus.NOTPLANNINGTOATTEND
+					: AttendanceStatus.NOTPLANNINGTOATTEND,
+				customAttendanceFieldValues: []
 			},
 			usePartTime: attendanceSignup.usePartTime
 		});
@@ -265,7 +268,8 @@ export default class AttendanceForm extends React.Component<
 				? attendanceSignup.status
 				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 				? AttendanceStatus.COMMITTEDATTENDED
-				: AttendanceStatus.NOTPLANNINGTOATTEND
+				: AttendanceStatus.NOTPLANNINGTOATTEND,
+			customAttendanceFieldValues: []
 		};
 
 		if (this.props.record) {

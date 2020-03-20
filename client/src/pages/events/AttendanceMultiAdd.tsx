@@ -444,7 +444,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				comments: `Multi add by ${this.props.member!.getFullName()} on ${DateTime.local().toLocaleString()}`,
 				memberID: member.getReference(),
 				planToUseCAPTransportation: false,
-				status: AttendanceStatus.COMMITTEDATTENDED
+				status: AttendanceStatus.COMMITTEDATTENDED,
+				customAttendanceFieldValues: []
 			})),
 			members
 		);

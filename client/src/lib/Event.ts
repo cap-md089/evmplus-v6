@@ -19,7 +19,8 @@ import {
 	Member,
 	maybe,
 	OtherMultCheckboxReturn,
-	RadioReturnWithOther
+	RadioReturnWithOther,
+	SimpleMultCheckboxReturn
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -153,7 +154,7 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 
 	public transportationDescription: string;
 
-	public uniform: OtherMultCheckboxReturn;
+	public uniform: SimpleMultCheckboxReturn;
 
 	public desiredNumberOfParticipants: number;
 

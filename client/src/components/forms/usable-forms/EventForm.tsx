@@ -2,6 +2,7 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	DisplayInternalPointOfContact,
+	emptySimpleFromLabels,
 	ExternalPointOfContact,
 	NewEventObject,
 	just,
@@ -13,7 +14,8 @@ import {
 	RadioReturnWithOther,
 	EchelonEventNumber,
 	emptyFromLabels,
-	Maybe
+	Maybe,
+	SimpleMultCheckboxReturn
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -39,6 +41,7 @@ import SimpleForm, {
 	Title,
 	RadioButtonWithOther
 } from '../SimpleForm';
+import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -128,7 +131,7 @@ export interface NewEventFormValues {
 	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
 	customAttendanceFields: CustomAttendanceField[];
 	signUpPartTime: boolean;
-	uniform: OtherMultCheckboxReturn;
+	uniform: SimpleMultCheckboxReturn;
 	mealsDescription: OtherMultCheckboxReturn;
 	lodgingArrangments: OtherMultCheckboxReturn;
 	activity: OtherMultCheckboxReturn;
@@ -224,7 +227,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: emptyFromLabels(Uniforms),
+	uniform: emptySimpleFromLabels(Uniforms),
 	desiredNumberOfParticipants: 8,
 	useRegistration: false,
 	registration: {
@@ -502,7 +505,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				<Title>Logistics Information</Title>
 
 				<Label>Uniform</Label>
-				<OtherMultCheckbox name="uniform" labels={Uniforms} />
+				<SimpleMultCheckbox name="uniform" labels={Uniforms} />
 
 				<Label>Required forms</Label>
 				<OtherMultCheckbox name="requiredForms" labels={RequiredForms} />
