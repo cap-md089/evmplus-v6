@@ -478,14 +478,30 @@ const getOrCreate = async <T>(schema: Schema, name: string): Promise<Collection<
 		getOrCreate(targetSchema, 'UserPermissions')
 	]);
 
-	const accounts = await moveAccounts(mysqlConnection, targetSchema);
-	await movePermissions(mysqlConnection, targetSchema);
-	await moveRegistry(mysqlConnection, targetSchema);
-	await moveUsers(mysqlConnection, targetSchema);
-	await moveExtraMemberInfo(mysqlConnection, targetSchema);
-	await moveTeams(mysqlConnection, targetSchema, accounts);
-	await moveFiles(mysqlConnection, targetSchema);
-	await moveEvents(mysqlConnection, targetSchema, accounts);
+	console.log('Moving accounts...');
+    const accounts = await moveAccounts(mysqlConnection, targetSchema);
+	console.log('Moved accounts.');
+	/*console.log('Moving permissions...');
+    await movePermissions(mysqlConnection, targetSchema);
+	console.log('Moved permissions.');
+	console.log('Moving registries...');
+    await moveRegistry(mysqlConnection, targetSchema);
+	console.log('Moved registries.');
+	console.log('Moving users...');
+    await moveUsers(mysqlConnection, targetSchema);
+	console.log('Moved users.');
+	console.log('Moving extra member info...');
+    await moveExtraMemberInfo(mysqlConnection, targetSchema);
+	console.log('Moved extra member info.');
+	console.log('Moving teams...');
+    await moveTeams(mysqlConnection, targetSchema, accounts);
+	console.log('Moved teams.');
+	console.log('Moving files...');
+    await moveFiles(mysqlConnection, targetSchema);
+	console.log('Moved files.');*/
+	console.log('Moving events...');
+    await moveEvents(mysqlConnection, targetSchema, accounts);
+	console.log('Moved events.');
 
 	return 0;
 })()
@@ -591,9 +607,9 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 
 	await Promise.all([clearCollection(eventCollection), clearCollection(attendanceCollection)]);
 
-	for (const account of accounts) {
+	/*for (const account of accounts) {
 		await deleteAllGoogleCalendarEvents(account);
-	}
+	}*/
 
 	const [oldEvents, oldAttendance, oldSpecialAttendance, fileAssignments] = (await Promise.all([
 		new Promise((res, rej) => {
