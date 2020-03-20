@@ -995,7 +995,7 @@ export interface NewEventObject {
 	/**
 	 * The uniforms that can be worn
 	 */
-	uniform: OtherMultCheckboxReturn;
+	uniform: SimpleMultCheckboxReturn;
 	/**
 	 * How many people we want at the event
 	 */
@@ -1174,6 +1174,10 @@ export interface NewAttendanceRecord {
 	 * Only succeeds if they have the permission to do so
 	 */
 	memberID?: MemberReference;
+	/**
+	 * An application of the custom attendance fields
+	 */
+	customAttendanceFieldValues: CustomAttendanceFieldValue[];
 }
 
 /**
@@ -1313,6 +1317,49 @@ export type CustomAttendanceField =
 	| CustomAttendanceFieldFile
 	| CustomAttendanceFieldNumber
 	| CustomAttendanceFieldText;
+
+export interface CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType;
+
+	title: string;
+}
+
+export interface CustomAttendanceFieldCheckboxValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.CHECKBOX;
+
+	value: boolean;
+}
+
+export interface CustomAttendanceFieldDateValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.DATE;
+
+	value: number;
+}
+
+export interface CustomAttendanceFieldFileValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.FILE;
+
+	value: string[];
+}
+
+export interface CustomAttendanceFieldNumberValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.NUMBER;
+
+	value: number;
+}
+
+export interface CustomAttendanceFieldTextValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.TEXT;
+
+	value: string;
+}
+
+export type CustomAttendanceFieldValue =
+	| CustomAttendanceFieldCheckboxValue
+	| CustomAttendanceFieldDateValue
+	| CustomAttendanceFieldFileValue
+	| CustomAttendanceFieldNumberValue
+	| CustomAttendanceFieldTextValue;
 
 /**
  * A basic point of contact

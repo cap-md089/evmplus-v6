@@ -26,7 +26,8 @@ export const emptySimpleFromLabels = (labels: string[]): SimpleMultCheckboxRetur
 });
 
 export const presentMultCheckboxReturn = (
-	input: SimpleMultCheckboxReturn | OtherMultCheckboxReturn
+	input: SimpleMultCheckboxReturn | OtherMultCheckboxReturn,
+	seperator = ', '
 ): Maybe<string> => {
 	const values = input.labels.filter((_, i) => input.values[i]);
 
@@ -34,7 +35,7 @@ export const presentMultCheckboxReturn = (
 		values.push(input.otherValue);
 	}
 
-	const returnString = values.join(', ');
+	const returnString = values.join(seperator);
 
 	return !!returnString ? just(returnString) : none();
 };
