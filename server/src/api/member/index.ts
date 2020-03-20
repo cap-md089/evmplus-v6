@@ -5,10 +5,12 @@ import {
 	FlightAssignBulkValidator,
 	FlightAssignValidator,
 	leftyMemberMiddleware,
-	leftyMemberMiddlewareWithPassswordOnly,
 	leftyPermissionMiddleware,
 	memberMiddleware,
-	Validator
+	memberMiddlewareGenerator,
+	Validator,
+	asyncErrorHandler,
+	SessionType
 } from '../../lib/internals';
 import { leftyTokenMiddleware } from '../formtoken';
 // API routes
@@ -100,7 +102,12 @@ router.get(
 
 router.post(
 	'/passwordreset',
-	leftyMemberMiddlewareWithPassswordOnly,
+	memberMiddlewareGenerator(
+		asyncErrorHandler,
+		// tslint:disable-next-line:no-bitwise
+		SessionType.PASSWORD_RESET | SessionType.REGULAR,
+		true
+	),
 	leftyTokenMiddleware,
 	passwordreset
 );

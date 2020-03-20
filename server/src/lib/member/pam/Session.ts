@@ -466,7 +466,7 @@ export const leftyConditionalMemberMiddlewareWithPasswordOnly = conditionalMembe
 	SessionType.PASSWORD_RESET
 );
 
-const memberMiddlewareGenerator = (
+export const memberMiddlewareGenerator = (
 	errorHandler: typeof asyncErrorHandler,
 	sessionType: SessionType,
 	beLefty: boolean
