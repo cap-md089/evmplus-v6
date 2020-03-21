@@ -18,7 +18,8 @@ import {
 	RegistryValues,
 	ShortDutyPosition,
 	SigninReturn,
-	TaskObject
+	TaskObject,
+	EmailSentType
 } from './types';
 
 // tslint:disable:no-namespace
@@ -129,7 +130,7 @@ export namespace api {
 			export namespace cap {
 				export type Finish = EitherObj<HTTPError, { sessionID: string }>;
 
-				export type Request = EitherObj<HTTPError, void>;
+				export type Request = EitherObj<HTTPError, EmailSentType>;
 
 				export type UsernameRequest = EitherObj<HTTPError, void>;
 

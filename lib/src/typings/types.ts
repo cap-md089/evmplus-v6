@@ -374,6 +374,11 @@ export enum PasswordSetResult {
 	SERVER_ERROR
 }
 
+export enum EmailSentType {
+	TOPARENT,
+	TOCADET
+}
+
 // tslint:disable-next-line: no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
