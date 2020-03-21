@@ -39,7 +39,7 @@ export default class ErrorHandler extends React.PureComponent<
 				filename: stack.getFileName(),
 				line: stack.getLineNumber(),
 				column: stack.getColumnNumber(),
-				name: stack.getFunctionName()
+				name: stack.getFunctionName() || '<unknown>'
 			})),
 			timestamp: Date.now(),
 			type: 'Client'

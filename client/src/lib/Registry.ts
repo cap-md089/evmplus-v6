@@ -28,7 +28,7 @@ export default class Registry extends APIInterface<RegistryValues> implements Re
 			throw new Error('Could not get registry');
 		}
 
-		const registry = await result.json() as api.registry.Get;
+		const registry = (await result.json()) as api.registry.Get;
 
 		return either(registry).cata(
 			e => Promise.reject(e.message),
