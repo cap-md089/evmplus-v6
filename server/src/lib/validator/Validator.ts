@@ -559,7 +559,7 @@ export default class Validator<T> {
 		};
 	}
 
-	public static StrictValue = (value: any): ValidatorFunction<typeof value> => input =>
+	public static StrictValue = <T>(value: T): ValidatorFunction<T> => input =>
 		input === value
 			? {
 					valid: true

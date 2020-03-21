@@ -6,7 +6,7 @@ import * as logger from 'morgan';
 import accountcheck from './api/accountcheck';
 import check from './api/check';
 import echo from './api/echo';
-import clienterror from './api/errors/clienterror';
+import clienterror, { ClientErrorValidator } from './api/errors/clienterror';
 import geterrors from './api/errors/geterrors';
 import markerrordone from './api/errors/markerrordone';
 import servererror from './api/errors/servererror';
@@ -25,7 +25,8 @@ import {
 	Account,
 	leftyConditionalMemberMiddleware,
 	MySQLMiddleware,
-	MySQLRequest
+	MySQLRequest,
+	Validator
 } from './lib/internals';
 
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
@@ -116,6 +117,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 		'/clienterror',
 		Account.LeftyExpressMiddleware,
 		leftyConditionalMemberMiddleware,
+		Validator.LeftyBodyExpressMiddleware(ClientErrorValidator),
 		clienterror
 	);
 

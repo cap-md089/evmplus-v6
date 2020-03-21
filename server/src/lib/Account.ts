@@ -481,15 +481,22 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 		const iterator = eventCollection
 			.find(
-				'accountID = :accountID AND (pickupDateTime > :start AND pickupDateTime < :end) OR (meetDateTime < :end AND meetDateTime > :start)'
+				'accountID = :accountID AND (pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime)'
 			)
 			.bind('accountID', this.id)
-			// @ts-ignore
-			.bind('start', start)
-			// @ts-ignore
-			.bind('end', end);
+			.bind('pickupDateTime', start)
+			.bind('meetDateTime', end);
 
-		return generateResults(iterator);
+		console.log(
+			'accountID = :accountID AND (pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime)'
+				.replace(/\:accountID/g, `"${this.id}"`)
+				.replace(/\:pickupDateTime/g, start + '')
+				.replace(/\:meetDateTime/g, end + '')
+		);
+
+		for await (const i of generateResults(iterator)) {
+			yield i;
+		}
 	}
 
 	public async *getSortedEvents(): AsyncIterableIterator<Event> {

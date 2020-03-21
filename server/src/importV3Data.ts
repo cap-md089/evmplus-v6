@@ -31,14 +31,7 @@ import { writeFileSync } from 'fs';
 import * as mysql from 'mysql';
 import { join } from 'path';
 import conf from './conf';
-import {
-	Account,
-	deleteAllGoogleCalendarEvents,
-	Event,
-	MemberBase,
-	RawAttendanceDBRecord,
-	Team
-} from './lib/internals';
+import { Account, Event, MemberBase, RawAttendanceDBRecord, Team } from './lib/internals';
 import * as Permissions from './lib/Permissions';
 
 // tslint:disable-next-line: no-namespace
@@ -418,6 +411,11 @@ const getOrCreate = async <T>(schema: Schema, name: string): Promise<Collection<
 
 // FileMemberAssignments -> N/A
 
+enum RunFlag {
+	RUN,
+	NORUN
+}
+
 (async () => {
 	const { user, password, host, port } = conf.database.connection;
 
@@ -478,30 +476,14 @@ const getOrCreate = async <T>(schema: Schema, name: string): Promise<Collection<
 		getOrCreate(targetSchema, 'UserPermissions')
 	]);
 
-	console.log('Moving accounts...');
-    const accounts = await moveAccounts(mysqlConnection, targetSchema);
-	console.log('Moved accounts.');
-	/*console.log('Moving permissions...');
-    await movePermissions(mysqlConnection, targetSchema);
-	console.log('Moved permissions.');
-	console.log('Moving registries...');
-    await moveRegistry(mysqlConnection, targetSchema);
-	console.log('Moved registries.');
-	console.log('Moving users...');
-    await moveUsers(mysqlConnection, targetSchema);
-	console.log('Moved users.');
-	console.log('Moving extra member info...');
-    await moveExtraMemberInfo(mysqlConnection, targetSchema);
-	console.log('Moved extra member info.');
-	console.log('Moving teams...');
-    await moveTeams(mysqlConnection, targetSchema, accounts);
-	console.log('Moved teams.');
-	console.log('Moving files...');
-    await moveFiles(mysqlConnection, targetSchema);
-	console.log('Moved files.');*/
-	console.log('Moving events...');
-    await moveEvents(mysqlConnection, targetSchema, accounts);
-	console.log('Moved events.');
+	const accounts = await moveAccounts(mysqlConnection, targetSchema);
+	await movePermissions(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveRegistry(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveUsers(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveExtraMemberInfo(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveTeams(mysqlConnection, targetSchema, accounts, RunFlag.NORUN);
+	await moveFiles(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveEvents(mysqlConnection, targetSchema, accounts, RunFlag.RUN);
 
 	return 0;
 })()
@@ -516,6 +498,8 @@ async function clearCollection(collection: Collection) {
 }
 
 async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account[]> {
+	console.log('Moving accounts...');
+
 	const accountCollection = await getOrCreate<RawAccountObject>(to, 'Accounts');
 
 	await clearCollection(accountCollection);
@@ -598,10 +582,18 @@ async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account
 		}
 	}
 
+	console.log('Moved accounts.');
+
 	return newAccounts;
 }
 
-async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[]) {
+async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[], run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving events...');
+
 	const eventCollection = await getOrCreate<RawEventObject>(to, 'Events');
 	const attendanceCollection = await getOrCreate<RawAttendanceDBRecord>(to, 'Attendance');
 
@@ -1028,9 +1020,17 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 			} as MemberBase
 		);
 	}
+
+	console.log('Moved events.');
 }
 
-async function moveFiles(from: mysql.Connection, to: Schema) {
+async function moveFiles(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving files...');
+
 	const fileCollection = await getOrCreate<RawFileObject>(to, 'Files');
 
 	await clearCollection(fileCollection);
@@ -1080,9 +1080,17 @@ async function moveFiles(from: mysql.Connection, to: Schema) {
 		await fileCollection.add(object).execute();
 		console.log(`Added file ${object.id} for account ${object.accountID}`);
 	}
+
+	console.log('Moved files.');
 }
 
-async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[]) {
+async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[], run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving teams...');
+
 	const teamsCollection = await getOrCreate<RawTeamObject>(to, 'Teams');
 
 	await clearCollection(teamsCollection);
@@ -1150,9 +1158,17 @@ async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[]
 			console.log(`Could not find account ${team.accountID}`);
 		}
 	}
+
+	console.log('Moved teams.');
 }
 
-async function moveExtraMemberInfo(from: mysql.Connection, to: Schema) {
+async function moveExtraMemberInfo(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving extra member information...');
+
 	const extraInfoCollection = await getOrCreate<ExtraMemberInformation>(
 		to,
 		'ExtraMemberInformation'
@@ -1199,9 +1215,17 @@ async function moveExtraMemberInfo(from: mysql.Connection, to: Schema) {
 		console.log(`Added extra info for ${(datum.member as NHQMemberReference).id}`);
 		await extraInfoCollection.add(datum).execute();
 	}
+
+	console.log('Moved extra member information.');
 }
 
-async function moveUsers(from: mysql.Connection, to: Schema) {
+async function moveUsers(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving users...');
+
 	const userAccountCollection = await getOrCreate<UserAccountInformation>(to, 'UserAccountInfo');
 
 	await clearCollection(userAccountCollection);
@@ -1260,9 +1284,17 @@ async function moveUsers(from: mysql.Connection, to: Schema) {
 		);
 		await userAccountCollection.add(account).execute();
 	}
+
+	console.log('Moved users.');
 }
 
-async function movePermissions(from: mysql.Connection, to: Schema) {
+async function movePermissions(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving permissions...');
+
 	const permissionsCollection = await getOrCreate<StoredMemberPermissions>(to, 'UserPermissions');
 
 	await clearCollection(permissionsCollection);
@@ -1301,9 +1333,17 @@ async function movePermissions(from: mysql.Connection, to: Schema) {
 			})
 			.execute();
 	}
+
+	console.log('Moved permissions.');
 }
 
-async function moveRegistry(from: mysql.Connection, to: Schema) {
+async function moveRegistry(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	console.log('Moving registries...');
+
 	const registryCollection = await getOrCreate<RegistryValues>(to, 'Registry');
 
 	await clearCollection(registryCollection);
@@ -1433,4 +1473,6 @@ async function moveRegistry(from: mysql.Connection, to: Schema) {
 	for (const registry of registries) {
 		await registryCollection.add(registry).execute();
 	}
+
+	console.log('Moved registries.');
 }

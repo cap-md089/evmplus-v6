@@ -1,9 +1,10 @@
 import * as aws from 'aws-sdk';
-import { api, just, left, none, right } from 'common-lib';
+import { api, EmailSentType, just, left, none, right } from 'common-lib';
 import {
 	addUserAccountCreationToken,
 	asyncEitherHandler,
 	BasicSimpleValidatedRequest,
+	CAPNHQMember,
 	resolveReference,
 	Validator,
 	verifyCaptcha
@@ -37,14 +38,14 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 			});
 		}
 
-		let member;
+		let member: CAPNHQMember;
 		try {
-			member = await resolveReference(
+			member = (await resolveReference(
 				{ id: req.body.capid, type: 'CAPNHQMember' },
 				req.account,
 				req.mysqlx,
 				true
-			);
+			)) as CAPNHQMember;
 		} catch (e) {
 			// need to log failed attempt with req.body.capid and req.body.email here
 			return left({
@@ -54,7 +55,8 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 			});
 		}
 
-		const email = req.body.email.toLowerCase();
+		let email = req.body.email.toLowerCase();
+		let emailSentType = EmailSentType.TOCADET;
 
 		if (
 			!(
@@ -78,6 +80,29 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 				error: none<Error>(),
 				message: 'Email provided does not match email in database'
 			});
+		}
+
+		if (+member.getDateOfBirth() > +new Date() - 13 * 365 * 24 * 3600 * 1000) {
+			// They are under 13 years of age...
+			// To satisfy COPPA, we need parental consent
+			// As such, we email the parents instead of the cadets
+			// If they create the account, they are consenting
+			emailSentType = EmailSentType.TOPARENT;
+
+			const newEmail =
+				member.contact.CADETPARENTEMAIL.PRIMARY ||
+				member.contact.CADETPARENTEMAIL.SECONDARY ||
+				member.contact.CADETPARENTEMAIL.EMERGENCY;
+
+			if (!newEmail) {
+				return left({
+					code: 400,
+					error: none<Error>(),
+					message: 'There is no associated cadet parent email for you'
+				});
+			}
+
+			email = newEmail;
 		}
 
 		let token;
@@ -163,6 +188,6 @@ export default asyncEitherHandler<api.member.account.cap.Request>(
 		// need to log successful attempt with req.body.capid and req.body.email here
 		console.log(token);
 
-		return right(void 0);
+		return right(emailSentType);
 	}
 );

@@ -1,47 +1,60 @@
 import {
 	api,
 	ClientErrorObject,
-	ErrorObject,
 	ErrorResolvedStatus,
 	Errors,
-	left,
+	ErrorStack,
 	NewClientErrorObject,
-	none,
 	right
 } from 'common-lib';
 import {
 	asyncEitherHandler,
 	BasicConditionalMemberRequest,
-	generateResults
+	generateResults,
+	Validator
 } from '../../lib/internals';
+
+export const ClientErrorValidator = new Validator<NewClientErrorObject>({
+	componentStack: {
+		validator: Validator.String
+	},
+	message: {
+		validator: Validator.String
+	},
+	pageURL: {
+		validator: Validator.String
+	},
+	resolved: {
+		validator: Validator.Enum<ErrorResolvedStatus>(ErrorResolvedStatus)
+	},
+	stack: {
+		validator: Validator.ArrayOf(
+			new Validator<ErrorStack>({
+				column: {
+					validator: Validator.Number
+				},
+				filename: {
+					validator: Validator.String
+				},
+				line: {
+					validator: Validator.Number
+				},
+				name: {
+					validator: Validator.String
+				}
+			})
+		)
+	},
+	timestamp: {
+		validator: Validator.Number
+	},
+	type: {
+		validator: Validator.StrictValue<'Client'>('Client')
+	}
+});
 
 export default asyncEitherHandler<api.errors.ClientError>(
 	async (req: BasicConditionalMemberRequest) => {
-		if (
-			typeof req.body.timestamp !== 'number' ||
-			typeof req.body.message !== 'string' ||
-			typeof req.body.resolved !== 'boolean' ||
-			req.body.type !== 'Client' ||
-			!Array.isArray(req.body.stack) ||
-			(req.body as ErrorObject).stack
-				.map(
-					stack =>
-						typeof stack.name !== 'string' ||
-						typeof stack.filename !== 'string' ||
-						typeof stack.line !== 'number' ||
-						typeof stack.column !== 'number'
-				)
-				.reduce((a, b) => a || b, false) ||
-			typeof req.body.pageURL !== 'string' ||
-			typeof req.body.componentStack !== 'string'
-		) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Error object provided is invalid'
-			});
-		}
-
 		const info = req.body as NewClientErrorObject;
 
 		console.error('Client error!', info.message);

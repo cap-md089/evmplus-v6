@@ -5,7 +5,8 @@ import {
 	FileTeamControlList,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
-	FileUserControlList
+	FileUserControlList,
+	FileSignedInControlList
 } from 'common-lib';
 import Validator from '../Validator';
 
@@ -54,7 +55,7 @@ class FileAccountControlListValidator extends Validator<FileAccountControlList> 
 	}
 }
 
-class FileSignedInControlListValidator extends Validator<FileOtherControlList> {
+class FileSignedInControlListValidator extends Validator<FileSignedInControlList> {
 	constructor() {
 		super({
 			type: {

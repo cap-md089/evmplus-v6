@@ -26,6 +26,7 @@ import {
 	MemberBase,
 	SessionedUser
 } from '../../internals';
+import { convertNHQDate } from '../../MySQLUtil';
 
 export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
 	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPNHQMember> {
@@ -72,7 +73,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			},
 			schema,
 			account,
-			extraInformation
+			extraInformation,
+			results[0]
 		);
 
 		member.updateDutyPositions();
@@ -195,7 +197,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		data: NHQMemberObject,
 		schema: Schema,
 		account: Account,
-		extraInfo: ExtraMemberInformation
+		extraInfo: ExtraMemberInformation,
+		private rawData: NHQ.CAPMember
 	) {
 		super(data, schema, account, extraInfo);
 
@@ -355,6 +358,10 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		});
 
 		return fileName;
+	}
+
+	public getDateOfBirth() {
+		return convertNHQDate(this.rawData.DOB);
 	}
 
 	private updateDutyPositions() {
