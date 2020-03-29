@@ -2286,7 +2286,7 @@ export interface FileObject extends RawFileObject {
  * to the client
  */
 export interface FullFileObject extends FileObject {
-	uploader: MemberObject;
+	uploader: MaybeObj<MemberObject>;
 }
 
 export type Timezone =

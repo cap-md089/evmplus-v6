@@ -9,3 +9,7 @@ export * from './lib/Member';
 export * from './lib/formatDate';
 export * from './lib/errorHandling';
 export * from './lib/forms';
+export * from './lib/events';
+export * from './lib/Account';
+
+export const identity = <T>(a: T): T => a;

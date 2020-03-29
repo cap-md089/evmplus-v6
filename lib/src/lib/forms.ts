@@ -42,3 +42,11 @@ export const presentMultCheckboxReturn = (
 
 export const presentRadioReturn = <E extends number>(input: RadioReturnWithOther<E>): string =>
 	input.otherValueSelected ? input.otherValue : input.labels[input.selection];
+
+export const defaultRadioFromLabels = <E extends number>(
+	labels: string[]
+): RadioReturnWithOther<E> => ({
+	otherValueSelected: false,
+	labels,
+	selection: 0 as E
+});

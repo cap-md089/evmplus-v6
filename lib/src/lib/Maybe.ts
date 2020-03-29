@@ -37,6 +37,9 @@ export class Just<T> implements JustObj<T> {
 
 	public filter = (f: (v: T) => boolean): Maybe<T> => (f(this.value) ? this : none());
 
+	public filterType = <U extends T = T>(f: (v: T) => v is U): Maybe<U> =>
+		f(this.value) ? ((this as unknown) as Just<U>) : none();
+
 	public cata = <U>(nf: () => U, f: (v: T) => U): U => f(this.value);
 
 	public chain = <U>(f: (v: T) => U): U | null => this.map(f).join();
@@ -73,7 +76,10 @@ export class None<T> implements NoneObj<T> {
 
 	public join = (): null => null;
 
-	public filter = (f: (v: T) => boolean): Maybe<T> => none();
+	public filter = (f: (v: T) => boolean): Maybe<T> => this;
+
+	public filterType = <U extends T = T>(f: (v: T) => v is U): Maybe<U> =>
+		(this as unknown) as None<U>;
 
 	public cata = <U>(nf: () => U, f: (v: T) => U): U => nf();
 
@@ -103,7 +109,7 @@ export const just = <T>(value: T | Maybe<T>): Maybe<T> =>
 
 export const none = <T>(): Maybe<T> => new None();
 
-export const fromValue = <T>(value?: T | undefined | null): Maybe<T> =>
+export const fromValue = <T>(value?: T | Maybe<T> | undefined | null): Maybe<T> =>
 	value === undefined || value === null ? none() : just(value);
 
 export const maybe = <T>(obj: MaybeObj<T>): Maybe<T> => (obj.hasValue ? just(obj.value) : none());
