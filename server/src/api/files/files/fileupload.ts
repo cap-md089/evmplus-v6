@@ -3,7 +3,8 @@ import {
 	FileUserAccessControlType,
 	FullFileObject,
 	MemberReference,
-	RawFileObject
+	RawFileObject,
+	just
 } from 'common-lib';
 import * as express from 'express';
 import * as fs from 'fs';
@@ -163,7 +164,7 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 					// Return results
 					json<FullFileObject>(res, {
 						...fullFileObject.toRaw(),
-						uploader: req.member.toRaw()
+						uploader: just(req.member.toRaw())
 					});
 				})
 				.catch(err => {

@@ -66,13 +66,13 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			}
 
 			if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
-				accountID = 'mdx89';
+				accountID = 'md089';
 			} else if (parts.length === 2) {
 				accountID = 'sales';
 			} else if (parts.length === 3) {
 				accountID = parts[0];
 			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
-				accountID = 'mdx89';
+				accountID = 'md089';
 			} else {
 				res.status(400);
 				res.end();
@@ -107,13 +107,13 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			}
 
 			if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
-				accountID = 'mdx89';
+				accountID = 'md089';
 			} else if (parts.length === 2) {
 				accountID = 'sales';
 			} else if (parts.length === 3) {
 				accountID = parts[0];
 			} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
-				accountID = 'mdx89';
+				accountID = 'md089';
 			} else {
 				res.status(400);
 				return res.json(
@@ -166,7 +166,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 
 				if (parts.length === 1 && process.env.NODE_ENV !== 'production') {
 					// localhost
-					return right('mdx89');
+					return right('md089');
 				} else if (parts.length === 2) {
 					// capunit.com
 					return right('sales');
@@ -178,7 +178,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 					return right(parts[0]);
 				} else if (parts.length === 4 && process.env.NODE_ENV !== 'production') {
 					// 192.168.1.128
-					return right('mdx89');
+					return right('md089');
 				} else {
 					// IP/localhost in production, otherwise invalid hostname
 					return asyncLeft({
@@ -426,7 +426,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			});
 
 			for await (const member of generateResults(memberFind)) {
-				yield CAPNHQMember.Get(member.CAPID, this, this.schema);
+				yield CAPNHQMember.GetFrom(member, this, this.schema);
 			}
 		}
 
@@ -476,27 +476,29 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		}
 	}
 
-	public async *getEventsInRange(start: number, end: number): AsyncIterableIterator<EventObject> {
+	public getEventsInRange(start: number, end: number): AsyncIterableIterator<EventObject> {
 		const eventCollection = this.schema.getCollection<EventObject>('Events');
 
 		const iterator = eventCollection
 			.find(
-				'accountID = :accountID AND (pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime)'
+				'accountID = :accountID AND ((pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime))'
 			)
 			.bind('accountID', this.id)
 			.bind('pickupDateTime', start)
 			.bind('meetDateTime', end);
 
-		console.log(
-			'accountID = :accountID AND (pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime)'
-				.replace(/\:accountID/g, `"${this.id}"`)
-				.replace(/\:pickupDateTime/g, start + '')
-				.replace(/\:meetDateTime/g, end + '')
-		);
+		return generateResults(iterator);
+	}
 
-		for await (const i of generateResults(iterator)) {
-			yield i;
-		}
+	public queryEvents(query: string, bind: any): mysql.CollectionFind<EventObject> {
+		const eventCollection = this.schema.getCollection<EventObject>('Events');
+
+		const find = eventCollection
+			.find(`accountID = :accountID AND (${query})`)
+			.bind('accountID', this.id)
+			.bind(bind);
+
+		return find;
 	}
 
 	public async *getSortedEvents(): AsyncIterableIterator<Event> {

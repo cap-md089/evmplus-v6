@@ -274,42 +274,93 @@ export async function deleteAllGoogleCalendarEvents(inAccount: Account, config =
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
-	const listResponse = await myCalendar.events.list({
-		auth: jwtClient,
-		calendarId: inAccount.mainCalendarID
-	});
-	const events = listResponse?.data.items;
-	if (events?.length) {
-		for (const event of events) {
-			await myCalendar.events.delete({
-				auth: jwtClient,
-				calendarId: inAccount.mainCalendarID,
-				eventId: event.id as string
-			});
+	let iteration = 0;
+	let count = 0;
 
-			await new Promise(res => {
-				setTimeout(res, 500);
-			});
-		}
-	}
-	const listWingResponse = await myCalendar.events.list({
-		auth: jwtClient,
-		calendarId: inAccount.wingCalendarID
-	});
-	const wingevents = listWingResponse?.data.items;
-	if (wingevents?.length) {
-		for (const event of wingevents) {
-			await myCalendar.events.delete({
-				auth: jwtClient,
-				calendarId: inAccount.wingCalendarID,
-				eventId: event.id as string
-			});
+	console.log(`Deleting events for ${inAccount.mainCalendarID} (${inAccount.id})`);
 
-			await new Promise(res => {
-				setTimeout(res, 500);
-			});
+	let events = (
+		await myCalendar.events.list({
+			auth: jwtClient,
+			calendarId: inAccount.mainCalendarID
+		})
+	)?.data.items;
+	while (events === null || events === undefined || events.length > 0) {
+		if (events !== null && events !== undefined) {
+			console.log(`Deleting ${events.length} events for iteration ${iteration}...`);
+			for (const event of events) {
+				await myCalendar.events.delete({
+					auth: jwtClient,
+					calendarId: inAccount.mainCalendarID,
+					eventId: event.id as string
+				});
+
+				await new Promise(res => {
+					setTimeout(res, 500);
+				});
+			}
+
+			iteration++;
+			count += events.length;
+			console.log(
+				`Completed ${iteration}th iteration of deleting events (${events.length} items)...`
+			);
+		} else {
+			console.log('Received null list!');
 		}
+		events = (
+			await myCalendar.events.list({
+				auth: jwtClient,
+				calendarId: inAccount.mainCalendarID
+			})
+		)?.data.items;
 	}
+
+	console.log(`Deleted ${count} events for ${inAccount.wingCalendarID} (${inAccount.id})`);
+
+	iteration = 0;
+	count = 0;
+
+	console.log(`Deleting events for ${inAccount.wingCalendarID} (${inAccount.id})`);
+
+	let wingevents = (
+		await myCalendar.events.list({
+			auth: jwtClient,
+			calendarId: inAccount.wingCalendarID
+		})
+	)?.data.items;
+	while (wingevents === null || wingevents === undefined || wingevents.length > 0) {
+		if (wingevents !== null && wingevents !== undefined) {
+			console.log(`Deleting ${wingevents.length} events for iteration ${iteration}...`);
+			for (const event of wingevents) {
+				await myCalendar.events.delete({
+					auth: jwtClient,
+					calendarId: inAccount.wingCalendarID,
+					eventId: event.id as string
+				});
+
+				await new Promise(res => {
+					setTimeout(res, 500);
+				});
+			}
+			iteration++;
+			count += wingevents.length;
+			console.log(
+				`Completed ${iteration}th iteration of deleting events (${wingevents.length} items)...`
+			);
+		} else {
+			console.log('Received null list!');
+		}
+
+		wingevents = (
+			await myCalendar.events.list({
+				auth: jwtClient,
+				calendarId: inAccount.mainCalendarID
+			})
+		)?.data.items;
+	}
+
+	console.log(`Deleted ${count} wing events for ${inAccount.wingCalendarID} (${inAccount.id})`);
 
 	// const clearMainResponse = await myCalendar.calendars.clear ({
 	// 	auth: jwtClient,

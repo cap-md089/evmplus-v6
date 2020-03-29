@@ -350,7 +350,7 @@ export default class EventValidator extends Validator<NewEventObject> {
 				validator: Validator.Boolean
 			},
 			uniform: {
-				validator: Validator.OtherMultCheckboxReturn
+				validator: Validator.SimpleMultCheckboxReturn
 			},
 			wingEventNumber: {
 				validator: Validator.OtherRadioReturn(EchelonEventNumber)

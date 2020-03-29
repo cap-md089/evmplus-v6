@@ -11,6 +11,7 @@ import {
 	FileUserAccessControlType,
 	InternalPointOfContact,
 	MemberReference,
+	NHQ,
 	NHQMemberReference,
 	none,
 	OtherMultCheckboxReturn,
@@ -31,7 +32,14 @@ import { writeFileSync } from 'fs';
 import * as mysql from 'mysql';
 import { join } from 'path';
 import conf from './conf';
-import { Account, Event, MemberBase, RawAttendanceDBRecord, Team } from './lib/internals';
+import {
+	Account,
+	deleteAllGoogleCalendarEvents,
+	Event,
+	MemberBase,
+	RawAttendanceDBRecord,
+	Team
+} from './lib/internals';
 import * as Permissions from './lib/Permissions';
 
 // tslint:disable-next-line: no-namespace
@@ -262,6 +270,51 @@ namespace V3 {
 		HistoryIndex: string;
 		AddTime: number;
 	}
+
+	// tslint:disable-next-line:class-name
+	export interface Data_Member {
+		Timestamp: number;
+		DataSource: string;
+		CAPID: number;
+		NameLast: string;
+		NameFirst: string;
+		NameMiddle: string;
+		NameSuffix: string;
+		Gender: string;
+		DOB: number;
+		Profession: string;
+		EducationLevel: string;
+		Citizen: string;
+		ORGID: number;
+		Wing: string;
+		UNIT: string;
+		Rank: string;
+		Joined: number;
+		Expiration: number;
+		OrgJoined: number;
+		UsrID: string;
+		DateMod: number;
+		LSCode: string;
+		Type: string;
+		RankDate: number;
+		Region: string;
+		MbrSt: string;
+		PicStatus: string;
+		CdtWaiver: string;
+	}
+
+	// tslint:disable-next-line:class-name
+	export interface Data_MbrContact {
+		CAPID: number;
+		Type: string;
+		Priority: string;
+		Contact: string;
+		UsrID: string;
+		DateMod: number;
+		DoNotContact: number;
+		ContactName: string;
+		ORGID: number;
+	}
 }
 
 function parseCheckboxValue(
@@ -428,8 +481,8 @@ enum RunFlag {
 	const targetSchema = mysqlxSession.getSchema(conf.database.connection.database);
 
 	const mysqlConnection = mysql.createConnection({
-		port: 3310,
-		host: '172.16.17.160',
+		port: 33389,
+		host: 'md089.capunit.com',
 		user,
 		password,
 		database: 'EventManagement'
@@ -483,7 +536,8 @@ enum RunFlag {
 	await moveExtraMemberInfo(mysqlConnection, targetSchema, RunFlag.NORUN);
 	await moveTeams(mysqlConnection, targetSchema, accounts, RunFlag.NORUN);
 	await moveFiles(mysqlConnection, targetSchema, RunFlag.NORUN);
-	await moveEvents(mysqlConnection, targetSchema, accounts, RunFlag.RUN);
+	await moveMemberData(mysqlConnection, targetSchema, RunFlag.NORUN);
+	await moveEvents(mysqlConnection, targetSchema, accounts, RunFlag.RUN, RunFlag.RUN);
 
 	return 0;
 })()
@@ -564,7 +618,11 @@ async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account
 			const obj = oldAccountsAsRawAccountObjects[oldAccount.AccountID];
 			obj.orgIDs.push(oldAccount.UnitID);
 			obj.mainOrg =
-				obj.mainOrg === 1 ? obj.mainOrg : oldAccount.UnitID !== 0 ? oldAccount.UnitID : 0;
+				oldAccount.MainOrg === 1
+					? oldAccount.UnitID
+					: oldAccount.UnitID !== 0
+					? oldAccount.UnitID
+					: obj.mainOrg;
 		}
 	}
 
@@ -587,21 +645,36 @@ async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account
 	return newAccounts;
 }
 
-async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[], run: RunFlag) {
+async function moveEvents(
+	from: mysql.Connection,
+	to: Schema,
+	accounts: Account[],
+	run: RunFlag,
+	runCopy: RunFlag
+) {
 	if (run === RunFlag.NORUN) {
 		return;
 	}
 
 	console.log('Moving events...');
 
-	const eventCollection = await getOrCreate<RawEventObject>(to, 'Events');
 	const attendanceCollection = await getOrCreate<RawAttendanceDBRecord>(to, 'Attendance');
+	const eventCollection = await getOrCreate<RawEventObject>(to, 'Events');
 
-	await Promise.all([clearCollection(eventCollection), clearCollection(attendanceCollection)]);
+	if (runCopy === RunFlag.RUN) {
+		await Promise.all([
+			clearCollection(eventCollection),
+			clearCollection(attendanceCollection)
+		]);
 
-	/*for (const account of accounts) {
-		await deleteAllGoogleCalendarEvents(account);
-	}*/
+		for (const account of accounts) {
+			console.log(`Deleting events for ${account.id}...`);
+			await deleteAllGoogleCalendarEvents(account);
+			console.log(`Deleted events for ${account.id}.`);
+		}
+	} else {
+		await clearCollection(attendanceCollection);
+	}
 
 	const [oldEvents, oldAttendance, oldSpecialAttendance, fileAssignments] = (await Promise.all([
 		new Promise((res, rej) => {
@@ -662,7 +735,8 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 				'Classroom/Tour/Light',
 				'Backcountry',
 				'Flying',
-				'Physically Rigorous'
+				'Physically Rigorous',
+				'Recurring Meeting'
 			],
 			true
 		),
@@ -846,15 +920,7 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 		startDateTime: rec.StartDateTime * 1000,
 		status: parseRadioValue<EventStatus>(
 			rec.Status,
-			[
-				'Private',
-				'Draft',
-				'Tentative',
-				'Confirmed',
-				'Complete',
-				'Cancelled',
-				'Information Only'
-			],
+			['Draft', 'Tentative', 'Confirmed', 'Complete', 'Cancelled', 'Information Only'],
 			EventStatus.TENTATIVE,
 			false
 		),
@@ -880,25 +946,42 @@ async function moveEvents(from: mysql.Connection, to: Schema, accounts: Account[
 
 	const newEvents: Event[] = [];
 
-	for (const oldEvent of oldEvents) {
-		const newEventObject = transformEvent(oldEvent);
+	if (runCopy === RunFlag.RUN) {
+		for (const oldEvent of oldEvents) {
+			const newEventObject = transformEvent(oldEvent);
 
-		if (!accounts.find(acc => acc.id === oldEvent.AccountID)) {
-			console.log(`Couldn't find account ${oldEvent.AccountID}!`);
-			continue;
+			if (!accounts.find(acc => acc.id === oldEvent.AccountID)) {
+				console.log(`Couldn't find account ${oldEvent.AccountID}!`);
+				continue;
+			}
+
+			const newEvent = await Event.Create(
+				newEventObject,
+				accounts.find(acc => acc.id === oldEvent.AccountID)!,
+				to,
+				newEventObject.author as NHQMemberReference
+			);
+
+			newEvent.id = oldEvent.EventNumber;
+
+			await newEvent.save();
+
+			newEvents.push(newEvent);
+
+			console.log(`Added event ${newEvent.accountID}-${newEvent.id}`);
+
+			await new Promise(res => setTimeout(res, 500));
 		}
+	} else {
+		for (const oldEvent of oldEvents) {
+			const account = accounts.find(acc => acc.id === oldEvent.AccountID);
+			if (!account) {
+				console.log(`Couldn't find account ${oldEvent.AccountID}!`);
+				continue;
+			}
 
-		const newEvent = await Event.Create(
-			newEventObject,
-			accounts.find(acc => acc.id === oldEvent.AccountID)!,
-			to,
-			newEventObject.author as NHQMemberReference
-		);
-		newEvents.push(newEvent);
-
-		console.log(`Added event ${newEvent.accountID}-${newEvent.id}`);
-
-		await new Promise(res => setTimeout(res, 500));
+			newEvents.push(await Event.Get(oldEvent.EventNumber, account, to));
+		}
 	}
 
 	for (const record of oldAttendance) {
@@ -1475,4 +1558,115 @@ async function moveRegistry(from: mysql.Connection, to: Schema, run: RunFlag) {
 	}
 
 	console.log('Moved registries.');
+}
+
+async function moveMemberData(from: mysql.Connection, to: Schema, run: RunFlag) {
+	if (run === RunFlag.NORUN) {
+		return;
+	}
+
+	const memberCollection = to.getCollection<NHQ.CAPMember>('NHQ_Member');
+	const mbrContactCollection = to.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
+
+	await clearCollection(memberCollection);
+	await clearCollection(mbrContactCollection);
+
+	console.log('Moving member CAPWATCH data...');
+
+	const [oldMemberContact, oldMembers] = (await Promise.all([
+		new Promise((res, rej) => {
+			from.query('SELECT * FROM Data_MbrContact;', (err, results) => {
+				if (err) {
+					rej(err);
+				}
+
+				res(results);
+			});
+		}),
+		new Promise((res, rej) => {
+			from.query('SELECT * FROM Data_Member;', (err, results) => {
+				if (err) {
+					rej(err);
+				}
+
+				res(results);
+			});
+		})
+	])) as [V3.Data_MbrContact[], V3.Data_Member[]];
+
+	const newMembers: NHQ.CAPMember[] = oldMembers.map(mem => ({
+		CAPID: mem.CAPID,
+		CdtWaiver: mem.CdtWaiver,
+		Citizen: mem.Citizen,
+		DOB: new Date(mem.DOB * 1000).toISOString(),
+		DateMod: new Date(mem.DateMod * 1000).toISOString(),
+		EducationLevel: mem.EducationLevel,
+		Expiration: new Date(mem.Expiration * 1000).toISOString(),
+		Gender: mem.Gender,
+		Joined: new Date(mem.Joined * 1000).toISOString(),
+		LSCode: mem.LSCode,
+		MbrStatus: mem.MbrSt,
+		NameFirst: mem.NameFirst,
+		NameLast: mem.NameLast,
+		NameMiddle: mem.NameMiddle,
+		NameSuffix: mem.NameSuffix,
+		ORGID: mem.ORGID,
+		OrgJoined: new Date(mem.OrgJoined * 1000).toISOString(),
+		PicDate: new Date().toISOString(),
+		PicStatus: mem.PicStatus,
+		Profession: mem.Profession,
+		Rank: mem.Rank,
+		RankDate: new Date(mem.RankDate).toISOString(),
+		Region: mem.Region,
+		SSN: '',
+		Type: mem.Type as
+			| 'NULL'
+			| 'CADET'
+			| 'CADET SPONSOR'
+			| 'SENIOR'
+			| 'PATRON'
+			| 'FIFTY YEAR'
+			| 'FiftyYear'
+			| 'INDEFINITE'
+			| 'LIFE'
+			| 'STATE LEG',
+		Wing: mem.Wing,
+		UsrID: mem.UsrID,
+		Unit: mem.UNIT
+	}));
+
+	const newMemberContact: NHQ.MbrContact[] = oldMemberContact.map(cont => ({
+		CAPID: cont.CAPID,
+		Contact: cont.Contact,
+		DateMod: new Date(cont.DateMod * 1000).toISOString(),
+		DoNotContact: cont.DoNotContact,
+		Priority: cont.Priority as 'PRIMARY' | 'SECONDARY' | 'EMERGENCY',
+		Type: cont.Type as
+			| 'ALPHAPAGER'
+			| 'ASSISTANT'
+			| 'CADETPARENTEMAIL'
+			| 'CADETPARENTPHONE'
+			| 'CELLPHONE'
+			| 'DIGITALPAGER'
+			| 'EMAIL'
+			| 'HOMEFAX'
+			| 'HOMEPHONE'
+			| 'INSTANTMESSAGER'
+			| 'ISDN'
+			| 'RADIO'
+			| 'TELEX'
+			| 'WORKFAX'
+			| 'WORKPHONE',
+		UsrID: cont.UsrID
+	}));
+
+	for (const member of newMembers) {
+		await memberCollection.add(member).execute();
+	}
+
+	for (const mbrContact of newMemberContact) {
+		await mbrContactCollection.add(mbrContact).execute();
+	}
+
+	console.log('Moved member CAPWATCH data.');
 }

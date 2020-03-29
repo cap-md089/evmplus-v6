@@ -2,34 +2,23 @@ import { EventObject } from 'common-lib';
 import {
 	AccountRequest,
 	asyncErrorHandler,
-	Event,
+	generateResults,
 	Registry,
-	streamAsyncGeneratorAsJSONArrayTyped
+	streamAsyncGeneratorAsJSONArray
 } from '../../../lib/internals';
 
 export default asyncErrorHandler(async (req: AccountRequest, res) => {
-	let count = 0;
 	const registry = await Registry.Get(req.account, req.mysqlx);
 
-	await streamAsyncGeneratorAsJSONArrayTyped<Event, EventObject>(
+	await streamAsyncGeneratorAsJSONArray<EventObject>(
 		res,
-		req.account.getSortedEvents(),
-		ev => {
-			if (!ev.showUpcoming) {
-				return false;
-			}
-
-			if (ev.endDateTime < Date.now()) {
-				return false;
-			}
-
-			if (count > registry.values.Website.ShowUpcomingEventCount) {
-				return false;
-			}
-
-			count++;
-
-			return ev.toRaw();
-		}
+		generateResults(
+			req.account
+				.queryEvents('showUpcoming = true AND endDateTime > :endDateTime', {
+					endDateTime: Date.now()
+				})
+				.sort('endDateTime ASC')
+				.limit(registry.values.Website.ShowUpcomingEventCount)
+		)
 	);
 });

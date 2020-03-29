@@ -8,7 +8,9 @@ import {
 	FileUserAccessControlType,
 	FileUserControlList,
 	FullFileObject,
+	just,
 	MemberReference,
+	none,
 	NoSQLDocument,
 	RawFileObject
 } from 'common-lib';
@@ -290,6 +292,8 @@ export default class File implements FileObject, DatabaseInterface<FileObject> {
 	public toFullRaw = async (): Promise<FullFileObject> => ({
 		...this.toRaw(),
 		uploader: await resolveReference(this.owner, this.account, this.schema, true)
+			.then(x => just(x))
+			.catch(x => none())
 	});
 
 	public async delete(): Promise<void> {

@@ -1,4 +1,4 @@
-import { TeamPublicity } from 'common-lib';
+import { stringifyMemberReference, TeamPublicity } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
@@ -50,13 +50,22 @@ export default asyncErrorHandler(
 			team.cadetLeader
 		].filter(m => m.type !== 'Null');
 
-		for (const mem of teamMembers) {
-			const fullMember = await resolveReference(mem, req.account, req.mysqlx);
+		const sentMembers: { [key: string]: true } = {};
 
-			if (fullMember) {
-				res.write((started ? ', ' : '[') + JSON.stringify(fullMember.toRaw()));
-				started = true;
-			}
+		for (const mem of teamMembers) {
+			try {
+				if (sentMembers[stringifyMemberReference(mem)]) {
+					continue;
+				}
+				sentMembers[stringifyMemberReference(mem)] = true;
+
+				const fullMember = await resolveReference(mem, req.account, req.mysqlx);
+
+				if (fullMember) {
+					res.write((started ? ', ' : '[') + JSON.stringify(fullMember.toRaw()));
+					started = true;
+				}
+			} catch (e) {}
 		}
 
 		if (!started) {

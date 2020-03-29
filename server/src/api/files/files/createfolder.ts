@@ -93,7 +93,7 @@ export default asyncEitherHandler<api.files.files.CreateFolder>(
 
 		return right({
 			...file.toRaw(),
-			uploader: req.member.toRaw()
+			uploader: just(req.member.toRaw())
 		});
 	}
 );

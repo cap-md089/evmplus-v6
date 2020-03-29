@@ -77,11 +77,17 @@ export default class Team implements FullTeamObject {
 			visibility: TeamPublicity.PUBLIC
 		};
 
-		const cadetGenerator = generateResults(
-			findAndBind(cadetDutyPositions, {
-				ORGID: account.mainOrg
-			})
-		);
+		const cadetGenerators = [];
+
+		for (const ORGID of account.orgIDs) {
+			cadetGenerators.push(
+				generateResults(
+					findAndBind(cadetDutyPositions, {
+						ORGID
+					})
+				)
+			);
+		}
 
 		const cadets: {
 			[key: number]: {
@@ -90,24 +96,29 @@ export default class Team implements FullTeamObject {
 			};
 		} = {};
 
-		for await (const cadetDutyPosition of cadetGenerator) {
-			if (cadetDutyPosition.Duty === 'Cadet Commander') {
-				teamObject.cadetLeader = {
-					type: 'CAPNHQMember',
-					id: cadetDutyPosition.CAPID
-				};
-			}
+		for (const generator of cadetGenerators) {
+			for await (const cadetDutyPosition of generator) {
+				if (cadetDutyPosition.Duty === 'Cadet Commander') {
+					teamObject.cadetLeader = {
+						type: 'CAPNHQMember',
+						id: cadetDutyPosition.CAPID
+					};
+				}
 
-			if (!cadets[cadetDutyPosition.CAPID]) {
-				cadets[cadetDutyPosition.CAPID] = {
-					positions: [cadetDutyPosition.Duty],
-					joined: +DateTime.fromISO(cadetDutyPosition.DateMod)
-				};
-			} else {
-				const cadet = cadets[cadetDutyPosition.CAPID];
+				if (!cadets[cadetDutyPosition.CAPID]) {
+					cadets[cadetDutyPosition.CAPID] = {
+						positions: [cadetDutyPosition.Duty],
+						joined: +DateTime.fromISO(cadetDutyPosition.DateMod)
+					};
+				} else {
+					const cadet = cadets[cadetDutyPosition.CAPID];
 
-				cadet.positions.push(cadetDutyPosition.Duty);
-				cadet.joined = Math.min(cadet.joined, +DateTime.fromISO(cadetDutyPosition.DateMod));
+					cadet.positions.push(cadetDutyPosition.Duty);
+					cadet.joined = Math.min(
+						cadet.joined,
+						+DateTime.fromISO(cadetDutyPosition.DateMod)
+					);
+				}
 			}
 		}
 
@@ -237,9 +248,9 @@ export default class Team implements FullTeamObject {
 		schema: Schema
 	): Promise<FullTeamObject> {
 		const [cadetLeader, seniorMentor, seniorCoach] = await Promise.all([
-			resolveReference(raw.cadetLeader, account, schema),
-			resolveReference(raw.seniorMentor, account, schema),
-			resolveReference(raw.seniorCoach, account, schema)
+			resolveReference(raw.cadetLeader, account, schema).catch(() => null),
+			resolveReference(raw.seniorMentor, account, schema).catch(() => null),
+			resolveReference(raw.seniorCoach, account, schema).catch(() => null)
 		]);
 
 		const cadetLeaderName = cadetLeader ? cadetLeader.getFullName() : '';

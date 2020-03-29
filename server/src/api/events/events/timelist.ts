@@ -1,9 +1,9 @@
-import { EventObject } from 'common-lib';
+import { EventObject, EventStatus, fromValue } from 'common-lib';
 import { Response } from 'express';
 import {
 	asyncErrorHandler,
 	ConditionalMemberRequest,
-	streamAsyncGeneratorAsJSONArray
+	streamAsyncGeneratorAsJSONArrayTyped
 } from '../../../lib/internals';
 
 export default asyncErrorHandler(
@@ -22,9 +22,16 @@ export default asyncErrorHandler(
 		const start = parseInt(req.params.start, 10);
 		const end = parseInt(req.params.end, 10);
 
-		await streamAsyncGeneratorAsJSONArray<EventObject>(
+		await streamAsyncGeneratorAsJSONArrayTyped<EventObject, EventObject>(
 			res,
-			req.account.getEventsInRange(start, end)
+			req.account.getEventsInRange(start, end),
+			ev =>
+				ev.status !== EventStatus.DRAFT ||
+				fromValue(req.member)
+					.map(member => member.isPOCOf(ev) || member.hasPermission('ManageEvent'))
+					.orSome(false)
+					? ev
+					: false
 		);
 	}
 );

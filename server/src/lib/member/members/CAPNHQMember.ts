@@ -26,9 +26,55 @@ import {
 	MemberBase,
 	SessionedUser
 } from '../../internals';
-import { convertNHQDate } from '../../MySQLUtil';
 
 export default class CAPNHQMember extends MemberBase implements NHQMemberObject {
+	public static async GetFrom(
+		info: NHQ.CAPMember,
+		account: Account,
+		schema: Schema
+	): Promise<CAPNHQMember> {
+		const id = info.CAPID;
+
+		const [contact, dutyPositions, extraInformation, permissions] = await Promise.all([
+			CAPNHQMember.GetCAPWATCHContactForMember(id, schema),
+			CAPNHQMember.GetRegularDutypositions(id, schema),
+			CAPNHQMember.LoadExtraMemberInformation({ type: 'CAPNHQMember', id }, schema, account),
+			getPermissionsForMemberInAccountDefault(schema, { id, type: 'CAPNHQMember' }, account)
+		]);
+
+		const member = new CAPNHQMember(
+			{
+				id,
+				contact,
+				// Fully set by updateDutyPositions() below
+				dutyPositions,
+				memberRank: info.Rank,
+				nameFirst: info.NameFirst,
+				nameMiddle: info.NameMiddle,
+				nameLast: info.NameLast,
+				nameSuffix: info.NameSuffix,
+				seniorMember: info.Type !== 'CADET',
+				squadron: `${info.Region}-${info.Wing}-${info.Unit}`,
+				orgid: info.ORGID,
+				usrID: getUserID([info.NameFirst, info.NameMiddle, info.NameLast, info.NameSuffix]),
+				type: 'CAPNHQMember',
+				teamIDs: extraInformation.teamIDs,
+				flight: extraInformation.flight,
+				absenteeInformation: extraInformation.absentee,
+				permissions,
+				expirationDate: +DateTime.fromISO(info.Expiration)
+			},
+			schema,
+			account,
+			extraInformation,
+			info
+		);
+
+		member.updateDutyPositions();
+
+		return member;
+	}
+
 	public static async Get(id: number, account: Account, schema: Schema): Promise<CAPNHQMember> {
 		const memberTable = schema.getCollection<NHQ.CAPMember>('NHQ_Member');
 
@@ -298,7 +344,7 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 			mainOrg: this.orgid
 		});
 
-		const generator = generateResults(accountFind);
+		const generator = await collectResults(accountFind);
 
 		for await (const i of generator) {
 			yield Account.Get(i.id, this.schema);
@@ -360,8 +406,8 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 		return fileName;
 	}
 
-	public getDateOfBirth() {
-		return convertNHQDate(this.rawData.DOB);
+	public getDateOfBirth(): Date {
+		return new Date(this.rawData.DOB);
 	}
 
 	private updateDutyPositions() {

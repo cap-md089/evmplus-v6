@@ -11,6 +11,7 @@ import {
 } from 'common-lib';
 import {
 	Account,
+	CAPNHQMember,
 	collectResults,
 	DEFAULT_PERMISSIONS,
 	findAndBind,
@@ -91,7 +92,7 @@ export default class CAPProspectiveMember extends MemberBase
 		id: string,
 		account: Account,
 		schema: Schema
-	): Promise<CAPProspectiveMember> {
+	): Promise<CAPProspectiveMember | CAPNHQMember> {
 		const prospectiveCollection = schema.getCollection<
 			RawProspectiveMemberObject & Required<NoSQLDocument>
 		>(CAPProspectiveMember.tableName);

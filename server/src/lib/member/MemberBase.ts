@@ -2,7 +2,9 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AbsenteeInformation,
 	CAPMemberContact,
+	EventObject,
 	ExtraMemberInformation,
+	isPOCOf,
 	MemberObject,
 	MemberPermissions,
 	MemberReference,
@@ -18,7 +20,6 @@ import {
 	Account,
 	areMemberReferencesTheSame,
 	collectResults,
-	Event,
 	findAndBind,
 	generateResults,
 	modifyAndBind,
@@ -247,8 +248,8 @@ export default abstract class MemberBase implements MemberObject {
 		return buildName;
 	}
 
-	public isPOCOf(event: Event) {
-		return event.isPOC(this);
+	public isPOCOf(event: EventObject) {
+		return isPOCOf(this.getReference(), event);
 	}
 
 	public async getUnreadNotificationCount() {
