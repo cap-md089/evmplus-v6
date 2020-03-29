@@ -1,11 +1,20 @@
-import { AttendanceStatus, Member, MemberObject, Maybe, none, just } from 'common-lib';
+import {
+	AttendanceStatus,
+	Member,
+	MemberObject,
+	Maybe,
+	none,
+	just,
+	fromValue,
+	formatEventViewerDate
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../../components/Button';
 import { InputProps } from '../../components/form-inputs/Input';
 import Selector, { CheckInput } from '../../components/form-inputs/Selector';
 import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
-import { TextInput } from '../../components/forms/SimpleForm';
+import { TextInput, NumberInput, TextBox } from '../../components/forms/SimpleForm';
 import SimpleForm, { Checkbox, Label } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import Event from '../../lib/Event';
@@ -26,7 +35,7 @@ enum MemberList {
 
 interface SelectorFormValues {
 	members: CAPMemberClasses[];
-	sortFunction: Maybe<SortFunction>;
+	sortFunction: SortFunction;
 	displayAdvanced: boolean;
 }
 
@@ -35,7 +44,7 @@ interface MultiAddState {
 	event: Event | null;
 	error: number;
 	selectedMembers: CAPMemberClasses[];
-	sortFunction: Maybe<SortFunction>;
+	sortFunction: SortFunction;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -43,8 +52,12 @@ interface MultiAddState {
 		nameInput: string;
 		rankGreaterThan: string;
 		rankLessThan: string;
-		memberFilter: Maybe<MemberList>;
+		memberFilter: MemberList;
 	};
+	capidAdd: number | null;
+	capidSaved: boolean;
+	capidSaving: boolean;
+	capidError: string | null;
 }
 
 const memberRanks = [
@@ -189,15 +202,15 @@ const rankLessThan: CheckInput<Member, string> = {
 	filterInput: TextInput
 };
 
-const memberFilter: CheckInput<Member, Maybe<MemberList>> = {
+const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
-		return memberFilters[input.orSome(MemberList.ALL)](mem);
+		return memberFilters[fromValue(input).orSome(MemberList.ALL)](mem);
 	},
-	filterInput: (props: InputProps<Maybe<MemberList>>) => (
+	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton<MemberList>
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={(props.value || none()).orElse(MemberList.ALL)}
+			value={fromValue(props.value).orSome(MemberList.ALL)}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -224,14 +237,18 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		displayAdvanced: false,
 		filterValues: {
 			flightInput: '',
-			memberFilter: just<MemberList>(MemberList.ALL),
+			memberFilter: MemberList.ALL,
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: ''
 		},
 		selectedMembers: [],
-		sortFunction: just<SortFunction>(SortFunction.LASTNAME),
-		visibleItems: []
+		sortFunction: SortFunction.LASTNAME,
+		visibleItems: [],
+		capidAdd: null,
+		capidSaved: false,
+		capidSaving: false,
+		capidError: null
 	};
 
 	constructor(props: PageProps<{ id: string }>) {
@@ -247,6 +264,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		this.handleDifferentVisibleItems = this.handleDifferentVisibleItems.bind(this);
 		this.addMembers = this.addMembers.bind(this);
 		this.onFilterValuesChange = this.onFilterValuesChange.bind(this);
+		this.modifyCAPID = this.modifyCAPID.bind(this);
+		this.addCAPID = this.addCAPID.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -330,8 +349,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		const SortSelector = SimpleRadioButton as new () => SimpleRadioButton<SortFunction>;
 
-		const currentSortFunction =
-			sortFunctions[this.state.sortFunction.orSome(SortFunction.LASTNAME)];
+		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
 		const filterValues = this.state.displayAdvanced
 			? [
@@ -345,6 +363,26 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		return (
 			<>
+				<SimpleForm<{ capid: number | null }>
+					values={{ capid: this.state.capidAdd }}
+					validator={{ capid: id => id !== null && id >= 100000 && id <= 999999 }}
+					onChange={this.modifyCAPID}
+					onSubmit={this.addCAPID}
+					submitInfo={{
+						text: this.state.capidSaving ? 'Adding...' : 'Add',
+						disabled: this.state.capidSaving
+					}}
+					disableOnInvalid={true}
+				>
+					<TextBox>
+						<b>
+							<span style={{ color: 'red' }}>{this.state.capidError}</span>
+						</b>
+					</TextBox>
+
+					<Label>Add by CAP ID</Label>
+					<NumberInput name="capid" errorMessage="Invalid CAP ID" />
+				</SimpleForm>
 				<Button onClick={this.selectAll}>Select all</Button>
 				&nbsp; &nbsp; &nbsp;
 				<Button onClick={this.selectVisible}>Select visible</Button>
@@ -481,5 +519,50 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				}
 			});
 		}
+	}
+
+	private async modifyCAPID({ capid }: { capid: number | null }) {
+		this.setState({
+			capidAdd: capid,
+			capidSaved: false,
+			capidError: null
+		});
+	}
+
+	private async addCAPID({ capid }: { capid: number | null }) {
+		this.setState({
+			capidSaving: true,
+			capidSaved: false,
+			capidError: null
+		});
+
+		if (this.state.event!.hasMember({ type: 'CAPNHQMember', id: capid! })) {
+			this.setState({
+				capidSaving: false,
+				capidError: 'Member is already in attendance'
+			});
+			return;
+		}
+
+		await this.state.event!.addAttendee(
+			this.props.member!,
+			{ type: 'CAPNHQMember', id: capid! },
+			{
+				arrivalTime: null,
+				comments:
+					'CAP ID add by ' +
+					this.props.member!.getFullName() +
+					formatEventViewerDate(+new Date()),
+				customAttendanceFieldValues: [],
+				departureTime: null,
+				planToUseCAPTransportation: false,
+				status: AttendanceStatus.COMMITTEDATTENDED
+			}
+		);
+
+		this.setState({
+			capidSaved: true,
+			capidSaving: false
+		});
 	}
 }

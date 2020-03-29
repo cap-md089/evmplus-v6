@@ -2,11 +2,12 @@ import { EventStatus, presentMultCheckboxReturn } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Uniforms } from '../components/forms/usable-forms/EventForm';
 import Loader from '../components/Loader';
 import { SideNavigationItem } from '../components/page-elements/SideNavigation';
 import Event from '../lib/Event';
 import Page, { PageProps } from './Page';
+import { FacebookProvider, Page as FBPage } from 'react-facebook';
+import { TwitterTimelineEmbed } from 'react-twitter-embed';
 
 interface MainState {
 	events: Event[] | null;
@@ -161,6 +162,26 @@ export default class Main extends Page<PageProps, MainState> {
 								</div>
 							))}
 						</section>
+						{!!this.props.registry.Contact.Twitter ? (
+							<section className="halfSection">
+								<TwitterTimelineEmbed
+									screenName={this.props.registry.Contact.Twitter}
+									sourceType="profile"
+									options={{ height: 500 }}
+								/>
+							</section>
+						) : null}
+
+						{!!this.props.registry.Contact.FaceBook ? (
+							<section className="halfSection">
+								<FacebookProvider appId="1640151259363083">
+									<FBPage
+										href={`https://www.facebooko.com/${this.props.registry.Contact.FaceBook}`}
+										tabs="timeline"
+									/>
+								</FacebookProvider>
+							</section>
+						) : null}
 					</>
 				)}
 			</div>

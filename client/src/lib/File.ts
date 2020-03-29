@@ -9,7 +9,10 @@ import {
 	MemberReference,
 	EitherObj,
 	api,
-	either
+	either,
+	maybe,
+	Maybe,
+	none
 } from 'common-lib';
 import Account from './Account';
 import APIInterface from './APIInterface';
@@ -129,7 +132,12 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 	 * @param member The member creating the folder
 	 * @param account The account responsible for the folder
 	 */
-	public static async CreateFolder(name: string, parent: FileInterface, member: MemberBase, account: Account) {
+	public static async CreateFolder(
+		name: string,
+		parent: FileInterface,
+		member: MemberBase,
+		account: Account
+	) {
 		const token = await APIInterface.getToken(account.id, member);
 
 		const results = await account.fetch(
@@ -171,7 +179,7 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 
 		const results = await account.fetch(`/api/files/${id}`, {}, member);
 
-		file = await results.json() as api.files.files.GetFile<FullFileObject>;
+		file = (await results.json()) as api.files.files.GetFile<FullFileObject>;
 
 		return either(file).cata(
 			e => Promise.reject(e.message),
@@ -205,7 +213,7 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 
 	public folderPath: Array<{ id: string; name: string }> = [];
 
-	public uploader: MemberObject;
+	public uploader: Maybe<MemberObject>;
 
 	public constructor(data: FullFileObject, public account: Account) {
 		super(account.id);
@@ -222,7 +230,7 @@ export default class FileInterface extends APIInterface<FullFileObject> implemen
 		this.parentID = data.parentID;
 		this.folderPath = data.folderPath;
 		this.owner = data.owner;
-		this.uploader = data.uploader;
+		this.uploader = maybe(data.uploader || none());
 	}
 
 	/**

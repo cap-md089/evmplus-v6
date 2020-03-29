@@ -8,15 +8,17 @@ import { DateTime } from 'luxon';
 
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Timezone } from 'common-lib';
 
-const TimeZoneDisplays = {
+const TimeZoneDisplays: { [P in Timezone]: string } = {
 	'America/New_York': 'EST',
 	'America/Chicago': 'CST',
 	'America/Denver': 'MST',
 	'America/Los_Angeles': 'PST',
 	'America/Arizona': 'Arizona',
 	'America/Anchorage': 'Alaska',
-	'Pacific/Hawaii': 'Hawaii'
+	'America/Hawaii': 'Hawaii',
+	'America/Puerto_Rico': 'Puerto Rico'
 };
 
 type SupportedTimeZones = keyof typeof TimeZoneDisplays;
@@ -109,6 +111,9 @@ export default class DateTimeInput extends React.Component<
 					timeIntervals={this.props.minuteInterval || 15}
 					dateFormat={this.props.time ? 'MM/dd/yyyy HH:mm' : 'MM/dd/yyyy'}
 				/>
+				{this.props.hasError && this.props.errorMessage ? (
+					<span className="text-error">{this.props.errorMessage}</span>
+				) : null}
 				{!sameTimezone ? (
 					<>
 						<br />

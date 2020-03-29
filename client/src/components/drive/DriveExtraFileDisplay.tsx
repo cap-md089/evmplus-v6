@@ -11,6 +11,7 @@ export interface ExtraDisplayProps {
 	childRef: React.RefObject<HTMLDivElement>;
 	fileDelete: (file: FileInterface) => void;
 	fileModify: (file: FileInterface) => void;
+	fileUpdate: () => void;
 }
 
 export interface CommentsForm {

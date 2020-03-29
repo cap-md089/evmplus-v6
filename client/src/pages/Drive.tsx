@@ -10,7 +10,7 @@ import Loader from '../components/Loader';
 import FileInterface from '../lib/File';
 import './Drive.css';
 import Page, { PageProps } from './Page';
-import { FileObject, FullFileObject } from 'common-lib';
+import { FileObject, FullFileObject, just } from 'common-lib';
 
 enum ErrorReason {
 	NONE,
@@ -243,6 +243,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 									childRef={this.extraInfoRef}
 									fileDelete={this.fileDeleted}
 									fileModify={this.fileModified}
+									fileUpdate={this.refresh}
 								/>
 							) : null}
 						</React.Fragment>
@@ -278,6 +279,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 									childRef={this.extraInfoRef}
 									fileDelete={this.fileDeleted}
 									fileModify={this.fileModified}
+									fileUpdate={this.refresh}
 								/>
 							) : null}
 						</React.Fragment>
@@ -336,13 +338,9 @@ export default class Drive extends Page<PageProps, DriveState> {
 				this.props.account.getFiles(id, this.props.member),
 				FileInterface.Get(id, this.props.member, this.props.account)
 			]);
-			let parentFolder = null;
-			if (currentFolder.id !== 'root') {
-				parentFolder = await currentFolder.getParent(this.props.member);
-			}
 			this.setState(
 				{
-					files: parentFolder ? [...files, parentFolder] : files,
+					files,
 					currentFolder
 				},
 				() => {
@@ -378,7 +376,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 	private addFile(file: FileObject) {
 		const fileObject: FullFileObject = {
 			...file,
-			uploader: this.props.member!.toRaw()
+			uploader: just(this.props.member!.toRaw())
 		};
 
 		this.setState(prev => ({

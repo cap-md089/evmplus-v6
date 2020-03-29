@@ -2,33 +2,10 @@ import { EventObject, EventStatus } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Loader from '../../components/Loader';
-import myFetch from '../../lib/myFetch';
+import { CalendarProps, getMonth, getPositionIndices } from '../Calendar';
+import Page from '../Page';
 import './DesktopCalendar.css';
-import Page, { PageProps } from '../Page';
-
-export const getMonth = (month: number, year: number) =>
-	DateTime.utc()
-		.set({
-			year,
-			month
-		})
-		.startOf('month');
-
-export const MONTHS = [
-	'January',
-	'February',
-	'March',
-	'April',
-	'May',
-	'June',
-	'July',
-	'August',
-	'September',
-	'October',
-	'November',
-	'December'
-];
+import { MONTHS } from '../../components/form-inputs/DateTimeInput';
 
 export type CalendarData = Array<
 	Array<{
@@ -95,68 +72,12 @@ export const getClassNameFromEvent = (obj: EventObject) => {
 	}
 };
 
-export default class DesktopCalendar extends Page<
-	PageProps<{ month?: string; year?: string }>,
-	{
-		events: EventObject[] | null;
-	}
-> {
-	public state = {
-		events: null
-	};
+export default class DesktopCalendar extends Page<CalendarProps> {
+	public state: {} = {};
 
 	public render() {
-		return this.state.events === null ? <Loader /> : this.renderCalendar(this.state.events!);
-	}
+		let events = this.props.events;
 
-	public async componentDidMount() {
-		this.props.updateBreadCrumbs([
-			{
-				target: '/',
-				text: 'Home'
-			},
-			{
-				target: '/calendar',
-				text: 'Calendar'
-			}
-		]);
-
-		this.updateTitle('Calendar');
-
-		this.props.updateSideNav([]);
-
-		const year =
-			typeof this.props.routeProps.match.params.year === 'undefined'
-				? new Date().getUTCFullYear()
-				: parseInt(this.props.routeProps.match.params.year, 10);
-		const month =
-			typeof this.props.routeProps.match.params.month === 'undefined'
-				? new Date().getUTCMonth() + 1
-				: parseInt(this.props.routeProps.match.params.month, 10);
-
-		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
-		const nextMonth = getMonth(month + 1, year);
-
-		const startOfLastMonthWeek =
-			lastMonth.startOf('week').day === lastMonth.day - 6
-				? lastMonth
-				: lastMonth.startOf('week');
-		const endOfNextMonth = nextMonth.endOf('week');
-
-		const res = await myFetch(`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`, {
-			headers: {
-				authorization: this.props.member ? this.props.member.sessionID : ''
-			}
-		});
-
-		const events = (await res.json()) as EventObject[];
-
-		this.setState({
-			events
-		});
-	}
-
-	private renderCalendar(events: EventObject[]) {
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
 				? new Date().getUTCFullYear()
@@ -249,39 +170,22 @@ export default class DesktopCalendar extends Page<
 			const startDate = DateTime.fromMillis(val.meetDateTime);
 			const endDate = DateTime.fromMillis(val.pickupDateTime);
 
-			let startWeek = 0;
-			let startDay = 0;
+			const { weekNumber: startWeek, dayNumber: startDay } = getPositionIndices(
+				startDate,
+				this.props.start,
+				this.props.end,
+				month,
+				year
+			);
+			const { weekNumber: endWeek, dayNumber: endDay } = getPositionIndices(
+				endDate,
+				this.props.start,
+				this.props.end,
+				month,
+				year
+			);
 
-			let endWeek = 0;
-			let endDay = 0;
-
-			if (startDate < thisMonth) {
-				startWeek = 0;
-				startDay =
-					+startDate + (thisMonth.weekday % 7) * 24 * 3600 * 1000 < +thisMonth
-						? 0
-						: startDate.weekday;
-			} else if (startDate < nextMonth) {
-				startWeek = Math.floor(((thisMonth.weekday % 7) + startDate.day) / 7);
-				startDay = startDate.weekday;
-			} else {
-				startWeek = calendar.length - 1;
-				startDay = startDate.weekday;
-			}
-
-			if (endDate > nextMonth) {
-				const nextWeek = +nextMonth + (nextMonth.weekday % 7) * 24 * 3600 * 1000;
-				endWeek = calendar.length - 1;
-				endDay = +endDate > nextWeek ? 7 : endDate.weekday;
-			} else if (endDate > thisMonth) {
-				endWeek = Math.floor(((thisMonth.weekday % 7) + endDate.day) / 7);
-				endDay = endDate.weekday;
-			} else {
-				endWeek = 0;
-				endDay = endDate.weekday;
-			}
-
-			for (let k = startWeek; k < endWeek; k++) {
+			for (let k = startWeek; k <= endWeek; k++) {
 				if (k === startWeek && k === endWeek) {
 					const index = findIndex(calendar, startDay % 7, endDay % 7, k);
 

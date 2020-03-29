@@ -1,20 +1,18 @@
 import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
+	defaultRadioFromLabels,
 	DisplayInternalPointOfContact,
-	emptySimpleFromLabels,
-	ExternalPointOfContact,
-	NewEventObject,
-	just,
-	none,
-	PointOfContactType,
-	OtherMultCheckboxReturn,
-	EventStatus as EventStatusEnum,
-	InternalPointOfContact,
-	RadioReturnWithOther,
 	EchelonEventNumber,
 	emptyFromLabels,
-	Maybe,
+	emptySimpleFromLabels,
+	EventStatus as EventStatusEnum,
+	ExternalPointOfContact,
+	InternalPointOfContact,
+	NewEventObject,
+	OtherMultCheckboxReturn,
+	PointOfContactType,
+	RadioReturnWithOther,
 	SimpleMultCheckboxReturn
 } from 'common-lib';
 import { DateTime } from 'luxon';
@@ -26,6 +24,7 @@ import Team from '../../../lib/Team';
 import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
 import { InputProps } from '../../form-inputs/Input';
 import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
+import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
 import SimpleForm, {
 	Checkbox,
 	DateTimeInput,
@@ -33,15 +32,16 @@ import SimpleForm, {
 	FormBlock,
 	Label,
 	ListEditor,
-	OtherMultCheckbox,
 	NumberInput,
+	OtherMultCheckbox,
+	RadioButtonWithOther,
 	SimpleRadioButton,
 	TeamSelector,
 	TextInput,
 	Title,
-	RadioButtonWithOther
+	FormValidator
 } from '../SimpleForm';
-import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
+import { BooleanForField } from '../../form-inputs/FormBlock';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -97,12 +97,7 @@ interface EventFormProps {
 	memberList: Promise<CAPMemberClasses[]>;
 	onEventChange: (event: NewEventFormValues, valid: boolean) => void;
 	onEventFormSubmit: (event: NewEventFormValues, valid: boolean) => void;
-}
-
-interface EventFormState {
-	valid: boolean;
-	changed: { [P in keyof NewEventObject]: boolean };
-	errors: { [P in keyof NewEventObject]: boolean };
+	saving: boolean;
 }
 
 export interface NewEventFormValues {
@@ -140,6 +135,9 @@ export interface NewEventFormValues {
 	limitSignupsToTeam: boolean | null;
 	fileIDs: string[];
 	privateAttendance: boolean;
+	groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
+	wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
+	regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
 	// These are special values used
 	useRegistration: boolean;
@@ -152,21 +150,9 @@ export interface NewEventFormValues {
 		feeAmount: number;
 		feeDue: number;
 	};
-
-	groupEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
-	wingEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
-	regionEventNumber: Maybe<RadioReturnWithOther<EchelonEventNumber>>;
 }
 
 export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObject => {
-	if (
-		event.groupEventNumber.isNone() ||
-		event.wingEventNumber.isNone() ||
-		event.regionEventNumber.isNone()
-	) {
-		throw new Error('Form is not complete');
-	}
-
 	return {
 		acceptSignups: event.acceptSignups,
 		activity: event.activity,
@@ -177,7 +163,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObj
 		endDateTime: event.endDateTime,
 		eventWebsite: event.eventWebsite,
 		fileIDs: event.fileIDs,
-		groupEventNumber: event.groupEventNumber.some(),
+		groupEventNumber: event.groupEventNumber,
 		highAdventureDescription: event.highAdventureDescription,
 		location: event.location,
 		lodgingArrangments: event.lodgingArrangments,
@@ -191,7 +177,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObj
 		pointsOfContact: event.pointsOfContact,
 		customAttendanceFields: event.customAttendanceFields,
 		publishToWingCalendar: event.publishToWingCalendar,
-		regionEventNumber: event.regionEventNumber.some(),
+		regionEventNumber: event.regionEventNumber,
 		registration: event.useRegistration ? event.registration : null,
 		requiredEquipment: event.requiredEquipment,
 		requiredForms: event.requiredForms,
@@ -211,7 +197,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObj
 		transportationDescription: event.transportationDescription,
 		transportationProvided: event.transportationProvided,
 		uniform: event.uniform,
-		wingEventNumber: event.wingEventNumber.some(),
+		wingEventNumber: event.wingEventNumber,
 		privateAttendance: event.privateAttendance
 	};
 };
@@ -251,9 +237,9 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	signUpDenyMessage: '',
 	publishToWingCalendar: false,
 	showUpcoming: true,
-	groupEventNumber: none(),
-	wingEventNumber: none(),
-	regionEventNumber: none(),
+	groupEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
+	wingEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
+	regionEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
 	complete: false,
 	administrationComments: '',
 	status: 0,
@@ -276,7 +262,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	endDateTime: event.endDateTime,
 	eventWebsite: event.eventWebsite,
 	fileIDs: event.fileIDs,
-	groupEventNumber: just(event.groupEventNumber),
+	groupEventNumber: event.groupEventNumber,
 	highAdventureDescription: event.highAdventureDescription,
 	location: event.location,
 	lodgingArrangments: event.lodgingArrangments,
@@ -294,7 +280,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	pointsOfContact: event.pointsOfContact,
 	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
-	regionEventNumber: just(event.regionEventNumber),
+	regionEventNumber: event.regionEventNumber,
 	registration: event.registration || {
 		deadline: Date.now(),
 		information: ''
@@ -311,109 +297,28 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: just(event.wingEventNumber),
+	wingEventNumber: event.wingEventNumber,
 	limitSignupsToTeam: event.limitSignupsToTeam,
 	privateAttendance: event.privateAttendance
 });
 
-export default class EventForm extends React.Component<EventFormProps, EventFormState> {
-	public state: EventFormState = {
-		valid: false,
-		changed: {
-			acceptSignups: false,
-			activity: false,
-			administrationComments: false,
-			comments: false,
-			complete: false,
-			desiredNumberOfParticipants: false,
-			endDateTime: false,
-			eventWebsite: false,
-			fileIDs: false,
-			groupEventNumber: false,
-			highAdventureDescription: false,
-			location: false,
-			lodgingArrangments: false,
-			mealsDescription: false,
-			meetDateTime: false,
-			meetLocation: false,
-			name: false,
-			participationFee: false,
-			pickupDateTime: false,
-			pickupLocation: false,
-			pointsOfContact: false,
-			customAttendanceFields: false,
-			publishToWingCalendar: false,
-			regionEventNumber: false,
-			registration: false,
-			requiredEquipment: false,
-			requiredForms: false,
-			showUpcoming: false,
-			signUpDenyMessage: false,
-			signUpPartTime: false,
-			startDateTime: false,
-			status: false,
-			teamID: false,
-			limitSignupsToTeam: false,
-			transportationDescription: false,
-			transportationProvided: false,
-			uniform: false,
-			wingEventNumber: false,
-			privateAttendance: false
-		},
-		errors: {
-			acceptSignups: false,
-			activity: false,
-			administrationComments: false,
-			comments: false,
-			complete: false,
-			desiredNumberOfParticipants: false,
-			endDateTime: false,
-			eventWebsite: false,
-			fileIDs: false,
-			groupEventNumber: false,
-			highAdventureDescription: false,
-			location: false,
-			lodgingArrangments: false,
-			mealsDescription: false,
-			meetDateTime: false,
-			meetLocation: false,
-			name: false,
-			participationFee: false,
-			pickupDateTime: false,
-			pickupLocation: false,
-			pointsOfContact: false,
-			customAttendanceFields: false,
-			publishToWingCalendar: false,
-			regionEventNumber: false,
-			registration: false,
-			requiredEquipment: false,
-			requiredForms: false,
-			showUpcoming: false,
-			signUpDenyMessage: false,
-			signUpPartTime: false,
-			startDateTime: false,
-			status: false,
-			teamID: false,
-			limitSignupsToTeam: false,
-			transportationDescription: false,
-			transportationProvided: false,
-			uniform: false,
-			wingEventNumber: false,
-			privateAttendance: false
-		}
-	};
+const eventValidator: FormValidator<NewEventFormValues> = {
+	transportationDescription: (desc, values) => desc !== '' || !values.transportationProvided,
+	pickupLocation: loc => !!loc,
+	location: loc => !!loc,
+	meetLocation: loc => !!loc,
+	name: loc => !!loc,
+	startDateTime: (start, values) => start >= values.meetDateTime,
+	endDateTime: (end, values) => end >= values.startDateTime,
+	pickupDateTime: (pickup, values) => pickup >= values.endDateTime
+};
 
+export default class EventForm extends React.Component<EventFormProps> {
 	public constructor(props: EventFormProps) {
 		super(props);
 
 		this.onEventChange = this.onEventChange.bind(this);
 		this.onEventSubmit = this.onEventSubmit.bind(this);
-
-		this.endDateTimeInputChange = this.endDateTimeInputChange.bind(this);
-		this.eventLocationInputChange = this.eventLocationInputChange.bind(this);
-		this.startDateTimeInputChange = this.startDateTimeInputChange.bind(this);
-		this.pickupDateTimeInputChange = this.pickupDateTimeInputChange.bind(this);
-		this.pickupLocationInputChange = this.pickupLocationInputChange.bind(this);
 	}
 
 	public render() {
@@ -425,60 +330,69 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				onSubmit={this.onEventSubmit}
 				values={values}
 				submitInfo={{
-					text: this.props.isEventUpdate ? 'Update event' : 'Create event',
-					disabled: !this.state.valid
+					text: this.props.saving
+						? 'Saving...'
+						: this.props.isEventUpdate
+						? 'Update event'
+						: 'Create event',
+					disabled: this.props.saving
 				}}
+				validator={eventValidator}
+				disableOnInvalid={true}
 			>
 				<Title>Main information</Title>
 
 				<Label>Event Name</Label>
-				<TextInput name="name" />
+				<TextInput name="name" errorMessage="Event must have a name" />
 
 				<Label>Meet date and time</Label>
 				<DateTimeInput
 					name="meetDateTime"
 					time={true}
-					originalTimeZoneOffset={'America/New_York'}
+					originalTimeZoneOffset={this.props.registry.Website.Timezone}
 				/>
 
 				<Label>Meet location</Label>
-				<TextInput name="meetLocation" />
+				<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
 
 				<Label>Start date and time</Label>
 				<DateTimeInput
 					name="startDateTime"
 					time={true}
-					originalTimeZoneOffset={'America/New_York'}
-					onChange={this.startDateTimeInputChange}
+					originalTimeZoneOffset={this.props.registry.Website.Timezone}
+					errorMessage="Event cannot start before meeting"
 				/>
 
 				<Label>Event location</Label>
-				<TextInput name="location" onChange={this.eventLocationInputChange} />
+				<TextInput name="location" errorMessage="Event must have a location" />
 
 				<Label>End date and time</Label>
 				<DateTimeInput
 					name="endDateTime"
 					time={true}
-					originalTimeZoneOffset={'America/New_York'}
-					onChange={this.endDateTimeInputChange}
+					originalTimeZoneOffset={this.props.registry.Website.Timezone}
+					errorMessage="Event cannot end before it starts"
 				/>
 
 				<Label>Pickup date and time</Label>
 				<DateTimeInput
 					name="pickupDateTime"
 					time={true}
-					originalTimeZoneOffset={'America/New_York'}
-					onChange={this.pickupDateTimeInputChange}
+					originalTimeZoneOffset={this.props.registry.Website.Timezone}
+					errorMessage="Event cannot have a pickup before it ends"
 				/>
 
 				<Label>Pickup location</Label>
-				<TextInput name="pickupLocation" onChange={this.pickupLocationInputChange} />
+				<TextInput name="pickupLocation" />
 
 				<Label>Transportation provided</Label>
 				<Checkbox name="transportationProvided" />
 
 				<Label>Transportation description</Label>
-				<TextInput name="transportationDescription" />
+				<TextInput
+					name="transportationDescription"
+					errorMessage="Transportation description required if there is transportation provided"
+				/>
 
 				<Title>Activity Information</Title>
 
@@ -529,7 +443,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<DateTimeInput
 						name="deadline"
 						time={true}
-						originalTimeZoneOffset={'America/New_York'}
+						originalTimeZoneOffset={this.props.registry.Website.Timezone}
 					/>
 				</FormBlock>
 
@@ -553,7 +467,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<DateTimeInput
 						name="feeDue"
 						time={true}
-						originalTimeZoneOffset={'America/New_York'}
+						originalTimeZoneOffset={this.props.registry.Website.Timezone}
 					/>
 				</FormBlock>
 
@@ -663,25 +577,25 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		);
 	}
 
-	private onEventChange(event: NewEventFormValues) {
-		const valid = this.checkIfValid(event);
-
+	private onEventChange(
+		event: NewEventFormValues,
+		errors: BooleanForField<NewEventFormValues>,
+		changed: BooleanForField<NewEventFormValues>,
+		error: boolean
+	) {
 		if (!this.props.isEventUpdate) {
 			const dateTimesHaveBeenModified =
-				this.state.changed.startDateTime ||
-				this.state.changed.endDateTime ||
-				this.state.changed.pickupDateTime;
+				changed.startDateTime || changed.endDateTime || changed.pickupDateTime;
 
 			if (!dateTimesHaveBeenModified) {
 				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
 				event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
 				event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
-			} else if (!this.state.changed.pickupDateTime) {
+			} else if (!changed.pickupDateTime) {
 				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
 			}
 
-			const locationsHaveBeenModified =
-				this.state.changed.location || this.state.changed.pickupLocation;
+			const locationsHaveBeenModified = changed.location || changed.pickupLocation;
 
 			if (!locationsHaveBeenModified) {
 				event.location = event.meetLocation;
@@ -689,15 +603,16 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			}
 		}
 
-		this.setState({
-			valid
-		});
-
-		this.props.onEventChange(event, valid);
+		this.props.onEventChange(event, !error);
 	}
 
-	private onEventSubmit(event: NewEventFormValues) {
-		const valid = this.checkIfValid(event);
+	private onEventSubmit(
+		event: NewEventFormValues,
+		error: BooleanForField<NewEventFormValues>,
+		changed: BooleanForField<NewEventFormValues>,
+		hasError: boolean
+	) {
+		const valid = !hasError;
 
 		// if (!this.props.isEventUpdate) {
 		// 	const dateTimesHaveBeenModified =
@@ -727,136 +642,5 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		});
 
 		this.props.onEventFormSubmit(event, valid);
-	}
-
-	private checkIfValid(event: NewEventFormValues): boolean {
-		let valid = true;
-
-		if (event.meetDateTime >= event.startDateTime) {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					meetDateTime: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.startDateTime >= event.endDateTime) {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					startDateTime: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.endDateTime >= event.pickupDateTime) {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					endDateTime: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.name === '') {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					name: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.meetLocation === '') {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					meetLocation: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.location === '') {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					location: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.pickupLocation === '') {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					pickupLocation: true
-				}
-			}));
-			valid = false;
-		}
-
-		if (event.transportationProvided === true && event.transportationDescription === '') {
-			this.setState(prev => ({
-				errors: {
-					...prev.errors,
-					transportationDescription: true
-				}
-			}));
-			valid = false;
-		}
-
-		return valid;
-	}
-
-	private startDateTimeInputChange() {
-		this.setState(prev => ({
-			changed: {
-				...prev.changed,
-				startDateTime: true
-			}
-		}));
-	}
-
-	private endDateTimeInputChange() {
-		this.setState(prev => ({
-			changed: {
-				...prev.changed,
-				endDateTime: true
-			}
-		}));
-	}
-
-	private pickupDateTimeInputChange() {
-		this.setState(prev => ({
-			changed: {
-				...prev.changed,
-				pickupDateTime: true
-			}
-		}));
-	}
-
-	private eventLocationInputChange() {
-		this.setState(prev => ({
-			changed: {
-				...prev.changed,
-				location: true
-			}
-		}));
-	}
-
-	private pickupLocationInputChange() {
-		this.setState(prev => ({
-			changed: {
-				...prev.changed,
-				pickupLocation: true
-			}
-		}));
 	}
 }

@@ -18,12 +18,12 @@ type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
 type RegEditValues = Omit<RegistryValues, '_id' | 'accountID' | 'id'>;
 
 const timezones: Timezone[] = [
+	'America/Hawaii',
 	'America/Anchorage',
+	'America/Los_Angeles',
 	'America/Arizona',
 	'America/Chicago',
 	'America/Denver',
-	'America/Hawaii',
-	'America/Los_Angeles',
 	'America/New_York',
 	'America/Puerto_Rico'
 ];

@@ -12,6 +12,7 @@ interface FlightAssignStateLoaded {
 	open: boolean;
 	highlighted: string | null;
 	saved: boolean;
+	saving: boolean;
 }
 
 interface FlightAssignStateUnloaded {
@@ -19,6 +20,7 @@ interface FlightAssignStateUnloaded {
 	loaded: false;
 	open: boolean;
 	highlighted: string | null;
+	saving: boolean;
 	saved: false;
 }
 
@@ -39,6 +41,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		loaded: false,
 		open: true,
 		highlighted: null,
+		saving: false,
 		saved: false
 	};
 
@@ -105,14 +108,14 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			return <Loader />;
 		}
 
-		const unusedMembers = this.state.members.slice();
+		const unusedMembers = this.state.members.slice().filter(mem => !mem.seniorMember);
 		const flights: Array<[string, CAPMemberClasses[]]> = [];
 
 		for (const flight of this.props.registry.RankAndFile.Flights) {
 			flights.push([flight, []]);
-			for (const i in unusedMembers) {
+			for (let i = unusedMembers.length - 1; i >= 0; i--) {
 				if (unusedMembers[i].flight === flight && !unusedMembers[i].seniorMember) {
-					const oldMember = unusedMembers.splice(parseInt(i, 10), 1)[0];
+					const oldMember = unusedMembers.splice(i, 1)[0];
 					flights[flights.length - 1][1].push(oldMember);
 				}
 			}
@@ -122,7 +125,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			mem.flight = null;
 		});
 
-		flights.push(['Unassigned', unusedMembers.filter(mem => !mem.seniorMember)]);
+		flights.push(['Unassigned', unusedMembers]);
 
 		let first = 0;
 
@@ -142,8 +145,12 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 					/>
 				))}
 				<div style={saveButtonMargin} id="save">
-					<Button buttonType="primaryButton" onClick={this.onSaveClick}>
-						Save
+					<Button
+						buttonType="primaryButton"
+						onClick={this.onSaveClick}
+						disabled={this.state.saving}
+					>
+						{this.state.saving ? 'Saving...' : 'Save'}
 					</Button>
 					{this.state.saved ? <span style={saveMessage}>Saved!</span> : null}
 				</div>
@@ -197,10 +204,16 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			}
 		}
 
+		this.setState({
+			saved: false,
+			saving: true
+		});
+
 		await this.props.member!.updateFlights(payload.members);
 
 		this.setState({
-			saved: true
+			saved: true,
+			saving: false
 		});
 	}
 }

@@ -1,73 +1,21 @@
-import React from 'react';
-import Page, { PageProps } from '../Page';
 import { EventObject } from 'common-lib';
-import Loader from '../../components/Loader';
-import { MONTHS, getMonth, getClassNameFromEvent } from './DesktopCalendar';
-import myFetch from '../../lib/myFetch';
 import { DateTime } from 'luxon';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { MONTHS } from '../../components/form-inputs/DateTimeInput';
+import { CalendarProps, getMonth } from '../Calendar';
+import Page from '../Page';
+import { getClassNameFromEvent } from './DesktopCalendar';
 import './MobileCalendar.scss';
 
-export default class MobileCalendar extends Page<
-	PageProps<{ month?: string; year?: string }>,
-	{ events: EventObject[] | null }
-> {
+export default class MobileCalendar extends Page<CalendarProps> {
 	public state = {
 		events: null
 	};
 
-	public async componentDidMount() {
-		this.props.updateBreadCrumbs([
-			{
-				target: '/',
-				text: 'Home'
-			},
-			{
-				target: '/calendar',
-				text: 'Calendar'
-			}
-		]);
-
-		this.updateTitle('Calendar');
-
-		this.props.updateSideNav([]);
-
-		const year =
-			typeof this.props.routeProps.match.params.year === 'undefined'
-				? new Date().getUTCFullYear()
-				: parseInt(this.props.routeProps.match.params.year, 10);
-		const month =
-			typeof this.props.routeProps.match.params.month === 'undefined'
-				? new Date().getUTCMonth() + 1
-				: parseInt(this.props.routeProps.match.params.month, 10);
-
-		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
-		const nextMonth = getMonth(month + 1, year);
-
-		const startOfLastMonthWeek =
-			lastMonth.startOf('week').day === lastMonth.day - 6
-				? lastMonth
-				: lastMonth.startOf('week');
-		const endOfNextMonth = nextMonth.endOf('week');
-
-		const res = await myFetch(`/api/event/${+startOfLastMonthWeek}/${+endOfNextMonth}`, {
-			headers: {
-				authorization: this.props.member ? this.props.member.sessionID : ''
-			}
-		});
-
-		const events = (await res.json()) as EventObject[];
-
-		this.setState({
-			events
-		});
-	}
-
 	public render() {
-		return this.state.events === null ? <Loader /> : this.renderCalendar(this.state.events!);
-	}
+		const events = this.props.events;
 
-	public renderCalendar(events: EventObject[]) {
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
 				? new Date().getUTCFullYear()

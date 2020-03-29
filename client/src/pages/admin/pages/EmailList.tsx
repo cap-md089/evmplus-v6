@@ -52,7 +52,7 @@ const normalizeRankInput = (rank: string) =>
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
 	availableMembers: null | CAPMemberClasses[];
-	sortFunction: Maybe<SortFunction>;
+	sortFunction: SortFunction;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -60,7 +60,7 @@ interface EmailListState {
 		nameInput: string;
 		rankGreaterThan: string;
 		rankLessThan: string;
-		memberFilter: Maybe<MemberList>;
+		memberFilter: MemberList;
 	};
 }
 
@@ -178,15 +178,15 @@ const rankLessThan: CheckInput<Member, string> = {
 	filterInput: TextInput
 };
 
-const memberFilter: CheckInput<Member, Maybe<MemberList>> = {
+const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
-		return memberFilters[input.orSome(MemberList.ALL)](mem);
+		return memberFilters[fromValue(input).orSome(MemberList.ALL)](mem);
 	},
-	filterInput: (props: InputProps<Maybe<MemberList>>) => (
+	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={(props.value || none()).orElse(MemberList.ALL)}
+			value={fromValue(props.value).orSome(MemberList.ALL)}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -209,12 +209,12 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
 		selectedMembers: [],
 		availableMembers: null,
-		sortFunction: just<SortFunction>(SortFunction.LASTNAME),
+		sortFunction: SortFunction.LASTNAME,
 		visibleItems: [],
 		displayAdvanced: false,
 		filterValues: {
 			flightInput: '',
-			memberFilter: just<MemberList>(MemberList.ALL),
+			memberFilter: MemberList.ALL,
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: ''
@@ -259,12 +259,11 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
 			members: CAPMemberClasses[];
-			sortFunction: Maybe<SortFunction>;
+			sortFunction: SortFunction;
 			displayAdvanced: boolean;
 		}>;
 
-		const currentSortFunction =
-			sortFunctions[this.state.sortFunction.orElse(SortFunction.LASTNAME).some()];
+		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
 		const filterValues = this.state.filterValues;
 
@@ -352,6 +351,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						<Label>Show advanced filters</Label>
 						<Checkbox name="displayAdvanced" />
 						<MemberSelector
+							fullWidth={true}
 							name="members"
 							values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
 							displayValue={this.displayMemberName}

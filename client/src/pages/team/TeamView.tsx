@@ -271,6 +271,8 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			}
 		}
 
-		return emailList.filter(e => !!e).join('; ');
+		const found: { [key: string]: true } = {};
+
+		return emailList.filter(e => (!e || found[e] ? false : (found[e] = true))).join('; ');
 	}
 }

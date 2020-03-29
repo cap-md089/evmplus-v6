@@ -15,6 +15,7 @@ interface AddEventState {
 	createError: null | number;
 	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
+	saving: boolean;
 }
 
 export default class AddEvent extends Page<PageProps, AddEventState> {
@@ -22,7 +23,8 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		createError: null,
 		event: emptyEventFormValues(),
 		memberList: this.props.account.getMembers(this.props.member),
-		teamList: this.props.account.getTeams(this.props.member)
+		teamList: this.props.account.getTeams(this.props.member),
+		saving: false
 	};
 
 	constructor(props: PageProps) {
@@ -99,6 +101,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				registry={this.props.registry}
 				teamList={this.state.teamList}
 				memberList={this.state.memberList}
+				saving={this.state.saving}
 			/>
 		) : (
 			<div>Please sign in</div>
@@ -127,15 +130,24 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 
 		let eventObject;
 
+		this.setState({
+			saving: true
+		});
+
 		try {
 			eventObject = await Event.Create(realEvent, this.props.member, this.props.account);
 		} catch (e) {
 			this.setState({
-				createError: e.status
+				createError: e.status,
+				saving: false
 			});
 
 			return;
 		}
+
+		this.setState({
+			saving: false
+		});
 
 		this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
 	}

@@ -1,6 +1,7 @@
 @import '../../theme';
 
-input[type="text"], input[type="password"] {
+input[type='text'],
+input[type='password'] {
 	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 	box-sizing: border-box;
 	border: 1px solid black;
@@ -10,10 +11,16 @@ input[type="text"], input[type="password"] {
 	background: white;
 }
 
-input[type="text"]:focus, input[type="password"]:focus {
+input[type='text']:focus,
+input[type='password']:focus {
 	box-shadow: inset 0 0 1em #258eea;
 }
 
-input[type="text"]:disabled {
-	background: #aaa
+input[type='text']:disabled {
+	background: #aaa;
+}
+
+.text-error {
+	margin-left: 5px;
+	color: red;
 }

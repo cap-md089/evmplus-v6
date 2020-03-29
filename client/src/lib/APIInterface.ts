@@ -121,7 +121,7 @@ export default abstract class APIInterface<T> {
 			options.method = 'POST';
 		}
 
-		return func(this.buildURI.apply(this, uri.split('/')), options);
+		return func(`/${uri}`, options);
 	}
 
 	/**

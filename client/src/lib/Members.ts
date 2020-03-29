@@ -27,6 +27,9 @@ export const createCorrectMemberObject = (
 
 export type CAPMemberClasses = CAPNHQMember | CAPProspectiveMember;
 
+export const isCAPMemberClass = (m?: MemberBase | null): m is CAPMemberClasses =>
+	m instanceof CAPNHQMember || m instanceof CAPProspectiveMember;
+
 /**
  * Given a session ID, queries the server for the member that the session ID belongs to
  *

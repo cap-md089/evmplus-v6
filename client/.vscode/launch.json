@@ -17,7 +17,8 @@
 			"webRoot": "${workspaceFolder}/src",
 			"linux": {
 				"runtimeExecutable": "/usr/bin/chromium"
-			}
+			},
+			"skipFiles": ["node_modules/**/*"]
 		},
 		{
 			"type": "chrome",

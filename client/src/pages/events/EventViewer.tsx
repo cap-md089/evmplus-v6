@@ -4,28 +4,32 @@ import {
 	AttendanceRecord,
 	Either,
 	EventStatus,
+	formatEventViewerDate as formatDate,
+	fromValue,
+	getMemberEmail,
+	getMemberPhone,
+	identity,
+	just,
 	Maybe,
 	Member,
 	MemberReference,
 	NewAttendanceRecord,
-	NHQMemberReference,
-	PointOfContactType,
-	ProspectiveMemberReference,
-	formatEventViewerDate as formatDate,
+	none,
 	NullMemberReference,
-	presentMultCheckboxReturn
+	PointOfContactType,
+	presentMultCheckboxReturn,
+	renderAccountID,
+	stringifyMemberReference
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import AttendanceItemView from '../../components/AttendanceView';
-import Button from '../../components/Button';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DropDownList from '../../components/DropDownList';
 import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
-import { Activities, RequiredForms, Uniforms } from '../../components/forms/usable-forms/EventForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
 import Event from '../../lib/Event';
@@ -81,13 +85,77 @@ export const attendanceStatusLabels = [
 ];
 
 const renderName = (
+	renderMember: MemberBase | null,
+	event: Event,
 	member: AttendanceRecord,
 	attendees: { [key: string]: Maybe<Member> },
 	organizations: { [key: string]: AccountObject }
 ) => {
-	return `${(member.memberID as Exclude<MemberReference, NullMemberReference>).id}: ${
-		member.memberName
-	}`;
+	const defaultRenderName = `${
+		(member.memberID as Exclude<MemberReference, NullMemberReference>).id
+	}: ${member.memberName}`;
+
+	if (
+		!!renderMember &&
+		(renderMember?.hasPermission('ManageEvent') || event.isPOC(renderMember))
+	) {
+		const id = stringifyMemberReference(member.memberID);
+
+		const getAccountWithID = (orgs: { [key: string]: AccountObject }) => (
+			foundMember: Member
+		) => {
+			let foundAccount = none<AccountObject>();
+
+			if (foundMember.type === 'CAPNHQMember') {
+				for (const accountID in orgs) {
+					if (orgs.hasOwnProperty(accountID)) {
+						const org = orgs[accountID];
+
+						if (org.mainOrg === foundMember.orgid) {
+							foundAccount = just(org);
+							break;
+						} else if (
+							!foundAccount.hasValue &&
+							org.orgIDs.includes(foundMember.orgid)
+						) {
+							foundAccount = just(org);
+						}
+					}
+				}
+			} else if (foundMember.type === 'CAPProspectiveMember') {
+				foundAccount = just(orgs[foundMember.accountID]);
+			} else {
+				throw new Error('Did not cover all member types');
+			}
+
+			return foundAccount;
+		};
+
+		const mem = fromValue(attendees[id]);
+
+		const account = mem.flatMap(getAccountWithID(organizations));
+
+		return mem
+			.flatMap(foundMember => {
+				const email = getMemberEmail(foundMember.contact);
+				const phone = getMemberPhone(foundMember.contact);
+
+				const contactDisplay = [email, phone]
+					.filter(val => val.isSome())
+					.map(val => val.some())
+					.join(', ');
+
+				return account.map(
+					foundAccount =>
+						`${defaultRenderName} [${renderAccountID(
+							foundAccount
+						)}] [${contactDisplay}]`
+				);
+			})
+			.orSome(defaultRenderName);
+	}
+
+	return defaultRenderName;
 };
 
 export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
@@ -308,12 +376,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									</DialogueButton>
 									{' | '}
 									<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-									{' | '}
+									{/* {' | '}
 									<Button buttonType="none">Print Cadet Roster</Button>
 									{' | '}
 									<Button buttonType="none">Print Senior Roster</Button>
 									{' | '}
-									<Button buttonType="none">Print Event Registry</Button>
+									<Button buttonType="none">Print Event Registry</Button> */}
 									<br />
 									<br />
 								</>
@@ -420,9 +488,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							{member !== null ? (
 								<div id="signup">
 									{event.canSignUpForEvent(this.props.member).cata(
-										err => (
-											<p>Cannot sign up for event: {err}</p>
-										),
+										err =>
+											err !== 'Member is already in attendance' ? (
+												<p>Cannot sign up for event: {err}</p>
+											) : null,
 										() => (
 											<AttendanceForm
 												account={this.props.account}
@@ -438,7 +507,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									)}
 									<h2 id="attendance">Attendance</h2>
 									<DropDownList
-										titles={val => renderName(val, attendees, organizations)}
+										titles={val =>
+											renderName(
+												this.props.member,
+												event,
+												val,
+												attendees,
+												organizations
+											)
+										}
 										values={event.attendance}
 										onlyOneOpen={true}
 									>
@@ -456,6 +533,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													val.memberID
 												)}
 												key={i}
+												index={i}
 											/>
 										)}
 									</DropDownList>

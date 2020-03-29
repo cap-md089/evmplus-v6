@@ -21,7 +21,7 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 
 		const isChecked = (i: number) =>
 			value
-				.map(val => val.values[i])
+				.flatMap(val => fromValue(val.values[i]))
 				.orElse(false)
 				.some();
 

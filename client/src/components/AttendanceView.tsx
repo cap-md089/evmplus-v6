@@ -20,6 +20,7 @@ interface AttendanceItemViewProps {
 	updateAttendance: (record: NewAttendanceRecord, member: MemberReference) => void;
 	clearUpdated: () => void;
 	updated: boolean;
+	index: number;
 }
 
 const statusDescription = {
@@ -65,6 +66,7 @@ export default class AttendanceItemView extends Component<
 				clearUpdated={this.props.clearUpdated}
 				removeRecord={this.props.removeAttendance}
 				signup={false}
+				index={this.props.index}
 			/>
 		) : (
 			<div>

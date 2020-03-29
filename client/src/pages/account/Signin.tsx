@@ -156,10 +156,12 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 					{this.state.passwordSetResult !== '' ? <Label /> : null}
 					{this.state.passwordSetResult !== '' ? (
-						<TextBox>{this.state.passwordSetResult}</TextBox>
+						<TextBox>
+							<b>{this.state.passwordSetResult}</b>
+						</TextBox>
 					) : null}
 
-					<PasswordForm name="password" />
+					<PasswordForm fullWidth={true} name="password" />
 				</SimpleForm>
 			</div>
 		);

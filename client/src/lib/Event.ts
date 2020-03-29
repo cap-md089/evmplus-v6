@@ -357,10 +357,10 @@ export default class Event extends APIInterface<EventObject> implements EventObj
 			}
 		}
 
-		const body: NewAttendanceRecord & { member?: MemberReference } = record;
+		const body: NewAttendanceRecord = record;
 
 		if (!member.matchesReference(memberToAdd)) {
-			body.member = memberToAdd;
+			body.memberID = memberToAdd;
 		}
 
 		const token = await this.getToken(member);

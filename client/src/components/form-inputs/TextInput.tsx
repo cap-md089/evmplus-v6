@@ -87,7 +87,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 					disabled={this.props.disabled}
 				/>
 				{this.props.hasError && this.props.errorMessage && this.state.changed ? (
-					<span>{this.props.errorMessage}</span>
+					<span className="text-error">{this.props.errorMessage}</span>
 				) : null}
 			</div>
 		);

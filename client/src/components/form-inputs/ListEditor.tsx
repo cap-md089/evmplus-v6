@@ -4,7 +4,7 @@ import { InputProps } from './Input';
 import './ListEditor.css';
 import { Omit } from 'react-router';
 
-type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
+export type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
 
 const clearFix: React.CSSProperties = {
 	content: '',
@@ -16,7 +16,7 @@ const upperMargin = {
 	marginTop: 10
 };
 
-interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
+export interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
 	extends InputProps<T[]> {
 	inputComponent: R;
 	addNew: () => T;

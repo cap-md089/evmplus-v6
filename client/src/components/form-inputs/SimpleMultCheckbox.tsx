@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 import './MultCheckbox.scss';
-import { SimpleMultCheckboxReturn, emptyFromLabels, Maybe, none } from 'common-lib';
+import { SimpleMultCheckboxReturn, emptyFromLabels, Maybe, none, fromValue } from 'common-lib';
 
-interface SimpleMultCheckboxProps extends InputProps<Maybe<SimpleMultCheckboxReturn>> {
+interface SimpleMultCheckboxProps extends InputProps<SimpleMultCheckboxReturn> {
 	labels: string[];
 }
 
@@ -13,13 +13,9 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 	}
 
 	public render() {
-		const value = this.props.value || none();
+		const value = this.props.value || emptyFromLabels(this.props.labels);
 
-		const isChecked = (i: number) =>
-			value
-				.map(val => val.values[i])
-				.orElse(false)
-				.some();
+		const isChecked = (i: number) => value.values[i];
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -46,7 +42,7 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 		return (e: React.ChangeEvent<HTMLInputElement>) => {
 			const isChecked = e.currentTarget.checked;
 
-			const value = (this.props.value || none())
+			const value = fromValue(this.props.value)
 				.orElse(emptyFromLabels(this.props.labels))
 				.map(val => ({
 					...val,
@@ -60,12 +56,12 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value
+					value: value.some()
 				});
 			}
 
 			if (this.props.onChange) {
-				this.props.onChange(value);
+				this.props.onChange(value.some());
 			}
 		};
 	}

@@ -49,7 +49,12 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 							<Link to="/admin/permissions">Permission management</Link>
 						</>
 					) : null}
-					{this.props.member instanceof CAPNHQMember && this.props.member.seniorMember ? (
+					{this.props.member instanceof CAPNHQMember &&
+					(this.props.member.seniorMember ||
+						this.props.member.hasDutyPosition([
+							'Cadet Commander',
+							'Cadet Deputy Commander'
+						])) ? (
 						<>
 							<br />
 							<Link to="/admin/emaillist">Email selector</Link>

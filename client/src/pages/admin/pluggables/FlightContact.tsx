@@ -15,7 +15,8 @@ import LoaderShort from '../../../components/LoaderShort';
 import MemberBase, {
 	CAPMemberClasses,
 	CAPNHQMember,
-	CAPProspectiveMember
+	CAPProspectiveMember,
+	isCAPMemberClass
 } from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
 import './FlightContact.css';
@@ -157,7 +158,7 @@ const normalizeRankInput = (rank: string) =>
 interface EmailListState {
 	selectedMembers: CAPMemberClasses[];
 	availableMembers: null | CAPMemberClasses[];
-	sortFunction: Maybe<SortFunction>;
+	sortFunction: SortFunction;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
 	filterValues: {
@@ -282,7 +283,7 @@ const simpleFilters2 = [nameInput];
 
 interface SelectorFormValues {
 	members: CAPMemberClasses[];
-	sortFunction: Maybe<SortFunction>;
+	sortFunction: SortFunction;
 	displayAdvanced: boolean;
 }
 
@@ -295,17 +296,13 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			rankGreaterThan: '',
 			rankLessThan: '',
 			flightInput: fromValue(this.props.member)
-				.flatMap(member =>
-					member instanceof CAPNHQMember || member instanceof CAPProspectiveMember
-						? just(member)
-						: none<CAPMemberClasses>()
-				)
+				.filterType(isCAPMemberClass)
 				.filter(isFlightStaff)
 				.flatMap(member => fromValue(member.flight))
 				.orSome('')
 		},
 		selectedMembers: [],
-		sortFunction: just<SortFunction>(SortFunction.CAPID),
+		sortFunction: SortFunction.CAPID,
 		visibleItems: []
 	};
 
@@ -379,8 +376,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			return <Loader />;
 		}
 
-		const currentSortFunction =
-			sortFunctions[this.state.sortFunction.orSome(SortFunction.LASTNAME)];
+		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
 		const filterValues = this.state.filterValues;
 

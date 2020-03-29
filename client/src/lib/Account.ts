@@ -121,9 +121,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	}
 
 	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
-		const url = this.buildURI('api', 'member');
-
-		const results = await this.fetch(url, {}, member);
+		const results = await this.fetch(`/api/member`, {}, member);
 
 		const json = (await results.json()) as Member[];
 
@@ -156,9 +154,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	}
 
 	public async getEvents(member?: MemberBase | null): Promise<Event[]> {
-		const url = this.buildURI('api', 'event');
-
-		const results = await this.fetch(url, {}, member);
+		const results = await this.fetch(`/api/event`, {}, member);
 
 		const events = await results.json();
 
@@ -166,9 +162,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	}
 
 	public async getNextRecurringEvent(): Promise<Maybe<Event>> {
-		const url = this.buildURI('api', 'event', 'recurring');
-
-		const results = await this.fetch(url);
+		const results = await this.fetch(`/api/event/recurring`);
 
 		const event = (await results.json()) as EitherObj<api.HTTPError, MaybeObj<EventObject>>;
 
@@ -179,9 +173,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	}
 
 	public async getUpcomingEvents(): Promise<Event[]> {
-		const url = this.buildURI('api', 'event', 'upcoming');
-
-		const results = await this.fetch(url);
+		const results = await this.fetch(`/api/event/upcoming`);
 
 		const events = await results.json();
 
@@ -193,9 +185,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 	}
 
 	public async getTeams(member?: MemberBase | null): Promise<Team[]> {
-		const url = this.buildURI('api', 'team');
-
-		const results = await this.fetch(url, {}, member);
+		const results = await this.fetch(`/api/team`, {}, member);
 
 		const teams = await results.json();
 
@@ -213,9 +203,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			target = target.id;
 		}
 
-		const url = this.buildURI('api', 'files', target, 'children');
-
-		const results = await this.fetch(url, {}, member);
+		const results = await this.fetch(`/api/files/${target}/children`, {}, member);
 
 		return results.json() as Promise<FileObject[]>;
 	}
@@ -234,9 +222,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			target = target.id;
 		}
 
-		const url = this.buildURI('api', 'files', target, 'children', 'dirty');
-
-		const results = await this.fetch(url, {}, member);
+		const results = await this.fetch(`/api/files/${target}/children/dirty`, {}, member);
 
 		const files = await results.json();
 

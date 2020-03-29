@@ -54,5 +54,7 @@ export default (props: NumberInputProps) => (
 				});
 			}
 		}}
+		hasError={props.hasError}
+		errorMessage={props.errorMessage}
 	/>
 );

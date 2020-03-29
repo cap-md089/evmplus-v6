@@ -82,7 +82,9 @@ export default class POCInput extends React.Component<
 
 		const POCType = SimpleRadioButton as new () => SimpleRadioButton<PointOfContactType>;
 
-		const value = this.props.value;
+		const value = {
+			...this.props.value
+		};
 
 		return (
 			<FormBlock<DisplayInternalPointOfContact | ExternalPointOfContact>

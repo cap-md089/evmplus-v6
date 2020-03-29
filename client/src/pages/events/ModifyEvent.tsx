@@ -14,6 +14,7 @@ interface ModifyEventUIState {
 	memberList: Promise<CAPMemberClasses[]>;
 	teamList: Promise<Team[]>;
 	errorMessage: string | null;
+	saving: boolean;
 }
 
 interface ModifyEventStateLoading {
@@ -34,7 +35,8 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 
 		errorMessage: null,
 		memberList: this.props.account.getMembers(this.props.member),
-		teamList: this.props.account.getTeams(this.props.member)
+		teamList: this.props.account.getTeams(this.props.member),
+		saving: false
 	};
 
 	constructor(props: PageProps<{ id: string }>) {
@@ -143,6 +145,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 				registry={this.props.registry}
 				teamList={this.state.teamList}
 				memberList={this.state.memberList}
+				saving={this.state.saving}
 			/>
 		);
 	}
@@ -175,8 +178,19 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 
 		eventObject.set(convertFormValuesToEvent(event));
 
-		eventObject.save(this.props.member).then(() => {
-			this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
+		this.setState({
+			saving: true
 		});
+
+		eventObject
+			.save(this.props.member)
+			.then(() => {
+				this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
+			})
+			.catch(() => {
+				this.setState({
+					saving: false
+				});
+			});
 	}
 }

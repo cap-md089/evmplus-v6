@@ -1,10 +1,9 @@
-import { Maybe, RadioReturnWithOther, none, just } from 'common-lib';
+import { Maybe, RadioReturnWithOther, none, just, emptyFromLabels, fromValue } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
 import './RadioButton.scss';
 
-export interface RadioProps<E extends number = number>
-	extends InputProps<Maybe<RadioReturnWithOther<E>>> {
+export interface RadioProps<E extends number = number> extends InputProps<RadioReturnWithOther<E>> {
 	labels: string[];
 }
 
@@ -15,7 +14,11 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: this.props.value || none()
+				value: this.props.value || {
+					labels: this.props.labels.slice(),
+					otherValueSelected: false,
+					selection: 0 as E
+				}
 			});
 		}
 
@@ -24,7 +27,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	}
 
 	public render() {
-		const value = this.props.value || none();
+		const value = fromValue(this.props.value);
 
 		const isChecked = (i: number) =>
 			value
@@ -95,11 +98,11 @@ export default class RadioButton<E extends number = number> extends React.Compon
 
 	private getChangeHandler(index: E) {
 		return () => {
-			const value = just<RadioReturnWithOther<E>>({
+			const value = {
 				labels: this.props.labels,
-				otherValueSelected: false,
+				otherValueSelected: false as const,
 				selection: index
-			});
+			};
 
 			if (this.props.onChange) {
 				this.props.onChange(value);
@@ -117,11 +120,11 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	private updateOtherText(e: React.ChangeEvent<HTMLInputElement>) {
 		const text = e.target.value;
 
-		const value = just<RadioReturnWithOther<E>>({
+		const value = {
 			labels: this.props.labels,
-			otherValueSelected: true,
+			otherValueSelected: true as const,
 			otherValue: text
-		});
+		};
 
 		if (this.props.onChange) {
 			this.props.onChange(value);
@@ -136,16 +139,16 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	}
 
 	private selectOther() {
-		const otherText = (this.props.value || none())
+		const otherText = fromValue(this.props.value)
 			.flatMap(ret => (ret.otherValueSelected ? just(ret.otherValue) : none<string>()))
 			.orElse('')
 			.some();
 
-		const value = just<RadioReturnWithOther<E>>({
+		const value = {
 			labels: this.props.labels,
 			otherValue: otherText,
-			otherValueSelected: true
-		});
+			otherValueSelected: true as const
+		};
 
 		if (this.props.onChange) {
 			this.props.onChange(value);

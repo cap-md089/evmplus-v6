@@ -5,17 +5,17 @@ import {
 	EitherObj,
 	just,
 	Maybe,
+	maybe,
 	MemberReference,
 	none,
 	NullMemberReference,
-	stringifyMemberReference,
-	MaybeObj,
-	maybe
+	stringifyMemberReference
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'timeago.js';
+import Button from '../../../components/Button';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import Loader from '../../../components/Loader';
@@ -23,7 +23,6 @@ import SigninLink from '../../../components/SigninLink';
 import MemberBase, { CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
 import attendanceStyles from './AttendanceLog.module.css';
-import Button from '../../../components/Button';
 
 interface AttendanceHistoryUIState {
 	buttonsDisabled: boolean;

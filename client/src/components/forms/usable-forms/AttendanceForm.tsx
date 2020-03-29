@@ -21,7 +21,7 @@ import SimpleForm, {
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
 
-interface AttendanceFormProps {
+export interface AttendanceFormProps {
 	account: Account;
 	member: MemberBase;
 	event: Event;
@@ -31,11 +31,14 @@ interface AttendanceFormProps {
 	updated: boolean;
 	signup: boolean;
 	clearUpdated: () => void;
+	index?: number;
 }
 
 interface AttendanceFormState {
 	attendance: NewAttendanceRecord;
 	usePartTime: boolean;
+	saving: boolean;
+	deleting: boolean;
 }
 
 export default class AttendanceForm extends React.Component<
@@ -57,7 +60,9 @@ export default class AttendanceForm extends React.Component<
 					status: props.record.status,
 					customAttendanceFieldValues: []
 				},
-				usePartTime: false
+				usePartTime: false,
+				saving: false,
+				deleting: false
 			};
 		} else {
 			this.state = {
@@ -66,10 +71,12 @@ export default class AttendanceForm extends React.Component<
 					comments: '',
 					departureTime: null,
 					planToUseCAPTransportation: false,
-					status: 0,
+					status: AttendanceStatus.COMMITTEDATTENDED,
 					customAttendanceFieldValues: []
 				},
-				usePartTime: false
+				usePartTime: false,
+				saving: false,
+				deleting: false
 			};
 		}
 
@@ -113,18 +120,23 @@ export default class AttendanceForm extends React.Component<
 					status: !!this.props.record
 						? this.state.attendance.status
 						: this.state.attendance.status === AttendanceStatus.COMMITTEDATTENDED
-						? 0
-						: 1
+						? AttendanceStatus.COMMITTEDATTENDED
+						: AttendanceStatus.NOSHOW
 				}}
 				onChange={this.onAttendanceFormChange}
 				onSubmit={this.onAttendanceFormSubmit}
 				submitInfo={{
-					text: !!this.props.record ? 'Update information' : 'Sign up'
+					text: this.state.saving
+						? !!this.props.record
+							? 'Updating...'
+							: 'Signing up...'
+						: !!this.props.record
+						? 'Update information'
+						: 'Sign up',
+					disabled: this.state.saving || this.state.deleting
 				}}
 			>
-				{this.props.updated ? (
-					<TextBox name="null">Attendance information updated</TextBox>
-				) : null}
+				{this.props.updated ? <TextBox>Attendance information updated</TextBox> : null}
 
 				<Label>Comments</Label>
 				<BigTextBox name="comments" />
@@ -190,19 +202,26 @@ export default class AttendanceForm extends React.Component<
 				{!!this.props.record ? (
 					<SimpleRadioButton<AttendanceStatus>
 						name="status"
+						index={this.props.index}
 						labels={attendanceStatusLabels}
 					/>
 				) : (
 					<SimpleRadioButton<AttendanceStatus>
 						name="status"
+						index={this.props.index}
 						labels={['I will attend', 'I will NOT attend']}
 					/>
 				)}
 
 				{!!this.props.record && this.props.member.isPOCOf(this.props.event) ? (
 					<TextBox name="null">
-						<Button onClick={this.removeAttendanceRecord}>
-							Remove attendance record
+						<Button
+							onClick={this.removeAttendanceRecord}
+							disabled={this.state.deleting || this.state.saving}
+						>
+							{this.state.deleting
+								? 'Deleting record...'
+								: 'Remove attendance record'}
 						</Button>
 					</TextBox>
 				) : null}
@@ -226,11 +245,11 @@ export default class AttendanceForm extends React.Component<
 				comments: attendanceSignup.comments,
 				departureTime,
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
-				status: this.props.record
+				status: !!this.props.record
 					? attendanceSignup.status
 					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 					? AttendanceStatus.COMMITTEDATTENDED
-					: AttendanceStatus.NOTPLANNINGTOATTEND,
+					: AttendanceStatus.NOSHOW,
 				customAttendanceFieldValues: []
 			},
 			usePartTime: attendanceSignup.usePartTime
@@ -268,9 +287,13 @@ export default class AttendanceForm extends React.Component<
 				? attendanceSignup.status
 				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 				? AttendanceStatus.COMMITTEDATTENDED
-				: AttendanceStatus.NOTPLANNINGTOATTEND,
+				: AttendanceStatus.NOSHOW,
 			customAttendanceFieldValues: []
 		};
+
+		this.setState({
+			saving: true
+		});
 
 		if (this.props.record) {
 			await this.props.event.modifyAttendee(
@@ -286,6 +309,10 @@ export default class AttendanceForm extends React.Component<
 			);
 		}
 
+		this.setState({
+			saving: false
+		});
+
 		this.props.updateRecord(newRecord, this.props.member.getReference());
 	}
 
@@ -294,7 +321,15 @@ export default class AttendanceForm extends React.Component<
 			return;
 		}
 
+		this.setState({
+			deleting: true
+		});
+
 		await this.props.event.removeAttendee(this.props.member, this.props.record.memberID);
+
+		this.setState({
+			deleting: false
+		});
 
 		this.props.removeRecord(this.props.record);
 	}

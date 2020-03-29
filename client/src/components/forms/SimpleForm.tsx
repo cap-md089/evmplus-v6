@@ -190,6 +190,9 @@ export function isLabel(el: React.ReactNode): el is React.ReactElement<any> {
  */
 export type BooleanFields<T> = { [K in keyof T]: boolean };
 
+/**
+ * The predicate function returns true if the value is a good one
+ */
 export type FormValidator<T> = { [K in keyof T]?: (value: T[K], allValues: T) => boolean };
 
 /**
@@ -265,7 +268,7 @@ export interface FormProps<F> {
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
 	 */
-	values?: F;
+	values: F;
 	/**
 	 * Whether or not to show a submit button. This is nice for when a submit button is not
 	 * nessecary
@@ -273,6 +276,8 @@ export interface FormProps<F> {
 	showSubmitButton?: boolean;
 	/**
 	 * Validator for the form
+	 *
+	 * The predicate function returns true if the value is a good one
 	 */
 	validator?: FormValidator<F>;
 	/**
@@ -318,7 +323,6 @@ export default class SimpleForm<
 		disabled: boolean;
 	}
 > {
-	protected fields: C = {} as C;
 	protected fieldsChanged: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
 
 	protected get fieldsError(): { [K in keyof C]: boolean } {
@@ -336,7 +340,10 @@ export default class SimpleForm<
 				if (this.props.validator.hasOwnProperty(i)) {
 					const field = i as keyof C;
 					// @ts-ignore
-					fieldsError[field] = !this.props.validator[field](this.fields[i], this.fields);
+					fieldsError[field] = !this.props.validator[field](
+						this.props.values[i],
+						this.props.values
+					);
 				}
 			}
 		}
@@ -350,9 +357,6 @@ export default class SimpleForm<
 			false
 		);
 	}
-
-	protected token: string = '';
-	protected sessionID: string = '';
 
 	/**
 	 * Create a form
@@ -373,8 +377,6 @@ export default class SimpleForm<
 		this.onChange = this.onChange.bind(this);
 		this.onInitialize = this.onInitialize.bind(this);
 		this.submit = this.submit.bind(this);
-
-		this.fields = {} as C;
 	}
 
 	/**
@@ -435,9 +437,6 @@ export default class SimpleForm<
 						// 	: typeof child.props.value === 'undefined'
 						// 	? ''
 						// 	: child.props.value;
-						if (typeof this.fields[childName] === 'undefined') {
-							this.fields[childName] = value;
-						}
 						if (isFullWidthableElement(child)) {
 							childFullWidth = !!child.props.fullWidth;
 						}
@@ -456,7 +455,8 @@ export default class SimpleForm<
 								onInitialize: this.onInitialize,
 								key: i + 1,
 								value,
-								hasError: this.fieldsError[childName]
+								hasError:
+									this.fieldsChanged[childName] && this.fieldsError[childName]
 							})
 						];
 					}
@@ -564,44 +564,34 @@ export default class SimpleForm<
 	 */
 	protected onChange(e: { name: string; value: any }) {
 		const name = e.name as keyof C;
-		this.fields[name] = e.value;
+		const fields = { ...this.props.values };
+		fields[name] = e.value;
 		this.fieldsChanged[e.name as keyof C] = true;
 
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = !validator(e.value, this.fields);
+			error = !validator(e.value, fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		// DO NOT TOUCH
-		// If this is moved into the conditional TypeScript gets upset
-		const onChange = this.props.onChange;
-
-		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
-		}
+		this.props.onChange?.(fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 	}
 
 	protected onInitialize(e: { name: string; value: any }) {
 		const name = e.name as keyof C;
-		this.fields[name] = e.value;
+		const fields = { ...this.props.values };
+		fields[name] = e.value;
 		this.fieldsChanged[e.name as keyof C] = false;
 
 		let error = false;
 		const validator = this.props.validator ? this.props.validator[name] : null;
 		if (validator) {
-			error = !validator(e.value, this.fields);
+			error = !validator(e.value, fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
-		// DO NOT TOUCH
-		// If this is moved into the conditional TypeScript gets upset
-		const onChange = this.props.onChange;
-
-		if (onChange !== undefined) {
-			onChange(this.fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
-		}
+		this.props.onChange?.(fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
 	}
 
 	/**
@@ -612,7 +602,12 @@ export default class SimpleForm<
 	protected submit(e: React.MouseEvent<HTMLInputElement>) {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
-			this.props.onSubmit(this.fields, this.fieldsError, this.fieldsChanged, this.hasError);
+			this.props.onSubmit(
+				this.props.values,
+				this.fieldsError,
+				this.fieldsChanged,
+				this.hasError
+			);
 		}
 	}
 }

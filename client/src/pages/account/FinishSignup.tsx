@@ -72,7 +72,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				<Label>Please choose a username</Label>
 				<TextInput name="username" />
 
-				<PasswordForm name="password" />
+				<PasswordForm name="password" fullWidth={true} />
 			</SimpleForm>
 		);
 	}

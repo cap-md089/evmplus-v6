@@ -28,7 +28,7 @@ export default class ErrorMessage extends APIInterface<ErrorObject> {
 
 		const fullError = (await req.json()) as EitherObj<api.HTTPError, ClientErrorObject>;
 
-		return either(fullError).map(e => new ErrorMessage(e));
+		return either(fullError);
 	}
 
 	public constructor(public error: ClientErrorObject | ServerErrorObject) {
