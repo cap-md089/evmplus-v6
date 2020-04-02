@@ -66,7 +66,10 @@ export class AsyncMaybe<T> {
 	public isNone = (): Promise<boolean> => this.value.then(v => isNone(v)).catch(v => true);
 
 	public toEither = <L>(defaultValue: L): AsyncEither<L, T> =>
-		new AsyncEither(this.maybe().then(maybe => maybe.toEither(defaultValue)), defaultValue);
+		new AsyncEither(
+			this.maybe().then(maybe => maybe.toEither(defaultValue)),
+			defaultValue
+		);
 
 	public then = <TResult1 = T, TResult2 = never>(
 		onfulfilled?: ((value: T | null) => TResult1 | PromiseLike<TResult1>) | undefined | null,

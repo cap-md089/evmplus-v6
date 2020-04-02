@@ -1,4 +1,4 @@
-import { CAPMemberContact, MemberReference } from '../typings/types';
+import { CAPMemberContact, Member, MemberReference } from '../typings/types';
 import { fromValue, just, Maybe, none } from './Maybe';
 
 export const stringifyMemberReference = (ref: MemberReference) =>
@@ -51,3 +51,22 @@ export const getMemberEmail = (contact: CAPMemberContact) =>
 
 export const areMembersTheSame = (ref1: MemberReference, ref2: MemberReference) =>
 	ref1.type !== 'Null' && ref1.type === ref2.type && ref1.id === ref2.id;
+
+export const getFullMemberName = (member: Member): Maybe<string> =>
+	member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember'
+		? just(
+				member.memberRank +
+					' ' +
+					[
+						member.nameFirst,
+						member.nameMiddle.charAt(0),
+						member.nameLast,
+						member.nameSuffix
+					]
+						.filter(s => !!s)
+						.map(value => value.trimLeft().trimRight())
+						.map(value => value.replace(/\r\n/gm, ''))
+						.map(value => value.replace(/(  +)/g, ' '))
+						.join(' ')
+		  )
+		: none();

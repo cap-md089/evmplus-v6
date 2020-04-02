@@ -138,6 +138,8 @@ export namespace api {
 
 				export type FinishPasswordReset = EitherObj<HTTPError, { sessionID: string }>;
 			}
+
+			export type RegisterDiscord = EitherObj<HTTPError, void>;
 		}
 
 		export namespace attendance {

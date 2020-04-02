@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import { MaybeObj } from '../lib/Maybe';
 
 /**
@@ -262,8 +263,9 @@ export enum MemberCreateError {
 	SERVER_ERROR = 1,
 	PASSWORD_EXPIRED = 2,
 	INVALID_SESSION_ID = 3,
-	UNKOWN_SERVER_ERROR = 4,
-	DATABASE_ERROR = 5
+	RECAPTCHA_INVALID = 4,
+	UNKOWN_SERVER_ERROR = 5,
+	DATABASE_ERROR = 6
 }
 
 export enum PointOfContactType {
@@ -622,7 +624,7 @@ export enum ErrorResolvedStatus {
 	RESOLVED
 }
 
-export type ErrorType = 'Server' | 'Client';
+export type ErrorType = 'Server' | 'Client' | 'DiscordBot';
 
 /**
  * Describes errors that are stored in the database
@@ -739,7 +741,32 @@ export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, 
 	user: MemberReference | null;
 }
 
-export type Errors = ClientErrorObject | ServerErrorObject;
+export interface DiscordBotErrorObject extends ErrorObject, NoSQLDocument, Identifiable {
+	/**
+	 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
+	 */
+	id: number;
+	/**
+	 * The file in which the error occurred
+	 */
+	type: 'DiscordBot';
+}
+
+export type Errors = ClientErrorObject | ServerErrorObject | DiscordBotErrorObject;
+
+/**
+ * Used to represent the information that allows the Discord bot to control servers
+ */
+export interface DiscordServerInformation {
+	/**
+	 * The server (guild) ID
+	 */
+	serverID: string;
+	/**
+	 * Whether or not to display what flight the member is a part of
+	 */
+	displayFlight: boolean;
+}
 
 /**
  * Used when requesting or editing an account
@@ -749,6 +776,10 @@ export interface NewAccountObject {
 	 * CAP IDs of the admins of this account
 	 */
 	adminIDs: MemberReference[];
+	/**
+	 * Discord server information
+	 */
+	discordServer: MaybeObj<DiscordServerInformation>;
 }
 
 /**
@@ -1960,6 +1991,8 @@ export interface NullMemberReference {
  */
 export type MemberReference = NHQMemberReference | ProspectiveMemberReference | NullMemberReference;
 
+export type NonNullMemberReference = Exclude<MemberReference, NullMemberReference>;
+
 /**
  * In the case that it doesn't like MemberBase, try using Member
  */
@@ -2089,7 +2122,8 @@ export interface FailedSigninReturn {
 		| MemberCreateError.INCORRRECT_CREDENTIALS
 		| MemberCreateError.SERVER_ERROR
 		| MemberCreateError.UNKOWN_SERVER_ERROR
-		| MemberCreateError.INVALID_SESSION_ID;
+		| MemberCreateError.INVALID_SESSION_ID
+		| MemberCreateError.RECAPTCHA_INVALID;
 }
 
 /**
@@ -2894,4 +2928,55 @@ export interface PasswordResetTokenInformation extends NoSQLDocument {
 	 * For whom the token belongs
 	 */
 	username: string;
+}
+
+export interface DiscordAccount extends NoSQLDocument {
+	/**
+	 * The ID of the member we are associating with a CAPUnit.com account
+	 */
+	discordID: string;
+	/**
+	 * The member who has the Discord account
+	 */
+	member: MemberReference;
+}
+
+export interface ServerConfiguration {
+	production: boolean;
+	testing: boolean;
+	clientStorage: string;
+	database: {
+		connection: {
+			database: string;
+			host: string;
+			password: string;
+			port: number;
+			user: string;
+		};
+		connectionCount: number;
+	};
+	fileStoragePath: string;
+	capwatchFileDownloadDirectory: string;
+	googleKeysPath: string;
+	path: string;
+	port: number;
+}
+
+export declare interface MemberUpdateEventEmitter extends EventEmitter {
+	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;
+	on(
+		event: 'memberChange',
+		listener: (info: { member: NonNullMemberReference; account: AccountObject }) => void
+	): this;
+	on(
+		event: 'discordRegister',
+		listener: (user: { user: DiscordAccount; account: AccountObject }) => void
+	): this;
+
+	emit(event: 'capwatchImport', account: AccountObject): boolean;
+	emit(
+		event: 'memberChange',
+		member: { member: NonNullMemberReference; account: AccountObject }
+	): boolean;
+	emit(event: 'discordRegister', user: { user: DiscordAccount; account: AccountObject }): boolean;
 }

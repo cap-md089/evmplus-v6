@@ -152,7 +152,48 @@ export class AsyncEither<L, R> {
 	public setErrorValue = (errorValue: L | ((err: Error) => L)) =>
 		new AsyncEither(this.value, errorValue);
 
-	public then = (
+	public filter = (
+		predicate: (v: R) => AsyncEither<L, boolean> | Promise<boolean> | boolean,
+		failedFilterResult: L,
+		errorValue = this.errorValue
+	): AsyncEither<L, R> =>
+		new AsyncEither(
+			this.value
+				.then(eith =>
+					eith.cata(
+						() => Promise.resolve(eith),
+						async r => {
+							try {
+								const pred = predicate(r);
+								const keep = (await (pred instanceof AsyncEither
+									? pred.value
+									: Promise.resolve(pred).then(right))) as Either<L, boolean>;
+								return keep.cata(
+									l => left<L, R>(l),
+									shouldKeep =>
+										shouldKeep ? eith : left<L, R>(failedFilterResult)
+								);
+							} catch (e) {
+								return left<L, R>(
+									typeof errorValue === 'function'
+										? (errorValue as (err: Error) => L)(e)
+										: errorValue
+								);
+							}
+						}
+					)
+				)
+				.catch(err =>
+					left<L, R>(
+						typeof errorValue === 'function'
+							? (errorValue as (err: Error) => L)(err)
+							: errorValue
+					)
+				),
+			errorValue
+		);
+
+	public then = async (
 		onfulfilled?:
 			| ((value: Either<L, R>) => Either<L, R> | PromiseLike<Either<L, R>>)
 			| undefined
@@ -161,18 +202,20 @@ export class AsyncEither<L, R> {
 			| ((reason: any) => Either<L, R> | PromiseLike<Either<L, R>>)
 			| undefined
 			| null
-	): PromiseLike<Either<L, R>> => {
-		return this.value.then(
-			val => (onfulfilled ? onfulfilled(val) : Promise.resolve(val)),
-			val => {
-				if (onRejectedWithLongName) {
-					return onRejectedWithLongName(left(val));
-				}
-				return left(val);
+	): Promise<Either<L, R>> => {
+		try {
+			const val = await this.value;
+			return onfulfilled ? onfulfilled(val) : Promise.resolve(val);
+		} catch (val1) {
+			if (onRejectedWithLongName) {
+				return onRejectedWithLongName(left(val1));
 			}
-		);
+			return left(val1);
+		}
 	};
 }
 
 export const asyncLeft = AsyncEither.Left;
 export const asyncRight = AsyncEither.Right;
+
+export const destroy = () => void 0;
