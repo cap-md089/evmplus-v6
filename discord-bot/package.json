@@ -4,7 +4,8 @@
   "description": "Manages members in the Discord server used by CAP St. Mary's",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc"
   },
   "private": true,
   "repository": {
@@ -40,7 +41,7 @@
   "devDependencies": {
     "@types/express": "^4.17.2",
     "@types/jest": "^25.1.1",
-    "@types/node": "^13.5.2",
+    "@types/node": "^13.9.8",
     "jest": "^25.1.0",
     "jest-cli": "^25.1.0",
     "ts-jest": "^25.1.0",
@@ -49,6 +50,8 @@
     "typescript": "^3.7.5"
   },
   "dependencies": {
+    "@mysql/xdevapi": "^8.0.19",
+    "common-lib": "file:../lib",
     "discord.js": "^11.5.1"
   }
 }
