@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 import './MultCheckbox.scss';
-import { SimpleMultCheckboxReturn, emptyFromLabels, Maybe, none, fromValue } from 'common-lib';
+import { SimpleMultCheckboxReturn, emptyFromLabels, fromValue } from 'common-lib';
 
 interface SimpleMultCheckboxProps extends InputProps<SimpleMultCheckboxReturn> {
 	labels: string[];
@@ -20,6 +20,11 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
 				<section>
+					{this.props.hasError && this.props.errorMessage ? (
+						<div style={{ paddingBottom: 5 }} className="text-error">
+							{this.props.errorMessage}
+						</div>
+					) : null}
 					{this.props.labels.map((label, i) => (
 						<div className="checkboxDiv checkboxDivMult" key={i}>
 							<input

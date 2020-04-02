@@ -329,9 +329,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 													<div
 														className="event-container"
 														style={{
-															width: `calc(${val.width * 100}% + ${
-																val.width
-															}px)`
+															width: `${val.width * 100}%`
 														}}
 													>
 														<Link

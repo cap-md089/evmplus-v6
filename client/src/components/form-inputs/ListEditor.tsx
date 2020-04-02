@@ -57,6 +57,9 @@ export default class ListEditor<
 					...this.props.boxStyles
 				}}
 			>
+				{this.props.hasError && this.props.errorMessage ? (
+					<div className="text-error">{this.props.errorMessage}</div>
+				) : null}
 				<div className="listitems-edit">
 					{(this.props.value || [])
 						.map((value, index) => {

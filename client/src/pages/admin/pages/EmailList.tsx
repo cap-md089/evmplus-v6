@@ -1,4 +1,4 @@
-import { Member, MemberObject, Maybe, just, fromValue, none } from 'common-lib';
+import { fromValue, Member, MemberObject } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
 import { InputProps } from '../../../components/form-inputs/Input';
@@ -55,6 +55,7 @@ interface EmailListState {
 	sortFunction: SortFunction;
 	visibleItems: CAPMemberClasses[];
 	displayAdvanced: boolean;
+	addParentEmails: boolean;
 	filterValues: {
 		flightInput: string;
 		nameInput: string;
@@ -212,6 +213,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		sortFunction: SortFunction.LASTNAME,
 		visibleItems: [],
 		displayAdvanced: false,
+		addParentEmails: false,
 		filterValues: {
 			flightInput: '',
 			memberFilter: MemberList.ALL,
@@ -261,6 +263,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 			members: CAPMemberClasses[];
 			sortFunction: SortFunction;
 			displayAdvanced: boolean;
+			addParentEmails: boolean;
 		}>;
 
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
@@ -332,17 +335,22 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						values={{
 							members: this.state.selectedMembers,
 							sortFunction: this.state.sortFunction,
-							displayAdvanced: this.state.displayAdvanced
+							displayAdvanced: this.state.displayAdvanced,
+							addParentEmails: this.state.addParentEmails
 						}}
-						onChange={({ members, sortFunction, displayAdvanced }) => {
+						onChange={({ members, sortFunction, displayAdvanced, addParentEmails }) => {
 							this.setState({
 								selectedMembers: members,
 								sortFunction,
-								displayAdvanced
+								displayAdvanced,
+								addParentEmails
 							});
 						}}
 						id="none"
 					>
+						<Label>Add parent emails</Label>
+						<Checkbox name="addParentEmails" />
+
 						<Label>Select how to sort</Label>
 						<SimpleRadioButton<SortFunction>
 							name="sortFunction"
@@ -437,21 +445,31 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		const emails: { [key: string]: true } = {};
 
 		(this.state.selectedMembers
-			.map(this.getEmail)
+			.flatMap(this.getEmail.bind(this))
 			.filter(email => !!email) as string[]).forEach(email => (emails[email] = true));
 
 		return Object.keys(emails).join('; ');
 	}
 
-	private getEmail(member: MemberObject): string | undefined {
-		return (
-			member.contact.EMAIL.PRIMARY ||
-			member.contact.CADETPARENTEMAIL.PRIMARY ||
-			member.contact.EMAIL.SECONDARY ||
-			member.contact.CADETPARENTEMAIL.SECONDARY ||
-			member.contact.EMAIL.EMERGENCY ||
-			member.contact.CADETPARENTEMAIL.EMERGENCY
-		);
+	private getEmail(member: MemberObject): Array<string | undefined> {
+		return (this.state.addParentEmails
+			? [
+					member.contact.EMAIL.PRIMARY,
+					member.contact.CADETPARENTEMAIL.PRIMARY,
+					member.contact.EMAIL.SECONDARY,
+					member.contact.CADETPARENTEMAIL.SECONDARY,
+					member.contact.EMAIL.EMERGENCY,
+					member.contact.CADETPARENTEMAIL.EMERGENCY
+			  ]
+			: [
+					member.contact.EMAIL.PRIMARY ||
+						member.contact.CADETPARENTEMAIL.PRIMARY ||
+						member.contact.EMAIL.SECONDARY ||
+						member.contact.CADETPARENTEMAIL.SECONDARY ||
+						member.contact.EMAIL.EMERGENCY ||
+						member.contact.CADETPARENTEMAIL.EMERGENCY
+			  ]
+		).filter(s => !!s);
 	}
 
 	private selectText() {

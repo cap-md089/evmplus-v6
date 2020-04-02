@@ -10,7 +10,8 @@ import {
 	just,
 	Maybe,
 	none,
-	ServerErrorObject
+	ServerErrorObject,
+	DiscordBotErrorObject
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -126,6 +127,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 						<>
 							{this.renderErrorList(errors, 'Client')}
 							{this.renderErrorList(errors, 'Server')}
+							{this.renderErrorList(errors, 'DiscordBot')}
 						</>
 					)
 				)
@@ -136,6 +138,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		const title =
 			type === 'Client' ? (
 				<h1 id="client-errors">Client errors</h1>
+			) : type === 'DiscordBot' ? (
+				<h1 id="discord-errors">Discord Bot Errors</h1>
 			) : (
 				<h1 id="server-errors">Server errors</h1>
 			);
@@ -167,6 +171,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					<div key={i}>
 						{type === 'Server'
 							? this.renderServerErrorObject(errorList as ServerErrorObject[])
+							: type === 'DiscordBot'
+							? this.renderDiscordBotErrorObject(errorList as DiscordBotErrorObject[])
 							: this.renderClientErrorObject(errorList as ClientErrorObject[])}
 					</div>
 				))}
@@ -217,6 +223,59 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 							<div key={i}>
 								<h3>Payload</h3>
 								<pre>{error.payload}</pre>
+								<h3>Stack</h3>
+								<ul>
+									{error.stack.map((err, ind) => (
+										<li key={ind}>
+											<p>
+												File: {err.filename}:{err.line}:{err.column}
+												<br />
+												Function: {err.name}
+											</p>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+					</DropDownList>
+				</p>
+			</div>
+		);
+	}
+
+	private renderDiscordBotErrorObject(errorInfo: DiscordBotErrorObject[]) {
+		const id = errorInfo[0].id;
+
+		return (
+			<div>
+				<h2 className="title" style={titleStyle}>
+					Issue #{id} (Occurred {errorInfo.length} times)
+					<Button<Errors>
+						useData={true}
+						data={errorInfo[0]}
+						className="rightFloat"
+						buttonType="none"
+						onClick={this.resolveError}
+					>
+						Issue resolved?
+					</Button>
+				</h2>
+				<p>
+					First appearance: {new Date(errorInfo[0].timestamp).toString()}
+					<br />
+					Error: {errorInfo[0].message}
+					<br />
+					Where: {errorInfo[0].stack[0].filename}:{errorInfo[0].stack[0].line}:
+					{errorInfo[0].stack[0].column}
+					<br />
+					Function: {errorInfo[0].stack[0].name}
+					<DropDownList<DiscordBotErrorObject>
+						titles={error => `(${error.message})`}
+						onlyOneOpen={true}
+						values={errorInfo}
+					>
+						{(error, i) => (
+							<div key={i}>
 								<h3>Stack</h3>
 								<ul>
 									{error.stack.map((err, ind) => (

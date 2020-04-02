@@ -46,7 +46,7 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 		widget: NotificationsPlug
 	},
 	{
-		canuse,
+		canuse: ({ member }) => !!member?.hasPermission('FileManagement'),
 		widget: DriveWidget
 	},
 	{

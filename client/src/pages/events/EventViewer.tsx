@@ -434,6 +434,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									.orElse(<i>No forms specified</i>)
 									.some()}
 								<br />
+								{event.requiredEquipment.length > 0 ? (
+									<>
+										<strong>Required equipment:</strong>{' '}
+										{event.requiredEquipment.join(', ')}
+										<br />
+									</>
+								) : null}
 								<strong>Event status:</strong> {eventStatus(event.status)}
 								<br />
 								<br />

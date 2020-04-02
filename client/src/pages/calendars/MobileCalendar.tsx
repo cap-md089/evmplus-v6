@@ -39,7 +39,8 @@ export default class MobileCalendar extends Page<CalendarProps> {
 			const endDate = DateTime.fromMillis(event.pickupDateTime);
 
 			const startDay = +startDate < +thisMonth ? 0 : startDate.day - 1;
-			const endDay = +endDate >= +nextMonth ? thisMonth.day : endDate.day;
+			const endDay =
+				+endDate < +thisMonth ? 0 : +endDate >= +nextMonth ? thisMonth.day : endDate.day;
 
 			for (let i = startDay; i < endDay; i++) {
 				days[i].push(event);

@@ -43,7 +43,8 @@ const signinErrorMessages = {
 	[MemberCreateError.PASSWORD_EXPIRED]: '',
 	[MemberCreateError.SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'An error occurred while trying to sign in',
-	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in'
+	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in',
+	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA'
 };
 
 const validateNotEmpty = (val: string | null) => !!val;

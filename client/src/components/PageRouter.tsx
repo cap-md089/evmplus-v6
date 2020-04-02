@@ -37,6 +37,7 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
+import RegisterDiscord from '../pages/account/RegisterDiscord';
 
 const pages: Array<{
 	url: string;
@@ -211,6 +212,11 @@ const pages: Array<{
 	{
 		url: '/finishpasswordreset/:token',
 		component: FinishPasswordResetForm,
+		exact: true
+	},
+	{
+		url: '/registerdiscord/:discordid',
+		component: RegisterDiscord,
 		exact: true
 	},
 

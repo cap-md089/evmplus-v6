@@ -1,18 +1,19 @@
 import {
 	AccountObject,
+	api,
+	DiscordServerInformation,
+	either,
+	EitherObj,
 	EventObject,
 	FileObject,
 	FullFileObject,
 	FullTeamObject,
-	Member,
-	MemberReference,
+	isValidEither,
 	maybe,
-	EitherObj,
-	api,
-	MaybeObj,
-	either,
 	Maybe,
-	isValidEither
+	MaybeObj,
+	Member,
+	MemberReference
 } from 'common-lib';
 import APIInterface from './APIInterface';
 import Event from './Event';
@@ -20,8 +21,8 @@ import FileInterface from './File';
 import MemberBase from './MemberBase';
 import { CAPMemberClasses, createCorrectMemberObject } from './Members';
 import myFetch from './myFetch';
-import Team from './Team';
 import Registry from './Registry';
+import Team from './Team';
 
 /**
  * Holds the account information for a provided account
@@ -93,6 +94,8 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 
 	public serviceAccount: MaybeObj<string>;
 
+	public discordServer: MaybeObj<DiscordServerInformation>;
+
 	protected constructor(data: AccountObject) {
 		super(data.id);
 
@@ -118,6 +121,7 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 		this.comments = data.comments;
 		this.serviceAccount = data.serviceAccount;
 		this.shareLink = data.shareLink;
+		this.discordServer = data.discordServer;
 	}
 
 	public async getMembers(member?: MemberBase | null): Promise<CAPMemberClasses[]> {
@@ -247,7 +251,8 @@ export default class Account extends APIInterface<AccountObject> implements Acco
 			paidEventLimit: this.paidEventLimit,
 			unpaidEventLimit: this.unpaidEventLimit,
 			validPaid: this.validPaid,
-			aliases: this.aliases
+			aliases: this.aliases,
+			discordServer: this.discordServer
 		};
 	}
 

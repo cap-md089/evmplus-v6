@@ -13,7 +13,8 @@ import {
 	OtherMultCheckboxReturn,
 	PointOfContactType,
 	RadioReturnWithOther,
-	SimpleMultCheckboxReturn
+	SimpleMultCheckboxReturn,
+	isOneOfSelected
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -39,7 +40,8 @@ import SimpleForm, {
 	TeamSelector,
 	TextInput,
 	Title,
-	FormValidator
+	FormValidator,
+	TextBox
 } from '../SimpleForm';
 import { BooleanForField } from '../../form-inputs/FormBlock';
 
@@ -217,13 +219,13 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	desiredNumberOfParticipants: 8,
 	useRegistration: false,
 	registration: {
-		deadline: 0,
+		deadline: Date.now(),
 		information: ''
 	},
 	useParticipationFee: false,
 	participationFee: {
 		feeAmount: 0,
-		feeDue: 0
+		feeDue: Date.now()
 	},
 	mealsDescription: emptyFromLabels(Meals),
 	lodgingArrangments: emptyFromLabels(LodgingArrangments),
@@ -310,7 +312,10 @@ const eventValidator: FormValidator<NewEventFormValues> = {
 	name: loc => !!loc,
 	startDateTime: (start, values) => start >= values.meetDateTime,
 	endDateTime: (end, values) => end >= values.startDateTime,
-	pickupDateTime: (pickup, values) => pickup >= values.endDateTime
+	pickupDateTime: (pickup, values) => pickup >= values.endDateTime,
+	uniform: isOneOfSelected,
+	requiredEquipment: equipment =>
+		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true)
 };
 
 export default class EventForm extends React.Component<EventFormProps> {
@@ -340,22 +345,24 @@ export default class EventForm extends React.Component<EventFormProps> {
 				validator={eventValidator}
 				disableOnInvalid={true}
 			>
+				<TextBox>An asterisk (*) denotes a required field</TextBox>
+
 				<Title>Main information</Title>
 
-				<Label>Event Name</Label>
+				<Label>Event Name*</Label>
 				<TextInput name="name" errorMessage="Event must have a name" />
 
-				<Label>Meet date and time</Label>
+				<Label>Meet date and time*</Label>
 				<DateTimeInput
 					name="meetDateTime"
 					time={true}
 					originalTimeZoneOffset={this.props.registry.Website.Timezone}
 				/>
 
-				<Label>Meet location</Label>
+				<Label>Meet location*</Label>
 				<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
 
-				<Label>Start date and time</Label>
+				<Label>Start date and time*</Label>
 				<DateTimeInput
 					name="startDateTime"
 					time={true}
@@ -363,10 +370,10 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot start before meeting"
 				/>
 
-				<Label>Event location</Label>
+				<Label>Event location*</Label>
 				<TextInput name="location" errorMessage="Event must have a location" />
 
-				<Label>End date and time</Label>
+				<Label>End date and time*</Label>
 				<DateTimeInput
 					name="endDateTime"
 					time={true}
@@ -374,7 +381,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot end before it starts"
 				/>
 
-				<Label>Pickup date and time</Label>
+				<Label>Pickup date and time*</Label>
 				<DateTimeInput
 					name="pickupDateTime"
 					time={true}
@@ -382,8 +389,8 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot have a pickup before it ends"
 				/>
 
-				<Label>Pickup location</Label>
-				<TextInput name="pickupLocation" />
+				<Label>Pickup location*</Label>
+				<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
 
 				<Label>Transportation provided</Label>
 				<Checkbox name="transportationProvided" />
@@ -418,8 +425,12 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Title>Logistics Information</Title>
 
-				<Label>Uniform</Label>
-				<SimpleMultCheckbox name="uniform" labels={Uniforms} />
+				<Label>Uniform*</Label>
+				<SimpleMultCheckbox
+					name="uniform"
+					labels={Uniforms}
+					errorMessage="Uniform selection is required"
+				/>
 
 				<Label>Required forms</Label>
 				<OtherMultCheckbox name="requiredForms" labels={RequiredForms} />
@@ -430,6 +441,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					addNew={() => ''}
 					inputComponent={TextInput}
 					extraProps={{}}
+					errorMessage="Items cannot be empty"
 				/>
 
 				<Label>Use registration deadline</Label>

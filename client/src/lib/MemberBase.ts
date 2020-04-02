@@ -8,7 +8,9 @@ import {
 	MemberType,
 	MemberPermission,
 	MemberPermissions,
-	AbsenteeInformation
+	AbsenteeInformation,
+	either,
+	api
 } from 'common-lib';
 import myFetch from './myFetch';
 
@@ -230,6 +232,25 @@ export default abstract class MemberBase extends APIInterface<MemberObject>
 			},
 			this
 		);
+	}
+
+	public async registerDiscord(discordID: string) {
+		const token = await this.getToken(this);
+
+		const result = await this.fetch(
+			`/api/member/account/registerdiscord/${discordID}`,
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					token
+				})
+			},
+			this
+		);
+
+		const json = (await result.json()) as api.member.account.RegisterDiscord;
+
+		return either(json);
 	}
 
 	public memberFetch(url: string, options: RequestInit = {}, func: typeof myFetch = myFetch) {
