@@ -53,6 +53,7 @@ import {
 } from './internals';
 import { safeBind } from './MySQLUtil';
 import { serverErrorGenerator } from './Util';
+import { UserList } from './member/pam/Session';
 
 type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
 type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
@@ -551,7 +552,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 	 *
 	 * @param member The member to check
 	 */
-	public isPOC(member: MemberBase) {
+	public isPOC(member: UserList | MemberBase) {
 		return (
 			!!this.pointsOfContact
 				.map(
@@ -560,6 +561,7 @@ export default class Event implements EventObject, DatabaseInterface<EventObject
 						areMemberReferencesTheSame(member.getReference(), poc.memberReference)
 				)
 				.reduce((prev, curr) => prev || curr, false) ||
+			('hasPermission' in member && member.hasPermission('ManageEvent')) ||
 			member.matchesReference(this.author) ||
 			member.isRioux
 		);

@@ -5,6 +5,7 @@ import * as csv from 'csv-parse';
 import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import dutyPosition from './capwatch-modules/dutyposition';
+import mbrAchievements from './capwatch-modules/mbrachievement';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
@@ -46,6 +47,10 @@ const modules: Array<{
 		module: oFlight,
 		file: 'OFlight.txt'
 	},
+	{
+		module: mbrAchievements,
+		file: 'MbrAchievements.txt'
+	},
 	/*	{
 		module: seniorAwards,
 		file: 'SeniorAwards.txt'
@@ -53,10 +58,6 @@ const modules: Array<{
 	{
 		module: seniorLevel,
 		file: 'SeniorLevel.txt'
-	},
-	{
-		module: mbrAchievements,
-		file: 'MbrAchievements.txt'
 	},
 	{
 		module: mbrAddresses,

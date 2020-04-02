@@ -3,7 +3,12 @@ import { asyncEitherHandler, BasicMemberRequest, Team } from '../../lib/internal
 
 export default asyncEitherHandler<api.team.Create>(async (req: BasicMemberRequest) => {
 	try {
-		const newTeam = await Team.Create(req.body, req.account, req.mysqlx);
+		const newTeam = await Team.Create(
+			req.body,
+			req.account,
+			req.mysqlx,
+			req.memberUpdateEmitter
+		);
 
 		return right(newTeam.toFullRaw(req.member));
 	} catch (e) {

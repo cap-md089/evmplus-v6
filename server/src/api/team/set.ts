@@ -23,7 +23,8 @@ export default asyncEitherHandler<api.team.Set>(
 					team.members.slice(),
 					req.body.members,
 					req.account,
-					req.mysqlx
+					req.mysqlx,
+					req.memberUpdateEmitter
 				);
 			}
 

@@ -8,6 +8,7 @@ import {
 	NHQ,
 	NHQMemberObject,
 	NHQMemberReference,
+	RawTeamObject,
 	ShortDutyPosition,
 	TemporaryDutyPosition
 } from 'common-lib';
@@ -31,14 +32,20 @@ export default class CAPNHQMember extends MemberBase implements NHQMemberObject 
 	public static async GetFrom(
 		info: NHQ.CAPMember,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		teamObjects?: RawTeamObject[]
 	): Promise<CAPNHQMember> {
 		const id = info.CAPID;
 
 		const [contact, dutyPositions, extraInformation, permissions] = await Promise.all([
 			CAPNHQMember.GetCAPWATCHContactForMember(id, schema),
 			CAPNHQMember.GetRegularDutypositions(id, schema),
-			CAPNHQMember.LoadExtraMemberInformation({ type: 'CAPNHQMember', id }, schema, account),
+			CAPNHQMember.LoadExtraMemberInformation(
+				{ type: 'CAPNHQMember', id },
+				schema,
+				account,
+				teamObjects
+			),
 			getPermissionsForMemberInAccountDefault(schema, { id, type: 'CAPNHQMember' }, account)
 		]);
 

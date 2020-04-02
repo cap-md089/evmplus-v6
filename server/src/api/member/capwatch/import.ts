@@ -1,5 +1,13 @@
-import { api, asyncRight, CAPWATCHImportUpdate, fromValue, left, none, right } from 'common-lib';
-import { EventEmitter } from 'events';
+import {
+	api,
+	asyncRight,
+	CAPWATCHImportUpdate,
+	fromValue,
+	left,
+	MemberUpdateEventEmitter,
+	none,
+	right
+} from 'common-lib';
 import {
 	Account,
 	asyncEitherHandler2,
@@ -40,10 +48,9 @@ const defaultFiles = [
 	'MbrContact.txt',
 	'CadetDutyPositions.txt',
 	'CadetActivities.txt',
-	'OFlight.txt'
+	'OFlight.txt',
+	'MbrAchievements.txt'
 ];
-
-const identity = <T>(a: T): T => a;
 
 const sequentialExecute = async <T, R>(
 	info: T[],
@@ -65,81 +72,83 @@ const collect = async <T>(iter: AsyncIterableIterator<T>): Promise<T[]> => {
 	return res;
 };
 
-export const capwatchEmitter = new EventEmitter();
-
-export default asyncEitherHandler2<api.member.capwatch.RequestImport>(request =>
-	asyncRight(request, serverErrorGenerator('Could not import CAPWATCH files'))
-		// Validate request
-		.flatMap(Account.RequestTransformer)
-		.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
-		.flatMap(tokenTransformer)
-		.flatMap(permissionTransformer('DownloadCAPWATCH'))
-		.flatMap(r => validator.transform(r))
-		.flatMap<Omit<BasicMemberRequest<{}, RequestBody>, 'member'> & { member: CAPNHQUser }>(
-			req =>
-				req.member instanceof CAPNHQMember
-					? right({
-							...req,
-							member: req.member
-					  })
-					: left({
-							code: 400,
-							message:
-								'Member cannot import CAPWATCH files. Member has to be a CAP NHQ member',
-							error: none<Error>()
-					  })
-		)
-		// Perform import
-		.flatMap(req =>
-			asyncRight(
-				fromValue(req.body.files).cata(() => defaultFiles, identity),
-				serverErrorGenerator('Could not import CAPWATCH files')
-			).flatMap(files =>
-				asyncRight(req.body.orgIDs, serverErrorGenerator('Could not get CAPWATCH files'))
-					// Download CAPWATCH files
-					.map(ids =>
-						Promise.all(
-							ids.map(id =>
-								req.member.downloadCAPWATCHFile(
-									id,
-									req.body.password,
-									req.configuration
-								)
-							)
-						)
-					)
-					// Import files
-					.map(filePaths =>
-						sequentialExecute(filePaths, (path, i) =>
-							collect(
-								ImportCAPWATCHFile(
-									path,
-									req.mysqlx,
-									req.mysqlxSession,
-									req.body.orgIDs[i],
-									files
-								)
-							)
-						)
-					)
-					// Parse results, send them to the client
-					.map(results =>
-						results.map((resultList, index) =>
-							resultList.map<api.member.capwatch.CAPWATCHFileImportedResult>(res => ({
-								type: CAPWATCHImportUpdate.FileImported,
-								orgID: req.body.orgIDs[index],
-								error: res.error,
-								file: res.file
-							}))
-						)
-					)
-					.map(results => results.reduce((prev, curr) => [...prev, ...curr], []))
+export default (capwatchEmitter: MemberUpdateEventEmitter) =>
+	asyncEitherHandler2<api.member.capwatch.RequestImport>(request =>
+		asyncRight(request, serverErrorGenerator('Could not import CAPWATCH files'))
+			// Validate request
+			.flatMap(Account.RequestTransformer)
+			.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
+			.flatMap(tokenTransformer)
+			.flatMap(permissionTransformer('DownloadCAPWATCH'))
+			.flatMap(r => validator.transform(r))
+			.flatMap<Omit<BasicMemberRequest<{}, RequestBody>, 'member'> & { member: CAPNHQUser }>(
+				req =>
+					req.member instanceof CAPNHQMember
+						? right({
+								...req,
+								member: req.member
+						  })
+						: left({
+								code: 400,
+								message:
+									'Member cannot import CAPWATCH files. Member has to be a CAP NHQ member',
+								error: none<Error>()
+						  })
 			)
-		)
-		.tap(results => {
-			const ids = results.map(res => res.orgID);
-			if (ids.includes(916) || ids.includes(2529)) {
-				capwatchEmitter.emit('capwatch-update');
-			}
-		})
-);
+			// Perform import
+			.flatMap(req =>
+				asyncRight(
+					fromValue(req.body.files).orSome(defaultFiles),
+					serverErrorGenerator('Could not import CAPWATCH files')
+				)
+					.flatMap(files =>
+						asyncRight(
+							req.body.orgIDs,
+							serverErrorGenerator('Could not get CAPWATCH files')
+						)
+							// Download CAPWATCH files
+							.map(ids =>
+								Promise.all(
+									ids.map(id =>
+										req.member.downloadCAPWATCHFile(
+											id,
+											req.body.password,
+											req.configuration
+										)
+									)
+								)
+							)
+							// Import files
+							.map(filePaths =>
+								sequentialExecute(filePaths, (path, i) =>
+									collect(
+										ImportCAPWATCHFile(
+											path,
+											req.mysqlx,
+											req.mysqlxSession,
+											req.body.orgIDs[i],
+											files
+										)
+									)
+								)
+							)
+							// Parse results, send them to the client
+							.map(results =>
+								results.map((resultList, index) =>
+									resultList.map<api.member.capwatch.CAPWATCHFileImportedResult>(
+										res => ({
+											type: CAPWATCHImportUpdate.FileImported,
+											orgID: req.body.orgIDs[index],
+											error: res.error,
+											file: res.file
+										})
+									)
+								)
+							)
+							.map(results => results.reduce((prev, curr) => [...prev, ...curr], []))
+					)
+					.tap(results => {
+						capwatchEmitter.emit('capwatchImport', req.account.toRaw());
+					})
+			)
+	);

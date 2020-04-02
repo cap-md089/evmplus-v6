@@ -6,6 +6,7 @@ import {
 	FullTeamMember,
 	FullTeamObject,
 	MemberReference,
+	MemberUpdateEventEmitter,
 	NewTeamObject,
 	NHQ,
 	RawTeamMember,
@@ -172,7 +173,8 @@ export default class Team implements FullTeamObject {
 	public static async Create(
 		data: NewTeamObject,
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		emitter: MemberUpdateEventEmitter
 	): Promise<Team> {
 		const teamsCollection = schema.getCollection<RawTeamObject>(Team.collectionName);
 
@@ -220,7 +222,7 @@ export default class Team implements FullTeamObject {
 				const fullMember = await resolveReference(i.reference, account, schema);
 
 				if (fullMember) {
-					await teamObject.addTeamMember(fullMember, i.job, account, schema);
+					await teamObject.addTeamMember(fullMember, i.job, account, schema, emitter);
 				}
 			} catch (e) {
 				// ignore
@@ -264,7 +266,7 @@ export default class Team implements FullTeamObject {
 			try {
 				fullMember = await resolveReference(member.reference, account, schema);
 			} catch (e) {
-				console.log('Could not get member ', member.reference);
+				console.error('Could not get member ', member.reference);
 			}
 
 			if (fullMember) {
@@ -287,7 +289,9 @@ export default class Team implements FullTeamObject {
 						name: fullMember.getFullName()
 					});
 				}
-			} catch (e) {}
+			} catch (e) {
+				console.error('Could not get member ', member.reference);
+			}
 		}
 
 		const full: FullTeamObject = {
@@ -389,7 +393,7 @@ export default class Team implements FullTeamObject {
 		await teamCollection.replaceOne(this._id, this.toRawWithMembers());
 	}
 
-	public async delete(): Promise<void> {
+	public async delete(emitter: MemberUpdateEventEmitter): Promise<void> {
 		if (this.deleted) {
 			throw new Error('Cannot operate on a deleted event');
 		}
@@ -399,12 +403,12 @@ export default class Team implements FullTeamObject {
 		}
 
 		for (const teamMember of this.members) {
-			await this.removeTeamMember(teamMember.reference, this.account, this.schema);
+			await this.removeTeamMember(teamMember.reference, this.account, this.schema, emitter);
 		}
 		await Promise.all([
-			this.removeTeamLeader(this.seniorCoach, this.account, this.schema),
-			this.removeTeamLeader(this.seniorMentor, this.account, this.schema),
-			this.removeTeamLeader(this.cadetLeader, this.account, this.schema)
+			this.removeTeamLeader(this.seniorCoach, this.account, this.schema, emitter),
+			this.removeTeamLeader(this.seniorMentor, this.account, this.schema, emitter),
+			this.removeTeamLeader(this.cadetLeader, this.account, this.schema, emitter)
 		]);
 
 		const teamCollection = this.schema.getCollection<RawTeamObject>(Team.collectionName);
@@ -483,7 +487,13 @@ export default class Team implements FullTeamObject {
 		return this.hasMember(member);
 	}
 
-	public async addTeamMember(member: MemberBase, job: string, account: Account, schema: Schema) {
+	public async addTeamMember(
+		member: MemberBase,
+		job: string,
+		account: Account,
+		schema: Schema,
+		emitter: MemberUpdateEventEmitter
+	) {
 		const oldMember = this.members.filter(f =>
 			areMemberReferencesTheSame(member.getReference(), f.reference)
 		)[0];
@@ -494,6 +504,11 @@ export default class Team implements FullTeamObject {
 
 		await this.updateMember(member.getReference(), account, schema);
 
+		emitter.emit('memberChange', {
+			member: member.getReference(),
+			account: account.toRaw()
+		});
+
 		this.members.push({
 			job,
 			joined: +DateTime.utc(),
@@ -502,7 +517,12 @@ export default class Team implements FullTeamObject {
 		});
 	}
 
-	public async removeTeamLeader(member: MemberReference, account: Account, schema: Schema) {
+	public async removeTeamLeader(
+		member: MemberReference,
+		account: Account,
+		schema: Schema,
+		emitter: MemberUpdateEventEmitter
+	) {
 		if (!this.isMemberOrLeader(member) && this.hasMember(member)) {
 			return;
 		}
@@ -543,9 +563,19 @@ export default class Team implements FullTeamObject {
 
 			await extraInformation.replaceOne(results[0]._id, results[0]);
 		}
+
+		emitter.emit('memberChange', {
+			member,
+			account: account.toRaw()
+		});
 	}
 
-	public async removeTeamMember(member: MemberReference, account: Account, schema: Schema) {
+	public async removeTeamMember(
+		member: MemberReference,
+		account: Account,
+		schema: Schema,
+		emitter: MemberUpdateEventEmitter
+	) {
 		if (!this.hasMember(member)) {
 			return;
 		}
@@ -596,6 +626,11 @@ export default class Team implements FullTeamObject {
 
 			await extraInformation.replaceOne(results[0]._id, results[0]);
 		}
+
+		emitter.emit('memberChange', {
+			member,
+			account: account.toRaw()
+		});
 	}
 
 	public modifyTeamMember(member: MemberReference, job: string) {
@@ -611,7 +646,8 @@ export default class Team implements FullTeamObject {
 		oldMembers: RawTeamMember[],
 		newMembers: RawTeamMember[],
 		account: Account,
-		schema: Schema
+		schema: Schema,
+		emitter: MemberUpdateEventEmitter
 	) {
 		for (const oldMember of oldMembers) {
 			if (
@@ -619,7 +655,7 @@ export default class Team implements FullTeamObject {
 					areMemberReferencesTheSame(member.reference, oldMember.reference)
 				).length === 0
 			) {
-				this.removeTeamMember(oldMember.reference, account, schema);
+				await this.removeTeamMember(oldMember.reference, account, schema, emitter);
 			}
 		}
 
@@ -636,7 +672,7 @@ export default class Team implements FullTeamObject {
 					true
 				);
 
-				await this.addTeamMember(fullMember, newMember.job, account, schema);
+				await this.addTeamMember(fullMember, newMember.job, account, schema, emitter);
 			} else {
 				this.modifyTeamMember(newMember.reference, newMember.job);
 			}
@@ -645,15 +681,15 @@ export default class Team implements FullTeamObject {
 
 	public async updateTeamLeaders(account: Account, schema: Schema) {
 		if (this.cadetLeader && this.cadetLeader.type !== 'Null') {
-			this.updateMember(this.cadetLeader, account, schema);
+			await this.updateMember(this.cadetLeader, account, schema);
 		}
 
 		if (this.seniorCoach && this.seniorCoach.type !== 'Null') {
-			this.updateMember(this.seniorCoach, account, schema);
+			await this.updateMember(this.seniorCoach, account, schema);
 		}
 
 		if (this.seniorMentor && this.seniorMentor.type !== 'Null') {
-			this.updateMember(this.seniorMentor, account, schema);
+			await this.updateMember(this.seniorMentor, account, schema);
 		}
 	}
 

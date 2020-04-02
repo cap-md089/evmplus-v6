@@ -71,12 +71,18 @@ export default asyncEitherHandler2<api.events.events.GetEventViewerData, { id: s
 					if (
 						event.privateAttendance &&
 						!req.member
-							.map(event.isPOC)
+							.map(
+								m =>
+									event.isPOC(m) ||
+									(event.teamID !== null
+										? m.teamIDs.includes(event.teamID)
+										: false)
+							)
 							.orElse(false)
 							.some()
 					) {
 						return {
-							event: event.toRaw(isValidMember ? req.member.some() : null),
+							event: event.toRaw(null),
 							attendees,
 							organizations
 						};

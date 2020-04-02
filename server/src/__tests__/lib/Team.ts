@@ -1,5 +1,6 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { RawTeamObject } from 'common-lib';
+import { EventEmitter } from 'events';
 import conftest from '../../conf.test';
 import {
 	Account,
@@ -32,7 +33,7 @@ describe('Team', () => {
 	});
 
 	beforeEach(async done => {
-		team = await Team.Create(newTeam, account, schema);
+		team = await Team.Create(newTeam, account, schema, new EventEmitter());
 
 		done();
 	});
@@ -53,7 +54,7 @@ describe('Team', () => {
 	});
 
 	it('should create a team', async done => {
-		const newTeamObject = await Team.Create(newTeam, account, schema);
+		const newTeamObject = await Team.Create(newTeam, account, schema, new EventEmitter());
 
 		const results = await collectResults(
 			safeBind(schema.getCollection<RawTeamObject>('Teams').find('id = :id'), {
@@ -91,7 +92,7 @@ describe('Team', () => {
 	});
 
 	it('should add a team member', async done => {
-		await team.addTeamMember(member, 'Eh', account, schema);
+		await team.addTeamMember(member, 'Eh', account, schema, new EventEmitter());
 
 		expect(team.members.length).toEqual(2);
 		expect(team.members[1].reference).toEqual(member.getReference());
@@ -100,7 +101,7 @@ describe('Team', () => {
 	});
 
 	it('should modify a team member', async done => {
-		await team.addTeamMember(member, 'Eh', account, schema);
+		await team.addTeamMember(member, 'Eh', account, schema, new EventEmitter());
 
 		const newJob = 'A new job';
 
@@ -112,13 +113,13 @@ describe('Team', () => {
 	});
 
 	it('should remove a team member', () => {
-		team.removeTeamMember(member.getReference(), account, schema);
+		team.removeTeamMember(member.getReference(), account, schema, new EventEmitter());
 
 		expect(team.members.length).toEqual(1);
 	});
 
 	it('should delete team information', async done => {
-		await team.delete();
+		await team.delete(new EventEmitter());
 
 		const results = await collectResults(schema.getCollection('Teams').find('true'));
 
@@ -128,10 +129,10 @@ describe('Team', () => {
 	});
 
 	it('should fail to save or delete team information for a deleted team', async done => {
-		await team.delete();
+		await team.delete(new EventEmitter());
 
 		await expect(team.save()).rejects.toEqual(expect.any(Error));
-		await expect(team.delete()).rejects.toEqual(expect.any(Error));
+		await expect(team.delete(new EventEmitter())).rejects.toEqual(expect.any(Error));
 
 		done();
 	});

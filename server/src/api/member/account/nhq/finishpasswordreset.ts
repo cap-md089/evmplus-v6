@@ -36,7 +36,8 @@ const memberCreateErrorMessages = {
 	[MemberCreateError.PASSWORD_EXPIRED]: 'There was an unknown server error',
 	[MemberCreateError.INVALID_SESSION_ID]: 'There was an unknown server error',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'There was an unknown server error',
-	[MemberCreateError.DATABASE_ERROR]: 'There was an unknown server error'
+	[MemberCreateError.DATABASE_ERROR]: 'There was an unknown server error',
+	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA'
 };
 
 const passwordResetErrorMessages = {

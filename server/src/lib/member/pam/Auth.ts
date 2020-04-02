@@ -28,7 +28,11 @@ interface SigninPasswordOld {
 }
 
 interface SigninFailed {
-	result: MemberCreateError.INCORRRECT_CREDENTIALS | MemberCreateError.SERVER_ERROR;
+	result:
+		| MemberCreateError.INCORRRECT_CREDENTIALS
+		| MemberCreateError.SERVER_ERROR
+		| MemberCreateError.UNKOWN_SERVER_ERROR
+		| MemberCreateError.RECAPTCHA_INVALID;
 }
 
 export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
@@ -94,7 +98,9 @@ export const trySignin = async (
 	recaptchaCode: string
 ): Promise<SigninResult> => {
 	if (!(await verifyCaptcha(recaptchaCode))) {
-		throw new Error('Could not verify reCAPTCHA');
+		return {
+			result: MemberCreateError.RECAPTCHA_INVALID
+		};
 	}
 
 	const valid = await checkIfPasswordValid(schema, username, password);

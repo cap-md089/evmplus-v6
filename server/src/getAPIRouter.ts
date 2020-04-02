@@ -1,6 +1,7 @@
 import * as mysql from '@mysql/xdevapi';
 import * as bodyParser from 'body-parser';
-import { left } from 'common-lib';
+import { left, MemberUpdateEventEmitter } from 'common-lib';
+import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as logger from 'morgan';
 import accountcheck from './api/accountcheck';
@@ -15,7 +16,6 @@ import filerouter from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
 import members from './api/member';
-import { capwatchEmitter } from './api/member/capwatch/import';
 import notifications from './api/notifications';
 import registry from './api/registry';
 import signin from './api/signin';
@@ -32,23 +32,12 @@ import {
 export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	const router: express.Router = express.Router();
 
-	const { database: schema, host, password, port: mysqlPort, user } = conf.database.connection;
-
-	if (typeof session === 'undefined') {
-		session = await mysql.getSession({
-			host,
-			password,
-			port: mysqlPort,
-			user
-		});
-	}
-
-	const eventManagementSchema = session.getSchema(schema);
+	const updateEmitter: MemberUpdateEventEmitter = new EventEmitter();
 
 	/**
 	 * Use API Routers
 	 */
-	router.use('*', MySQLMiddleware(eventManagementSchema, session, conf));
+	router.use('*', MySQLMiddleware(conf, updateEmitter));
 
 	router.use((req: MySQLRequest, _, next) => {
 		req._originalUrl = req.originalUrl;
@@ -109,7 +98,7 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	router.use('/team', team);
 
-	router.use('/member', Account.LeftyExpressMiddleware, members);
+	router.use('/member', Account.LeftyExpressMiddleware, members(updateEmitter));
 
 	router.use('/notifications', notifications);
 
@@ -137,7 +126,6 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 
 	return {
 		router,
-		session,
-		capwatchEmitter
+		capwatchEmitter: updateEmitter
 	};
 };

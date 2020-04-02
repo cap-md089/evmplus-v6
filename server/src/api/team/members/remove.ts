@@ -16,7 +16,12 @@ export default asyncEitherHandler<api.team.Remove>(
 		}
 
 		try {
-			await team.removeTeamMember(req.body.reference, req.account, req.mysqlx);
+			await team.removeTeamMember(
+				req.body.reference,
+				req.account,
+				req.mysqlx,
+				req.memberUpdateEmitter
+			);
 
 			await team.save();
 		} catch (e) {

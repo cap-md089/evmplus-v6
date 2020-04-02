@@ -26,7 +26,8 @@ import {
 	SimpleMultCheckboxReturn,
 	StoredMemberPermissions,
 	TeamPublicity,
-	UserAccountInformation
+	UserAccountInformation,
+	MemberUpdateEventEmitter
 } from 'common-lib';
 import { writeFileSync } from 'fs';
 import * as mysql from 'mysql';
@@ -34,6 +35,7 @@ import { join } from 'path';
 import conf from './conf';
 import {
 	Account,
+	areMemberReferencesTheSame,
 	deleteAllGoogleCalendarEvents,
 	Event,
 	MemberBase,
@@ -41,6 +43,7 @@ import {
 	Team
 } from './lib/internals';
 import * as Permissions from './lib/Permissions';
+import { EventEmitter } from 'events';
 
 // tslint:disable-next-line: no-namespace
 namespace V3 {
@@ -537,7 +540,7 @@ enum RunFlag {
 	await moveTeams(mysqlConnection, targetSchema, accounts, RunFlag.NORUN);
 	await moveFiles(mysqlConnection, targetSchema, RunFlag.NORUN);
 	await moveMemberData(mysqlConnection, targetSchema, RunFlag.NORUN);
-	await moveEvents(mysqlConnection, targetSchema, accounts, RunFlag.RUN, RunFlag.RUN);
+	await moveEvents(mysqlConnection, targetSchema, accounts, RunFlag.RUN, RunFlag.NORUN);
 
 	return 0;
 })()
@@ -612,7 +615,8 @@ async function moveAccounts(from: mysql.Connection, to: Schema): Promise<Account
 					googleIDs =>
 						googleIDs.AccountID === oldAccount.AccountID &&
 						googleIDs.CalendarType === 'Wing'
-				)?.CalendarID!
+				)?.CalendarID!,
+				discordServer: { hasValue: false }
 			};
 		} else {
 			const obj = oldAccountsAsRawAccountObjects[oldAccount.AccountID];
@@ -972,6 +976,8 @@ async function moveEvents(
 
 			await new Promise(res => setTimeout(res, 500));
 		}
+
+		console.log('Moved events.');
 	} else {
 		for (const oldEvent of oldEvents) {
 			const account = accounts.find(acc => acc.id === oldEvent.AccountID);
@@ -983,6 +989,8 @@ async function moveEvents(
 			newEvents.push(await Event.Get(oldEvent.EventNumber, account, to));
 		}
 	}
+
+	console.log('Moving attendance...');
 
 	for (const record of oldAttendance) {
 		const event = newEvents.find(
@@ -1026,10 +1034,18 @@ async function moveEvents(
 				},
 				getFullName() {
 					return record.MemberRankName;
+				},
+				matchesReference(ref: MemberReference) {
+					return areMemberReferencesTheSame(
+						{ type: 'CAPNHQMember', id: record.CAPID },
+						ref
+					);
 				}
 			} as MemberBase
 		);
 	}
+
+	console.log('Moved attendance. Moving special attendance...');
 
 	for (const record of oldSpecialAttendance) {
 		const event = newEvents.find(
@@ -1099,12 +1115,18 @@ async function moveEvents(
 				},
 				getFullName() {
 					return record.MemberRankName;
+				},
+				matchesReference(ref: MemberReference) {
+					return areMemberReferencesTheSame(
+						{ type: 'CAPNHQMember', id: record.CAPID },
+						ref
+					);
 				}
 			} as MemberBase
 		);
 	}
 
-	console.log('Moved events.');
+	console.log('Moved special attendance.');
 }
 
 async function moveFiles(from: mysql.Connection, to: Schema, run: RunFlag) {
@@ -1235,7 +1257,12 @@ async function moveTeams(from: mysql.Connection, to: Schema, accounts: Account[]
 	for (const team of newTeamInfo) {
 		const account = accounts.find(acc => team.accountID === acc.id);
 		if (account) {
-			await Team.Create(team.team, account, to);
+			await Team.Create(
+				team.team,
+				account,
+				to,
+				new EventEmitter() as MemberUpdateEventEmitter
+			);
 			console.log(`Added team ${team.team.name}`);
 		} else {
 			console.log(`Could not find account ${team.accountID}`);

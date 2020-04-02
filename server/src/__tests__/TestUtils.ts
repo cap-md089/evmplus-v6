@@ -1,5 +1,6 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { api, AsyncEither, EitherObj, MemberReference } from 'common-lib';
+import { EventEmitter } from 'events';
 import { IncomingHttpHeaders } from 'http';
 import conf from '../conf';
 import {
@@ -90,6 +91,7 @@ export const prepareBasicGetRequest = <P extends ParamType = {}>(
 	headers: {},
 	hostname: 'mdx89.capunit.com',
 	method: 'GET',
+	memberUpdateEmitter: new EventEmitter(),
 	mysqlx: mysqlxSession.getSchema(configuration.database.connection.database),
 	mysqlxSession,
 	originalUrl: url,
@@ -108,6 +110,7 @@ export const prepareBasicPostRequest = <B = any>(
 	headers: {},
 	hostname: 'mdx89.capunit.com',
 	method: 'POST',
+	memberUpdateEmitter: new EventEmitter(),
 	mysqlx: mysqlxSession.getSchema(configuration.database.connection.database),
 	mysqlxSession,
 	originalUrl: url,

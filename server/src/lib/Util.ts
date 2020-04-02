@@ -182,7 +182,8 @@ export async function getTestTools(testconf: typeof Configuration) {
 		paid: true,
 		paidEventLimit: 500,
 		unpaidEventLimit: 5,
-		aliases: ['test']
+		aliases: ['test'],
+		discordServer: { hasValue: false }
 	};
 
 	const conn = testconf.database.connection;
@@ -263,7 +264,19 @@ export const asyncErrorHandler = (
 	fn: AsyncExpressHandler<any>
 ): ConvertedAsyncExpressHandler<any> => {
 	const handler: ConvertedAsyncExpressHandler<any> = (req, res, next) =>
-		fn(req, res, next).catch(next);
+		fn(req, res, next).catch(async err => {
+			await saveServerError(err, await convertReqForSavingAsError(req));
+
+			try {
+				await req.mysqlxSession.close();
+			} catch (e) {
+				// ignore
+			}
+
+			res.status(500);
+			res.set('x-error-handled', 'true');
+			res.end();
+		});
 
 	handler.fn = fn;
 
@@ -398,14 +411,14 @@ export const asyncEitherHandler = <R>(
 					async l => {
 						return l.error.cata(
 							() =>
-								Promise.resolve(
-									res.json(
+								req.mysqlxSession.close().then(() => {
+									return res.json(
 										left({
 											code: l.code,
 											message: l.message
 										})
-									)
-								),
+									);
+								}),
 							async err => {
 								console.error(err);
 								await saveServerError(
@@ -413,6 +426,8 @@ export const asyncEitherHandler = <R>(
 									await convertReqForSavingAsError(req),
 									l
 								);
+
+								await req.mysqlxSession.close();
 
 								return res.json(
 									left({
@@ -423,7 +438,11 @@ export const asyncEitherHandler = <R>(
 							}
 						);
 					},
-					async r => res.json(right(r))
+					async r => {
+						await req.mysqlxSession.close();
+
+						return res.json(right(r));
+					}
 				)
 			)
 			.catch(async err => {
@@ -431,6 +450,8 @@ export const asyncEitherHandler = <R>(
 					console.error(err);
 					await saveServerError(err, await convertReqForSavingAsError(req));
 				}
+
+				await req.mysqlxSession.close();
 
 				res.status(500);
 				return res.json(

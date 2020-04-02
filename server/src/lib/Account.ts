@@ -7,6 +7,7 @@ import {
 	asyncLeft,
 	asyncRight,
 	DatabaseInterface,
+	DiscordServerInformation,
 	EventObject,
 	FileObject,
 	just,
@@ -26,9 +27,12 @@ import { DateTime } from 'luxon';
 import {
 	areMemberReferencesTheSame,
 	asyncErrorHandler,
+	BasicMySQLRequest,
 	CAPMemberClasses,
 	CAPNHQMember,
 	CAPProspectiveMember,
+	collectGenerator,
+	ConditionalMemberRequest,
 	Event,
 	File,
 	findAndBind,
@@ -38,12 +42,11 @@ import {
 	MySQLRequest,
 	ParamType,
 	Registry,
+	safeBind,
+	serverErrorGenerator,
 	Team
 } from './internals';
-import { ConditionalMemberRequest } from './member/pam/Session';
-import { BasicMySQLRequest, safeBind } from './MySQLUtil';
 import saveServerError from './saveServerError';
-import { serverErrorGenerator } from './Util';
 
 export interface AccountRequest<P extends ParamType = {}, B = any> extends MySQLRequest<P, B> {
 	account: Account;
@@ -287,7 +290,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			paid: values.paid,
 			paidEventLimit: values.paidEventLimit,
 			unpaidEventLimit: values.unpaidEventLimit,
-			aliases: values.aliases
+			aliases: values.aliases,
+			discordServer: values.discordServer
 		};
 
 		const expired = +DateTime.utc() > values.expires;
@@ -377,6 +381,10 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	 * CAPUnit.com, however it is good to have for configuration.
 	 */
 	public serviceAccount: MaybeObj<string>;
+	/**
+	 * Does the account have Discord integration?
+	 */
+	public discordServer: MaybeObj<DiscordServerInformation>;
 
 	// tslint:disable-next-line:variable-name
 	public _id: string;
@@ -403,6 +411,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		this.mainCalendarID = data.mainCalendarID;
 		this.wingCalendarID = data.wingCalendarID;
 		this.serviceAccount = data.serviceAccount;
+		this.discordServer = data.discordServer;
 	}
 
 	public buildURI(...identifiers: string[]) {
@@ -418,6 +427,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 	}
 
 	public async *getMembers(): AsyncIterableIterator<CAPMemberClasses> {
+		const teamObjects = await collectGenerator(this.getTeamObjects());
+
 		const memberCollection = this.schema.getCollection<NHQ.CAPMember>('NHQ_Member');
 
 		for (const ORGID of this.orgIDs) {
@@ -426,7 +437,7 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			});
 
 			for await (const member of generateResults(memberFind)) {
-				yield CAPNHQMember.GetFrom(member, this, this.schema);
+				yield CAPNHQMember.GetFrom(member, this, this.schema, teamObjects);
 			}
 		}
 
@@ -604,7 +615,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 			paid: this.paid,
 			paidEventLimit: this.paidEventLimit,
 			unpaidEventLimit: this.unpaidEventLimit,
-			aliases: this.aliases
+			aliases: this.aliases,
+			discordServer: this.discordServer
 		});
 	}
 
@@ -625,7 +637,8 @@ export default class Account implements AccountObject, DatabaseInterface<Account
 		paidEventLimit: this.paidEventLimit,
 		unpaidEventLimit: this.unpaidEventLimit,
 		validPaid: this.validPaid,
-		aliases: this.aliases
+		aliases: this.aliases,
+		discordServer: this.discordServer
 	});
 
 	public getSquadronName(): string {

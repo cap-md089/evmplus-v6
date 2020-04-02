@@ -12,11 +12,8 @@ describe('/api', () => {
 			done();
 		});
 
-		afterEach(async done => {
+		afterEach(() => {
 			server.server.close();
-			await server.mysqlConn.close();
-
-			done();
 		});
 
 		// Test is important because certain tests for the client depend

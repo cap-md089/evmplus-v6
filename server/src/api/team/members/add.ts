@@ -33,7 +33,13 @@ export default asyncEitherHandler<api.team.members.Add>(
 		}
 
 		try {
-			await team.addTeamMember(fullMember, req.body.job, req.account, req.mysqlx);
+			await team.addTeamMember(
+				fullMember,
+				req.body.job,
+				req.account,
+				req.mysqlx,
+				req.memberUpdateEmitter
+			);
 
 			await team.save();
 		} catch (e) {

@@ -16,7 +16,7 @@ export default asyncEitherHandler<api.team.Delete>(
 		}
 
 		try {
-			await team.delete();
+			await team.delete(req.memberUpdateEmitter);
 		} catch (e) {
 			return left({
 				code: 500,

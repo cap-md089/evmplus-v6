@@ -1,4 +1,5 @@
 import { Session } from '@mysql/xdevapi';
+import { MemberUpdateEventEmitter } from 'common-lib';
 import * as express from 'express';
 import * as fs from 'fs';
 import * as http from 'http';
@@ -7,7 +8,9 @@ import { Configuration } from './conf';
 import getRouter from './getAPIRouter';
 
 export interface ServerConfiguration {
-	mysqlConn: Session;
+	capwatchEmitter: MemberUpdateEventEmitter;
+	conf: typeof Configuration;
+	finishServerSetup: () => void;
 	server: http.Server;
 	app: express.Application;
 }
@@ -16,7 +19,7 @@ export default async (
 	conf: typeof Configuration,
 	port: number = conf.port,
 	mysqlConn?: Session
-) => {
+): Promise<ServerConfiguration> => {
 	const app: express.Application = express();
 
 	app.set('port', port);
@@ -26,9 +29,7 @@ export default async (
 	server.on('error', onError);
 	server.on('listening', onListening);
 
-	const { router, session, capwatchEmitter } = await getRouter(conf, mysqlConn);
-
-	mysqlConn = session;
+	const { router, capwatchEmitter } = await getRouter(conf, mysqlConn);
 
 	app.use((req, res, next) => {
 		res.removeHeader('X-Powered-By');
@@ -85,8 +86,8 @@ export default async (
 	return {
 		app,
 		server,
-		mysqlConn,
 		capwatchEmitter,
+		conf,
 		finishServerSetup() {
 			app.use(express.static(path.join(conf.clientStorage, 'build')));
 			app.get('*', (req, res) => {

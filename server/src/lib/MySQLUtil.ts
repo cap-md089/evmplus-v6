@@ -3,6 +3,7 @@ import * as express from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { DateTime } from 'luxon';
 import { Configuration } from '../conf';
+import { MemberUpdateEventEmitter } from 'common-lib';
 
 export interface ParamType {
 	[key: string]: string | undefined;
@@ -16,6 +17,7 @@ export interface MySQLRequest<P extends ParamType = {}, B = any> extends express
 	method: string;
 	hostname: string;
 	headers: IncomingHttpHeaders;
+	memberUpdateEmitter: MemberUpdateEventEmitter;
 
 	/**
 	 * Contains stuff that is used.
@@ -43,6 +45,7 @@ export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
 	originalUrl: string;
 	_originalUrl: string;
 	hostname: string;
+	memberUpdateEmitter: MemberUpdateEventEmitter;
 
 	/**
 	 * Contains stuff that is used.
@@ -62,13 +65,36 @@ export const createFakeRequest = <P extends ParamType = {}, B = any>(
 	info: BasicMySQLRequest<P, B>
 ): MySQLRequest<P, B> => info as MySQLRequest<P, B>;
 
-export default (
-	pool: mysql.Schema,
-	session: mysql.Session,
-	configuration: typeof Configuration
-) => {
-	return (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
-		req.mysqlx = pool;
+export const getSession = (configuration: typeof Configuration) => {
+	const { host, password, port: mysqlPort, user } = configuration.database.connection;
+
+	return mysql.getSession({
+		host,
+		password,
+		port: mysqlPort,
+		user
+	});
+};
+
+export default (configuration: typeof Configuration, emitter: MemberUpdateEventEmitter) => {
+	return async (req: MySQLRequest, res: express.Response, next: express.NextFunction) => {
+		const {
+			database: schema,
+			host,
+			password,
+			port: mysqlPort,
+			user
+		} = configuration.database.connection;
+
+		const session = await mysql.getSession({
+			host,
+			password,
+			port: mysqlPort,
+			user
+		});
+
+		req.mysqlx = session.getSchema(schema);
+		req.memberUpdateEmitter = emitter;
 		req.mysqlxSession = session;
 		req.configuration = configuration;
 		next();

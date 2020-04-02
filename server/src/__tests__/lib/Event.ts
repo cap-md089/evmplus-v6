@@ -176,7 +176,8 @@ describe('Event', () => {
 					paid: true,
 					paidEventLimit: 5,
 					unpaidEventLimit: 500,
-					aliases: []
+					aliases: [],
+					discordServer: { hasValue: false }
 				},
 				schema
 			);

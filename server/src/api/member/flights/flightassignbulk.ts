@@ -25,10 +25,19 @@ export default asyncEitherHandler<api.member.flights.AssignBulk>(
 				continue;
 			}
 
+			if (request.newFlight === member.flight) {
+				continue;
+			}
+
 			member.setFlight(request.newFlight);
 
 			try {
 				await member.saveExtraMemberInformation(req.mysqlx, req.account);
+
+				req.memberUpdateEmitter.emit('memberChange', {
+					member: member.getReference(),
+					account: req.account.toRaw()
+				});
 			} catch (e) {
 				saveServerError(e, req);
 			}

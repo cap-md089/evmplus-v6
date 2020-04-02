@@ -51,6 +51,11 @@ export default asyncEitherHandler<api.member.flights.Assign>(
 
 		try {
 			await member.saveExtraMemberInformation(req.mysqlx, req.account);
+
+			req.memberUpdateEmitter.emit('memberChange', {
+				member: member.getReference(),
+				account: req.account.toRaw()
+			});
 		} catch (e) {
 			return left({
 				code: 500,

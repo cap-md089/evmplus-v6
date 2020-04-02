@@ -9,6 +9,7 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
+	NonNullMemberReference,
 	NoSQLDocument,
 	NotificationTargetType,
 	RawNotificationObject,
@@ -34,7 +35,8 @@ export default abstract class MemberBase implements MemberObject {
 	protected static async LoadExtraMemberInformation(
 		memberID: MemberReference,
 		schema: Schema,
-		account: Account
+		account: Account,
+		teamObjects?: RawTeamObject[]
 	): Promise<ExtraMemberInformation> {
 		if (memberID.type === 'Null') {
 			throw new Error('Null member reference');
@@ -44,6 +46,13 @@ export default abstract class MemberBase implements MemberObject {
 			'ExtraMemberInformation'
 		);
 
+		const isPartOfTeam = (member: MemberReference) => (team: RawTeamObject) =>
+			areMemberReferencesTheSame(team.seniorCoach, member) ||
+			areMemberReferencesTheSame(team.seniorMentor, member) ||
+			areMemberReferencesTheSame(team.cadetLeader, member) ||
+			team.members.filter(raw => areMemberReferencesTheSame(raw.reference, member)).length >
+				0;
+
 		const [results, teamIDs] = await Promise.all([
 			collectResults(
 				findAndBind(extraMemberSchema, {
@@ -51,22 +60,17 @@ export default abstract class MemberBase implements MemberObject {
 					accountID: account.id
 				})
 			),
-			collectGenerator(
-				(async function*() {
-					for await (const i of account.getTeamObjects()) {
-						if (
-							areMemberReferencesTheSame(i.seniorCoach, memberID) ||
-							areMemberReferencesTheSame(i.seniorMentor, memberID) ||
-							areMemberReferencesTheSame(i.cadetLeader, memberID) ||
-							i.members.filter(raw =>
-								areMemberReferencesTheSame(raw.reference, memberID)
-							).length > 0
-						) {
-							yield i.id;
-						}
-					}
-				})()
-			)
+			teamObjects
+				? teamObjects.filter(isPartOfTeam(memberID)).map(obj => obj.id)
+				: collectGenerator(
+						(async function*() {
+							for await (const i of account.getTeamObjects()) {
+								if (isPartOfTeam(memberID)(i)) {
+									yield i.id;
+								}
+							}
+						})()
+				  )
 		]);
 
 		if (results.length === 0) {
@@ -147,7 +151,7 @@ export default abstract class MemberBase implements MemberObject {
 	/**
 	 * Cheap way to produce references
 	 */
-	public abstract getReference: () => MemberReference;
+	public abstract getReference: () => NonNullMemberReference;
 
 	/**
 	 * Used to differentiate when using polymorphism

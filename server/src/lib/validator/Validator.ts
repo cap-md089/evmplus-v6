@@ -13,7 +13,9 @@ import {
 	RadioReturnWithOther,
 	RadioReturnWithOtherSelected,
 	RadioReturnWithoutOtherSelected,
-	SimpleMultCheckboxReturn
+	SimpleMultCheckboxReturn,
+	JustObj,
+	NoneObj
 } from 'common-lib';
 import * as express from 'express';
 import { BasicAccountRequest } from '../Account';
@@ -1053,3 +1055,22 @@ export default class Validator<T> {
 			);
 	}
 }
+
+export const JustValidator = <T>(validator: Validator<T> | ValidatorFunction<T>) =>
+	new Validator<JustObj<T>>({
+		hasValue: {
+			validator: Validator.StrictValue(true)
+		},
+		value: {
+			validator
+		}
+	});
+
+export const NoneValidator = new Validator<NoneObj<any>>({
+	hasValue: {
+		validator: Validator.StrictValue(false)
+	}
+});
+
+export const MaybeValidator = <T>(validator: Validator<T> | ValidatorFunction<T>) =>
+	Validator.Or(JustValidator(validator), NoneValidator);

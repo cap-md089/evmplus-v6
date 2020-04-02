@@ -229,7 +229,8 @@ async function tableAccountFunction() {
 			expires: 999999999999,
 			paidEventLimit: 50,
 			unpaidEventLimit: 25,
-			aliases: []
+			aliases: [],
+			discordServer: { hasValue: false }
 		};
 
 		await v4Collection.add(myNewAccount).execute();
@@ -291,7 +292,8 @@ async function tableAttendanceFunction() {
 			expires: 999999999999,
 			paidEventLimit: 50,
 			unpaidEventLimit: 25,
-			aliases: []
+			aliases: [],
+			discordServer: { hasValue: false }
 		};
 
 		await v4Collection.add(myNewAccount).execute();
