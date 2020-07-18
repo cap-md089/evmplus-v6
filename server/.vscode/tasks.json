@@ -1,0 +1,60 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "gulp",
+			"task": "ts",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"type": "gulp",
+			"task": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
+		},
+		{
+			"type": "gulp",
+			"task": "default",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
+		},
+		{
+			"type": "gulp",
+			"task": "mysql:import",
+			"problemMatcher": []
+		},
+		{
+			"type": "gulp",
+			"task": "mysql:backup",
+			"problemMatcher": []
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		}
+	]
+}

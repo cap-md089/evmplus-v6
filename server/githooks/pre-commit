@@ -1,0 +1,17 @@
+PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
+git stash -q --keep-index
+
+gulp ts
+BUILDRESULT=$?
+
+[ $BUILDRESULT -ne 0 ] && exit 1
+
+npm test
+TESTRESULT=$?
+
+[ $TESTRESULT -ne 0 ] && exit 1
+
+git stash pop -q
+
+exit 0
