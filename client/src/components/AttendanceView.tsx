@@ -1,23 +1,24 @@
-import React, { Component } from 'react';
-import Event from '../lib/Event';
-import Account from '../lib/Account';
-import MemberBase from '../lib/Members';
 import {
+	AccountObject,
+	areMembersTheSame,
 	AttendanceRecord,
-	MemberReference,
+	AttendanceStatus,
+	effectiveManageEventPermissionForEvent,
 	NewAttendanceRecord,
-	AttendanceStatus
+	RawEventObject,
+	User
 } from 'common-lib';
 import { DateTime } from 'luxon';
+import React, { Component } from 'react';
 import AttendanceForm from './forms/usable-forms/AttendanceForm';
 
 interface AttendanceItemViewProps {
-	owningEvent: Event;
-	owningAccount: Account;
-	member: MemberBase;
+	owningEvent: RawEventObject;
+	owningAccount: AccountObject;
+	member: User;
 	attendanceRecord: AttendanceRecord;
 	removeAttendance: (record: AttendanceRecord) => void;
-	updateAttendance: (record: NewAttendanceRecord, member: MemberReference) => void;
+	updateAttendance: (record: Required<NewAttendanceRecord>) => void;
 	clearUpdated: () => void;
 	updated: boolean;
 	index: number;
@@ -53,9 +54,8 @@ export default class AttendanceItemView extends Component<
 	}
 
 	public render() {
-		return this.props.member.hasPermission('ManageEvent') ||
-			this.props.owningEvent.isPOC(this.props.member) ||
-			this.props.member.matchesReference(this.props.attendanceRecord.memberID) ? (
+		return effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ||
+			areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) ? (
 			<AttendanceForm
 				account={this.props.owningAccount}
 				event={this.props.owningEvent}
@@ -77,17 +77,16 @@ export default class AttendanceItemView extends Component<
 				Plan to use CAP transportation:{' '}
 				{this.props.attendanceRecord.planToUseCAPTransportation ? 'Yes' : 'No'}
 				<br />
-				{this.props.attendanceRecord.arrivalTime !== null &&
-				this.props.attendanceRecord.departureTime !== null ? (
+				{this.props.attendanceRecord.shiftTime !== null ? (
 					<>
 						Arrival time:{' '}
 						{DateTime.fromMillis(
-							this.props.attendanceRecord.arrivalTime
+							this.props.attendanceRecord.shiftTime.arrivalTime
 						).toLocaleString()}
 						<br />
 						Departure time:{' '}
 						{DateTime.fromMillis(
-							this.props.attendanceRecord.departureTime
+							this.props.attendanceRecord.shiftTime.departureTime
 						).toLocaleString()}
 					</>
 				) : null}

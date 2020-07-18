@@ -1,10 +1,10 @@
-import { api, either } from 'common-lib';
+import { Either } from 'common-lib';
 import * as React from 'react';
-import SimpleForm, { Label, TextBox, Title } from '../../components/forms/SimpleForm';
-import { fetchFunction } from '../../lib/myFetch';
-import Page, { PageProps } from '../Page';
 import PasswordForm from '../../components/form-inputs/PasswordForm';
+import SimpleForm, { Label, TextBox, Title } from '../../components/forms/SimpleForm';
+import fetchApi from '../../lib/apis';
 import { getMember } from '../../lib/Members';
+import Page, { PageProps } from '../Page';
 
 interface FinishPasswordResetFormValues {
 	newPassword: string;
@@ -72,48 +72,33 @@ export default class FinishPasswordResetForm extends Page<
 	}
 
 	private async submit(form: FinishPasswordResetFormValues) {
-		try {
+		const { newPassword } = form;
+
+		if (!newPassword) {
+			return;
+		}
+
+		this.setState({
+			tryingSubmit: true,
+			error: null,
+			success: false
+		});
+
+		const fetchResult = await fetchApi.member.account.finishPasswordReset(
+			{},
+			{ token: this.props.routeProps.match.params.token, newPassword }
+		);
+
+		if (Either.isLeft(fetchResult)) {
 			this.setState({
-				tryingSubmit: true,
-				error: null,
-				success: false
+				tryingSubmit: false,
+				error: fetchResult.value.message
 			});
+		} else {
+			const member = await getMember(fetchResult.value.sessionID);
 
-			const fetchResult = await fetchFunction(
-				'/api/member/account/capnhq/finishpasswordreset',
-				{
-					body: JSON.stringify({
-						...form,
-						token: this.props.routeProps.match.params.token
-					}),
-					headers: {
-						'content-type': 'application/json'
-					},
-					method: 'POST'
-				}
-			);
-
-			const result: api.member.account.cap.FinishPasswordReset = await fetchResult.json();
-
-			either(result).cata(
-				e => {
-					this.setState({
-						tryingSubmit: false,
-						error: e.message
-					});
-				},
-				async ({ sessionID }) => {
-					const member = await getMember(sessionID);
-
-					this.props.authorizeUser(member);
-					this.props.routeProps.history.push('/admin');
-				}
-			);
-		} catch (e) {
-			this.setState({
-				error: 'Could not reset password',
-				tryingSubmit: false
-			});
+			this.props.authorizeUser(member);
+			this.props.routeProps.history.push('/admin');
 		}
 	}
 }

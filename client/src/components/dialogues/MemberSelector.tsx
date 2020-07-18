@@ -1,26 +1,30 @@
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from './DownloadDialogue';
-import Loader from '../Loader';
 import { FormBlock, Label, TextBox, TextInput } from '../forms/SimpleForm';
 import { InputProps } from '../form-inputs/Input';
-import { MemberReference } from 'common-lib';
-import { CAPMemberClasses } from '../../lib/Members';
+import {
+	MemberReference,
+	Maybe as M,
+	Member,
+	MaybeObj,
+	getFullMemberName,
+	toReference,
+	areMembersTheSame
+} from 'common-lib';
 
-interface MemberInputProps extends InputProps<MemberReference> {
-	memberList: Promise<CAPMemberClasses[]>;
+interface MemberInputProps extends InputProps<MaybeObj<MemberReference>> {
+	memberList: Member[];
 }
 
 interface MemberInputState {
-	members: CAPMemberClasses[] | null;
 	open: boolean;
-	selectedValue: CAPMemberClasses | null;
+	selectedValue: Member | null;
 	filterValues: any[];
 }
 
 export default class MemberSelector extends React.Component<MemberInputProps, MemberInputState> {
 	public state: MemberInputState = {
-		members: null,
 		open: false,
 		selectedValue: null,
 		filterValues: []
@@ -34,26 +38,12 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 		this.selectMember = this.selectMember.bind(this);
 	}
 
-	public async componentDidMount() {
-		const members = await this.props.memberList;
-
-		this.setState({
-			members
-		});
-	}
-
 	public render() {
-		if (!this.state.members) {
-			return <Loader />;
-		}
+		const memberRef: MaybeObj<MemberReference> = this.props.value ?? M.none();
 
-		const memberRef: MemberReference = this.props.value || {
-			type: 'Null'
-		};
-
-		const targetMember = this.state.members.filter(member =>
-			member.matchesReference(memberRef)
-		)[0];
+		const targetMember = memberRef.hasValue
+			? this.props.memberList.filter(areMembersTheSame(memberRef.value))[0]
+			: null;
 
 		return (
 			<FormBlock name={this.props.name}>
@@ -61,14 +51,14 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 
 				<TextBox>
 					<Button onClick={this.openDialogue}>Select a member</Button>
-					<DownloadDialogue<CAPMemberClasses>
+					<DownloadDialogue<Member>
 						open={this.state.open}
 						multiple={false}
 						overflow={400}
 						title="Select a member"
 						showIDField={false}
-						displayValue={this.displayMember}
-						valuePromise={this.state.members}
+						displayValue={getFullMemberName}
+						valuePromise={this.props.memberList}
 						filters={[
 							{
 								check: (member, input) => {
@@ -77,9 +67,9 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 									}
 
 									try {
-										return !!member
-											.getFullName()
-											.match(new RegExp(input, 'gi'));
+										return !!getFullMemberName(member).match(
+											new RegExp(input, 'gi')
+										);
 									} catch (e) {
 										return false;
 									}
@@ -105,7 +95,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 				<TextInput
 					disabled={true}
 					name="name"
-					value={targetMember ? targetMember.getFullName() : ''}
+					value={targetMember ? getFullMemberName(targetMember) : ''}
 				/>
 			</FormBlock>
 		);
@@ -117,25 +107,19 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 		});
 	}
 
-	private displayMember(member: CAPMemberClasses) {
-		return member.getFullName();
-	}
-
-	private setSelectedMember(selectedValue: CAPMemberClasses | null) {
+	private setSelectedMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue
 		});
 	}
 
-	private selectMember(selectedValue: CAPMemberClasses | null) {
+	private selectMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue,
 			open: false
 		});
 
-		const value: MemberReference = selectedValue
-			? selectedValue.getReference()
-			: { type: 'Null' };
+		const value: MaybeObj<MemberReference> = M.map(toReference)(M.fromValue(selectedValue));
 
 		if (this.props.onChange) {
 			this.props.onChange(value);

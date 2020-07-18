@@ -1,18 +1,28 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
-import MemberBase, { CAPNHQMember } from '../../../lib/Members';
+import {
+	effectiveManageEventPermission,
+	Permissions,
+	hasPermission,
+	User,
+	AccountType
+} from 'common-lib';
 
 export const canUseCreate = (props: PageProps) => {
 	if (!props.member) {
 		return false;
 	}
 
-	return props.member.hasPermission('ManageEvent') || props.member.hasPermission('ManageTeam');
+	return (
+		effectiveManageEventPermission(props.member) !== Permissions.ManageEvent.NONE ||
+		hasPermission('ManageTeam')()(props.member) ||
+		hasPermission('ProspectiveMemberManagement')()(props.member)
+	);
 };
 
 interface CreateWidgetProps extends PageProps {
-	member: MemberBase;
+	member: User;
 }
 
 export class CreateWidget extends Page<CreateWidgetProps> {
@@ -22,25 +32,25 @@ export class CreateWidget extends Page<CreateWidgetProps> {
 			<div className="widget">
 				<div className="widget-title">Create something</div>
 				<div className="widget-body">
-					{this.props.member.hasPermission('ManageEvent') ||
-					(this.props.member instanceof CAPNHQMember &&
-						this.props.member.hasDutyPosition([
-							'Operations Officer',
-							'Squadron Activities Officer',
-							'Activities Officer',
-							'Cadet Operations Officer',
-							'Cadet Operations NCO',
-							'Cadet Activities Officer',
-							'Cadet Activities NCO'
-						])) ? (
+					{effectiveManageEventPermission(this.props.member) !==
+					Permissions.ManageEvent.NONE ? (
 						<>
 							<Link to="/addevent">Draft an event</Link>
 							<br />
 						</>
 					) : null}
-					{this.props.member.hasPermission('ManageTeam') ? (
+					{hasPermission('ManageTeam')()(this.props.member) ? (
 						<>
 							<Link to="/team/create">Add a team</Link>
+							<br />
+						</>
+					) : null}
+					{hasPermission('ProspectiveMemberManagement')()(this.props.member) &&
+					this.props.account.type !== AccountType.CAPEVENT ? (
+						<>
+							<Link to="/admin/createcapprospectiveaccount">
+								Create a prospective member account
+							</Link>
 							<br />
 						</>
 					) : null}

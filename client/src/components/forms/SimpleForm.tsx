@@ -10,7 +10,6 @@ import FileInput from '../form-inputs/FileInput';
 import FormBlock from '../form-inputs/FormBlock';
 import { InputProps } from '../form-inputs/Input';
 import ListEditor from '../form-inputs/ListEditor';
-import LoadingTextArea from '../form-inputs/LoadingTextArea';
 import OtherMultCheckbox from '../form-inputs/OtherMultCheckbox';
 import MultiRange from '../form-inputs/MultiRange';
 import NumberInput from '../form-inputs/NumberInput';
@@ -28,12 +27,6 @@ import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
 import SimpleMultCheckbox from '../form-inputs/SimpleMultCheckbox';
 import './Form.scss';
-
-let TextArea: typeof import('../form-inputs/TextArea').default;
-
-import('../form-inputs/TextArea').then(textArea => {
-	TextArea = textArea.default;
-});
 
 const saveMessage = {
 	marginLeft: 10
@@ -127,7 +120,6 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 
 	return (
 		el.type === TextInput ||
-		el.type === TextArea ||
 		el.type === MultiRange ||
 		el.type === DateTimeInput ||
 		el.type === RadioButtonWithOther ||
@@ -139,7 +131,6 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === TextBox ||
 		el.type === NumberInput ||
 		el.type === Selector ||
-		el.type === LoadingTextArea ||
 		el.type === BigTextBox ||
 		el.type === DisabledMappedText ||
 		el.type === DisabledText ||
@@ -725,7 +716,6 @@ export {
 	TextBox,
 	NumberInput,
 	Selector,
-	LoadingTextArea,
 	DisabledMappedText,
 	BigTextBox,
 	DisabledText,

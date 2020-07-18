@@ -1,14 +1,12 @@
-import { FileObject } from 'common-lib';
+import { FileObject, User } from 'common-lib';
 import * as React from 'react';
-import FileInterface from '../../lib/File';
-import MemberBase from '../../lib/Members';
-import urlFormat from '../../lib/urlFormat';
 
 export interface FileDisplayProps {
-	file: FileInterface;
+	file: FileObject;
+	parent: FileObject;
 	onSelect: (file: FileObject) => void;
 	selected: boolean;
-	member: MemberBase | null;
+	member: User | null;
 }
 
 export default (props: FileDisplayProps) => (
@@ -24,8 +22,7 @@ export default (props: FileDisplayProps) => (
 			{!!props.file.contentType.match(/image\//) ? (
 				<div
 					style={{
-						backgroundImage:
-							'url(' + urlFormat('api', 'files', props.file.id, 'export') + ')'
+						backgroundImage: `url('/api/files/${props.file.id}/export')`
 					}}
 				/>
 			) : null}

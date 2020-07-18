@@ -16,8 +16,17 @@
 		background: #fcfff4;
 		background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
 		border-radius: 4px;
-		box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
+		box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0, 0, 0, 0.5);
 		z-index: 0;
+
+		&.disabled {
+			background: #7e7f7a;
+			background: linear-gradient(to bottom, #7e7f7a 0%, #6f726b 40%, #595f56 100%);
+		}
+
+		&.disabled:after {
+			border-color: #33333333;
+		}
 
 		&:after {
 			content: '';
@@ -36,7 +45,7 @@
 		}
 	}
 
-	input[type="checkbox"] {
+	input[type='checkbox'] {
 		visibility: hidden;
 		position: absolute;
 

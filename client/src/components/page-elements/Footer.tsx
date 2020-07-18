@@ -1,15 +1,31 @@
+import { get, Maybe, MaybeObj, pipe, RegistryValues, WebsiteContact } from 'common-lib';
 import * as React from 'react';
-import Registry from '../../lib/Registry';
 import './Footer.scss';
-import { Maybe, fromValue } from 'common-lib';
 
 interface FooterProps {
-	registry: Maybe<Registry>;
+	registry: MaybeObj<RegistryValues>;
 }
 
 const preventClick = (ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
 	return false;
 };
+
+const addressToDisplay = ({
+	Name,
+	FirstLine,
+	SecondLine
+}: Exclude<WebsiteContact['MeetingAddress'], null>) => (
+	<div>
+		<div className="footerBoxTitle">Meeting Address</div>
+		<p>
+			{Name}
+			<br />
+			{FirstLine}
+			<br />
+			{SecondLine}
+		</p>
+	</div>
+);
 
 export default (({ registry }) => (
 	<footer>
@@ -17,15 +33,17 @@ export default (({ registry }) => (
 			<div>
 				<div className="footerBoxTitle">Connect With Us</div>
 				<p>
-					{registry
-						.map(reg => [
+					{Maybe.orSome<Array<null | React.ReactChild>>([])(
+						Maybe.map<RegistryValues, Array<null | React.ReactChild>>(reg => [
 							reg.Contact.FaceBook ? (
 								<a
 									href={`https://www.facebook.com/${reg.Contact.FaceBook}`}
 									target="_blank"
 									className="social-media fb"
 									rel="noopener noreferrer"
-								/>
+								>
+									Facebook
+								</a>
 							) : null,
 							reg.Contact.Twitter ? (
 								<a
@@ -33,7 +51,9 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media twitter"
 									rel="noopener noreferrer"
-								/>
+								>
+									Twitter
+								</a>
 							) : null,
 							reg.Contact.YouTube ? (
 								<a
@@ -41,7 +61,9 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media youtube"
 									rel="noopener noreferrer"
-								/>
+								>
+									YouTube
+								</a>
 							) : null,
 							reg.Contact.LinkedIn ? (
 								<a
@@ -49,7 +71,9 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media linkedin"
 									rel="noopener noreferrer"
-								/>
+								>
+									LinkedIn
+								</a>
 							) : null,
 							reg.Contact.Instagram ? (
 								<a
@@ -57,7 +81,9 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media instagram"
 									rel="noopener noreferrer"
-								/>
+								>
+									Instagram
+								</a>
 							) : null,
 							reg.Contact.Flickr ? (
 								<a
@@ -65,7 +91,9 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media flickr"
 									rel="noopener noreferrer"
-								/>
+								>
+									Flickr
+								</a>
 							) : null,
 							reg.Contact.Discord ? (
 								<a
@@ -73,42 +101,28 @@ export default (({ registry }) => (
 									target="_blank"
 									className="social-media discord"
 									rel="noopener noreferrer"
-								/>
+								>
+									Discord
+								</a>
 							) : null
-						])
-						.orNull()}
+						])(registry)
+					)}
 				</p>
 			</div>
-			{registry
-				.flatMap(reg => fromValue(reg.Contact.MeetingAddress))
-				.map(({ Name, FirstLine, SecondLine }) => (
-					<div>
-						<div className="footerBoxTitle">Meeting Address</div>
-						<p>
-							{Name}
-							<br />
-							{FirstLine}
-							<br />
-							{SecondLine}
-						</p>
-					</div>
-				))
-				.orNull()}
-			{registry
-				.flatMap(reg => fromValue(reg.Contact.MailingAddress))
-				.map(({ Name, FirstLine, SecondLine }) => (
-					<div>
-						<div className="footerBoxTitle">Mailing Address</div>
-						<p>
-							{Name}
-							<br />
-							{FirstLine}
-							<br />
-							{SecondLine}
-						</p>
-					</div>
-				))
-				.orNull()}
+			{pipe(
+				Maybe.map<RegistryValues, WebsiteContact>(get('Contact')),
+				Maybe.map(get('MeetingAddress')),
+				Maybe.flatMap(Maybe.fromValue),
+				Maybe.map(addressToDisplay),
+				Maybe.orSome<React.ReactChild | null>(null)
+			)(registry)}
+			{pipe(
+				Maybe.map<RegistryValues, WebsiteContact>(get('Contact')),
+				Maybe.map(get('MailingAddress')),
+				Maybe.flatMap(Maybe.fromValue),
+				Maybe.map(addressToDisplay),
+				Maybe.orSome<React.ReactChild | null>(null)
+			)(registry)}
 		</div>
 		<div
 			style={{
@@ -116,10 +130,6 @@ export default (({ registry }) => (
 			}}
 			className="links"
 		>
-			<div className="info-left">
-				&copy; 2017-
-				{new Date().getFullYear()} capunit.com
-			</div>
 			<div className="links-right">
 				<a href="#base" onClick={preventClick}>
 					Top

@@ -3,9 +3,13 @@ import 'whatwg-fetch';
 
 // import { APIURL } from '../../../src/types';
 
-export const fetchFunction =
-	process && process.env && process.env.NODE_ENV === 'test'
-		? (url: string, options: RequestInit = {}) => fetch2('http://localhost:3001' + url, options)
+export const fetchFunction: (
+	url: RequestInfo | string,
+	options?: RequestInit
+) => Promise<Response> =
+	process.env.NODE_ENV === 'test'
+		? (url: string | RequestInfo, options: RequestInit = {}) =>
+				fetch2('http://localhost:3001' + url, options)
 		: fetch;
 
 /**

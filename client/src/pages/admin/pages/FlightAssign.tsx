@@ -1,13 +1,20 @@
 import * as React from 'react';
 import Page, { PageProps } from '../../Page';
 import Loader from '../../../components/Loader';
-import { CAPMemberClasses } from '../../../lib/Members';
 import FlightRow from '../../../components/flightassign/FlightRow';
 import Button from '../../../components/Button';
-import { MemberReference } from 'common-lib';
+import {
+	MemberReference,
+	Member,
+	hasPermission,
+	Either,
+	areMembersTheSame,
+	toReference
+} from 'common-lib';
+import fetchApi from '../../../lib/apis';
 
 interface FlightAssignStateLoaded {
-	members: CAPMemberClasses[];
+	members: Member[];
 	loaded: true;
 	open: boolean;
 	highlighted: string | null;
@@ -54,7 +61,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	}
 
 	public async componentDidMount() {
-		if (!this.props.member || !this.props.member.hasPermission('FlightAssign')) {
+		if (!this.props.member || !hasPermission('FlightAssign')()(this.props.member)) {
 			return;
 		}
 
@@ -91,12 +98,15 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			}
 		]);
 
-		const members = await this.props.account.getMembers(this.props.member);
+		const membersEither = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
 
-		this.setState({
-			members,
-			loaded: true
-		});
+		if (Either.isLeft(membersEither)) {
+		} else {
+			this.setState({
+				members: membersEither.value,
+				loaded: true
+			});
+		}
 	}
 
 	public render() {
@@ -109,7 +119,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		}
 
 		const unusedMembers = this.state.members.slice().filter(mem => !mem.seniorMember);
-		const flights: Array<[string, CAPMemberClasses[]]> = [];
+		const flights: Array<[string, Member[]]> = [];
 
 		for (const flight of this.props.registry.RankAndFile.Flights) {
 			flights.push([flight, []]);
@@ -168,7 +178,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	private onDrop(flight: string) {
 		return (memRef: MemberReference) => {
 			for (const member of this.state.members!) {
-				if (member.matchesReference(memRef)) {
+				if (areMembersTheSame(memRef)(member)) {
 					member.flight = flight;
 				}
 			}
@@ -193,12 +203,12 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		for (const i of this.state.members!) {
 			if (i.flight && this.props.registry.RankAndFile.Flights.indexOf(i.flight) > -1) {
 				payload.members.push({
-					member: i.getReference(),
+					member: toReference(i),
 					newFlight: i.flight
 				});
 			} else {
 				payload.members.push({
-					member: i.getReference(),
+					member: toReference(i),
 					newFlight: null
 				});
 			}
@@ -209,7 +219,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			saving: true
 		});
 
-		await this.props.member!.updateFlights(payload.members);
+		await fetchApi.member.flight.assignBulk({}, payload, this.props.member!.sessionID);
 
 		this.setState({
 			saved: true,

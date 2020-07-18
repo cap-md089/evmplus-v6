@@ -1,6 +1,7 @@
+import { hasPermission, isRioux } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
-import MemberBase from '../../lib/Members';
+import SigninLink from '../../components/SigninLink';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
 import AttendanceHistory from './pages/AttendanceHistory';
@@ -46,7 +47,7 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 		widget: NotificationsPlug
 	},
 	{
-		canuse: ({ member }) => !!member?.hasPermission('FileManagement'),
+		canuse: ({ member }) => !!member && hasPermission('FileManagement')()(member),
 		widget: DriveWidget
 	},
 	{
@@ -106,7 +107,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 
 	public render() {
 		if (!this.props.member) {
-			return <div>Please sign in</div>;
+			return <SigninLink>Please sign in</SigninLink>;
 		}
 
 		return (
@@ -164,10 +165,16 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	private defaultPage() {
+		const member = this.props.member;
+
+		if (!member) {
+			return <SigninLink>Please sign in</SigninLink>;
+		}
+
 		return (
 			<div className="widget-holder">
 				{widgets.map((val, i) =>
-					val.canuse(this.props) || MemberBase.IsRioux(this.props.member) ? (
+					val.canuse(this.props) || isRioux(member) ? (
 						<val.widget {...this.props} key={i} />
 					) : null
 				)}

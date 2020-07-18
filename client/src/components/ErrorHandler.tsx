@@ -1,14 +1,12 @@
 import esp, { StackFrame } from 'error-stack-parser';
 import * as React from 'react';
-import MemberBase from '../lib/Members';
-import { NewClientErrorObject, ErrorResolvedStatus } from 'common-lib';
-import ErrorMessage from '../lib/ErrorMessage';
-import Account from '../lib/Account';
+import { NewClientErrorObject, ErrorResolvedStatus, User, AccountObject } from 'common-lib';
+import fetchApi from '../lib/apis';
 
 export default class ErrorHandler extends React.PureComponent<
 	{
-		member: MemberBase | null;
-		account: Account;
+		member: User | null;
+		account: AccountObject;
 	},
 	{
 		crash: boolean;
@@ -18,7 +16,7 @@ export default class ErrorHandler extends React.PureComponent<
 		crash: false
 	};
 
-	constructor(props: { member: MemberBase | null; account: Account }) {
+	constructor(props: { member: User | null; account: AccountObject }) {
 		super(props);
 
 		this.tryAgain = this.tryAgain.bind(this);
@@ -45,10 +43,16 @@ export default class ErrorHandler extends React.PureComponent<
 			type: 'Client'
 		};
 
-		ErrorMessage.Create(errorObject, this.props.member, this.props.account).then(() => {
-			// tslint:disable-next-line:no-console
-			console.log('Error logged');
-		});
+		fetchApi.errors.clientError({}, errorObject, this.props.member?.sessionID).then(
+			() => {
+				// tslint:disable-next-line:no-console
+				console.log('Error logged');
+			},
+			() => {
+				// tslint:disable-next-line:no-console
+				console.log('Failed to log error');
+			}
+		);
 
 		this.setState({
 			crash: true

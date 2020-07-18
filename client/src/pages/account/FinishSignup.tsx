@@ -1,10 +1,10 @@
+import { Either } from 'common-lib';
 import React from 'react';
-import Page, { PageProps } from '../Page';
-import SimpleForm, { Label, Title, TextBox, TextInput } from '../../components/forms/SimpleForm';
 import PasswordForm from '../../components/form-inputs/PasswordForm';
-import { fetchFunction } from '../../lib/myFetch';
+import SimpleForm, { Label, TextBox, TextInput, Title } from '../../components/forms/SimpleForm';
+import fetchApi from '../../lib/apis';
 import { getMember } from '../../lib/Members';
-import { EitherObj, api, either } from 'common-lib';
+import Page, { PageProps } from '../Page';
 
 interface FormValues {
 	username: string;
@@ -81,49 +81,31 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		const token = this.props.routeProps.match.params.token;
 		const { username, password } = this.state.form;
 
+		if (!password) {
+			return;
+		}
+
 		this.setState({
 			error: null,
 			tryingFinish: true,
 			success: false
 		});
 
-		try {
-			const fetchResult = await fetchFunction('/api/member/account/capnhq/finish', {
-				body: JSON.stringify({
-					token,
-					username,
-					password
-				}),
-				headers: {
-					'content-type': 'application/json'
-				},
-				method: 'POST'
-			});
+		const fetchResult = await fetchApi.member.account.finishAccountSetup(
+			{},
+			{ token, username, password }
+		);
 
-			const result: EitherObj<
-				api.HTTPError,
-				{ sessionID: string }
-			> = await fetchResult.json();
-
-			either(result).cata(
-				e => {
-					this.setState({
-						tryingFinish: false,
-						error: e.message
-					});
-				},
-				async ({ sessionID }) => {
-					const member = await getMember(sessionID);
-
-					this.props.authorizeUser(member);
-					this.props.routeProps.history.push('/admin');
-				}
-			);
-		} catch (e) {
+		if (Either.isLeft(fetchResult)) {
 			this.setState({
-				error: 'Could not connect to server',
-				success: false
+				tryingFinish: false,
+				error: fetchResult.value.message
 			});
+		} else {
+			const member = await getMember(fetchResult.value.sessionID);
+
+			this.props.authorizeUser(member);
+			this.props.routeProps.history.push('/admin');
 		}
 	}
 }

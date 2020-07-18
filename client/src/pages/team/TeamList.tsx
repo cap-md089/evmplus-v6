@@ -1,17 +1,28 @@
-import { TeamPublicity } from 'common-lib';
+import { TeamPublicity, Either, always, FullTeamObject, hasPermission } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../../components/Loader';
-import Team from '../../lib/Team';
 import Page, { PageProps } from '../Page';
+import fetchApi from '../../lib/apis';
 
-interface TeamListState {
-	teams: Team[] | null;
+interface TeamListLoadingState {
+	state: 'LOADING';
 }
+
+interface TeamListLoadedState {
+	state: 'LOADED';
+	teams: FullTeamObject[];
+}
+
+interface TeamListErrorState {
+	state: 'ERROR';
+}
+
+type TeamListState = TeamListLoadedState | TeamListLoadingState | TeamListErrorState;
 
 export default class TeamList extends Page<PageProps, TeamListState> {
 	public state: TeamListState = {
-		teams: null
+		state: 'LOADING'
 	};
 
 	public constructor(props: PageProps) {
@@ -32,29 +43,44 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		this.props.updateSideNav([]);
 		this.updateTitle('Team list');
 
-		const teams = await this.props.account.getTeams(this.props.member);
+		const teamsEither = await fetchApi.team.list({}, {}, this.props.member?.sessionID);
 
-		this.props.updateSideNav(
-			teams.map(team => ({
-				target: team.id.toString(),
-				text: team.name,
-				type: 'Reference' as 'Reference'
-			}))
-		);
+		if (Either.isLeft(teamsEither)) {
+			this.setState(
+				always({
+					state: 'ERROR'
+				})
+			);
+		} else {
+			const teams = teamsEither.value;
 
-		this.setState({
-			teams
-		});
+			this.props.updateSideNav(
+				teams.map(team => ({
+					target: team.id.toString(),
+					text: team.name,
+					type: 'Reference' as 'Reference'
+				}))
+			);
+
+			this.setState({
+				state: 'LOADED',
+				teams
+			});
+		}
 	}
 
 	public render() {
-		if (this.state.teams === null) {
+		if (this.state.state === 'LOADING') {
 			return <Loader />;
+		}
+
+		if (this.state.state === 'ERROR') {
+			return <div>There was an error getting the teams list</div>;
 		}
 
 		return (
 			<div>
-				{this.props.member && this.props.member.hasPermission('ManageTeam') ? (
+				{this.props.member && hasPermission('ManageTeam')()(this.props.member) ? (
 					<Link to="/team/create">Add team</Link>
 				) : null}
 				{this.state.teams.map((team, i) => (

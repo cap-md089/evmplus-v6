@@ -1,9 +1,9 @@
+import { Either } from 'common-lib';
 import * as React from 'react';
-import Page, { PageProps } from '../Page';
-import SimpleForm, { Title, Label, TextBox, TextInput } from '../../components/forms/SimpleForm';
 import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
-import { fetchFunction } from '../../lib/myFetch';
-import { api, either } from 'common-lib';
+import SimpleForm, { Label, TextBox, TextInput, Title } from '../../components/forms/SimpleForm';
+import fetchApi from '../../lib/apis';
+import Page, { PageProps } from '../Page';
 
 interface RequestPasswordResetFormValues {
 	username: string;
@@ -88,44 +88,36 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 	}
 
 	private async submit(form: RequestPasswordResetFormValues) {
-		try {
-			// @ts-ignore
-			window.grecaptcha.reset();
+		if (!form.captchaToken) {
+			return;
+		}
 
+		// @ts-ignore
+		window.grecaptcha.reset();
+
+		this.setState({
+			tryingSubmit: true,
+			error: null,
+			success: false
+		});
+
+		const result = await fetchApi.member.account.passwordResetRequest(
+			{},
+			{
+				username: form.username,
+				captchaToken: form.captchaToken
+			}
+		);
+
+		if (Either.isLeft(result)) {
 			this.setState({
-				tryingSubmit: true,
+				error: result.value.message,
+				tryingSubmit: false
+			});
+		} else {
+			this.setState({
+				success: true,
 				error: null,
-				success: false
-			});
-
-			const fetchResult = await fetchFunction('/api/member/account/capnhq/requestpassword', {
-				body: JSON.stringify(form),
-				headers: {
-					'content-type': 'application/json'
-				},
-				method: 'POST'
-			});
-
-			const result: api.member.account.cap.PasswordResetRequest = await fetchResult.json();
-
-			either(result).cata(
-				error => {
-					this.setState({
-						error: error.message,
-						tryingSubmit: false
-					});
-				},
-				() => {
-					this.setState({
-						success: true,
-						error: null,
-						tryingSubmit: false
-					});
-				}
-			);
-		} catch (e) {
-			this.setState({
-				error: 'Could not request password reset',
 				tryingSubmit: false
 			});
 		}

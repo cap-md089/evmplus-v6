@@ -1,20 +1,34 @@
+import { Either, isRioux, Member, toReference } from 'common-lib';
 import React from 'react';
-import Page, { PageProps } from '../../Page';
-import MemberBase, { getMember } from '../../../lib/Members';
-import LoaderShort from '../../../components/LoaderShort';
-import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
-import APIInterface from '../../../lib/APIInterface';
+import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
+import LoaderShort from '../../../components/LoaderShort';
+import fetchApi from '../../../lib/apis';
+import Page, { PageProps } from '../../Page';
 
-interface SuState {
-	members: MemberBase[] | null;
+interface SuLoadingState {
+	state: 'LOADING';
 }
 
-export const canUseSu = (props: PageProps) => !!props.member && props.member.isRioux;
+interface SuLoadedState {
+	state: 'LOADED';
+
+	members: Member[];
+}
+
+interface SuErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+type SuState = SuLoadedState | SuLoadingState | SuErrorState;
+
+export const canUseSu = (props: PageProps) => !!props.member && isRioux(props.member);
 
 export default class SuWidget extends Page<PageProps, SuState> {
 	public state: SuState = {
-		members: null
+		state: 'LOADING'
 	};
 
 	public constructor(props: PageProps) {
@@ -24,9 +38,23 @@ export default class SuWidget extends Page<PageProps, SuState> {
 	}
 
 	public async componentDidMount() {
-		const members = await this.props.account.getMembers(this.props.member);
+		if (!this.props.member) {
+			return;
+		}
 
-		this.setState({ members });
+		const members = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
+
+		if (members.direction === 'left') {
+			this.setState({
+				state: 'ERROR',
+				message: members.value.message
+			});
+		} else {
+			this.setState({
+				state: 'LOADED',
+				members: members.value
+			});
+		}
 	}
 
 	public render() {
@@ -34,8 +62,10 @@ export default class SuWidget extends Page<PageProps, SuState> {
 			<div className="widget">
 				<div className="widget-title">Su</div>
 				<div className="widget-body">
-					{this.state.members === null ? (
+					{this.state.state === 'LOADING' ? (
 						<LoaderShort />
+					) : this.state.state === 'ERROR' ? (
+						<div>{this.state.message}</div>
 					) : (
 						<div>
 							There are {this.state.members.length} members in your unit
@@ -59,26 +89,22 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		);
 	}
 
-	private async suMember(member: MemberBase | null) {
+	private async suMember(member: Member | null) {
 		if (!member || !this.props.member) {
 			return;
 		}
 
-		const token = await APIInterface.getToken(this.props.account.id, this.props.member);
+		const newMember = await fetchApi.member
+			.su({}, toReference(member), this.props.member.sessionID)
+			.flatMap(() => fetchApi.check({}, {}, localStorage.getItem('sessionID')!));
 
-		await this.props.account.fetch(
-			'/api/member/su',
-			{
-				body: JSON.stringify({
-					...member.getReference(),
-					token
-				})
-			},
-			this.props.member
-		);
-
-		const newMember = await getMember(localStorage.getItem('sessionID')!);
-
-		this.props.authorizeUser(newMember);
+		if (Either.isLeft(newMember)) {
+			this.setState({
+				state: 'ERROR',
+				message: newMember.value.message
+			});
+		} else {
+			this.props.authorizeUser(newMember.value);
+		}
 	}
 }

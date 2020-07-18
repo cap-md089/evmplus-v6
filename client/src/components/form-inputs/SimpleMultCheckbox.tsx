@@ -1,17 +1,13 @@
+import { emptyFromLabels, SimpleMultCheckboxReturn } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
 import './MultCheckbox.scss';
-import { SimpleMultCheckboxReturn, emptyFromLabels, fromValue } from 'common-lib';
 
 interface SimpleMultCheckboxProps extends InputProps<SimpleMultCheckboxReturn> {
 	labels: string[];
 }
 
 export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckboxProps> {
-	constructor(props: SimpleMultCheckboxProps) {
-		super(props);
-	}
-
 	public render() {
 		const value = this.props.value || emptyFromLabels(this.props.labels);
 
@@ -47,26 +43,25 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 		return (e: React.ChangeEvent<HTMLInputElement>) => {
 			const isChecked = e.currentTarget.checked;
 
-			const value = fromValue(this.props.value)
-				.orElse(emptyFromLabels(this.props.labels))
-				.map(val => ({
-					...val,
-					values: [
-						...val.values.slice(0, index),
-						isChecked,
-						...val.values.slice(index + 1)
-					]
-				}));
+			const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+			const value = {
+				...inputValue,
+				values: [
+					...inputValue.values.slice(0, index),
+					isChecked,
+					...inputValue.values.slice(index + 1)
+				]
+			};
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: value.some()
+					value: value
 				});
 			}
 
 			if (this.props.onChange) {
-				this.props.onChange(value.some());
+				this.props.onChange(value);
 			}
 		};
 	}

@@ -1,4 +1,4 @@
-import { EventObject } from 'common-lib';
+import { RawEventObject, effectiveManageEventPermission, Permissions } from 'common-lib';
 import { DateTime } from 'luxon';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -49,7 +49,9 @@ export default class MobileCalendar extends Page<CalendarProps> {
 
 		return (
 			<div className="calendar-mobile">
-				{this.props.member && this.props.member.hasPermission('ManageEvent') ? (
+				{this.props.member &&
+				effectiveManageEventPermission(this.props.member) !==
+					Permissions.ManageEvent.NONE ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
 				<div className="calendar-title">
@@ -76,7 +78,10 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		);
 	}
 
-	private renderEventListForDay = (month: DateTime) => (events: EventObject[], index: number) => {
+	private renderEventListForDay = (month: DateTime) => (
+		events: RawEventObject[],
+		index: number
+	) => {
 		if (events.length === 0) {
 			return null;
 		}

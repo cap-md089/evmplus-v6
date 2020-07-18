@@ -1,10 +1,12 @@
+import { Either, EitherObj, HTTPError, Maybe, MaybeObj } from 'common-lib';
 import * as React from 'react';
-import Page, { PageProps } from '../Page';
-import { Either, api, Maybe, none, just } from 'common-lib';
 import Loader from '../../components/Loader';
+import SigninLink from '../../components/SigninLink';
+import fetchApi from '../../lib/apis';
+import Page, { PageProps } from '../Page';
 
 interface RegisterDiscordState {
-	result: Maybe<Either<api.HTTPError, void>>;
+	result: MaybeObj<EitherObj<HTTPError, void>>;
 }
 
 export default class RegisterDiscord extends Page<
@@ -12,18 +14,23 @@ export default class RegisterDiscord extends Page<
 	RegisterDiscordState
 > {
 	public state: RegisterDiscordState = {
-		result: none()
+		result: Maybe.none()
 	};
 
 	public async componentDidMount() {
 		if (!this.props.member) {
+			this.props.routeProps.history.push(
+				`/signin/?returnurl=/registerdiscord/${this.props.routeProps.match.params.discordid}`
+			);
 			return;
 		}
 
 		this.setState({
-			result: just(
-				await this.props.member.registerDiscord(
-					this.props.routeProps.match.params.discordid
+			result: Maybe.some(
+				await fetchApi.member.account.registerDiscord(
+					{ discordID: this.props.routeProps.match.params.discordid },
+					{},
+					this.props.member.sessionID
 				)
 			)
 		});
@@ -31,17 +38,17 @@ export default class RegisterDiscord extends Page<
 
 	public render() {
 		if (!this.props.member) {
-			// this.props.routeProps.history.push('/signin/?returnurl=' + )
-			return <div>You need to sign in to view this page</div>;
+			return <SigninLink>You need to sign in to view this page</SigninLink>;
 		}
 
 		if (!this.state.result.hasValue) {
 			return <Loader />;
 		}
 
-		return this.state.result.value.cata(
-			err => <div>{err.message}</div>,
-			() => <div>You can now close this page</div>
-		);
+		if (Either.isLeft(this.state.result.value)) {
+			return <div>{this.state.result.value.value.message}</div>;
+		}
+
+		return <div>You can now close this page</div>;
 	}
 }

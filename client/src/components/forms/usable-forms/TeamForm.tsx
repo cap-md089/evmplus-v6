@@ -1,6 +1,14 @@
-import { NewTeamMember, NewTeamObject, TeamPublicity } from 'common-lib';
+import {
+	get,
+	Maybe,
+	MaybeObj,
+	Member,
+	MemberReference,
+	NewTeamMember,
+	NewTeamObject,
+	TeamPublicity
+} from 'common-lib';
 import * as React from 'react';
-import { CAPMemberClasses } from '../../../lib/Members';
 import MemberSelector from '../../dialogues/MemberSelector';
 import TeamMemberInput, { TeamMemberInputProps } from '../../form-inputs/TeamMemberInput';
 import SimpleForm, {
@@ -15,16 +23,43 @@ import SimpleForm, {
 	TextInput
 } from '../SimpleForm';
 
-interface TeamFormProps {
-	team: NewTeamObject;
-	isTeamUpdate?: boolean;
-	memberList: Promise<CAPMemberClasses[]>;
-	onTeamChange: (event: NewTeamObject, valid: boolean) => void;
-	onTeamFormSubmit: (event: NewTeamObject, valid: boolean) => void;
+export interface NewTeamMemberEdit {
+	reference: MaybeObj<MemberReference>;
+	job: string;
 }
 
-const teamValidator: FormValidator<NewTeamObject> = {
-	name: name => name !== ''
+export interface TeamObjectEdit extends Omit<NewTeamObject, 'members'> {
+	members: NewTeamMemberEdit[];
+}
+
+interface TeamFormProps {
+	team: TeamObjectEdit;
+	isTeamUpdate?: boolean;
+	memberList: Member[];
+	onTeamChange: (event: TeamObjectEdit) => void;
+	onTeamFormSubmit: (event: MaybeObj<TeamObjectEdit>) => void;
+}
+
+export const collapseTeamEditToObject = (team: TeamObjectEdit): MaybeObj<NewTeamObject> =>
+	Maybe.map<NewTeamMember[], NewTeamObject>(members => ({ ...team, members }))(
+		Maybe.And<NewTeamMember>(
+			team.members.map(member =>
+				Maybe.map<MemberReference, NewTeamMember>(reference => ({
+					reference,
+					job: member.job
+				}))(member.reference)
+			)
+		)
+	);
+
+export const expandTeamObjectToEdit = (team: NewTeamObject): TeamObjectEdit => ({
+	...team,
+	members: team.members.map(({ reference, job }) => ({ reference: Maybe.some(reference), job }))
+});
+
+const teamValidator: FormValidator<TeamObjectEdit> = {
+	name: name => name !== '',
+	members: members => !members.map(get('reference')).some(Maybe.isNone)
 };
 
 export default class TeamForm extends React.Component<TeamFormProps> {
@@ -37,12 +72,13 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 
 	public render() {
 		return (
-			<SimpleForm<NewTeamObject>
+			<SimpleForm<TeamObjectEdit>
 				onChange={this.onTeamChange}
 				onSubmit={this.onTeamSubmit}
 				submitInfo={{
 					text: this.props.isTeamUpdate ? 'Update team' : 'Create team'
 				}}
+				disableOnInvalid={true}
 				values={this.props.team}
 				validator={teamValidator}
 			>
@@ -76,7 +112,7 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 					Protected means that the names and contact information require being signed in
 					to see
 					<br />
-					Public means that people can see names and contact information
+					Public means that anyone can see names and contact information
 				</TextBox>
 
 				<Label>Team visibility</Label>
@@ -88,12 +124,10 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 
 				<Divider />
 
-				<ListEditor<NewTeamMember, TeamMemberInputProps>
+				<ListEditor<NewTeamMemberEdit, TeamMemberInputProps>
 					name="members"
 					addNew={() => ({
-						reference: {
-							type: 'Null'
-						},
+						reference: Maybe.none(),
 						job: ''
 					})}
 					extraProps={{
@@ -109,21 +143,16 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 		);
 	}
 
-	private onTeamChange(
-		team: NewTeamObject,
-		errors: BooleanFields<NewTeamObject>,
-		changed: BooleanFields<NewTeamObject>,
-		valid: boolean
-	) {
-		this.props.onTeamChange(team, valid);
+	private onTeamChange(team: TeamObjectEdit) {
+		this.props.onTeamChange(team);
 	}
 
 	private onTeamSubmit(
-		team: NewTeamObject,
-		errors: BooleanFields<NewTeamObject>,
-		changed: BooleanFields<NewTeamObject>,
+		team: TeamObjectEdit,
+		errors: BooleanFields<TeamObjectEdit>,
+		changed: BooleanFields<TeamObjectEdit>,
 		valid: boolean
 	) {
-		this.props.onTeamFormSubmit(team, valid);
+		this.props.onTeamFormSubmit(valid ? Maybe.some(team) : Maybe.none());
 	}
 }

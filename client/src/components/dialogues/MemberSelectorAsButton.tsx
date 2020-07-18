@@ -1,24 +1,24 @@
 import * as React from 'react';
-import MemberBase from '../../lib/Members';
 import Button from '../Button';
 import { TextInput } from '../forms/SimpleForm';
 import Loader from '../Loader';
 import LoaderShort from '../LoaderShort';
 import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';
+import { Member, getFullMemberName } from 'common-lib';
 
 type MemberSelectorButtonProps = DialogueButtonProps & {
-	memberList: Promise<MemberBase[]>;
-	onMemberSelect: (member: MemberBase | null) => void;
+	memberList: Promise<Member[]> | Member[];
+	onMemberSelect: (member: Member | null) => void;
 	useShortLoader?: boolean;
 	disabled?: boolean;
 	buttonType?: '' | 'primaryButton' | 'secondaryButton' | 'none';
 };
 
 interface MemberSelectorButtonState {
-	members: MemberBase[] | null;
+	members: Member[] | null;
 	open: boolean;
-	selectedValue: MemberBase | null;
+	selectedValue: Member | null;
 	filterValues: any[];
 }
 
@@ -63,13 +63,13 @@ export default class MemberSelectorButton extends React.Component<
 				>
 					{this.props.children}
 				</Button>
-				<DownloadDialogue<MemberBase>
+				<DownloadDialogue<Member>
 					open={this.state.open}
 					multiple={false}
 					overflow={400}
 					title="Select a member"
 					showIDField={false}
-					displayValue={this.displayMember}
+					displayValue={getFullMemberName}
 					valuePromise={this.state.members}
 					filters={[
 						{
@@ -79,7 +79,9 @@ export default class MemberSelectorButton extends React.Component<
 								}
 
 								try {
-									return !!member.getFullName().match(new RegExp(input, 'gi'));
+									return !!getFullMemberName(member).match(
+										new RegExp(input, 'gi')
+									);
 								} catch (e) {
 									return false;
 								}
@@ -102,17 +104,13 @@ export default class MemberSelectorButton extends React.Component<
 		});
 	}
 
-	private displayMember(member: MemberBase) {
-		return member.getFullName();
-	}
-
-	private setSelectedMember(selectedValue: MemberBase | null) {
+	private setSelectedMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue
 		});
 	}
 
-	private selectMember(selectedValue: MemberBase | null) {
+	private selectMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue,
 			open: false

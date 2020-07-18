@@ -1,20 +1,20 @@
+import { FullTeamObject, get } from 'common-lib';
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import Loader from '../Loader';
 import { DisabledText, FormBlock, Label, TextBox } from '../forms/SimpleForm';
+import Loader from '../Loader';
 import { InputProps } from './Input';
 import TextInput from './TextInput';
-import Team from '../../lib/Team';
 
 interface TeamSelectorProps extends InputProps<number | null> {
-	teamList: Promise<Team[]>;
+	teamList: FullTeamObject[];
 }
 
 interface TeamSelectorState {
-	teams: Team[] | null;
+	teams: FullTeamObject[] | null;
 	open: boolean;
-	selectedValue: Team | null;
+	selectedValue: FullTeamObject | null;
 	filterValues: any[];
 }
 
@@ -64,13 +64,13 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 					<Button onClick={this.openTeamDialogue} buttonType="none">
 						Select a team
 					</Button>
-					<DownloadDialogue<Team>
+					<DownloadDialogue<FullTeamObject>
 						open={this.state.open}
 						multiple={false}
 						overflow={400}
 						title="Select a team"
 						showIDField={false}
-						displayValue={this.displayTeam}
+						displayValue={get('name')}
 						valuePromise={this.state.teams}
 						filters={[
 							{
@@ -104,23 +104,19 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		);
 	}
 
-	private displayTeam(team: Team) {
-		return team.name;
-	}
-
 	private onTeamDialogueFilterValueChange(filterValues: any[]) {
 		this.setState({
 			filterValues
 		});
 	}
 
-	private setSelectedTeam(selectedValue: Team | null) {
+	private setSelectedTeam(selectedValue: FullTeamObject | null) {
 		this.setState({
 			selectedValue
 		});
 	}
 
-	private selectTeam(selectedValue: Team | null) {
+	private selectTeam(selectedValue: FullTeamObject | null) {
 		this.setState({
 			selectedValue,
 			open: false

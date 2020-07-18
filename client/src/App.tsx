@@ -1,4 +1,15 @@
-import { FileObject, fromValue, MemberCreateError, SigninReturn } from 'common-lib';
+import {
+	AccountObject,
+	AsyncEither,
+	asyncRight,
+	Either,
+	FileObject,
+	Maybe,
+	MemberCreateError,
+	RegistryValues,
+	SigninReturn,
+	User
+} from 'common-lib';
 import * as React from 'react';
 import './App.scss';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
@@ -8,20 +19,19 @@ import Footer from './components/page-elements/Footer';
 import Header from './components/page-elements/Header';
 import SideNavigation, { SideNavigationItem } from './components/page-elements/SideNavigation';
 import PageRouter from './components/PageRouter';
-import Account from './lib/Account';
-import { CAPMemberClasses, createCorrectMemberObject, getMember } from './lib/Members';
-import myFetch from './lib/myFetch';
-import Registry from './lib/Registry';
+import fetchApi from './lib/apis';
+import { getMember } from './lib/Members';
 
 interface AppState {
-	Registry: Registry | null;
+	Registry: RegistryValues | null;
 	member: SigninReturn;
-	fullMember: CAPMemberClasses | null;
+	fullMember: User | null;
 	loading: boolean;
-	account: Account | null;
+	account: AccountObject | null;
 	sideNavLinks: SideNavigationItem[];
 	breadCrumbs: BreadCrumb[];
 	allowedSlideshowIDs: FileObject[];
+	loadError: boolean;
 }
 
 export default class App extends React.Component<
@@ -42,7 +52,8 @@ export default class App extends React.Component<
 		sideNavLinks: [],
 		breadCrumbs: [],
 		allowedSlideshowIDs: [],
-		fullMember: null
+		fullMember: null,
+		loadError: false
 	};
 
 	private timer: NodeJS.Timer | null = null;
@@ -58,11 +69,9 @@ export default class App extends React.Component<
 	}
 
 	public async componentDidMount() {
-		myFetch('/api/banner')
-			.then(res => res.json())
-			.then((allowedSlideshowIDs: FileObject[]) => {
-				this.setState({ allowedSlideshowIDs });
-			});
+		fetchApi
+			.slideshowImageIDs({}, {})
+			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }));
 
 		const sessionID = localStorage.getItem('sessionID');
 
@@ -72,18 +81,35 @@ export default class App extends React.Component<
 
 		window.addEventListener('storage', this.onStorageChange);
 
-		const [account, member] = await Promise.all([Account.Get(), getMember(sessionID || '')]);
+		const infoEither = await AsyncEither.All([
+			fetchApi.accountCheck({}, {}),
+			fetchApi.registry.get({}, {}),
+
+			// The following should not fail
+			asyncRight(
+				sessionID ? getMember(sessionID) : { error: MemberCreateError.INVALID_SESSION_ID },
+				{
+					code: 500,
+					message: 'Could not get account information'
+				}
+			)
+		]);
+
+		if (Either.isLeft(infoEither)) {
+			this.setState({
+				loadError: true,
+				loading: false
+			});
+			return;
+		}
+
+		const [account, registry, member] = infoEither.value;
 
 		if (member.error !== MemberCreateError.NONE) {
 			localStorage.removeItem('sessionID');
 		}
 
-		const fullMember =
-			member.error !== MemberCreateError.NONE
-				? null
-				: createCorrectMemberObject(member.member, account, member.sessionID);
-
-		const registry = await Registry.Get(account);
+		const fullMember = member.error !== MemberCreateError.NONE ? null : member.member;
 
 		this.setState({
 			Registry: registry,
@@ -105,7 +131,10 @@ export default class App extends React.Component<
 	public render() {
 		return (
 			<>
-				<Header registry={fromValue(this.state.Registry)} />
+				<Header
+					loadingError={this.state.loadError}
+					registry={Maybe.fromValue(this.state.Registry)}
+				/>
 				{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
 				<div className="background">
 					<div className="main-content-bottom" />
@@ -126,6 +155,8 @@ export default class App extends React.Component<
 						)}
 						{this.state.loading ? (
 							<Loader />
+						) : this.state.loadError ? (
+							<div>The account does not exist</div>
 						) : (
 							<PageRouter
 								updateApp={this.update}
@@ -142,7 +173,7 @@ export default class App extends React.Component<
 					</div>
 				</main>
 				<div className="content-border right-border" />
-				<Footer registry={fromValue(this.state.Registry)} />
+				<Footer registry={Maybe.fromValue(this.state.Registry)} />
 			</>
 		);
 	}
@@ -160,20 +191,12 @@ export default class App extends React.Component<
 
 		if (member.error === MemberCreateError.NONE && fullMember) {
 			if (member.member.id !== fullMember.id) {
-				fullMember = createCorrectMemberObject(
-					member.member,
-					this.state.account!,
-					member.sessionID
-				);
+				fullMember = member.member;
 			} else {
 				fullMember.sessionID = member.sessionID;
 			}
 		} else if (member.error === MemberCreateError.NONE) {
-			fullMember = createCorrectMemberObject(
-				member.member,
-				this.state.account!,
-				member.sessionID
-			);
+			fullMember = member.member;
 		} else {
 			fullMember = null;
 		}

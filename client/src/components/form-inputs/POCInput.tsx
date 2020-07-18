@@ -1,14 +1,20 @@
 import {
-	CAPMemberObject,
 	DisplayInternalPointOfContact,
 	ExternalPointOfContact,
 	Member,
-	MemberObject,
 	PointOfContact,
-	PointOfContactType
+	PointOfContactType,
+	MaybeObj,
+	MemberReference,
+	Maybe,
+	getFullMemberName,
+	getMemberEmail,
+	toReference,
+	getMemberPhone,
+	InternalPointOfContact,
+	areMembersTheSame
 } from 'common-lib';
 import * as React from 'react';
-import { CAPMemberClasses, createCorrectMemberObject } from '../../lib/Members';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
 import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
@@ -19,9 +25,41 @@ import TextBox from './TextBox';
 const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
 	poc.type === PointOfContactType.INTERNAL;
 
+export interface InternalPointOfContactEdit
+	extends Omit<DisplayInternalPointOfContact, 'name' | 'memberReference'> {
+	memberReference: MaybeObj<MemberReference>;
+}
+
+export const upgradeDisplayInternalPointOfContactToEdit = (
+	poc: DisplayInternalPointOfContact
+): InternalPointOfContactEdit => ({
+	email: poc.email,
+	memberReference: Maybe.some(poc.memberReference),
+	phone: poc.phone,
+	receiveEventUpdates: poc.receiveEventUpdates,
+	receiveRoster: poc.receiveRoster,
+	receiveSignUpUpdates: poc.receiveSignUpUpdates,
+	receiveUpdates: poc.receiveUpdates,
+	type: PointOfContactType.INTERNAL
+});
+
+export const simplifyDisplayInternalPointOfContactFromEdit = (
+	poc: InternalPointOfContactEdit
+): MaybeObj<InternalPointOfContact> =>
+	Maybe.map<MemberReference, InternalPointOfContact>(memberReference => ({
+		email: poc.email,
+		memberReference,
+		phone: poc.phone,
+		receiveEventUpdates: poc.receiveEventUpdates,
+		receiveRoster: poc.receiveRoster,
+		receiveSignUpUpdates: poc.receiveSignUpUpdates,
+		receiveUpdates: poc.receiveUpdates,
+		type: PointOfContactType.INTERNAL
+	}))(poc.memberReference);
+
 export interface POCInputProps
-	extends NotOptionalInputProps<DisplayInternalPointOfContact | ExternalPointOfContact> {
-	memberList: Promise<CAPMemberClasses[]>;
+	extends NotOptionalInputProps<InternalPointOfContactEdit | ExternalPointOfContact> {
+	memberList: Member[];
 }
 
 export default class POCInput extends React.Component<
@@ -29,7 +67,7 @@ export default class POCInput extends React.Component<
 	{
 		memberSelectOpen: boolean;
 		filterValues: any[];
-		selectedValue: null | MemberObject;
+		selectedValue: null | Member;
 	}
 > {
 	public state = {
@@ -47,10 +85,7 @@ export default class POCInput extends React.Component<
 				value: this.props.value || {
 					type: PointOfContactType.INTERNAL,
 					email: '',
-					name: '',
-					memberReference: {
-						type: 'Null'
-					},
+					memberReference: Maybe.none(),
 					phone: '',
 					receiveEventUpdates: false,
 					receiveRoster: false,
@@ -83,11 +118,23 @@ export default class POCInput extends React.Component<
 		const POCType = SimpleRadioButton as new () => SimpleRadioButton<PointOfContactType>;
 
 		const value = {
-			...this.props.value
+			...this.props.value,
+			name:
+				this.props.value.type === PointOfContactType.INTERNAL
+					? Maybe.orSome('')(
+							Maybe.map(getFullMemberName)(
+								Maybe.flatMap<MemberReference, Member>(member =>
+									Maybe.fromArray(
+										this.props.memberList.filter(areMembersTheSame(member))
+									)
+								)(this.props.value.memberReference)
+							)
+					  )
+					: this.props.value.name
 		};
 
 		return (
-			<FormBlock<DisplayInternalPointOfContact | ExternalPointOfContact>
+			<FormBlock<InternalPointOfContactEdit | ExternalPointOfContact>
 				name={`pocInput-${this.props.index}`}
 				onFormChange={this.onUpdate}
 				onInitialize={this.props.onInitialize}
@@ -125,26 +172,26 @@ export default class POCInput extends React.Component<
 
 				<Label>Receive updates</Label>
 				<Checkbox name="receiveUpdates" index={this.props.index} />
+
+				<Label>Publicly display contact info</Label>
+				<Checkbox name="publicDisplay" index={this.props.index} />
 			</FormBlock>
 		);
 	}
 
 	private onUpdate(
-		poc: DisplayInternalPointOfContact | ExternalPointOfContact,
+		poc: InternalPointOfContactEdit | ExternalPointOfContact,
 		error: any,
 		changed: any,
 		hasError: any,
-		name: keyof (DisplayInternalPointOfContact | ExternalPointOfContact)
+		name: keyof (InternalPointOfContactEdit | ExternalPointOfContact)
 	) {
 		if (name === 'type') {
 			if (poc.type === PointOfContactType.INTERNAL) {
 				poc = {
 					type: PointOfContactType.INTERNAL,
 					email: '',
-					memberReference: {
-						type: 'Null'
-					},
-					name: '',
+					memberReference: Maybe.none(),
 					phone: '',
 					receiveEventUpdates: false,
 					receiveRoster: false,
@@ -179,34 +226,17 @@ export default class POCInput extends React.Component<
 		});
 	}
 
-	private displayMemberValue(member: CAPMemberClasses) {
-		let rank = '';
-
-		if (member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') {
-			rank = (member as CAPMemberObject).memberRank + ' ';
-		}
-
-		return `${rank}${member.getName()}`;
-	}
-
 	private updateFilterValues(filterValues: any[]) {
 		this.setState({ filterValues });
 	}
 
 	private selectMember(member: Member | null) {
 		if (member !== null) {
-			const mem = createCorrectMemberObject(member, this.props.account!, '');
-
-			if (mem === null) {
-				throw new Error('Invalid member object');
-			}
-
-			const value: DisplayInternalPointOfContact = {
-				...(this.props.value as DisplayInternalPointOfContact)!,
-				email: mem.getBestEmail() || '',
-				name: mem.getName(),
-				memberReference: mem.getReference(),
-				phone: mem.getBestPhone() || ''
+			const value: InternalPointOfContactEdit = {
+				...(this.props.value as InternalPointOfContactEdit)!,
+				email: Maybe.orSome('')(getMemberEmail(member.contact)),
+				memberReference: Maybe.some(toReference(member)),
+				phone: Maybe.orSome('')(getMemberPhone(member.contact))
 			};
 
 			this.onUpdate(value, null, null, null, 'email');
@@ -217,7 +247,7 @@ export default class POCInput extends React.Component<
 		});
 	}
 
-	private setSelectedValue(selectedValue: MemberObject | null) {
+	private setSelectedValue(selectedValue: Member | null) {
 		this.setState({
 			selectedValue
 		});
@@ -241,7 +271,7 @@ export default class POCInput extends React.Component<
 	private getMemberSelector() {
 		const value = this.props.value!;
 
-		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<CAPMemberClasses>;
+		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<Member>;
 
 		return isInternalPOC(value) ? (
 			<TextBox>
@@ -252,7 +282,7 @@ export default class POCInput extends React.Component<
 					overflow={400}
 					title="Select Point of Contact"
 					showIDField={true}
-					displayValue={this.displayMemberValue}
+					displayValue={getFullMemberName}
 					valuePromise={this.props.memberList}
 					filters={[
 						{
@@ -262,9 +292,9 @@ export default class POCInput extends React.Component<
 								}
 
 								try {
-									return !!memberToCheck
-										.getFullName()
-										.match(new RegExp(input, 'gi'));
+									return !!getFullMemberName(memberToCheck).match(
+										new RegExp(input, 'gi')
+									);
 								} catch (e) {
 									return false;
 								}

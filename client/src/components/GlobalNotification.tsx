@@ -1,16 +1,28 @@
+import {
+	AccountObject,
+	Either,
+	Maybe,
+	MaybeObj,
+	NotificationCause,
+	NotificationCauseType,
+	NotificationDataMessage,
+	NotificationEveryoneTarget,
+	NotificationObject
+} from 'common-lib';
 import * as React from 'react';
-import Account from '../lib/Account';
-import Notification from '../lib/Notification';
-import './GlobalNotification.css';
+import fetchApi from '../lib/apis';
 import Button from './Button';
+import './GlobalNotification.css';
 
 interface NotificationState {
-	notification: null | Notification;
+	notification: MaybeObj<
+		NotificationObject<NotificationCause, NotificationEveryoneTarget, NotificationDataMessage>
+	>;
 	closed: number | null;
 }
 
 interface NotificationProps {
-	account: Account;
+	account: AccountObject;
 }
 
 export default class GlobalNotification extends React.Component<
@@ -19,7 +31,7 @@ export default class GlobalNotification extends React.Component<
 > {
 	public state: NotificationState = {
 		closed: null,
-		notification: null
+		notification: Maybe.none()
 	};
 
 	private timer?: number;
@@ -43,7 +55,10 @@ export default class GlobalNotification extends React.Component<
 	}
 
 	public render() {
-		if (!this.state.notification || this.state.closed === this.state.notification.id) {
+		if (
+			!this.state.notification.hasValue ||
+			this.state.closed === this.state.notification.value.id
+		) {
 			return null;
 		}
 
@@ -56,22 +71,27 @@ export default class GlobalNotification extends React.Component<
 				>
 					&#10006;
 				</Button>
-				{this.state.notification.fromMemberName} {this.state.notification.text}
+				{this.state.notification.value.cause.type === NotificationCauseType.MEMBER
+					? `${this.state.notification.value.cause.fromName} - `
+					: null}
+				{this.state.notification.value.extraData.message}
 			</div>
 		);
 	}
 
 	private async updateNotification() {
-		const notification = await Notification.GetGlobal(this.props.account);
+		const notificationEither = await fetchApi.notifications.global.get({}, {});
 
-		this.setState({
-			notification
-		});
+		if (Either.isRight(notificationEither)) {
+			this.setState({
+				notification: notificationEither.value
+			});
+		}
 	}
 
 	private onButtonClick() {
 		this.setState(prev => ({
-			closed: prev.notification ? prev.notification.id : null
+			closed: prev.notification.hasValue ? prev.notification.value.id : null
 		}));
 	}
 }

@@ -1,20 +1,18 @@
+import { AccountObject, RegistryValues, SigninReturn, User } from 'common-lib';
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { BreadCrumb } from '../components/BreadCrumbs';
 import { SideNavigationItem } from '../components/page-elements/SideNavigation';
-import Account from '../lib/Account';
-import MemberBase from '../lib/MemberBase';
-import Registry from '../lib/Registry';
-import { SigninReturn } from 'common-lib';
+import fetchApi from '../lib/apis';
 
 // DO NOT USE THIS COMPONENT
 // Other pages extend this so that I can use `typeof Page` in route composition
 
 export interface PageProps<R = {}> {
-	member: MemberBase | null;
-	account: Account;
+	member: User | null;
+	account: AccountObject;
 	routeProps: RouteComponentProps<R>;
-	registry: Registry;
+	registry: RegistryValues;
 	fullMemberDetails: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
@@ -92,17 +90,13 @@ export default abstract class Page<
 	}
 
 	protected async refreshSession() {
-		// tslint:disable-next-line:no-console
-		console.log('Refreshing session ID');
-
 		const { member } = this.props;
 		if (member) {
-			await member
-				.fetch(`/api/check`, {}, member)
-				.then(res => res.json())
-				.then((sr: SigninReturn) => {
-					this.props.authorizeUser(sr);
-				});
+			const result = await fetchApi.check({}, {}, member.sessionID);
+
+			if (result.direction === 'right') {
+				this.props.authorizeUser(result.value);
+			}
 		}
 	}
 }

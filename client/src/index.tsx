@@ -1,4 +1,4 @@
-import 'core-js/stable';
+// import 'core-js/stable';
 import 'promise-polyfill/src/polyfill';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -6,7 +6,6 @@ import * as ReactDOM from 'react-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import 'regenerator-runtime/runtime';
 import App from './App';
-import './lib/MemberBase';
 import './_theme.scss';
 
 ReactDOM.render(

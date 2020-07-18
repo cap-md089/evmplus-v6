@@ -1,12 +1,20 @@
 import {
+	AsyncEither,
+	AttendanceRecord,
 	AttendanceStatus,
+	complement,
+	effectiveManageEventPermissionForEvent,
+	Either,
+	EventObject,
+	formatEventViewerDate,
+	get,
+	getFullMemberName,
+	hasMember,
+	Maybe,
 	Member,
 	MemberObject,
-	Maybe,
-	none,
-	just,
-	fromValue,
-	formatEventViewerDate
+	Permissions,
+	toReference
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -14,11 +22,16 @@ import Button from '../../components/Button';
 import { InputProps } from '../../components/form-inputs/Input';
 import Selector, { CheckInput } from '../../components/form-inputs/Selector';
 import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
-import { TextInput, NumberInput, TextBox } from '../../components/forms/SimpleForm';
-import SimpleForm, { Checkbox, Label } from '../../components/forms/SimpleForm';
+import SimpleForm, {
+	Checkbox,
+	Label,
+	NumberInput,
+	TextBox,
+	TextInput
+} from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
-import Event from '../../lib/Event';
-import { CAPMemberClasses } from '../../lib/Members';
+import SigninLink from '../../components/SigninLink';
+import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 
 enum SortFunction {
@@ -34,18 +47,32 @@ enum MemberList {
 }
 
 interface SelectorFormValues {
-	members: CAPMemberClasses[];
+	members: Member[];
 	sortFunction: SortFunction;
 	displayAdvanced: boolean;
 }
 
-interface MultiAddState {
-	members: CAPMemberClasses[] | null;
-	event: Event | null;
-	error: number;
-	selectedMembers: CAPMemberClasses[];
+interface MultiAddMemberLoadingState {
+	state: 'LOADING';
+}
+
+interface MultiAddMemberLoadedState {
+	state: 'LOADED';
+
+	members: Member[];
+	event: EventObject;
+}
+
+interface MultiAddMemberErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+interface MultiAddUIState {
+	selectedMembers: Member[];
 	sortFunction: SortFunction;
-	visibleItems: CAPMemberClasses[];
+	visibleItems: Member[];
 	displayAdvanced: boolean;
 	filterValues: {
 		flightInput: string;
@@ -59,6 +86,9 @@ interface MultiAddState {
 	capidSaving: boolean;
 	capidError: string | null;
 }
+
+type MultiAddState = MultiAddUIState &
+	(MultiAddMemberLoadedState | MultiAddMemberLoadingState | MultiAddMemberErrorState);
 
 const memberRanks = [
 	'cab',
@@ -204,13 +234,13 @@ const rankLessThan: CheckInput<Member, string> = {
 
 const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
-		return memberFilters[fromValue(input).orSome(MemberList.ALL)](mem);
+		return memberFilters[Maybe.orSome(MemberList.ALL)(Maybe.fromValue(input))](mem);
 	},
 	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton<MemberList>
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={fromValue(props.value).orSome(MemberList.ALL)}
+			value={Maybe.orSome(MemberList.ALL)(Maybe.fromValue(props.value))}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -231,9 +261,7 @@ const simpleFilters = [nameInput, memberFilter];
 
 export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, MultiAddState> {
 	public state: MultiAddState = {
-		members: null,
-		event: null,
-		error: 0,
+		state: 'LOADING',
 		displayAdvanced: false,
 		filterValues: {
 			flightInput: '',
@@ -269,6 +297,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 	}
 
 	public async componentDidMount() {
+		this.updateTitle('Attendance add');
+
 		if (!this.props.member) {
 			return;
 		}
@@ -277,39 +307,51 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		// eslint-disable-next-line
 		if (eventID !== eventID) {
-			return this.setState({
-				error: 404
-			});
+			return this.setState(prev => ({
+				...prev,
+
+				state: 'ERROR',
+				message: 'Could not find event specified'
+			}));
 		}
 
-		let members;
-		let event;
+		const resultsEither = await AsyncEither.All([
+			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
+			fetchApi.events.events.get({ id: eventID.toString() }, {}, this.props.member.sessionID)
+		]);
 
-		try {
-			[members, event] = await Promise.all([
-				this.props.account.getMembers(this.props.member),
-				Event.Get(eventID, this.props.member, this.props.account)
-			]);
+		if (Either.isLeft(resultsEither)) {
+			return this.setState(prev => ({
+				...prev,
 
-			this.setState({
-				members,
-				event
-			});
-		} catch (e) {
-			this.setState({
-				error: 404
-			});
-			return;
+				state: 'ERROR',
+				message: resultsEither.value.message
+			}));
 		}
+
+		const [members, event] = resultsEither.value;
 
 		// this.updateURL(`/multiadd/${event.getEventURLComponent()}`);
 
-		if (!event.isPOC(this.props.member)) {
-			this.setState({
-				error: 403
-			});
-			return;
+		if (
+			effectiveManageEventPermissionForEvent(this.props.member)(event) ===
+			Permissions.ManageEvent.NONE
+		) {
+			return this.setState(prev => ({
+				...prev,
+
+				state: 'ERROR',
+				message: 'You do not have permission to do that'
+			}));
 		}
+
+		this.setState(prev => ({
+			...prev,
+
+			state: 'LOADED',
+			members,
+			event
+		}));
 
 		this.props.updateBreadCrumbs([
 			{
@@ -327,27 +369,20 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		]);
 
 		this.props.updateSideNav([]);
-
-		this.updateTitle('Attendance add');
 	}
 
 	public render() {
-		if (this.state.error === 403 || !this.props.member) {
-			return <div>You do not have permission to do that</div>;
-		}
-		if (this.state.error === 404) {
-			return <div>The requested event does not exist</div>;
+		if (!this.props.member) {
+			return <SigninLink>Please sign in to continue.</SigninLink>;
 		}
 
-		if (this.state.event === null) {
+		if (this.state.state === 'LOADING') {
 			return <Loader />;
 		}
 
-		const MemberSelector = (Selector as unknown) as new () => Selector<CAPMemberClasses>;
-
-		const SelectorForm = SimpleForm as new () => SimpleForm<SelectorFormValues>;
-
-		const SortSelector = SimpleRadioButton as new () => SimpleRadioButton<SortFunction>;
+		if (this.state.state === 'ERROR') {
+			return <div>{this.state.message}</div>;
+		}
 
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
@@ -390,7 +425,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				<Button onClick={this.deselectAll}>Deselect all</Button>
 				<br />
 				<br />
-				<SelectorForm
+				<SimpleForm<SelectorFormValues>
 					values={{
 						members: this.state.selectedMembers,
 						sortFunction: this.state.sortFunction,
@@ -400,7 +435,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					onSubmit={this.addMembers}
 				>
 					<Label>Select how to sort</Label>
-					<SortSelector
+					<SimpleRadioButton<SortFunction>
 						name="sortFunction"
 						labels={['Last name', 'First name', 'CAPID']}
 					/>
@@ -408,7 +443,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					<Label>Show advanced filters</Label>
 					<Checkbox name="displayAdvanced" />
 
-					<MemberSelector
+					<Selector<Member>
 						fullWidth={true}
 						name="members"
 						values={this.state.members!.slice(0).sort(currentSortFunction)}
@@ -421,35 +456,42 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 						filterValues={filterValues}
 						onFilterValuesChange={this.onFilterValuesChange}
 					/>
-				</SelectorForm>
+				</SimpleForm>
 			</>
 		);
 	}
 
-	private renderMember(member: CAPMemberClasses) {
-		if (!this.state.event) {
-			return <div>{member.getFullName()}</div>;
+	private renderMember(member: Member) {
+		if (this.state.state !== 'LOADED') {
+			return <div>{getFullMemberName(member)}</div>;
 		}
 
-		if (this.state.event.hasMember(member)) {
-			return (
-				<div title="This member is already in attendance" style={grayedOut}>
-					{member.getFullName()}
-				</div>
-			);
-		} else {
-			return <div>{member.getFullName()}</div>;
-		}
+		return hasMember(this.state.event)(member) ? (
+			<div title="This member is already in attendance" style={grayedOut}>
+				{getFullMemberName(member)}
+			</div>
+		) : (
+			<div>{getFullMemberName(member)}</div>
+		);
 	}
 
-	private filterMembers(members: CAPMemberClasses[]) {
-		return members.filter(member => !this.state.event!.hasMember(member));
+	private filterMembers(members: Member[]) {
+		if (this.state.state !== 'LOADED') {
+			return [];
+		}
+
+		return members.filter(complement(hasMember(this.state.event)));
 	}
 
 	private selectAll() {
-		this.setState(prev => ({
-			selectedMembers: this.filterMembers((prev.members || []).slice(0))
-		}));
+		this.setState(prev =>
+			prev.state === 'LOADED'
+				? {
+						...prev,
+						selectedMembers: this.filterMembers((prev.members || []).slice(0))
+				  }
+				: prev
+		);
 	}
 
 	private selectVisible() {
@@ -472,28 +514,52 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		});
 	}
 
-	private async addMembers({ members, sortFunction, displayAdvanced }: SelectorFormValues) {
-		await this.state.event!.addAttendees(
-			this.props.member!,
-			members.map(member => ({
-				arrivalTime: null,
-				departureTime: null,
-				canUsePhotos: true,
-				comments: `Multi add by ${this.props.member!.getFullName()} on ${DateTime.local().toLocaleString()}`,
-				memberID: member.getReference(),
-				planToUseCAPTransportation: false,
-				status: AttendanceStatus.COMMITTEDATTENDED,
-				customAttendanceFieldValues: []
-			})),
-			members
+	private async addMembers({ members }: SelectorFormValues) {
+		if (!this.props.member) {
+			return;
+		}
+
+		const member = this.props.member;
+
+		const result = await fetchApi.events.attendance.addBulk(
+			{ id: this.props.routeProps.match.params.id.split('-')[0] },
+			{
+				members: members.map(addedMember => ({
+					shiftTime: null,
+					canUsePhotos: true,
+					comments: `Multi add by ${getFullMemberName(
+						member
+					)} on ${DateTime.local().toLocaleString()}`,
+					memberID: toReference(addedMember),
+					planToUseCAPTransportation: false,
+					status: AttendanceStatus.COMMITTEDATTENDED,
+					customAttendanceFieldValues: []
+				}))
+			},
+			member.sessionID
 		);
 
-		this.setState({
-			selectedMembers: []
-		});
+		if (Either.isRight(result)) {
+			const attendance = result.value.filter(Either.isRight).map(get('value'));
+
+			this.setState(prev =>
+				prev.state === 'LOADED'
+					? {
+							...prev,
+							event: {
+								...prev.event,
+								attendance
+							},
+							selectedMembers: []
+					  }
+					: prev
+			);
+		} else {
+			// TODO: Handle error case
+		}
 	}
 
-	private handleDifferentVisibleItems(visibleItems: CAPMemberClasses[]) {
+	private handleDifferentVisibleItems(visibleItems: Member[]) {
 		this.setState({
 			visibleItems
 		});
@@ -530,39 +596,75 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 	}
 
 	private async addCAPID({ capid }: { capid: number | null }) {
+		if (capid === null || this.state.state !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
 		this.setState({
 			capidSaving: true,
 			capidSaved: false,
 			capidError: null
 		});
 
-		if (this.state.event!.hasMember({ type: 'CAPNHQMember', id: capid! })) {
-			this.setState({
+		if (hasMember(this.state.event)({ type: 'CAPNHQMember', id: capid })) {
+			return this.setState({
 				capidSaving: false,
 				capidError: 'Member is already in attendance'
 			});
-			return;
 		}
 
-		await this.state.event!.addAttendee(
-			this.props.member!,
-			{ type: 'CAPNHQMember', id: capid! },
-			{
-				arrivalTime: null,
-				comments:
-					'CAP ID add by ' +
-					this.props.member!.getFullName() +
-					formatEventViewerDate(+new Date()),
-				customAttendanceFieldValues: [],
-				departureTime: null,
-				planToUseCAPTransportation: false,
-				status: AttendanceStatus.COMMITTEDATTENDED
-			}
+		const record: AttendanceRecord = {
+			shiftTime: {
+				arrivalTime: this.state.event.startDateTime,
+				departureTime: this.state.event.pickupDateTime
+			},
+			comments: `CAP ID add by ${getFullMemberName(
+				this.props.member
+			)} on ${formatEventViewerDate(+new Date())}`,
+			customAttendanceFieldValues: [],
+			planToUseCAPTransportation: false,
+			status: AttendanceStatus.COMMITTEDATTENDED,
+			memberID: {
+				type: 'CAPNHQMember' as const,
+				id: capid
+			},
+
+			// Dummy fields the server ignores, the client doesn't need and we can't currently fully provide, but it satisfies the type checker
+			memberName: '',
+			summaryEmailSent: false,
+			timestamp: Date.now()
+		};
+
+		const result = await fetchApi.events.attendance.add(
+			{ id: this.state.event.id.toString() },
+			record,
+			this.props.member.sessionID
 		);
 
-		this.setState({
-			capidSaved: true,
-			capidSaving: false
-		});
+		if (Either.isLeft(result)) {
+			this.setState({
+				capidSaved: true,
+				capidSaving: false,
+				capidError: result.value.message
+			});
+		} else {
+			this.setState(prev =>
+				prev.state === 'LOADED'
+					? {
+							...prev,
+							capidSaved: true,
+							capidSaving: false,
+							event: {
+								...prev.event,
+								attendance: [...prev.event.attendance, record]
+							}
+					  }
+					: {
+							...prev,
+							capidSaved: true,
+							capidSaving: false
+					  }
+			);
+		}
 	}
 }

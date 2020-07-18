@@ -1,20 +1,20 @@
+import { AbsenteeInformation, isCAPMember, Maybe, MemberCreateError, User } from 'common-lib';
 import * as React from 'react';
-import './Absentee.css';
-import { AbsenteeInformation } from 'common-lib';
+import { DateTimeInput, Form, Label, TextInput } from '../../../components/forms/SimpleForm';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
-import { CAPMemberClasses, CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
-import { Label, DateTimeInput, TextInput, Form } from '../../../components/forms/SimpleForm';
+import './Absentee.css';
 
 interface AbsenteeState {
 	absentee: AbsenteeInformation;
 }
 
 interface AbsenteeProps extends PageProps {
-	member: CAPMemberClasses;
+	member: User;
 }
 
 export const canUseAbsentee = (props: PageProps) => {
-	return props.member instanceof CAPNHQMember || props.member instanceof CAPProspectiveMember;
+	return Maybe.orSome(false)(Maybe.map(isCAPMember)(Maybe.fromValue(props.member)));
 };
 
 export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
@@ -80,7 +80,21 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 	}
 
 	public async onSubmit() {
-		this.props.member.absenteeInformation = this.state.absentee;
-		await this.props.member.saveAbsenteeInformation();
+		if (this.props.fullMemberDetails.error !== MemberCreateError.NONE) {
+			return;
+		}
+
+		await fetchApi.member.setAbsentee({}, this.state.absentee, this.props.member.sessionID);
+
+		this.props.authorizeUser({
+			error: MemberCreateError.NONE,
+			member: {
+				...this.props.member,
+				absenteeInformation: this.state.absentee
+			},
+			notificationCount: this.props.fullMemberDetails.notificationCount,
+			sessionID: this.props.member.sessionID,
+			taskCount: this.props.fullMemberDetails.taskCount
+		});
 	}
 }

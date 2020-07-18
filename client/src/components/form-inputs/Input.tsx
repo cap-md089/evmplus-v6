@@ -1,6 +1,5 @@
+import { AccountObject, User } from 'common-lib';
 import * as React from 'react';
-import MemberBase from '../../lib/Members';
-import Account from '../../lib/Account';
 
 export interface InputProps<V> {
 	// Callback handler
@@ -55,8 +54,8 @@ export interface InputProps<V> {
 	/**
 	 * Used by some components. They should throw an error if they are not defined
 	 */
-	member?: MemberBase | null;
-	account?: Account | null;
+	member?: User | null;
+	account?: AccountObject | null;
 	/**
 	 * Whether or not there is an error with this component
 	 *
@@ -82,6 +81,6 @@ export interface InputProps<V> {
 }
 
 export interface NotOptionalInputProps<V> extends InputProps<V> {
-	member: MemberBase;
-	account: Account;
+	member: User;
+	account: AccountObject;
 }

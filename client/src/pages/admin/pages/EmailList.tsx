@@ -1,4 +1,4 @@
-import { fromValue, Member, MemberObject } from 'common-lib';
+import { Member, Maybe, Either, areMembersTheSame, getFullMemberName } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
 import { InputProps } from '../../../components/form-inputs/Input';
@@ -11,8 +11,8 @@ import SimpleForm, {
 	TextInput
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
-import { CAPMemberClasses } from '../../../lib/Members';
 import Page, { PageProps } from '../../Page';
+import fetchApi from '../../../lib/apis';
 
 const memberRanks = [
 	'cab',
@@ -49,11 +49,26 @@ const normalizeRankInput = (rank: string) =>
 		.replace('2nd', '2d')
 		.replace(' ', '');
 
-interface EmailListState {
-	selectedMembers: CAPMemberClasses[];
-	availableMembers: null | CAPMemberClasses[];
+interface EmailListLoadingState {
+	state: 'LOADING';
+}
+
+interface EmailListLoadedState {
+	state: 'LOADED';
+
+	members: Member[];
+}
+
+interface EmailListErrorState {
+	state: 'ERROR';
+
+	error: string;
+}
+
+interface EmailListUIState {
+	selectedMembers: Member[];
 	sortFunction: SortFunction;
-	visibleItems: CAPMemberClasses[];
+	visibleItems: Member[];
 	displayAdvanced: boolean;
 	addParentEmails: boolean;
 	filterValues: {
@@ -64,6 +79,9 @@ interface EmailListState {
 		memberFilter: MemberList;
 	};
 }
+
+type EmailListState = EmailListUIState &
+	(EmailListLoadedState | EmailListLoadingState | EmailListErrorState);
 
 enum SortFunction {
 	LASTNAME,
@@ -112,7 +130,7 @@ const flightInput: CheckInput<Member, string> = {
 	filterInput: TextInput
 };
 
-const nameInput: CheckInput<MemberObject, string> = {
+const nameInput: CheckInput<Member, string> = {
 	check: (mem, input) => {
 		if (input === undefined || input === '') {
 			return true;
@@ -181,13 +199,13 @@ const rankLessThan: CheckInput<Member, string> = {
 
 const memberFilter: CheckInput<Member, MemberList> = {
 	check: (mem, input) => {
-		return memberFilters[fromValue(input).orSome(MemberList.ALL)](mem);
+		return memberFilters[Maybe.orSome(MemberList.ALL)(Maybe.fromValue(input))](mem);
 	},
 	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton
 			labels={['Cadets', 'Senior Members', 'All']}
 			name=""
-			value={fromValue(props.value).orSome(MemberList.ALL)}
+			value={Maybe.orSome(MemberList.ALL)(Maybe.fromValue(props.value))}
 			onChange={props.onChange}
 			onInitialize={props.onInitialize}
 			onUpdate={props.onUpdate}
@@ -208,8 +226,8 @@ const simpleFilters = [nameInput, memberFilter];
 
 export default class EmailList extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
+		state: 'LOADING',
 		selectedMembers: [],
-		availableMembers: null,
 		sortFunction: SortFunction.LASTNAME,
 		visibleItems: [],
 		displayAdvanced: false,
@@ -232,14 +250,6 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 	}
 
 	public async componentDidMount() {
-		if (this.props.member) {
-			const members = await this.props.account.getMembers(this.props.member);
-
-			this.setState({
-				availableMembers: members
-			});
-		}
-
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -254,13 +264,35 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		this.props.updateSideNav([]);
 
 		this.updateTitle('Email selector');
+
+		if (this.props.member) {
+			const membersEither = await fetchApi.member.memberList(
+				{},
+				{},
+				this.props.member.sessionID
+			);
+
+			if (Either.isLeft(membersEither)) {
+				this.setState(prev => ({
+					...prev,
+					state: 'ERROR',
+					error: membersEither.value.message
+				}));
+			} else {
+				this.setState(prev => ({
+					...prev,
+					state: 'LOADED',
+					members: membersEither.value
+				}));
+			}
+		}
 	}
 
 	public render() {
-		const MemberSelector = (Selector as unknown) as new () => Selector<CAPMemberClasses>;
+		const MemberSelector = (Selector as unknown) as new () => Selector<Member>;
 
 		const SelectorForm = SimpleForm as new () => SimpleForm<{
-			members: CAPMemberClasses[];
+			members: Member[];
 			sortFunction: SortFunction;
 			displayAdvanced: boolean;
 			addParentEmails: boolean;
@@ -271,15 +303,22 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		const filterValues = this.state.filterValues;
 
 		return this.props.member ? (
-			this.state.availableMembers === null ? (
+			this.state.state === 'LOADING' ? (
 				<Loader />
+			) : this.state.state === 'ERROR' ? (
+				<div>{this.state.error}</div>
 			) : (
 				<>
 					<Button
 						onClick={() => {
-							this.setState(prev => ({
-								selectedMembers: (prev.availableMembers || []).slice(0)
-							}));
+							this.setState(prev =>
+								prev.state === 'LOADED'
+									? {
+											...prev,
+											selectedMembers: (prev.members || []).slice(0)
+									  }
+									: prev
+							);
 						}}
 					>
 						Select all
@@ -288,21 +327,18 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 					<Button
 						onClick={() => {
 							this.setState(prev => {
-								const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(
-									0
-								);
+								if (prev.state !== 'LOADED') {
+									return prev;
+								}
 
-								prev.visibleItems.forEach(item => {
-									if (
-										selectedMembers.filter(i =>
-											i.matchesReference(item.getReference())
-										).length === 0
-									) {
-										selectedMembers.push(item);
-									}
-								});
+								const selectedMembers = [
+									...prev.selectedMembers,
+									...prev.visibleItems.filter(
+										item => !prev.selectedMembers.some(areMembersTheSame(item))
+									)
+								];
 
-								return { selectedMembers };
+								return { ...prev, selectedMembers };
 							});
 						}}
 					>
@@ -361,8 +397,8 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						<MemberSelector
 							fullWidth={true}
 							name="members"
-							values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
-							displayValue={this.displayMemberName}
+							values={this.state.members.slice(0).sort(currentSortFunction)}
+							displayValue={getFullMemberName}
 							multiple={true}
 							showIDField={this.state.displayAdvanced}
 							onChangeVisible={newVisibleItems => {
@@ -437,21 +473,18 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		);
 	}
 
-	private displayMemberName(member: CAPMemberClasses): string {
-		return member.getFullName();
-	}
-
 	private getEmailText() {
 		const emails: { [key: string]: true } = {};
 
-		(this.state.selectedMembers
+		this.state.selectedMembers
 			.flatMap(this.getEmail.bind(this))
-			.filter(email => !!email) as string[]).forEach(email => (emails[email] = true));
+			.filter(email => !!email)
+			.forEach(email => (emails[email] = true));
 
 		return Object.keys(emails).join('; ');
 	}
 
-	private getEmail(member: MemberObject): Array<string | undefined> {
+	private getEmail(member: Member): Array<string> {
 		return (this.state.addParentEmails
 			? [
 					member.contact.EMAIL.PRIMARY,
@@ -469,7 +502,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						member.contact.EMAIL.EMERGENCY ||
 						member.contact.CADETPARENTEMAIL.EMERGENCY
 			  ]
-		).filter(s => !!s);
+		).filter((s): s is string => !!s);
 	}
 
 	private selectText() {

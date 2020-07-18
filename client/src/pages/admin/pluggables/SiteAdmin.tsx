@@ -1,14 +1,14 @@
+import { User, hasPermission, hasOneDutyPosition } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
-import MemberBase, { CAPNHQMember } from '../../../lib/Members';
 
 export const shouldRenderSiteAdmin = (props: PageProps) => {
-	return true;
+	return !!props.member;
 };
 
 export interface RequiredMember extends PageProps {
-	member: MemberBase;
+	member: User;
 }
 
 export class SiteAdminWidget extends Page<RequiredMember> {
@@ -18,10 +18,11 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 		return (
 			<div className="widget">
 				<div className="widget-title">
-					{this.props.member.hasPermission('RegistryEdit')
+					{hasPermission('RegistryEdit')()(this.props.member)
 						? 'Site '
-						: this.props.member.hasPermission('FlightAssign') ||
-						  (this.props.member instanceof CAPNHQMember &&
+						: hasPermission('FlightAssign')()(this.props.member) ||
+						  ((this.props.member.type === 'CAPNHQMember' ||
+								this.props.member.type === 'CAPProspectiveMember') &&
 								this.props.member.seniorMember)
 						? 'Account '
 						: 'Personal '}
@@ -31,30 +32,30 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					<Link to="/admin/attendance">View Attendance</Link>
 					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
-					{this.props.member.hasPermission('FlightAssign') ? (
+					{hasPermission('FlightAssign')()(this.props.member) ? (
 						<>
 							<br />
 							<Link to="/admin/flightassign">Assign flight members</Link>
 						</>
 					) : null}
-					{this.props.member.hasPermission('RegistryEdit') ? (
+					{hasPermission('RegistryEdit')()(this.props.member) ? (
 						<>
 							<br />
 							<Link to="/admin/regedit">Site configuration</Link>
 						</>
 					) : null}
-					{this.props.member.hasPermission('PermissionManagement') ? (
+					{hasPermission('PermissionManagement')()(this.props.member) ? (
 						<>
 							<br />
 							<Link to="/admin/permissions">Permission management</Link>
 						</>
 					) : null}
-					{this.props.member instanceof CAPNHQMember &&
+					{(this.props.member.type === 'CAPProspectiveMember' ||
+						this.props.member.type === 'CAPNHQMember') &&
 					(this.props.member.seniorMember ||
-						this.props.member.hasDutyPosition([
-							'Cadet Commander',
-							'Cadet Deputy Commander'
-						])) ? (
+						hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Commander'])(
+							this.props.member
+						)) ? (
 						<>
 							<br />
 							<Link to="/admin/emaillist">Email selector</Link>

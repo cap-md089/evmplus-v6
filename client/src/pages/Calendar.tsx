@@ -1,13 +1,13 @@
+import { Either, RawEventObject, Timezone } from 'common-lib';
+import { DateTime, Duration } from 'luxon';
 import React from 'react';
-import Page, { PageProps } from './Page';
+import Loader from '../components/Loader';
 import { isMobile } from '../components/page-elements/SideNavigation';
+import fetchApi from '../lib/apis';
+import './calendars/Calendar.css';
 import DesktopCalendar from './calendars/DesktopCalendar';
 import MobileCalendar from './calendars/MobileCalendar';
-import './calendars/Calendar.css';
-import { EventObject, Timezone } from 'common-lib';
-import Loader from '../components/Loader';
-import { DateTime, Duration } from 'luxon';
-import myFetch from '../lib/myFetch';
+import Page, { PageProps } from './Page';
 
 export const getMonth = (month: number, year: number) =>
 	DateTime.utc()
@@ -75,16 +75,20 @@ export const getPositionIndices = (
 };
 
 export interface CalendarProps extends PageProps<{ month?: string; year?: string }> {
-	events: EventObject[];
+	events: RawEventObject[];
 	start: DateTime;
 	end: DateTime;
 }
 
 export default class Calendar extends Page<
 	PageProps<{ month?: string; year?: string }>,
-	{ events: EventObject[] | null; start: DateTime | null; end: DateTime | null }
+	{ events: RawEventObject[] | null; start: DateTime | null; end: DateTime | null }
 > {
-	public state: { events: EventObject[] | null; start: DateTime | null; end: DateTime | null } = {
+	public state: {
+		events: RawEventObject[] | null;
+		start: DateTime | null;
+		end: DateTime | null;
+	} = {
 		events: null,
 		start: null,
 		end: null
@@ -130,6 +134,8 @@ export default class Calendar extends Page<
 		const startOfLastMonthWeek =
 			thisMonthStart.weekday === 7 // Sunday
 				? thisMonthStart
+				: lastMonth.weekday === 7
+				? lastMonth.minus(Duration.fromObject({ days: 1 }))
 				: lastMonth.startOf('week').minus(
 						Duration.fromObject({
 							days: 1
@@ -139,13 +145,20 @@ export default class Calendar extends Page<
 
 		const offset = offsets[this.props.registry.Website.Timezone];
 
-		const res = await myFetch(`/api/event/${+startOfLastMonthWeek + offset}/${+end + offset}`, {
-			headers: {
-				authorization: this.props.member ? this.props.member.sessionID : ''
-			}
-		});
+		const resEither = await fetchApi.events.events.getRange(
+			{
+				timestart: (+startOfLastMonthWeek + offset).toString(),
+				timeend: (+end + offset).toString()
+			},
+			{},
+			this.props.member?.sessionID
+		);
 
-		const events = (await res.json()) as EventObject[];
+		if (Either.isLeft(resEither)) {
+			return;
+		}
+
+		const events = resEither.value;
 
 		this.setState({
 			events,

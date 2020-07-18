@@ -1,14 +1,16 @@
 import {
 	api,
+	areMembersTheSame,
 	Either,
-	either,
-	EitherObj,
-	just,
+	get,
+	hasOneDutyPosition,
+	hasPermission,
+	isCAPMember,
 	Maybe,
-	maybe,
+	MaybeObj,
+	Member,
 	MemberReference,
-	none,
-	NullMemberReference,
+	pipe,
 	stringifyMemberReference
 } from 'common-lib';
 import { DateTime } from 'luxon';
@@ -20,25 +22,62 @@ import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import Loader from '../../../components/Loader';
 import SigninLink from '../../../components/SigninLink';
-import MemberBase, { CAPNHQMember, CAPProspectiveMember } from '../../../lib/Members';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import attendanceStyles from './AttendanceLog.module.css';
 
-interface AttendanceHistoryUIState {
-	buttonsDisabled: boolean;
-}
+interface AttendanceHistoryUIState {}
 
 interface AttendanceHistoryLoading {
 	type: 'LOADING';
 }
 
-interface AttendanceHistoryLoaded {
-	type: 'LOADED';
-	attendanceRecords: Either<api.HTTPError, api.member.attendance.EventAttendanceRecord[]>;
-	memberBeingViewed: Maybe<MemberReference>;
+interface AttendanceHistoryError {
+	type: 'ERROR';
+
+	message: string;
 }
 
-type AttendanceHistoryState = (AttendanceHistoryLoaded | AttendanceHistoryLoading) &
+interface AttendanceHistoryGroupLoaded {
+	type: 'GROUPLOADED';
+
+	attendanceRecords: api.member.attendance.EventAttendanceRecord[];
+}
+
+interface AttendanceHistoryMemberLoaded {
+	type: 'MEMBERLOADED';
+
+	attendanceRecords: api.member.attendance.EventAttendanceRecord[];
+	memberBeingViewed: MaybeObj<MemberReference>;
+}
+
+interface AttendanceHistoryMemberListLoading {
+	state: 'LOADING';
+}
+
+interface AttendanceHistoryMemberListLoaded {
+	state: 'LOADED';
+
+	members: Member[];
+}
+
+interface AttendanceHistoryMemberListError {
+	state: 'ERROR';
+
+	memberMessage: string;
+}
+
+type AttendanceHistoryState = (
+	| AttendanceHistoryError
+	| AttendanceHistoryMemberLoaded
+	| AttendanceHistoryGroupLoaded
+	| AttendanceHistoryLoading
+) &
+	(
+		| AttendanceHistoryMemberListError
+		| AttendanceHistoryMemberListLoaded
+		| AttendanceHistoryMemberListLoading
+	) &
 	AttendanceHistoryUIState;
 
 const AttendanceView: React.FunctionComponent<{
@@ -48,7 +87,7 @@ const AttendanceView: React.FunctionComponent<{
 	<table className={attendanceStyles.attendanceTable}>
 		<tbody>
 			<tr className={attendanceStyles.attendanceTableHeaderRow}>
-				{!isMemberTheSameAsViewer && <th>Name</th>}
+				{!isMemberTheSameAsViewer && <th>Name (grade at time of event)</th>}
 				{!isMemberTheSameAsViewer && <th>Member ID</th>}
 				<th>Event ID</th>
 				<th>Event Name</th>
@@ -59,47 +98,52 @@ const AttendanceView: React.FunctionComponent<{
 				<tr key={i} className={attendanceStyles.attendanceTableRow}>
 					{!isMemberTheSameAsViewer && <td>{record.member.name}</td>}
 					{!isMemberTheSameAsViewer && (
-						<td>
-							{
-								(record.member.reference as Exclude<
-									MemberReference,
-									NullMemberReference
-								>).id
-							}
-						</td>
+						<td>{stringifyMemberReference(record.member.reference)}</td>
 					)}
 					<td>
-						{maybe(record.event)
-							.map(event => `${event.id}`)
-							.orElse('')
-							.some()}
+						{pipe(
+							Maybe.map<
+								api.member.attendance.EventAttendanceRecordEventInformation,
+								string
+							>(event => `${event.id}`),
+							Maybe.orSome('')
+						)(record.event)}
 					</td>
 					<td>
-						{maybe(record.event)
-							.map(event => <>{event.name}</>)
-							.orElse(<i>Member has not attended an event</i>)
-							.some()}
+						{pipe(
+							Maybe.map<
+								api.member.attendance.EventAttendanceRecordEventInformation,
+								React.ReactChild
+							>(event => event.name),
+							Maybe.orSome<React.ReactChild>(<i>Member has not attended an event</i>)
+						)(record.event)}
 					</td>
 					<td>
-						{maybe(record.event)
-							.map(
+						{pipe(
+							Maybe.map<
+								api.member.attendance.EventAttendanceRecordEventInformation,
+								React.ReactChild
+							>(
 								event =>
 									`${DateTime.fromMillis(event.endDateTime).toFormat(
 										'yyyy LLL dd'
 									)}, ${format(event.endDateTime)}`
-							)
-							.orElse('')
-							.some()}
+							),
+							Maybe.orSome<React.ReactChild>(<></>)
+						)(record.event)}
 					</td>
 					<td>
-						{maybe(record.event)
-							.map(event => (
+						{pipe(
+							Maybe.map<
+								api.member.attendance.EventAttendanceRecordEventInformation,
+								React.ReactChild
+							>(event => (
 								<Link key={`event-link-${i}`} to={`/eventviewer/${event.id}`}>
 									View Event
 								</Link>
-							))
-							.orElse(<></>)
-							.some()}
+							)),
+							Maybe.orSome<React.ReactChild>(<></>)
+						)(record.event)}
 					</td>
 				</tr>
 			))}
@@ -116,11 +160,8 @@ enum GroupTarget {
 export default class AttendanceHistory extends Page<PageProps, AttendanceHistoryState> {
 	public state: AttendanceHistoryState = {
 		type: 'LOADING',
-
-		buttonsDisabled: false
+		state: 'LOADING'
 	};
-
-	private members = this.props.account.getMembers(this.props.member);
 
 	public constructor(props: PageProps) {
 		super(props);
@@ -130,7 +171,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		this.loadShortGroupAttendance = this.loadShortGroupAttendance.bind(this);
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -150,7 +191,23 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 
 		const member = this.props.member;
 		if (member) {
-			this.loadAttendanceForMember(member.getReference());
+			this.loadAttendanceForMember(member);
+
+			const memberListEither = await fetchApi.member.memberList({}, {}, member.sessionID);
+
+			if (Either.isLeft(memberListEither)) {
+				this.setState(prev => ({
+					...prev,
+					state: 'ERROR',
+					memberMessage: memberListEither.value.message
+				}));
+			} else {
+				this.setState(prev => ({
+					...prev,
+					state: 'LOADED',
+					members: memberListEither.value
+				}));
+			}
 		}
 	}
 
@@ -170,10 +227,10 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		return (
 			<div>
 				<div className={attendanceStyles.controlsBox}>
-					{member.hasPermission('AttendanceView') ? (
+					{hasPermission('AttendanceView')()(member) && this.state.state === 'LOADED' ? (
 						<MemberSelectorButton
-							disabled={this.state.buttonsDisabled}
-							memberList={this.members}
+							disabled={this.state.state !== 'LOADED'}
+							memberList={this.state.members}
 							onMemberSelect={this.handleMemberSelect}
 							buttonType="primaryButton"
 							title="Select a member to view attendance"
@@ -182,24 +239,32 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 						>
 							Select a member
 						</MemberSelectorButton>
+					) : hasPermission('AttendanceView')()(member) &&
+					  this.state.state === 'LOADING' ? (
+						<Loader />
+					) : hasPermission('AttendanceView')()(member) &&
+					  this.state.state === 'ERROR' ? (
+						<div>{this.state.memberMessage}</div>
 					) : null}
 					{this.groupTarget !== GroupTarget.NONE ? (
 						<Button
 							onClick={this.loadShortGroupAttendance}
-							disabled={this.state.buttonsDisabled}
+							disabled={this.state.type === 'LOADING'}
 						>
 							Load {this.groupTarget === GroupTarget.ACCOUNT ? 'squadron' : 'flight'}{' '}
 							attendance
 						</Button>
 					) : null}
-					{state.type === 'LOADED' &&
-					state.memberBeingViewed
-						.map(ref => !member.matchesReference(ref))
-						.orElse(true)
-						.some() ? (
+					{(state.type === 'MEMBERLOADED' &&
+						state.memberBeingViewed.hasValue &&
+						!areMembersTheSame(state.memberBeingViewed.value)(member)) ||
+					state.type === 'GROUPLOADED' ? (
 						<Button
 							onClick={this.loadMyAttendance}
-							disabled={this.state.buttonsDisabled}
+							disabled={
+								this.state.type !== 'MEMBERLOADED' &&
+								this.state.type !== 'GROUPLOADED'
+							}
 						>
 							View my attendance
 						</Button>
@@ -208,19 +273,18 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				<div>
 					{state.type === 'LOADING' ? (
 						<Loader />
+					) : state.type === 'ERROR' ? (
+						<div>{state.message}</div>
 					) : (
-						state.attendanceRecords.cata(
-							err => <div>Error loading values: {err.message}</div>,
-							records => (
-								<AttendanceView
-									records={records}
-									isMemberTheSameAsViewer={state.memberBeingViewed
-										.map(ref => member.matchesReference(ref))
-										.orElse(false)
-										.some()}
-								/>
-							)
-						)
+						<AttendanceView
+							records={state.attendanceRecords}
+							isMemberTheSameAsViewer={
+								state.type === 'MEMBERLOADED' &&
+								Maybe.orSome(false)(
+									Maybe.map(areMembersTheSame(member))(state.memberBeingViewed)
+								)
+							}
+						/>
 					)}
 				</div>
 			</div>
@@ -228,20 +292,20 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 	}
 
 	private get groupTarget() {
-		if (this.props.member?.hasPermission('AttendanceView')) {
+		if (!this.props.member) {
+			return GroupTarget.NONE;
+		}
+
+		if (hasPermission('AttendanceView')()(this.props.member)) {
 			return GroupTarget.ACCOUNT;
 		}
 
-		if (
-			this.props.member instanceof CAPNHQMember ||
-			this.props.member instanceof CAPProspectiveMember
-		) {
+		if (isCAPMember(this.props.member)) {
 			if (
 				this.props.member.flight !== null &&
-				this.props.member.hasDutyPosition([
-					'Cadet Flight Commander',
-					'Cadet Flight Sergeant'
-				])
+				hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(
+					this.props.member
+				)
 			) {
 				return GroupTarget.FLIGHT;
 			}
@@ -250,65 +314,84 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		return GroupTarget.NONE;
 	}
 
-	private handleMemberSelect(member: MemberBase | null) {
+	private handleMemberSelect(member: Member | null) {
 		if (member) {
-			this.loadAttendanceForMember(member.getReference());
+			this.loadAttendanceForMember(member);
 		}
 	}
 
 	private loadMyAttendance() {
-		this.loadAttendanceForMember(this.props.member!.getReference());
+		if (this.props.member) {
+			this.loadAttendanceForMember(this.props.member);
+		}
 	}
 
 	private async loadAttendanceForMember(member: MemberReference) {
-		if (!this.props.member || this.state.buttonsDisabled) {
+		if (!this.props.member) {
 			return;
 		}
 
-		const url = this.props.member.matchesReference(member)
-			? '/api/member/attendance/'
-			: `/api/member/attendance/${stringifyMemberReference(member)}`;
+		const func = areMembersTheSame(this.props.member)(member)
+			? (sessionID: string) => fetchApi.member.attendance.get({}, {}, sessionID)
+			: (sessionID: string) =>
+					fetchApi.member.attendance.getForMember(
+						{ reference: stringifyMemberReference(member) },
+						{},
+						sessionID
+					);
 
-		this.setState({
-			buttonsDisabled: true
-		});
+		const dataEither = await func(this.props.member.sessionID);
 
-		const data = await this.props.member.memberFetch(url);
+		if (Either.isLeft(dataEither)) {
+			this.setState(prev => ({
+				...prev,
+				type: 'ERROR',
+				message: dataEither.value.message
+			}));
+		} else {
+			const attendanceRecords = dataEither.value.filter(Either.isRight).map(get('value'));
 
-		const jsonData = (await data.json()) as EitherObj<
-			api.HTTPError,
-			api.member.attendance.EventAttendanceRecord[]
-		>;
+			this.setState(prev => ({
+				...prev,
 
-		this.setState({
-			type: 'LOADED',
-			attendanceRecords: either(jsonData),
-			memberBeingViewed: just(member),
-			buttonsDisabled: false
-		});
+				type: 'MEMBERLOADED',
+				attendanceRecords,
+				memberBeingViewed: Maybe.some(member),
+				buttonsDisabled: false
+			}));
+		}
 	}
 
 	private async loadShortGroupAttendance() {
-		if (!this.props.member || this.state.buttonsDisabled) {
+		if (!this.props.member || this.state.type === 'LOADING') {
 			return;
 		}
 
-		this.setState({
-			buttonsDisabled: true
-		});
+		const dataEither = await fetchApi.member.attendance.getForGroup(
+			{},
+			{},
+			this.props.member.sessionID
+		);
 
-		const data = await this.props.member.memberFetch(`/api/member/attendance/short`);
+		if (Either.isLeft(dataEither)) {
+			this.setState(prev => ({
+				...prev,
+				type: 'ERROR',
+				message: dataEither.value.message
+			}));
+		} else {
+			const attendanceRecords = dataEither.value
+				.filter(Either.isRight)
+				.map(get('value'))
+				.filter(Maybe.isSome)
+				.map(get('value'));
 
-		const jsonData = (await data.json()) as EitherObj<
-			api.HTTPError,
-			api.member.attendance.EventAttendanceRecord[]
-		>;
-
-		this.setState({
-			type: 'LOADED',
-			attendanceRecords: either(jsonData),
-			memberBeingViewed: none(),
-			buttonsDisabled: false
-		});
+			this.setState(prev => ({
+				...prev,
+				type: 'GROUPLOADED',
+				attendanceRecords,
+				buttonsDisabled: false
+			}));
+		}
 	}
 }

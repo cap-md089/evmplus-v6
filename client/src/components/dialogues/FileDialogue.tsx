@@ -1,15 +1,13 @@
+import { AccountObject, AsyncEither, Either, FileObject, get, User } from 'common-lib';
 import * as React from 'react';
-import Account from '../../lib/Account';
-import FileInterface from '../../lib/File';
-import MemberBase from '../../lib/Members';
-import Dialogue, { DialogueButtons, DialogueWithOK, DialogueWithOKCancel } from './Dialogue';
-import './FileDialogue.css';
-import { SimpleFileDisplayer } from './dialogue-components/SimpleFileDisplayer';
-import FileUploader from '../FileUploader';
+import fetchApi from '../../lib/apis';
 import { FolderDisplayer } from '../drive/FolderDisplayer';
+import FileUploader from '../FileUploader';
 import Loader from '../Loader';
+import Dialogue, { DialogueButtons, DialogueWithOK, DialogueWithOKCancel } from './Dialogue';
 import { SelectedFileDisplayer } from './dialogue-components/SelectedFileDisplayer';
-import { FileObject } from 'common-lib';
+import { SimpleFileDisplayer } from './dialogue-components/SimpleFileDisplayer';
+import './FileDialogue.css';
 
 enum FileDialogueView {
 	MYDRIVE,
@@ -19,8 +17,8 @@ enum FileDialogueView {
 }
 
 export interface ItemProps {
-	file: FileInterface;
-	onClick: (file: FileInterface, selected: boolean) => void;
+	file: FileObject;
+	onClick: (file: FileObject, selected: boolean) => void;
 	selected: boolean;
 }
 
@@ -28,16 +26,16 @@ interface FileDialogueState {
 	view: FileDialogueView;
 	hovering: boolean;
 	open: boolean;
-	files: FileInterface[] | null;
+	files: FileObject[] | null;
 	error: boolean;
 	selectedFolder: string;
-	selectedFiles: FileInterface[];
-	currentFolder: null | FileInterface;
+	selectedFiles: FileObject[];
+	currentFolder: null | FileObject;
 }
 
 export interface FileDialogueProps {
-	member: MemberBase;
-	account: Account;
+	member: User;
+	account: AccountObject;
 
 	open: boolean;
 	/**
@@ -45,14 +43,14 @@ export interface FileDialogueProps {
 	 *
 	 * If it returns a boolean value, it stays open; otherwise it closes
 	 */
-	onReturn: (ids: FileInterface[]) => void;
+	onReturn: (ids: FileObject[]) => void;
 	/**
 	 * Used to filter all the files to show only the desired ones to be selected
 	 *
 	 * When files are uploaded, a warning is given saying that the provided file
 	 * has been uploaded but is invalid
 	 */
-	filter?: (element: FileObject, index: number, array: FileInterface[]) => boolean;
+	filter?: (element: FileObject, index: number, array: FileObject[]) => boolean;
 	/**
 	 * Whether or not one file is to be returned
 	 *
@@ -265,7 +263,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		};
 	}
 
-	private onFolderClick(folder: FileInterface, selected: boolean) {
+	private onFolderClick(folder: FileObject, selected: boolean) {
 		// basically set state with folder id
 		if (selected) {
 			this.setState({
@@ -280,7 +278,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		}
 	}
 
-	private onFileClick(file: FileInterface, selected: boolean) {
+	private onFileClick(file: FileObject, selected: boolean) {
 		// add file to selected files if it is not selected else remove
 		if (selected) {
 			const selectedFiles = this.state.selectedFiles.filter(
@@ -297,13 +295,13 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		}
 	}
 
-	private handleSelectedFileDelete(file: FileInterface, selected: boolean) {
+	private handleSelectedFileDelete(file: FileObject, selected: boolean) {
 		// delete the file from this.state.selectedFiles
 		const selectedFiles = this.state.selectedFiles.filter(f => f.id !== file.id);
 		this.setState({ selectedFiles });
 	}
 
-	private addFile(file: FileInterface) {
+	private addFile(file: FileObject) {
 		if (this.props.multiple) {
 			this.setState(prev => ({
 				selectedFiles: [...prev.selectedFiles, file].filter(
@@ -324,23 +322,21 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 	}
 
 	private async goToFolder(id: string) {
-		this.setState({
-			files: []
-		});
+		const fileInfoEither = await AsyncEither.All([
+			fetchApi.files.children.getFull({ parentid: id }, {}, this.props.member.sessionID),
+			fetchApi.files.files.get({ id }, {}, this.props.member.sessionID)
+		]);
 
-		try {
-			const [files, currentFolder] = await Promise.all([
-				this.props.account.getFiles(id, this.props.member),
-				FileInterface.Get(id, this.props.member, this.props.account)
-			]);
-
-			this.setState({
-				files,
-				currentFolder
-			});
-		} catch (e) {
+		if (Either.isLeft(fileInfoEither)) {
 			this.setState({
 				error: true
+			});
+		} else {
+			const [files, currentFolder] = fileInfoEither.value;
+
+			this.setState({
+				files: files.filter(Either.isRight).map(get('value')),
+				currentFolder
 			});
 		}
 	}

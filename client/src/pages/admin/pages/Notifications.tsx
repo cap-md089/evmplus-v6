@@ -1,49 +1,68 @@
-import { NotificationCauseType, NotificationDataEvent, NotificationDataType } from 'common-lib';
+import {
+	AccountObject,
+	Member,
+	NotificationCause,
+	NotificationCauseType,
+	NotificationData,
+	NotificationDataEvent,
+	NotificationDataMessage,
+	NotificationDataPermissions,
+	NotificationDataType,
+	NotificationObject,
+	NotificationTarget,
+	Either,
+	get
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 import Loader from '../../../components/Loader';
-import Account from '../../../lib/Account';
-import MemberBase from '../../../lib/Members';
-import Notification from '../../../lib/Notification';
 import Page, { PageProps } from '../../Page';
 import './Notifications.css';
+import fetchApi from '../../../lib/apis';
 
-interface NotificationsState {
-	notifications: Notification[] | null;
-	currentViewed: number | null;
+interface NotificationRenderer<T extends NotificationData = NotificationData> {
+	render: (
+		notification: NotificationObject<NotificationCause, NotificationTarget, T>,
+		member: Member,
+		account: AccountObject
+	) => React.ReactChild;
+	shouldRender: (
+		notification: NotificationObject<NotificationCause, NotificationTarget, any>
+	) => notification is NotificationObject<NotificationCause, NotificationTarget, T>;
 }
 
-interface NotificationRenderer {
-	render: (notification: Notification, member: MemberBase, account: Account) => React.ReactChild;
-	shouldRender: (notification: Notification) => boolean;
-}
+type NO<T extends NotificationData> = NotificationObject<NotificationCause, NotificationTarget, T>;
 
-const renderers: NotificationRenderer[] = [
+const renderers: [
+	NotificationRenderer<NotificationDataMessage>,
+	NotificationRenderer<NotificationDataEvent>,
+	NotificationRenderer<NotificationDataPermissions>
+] = [
 	{
-		shouldRender: notif => notif.extraData === null,
-		render: notif => <div>{notif.text}</div>
+		shouldRender: (notif): notif is NO<NotificationDataMessage> => notif.extraData === null,
+		render: notif => <div>{notif.extraData.message}</div>
 	},
 	{
-		shouldRender: notif =>
-			notif.extraData !== null && notif.extraData.type === NotificationDataType.EVENT,
+		shouldRender: (notif): notif is NO<NotificationDataEvent> =>
+			notif.extraData.type === NotificationDataType.EVENT,
 		render: notif => (
 			<div>
-				{(notif.extraData as NotificationDataEvent).delta === 'ADDED' ? (
+				{notif.extraData.delta === 'ADDED' ? (
 					<div>
 						You are now a Point of Contact for of the event{' '}
-						<Link
-							to={`/eventviewer/${
-								(notif.extraData as NotificationDataEvent).eventID
-							}`}
-						>
-							{(notif.extraData as NotificationDataEvent).eventName}
+						<Link to={`/eventviewer/${notif.extraData.eventID}`}>
+							{notif.extraData.eventName}
 						</Link>
 						.
 						<br />
 						<br />
-						This was done by {notif.fromMemberName} on{' '}
+						This was done by{' '}
+						{notif.cause.type === NotificationCauseType.MEMBER
+							? notif.cause.fromName
+							: 'SYSTEM'}{' '}
+						on{' '}
 						{DateTime.fromMillis(notif.created).toLocaleString({
 							...DateTime.DATETIME_SHORT,
 							hour12: false
@@ -52,17 +71,17 @@ const renderers: NotificationRenderer[] = [
 				) : (
 					<div>
 						You are no longer a Point of Contact for the event{' '}
-						<Link
-							to={`/eventviewer/${
-								(notif.extraData as NotificationDataEvent).eventID
-							}`}
-						>
-							{(notif.extraData as NotificationDataEvent).eventName}
+						<Link to={`/eventviewer/${notif.extraData.eventID}`}>
+							{notif.extraData.eventName}
 						</Link>
 						.
 						<br />
 						<br />
-						This was done by {notif.fromMemberName} on{' '}
+						This was done by{' '}
+						{notif.cause.type === NotificationCauseType.MEMBER
+							? notif.cause.fromName
+							: 'SYSTEM'}{' '}
+						on{' '}
 						{DateTime.fromMillis(notif.created).toLocaleString({
 							...DateTime.DATETIME_SHORT,
 							hour12: false
@@ -73,8 +92,7 @@ const renderers: NotificationRenderer[] = [
 		)
 	},
 	{
-		shouldRender: notif =>
-			notif.extraData !== null &&
+		shouldRender: (notif): notif is NO<NotificationDataPermissions> =>
 			notif.extraData.type === NotificationDataType.PERMISSIONCHANGE,
 		render: notif => {
 			return (
@@ -82,7 +100,11 @@ const renderers: NotificationRenderer[] = [
 					Your permission levels have changed
 					<br />
 					<br />
-					This was done by {notif.fromMemberName} on{' '}
+					This was done by{' '}
+					{notif.cause.type === NotificationCauseType.MEMBER
+						? notif.cause.fromName
+						: 'SYSTEM'}{' '}
+					on{' '}
 					{DateTime.fromMillis(notif.created).toLocaleString({
 						...DateTime.DATETIME_SHORT,
 						hour12: false
@@ -93,9 +115,47 @@ const renderers: NotificationRenderer[] = [
 	}
 ];
 
+interface NotificationsLoadingState {
+	state: 'LOADING';
+}
+
+interface NotificationsLoadedState {
+	state: 'LOADED';
+
+	notifications: NotificationObject[];
+}
+
+interface NotificationsErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+interface NotificationsUIState {
+	currentViewed: number | null;
+}
+
+type NotificationsState = (
+	| NotificationsLoadedState
+	| NotificationsLoadingState
+	| NotificationsErrorState
+) &
+	NotificationsUIState;
+
+const simpleText = (notif: NotificationObject) =>
+	notif.extraData.type === NotificationDataType.EVENT
+		? `Event "${notif.extraData.eventName}" notification`
+		: notif.extraData.type === NotificationDataType.MESSAGE
+		? notif.extraData.message
+		: notif.extraData.type === NotificationDataType.PERMISSIONCHANGE
+		? `Permission change`
+		: notif.extraData.type === NotificationDataType.PERSONNELFILES
+		? 'Personnel file update'
+		: 'Prospective member information update';
+
 export default class Notifications extends Page<PageProps, NotificationsState> {
 	public state: NotificationsState = {
-		notifications: null,
+		state: 'LOADING',
 		currentViewed: null
 	};
 
@@ -106,20 +166,6 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 	}
 
 	public async componentDidMount() {
-		if (!this.props.member) {
-			return;
-		}
-
-		const notifications = await Notification.GetList(this.props.account, this.props.member);
-
-		notifications.reverse();
-
-		this.setState({
-			notifications
-		});
-	}
-
-	public componentDidUpdate() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -135,7 +181,38 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			}
 		]);
 
-		if (!this.state.notifications) {
+		if (!this.props.member) {
+			return;
+		}
+
+		const notificationsEither = await fetchApi.notifications.list(
+			{},
+			{},
+			this.props.member.sessionID
+		);
+
+		if (Either.isLeft(notificationsEither)) {
+			return this.setState(prev => ({
+				...prev,
+
+				state: 'ERROR',
+				message: notificationsEither.value.message
+			}));
+		}
+
+		const notifications = notificationsEither.value.filter(Either.isRight).map(get('value'));
+
+		notifications.reverse();
+
+		this.setState({
+			currentViewed: null,
+			state: 'LOADED',
+			notifications
+		});
+	}
+
+	public componentDidUpdate() {
+		if (this.state.state !== 'LOADED') {
 			return;
 		}
 
@@ -144,7 +221,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				.filter(notif => !notif.read)
 				.map(notif => ({
 					type: 'Reference' as const,
-					text: notif.text,
+					text: simpleText(notif),
 					target: `notification-${notif.id}`
 				}))
 		);
@@ -155,8 +232,12 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			return <div>Please sign in to view your notifications</div>;
 		}
 
-		if (this.state.notifications === null) {
+		if (this.state.state === 'LOADING') {
 			return <Loader />;
+		}
+
+		if (this.state.state === 'ERROR') {
+			return <div>{this.state.message}</div>;
 		}
 
 		return (
@@ -175,11 +256,17 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 									id={`notification-${notif.id}`}
 									onClick={this.notificationClick(i)}
 								>
-									<td>{notif.read ? notif.text : <b>{notif.text}</b>}</td>
+									<td>
+										{notif.read ? (
+											simpleText(notif)
+										) : (
+											<b>{simpleText(notif)}</b>
+										)}
+									</td>
 									<td>
 										{notif.cause.type === NotificationCauseType.SYSTEM
 											? 'SYSTEM'
-											: notif.fromMemberName}
+											: notif.cause.fromName}
 									</td>
 									<td>
 										{DateTime.fromMillis(notif.created).toLocaleString({
@@ -218,48 +305,70 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 
 	private notificationClick(index: number) {
 		return async () => {
-			if (!this.state.notifications) {
-				this.setState(prev => ({
-					currentViewed: prev.currentViewed === index ? null : index
-				}));
-
+			if (this.state.state !== 'LOADED' || !this.props.member) {
 				return;
 			}
-
-			if (this.state.notifications[index].read) {
-				this.setState(prev => ({
-					currentViewed: prev.currentViewed === index ? null : index
-				}));
-
-				return;
-			}
-
-			await this.state.notifications[index].toggleRead(this.props.member!);
 
 			this.setState(prev => ({
 				currentViewed: prev.currentViewed === index ? null : index
 			}));
 
-			this.forceUpdate();
+			const notification = this.state.notifications[index];
+
+			if (!notification) {
+				return;
+			}
+
+			if (notification.read) {
+				this.setState(prev => ({
+					currentViewed: prev.currentViewed === index ? null : index
+				}));
+
+				return;
+			}
+
+			await fetchApi.notifications.toggleRead(
+				{ id: index.toString() },
+				{},
+				this.props.member.sessionID
+			);
+
+			this.setState(prev => ({
+				currentViewed: prev.currentViewed === index ? null : index
+			}));
 		};
 	}
 
 	private async markUnread(index: number) {
-		if (!this.state.notifications) {
+		if (!this.props.member || this.state.state !== 'LOADED') {
 			return;
 		}
 
-		await this.state.notifications[index].toggleRead(this.props.member!);
+		const notification = this.state.notifications[index];
+
+		if (!notification) {
+			return;
+		}
+
+		await fetchApi.notifications.toggleRead(
+			{ id: index.toString() },
+			{},
+			this.props.member.sessionID
+		);
 
 		this.setState({
 			currentViewed: null
 		});
 	}
 
-	private renderNotification(notif: Notification) {
+	private renderNotification(notif: NotificationObject) {
 		for (const i of renderers) {
 			if (i.shouldRender(notif)) {
-				return i.render(notif, this.props.member!, this.props.account);
+				return i.render(
+					notif as NotificationObject<NotificationCause, NotificationTarget, any>,
+					this.props.member!,
+					this.props.account
+				);
 			}
 		}
 

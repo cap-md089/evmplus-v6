@@ -1,13 +1,17 @@
 import {
+	AccountObject,
 	AttendanceRecord,
 	AttendanceStatus,
-	MemberReference,
-	NewAttendanceRecord
+	effectiveManageEventPermissionForEvent,
+	Either,
+	NewAttendanceRecord,
+	Permissions,
+	RawEventObject,
+	toReference,
+	User
 } from 'common-lib';
 import * as React from 'react';
-import Account from '../../../lib/Account';
-import Event from '../../../lib/Event';
-import MemberBase from '../../../lib/Members';
+import fetchApi from '../../../lib/apis';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
 import Button from '../../Button';
 import SimpleForm, {
@@ -16,17 +20,18 @@ import SimpleForm, {
 	DateTimeInput,
 	Label,
 	SimpleRadioButton,
-	TextBox
+	TextBox,
+	FormBlock
 } from '../SimpleForm';
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
 
 export interface AttendanceFormProps {
-	account: Account;
-	member: MemberBase;
-	event: Event;
+	account: AccountObject;
+	member: User;
+	event: RawEventObject;
 	record?: AttendanceRecord;
-	updateRecord: (record: NewAttendanceRecord, member: MemberReference) => void;
+	updateRecord: (record: Required<NewAttendanceRecord>) => void;
 	removeRecord: (record: AttendanceRecord) => void;
 	updated: boolean;
 	signup: boolean;
@@ -38,6 +43,7 @@ interface AttendanceFormState {
 	attendance: NewAttendanceRecord;
 	usePartTime: boolean;
 	saving: boolean;
+	errorSaving: boolean;
 	deleting: boolean;
 }
 
@@ -53,13 +59,13 @@ export default class AttendanceForm extends React.Component<
 		if (props.record) {
 			this.state = {
 				attendance: {
-					arrivalTime: props.record.arrivalTime,
 					comments: props.record.comments,
-					departureTime: props.record.departureTime,
+					shiftTime: props.record.shiftTime,
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
 					status: props.record.status,
 					customAttendanceFieldValues: []
 				},
+				errorSaving: false,
 				usePartTime: false,
 				saving: false,
 				deleting: false
@@ -67,13 +73,13 @@ export default class AttendanceForm extends React.Component<
 		} else {
 			this.state = {
 				attendance: {
-					arrivalTime: null,
 					comments: '',
-					departureTime: null,
+					shiftTime: null,
 					planToUseCAPTransportation: false,
 					status: AttendanceStatus.COMMITTEDATTENDED,
 					customAttendanceFieldValues: []
 				},
+				errorSaving: false,
 				usePartTime: false,
 				saving: false,
 				deleting: false
@@ -92,8 +98,10 @@ export default class AttendanceForm extends React.Component<
 
 		const eventLength = this.props.event.pickupDateTime - this.props.event.meetDateTime;
 
-		const arrival = this.state.attendance.arrivalTime || this.props.event.meetDateTime;
-		const departure = this.state.attendance.departureTime || this.props.event.pickupDateTime;
+		const arrival =
+			this.state.attendance.shiftTime?.arrivalTime ?? this.props.event.meetDateTime;
+		const departure =
+			this.state.attendance.shiftTime?.departureTime ?? this.props.event.pickupDateTime;
 
 		const beforeArrival =
 			clamp(this.props.event.meetDateTime, this.props.event.pickupDateTime, arrival) -
@@ -180,22 +188,23 @@ export default class AttendanceForm extends React.Component<
 						</div>
 					</TextBox>
 				) : null}
-				{usePartTime ? <Label>Arrival time</Label> : null}
-				{usePartTime ? (
-					<DateTimeInput
-						name="arrivalTime"
-						time={true}
-						originalTimeZoneOffset={'America/New_York'}
-					/>
-				) : null}
 
-				{usePartTime ? <Label>Departure time</Label> : null}
 				{usePartTime ? (
-					<DateTimeInput
-						name="departureTime"
-						time={true}
-						originalTimeZoneOffset={'America/New_York'}
-					/>
+					<FormBlock name="shiftTime">
+						<Label>Arrival time</Label>
+						<DateTimeInput
+							name="arrivalTime"
+							time={true}
+							originalTimeZoneOffset={'America/New_York'}
+						/>
+
+						<Label>Departure time</Label>
+						<DateTimeInput
+							name="departureTime"
+							time={true}
+							originalTimeZoneOffset={'America/New_York'}
+						/>
+					</FormBlock>
 				) : null}
 
 				<Label>Attendance status</Label>
@@ -213,7 +222,9 @@ export default class AttendanceForm extends React.Component<
 					/>
 				)}
 
-				{!!this.props.record && this.props.member.isPOCOf(this.props.event) ? (
+				{!!this.props.record &&
+				effectiveManageEventPermissionForEvent(this.props.member)(this.props.event) ===
+					Permissions.ManageEvent.FULL ? (
 					<TextBox name="null">
 						<Button
 							onClick={this.removeAttendanceRecord}
@@ -232,18 +243,25 @@ export default class AttendanceForm extends React.Component<
 	private onAttendanceFormChange(
 		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
 	) {
-		let arrivalTime = attendanceSignup.arrivalTime || this.props.event.meetDateTime;
-		let departureTime = attendanceSignup.departureTime || this.props.event.pickupDateTime;
+		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
+		let departureTime =
+			attendanceSignup.shiftTime?.departureTime || this.props.event.pickupDateTime;
+
+		let shiftTime = attendanceSignup.shiftTime;
 
 		if (arrivalTime > departureTime) {
 			[arrivalTime, departureTime] = [departureTime, arrivalTime];
+
+			shiftTime = {
+				arrivalTime,
+				departureTime
+			};
 		}
 
 		this.setState({
 			attendance: {
-				arrivalTime,
 				comments: attendanceSignup.comments,
-				departureTime,
+				shiftTime,
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
 				status: !!this.props.record
 					? attendanceSignup.status
@@ -252,7 +270,8 @@ export default class AttendanceForm extends React.Component<
 					: AttendanceStatus.NOSHOW,
 				customAttendanceFieldValues: []
 			},
-			usePartTime: attendanceSignup.usePartTime
+			usePartTime: attendanceSignup.usePartTime,
+			errorSaving: false
 		});
 
 		this.props.clearUpdated();
@@ -261,25 +280,39 @@ export default class AttendanceForm extends React.Component<
 	private async onAttendanceFormSubmit(
 		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
 	) {
-		let arrivalTime = attendanceSignup.arrivalTime || this.props.event.meetDateTime;
-		let departureTime = attendanceSignup.departureTime || this.props.event.pickupDateTime;
+		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
+		let departureTime =
+			attendanceSignup.shiftTime?.departureTime || this.props.event.pickupDateTime;
+
+		let shiftTime = attendanceSignup.shiftTime;
 
 		if (arrivalTime > departureTime) {
 			[arrivalTime, departureTime] = [departureTime, arrivalTime];
+
+			shiftTime = {
+				arrivalTime,
+				departureTime
+			};
 		}
 
-		const newRecord: NewAttendanceRecord = {
-			arrivalTime: attendanceSignup.usePartTime
-				? clamp(this.props.event.meetDateTime, this.props.event.pickupDateTime, arrivalTime)
-				: null,
-			comments: attendanceSignup.comments,
-			departureTime: attendanceSignup.usePartTime
-				? clamp(
+		shiftTime = shiftTime
+			? {
+					arrivalTime: clamp(
 						this.props.event.meetDateTime,
 						this.props.event.pickupDateTime,
-						departureTime
-				  )
-				: null,
+						shiftTime.arrivalTime
+					),
+					departureTime: clamp(
+						this.props.event.meetDateTime,
+						this.props.event.pickupDateTime,
+						shiftTime.departureTime
+					)
+			  }
+			: null;
+
+		const newRecord: NewAttendanceRecord = {
+			comments: attendanceSignup.comments,
+			shiftTime,
 			planToUseCAPTransportation: this.props.event.transportationProvided
 				? attendanceSignup.planToUseCAPTransportation
 				: false,
@@ -296,24 +329,34 @@ export default class AttendanceForm extends React.Component<
 		});
 
 		if (this.props.record) {
-			await this.props.event.modifyAttendee(
-				this.props.member,
-				this.props.record.memberID,
-				newRecord
+			const result = await fetchApi.events.attendance.modify(
+				{ id: this.props.event.id.toString() },
+				{ ...newRecord, memberID: this.props.record.memberID },
+				this.props.member.sessionID
 			);
+
+			this.setState({
+				errorSaving: Either.isLeft(result),
+				saving: false
+			});
 		} else {
-			await this.props.event.addAttendee(
-				this.props.member,
-				this.props.member.getReference(),
-				newRecord
+			const result = await fetchApi.events.attendance.add(
+				{ id: this.props.event.id.toString() },
+				{ ...newRecord, memberID: toReference(this.props.member) },
+				this.props.member.sessionID
 			);
+
+			this.setState({
+				errorSaving: Either.isLeft(result),
+				saving: false
+			});
 		}
 
-		this.setState({
-			saving: false
+		this.props.updateRecord({
+			...newRecord,
+			shiftTime: this.props.record?.shiftTime ?? null,
+			memberID: this.props.record?.memberID ?? toReference(this.props.member)
 		});
-
-		this.props.updateRecord(newRecord, this.props.member.getReference());
 	}
 
 	private async removeAttendanceRecord() {
@@ -325,7 +368,11 @@ export default class AttendanceForm extends React.Component<
 			deleting: true
 		});
 
-		await this.props.event.removeAttendee(this.props.member, this.props.record.memberID);
+		await fetchApi.events.attendance.delete(
+			{ id: this.props.event.id.toString() },
+			{ member: toReference(this.props.record.memberID) },
+			this.props.member.sessionID
+		);
 
 		this.setState({
 			deleting: false

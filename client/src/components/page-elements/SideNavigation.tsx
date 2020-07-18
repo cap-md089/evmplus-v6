@@ -1,8 +1,7 @@
-import { MemberCreateError, SigninReturn } from 'common-lib';
+import { getFullMemberName, MemberCreateError, SigninReturn, User } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
-import MemberBase from '../../lib/Members';
 import SigninLink from '../SigninLink';
 import './SideNavigation.scss';
 
@@ -38,7 +37,7 @@ export type SideNavigationItem =
 
 export interface SideNavigationProps extends RouteComponentProps<{}> {
 	links: SideNavigationItem[];
-	member: MemberBase | null;
+	member: User | null;
 	fullMemberDetails: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
 }
@@ -105,7 +104,7 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 						{this.props.member ? (
 							<button onClick={this.signOut} style={cursor}>
 								<span className="arrow" />
-								<span>Sign out {this.props.member.getFullName()}</span>
+								<span>Sign out {getFullMemberName(this.props.member)}</span>
 							</button>
 						) : (
 							<SigninLink onClick={this.close}>

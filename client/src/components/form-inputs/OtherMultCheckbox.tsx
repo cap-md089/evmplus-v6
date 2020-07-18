@@ -1,4 +1,4 @@
-import { OtherMultCheckboxReturn, fromValue, just, none, emptyFromLabels } from 'common-lib';
+import { emptyFromLabels, get, Maybe as M, OtherMultCheckboxReturn, pipe } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
 import './MultCheckbox.scss';
@@ -17,23 +17,27 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 	}
 
 	public render() {
-		const value = fromValue(this.props.value);
+		const value = M.fromValue(this.props.value);
 
 		const isChecked = (i: number) =>
-			value
-				.flatMap(val => fromValue(val.values[i]))
-				.orElse(false)
-				.some();
+			pipe(
+				M.flatMap<OtherMultCheckboxReturn, boolean>(ret =>
+					ret.otherSelected ? M.some(false) : M.fromValue(ret.values[i])
+				),
+				M.orSome(false)
+			)(value);
 
-		const isOtherChecked = value
-			.map(val => val.otherSelected)
-			.orElse(false)
-			.some();
+		const isOtherChecked = pipe(
+			M.map<OtherMultCheckboxReturn, boolean>(get('otherSelected')),
+			M.orSome(false)
+		)(value);
 
-		const otherText = value
-			.flatMap(val => (val.otherSelected ? just(val.otherValue) : none<string>()))
-			.orElse('')
-			.some();
+		const otherText = pipe(
+			M.flatMap<OtherMultCheckboxReturn, string>(ret =>
+				ret.otherSelected ? M.some(ret.otherValue) : M.none()
+			),
+			M.orSome('')
+		)(value);
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -80,17 +84,15 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		return (e: React.ChangeEvent<HTMLInputElement>) => {
 			const isChecked = e.currentTarget.checked;
 
-			const value = fromValue(this.props.value)
-				.orElse(emptyFromLabels(this.props.labels))
-				.map(val => ({
-					...val,
-					values: [
-						...val.values.slice(0, index),
-						isChecked,
-						...val.values.slice(index + 1)
-					]
-				}))
-				.some();
+			const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+			const value = {
+				...inputValue,
+				values: [
+					...inputValue.values.slice(0, index),
+					isChecked,
+					...inputValue.values.slice(index + 1)
+				]
+			};
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
@@ -106,14 +108,12 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 	}
 
 	private addOther() {
-		const value = fromValue(this.props.value)
-			.orElse(emptyFromLabels(this.props.labels))
-			.map(val => ({
-				...val,
-				otherSelected: true,
-				otherValue: val.otherSelected ? val.otherValue : ''
-			}))
-			.some();
+		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+		const value = {
+			...inputValue,
+			otherSelected: true,
+			otherValue: inputValue.otherSelected ? inputValue.otherValue : ''
+		};
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
@@ -130,21 +130,17 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 	private onOtherCheckboxChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const isChecked = e.currentTarget.checked;
 
-		const value = fromValue(this.props.value)
-			.orElse(emptyFromLabels(this.props.labels))
-			.map<OtherMultCheckboxReturn>(val =>
-				isChecked
-					? {
-							...val,
-							otherSelected: true,
-							otherValue: e.currentTarget.value
-					  }
-					: {
-							...val,
-							otherSelected: false
-					  }
-			)
-			.some();
+		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+		const value: OtherMultCheckboxReturn = isChecked
+			? {
+					...inputValue,
+					otherSelected: true,
+					otherValue: inputValue.otherSelected ? inputValue.otherValue : ''
+			  }
+			: {
+					...inputValue,
+					otherSelected: false
+			  };
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
@@ -159,14 +155,12 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 	}
 
 	private updateText(e: React.ChangeEvent<HTMLInputElement>) {
-		const value = fromValue(this.props.value)
-			.orElse(emptyFromLabels(this.props.labels))
-			.map(val => ({
-				...val,
-				otherSelected: true,
-				otherValue: e.currentTarget.value
-			}))
-			.some();
+		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+		const value = {
+			...inputValue,
+			otherSelected: true,
+			otherValue: inputValue.otherSelected ? e.currentTarget.value : ''
+		};
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({

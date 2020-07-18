@@ -12,6 +12,8 @@ interface DropDownListProps<T> {
 	titles: (value: T, index: number, array: T[]) => ReactNode;
 	children: (value: T, index: number, array: T[]) => ReactNode;
 	values: T[];
+
+	keyFunc?: (val: T, index: number, array: T[]) => string;
 }
 
 interface DropDownListState<T> {
@@ -27,7 +29,7 @@ export default class DropDownList<T> extends PureComponent<
 		props: DropDownListProps<T>,
 		state: DropDownListState<T>
 	): DropDownListState<T> | null {
-		let open = typeof props.open !== 'undefined' ? [...props.open] : [...state.open];
+		let open = props.open ?? state.open;
 
 		if (open.length !== props.values.length) {
 			open = props.values.map(val =>
@@ -39,7 +41,7 @@ export default class DropDownList<T> extends PureComponent<
 
 		return {
 			open,
-			previousValues: [...props.values]
+			previousValues: props.values
 		};
 	}
 
@@ -52,14 +54,14 @@ export default class DropDownList<T> extends PureComponent<
 	private arrowRefs: Array<HTMLDivElement | null> = [];
 
 	private get onlyOneOpen() {
-		return typeof this.props.onlyOneOpen === undefined ? false : this.props.onlyOneOpen;
+		return this.props.onlyOneOpen ?? false;
 	}
 
 	public render() {
 		return (
 			<ul className="detailedlistplus">
 				{this.props.values.map((val, ind, arr) => (
-					<li key={ind}>
+					<li key={`${ind}-${val}`}>
 						<div
 							className={`detailedlistplusrow ${
 								this.state.open[ind] ? 'open' : 'closed'

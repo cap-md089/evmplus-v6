@@ -39,6 +39,13 @@
 			"linux": {
 				"runtimeExecutable": "/usr/bin/firefox"
 			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch React Scripts",
+			"program": "${workspaceFolder}/node_modules/react-scripts/scripts/start.js",
+			"cwd": "${workspaceFolder}"
 		}
 	]
 }

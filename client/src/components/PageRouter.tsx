@@ -1,11 +1,18 @@
-import { SigninReturn } from 'common-lib';
+import {
+	AccountObject,
+	always,
+	Either,
+	MemberCreateError,
+	RegistryValues,
+	SigninReturn,
+	User
+} from 'common-lib';
 import * as React from 'react';
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
-import Account from '../lib/Account';
-import MemberBase from '../lib/Members';
-import Registry from '../lib/Registry';
+import fetchApi from '../lib/apis';
 import FinishPasswordResetForm from '../pages/account/FinishPasswordReset';
 import FinishSignup from '../pages/account/FinishSignup';
+import RegisterDiscord from '../pages/account/RegisterDiscord';
 import RequestPasswordResetForm from '../pages/account/RequestPasswordReset';
 import RequestUsernameForm from '../pages/account/RequestUsername';
 import Signin from '../pages/account/Signin';
@@ -21,12 +28,10 @@ import LinkList from '../pages/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import EventViewer from '../pages/events/EventViewer';
-import { CAPF6080Render } from '../pages/events/forms/CAPF6080';
 import ModifyEvent from '../pages/events/ModifyEvent';
 import Main from '../pages/Main';
 import NotFound from '../pages/NotFound';
 import Page from '../pages/Page';
-import PhotoLibrary from '../pages/PhotoLibrary';
 import RackBuilder from '../pages/RibbonRack';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamEdit from '../pages/team/TeamEdit';
@@ -37,7 +42,6 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
-import RegisterDiscord from '../pages/account/RegisterDiscord';
 
 const pages: Array<{
 	url: string;
@@ -150,11 +154,6 @@ const pages: Array<{
 		exact: false
 	},
 	{
-		url: '/photolibrary',
-		component: PhotoLibrary,
-		exact: false
-	},
-	{
 		url: '/admin',
 		component: Admin,
 		exact: false
@@ -195,11 +194,6 @@ const pages: Array<{
 		exact: true
 	},
 	{
-		url: '/test6080',
-		component: CAPF6080Render,
-		exact: true
-	},
-	{
 		url: '/passwordreset',
 		component: RequestPasswordResetForm,
 		exact: true
@@ -231,12 +225,12 @@ const pages: Array<{
 
 const composeElement = (
 	El: typeof Page,
-	account: Account,
+	account: AccountObject,
 	authorizeUser: (arg: SigninReturn) => void,
 	updateSideNav: (links: SideNavigationItem[]) => void,
 	updateBreadcrumbs: (links: BreadCrumb[]) => void,
-	registry: Registry,
-	member: MemberBase | null,
+	registry: RegistryValues,
+	member: User | null,
 	fullMemberDetails: SigninReturn,
 	updateApp: () => void
 ) => (props: RouteComponentProps<any>) => {
@@ -258,12 +252,12 @@ const composeElement = (
 
 interface PageDisplayerProps {
 	El: typeof Page;
-	account: Account;
+	account: AccountObject;
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
-	registry: Registry;
-	member: MemberBase | null;
+	registry: RegistryValues;
+	member: User | null;
 	fullMemberDetails: SigninReturn;
 	routeProps: RouteComponentProps<any>;
 	updateApp: () => void;
@@ -326,10 +320,10 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 interface PageRouterProps extends RouteComponentProps<any> {
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
-	member: MemberBase | null;
-	account: Account;
+	member: User | null;
+	account: AccountObject;
 	authorizeUser: (arg: SigninReturn) => void;
-	registry: Registry;
+	registry: RegistryValues;
 	fullMemberDetails: SigninReturn;
 	updateApp: () => void;
 }
@@ -391,11 +385,12 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			const { member } = this.props;
 
 			if (member) {
-				member
-					.fetch(`/api/check`, {}, member)
-					.then(res => res.json())
-					.then((sr: SigninReturn) => {
-						this.props.authorizeUser(sr);
+				fetchApi
+					.check({}, {}, member.sessionID)
+					.leftFlatMap(always(Either.right({ error: MemberCreateError.SERVER_ERROR })))
+					.fullJoin()
+					.then(ret => {
+						this.props.authorizeUser(ret);
 
 						this.setState({
 							loading: false

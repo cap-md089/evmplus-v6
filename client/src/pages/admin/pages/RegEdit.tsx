@@ -1,17 +1,24 @@
+import {
+	hasPermission,
+	RankAndFileInformation,
+	RegistryValues,
+	Timezone,
+	WebsiteContact
+} from 'common-lib';
 import * as React from 'react';
-import { RegistryValues, Timezone, WebsiteContact, RankAndFileInformation } from 'common-lib';
-import Page, { PageProps } from '../../Page';
-import SimpleForm, {
-	Title,
-	FormBlock,
-	Label,
-	NumberInput,
-	TextInput,
-	ListEditor,
-	TextBox
-} from '../../../components/forms/SimpleForm';
 import Button from '../../../components/Button';
 import Select from '../../../components/form-inputs/Select';
+import SimpleForm, {
+	FormBlock,
+	Label,
+	ListEditor,
+	NumberInput,
+	TextBox,
+	TextInput,
+	Title
+} from '../../../components/forms/SimpleForm';
+import fetchApi from '../../../lib/apis';
+import Page, { PageProps } from '../../Page';
 
 type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
 
@@ -157,7 +164,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (!this.props.member.hasPermission('RegistryEdit')) {
+		if (hasPermission('RegistryEdit')()(this.props.member)) {
 			return <div>You do not have permission to do that</div>;
 		}
 
@@ -238,9 +245,6 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 					<Label>How many upcoming events to show</Label>
 					<NumberInput name="ShowUpcomingEventCount" />
 
-					<Label>How many photos to show per page on the photo library</Label>
-					<NumberInput name="PhotoLibraryImagesPerPage" />
-
 					<Label>What timezone does the unit primarily operate within?</Label>
 					<Select
 						labels={timezones.map(i => i.substr(8).replace('_', ' '))}
@@ -264,6 +268,10 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 	}
 
 	private async onFormSubmit(formValues: RegEditFormValues) {
+		if (!this.props.member) {
+			return;
+		}
+
 		const values = convertFormToState(formValues);
 
 		if (
@@ -286,7 +294,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		this.props.registry.RankAndFile = values.RankAndFile;
 		this.props.registry.Website = values.Website;
 
-		await this.props.registry.save(this.props.member!);
+		await fetchApi.registry.set({}, this.props.registry, this.props.member.sessionID);
 
 		this.props.updateApp();
 	}

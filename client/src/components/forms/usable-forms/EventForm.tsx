@@ -1,36 +1,43 @@
 import {
+	AccountObject,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	defaultRadioFromLabels,
-	DisplayInternalPointOfContact,
 	EchelonEventNumber,
+	effectiveManageEventPermission,
 	emptyFromLabels,
 	emptySimpleFromLabels,
 	EventStatus as EventStatusEnum,
 	ExternalPointOfContact,
+	FullTeamObject,
 	InternalPointOfContact,
+	isOneOfSelected,
+	Maybe,
+	MaybeObj,
+	Member,
+	MemberReference,
 	NewEventObject,
 	OtherMultCheckboxReturn,
+	Permissions,
 	PointOfContactType,
 	RadioReturnWithOther,
+	RegistryValues,
 	SimpleMultCheckboxReturn,
-	isOneOfSelected
+	User
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
-import Account from '../../../lib/Account';
-import MemberBase, { CAPMemberClasses } from '../../../lib/Members';
-import Registry from '../../../lib/Registry';
-import Team from '../../../lib/Team';
 import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
+import { BooleanForField } from '../../form-inputs/FormBlock';
 import { InputProps } from '../../form-inputs/Input';
-import POCInput, { POCInputProps } from '../../form-inputs/POCInput';
+import POCInput, { InternalPointOfContactEdit, POCInputProps } from '../../form-inputs/POCInput';
 import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
 import SimpleForm, {
 	Checkbox,
 	DateTimeInput,
 	FileInput,
 	FormBlock,
+	FormValidator,
 	Label,
 	ListEditor,
 	NumberInput,
@@ -38,12 +45,10 @@ import SimpleForm, {
 	RadioButtonWithOther,
 	SimpleRadioButton,
 	TeamSelector,
+	TextBox,
 	TextInput,
-	Title,
-	FormValidator,
-	TextBox
+	Title
 } from '../SimpleForm';
-import { BooleanForField } from '../../form-inputs/FormBlock';
 
 export const Uniforms = [
 	'Dress Blue A',
@@ -90,15 +95,15 @@ export const EventStatus = [
 ];
 
 interface EventFormProps {
-	registry: Registry;
+	registry: RegistryValues;
 	event: NewEventFormValues;
 	isEventUpdate?: boolean;
-	account: Account;
-	member: MemberBase;
-	teamList: Promise<Team[]>;
-	memberList: Promise<CAPMemberClasses[]>;
+	account: AccountObject;
+	member: User;
+	teamList: FullTeamObject[];
+	memberList: Member[];
 	onEventChange: (event: NewEventFormValues, valid: boolean) => void;
-	onEventFormSubmit: (event: NewEventFormValues, valid: boolean) => void;
+	onEventFormSubmit: (event: MaybeObj<NewEventFormValues>) => void;
 	saving: boolean;
 }
 
@@ -125,7 +130,7 @@ export interface NewEventFormValues {
 	complete: boolean;
 	administrationComments: string;
 	status: EventStatusEnum;
-	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
+	pointsOfContact: Array<InternalPointOfContactEdit | ExternalPointOfContact>;
 	customAttendanceFields: CustomAttendanceField[];
 	signUpPartTime: boolean;
 	uniform: SimpleMultCheckboxReturn;
@@ -154,8 +159,8 @@ export interface NewEventFormValues {
 	};
 }
 
-export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObject => {
-	return {
+export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<NewEventObject> =>
+	Maybe.map((pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>) => ({
 		acceptSignups: event.acceptSignups,
 		activity: event.activity,
 		administrationComments: event.administrationComments,
@@ -176,7 +181,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObj
 		participationFee: event.useParticipationFee ? event.participationFee : null,
 		pickupDateTime: event.pickupDateTime,
 		pickupLocation: event.pickupLocation,
-		pointsOfContact: event.pointsOfContact,
+		pointsOfContact,
 		customAttendanceFields: event.customAttendanceFields,
 		publishToWingCalendar: event.publishToWingCalendar,
 		regionEventNumber: event.regionEventNumber,
@@ -201,8 +206,25 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): NewEventObj
 		uniform: event.uniform,
 		wingEventNumber: event.wingEventNumber,
 		privateAttendance: event.privateAttendance
-	};
-};
+	}))(
+		Maybe.And(
+			event.pointsOfContact.map<MaybeObj<InternalPointOfContact | ExternalPointOfContact>>(
+				poc =>
+					poc.type === PointOfContactType.EXTERNAL
+						? Maybe.some(poc)
+						: Maybe.map<MemberReference, InternalPointOfContact>(memberReference => ({
+								memberReference,
+								email: poc.email,
+								phone: poc.phone,
+								receiveEventUpdates: poc.receiveEventUpdates,
+								receiveRoster: poc.receiveRoster,
+								receiveSignUpUpdates: poc.receiveSignUpUpdates,
+								receiveUpdates: poc.receiveUpdates,
+								type: PointOfContactType.INTERNAL
+						  }))(poc.memberReference)
+			)
+		)
+	);
 
 export const emptyEventFormValues = (): NewEventFormValues => ({
 	name: '',
@@ -279,7 +301,20 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	useParticipationFee: !!event.participationFee,
 	pickupDateTime: event.pickupDateTime,
 	pickupLocation: event.pickupLocation,
-	pointsOfContact: event.pointsOfContact,
+	pointsOfContact: event.pointsOfContact.map(poc =>
+		poc.type === PointOfContactType.EXTERNAL
+			? poc
+			: {
+					email: poc.email,
+					phone: poc.phone,
+					receiveEventUpdates: poc.receiveEventUpdates,
+					receiveRoster: poc.receiveRoster,
+					receiveSignUpUpdates: poc.receiveSignUpUpdates,
+					receiveUpdates: poc.receiveUpdates,
+					memberReference: Maybe.some(poc.memberReference),
+					type: PointOfContactType.INTERNAL
+			  }
+	),
 	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
 	regionEventNumber: event.regionEventNumber,
@@ -295,12 +330,12 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	signUpPartTime: event.signUpPartTime,
 	startDateTime: event.startDateTime,
 	status: event.status,
-	teamID: event.teamID,
+	teamID: event.teamID ?? null,
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
 	wingEventNumber: event.wingEventNumber,
-	limitSignupsToTeam: event.limitSignupsToTeam,
+	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
 	privateAttendance: event.privateAttendance
 });
 
@@ -488,16 +523,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Title>Points of Contact</Title>
 
-				<ListEditor<DisplayInternalPointOfContact | ExternalPointOfContact, POCInputProps>
+				<ListEditor<InternalPointOfContactEdit | ExternalPointOfContact, POCInputProps>
 					name="pointsOfContact"
 					inputComponent={POCInput}
 					addNew={() => ({
 						type: PointOfContactType.INTERNAL,
 						email: '',
 						name: '',
-						memberReference: {
-							type: 'Null'
-						},
+						memberReference: Maybe.none(),
 						phone: '',
 						receiveEventUpdates: false,
 						receiveRoster: false,
@@ -557,7 +590,10 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<SimpleRadioButton
 					name="status"
 					labels={
-						this.props.member.hasPermission('ManageEvent', 2) ? EventStatus : ['Draft']
+						effectiveManageEventPermission(this.props.member) >=
+						Permissions.ManageEvent.FULL
+							? EventStatus
+							: ['Draft']
 					}
 				/>
 
@@ -653,6 +689,6 @@ export default class EventForm extends React.Component<EventFormProps> {
 			valid
 		});
 
-		this.props.onEventFormSubmit(event, valid);
+		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());
 	}
 }

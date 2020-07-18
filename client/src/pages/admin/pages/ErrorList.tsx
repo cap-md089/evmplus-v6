@@ -1,17 +1,20 @@
 import {
+	always,
 	api,
+	APIEndpointReturnValue,
 	areErrorObjectsTheSame,
 	ClientErrorObject,
+	complement,
+	DiscordBotErrorObject,
 	Either,
-	either,
 	Errors,
 	ErrorType,
-	isSomething,
-	just,
+	get,
+	HTTPError,
+	isRioux,
 	Maybe,
-	none,
-	ServerErrorObject,
-	DiscordBotErrorObject
+	MaybeObj,
+	ServerErrorObject
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -19,30 +22,30 @@ import Button from '../../../components/Button';
 import DropDownList from '../../../components/DropDownList';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
-import { SideNavigationItem } from '../../../components/page-elements/SideNavigation';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import { RequiredMember } from '../pluggables/SiteAdmin';
-import { fetchFunction } from '../../../lib/myFetch';
-import APIInterface from '../../../lib/APIInterface';
 
-export const shouldRenderErrorList = (props: PageProps): boolean => !!props.member?.isRioux;
+export const shouldRenderErrorList = (props: PageProps): boolean =>
+	!!props.member && isRioux(props.member);
 
 interface ErrorListWidgetState {
-	errors: Maybe<Either<api.HTTPError, Errors[]>>;
+	errors: MaybeObj<APIEndpointReturnValue<api.errors.GetErrors>>;
 }
 
 export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> {
 	public state: ErrorListWidgetState = {
-		errors: none()
+		errors: Maybe.none()
 	};
 
 	public async componentDidMount() {
-		if (!this.props.member.isRioux) {
+		if (!shouldRenderErrorList(this.props)) {
 			throw new Error('What??');
 		}
 
-		const resp = await this.props.account.fetch(`/api/errors`, {}, this.props.member);
-		const errors = just(either((await resp.json()) as api.errors.GetErrors));
+		const errors = Maybe.some(
+			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID)
+		);
 
 		this.setState({ errors });
 	}
@@ -54,26 +57,22 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 					<div className="widget-title">Errors</div>
 				</Link>
 				<div className="widget-body">
-					{this.state.errors.cata(
-						() => (
-							<LoaderShort />
-						),
-						errorsEither =>
-							errorsEither.cata(
-								err => <div>{err.message}</div>,
-								errors => (
-									<div>
-										There {errors.length === 1 ? 'is' : 'are'} {errors.length}{' '}
-										error
-										{errors.length === 1 ? '' : 's'}.
-										<br />
-										<br />
-										<Link to="/admin/errorlist">
-											Check {errors.length === 1 ? 'it' : 'them'} out
-										</Link>
-									</div>
-								)
-							)
+					{Maybe.cata<APIEndpointReturnValue<api.errors.GetErrors>, React.ReactChild>(
+						always(<LoaderShort />)
+					)(
+						Either.cata<HTTPError, Errors[], React.ReactChild>(err => (
+							<div>{err.message}</div>
+						))(errors => (
+							<div>
+								There {errors.length === 1 ? 'is' : 'are'} {errors.length} error
+								{errors.length === 1 ? '' : 's'}.
+								<br />
+								<br />
+								<Link to="/admin/errorlist">
+									Check {errors.length === 1 ? 'it' : 'them'} out
+								</Link>
+							</div>
+						))
 					)}
 				</div>
 			</div>
@@ -86,12 +85,12 @@ const titleStyle = {
 };
 
 interface ErrorListPageState {
-	errors: Maybe<Either<api.HTTPError, Errors[]>>;
+	errors: MaybeObj<APIEndpointReturnValue<api.errors.GetErrors>>;
 }
 
 export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	public state: ErrorListPageState = {
-		errors: none()
+		errors: Maybe.none()
 	};
 
 	public constructor(props: PageProps) {
@@ -101,12 +100,13 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	}
 
 	public async componentDidMount() {
-		if (!this.props.member?.isRioux) {
+		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			throw new Error('What??');
 		}
 
-		const resp = await this.props.account.fetch(`/api/errors`, {}, this.props.member);
-		const errors = just(either((await resp.json()) as api.errors.GetErrors));
+		const errors = Maybe.some(
+			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID)
+		);
 
 		this.setState({ errors });
 
@@ -114,23 +114,24 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	}
 
 	public render() {
-		if (!this.props.member?.isRioux) {
+		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			return <div>You do not have permission to view this page</div>;
 		}
 
-		return this.state.errors.cata(
-			() => <Loader />,
-			errorEither =>
-				errorEither.cata(
-					error => <div>{error.message}</div>,
-					errors => (
-						<>
-							{this.renderErrorList(errors, 'Client')}
-							{this.renderErrorList(errors, 'Server')}
-							{this.renderErrorList(errors, 'DiscordBot')}
-						</>
-					)
-				)
+		if (Maybe.isNone(this.state.errors)) {
+			return <Loader />;
+		}
+
+		if (Either.isLeft(this.state.errors.value)) {
+			return <div>{this.state.errors.value.value.message}</div>;
+		}
+
+		return (
+			<>
+				{this.renderErrorList(this.state.errors.value.value, 'Client')}
+				{this.renderErrorList(this.state.errors.value.value, 'Server')}
+				{this.renderErrorList(this.state.errors.value.value, 'DiscordBot')}
+			</>
 		);
 	}
 
@@ -352,34 +353,30 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	}
 
 	private async resolveError(error: Errors) {
-		if (!this.props.member?.isRioux) {
+		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			throw new Error('No!');
 		}
 
-		const token = await APIInterface.getToken(this.props.account.id, this.props.member);
-
-		await this.props.member.memberFetch(
-			`/api/errors`,
+		await fetchApi.errors.markErrorDone(
+			{},
 			{
-				body: JSON.stringify({
-					column: error.stack[0].column,
-					line: error.stack[0].line,
-					fileName: error.stack[0].filename,
-					type: error.type,
-					message: error.message,
-					token
-				})
+				column: error.stack[0].column,
+				fileName: error.stack[0].filename,
+				line: error.stack[0].line,
+				message: error.message,
+				type: error.type
 			},
-			fetchFunction
+			this.props.member.sessionID
 		);
 
 		const comparer = areErrorObjectsTheSame(error);
 
 		this.setState(
 			errors => ({
-				errors: errors.errors.map(eith =>
-					eith.map(items => items.filter(item => !comparer(item)))
-				)
+				errors: Maybe.map<
+					APIEndpointReturnValue<api.errors.GetErrors>,
+					APIEndpointReturnValue<api.errors.GetErrors>
+				>(Either.map(items => items.filter(complement(comparer))))(errors.errors)
 			}),
 			() => {
 				this.updateSideNav(this.state.errors);
@@ -387,37 +384,43 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		);
 	}
 
-	private updateSideNav(errors: Maybe<Either<api.HTTPError, Errors[]>>) {
-		this.props.updateSideNav(
-			errors
-				.map(list =>
-					list
-						.map(errorList => {
-							const serverErrors = errorList.filter(error => error.type === 'Server');
-							const clientErrors = errorList.filter(error => error.type === 'Client');
-							return [
-								clientErrors.length > 0
-									? just<SideNavigationItem>({
-											target: 'client-errors',
-											text: 'Client Errors',
-											type: 'Reference'
-									  })
-									: none<SideNavigationItem>(),
-								serverErrors.length > 0
-									? just<SideNavigationItem>({
-											target: 'server-errors',
-											text: 'Server Errors',
-											type: 'Reference'
-									  })
-									: none<SideNavigationItem>()
-							]
-								.filter(isSomething)
-								.map(item => item.some());
-						})
-						.toSome()
-						.orSome([])
-				)
-				.orSome([])
-		);
+	private updateSideNav(errors: MaybeObj<APIEndpointReturnValue<api.errors.GetErrors>>) {
+		if (Maybe.isNone(errors) || Either.isLeft(errors.value)) {
+			this.props.updateSideNav([]);
+		} else {
+			const errorList = errors.value.value;
+
+			const hasClientError = errorList.some(error => error.type === 'Client');
+			const hasServerError = errorList.some(error => error.type === 'Server');
+			const hasDiscordError = errorList.some(error => error.type === 'DiscordBot');
+
+			this.props.updateSideNav(
+				[
+					hasClientError
+						? Maybe.some({
+								target: 'client-errors',
+								text: 'Client Errors',
+								type: 'Reference' as const
+						  })
+						: Maybe.none(),
+					hasServerError
+						? Maybe.some({
+								target: 'server-errors',
+								text: 'Server Errors',
+								type: 'Reference' as const
+						  })
+						: Maybe.none(),
+					hasDiscordError
+						? Maybe.some({
+								target: 'discord-errors',
+								text: 'Discord Bot Errors',
+								type: 'Reference' as const
+						  })
+						: Maybe.none()
+				]
+					.filter(Maybe.isSome)
+					.map(get('value'))
+			);
+		}
 	}
 }

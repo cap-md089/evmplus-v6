@@ -1,23 +1,44 @@
-import { EventStatus, presentMultCheckboxReturn } from 'common-lib';
+import {
+	AsyncEither,
+	Either,
+	EventStatus,
+	getURIComponent,
+	Maybe as M,
+	MaybeObj,
+	pipe,
+	presentMultCheckboxReturn,
+	RawEventObject
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
+import { FacebookProvider, Page as FBPage } from 'react-facebook';
 import { Link } from 'react-router-dom';
+import { TwitterTimelineEmbed } from 'react-twitter-embed';
 import Loader from '../components/Loader';
 import { SideNavigationItem } from '../components/page-elements/SideNavigation';
-import Event from '../lib/Event';
+import fetchApi from '../lib/apis';
 import Page, { PageProps } from './Page';
-import { FacebookProvider, Page as FBPage } from 'react-facebook';
-import { TwitterTimelineEmbed } from 'react-twitter-embed';
 
-interface MainState {
-	events: Event[] | null;
-	nextEvent: Event | null;
+interface MainStateUnloaded {
+	state: 'UNLOADED';
 }
+
+interface MainStateLoaded {
+	state: 'LOADED';
+	events: RawEventObject[];
+	nextEvent: MaybeObj<RawEventObject>;
+}
+
+interface MainStateError {
+	state: 'ERROR';
+	message: string;
+}
+
+type MainState = MainStateUnloaded | MainStateLoaded | MainStateError;
 
 export default class Main extends Page<PageProps, MainState> {
 	public state: MainState = {
-		events: null,
-		nextEvent: null
+		state: 'UNLOADED'
 	};
 
 	public async componentDidMount() {
@@ -46,26 +67,37 @@ export default class Main extends Page<PageProps, MainState> {
 		]);
 		this.updateTitle();
 
-		const [events, nextEvent] = await Promise.all([
-			this.props.account.getUpcomingEvents(),
-			this.props.account.getNextRecurringEvent()
+		const infoEither = await AsyncEither.All([
+			fetchApi.events.events.getNextRecurring({}, {}),
+			fetchApi.events.events.getUpcoming({}, {})
 		]);
 
-		this.setState({
-			events,
-			nextEvent: nextEvent.join()
-		});
+		if (Either.isLeft(infoEither)) {
+			this.setState({
+				state: 'ERROR'
+			});
+		} else {
+			const [nextEvent, events] = infoEither.value;
+
+			this.setState({
+				state: 'LOADED',
+				events,
+				nextEvent
+			});
+		}
 	}
 
 	public render() {
 		return (
 			<div>
-				{this.state.events === null ? (
+				{this.state.state === 'UNLOADED' ? (
 					<Loader />
+				) : this.state.state === 'ERROR' ? (
+					<div>{this.state.message}</div>
 				) : (
 					<>
 						<section className="halfSection" style={{ float: 'left' }}>
-							{this.state.nextEvent === null ? (
+							{!this.state.nextEvent.hasValue ? (
 								<h3 style={{ textAlign: 'center' }}>No upcoming meeting</h3>
 							) : (
 								<>
@@ -76,11 +108,11 @@ export default class Main extends Page<PageProps, MainState> {
 									>
 										Next meeting
 									</h3>
-									<strong>Event</strong>: {this.state.nextEvent.name}
+									<strong>Event</strong>: {this.state.nextEvent.value.name}
 									<br />
 									<strong>Time</strong>:{' '}
 									{DateTime.fromMillis(
-										this.state.nextEvent.meetDateTime
+										this.state.nextEvent.value.meetDateTime
 									).toLocaleString({
 										year: 'numeric',
 										weekday: 'short',
@@ -91,16 +123,23 @@ export default class Main extends Page<PageProps, MainState> {
 										hour12: false
 									})}
 									<br />
-									<strong>Location</strong>: {this.state.nextEvent.meetLocation}
+									<strong>Location</strong>:{' '}
+									{this.state.nextEvent.value.meetLocation}
 									<br />
 									<strong>Uniform of the day</strong>:{' '}
-									{presentMultCheckboxReturn(this.state.nextEvent.uniform)
-										.map(uniform => <>{uniform}</>)
-										.orElse(<i>No uniform specified</i>)
-										.some()}
+									{pipe(
+										M.map(uniform => <>{uniform}</>),
+										M.orSome(<i>No uniform specified</i>)
+									)(
+										presentMultCheckboxReturn(
+											this.state.nextEvent.value.uniform
+										)
+									)}
 									<br />
 									<Link
-										to={`/eventviewer/${this.state.nextEvent.getEventURLComponent()}`}
+										to={`/eventviewer/${getURIComponent(
+											this.state.nextEvent.value
+										)}`}
 									>
 										View details
 									</Link>
@@ -139,7 +178,7 @@ export default class Main extends Page<PageProps, MainState> {
 													month: 'long'
 												})}
 											</strong>{' '}
-											<Link to={`/eventviewer/${ev.getEventURLComponent()}`}>
+											<Link to={`/eventviewer/${getURIComponent(ev)}`}>
 												{ev.name}
 											</Link>{' '}
 											<strong>!! Cancelled !!</strong>
@@ -154,7 +193,7 @@ export default class Main extends Page<PageProps, MainState> {
 													month: 'long'
 												})}
 											</strong>{' '}
-											<Link to={`/eventviewer/${ev.getEventURLComponent()}`}>
+											<Link to={`/eventviewer/${getURIComponent(ev)}`}>
 												{ev.name}
 											</Link>
 										</span>

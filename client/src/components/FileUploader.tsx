@@ -1,13 +1,12 @@
+import { FileObject, AccountObject, User } from 'common-lib';
 import * as React from 'react';
-import Account from '../lib/Account';
-import FileInterface from '../lib/File';
-import MemberBase from '../lib/Members';
+import { uploadFile } from '../lib/File';
 
 interface FileUploaderProps {
-	onFileUpload: (file: FileInterface) => void;
-	member: MemberBase;
-	account: Account | null;
-	currentFolder: FileInterface;
+	onFileUpload: (file: FileObject) => void;
+	member: User;
+	account: AccountObject;
+	currentFolder: FileObject;
 	display: boolean;
 }
 
@@ -48,29 +47,22 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 			doneWithCurrentFile: false
 		});
 
-		const account = this.props.account || (await Account.Get());
-
-		const fileUploader = FileInterface.Create(
-			this.state.files[0],
-			this.props.currentFolder,
-			this.props.member,
-			account
-		);
-
-		fileUploader.progressListeners.push(progress => {
-			this.setState({
-				progress
-			});
-		});
-
-		fileUploader.finishListeners.push(fileInterface => {
-			this.props.onFileUpload(fileInterface);
-			this.setState(prev => ({
-				files: prev.files.slice(1),
-				doneWithCurrentFile: true,
-				progress: 0
-			}));
-		});
+		for await (const event of uploadFile(this.props.member)(this.props.currentFolder.id)(
+			this.state.files[0]
+		)) {
+			if (event.event === 'PROGRESS') {
+				this.setState({
+					progress: event.progress
+				});
+			} else if (event.event === 'FINISH') {
+				this.props.onFileUpload(event.file);
+				this.setState(prev => ({
+					files: prev.files.slice(1),
+					doneWithCurrentFile: true,
+					progress: 0
+				}));
+			}
+		}
 	}
 
 	public render() {
@@ -168,7 +160,10 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 					files.push(ev.dataTransfer.items[i].getAsFile());
 				}
 			}
-			this.handleFiles((files as any) as FileList);
+
+			if (files.length > 0) {
+				this.handleFiles((files as any) as FileList);
+			}
 		}
 
 		this.setState({

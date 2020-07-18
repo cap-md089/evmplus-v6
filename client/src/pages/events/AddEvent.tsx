@@ -1,29 +1,52 @@
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
-import { NewEventObject } from 'common-lib';
-import { CAPMemberClasses } from '../../lib/Members';
-import Team from '../../lib/Team';
+import {
+	Member,
+	FullTeamObject,
+	AsyncEither,
+	Either,
+	effectiveManageEventPermission,
+	Permissions,
+	MaybeObj,
+	Maybe
+} from 'common-lib';
 import EventForm, {
 	emptyEventFormValues,
 	NewEventFormValues,
 	convertFormValuesToEvent
 } from '../../components/forms/usable-forms/EventForm';
-import Event from '../../lib/Event';
+import fetchApi from '../../lib/apis';
+import SigninLink from '../../components/SigninLink';
+import Loader from '../../components/Loader';
 
-interface AddEventState {
-	event: NewEventFormValues;
-	createError: null | number;
-	memberList: Promise<CAPMemberClasses[]>;
-	teamList: Promise<Team[]>;
+interface AddEventUIState {
 	saving: boolean;
 }
 
+interface AddEventLoadingState {
+	state: 'LOADING';
+}
+
+interface AddEventErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+interface AddEventLoadedState {
+	state: 'LOADED';
+
+	event: NewEventFormValues;
+	memberList: Member[];
+	teamList: FullTeamObject[];
+}
+
+type AddEventState = (AddEventLoadingState | AddEventErrorState | AddEventLoadedState) &
+	AddEventUIState;
+
 export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
-		createError: null,
-		event: emptyEventFormValues(),
-		memberList: this.props.account.getMembers(this.props.member),
-		teamList: this.props.account.getTeams(this.props.member),
+		state: 'LOADING',
 		saving: false
 	};
 
@@ -34,7 +57,39 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
+		if (!this.props.member) {
+			return;
+		}
+
+		if (effectiveManageEventPermission(this.props.member) === Permissions.ManageEvent.NONE) {
+			return;
+		}
+
+		const infoEither = await AsyncEither.All([
+			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
+			fetchApi.team.list({}, {}, this.props.member.sessionID)
+		]);
+
+		if (Either.isLeft(infoEither)) {
+			return this.setState({
+				state: 'ERROR',
+				message: 'Could not load member or team information',
+				saving: false
+			});
+		}
+
+		const [memberList, teamList] = infoEither.value;
+
+		this.setState(prev => ({
+			...prev,
+
+			state: 'LOADED',
+			event: emptyEventFormValues(),
+			memberList,
+			teamList
+		}));
+
 		this.props.updateSideNav([
 			{
 				target: 'main-information',
@@ -90,7 +145,23 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 	}
 
 	public render() {
-		return this.props.member && Event.HasBasicPermission(this.props.member) ? (
+		if (!this.props.member) {
+			return <SigninLink>Please sign in.</SigninLink>;
+		}
+
+		if (effectiveManageEventPermission(this.props.member) === Permissions.ManageEvent.NONE) {
+			return <div>You do not have permission to do that.</div>;
+		}
+
+		if (this.state.state === 'LOADING') {
+			return <Loader />;
+		}
+
+		if (this.state.state === 'ERROR') {
+			return <div>{this.state.message}</div>;
+		}
+
+		return (
 			<EventForm
 				account={this.props.account}
 				member={this.props.member}
@@ -103,58 +174,49 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				memberList={this.state.memberList}
 				saving={this.state.saving}
 			/>
-		) : (
-			<div>Please sign in</div>
 		);
 	}
 
-	private async handleSubmit(event: NewEventFormValues, valid: boolean) {
-		if (!this.props.member || !Event.HasBasicPermission(this.props.member)) {
+	private async handleSubmit(maybeEvent: MaybeObj<NewEventFormValues>) {
+		if (!this.props.member) {
 			return;
 		}
 
-		if (!valid) {
-			return;
-		}
-
-		let realEvent;
-
-		try {
-			realEvent = convertFormValuesToEvent(event);
-		} catch (e) {
-			this.setState({
-				createError: 400
-			});
-			return;
-		}
-
-		let eventObject;
+		const maybeFullEvent = Maybe.flatMap(convertFormValuesToEvent)(maybeEvent);
 
 		this.setState({
 			saving: true
 		});
 
-		try {
-			eventObject = await Event.Create(realEvent, this.props.member, this.props.account);
-		} catch (e) {
-			this.setState({
-				createError: e.status,
-				saving: false
-			});
-
+		if (!maybeFullEvent.hasValue) {
 			return;
 		}
 
-		this.setState({
-			saving: false
-		});
+		const createResult = await fetchApi.events.events.add(
+			{},
+			maybeFullEvent.value,
+			this.props.member.sessionID
+		);
 
-		this.props.routeProps.history.push(`/eventviewer/${eventObject.id}`);
+		if (Either.isLeft(createResult)) {
+			this.setState({
+				saving: false,
+				state: 'ERROR',
+				message: 'Could not create event'
+			});
+		} else {
+			this.props.routeProps.history.push(`/eventviewer/${createResult.value.id}`);
+		}
 	}
 
 	private updateNewEvent(event: NewEventFormValues) {
-		this.setState({
+		if (this.state.state !== 'LOADED') {
+			return;
+		}
+
+		this.setState(prev => ({
+			...prev,
 			event
-		});
+		}));
 	}
 }

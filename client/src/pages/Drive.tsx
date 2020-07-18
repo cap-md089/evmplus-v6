@@ -1,3 +1,13 @@
+import {
+	AsyncEither,
+	Either,
+	FileObject,
+	FullFileObject,
+	get,
+	hasPermission,
+	Maybe,
+	Permissions
+} from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
 import ExtraFileDisplay from '../components/drive/DriveExtraFileDisplay';
@@ -5,21 +15,11 @@ import ExtraFolderDisplay from '../components/drive/DriveExtraFolderDisplay';
 import DriveFileDisplay from '../components/drive/DriveFileDisplay';
 import DriveFolderDisplay from '../components/drive/DriveFolderDisplay';
 import FileUploader from '../components/FileUploader';
-import { TextInput, Form } from '../components/forms/SimpleForm';
+import { Form, TextInput } from '../components/forms/SimpleForm';
 import Loader from '../components/Loader';
-import FileInterface from '../lib/File';
+import fetchApi from '../lib/apis';
 import './Drive.css';
 import Page, { PageProps } from './Page';
-import { FileObject, FullFileObject, just } from 'common-lib';
-
-enum ErrorReason {
-	NONE,
-	ERR401,
-	ERR403,
-	ERR404,
-	ERR500,
-	UNKNOWN
-}
 
 interface UnloadedDriveState {
 	files: null;
@@ -28,17 +28,17 @@ interface UnloadedDriveState {
 	currentFolder: null;
 	showingExtraInfo: boolean;
 	error: boolean;
-	errorReason: ErrorReason;
+	errorReason: string | null;
 }
 
 interface LoadedDriveState {
-	files: FileInterface[];
+	files: FileObject[];
 	currentlySelected: string;
 	newFoldername: string;
-	currentFolder: FileInterface;
+	currentFolder: FileObject;
 	showingExtraInfo: boolean;
 	error: boolean;
-	errorReason: ErrorReason;
+	errorReason: string | null;
 }
 
 type DriveState = UnloadedDriveState | LoadedDriveState;
@@ -51,7 +51,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		currentFolder: null,
 		showingExtraInfo: true,
 		error: false,
-		errorReason: ErrorReason.UNKNOWN
+		errorReason: null
 	};
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
@@ -64,7 +64,6 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		this.createFolder = this.createFolder.bind(this);
 		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
-		this.receiveData = this.receiveData.bind(this);
 		this.addFile = this.addFile.bind(this);
 		this.fileDeleted = this.fileDeleted.bind(this);
 		this.fileModified = this.fileModified.bind(this);
@@ -128,18 +127,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 	public render() {
 		if (this.state.error) {
-			switch (this.state.errorReason) {
-				case ErrorReason.ERR403:
-				case ErrorReason.ERR401:
-					return <div>You do not have permission to view the requested folder</div>;
-				case ErrorReason.ERR404:
-					return <div>The requested folder could not be found</div>;
-				case ErrorReason.ERR500:
-				case ErrorReason.UNKNOWN:
-					return <div>There was an unknown server error</div>;
-				default:
-					break;
-			}
+			return <div>{this.state.errorReason}</div>;
 		}
 
 		if (this.state.files === null || this.state.currentFolder === null) {
@@ -149,7 +137,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		const filesPerRow = 4;
 
 		const folders = this.state.files.filter(file => file.contentType === 'application/folder');
-		const rowedFolders: FileInterface[][] = [];
+		const rowedFolders: FileObject[][] = [];
 		folders.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
 			if (rowedFolders[realIndex] === undefined) {
@@ -160,7 +148,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		});
 
 		const files = this.state.files.filter(file => file.contentType !== 'application/folder');
-		const rowedFiles: FileInterface[][] = [];
+		const rowedFiles: FileObject[][] = [];
 		files.forEach((file, index) => {
 			const realIndex = Math.floor(index / filesPerRow);
 			if (rowedFiles[realIndex] === undefined) {
@@ -201,7 +189,10 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		return (
 			<div>
-				{this.props.member && this.props.member.hasPermission('FileManagement') ? (
+				{this.props.member &&
+				hasPermission('FileManagement')(Permissions.FileManagement.FULL)(
+					this.props.member
+				) ? (
 					<div>
 						<Form<{ name: string }>
 							id=""
@@ -232,11 +223,13 @@ export default class Drive extends Page<PageProps, DriveState> {
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 										refresh={this.refresh}
+										parent={this.state.currentFolder!}
 									/>
 								))}
 							</div>
 							{isFolderSelected && i === indices.row ? (
 								<ExtraFolderDisplay
+									parentFile={this.state.currentFolder!}
 									currentFolderID={this.state.currentFolder!.id}
 									file={folderList[indices.column]}
 									member={this.props.member}
@@ -269,11 +262,13 @@ export default class Drive extends Page<PageProps, DriveState> {
 										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
+										parent={this.state.currentFolder!}
 									/>
 								))}
 							</div>
 							{isFileSelected && i === indices.row ? (
 								<ExtraFileDisplay
+									parentFile={this.state.currentFolder!}
 									file={fileList[indices.column]}
 									member={this.props.member}
 									childRef={this.extraInfoRef}
@@ -324,63 +319,56 @@ export default class Drive extends Page<PageProps, DriveState> {
 		});
 	}
 
-	private async receiveData({ id }: { id: string }) {
-		if (this.state.currentFolder && this.props.member) {
-			await this.state.currentFolder.addChild(this.props.member, id);
-
-			this.goToFolder(id, true);
-		}
-	}
-
 	private async goToFolder(id: string, update = true) {
-		try {
-			const [files, currentFolder] = await Promise.all([
-				this.props.account.getFiles(id, this.props.member),
-				FileInterface.Get(id, this.props.member, this.props.account)
-			]);
-			this.setState(
-				{
-					files,
-					currentFolder
-				},
-				() => {
-					if (update) {
-						this.props.routeProps.history.push('/' + this.path + '/' + id);
-					}
+		const folderInfoEither = await AsyncEither.All([
+			fetchApi.files.children.getFull({ parentid: id }, {}, this.props.member?.sessionID),
+			fetchApi.files.files.get({ id }, {}, this.props.member?.sessionID)
+		]);
 
-					this.props.updateBreadCrumbs(
-						currentFolder.folderPath.map(folder => ({
-							text: folder.name,
-							target: `/${this.path}/${folder.id}`
-						}))
-					);
-				}
-			);
-		} catch (err) {
-			this.setState({
+		if (Either.isLeft(folderInfoEither)) {
+			return this.setState({
 				error: true,
-				errorReason:
-					err.status === 403
-						? ErrorReason.ERR403
-						: err.status === 404
-						? ErrorReason.ERR404
-						: err.status === 500
-						? ErrorReason.ERR500
-						: err.status === 401
-						? ErrorReason.ERR401
-						: ErrorReason.UNKNOWN
+				errorReason: folderInfoEither.value.message
 			});
 		}
+
+		const [wrappedFiles, currentFolder] = folderInfoEither.value;
+
+		const files = wrappedFiles.filter(Either.isRight).map(get('value'));
+
+		this.setState(
+			{
+				files,
+				currentFolder
+			},
+			() => {
+				if (update) {
+					this.props.routeProps.history.push('/' + this.path + '/' + id);
+				}
+
+				this.props.updateBreadCrumbs(
+					currentFolder.folderPath.map(folder => ({
+						text: folder.name,
+						target: `/${this.path}/${folder.id}`
+					}))
+				);
+			}
+		);
 	}
 
 	private addFile(file: FileObject) {
+		if (!this.props.member) {
+			// Probably an error if it reaches here
+			return;
+		}
+
 		const fileObject: FullFileObject = {
 			...file,
-			uploader: just(this.props.member!.toRaw())
+			uploader: Maybe.some(this.props.member)
 		};
 
 		this.setState(prev => ({
-			files: [...prev.files!, new FileInterface(fileObject, this.props.account)]
+			files: [...prev.files!, fileObject]
 		}));
 	}
 
@@ -390,7 +378,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		}));
 	}
 
-	private fileModified(file: FullFileObject) {
+	private fileModified(file: FileObject) {
 		const files = (this.state.files || []).slice();
 
 		let index = 0;
@@ -401,7 +389,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			}
 		}
 
-		files[index] = new FileInterface(file, this.props.account);
+		files[index] = file;
 
 		this.setState({ files });
 	}
@@ -412,16 +400,18 @@ export default class Drive extends Page<PageProps, DriveState> {
 		}
 	}
 
-	private createFolder() {
+	private async createFolder() {
 		if (this.props.member && this.state.newFoldername !== '' && this.state.currentFolder) {
-			FileInterface.CreateFolder(
-				this.state.newFoldername,
-				this.state.currentFolder,
-				this.props.member,
-				this.props.account
-			).then(folder => {
-				this.addFile(folder);
-			});
+			const result = await fetchApi.files.files.createFolder(
+				{ parentid: this.state.currentFolder.id, name: this.state.newFoldername },
+				{},
+				this.props.member.sessionID
+			);
+
+			if (Either.isLeft(result)) {
+			} else {
+				this.addFile(result.value);
+			}
 		}
 	}
 }

@@ -1,16 +1,14 @@
-import * as React from 'react';
+import { Member, MemberReference } from 'common-lib';
 import jQuery from 'jquery';
-
-import './FlightRow.css';
+import * as React from 'react';
 import FlightMember from './FlightMember';
-import { MemberReference } from 'common-lib';
-import { CAPMemberClasses } from '../../lib/Members';
+import './FlightRow.css';
 
 interface FlightRowProps {
 	open: boolean;
 	onDragStart: (flight: string) => void;
 	onDrop: (member: MemberReference) => void;
-	members: CAPMemberClasses[];
+	members: Member[];
 	name: string;
 	first: boolean;
 	highlighted: boolean;

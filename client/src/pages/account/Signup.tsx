@@ -1,3 +1,4 @@
+import { Either } from 'common-lib';
 import React from 'react';
 import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
 import SimpleForm, {
@@ -7,9 +8,8 @@ import SimpleForm, {
 	TextInput,
 	Title
 } from '../../components/forms/SimpleForm';
-import { fetchFunction } from '../../lib/myFetch';
+import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
-import { EitherObj, api, either } from 'common-lib';
 
 interface SignupFormValues {
 	capid: number | null;
@@ -50,7 +50,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				onSubmit={this.signup}
 				disableOnInvalid={true}
 				validator={{
-					capid: id => id !== null && id >= 100000 && id <= 999999,
+					capid: id => id !== null && id >= 100000,
 					email: email => !!email && !!email.match(/.*?@.*/),
 					recaptcha: val => val !== null
 				}}
@@ -88,6 +88,9 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 					CAPUnit.com account. You will receive an email with a link to select a username
 					and password and complete the account registration process. Only one CAPUnit.com
 					account may be created per CAP ID.
+					{/* <br />
+					If you have signed up for an account on any of CAPUnit.com's subdomains, you can
+					use that account instead */}
 				</TextBox>
 
 				<Label>CAP ID number</Label>
@@ -112,29 +115,21 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			// @ts-ignore
 			window.grecaptcha.reset();
 
-			const fetchResult = await fetchFunction('/api/member/account/capnhq/request', {
-				body: JSON.stringify(values),
-				headers: {
-					'content-type': 'application/json'
-				},
-				method: 'POST'
-			});
-
-			const result: EitherObj<api.HTTPError, void> = await fetchResult.json();
-
-			either(result).cata(
-				error => {
-					this.setState({
-						error: error.message
-					});
-				},
-				() => {
-					this.setState({
-						success: true,
-						error: null
-					});
-				}
+			const result = await fetchApi.member.account.capnhq.requestNHQAccount(
+				{},
+				{ capid: values.capid!, recaptcha: values.recaptcha!, email: values.email }
 			);
+
+			if (Either.isLeft(result)) {
+				this.setState({
+					error: result.value.message
+				});
+			} else {
+				this.setState({
+					success: true,
+					error: null
+				});
+			}
 		} catch (e) {
 			this.setState({
 				error: 'Could not request account',

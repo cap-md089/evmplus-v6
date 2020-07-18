@@ -1,36 +1,67 @@
+import {
+	api,
+	APIEndpointReturnValue,
+	areMembersTheSame,
+	canSeeMembership,
+	Either,
+	FullTeamMember,
+	FullTeamObject,
+	getFullMemberName,
+	getMemberEmail,
+	hasPermission,
+	isTeamLeader,
+	Maybe as M,
+	MaybeObj,
+	Member,
+	MemberReference,
+	Permissions,
+	pipe,
+	get
+} from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Page, { PageProps } from '../Page';
-import MemberBase, { CAPMemberClasses } from '../../lib/Members';
-import Team from '../../lib/Team';
-import Loader from '../../components/Loader';
-import DialogueButton from '../../components/dialogues/DialogueButton';
 import { DialogueButtons } from '../../components/dialogues/Dialogue';
-import { just, fromValue, MemberReference, FullTeamMember } from 'common-lib';
+import DialogueButton from '../../components/dialogues/DialogueButton';
+import Loader from '../../components/Loader';
+import fetchApi from '../../lib/apis';
+import Page, { PageProps } from '../Page';
 
-interface TeamViewState {
-	members: CAPMemberClasses[] | null;
-	team: Team | null;
-	error: number;
+interface TeamViewStateLoading {
+	type: 'LOADING';
 }
 
-const findMemberInTeam = (members: FullTeamMember[]) => (memberToCheck: MemberReference) =>
-	fromValue(
-		members.filter(member =>
-			MemberBase.AreMemberReferencesTheSame(memberToCheck, member.reference)
-		)[0]
-	);
+interface TeamViewHasTeamState {
+	type: 'HASTEAM';
 
-const findMember = (members: CAPMemberClasses[]) => (memberToCheck: MemberReference) =>
-	fromValue(
-		members.filter(member => MemberBase.AreMemberReferencesTheSame(memberToCheck, member))[0]
-	);
+	team: FullTeamObject;
+}
+
+interface TeamHasMembersState {
+	type: 'HASMEMBERS';
+
+	team: FullTeamObject;
+
+	members: Member[];
+}
+
+interface TeamErrorState {
+	type: 'ERROR';
+
+	message: string;
+}
+
+type TeamViewState =
+	| TeamViewStateLoading
+	| TeamViewHasTeamState
+	| TeamHasMembersState
+	| TeamErrorState;
+
+const findMemberInTeam = (members: FullTeamMember[]) => (memberToCheck: MemberReference) =>
+	M.fromArray(members.filter(member => areMembersTheSame(memberToCheck)(member.reference)));
 
 export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewState> {
 	public state: TeamViewState = {
-		members: null,
-		team: null,
-		error: 200
+		type: 'LOADING'
 	};
 
 	public constructor(props: PageProps<{ id: string }>) {
@@ -40,7 +71,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 	}
 
 	public async componentDidMount() {
-		let team: Team;
+		let team: APIEndpointReturnValue<api.team.GetTeam>;
 
 		this.props.updateBreadCrumbs([
 			{
@@ -55,19 +86,28 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		this.props.updateSideNav([]);
 
 		try {
-			team = await Team.Get(
-				parseInt(this.props.routeProps.match.params.id, 10),
-				this.props.account,
-				this.props.member
+			team = await fetchApi.team.get(
+				{ id: this.props.routeProps.match.params.id },
+				{},
+				this.props.member?.sessionID
 			);
 		} catch (e) {
 			return this.setState({
-				error: 404
+				type: 'ERROR',
+				message: 'A connection error occurred'
+			});
+		}
+
+		if (Either.isLeft(team)) {
+			return this.setState({
+				type: 'ERROR',
+				message: team.value.message
 			});
 		}
 
 		this.setState({
-			team
+			type: 'HASTEAM',
+			team: team.value
 		});
 
 		this.props.updateBreadCrumbs([
@@ -80,42 +120,84 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 				text: 'Team list'
 			},
 			{
-				target: `/team/${team.id}`,
-				text: `View team "${team.name}"`
+				target: `/team/${team.value.id}`,
+				text: `View team "${team.value.name}"`
 			}
 		]);
-		this.updateTitle(`View team "${team.name}"`);
+		this.updateTitle(`View team "${team.value.name}"`);
 
-		if (team.canGetFullMembers(this.props.member)) {
-			const members = await team.getFullMembers(this.props.member);
+		if (canSeeMembership(M.fromValue(this.props.member))(team.value)) {
+			const members = await fetchApi.team.members.list(
+				{ id: this.props.routeProps.match.params.id },
+				{},
+				this.props.member!.sessionID
+			);
 
-			this.setState({
-				members
-			});
-		} else {
-			this.setState({
-				members: []
-			});
+			if (members.direction === 'left') {
+				this.setState({
+					type: 'ERROR',
+					message: members.value.message
+				});
+			} else {
+				this.setState({
+					type: 'HASMEMBERS',
+					team: team.value,
+					members: members.value
+				});
+			}
 		}
 	}
 
 	public render() {
-		if (this.state.error === 404) {
-			return <div>Team not found</div>;
+		if (this.state.type === 'ERROR') {
+			return <div>{this.state.message}</div>;
 		}
 
-		const { team, members } = this.state;
-
-		if (team === null || members === null) {
+		if (this.state.type === 'LOADING') {
 			return <Loader />;
 		}
 
-		const emails = this.getEmails();
+		const { team } = this.state;
+
+		const renderMemberInfo = (
+			className: string,
+			memRef: MaybeObj<MemberReference>,
+			memName: MaybeObj<string>
+		) =>
+			pipe(
+				M.map<[MemberReference, string], [MaybeObj<Member>, string]>(([ref, name]) => [
+					this.state.type === 'HASMEMBERS'
+						? M.fromArray(this.state.members.filter(areMembersTheSame(ref)))
+						: M.none(),
+					name
+				]),
+				M.map<[MaybeObj<Member>, string], [MaybeObj<string>, string]>(
+					([maybeMem, name]) => [
+						M.flatMap<Member, string>(m => getMemberEmail(m.contact))(maybeMem),
+						name
+					]
+				),
+				M.map(([emailMaybe, name]) => (
+					<>
+						{name}{' '}
+						{M.orSome<React.ReactChild | null>(null)(
+							M.map(email => <i>({email})</i>)(emailMaybe)
+						)}
+					</>
+				)),
+				M.map(renderedName => (
+					<p>
+						{className}
+						{renderedName}
+					</p>
+				)),
+				M.orSome<React.ReactChild | null>(null)
+			)(M.And([memRef, memName]));
 
 		return (
 			<div>
 				{this.props.member &&
-				this.props.member.hasPermission('ManageTeam') &&
+				hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) &&
 				team.id !== 0 ? (
 					<>
 						<Link to={`/team/edit/${team.id}`}>Edit team</Link>
@@ -135,61 +217,48 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 				) : null}
 				<h1>{team.name}</h1>
 				<p>{team.description || <i>No team description</i>}</p>
-				{team.seniorCoachName !== '' ? (
-					<p>
-						Senior member coach:
-						{just(team.seniorCoach)
-							.flatMap(findMember(members))
-							.flatMap(member => fromValue(member.getBestEmail()))
-							.map(email => <i key={0}> ({email})</i>)
-							.orNull()}{' '}
-						{team.seniorCoachName}
-					</p>
-				) : null}
-				{team.seniorMentorName !== '' ? (
-					<p>
-						Senior member mentor:
-						{just(team.seniorMentor)
-							.flatMap(findMember(members))
-							.flatMap(member => fromValue(member.getBestEmail()))
-							.map(email => <i key={0}> ({email})</i>)
-							.orNull()}{' '}
-						{team.seniorMentorName}
-					</p>
-				) : null}
-				{team.cadetLeaderName !== '' ? (
-					<p>
-						Cadet leader:
-						{just(team.cadetLeader)
-							.flatMap(findMember(members))
-							.flatMap(member => fromValue(member.getBestEmail()))
-							.map(email => <i key={0}> ({email})</i>)
-							.orNull()}{' '}
-						{team.cadetLeaderName}
-					</p>
-				) : null}
+
+				{renderMemberInfo('Senior member coach: ', team.seniorCoach, team.seniorCoachName)}
+				{renderMemberInfo(
+					'Senior member mentor: ',
+					team.seniorMentor,
+					team.seniorMentorName
+				)}
+				{renderMemberInfo('Cadet leader: ', team.cadetLeader, team.cadetLeaderName)}
+
 				<h2>Team members</h2>
-				{team.canGetFullMembers(this.props.member)
-					? members.map((member, i) =>
-							just(member)
-								.flatMap(findMemberInTeam(team.members))
-								.map(teamMember => (
+				{this.state.type === 'HASMEMBERS'
+					? this.state.members.map((member, i) =>
+							pipe(
+								M.map<FullTeamMember, React.ReactChild>(teamMember => (
 									<div key={i}>
-										{member.getFullName()} (<i>{member.getBestEmail()}</i>):{' '}
-										{teamMember.job}
+										{getFullMemberName(member)}
+										{M.orSome<React.ReactChild | null>(null)(
+											M.map<string, React.ReactChild>(email => (
+												<i> ({email})</i>
+											))(getMemberEmail(member.contact))
+										)}
+										: {teamMember.job}
 									</div>
-								))
-								.orNull()
+								)),
+								M.orSome<React.ReactChild | null>(null)
+							)(
+								findMemberInTeam((this.state as TeamHasMembersState).team.members)(
+									member
+								)
+							)
 					  )
 					: team.members.map((member, i) => (
 							<div key={i}>
 								{member.name}: {member.job}
 							</div>
 					  ))}
-				{this.props.member && team.isLeader(this.props.member.getReference()) ? (
+				{this.state.type === 'HASMEMBERS' &&
+				this.props.member &&
+				isTeamLeader(this.props.member)(this.state.team) ? (
 					<>
 						<h2>Team member emails</h2>
-						<div>{emails}</div>
+						<div>{this.getEmails(this.state)}</div>
 					</>
 				) : null}
 			</div>
@@ -201,42 +270,39 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return;
 		}
 
-		if (!this.state.team) {
+		if (this.state.type !== 'HASMEMBERS' && this.state.type !== 'HASTEAM') {
 			return;
 		}
 
-		if (!this.props.member.hasPermission('ManageTeam')) {
+		if (hasPermission('ManageTeam')()(this.props.member)) {
 			return;
 		}
 
-		await this.state.team.delete(this.props.member);
+		await fetchApi.team.delete(
+			{ id: this.state.team.id.toString() },
+			{},
+			this.props.member.sessionID
+		);
 
 		this.props.routeProps.history.push('/team');
 	}
 
-	private getEmails() {
-		if (
-			!this.props.member ||
-			!this.state.team ||
-			!this.state.members ||
-			!this.state.team.isLeader(this.props.member.getReference())
-		) {
+	private getEmails(state: TeamHasMembersState) {
+		if (!this.props.member || !isTeamLeader(this.props.member)(state.team)) {
 			return '';
 		}
 
 		const emailList = [];
 
 		const membersToCheck = [
-			this.state.team.cadetLeader,
-			this.state.team.seniorCoach,
-			this.state.team.seniorMentor,
-			...this.state.team.members.map(m => m.reference)
-		].filter(m => m.type !== 'Null');
+			state.team.cadetLeader,
+			state.team.seniorCoach,
+			state.team.seniorMentor,
+			...state.team.members.map(get('reference')).map(M.some)
+		].filter(M.isSome);
 
 		for (const member of membersToCheck) {
-			const memberObj = this.state.members.filter(mem =>
-				MemberBase.AreMemberReferencesTheSame(mem, member)
-			);
+			const memberObj = state.members.filter(areMembersTheSame(member.value));
 
 			if (memberObj.length === 1) {
 				const cont = memberObj[0].contact;

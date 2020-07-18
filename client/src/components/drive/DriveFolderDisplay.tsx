@@ -1,6 +1,7 @@
-import { FileUserAccessControlPermissions } from 'common-lib';
+import { FileUserAccessControlPermissions, userHasFilePermission } from 'common-lib';
 import * as React from 'react';
 import { FileDisplayProps } from './DriveFileDisplay';
+import fetchApi from '../../lib/apis';
 
 export default class DriveFolderDisplay extends React.Component<
 	FileDisplayProps & { refresh: () => void },
@@ -20,10 +21,7 @@ export default class DriveFolderDisplay extends React.Component<
 	}
 
 	public render() {
-		return this.props.file.hasPermission(
-			this.props.member,
-			FileUserAccessControlPermissions.WRITE
-		) ? (
+		return (
 			<div
 				className={`drive-folder-display ${this.props.selected ? 'selected' : ''} ${
 					this.state.hovering ? 'hovering' : ''
@@ -39,21 +37,20 @@ export default class DriveFolderDisplay extends React.Component<
 			>
 				{this.props.file.fileName}
 			</div>
-		) : (
-			<div
-				className={`drive-folder-display ${this.props.selected ? 'selected' : ''}`}
-				onClick={() => this.props.onSelect(this.props.file)}
-				draggable={true}
-				onDragStart={this.handleDragStart}
-			>
-				{this.props.file.fileName}
-			</div>
 		);
 	}
 
 	private handleOver(e: React.DragEvent<HTMLDivElement>) {
 		e.stopPropagation();
 		e.preventDefault();
+
+		if (
+			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+				this.props.file
+			)
+		) {
+			return;
+		}
 
 		this.setState({
 			hovering: true
@@ -69,6 +66,14 @@ export default class DriveFolderDisplay extends React.Component<
 	private async handleDrop(e: React.DragEvent<HTMLDivElement>) {
 		e.preventDefault();
 		e.stopPropagation();
+
+		if (
+			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+				this.props.file
+			)
+		) {
+			return;
+		}
 
 		const id = e.dataTransfer.getData('text');
 
@@ -88,7 +93,11 @@ export default class DriveFolderDisplay extends React.Component<
 			return;
 		}
 
-		await this.props.file.addChild(this.props.member, id);
+		await fetchApi.files.children.add(
+			{ parentid: this.props.file.id },
+			{ childid: id },
+			this.props.member.sessionID
+		);
 
 		this.props.refresh();
 		this.setState({

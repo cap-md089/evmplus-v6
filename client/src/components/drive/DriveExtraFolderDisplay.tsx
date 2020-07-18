@@ -1,6 +1,16 @@
-import { FileUserAccessControlPermissions } from 'common-lib';
+import {
+	APIEither,
+	asyncIterMap,
+	asyncIterReduce,
+	Either,
+	FileObject,
+	FileUserAccessControlPermissions,
+	get,
+	pipe,
+	userHasFilePermission
+} from 'common-lib';
 import * as React from 'react';
-import FileInterface from '../../lib/File';
+import fetchApi from '../../lib/apis';
 import Button from '../Button';
 import Form, { BigTextBox, Label } from '../forms/SimpleForm';
 import { CommentsForm, ExtraDisplayProps } from './DriveExtraFileDisplay';
@@ -29,13 +39,10 @@ export default class ExtraFolderDisplay extends React.Component<
 	}
 
 	public render() {
-		const FileChangeForm = Form as new () => Form<CommentsForm>;
-
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{this.props.file.hasPermission(
-					this.props.member,
-					FileUserAccessControlPermissions.DELETE
+				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+					this.props.parentFile
 				) ? (
 					<>
 						<Button buttonType="none" onClick={this.saveFiles}>
@@ -46,13 +53,10 @@ export default class ExtraFolderDisplay extends React.Component<
 					</>
 				) : null}
 				<h3>Comments:</h3>
-				{this.props.file.hasPermission(
-					this.props.member,
-					// tslint:disable-next-line:no-bitwise
-					FileUserAccessControlPermissions.COMMENT |
-						FileUserAccessControlPermissions.MODIFY
+				{userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
+					this.props.file
 				) ? (
-					<FileChangeForm
+					<Form<CommentsForm>
 						id=""
 						values={{ comments: this.props.file.comments }}
 						onChange={this.onFormChange}
@@ -61,7 +65,7 @@ export default class ExtraFolderDisplay extends React.Component<
 					>
 						<Label>Comments</Label>
 						<BigTextBox name="comments" />
-					</FileChangeForm>
+					</Form>
 				) : (
 					this.props.file.comments
 				)}
@@ -70,62 +74,70 @@ export default class ExtraFolderDisplay extends React.Component<
 	}
 
 	private onFormChange(formState: CommentsForm) {
-		this.props.file.comments = formState.comments;
-		this.props.fileModify(this.props.file);
+		this.props.fileModify({
+			...this.props.file,
+			...formState
+		});
 	}
 
-	private onFileChangeFormSubmit(formState: CommentsForm) {
-		this.props.file.comments = formState.comments;
-
+	private async onFileChangeFormSubmit(formState: CommentsForm) {
 		if (this.props.member) {
-			this.props.file.save(this.props.member).then(() => {
-				this.props.fileModify(this.props.file);
+			await fetchApi.files.files.setInfo(
+				{ fileid: this.props.file.id },
+				formState,
+				this.props.member.sessionID
+			);
+
+			this.props.fileModify({
+				...this.props.file,
+				...formState
 			});
 		}
 	}
 
 	private async saveFiles() {
-		if (!this.props.member) {
-			// TODO: Show error message
+		const member = this.props.member;
+
+		if (!member) {
 			return;
 		}
 
-		let parent;
+		const childrenEither = await fetchApi.files.children.getBasic(
+			{ parentid: this.props.file.id },
+			{},
+			member.sessionID
+		);
 
-		try {
-			parent = await this.props.file.getParent(this.props.member);
-		} catch (e) {
-			// TODO: Show error message
+		if (Either.isLeft(childrenEither)) {
 			return;
 		}
 
-		const getFilesPromise = [];
+		const children = childrenEither.value.filter(Either.isRight).map(get('value'));
 
-		for (const id of this.props.file.fileChildren) {
-			getFilesPromise.push(FileInterface.Get(id, this.props.member, this.props.file.account));
-		}
-
-		const children = await Promise.all(getFilesPromise);
-		const saveFilesPromises = [];
-
-		for (const child of children) {
-			saveFilesPromises.push(child.moveTo(parent, this.props.member));
-		}
-
-		const moveResults = await Promise.all(saveFilesPromises);
-
-		const moveSuccess = moveResults
-			.map(c => c === 200 || c === 204)
-			.reduce((a, b) => a && b, true);
+		const moveSuccess = pipe(
+			asyncIterMap<FileObject, APIEither<void>>((file: FileObject) =>
+				fetchApi.files.children.add(
+					{ parentid: this.props.parentFile.id },
+					{ childid: file.id },
+					member.sessionID
+				)
+			),
+			asyncIterMap(Either.isRight),
+			asyncIterReduce<boolean, boolean>((prev, curr) => prev || curr)(false)
+		)(children);
 
 		if (!moveSuccess) {
 			// TODO: Show error message
 			return;
 		}
 
-		const result = await this.props.file.delete(this.props.member);
+		const result = await fetchApi.files.files.delete(
+			{ fileid: this.props.file.id },
+			{},
+			member.sessionID
+		);
 
-		if (result !== 200 && result !== 204) {
+		if (Either.isLeft(result)) {
 			// TODO: Show error message
 			return;
 		}

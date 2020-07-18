@@ -1,24 +1,59 @@
-import { MemberPermissions } from 'common-lib';
+import {
+	api,
+	areMembersTheSame,
+	AsyncEither,
+	Either,
+	getFullMemberName,
+	getMemberName,
+	hasPermission,
+	Maybe,
+	Member,
+	MemberPermissions,
+	MemberReference,
+	parseStringMemberReference,
+	pipe,
+	stringifyMemberReference,
+	stripProp,
+	toReference
+} from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import SimpleForm, {
+	Divider,
+	Label,
 	PermissionsEdit,
 	TextBox,
-	Title,
-	Divider,
-	Label
+	Title
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
-import MemberBase from '../../../lib/Members';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 
-interface PermissionAssignState {
-	members: MemberBase[] | null;
-	availableMembers: MemberBase[] | null;
+interface PermissionAssignUIState {
 	submitSuccess: boolean;
 }
+
+interface PermissionAssignLoadingState {
+	state: 'LOADING';
+}
+
+interface PermissionAssignLoadedState {
+	state: 'LOADED';
+
+	membersWithPermissions: Array<api.member.permissions.PermissionInformation & { name: string }>;
+	availableMembers: Member[];
+}
+
+interface PermissionAssignErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+type PermissionAssignState = PermissionAssignUIState &
+	(PermissionAssignLoadingState | PermissionAssignLoadedState | PermissionAssignErrorState);
 
 interface PermissionInformation {
 	[key: string]: MemberPermissions;
@@ -26,8 +61,7 @@ interface PermissionInformation {
 
 export default class PermissionAssign extends Page<PageProps, PermissionAssignState> {
 	public state: PermissionAssignState = {
-		members: null,
-		availableMembers: null,
+		state: 'LOADING',
 		submitSuccess: false
 	};
 
@@ -44,28 +78,44 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		const availableMembers = await this.props.account.getMembers(this.props.member);
-
-		const membersWithPermissions = [];
-
-		for (const j in availableMembers) {
-			if (availableMembers.hasOwnProperty(j)) {
-				const hasPermissions =
-					Object.values(availableMembers[j].permissions).reduce(
-						(prev, curr) => prev + curr,
-						0
-					) !== 0;
-				if (hasPermissions) {
-					const member = availableMembers.splice(parseInt(j, 10), 1)[0];
-					membersWithPermissions.push(member);
-				}
-			}
+		if (!hasPermission('PermissionManagement')()(this.props.member)) {
+			return;
 		}
 
-		this.setState({
-			members: membersWithPermissions,
+		const membersEither = await AsyncEither.All([
+			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
+			fetchApi.member.permissions.get({}, {}, this.props.member.sessionID)
+		]);
+
+		if (Either.isLeft(membersEither)) {
+			this.setState(prev => ({
+				...prev,
+				state: 'ERROR',
+				message: membersEither.value.message
+			}));
+			return;
+		}
+
+		const [availableMembers, permissions] = membersEither.value;
+
+		const membersWithPermissions = permissions.map(perms => ({
+			...perms,
+			name: getName(perms.member)
+		}));
+
+		const getName = (member: MemberReference): string =>
+			pipe(
+				Maybe.map(getMemberName),
+				Maybe.orSome(stringifyMemberReference(member))
+			)(Maybe.fromArray(availableMembers.filter(areMembersTheSame(member))));
+
+		this.setState(prev => ({
+			...prev,
+
+			state: 'LOADED',
+			membersWithPermissions,
 			availableMembers
-		});
+		}));
 
 		this.props.updateBreadCrumbs([
 			{
@@ -83,9 +133,9 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		]);
 
 		this.props.updateSideNav([
-			...membersWithPermissions.map(member => ({
-				target: Title.GenerateID(member.getFullName()),
-				text: member.getFullName(),
+			...membersWithPermissions.map(({ name }) => ({
+				target: Title.GenerateID(name),
+				text: name,
 				type: 'Reference' as const
 			})),
 			{
@@ -101,33 +151,36 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return <h3>Please sign in</h3>;
 		}
 
-		if (!this.props.member.hasPermission('PermissionManagement')) {
+		if (!hasPermission('PermissionManagement')()(this.props.member)) {
 			return <h3>You don't have permission to do that</h3>;
 		}
 
-		if (!this.state.members) {
+		const state = this.state;
+
+		if (state.state === 'LOADING') {
 			return <Loader />;
 		}
-		if (!this.state.availableMembers) {
-			return <Loader />;
+
+		if (state.state === 'ERROR') {
+			return <div>{state.message}</div>;
 		}
 
 		const values: PermissionInformation = {};
 
-		for (const member of this.state.members) {
-			values[`permissions-${member.getFullName()}`] = member.permissions;
+		for (const member of state.membersWithPermissions) {
+			values[`permissions-${stringifyMemberReference(member.member)}`] = member.permissions;
 		}
 
-		const children = this.state.members.flatMap((value, index) => [
-			<Title key={index * 3}>{value.getFullName()}</Title>,
+		const children = state.membersWithPermissions.flatMap((value, index) => [
+			<Title key={`${stringifyMemberReference(value.member)}-1`}>{value.name}</Title>,
 			<PermissionsEdit
-				name={`permissions-${value.getFullName()}`}
-				key={index * 3 + 1}
+				name={`permissions-${stringifyMemberReference(value.member)}`}
+				key={`${stringifyMemberReference(value.member)}-2}`}
 				index={index}
 			/>,
-			<TextBox key={index * 3 + 2}>
-				<Button onClick={this.getRemover(index)} buttonType={'none'}>
-					Remove {value.getFullName()}
+			<TextBox key={`${stringifyMemberReference(value.member)}-3`}>
+				<Button onClick={this.getRemover(value.member)} buttonType={'none'}>
+					Remove {value.name}
 				</Button>
 			</TextBox>
 		]);
@@ -137,7 +190,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				onChange={this.handleChange}
 				values={values}
 				onSubmit={this.handleSubmit}
-				successMessage={this.state.submitSuccess && 'Saved!'}
+				successMessage={state.submitSuccess && 'Saved!'}
 				submitInfo={{
 					text: 'Save changes'
 				}}
@@ -147,7 +200,12 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 					<Label key={children.length + 1} />,
 					<TextBox key={children.length + 2}>
 						<MemberSelectorButton
-							memberList={Promise.resolve(this.state.availableMembers)}
+							memberList={state.availableMembers.filter(
+								mem =>
+									!state.membersWithPermissions.some(permMember =>
+										areMembersTheSame(permMember.member)(mem)
+									)
+							)}
 							title="Select a member"
 							displayButtons={DialogueButtons.OK_CANCEL}
 							onMemberSelect={this.addMember}
@@ -165,35 +223,85 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 	}
 
 	private handleChange(values: PermissionInformation) {
-		for (const member of this.state.members!) {
-			for (const i in values) {
-				if (i === `permissions-${member.getFullName()}`) {
-					member.permissions = values[i];
+		if (this.state.state !== 'LOADED') {
+			return;
+		}
+
+		const membersWithPermissions: Array<{
+			name: string;
+		} & api.member.permissions.PermissionInformation> = [];
+
+		for (const memberIDString in values) {
+			const memberIDEither = parseStringMemberReference(memberIDString);
+
+			if (Either.isRight(memberIDEither)) {
+				const memberID = memberIDEither.value;
+
+				const memberMaybe = Maybe.fromArray(
+					this.state.availableMembers.filter(areMembersTheSame(memberID))
+				);
+
+				if (Maybe.isSome(memberMaybe)) {
+					membersWithPermissions.push({
+						member: memberID,
+						name: getFullMemberName(memberMaybe.value),
+						permissions: values[memberIDString]
+					});
 				}
 			}
 		}
 
-		this.setState({
-			submitSuccess: false
-		});
+		this.setState(prev => ({
+			...prev,
 
-		this.forceUpdate();
+			state: 'LOADED',
+			membersWithPermissions
+		}));
 	}
 
-	private async addMember(member: MemberBase | null) {
+	private async addMember(member: Member | null) {
 		if (!member) {
 			return;
 		}
 
-		let members = this.state.availableMembers;
-
-		members = members!.filter(mem => !member.is(mem));
-
-		this.setState(prev => ({
-			submitSuccess: false,
-			availableMembers: members,
-			members: [...prev.members!, member]
-		}));
+		this.setState(prev =>
+			prev.state === 'LOADED'
+				? {
+						...prev,
+						submitSuccess: false,
+						membersWithPermissions: [
+							...prev.membersWithPermissions,
+							{
+								member: toReference(member),
+								name: getFullMemberName(member),
+								permissions: {
+									AdministerPT: 0,
+									AssignTasks: 0,
+									AssignTemporaryDutyPositions: 0,
+									AttendanceView: 0,
+									CreateNotifications: 0,
+									DownloadCAPWATCH: 0,
+									EventContactSheet: 0,
+									EventLinkList: 0,
+									FileManagement: 0,
+									FlightAssign: 0,
+									ManageEvent: 0,
+									ManageTeam: 0,
+									MusterSheet: 0,
+									ORMOPORD: 0,
+									PTSheet: 0,
+									PermissionManagement: 0,
+									PromotionManagement: 0,
+									ProspectiveMemberManagement: 0,
+									RegistryEdit: 0,
+									ScanAdd: 0,
+									ViewAccountNotifications: 0
+								}
+							}
+						]
+				  }
+				: prev
+		);
 	}
 
 	private async handleSubmit() {
@@ -201,24 +309,36 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		await this.props.account.setMemberPermissions(this.props.member, this.state.members!);
+		if (this.state.state !== 'LOADED') {
+			return;
+		}
 
-		this.setState({
-			submitSuccess: true
-		});
+		const result = await fetchApi.member.permissions.set(
+			{},
+			{ newRoles: this.state.membersWithPermissions.map(stripProp('name')) },
+			this.props.member.sessionID
+		);
+
+		if (Either.isRight(result)) {
+			this.setState({
+				submitSuccess: true
+			});
+		} else {
+		}
 	}
 
-	private getRemover(index: number) {
+	private getRemover(index: MemberReference) {
 		return () => {
-			const availableMembers = this.state.availableMembers!.slice(0);
-			const members = this.state.members!.slice(0);
-
-			availableMembers.push(members.splice(index, 1)[0]);
-
-			this.setState({
-				availableMembers,
-				members
-			});
+			this.setState(prev =>
+				prev.state === 'LOADED'
+					? {
+							...prev,
+							membersWithPermissions: prev.membersWithPermissions.filter(
+								mem => !areMembersTheSame(index)(mem.member)
+							)
+					  }
+					: prev
+			);
 		};
 	}
 }

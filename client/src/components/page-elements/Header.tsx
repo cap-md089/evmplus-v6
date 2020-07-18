@@ -1,15 +1,15 @@
-import { Maybe } from 'common-lib';
-import React, { useEffect, FunctionComponent } from 'react';
+import { MaybeObj, RegistryValues } from 'common-lib';
+import React, { FunctionComponent, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import jQuery, { bestfit } from '../../jquery.textfit';
-import Registry from '../../lib/Registry';
 import './Header.scss';
 
 interface HeaderProps {
-	registry: Maybe<Registry>;
+	registry: MaybeObj<RegistryValues>;
+	loadingError: boolean;
 }
 
-export default (({ registry }) => {
+export default (({ registry, loadingError }) => {
 	const ref = React.createRef<HTMLDivElement>();
 
 	useEffect(() => {
@@ -24,7 +24,11 @@ export default (({ registry }) => {
 				{/* <img src alt="Civil Air Patrol" height="127" className="logo" /> */}
 				{/* <div className="header-divider" /> */}
 				<div className="page-title" ref={ref}>
-					{registry.map(reg => reg.Website.Name).orNull()}
+					{loadingError
+						? 'CAPUnit.com'
+						: registry.hasValue
+						? registry.value.Website.Name
+						: null}
 				</div>
 				<div className="servings">
 					<span className="servings-title">

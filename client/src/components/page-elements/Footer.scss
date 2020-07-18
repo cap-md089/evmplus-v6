@@ -7,13 +7,13 @@
 		background: #0f407d;
 		margin-top: -50px;
 		padding-top: 68px;
-		z-index: -20;
+		z-index: 1;
 		box-shadow: inset 0 30px 30px -25px #002149;
 
 		display: grid;
 		grid-template-areas:
-			". footer ."
-			". extra .";
+			'. footer .'
+			'. extra .';
 		grid-template-columns: 1fr 1028px 1fr;
 		grid-template-rows: auto;
 
@@ -29,7 +29,7 @@
 		}
 
 		.footerBoxTitle {
-			font-family: "RobotoRegular", Arial, Helvetica, sans-serif;
+			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 			font-size: 16px;
 			color: $secondary-color;
 			line-height: 20px;
@@ -39,7 +39,7 @@
 		.links {
 			grid-area: extra;
 
-			border-top: 1px solid  #305d95;
+			border-top: 1px solid #305d95;
 			margin-top: 20px;
 			padding: 21px 0 0 0;
 
@@ -53,7 +53,7 @@
 				font-size: 12px;
 			}
 		}
-		
+
 		p {
 			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 			font-size: 14px;
@@ -70,34 +70,36 @@
 			text-decoration: none;
 			background-size: 32px 32px;
 			background-attachment: initial;
-			content: " ";
+			content: ' ';
+			font-size: 0px;
+			margin-top: -30px;
 
 			&.fb {
-				background-image: url('/images/sm/fb.png')
+				background-image: url('/images/sm/fb.png');
 			}
 
 			&.twitter {
-				background-image: url('/images/sm/tw.png')
+				background-image: url('/images/sm/tw.png');
 			}
 
 			&.youtube {
-				background-image: url('/images/sm/yt.png')
+				background-image: url('/images/sm/yt.png');
 			}
 
 			&.linkedin {
-				background-image: url('/images/sm/li.png')
+				background-image: url('/images/sm/li.png');
 			}
 
 			&.instagram {
-				background-image: url('/images/sm/insta.png')
+				background-image: url('/images/sm/insta.png');
 			}
 
 			&.flickr {
-				background-image: url('/images/sm/flickr.png')
+				background-image: url('/images/sm/flickr.png');
 			}
 
 			&.discord {
-				background-image: url('/images/sm/discord.png')
+				background-image: url('/images/sm/discord.png');
 			}
 		}
 	}
@@ -112,8 +114,8 @@
 @media (max-width: 1028px) {
 	footer {
 		grid-template-areas:
-			"footer"
-			"extra";
+			'footer'
+			'extra';
 		grid-template-columns: 100%;
 		grid-template-rows: min-content min-content;
 
@@ -121,7 +123,8 @@
 			flex-direction: column;
 		}
 
-		.links .links-right, .links .info-left {
+		.links .links-right,
+		.links .info-left {
 			float: none;
 			clear: both;
 			margin: 0 auto;

@@ -1,22 +1,22 @@
+import { AsyncEither, Either, FileObject } from 'common-lib';
 import * as React from 'react';
-import FileInterface from '../../lib/File';
+import fetchApi from '../../lib/apis';
 import Button from '../Button';
 import Dialogue, { DialogueButtons } from '../dialogues/Dialogue';
 import FileDialogue from '../dialogues/FileDialogue';
 import Loader from '../Loader';
 import './FileInput.css';
 import { InputProps } from './Input';
-import { FileObject } from 'common-lib';
 
 interface FileInputState {
-	files: FileInterface[];
+	files: FileObject[];
 	dialogueOpen: boolean;
 	loaded: boolean;
 }
 
 interface FileDisplayProps {
 	onClick: (file: FileObject) => void;
-	file: FileInterface;
+	file: FileObject;
 }
 
 const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
@@ -80,17 +80,23 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 	}
 
 	public async componentDidMount() {
-		if (this.props.value && this.props.account && this.props.member) {
-			const account = this.props.account;
-
-			const files = await Promise.all(
-				this.props.value.map(id => FileInterface.Get(id, this.props.member, account))
+		if (this.props.value && this.props.member) {
+			const files = await AsyncEither.All(
+				this.props.value.map(id =>
+					fetchApi.files.files.get(
+						{ id: id.toString() },
+						{},
+						this.props.member?.sessionID
+					)
+				)
 			);
 
-			this.setState({
-				files,
-				loaded: true
-			});
+			if (Either.isRight(files)) {
+				this.setState({
+					files: files.value,
+					loaded: true
+				});
+			}
 		} else {
 			this.setState({
 				files: [],
@@ -181,7 +187,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		);
 	}
 
-	private handleFileSelect(files: FileInterface[]) {
+	private handleFileSelect(files: FileObject[]) {
 		const newFiles = this.state.files.slice(0);
 
 		for (const file of files) {

@@ -142,7 +142,7 @@ body {
 }
 
 .background {
-	z-index: -10;
+	z-index: 2;
 	grid-area: body side-nav;
 	grid-column: 3 / 5;
 	grid-row: 3 / 5;
@@ -176,6 +176,7 @@ main {
 	padding: 11px 22px 0 22px;
 	box-sizing: border-box;
 	padding-bottom: 22px;
+	z-index: 3;
 
 	.halfSection {
 		box-sizing: border-box;

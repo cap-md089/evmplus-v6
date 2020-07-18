@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 import { FormBlock, Label, MemberSelector, TextInput } from '../forms/SimpleForm';
-import { NewTeamMember } from 'common-lib';
-import { CAPMemberClasses } from '../../lib/Members';
+import { Member } from 'common-lib';
+import { NewTeamMemberEdit } from '../forms/usable-forms/TeamForm';
 
-export interface TeamMemberInputProps extends InputProps<NewTeamMember> {
-	memberList: Promise<CAPMemberClasses[]>;
+export interface TeamMemberInputProps extends InputProps<NewTeamMemberEdit> {
+	memberList: Member[];
 }
 
 export default (props: TeamMemberInputProps) => (

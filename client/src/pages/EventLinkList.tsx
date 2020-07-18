@@ -1,16 +1,39 @@
-import { EchelonEventNumber, EventStatus, RadioReturnWithOther } from 'common-lib';
+import {
+	EchelonEventNumber,
+	Either,
+	EventStatus,
+	RadioReturnWithOther,
+	RawEventObject
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../components/Loader';
-import Event from '../lib/Event';
+import fetchApi from '../lib/apis';
 import './EventLinkList.css';
 import Page, { PageProps } from './Page';
 
-interface EventLinkListState {
-	eventList: Event[] | null;
-	eventsThatAreLinked: Event[] | null;
+interface EventLinkListLoadingState {
+	state: 'LOADING';
 }
+
+interface EventLinkListLoadedState {
+	state: 'LOADED';
+
+	events: RawEventObject[];
+	eventsThatAreLinked: RawEventObject[];
+}
+
+interface EventLinkListErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+type EventLinkListState =
+	| EventLinkListErrorState
+	| EventLinkListLoadedState
+	| EventLinkListLoadingState;
 
 function getEventStatus(status: EventStatus) {
 	switch (status) {
@@ -27,7 +50,6 @@ function getEventStatus(status: EventStatus) {
 		case EventStatus.TENTATIVE:
 			return <span style={{ color: 'orange' }}>Tentative</span>;
 	}
-	return null;
 }
 
 function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
@@ -44,26 +66,10 @@ function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 
 export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
-		eventList: null,
-		eventsThatAreLinked: null
+		state: 'LOADING'
 	};
 
 	public async componentDidMount() {
-		if (this.props.member) {
-			let eventList = await this.props.account.getEvents(this.props.member);
-
-			// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
-			eventList = eventList.sort((a, b) => a.startDateTime - b.startDateTime);
-
-			eventList = eventList.filter(
-				event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000
-			);
-
-			const eventsThatAreLinked = eventList.filter(event => !!event.sourceEvent);
-
-			this.setState({ eventList, eventsThatAreLinked });
-		}
-
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -78,6 +84,36 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		this.props.updateSideNav([]);
 
 		this.updateTitle('Event list');
+
+		if (this.props.member) {
+			const eventListEither = await fetchApi.events.events
+				.getList({}, {}, this.props.member.sessionID)
+				.map(events => events.sort((a, b) => a.startDateTime - b.startDateTime));
+
+			if (Either.isLeft(eventListEither)) {
+				this.setState({
+					state: 'ERROR',
+					message: eventListEither.value.message
+				});
+			} else {
+				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
+				let events = eventListEither.value.sort(
+					(a, b) => a.startDateTime - b.startDateTime
+				);
+
+				events = events.filter(
+					event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000
+				);
+
+				const eventsThatAreLinked = events.filter(event => !!event.sourceEvent);
+
+				this.setState({
+					state: 'LOADED',
+					events,
+					eventsThatAreLinked
+				});
+			}
+		}
 	}
 
 	public render() {
@@ -86,13 +122,17 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			return <div>Please sign in to view this content</div>;
 		}
 
-		if (this.state.eventList === null || this.state.eventsThatAreLinked === null) {
+		if (this.state.state === 'LOADING') {
 			return <Loader />;
+		}
+
+		if (this.state.state === 'ERROR') {
+			return <div>{this.state.message}</div>;
 		}
 
 		const eventsAreLinked = this.state.eventsThatAreLinked.length > 0;
 
-		return this.state.eventList.length === 0 ? (
+		return this.state.events.length === 0 ? (
 			<div>No events to list</div>
 		) : (
 			<div className="eventlinklist">
@@ -121,7 +161,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							<th>Wing Cal</th>
 							<th>Debrief</th>
 						</tr>
-						{this.state.eventList.map((event, i) => (
+						{this.state.events.map((event, i) => (
 							<tr key={i}>
 								<td>
 									{event.accountID}-{event.id} ::{'  '}

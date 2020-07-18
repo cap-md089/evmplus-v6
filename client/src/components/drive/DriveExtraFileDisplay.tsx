@@ -1,16 +1,21 @@
-import { FileUserAccessControlPermissions } from 'common-lib';
+import {
+	FileObject,
+	FileUserAccessControlPermissions,
+	User,
+	userHasFilePermission
+} from 'common-lib';
 import * as React from 'react';
-import FileInterface from '../../lib/File';
-import MemberBase from '../../lib/Members';
+import fetchApi from '../../lib/apis';
 import Button from '../Button';
 import SimpleForm, { BigTextBox, Label } from '../forms/SimpleForm';
 
 export interface ExtraDisplayProps {
-	file: FileInterface;
-	member: MemberBase | null;
+	parentFile: FileObject;
+	file: FileObject;
+	member: User | null;
 	childRef: React.RefObject<HTMLDivElement>;
-	fileDelete: (file: FileInterface) => void;
-	fileModify: (file: FileInterface) => void;
+	fileDelete: (file: FileObject) => void;
+	fileModify: (file: FileObject) => void;
 	fileUpdate: () => void;
 }
 
@@ -35,9 +40,8 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 	public render() {
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{this.props.file.hasPermission(
-					this.props.member,
-					FileUserAccessControlPermissions.DELETE
+				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+					this.props.parentFile
 				) ? (
 					<>
 						<Button buttonType="none" onClick={this.onDeleteFileClick}>
@@ -48,11 +52,8 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 					</>
 				) : null}
 				<h3>Comments:</h3>
-				{this.props.file.hasPermission(
-					this.props.member,
-					// tslint:disable-next-line:no-bitwise
-					FileUserAccessControlPermissions.COMMENT |
-						FileUserAccessControlPermissions.MODIFY
+				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+					this.props.file
 				) ? (
 					<SimpleForm<CommentsForm>
 						values={{ comments: this.props.file.comments }}
@@ -75,21 +76,31 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 		this.props.fileModify(this.props.file);
 	}
 
-	private onDeleteFileClick() {
+	private async onDeleteFileClick() {
 		if (this.props.member) {
-			this.props.file.delete(this.props.member).then(() => {
-				this.props.fileDelete(this.props.file);
-			});
+			await fetchApi.files.files.delete(
+				{ fileid: this.props.file.id },
+				{},
+				this.props.member.sessionID
+			);
+			this.props.fileDelete(this.props.file);
 		}
 	}
 
-	private onFileChangeFormSubmit(formState: CommentsForm) {
-		this.props.file.comments = formState.comments;
-
+	private async onFileChangeFormSubmit(formState: CommentsForm) {
 		if (this.props.member) {
-			this.props.file.save(this.props.member).then(() => {
-				this.props.fileModify(this.props.file);
-			});
+			const newFile: FileObject = {
+				...this.props.file,
+				...formState
+			};
+
+			await fetchApi.files.files.setInfo(
+				{ fileid: this.props.file.id },
+				formState,
+				this.props.member.sessionID
+			);
+
+			this.props.fileModify(newFile);
 		}
 	}
 }

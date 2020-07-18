@@ -1,4 +1,4 @@
-import { Maybe, RadioReturnWithOther, none, just, emptyFromLabels, fromValue } from 'common-lib';
+import { get, Maybe as M, pipe, RadioReturnWithOther } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
 import './RadioButton.scss';
@@ -27,28 +27,32 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	}
 
 	public render() {
-		const value = fromValue(this.props.value);
+		const value = M.fromValue(this.props.value);
 
 		const isChecked = (i: number) =>
-			value
-				.map(ret => (ret.otherValueSelected ? false : ret.selection === i))
-				.orElse(false)
-				.some();
+			pipe(
+				M.map<RadioReturnWithOther<E>, boolean>(ret =>
+					ret.otherValueSelected ? false : ret.selection === i
+				),
+				M.orSome(false)
+			)(value);
 
 		const name = (i: number) =>
 			`${this.props.name}-${
 				this.props.index === undefined ? '' : `-${this.props.index}`
 			}-${i}`;
 
-		const isOtherChecked = value
-			.map(ret => ret.otherValueSelected)
-			.orElse(false)
-			.some();
+		const isOtherChecked = pipe(
+			M.map<RadioReturnWithOther<E>, boolean>(get('otherValueSelected')),
+			M.orSome(false)
+		)(value);
 
-		const otherText = value
-			.flatMap(ret => (ret.otherValueSelected ? just(ret.otherValue) : none<string>()))
-			.orElse('')
-			.some();
+		const otherText = pipe(
+			M.flatMap<RadioReturnWithOther<E>, string>(ret =>
+				ret.otherValueSelected ? M.some(ret.otherValue) : M.none()
+			),
+			M.orSome('')
+		)(value);
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -139,10 +143,12 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	}
 
 	private selectOther() {
-		const otherText = fromValue(this.props.value)
-			.flatMap(ret => (ret.otherValueSelected ? just(ret.otherValue) : none<string>()))
-			.orElse('')
-			.some();
+		const otherText = pipe(
+			M.flatMap<RadioReturnWithOther<E>, string>(ret =>
+				ret.otherValueSelected ? M.some(ret.otherValue) : M.none()
+			),
+			M.orSome('')
+		)(M.fromValue(this.props.value));
 
 		const value = {
 			labels: this.props.labels,

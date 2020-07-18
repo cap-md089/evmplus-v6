@@ -1,4 +1,9 @@
-import { EventObject, EventStatus } from 'common-lib';
+import {
+	RawEventObject,
+	EventStatus,
+	effectiveManageEventPermission,
+	Permissions
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -14,7 +19,7 @@ export type CalendarData = Array<
 		year: number;
 		events: Array<
 			| {
-					event: EventObject;
+					event: RawEventObject;
 					width: number;
 					block: boolean;
 					mergeLeft: boolean;
@@ -51,7 +56,7 @@ const findIndex = (calendar: CalendarData, startDay: number, endDay: number, wee
 	return testIndex;
 };
 
-export const getClassNameFromEvent = (obj: EventObject) => {
+export const getClassNameFromEvent = (obj: RawEventObject) => {
 	switch (obj.status) {
 		case EventStatus.CANCELLED:
 			return ' cancelled';
@@ -280,7 +285,9 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 
 		return (
 			<div className="calendar-desktop">
-				{this.props.member && this.props.member.hasPermission('ManageEvent') ? (
+				{this.props.member &&
+				effectiveManageEventPermission(this.props.member) !==
+					Permissions.ManageEvent.NONE ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
 				<table>

@@ -1,20 +1,51 @@
+import { Either, FileObject, get } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import LoaderShort from '../../../components/LoaderShort';
-import FileInterface from '../../../lib/File';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 
-export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
-	public state: { list: string[] | null } = {
-		list: null
+interface DriveWidgetLoadingState {
+	state: 'LOADING';
+}
+
+interface DriveWidgetLoadedState {
+	state: 'LOADED';
+
+	list: FileObject[];
+}
+
+interface DriveWidgetErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+type DriveWidgetState = DriveWidgetErrorState | DriveWidgetLoadedState | DriveWidgetLoadingState;
+
+export class DriveWidget extends Page<PageProps, DriveWidgetState> {
+	public state: DriveWidgetState = {
+		state: 'LOADING'
 	};
 
 	public async componentDidMount() {
-		const root = await FileInterface.Get('root', this.props.member, this.props.account);
+		const root = await fetchApi.files.children.getBasic(
+			{ parentid: 'root' },
+			{},
+			this.props.member?.sessionID
+		);
 
-		this.setState({
-			list: root.fileChildren
-		});
+		if (Either.isLeft(root)) {
+			this.setState({
+				state: 'ERROR',
+				message: root.value.message
+			});
+		} else {
+			this.setState({
+				state: 'LOADED',
+				list: root.value.filter(Either.isRight).map(get('value'))
+			});
+		}
 	}
 
 	public render() {
@@ -22,8 +53,10 @@ export class DriveWidget extends Page<PageProps, { list: string[] | null }> {
 			<div className="widget">
 				<div className="widget-title">Drive information</div>
 				<div className="widget-body">
-					{this.state.list === null ? (
+					{this.state.state === 'LOADING' ? (
 						<LoaderShort />
+					) : this.state.state === 'ERROR' ? (
+						<div>{this.state.message}</div>
 					) : (
 						<div>
 							There {this.state.list.length === 1 ? 'is' : 'are'}{' '}

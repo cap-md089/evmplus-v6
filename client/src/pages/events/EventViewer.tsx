@@ -1,30 +1,48 @@
 import {
-	AccountObject,
+	advancedMultCheckboxReturn,
+	always,
 	api,
+	APIEither,
+	APIEndpointReturnValue,
+	areMembersTheSame,
+	AsyncEither,
 	AttendanceRecord,
+	canSignUpForEvent,
+	CAPMemberContact,
+	effectiveManageEventPermissionForEvent,
 	Either,
+	EitherObj,
+	EventObject,
 	EventStatus,
 	formatEventViewerDate as formatDate,
-	fromValue,
+	forms,
+	FullTeamObject,
+	get,
 	getMemberEmail,
 	getMemberPhone,
-	identity,
-	just,
+	getURIComponent,
 	Maybe,
+	MaybeObj,
 	Member,
 	MemberReference,
 	NewAttendanceRecord,
-	none,
-	NullMemberReference,
+	NewEventObject,
+	Permissions,
+	pipe,
 	PointOfContactType,
 	presentMultCheckboxReturn,
-	renderAccountID,
-	stringifyMemberReference
+	RawEventObject,
+	User,
+	isCAPMember,
+	Right,
+	CAPNHQMemberReference
 } from 'common-lib';
+import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import AttendanceItemView from '../../components/AttendanceView';
-import { DialogueButtons } from '../../components/dialogues/Dialogue';
+import Button from '../../components/Button';
+import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DropDownList from '../../components/DropDownList';
@@ -32,34 +50,64 @@ import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
-import Event from '../../lib/Event';
-import MemberBase, { CAPMemberClasses } from '../../lib/Members';
+import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
 
 const noop = () => void 0;
 
-type EventData = Either<
-	api.HTTPError,
-	{
-		event: Event;
-		attendees: {
-			[key: string]: Maybe<Member>;
-		};
-		organizations: {
-			[key: string]: AccountObject;
-		};
-	}
->;
-
-interface EventViewerState {
-	eventInformation: EventData | null;
-	previousUpdatedMember: MemberReference;
-	newTime: number;
-	cadetRoster: CAPMemberClasses[] | null;
-	seniorRoster: CAPMemberClasses[] | null;
-	eventRegistry: boolean;
+interface EventViewerViewerLoadingState {
+	viewerState: 'LOADING';
 }
+
+interface EventViewerViewerLoadedState {
+	viewerState: 'LOADED';
+
+	eventInformation: api.events.events.EventViewerData;
+}
+
+interface EventViewerViewerErrorState {
+	viewerState: 'ERROR';
+
+	viewerMessage: string;
+}
+
+type EventViewerViewerState =
+	| EventViewerViewerErrorState
+	| EventViewerViewerLoadedState
+	| EventViewerViewerLoadingState;
+
+interface EventViewerTeamLoadingState {
+	teamState: 'LOADING';
+}
+
+interface EventViewerTeamErrorState {
+	teamState: 'ERROR';
+
+	teamMessage: string;
+}
+
+interface EventViewerTeamLoadedState {
+	teamState: 'LOADED';
+
+	teamInformation: MaybeObj<APIEither<FullTeamObject>>;
+}
+
+type EventViewerTeamState =
+	| EventViewerTeamLoadedState
+	| EventViewerTeamLoadingState
+	| EventViewerTeamErrorState;
+
+interface EventViewerUIState {
+	previousUpdatedMember: MaybeObj<MemberReference>;
+	newTime: number;
+	cadetRoster: Member[] | null;
+	seniorRoster: Member[] | null;
+	eventRegistry: boolean;
+	showingCAPIDs: boolean;
+}
+
+type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerViewerState;
 
 type EventViewerProps = PageProps<{ id: string }>;
 
@@ -84,90 +132,74 @@ export const attendanceStatusLabels = [
 	'Rescinded commitment to attend'
 ];
 
-const renderName = (
-	renderMember: MemberBase | null,
-	event: Event,
-	member: AttendanceRecord,
-	attendees: { [key: string]: Maybe<Member> },
-	organizations: { [key: string]: AccountObject }
+const renderName = (renderMember: User | null) => (event: RawEventObject) => (
+	member: api.events.events.EventViewerAttendanceRecord
 ) => {
-	const defaultRenderName = `${
-		(member.memberID as Exclude<MemberReference, NullMemberReference>).id
-	}: ${member.memberName}`;
+	const defaultRenderName = `${member.record.memberID.id}: ${member.record.memberName}`;
 
 	if (
 		!!renderMember &&
-		(renderMember?.hasPermission('ManageEvent') || event.isPOC(renderMember))
+		effectiveManageEventPermissionForEvent(renderMember)(event) !== Permissions.ManageEvent.NONE
 	) {
-		const id = stringifyMemberReference(member.memberID);
+		const {
+			memberName,
+			memberID: { id }
+		} = member.record;
 
-		const getAccountWithID = (orgs: { [key: string]: AccountObject }) => (
-			foundMember: Member
-		) => {
-			let foundAccount = none<AccountObject>();
+		const accountName = pipe(
+			Maybe.map(name => `[${name}]`),
+			Maybe.orSome('')
+		)(member.orgName);
 
-			if (foundMember.type === 'CAPNHQMember') {
-				for (const accountID in orgs) {
-					if (orgs.hasOwnProperty(accountID)) {
-						const org = orgs[accountID];
+		const contactEmail = pipe(
+			Maybe.map<Member, CAPMemberContact>(get('contact')),
+			Maybe.flatMap(getMemberEmail)
+		)(member.member);
 
-						if (org.mainOrg === foundMember.orgid) {
-							foundAccount = just(org);
-							break;
-						} else if (
-							!foundAccount.hasValue &&
-							org.orgIDs.includes(foundMember.orgid)
-						) {
-							foundAccount = just(org);
-						}
-					}
-				}
-			} else if (foundMember.type === 'CAPProspectiveMember') {
-				foundAccount = just(orgs[foundMember.accountID]);
-			} else {
-				throw new Error('Did not cover all member types');
-			}
+		const contactPhone = pipe(
+			Maybe.map<Member, CAPMemberContact>(get('contact')),
+			Maybe.flatMap(getMemberPhone)
+		)(member.member);
 
-			return foundAccount;
-		};
+		const contact = [contactEmail, contactPhone].filter(Maybe.isSome).map(get('value'));
+		const renderedContact = contact.length === 0 ? '' : `[${contact.join(', ')}]`;
 
-		const mem = fromValue(attendees[id]);
-
-		const account = mem.flatMap(getAccountWithID(organizations));
-
-		return mem
-			.flatMap(foundMember => {
-				const email = getMemberEmail(foundMember.contact);
-				const phone = getMemberPhone(foundMember.contact);
-
-				const contactDisplay = [email, phone]
-					.filter(val => val.isSome())
-					.map(val => val.some())
-					.join(', ');
-
-				return account.map(
-					foundAccount =>
-						`${defaultRenderName} [${renderAccountID(
-							foundAccount
-						)}] [${contactDisplay}]`
-				);
-			})
-			.orSome(defaultRenderName);
+		return `${id}: ${memberName} ${accountName} ${renderedContact}`;
+	} else {
+		return defaultRenderName;
 	}
-
-	return defaultRenderName;
 };
+
+const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
+	...eventViewer.event,
+	attendance: eventViewer.attendees
+		.filter(Either.isRight)
+		.map(get('value'))
+		.map(get('record')),
+	pointsOfContact: eventViewer.pointsOfContact
+});
+
+const canEitherMaybeSignUpForEvent = (event: api.events.events.EventViewerData) => (
+	team: MaybeObj<EitherObj<any, FullTeamObject>>
+): ((member: MemberReference) => EitherObj<string, void>) =>
+	event.event.teamID === null || event.event.teamID === undefined
+		? canSignUpForEvent(viewerDataToEventObject(event))([])
+		: Maybe.isNone(team) || Either.isLeft(team.value)
+		? always(Either.left('Could not load team information'))
+		: canSignUpForEvent(viewerDataToEventObject(event))(
+				team.value.value.members.map(get('reference'))
+		  );
 
 export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
 	public state: EventViewerState = {
-		eventInformation: null,
-		previousUpdatedMember: {
-			type: 'Null'
-		},
+		viewerState: 'LOADING',
+		teamState: 'LOADING',
+		previousUpdatedMember: Maybe.none(),
 		newTime: 0,
 		cadetRoster: null,
 		seniorRoster: null,
-		eventRegistry: false
+		eventRegistry: false,
+		showingCAPIDs: false
 	};
 
 	constructor(props: EventViewerProps) {
@@ -181,22 +213,26 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.copyMoveEvent = this.copyMoveEvent.bind(this);
 		this.copyEvent = this.copyEvent.bind(this);
 		this.deleteEvent = this.deleteEvent.bind(this);
+
+		this.renderFormsButtons = this.renderFormsButtons.bind(this);
+		this.createCAPF6080 = this.createCAPF6080.bind(this);
 	}
 
 	public async componentDidMount() {
-		const eventInformation =
-			this.state.eventInformation ||
-			(await Event.EventViewerGet(
-				parseInt(this.props.routeProps.match.params.id.split('-')[0], 10),
-				this.props.member,
-				this.props.account
-			));
+		const eventInformation = await fetchApi.events.events.getViewerData(
+			{ id: this.props.routeProps.match.params.id.split('-')[0] },
+			{},
+			this.props.member?.sessionID
+		);
 
-		this.setState({
-			eventInformation
-		});
+		if (Either.isLeft(eventInformation)) {
+			this.setState(prev => ({
+				...prev,
 
-		if (eventInformation.direction === 'left') {
+				viewerState: 'ERROR',
+				viewerMessage: eventInformation.value.message
+			}));
+
 			this.props.updateBreadCrumbs([
 				{
 					text: 'Home',
@@ -215,11 +251,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			return;
 		}
 
-		// Make this work sometime?
-		// With this uncommented, the page rerenders an extra time
-		// This causes there to be two web requests
-		// If this can be done without unmounting/remounting, that would be great
-		// this.updateURL(`/eventviewer/${eventInformation.value.event.getEventURLComponent()}`);
+		const { event } = eventInformation.value;
+
+		this.setState(prev => ({
+			...prev,
+
+			viewerState: 'LOADED',
+			eventInformation: eventInformation.value
+		}));
 
 		this.props.updateBreadCrumbs([
 			{
@@ -231,14 +270,56 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				text: 'Calendar'
 			},
 			{
-				target: eventInformation.value.event.getEventURLComponent(),
+				target: getURIComponent(eventInformation.value.event),
 				text: `View ${eventInformation.value.event.name}`
 			}
 		]);
 
+		let teamInfo: MaybeObj<APIEndpointReturnValue<api.team.GetTeam>> = Maybe.none();
+
+		if (event.teamID !== null && event.teamID !== undefined) {
+			const teamInfoEither = await fetchApi.team
+				.get({ id: event.teamID.toString() }, {}, this.props.member?.sessionID)
+				.map(Maybe.some)
+				.map(Maybe.map(Either.right));
+
+			if (Either.isRight(teamInfoEither)) {
+				teamInfo = teamInfoEither.value;
+
+				this.setState(prev => ({
+					...prev,
+
+					teamState: 'LOADED',
+					teamInformation: teamInfo
+				}));
+			} else {
+				this.setState(prev => ({
+					...prev,
+
+					teamState: 'ERROR',
+					teamMessage: 'Could not load team membership information'
+				}));
+			}
+		} else {
+			this.setState(prev => ({
+				...prev,
+				teamState: 'LOADED',
+				teamInformation: Maybe.none()
+			}));
+		}
+
+		// Make this work sometime?
+		// With this uncommented, the page rerenders an extra time
+		// This causes there to be two web requests
+		// If this can be done without unmounting/remounting, that would be great
+		// this.updateURL(`/eventviewer/${eventInformation.value.event.getEventURLComponent()}`);
+		// Probably to come with React Redux
+
 		if (
 			this.props.member &&
-			eventInformation.value.event.canSignUpForEvent(this.props.member).isRight()
+			Either.isRight(
+				canEitherMaybeSignUpForEvent(eventInformation.value)(teamInfo)(this.props.member)
+			)
 		) {
 			this.props.updateSideNav([
 				{
@@ -284,435 +365,581 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 	}
 
 	public render() {
-		if (this.state.eventInformation === null) {
+		if (this.state.viewerState === 'LOADING') {
 			return <Loader />;
 		}
 
-		return this.state.eventInformation.cata(
-			err => <div>{err.message}</div>,
-			({ event, attendees, organizations }) => {
-				const { member } = this.props;
+		if (this.state.viewerState === 'ERROR') {
+			return <div>{this.state.viewerMessage}</div>;
+		}
 
-				return (
-					<>
-						<div className="eventviewerroot">
-							{member && member.isPOCOf(event) ? (
-								<>
-									<Link to={`/eventform/${event.id}`}>
-										Edit event "{event.name}"
-									</Link>
-									{' | '}
-									<DialogueButtonForm<{ newTime: number }>
-										buttonText="Move event"
-										buttonClass="underline-button"
-										buttonType="none"
-										displayButtons={DialogueButtons.YES_NO_CANCEL}
-										onYes={this.moveEvent}
-										onNo={this.copyMoveEvent}
-										title="Move event"
-										labels={['Move event', 'Copy move event', 'Cancel']}
-										values={{
-											newTime: event.startDateTime
+		const eventViewerInfo = this.state.eventInformation;
+		const { event, attendees, pointsOfContact } = eventViewerInfo;
+		const { member } = this.props;
+
+		return (
+			<>
+				<div className="eventviewerroot">
+					{member &&
+					effectiveManageEventPermissionForEvent(member)(event) !==
+						Permissions.ManageEvent.NONE ? (
+						<>
+							<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Move event"
+								buttonClass="underline-button"
+								buttonType="none"
+								displayButtons={DialogueButtons.YES_NO_CANCEL}
+								onYes={this.moveEvent}
+								onNo={this.copyMoveEvent}
+								title="Move event"
+								labels={['Move event', 'Copy move event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<TextBox name="null">
+									<span
+										style={{
+											lineHeight: '1px'
 										}}
 									>
-										<TextBox name="null">
-											<span
-												style={{
-													lineHeight: '1px'
-												}}
-											>
-												<span style={{ color: 'red' }}>WARNING:</span>{' '}
-												moving this event may cause confusion.
-												<br />
-												Consider instead copying this event, and marking
-												<br />
-												this event as cancelled.
-												<br />
-												<br />
-												Or, click the 'Copy move button' to perform this
-												<br />
-												action automatically
-											</span>
-										</TextBox>
+										<span style={{ color: 'red' }}>WARNING:</span> moving this
+										event may cause confusion.
+										<br />
+										Consider instead copying this event, and marking
+										<br />
+										this event as cancelled.
+										<br />
+										<br />
+										Or, click the 'Copy move button' to perform this
+										<br />
+										action automatically
+									</span>
+								</TextBox>
 
-										<Label>New start time of event</Label>
-										<DateTimeInput
-											name="newTime"
-											time={true}
-											originalTimeZoneOffset={'America/New_York'}
-										/>
-									</DialogueButtonForm>
-									{' | '}
-									<DialogueButtonForm<{ newTime: number }>
-										buttonText="Copy event"
-										buttonType="none"
-										buttonClass="underline-button"
-										displayButtons={DialogueButtons.OK_CANCEL}
-										onOk={this.copyEvent}
-										title="Move event"
-										labels={['Copy event', 'Cancel']}
-										values={{
-											newTime: event.startDateTime
-										}}
-									>
-										<Label>Start time of new event</Label>
-										<DateTimeInput
-											name="newTime"
-											time={true}
-											originalTimeZoneOffset={'America/New_York'}
-										/>
-									</DialogueButtonForm>
-									{' | '}
-									<DialogueButton
-										buttonText="Delete event"
-										buttonType="none"
-										buttonClass="underline-button"
-										displayButtons={DialogueButtons.OK_CANCEL}
-										onOk={this.deleteEvent}
-										title="Delete event"
-										labels={['Yes', 'No']}
-									>
-										Really delete event?
-									</DialogueButton>
-									{' | '}
-									<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-									{/* {' | '}
-									<Button buttonType="none">Print Cadet Roster</Button>
-									{' | '}
-									<Button buttonType="none">Print Senior Roster</Button>
-									{' | '}
-									<Button buttonType="none">Print Event Registry</Button> */}
-									<br />
-									<br />
-								</>
-							) : null}
-							<div id="information">
-								<strong>Event: </strong> {event.name}
+								<Label>New start time of event</Label>
+								<DateTimeInput
+									name="newTime"
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Copy event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.copyEvent}
+								title="Move event"
+								labels={['Copy event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<Label>Start time of new event</Label>
+								<DateTimeInput
+									name="newTime"
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButton
+								buttonText="Delete event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.deleteEvent}
+								title="Delete event"
+								labels={['Yes', 'No']}
+							>
+								Really delete event?
+							</DialogueButton>
+							{' | '}
+							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
+							{/* {' | '}
+								<Button buttonType="none">Print Cadet Roster</Button>
+								{' | '}
+								<Button buttonType="none">Print Senior Roster</Button>
+								{' | '}
+								<Button buttonType="none">Print Event Registry</Button> */}
+							<br />
+							<br />
+						</>
+					) : null}
+					<div id="information">
+						<strong>Event: </strong> {event.name}
+						<br />
+						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
+						<br />
+						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>Start</strong> at {formatDate(event.startDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>End</strong> at {formatDate(event.endDateTime)}
+						<br />
+						<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
+						{event.pickupLocation}
+						<br />
+						<br />
+						<strong>Transportation provided:</strong>{' '}
+						{event.transportationProvided ? 'YES' : 'NO'}
+						<br />
+						{event.transportationProvided ? (
+							<>
+								<strong>Transportation Description:</strong>{' '}
+								{event.transportationDescription}
 								<br />
-								<strong>Event ID: </strong> {event.accountID.toUpperCase()}-
-								{event.id}
+							</>
+						) : null}
+						<strong>Uniform:</strong>{' '}
+						{pipe(
+							Maybe.map(uniform => <>{uniform}</>),
+							Maybe.orSome(<i>No uniform specified</i>)
+						)(presentMultCheckboxReturn(event.uniform))}
+						<br />
+						<strong>Comments:</strong> {event.comments}
+						<br />
+						<strong>Activity:</strong>{' '}
+						{pipe(
+							Maybe.map(activities => <>{activities}</>),
+							Maybe.orSome(<i>Unknown activity type</i>)
+						)(presentMultCheckboxReturn(event.activity))}
+						<br />
+						<strong>Required forms:</strong>{' '}
+						{pipe(
+							(renderedForms: JSX.Element[]) =>
+								renderedForms.length === 0
+									? Maybe.none()
+									: Maybe.some(renderedForms),
+							Maybe.map<JSX.Element[], Array<JSX.Element | null>>(renderedForms =>
+								renderedForms.flatMap((form, index, { length }) => [
+									React.cloneElement(form, { key: index }),
+									index < length - 1 ? <>, </> : null
+								])
+							),
+							Maybe.orSome<Array<JSX.Element | null>>([
+								<i key={0}>No forms required</i>
+							])
+						)(advancedMultCheckboxReturn(event.requiredForms, this.renderFormsButtons))}
+						<br />
+						{event.requiredEquipment.length > 0 ? (
+							<>
+								<strong>Required equipment:</strong>{' '}
+								{event.requiredEquipment.join(', ')}
 								<br />
-								<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
-								{event.location}
-								<br />
-								<strong>Start</strong> at {formatDate(event.startDateTime)} at{' '}
-								{event.location}
-								<br />
-								<strong>End</strong> at {formatDate(event.endDateTime)}
-								<br />
-								<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
-								{event.pickupLocation}
-								<br />
-								<br />
-								<strong>Transportation provided:</strong>{' '}
-								{event.transportationProvided ? 'YES' : 'NO'}
-								<br />
-								{event.transportationProvided ? (
-									<>
-										<strong>Transportation Description:</strong>{' '}
-										{event.transportationDescription}
+							</>
+						) : null}
+						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						<br />
+						<div>
+							{pointsOfContact.map((poc, i) =>
+								poc.type === PointOfContactType.INTERNAL ? (
+									<div key={i}>
+										<b>CAP Point of Contact: </b>
+										{poc.name}
 										<br />
-									</>
-								) : null}
-								<strong>Uniform:</strong>{' '}
-								{presentMultCheckboxReturn(event.uniform)
-									.map(uniform => <>{uniform}</>)
-									.orElse(<i>No uniform specified</i>)
-									.some()}
-								<br />
-								<strong>Comments:</strong> {event.comments}
-								<br />
-								<strong>Activity:</strong>{' '}
-								{presentMultCheckboxReturn(event.activity)
-									.map(activities => <>{activities}</>)
-									.orElse(<i>Unknown activity type</i>)
-									.some()}
-								<br />
-								<strong>Required forms:</strong>{' '}
-								{presentMultCheckboxReturn(event.requiredForms)
-									.map(forms => <>{forms}</>)
-									.orElse(<i>No forms specified</i>)
-									.some()}
-								<br />
-								{event.requiredEquipment.length > 0 ? (
-									<>
-										<strong>Required equipment:</strong>{' '}
-										{event.requiredEquipment.join(', ')}
+										{!!poc.email ? (
+											<>
+												<b>CAP Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{!!poc.phone ? (
+											<>
+												<b>CAP Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
 										<br />
-									</>
+									</div>
+								) : (
+									<div key={i}>
+										<b>External Point of Contact: </b>
+										{poc.name}
+										<br />
+										{poc.email !== '' ? (
+											<>
+												<b>External Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{poc.phone !== '' ? (
+											<>
+												<b>External Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								)
+							)}
+						</div>
+					</div>
+					{member !== null ? (
+						this.state.teamState === 'LOADING' ? (
+							<Loader />
+						) : this.state.teamState === 'ERROR' ? (
+							<div>{this.state.teamMessage}</div>
+						) : (
+							<>
+								{this.state.eventInformation.attendees.some(
+									rec =>
+										Either.isRight(rec) &&
+										rec.value.record.memberID.type === 'CAPNHQMember'
+								) ? (
+									<Button
+										buttonType="none"
+										onClick={() => this.setState({ showingCAPIDs: true })}
+									>
+										Show CAP IDs
+									</Button>
 								) : null}
-								<strong>Event status:</strong> {eventStatus(event.status)}
-								<br />
-								<br />
-								<div>
-									{event.pointsOfContact.map((poc, i) =>
-										poc.type === PointOfContactType.INTERNAL ? (
-											<div key={i}>
-												<b>CAP Point of Contact: </b>
-												{poc.name}
-												<br />
-												{!!poc.email ? (
-													<>
-														<b>CAP Point of Contact Email: </b>
-														{poc.email}
-														<br />
-													</>
-												) : null}
-												{!!poc.phone ? (
-													<>
-														<b>CAP Point of Contact Phone: </b>
-														{poc.phone}
-														<br />
-													</>
-												) : null}
-												<br />
-											</div>
-										) : (
-											<div key={i}>
-												<b>External Point of Contact: </b>
-												{poc.name}
-												<br />
-												{poc.email !== '' ? (
-													<>
-														<b>External Point of Contact Email: </b>
-														{poc.email}
-														<br />
-													</>
-												) : null}
-												{poc.phone !== '' ? (
-													<>
-														<b>External Point of Contact Phone: </b>
-														{poc.phone}
-														<br />
-													</>
-												) : null}
-												<br />
-											</div>
+								<Dialogue
+									displayButtons={DialogueButtons.OK}
+									open={this.state.showingCAPIDs}
+									title="CAP IDs"
+									onClose={() => this.setState({ showingCAPIDs: false })}
+								>
+									{this.state.eventInformation.attendees
+										.filter(
+											(
+												val
+											): val is Right<
+												api.events.events.EventViewerAttendanceRecord
+											> =>
+												Either.isRight(val) &&
+												val.value.record.memberID.type === 'CAPNHQMember'
 										)
-									)}
-								</div>
-							</div>
-							{member !== null ? (
+										.flatMap((rec, i) => [
+											(rec.value.record.memberID as CAPNHQMemberReference).id,
+											i < attendees.length - 1 ? ', ' : null
+										])}
+								</Dialogue>
 								<div id="signup">
-									{event.canSignUpForEvent(this.props.member).cata(
-										err =>
-											err !== 'Member is already in attendance' ? (
-												<p>Cannot sign up for event: {err}</p>
-											) : null,
-										() => (
-											<AttendanceForm
-												account={this.props.account}
-												event={event}
-												member={member}
-												updateRecord={this.addAttendanceRecord}
-												updated={false}
-												clearUpdated={this.clearPreviousMember}
-												removeRecord={noop}
-												signup={true}
-											/>
-										)
+									{Either.cata<string, void, React.ReactElement | null>(err =>
+										err !== 'Member is already in attendance' ? (
+											<p>Cannot sign up for event: {err}</p>
+										) : null
+									)(() => (
+										<AttendanceForm
+											account={this.props.account}
+											event={viewerDataToEventObject(eventViewerInfo)}
+											member={member}
+											updateRecord={this.addAttendanceRecord}
+											updated={false}
+											clearUpdated={this.clearPreviousMember}
+											removeRecord={noop}
+											signup={true}
+										/>
+									))(
+										canEitherMaybeSignUpForEvent(eventViewerInfo)(
+											this.state.teamInformation
+										)(member)
 									)}
 									<h2 id="attendance">Attendance</h2>
-									<DropDownList
-										titles={val =>
-											renderName(
-												this.props.member,
-												event,
-												val,
-												attendees,
-												organizations
-											)
-										}
-										values={event.attendance}
+									<DropDownList<api.events.events.EventViewerAttendanceRecord>
+										titles={renderName(member)(event)}
+										values={attendees.filter(Either.isRight).map(get('value'))}
 										onlyOneOpen={true}
 									>
 										{(val, i) => (
 											<AttendanceItemView
-												attendanceRecord={val}
+												attendanceRecord={val.record}
 												clearUpdated={this.clearPreviousMember}
 												owningAccount={this.props.account}
 												owningEvent={event}
 												member={member}
 												removeAttendance={this.removeAttendanceRecord}
 												updateAttendance={this.addAttendanceRecord}
-												updated={MemberBase.AreMemberReferencesTheSame(
-													this.state.previousUpdatedMember,
-													val.memberID
-												)}
+												updated={pipe(
+													Maybe.map(
+														areMembersTheSame(val.record.memberID)
+													),
+													Maybe.orSome(false)
+												)(this.state.previousUpdatedMember)}
 												key={i}
 												index={i}
 											/>
 										)}
 									</DropDownList>
-									{event.attendance.length === 0 ? (
+									{attendees.length === 0 ? (
 										<div>
 											No{' '}
-											{event.privateAttendance && !event.isPOC(member)
+											{event.privateAttendance &&
+											effectiveManageEventPermissionForEvent(member)(
+												event
+											) !== Permissions.ManageEvent.NONE
 												? 'public '
 												: ''}
 											attendance records
 										</div>
 									) : null}
 								</div>
-							) : (
-								<SigninLink>Sign in to see more information</SigninLink>
-							)}
-						</div>
-						<div className="cadetroster">
-							{this.state.cadetRoster !== null ? (
-								<div>
-									<img
-										className="caplogobw"
-										src="/images/CAP_Seal_Monochrome.PNG"
-										alt="CAP Logo"
-									/>
-									<h2>Cadet Attendance Log</h2>
-									<strong>Date:</strong> {formatDate(event.startDateTime)}{' '}
-									<strong>Location:</strong> CAP St. Marys
-									<strong>Uniform: </strong>
-									<table>
-										<tr>
-											<th>First</th>
-											<th>Second</th>
-											<th>Third</th>
-										</tr>
-										<tr>
-											<td>Data 1</td>
-											<td>Data 2</td>
-											<td>Data 3</td>
-										</tr>
-									</table>
-								</div>
-							) : null}
-						</div>
-					</>
-				);
-			}
+							</>
+						)
+					) : (
+						<SigninLink>Sign in to see more information</SigninLink>
+					)}
+				</div>
+			</>
 		);
 	}
 
-	private addAttendanceRecord(record: NewAttendanceRecord, member: MemberReference) {
-		this.setState({
-			previousUpdatedMember: member
-		});
+	private addAttendanceRecord(record: Required<NewAttendanceRecord>) {
+		if (this.state.viewerState !== 'LOADED') {
+			return;
+		}
+
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
+
+						previousUpdatedMember: Maybe.some(record.memberID),
+						eventInformation: {
+							...prev.eventInformation,
+							attendees: [
+								...prev.eventInformation.attendees,
+								Either.right({
+									record,
+									member: Maybe.none(),
+									orgName: Maybe.none()
+								})
+							]
+						}
+				  }
+				: prev
+		);
 	}
 
 	private removeAttendanceRecord(record: AttendanceRecord) {
-		this.forceUpdate();
+		this.setState(prev =>
+			prev.viewerState !== 'LOADED'
+				? prev
+				: {
+						...prev,
+						eventInformation: {
+							attendees: prev.eventInformation.attendees.filter(
+								mem =>
+									Either.isLeft(mem) ||
+									!areMembersTheSame(mem.value.record.memberID)(record.memberID)
+							),
+							event: prev.eventInformation.event,
+							pointsOfContact: prev.eventInformation.pointsOfContact
+						}
+				  }
+		);
 	}
 
 	private clearPreviousMember() {
 		this.setState({
-			previousUpdatedMember: {
-				type: 'Null'
-			}
+			previousUpdatedMember: Maybe.none()
 		});
 	}
 
 	private async moveEvent({ newTime }: { newTime: number }) {
-		if (!this.state.eventInformation) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
 			throw new Error('Attempting to move a null event');
 		}
 
-		await this.state.eventInformation.map(({ event }) => {
-			const timeDelta = newTime - event.startDateTime;
+		if (!this.props.member) {
+			return;
+		}
 
-			event.meetDateTime += timeDelta;
-			event.startDateTime = newTime;
-			event.endDateTime += timeDelta;
-			event.pickupDateTime += timeDelta;
+		const { event } = state.eventInformation;
 
-			if (!this.props.member) {
-				throw new Error('Attempting to mvoe an event without authorization');
+		const timeDelta = newTime - event.startDateTime;
+
+		const newEvent: Partial<NewEventObject> = {
+			meetDateTime: event.meetDateTime + timeDelta,
+			startDateTime: newTime,
+			endDateTime: event.endDateTime + timeDelta,
+			pickupDateTime: event.pickupDateTime + timeDelta
+		};
+
+		await fetchApi.events.events.set(
+			{ id: event.id.toString() },
+			newEvent,
+			this.props.member.sessionID
+		);
+
+		this.setState({
+			...state,
+
+			eventInformation: {
+				...state.eventInformation,
+				event: {
+					...state.eventInformation.event,
+					...newEvent
+				}
 			}
-
-			return event.save(this.props.member);
-		}).value;
-
-		this.forceUpdate();
+		});
 	}
 
 	private async copyMoveEvent({ newTime }: { newTime: number }) {
-		if (!this.state.eventInformation) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
 			throw new Error('Attempting to move a null event');
 		}
 
-		await this.state.eventInformation.map(async ({ event }) => {
-			if (!this.props.member) {
-				throw new Error('Attempting to mvoe an event without authorization');
-			}
+		if (!this.props.member) {
+			return;
+		}
 
-			const newEvent = await event.copy(newTime, this.props.member);
+		const { event } = state.eventInformation;
 
-			event.status = EventStatus.CANCELLED;
+		const newEvent: Partial<NewEventObject> = {
+			status: EventStatus.CANCELLED
+		};
 
-			await event.save(this.props.member);
+		const result = await AsyncEither.All([
+			fetchApi.events.events.set(
+				{ id: event.id.toString() },
+				newEvent,
+				this.props.member.sessionID
+			),
+			fetchApi.events.events.copy(
+				{ id: event.id.toString() },
+				{ newTime, copyStatus: false, copyFiles: false },
+				this.props.member.sessionID
+			)
+		]);
 
-			if (newEvent) {
-				this.props.routeProps.history.push(`/eventviewer/${newEvent.id}`);
-			}
-		}).value;
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/eventviewer/${result.value[1].id}`);
+		}
 	}
 
 	private async copyEvent({ newTime }: { newTime: number }) {
-		if (!this.state.eventInformation) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
 			throw new Error('Attempting to move a null event');
 		}
 
-		await this.state.eventInformation.map(async ({ event }) => {
-			if (!this.props.member) {
-				throw new Error('Attempting to move an event without authorization');
-			}
+		if (!this.props.member) {
+			return;
+		}
 
-			const newEvent = await event.copy(newTime, this.props.member);
+		const result = await fetchApi.events.events.copy(
+			{ id: state.eventInformation.event.id.toString() },
+			{ newTime, copyStatus: false, copyFiles: false },
+			this.props.member.sessionID
+		);
 
-			if (newEvent) {
-				this.props.routeProps.history.push(`/eventviewer/${newEvent.id}`);
-			}
-		}).value;
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/eventviewer/${result.value.id}`);
+		}
 	}
 
 	private async deleteEvent() {
-		if (!this.state.eventInformation) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
 			throw new Error('Attempting to move a null event');
 		}
 
-		await this.state.eventInformation.map(async ({ event }) => {
-			if (!this.props.member) {
-				throw new Error('Attempting to delete an event without authorization');
+		if (!this.props.member) {
+			return;
+		}
+
+		const result = await fetchApi.events.events.delete(
+			{ id: state.eventInformation.event.id.toString() },
+			{},
+			this.props.member.sessionID
+		);
+
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/calendar/`);
+		}
+	}
+
+	private renderFormsButtons(formName: string): JSX.Element {
+		if (!this.props.member) {
+			return <>{formName}</>;
+		}
+
+		if (formName === 'CAPF 60-80 Civil Air Patrol Cadet Activity Permission Slip') {
+			return (
+				<Button buttonType="none" onClick={this.createCAPF6080}>
+					{formName}
+				</Button>
+			);
+		} else {
+			return <>{formName}</>;
+		}
+	}
+
+	private async createCAPF6080() {
+		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
+		const docDef = forms.capf6080DocumentDefinition(
+			this.state.eventInformation.event,
+			this.state.eventInformation.pointsOfContact,
+			this.props.member
+		);
+
+		await this.printForm(
+			docDef,
+			`CAPF6080-${this.props.account.id}-${this.state.eventInformation.event.id}.pdf`
+		);
+	}
+
+	private async printForm(docDef: TDocumentDefinitions, fileName: string) {
+		const pdfMake = await import('pdfmake');
+
+		const fontGetter =
+			process.env.NODE_ENV === 'production'
+				? (fontName: string) =>
+						`https://${this.props.account.id}.capunit.com/images/fonts/${fontName}`
+				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
+
+		const fonts: TFontDictionary = {
+			Roboto: {
+				normal: fontGetter('Roboto-Regular.ttf'),
+				bold: fontGetter('Roboto-Medium.ttf'),
+				italics: fontGetter('Roboto-Italic.ttf'),
+				bolditalics: fontGetter('Roboto-MediumItalic.ttf')
+			},
+			FreeMono: {
+				normal: fontGetter('FreeMono.ttf'),
+				bold: fontGetter('FreeMonoBold.ttf'),
+				italics: fontGetter('FreeMonoOblique.ttf'),
+				bolditalics: fontGetter('FreeMonoBoldOblique.ttf')
+			},
+			FreeSans: {
+				normal: fontGetter('FreeSans.ttf'),
+				bold: fontGetter('FreeSansBold.ttf'),
+				italics: fontGetter('FreeSansOblique.ttf'),
+				bolditalics: fontGetter('FreeSansBoldOblique.ttf')
+			},
+			FreeSerif: {
+				normal: fontGetter('FreeSerif.ttf'),
+				bold: fontGetter('FreeSerifBold.ttf'),
+				italics: fontGetter('FreeSerifItalic.ttf'),
+				bolditalics: fontGetter('FreeSerifBoldItalic.ttf')
 			}
+		};
 
-			await event.delete(this.props.member);
+		// @ts-ignore
+		const docPrinter = pdfMake.createPdf(docDef, null, fonts);
 
-			this.props.routeProps.history.push(`/calendar`);
-		}).value;
-	}
-
-	private async fetchCadetRoster() {
-		// if (!this.state.event) {
-		// 	throw new Error('Attempting to move a null event');
-		// }
-		// if (!this.props.member) {
-		// 	throw new Error('Attempting to delete an event without authorization');
-		// }
-		// const roster = await this.props.account.getMembers();
-		// const cadetRoster = roster.filter(member => !member.seniorMember);
-		// this.setState({ cadetRoster });
-	}
-
-	private async fetchSeniorRoster() {
-		// if (!this.state.event) {
-		// 	throw new Error('Attempting to move a null event');
-		// }
-		// if (!this.props.member) {
-		// 	throw new Error('Attempting to delete an event without authorization');
-		// }
-		// const roster = await this.props.account.getMembers();
-		// const seniorRoster = roster.filter(member => member.seniorMember);
-		// this.setState({ seniorRoster });
-	}
-
-	private fetchEventRegistry() {
-		// do stuff
+		docPrinter.download(fileName);
 	}
 }

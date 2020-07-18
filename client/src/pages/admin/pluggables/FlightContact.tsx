@@ -1,82 +1,114 @@
-import { Member, MemberObject, MemberReference, just, fromValue, none, Maybe } from 'common-lib';
+import {
+	areMembersTheSame,
+	CAPMember,
+	CAPMemberReference,
+	Either,
+	get,
+	getFullMemberName,
+	getMemberEmail,
+	hasOneDutyPosition,
+	isCAPMember,
+	Maybe as M,
+	Maybe,
+	Member,
+	MemberObject,
+	pipe
+} from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
-import { TextInput } from '../../../components/forms/SimpleForm';
 import SimpleForm, {
 	Checkbox,
 	Label,
-	SimpleRadioButton
+	SimpleRadioButton,
+	TextInput
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
-import MemberBase, {
-	CAPMemberClasses,
-	CAPNHQMember,
-	CAPProspectiveMember,
-	isCAPMemberClass
-} from '../../../lib/Members';
+import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import './FlightContact.css';
 
-const isFlightStaff = (member: MemberBase | undefined | null) =>
-	fromValue(member)
-		.flatMap(mem =>
-			mem instanceof CAPNHQMember || mem instanceof CAPProspectiveMember
-				? just(mem)
-				: none<CAPMemberClasses>()
-		)
-		.filter(
-			mem =>
-				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Commander') ||
-				mem.dutyPositions.map(duty => duty.duty).includes('Cadet Flight Sergeant')
-		)
-		.cata(
-			() => false,
-			() => true
-		);
+const isMaybeFlightStaff = pipe(
+	M.filterType<Member, CAPMember>(isCAPMember),
+	M.filter(hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])),
+	M.isSome
+);
+
+const isFlightStaff = (member: Member | undefined | null): member is CAPMember =>
+	isMaybeFlightStaff(M.fromValue(member));
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
-		props.member instanceof CAPNHQMember &&
+		!!props.member &&
+		isCAPMember(props.member) &&
 		!props.member.seniorMember &&
-		props.member.hasDutyPosition([
+		hasOneDutyPosition([
 			'Cadet Flight Commander',
 			'Cadet Flight Sergeant',
 			'Cadet Commander',
 			'Cadet Deputy Commander'
-		])
+		])(props.member)
 	);
 };
 
-interface FlightContactState {
-	members: MemberReference[] | null;
+interface FlightContactLoadingState {
+	state: 'LOADING';
 }
+
+interface FlightContactLoadedState {
+	state: 'LOADED';
+
+	members: CAPMemberReference[];
+}
+
+interface FlightContactErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+type FlightContactState =
+	| FlightContactErrorState
+	| FlightContactLoadedState
+	| FlightContactLoadingState;
 
 export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 	public state: FlightContactState = {
-		members: null
+		state: 'LOADING'
 	};
 
 	public async componentDidMount() {
 		if (
 			this.props.member &&
-			this.props.member instanceof CAPNHQMember &&
+			isCAPMember(this.props.member) &&
 			!this.props.member.seniorMember &&
-			this.props.member.hasDutyPosition([
+			hasOneDutyPosition([
 				'Cadet Flight Commander',
 				'Cadet Flight Sergeant',
 				'Cadet Commander',
 				'Cadet Deputy Commander'
-			])
+			])(this.props.member)
 		) {
-			const members = await this.props.member.getFlightMemberReferences();
+			const memberEither = await fetchApi.member.flight.membersBasic(
+				{},
+				{},
+				this.props.member.sessionID
+			);
 
-			this.setState({
-				members
-			});
+			if (Either.isLeft(memberEither)) {
+				this.setState({
+					state: 'ERROR',
+					message: memberEither.value.message
+				});
+			} else {
+				this.setState({
+					state: 'LOADED',
+					members: memberEither.value.filter(Either.isRight).map(get('value'))
+				});
+			}
 		}
 	}
 
@@ -91,8 +123,10 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 					<div className="widget-title">Flight Contact</div>
 				</Link>
 				<div className="widget-body">
-					{this.state.members === null ? (
+					{this.state.state === 'LOADING' ? (
 						<LoaderShort />
+					) : this.state.state === 'ERROR' ? (
+						<div>{this.state.message}</div>
 					) : (
 						<div>
 							There {this.state.members.length === 1 ? 'is' : 'are'}{' '}
@@ -155,11 +189,26 @@ const normalizeRankInput = (rank: string) =>
 		.replace(' ', '')
 		.replace('.', '');
 
-interface EmailListState {
-	selectedMembers: CAPMemberClasses[];
-	availableMembers: null | CAPMemberClasses[];
+interface EmailListLoadingState {
+	state: 'LOADING';
+}
+
+interface EmailListErrorState {
+	state: 'ERROR';
+
+	message: string;
+}
+
+interface EmailListLoadedState {
+	state: 'LOADED';
+
+	members: Member[];
+}
+
+interface EmailListUIState {
+	selectedMembers: Member[];
 	sortFunction: SortFunction;
-	visibleItems: CAPMemberClasses[];
+	visibleItems: Member[];
 	displayAdvanced: boolean;
 	filterValues: {
 		nameInput: string;
@@ -168,6 +217,9 @@ interface EmailListState {
 		flightInput: string;
 	};
 }
+
+type EmailListState = EmailListUIState &
+	(EmailListLoadedState | EmailListLoadingState | EmailListErrorState);
 
 enum SortFunction {
 	LASTNAME,
@@ -282,24 +334,26 @@ const simpleFilters1 = [nameInput, flightInput];
 const simpleFilters2 = [nameInput];
 
 interface SelectorFormValues {
-	members: CAPMemberClasses[];
+	members: Member[];
 	sortFunction: SortFunction;
 	displayAdvanced: boolean;
 }
 
 export default class FlightContact extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
-		availableMembers: null,
+		state: 'LOADING',
 		displayAdvanced: false,
 		filterValues: {
 			nameInput: '',
 			rankGreaterThan: '',
 			rankLessThan: '',
-			flightInput: fromValue(this.props.member)
-				.filterType(isCAPMemberClass)
-				.filter(isFlightStaff)
-				.flatMap(member => fromValue(member.flight))
-				.orSome('')
+			flightInput: pipe(
+				M.filterType(isCAPMember),
+				M.filterType(isFlightStaff),
+				M.map(get('flight')),
+				M.flatMap(M.fromValue),
+				M.orSome('')
+			)(M.fromValue(this.props.member))
 		},
 		selectedMembers: [],
 		sortFunction: SortFunction.CAPID,
@@ -316,40 +370,54 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 	}
 
 	public async componentDidMount() {
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/admin',
+				text: 'Administration'
+			},
+			{
+				target: '/admin/flightcontact',
+				text: 'Flight contact'
+			}
+		]);
+
+		this.props.updateSideNav([]);
+
+		this.updateTitle('Email selector');
+
 		if (
 			this.props.member &&
-			this.props.member instanceof CAPNHQMember &&
-			this.props.member.hasDutyPosition([
+			isCAPMember(this.props.member) &&
+			hasOneDutyPosition([
 				'Cadet Flight Commander',
 				'Cadet Flight Sergeant',
 				'Cadet Commander',
 				'Cadet Deputy Commander'
-			])
+			])(this.props.member)
 		) {
-			const members = await this.props.member.getFlightMembers();
+			const memberEither = await fetchApi.member.flight.membersFull(
+				{},
+				{},
+				this.props.member.sessionID
+			);
 
-			this.setState({
-				availableMembers: members
-			});
-
-			this.props.updateBreadCrumbs([
-				{
-					target: '/',
-					text: 'Home'
-				},
-				{
-					target: '/admin',
-					text: 'Administration'
-				},
-				{
-					target: '/admin/flightcontact',
-					text: 'Flight contact'
-				}
-			]);
-
-			this.props.updateSideNav([]);
-
-			this.updateTitle('Email selector');
+			if (Either.isLeft(memberEither)) {
+				this.setState(prev => ({
+					...prev,
+					state: 'ERROR',
+					message: memberEither.value.message
+				}));
+			} else {
+				this.setState(prev => ({
+					...prev,
+					state: 'LOADED',
+					members: memberEither.value.filter(Either.isRight).map(get('value'))
+				}));
+			}
 		}
 	}
 
@@ -360,20 +428,24 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 
 		if (
 			!(
-				this.props.member instanceof CAPNHQMember &&
-				this.props.member.hasDutyPosition([
+				isCAPMember(this.props.member) &&
+				hasOneDutyPosition([
 					'Cadet Flight Commander',
 					'Cadet Flight Sergeant',
 					'Cadet Commander',
 					'Cadet Deputy Commander'
-				])
+				])(this.props.member)
 			)
 		) {
 			return <div>You do not have permission to do that</div>;
 		}
 
-		if (this.state.availableMembers === null) {
+		if (this.state.state === 'LOADING') {
 			return <Loader />;
+		}
+
+		if (this.state.state === 'ERROR') {
+			return <div>{this.state.message}</div>;
 		}
 
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
@@ -384,9 +456,14 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			<>
 				<Button
 					onClick={() => {
-						this.setState(prev => ({
-							selectedMembers: (prev.availableMembers || []).slice(0)
-						}));
+						this.setState(prev =>
+							prev.state === 'LOADED'
+								? {
+										...prev,
+										selectedMembers: prev.members.slice(0)
+								  }
+								: prev
+						);
 					}}
 				>
 					Select all
@@ -439,11 +516,11 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					<Label>Show advanced filters</Label>
 					<Checkbox name="displayAdvanced" />
 
-					<Selector<CAPMemberClasses>
+					<Selector<Member>
 						fullWidth={true}
 						name="members"
-						values={this.state.availableMembers.slice(0).sort(currentSortFunction)}
-						displayValue={this.displayMemberName}
+						values={this.state.members.slice(0).sort(currentSortFunction)}
+						displayValue={getFullMemberName}
 						multiple={true}
 						showIDField={this.state.displayAdvanced}
 						onChangeVisible={newVisibleItems => {
@@ -529,12 +606,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		);
 	}
 
-	private displayMemberName(member: CAPMemberClasses): string {
-		return member.getFullName();
-	}
-
-	private getEmail(member: CAPMemberClasses): string | undefined {
-		return member.getBestEmail();
+	private getEmail(member: Member): string | undefined {
+		return Maybe.orSome<string | undefined>(undefined)(getMemberEmail(member.contact));
 	}
 
 	private selectText() {
@@ -556,15 +629,15 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 	}
 
 	private getFilters() {
-		if (
-			this.props.member instanceof CAPNHQMember ||
-			this.props.member instanceof CAPProspectiveMember
-		) {
-			if (this.props.member.hasDutyPosition(['Cadet Commander', 'Cadet Deputy Commander'])) {
+		if (this.props.member && isCAPMember(this.props.member)) {
+			if (
+				hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Comander'])(this.props.member)
+			) {
 				return this.state.displayAdvanced ? advancedFilters1 : simpleFilters1;
 			} else {
 				return this.state.displayAdvanced ? advancedFilters2 : simpleFilters2;
 			}
+		} else if (!this.props.member) {
 		} else {
 			throw new Error('Weird');
 		}
@@ -587,7 +660,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		return Object.keys(emails).join('; ');
 	}
 
-	private renderMember(member: CAPMemberClasses, index: number) {
+	private renderMember(member: Member, index: number) {
 		const phoneCount = [
 			member.contact.CELLPHONE.PRIMARY,
 			member.contact.CELLPHONE.SECONDARY,
@@ -613,7 +686,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			element: (
 				<div className="flightcontactlist-item" key={index}>
 					<div className="flightcontactlist-name">
-						{member.getFullName()}
+						{getFullMemberName(member)}
 						<br />
 						{absent}
 					</div>
@@ -671,12 +744,10 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 
 	private selectAllVisible() {
 		this.setState(prev => {
-			const selectedMembers: CAPMemberClasses[] = prev.selectedMembers.slice(0);
+			const selectedMembers: Member[] = prev.selectedMembers.slice(0);
 
 			prev.visibleItems.forEach(item => {
-				if (
-					selectedMembers.filter(i => i.matchesReference(item.getReference())).length < 1
-				) {
+				if (selectedMembers.filter(areMembersTheSame(item)).length < 1) {
 					selectedMembers.push(item);
 				}
 			});

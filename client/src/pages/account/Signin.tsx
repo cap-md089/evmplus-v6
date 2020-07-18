@@ -1,19 +1,11 @@
-import {
-	MemberCreateError,
-	PasswordSetResult,
-	SigninReturn,
-	EitherObj,
-	api,
-	either
-} from 'common-lib';
+import { always, Either, MemberCreateError } from 'common-lib';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PasswordForm from '../../components/form-inputs/PasswordForm';
 import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
 import SimpleForm, { Label, TextBox, TextInput, Title } from '../../components/forms/SimpleForm';
-import APIInterface from '../../lib/APIInterface';
+import fetchApi from '../../lib/apis';
 import { getMember } from '../../lib/Members';
-import myFetch, { fetchFunction } from '../../lib/myFetch';
 import Page, { PageProps } from '../Page';
 
 interface ResetPasswordFormValues {
@@ -174,39 +166,36 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			error: MemberCreateError.NONE
 		});
 
-		try {
-			const fetchResult = await fetchFunction('/api/signin', {
-				headers: {
-					'content-type': 'application/json'
-				},
-				body: JSON.stringify(this.state.signinFormValues),
-				method: 'POST'
+		if (!this.state.signinFormValues.recaptcha) {
+			return;
+		}
+
+		const signinResults = await fetchApi
+			.signin(
+				{},
+				{
+					username: this.state.signinFormValues.username,
+					password: this.state.signinFormValues.password,
+					recaptcha: this.state.signinFormValues.recaptcha
+				}
+			)
+			.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))
+			.fullJoin();
+
+		if (signinResults.error === MemberCreateError.NONE) {
+			this.props.authorizeUser(signinResults);
+			this.props.routeProps.history.push(this.returnUrl);
+		} else if (signinResults.error === MemberCreateError.PASSWORD_EXPIRED) {
+			this.setState({
+				error: signinResults.error,
+				tryingSignin: false,
+				updatePasswordSessionID: signinResults.sessionID
 			});
-
-			const signinResults: SigninReturn = await fetchResult.json();
-
-			if (signinResults.error === MemberCreateError.NONE) {
-				this.props.authorizeUser(signinResults);
-				this.props.routeProps.history.push(this.returnUrl);
-			} else if (signinResults.error === MemberCreateError.PASSWORD_EXPIRED) {
-				this.setState({
-					error: signinResults.error,
-					tryingSignin: false,
-					updatePasswordSessionID: signinResults.sessionID
-				});
-			} else {
-				// @ts-ignore
-				window.grecaptcha.reset();
-				this.setState({
-					error: signinResults.error,
-					tryingSignin: false
-				});
-			}
-		} catch (e) {
+		} else {
 			// @ts-ignore
 			window.grecaptcha.reset();
 			this.setState({
-				error: MemberCreateError.UNKOWN_SERVER_ERROR,
+				error: signinResults.error,
 				tryingSignin: false
 			});
 		}
@@ -217,45 +206,22 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			tryingPasswordReset: true
 		});
 
-		const token = await APIInterface.getTokenForSession(
-			this.props.account.id,
+		const resetPasswordResult = await fetchApi.member.passwordReset(
+			{},
+			{ password: this.state.resetFormValues.password },
 			this.state.updatePasswordSessionID!
 		);
-		const fetchResult = await myFetch('/api/member/passwordreset', {
-			headers: {
-				'authorization': this.state.updatePasswordSessionID!,
-				'content-type': 'application/json'
-			},
-			body: JSON.stringify({
-				password: this.state.resetFormValues.password,
-				token
-			}),
-			method: 'POST'
-		});
-		const eith: EitherObj<api.HTTPError, PasswordSetResult> = await fetchResult.json();
 
-		either(eith)
-			.cata(
-				async e => {
-					this.setState({
-						passwordSetResult: e.message,
-						tryingPasswordReset: false
-					});
-				},
-				async () => {
-					const member = await getMember(this.state.updatePasswordSessionID!);
-
-					if (member) {
-						this.props.authorizeUser(member);
-						this.props.routeProps.history.push(this.returnUrl);
-					}
-				}
-			)
-			.catch(() => {
-				this.setState({
-					passwordSetResult: 'There was an error connecting to the server',
-					tryingPasswordReset: false
-				});
+		if (Either.isLeft(resetPasswordResult)) {
+			this.setState({
+				passwordSetResult: resetPasswordResult.value.message,
+				tryingPasswordReset: false
 			});
+		} else {
+			const member = await getMember(this.state.updatePasswordSessionID!);
+
+			this.props.authorizeUser(member);
+			this.props.routeProps.history.push(this.returnUrl);
+		}
 	}
 }

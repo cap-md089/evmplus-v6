@@ -1,12 +1,11 @@
+import { getFullMemberName, Member, toReference } from 'common-lib';
 import * as React from 'react';
-
 import './FlightMember.css';
-import { CAPMemberClasses } from '../../lib/Members';
 
 interface FlightMemberProps {
 	onDragStart: () => void;
 	onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-	member: CAPMemberClasses;
+	member: Member;
 }
 
 export default class FlightMember extends React.Component<FlightMemberProps> {
@@ -35,7 +34,7 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 				onDragLeave={this.handleOver}
 				onDragEnter={this.handleOver}
 			>
-				{this.props.member.getFullName()}
+				{getFullMemberName(this.props.member)}
 			</div>
 		);
 	}
@@ -43,7 +42,7 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 	private onDragStart(e: React.DragEvent<HTMLDivElement>) {
 		this.props.onDragStart();
 
-		e.dataTransfer.setData('text', JSON.stringify(this.props.member.getReference()));
+		e.dataTransfer.setData('text', JSON.stringify(toReference(this.props.member)));
 	}
 
 	private onDrop(e: React.DragEvent<HTMLDivElement>) {

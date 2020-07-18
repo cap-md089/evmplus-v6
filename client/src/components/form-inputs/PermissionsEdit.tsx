@@ -43,7 +43,8 @@ export const Member: Readonly<MemberPermissions> = {
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
-	RegistryEdit: 0
+	RegistryEdit: 0,
+	ViewAccountNotifications: 0
 };
 
 export const Staff: Readonly<MemberPermissions> = {
@@ -68,7 +69,8 @@ export const Staff: Readonly<MemberPermissions> = {
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
-	RegistryEdit: 0
+	RegistryEdit: 0,
+	ViewAccountNotifications: 0
 };
 
 export const Manager: Readonly<MemberPermissions> = {
@@ -93,7 +95,8 @@ export const Manager: Readonly<MemberPermissions> = {
 
 	DownloadCAPWATCH: 0,
 	PermissionManagement: 0,
-	RegistryEdit: 0
+	RegistryEdit: 0,
+	ViewAccountNotifications: 0
 };
 
 export const Admin: Readonly<MemberPermissions> = {
@@ -118,7 +121,8 @@ export const Admin: Readonly<MemberPermissions> = {
 
 	DownloadCAPWATCH: 1,
 	PermissionManagement: 1,
-	RegistryEdit: 1
+	RegistryEdit: 1,
+	ViewAccountNotifications: 1
 };
 
 const stripPermissionLevel = (values: PermissionFormValues): MemberPermissions => ({
@@ -141,7 +145,8 @@ const stripPermissionLevel = (values: PermissionFormValues): MemberPermissions =
 	ProspectiveMemberManagement: values.ProspectiveMemberManagement,
 	RegistryEdit: values.RegistryEdit,
 	ScanAdd: values.ScanAdd,
-	AttendanceView: values.AttendanceView
+	AttendanceView: values.AttendanceView,
+	ViewAccountNotifications: values.ViewAccountNotifications
 });
 
 const permissionLevelFromPermissions = (permissions: MemberPermissions): PermissionLevel =>
@@ -193,7 +198,8 @@ export default class PermissionsEdit extends React.Component<
 
 				DownloadCAPWATCH: 0,
 				PermissionManagement: 0,
-				RegistryEdit: 0
+				RegistryEdit: 0,
+				ViewAccountNotifications: 0
 			};
 
 			this.props.onInitialize({
@@ -228,7 +234,8 @@ export default class PermissionsEdit extends React.Component<
 
 			DownloadCAPWATCH: 0,
 			PermissionManagement: 0,
-			RegistryEdit: 0
+			RegistryEdit: 0,
+			ViewAccountNotifications: 0
 		};
 
 		const permissionlevel = permissionLevelFromPermissions(value);

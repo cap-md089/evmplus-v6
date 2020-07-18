@@ -1,8 +1,8 @@
-import { api, either } from 'common-lib';
+import { Either } from 'common-lib';
 import * as React from 'react';
 import ReCAPTCHAInput from '../../components/form-inputs/ReCAPTCHA';
 import SimpleForm, { Label, NumberInput, TextBox, Title } from '../../components/forms/SimpleForm';
-import { fetchFunction } from '../../lib/myFetch';
+import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 
 interface RequestUsernameFormValues {
@@ -43,7 +43,7 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				disableOnInvalid={true}
 				validator={{
 					captchaToken: val => val !== null,
-					capid: val => val !== null
+					capid: val => val !== null && val >= 100000
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSubmit,
@@ -88,44 +88,33 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 	}
 
 	private async submit(form: RequestUsernameFormValues) {
-		try {
-			// @ts-ignore
-			window.grecaptcha.reset();
+		if (!form.capid || !form.captchaToken) {
+			return;
+		}
 
+		// @ts-ignore
+		window.grecaptcha.reset();
+
+		this.setState({
+			tryingSubmit: true,
+			error: null,
+			success: false
+		});
+
+		const result = await fetchApi.member.account.capnhq.usernameRequest(
+			{},
+			{ capid: form.capid, captchaToken: form.captchaToken }
+		);
+
+		if (Either.isLeft(result)) {
 			this.setState({
-				tryingSubmit: true,
+				tryingSubmit: false,
+				error: result.value.message
+			});
+		} else {
+			this.setState({
+				success: true,
 				error: null,
-				success: false
-			});
-
-			const fetchResult = await fetchFunction('/api/member/account/capnhq/username', {
-				body: JSON.stringify(form),
-				headers: {
-					'content-type': 'application/json'
-				},
-				method: 'POST'
-			});
-
-			const result: api.member.account.cap.UsernameRequest = await fetchResult.json();
-
-			either(result).cata(
-				error => {
-					this.setState({
-						error: error.message,
-						tryingSubmit: false
-					});
-				},
-				() => {
-					this.setState({
-						success: true,
-						error: null,
-						tryingSubmit: false
-					});
-				}
-			);
-		} catch (e) {
-			this.setState({
-				error: 'Could not request username',
 				tryingSubmit: false
 			});
 		}
