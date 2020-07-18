@@ -6,14 +6,6 @@ import copy from '../../api/events/events/copy';
 import eventviewer from '../../api/events/events/eventviewer';
 import getevent from '../../api/events/events/getevent';
 import conftest from '../../conf.test';
-import {
-	Account,
-	CAPNHQMember,
-	CAPNHQUser,
-	Event,
-	getTestTools2,
-	MemberBase
-} from '../../lib/internals';
 import { newEvent } from '../consts';
 import '../EitherMatcher';
 import {
@@ -22,7 +14,7 @@ import {
 	getUser,
 	prepareBasicGetRequest,
 	prepareBasicPostRequest,
-	resolveToEither
+	resolveToEither,
 } from '../TestUtils';
 
 describe('Event', () => {
@@ -37,19 +29,13 @@ describe('Event', () => {
 
 		mem = await CAPNHQMember.Get(542488, account, schema);
 
-		await schema
-			.getCollection('Events')
-			.remove('true')
-			.execute();
+		await schema.getCollection('Events').remove('true').execute();
 
 		done();
 	});
 
 	afterAll(async done => {
-		await schema
-			.getCollection('Events')
-			.remove('true')
-			.execute();
+		await schema.getCollection('Events').remove('true').execute();
 
 		await session.close();
 
@@ -104,7 +90,7 @@ describe('Event', () => {
 				departureTime: null,
 				planToUseCAPTransportation: false,
 				status: 0,
-				customAttendanceFieldValues: []
+				customAttendanceFieldValues: [],
 			},
 			mem
 		);
@@ -121,7 +107,7 @@ describe('Event', () => {
 				departureTime: null,
 				planToUseCAPTransportation: true,
 				status: 0,
-				customAttendanceFieldValues: []
+				customAttendanceFieldValues: [],
 			},
 			mem
 		);
@@ -177,7 +163,7 @@ describe('Event', () => {
 					paidEventLimit: 5,
 					unpaidEventLimit: 500,
 					aliases: [],
-					discordServer: { hasValue: false }
+					discordServer: { hasValue: false },
 				},
 				schema
 			);
@@ -270,7 +256,7 @@ describe('Event', () => {
 
 			expect(res).toMatchRight({
 				...newEvent,
-				signUpDenyMessage: null
+				signUpDenyMessage: null,
 			});
 
 			done();
@@ -299,7 +285,7 @@ describe('Event', () => {
 					session,
 					`/api/event/${event.id}/copy`
 				),
-				params: { id: event.id.toString() }
+				params: { id: event.id.toString() },
 			};
 			const accReq = addAccountForTransformer(req, account);
 			const riouxReq = addUserForTransformer(accReq, rioux);
@@ -312,13 +298,13 @@ describe('Event', () => {
 				...newEvent,
 				status: EventStatus.INFORMATIONONLY,
 				signUpDenyMessage: null,
-				complete: true
+				complete: true,
 			});
 
 			const res2 = await resolveToEither(copy.fn(gemmelReq));
 
 			expect(res2).toMatchLeft({
-				code: 403
+				code: 403,
 			});
 
 			done();
@@ -340,7 +326,7 @@ describe('Event', () => {
 					session,
 					`/api/event/${event.id}/viewer`
 				),
-				params: { id: event.id.toString() }
+				params: { id: event.id.toString() },
 			};
 			const accReq = addAccountForTransformer(req, account);
 			const riouxReq = addUserForTransformer(accReq, rioux);
@@ -352,7 +338,7 @@ describe('Event', () => {
 			expect(res1).toMatchRight({
 				attendees: {},
 				event: event.toRaw(),
-				organizations: {}
+				organizations: {},
 			});
 
 			const res2 = await resolveToEither(eventviewer.fn(riouxReq));
@@ -360,7 +346,7 @@ describe('Event', () => {
 			expect(res2).toMatchRight({
 				attendees: {},
 				event: event.toRaw(),
-				organizations: {}
+				organizations: {},
 			});
 
 			await event.addMemberToAttendance(
@@ -371,7 +357,7 @@ describe('Event', () => {
 					departureTime: null,
 					planToUseCAPTransportation: false,
 					memberID: rioux.getReference(),
-					customAttendanceFieldValues: []
+					customAttendanceFieldValues: [],
 				},
 				rioux
 			);
@@ -380,7 +366,7 @@ describe('Event', () => {
 
 			expect(res3).toMatchRight({
 				attendees: {
-					[stringifyMemberReference(rioux)]: just(rioux.toRaw())
+					[stringifyMemberReference(rioux)]: just(rioux.toRaw()),
 				},
 				event: event.toRaw(rioux),
 				organizations: {
@@ -388,8 +374,8 @@ describe('Event', () => {
 					// The accounts below have to be added because they use 916 as their main ORG id
 					// the Rioux account is in the 916 org, and as such the accounts below
 					'linktarget': (await Account.Get('linktarget', schema)).toRaw(),
-					'md089-test': (await Account.Get('md089-test', schema)).toRaw()
-				}
+					'md089-test': (await Account.Get('md089-test', schema)).toRaw(),
+				},
 			});
 
 			done();

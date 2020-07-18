@@ -1,68 +1,32 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	areErrorObjectsTheSame,
-	asyncLeft,
+	asyncIterFilter,
+	asyncIterMap,
 	asyncRight,
+	collectGeneratorAsync,
+	destroy,
+	errorGenerator,
 	ErrorResolvedStatus,
 	Errors,
-	ErrorType,
-	none
-} from 'common-lib';
-import {
-	Account,
-	asyncEitherHandler2,
-	BasicSimpleValidatedRequest,
-	memberRequestTransformer,
-	serverErrorGenerator,
+	get,
 	SessionType,
-	Validator
-} from '../../lib/internals';
-import { tokenTransformer } from '../formtoken';
+} from 'common-lib';
+import { isRequesterRioux, PAM } from 'server-common';
 import { getErrors } from './geterrors';
 
-interface MarkErrorDoneRequestBody {
-	message: string;
-	type: ErrorType;
-	fileName: string;
-	line: number;
-	column: number;
-}
+const errorHandler = errorGenerator('Could not mark error as resolved');
 
-const errorValidator = new Validator<MarkErrorDoneRequestBody>({
-	column: {
-		validator: Validator.Number
-	},
-	line: {
-		validator: Validator.Number
-	},
-	fileName: {
-		validator: Validator.String
-	},
-	type: {
-		validator: Validator.OneOfStrict<ErrorType>('Client', 'Server')
-	},
-	message: {
-		validator: Validator.String
-	}
-});
-
-const errorHandler = serverErrorGenerator('Could not mark error as resolved');
-
-export default asyncEitherHandler2<api.errors.MarkErrorAsDone>(request =>
+export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(request =>
 	asyncRight(request, errorHandler)
-		.flatMap(Account.RequestTransformer)
-		.flatMap(memberRequestTransformer(SessionType.REGULAR, true))
-		.flatMap(tokenTransformer)
-		.flatMap(errorValidator.transform)
-		.flatMap<BasicSimpleValidatedRequest<MarkErrorDoneRequestBody>>(req =>
-			req.member.isRioux
-				? asyncRight(req, errorHandler)
-				: asyncLeft({
-						code: 403,
-						message: 'Member is not a developer',
-						error: none<Error>()
-				  })
-		)
+		.filter(isRequesterRioux, {
+			type: 'OTHER',
+			code: 403,
+			message: 'Member is not a developer',
+		})
 		.flatMap(req =>
 			asyncRight(
 				({
@@ -72,33 +36,29 @@ export default asyncEitherHandler2<api.errors.MarkErrorAsDone>(request =>
 						{
 							column: req.body.column,
 							line: req.body.line,
-							filename: req.body.fileName
-						}
-					]
+							filename: req.body.fileName,
+						},
+					],
 				} as unknown) as Errors,
 				errorHandler
 			)
 				.flatMap(err =>
-					asyncRight(req.mysqlx, errorHandler)
-						.flatMap(getErrors)
-						.map(errors =>
-							errors.filter(areErrorObjectsTheSame(err)).map(error => error.id)
-						)
+					getErrors(req.mysqlx)
+						.map(asyncIterFilter(areErrorObjectsTheSame(err)))
+						.map(asyncIterMap(get('id')))
 				)
-				.flatMap(errorIDs =>
-					asyncRight(req.mysqlx.getCollection<Errors>('Errors'), errorHandler).map(
-						collection =>
-							collection
-								.modify(`id in [${errorIDs.join(',')}]`)
-								.patch({
-									resolved: ErrorResolvedStatus.RESOLVED
-								})
-								// I was stupid with making the types. 95% of the time, it works great and to my
-								// advantage. For taking advantage of the corner cases like here, not so much
-								// .bind('errorIDs' as keyof Errors, (errorIDs as unknown) as string)
-								.execute()
-					)
+				.map(collectGeneratorAsync)
+				.map(errorIDs =>
+					req.mysqlx
+						.getCollection<Errors>('Errors')
+						.modify(`id in [${errorIDs.join(',')}]`)
+						.patch({
+							resolved: ErrorResolvedStatus.RESOLVED,
+						})
+						.execute()
 				)
+				.map(destroy)
 		)
-		.map(() => void 0)
 );
+
+export default func;

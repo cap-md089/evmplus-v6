@@ -1,118 +1,50 @@
-import { MemberUpdateEventEmitter } from 'common-lib';
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import * as express from 'express';
-import {
-	AbsenteeValidator,
-	Account,
-	asyncErrorHandler,
-	FlightAssignBulkValidator,
-	FlightAssignValidator,
-	leftyMemberMiddleware,
-	leftyPermissionMiddleware,
-	memberMiddleware,
-	memberMiddlewareGenerator,
-	SessionType,
-	Validator
-} from '../../lib/internals';
-import { leftyTokenMiddleware } from '../formtoken';
+import { endpointAdder } from '../../lib/API';
 // API routes
 import absent from './absent';
 import account from './account';
 import basic from './attendance/basic';
+import other from './attendance/other';
 import short from './attendance/short';
-import capwatch from './capwatch';
+import capwatchimport from './capwatch/importcapwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
 import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
 import getmembers from './getmembers';
 import passwordreset from './passwordreset';
-import setpermissions, { permissionsValidator } from './permissions/setpermissions';
+import setpermissions from './permissions/setpermissions';
 import su from './su';
 import getdutypositions from './temporarydutypositions/get';
-import setdutypositions, { setDutyPositionsValidator } from './temporarydutypositions/set';
+import setdutypositions from './temporarydutypositions/set';
 
-export default (emitter: MemberUpdateEventEmitter) => {
-	const router = express.Router();
+const router = express.Router();
 
-	router.use('/account', account(emitter));
-	router.use('/capwatch', capwatch(emitter));
+const adder = endpointAdder(router) as () => () => void;
 
-	router.use(Account.LeftyExpressMiddleware);
+addAPI(Validator, adder, getmembers);
+addAPI(Validator, adder, passwordreset);
+addAPI(Validator, adder, absent);
+addAPI(Validator, adder, su);
 
-	router.get('/', memberMiddleware, getmembers);
-	router.post('/su', leftyMemberMiddleware, leftyTokenMiddleware, su);
-	router.post(
-		'/absent',
-		leftyMemberMiddleware,
-		leftyTokenMiddleware,
-		Validator.LeftyBodyExpressMiddleware(AbsenteeValidator),
-		absent
-	);
+addAPI(Validator, adder, getdutypositions);
+addAPI(Validator, adder, setdutypositions);
 
-	router.get('/flight', memberMiddleware, flightmembers);
-	router.get('/flight/basic', memberMiddleware, flightbasic);
-	router.post(
-		'/flight',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('FlightAssign'),
-		leftyTokenMiddleware,
-		Validator.LeftyBodyExpressMiddleware(FlightAssignValidator),
-		flightassign
-	);
-	router.post(
-		'/flight/bulk',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('FlightAssign'),
-		leftyTokenMiddleware,
-		Validator.LeftyBodyExpressMiddleware(FlightAssignBulkValidator),
-		flightassignbulk
-	);
+addAPI(Validator, adder, setpermissions);
 
-	router.post(
-		'/permissions',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('PermissionManagement'),
-		leftyTokenMiddleware,
-		Validator.LeftyBodyExpressMiddleware(permissionsValidator),
-		setpermissions
-	);
+addAPI(Validator, adder, flightassign);
+addAPI(Validator, adder, flightassignbulk);
+addAPI(Validator, adder, flightbasic);
+addAPI(Validator, adder, flightmembers);
 
-	router.get(
-		'/tempdutypositions/:type/:id',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('AssignTemporaryDutyPositions'),
-		leftyTokenMiddleware,
-		getdutypositions
-	);
-	router.post(
-		'/tempdutypositions/:type/:id',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('AssignTemporaryDutyPositions'),
-		leftyTokenMiddleware,
-		Validator.LeftyBodyExpressMiddleware(setDutyPositionsValidator),
-		setdutypositions
-	);
+addAPI(Validator, adder, capwatchimport);
 
-	router.get('/attendance', leftyMemberMiddleware, basic);
-	router.get('/attendance/short', leftyMemberMiddleware, short);
-	router.get(
-		'/attendance/:reference',
-		leftyMemberMiddleware,
-		leftyPermissionMiddleware('AttendanceView'),
-		basic
-	);
+addAPI(Validator, adder, basic);
+addAPI(Validator, adder, short);
+addAPI(Validator, adder, other);
 
-	router.post(
-		'/passwordreset',
-		memberMiddlewareGenerator(
-			asyncErrorHandler,
-			// tslint:disable-next-line:no-bitwise
-			SessionType.PASSWORD_RESET | SessionType.REGULAR,
-			true
-		),
-		leftyTokenMiddleware,
-		passwordreset
-	);
+router.use(account);
 
-	return router;
-};
+export default router;

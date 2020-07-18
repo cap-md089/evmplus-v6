@@ -1,93 +1,64 @@
-import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
+import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	Event,
-	MemberBase,
-	NewAttendanceRecordValidator,
-	resolveReference,
-	Validator
-} from '../../../lib/internals';
+	always,
+	api,
+	asyncIterHandler,
+	asyncIterMap,
+	asyncRight,
+	canManageEvent,
+	collectGeneratorAsync,
+	errorGenerator,
+	Maybe,
+	NewAttendanceRecord,
+	Permissions,
+	RawEventObject,
+	SessionType,
+	Validator,
+} from 'common-lib';
+import {
+	addMemberToAttendanceFunc,
+	getAttendanceForEvent,
+	getEvent,
+	getFullEventObject,
+	PAM,
+} from 'server-common';
+import { validateRequest } from '../../../lib/requestUtils';
 
-/**
- * Needs to be an object with the property as the token
- * needs to be sent as part of the body
- */
-interface BulkAttendanceRequest {
-	members: NewAttendanceRecord[];
-}
-
-export const attendanceBulkValidator = new Validator<BulkAttendanceRequest>({
-	members: {
-		validator: Validator.ArrayOf(NewAttendanceRecordValidator)
-	}
+const bulkAttendanceValidator = new Validator({
+	members: Validator.ArrayOf(
+		Validator.Required(
+			(validator<NewAttendanceRecord>(Validator) as Validator<NewAttendanceRecord>).rules
+		)
+	),
 });
 
-export default asyncEitherHandler<api.events.attendance.AddBulk>(
-	async (req: BasicMemberValidatedRequest<BulkAttendanceRequest, { id: string }>) => {
-		let event: Event;
-		let member: MemberBase | null;
+export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendance.AddBulk> = (
+	now = Date.now
+) =>
+	PAM.RequireSessionType(SessionType.REGULAR)(request =>
+		validateRequest(bulkAttendanceValidator)(request).flatMap(req =>
+			getEvent(req.mysqlx)(req.account)(req.params.id)
+				.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+					type: 'OTHER',
+					code: 403,
+					message: 'Member cannot perform this action',
+				})
+				.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
 
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event'
-			});
-		}
+				.flatMap<RawEventObject>(event =>
+					asyncRight(
+						collectGeneratorAsync(
+							asyncIterMap(
+								addMemberToAttendanceFunc(now)(req.mysqlx)(req.account)(event)
+							)(req.body.members)
+						),
+						errorGenerator('Could not add attendance records')
+					).map(always(event))
+				)
 
-		// DO NOT MOVE THIS INTO THE IF STATEMENT
-		// For some reason it does not work, it needs to be
-		// stored in a variable first
-		const canAddOtherMembers =
-			req.member.isPOCOf(event) ||
-			req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL) ||
-			req.member.hasDutyPosition('Personnel Officer');
+				.flatMap(getAttendanceForEvent(req.mysqlx))
+				.map(asyncIterHandler(errorGenerator('Could not get attendance record')))
+		)
+	);
 
-		if (!canAddOtherMembers) {
-			return left({
-				code: 403,
-				error: none<Error>(),
-				message: 'Invalid permissions'
-			});
-		}
-
-		for (const i of req.body.members) {
-			if (i.memberID === undefined) {
-				continue;
-			}
-
-			member = await resolveReference(i.memberID, req.account, req.mysqlx);
-
-			if (member === null) {
-				continue;
-			}
-
-			event.addMemberToAttendance(
-				{
-					arrivalTime: i.arrivalTime,
-					comments: i.comments,
-					departureTime: i.departureTime,
-					planToUseCAPTransportation: i.planToUseCAPTransportation,
-					status: i.status,
-					customAttendanceFieldValues: i.customAttendanceFieldValues
-				},
-				member
-			);
-		}
-
-		try {
-			await event.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save attendance information'
-			});
-		}
-
-		return right(event.attendance);
-	}
-);
+export default func();

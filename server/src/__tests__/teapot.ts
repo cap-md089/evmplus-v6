@@ -15,9 +15,7 @@ describe('/teapot', () => {
 	});
 
 	it('should respond with HTTP 418', done => {
-		request(server)
-			.get('/teapot')
-			.expect(418, done);
+		request(server).get('/teapot').expect(418, done);
 	});
 
 	it('should respond to a body of "teapot"', done => {

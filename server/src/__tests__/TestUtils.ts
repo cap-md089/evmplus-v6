@@ -3,19 +3,6 @@ import { api, AsyncEither, EitherObj, MemberReference } from 'common-lib';
 import { EventEmitter } from 'events';
 import { IncomingHttpHeaders } from 'http';
 import conf from '../conf';
-import {
-	Account,
-	addUserAccount,
-	addUserAccountCreationToken,
-	BasicAccountRequest,
-	BasicMemberRequest,
-	BasicMySQLRequest,
-	CAPNHQUser,
-	CAPProspectiveUser,
-	createSessionForUser,
-	getInformationForMember,
-	ParamType
-} from '../lib/internals';
 
 jest.setTimeout(30000);
 
@@ -75,8 +62,8 @@ export const addHeader = <
 	...req,
 	headers: {
 		...req.headers,
-		[header]: value
-	}
+		[header]: value,
+	},
 });
 
 export const prepareBasicGetRequest = <P extends ParamType = {}>(
@@ -95,7 +82,7 @@ export const prepareBasicGetRequest = <P extends ParamType = {}>(
 	mysqlx: mysqlxSession.getSchema(configuration.database.connection.database),
 	mysqlxSession,
 	originalUrl: url,
-	_originalUrl: url
+	_originalUrl: url,
 });
 
 export const prepareBasicPostRequest = <B = any>(
@@ -114,7 +101,7 @@ export const prepareBasicPostRequest = <B = any>(
 	mysqlx: mysqlxSession.getSchema(configuration.database.connection.database),
 	mysqlxSession,
 	originalUrl: url,
-	_originalUrl: url
+	_originalUrl: url,
 });
 
 export const addAccount = <P extends ParamType, B>(
@@ -122,7 +109,7 @@ export const addAccount = <P extends ParamType, B>(
 	account: Account
 ): BasicAccountRequest<P, B> => ({
 	...req,
-	account
+	account,
 });
 
 export const addAccountForTransformer = <P extends ParamType, B>(
@@ -130,7 +117,7 @@ export const addAccountForTransformer = <P extends ParamType, B>(
 	account: Account | string
 ): BasicMySQLRequest<P, B> => ({
 	...req,
-	hostname: `${typeof account === 'string' ? account : account.id}.capunit.com`
+	hostname: `${typeof account === 'string' ? account : account.id}.capunit.com`,
 });
 
 export const addUser = <P extends ParamType, B>(
@@ -138,7 +125,7 @@ export const addUser = <P extends ParamType, B>(
 	member: CAPNHQUser | CAPProspectiveUser
 ): BasicMemberRequest<P, B> => ({
 	...req,
-	member
+	member,
 });
 
 export const addUserForTransformer = <P extends ParamType, B>(

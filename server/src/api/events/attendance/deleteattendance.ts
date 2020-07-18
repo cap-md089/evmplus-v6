@@ -1,50 +1,32 @@
-import { api, just, left, none, Permissions, right } from 'common-lib';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	asyncEitherHandler,
-	BasicMemberRequest,
-	Event,
-	isValidMemberReference,
-	MemberBase,
-	resolveReference
-} from '../../../lib/internals';
+	api,
+	asyncRight,
+	canManageEvent,
+	destroy,
+	errorGenerator,
+	Permissions,
+	SessionType,
+	toReference,
+} from 'common-lib';
+import { getEvent, PAM, removeMemberFromEventAttendance } from 'server-common';
 
-export default asyncEitherHandler<api.events.attendance.Delete>(
-	async (req: BasicMemberRequest<{ id: string }>) => {
-		let event: Event;
-		let member: MemberBase;
+const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
+	canModifyEvent: boolean
+) => (canModifyEvent ? req.body.member ?? toReference(req.member) : toReference(req.member));
 
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event'
-			});
-		}
-
-		if (
-			isValidMemberReference(req.body) &&
-			(req.member.isPOCOf(event) ||
-				req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
-		) {
-			member = await resolveReference(req.body, req.account, req.mysqlx, true);
-		} else {
-			member = req.member;
-		}
-
-		event.removeMemberFromAttendance(member);
-
-		try {
-			await event.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save attendance information'
-			});
-		}
-
-		return right(event.attendance);
-	}
+export const func: ServerAPIEndpoint<api.events.attendance.Delete> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(event =>
+		asyncRight(
+			getMember(req)(canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)),
+			errorGenerator('Could not delete member from attendance')
+		)
+			.tap(console.log)
+			.flatMap(removeMemberFromEventAttendance(req.mysqlx)(req.account)(event))
+			.map(destroy)
+	)
 );
+
+export default func;

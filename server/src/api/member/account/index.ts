@@ -1,33 +1,27 @@
-import { MemberUpdateEventEmitter } from 'common-lib';
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import { Router } from 'express';
-import { Account, Validator } from '../../../lib/internals';
-import finishaccount, { nhqFinishValidator } from './nhq/finishaccount';
-import finishpasswordreset from './nhq/finishpasswordreset';
-import requestaccount, { nhqRequestValidator } from './nhq/requestaccount';
-import requestpasswordreset from './nhq/requestpasswordreset';
-import requestusername from './nhq/requestusername';
+import { endpointAdder } from '../../../lib/API';
+import createprospective from './capprospective/createprospective';
+import finishaccount from './finishaccount';
+import finishpasswordreset from './finishpasswordreset';
+import requestnhqaccount from './nhq/requestaccount';
+import requestnhqusername from './nhq/requestusername';
 import registerdiscord from './registerdiscord';
+import requestpasswordreset from './requestpasswordreset';
 
-export default (emitter: MemberUpdateEventEmitter) => {
-	const router = Router();
+const router = Router();
 
-	router.post('/registerdiscord/:discordID', registerdiscord(emitter));
-	router.post('/capnhq/username', requestusername());
-	router.post('/capnhq/requestpassword', requestpasswordreset());
-	router.post('/capnhq/finishpasswordreset', finishpasswordreset);
+const adder = endpointAdder(router) as () => () => void;
 
-	router.use(Account.LeftyExpressMiddleware);
+addAPI(Validator, adder, requestnhqusername);
+addAPI(Validator, adder, requestnhqaccount);
 
-	router.post(
-		'/capnhq/request',
-		Validator.LeftyBodyExpressMiddleware(nhqRequestValidator),
-		requestaccount
-	);
-	router.post(
-		'/capnhq/finish',
-		Validator.LeftyBodyExpressMiddleware(nhqFinishValidator),
-		finishaccount
-	);
+addAPI(Validator, adder, createprospective);
 
-	return router;
-};
+addAPI(Validator, adder, finishaccount);
+addAPI(Validator, adder, finishpasswordreset);
+addAPI(Validator, adder, requestpasswordreset);
+addAPI(Validator, adder, registerdiscord);
+
+export default router;

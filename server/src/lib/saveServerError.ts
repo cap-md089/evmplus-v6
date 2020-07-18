@@ -1,52 +1,108 @@
-import { api, ErrorResolvedStatus, Errors, HTTPRequestMethod, ServerErrorObject } from 'common-lib';
+import {
+	AccountObject,
+	always,
+	BasicMySQLRequest,
+	Either,
+	EitherObj,
+	ErrorResolvedStatus,
+	Errors,
+	get,
+	HTTPRequestMethod,
+	Maybe,
+	Member,
+	MemberReference,
+	ParamType,
+	ServerError,
+	ServerErrorObject,
+	toReference,
+} from 'common-lib';
 import { parse } from 'error-stack-parser';
-import { BasicConditionalMemberRequest } from './member/pam/Session';
-import { generateResults } from './MySQLUtil';
+import {
+	accountRequestTransformer,
+	BasicAccountRequest,
+	generateResults,
+	PAM,
+} from 'server-common';
 
-export default async (err: Error, req: BasicConditionalMemberRequest, l?: api.ServerError) => {
+export type Requests<P extends ParamType = {}, B = any> =
+	| BasicMySQLRequest<P, B>
+	| BasicAccountRequest<P, B>
+	| PAM.BasicMemberRequest<P, B>
+	| PAM.BasicMaybeMemberRequest<P, B>;
+
+export default async (err: Error, req: Requests, l?: ServerError) => {
 	console.error(err);
 
 	const errorCollection = req.mysqlx.getCollection<Errors>('Errors');
-	let id = 0;
+	try {
+		let id = 0;
+		// Create the ID of the new error
+		{
+			const errorGenerator = generateResults(errorCollection.find('true'));
 
-	// Create the ID of the new error
-	{
-		const errorGenerator = generateResults(errorCollection.find('true'));
+			for await (const error of errorGenerator) {
+				id = Math.max(id, error.id);
+			}
 
-		for await (const error of errorGenerator) {
-			id = Math.max(id, error.id);
+			id++;
 		}
 
-		id++;
-	}
+		let account: EitherObj<ServerError, AccountObject>;
 
-	// Add the error to the database
-	{
-		const stacks = parse(err);
+		{
+			if ('account' in req) {
+				account = Either.right(req.account);
+			} else {
+				account = await accountRequestTransformer(req).map(get('account')).join();
+			}
+		}
 
-		const errorObject: ServerErrorObject = {
-			id,
+		// Add the error to the database
+		{
+			const stacks = parse(err);
 
-			requestedPath: req._originalUrl,
-			requestedUser: req.member ? req.member.getReference() : null,
-			requestMethod: req.method.toUpperCase() as HTTPRequestMethod,
-			payload: !!req.body ? JSON.stringify(req.body) : '<none>',
-			accountID: req.account.id,
+			const errorObject: ServerErrorObject = {
+				id,
 
-			message: err.message || '<none>',
-			stack: stacks.map(stack => ({
-				filename: stack.getFileName(),
-				line: stack.getLineNumber(),
-				column: stack.getColumnNumber(),
-				name: stack.getFunctionName() || '<unknown>'
-			})),
-			filename: stacks[0].getFileName(),
+				requestedPath: req._originalUrl,
+				requestedUser:
+					'member' in req
+						? 'hasValue' in req.member
+							? Maybe.orSome<MemberReference | null>(null)(
+									Maybe.map<Member, MemberReference | null>(toReference)(
+										req.member
+									)
+							  )
+							: toReference(req.member)
+						: null,
+				requestMethod: req.method.toUpperCase() as HTTPRequestMethod,
+				payload: !!req.body ? JSON.stringify(req.body) : '<none>',
+				accountID: Either.cata<ServerError, AccountObject, string>(always('<unknown>'))(
+					get('id')
+				)(account),
 
-			timestamp: Date.now(),
-			resolved: ErrorResolvedStatus.UNRESOLVED,
-			type: 'Server'
-		};
+				message: err.message || '<none>',
+				stack: stacks.map(stack => ({
+					filename: stack.getFileName(),
+					line: stack.getLineNumber(),
+					column: stack.getColumnNumber(),
+					name: stack.getFunctionName() || '<unknown>',
+				})),
+				filename: stacks[0].getFileName(),
 
-		await errorCollection.add(errorObject).execute();
+				timestamp: Date.now(),
+				resolved: ErrorResolvedStatus.UNRESOLVED,
+				type: 'Server',
+			};
+
+			try {
+				await errorCollection.add(errorObject).execute();
+			} catch (e) {
+				console.log('Could not record error!', e);
+			}
+		}
+	} catch (err) {
+		// Wrapped in a try-catch because it is crucial this doesn't fail, similar to C++'s noexcept
+		console.error('Additionally, another error occurred while trying to save the error', err);
 	}
 };

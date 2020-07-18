@@ -2,14 +2,6 @@ import { Schema, Session } from '@mysql/xdevapi';
 import { RawTeamObject } from 'common-lib';
 import { EventEmitter } from 'events';
 import conftest from '../../conf.test';
-import {
-	Account,
-	CAPNHQMember,
-	collectResults,
-	getTestTools2,
-	safeBind,
-	Team
-} from '../../lib/internals';
 import { newTeam } from '../consts';
 
 describe('Team', () => {
@@ -24,10 +16,7 @@ describe('Team', () => {
 
 		member = await CAPNHQMember.Get(542488, account, schema);
 
-		await schema
-			.getCollection('Teams')
-			.remove('true')
-			.execute();
+		await schema.getCollection('Teams').remove('true').execute();
 
 		done();
 	});
@@ -39,10 +28,7 @@ describe('Team', () => {
 	});
 
 	afterEach(async done => {
-		await schema
-			.getCollection('Teams')
-			.remove('true')
-			.execute();
+		await schema.getCollection('Teams').remove('true').execute();
 
 		done();
 	});
@@ -58,7 +44,7 @@ describe('Team', () => {
 
 		const results = await collectResults(
 			safeBind(schema.getCollection<RawTeamObject>('Teams').find('id = :id'), {
-				id: newTeamObject.id
+				id: newTeamObject.id,
 			})
 		);
 

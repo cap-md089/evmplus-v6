@@ -8,10 +8,11 @@
 			"program": "${workspaceFolder}/dist/index.js",
 			"sourceMaps": true,
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
-			"skipFiles": ["node_modules/**/*.js", "<node_internals>/**/*.js"],
+			// "skipFiles": ["**/*.js", "<node_internals>/**/*.js"],
 			"env": {
 				"NODE_ENV": "development"
-			}
+			},
+			"runtimeVersion": "13.14.0"
 		},
 		{
 			"type": "node",

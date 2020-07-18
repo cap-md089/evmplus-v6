@@ -1,36 +1,60 @@
-import { CAPMemberObject } from 'common-lib';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	asyncErrorHandler,
-	CAPMemberClasses,
-	MemberRequest,
-	streamAsyncGeneratorAsJSONArrayTyped
-} from '../../../lib/internals';
+	always,
+	api,
+	asyncIterFilter,
+	asyncIterHandler,
+	asyncIterMap,
+	asyncLeft,
+	asyncRight,
+	Either,
+	EitherObj,
+	errorGenerator,
+	get,
+	hasOneDutyPosition,
+	isRioux,
+	Member,
+	Right,
+	ServerError,
+	SessionType,
+} from 'common-lib';
+import { getMembers, PAM } from 'server-common';
 
-export default asyncErrorHandler(async (req: MemberRequest, res) => {
-	if (
-		!req.member.hasDutyPosition([
+export const func: ServerAPIEndpoint<api.member.flight.FlightMembersFull> = PAM.RequiresMemberType(
+	'CAPNHQMember',
+	'CAPProspectiveMember'
+)(
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		(hasOneDutyPosition([
 			'Cadet Flight Commander',
 			'Cadet Flight Sergeant',
 			'Cadet Commander',
-			'Cadet Deputy Commander'
+			'Cadet Deputy Commander',
 		])
-	) {
-		res.status(403);
-		return res.end();
-	}
+			? asyncRight(req, errorGenerator('Could not process request'))
+			: asyncLeft<ServerError, typeof req>({
+					type: 'OTHER',
+					code: 403,
+					message: 'Member does not have permission to do that',
+			  })
+		)
+			.map(() => getMembers(req.mysqlx)(req.account))
+			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
+			.map(asyncIterMap(get('value')))
+			.map(asyncIterFilter(mem => !mem.seniorMember))
+			.map(
+				asyncIterFilter(
+					isRioux(req.member)
+						? always(true)
+						: hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(
+								req.member
+						  )
+						? mem => mem.flight === req.member.flight && mem.flight !== null
+						: always(true)
+				)
+			)
+			.map(asyncIterHandler(errorGenerator('Could not get member ID')))
+	)
+);
 
-	await streamAsyncGeneratorAsJSONArrayTyped<CAPMemberClasses, CAPMemberObject>(
-		res,
-		req.account.getMembers(),
-		mem => {
-			if (
-				(req.member.hasDutyPosition(['Cadet Commander', 'Cadet Deputy Commander']) &&
-					!mem.seniorMember) ||
-				(mem.flight === req.member.flight && mem.flight !== null)
-			) {
-				return mem.toRaw();
-			}
-			return false;
-		}
-	);
-});
+export default func;

@@ -1,126 +1,106 @@
 import {
-	AccountObject,
+	AsyncRepr,
+	ServerAPIEndpoint,
+	ServerAPIRequestParameter,
+	ServerEither,
+} from 'auto-client-api';
+import {
+	always,
 	api,
+	AsyncEither,
+	asyncIterMap,
 	asyncRight,
-	just,
-	MaybeObj,
-	Member,
-	none,
-	stringifyMemberReference
+	AttendanceRecord,
+	canMaybeManageEvent,
+	Either,
+	errorGenerator,
+	Maybe,
+	memoize,
+	Permissions,
+	RawEventObject,
 } from 'common-lib';
 import {
-	Account,
-	asyncEitherHandler2,
-	Event,
-	memberRequestTransformer,
+	getAccount,
+	getAttendanceForEvent,
+	getCAPAccountsForORGID,
+	getEvent,
+	getFullPointsOfContact,
+	getOrgName,
+	getRegistry,
 	resolveReference,
-	serverErrorGenerator,
-	SessionType
-} from '../../../lib/internals';
+} from 'server-common';
 
-const inList = (
-	member: Member,
-	organizations: {
-		[key: string]: AccountObject;
-	}
-): boolean => {
-	for (const account in organizations) {
-		if (member.type === 'CAPNHQMember') {
-			if (
-				organizations[account].mainOrg === member.orgid ||
-				organizations[account].orgIDs.includes(member.orgid)
-			) {
-				return true;
-			}
-		} else if (member.type === 'CAPProspectiveMember') {
-			if (account === member.accountID) {
-				return true;
-			}
-		}
-	}
-
-	return false;
-};
-
-export default asyncEitherHandler2<api.events.events.GetEventViewerData, { id: string }>(r =>
-	asyncRight(r, serverErrorGenerator('Could not get event information'))
-		.flatMap(req => Account.RequestTransformer(req))
-		.flatMap(req => memberRequestTransformer(SessionType.REGULAR, false)(req))
-		.flatMap<api.events.events.EventViewerData>(req =>
-			Event.GetEither(req.params.id, req.account, req.mysqlx)
-				.setErrorValue(serverErrorGenerator('Could not get event information'))
-				.map(async event => {
-					let isValidMember = false;
-
-					if (req.member.isSome()) {
-						const member = req.member.some();
-
-						for await (const account of member.getAccounts()) {
-							if (account.id === req.account.id) {
-								isValidMember = true;
-							}
-						}
-					}
-
-					return [isValidMember, event] as [boolean, Event];
-				})
-				.map(async ([isValidMember, event]) => {
-					const attendees: { [key: string]: MaybeObj<Member> } = {};
-					const organizations: { [key: string]: AccountObject } = {};
-
-					if (
-						event.privateAttendance &&
-						!req.member
-							.map(
-								m =>
-									event.isPOC(m) ||
-									(event.teamID !== null
-										? m.teamIDs.includes(event.teamID)
-										: false)
+export const getFullEventInformation = (
+	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>
+) => (event: RawEventObject): ServerEither<AsyncRepr<api.events.events.EventViewerData>> =>
+	AsyncEither.All([
+		asyncRight(
+			getOrgName({
+				byId: always(memoize(getAccount(req.mysqlx))),
+				byOrgid: always(memoize(getCAPAccountsForORGID(req.mysqlx))),
+			})(req.mysqlx)(req.account),
+			errorGenerator('Could not get stuff')
+		).flatMap(orgNameGetter =>
+			getAttendanceForEvent(req.mysqlx)(event).map(
+				asyncIterMap(record =>
+					resolveReference(req.mysqlx)(req.account)(record.memberID)
+						.flatMap(member =>
+							orgNameGetter(member).map(orgName => ({
+								member: Maybe.some(member),
+								record,
+								orgName,
+							}))
+						)
+						.leftFlatMap(
+							always(
+								Either.right({
+									member: Maybe.none(),
+									record,
+									orgName: Maybe.none(),
+								})
 							)
-							.orElse(false)
-							.some()
-					) {
-						return {
-							event: event.toRaw(null),
-							attendees,
-							organizations
-						};
-					}
-					const attendance = event.getAttendance();
+						)
+				)
+			)
+		),
+		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
+	]).map<AsyncRepr<api.events.events.EventViewerData>>(([attendees, pointsOfContact]) => ({
+		event,
+		attendees,
+		pointsOfContact,
+	}));
 
-					if (isValidMember) {
-						for (const attendee of attendance) {
-							const ref = stringifyMemberReference(attendee.memberID);
+export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
+	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(event =>
+		canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)
+			? getFullEventInformation(req)(event)
+			: AsyncEither.All([
+					getRegistry(req.mysqlx)(req.account),
+					getAttendanceForEvent(req.mysqlx)(event),
+					getFullPointsOfContact(req.mysqlx)(req.account)(
+						event.pointsOfContact.map(poc => ({
+							...poc,
+							email: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.email : '',
+							phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
+						}))
+					),
+			  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
+					([registry, attendees, pointsOfContact]) => ({
+						event,
+						attendees:
+							event.privateAttendance &&
+							!canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+								? []
+								: asyncIterMap((record: AttendanceRecord) =>
+										Either.right({
+											member: Maybe.none(),
+											record,
+											orgName: Maybe.some(registry.Website.Name),
+										})
+								  )(attendees),
+						pointsOfContact,
+					})
+			  )
+	);
 
-							if (!attendees[ref]) {
-								try {
-									const member = await resolveReference(
-										attendee.memberID,
-										req.account,
-										req.mysqlx,
-										true
-									);
-
-									attendees[ref] = just(member.toRaw());
-
-									if (!inList(member, organizations)) {
-										for await (const account of member.getMainAccounts()) {
-											organizations[account.id] = account.toRaw();
-										}
-									}
-								} catch (e) {
-									attendees[ref] = none();
-								}
-							}
-						}
-					}
-
-					return {
-						event: event.toRaw(isValidMember ? req.member.some() : null),
-						attendees,
-						organizations
-					};
-				})
-		)
-);
+export default func;

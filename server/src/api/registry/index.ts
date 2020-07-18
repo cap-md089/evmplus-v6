@@ -1,28 +1,16 @@
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import * as express from 'express';
-import {
-	Account,
-	leftyMemberMiddleware,
-	leftyPermissionMiddleware,
-	RegistryValueValidator,
-	Validator
-} from '../../lib/internals';
-import { leftyTokenMiddleware } from '../formtoken';
-// CRUD functions
+import { endpointAdder } from '../../lib/API';
+// APIs
 import get from './get';
 import set from './set';
 
 const router = express.Router();
 
-router.use(Account.ExpressMiddleware);
+const adder = endpointAdder(router) as () => () => void;
 
-router.get('/', get);
-router.post(
-	'/',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	leftyPermissionMiddleware('RegistryEdit'),
-	Validator.LeftyPartialBodyExpressMiddleware(RegistryValueValidator),
-	set
-);
+addAPI(Validator, adder, get);
+addAPI(Validator, adder, set);
 
 export default router;

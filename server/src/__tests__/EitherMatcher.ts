@@ -47,7 +47,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -57,7 +57,7 @@ expect.extend({
 					received.value
 				)}`;
 			},
-			pass: this.isNot ? received.direction === 'left' : received.direction === 'right'
+			pass: this.isNot ? received.direction === 'left' : received.direction === 'right',
 		};
 	},
 	// @ts-ignore
@@ -67,7 +67,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -76,14 +76,14 @@ expect.extend({
 				message() {
 					return `Value is right: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
 				message() {
 					return `Value is left: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -101,7 +101,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	// @ts-ignore
@@ -111,7 +111,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -120,14 +120,14 @@ expect.extend({
 				message() {
 					return `Value is right: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
 				message() {
 					return `Value is left: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -145,7 +145,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	toBeLeft(received) {
@@ -154,7 +154,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -164,7 +164,7 @@ expect.extend({
 					received.value
 				)}`;
 			},
-			pass: this.isNot ? received.direction === 'right' : received.direction === 'left'
+			pass: this.isNot ? received.direction === 'right' : received.direction === 'left',
 		};
 	},
 	// @ts-ignore
@@ -174,7 +174,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -183,14 +183,14 @@ expect.extend({
 				message() {
 					return `Value is right: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
 				message() {
 					return `Value is left: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -208,7 +208,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	// @ts-ignore
@@ -218,7 +218,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid EitherObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -227,14 +227,14 @@ expect.extend({
 				message() {
 					return `Value is left: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'right') {
 			return {
 				message() {
 					return `Value is right: ${JSON.stringify(received.value)}`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -252,7 +252,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	toBeSome(received) {
@@ -261,7 +261,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid MaybeObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -269,7 +269,7 @@ expect.extend({
 			message: () => {
 				return `Value does ${this.isNot ? '' : 'not '}have a value`;
 			},
-			pass: this.isNot ? received.hasValue : !received.hasValue
+			pass: this.isNot ? received.hasValue : !received.hasValue,
 		};
 	},
 	// @ts-ignore
@@ -279,7 +279,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid MaybeObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -288,14 +288,14 @@ expect.extend({
 				message() {
 					return `Maybe object has value, expected none`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && !received.hasValue) {
 			return {
 				message() {
 					return `Maybe object is none, expected some`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -313,7 +313,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	// @ts-ignore
@@ -323,7 +323,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid MaybeObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -332,14 +332,14 @@ expect.extend({
 				message() {
 					return `Maybe object has value, expected none`;
 				},
-				pass: false
+				pass: false,
 			};
 		} else if (!this.isNot && !received.hasValue) {
 			return {
 				message() {
 					return `Maybe object is none, expected some`;
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -357,7 +357,7 @@ expect.extend({
 		// The test should therefore always pass, that means it needs to be
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
-			pass: !this.isNot
+			pass: !this.isNot,
 		};
 	},
 	toBeNone(received) {
@@ -366,7 +366,7 @@ expect.extend({
 				message() {
 					return 'Value received is not a valid MaybeObj';
 				},
-				pass: false
+				pass: false,
 			};
 		}
 
@@ -374,7 +374,7 @@ expect.extend({
 			message: () => {
 				return `Value does ${this.isNot ? 'not ' : ''}have a value`;
 			},
-			pass: this.isNot ? !received.hasValue : received.hasValue
+			pass: this.isNot ? !received.hasValue : received.hasValue,
 		};
-	}
+	},
 });

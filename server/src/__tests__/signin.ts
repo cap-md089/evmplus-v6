@@ -1,25 +1,18 @@
 import { Schema, Session } from '@mysql/xdevapi';
-import { fromValue, MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
+import { MemberCreateError, SigninReturn, SuccessfulSigninReturn } from 'common-lib';
 import * as request from 'supertest';
 import { default as conf, default as conftest } from '../conf.test';
-import getServer, { ServerConfiguration } from '../getServer';
-import {
-	Account,
-	addUserAccount,
-	addUserAccountCreationToken,
-	getTestTools2,
-	validateUserAccountCreationToken
-} from '../lib/internals';
+import getServer, { ServerInitializationOptions } from '../getServer';
 
 const signinInformation = {
 	username: 'ariouxTest',
 	password: 'aPasswordThatSu><10',
-	recaptcha: ''
+	recaptcha: '',
 };
 
 describe('/api', () => {
 	describe('/signin', () => {
-		let server: ServerConfiguration;
+		let server: ServerInitializationOptions;
 		let account: Account;
 		let schema: Schema;
 		let session: Session;
@@ -33,7 +26,7 @@ describe('/api', () => {
 
 			const token = await addUserAccountCreationToken(schema, {
 				id: 535799,
-				type: 'CAPNHQMember'
+				type: 'CAPNHQMember',
 			});
 			const memberReference = await validateUserAccountCreationToken(schema, token);
 
@@ -51,14 +44,8 @@ describe('/api', () => {
 
 		afterAll(async () => {
 			await Promise.all([
-				schema
-					.getCollection('UserAccountInfo')
-					.remove('member.id = 535799')
-					.execute(),
-				schema
-					.getCollection('UserAccountTokens')
-					.remove('member.id = 535799')
-					.execute()
+				schema.getCollection('UserAccountInfo').remove('member.id = 535799').execute(),
+				schema.getCollection('UserAccountTokens').remove('member.id = 535799').execute(),
 			]);
 
 			await sessionStorage.close();
@@ -96,7 +83,7 @@ describe('/api', () => {
 				.post('/api/signin')
 				.send({
 					...signinInformation,
-					password: 'incorrect'
+					password: 'incorrect',
 				})
 				.set('Accept', 'application/json')
 				.set('Content-type', 'application/json')

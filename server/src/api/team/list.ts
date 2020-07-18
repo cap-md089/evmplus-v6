@@ -1,27 +1,48 @@
-import { FullTeamObject, MemberReference, TeamPublicity } from 'common-lib';
-import { Response } from 'express';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	asyncErrorHandler,
-	ConditionalMemberRequest,
-	streamAsyncGeneratorAsJSONArrayTyped,
-	Team
-} from '../../lib/internals';
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	call,
+	Either,
+	EitherObj,
+	FullTeamObject,
+	get,
+	isPartOfTeam,
+	Maybe,
+	MaybeObj,
+	pipe,
+	RawTeamObject,
+	Right,
+	ServerError,
+	SessionType,
+	TeamPublicity,
+	User,
+} from 'common-lib';
+import { expandTeam, getTeamObjects, httpStripTeamObject, PAM } from 'server-common';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: Response) => {
-	const memRef: MemberReference = !req.member ? { type: 'Null' } : req.member.getReference();
+const isTeamMemberOrLeaderIfPrivate = (user: MaybeObj<User>) => (team: FullTeamObject) =>
+	team.visibility === TeamPublicity.PRIVATE
+		? pipe(
+				Maybe.map<User, (team: RawTeamObject) => boolean>(isPartOfTeam),
+				Maybe.map<(team: RawTeamObject) => boolean, boolean>(call(team)),
+				Maybe.orSome(false)
+		  )(user)
+		: true;
 
-	await streamAsyncGeneratorAsJSONArrayTyped<Team, FullTeamObject>(
-		res,
-		req.account.getTeams(),
-		team => {
-			if (team.visibility === TeamPublicity.PRIVATE) {
-				if (team.isMemberOrLeader(memRef)) {
-					return team.toFullRaw(req.member);
-				} else {
-					return false;
-				}
-			}
-			return team.toFullRaw(req.member);
-		}
-	);
-});
+export const func: ServerAPIEndpoint<api.team.ListTeams> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getTeamObjects(req.mysqlx)(req.account)
+		.map(asyncIterMap(expandTeam(req.mysqlx)(req.account)))
+		.map(
+			asyncIterFilter<EitherObj<ServerError, FullTeamObject>, Right<FullTeamObject>>(
+				Either.isRight
+			)
+		)
+		.map(asyncIterMap<Right<FullTeamObject>, FullTeamObject>(get('value')))
+		.map(asyncIterFilter(isTeamMemberOrLeaderIfPrivate(req.member)))
+		.map(asyncIterMap(httpStripTeamObject(req.member)))
+);
+
+export default func;

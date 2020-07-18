@@ -1,14 +1,18 @@
-import { HTTPRequestMethod, RawAuditLogItem } from 'common-lib';
+import { HTTPRequestMethod, Maybe, RawAuditLogItem } from 'common-lib';
 import { NextFunction, Response } from 'express';
-import { ConditionalMemberRequest } from './internals';
+import { PAM } from 'server-common';
 
-export default (req: ConditionalMemberRequest, res: Response, next: NextFunction) => {
+export default (
+	req: PAM.BasicMaybeMemberRequest | PAM.BasicMemberRequest,
+	res: Response,
+	next: NextFunction
+) => {
 	const item: RawAuditLogItem = {
 		accountID: req.account.id,
-		actor: req.member ? req.member.getReference() : { type: 'Null' },
+		actor: 'hasValue' in req.member ? req.member : Maybe.some(req.member),
 		method: req.method as HTTPRequestMethod,
 		target: req._originalUrl,
-		timestamp: Date.now()
+		timestamp: Date.now(),
 	};
 
 	const audits = req.mysqlx.getCollection<RawAuditLogItem>('Audits');

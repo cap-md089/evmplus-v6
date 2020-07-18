@@ -1,65 +1,53 @@
-import { api, asyncLeft, asyncRight, EventStatus, none } from 'common-lib';
+import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
-	Account,
-	asyncEitherHandler2,
-	BasicMemberRequest,
-	CAPNHQUser,
-	Event,
-	EventValidator,
-	memberRequestTransformer,
-	serverErrorGenerator,
-	SessionType
-} from '../../../lib/internals';
-import { tokenTransformer } from '../../formtoken';
+	always,
+	api,
+	canManageEvent,
+	Maybe,
+	NewEventObject,
+	Permissions,
+	RawEventObject,
+	SessionType,
+	Validator,
+} from 'common-lib';
+import { getEvent, getFullEventObject, PAM, saveEventFunc } from 'server-common';
+import { validateRequest } from '../../../lib/requestUtils';
 
-export default asyncEitherHandler2<api.events.events.Set, { id: string }>(req =>
-	asyncRight(req, serverErrorGenerator('Could not update event'))
-		.flatMap(r => Account.RequestTransformer(r))
-		.flatMap(r => memberRequestTransformer(SessionType.REGULAR, true)(r))
-		.flatMap(r => tokenTransformer(r))
-		.flatMap<BasicMemberRequest<{ id: string }>>(r =>
-			r.member.hasPermission('ManageEvent') ||
-			(r.member instanceof CAPNHQUser &&
-				r.member.hasDutyPosition([
-					'Operations Officer',
-					'Squadron Activities Officer',
-					'Activities Officer',
-					'Cadet Operations Officer',
-					'Cadet Operations NCO',
-					'Cadet Activities Officer',
-					'Cadet Activities NCO'
-				]))
-				? asyncRight(r, serverErrorGenerator('Could not create new event'))
-				: asyncLeft({
-						error: none<Error>(),
-						message: 'Member does not have permission to perform that action',
-						code: 403
-				  })
-		)
-		.flatMap(r => EventValidator.partialTransform(r))
-		.map(r => ({
-			...r,
-			body: {
-				...r.body,
-				// We don't want those without the proper permissions to publish an event
-				// they don't have the permission to publish
-				// This allows for cadets to have responsibility but still be verified by
-				// senior members
-				status:
-					r.member.hasPermission('ManageEvent') ||
-					(r instanceof CAPNHQUser &&
-						r.member.hasDutyPosition([
-							'Operations Officer',
-							'Squadron Activities Officer',
-							'Activities Officer'
-						]))
-						? r.body.status
-						: EventStatus.DRAFT
-			}
-		}))
-		.flatMap(r =>
-			Event.GetEither(r.params.id, r.account, r.mysqlx)
-				.tap(event => event.set(r.body, r.account, r.mysqlx, r.member))
-				.map(event => event.save())
-		)
+const partialEventValidator = Validator.Partial(
+	(validator<NewEventObject>(Validator) as Validator<NewEventObject>).rules
 );
+
+export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.Set> = (
+	now = Date.now
+) =>
+	PAM.RequireSessionType(SessionType.REGULAR)(request =>
+		validateRequest(partialEventValidator)(request).flatMap(req =>
+			getEvent(req.mysqlx)(req.account)(req.params.id)
+				.filter(canManageEvent(Permissions.ManageEvent.ADDDRAFTEVENTS)(req.member), {
+					type: 'OTHER',
+					code: 403,
+					message: 'Member does not have permission to perform that action',
+				})
+				.map<[RawEventObject, RawEventObject]>(event => [
+					{
+						...event,
+						...req.body,
+						status: canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+							? req.body.status ?? event.status
+							: event.status,
+					},
+					event,
+				])
+				.tap(([newEvent, oldEvent]) => {
+					console.log(newEvent);
+				})
+				.flatMap(([newEvent, oldEvent]) =>
+					saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
+						newEvent
+					).map(always(newEvent))
+				)
+				.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
+		)
+	);
+
+export default func();

@@ -1,35 +1,42 @@
 import * as mysql from '@mysql/xdevapi';
-import * as bodyParser from 'body-parser';
-import { left, MemberUpdateEventEmitter } from 'common-lib';
+import { addAPI } from 'auto-client-api';
+import { MemberUpdateEventEmitter, ServerConfiguration, Validator } from 'common-lib';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as logger from 'morgan';
+import { MySQLRequest } from 'server-common';
+// API Routers
 import accountcheck from './api/accountcheck';
 import check from './api/check';
 import echo from './api/echo';
-import clienterror, { ClientErrorValidator } from './api/errors/clienterror';
-import geterrors from './api/errors/geterrors';
-import markerrordone from './api/errors/markerrordone';
+import errors from './api/errors';
 import servererror from './api/errors/servererror';
 import events from './api/events';
-import filerouter from './api/files';
+import files from './api/files';
 import { getFormToken } from './api/formtoken';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
-import members from './api/member';
+import member from './api/member';
 import notifications from './api/notifications';
 import registry from './api/registry';
 import signin from './api/signin';
+import tasks from './api/tasks';
 import team from './api/team';
-import { Configuration } from './conf';
-import {
-	Account,
-	leftyConditionalMemberMiddleware,
-	MySQLMiddleware,
-	MySQLRequest,
-	Validator
-} from './lib/internals';
+// Server libraries
+import { endpointAdder } from './lib/API';
 
-export default async (conf: typeof Configuration, session?: mysql.Session) => {
+export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
+	if (!mysqlConn) {
+		mysqlConn = await mysql.getClient(
+			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
+			{
+				pooling: {
+					enabled: true,
+					maxSize: conf.DB_POOL_SIZE,
+				},
+			}
+		);
+	}
+
 	const router: express.Router = express.Router();
 
 	const updateEmitter: MemberUpdateEventEmitter = new EventEmitter();
@@ -37,95 +44,74 @@ export default async (conf: typeof Configuration, session?: mysql.Session) => {
 	/**
 	 * Use API Routers
 	 */
-	router.use('*', MySQLMiddleware(conf, updateEmitter));
+	router.use(
+		'/api',
+		async (request: express.Request, res: express.Response, next: express.NextFunction) => {
+			const req = (request as unknown) as MySQLRequest;
 
-	router.use((req: MySQLRequest, _, next) => {
-		req._originalUrl = req.originalUrl;
-		req.originalUrl = 'http' + (req.secure ? 's' : '') + '://' + req.hostname + req.originalUrl;
-		next();
-	});
+			try {
+				const session = await mysqlConn?.getSession()!;
 
-	if (!conf.testing) {
+				req.mysqlx = session.getSchema(conf.DB_SCHEMA);
+				req.memberUpdateEmitter = updateEmitter;
+				req.mysqlxSession = session;
+				req.configuration = conf;
+				req._originalUrl = req.originalUrl;
+
+				next();
+			} catch (e) {
+				console.error(e);
+				res.status(500);
+				res.end();
+			}
+		}
+	);
+
+	if (conf.NODE_ENV !== 'test') {
 		router.use(logger('dev'));
 	}
 
-	router.use('/files', filerouter);
+	router.use(errors);
+	router.use(events);
+	router.use(files);
+	router.use(member);
+	router.use(notifications);
+	router.use(registry);
+	router.use(tasks);
+	router.use(team);
 
-	router.use(
-		bodyParser.json({
-			strict: false
-		})
-	);
+	const adder = endpointAdder(router) as () => () => void;
 
-	router.use((req, res, next) => {
-		if (typeof req.body !== 'undefined' && req.body === 'teapot') {
-			res.status(418);
-			res.end();
-		} else if (typeof req.body !== 'object') {
-			res.status(400);
-			return res.json(
-				left({
-					code: 400,
-					error:
-						'Body is not recognized as properly formatted JSON. Either the JSON is invalid or a "content-type" header is missing'
-				})
-			);
-		} else {
-			next();
+	addAPI(Validator, adder, signin);
+	addAPI(Validator, adder, getFormToken);
+	addAPI(Validator, adder, getSlideshowImageIDs);
+	addAPI(Validator, adder, check);
+	addAPI(Validator, adder, accountcheck);
+	addAPI(Validator, adder, echo);
+
+	router.use((servererror as unknown) as express.ErrorRequestHandler);
+
+	router.use('/api', async (request, response) => {
+		const req = (request as unknown) as MySQLRequest;
+
+		if (req.mysqlxSession) {
+			await req.mysqlxSession.close();
 		}
+
+		response.status(404);
+		response.json({
+			direction: 'left',
+			value: {
+				type: 'OTHER',
+				code: 404,
+				message: 'API not found',
+			},
+		});
 	});
-
-	router.post('/signin', Account.LeftyExpressMiddleware, signin);
-
-	router.get('/token', getFormToken);
-
-	router.get(
-		'/banner',
-		Account.LeftyExpressMiddleware,
-		leftyConditionalMemberMiddleware,
-		getSlideshowImageIDs
-	);
-
-	router.use('/registry', registry);
-
-	router.get('/accountcheck', Account.LeftyExpressMiddleware, accountcheck);
-
-	router.post('/echo', echo);
-
-	router.use('/check', Account.LeftyExpressMiddleware, leftyConditionalMemberMiddleware, check);
-
-	router.use('/event', events);
-
-	router.use('/team', team);
-
-	router.use('/member', Account.LeftyExpressMiddleware, members(updateEmitter));
-
-	router.use('/notifications', notifications);
-
-	router.post(
-		'/clienterror',
-		Account.LeftyExpressMiddleware,
-		leftyConditionalMemberMiddleware,
-		Validator.LeftyBodyExpressMiddleware(ClientErrorValidator),
-		clienterror
-	);
-
-	router.get('/errors', geterrors);
-	router.post('/errors', markerrordone);
-
-	router.use('*', (req, res) => {
-		res.status(404);
-		res.end();
-	});
-
-	router.use(
-		Account.LeftyExpressMiddleware,
-		leftyConditionalMemberMiddleware,
-		(servererror as unknown) as express.ErrorRequestHandler
-	);
 
 	return {
 		router,
-		capwatchEmitter: updateEmitter
+		capwatchEmitter: updateEmitter,
+		mysqlConn,
 	};
 };

@@ -1,10 +1,8 @@
 import { Schema, Session } from '@mysql/xdevapi';
 import { Server } from 'http';
 import * as request from 'supertest';
-import { validToken } from '../../api/formtoken';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
-import { Account, CAPNHQUser, getTestTools2 } from '../../lib/internals';
 import '../EitherMatcher';
 import { addAccount, addUser, getUser, prepareBasicPostRequest } from '../TestUtils';
 
@@ -53,7 +51,7 @@ describe('form tokens', () => {
 							prepareBasicPostRequest(
 								conftest,
 								{
-									token: body.value
+									token: body.value,
 								},
 								session,
 								'/api/formtoken'

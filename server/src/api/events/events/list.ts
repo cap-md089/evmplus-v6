@@ -1,13 +1,8 @@
-import * as express from 'express';
-import {
-	asyncErrorHandler,
-	ConditionalMemberRequest,
-	Event,
-	streamAsyncGeneratorAsJSONArray
-} from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, asyncRight, errorGenerator } from 'common-lib';
+import { getSortedEvents } from 'server-common';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: express.Response) => {
-	await streamAsyncGeneratorAsJSONArray<Event>(res, req.account.getEvents(), e =>
-		JSON.stringify(e.toRaw(req.member))
-	);
-});
+export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
+	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'));
+
+export default func;

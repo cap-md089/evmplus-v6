@@ -1,193 +1,117 @@
-import * as aws from 'aws-sdk';
-import { api, EmailSentType, just, left, none, right } from 'common-lib';
+import { Schema } from '@mysql/xdevapi';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	addUserAccountCreationToken,
-	asyncEitherHandler,
-	BasicSimpleValidatedRequest,
-	CAPNHQMember,
-	resolveReference,
-	Validator,
-	verifyCaptcha
-} from '../../../../lib/internals';
+	AccountObject,
+	always,
+	api,
+	AsyncEither,
+	asyncRight,
+	CAPMemberObject,
+	CAPNHQMemberObject,
+	EmailSentType,
+	errorGenerator,
+	getFullMemberName,
+	Member,
+	RegistryValues,
+} from 'common-lib';
+import { CAP, getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
 
-interface RequestParameters {
-	capid: number;
-	email: string;
-	recaptcha: string;
-}
+const hasEmail = (email: string) => (member: CAPMemberObject) =>
+	!!(
+		(member.contact.CADETPARENTEMAIL.PRIMARY &&
+			member.contact.CADETPARENTEMAIL.PRIMARY.toLowerCase() === email) ||
+		(member.contact.CADETPARENTEMAIL.SECONDARY &&
+			member.contact.CADETPARENTEMAIL.SECONDARY.toLowerCase() === email) ||
+		(member.contact.CADETPARENTEMAIL.EMERGENCY &&
+			member.contact.CADETPARENTEMAIL.EMERGENCY.toLowerCase() === email) ||
+		(member.contact.EMAIL.PRIMARY && member.contact.EMAIL.PRIMARY.toLowerCase() === email) ||
+		(member.contact.EMAIL.SECONDARY &&
+			member.contact.EMAIL.SECONDARY.toLowerCase() === email) ||
+		(member.contact.EMAIL.EMERGENCY && member.contact.EMAIL.EMERGENCY.toLowerCase() === email)
+	);
 
-export const nhqRequestValidator = new Validator<RequestParameters>({
-	capid: {
-		validator: Validator.Number
-	},
-	email: {
-		validator: Validator.String
-	},
-	recaptcha: {
-		validator: Validator.String
-	}
-});
+export const getProperEmailAndSendType = (schema: Schema) => (email: string) => (id: number) => (
+	member: CAPNHQMemberObject
+) =>
+	CAP.getBirthday(schema)(member)
+		.map<[string | undefined, EmailSentType]>(birthday =>
+			+birthday > +new Date() - 13 * 365 * 24 * 3600 * 1000
+				? [
+						member.contact.CADETPARENTEMAIL.PRIMARY ||
+							member.contact.CADETPARENTEMAIL.SECONDARY ||
+							member.contact.CADETPARENTEMAIL.EMERGENCY,
+						EmailSentType.TOPARENT,
+				  ]
+				: [email, EmailSentType.TOCADET]
+		)
+		.filter((emailInfo): emailInfo is [string, EmailSentType] => !!emailInfo[0], {
+			type: 'OTHER',
+			code: 400,
+			message: 'There is no associated cadet parent email for you',
+		})
+		.map<[string, EmailSentType]>(i => i as [string, EmailSentType])
+		.flatMap(([newEmail, emailType]) =>
+			asyncRight(
+				PAM.addUserAccountCreationToken(schema, {
+					id,
+					type: 'CAPNHQMember',
+				}),
+				errorGenerator('Could not add user account creation token')
+			).map<[string, string, EmailSentType]>(token => [token, newEmail, emailType])
+		);
 
-export default asyncEitherHandler<api.member.account.cap.Request>(
-	async (req: BasicSimpleValidatedRequest<RequestParameters>) => {
-		if (!(await verifyCaptcha(req.body.recaptcha))) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Could not verify reCAPTCHA'
-			});
-		}
+const emailText = (account: AccountObject) => (token: string) => `You're almost there!
+To complete your CAPUnit.com account creation: visit the link below:
+https://${account.id}.capunit.com/finishaccount/${token}`;
 
-		let member: CAPNHQMember;
-		try {
-			member = (await resolveReference(
-				{ id: req.body.capid, type: 'CAPNHQMember' },
-				req.account,
-				req.mysqlx,
-				true
-			)) as CAPNHQMember;
-		} catch (e) {
-			// need to log failed attempt with req.body.capid and req.body.email here
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'CAPID does not exist or could not be found'
-			});
-		}
+const emailHtml = (account: AccountObject) => (member: Member) => (
+	token: string
+) => `<h2>You're almost there ${getFullMemberName(member)}!</h2>
+<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>
+<p><a href="https://${
+	account.id
+}.capunit.com/finishaccount/${token}">Confirm account creation</a></p>
+<h4>Please respond to this email if you have questions regarding your CAPUnit.com account. If you did not request this account, simply disregard this email.</h4>`;
 
-		let email = req.body.email.toLowerCase();
-		let emailSentType = EmailSentType.TOCADET;
+const writeEmail = (
+	req: ServerAPIRequestParameter<api.member.account.capnhq.RequestNHQAccount>
+) => (member: Member) => ([[token, email, sentType], registry]: [
+	[string, string, EmailSentType],
+	RegistryValues
+]) =>
+	sendEmail(true)(registry)('CAPUnit.com Account Creation')(email)(
+		emailHtml(req.account)(member)(token)
+	)(emailText(req.account)(token)).map(always(sentType));
 
-		if (
-			!(
-				(member.contact.CADETPARENTEMAIL.PRIMARY &&
-					member.contact.CADETPARENTEMAIL.PRIMARY.toLowerCase() === email) ||
-				(member.contact.CADETPARENTEMAIL.SECONDARY &&
-					member.contact.CADETPARENTEMAIL.SECONDARY.toLowerCase() === email) ||
-				(member.contact.CADETPARENTEMAIL.EMERGENCY &&
-					member.contact.CADETPARENTEMAIL.EMERGENCY.toLowerCase() === email) ||
-				(member.contact.EMAIL.PRIMARY &&
-					member.contact.EMAIL.PRIMARY.toLowerCase() === email) ||
-				(member.contact.EMAIL.SECONDARY &&
-					member.contact.EMAIL.SECONDARY.toLowerCase() === email) ||
-				(member.contact.EMAIL.EMERGENCY &&
-					member.contact.EMAIL.EMERGENCY.toLowerCase() === email)
-			)
-		) {
-			// need to log failed attempt with req.body.capid and req.body.email here
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Email provided does not match email in database'
-			});
-		}
-
-		if (+member.getDateOfBirth() > +new Date() - 13 * 365 * 24 * 3600 * 1000) {
-			// They are under 13 years of age...
-			// To satisfy COPPA, we need parental consent
-			// As such, we email the parents instead of the cadets
-			// If they create the account, they are consenting
-			emailSentType = EmailSentType.TOPARENT;
-
-			const newEmail =
-				member.contact.CADETPARENTEMAIL.PRIMARY ||
-				member.contact.CADETPARENTEMAIL.SECONDARY ||
-				member.contact.CADETPARENTEMAIL.EMERGENCY;
-
-			if (!newEmail) {
-				return left({
-					code: 400,
-					error: none<Error>(),
-					message: 'There is no associated cadet parent email for you'
-				});
-			}
-
-			email = newEmail;
-		}
-
-		let token;
-		try {
-			token = await addUserAccountCreationToken(req.mysqlx, {
+export const func: (
+	email?: typeof sendEmail
+) => ServerAPIEndpoint<api.member.account.capnhq.RequestNHQAccount> = (
+	emailFunction = sendEmail
+) => request =>
+	asyncRight(request, errorGenerator('Could not create account'))
+		.filter(req => PAM.verifyCaptcha(req.body.recaptcha), {
+			type: 'OTHER',
+			code: 400,
+			message: 'Could not verify reCAPTCHA',
+		})
+		.flatMap(req =>
+			resolveReference(req.mysqlx)(req.account)({
+				type: 'CAPNHQMember' as const,
 				id: req.body.capid,
-				type: 'CAPNHQMember'
-			});
-		} catch (e) {
-			// need to log failed attempt with req.body.capid and req.body.email here
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: e.message
-			});
-		}
+			})
+				.filter(hasEmail(req.body.email), {
+					type: 'OTHER',
+					code: 400,
+					message: 'Email provided does not match email in database',
+				})
+				.flatMap(member =>
+					AsyncEither.All([
+						getProperEmailAndSendType(req.mysqlx)(req.body.email)(req.body.capid)(
+							member
+						),
+						getRegistry(req.mysqlx)(req.account),
+					]).flatMap(writeEmail(req)(member))
+				)
+		);
 
-		// send email here
-		aws.config.update({ region: 'us-east-1' });
-		const thisAccount = req.account.id;
-
-		const subjectmessage = 'CAPUnit.com Account Creation';
-		let htmlmessage =
-			"<h2>You're almost there " +
-			member.memberRank +
-			' ' +
-			member.nameFirst +
-			' ' +
-			member.nameLast +
-			'!</h2>';
-		htmlmessage +=
-			'<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>';
-		htmlmessage +=
-			'<p><a href="https://' +
-			thisAccount +
-			'.capunit.com/finishaccount/' +
-			token +
-			'">Confirm account creation';
-		htmlmessage +=
-			'</a><p><h4>Please respond to this email if you have questions regarding your ';
-		htmlmessage +=
-			'CAPUnit.com account.  If you did not request this account, simply disregard this email.</h4></p>';
-		htmlmessage += 'Sincerely,<br>The CAPUnit.com Support Team';
-		let textmessage = "You're almost there!\n";
-		textmessage += 'To complete your CAPUnit.com account creation, visit the link below:\n';
-		textmessage += `https://${thisAccount}.capunit.com/finishaccount/${token}\n\n`;
-		textmessage += 'Sincerely,\n';
-		textmessage += 'The CAPUnit.com Support Team';
-		const charsetinuse = 'UTF-8';
-
-		const emailParams = {
-			Destination: {
-				BccAddresses: ['capstmarys@gmail.com'],
-				// 	CcAddresses: [''],
-				ToAddresses: [email]
-			},
-			Message: {
-				Body: {
-					Html: { Charset: charsetinuse, Data: htmlmessage },
-					Text: { Charset: charsetinuse, Data: textmessage }
-				},
-				Subject: { Charset: charsetinuse, Data: subjectmessage }
-			},
-			Source: '"CAPUnit.com Support" <support@capunit.com>',
-			ReplyToAddresses: ['"CAPUnit.com Support" <support@capunit.com>']
-		};
-		const SEShandle = new aws.SES({ apiVersion: '2010-12-01' });
-
-		// https://{account.id}.capunit.com/finishaccount/{token}
-		try {
-			const sendPromise = await SEShandle.sendEmail(emailParams).promise();
-			if (!!sendPromise.$response.error) {
-				throw sendPromise.$response.error;
-			}
-		} catch (e) {
-			// need to log failed attempt with req.body.capid and req.body.email here
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Email failed to send'
-			});
-		}
-		// need to log successful attempt with req.body.capid and req.body.email here
-		console.log(token);
-
-		return right(emailSentType);
-	}
-);
+export default func();

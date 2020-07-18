@@ -1,48 +1,64 @@
-import { FileUserAccessControlPermissions } from 'common-lib';
-import * as express from 'express';
+import {
+	BasicMySQLRequest,
+	Either,
+	FileUserAccessControlPermissions,
+	Maybe,
+	MaybeObj,
+	RawFileObject,
+	SessionType,
+	User,
+	userHasFilePermission,
+} from 'common-lib';
 import * as fs from 'fs';
 import { join } from 'path';
-import { Configuration as config } from '../../../conf';
-import { asyncErrorHandler, ConditionalMemberRequest, File } from '../../../lib/internals';
+import { accountRequestTransformer, getFileObject, PAM } from 'server-common';
+import asyncErrorHandler from '../../../lib/asyncErrorHandler';
 
-export default asyncErrorHandler(
-	async (req: ConditionalMemberRequest<{ fileid: string }>, res: express.Response) => {
-		let file: File;
+const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
-		try {
-			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
-		} catch (e) {
-			res.status(404);
+export const func = (createReadStream = fs.createReadStream) =>
+	asyncErrorHandler(async (req: BasicMySQLRequest<{ fileid: string }>, res) => {
+		const fileEither = await accountRequestTransformer(req)
+			.flatMap(PAM.memberRequestTransformer(SessionType.REGULAR, false))
+			.flatMap(request =>
+				getFileObject(true)(req.mysqlx)(request.account)(request.params.fileid).map<
+					[RawFileObject, MaybeObj<User>]
+				>(f => [f, request.member])
+			)
+			.join();
+
+		if (Either.isLeft(fileEither)) {
+			res.status(fileEither.value.code);
 			res.end();
+
+			if (fileEither.value.type === 'CRASH') {
+				throw fileEither.value.error;
+			}
+
+			await req.mysqlxSession.close();
+
 			return;
 		}
 
-		if (
-			!(await file.hasPermission(
-				req.member,
-				req.mysqlx,
-				req.account,
-				FileUserAccessControlPermissions.READ
-			))
-		) {
+		const [file, member] = fileEither.value;
+
+		if (!canReadFile(Maybe.orSome<null | User>(null)(member))(file)) {
 			res.status(403);
 			res.end();
+			await req.mysqlxSession.close();
 			return;
 		}
 
-		const fileRequested = fs.createReadStream(
-			join(config.fileStoragePath, file.accountID + '-' + file.id)
+		const fileRequested = createReadStream(
+			join(req.configuration.DRIVE_STORAGE_PATH, file.accountID + '-' + file.id)
 		);
 
 		res.contentType(file.contentType);
 		res.setHeader('Content-Disposition', 'attachment; filename="' + file.fileName + '"');
 
-		fileRequested
-			.on('data', data => {
-				res.write(data);
-			})
-			.on('end', () => {
-				res.end();
-			});
-	}
-);
+		fileRequested.pipe(res);
+
+		await req.mysqlxSession.close();
+	});
+
+export default func();

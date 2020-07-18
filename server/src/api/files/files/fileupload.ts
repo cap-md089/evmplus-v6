@@ -1,136 +1,110 @@
+import * as Busboy from 'busboy';
 import {
+	AccountObject,
+	Either,
+	FileObject,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
 	FullFileObject,
-	MemberReference,
 	RawFileObject,
-	just
+	SessionType,
+	toReference,
+	User,
+	userHasFilePermission,
 } from 'common-lib';
-import * as express from 'express';
 import * as fs from 'fs';
-import { DateTime } from 'luxon';
-import { lookup } from 'mime-types';
-import { basename, join } from 'path';
+import { join } from 'path';
+import {
+	accountRequestTransformer,
+	expandFileObject,
+	getFileObject,
+	getFilePath,
+	MySQLRequest,
+	PAM,
+} from 'server-common';
 import { v4 as uuid } from 'uuid';
-import { Configuration as config } from '../../../conf';
-import { asyncErrorHandler, File, json, MemberRequest } from '../../../lib/internals';
-import { validRawToken } from '../../formtoken';
-
-const parseHeaders = (lines: string[]) => {
-	const headers: { [key: string]: string } = {};
-	for (const line of lines) {
-		const parts = line.split(': ');
-		const header = parts[0].toLowerCase();
-		headers[header] = parts[1];
-	}
-	return headers;
-};
-
-const endingToMime = (ending: string): string => lookup(ending) || 'application/octet-stream';
+import asyncErrorHandler from '../../../lib/asyncErrorHandler';
+import saveServerError from '../../../lib/saveServerError';
 
 export const isImage = (ending: string): boolean =>
-	['png', 'jpg', 'jpeg', 'gif', 'bmp'].indexOf(ending) > -1;
+	['png', 'jpg', 'jpeg', 'gif', 'bmp'].includes(ending);
 
-const findEnding = (input: Buffer, boundary: string) => {
-	const index = input.length - boundary.length;
-	const testBoundary = input.slice(index).toString();
+const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-	if (testBoundary === boundary) {
-		return index;
-	}
+/*
+	File data plan:
 
-	return input.length;
-};
+	1. Store FILE on disk
+	2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
+	3. MySQL database will store METADATA (Author, filename, etc)
+*/
+export const func = (createWriteStream = fs.createWriteStream) =>
+	asyncErrorHandler(async (req: MySQLRequest<{ parentid?: string }>, res) => {
+		const parentID = req.params.parentid ?? 'root';
 
-fs.exists(config.fileStoragePath, exists => {
-	if (!exists) {
-		fs.mkdirSync(config.fileStoragePath, 0o755);
-	}
-});
+		const reqEither = await accountRequestTransformer(req)
+			.flatMap(PAM.memberRequestTransformer(SessionType.REGULAR, true))
+			.flatMap(request =>
+				getFileObject(false)(req.mysqlx)(request.account)(parentID).map<
+					[User, AccountObject, RawFileObject]
+				>(file => [request.member, request.account, file])
+			)
+			.join();
 
-export default asyncErrorHandler(async (req: MemberRequest, res: express.Response) => {
-	let collectingData = false;
-	let fileName = '';
-	let boundary = '';
-	let writeStream: fs.WriteStream;
+		if (Either.isLeft(reqEither)) {
+			res.status(reqEither.value.code);
+			res.end();
 
-	if (typeof req.headers !== 'undefined' && typeof req.headers.token === 'string') {
-		if (!(await validRawToken(req.mysqlx, req.member, req.headers.token))) {
+			await req.mysqlxSession.close();
+
+			if (reqEither.value.type === 'CRASH') {
+				throw reqEither.value.error;
+			}
+
+			return;
+		}
+
+		const [member, account, parent] = reqEither.value;
+
+		if (
+			typeof req.headers.token !== 'string' ||
+			!(await PAM.isTokenValid(req.mysqlx, member, req.headers.token)) ||
+			!canSaveToFolder(member)(parent)
+		) {
 			res.status(403);
 			res.end();
 			return;
 		}
-	} else {
-		res.status(403);
-		res.end();
-		return;
-	}
 
-	/*
-		File data plan:
+		const id = uuid().replace(/-/g, '');
+		const realFilename = `${account.id}-${id}`;
+		const created = Date.now();
+		const fileWriteStream = createWriteStream(
+			join(req.configuration.DRIVE_STORAGE_PATH, realFilename)
+		);
 
-		1. Store FILE on disk
-		2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
-		3. MySQL database will store METADATA (Author, filename, etc)
-	*/
-	req.on('data', info => {
-		if (typeof info === 'string') {
-			// Handle binary data
-			info = new Buffer(info);
-		}
-		// Start looking for headers
-		if (!collectingData) {
-			// Record headers
-			let headerString = '';
-			let i = 0;
-			while (!(info.slice(i, i + 4).toString() === '\r\n\r\n')) {
-				headerString += String.fromCharCode(info[i++]);
-			}
-			i += 4;
-			// It has the headers recorded; standards say that the headers are defined as ending
-			// when there is a double \r\n
+		const filesCollection = req.mysqlx.getCollection<RawFileObject>('Files');
+		const owner = toReference(member);
 
-			// Get headers
-			const firstLines = headerString.split('\r\n');
+		const busboy = new Busboy({
+			headers: req.headers,
+			limits: {
+				files: 1,
+				fields: 1,
+			},
+		});
 
-			boundary = '\r\n' + firstLines[0] + '--\r\n';
+		req.pipe(busboy);
 
-			const headers = parseHeaders(firstLines);
+		let sentFile = false;
 
-			// Get file name
-			const query = headers['content-disposition']
-				.split(/; ?/)
-				.map(str => str.split(/ ?\= ?/))
-				.filter(pair => pair[0].match(/filename/))[0][1];
-			fileName = basename(JSON.parse(query));
-
-			// Get file ending and mime type
-			const endingArray = fileName.split('.');
-			const ending = endingArray[endingArray.length - 1];
-			let contentType = headers['content-type'];
-			if (!contentType) {
-				contentType = endingToMime(ending);
-			}
-
-			const id = uuid().replace(/-/g, '');
-
-			// Start to write to disk
-			const realFilename = `${req.account.id}-${id}`;
-			writeStream = fs.createWriteStream(join(config.fileStoragePath, realFilename));
-			writeStream.write(info.slice(i, findEnding(info, boundary)));
-
-			collectingData = true;
-
-			const created = +DateTime.utc();
-
-			const filesCollection = req.mysqlx.getCollection<RawFileObject>('Files');
-
-			const reference: MemberReference = req.member.getReference();
+		busboy.on('file', (fieldName, file, fileName, encoding, contentType) => {
+			sentFile = true;
 
 			const uploadedFile: RawFileObject = {
 				kind: 'drive#file',
 				id,
-				accountID: req.account.id,
+				accountID: account.id,
 				comments: '',
 				contentType,
 				created,
@@ -140,44 +114,55 @@ export default asyncErrorHandler(async (req: MemberRequest, res: express.Respons
 				permissions: [
 					{
 						type: FileUserAccessControlType.OTHER,
-						permission: FileUserAccessControlPermissions.READ
-					}
+						permission: FileUserAccessControlPermissions.READ,
+					},
 				],
-				owner: reference,
-				fileChildren: [],
-				parentID: 'root'
+				owner,
+				parentID,
 			};
 
-			// Wait until query is finished and data is written before closing connection
+			file.pipe(fileWriteStream);
+
 			Promise.all([
 				new Promise(resolve => {
-					req.on('end', () => {
-						writeStream.close();
+					file.on('end', () => {
+						fileWriteStream.close();
 						resolve();
 					});
 				}),
-				// Insert into the database metadata
-				filesCollection.add(uploadedFile).execute()
+				filesCollection.add(uploadedFile).execute(),
 			])
 				.then(async () => {
-					const fullFileObject = await File.Get(id, req.account, req.mysqlx);
-					// Return results
-					json<FullFileObject>(res, {
-						...fullFileObject.toRaw(),
-						uploader: just(req.member.toRaw())
-					});
+					const fullFileObject: FullFileObject = await getFileObject(false)(req.mysqlx)(
+						account
+					)(id)
+						.flatMap<FullFileObject>(newFile =>
+							getFilePath(req.mysqlx)(account)(newFile)
+								.map<FileObject>(folderPath => ({
+									...newFile,
+									folderPath,
+								}))
+								.flatMap<FullFileObject>(expandFileObject(req.mysqlx)(account))
+						)
+						.fullJoin();
+
+					res.json(fullFileObject);
+
+					await req.mysqlxSession.close();
 				})
 				.catch(err => {
-					// tslint:disable-next-line:no-console
-					console.log(err);
+					saveServerError(err, req);
 					res.status(500);
 					res.end();
 				});
-		} else {
-			// Adds more data to file. If it finds the ending, it will not get to this section again
-			const newData = info.slice(0, findEnding(info, boundary));
-			writeStream.write(newData);
-		}
-		req.resume();
+		});
+
+		busboy.on('end', () => {
+			if (!sentFile) {
+				res.status(400);
+				res.end();
+			}
+		});
 	});
-});
+
+export default func();

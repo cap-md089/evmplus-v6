@@ -1,50 +1,32 @@
-import { api, just, left, none, PasswordSetResult, right } from 'common-lib';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	addPasswordForUser,
-	asyncEitherHandler,
-	BasicMemberRequest,
+	always,
+	api,
+	asyncRight,
+	Either,
+	errorGenerator,
+	PasswordSetResult,
 	SessionType,
-	setSessionType
-} from '../../lib/internals';
+} from 'common-lib';
+import { PAM } from 'server-common';
 
-const passwordResetErrorMessages = {
-	[PasswordSetResult.COMPLEXITY]: 'Password fails to meet complexity requirements',
-	[PasswordSetResult.IN_HISTORY]: 'Password has been used too recently',
-	[PasswordSetResult.MIN_AGE]: 'Password is not old enough to change',
-	[PasswordSetResult.OK]: '',
-	[PasswordSetResult.SERVER_ERROR]: 'There was an error with the server'
-};
+export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSessionType(
+	// tslint:disable-next-line:no-bitwise
+	SessionType.REGULAR | SessionType.PASSWORD_RESET
+)(request =>
+	asyncRight(request, errorGenerator('Could not reset password for user'))
+		.map(req =>
+			PAM.addPasswordForUser(req.mysqlx, req.session.userAccount.username, req.body.password)
+		)
+		.flatMap<PasswordSetResult>(result => {
+			if (request.session.type === SessionType.PASSWORD_RESET) {
+				return PAM.setSessionType(request.mysqlx, request.session, SessionType.REGULAR).map(
+					always(result)
+				);
+			} else {
+				return Either.right(result);
+			}
+		})
+);
 
-export default asyncEitherHandler<api.member.PasswordReset>(async (req: BasicMemberRequest) => {
-	if (typeof req.body.password !== 'string') {
-		return left({
-			code: 400,
-			error: none<Error>(),
-			message: 'New password is not a string'
-		});
-	}
-
-	try {
-		const result = await addPasswordForUser(req.mysqlx, req.member.username, req.body.password);
-
-		if (result !== PasswordSetResult.OK) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: passwordResetErrorMessages[result]
-			});
-		}
-
-		if (req.member.session.type === SessionType.PASSWORD_RESET) {
-			await setSessionType(req.mysqlx, req.member.session, SessionType.REGULAR).fullJoin();
-		}
-
-		return right(void 0);
-	} catch (e) {
-		return left({
-			code: 500,
-			error: just(e),
-			message: 'Unknown server error'
-		});
-	}
-});
+export default func;

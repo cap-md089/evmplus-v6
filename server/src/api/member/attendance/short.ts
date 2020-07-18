@@ -1,117 +1,50 @@
-import { Schema } from '@mysql/xdevapi';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
+	always,
 	api,
-	fromValue,
-	just,
-	left,
+	asyncEitherIterMap,
+	AsyncIter,
+	asyncIterFilter,
+	asyncIterMap,
+	asyncLeft,
+	asyncRight,
+	Either,
+	EitherObj,
+	errorGenerator,
+	GroupTarget,
+	hasOneDutyPosition,
+	hasPermission,
+	identity,
+	isCAPMember,
+	Maybe,
+	MaybeObj,
+	Member,
 	MemberReference,
-	none,
-	NoSQLDocument,
-	right
+	memoize,
+	Permissions,
+	ServerError,
+	SessionType,
+	toReference,
+	User,
 } from 'common-lib';
 import {
-	Account,
-	areMemberReferencesTheSame,
-	asyncEitherHandler2,
-	CAPMemberClasses,
-	CAPNHQMember,
-	CAPProspectiveMember,
-	collectGenerator,
-	collectResults,
-	Event,
-	findAndBind,
-	MemberRequest,
+	getEvent,
+	getLatestAttendanceForMember,
+	getMembers,
+	PAM,
 	RawAttendanceDBRecord,
-	resolveReference,
-	UserList
-} from '../../../lib/internals';
+} from 'server-common';
+import { expandRecord } from './basic';
 
-export const getAttendanceRecordForMembers = async (
-	member: CAPMemberClasses,
-	references: MemberReference[],
-	account: Account,
-	schema: Schema
-): Promise<api.member.attendance.EventAttendanceRecord[]> => {
-	const attendanceCollection = schema.getCollection<
-		RawAttendanceDBRecord & Required<NoSQLDocument>
-	>('Attendance');
-
-	const records = await Promise.all(
-		references.map(
-			async reference =>
-				[
-					fromValue(
-						(
-							await collectResults(
-								findAndBind(attendanceCollection, {
-									memberID: reference
-								})
-									.sort('departureTime DESC')
-									.limit(1)
-							)
-						)[0]
-					),
-					reference
-				] as const
-		)
-	);
-
-	return Promise.all(
-		records.map(async record => {
-			if (!record[0].hasValue) {
-				const noRecordRecordMember = await (areMemberReferencesTheSame(member, record[1])
-					? member
-					: resolveReference(record[1], account, schema, true));
-
-				return {
-					member: {
-						reference: record[1],
-						name: noRecordRecordMember.getFullName()
-					},
-					event: none<api.member.attendance.EventAttendanceRecordEventInformation>()
-				};
-			}
-
-			const [recordMember, event] = await Promise.all([
-				areMemberReferencesTheSame(member, record[0].value.memberID)
-					? member
-					: resolveReference(record[0].value.memberID, account, schema, true),
-				Event.Get(record[0].value.eventID, account, schema)
-			]);
-
-			return {
-				member: {
-					reference: record[0].value.memberID,
-					name: recordMember.getFullName()
-				},
-				event: just<api.member.attendance.EventAttendanceRecordEventInformation>({
-					id: record[0].value.eventID,
-					startDateTime: event.startDateTime,
-					endDateTime: event.endDateTime,
-					location: event.location,
-					name: event.name,
-					attendanceComments: record[0].value.comments
-				})
-			};
-		})
-	);
-};
-
-enum GroupTarget {
-	NONE,
-	FLIGHT,
-	ACCOUNT
-}
-
-const groupTarget = (member: UserList) => {
-	if (member.hasPermission('AttendanceView', 1)) {
+const groupTarget = (member: User) => {
+	if (hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(member)) {
 		return GroupTarget.ACCOUNT;
 	}
 
-	if (member instanceof CAPNHQMember || member instanceof CAPProspectiveMember) {
+	if (isCAPMember(member)) {
 		if (
 			member.flight !== null &&
-			member.hasDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])
+			hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(member)
 		) {
 			return GroupTarget.FLIGHT;
 		}
@@ -120,24 +53,47 @@ const groupTarget = (member: UserList) => {
 	return GroupTarget.NONE;
 };
 
-export default asyncEitherHandler2<api.member.attendance.Get>(async (req: MemberRequest) => {
-	const group = groupTarget(req.member);
-
-	if (group === GroupTarget.NONE) {
-		return left({
-			error: none<Error>(),
+export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	asyncRight(groupTarget(req.member), errorGenerator('Could not get member attendance'))
+		.filter(target => target !== GroupTarget.NONE, {
+			type: 'OTHER',
+			code: 403,
 			message: 'Member does not have permission to get the attendance for a flight or unit',
-			code: 403
-		});
-	}
+		})
+		.map(target =>
+			asyncIterFilter<EitherObj<ServerError, Member>>(
+				target === GroupTarget.FLIGHT
+					? member => Either.isRight(member) && member.value.flight === req.member.flight
+					: Either.isRight
+			)(getMembers(req.mysqlx)(req.account))
+		)
+		.map(asyncEitherIterMap(toReference))
+		.map<AsyncIter<EitherObj<ServerError, MaybeObj<RawAttendanceDBRecord>>>>(
+			asyncIterMap<
+				EitherObj<ServerError, MemberReference>,
+				EitherObj<ServerError, MaybeObj<RawAttendanceDBRecord>>
+			>(eith =>
+				eith.direction === 'right'
+					? getLatestAttendanceForMember(req.mysqlx)(req.account)(eith.value)
+					: asyncLeft<ServerError, MaybeObj<RawAttendanceDBRecord>>(eith.value)
+			)
+		)
+		.map(
+			asyncEitherIterMap<
+				MaybeObj<RawAttendanceDBRecord>,
+				MaybeObj<api.member.attendance.EventAttendanceRecord>
+			>(rec =>
+				Maybe.isSome(rec)
+					? expandRecord(always(always(memoize(getEvent(req.mysqlx)(req.account)))))(req)(
+							rec.value
+					  )
+							.map(Maybe.some)
+							.cata(Maybe.none, identity)
+					: Maybe.none()
+			)
+		)
+);
 
-	const members = await collectGenerator(req.account.getMembers());
-	const references =
-		group === GroupTarget.FLIGHT
-			? members.filter(mem => req.member.flight === mem.flight).map(mem => mem.getReference())
-			: members.map(mem => mem.getReference());
-
-	return right(
-		await getAttendanceRecordForMembers(req.member, references, req.account, req.mysqlx)
-	);
-});
+export default func;

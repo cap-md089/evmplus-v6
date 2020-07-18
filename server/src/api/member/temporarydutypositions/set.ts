@@ -1,153 +1,66 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
-	just,
-	left,
-	MemberReference,
-	none,
-	right,
-	ShortCAPUnitDutyPosition
+	asyncEither,
+	CAPMember,
+	destroy,
+	errorGenerator,
+	parseStringMemberReference,
+	SessionType,
+	ShortCAPUnitDutyPosition,
+	ShortDutyPosition,
 } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	resolveReference,
-	Validator
-} from '../../../lib/internals';
+import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
+import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
 
-interface SetTemporaryDutyPositions {
-	dutyPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>;
-}
+const getDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) => (duty: string) =>
+	oldPositions.find(({ duty: oldDuty, type }) => duty === oldDuty && type === 'CAPUnit') ?? {
+		type: 'CAPUnit' as const,
+		duty,
+		date: now(),
+	};
 
-const shortCAPWatchDutyPositionValidator = new Validator<Omit<ShortCAPUnitDutyPosition, 'date'>>({
-	duty: {
-		validator: Validator.String
-	},
-	type: {
-		validator: Validator.StrictValue('CAPUnit' as 'CAPUnit')
-	},
-	expires: {
-		validator: Validator.Number
-	}
+const updateDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) => ({
+	duty,
+	expires,
+}: ShortCAPUnitDutyPosition) => ({
+	...getDutyPosition(now)(oldPositions)(duty),
+	expires,
 });
 
-export const setDutyPositionsValidator = new Validator<SetTemporaryDutyPositions>({
-	dutyPositions: {
-		validator: Validator.ArrayOf(shortCAPWatchDutyPositionValidator)
-	}
-});
+const getNewPositions = (now = Date.now) => (
+	newPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>
+) => (oldPositions: ShortDutyPosition[]): ShortDutyPosition[] => [
+	...newPositions.map(updateDutyPosition(now)(oldPositions)),
+	...oldPositions.filter(({ type }) => type !== 'CAPUnit'),
+];
 
-const areDutiesTheSame = (d1: ShortCAPUnitDutyPosition, d2: ShortCAPUnitDutyPosition) =>
-	d1.date === d2.date && d1.duty === d2.duty && d1.expires === d2.expires;
+export const func: () => ServerAPIEndpoint<
+	api.member.temporarydutypositions.SetTemporaryDutyPositions
+> = (now = Date.now) =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission('AssignTemporaryDutyPositions')(req =>
+			asyncEither(
+				parseStringMemberReference(req.params.id),
+				errorGenerator('Could not parse member ID')
+			)
+				.flatMap(resolveReference(req.mysqlx)(req.account))
+				.map<CAPMember>(member => ({
+					...member,
+					dutyPositions: getNewPositions(now)(req.body.dutyPositions)(
+						member.dutyPositions
+					),
+				}))
+				.tap(member => {
+					req.memberUpdateEmitter.emit('memberChange', {
+						member,
+						account: req.account,
+					});
+				})
+				.flatMap(getExtraMemberInformationForCAPMember(req.account))
+				.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
+				.map(destroy)
+		)
+	);
 
-export default asyncEitherHandler<api.member.temporarydutypositions.Set>(
-	async (
-		req: BasicMemberValidatedRequest<SetTemporaryDutyPositions, { id: string; type: string }>
-	) => {
-		let ref: MemberReference;
-		if (req.params.type === 'CAPNHQMember') {
-			if (parseInt(req.params.id, 10) !== parseInt(req.params.id, 10)) {
-				return left({
-					code: 400,
-					error: none<Error>(),
-					message: 'Invalid CAP ID'
-				});
-			}
-
-			ref = {
-				type: 'CAPNHQMember',
-				id: parseInt(req.params.id, 10)
-			};
-		} else if (req.params.type === 'CAPProspectiveMember') {
-			ref = {
-				type: 'CAPProspectiveMember',
-				id: req.params.id
-			};
-		} else {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Invalid member type'
-			});
-		}
-
-		let member;
-		try {
-			member = await resolveReference(ref, req.account, req.mysqlx, true);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find member specified'
-			});
-		}
-
-		const now = Date.now();
-
-		const oldDutyPositions = member.dutyPositions.filter(
-			v => v.type === 'CAPUnit'
-		) as ShortCAPUnitDutyPosition[];
-		const newDutyPositions: ShortCAPUnitDutyPosition[] = [];
-
-		for (const duty of req.body.dutyPositions) {
-			let found = false;
-
-			for (const newDutyPosition of newDutyPositions) {
-				if (newDutyPosition.duty === duty.duty) {
-					newDutyPosition.expires = Math.max(newDutyPosition.expires, duty.expires);
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				newDutyPositions.push({
-					...duty,
-					date: Date.now()
-				});
-			}
-		}
-
-		const oldDutyPositionsDiff: ShortCAPUnitDutyPosition[] = oldDutyPositions.slice();
-		const newDutyPositionsDiff: ShortCAPUnitDutyPosition[] = newDutyPositions.slice();
-
-		for (let i = oldDutyPositions.length - 1; i >= 0; i--) {
-			for (let j = newDutyPositions.length - 1; j >= 0; j--) {
-				if (areDutiesTheSame(oldDutyPositions[i], newDutyPositions[j])) {
-					oldDutyPositionsDiff.splice(i, 1);
-				}
-			}
-		}
-
-		for (let i = newDutyPositions.length - 1; i >= 0; i--) {
-			for (let j = oldDutyPositions.length - 1; j >= 0; j--) {
-				if (areDutiesTheSame(oldDutyPositions[i], newDutyPositions[j])) {
-					newDutyPositionsDiff.splice(i, 1);
-				}
-			}
-		}
-
-		for (const duty of newDutyPositions) {
-			member.addTemporaryDutyPosition({
-				Duty: duty.duty,
-				assigned: now,
-				validUntil: duty.expires
-			});
-		}
-
-		for (const oldDuty of oldDutyPositions) {
-			member.removeDutyPosition(oldDuty.duty);
-		}
-
-		try {
-			await member.saveExtraMemberInformation(req.mysqlx, req.account);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save member information'
-			});
-		}
-
-		return right(void 0);
-	}
-);
+export default func();

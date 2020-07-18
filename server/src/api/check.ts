@@ -1,31 +1,45 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
+	always,
+	api,
+	AsyncEither,
+	asyncRight,
+	errorGenerator,
+	isRioux,
+	Maybe,
 	MemberCreateError,
-	NHQMemberObject,
-	ProspectiveMemberObject,
-	SigninReturn
+	ServerError,
+	SigninReturn,
+	User,
 } from 'common-lib';
-import * as express from 'express';
-import { ConditionalMemberRequest, json } from '../lib/internals';
+import {
+	Admin,
+	getUnfinishedTaskCountForMember,
+	getUnreadNotificationCount,
+	ServerEither,
+} from 'server-common';
 
-export default async (req: ConditionalMemberRequest, res: express.Response) => {
-	if (!!req.member) {
-		const [taskCount, notificationCount] = await Promise.all([
-			req.member.getUnreadNotificationCount(),
-			req.member.getUnfinishedTaskCount()
-		]);
-
-		const member = req.member.toRaw() as ProspectiveMemberObject | NHQMemberObject;
-
-		json<SigninReturn>(res, {
+export const func: ServerAPIEndpoint<api.Check> = req =>
+	Maybe.cata<User, ServerEither<SigninReturn>>(
+		always(
+			asyncRight<ServerError, SigninReturn>(
+				{
+					error: MemberCreateError.INVALID_SESSION_ID,
+				},
+				errorGenerator('What?')
+			)
+		)
+	)(user =>
+		AsyncEither.All([
+			getUnreadNotificationCount(req.mysqlx)(req.account)(user),
+			getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(user),
+		]).map(([notificationCount, taskCount]) => ({
 			error: MemberCreateError.NONE,
-			sessionID: req.member.sessionID,
-			member,
+			sessionID: user.sessionID,
+			member: isRioux(user) ? { ...user, permissions: Admin } : user,
 			notificationCount,
-			taskCount
-		});
-	} else {
-		json<SigninReturn>(res, {
-			error: MemberCreateError.INVALID_SESSION_ID
-		});
-	}
-};
+			taskCount,
+		}))
+	)(req.member);
+
+export default func;

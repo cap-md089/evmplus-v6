@@ -1,74 +1,87 @@
-import { MemberCreateError, SigninReturn } from 'common-lib';
-import * as express from 'express';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	AccountRequest,
-	asyncErrorHandler,
-	json,
+	api,
+	AsyncEither,
+	asyncLeft,
+	asyncRight,
+	errorGenerator,
+	ExpiredSuccessfulSigninReturn,
+	FailedSigninReturn,
+	MemberCreateError,
+	ServerError,
+	SuccessfulSigninReturn,
+} from 'common-lib';
+import {
+	getUnfinishedTaskCountForMember,
+	getUnreadNotificationCount,
+	PAM,
 	resolveReference,
-	trySignin
-} from '../lib/internals';
+	ServerEither,
+} from 'server-common';
+import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
 
-export default asyncErrorHandler(async (req: AccountRequest, res: express.Response) => {
-	if (
-		typeof req.body.username !== 'string' ||
-		typeof req.body.password !== 'string' ||
-		typeof req.body.recaptcha !== 'string'
-	) {
-		res.status(400);
-		res.end();
-		return;
-	}
+const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
+	result: PAM.SigninSuccess
+): ServerEither<SuccessfulSigninReturn> =>
+	AsyncEither.All([
+		resolveReference(req.mysqlx)(req.account)(result.member),
+		asyncRight(
+			getPermissionsForMemberInAccountDefault(req.mysqlx, result.member, req.account),
+			errorGenerator('Could not get permissions for member')
+		),
+		getUnreadNotificationCount(req.mysqlx)(req.account)(result.member),
+		getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(result.member),
+	]).map(([member, permissions, notificationCount, taskCount]) => ({
+		error: MemberCreateError.NONE,
+		member: {
+			...member,
+			sessionID: result.sessionID,
+			permissions,
+		},
+		sessionID: result.sessionID,
+		notificationCount,
+		taskCount,
+	}));
 
-	if (typeof req.account === 'undefined') {
-		res.status(400);
-		res.end();
-		return;
-	}
+const handlePasswordExpired = (req: ServerAPIRequestParameter<api.Signin>) => (
+	result: PAM.SigninPasswordOld
+): ServerEither<ExpiredSuccessfulSigninReturn> =>
+	asyncRight<ServerError, ExpiredSuccessfulSigninReturn>(
+		{
+			error: MemberCreateError.PASSWORD_EXPIRED,
+			sessionID: result.sessionID,
+		},
+		errorGenerator('Could not handle failure')
+	);
 
-	const {
-		username,
-		password,
-		recaptcha
-	}: { username: string; password: string; recaptcha: string } = req.body;
+const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
+	result: PAM.SigninFailed
+): ServerEither<FailedSigninReturn> =>
+	result.result === MemberCreateError.SERVER_ERROR ||
+	result.result === MemberCreateError.UNKOWN_SERVER_ERROR
+		? asyncLeft({
+				type: 'OTHER',
+				code: 500,
+				message: 'Unknown error occurred',
+		  })
+		: asyncRight<ServerError, FailedSigninReturn>(
+				{
+					error: result.result,
+				},
+				errorGenerator('Could not handle failure')
+		  );
 
-	const signinResult = await trySignin(req.mysqlx, username, password, recaptcha);
+export const func: ServerAPIEndpoint<api.Signin> = req =>
+	asyncRight(
+		PAM.trySignin(req.mysqlx, req.body.username, req.body.password, req.body.recaptcha),
+		errorGenerator('Could not sign in as user')
+	).flatMap<SuccessfulSigninReturn | FailedSigninReturn | ExpiredSuccessfulSigninReturn>(
+		results =>
+			results.result === MemberCreateError.NONE
+				? handleSuccess(req)(results)
+				: results.result === MemberCreateError.PASSWORD_EXPIRED
+				? handlePasswordExpired(req)(results)
+				: handleFailure(req)(results)
+	);
 
-	try {
-		if (signinResult.result === MemberCreateError.NONE) {
-			const member = await resolveReference(
-				signinResult.member,
-				req.account,
-				req.mysqlx,
-				true
-			);
-
-			const [notificationCount, taskCount] = await Promise.all([
-				member.getUnreadNotificationCount(),
-				member.getUnfinishedTaskCount()
-			]);
-
-			json<SigninReturn>(res, {
-				error: MemberCreateError.NONE,
-				member: member.toRaw(),
-				sessionID: signinResult.sessionID,
-				notificationCount,
-				taskCount
-			});
-		} else if (signinResult.result === MemberCreateError.PASSWORD_EXPIRED) {
-			json<SigninReturn>(res, {
-				error: MemberCreateError.PASSWORD_EXPIRED,
-				sessionID: signinResult.sessionID
-			});
-		} else {
-			res.status(400);
-			json<SigninReturn>(res, {
-				error: signinResult.result
-			});
-		}
-	} catch (e) {
-		res.status(500);
-		json<SigninReturn>(res, {
-			error: MemberCreateError.UNKOWN_SERVER_ERROR
-		});
-	}
-});
+export default func;

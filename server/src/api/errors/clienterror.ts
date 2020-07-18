@@ -1,101 +1,49 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
+	asyncRight,
 	ClientErrorObject,
+	destroy,
+	errorGenerator,
 	ErrorResolvedStatus,
 	Errors,
-	ErrorStack,
-	NewClientErrorObject,
-	right
+	Maybe,
+	Member,
+	MemberReference,
+	pipe,
+	toReference,
 } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicConditionalMemberRequest,
-	generateResults,
-	Validator
-} from '../../lib/internals';
+import { addToCollection, collectResults } from 'server-common';
 
-export const ClientErrorValidator = new Validator<NewClientErrorObject>({
-	componentStack: {
-		validator: Validator.String
-	},
-	message: {
-		validator: Validator.String
-	},
-	pageURL: {
-		validator: Validator.String
-	},
-	resolved: {
-		validator: Validator.Enum<ErrorResolvedStatus>(ErrorResolvedStatus)
-	},
-	stack: {
-		validator: Validator.ArrayOf(
-			new Validator<ErrorStack>({
-				column: {
-					validator: Validator.Number
-				},
-				filename: {
-					validator: Validator.String
-				},
-				line: {
-					validator: Validator.Number
-				},
-				name: {
-					validator: Validator.String
-				}
-			})
-		)
-	},
-	timestamp: {
-		validator: Validator.Number
-	},
-	type: {
-		validator: Validator.StrictValue<'Client'>('Client')
-	}
-});
+export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
+	asyncRight(req.mysqlx.getCollection<Errors>('Errors'), errorGenerator('Could not get new ID'))
+		.map(collection => collection.find('true').sort('id DESC').limit(1))
+		.map(collectResults)
+		.map(Maybe.fromArray)
+		.map(Maybe.map<{ id: number }, number>(i => i.id + 1))
+		.map(Maybe.orSome(1))
+		.map<ClientErrorObject>(id => ({
+			accountID: req.account.id,
+			componentStack: req.body.componentStack,
+			id,
+			message: req.body.message,
+			pageURL: req.body.pageURL,
+			resolved: ErrorResolvedStatus.UNRESOLVED,
+			stack: req.body.stack.map(item => ({
+				name: item.name,
+				filename: item.filename,
+				line: item.line,
+				column: item.column,
+			})),
+			timestamp: Date.now(),
+			type: 'Client',
+			user: pipe(
+				Maybe.map<Member, MemberReference>(toReference),
+				Maybe.orSome<MemberReference | null>(null)
+			)(req.member),
+		}))
+		.map(addToCollection(req.mysqlx.getCollection<Errors>('Errors')))
 
-export default asyncEitherHandler<api.errors.ClientError>(
-	async (req: BasicConditionalMemberRequest) => {
-		const info = req.body as NewClientErrorObject;
+		.map(destroy);
 
-		console.error('Client error!', info.message);
-
-		const errorCollection = req.mysqlx.getCollection<Errors>('Errors');
-		let id = 0;
-
-		// Get the ID for the new error
-		{
-			const errorGenerator = generateResults(errorCollection.find('true'));
-
-			for await (const error of errorGenerator) {
-				id = Math.max(id, error.id);
-			}
-
-			id++;
-		}
-
-		// Add the error to the database
-		{
-			const errorObject: ClientErrorObject = {
-				componentStack: info.componentStack,
-				accountID: req.account.id,
-				id,
-				pageURL: info.pageURL,
-				type: 'Client',
-				stack: info.stack.map(item => ({
-					name: item.name,
-					filename: item.filename,
-					line: item.line,
-					column: item.column
-				})),
-				resolved: ErrorResolvedStatus.UNRESOLVED,
-				message: info.message,
-				timestamp: Date.now(),
-				user: req.member ? req.member.getReference() : null
-			};
-
-			await errorCollection.add(errorObject).execute();
-
-			return right(void 0);
-		}
-	}
-);
+export default func;

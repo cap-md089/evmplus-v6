@@ -1,14 +1,8 @@
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import * as express from 'express';
-import {
-	Account,
-	leftyMemberMiddleware,
-	leftyPermissionMiddleware,
-	memberMiddleware,
-	NewTaskObjectValidator,
-	RawTaskObjectValidator,
-	Validator
-} from '../../lib/internals';
-import { leftyTokenMiddleware } from '../formtoken';
+import { endpointAdder } from '../../lib/API';
+// APIs
 import taskcreate from './taskcreate';
 import taskdelete from './taskdelete';
 import taskedit from './taskedit';
@@ -17,32 +11,12 @@ import tasklist from './tasklist';
 
 const router = express.Router();
 
-router.use(Account.ExpressMiddleware);
+const adder = endpointAdder(router) as () => () => void;
 
-router.get('/', memberMiddleware, tasklist);
-router.get('/:id', leftyMemberMiddleware, taskget);
-router.post(
-	'/',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	leftyPermissionMiddleware('AssignTasks'),
-	Validator.LeftyBodyExpressMiddleware(NewTaskObjectValidator),
-	taskcreate
-);
-router.put(
-	'/:id',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	leftyPermissionMiddleware('AssignTasks'),
-	Validator.BodyExpressMiddleware(RawTaskObjectValidator),
-	taskedit
-);
-router.delete(
-	'/:id',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	leftyPermissionMiddleware('AssignTasks'),
-	taskdelete
-);
+addAPI(Validator, adder, taskcreate);
+addAPI(Validator, adder, taskdelete);
+addAPI(Validator, adder, taskedit);
+addAPI(Validator, adder, taskget);
+addAPI(Validator, adder, tasklist);
 
 export default router;

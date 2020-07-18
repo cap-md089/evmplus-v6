@@ -27,7 +27,8 @@
 		"experimentalDecorators": true,
 		"sourceMap": true,
 		"strictNullChecks": true,
-		"strictPropertyInitialization": true
+		"strictPropertyInitialization": true,
+		"plugins": [{ "transform": "auto-client-api" }]
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules/**/*.ts", "node_modules"],

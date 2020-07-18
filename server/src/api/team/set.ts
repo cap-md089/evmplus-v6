@@ -1,42 +1,39 @@
-import { api, just, left, none, RawTeamObject, right } from 'common-lib';
-import { asyncEitherHandler, BasicPartialMemberValidatedRequest, Team } from '../../lib/internals';
+import { ServerAPIEndpoint, validator } from 'auto-client-api';
+import {
+	api,
+	asyncRight,
+	destroy,
+	errorGenerator,
+	NewTeamObject,
+	SessionType,
+	Validator,
+} from 'common-lib';
+import { getTeam, PAM, saveTeam, updateTeam } from 'server-common';
+import { validateRequest } from '../../lib/requestUtils';
 
-export default asyncEitherHandler<api.team.Set>(
-	async (req: BasicPartialMemberValidatedRequest<RawTeamObject, { id: string }>) => {
-		let team: Team;
-
-		try {
-			team = await Team.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find team'
-			});
-		}
-
-		team.set(req.body);
-
-		try {
-			if (req.body.members) {
-				await team.updateMembers(
-					team.members.slice(),
-					req.body.members,
-					req.account,
-					req.mysqlx,
-					req.memberUpdateEmitter
-				);
-			}
-
-			await team.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not update team information'
-			});
-		}
-
-		return right(void 0);
-	}
+const teamPartialValidator = Validator.Partial(
+	(validator<NewTeamObject>(Validator) as Validator<NewTeamObject>).rules
 );
+
+export const func: ServerAPIEndpoint<api.team.SetTeamData> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('ManageTeam')(request =>
+		validateRequest(teamPartialValidator)(request).flatMap(req =>
+			getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10)).flatMap(oldTeam =>
+				asyncRight(
+					{
+						...oldTeam,
+						...req.body,
+					},
+					errorGenerator('Could not update team')
+				)
+					.map(updateTeam(req.account)(req.memberUpdateEmitter)(oldTeam))
+					.map(saveTeam(req.mysqlx))
+					.map(destroy)
+			)
+		)
+	)
+);
+
+export default func;

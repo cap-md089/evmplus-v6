@@ -1,68 +1,52 @@
-import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
 import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	Event,
-	isValidMemberReference,
-	MemberBase,
-	resolveReference
-} from '../../../lib/internals';
+	ServerAPIEndpoint,
+	ServerAPIRequestParameter,
+	ServerEither,
+	validator,
+} from 'auto-client-api';
+import {
+	api,
+	APIEndpointBody,
+	asyncRight,
+	canManageEvent,
+	destroy,
+	errorGenerator,
+	Maybe,
+	Member,
+	NewAttendanceRecord,
+	Permissions,
+	RawEventObject,
+	SessionType,
+	Validator,
+} from 'common-lib';
+import { getEvent, modifyEventAttendanceRecord, PAM, resolveReference } from 'server-common';
+import { validateRequest } from '../../../lib/requestUtils';
 
-export default asyncEitherHandler<api.events.attendance.ModifyAttendance>(
-	async (req: BasicMemberValidatedRequest<NewAttendanceRecord, { id: string }>) => {
-		let event: Event;
-		let member: MemberBase | null;
+export const getMember = (
+	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>
+) => (body: APIEndpointBody<api.events.attendance.ModifyAttendance>) => (event: RawEventObject) =>
+	canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+		? Maybe.orSome<ServerEither<Member>>(
+				asyncRight(req.member, errorGenerator('Could not get member information'))
+		  )(Maybe.map(resolveReference(req.mysqlx)(req.account))(Maybe.fromValue(body.memberID)))
+		: asyncRight(req.member, errorGenerator('Could not get member information'));
 
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event'
-			});
-		}
-
-		if (
-			isValidMemberReference(req.body.memberID) &&
-			(req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL) ||
-				event.isPOC(req.member))
-		) {
-			try {
-				member = await resolveReference(req.body.memberID, req.account, req.mysqlx, true);
-			} catch (e) {
-				return left({
-					code: 404,
-					error: none<Error>(),
-					message: 'Could not find member'
-				});
-			}
-		} else {
-			member = req.member;
-		}
-
-		event.modifyAttendanceRecord(
-			{
-				arrivalTime: req.body.arrivalTime,
-				comments: req.body.comments,
-				departureTime: req.body.departureTime,
-				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				status: req.body.status,
-				customAttendanceFieldValues: req.body.customAttendanceFieldValues
-			},
-			member
-		);
-
-		try {
-			await event.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save attendance information'
-			});
-		}
-
-		return right(void 0);
-	}
+const attendanceModifyValidator = Validator.Partial(
+	(validator<NewAttendanceRecord>(Validator) as Validator<NewAttendanceRecord>).rules
 );
+
+export const func: ServerAPIEndpoint<api.events.attendance.ModifyAttendance> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(request =>
+	validateRequest(attendanceModifyValidator)(request).flatMap(req =>
+		getEvent(req.mysqlx)(req.account)(req.params.id)
+			.map(event =>
+				getMember(req)(req.body)(event).flatMap(member =>
+					modifyEventAttendanceRecord(req.mysqlx)(req.account)(event)(member)(req.body)
+				)
+			)
+			.map(destroy)
+	)
+);
+
+export default func;

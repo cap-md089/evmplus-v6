@@ -1,69 +1,32 @@
-import { api, just, left, none, right } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	FlightAssign,
-	Registry,
-	resolveReference
-} from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, asyncEither, destroy, errorGenerator, SessionType } from 'common-lib';
+import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
+import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
 
-export default asyncEitherHandler<api.member.flights.Assign>(
-	async (req: BasicMemberValidatedRequest<FlightAssign>) => {
-		let member;
-
-		try {
-			member = await resolveReference(req.body.member, req.account, req.mysqlx, true);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find member specified'
-			});
-		}
-
-		if (typeof req.body.newFlight !== 'string') {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Flight is required in order to set flight for member'
-			});
-		}
-
-		try {
-			const registry = await Registry.Get(req.account, req.mysqlx);
-
-			if (!registry.values.RankAndFile.Flights.includes(req.body.newFlight)) {
-				return left({
-					code: 400,
-					error: none<Error>(),
-					message: 'Flight specified is not a valid flight'
-				});
-			}
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not get registry for account'
-			});
-		}
-
-		member.setFlight(req.body.newFlight);
-
-		try {
-			await member.saveExtraMemberInformation(req.mysqlx, req.account);
-
-			req.memberUpdateEmitter.emit('memberChange', {
-				member: member.getReference(),
-				account: req.account.toRaw()
-			});
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save flight information for member'
-			});
-		}
-
-		return right(void 0);
-	}
+export const func: ServerAPIEndpoint<api.member.flight.Assign> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('FlightAssign')(req =>
+		resolveReference(req.mysqlx)(req.account)(req.body.member)
+			.map(member => ({
+				...member,
+				flight: req.body.flight,
+			}))
+			.flatMap(member =>
+				asyncEither(
+					getExtraMemberInformationForCAPMember(req.account)(member),
+					errorGenerator('Could not save flight information')
+				)
+					.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
+					.tap(() =>
+						req.memberUpdateEmitter.emit('memberChange', {
+							member,
+							account: req.account,
+						})
+					)
+					.map(destroy)
+			)
+	)
 );
+
+export default func;

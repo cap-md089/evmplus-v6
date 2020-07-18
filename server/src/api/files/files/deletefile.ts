@@ -1,30 +1,16 @@
-import { api, just, left, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, FileUserAccessControlPermissions, userHasFilePermission } from 'common-lib';
+import { deleteFileObject, getFileObject } from 'server-common';
 
-export default asyncEitherHandler<api.files.files.Delete>(
-	async (req: BasicMemberRequest<{ fileid: string }>) => {
-		let file;
+const canDeleteFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-		try {
-			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find file to delete'
-			});
-		}
+export const func: ServerAPIEndpoint<api.files.files.Delete> = req =>
+	getFileObject(false)(req.mysqlx)(req.account)(req.params.fileid)
+		.filter(canDeleteFile(req.member), {
+			type: 'OTHER',
+			code: 403,
+			message: 'Member cannot delete file',
+		})
+		.flatMap(deleteFileObject(req.configuration)(req.mysqlx)(req.account));
 
-		try {
-			await file.delete();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not delete file'
-			});
-		}
-
-		return right(void 0);
-	}
-);
+export default func;

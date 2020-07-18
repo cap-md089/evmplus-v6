@@ -1,42 +1,24 @@
-import { api, just, left, NewTaskObject, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberValidatedRequest, Task } from '../../lib/internals';
+import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
+import { api, destroy, hasPermissionForTask, RawTaskObject, SessionType } from 'common-lib';
+import { getTask, PAM, saveTask } from 'server-common';
 
-export default asyncEitherHandler<api.tasks.Edit>(
-	async (req: BasicMemberValidatedRequest<NewTaskObject, { id: string }>) => {
-		const id = parseInt(req.params.id, 10);
+const mergeRequestBody = (req: APIRequest<api.tasks.EditTask>) => (task: RawTaskObject) => ({
+	...task,
+	...req.body,
+});
 
-		if (id !== id) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Invalid ID passed as a parameter'
-			});
-		}
-
-		let task: Task;
-
-		try {
-			task = await Task.Get(id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find task'
-			});
-		}
-
-		task.set(req.body);
-
-		try {
-			await task.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save information for task'
-			});
-		}
-
-		return right(void 0);
-	}
+export const func: ServerAPIEndpoint<api.tasks.EditTask> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getTask(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
+		.filter(hasPermissionForTask(req.member), {
+			type: 'OTHER',
+			code: 403,
+			message: 'Member does not have permission to modify the task',
+		})
+		.map(mergeRequestBody(req))
+		.flatMap(saveTask(req.mysqlx))
+		.map(destroy)
 );
+
+export default func;

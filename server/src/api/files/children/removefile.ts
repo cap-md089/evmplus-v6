@@ -1,39 +1,39 @@
-import { api, just, left, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import {
+	api,
+	AsyncEither,
+	destroy,
+	FileUserAccessControlPermissions,
+	get,
+	userHasFilePermission,
+} from 'common-lib';
+import { getFileObject, saveFileObject } from 'server-common';
 
-export default asyncEitherHandler<api.files.children.RemoveChild>(
-	async (req: BasicMemberRequest<{ parentid: string; childid: string }>) => {
-		const parentid = req.params.parentid;
-		const childid = req.params.childid;
+const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
+const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-		let parent: File;
-		let child: File;
+export const func: ServerAPIEndpoint<api.files.children.RemoveChild> = req =>
+	AsyncEither.All([
+		getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid),
+		getFileObject(true)(req.mysqlx)(req.account)(req.params.childid),
+	])
+		.filter(([parent, child]) => canModify(req.member)(parent) && canRead(req.member)(child), {
+			type: 'OTHER',
+			code: 403,
+			message:
+				'Member needs to be able to read child and modify parent in order to perform this action',
+		})
+		.map(get(1))
+		.filter(child => child.parentID === req.params.parentid, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Child object is not a child of the requested parent object',
+		})
+		.map(child => ({
+			...child,
+			parentID: 'root',
+		}))
+		.map(saveFileObject(req.mysqlx))
+		.map(destroy);
 
-		try {
-			[parent, child] = await Promise.all([
-				File.Get(parentid, req.account, req.mysqlx),
-				File.Get(childid, req.account, req.mysqlx)
-			]);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find either the parent or the child'
-			});
-		}
-
-		parent.removeChild(child);
-
-		try {
-			await Promise.all([parent.save(), child.save()]);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save information for files'
-			});
-		}
-
-		return right(void 0);
-	}
-);
+export default func;

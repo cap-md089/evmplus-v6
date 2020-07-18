@@ -1,10 +1,10 @@
 import * as request from 'supertest';
 import conftest from '../conf.test';
-import getServer, { ServerConfiguration } from '../getServer';
+import getServer, { ServerInitializationOptions } from '../getServer';
 
 describe('/api', () => {
 	describe('/echo', () => {
-		let server: ServerConfiguration;
+		let server: ServerInitializationOptions;
 
 		beforeEach(async done => {
 			server = await getServer(conftest, 3005);
@@ -20,7 +20,7 @@ describe('/api', () => {
 		// on this echo service
 		it('should echo what is given to it', done => {
 			const payload = {
-				hello: 'world'
+				hello: 'world',
 			};
 
 			request(server.server)

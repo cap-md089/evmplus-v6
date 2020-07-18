@@ -1,13 +1,12 @@
 import get from '../api/registry/get';
 import conftest from '../conf.test';
-import getServer, { ServerConfiguration } from '../getServer';
-import { getSession, getTestTools, Registry } from '../lib/internals';
+import getServer, { ServerInitializationOptions } from '../getServer';
 import './EitherMatcher';
 import { addAccountForTransformer, prepareBasicGetRequest, resolveToEither } from './TestUtils';
 
 describe('/api', () => {
 	describe('/registry', () => {
-		let server: ServerConfiguration;
+		let server: ServerInitializationOptions;
 		let registry: Registry;
 
 		beforeEach(async done => {
@@ -50,7 +49,7 @@ describe('/api', () => {
 			const res = await resolveToEither(get.fn(req));
 
 			expect(res).toMatchLeft({
-				code: 400
+				code: 400,
 			});
 
 			done();

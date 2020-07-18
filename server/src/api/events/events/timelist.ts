@@ -1,37 +1,58 @@
-import { EventObject, EventStatus, fromValue } from 'common-lib';
-import { Response } from 'express';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	asyncErrorHandler,
-	ConditionalMemberRequest,
-	streamAsyncGeneratorAsJSONArrayTyped
-} from '../../../lib/internals';
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	asyncRight,
+	canManageEvent,
+	Either,
+	EitherObj,
+	errorGenerator,
+	EventStatus,
+	get,
+	Maybe,
+	MaybeObj,
+	Permissions,
+	pipe,
+	RawEventObject,
+	Right,
+	ServerError,
+	User,
+} from 'common-lib';
+import { getEventsInRange } from 'server-common';
 
-export default asyncErrorHandler(
-	async (req: ConditionalMemberRequest<{ start: string; end: string }>, res: Response) => {
-		// In JavaScript, true === (NaN !== NaN) for some reason
+const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) =>
+	pipe(
+		Maybe.map<User, (e: RawEventObject) => boolean>(
+			canManageEvent(Permissions.ManageEvent.ADDDRAFTEVENTS)
+		),
+		Maybe.orSome<(e: RawEventObject) => boolean>(() => false)
+	)(member)(event);
 
-		if (
-			parseInt(req.params.start, 10) !== parseInt(req.params.start, 10) ||
-			parseInt(req.params.end, 10) !== parseInt(req.params.end, 10)
-		) {
-			res.status(400);
-			res.end();
-			return;
-		}
-
-		const start = parseInt(req.params.start, 10);
-		const end = parseInt(req.params.end, 10);
-
-		await streamAsyncGeneratorAsJSONArrayTyped<EventObject, EventObject>(
-			res,
-			req.account.getEventsInRange(start, end),
-			ev =>
-				ev.status !== EventStatus.DRAFT ||
-				fromValue(req.member)
-					.map(member => member.isPOCOf(ev) || member.hasPermission('ManageEvent'))
-					.orSome(false)
-					? ev
-					: false
+export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
+	asyncRight(
+		[parseInt(req.params.timestart, 10), parseInt(req.params.timeend, 10)],
+		errorGenerator('Could not get events in range')
+	)
+		.filter(([timestart, timeend]) => !isNaN(timestart) && !isNaN(timeend), {
+			type: 'OTHER',
+			code: 400,
+			message: 'The provided range start and end are invalid',
+		})
+		.map(([timestart, timeend]) =>
+			getEventsInRange(req.mysqlx)(req.account)(timestart)(timeend)
+		)
+		.map(
+			asyncIterFilter<EitherObj<ServerError, RawEventObject>, Right<RawEventObject>>(
+				Either.isRight
+			)
+		)
+		.map(asyncIterMap(get('value')))
+		.map(
+			asyncIterFilter(
+				event =>
+					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member)
+			)
 		);
-	}
-);
+
+export default func;

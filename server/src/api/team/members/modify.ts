@@ -1,32 +1,16 @@
-import { api, just, left, NewTeamMember, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberValidatedRequest, Team } from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, destroy, SessionType } from 'common-lib';
+import { getTeam, modfiyTeamMember, PAM, saveTeam } from 'server-common';
 
-export default asyncEitherHandler<api.team.members.Modify>(
-	async (req: BasicMemberValidatedRequest<NewTeamMember, { id: string }>) => {
-		let team: Team;
-
-		try {
-			team = await Team.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find team specified'
-			});
-		}
-
-		team.modifyTeamMember(req.body.reference, req.body.job);
-
-		try {
-			await team.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save team'
-			});
-		}
-
-		return right(void 0);
-	}
+export const func: ServerAPIEndpoint<api.team.members.ModifyTeamMember> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('ManageTeam')(req =>
+		getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
+			.map(modfiyTeamMember(req.body))
+			.flatMap(saveTeam(req.mysqlx))
+			.map(destroy)
+	)
 );
+
+export default func;

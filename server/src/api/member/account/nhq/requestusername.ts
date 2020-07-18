@@ -1,104 +1,74 @@
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
 	api,
-	asyncJust,
 	asyncLeft,
 	asyncRight,
-	EitherObj,
-	none,
-	UserAccountInformation
+	CAPNHQMemberReference,
+	errorGenerator,
+	getFullMemberName,
+	getMemberEmail,
+	Maybe,
+	Member,
+	pipe,
+	UserAccountInformation,
 } from 'common-lib';
-import Account from '../../../../lib/Account';
-import {
-	BasicSimpleValidatedRequest,
-	getEmail,
-	getInformationForMember,
-	MemberClasses,
-	Registry,
-	resolveReferenceE,
-	Validator,
-	verifyCaptcha
-} from '../../../../lib/internals';
-import { asyncEitherHandler2, sendEmail, serverErrorGenerator } from '../../../../lib/Util';
+import { getRegistry, PAM, resolveReference, sendEmail, ServerEither } from 'server-common';
 
-interface CAPNHQUsernameRequest {
-	capid: number;
-	captchaToken: string;
-}
-
-const usernameRequestValidator = new Validator<CAPNHQUsernameRequest>({
-	capid: {
-		validator: Validator.Number
-	},
-	captchaToken: {
-		validator: Validator.String
-	}
-});
-
-const htmlEmailBody = (memberInfo: MemberClasses, accountInfo: UserAccountInformation) =>
-	`${memberInfo.getFullName()}, your login is ${accountInfo.username}.<br />
+const htmlEmailBody = (memberInfo: Member, accountInfo: UserAccountInformation) =>
+	`${getFullMemberName(memberInfo)}, your login is ${accountInfo.username}.<br />
 Please respond to this email if you have questions regarding your CAPUnit.com account.`;
 
-const textEmailBody = (memberInfo: MemberClasses, accountInfo: UserAccountInformation) =>
-	`${memberInfo.getFullName()}, your login is ${accountInfo.username}.
+const textEmailBody = (memberInfo: Member, accountInfo: UserAccountInformation) =>
+	`${getFullMemberName(memberInfo)}, your login is ${accountInfo.username}.
 Please respond to this email if you have questions regarding your CAPUnit.com account.`;
 
-export default (emailFunction = sendEmail) =>
-	asyncEitherHandler2<EitherObj<api.ServerError, void>>(r =>
-		asyncRight(r, serverErrorGenerator('Could not request username'))
-			.flatMap(Account.RequestTransformer)
-			.flatMap(req => usernameRequestValidator.transform(req))
-			.flatMap(req =>
-				asyncRight(
-					verifyCaptcha(req.body.captchaToken),
-					serverErrorGenerator('Could not verify CAPTCHA token')
-				).flatMap<BasicSimpleValidatedRequest<CAPNHQUsernameRequest>>(success =>
-					success
-						? asyncRight(req, serverErrorGenerator('Could not verify token'))
-						: asyncLeft({
-								error: none<Error>(),
-								code: 400,
-								message: 'Could not verify CAPTCHA'
-						  })
-				)
+const sendEmailToMember = (emailFunction: typeof sendEmail) => (
+	req: ServerAPIRequestParameter<api.member.account.capnhq.UsernameRequest>
+) => (info: UserAccountInformation<CAPNHQMemberReference>) => (member: Member) => (email: string) =>
+	getRegistry(req.mysqlx)(req.account)
+		.map(emailFunction(true))
+		.flatMap(sender =>
+			sender('Username request')(email)(htmlEmailBody(member, info))(
+				textEmailBody(member, info)
 			)
-			.map(req =>
-				asyncJust(
-					getInformationForMember(req.mysqlx, {
-						type: 'CAPNHQMember',
-						id: req.body.capid
-					})
-				)
-					.map(info =>
-						resolveReferenceE(
-							{ type: 'CAPNHQMember', id: req.body.capid },
-							req.account,
-							req.mysqlx
-						).flatMap(member =>
-							getEmail(member)
-								.map(email =>
-									asyncRight(
-										Registry.Get(req.account, req.mysqlx),
-										serverErrorGenerator('Could not get site configuration')
-									)
-										.map(registry => emailFunction(true)(registry))
-										.map(emailer => emailer('Username request')(email))
-										.map(emailer => emailer(htmlEmailBody(member, info)))
-										.flatMap(emailer => emailer(textEmailBody(member, info)))
-								)
-								.orSome(
-									asyncLeft({
-										code: 400,
-										message:
-											'There is no email address associated with the account requested',
-										error: none<Error>()
-									})
-								)
-						)
+		);
+
+export const func: (
+	emailFunction?: typeof sendEmail
+) => ServerAPIEndpoint<api.member.account.capnhq.UsernameRequest> = (
+	emailFunction = sendEmail
+) => req =>
+	asyncRight(
+		PAM.verifyCaptcha(req.body.captchaToken),
+		errorGenerator('Could not verify CAPTCHA token')
+	)
+		.filter(success => success, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Could not verify CAPTCHA token',
+		})
+		.map(() =>
+			PAM.getInformationForMember(req.mysqlx, {
+				type: 'CAPNHQMember' as const,
+				id: req.body.capid,
+			})
+		)
+		.flatMap(info =>
+			resolveReference(req.mysqlx)(req.account)(info.member).flatMap(member =>
+				pipe(
+					Maybe.map<string, ServerEither<void>>(
+						sendEmailToMember(emailFunction)(req)(info)(member)
+					),
+					Maybe.orSome<ServerEither<void>>(
+						asyncLeft({
+							type: 'OTHER',
+							code: 400,
+							message:
+								'There is no email address associated with the account requested',
+						})
 					)
-					.cata(
-						() => asyncRight(void 0, serverErrorGenerator('Could not send username')),
-						eith => eith
-					)
+				)(getMemberEmail(member.contact))
 			)
-			.flatMap(i => i)
-	);
+		);
+
+export default func();

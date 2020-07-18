@@ -1,22 +1,17 @@
-import { api, asyncRight } from 'common-lib';
-import {
-	Account,
-	asyncEitherHandler2,
-	Event,
-	memberRequestTransformer,
-	serverErrorGenerator,
-	SessionType
-} from '../../../lib/internals';
-import { tokenTransformer } from '../../formtoken';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, canManageEvent, Permissions, SessionType } from 'common-lib';
+import { deleteEvent, getEvent, PAM } from 'server-common';
 
-export default asyncEitherHandler2<api.events.events.Delete, { id: string }>(r =>
-	asyncRight(r, serverErrorGenerator('Could not delete event'))
-		.flatMap(req => Account.RequestTransformer(req))
-		.flatMap(req => memberRequestTransformer(SessionType.REGULAR, true)(req))
-		.flatMap(req => tokenTransformer(req))
-		.flatMap(req =>
-			Event.GetEither(req.params.id, req.account, req.mysqlx)
-				.setErrorValue(serverErrorGenerator('Could not delete event'))
-				.map(event => event.delete())
-		)
+export const func: ServerAPIEndpoint<api.events.events.Delete> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+			type: 'OTHER',
+			code: 403,
+			message: 'Member cannot perform that action',
+		})
+		.flatMap(deleteEvent(req.configuration)(req.mysqlx)(req.account))
 );
+
+export default func;

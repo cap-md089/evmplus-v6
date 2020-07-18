@@ -1,55 +1,21 @@
-import { api, just, left, none, RawTeamMember, right } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	resolveReference,
-	Team
-} from '../../../lib/internals';
+import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
+import { always, api, destroy, RawTeamObject, SessionType } from 'common-lib';
+import { addMemberToTeam, getTeam, PAM, resolveReference, saveTeam } from 'server-common';
 
-export default asyncEitherHandler<api.team.members.Add>(
-	async (req: BasicMemberValidatedRequest<RawTeamMember, { id: string }>) => {
-		let team: Team;
+const checkIfMemberExists = (req: APIRequest<api.team.members.AddTeamMember>) => (
+	team: RawTeamObject
+) => resolveReference(req.mysqlx)(req.account)(req.body.reference).map(always(team));
 
-		try {
-			team = await Team.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find team'
-			});
-		}
-
-		let fullMember;
-
-		try {
-			fullMember = await resolveReference(req.body.reference, req.account, req.mysqlx, true);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find member specified'
-			});
-		}
-
-		try {
-			await team.addTeamMember(
-				fullMember,
-				req.body.job,
-				req.account,
-				req.mysqlx,
-				req.memberUpdateEmitter
-			);
-
-			await team.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save team information'
-			});
-		}
-
-		return right(void 0);
-	}
+export const func: ServerAPIEndpoint<api.team.members.AddTeamMember> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('ManageTeam')(req =>
+		getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
+			.flatMap(checkIfMemberExists(req))
+			.map(addMemberToTeam(req.memberUpdateEmitter)(req.account)(req.body))
+			.flatMap(saveTeam(req.mysqlx))
+			.map(destroy)
+	)
 );
+
+export default func;

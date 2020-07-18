@@ -1,7 +1,7 @@
-import { AccountObject } from 'common-lib';
-import { Response } from 'express';
-import { AccountRequest, json } from '../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, asyncRight, errorGenerator } from 'common-lib';
 
-export default (req: AccountRequest, res: Response) => {
-	json<AccountObject>(res, req.account.toRaw());
-};
+export const func: ServerAPIEndpoint<api.AccountCheck> = req =>
+	asyncRight(req.account, errorGenerator('What?'));
+
+export default func;

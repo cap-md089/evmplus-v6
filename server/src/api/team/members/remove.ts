@@ -1,37 +1,33 @@
-import { api, just, left, NewTeamMember, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberValidatedRequest, Team } from '../../../lib/internals';
+import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
+import {
+	api,
+	asyncEither,
+	destroy,
+	errorGenerator,
+	MemberReference,
+	parseStringMemberReference,
+	SessionType,
+} from 'common-lib';
+import { getTeam, PAM, removeMemberFromTeam, saveTeam } from 'server-common';
 
-export default asyncEitherHandler<api.team.Remove>(
-	async (req: BasicMemberValidatedRequest<NewTeamMember, { id: string }>) => {
-		let team: Team;
+const removeMemberFromTeamWithRequest = (req: APIRequest<api.team.members.DeleteTeamMember>) => (
+	ref: MemberReference
+) =>
+	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
+		.map(removeMemberFromTeam(req.account)(req.memberUpdateEmitter)(ref))
+		.flatMap(saveTeam(req.mysqlx));
 
-		try {
-			team = await Team.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find team'
-			});
-		}
-
-		try {
-			await team.removeTeamMember(
-				req.body.reference,
-				req.account,
-				req.mysqlx,
-				req.memberUpdateEmitter
-			);
-
-			await team.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save team information'
-			});
-		}
-
-		return right(void 0);
-	}
+export const func: ServerAPIEndpoint<api.team.members.DeleteTeamMember> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('ManageTeam')(req =>
+		asyncEither(
+			parseStringMemberReference(req.params.memberid),
+			errorGenerator('Could not remove member from team')
+		)
+			.flatMap(removeMemberFromTeamWithRequest(req))
+			.map(destroy)
+	)
 );
+
+export default func;

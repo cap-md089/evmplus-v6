@@ -1,95 +1,73 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
-	just,
-	left,
+	asyncRight,
+	destroy,
+	errorGenerator,
 	MemberPermission,
 	MemberPermissions,
 	MemberReference,
-	right
+	parseStringMemberReference,
+	Right,
+	SessionType,
+	stringifyMemberReference,
+	toReference,
 } from 'common-lib';
-import {
-	areMemberReferencesTheSame,
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	PermissionsValidator,
-	setPermissionsForMemberInAccount,
-	Validator
-} from '../../../lib/internals';
+import { PAM } from 'server-common';
+import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
 
-interface PermissionItem {
+const getHighestPermissionsObject = (perms1: MemberPermissions) => (
+	perms2: MemberPermissions
+): MemberPermissions =>
+	(Object.fromEntries(
+		Object.keys(perms1).map((key: MemberPermission) => [
+			key,
+			perms1[key] > perms2[key] ? perms1[key] : perms2[key],
+		])
+	) as unknown) as MemberPermissions;
+
+const simplifyInputs = (
+	roles: Array<{
+		member: MemberReference;
+		permissions: MemberPermissions;
+	}>
+): Array<{
 	member: MemberReference;
 	permissions: MemberPermissions;
-}
+}> => {
+	const members: { [key: string]: MemberPermissions } = {};
 
-interface PermissionsList {
-	newRoles: PermissionItem[];
-}
-
-const permissionValidator = new Validator<PermissionItem>({
-	member: {
-		validator: Validator.MemberReference
-	},
-	permissions: {
-		validator: PermissionsValidator
+	for (const role of roles) {
+		const key = stringifyMemberReference(role.member);
+		members[key] = getHighestPermissionsObject(members[key] ?? role.permissions)(
+			role.permissions
+		);
 	}
-});
 
-export const permissionsValidator = new Validator<PermissionsList>({
-	newRoles: {
-		validator: Validator.ArrayOf(permissionValidator)
-	}
-});
+	return Object.keys(members).map(key => ({
+		member: (parseStringMemberReference(key) as Right<MemberReference>).value,
+		permissions: members[key],
+	}));
+};
 
-export default asyncEitherHandler<api.member.permissions.Set>(
-	async (req: BasicMemberValidatedRequest<PermissionsList>) => {
-		/**
-		 * This just sanitizes user inputs, makes sure there are no duplicates and makes sure each item
-		 * is as high as possible
-		 */
-		const newRoles: PermissionItem[] = [];
-		for (const inputRole of req.body.newRoles) {
-			let found = false;
-			for (const newRole of newRoles) {
-				if (areMemberReferencesTheSame(newRole.member, inputRole.member)) {
-					for (const perm in inputRole.permissions) {
-						if (inputRole.permissions.hasOwnProperty(perm)) {
-							const permission = perm as MemberPermission;
-							// @ts-ignore
-							newRole.permissions[permission] = Math.max(
-								newRole.permissions[permission],
-								inputRole.permissions[permission]
-							);
-						}
-					}
-
-					found = true;
-				}
-			}
-
-			if (!found && inputRole.member.type !== 'Null') {
-				newRoles.push(inputRole);
-			}
-		}
-
-		try {
-			await Promise.all(
-				newRoles.map(role =>
+export const func: ServerAPIEndpoint<api.member.permissions.SetPermissions> = PAM.RequiresPermission(
+	'PermissionManagement'
+)(
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		asyncRight(
+			Promise.all(
+				simplifyInputs(req.body.newRoles).map(newRole =>
 					setPermissionsForMemberInAccount(
 						req.mysqlx,
-						role.member,
-						role.permissions,
+						toReference(req.member),
+						newRole.permissions,
 						req.account
 					)
 				)
-			);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not set permissions for the members provided'
-			});
-		}
-
-		return right(void 0);
-	}
+			),
+			errorGenerator('Could not save permissions')
+		).map(destroy)
+	)
 );
+
+export default func;

@@ -2,7 +2,6 @@ import { Schema, Session } from '@mysql/xdevapi';
 import * as request from 'supertest';
 import conftest from '../../conf.test';
 import getServer from '../../getServer';
-import { Account, CAPNHQMember, Event, getTestTools2 } from '../../lib/internals';
 import { newEvent, rawAccount } from '../consts';
 
 describe('Account', () => {
@@ -13,11 +12,7 @@ describe('Account', () => {
 	beforeAll(async done => {
 		[account, schema, session] = await getTestTools2(conftest);
 
-		await schema
-			.getCollection('Accounts')
-			.remove(`id = "${rawAccount.id}"`)
-			.execute(),
-			done();
+		await schema.getCollection('Accounts').remove(`id = "${rawAccount.id}"`).execute(), done();
 	});
 
 	afterAll(async done => {
@@ -100,7 +95,7 @@ describe('Account', () => {
 
 		const [testEvent1, testEvent2] = await Promise.all([
 			Event.Create(newEvent, account, schema, mem, conftest),
-			Event.Create(newEvent, testAccount, schema, mem, conftest)
+			Event.Create(newEvent, testAccount, schema, mem, conftest),
 		]);
 
 		for await (const i of account.getEvents()) {

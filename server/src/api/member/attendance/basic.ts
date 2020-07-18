@@ -1,101 +1,65 @@
-import { Schema } from '@mysql/xdevapi';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	always,
 	api,
-	asyncLeft,
-	asyncRight,
-	fromValue,
-	just,
-	MemberReference,
-	none,
-	NoSQLDocument,
-	parseStringMemberReference
+	asyncIterMap,
+	Either,
+	errorGenerator,
+	Maybe,
+	RawEventObject,
+	ServerError,
+	SessionType,
+	stringifyMemberReference,
+	toReference,
+	ValidatorError,
 } from 'common-lib';
-import {
-	Account,
-	areMemberReferencesTheSame,
-	asyncEitherHandler2,
-	CAPMemberClasses,
-	collectResults,
-	Event,
-	findAndBind,
-	MemberRequest,
-	RawAttendanceDBRecord,
-	resolveReference,
-	resolveReferenceE,
-	serverErrorGenerator
-} from '../../../lib/internals';
+import { getAttendanceForMember, getEvent, PAM, RawAttendanceDBRecord } from 'server-common';
 
-export const getAttendanceRecordsForMember = async (
-	member: CAPMemberClasses,
-	reference: MemberReference,
-	account: Account,
-	schema: Schema
-): Promise<api.member.attendance.EventAttendanceRecord[]> => {
-	const attendanceCollection = schema.getCollection<
-		RawAttendanceDBRecord & Required<NoSQLDocument>
-	>('Attendance');
+const stripEvent = (record: RawAttendanceDBRecord) => (
+	event: RawEventObject
+): api.member.attendance.EventAttendanceRecordEventInformation => ({
+	attendanceComments: record.comments,
+	endDateTime: event.endDateTime,
+	id: event.id,
+	location: event.location,
+	name: event.name,
+	startDateTime: event.startDateTime,
+});
 
-	const records = await collectResults(
-		findAndBind(attendanceCollection, {
-			memberID: reference
-		})
-	);
-
-	let targetMember: CAPMemberClasses | null = null;
-
-	return Promise.all(
-		records.map(async record => {
-			const [recordMember, event] = await Promise.all([
-				areMemberReferencesTheSame(member, record.memberID)
-					? member
-					: targetMember || resolveReference(reference, account, schema, true),
-				Event.Get(record.eventID, account, schema)
-			]);
-
-			targetMember = recordMember;
-
-			return {
-				member: {
-					reference: record.memberID,
-					name: recordMember.getFullName()
-				},
-				event: just({
-					id: record.eventID,
-					startDateTime: event.startDateTime,
-					endDateTime: event.endDateTime,
-					location: event.location,
-					name: event.name,
-					attendanceComments: record.comments
-				})
-			};
-		})
-	);
-};
-
-export default asyncEitherHandler2<api.member.attendance.Get>(
-	(req: MemberRequest<{ reference?: string }>) => {
-		const memberReference = fromValue(req.params.reference)
-			.flatMap(parseStringMemberReference)
-			.orElse(req.member.getReference())
-			.some();
-
-		const targetMember = req.member.matchesReference(memberReference)
-			? asyncRight(req.member, serverErrorGenerator('Cannot get member records'))
-			: resolveReferenceE(memberReference, req.account, req.mysqlx);
-
-		return targetMember
-			.flatMap(member =>
-				req.member.hasPermission('AttendanceView') || req.member.flight === member.flight
-					? asyncRight(member, serverErrorGenerator('Could not get member records'))
-					: asyncLeft<api.ServerError, CAPMemberClasses>({
-							code: 403,
-							error: none<Error>(),
-							message:
-								'Cannot get member information for a member who is not in the same flight'
-					  })
+export const expandRecord = (getEventFunc: typeof getEvent) => (
+	req: ServerAPIRequestParameter<api.member.attendance.Get>
+) => (record: RawAttendanceDBRecord) =>
+	getEventFunc(req.mysqlx)(req.account)(record.eventID)
+		.map(stripEvent(record))
+		.map(Maybe.some)
+		.leftFlatMap(always(Either.right(Maybe.none())))
+		.map<api.member.attendance.EventAttendanceRecord>(event => ({
+			event,
+			member: {
+				name: record.memberName,
+				reference: record.memberID,
+			},
+		}))
+		.leftMap(
+			err => ({
+				...(err as Exclude<ServerError, ValidatorError>),
+				message: `Record could not be shown for ${
+					record.memberName
+				} (${stringifyMemberReference(record.memberID)})`,
+			}),
+			errorGenerator(
+				`Record could not be shown for ${record.memberName} (${stringifyMemberReference(
+					record.memberID
+				)})`
 			)
-			.map(member =>
-				getAttendanceRecordsForMember(member, memberReference, req.account, req.mysqlx)
-			);
-	}
+		);
+
+export const func: ServerAPIEndpoint<api.member.attendance.Get> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getAttendanceForMember(req.mysqlx)(req.account)(toReference(req.member)).map(
+		asyncIterMap(expandRecord(getEvent)(req))
+	)
 );
+
+export default func;

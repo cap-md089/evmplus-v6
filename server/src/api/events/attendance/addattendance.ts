@@ -1,78 +1,54 @@
-import { api, just, left, NewAttendanceRecord, none, Permissions, right } from 'common-lib';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	Event,
+	api,
+	applyCustomAttendanceFields,
+	asyncRight,
+	destroy,
+	effectiveManageEventPermissionForEvent,
+	errorGenerator,
+	EventObject,
 	isValidMemberReference,
-	MemberBase,
-	resolveReference
-} from '../../../lib/internals';
+	Maybe,
+	NewAttendanceRecord,
+	Permissions,
+	SessionType,
+	toReference,
+} from 'common-lib';
+import {
+	addMemberToAttendance,
+	getEvent,
+	getFullEventObject,
+	PAM,
+	resolveReference,
+} from 'server-common';
 
-export default asyncEitherHandler<api.events.attendance.Add>(
-	async (req: BasicMemberValidatedRequest<NewAttendanceRecord, { id: string }>) => {
-		let event: Event;
-		let member: MemberBase;
+const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) => (
+	event: EventObject
+) =>
+	(isValidMemberReference(req.body.memberID) &&
+	effectiveManageEventPermissionForEvent(req.member)(event) === Permissions.ManageEvent.FULL
+		? resolveReference(req.mysqlx)(req.account)(req.body.memberID)
+		: asyncRight(req.member, errorGenerator('Could not get member'))
+	)
+		.map(toReference)
+		.map<Required<NewAttendanceRecord>>(memberID => ({
+			...req.body,
+			customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)(
+				req.body.customAttendanceFieldValues
+			),
+			shiftTime: req.body.shiftTime ?? null,
+			memberID,
+		}));
 
-		try {
-			event = await Event.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find event'
-			});
-		}
-
-		try {
-			if (
-				isValidMemberReference(req.body.memberID) &&
-				(req.member.isPOCOf(event) ||
-					req.member.hasPermission('ManageEvent', Permissions.ManageEvent.FULL))
-			) {
-				member = await resolveReference(req.body.memberID, req.account, req.mysqlx, true);
-			} else {
-				member = req.member;
-			}
-		} catch (e) {
-			return left({
-				code: 404,
-				error: just(e),
-				message: 'Could not get member specified'
-			});
-		}
-
-		const signupError = event.canSignUpForEvent(member);
-
-		if (signupError.direction === 'left') {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: signupError.value
-			});
-		}
-
-		await event.addMemberToAttendance(
-			{
-				arrivalTime: req.body.arrivalTime,
-				comments: req.body.comments,
-				departureTime: req.body.departureTime,
-				planToUseCAPTransportation: req.body.planToUseCAPTransportation,
-				status: req.body.status,
-				customAttendanceFieldValues: req.body.customAttendanceFieldValues
-			},
-			member
-		);
-
-		try {
-			await event.save();
-
-			return right(void 0);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save attendance information'
-			});
-		}
-	}
+export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
+		.flatMap(event =>
+			getRecord(req)(event).flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event))
+		)
+		.map(destroy)
 );
+
+export default func;

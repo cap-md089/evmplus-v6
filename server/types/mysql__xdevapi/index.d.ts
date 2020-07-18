@@ -1,12 +1,16 @@
-type UndefinedToNull<T> = {
-	[P in keyof T]: T[P] extends undefined ? null : T[P]
-};
-
-type Bound<T> = {
-	[P in keyof T]?: T[P] extends Array<infer U> ? U : T[P];
-}
-
 declare module '@mysql/xdevapi' {
+	export type UndefinedToNull<T> = {
+		[P in keyof T]: T[P] extends undefined ? null : T[P];
+	};
+
+	export type WithoutEmpty<T> = {
+		[P in keyof T]: T[P] extends null | undefined ? undefined : T[P];
+	};
+
+	export type Bound<T> = {
+		[P in keyof T]?: T[P] extends Array<infer U> ? U : T[P];
+	};
+
 	type DataModel = number;
 	type DocumentOrJSON = any | string;
 	type ParserOptions = DataModel;
@@ -125,16 +129,13 @@ declare module '@mysql/xdevapi' {
 
 		public count(): Promise<number>;
 
-		public createIndex(
-			name: string,
-			constraint: IndexDefinition
-		): Promise<boolean>;
+		public createIndex(name: string, constraint: IndexDefinition): Promise<boolean>;
 
 		public dropIndex(name: string): Promise<boolean>;
 
 		public existsInDatabase(): Promise<boolean>;
 
-		public find(expr: SearchConditionStr): CollectionFind<T>;
+		public find(expr: SearchConditionStr): CollectionFind<T & { _id: string }>;
 
 		public getName(): string;
 
@@ -161,9 +162,8 @@ declare module '@mysql/xdevapi' {
 		public execute(): Promise<Result>;
 	}
 
-	class CollectionFind<T>
-		implements Binding<T>, CollectionOrdering, Grouping, Limiting, Locking {
-		public execute(callback: (fields: T) => void): Promise<Result>;
+	class CollectionFind<T> implements Binding<T>, CollectionOrdering, Grouping, Limiting, Locking {
+		public execute(callback: (fields: WithoutEmpty<T>) => void): Promise<Result>;
 
 		public fields(projections: string[] | string): CollectionFind<T>;
 
@@ -190,8 +190,7 @@ declare module '@mysql/xdevapi' {
 		public lockShared(mode: LockContention): CollectionFind<T>;
 	}
 
-	class CollectionModify<T>
-		implements Binding<T>, CollectionOrdering, Limiting {
+	class CollectionModify<T> implements Binding<T>, CollectionOrdering, Limiting {
 		public arrayAppend<K extends keyof T = keyof T>(
 			field: K,
 			any: T[K] extends Array<infer U> ? U : never
@@ -208,10 +207,7 @@ declare module '@mysql/xdevapi' {
 
 		public patch(properties: Partial<T>): CollectionModify<T>;
 
-		public set<K extends keyof T = keyof T>(
-			field: K,
-			any: T[K]
-		): CollectionModify<T>;
+		public set<K extends keyof T = keyof T>(field: K, any: T[K]): CollectionModify<T>;
 
 		public unset(fields: string | string[]): CollectionModify<T>;
 
@@ -229,8 +225,7 @@ declare module '@mysql/xdevapi' {
 		public offset(value: number): CollectionModify<T>;
 	}
 
-	class CollectionRemove<T>
-		implements Binding<T>, CollectionOrdering, Limiting {
+	class CollectionRemove<T> implements Binding<T>, CollectionOrdering, Limiting {
 		public execute(): Promise<Result>;
 
 		public bind(parameter: Bound<T>): CollectionRemove<T>;
@@ -264,7 +259,7 @@ declare module '@mysql/xdevapi' {
 	class Schema implements DatabaseObject {
 		public createCollection(
 			name: string,
-			options: CreateCollectionOptions
+			options?: CreateCollectionOptions
 		): Promise<Collection>;
 
 		public dropCollection(name: string): Promise<boolean>;
@@ -273,13 +268,9 @@ declare module '@mysql/xdevapi' {
 
 		public getClassName(): string;
 
-		public getCollection<T = any>(
-			name: string
-		): Collection<UndefinedToNull<T>>;
+		public getCollection<T = any>(name: string): Collection<WithoutEmpty<T>>;
 
-		public getCollectionAsTable<T = any>(
-			name: string
-		): Table<UndefinedToNull<T>>;
+		public getCollectionAsTable<T = any>(name: string): Table<UndefinedToNull<T>>;
 
 		public getCollections(): Promise<Collection[]>;
 
@@ -480,13 +471,7 @@ declare module '@mysql/xdevapi' {
 	}
 
 	class TableSelect<T>
-		implements
-			Binding<T>,
-			Grouping,
-			Limiting,
-			Locking,
-			TableFiltering,
-			TableOrdering {
+		implements Binding<T>, Grouping, Limiting, Locking, TableFiltering, TableOrdering {
 		public execute(
 			rowcb?: (item: T) => void,
 			metacb?: (metadata: any) => void
@@ -548,6 +533,14 @@ declare module '@mysql/xdevapi' {
 	 * @returns {Promise<Session>} The session
 	 */
 	const getSession: (options: string | URI) => Promise<Session>;
+
+	class Client {
+		public close(): Promise<void>;
+
+		public getSession(): Promise<Session>;
+	}
+
+	const getClient: (options: any, options2: any) => Promise<Client>;
 
 	/**
 	 * Retrieve the connector version number (from package.json)

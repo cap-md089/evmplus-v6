@@ -1,38 +1,40 @@
-import { api, EditableFileObjectProperties, just, left, none, right } from 'common-lib';
+import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
-	asyncEitherHandler,
-	BasicPartialMemberValidatedRequest,
-	File
-} from '../../../lib/internals';
+	api,
+	destroy,
+	EditableFileObjectProperties,
+	FileUserAccessControlPermissions,
+	SessionType,
+	userHasFilePermission,
+	Validator,
+} from 'common-lib';
+import { getFileObject, PAM, saveFileObject } from 'server-common';
+import { validateRequest } from '../../../lib/requestUtils';
 
-export default asyncEitherHandler<api.files.files.SetInfo>(
-	async (
-		req: BasicPartialMemberValidatedRequest<EditableFileObjectProperties, { fileid: string }>
-	) => {
-		let file: File;
+const canModifyFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-		try {
-			file = await File.Get(req.params.fileid, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find file'
-			});
-		}
-
-		file.set(req.body);
-
-		try {
-			await file.save();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save file information'
-			});
-		}
-
-		return right(void 0);
-	}
+const fileInfoValidator = Validator.Partial(
+	(validator<EditableFileObjectProperties>(Validator) as Validator<EditableFileObjectProperties>)
+		.rules
 );
+
+export const func: ServerAPIEndpoint<api.files.files.SetInfo> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(request =>
+	validateRequest(fileInfoValidator)(request).flatMap(req =>
+		getFileObject(false)(req.mysqlx)(req.account)(req.params.fileid)
+			.filter(canModifyFile(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message: 'Member does not have permission to carry out this action',
+			})
+			.map(file => ({
+				...file,
+				...req.body,
+			}))
+			.map(saveFileObject(req.mysqlx))
+			.map(destroy)
+	)
+);
+
+export default func;

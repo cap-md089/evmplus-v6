@@ -1,59 +1,42 @@
-import { api, left, none, right } from 'common-lib';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	Account,
-	asyncEitherHandler,
-	BasicMemberRequest,
-	Event,
-	getPermissionsForMemberInAccount
-} from '../../../lib/internals';
+	always,
+	api,
+	AsyncEither,
+	asyncRight,
+	errorGenerator,
+	hasBasicEventPermissions,
+	toReference,
+	User,
+} from 'common-lib';
+import { getAccount, getEvent, linkEvent, PAM } from 'server-common';
 
-export default asyncEitherHandler<api.events.events.Link>(
-	async (req: BasicMemberRequest<{ parent: string }>) => {
-		if (
-			req.body === undefined ||
-			req.body === null ||
-			typeof req.body.id !== 'string' ||
-			req.params.parent === undefined
-		) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Linked event target and source could not be found'
-			});
-		}
-
-		let event: Event;
-		let targetAccount: Account;
-
-		try {
-			[event, targetAccount] = await Promise.all([
-				Event.Get(req.params.parent, req.account, req.mysqlx),
-				Account.Get(req.body.id, req.mysqlx)
-			]);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: "Either the account or the event couldn't be found"
-			});
-		}
-
-		const permissionsForMemberInTargetAccount = await getPermissionsForMemberInAccount(
-			req.mysqlx,
-			req.member.getReference(),
-			targetAccount
-		);
-
-		if (permissionsForMemberInTargetAccount.ManageEvent < 2) {
-			return left({
+export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
+	AsyncEither.All([
+		getEvent(req.mysqlx)(req.account)(req.params.eventID),
+		getAccount(req.mysqlx)(req.params.targetaccount),
+	]).flatMap(([event, targetAccount]) =>
+		asyncRight(
+			PAM.getPermissionsForMemberInAccountDefault(
+				req.mysqlx,
+				toReference(req.member),
+				targetAccount
+			),
+			errorGenerator('Could not get permissions for account')
+		)
+			.map<User>(permissions => ({ ...req.member, permissions }))
+			.filter(hasBasicEventPermissions, {
+				type: 'OTHER',
 				code: 403,
-				error: none<Error>(),
-				message: 'This account does not have permissions to perform this action'
-			});
-		}
+				message:
+					'Member does not have permission to perform this action in the specified account',
+			})
+			.map(always(targetAccount))
+			.flatMap(
+				linkEvent(req.configuration)(req.mysqlx)(req.account)(event)(
+					toReference(req.member)
+				)
+			)
+	);
 
-		const newEvent = await event.linkTo(targetAccount, req.member);
-
-		return right(newEvent.toRaw(req.member));
-	}
-);
+export default func;

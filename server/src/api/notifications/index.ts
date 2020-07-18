@@ -1,45 +1,23 @@
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import { Router } from 'express';
-import { Account, leftyMemberMiddleware } from '../../lib/internals';
-import { leftyTokenMiddleware } from '../formtoken';
-// Admin Notification APIs
-import admindelete from './admin/delete';
-import adminget from './admin/get';
-import adminlist from './admin/list';
-import adminmarkread from './admin/toggleread';
-// Notification APIs for all the notification types
-import allget from './allget';
-import alllist from './alllist';
-import alltoggleread from './alltoggleread';
-// Global notifications
-import globalcreate from './global/createglobal';
+import { endpointAdder } from '../../lib/API';
+import deletenotification from './deletenotification';
+import get from './get';
+import globalcreate from './global/create';
 import globalget from './global/get';
-import globaltoggleread from './global/markread';
-// Member Notification APIs
-import memberdelete from './member/delete';
-import memberget from './member/get';
-import memberlist from './member/list';
-import membertoggleread from './member/toggleread';
+import list from './list';
+import toggleread from './toggleread';
 
 const router = Router();
 
-router.use(Account.ExpressMiddleware);
+const adder = endpointAdder(router) as () => () => void;
 
-router.get('/admin', leftyMemberMiddleware, adminlist);
-router.get('/admin/:id', leftyMemberMiddleware, adminget);
-router.post('/admin/:id', leftyMemberMiddleware, leftyTokenMiddleware, adminmarkread);
-router.delete('/admin/:id', leftyMemberMiddleware, leftyTokenMiddleware, admindelete);
-
-router.get('/member', leftyMemberMiddleware, memberlist);
-router.get('/member/:id', leftyMemberMiddleware, memberget);
-router.post('/member/:id', leftyMemberMiddleware, leftyTokenMiddleware, membertoggleread);
-router.delete('/member/:id', leftyMemberMiddleware, leftyTokenMiddleware, memberdelete);
-
-router.get('/global', globalget);
-router.post('/global', leftyMemberMiddleware, leftyTokenMiddleware, globalcreate);
-router.delete('/global', leftyMemberMiddleware, leftyTokenMiddleware, globaltoggleread);
-
-router.get('/', leftyMemberMiddleware, alllist);
-router.get('/:id', leftyMemberMiddleware, allget);
-router.post('/:id', leftyMemberMiddleware, alltoggleread);
+addAPI(Validator, adder, globalget);
+addAPI(Validator, adder, globalcreate);
+addAPI(Validator, adder, deletenotification);
+addAPI(Validator, adder, get);
+addAPI(Validator, adder, list);
+addAPI(Validator, adder, toggleread);
 
 export default router;

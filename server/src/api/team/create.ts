@@ -1,21 +1,15 @@
-import { api, just, left, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, Team } from '../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, SessionType } from 'common-lib';
+import { createTeam, expandTeam, PAM } from 'server-common';
 
-export default asyncEitherHandler<api.team.Create>(async (req: BasicMemberRequest) => {
-	try {
-		const newTeam = await Team.Create(
-			req.body,
-			req.account,
-			req.mysqlx,
-			req.memberUpdateEmitter
-		);
+export const func: ServerAPIEndpoint<api.team.CreateTeam> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(
+	PAM.RequiresPermission('ManageTeam')(req =>
+		createTeam(req.memberUpdateEmitter)(req.mysqlx)(req.account)(req.body).flatMap(
+			expandTeam(req.mysqlx)(req.account)
+		)
+	)
+);
 
-		return right(newTeam.toFullRaw(req.member));
-	} catch (e) {
-		return left({
-			code: 500,
-			error: just(e),
-			message: 'Could not create team'
-		});
-	}
-});
+export default func;

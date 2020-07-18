@@ -1,99 +1,68 @@
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
+	always,
 	api,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
-	just,
-	left,
-	none,
+	Maybe,
 	RawFileObject,
-	right
+	toReference,
+	userHasFilePermission,
 } from 'common-lib';
-import { DateTime } from 'luxon';
+import { expandRawFileObject, getFileObject } from 'server-common';
 import { v4 as uuid } from 'uuid';
-import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
 
-export default asyncEitherHandler<api.files.files.CreateFolder>(
-	async (req: BasicMemberRequest<{ parentid: string; name: string }>) => {
-		let parent: File;
+const canAddSubfolder = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-		try {
-			parent = await File.Get(req.params.parentid, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find parent file'
-			});
-		}
+export const func: (
+	uuidFunc?: typeof uuid,
+	now?: () => number
+) => ServerAPIEndpoint<api.files.files.CreateFolder> = (uuidFunc = uuid, now = Date.now) => req =>
+	getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid)
+		.filter(canAddSubfolder(req.member), {
+			type: 'OTHER',
+			code: 403,
+			message: 'You do not have permission to do that',
+		})
+		.filter(file => file.contentType === 'application/folder', {
+			type: 'OTHER',
+			code: 403,
+			message: 'You can only add a subfolder to a folder',
+		})
+		.map(({ id: parentID }) => {
+			const id = uuidFunc().replace(/-/g, '');
 
-		if (
-			!(await parent.hasPermission(
-				req.member,
-				req.mysqlx,
-				req.account,
-				FileUserAccessControlPermissions.MODIFY
-			))
-		) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Member does not have the required permissions'
-			});
-		}
+			const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 
-		const id = uuid().replace(/-/g, '');
+			const owner = toReference(req.member);
 
-		const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
+			const newFile: RawFileObject = {
+				accountID: req.account.id,
+				comments: '',
+				contentType: 'application/folder',
+				created: now(),
+				fileName: req.params.name,
+				forDisplay: false,
+				forSlideshow: false,
+				id,
+				kind: 'drive#file',
+				owner,
+				parentID,
+				permissions: [
+					{
+						type: FileUserAccessControlType.USER,
+						reference: owner,
+						permission: FileUserAccessControlPermissions.FULLCONTROL,
+					},
+				],
+			};
 
-		const reference = req.member.getReference();
+			return fileCollection.add(newFile).execute().then(always(newFile));
+		})
+		.flatMap(expandRawFileObject(req.mysqlx)(req.account))
+		.map(file => ({
+			...file,
+			uploader: Maybe.some(req.member),
+		}));
 
-		try {
-			await fileCollection
-				.add({
-					accountID: req.account.id,
-					comments: '',
-					contentType: 'application/folder',
-					created: +DateTime.utc(),
-					fileName: req.params.name,
-					forDisplay: false,
-					forSlideshow: false,
-					id,
-					kind: 'drive#file',
-					permissions: [
-						{
-							type: FileUserAccessControlType.USER,
-							reference,
-							permission: FileUserAccessControlPermissions.FULLCONTROL
-						}
-					],
-					owner: reference,
-					fileChildren: [],
-					parentID: req.params.parentid
-				})
-				.execute();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not add file'
-			});
-		}
-
-		let file: File;
-
-		try {
-			file = await File.Get(id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not add file'
-			});
-		}
-
-		return right({
-			...file.toRaw(),
-			uploader: just(req.member.toRaw())
-		});
-	}
-);
+export default func();

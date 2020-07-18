@@ -1,15 +1,13 @@
-import { api, asyncRight, NewTaskObject } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicMemberValidatedRequest,
-	serverErrorGenerator,
-	Task
-} from '../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, Permissions, SessionType } from 'common-lib';
+import { createTask, PAM } from 'server-common';
 
-export default asyncEitherHandler<api.tasks.Create>(
-	(req: BasicMemberValidatedRequest<NewTaskObject>) =>
-		asyncRight(
-			Task.Create(req.body, req.member, req.account, req.mysqlx),
-			serverErrorGenerator('Could not create task')
-		)
+export const func: ServerAPIEndpoint<api.tasks.CreateTask> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(request =>
+	PAM.checkPermissions('AssignTasks')(Permissions.AssignTasks.YES)()(request).flatMap(req =>
+		createTask(req.mysqlx)(req.account)(req.body)
+	)
 );
+
+export default func;

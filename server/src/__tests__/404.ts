@@ -22,8 +22,6 @@ describe('any url that is not an image, build file, or api call', () => {
 	});
 
 	it('should respond with 404', done => {
-		request(server)
-			.get('/api/not/a/real/api')
-			.expect(404, done);
+		request(server).get('/api/not/a/real/api').expect(404, done);
 	});
 });

@@ -1,68 +1,33 @@
-import { api, asyncLeft, asyncRight, none } from 'common-lib';
-import { DateTime } from 'luxon';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	Account,
-	asyncEitherHandler2,
-	Event,
-	memberRequestTransformer,
-	serverErrorGenerator,
+	api,
+	asyncRight,
+	canManageEvent,
+	errorGenerator,
+	Maybe,
+	Permissions,
 	SessionType,
-	Validator
-} from '../../../lib/internals';
-import { tokenTransformer } from '../../formtoken';
+	toReference,
+} from 'common-lib';
+import { copyEvent, getEvent, getFullEventObject, PAM } from 'server-common';
 
-interface EventCopyBody {
-	newTime: number;
-	copyStatus: boolean | undefined | null;
-	copyFiles: boolean | undefined | null;
-}
-
-export const copyValidator = new Validator<EventCopyBody>({
-	newTime: {
-		validator: Validator.Number
-	},
-	copyStatus: {
-		validator: Validator.Or(Validator.Boolean, Validator.Nothing),
-		required: false
-	},
-	copyFiles: {
-		validator: Validator.Or(Validator.Boolean, Validator.Nothing),
-		required: false
-	}
-});
-
-export default asyncEitherHandler2<api.events.events.Copy, { id: string }>(req =>
-	asyncRight(req, serverErrorGenerator('Could not copy event'))
-		// Middleware
-		.flatMap(r => Account.RequestTransformer(r))
-		.flatMap(r => memberRequestTransformer(SessionType.REGULAR, true)(r))
-		.flatMap(r => tokenTransformer(r))
-		// For some reason, this causes the type system to work properly, as opposed to just passing in copyValidator.transform
-		.flatMap(r => copyValidator.transform(r))
-		// Take the request and get the event
-		.flatMap(r =>
-			Event.GetEither(r.params.id, r.account, r.mysqlx)
-				// Check for permissions
-				.flatMap<Event>(event =>
-					event.isPOC(r.member)
-						? asyncRight(event, serverErrorGenerator('Could not copy event'))
-						: asyncLeft({
-								code: 403,
-								error: none<Error>(),
-								message: 'Member has invalid permissions to perform that action'
-						  })
-				)
-				// Copy the event
-				.map(event =>
-					event.copy(
-						DateTime.fromMillis(r.body.newTime),
-						r.member,
-						r.configuration,
-						!!r.body.copyStatus,
-						!!r.body.copyFiles
-					)
-				)
-				// Return it to the user
-				.map(event => event.toRaw(r.member))
-		)
+export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	asyncRight(req, errorGenerator('Could not get information')).flatMap(() =>
+		getEvent(req.mysqlx)(req.account)(req.params.id)
+			.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message: 'Member does not have permission to perform that action',
+			})
+			.map(copyEvent(req.configuration)(req.mysqlx)(req.account))
+			.map(copier => copier(toReference(req.member)))
+			.map(copier => copier(req.body.newTime))
+			.map(copier => copier(!!req.body.copyStatus))
+			.flatMap(copier => copier(!!req.body.copyFiles))
+			.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
+	)
 );
+
+export default func;

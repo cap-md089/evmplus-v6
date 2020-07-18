@@ -1,58 +1,34 @@
-import { api, just, left, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, File } from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import {
+	api,
+	AsyncEither,
+	destroy,
+	FileUserAccessControlPermissions,
+	get,
+	userHasFilePermission,
+} from 'common-lib';
+import { getFileObject, saveFileObject } from 'server-common';
 
-export default asyncEitherHandler<api.files.children.AddChild>(
-	async (req: BasicMemberRequest<{ parentid: string }>) => {
-		const parentid = req.params.parentid;
-		const childid = req.body.id;
+const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
+const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-		let child, parent, oldparent;
+export const func: ServerAPIEndpoint<api.files.children.AddChild> = req =>
+	AsyncEither.All([
+		getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid),
+		getFileObject(true)(req.mysqlx)(req.account)(req.body.childid),
+	])
+		.filter(([parent, child]) => canModify(req.member)(parent) && canRead(req.member)(child), {
+			type: 'OTHER',
+			code: 403,
+			message:
+				'Member needs to be able to read child and modify parent in order to perform this action',
+		})
+		.map(get(1))
+		.map(child => ({
+			...child,
+			parentID: req.params.parentid,
+		}))
+		.map(saveFileObject(req.mysqlx))
+		.map(destroy);
 
-		try {
-			[child, parent] = await Promise.all([
-				File.Get(childid, req.account, req.mysqlx),
-				File.Get(parentid, req.account, req.mysqlx)
-			]);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find either the child or the parent'
-			});
-		}
-
-		try {
-			oldparent = await child.getParent();
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not unlink from old parent'
-			});
-		}
-
-		oldparent.removeChild(child);
-
-		try {
-			await parent.addChild(child);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not add child to parent'
-			});
-		}
-
-		try {
-			await Promise.all([oldparent.save(), child.save(), parent.save()]);
-		} catch (e) {
-			return left({
-				code: 500,
-				error: just(e),
-				message: 'Could not save information for files'
-			});
-		}
-
-		return right(void 0);
-	}
-);
+export default func;

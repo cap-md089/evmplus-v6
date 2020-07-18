@@ -1,32 +1,13 @@
-import { api, left, none, right, TeamPublicity } from 'common-lib';
-import { asyncEitherHandler, BasicConditionalMemberRequest, Team } from '../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, SessionType } from 'common-lib';
+import { expandTeam, getTeam, httpStripTeamObject, PAM } from 'server-common';
 
-export default asyncEitherHandler<api.team.Get>(
-	async (req: BasicConditionalMemberRequest<{ id: string }>) => {
-		let team: Team;
-
-		try {
-			team = await Team.Get(req.params.id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find team'
-			});
-		}
-
-		if (team.visibility === TeamPublicity.PRIVATE) {
-			if (req.member && team.isMemberOrLeader(req.member.getReference())) {
-				return right(team.toFullRaw(req.member));
-			} else {
-				return left({
-					code: 403,
-					error: none<Error>(),
-					message: 'Member does not have permission to perform that action'
-				});
-			}
-		} else {
-			return right(team.toFullRaw(req.member));
-		}
-	}
+export const func: ServerAPIEndpoint<api.team.GetTeam> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
+		.flatMap(expandTeam(req.mysqlx)(req.account))
+		.map(httpStripTeamObject(req.member))
 );
+
+export default func;

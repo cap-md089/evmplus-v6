@@ -1,14 +1,8 @@
-import { api, just, none, NotificationObject, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, GlobalNotification } from '../../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api } from 'common-lib';
+import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 
-export default asyncEitherHandler<api.notifications.global.Get>(
-	async (req: BasicMemberRequest<{ id: string }>) => {
-		try {
-			const notification = await GlobalNotification.GetCurrent(req.account, req.mysqlx);
+export const func: ServerAPIEndpoint<api.notifications.global.GetGlobalNotification> = req =>
+	getCurrentGlobalNotification(req.mysqlx)(req.account);
 
-			return right(just(notification.toFullRaw()));
-		} catch (e) {
-			return right(none<NotificationObject>());
-		}
-	}
-);
+export default func;

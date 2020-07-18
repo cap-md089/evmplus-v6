@@ -1,19 +1,11 @@
+import { addAPI } from 'auto-client-api';
+import { Validator } from 'common-lib';
 import * as express from 'express';
-import {
-	Account,
-	conditionalMemberMiddleware,
-	leftyConditionalMemberMiddleware,
-	leftyMemberMiddleware,
-	NewAttendanceRecordValidator,
-	NewDebriefItemValidator,
-	replaceUndefinedWithNullMiddleware,
-	Validator
-} from '../../lib/internals';
-import { leftyTokenMiddleware } from '../formtoken';
+import { endpointAdder } from '../../lib/API';
 // Attendance
 import addattendance from './attendance/addattendance';
-import addattendancebulk, { attendanceBulkValidator } from './attendance/addattendancebulk';
-import attendancelogcadet from './attendance/attendancelogcadet';
+import addattendancebulk from './attendance/addattendancebulk';
+// import attendancelogcadet from './attendance/attendancelogcadet';
 // import attendancelogsenior from './attendance/attendancelogsenior';
 // import attendanceroster from './attendance/attendanceroster';
 import deleteattendance from './attendance/deleteattendance';
@@ -37,65 +29,31 @@ import timelist from './events/timelist';
 
 const router = express.Router();
 
-router.get('/upcoming', Account.LeftyExpressMiddleware, listupcoming);
-router.get('/recurring', Account.LeftyExpressMiddleware, getnextrecurring);
-
-// These APIs use Account transformers, not middleware
-router.get('/:id', getevent);
-router.post('/:id/copy', copy);
-router.post('/', addevent);
-router.get('/:id/viewer', eventviewer);
-router.put('/:id', setevent);
-
-router.use(Account.LeftyExpressMiddleware);
-
-router.get('/:id/attendance/log/cadet', leftyConditionalMemberMiddleware, attendancelogcadet);
+// router.get('/:id/attendance/log/cadet', attendancelogcadet);
 // router.get('/:id/attendance/log/senior', conditionalMemberMiddleware, attendancelogsenior);
 // router.get('/:id/attendance/roster', conditionalMemberMiddleware, attendanceroster);
-router.get('/:id/attendance', leftyMemberMiddleware, getattendance);
-router.post(
-	'/:id/attendance/bulk',
-	leftyMemberMiddleware,
-	replaceUndefinedWithNullMiddleware,
-	leftyTokenMiddleware,
-	Validator.LeftyBodyExpressMiddleware(attendanceBulkValidator),
-	addattendancebulk
-);
-router.post(
-	'/:id/attendance',
-	leftyMemberMiddleware,
-	replaceUndefinedWithNullMiddleware,
-	leftyTokenMiddleware,
-	Validator.LeftyBodyExpressMiddleware(NewAttendanceRecordValidator),
-	addattendance
-);
-router.put(
-	'/:id/attendance',
-	leftyMemberMiddleware,
-	replaceUndefinedWithNullMiddleware,
-	leftyTokenMiddleware,
-	Validator.LeftyBodyExpressMiddleware(NewAttendanceRecordValidator),
-	modifyattendance
-);
-router.delete('/:id/attendance', leftyMemberMiddleware, leftyTokenMiddleware, deleteattendance);
 
-router.post(
-	'/:id/debrief',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	NewDebriefItemValidator.leftyExpressHandler,
-	adddebrief
-);
-router.delete(
-	'/:id/debrief/:timestamp',
-	leftyMemberMiddleware,
-	leftyTokenMiddleware,
-	deletedebrief
-);
+const adder = endpointAdder(router) as () => () => void;
 
-router.get('/', leftyConditionalMemberMiddleware, list);
-router.get('/:start/:end', conditionalMemberMiddleware, timelist);
-router.post('/:parent', leftyMemberMiddleware, leftyTokenMiddleware, linkevent);
-router.delete('/:id', leftyMemberMiddleware, leftyTokenMiddleware, deleteevent);
+addAPI(Validator, adder, addattendance);
+addAPI(Validator, adder, addattendancebulk);
+addAPI(Validator, adder, deleteattendance);
+addAPI(Validator, adder, getattendance);
+addAPI(Validator, adder, modifyattendance);
+
+addAPI(Validator, adder, adddebrief);
+addAPI(Validator, adder, deletedebrief);
+
+addAPI(Validator, adder, addevent);
+addAPI(Validator, adder, copy);
+addAPI(Validator, adder, deleteevent);
+addAPI(Validator, adder, eventviewer);
+addAPI(Validator, adder, list);
+addAPI(Validator, adder, getnextrecurring);
+addAPI(Validator, adder, listupcoming);
+addAPI(Validator, adder, linkevent);
+addAPI(Validator, adder, setevent);
+addAPI(Validator, adder, getevent);
+addAPI(Validator, adder, timelist);
 
 export default router;

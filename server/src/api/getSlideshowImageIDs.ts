@@ -1,21 +1,34 @@
-import { FileUserAccessControlPermissions } from 'common-lib';
-import * as express from 'express';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	asyncErrorHandler,
-	ConditionalMemberRequest,
-	streamAsyncGeneratorAsJSONArray
-} from '../lib/internals';
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	asyncRight,
+	Either,
+	EitherObj,
+	errorGenerator,
+	FileObject,
+	FileUserAccessControlPermissions,
+	get,
+	RawFileObject,
+	Right,
+	ServerError,
+	userHasFilePermission,
+} from 'common-lib';
+import { expandRawFileObject, findAndBindC, generateResults } from 'server-common';
 
-export default asyncErrorHandler(async (req: ConditionalMemberRequest, res: express.Response) => {
-	await streamAsyncGeneratorAsJSONArray(res, req.account.getFiles(), async file =>
-		file.forSlideshow &&
-		!(await file.hasPermission(
-			req.member,
-			req.mysqlx,
-			req.account,
-			FileUserAccessControlPermissions.READ
-		))
-			? JSON.stringify(file.toRaw())
-			: false
-	);
-});
+export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
+	asyncRight(req.mysqlx.getCollection<RawFileObject>('Files'), errorGenerator('Could not get '))
+		.map(
+			findAndBindC<RawFileObject>({
+				forSlideshow: true,
+				accountID: req.account.id,
+			})
+		)
+		.map(generateResults)
+		.map(asyncIterFilter(userHasFilePermission(FileUserAccessControlPermissions.READ)(null)))
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
+		.map(asyncIterFilter<EitherObj<ServerError, FileObject>, Right<FileObject>>(Either.isRight))
+		.map(asyncIterMap(get('value')));
+
+export default func;

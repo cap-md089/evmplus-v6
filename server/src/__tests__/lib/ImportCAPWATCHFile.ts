@@ -3,14 +3,6 @@ import { NHQ } from 'common-lib';
 import { CAPWATCHImportErrors } from 'common-lib';
 import { resolve } from 'path';
 import conftest from '../../conf.test';
-import {
-	Account,
-	CAPNHQMember,
-	collectResults,
-	findAndBind,
-	getTestTools2,
-	ImportCAPWATCHFile
-} from '../../lib/internals';
 
 const zipFileLocation = resolve(__dirname, '../CAPWATCH.zip');
 
@@ -55,7 +47,7 @@ describe('Import CAPWATCH File', () => {
 		let resultCount = 0;
 
 		for await (const _ of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'notafile.txt'
+			'notafile.txt',
 		])) {
 			resultCount++;
 		}
@@ -69,7 +61,7 @@ describe('Import CAPWATCH File', () => {
 
 	it('should import Member.txt', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'Member.txt'
+			'Member.txt',
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
@@ -83,14 +75,14 @@ describe('Import CAPWATCH File', () => {
 
 	it('should import member contact information', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'MbrContact.txt'
+			'MbrContact.txt',
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
 		const results = await collectResults(
 			findAndBind(schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact'), {
-				CAPID: 542488
+				CAPID: 542488,
 			})
 		);
 
@@ -103,14 +95,14 @@ describe('Import CAPWATCH File', () => {
 
 	it('should import cadet activity information', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'CadetActivities.txt'
+			'CadetActivities.txt',
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
 		const results = await collectResults(
 			findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), {
-				CAPID: 546319
+				CAPID: 546319,
 			})
 		);
 
@@ -122,14 +114,14 @@ describe('Import CAPWATCH File', () => {
 
 	it('should import duty positions', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'DutyPosition.txt'
+			'DutyPosition.txt',
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
 		const results = await collectResults(
 			findAndBind(schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition'), {
-				CAPID: 546319
+				CAPID: 546319,
 			})
 		);
 
@@ -142,14 +134,14 @@ describe('Import CAPWATCH File', () => {
 
 	it('should import cadet duty positions', async done => {
 		for await (const i of ImportCAPWATCHFile(zipFileLocation, schema, session, 916, [
-			'CadetDutyPositions.txt'
+			'CadetDutyPositions.txt',
 		])) {
 			expect(i.error).toBe(CAPWATCHImportErrors.NONE);
 		}
 
 		const results = await collectResults(
 			findAndBind(schema.getCollection<NHQ.DutyPosition>('NHQ_CadetDutyPosition'), {
-				CAPID: 542488
+				CAPID: 542488,
 			})
 		);
 

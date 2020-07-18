@@ -1,30 +1,18 @@
-import { api, left, none, right } from 'common-lib';
-import { asyncEitherHandler, BasicMemberRequest, Task } from '../../lib/internals';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, hasPermissionForTask, SessionType } from 'common-lib';
+import { getTask, PAM } from 'server-common';
 
-export default asyncEitherHandler<api.tasks.Get>(
-	async (req: BasicMemberRequest<{ id: string }>) => {
-		const id = parseInt(req.params.id, 10);
-
-		if (id !== id) {
-			return left({
-				code: 400,
-				error: none<Error>(),
-				message: 'Invalid ID passed as parameter'
-			});
+export const func: ServerAPIEndpoint<api.tasks.GetTask> = PAM.RequireSessionType(
+	SessionType.REGULAR
+)(req =>
+	getTask(req.mysqlx)(req.account)(parseInt(req.params.id, 10)).filter(
+		hasPermissionForTask(req.member),
+		{
+			type: 'OTHER',
+			code: 403,
+			message: 'Member is not able to view the requested task',
 		}
-
-		let task: Task;
-
-		try {
-			task = await Task.Get(id, req.account, req.mysqlx);
-		} catch (e) {
-			return left({
-				code: 404,
-				error: none<Error>(),
-				message: 'Could not find task'
-			});
-		}
-
-		return right(task.toRaw());
-	}
+	)
 );
+
+export default func;

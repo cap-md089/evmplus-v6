@@ -1,88 +1,25 @@
-import { FileObject, FileUserAccessControlPermissions, FullFileObject } from 'common-lib';
-import * as express from 'express';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	asyncErrorHandler,
-	ConditionalMemberRequest,
-	File,
-	streamAsyncGeneratorAsJSONArrayTyped
-} from '../../../lib/internals';
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	FileUserAccessControlPermissions,
+	Maybe,
+	userHasFilePermission,
+} from 'common-lib';
+import { expandRawFileObject, getChildren, getFileObject } from 'server-common';
 
-export default asyncErrorHandler(
-	async (
-		req: ConditionalMemberRequest<{ parentid: string; method: string }>,
-		res: express.Response
-	) => {
-		const parentid = typeof req.params.parentid === 'undefined' ? 'root' : req.params.parentid;
-		const method = typeof req.params.method === 'undefined' ? 'clean' : req.params.method;
+const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
-		if (['clean', 'dirty'].indexOf(method) === -1) {
-			res.status(400);
-			res.end();
-			return;
-		}
+export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
+	getFileObject(true)(req.mysqlx)(req.account)(req.params.parentid)
+		.filter(canRead(Maybe.join(req.member)), {
+			type: 'OTHER',
+			code: 403,
+			message: 'Member cannot read the file requested',
+		})
+		.flatMap(getChildren(req.mysqlx)(req.account))
+		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)));
 
-		let folder;
-
-		try {
-			folder = await File.Get(parentid, req.account, req.mysqlx);
-		} catch (e) {
-			res.status(404);
-			res.end();
-			return;
-		}
-
-		if (
-			!(await folder.hasPermission(
-				req.member,
-				req.mysqlx,
-				req.account,
-				FileUserAccessControlPermissions.READ
-			))
-		) {
-			res.status(403);
-			res.end();
-			return;
-		}
-
-		if (
-			req.params.method !== undefined &&
-			req.params.method === 'dirty' &&
-			req.member !== null
-		) {
-			await streamAsyncGeneratorAsJSONArrayTyped<File, FullFileObject>(
-				res,
-				folder.getChildren(),
-				async file => {
-					const canRead = await file.hasPermission(
-						req.member,
-						req.mysqlx,
-						req.account,
-						FileUserAccessControlPermissions.READ
-					);
-
-					if (!canRead) {
-						return false;
-					}
-
-					const fullFile = await file.toFullRaw();
-
-					return fullFile;
-				}
-			);
-		} else {
-			await streamAsyncGeneratorAsJSONArrayTyped<File, FileObject>(
-				res,
-				folder.getChildren(),
-				file =>
-					file.hasPermission(
-						req.member,
-						req.mysqlx,
-						req.account,
-						FileUserAccessControlPermissions.READ
-					)
-						? file.toRaw()
-						: false
-			);
-		}
-	}
-);
+export default func;

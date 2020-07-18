@@ -1,55 +1,33 @@
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
 	api,
-	just,
-	left,
-	MemberReference,
-	NHQMemberReference,
-	none,
-	ProspectiveMemberReference,
-	right
+	asyncLeft,
+	asyncRight,
+	destroy,
+	errorGenerator,
+	isRioux,
+	ServerError,
+	SessionType,
 } from 'common-lib';
-import {
-	asyncEitherHandler,
-	BasicMemberRequest,
-	CAPNHQMember,
-	isValidMemberReference
-} from '../../lib/internals';
+import { PAM } from 'server-common';
 
-export default asyncEitherHandler<api.member.Su>(async (req: BasicMemberRequest) => {
-	if (!req.member.isRioux || !(req.member instanceof CAPNHQMember)) {
-		return left({
-			code: 403,
-			error: none<Error>(),
-			message: 'Member has invalid permissions to perform this action'
-		});
-	}
+export const func: ServerAPIEndpoint<api.member.Su> = PAM.RequireSessionType(SessionType.REGULAR)(
+	request =>
+		asyncRight(request, errorGenerator('Could not su as other user'))
+			.flatMap(req =>
+				isRioux(req.member)
+					? asyncRight<ServerError, ServerAPIRequestParameter<api.member.Su>>(
+							req,
+							errorGenerator('Could not su as other user')
+					  )
+					: asyncLeft<ServerError, ServerAPIRequestParameter<api.member.Su>>({
+							type: 'OTHER',
+							code: 403,
+							message: "You don't have permission to do that",
+					  })
+			)
+			.map(req => PAM.su(req.mysqlx, req.session, req.body))
+			.map(destroy)
+);
 
-	if (!isValidMemberReference(req.body)) {
-		return left({
-			code: 400,
-			error: none<Error>(),
-			message: 'You provided an invalid member, dummy'
-		});
-	}
-
-	try {
-		await req.member.su(
-			req.body.type === 'Null'
-				? {
-						type: 'Null'
-				  }
-				: ({
-						type: req.body.type,
-						id: (req.body as NHQMemberReference | ProspectiveMemberReference).id
-				  } as MemberReference)
-		);
-	} catch (e) {
-		return left({
-			code: 500,
-			error: just(e),
-			message: 'Could not su as target member'
-		});
-	}
-
-	return right(void 0);
-});
+export default func;
