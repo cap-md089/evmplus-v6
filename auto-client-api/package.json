@@ -1,0 +1,22 @@
+{
+	"name": "auto-client-api",
+	"version": "0.1.0",
+	"description": "Automatically generates APIs for the TypeScript CAPUnit.com server for use on a JavaScript client",
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/index.js"
+	},
+	"author": "Andrew Rioux",
+	"license": "GPL-2.0",
+	"private": true,
+	"dependencies": {
+		"typescript": "^3.8.3"
+	},
+	"devDependencies": {
+		"@types/node": "^13.13.4",
+		"common-lib": "file:../lib",
+		"prettier": "^2.0.5",
+		"tslint": "^6.1.2",
+		"tslint-config-prettier": "^1.18.0"
+	}
+}

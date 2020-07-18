@@ -1,5 +1,7 @@
-import { EventEmitter } from 'events';
-import { MaybeObj } from '../lib/Maybe';
+import type { Schema, Session } from '@mysql/xdevapi';
+import type { EventEmitter } from 'events';
+import type { IncomingHttpHeaders } from 'http';
+import type { MaybeObj } from '../lib/Maybe';
 
 /**
  * Table for SQL definitions for CAP NHQ
@@ -113,7 +115,7 @@ export namespace NHQ {
 		DoNotContact: number;
 	}
 
-	export interface CAPMember {
+	export interface NHQMember {
 		CAPID: number;
 		SSN: '';
 		NameLast: string;
@@ -246,7 +248,7 @@ export enum EventStatus {
 	CONFIRMED,
 	COMPLETE,
 	CANCELLED,
-	INFORMATIONONLY
+	INFORMATIONONLY,
 }
 
 export enum EchelonEventNumber {
@@ -254,7 +256,7 @@ export enum EchelonEventNumber {
 	TO_BE_APPLIED_FOR = 1,
 	APPLIED_FOR = 2,
 	DENIED = 3,
-	APPROVED = 4
+	APPROVED = 4,
 }
 
 export enum MemberCreateError {
@@ -265,38 +267,44 @@ export enum MemberCreateError {
 	INVALID_SESSION_ID = 3,
 	RECAPTCHA_INVALID = 4,
 	UNKOWN_SERVER_ERROR = 5,
-	DATABASE_ERROR = 6
+	DATABASE_ERROR = 6,
 }
 
 export enum PointOfContactType {
 	INTERNAL,
-	EXTERNAL
+	EXTERNAL,
 }
 
 export enum TeamPublicity {
 	PRIVATE, // Nothing visible, not shown on Browse unless signed in and member of team
 	// Names are visible to those signed in
 	PROTECTED, // Names and contact information available to those who sign in
-	PUBLIC // Full visibility
+	PUBLIC, // Full visibility
+}
+
+export enum CAPProspectiveMemberPasswordCreationType {
+	WITHPASSWORD,
+	EMAILLINK,
+	RANDOMPASSWORD,
 }
 
 export enum MemberCAPWATCHErrors {
 	INVALID_PERMISSIONS,
-	NO_NHQ_ACTION
+	NO_NHQ_ACTION,
 }
 
 export enum CAPWATCHImportErrors {
 	NONE,
 	BADDATA,
 	INSERT,
-	CLEAR
+	CLEAR,
 }
 
 export enum AttendanceStatus {
 	COMMITTEDATTENDED,
 	NOSHOW,
 	RESCINDEDCOMMITMENTTOATTEND,
-	NOTPLANNINGTOATTEND
+	NOTPLANNINGTOATTEND,
 }
 
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
@@ -304,19 +312,11 @@ export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
 	// Write, for folders, means changing name and uploading files
-	// For files, maybe at some point there will be a way to
-	// overwrite
 	// tslint:disable-next-line:no-bitwise
 	WRITE = 1 << 1,
 	// tslint:disable-next-line:no-bitwise
-	COMMENT = 1 << 2,
-	// tslint:disable-next-line:no-bitwise
-	MODIFY = 1 << 3,
-	// tslint:disable-next-line:no-bitwise
-	DELETE = 1 << 4,
-	// tslint:disable-next-line:no-bitwise
-	ASSIGNPERMISSIONS = 1 << 5,
-	FULLCONTROL = 255
+	MODIFY = 1 << 2,
+	FULLCONTROL = 255,
 }
 
 export enum FileUserAccessControlType {
@@ -324,27 +324,28 @@ export enum FileUserAccessControlType {
 	TEAM,
 	ACCOUNTMEMBER,
 	SIGNEDIN,
-	OTHER
+	OTHER,
 }
 
 // For some reason MySQL doesn't like 0...
 export enum NotificationTargetType {
 	MEMBER = 1,
 	ADMINS,
-	EVERYONE
+	EVERYONE,
 }
 
 // For some reason MySQL doesn't like 0...
 export enum NotificationCauseType {
 	MEMBER = 1,
-	SYSTEM
+	SYSTEM,
 }
 
 export enum NotificationDataType {
 	PROSPECTIVEMEMBER,
 	PERSONNELFILES,
 	EVENT,
-	PERMISSIONCHANGE
+	PERMISSIONCHANGE,
+	MESSAGE,
 }
 
 export enum CustomAttendanceFieldEntryType {
@@ -352,20 +353,20 @@ export enum CustomAttendanceFieldEntryType {
 	NUMBER,
 	DATE,
 	CHECKBOX,
-	FILE
+	FILE,
 }
 
 export enum CAPWATCHImportUpdate {
 	CAPWATCHFileDownloaded,
 	FileImported,
 	CAPWATCHFileDone,
-	ProgressInitialization
+	ProgressInitialization,
 }
 
 export enum PasswordResult {
 	VALID,
 	VALID_EXPIRED,
-	INVALID
+	INVALID,
 }
 
 export enum PasswordSetResult {
@@ -373,115 +374,132 @@ export enum PasswordSetResult {
 	IN_HISTORY,
 	COMPLEXITY,
 	MIN_AGE,
-	SERVER_ERROR
+	SERVER_ERROR,
 }
 
 export enum EmailSentType {
 	TOPARENT,
-	TOCADET
+	TOCADET,
+}
+
+export enum ProspectiveMemberPasswordCreationType {
+	WITHPASSWORD,
+	EMAILLINK,
+	RANDOMPASSWORD,
+}
+
+export enum GroupTarget {
+	NONE,
+	FLIGHT,
+	ACCOUNT,
 }
 
 // tslint:disable-next-line: no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum MusterSheet {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum PTSheet {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum PromotionManagement {
 		NONE,
-		FULL
+		FULL,
 	}
 
 	export enum AssignTasks {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum AdministerPT {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum ManageEvent {
 		NONE,
 		ADDDRAFTEVENTS,
-		FULL
+		FULL,
 	}
 
 	export enum EventContactSheet {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum ORMOPORD {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum AssignTemporaryDutyPosition {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum ProspectiveMemberManagement {
 		NONE,
-		FULL
+		FULL,
 	}
 
 	export enum EventLinkList {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum ManageTeam {
 		NONE,
-		FULL
+		FULL,
 	}
 
 	export enum FileManagement {
 		NONE,
-		FULL
+		FULL,
 	}
 
 	export enum PermissionManagement {
 		NONE,
-		FULL
+		FULL,
 	}
 
 	export enum DownloadCAPWATCH {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum Notify {
 		NO,
-		GLOBAL
+		GLOBAL,
 	}
 
 	export enum RegistryEdit {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum ScanAdd {
 		NO,
-		YES
+		YES,
 	}
 
 	export enum AttendanceView {
 		PERSONAL,
-		OTHER
+		OTHER,
+	}
+
+	export enum ViewAccountNotifications {
+		NO,
+		YES,
 	}
 }
 
@@ -525,55 +543,10 @@ export type RadioReturnWithOther<E extends number> =
 	| RadioReturnWithOtherSelected
 	| RadioReturnWithoutOtherSelected<E>;
 
-// type RadioReturn<E> = [E, string];
-// type MultCheckboxReturn = [boolean[], string];
 /**
  * Provides some consistency in type information at least
  */
 export type SessionID = string;
-
-/**
- * Mark documents as NoSQL, for interaction with the database
- *
- * But not too close, because an object may not have been created and
- * therefore not have an _id
- */
-export interface NoSQLDocument {
-	/**
-	 * The ID assigned by NoSQL/MySQL
-	 */
-	_id?: string;
-}
-
-/**
- * Used by certain classes to say this object can't be undefined. NoSQLDocument
- * is used when the object is being created and information cannot be known about
- * it
- */
-export type FullDBObject<T extends NoSQLDocument> = T & Required<NoSQLDocument>;
-
-/**
- * Most classes interact with the database in some way; just define some
- * common ground for them
- */
-export interface DatabaseInterface<T extends NoSQLDocument> {
-	/**
-	 * All database interfaces should implement the object they
-	 * are interfaces for, and need a standard for `_id`s
-	 */
-	_id: string;
-	/**
-	 * Return the object in a manner that is safe for JSON transfer
-	 *
-	 * Useful for when making sure the wrong data doesn't get transferred
-	 * to the client
-	 */
-	toRaw(): { [P in Exclude<keyof T, '_id'>]: T[P] };
-	/**
-	 * Save the document to the database
-	 */
-	save(): Promise<void>;
-}
 
 /**
  * Most objects are identifiable; this also allows for general purpose libraries
@@ -621,7 +594,7 @@ export interface ErrorStack {
 
 export enum ErrorResolvedStatus {
 	UNRESOLVED = 1,
-	RESOLVED
+	RESOLVED,
 }
 
 export type ErrorType = 'Server' | 'Client' | 'DiscordBot';
@@ -658,7 +631,7 @@ export interface ErrorObject {
  * These errors apply to the server, as it contains information such as
  * the request method and path which the client doesn't get
  */
-export interface ServerErrorObject extends ErrorObject, NoSQLDocument, Identifiable {
+export interface ServerErrorObject extends ErrorObject, Identifiable {
 	/**
 	 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
 	 */
@@ -724,7 +697,7 @@ export interface NewClientErrorObject extends ErrorObject {
 /**
  * The errors the client sends towards the server to be saved
  */
-export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, Identifiable {
+export interface ClientErrorObject extends NewClientErrorObject, Identifiable {
 	/**
 	 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
 	 */
@@ -741,18 +714,33 @@ export interface ClientErrorObject extends NewClientErrorObject, NoSQLDocument, 
 	user: MemberReference | null;
 }
 
-export interface DiscordBotErrorObject extends ErrorObject, NoSQLDocument, Identifiable {
+export interface DiscordBotErrorObject extends ErrorObject, Identifiable {
 	/**
 	 * IDs are simple numbers, so devs can ask each other 'can you fix bug 30?'
 	 */
 	id: number;
 	/**
-	 * The file in which the error occurred
+	 * The file location of the error
+	 */
+	filename: string;
+	/**
+	 * TypeScript descriminator
 	 */
 	type: 'DiscordBot';
 }
 
 export type Errors = ClientErrorObject | ServerErrorObject | DiscordBotErrorObject;
+
+/**
+ * Differentiates between accounts
+ */
+export enum AccountType {
+	CAPSQUADRON = 1,
+	CAPGROUP = 2,
+	CAPWING = 3,
+	CAPREGION = 4,
+	CAPEVENT = 5,
+}
 
 /**
  * Used to represent the information that allows the Discord bot to control servers
@@ -769,80 +757,26 @@ export interface DiscordServerInformation {
 }
 
 /**
- * Used when requesting or editing an account
+ * Used as the base for all the other accounts
  */
-export interface NewAccountObject {
+export interface NewAccountBase extends Identifiable {
 	/**
-	 * CAP IDs of the admins of this account
+	 * The main ID
 	 */
-	adminIDs: MemberReference[];
+	id: string;
+
 	/**
 	 * Discord server information
 	 */
 	discordServer: MaybeObj<DiscordServerInformation>;
-}
 
-/**
- * The raw account object stored in the database
- *
- * Doesn't contain simple boolean values for if it has expired and such, these are
- * put in the FullAccountObject that gets expanded upon and used more in practice
- */
-export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccountObject {
 	/**
-	 * The Account ID
-	 */
-	id: string;
-	/**
-	 * The ID of the main Google calendar
+	 * The main calendar for publishing events to
 	 */
 	mainCalendarID: string;
-	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
-	/**
-	 * The email address of the Google service account.  Not directly used by
-	 * CAPUnit.com, however it is good to have for configuration.
-	 */
-	serviceAccount: MaybeObj<string>;
-	/**
-	 * The web link used to share the Google Calendar to Wing or others
-	 * (only contains events with the publishToWingCalendar property true)
-	 */
-	shareLink: string;
-	/**
-	 * Miscellaneous comments regarding the account
-	 */
-	comments: string;
-	/**
-	 * Whether or not the account is an echelon account
-	 */
-	echelon: boolean;
-	/**
-	 * The main organization of the account
-	 */
-	mainOrg: number;
-	/**
-	 * The ids of the organizations
-	 */
-	orgIDs: number[];
-	/**
-	 * Whether the account is a paid account
-	 */
-	paid: boolean;
-	/**
-	 * Datetime when the account expires in
-	 */
-	expires: number;
-	/**
-	 * How many events can be used if this account is paid for
-	 */
-	paidEventLimit: number;
-	/**
-	 * How many events can be used if this account is unpaid for
-	 */
-	unpaidEventLimit: number;
+}
+
+export interface AccountBase {
 	/**
 	 * Allow for website accounts to alias themselves
 	 *
@@ -854,21 +788,166 @@ export interface RawAccountObject extends Identifiable, NoSQLDocument, NewAccoun
 }
 
 /**
- * The object that splits all of the data used by different people to limit their views
- * to what they want and what they have permissions for
+ * Used when requesting or editing an account
  */
-export interface AccountObject extends RawAccountObject {
+export interface NewCAPSquadronAccountObject extends NewAccountBase {
 	/**
-	 * Whether the account is a valid paid account
-	 *
-	 * Valid paid means it is paid for and not expired
+	 * The ID of the wing Google calendar
 	 */
-	validPaid: boolean;
+	wingCalendarID: string;
 	/**
-	 * Whether the account is expired
+	 * The main organization of the account
 	 */
-	expired: boolean;
+	mainOrg: number;
+	/**
+	 * The ids of the organizations
+	 */
+	orgIDs: number[];
+	/**
+	 * A reference to the account that belongs to the group that this unit belongs to
+	 */
+	parentGroup: MaybeObj<string>;
+	/**
+	 * A reference to the account that belongs to the wing that this unit belongs to
+	 */
+	parentWing: MaybeObj<string>;
 }
+
+/**
+ * The raw account object stored in the database
+ *
+ * Doesn't contain simple boolean values for if it has expired and such, these are
+ * put in the FullAccountObject that gets expanded upon and used more in practice
+ */
+export interface RawCAPSquadronAccountObject extends NewCAPSquadronAccountObject, AccountBase {
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
+	 * Marks this object as a CAP squadron Account
+	 */
+	type: AccountType.CAPSQUADRON;
+}
+
+export interface NewCAPGroupAccountObject extends NewAccountBase {
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	wingCalendarID: string;
+	/**
+	 * The main organization of the account
+	 */
+	orgid: number;
+	/**
+	 * A reference to the account that belongs to the wing that this group belongs to
+	 */
+	parent: MaybeObj<string>;
+}
+
+export interface RawCAPGroupAccountObject extends NewCAPGroupAccountObject, AccountBase {
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
+	 * Marks this object as a CAP group Account
+	 */
+	type: AccountType.CAPGROUP;
+}
+
+export interface NewCAPWingAccountObject extends NewAccountBase {
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	wingCalendarID: string;
+	/**
+	 * The main organization of the account
+	 */
+	orgid: number;
+	/**
+	 * Other organization IDs that hold wing leadership/staff
+	 */
+	orgIDs: number[];
+	/**
+	 * A reference to the account that belongs to the region that this wing belongs to
+	 */
+	parent: MaybeObj<string>;
+}
+
+export interface RawCAPWingAccountObject extends NewCAPWingAccountObject, AccountBase {
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
+	 * Marks this object as a CAP group Account
+	 */
+	type: AccountType.CAPWING;
+}
+
+export interface NewCAPRegionAccountObject extends NewAccountBase {
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	wingCalendarID: string;
+	/**
+	 * The main organization of the account
+	 */
+	orgid: number;
+}
+
+export interface RawCAPRegionAccountObject extends NewCAPRegionAccountObject, AccountBase {
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
+	 * Marks this object as a CAP group Account
+	 */
+	type: AccountType.CAPREGION;
+}
+
+export interface NewCAPEventAccountObject extends NewAccountBase {
+	/**
+	 * The ID of the wing Google calendar
+	 */
+	wingCalendarID: string;
+	/**
+	 * A reference to the account that belongs to the wing that this group belongs to
+	 *
+	 * Because CAP above squadrons is filled with old people not accepting new tech,
+	 * the echelon units may not necessarily have accounts to reference...
+	 */
+	parent: MaybeObj<string>;
+}
+
+export interface RawCAPEventAccountObject extends NewCAPEventAccountObject, AccountBase {
+	/**
+	 * Miscellaneous comments regarding the account
+	 */
+	comments: string;
+	/**
+	 * Marks this object as a CAP group Account
+	 */
+	type: AccountType.CAPEVENT;
+}
+
+export type RegularCAPAccountObject =
+	| RawCAPSquadronAccountObject
+	| RawCAPGroupAccountObject
+	| RawCAPWingAccountObject
+	| RawCAPRegionAccountObject;
+
+/**
+ * Represents the different kinds of CAP accounts possible
+ */
+export type CAPAccountObject = RegularCAPAccountObject | RawCAPEventAccountObject;
+
+/**
+ * Represents the different kinds of accounts possible
+ */
+export type AccountObject = CAPAccountObject;
 
 export interface NewDebriefItem {
 	/**
@@ -894,7 +973,9 @@ export interface DebriefItem extends NewDebriefItem {
 	timeSubmitted: number;
 }
 
-export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewEventObject {
+export type RawPointOfContact = InternalPointOfContact | ExternalPointOfContact;
+
+export interface RawEventObject extends AccountIdentifiable, NewEventObject {
 	/**
 	 * ID of the Event, can be expressed as the event number
 	 */
@@ -917,16 +998,12 @@ export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewE
 	 */
 	debrief: DebriefItem[];
 	/**
-	 * Who to contact for more event information
-	 */
-	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
-	/**
 	 * If this is a linked event this will be present
 	 *
 	 * Linking events allows for one account to copy an event of another account
 	 * and receive updates and such
 	 */
-	sourceEvent: null | {
+	sourceEvent?: null | {
 		/**
 		 * ID of the event it came from
 		 */
@@ -940,21 +1017,23 @@ export interface RawEventObject extends AccountIdentifiable, NoSQLDocument, NewE
 		/**
 		 * UUID of the Google Caldendar event on the main calendar
 		 */
-		mainId: string;
+		mainId?: null | string;
 		/**
 		 * UUID of the Google Calendar event on the Wing published calendar
 		 */
-		wingId: null | string;
+		wingId?: null | string;
 		/**
 		 * UUID of the Google Calendar registration deadline event on the main calendar
 		 */
-		regId: null | string;
+		regId?: null | string;
 		/**
 		 * UUID of the Goodle Calendar fee deadline event on the main calendar
 		 */
-		feeId: null | string;
+		feeId?: null | string;
 	};
 }
+
+export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 
 /**
  * The meat of what this website is designed for; events can be signed up for
@@ -969,7 +1048,7 @@ export interface EventObject extends RawEventObject {
 	/**
 	 * Who to contact for more event information
 	 */
-	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
+	pointsOfContact: FullPointOfContact[];
 }
 
 /**
@@ -1041,7 +1120,7 @@ export interface NewEventObject {
 	 * As it is partial, not required information, this may be
 	 * excluded
 	 */
-	registration: null | {
+	registration?: null | {
 		/**
 		 * When the registration closes
 		 */
@@ -1054,7 +1133,7 @@ export interface NewEventObject {
 	/**
 	 * Same as registration deadline but for fees
 	 */
-	participationFee: null | {
+	participationFee?: null | {
 		/**
 		 * When the fee is due
 		 */
@@ -1143,7 +1222,7 @@ export interface NewEventObject {
 	/**
 	 * Who to contact for more event information
 	 */
-	pointsOfContact: Array<InternalPointOfContact | ExternalPointOfContact>;
+	pointsOfContact: RawPointOfContact[];
 	/**
 	 * Custom fields for attendance records
 	 */
@@ -1155,13 +1234,13 @@ export interface NewEventObject {
 	/**
 	 * If this is a team event, a team can be specified for future features
 	 */
-	teamID: number | null;
+	teamID?: null | number;
 	/**
 	 * Limit sign ups to team members
 	 *
 	 * Only required if a team is selected
 	 */
-	limitSignupsToTeam: boolean | null;
+	limitSignupsToTeam?: null | boolean;
 	/**
 	 * Files that may be associated with the event; e.g. forms
 	 */
@@ -1170,10 +1249,6 @@ export interface NewEventObject {
 	 * Whether or not attendance view should be displayed to all members or only to Managers and POCs
 	 */
 	privateAttendance: boolean;
-	/**
-	 * Whether or not the event is intended to have special GES qualifications
-	 */
-	// specialEvent: boolean;
 }
 
 /**
@@ -1196,13 +1271,13 @@ export interface NewAttendanceRecord {
 	// If the member stays for the whole event, this will match the
 	// start/end date times of the event
 	/**
-	 * If they are comming part time, this shows when they arrive
+	 * Details how long the member will stay for
 	 */
-	arrivalTime: number | null;
-	/**
-	 * If they are comming part time, this shows when they depart
-	 */
-	departureTime: number | null;
+	shiftTime?: null | {
+		arrivalTime: number;
+
+		departureTime: number;
+	};
 	/**
 	 * A new attendance record may contain this if someone tries to
 	 * add someone else
@@ -1240,14 +1315,11 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 
 	// If the member stays for the whole event, this will match the
 	// start/end date times of the event
-	/**
-	 * If they are comming part time, this shows when they arrive
-	 */
-	arrivalTime: number;
-	/**
-	 * If they are comming part time, this shows when they depart
-	 */
-	departureTime: number;
+	shiftTime: {
+		arrivalTime: number;
+
+		departureTime: number;
+	};
 }
 
 export interface FullAttendanceRecord extends AttendanceRecord {
@@ -1436,6 +1508,12 @@ export interface PointOfContact {
 	 * Email whenever someone signs up
 	 */
 	receiveSignUpUpdates: boolean;
+	/**
+	 * Whether or not to publicly show the contact info
+	 *
+	 * Value may not exist due to backwards compatability; if it doesn't, don't show info
+	 */
+	publicDisplay?: boolean;
 }
 
 /**
@@ -1543,7 +1621,7 @@ export interface CAPMemberContact {
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	INSTANTMESSAGER: CAPMemberContactInstance;
+	INSTANTMESSENGER: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
@@ -1668,9 +1746,14 @@ export interface MemberPermissions {
 	 * Whether or not the user can edit the registry
 	 */
 	RegistryEdit: Permissions.RegistryEdit;
+
+	/**
+	 * Whether or not the member can view notifications designated for account admins
+	 */
+	ViewAccountNotifications: Permissions.ViewAccountNotifications;
 }
 
-export interface StoredMemberPermissions extends NoSQLDocument {
+export interface StoredMemberPermissions {
 	member: MemberReference;
 	accountID: string;
 	permissions: MemberPermissions;
@@ -1702,20 +1785,46 @@ export type MemberPermission = keyof MemberPermissions;
 export type MemberType = CAPMemberType;
 
 /**
+ * Useful for displaying simple things like where a user hails from
+ */
+export interface ShortAccountInfo extends Identifiable {
+	/**
+	 * The ID of an account the member hails from
+	 */
+	id: string;
+
+	/**
+	 * The name of the account the member hails from
+	 */
+	name: string;
+}
+
+/**
+ * Used to store short account info in the database
+ */
+export interface StoredAccountMembership {
+	/**
+	 * The account a member may be a part of
+	 */
+	accountID: string;
+
+	/**
+	 * The member that isn't a part of the account but participates frequently
+	 */
+	member: MemberReference;
+}
+
+/**
  * Information stored about a member in our database
  *
  * Does not include permission information, which is stored seperately
  * This is so that permissions can be on an account basis
  */
-export interface RawMemberObject extends Identifiable {
+export interface MemberObject extends Identifiable {
 	/**
 	 * The CAPID of the member
 	 */
 	id: number | string;
-	/**
-	 * Contact information for the user
-	 */
-	contact: CAPMemberContact;
 	/**
 	 * First name of member
 	 */
@@ -1733,17 +1842,9 @@ export interface RawMemberObject extends Identifiable {
 	 */
 	nameSuffix: string;
 	/**
-	 * User login ID
-	 */
-	usrID: string;
-	/**
 	 * The type of user, as there are multiple
 	 */
 	type: MemberType;
-	/**
-	 * Used to easily reference teams
-	 */
-	teamIDs: number[];
 	/**
 	 * Shows how long the member is absent for
 	 *
@@ -1753,25 +1854,14 @@ export interface RawMemberObject extends Identifiable {
 }
 
 /**
- * Describes a member
- *
- * CAPWATCHMember and NHQMember have their sources in NHQ
- * ProspectiveMembers are located in our database
- */
-export interface MemberObject extends RawMemberObject {
-	/**
-	 * Tells what the member can do
-	 */
-	permissions: MemberPermissions;
-}
-
-/**
  * Users are different in that they are actively using the website right now,
  * and they have a session. They also have created an account with us
  *
  * This is important because this means they have a session ID and permissions
+ *
+ * Does not extend MemberObject to allow for TypeScript to discriminate between users
  */
-export interface UserObject extends MemberObject {
+export interface UserObject {
 	/**
 	 * Permissions a user may have
 	 */
@@ -1790,7 +1880,7 @@ export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember';
 /**
  * These are common to all CAPMembers, not necessarily all members
  */
-export interface RawCAPMember extends RawMemberObject {
+export interface RawCAPMember extends MemberObject {
 	/**
 	 * Descriminant
 	 */
@@ -1811,6 +1901,14 @@ export interface RawCAPMember extends RawMemberObject {
 	 * The organization the member belongs to
 	 */
 	orgid: number;
+	/**
+	 * Contact information for the user
+	 */
+	contact: CAPMemberContact;
+	/**
+	 * User login ID
+	 */
+	usrID: string;
 }
 
 /**
@@ -1818,18 +1916,11 @@ export interface RawCAPMember extends RawMemberObject {
  */
 export type ShortDutyPositionType = 'CAPUnit' | 'NHQ';
 
-/**
- * Short duty positions for use by CAPUnit.com
- */
-export interface ShortCAPUnitDutyPosition {
+export interface NewShortCAPUnitDutyPosition {
 	/**
 	 * Represents the duty assigned
 	 */
 	duty: string;
-	/**
-	 * Represents the date it was assigned
-	 */
-	date: number;
 	/**
 	 * Signifies this is not an official duty from CAPNHQ
 	 */
@@ -1838,6 +1929,16 @@ export interface ShortCAPUnitDutyPosition {
 	 * Determines when it expires
 	 */
 	expires: number;
+}
+
+/**
+ * Short duty positions for use by CAPUnit.com
+ */
+export interface ShortCAPUnitDutyPosition extends NewShortCAPUnitDutyPosition {
+	/**
+	 * Represents the date it was assigned
+	 */
+	date: number;
 }
 
 /**
@@ -1852,6 +1953,10 @@ export interface ShortNHQDutyPosition {
 	 * Represents the date it was assigned
 	 */
 	date: number;
+	/**
+	 * Represents which organization it is for
+	 */
+	orgid: number;
 	/**
 	 * Signifies this is an official duty from CAPNHQ
 	 */
@@ -1880,16 +1985,16 @@ export interface CAPMemberObject extends RawCAPMember {
 	 */
 	flight: string | null;
 	/**
-	 * Shows what the member is allowed to do
+	 * The list of teams the member is a part of
 	 */
-	permissions: MemberPermissions;
+	teamIDs: number[];
 }
 
 /**
  * The preferable version of CAPMember, as it is returned from NHQMember and contains
  * the most up to date information and has a specific type
  */
-export interface NHQMemberObject extends CAPMemberObject {
+export interface CAPNHQMemberObject extends CAPMemberObject {
 	/**
 	 * Strict CAP IDs are six digit numbers
 	 */
@@ -1902,15 +2007,16 @@ export interface NHQMemberObject extends CAPMemberObject {
 	 * When the membership lapses for this member
 	 */
 	expirationDate: number;
+	/**
+	 * The date of birth of the member
+	 */
+	dateOfBirth: number;
 }
 
 /**
  * The information we store in our database is represented as such
  */
-export interface RawProspectiveMemberObject
-	extends RawCAPMember,
-		AccountIdentifiable,
-		NoSQLDocument {
+export interface RawCAPProspectiveMemberObject extends RawCAPMember, AccountIdentifiable {
 	/**
 	 * We use string IDs for this account type
 	 */
@@ -1934,7 +2040,7 @@ export interface RawProspectiveMemberObject
 /**
  * A full ProspectiveMember is similar to a CAPMember
  */
-export interface ProspectiveMemberObject extends RawProspectiveMemberObject, CAPMemberObject {
+export interface CAPProspectiveMemberObject extends RawCAPProspectiveMemberObject, CAPMemberObject {
 	/**
 	 * Prospective members have string IDs
 	 */
@@ -1943,11 +2049,45 @@ export interface ProspectiveMemberObject extends RawProspectiveMemberObject, CAP
 	 * Typescript deliminator
 	 */
 	type: 'CAPProspectiveMember';
-	/**
-	 * Shows what the member is allowed to do
-	 */
-	permissions: MemberPermissions;
 }
+
+export type NewCAPProspectiveMember = Omit<
+	RawCAPProspectiveMemberObject,
+	| 'id'
+	| 'absenteeInformation'
+	| 'teamIDs'
+	| 'type'
+	| 'usrID'
+	| 'accountID'
+	| 'dutyPositions'
+	| 'memberRank'
+	| 'orgid'
+	| 'squadron'
+	| '_id'
+>;
+
+export interface CAPProspectiveMemberPasswordCreationWithPassword {
+	type: CAPProspectiveMemberPasswordCreationType.WITHPASSWORD;
+
+	password: string;
+
+	username: string;
+}
+
+export interface CAPProspectiveMemberPasswordCreationWithEmail {
+	type: CAPProspectiveMemberPasswordCreationType.EMAILLINK;
+}
+
+export interface CAPProspectiveMemberPasswordCreationWithRandomPassword {
+	type: CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD;
+
+	username: string;
+}
+
+export type CAPProspectiveMemberPasswordCreation =
+	| CAPProspectiveMemberPasswordCreationWithEmail
+	| CAPProspectiveMemberPasswordCreationWithPassword
+	| CAPProspectiveMemberPasswordCreationWithRandomPassword;
 
 /**
  * Used when referring to members, as numerical CAPIDs do not work as well with
@@ -1962,7 +2102,7 @@ interface MemberReferenceBase {
 /**
  * ProspectiveMemberReference refers to a ProspectiveMember
  */
-export interface ProspectiveMemberReference extends MemberReferenceBase {
+export interface CAPProspectiveMemberReference extends MemberReferenceBase {
 	type: 'CAPProspectiveMember';
 	id: string;
 }
@@ -1970,33 +2110,40 @@ export interface ProspectiveMemberReference extends MemberReferenceBase {
 /**
  * NHQMemberReference refers to a NHQMember
  */
-export interface NHQMemberReference extends MemberReferenceBase {
+export interface CAPNHQMemberReference extends MemberReferenceBase {
 	type: 'CAPNHQMember';
 	id: number;
 }
 
-/**
- * The NullMemberReference is used when for initial form values
- *
- * Should be filtered out
- * The various createCorrectMemberObject functions handle this,
- * returning null or throwing an error
- */
-export interface NullMemberReference {
-	type: 'Null';
-}
+export type CAPMemberReference = CAPNHQMemberReference | CAPProspectiveMemberReference;
+export type CAPMember = CAPProspectiveMemberObject | CAPNHQMemberObject;
 
 /**
  * Union type to allow for referring to both NHQMembers and ProspectiveMembers
  */
-export type MemberReference = NHQMemberReference | ProspectiveMemberReference | NullMemberReference;
+export type MemberReference = CAPMemberReference;
+export type Member = CAPMember;
+export type User = Member & UserObject;
 
-export type NonNullMemberReference = Exclude<MemberReference, NullMemberReference>;
+export type MemberForReference<T extends MemberReference> = T extends CAPNHQMemberReference
+	? CAPNHQMemberObject
+	: T extends CAPProspectiveMemberReference
+	? CAPProspectiveMemberObject
+	: Member;
 
-/**
- * In the case that it doesn't like MemberBase, try using Member
- */
-export type Member = ProspectiveMemberObject | NHQMemberObject;
+export type ReferenceForMember<T extends Member> = T extends CAPNHQMemberReference
+	? CAPNHQMemberReference
+	: T extends CAPProspectiveMemberReference
+	? CAPProspectiveMemberReference
+	: MemberReference;
+
+export type ReferenceForType<T extends MemberType> = T extends 'CAPProspectiveMember'
+	? CAPProspectiveMemberReference
+	: T extends 'CAPNHQMember'
+	? CAPNHQMemberReference
+	: MemberReference;
+
+export type UserForReference<T extends MemberReference> = MemberForReference<T> & UserObject;
 
 /**
  * Records temporary duty positions that we assign
@@ -2025,21 +2172,11 @@ export interface TemporaryDutyPosition {
  * our website uses and NHQ doesn't, for instance temporary duty positions and
  * permissions
  */
-export interface ExtraMemberInformation extends NoSQLDocument {
+export interface ExtraMemberInformation {
 	/**
 	 * The member this information belongs to
 	 */
 	member: MemberReference;
-	/**
-	 * Extra duty positions that are assigned to the member
-	 */
-	temporaryDutyPositions: TemporaryDutyPosition[];
-	/**
-	 * Member flight
-	 *
-	 * Undefined if the member is a senior member
-	 */
-	flight: null | string;
 	/**
 	 * IDs of teams the member is a part of
 	 */
@@ -2067,7 +2204,14 @@ export interface CAPExtraMemberInformation extends ExtraMemberInformation {
 	 * Undefined if the member is a senior member
 	 */
 	flight: null | string;
+
+	/**
+	 * Descriminates the type
+	 */
+	member: CAPMemberReference;
 }
+
+export type AllExtraMemberInformation = CAPExtraMemberInformation;
 
 /**
  * The object that represents a successful session, as signing in
@@ -2081,7 +2225,7 @@ export interface SuccessfulSigninReturn {
 	/**
 	 * The member details
 	 */
-	member: Member;
+	member: User;
 	/**
 	 * The ID for the session
 	 */
@@ -2140,7 +2284,7 @@ export type SigninReturn =
  *
  * Follows the example of Google APIs
  */
-export interface DriveObject extends AccountIdentifiable, NoSQLDocument {
+export interface DriveObject extends AccountIdentifiable {
 	/**
 	 * The kind of object it is, as these pass through JSON requests
 	 */
@@ -2293,13 +2437,20 @@ export interface RawFileObject extends DriveObject, EditableFileObjectProperties
 	 */
 	created: number;
 	/**
-	 * Children ids for folder
-	 */
-	fileChildren: string[];
-	/**
 	 * ID of the parent for going backwards
 	 */
 	parentID: string | null;
+}
+
+export interface FolderPathItem {
+	/**
+	 * The ID of the parent folder
+	 */
+	id: string;
+	/**
+	 * The name of the parent folder
+	 */
+	name: string;
 }
 
 /**
@@ -2309,10 +2460,7 @@ export interface FileObject extends RawFileObject {
 	/**
 	 * Provided by the file class, not actually stored in the database
 	 */
-	folderPath: Array<{
-		id: string;
-		name: string;
-	}>;
+	folderPath: FolderPathItem[];
 }
 
 /**
@@ -2426,7 +2574,7 @@ export interface RankAndFileInformation {
 /**
  * Each account has a registry, stores configuration
  */
-export interface RegistryValues extends NoSQLDocument, AccountIdentifiable {
+export interface RegistryValues extends AccountIdentifiable {
 	/**
 	 * How to contact the account; email, social media, etc;
 	 */
@@ -2514,15 +2662,15 @@ export interface NewTeamObject {
 	/**
 	 * Who will be leading the team?
 	 */
-	cadetLeader: MemberReference | NullMemberReference;
+	cadetLeader: MaybeObj<MemberReference>;
 	/**
 	 * Who will mentor the team?
 	 */
-	seniorMentor: MemberReference | NullMemberReference;
+	seniorMentor: MaybeObj<MemberReference>;
 	/**
 	 * Who coaches the team?
 	 */
-	seniorCoach: MemberReference | NullMemberReference;
+	seniorCoach: MaybeObj<MemberReference>;
 	/**
 	 * Visbility of team; each one is described by the enum declaration
 	 */
@@ -2532,7 +2680,7 @@ export interface NewTeamObject {
 /**
  * Allows for teams of cadets
  */
-export interface RawTeamObject extends NewTeamObject, AccountIdentifiable, NoSQLDocument {
+export interface RawTeamObject extends NewTeamObject, AccountIdentifiable {
 	/**
 	 * Solidifies the types for the full team object
 	 */
@@ -2566,52 +2714,53 @@ export interface FullTeamObject extends RawTeamObject {
 	 * As the cadet leader is not technically a team member,
 	 * and their name needs to be sent, this is included
 	 */
-	cadetLeaderName: string;
+	cadetLeaderName: MaybeObj<string>;
 	/**
 	 * As the senior mentor is not technically a team member,
 	 * and their name needs to be sent, this is included
 	 */
-	seniorMentorName: string;
+	seniorMentorName: MaybeObj<string>;
 	/**
 	 * As the senior coach is not technically a team member,
 	 * and their name needs to be sent, this is included
 	 */
-	seniorCoachName: string;
+	seniorCoachName: MaybeObj<string>;
 }
 
 /**
  * Used to start to send a notification
  */
-export interface NewNotificationObject {
+export interface NewNotificationObject<
+	C extends NotificationCause,
+	T extends NotificationTarget,
+	D extends NotificationData
+> {
 	/**
 	 * What caused this notification?
 	 */
-	cause: NotificationCause;
+	cause: C;
 	/**
-	 * What should the notification say?
+	 * The data for the notification
 	 */
-	text: string;
+	extraData: D;
 	/**
-	 * Some extra data to make the viewer more accessible
+	 * Who is the notification for?
 	 */
-	extraData: NotificationData | null;
+	target: T;
 }
 
 /**
  * A raw notification object is what is stored directly in the database
  */
-export interface RawNotificationObject
-	extends NewNotificationObject,
-		AccountIdentifiable,
-		NoSQLDocument {
+export interface RawNotificationObject<
+	C extends NotificationCause = NotificationCause,
+	T extends NotificationTarget = NotificationTarget,
+	D extends NotificationData = NotificationData
+> extends NewNotificationObject<C, T, D>, AccountIdentifiable {
 	/**
 	 * Used to identify notifications
 	 */
 	id: number;
-	/**
-	 * Who is the notification for?
-	 */
-	target: NotificationTarget;
 	/**
 	 * Is the notification handled?
 	 */
@@ -2633,10 +2782,13 @@ export interface RawNotificationObject
 /**
  * Notifications are used to tell members that they need to check stuff
  */
-export interface NotificationObject extends RawNotificationObject {
-	fromMemberName: string | null;
-	toMemberName: string | null;
-}
+export type NotificationObject<
+	C extends NotificationCause = NotificationCause,
+	T extends NotificationTarget = NotificationTarget,
+	D extends NotificationData = NotificationData
+> = RawNotificationObject<C, T, D> &
+	(C extends NotificationMemberCause ? { fromMemberName: string } : {}) &
+	(T extends NotificationMemberTarget ? { toMemberName: string } : {});
 
 /**
  * This is a notification that comes from another member, e.g. a task
@@ -2646,6 +2798,10 @@ export interface NotificationMemberCause {
 	 * Determines who caused the notification
 	 */
 	from: MemberReference;
+	/**
+	 * The name of the person this is from, for rendering purposes
+	 */
+	fromName: string;
 	/**
 	 * Determines the type of cause
 	 */
@@ -2723,6 +2879,32 @@ export type NotificationTarget =
 	| NotificationAdminTarget
 	| NotificationEveryoneTarget;
 
+export type MemberNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = NotificationObject<C, NotificationMemberTarget, D>;
+export type AdminNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = NotificationObject<C, NotificationAdminTarget, D>;
+export type GlobalNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = NotificationObject<C, NotificationEveryoneTarget, D>;
+
+export type RawMemberNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = RawNotificationObject<C, NotificationMemberTarget, D>;
+export type RawAdminNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = RawNotificationObject<C, NotificationAdminTarget, D>;
+export type RawGlobalNotification<
+	C extends NotificationCause = NotificationCause,
+	D extends NotificationData = NotificationData
+> = RawNotificationObject<C, NotificationEveryoneTarget, D>;
+
 /**
  *
  */
@@ -2755,6 +2937,15 @@ export interface NotificationDataEvent {
 }
 
 /**
+ * Used for simple messages
+ */
+export interface NotificationDataMessage {
+	type: NotificationDataType.MESSAGE;
+
+	message: string;
+}
+
+/**
  * Union of all
  */
 export type NotificationData =
@@ -2762,7 +2953,7 @@ export type NotificationData =
 	| NotificationDataPersonnelFile
 	| NotificationDataEvent
 	| NotificationDataPermissions
-	| null;
+	| NotificationDataMessage;
 
 /**
  * Audit log item stored in the database
@@ -2785,7 +2976,7 @@ export interface RawAuditLogItem {
 	/**
 	 * Who did it?
 	 */
-	actor: MemberReference;
+	actor: MaybeObj<MemberReference>;
 	/**
 	 * When did he/she do it?
 	 */
@@ -2805,20 +2996,26 @@ export interface RawAuditLogItem {
 /**
  * These are objects containing the results of people completing their tasks
  */
-export interface TaskRecipientsResults {
+export interface TaskRecipientsResultsNotDone {
 	/**
 	 * Whether or not they are done with their task
 	 */
-	done: boolean;
+	done: false;
 	/**
 	 * The person tasked
 	 */
 	tasked: MemberReference;
-	/**
-	 * Comments about the task results the tasked person may have
-	 */
+}
+
+export interface TaskRecipientsResultsDone {
+	done: true;
+
+	tasked: MemberReference;
+
 	comments: string;
 }
+
+export type TaskRecipientsResults = TaskRecipientsResultsDone | TaskRecipientsResultsNotDone;
 
 /**
  * Tasks are a thing that let people assign each other things to do
@@ -2848,7 +3045,7 @@ export interface NewTaskObject extends RawTaskObject {
 /**
  * A full task object including the ID
  */
-export interface TaskObject extends RawTaskObject, AccountIdentifiable, NoSQLDocument {
+export interface TaskObject extends RawTaskObject, AccountIdentifiable {
 	/**
 	 * The way to identify this task
 	 */
@@ -2900,7 +3097,7 @@ export interface AccountPasswordInformation {
 /**
  * Represents how basic account mapping information is stored in our database
  */
-export interface UserAccountInformation extends NoSQLDocument {
+export interface UserAccountInformation<T extends MemberReference = MemberReference> {
 	/**
 	 * The username of a user
 	 */
@@ -2908,14 +3105,14 @@ export interface UserAccountInformation extends NoSQLDocument {
 	/**
 	 * What the user represents
 	 */
-	member: MemberReference;
+	member: T;
 	/**
 	 * Store a password history for the user
 	 */
 	passwordHistory: AccountPasswordInformation[];
 }
 
-export interface PasswordResetTokenInformation extends NoSQLDocument {
+export interface PasswordResetTokenInformation {
 	/**
 	 * When the token expires
 	 */
@@ -2930,7 +3127,7 @@ export interface PasswordResetTokenInformation extends NoSQLDocument {
 	username: string;
 }
 
-export interface DiscordAccount extends NoSQLDocument {
+export interface DiscordAccount {
 	/**
 	 * The ID of the member we are associating with a CAPUnit.com account
 	 */
@@ -2942,41 +3139,130 @@ export interface DiscordAccount extends NoSQLDocument {
 }
 
 export interface ServerConfiguration {
-	production: boolean;
-	testing: boolean;
-	clientStorage: string;
-	database: {
-		connection: {
-			database: string;
-			host: string;
-			password: string;
-			port: number;
-			user: string;
-		};
-		connectionCount: number;
-	};
-	fileStoragePath: string;
-	capwatchFileDownloadDirectory: string;
-	googleKeysPath: string;
-	path: string;
-	port: number;
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: number;
+	DB_USER: string;
+	DB_POOL_SIZE: number;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: number;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN: string;
+
+	REMOTE_DRIVE_STORAGE_PATH: string;
+	REMOTE_DRIVE_HOST: string;
+	REMOTE_DRIVE_PORT: number;
+	REMOTE_DRIVE_KEY_FILE: string;
+	REMOTE_DRIVE_USER: string;
+}
+
+export interface RawServerConfiguration {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: string;
+	DB_USER: string;
+	DB_POOL_SIZE: string;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: string;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN: string;
+
+	REMOTE_DRIVE_STORAGE_PATH: string;
+	REMOTE_DRIVE_HOST: string;
+	REMOTE_DRIVE_PORT: string;
+	REMOTE_DRIVE_KEY_FILE: string;
+	REMOTE_DRIVE_USER: string;
 }
 
 export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;
 	on(
 		event: 'memberChange',
-		listener: (info: { member: NonNullMemberReference; account: AccountObject }) => void
+		listener: (info: { member: Member; account: AccountObject }) => void
 	): this;
 	on(
 		event: 'discordRegister',
 		listener: (user: { user: DiscordAccount; account: AccountObject }) => void
 	): this;
+	on(
+		event: 'teamMemberRemove' | 'teamMemberAdd',
+		listener: (info: {
+			member: MemberReference;
+			team: RawTeamObject;
+			account: AccountObject;
+		}) => void
+	): this;
 
 	emit(event: 'capwatchImport', account: AccountObject): boolean;
-	emit(
-		event: 'memberChange',
-		member: { member: NonNullMemberReference; account: AccountObject }
-	): boolean;
+	emit(event: 'memberChange', member: { member: Member; account: AccountObject }): boolean;
 	emit(event: 'discordRegister', user: { user: DiscordAccount; account: AccountObject }): boolean;
+	emit(
+		event: 'teamMemberRemove' | 'teamMemberAdd',
+		info: { member: MemberReference; team: RawTeamObject; account: AccountObject }
+	): boolean;
+}
+
+export type Matcheable<T extends string | number | symbol, V> = {
+	[K in T]: V;
+};
+
+export interface ParamType {
+	[key: string]: string | undefined;
+}
+
+export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
+	/**
+	 * Contains basic properties from express.Request
+	 */
+	body: B;
+	method: string;
+	headers: IncomingHttpHeaders;
+	originalUrl: string;
+	_originalUrl: string;
+	hostname: string;
+
+	/**
+	 * Contains stuff that is used.
+	 *
+	 * If the 'extends express.Request' bit above were removed, the only compile time errors that would occur
+	 * would be from router.use not accepting this type of request. As such, if deemed necessary, we can
+	 * extract code from asyncErrorHandler or asyncEitherHandler and pass it an object such as this and check
+	 * the output
+	 */
+	mysqlx: Schema;
+	mysqlxSession: Session;
+	params: P;
+	configuration: ServerConfiguration;
+	memberUpdateEmitter: MemberUpdateEventEmitter;
+}
+
+export enum SessionType {
+	REGULAR = 1,
+	PASSWORD_RESET = 2,
+	SCAN_ADD = 4,
+}
+
+export interface UserSession<T extends MemberReference = MemberReference> {
+	id: SessionID;
+	created: number;
+	userAccount: UserAccountInformation<T>;
+	type: SessionType;
+}
+
+export interface ActiveSession<T extends MemberReference = MemberReference> extends UserSession<T> {
+	user: UserForReference<T>;
 }

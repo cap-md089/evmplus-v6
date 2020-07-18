@@ -1,87 +1,54 @@
-import { AsyncEither } from './AsyncEither';
-import { just, Maybe, none } from './Maybe';
+export type EitherObj<L, R> = Left<L> | Right<R>;
 
-export type EitherObj<L, R> = LeftObj<L> | RightObj<R>;
-
-export interface LeftObj<L> {
+export interface Left<L> {
 	direction: 'left';
 
 	value: L;
 }
 
-export interface RightObj<R> {
+export interface Right<R> {
 	direction: 'right';
 
 	value: R;
 }
 
-export type Either<L, R> = Left<L, R> | Right<L, R>;
-export type EitherFromObj<T> = T extends EitherObj<infer L, infer R> ? Either<L, R> : never;
+export class Either {
+	public static left = <L, R>(value: L): Left<L> => ({ direction: 'left', value });
 
-export class Left<L, R> implements LeftObj<L> {
-	public static Left = <L, R>(value: L): Left<L, R> => new Left(value);
+	public static right = <L, R>(value: R): Right<R> => ({ direction: 'right', value });
 
-	public readonly direction = 'left' as const;
+	public static isLeft = <L, R>(v: EitherObj<L, R>): v is Left<L> => v.direction === 'left';
 
-	private constructor(public readonly value: L) {}
+	public static isRight = <L, R>(v: EitherObj<L, R>): v is Right<R> => v.direction === 'right';
 
-	public isLeft = (): this is Left<L, R> => true;
+	public static leftMap = <L, L2, R>(f: (val: L) => L2) => (eith: EitherObj<L, R>) =>
+		Either.isLeft(eith) ? Either.left(f(eith.value)) : eith;
 
-	public isRight = (): this is Right<L, R> => false;
+	public static map = <L, R, R2>(f: (val: R) => R2) => (eith: EitherObj<L, R>) =>
+		Either.isRight(eith) ? Either.right(f(eith.value)) : eith;
 
-	public map = <R2>(f: (val: R) => R2): Either<L, R2> => (this as any) as Left<L, R2>;
+	public static flatMap = <L, R, R2>(f: (val: R) => EitherObj<L, R2>) => (
+		eith: EitherObj<L, R>
+	) => (Either.isRight(eith) ? f(eith.value) : eith);
 
-	public flatMap = <R2>(f: (val: R) => Either<L, R2>): Either<L, R2> =>
-		(this as any) as Left<L, R2>;
+	public static cata = <L, R, T>(lf: (v: L) => T) => (rf: (v: R) => T) => (
+		eith: EitherObj<L, R>
+	) => (Either.isRight(eith) ? rf(eith.value) : lf(eith.value));
 
-	public toSome = (): Maybe<R> => none();
+	public static filter = <L, R>(predicate: (val: R) => boolean) => (filterError: L) =>
+		Either.cata<L, R, EitherObj<L, R>>(Either.left)(right =>
+			predicate(right) ? Either.right(right) : Either.left(filterError)
+		);
 
-	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => lf(this.value);
+	public static filterType = <L, R, S extends R>(predicate: (val: R) => val is S) => (
+		filterError: L
+	) =>
+		Either.cata<L, R, EitherObj<L, S>>(Either.left)(right =>
+			predicate(right) ? Either.right(right) : Either.left(filterError)
+		);
 
-	public toAsync = (): AsyncEither<L, R> => new AsyncEither(Promise.resolve(this), this.value);
-
-	public toObj = (): LeftObj<L> => ({
-		direction: 'left',
-		value: this.value
-	});
+	public static isValidEither = (value: any): value is EitherObj<any, any> =>
+		'direction' in value &&
+		'value' in value &&
+		(value.direction === 'right' || value.direction === 'left');
 }
-
-export class Right<L, R> implements RightObj<R> {
-	public static Right = <L, R>(value: R): Right<L, R> => new Right(value);
-
-	public readonly direction = 'right' as const;
-
-	private constructor(public readonly value: R) {}
-
-	public isLeft = (): this is Left<L, R> => false;
-
-	public isRight = (): this is Right<L, R> => true;
-
-	public map = <R2>(f: (val: R) => R2): Either<L, R2> => new Right(f(this.value));
-
-	public flatMap = <R2>(f: (val: R) => Either<L, R2>): Either<L, R2> => f(this.value);
-
-	public toSome = (): Maybe<R> => just(this.value);
-
-	public cata = <T>(lf: (v: L) => T, rf: (v: R) => T): T => rf(this.value);
-
-	public toAsync = (errorValue: L): AsyncEither<L, R> =>
-		new AsyncEither(Promise.resolve(this), errorValue);
-
-	public toObj = (): RightObj<R> => ({
-		direction: 'right',
-		value: this.value
-	});
-}
-
-export const left = Left.Left;
-
-export const right = Right.Right;
-
-export const either = <L, R>(value: EitherObj<L, R>): Either<L, R> =>
-	value.direction === 'left' ? left(value.value) : right(value.value);
-
-export const isValidEither = (value: any): value is EitherObj<any, any> =>
-	'direction' in value &&
-	'value' in value &&
-	(value.direction === 'right' || value.direction === 'left');

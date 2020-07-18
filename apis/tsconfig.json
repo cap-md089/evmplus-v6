@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"target": "es2018",
+		"module": "commonjs",
+		"outDir": "dist",
+		"noImplicitAny": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"declaration": true,
+		"alwaysStrict": true,
+		"forceConsistentCasingInFileNames": true,
+		"noUnusedLocals": true,
+		"lib": [
+			"es2015",
+			"es2017",
+			"es2015.promise",
+			"es5",
+			"esnext.asynciterable",
+			"es6",
+			"es2018",
+			"dom",
+			"esnext"
+		],
+		"pretty": true,
+		"removeComments": true,
+		"allowSyntheticDefaultImports": false,
+		"experimentalDecorators": true,
+		"sourceMap": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"plugins": [{ "transform": "auto-client-api" }],
+		"typeRoots": ["./types", "./node_modules/@types"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules/**/*.ts", "node_modules", "dist"],
+	"lib": ["es2015", "es2017", "es2015.promise", "es5", "esnext.asynciterable"]
+}

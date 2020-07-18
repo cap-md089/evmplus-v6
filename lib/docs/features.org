@@ -60,7 +60,7 @@
     - [X] Folders
     - [ ] Unit tests
 *** CAPWATCH Import [1/3]
-    - [-] Imports [7/18]
+    - [-] Imports [9/18]
       - [X] Member
       - [X] Senior member duty positions
       - [X] Cadet duty positions
@@ -69,11 +69,11 @@
       - [X] OFlights
       - [ ] Senior awards
       - [ ] Senior levels
-      - [ ] Member achievements
+      - [X] Member achievements
       - [ ] Member addresses
       - [ ] Member chars
       - [ ] Cadet achievement Enum
-      - [ ] Achievements
+      - [X] Achievements
       - [ ] Commanders
       - [X] Organization
       - [ ] Organization addresses
@@ -103,10 +103,13 @@
     - [X] Link
     - [-] Attendance [1/2]
       - [X] CRUD
-      - [-] Limit sign ups [2/3]
-        - [X] Timeline
+      - [-] Limit sign ups [2/4]
+        - [-] Timeline [1/2]
+          - [X] Registration
+          - [ ] Event end datetime
         - [X] Team
         - [ ] Current attendance count
+        - [X] Signup deny
     - [X] Integration tests
 *** Member [3/5]
     - [X] Sign in [2/2]
@@ -154,14 +157,14 @@
     - [ ] Integration tests
 * Client
 ** Pages
-*** Main page [4/7]
+*** Main page [6/7]
     - [X] Notification display
     - [X] Recurring event display
     - [X] Upcoming event display
     - [ ] Promotion requirements display
     - [X] Remove Aerospace Education, Leadership, and Emergency Services links
-    - [ ] Facebook feed for account/registry
-    - [ ] Twitter feed for account/registry
+    - [X] Facebook feed for account/registry
+    - [X] Twitter feed for account/registry
 *** Drive management [4/6]
     - [X] File view
     - [X] File upload
@@ -169,25 +172,40 @@
     - [X] File movement
     - [ ] File permission management
     - [ ] Unit tests
-*** Photo library [2/2]
-    - [X] It works
-    - [X] It loads x at a time, x defined in registry
-*** Administration [3/3]
+*** Photo library [1/1]
+    - [X] It is removed
+*** Administration [1/3]
     - [X] Redesign to have better UX
-    - [X] Pluggables [2/2]
-      - [X] Link list
+    - [-] Pluggables [4/6]
+      - [-] Administration [6/7]
+        - [ ] Event link list
+        - [X] Attendance
+        - [X] Duty positions
+        - [X] Flight membership
+        - [X] Site configuration
+        - [X] Permission management
+        - [X] Email selector
       - [X] Absentee
-    - [X] Pages [6/6]
+      - [-] Item creation [3/4]
+        - [ ] Tasks
+        - [X] Event
+        - [X] Team
+        - [X] Prospective member account
+      - [X] Errors
+      - [X] Su
+      - [X] Flight contact
+    - [-] Pages [5/8]
       - [X] Registry edit
       - [X] Flight/squadron contact
       - [X] Flight assignment
       - [X] Permission assignment
       - [X] Temporary duty positions
-      - [X] Attendance view [3/3]
+      - [-] Attendance view [2/3]
         - [X] Personal
-        - [X] Flight - for cadet
+        - [ ] Flight - for cadet
         - [X] Flight - last event for each cadet for flight and time since attendance
         - Grade | Name | CAPID | Last Event number | Last Event name | Time since event execution | Last Event link
+      - [ ] Event link list
 *** Teams [5/5]
     - [X] Team list
     - [X] Team view [1/1]
@@ -195,27 +213,27 @@
     - [X] Team edit
     - [X] Team add
     - [X] Team delete
-*** Events [1/6]
+*** Events [0/6]
     - [-] Add event [2/4]
       - [X] Basic functionality
       - [X] Fix bug: clicking 'Receive event updates' or other three checkboxes clears out POC information
       - [ ] If session expired, 'token 401' error issues and client doesn't respond
       - [ ] Custom attendance field not saved with event
-    - [-] Modify event [3/9]
+    - [-] Modify event [5/9]
       - [X] Basic functionality
       - [X] Fix POC checkbox anomoly where 2nd POC changes 1st POC checkbox
       - [X] Fix event custom field anomoly where 2nd custom field changes 1st custom field checkbox
       - [ ] Fix custom field type selector, unable to change to Text or Number type of field
       - [ ] Remove Region Event Number option
       - [ ] If session expired, 'token 401' error issues and client doesn't respond
-      - [ ] No notification to user if required information not present (incomplete POC, for example)
+      - [X] No notification to user if required information not present (incomplete POC, for example)
       - [ ] Remove POC button should read 'Remove POC' not 'Remove Item'
-      - [ ] 'UPDATE EVENT' returns error 400
+      - [X] 'UPDATE EVENT' returns error 400
     - [-] Calendar [1/2]
       - [X] Basic use
       - [ ] Context menu for events
-    - [X] Event link list
-    - [-] View event [7/8]
+    - [ ] Event link list
+    - [-] View event [8/11]
       - [X] Move
       - [X] Copy move
       - [X] Copy
@@ -224,16 +242,20 @@
       - [X] Attendance sign up [1/1]
         - [X] Team only events
       - [X] Attendance modify
-      - [-] Attendance view
+      - [ ] Link event button
+      - [ ] CAP ID list
+      - [ ] Form generation
+        - [ ] CAPF 60-80
+      - [X] Attendance view [2/2]
         - [X] Basic attendance view
-        - [ ] Extra information for user [0/3]
-          - [ ] Phone number
-          - [ ] Parent organization
-          - [ ] Whether or not they are part of the event organization
+        - [X] Extra information for user [3/3]
+          - [X] Phone number
+          - [X] Parent organization
+          - [X] Whether or not they are part of the event organization
     - [ ] Unit tests
 ** Templates
-*** Forms [0/2]
-    - [-] Inputs [16/17]
+*** Forms [1/3]
+    - [-] Inputs [17/18]
       - [X] Checkbox
       - [-] Datetime input [2/3]
         - [X] Basic operation
@@ -243,37 +265,52 @@
       - [X] File input
       - [X] Form block
       - [X] List editor
-      - [X] MultCheckbox
+      - [X] MultCheckbox [2/2]
+        - [X] Simple
+        - [X] Other
       - [X] MultiRange
       - [X] Number input
       - [X] POC Input
-      - [X] Radio button
+      - [X] Radio button [2/2]
+        - [X] Simple
+        - [X] Other
       - [X] Selector
       - [X] Simple Radio button
-      - [X] TextArea [2/2]
-        - [X] Lazy text area
-        - [X] Display
       - [X] Text input
       - [X] Team selector
       - [X] Permissions editor
+      - [X] Autocomplete
+      - [X] New password
+    - [X] Forms [3/3]
+      - [X] Team
+      - [X] Event
+      - [X] Attendance
     - [ ] Unit tests
 *** DONE Dialogue
 *** DONE FileDialogue
-*** TODO Signin link
+*** DONE Signin link
 *** DONE Button
-*** TODO Mobile site
-*** TODO Styles in general
+*** DONE Mobile site
+*** DONE Styles in general
     They should be redone
     Preferably using sass modules, as what is currently in place is bloated
 ** Debugging
 *** DONE Error handling
+* Discord bot
+** Commands
+*** Attendance record [2/2]
+    - [X] Record attendance for event with members of current voice channel
+    - [X] Record attendance for event with members of all voice channels
+** Member management [2/2]
+   - [X] Provide link account links
+   - [X] Update member information (nickname, roles)
+** DONE Discord setup script
 * Security
 ** CSRF [3/3]
    - [X] PAM on server
    - [X] Token request for every POST request
    - [X] Login forms requires reCAPTCHA
 ** DONE Captcha
-   CLOSED: [2019-11-25 Mon 19:32]
 ** DONE XSS protection
    Done by React
 ** DONE SQL injection protection

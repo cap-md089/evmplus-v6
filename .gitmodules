@@ -1,9 +1,0 @@
-[submodule "client"]
-	path = client
-	url = /mnt/persistent/repositories/react-capunit-client.git
-[submodule "server"]
-	path = server
-	url = /mnt/persistent/repositories/react-capunit-server.git
-[submodule "discord-bot"]
-	path = discord-bot
-	url = awsdev:/mnt/persistent/repositories/discord-bot.git

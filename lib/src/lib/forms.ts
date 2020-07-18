@@ -1,9 +1,9 @@
 import {
 	OtherMultCheckboxReturn,
 	RadioReturnWithOther,
-	SimpleMultCheckboxReturn
+	SimpleMultCheckboxReturn,
 } from '../typings/types';
-import { just, Maybe, none } from './Maybe';
+import { Maybe as M, MaybeObj as Maybe } from './Maybe';
 
 export const isOneOfSelected = (
 	input: OtherMultCheckboxReturn | SimpleMultCheckboxReturn
@@ -17,12 +17,12 @@ export const isSelected = (
 export const emptyFromLabels = (labels: string[]): OtherMultCheckboxReturn => ({
 	labels,
 	otherSelected: false,
-	values: labels.map(_ => false)
+	values: labels.map(_ => false),
 });
 
 export const emptySimpleFromLabels = (labels: string[]): SimpleMultCheckboxReturn => ({
 	labels,
-	values: labels.map(_ => false)
+	values: labels.map(_ => false),
 });
 
 export const presentMultCheckboxReturn = (
@@ -37,7 +37,20 @@ export const presentMultCheckboxReturn = (
 
 	const returnString = values.join(seperator);
 
-	return !!returnString ? just(returnString) : none();
+	return !!returnString ? M.some(returnString) : M.none();
+};
+
+export const advancedMultCheckboxReturn = <T>(
+	input: SimpleMultCheckboxReturn | OtherMultCheckboxReturn,
+	mapFunction: (item: string) => T
+): T[] => {
+	const values = input.labels.filter((_, i) => input.values[i]);
+
+	if ('otherSelected' in input && input.otherSelected) {
+		values.push(input.otherValue);
+	}
+
+	return values.map(mapFunction);
 };
 
 export const presentRadioReturn = <E extends number>(input: RadioReturnWithOther<E>): string =>
@@ -48,5 +61,5 @@ export const defaultRadioFromLabels = <E extends number>(
 ): RadioReturnWithOther<E> => ({
 	otherValueSelected: false,
 	labels,
-	selection: 0 as E
+	selection: 0 as E,
 });

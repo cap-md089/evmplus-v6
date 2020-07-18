@@ -1,5 +1,5 @@
 {
-    "folders": [
+	"folders": [
 		{
 			"path": "server",
 			"name": "Server"
@@ -15,6 +15,26 @@
 		{
 			"path": "discord-bot",
 			"name": "Discord Bot"
+		},
+		{
+			"path": "auto-client-api",
+			"name": "API Generator"
+		},
+		{
+			"path": "apis",
+			"name": "APIs"
+		},
+		{
+			"path": "auto-api-tests",
+			"name": "API Generator Tests"
+		},
+		{
+			"path": "server-common",
+			"name": "Discord/Server Common"
+		},
+		{
+			"path": "util-cli",
+			"name": "Command Line Utilities"
 		}
 	],
 	"settings": {
@@ -23,18 +43,16 @@
 	"launch": {
 		"compounds": [
 			{
-				"name": "Launch Chrome & Server",
-				"configurations": [
-					"Launch Chrome",
-					"Launch Server"
-				]
+				"name": "Launch Chrome (Normal Linux) & Server",
+				"configurations": ["Launch Chrome (Normal Linux)", "Launch Server"]
+			},
+			{
+				"name": "Launch Chrome (Snap Linux) & Server",
+				"configurations": ["Launch Chrome (Snap Linux)", "Launch Server"]
 			},
 			{
 				"name": "Launch Firefox & Server",
-				"configurations": [
-					"Launch Firefox",
-					"Launch Server"
-				]
+				"configurations": ["Launch Firefox", "Launch Server"]
 			}
 		]
 	}
