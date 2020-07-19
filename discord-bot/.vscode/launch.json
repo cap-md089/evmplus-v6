@@ -1,0 +1,17 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch Discord Bot",
+			"program": "${workspaceFolder}/dist/index.js",
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"skipFiles": ["node_modules/**/*.js", "<node_internals>/**/*.js"],
+			"env": {
+				"NODE_ENV": "development"
+			}
+		}
+	]
+}
