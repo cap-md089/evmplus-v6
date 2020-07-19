@@ -5,8 +5,8 @@ import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setup from 'discord-bot';
 import 'dotenv/config';
 import { exists, mkdirSync } from 'fs';
-import getServer from './getServer';
 import { confFromRaw } from 'server-common';
+import getServer from './getServer';
 
 console.log = console.log.bind(console);
 
