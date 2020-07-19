@@ -1,15 +1,15 @@
 import { Schema } from '@mysql/xdevapi';
-import { DiscordAccount, just, none, NonNullMemberReference } from 'common-lib';
-import { collectResults, findAndBind } from '../lib/internals';
+import { DiscordAccount, MemberReference, Maybe } from 'common-lib';
+import { findAndBind, collectResults } from 'server-common';
 
-export default (schema: Schema) => async (member: NonNullMemberReference) => {
+export default (schema: Schema) => async (member: MemberReference) => {
 	const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
 	const results = await collectResults(findAndBind(collection, { member }));
 
 	if (results.length !== 1) {
-		return none<DiscordAccount>();
+		return Maybe.none();
 	}
 
-	return just(results[0]);
+	return Maybe.some(results[0]);
 };

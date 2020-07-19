@@ -1,29 +1,53 @@
 import { Schema } from '@mysql/xdevapi';
-import { DiscordAccount, fromValue, just, Maybe, RawTeamObject, NHQ } from 'common-lib';
-import { Client, Guild, GuildMember, Role, Collection } from 'discord.js';
 import {
-	Account,
-	MemberClasses,
-	resolveReference,
-	Team,
+	AccountObject,
+	DiscordAccount,
+	DiscordServerInformation,
+	getORGIDsFromCAPAccount,
+	get,
+	getFullMemberName,
+	isPartOfTeam,
+	isTeamLeader,
+	Maybe,
+	MaybeObj,
+	Member,
+	NHQ,
+	pipe,
+	RawTeamObject,
+	collectGeneratorAsync,
+	asyncIterFilter,
+	asyncIterMap,
+	CAPMemberObject,
+	asyncIterReduce,
+	ServerError,
+	EitherObj,
+	Either,
+	always,
+} from 'common-lib';
+import { Client, Collection, Guild, GuildMember, Role, Permissions } from 'discord.js';
+import {
 	collectResults,
-	findAndBind
-} from '../lib/internals';
+	findAndBind,
+	getTeam,
+	resolveReference,
+	getTeamObjects,
+	getAllAccountsForMember,
+} from 'server-common';
 
-const CadetExecutiveStaffRoles = [
+export const CadetExecutiveStaffRoles = [
 	'Cadet Commander',
 	'Cadet Deputy Commander',
-	'Cadet Executive Officer'
+	'Cadet Executive Officer',
 ];
 
-const CadetLineStaffRoles = [
+export const CadetLineStaffRoles = [
 	'Cadet First Sergeant',
 	'Cadet Flight Commander',
 	'Cadet Flight Sergeant',
-	'Cadet Element Leader'
+	'Cadet Element Leader',
 ];
 
-const CadetSupportStaffRoles = [
+export const CadetSupportStaffRoles = [
 	'Cadet Activities Officer',
 	'Cadet Administrative Officer',
 	'Cadet Aerospace Education Officer',
@@ -52,17 +76,17 @@ const CadetSupportStaffRoles = [
 	'Cadet Public Affairs NCO',
 	'Cadet Recruiting NCO',
 	'Cadet Safety NCO',
-	'Cadet Supply NCO'
+	'Cadet Supply NCO',
 ];
 
-const CACRepresentativeRoles = [
+export const CACRepresentativeRoles = [
 	'Cadet WCAC Representative',
 	'Cadet WCAC Assistant',
 	'Cadet GCAC Representative',
-	'Cadet GCAC Assistant'
+	'Cadet GCAC Assistant',
 ];
 
-const AchvIDToCertificationRole = {
+export const AchvIDToCertificationRole = {
 	44: 'VFR Pilot',
 	53: 'GES',
 	55: 'MS',
@@ -206,10 +230,17 @@ const AchvIDToCertificationRole = {
 	253: 'MCCS',
 	254: 'CSSCS',
 	255: 'CSSDS',
-	256: 'MCDS'
+	256: 'MCDS',
 };
 
-const ManualRoles = [
+export const allRoles = [
+	...CadetExecutiveStaffRoles,
+	...CadetLineStaffRoles,
+	...CadetSupportStaffRoles,
+	...CACRepresentativeRoles,
+];
+
+export const ManualRoles = [
 	'Squadron Commander',
 	'Deputy Commander for Cadets',
 	'Assistant Deputy Commander for Cadets',
@@ -217,66 +248,131 @@ const ManualRoles = [
 	'Bot Developer',
 	'Website Developer',
 	'Discord Server PAO',
-	'Previous Cadet Commander'
+	'Previous Cadet Commander',
 ];
 
-const hasOneOf = <T>(arr1: T[]) => (arr2: T[]) =>
+export const hasOneOf = <T>(arr1: T[]) => (arr2: T[]) =>
 	arr2.map(includes(arr1)).reduce((prev, curr) => prev || curr, false);
 
-const includes = <T>(arr: T[]) => (elem: T) => arr.includes(elem);
+export const includes = <T>(arr: T[]) => (elem: T) => arr.includes(elem);
 
-const hasExecutiveStaffRole = hasOneOf(CadetExecutiveStaffRoles);
-const hasSupportStaffRole = hasOneOf(CadetSupportStaffRoles);
-const hasLineStaffRole = hasOneOf(CadetLineStaffRoles);
-const hasCACRole = hasOneOf(CACRepresentativeRoles);
+export const hasExecutiveStaffRole = hasOneOf(CadetExecutiveStaffRoles);
+export const hasSupportStaffRole = hasOneOf(CadetSupportStaffRoles);
+export const hasLineStaffRole = hasOneOf(CadetLineStaffRoles);
+export const hasCACRole = hasOneOf(CACRepresentativeRoles);
 
-const onlyJustValues = <T>(arr: Maybe<T>[]): T[] => arr.filter(v => v.isSome()).map(v => v.some());
+export const onlyJustValues = <T>(arr: MaybeObj<T>[]): T[] =>
+	arr.filter(Maybe.isSome).map(Maybe.join) as T[];
 
-const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K]) => (val: T) =>
+export const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K]) => (val: T) =>
 	val[prop] === value;
 
-const byName = byProp<{ name: string }>('name');
+export const byName = byProp<{ name: string }>('name');
 
 const roleNamesToRoles = (rolesCollection: Collection<string, Role>) => (roleNames: string[]) =>
-	rolesCollection.array().filter(role => roleNames.includes(role.name));
+	rolesCollection.array().filter((role) => roleNames.includes(role.name));
 
-const getDutyPositionRoles = (guild: Guild) => (member: MemberClasses): Role[] => {
+const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
+	member: Member
+): Promise<Role[]> => {
 	const categoryRoles = [];
 
-	const dutyPositionNames = member.dutyPositions.map(dp => dp.duty);
+	const dutyPositionNames = member.dutyPositions
+		.filter((dp) => dp.type === 'CAPUnit' || orgids.includes(dp.orgid))
+		.map((dp) => dp.duty);
+
+	const extraRoles = dutyPositionNames.filter((name) => !allRoles.includes(name));
 
 	if (hasExecutiveStaffRole(dutyPositionNames)) {
-		categoryRoles.push(fromValue(guild.roles.find(byName('Cadet Executive Staff'))));
+		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Executive Staff'))));
+
+		if (dutyPositionNames.includes('Cadet Deputy Commander')) {
+			categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Line Staff'))));
+		}
+
+		if (dutyPositionNames.includes('Cadet Executive Officer')) {
+			categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Support Staff'))));
+		}
 	}
 
 	if (hasLineStaffRole(dutyPositionNames)) {
-		categoryRoles.push(fromValue(guild.roles.find(byName('Cadet Line Staff'))));
+		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Line Staff'))));
 	}
 
-	if (hasSupportStaffRole(dutyPositionNames)) {
-		categoryRoles.push(fromValue(guild.roles.find(byName('Cadet Support Staff'))));
+	if (hasSupportStaffRole(dutyPositionNames) || extraRoles.length > 0) {
+		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Support Staff'))));
 	}
 
 	if (hasCACRole(dutyPositionNames)) {
-		categoryRoles.push(fromValue(guild.roles.find(byName('CAC Representative'))));
+		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('CAC Representative'))));
 	}
 
-	const allRoles = [
-		...CadetExecutiveStaffRoles,
-		...CadetLineStaffRoles,
-		...CadetSupportStaffRoles,
-		...CACRepresentativeRoles
-	];
+	for (const role of extraRoles) {
+		if (role.includes('OIC') || role.includes('Officer')) {
+			if (guild.roles.find(byName(role))) {
+				// Already added, just use that one
+				continue;
+			}
+
+			const position = [...guild.roles.values()]
+				.filter(({ name }) => name.includes('Officer') || name.includes('OIC'))
+				.map(get('position'))
+				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
+
+			await guild.createRole({
+				color: [17, 128, 106],
+				hoist: false,
+				mentionable: false,
+				name: role,
+				permissions: new Permissions(Permissions.DEFAULT)
+					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
+					.remove(Permissions.FLAGS.CHANGE_NICKNAME!),
+				position,
+			});
+		} else {
+			if (guild.roles.find(byName(role))) {
+				// Already added, just use that one
+				continue;
+			}
+
+			const position = [...guild.roles.values()]
+				.filter(({ name }) => name.includes('NCO'))
+				.map(get('position'))
+				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
+
+			await guild.createRole({
+				color: [17, 128, 106],
+				hoist: false,
+				mentionable: false,
+				name: role,
+				permissions: new Permissions(Permissions.DEFAULT)
+					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
+					.remove(Permissions.FLAGS.CHANGE_NICKNAME!),
+				position,
+			});
+		}
+	}
 
 	return onlyJustValues([
 		...categoryRoles,
 		...allRoles
 			.filter(includes(dutyPositionNames))
-			.map(roleName => fromValue(guild.roles.find(byName(roleName))))
+			.map((roleName) => Maybe.fromValue(guild.roles.find(byName(roleName)))),
+		...extraRoles.map((roleName) => Maybe.fromValue(guild.roles.find(byName(roleName)))),
 	]);
 };
 
-const getFlightRoles = (guild: Guild) => (member: MemberClasses): Role[] => {
+const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => (
+	member: CAPMemberObject
+) => {
+	const dutyPositions = member.dutyPositions
+		.filter((position) => position.type === 'NHQ' && orgids.includes(position.orgid))
+		.map(get('duty'));
+
+	return guild.roles.filterArray((role) => dutyPositions.includes(role.name));
+};
+
+const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
 	if (member.flight !== null) {
 		const isFlightRole = (flight: string) => {
 			flight = flight.toLowerCase();
@@ -285,7 +381,7 @@ const getFlightRoles = (guild: Guild) => (member: MemberClasses): Role[] => {
 			};
 		};
 
-		let flightRole = fromValue(guild.roles.find(isFlightRole(member.flight)));
+		let flightRole = Maybe.fromValue(guild.roles.find(isFlightRole(member.flight)));
 
 		if (flightRole.hasValue) {
 			const flightCategoryRole = guild.roles.find(byName('Flight Member'));
@@ -303,12 +399,9 @@ const getFlightRoles = (guild: Guild) => (member: MemberClasses): Role[] => {
 	}
 };
 
-const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: Account) => async (
-	member: MemberClasses
-): Promise<Role[]> => {
-	// The staff team is already done in great detail by other roles, such as 'Cadet Support Staff'
-	const teamIDs = member.teamIDs.filter(team => team !== 0);
-
+const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
+	teamIDs: number[]
+) => async (member: Member): Promise<Role[]> => {
 	if (teamIDs.length === 0) {
 		return [];
 	}
@@ -318,30 +411,33 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: Account) =>
 
 	let teamRoleInsertionPoint = guild.roles
 		.array()
-		.filter(role => role.name.toLowerCase().includes('team'))
-		.map(role => role.position)
+		.filter((role) => role.name.toLowerCase().includes('team'))
+		.map((role) => role.position)
 		.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
 	let teamLeadRoleInsertionPoint = Math.min(
-		fromValue(guild.roles.find(byName('Team Member')))
-			.map(r => r.position)
-			.orSome(Number.POSITIVE_INFINITY),
+		Maybe.orSome(Number.POSITIVE_INFINITY)(
+			Maybe.map<Role, number>((r) => r.position)(
+				Maybe.fromValue(guild.roles.find(byName('Team Member')))
+			)
+		),
 		guild.roles
 			.array()
-			.filter(role => role.name.toLowerCase().includes('team lead'))
-			.map(role => role.position)
+			.filter((role) => role.name.toLowerCase().includes('team lead'))
+			.map((role) => role.position)
 			.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY)
 	);
 
-	const roles = [fromValue(guild.roles.find(byName('Team Member')))];
+	const roles = [Maybe.fromValue(guild.roles.find(byName('Team Member')))];
 
 	// Team name background: rgb(194, 124, 14)
 	// Team lead background: rgb(241, 196, 15)
 
 	for (const teamID of teamIDs) {
-		const team = await Team.Get(teamID, account, schema);
+		// const team = await Team.Get(teamID, account, schema);
+		const team = await getTeam(schema)(account)(teamID).fullJoin();
 
-		if (team.isLeader(member)) {
+		if (isTeamLeader(member)(team)) {
 			let role = guild.roles.find(byName(`Team Lead - ${team.name}`));
 
 			if (!role) {
@@ -350,13 +446,13 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: Account) =>
 					hoist: false,
 					mentionable: false,
 					name: `Team Lead - ${team.name}`,
-					position: teamLeadRoleInsertionPoint
+					position: teamLeadRoleInsertionPoint,
 				});
 
 				teamRoleInsertionPoint--;
 			}
 
-			roles.push(just(role));
+			roles.push(Maybe.some(role));
 		}
 
 		let role = guild.roles.find(byName(renderTeamName(team)));
@@ -367,18 +463,18 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: Account) =>
 				hoist: false,
 				mentionable: false,
 				name: renderTeamName(team),
-				position: teamRoleInsertionPoint
+				position: teamRoleInsertionPoint,
 			});
 		}
 
-		roles.push(just(role));
+		roles.push(Maybe.some(role));
 	}
 
 	return onlyJustValues(roles);
 };
 
 const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async (
-	member: MemberClasses
+	member: Member
 ): Promise<Role[]> => {
 	if (member.type !== 'CAPNHQMember') {
 		return [];
@@ -386,18 +482,13 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 
 	const achievementIDs = await collectResults(
 		findAndBind(schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'), {
-			CAPID: member.id
+			CAPID: member.id,
 		})
 	);
 
 	const realAchievementIDs = achievementIDs.filter(
-		achv => achv.AchvID !== 95 && achv.AchvID !== 169
+		(achv) => achv.AchvID !== 95 && achv.AchvID !== 169
 	);
-
-	if (member.id === 622973) {
-		console.log(achievementIDs);
-		console.log(realAchievementIDs);
-	}
 
 	if (realAchievementIDs.length === 0) {
 		return [];
@@ -406,63 +497,101 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 	let roleNames = [
 		'Certified',
 		...realAchievementIDs.map(
-			achv => AchvIDToCertificationRole[achv.AchvID as keyof typeof AchvIDToCertificationRole]
-		)
+			(achv) =>
+				AchvIDToCertificationRole[achv.AchvID as keyof typeof AchvIDToCertificationRole]
+		),
 	];
 
 	if (roleNames.includes('GTL')) {
 		roleNames = roleNames.filter(
-			name => !(name === 'GTM3' || name === 'GTM2' || name === 'GTM1')
+			(name) => !(name === 'GTM3' || name === 'GTM2' || name === 'GTM1')
 		);
 	}
 	if (roleNames.includes('GTM1')) {
-		roleNames = roleNames.filter(name => !(name === 'GTM3' || name === 'GTM2'));
+		roleNames = roleNames.filter((name) => !(name === 'GTM3' || name === 'GTM2'));
 	}
 	if (roleNames.includes('GTM2')) {
-		roleNames = roleNames.filter(name => name !== 'GTM3');
+		roleNames = roleNames.filter((name) => name !== 'GTM3');
 	}
 
-	return guild.roles.filter(role => roleNames.includes(role.name)).array();
+	return guild.roles.filter((role) => roleNames.includes(role.name)).array();
 };
 
-const setupRoles = (guild: Guild) => (schema: Schema) => (account: Account) => (
+const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
 	discordUser: GuildMember
-) => async (member: MemberClasses) => {
+) => (teamIDs: number[]) => async (member: Member) => {
 	let roles: Role[];
 
 	const beforeRoles = roleNamesToRoles(discordUser.roles)(ManualRoles);
 
-	if (member.seniorMember) {
-		roles = [
-			...beforeRoles,
-			...(await get101CardCertificationRoles(guild)(schema)(member)),
-			...onlyJustValues([fromValue(guild.roles.find(byName('Senior Member')))])
-		];
-	} else {
-		const oldRoles = discordUser.roles;
+	let isAccountMember = await asyncIterReduce<EitherObj<ServerError, AccountObject>, boolean>(
+		(prev, memberAccount) =>
+			prev || Either.cata(always(false))(({ id }) => id === account.id)(memberAccount)
+	)(false)(getAllAccountsForMember({})(schema)(member));
 
-		roles = [
-			...beforeRoles,
-			...getDutyPositionRoles(guild)(member),
-			...getFlightRoles(guild)(member),
-			...(await get101CardCertificationRoles(guild)(schema)(member)),
-			...(await getTeamRoles(guild)(schema)(account)(member))
-		];
+	if (isAccountMember) {
+		if (member.seniorMember) {
+			roles = [
+				...beforeRoles,
+				...getSeniorMemberDutyPositions(guild)(
+					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account))
+				)(member),
+				...(await get101CardCertificationRoles(guild)(schema)(member)),
+				...onlyJustValues([
+					Maybe.fromValue(guild.roles.find(byName('Senior Member'))),
+					Maybe.fromValue(guild.roles.find(byName('Certified Member'))),
+				]),
+			];
+		} else {
+			const oldRoles = discordUser.roles;
 
-		if (oldRoles.find(byName('Cadet Commander')) && !roles.find(byName('Cadet Commander'))) {
-			const prevCommanderRole = guild.roles.find(byName('Previous Cadet Commander'));
+			roles = [
+				...beforeRoles,
+				...(await getDutyPositionRoles(guild)(
+					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account))
+				)(member)),
+				...pipe(
+					Maybe.map<DiscordServerInformation, Role[]>((info) =>
+						info.displayFlight ? getFlightRoles(guild)(member) : []
+					),
+					Maybe.orSome([])
+				)(account.discordServer),
+				...(await get101CardCertificationRoles(guild)(schema)(member)),
+				...(await getTeamRoles(guild)(schema)(account)(teamIDs)(member)),
+				...onlyJustValues([Maybe.fromValue(guild.roles.find(byName('Certified Member')))]),
+				...(member.id === 542488
+					? onlyJustValues([
+							Maybe.fromValue(guild.roles.find(byName('Cadet IT Officer'))),
+					  ])
+					: []),
+			];
 
-			if (prevCommanderRole) {
-				roles.push(prevCommanderRole);
+			if (
+				oldRoles.find(byName('Cadet Commander')) &&
+				!roles.find(byName('Cadet Commander'))
+			) {
+				const prevCommanderRole = guild.roles.find(byName('Previous Cadet Commander'));
+
+				if (prevCommanderRole) {
+					roles.push(prevCommanderRole);
+				}
+			}
+
+			if (
+				!roles.find(byName('Cadet Public Affairs NCO')) &&
+				!roles.find(byName('Cadet Public Affairs Officer'))
+			) {
+				roles = roles.filter((role) => role.name !== 'Discord Server PAO');
 			}
 		}
-
-		if (
-			!roles.find(byName('Cadet Public Affairs NCO')) &&
-			!roles.find(byName('Cadet Public Affairs Officer'))
-		) {
-			roles = roles.filter(role => role.name !== 'Discord Server PAO');
-		}
+	} else {
+		roles = [
+			...(await getTeamRoles(guild)(schema)(account)(teamIDs)(member)),
+			...onlyJustValues([
+				Maybe.fromValue(guild.roles.find(byName('Certified Member'))),
+				Maybe.fromValue(guild.roles.find(byName('Guest'))),
+			]),
+		];
 	}
 
 	if (guild.ownerID !== discordUser.id) {
@@ -471,8 +600,8 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: Account) => (
 };
 
 export default (client: Client) => (schema: Schema) => (guildID: string) => (
-	account: Account
-) => async (discordUser: DiscordAccount) => {
+	account: AccountObject
+) => (teamObjects?: number[]) => async (discordUser: DiscordAccount) => {
 	if (!account.discordServer.hasValue) {
 		return;
 	}
@@ -490,12 +619,24 @@ export default (client: Client) => (schema: Schema) => (guildID: string) => (
 			return;
 		}
 
-		const member = await resolveReference(discordUser.member, account, schema, true);
+		if (!teamObjects) {
+			teamObjects = await getTeamObjects(schema)(account)
+				.map(
+					pipe(
+						asyncIterFilter<RawTeamObject>(isPartOfTeam(discordUser.member)),
+						asyncIterMap(get('id'))
+					)
+				)
+				.map(collectGeneratorAsync)
+				.fullJoin();
+		}
+
+		const member = await resolveReference(schema)(account)(discordUser.member).fullJoin();
 
 		if (guild.ownerID !== discordUser.discordID) {
-			await user.setNickname(member.getFullName());
+			await user.setNickname(getFullMemberName(member));
+			await setupRoles(guild)(schema)(account)(user)(teamObjects)(member);
 		}
-		await setupRoles(guild)(schema)(account)(user)(member);
 	} catch (e) {
 		console.error(e);
 	}

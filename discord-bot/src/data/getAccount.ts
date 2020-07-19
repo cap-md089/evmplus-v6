@@ -1,20 +1,18 @@
 import { Schema } from '@mysql/xdevapi';
-import { just, none, RawAccountObject } from 'common-lib';
-import { Account, collectResults, findAndBind } from '../lib/internals';
+import { AccountObject, Maybe, MaybeObj } from 'common-lib';
+import { collectResults, findAndBind } from 'server-common';
 
-export default (schema: Schema) => async (serverID: string) => {
-	const collection = schema.getCollection<RawAccountObject>('Accounts');
+export default (schema: Schema) => async (serverID: string): Promise<MaybeObj<AccountObject>> => {
+	const collection = schema.getCollection<AccountObject>('Accounts');
 
-	const results = await collectResults(
+	const results = await collectResults<AccountObject>(
 		// @ts-ignore
 		findAndBind(collection, { discordServer: { hasValue: true, value: { serverID } } })
 	);
 
 	if (results.length !== 1) {
-		return none<Account>();
+		return Maybe.none();
 	}
 
-	const a = results[0] as RawAccountObject;
-
-	return just(await Account.Get(a.id, schema));
+	return Maybe.some(results[0]);
 };

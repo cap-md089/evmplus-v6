@@ -28,7 +28,8 @@
 		"sourceMap": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"declaration": true
+		"declaration": true,
+		"plugins": [{ "transform": "auto-client-api" }]
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules/**/*.ts", "node_modules"],
