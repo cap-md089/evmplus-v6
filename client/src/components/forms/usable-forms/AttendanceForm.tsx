@@ -1,12 +1,16 @@
 import {
 	AccountObject,
+	applyCustomAttendanceFields,
 	AttendanceRecord,
 	AttendanceStatus,
+	CustomAttendanceFieldEntryType,
+	CustomAttendanceFieldValue,
 	effectiveManageEventPermissionForEvent,
 	Either,
 	NewAttendanceRecord,
 	Permissions,
 	RawEventObject,
+	RegistryValues,
 	toReference,
 	User
 } from 'common-lib';
@@ -18,18 +22,23 @@ import SimpleForm, {
 	BigTextBox,
 	Checkbox,
 	DateTimeInput,
+	FormBlock,
 	Label,
+	NumberInput,
 	SimpleRadioButton,
 	TextBox,
-	FormBlock
+	TextInput
 } from '../SimpleForm';
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
+
+type FormState = NewAttendanceRecord & { usePartTime: boolean };
 
 export interface AttendanceFormProps {
 	account: AccountObject;
 	member: User;
 	event: RawEventObject;
+	registry: RegistryValues;
 	record?: AttendanceRecord;
 	updateRecord: (record: Required<NewAttendanceRecord>) => void;
 	removeRecord: (record: AttendanceRecord) => void;
@@ -47,6 +56,81 @@ interface AttendanceFormState {
 	deleting: boolean;
 }
 
+const RenderCustomAttendanceFieldInput: React.FC<{
+	field: CustomAttendanceFieldValue;
+	disabled: boolean;
+	key: string;
+	onChange: (field: CustomAttendanceFieldValue) => void;
+	registry: RegistryValues;
+	index: number;
+	indexInside: number;
+}> = ({ field, disabled, onChange, registry, key, index, indexInside }) =>
+	field.type === CustomAttendanceFieldEntryType.CHECKBOX ? (
+		<Checkbox
+			key={key}
+			name={`ignore-${index}-${indexInside}`}
+			onChange={value => {
+				console.log(!disabled);
+				!disabled &&
+					onChange({
+						value,
+						type: CustomAttendanceFieldEntryType.CHECKBOX,
+						title: field.title
+					});
+			}}
+			disabled={disabled}
+			value={field.value}
+		/>
+	) : field.type === CustomAttendanceFieldEntryType.DATE ? (
+		<DateTimeInput
+			key={key}
+			name={`ignore-${index}-${indexInside}`}
+			disabled={disabled}
+			originalTimeZoneOffset={registry.Website.Timezone}
+			time={true}
+			onChange={value =>
+				!disabled &&
+				onChange({
+					value,
+					type: CustomAttendanceFieldEntryType.DATE,
+					title: field.title
+				})
+			}
+			value={field.value}
+		/>
+	) : field.type === CustomAttendanceFieldEntryType.FILE ? null : field.type ===
+	  CustomAttendanceFieldEntryType.NUMBER ? (
+		<NumberInput
+			disabled={disabled}
+			key={key}
+			value={field.value}
+			name={`ignore-${index}-${indexInside}`}
+			onChange={value =>
+				!disabled &&
+				onChange({
+					value: value!,
+					type: CustomAttendanceFieldEntryType.NUMBER,
+					title: field.title
+				})
+			}
+		/>
+	) : (
+		<TextInput
+			name={`ignore-${index}-${indexInside}`}
+			key={key}
+			value={field.value}
+			disabled={disabled}
+			onChange={value =>
+				!disabled &&
+				onChange({
+					value,
+					type: CustomAttendanceFieldEntryType.TEXT,
+					title: field.title
+				})
+			}
+		/>
+	);
+
 export default class AttendanceForm extends React.Component<
 	AttendanceFormProps,
 	AttendanceFormState
@@ -56,6 +140,10 @@ export default class AttendanceForm extends React.Component<
 	public constructor(props: AttendanceFormProps) {
 		super(props);
 
+		const customAttendanceFields = applyCustomAttendanceFields(
+			props.event.customAttendanceFields
+		);
+
 		if (props.record) {
 			this.state = {
 				attendance: {
@@ -63,7 +151,9 @@ export default class AttendanceForm extends React.Component<
 					shiftTime: props.record.shiftTime,
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
 					status: props.record.status,
-					customAttendanceFieldValues: []
+					customAttendanceFieldValues: customAttendanceFields(
+						props.record.customAttendanceFieldValues
+					)
 				},
 				errorSaving: false,
 				usePartTime: false,
@@ -77,7 +167,7 @@ export default class AttendanceForm extends React.Component<
 					shiftTime: null,
 					planToUseCAPTransportation: false,
 					status: AttendanceStatus.COMMITTEDATTENDED,
-					customAttendanceFieldValues: []
+					customAttendanceFieldValues: customAttendanceFields([])
 				},
 				errorSaving: false,
 				usePartTime: false,
@@ -222,6 +312,11 @@ export default class AttendanceForm extends React.Component<
 					/>
 				)}
 
+				{this.getCustomFields(
+					this.props.event,
+					this.state.attendance.customAttendanceFieldValues
+				)}
+
 				{!!this.props.record &&
 				effectiveManageEventPermissionForEvent(this.props.member)(this.props.event) ===
 					Permissions.ManageEvent.FULL ? (
@@ -240,9 +335,106 @@ export default class AttendanceForm extends React.Component<
 		);
 	}
 
+	private getCustomFields(event: RawEventObject, rawFields: CustomAttendanceFieldValue[]) {
+		if (this.props.record) {
+			if (effectiveManageEventPermissionForEvent(this.props.member)(event)) {
+				const fields = rawFields;
+
+				return fields.flatMap((field, index) => [
+					<Label key={`custom-attendance-field-${index * 2}`}>{field.title}</Label>,
+					RenderCustomAttendanceFieldInput({
+						key: `custom-attendance-field-${index * 2 + 1}`,
+						field,
+						onChange: this.getFieldChanger(field.title),
+						disabled: false,
+						registry: this.props.registry,
+						index: this.props.index ?? -1,
+						indexInside: index
+					})
+				]);
+			} else {
+				const fields = rawFields.filter(
+					field =>
+						event.customAttendanceFields.find(rec => rec.title === field.title)
+							?.displayToMember
+				);
+
+				return fields.flatMap((field, index) => [
+					<Label key={`custom-attendance-field-${index * 2}`}>{field.title}</Label>,
+					RenderCustomAttendanceFieldInput({
+						key: `custom-attendance-field-${index * 2 + 1}`,
+						field,
+						onChange: this.getFieldChanger(field.title),
+						disabled: !event.customAttendanceFields.find(
+							rec => rec.title === field.title
+						)?.allowMemberToModify,
+						index: this.props.index ?? -1,
+						indexInside: index,
+						registry: this.props.registry
+					})
+				]);
+			}
+		} else {
+			const fields = rawFields.filter(
+				field =>
+					event.customAttendanceFields.find(rec => rec.title === field.title)
+						?.displayToMember
+			);
+
+			return fields.flatMap((field, index) => [
+				<Label key={`custom-attendance-field-${index * 2}`}>{field.title}</Label>,
+				RenderCustomAttendanceFieldInput({
+					key: `custom-attendance-field-${index * 2 + 1}`,
+					field,
+					onChange: this.getFieldChanger(field.title),
+					disabled: !event.customAttendanceFields.find(rec => rec.title === field.title)
+						?.allowMemberToModify,
+					registry: this.props.registry,
+					index: this.props.index ?? -1,
+					indexInside: index
+				})
+			]);
+		}
+	}
+
+	private getFieldChanger(title: string) {
+		const prevRec = { ...this.state.attendance, usePartTime: this.state.usePartTime };
+
+		console.log(title);
+
+		return (newValue: CustomAttendanceFieldValue) => {
+			console.log(newValue);
+			console.log(
+				prevRec.customAttendanceFieldValues.map(oldRec =>
+					oldRec.title === newValue.title ? newValue : oldRec
+				)
+			);
+			this.onAttendanceFormChange(
+				{
+					...prevRec,
+					customAttendanceFieldValues: prevRec.customAttendanceFieldValues.map(oldRec =>
+						oldRec.title === newValue.title ? newValue : oldRec
+					)
+				},
+				void 0,
+				void 0,
+				void 0,
+				'customAttendanceFieldValues'
+			);
+		};
+	}
+
 	private onAttendanceFormChange(
-		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
+		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean },
+		error: any,
+		chnaged: any,
+		hasError: any,
+		fieldChanged: keyof FormState
 	) {
+		if ((fieldChanged as string).startsWith('ignore')) {
+			return;
+		}
+
 		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
 		let departureTime =
 			attendanceSignup.shiftTime?.departureTime || this.props.event.pickupDateTime;
@@ -268,7 +460,7 @@ export default class AttendanceForm extends React.Component<
 					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 					? AttendanceStatus.COMMITTEDATTENDED
 					: AttendanceStatus.NOSHOW,
-				customAttendanceFieldValues: []
+				customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues
 			},
 			usePartTime: attendanceSignup.usePartTime,
 			errorSaving: false
@@ -321,7 +513,7 @@ export default class AttendanceForm extends React.Component<
 				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 				? AttendanceStatus.COMMITTEDATTENDED
 				: AttendanceStatus.NOSHOW,
-			customAttendanceFieldValues: []
+			customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues
 		};
 
 		this.setState({

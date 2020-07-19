@@ -29,23 +29,6 @@
 			"linux": {
 				"runtimeExecutable": "/snap/bin/chromium"
 			}
-		},
-		{
-			"type": "firefox",
-			"request": "launch",
-			"name": "Launch Firefox",
-			"url": "http://localhost:3000",
-			"webRoot": "${workspaceFolder}/src",
-			"linux": {
-				"runtimeExecutable": "/usr/bin/firefox"
-			}
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "Launch React Scripts",
-			"program": "${workspaceFolder}/node_modules/react-scripts/scripts/start.js",
-			"cwd": "${workspaceFolder}"
 		}
 	]
 }

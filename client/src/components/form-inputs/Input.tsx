@@ -78,6 +78,10 @@ export interface InputProps<V> {
 	 * Whether or not the input takes up the whole row
 	 */
 	fullWidth?: boolean;
+	/**
+	 * Whether or not the input should block input
+	 */
+	disabled?: boolean;
 }
 
 export interface NotOptionalInputProps<V> extends InputProps<V> {

@@ -641,6 +641,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											clearUpdated={this.clearPreviousMember}
 											removeRecord={noop}
 											signup={true}
+											registry={this.props.registry}
 										/>
 									))(
 										canEitherMaybeSignUpForEvent(eventViewerInfo)(
@@ -659,6 +660,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 												clearUpdated={this.clearPreviousMember}
 												owningAccount={this.props.account}
 												owningEvent={event}
+												registry={this.props.registry}
 												member={member}
 												removeAttendance={this.removeAttendanceRecord}
 												updateAttendance={this.addAttendanceRecord}

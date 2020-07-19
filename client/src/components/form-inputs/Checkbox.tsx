@@ -1,32 +1,17 @@
 import * as React from 'react';
-import { InputProps } from './Input';
 import './Checkbox.scss';
+import { InputProps } from './Input';
 
-interface CheckboxState {
-	value: boolean;
-}
-
-export default class Checkbox extends React.Component<InputProps<boolean>, CheckboxState> {
-	public state = {
-		value: false
-	};
-
+export default class Checkbox extends React.Component<InputProps<boolean>> {
 	constructor(props: InputProps<boolean>) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
 
-		this.state = {
-			value:
-				typeof props.value === 'undefined' || (props.value as any) === ''
-					? false
-					: props.value
-		};
-
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: props.name,
-				value: this.state.value
+				value: !!this.props.value
 			});
 		}
 	}
@@ -41,32 +26,30 @@ export default class Checkbox extends React.Component<InputProps<boolean>, Check
 				<div className="checkboxDiv">
 					<input
 						type="checkbox"
-						checked={this.state.value}
+						checked={!!this.props.value}
 						onChange={this.onChange}
 						name={this.props.name}
 						id={name}
+						disabled={this.props.disabled}
 					/>
-					<label htmlFor={name} />
+					<label htmlFor={name} className={this.props.disabled ? 'disabled' : ''} />
 				</div>
 			</div>
 		);
 	}
 
 	private onChange(e: React.ChangeEvent<HTMLInputElement>) {
+		if (this.props.disabled) {
+			return;
+		}
+
 		const value = e.currentTarget.checked;
-		this.setState({
+
+		this.props.onUpdate?.({
+			name: this.props.name,
 			value
 		});
 
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
-				name: this.props.name,
-				value
-			});
-		}
-
-		if (this.props.onChange) {
-			this.props.onChange(value);
-		}
+		this.props.onChange?.(value);
 	}
 }

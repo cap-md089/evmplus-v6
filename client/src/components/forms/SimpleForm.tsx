@@ -385,136 +385,133 @@ export default class SimpleForm<
 
 		return (
 			<form className="form-async">
-				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
-					if (
-						typeof this.props.children === 'undefined' ||
-						this.props.children === null
-					) {
-						throw new TypeError('Some error occurred');
-					}
-					let ret;
-					let childFullWidth = false;
-					let hidden = false;
-					if (!isInput(child)) {
-						// This algorithm handles labels for inputs by handling inputs
-						// Puts out titles on their own line
-						// Disregards spare labels and such
-						if (isLabel(child) && (child.type === Title || child.type === Divider)) {
-							return child;
-						}
-						return;
-					} else {
-						hidden = isHideableElement(child) && !!child.props.hidden;
-
-						const childName: keyof C = child.props.name as keyof C;
-						const value =
-							typeof child.props.value !== 'undefined'
-								? child.props.value
-								: typeof this.props.values === 'undefined'
-								? ''
-								: typeof (this.props.values as C)[childName] === 'undefined'
-								? ''
-								: (this.props.values as C)[childName];
-
-						// typeof this.props.values !== 'undefined'
-						// 	? typeof this.props.values[
-						// 			child.props.name
-						// 	  ] === 'undefined'
-						// 		? typeof child.props.value ===
-						// 		  'undefined'
-						// 			? ''
-						// 			: child.props.value
-						// 		: this.props.values[child.props.name]
-						// 	: typeof child.props.value === 'undefined'
-						// 	? ''
-						// 	: child.props.value;
-						if (isFullWidthableElement(child)) {
-							childFullWidth = !!child.props.fullWidth;
-						}
-						if (typeof childFullWidth === 'undefined') {
-							childFullWidth = false;
-						}
-
-						// @ts-ignore
-						if (defaultFullWidthElements.includes(child.type)) {
-							childFullWidth = true;
-						}
-
-						ret = [
-							React.cloneElement(child, {
-								onUpdate: this.onChange,
-								onInitialize: this.onInitialize,
-								key: i + 1,
-								value,
-								hasError:
-									this.fieldsChanged[childName] && this.fieldsError[childName]
-							})
-						];
-					}
-					if (!childFullWidth) {
-						if (
-							i > 0 &&
-							typeof (this.props.children as React.ReactChild[])[i - 1] !==
-								'undefined' &&
-							(this.props.children as React.ReactChild[])[i - 1] !== null &&
-							!isInput((this.props.children as React.ReactChild[])[i - 1])
-						) {
-							const children = this.props.children;
+				{(this.props.children as Array<React.ReactNode | React.ReactNode[]>)
+					.flatMap(node => (Array.isArray(node) ? node : [node]))
+					.map((child, i, children) => {
+						let ret;
+						let childFullWidth = false;
+						let hidden = false;
+						if (!isInput(child)) {
+							// This algorithm handles labels for inputs by handling inputs
+							// Puts out titles on their own line
+							// Disregards spare labels and such
 							if (
-								typeof children === 'string' ||
-								typeof children === 'number' ||
-								typeof children === 'boolean'
+								isLabel(child) &&
+								(child.type === Title || child.type === Divider)
 							) {
-								return;
+								return child;
+							}
+							return null;
+						} else {
+							hidden = isHideableElement(child) && !!child.props.hidden;
+
+							const childName: keyof C = child.props.name as keyof C;
+							const value =
+								typeof child.props.value !== 'undefined'
+									? child.props.value
+									: typeof this.props.values === 'undefined'
+									? ''
+									: typeof (this.props.values as C)[childName] === 'undefined'
+									? ''
+									: (this.props.values as C)[childName];
+
+							// typeof this.props.values !== 'undefined'
+							// 	? typeof this.props.values[
+							// 			child.props.name
+							// 	  ] === 'undefined'
+							// 		? typeof child.props.value ===
+							// 		  'undefined'
+							// 			? ''
+							// 			: child.props.value
+							// 		: this.props.values[child.props.name]
+							// 	: typeof child.props.value === 'undefined'
+							// 	? ''
+							// 	: child.props.value;
+							if (isFullWidthableElement(child)) {
+								childFullWidth = !!child.props.fullWidth;
+							}
+							if (typeof childFullWidth === 'undefined') {
+								childFullWidth = false;
 							}
 
-							if (!Array.isArray(children)) {
-								return;
+							// @ts-ignore
+							if (defaultFullWidthElements.includes(child.type)) {
+								childFullWidth = true;
 							}
 
-							const previousChild = children[i - 1];
-
+							ret = [
+								React.cloneElement(child, {
+									onUpdate: this.onChange,
+									onInitialize: this.onInitialize,
+									key: i + 1,
+									value,
+									hasError:
+										this.fieldsChanged[childName] && this.fieldsError[childName]
+								})
+							];
+						}
+						if (!childFullWidth) {
 							if (
-								typeof previousChild === 'string' ||
-								typeof previousChild === 'number' ||
-								typeof previousChild === 'undefined' ||
-								previousChild === null
+								i > 0 &&
+								typeof children[i - 1] !== 'undefined' &&
+								children[i - 1] !== null &&
+								!isInput(children[i - 1])
 							) {
-								ret.unshift(
-									<Label key={i - 1} fullWidth={childFullWidth}>
-										{previousChild}
-									</Label>
-								);
-							} else {
-								// @ts-ignore
-								if (isLabel(previousChild!) && previousChild!.type !== Title) {
+								if (
+									typeof children === 'string' ||
+									typeof children === 'number' ||
+									typeof children === 'boolean'
+								) {
+									return null;
+								}
+
+								if (!Array.isArray(children)) {
+									return null;
+								}
+
+								const previousChild = children[i - 1];
+
+								if (
+									typeof previousChild === 'string' ||
+									typeof previousChild === 'number' ||
+									typeof previousChild === 'undefined' ||
+									previousChild === null
+								) {
 									ret.unshift(
-										// @ts-ignore
-										React.cloneElement(previousChild, {
-											onUpdate: this.onChange,
-											onInitialize: this.onInitialize,
-											key: i
-										})
+										<Label key={i - 1} fullWidth={childFullWidth}>
+											{previousChild}
+										</Label>
 									);
+								} else {
+									// @ts-ignore
+									if (isLabel(previousChild!) && previousChild!.type !== Title) {
+										ret.unshift(
+											// @ts-ignore
+											React.cloneElement(previousChild, {
+												onUpdate: this.onChange,
+												onInitialize: this.onInitialize,
+												key: i
+											})
+										);
+									}
 								}
 							}
 						}
-					}
 
-					if (ret.length === 1 && !childFullWidth) {
-						ret.unshift(<div key={i - 1} className="label-formbox" />);
-					}
+						if (ret.length === 1 && !childFullWidth) {
+							ret.unshift(<div key={i - 1} className="label-formbox" />);
+						}
 
-					return (
-						<div
-							key={i}
-							className={`formbar${childFullWidth ? ' fullwidth' : ''}`}
-							style={hidden ? hiddenStyles : undefined}
-						>
-							{ret}
-						</div>
-					);
-				})}
+						return (
+							<div
+								key={i}
+								className={`formbar${childFullWidth ? ' fullwidth' : ''}`}
+								style={hidden ? hiddenStyles : undefined}
+							>
+								{ret}
+							</div>
+						);
+					})}
 				{(typeof this.props.showSubmitButton === 'undefined' ? (
 					true
 				) : (

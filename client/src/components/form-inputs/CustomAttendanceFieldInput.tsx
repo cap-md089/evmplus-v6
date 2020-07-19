@@ -153,7 +153,14 @@ export default class CustomAttendanceFieldInput extends React.Component<
 			case CustomAttendanceFieldEntryType.NUMBER:
 				return <NumberInput key="prefill" name="preFill" value={inValue.preFill} />;
 			case CustomAttendanceFieldEntryType.CHECKBOX:
-				return <Checkbox key="prefill" name="preFill" value={inValue.preFill} />;
+				return (
+					<Checkbox
+						key="prefill"
+						name="preFill"
+						value={inValue.preFill}
+						index={this.props.index}
+					/>
+				);
 			case CustomAttendanceFieldEntryType.DATE:
 				return (
 					<DateTimeInput
