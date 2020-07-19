@@ -6,32 +6,32 @@ WORKDIR /usr/capunit-com
 RUN apt-get update && apt-get install -y unzip
 
 # Go through each one in order, copying, installling dependencies, and building
-COPY apis ./apis
-RUN cd lib && npm install
+COPY lib ./lib
+RUN cd lib && npm install --no-package-lock
 RUN cd lib && ./node_modules/.bin/tsc --version && npm run build
 
 COPY auto-client-api ./auto-client-api
-RUN cd auto-client-api && npm install
+RUN cd auto-client-api && npm install --no-package-lock
 RUN cd auto-client-api && ./node_modules/.bin/tsc --version && npm run build
 
-COPY client ./client
-RUN cd server-common && npm install
+COPY server-common ./server-common
+RUN cd server-common && npm install --no-package-lock
 RUN cd server-common && ./node_modules/.bin/tsc --version && npm run build -- --project tsconfig.build.json
 
 COPY discord-bot ./discord-bot
-RUN cd discord-bot && npm install
+RUN cd discord-bot && npm install --no-package-lock
 RUN cd discord-bot && ./node_modules/.bin/tsc --version && npm run build
 
-COPY lib ./lib
-RUN cd apis && npm install
+COPY apis ./apis
+RUN cd apis && npm install --no-package-lock
 RUN cd apis && ./node_modules/.bin/tsc --version && npm run build
 
-COPY server ./server
-RUN cd client && npm install
+COPY client ./client
+RUN cd client && npm install --no-package-lock
 RUN cd client && ./node_modules/.bin/tsc --version && npm run build
 
-COPY server-common ./server-common
-RUN cd server && npm install
+COPY server ./server
+RUN cd server && npm install --no-package-lock
 RUN cd server && ./node_modules/.bin/tsc --version && npm run build -- --project tsconfig.build.json
 
 # This all can be commented out to build a staging build with dev dependencies still installed

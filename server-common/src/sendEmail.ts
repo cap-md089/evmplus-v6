@@ -152,5 +152,3 @@ export const sendEmail = (bccCapStMarys: boolean) => (registry: RegistryValues) 
 				? asyncLeft(errorGenerator('Could not send email')(result.$response.error))
 				: asyncRight(void 0, errorGenerator('Could not send email'))
 		);
-
-export default sendEmail;

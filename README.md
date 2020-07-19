@@ -35,6 +35,16 @@ Run `util-cli/dist/databseSetup.js`
 
 ### sFTP setup
 
+The following instructions will be for a Linux server
+
+1. On the Linux server, create the desired user to store information
+2. Create a SSL public and private key pair with the following command:
+
+    `ssh-keygen -b 2048 filestore_access_key`
+
+3. Copy the contents of `filestore_access_key` to `~/.ssh/authorized_keys` in the user folder for the user created before
+4. Use the SSL key to
+
 ### AWS setup
 
 1. [Acquire AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html)
@@ -46,6 +56,10 @@ Run `util-cli/dist/databseSetup.js`
 1. [Create a bot and get its token](https://discordpy.readthedocs.io/en/latest/discord.html).
 2. Store this token in the `server/.env`
 
+## Building the CLI utilities
+
+1. In the `util-cli` directory, run `npm install --no-package-lock`
+
 ## Building the server
 
 In the repository directory, build the docker image:
@@ -54,12 +68,10 @@ In the repository directory, build the docker image:
 
 When you change the server configuration, you will have to run this command again
 
-## Building the CLI utilities
-
-1. In the `util-cli` directory, run `npm install --no-package-lock`
-
 ## Running the server
 
-As it is a docker image, you can just run the following:
+As it is a docker image, you can run the following:
 
-`docker run --publish 3001:3001 -d --name capunit-com capunit-com:1.0`
+`docker run -it --name=capunit-com -v /google-keys:/google-keys:ro -v /drive-ssl-key:/drive-ssl-key:ro -p 80:3001 capunit-com:1.0`
+
+This command assumes that the required Google service account keys are in the `/google-keys` folder and that the SSL key used for the sFTP server is located in `/drive-ssl-key` and has the appropriate path specified in `server/.env`

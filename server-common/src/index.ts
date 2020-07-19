@@ -12,7 +12,6 @@ export * from './Organizations';
 export * from './Permissions';
 export * from './Registry';
 export * from './sendEmail';
-export { default as sendEmail } from './sendEmail';
 export * from './servertypes';
 export * from './Task';
 export * from './Team';
