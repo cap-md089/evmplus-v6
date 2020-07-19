@@ -9,14 +9,12 @@ import {
 	User,
 	userHasFilePermission,
 } from 'common-lib';
-import * as fs from 'fs';
-import { join } from 'path';
-import { accountRequestTransformer, getFileObject, PAM } from 'server-common';
+import { accountRequestTransformer, downloadFileObject, getFileObject, PAM } from 'server-common';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
 
 const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
-export const func = (createReadStream = fs.createReadStream) =>
+export const func = () =>
 	asyncErrorHandler(async (req: BasicMySQLRequest<{ fileid: string }>, res) => {
 		const fileEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(SessionType.REGULAR, false))
@@ -49,16 +47,18 @@ export const func = (createReadStream = fs.createReadStream) =>
 			return;
 		}
 
-		const fileRequested = createReadStream(
-			join(req.configuration.DRIVE_STORAGE_PATH, file.accountID + '-' + file.id)
-		);
+		// const fileRequested = createReadStream(
+		// 	join(req.configuration.DRIVE_STORAGE_PATH, file.accountID + '-' + file.id)
+		// );
 
 		res.contentType(file.contentType);
 		res.setHeader('Content-Disposition', 'attachment; filename="' + file.fileName + '"');
 
-		fileRequested.pipe(res);
-
 		await req.mysqlxSession.close();
+
+		await downloadFileObject(req.configuration)(file)(res);
+
+		res.end();
 	});
 
 export default func();

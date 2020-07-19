@@ -7,6 +7,7 @@ import {
 	UserAccountInformation,
 	SessionType,
 	UserSession,
+	ServerConfiguration,
 } from 'common-lib';
 import * as rp from 'request-promise';
 import { checkIfPasswordValid } from './Password';
@@ -35,13 +36,10 @@ export interface SigninFailed {
 
 export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
 
-// Client side key is 6LfHMcIUAAAAAJFL5xb0RkgUdc3DcDhTmmdSMYml
-const captchaSecret =
-	process.env.NODE_ENV === 'development'
-		? '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
-		: '6LfHMcIUAAAAABw78xmjBJo4guKn0HAOMafh5Nmx';
-
-export const verifyCaptcha = async (response: string, secret = captchaSecret): Promise<boolean> => {
+export const verifyCaptcha = async (
+	response: string,
+	conf: ServerConfiguration
+): Promise<boolean> => {
 	if (process.env.NODE_ENV === 'test') {
 		return true;
 	}
@@ -51,7 +49,7 @@ export const verifyCaptcha = async (response: string, secret = captchaSecret): P
 			followRedirect: false,
 			method: 'POST',
 			form: {
-				secret,
+				secret: conf.RECAPTCHA_SECRET,
 				response,
 			},
 			resolveWithFullResponse: false,
@@ -93,9 +91,10 @@ export const trySignin = async (
 	schema: Schema,
 	username: string,
 	password: string,
-	recaptchaCode: string
+	recaptchaCode: string,
+	conf: ServerConfiguration
 ): Promise<SigninResult> => {
-	if (!(await verifyCaptcha(recaptchaCode))) {
+	if (!(await verifyCaptcha(recaptchaCode, conf))) {
 		return {
 			result: MemberCreateError.RECAPTCHA_INVALID,
 		};

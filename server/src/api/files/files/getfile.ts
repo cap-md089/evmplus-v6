@@ -10,8 +10,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import * as fs from 'fs';
-import { join } from 'path';
-import { accountRequestTransformer, getFileObject, PAM } from 'server-common';
+import { accountRequestTransformer, downloadFileObject, getFileObject, PAM } from 'server-common';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
 
 const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ);
@@ -48,13 +47,9 @@ export const func = (createReadStreamFunc = fs.createReadStream) =>
 			return res.end();
 		}
 
-		const fileRequested = createReadStreamFunc(
-			join(req.configuration.DRIVE_STORAGE_PATH, file.accountID + '-' + file.id)
-		);
-
-		fileRequested.pipe(res);
-
 		await req.mysqlxSession.close();
+
+		await downloadFileObject(req.configuration)(file)(res);
 	});
 
 export default func();

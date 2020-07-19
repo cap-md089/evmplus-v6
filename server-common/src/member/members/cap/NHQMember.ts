@@ -17,6 +17,7 @@ import {
 	get as getProp,
 	getMemberName,
 	getORGIDsFromCAPAccount,
+	iterFilter,
 	iterMap,
 	Maybe,
 	NHQ,
@@ -82,16 +83,14 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 			collectResults(
 				schema
 					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
-					.find('ORGID in :ORGID and CAPID = :CAPID')
+					.find('CAPID = :CAPID')
 					.bind('CAPID', CAPID)
-					.bind('ORGID', orgids as any)
 			),
 			collectResults(
 				schema
 					.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
-					.find('ORGID in :ORGID and CAPID = :CAPID')
+					.find('CAPID = :CAPID')
 					.bind('CAPID', CAPID)
-					.bind('ORGID', orgids as any)
 			),
 		]),
 		errorGenerator('Could not get duty positions')
@@ -105,6 +104,7 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 				type: 'NHQ' as const,
 			}))
 		)
+		.map(iterFilter(item => orgids.includes(item.orgid)))
 		.map(collectGenerator);
 
 const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
@@ -130,21 +130,30 @@ export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
 	asyncRight(info.CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
 			AsyncEither.All([
-				getCAPWATCHContactForMember(schema)(id),
-				Maybe.orSome<AsyncEither<ServerError, ShortDutyPosition[]>>(
-					asyncRight(
-						[] as ShortDutyPosition[],
-						errorGenerator('Could not get duty positions')
-					)
-				)(
-					Maybe.map((orgids: number[]) => getNHQDutyPositions(schema)(orgids)(id))(
-						getORGIDsFromCAPAccount(account)
-					)
+				// getCAPWATCHContactForMember(schema)(id),
+				asyncRight({} as CAPMemberContact, errorGenerator('Could not get contact')),
+				// Maybe.orSome<AsyncEither<ServerError, ShortDutyPosition[]>>(
+				// 	asyncRight(
+				// 		[] as ShortDutyPosition[],
+				// 		errorGenerator('Could not get duty positions')
+				// 	)
+				// )(
+				// 	Maybe.map((orgids: number[]) => getNHQDutyPositions(schema)(orgids)(id))(
+				// 		getORGIDsFromCAPAccount(account)
+				// 	)
+				// ),
+				asyncRight(
+					[] as ShortDutyPosition[],
+					errorGenerator('Could not get duty positions')
 				),
-				loadExtraCAPMemberInformation(schema)(account)({
-					id,
-					type: 'CAPNHQMember',
-				})(teamObjects),
+				// loadExtraCAPMemberInformation(schema)(account)({
+				// 	id,
+				// 	type: 'CAPNHQMember',
+				// })(teamObjects),
+				asyncRight(
+					{} as CAPExtraMemberInformation,
+					errorGenerator('Could not get duty positions')
+				),
 			])
 		)
 		.map<CAPNHQMemberObject>(([contact, dutyPositions, extraInformation]) => ({

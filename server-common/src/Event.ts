@@ -120,13 +120,14 @@ const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject)
 ) => (collection: Collection<RawAttendanceDBRecord>) =>
 	collection
 		.find(
-			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND departureTime < :endDateTime'
+			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime'
 		)
 		// @ts-ignore
 		.bind('member_id', member.id)
 		// @ts-ignore
 		.bind('member_type', member.type)
 		.bind('accountID', accountID)
+		// @ts-ignore
 		.bind('endDateTime', now());
 
 export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (

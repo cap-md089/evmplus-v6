@@ -50,7 +50,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			const req = (request as unknown) as MySQLRequest;
 
 			try {
-				const session = await mysqlConn?.getSession()!;
+				const session = await mysqlConn!.getSession();
 
 				req.mysqlx = session.getSchema(conf.DB_SCHEMA);
 				req.memberUpdateEmitter = updateEmitter;

@@ -105,7 +105,7 @@ export default async function* (
 	session: Session,
 	files: string[] = modules.map(mod => mod.file)
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
-	session.startTransaction();
+	await session.startTransaction();
 
 	const foundModules: { [key: string]: boolean } = {};
 
@@ -154,5 +154,5 @@ export default async function* (
 		}
 	}
 
-	session.commit();
+	await session.commit();
 }

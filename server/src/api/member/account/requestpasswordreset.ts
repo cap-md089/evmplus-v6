@@ -52,7 +52,7 @@ export const func: (
 	emailFunction = sendEmail
 ) => req =>
 	asyncRight(req, errorGenerator('Could not request username'))
-		.filter(() => PAM.verifyCaptcha(req.body.captchaToken), {
+		.filter(() => PAM.verifyCaptcha(req.body.captchaToken, req.configuration), {
 			type: 'OTHER',
 			code: 400,
 			message: 'Could not verify reCAPTCHA',

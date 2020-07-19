@@ -22,8 +22,8 @@ import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/memb
 
 const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 	result: PAM.SigninSuccess
-): ServerEither<SuccessfulSigninReturn> =>
-	AsyncEither.All([
+): ServerEither<SuccessfulSigninReturn> => {
+	return AsyncEither.All([
 		resolveReference(req.mysqlx)(req.account)(result.member),
 		asyncRight(
 			getPermissionsForMemberInAccountDefault(req.mysqlx, result.member, req.account),
@@ -42,6 +42,7 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 		notificationCount,
 		taskCount,
 	}));
+};
 
 const handlePasswordExpired = (req: ServerAPIRequestParameter<api.Signin>) => (
 	result: PAM.SigninPasswordOld
@@ -71,10 +72,16 @@ const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
 				errorGenerator('Could not handle failure')
 		  );
 
-export const func: ServerAPIEndpoint<api.Signin> = req =>
-	asyncRight(
-		PAM.trySignin(req.mysqlx, req.body.username, req.body.password, req.body.recaptcha),
-		errorGenerator('Could not sign in as user')
+export const func: ServerAPIEndpoint<api.Signin> = req => {
+	return asyncRight(
+		PAM.trySignin(
+			req.mysqlx,
+			req.body.username,
+			req.body.password,
+			req.body.recaptcha,
+			req.configuration
+		),
+		errorGenerator('Could not sign in')
 	).flatMap<SuccessfulSigninReturn | FailedSigninReturn | ExpiredSuccessfulSigninReturn>(
 		results =>
 			results.result === MemberCreateError.NONE
@@ -83,5 +90,6 @@ export const func: ServerAPIEndpoint<api.Signin> = req =>
 				? handlePasswordExpired(req)(results)
 				: handleFailure(req)(results)
 	);
+};
 
 export default func;

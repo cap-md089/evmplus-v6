@@ -14,13 +14,14 @@ import {
 	FullFileObject,
 	get,
 	Maybe,
+	memoize,
 	RawFileObject,
 	ServerConfiguration,
 	ServerError,
 } from 'common-lib';
-import { unlink } from 'fs';
+import { readFile } from 'fs';
 import { join } from 'path';
-import { promisify } from 'util';
+import * as Client from 'ssh2-sftp-client';
 import { resolveReference } from './Members';
 import {
 	collectResults,
@@ -32,7 +33,17 @@ import {
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
 
-const promisedUnlink = promisify(unlink);
+const getSFTPKeyFile = memoize(async (conf: ServerConfiguration) => {
+	return new Promise((res, rej) => {
+		readFile(conf.REMOTE_DRIVE_KEY_FILE, (err, data) => {
+			if (err) {
+				rej(err);
+			} else {
+				res(data);
+			}
+		});
+	});
+});
 
 export const getRootFileObject = (schema: Schema) => (
 	account: AccountObject
@@ -212,6 +223,60 @@ export const saveFileObject = (schema: Schema) => (
 				errorGenerator('Could not save file information')
 		  ).flatMap(saveItemToCollectionA(fileObject));
 
+export const downloadFileObject = (conf: ServerConfiguration) => (file: RawFileObject) => (
+	destination: NodeJS.WritableStream
+): ServerEither<void> =>
+	file.contentType === 'application/folder'
+		? asyncLeft({
+				type: 'OTHER' as const,
+				code: 400,
+				message: 'Cannot download folder',
+		  })
+		: asyncRight(
+				(async () => {
+					const sftp = new Client();
+
+					await sftp.connect({
+						host: conf.REMOTE_DRIVE_HOST,
+						port: conf.REMOTE_DRIVE_PORT,
+						username: conf.REMOTE_DRIVE_USER,
+						privateKey: await getSFTPKeyFile(conf),
+					});
+
+					await sftp.get(
+						join(conf.REMOTE_DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
+						destination
+					);
+
+					await sftp.end();
+				})(),
+				errorGenerator('Could not download file')
+		  );
+
+export const uploadFile = (conf: ServerConfiguration) => (file: RawFileObject) => (
+	fileStream: NodeJS.ReadableStream
+): ServerEither<void> =>
+	asyncRight(
+		(async () => {
+			const sftp = new Client('remote-drive');
+
+			await sftp.connect({
+				host: conf.REMOTE_DRIVE_HOST,
+				port: conf.REMOTE_DRIVE_PORT,
+				username: conf.REMOTE_DRIVE_USER,
+				privateKey: await getSFTPKeyFile(conf),
+			});
+
+			await sftp.put(
+				fileStream,
+				join(conf.REMOTE_DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`)
+			);
+
+			await sftp.end();
+		})(),
+		errorGenerator('Could not upload file')
+	);
+
 export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) => (
 	account: AccountObject
 ) => (file: RawFileObject): ServerEither<void> =>
@@ -229,9 +294,20 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 							return;
 						}
 
-						await promisedUnlink(
-							join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`)
+						const sftp = new Client('remote-drive');
+
+						await sftp.connect({
+							host: conf.REMOTE_DRIVE_HOST,
+							port: conf.REMOTE_DRIVE_PORT,
+							username: conf.REMOTE_DRIVE_USER,
+							privateKey: await getSFTPKeyFile(conf),
+						});
+
+						await sftp.delete(
+							join(conf.REMOTE_DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`)
 						);
+
+						await sftp.end();
 					})(),
 					errorGenerator('Could not delete file')
 				),

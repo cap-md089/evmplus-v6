@@ -114,9 +114,9 @@ export interface GetNextRecurring {
 }
 
 export interface Link {
-	(params: { eventID: string; targetaccount: string }, body: {}): APIEither<RawEventObject>;
+	(params: { eventid: string; targetaccount: string }, body: {}): APIEither<RawEventObject>;
 
-	url: '/api/events/:parent/link/:targetaccount';
+	url: '/api/events/:eventid/link/:targetaccount';
 
 	method: 'post';
 

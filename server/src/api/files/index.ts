@@ -23,13 +23,13 @@ const router = express.Router();
 
 // The following two have to be first, as they can't have bodyParser taking the data
 // and ending the data stream
-router.post('/upload/:parentid?', upload);
+router.post('/api/files/upload/:parentid?', upload);
 
 // api.files.files.GetFileData
-router.get('/:fileid/export', getfile);
+router.get('/api/files/:fileid/export', getfile);
 // export, functions differently and downloads data for file with download headers
 // api.files.files.DownloadFile
-router.get('/:fileid/download', downloadfile);
+router.get('/api/files/:fileid/download', downloadfile);
 
 const adder = endpointAdder(router) as () => () => void;
 

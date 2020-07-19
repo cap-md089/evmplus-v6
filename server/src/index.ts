@@ -4,7 +4,6 @@ import { validator } from 'auto-client-api';
 import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setup from 'discord-bot';
 import 'dotenv/config';
-import { exists, mkdirSync } from 'fs';
 import { confFromRaw } from 'server-common';
 import getServer from './getServer';
 
@@ -21,12 +20,6 @@ if (Either.isLeft(confEither)) {
 
 const conf = confEither.value;
 
-exists(conf.REMOTE_DRIVE_STORAGE_PATH, dirExists => {
-	if (!dirExists) {
-		mkdirSync(conf.REMOTE_DRIVE_STORAGE_PATH, 0o750);
-	}
-});
-
 getServer(conf)
 	.then(({ finishServerSetup, capwatchEmitter, mysqlConn, app }) => {
 		setup(conf, capwatchEmitter, mysqlConn);
@@ -38,6 +31,6 @@ getServer(conf)
 		console.log('Server bound');
 	});
 
-process.on('unhandledRejection', up => {
-	throw up;
-});
+// process.on('unhandledRejection', up => {
+// 	throw up;
+// });

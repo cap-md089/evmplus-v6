@@ -89,7 +89,7 @@ export const func: (
 	emailFunction = sendEmail
 ) => request =>
 	asyncRight(request, errorGenerator('Could not create account'))
-		.filter(req => PAM.verifyCaptcha(req.body.recaptcha), {
+		.filter(req => PAM.verifyCaptcha(req.body.recaptcha, req.configuration), {
 			type: 'OTHER',
 			code: 400,
 			message: 'Could not verify reCAPTCHA',

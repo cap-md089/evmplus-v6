@@ -12,8 +12,6 @@ import {
 	User,
 	userHasFilePermission,
 } from 'common-lib';
-import * as fs from 'fs';
-import { join } from 'path';
 import {
 	accountRequestTransformer,
 	expandFileObject,
@@ -21,6 +19,7 @@ import {
 	getFilePath,
 	MySQLRequest,
 	PAM,
+	uploadFile,
 } from 'server-common';
 import { v4 as uuid } from 'uuid';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
@@ -38,7 +37,7 @@ const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.M
 	2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
 	3. MySQL database will store METADATA (Author, filename, etc)
 */
-export const func = (createWriteStream = fs.createWriteStream) =>
+export const func = () =>
 	asyncErrorHandler(async (req: MySQLRequest<{ parentid?: string }>, res) => {
 		const parentID = req.params.parentid ?? 'root';
 
@@ -77,11 +76,7 @@ export const func = (createWriteStream = fs.createWriteStream) =>
 		}
 
 		const id = uuid().replace(/-/g, '');
-		const realFilename = `${account.id}-${id}`;
 		const created = Date.now();
-		const fileWriteStream = createWriteStream(
-			join(req.configuration.DRIVE_STORAGE_PATH, realFilename)
-		);
 
 		const filesCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 		const owner = toReference(member);
@@ -121,15 +116,8 @@ export const func = (createWriteStream = fs.createWriteStream) =>
 				parentID,
 			};
 
-			file.pipe(fileWriteStream);
-
 			Promise.all([
-				new Promise(resolve => {
-					file.on('end', () => {
-						fileWriteStream.close();
-						resolve();
-					});
-				}),
+				uploadFile(req.configuration)(uploadedFile)(file),
 				filesCollection.add(uploadedFile).execute(),
 			])
 				.then(async () => {

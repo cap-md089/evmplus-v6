@@ -3161,6 +3161,11 @@ export interface ServerConfiguration {
 	REMOTE_DRIVE_PORT: number;
 	REMOTE_DRIVE_KEY_FILE: string;
 	REMOTE_DRIVE_USER: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
 }
 
 export interface RawServerConfiguration {
@@ -3186,6 +3191,11 @@ export interface RawServerConfiguration {
 	REMOTE_DRIVE_PORT: string;
 	REMOTE_DRIVE_KEY_FILE: string;
 	REMOTE_DRIVE_USER: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
 }
 
 export declare interface MemberUpdateEventEmitter extends EventEmitter {

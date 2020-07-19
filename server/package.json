@@ -38,6 +38,7 @@
 		"request-promise": "^4.2.2",
 		"serve-favicon": "^2.4.5",
 		"server-common": "file:../server-common",
+		"ssh2-sftp-client": "^5.2.1",
 		"uuid": "^3.2.1"
 	},
 	"devDependencies": {
@@ -76,7 +77,7 @@
 		"tslint": "^5.19.0",
 		"tslint-config-prettier": "^1.13.0",
 		"ttypescript": "^1.5.10",
-		"typescript": "^3.8.3"
+		"typescript": "^3.9.7"
 	},
 	"jest": {
 		"globals": {

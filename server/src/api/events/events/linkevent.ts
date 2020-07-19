@@ -13,7 +13,7 @@ import { getAccount, getEvent, linkEvent, PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 	AsyncEither.All([
-		getEvent(req.mysqlx)(req.account)(req.params.eventID),
+		getEvent(req.mysqlx)(req.account)(req.params.eventid),
 		getAccount(req.mysqlx)(req.params.targetaccount),
 	]).flatMap(([event, targetAccount]) =>
 		asyncRight(

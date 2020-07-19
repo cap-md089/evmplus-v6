@@ -303,6 +303,7 @@ export const deleteItemFromCollectionA = <T extends AccountIdentifiable>(
 				.remove('id = :id AND accountID = :accountID')
 				// @ts-ignore
 				.bind('id', item.id)
+				// @ts-ignore
 				.bind('accountID', item.accountID)
 		)
 		.map(remove => remove.execute())
@@ -317,6 +318,7 @@ export const deleteFromCollectionA = <T extends AccountIdentifiable>(item: T) =>
 				.remove('id = :id AND accountID = :accountID')
 				// @ts-ignore
 				.bind('id', item.id)
+				// @ts-ignore
 				.bind('accountID', item.accountID)
 		)
 		.map(remove => remove.execute())

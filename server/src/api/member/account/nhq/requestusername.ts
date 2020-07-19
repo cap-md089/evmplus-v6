@@ -39,7 +39,7 @@ export const func: (
 	emailFunction = sendEmail
 ) => req =>
 	asyncRight(
-		PAM.verifyCaptcha(req.body.captchaToken),
+		PAM.verifyCaptcha(req.body.captchaToken, req.configuration),
 		errorGenerator('Could not verify CAPTCHA token')
 	)
 		.filter(success => success, {
