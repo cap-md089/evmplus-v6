@@ -1,0 +1,945 @@
+import {
+	advancedMultCheckboxReturn,
+	always,
+	api,
+	APIEither,
+	APIEndpointReturnValue,
+	areMembersTheSame,
+	AsyncEither,
+	AttendanceRecord,
+	canSignUpForEvent,
+	CAPMemberContact,
+	effectiveManageEventPermissionForEvent,
+	Either,
+	EitherObj,
+	EventObject,
+	EventStatus,
+	formatEventViewerDate as formatDate,
+	forms,
+	FullTeamObject,
+	get,
+	getMemberEmail,
+	getMemberPhone,
+	getURIComponent,
+	Maybe,
+	MaybeObj,
+	Member,
+	MemberReference,
+	NewAttendanceRecord,
+	NewEventObject,
+	Permissions,
+	pipe,
+	PointOfContactType,
+	presentMultCheckboxReturn,
+	RawEventObject,
+	User,
+	isCAPMember,
+	Right,
+	CAPNHQMemberReference
+} from 'common-lib';
+import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
+import * as React from 'react';
+import { Link } from 'react-router-dom';
+import AttendanceItemView from '../../components/AttendanceView';
+import Button from '../../components/Button';
+import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
+import DialogueButton from '../../components/dialogues/DialogueButton';
+import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
+import DropDownList from '../../components/DropDownList';
+import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
+import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
+import Loader from '../../components/Loader';
+import SigninLink from '../../components/SigninLink';
+import fetchApi from '../../lib/apis';
+import Page, { PageProps } from '../Page';
+import './EventViewer.css';
+
+const noop = () => void 0;
+
+interface EventViewerViewerLoadingState {
+	viewerState: 'LOADING';
+}
+
+interface EventViewerViewerLoadedState {
+	viewerState: 'LOADED';
+
+	eventInformation: api.events.events.EventViewerData;
+}
+
+interface EventViewerViewerErrorState {
+	viewerState: 'ERROR';
+
+	viewerMessage: string;
+}
+
+type EventViewerViewerState =
+	| EventViewerViewerErrorState
+	| EventViewerViewerLoadedState
+	| EventViewerViewerLoadingState;
+
+interface EventViewerTeamLoadingState {
+	teamState: 'LOADING';
+}
+
+interface EventViewerTeamErrorState {
+	teamState: 'ERROR';
+
+	teamMessage: string;
+}
+
+interface EventViewerTeamLoadedState {
+	teamState: 'LOADED';
+
+	teamInformation: MaybeObj<APIEither<FullTeamObject>>;
+}
+
+type EventViewerTeamState =
+	| EventViewerTeamLoadedState
+	| EventViewerTeamLoadingState
+	| EventViewerTeamErrorState;
+
+interface EventViewerUIState {
+	previousUpdatedMember: MaybeObj<MemberReference>;
+	newTime: number;
+	cadetRoster: Member[] | null;
+	seniorRoster: Member[] | null;
+	eventRegistry: boolean;
+	showingCAPIDs: boolean;
+}
+
+type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerViewerState;
+
+type EventViewerProps = PageProps<{ id: string }>;
+
+const eventStatus = (stat: EventStatus): string =>
+	stat === EventStatus.COMPLETE
+		? 'Complete'
+		: stat === EventStatus.CANCELLED
+		? 'Cancelled'
+		: stat === EventStatus.CONFIRMED
+		? 'Confirmed'
+		: stat === EventStatus.DRAFT
+		? 'Draft'
+		: stat === EventStatus.INFORMATIONONLY
+		? 'Information Only'
+		: stat === EventStatus.TENTATIVE
+		? 'Tentative'
+		: '';
+
+export const attendanceStatusLabels = [
+	'Commited/Attended',
+	'No show',
+	'Rescinded commitment to attend'
+];
+
+const renderName = (renderMember: User | null) => (event: RawEventObject) => (
+	member: api.events.events.EventViewerAttendanceRecord
+) => {
+	const defaultRenderName = `${member.record.memberID.id}: ${member.record.memberName}`;
+
+	if (
+		!!renderMember &&
+		effectiveManageEventPermissionForEvent(renderMember)(event) !== Permissions.ManageEvent.NONE
+	) {
+		const {
+			memberName,
+			memberID: { id }
+		} = member.record;
+
+		const accountName = pipe(
+			Maybe.map(name => `[${name}]`),
+			Maybe.orSome('')
+		)(member.orgName);
+
+		const contactEmail = pipe(
+			Maybe.map<Member, CAPMemberContact>(get('contact')),
+			Maybe.flatMap(getMemberEmail)
+		)(member.member);
+
+		const contactPhone = pipe(
+			Maybe.map<Member, CAPMemberContact>(get('contact')),
+			Maybe.flatMap(getMemberPhone)
+		)(member.member);
+
+		const contact = [contactEmail, contactPhone].filter(Maybe.isSome).map(get('value'));
+		const renderedContact = contact.length === 0 ? '' : `[${contact.join(', ')}]`;
+
+		return `${id}: ${memberName} ${accountName} ${renderedContact}`;
+	} else {
+		return defaultRenderName;
+	}
+};
+
+const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
+	...eventViewer.event,
+	attendance: eventViewer.attendees
+		.filter(Either.isRight)
+		.map(get('value'))
+		.map(get('record')),
+	pointsOfContact: eventViewer.pointsOfContact
+});
+
+const canEitherMaybeSignUpForEvent = (event: api.events.events.EventViewerData) => (
+	team: MaybeObj<EitherObj<any, FullTeamObject>>
+): ((member: MemberReference) => EitherObj<string, void>) =>
+	event.event.teamID === null || event.event.teamID === undefined
+		? canSignUpForEvent(viewerDataToEventObject(event))([])
+		: Maybe.isNone(team) || Either.isLeft(team.value)
+		? always(Either.left('Could not load team information'))
+		: canSignUpForEvent(viewerDataToEventObject(event))(
+				team.value.value.members.map(get('reference'))
+		  );
+
+export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
+	public state: EventViewerState = {
+		viewerState: 'LOADING',
+		teamState: 'LOADING',
+		previousUpdatedMember: Maybe.none(),
+		newTime: 0,
+		cadetRoster: null,
+		seniorRoster: null,
+		eventRegistry: false,
+		showingCAPIDs: false
+	};
+
+	constructor(props: EventViewerProps) {
+		super(props);
+
+		this.addAttendanceRecord = this.addAttendanceRecord.bind(this);
+		this.clearPreviousMember = this.clearPreviousMember.bind(this);
+		this.removeAttendanceRecord = this.removeAttendanceRecord.bind(this);
+
+		this.moveEvent = this.moveEvent.bind(this);
+		this.copyMoveEvent = this.copyMoveEvent.bind(this);
+		this.copyEvent = this.copyEvent.bind(this);
+		this.deleteEvent = this.deleteEvent.bind(this);
+
+		this.renderFormsButtons = this.renderFormsButtons.bind(this);
+		this.createCAPF6080 = this.createCAPF6080.bind(this);
+	}
+
+	public async componentDidMount() {
+		const eventInformation = await fetchApi.events.events.getViewerData(
+			{ id: this.props.routeProps.match.params.id.split('-')[0] },
+			{},
+			this.props.member?.sessionID
+		);
+
+		if (Either.isLeft(eventInformation)) {
+			this.setState(prev => ({
+				...prev,
+
+				viewerState: 'ERROR',
+				viewerMessage: eventInformation.value.message
+			}));
+
+			this.props.updateBreadCrumbs([
+				{
+					text: 'Home',
+					target: '/'
+				},
+				{
+					target: '/calendar',
+					text: 'Calendar'
+				}
+			]);
+
+			this.props.updateSideNav([]);
+
+			this.updateTitle(`View event`);
+
+			return;
+		}
+
+		const { event } = eventInformation.value;
+
+		this.setState(prev => ({
+			...prev,
+
+			viewerState: 'LOADED',
+			eventInformation: eventInformation.value
+		}));
+
+		this.props.updateBreadCrumbs([
+			{
+				text: 'Home',
+				target: '/'
+			},
+			{
+				target: '/calendar',
+				text: 'Calendar'
+			},
+			{
+				target: getURIComponent(eventInformation.value.event),
+				text: `View ${eventInformation.value.event.name}`
+			}
+		]);
+
+		let teamInfo: MaybeObj<APIEndpointReturnValue<api.team.GetTeam>> = Maybe.none();
+
+		if (event.teamID !== null && event.teamID !== undefined) {
+			const teamInfoEither = await fetchApi.team
+				.get({ id: event.teamID.toString() }, {}, this.props.member?.sessionID)
+				.map(Maybe.some)
+				.map(Maybe.map(Either.right));
+
+			if (Either.isRight(teamInfoEither)) {
+				teamInfo = teamInfoEither.value;
+
+				this.setState(prev => ({
+					...prev,
+
+					teamState: 'LOADED',
+					teamInformation: teamInfo
+				}));
+			} else {
+				this.setState(prev => ({
+					...prev,
+
+					teamState: 'ERROR',
+					teamMessage: 'Could not load team membership information'
+				}));
+			}
+		} else {
+			this.setState(prev => ({
+				...prev,
+				teamState: 'LOADED',
+				teamInformation: Maybe.none()
+			}));
+		}
+
+		// Make this work sometime?
+		// With this uncommented, the page rerenders an extra time
+		// This causes there to be two web requests
+		// If this can be done without unmounting/remounting, that would be great
+		// this.updateURL(`/eventviewer/${eventInformation.value.event.getEventURLComponent()}`);
+		// Probably to come with React Redux
+
+		if (
+			this.props.member &&
+			Either.isRight(
+				canEitherMaybeSignUpForEvent(eventInformation.value)(teamInfo)(this.props.member)
+			)
+		) {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				},
+				{
+					target: 'signup',
+					text: 'Sign up',
+					type: 'Reference'
+				},
+				{
+					target: 'attendance',
+					text: 'Attendance',
+					type: 'Reference'
+				}
+			]);
+		} else if (this.props.member) {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				},
+				{
+					target: 'attendance',
+					text: 'Attendance',
+					type: 'Reference'
+				}
+			]);
+		} else {
+			this.props.updateSideNav([
+				{
+					target: 'information',
+					text: 'Event Information',
+					type: 'Reference'
+				}
+			]);
+		}
+
+		this.updateTitle(`View event ${eventInformation.value.event.name}`);
+	}
+
+	public render() {
+		if (this.state.viewerState === 'LOADING') {
+			return <Loader />;
+		}
+
+		if (this.state.viewerState === 'ERROR') {
+			return <div>{this.state.viewerMessage}</div>;
+		}
+
+		const eventViewerInfo = this.state.eventInformation;
+		const { event, attendees, pointsOfContact } = eventViewerInfo;
+		const { member } = this.props;
+
+		return (
+			<>
+				<div className="eventviewerroot">
+					{member &&
+					effectiveManageEventPermissionForEvent(member)(event) !==
+						Permissions.ManageEvent.NONE ? (
+						<>
+							<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Move event"
+								buttonClass="underline-button"
+								buttonType="none"
+								displayButtons={DialogueButtons.YES_NO_CANCEL}
+								onYes={this.moveEvent}
+								onNo={this.copyMoveEvent}
+								title="Move event"
+								labels={['Move event', 'Copy move event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<TextBox name="null">
+									<span
+										style={{
+											lineHeight: '1px'
+										}}
+									>
+										<span style={{ color: 'red' }}>WARNING:</span> moving this
+										event may cause confusion.
+										<br />
+										Consider instead copying this event, and marking
+										<br />
+										this event as cancelled.
+										<br />
+										<br />
+										Or, click the 'Copy move button' to perform this
+										<br />
+										action automatically
+									</span>
+								</TextBox>
+
+								<Label>New start time of event</Label>
+								<DateTimeInput
+									name="newTime"
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButtonForm<{ newTime: number }>
+								buttonText="Copy event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.copyEvent}
+								title="Move event"
+								labels={['Copy event', 'Cancel']}
+								values={{
+									newTime: event.startDateTime
+								}}
+							>
+								<Label>Start time of new event</Label>
+								<DateTimeInput
+									name="newTime"
+									time={true}
+									originalTimeZoneOffset={'America/New_York'}
+								/>
+							</DialogueButtonForm>
+							{' | '}
+							<DialogueButton
+								buttonText="Delete event"
+								buttonType="none"
+								buttonClass="underline-button"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.deleteEvent}
+								title="Delete event"
+								labels={['Yes', 'No']}
+							>
+								Really delete event?
+							</DialogueButton>
+							{' | '}
+							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
+							{/* {' | '}
+								<Button buttonType="none">Print Cadet Roster</Button>
+								{' | '}
+								<Button buttonType="none">Print Senior Roster</Button>
+								{' | '}
+								<Button buttonType="none">Print Event Registry</Button> */}
+							<br />
+							<br />
+						</>
+					) : null}
+					<div id="information">
+						<strong>Event: </strong> {event.name}
+						<br />
+						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
+						<br />
+						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>Start</strong> at {formatDate(event.startDateTime)} at{' '}
+						{event.location}
+						<br />
+						<strong>End</strong> at {formatDate(event.endDateTime)}
+						<br />
+						<strong>Pickup</strong> at {formatDate(event.pickupDateTime)} at{' '}
+						{event.pickupLocation}
+						<br />
+						<br />
+						<strong>Transportation provided:</strong>{' '}
+						{event.transportationProvided ? 'YES' : 'NO'}
+						<br />
+						{event.transportationProvided ? (
+							<>
+								<strong>Transportation Description:</strong>{' '}
+								{event.transportationDescription}
+								<br />
+							</>
+						) : null}
+						<strong>Uniform:</strong>{' '}
+						{pipe(
+							Maybe.map(uniform => <>{uniform}</>),
+							Maybe.orSome(<i>No uniform specified</i>)
+						)(presentMultCheckboxReturn(event.uniform))}
+						<br />
+						<strong>Comments:</strong> {event.comments}
+						<br />
+						<strong>Activity:</strong>{' '}
+						{pipe(
+							Maybe.map(activities => <>{activities}</>),
+							Maybe.orSome(<i>Unknown activity type</i>)
+						)(presentMultCheckboxReturn(event.activity))}
+						<br />
+						<strong>Required forms:</strong>{' '}
+						{pipe(
+							(renderedForms: JSX.Element[]) =>
+								renderedForms.length === 0
+									? Maybe.none()
+									: Maybe.some(renderedForms),
+							Maybe.map<JSX.Element[], Array<JSX.Element | null>>(renderedForms =>
+								renderedForms.flatMap((form, index, { length }) => [
+									React.cloneElement(form, { key: index }),
+									index < length - 1 ? <>, </> : null
+								])
+							),
+							Maybe.orSome<Array<JSX.Element | null>>([
+								<i key={0}>No forms required</i>
+							])
+						)(advancedMultCheckboxReturn(event.requiredForms, this.renderFormsButtons))}
+						<br />
+						{event.requiredEquipment.length > 0 ? (
+							<>
+								<strong>Required equipment:</strong>{' '}
+								{event.requiredEquipment.join(', ')}
+								<br />
+							</>
+						) : null}
+						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						<br />
+						<div>
+							{pointsOfContact.map((poc, i) =>
+								poc.type === PointOfContactType.INTERNAL ? (
+									<div key={i}>
+										<b>CAP Point of Contact: </b>
+										{poc.name}
+										<br />
+										{!!poc.email ? (
+											<>
+												<b>CAP Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{!!poc.phone ? (
+											<>
+												<b>CAP Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								) : (
+									<div key={i}>
+										<b>External Point of Contact: </b>
+										{poc.name}
+										<br />
+										{poc.email !== '' ? (
+											<>
+												<b>External Point of Contact Email: </b>
+												{poc.email}
+												<br />
+											</>
+										) : null}
+										{poc.phone !== '' ? (
+											<>
+												<b>External Point of Contact Phone: </b>
+												{poc.phone}
+												<br />
+											</>
+										) : null}
+										<br />
+									</div>
+								)
+							)}
+						</div>
+					</div>
+					{member !== null ? (
+						this.state.teamState === 'LOADING' ? (
+							<Loader />
+						) : this.state.teamState === 'ERROR' ? (
+							<div>{this.state.teamMessage}</div>
+						) : (
+							<>
+								{this.state.eventInformation.attendees.some(
+									rec =>
+										Either.isRight(rec) &&
+										rec.value.record.memberID.type === 'CAPNHQMember'
+								) ? (
+									<Button
+										buttonType="none"
+										onClick={() => this.setState({ showingCAPIDs: true })}
+									>
+										Show CAP IDs
+									</Button>
+								) : null}
+								<Dialogue
+									displayButtons={DialogueButtons.OK}
+									open={this.state.showingCAPIDs}
+									title="CAP IDs"
+									onClose={() => this.setState({ showingCAPIDs: false })}
+								>
+									{this.state.eventInformation.attendees
+										.filter(
+											(
+												val
+											): val is Right<
+												api.events.events.EventViewerAttendanceRecord
+											> =>
+												Either.isRight(val) &&
+												val.value.record.memberID.type === 'CAPNHQMember'
+										)
+										.flatMap((rec, i) => [
+											(rec.value.record.memberID as CAPNHQMemberReference).id,
+											i < attendees.length - 1 ? ', ' : null
+										])}
+								</Dialogue>
+								<div id="signup">
+									{Either.cata<string, void, React.ReactElement | null>(err =>
+										err !== 'Member is already in attendance' ? (
+											<p>Cannot sign up for event: {err}</p>
+										) : null
+									)(() => (
+										<AttendanceForm
+											account={this.props.account}
+											event={viewerDataToEventObject(eventViewerInfo)}
+											member={member}
+											updateRecord={this.addAttendanceRecord}
+											updated={false}
+											clearUpdated={this.clearPreviousMember}
+											removeRecord={noop}
+											signup={true}
+										/>
+									))(
+										canEitherMaybeSignUpForEvent(eventViewerInfo)(
+											this.state.teamInformation
+										)(member)
+									)}
+									<h2 id="attendance">Attendance</h2>
+									<DropDownList<api.events.events.EventViewerAttendanceRecord>
+										titles={renderName(member)(event)}
+										values={attendees.filter(Either.isRight).map(get('value'))}
+										onlyOneOpen={true}
+									>
+										{(val, i) => (
+											<AttendanceItemView
+												attendanceRecord={val.record}
+												clearUpdated={this.clearPreviousMember}
+												owningAccount={this.props.account}
+												owningEvent={event}
+												member={member}
+												removeAttendance={this.removeAttendanceRecord}
+												updateAttendance={this.addAttendanceRecord}
+												updated={pipe(
+													Maybe.map(
+														areMembersTheSame(val.record.memberID)
+													),
+													Maybe.orSome(false)
+												)(this.state.previousUpdatedMember)}
+												key={i}
+												index={i}
+											/>
+										)}
+									</DropDownList>
+									{attendees.length === 0 ? (
+										<div>
+											No{' '}
+											{event.privateAttendance &&
+											effectiveManageEventPermissionForEvent(member)(
+												event
+											) !== Permissions.ManageEvent.NONE
+												? 'public '
+												: ''}
+											attendance records
+										</div>
+									) : null}
+								</div>
+							</>
+						)
+					) : (
+						<SigninLink>Sign in to see more information</SigninLink>
+					)}
+				</div>
+			</>
+		);
+	}
+
+	private addAttendanceRecord(record: Required<NewAttendanceRecord>) {
+		if (this.state.viewerState !== 'LOADED') {
+			return;
+		}
+
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
+
+						previousUpdatedMember: Maybe.some(record.memberID),
+						eventInformation: {
+							...prev.eventInformation,
+							attendees: [
+								...prev.eventInformation.attendees,
+								Either.right({
+									record,
+									member: Maybe.none(),
+									orgName: Maybe.none()
+								})
+							]
+						}
+				  }
+				: prev
+		);
+	}
+
+	private removeAttendanceRecord(record: AttendanceRecord) {
+		this.setState(prev =>
+			prev.viewerState !== 'LOADED'
+				? prev
+				: {
+						...prev,
+						eventInformation: {
+							attendees: prev.eventInformation.attendees.filter(
+								mem =>
+									Either.isLeft(mem) ||
+									!areMembersTheSame(mem.value.record.memberID)(record.memberID)
+							),
+							event: prev.eventInformation.event,
+							pointsOfContact: prev.eventInformation.pointsOfContact
+						}
+				  }
+		);
+	}
+
+	private clearPreviousMember() {
+		this.setState({
+			previousUpdatedMember: Maybe.none()
+		});
+	}
+
+	private async moveEvent({ newTime }: { newTime: number }) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const { event } = state.eventInformation;
+
+		const timeDelta = newTime - event.startDateTime;
+
+		const newEvent: Partial<NewEventObject> = {
+			meetDateTime: event.meetDateTime + timeDelta,
+			startDateTime: newTime,
+			endDateTime: event.endDateTime + timeDelta,
+			pickupDateTime: event.pickupDateTime + timeDelta
+		};
+
+		await fetchApi.events.events.set(
+			{ id: event.id.toString() },
+			newEvent,
+			this.props.member.sessionID
+		);
+
+		this.setState({
+			...state,
+
+			eventInformation: {
+				...state.eventInformation,
+				event: {
+					...state.eventInformation.event,
+					...newEvent
+				}
+			}
+		});
+	}
+
+	private async copyMoveEvent({ newTime }: { newTime: number }) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const { event } = state.eventInformation;
+
+		const newEvent: Partial<NewEventObject> = {
+			status: EventStatus.CANCELLED
+		};
+
+		const result = await AsyncEither.All([
+			fetchApi.events.events.set(
+				{ id: event.id.toString() },
+				newEvent,
+				this.props.member.sessionID
+			),
+			fetchApi.events.events.copy(
+				{ id: event.id.toString() },
+				{ newTime, copyStatus: false, copyFiles: false },
+				this.props.member.sessionID
+			)
+		]);
+
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/eventviewer/${result.value[1].id}`);
+		}
+	}
+
+	private async copyEvent({ newTime }: { newTime: number }) {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const result = await fetchApi.events.events.copy(
+			{ id: state.eventInformation.event.id.toString() },
+			{ newTime, copyStatus: false, copyFiles: false },
+			this.props.member.sessionID
+		);
+
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/eventviewer/${result.value.id}`);
+		}
+	}
+
+	private async deleteEvent() {
+		const state = this.state;
+
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to move a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const result = await fetchApi.events.events.delete(
+			{ id: state.eventInformation.event.id.toString() },
+			{},
+			this.props.member.sessionID
+		);
+
+		if (Either.isRight(result)) {
+			this.props.routeProps.history.push(`/calendar/`);
+		}
+	}
+
+	private renderFormsButtons(formName: string): JSX.Element {
+		if (!this.props.member) {
+			return <>{formName}</>;
+		}
+
+		if (formName === 'CAPF 60-80 Civil Air Patrol Cadet Activity Permission Slip') {
+			return (
+				<Button buttonType="none" onClick={this.createCAPF6080}>
+					{formName}
+				</Button>
+			);
+		} else {
+			return <>{formName}</>;
+		}
+	}
+
+	private async createCAPF6080() {
+		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
+		const docDef = forms.capf6080DocumentDefinition(
+			this.state.eventInformation.event,
+			this.state.eventInformation.pointsOfContact,
+			this.props.member
+		);
+
+		await this.printForm(
+			docDef,
+			`CAPF6080-${this.props.account.id}-${this.state.eventInformation.event.id}.pdf`
+		);
+	}
+
+	private async printForm(docDef: TDocumentDefinitions, fileName: string) {
+		const pdfMake = await import('pdfmake');
+
+		const fontGetter =
+			process.env.NODE_ENV === 'production'
+				? (fontName: string) =>
+						`https://${this.props.account.id}.capunit.com/images/fonts/${fontName}`
+				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
+
+		const fonts: TFontDictionary = {
+			Roboto: {
+				normal: fontGetter('Roboto-Regular.ttf'),
+				bold: fontGetter('Roboto-Medium.ttf'),
+				italics: fontGetter('Roboto-Italic.ttf'),
+				bolditalics: fontGetter('Roboto-MediumItalic.ttf')
+			},
+			FreeMono: {
+				normal: fontGetter('FreeMono.ttf'),
+				bold: fontGetter('FreeMonoBold.ttf'),
+				italics: fontGetter('FreeMonoOblique.ttf'),
+				bolditalics: fontGetter('FreeMonoBoldOblique.ttf')
+			},
+			FreeSans: {
+				normal: fontGetter('FreeSans.ttf'),
+				bold: fontGetter('FreeSansBold.ttf'),
+				italics: fontGetter('FreeSansOblique.ttf'),
+				bolditalics: fontGetter('FreeSansBoldOblique.ttf')
+			},
+			FreeSerif: {
+				normal: fontGetter('FreeSerif.ttf'),
+				bold: fontGetter('FreeSerifBold.ttf'),
+				italics: fontGetter('FreeSerifItalic.ttf'),
+				bolditalics: fontGetter('FreeSerifBoldItalic.ttf')
+			}
+		};
+
+		// @ts-ignore
+		const docPrinter = pdfMake.createPdf(docDef, null, fonts);
+
+		docPrinter.download(fileName);
+	}
+}

@@ -1,0 +1,21 @@
+.listEditor-removeItem {
+	clear:both;
+	display: inline-block;
+	margin-top: 20px;
+}
+
+.fullwidth .add-item {
+	margin-left: 220px;
+}
+
+.list-editor .listeditor-divider {
+	margin-bottom: 10px;
+}
+
+.fullwidth .list-editor .listeditor-divider {
+	margin-bottom: 30px;
+}
+
+.list-editor .remove-item {
+	margin: 10px 0;
+}

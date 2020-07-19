@@ -1,0 +1,121 @@
+@import '../../theme';
+
+@media screen {
+	header {
+		grid-area: header;
+		display: grid;
+		grid-template-areas: 'name servings';
+		grid-template-columns: auto 300px;
+		height: 127px;
+
+		& > img {
+			margin: -5px 0 0 -5px;
+			padding: 0 19px 0 0;
+			position: relative;
+		}
+
+		.header-divider {
+			height: 81px;
+			margin: 25px 0 0 0;
+		}
+
+		.page-title {
+			text-transform: uppercase;
+			color: $secondary-color;
+			font-size: 42px;
+			font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+			line-height: 43px;
+			margin: 49px 0 0 30px;
+			height: 43px;
+			text-align: left;
+		}
+	}
+
+	.servings {
+		margin: 25px 59px 0 0;
+
+		.servings-title {
+			text-transform: uppercase;
+			font-size: 18px;
+			line-height: 19px;
+			color: $secondary-color;
+			font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+		}
+	}
+
+	nav.main-nav {
+		grid-area: top-nav;
+		margin: 0;
+
+		ul {
+			padding: 0;
+			margin: 0 0 0 1px;
+			list-style-type: none;
+		}
+
+		li {
+			padding: 0;
+			height: 46px;
+			float: left;
+			margin: 0 3px 0 0;
+		}
+
+		a {
+			box-sizing: border-box;
+			font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+			font-size: 16px;
+			line-height: 18px;
+			background: #0e3e66;
+			color: white;
+			padding: 14px 33px 0 33px;
+			text-transform: uppercase;
+			text-decoration: none;
+			height: 45px;
+			display: inline-block;
+			border-top-left-radius: 9px;
+			border-top-right-radius: 9px;
+			border-bottom: 1px solid #4370a4;
+
+			&.selected {
+				margin-top: 1px;
+				height: 47px;
+				color: $secondary-color;
+				border-left: 1px solid #194a84;
+				border-right: 1px solid #193e6b;
+				border-top: 1px solid #255187;
+
+				background: linear-gradient(
+					to bottom,
+					rgba(9, 59, 120, 1) 1%,
+					rgba(39, 89, 149, 1) 88%
+				);
+			}
+		}
+	}
+}
+
+@media screen and (max-width: 1028px) {
+	header {
+		grid-template-areas: 'name';
+		grid-template-columns: 100%;
+
+		.page-title {
+			margin: 49px auto 0 auto;
+			box-sizing: border-box;
+			width: auto;
+			max-width: 100%;
+		}
+	}
+
+	.servings,
+	.logo,
+	.header-divider {
+		grid-area: none;
+		display: none;
+	}
+
+	nav.main-nav a {
+		font-size: 12px;
+		padding: 14px 20px 0 20px;
+	}
+}

@@ -1,0 +1,25 @@
+.absentee-form .original-time {
+	clear: both;
+	margin: 10px 0;
+	padding-top: 10px;
+}
+
+.absentee-form .submit {
+	margin-top: 10px;
+	float: right;
+}
+
+.absentee-form input[name="comments"] {
+	width: 250px;
+	margin: 0 auto;
+}
+
+.absentee-form .datetime-input-root {
+	padding-top: 0;
+	margin-bottom: 10px;
+}
+
+.absentee-form .formbox {
+	clear: both;
+	padding-top: 10px;
+}

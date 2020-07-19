@@ -1,0 +1,20 @@
+.pagination-controls {
+	width: 100%;
+	margin: 0;
+	padding: 10px;
+	border-top: 1px solid #0b375b;
+	border-bottom: 1px solid #0b375b;
+	display: flex;
+	justify-content: center;
+}
+
+.pagination-controls span {
+	cursor: pointer;
+	display: inline-block;
+	padding: 2px;
+}
+
+.pagination-controls span.highlighted {
+	color: #2875d7;
+	text-decoration: underline;
+}

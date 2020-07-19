@@ -1,0 +1,51 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "chrome",
+			"request": "attach",
+			"name": "Attach to Chrome",
+			"port": 9222,
+			"webRoot": "${workspaceFolder}/src",
+			"url": "http://localhost:3000"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Chrome (Normal Linux)",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/src",
+			"linux": {
+				"runtimeExecutable": "/usr/bin/chromium"
+			},
+			"skipFiles": ["node_modules/**/*"]
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Chrome (Snap Linux)",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/src",
+			"linux": {
+				"runtimeExecutable": "/snap/bin/chromium"
+			}
+		},
+		{
+			"type": "firefox",
+			"request": "launch",
+			"name": "Launch Firefox",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/src",
+			"linux": {
+				"runtimeExecutable": "/usr/bin/firefox"
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch React Scripts",
+			"program": "${workspaceFolder}/node_modules/react-scripts/scripts/start.js",
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}

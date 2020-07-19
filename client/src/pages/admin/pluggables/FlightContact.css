@@ -1,0 +1,30 @@
+.flightcontactlist-item {
+	clear: both;
+	padding: 15px;
+	border-top: 1px solid black;
+}
+
+.flightcontactlist-phones p {
+	margin-top: 0px !important;
+}
+
+.flightcontactlist-item:nth-of-type(1) {
+	border-top-width: 0;
+}
+
+.flightcontactlist-name {
+	float: left;
+	width: 50%;
+	padding-bottom: 15px;
+}
+
+.flightcontactlist-phones {
+	float: left;
+}
+
+.flightcontactlist-item .flightcontactlist-absent {
+	display: inline-block;
+	padding-top: 10px;
+	font-style: italic;
+	color: red;
+}

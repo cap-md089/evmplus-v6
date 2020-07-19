@@ -1,0 +1,16 @@
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		".vscode": true,
+		".tscache": true,
+		"node_modules": false,
+		"dist": true,
+		"coverage": true,
+		"tscommand-*": true,
+		".sass-cache": true
+	}
+}

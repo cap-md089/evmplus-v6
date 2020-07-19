@@ -1,0 +1,59 @@
+#notification-list {
+	width: 100%;
+	box-sizing: border-box;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+#notification-list th {
+	width: 30%;
+	border: 1px solid black;
+	padding: 5px;
+	box-sizing: border-box;
+}
+
+#notification-list th:nth-child(1) {
+	width: 40%;
+}
+
+#notification-list tr.notification td {
+	border: 1px solid black;
+	cursor: pointer;
+	padding: 5px;
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+#notification-list tr.notification td:nth-child(1) {
+	width: 40%;
+}
+
+#notification-list tr.notification td:nth-child(2), #notification-list tr.notification td:nth-child(3) {
+	width: 30%;
+}
+
+#notification-list tr.current-notification-view td {
+	padding: 5px;
+	box-sizing: border-box;
+	border: 1px solid black;
+}
+
+#notification-list tr.current-notification-view  {
+	width: 100%;
+	margin: 0;
+}
+
+#notification-list .current-notification-view .current-notification-actions {
+	float: right;
+	padding-right: 10px;
+	padding-top: 10px;
+}
+
+#notification-list .current-notification-view .current-notification-text {
+	clear: both;
+	padding: 10px;
+	box-sizing: border-box;
+}

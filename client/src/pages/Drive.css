@@ -1,0 +1,79 @@
+.drive-newfoldername-row input[type="text"] {
+	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+	box-sizing: border-box;
+	border: 1px solid black;
+	padding: 9px;
+	font-size: 14px;
+	color: #0b375b;
+	background: white;
+	border-radius: 10px;
+	line-height: 18px;
+}
+
+.drive-newfoldername-submit {
+	margin-left: 10px;
+}
+
+.drive-newfoldername-row {
+	float: left;
+	margin-bottom: 10px;
+}
+
+.drive-folder-display {
+	padding: 10px;
+}
+
+.drive-file-display {
+	height: 270px;
+	background-color: #e3e3e3;
+}
+
+.drive-file-display .info-display {
+	padding: 10px;
+}
+
+.drive-file-display .display-image {
+	height: 200px;
+	border-bottom: 1px solid black;
+	background-color: #ffffff;
+	padding: 3%;
+	box-sizing: border-box;
+	margin: 0;
+}
+
+.drive-file-display .display-image div {
+	width: 100%;
+	height: 100%;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.drive-file-display, .drive-folder-display {
+	flex-grow: 1;
+	flex-basis: 25%;
+	max-width: calc(25% - 10px);
+	margin: 5px;
+	box-sizing: border-box;
+	border: 1px solid black;
+}
+
+.drive-file-display.selected, .drive-folder-display.selected {
+	box-shadow: 0 0 1em #258eea
+}
+
+.drive-folder-row, .drive-file-row {
+	display: flex
+}
+
+.drive-file-extra-display {
+	margin: 5px;
+	padding: 20px;
+	box-shadow: inset 0 0 11px 0;
+	box-sizing: border-box;
+}
+
+.drive-folder-display.hovering {
+	border: 1px dashed #3079ed;
+	background-color: #b4d1ff;
+}

@@ -1,0 +1,40 @@
+.attendanceTable {
+	width: 100%;
+	border-collapse: collapse;
+	box-sizing: border-box;
+}
+
+.attendanceTableRow {
+	box-sizing: border-box;
+}
+
+.attendanceTableHeaderRow {
+	box-sizing: border-box;
+}
+
+.attendanceTableHeaderRow th,
+.attendanceTableRow td {
+	box-sizing: border-box;
+	padding: 5px;
+	border: 1px solid black;
+	text-align: left;
+}
+
+.overflowEllipsis {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.controlsBox {
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.controlsBox button {
+	margin-right: 10px;
+}
+
+.controlsBox .svg-loader {
+	width: 100%;
+}

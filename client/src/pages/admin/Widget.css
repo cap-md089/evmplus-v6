@@ -1,0 +1,26 @@
+.widget {
+	min-width: 285px;
+	border: 1px solid gray;
+	box-shadow: 0 0 4px 0 gray;
+	margin: 5px;
+	margin-top: 0;
+	margin-bottom: 10px;
+	break-inside: avoid;
+}
+
+.widget:hover {
+	box-shadow: 0 0 4px 0 #0b375b;
+}
+
+.widget .widget-title {
+	border-bottom: 1px solid #f6bf22;
+	color: #0b375b;
+	margin: 10px;
+	font-size: 1.3em;
+	text-align: center;
+}
+
+.widget .widget-body {
+	margin: 10px;
+	margin-top: 0px;
+}

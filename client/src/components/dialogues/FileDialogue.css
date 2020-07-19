@@ -1,0 +1,101 @@
+#fileDialogue > div {
+	width: 570px;
+	overflow-y: auto;
+}
+
+#fileDialogueControls {
+	display: block;
+	margin: 0;
+	padding: 0 15px !important;
+	margin-bottom: 10px;
+}
+
+#fileDialogueControls button {
+	display: inline-block;
+	padding: 12px;
+	box-sizing: border-box;
+	margin-right: 5px;
+	text-decoration: none;
+	color: #0b375b;
+}
+
+#fileDialogueControls button.selected {
+	border-bottom: 1px solid #f6bf22;
+	font-weight: bold;
+}
+
+#fileDialogueControls button:hover {
+	text-decoration: underline;
+}
+
+#fileDialogue .folderDisplayer {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .folderDisplayer .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .folderDisplayer .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
+}
+
+#fileDialogue .fileDisplayer {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .fileDisplayer .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .fileDisplayer .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
+}
+
+#fileDialogue .selectedFile {
+	width: 135px;
+	display: inline-block;
+}
+
+#fileDialogue .selectedFile .box {
+	margin: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 7px;
+	border: 1px solid #cccccc;
+	cursor: pointer;
+}
+
+#fileDialogue .selectedFile .box.selected {
+	border-color: #1080be;
+	box-shadow: 0 0 4px #1080be;
+}
+
+#fileDialogue .selectedFile .box.selected.red {
+	border-color: #ee4444;
+	box-shadow: 0 0 4px #ee4444;
+}
+
+#fileDialogueBody .divider10px {
+	padding: 5px;
+}

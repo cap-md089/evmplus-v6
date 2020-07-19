@@ -1,0 +1,52 @@
+input[type="range"] {
+	margin-top: 15px;
+	display: inline-block;
+	padding-top: 0;
+}
+
+input.multirange {
+	padding: 0;
+	margin: 0;
+	display: inline-block;
+	vertical-align: top;
+}
+
+input.multirange.original {
+	position: absolute;
+}
+
+input.multirange.original::-webkit-slider-thumb {
+	position: relative;
+	z-index: 2;
+}
+
+input.multirange.original::-moz-range-thumb {
+	transform: scale(1);
+	z-index: 1;
+}
+
+input.multirange::-moz-range-track {
+	border-color: transparent;
+}
+
+input.multirange.ghost {
+	position: relative;
+	background: var(--trackbackground);
+	--trackbackground: linear-gradient(to right, transparent var(--low), var(--trackcolor) 0,
+		var(--trackcolor) var(--high), transparent 0) no-repeat 0 45% / 100% 40%;
+	--trackcolor: #2857d7;
+}
+
+input.multirange.ghost::-webkit-slider-runnable-track {
+	background: var(--trackbackground);
+}
+
+.multirange-leftdisplay {
+	display: inline-block;
+	margin-right: 15px;
+}
+
+.multirange-rightdisplay {
+	display: inline-block;
+	margin-left: 15px;
+}

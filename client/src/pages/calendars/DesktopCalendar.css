@@ -1,0 +1,129 @@
+.calendar-desktop tbody,
+.calendar-desktop {
+	width: 100%;
+	box-sizing: border-box;
+	table-layout: fixed;
+}
+
+.calendar-desktop table,
+.calendar-desktop caption {
+	width: 100%;
+	border: 1px solid black;
+	border-collapse: collapse;
+	box-sizing: border-box;
+}
+
+.calendar-desktop caption {
+	padding: 5px;
+	font-size: 1.2em;
+}
+
+.calendar-desktop caption {
+	border-bottom-width: 0;
+}
+
+.calendar-desktop .left-link {
+	float: left;
+	font-size: 0.8333em;
+	margin-left: 10px;
+}
+
+.calendar-desktop .right-link {
+	float: right;
+	font-size: 0.8333em;
+	margin-right: 10px;
+}
+
+.calendar-desktop tbody td,
+.calendar-desktop tbody th {
+	border: 1px solid black;
+	width: 14.28%;
+	border-collapse: collapse;
+	box-sizing: border-box;
+	padding: 0;
+	max-width: 101px;
+	vertical-align: top;
+}
+
+.calendar-desktop td.calendar-outmonth .date-name {
+	color: gray;
+}
+
+.calendar-desktop .date-name {
+	box-sizing: border-box;
+	padding: 2px;
+	margin: 0;
+	border-bottom: 1px solid black;
+}
+
+.calendar-desktop .events-list {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	min-height: 100px;
+	padding-top: 4px;
+}
+
+.calendar-desktop .events-list .event-item {
+	box-sizing: border-box;
+	width: calc(100% - 2.5px);
+	margin: 0px;
+	font-size: 12px;
+	padding: 1.5px;
+	padding-left: 2px;
+	height: 26.5px;
+	margin: calc(2.5px / 2);
+	border-radius: 5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+
+	border: 2px solid #071d31;
+	background-color: #0f407d;
+	color: white;
+}
+
+.events-list a {
+	display: inline-block;
+	width: 100%;
+}
+
+.events-list .block {
+	height: 30px;
+	margin: 1px;
+	padding: 0px;
+	box-sizing: border-box;
+	border: 2px solid rgba(0, 0, 0, 0);
+}
+
+.calendar-desktop .event-item.mergeRight {
+	border-top-right-radius: 0px;
+	border-bottom-right-radius: 0px;
+	margin-right: 0;
+	width: calc(100% - 1.25px);
+	border-right-width: 0;
+}
+
+.calendar-desktop .event-item.mergeLeft {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	margin-left: 0;
+	padding-left: 3px;
+	width: calc(100% - 1.25px);
+	border-left-width: 0;
+}
+
+.calendar-desktop .event-item.mergeLeft.mergeRight {
+	width: 100%;
+}
+
+.calendar-desktop .event-link {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	text-decoration: none;
+}
+
+.calendar-desktop .event-item.first-event-name {
+	padding-left: 5px;
+}
