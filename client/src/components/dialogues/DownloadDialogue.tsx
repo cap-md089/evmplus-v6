@@ -8,6 +8,7 @@ interface DownloadProps<T extends Identifiable> {
 	// Properties for the dialogue
 	open: boolean;
 	title: string;
+	onCancel: () => void;
 
 	// Properties for the selector
 	showIDField?: boolean;
@@ -149,11 +150,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 	}
 
 	private onCancel() {
-		if (this.props.multiple) {
-			this.props.onValuesSelect([] as T[]);
-		} else {
-			this.props.onValueSelect(null);
-		}
+		this.props.onCancel();
 	}
 
 	private onSingleChange(value: T) {

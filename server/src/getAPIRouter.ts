@@ -1,6 +1,7 @@
 import * as mysql from '@mysql/xdevapi';
 import { addAPI } from 'auto-client-api';
 import { MemberUpdateEventEmitter, ServerConfiguration, Validator } from 'common-lib';
+import * as cors from 'cors';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as logger from 'morgan';
@@ -40,6 +41,29 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	const router: express.Router = express.Router();
 
 	const updateEmitter: MemberUpdateEventEmitter = new EventEmitter();
+
+	const corsOptions: cors.CorsOptions = {
+		origin(origin, callback) {
+			if (
+				origin?.endsWith(
+					process.env.NODE_ENV === 'productoin'
+						? '.capunit.com'
+						: '.localcapunit.com:3000'
+				) ||
+				!origin
+			) {
+				callback(null, true);
+			} else {
+				callback(new Error('Not allowed by CORS'));
+			}
+		},
+		methods: ['GET', 'POST', 'PUT', 'DELETE'],
+		allowedHeaders: ['Authorizatoin', 'Content-Type', 'authorization', 'content-type'],
+	};
+
+	router.use(cors(corsOptions));
+
+	router.options('*', cors(corsOptions));
 
 	/**
 	 * Use API Routers

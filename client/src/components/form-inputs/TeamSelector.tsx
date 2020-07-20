@@ -67,6 +67,7 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 					<DownloadDialogue<FullTeamObject>
 						open={this.state.open}
 						multiple={false}
+						onCancel={() => this.selectTeam(null)}
 						overflow={400}
 						title="Select a team"
 						showIDField={false}

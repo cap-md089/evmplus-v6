@@ -1,13 +1,41 @@
 import type { Schema } from '@mysql/xdevapi';
 import {
+	AccountLinkTarget,
 	AccountObject,
+	AllExtraMemberInformation,
+	areMembersTheSame,
 	AsyncEither,
+	AsyncIter,
+	asyncIterConcat,
+	asyncIterFilter,
+	asyncIterMap,
 	asyncLeft,
+	asyncRight,
+	countAsync,
+	EitherObj,
+	errorGenerator,
+	get,
+	isPartOfTeam,
+	isRioux,
+	Member,
 	MemberForReference,
+	MemberPermissions,
 	MemberReference,
+	Permissions,
+	RawTeamObject,
 	ServerError,
+	StoredAccountMembership,
+	StoredMemberPermissions,
+	toReference,
+	User,
 } from 'common-lib';
+import { AccountGetter, getAccount } from './Account';
+import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
+import { findAndBind, generateResults, modifyAndBind } from './MySQLUtil';
+import { getMemberNotifications } from './notifications';
+import { getRegistryById } from './Registry';
+import { getTasksForMember } from './Task';
 
 export * from './member/members';
 
@@ -34,3 +62,104 @@ export const getMemberName = (schema: Schema) => (account: AccountObject) => (
 				message: 'Invalid member type',
 				code: 400,
 		  });
+
+export const saveExtraMemberInformation = (schema: Schema) => (account: AccountObject) => (
+	info: AllExtraMemberInformation
+) =>
+	asyncRight(
+		schema.getCollection<AllExtraMemberInformation>('ExtraMemberInformation'),
+		errorGenerator('Could not save extra member information')
+	)
+		.map(collection =>
+			modifyAndBind(collection, {
+				accountID: account.id,
+				member: info.member,
+			})
+		)
+		.map(modifier => modifier.patch(info).execute());
+
+export const getMemberTeams = (schema: Schema) => (account: AccountObject) => (
+	member: MemberReference
+) =>
+	asyncRight(schema.getCollection<RawTeamObject>('Teams'), errorGenerator('Could not get teams'))
+		.map(collection =>
+			findAndBind(collection, {
+				accountID: account.id,
+			})
+		)
+		.map(generateResults)
+		.map(asyncIterFilter(isPartOfTeam(member) as (v: RawTeamObject) => v is RawTeamObject));
+
+export const getUnfinishedTaskCountForMember = (schema: Schema) => (account: AccountObject) => (
+	member: MemberReference
+) =>
+	getTasksForMember(schema)(account)(member)
+		.map(
+			asyncIterFilter(
+				task =>
+					task.results.filter(v => areMembersTheSame(member)(v.tasked) && !v.done)
+						.length > 0
+			)
+		)
+		.map(countAsync);
+
+export const getNotificationCount = (schema: Schema) => (account: AccountObject) => (
+	member: MemberReference
+) => getMemberNotifications(schema)(account)(member).map(countAsync);
+
+export const getUnreadNotificationCount = (schema: Schema) => (account: AccountObject) => (
+	member: MemberReference
+) =>
+	getMemberNotifications(schema)(account)(member)
+		.map(asyncIterFilter(notification => !notification.read))
+		.map(countAsync);
+
+export const isRequesterRioux = <T extends { member: User }>(req: T) => isRioux(req.member);
+
+export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
+	schema: Schema
+) => (member: Member) => CAP.getHomeAccountsForMember(accountGetter)(schema)(member);
+
+export const getExtraAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
+	schema: Schema
+) => (member: MemberReference): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+	asyncIterMap((accountGetter.byId ?? getAccount)(schema))(
+		asyncIterMap(get<StoredAccountMembership, 'accountID'>('accountID'))(
+			generateResults(
+				findAndBind(
+					schema.getCollection<StoredAccountMembership>('ExtraAccountMembership'),
+					{
+						member: toReference(member),
+					}
+				)
+			)
+		)
+	);
+
+export const getAllAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
+	schema: Schema
+) => (member: Member): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+	asyncIterConcat<EitherObj<ServerError, AccountObject>>(
+		getHomeAccountsForMember(accountGetter)(schema)(member)
+	)(() => getExtraAccountsForMember(accountGetter)(schema)(toReference(member)));
+
+export const getAdminAccountIDsForMember = (schema: Schema) => (
+	member: MemberReference
+): AsyncIter<EitherObj<ServerError, AccountLinkTarget>> =>
+	asyncIterMap<{ accountID: string }, EitherObj<ServerError, AccountLinkTarget>>(record =>
+		getRegistryById(schema)(record.accountID).map(registry => ({
+			name: registry.Website.Name,
+			id: record.accountID,
+		}))
+	)(
+		asyncIterFilter<{ accountID: string }>(record => record.accountID !== 'www')(
+			generateResults<{ accountID: string }>(
+				findAndBind(schema.getCollection<StoredMemberPermissions>('UserPermissions'), {
+					member: toReference(member),
+					permissions: {
+						ManageEvent: Permissions.ManageEvent.FULL,
+					} as MemberPermissions,
+				}).fields('accountID')
+			)
+		)
+	);

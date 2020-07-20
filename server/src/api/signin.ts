@@ -1,17 +1,27 @@
 import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	AccountLinkTarget,
 	api,
 	AsyncEither,
+	asyncIterFilter,
+	asyncIterMap,
 	asyncLeft,
 	asyncRight,
+	collectGeneratorAsync,
+	Either,
+	EitherObj,
 	errorGenerator,
 	ExpiredSuccessfulSigninReturn,
 	FailedSigninReturn,
+	get,
 	MemberCreateError,
+	Right,
 	ServerError,
 	SuccessfulSigninReturn,
+	toReference,
 } from 'common-lib';
 import {
+	getAdminAccountIDsForMember,
 	getUnfinishedTaskCountForMember,
 	getUnreadNotificationCount,
 	PAM,
@@ -31,7 +41,20 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 		),
 		getUnreadNotificationCount(req.mysqlx)(req.account)(result.member),
 		getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(result.member),
-	]).map(([member, permissions, notificationCount, taskCount]) => ({
+		asyncRight<ServerError, AccountLinkTarget[]>(
+			collectGeneratorAsync(
+				asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
+					asyncIterFilter<
+						EitherObj<ServerError, AccountLinkTarget>,
+						Right<AccountLinkTarget>
+					>(Either.isRight)(
+						getAdminAccountIDsForMember(req.mysqlx)(toReference(result.member))
+					)
+				)
+			),
+			errorGenerator('Could not get admin account IDs for member')
+		),
+	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
 		error: MemberCreateError.NONE,
 		member: {
 			...member,
@@ -41,6 +64,7 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 		sessionID: result.sessionID,
 		notificationCount,
 		taskCount,
+		linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
 	}));
 };
 

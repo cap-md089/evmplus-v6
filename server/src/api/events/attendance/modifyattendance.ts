@@ -10,6 +10,7 @@ import {
 	asyncRight,
 	canManageEvent,
 	destroy,
+	effectiveManageEventPermissionForEvent,
 	errorGenerator,
 	Maybe,
 	Member,
@@ -19,7 +20,13 @@ import {
 	SessionType,
 	Validator,
 } from 'common-lib';
-import { getEvent, modifyEventAttendanceRecord, PAM, resolveReference } from 'server-common';
+import {
+	getAccount,
+	getEvent,
+	modifyEventAttendanceRecord,
+	PAM,
+	resolveReference,
+} from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
 
 export const getMember = (
@@ -40,7 +47,15 @@ export const func: ServerAPIEndpoint<api.events.attendance.ModifyAttendance> = P
 )(request =>
 	validateRequest(attendanceModifyValidator)(request).flatMap(req =>
 		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.map(event =>
+			.flatMap(event =>
+				effectiveManageEventPermissionForEvent(req.member)(event) ===
+					Permissions.ManageEvent.FULL || !event.sourceEvent
+					? asyncRight(event, errorGenerator('Could not get event information'))
+					: getAccount(req.mysqlx)(event.sourceEvent.accountID).flatMap(account =>
+							getEvent(req.mysqlx)(account)(event.sourceEvent!.id)
+					  )
+			)
+			.flatMap(event =>
 				getMember(req)(req.body)(event).flatMap(member =>
 					modifyEventAttendanceRecord(req.mysqlx)(req.account)(event)(member)(req.body)
 				)

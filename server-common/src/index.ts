@@ -3,7 +3,6 @@ export * from './Error';
 export * from './Event';
 export * from './File';
 export * from './GoogleUtils';
-export * from './member/MemberBase';
 export * as PAM from './member/pam';
 export * from './Members';
 export * from './MySQLUtil';

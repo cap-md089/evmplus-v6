@@ -1,4 +1,4 @@
-import { APITree, generateAPITree } from 'auto-client-api';
+import { generateAPITree } from 'auto-client-api';
 import { api, defaultAPICallBase } from 'common-lib';
 
 type Tree = {
@@ -131,16 +131,8 @@ type Tree = {
 	token: api.FormToken;
 };
 
-let tree: APITree<Tree> | null = null;
-
 export default (fetchFunction: typeof fetch) => {
-	if (tree !== null) {
-		return tree;
-	}
-
 	const caller = defaultAPICallBase(fetchFunction);
 
-	tree = generateAPITree<Tree>(caller);
-
-	return tree;
+	return generateAPITree<Tree>(caller);
 };

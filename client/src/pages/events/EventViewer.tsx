@@ -35,7 +35,10 @@ import {
 	User,
 	isCAPMember,
 	Right,
-	CAPNHQMemberReference
+	CAPNHQMemberReference,
+	MemberCreateError,
+	AccountLinkTarget,
+	HTTPError
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -46,13 +49,14 @@ import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DropDownList from '../../components/DropDownList';
-import { DateTimeInput, Label, TextBox } from '../../components/forms/SimpleForm';
+import { DateTimeInput, Label, TextBox, TextInput } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
+import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 
 const noop = () => void 0;
 
@@ -105,6 +109,10 @@ interface EventViewerUIState {
 	seniorRoster: Member[] | null;
 	eventRegistry: boolean;
 	showingCAPIDs: boolean;
+	openLinkEventDialogue: boolean;
+	selectedAccountToLinkTo: AccountLinkTarget | null;
+	accountFilterValues: any[];
+	linkEventResult: null | HTTPError | { id: number; accountID: string };
 }
 
 type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerViewerState;
@@ -199,7 +207,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		cadetRoster: null,
 		seniorRoster: null,
 		eventRegistry: false,
-		showingCAPIDs: false
+		showingCAPIDs: false,
+		accountFilterValues: [],
+		linkEventResult: null,
+		openLinkEventDialogue: false,
+		selectedAccountToLinkTo: null
 	};
 
 	constructor(props: EventViewerProps) {
@@ -374,8 +386,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		const eventViewerInfo = this.state.eventInformation;
-		const { event, attendees, pointsOfContact } = eventViewerInfo;
-		const { member } = this.props;
+		const { event, attendees, pointsOfContact, sourceAccountName } = eventViewerInfo;
+		const { member, fullMemberDetails } = this.props;
 
 		return (
 			<>
@@ -466,11 +478,123 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<Button buttonType="none">Print Senior Roster</Button>
 								{' | '}
 								<Button buttonType="none">Print Event Registry</Button> */}
+						</>
+					) : null}
+					{member &&
+					effectiveManageEventPermissionForEvent(member)(event) &&
+					fullMemberDetails.error === MemberCreateError.NONE &&
+					fullMemberDetails.linkableAccounts.length > 0 &&
+					event.sourceEvent === null
+						? ' | '
+						: null}
+					{fullMemberDetails.error !== MemberCreateError.NONE ||
+					event.sourceEvent !== null ? null : fullMemberDetails.linkableAccounts
+							.length === 1 ? (
+						<Button
+							onClick={() =>
+								this.linkEventTo(fullMemberDetails.linkableAccounts[0].id)
+							}
+							buttonType="none"
+						>
+							Link event to {fullMemberDetails.linkableAccounts[0].name}
+						</Button>
+					) : (
+						<>
+							<Button
+								buttonType="none"
+								onClick={() => this.setState({ openLinkEventDialogue: true })}
+							>
+								Link event
+							</Button>
+							<DownloadDialogue
+								valuePromise={fullMemberDetails.linkableAccounts}
+								displayValue={get('name')}
+								multiple={false}
+								onValueClick={selectedAccountToLinkTo =>
+									this.setState({ selectedAccountToLinkTo })
+								}
+								onCancel={() => this.setState({ openLinkEventDialogue: false })}
+								onValueSelect={info => info && this.linkEventTo(info.id)}
+								open={this.state.openLinkEventDialogue}
+								title="Select an account"
+								selectedValue={this.state.selectedAccountToLinkTo}
+								filterValues={this.state.accountFilterValues}
+								onFilterValuesChange={accountFilterValues =>
+									this.setState({ accountFilterValues })
+								}
+								filters={[
+									{
+										check: (accountInfo, input) => {
+											if (input === '' || typeof input !== 'string') {
+												return true;
+											}
+
+											try {
+												return !!accountInfo.name.match(
+													new RegExp(input, 'gi')
+												);
+											} catch (e) {
+												return false;
+											}
+										},
+										displayText: 'Account name',
+										filterInput: TextInput
+									}
+								]}
+								showIDField={false}
+							/>
+							<Dialogue
+								onClose={() => this.setState({ linkEventResult: null })}
+								displayButtons={DialogueButtons.OK}
+								title="Link event result"
+								open={this.state.linkEventResult !== null}
+							>
+								{this.state.linkEventResult !== null ? (
+									'id' in this.state.linkEventResult ? (
+										<p>
+											Your event has been linked!
+											<br />
+											<br />
+											<a
+												href={`https://${this.state.linkEventResult.accountID}.capunit.com/eventviewer/${this.state.linkEventResult.id}`}
+												rel="noopener _blank"
+											>
+												View it here
+											</a>
+										</p>
+									) : (
+										this.state.linkEventResult.message
+									)
+								) : null}
+							</Dialogue>
+						</>
+					)}
+					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
+					(fullMemberDetails.error === MemberCreateError.NONE &&
+						fullMemberDetails.linkableAccounts.length > 0 &&
+						event.sourceEvent === null) ? (
+						<>
 							<br />
 							<br />
 						</>
 					) : null}
 					<div id="information">
+						{event.sourceEvent ? (
+							<>
+								<strong>
+									<a
+										href={`https://${event.sourceEvent.accountID}.capunit.com/eventviewer/${event.sourceEvent.id}`}
+										rel="noopener _blank"
+									>
+										Event linked from{' '}
+										{sourceAccountName ??
+											event.sourceEvent.accountID.toUpperCase()}
+									</a>
+								</strong>
+								<br />
+								<br />
+							</>
+						) : null}
 						<strong>Event: </strong> {event.name}
 						<br />
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
@@ -943,5 +1067,34 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const docPrinter = pdfMake.createPdf(docDef, null, fonts);
 
 		docPrinter.download(fileName);
+	}
+
+	private async linkEventTo(targetaccount: string) {
+		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
+		this.setState({
+			openLinkEventDialogue: false
+		});
+
+		const result = await fetchApi.events.events.link(
+			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
+			{},
+			this.props.member.sessionID
+		);
+
+		if (Either.isLeft(result)) {
+			this.setState({
+				linkEventResult: result.value
+			});
+		} else {
+			this.setState({
+				linkEventResult: {
+					accountID: result.value.accountID,
+					id: result.value.id
+				}
+			});
+		}
 	}
 }

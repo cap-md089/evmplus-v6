@@ -59,6 +59,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 						showIDField={false}
 						displayValue={getFullMemberName}
 						valuePromise={this.props.memberList}
+						onCancel={() => this.selectMember(null)}
 						filters={[
 							{
 								check: (member, input) => {

@@ -15,7 +15,7 @@ import {
 	User
 } from 'common-lib';
 import * as React from 'react';
-import fetchApi from '../../../lib/apis';
+import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
 import Button from '../../Button';
 import SimpleForm, {
@@ -521,8 +521,13 @@ export default class AttendanceForm extends React.Component<
 		});
 
 		if (this.props.record) {
-			const result = await fetchApi.events.attendance.modify(
-				{ id: this.props.event.id.toString() },
+			const api =
+				this.props.record.sourceAccountID === this.props.account.id
+					? fetchApi
+					: fetchAPIForAccount(this.props.record.sourceAccountID);
+
+			const result = await api.events.attendance.modify(
+				{ id: this.props.record.sourceEventID.toString() },
 				{ ...newRecord, memberID: this.props.record.memberID },
 				this.props.member.sessionID
 			);
@@ -560,8 +565,17 @@ export default class AttendanceForm extends React.Component<
 			deleting: true
 		});
 
-		await fetchApi.events.attendance.delete(
-			{ id: this.props.event.id.toString() },
+		console.log(this.props.record.sourceAccountID);
+		console.log(this.props.account.id);
+		console.log(this.props.record.sourceAccountID === this.props.account.id);
+
+		const api =
+			this.props.record.sourceAccountID === this.props.account.id
+				? fetchApi
+				: fetchAPIForAccount(this.props.record.sourceAccountID);
+
+		await api.events.attendance.delete(
+			{ id: this.props.record.sourceEventID.toString() },
 			{ member: toReference(this.props.record.memberID) },
 			this.props.member.sessionID
 		);

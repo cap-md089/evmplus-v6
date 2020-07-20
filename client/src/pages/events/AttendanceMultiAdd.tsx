@@ -629,6 +629,9 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				id: capid
 			},
 
+			sourceAccountID: this.props.account.id,
+			sourceEventID: this.state.event.id,
+
 			// Dummy fields the server ignores, the client doesn't need and we can't currently fully provide, but it satisfies the type checker
 			memberName: '',
 			summaryEmailSent: false,

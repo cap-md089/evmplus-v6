@@ -40,10 +40,10 @@ The following instructions will be for a Linux server
 1. On the Linux server, create the desired user to store information
 2. Create a SSL public and private key pair with the following command:
 
-    `ssh-keygen -b 2048 filestore_access_key`
+    `ssh-keygen -b 2048 -f filestore_access_key`
 
-3. Copy the contents of `filestore_access_key` to `~/.ssh/authorized_keys` in the user folder for the user created before
-4. Use the SSL key to
+3. Copy the contents of `filestore_access_key.pub` to `~/.ssh/authorized_keys` in the user folder for the user created before
+4. Ensure that the SSL key is accessible to the server process, and configure `server/.env` to point to the new SSL key
 
 ### AWS setup
 

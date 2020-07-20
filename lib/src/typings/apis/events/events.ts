@@ -20,6 +20,7 @@ export interface EventViewerData {
 	event: RawEventObject;
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 	attendees: Array<APIEither<EventViewerAttendanceRecord>>;
+	sourceAccountName?: string | undefined;
 }
 
 export interface Add {

@@ -1320,6 +1320,10 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 
 		departureTime: number;
 	};
+
+	// Details where the record come from
+	sourceEventID: number;
+	sourceAccountID: string;
 }
 
 export interface FullAttendanceRecord extends AttendanceRecord {
@@ -2214,6 +2218,20 @@ export interface CAPExtraMemberInformation extends ExtraMemberInformation {
 export type AllExtraMemberInformation = CAPExtraMemberInformation;
 
 /**
+ * Refers to the information that allows a member to link an event to an account
+ */
+export interface AccountLinkTarget {
+	/**
+	 * The account ID that a user can target
+	 */
+	id: string;
+	/**
+	 * A pretty name for an account
+	 */
+	name: string;
+}
+
+/**
  * The object that represents a successful session, as signing in
  * returns a session
  */
@@ -2238,6 +2256,10 @@ export interface SuccessfulSigninReturn {
 	 * Returns the amount of unfinished tasks the member has
 	 */
 	taskCount: number;
+	/**
+	 * Returns the accounts that a member is able to link events to
+	 */
+	linkableAccounts: AccountLinkTarget[];
 }
 
 /**

@@ -70,6 +70,7 @@ export default class MemberSelectorButton extends React.Component<
 					title="Select a member"
 					showIDField={false}
 					displayValue={getFullMemberName}
+					onCancel={() => this.selectMember(null)}
 					valuePromise={this.state.members}
 					filters={[
 						{

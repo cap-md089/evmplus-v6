@@ -27,6 +27,7 @@ import {
 	getFullPointsOfContact,
 	getOrgName,
 	getRegistry,
+	getRegistryById,
 	resolveReference,
 } from 'server-common';
 
@@ -64,11 +65,17 @@ export const getFullEventInformation = (
 			)
 		),
 		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
-	]).map<AsyncRepr<api.events.events.EventViewerData>>(([attendees, pointsOfContact]) => ({
-		event,
-		attendees,
-		pointsOfContact,
-	}));
+		event.sourceEvent
+			? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(reg => reg.Website.Name)
+			: asyncRight(void 0, errorGenerator('Could not get account name')),
+	]).map<AsyncRepr<api.events.events.EventViewerData>>(
+		([attendees, pointsOfContact, sourceAccountName]) => ({
+			event,
+			attendees,
+			pointsOfContact,
+			sourceAccountName,
+		})
+	);
 
 export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(event =>
@@ -84,8 +91,13 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 							phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
 						}))
 					),
+					event.sourceEvent
+						? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(
+								reg => reg.Website.Name
+						  )
+						: asyncRight(void 0, errorGenerator('Could not get account name')),
 			  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
-					([registry, attendees, pointsOfContact]) => ({
+					([registry, attendees, pointsOfContact, sourceAccountName]) => ({
 						event,
 						attendees:
 							event.privateAttendance &&
@@ -99,6 +111,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 										})
 								  )(attendees),
 						pointsOfContact,
+						sourceAccountName,
 					})
 			  )
 	);

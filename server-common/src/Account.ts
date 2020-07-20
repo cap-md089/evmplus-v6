@@ -69,7 +69,7 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 
 			if (parts.length === 1 && process.env.NODE_ENV === 'development') {
 				// localhost
-				return Either.right('md089');
+				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
 			} else if (parts.length === 2) {
 				// capunit.com
 				return Either.right('sales');
@@ -78,12 +78,12 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 				return Either.right(parts[0]);
 			} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
 				// 192.168.1.128
-				return Either.right('md089');
+				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
 			} else {
 				// IP/localhost in production, otherwise invalid hostname
 				return Either.left({
 					type: 'OTHER',
-					code: 400,
+					code: 404,
 					message: 'Could not get account ID from URL',
 				});
 			}
@@ -126,7 +126,7 @@ export const getAccount = (schema: Schema) => (accountID: string) =>
 		)
 		.map(collectGeneratorAsync)
 		.filter(ofLength(1), {
-			code: 400,
+			code: 404,
 			type: 'OTHER',
 			message: 'Could not find account',
 		})

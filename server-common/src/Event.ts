@@ -39,6 +39,12 @@ import {
 	toReference,
 	Member,
 	getFullMemberName,
+	asyncIterConcat,
+	asyncIterFlatMap,
+	identity,
+	asyncIterFilter,
+	Right,
+	EitherObj,
 } from 'common-lib';
 import { getAccount } from './Account';
 import updateGoogleCalendars, {
@@ -57,6 +63,7 @@ import {
 	modifyAndBindC,
 	saveToCollectionA,
 	generateBindObject,
+	findAndBind,
 } from './MySQLUtil';
 import { createNotification } from './Notification';
 import { ServerEither } from './servertypes';
@@ -64,7 +71,8 @@ import { ServerEither } from './servertypes';
 type POCRaw = (ExternalPointOfContact | InternalPointOfContact)[];
 type POCFull = (ExternalPointOfContact | DisplayInternalPointOfContact)[];
 
-export interface RawAttendanceDBRecord extends AttendanceRecord {
+export interface RawAttendanceDBRecord
+	extends Omit<AttendanceRecord, 'sourceAccountID' | 'sourceEventID'> {
 	accountID: string;
 	eventID: number;
 }
@@ -113,6 +121,8 @@ const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRec
 	summaryEmailSent: rec.summaryEmailSent,
 	timestamp: rec.timestamp,
 	shiftTime: rec.shiftTime,
+	sourceAccountID: rec.accountID,
+	sourceEventID: rec.eventID,
 }));
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
@@ -156,6 +166,32 @@ export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) =
 		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults);
 export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 
+const getLinkedEvents = (schema: Schema) => (accountID: string) => (eventID: number) =>
+	generateResults(
+		findAndBind(schema.getCollection<RawEventObject>('Events'), {
+			sourceEvent: { id: eventID, accountID },
+		})
+	);
+
+const getLinkedEventsAttendance = (schema: Schema) => (accountID: string) => (
+	eventID: number
+): AsyncIter<AttendanceRecord> =>
+	asyncIterFlatMap(identity)(
+		asyncIterMap<
+			Right<AsyncIterableIterator<AttendanceRecord>>,
+			AsyncIterableIterator<AttendanceRecord>
+		>(get('value'))(
+			asyncIterFilter<
+				EitherObj<ServerError, AsyncIterableIterator<AttendanceRecord>>,
+				Right<AsyncIterableIterator<AttendanceRecord>>
+			>(Either.isRight)(
+				asyncIterMap(getAttendanceForEvent(schema))(
+					getLinkedEvents(schema)(accountID)(eventID)
+				)
+			)
+		)
+	);
+
 export const getAttendanceForEvent = (schema: Schema) => ({
 	id: eventID,
 	accountID,
@@ -168,7 +204,10 @@ export const getAttendanceForEvent = (schema: Schema) => ({
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID })
 		)
 		.map(generateResults)
-		.map(attendanceRecordMapper);
+		.map(attendanceRecordMapper)
+		.map(iter =>
+			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(accountID)(eventID))
+		);
 
 export const getEventAttendance = (schema: Schema) => (account: AccountObject) => (
 	eventID: number
@@ -181,7 +220,10 @@ export const getEventAttendance = (schema: Schema) => (account: AccountObject) =
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id })
 		)
 		.map(generateResults)
-		.map(attendanceRecordMapper);
+		.map(attendanceRecordMapper)
+		.map(iter =>
+			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(account.id)(eventID))
+		);
 
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
 	viewer: MaybeObj<MemberReference>
