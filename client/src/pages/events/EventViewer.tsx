@@ -38,7 +38,8 @@ import {
 	CAPNHQMemberReference,
 	MemberCreateError,
 	AccountLinkTarget,
-	HTTPError
+	HTTPError,
+	getMemberName
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -220,6 +221,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.addAttendanceRecord = this.addAttendanceRecord.bind(this);
 		this.clearPreviousMember = this.clearPreviousMember.bind(this);
 		this.removeAttendanceRecord = this.removeAttendanceRecord.bind(this);
+		this.modifyAttendanceRecord = this.modifyAttendanceRecord.bind(this);
 
 		this.moveEvent = this.moveEvent.bind(this);
 		this.copyMoveEvent = this.copyMoveEvent.bind(this);
@@ -787,7 +789,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 												registry={this.props.registry}
 												member={member}
 												removeAttendance={this.removeAttendanceRecord}
-												updateAttendance={this.addAttendanceRecord}
+												updateAttendance={this.modifyAttendanceRecord}
 												updated={pipe(
 													Maybe.map(
 														areMembersTheSame(val.record.memberID)
@@ -822,6 +824,53 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		);
 	}
 
+	private modifyAttendanceRecord(record: Required<NewAttendanceRecord>) {
+		if (this.state.viewerState !== 'LOADED') {
+			return;
+		}
+
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
+
+						previousUpdatedMember: Maybe.some(record.memberID),
+						eventInformation: {
+							...prev.eventInformation,
+							attendees: [
+								...prev.eventInformation.attendees.filter(
+									rec =>
+										Either.isLeft(rec) ||
+										!areMembersTheSame(this.props.member!)(
+											rec.value.record.memberID
+										)
+								),
+								Either.right<
+									HTTPError,
+									api.events.events.EventViewerAttendanceRecord
+								>({
+									record: {
+										...record,
+										timestamp: Date.now(),
+										summaryEmailSent: false,
+										sourceAccountID: this.props.account.id,
+										sourceEventID: prev.eventInformation.event.id,
+										shiftTime: record.shiftTime ?? {
+											arrivalTime: prev.eventInformation.event.pickupDateTime,
+											departureTime: prev.eventInformation.event.meetDateTime
+										},
+										memberName: getMemberName(this.props.member!)
+									},
+									member: Maybe.fromValue(this.props.member),
+									orgName: Maybe.some(this.props.registry.Website.Name)
+								})
+							]
+						}
+				  }
+				: prev
+		);
+	}
+
 	private addAttendanceRecord(record: Required<NewAttendanceRecord>) {
 		if (this.state.viewerState !== 'LOADED') {
 			return;
@@ -837,10 +886,24 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							...prev.eventInformation,
 							attendees: [
 								...prev.eventInformation.attendees,
-								Either.right({
-									record,
-									member: Maybe.none(),
-									orgName: Maybe.none()
+								Either.right<
+									HTTPError,
+									api.events.events.EventViewerAttendanceRecord
+								>({
+									record: {
+										...record,
+										timestamp: Date.now(),
+										summaryEmailSent: false,
+										sourceAccountID: this.props.account.id,
+										sourceEventID: prev.eventInformation.event.id,
+										shiftTime: record.shiftTime ?? {
+											arrivalTime: prev.eventInformation.event.pickupDateTime,
+											departureTime: prev.eventInformation.event.meetDateTime
+										},
+										memberName: getMemberName(this.props.member!)
+									},
+									member: Maybe.fromValue(this.props.member),
+									orgName: Maybe.some(this.props.registry.Website.Name)
 								})
 							]
 						}
