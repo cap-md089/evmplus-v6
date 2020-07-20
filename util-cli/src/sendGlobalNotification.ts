@@ -57,7 +57,7 @@ const conf = confEither.value;
 	}
 
 	const cliargs = process.argv.slice(2).join(' ');
-	const check = cliargs.match(/^(\d{6}|SYS) (\S*) (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) (.*)/);
+	const check = cliargs.match(/^(\d{6}|SYS) (\S*) (\d{4})-(\d{2})-(\d{2}) (\d{2}):?(\d{2}) (.*)/);
 
 	// Check if valid
 	if (check === null) {
