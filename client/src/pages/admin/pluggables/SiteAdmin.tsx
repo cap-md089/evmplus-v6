@@ -53,7 +53,7 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					{(this.props.member.type === 'CAPProspectiveMember' ||
 						this.props.member.type === 'CAPNHQMember') &&
 					(this.props.member.seniorMember ||
-						hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Commander'])(
+						hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Commander', 'Cadet Executive Officer'])(
 							this.props.member
 						)) ? (
 						<>
