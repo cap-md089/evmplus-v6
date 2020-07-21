@@ -502,6 +502,7 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 	const achievementIDs = await collectResults(
 		findAndBind(schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'), {
 			CAPID: member.id,
+			Status: 'ACTIVE',
 		})
 	);
 
