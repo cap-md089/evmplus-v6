@@ -23,6 +23,7 @@ import { validator } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
+	AttendanceRecord,
 	AttendanceStatus,
 	CAPEventMemberPermissions,
 	CAPGroupMemberPermissions,
@@ -31,13 +32,19 @@ import {
 	CAPWingMemberPermissions,
 	CustomAttendanceFieldValue,
 	Either,
+	ExternalPointOfContact,
 	identity,
+	InternalPointOfContact,
 	Maybe,
 	MaybeObj,
 	MemberReference,
 	Permissions,
+	PointOfContactType,
+	RawEventObject,
 	RawServerConfiguration,
+	RawTeamObject,
 	StoredMemberPermissions,
+	stripProp,
 	Validator,
 } from 'common-lib';
 import 'dotenv/config';
@@ -185,56 +192,56 @@ process.on('unhandledRejection', (up) => {
 		return count;
 	};
 
-	// const v5teamsCollection = v5schema.getCollection<RawTeamObject>('Teams');
-	// const v6teamsCollection = v6schema.getCollection<RawTeamObject>('Teams');
+	const v5teamsCollection = v5schema.getCollection<RawTeamObject>('Teams');
+	const v6teamsCollection = v6schema.getCollection<RawTeamObject>('Teams');
 
-	// const refToMaybe = (
-	// 	mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>
-	// ): MaybeObj<MemberReference> =>
-	// 	'hasValue' in mem ? mem : mem.type === 'Null' ? Maybe.none() : Maybe.some(mem);
+	const refToMaybe = (
+		mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>
+	): MaybeObj<MemberReference> =>
+		'hasValue' in mem ? mem : mem.type === 'Null' ? Maybe.none() : Maybe.some(mem);
 
-	// console.log('Moving teams...');
-	// console.log(
-	// 	await moveFromOneToOther<RawTeamObject>((team) => ({
-	// 		...team,
-	// 		cadetLeader: refToMaybe(team.cadetLeader),
-	// 		seniorCoach: refToMaybe(team.seniorCoach),
-	// 		seniorMentor: refToMaybe(team.seniorMentor),
-	// 	}))(v5teamsCollection, v6teamsCollection),
-	// 	'records moved'
-	// );
-	// console.log('Moved teams.\n');
+	console.log('Moving teams...');
+	console.log(
+		await moveFromOneToOther<RawTeamObject>((team) => ({
+			...team,
+			cadetLeader: refToMaybe(team.cadetLeader),
+			seniorCoach: refToMaybe(team.seniorCoach),
+			seniorMentor: refToMaybe(team.seniorMentor),
+		}))(v5teamsCollection, v6teamsCollection),
+		'records moved'
+	);
+	console.log('Moved teams.\n');
 
-	// const v5eventsCollection = v5schema.getCollection<RawEventObject>('Events');
-	// const v6eventsCollection = v6schema.getCollection<RawEventObject>('Events');
+	const v5eventsCollection = v5schema.getCollection<RawEventObject>('Events');
+	const v6eventsCollection = v6schema.getCollection<RawEventObject>('Events');
 
-	// const correctPOC = (
-	// 	poc:
-	// 		| InternalPointOfContact
-	// 		| ExternalPointOfContact
-	// 		| (Omit<InternalPointOfContact, 'memberReference'> & { member: MemberReference })
-	// ): InternalPointOfContact | ExternalPointOfContact =>
-	// 	poc.type === PointOfContactType.EXTERNAL
-	// 		? poc
-	// 		: 'member' in poc
-	// 		? {
-	// 				...(stripProp('member')(poc) as Omit<
-	// 					InternalPointOfContact,
-	// 					'memberReference'
-	// 				>),
-	// 				memberReference: poc.member,
-	// 		  }
-	// 		: poc;
+	const correctPOC = (
+		poc:
+			| InternalPointOfContact
+			| ExternalPointOfContact
+			| (Omit<InternalPointOfContact, 'memberReference'> & { member: MemberReference })
+	): InternalPointOfContact | ExternalPointOfContact =>
+		poc.type === PointOfContactType.EXTERNAL
+			? poc
+			: 'member' in poc
+			? {
+					...(stripProp('member')(poc) as Omit<
+						InternalPointOfContact,
+						'memberReference'
+					>),
+					memberReference: poc.member,
+			  }
+			: poc;
 
-	// console.log('Moving events...');
-	// console.log(
-	// 	await moveFromOneToOther<RawEventObject>((event) => ({
-	// 		...event,
-	// 		pointsOfContact: event.pointsOfContact.map(correctPOC),
-	// 	}))(v5eventsCollection, v6eventsCollection),
-	// 	'records moved'
-	// );
-	// console.log('Moved events.\n');
+	console.log('Moving events...');
+	console.log(
+		await moveFromOneToOther<RawEventObject>((event) => ({
+			...event,
+			pointsOfContact: event.pointsOfContact.map(correctPOC),
+		}))(v5eventsCollection, v6eventsCollection),
+		'records moved'
+	);
+	console.log('Moved events.\n');
 
 	const v5accountsCollection = v5schema.getCollection<V5RawAccountObject>('Accounts');
 	const v6accountsCollection = v6schema.getCollection<AccountObject>('Accounts');
@@ -311,37 +318,37 @@ process.on('unhandledRejection', (up) => {
 	);
 	console.log('Moved accounts.\n');
 
-	// const v5attendanceCollection = v5schema.getCollection<RawAttendanceRecord<V5AttendanceRecord>>(
-	// 	'Attendance'
-	// );
-	// const v6attendanceCollection = v6schema.getCollection<RawAttendanceRecord<AttendanceRecord>>(
-	// 	'Attendance'
-	// );
+	const v5attendanceCollection = v5schema.getCollection<RawAttendanceRecord<V5AttendanceRecord>>(
+		'Attendance'
+	);
+	const v6attendanceCollection = v6schema.getCollection<RawAttendanceRecord<AttendanceRecord>>(
+		'Attendance'
+	);
 
-	// console.log('Moving attendance...');
-	// console.log(
-	// 	await mapFromOneToOther<
-	// 		RawAttendanceRecord<V5AttendanceRecord>,
-	// 		RawAttendanceRecord<AttendanceRecord>
-	// 	>((record) => ({
-	// 		accountID: record.accountID,
-	// 		comments: record.comments,
-	// 		customAttendanceFieldValues: record.customAttendanceFieldValues,
-	// 		eventID: record.eventID,
-	// 		memberID: record.memberID,
-	// 		memberName: record.memberName,
-	// 		planToUseCAPTransportation: record.planToUseCAPTransportation,
-	// 		shiftTime: {
-	// 			arrivalTime: record.arrivalTime,
-	// 			departureTime: record.departureTime,
-	// 		},
-	// 		status: record.status,
-	// 		summaryEmailSent: record.summaryEmailSent,
-	// 		timestamp: record.timestamp,
-	// 	}))(v5attendanceCollection, v6attendanceCollection),
-	// 	'records moved'
-	// );
-	// console.log('Moved attendance.\n');
+	console.log('Moving attendance...');
+	console.log(
+		await mapFromOneToOther<
+			RawAttendanceRecord<V5AttendanceRecord>,
+			RawAttendanceRecord<AttendanceRecord>
+		>((record) => ({
+			accountID: record.accountID,
+			comments: record.comments,
+			customAttendanceFieldValues: record.customAttendanceFieldValues,
+			eventID: record.eventID,
+			memberID: record.memberID,
+			memberName: record.memberName,
+			planToUseCAPTransportation: record.planToUseCAPTransportation,
+			shiftTime: {
+				arrivalTime: record.arrivalTime,
+				departureTime: record.departureTime,
+			},
+			status: record.status,
+			summaryEmailSent: record.summaryEmailSent,
+			timestamp: record.timestamp,
+		}))(v5attendanceCollection, v6attendanceCollection),
+		'records moved'
+	);
+	console.log('Moved attendance.\n');
 
 	const v5permissionsCollection = v5schema.getCollection<V5StoredMemberPermissions>(
 		'UserPermissions'
@@ -475,34 +482,34 @@ process.on('unhandledRejection', (up) => {
 	);
 	console.log('Moved UserPermissions.');
 
-	// const move = async (table: string) => {
-	// 	console.log(`Moving ${table}...`);
-	// 	await moveFromOneToOther(identity)(
-	// 		v5schema.getCollection(table),
-	// 		v6schema.getCollection(table)
-	// 	);
-	// 	console.log(`Moved ${table}.\n`);
-	// };
-	// await move('Attendance');
-	// await move('DiscordAccounts');
-	// await move('ExtraAccountMembership');
-	// await move('ExtraMemberInformation');
-	// await move('Files');
-	// await move('MemberSessions');
-	// await move('NHQ_CadetActivities');
-	// await move('NHQ_CadetDutyPosition');
-	// await move('NHQ_DutyPosition');
-	// await move('NHQ_MbrContact');
-	// await move('NHQ_Member');
-	// await move('NHQ_OFlight');
-	// await move('NHQ_Organization');
-	// await move('Notifications');
-	// await move('PasswordResetTokens');
-	// await move('ProspectiveMembers');
-	// await move('Registry');
-	// await move('Tasks');
-	// await move('Teams');
-	// await move('UserAccountInfo');
+	const move = async (table: string) => {
+		console.log(`Moving ${table}...`);
+		await moveFromOneToOther(identity)(
+			v5schema.getCollection(table),
+			v6schema.getCollection(table)
+		);
+		console.log(`Moved ${table}.\n`);
+	};
+	await move('Attendance');
+	await move('DiscordAccounts');
+	await move('ExtraAccountMembership');
+	await move('ExtraMemberInformation');
+	await move('Files');
+	await move('MemberSessions');
+	await move('NHQ_CadetActivities');
+	await move('NHQ_CadetDutyPosition');
+	await move('NHQ_DutyPosition');
+	await move('NHQ_MbrContact');
+	await move('NHQ_Member');
+	await move('NHQ_OFlight');
+	await move('NHQ_Organization');
+	await move('Notifications');
+	await move('PasswordResetTokens');
+	await move('ProspectiveMembers');
+	await move('Registry');
+	await move('Tasks');
+	await move('Teams');
+	await move('UserAccountInfo');
 
 	await Promise.all([v5session.close(), v6session.close()]);
 
