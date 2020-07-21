@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { Schema } from '@mysql/xdevapi';
 import { promisify } from 'bluebird';
 import {
@@ -19,6 +38,7 @@ import {
 	stripProp,
 	User,
 	UserAccountInformation,
+	getDefaultMemberPermissions,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { resolveReference } from '../../Members';
@@ -29,7 +49,6 @@ import {
 	modifyAndBind,
 	safeBind,
 } from '../../MySQLUtil';
-import { Member } from '../../Permissions';
 import { ServerEither } from '../../servertypes';
 import { addPasswordForUser } from './Password';
 
@@ -319,17 +338,21 @@ const getPermissionsRecordForMemberInAccount = async (
 	return stripProp('_id')(permissions[0]) as StoredMemberPermissions;
 };
 
-export const DEFAULT_PERMISSIONS: Readonly<MemberPermissions> = Member;
-
 export const getPermissionsForMemberInAccountDefault = async (
 	schema: Schema,
 	member: MemberReference,
 	account: AccountObject
 ): Promise<MemberPermissions> => {
 	try {
-		return await getPermissionsForMemberInAccount(schema, member, account);
+		const permissions = await getPermissionsForMemberInAccount(schema, member, account);
+
+		if (permissions.type !== account.type) {
+			return getDefaultMemberPermissions(account.type);
+		}
+
+		return permissions;
 	} catch (e) {
-		return DEFAULT_PERMISSIONS;
+		return getDefaultMemberPermissions(account.type);
 	}
 };
 
@@ -381,14 +404,14 @@ export const setPermissionsForMemberInAccount = async (
 
 export const RequiresPermission = <T extends MemberPermission>(
 	permission: T,
-	threshold: MemberPermissions[T] = 1 as MemberPermissions[T],
+	threshold: number = 1,
 	message = 'Member does not have permission to perform the requested action'
 ) => <R extends { member?: MaybeObj<User> | User }, V>(func: (req: R) => ServerEither<V>) => (
 	req: R
 ) => checkPermissions(permission)(threshold)(message)(req).flatMap(func);
 
 export const checkPermissions = <T extends MemberPermission>(permission: T) => (
-	threshold: MemberPermissions[T]
+	threshold: number
 ) => (message = 'Member does not have permission to perform the requested action') => <
 	R extends { member?: MaybeObj<User> | User }
 >(

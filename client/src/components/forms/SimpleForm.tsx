@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import * as React from 'react';
 import MemberSelector from '../dialogues/MemberSelector';
 // Form inputs
@@ -292,6 +311,10 @@ export interface FormProps<F> {
 	 * Disables the form when inputs are invalid
 	 */
 	disableOnInvalid?: boolean;
+	/**
+	 * Manual override for disabling the form
+	 */
+	formDisabled?: boolean;
 }
 
 /**
@@ -379,7 +402,7 @@ export default class SimpleForm<
 		const submitInfo = {
 			text: 'Submit',
 			className: 'submit',
-			disabled: this.hasError,
+			disabled: this.props.formDisabled || this.hasError,
 			...(this.props.submitInfo || {})
 		};
 
@@ -525,6 +548,7 @@ export default class SimpleForm<
 								value={submitInfo.text}
 								className={`primaryButton ${submitInfo.className}`}
 								disabled={
+									this.props.formDisabled ||
 									(this.props.disableOnInvalid && this.hasError) ||
 									submitInfo.disabled
 								}

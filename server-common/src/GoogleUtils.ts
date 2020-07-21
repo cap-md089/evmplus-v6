@@ -1,19 +1,36 @@
-// import { DateTime } from 'luxon';
-// import { Configuration } from '../conf';
+/**
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
-	ServerConfiguration,
 	EventStatus,
 	formatGoogleCalendarDate,
 	isOneOfSelected,
 	Maybe,
 	presentMultCheckboxReturn,
 	RawEventObject,
+	ServerConfiguration,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
 import { getRegistry } from './Registry';
-import { Schema } from '@mysql/xdevapi';
 
 // 99999999  these five arrays need to go to a common area between client and server
 export const Uniforms = [
@@ -176,6 +193,61 @@ function buildDeadlineDescription(inEvent: RawEventObject, inStatement: string):
 	description += '<---->Status\nThe parent event is ' + status + '\n\n';
 
 	return description;
+}
+
+export async function createGoogleCalendar(
+	accountID: string,
+	name: string,
+	config: ServerConfiguration
+) {
+	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json');
+	const jwtClient = new google.auth.JWT(
+		privateKey.client_email,
+		undefined,
+		privateKey.private_key,
+		['https://www.googleapis.com/auth/calendar']
+	);
+
+	await jwtClient.authorize();
+
+	const calendar = google.calendar({ version: 'v3' });
+
+	const requestBody = {
+		summary: name,
+	};
+
+	const newCalendar = await calendar.calendars.insert({
+		requestBody,
+		auth: jwtClient,
+	});
+
+	if (!newCalendar.data.id) {
+		throw new Error('Could not create new calendar');
+	}
+
+	await calendar.acl.insert({
+		auth: jwtClient,
+		requestBody: {
+			role: 'reader',
+			scope: {
+				type: 'default',
+			},
+		},
+		calendarId: newCalendar.data.id,
+	});
+
+	return newCalendar.data.id;
+}
+
+export async function createGoogleCalendarForEvent(
+	newEventName: string,
+	newAccountName: string,
+	accountID: string,
+	config: ServerConfiguration
+) {
+	const name = `${newAccountName} - ${newEventName}`;
+
+	return createGoogleCalendar(accountID, name, config);
 }
 
 export async function createGoogleCalendarEvents(

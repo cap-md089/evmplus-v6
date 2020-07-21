@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import type { Schema, Session } from '@mysql/xdevapi';
 import type { EventEmitter } from 'events';
 import type { IncomingHttpHeaders } from 'http';
@@ -498,6 +517,11 @@ export namespace Permissions {
 	}
 
 	export enum ViewAccountNotifications {
+		NO,
+		YES,
+	}
+
+	export enum CreateEventAccount {
 		NO,
 		YES,
 	}
@@ -1661,7 +1685,9 @@ export type CAPMemberContactPriority = keyof CAPMemberContactInstance;
 /**
  * The permissions list for various members
  */
-export interface MemberPermissions {
+export interface CAPSquadronMemberPermissions {
+	type: AccountType.CAPSQUADRON;
+
 	// Start the Cadet Staff permissions
 	/**
 	 * Whether or not the user can assign flight members
@@ -1705,8 +1731,14 @@ export interface MemberPermissions {
 	 * Whether or not the user can assign temporary duty positions
 	 */
 	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
-
-	// Admin privileges
+	/**
+	 * Whether or not members can initiate scan add sessions
+	 */
+	ScanAdd: Permissions.ScanAdd;
+	/**
+	 * Whether or not the user can view attendance for other people
+	 */
+	AttendanceView: Permissions.AttendanceView;
 	/**
 	 * Whether or not the user can manage prospective members
 	 */
@@ -1723,18 +1755,145 @@ export interface MemberPermissions {
 	 * Whether or not the user can manage files
 	 */
 	FileManagement: Permissions.FileManagement;
+
+	// Admin privileges
 	/**
 	 * Whether or not the user can manage permissions of others
 	 */
 	PermissionManagement: Permissions.PermissionManagement;
 	/**
-	 * Whether or not the user can download CAPWATCH files
+	 * Whether or not the member can create banner notifications
 	 */
-	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
+	CreateNotifications: Permissions.Notify;
+	/**
+	 * Whether or not the user can edit the registry
+	 */
+	RegistryEdit: Permissions.RegistryEdit;
+	/**
+	 * Whether or not the member can view notifications designated for account admins
+	 */
+	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+}
+
+/**
+ * The permissions list for various members
+ */
+export interface CAPEventMemberPermissions {
+	type: AccountType.CAPEVENT;
+
+	// Start the Cadet Staff permissions
+	/**
+	 * Whether or not the user can assign flight members
+	 */
+	FlightAssign: Permissions.FlightAssign;
+	/**
+	 * Whether or not the user can get the muster sheet
+	 */
+	MusterSheet: Permissions.MusterSheet;
+	/**
+	 * Whether or not the user can assign tasks
+	 */
+	AssignTasks: Permissions.AssignTasks;
+	/**
+	 * Whether or not the user can administer PT
+	 */
+	AdministerPT: Permissions.AdministerPT;
+
+	// Start Manager permissions
+	/**
+	 * Whether or not the user can manage events and to what degree
+	 */
+	ManageEvent: Permissions.ManageEvent;
+	/**
+	 * Whether or not the user can get event contact information
+	 */
+	EventContactSheet: Permissions.EventContactSheet;
+	/**
+	 * Whether or not the user can get ORM OPORD information
+	 */
+	ORMOPORD: Permissions.ORMOPORD;
+	/**
+	 * Whether or not the user can assign temporary duty positions
+	 */
+	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
+	/**
+	 * Whether or not members can initiate scan add sessions
+	 */
+	ScanAdd: Permissions.ScanAdd;
+	/**
+	 * Whether or not the user can view attendance for other people
+	 */
+	AttendanceView: Permissions.AttendanceView;
+	/**
+	 * Whether or not the user can view a list of all events
+	 */
+	EventLinkList: Permissions.EventLinkList;
+	/**
+	 * Whether or not the user can add a team
+	 */
+	ManageTeam: Permissions.ManageTeam;
+	/**
+	 * Whether or not the user can manage files
+	 */
+	FileManagement: Permissions.FileManagement;
+
+	// Admin privileges
+	/**
+	 * Whether or not the user can manage permissions of others
+	 */
+	PermissionManagement: Permissions.PermissionManagement;
 	/**
 	 * Whether or not the member can create banner notifications
 	 */
 	CreateNotifications: Permissions.Notify;
+	/**
+	 * Whether or not the user can edit the registry
+	 */
+	RegistryEdit: Permissions.RegistryEdit;
+	/**
+	 * Whether or not the member can view notifications designated for account admins
+	 */
+	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+}
+
+export interface CAPGroupMemberPermissions {
+	type: AccountType.CAPGROUP;
+
+	// Start the Cadet Staff permissions
+	/**
+	 * Whether or not the user can assign tasks
+	 */
+	AssignTasks: Permissions.AssignTasks;
+
+	// Start Manager permissions
+	/**
+	 * Whether or not the user can manage events and to what degree
+	 */
+	ManageEvent: Permissions.ManageEvent;
+	/**
+	 * Whether or not the user can get event contact information
+	 */
+	EventContactSheet: Permissions.EventContactSheet;
+	/**
+	 * Whether or not the user can get ORM OPORD information
+	 */
+	ORMOPORD: Permissions.ORMOPORD;
+	/**
+	 * Whether or not the user can assign temporary duty positions
+	 */
+	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
+	/**
+	 * Whether or not the user can view a list of all events
+	 */
+	EventLinkList: Permissions.EventLinkList;
+	/**
+	 * Whether or not the user can add a team
+	 */
+	ManageTeam: Permissions.ManageTeam;
+	/**
+	 * Whether or not the user can manage files
+	 */
+	FileManagement: Permissions.FileManagement;
 	/**
 	 * Whether or not members can initiate scan add sessions
 	 */
@@ -1744,18 +1903,180 @@ export interface MemberPermissions {
 	 */
 	AttendanceView: Permissions.AttendanceView;
 
-	// Developer/super admin privileges?
-	// Will change when utilities are more user friendly
+	// Admin privileges
+	/**
+	 * Whether or not the user can manage permissions of others
+	 */
+	PermissionManagement: Permissions.PermissionManagement;
+	/**
+	 * Whether or not the member can create banner notifications
+	 */
+	CreateNotifications: Permissions.Notify;
 	/**
 	 * Whether or not the user can edit the registry
 	 */
 	RegistryEdit: Permissions.RegistryEdit;
-
 	/**
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
 }
+
+export interface CAPWingMemberPermissions {
+	type: AccountType.CAPWING;
+
+	// Start the Cadet Staff permissions
+	/**
+	 * Whether or not the user can assign tasks
+	 */
+	AssignTasks: Permissions.AssignTasks;
+
+	// Start Manager permissions
+	/**
+	 * Whether or not the user can manage events and to what degree
+	 */
+	ManageEvent: Permissions.ManageEvent;
+	/**
+	 * Whether or not the user can get event contact information
+	 */
+	EventContactSheet: Permissions.EventContactSheet;
+	/**
+	 * Whether or not the user can get ORM OPORD information
+	 */
+	ORMOPORD: Permissions.ORMOPORD;
+	/**
+	 * Whether or not the user can assign temporary duty positions
+	 */
+	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
+	/**
+	 * Whether or not the user can view a list of all events
+	 */
+	EventLinkList: Permissions.EventLinkList;
+	/**
+	 * Whether or not the user can add a team
+	 */
+	ManageTeam: Permissions.ManageTeam;
+	/**
+	 * Whether or not the user can manage files
+	 */
+	FileManagement: Permissions.FileManagement;
+	/**
+	 * Whether or not members can initiate scan add sessions
+	 */
+	ScanAdd: Permissions.ScanAdd;
+	/**
+	 * Whether or not the user can view attendance for other people
+	 */
+	AttendanceView: Permissions.AttendanceView;
+
+	// Admin privileges
+	/**
+	 * Whether or not the user can manage permissions of others
+	 */
+	PermissionManagement: Permissions.PermissionManagement;
+	/**
+	 * Whether or not the member can create banner notifications
+	 */
+	CreateNotifications: Permissions.Notify;
+	/**
+	 * Whether or not the user can edit the registry
+	 */
+	RegistryEdit: Permissions.RegistryEdit;
+	/**
+	 * Whether or not the member can view notifications designated for account admins
+	 */
+	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Used for creating sub accounts
+	 */
+	CreateEventAccount: Permissions.CreateEventAccount;
+}
+
+export interface CAPRegionMemberPermissions {
+	type: AccountType.CAPREGION;
+
+	// Start the Cadet Staff permissions
+	/**
+	 * Whether or not the user can assign tasks
+	 */
+	AssignTasks: Permissions.AssignTasks;
+
+	// Start Manager permissions
+	/**
+	 * Whether or not the user can manage events and to what degree
+	 */
+	ManageEvent: Permissions.ManageEvent;
+	/**
+	 * Whether or not the user can get event contact information
+	 */
+	EventContactSheet: Permissions.EventContactSheet;
+	/**
+	 * Whether or not the user can get ORM OPORD information
+	 */
+	ORMOPORD: Permissions.ORMOPORD;
+	/**
+	 * Whether or not the user can assign temporary duty positions
+	 */
+	AssignTemporaryDutyPositions: Permissions.AssignTemporaryDutyPosition;
+	/**
+	 * Whether or not the user can view a list of all events
+	 */
+	EventLinkList: Permissions.EventLinkList;
+	/**
+	 * Whether or not the user can add a team
+	 */
+	ManageTeam: Permissions.ManageTeam;
+	/**
+	 * Whether or not the user can manage files
+	 */
+	FileManagement: Permissions.FileManagement;
+	/**
+	 * Whether or not members can initiate scan add sessions
+	 */
+	ScanAdd: Permissions.ScanAdd;
+	/**
+	 * Whether or not the user can view attendance for other people
+	 */
+	AttendanceView: Permissions.AttendanceView;
+
+	// Admin privileges
+	/**
+	 * Whether or not the user can manage permissions of others
+	 */
+	PermissionManagement: Permissions.PermissionManagement;
+	/**
+	 * Whether or not the member can create banner notifications
+	 */
+	CreateNotifications: Permissions.Notify;
+	/**
+	 * Whether or not the user can edit the registry
+	 */
+	RegistryEdit: Permissions.RegistryEdit;
+	/**
+	 * Whether or not the member can view notifications designated for account admins
+	 */
+	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Used for creating sub accounts
+	 */
+	CreateEventAccount: Permissions.CreateEventAccount;
+}
+
+export type MemberPermissions =
+	| CAPSquadronMemberPermissions
+	| CAPWingMemberPermissions
+	| CAPEventMemberPermissions
+	| CAPGroupMemberPermissions
+	| CAPRegionMemberPermissions;
+
+export type MemberPermission = keyof Omit<
+	Omit<CAPSquadronMemberPermissions, 'type'> &
+		Omit<CAPWingMemberPermissions, 'type'> &
+		Omit<CAPEventMemberPermissions, 'type'> &
+		Omit<CAPRegionMemberPermissions, 'type'> &
+		Omit<CAPGroupMemberPermissions, 'type'>,
+	'type'
+>;
 
 export interface StoredMemberPermissions {
 	member: MemberReference;
@@ -1777,11 +2098,6 @@ export interface AbsenteeInformation {
 	 */
 	absentUntil: number;
 }
-
-/**
- * String representation of permissions
- */
-export type MemberPermission = keyof MemberPermissions;
 
 /**
  * String representation of the member type, as there needs to be a way to differentiate

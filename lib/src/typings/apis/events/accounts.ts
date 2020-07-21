@@ -17,7 +17,26 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * as accounts from './accounts';
-export * as attendance from './attendance';
-export * as debrief from './debrief';
-export * as events from './events';
+import { APIEither } from '../../api';
+import { NewEventObject, RawCAPEventAccountObject } from '../../types';
+
+export interface AddEventAccount {
+	(
+		params: {},
+		body: {
+			accountID: string;
+			accountName: string;
+			event: NewEventObject;
+		}
+	): APIEither<RawCAPEventAccountObject>;
+
+	url: '/api/events/account/';
+
+	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: true;
+}

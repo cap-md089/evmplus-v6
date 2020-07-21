@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { hasPermission, isRioux } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
@@ -10,6 +29,7 @@ import ErrorListPage, { ErrorListWidget, shouldRenderErrorList } from './pages/E
 import FlightAssign from './pages/FlightAssign';
 import Notifications from './pages/Notifications';
 import PermissionAssign from './pages/PermissionAssign';
+import CreateAccount from '../events/CreateAccount';
 import RegEdit from './pages/RegEdit';
 import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
@@ -156,6 +176,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route
 					path="/admin/attendance/"
 					render={this.pageRenderer(AttendanceHistory)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/createeventaccount/"
+					render={this.pageRenderer(CreateAccount)}
 					exact={false}
 				/>
 

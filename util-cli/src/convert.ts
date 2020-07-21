@@ -378,8 +378,9 @@ process.on('unhandledRejection', (up) => {
 	): CAPSquadronMemberPermissions => ({
 		type: AccountType.CAPSQUADRON,
 
-		ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 		...permissions,
+		ViewAccountNotifications:
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getGroupPermissions = (permissions: V5MemberPermissions): CAPGroupMemberPermissions => ({

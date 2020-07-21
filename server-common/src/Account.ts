@@ -1,7 +1,28 @@
-import { Schema } from '@mysql/xdevapi';
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { Schema, Session } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	AccountType,
+	always,
+	applyCustomAttendanceFields,
 	AsyncEither,
 	asyncEitherIterMap,
 	AsyncIter,
@@ -10,24 +31,26 @@ import {
 	asyncIterHandler,
 	asyncIterMap,
 	asyncRight,
+	AttendanceStatus,
 	BasicMySQLRequest,
 	CAPAccountObject,
 	CAPProspectiveMemberObject,
 	collectGeneratorAsync,
-	destroy,
 	Either,
 	EitherObj,
 	errorGenerator,
 	EventObject,
 	FileObject,
+	FullPointOfContact,
 	get,
 	identity,
+	isRioux,
 	Maybe,
 	MaybeObj,
 	Member,
 	MemberReference,
 	memoize,
-	NewCAPEventAccountObject,
+	NewEventObject,
 	NHQ,
 	ofLength,
 	onlyRights,
@@ -39,17 +62,30 @@ import {
 	RawCAPWingAccountObject,
 	RawEventObject,
 	RawTeamObject,
+	ServerConfiguration,
 	ServerError,
 	statefulFunction,
 	StoredAccountMembership,
 	stringifyMemberReference,
 	stripProp,
 	toReference,
+	User,
 	yieldObjAsync,
+	getDefaultAdminPermissions,
 } from 'common-lib';
+import { addMemberToAttendanceFunc, createEventFunc, linkEventFunc } from './Event';
+import { createGoogleCalendarForEvent } from './GoogleUtils';
+import { setPermissionsForMemberInAccount } from './member/pam';
 import { CAP, resolveReference } from './Members';
-import { collectResults, findAndBind, findAndBindC, generateResults, safeBind } from './MySQLUtil';
-import { getRegistryById } from './Registry';
+import {
+	addToCollection,
+	collectResults,
+	findAndBind,
+	findAndBindC,
+	generateResults,
+	safeBind,
+} from './MySQLUtil';
+import { getRegistry, getRegistryById, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
 import { getStaffTeam } from './Team';
 
@@ -91,21 +127,131 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 		.flatMap(getAccount(req.mysqlx))
 		.map(account => ({ ...req, account }));
 
-export const createCAPEventAccount = (schema: Schema) => (account: NewCAPEventAccountObject) =>
+export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
+	session: Session
+) => (schema: Schema) => (parentAccount: RawCAPWingAccountObject) => (author: User) => (
+	accountID: string
+) => (accountName: string) => (newEvent: NewEventObject): ServerEither<RawCAPEventAccountObject> =>
 	asyncRight(
-		schema.getCollection<AccountObject>('Accounts'),
+		(async () => {
+			const dutyPositions = author.dutyPositions
+				.filter(
+					duty => duty.type === 'CAPUnit' || parentAccount.orgIDs.includes(duty.orgid)
+				)
+				.map(({ duty }) => duty);
+
+			if (
+				!dutyPositions.includes('Information Technologies Officer') &&
+				!dutyPositions.includes('Commander') &&
+				!isRioux(author)
+			) {
+				return Either.left({
+					type: 'OTHER' as const,
+					code: 403,
+					message: 'You do not have permission to do that',
+				});
+			}
+
+			if (!accountID.startsWith(parentAccount.id)) {
+				return Either.left({
+					type: 'OTHER' as const,
+					code: 400,
+					message: `The account ID must start with '${parentAccount.id}'`,
+				});
+			}
+
+			if (accountID === parentAccount.id) {
+				return Either.left({
+					type: 'OTHER' as const,
+					code: 400,
+					message: 'Cannot create duplicate account',
+				});
+			}
+
+			return AsyncEither.All([
+				getAccount(schema)(accountID)
+					.map<AccountObject | null>(identity)
+					.leftFlatMap(always(Either.right<ServerError, AccountObject | null>(null))),
+				asyncRight(
+					session.startTransaction(),
+					errorGenerator('Could not create save point')
+				),
+			]);
+		})(),
 		errorGenerator('Could not create a CAP Event account')
 	)
-		.map(collection =>
-			collection
-				.add({
-					...account,
-					comments: '',
-					type: AccountType.CAPEVENT,
-				} as RawCAPEventAccountObject)
-				.execute()
+		.flatMap(identity)
+		.filter(([account]) => account === null, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Cannot create duplicate account',
+		})
+		.map(
+			() => createGoogleCalendarForEvent(newEvent.name, accountName, accountID, config),
+			errorGenerator('Could not create Google calendar')
 		)
-		.map(destroy);
+		.map<RawCAPEventAccountObject>(mainCalendarID => ({
+			aliases: [],
+			comments: '',
+			discordServer: Maybe.none(),
+			id: accountID,
+			mainCalendarID,
+			parent: Maybe.some(parentAccount.id),
+			wingCalendarID: parentAccount.wingCalendarID,
+
+			type: AccountType.CAPEVENT,
+		}))
+		.flatMap(addToCollection(schema.getCollection<RawCAPEventAccountObject>('Accounts')))
+		// Account setup
+		.tap(newAccount =>
+			AsyncEither.All([
+				getRegistry(schema)(newAccount)
+					.map(registry => ({
+						...registry,
+						Website: {
+							...registry.Website,
+							Name: accountName,
+						},
+					}))
+					.flatMap(saveRegistry(schema)),
+				asyncRight(
+					setPermissionsForMemberInAccount(
+						schema,
+						toReference(author),
+						getDefaultAdminPermissions(AccountType.CAPEVENT),
+						newAccount
+					),
+					errorGenerator('Could not set permissions for member in new account')
+				),
+			])
+		)
+		.tap(newAccount =>
+			createEventFunc(now)(config)(schema)(newAccount)(toReference(author))(newEvent)
+				.tap(event =>
+					addMemberToAttendanceFunc(now)(schema)(newAccount)({
+						...event,
+						attendance: [],
+						pointsOfContact: event.pointsOfContact as FullPointOfContact[],
+					})({
+						comments: '',
+						customAttendanceFieldValues: applyCustomAttendanceFields(
+							newEvent.customAttendanceFields
+						)([]),
+						memberID: toReference(author),
+						planToUseCAPTransportation: false,
+						shiftTime: null,
+						status: AttendanceStatus.COMMITTEDATTENDED,
+					})
+				)
+				.tap(event =>
+					linkEventFunc(now)(config)(schema)(newAccount)(event)(toReference(author))(
+						parentAccount
+					)
+				)
+		)
+		.tap(() => session.commit())
+		.leftTap(() => session.rollback());
+export const createCAPEventAccount = createCAPEventAccountFunc(Date.now);
 
 export interface AccountGetter {
 	byId: typeof getAccount;

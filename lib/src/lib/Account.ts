@@ -1,11 +1,33 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import {
 	AccountObject,
 	AccountType,
 	CAPAccountObject,
 	RawCAPSquadronAccountObject,
 	RegularCAPAccountObject,
+	User,
+	Permissions,
 } from '../typings/types';
 import { Maybe, MaybeObj } from './Maybe';
+import { hasPermission, isCAPMember, isRioux } from './Member';
 
 export const isRegularCAPAccountObject = (
 	account: AccountObject
@@ -34,3 +56,22 @@ export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<num
 		: account.type === AccountType.CAPWING
 		? Maybe.some([account.orgid, ...account.orgIDs])
 		: Maybe.none();
+
+export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (user: User) => {
+	const duties = user.dutyPositions
+		.filter(
+			duty =>
+				duty.type === 'CAPUnit' ||
+				Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(parent)).includes(duty.orgid)
+		)
+		.map(({ duty }) => duty);
+
+	return (
+		isRioux(user) ||
+		((parent.type === AccountType.CAPWING || parent.type === AccountType.CAPREGION) &&
+			isCAPMember(user) &&
+			(duties.includes('Commander') ||
+				duties.includes('Information Technologies Officer') ||
+				hasPermission('CreateEventAccount')(Permissions.CreateEventAccount.YES)(user)))
+	);
+};
