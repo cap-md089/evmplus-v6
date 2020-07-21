@@ -1,4 +1,23 @@
-input[type="range"] {
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of CAPUnit.com.
+ * 
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+input[type='range'] {
 	margin-top: 15px;
 	display: inline-block;
 	padding-top: 0;
@@ -32,8 +51,14 @@ input.multirange::-moz-range-track {
 input.multirange.ghost {
 	position: relative;
 	background: var(--trackbackground);
-	--trackbackground: linear-gradient(to right, transparent var(--low), var(--trackcolor) 0,
-		var(--trackcolor) var(--high), transparent 0) no-repeat 0 45% / 100% 40%;
+	--trackbackground: linear-gradient(
+			to right,
+			transparent var(--low),
+			var(--trackcolor) 0,
+			var(--trackcolor) var(--high),
+			transparent 0
+		)
+		no-repeat 0 45% / 100% 40%;
 	--trackcolor: #2857d7;
 }
 

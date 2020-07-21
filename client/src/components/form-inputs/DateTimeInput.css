@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of CAPUnit.com.
+ * 
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 .datetime-input-root {
 	clear: both;
 	position: relative;
@@ -5,7 +24,9 @@
 	padding-top: 10px;
 }
 
-.datetime-input-box input, .date-input-box input, .time-input-box input {
+.datetime-input-box input,
+.date-input-box input,
+.time-input-box input {
 	border: 1px solid black;
 	height: 15px;
 	padding: 5px;
@@ -69,7 +90,10 @@
 	position: relative;
 }
 
-input[type="date"], input[type="datetime"], input[type="time"], input[type="datetime-local"] {
+input[type='date'],
+input[type='datetime'],
+input[type='time'],
+input[type='datetime-local'] {
 	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 	box-sizing: border-box;
 	border: 1px solid black;
@@ -80,14 +104,20 @@ input[type="date"], input[type="datetime"], input[type="time"], input[type="date
 	z-index: 0;
 }
 
-input[type="date"]:focus, input[type="datetime"]:focus, input[type="time"]:focus, input[type="datetime-local"]:focus {
+input[type='date']:focus,
+input[type='datetime']:focus,
+input[type='time']:focus,
+input[type='datetime-local']:focus {
 	box-shadow: inset 0 0 1em #258eea;
 }
 
-input[type="date"]:disabled, input[type="datetime"]:disabled, input[type="time"]:disabled, input[type="datetime-local"]:disabled {
-	background: #aaa
+input[type='date']:disabled,
+input[type='datetime']:disabled,
+input[type='time']:disabled,
+input[type='datetime-local']:disabled {
+	background: #aaa;
 }
 
-input[class^="react-datepicker"] {
+input[class^='react-datepicker'] {
 	z-index: 0;
 }

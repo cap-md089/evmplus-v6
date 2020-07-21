@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import {
 	AccountObject,
 	always,
@@ -32,12 +51,10 @@ import ModifyEvent from '../pages/events/ModifyEvent';
 import Main from '../pages/Main';
 import NotFound from '../pages/NotFound';
 import Page from '../pages/Page';
-import RackBuilder from '../pages/RibbonRack';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamEdit from '../pages/team/TeamEdit';
 import TeamList from '../pages/team/TeamList';
 import TeamView from '../pages/team/TeamView';
-import Test from '../pages/Test';
 import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
@@ -52,16 +69,6 @@ const pages: Array<{
 		url: '/',
 		component: Main,
 		exact: true
-	},
-	{
-		url: '/test',
-		component: Test,
-		exact: false
-	},
-	{
-		url: '/rack',
-		component: RackBuilder,
-		exact: false
 	},
 	{
 		url: '/eventform',

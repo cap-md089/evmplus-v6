@@ -1,12 +1,31 @@
-$primary-color: 		#0b375b;
-$secondary-color:		#f6bf22;
-$special-text-color: 	#ffffff;
-$normal-text-color:		#0b375b;
-$link-color:			#2875d7;
-$h1-color:				$primary-color;
-$h-color:				#396f9c;
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of CAPUnit.com.
+ * 
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-$text-font:				RobotoRegular;
+$primary-color: #0b375b;
+$secondary-color: #f6bf22;
+$special-text-color: #ffffff;
+$normal-text-color: #0b375b;
+$link-color: #2875d7;
+$h1-color: $primary-color;
+$h-color: #396f9c;
+
+$text-font: RobotoRegular;
 
 $primary-button-color: #4278ba;
 $secondary-button-color: #07346c;

@@ -1,4 +1,23 @@
-.drive-newfoldername-row input[type="text"] {
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of CAPUnit.com.
+ * 
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.drive-newfoldername-row input[type='text'] {
 	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
 	box-sizing: border-box;
 	border: 1px solid black;
@@ -49,7 +68,8 @@
 	background-size: contain;
 }
 
-.drive-file-display, .drive-folder-display {
+.drive-file-display,
+.drive-folder-display {
 	flex-grow: 1;
 	flex-basis: 25%;
 	max-width: calc(25% - 10px);
@@ -58,12 +78,14 @@
 	border: 1px solid black;
 }
 
-.drive-file-display.selected, .drive-folder-display.selected {
-	box-shadow: 0 0 1em #258eea
+.drive-file-display.selected,
+.drive-folder-display.selected {
+	box-shadow: 0 0 1em #258eea;
 }
 
-.drive-folder-row, .drive-file-row {
-	display: flex
+.drive-folder-row,
+.drive-file-row {
+	display: flex;
 }
 
 .drive-file-extra-display {

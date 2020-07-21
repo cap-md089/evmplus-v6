@@ -1,12 +1,3 @@
-//   "proxy": {
-//     "/api": {
-//       "target": "http://md089.localcapunit.com:3001"
-//     },
-//     "/images": {
-//       "target": "http://md089.localcapunit.com:3001"
-//     }
-//   }
-
 // @ts-ignore
 const proxy = require('http-proxy-middleware');
 
