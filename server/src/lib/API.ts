@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { AsyncRepr, RequestType, ReturnValue, ServerAPIReturnValue } from 'auto-client-api';
 import * as bodyParser from 'body-parser';
 import {
@@ -73,7 +92,7 @@ export const validateBody = <
 		Either.leftMap<ValidatorFail, ValidatorError, APIEndpointBody<T>>(validatorState => ({
 			type: 'VALIDATOR',
 			code: 400,
-			message: 'There was a problem with the request',
+			message: 'There was a problem with the request body',
 			validatorState,
 		}))(validator.validate(req.body, 'request body'))
 	);
@@ -175,12 +194,18 @@ export const sendResponse = <T extends APIEndpoint<string, any, any, any, any, a
 
 	const awaitedResult = await result;
 
-	response.status(200);
+	if (awaitedResult === null || awaitedResult === undefined) {
+		response.status(204);
+		response.write(`{"direction":"right","value":null}`);
+		response.end();
+	} else {
+		response.status(200);
 
-	response.write('{"direction":"right","value":');
-	await send(request)(response)(awaitedResult);
-	response.write('}');
-	response.end();
+		response.write('{"direction":"right","value":');
+		await send(request)(response)(awaitedResult);
+		response.write('}');
+		response.end();
+	}
 };
 
 export const sendError = (request: Requests) => (response: express.Response) => async (
@@ -191,12 +216,7 @@ export const sendError = (request: Requests) => (response: express.Response) => 
 	}
 
 	response.status(err.code);
-	response.json(
-		Either.left({
-			code: err.code,
-			message: err.message,
-		}) as APIEither<any>
-	);
+	response.json(Either.left(stripProp('type')(stripProp('error')(err))) as APIEither<any>);
 };
 
 export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, any, any>>(

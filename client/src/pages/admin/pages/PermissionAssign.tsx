@@ -1,10 +1,28 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import {
 	api,
 	areMembersTheSame,
 	AsyncEither,
 	Either,
 	getFullMemberName,
-	getMemberName,
 	hasPermission,
 	Maybe,
 	Member,
@@ -30,6 +48,7 @@ import SimpleForm, {
 import Loader from '../../../components/Loader';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
+import { subMilliseconds } from 'date-fns';
 
 interface PermissionAssignUIState {
 	submitSuccess: boolean;
@@ -98,23 +117,15 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 
 		const [availableMembers, permissions] = membersEither.value;
 
-		const membersWithPermissions = permissions.map(perms => ({
-			...perms,
-			name: getName(perms.member)
-		}));
-
 		const getName = (member: MemberReference): string =>
 			pipe(
-				Maybe.map(getMemberName),
+				Maybe.map(getFullMemberName),
 				Maybe.orSome(stringifyMemberReference(member))
 			)(Maybe.fromArray(availableMembers.filter(areMembersTheSame(member))));
 
-		this.setState(prev => ({
-			...prev,
-
-			state: 'LOADED',
-			membersWithPermissions,
-			availableMembers
+		const membersWithPermissions = permissions.map(perms => ({
+			...perms,
+			name: getName(perms.member)
 		}));
 
 		this.props.updateBreadCrumbs([
@@ -144,6 +155,14 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				type: 'Reference'
 			}
 		]);
+
+		this.setState(prev => ({
+			...prev,
+
+			state: 'LOADED',
+			membersWithPermissions,
+			availableMembers
+		}));
 	}
 
 	public render() {
@@ -168,18 +187,20 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		const values: PermissionInformation = {};
 
 		for (const member of state.membersWithPermissions) {
-			values[`permissions-${stringifyMemberReference(member.member)}`] = member.permissions;
+			values[`${stringifyMemberReference(member.member)}`] = member.permissions;
 		}
 
 		const children = state.membersWithPermissions.flatMap((value, index) => [
 			<Title key={`${stringifyMemberReference(value.member)}-1`}>{value.name}</Title>,
 			<PermissionsEdit
-				name={`permissions-${stringifyMemberReference(value.member)}`}
+				name={`${stringifyMemberReference(value.member)}`}
 				key={`${stringifyMemberReference(value.member)}-2}`}
 				index={index}
+				account={this.props.account}
+				fullWidth={true}
 			/>,
 			<TextBox key={`${stringifyMemberReference(value.member)}-3`}>
-				<Button onClick={this.getRemover(value.member)} buttonType={'none'}>
+				<Button onClick={this.getRemover(value.member)} buttonType="primaryButton">
 					Remove {value.name}
 				</Button>
 			</TextBox>
@@ -245,6 +266,12 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 					membersWithPermissions.push({
 						member: memberID,
 						name: getFullMemberName(memberMaybe.value),
+						permissions: values[memberIDString]
+					});
+				} else {
+					membersWithPermissions.push({
+						member: memberID,
+						name: stringifyMemberReference(memberID),
 						permissions: values[memberIDString]
 					});
 				}
@@ -324,6 +351,9 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				submitSuccess: true
 			});
 		} else {
+			this.setState({
+				submitSuccess: false
+			});
 		}
 	}
 

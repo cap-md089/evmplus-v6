@@ -1,45 +1,63 @@
 #!/usr/bin/env node
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 import { Collection, getSession } from '@mysql/xdevapi';
 import { validator } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
-	AttendanceRecord,
 	AttendanceStatus,
+	CAPEventMemberPermissions,
+	CAPGroupMemberPermissions,
+	CAPRegionMemberPermissions,
+	CAPSquadronMemberPermissions,
+	CAPWingMemberPermissions,
 	CustomAttendanceFieldValue,
 	Either,
-	ExternalPointOfContact,
 	identity,
-	InternalPointOfContact,
 	Maybe,
 	MaybeObj,
 	MemberReference,
-	PointOfContactType,
-	RawEventObject,
+	Permissions,
 	RawServerConfiguration,
-	RawTeamObject,
-	stripProp,
+	StoredMemberPermissions,
 	Validator,
 } from 'common-lib';
 import 'dotenv/config';
-import { confFromRaw, generateResults } from 'server-common';
-
+import { confFromRaw, generateResults, getAccount } from 'server-common';
+// const v5teamsCollection = v5schema.getCollection<RawTeamObject>('Teams');
 const configurationValidator = validator<RawServerConfiguration>(Validator);
 
 const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
 
-export interface V5DiscordServerInformation {
+interface V5DiscordServerInformation {
 	serverID: string;
 	displayFlight: boolean;
 }
 
-export interface V5NewAccountObject {
+interface V5NewAccountObject {
 	adminIDs: MemberReference[];
 	discordServer: MaybeObj<V5DiscordServerInformation>;
 }
 
-export enum V5AccountType {
+enum V5AccountType {
 	CAPSQUADRON,
 	CAPGROUP,
 	CAPWING,
@@ -47,7 +65,8 @@ export enum V5AccountType {
 	CAPEVENT,
 }
 
-export interface V5RawAccountObject extends V5NewAccountObject {
+// @ts-ignore
+interface V5RawAccountObject extends V5NewAccountObject {
 	id: string;
 	mainCalendarID: string;
 	wingCalendarID: string;
@@ -65,7 +84,7 @@ export interface V5RawAccountObject extends V5NewAccountObject {
 	type: V5AccountType;
 }
 
-export interface V5NewAttendanceRecord {
+interface V5NewAttendanceRecord {
 	comments: string;
 	status: AttendanceStatus;
 	planToUseCAPTransportation: boolean;
@@ -75,7 +94,8 @@ export interface V5NewAttendanceRecord {
 	customAttendanceFieldValues: CustomAttendanceFieldValue[];
 }
 
-export interface V5AttendanceRecord extends V5NewAttendanceRecord {
+// @ts-ignore
+interface V5AttendanceRecord extends V5NewAttendanceRecord {
 	timestamp: number;
 	memberID: MemberReference;
 	memberName: string;
@@ -84,10 +104,19 @@ export interface V5AttendanceRecord extends V5NewAttendanceRecord {
 	departureTime: number;
 }
 
-type RawAttendanceRecord<T> = T & {
+// @ts-ignore
+type RawAttendanceRecord<T> = Omit<T, 'sourceEventID' | 'sourceAccountID'> & {
 	accountID: string;
 	eventID: string;
 };
+
+type V5MemberPermissions = Omit<CAPSquadronMemberPermissions, 'type'>;
+
+interface V5StoredMemberPermissions {
+	member: MemberReference;
+	accountID: string;
+	permissions: V5MemberPermissions;
+}
 
 if (Either.isLeft(confEither)) {
 	console.error('Configuration error!', confEither.value);
@@ -120,7 +149,8 @@ process.on('unhandledRejection', (up) => {
 	// @ts-ignore
 	const v6schema = v6session.getSchema('EventManagementv6');
 
-	const moveFromOneToOther = <T>(mapFunc: (inObj: T) => T = identity) => async (
+	// @ts-ignore
+	const moveFromOneToOther = <T>(mapFunc: (inObj: T) => T | PromiseLike<T> = identity) => async (
 		from: Collection<T>,
 		to: Collection<T>
 	) => {
@@ -129,7 +159,7 @@ process.on('unhandledRejection', (up) => {
 		let count = 0;
 
 		for await (const item of generateResults(from.find('true'))) {
-			await to.add(mapFunc(item as T)).execute();
+			await to.add(await mapFunc(item as T)).execute();
 
 			count++;
 		}
@@ -137,7 +167,8 @@ process.on('unhandledRejection', (up) => {
 		return count;
 	};
 
-	const mapFromOneToOther = <T, U>(mapFunc: (inObj: T) => U) => async (
+	// @ts-ignore
+	const mapFromOneToOther = <T, U>(mapFunc: (inObj: T) => U | PromiseLike<U>) => async (
 		from: Collection<T>,
 		to: Collection<U>
 	) => {
@@ -146,7 +177,7 @@ process.on('unhandledRejection', (up) => {
 		let count = 0;
 
 		for await (const item of generateResults(from.find('true'))) {
-			await to.add(mapFunc(item as T)).execute();
+			await to.add(await mapFunc(item as T)).execute();
 
 			count++;
 		}
@@ -154,65 +185,56 @@ process.on('unhandledRejection', (up) => {
 		return count;
 	};
 
-	const v5teamsCollection = v5schema.getCollection<RawTeamObject>('Teams');
-	const v6teamsCollection = v6schema.getCollection<RawTeamObject>('Teams');
+	// const v5teamsCollection = v5schema.getCollection<RawTeamObject>('Teams');
+	// const v6teamsCollection = v6schema.getCollection<RawTeamObject>('Teams');
 
-	const refToMaybe = (
-		mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>
-	): MaybeObj<MemberReference> =>
-		'hasValue' in mem ? mem : mem.type === 'Null' ? Maybe.none() : Maybe.some(mem);
+	// const refToMaybe = (
+	// 	mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>
+	// ): MaybeObj<MemberReference> =>
+	// 	'hasValue' in mem ? mem : mem.type === 'Null' ? Maybe.none() : Maybe.some(mem);
 
-	console.log('Moving teams...');
-	console.log(
-		await moveFromOneToOther<RawTeamObject>((team) => ({
-			...team,
-			cadetLeader: refToMaybe(team.cadetLeader),
-			seniorCoach: refToMaybe(team.seniorCoach),
-			seniorMentor: refToMaybe(team.seniorMentor),
-		}))(v5teamsCollection, v6teamsCollection),
-		'records moved'
-	);
-	console.log('Moved teams.\n');
+	// console.log('Moving teams...');
+	// console.log(
+	// 	await moveFromOneToOther<RawTeamObject>((team) => ({
+	// 		...team,
+	// 		cadetLeader: refToMaybe(team.cadetLeader),
+	// 		seniorCoach: refToMaybe(team.seniorCoach),
+	// 		seniorMentor: refToMaybe(team.seniorMentor),
+	// 	}))(v5teamsCollection, v6teamsCollection),
+	// 	'records moved'
+	// );
+	// console.log('Moved teams.\n');
 
-	const v5eventsCollection = v5schema.getCollection<RawEventObject>('Events');
-	const v6eventsCollection = v6schema.getCollection<RawEventObject>('Events');
+	// const v5eventsCollection = v5schema.getCollection<RawEventObject>('Events');
+	// const v6eventsCollection = v6schema.getCollection<RawEventObject>('Events');
 
-	const correctPOC = (
-		poc:
-			| InternalPointOfContact
-			| ExternalPointOfContact
-			| (Omit<InternalPointOfContact, 'memberReference'> & { member: MemberReference })
-	): InternalPointOfContact | ExternalPointOfContact =>
-		poc.type === PointOfContactType.EXTERNAL
-			? poc
-			: 'member' in poc
-			? {
-					...(stripProp('member')(poc) as Omit<
-						InternalPointOfContact,
-						'memberReference'
-					>),
-					memberReference: poc.member,
-			  }
-			: poc;
+	// const correctPOC = (
+	// 	poc:
+	// 		| InternalPointOfContact
+	// 		| ExternalPointOfContact
+	// 		| (Omit<InternalPointOfContact, 'memberReference'> & { member: MemberReference })
+	// ): InternalPointOfContact | ExternalPointOfContact =>
+	// 	poc.type === PointOfContactType.EXTERNAL
+	// 		? poc
+	// 		: 'member' in poc
+	// 		? {
+	// 				...(stripProp('member')(poc) as Omit<
+	// 					InternalPointOfContact,
+	// 					'memberReference'
+	// 				>),
+	// 				memberReference: poc.member,
+	// 		  }
+	// 		: poc;
 
-	console.log('Moving events...');
-	console.log(
-		await moveFromOneToOther<RawEventObject>((event) => ({
-			...event,
-			pointsOfContact: event.pointsOfContact.map(correctPOC),
-		}))(v5eventsCollection, v6eventsCollection),
-		'records moved'
-	);
-	console.log('Moved events.\n');
-
-	// const move = async (table: string) => {
-	// 	console.log(`Moving ${table}...`);
-	// 	await moveFromOneToOther(identity)(
-	// 		v5schema.getCollection(table),
-	// 		v6schema.getCollection(table)
-	// 	);
-	// 	console.log(`Moved ${table}.\n`);
-	// };
+	// console.log('Moving events...');
+	// console.log(
+	// 	await moveFromOneToOther<RawEventObject>((event) => ({
+	// 		...event,
+	// 		pointsOfContact: event.pointsOfContact.map(correctPOC),
+	// 	}))(v5eventsCollection, v6eventsCollection),
+	// 	'records moved'
+	// );
+	// console.log('Moved events.\n');
 
 	const v5accountsCollection = v5schema.getCollection<V5RawAccountObject>('Accounts');
 	const v6accountsCollection = v6schema.getCollection<AccountObject>('Accounts');
@@ -289,38 +311,177 @@ process.on('unhandledRejection', (up) => {
 	);
 	console.log('Moved accounts.\n');
 
-	const v5attendanceCollection = v5schema.getCollection<RawAttendanceRecord<V5AttendanceRecord>>(
-		'Attendance'
+	// const v5attendanceCollection = v5schema.getCollection<RawAttendanceRecord<V5AttendanceRecord>>(
+	// 	'Attendance'
+	// );
+	// const v6attendanceCollection = v6schema.getCollection<RawAttendanceRecord<AttendanceRecord>>(
+	// 	'Attendance'
+	// );
+
+	// console.log('Moving attendance...');
+	// console.log(
+	// 	await mapFromOneToOther<
+	// 		RawAttendanceRecord<V5AttendanceRecord>,
+	// 		RawAttendanceRecord<AttendanceRecord>
+	// 	>((record) => ({
+	// 		accountID: record.accountID,
+	// 		comments: record.comments,
+	// 		customAttendanceFieldValues: record.customAttendanceFieldValues,
+	// 		eventID: record.eventID,
+	// 		memberID: record.memberID,
+	// 		memberName: record.memberName,
+	// 		planToUseCAPTransportation: record.planToUseCAPTransportation,
+	// 		shiftTime: {
+	// 			arrivalTime: record.arrivalTime,
+	// 			departureTime: record.departureTime,
+	// 		},
+	// 		status: record.status,
+	// 		summaryEmailSent: record.summaryEmailSent,
+	// 		timestamp: record.timestamp,
+	// 	}))(v5attendanceCollection, v6attendanceCollection),
+	// 	'records moved'
+	// );
+	// console.log('Moved attendance.\n');
+
+	const v5permissionsCollection = v5schema.getCollection<V5StoredMemberPermissions>(
+		'UserPermissions'
 	);
-	const v6attendanceCollection = v6schema.getCollection<RawAttendanceRecord<AttendanceRecord>>(
-		'Attendance'
+	const v6permissionsCollection = v6schema.getCollection<StoredMemberPermissions>(
+		'UserPermissions'
 	);
 
-	console.log('Moving attendance...');
+	const getEventPermissions = (permissions: V5MemberPermissions): CAPEventMemberPermissions => ({
+		type: AccountType.CAPEVENT,
+
+		AdministerPT: permissions.AdministerPT,
+		AssignTasks: permissions.AssignTasks,
+		AssignTemporaryDutyPositions: permissions.AssignTemporaryDutyPositions,
+		AttendanceView: permissions.AttendanceView,
+		CreateNotifications: permissions.CreateNotifications,
+		EventContactSheet: permissions.EventContactSheet,
+		EventLinkList: permissions.EventLinkList,
+		FileManagement: permissions.FileManagement,
+		FlightAssign: permissions.FlightAssign,
+		ManageEvent: permissions.ManageEvent,
+		ManageTeam: permissions.ManageTeam,
+		MusterSheet: permissions.MusterSheet,
+		ORMOPORD: permissions.ORMOPORD,
+		PermissionManagement: permissions.PermissionManagement,
+		RegistryEdit: permissions.RegistryEdit,
+		ScanAdd: permissions.ScanAdd,
+		ViewAccountNotifications:
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
+	});
+
+	const getSquadronPermissions = (
+		permissions: V5MemberPermissions
+	): CAPSquadronMemberPermissions => ({
+		type: AccountType.CAPSQUADRON,
+
+		ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
+		...permissions,
+	});
+
+	const getGroupPermissions = (permissions: V5MemberPermissions): CAPGroupMemberPermissions => ({
+		type: AccountType.CAPGROUP,
+
+		AssignTasks: permissions.AssignTasks,
+		AssignTemporaryDutyPositions: permissions.AssignTemporaryDutyPositions,
+		AttendanceView: permissions.AttendanceView,
+		CreateNotifications: permissions.CreateNotifications,
+		EventContactSheet: permissions.EventContactSheet,
+		EventLinkList: permissions.EventLinkList,
+		FileManagement: permissions.FileManagement,
+		ManageEvent: permissions.ManageEvent,
+		ManageTeam: permissions.ManageTeam,
+		ORMOPORD: permissions.ORMOPORD,
+		PermissionManagement: permissions.PermissionManagement,
+		RegistryEdit: permissions.RegistryEdit,
+		ScanAdd: permissions.ScanAdd,
+		ViewAccountNotifications:
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
+	});
+
+	const getWingPermissions = (permissions: V5MemberPermissions): CAPWingMemberPermissions => ({
+		type: AccountType.CAPWING,
+
+		AssignTasks: permissions.AssignTasks,
+		AssignTemporaryDutyPositions: permissions.AssignTemporaryDutyPositions,
+		AttendanceView: permissions.AttendanceView,
+		CreateEventAccount: Permissions.CreateEventAccount.NO,
+		CreateNotifications: permissions.CreateNotifications,
+		EventContactSheet: permissions.EventContactSheet,
+		EventLinkList: permissions.EventLinkList,
+		FileManagement: permissions.FileManagement,
+		ManageEvent: permissions.ManageEvent,
+		ManageTeam: permissions.ManageTeam,
+		ORMOPORD: permissions.ORMOPORD,
+		PermissionManagement: permissions.PermissionManagement,
+		RegistryEdit: permissions.RegistryEdit,
+		ScanAdd: permissions.ScanAdd,
+		ViewAccountNotifications:
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
+	});
+
+	const getRegionPermissions = (
+		permissions: V5MemberPermissions
+	): CAPRegionMemberPermissions => ({
+		type: AccountType.CAPREGION,
+
+		AssignTasks: permissions.AssignTasks,
+		AssignTemporaryDutyPositions: permissions.AssignTemporaryDutyPositions,
+		AttendanceView: permissions.AttendanceView,
+		CreateEventAccount: Permissions.CreateEventAccount.NO,
+		CreateNotifications: permissions.CreateNotifications,
+		EventContactSheet: permissions.EventContactSheet,
+		EventLinkList: permissions.EventLinkList,
+		FileManagement: permissions.FileManagement,
+		ManageEvent: permissions.ManageEvent,
+		ManageTeam: permissions.ManageTeam,
+		ORMOPORD: permissions.ORMOPORD,
+		PermissionManagement: permissions.PermissionManagement,
+		RegistryEdit: permissions.RegistryEdit,
+		ScanAdd: permissions.ScanAdd,
+		ViewAccountNotifications:
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
+	});
+
+	const getPermissions = (accountType: AccountType) => (permissions: V5MemberPermissions) =>
+		accountType === AccountType.CAPEVENT
+			? getEventPermissions(permissions)
+			: accountType === AccountType.CAPSQUADRON
+			? getSquadronPermissions(permissions)
+			: accountType === AccountType.CAPGROUP
+			? getGroupPermissions(permissions)
+			: accountType === AccountType.CAPWING
+			? getWingPermissions(permissions)
+			: getRegionPermissions(permissions);
+
+	console.log('Moving UserPermissions...');
 	console.log(
-		await mapFromOneToOther<
-			RawAttendanceRecord<V5AttendanceRecord>,
-			RawAttendanceRecord<AttendanceRecord>
-		>((record) => ({
-			accountID: record.accountID,
-			comments: record.comments,
-			customAttendanceFieldValues: record.customAttendanceFieldValues,
-			eventID: record.eventID,
-			memberID: record.memberID,
-			memberName: record.memberName,
-			planToUseCAPTransportation: record.planToUseCAPTransportation,
-			shiftTime: {
-				arrivalTime: record.arrivalTime,
-				departureTime: record.departureTime,
-			},
-			status: record.status,
-			summaryEmailSent: record.summaryEmailSent,
-			timestamp: record.timestamp,
-		}))(v5attendanceCollection, v6attendanceCollection),
+		await mapFromOneToOther<V5StoredMemberPermissions, StoredMemberPermissions>(
+			({ permissions, accountID, member }) =>
+				getAccount(v6schema)(accountID)
+					.map<StoredMemberPermissions>(({ type }) => ({
+						type,
+						permissions: getPermissions(type)(permissions),
+						member,
+						accountID,
+					}))
+					.fullJoin()
+		)(v5permissionsCollection, v6permissionsCollection),
 		'records moved'
 	);
-	console.log('Moved attendance.\n');
+	console.log('Moved UserPermissions.');
 
+	// const move = async (table: string) => {
+	// 	console.log(`Moving ${table}...`);
+	// 	await moveFromOneToOther(identity)(
+	// 		v5schema.getCollection(table),
+	// 		v6schema.getCollection(table)
+	// 	);
+	// 	console.log(`Moved ${table}.\n`);
+	// };
 	// await move('Attendance');
 	// await move('DiscordAccounts');
 	// await move('ExtraAccountMembership');
@@ -341,7 +502,6 @@ process.on('unhandledRejection', (up) => {
 	// await move('Tasks');
 	// await move('Teams');
 	// await move('UserAccountInfo');
-	// await move('UserPermissions');
 
 	await Promise.all([v5session.close(), v6session.close()]);
 

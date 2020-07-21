@@ -4,7 +4,7 @@ import { findAndBindC, generateResults } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.member.permissions.GetPermissions> = req =>
 	asyncRight(
-		req.mysqlx.getCollection<StoredMemberPermissions>('MemberPermissions'),
+		req.mysqlx.getCollection<StoredMemberPermissions>('UserPermissions'),
 		errorGenerator('Could not get member permissions')
 	)
 		.map(

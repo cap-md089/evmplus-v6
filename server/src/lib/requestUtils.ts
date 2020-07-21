@@ -68,7 +68,7 @@ export const validateRequest = <T extends any>(validator: ValidatorImpl<T>) => <
 		Either.leftMap<ValidatorFail, ValidatorError, T>(validatorState => ({
 			type: 'VALIDATOR',
 			code: 400,
-			message: 'There was a problem with the request',
+			message: 'There was a problem with the request body',
 			validatorState,
 		}))(validator.validate(req.body, 'body')),
 		errorGenerator('Could not validate body')

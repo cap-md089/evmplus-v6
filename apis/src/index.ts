@@ -8,6 +8,9 @@ type Tree = {
 		markErrorDone: api.errors.MarkErrorAsDone;
 	};
 	events: {
+		account: {
+			create: api.events.accounts.AddEventAccount;
+		};
 		attendance: {
 			get: api.events.attendance.GetAttendance;
 			add: api.events.attendance.Add;

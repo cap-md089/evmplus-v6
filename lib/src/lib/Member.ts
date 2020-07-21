@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { complement, pipe } from 'ramda';
 import { ServerError } from '../typings/api';
 import {
@@ -8,7 +27,6 @@ import {
 	CAPProspectiveMemberReference,
 	Member,
 	MemberPermission,
-	MemberPermissions,
 	MemberReference,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
@@ -120,12 +138,16 @@ export const getFullMemberName = (member: {
 // : Maybe.none();
 
 export const hasSpecificPermission = <T extends MemberPermission>(permission: T) => (
-	threshold: MemberPermissions[T] = 1 as MemberPermissions[T]
-) => (user: User) => user.permissions[permission] === threshold || isRioux(user);
+	threshold: number
+) => (user: User) =>
+	// @ts-ignore
+	(user.permissions[permission] ?? 0) === threshold || isRioux(user);
 
 export const hasPermission = <T extends MemberPermission>(permission: T) => (
-	threshold: MemberPermissions[T] = 1 as MemberPermissions[T]
-) => (user: User) => user.permissions[permission] >= threshold || isRioux(user);
+	threshold: number = 0
+) => (user: User) =>
+	// @ts-ignore
+	(user.permissions[permission] ?? 0) >= threshold || isRioux(user);
 
 export const asReference = (member: Member): MemberReference =>
 	member.type === 'CAPNHQMember'

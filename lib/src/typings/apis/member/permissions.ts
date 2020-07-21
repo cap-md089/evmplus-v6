@@ -34,7 +34,7 @@ export interface GetPermissions {
 
 	requiresMember: 'required';
 
-	needsToken: true;
+	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }

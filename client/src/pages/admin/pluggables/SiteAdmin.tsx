@@ -1,4 +1,4 @@
-import { User, hasPermission, hasOneDutyPosition } from 'common-lib';
+import { User, hasPermission, hasOneDutyPosition, AccountType } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
@@ -32,7 +32,8 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					<Link to="/admin/attendance">View Attendance</Link>
 					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
-					{hasPermission('FlightAssign')()(this.props.member) ? (
+					{this.props.account.type === AccountType.CAPSQUADRON &&
+					hasPermission('FlightAssign')()(this.props.member) ? (
 						<>
 							<br />
 							<Link to="/admin/flightassign">Assign flight members</Link>
@@ -53,9 +54,11 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					{(this.props.member.type === 'CAPProspectiveMember' ||
 						this.props.member.type === 'CAPNHQMember') &&
 					(this.props.member.seniorMember ||
-						hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Commander', 'Cadet Executive Officer'])(
-							this.props.member
-						)) ? (
+						hasOneDutyPosition([
+							'Cadet Commander',
+							'Cadet Deputy Commander',
+							'Cadet Executive Officer'
+						])(this.props.member)) ? (
 						<>
 							<br />
 							<Link to="/admin/emaillist">Email selector</Link>

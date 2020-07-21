@@ -1,4 +1,24 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import {
+	AccountLinkTarget,
 	advancedMultCheckboxReturn,
 	always,
 	api,
@@ -9,6 +29,7 @@ import {
 	AttendanceRecord,
 	canSignUpForEvent,
 	CAPMemberContact,
+	CAPNHQMemberReference,
 	effectiveManageEventPermissionForEvent,
 	Either,
 	EitherObj,
@@ -19,11 +40,14 @@ import {
 	FullTeamObject,
 	get,
 	getMemberEmail,
+	getMemberName,
 	getMemberPhone,
 	getURIComponent,
+	HTTPError,
 	Maybe,
 	MaybeObj,
 	Member,
+	MemberCreateError,
 	MemberReference,
 	NewAttendanceRecord,
 	NewEventObject,
@@ -32,14 +56,8 @@ import {
 	PointOfContactType,
 	presentMultCheckboxReturn,
 	RawEventObject,
-	User,
-	isCAPMember,
 	Right,
-	CAPNHQMemberReference,
-	MemberCreateError,
-	AccountLinkTarget,
-	HTTPError,
-	getMemberName
+	User
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -49,6 +67,7 @@ import Button from '../../components/Button';
 import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
+import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import { DateTimeInput, Label, TextBox, TextInput } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
@@ -57,7 +76,6 @@ import SigninLink from '../../components/SigninLink';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
-import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 
 const noop = () => void 0;
 
