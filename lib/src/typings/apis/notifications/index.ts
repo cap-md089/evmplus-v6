@@ -14,9 +14,9 @@ export interface GetNotification {
 
 	requiresMember: 'required';
 
-	needsToken: true;
+	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }
 
 export interface GetNotificationList {
@@ -30,9 +30,9 @@ export interface GetNotificationList {
 
 	requiresMember: 'required';
 
-	needsToken: true;
+	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }
 
 export interface ToggleNotificationRead {
@@ -46,7 +46,7 @@ export interface ToggleNotificationRead {
 
 	needsToken: true;
 
-	useValidator: true;
+	useValidator: false;
 }
 
 export interface DeleteNotification {
@@ -60,5 +60,5 @@ export interface DeleteNotification {
 
 	needsToken: true;
 
-	useValidator: true;
+	useValidator: false;
 }
