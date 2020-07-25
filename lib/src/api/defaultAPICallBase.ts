@@ -18,7 +18,7 @@
  */
 
 import { AsyncEither, asyncRight } from '../lib/AsyncEither';
-import { EitherObj } from '../lib/Either';
+import { EitherObj, Either } from '../lib/Either';
 import {
 	api,
 	APIEither,
@@ -165,8 +165,11 @@ export default (fetchFunction: FetchFunction) => <
 				request => fetchFunction(customURLReplacer(params), request),
 				errorGenerator('Could not complete request')
 			)
-			.flatMap(
-				response =>
-					response.json.apply(response) as Promise<APIEither<APIEndpointReturnValue<T>>>
+			.flatMap(response =>
+				response.status === 204
+					? Either.right(void 0 as APIEndpointReturnValue<T>)
+					: (response.json.apply(response) as Promise<
+							APIEither<APIEndpointReturnValue<T>>
+					  >)
 			);
 };
