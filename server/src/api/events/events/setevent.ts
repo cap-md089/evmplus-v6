@@ -57,9 +57,6 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 					},
 					event,
 				])
-				.tap(([newEvent, oldEvent]) => {
-					console.log(newEvent);
-				})
 				.flatMap(([newEvent, oldEvent]) =>
 					saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
 						newEvent
