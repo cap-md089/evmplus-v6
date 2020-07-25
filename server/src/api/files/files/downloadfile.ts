@@ -76,8 +76,6 @@ export const func = () =>
 		await req.mysqlxSession.close();
 
 		await downloadFileObject(req.configuration)(file)(res);
-
-		res.end();
 	});
 
 export default func();
