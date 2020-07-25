@@ -64,11 +64,11 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	const corsOptions: cors.CorsOptions = {
 		origin(origin, callback) {
 			if (
-				origin?.endsWith(
-					process.env.NODE_ENV === 'productoin'
-						? '.capunit.com'
-						: '.localcapunit.com:3000'
-				) ||
+				(process.env.NODE_ENV === 'production'
+					? origin?.endsWith('.capunit.com')
+					: origin?.endsWith('.localcapunit.com:3000') ||
+					  origin?.endsWith('.localcapunit.com:3001') ||
+					  origin?.endsWith('.capunit.com:3001')) ||
 				!origin
 			) {
 				callback(null, true);
@@ -77,7 +77,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			}
 		},
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
-		allowedHeaders: ['Authorizatoin', 'Content-Type', 'authorization', 'content-type'],
+		allowedHeaders: ['Authorization', 'Content-Type', 'authorization', 'content-type'],
 	};
 
 	router.use(cors(corsOptions));
