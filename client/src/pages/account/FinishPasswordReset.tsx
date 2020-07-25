@@ -85,7 +85,7 @@ export default class FinishPasswordResetForm extends Page<
 				<Label />
 				<TextBox>Enter a new password</TextBox>
 
-				<PasswordForm name="newPassword" />
+				<PasswordForm name="newPassword" fullWidth={true} />
 			</SimpleForm>
 		);
 	}
