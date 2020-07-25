@@ -50,6 +50,10 @@ export type Requests<P extends ParamType = {}, B = any> =
 	| PAM.BasicMaybeMemberRequest<P, B>;
 
 export default async (err: Error, req: Requests, l?: ServerError) => {
+	if (err.message.startsWith('Not allowed by CORS')) {
+		return;
+	}
+
 	console.error(err);
 
 	const errorCollection = req.mysqlx.getCollection<Errors>('Errors');

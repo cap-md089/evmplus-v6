@@ -26,6 +26,12 @@ export default async (err: Error, req: Requests, res: Response, next: NextFuncti
 		return next();
 	}
 
+	// CORS issue; the connection may not have been established
+	if (err.message.startsWith('Not allowed by CORS')) {
+		await req.mysqlxSession?.close();
+		return next();
+	}
+
 	// There was an error formatting the JSON properly
 	if (err.message.startsWith('Unexpected token ')) {
 		await req.mysqlxSession.close();
