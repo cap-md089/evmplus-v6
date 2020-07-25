@@ -46,6 +46,7 @@ import {
 	StoredMemberPermissions,
 	stripProp,
 	Validator,
+	errorGenerator,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -476,11 +477,22 @@ process.on('unhandledRejection', (up) => {
 						member,
 						accountID,
 					}))
+					.leftMap(
+						(err) =>
+							err.type === 'OTHER' && err.code === 404
+								? {
+										code: 404,
+										type: 'OTHER' as const,
+										message: `Could not find account: ${accountID}`,
+								  }
+								: err,
+						errorGenerator('Could not get account info')
+					)
 					.fullJoin()
 		)(v5permissionsCollection, v6permissionsCollection),
 		'records moved'
 	);
-	console.log('Moved UserPermissions.');
+	console.log('Moved UserPermissions.\n');
 
 	const move = async (table: string) => {
 		console.log(`Moving ${table}...`);
@@ -490,9 +502,8 @@ process.on('unhandledRejection', (up) => {
 		);
 		console.log(`Moved ${table}.\n`);
 	};
-	await move('Attendance');
 	await move('DiscordAccounts');
-	await move('ExtraAccountMembership');
+	// await move('ExtraAccountMembership');
 	await move('ExtraMemberInformation');
 	await move('Files');
 	await move('MemberSessions');
