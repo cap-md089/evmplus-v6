@@ -183,7 +183,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (hasPermission('RegistryEdit')()(this.props.member)) {
+		if (!hasPermission('RegistryEdit')()(this.props.member)) {
 			return <div>You do not have permission to do that</div>;
 		}
 
