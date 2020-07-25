@@ -170,8 +170,8 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 		team: TeamObjectEdit,
 		errors: BooleanFields<TeamObjectEdit>,
 		changed: BooleanFields<TeamObjectEdit>,
-		valid: boolean
+		hasError: boolean
 	) {
-		this.props.onTeamFormSubmit(valid ? Maybe.some(team) : Maybe.none());
+		this.props.onTeamFormSubmit(hasError ? Maybe.none() : Maybe.some(team));
 	}
 }
