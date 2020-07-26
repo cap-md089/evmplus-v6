@@ -44,8 +44,7 @@ The following instructions will be for a Linux server
 3. Copy the contents of `filestore_access_key.pub` to `~/.ssh/authorized_keys` in the user folder for the user created before
 4. Ensure the SSL key is accessible to the server process.
     - If you are not using Docker, configure `server/.env` to point to the new SSL key
-    - If you are using Docker, make sure `REMOTE_DRIVE_KEY_FILE` points to the new SSL key when running `docker build` and is in the repository
-		- The 'keys' directory is ignored, so it is suggested to create the 'keys' directory and place the file in there
+    - If you are using Docker, make sure `REMOTE_DRIVE_KEY_FILE` points to the new SSL key when running `docker build` and is in the repository - The 'keys' directory is ignored, so it is suggested to create the 'keys' directory and place the file in there
 
 ### AWS setup
 
@@ -56,23 +55,23 @@ The following instructions will be for a Linux server
 ### Google setup
 
 1. Service account setup
-	1. Go to [the Google Cloud console](https://console.cloud.google.com/)
-	2. Create a new project
-	3. In the navigation menu, go to 'APIs & Services' -> 'Library'
-	4. Find the Google Calendar API, and enable it
-	5. In the navigation menu, go to 'IAM & Admin' -> 'Service accounts'
-	6. Click 'Create service account' at the top
-	7. Give it a name, and give it 'Project Owner' as a role
-	8. Don't grant access to any users
-	9. Back at the 'Service accounts' page, in the actions menu on the right, click 'Create key'
-	10. Select JSON
-	11. Save this to a google-keys directory within this repository
-		- .gitignore is set up to ignore all files within the 'keys' directory; it would be best to create a 'keys/google-keys' directory and place this JSON file in said directory
-		- Be sure to name it according to the following format: `${accountID}.json`, where accountID is the ID of the account you will be creating later
+    1. Go to [the Google Cloud console](https://console.cloud.google.com/)
+    2. Create a new project
+    3. In the navigation menu, go to 'APIs & Services' -> 'Library'
+    4. Find the Google Calendar API, and enable it
+    5. In the navigation menu, go to 'IAM & Admin' -> 'Service accounts'
+    6. Click 'Create service account' at the top
+    7. Give it a name, and give it 'Project Owner' as a role
+    8. Don't grant access to any users
+    9. Back at the 'Service accounts' page, in the actions menu on the right, click 'Create key'
+    10. Select JSON
+    11. Save this to a google-keys directory within this repository
+        - .gitignore is set up to ignore all files within the 'keys' directory; it would be best to create a 'keys/google-keys' directory and place this JSON file in said directory
+        - Be sure to name it according to the following format: `${accountID}.json`, where accountID is the ID of the account you will be creating later
 2. Google calendar setup
-	1. Create two Google calendars, one to send to your Wing and one to use for local squadron use
-	2. On each calendar, add the service account from before with the ability to 'Manage Events and Sharing'
-	3. Copy the IDs of these Google calendars, they will be needed for the account setup step later
+    1. Create two Google calendars, one to send to your Wing and one to use for local squadron use
+    2. On each calendar, add the service account from before with the ability to 'Manage Events and Sharing'
+    3. Copy the IDs of these Google calendars, they will be needed for the account setup step later
 
 ### Discord bot setup
 
@@ -100,6 +99,9 @@ As it is a docker image, you can run the following:
 ### Creating an account and supplying it data
 
 When you have all the parts together, you can run the `util-cli/dist/createAccount.js` file to create your squadron account
+
+Once the account is created, you will need to run `util-cli/dist/importCapwatchfile.js` to load squadron data, providing a path to a CAPWATCH file
+**Note: this has to be done on a Linux machine**
 
 ### Accessing the site
 
