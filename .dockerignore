@@ -1,4 +1,6 @@
 */node_modules
+*/dist
+*/build
 server/npm-debug.log
 server/mysqldumps
 server/capwatch-zips

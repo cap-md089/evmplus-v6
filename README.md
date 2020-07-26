@@ -1,14 +1,12 @@
 # CAPUnit.com v6
 
-The event and unit management site for Civil Air Patrol
+The premiere event and unit management site for Civil Air Patrol
 
 Current units running the CAPUnit suite:
 
-1. [MD001 - Maryland Wing](https://md001.capunit.com/)
-2. [MD089 - St. Mary's Composite Squadron](https://md089.capunit.com/)
-3. [MD008 - Harford Composite Squadron](https://md008.capunit.com/)
-4. [MD003 - Frederick Composite Squadron](https://md003.capunit.com/)
-5. [MD007 - Calvert Cadet Squadron](https://md007.capunit.com/)
+1. [MD089 - St. Mary's Composite Squadron](https://md089.capunit.com/)
+2. [MD008 - Harford Composite Squadron](https://md008.capunit.com/)
+3. [MD003 - Frederick Composite Squadron](https://md003.capunit.com/)
 
 ## Requirements for building and running
 
@@ -21,7 +19,8 @@ This program depends on the following to fully function:
 1. A [MySQL server](#mysql-setup) (required)
 2. An [sFTP server](#sftp-setup) (required)
 3. [AWS SMTP credentials](#aws-setup) (required)
-4. A [Discord bot token](#discord-bot-setup) (optional)
+4. [Google keys and calendar setup](#google-setup) (required)
+5. A [Discord bot token](#discord-bot-setup) (optional)
 
 To help with setup, see [building the CLI utilities.](#building-the-cli-utilities)
 
@@ -43,13 +42,37 @@ The following instructions will be for a Linux server
     `ssh-keygen -b 2048 -f filestore_access_key`
 
 3. Copy the contents of `filestore_access_key.pub` to `~/.ssh/authorized_keys` in the user folder for the user created before
-4. Ensure that the SSL key is accessible to the server process, and configure `server/.env` to point to the new SSL key
+4. Ensure the SSL key is accessible to the server process.
+    - If you are not using Docker, configure `server/.env` to point to the new SSL key
+    - If you are using Docker, make sure `REMOTE_DRIVE_KEY_FILE` points to the new SSL key when running `docker build` and is in the repository
+		- The 'keys' directory is ignored, so it is suggested to create the 'keys' directory and place the file in there
 
 ### AWS setup
 
 1. [Acquire AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html)
 2. Manage the IAM user created to allow access to SMTP
 3. Store the AWS credentials in `server/.env`
+
+### Google setup
+
+1. Service account setup
+	1. Go to [the Google Cloud console](https://console.cloud.google.com/)
+	2. Create a new project
+	3. In the navigation menu, go to 'APIs & Services' -> 'Library'
+	4. Find the Google Calendar API, and enable it
+	5. In the navigation menu, go to 'IAM & Admin' -> 'Service accounts'
+	6. Click 'Create service account' at the top
+	7. Give it a name, and give it 'Project Owner' as a role
+	8. Don't grant access to any users
+	9. Back at the 'Service accounts' page, in the actions menu on the right, click 'Create key'
+	10. Select JSON
+	11. Save this to a google-keys directory within this repository
+		- .gitignore is set up to ignore all files within the 'keys' directory; it would be best to create a 'keys/google-keys' directory and place this JSON file in said directory
+		- Be sure to name it according to the following format: `${accountID}.json`, where accountID is the ID of the account you will be creating later
+2. Google calendar setup
+	1. Create two Google calendars, one to send to your Wing and one to use for local squadron use
+	2. On each calendar, add the service account from before with the ability to 'Manage Events and Sharing'
+	3. Copy the IDs of these Google calendars, they will be needed for the account setup step later
 
 ### Discord bot setup
 
@@ -64,7 +87,7 @@ The following instructions will be for a Linux server
 
 In the repository directory, build the docker image:
 
-`docker build --tag capunit-com .`
+`docker build --build-arg GOOGLE_KEYS_PATH=keys/google-keys --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag capunit-com .`
 
 When you change the server configuration, you will have to run this command again
 
@@ -72,6 +95,18 @@ When you change the server configuration, you will have to run this command agai
 
 As it is a docker image, you can run the following:
 
-`docker run -it --name=capunit-com -v /google-keys:/google-keys:ro -v /drive-ssl-key:/drive-ssl-key:ro -p 80:3001 capunit-com:1.0`
+`docker run -rm --name=capunit-com -p 80:3001 capunit-com:latest`
 
-This command assumes that the required Google service account keys are in the `/google-keys` folder and that the SSL key used for the sFTP server is located in `/drive-ssl-key` and has the appropriate path specified in `server/.env`
+### Creating an account and supplying it data
+
+When you have all the parts together, you can run the `util-cli/dist/createAccount.js` file to create your squadron account
+
+### Accessing the site
+
+To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.capunit.com`.
+
+## Alternatively...
+
+If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `support@capunit.com` to request an official CAPUnit.com website.
+
+This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the CAPUnit.com domain.
