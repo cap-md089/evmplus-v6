@@ -64,11 +64,8 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	const corsOptions: cors.CorsOptions = {
 		origin(origin, callback) {
 			if (
-				(process.env.NODE_ENV === 'production'
-					? origin?.endsWith('.capunit.com')
-					: origin?.endsWith('.localcapunit.com:3000') ||
-					  origin?.endsWith('.localcapunit.com:3001') ||
-					  origin?.endsWith('.capunit.com:3001')) ||
+				process.env.NODE_ENV !== 'production' ||
+				origin?.endsWith('.capunit.com') ||
 				!origin
 			) {
 				callback(null, true);
