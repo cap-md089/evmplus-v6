@@ -47,6 +47,8 @@ import {
 	stripProp,
 	Validator,
 	errorGenerator,
+	CAPExtraMemberInformation,
+	stringifyMemberReference,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -494,6 +496,32 @@ process.on('unhandledRejection', (up) => {
 	);
 	console.log('Moved UserPermissions.\n');
 
+	console.log('Moving ExtraMemberInformation...');
+	const stored: { [key: string]: boolean } = {};
+
+	const stringifyRecord = (rec: CAPExtraMemberInformation) =>
+		`${rec.accountID}-${stringifyMemberReference(rec.member)}`;
+
+	await v6schema.getCollection('ExtraMemberInformation').remove('true').execute();
+
+	let count = 0;
+	for await (const i of generateResults(
+		v5schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation').find('true')
+	)) {
+		if (!stored[stringifyRecord(i)]) {
+			stored[stringifyRecord(i)] = true;
+
+			await v6schema
+				.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation')
+				.add(i)
+				.execute();
+
+			count++;
+		}
+	}
+	console.log(count, 'records moved');
+	console.log('Moved ExtraMemberInformation');
+
 	const move = async (table: string) => {
 		console.log(`Moving ${table}...`);
 		await moveFromOneToOther(identity)(
@@ -504,7 +532,6 @@ process.on('unhandledRejection', (up) => {
 	};
 
 	await move('DiscordAccounts');
-	await move('ExtraMemberInformation');
 	await move('Files');
 	await move('MemberSessions');
 	await move('NHQ_CadetActivities');
