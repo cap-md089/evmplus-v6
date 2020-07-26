@@ -12,11 +12,14 @@ import {
 	RawCAPSquadronAccountObject,
 	AccountType,
 	AccountObject,
+	MemberReference,
+	getDefaultAdminPermissions,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw } from 'server-common';
 import { createInterface } from 'readline';
 import { promisify } from 'util';
+import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
 
 const configurationValidator = validator<RawServerConfiguration>(Validator);
 
@@ -120,6 +123,22 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		.getCollection<AccountObject>('Accounts')
 		.add(accountObj)
 		.execute();
+
+	let capidInput = '';
+	while (isNaN(parseInt(capidInput, 10))) {
+		capidInput = await asker('What is your CAP ID number? - ');
+	}
+	const member: MemberReference = {
+		type: 'CAPNHQMember',
+		id: parseInt(capidInput, 10),
+	};
+
+	await setPermissionsForMemberInAccount(
+		session.getSchema(conf.DB_SCHEMA),
+		member,
+		getDefaultAdminPermissions(AccountType.CAPSQUADRON),
+		accountObj
+	);
 
 	await session.close();
 
