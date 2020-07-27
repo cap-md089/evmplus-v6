@@ -49,6 +49,7 @@ import {
 	errorGenerator,
 	CAPExtraMemberInformation,
 	stringifyMemberReference,
+	RegistryValues,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -531,6 +532,25 @@ process.on('unhandledRejection', (up) => {
 		console.log(`Moved ${table}.\n`);
 	};
 
+	type V6RegistryType = Omit<RegistryValues, 'Website'> & {
+		Website: Omit<RegistryValues['Website'], 'FaviconID'>;
+	};
+	const v5registry = v5schema.getCollection<V6RegistryType>('Registry');
+	const v6registry = v6schema.getCollection<RegistryValues>('Registry');
+
+	console.log('Moving Registry...');
+	console.log(
+		await mapFromOneToOther<V6RegistryType, RegistryValues>((reg) => ({
+			...reg,
+			Website: {
+				...reg.Website,
+				FaviconID: Maybe.none(),
+			},
+		}))(v5registry, v6registry),
+		'records moved'
+	);
+	console.log('Moved Registry.');
+
 	await move('DiscordAccounts');
 	await move('Files');
 	await move('MemberSessions');
@@ -543,7 +563,6 @@ process.on('unhandledRejection', (up) => {
 	await move('NHQ_Organization');
 	await move('PasswordResetTokens');
 	await move('ProspectiveMembers');
-	await move('Registry');
 	await move('Tasks');
 	await move('Teams');
 	await move('UserAccountInfo');

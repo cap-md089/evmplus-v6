@@ -55,7 +55,7 @@ ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 ENV GOOGLE_KEYS_PATH /google-keys
 
 # Install the unzip command to import CAPWATCH files
-RUN apt-get update && apt-get install -y unzip
+RUN apt-get update && apt-get install -y unzip imagemagick --no-install-recommends
 
 COPY --from=builder /usr/capunit-com/lib ./lib
 RUN cd lib && npm install --no-package-lock --production

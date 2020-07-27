@@ -61,6 +61,8 @@ const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
 
 interface FileInputProps extends InputProps<string[]> {
 	filter?: (element: FileObject, index: number, array: FileObject[]) => boolean;
+
+	single?: boolean;
 }
 
 export default class FileInput extends React.Component<FileInputProps, FileInputState> {
@@ -174,6 +176,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 							filter={this.props.filter}
 							member={this.props.member}
 							account={this.props.account}
+							multiple={!this.props.single}
 						/>
 					) : this.state.dialogueOpen ? (
 						<Dialogue

@@ -3,22 +3,21 @@
 import { getSession } from '@mysql/xdevapi';
 import { validator } from 'auto-client-api';
 import {
+	AccountObject,
+	AccountType,
+	DiscordServerInformation,
 	Either,
-	RawServerConfiguration,
-	Validator,
+	getDefaultAdminPermissions,
 	Maybe,
 	MaybeObj,
-	DiscordServerInformation,
-	RawCAPSquadronAccountObject,
-	AccountType,
-	AccountObject,
 	MemberReference,
-	getDefaultAdminPermissions,
+	RawCAPSquadronAccountObject,
+	RawServerConfiguration,
+	Validator,
 } from 'common-lib';
 import 'dotenv/config';
-import { confFromRaw } from 'server-common';
 import { createInterface } from 'readline';
-import { promisify } from 'util';
+import { confFromRaw } from 'server-common';
 import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
 
 const configurationValidator = validator<RawServerConfiguration>(Validator);

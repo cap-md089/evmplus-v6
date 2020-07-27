@@ -27,6 +27,7 @@ import {
 	RegistryValues,
 	ServerError,
 	Timezone,
+	Maybe,
 } from 'common-lib';
 import {
 	addItemToCollection,
@@ -109,6 +110,7 @@ export const createRegistry = (schema: Schema) => (
 					ShowUpcomingEventCount: 7,
 					PhotoLibraryImagesPerPage: 20,
 					Timezone: timezone,
+					FaviconID: Maybe.none(),
 				},
 				RankAndFile: {
 					Flights: ['Alpha', 'Bravo', 'Charlie'],

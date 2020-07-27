@@ -97,6 +97,21 @@ export const uploadFile = (user: User) => (parentid: string) =>
 			results.finish();
 		});
 
+		const uploadPromise = new Promise<UploadFinishEvent>((res, rej) => {
+			xhr.addEventListener('readystatechange', function(evt: Event) {
+				if (this.readyState === 4) {
+					const resp = JSON.parse(this.responseText) as FullFileObject;
+
+					res({
+						event: 'FINISH',
+						file: resp
+					});
+				}
+			});
+
+			xhr.send(fd);
+		});
+
 		while (!done || results.queue.length > 0) {
 			try {
 				const value = await new Promise<UploadProgressEvent>((res, rej) => {
@@ -117,18 +132,5 @@ export const uploadFile = (user: User) => (parentid: string) =>
 			}
 		}
 
-		return new Promise<UploadFinishEvent>((res, rej) => {
-			xhr.addEventListener('readystatechange', function(evt: Event) {
-				if (this.readyState === 4) {
-					const resp = JSON.parse(this.responseText) as FullFileObject;
-
-					res({
-						event: 'FINISH',
-						file: resp
-					});
-				}
-			});
-
-			xhr.send(fd);
-		});
+		return uploadPromise;
 	};

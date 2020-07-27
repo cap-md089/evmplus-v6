@@ -86,9 +86,14 @@ export const func = () =>
 
 		if (
 			typeof req.headers.token !== 'string' ||
-			!(await PAM.isTokenValid(req.mysqlx, member, req.headers.token)) ||
-			!canSaveToFolder(member)(parent)
+			!(await PAM.isTokenValid(req.mysqlx, member, req.headers.token))
 		) {
+			res.status(401);
+			res.end();
+			return;
+		}
+
+		if (!canSaveToFolder(member)(parent)) {
 			res.status(403);
 			res.end();
 			return;

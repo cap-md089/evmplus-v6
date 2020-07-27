@@ -155,4 +155,7 @@ export class Maybe {
 
 	public static fromArray = <T>(array: T[]): MaybeObj<T> =>
 		array.length === 1 ? Maybe.some(array[0]) : Maybe.none();
+
+	public static toArray = <T>(maybe: MaybeObj<T>): T[] =>
+		Maybe.isSome(maybe) ? [maybe.value] : [];
 }

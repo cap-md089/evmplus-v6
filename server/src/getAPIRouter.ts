@@ -41,6 +41,7 @@ import registry from './api/registry';
 import signin from './api/signin';
 import tasks from './api/tasks';
 import team from './api/team';
+import favicon from './favicon';
 // Server libraries
 import { endpointAdder } from './lib/API';
 
@@ -81,31 +82,34 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 
 	router.options('*', cors(corsOptions));
 
+	const setupDatabase = async (
+		request: express.Request,
+		res: express.Response,
+		next: express.NextFunction
+	) => {
+		const req = (request as unknown) as MySQLRequest;
+
+		try {
+			const session = await mysqlConn!.getSession();
+
+			req.mysqlx = session.getSchema(conf.DB_SCHEMA);
+			req.memberUpdateEmitter = updateEmitter;
+			req.mysqlxSession = session;
+			req.configuration = conf;
+			req._originalUrl = req.originalUrl;
+
+			next();
+		} catch (e) {
+			console.error(e);
+			res.status(500);
+			res.end();
+		}
+	};
+
 	/**
 	 * Use API Routers
 	 */
-	router.use(
-		'/api',
-		async (request: express.Request, res: express.Response, next: express.NextFunction) => {
-			const req = (request as unknown) as MySQLRequest;
-
-			try {
-				const session = await mysqlConn!.getSession();
-
-				req.mysqlx = session.getSchema(conf.DB_SCHEMA);
-				req.memberUpdateEmitter = updateEmitter;
-				req.mysqlxSession = session;
-				req.configuration = conf;
-				req._originalUrl = req.originalUrl;
-
-				next();
-			} catch (e) {
-				console.error(e);
-				res.status(500);
-				res.end();
-			}
-		}
-	);
+	router.use('/api', setupDatabase);
 
 	if (conf.NODE_ENV !== 'test') {
 		router.use(logger('dev'));
@@ -148,6 +152,8 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			},
 		});
 	});
+
+	router.get('/favicon.ico', setupDatabase, favicon);
 
 	return {
 		router,

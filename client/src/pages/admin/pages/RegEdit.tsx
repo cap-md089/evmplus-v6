@@ -19,6 +19,7 @@
 
 import {
 	hasPermission,
+	Maybe,
 	RankAndFileInformation,
 	RegistryValues,
 	Timezone,
@@ -28,6 +29,7 @@ import * as React from 'react';
 import Button from '../../../components/Button';
 import Select from '../../../components/form-inputs/Select';
 import SimpleForm, {
+	FileInput,
 	FormBlock,
 	Label,
 	ListEditor,
@@ -68,6 +70,7 @@ interface RegEditFormValues {
 		ShowUpcomingEventCount: number;
 		Separator: string;
 		Timezone: number;
+		FaviconID: string[];
 	};
 }
 
@@ -79,6 +82,7 @@ const convertStateToForm = (values: RegEditValues): RegEditFormValues => ({
 	...values,
 	Website: {
 		...values.Website,
+		FaviconID: Maybe.toArray(values.Website.FaviconID),
 		Timezone: timezones.indexOf(values.Website.Timezone)
 	}
 });
@@ -87,6 +91,7 @@ const convertFormToState = (values: RegEditFormValues): RegEditValues => ({
 	...values,
 	Website: {
 		...values.Website,
+		FaviconID: Maybe.fromArray(values.Website.FaviconID),
 		Timezone: timezones[values.Website.Timezone]
 	}
 });
@@ -129,7 +134,8 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				PhotoLibraryImagesPerPage: this.props.registry.Website.PhotoLibraryImagesPerPage,
 				Separator: this.props.registry.Website.Separator,
 				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount,
-				Timezone: this.props.registry.Website.Timezone
+				Timezone: this.props.registry.Website.Timezone,
+				FaviconID: this.props.registry.Website.FaviconID
 			}
 		},
 		showSave: false
@@ -268,6 +274,19 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 					<Select
 						labels={timezones.map(i => i.substr(8).replace('_', ' '))}
 						name="Timezone"
+					/>
+
+					<Label>Shortcut icon (favicon)</Label>
+					<FileInput
+						name="FaviconID"
+						single={true}
+						filter={file =>
+							file.fileName.endsWith('.png') ||
+							file.fileName.endsWith('.ico') ||
+							file.fileName.endsWith('.jpg')
+						}
+						account={this.props.account}
+						member={this.props.member}
 					/>
 				</FormBlock>
 

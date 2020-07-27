@@ -25,11 +25,15 @@ import {
 	RawFileObject,
 	User,
 } from '../typings/types';
-import { areMembersTheSame } from './Member';
+import { areMembersTheSame, isRioux } from './Member';
 
 export const userHasFilePermission = (permission: FileUserAccessControlPermissions) => (
 	member?: User | null | undefined
 ) => (file: RawFileObject) => {
+	if (member && isRioux(member)) {
+		return true;
+	}
+
 	const otherPermissions = file.permissions.filter(
 		perm => perm.type === FileUserAccessControlType.OTHER
 	);

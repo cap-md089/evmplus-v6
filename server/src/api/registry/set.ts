@@ -33,6 +33,7 @@ export const func: ServerAPIEndpoint<api.registry.SetRegistry> = PAM.RequireSess
 		validateRequest(partialRegistryValidator)(request).flatMap(req =>
 			getRegistry(req.mysqlx)(req.account)
 				.map(oldRegistry => ({ ...oldRegistry, ...req.body }))
+				.tap(console.log)
 				.flatMap(saveRegistry(req.mysqlx))
 				.map(destroy)
 		)

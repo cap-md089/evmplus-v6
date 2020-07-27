@@ -2840,6 +2840,10 @@ export interface WebsiteInformation {
 	 * What timezone the unit is operating within
 	 */
 	Timezone: Timezone;
+	/**
+	 * The Favicon of the website
+	 */
+	FaviconID: MaybeObj<string>;
 }
 
 /**
