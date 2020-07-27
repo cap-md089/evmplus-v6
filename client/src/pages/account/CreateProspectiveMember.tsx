@@ -266,6 +266,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 				text: 'Create Prospective Member Account'
 			}
 		]);
+		this.updateTitle('Create Prospective Member');
 	}
 
 	public render() {

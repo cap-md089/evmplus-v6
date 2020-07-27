@@ -53,6 +53,12 @@ FROM node:13 AS runner
 
 WORKDIR /usr/capunit-com
 
+COPY --from=builder /usr/capunit-com/remote_drive_key /usr/capunit-com/remote_drive_key
+ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
+
+COPY --from=builder /google-keys /google-keys
+ENV GOOGLE_KEYS_PATH /google-keys
+
 # Install the unzip command to import CAPWATCH files
 RUN apt-get update && apt-get install -y unzip
 
