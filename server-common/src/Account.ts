@@ -89,7 +89,7 @@ import { getRegistry, getRegistryById, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
 import { getStaffTeam } from './Team';
 import { promisify } from 'util';
-import { copyFile } from '../../../projects/cap/typescript-capunit/server-common/node_modules/@types/graceful-fs';
+import { copyFile } from 'fs';
 import { join } from 'path';
 
 export interface BasicAccountRequest<P extends ParamType = {}, B = any>
