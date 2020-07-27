@@ -21,6 +21,7 @@ import {
 	Either,
 	getFullMemberName,
 	hasPermission,
+	identity,
 	isCAPMember,
 	isCAPUnitDutyPosition,
 	Maybe,
@@ -34,14 +35,14 @@ import * as React from 'react';
 import Button from '../../../components/Button';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
-import Select from '../../../components/form-inputs/Select';
+import LaxAutocomplete from '../../../components/form-inputs/LaxAutocomplete';
 import SimpleForm, { DateTimeInput, Label } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 
 interface AddDutyPositionData {
-	position: number;
+	position: string;
 	endDate: number;
 }
 
@@ -168,7 +169,7 @@ export default class TemporaryDutyPositions extends Page<
 	public state: TemporaryDutyPositionViewerEditorState = {
 		state: 'CANCELLED',
 		addDutyPosition: {
-			position: 0,
+			position: '',
 			endDate: Date.now()
 		},
 		showDutyPositionSave: false
@@ -229,7 +230,8 @@ export default class TemporaryDutyPositions extends Page<
 				...prev,
 
 				state: 'LOADED',
-				members: memberListEither.value
+				members: memberListEither.value,
+				currentMember: Maybe.none()
 			}));
 		}
 	}
@@ -319,7 +321,7 @@ export default class TemporaryDutyPositions extends Page<
 		}
 	}
 
-	private getRemover(index: number) {
+	private getRemover(positionToRemove: string) {
 		return async () => {
 			if (this.state.state !== 'LOADED' || !this.state.currentMember.hasValue) {
 				return;
@@ -328,7 +330,9 @@ export default class TemporaryDutyPositions extends Page<
 				return;
 			}
 
-			const dutyPositions = this.state.currentMember.value.dutyPositions.splice(index, 1);
+			const dutyPositions = this.state.currentMember.value.dutyPositions.filter(
+				({ duty, type }) => type !== 'CAPUnit' || duty !== positionToRemove
+			);
 
 			await fetchApi.member.temporaryDutyPositions.set(
 				{ id: stringifyMemberReference(this.state.currentMember.value) },
@@ -371,7 +375,7 @@ export default class TemporaryDutyPositions extends Page<
 								hour12: false
 							})}
 							){' '}
-							<Button buttonType="none" onClick={this.getRemover(index)}>
+							<Button buttonType="none" onClick={this.getRemover(pos.duty)}>
 								Remove this duty position
 							</Button>
 						</li>
@@ -396,7 +400,12 @@ export default class TemporaryDutyPositions extends Page<
 					successMessage={this.state.showDutyPositionSave && 'Saved!'}
 				>
 					<Label>Duty Position to assign</Label>
-					<Select name="position" labels={temporaryDutyPositions} />
+					<LaxAutocomplete
+						renderItem={identity}
+						name="position"
+						items={temporaryDutyPositions}
+					/>
+					{/* <Select name="position" labels={temporaryDutyPositions} /> */}
 
 					<Label>Duration of position</Label>
 					<DateTimeInput
@@ -425,7 +434,7 @@ export default class TemporaryDutyPositions extends Page<
 					...state.currentMember.value.dutyPositions,
 					{
 						date: Date.now(),
-						duty: temporaryDutyPositions[data.position],
+						duty: data.position,
 						expires: data.endDate,
 						type: 'CAPUnit' as const
 					}
@@ -442,7 +451,7 @@ export default class TemporaryDutyPositions extends Page<
 				showDutyPositionSave: true,
 				addDutyPosition: {
 					endDate: Date.now(),
-					position: 0
+					position: ''
 				}
 			});
 		};
