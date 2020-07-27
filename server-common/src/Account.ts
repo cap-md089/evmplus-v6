@@ -88,6 +88,9 @@ import {
 import { getRegistry, getRegistryById, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
 import { getStaffTeam } from './Team';
+import { promisify } from 'util';
+import { copyFile } from '../../../projects/cap/typescript-capunit/server-common/node_modules/@types/graceful-fs';
+import { join } from 'path';
 
 export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	extends BasicMySQLRequest<P, B> {
@@ -224,6 +227,12 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 					errorGenerator('Could not set permissions for member in new account')
 				),
 			])
+		)
+		.tap(newAccount =>
+			promisify(copyFile)(
+				join(config.GOOGLE_KEYS_PATH, `${parentAccount.id}.json`),
+				join(config.GOOGLE_KEYS_PATH, `${newAccount.id}.json`)
+			)
 		)
 		.tap(newAccount =>
 			createEventFunc(now)(config)(schema)(newAccount)(toReference(author))(newEvent)

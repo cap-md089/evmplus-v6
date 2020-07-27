@@ -65,8 +65,7 @@ The following instructions will be for a Linux server
     8. Don't grant access to any users
     9. Back at the 'Service accounts' page, in the actions menu on the right, click 'Create key'
     10. Select JSON
-    11. Save this to a google-keys directory within this repository
-        - .gitignore is set up to ignore all files within the 'keys' directory; it would be best to create a 'keys/google-keys' directory and place this JSON file in said directory
+    11. Save this to a google-keys directory accessible to the built docker image
         - Be sure to name it according to the following format: `${accountID}.json`, where accountID is the ID of the account you will be creating later
 2. Google calendar setup
     1. Create two Google calendars, one to send to your Wing and one to use for local squadron use
@@ -86,7 +85,7 @@ The following instructions will be for a Linux server
 
 In the repository directory, build the docker image:
 
-`docker build --build-arg GOOGLE_KEYS_PATH=keys/google-keys --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag capunit-com .`
+`docker build --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag capunit-com .`
 
 When you change the server configuration, you will have to run this command again
 
@@ -94,7 +93,9 @@ When you change the server configuration, you will have to run this command agai
 
 As it is a docker image, you can run the following:
 
-`docker run -rm --name=capunit-com -p 80:3001 capunit-com:latest`
+`docker run -rm --name=capunit-com --restart=always -v /google-keys:/google-keys -p 80:3001 capunit-com:latest`
+
+The target of the virtual bind must be `/google-keys`; this must be a virtual mount as the Google keys change and has to persist between changes in images
 
 ### Creating an account and supplying it data
 

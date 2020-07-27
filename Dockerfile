@@ -23,10 +23,6 @@ ARG REMOTE_DRIVE_KEY_FILE
 COPY $REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 
-ARG GOOGLE_KEYS_PATH
-COPY $GOOGLE_KEYS_PATH /google-keys
-ENV GOOGLE_KEYS_PATH /google-keys
-
 # Go through each one in order, copying, installling dependencies, and building
 COPY lib ./lib
 RUN cd lib && npm install --no-package-lock && npm run build
@@ -56,7 +52,6 @@ WORKDIR /usr/capunit-com
 COPY --from=builder /usr/capunit-com/remote_drive_key /usr/capunit-com/remote_drive_key
 ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 
-COPY --from=builder /google-keys /google-keys
 ENV GOOGLE_KEYS_PATH /google-keys
 
 # Install the unzip command to import CAPWATCH files
