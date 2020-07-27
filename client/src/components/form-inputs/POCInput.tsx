@@ -301,7 +301,7 @@ export default class POCInput extends React.Component<
 					overflow={400}
 					onCancel={() => this.selectMember(null)}
 					title="Select Point of Contact"
-					showIDField={true}
+					showIDField={false}
 					displayValue={getFullMemberName}
 					valuePromise={this.props.memberList}
 					filters={[
