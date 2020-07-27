@@ -43,6 +43,7 @@ import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notif
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import SuWidget, { canUseSu } from './pluggables/Su';
 import './Widget.css';
+import CreateProspectiveMember from '../account/CreateProspectiveMember';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -181,6 +182,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 				<Route
 					path="/admin/createeventaccount/"
 					render={this.pageRenderer(CreateAccount)}
+					exact={false}
+				/>
+				<Route
+					path="/admin/createcapprospectiveaccount"
+					render={this.pageRenderer(CreateProspectiveMember)}
 					exact={false}
 				/>
 

@@ -45,7 +45,13 @@ import TeamSelector from '../form-inputs/TeamSelector';
 import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
 import SimpleMultCheckbox from '../form-inputs/SimpleMultCheckbox';
+import LaxAutocomplete from '../form-inputs/LaxAutocomplete';
 import './Form.scss';
+import {
+	ContactInput,
+	ContactInstanceInput,
+	PasswordType
+} from '../../pages/account/CreateProspectiveMember';
 
 const saveMessage = {
 	marginLeft: 10
@@ -118,7 +124,14 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 			: '';
 
 		return (
-			<div className="form-header" style={fullWidth}>
+			<div
+				className="form-header"
+				style={{
+					...fullWidth,
+					boxSizing: 'border-box',
+					gridColumn: '1 / 3'
+				}}
+			>
 				<h3 id={id}>{this.props.children}</h3>
 			</div>
 		);
@@ -162,7 +175,11 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === PermissionsEdit ||
 		el.type === ReCAPTCHAInput ||
 		el.type === PasswordForm ||
-		el.type === SimpleMultCheckbox
+		el.type === SimpleMultCheckbox ||
+		el.type === ContactInput ||
+		el.type === ContactInstanceInput ||
+		el.type === PasswordType ||
+		el.type === LaxAutocomplete
 	);
 }
 

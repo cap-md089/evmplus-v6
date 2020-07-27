@@ -101,26 +101,14 @@ export default class FormBlock<T extends object> extends React.Component<
 	}
 
 	public render() {
-		const props = Object.assign({}, this.props);
+		const { onInitialize, onUpdate, name, value, children, ...props } = this.props;
 
-		const children = props.children instanceof Array ? props.children.flatMap(f => f) : null;
-
-		// @ts-ignore
-		delete props.onInitialize;
-		// @ts-ignore
-		delete props.onUpdate;
-		// @ts-ignore
-		delete props.name;
-
+		const usedChildren = Array.isArray(children)
+			? children.flatMap(f => (Array.isArray(f) ? f : [f]))
+			: null;
 		return (
-			<div {...props}>
-				{React.Children.map(children, (child, i) => {
-					if (
-						typeof this.props.children === 'undefined' ||
-						this.props.children === null
-					) {
-						throw new TypeError('Some error occurred');
-					}
+			<div {...props} style={{ gridColumn: '1 / 3', boxSizing: 'border-box' }}>
+				{usedChildren?.map((child, i) => {
 					let ret;
 					let fullWidth = false;
 					if (!isInput(child)) {
@@ -134,22 +122,20 @@ export default class FormBlock<T extends object> extends React.Component<
 					} else {
 						const childName: keyof T = child.props.name as keyof T;
 
-						const value =
+						const childValue =
 							typeof child.props.value !== 'undefined'
 								? child.props.value
-								: typeof this.props.value === 'undefined'
+								: typeof value === 'undefined'
 								? ''
 								: this.props.value === null ||
-								  typeof (this.props.value as T)[childName] === 'undefined'
+								  typeof (value as T)[childName] === 'undefined'
 								? ''
 								: this.props.value![childName];
 						if (
-							!(
-								this.props.value === null || typeof this.props.value === 'undefined'
-							) &&
-							typeof this.props.value![childName] === 'undefined'
+							!(value === null || typeof value === 'undefined') &&
+							typeof value[childName] === 'undefined'
 						) {
-							this.props.value![childName] = value;
+							value[childName] = childValue;
 						}
 
 						if (isFullWidthableElement(child)) {
@@ -169,29 +155,29 @@ export default class FormBlock<T extends object> extends React.Component<
 								key: i,
 								onUpdate: this.onUpdate,
 								onInitialize: this.onInitialize,
-								value
+								value: childValue
 							})
 						];
 					}
 					if (
 						i > 0 &&
-						typeof (this.props.children as React.ReactChild[])[i - 1] !== 'undefined' &&
-						(this.props.children as React.ReactChild[])[i - 1] !== null &&
-						!isInput((this.props.children as React.ReactChild[])[i - 1])
+						typeof usedChildren[i - 1] !== 'undefined' &&
+						usedChildren[i - 1] !== null &&
+						!isInput(usedChildren[i - 1])
 					) {
 						if (
-							typeof children === 'string' ||
-							typeof children === 'number' ||
-							typeof children === 'boolean'
+							typeof usedChildren === 'string' ||
+							typeof usedChildren === 'number' ||
+							typeof usedChildren === 'boolean'
 						) {
 							return;
 						}
 
-						if (!Array.isArray(children)) {
+						if (!Array.isArray(usedChildren)) {
 							return;
 						}
 
-						const previousChild = children[i - 1];
+						const previousChild = usedChildren[i - 1];
 
 						if (
 							typeof previousChild === 'string' ||
@@ -205,8 +191,7 @@ export default class FormBlock<T extends object> extends React.Component<
 								</Label>
 							);
 						} else {
-							// @ts-ignore
-							if (isLabel(previousChild!) && previousChild!.type !== Title) {
+							if (isLabel(previousChild) && previousChild.type !== Title) {
 								ret.unshift(
 									// @ts-ignore
 									React.cloneElement(previousChild, {

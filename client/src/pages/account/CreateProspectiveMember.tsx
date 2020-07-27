@@ -234,6 +234,40 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		this.onFormSubmit = this.onFormSubmit.bind(this);
 	}
 
+	public componentDidMount() {
+		this.props.updateSideNav([
+			{
+				target: 'general-information',
+				text: 'General Information',
+				type: 'Reference'
+			},
+			{
+				target: 'parent-email',
+				text: 'Contact Information',
+				type: 'Reference'
+			},
+			{
+				target: 'password-information',
+				text: 'Password Information',
+				type: 'Reference'
+			}
+		]);
+		this.props.updateBreadCrumbs([
+			{
+				target: '/',
+				text: 'Home'
+			},
+			{
+				target: '/admin',
+				text: 'Administration'
+			},
+			{
+				target: '/admin/createprospectiveaccount',
+				text: 'Create Prospective Member Account'
+			}
+		]);
+	}
+
 	public render() {
 		const { form, error } = this.state;
 
