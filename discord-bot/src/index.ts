@@ -37,6 +37,7 @@ import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import setupDiscordServer from './data/setupDiscordServer';
 import setupUser from './data/setupUser';
+import 'dotenv/config';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 

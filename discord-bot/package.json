@@ -56,6 +56,7 @@
 		"auto-client-api": "file:../auto-client-api",
 		"common-lib": "file:../lib",
 		"discord.js": "^11.5.1",
+		"dotenv": "^8.2.0",
 		"server-common": "file:../server-common"
 	}
 }
