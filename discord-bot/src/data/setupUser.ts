@@ -393,14 +393,10 @@ const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => (
 
 const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
 	if (member.flight !== null) {
-		const isFlightRole = (flight: string) => {
-			flight = flight.toLowerCase().replace(/ ?flight/i, '');
-			return (role: Role) => {
-				return role.name.toLowerCase() === `${flight} flight`;
-			};
-		};
+		const isMatchingFlightRole = (flight: string) => (role: Role) =>
+			!!role.name.match(new RegExp(`${flight}( flight)?`, 'i'));
 
-		const flightRole = Maybe.fromValue(guild.roles.find(isFlightRole(member.flight)));
+		const flightRole = Maybe.fromValue(guild.roles.find(isMatchingFlightRole(member.flight)));
 
 		if (flightRole.hasValue) {
 			const flightCategoryRole = guild.roles.find(byName('Flight Member'));

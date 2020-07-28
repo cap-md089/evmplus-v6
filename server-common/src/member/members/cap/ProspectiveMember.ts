@@ -59,7 +59,7 @@ const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject)
 	reference: CAPProspectiveMemberReference
 ) =>
 	asyncRight(
-		schema.getCollection<RawCAPProspectiveMemberObject>('ProspecitveMembers'),
+		schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
 		errorGenerator('Could not get member information')
 	)
 		.map(
