@@ -394,13 +394,13 @@ const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => (
 const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
 	if (member.flight !== null) {
 		const isFlightRole = (flight: string) => {
-			flight = flight.toLowerCase();
+			flight = flight.toLowerCase().replace(/ ?flight/i, '');
 			return (role: Role) => {
 				return role.name.toLowerCase() === `${flight} flight`;
 			};
 		};
 
-		let flightRole = Maybe.fromValue(guild.roles.find(isFlightRole(member.flight)));
+		const flightRole = Maybe.fromValue(guild.roles.find(isFlightRole(member.flight)));
 
 		if (flightRole.hasValue) {
 			const flightCategoryRole = guild.roles.find(byName('Flight Member'));
@@ -579,11 +579,6 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 				...(await get101CardCertificationRoles(guild)(schema)(member)),
 				...(await getTeamRoles(guild)(schema)(account)(teamIDs)(member)),
 				...onlyJustValues([Maybe.fromValue(guild.roles.find(byName('Certified Member')))]),
-				...(member.id === 542488
-					? onlyJustValues([
-							Maybe.fromValue(guild.roles.find(byName('Cadet IT Officer'))),
-					  ])
-					: []),
 			];
 
 			if (
