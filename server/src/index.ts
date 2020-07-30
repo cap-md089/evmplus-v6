@@ -22,6 +22,7 @@ import { validator } from 'auto-client-api';
 import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setup from 'discord-bot';
 import 'dotenv/config';
+import { createServer } from 'net';
 import { confFromRaw } from 'server-common';
 import getServer from './getServer';
 
@@ -48,6 +49,22 @@ getServer(conf)
 		val();
 		console.log('Server bound');
 	});
+
+createServer(sock => {
+	let data = '';
+
+	sock.on('data', dataIn => {
+		data += dataIn.toString('utf-8');
+	});
+
+	sock.on('end', () => {
+		if (data.trim() === 'conf') {
+			sock.write(JSON.stringify(conf));
+		}
+
+		sock.end();
+	});
+}).listen(54248, '127.0.0.1');
 
 // process.on('unhandledRejection', up => {
 // 	throw up;
