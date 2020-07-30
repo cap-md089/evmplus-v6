@@ -1,12 +1,6 @@
 // Required to make VS Code actually able to debug stuff
 {
 	"folders": [
-		// Needed to modify things like the Dockerfile and .gitignore
-		{
-			"path": ".",
-			"name": "Everything"
-		},
-
 		{
 			"path": "lib",
 			"name": "Common Utils"
@@ -38,6 +32,12 @@
 		{
 			"path": "auto-api-tests",
 			"name": "API Generator Tests"
+		},
+
+		// Needed to modify things like the Dockerfile and .gitignore
+		{
+			"path": ".",
+			"name": "Everything"
 		}
 	]
 }
