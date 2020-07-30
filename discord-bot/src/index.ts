@@ -228,7 +228,21 @@ if (require.main === module) {
 		return new Promise((resolve, reject) => {
 			client.on('ready', async () => {
 				try {
-					await setupDiscordServer(conf)(mysqlClient)(client)('688030972112928824')({
+					// const session = await mysqlClient.getSession();
+					// const schema = session.getSchema('EventManagementv6');
+
+					// const accountMaybe = await getAccount(schema)('437034622090477568');
+
+					// if (!accountMaybe.hasValue) {
+					// 	return;
+					// }
+
+					// await setupUser(client)(schema)('437034622090477568')(accountMaybe.value)([])({
+					// 	discordID: '192688519045578762',
+					// 	member: { type: 'CAPNHQMember', id: 542488 },
+					// });
+
+					await setupDiscordServer(conf)(mysqlClient)(client)('437034622090477568')({
 						deleteOldRoles: false,
 						addCACRepresentativeRoles: false,
 						addCadetExecutiveStaffRoles: false,

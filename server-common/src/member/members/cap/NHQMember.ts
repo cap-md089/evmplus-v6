@@ -287,7 +287,8 @@ export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemb
 
 export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema: Schema) => (
 	member: CAPNHQMemberObject
-): AsyncIter<EitherObj<ServerError, CAPAccountObject>> => accountGetter.byOrgid(schema)(member.orgid);
+): AsyncIter<EitherObj<ServerError, CAPAccountObject>> =>
+	accountGetter.byOrgid(schema)(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
 	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);

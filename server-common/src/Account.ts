@@ -72,6 +72,7 @@ import {
 	User,
 	yieldObjAsync,
 	getDefaultAdminPermissions,
+	asyncIterTap,
 } from 'common-lib';
 import { addMemberToAttendanceFunc, createEventFunc, linkEventFunc } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
@@ -294,7 +295,7 @@ export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 		asyncIterHandler<CAPAccountObject>(errorGenerator('Could not get account for member'))(
 			asyncIterFilter(
 				statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
-					(acc, state) => [!!state[acc.id], { ...state, [acc.id]: true }]
+					(account, state) => [!state[account.id], { ...state, [account.id]: true }]
 				)
 			)(
 				asyncIterConcat<CAPAccountObject>(

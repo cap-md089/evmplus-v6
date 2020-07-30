@@ -20,11 +20,19 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
+	always,
+	asyncIterFilter,
+	asyncIterMap,
+	asyncIterReduce,
+	CAPMemberObject,
+	collectGeneratorAsync,
 	DiscordAccount,
 	DiscordServerInformation,
-	getORGIDsFromCAPAccount,
+	Either,
+	EitherObj,
 	get,
 	getFullMemberName,
+	getORGIDsFromCAPAccount,
 	isPartOfTeam,
 	isTeamLeader,
 	Maybe,
@@ -33,24 +41,16 @@ import {
 	NHQ,
 	pipe,
 	RawTeamObject,
-	collectGeneratorAsync,
-	asyncIterFilter,
-	asyncIterMap,
-	CAPMemberObject,
-	asyncIterReduce,
 	ServerError,
-	EitherObj,
-	Either,
-	always,
 } from 'common-lib';
-import { Client, Collection, Guild, GuildMember, Role, Permissions } from 'discord.js';
+import { Client, Collection, Guild, GuildMember, Permissions, Role } from 'discord.js';
 import {
 	collectResults,
 	findAndBind,
-	getTeam,
-	resolveReference,
-	getTeamObjects,
 	getAllAccountsForMember,
+	getTeam,
+	getTeamObjects,
+	resolveReference,
 } from 'server-common';
 
 export const CadetExecutiveStaffRoles = [
