@@ -22,8 +22,8 @@ import { validator } from 'auto-client-api';
 import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setup from 'discord-bot';
 import 'dotenv/config';
-import { createServer } from 'net';
 import { confFromRaw } from 'server-common';
+import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
 
 console.log = console.log.bind(console);
@@ -43,6 +43,8 @@ getServer(conf)
 	.then(({ finishServerSetup, capwatchEmitter, mysqlConn, app }) => {
 		setup(conf, capwatchEmitter, mysqlConn);
 
+		createSocketUI(conf, mysqlConn);
+
 		return finishServerSetup;
 	})
 	.then(val => {
@@ -50,22 +52,6 @@ getServer(conf)
 		console.log('Server bound');
 	});
 
-createServer(sock => {
-	let data = '';
-
-	sock.on('data', dataIn => {
-		data += dataIn.toString('utf-8');
-	});
-
-	sock.on('end', () => {
-		if (data.trim() === 'conf') {
-			sock.write(JSON.stringify(conf));
-		}
-
-		sock.end();
-	});
-}).listen(54248, '127.0.0.1');
-
-// process.on('unhandledRejection', up => {
-// 	throw up;
-// });
+process.on('unhandledRejection', up => {
+	throw up;
+});

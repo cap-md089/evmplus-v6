@@ -43,6 +43,7 @@ import {
 	FileObject,
 	FullPointOfContact,
 	get,
+	getDefaultAdminPermissions,
 	identity,
 	isRioux,
 	Maybe,
@@ -71,9 +72,10 @@ import {
 	toReference,
 	User,
 	yieldObjAsync,
-	getDefaultAdminPermissions,
-	asyncIterTap,
 } from 'common-lib';
+import { copyFile } from 'fs';
+import { join } from 'path';
+import { promisify } from 'util';
 import { addMemberToAttendanceFunc, createEventFunc, linkEventFunc } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
 import { setPermissionsForMemberInAccount } from './member/pam';
@@ -89,9 +91,6 @@ import {
 import { getRegistry, getRegistryById, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
 import { getStaffTeam } from './Team';
-import { promisify } from 'util';
-import { copyFile } from 'fs';
-import { join } from 'path';
 
 export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	extends BasicMySQLRequest<P, B> {
