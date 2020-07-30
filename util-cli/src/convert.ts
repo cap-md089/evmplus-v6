@@ -561,10 +561,8 @@ process.on('unhandledRejection', (up) => {
 	await move('NHQ_Member');
 	await move('NHQ_OFlight');
 	await move('NHQ_Organization');
-	await move('PasswordResetTokens');
 	await move('ProspectiveMembers');
 	await move('Tasks');
-	await move('Teams');
 	await move('UserAccountInfo');
 
 	await Promise.all([v5session.close(), v6session.close()]);
