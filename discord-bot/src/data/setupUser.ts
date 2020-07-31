@@ -263,11 +263,9 @@ export const ManualRoles = [
 	'Squadron Commander',
 	'Deputy Commander for Cadets',
 	'Assistant Deputy Commander for Cadets',
-	'Squadron Software Developer',
-	'Bot Developer',
-	'Website Developer',
 	'Discord Server PAO',
 	'Previous Cadet Commander',
+	'CAPUnit Software Developer',
 ];
 
 export const hasOneOf = <T>(arr1: T[]) => (arr2: T[]) =>
