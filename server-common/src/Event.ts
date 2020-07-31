@@ -167,11 +167,9 @@ export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Sch
 		errorGenerator('Could not get attendance records')
 	)
 		.map(findForMemberFunc(now)(account)(member))
-		.map(find => find.limit(1).sort('departureTime DESC'))
+		.map(find => find.limit(1).sort('shiftTime.departureTime DESC'))
 		.map(collectResults)
-		.map((results: RawAttendanceDBRecord[]) =>
-			results.length === 0 ? Maybe.none() : Maybe.some(results[0])
-		);
+		.map(Maybe.fromArray);
 export const getLatestAttendanceForMember = getLatestAttendanceForMemberFunc(Date.now);
 
 export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
