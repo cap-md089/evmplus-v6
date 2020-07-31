@@ -28,21 +28,16 @@ import {
 	ServerConfiguration,
 	toReference,
 	Validator,
-	asyncIterFilter,
-	EitherObj,
-	RawTeamObject,
-	asyncIterMap,
-	isPartOfTeam,
 } from 'common-lib';
 import { Client } from 'discord.js';
-import { getMembers, confFromRaw, getRegistry, getTeamObjects } from 'server-common';
+import 'dotenv/config';
+import { confFromRaw, getMembers, getRegistry, getTeamObjects } from 'server-common';
 import attendancerecord from './commands/attendancerecord';
 import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import setupDiscordServer from './data/setupDiscordServer';
 import setupUser from './data/setupUser';
-import 'dotenv/config';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
