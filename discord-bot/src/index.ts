@@ -28,6 +28,11 @@ import {
 	ServerConfiguration,
 	toReference,
 	Validator,
+	asyncIterFilter,
+	EitherObj,
+	RawTeamObject,
+	asyncIterMap,
+	isPartOfTeam,
 } from 'common-lib';
 import { Client } from 'discord.js';
 import { getMembers, confFromRaw, getRegistry, getTeamObjects } from 'server-common';
@@ -237,7 +242,21 @@ if (require.main === module) {
 					// 	return;
 					// }
 
-					// await setupUser(client)(schema)('437034622090477568')(accountMaybe.value)([])({
+					// const teams = await getTeamObjects(schema)(accountMaybe.value)
+					// 	// block the staff team
+					// 	.map(asyncIterFilter((team) => team.id !== 0))
+					// 	.map(
+					// 		asyncIterFilter<RawTeamObject>(
+					// 			isPartOfTeam({ type: 'CAPNHQMember', id: 542488 })
+					// 		)
+					// 	)
+					// 	.map(asyncIterMap(get('id')))
+					// 	.map(collectGeneratorAsync)
+					// 	.fullJoin();
+
+					// await setupUser(client)(schema)('437034622090477568')(accountMaybe.value)(
+					// 	teams
+					// )({
 					// 	discordID: '192688519045578762',
 					// 	member: { type: 'CAPNHQMember', id: 542488 },
 					// });

@@ -392,7 +392,7 @@ const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => (
 const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
 	if (member.flight !== null) {
 		const isMatchingFlightRole = (flight: string) => (role: Role) =>
-			!!role.name.match(new RegExp(`${flight}( flight)?`, 'i'));
+			!!role.name.match(new RegExp(`^${flight}( flight)?$`, 'i'));
 
 		const flightRole = Maybe.fromValue(guild.roles.find(isMatchingFlightRole(member.flight)));
 
@@ -632,6 +632,7 @@ export default (client: Client) => (schema: Schema) => (guildID: string) => (
 			teamObjects = await getTeamObjects(schema)(account)
 				.map(
 					pipe(
+						asyncIterFilter<RawTeamObject>((team) => team.id !== 0),
 						asyncIterFilter<RawTeamObject>(isPartOfTeam(discordUser.member)),
 						asyncIterMap(get('id'))
 					)

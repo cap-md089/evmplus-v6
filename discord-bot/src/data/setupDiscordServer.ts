@@ -243,11 +243,11 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: mysql.Cli
 
 				try {
 					const dmChannel = await member.createDM();
-
 					if (dmChannel.messages.size === 0) {
-						await dmChannel.send(
-							`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.capunit.com/signin/?returnurl=/registerdiscord/${member.id}`
-						);
+						// 	await dmChannel.send(
+						// 		`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.capunit.com/signin/?returnurl=/registerdiscord/${member.id}`
+						// 	);
+						console.log('Empty chat:', member.displayName);
 					}
 				} catch (e) {
 					console.error('Cannot send message to ', member.displayName);
