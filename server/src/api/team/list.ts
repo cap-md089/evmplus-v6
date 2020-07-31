@@ -34,11 +34,10 @@ import {
 	RawTeamObject,
 	Right,
 	ServerError,
-	SessionType,
 	TeamPublicity,
 	User,
 } from 'common-lib';
-import { expandTeam, getTeamObjects, httpStripTeamObject, PAM } from 'server-common';
+import { expandTeam, getTeamObjects, httpStripTeamObject } from 'server-common';
 
 const isTeamMemberOrLeaderIfPrivate = (user: MaybeObj<User>) => (team: FullTeamObject) =>
 	team.visibility === TeamPublicity.PRIVATE
@@ -49,9 +48,7 @@ const isTeamMemberOrLeaderIfPrivate = (user: MaybeObj<User>) => (team: FullTeamO
 		  )(user)
 		: true;
 
-export const func: ServerAPIEndpoint<api.team.ListTeams> = PAM.RequireSessionType(
-	SessionType.REGULAR
-)(req =>
+export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
 	getTeamObjects(req.mysqlx)(req.account)
 		.map(asyncIterMap(expandTeam(req.mysqlx)(req.account)))
 		.map(
@@ -61,7 +58,6 @@ export const func: ServerAPIEndpoint<api.team.ListTeams> = PAM.RequireSessionTyp
 		)
 		.map(asyncIterMap<Right<FullTeamObject>, FullTeamObject>(get('value')))
 		.map(asyncIterFilter(isTeamMemberOrLeaderIfPrivate(req.member)))
-		.map(asyncIterMap(httpStripTeamObject(req.member)))
-);
+		.map(asyncIterMap(httpStripTeamObject(req.member)));
 
 export default func;
