@@ -30,7 +30,8 @@ import {
 	Member,
 	MemberReference,
 	pipe,
-	stringifyMemberReference
+	stringifyMemberReference,
+	Permissions
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -246,7 +247,8 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		return (
 			<div>
 				<div className={attendanceStyles.controlsBox}>
-					{hasPermission('AttendanceView')()(member) && this.state.state === 'LOADED' ? (
+					{hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(member) &&
+					this.state.state === 'LOADED' ? (
 						<MemberSelectorButton
 							disabled={this.state.state !== 'LOADED'}
 							memberList={this.state.members}
@@ -258,10 +260,10 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 						>
 							Select a member
 						</MemberSelectorButton>
-					) : hasPermission('AttendanceView')()(member) &&
+					) : hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(member) &&
 					  this.state.state === 'LOADING' ? (
 						<Loader />
-					) : hasPermission('AttendanceView')()(member) &&
+					) : hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(member) &&
 					  this.state.state === 'ERROR' ? (
 						<div>{this.state.memberMessage}</div>
 					) : null}
@@ -315,7 +317,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 			return GroupTarget.NONE;
 		}
 
-		if (hasPermission('AttendanceView')()(this.props.member)) {
+		if (hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(this.props.member)) {
 			return GroupTarget.ACCOUNT;
 		}
 
