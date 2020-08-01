@@ -1,0 +1,66 @@
+{
+	"name": "server-common",
+	"version": "1.1.0",
+	"description": "Common code for server based packages such as the main server and the Discord bot",
+	"main": "./dist/index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "ttsc --project tsconfig.build.json",
+		"check": "ttsc --project tsconfig.build.json --noEmit",
+		"lint": "tslint --project ."
+	},
+	"author": "Andrew Rioux",
+	"license": "GPL-2.0",
+	"private": true,
+	"devDependencies": {
+		"@types/body-parser": "^1.19.0",
+		"@types/csv-parse": "^1.2.2",
+		"@types/error-stack-parser": "^2.0.0",
+		"@types/express": "^4.17.6",
+		"@types/jest": "^24",
+		"@types/luxon": "^1.22.0",
+		"@types/request-promise": "^4.1.46",
+		"@types/uuid": "^7.0.3",
+		"jest": "^24",
+		"ts-jest": "^24",
+		"tslint": "^6.1.2",
+		"tslint-config-prettier": "^1.18.0",
+		"ttypescript": "^1.5.10",
+		"typescript": "^3.9.7"
+	},
+	"dependencies": {
+		"@mysql/xdevapi": "^8.0.20",
+		"auto-client-api": "^1.0.0",
+		"aws-sdk": "^2.669.0",
+		"body-parser": "^1.19.0",
+		"common-lib": "^1.4.0",
+		"csv-parse": "^4.11.1",
+		"error-stack-parser": "^2.0.6",
+		"googleapis": "^50.0.0",
+		"luxon": "^1.24.1",
+		"request-promise": "^4.2.5",
+		"ssh2-sftp-client": "^5.2.1",
+		"uuid": "^8.0.0"
+	},
+	"jest": {
+		"globals": {
+			"ts-jest": {
+				"tsConfig": "tsconfig.test.json",
+				"diagnostics": false
+			}
+		},
+		"testRegex": "(/src/__tests__/.*\\.test\\.ts)",
+		"testPathIgnorePatterns": [
+			"/node_modules/"
+		],
+		"transform": {
+			"^.+\\.tsx?$": "ts-jest"
+		},
+		"moduleFileExtensions": [
+			"ts",
+			"js",
+			"json",
+			"node"
+		]
+	}
+}

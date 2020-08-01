@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Check for compile errors
+if lerna run check; then
+	# Everything compiles
+	:
+else
+	echo "Compile failure"
+	exit 1
+fi
+
+# Run tests
+# if lerna run test; then
+# 	# We passed
+# 	:
+# else
+# 	echo "Unit tests have failed"
+# 	exit 1
+# fi
+
+# Lint code
+if lerna run lint; then
+	# Code is lint free
+	:
+else
+	echo "Code fails lint check"
+	exit 1
+fi
+
+# Apply prettier rules
+# This now applies the rules instead of checking, as checking was causing issues
+#	For some reason, when prettier writes it doesn't necessarily pass its own checks
+FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
+echo "$FILES" | xargs node_modules/.bin/prettier --write
+echo "$FILES" | xargs git add

@@ -1,0 +1,11 @@
+{
+	"extends": [
+		"tslint:recommended",
+		"tslint-react",
+		"tslint-config-prettier",
+		"../../tslint.json"
+	],
+	"rules": {
+		"array-type": [true, "array-simple"]
+	}
+}

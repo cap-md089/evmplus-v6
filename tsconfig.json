@@ -1,0 +1,19 @@
+{
+	"extends": "./tsconfig.common.json",
+	"compilerOptions": {
+		"baseUrl": "./packages",
+		"paths": {
+			"apis": ["packages/apis"],
+			"auto-api-tests": ["packages/auto-api-tests"],
+			"client": ["packages/client"],
+			"discord-bot": ["packages/discord-bot"],
+			"common-lib": ["packages/common-lib"],
+			"server": ["packages/server"],
+			"server-common": ["packages/server-common"],
+			"util-cli": ["packages/util-cli"]
+		}
+	},
+	"files": [],
+	"exclude": ["node_modules"],
+	"lib": ["es2015", "es2017", "es2015.promise", "es5", "esnext.asynciterable"]
+}

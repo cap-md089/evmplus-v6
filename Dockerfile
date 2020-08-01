@@ -19,31 +19,24 @@ FROM node:13 AS builder
 
 WORKDIR /usr/capunit-com
 
+RUN npm install --global lerna@3.22.1
+
 ARG REMOTE_DRIVE_KEY_FILE
 COPY $REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 
-# Go through each one in order, copying, installling dependencies, and building
-COPY lib ./lib
-RUN cd lib && npm install --no-package-lock && npm run build
+# Copy all packages and build them with development dependencies
+COPY lerna.json package.json tsconfig.* yarn.lock ./
+COPY packages/apis packages/auto-client-api \
+	packages/client packages/common-lib \
+	packages/discord-bot packages/server \
+	packages/server-common packages/util-cli \
+	./packages
+COPY types ./types
+RUN yarn install
+RUN lerna run build
 
-COPY auto-client-api ./auto-client-api
-RUN cd auto-client-api && npm install --no-package-lock && npm run build
-
-COPY server-common ./server-common
-RUN cd server-common && npm install --no-package-lock && npm run build -- --project tsconfig.build.json
-
-COPY discord-bot ./discord-bot
-RUN cd discord-bot && npm install --no-package-lock && npm run build
-
-COPY apis ./apis
-RUN cd apis && npm install --no-package-lock && npm run build
-
-COPY client ./client
-RUN cd client && npm install --no-package-lock && npm run build
-
-COPY server ./server
-RUN cd server && npm install --no-package-lock && npm run build -- --project tsconfig.build.json
+CMD [ "npm", "--prefix", "packages/server", "start" ]
 
 FROM node:13 AS runner
 
@@ -55,31 +48,16 @@ ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 ENV GOOGLE_KEYS_PATH /google-keys
 
 # Install the unzip command to import CAPWATCH files
-RUN apt-get update && apt-get install -y unzip imagemagick --no-install-recommends
+RUN apt-get update \
+	&& apt-get install -y unzip imagemagick --no-install-recommends \
+	&& npm install --global lerna@3.22.1
 
-COPY --from=builder /usr/capunit-com/lib ./lib
-RUN cd lib && npm install --no-package-lock --production
+COPY --from=builder /usr/capunit-com/* /usr/capunit-com/
+RUN lerna bootstrap -- --production
 
-COPY --from=builder /usr/capunit-com/auto-client-api ./auto-client-api
-
-COPY --from=builder /usr/capunit-com/server-common ./server-common
-RUN cd server-common && npm install --no-package-lock --production
-
-COPY --from=builder /usr/capunit-com/discord-bot ./discord-bot
-RUN cd discord-bot && npm install --no-package-lock --production
-
-COPY --from=builder /usr/capunit-com/apis ./apis
-RUN cd apis && npm install --no-package-lock --production
-
-COPY --from=builder /usr/capunit-com/client ./client
-RUN cd client && npm install --no-package-lock --production
-
-COPY --from=builder /usr/capunit-com/server ./server
-RUN cd server && npm install --no-package-lock --production
-
-# Configure the server to use the right reCAPTCHA keys and 
+# Configure the server to use the right reCAPTCHA keys and built client
 ENV NODE_ENV production
 ENV CLIENT_PATH /usr/capunit-com/client
 EXPOSE 3001
 
-CMD cd server && node dist/index.js
+CMD [ "npm", "--prefix", "packages/server", "start" ]

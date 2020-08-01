@@ -1,5 +1,0 @@
-src/conf.ts	merge=ours
-src/conf.test.ts merge=ours
-src/test.ts merge=ours
-*.js -diff
-gulpfile.js diff

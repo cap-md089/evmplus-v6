@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "jsx": "preserve",
+    "skipLibCheck": true,
+    "strict": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "lib": [
+      "es2015",
+      "es2017",
+      "es2015.promise",
+      "es5",
+      "esnext.asynciterable",
+      "es6",
+      "es2018",
+      "dom",
+      "esnext"
+    ],
+    "removeComments": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "target": "es5"
+  },
+  "include": [
+    "src"
+  ]
+}

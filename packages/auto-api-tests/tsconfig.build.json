@@ -1,0 +1,10 @@
+{
+	"extends": "../../tsconfig.build.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"plugins": [{ "transform": "auto-client-api" }]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"]
+}

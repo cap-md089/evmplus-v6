@@ -1,0 +1,60 @@
+{
+	"name": "discord-bot",
+	"version": "1.1.0",
+	"description": "Manages members in the Discord server used by CAP St. Mary's",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "ttsc --project tsconfig.build.json",
+		"check": "ttsc --project tsconfig.build.json --noEmit",
+		"lint": "tslint --project ."
+	},
+	"private": true,
+	"author": "Andrew Rioux",
+	"license": "GPL-2.0",
+	"jest": {
+		"globals": {
+			"ts-jest": {
+				"tsConfig": "tsconfig.test.json",
+				"diagnostics": false
+			}
+		},
+		"testRegex": "(/src/__tests__/.*\\.ts)",
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"<rootDir>/src/__tests__/consts.ts",
+			"<rootDir>/src/__tests__/TestUtils.ts",
+			"<rootDir>/src/__tests__/EitherMatcher.ts"
+		],
+		"transform": {
+			"^.+\\.tsx?$": "ts-jest"
+		},
+		"moduleFileExtensions": [
+			"ts",
+			"js",
+			"json",
+			"node"
+		]
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.2",
+		"@types/jest": "^24",
+		"@types/node": "^13.13.4",
+		"jest": "^24",
+		"jest-cli": "^24",
+		"prettier": "^2.0.5",
+		"ts-jest": "^24",
+		"tslint": "^6.0.0",
+		"tslint-config-prettier": "^1.18.0",
+		"ttypescript": "^1.5.10",
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"@mysql/xdevapi": "^8.0.19",
+		"auto-client-api": "^1.0.0",
+		"common-lib": "^1.4.0",
+		"discord.js": "^11.5.1",
+		"dotenv": "^8.2.0",
+		"server-common": "^1.1.0"
+	}
+}

@@ -6,15 +6,6 @@
 		"**/CVS": true,
 		"**/.DS_Store": true,
 		"coverage": true,
-		"tscommand-*": true,
-		"apis": true,
-		"auto-client-api": true,
-		"auto-api-tests": true,
-		"client": true,
-		"discord-bot": true,
-		"lib": true,
-		"server": true,
-		"server-common": true,
-		"util-cli": true
+		"tscommand-*": true
 	}
 }

@@ -1,0 +1,6 @@
+{
+	"compilerOptions": {},
+	"files": [],
+	"extends": "./tsconfig.common.json",
+	"exclude": ["node_modules"]
+}

@@ -1,6 +1,9 @@
 keys
-server/mysqldumps
+packages/server/mysqldumps
 
-*/node_modules
-*/dist
-*/.env
+node_modules
+
+packages/*/node_modules
+packages/*/dist
+packages/*/.env
+packages/*/*.tsbuildinfo
