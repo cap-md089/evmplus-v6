@@ -17,25 +17,23 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from "@mysql/xdevapi";
-import { AccountObject, Maybe, MaybeObj } from "common-lib";
-import { collectResults, findAndBind } from "server-common";
+import { Schema } from '@mysql/xdevapi';
+import { AccountObject, Maybe, MaybeObj } from 'common-lib';
+import { collectResults, findAndBind } from 'server-common';
 
-export default (schema: Schema) => async (
-  serverID: string
-): Promise<MaybeObj<AccountObject>> => {
-  const collection = schema.getCollection<AccountObject>("Accounts");
+export default (schema: Schema) => async (serverID: string): Promise<MaybeObj<AccountObject>> => {
+	const collection = schema.getCollection<AccountObject>('Accounts');
 
-  const results = await collectResults<AccountObject>(
-    findAndBind(collection, {
-      // @ts-ignore
-      discordServer: { hasValue: true, value: { serverID } }
-    })
-  );
+	const results = await collectResults<AccountObject>(
+		findAndBind(collection, {
+			// @ts-ignore
+			discordServer: { hasValue: true, value: { serverID } },
+		})
+	);
 
-  if (results.length !== 1) {
-    return Maybe.none();
-  }
+	if (results.length !== 1) {
+		return Maybe.none();
+	}
 
-  return Maybe.some(results[0]);
+	return Maybe.some(results[0]);
 };

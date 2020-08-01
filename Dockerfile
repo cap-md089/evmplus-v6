@@ -27,11 +27,7 @@ ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
 
 # Copy all packages and build them with development dependencies
 COPY lerna.json package.json tsconfig.* yarn.lock ./
-COPY packages/apis packages/auto-client-api \
-	packages/client packages/common-lib \
-	packages/discord-bot packages/server \
-	packages/server-common packages/util-cli \
-	./packages
+COPY packages ./packages
 COPY types ./types
 RUN yarn install
 RUN lerna run build
