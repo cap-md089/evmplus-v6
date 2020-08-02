@@ -1,0 +1,76 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux, Melissa Trick
+ *
+ * This file is part of CAPUnit.com.
+ *
+ * CAPUnit.com is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * CAPUnit.com is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+body,
+html,
+#root {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+}
+
+.quizzer-root {
+	margin: 0;
+	box-sizing: border-box;
+	padding: 10px;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+img.insigniaImage {
+	width: 40px;
+	height: 60px;
+}
+
+/* Width: 1 7/16
+ Height: 3/8*/
+$widthToHeight: 3.8333;
+
+$widthPx: 20px;
+
+img.ribbonImage {
+	height: $widthPx;
+	width: $widthPx * $widthToHeight;
+}
+
+$borderWidth: 2px;
+
+img {
+	border: $borderWidth solid transparent;
+	box-sizing: border-box;
+}
+
+input[type='radio'],
+input[type='checkbox'] {
+	display: none;
+}
+
+input[type='radio']:checked + label,
+input[type='checkbox']:checked + label {
+	img {
+		border: $borderWidth solid red;
+	}
+}
+
+.inline {
+	display: inline-block;
+}

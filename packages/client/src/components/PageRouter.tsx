@@ -59,6 +59,8 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
+import { Quizzer } from '../pages/quizzer/Quizzer';
+import { QuizzerDragAndDrop } from '../pages/quizzer/QuizzerDragNDrop';
 
 const pages: Array<{
 	url: string;
@@ -219,6 +221,16 @@ const pages: Array<{
 		url: '/registerdiscord/:discordid',
 		component: RegisterDiscord,
 		exact: true
+	},
+	{
+		url: '/capr393quizzer',
+		component: Quizzer,
+		exact: false
+	},
+	{
+		url: '/capr393quizzer2',
+		component: QuizzerDragAndDrop,
+		exact: false
 	},
 
 	// THIS GOES LAST
