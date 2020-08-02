@@ -494,11 +494,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</DialogueButton>
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-							<br/>
-							<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
-								Download Attendance Spreadsheet
-							</Button>
-							
+							{attendees.filter(Either.isRight).length > 0 ? (
+								<>
+									<br />
+									<Button
+										buttonType="none"
+										onClick={this.createAttendanceSpreadsheet}
+									>
+										Download Attendance Spreadsheet
+									</Button>
+								</>
+							) : null}
 							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
@@ -1165,25 +1171,35 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const XLSX = await import('xlsx');
 
 		const wb = XLSX.utils.book_new();
-		const evtID = this.state.eventInformation.event.accountID + "-" + this.state.eventInformation.event.id;
+		const evtID =
+			this.state.eventInformation.event.accountID +
+			'-' +
+			this.state.eventInformation.event.id;
 
-		let wsName = "EventInfo";
+		let wsName = 'EventInfo';
 		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
 		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
 		let sheet = spreadsheets.FormatEventXL(evtID, ws);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
-		wsName = "Attendance";
-		const [wsDataAttendance, widths] = spreadsheets.AttendanceXL(this.state.eventInformation.event, 
-			this.state.eventInformation.attendees.filter(Either.isRight).map(record => record.value.record));
+		wsName = 'Attendance';
+		const [wsDataAttendance, widths] = spreadsheets.AttendanceXL(
+			this.state.eventInformation.event,
+			this.state.eventInformation.attendees
+				.filter(Either.isRight)
+				.map(record => record.value.record)
+		);
 		ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-		sheet = spreadsheets.FormatAttendanceXL(ws, widths, 
+		sheet = spreadsheets.FormatAttendanceXL(
+			ws,
+			widths,
 			this.state.eventInformation.event.customAttendanceFields,
 			XLSX.utils.encode_cell,
-						wsDataAttendance.length);
+			wsDataAttendance.length
+		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
-		
-		XLSX.writeFile(wb, `Attendance ${ evtID }.xlsx`);
+
+		XLSX.writeFile(wb, `Attendance ${evtID}.xlsx`);
 	}
 
 	private async linkEventTo(targetaccount: string) {

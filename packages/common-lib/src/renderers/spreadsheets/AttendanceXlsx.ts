@@ -41,6 +41,14 @@ const AttendanceStatus = [
 	'Not Planning to Attend',
 ];
 
+const CustomAttendanceFieldType = [
+	'Text',
+	'Number',
+	'Date',
+	'Checkbox',
+	'File'
+];
+
 export const EventXL = (event: RawEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
 		'CAPUnit.com Event Information and Sign-up/Attendance Roster',
@@ -71,6 +79,51 @@ export const EventXL = (event: RawEventObject): Array<Array<string | number>> =>
 	retVal.push(row);
 	row = [event.comments];
 	retVal.push(row);
+
+	if(event.customAttendanceFields.length > 0) {
+		const numPadding = 8;
+		for (let l = 0; l < numPadding; l++) {
+			retVal.push([]);
+		}
+		retVal.push(['Custom Attendance Fields','','','','','Can Member']);
+
+		row = [
+			'',
+			'Field Name',
+			'Field Type',
+			'Prefill Value',
+			'',
+			'See?',
+			'Edit?'
+		];
+		retVal.push(row);
+		retVal.push([]);
+		let fieldPreFill: string;
+
+		for (const customField of event.customAttendanceFields) {
+			if(customField.type !== CustomAttendanceFieldEntryType.FILE) {
+				fieldPreFill = typeof customField.preFill === 'boolean' 
+					? customField.preFill
+						? 'Y'
+						: 'N'
+					: typeof customField.preFill === 'number'
+						? customField.preFill.toString()
+						: customField.preFill;
+			} else {
+				fieldPreFill = "N/A";
+			}
+			row = [ '',
+				customField.title,
+				CustomAttendanceFieldType[customField.type],
+				fieldPreFill,
+				'',
+				customField.displayToMember ? 'Y' : 'N',
+				customField.allowMemberToModify ? 'Y' : 'N'
+			];	
+			retVal.push(row);
+		}
+
+	}
 
 	return retVal;
 };
@@ -153,7 +206,7 @@ export const AttendanceXL = (
 					: fieldVal.value
 			);
 		}
-		widths = widths.map((width, index) => Math.max(width, row[index].toString().length));
+		widths = widths.map((width, index) => Math.max(width, (row[index] ?? '').toString().length));
 		retVal.push(row);
 	}
 	return [retVal, widths.map(width => width + 4)];
