@@ -23,21 +23,14 @@ import { presentMultCheckboxReturn } from '../../lib/forms';
 import { Maybe } from '../../lib/Maybe';
 import { FullPointOfContact, Member, RawEventObject } from '../../typings/types';
 
-function formatPhone(phone: string) {
+export function formatPhone(phone: string) {
 	// strip spaces and non-numeric characters
 	phone.trimLeft().trimRight();
-	if (phone) {
-		if (phone!.match(/\d+/g)) {
+	if(phone) {
+		if(phone!.match(/\d+/g)) {
 			phone = phone!.match(/\d+/g)!.join('').toString();
 			// add formatting
-			return (
-				'(' +
-				phone.substring(0, 3) +
-				')' +
-				phone.substring(3, 6) +
-				'-' +
-				phone.substring(6, 10)
-			);
+			return '(' + phone.substring(0, 3) + ')' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
 		} else {
 			return '';
 		}
@@ -99,32 +92,32 @@ const boxUnchecked = (boxSize: number, vOffset: number) => ({
 const GetBestPhone = (inMember: Member) => {
 	let numbersData = '';
 
-	if (inMember.contact.CELLPHONE.PRIMARY) {
-		numbersData += 'CP ' + formatPhone(inMember.contact.CELLPHONE.PRIMARY) + '\n';
+	if(inMember.contact.CELLPHONE.PRIMARY) {
+		numbersData += "CP " + formatPhone(inMember.contact.CELLPHONE.PRIMARY) + "\n";
 	}
-	if (inMember.contact.CELLPHONE.SECONDARY) {
-		numbersData += 'CS ' + formatPhone(inMember.contact.CELLPHONE.SECONDARY) + '\n';
+	if(inMember.contact.CELLPHONE.SECONDARY) {
+		numbersData += "CS " + formatPhone(inMember.contact.CELLPHONE.SECONDARY) + "\n";
 	}
-	if (inMember.contact.CELLPHONE.EMERGENCY) {
-		numbersData += 'CE ' + formatPhone(inMember.contact.CELLPHONE.EMERGENCY) + '\n';
+	if(inMember.contact.CELLPHONE.EMERGENCY) {
+		numbersData += "CE " + formatPhone(inMember.contact.CELLPHONE.EMERGENCY) + "\n";
 	}
-	if (inMember.contact.CADETPARENTPHONE.PRIMARY) {
-		numbersData += 'PP ' + formatPhone(inMember.contact.CADETPARENTPHONE.PRIMARY) + '\n';
+	if(inMember.contact.CADETPARENTPHONE.PRIMARY) {
+		numbersData += "PP " + formatPhone(inMember.contact.CADETPARENTPHONE.PRIMARY) + "\n";
 	}
-	if (inMember.contact.CADETPARENTPHONE.SECONDARY) {
-		numbersData += 'PS ' + formatPhone(inMember.contact.CADETPARENTPHONE.SECONDARY) + '\n';
+	if(inMember.contact.CADETPARENTPHONE.SECONDARY) {
+		numbersData += "PS " + formatPhone(inMember.contact.CADETPARENTPHONE.SECONDARY) + "\n";
 	}
-	if (inMember.contact.CADETPARENTPHONE.EMERGENCY) {
-		numbersData += 'PE ' + formatPhone(inMember.contact.CADETPARENTPHONE.EMERGENCY) + '\n';
+	if(inMember.contact.CADETPARENTPHONE.EMERGENCY) {
+		numbersData += "PE " + formatPhone(inMember.contact.CADETPARENTPHONE.EMERGENCY) + "\n";
 	}
-	if (inMember.contact.HOMEPHONE.PRIMARY) {
-		numbersData += 'HP ' + formatPhone(inMember.contact.HOMEPHONE.PRIMARY) + '\n';
+	if(inMember.contact.HOMEPHONE.PRIMARY) {
+		numbersData += "HP " + formatPhone(inMember.contact.HOMEPHONE.PRIMARY) + "\n";
 	}
-	if (inMember.contact.HOMEPHONE.EMERGENCY) {
-		numbersData += 'HE ' + formatPhone(inMember.contact.HOMEPHONE.EMERGENCY) + '\n';
+	if(inMember.contact.HOMEPHONE.EMERGENCY) {
+		numbersData += "HE " + formatPhone(inMember.contact.HOMEPHONE.EMERGENCY) + "\n";
 	}
-	if (numbersData.length > 2) {
-		numbersData = numbersData.substring(0, numbersData.length - 1);
+	if(numbersData.length > 2) {
+		numbersData = numbersData.substring(0,numbersData.length - 1);
 		return numbersData;
 	} else {
 		return '';
@@ -134,26 +127,26 @@ const GetBestPhone = (inMember: Member) => {
 const GetBestEmail = (inMember: Member) => {
 	let numbersData = '';
 
-	if (inMember.contact.EMAIL.PRIMARY) {
-		numbersData += 'EP ' + inMember.contact.EMAIL.PRIMARY + '\n';
+	if(inMember.contact.EMAIL.PRIMARY) {
+		numbersData += "EP " + inMember.contact.EMAIL.PRIMARY + "\n";
 	}
-	if (inMember.contact.EMAIL.SECONDARY) {
-		numbersData += 'ES ' + inMember.contact.EMAIL.SECONDARY + '\n';
+	if(inMember.contact.EMAIL.SECONDARY) {
+		numbersData += "ES " + inMember.contact.EMAIL.SECONDARY + "\n";
 	}
-	if (inMember.contact.EMAIL.EMERGENCY) {
-		numbersData += 'EE ' + inMember.contact.EMAIL.EMERGENCY + '\n';
+	if(inMember.contact.EMAIL.EMERGENCY) {
+		numbersData += "EE " + inMember.contact.EMAIL.EMERGENCY + "\n";
 	}
-	if (inMember.contact.CADETPARENTEMAIL.PRIMARY) {
-		numbersData += 'PP ' + inMember.contact.CADETPARENTEMAIL.PRIMARY + '\n';
+	if(inMember.contact.CADETPARENTEMAIL.PRIMARY) {
+		numbersData += "PP " + inMember.contact.CADETPARENTEMAIL.PRIMARY + "\n";
 	}
-	if (inMember.contact.CADETPARENTEMAIL.SECONDARY) {
-		numbersData += 'PS ' + inMember.contact.CADETPARENTEMAIL.SECONDARY + '\n';
+	if(inMember.contact.CADETPARENTEMAIL.SECONDARY) {
+		numbersData += "PS " + inMember.contact.CADETPARENTEMAIL.SECONDARY + "\n";
 	}
-	if (inMember.contact.CADETPARENTEMAIL.EMERGENCY) {
-		numbersData += 'PE ' + inMember.contact.CADETPARENTEMAIL.EMERGENCY + '\n';
+	if(inMember.contact.CADETPARENTEMAIL.EMERGENCY) {
+		numbersData += "PE " + inMember.contact.CADETPARENTEMAIL.EMERGENCY + "\n";
 	}
-	if (numbersData.length > 2) {
-		numbersData = numbersData.substring(0, numbersData.length - 1);
+	if(numbersData.length > 2) {
+		numbersData = numbersData.substring(0,numbersData.length - 1);
 		return numbersData;
 	} else {
 		return '';
@@ -161,33 +154,31 @@ const GetBestEmail = (inMember: Member) => {
 };
 
 const GetOtherForms = (inEvent: RawEventObject) => {
-	if (inEvent.requiredForms.otherSelected) {
+	if(inEvent.requiredForms.otherSelected) {
 		return inEvent.requiredForms.otherValue;
 	} else {
 		return '';
 	}
-};
+}
 
 export const capf6080DocumentDefinition = (
 	event: RawEventObject,
 	pointsOfContact: FullPointOfContact[],
-	member: Member
+	member: Member,
 ): TDocumentDefinitions => {
-	const MemberPhones = GetBestPhone(member);
-	const MemberEmails = GetBestEmail(member);
-	const POCText = pointsOfContact
-		.map(
-			(value, index) =>
-				'\n' +
-				(index + 1) +
-				') ' +
-				value.name +
-				', Phone: ' +
-				formatPhone(value.phone) +
-				', Email: ' +
-				value.email
-		)
-		.toString();
+	const MemberPhones = member.seniorMember ? "" : GetBestPhone(member);
+	const MemberEmails = member.seniorMember ? "" : GetBestEmail(member);
+	const MemberName = member.seniorMember ? "" : member.memberRank + ' ' + member.nameFirst + ' ' + member.nameLast;
+	const MemberID = member.seniorMember ? "" : member.id;
+	const MemberSquadron = member.seniorMember ? "" : member.squadron;
+	const POCText = pointsOfContact.map(
+								(value, index) =>
+									'\n' + (index + 1) + ') ' + value.name +
+									', Phone: ' +
+									formatPhone(value.phone) +
+									', Email: ' +
+									value.email
+							).toString();
 
 	const myTitleFontSize = 10;
 	const myTextFontSize = 9;
@@ -233,13 +224,6 @@ export const capf6080DocumentDefinition = (
 				},
 		  ]
 		: [];
-	// let limitedComments = limitLines(event.comments, 140, 12);
-	// if(limitedComments.length < event.comments.length) {
-	// limitedComments = limitedComments + " ... (comments truncated)";
-	// }
-
-	const orEmptyString = Maybe.orSome('');
-
 	const eventComments = myTest
 		? [
 				{
@@ -351,7 +335,7 @@ export const capf6080DocumentDefinition = (
 						text: [
 							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
-								text: orEmptyString(presentMultCheckboxReturn(event.uniform)),
+								text: Maybe.orSome('')(presentMultCheckboxReturn(event.uniform, ', ')),
 								bold: false,
 								fontSize: myTextFontSize,
 							},
@@ -366,7 +350,7 @@ export const capf6080DocumentDefinition = (
 						text: [
 							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
-								text: orEmptyString(presentMultCheckboxReturn(event.uniform)),
+								text: Maybe.orSome('')(presentMultCheckboxReturn(event.uniform, ', ')),
 								bold: false,
 								fontSize: myTextFontSize,
 							},
@@ -388,25 +372,24 @@ export const capf6080DocumentDefinition = (
 				},
 		  ]
 		: [];
-	const transportationDescription =
-		event.transportationDescription && myTest
-			? [
-					{
-						text: [
-							{
-								text: 'Transportation Description: ',
-								bold: true,
-								fontSize: myTextFontSize,
-							},
-							{
-								text: event.transportationDescription,
-								bold: false,
-								fontSize: myTextFontSize,
-							},
-						],
-					},
-			  ]
-			: [];
+	const transportationDescription = event.transportationDescription && myTest
+		? [
+				{
+					text: [
+						{
+							text: 'Transportation Description: ',
+							bold: true,
+							fontSize: myTextFontSize,
+						},
+						{
+							text: event.transportationDescription,
+							bold: false,
+							fontSize: myTextFontSize,
+						},
+					],
+				},
+		  ]
+		: [];
 	const registrationDeadline =
 		event.registration && myTest
 			? [
@@ -486,30 +469,13 @@ export const capf6080DocumentDefinition = (
 					},
 			  ]
 			: [];
-
-	const lodgingText = presentMultCheckboxReturn(event.lodgingArrangments);
-	const lodging =
-		myTest && Maybe.isSome(lodgingText)
-			? [
-					{
-						text: [
-							{ text: 'Lodging: ', bold: true, fontSize: myTextFontSize },
-							{
-								text: lodgingText.value,
-								bold: false,
-								fontSize: myTextFontSize,
-							},
-						],
-					},
-			  ]
-			: [];
-	const activity = myTest
+	const lodging = myTest && Maybe.isSome(presentMultCheckboxReturn(event.lodgingArrangments))
 		? [
 				{
 					text: [
-						{ text: 'Activity: ', bold: true, fontSize: myTextFontSize },
+						{ text: 'Lodging: ', bold: true, fontSize: myTextFontSize },
 						{
-							text: orEmptyString(presentMultCheckboxReturn(event.activity)),
+							text: Maybe.orSome('')(presentMultCheckboxReturn(event.lodgingArrangments)),
 							bold: false,
 							fontSize: myTextFontSize,
 						},
@@ -517,47 +483,59 @@ export const capf6080DocumentDefinition = (
 				},
 		  ]
 		: [];
-	const highAdventure =
-		myTest && event.highAdventureDescription.length > 0
-			? [
-					{
-						text: [
-							{
-								text: 'High Adventure Description: ',
-								bold: true,
-								fontSize: myTextFontSize,
-							},
-							{
-								text: event.highAdventureDescription,
-								bold: false,
-								fontSize: myTextFontSize,
-							},
-						],
-					},
-			  ]
-			: [];
-	const requiredEquipment =
-		myTest && event.requiredEquipment.length > 0
-			? [
-					{
-						text: [
-							{ text: 'Required Equipment: ', bold: true, fontSize: myTextFontSize },
-							{
-								text: event.requiredEquipment.toString(),
-								bold: false,
-								fontSize: myTextFontSize,
-							},
-						],
-					},
-			  ]
-			: [];
+	const activity = myTest
+		? [
+				{
+					text: [
+						{ text: 'Activity: ', bold: true, fontSize: myTextFontSize },
+						{
+							text: Maybe.orSome('')(presentMultCheckboxReturn(event.activity)),
+							bold: false,
+							fontSize: myTextFontSize,
+						},
+					],
+				},
+		  ]
+		: [];
+	const highAdventure = myTest && event.highAdventureDescription.length > 0
+		? [
+				{
+					text: [
+						{
+							text: 'High Adventure Description: ',
+							bold: true,
+							fontSize: myTextFontSize,
+						},
+						{
+							text: event.highAdventureDescription,
+							bold: false,
+							fontSize: myTextFontSize,
+						},
+					],
+				},
+		  ]
+		: [];
+	const requiredEquipment = myTest && event.requiredEquipment.length > 0
+		? [
+				{
+					text: [
+						{ text: 'Required Equipment: ', bold: true, fontSize: myTextFontSize },
+						{
+							text: event.requiredEquipment.toString(),
+							bold: false,
+							fontSize: myTextFontSize,
+						},
+					],
+				},
+		  ]
+		: [];
 	const meals = myTest
 		? [
 				{
 					text: [
 						{ text: 'Meals: ', bold: true, fontSize: myTextFontSize },
 						{
-							text: orEmptyString(presentMultCheckboxReturn(event.mealsDescription)),
+							text: Maybe.orSome('')(presentMultCheckboxReturn(event.mealsDescription)),
 							bold: false,
 							fontSize: myTextFontSize,
 						},
@@ -703,12 +681,7 @@ export const capf6080DocumentDefinition = (
 													fontSize: myTextFontSize,
 												},
 												{
-													text:
-														member.memberRank +
-														' ' +
-														member.nameFirst +
-														' ' +
-														member.nameLast,
+													text: MemberName,
 													fontSize: myTextFontSize,
 												},
 												{
@@ -716,7 +689,7 @@ export const capf6080DocumentDefinition = (
 													bold: true,
 													fontSize: myTextFontSize,
 												},
-												{ text: member.id, fontSize: myTextFontSize },
+												{ text: MemberID, fontSize: myTextFontSize },
 											],
 										],
 									},
@@ -733,7 +706,7 @@ export const capf6080DocumentDefinition = (
 													bold: true,
 													fontSize: myTextFontSize,
 												},
-												{ text: member.squadron, fontSize: myTextFontSize },
+												{ text: MemberSquadron, fontSize: myTextFontSize },
 												{
 													text: 'Phone:',
 													bold: true,
@@ -936,8 +909,7 @@ export const capf6080DocumentDefinition = (
 												},
 												{
 													text:
-														'Other/Special Local Local Forms (specify)\n' +
-														GetOtherForms(event),
+														'Other/Special Local Local Forms (specify)\n' + GetOtherForms(event),
 													fontSize: myTextFontSize,
 													colSpan: 3,
 													rowSpan: 2,
@@ -1092,10 +1064,7 @@ export const capf6080DocumentDefinition = (
 													{ text: 'Event Info:' },
 													{
 														qr:
-															'https://' +
-															event.accountID +
-															'.capunit.com/eventviewer/' +
-															event.id,
+															'https://' + event.accountID + '.capunit.com/eventviewer/' + event.id,
 														fit: '70',
 													},
 												],
@@ -1117,3 +1086,4 @@ export const capf6080DocumentDefinition = (
 
 	return docDefinition;
 };
+// http://localhost:3001/api/event/2/attendance/log

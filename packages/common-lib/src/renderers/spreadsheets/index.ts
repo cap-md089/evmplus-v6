@@ -17,5 +17,4 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * as forms from './forms';
-export * as spreadsheets from './spreadsheets';
+export * from './AttendanceXlsx';
