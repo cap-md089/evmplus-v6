@@ -25,7 +25,8 @@
 		"timeago": "1.6.7",
 		"timeago.js": "4.0.2",
 		"typescript": "^3.9.5",
-		"whatwg-fetch": "2.0.3"
+		"whatwg-fetch": "2.0.3",
+		"xlsx": "^0.16.5"
 	},
 	"scripts": {
 		"start": "react-scripts start",
@@ -47,6 +48,7 @@
 		"not op_mini all"
 	],
 	"devDependencies": {
+		"@types/xlsx": "^0.0.36",
 		"@types/draft-js": "0.10.20",
 		"@types/http-proxy-middleware": "0.19.2",
 		"@types/isomorphic-fetch": "0.0.34",

@@ -57,6 +57,7 @@ import {
 	presentMultCheckboxReturn,
 	RawEventObject,
 	Right,
+	spreadsheets,
 	User
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
@@ -248,6 +249,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 		this.renderFormsButtons = this.renderFormsButtons.bind(this);
 		this.createCAPF6080 = this.createCAPF6080.bind(this);
+		this.createAttendanceSpreadsheet = this.createAttendanceSpreadsheet.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -465,7 +467,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								buttonClass="underline-button"
 								displayButtons={DialogueButtons.OK_CANCEL}
 								onOk={this.copyEvent}
-								title="Move event"
+								title="Copy event"
 								labels={['Copy event', 'Cancel']}
 								values={{
 									newTime: event.startDateTime
@@ -492,6 +494,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</DialogueButton>
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
+							<br/>
+							<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
+								Download Attendance Spreadsheet
+							</Button>
+							
 							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
@@ -1148,6 +1155,35 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const docPrinter = pdfMake.createPdf(docDef, null, fonts);
 
 		docPrinter.download(fileName);
+	}
+
+	private async createAttendanceSpreadsheet() {
+		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
+		const XLSX = await import('xlsx');
+
+		const wb = XLSX.utils.book_new();
+		const evtID = this.state.eventInformation.event.accountID + "-" + this.state.eventInformation.event.id;
+
+		let wsName = "EventInfo";
+		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
+		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+		let sheet = spreadsheets.FormatEventXL(evtID, ws);
+		XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+		wsName = "Attendance";
+		const [wsDataAttendance, widths] = spreadsheets.AttendanceXL(this.state.eventInformation.event, 
+			this.state.eventInformation.attendees.filter(Either.isRight).map(record => record.value.record));
+		ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+		sheet = spreadsheets.FormatAttendanceXL(ws, widths, 
+			this.state.eventInformation.event.customAttendanceFields,
+			XLSX.utils.encode_cell,
+						wsDataAttendance.length);
+		XLSX.utils.book_append_sheet(wb, sheet, wsName);
+		
+		XLSX.writeFile(wb, `Attendance ${ evtID }.xlsx`);
 	}
 
 	private async linkEventTo(targetaccount: string) {
