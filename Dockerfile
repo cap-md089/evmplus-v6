@@ -38,22 +38,23 @@ FROM node:13 AS runner
 
 WORKDIR /usr/capunit-com
 
-COPY --from=builder /usr/capunit-com/remote_drive_key /usr/capunit-com/remote_drive_key
-ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
-
-ENV GOOGLE_KEYS_PATH /google-keys
-
 # Install the unzip command to import CAPWATCH files
 RUN apt-get update \
 	&& apt-get install -y unzip imagemagick --no-install-recommends \
 	&& npm install --global lerna@3.22.1
 
-COPY --from=builder /usr/capunit-com/* /usr/capunit-com/
+COPY --from=builder /usr/capunit-com/remote_drive_key /usr/capunit-com/remote_drive_key
+COPY --from=builder /usr/capunit-com/packages /usr/capunit-com/packages
+COPY --from=builder /usr/capunit-com/package.json /usr/capunit-com/package.json
+COPY --from=builder /usr/capunit-com/lerna.json /usr/capunit-com/lerna.json
+COPY --from=builder /usr/capunit-com/yarn.lock /usr/capunit-com/yarn.lock
 RUN lerna bootstrap -- --production
 
 # Configure the server to use the right reCAPTCHA keys and built client
+ENV REMOTE_DRIVE_KEY_FILE /usr/capunit-com/remote_drive_key
+ENV GOOGLE_KEYS_PATH /google-keys
 ENV NODE_ENV production
-ENV CLIENT_PATH /usr/capunit-com/client
+ENV CLIENT_PATH /usr/capunit-com/packages/client
 EXPOSE 3001
 
-CMD [ "npm", "--prefix", "packages/server", "start" ]
+CMD cd /usr/capunit-com/packages/server && npm start
