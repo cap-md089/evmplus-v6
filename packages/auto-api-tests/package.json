@@ -15,7 +15,7 @@
 	"private": true,
 	"dependencies": {
 		"auto-client-api": "^1.1.0",
-		"common-lib": "^1.4.0"
+		"common-lib": "^1.1.0"
 	},
 	"devDependencies": {
 		"@types/jest": "^25.2.1",

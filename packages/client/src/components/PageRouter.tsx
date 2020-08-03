@@ -60,7 +60,6 @@ import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
 import { Quizzer } from '../pages/quizzer/Quizzer';
-import { QuizzerDragAndDrop } from '../pages/quizzer/QuizzerDragNDrop';
 import TeamEmailList from '../pages/team/TeamEmail';
 
 const pages: Array<{
@@ -231,11 +230,6 @@ const pages: Array<{
 	{
 		url: '/capr393quizzer',
 		component: Quizzer,
-		exact: false
-	},
-	{
-		url: '/capr393quizzer2',
-		component: QuizzerDragAndDrop,
 		exact: false
 	},
 
