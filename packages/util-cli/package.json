@@ -13,7 +13,7 @@
 	"dependencies": {
 		"@mysql/xdevapi": "^8.0.21",
 		"auto-client-api": "^1.1.0",
-		"common-lib": "^1.1.0",
+		"common-lib": "^1.4.0",
 		"dotenv": "^8.2.0",
 		"server-common": "^1.1.0"
 	},

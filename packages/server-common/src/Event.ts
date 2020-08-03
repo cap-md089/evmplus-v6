@@ -63,12 +63,12 @@ import {
 	identity,
 	asyncIterFilter,
 	Right,
-	EitherObj
+	EitherObj,
 } from 'common-lib';
 import { getAccount } from './Account';
 import updateGoogleCalendars, {
 	createGoogleCalendarEvents,
-	removeGoogleCalendarEvents
+	removeGoogleCalendarEvents,
 } from './GoogleUtils';
 import { getMemberName } from './Members';
 import {
@@ -82,7 +82,7 @@ import {
 	modifyAndBindC,
 	saveToCollectionA,
 	generateBindObject,
-	findAndBind
+	findAndBind,
 } from './MySQLUtil';
 import { createNotification } from './Notification';
 import { ServerEither } from './servertypes';
@@ -106,7 +106,7 @@ export const getFullPointsOfContact = (schema: Schema) => (account: AccountObjec
 			poc.type === PointOfContactType.INTERNAL
 				? getMemberName(schema)(account)(poc.memberReference).map(name => ({
 						...poc,
-						name
+						name,
 				  }))
 				: asyncRight(poc, errorGenerator('Could not get point of contact data'))
 		)
@@ -126,7 +126,7 @@ export const getSimplePointsOfContact = (
 					receiveEventUpdates: poc.receiveEventUpdates,
 					receiveRoster: poc.receiveRoster,
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
-					receiveUpdates: poc.receiveUpdates
+					receiveUpdates: poc.receiveUpdates,
 			  }
 	);
 
@@ -141,7 +141,7 @@ const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRec
 	timestamp: rec.timestamp,
 	shiftTime: rec.shiftTime,
 	sourceAccountID: rec.accountID,
-	sourceEventID: rec.eventID
+	sourceEventID: rec.eventID,
 }));
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
@@ -186,7 +186,7 @@ export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 const getLinkedEvents = (schema: Schema) => (accountID: string) => (eventID: number) =>
 	generateResults(
 		findAndBind(schema.getCollection<RawEventObject>('Events'), {
-			sourceEvent: { id: eventID, accountID }
+			sourceEvent: { id: eventID, accountID },
 		})
 	);
 
@@ -211,7 +211,7 @@ const getLinkedEventsAttendance = (schema: Schema) => (accountID: string) => (
 
 export const getAttendanceForEvent = (schema: Schema) => ({
 	id: eventID,
-	accountID
+	accountID,
 }: RawEventObject) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
@@ -250,7 +250,7 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 		: asyncRight<ServerError, POCFull>([], {
 				type: 'OTHER',
 				code: 500,
-				message: 'Could not get points of contact'
+				message: 'Could not get points of contact',
 		  })
 	).flatMap(pointsOfContact =>
 		viewer.hasValue && (!event.privateAttendance || isPOCOf(viewer.value, event))
@@ -259,13 +259,13 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 					.map<EventObject>(attendance => ({
 						...event,
 						pointsOfContact,
-						attendance
+						attendance,
 					}))
 			: asyncRight<ServerError, EventObject>(
 					{
 						...event,
 						pointsOfContact,
-						attendance: [] as AttendanceRecord[]
+						attendance: [] as AttendanceRecord[],
 					},
 					errorGenerator('Could not get event with attendance')
 			  )
@@ -284,14 +284,14 @@ export const removeMemberFromEventAttendance = (schema: Schema) => (account: Acc
 					generateFindStatement({
 						accountID: account.id,
 						eventID: event.id,
-						memberID: toReference(member)
+						memberID: toReference(member),
 					})
 				)
 				.bind(
 					generateBindObject({
 						accountID: account.id,
 						eventID: event.id,
-						memberID: toReference(member)
+						memberID: toReference(member),
 					})
 				)
 				.execute()
@@ -305,7 +305,7 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 		asyncLeft({
 			type: 'OTHER',
 			code: 400,
-			message
+			message,
 		})
 	)(() => asyncRight(void 0, errorGenerator('Could not add member to attendance')))(
 		canSignUpForEvent(event)([])(attendee.memberID)
@@ -320,8 +320,8 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 				summaryEmailSent: false,
 				shiftTime: attendee.shiftTime ?? {
 					arrivalTime: event.meetDateTime,
-					departureTime: event.pickupDateTime
-				}
+					departureTime: event.pickupDateTime,
+				},
 			})
 		)
 	);
@@ -338,7 +338,7 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (account: Account
 			modifyAndBindC<RawAttendanceDBRecord>({
 				accountID: account.id,
 				eventID: event.id,
-				memberID: toReference(member)
+				memberID: toReference(member),
 			})
 		)
 		.map(collection =>
@@ -349,8 +349,8 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (account: Account
 					memberName: getFullMemberName(member),
 					shiftTime: record.shiftTime ?? {
 						arrivalTime: event.meetDateTime,
-						departureTime: event.pickupDateTime
-					}
+						departureTime: event.pickupDateTime,
+					},
 				})
 				.execute()
 		)
@@ -372,7 +372,7 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		.filter(id => !isNaN(id), {
 			type: 'OTHER',
 			code: 400,
-			message: 'Invalid event ID'
+			message: 'Invalid event ID',
 		})
 		.flatMap(id =>
 			asyncRight(
@@ -382,7 +382,7 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 				.map(
 					findAndBindC<RawEventObject>({
 						accountID: account.id,
-						id
+						id,
 					})
 				)
 				.map(collectResults)
@@ -390,7 +390,7 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		.filter(results => results.length === 1, {
 			type: 'OTHER',
 			code: 404,
-			message: 'Could not find event specified'
+			message: 'Could not find event specified',
 		})
 		.map(get(0))
 		.map(stripProp('_id'));
@@ -403,18 +403,18 @@ const sendPOCNotifications = (delta: 'ADDED' | 'REMOVED') => (schema: Schema) =>
 			createNotification(schema)(account)({
 				target: {
 					type: NotificationTargetType.MEMBER,
-					to: poc.memberReference
+					to: poc.memberReference,
 				},
 				cause: {
-					type: NotificationCauseType.SYSTEM
+					type: NotificationCauseType.SYSTEM,
 				},
 				extraData: {
 					accountID: event.accountID,
 					delta,
 					eventID: event.id,
 					eventName: event.name,
-					type: NotificationDataType.EVENT
-				}
+					type: NotificationDataType.EVENT,
+				},
 			})
 		)
 	).map(destroy);
@@ -447,7 +447,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 				mainId,
 				wingId,
 				regId,
-				feeId
+				feeId,
 			},
 			groupEventNumber: event.groupEventNumber,
 			highAdventureDescription: event.highAdventureDescription,
@@ -481,7 +481,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
-			wingEventNumber: event.wingEventNumber
+			wingEventNumber: event.wingEventNumber,
 		}))
 		.flatMap(newEvent => {
 			const isInternalPOC = (poc: PointOfContact): poc is InternalPointOfContact =>
@@ -498,7 +498,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 
 			return AsyncEither.All([
 				sendPOCRemovedNotifications(schema)(account)(newEvent)(removedPOCs),
-				sendPOCAddedNotifications(schema)(account)(newEvent)(addedPOCs)
+				sendPOCAddedNotifications(schema)(account)(newEvent)(addedPOCs),
 			]).map(always(newEvent));
 		})
 		.flatMap(saveToCollectionA(schema.getCollection<RawEventObject>('Events')));
@@ -507,7 +507,7 @@ export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawEventObject) => (timeToRemove: number) => ({
 	...event,
-	debrief: event.debrief.filter(({ timeSubmitted }) => timeSubmitted !== timeToRemove)
+	debrief: event.debrief.filter(({ timeSubmitted }) => timeSubmitted !== timeToRemove),
 });
 
 export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => (
@@ -571,7 +571,7 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			timeCreated: now(),
 			timeModified: now(),
 			debrief: [],
-			googleCalendarIds: {}
+			googleCalendarIds: {},
 		}))
 		.flatMap(event =>
 			asyncRight(
@@ -583,8 +583,8 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 					mainId,
 					wingId,
 					regId,
-					feeId
-				}
+					feeId,
+				},
 			}))
 		)
 		.flatMap(addToCollection(schema.getCollection<RawEventObject>('Events')));
@@ -605,7 +605,7 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			meetDateTime: event.meetDateTime + timeDelta,
 			startDateTime: event.startDateTime + timeDelta,
 			endDateTime: event.endDateTime + timeDelta,
-			pickupDateTime: event.pickupDateTime + timeDelta
+			pickupDateTime: event.pickupDateTime + timeDelta,
 		}))
 		.flatMap(createEventFunc(now)(config)(schema)(account)(author));
 export const copyEvent = copyEventFunc(Date.now);
@@ -619,15 +619,15 @@ export const linkEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 		.filter(event => !event.sourceEvent, {
 			type: 'OTHER',
 			code: 400,
-			message: 'Cannot link to a linked event'
+			message: 'Cannot link to a linked event',
 		})
 		.flatMap(createEventFunc(now)(config)(schema)(targetAccount)(author))
 		.map<RawEventObject>(event => ({
 			...event,
 			sourceEvent: {
 				accountID: account.id,
-				id: linkedEvent.id
-			}
+				id: linkedEvent.id,
+			},
 		}))
 		.flatMap(event => saveEventFunc(now)(config)(schema)(targetAccount)(event)(event));
 export const linkEvent = linkEventFunc();

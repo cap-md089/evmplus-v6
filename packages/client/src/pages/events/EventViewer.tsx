@@ -521,7 +521,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						? ' | '
 						: null}
 					{fullMemberDetails.error !== MemberCreateError.NONE ||
-					event.sourceEvent !== null ? null : fullMemberDetails.linkableAccounts
+					(event.sourceEvent !== null &&
+						event.sourceEvent !== undefined) ? null : fullMemberDetails.linkableAccounts
 							.length === 1 ? (
 						<Button
 							onClick={() =>
