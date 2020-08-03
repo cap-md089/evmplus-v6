@@ -28,14 +28,12 @@ import {
 	getFullMemberName,
 	getMemberEmail,
 	hasPermission,
-	isTeamLeader,
 	Maybe as M,
 	MaybeObj,
 	Member,
 	MemberReference,
 	Permissions,
-	pipe,
-	get
+	pipe
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -234,6 +232,15 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 						</DialogueButton>
 					</>
 				) : null}
+				{this.props.member &&
+				hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) &&
+				team.id !== 0 &&
+				canSeeMembership(M.fromValue(this.props.member))(this.state.team)
+					? ' | '
+					: null}
+				{canSeeMembership(M.fromValue(this.props.member))(this.state.team) ? (
+					<Link to={`/team/emails/${team.id}`}>Team contact info</Link>
+				) : null}
 				<h1>{team.name}</h1>
 				<p>{team.description || <i>No team description</i>}</p>
 
@@ -251,13 +258,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 							pipe(
 								M.map<FullTeamMember, React.ReactChild>(teamMember => (
 									<div key={i}>
-										{getFullMemberName(member)}
-										{M.orSome<React.ReactChild | null>(null)(
-											M.map<string, React.ReactChild>(email => (
-												<i key={i}> ({email})</i>
-											))(getMemberEmail(member.contact))
-										)}
-										: {teamMember.job}
+										{getFullMemberName(member)}: {teamMember.job}
 									</div>
 								)),
 								M.orSome<React.ReactChild | null>(null)
@@ -272,14 +273,6 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 								{member.name}: {member.job}
 							</div>
 					  ))}
-				{this.state.type === 'HASMEMBERS' &&
-				this.props.member &&
-				isTeamLeader(this.props.member)(this.state.team) ? (
-					<>
-						<h2>Team member emails</h2>
-						<div>{this.getEmails(this.state)}</div>
-					</>
-				) : null}
 			</div>
 		);
 	}
@@ -304,60 +297,5 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		);
 
 		this.props.routeProps.history.push('/team');
-	}
-
-	private getEmails(state: TeamHasMembersState) {
-		if (!this.props.member || !isTeamLeader(this.props.member)(state.team)) {
-			return '';
-		}
-
-		const emailList = [];
-
-		const membersToCheck = [
-			state.team.cadetLeader,
-			state.team.seniorCoach,
-			state.team.seniorMentor,
-			...state.team.members.map(get('reference')).map(M.some)
-		].filter(M.isSome);
-
-		for (const member of membersToCheck) {
-			const memberObj = state.members.filter(areMembersTheSame(member.value));
-
-			if (memberObj.length === 1) {
-				const cont = memberObj[0].contact;
-
-				if (cont.EMAIL.PRIMARY && emailList.indexOf(cont.EMAIL.PRIMARY) === -1) {
-					emailList.push(cont.EMAIL.PRIMARY);
-				}
-				if (cont.EMAIL.SECONDARY && emailList.indexOf(cont.EMAIL.SECONDARY) === -1) {
-					emailList.push(memberObj[0].contact.EMAIL.SECONDARY);
-				}
-				if (cont.EMAIL.EMERGENCY && emailList.indexOf(cont.EMAIL.EMERGENCY) === -1) {
-					emailList.push(memberObj[0].contact.EMAIL.EMERGENCY);
-				}
-				if (
-					cont.CADETPARENTEMAIL.PRIMARY &&
-					emailList.indexOf(cont.CADETPARENTEMAIL.PRIMARY) === -1
-				) {
-					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.PRIMARY);
-				}
-				if (
-					cont.CADETPARENTEMAIL.SECONDARY &&
-					emailList.indexOf(cont.CADETPARENTEMAIL.SECONDARY) === -1
-				) {
-					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.SECONDARY);
-				}
-				if (
-					cont.CADETPARENTEMAIL.EMERGENCY &&
-					emailList.indexOf(cont.CADETPARENTEMAIL.EMERGENCY) === -1
-				) {
-					emailList.push(memberObj[0].contact.CADETPARENTEMAIL.EMERGENCY);
-				}
-			}
-		}
-
-		const found: { [key: string]: true } = {};
-
-		return emailList.filter(e => (!e || found[e] ? false : (found[e] = true))).join('; ');
 	}
 }

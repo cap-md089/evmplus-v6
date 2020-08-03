@@ -30,7 +30,7 @@
 	},
 	"dependencies": {
 		"@mysql/xdevapi": "^8.0.20",
-		"auto-client-api": "^1.0.0",
+		"auto-client-api": "^1.1.0",
 		"aws-sdk": "^2.669.0",
 		"body-parser": "^1.19.0",
 		"common-lib": "^1.4.0",

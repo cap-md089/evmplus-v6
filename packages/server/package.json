@@ -14,7 +14,7 @@
 	"license": "GPL-2.0",
 	"main": "dist/index.js",
 	"dependencies": {
-		"auto-client-api": "^1.0.0",
+		"auto-client-api": "^1.1.0",
 		"body-parser": "^1.18.2",
 		"busboy": "^0.3.1",
 		"cheerio": "^1.0.0-rc.2",

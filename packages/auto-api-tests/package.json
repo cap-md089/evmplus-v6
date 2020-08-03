@@ -14,7 +14,7 @@
 	"license": "GPL-2.0",
 	"private": true,
 	"dependencies": {
-		"auto-client-api": "^1.0.0",
+		"auto-client-api": "^1.1.0",
 		"common-lib": "^1.4.0"
 	},
 	"devDependencies": {
