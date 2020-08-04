@@ -340,7 +340,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 	private async goToFolder(id: string, update = true) {
 		const folderInfoEither = await AsyncEither.All([
-			fetchApi.files.children.getFull({ parentid: id }, {}, this.props.member?.sessionID),
+			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member?.sessionID),
 			fetchApi.files.files.get({ id }, {}, this.props.member?.sessionID)
 		]);
 

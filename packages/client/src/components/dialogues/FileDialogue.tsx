@@ -342,7 +342,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 
 	private async goToFolder(id: string) {
 		const fileInfoEither = await AsyncEither.All([
-			fetchApi.files.children.getFull({ parentid: id }, {}, this.props.member.sessionID),
+			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member.sessionID),
 			fetchApi.files.files.get({ id }, {}, this.props.member.sessionID)
 		]);
 
