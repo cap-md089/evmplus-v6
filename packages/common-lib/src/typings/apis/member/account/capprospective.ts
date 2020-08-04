@@ -29,7 +29,7 @@ export interface CreateProspectiveAccount {
 		}
 	): APIEither<void>;
 
-	url: '/api/member/account/capnhq/requestaccount';
+	url: '/api/member/account/capprospective/requestaccount';
 
 	method: 'post';
 
