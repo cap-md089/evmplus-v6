@@ -20,14 +20,13 @@
 import { APIEither } from '../../../api';
 import { CAPProspectiveMemberPasswordCreation, NewCAPProspectiveMember } from '../../../types';
 
+interface ProspectiveAccountBody {
+	member: NewCAPProspectiveMember;
+	login: CAPProspectiveMemberPasswordCreation;
+}
+
 export interface CreateProspectiveAccount {
-	(
-		params: {},
-		body: {
-			member: NewCAPProspectiveMember;
-			login: CAPProspectiveMemberPasswordCreation;
-		}
-	): APIEither<void>;
+	(params: {}, body: ProspectiveAccountBody): APIEither<void>;
 
 	url: '/api/member/account/capprospective/requestaccount';
 
@@ -35,7 +34,7 @@ export interface CreateProspectiveAccount {
 
 	requiresMember: 'required';
 
-	needsToken: false;
+	needsToken: true;
 
-	useValidator: false;
+	useValidator: true;
 }

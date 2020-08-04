@@ -1,11 +1,24 @@
 #!/bin/sh
 
+STASH_NAME=pre-commit-$(date +%s)
+git stash save -q --keep-index --include-untracked $STASH_NAME
+
+function pop() {
+	STASH_NUM=$(git stash list | grep $STASH_NAME | sed -re 's/stash@\{(.*)\}.*/\1/')
+
+	if [ -n "$STASH_NUM" ]
+		then
+		git stash pop -q stash@{$STASH_NUM}
+	fi
+}
+
 # Check for compile errors
 if lerna run check; then
 	# Everything compiles
 	:
 else
 	echo "Compile failure"
+	pop
 	exit 1
 fi
 
@@ -24,6 +37,7 @@ if lerna run lint; then
 	:
 else
 	echo "Code fails lint check"
+	pop
 	exit 1
 fi
 
@@ -33,3 +47,5 @@ fi
 FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
 echo "$FILES" | xargs node_modules/.bin/prettier --write
 echo "$FILES" | xargs git add
+
+pop
