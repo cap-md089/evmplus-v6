@@ -57,4 +57,4 @@ ENV NODE_ENV production
 ENV CLIENT_PATH /usr/capunit-com/packages/client
 EXPOSE 3001
 
-CMD cd /usr/capunit-com/packages/server && npm start
+CMD cd /usr/capunit-com/packages/server && node dist/index.js
