@@ -17,21 +17,19 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from "@mysql/xdevapi";
-import { DiscordAccount, Maybe } from "common-lib";
-import { GuildMember } from "discord.js";
-import { collectResults, findAndBind } from "server-common";
+import { Schema } from '@mysql/xdevapi';
+import { DiscordAccount, Maybe } from 'common-lib';
+import { GuildMember } from 'discord.js';
+import { collectResults, findAndBind } from 'server-common';
 
 export default (schema: Schema) => async (member: GuildMember) => {
-  const collection = schema.getCollection<DiscordAccount>("DiscordAccounts");
+	const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
-  const results = await collectResults(
-    findAndBind(collection, { discordID: member.id })
-  );
+	const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
-  if (results.length !== 1) {
-    return Maybe.none();
-  }
+	if (results.length !== 1) {
+		return Maybe.none();
+	}
 
-  return Maybe.some(results[0]);
+	return Maybe.some(results[0]);
 };
