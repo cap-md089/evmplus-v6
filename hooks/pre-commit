@@ -1,24 +1,11 @@
 #!/bin/sh
 
-STASH_NAME=pre-commit-$(date +%s)
-git stash save -q --keep-index --include-untracked $STASH_NAME
-
-function pop() {
-	STASH_NUM=$(git stash list | grep $STASH_NAME | sed -re 's/stash@\{(.*)\}.*/\1/')
-
-	if [ -n "$STASH_NUM" ]
-		then
-		git stash pop -q stash@{$STASH_NUM}
-	fi
-}
-
 # Check for compile errors
 if lerna run check; then
 	# Everything compiles
 	:
 else
 	echo "Compile failure"
-	pop
 	exit 1
 fi
 
@@ -37,11 +24,8 @@ if lerna run lint; then
 	:
 else
 	echo "Code fails lint check"
-	pop
 	exit 1
 fi
-
-pop
 
 # Apply prettier rules
 # This now applies the rules instead of checking, as checking was causing issues

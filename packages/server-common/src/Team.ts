@@ -415,14 +415,14 @@ const removeTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEvent
 		member: leader.value
 	});
 
-	return team;
+	return newTeam;
 };
 
 const setTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEventEmitter) => (
 	team: RawTeamObject
 ) => (type: 'cadetLeader' | 'seniorMentor' | 'seniorCoach') => (member: MemberReference) => {
 	if (Maybe.isSome(team[type])) {
-		return removeTeamLeader(account)(emitter)(team)(type);
+		removeTeamLeader(account)(emitter)(team)(type);
 	}
 
 	const newTeam = {
@@ -502,7 +502,7 @@ export const updateTeamMembers = updateTeamMembersFunc();
 
 export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter
-) => (newTeamInfo: NewTeamObject) => (team: RawTeamObject): RawTeamObject =>
+) => (team: RawTeamObject) => (newTeamInfo: NewTeamObject): RawTeamObject =>
 	pipe(
 		updateTeamMembersFunc(now)(account)(emitter)(newTeamInfo.members),
 		updateTeamLeader(account)(emitter)('cadetLeader')(newTeamInfo.cadetLeader),

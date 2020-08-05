@@ -22,7 +22,6 @@ import {
 	AccountObject,
 	always,
 	asyncIterFilter,
-	asyncIterMap,
 	asyncIterReduce,
 	CAPMemberObject,
 	collectGeneratorAsync,
@@ -48,10 +47,10 @@ import {
 	collectResults,
 	findAndBind,
 	getAllAccountsForMember,
-	getTeam,
 	getTeamObjects,
 	resolveReference
 } from 'server-common';
+import { getOrCreateTeamRolesForTeam } from './getTeamRole';
 
 export const CadetExecutiveStaffRoles = [
 	'Cadet Commander',
@@ -413,74 +412,25 @@ const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
 };
 
 const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
-	teamIDs: number[]
+	teams: RawTeamObject[]
 ) => async (member: Member): Promise<Role[]> => {
-	if (teamIDs.length === 0) {
+	if (teams.length === 0) {
 		return [];
 	}
-
-	const renderTeamName = (team: RawTeamObject) =>
-		team.name.toLowerCase().includes('team') ? team.name : `${team.name} Team`;
-
-	let teamRoleInsertionPoint = guild.roles
-		.array()
-		.filter(role => role.name.toLowerCase().includes('team'))
-		.map(role => role.position)
-		.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
-
-	const teamLeadRoleInsertionPoint = Math.min(
-		Maybe.orSome(Number.POSITIVE_INFINITY)(
-			Maybe.map<Role, number>(r => r.position)(
-				Maybe.fromValue(guild.roles.find(byName('Team Member')))
-			)
-		),
-		guild.roles
-			.array()
-			.filter(role => role.name.toLowerCase().includes('team lead'))
-			.map(role => role.position)
-			.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY)
-	);
 
 	const roles = [Maybe.fromValue(guild.roles.find(byName('Team Member')))];
 
 	// Team name background: rgb(194, 124, 14)
 	// Team lead background: rgb(241, 196, 15)
 
-	for (const teamID of teamIDs) {
-		// const team = await Team.Get(teamID, account, schema);
-		const team = await getTeam(schema)(account)(teamID).fullJoin();
+	for (const team of teams) {
+		const teamRoles = await getOrCreateTeamRolesForTeam(guild)(team);
 
 		if (isTeamLeader(member)(team)) {
-			let teamLeaderRole = guild.roles.find(byName(`Team Lead - ${team.name}`));
-
-			if (!teamLeaderRole) {
-				teamLeaderRole = await guild.createRole({
-					color: [241, 196, 15],
-					hoist: false,
-					mentionable: false,
-					name: `Team Lead - ${team.name}`,
-					position: teamLeadRoleInsertionPoint
-				});
-
-				teamRoleInsertionPoint--;
-			}
-
-			roles.push(Maybe.some(teamLeaderRole));
+			roles.push(teamRoles[1]);
 		}
 
-		let role = guild.roles.find(byName(renderTeamName(team)));
-
-		if (!role) {
-			role = await guild.createRole({
-				color: [194, 124, 14],
-				hoist: false,
-				mentionable: false,
-				name: renderTeamName(team),
-				position: teamRoleInsertionPoint
-			});
-		}
-
-		roles.push(Maybe.some(role));
+		roles.push(teamRoles[2]);
 	}
 
 	return onlyJustValues(roles);
@@ -532,7 +482,7 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 
 const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
 	discordUser: GuildMember
-) => (teamIDs: number[]) => async (member: Member) => {
+) => (teams: RawTeamObject[]) => async (member: Member) => {
 	let roles: Role[];
 
 	const beforeRoles = roleNamesToRoles(discordUser.roles)(ManualRoles);
@@ -570,7 +520,7 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 					Maybe.orSome([])
 				)(account.discordServer),
 				...(await get101CardCertificationRoles(guild)(schema)(member)),
-				...(await getTeamRoles(guild)(schema)(account)(teamIDs)(member)),
+				...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
 				...onlyJustValues([Maybe.fromValue(guild.roles.find(byName('Certified Member')))])
 			];
 
@@ -594,7 +544,7 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 		}
 	} else {
 		roles = [
-			...(await getTeamRoles(guild)(schema)(account)(teamIDs)(member)),
+			...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
 			...onlyJustValues([
 				Maybe.fromValue(guild.roles.find(byName('Certified Member'))),
 				Maybe.fromValue(guild.roles.find(byName('Guest')))
@@ -609,7 +559,7 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 
 export default (client: Client) => (schema: Schema) => (guildID: string) => (
 	account: AccountObject
-) => (teamObjects?: number[]) => async (discordUser: DiscordAccount) => {
+) => (teamObjects?: RawTeamObject[]) => async (discordUser: DiscordAccount) => {
 	if (!account.discordServer.hasValue) {
 		return;
 	}
@@ -632,8 +582,7 @@ export default (client: Client) => (schema: Schema) => (guildID: string) => (
 				.map(
 					pipe(
 						asyncIterFilter<RawTeamObject>(team => team.id !== 0),
-						asyncIterFilter<RawTeamObject>(isPartOfTeam(discordUser.member)),
-						asyncIterMap(get('id'))
+						asyncIterFilter<RawTeamObject>(isPartOfTeam(discordUser.member))
 					)
 				)
 				.map(collectGeneratorAsync)

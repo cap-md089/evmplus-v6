@@ -286,7 +286,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return;
 		}
 
-		if (hasPermission('ManageTeam')()(this.props.member)) {
+		if (!hasPermission('ManageTeam')()(this.props.member)) {
 			return;
 		}
 

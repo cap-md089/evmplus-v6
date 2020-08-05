@@ -24,6 +24,7 @@ import {
 	destroy,
 	errorGenerator,
 	NewTeamObject,
+	ServerError,
 	SessionType,
 	Validator
 } from 'common-lib';
@@ -40,10 +41,15 @@ export const func: ServerAPIEndpoint<api.team.SetTeamData> = PAM.RequireSessionT
 	PAM.RequiresPermission('ManageTeam')(request =>
 		validateRequest(teamPartialValidator)(request).flatMap(req =>
 			getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10)).flatMap(oldTeam =>
-				asyncRight(
+				asyncRight<ServerError, NewTeamObject>(
 					{
-						...oldTeam,
-						...req.body
+						cadetLeader: req.body.cadetLeader ?? oldTeam.cadetLeader,
+						description: req.body.description ?? oldTeam.description,
+						members: req.body.members ?? oldTeam.members,
+						name: req.body.name ?? oldTeam.name,
+						seniorCoach: req.body.seniorCoach ?? oldTeam.seniorCoach,
+						seniorMentor: req.body.seniorMentor ?? oldTeam.seniorMentor,
+						visibility: req.body.visibility ?? oldTeam.visibility
 					},
 					errorGenerator('Could not update team')
 				)

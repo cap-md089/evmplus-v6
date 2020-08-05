@@ -22,12 +22,14 @@ import { validator } from 'auto-client-api';
 import {
 	collectGeneratorAsync,
 	Either,
-	get,
 	MemberUpdateEventEmitter,
 	RawServerConfiguration,
 	ServerConfiguration,
 	toReference,
-	Validator
+	Validator,
+	isTeamLeader,
+	Maybe as M,
+	isPartOfTeam
 } from 'common-lib';
 import { Client } from 'discord.js';
 import 'dotenv/config';
@@ -38,6 +40,7 @@ import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import setupDiscordServer from './data/setupDiscordServer';
 import setupUser from './data/setupUser';
+import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
@@ -91,7 +94,7 @@ export default function setup(
 				continue;
 			}
 
-			await setupForAccount(teams.map(get('id')))(userAccount.value);
+			await setupForAccount(teams)(userAccount.value);
 		}
 
 		console.log('Done applying CAPWATCH to Discord');
@@ -116,6 +119,111 @@ export default function setup(
 		}
 
 		await guildUserSetup(account.value)()(user);
+
+		await session.close();
+	});
+
+	capwatchEmitter.on('teamMemberRemove', async ({ account, member, team }) => {
+		const { schema, session } = await getXSession(conf, mysqlClient);
+
+		const discordServer = account.discordServer;
+
+		if (!discordServer.hasValue) {
+			return;
+		}
+
+		const guild = client.guilds.get(discordServer.value.serverID);
+
+		if (!guild) {
+			return;
+		}
+
+		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
+			getDiscordAccount(schema)(toReference(member)),
+			getOrCreateTeamRolesForTeam(guild)(team)
+		]);
+
+		if (!discordAccountMaybe.hasValue) {
+			return;
+		}
+
+		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
+
+		if (!guildMember) {
+			return;
+		}
+
+		let newRoles = guildMember.roles.clone();
+
+		if (M.isSome(leaderRole) && !isTeamLeader(member)(team)) {
+			newRoles = newRoles.filter(role => role.id !== leaderRole.value.id);
+		}
+
+		if (M.isSome(memberRole) && !isPartOfTeam(member)(team)) {
+			newRoles = newRoles.filter(role => role.id !== memberRole.value.id);
+		}
+
+		if (M.isSome(genericTeamRole)) {
+			const hasTeamRole = !!newRoles.find(
+				role =>
+					role.name.toLowerCase().includes('team') &&
+					!role.hexColor.toLowerCase().endsWith('71368a')
+			);
+			if (!hasTeamRole) {
+				newRoles = newRoles.filter(role => role.id !== genericTeamRole.value.id);
+			}
+		}
+
+		await guildMember.setRoles(newRoles);
+
+		await session.close();
+	});
+
+	capwatchEmitter.on('teamMemberAdd', async ({ account, member, team }) => {
+		const { schema, session } = await getXSession(conf, mysqlClient);
+
+		const discordServer = account.discordServer;
+
+		if (!discordServer.hasValue) {
+			return;
+		}
+
+		const guild = client.guilds.get(discordServer.value.serverID);
+
+		if (!guild) {
+			return;
+		}
+
+		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
+			getDiscordAccount(schema)(toReference(member)),
+			getOrCreateTeamRolesForTeam(guild)(team)
+		]);
+
+		if (!discordAccountMaybe.hasValue) {
+			return;
+		}
+
+		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
+
+		if (!guildMember) {
+			return;
+		}
+
+		const newRoles = guildMember.roles.clone();
+
+		if (M.isSome(leaderRole) && isTeamLeader(member)(team)) {
+			newRoles.set(leaderRole.value.id, leaderRole.value);
+		}
+
+		if (M.isSome(genericTeamRole)) {
+			newRoles.set(genericTeamRole.value.id, genericTeamRole.value);
+		}
+
+		if (M.isSome(memberRole)) {
+			newRoles.set(memberRole.value.id, memberRole.value);
+		}
+
+		await guildMember.setRoles(newRoles);
 
 		await session.close();
 	});
