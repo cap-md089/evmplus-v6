@@ -263,6 +263,8 @@ export const ManualRoles = [
 	'Deputy Commander for Cadets',
 	'Assistant Deputy Commander for Cadets',
 	'Discord Server PAO',
+	'Presenter',
+	'Announcer',
 	'Previous Cadet Commander',
 	'CAPUnit Software Developer'
 ];

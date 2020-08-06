@@ -191,7 +191,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		if (attendanceIDs.some(areMembersTheSame(member))) {
 			console.log(`${getFullMemberName(member)} is already in attendance, skipping`);
 			membersDuplicate++;
-			return;
+			continue;
 		}
 
 		const result = await addMemberToAttendance(schema)(account.value)({
