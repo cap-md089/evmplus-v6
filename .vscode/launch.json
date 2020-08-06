@@ -3,7 +3,49 @@
 	// Hover to view descriptions of existing attributes.
 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
-	"configurations": [],
+	"configurations": [
+		{
+			"type": "node",
+			"name": "Launch Server",
+			"trace": true,
+			"protocol": "inspector",
+			"program": "${workspaceFolder}/packages/server/dist/index.js",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/packages/server/dist/**/*.js",
+				"${workspaceFolder}/packages/server-common/dist/**/*.js",
+				"${workspaceFolder}/packages/discord-bot/dist/**/*.js",
+				"${workspaceFolder}/packages/common-lib/dist/**/*.js"
+			],
+			"cwd": "${workspaceFolder}/packages/server",
+			"runtimeVersion": "13.14.0",
+			"env": {
+				"NODE_ENV": "development"
+			}
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Chrome (Normal Linux)",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/packages/client/src",
+			"linux": {
+				"runtimeExecutable": "/usr/bin/chromium"
+			}
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Chrome (Snap Linux)",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}/packages/client/src",
+			"linux": {
+				"runtimeExecutable": "/snap/bin/chromium"
+			}
+		}
+	],
 	"compounds": [
 		{
 			"name": "Launch Server & Client (Normal Linux)",

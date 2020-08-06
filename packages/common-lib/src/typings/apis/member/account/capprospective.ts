@@ -36,5 +36,5 @@ export interface CreateProspectiveAccount {
 
 	needsToken: true;
 
-	useValidator: true;
+	useValidator: false;
 }

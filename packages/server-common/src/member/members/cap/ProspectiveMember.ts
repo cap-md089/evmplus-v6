@@ -38,7 +38,7 @@ import {
 	getMemberName,
 	getUserID,
 	isRegularCAPAccountObject,
-	maxAsync,
+	Maybe,
 	NewCAPProspectiveMember,
 	RawCAPEventAccountObject,
 	RawCAPProspectiveMemberObject,
@@ -48,37 +48,37 @@ import {
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
 	stripProp,
-	yieldObjAsync
+	yieldObjAsync,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
 import { AccountGetter } from '../../../Account';
-import { collectResults, findAndBindC, generateResults } from '../../../MySQLUtil';
+import { addToCollection, collectResults, findAndBindC } from '../../../MySQLUtil';
 import { getRegistry } from '../../../Registry';
 
 const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject) => (
-	reference: CAPProspectiveMemberReference
+	reference: CAPProspectiveMemberReference,
 ) =>
 	asyncRight(
 		schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
-		errorGenerator('Could not get member information')
+		errorGenerator('Could not get member information'),
 	)
 		.map(
 			findAndBindC<RawCAPProspectiveMemberObject>({
 				id: reference.id,
-				accountID: account.id
-			})
+				accountID: account.id,
+			}),
 		)
 		.map(collectResults)
 		.filter(results => results.length === 1, {
 			message: 'Could not find member',
 			code: 404,
-			type: 'OTHER'
+			type: 'OTHER',
 		})
 		.map(get(0))
 		.map(stripProp('_id'));
 
 export const expandProspectiveMember = (schema: Schema) => (
-	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>
+	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>,
 ) => (teamObjects?: RawTeamObject[]) => (info: RawCAPProspectiveMemberObject) =>
 	getRegistry(schema)(account).flatMap(registry =>
 		asyncRight(info.id, errorGenerator('Could not get member information'))
@@ -86,9 +86,9 @@ export const expandProspectiveMember = (schema: Schema) => (
 				AsyncEither.All([
 					loadExtraCAPMemberInformation(schema)(account)({
 						id,
-						type: 'CAPProspectiveMember'
-					})(teamObjects)
-				])
+						type: 'CAPProspectiveMember',
+					})(teamObjects),
+				]),
 			)
 			.map<CAPProspectiveMemberObject>(([extraInformation]) => ({
 				absenteeInformation: extraInformation.absentee,
@@ -99,8 +99,8 @@ export const expandProspectiveMember = (schema: Schema) => (
 							date: item.assigned,
 							duty: item.Duty,
 							expires: item.validUntil,
-							type: 'CAPUnit'
-						} as ShortDutyPosition)
+							type: 'CAPUnit',
+						} as ShortDutyPosition),
 				),
 				flight: extraInformation.flight,
 				id: info.id,
@@ -115,12 +115,12 @@ export const expandProspectiveMember = (schema: Schema) => (
 				orgid: account.type === AccountType.CAPSQUADRON ? account.mainOrg : account.orgid,
 				accountID: account.id,
 				usrID: info.usrID,
-				teamIDs: extraInformation.teamIDs
-			}))
+				teamIDs: extraInformation.teamIDs,
+			})),
 	);
 
 export const getProspectiveMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[]
+	teamObjects?: RawTeamObject[],
 ) => (prospectiveID: string): AsyncEither<ServerError, CAPProspectiveMemberObject> =>
 	getRegistry(schema)(account).flatMap(registry =>
 		isRegularCAPAccountObject(account)
@@ -129,13 +129,13 @@ export const getProspectiveMember = (schema: Schema) => (account: AccountObject)
 						AsyncEither.All([
 							getRowsForProspectiveMember(schema)(account)({
 								type: 'CAPProspectiveMember',
-								id
+								id,
 							}),
 							loadExtraCAPMemberInformation(schema)(account)({
 								id,
-								type: 'CAPProspectiveMember'
-							})(teamObjects)
-						])
+								type: 'CAPProspectiveMember',
+							})(teamObjects),
+						]),
 					)
 					.map<CAPProspectiveMemberObject>(([info, extraInformation]) => ({
 						absenteeInformation: extraInformation.absentee,
@@ -147,9 +147,9 @@ export const getProspectiveMember = (schema: Schema) => (account: AccountObject)
 										date: item.assigned,
 										duty: item.Duty,
 										expires: item.validUntil,
-										type: 'CAPUnit'
-									} as ShortDutyPosition)
-							)
+										type: 'CAPUnit',
+									} as ShortDutyPosition),
+							),
 						],
 						flight: extraInformation.flight,
 						id: info.id,
@@ -167,24 +167,24 @@ export const getProspectiveMember = (schema: Schema) => (account: AccountObject)
 								: account.orgid,
 						accountID: account.id,
 						usrID: info.usrID,
-						teamIDs: extraInformation.teamIDs
+						teamIDs: extraInformation.teamIDs,
 					}))
 			: asyncLeft({
 					type: 'OTHER',
 					code: 400,
-					message: 'Cannot create a prospective member for a CAP Event account'
-			  })
+					message: 'Cannot create a prospective member for a CAP Event account',
+			  }),
 	);
 
 export const getExtraInformationFromProspectiveMember = (account: AccountObject) => (
-	member: CAPProspectiveMemberObject
+	member: CAPProspectiveMemberObject,
 ): CAPExtraMemberInformation => ({
 	absentee: member.absenteeInformation,
 	accountID: account.id,
 	flight: member.flight,
 	member: {
 		type: 'CAPProspectiveMember',
-		id: member.id
+		id: member.id,
 	},
 	teamIDs: [],
 	temporaryDutyPositions: member.dutyPositions
@@ -192,12 +192,12 @@ export const getExtraInformationFromProspectiveMember = (account: AccountObject)
 		.map(({ date, duty, expires }) => ({
 			Duty: duty,
 			assigned: date,
-			validUntil: expires
-		}))
+			validUntil: expires,
+		})),
 });
 
 export const getNameForCAPProspectiveMember = (schema: Schema) => (account: AccountObject) => (
-	reference: CAPProspectiveMemberReference
+	reference: CAPProspectiveMemberReference,
 ): AsyncEither<ServerError, string> =>
 	getRowsForProspectiveMember(schema)(account)(reference).map(
 		result =>
@@ -205,65 +205,56 @@ export const getNameForCAPProspectiveMember = (schema: Schema) => (account: Acco
 				nameFirst: result.nameFirst,
 				nameMiddle: result.nameMiddle,
 				nameLast: result.nameLast,
-				nameSuffix: result.nameSuffix
-			})}`
+				nameSuffix: result.nameSuffix,
+			})}`,
 	);
 
 export const createCAPProspectiveMember = (schema: Schema) => (
-	account: RawCAPSquadronAccountObject
+	account: RawCAPSquadronAccountObject,
 ) => (data: NewCAPProspectiveMember): AsyncEither<ServerError, CAPProspectiveMemberObject> =>
 	asyncRight(
 		schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
-		errorGenerator('Could not create member')
+		errorGenerator('Could not create member'),
 	).flatMap(collection =>
 		asyncRight(
 			findAndBindC<RawCAPProspectiveMemberObject>({
-				accountID: account.id
-			})(collection),
-			errorGenerator('Could not get member ID')
+				accountID: account.id,
+			})(collection)
+				.sort('id DESC')
+				.limit(1),
+			errorGenerator('Could not get member ID'),
 		)
-			.map(generateResults)
-			.map(asyncIterMap(get('id')))
-			.map(asyncIterMap(id => parseInt((id.match(/(0-9])*$/) || [])[1], 10)))
-			.map(maxAsync)
-			.map(addOne)
+			.map(collectResults)
+			.map(Maybe.fromArray)
+			.map(Maybe.map(({ id }) => parseInt(id.split('-')[1], 10)))
+			.map(Maybe.map(addOne))
+			.map(Maybe.orSome(1))
 			.map(id => `${account.id}-${id}`)
 			.flatMap(id =>
-				getRegistry(schema)(account).flatMap(registry =>
-					asyncRight(
-						collection.add({
-							...data,
-							id,
-							accountID: account.id,
-							type: 'CAPProspectiveMember',
-							absenteeInformation: null,
-							dutyPositions: [],
-							memberRank: data.seniorMember ? 'SM' : 'CADET',
-							orgid: account.mainOrg,
-							squadron: registry.Website.Name,
-							usrID: getUserID([data.nameFirst, data.nameMiddle, data.nameLast])
-						}),
-						errorGenerator('Could not add member')
-					).map<CAPProspectiveMemberObject>(() => ({
-						...data,
-						id,
-						accountID: account.id,
-						type: 'CAPProspectiveMember',
-						squadron: registry.Website.Name,
-						absenteeInformation: null,
-						teamIDs: [],
-						dutyPositions: [],
-						memberRank: data.seniorMember ? 'SM' : 'CADET',
-						orgid: account.mainOrg,
-						usrID: getUserID([data.nameFirst, data.nameMiddle, data.nameLast])
-					}))
-				)
+				getRegistry(schema)(account).map<RawCAPProspectiveMemberObject>(registry => ({
+					...data,
+					id,
+					absenteeInformation: null,
+					accountID: account.id,
+					dutyPositions: [],
+					memberRank: data.seniorMember ? 'SM' : 'CADET',
+					orgid: account.mainOrg,
+					squadron: registry.Website.Name,
+					type: 'CAPProspectiveMember',
+					usrID: getUserID([data.nameFirst, data.nameMiddle, data.nameLast]),
+				})),
 			)
+			.flatMap(
+				addToCollection(
+					schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
+				),
+			)
+			.flatMap(expandProspectiveMember(schema)(account)([])),
 	);
 
 export const getProspectiveMemberAccountsFunc = (accountGetter: AccountGetter) => (
-	schema: Schema
+	schema: Schema,
 ) => (member: CAPProspectiveMemberObject): AsyncIter<EitherObj<ServerError, AccountObject>> =>
 	asyncIterMap<EitherObj<ServerError, AccountObject>, EitherObj<ServerError, AccountObject>>(
-		Either.map(stripProp('_id') as (obj: AccountObject) => AccountObject)
+		Either.map(stripProp('_id') as (obj: AccountObject) => AccountObject),
 	)(yieldObjAsync(accountGetter.byId(schema)(member.accountID)));
