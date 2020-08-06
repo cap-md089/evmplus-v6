@@ -58,7 +58,7 @@ import {
 	RawEventObject,
 	Right,
 	spreadsheets,
-	User
+	User,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -157,11 +157,11 @@ const eventStatus = (stat: EventStatus): string =>
 export const attendanceStatusLabels = [
 	'Commited/Attended',
 	'No show',
-	'Rescinded commitment to attend'
+	'Rescinded commitment to attend',
 ];
 
 const renderName = (renderMember: User | null) => (event: RawEventObject) => (
-	member: api.events.events.EventViewerAttendanceRecord
+	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
 	const defaultRenderName = `${member.record.memberID.id}: ${member.record.memberName}`;
 
@@ -171,22 +171,22 @@ const renderName = (renderMember: User | null) => (event: RawEventObject) => (
 	) {
 		const {
 			memberName,
-			memberID: { id }
+			memberID: { id },
 		} = member.record;
 
 		const accountName = pipe(
 			Maybe.map(name => `[${name}]`),
-			Maybe.orSome('')
+			Maybe.orSome(''),
 		)(member.orgName);
 
 		const contactEmail = pipe(
 			Maybe.map<Member, CAPMemberContact>(get('contact')),
-			Maybe.flatMap(getMemberEmail)
+			Maybe.flatMap(getMemberEmail),
 		)(member.member);
 
 		const contactPhone = pipe(
 			Maybe.map<Member, CAPMemberContact>(get('contact')),
-			Maybe.flatMap(getMemberPhone)
+			Maybe.flatMap(getMemberPhone),
 		)(member.member);
 
 		const contact = [contactEmail, contactPhone].filter(Maybe.isSome).map(get('value'));
@@ -204,19 +204,17 @@ const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData)
 		.filter(Either.isRight)
 		.map(get('value'))
 		.map(get('record')),
-	pointsOfContact: eventViewer.pointsOfContact
+	pointsOfContact: eventViewer.pointsOfContact,
 });
 
 const canEitherMaybeSignUpForEvent = (event: api.events.events.EventViewerData) => (
-	team: MaybeObj<EitherObj<any, FullTeamObject>>
+	team: MaybeObj<EitherObj<any, FullTeamObject>>,
 ): ((member: MemberReference) => EitherObj<string, void>) =>
 	event.event.teamID === null || event.event.teamID === undefined
-		? canSignUpForEvent(viewerDataToEventObject(event))([])
+		? canSignUpForEvent(viewerDataToEventObject(event))(Maybe.none())
 		: Maybe.isNone(team) || Either.isLeft(team.value)
 		? always(Either.left('Could not load team information'))
-		: canSignUpForEvent(viewerDataToEventObject(event))(
-				team.value.value.members.map(get('reference'))
-		  );
+		: canSignUpForEvent(viewerDataToEventObject(event))(Maybe.some(team.value.value));
 
 export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
 	public state: EventViewerState = {
@@ -231,7 +229,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		accountFilterValues: [],
 		linkEventResult: null,
 		openLinkEventDialogue: false,
-		selectedAccountToLinkTo: null
+		selectedAccountToLinkTo: null,
 	};
 
 	constructor(props: EventViewerProps) {
@@ -256,7 +254,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const eventInformation = await fetchApi.events.events.getViewerData(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{},
-			this.props.member?.sessionID
+			this.props.member?.sessionID,
 		);
 
 		if (Either.isLeft(eventInformation)) {
@@ -264,18 +262,18 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				...prev,
 
 				viewerState: 'ERROR',
-				viewerMessage: eventInformation.value.message
+				viewerMessage: eventInformation.value.message,
 			}));
 
 			this.props.updateBreadCrumbs([
 				{
 					text: 'Home',
-					target: '/'
+					target: '/',
 				},
 				{
 					target: '/calendar',
-					text: 'Calendar'
-				}
+					text: 'Calendar',
+				},
 			]);
 
 			this.props.updateSideNav([]);
@@ -291,22 +289,22 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			...prev,
 
 			viewerState: 'LOADED',
-			eventInformation: eventInformation.value
+			eventInformation: eventInformation.value,
 		}));
 
 		this.props.updateBreadCrumbs([
 			{
 				text: 'Home',
-				target: '/'
+				target: '/',
 			},
 			{
 				target: '/calendar',
-				text: 'Calendar'
+				text: 'Calendar',
 			},
 			{
 				target: getURIComponent(eventInformation.value.event),
-				text: `View ${eventInformation.value.event.name}`
-			}
+				text: `View ${eventInformation.value.event.name}`,
+			},
 		]);
 
 		let teamInfo: MaybeObj<APIEndpointReturnValue<api.team.GetTeam>> = Maybe.none();
@@ -324,21 +322,21 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					...prev,
 
 					teamState: 'LOADED',
-					teamInformation: teamInfo
+					teamInformation: teamInfo,
 				}));
 			} else {
 				this.setState(prev => ({
 					...prev,
 
 					teamState: 'ERROR',
-					teamMessage: 'Could not load team membership information'
+					teamMessage: 'Could not load team membership information',
 				}));
 			}
 		} else {
 			this.setState(prev => ({
 				...prev,
 				teamState: 'LOADED',
-				teamInformation: Maybe.none()
+				teamInformation: Maybe.none(),
 			}));
 		}
 
@@ -352,46 +350,46 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		if (
 			this.props.member &&
 			Either.isRight(
-				canEitherMaybeSignUpForEvent(eventInformation.value)(teamInfo)(this.props.member)
+				canEitherMaybeSignUpForEvent(eventInformation.value)(teamInfo)(this.props.member),
 			)
 		) {
 			this.props.updateSideNav([
 				{
 					target: 'information',
 					text: 'Event Information',
-					type: 'Reference'
+					type: 'Reference',
 				},
 				{
 					target: 'signup',
 					text: 'Sign up',
-					type: 'Reference'
+					type: 'Reference',
 				},
 				{
 					target: 'attendance',
 					text: 'Attendance',
-					type: 'Reference'
-				}
+					type: 'Reference',
+				},
 			]);
 		} else if (this.props.member) {
 			this.props.updateSideNav([
 				{
 					target: 'information',
 					text: 'Event Information',
-					type: 'Reference'
+					type: 'Reference',
 				},
 				{
 					target: 'attendance',
 					text: 'Attendance',
-					type: 'Reference'
-				}
+					type: 'Reference',
+				},
 			]);
 		} else {
 			this.props.updateSideNav([
 				{
 					target: 'information',
 					text: 'Event Information',
-					type: 'Reference'
-				}
+					type: 'Reference',
+				},
 			]);
 		}
 
@@ -430,13 +428,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								title="Move event"
 								labels={['Move event', 'Copy move event', 'Cancel']}
 								values={{
-									newTime: event.startDateTime
+									newTime: event.startDateTime,
 								}}
 							>
 								<TextBox name="null">
 									<span
 										style={{
-											lineHeight: '1px'
+											lineHeight: '1px',
 										}}
 									>
 										<span style={{ color: 'red' }}>WARNING:</span> moving this
@@ -470,7 +468,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								title="Copy event"
 								labels={['Copy event', 'Cancel']}
 								values={{
-									newTime: event.startDateTime
+									newTime: event.startDateTime,
 								}}
 							>
 								<Label>Start time of new event</Label>
@@ -565,15 +563,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 											try {
 												return !!accountInfo.name.match(
-													new RegExp(input, 'gi')
+													new RegExp(input, 'gi'),
 												);
 											} catch (e) {
 												return false;
 											}
 										},
 										displayText: 'Account name',
-										filterInput: TextInput
-									}
+										filterInput: TextInput,
+									},
 								]}
 								showIDField={false}
 							/>
@@ -658,7 +656,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<strong>Uniform:</strong>{' '}
 						{pipe(
 							Maybe.map(uniform => <>{uniform}</>),
-							Maybe.orSome(<i>No uniform specified</i>)
+							Maybe.orSome(<i>No uniform specified</i>),
 						)(presentMultCheckboxReturn(event.uniform))}
 						<br />
 						<strong>Comments:</strong> {event.comments}
@@ -666,7 +664,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<strong>Activity:</strong>{' '}
 						{pipe(
 							Maybe.map(activities => <>{activities}</>),
-							Maybe.orSome(<i>Unknown activity type</i>)
+							Maybe.orSome(<i>Unknown activity type</i>),
 						)(presentMultCheckboxReturn(event.activity))}
 						<br />
 						<strong>Required forms:</strong>{' '}
@@ -678,12 +676,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							Maybe.map<JSX.Element[], Array<JSX.Element | null>>(renderedForms =>
 								renderedForms.flatMap((form, index, { length }) => [
 									React.cloneElement(form, { key: index }),
-									index < length - 1 ? <>, </> : null
-								])
+									index < length - 1 ? <>, </> : null,
+								]),
 							),
 							Maybe.orSome<Array<JSX.Element | null>>([
-								<i key={0}>No forms required</i>
-							])
+								<i key={0}>No forms required</i>,
+							]),
 						)(advancedMultCheckboxReturn(event.requiredForms, this.renderFormsButtons))}
 						<br />
 						{event.requiredEquipment.length > 0 ? (
@@ -740,7 +738,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										) : null}
 										<br />
 									</div>
-								)
+								),
 							)}
 						</div>
 					</div>
@@ -754,7 +752,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								{this.state.eventInformation.attendees.some(
 									rec =>
 										Either.isRight(rec) &&
-										rec.value.record.memberID.type === 'CAPNHQMember'
+										rec.value.record.memberID.type === 'CAPNHQMember',
 								) ? (
 									<Button
 										buttonType="none"
@@ -772,23 +770,23 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									{this.state.eventInformation.attendees
 										.filter(
 											(
-												val
+												val,
 											): val is Right<
 												api.events.events.EventViewerAttendanceRecord
 											> =>
 												Either.isRight(val) &&
-												val.value.record.memberID.type === 'CAPNHQMember'
+												val.value.record.memberID.type === 'CAPNHQMember',
 										)
 										.flatMap((rec, i) => [
 											(rec.value.record.memberID as CAPNHQMemberReference).id,
-											i < attendees.length - 1 ? ', ' : null
+											i < attendees.length - 1 ? ', ' : null,
 										])}
 								</Dialogue>
 								<div id="signup">
 									{Either.cata<string, void, React.ReactElement | null>(err =>
 										err !== 'Member is already in attendance' ? (
 											<p>Cannot sign up for event: {err}</p>
-										) : null
+										) : null,
 									)(() => (
 										<AttendanceForm
 											account={this.props.account}
@@ -803,8 +801,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										/>
 									))(
 										canEitherMaybeSignUpForEvent(eventViewerInfo)(
-											this.state.teamInformation
-										)(member)
+											this.state.teamInformation,
+										)(member),
 									)}
 									<h2 id="attendance">Attendance</h2>
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
@@ -824,9 +822,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 												updateAttendance={this.modifyAttendanceRecord}
 												updated={pipe(
 													Maybe.map(
-														areMembersTheSame(val.record.memberID)
+														areMembersTheSame(val.record.memberID),
 													),
-													Maybe.orSome(false)
+													Maybe.orSome(false),
 												)(this.state.previousUpdatedMember)}
 												key={i}
 												index={i}
@@ -838,7 +836,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											No{' '}
 											{event.privateAttendance &&
 											effectiveManageEventPermissionForEvent(member)(
-												event
+												event,
 											) !== Permissions.ManageEvent.NONE
 												? 'public '
 												: ''}
@@ -874,8 +872,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									rec =>
 										Either.isLeft(rec) ||
 										!areMembersTheSame(this.props.member!)(
-											rec.value.record.memberID
-										)
+											rec.value.record.memberID,
+										),
 								),
 								Either.right<
 									HTTPError,
@@ -889,17 +887,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										sourceEventID: prev.eventInformation.event.id,
 										shiftTime: record.shiftTime ?? {
 											arrivalTime: prev.eventInformation.event.pickupDateTime,
-											departureTime: prev.eventInformation.event.meetDateTime
+											departureTime: prev.eventInformation.event.meetDateTime,
 										},
-										memberName: getMemberName(this.props.member!)
+										memberName: getMemberName(this.props.member!),
 									},
 									member: Maybe.fromValue(this.props.member),
-									orgName: Maybe.some(this.props.registry.Website.Name)
-								})
-							]
-						}
+									orgName: Maybe.some(this.props.registry.Website.Name),
+								}),
+							],
+						},
 				  }
-				: prev
+				: prev,
 		);
 	}
 
@@ -930,17 +928,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										sourceEventID: prev.eventInformation.event.id,
 										shiftTime: record.shiftTime ?? {
 											arrivalTime: prev.eventInformation.event.pickupDateTime,
-											departureTime: prev.eventInformation.event.meetDateTime
+											departureTime: prev.eventInformation.event.meetDateTime,
 										},
-										memberName: getMemberName(this.props.member!)
+										memberName: getMemberName(this.props.member!),
 									},
 									member: Maybe.fromValue(this.props.member),
-									orgName: Maybe.some(this.props.registry.Website.Name)
-								})
-							]
-						}
+									orgName: Maybe.some(this.props.registry.Website.Name),
+								}),
+							],
+						},
 				  }
-				: prev
+				: prev,
 		);
 	}
 
@@ -954,18 +952,18 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							attendees: prev.eventInformation.attendees.filter(
 								mem =>
 									Either.isLeft(mem) ||
-									!areMembersTheSame(mem.value.record.memberID)(record.memberID)
+									!areMembersTheSame(mem.value.record.memberID)(record.memberID),
 							),
 							event: prev.eventInformation.event,
-							pointsOfContact: prev.eventInformation.pointsOfContact
-						}
-				  }
+							pointsOfContact: prev.eventInformation.pointsOfContact,
+						},
+				  },
 		);
 	}
 
 	private clearPreviousMember() {
 		this.setState({
-			previousUpdatedMember: Maybe.none()
+			previousUpdatedMember: Maybe.none(),
 		});
 	}
 
@@ -988,13 +986,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			meetDateTime: event.meetDateTime + timeDelta,
 			startDateTime: newTime,
 			endDateTime: event.endDateTime + timeDelta,
-			pickupDateTime: event.pickupDateTime + timeDelta
+			pickupDateTime: event.pickupDateTime + timeDelta,
 		};
 
 		await fetchApi.events.events.set(
 			{ id: event.id.toString() },
 			newEvent,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.setState({
@@ -1004,9 +1002,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				...state.eventInformation,
 				event: {
 					...state.eventInformation.event,
-					...newEvent
-				}
-			}
+					...newEvent,
+				},
+			},
 		});
 	}
 
@@ -1024,20 +1022,20 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const { event } = state.eventInformation;
 
 		const newEvent: Partial<NewEventObject> = {
-			status: EventStatus.CANCELLED
+			status: EventStatus.CANCELLED,
 		};
 
 		const result = await AsyncEither.All([
 			fetchApi.events.events.set(
 				{ id: event.id.toString() },
 				newEvent,
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			),
 			fetchApi.events.events.copy(
 				{ id: event.id.toString() },
 				{ newTime, copyStatus: false, copyFiles: false },
-				this.props.member.sessionID
-			)
+				this.props.member.sessionID,
+			),
 		]);
 
 		if (Either.isRight(result)) {
@@ -1059,7 +1057,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const result = await fetchApi.events.events.copy(
 			{ id: state.eventInformation.event.id.toString() },
 			{ newTime, copyStatus: false, copyFiles: false },
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -1081,7 +1079,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const result = await fetchApi.events.events.delete(
 			{ id: state.eventInformation.event.id.toString() },
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -1113,12 +1111,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const docDef = forms.capf6080DocumentDefinition(
 			this.state.eventInformation.event,
 			this.state.eventInformation.pointsOfContact,
-			this.props.member
+			this.props.member,
 		);
 
 		await this.printForm(
 			docDef,
-			`CAPF6080-${this.props.account.id}-${this.state.eventInformation.event.id}.pdf`
+			`CAPF6080-${this.props.account.id}-${this.state.eventInformation.event.id}.pdf`,
 		);
 	}
 
@@ -1136,26 +1134,26 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				normal: fontGetter('Roboto-Regular.ttf'),
 				bold: fontGetter('Roboto-Medium.ttf'),
 				italics: fontGetter('Roboto-Italic.ttf'),
-				bolditalics: fontGetter('Roboto-MediumItalic.ttf')
+				bolditalics: fontGetter('Roboto-MediumItalic.ttf'),
 			},
 			FreeMono: {
 				normal: fontGetter('FreeMono.ttf'),
 				bold: fontGetter('FreeMonoBold.ttf'),
 				italics: fontGetter('FreeMonoOblique.ttf'),
-				bolditalics: fontGetter('FreeMonoBoldOblique.ttf')
+				bolditalics: fontGetter('FreeMonoBoldOblique.ttf'),
 			},
 			FreeSans: {
 				normal: fontGetter('FreeSans.ttf'),
 				bold: fontGetter('FreeSansBold.ttf'),
 				italics: fontGetter('FreeSansOblique.ttf'),
-				bolditalics: fontGetter('FreeSansBoldOblique.ttf')
+				bolditalics: fontGetter('FreeSansBoldOblique.ttf'),
 			},
 			FreeSerif: {
 				normal: fontGetter('FreeSerif.ttf'),
 				bold: fontGetter('FreeSerifBold.ttf'),
 				italics: fontGetter('FreeSerifItalic.ttf'),
-				bolditalics: fontGetter('FreeSerifBoldItalic.ttf')
-			}
+				bolditalics: fontGetter('FreeSerifBoldItalic.ttf'),
+			},
 		};
 
 		// @ts-ignore
@@ -1188,7 +1186,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			this.state.eventInformation.event,
 			this.state.eventInformation.attendees
 				.filter(Either.isRight)
-				.map(record => record.value.record)
+				.map(record => record.value.record),
 		);
 		ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
 		sheet = spreadsheets.FormatAttendanceXL(
@@ -1196,7 +1194,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			widths,
 			this.state.eventInformation.event.customAttendanceFields,
 			XLSX.utils.encode_cell,
-			wsDataAttendance.length
+			wsDataAttendance.length,
 		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
@@ -1209,25 +1207,25 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		this.setState({
-			openLinkEventDialogue: false
+			openLinkEventDialogue: false,
 		});
 
 		const result = await fetchApi.events.events.link(
 			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {
 			this.setState({
-				linkEventResult: result.value
+				linkEventResult: result.value,
 			});
 		} else {
 			this.setState({
 				linkEventResult: {
 					accountID: result.value.accountID,
-					id: result.value.id
-				}
+					id: result.value.id,
+				},
 			});
 		}
 	}

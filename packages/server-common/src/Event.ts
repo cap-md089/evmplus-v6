@@ -64,6 +64,7 @@ import {
 	asyncIterFilter,
 	Right,
 	EitherObj,
+	call,
 } from 'common-lib';
 import { getAccount } from './Account';
 import updateGoogleCalendars, {
@@ -86,6 +87,7 @@ import {
 } from './MySQLUtil';
 import { createNotification } from './Notification';
 import { ServerEither } from './servertypes';
+import { getTeam } from './Team';
 
 type POCRaw = (ExternalPointOfContact | InternalPointOfContact)[];
 type POCFull = (ExternalPointOfContact | DisplayInternalPointOfContact)[];
@@ -99,7 +101,7 @@ export interface RawAttendanceDBRecord
 export { EventStatus };
 
 export const getFullPointsOfContact = (schema: Schema) => (account: AccountObject) => (
-	records: POCRaw
+	records: POCRaw,
 ): ServerEither<POCFull> =>
 	AsyncEither.All(
 		records.map<ServerEither<DisplayInternalPointOfContact | ExternalPointOfContact>>(poc =>
@@ -108,12 +110,12 @@ export const getFullPointsOfContact = (schema: Schema) => (account: AccountObjec
 						...poc,
 						name,
 				  }))
-				: asyncRight(poc, errorGenerator('Could not get point of contact data'))
-		)
+				: asyncRight(poc, errorGenerator('Could not get point of contact data')),
+		),
 	);
 
 export const getSimplePointsOfContact = (
-	records: (ExternalPointOfContact | InternalPointOfContact | DisplayInternalPointOfContact)[]
+	records: (ExternalPointOfContact | InternalPointOfContact | DisplayInternalPointOfContact)[],
 ): POCRaw =>
 	records.map(poc =>
 		poc.type === PointOfContactType.EXTERNAL
@@ -127,7 +129,7 @@ export const getSimplePointsOfContact = (
 					receiveRoster: poc.receiveRoster,
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
 					receiveUpdates: poc.receiveUpdates,
-			  }
+			  },
 	);
 
 const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRecord>(rec => ({
@@ -145,11 +147,11 @@ const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRec
 }));
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
-	member: MemberReference
+	member: MemberReference,
 ) => (collection: Collection<RawAttendanceDBRecord>) =>
 	collection
 		.find(
-			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime'
+			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime',
 		)
 		// @ts-ignore
 		.bind('member_id', member.id)
@@ -160,11 +162,11 @@ const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject)
 		.bind('endDateTime', now());
 
 export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (member: MemberReference): ServerEither<MaybeObj<RawAttendanceDBRecord>> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records')
+		errorGenerator('Could not get attendance records'),
 	)
 		.map(findForMemberFunc(now)(account)(member))
 		.map(find => find.limit(1).sort('shiftTime.departureTime DESC'))
@@ -173,11 +175,11 @@ export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Sch
 export const getLatestAttendanceForMember = getLatestAttendanceForMemberFunc(Date.now);
 
 export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (member: MemberReference) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records')
+		errorGenerator('Could not get attendance records'),
 	)
 		.map(findForMemberFunc(now)(account)(member))
 		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults);
@@ -187,11 +189,11 @@ const getLinkedEvents = (schema: Schema) => (accountID: string) => (eventID: num
 	generateResults(
 		findAndBind(schema.getCollection<RawEventObject>('Events'), {
 			sourceEvent: { id: eventID, accountID },
-		})
+		}),
 	);
 
 const getLinkedEventsAttendance = (schema: Schema) => (accountID: string) => (
-	eventID: number
+	eventID: number,
 ): AsyncIter<AttendanceRecord> =>
 	asyncIterFlatMap(identity)(
 		asyncIterMap<
@@ -203,10 +205,10 @@ const getLinkedEventsAttendance = (schema: Schema) => (accountID: string) => (
 				Right<AsyncIterableIterator<AttendanceRecord>>
 			>(Either.isRight)(
 				asyncIterMap(getAttendanceForEvent(schema))(
-					getLinkedEvents(schema)(accountID)(eventID)
-				)
-			)
-		)
+					getLinkedEvents(schema)(accountID)(eventID),
+				),
+			),
+		),
 	);
 
 export const getAttendanceForEvent = (schema: Schema) => ({
@@ -215,35 +217,35 @@ export const getAttendanceForEvent = (schema: Schema) => ({
 }: RawEventObject) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records')
+		errorGenerator('Could not get attendance records'),
 	)
 		.map(
-			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID })
+			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID }),
 		)
 		.map(generateResults)
 		.map(attendanceRecordMapper)
 		.map(iter =>
-			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(accountID)(eventID))
+			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(accountID)(eventID)),
 		);
 
 export const getEventAttendance = (schema: Schema) => (account: AccountObject) => (
-	eventID: number
+	eventID: number,
 ): ServerEither<AsyncIter<AttendanceRecord>> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records')
+		errorGenerator('Could not get attendance records'),
 	)
 		.map(
-			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id })
+			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id }),
 		)
 		.map(generateResults)
 		.map(attendanceRecordMapper)
 		.map(iter =>
-			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(account.id)(eventID))
+			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(account.id)(eventID)),
 		);
 
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
-	viewer: MaybeObj<MemberReference>
+	viewer: MaybeObj<MemberReference>,
 ) => (event: RawEventObject): ServerEither<EventObject> =>
 	(Maybe.isSome(viewer)
 		? getFullPointsOfContact(schema)(account)(event.pointsOfContact)
@@ -267,16 +269,16 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 						pointsOfContact,
 						attendance: [] as AttendanceRecord[],
 					},
-					errorGenerator('Could not get event with attendance')
-			  )
+					errorGenerator('Could not get event with attendance'),
+			  ),
 	);
 
 export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
-	event: RawEventObject
+	event: RawEventObject,
 ) => (member: MemberReference) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not delete attendance record')
+		errorGenerator('Could not delete attendance record'),
 	)
 		.map(collection =>
 			collection
@@ -285,61 +287,71 @@ export const removeMemberFromEventAttendance = (schema: Schema) => (account: Acc
 						accountID: account.id,
 						eventID: event.id,
 						memberID: toReference(member),
-					})
+					}),
 				)
 				.bind(
 					generateBindObject({
 						accountID: account.id,
 						eventID: event.id,
 						memberID: toReference(member),
-					})
+					}),
 				)
-				.execute()
+				.execute(),
 		)
 		.map(destroy);
 
+const sendSignupDenyMessage = (message: string): ServerEither<void> =>
+	asyncLeft({
+		type: 'OTHER',
+		code: 400,
+		message,
+	});
+
 export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (event: EventObject) => (attendee: Required<NewAttendanceRecord>) =>
-	Either.cata<string, void, ServerEither<void>>(message =>
-		asyncLeft({
-			type: 'OTHER',
-			code: 400,
-			message,
-		})
-	)(() => asyncRight(void 0, errorGenerator('Could not add member to attendance')))(
-		canSignUpForEvent(event)([])(attendee.memberID)
-	).flatMap(() =>
-		getMemberName(schema)(account)(attendee.memberID).flatMap(memberName =>
-			addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
-				...attendee,
-				accountID: event.accountID,
-				eventID: event.id,
-				timestamp: now(),
-				memberName,
-				summaryEmailSent: false,
-				shiftTime: attendee.shiftTime ?? {
-					arrivalTime: event.meetDateTime,
-					departureTime: event.pickupDateTime,
-				},
-			})
+	(event.teamID !== null && event.teamID !== undefined
+		? getTeam(schema)(account)(event.teamID).map(Maybe.some)
+		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+	)
+		.map(canSignUpForEvent(event))
+		.map(call(attendee.memberID))
+		.map(
+			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
+				asyncRight(void 0, errorGenerator('Could not add member to attendance')),
+			),
 		)
-	);
+		.flatMap(() =>
+			getMemberName(schema)(account)(attendee.memberID).flatMap(memberName =>
+				addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
+					...attendee,
+					accountID: event.accountID,
+					eventID: event.id,
+					timestamp: now(),
+					memberName,
+					summaryEmailSent: false,
+					shiftTime: attendee.shiftTime ?? {
+						arrivalTime: event.meetDateTime,
+						departureTime: event.pickupDateTime,
+					},
+				}),
+			),
+		);
 export const addMemberToAttendance = addMemberToAttendanceFunc(Date.now);
 
 export const modifyEventAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
-	event: RawEventObject
+	event: RawEventObject,
 ) => (member: Member) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not save attendance record')
+		errorGenerator('Could not save attendance record'),
 	)
 		.map(
 			modifyAndBindC<RawAttendanceDBRecord>({
 				accountID: account.id,
 				eventID: event.id,
 				memberID: toReference(member),
-			})
+			}),
 		)
 		.map(collection =>
 			collection
@@ -352,12 +364,12 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (account: Account
 						departureTime: event.pickupDateTime,
 					},
 				})
-				.execute()
+				.execute(),
 		)
 		.map(destroy);
 
 export const getSourceEvent = (schema: Schema) => (
-	event: RawEventObject
+	event: RawEventObject,
 ): ServerEither<MaybeObj<RawEventObject>> =>
 	event.sourceEvent
 		? getAccount(schema)(event.sourceEvent.accountID)
@@ -366,7 +378,7 @@ export const getSourceEvent = (schema: Schema) => (
 		: asyncRight(Maybe.none(), errorGenerator('Could not get source event'));
 
 export const getEvent = (schema: Schema) => (account: AccountObject) => (
-	eventID: number | string
+	eventID: number | string,
 ): ServerEither<RawEventObject> =>
 	asyncRight(parseInt(eventID + '', 10), errorGenerator('There was a problem getting the event'))
 		.filter(id => !isNaN(id), {
@@ -377,15 +389,15 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		.flatMap(id =>
 			asyncRight(
 				schema.getCollection<RawEventObject>('Events'),
-				errorGenerator('Could not get event')
+				errorGenerator('Could not get event'),
 			)
 				.map(
 					findAndBindC<RawEventObject>({
 						accountID: account.id,
 						id,
-					})
+					}),
 				)
-				.map(collectResults)
+				.map(collectResults),
 		)
 		.filter(results => results.length === 1, {
 			type: 'OTHER',
@@ -396,7 +408,7 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		.map(stripProp('_id'));
 
 const sendPOCNotifications = (delta: 'ADDED' | 'REMOVED') => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (event: RawEventObject) => (pocs: InternalPointOfContact[]) =>
 	AsyncEither.All(
 		pocs.map(poc =>
@@ -415,19 +427,19 @@ const sendPOCNotifications = (delta: 'ADDED' | 'REMOVED') => (schema: Schema) =>
 					eventName: event.name,
 					type: NotificationDataType.EVENT,
 				},
-			})
-		)
+			}),
+		),
 	).map(destroy);
 
 const sendPOCRemovedNotifications = sendPOCNotifications('REMOVED');
 const sendPOCAddedNotifications = sendPOCNotifications('ADDED');
 
 export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema
+	schema: Schema,
 ) => (account: AccountObject) => (oldEvent: RawEventObject) => (event: RawEventObject) =>
 	asyncRight(
 		updateGoogleCalendars(schema, event, account, config),
-		errorGenerator('Could not update google calendar')
+		errorGenerator('Could not update google calendar'),
 	)
 		.map<RawEventObject>(([mainId, wingId, regId, feeId]) => ({
 			acceptSignups: event.acceptSignups,
@@ -490,7 +502,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			const newInternalPOCs = newEvent.pointsOfContact.filter(isInternalPOC);
 
 			const pocGetter = getItemsNotInSecondArray<InternalPointOfContact>(item1 => item2 =>
-				areMembersTheSame(item1.memberReference)(item2.memberReference)
+				areMembersTheSame(item1.memberReference)(item2.memberReference),
 			);
 
 			const removedPOCs = pocGetter(oldInternalPOCs)(newInternalPOCs);
@@ -511,17 +523,17 @@ export const removeItemFromEventDebrief = (event: RawEventObject) => (timeToRemo
 });
 
 export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (event: RawEventObject): ServerEither<void> =>
 	asyncRight(
 		removeGoogleCalendarEvents(event, account, config),
-		errorGenerator('Could not delete Google calendar events')
+		errorGenerator('Could not delete Google calendar events'),
 	)
 		.map(always(event))
 		.flatMap(deleteItemFromCollectionA(schema.getCollection<RawEventObject>('Events')));
 
 export const createEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema
+	schema: Schema,
 ) => (account: AccountObject) => (author: MemberReference) => (data: NewEventObject) =>
 	getNewID(account)(schema.getCollection<RawEventObject>('Events'))
 		.map<RawEventObject>(id => ({
@@ -576,7 +588,7 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 		.flatMap(event =>
 			asyncRight(
 				createGoogleCalendarEvents(schema, event, account, config),
-				errorGenerator('Could not create Google calendar events')
+				errorGenerator('Could not create Google calendar events'),
 			).map<RawEventObject>(([mainId, wingId, regId, feeId]) => ({
 				...event,
 				googleCalendarIds: {
@@ -585,15 +597,15 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 					regId,
 					feeId,
 				},
-			}))
+			})),
 		)
 		.flatMap(addToCollection(schema.getCollection<RawEventObject>('Events')));
 export const createEvent = createEventFunc(Date.now);
 
 export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema
+	schema: Schema,
 ) => (account: AccountObject) => (event: RawEventObject) => (author: MemberReference) => (
-	newStartTime: number
+	newStartTime: number,
 ) => (copyStatus = false) => (copyFiles = false) =>
 	asyncRight(newStartTime - event.startDateTime, errorGenerator('Could not copy event'))
 		.map(timeDelta => ({
@@ -611,9 +623,9 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 export const copyEvent = copyEventFunc(Date.now);
 
 export const linkEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema
+	schema: Schema,
 ) => (account: AccountObject) => (linkedEvent: RawEventObject) => (author: MemberReference) => (
-	targetAccount: AccountObject
+	targetAccount: AccountObject,
 ) =>
 	asyncRight(linkedEvent, errorGenerator('Could not link event'))
 		.filter(event => !event.sourceEvent, {
