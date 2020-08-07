@@ -22,30 +22,33 @@ import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
-	call,
 	Either,
 	EitherObj,
 	FullTeamObject,
 	get,
+	hasPermission,
 	isPartOfTeam,
 	Maybe,
 	MaybeObj,
+	Permissions,
 	pipe,
-	RawTeamObject,
 	Right,
 	ServerError,
 	TeamPublicity,
-	User
+	User,
 } from 'common-lib';
 import { expandTeam, getTeamObjects, httpStripTeamObject } from 'server-common';
 
-const isTeamMemberOrLeaderIfPrivate = (user: MaybeObj<User>) => (team: FullTeamObject) =>
+const isTeamMemberOrLeaderIfPrivate = (maybeUser: MaybeObj<User>) => (team: FullTeamObject) =>
 	team.visibility === TeamPublicity.PRIVATE
 		? pipe(
-				Maybe.map<User, (team: RawTeamObject) => boolean>(isPartOfTeam),
-				Maybe.map<(team: RawTeamObject) => boolean, boolean>(call(team)),
-				Maybe.orSome(false)
-		  )(user)
+				Maybe.map<User, boolean>(
+					user =>
+						hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(user) ||
+						isPartOfTeam(user)(team),
+				),
+				Maybe.orSome(false),
+		  )(maybeUser)
 		: true;
 
 export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
@@ -53,8 +56,8 @@ export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
 		.map(asyncIterMap(expandTeam(req.mysqlx)(req.account)))
 		.map(
 			asyncIterFilter<EitherObj<ServerError, FullTeamObject>, Right<FullTeamObject>>(
-				Either.isRight
-			)
+				Either.isRight,
+			),
 		)
 		.map(asyncIterMap<Right<FullTeamObject>, FullTeamObject>(get('value')))
 		.map(asyncIterFilter(isTeamMemberOrLeaderIfPrivate(req.member)))
