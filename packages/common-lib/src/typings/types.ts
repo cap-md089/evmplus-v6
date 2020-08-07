@@ -57,7 +57,12 @@ export namespace NHQ {
 		SitAndReach: number;
 		PushUps: number;
 		CurlUps: number;
-	}
+        HFZID: number;
+		StaffServiceDate: string;
+		TechnicalWritingAssignment: string;
+		TechnicalWritingAssignmentDate: string;
+		OralPresentationDate: string;
+ 	}
 
 	export interface CadetAchvAprs {
 		CAPID: number;
@@ -67,11 +72,22 @@ export namespace NHQ {
 		DspReason: string;
 		AwardNo: number;
 		JROTCWaiver: number;
-		UsrID: number;
+		UsrID: string;
 		DateMod: string;
 		FirstUsr: string;
 		DateCreated: string;
 		PrintedCert: number;
+	}
+
+	export interface CdtAchvEnum {
+		CadetAchvID: number;
+		AchvName: string;
+		CurAwdNo: number;
+		UsrID: string;
+		DateMod: string;
+		FirstUsr: string;
+		DateCreated: string;
+		Rank: string;
 	}
 
 	/*  CAPID,Type,Location,Completed,UsrID,DateMod  */

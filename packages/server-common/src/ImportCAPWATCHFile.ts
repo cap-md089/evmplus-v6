@@ -23,6 +23,8 @@ import { CAPWATCHImportErrors } from 'common-lib';
 import * as csv from 'csv-parse';
 import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
+import cadetAchv from './capwatch-modules/cadetachv';
+import cadetAchvAprs from './capwatch-modules/cadetachvaprs';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrAchievements from './capwatch-modules/mbrachievement';
 import mbrContact from './capwatch-modules/mbrcontact';
@@ -65,6 +67,14 @@ const modules: {
 	{
 		module: mbrAchievements,
 		file: 'MbrAchievements.txt'
+	},
+	{
+		module: cadetAchv,
+		file: 'CadetAchv.txt'
+	},
+	{
+		module: cadetAchvAprs,
+		file: 'CadetAchvAprs.txt'
 	},
 	/*	{
 		module: seniorAwards,
