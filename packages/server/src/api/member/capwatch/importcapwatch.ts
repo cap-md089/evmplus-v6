@@ -40,6 +40,9 @@
 // 	'CadetActivities.txt',
 // 	'OFlight.txt',
 // 	'MbrAchievements.txt',
+//  'CadetAchv.txt',
+//  'CadetAchvAprs.txt',
+//  'CdtAchvEnum.txt',
 // ]);
 
 // export const func: ServerAPIEndpoint<api.member.capwatch.RequestImport> = PAM.RequiresPermission(

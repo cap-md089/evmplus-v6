@@ -17,11 +17,17 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// import { MemberObject } from "../typings/types";
+
 // import { User } from '../typings/types';
 // import { hasPermission } from './Member';
 // import { get } from './Util';
 
 // need to have functions to return single cadet or all cadets for an account
+
+// export function currentCadetPromotionRequirements(member: MemberObject) => CadetPromotionRequirements {
+
+// }
 
 // look in cadet achievement approvals for highest achievement level with APR status
 // 		if not present, treat as CADET INC
