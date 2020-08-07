@@ -118,7 +118,7 @@ export const effectiveManageEventPermission = (member: User) =>
 				'Operations Officer',
 				'Activities Officer',
 				'Squadron Activities Officer',
-			])
+			])(member)
 			? Permissions.ManageEvent.FULL
 			: Permissions.ManageEvent.NONE,
 		(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
@@ -127,7 +127,7 @@ export const effectiveManageEventPermission = (member: User) =>
 				'Cadet Operations NCO',
 				'Cadet Activities Officer',
 				'Cadet Activities NCO',
-			])
+			])(member)
 			? Permissions.ManageEvent.ADDDRAFTEVENTS
 			: Permissions.ManageEvent.NONE,
 		member.permissions.ManageEvent,
