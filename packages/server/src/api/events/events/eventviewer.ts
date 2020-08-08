@@ -17,28 +17,37 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Schema } from '@mysql/xdevapi';
 import {
 	AsyncRepr,
 	ServerAPIEndpoint,
 	ServerAPIRequestParameter,
-	ServerEither
+	ServerEither,
 } from 'auto-client-api';
 import {
 	always,
 	api,
 	AsyncEither,
+	asyncIterFilter,
 	asyncIterMap,
 	asyncRight,
 	AttendanceRecord,
 	canMaybeManageEvent,
+	collectGeneratorAsync,
 	Either,
+	EitherObj,
 	errorGenerator,
+	get,
 	Maybe,
 	memoize,
 	Permissions,
-	RawEventObject
+	RawEventObject,
+	Right,
+	ServerError,
 } from 'common-lib';
 import {
+	findAndBind,
+	generateResults,
 	getAccount,
 	getAttendanceForEvent,
 	getCAPAccountsForORGID,
@@ -47,19 +56,62 @@ import {
 	getOrgName,
 	getRegistry,
 	getRegistryById,
-	resolveReference
+	resolveReference,
 } from 'server-common';
 
+interface LinkedEventInfo {
+	id: number;
+	accountID: string;
+	name: string;
+	accountName: string;
+}
+
+export const expandLinkedEvent = (schema: Schema) => ({
+	id,
+	name,
+	accountID,
+}: RawEventObject): ServerEither<LinkedEventInfo> =>
+	getRegistryById(schema)(accountID).map(({ Website: { Name: accountName } }) => ({
+		accountName,
+		name,
+		id,
+		accountID,
+	}));
+
+export const getLinkedEvents = (
+	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>,
+) => (event: RawEventObject): ServerEither<LinkedEventInfo[]> =>
+	asyncRight(
+		collectGeneratorAsync(
+			asyncIterMap<Right<LinkedEventInfo>, LinkedEventInfo>(get('value'))(
+				asyncIterFilter<EitherObj<ServerError, LinkedEventInfo>, Right<LinkedEventInfo>>(
+					Either.isRight,
+				)(
+					asyncIterMap<RawEventObject, EitherObj<ServerError, LinkedEventInfo>>(
+						expandLinkedEvent(req.mysqlx),
+					)(
+						generateResults(
+							findAndBind(req.mysqlx.getCollection<RawEventObject>('Events'), {
+								sourceEvent: { id: event.id, accountID: event.accountID },
+							}),
+						),
+					),
+				),
+			),
+		),
+		errorGenerator('Could not get events linked to this one'),
+	);
+
 export const getFullEventInformation = (
-	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>
+	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>,
 ) => (event: RawEventObject): ServerEither<AsyncRepr<api.events.events.EventViewerData>> =>
 	AsyncEither.All([
 		asyncRight(
 			getOrgName({
 				byId: always(memoize(getAccount(req.mysqlx))),
-				byOrgid: always(memoize(getCAPAccountsForORGID(req.mysqlx)))
+				byOrgid: always(memoize(getCAPAccountsForORGID(req.mysqlx))),
 			})(req.mysqlx)(req.account),
-			errorGenerator('Could not get stuff')
+			errorGenerator('Could not get stuff'),
 		).flatMap(orgNameGetter =>
 			getAttendanceForEvent(req.mysqlx)(event).map(
 				asyncIterMap(record =>
@@ -68,32 +120,34 @@ export const getFullEventInformation = (
 							orgNameGetter(member).map(orgName => ({
 								member: Maybe.some(member),
 								record,
-								orgName
-							}))
+								orgName,
+							})),
 						)
 						.leftFlatMap(
 							always(
 								Either.right({
 									member: Maybe.none(),
 									record,
-									orgName: Maybe.none()
-								})
-							)
-						)
-				)
-			)
+									orgName: Maybe.none(),
+								}),
+							),
+						),
+				),
+			),
 		),
 		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
 		event.sourceEvent
 			? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(reg => reg.Website.Name)
-			: asyncRight(void 0, errorGenerator('Could not get account name'))
+			: asyncRight(void 0, errorGenerator('Could not get account name')),
+		getLinkedEvents(req)(event),
 	]).map<AsyncRepr<api.events.events.EventViewerData>>(
-		([attendees, pointsOfContact, sourceAccountName]) => ({
+		([attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
 			event,
 			attendees,
 			pointsOfContact,
-			sourceAccountName
-		})
+			sourceAccountName,
+			linkedEvents,
+		}),
 	);
 
 export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
@@ -107,16 +161,17 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 						event.pointsOfContact.map(poc => ({
 							...poc,
 							email: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.email : '',
-							phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : ''
-						}))
+							phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
+						})),
 					),
 					event.sourceEvent
 						? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(
-								reg => reg.Website.Name
+								reg => reg.Website.Name,
 						  )
-						: asyncRight(void 0, errorGenerator('Could not get account name'))
+						: asyncRight(void 0, errorGenerator('Could not get account name')),
+					getLinkedEvents(req)(event),
 			  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
-					([registry, attendees, pointsOfContact, sourceAccountName]) => ({
+					([registry, attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
 						event,
 						attendees:
 							event.privateAttendance &&
@@ -126,13 +181,14 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 										Either.right({
 											member: Maybe.none(),
 											record,
-											orgName: Maybe.some(registry.Website.Name)
-										})
+											orgName: Maybe.some(registry.Website.Name),
+										}),
 								  )(attendees),
 						pointsOfContact,
-						sourceAccountName
-					})
-			  )
+						sourceAccountName,
+						linkedEvents,
+					}),
+			  ),
 	);
 
 export default func;

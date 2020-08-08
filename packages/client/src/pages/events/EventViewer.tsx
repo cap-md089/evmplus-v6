@@ -406,7 +406,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		const eventViewerInfo = this.state.eventInformation;
-		const { event, attendees, pointsOfContact, sourceAccountName } = eventViewerInfo;
+		const {
+			event,
+			attendees,
+			pointsOfContact,
+			sourceAccountName,
+			linkedEvents,
+		} = eventViewerInfo;
 		const { member, fullMemberDetails } = this.props;
 
 		return (
@@ -492,17 +498,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</DialogueButton>
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-							{attendees.filter(Either.isRight).length > 0 ? (
-								<>
-									<br />
-									<Button
-										buttonType="none"
-										onClick={this.createAttendanceSpreadsheet}
-									>
-										Download Attendance Spreadsheet
-									</Button>
-								</>
-							) : null}
 							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
@@ -519,9 +514,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						? ' | '
 						: null}
 					{fullMemberDetails.error !== MemberCreateError.NONE ||
-					(event.sourceEvent !== null &&
-						event.sourceEvent !== undefined) ? null : fullMemberDetails.linkableAccounts
-							.length === 1 ? (
+					(event.sourceEvent !== null && event.sourceEvent !== undefined) ||
+					fullMemberDetails.linkableAccounts.length === 0 ? null : fullMemberDetails
+							.linkableAccounts.length === 1 ? (
 						<Button
 							onClick={() =>
 								this.linkEventTo(fullMemberDetails.linkableAccounts[0].id)
@@ -601,6 +596,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</Dialogue>
 						</>
 					)}
+					{attendees.filter(Either.isRight).length > 0 ? (
+						<>
+							<br />
+							<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
+								Download Attendance Spreadsheet
+							</Button>
+						</>
+					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
 						fullMemberDetails.linkableAccounts.length > 0 &&
@@ -627,7 +630,26 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<br />
 							</>
 						) : null}
-						<strong>Event: </strong> {event.name}
+						{linkedEvents.length > 0 ? (
+							<>
+								<h4>Events linked to this event</h4>
+								<ul>
+									{linkedEvents.map(
+										({ id, accountID, name, accountName }, index) => (
+											<li key={index}>
+												<a
+													href={`https://${accountID}.capunit.com/eventviewer/${id}`}
+													target="noopener _blank"
+												>
+													{accountName} - {name}
+												</a>
+											</li>
+										),
+									)}
+								</ul>
+							</>
+						) : null}
+						<h3>{event.name}</h3>
 						<br />
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
