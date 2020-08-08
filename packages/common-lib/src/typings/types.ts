@@ -57,12 +57,12 @@ export namespace NHQ {
 		SitAndReach: number;
 		PushUps: number;
 		CurlUps: number;
-        HFZID: number;
+		HFZID: number;
 		StaffServiceDate: string;
 		TechnicalWritingAssignment: string;
 		TechnicalWritingAssignmentDate: string;
 		OralPresentationDate: string;
- 	}
+	}
 
 	export interface CadetAchvAprs {
 		CAPID: number;
@@ -340,6 +340,12 @@ export enum AttendanceStatus {
 	NOSHOW,
 	RESCINDEDCOMMITMENTTOATTEND,
 	NOTPLANNINGTOATTEND,
+}
+
+export enum AuditableEventType {
+	MODIFY = 1,
+	ADD = 2,
+	DELETE = 3,
 }
 
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
@@ -3560,11 +3566,11 @@ export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;
 	on(
 		event: 'memberChange',
-		listener: (info: { member: Member; account: AccountObject }) => void
+		listener: (info: { member: Member; account: AccountObject }) => void,
 	): this;
 	on(
 		event: 'discordRegister',
-		listener: (user: { user: DiscordAccount; account: AccountObject }) => void
+		listener: (user: { user: DiscordAccount; account: AccountObject }) => void,
 	): this;
 	on(
 		event: 'teamMemberRemove' | 'teamMemberAdd',
@@ -3572,7 +3578,7 @@ export declare interface MemberUpdateEventEmitter extends EventEmitter {
 			member: MemberReference;
 			team: RawTeamObject;
 			account: AccountObject;
-		}) => void
+		}) => void,
 	): this;
 
 	emit(event: 'capwatchImport', account: AccountObject): boolean;
@@ -3580,7 +3586,7 @@ export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	emit(event: 'discordRegister', user: { user: DiscordAccount; account: AccountObject }): boolean;
 	emit(
 		event: 'teamMemberRemove' | 'teamMemberAdd',
-		info: { member: MemberReference; team: RawTeamObject; account: AccountObject }
+		info: { member: MemberReference; team: RawTeamObject; account: AccountObject },
 	): boolean;
 }
 
@@ -3634,3 +3640,81 @@ export interface UserSession<T extends MemberReference = MemberReference> {
 export interface ActiveSession<T extends MemberReference = MemberReference> extends UserSession<T> {
 	user: UserForReference<T>;
 }
+
+export type AuditableObjects =
+	| NewEventObject
+	| NewAttendanceRecord
+	| EditableFileObjectProperties
+	| NewCAPProspectiveMember
+	| MemberPermissions;
+
+/**
+ * Represents a descriminant that
+ */
+export type TargetForType<T extends AuditableObjects> = T extends NewEventObject
+	? 'Event'
+	: T extends NewAttendanceRecord
+	? 'Attendance'
+	: T extends EditableFileObjectProperties
+	? 'File'
+	: T extends NewCAPProspectiveMember
+	? 'CAPProspectiveMember'
+	: T extends MemberPermissions
+	? 'Permissions'
+	: never;
+
+export type ChangeRepresentation<T> = {
+	[P in keyof T]?: {
+		oldValue: T[P];
+		newValue: T[P];
+	};
+};
+
+export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
+	target: TargetForType<T>;
+
+	actor: MemberReference;
+
+	changes: ChangeRepresentation<Omit<T, 'id'>>;
+
+	accountID: string;
+
+	targetID: T['id'];
+
+	timestamp: number;
+
+	type: AuditableEventType.MODIFY;
+}
+
+export interface CreateEvent<T extends AuditableObjects & Identifiable> {
+	target: TargetForType<T>;
+
+	actor: MemberReference;
+
+	accountID: string;
+
+	targetID: T['id'];
+
+	timestamp: number;
+
+	type: AuditableEventType.ADD;
+}
+
+export interface DeleteEvent<T extends AuditableObjects & Identifiable> {
+	target: TargetForType<T>;
+
+	actor: MemberReference;
+
+	accountID: string;
+
+	targetID: T['id'];
+
+	timestamp: number;
+
+	type: AuditableEventType.DELETE;
+}
+
+export type AuditableEvents<O extends AuditableObjects & Identifiable> =
+	| ChangeEvent<O>
+	| CreateEvent<O>
+	| DeleteEvent<O>;
