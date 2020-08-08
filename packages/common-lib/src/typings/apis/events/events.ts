@@ -26,7 +26,7 @@ import {
 	ExternalPointOfContact,
 	Member,
 	NewEventObject,
-	RawEventObject
+	RawEventObject,
 } from '../../types';
 
 export interface EventViewerAttendanceRecord {
@@ -40,6 +40,12 @@ export interface EventViewerData {
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 	attendees: Array<APIEither<EventViewerAttendanceRecord>>;
 	sourceAccountName?: string | undefined;
+	linkedEvents: Array<{
+		id: number;
+		accountID: string;
+		name: string;
+		accountName: string;
+	}>;
 }
 
 export interface Add {
@@ -63,7 +69,7 @@ export interface Copy {
 			newTime: number;
 			copyStatus: boolean | undefined | null;
 			copyFiles: boolean | undefined | null;
-		}
+		},
 	): APIEither<EventObject>;
 
 	url: '/api/events/:id/copy';
