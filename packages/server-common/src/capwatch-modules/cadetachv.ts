@@ -60,7 +60,7 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 		return CAPWATCHError.BADDATA;
 	}
 
-	const cadetAchievementCollection = schema.getCollection<NHQ.CadetAchv>('Cadet_Achv');
+	const cadetAchievementCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv');
 
 	for (const member of fileData) {
 		try {

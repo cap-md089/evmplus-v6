@@ -21,52 +21,43 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async (fileData, schema) => {
+const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileData, schema) => {
 	if (
 		fileData.length === 0 ||
-		typeof fileData[0].CAPID === 'undefined' ||
 		typeof fileData[0].CadetAchvID === 'undefined' ||
-		typeof fileData[0].Status === 'undefined' ||
-		typeof fileData[0].AprCAPID === 'undefined' ||
-		typeof fileData[0].DspReason === 'undefined' ||
-		typeof fileData[0].AwardNo === 'undefined' ||
-		typeof fileData[0].JROTCWaiver === 'undefined' ||
+		typeof fileData[0].AchvName === 'undefined' ||
+		typeof fileData[0].CurAwdNo === 'undefined' ||
 		typeof fileData[0].UsrID === 'undefined' ||
 		typeof fileData[0].DateMod === 'undefined' ||
 		typeof fileData[0].FirstUsr === 'undefined' ||
 		typeof fileData[0].DateCreated === 'undefined' ||
-		typeof fileData[0].PrintedCert === 'undefined'
+		typeof fileData[0].Rank === 'undefined'
 	) {
 		return CAPWATCHError.BADDATA;
 	}
 
-	const cadetAchievementApprovalsCollection = schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs');
+	const cadetAchievementEnumCollection = schema.getCollection<NHQ.CdtAchvEnum>('NHQ_CdtAchvEnum');
 
 	for (const member of fileData) {
 		try {
 			await Promise.all([
-				cadetAchievementApprovalsCollection
-					.remove('CAPID = :CAPID')
-					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
+				cadetAchievementEnumCollection
+					.remove('FirstUsr = "coopertd"')
 					.execute()
 			]);
 
 			const values = {
-				CAPID: parseInt(member.CAPID + '', 10),
 				CadetAchvID: member.CadetAchvID,
-				Status: member.Status,
-				AprCAPID: member.AprCAPID,
-				DspReason: member.DspReason,
-				AwardNo: member.AwardNo,
-				JROTCWaiver: member.JROTCWaiver,
+				AchvName: member.AchvName,
+				CurAwdNo: member.CurAwdNo,
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				PrintedCert: member.PrintedCert
+				Rank: member.Rank
 			};
 
-			await cadetAchievementApprovalsCollection.add(values).execute();
+			await cadetAchievementEnumCollection.add(values).execute();
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;
@@ -76,4 +67,4 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 	return CAPWATCHError.NONE;
 };
 
-export default cadetAchievementApprovalsParse;
+export default cadetAchievementEnumParse;
