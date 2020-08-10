@@ -3518,7 +3518,7 @@ export interface ServerConfiguration {
 
 	NODE_ENV: string;
 
-	DISCORD_CLIENT_TOKEN: string;
+	DISCORD_CLIENT_TOKEN?: string;
 
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;
@@ -3548,7 +3548,7 @@ export interface RawServerConfiguration {
 
 	NODE_ENV: string;
 
-	DISCORD_CLIENT_TOKEN: string;
+	DISCORD_CLIENT_TOKEN?: string;
 
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;

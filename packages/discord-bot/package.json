@@ -47,7 +47,7 @@
 		"tslint": "^6.0.0",
 		"tslint-config-prettier": "^1.18.0",
 		"ttypescript": "^1.5.10",
-		"typescript": "^3.8.3"
+		"typescript": "3.9"
 	},
 	"dependencies": {
 		"@mysql/xdevapi": "^8.0.19",

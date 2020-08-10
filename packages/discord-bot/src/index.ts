@@ -29,7 +29,7 @@ import {
 	Validator,
 	isTeamLeader,
 	Maybe as M,
-	isPartOfTeam
+	isPartOfTeam,
 } from 'common-lib';
 import { Client } from 'discord.js';
 import 'dotenv/config';
@@ -53,8 +53,12 @@ export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: my
 export default function setup(
 	conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
-	mysqlClient: mysql.Client
+	mysqlClient: mysql.Client,
 ) {
+	if (!conf.DISCORD_CLIENT_TOKEN) {
+		return;
+	}
+
 	const client = new Client();
 
 	const userSetupFunction = setupUser(client);
@@ -140,7 +144,7 @@ export default function setup(
 
 		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
 			getDiscordAccount(schema)(toReference(member)),
-			getOrCreateTeamRolesForTeam(guild)(team)
+			getOrCreateTeamRolesForTeam(guild)(team),
 		]);
 
 		if (!discordAccountMaybe.hasValue) {
@@ -167,7 +171,7 @@ export default function setup(
 			const hasTeamRole = !!newRoles.find(
 				role =>
 					role.name.toLowerCase().includes('team') &&
-					!role.hexColor.toLowerCase().endsWith('71368a')
+					!role.hexColor.toLowerCase().endsWith('71368a'),
 			);
 			if (!hasTeamRole) {
 				newRoles = newRoles.filter(role => role.id !== genericTeamRole.value.id);
@@ -196,7 +200,7 @@ export default function setup(
 
 		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
 			getDiscordAccount(schema)(toReference(member)),
-			getOrCreateTeamRolesForTeam(guild)(team)
+			getOrCreateTeamRolesForTeam(guild)(team),
 		]);
 
 		if (!discordAccountMaybe.hasValue) {
@@ -279,7 +283,7 @@ export default function setup(
 			const dmChannel = await member.createDM();
 
 			dmChannel.send(
-				`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.capunit.com/registerdiscord/${member.id}`
+				`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.capunit.com/registerdiscord/${member.id}`,
 			);
 
 			await session.close();
@@ -314,7 +318,7 @@ if (require.main === module) {
 		const configurationValidator = validator<RawServerConfiguration>(Validator);
 
 		const confEither = Either.map(confFromRaw)(
-			configurationValidator.validate(process.env, '')
+			configurationValidator.validate(process.env, ''),
 		);
 
 		if (Either.isLeft(confEither)) {
@@ -328,9 +332,9 @@ if (require.main === module) {
 			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
 			{
 				pooling: {
-					enabled: false
-				}
-			}
+					enabled: false,
+				},
+			},
 		);
 
 		return new Promise((resolve, reject) => {
@@ -377,7 +381,7 @@ if (require.main === module) {
 						itOfficerAdmin: false,
 						addSeniorMemberRoles: false,
 						addESRoles: false,
-						preserveRoles: ['ALS Commander']
+						preserveRoles: ['ALS Commander'],
 					});
 
 					resolve();
@@ -395,6 +399,6 @@ if (require.main === module) {
 		err => {
 			console.error(err);
 			process.exit(1);
-		}
+		},
 	);
 }
