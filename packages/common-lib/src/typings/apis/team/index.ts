@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents the management of basic team information
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -22,6 +26,9 @@ import { FullTeamObject, NewTeamObject } from '../../types';
 
 export * as members from './members';
 
+/**
+ * Creates a new team
+ */
 export interface CreateTeam {
 	(params: {}, body: NewTeamObject): APIEither<FullTeamObject>;
 
@@ -36,6 +43,10 @@ export interface CreateTeam {
 	useValidator: true;
 }
 
+/**
+ * Gets full team information; includes extra display information
+ * (like names)
+ */
 export interface GetTeam {
 	(params: { id: string }, body: {}): APIEither<FullTeamObject>;
 
@@ -50,6 +61,10 @@ export interface GetTeam {
 	useValidator: true;
 }
 
+/**
+ * Lists teams and some of their information;
+ * view changes based on team permissions (private vs protected)
+ */
 export interface ListTeams {
 	(params: {}, body: {}): APIEither<FullTeamObject[]>;
 
@@ -64,6 +79,9 @@ export interface ListTeams {
 	useValidator: true;
 }
 
+/**
+ * Deletes a team and removes their membership
+ */
 export interface DeleteTeam {
 	(params: { id: string }, body: {}): APIEither<void>;
 
@@ -78,6 +96,9 @@ export interface DeleteTeam {
 	useValidator: true;
 }
 
+/**
+ * Updates team name, description, membership, etc
+ */
 export interface SetTeamData {
 	(params: { id: string }, body: Partial<NewTeamObject>): APIEither<void>;
 

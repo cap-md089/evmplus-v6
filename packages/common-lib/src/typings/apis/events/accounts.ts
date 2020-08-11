@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents CAPEventAccount management functions
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,15 @@
 import { APIEither } from '../../api';
 import { NewEventObject, RawCAPEventAccountObject } from '../../types';
 
+/**
+ * Simplifies the creation of CAPEventAccount types
+ *
+ *  - Creates an account at the account ID specified
+ * 	- Creates a Registry and stores the account name
+ *  - Creates the event specified on the new account
+ *  - Links that event to the parent account
+ * 	- Adds permissions for the creator of the event as an admin of the new account
+ */
 export interface AddEventAccount {
 	(
 		params: {},
@@ -27,7 +40,7 @@ export interface AddEventAccount {
 			accountID: string;
 			accountName: string;
 			event: NewEventObject;
-		}
+		},
 	): APIEither<RawCAPEventAccountObject>;
 
 	url: '/api/events/account/';

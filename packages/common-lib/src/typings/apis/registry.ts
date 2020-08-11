@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents management of site configuration
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,9 @@
 import { APIEither } from '../../typings/api';
 import { RegistryValues } from '../../typings/types';
 
+/**
+ * Gets the public site configuration for an account
+ */
 export interface GetRegistry {
 	(params: {}, body: {}): APIEither<RegistryValues>;
 
@@ -34,6 +41,9 @@ export interface GetRegistry {
 	useValidator: true;
 }
 
+/**
+ * Updates the public configuration for an account
+ */
 export interface SetRegistry {
 	(params: {}, body: Partial<RegistryValues>): APIEither<void>;
 

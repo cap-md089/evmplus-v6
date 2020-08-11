@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file represents the error recording API
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,9 @@
 import { APIEither } from '../api';
 import { Errors, ErrorType, NewClientErrorObject } from '../types';
 
+/**
+ * Stores a client error
+ */
 export interface ClientError {
 	(params: {}, body: NewClientErrorObject): APIEither<void>;
 
@@ -34,6 +41,12 @@ export interface ClientError {
 	useValidator: true;
 }
 
+/**
+ * Gets a list of errors currently stored on the server that
+ * are unresolved
+ *
+ * Locked to developers only
+ */
 export interface GetErrors {
 	(params: {}, body: {}): APIEither<Errors[]>;
 
@@ -56,6 +69,11 @@ interface MarkErrorDoneRequestBody {
 	column: number;
 }
 
+/**
+ * Marks an error as handled
+ *
+ * Locked to developers only
+ */
 export interface MarkErrorAsDone {
 	(params: {}, body: MarkErrorDoneRequestBody): APIEither<void>;
 

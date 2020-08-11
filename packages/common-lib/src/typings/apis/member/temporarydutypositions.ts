@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents how to change and get temporary duty positions
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,16 @@
 import { APIEither } from '../../api';
 import { NewShortCAPUnitDutyPosition, ShortCAPUnitDutyPosition } from '../../types';
 
+/**
+ * Gets the duty positions assigned on CAPUnit.com for the specified member
+ *
+ * Differs from more permanent positions assigned on CAP NHQ, as these have an expiration date set
+ *
+ * `id` is a MemberREference formatted according to stringifyMemberReference
+ *
+ * This function may not be the desired one, as a CAPMemberObject also contains the duty positions
+ * returned below
+ */
 export interface GetTemporaryDutyPositions {
 	(params: { id: string }, body: {}): APIEither<ShortCAPUnitDutyPosition[]>;
 
@@ -34,6 +48,11 @@ export interface GetTemporaryDutyPositions {
 	useValidator: true;
 }
 
+/**
+ * Updates the temporary duty positions assigned to a member
+ *
+ * By not including a duty position, this will delete that duty position
+ */
 export interface SetTemporaryDutyPositions {
 	(params: { id: string }, body: { dutyPositions: NewShortCAPUnitDutyPosition[] }): APIEither<
 		void

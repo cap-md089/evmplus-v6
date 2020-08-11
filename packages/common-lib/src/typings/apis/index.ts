@@ -3,6 +3,11 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file holds all the other APIs while also documenting some
+ * global level APIs
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -29,6 +34,9 @@ export * as registry from './registry';
 export * as tasks from './tasks';
 export * as team from './team';
 
+/**
+ * Gets the account associated with the URL
+ */
 export interface AccountCheck {
 	(params: {}, body: {}): APIEither<AccountObject>;
 
@@ -43,6 +51,11 @@ export interface AccountCheck {
 	useValidator: true;
 }
 
+/**
+ * Checks the validity of the member in the request,
+ * while also checking unread notifications, task counts,
+ * and accounts the member is able to link events to
+ */
 export interface Check {
 	(params: {}, body: {}): APIEither<SigninReturn>;
 
@@ -57,6 +70,9 @@ export interface Check {
 	useValidator: true;
 }
 
+/**
+ * A simple JSON echo server
+ */
 export interface Echo {
 	(params: {}, body: any): any;
 
@@ -71,6 +87,9 @@ export interface Echo {
 	useValidator: true;
 }
 
+/**
+ * Gets a token used for the requests that need a token
+ */
 export interface FormToken {
 	(params: {}, body: {}): APIEither<string>;
 
@@ -82,9 +101,14 @@ export interface FormToken {
 
 	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }
 
+/**
+ * Using a username, password, and the appropriate
+ * reCAPTCHA token, signs in a user and returns
+ * user information to include a session ID
+ */
 export interface Signin {
 	(
 		params: {},
@@ -92,7 +116,7 @@ export interface Signin {
 			username: string;
 			password: string;
 			recaptcha: string;
-		}
+		},
 	): APIEither<SigninReturn>;
 
 	url: '/api/signin';
@@ -106,6 +130,10 @@ export interface Signin {
 	useValidator: true;
 }
 
+/**
+ * Returns a list of all the files that are valid slideshow files
+ * (they have the property forSlideshow: true)
+ */
 export interface SlideshowImageIDs {
 	(params: {}, body: {}): APIEither<FileObject[]>;
 

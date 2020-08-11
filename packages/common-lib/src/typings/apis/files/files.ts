@@ -3,6 +3,14 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents how to manage files and folders
+ *
+ * See `common-lib/src/typings/api.ts` for more information on the
+ * API documentation
+ *
+ * See `common-lib/src/typings/apis/files/children.ts` for more information
+ * on the differences between files and folders
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +28,9 @@
 import { APIEither } from '../../api';
 import { EditableFileObjectProperties, FileObject, FullFileObject } from '../../types';
 
+/**
+ * Creates a file with application/folder MIME type
+ */
 export interface CreateFolder {
 	(params: { parentid: string; name: string }, body: {}): APIEither<FullFileObject>;
 
@@ -34,6 +45,9 @@ export interface CreateFolder {
 	useValidator: true;
 }
 
+/**
+ * Gets basic file information
+ */
 export interface GetFile {
 	(params: { id: string }, body: {}): APIEither<FileObject>;
 
@@ -48,6 +62,9 @@ export interface GetFile {
 	useValidator: true;
 }
 
+/**
+ * Downloads the raw binary data of a file
+ */
 export interface GetFileData {
 	(params: { id: string }, body: {}): string;
 
@@ -62,6 +79,10 @@ export interface GetFileData {
 	useValidator: true;
 }
 
+/**
+ * Downloads the raw binary data of a file
+ * Sets some headers that tell browsers to download the file as opposed to show it
+ */
 export interface DownloadFile {
 	(params: { id: string }, body: {}): string;
 
@@ -76,6 +97,10 @@ export interface DownloadFile {
 	useValidator: true;
 }
 
+/**
+ * Returns the full information concerning the file, including a full member object
+ * for the owner of the file
+ */
 export interface GetFullFile {
 	(params: { id: string }, body: {}): APIEither<FullFileObject>;
 
@@ -90,6 +115,10 @@ export interface GetFullFile {
 	useValidator: true;
 }
 
+/**
+ * Fake route just for documentation purposes that details uploading a file
+ * Will not work when used like other API routes, but it does exist
+ */
 export interface UploadFile {
 	(): APIEither<FullFileObject>;
 
@@ -104,6 +133,9 @@ export interface UploadFile {
 	useValidator: true;
 }
 
+/**
+ * Sets file properties like file name
+ */
 export interface SetInfo {
 	(params: { fileid: string }, body: Partial<EditableFileObjectProperties>): APIEither<void>;
 
@@ -118,6 +150,10 @@ export interface SetInfo {
 	useValidator: false;
 }
 
+/**
+ * Deletes a file
+ * Does not recursively delete file children, if applicable
+ */
 export interface Delete {
 	(params: { fileid: string }, body: {}): APIEither<void>;
 

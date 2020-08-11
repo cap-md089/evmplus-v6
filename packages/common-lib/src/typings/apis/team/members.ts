@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents the management of team membership
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,10 @@
 import { APIEither } from '../../api';
 import { Member, NewTeamMember } from '../../types';
 
+/**
+ * Gets full member information for a team; changes based off of
+ * team permissions
+ */
 export interface ListTeamMembers {
 	(params: { id: string }, body: {}): APIEither<Member[]>;
 
@@ -34,6 +42,9 @@ export interface ListTeamMembers {
 	useValidator: true;
 }
 
+/**
+ * Modifies the role of a team member
+ */
 export interface ModifyTeamMember {
 	(params: { id: string }, body: NewTeamMember): APIEither<void>;
 
@@ -48,6 +59,9 @@ export interface ModifyTeamMember {
 	useValidator: true;
 }
 
+/**
+ * Adds the member specified
+ */
 export interface AddTeamMember {
 	(params: { id: string }, body: NewTeamMember): APIEither<void>;
 
@@ -62,6 +76,9 @@ export interface AddTeamMember {
 	useValidator: true;
 }
 
+/**
+ * Remove a member from a team
+ */
 export interface DeleteTeamMember {
 	(params: { id: string; memberid: string }, body: {}): APIEither<void>;
 

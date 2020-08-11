@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents the APIs to manage event debrief items
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,9 @@
 import { APIEither } from '../../api';
 import { DebriefItem, NewDebriefItem } from '../../types';
 
+/**
+ * Adds the specified debrief item to an event
+ */
 export interface Add {
 	(params: { id: string }, body: NewDebriefItem): APIEither<DebriefItem[]>;
 
@@ -34,6 +41,11 @@ export interface Add {
 	useValidator: true;
 }
 
+/**
+ * Removes debrief items with the specified timestamp
+ *
+ * Timestamp is Unix timestamp in milliseconds
+ */
 export interface Delete {
 	(params: { id: string; timestamp: string }, body: {}): APIEither<DebriefItem[]>;
 
