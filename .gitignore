@@ -7,3 +7,5 @@ packages/*/node_modules
 packages/*/dist
 packages/*/.env
 packages/*/*.tsbuildinfo
+
+lerna-debug.log

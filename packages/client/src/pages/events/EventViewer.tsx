@@ -510,11 +510,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					effectiveManageEventPermissionForEvent(member)(event) &&
 					fullMemberDetails.error === MemberCreateError.NONE &&
 					fullMemberDetails.linkableAccounts.length > 0 &&
-					event.sourceEvent === null
+					!event.sourceEvent
 						? ' | '
 						: null}
 					{fullMemberDetails.error !== MemberCreateError.NONE ||
-					(event.sourceEvent !== null && event.sourceEvent !== undefined) ||
+					!!event.sourceEvent ||
 					fullMemberDetails.linkableAccounts.length === 0 ? null : fullMemberDetails
 							.linkableAccounts.length === 1 ? (
 						<Button
