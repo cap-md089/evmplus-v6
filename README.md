@@ -113,3 +113,18 @@ To access the site, you have to use a domain name that starts with the account I
 If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `support@capunit.com` to request an official CAPUnit.com website.
 
 This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the CAPUnit.com domain.
+
+## Developing CAPUnit.com
+
+The development requirements for CAPUnit.com are a bit different. The server will require the same configuration and external as a production system, but the keys and database do not need to be the same.
+
+1. Install required software
+    - Node 13
+    - Yarn
+    - [Commitizen](https://github.com/commitizen/cz-cli)
+    - Git
+2. In the project directory, run `yarn install`
+3. The environment should be set up to code
+    - To start the webpack development server, go into `packages/client` and run `yarn start` to start developing the client code
+    - To develop the server and its sub modules, go into the module after making changes and run `yarn run build`
+    - The server will need to be started when developing the client
