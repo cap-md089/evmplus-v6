@@ -1,6 +1,6 @@
 {
 	"name": "server-common",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "Common code for server based packages such as the main server and the Discord bot",
 	"main": "./dist/index.js",
 	"scripts": {
@@ -30,10 +30,10 @@
 	},
 	"dependencies": {
 		"@mysql/xdevapi": "^8.0.20",
-		"auto-client-api": "^1.2.0",
+		"auto-client-api": "^1.3.0",
 		"aws-sdk": "^2.669.0",
 		"body-parser": "^1.19.0",
-		"common-lib": "^1.5.0",
+		"common-lib": "^1.6.0",
 		"csv-parse": "^4.11.1",
 		"error-stack-parser": "^2.0.6",
 		"googleapis": "^50.0.0",
