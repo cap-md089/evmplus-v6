@@ -30,7 +30,7 @@ The MySQL server has to be installed, have the [X Plugin enabled](https://dev.my
 
 Once the user is created, fill in the appropriate configuration variables in `server/.env.default`, and copy the configured file to `util-cli/.env` and `server/.env`
 
-Run `util-cli/dist/databseSetup.js`
+Run `util-cli/dist/databaseSetup.js`
 
 ### sFTP setup
 
@@ -101,7 +101,7 @@ The target of the virtual bind must be `/google-keys`; this must be a virtual mo
 
 When you have all the parts together, you can run the `util-cli/dist/createAccount.js` file to create your squadron account
 
-Once the account is created, you will need to run `util-cli/dist/importCapwatchfile.js` to load squadron data, providing a path to a CAPWATCH file
+Once the account is created, you will need to run `util-cli/dist/importCapwatch.js` to load squadron data, providing a path to a CAPWATCH file
 **Note: this has to be done on a Linux machine**
 
 ### Accessing the site
@@ -116,7 +116,7 @@ This will take advantage of the hosting and support already available, and will 
 
 ## Developing CAPUnit.com
 
-The development requirements for CAPUnit.com are a bit different. The server will require the same configuration and external as a production system, but the keys and database do not need to be the same.
+The development requirements for CAPUnit.com are a bit different. The server will require the same configuration and external services as a production system, but the keys and database do not need to be the same.
 
 1. Install required software
     - Node 13
