@@ -28,6 +28,7 @@ import {
 	always,
 	api,
 	AsyncEither,
+	AsyncIter,
 	asyncIterFilter,
 	asyncIterMap,
 	asyncRight,
@@ -152,11 +153,16 @@ export const getFullEventInformation = (
 
 export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(event =>
-		canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)
+		canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
 			? getFullEventInformation(req)(event)
 			: AsyncEither.All([
 					getRegistry(req.mysqlx)(req.account),
-					getAttendanceForEvent(req.mysqlx)(event),
+					Maybe.isSome(req.member)
+						? getAttendanceForEvent(req.mysqlx)(event)
+						: asyncRight<ServerError, AsyncIter<AttendanceRecord>>(
+								[],
+								errorGenerator(),
+						  ),
 					getFullPointsOfContact(req.mysqlx)(req.account)(
 						event.pointsOfContact.map(poc => ({
 							...poc,
