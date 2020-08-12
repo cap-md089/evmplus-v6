@@ -22,14 +22,14 @@ import { validator } from 'auto-client-api';
 import {
 	collectGeneratorAsync,
 	Either,
+	isPartOfTeam,
+	isTeamLeader,
+	Maybe as M,
 	MemberUpdateEventEmitter,
 	RawServerConfiguration,
 	ServerConfiguration,
 	toReference,
 	Validator,
-	isTeamLeader,
-	Maybe as M,
-	isPartOfTeam,
 } from 'common-lib';
 import { Client } from 'discord.js';
 import 'dotenv/config';
@@ -38,9 +38,9 @@ import attendancerecord from './commands/attendancerecord';
 import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
+import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupDiscordServer from './data/setupDiscordServer';
 import setupUser from './data/setupUser';
-import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
