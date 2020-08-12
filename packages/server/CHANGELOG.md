@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.3.1](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.3.0...capunit-com-server@6.3.1) (2020-08-12)
+
+
+### Bug Fixes
+
+* **eventviewer:** fixed permissions for event viewer, updated style of client ([10af6a5](http://github.com//cap-md089/capunit-com-v6/commit/10af6a5d40800542747943a292419231e4195888))
+
+
+
+
+
 # 6.3.0 (2020-08-11)
 
 

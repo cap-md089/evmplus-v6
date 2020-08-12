@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.4.1](http://github.com//cap-md089/capunit-com-v6/compare/client@1.4.0...client@1.4.1) (2020-08-12)
+
+
+### Bug Fixes
+
+* **eventviewer:** fixed link event button not appearing in the right place ([ef1bc22](http://github.com//cap-md089/capunit-com-v6/commit/ef1bc228aba0a66e7bd6deb999195d7d255de2a6)), closes [#2](http://github.com//cap-md089/capunit-com-v6/issues/2)
+* **eventviewer:** fixed permissions for event viewer, updated style of client ([10af6a5](http://github.com//cap-md089/capunit-com-v6/commit/10af6a5d40800542747943a292419231e4195888))
+
+
+
+
+
 # 1.4.0 (2020-08-11)
 
 

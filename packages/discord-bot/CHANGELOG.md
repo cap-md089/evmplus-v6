@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.1](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.3.0...discord-bot@1.3.1) (2020-08-12)
+
+**Note:** Version bump only for package discord-bot
+
+
+
+
+
 # 1.3.0 (2020-08-11)
 
 
