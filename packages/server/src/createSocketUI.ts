@@ -35,7 +35,7 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 					const {
 						REMOTE_DRIVE_HOST: host,
 						REMOTE_DRIVE_PORT: port,
-						REMOTE_DRIVE_USER: username
+						REMOTE_DRIVE_USER: username,
 					} = config;
 
 					try {
@@ -51,7 +51,7 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 							host,
 							port,
 							username,
-							privateKey
+							privateKey,
 						});
 
 						const files = await sftp.list(config.REMOTE_DRIVE_STORAGE_PATH);
@@ -64,6 +64,24 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 						sock.write(e.message);
 					}
 				}
+			} else if (cmd === 'version') {
+				const { version: serverVersion } = require('../package.json');
+				const { version: apiVersion } = require('apis/package.json');
+				const { version: compilerVersion } = require('auto-client-api/package.json');
+				const { version: clientVersion } = require('../../client/package.json');
+				const { version: libVersion } = require('common-lib/package.json');
+				const { version: discordBotVersion } = require('discord-bot/package.json');
+				const { version: serverCommonVersion } = require('server-common/package.json');
+				const { version: typescriptVersion } = require('typescript/package.json');
+
+				console.log(`Server version: ${serverVersion}`);
+				console.log(`API version: ${apiVersion}`);
+				console.log(`Macro version: ${compilerVersion}`);
+				console.log(`Client version: ${clientVersion}`);
+				console.log(`Common lib version: ${libVersion}`);
+				console.log(`Discord bot version: ${discordBotVersion}`);
+				console.log(`Server common version: ${serverCommonVersion}`);
+				console.log(`TypeScript version: ${typescriptVersion}`);
 			} else {
 				sock.write('Invalid command\n');
 			}
