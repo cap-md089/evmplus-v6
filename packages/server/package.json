@@ -1,6 +1,6 @@
 {
 	"name": "capunit-com-server",
-	"version": "6.3.1",
+	"version": "6.4.0",
 	"private": true,
 	"scripts": {
 		"start": "dist/index.js",
