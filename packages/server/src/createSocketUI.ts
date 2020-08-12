@@ -74,14 +74,14 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 				const { version: serverCommonVersion } = require('server-common/package.json');
 				const { version: typescriptVersion } = require('typescript/package.json');
 
-				console.log(`Server version: ${serverVersion}`);
-				console.log(`API version: ${apiVersion}`);
-				console.log(`Macro version: ${compilerVersion}`);
-				console.log(`Client version: ${clientVersion}`);
-				console.log(`Common lib version: ${libVersion}`);
-				console.log(`Discord bot version: ${discordBotVersion}`);
-				console.log(`Server common version: ${serverCommonVersion}`);
-				console.log(`TypeScript version: ${typescriptVersion}`);
+				sock.write(`Server version: ${serverVersion}\n`);
+				sock.write(`API version: ${apiVersion}\n`);
+				sock.write(`Macro version: ${compilerVersion}\n`);
+				sock.write(`Client version: ${clientVersion}\n`);
+				sock.write(`Common lib version: ${libVersion}\n`);
+				sock.write(`Discord bot version: ${discordBotVersion}\n`);
+				sock.write(`Server common version: ${serverCommonVersion}\n`);
+				sock.write(`TypeScript version: ${typescriptVersion}\n`);
 			} else {
 				sock.write('Invalid command\n');
 			}
