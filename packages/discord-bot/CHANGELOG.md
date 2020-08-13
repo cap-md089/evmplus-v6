@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.2](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.3.1...discord-bot@1.3.2) (2020-08-13)
+
+
+### Bug Fixes
+
+* **discord-bot:** fixed not being able to update flight membership ([6c836ad](http://github.com//cap-md089/capunit-com-v6/commit/6c836ad9e0d98ab99d8af5bd855972fdcb644c12))
+
+
+
+
+
 ## [1.3.1](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.3.0...discord-bot@1.3.1) (2020-08-12)
 
 **Note:** Version bump only for package discord-bot
