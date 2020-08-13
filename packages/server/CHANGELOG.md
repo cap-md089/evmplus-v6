@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.4.1](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.4.0...capunit-com-server@6.4.1) (2020-08-13)
+
+
+### Bug Fixes
+
+* **discord-bot:** fixed not being able to update flight membership ([6c836ad](http://github.com//cap-md089/capunit-com-v6/commit/6c836ad9e0d98ab99d8af5bd855972fdcb644c12))
+* fixed version command on the server ([7388205](http://github.com//cap-md089/capunit-com-v6/commit/7388205fd2feb6105e15bbbd43d9cd11dc49c396))
+
+
+
+
+
 # [6.4.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.3.1...capunit-com-server@6.4.0) (2020-08-12)
 
 
