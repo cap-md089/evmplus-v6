@@ -250,7 +250,7 @@ export default function setup(
 			return;
 		}
 
-		const userAccount = await getDiscordAccount(schema)(member);
+		const userAccount = await getDiscordAccount(schema)(toReference(member));
 
 		if (!userAccount.hasValue) {
 			return;

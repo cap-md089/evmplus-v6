@@ -51,7 +51,8 @@ export interface Assign {
 export interface AssignBulk {
 	(
 		params: {},
-		body: { members: Array<{ member: MemberReference; newFlight: string | null }> },
+		// tslint:disable-next-line:array-type
+		body: { members: { member: MemberReference; newFlight: string | null }[] },
 	): APIEither<void>;
 
 	url: '/api/member/flight/bulk';
