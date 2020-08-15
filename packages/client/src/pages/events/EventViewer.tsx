@@ -499,6 +499,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 							{/* {' | '}
+							<Link to={`/scanadd/${event.id}`}>Scan Add attendance</Link> */}
+							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
 								<Button buttonType="none">Print Senior Roster</Button>
@@ -596,14 +598,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</Dialogue>
 						</>
 					)}
-					{attendees.filter(Either.isRight).length > 0 ? (
-						<>
-							<br />
-							<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
-								Download Attendance Spreadsheet
-							</Button>
-						</>
-					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
 						fullMemberDetails.linkableAccounts.length > 0 &&
@@ -782,6 +776,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									>
 										Show CAP IDs
 									</Button>
+								) : null}
+								{(attendees.filter(Either.isRight).length > 0) && (effectiveManageEventPermissionForEvent(member)(event)) ? (
+									<>
+										{' | '}
+										<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
+											Download Attendance Spreadsheet
+										</Button>
+									</>
 								) : null}
 								<Dialogue
 									displayButtons={DialogueButtons.OK}
@@ -1208,7 +1210,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			this.state.eventInformation.event,
 			this.state.eventInformation.attendees
 				.filter(Either.isRight)
-				.map(record => record.value.record),
+				.map(record => record.value),
 		);
 		ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
 		sheet = spreadsheets.FormatAttendanceXL(

@@ -264,7 +264,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 					  this.state.state === 'ERROR' ? (
 						<div>{this.state.memberMessage}</div>
 					) : null}
-					{this.groupTarget !== GroupTarget.NONE ? (
+					{this.groupTarget !== GroupTarget.NONE && state.type !== 'GROUPLOADED'  ? (
 						<Button
 							onClick={this.loadShortGroupAttendance}
 							disabled={this.state.type === 'LOADING'}
