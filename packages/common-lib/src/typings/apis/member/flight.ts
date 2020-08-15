@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents how flights are managed with CAPUnit.com
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +24,11 @@
 import { APIEither } from '../../api';
 import { CAPMemberObject, MemberReference } from '../../types';
 
+/**
+ * Assigns the specified member to the specified flight
+ *
+ * A null flight disassociates the member with a flight, marking them as unassigned
+ */
 export interface Assign {
 	(params: {}, body: { member: MemberReference; flight: string | null }): APIEither<void>;
 
@@ -34,11 +43,16 @@ export interface Assign {
 	useValidator: true;
 }
 
+/**
+ * Allows assigning multiple people to different flights at once
+ *
+ * A null flight disassociates the member with a flight, marking them as unassigned
+ */
 export interface AssignBulk {
 	(
 		params: {},
-		// tslint:disable-next-line: array-type
-		body: { members: { member: MemberReference; newFlight: string | null }[] }
+		// tslint:disable-next-line:array-type
+		body: { members: { member: MemberReference; newFlight: string | null }[] },
 	): APIEither<void>;
 
 	url: '/api/member/flight/bulk';
@@ -52,6 +66,16 @@ export interface AssignBulk {
 	useValidator: true;
 }
 
+/**
+ * Gets member references for everyone in the flight the current member is in
+ *
+ * If the person making the request has any of these roles, it returns all cadets in
+ * the squadron:
+ * 	- Cadet Commander
+ *  - Cadet Exective Officer
+ *  - Cadet Deputy Commander
+ *  - Deputy Commander for Cadets
+ */
 export interface FlightMembersBasic {
 	(params: {}, body: {}): APIEither<Array<APIEither<MemberReference>>>;
 
@@ -66,6 +90,16 @@ export interface FlightMembersBasic {
 	useValidator: true;
 }
 
+/**
+ * Gets member references for everyone in the flight the current member is in
+ *
+ * If the person making the request has any of these roles, it returns all cadets in
+ * the squadron:
+ * 	- Cadet Commander
+ *  - Cadet Exective Officer
+ *  - Cadet Deputy Commander
+ *  - Deputy Commander for Cadets
+ */
 export interface FlightMembersFull {
 	(params: {}, body: {}): APIEither<Array<APIEither<CAPMemberObject>>>;
 

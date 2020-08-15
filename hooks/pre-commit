@@ -1,22 +1,31 @@
 #!/bin/sh
 
-# Check for compile errors
-if lerna run check; then
-	# Everything compiles
-	:
-else
-	echo "Compile failure"
-	exit 1
-fi
+# Check for master branch
+branch="$(git rev-parse --abbrev-ref HEAD)"
 
-# Run tests
-# if lerna run test; then
-# 	# We passed
-# 	:
-# else
-# 	echo "Unit tests have failed"
-# 	exit 1
-# fi
+# If the branch is master, higher standards should be enforced,
+# while also allowing speedy commits to be made to other branches
+if [ "$branch" = "master" ]; then
+
+	# Check for compile errors
+	if lerna run check; then
+		# Everything compiles
+		:
+	else
+		echo "Compile failure"
+		exit 1
+	fi
+
+	# Run tests
+	# if lerna run test; then
+	# 	# We passed
+	# 	:
+	# else
+	# 	echo "Unit tests have failed"
+	# 	exit 1
+	# fi
+
+fi
 
 # Lint code
 if lerna run lint; then

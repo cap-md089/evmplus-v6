@@ -20,7 +20,7 @@
 import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
-	CustomAttendanceFieldFile
+	CustomAttendanceFieldFile,
 } from 'common-lib';
 import * as React from 'react';
 import {
@@ -29,7 +29,7 @@ import {
 	FormBlock,
 	Label,
 	NumberInput,
-	TextInput
+	TextInput,
 } from '../forms/SimpleForm';
 import { InputProps } from './Input';
 import SimpleRadioButton from './SimpleRadioButton';
@@ -49,8 +49,8 @@ export default class CustomAttendanceFieldInput extends React.Component<
 					title: '',
 					preFill: '',
 					displayToMember: false,
-					allowMemberToModify: false
-				}
+					allowMemberToModify: false,
+				},
 			});
 		}
 
@@ -105,62 +105,76 @@ export default class CustomAttendanceFieldInput extends React.Component<
 	}
 
 	private onUpdate(
-		value: CustomAttendanceField,
+		newValue: CustomAttendanceField,
 		error: BooleanForField<CustomAttendanceField>,
 		changed: BooleanForField<CustomAttendanceField>,
 		hasError: boolean,
-		fieldChanged: keyof CustomAttendanceField
+		fieldChanged: keyof CustomAttendanceField,
 	) {
+		const name = `customAttendanceFieldInput-${this.props.index}`;
+
 		if (fieldChanged === 'type') {
-			if (value.type === CustomAttendanceFieldEntryType.CHECKBOX) {
-				value = {
-					allowMemberToModify: value.allowMemberToModify,
-					displayToMember: value.displayToMember,
-					title: value.title,
-					type: CustomAttendanceFieldEntryType.CHECKBOX,
-					preFill: false
-				};
+			if (newValue.type === CustomAttendanceFieldEntryType.CHECKBOX) {
+				this.props.onUpdate?.({
+					name,
+					value: {
+						allowMemberToModify: newValue.allowMemberToModify,
+						displayToMember: newValue.displayToMember,
+						title: newValue.title,
+						type: CustomAttendanceFieldEntryType.CHECKBOX,
+						preFill: false,
+					},
+				});
+			} else if (newValue.type === CustomAttendanceFieldEntryType.DATE) {
+				this.props.onUpdate?.({
+					name,
+					value: {
+						allowMemberToModify: newValue.allowMemberToModify,
+						displayToMember: newValue.displayToMember,
+						title: newValue.title,
+						type: CustomAttendanceFieldEntryType.DATE,
+						preFill: Date.now(),
+					},
+				});
+			} else if (newValue.type === CustomAttendanceFieldEntryType.FILE) {
+				this.props.onUpdate?.({
+					name,
+					value: {
+						allowMemberToModify: newValue.allowMemberToModify,
+						displayToMember: newValue.displayToMember,
+						title: newValue.title,
+						type: CustomAttendanceFieldEntryType.FILE,
+					} as CustomAttendanceFieldFile,
+				});
+			} else if (newValue.type === CustomAttendanceFieldEntryType.NUMBER) {
+				this.props.onUpdate?.({
+					name,
+					value: {
+						allowMemberToModify: newValue.allowMemberToModify,
+						displayToMember: newValue.displayToMember,
+						title: newValue.title,
+						type: CustomAttendanceFieldEntryType.NUMBER,
+						preFill: 0,
+					},
+				});
+			} else if (newValue.type === CustomAttendanceFieldEntryType.TEXT) {
+				this.props.onUpdate?.({
+					name,
+					value: {
+						allowMemberToModify: newValue.allowMemberToModify,
+						displayToMember: newValue.displayToMember,
+						title: newValue.title,
+						type: CustomAttendanceFieldEntryType.TEXT,
+						preFill: '',
+					},
+				});
+			} else {
+				throw new Error('Weird state');
 			}
-			if (value.type === CustomAttendanceFieldEntryType.DATE) {
-				value = {
-					allowMemberToModify: value.allowMemberToModify,
-					displayToMember: value.displayToMember,
-					title: value.title,
-					type: CustomAttendanceFieldEntryType.DATE,
-					preFill: Date.now()
-				};
-			}
-			if (value.type === CustomAttendanceFieldEntryType.FILE) {
-				value = {
-					allowMemberToModify: value.allowMemberToModify,
-					displayToMember: value.displayToMember,
-					title: value.title,
-					type: CustomAttendanceFieldEntryType.FILE
-				} as CustomAttendanceFieldFile;
-			}
-			if (value.type === CustomAttendanceFieldEntryType.NUMBER) {
-				value = {
-					allowMemberToModify: value.allowMemberToModify,
-					displayToMember: value.displayToMember,
-					title: value.title,
-					type: CustomAttendanceFieldEntryType.NUMBER,
-					preFill: 0
-				};
-			}
-			if (value.type === CustomAttendanceFieldEntryType.TEXT) {
-				value = {
-					allowMemberToModify: value.allowMemberToModify,
-					displayToMember: value.displayToMember,
-					title: value.title,
-					type: CustomAttendanceFieldEntryType.TEXT,
-					preFill: ''
-				};
-			}
-		}
-		if (this.props.onUpdate) {
-			this.props.onUpdate({
-				name: `customAttendanceFieldInput-${this.props.index}`,
-				value
+		} else {
+			this.props.onUpdate?.({
+				name,
+				value: newValue,
 			});
 		}
 	}

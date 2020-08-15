@@ -3,6 +3,11 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents management of attendance from a member
+ * standpoint, contrasting with the event API
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -21,6 +26,9 @@ import { MaybeObj } from '../../../lib/Maybe';
 import { APIEither } from '../../api';
 import { MemberReference } from '../../types';
 
+/**
+ * Contains information about the event pertinent to a member
+ */
 export interface EventAttendanceRecordEventInformation {
 	id: number;
 	startDateTime: number;
@@ -30,6 +38,9 @@ export interface EventAttendanceRecordEventInformation {
 	attendanceComments: string;
 }
 
+/**
+ * Contains wrapped information about an event to include some member information
+ */
 export interface EventAttendanceRecord {
 	member: {
 		reference: MemberReference;
@@ -38,6 +49,9 @@ export interface EventAttendanceRecord {
 	event: MaybeObj<EventAttendanceRecordEventInformation>;
 }
 
+/**
+ * Gets a personal list of attendance
+ */
 export interface Get {
 	(params: {}, body: {}): APIEither<Array<APIEither<EventAttendanceRecord>>>;
 
@@ -52,6 +66,9 @@ export interface Get {
 	useValidator: true;
 }
 
+/**
+ * Gets the attendance for a specific group, be that a squadron or flight
+ */
 export interface GetForGroup {
 	(params: {}, body: {}): APIEither<Array<APIEither<MaybeObj<EventAttendanceRecord>>>>;
 
@@ -66,6 +83,11 @@ export interface GetForGroup {
 	useValidator: true;
 }
 
+/**
+ * Gets the attendance for the specified member
+ *
+ * Reference is a member reference formatted according to stringifyMemberReference
+ */
 export interface GetForMember {
 	(params: { reference: string }, body: {}): APIEither<Array<APIEither<EventAttendanceRecord>>>;
 

@@ -22,6 +22,7 @@ import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncIterTap,
 	asyncRight,
 	CAPExtraMemberInformation,
 	collectGeneratorAsync,
@@ -34,13 +35,13 @@ import {
 	MemberReference,
 	Right,
 	ServerError,
-	SessionType
+	SessionType,
 } from 'common-lib';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
 
 export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
 	PAM.RequiresPermission('FlightAssign')(req =>
 		asyncRight(req.body.members, errorGenerator('Could not update member information'))
@@ -51,36 +52,50 @@ export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.Require
 				>(info =>
 					resolveReference(req.mysqlx)(req.account)(info.member).map(member => ({
 						member,
-						newFlight: info.newFlight
-					}))
-				)
+						newFlight: info.newFlight,
+					})),
+				),
 			)
 			.map(
 				asyncIterFilter<
 					EitherObj<ServerError, { newFlight: string | null; member: Member }>,
 					Right<{ newFlight: string | null; member: Member }>
-				>(Either.isRight)
+				>(Either.isRight),
 			)
 			.map(asyncIterMap(get('value')))
 			.map(asyncIterFilter(info => info.newFlight !== info.member.flight))
 			.map(
-				asyncIterMap(info => ({
-					...info.member,
-					flight: info.newFlight
-				}))
+				asyncIterMap(info => [
+					{
+						...info.member,
+						flight: info.newFlight,
+					},
+					info.member,
+				]),
 			)
+			.map(
+				asyncIterTap(([newMember, oldMember]) => {
+					if (newMember.flight !== oldMember.flight) {
+						req.memberUpdateEmitter.emit('memberChange', {
+							member: newMember,
+							account: req.account,
+						});
+					}
+				}),
+			)
+			.map(asyncIterMap(([newMember]) => newMember))
 			.map(asyncIterMap(getExtraMemberInformationForCAPMember(req.account)))
 			.map(
 				asyncIterFilter<
 					EitherObj<ServerError, CAPExtraMemberInformation>,
 					Right<CAPExtraMemberInformation>
-				>(Either.isRight)
+				>(Either.isRight),
 			)
 			.map(asyncIterMap(get('value')))
 			.map(asyncIterMap(saveExtraMemberInformation(req.mysqlx)(req.account)))
 			.map(collectGeneratorAsync)
-			.map(destroy)
-	)
+			.map(destroy),
+	),
 );
 
 export default func;

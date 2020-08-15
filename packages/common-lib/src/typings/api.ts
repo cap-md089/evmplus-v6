@@ -3,6 +3,32 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file and all of the files in `apis` document how to communicate
+ * with the server.  All of these expect to be run from a browser; this means that
+ * a host header is expected to be set with the format `${accountID}.capunit.com`
+ *
+ * Each interface defines:
+ * 	- The URL parameters and where in the URL it is to be located
+ * 		(e.g:
+ * 			with params: { id: string }
+ * 			and url: '/api/event/:id'
+ * 			get event 1 with the URL '/api/event/1'
+ * 		)
+ *  - The request body (JSON formatted, empty if body is {})
+ * 	- The return body (JSON formatted)
+ * 	- The HTTP method
+ * 	- Whether or not a member is used in the request
+ * 		- 'unused': Having a member doesn't change anything
+ * 		- 'optional': Having a member will produce different output
+ * 			than not having a member
+ * 		- 'requred': Returns 403 if a member session is not provided
+ *
+ * 		To use a member session, set the 'authorization' header to
+ * 			be the session ID
+ * 	- Whether or not a token is needed
+ * 		If it is needed, a `token` property needs to be added to the request body
+ * 		A token can be fetched from '/api/token', and is valid for one use
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -21,16 +47,26 @@ import { EitherObj } from '../lib/Either';
 import { ValidatorFail } from '../lib/Validator';
 import * as api from './apis';
 
+/**
+ * Contains the HTTP status code that will be reflected and also a message
+ * detailing what has happened
+ */
 export interface HTTPError {
 	code: number;
 	message: any;
 }
 
+/**
+ * Basic error information shared across all error objects
+ */
 export interface ErrorBase {
 	code: number;
 	type: string;
 }
 
+/**
+ * Records when a user has failed to provide the correct input to call an API
+ */
 export interface ValidatorError extends ErrorBase {
 	type: 'VALIDATOR';
 	code: 400;
@@ -38,6 +74,9 @@ export interface ValidatorError extends ErrorBase {
 	validatorState: ValidatorFail;
 }
 
+/**
+ * Used to record when the server crashes
+ */
 export interface Crash extends ErrorBase {
 	type: 'CRASH';
 	code: 500;
@@ -45,16 +84,27 @@ export interface Crash extends ErrorBase {
 	message: string;
 }
 
+/**
+ * Used for cases like user error. Just not a crash or user input shape error
+ */
 export interface GenericError extends ErrorBase {
 	type: 'OTHER';
-	code: number;
 	message: string;
 }
 
+/**
+ * These are the different types of errors that the server may generate
+ */
 export type ServerError = Crash | GenericError | ValidatorError;
 
+/**
+ * Shortcut type to document what is returned from APIs
+ */
 export type APIEither<T> = EitherObj<HTTPError, T>;
 
+/**
+ * The different HTTP methods expected to be used
+ */
 export type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export type MemberRequirement = 'required' | 'optional' | 'unused';
@@ -87,6 +137,10 @@ export interface APIEndpoint<
 
 	useValidator: UseValidator;
 }
+
+//
+// Convenience types to extract information from an API endpoint interface
+//
 
 export type APIEndpointURL<
 	T extends APIEndpoint<string, any, any, any, any, any, any, any>

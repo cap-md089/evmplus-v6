@@ -23,6 +23,7 @@ import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setup from 'discord-bot';
 import 'dotenv/config';
 import { confFromRaw } from 'server-common';
+import { api } from './api';
 import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
 
@@ -55,3 +56,5 @@ getServer(conf)
 process.on('unhandledRejection', up => {
 	throw up;
 });
+
+export default api;

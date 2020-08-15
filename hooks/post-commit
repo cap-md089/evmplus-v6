@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# exec < /dev/tty
-
-# lerna version --amend
-
-# exit

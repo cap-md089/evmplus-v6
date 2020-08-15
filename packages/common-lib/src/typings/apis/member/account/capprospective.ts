@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents how an admin can manage CAPProspectiveMember accounts
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -25,6 +29,9 @@ interface ProspectiveAccountBody {
 	login: CAPProspectiveMemberPasswordCreation;
 }
 
+/**
+ * Allows an admin to create a prospective member for someone else
+ */
 export interface CreateProspectiveAccount {
 	(params: {}, body: ProspectiveAccountBody): APIEither<void>;
 

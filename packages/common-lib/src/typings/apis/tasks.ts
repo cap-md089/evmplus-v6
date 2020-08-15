@@ -3,6 +3,12 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents management of tasks for a member
+ *
+ * TODO: create an interface on the client
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,6 +26,9 @@
 import { APIEither } from '../api';
 import { NewTaskObject, RawTaskObject, TaskObject } from '../types';
 
+/**
+ * Assigns a task to a member
+ */
 export interface CreateTask {
 	(params: {}, body: NewTaskObject): APIEither<TaskObject>;
 
@@ -34,6 +43,9 @@ export interface CreateTask {
 	useValidator: true;
 }
 
+/**
+ * Allows for getting a single task and the associated information
+ */
 export interface GetTask {
 	(params: { id: string }, body: {}): APIEither<TaskObject>;
 
@@ -48,6 +60,9 @@ export interface GetTask {
 	useValidator: true;
 }
 
+/**
+ * Lists the tasks assigned to the member of a session ID
+ */
 export interface ListTasks {
 	(params: {}, body: {}): APIEither<TaskObject[]>;
 
@@ -62,6 +77,9 @@ export interface ListTasks {
 	useValidator: true;
 }
 
+/**
+ * Updates task information
+ */
 export interface EditTask {
 	(params: { id: string }, body: RawTaskObject): APIEither<void>;
 
@@ -76,6 +94,9 @@ export interface EditTask {
 	useValidator: true;
 }
 
+/**
+ * Deletes a task completely
+ */
 export interface DeleteTask {
 	(params: { id: string }, body: {}): APIEither<void>;
 

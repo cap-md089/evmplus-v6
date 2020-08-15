@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents how to use APIs that manage event resources
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -29,12 +33,18 @@ import {
 	RawEventObject,
 } from '../../types';
 
+/**
+ * Contains information needed to display an attendance record in EventViewer.tsx
+ */
 export interface EventViewerAttendanceRecord {
 	record: AttendanceRecord;
 	member: MaybeObj<Member>;
 	orgName: MaybeObj<string>;
 }
 
+/**
+ * Contains information needed to display an event in EVentViewer.tsx
+ */
 export interface EventViewerData {
 	event: RawEventObject;
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
@@ -48,6 +58,10 @@ export interface EventViewerData {
 	}>;
 }
 
+/**
+ * Given the event information, adds it to the squadron calendar and the associated
+ * Google calendar
+ */
 export interface Add {
 	(params: {}, body: NewEventObject): APIEither<EventObject>;
 
@@ -62,6 +76,10 @@ export interface Add {
 	useValidator: true;
 }
 
+/**
+ * Copies an event, changing all the times to maintain the same delta, but
+ * based off of the new time
+ */
 export interface Copy {
 	(
 		params: { id: string },
@@ -83,6 +101,12 @@ export interface Copy {
 	useValidator: true;
 }
 
+/**
+ * Gets a list of events
+ *
+ * For optimal results, specify a page and page size
+ * TODO: Allow this to be done
+ */
 export interface GetList {
 	(params: {}, body: {}): APIEither<RawEventObject[]>;
 
@@ -97,6 +121,9 @@ export interface GetList {
 	useValidator: true;
 }
 
+/**
+ * Gets full event information for the requested event
+ */
 export interface Get {
 	(params: { id: string }, body: {}): APIEither<EventObject>;
 
@@ -111,6 +138,15 @@ export interface Get {
 	useValidator: true;
 }
 
+/**
+ * Downloads event viewer data for an event
+ *
+ * Contains event information and a lot of other relevant information,
+ * including:
+ * 	- The name of the account this event is linked from, if applicable
+ * 	- Attendance for the event
+ *  - Point of contact information
+ */
 export interface GetEventViewerData {
 	(params: { id: string }, body: {}): APIEither<EventViewerData>;
 
@@ -125,6 +161,9 @@ export interface GetEventViewerData {
 	useValidator: true;
 }
 
+/**
+ * Get's the next meeting with the 'Recurring Meeting' activity type set
+ */
 export interface GetNextRecurring {
 	(params: {}, body: {}): APIEither<MaybeObj<RawEventObject>>;
 
@@ -139,6 +178,9 @@ export interface GetNextRecurring {
 	useValidator: true;
 }
 
+/**
+ * Creates a link between the specified account and event
+ */
 export interface Link {
 	(params: { eventid: string; targetaccount: string }, body: {}): APIEither<RawEventObject>;
 
@@ -153,6 +195,9 @@ export interface Link {
 	useValidator: true;
 }
 
+/**
+ * Gets the next `X` events, where `X` is defined in the Registry as `Website.ShowUpcomingEventCount`
+ */
 export interface GetUpcoming {
 	(params: {}, body: {}): APIEither<RawEventObject[]>;
 
@@ -167,6 +212,9 @@ export interface GetUpcoming {
 	useValidator: true;
 }
 
+/**
+ * Updates event information for the specified event
+ */
 export interface Set {
 	(params: { id: string }, body: Partial<NewEventObject>): APIEither<EventObject>;
 
@@ -181,6 +229,9 @@ export interface Set {
 	useValidator: false;
 }
 
+/**
+ * Deletes the event specified
+ */
 export interface Delete {
 	(params: { id: string }, body: {}): APIEither<void>;
 
@@ -195,6 +246,12 @@ export interface Delete {
 	useValidator: true;
 }
 
+/**
+ * Gets all events between the two specified timestamps
+ *
+ * timestart and timeend are Unix timestamps in milliseconds, the same as the return value
+ * from Date.now()
+ */
 export interface GetRange {
 	(params: { timestart: string; timeend: string }, body: {}): APIEither<RawEventObject[]>;
 

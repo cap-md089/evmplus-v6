@@ -512,11 +512,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					effectiveManageEventPermissionForEvent(member)(event) &&
 					fullMemberDetails.error === MemberCreateError.NONE &&
 					fullMemberDetails.linkableAccounts.length > 0 &&
-					event.sourceEvent === null
+					!event.sourceEvent
 						? ' | '
 						: null}
 					{fullMemberDetails.error !== MemberCreateError.NONE ||
-					(event.sourceEvent !== null && event.sourceEvent !== undefined) ||
+					!!event.sourceEvent ||
 					fullMemberDetails.linkableAccounts.length === 0 ? null : fullMemberDetails
 							.linkableAccounts.length === 1 ? (
 						<Button
@@ -643,8 +643,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								</ul>
 							</>
 						) : null}
-						<h3>{event.name}</h3>
-						<br />
+						<h1>{event.name}</h1>
+						<h2>Meeting information</h2>
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
 						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
@@ -709,7 +709,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						) : null}
 						<strong>Event status:</strong> {eventStatus(event.status)}
 						<br />
-						<br />
+						<strong>Desired number of participants:</strong>{' '}
+						{event.desiredNumberOfParticipants}
+						<h2>Contact information</h2>
 						<div>
 							{pointsOfContact.map((poc, i) =>
 								poc.type === PointOfContactType.INTERNAL ? (

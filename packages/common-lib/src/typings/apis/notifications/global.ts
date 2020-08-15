@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents management of global notifications specifically
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -23,9 +27,12 @@ import {
 	NotificationCause,
 	NotificationDataMessage,
 	NotificationEveryoneTarget,
-	NotificationObject
+	NotificationObject,
 } from '../../types';
 
+/**
+ * Creates a global notification that will show up on everyone's computer
+ */
 export interface CreateGlobalNotification {
 	(params: {}, body: { text: string; expires: number }): APIEither<
 		NotificationObject<NotificationCause, NotificationEveryoneTarget, NotificationDataMessage>
@@ -42,6 +49,9 @@ export interface CreateGlobalNotification {
 	useValidator: true;
 }
 
+/**
+ * Checks to see if there is currently a global notification
+ */
 export interface GetGlobalNotification {
 	(params: {}, body: {}): APIEither<
 		MaybeObj<

@@ -3,6 +3,10 @@
  *
  * This file is part of CAPUnit.com.
  *
+ * This file documents management of the permissions resource
+ *
+ * See `common-lib/src/typings/api.ts` for more information
+ *
  * CAPUnit.com is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
@@ -20,17 +24,25 @@
 import { APIEither } from '../../api';
 import { MemberPermissions, MemberReference } from '../../types';
 
+/**
+ * Contains the information a member will have concerning their permissions
+ */
 export interface PermissionInformation {
 	member: MemberReference;
 	permissions: MemberPermissions;
 }
 
+/**
+ * Sets all the permissions of the unit.
+ *
+ * By not including a member, this will delete the permissions they have
+ */
 export interface SetPermissions {
 	(
 		params: {},
 		body: {
 			newRoles: PermissionInformation[];
-		}
+		},
 	): APIEither<void>;
 
 	url: '/api/member/permissions';
@@ -44,6 +56,9 @@ export interface SetPermissions {
 	useValidator: true;
 }
 
+/**
+ * Gets a list of all the members who have permissions in the unit
+ */
 export interface GetPermissions {
 	(params: {}, body: {}): APIEither<PermissionInformation[]>;
 

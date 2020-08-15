@@ -31,7 +31,7 @@ ReactDOM.render(
 	<Router>
 		<App isMobile={false} />
 	</Router>,
-	document.getElementById('root') as HTMLElement
+	document.getElementById('root') as HTMLElement,
 );
 
 // registerServiceWorker();
@@ -66,3 +66,8 @@ ReactDOM.render(
 
 // 	return true;
 // });
+
+// This is done to store a global variable without webpack mangling the name, so that I can actually find it
+// @ts-ignore
+// tslint:disable-next-line:no-string-literal
+window['CLIENT_VERSION'] = process.env.REACT_APP_VERSION;

@@ -36,26 +36,28 @@ import {
 	Right,
 	ServerError,
 	SessionType,
-	toReference
+	toReference,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.member.flight.FlightMembersBasic> = PAM.RequiresMemberType(
 	'CAPNHQMember',
-	'CAPProspectiveMember'
+	'CAPProspectiveMember',
 )(
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		(hasOneDutyPosition([
 			'Cadet Flight Commander',
 			'Cadet Flight Sergeant',
 			'Cadet Commander',
-			'Cadet Deputy Commander'
-		])
+			'Cadet Deputy Commander',
+			'Cadet Executive Officer',
+			'Deputy Commander for Cadets',
+		])(req.member)
 			? asyncRight(req, errorGenerator('Could not process request'))
 			: asyncLeft<ServerError, typeof req>({
 					type: 'OTHER',
 					code: 403,
-					message: 'Member does not have permission to do that'
+					message: 'Member does not have permission to do that',
 			  })
 		)
 			.map(() => getMembers(req.mysqlx)(req.account))
@@ -67,15 +69,15 @@ export const func: ServerAPIEndpoint<api.member.flight.FlightMembersBasic> = PAM
 					isRioux(req.member)
 						? always(true)
 						: hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(
-								req.member
+								req.member,
 						  )
 						? mem => mem.flight === req.member.flight && mem.flight !== null
-						: always(true)
-				)
+						: always(true),
+				),
 			)
 			.map(asyncIterMap(toReference))
-			.map(asyncIterHandler(errorGenerator('Could not get member ID')))
-	)
+			.map(asyncIterHandler(errorGenerator('Could not get member ID'))),
+	),
 );
 
 export default func;

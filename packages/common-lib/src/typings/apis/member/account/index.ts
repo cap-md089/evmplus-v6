@@ -22,6 +22,13 @@ import { APIEither } from '../../../api';
 export * as capnhq from './capnhq';
 export * as capprospective from './capprospective';
 
+/**
+ * Takes a Discord ID and assigns it to an account
+ *
+ * Also updates a Discord account with appropriate roles, if applicable
+ *
+ * Meant to only be accessed through a link from a Discord bot
+ */
 export interface RegisterDiscord {
 	(params: { discordID: string }, body: {}): APIEither<void>;
 
@@ -36,6 +43,9 @@ export interface RegisterDiscord {
 	useValidator: true;
 }
 
+/**
+ * Sends an email with a password reset link to a user to give them access again
+ */
 export interface PasswordResetRequest {
 	(params: {}, body: { username: string; captchaToken: string }): APIEither<void>;
 
@@ -50,6 +60,9 @@ export interface PasswordResetRequest {
 	useValidator: true;
 }
 
+/**
+ * Using a password reset token, updates a password for a member. The member is recorded in the database and associated with the token
+ */
 export interface FinishPasswordReset {
 	(params: {}, body: { token: string; newPassword: string }): APIEither<{ sessionID: string }>;
 
@@ -64,6 +77,9 @@ export interface FinishPasswordReset {
 	useValidator: true;
 }
 
+/**
+ * Using an account setup token, creates a full account
+ */
 export interface FinishAccountSetup {
 	(params: {}, body: { password: string; token: string; username: string }): APIEither<{
 		sessionID: string;

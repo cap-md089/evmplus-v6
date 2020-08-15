@@ -31,7 +31,7 @@ import {
 	Maybe,
 	Member,
 	MemberObject,
-	pipe
+	pipe,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -42,7 +42,7 @@ import SimpleForm, {
 	Checkbox,
 	Label,
 	SimpleRadioButton,
-	TextInput
+	TextInput,
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import LoaderShort from '../../../components/LoaderShort';
@@ -53,23 +53,27 @@ import './FlightContact.css';
 const isMaybeFlightStaff = pipe(
 	M.filterType<Member, CAPMember>(isCAPMember),
 	M.filter(hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])),
-	M.isSome
+	M.isSome,
 );
 
 const isFlightStaff = (member: Member | undefined | null): member is CAPMember =>
 	isMaybeFlightStaff(M.fromValue(member));
+
+const hasAllowedDutyPosition = hasOneDutyPosition([
+	'Cadet Flight Commander',
+	'Cadet Flight Sergeant',
+	'Cadet Commander',
+	'Cadet Deputy Commander',
+	'Cadet Executive Officer',
+	'Deputy Commander For Cadets',
+]);
 
 export const shouldRenderFlightContactWidget = (props: PageProps) => {
 	return (
 		!!props.member &&
 		isCAPMember(props.member) &&
 		!props.member.seniorMember &&
-		hasOneDutyPosition([
-			'Cadet Flight Commander',
-			'Cadet Flight Sergeant',
-			'Cadet Commander',
-			'Cadet Deputy Commander'
-		])(props.member)
+		hasAllowedDutyPosition(props.member)
 	);
 };
 
@@ -96,7 +100,7 @@ type FlightContactState =
 
 export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 	public state: FlightContactState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public async componentDidMount() {
@@ -104,28 +108,23 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 			this.props.member &&
 			isCAPMember(this.props.member) &&
 			!this.props.member.seniorMember &&
-			hasOneDutyPosition([
-				'Cadet Flight Commander',
-				'Cadet Flight Sergeant',
-				'Cadet Commander',
-				'Cadet Deputy Commander'
-			])(this.props.member)
+			hasAllowedDutyPosition(this.props.member)
 		) {
 			const memberEither = await fetchApi.member.flight.membersBasic(
 				{},
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(memberEither)) {
 				this.setState({
 					state: 'ERROR',
-					message: memberEither.value.message
+					message: memberEither.value.message,
 				});
 			} else {
 				this.setState({
 					state: 'LOADED',
-					members: memberEither.value.filter(Either.isRight).map(get('value'))
+					members: memberEither.value.filter(Either.isRight).map(get('value')),
 				});
 			}
 		}
@@ -197,7 +196,7 @@ const memberRanks = [
 	'briggen',
 	'majgen',
 	'ltgen',
-	'gen'
+	'gen',
 ];
 
 const normalizeRankInput = (rank: string) =>
@@ -243,13 +242,13 @@ type EmailListState = EmailListUIState &
 enum SortFunction {
 	LASTNAME,
 	FIRSTNAME,
-	CAPID
+	CAPID,
 }
 
 const sortFunctions: Array<(a: Member, b: Member) => number> = [
 	(a, b) => a.nameLast.localeCompare(b.nameLast),
 	(a, b) => a.nameFirst.localeCompare(b.nameFirst),
-	(a, b) => a.id.toString().localeCompare(b.id.toString())
+	(a, b) => a.id.toString().localeCompare(b.id.toString()),
 ];
 
 const nameInput: CheckInput<MemberObject, string> = {
@@ -270,7 +269,7 @@ const nameInput: CheckInput<MemberObject, string> = {
 		}
 	},
 	displayText: 'Name:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankGreaterThan: CheckInput<Member, string> = {
@@ -293,7 +292,7 @@ const rankGreaterThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank greater than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankLessThan: CheckInput<Member, string> = {
@@ -316,7 +315,7 @@ const rankLessThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank less than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const flightInput: CheckInput<Member, string> = {
@@ -343,7 +342,7 @@ const flightInput: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Flight:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const advancedFilters1 = [nameInput, rankGreaterThan, rankLessThan, flightInput];
@@ -371,12 +370,12 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				M.filterType(isFlightStaff),
 				M.map(get('flight')),
 				M.flatMap(M.fromValue),
-				M.orSome('')
-			)(M.fromValue(this.props.member))
+				M.orSome(''),
+			)(M.fromValue(this.props.member)),
 		},
 		selectedMembers: [],
 		sortFunction: SortFunction.CAPID,
-		visibleItems: []
+		visibleItems: [],
 	};
 
 	private selectableDiv = React.createRef<HTMLDivElement>();
@@ -392,16 +391,16 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/flightcontact',
-				text: 'Flight contact'
-			}
+				text: 'Flight contact',
+			},
 		]);
 
 		this.props.updateSideNav([]);
@@ -411,30 +410,25 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		if (
 			this.props.member &&
 			isCAPMember(this.props.member) &&
-			hasOneDutyPosition([
-				'Cadet Flight Commander',
-				'Cadet Flight Sergeant',
-				'Cadet Commander',
-				'Cadet Deputy Commander'
-			])(this.props.member)
+			hasAllowedDutyPosition(this.props.member)
 		) {
 			const memberEither = await fetchApi.member.flight.membersFull(
 				{},
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(memberEither)) {
 				this.setState(prev => ({
 					...prev,
 					state: 'ERROR',
-					message: memberEither.value.message
+					message: memberEither.value.message,
 				}));
 			} else {
 				this.setState(prev => ({
 					...prev,
 					state: 'LOADED',
-					members: memberEither.value.filter(Either.isRight).map(get('value'))
+					members: memberEither.value.filter(Either.isRight).map(get('value')),
 				}));
 			}
 		}
@@ -445,17 +439,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (
-			!(
-				isCAPMember(this.props.member) &&
-				hasOneDutyPosition([
-					'Cadet Flight Commander',
-					'Cadet Flight Sergeant',
-					'Cadet Commander',
-					'Cadet Deputy Commander'
-				])(this.props.member)
-			)
-		) {
+		if (!(isCAPMember(this.props.member) && hasAllowedDutyPosition(this.props.member))) {
 			return <div>You do not have permission to do that</div>;
 		}
 
@@ -479,9 +463,9 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 							prev.state === 'LOADED'
 								? {
 										...prev,
-										selectedMembers: prev.members.slice(0)
+										selectedMembers: prev.members.slice(0),
 								  }
-								: prev
+								: prev,
 						);
 					}}
 				>
@@ -493,7 +477,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				<Button
 					onClick={() => {
 						this.setState({
-							selectedMembers: []
+							selectedMembers: [],
 						});
 					}}
 				>
@@ -516,13 +500,13 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					values={{
 						members: this.state.selectedMembers,
 						sortFunction: this.state.sortFunction,
-						displayAdvanced: this.state.displayAdvanced
+						displayAdvanced: this.state.displayAdvanced,
 					}}
 					onChange={({ members, sortFunction, displayAdvanced }) => {
 						this.setState({
 							selectedMembers: members,
 							sortFunction,
-							displayAdvanced
+							displayAdvanced,
 						});
 					}}
 				>
@@ -544,7 +528,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						showIDField={this.state.displayAdvanced}
 						onChangeVisible={newVisibleItems => {
 							this.setState({
-								visibleItems: newVisibleItems
+								visibleItems: newVisibleItems,
 							});
 						}}
 						overflow={750}
@@ -555,8 +539,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 									filterValues: {
 										...prev.filterValues,
 										nameInput: values[0],
-										flightInput: values[1]
-									}
+										flightInput: values[1],
+									},
 								}));
 							} else {
 								this.setState({
@@ -564,8 +548,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 										nameInput: values[0],
 										rankGreaterThan: values[1],
 										rankLessThan: values[2],
-										flightInput: values[3]
-									}
+										flightInput: values[3],
+									},
 								});
 							}
 						}}
@@ -575,7 +559,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 										filterValues.nameInput,
 										filterValues.rankGreaterThan,
 										filterValues.rankLessThan,
-										filterValues.flightInput
+										filterValues.flightInput,
 								  ]
 								: [filterValues.nameInput, filterValues.flightInput]
 						}
@@ -601,7 +585,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						boxSizing: 'border-box',
 						padding: 5,
 						margin: 0,
-						fontStyle: 'italic'
+						fontStyle: 'italic',
 					}}
 					onClick={this.selectText}
 					ref={this.selectableDiv}
@@ -616,7 +600,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						overflow: 'auto',
 						border: '1px solid black',
 						boxSizing: 'border-box',
-						margin: 0
+						margin: 0,
 					}}
 				>
 					{this.getPhoneNumbers()}
@@ -650,7 +634,12 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 	private getFilters() {
 		if (this.props.member && isCAPMember(this.props.member)) {
 			if (
-				hasOneDutyPosition(['Cadet Commander', 'Cadet Deputy Comander'])(this.props.member)
+				hasOneDutyPosition([
+					'Cadet Commander',
+					'Cadet Deputy Comander',
+					'Cadet Executive Officer',
+					'Deputy Commander for Cadets',
+				])(this.props.member)
 			) {
 				return this.state.displayAdvanced ? advancedFilters1 : simpleFilters1;
 			} else {
@@ -690,7 +679,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			member.contact.HOMEPHONE.EMERGENCY,
 			member.contact.WORKPHONE.PRIMARY,
 			member.contact.WORKPHONE.SECONDARY,
-			member.contact.WORKPHONE.EMERGENCY
+			member.contact.WORKPHONE.EMERGENCY,
 		].filter(item => item !== '').length;
 
 		const absent =
@@ -758,7 +747,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 						) : null}
 					</div>
 				</div>
-			)
+			),
 		};
 	}
 
