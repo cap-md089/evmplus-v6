@@ -96,7 +96,7 @@ const boxUnchecked = (boxSize: number, vOffset: number) => ({
 	canvas: [{ type: 'rect', x: 0, y: vOffset, w: boxSize, h: boxSize, lineColor: 'black' }],
 });
 
-const GetBestPhone = (inMember: Member) => {
+const GetBestPhones = (inMember: Member) => {
 	let numbersData = '';
 
 	if (inMember.contact.CELLPHONE.PRIMARY) {
@@ -131,7 +131,7 @@ const GetBestPhone = (inMember: Member) => {
 	}
 };
 
-const GetBestEmail = (inMember: Member) => {
+const GetBestEmails = (inMember: Member) => {
 	let numbersData = '';
 
 	if (inMember.contact.EMAIL.PRIMARY) {
@@ -173,8 +173,8 @@ export const capf6080DocumentDefinition = (
 	pointsOfContact: FullPointOfContact[],
 	member: Member
 ): TDocumentDefinitions => {
-	const MemberPhones = member.seniorMember ? '' : GetBestPhone(member);
-	const MemberEmails = member.seniorMember ? '' : GetBestEmail(member);
+	const MemberPhones = member.seniorMember ? '' : GetBestPhones(member);
+	const MemberEmails = member.seniorMember ? '' : GetBestEmails(member);
 	const MemberName = member.seniorMember
 		? ''
 		: member.memberRank + ' ' + member.nameFirst + ' ' + member.nameLast;

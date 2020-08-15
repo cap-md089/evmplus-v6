@@ -60,7 +60,8 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 		}));
 
 export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	// tslint:disable-next-line: no-bitwise
+	SessionType.REGULAR | SessionType.SCAN_ADD
 )(req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
 		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))

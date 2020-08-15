@@ -31,6 +31,7 @@ import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
+import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
@@ -75,6 +76,10 @@ const modules: {
 	{
 		module: cadetAchvAprs,
 		file: 'CadetAchvAprs.txt'
+	},
+	{
+		module: cadetAchievementEnumParse,
+		file: 'CdtAchvEnum.txt'
 	},
 	/*	{
 		module: seniorAwards,

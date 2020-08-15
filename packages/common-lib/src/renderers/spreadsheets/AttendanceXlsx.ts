@@ -18,11 +18,14 @@
  */
 
 import type * as XLSX from 'xlsx';
+import { Maybe } from '../../lib/Maybe';
+import { get } from '../../lib/Util';
+import { EventViewerAttendanceRecord } from '../../typings/apis/events/events';
 import {
-	AttendanceRecord,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
-	RawEventObject,
+	Member,
+	RawEventObject
 } from '../../typings/types';
 
 const EventStatus = [
@@ -40,6 +43,93 @@ const AttendanceStatus = [
 	'Rescinded Commitment',
 	'Not Planning to Attend',
 ];
+
+export function formatPhone(phone: string) {
+	// strip spaces and non-numeric characters
+	phone.trimLeft().trimRight();
+	if (phone) {
+		if (phone!.match(/\d+/g)) {
+			phone = phone!.match(/\d+/g)!.join('').toString();
+			// add formatting
+			return (
+				'(' +
+				phone.substring(0, 3) +
+				')' +
+				phone.substring(3, 6) +
+				'-' +
+				phone.substring(6, 10)
+			);
+		} else {
+			return '';
+		}
+	} else {
+		return '';
+	}
+}
+
+const GetBestPhones = (inMember: Member) => {
+	let numbersData = '';
+
+	if (inMember.contact.CELLPHONE.PRIMARY) {
+		numbersData += 'CP ' + formatPhone(inMember.contact.CELLPHONE.PRIMARY) + '\n\r';
+	}
+	if (inMember.contact.CELLPHONE.SECONDARY) {
+		numbersData += 'CS ' + formatPhone(inMember.contact.CELLPHONE.SECONDARY) + '\n\r';
+	}
+	if (inMember.contact.CELLPHONE.EMERGENCY) {
+		numbersData += 'CE ' + formatPhone(inMember.contact.CELLPHONE.EMERGENCY) + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTPHONE.PRIMARY) {
+		numbersData += 'PP ' + formatPhone(inMember.contact.CADETPARENTPHONE.PRIMARY) + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTPHONE.SECONDARY) {
+		numbersData += 'PS ' + formatPhone(inMember.contact.CADETPARENTPHONE.SECONDARY) + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTPHONE.EMERGENCY) {
+		numbersData += 'PE ' + formatPhone(inMember.contact.CADETPARENTPHONE.EMERGENCY) + '\n\r';
+	}
+	if (inMember.contact.HOMEPHONE.PRIMARY) {
+		numbersData += 'HP ' + formatPhone(inMember.contact.HOMEPHONE.PRIMARY) + '\n\r';
+	}
+	if (inMember.contact.HOMEPHONE.EMERGENCY) {
+		numbersData += 'HE ' + formatPhone(inMember.contact.HOMEPHONE.EMERGENCY) + '\n\r';
+	}
+	if (numbersData.length > 2) {
+		numbersData = numbersData.substring(0, numbersData.length - 1);
+		return numbersData;
+	} else {
+		return '';
+	}
+};
+
+const GetBestEmails = (inMember: Member) => {
+	let numbersData = '';
+
+	if (inMember.contact.EMAIL.PRIMARY) {
+		numbersData += 'EP ' + inMember.contact.EMAIL.PRIMARY + '\n\r';
+	}
+	if (inMember.contact.EMAIL.SECONDARY) {
+		numbersData += 'ES ' + inMember.contact.EMAIL.SECONDARY + '\n\r';
+	}
+	if (inMember.contact.EMAIL.EMERGENCY) {
+		numbersData += 'EE ' + inMember.contact.EMAIL.EMERGENCY + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTEMAIL.PRIMARY) {
+		numbersData += 'PP ' + inMember.contact.CADETPARENTEMAIL.PRIMARY + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTEMAIL.SECONDARY) {
+		numbersData += 'PS ' + inMember.contact.CADETPARENTEMAIL.SECONDARY + '\n\r';
+	}
+	if (inMember.contact.CADETPARENTEMAIL.EMERGENCY) {
+		numbersData += 'PE ' + inMember.contact.CADETPARENTEMAIL.EMERGENCY + '\n\r';
+	}
+	if (numbersData.length > 2) {
+		numbersData = numbersData.substring(0, numbersData.length - 1);
+		return numbersData;
+	} else {
+		return '';
+	}
+};
 
 const CustomAttendanceFieldType = ['Text', 'Number', 'Date', 'Checkbox', 'File'];
 
@@ -151,7 +241,7 @@ export const FormatEventXL = (evt: string, sheet: XLSX.Sheet): XLSX.Sheet => {
 
 export const AttendanceXL = (
 	event: RawEventObject,
-	attendance: AttendanceRecord[]
+	attendance: EventViewerAttendanceRecord[],
 ): [Array<Array<string | number>>, number[]] => {
 	let widths: number[] = [];
 	let row: Array<string | number> = [
@@ -162,6 +252,8 @@ export const AttendanceXL = (
 		'Departure Time',
 		'Status',
 		'CAP Transport',
+		'Email(s)',
+		'Phone(s)',
 	];
 
 	const retVal: Array<Array<string | number>> = [];
@@ -171,18 +263,22 @@ export const AttendanceXL = (
 	widths = [...row.map(item => item.toString().length)];
 	retVal.push(row);
 
+	const orEmptyString = Maybe.orSome('');
+
 	// if event attendance present (no count function??)
 	for (const attendee of attendance) {
 		row = [
-			attendee.timestamp,
-			attendee.memberID.id + ' ',
-			attendee.memberName,
-			attendee.shiftTime.arrivalTime,
-			attendee.shiftTime.departureTime,
-			AttendanceStatus[attendee.status],
-			attendee.planToUseCAPTransportation ? 'Y' : 'N',
+			attendee.record.timestamp,
+			attendee.record.memberID.id + ' ',
+			attendee.record.memberName,
+			attendee.record.shiftTime.arrivalTime,
+			attendee.record.shiftTime.departureTime,
+			AttendanceStatus[attendee.record.status],
+			attendee.record.planToUseCAPTransportation ? 'Y' : 'N',
+			orEmptyString(Maybe.map(GetBestEmails)(attendee.member)),
+			orEmptyString(Maybe.map(GetBestPhones)(attendee.member)),
 		];
-		for (const fieldVal of attendee.customAttendanceFieldValues) {
+		for (const fieldVal of attendee.record.customAttendanceFieldValues) {
 			row.push(
 				typeof fieldVal.value === 'boolean'
 					? fieldVal.value
@@ -190,15 +286,15 @@ export const AttendanceXL = (
 						: 'N'
 					: Array.isArray(fieldVal.value)
 					? `${fieldVal.value} files`
-					: fieldVal.value
+					: fieldVal.value,
 			);
 		}
 		widths = widths.map((width, index) =>
-			Math.max(width, (row[index] ?? '').toString().length)
+			Math.max(width, (row[index] ?? '').toString().split('\n').map(get('length')).reduce((prev, curr) => Math.max(prev, curr), 0)),
 		);
 		retVal.push(row);
 	}
-	return [retVal, widths.map(width => width + 4)];
+	return [retVal, widths.map(width => width + 3)];
 };
 
 export const FormatAttendanceXL = (
@@ -206,12 +302,19 @@ export const FormatAttendanceXL = (
 	columnMaxWidths: number[],
 	customAttendanceFieldValues: CustomAttendanceField[],
 	encodeCell: (val: { c: number; r: number }) => string,
-	numRows: number
+	numRows: number,
 ): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
+	const numStaticColumns = 9;
+	let rowCount = 0;
+	let emails = '';
+	let phones = '';
+	const rowHeight = 11;
 
+	sheet['!rows'] = [{ hpt: rowHeight }];
 	let j = 2;
 	while (j <= numRows) {
+		rowCount = 0;
 		sheet['A' + j].t = 'd';
 		sheet['A' + j].z = dateFormat;
 		sheet['D' + j].t = 'd';
@@ -223,10 +326,15 @@ export const FormatAttendanceXL = (
 			const type = customAttendanceFieldValues[i].type;
 
 			if (type === CustomAttendanceFieldEntryType.DATE) {
-				sheet[encodeCell({ c: i + 8, r: j })].t = 'd';
-				sheet[encodeCell({ c: i + 8, r: j })].z = dateFormat;
+				sheet[encodeCell({ c: i + (numStaticColumns + 1), r: j })].t = 'd';
+				sheet[encodeCell({ c: i + (numStaticColumns + 1), r: j })].z = dateFormat;
 			}
 		}
+		// adjust row height here depending on number of phone or emails
+		emails = sheet['H' + j]?.v ?? '';
+		phones = sheet['I' + j]?.v ?? '';
+		rowCount = Math.max(emails.split('\n').length, phones.split('\n').length);
+		sheet['!rows'].push({ hpt: rowHeight + rowCount * rowHeight });
 		j += 1;
 	}
 	sheet['!cols'] = columnMaxWidths.map(wch => ({ wch }));

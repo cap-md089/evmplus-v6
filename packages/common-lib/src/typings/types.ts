@@ -3718,3 +3718,191 @@ export type AuditableEvents<O extends AuditableObjects & Identifiable> =
 	| ChangeEvent<O>
 	| CreateEvent<O>
 	| DeleteEvent<O>;
+
+
+export interface CadetPromotionRequirements{
+	/**
+	 * The Achievement ID number (integer from 1 to 21)
+	 */
+	CadetAchvID: number;
+
+	/**
+	 * The Achievement name
+	 */
+	AchvName: string;
+
+	/**
+	 * The Rank to promote to
+	 */
+	Rank: string;
+
+	/**
+	 * The grade held by a cadet earning that achievement
+	 */
+	Grade: string;
+
+	/**
+	 * The Achievement "Number" or title
+	 */
+	AchvNumber: string;
+
+	/**
+	 * Is reciting the oath required for this achivement?
+	 */
+	Oath: boolean;
+
+	/**
+	 * The Leadership module required for this achievement
+	 */
+	Leadership: string;
+
+	/**
+	 * Is mentoring required for this achievement?
+	 */
+	Mentor: boolean;
+
+	/**
+	 * Is SDA Service required for this achievement?
+	 */
+	SDAService: boolean;
+
+	/**
+	 * Is SDA Writing assignment required for this achivement?
+	 */
+	SDAWriting: boolean;
+
+	/**
+	 * Is SDA Presentation required for this achievement?
+	 */
+	SDAPresentation: boolean;
+
+	/**
+	 * The Drill module required for this achievement
+	 */
+	Drill: string;
+
+	/**
+	 * The number of drill items required to pass the drill test
+	 */
+	DrillItemsPass: number;
+
+	/**
+	 * The number of total items in the drill test
+	 */
+	DrillItemsTotal: number;
+
+	/**
+	 * The aerospace module required for this achievement
+	 */
+	Aerospace: string;
+
+	/**
+	 * Is Character Development required for this achievement?
+	 */
+	CharDev: boolean;
+
+	/**
+	 * Is Encampment required for this achievement?
+	 */
+	Encampment: boolean;
+
+	/**
+	 * Is RCLS required for this achievement?
+	 */
+	RCLS: boolean;
+
+	/**
+	 * The web page listing the requirements for the achievement
+	 */
+	ReqsWebLink: string;
+
+	/**
+	 * The web page with the leadership test for the achievement
+	 */
+	LeadTestWebLink: string;
+
+	/**
+	 * The web page for the Aerospace Education tests, if required
+	 */
+	AeroTestWebLink: string;
+
+	/**
+	 * The download links for the drill tests for the first 9 achievements
+	 */
+	DrillTestWebLink: string;
+
+}
+
+export interface CadetPromotionStatus{
+	/**
+	 * The Achievement name
+	 */
+	AchvName: string;
+
+	/**
+	 * The capmembers.com web page for the promotion requirements
+	 */
+	ReqsWebLink: string;
+
+	/**
+	 * Status of PT as avaialble from eServices
+	 */
+	PT: string;
+
+	/**
+	 * Status of oath requirement **************************************************************************
+	 */
+	Oath: boolean;
+
+	/**
+	 * Status of leadership requirement, include web link if requirement active, table lookup
+	 */
+	Leadership: string;
+
+	/**
+	 * Status of mentor activity - future capability, not currently present in CAPWATCH downloads
+	 */
+	Mentor: string;
+
+	/**
+	 * Status of SDA Service
+	 */
+	SDAService: string;
+
+	/**
+	 * Status of SDA Writing
+	 */
+	SDAWriting: string;
+
+	/**
+	 * Status of SDA Presentation
+	 */
+	SDAPresentation: string;
+
+	/**
+	 * Status of drill test, include web link if requirement active
+	 */
+	Drill: string;
+
+	/**
+	 * Status of aerospace test, include web link if requirement active
+	 */
+	Aerospace: string;
+
+	/**
+	 * Status of character development requirement, including wingman course
+	 */
+	CharDev: string;
+
+	/**
+	 * Status of encampment requirement, needed for Mitchell
+	 */
+	Encampment: string;
+
+	/**
+	 * Status of RCLS requirement, needed for Eaker, should have Encampment and C/MSgt before eligible
+	 */
+	RCLS: string;
+
+
+}
