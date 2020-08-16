@@ -58,6 +58,7 @@ import {
 	RawEventObject,
 	Right,
 	spreadsheets,
+	stringifyMemberReference,
 	User,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
@@ -779,10 +780,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										Show CAP IDs
 									</Button>
 								) : null}
-								{(attendees.filter(Either.isRight).length > 0) && (effectiveManageEventPermissionForEvent(member)(event)) ? (
+								{attendees.filter(Either.isRight).length > 0 &&
+								effectiveManageEventPermissionForEvent(member)(event) ? (
 									<>
 										{' | '}
-										<Button buttonType="none" onClick={this.createAttendanceSpreadsheet}>
+										<Button
+											buttonType="none"
+											onClick={this.createAttendanceSpreadsheet}
+										>
 											Download Attendance Spreadsheet
 										</Button>
 									</>
@@ -844,6 +849,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 												owningEvent={event}
 												registry={this.props.registry}
 												member={member}
+												recordMember={Maybe.orSome<Member | null>(null)(
+													val.member,
+												)}
 												removeAttendance={this.removeAttendanceRecord}
 												updateAttendance={this.modifyAttendanceRecord}
 												updated={pipe(
@@ -880,7 +888,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		);
 	}
 
-	private modifyAttendanceRecord(record: Required<NewAttendanceRecord>) {
+	private modifyAttendanceRecord(record: Required<NewAttendanceRecord>, member: Member | null) {
 		if (this.state.viewerState !== 'LOADED') {
 			return;
 		}
@@ -893,34 +901,39 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						previousUpdatedMember: Maybe.some(record.memberID),
 						eventInformation: {
 							...prev.eventInformation,
-							attendees: [
-								...prev.eventInformation.attendees.filter(
-									rec =>
-										Either.isLeft(rec) ||
-										!areMembersTheSame(this.props.member!)(
-											rec.value.record.memberID,
-										),
-								),
-								Either.right<
-									HTTPError,
-									api.events.events.EventViewerAttendanceRecord
-								>({
-									record: {
-										...record,
-										timestamp: Date.now(),
-										summaryEmailSent: false,
-										sourceAccountID: this.props.account.id,
-										sourceEventID: prev.eventInformation.event.id,
-										shiftTime: record.shiftTime ?? {
-											arrivalTime: prev.eventInformation.event.pickupDateTime,
-											departureTime: prev.eventInformation.event.meetDateTime,
-										},
-										memberName: getMemberName(this.props.member!),
-									},
-									member: Maybe.fromValue(this.props.member),
-									orgName: Maybe.some(this.props.registry.Website.Name),
-								}),
-							],
+							attendees: prev.eventInformation.attendees.map(rec =>
+								Either.isLeft(rec) ||
+								member === null ||
+								!areMembersTheSame(member)(rec.value.record.memberID)
+									? rec
+									: Either.right<
+											HTTPError,
+											api.events.events.EventViewerAttendanceRecord
+									  >({
+											member: Maybe.fromValue(member),
+											orgName: Maybe.some(this.props.registry.Website.Name),
+											record: {
+												...record,
+												timestamp: rec.value.record.timestamp,
+												summaryEmailSent: false,
+												sourceAccountID: this.props.account.id,
+												sourceEventID: prev.eventInformation.event.id,
+												shiftTime: record.shiftTime ?? {
+													arrivalTime:
+														prev.eventInformation.event.pickupDateTime,
+													departureTime:
+														prev.eventInformation.event.meetDateTime,
+												},
+												memberName: Maybe.orSome(
+													stringifyMemberReference(record.memberID),
+												)(
+													Maybe.map(getMemberName)(
+														Maybe.fromValue(member),
+													),
+												),
+											},
+									  }),
+							),
 						},
 				  }
 				: prev,

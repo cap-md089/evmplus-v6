@@ -22,13 +22,14 @@ import {
 	areMembersTheSame,
 	AttendanceRecord,
 	AttendanceStatus,
+	CustomAttendanceFieldEntryType,
+	CustomAttendanceFieldValue,
 	effectiveManageEventPermissionForEvent,
+	Member,
 	NewAttendanceRecord,
 	RawEventObject,
-	User,
 	RegistryValues,
-	CustomAttendanceFieldEntryType,
-	CustomAttendanceFieldValue
+	User,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import React, { Component } from 'react';
@@ -55,8 +56,9 @@ interface AttendanceItemViewProps {
 	registry: RegistryValues;
 	attendanceRecord: AttendanceRecord;
 	removeAttendance: (record: AttendanceRecord) => void;
-	updateAttendance: (record: Required<NewAttendanceRecord>) => void;
+	updateAttendance: (record: Required<NewAttendanceRecord>, member: Member) => void;
 	clearUpdated: () => void;
+	recordMember?: Member | null;
 	updated: boolean;
 	index: number;
 }
@@ -71,7 +73,7 @@ const statusDescription = {
 	),
 	[AttendanceStatus.NOTPLANNINGTOATTEND]: (
 		<span style={{ color: 'purple' }}>Not planning to attend</span>
-	)
+	),
 };
 
 interface AttendanceItemViewState {
@@ -83,7 +85,7 @@ export default class AttendanceItemView extends Component<
 	AttendanceItemViewState
 > {
 	public state: AttendanceItemViewState = {
-		open: false
+		open: false,
 	};
 
 	public constructor(props: AttendanceItemViewProps) {
@@ -103,6 +105,7 @@ export default class AttendanceItemView extends Component<
 				updated={this.props.updated}
 				clearUpdated={this.props.clearUpdated}
 				removeRecord={this.props.removeAttendance}
+				recordMember={this.props.recordMember}
 				signup={false}
 				index={this.props.index}
 			/>
@@ -119,12 +122,12 @@ export default class AttendanceItemView extends Component<
 					<>
 						Arrival time:{' '}
 						{DateTime.fromMillis(
-							this.props.attendanceRecord.shiftTime.arrivalTime
+							this.props.attendanceRecord.shiftTime.arrivalTime,
 						).toLocaleString()}
 						<br />
 						Departure time:{' '}
 						{DateTime.fromMillis(
-							this.props.attendanceRecord.shiftTime.departureTime
+							this.props.attendanceRecord.shiftTime.departureTime,
 						).toLocaleString()}
 					</>
 				) : null}

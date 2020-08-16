@@ -25,15 +25,14 @@ if [ "$branch" = "master" ]; then
 	# 	exit 1
 	# fi
 
-fi
-
-# Lint code
-if lerna run lint; then
-	# Code is lint free
-	:
-else
-	echo "Code fails lint check"
-	exit 1
+	# Lint code
+	if lerna run lint; then
+		# Code is lint free
+		:
+	else
+		echo "Code fails lint check"
+		exit 1
+	fi
 fi
 
 # Apply prettier rules

@@ -34,21 +34,19 @@ export const cadetPromotionRequirements = (schema: Schema) => async (
 	const maxAchv = await collectResults(
 		findAndBind(schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv'), { CAPID: memberID.id })
 			.sort('CadetAchvID DESC')
-			.limit(1)
+			.limit(1),
 	);
-	const maxAprv = await collectResults(
-		findAndBind(schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchvAprs'), { CAPID: memberID.id })
-			.sort('CadetAchvID DESC')
-			.limit(1)
-	);
-	const encampStatus = (await collectResults(
-		findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), { CAPID: memberID.id, Type: "ENCAMP" })
-	)).length > 0 ? true : false;
-	const rclsStatus = (await collectResults(
-		findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), { CAPID: memberID.id, Type: "RCLS" })
-	)).length > 0 ? true : false;
-
-	
+	// const maxAprv = await collectResults(
+	// 	findAndBind(schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchvAprs'), { CAPID: memberID.id })
+	// 		.sort('CadetAchvID DESC')
+	// 		.limit(1)
+	// );
+	// const encampStatus = (await collectResults(
+	// 	findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), { CAPID: memberID.id, Type: "ENCAMP" })
+	// )).length > 0 ? true : false;
+	// const rclsStatus = (await collectResults(
+	// 	findAndBind(schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'), { CAPID: memberID.id, Type: "RCLS" })
+	// )).length > 0 ? true : false;
 
 	return Maybe.map<NHQ.CadetAchv, CadetPromotionRequirements>(achv => Achv[achv.CadetAchvID])(
 		Maybe.fromArray(maxAchv),

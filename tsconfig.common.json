@@ -27,6 +27,7 @@
 		"experimentalDecorators": true,
 		"sourceMap": true,
 		"strictNullChecks": true,
-		"strictPropertyInitialization": true
+		"strictPropertyInitialization": true,
+		"declarationMap": true
 	}
 }

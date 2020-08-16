@@ -31,7 +31,8 @@ import {
 	RawEventObject,
 	RegistryValues,
 	toReference,
-	User
+	User,
+	Member,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
@@ -46,7 +47,7 @@ import SimpleForm, {
 	NumberInput,
 	SimpleRadioButton,
 	TextBox,
-	TextInput
+	TextInput,
 } from '../SimpleForm';
 
 const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
@@ -59,8 +60,9 @@ export interface AttendanceFormProps {
 	event: RawEventObject;
 	registry: RegistryValues;
 	record?: AttendanceRecord;
-	updateRecord: (record: Required<NewAttendanceRecord>) => void;
+	updateRecord: (record: Required<NewAttendanceRecord>, member: Member) => void;
 	removeRecord: (record: AttendanceRecord) => void;
+	recordMember?: Member | null;
 	updated: boolean;
 	signup: boolean;
 	clearUpdated: () => void;
@@ -93,7 +95,7 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 				onChange({
 					value,
 					type: CustomAttendanceFieldEntryType.CHECKBOX,
-					title: field.title
+					title: field.title,
 				})
 			}
 			disabled={disabled}
@@ -111,7 +113,7 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 				onChange({
 					value,
 					type: CustomAttendanceFieldEntryType.DATE,
-					title: field.title
+					title: field.title,
 				})
 			}
 			value={field.value}
@@ -128,7 +130,7 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 				onChange({
 					value: value!,
 					type: CustomAttendanceFieldEntryType.NUMBER,
-					title: field.title
+					title: field.title,
 				})
 			}
 		/>
@@ -143,7 +145,7 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 				onChange({
 					value,
 					type: CustomAttendanceFieldEntryType.TEXT,
-					title: field.title
+					title: field.title,
 				})
 			}
 		/>
@@ -159,7 +161,7 @@ export default class AttendanceForm extends React.Component<
 		super(props);
 
 		const customAttendanceFields = applyCustomAttendanceFields(
-			props.event.customAttendanceFields
+			props.event.customAttendanceFields,
 		);
 
 		if (props.record) {
@@ -170,13 +172,13 @@ export default class AttendanceForm extends React.Component<
 					planToUseCAPTransportation: props.record.planToUseCAPTransportation,
 					status: props.record.status,
 					customAttendanceFieldValues: customAttendanceFields(
-						props.record.customAttendanceFieldValues
-					)
+						props.record.customAttendanceFieldValues,
+					),
 				},
 				errorSaving: false,
 				usePartTime: false,
 				saving: false,
-				deleting: false
+				deleting: false,
 			};
 		} else {
 			this.state = {
@@ -185,12 +187,12 @@ export default class AttendanceForm extends React.Component<
 					shiftTime: null,
 					planToUseCAPTransportation: false,
 					status: AttendanceStatus.COMMITTEDATTENDED,
-					customAttendanceFieldValues: customAttendanceFields([])
+					customAttendanceFieldValues: customAttendanceFields([]),
 				},
 				errorSaving: false,
 				usePartTime: false,
 				saving: false,
-				deleting: false
+				deleting: false,
 			};
 		}
 
@@ -237,7 +239,7 @@ export default class AttendanceForm extends React.Component<
 						? this.state.attendance.status
 						: this.state.attendance.status === AttendanceStatus.COMMITTEDATTENDED
 						? AttendanceStatus.COMMITTEDATTENDED
-						: AttendanceStatus.NOSHOW
+						: AttendanceStatus.NOSHOW,
 				}}
 				onChange={this.onAttendanceFormChange}
 				onSubmit={this.onAttendanceFormSubmit}
@@ -249,7 +251,7 @@ export default class AttendanceForm extends React.Component<
 						: !!this.props.record
 						? 'Update information'
 						: 'Sign up',
-					disabled: this.state.saving || this.state.deleting
+					disabled: this.state.saving || this.state.deleting,
 				}}
 			>
 				{this.props.updated ? <TextBox>Attendance information updated</TextBox> : null}
@@ -273,19 +275,19 @@ export default class AttendanceForm extends React.Component<
 							<div
 								className="timeBefore"
 								style={{
-									width: `${percentBeforeArrival * 100}%`
+									width: `${percentBeforeArrival * 100}%`,
 								}}
 							/>
 							<div
 								className="timeDuring"
 								style={{
-									width: `${percentDuring * 100}%`
+									width: `${percentDuring * 100}%`,
 								}}
 							/>
 							<div
 								className="timeAfter"
 								style={{
-									width: `${percentAfterDeparture * 100}%`
+									width: `${percentAfterDeparture * 100}%`,
 								}}
 							/>
 							Duration:{' '}
@@ -332,7 +334,7 @@ export default class AttendanceForm extends React.Component<
 
 				{this.getCustomFields(
 					this.props.event,
-					this.state.attendance.customAttendanceFieldValues
+					this.state.attendance.customAttendanceFieldValues,
 				)}
 
 				{!!this.props.record &&
@@ -367,14 +369,14 @@ export default class AttendanceForm extends React.Component<
 						disabled: false,
 						registry: this.props.registry,
 						index: this.props.index ?? -1,
-						indexInside: index
-					})
+						indexInside: index,
+					}),
 				]);
 			} else {
 				const fields = rawFields.filter(
 					field =>
 						event.customAttendanceFields.find(rec => rec.title === field.title)
-							?.displayToMember
+							?.displayToMember,
 				);
 
 				return fields.flatMap((field, index) => [
@@ -384,19 +386,19 @@ export default class AttendanceForm extends React.Component<
 						field,
 						onChange: this.getFieldChanger(field.title),
 						disabled: !event.customAttendanceFields.find(
-							rec => rec.title === field.title
+							rec => rec.title === field.title,
 						)?.allowMemberToModify,
 						index: this.props.index ?? -1,
 						indexInside: index,
-						registry: this.props.registry
-					})
+						registry: this.props.registry,
+					}),
 				]);
 			}
 		} else {
 			const fields = rawFields.filter(
 				field =>
 					event.customAttendanceFields.find(rec => rec.title === field.title)
-						?.displayToMember
+						?.displayToMember,
 			);
 
 			return fields.flatMap((field, index) => [
@@ -409,8 +411,8 @@ export default class AttendanceForm extends React.Component<
 						?.allowMemberToModify,
 					registry: this.props.registry,
 					index: this.props.index ?? -1,
-					indexInside: index
-				})
+					indexInside: index,
+				}),
 			]);
 		}
 	}
@@ -424,20 +426,20 @@ export default class AttendanceForm extends React.Component<
 			console.log(newValue);
 			console.log(
 				prevRec.customAttendanceFieldValues.map(oldRec =>
-					oldRec.title === newValue.title ? newValue : oldRec
-				)
+					oldRec.title === newValue.title ? newValue : oldRec,
+				),
 			);
 			this.onAttendanceFormChange(
 				{
 					...prevRec,
 					customAttendanceFieldValues: prevRec.customAttendanceFieldValues.map(oldRec =>
-						oldRec.title === newValue.title ? newValue : oldRec
-					)
+						oldRec.title === newValue.title ? newValue : oldRec,
+					),
 				},
 				void 0,
 				void 0,
 				void 0,
-				'customAttendanceFieldValues'
+				'customAttendanceFieldValues',
 			);
 		};
 	}
@@ -447,7 +449,7 @@ export default class AttendanceForm extends React.Component<
 		error: any,
 		chnaged: any,
 		hasError: any,
-		fieldChanged: keyof FormState
+		fieldChanged: keyof FormState,
 	) {
 		if ((fieldChanged as string).startsWith('ignore')) {
 			return;
@@ -464,7 +466,7 @@ export default class AttendanceForm extends React.Component<
 
 			shiftTime = {
 				arrivalTime,
-				departureTime
+				departureTime,
 			};
 		}
 
@@ -478,17 +480,17 @@ export default class AttendanceForm extends React.Component<
 					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 					? AttendanceStatus.COMMITTEDATTENDED
 					: AttendanceStatus.NOSHOW,
-				customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues
+				customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues,
 			},
 			usePartTime: attendanceSignup.usePartTime,
-			errorSaving: false
+			errorSaving: false,
 		});
 
 		this.props.clearUpdated();
 	}
 
 	private async onAttendanceFormSubmit(
-		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean }
+		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean },
 	) {
 		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
 		let departureTime =
@@ -501,7 +503,7 @@ export default class AttendanceForm extends React.Component<
 
 			shiftTime = {
 				arrivalTime,
-				departureTime
+				departureTime,
 			};
 		}
 
@@ -510,13 +512,13 @@ export default class AttendanceForm extends React.Component<
 					arrivalTime: clamp(
 						this.props.event.meetDateTime,
 						this.props.event.pickupDateTime,
-						shiftTime.arrivalTime
+						shiftTime.arrivalTime,
 					),
 					departureTime: clamp(
 						this.props.event.meetDateTime,
 						this.props.event.pickupDateTime,
-						shiftTime.departureTime
-					)
+						shiftTime.departureTime,
+					),
 			  }
 			: null;
 
@@ -531,11 +533,11 @@ export default class AttendanceForm extends React.Component<
 				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
 				? AttendanceStatus.COMMITTEDATTENDED
 				: AttendanceStatus.NOSHOW,
-			customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues
+			customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues,
 		};
 
 		this.setState({
-			saving: true
+			saving: true,
 		});
 
 		if (this.props.record) {
@@ -547,31 +549,34 @@ export default class AttendanceForm extends React.Component<
 			const result = await api.events.attendance.modify(
 				{ id: this.props.record.sourceEventID.toString() },
 				{ ...newRecord, memberID: this.props.record.memberID },
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			this.setState({
 				errorSaving: Either.isLeft(result),
-				saving: false
+				saving: false,
 			});
 		} else {
 			const result = await fetchApi.events.attendance.add(
 				{ id: this.props.event.id.toString() },
 				{ ...newRecord, memberID: toReference(this.props.member) },
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			this.setState({
 				errorSaving: Either.isLeft(result),
-				saving: false
+				saving: false,
 			});
 		}
 
-		this.props.updateRecord({
-			...newRecord,
-			shiftTime: this.props.record?.shiftTime ?? null,
-			memberID: this.props.record?.memberID ?? toReference(this.props.member)
-		});
+		this.props.updateRecord(
+			{
+				...newRecord,
+				shiftTime: this.props.record?.shiftTime ?? null,
+				memberID: this.props.record?.memberID ?? toReference(this.props.member),
+			},
+			this.props.recordMember!,
+		);
 	}
 
 	private async removeAttendanceRecord() {
@@ -580,7 +585,7 @@ export default class AttendanceForm extends React.Component<
 		}
 
 		this.setState({
-			deleting: true
+			deleting: true,
 		});
 
 		console.log(this.props.record.sourceAccountID);
@@ -595,11 +600,11 @@ export default class AttendanceForm extends React.Component<
 		await api.events.attendance.delete(
 			{ id: this.props.record.sourceEventID.toString() },
 			{ member: toReference(this.props.record.memberID) },
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.setState({
-			deleting: false
+			deleting: false,
 		});
 
 		this.props.removeRecord(this.props.record);
