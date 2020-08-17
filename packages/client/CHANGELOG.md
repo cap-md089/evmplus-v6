@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.6.0](http://github.com//cap-md089/capunit-com-v6/compare/client@1.5.0...client@1.6.0) (2020-08-17)
+
+
+### Bug Fixes
+
+* **calendar:** fixed the displayed events not having colors reflect their status ([1be73fd](http://github.com//cap-md089/capunit-com-v6/commit/1be73fd8f02e88d433893797369154038817f6cf)), closes [#8](http://github.com//cap-md089/capunit-com-v6/issues/8)
+* added custom remove item labels for all instances of ListEditor ([720c941](http://github.com//cap-md089/capunit-com-v6/commit/720c941e53de270a6fdc3dbb1893b5caa8d6e0dd)), closes [#7](http://github.com//cap-md089/capunit-com-v6/issues/7)
+* fixed floats on the main page ([a845c9b](http://github.com//cap-md089/capunit-com-v6/commit/a845c9b33cfa7b9cc55bd6609d03d749fb3d5a21))
+* removed wing calendar from wing and region accounts and their events ([8975b7c](http://github.com//cap-md089/capunit-com-v6/commit/8975b7c69efa955f87433244cef7f6460bdc6ae1)), closes [#6](http://github.com//cap-md089/capunit-com-v6/issues/6)
+* **eventviewer:** fixed eventviewer updating client side state in a weird way ([aa3b763](http://github.com//cap-md089/capunit-com-v6/commit/aa3b7632b49eb0b65d5bf2481a61c688bd8cbb6b)), closes [#3](http://github.com//cap-md089/capunit-com-v6/issues/3)
+* **permissions:** fixed client acting like all members had all permissions ([fcc59ea](http://github.com//cap-md089/capunit-com-v6/commit/fcc59ea127eb7cec3e0973b7f7797f6e6080483f))
+
+
+### Features
+
+* **prospectivemembers:** added a prospective member management page ([73b07b3](http://github.com//cap-md089/capunit-com-v6/commit/73b07b3b9077ba52e82849a97463225c4a68154d)), closes [#4](http://github.com//cap-md089/capunit-com-v6/issues/4)
+
+
+
+
+
 ## [1.5.1](http://github.com//cap-md089/capunit-com-v6/compare/client@1.5.0...client@1.5.1) (2020-08-13)
 
 **Note:** Version bump only for package client

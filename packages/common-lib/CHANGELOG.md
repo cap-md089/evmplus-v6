@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.7.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.6.0...common-lib@1.7.0) (2020-08-17)
+
+
+### Bug Fixes
+
+* removed wing calendar from wing and region accounts and their events ([8975b7c](http://github.com//cap-md089/capunit-com-v6/commit/8975b7c69efa955f87433244cef7f6460bdc6ae1)), closes [#6](http://github.com//cap-md089/capunit-com-v6/issues/6)
+* **discord-bot:** fixed not being able to update flight membership ([6c836ad](http://github.com//cap-md089/capunit-com-v6/commit/6c836ad9e0d98ab99d8af5bd855972fdcb644c12))
+
+
+### Features
+
+* **prospectivemembers:** added a prospective member management page ([73b07b3](http://github.com//cap-md089/capunit-com-v6/commit/73b07b3b9077ba52e82849a97463225c4a68154d)), closes [#4](http://github.com//cap-md089/capunit-com-v6/issues/4)
+
+
+
+
+
 ## [1.6.1](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.6.0...common-lib@1.6.1) (2020-08-13)
 
 
