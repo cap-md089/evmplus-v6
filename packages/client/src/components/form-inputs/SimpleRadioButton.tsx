@@ -34,7 +34,7 @@ export default class SimpleRadioButton<E extends number = number> extends React.
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: this.props.value ?? (0 as E)
+				value: this.props.value ?? (0 as E),
 			});
 		}
 	}
@@ -78,7 +78,7 @@ export default class SimpleRadioButton<E extends number = number> extends React.
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: index
+					value: index,
 				});
 			}
 		};

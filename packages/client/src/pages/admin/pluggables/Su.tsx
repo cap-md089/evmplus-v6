@@ -47,7 +47,7 @@ export const canUseSu = (props: PageProps) => !!props.member && isRioux(props.me
 
 export default class SuWidget extends Page<PageProps, SuState> {
 	public state: SuState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public constructor(props: PageProps) {
@@ -66,12 +66,12 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		if (members.direction === 'left') {
 			this.setState({
 				state: 'ERROR',
-				message: members.value.message
+				message: members.value.message,
 			});
 		} else {
 			this.setState({
 				state: 'LOADED',
-				members: members.value
+				members: members.value,
 			});
 		}
 	}
@@ -120,7 +120,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		if (Either.isLeft(newMember)) {
 			this.setState({
 				state: 'ERROR',
-				message: newMember.value.message
+				message: newMember.value.message,
 			});
 		} else {
 			this.props.authorizeUser(newMember.value);

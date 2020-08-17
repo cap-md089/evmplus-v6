@@ -42,9 +42,9 @@ export const formatGoogleCalendarDate = (date: number) => {
 	const month = dateObject.getMonth();
 	const year = dateObject.getFullYear();
 
-	return `${hour === 12 ? 12 : hour % 12}:${zeroPad(minute)} ${
-		hour >= 12 ? 'PM' : 'AM'
-	} on ${month + 1}/${day}/${year}`;
+	return `${hour === 12 ? 12 : hour % 12}:${zeroPad(minute)} ${hour >= 12 ? 'PM' : 'AM'} on ${
+		month + 1
+	}/${day}/${year}`;
 };
 
 export function formatPhone(phone: string) {

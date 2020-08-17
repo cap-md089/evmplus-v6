@@ -74,7 +74,7 @@ export enum DialogueButtons {
 	OK_CANCEL,
 	YES_NO_CANCEL,
 	CUSTOM,
-	NONE
+	NONE,
 }
 
 export type DialogueProps =
@@ -90,7 +90,7 @@ interface DialogueState {
 
 export default class Dialogue extends React.Component<DialogueProps, DialogueState> {
 	public state = {
-		open: false
+		open: false,
 	};
 
 	private mainDiv = React.createRef<HTMLDivElement>();
@@ -99,7 +99,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 	public componentDidMount() {
 		if (this.mainDiv.current) {
 			$(this.mainDiv.current).css({
-				opacity: 0
+				opacity: 0,
 			});
 		}
 
@@ -115,7 +115,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			<div
 				className="cover"
 				style={{
-					display: this.state.open ? 'flex' : 'none'
+					display: this.state.open ? 'flex' : 'none',
 				}}
 				onClick={() => {
 					this.props.onClose();
@@ -134,7 +134,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 						<div className="closeButton">
 							<button
 								style={{
-									float: 'right'
+									float: 'right',
 								}}
 								className="primaryButton"
 								id="ok"
@@ -151,7 +151,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 							<button
 								style={{
 									float: 'right',
-									marginLeft: 10
+									marginLeft: 10,
 								}}
 								className="primaryButton"
 								id="cancel"
@@ -167,7 +167,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 							</button>
 							<button
 								style={{
-									float: 'right'
+									float: 'right',
 								}}
 								className="primaryButton"
 								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
@@ -186,7 +186,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 							<button
 								style={{
 									float: 'right',
-									marginLeft: 10
+									marginLeft: 10,
 								}}
 								className="primaryButton"
 								id="cancel"
@@ -205,7 +205,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 							<button
 								style={{
 									float: 'right',
-									marginLeft: 10
+									marginLeft: 10,
 								}}
 								className="primaryButton"
 								id="no"
@@ -223,7 +223,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 							</button>
 							<button
 								style={{
-									float: 'right'
+									float: 'right',
 								}}
 								className="primaryButton"
 								id="yes"
@@ -243,7 +243,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 					) : null}
 				</div>
 			</div>,
-			document.getElementById('dialogue-box') as HTMLElement
+			document.getElementById('dialogue-box') as HTMLElement,
 		);
 	}
 
@@ -263,40 +263,40 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			if (this.props.open && !this.state.open) {
 				div.animate(
 					{
-						opacity: 1
+						opacity: 1,
 					},
 					250,
-					'swing'
+					'swing',
 				);
 				cover.animate(
 					{
-						opacity: 1
+						opacity: 1,
 					},
 					250,
-					'swing'
+					'swing',
 				);
 				this.setState({
-					open: true
+					open: true,
 				});
 			} else if (!this.props.open && this.state.open) {
 				div.animate(
 					{
-						opacity: 0
+						opacity: 0,
 					},
 					150,
 					'swing',
 					() => {
 						this.setState({
-							open: false
+							open: false,
 						});
-					}
+					},
 				);
 				cover.animate(
 					{
-						opacity: 0
+						opacity: 0,
 					},
 					150,
-					'swing'
+					'swing',
 				);
 			}
 		}

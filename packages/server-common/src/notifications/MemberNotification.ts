@@ -34,32 +34,32 @@ import {
 	RawNotificationObject,
 	ServerError,
 	stripProp,
-	toReference
+	toReference,
 } from 'common-lib';
 import { findAndBindC, generateResults } from '../MySQLUtil';
 
 export const canSeeMemberNotification = (member: Member) => (
-	notification: RawNotificationObject<NotificationCause, NotificationMemberTarget>
+	notification: RawNotificationObject<NotificationCause, NotificationMemberTarget>,
 ) => areMembersTheSame(member)(notification.target.to);
 
 export const getMemberNotifications = (schema: Schema) => (account: AccountObject) => (
-	member: MemberReference
+	member: MemberReference,
 ): AsyncEither<
 	ServerError,
 	AsyncIter<RawNotificationObject<NotificationCause, NotificationMemberTarget>>
 > =>
 	asyncRight(
 		schema.getCollection<RawNotificationObject>('Notifications'),
-		errorGenerator('Could not get member notifications')
+		errorGenerator('Could not get member notifications'),
 	)
 		.map(
 			findAndBindC<RawNotificationObject<NotificationCause, NotificationMemberTarget>>({
 				accountID: account.id,
 				target: {
 					type: NotificationTargetType.MEMBER,
-					to: toReference(member)
-				}
-			})
+					to: toReference(member),
+				},
+			}),
 		)
 		.map(generateResults)
 		.map(asyncIterMap(stripProp('_id')));

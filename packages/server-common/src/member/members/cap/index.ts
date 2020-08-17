@@ -81,7 +81,7 @@ const invalidTypeLeft = asyncLeft<ServerError, any>({
 // -------------------------------------------------
 
 export const getExtraMemberInformationForCAPMember = (account: AccountObject) => (
-	member: CAPMember
+	member: CAPMember,
 ): EitherObj<ServerError, CAPExtraMemberInformation> =>
 	member.type === 'CAPNHQMember'
 		? Either.right(getExtraInformationFromCAPNHQMember(account)(member))
@@ -96,7 +96,7 @@ export const getExtraMemberInformationForCAPMember = (account: AccountObject) =>
 export const resolveCAPReference = (schema: Schema) => (account: AccountObject) => <
 	T extends CAPMemberReference = CAPMemberReference
 >(
-	reference: T
+	reference: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	reference.type === 'CAPNHQMember' && typeof reference.id === 'number'
 		? getNHQMember(schema)(account)()(reference.id)
@@ -105,7 +105,7 @@ export const resolveCAPReference = (schema: Schema) => (account: AccountObject) 
 		: invalidTypeLeft;
 
 export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => (
-	reference: CAPMemberReference
+	reference: CAPMemberReference,
 ): AsyncEither<ServerError, string> =>
 	reference.type === 'CAPNHQMember'
 		? getNameForCAPNHQMember(schema)(reference)
@@ -114,7 +114,7 @@ export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => 
 		: invalidTypeLeft;
 
 export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema
+	schema: Schema,
 ) => (member: CAPMember) =>
 	member.type === 'CAPNHQMember'
 		? getNHQHomeAccountsFunc({
@@ -135,10 +135,10 @@ export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) 
 // -------------------------------------------------
 
 export const addTemporaryDutyPosition = (position: TemporaryDutyPosition) => (
-	member: CAPMemberObject
+	member: CAPMemberObject,
 ): CAPMemberObject => {
 	const dutyPosition = iterFind<ShortDutyPosition>(({ duty }) => duty === position.Duty)(
-		member.dutyPositions
+		member.dutyPositions,
 	);
 
 	const dutyPositions = [...member.dutyPositions];
@@ -171,11 +171,11 @@ export const addTemporaryDutyPosition = (position: TemporaryDutyPosition) => (
 };
 
 export const removeTemporaryDutyPosition = (duty: string) => (
-	member: CAPMemberObject
+	member: CAPMemberObject,
 ): CAPMemberObject => ({
 	...member,
 	dutyPositions: member.dutyPositions.filter(
-		position => !(position.type === 'CAPUnit' && position.duty === duty)
+		position => !(position.type === 'CAPUnit' && position.duty === duty),
 	),
 });
 
@@ -186,11 +186,11 @@ const getTeamIDs = (schema: Schema) => (account: AccountObject) => (memberID: CA
 		.map(collectGeneratorAsync);
 
 export const loadExtraCAPMemberInformation = (schema: Schema) => (account: AccountObject) => (
-	memberID: CAPMemberReference
+	memberID: CAPMemberReference,
 ) => (teamObjects?: RawTeamObject[]): ServerEither<CAPExtraMemberInformation> =>
 	asyncRight(
 		schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
-		errorGenerator('Could not load extra member information')
+		errorGenerator('Could not load extra member information'),
 	)
 		.flatMap(collection =>
 			AsyncEither.All([
@@ -199,17 +199,17 @@ export const loadExtraCAPMemberInformation = (schema: Schema) => (account: Accou
 						findAndBind(collection, {
 							member: memberID,
 							accountID: account.id,
-						})
+						}),
 					),
-					errorGenerator('Could not get extra member results')
+					errorGenerator('Could not get extra member results'),
 				),
 				teamObjects
 					? asyncRight(
 							teamObjects.filter(isPartOfTeam(memberID)).map(obj => obj.id),
-							errorGenerator('Could not get Team IDs')
+							errorGenerator('Could not get Team IDs'),
 					  )
 					: getTeamIDs(schema)(account)(memberID),
-			])
+			]),
 		)
 		.map<CAPExtraMemberInformation>(([results, teams]) =>
 			results.length === 1
@@ -222,12 +222,12 @@ export const loadExtraCAPMemberInformation = (schema: Schema) => (account: Accou
 						teamIDs: teams,
 						absentee: null,
 						type: 'CAP',
-				  } as CAPExtraMemberInformation)
+				  } as CAPExtraMemberInformation),
 		)
 		.map(stripProp('_id'))
 		.map(results => ({
 			...results,
 			temporaryDutyPositions: results.temporaryDutyPositions.filter(
-				v => v.validUntil > Date.now()
+				v => v.validUntil > Date.now(),
 			),
 		}));

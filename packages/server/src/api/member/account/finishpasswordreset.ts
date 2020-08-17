@@ -24,7 +24,7 @@ import {
 	addPasswordForUser,
 	createSessionForUser,
 	getInformationForUser,
-	removePasswordValidationToken
+	removePasswordValidationToken,
 } from 'server-common/dist/member/pam';
 
 const passwordResetErrorMessages = {
@@ -32,7 +32,7 @@ const passwordResetErrorMessages = {
 	[PasswordSetResult.IN_HISTORY]: 'Password has been used too recently',
 	[PasswordSetResult.MIN_AGE]: 'Password is not old enough to change',
 	[PasswordSetResult.OK]: '',
-	[PasswordSetResult.SERVER_ERROR]: 'There was an error with the server'
+	[PasswordSetResult.SERVER_ERROR]: 'There was an error with the server',
 };
 
 export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
@@ -40,19 +40,19 @@ export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = r
 		.flatMap(username =>
 			asyncRight(
 				addPasswordForUser(req.mysqlx, username, req.body.newPassword),
-				errorGenerator('Could not add new password')
+				errorGenerator('Could not add new password'),
 			).flatMap<string>(setResult =>
 				setResult === PasswordSetResult.OK
 					? asyncRight(username, errorGenerator('Could not create new session for user'))
 					: asyncLeft({
 							type: 'OTHER',
 							code: 400,
-							message: passwordResetErrorMessages[setResult]
-					  })
-			)
+							message: passwordResetErrorMessages[setResult],
+					  }),
+			),
 		)
 		.flatMap(username =>
-			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username))
+			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),
 		)
 		.map(username => getInformationForUser(req.mysqlx, username))
 		.flatMap(account => createSessionForUser(req.mysqlx, account))

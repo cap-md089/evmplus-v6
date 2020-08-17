@@ -33,7 +33,7 @@ import {
 	Member,
 	MemberObject,
 	Permissions,
-	toReference
+	toReference,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -46,7 +46,7 @@ import SimpleForm, {
 	Label,
 	NumberInput,
 	TextBox,
-	TextInput
+	TextInput,
 } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
@@ -56,13 +56,13 @@ import Page, { PageProps } from '../Page';
 enum SortFunction {
 	LASTNAME,
 	FIRSTNAME,
-	CAPID
+	CAPID,
 }
 
 enum MemberList {
 	CADET,
 	SENIOR,
-	ALL
+	ALL,
 }
 
 interface SelectorFormValues {
@@ -133,26 +133,22 @@ const memberRanks = [
 	'briggen',
 	'majgen',
 	'ltgen',
-	'gen'
+	'gen',
 ];
 
 const normalizeRankInput = (rank: string) =>
-	(rank || '')
-		.toLowerCase()
-		.replace('/', '')
-		.replace('2nd', '2d')
-		.replace(' ', '');
+	(rank || '').toLowerCase().replace('/', '').replace('2nd', '2d').replace(' ', '');
 
 const sortFunctions: Array<(a: Member, b: Member) => number> = [
 	(a, b) => a.nameLast.localeCompare(b.nameLast),
 	(a, b) => a.nameFirst.localeCompare(b.nameFirst),
-	(a, b) => a.id.toString().localeCompare(b.id.toString())
+	(a, b) => a.id.toString().localeCompare(b.id.toString()),
 ];
 
 const grayedOut: React.CSSProperties = {
 	color: 'gray',
 	cursor: 'default',
-	fontStyle: 'italic'
+	fontStyle: 'italic',
 };
 
 const flightInput: CheckInput<Member, string> = {
@@ -181,7 +177,7 @@ const flightInput: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Flight:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const nameInput: CheckInput<MemberObject, string> = {
@@ -202,7 +198,7 @@ const nameInput: CheckInput<MemberObject, string> = {
 		}
 	},
 	displayText: 'Name:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankGreaterThan: CheckInput<Member, string> = {
@@ -225,7 +221,7 @@ const rankGreaterThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank greater than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankLessThan: CheckInput<Member, string> = {
@@ -248,7 +244,7 @@ const rankLessThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank less than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const memberFilter: CheckInput<Member, MemberList> = {
@@ -265,13 +261,13 @@ const memberFilter: CheckInput<Member, MemberList> = {
 			onUpdate={props.onUpdate}
 		/>
 	),
-	displayText: 'Member type'
+	displayText: 'Member type',
 };
 
 const memberFilters: Array<(a: Member) => boolean> = [
 	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? !a.seniorMember : false),
 	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? a.seniorMember : true),
-	() => true
+	() => true,
 ];
 
 const advancedFilters = [flightInput, nameInput, rankGreaterThan, rankLessThan, memberFilter];
@@ -287,7 +283,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			memberFilter: MemberList.ALL,
 			nameInput: '',
 			rankGreaterThan: '',
-			rankLessThan: ''
+			rankLessThan: '',
 		},
 		selectedMembers: [],
 		sortFunction: SortFunction.LASTNAME,
@@ -295,7 +291,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		capidAdd: null,
 		capidSaved: false,
 		capidSaving: false,
-		capidError: null
+		capidError: null,
 	};
 
 	constructor(props: PageProps<{ id: string }>) {
@@ -330,13 +326,13 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				...prev,
 
 				state: 'ERROR',
-				message: 'Could not find event specified'
+				message: 'Could not find event specified',
 			}));
 		}
 
 		const resultsEither = await AsyncEither.All([
 			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.events.events.get({ id: eventID.toString() }, {}, this.props.member.sessionID)
+			fetchApi.events.events.get({ id: eventID.toString() }, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(resultsEither)) {
@@ -344,7 +340,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				...prev,
 
 				state: 'ERROR',
-				message: resultsEither.value.message
+				message: resultsEither.value.message,
 			}));
 		}
 
@@ -360,7 +356,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				...prev,
 
 				state: 'ERROR',
-				message: 'You do not have permission to do that'
+				message: 'You do not have permission to do that',
 			}));
 		}
 
@@ -369,22 +365,22 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 			state: 'LOADED',
 			members,
-			event
+			event,
 		}));
 
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: `/eventviewer/${event.id}`,
-				text: `View "${event.name}"`
+				text: `View "${event.name}"`,
 			},
 			{
 				target: `/multiadd/${event.id}`,
-				text: 'Attendance add'
-			}
+				text: 'Attendance add',
+			},
 		]);
 
 		this.props.updateSideNav([]);
@@ -411,7 +407,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					this.state.filterValues.nameInput,
 					this.state.filterValues.rankGreaterThan,
 					this.state.filterValues.rankLessThan,
-					this.state.filterValues.memberFilter
+					this.state.filterValues.memberFilter,
 			  ]
 			: [this.state.filterValues.nameInput, this.state.filterValues.memberFilter];
 
@@ -424,7 +420,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					onSubmit={this.addCAPID}
 					submitInfo={{
 						text: this.state.capidSaving ? 'Adding...' : 'Add',
-						disabled: this.state.capidSaving
+						disabled: this.state.capidSaving,
 					}}
 					disableOnInvalid={true}
 				>
@@ -448,7 +444,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					values={{
 						members: this.state.selectedMembers,
 						sortFunction: this.state.sortFunction,
-						displayAdvanced: this.state.displayAdvanced
+						displayAdvanced: this.state.displayAdvanced,
 					}}
 					onChange={this.handleChange}
 					onSubmit={this.addMembers}
@@ -507,21 +503,21 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			prev.state === 'LOADED'
 				? {
 						...prev,
-						selectedMembers: this.filterMembers((prev.members || []).slice(0))
+						selectedMembers: this.filterMembers((prev.members || []).slice(0)),
 				  }
-				: prev
+				: prev,
 		);
 	}
 
 	private selectVisible() {
 		this.setState(prev => ({
-			selectedMembers: this.filterMembers(prev.visibleItems)
+			selectedMembers: this.filterMembers(prev.visibleItems),
 		}));
 	}
 
 	private deselectAll() {
 		this.setState({
-			selectedMembers: []
+			selectedMembers: [],
 		});
 	}
 
@@ -529,7 +525,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		this.setState({
 			selectedMembers: this.filterMembers(members),
 			sortFunction,
-			displayAdvanced
+			displayAdvanced,
 		});
 	}
 
@@ -547,15 +543,15 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					shiftTime: null,
 					canUsePhotos: true,
 					comments: `Multi add by ${getFullMemberName(
-						member
+						member,
 					)} on ${DateTime.local().toLocaleString()}`,
 					memberID: toReference(addedMember),
 					planToUseCAPTransportation: false,
 					status: AttendanceStatus.COMMITTEDATTENDED,
-					customAttendanceFieldValues: []
-				}))
+					customAttendanceFieldValues: [],
+				})),
 			},
-			member.sessionID
+			member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -567,11 +563,11 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 							...prev,
 							event: {
 								...prev.event,
-								attendance
+								attendance,
 							},
-							selectedMembers: []
+							selectedMembers: [],
 					  }
-					: prev
+					: prev,
 			);
 		} else {
 			// TODO: Handle error case
@@ -580,7 +576,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 	private handleDifferentVisibleItems(visibleItems: Member[]) {
 		this.setState({
-			visibleItems
+			visibleItems,
 		});
 	}
 
@@ -590,8 +586,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				filterValues: {
 					...prev.filterValues,
 					nameInput: values[0],
-					memberFilter: values[1]
-				}
+					memberFilter: values[1],
+				},
 			}));
 		} else {
 			this.setState({
@@ -600,8 +596,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					nameInput: values[1],
 					rankGreaterThan: values[2],
 					rankLessThan: values[3],
-					memberFilter: values[4]
-				}
+					memberFilter: values[4],
+				},
 			});
 		}
 	}
@@ -610,7 +606,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		this.setState({
 			capidAdd: capid,
 			capidSaved: false,
-			capidError: null
+			capidError: null,
 		});
 	}
 
@@ -622,30 +618,30 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		this.setState({
 			capidSaving: true,
 			capidSaved: false,
-			capidError: null
+			capidError: null,
 		});
 
 		if (hasMember(this.state.event)({ type: 'CAPNHQMember', id: capid })) {
 			return this.setState({
 				capidSaving: false,
-				capidError: 'Member is already in attendance'
+				capidError: 'Member is already in attendance',
 			});
 		}
 
 		const record: AttendanceRecord = {
 			shiftTime: {
 				arrivalTime: this.state.event.startDateTime,
-				departureTime: this.state.event.pickupDateTime
+				departureTime: this.state.event.pickupDateTime,
 			},
 			comments: `CAP ID add by ${getFullMemberName(
-				this.props.member
+				this.props.member,
 			)} on ${formatEventViewerDate(+new Date())}`,
 			customAttendanceFieldValues: [],
 			planToUseCAPTransportation: false,
 			status: AttendanceStatus.COMMITTEDATTENDED,
 			memberID: {
 				type: 'CAPNHQMember' as const,
-				id: capid
+				id: capid,
 			},
 
 			sourceAccountID: this.props.account.id,
@@ -654,20 +650,20 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			// Dummy fields the server ignores, the client doesn't need and we can't currently fully provide, but it satisfies the type checker
 			memberName: '',
 			summaryEmailSent: false,
-			timestamp: Date.now()
+			timestamp: Date.now(),
 		};
 
 		const result = await fetchApi.events.attendance.add(
 			{ id: this.state.event.id.toString() },
 			record,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {
 			this.setState({
 				capidSaved: true,
 				capidSaving: false,
-				capidError: result.value.message
+				capidError: result.value.message,
 			});
 		} else {
 			this.setState(prev =>
@@ -678,14 +674,14 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 							capidSaving: false,
 							event: {
 								...prev.event,
-								attendance: [...prev.event.attendance, record]
-							}
+								attendance: [...prev.event.attendance, record],
+							},
 					  }
 					: {
 							...prev,
 							capidSaved: true,
-							capidSaving: false
-					  }
+							capidSaving: false,
+					  },
 			);
 		}
 	}

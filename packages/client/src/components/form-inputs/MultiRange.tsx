@@ -47,12 +47,12 @@ export default class MultiRange extends React.Component<
 		if (typeof this.props.value !== 'undefined') {
 			this.state = {
 				low: ((this.props.value[0] - min) / (max - min)) * 100,
-				high: ((this.props.value[1] - min) / (max - min)) * 100
+				high: ((this.props.value[1] - min) / (max - min)) * 100,
 			};
 		} else {
 			this.state = {
 				low: 0,
-				high: 100
+				high: 100,
 			};
 		}
 		const { low, high } = this.state;
@@ -62,14 +62,14 @@ export default class MultiRange extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: props.name,
-				value: [parsedLow, parsedHigh]
+				value: [parsedLow, parsedHigh],
 			});
 		}
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: props.name,
-				value: [parsedLow, parsedHigh]
+				value: [parsedLow, parsedHigh],
 			});
 		}
 	}
@@ -100,13 +100,13 @@ export default class MultiRange extends React.Component<
 
 			this.setState({
 				high,
-				low
+				low,
 			});
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: [parsedLow, parsedHigh]
+					value: [parsedLow, parsedHigh],
 				});
 			}
 

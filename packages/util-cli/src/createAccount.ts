@@ -13,7 +13,7 @@ import {
 	MemberReference,
 	RawCAPSquadronAccountObject,
 	RawServerConfiguration,
-	Validator
+	Validator,
 } from 'common-lib';
 import 'dotenv/config';
 import { createInterface } from 'readline';
@@ -41,7 +41,7 @@ process.on('unhandledRejection', up => {
 });
 
 const askQuestion = (rl: ReturnType<typeof createInterface>) => (
-	question: string
+	question: string,
 ): Promise<string> =>
 	new Promise<string>(res => {
 		rl.question(question, res);
@@ -50,7 +50,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 (async () => {
 	const readlineInterface = createInterface({
 		input: process.stdin,
-		output: process.stdout
+		output: process.stdout,
 	});
 
 	const asker = askQuestion(readlineInterface);
@@ -69,7 +69,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 			? Maybe.none()
 			: Maybe.some({
 					serverID,
-					displayFlight: true
+					displayFlight: true,
 			  });
 
 	const mainCalendarID = await asker('What is the main Google calendar ID? - ');
@@ -78,7 +78,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 	let aliasInput = null;
 	while (!aliasInput) {
 		aliasInput = await asker(
-			'What is an alias for this account? (blank to have no alias or finish) - '
+			'What is an alias for this account? (blank to have no alias or finish) - ',
 		);
 
 		if (!!aliasInput) {
@@ -87,7 +87,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 	}
 
 	const wingCalendarID = await asker(
-		'What is the Google calendar ID of the calendar being published to your Wing? - '
+		'What is the Google calendar ID of the calendar being published to your Wing? - ',
 	);
 
 	let mainOrgInput = '';
@@ -107,14 +107,14 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		parentGroup: Maybe.none(),
 		parentWing: Maybe.none(),
 		type: AccountType.CAPSQUADRON,
-		wingCalendarID
+		wingCalendarID,
 	};
 
 	const session = await getSession({
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 
 	await session
@@ -129,14 +129,14 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 	}
 	const member: MemberReference = {
 		type: 'CAPNHQMember',
-		id: parseInt(capidInput, 10)
+		id: parseInt(capidInput, 10),
 	};
 
 	await setPermissionsForMemberInAccount(
 		session.getSchema(conf.DB_SCHEMA),
 		member,
 		getDefaultAdminPermissions(AccountType.CAPSQUADRON),
-		accountObj
+		accountObj,
 	);
 
 	await session.close();

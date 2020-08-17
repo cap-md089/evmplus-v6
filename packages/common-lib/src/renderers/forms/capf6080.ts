@@ -171,7 +171,7 @@ const GetOtherForms = (inEvent: RawEventObject) => {
 export const capf6080DocumentDefinition = (
 	event: RawEventObject,
 	pointsOfContact: FullPointOfContact[],
-	member: Member
+	member: Member,
 ): TDocumentDefinitions => {
 	const MemberPhones = member.seniorMember ? '' : GetBestPhones(member);
 	const MemberEmails = member.seniorMember ? '' : GetBestEmails(member);
@@ -190,7 +190,7 @@ export const capf6080DocumentDefinition = (
 				', Phone: ' +
 				formatPhone(value.phone) +
 				', Email: ' +
-				value.email
+				value.email,
 		)
 		.toString();
 
@@ -350,7 +350,7 @@ export const capf6080DocumentDefinition = (
 							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
 								text: Maybe.orSome('')(
-									presentMultCheckboxReturn(event.uniform, ', ')
+									presentMultCheckboxReturn(event.uniform, ', '),
 								),
 								bold: false,
 								fontSize: myTextFontSize,
@@ -367,7 +367,7 @@ export const capf6080DocumentDefinition = (
 							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
 								text: Maybe.orSome('')(
-									presentMultCheckboxReturn(event.uniform, ', ')
+									presentMultCheckboxReturn(event.uniform, ', '),
 								),
 								bold: false,
 								fontSize: myTextFontSize,
@@ -496,7 +496,7 @@ export const capf6080DocumentDefinition = (
 							{ text: 'Lodging: ', bold: true, fontSize: myTextFontSize },
 							{
 								text: Maybe.orSome('')(
-									presentMultCheckboxReturn(event.lodgingArrangments)
+									presentMultCheckboxReturn(event.lodgingArrangments),
 								),
 								bold: false,
 								fontSize: myTextFontSize,
@@ -560,7 +560,7 @@ export const capf6080DocumentDefinition = (
 						{ text: 'Meals: ', bold: true, fontSize: myTextFontSize },
 						{
 							text: Maybe.orSome('')(
-								presentMultCheckboxReturn(event.mealsDescription)
+								presentMultCheckboxReturn(event.mealsDescription),
 							),
 							bold: false,
 							fontSize: myTextFontSize,

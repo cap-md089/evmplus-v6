@@ -45,7 +45,7 @@ import {
 	UserAccountInformation,
 	UserForReference,
 	UserObject,
-	UserSession
+	UserSession,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
@@ -71,7 +71,7 @@ const MEMBER_CREATE_ERRORS = {
 	[MemberCreateError.PASSWORD_EXPIRED]: 'Password expired',
 	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA provided',
 	[MemberCreateError.SERVER_ERROR]: 'Unknown server error',
-	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'Unknown server error'
+	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'Unknown server error',
 };
 
 export interface BasicMemberRequest<P extends ParamType = {}, B = any>
@@ -90,7 +90,7 @@ export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
 
 const addSessionToDatabase = (
 	schema: Schema,
-	session: UserSession
+	session: UserSession,
 ): AsyncEither<ServerError, UserSession> =>
 	asyncRight<ServerError, Schema>(schema, errorGenerator('Could not create session for user'))
 		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
@@ -102,34 +102,34 @@ const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void>
 		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
 		.map(collection =>
 			safeBind(collection.remove('created < :created'), {
-				created: Date.now() - SESSION_AGE
-			}).execute()
+				created: Date.now() - SESSION_AGE,
+			}).execute(),
 		)
 		.map(destroy);
 
 const updateSessionExpireTime = (
 	schema: Schema,
-	session: UserSession
+	session: UserSession,
 ): AsyncEither<MemberCreateError, UserSession> =>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
 		.map(collection =>
 			safeBind(collection.modify('sessionID = :sessionID'), {
-				sessionID: session.id
+				sessionID: session.id,
 			})
 				.set('created', Date.now())
-				.execute()
+				.execute(),
 		)
 		.map(
 			always({
 				...session,
-				created: Date.now()
-			})
+				created: Date.now(),
+			}),
 		);
 
 const getSessionFromID = (
 	schema: Schema,
-	sessionID: SessionID
+	sessionID: SessionID,
 ): AsyncEither<MemberCreateError, UserSession> =>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
@@ -140,74 +140,74 @@ const getSessionFromID = (
 
 export const createSessionForUser = (
 	schema: Schema,
-	userAccount: UserAccountInformation
+	userAccount: UserAccountInformation,
 ): AsyncEither<ServerError, UserSession> =>
 	asyncRight<ServerError, Buffer>(
 		promisedRandomBytes(SESSION_ID_BYTE_COUNT),
-		errorGenerator('Could not create session for user')
+		errorGenerator('Could not create session for user'),
 	)
 		.map<string>(bytes => bytes.toString('hex'))
 		.map<UserSession>(sessionID => ({
 			id: sessionID,
 			created: Date.now(),
 			userAccount,
-			type: SessionType.REGULAR
+			type: SessionType.REGULAR,
 		}))
 		.flatMap(session => addSessionToDatabase(schema, session));
 
 export const setSessionType = (
 	schema: Schema,
 	session: UserSession,
-	type: SessionType
+	type: SessionType,
 ): AsyncEither<ServerError, UserSession> =>
 	asyncRight<ServerError, UserSession>(session, errorGenerator('Could not update user session'))
 		.map<UserSession>(sess => ({
 			...sess,
-			type
+			type,
 		}))
 		.tap(sess =>
 			safeBind(
 				schema.getCollection<UserSession>(SESSION_TABLE).modify('sessionID = :sessionID'),
 				{
-					sessionID: sess.id
-				}
+					sessionID: sess.id,
+				},
 			)
 				.set('type', type)
-				.execute()
+				.execute(),
 		);
 
 export const restoreFromSession = (schema: Schema) => (account: AccountObject) => <
 	T extends MemberReference = MemberReference
 >(
-	session: UserSession<T>
+	session: UserSession<T>,
 ) =>
 	AsyncEither.All([
 		asyncRight(
 			getPermissionsForMemberInAccountDefault(schema, session.userAccount.member, account),
-			errorGenerator('Could not get permissions for member')
+			errorGenerator('Could not get permissions for member'),
 		),
-		resolveReference(schema)(account)(session.userAccount.member)
+		resolveReference(schema)(account)(session.userAccount.member),
 	])
 		.map<UserForReference<T>>(([permissions, member]) => ({
 			...member,
 			...({
 				permissions,
-				sessionID: session.id
-			} as UserObject)
+				sessionID: session.id,
+			} as UserObject),
 		}))
 		.map<ActiveSession<T>>(user => ({
 			created: session.created,
 			id: session.id,
 			type: session.type,
 			user,
-			userAccount: session.userAccount
+			userAccount: session.userAccount,
 		}));
 
 export const sessionLength = (session: UserSession) => Date.now() - session.created;
 
 export const validateSession = (
 	schema: Schema,
-	sessionID: SessionID
+	sessionID: SessionID,
 ): AsyncEither<MemberCreateError, UserSession> =>
 	removeOldSessions(schema)
 		.flatMap(() => getSessionFromID(schema, sessionID))
@@ -215,18 +215,18 @@ export const validateSession = (
 
 export function memberRequestTransformer(
 	sessionType: SessionType,
-	memberRequired: false
+	memberRequired: false,
 ): <T extends BasicAccountRequest>(
-	req: T
+	req: T,
 ) => AsyncEither<
 	ServerError,
 	BasicMaybeMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
 >;
 export function memberRequestTransformer(
 	sessionType: SessionType,
-	memberRequired: true
+	memberRequired: true,
 ): <T extends BasicAccountRequest>(
-	req: T
+	req: T,
 ) => AsyncEither<
 	ServerError,
 	BasicMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
@@ -234,10 +234,10 @@ export function memberRequestTransformer(
 
 export function memberRequestTransformer(
 	sessionType: SessionType,
-	memberRequired: boolean = false
+	memberRequired: boolean = false,
 ) {
 	return <T extends BasicAccountRequest>(
-		req: T
+		req: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
 		new AsyncEither(
 			(typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined'
@@ -245,7 +245,7 @@ export function memberRequestTransformer(
 				: asyncLeft<ServerError, T>({
 						type: 'OTHER',
 						code: 400,
-						message: 'Authorization header not provided'
+						message: 'Authorization header not provided',
 				  })
 			)
 				.flatMap<UserSession>(() =>
@@ -253,16 +253,16 @@ export function memberRequestTransformer(
 						code => ({
 							type: 'OTHER',
 							code: 400,
-							message: MEMBER_CREATE_ERRORS[code]
+							message: MEMBER_CREATE_ERRORS[code],
 						}),
-						errorGenerator('Could not validate sesion')
-					)
+						errorGenerator('Could not validate sesion'),
+					),
 				)
 				// tslint:disable-next-line:no-bitwise
 				.filter(session => (sessionType & session.type) !== 0, {
 					type: 'OTHER',
 					code: 400,
-					message: 'Invalid session type'
+					message: 'Invalid session type',
 				})
 				.flatMap<ActiveSession>(restoreFromSession(req.mysqlx)(req.account))
 				.cata<EitherObj<ServerError, T & BasicMaybeMemberRequest>>(
@@ -272,7 +272,7 @@ export function memberRequestTransformer(
 							: Either.right<ServerError, T & BasicMaybeMemberRequest>({
 									...req,
 									member: Maybe.none(),
-									session: Maybe.none()
+									session: Maybe.none(),
 							  });
 					},
 					session =>
@@ -282,10 +282,10 @@ export function memberRequestTransformer(
 							// Basically the function declaration is enforced, but not easily
 							// This is the only not easy bit
 							member: memberRequired ? session.user : Maybe.some(session.user),
-							session: memberRequired ? session : Maybe.some(session)
-						} as T & BasicMaybeMemberRequest)
+							session: memberRequired ? session : Maybe.some(session),
+						} as T & BasicMaybeMemberRequest),
 				),
-			errorGenerator('Could not get user information')
+			errorGenerator('Could not get user information'),
 		);
 }
 
@@ -329,7 +329,7 @@ interface TokenObject {
 const addTokenToDatabase = async (
 	schema: Schema,
 	token: string,
-	member: UserAccountInformation
+	member: UserAccountInformation,
 ) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
@@ -337,7 +337,7 @@ const addTokenToDatabase = async (
 		.add({
 			token,
 			member,
-			created: Date.now()
+			created: Date.now(),
 		})
 		.execute();
 };
@@ -346,7 +346,7 @@ const removeOldTokens = async (schema: Schema) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
 	await safeBind(tokenCollection.remove('created < :created'), {
-		created: Date.now() - TOKEN_AGE
+		created: Date.now() - TOKEN_AGE,
 	}).execute();
 };
 
@@ -364,7 +364,7 @@ const invalidateToken = async (schema: Schema, token: string) => {
 
 export const getTokenForUser = async (
 	schema: Schema,
-	user: UserAccountInformation
+	user: UserAccountInformation,
 ): Promise<string> => {
 	const token = (await randomBytes(TOKEN_BYTE_COUNT)).toString('hex');
 
@@ -376,7 +376,7 @@ export const getTokenForUser = async (
 export const isTokenValid = async (
 	schema: Schema,
 	user: MemberReference,
-	token: string
+	token: string,
 ): Promise<boolean> => {
 	try {
 		const member = await getMemberForWeakToken(schema, token);
@@ -393,7 +393,7 @@ export const isTokenValid = async (
 
 export const getMemberForWeakToken = async (
 	schema: Schema,
-	token: string
+	token: string,
 ): Promise<UserAccountInformation | null> => {
 	await removeOldTokens(schema);
 
@@ -417,9 +417,9 @@ export const getMemberForWeakToken = async (
 
 export const RequireSessionType = (
 	sessionType: SessionType,
-	message = 'Member cannot perform the requested action with their current session. Try signing out and back in'
+	message = 'Member cannot perform the requested action with their current session. Try signing out and back in',
 ) => <R extends { session?: MaybeObj<ActiveSession> | ActiveSession }, V>(
-	f: (req: R) => ServerEither<V>
+	f: (req: R) => ServerEither<V>,
 ) => (req: R) =>
 	('session' in req && !!req.session
 		? 'hasValue' in req.session
@@ -430,12 +430,12 @@ export const RequireSessionType = (
 					: asyncLeft<ServerError, R>({
 							type: 'OTHER',
 							code: 403,
-							message
+							message,
 					  })
 				: asyncLeft<ServerError, R>({
 						type: 'OTHER',
 						code: 403,
-						message
+						message,
 				  })
 			: // tslint:disable-next-line:no-bitwise
 			(sessionType & req.session.type) !== 0
@@ -443,12 +443,12 @@ export const RequireSessionType = (
 			: asyncLeft<ServerError, R>({
 					type: 'OTHER',
 					code: 403,
-					message
+					message,
 			  })
 		: asyncLeft<ServerError, R>({
 				type: 'OTHER',
 				code: 403,
-				message
+				message,
 		  })
 	).flatMap(f);
 

@@ -32,7 +32,7 @@ export default class ErrorHandler extends React.PureComponent<
 	}
 > {
 	public state = {
-		crash: false
+		crash: false,
 	};
 
 	constructor(props: { member: User | null; account: AccountObject }) {
@@ -56,10 +56,10 @@ export default class ErrorHandler extends React.PureComponent<
 				filename: stack.getFileName(),
 				line: stack.getLineNumber(),
 				column: stack.getColumnNumber(),
-				name: stack.getFunctionName() || '<unknown>'
+				name: stack.getFunctionName() || '<unknown>',
 			})),
 			timestamp: Date.now(),
-			type: 'Client'
+			type: 'Client',
 		};
 
 		fetchApi.errors.clientError({}, errorObject, this.props.member?.sessionID).then(
@@ -70,11 +70,11 @@ export default class ErrorHandler extends React.PureComponent<
 			() => {
 				// tslint:disable-next-line:no-console
 				console.log('Failed to log error');
-			}
+			},
 		);
 
 		this.setState({
-			crash: true
+			crash: true,
 		});
 	}
 

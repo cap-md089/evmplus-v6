@@ -26,7 +26,7 @@ import {
 	RawFileObject,
 	ServerError,
 	SessionType,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import * as express from 'express';
 import {
@@ -34,7 +34,7 @@ import {
 	downloadFileObject,
 	getFileObject,
 	getRegistry,
-	MySQLRequest
+	MySQLRequest,
 } from 'server-common';
 import { memberRequestTransformer } from 'server-common/dist/member/pam';
 
@@ -45,8 +45,8 @@ export default async (request: express.Request, res: express.Response) => {
 			memberRequestTransformer(
 				// tslint:disable-next-line:no-bitwise
 				SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
-				false
-			)
+				false,
+			),
 		)
 		.flatMap(r =>
 			getRegistry(r.mysqlx)(r.account).flatMap(registry =>
@@ -54,21 +54,23 @@ export default async (request: express.Request, res: express.Response) => {
 					asyncLeft<ServerError, RawFileObject>({
 						type: 'OTHER',
 						code: 404,
-						message: "Favicon doesn't exist"
-					})
+						message: "Favicon doesn't exist",
+					}),
 				)(
-					Maybe.map(getFileObject(false)(r.mysqlx)(r.account))(registry.Website.FaviconID)
+					Maybe.map(getFileObject(false)(r.mysqlx)(r.account))(
+						registry.Website.FaviconID,
+					),
 				).filter(
 					userHasFilePermission(FileUserAccessControlPermissions.READ)(
-						r.member.hasValue ? r.member.value : null
+						r.member.hasValue ? r.member.value : null,
 					),
 					{
 						type: 'OTHER',
 						code: 403,
-						message: "Member doesn't have permission to view this file"
-					}
-				)
-			)
+						message: "Member doesn't have permission to view this file",
+					},
+				),
+			),
 		)
 		.join();
 

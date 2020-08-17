@@ -42,7 +42,7 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		open: false,
 		filterValues: [],
 		selectedValue: null,
-		teams: null
+		teams: null,
 	};
 
 	public constructor(props: TeamSelectorProps) {
@@ -57,7 +57,7 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 	public async componentDidMount() {
 		const teams = await this.props.teamList;
 		this.setState({
-			teams
+			teams,
 		});
 	}
 
@@ -106,8 +106,8 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 									}
 								},
 								displayText: 'Team name',
-								filterInput: TextInput
-							}
+								filterInput: TextInput,
+							},
 						]}
 						onValueClick={this.setSelectedTeam}
 						onValueSelect={this.selectTeam}
@@ -126,20 +126,20 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 
 	private onTeamDialogueFilterValueChange(filterValues: any[]) {
 		this.setState({
-			filterValues
+			filterValues,
 		});
 	}
 
 	private setSelectedTeam(selectedValue: FullTeamObject | null) {
 		this.setState({
-			selectedValue
+			selectedValue,
 		});
 	}
 
 	private selectTeam(selectedValue: FullTeamObject | null) {
 		this.setState({
 			selectedValue,
-			open: false
+			open: false,
 		});
 
 		if (this.props.onChange) {
@@ -149,14 +149,14 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: selectedValue ? selectedValue.id : null
+				value: selectedValue ? selectedValue.id : null,
 			});
 		}
 	}
 
 	private openTeamDialogue() {
 		this.setState({
-			open: true
+			open: true,
 		});
 	}
 }

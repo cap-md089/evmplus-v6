@@ -24,14 +24,14 @@ import { PAM } from 'server-common';
 export default (
 	req: PAM.BasicMaybeMemberRequest | PAM.BasicMemberRequest,
 	res: Response,
-	next: NextFunction
+	next: NextFunction,
 ) => {
 	const item: RawAuditLogItem = {
 		accountID: req.account.id,
 		actor: 'hasValue' in req.member ? req.member : Maybe.some(req.member),
 		method: req.method as HTTPRequestMethod,
 		target: req._originalUrl,
-		timestamp: Date.now()
+		timestamp: Date.now(),
 	};
 
 	const audits = req.mysqlx.getCollection<RawAuditLogItem>('Audits');

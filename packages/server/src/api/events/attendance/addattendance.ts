@@ -31,18 +31,18 @@ import {
 	NewAttendanceRecord,
 	Permissions,
 	SessionType,
-	toReference
+	toReference,
 } from 'common-lib';
 import {
 	addMemberToAttendance,
 	getEvent,
 	getFullEventObject,
 	PAM,
-	resolveReference
+	resolveReference,
 } from 'server-common';
 
 const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) => (
-	event: EventObject
+	event: EventObject,
 ) =>
 	(isValidMemberReference(req.body.memberID) &&
 	effectiveManageEventPermissionForEvent(req.member)(event) === Permissions.ManageEvent.FULL
@@ -53,22 +53,22 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 		.map<Required<NewAttendanceRecord>>(memberID => ({
 			...req.body,
 			customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)(
-				req.body.customAttendanceFieldValues
+				req.body.customAttendanceFieldValues,
 			),
 			shiftTime: req.body.shiftTime ?? null,
-			memberID
+			memberID,
 		}));
 
 export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
 	// tslint:disable-next-line: no-bitwise
-	SessionType.REGULAR | SessionType.SCAN_ADD
+	SessionType.REGULAR | SessionType.SCAN_ADD,
 )(req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
 		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
 		.flatMap(event =>
-			getRecord(req)(event).flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event))
+			getRecord(req)(event).flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event)),
 		)
-		.map(destroy)
+		.map(destroy),
 );
 
 export default func;

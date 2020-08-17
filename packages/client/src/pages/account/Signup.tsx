@@ -25,7 +25,7 @@ import SimpleForm, {
 	NumberInput,
 	TextBox,
 	TextInput,
-	Title
+	Title,
 } from '../../components/forms/SimpleForm';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
@@ -48,11 +48,11 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 		form: {
 			capid: null,
 			email: '',
-			recaptcha: null
+			recaptcha: null,
 		},
 		error: null,
 		tryingSignup: false,
-		success: false
+		success: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -71,11 +71,11 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				validator={{
 					capid: id => id !== null && id >= 100000,
 					email: email => !!email && !!email.match(/.*?@.*/),
-					recaptcha: val => val !== null
+					recaptcha: val => val !== null,
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSignup,
-					text: 'Sign up'
+					text: 'Sign up',
 				}}
 			>
 				<Title>Create account</Title>
@@ -128,7 +128,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			this.setState({
 				tryingSignup: true,
 				success: false,
-				error: null
+				error: null,
 			});
 
 			// @ts-ignore
@@ -136,23 +136,23 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 
 			const result = await fetchApi.member.account.capnhq.requestNHQAccount(
 				{},
-				{ capid: values.capid!, recaptcha: values.recaptcha!, email: values.email }
+				{ capid: values.capid!, recaptcha: values.recaptcha!, email: values.email },
 			);
 
 			if (Either.isLeft(result)) {
 				this.setState({
-					error: result.value.message
+					error: result.value.message,
 				});
 			} else {
 				this.setState({
 					success: true,
-					error: null
+					error: null,
 				});
 			}
 		} catch (e) {
 			this.setState({
 				error: 'Could not request account',
-				tryingSignup: false
+				tryingSignup: false,
 			});
 		}
 	}

@@ -24,7 +24,7 @@ import {
 	isLabel,
 	Label,
 	Title,
-	FormValidator
+	FormValidator,
 } from '../forms/SimpleForm';
 
 interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
@@ -40,7 +40,7 @@ interface FormBlockProps<V> extends React.HTMLAttributes<HTMLDivElement> {
 		error: BooleanForField<V>,
 		changed: BooleanForField<V>,
 		hasError: boolean,
-		fieldChanged: keyof V
+		fieldChanged: keyof V,
 	) => void;
 }
 
@@ -57,18 +57,18 @@ export default class FormBlock<T extends object> extends React.Component<
 > {
 	public static getDerivedStateFromProps<T>(
 		props: FormBlockProps<T>,
-		state: FormBlockState<T>
+		state: FormBlockState<T>,
 	): FormBlockState<T> {
 		if (!props.value) {
 			return {
 				fieldsError: {},
-				fieldsChanged: {}
+				fieldsChanged: {},
 			} as FormBlockState<T>;
 		}
 
 		const newState: FormBlockState<T> = {
 			fieldsChanged: { ...state.fieldsChanged },
-			fieldsError: {} as BooleanForField<T>
+			fieldsError: {} as BooleanForField<T>,
 		};
 
 		// tslint:disable-next-line: forin
@@ -89,7 +89,7 @@ export default class FormBlock<T extends object> extends React.Component<
 
 	public state: FormBlockState<T> = {
 		fieldsError: {} as BooleanForField<T>,
-		fieldsChanged: {} as BooleanForField<T>
+		fieldsChanged: {} as BooleanForField<T>,
 	};
 
 	constructor(props: FormBlockProps<T>) {
@@ -155,8 +155,8 @@ export default class FormBlock<T extends object> extends React.Component<
 								key: i,
 								onUpdate: this.onUpdate,
 								onInitialize: this.onInitialize,
-								value: childValue
-							})
+								value: childValue,
+							}),
 						];
 					}
 					if (
@@ -188,7 +188,7 @@ export default class FormBlock<T extends object> extends React.Component<
 							ret.unshift(
 								<Label key={i - 1} fullWidth={fullWidth}>
 									{previousChild}
-								</Label>
+								</Label>,
 							);
 						} else {
 							if (isLabel(previousChild) && previousChild.type !== Title) {
@@ -197,8 +197,8 @@ export default class FormBlock<T extends object> extends React.Component<
 									React.cloneElement(previousChild, {
 										key: i - 1,
 										onUpdate: this.onUpdate,
-										onInitialize: this.onInitialize
-									})
+										onInitialize: this.onInitialize,
+									}),
 								);
 							}
 						}
@@ -207,10 +207,10 @@ export default class FormBlock<T extends object> extends React.Component<
 							<div
 								className="input-formbox"
 								style={{
-									height: 2
+									height: 2,
 								}}
 								key={i - 1}
-							/>
+							/>,
 						);
 					}
 
@@ -241,7 +241,7 @@ export default class FormBlock<T extends object> extends React.Component<
 		this.setState(
 			{
 				fieldsChanged,
-				fieldsError
+				fieldsError,
 			},
 			() => {
 				let hasError = false;
@@ -264,17 +264,17 @@ export default class FormBlock<T extends object> extends React.Component<
 						this.state.fieldsError,
 						this.state.fieldsChanged,
 						hasError,
-						name
+						name,
 					);
 				}
 
 				if (this.props.onUpdate) {
 					this.props.onUpdate({
 						name: this.props.name,
-						value
+						value,
 					});
 				}
-			}
+			},
 		);
 	}
 

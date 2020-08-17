@@ -12,7 +12,7 @@ import {
 	NotificationTargetType,
 	RawServerConfiguration,
 	toReference,
-	Validator
+	Validator,
 } from 'common-lib';
 import {
 	createNotification,
@@ -20,7 +20,7 @@ import {
 	getAccount,
 	resolveReference,
 	saveNotification,
-	confFromRaw
+	confFromRaw,
 } from 'server-common';
 import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 
@@ -46,7 +46,7 @@ const conf = confEither.value;
 	const argError = () => {
 		console.error('Please provide a source, account ID, expiration date, and message');
 		console.error(
-			'node sendGlobalNotification.js [CAPID|SYS] [Account ID|ALL] [YYYY-MM-DD] [HH:MM] [message...]'
+			'node sendGlobalNotification.js [CAPID|SYS] [Account ID|ALL] [YYYY-MM-DD] [HH:MM] [message...]',
 		);
 		process.exit(1);
 	};
@@ -71,14 +71,14 @@ const conf = confEither.value;
 	const from =
 		check[1].toLowerCase() === 'sys'
 			? {
-					type: NotificationCauseType.SYSTEM
+					type: NotificationCauseType.SYSTEM,
 			  }
 			: {
 					type: NotificationCauseType.MEMBER,
 					from: {
 						id: parseInt(check[1], 10),
-						type: 'CAPNHQMember' as const
-					}
+						type: 'CAPNHQMember' as const,
+					},
 			  };
 	const accountID = check[2];
 	const expire = new Date(
@@ -86,7 +86,7 @@ const conf = confEither.value;
 		parseInt(check[4], 10) - 1, // Month 'index'
 		parseInt(check[5], 10), // Day
 		parseInt(check[6], 10), // Hour
-		parseInt(check[7], 10) // Minute
+		parseInt(check[7], 10), // Minute
 	).getTime();
 	const message = check[8];
 
@@ -106,17 +106,17 @@ const conf = confEither.value;
 				// Create a system notification, doesn't require extra information
 				await createNotification(db)(account)({
 					cause: {
-						type: NotificationCauseType.SYSTEM
+						type: NotificationCauseType.SYSTEM,
 					},
 					extraData: {
 						type: NotificationDataType.MESSAGE,
-						message
+						message,
 					},
 					target: {
 						type: NotificationTargetType.EVERYONE,
 						accountID: account.id,
-						expires: expire
-					}
+						expires: expire,
+					},
 				}).fullJoin();
 			} else {
 				// Get the member sending the notification
@@ -126,17 +126,17 @@ const conf = confEither.value;
 					cause: {
 						type: NotificationCauseType.MEMBER,
 						from: toReference(member),
-						fromName: getFullMemberName(member)
+						fromName: getFullMemberName(member),
 					},
 					extraData: {
 						type: NotificationDataType.MESSAGE,
-						message
+						message,
 					},
 					target: {
 						type: NotificationTargetType.EVERYONE,
 						accountID: account.id,
-						expires: expire
-					}
+						expires: expire,
+					},
 				}).fullJoin();
 			}
 		} catch (e) {
@@ -149,7 +149,7 @@ const conf = confEither.value;
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 
 	const emSchema = session.getSchema(conf.DB_SCHEMA);

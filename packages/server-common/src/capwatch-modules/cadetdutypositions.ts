@@ -30,7 +30,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (fileData
 
 	try {
 		const dutyPositionCollection = schema.getCollection<NHQ.CadetDutyPosition>(
-			'NHQ_CadetDutyPosition'
+			'NHQ_CadetDutyPosition',
 		);
 
 		const clearedORGIDs: { [key: number]: true } = {};
@@ -58,7 +58,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async (fileData
 				Asst: parseInt(duties.Asst + '', 10),
 				UsrID: duties.UsrID,
 				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				ORGID: parseInt(duties.ORGID + '', 10)
+				ORGID: parseInt(duties.ORGID + '', 10),
 			};
 
 			await dutyPositionCollection.add(values).execute();

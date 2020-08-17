@@ -31,7 +31,7 @@ import {
 	MemberReference,
 	pipe,
 	stringifyMemberReference,
-	Permissions
+	Permissions,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -123,7 +123,7 @@ const AttendanceView: React.FunctionComponent<{
 								api.member.attendance.EventAttendanceRecordEventInformation,
 								string
 							>(event => `${event.id}`),
-							Maybe.orSome('')
+							Maybe.orSome(''),
 						)(record.event)}
 					</td>
 					<td>
@@ -132,7 +132,7 @@ const AttendanceView: React.FunctionComponent<{
 								api.member.attendance.EventAttendanceRecordEventInformation,
 								React.ReactChild
 							>(event => event.name),
-							Maybe.orSome<React.ReactChild>(<i>Member has not attended an event</i>)
+							Maybe.orSome<React.ReactChild>(<i>Member has not attended an event</i>),
 						)(record.event)}
 					</td>
 					<td>
@@ -143,10 +143,10 @@ const AttendanceView: React.FunctionComponent<{
 							>(
 								event =>
 									`${DateTime.fromMillis(event.endDateTime).toFormat(
-										'yyyy LLL dd'
-									)}, ${format(event.endDateTime)}`
+										'yyyy LLL dd',
+									)}, ${format(event.endDateTime)}`,
 							),
-							Maybe.orSome<React.ReactChild>(<></>)
+							Maybe.orSome<React.ReactChild>(<></>),
 						)(record.event)}
 					</td>
 					<td>
@@ -159,7 +159,7 @@ const AttendanceView: React.FunctionComponent<{
 									View Event
 								</Link>
 							)),
-							Maybe.orSome<React.ReactChild>(<></>)
+							Maybe.orSome<React.ReactChild>(<></>),
 						)(record.event)}
 					</td>
 				</tr>
@@ -171,13 +171,13 @@ const AttendanceView: React.FunctionComponent<{
 enum GroupTarget {
 	NONE,
 	FLIGHT,
-	ACCOUNT
+	ACCOUNT,
 }
 
 export default class AttendanceHistory extends Page<PageProps, AttendanceHistoryState> {
 	public state: AttendanceHistoryState = {
 		type: 'LOADING',
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public constructor(props: PageProps) {
@@ -192,16 +192,16 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/attendance',
-				text: 'View Attendance'
-			}
+				text: 'View Attendance',
+			},
 		]);
 		this.props.updateSideNav([]);
 		this.updateTitle('View Attendance');
@@ -216,13 +216,13 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				this.setState(prev => ({
 					...prev,
 					state: 'ERROR',
-					memberMessage: memberListEither.value.message
+					memberMessage: memberListEither.value.message,
 				}));
 			} else {
 				this.setState(prev => ({
 					...prev,
 					state: 'LOADED',
-					members: memberListEither.value
+					members: memberListEither.value,
 				}));
 			}
 		}
@@ -264,7 +264,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 					  this.state.state === 'ERROR' ? (
 						<div>{this.state.memberMessage}</div>
 					) : null}
-					{this.groupTarget !== GroupTarget.NONE && state.type !== 'GROUPLOADED'  ? (
+					{this.groupTarget !== GroupTarget.NONE && state.type !== 'GROUPLOADED' ? (
 						<Button
 							onClick={this.loadShortGroupAttendance}
 							disabled={this.state.type === 'LOADING'}
@@ -299,7 +299,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 							isMemberTheSameAsViewer={
 								state.type === 'MEMBERLOADED' &&
 								Maybe.orSome(false)(
-									Maybe.map(areMembersTheSame(member))(state.memberBeingViewed)
+									Maybe.map(areMembersTheSame(member))(state.memberBeingViewed),
 								)
 							}
 						/>
@@ -322,7 +322,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 			if (
 				this.props.member.flight !== null &&
 				hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(
-					this.props.member
+					this.props.member,
 				)
 			) {
 				return GroupTarget.FLIGHT;
@@ -355,7 +355,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 					fetchApi.member.attendance.getForMember(
 						{ reference: stringifyMemberReference(member) },
 						{},
-						sessionID
+						sessionID,
 					);
 
 		const dataEither = await func(this.props.member.sessionID);
@@ -364,7 +364,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 			this.setState(prev => ({
 				...prev,
 				type: 'ERROR',
-				message: dataEither.value.message
+				message: dataEither.value.message,
 			}));
 		} else {
 			const attendanceRecords = dataEither.value.filter(Either.isRight).map(get('value'));
@@ -375,7 +375,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				type: 'MEMBERLOADED',
 				attendanceRecords,
 				memberBeingViewed: Maybe.some(member),
-				buttonsDisabled: false
+				buttonsDisabled: false,
 			}));
 		}
 	}
@@ -388,14 +388,14 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		const dataEither = await fetchApi.member.attendance.getForGroup(
 			{},
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(dataEither)) {
 			this.setState(prev => ({
 				...prev,
 				type: 'ERROR',
-				message: dataEither.value.message
+				message: dataEither.value.message,
 			}));
 		} else {
 			const attendanceRecords = dataEither.value
@@ -408,7 +408,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				...prev,
 				type: 'GROUPLOADED',
 				attendanceRecords,
-				buttonsDisabled: false
+				buttonsDisabled: false,
 			}));
 		}
 	}

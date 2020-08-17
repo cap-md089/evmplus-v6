@@ -23,7 +23,7 @@ import { getKeysForSymbol, getStringLiteralFromType, getBooleanLiteralFromType }
 const convertObjectToMap = (
 	type: ts.Type,
 	typeChecker: ts.TypeChecker,
-	argument: ts.Expression
+	argument: ts.Expression,
 ): ts.Expression => {
 	const properties = type.getProperties();
 
@@ -43,12 +43,12 @@ const convertObjectToMap = (
 				? convertEndpointToFunction(
 						typeChecker.getTypeFromTypeNode(valueDeclaration.type),
 						typeChecker,
-						argument
+						argument,
 				  )
 				: convertObjectToMap(
 						typeChecker.getTypeFromTypeNode(valueDeclaration.type),
 						typeChecker,
-						argument
+						argument,
 				  );
 
 			return ts.createPropertyAssignment(name, value);
@@ -61,7 +61,7 @@ const convertObjectToMap = (
 const convertEndpointToFunction = (
 	type: ts.Type,
 	typeChecker: ts.TypeChecker,
-	argument: ts.Expression
+	argument: ts.Expression,
 ): ts.Expression => {
 	const properties = type.getProperties();
 	const callSignatures = type.getCallSignatures();
@@ -70,7 +70,7 @@ const convertEndpointToFunction = (
 	const url = getStringLiteralFromType(properties.find(sym => sym.name === 'url'));
 	const method = getStringLiteralFromType(properties.find(sym => sym.name === 'method'));
 	const requiresMember = getStringLiteralFromType(
-		properties.find(sym => sym.name === 'requiresMember')
+		properties.find(sym => sym.name === 'requiresMember'),
 	);
 	const needsToken = getBooleanLiteralFromType(properties.find(sym => sym.name === 'needsToken'));
 
@@ -86,7 +86,7 @@ const convertEndpointToFunction = (
 			[url, 'url'],
 			[method, 'method'],
 			[requiresMember, 'requiresMember'],
-			[needsToken, 'needsToken']
+			[needsToken, 'needsToken'],
 		]
 			.filter(item => !!item[0])
 			.map(item => `${item[1]} is missing`)
@@ -102,15 +102,15 @@ const convertEndpointToFunction = (
 			[
 				ts.createPropertyAssignment(
 					'paramKeys',
-					ts.createArrayLiteral(paramKeys.map(ts.createStringLiteral))
+					ts.createArrayLiteral(paramKeys.map(ts.createStringLiteral)),
 				),
 				ts.createPropertyAssignment('url', ts.createLiteral(url)),
 				ts.createPropertyAssignment('method', ts.createLiteral(method)),
 				ts.createPropertyAssignment('requiresMember', ts.createLiteral(requiresMember)),
-				ts.createPropertyAssignment('needsToken', ts.createLiteral(needsToken))
+				ts.createPropertyAssignment('needsToken', ts.createLiteral(needsToken)),
 			],
-			true
-		)
+			true,
+		),
 	]);
 };
 

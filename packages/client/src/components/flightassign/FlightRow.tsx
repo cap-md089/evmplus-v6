@@ -41,14 +41,14 @@ interface FlightRowState {
 }
 
 const topBorder: React.CSSProperties = {
-	borderTopWidth: 1
+	borderTopWidth: 1,
 };
 
 export default class FlightRow extends React.Component<FlightRowProps, FlightRowState> {
 	public state: FlightRowState = {
 		open: true,
 		divHeight: 0,
-		hidenames: false
+		hidenames: false,
 	};
 
 	private namesDiv = React.createRef<HTMLDivElement>();
@@ -91,15 +91,15 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 			setTimeout(() => {
 				jQuery(this.namesDiv.current!).slideUp(() => {
 					this.setState({
-						open: false
+						open: false,
 					});
 				});
 				jQuery(this.titleDiv.current!).animate({
 					'height': 40,
-					'font-size': 32
+					'font-size': 32,
 				});
 				this.setState({
-					hidenames: true
+					hidenames: true,
 				});
 			}, 100);
 		} else if (
@@ -110,20 +110,20 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		) {
 			jQuery(this.namesDiv.current).slideDown(() => {
 				this.setState({
-					open: true
+					open: true,
 				});
 			});
 			jQuery(this.titleDiv.current).animate({
 				'height': 16,
-				'font-size': 14
+				'font-size': 14,
 			});
 			this.setState({
-				hidenames: false
+				hidenames: false,
 			});
 		}
 		if (this.namesDiv.current && this.state.divHeight !== this.namesDiv.current.scrollHeight) {
 			this.setState({
-				divHeight: this.namesDiv.current.scrollHeight
+				divHeight: this.namesDiv.current.scrollHeight,
 			});
 		}
 	}
@@ -131,7 +131,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 	public componentDidMount() {
 		if (this.namesDiv.current) {
 			this.setState({
-				divHeight: this.namesDiv.current.scrollHeight
+				divHeight: this.namesDiv.current.scrollHeight,
 			});
 		}
 	}

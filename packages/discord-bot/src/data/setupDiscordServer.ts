@@ -29,7 +29,7 @@ import setupUser, {
 	CACRepresentativeRoles,
 	CadetExecutiveStaffRoles,
 	CadetLineStaffRoles,
-	CadetSupportStaffRoles
+	CadetSupportStaffRoles,
 } from './setupUser';
 
 export interface DiscordSetupRules {
@@ -55,7 +55,7 @@ const hasProcessing = hasRole('Processing');
 const seniorMemberRoles = ['Squadron Commander'];
 
 export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClient) => (
-	client: Client
+	client: Client,
 ) => (guildId: string) => async (rules: Partial<DiscordSetupRules>) => {
 	const { schema, session } = await getXSession(config, mysql);
 
@@ -89,7 +89,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 		preserveRoles: [],
 		itOfficerAdmin: false,
 
-		...rules
+		...rules,
 	};
 
 	if (usedRules.deleteOldRoles) {
@@ -118,7 +118,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 			name,
 			permissions,
 			position: 0,
-			color
+			color,
 		});
 
 	const createRoleGroup = (color: [number, number, number]) => (name: string) =>
@@ -128,7 +128,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 			name,
 			permissions,
 			position: 0,
-			color
+			color,
 		});
 
 	if (usedRules.addSeniorMemberRoles) {
@@ -161,7 +161,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 		}
 
 		for (const name of CadetLineStaffRoles.filter(
-			lineStaffRoleName => lineStaffRoleName !== 'Cadet Squadron Commander'
+			lineStaffRoleName => lineStaffRoleName !== 'Cadet Squadron Commander',
 		)) {
 			await createRole([32, 102, 148])(name);
 		}
@@ -177,10 +177,10 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 					mentionable: false,
 					name,
 					permissions: new Permissions(Permissions.DEFAULT).add(
-						Permissions.FLAGS.ADMINISTRATOR!
+						Permissions.FLAGS.ADMINISTRATOR!,
 					),
 					position: 0,
-					color: [17, 128, 106]
+					color: [17, 128, 106],
 				});
 			} else {
 				await createRole([17, 128, 106])(name);
@@ -208,7 +208,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 				await createRole([113, 54, 138])(
 					AchvIDToCertificationRole[
 						(key as unknown) as keyof typeof AchvIDToCertificationRole
-					]
+					],
 				);
 			}
 		}
@@ -240,7 +240,7 @@ export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClie
 				await setupUser(client)(schema)(guildId)(account.value)()(results[0]);
 			} else {
 				await (await member.setRoles([guild.roles.find(byName('Processing'))])).setNickname(
-					''
+					'',
 				);
 
 				try {

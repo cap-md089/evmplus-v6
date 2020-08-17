@@ -33,14 +33,14 @@ import {
 	ParamType,
 	ServerError,
 	ServerErrorObject,
-	toReference
+	toReference,
 } from 'common-lib';
 import { parse } from 'error-stack-parser';
 import {
 	accountRequestTransformer,
 	BasicAccountRequest,
 	generateResults,
-	PAM
+	PAM,
 } from 'server-common';
 
 export type Requests<P extends ParamType = {}, B = any> =
@@ -76,9 +76,7 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 			if ('account' in req) {
 				account = Either.right(req.account);
 			} else {
-				account = await accountRequestTransformer(req)
-					.map(get('account'))
-					.join();
+				account = await accountRequestTransformer(req).map(get('account')).join();
 			}
 		}
 
@@ -95,15 +93,15 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 						? 'hasValue' in req.member
 							? Maybe.orSome<MemberReference | null>(null)(
 									Maybe.map<Member, MemberReference | null>(toReference)(
-										req.member
-									)
+										req.member,
+									),
 							  )
 							: toReference(req.member)
 						: null,
 				requestMethod: req.method.toUpperCase() as HTTPRequestMethod,
 				payload: !!req.body ? JSON.stringify(req.body) : '<none>',
 				accountID: Either.cata<ServerError, AccountObject, string>(always('<unknown>'))(
-					get('id')
+					get('id'),
 				)(account),
 
 				message: err.message || '<none>',
@@ -111,13 +109,13 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 					filename: stack.getFileName(),
 					line: stack.getLineNumber(),
 					column: stack.getColumnNumber(),
-					name: stack.getFunctionName() || '<unknown>'
+					name: stack.getFunctionName() || '<unknown>',
 				})),
 				filename: stacks[0].getFileName(),
 
 				timestamp: Date.now(),
 				resolved: ErrorResolvedStatus.UNRESOLVED,
-				type: 'Server'
+				type: 'Server',
 			};
 
 			try {

@@ -40,11 +40,11 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 	public state: RequestPasswordResetState = {
 		form: {
 			username: '',
-			captchaToken: null
+			captchaToken: null,
 		},
 		error: null,
 		tryingSubmit: false,
-		success: false
+		success: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -62,11 +62,11 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 				disableOnInvalid={true}
 				validator={{
 					captchaToken: val => val !== null,
-					username: val => val?.length > 0
+					username: val => val?.length > 0,
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSubmit,
-					text: 'Request password reset'
+					text: 'Request password reset',
 				}}
 			>
 				<Title>Request password reset</Title>
@@ -117,27 +117,27 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		this.setState({
 			tryingSubmit: true,
 			error: null,
-			success: false
+			success: false,
 		});
 
 		const result = await fetchApi.member.account.passwordResetRequest(
 			{},
 			{
 				username: form.username,
-				captchaToken: form.captchaToken
-			}
+				captchaToken: form.captchaToken,
+			},
 		);
 
 		if (Either.isLeft(result)) {
 			this.setState({
 				error: result.value.message,
-				tryingSubmit: false
+				tryingSubmit: false,
 			});
 		} else {
 			this.setState({
 				success: true,
 				error: null,
-				tryingSubmit: false
+				tryingSubmit: false,
 			});
 		}
 	}

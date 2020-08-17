@@ -32,7 +32,7 @@ const preventClick = (ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
 const addressToDisplay = ({
 	Name,
 	FirstLine,
-	SecondLine
+	SecondLine,
 }: Exclude<WebsiteContact['MeetingAddress'], null>) => (
 	<div>
 		<div className="footerBoxTitle">Meeting Address</div>
@@ -123,8 +123,8 @@ export default (({ registry }) => (
 								>
 									Discord
 								</a>
-							) : null
-						])(registry)
+							) : null,
+						])(registry),
 					)}
 				</p>
 			</div>
@@ -133,19 +133,19 @@ export default (({ registry }) => (
 				Maybe.map(get('MeetingAddress')),
 				Maybe.flatMap(Maybe.fromValue),
 				Maybe.map(addressToDisplay),
-				Maybe.orSome<React.ReactChild | null>(null)
+				Maybe.orSome<React.ReactChild | null>(null),
 			)(registry)}
 			{pipe(
 				Maybe.map<RegistryValues, WebsiteContact>(get('Contact')),
 				Maybe.map(get('MailingAddress')),
 				Maybe.flatMap(Maybe.fromValue),
 				Maybe.map(addressToDisplay),
-				Maybe.orSome<React.ReactChild | null>(null)
+				Maybe.orSome<React.ReactChild | null>(null),
 			)(registry)}
 		</div>
 		<div
 			style={{
-				color: 'white'
+				color: 'white',
 			}}
 			className="links"
 		>

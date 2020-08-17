@@ -27,7 +27,7 @@ import {
 	NHQ,
 	RegularCAPAccountObject,
 	ServerError,
-	Timezone
+	Timezone,
 } from 'common-lib';
 import { collectResults, safeBind } from './MySQLUtil';
 
@@ -103,16 +103,16 @@ const timezoneForWing: { [key: string]: Timezone } = {
 	WA: 'America/Los_Angeles',
 	WI: 'America/Chicago',
 	WV: 'America/New_York',
-	WY: 'America/Denver'
+	WY: 'America/Denver',
 };
 
 export const getUnitTimezoneGuess = (
 	schema: Schema,
-	account: RegularCAPAccountObject
+	account: RegularCAPAccountObject,
 ): AsyncEither<ServerError, Timezone> =>
 	asyncRight(
 		schema.getCollection<NHQ.Organization>('NHQ_Organization'),
-		errorGenerator('Could not get timezone for organization')
+		errorGenerator('Could not get timezone for organization'),
 	)
 		.map(collection => collection.find('ORGID = :ORGID'))
 		.map(find => safeBind(find, { ORGID: getORGIDFromAccount(account) }))
@@ -120,12 +120,12 @@ export const getUnitTimezoneGuess = (
 		.filter(orgs => orgs.length === 1, {
 			type: 'OTHER',
 			code: 404,
-			message: 'Could not find organization requested'
+			message: 'Could not find organization requested',
 		})
 		.map(get(0))
 		.map(org => timezoneForWing[org.Wing])
 		.filter(timezone => timezone !== undefined && timezone !== null, {
 			type: 'OTHER',
 			code: 404,
-			message: 'Could not find timezone requested'
+			message: 'Could not find timezone requested',
 		});

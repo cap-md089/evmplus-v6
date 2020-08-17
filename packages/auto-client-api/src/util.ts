@@ -101,7 +101,7 @@ export const getTypeNodeForSymbol = (sym: ts.Symbol | undefined): ts.TypeNode | 
 
 export const getKeysForSymbol = (
 	sym: ts.Symbol | undefined,
-	types: ts.TypeChecker
+	types: ts.TypeChecker,
 ): string[] | undefined => {
 	if (
 		!sym ||

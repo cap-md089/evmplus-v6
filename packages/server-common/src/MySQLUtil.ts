@@ -28,7 +28,7 @@ import {
 	errorGenerator,
 	Identifiable,
 	Maybe,
-	ParamType
+	ParamType,
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
@@ -40,11 +40,11 @@ export type MySQLRequest<P extends ParamType = {}, B = any> = Omit<express.Reque
 	BasicMySQLRequest<P, B>;
 
 export const createFakeRequest = <P extends ParamType = {}, B = any>(
-	info: BasicMySQLRequest<P, B>
+	info: BasicMySQLRequest<P, B>,
 ): MySQLRequest<P, B> => info as MySQLRequest<P, B>;
 
 export const collectResults = async <T>(
-	find: mysql.CollectionFind<T>
+	find: mysql.CollectionFind<T>,
 ): Promise<mysql.WithoutEmpty<T>[]> => {
 	const ret: mysql.WithoutEmpty<T>[] = [];
 
@@ -60,8 +60,8 @@ export const collectResults = async <T>(
 	return ret;
 };
 
-export const generateResults = async function*<U>(
-	find: mysql.CollectionFind<U>
+export const generateResults = async function* <U>(
+	find: mysql.CollectionFind<U>,
 ): AsyncIterableIterator<mysql.WithoutEmpty<U>> {
 	type T = mysql.WithoutEmpty<U>;
 
@@ -89,7 +89,7 @@ export const generateResults = async function*<U>(
 			if (results.callback) {
 				results.callback();
 			}
-		}
+		},
 	};
 	let done = false;
 
@@ -137,7 +137,7 @@ export const safeBind = <T, C extends mysql.Binding<T>>(find: C, bind: any): C =
 
 export const generateFindStatement = <T>(
 	find: RecursivePartial<T>,
-	scope: string | null = null
+	scope: string | null = null,
 ): string =>
 	Object.keys(find)
 		.map(val =>
@@ -145,18 +145,18 @@ export const generateFindStatement = <T>(
 				? '(' +
 				  generateFindStatement(
 						find[val as keyof T]!,
-						scope === null ? val : `${scope.replace('.', '')}.${val}`
+						scope === null ? val : `${scope.replace('.', '')}.${val}`,
 				  ) +
 				  ')'
 				: scope === null
 				? `${val} = :${val}`
-				: `${scope}.${val} = :${scope.replace('.', '')}${val}`
+				: `${scope}.${val} = :${scope.replace('.', '')}${val}`,
 		)
 		.join(' AND ');
 
 export const generateBindObject = <T>(
 	bind: RecursivePartial<T>,
-	scope: string | null = null
+	scope: string | null = null,
 ): any =>
 	Object.keys(bind)
 		.map(key => {
@@ -180,12 +180,12 @@ type RecursivePartial<T> = {
 };
 
 export const findAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
-	find: mysql.Collection<T>
+	find: mysql.Collection<T>,
 ) => findAndBind(find, bind);
 
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
-	bind: RecursivePartial<mysql.Bound<T>>
+	bind: RecursivePartial<mysql.Bound<T>>,
 ): mysql.CollectionFind<T> => {
 	const findWithStatement = find.find(generateFindStatement(bind));
 
@@ -201,12 +201,12 @@ export const findAndBind = <T>(
 };
 
 export const modifyAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
-	modify: mysql.Collection<T>
+	modify: mysql.Collection<T>,
 ) => modifyAndBind(modify, bind);
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
-	bind: RecursivePartial<mysql.Bound<T>>
+	bind: RecursivePartial<mysql.Bound<T>>,
 ): mysql.CollectionModify<T> => {
 	const modifyWithStatement = modify.modify(generateFindStatement(bind));
 
@@ -248,7 +248,7 @@ export const convertMySQLTimestampToDateTime = (datestring: string): DateTime =>
 
 		hour: parseInt(values[4], 10),
 		minute: parseInt(values[5], 10),
-		second: parseInt(values[6], 10)
+		second: parseInt(values[6], 10),
 	});
 
 	return datetime;
@@ -256,56 +256,56 @@ export const convertMySQLTimestampToDateTime = (datestring: string): DateTime =>
 
 export const addToCollection = <T>(targetCollection: mysql.Collection<T>) => (item: T) =>
 	asyncRight(targetCollection.add(item).execute(), errorGenerator('Could not add item')).map(
-		always(item)
+		always(item),
 	);
 
 export const addItemToCollection = <T extends AccountIdentifiable>(item: T) => (
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection => collection.add(item).execute())
 		.map(always(item));
 
 export const saveToCollection = <T extends Identifiable>(targetCollection: mysql.Collection<T>) => (
-	item: T
+	item: T,
 ) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
-				id: item.id
-			})
+				id: item.id,
+			}),
 		)
 		.map(modify => modify.patch(item).execute())
 		.map(always(item));
 
 export const saveToCollectionA = <T extends AccountIdentifiable>(
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) => (item: T) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
 				id: item.id,
-				accountID: item.accountID
-			})
+				accountID: item.accountID,
+			}),
 		)
 		.map(modify => modify.patch(item).execute())
 		.map(always(item));
 
 export const saveItemToCollectionA = <T extends AccountIdentifiable>(item: T) => (
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
 				id: item.id,
-				accountID: item.accountID
-			})
+				accountID: item.accountID,
+			}),
 		)
 		.map(modify => modify.patch(item).execute())
 		.map(always(item));
 
 export const deleteFromCollection = <T extends Identifiable>(
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) => (item: T) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		// @ts-ignore
@@ -314,7 +314,7 @@ export const deleteFromCollection = <T extends Identifiable>(
 		.map(always(item));
 
 export const deleteItemFromCollectionA = <T extends AccountIdentifiable>(
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) => (item: T) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection =>
@@ -323,13 +323,13 @@ export const deleteItemFromCollectionA = <T extends AccountIdentifiable>(
 				// @ts-ignore
 				.bind('id', item.id)
 				// @ts-ignore
-				.bind('accountID', item.accountID)
+				.bind('accountID', item.accountID),
 		)
 		.map(remove => remove.execute())
 		.map(destroy);
 
 export const deleteFromCollectionA = <T extends AccountIdentifiable>(item: T) => (
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ) =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection =>
@@ -338,56 +338,56 @@ export const deleteFromCollectionA = <T extends AccountIdentifiable>(item: T) =>
 				// @ts-ignore
 				.bind('id', item.id)
 				// @ts-ignore
-				.bind('accountID', item.accountID)
+				.bind('accountID', item.accountID),
 		)
 		.map(remove => remove.execute())
 		.map(destroy);
 
 export const getOneOfID = (idObj: Identifiable) => <T extends Identifiable>(
-	targetCollection: mysql.Collection<T>
+	targetCollection: mysql.Collection<T>,
 ): ServerEither<mysql.WithoutEmpty<T>> =>
 	asyncRight(targetCollection, errorGenerator('Could not get items'))
 		.map(
 			findAndBindC<T>({
-				id: idObj.id
-			} as RecursivePartial<mysql.Bound<T>>)
+				id: idObj.id,
+			} as RecursivePartial<mysql.Bound<T>>),
 		)
 		.map(collectResults)
 		.filter(results => results.length !== 1, {
 			code: 404,
 			message: 'Could not find requested item',
-			type: 'OTHER'
+			type: 'OTHER',
 		})
 		.map(([result]) => result);
 
 export const getOneOfIDA = <T extends AccountIdentifiable>(idObj: AccountIdentifiable) => <
 	U extends T
 >(
-	targetCollection: mysql.Collection<U>
+	targetCollection: mysql.Collection<U>,
 ): ServerEither<mysql.WithoutEmpty<U>> =>
 	asyncRight(targetCollection, errorGenerator('Could not get items'))
 		.map(
 			findAndBindC<U>({
 				id: idObj.id,
-				accountID: idObj.accountID
-			} as RecursivePartial<mysql.Bound<U>>)
+				accountID: idObj.accountID,
+			} as RecursivePartial<mysql.Bound<U>>),
 		)
 		.map(collectResults)
 		.filter(results => results.length !== 1, {
 			code: 404,
 			message: 'Could not find requested item',
-			type: 'OTHER'
+			type: 'OTHER',
 		})
 		.map(([result]) => result);
 
 export const getNewID = (account: AccountObject) => (
-	collection: mysql.Collection<AccountIdentifiable & { id: number }>
+	collection: mysql.Collection<AccountIdentifiable & { id: number }>,
 ) =>
 	asyncRight(collection, errorGenerator('Could not get new ID'))
 		.map(
 			findAndBindC<AccountIdentifiable & { id: number }>({
-				accountID: account.id
-			})
+				accountID: account.id,
+			}),
 		)
 		.map(find => find.sort('id DESC').limit(1))
 		.map(collectResults)

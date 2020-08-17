@@ -24,7 +24,7 @@ import { PAM } from 'server-common';
 export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = req =>
 	asyncRight(
 		PAM.validateUserAccountCreationToken(req.mysqlx, req.body.token),
-		errorGenerator('Could not find token')
+		errorGenerator('Could not find token'),
 	)
 		.map(
 			member =>
@@ -34,22 +34,22 @@ export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = re
 					req.body.username,
 					req.body.password,
 					member,
-					req.body.token
+					req.body.token,
 				),
 			error =>
 				error instanceof PAM.UserError
 					? {
 							type: 'OTHER',
 							code: 400,
-							message: error.message
+							message: error.message,
 					  }
 					: {
 							type: 'CRASH',
 							code: 500,
 							error,
 							message:
-								'An unknown error occurred while trying to finish creating your account'
-					  }
+								'An unknown error occurred while trying to finish creating your account',
+					  },
 		)
 		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
 		.map(({ id }) => ({ sessionID: id }));

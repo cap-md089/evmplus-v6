@@ -41,11 +41,11 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 	public state: FinishSignupState = {
 		form: {
 			password: null,
-			username: ''
+			username: '',
 		},
 		error: null,
 		success: false,
-		tryingFinish: false
+		tryingFinish: false,
 	};
 
 	constructor(props: PageProps<{ token: string }>) {
@@ -62,12 +62,12 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				onChange={form => this.setState({ form })}
 				validator={{
 					username: name => !!name && name.length > 0 && name.length < 45,
-					password: password => password !== null
+					password: password => password !== null,
 				}}
 				onSubmit={this.finishAccount}
 				submitInfo={{
 					disabled: this.state.tryingFinish,
-					text: this.state.tryingFinish ? 'Finalizing...' : 'Finish creating account'
+					text: this.state.tryingFinish ? 'Finalizing...' : 'Finish creating account',
 				}}
 			>
 				<Title>Finish account setup</Title>
@@ -107,18 +107,18 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		this.setState({
 			error: null,
 			tryingFinish: true,
-			success: false
+			success: false,
 		});
 
 		const fetchResult = await fetchApi.member.account.finishAccountSetup(
 			{},
-			{ token, username, password }
+			{ token, username, password },
 		);
 
 		if (Either.isLeft(fetchResult)) {
 			this.setState({
 				tryingFinish: false,
-				error: fetchResult.value.message
+				error: fetchResult.value.message,
 			});
 		} else {
 			const member = await getMember(fetchResult.value.sessionID);

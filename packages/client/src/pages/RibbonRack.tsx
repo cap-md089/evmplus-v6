@@ -104,7 +104,7 @@ class Ribbon extends React.Component<{
 			Encampment: 'Encampment Ribbon',
 			Recruiter: 'Cadet Recruiter Ribbon',
 			ForeignWarVet: 'Foreign War Veteran',
-			SegwartsAssociation: 'Segwarts Association Award'
+			SegwartsAssociation: 'Segwarts Association Award',
 		};
 
 		return (
@@ -116,7 +116,7 @@ class Ribbon extends React.Component<{
 					backgroundImage: `url(/images/cadet-ribbons/${this.props.source}.png)`,
 					backgroundSize: '100%',
 					backgroundPosition: 'center',
-					height: 20
+					height: 20,
 				}}
 				title={names[this.props.source]}
 			/>
@@ -128,7 +128,7 @@ const Spacer = (props: { size: number }) => (
 	<div
 		style={{
 			flex: `${6 / props.size} 1 ${100 / props.size}%`,
-			width: `${100 / props.size}%`
+			width: `${100 / props.size}%`,
 		}}
 	/>
 );
@@ -159,7 +159,7 @@ class RibbonRack extends React.Component<Partial<Ribbons>> {
 				style={{
 					display: 'flex',
 					flexWrap: 'wrap',
-					width: '50%'
+					width: '50%',
 				}}
 			>
 				{ribbons}

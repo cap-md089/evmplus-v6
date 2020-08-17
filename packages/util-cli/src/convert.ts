@@ -49,7 +49,7 @@ import {
 	errorGenerator,
 	CAPExtraMemberInformation,
 	stringifyMemberReference,
-	RegistryValues
+	RegistryValues,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -73,7 +73,7 @@ enum V5AccountType {
 	CAPGROUP,
 	CAPWING,
 	CAPREGION,
-	CAPEVENT
+	CAPEVENT,
 }
 
 // @ts-ignore
@@ -145,13 +145,13 @@ process.on('unhandledRejection', up => {
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 	const v6session = await getSession({
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 
 	// @ts-ignore
@@ -163,7 +163,7 @@ process.on('unhandledRejection', up => {
 	// @ts-ignore
 	const moveFromOneToOther = <T>(mapFunc: (inObj: T) => T | PromiseLike<T> = identity) => async (
 		from: Collection<T>,
-		to: Collection<T>
+		to: Collection<T>,
 	) => {
 		await to.remove('true').execute();
 
@@ -181,7 +181,7 @@ process.on('unhandledRejection', up => {
 	// @ts-ignore
 	const mapFromOneToOther = <T, U>(mapFunc: (inObj: T) => U | PromiseLike<U>) => async (
 		from: Collection<T>,
-		to: Collection<U>
+		to: Collection<U>,
 	) => {
 		await to.remove('true').execute();
 
@@ -200,7 +200,7 @@ process.on('unhandledRejection', up => {
 	const v6teamsCollection = v6schema.getCollection<RawTeamObject>('Teams');
 
 	const refToMaybe = (
-		mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>
+		mem: MemberReference | { type: 'Null' } | MaybeObj<MemberReference>,
 	): MaybeObj<MemberReference> =>
 		'hasValue' in mem ? mem : mem.type === 'Null' ? Maybe.none() : Maybe.some(mem);
 
@@ -210,9 +210,9 @@ process.on('unhandledRejection', up => {
 			...team,
 			cadetLeader: refToMaybe(team.cadetLeader),
 			seniorCoach: refToMaybe(team.seniorCoach),
-			seniorMentor: refToMaybe(team.seniorMentor)
+			seniorMentor: refToMaybe(team.seniorMentor),
 		}))(v5teamsCollection, v6teamsCollection),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved teams.\n');
 
@@ -225,7 +225,7 @@ process.on('unhandledRejection', up => {
 			| ExternalPointOfContact
 			| (Omit<InternalPointOfContact, 'memberReference'> & {
 					member: MemberReference;
-			  })
+			  }),
 	): InternalPointOfContact | ExternalPointOfContact =>
 		poc.type === PointOfContactType.EXTERNAL
 			? poc
@@ -235,7 +235,7 @@ process.on('unhandledRejection', up => {
 						InternalPointOfContact,
 						'memberReference'
 					>),
-					memberReference: poc.member
+					memberReference: poc.member,
 			  }
 			: poc;
 
@@ -243,9 +243,9 @@ process.on('unhandledRejection', up => {
 	console.log(
 		await moveFromOneToOther<RawEventObject>(event => ({
 			...event,
-			pointsOfContact: event.pointsOfContact.map(correctPOC)
+			pointsOfContact: event.pointsOfContact.map(correctPOC),
 		}))(v5eventsCollection, v6eventsCollection),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved events.\n');
 
@@ -266,7 +266,7 @@ process.on('unhandledRejection', up => {
 						parent: Maybe.some('md001'),
 						wingCalendarID: account.wingCalendarID,
 
-						type: AccountType.CAPEVENT
+						type: AccountType.CAPEVENT,
 					};
 
 				case V5AccountType.CAPGROUP:
@@ -280,7 +280,7 @@ process.on('unhandledRejection', up => {
 						parent: Maybe.some('md001'),
 						wingCalendarID: account.wingCalendarID,
 
-						type: AccountType.CAPGROUP
+						type: AccountType.CAPGROUP,
 					};
 
 				case V5AccountType.CAPREGION:
@@ -301,7 +301,7 @@ process.on('unhandledRejection', up => {
 						wingCalendarID: account.wingCalendarID,
 						parentWing: Maybe.some('md001'),
 
-						type: AccountType.CAPSQUADRON
+						type: AccountType.CAPSQUADRON,
 					};
 
 				case V5AccountType.CAPWING:
@@ -316,19 +316,19 @@ process.on('unhandledRejection', up => {
 						parent: Maybe.none(),
 						wingCalendarID: account.wingCalendarID,
 
-						type: AccountType.CAPWING
+						type: AccountType.CAPWING,
 					};
 			}
 		})(v5accountsCollection, v6accountsCollection),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved accounts.\n');
 
 	const v5attendanceCollection = v5schema.getCollection<RawAttendanceRecord<V5AttendanceRecord>>(
-		'Attendance'
+		'Attendance',
 	);
 	const v6attendanceCollection = v6schema.getCollection<RawAttendanceRecord<AttendanceRecord>>(
-		'Attendance'
+		'Attendance',
 	);
 
 	console.log('Moving attendance...');
@@ -346,21 +346,21 @@ process.on('unhandledRejection', up => {
 			planToUseCAPTransportation: record.planToUseCAPTransportation,
 			shiftTime: {
 				arrivalTime: record.arrivalTime,
-				departureTime: record.departureTime
+				departureTime: record.departureTime,
 			},
 			status: record.status,
 			summaryEmailSent: record.summaryEmailSent,
-			timestamp: record.timestamp
+			timestamp: record.timestamp,
 		}))(v5attendanceCollection, v6attendanceCollection),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved attendance.\n');
 
 	const v5permissionsCollection = v5schema.getCollection<V5StoredMemberPermissions>(
-		'UserPermissions'
+		'UserPermissions',
 	);
 	const v6permissionsCollection = v6schema.getCollection<StoredMemberPermissions>(
-		'UserPermissions'
+		'UserPermissions',
 	);
 
 	const getEventPermissions = (permissions: V5MemberPermissions): CAPEventMemberPermissions => ({
@@ -383,17 +383,17 @@ process.on('unhandledRejection', up => {
 		RegistryEdit: permissions.RegistryEdit,
 		ScanAdd: permissions.ScanAdd,
 		ViewAccountNotifications:
-			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getSquadronPermissions = (
-		permissions: V5MemberPermissions
+		permissions: V5MemberPermissions,
 	): CAPSquadronMemberPermissions => ({
 		type: AccountType.CAPSQUADRON,
 
 		...permissions,
 		ViewAccountNotifications:
-			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getGroupPermissions = (permissions: V5MemberPermissions): CAPGroupMemberPermissions => ({
@@ -413,7 +413,7 @@ process.on('unhandledRejection', up => {
 		RegistryEdit: permissions.RegistryEdit,
 		ScanAdd: permissions.ScanAdd,
 		ViewAccountNotifications:
-			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getWingPermissions = (permissions: V5MemberPermissions): CAPWingMemberPermissions => ({
@@ -434,11 +434,11 @@ process.on('unhandledRejection', up => {
 		RegistryEdit: permissions.RegistryEdit,
 		ScanAdd: permissions.ScanAdd,
 		ViewAccountNotifications:
-			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getRegionPermissions = (
-		permissions: V5MemberPermissions
+		permissions: V5MemberPermissions,
 	): CAPRegionMemberPermissions => ({
 		type: AccountType.CAPREGION,
 
@@ -457,7 +457,7 @@ process.on('unhandledRejection', up => {
 		RegistryEdit: permissions.RegistryEdit,
 		ScanAdd: permissions.ScanAdd,
 		ViewAccountNotifications:
-			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO
+			permissions.ViewAccountNotifications ?? Permissions.ViewAccountNotifications.NO,
 	});
 
 	const getPermissions = (accountType: AccountType) => (permissions: V5MemberPermissions) =>
@@ -480,7 +480,7 @@ process.on('unhandledRejection', up => {
 						type,
 						permissions: getPermissions(type)(permissions),
 						member,
-						accountID
+						accountID,
 					}))
 					.leftMap(
 						err =>
@@ -488,14 +488,14 @@ process.on('unhandledRejection', up => {
 								? {
 										code: 404,
 										type: 'OTHER' as const,
-										message: `Could not find account: ${accountID}`
+										message: `Could not find account: ${accountID}`,
 								  }
 								: err,
-						errorGenerator('Could not get account info')
+						errorGenerator('Could not get account info'),
 					)
-					.fullJoin()
+					.fullJoin(),
 		)(v5permissionsCollection, v6permissionsCollection),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved UserPermissions.\n');
 
@@ -505,14 +505,11 @@ process.on('unhandledRejection', up => {
 	const stringifyRecord = (rec: CAPExtraMemberInformation) =>
 		`${rec.accountID}-${stringifyMemberReference(rec.member)}`;
 
-	await v6schema
-		.getCollection('ExtraMemberInformation')
-		.remove('true')
-		.execute();
+	await v6schema.getCollection('ExtraMemberInformation').remove('true').execute();
 
 	let count = 0;
 	for await (const i of generateResults(
-		v5schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation').find('true')
+		v5schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation').find('true'),
 	)) {
 		if (!stored[stringifyRecord(i)]) {
 			stored[stringifyRecord(i)] = true;
@@ -532,7 +529,7 @@ process.on('unhandledRejection', up => {
 		console.log(`Moving ${table}...`);
 		await moveFromOneToOther(identity)(
 			v5schema.getCollection(table),
-			v6schema.getCollection(table)
+			v6schema.getCollection(table),
 		);
 		console.log(`Moved ${table}.\n`);
 	};
@@ -549,10 +546,10 @@ process.on('unhandledRejection', up => {
 			...reg,
 			Website: {
 				...reg.Website,
-				FaviconID: Maybe.none()
-			}
+				FaviconID: Maybe.none(),
+			},
 		}))(v5registry, v6registry),
-		'records moved'
+		'records moved',
 	);
 	console.log('Moved Registry.');
 

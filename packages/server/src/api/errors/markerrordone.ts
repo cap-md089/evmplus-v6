@@ -30,7 +30,7 @@ import {
 	ErrorResolvedStatus,
 	Errors,
 	get,
-	SessionType
+	SessionType,
 } from 'common-lib';
 import { isRequesterRioux, PAM } from 'server-common';
 import { getErrors } from './geterrors';
@@ -38,13 +38,13 @@ import { getErrors } from './geterrors';
 const errorHandler = errorGenerator('Could not mark error as resolved');
 
 export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(request =>
 	asyncRight(request, errorHandler)
 		.filter(isRequesterRioux, {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member is not a developer'
+			message: 'Member is not a developer',
 		})
 		.flatMap(req =>
 			asyncRight(
@@ -55,16 +55,16 @@ export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSe
 						{
 							column: req.body.column,
 							line: req.body.line,
-							filename: req.body.fileName
-						}
-					]
+							filename: req.body.fileName,
+						},
+					],
 				} as unknown) as Errors,
-				errorHandler
+				errorHandler,
 			)
 				.flatMap(err =>
 					getErrors(req.mysqlx)
 						.map(asyncIterFilter(areErrorObjectsTheSame(err)))
-						.map(asyncIterMap(get('id')))
+						.map(asyncIterMap(get('id'))),
 				)
 				.map(collectGeneratorAsync)
 				.map(errorIDs =>
@@ -72,12 +72,12 @@ export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSe
 						.getCollection<Errors>('Errors')
 						.modify(`id in [${errorIDs.join(',')}]`)
 						.patch({
-							resolved: ErrorResolvedStatus.RESOLVED
+							resolved: ErrorResolvedStatus.RESOLVED,
 						})
-						.execute()
+						.execute(),
 				)
-				.map(destroy)
-		)
+				.map(destroy),
+		),
 );
 
 export default func;

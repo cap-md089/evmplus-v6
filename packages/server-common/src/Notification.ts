@@ -61,17 +61,17 @@ export const getNotification = (schema: Schema) => (account: AccountObject) => <
 	T extends NotificationTarget,
 	D extends NotificationData
 >(
-	id: string | number
+	id: string | number,
 ): ServerEither<RawNotificationObject<C, T, D>> =>
 	asyncRight(
 		schema.getCollection<RawNotificationObject<C, T, D>>('Notifications'),
-		errorGenerator('Could not get notification')
+		errorGenerator('Could not get notification'),
 	)
 		.flatMap(
 			getOneOfIDA({
 				id,
 				accountID: account.id,
-			})
+			}),
 		)
 		.map(val => ({
 			...val,
@@ -85,17 +85,17 @@ export const expandNotification = (schema: Schema) => (account: AccountObject) =
 	T extends NotificationTarget,
 	D extends NotificationData
 >(
-	obj: RawNotificationObject<C, T, D>
+	obj: RawNotificationObject<C, T, D>,
 ): ServerEither<NotificationObject<C, T, D>> =>
 	AsyncEither.All<ServerError, MaybeObj<string>, MaybeObj<string>>([
 		obj.target.type === NotificationTargetType.MEMBER
 			? getMemberName(schema)(account)((obj.target as NotificationMemberTarget).to).map(
-					Maybe.some
+					Maybe.some,
 			  )
 			: asyncRight(Maybe.none(), errorGenerator('Could not get member names')),
 		obj.cause.type === NotificationCauseType.MEMBER
 			? getMemberName(schema)(account)((obj.cause as NotificationMemberCause).from).map(
-					Maybe.some
+					Maybe.some,
 			  )
 			: asyncRight(Maybe.none(), errorGenerator('Could not get member names')),
 	]).map(
@@ -112,18 +112,18 @@ export const expandNotification = (schema: Schema) => (account: AccountObject) =
 							fromMemberName,
 					  }
 					: {}),
-			} as NotificationObject<C, T, D>)
+			} as NotificationObject<C, T, D>),
 	);
 
 const getNewNotificationID = (schema: Schema) => (account: AccountObject): ServerEither<number> =>
 	asyncRight(
 		schema.getCollection<RawNotificationObject>('Notifications'),
-		errorGenerator('Could not get notifications')
+		errorGenerator('Could not get notifications'),
 	)
 		.map(
 			findAndBindC<RawNotificationObject>({
 				accountID: account.id,
-			})
+			}),
 		)
 		.map(generateResults)
 		.map(asyncIterMap(get('id')))
@@ -147,7 +147,7 @@ export const toggleRead = <T extends RawNotificationObject>(notification: T): T 
 
 export const deleteNotification = (schema: Schema) => (notification: NotificationObject) =>
 	deleteItemFromCollectionA(schema.getCollection<RawNotificationObject>('Notifications'))(
-		notification
+		notification,
 	);
 
 export const saveNotification = (schema: Schema) => (notification: NotificationObject) =>
@@ -158,7 +158,7 @@ export const createNotification = (schema: Schema) => (account: AccountObject) =
 	T extends NotificationTarget = NotificationTarget,
 	D extends NotificationData = NotificationData
 >(
-	notification: NewNotificationObject<C, T, D>
+	notification: NewNotificationObject<C, T, D>,
 ): ServerEither<RawNotificationObject<C, T, D>> =>
 	getNewNotificationID(schema)(account)
 		.map(id => ({
@@ -172,8 +172,8 @@ export const createNotification = (schema: Schema) => (account: AccountObject) =
 		}))
 		.flatMap(
 			addToCollection<RawNotificationObject<C, T, D>>(
-				schema.getCollection('Notifications') as Collection<RawNotificationObject<C, T, D>>
-			)
+				schema.getCollection('Notifications') as Collection<RawNotificationObject<C, T, D>>,
+			),
 		);
 
 export const canSeeNotification = (user: User) => (notification: NotificationObject) =>

@@ -75,7 +75,7 @@ export const insigniaURLs: { [K in InsigniaKeys]: string } = {
 	doolittleInsigniaChecked: doolittleInsignia,
 	doolittleFsInsigniaChecked: doolittleFsInsignia,
 	chiefInsigniaChecked: chiefInsignia,
-	chiefFsInsigniaChecked: chiefFsInsignia
+	chiefFsInsigniaChecked: chiefFsInsignia,
 };
 
 export type RibbonKeys = Exclude<keyof QuizInput, InsigniaKeys | 'grade'>;
@@ -115,5 +115,5 @@ export const ribbonURLs: { [K in RibbonKeys]: string } = {
 	iaceChecked: iaceRibbon,
 	vfwOfficer: vfwOfficerRibbon,
 	afaChecked: afaRibbon,
-	redService: redServiceRibbon
+	redService: redServiceRibbon,
 };

@@ -59,7 +59,7 @@ type GenericIntersect<T> = GenericType<T> & ComplexThing;
 enum TestEnum {
 	ITEMONE = 0,
 	ITEMTWO = 1,
-	ITEMTHREE = 'three'
+	ITEMTHREE = 'three',
 }
 
 const requiredTypeValidator = validator<RequiredType>(Validator);
@@ -105,25 +105,25 @@ describe('Validator', () => {
 		expect(
 			complexArrayValidator.validate(
 				{ things: [{ thing: 'string' }, { thing: 'string2' }] },
-				''
-			)
+				'',
+			),
 		).toBeRight();
 		expect(
-			complexArrayValidator.validate({ things: [{ thing: 'string' }, { thing: 1 }] }, '')
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, { thing: 1 }] }, ''),
 		).toBeLeft();
 		expect(
-			complexArrayValidator.validate({ things: [{ thing: 'string' }, null] }, '')
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, null] }, ''),
 		).toBeLeft();
 		expect(
-			complexArrayValidator.validate({ things: [{ thing: 'string' }, undefined] }, '')
+			complexArrayValidator.validate({ things: [{ thing: 'string' }, undefined] }, ''),
 		).toBeLeft();
 	});
 
 	it('should prune basic types', () => {
 		expect(
-			basicValidator.validate({ thing: 'string', otherThing: 'anotherstring' }, '')
+			basicValidator.validate({ thing: 'string', otherThing: 'anotherstring' }, ''),
 		).toEqualRight({
-			thing: 'string'
+			thing: 'string',
 		});
 	});
 
@@ -132,14 +132,14 @@ describe('Validator', () => {
 			complexValidator.validate(
 				{
 					thing: 'string',
-					basicThing: { thing: 'string', otherThing: 'string' }
+					basicThing: { thing: 'string', otherThing: 'string' },
 				},
-				''
-			)
+				'',
+			),
 		).toEqualRight({
 			basicThing: {
-				thing: 'string'
-			}
+				thing: 'string',
+			},
 		});
 
 		expect(
@@ -148,35 +148,35 @@ describe('Validator', () => {
 					things: [
 						{
 							thing: 'fdsa',
-							anotherThing: 1
+							anotherThing: 1,
 						},
 						{
-							thing: 'asdf'
-						}
+							thing: 'asdf',
+						},
 					],
-					fdsa: 1
+					fdsa: 1,
 				},
-				''
-			)
+				'',
+			),
 		).toEqualRight({
 			things: [
 				{
-					thing: 'fdsa'
+					thing: 'fdsa',
 				},
 				{
-					thing: 'asdf'
-				}
-			]
+					thing: 'asdf',
+				},
+			],
 		});
 	});
 
 	it('should validate complex unions', () => {
 		expect(maybeValidator.validate({ hasValue: false }, '')).toEqualRight({
-			hasValue: false
+			hasValue: false,
 		});
 		expect(maybeValidator.validate({ hasValue: true, value: 0 }, '')).toEqualRight({
 			hasValue: true,
-			value: 0
+			value: 0,
 		});
 	});
 
@@ -186,14 +186,14 @@ describe('Validator', () => {
 				{
 					thing: 'string',
 					basicThing: { thing: 'string' },
-					otherThing: 'string'
+					otherThing: 'string',
 				},
-				''
-			)
+				'',
+			),
 		).toEqualRight({
 			thing: 'string',
 			basicThing: { thing: 'string' },
-			otherThing: 'string'
+			otherThing: 'string',
 		});
 		expect(intersectValidator.validate({ basicThing: { thing: 'string' } }, '')).toBeLeft();
 		expect(intersectValidator.validate({ thing: 'string' }, '')).toBeLeft();
@@ -202,15 +202,15 @@ describe('Validator', () => {
 		expect(
 			genericIntersectValidator.validate(
 				{ thing: 0, basicThing: { thing: 'string' }, otherThing: 'string' },
-				''
-			)
+				'',
+			),
 		).toEqualRight({
 			thing: 0,
 			basicThing: { thing: 'string' },
-			otherThing: 'string'
+			otherThing: 'string',
 		});
 		expect(
-			genericIntersectValidator.validate({ basicThing: { thing: 'string' } }, '')
+			genericIntersectValidator.validate({ basicThing: { thing: 'string' } }, ''),
 		).toBeLeft();
 		expect(genericIntersectValidator.validate({ thing: 0 }, '')).toBeLeft();
 		expect(genericIntersectValidator.validate({}, '')).toBeLeft();
@@ -225,53 +225,53 @@ describe('Validator', () => {
 	it('should validate Required/Partial', () => {
 		expect(requiredTypeValidator.validate({ thing: 'string' }, '')).toBeRight();
 		expect(requiredTypeValidator.validate({ thing: 'string' }, '')).toMatchRight({
-			thing: 'string'
+			thing: 'string',
 		});
 		expect(requiredTypeValidator.validate({}, '')).toBeLeft();
 
 		expect(optionalTypeValidator.validate({}, '')).toBeRight();
 		expect(
-			optionalTypeValidator.validate({ basicThing: { thing: 'string' } }, '')
+			optionalTypeValidator.validate({ basicThing: { thing: 'string' } }, ''),
 		).toEqualRight({
-			basicThing: { thing: 'string' }
+			basicThing: { thing: 'string' },
 		});
 		expect(optionalTypeValidator.validate({ basicThing: null }, '')).toBeLeft();
 		expect(optionalTypeValidator.validate({ thing: null }, '')).toEqualRight({});
 
 		expect(requiredGenericTypeValidator.validate({}, '')).toBeLeft();
 		expect(
-			requiredGenericTypeValidator.validate({ otherThing: 'string', thing: 0 }, '')
+			requiredGenericTypeValidator.validate({ otherThing: 'string', thing: 0 }, ''),
 		).toEqualRight({
 			otherThing: 'string',
-			thing: 0
+			thing: 0,
 		});
 		expect(requiredGenericTypeValidator.validate({ otherThing: null }, '')).toBeLeft();
 
 		expect(optionalGenericTypeValidator.validate({}, '')).toBeRight();
 		expect(
-			optionalGenericTypeValidator.validate({ otherThing: 'string', thing: 0 }, '')
+			optionalGenericTypeValidator.validate({ otherThing: 'string', thing: 0 }, ''),
 		).toEqualRight({
 			otherThing: 'string',
-			thing: 0
+			thing: 0,
 		});
 		expect(optionalGenericTypeValidator.validate({ otherThing: null }, '')).toBeLeft();
 		expect(
-			optionalGenericTypeValidator.validate({ otherThing: 'string', eh: 'string' }, '')
+			optionalGenericTypeValidator.validate({ otherThing: 'string', eh: 'string' }, ''),
 		).toEqualRight({ otherThing: 'string' });
 		expect(optionalGenericTypeValidator.validate({ thing: 0, eh: 'string' }, '')).toEqualRight({
-			thing: 0
+			thing: 0,
 		});
 	});
 
 	it('should validate generic types', () => {
 		expect(
-			genericTypeNumberValidator.validate({ thing: 0, otherThing: 'string' }, '')
+			genericTypeNumberValidator.validate({ thing: 0, otherThing: 'string' }, ''),
 		).toEqualRight({ thing: 0, otherThing: 'string' });
 		expect(genericTypeNumberValidator.validate({ thing: 'string' }, '')).toBeLeft();
 		expect(genericTypeNumberValidator.validate({}, '')).toBeLeft();
 
 		expect(
-			genericTypeStringValidator.validate({ thing: 'string', otherThing: 'string' }, '')
+			genericTypeStringValidator.validate({ thing: 'string', otherThing: 'string' }, ''),
 		).toEqualRight({ thing: 'string', otherThing: 'string' });
 		expect(genericTypeStringValidator.validate({ thing: 0 }, '')).toBeLeft();
 		expect(genericTypeStringValidator.validate({}, '')).toBeLeft();
@@ -279,21 +279,21 @@ describe('Validator', () => {
 		expect(
 			genericTypeBasicTypeValidator.validate(
 				{ thing: { thing: 'string' }, otherThing: 'string' },
-				''
-			)
+				'',
+			),
 		).toEqualRight({ thing: { thing: 'string' }, otherThing: 'string' });
 		expect(genericTypeBasicTypeValidator.validate({ thing: 0 }, '')).toBeLeft();
 		expect(genericTypeBasicTypeValidator.validate({}, '')).toBeLeft();
 
 		expect(
-			genericArrayValidator.validate([{ otherThing: 'string', thing: 'string' }], '')
+			genericArrayValidator.validate([{ otherThing: 'string', thing: 'string' }], ''),
 		).toBeRight();
 		expect(genericArrayValidator.validate([{ otherThing: 'string', thing: 0 }], '')).toBeLeft();
 		expect(
-			genericArrayValidator2.validate([{ otherThing: 'string', thing: 'string' }], '')
+			genericArrayValidator2.validate([{ otherThing: 'string', thing: 'string' }], ''),
 		).toBeRight();
 		expect(
-			genericArrayValidator2.validate([{ otherThing: 'string', thing: 0 }], '')
+			genericArrayValidator2.validate([{ otherThing: 'string', thing: 0 }], ''),
 		).toBeLeft();
 	});
 

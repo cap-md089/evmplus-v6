@@ -50,15 +50,15 @@ import './Form.scss';
 import {
 	ContactInput,
 	ContactInstanceInput,
-	PasswordType
+	PasswordType,
 } from '../../pages/account/CreateProspectiveMember';
 
 const saveMessage = {
-	marginLeft: 10
+	marginLeft: 10,
 };
 
 const hiddenStyles = {
-	display: 'none'
+	display: 'none',
 };
 
 export const defaultFullWidthElements = [FormBlock, TeamSelector];
@@ -95,7 +95,7 @@ class Divider extends React.Component {
 }
 
 const fullWidth = {
-	width: '100%'
+	width: '100%',
 };
 
 /**
@@ -103,10 +103,7 @@ const fullWidth = {
  */
 class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	public static GenerateID = (id: string) =>
-		id
-			.toLocaleLowerCase()
-			.replace(/ +/g, '-')
-			.replace(/\//g, '');
+		id.toLocaleLowerCase().replace(/ +/g, '-').replace(/\//g, '');
 
 	public readonly IsLabel = true;
 
@@ -129,7 +126,7 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 				style={{
 					...fullWidth,
 					boxSizing: 'border-box',
-					gridColumn: '1 / 3'
+					gridColumn: '1 / 3',
 				}}
 			>
 				<h3 id={id}>{this.props.children}</h3>
@@ -184,11 +181,11 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 }
 
 export const isHideableElement = (
-	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>
+	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>,
 ): el is React.ReactElement<InputProps<any>> => typeof el.props.hidden !== 'undefined';
 
 export const isFullWidthableElement = (
-	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>
+	el: React.ReactElement<InputProps<any>> | React.ReactElement<InputProps<any>>,
 ): el is React.ReactElement<InputProps<any>> => typeof el.props.fullWidth !== 'undefined';
 
 /**
@@ -235,7 +232,7 @@ export interface FormProps<F> {
 		fields: F,
 		error: BooleanFields<F>,
 		changed: BooleanFields<F>,
-		hasError: boolean
+		hasError: boolean,
 	) => void;
 	/**
 	 * Styles the submit button
@@ -290,7 +287,7 @@ export interface FormProps<F> {
 		error: BooleanFields<F>,
 		changed: BooleanFields<F>,
 		hasError: boolean,
-		fieldChanged: keyof F
+		fieldChanged: keyof F,
 	) => void;
 	/**
 	 * Sets the values given the name. Allows for not having to set form values repeatedly
@@ -373,7 +370,7 @@ export default class SimpleForm<
 					// @ts-ignore
 					fieldsError[field] = !this.props.validator[field](
 						this.props.values[i],
-						this.props.values
+						this.props.values,
 					);
 				}
 			}
@@ -385,7 +382,7 @@ export default class SimpleForm<
 	protected get hasError(): boolean {
 		return (Object.values(this.fieldsError) as boolean[]).reduce(
 			(prev, curr) => prev || curr,
-			false
+			false,
 		);
 	}
 
@@ -402,7 +399,7 @@ export default class SimpleForm<
 		super(props);
 
 		this.state = {
-			disabled: false
+			disabled: false,
 		};
 
 		this.onChange = this.onChange.bind(this);
@@ -420,7 +417,7 @@ export default class SimpleForm<
 			text: 'Submit',
 			className: 'submit',
 			disabled: this.props.formDisabled || this.hasError,
-			...(this.props.submitInfo || {})
+			...(this.props.submitInfo || {}),
 		};
 
 		return (
@@ -486,8 +483,9 @@ export default class SimpleForm<
 									key: i + 1,
 									value,
 									hasError:
-										this.fieldsChanged[childName] && this.fieldsError[childName]
-								})
+										this.fieldsChanged[childName] &&
+										this.fieldsError[childName],
+								}),
 							];
 						}
 						if (!childFullWidth) {
@@ -520,7 +518,7 @@ export default class SimpleForm<
 									ret.unshift(
 										<Label key={i - 1} fullWidth={childFullWidth}>
 											{previousChild}
-										</Label>
+										</Label>,
 									);
 								} else {
 									// @ts-ignore
@@ -530,8 +528,8 @@ export default class SimpleForm<
 											React.cloneElement(previousChild, {
 												onUpdate: this.onChange,
 												onInitialize: this.onInitialize,
-												key: i
-											})
+												key: i,
+											}),
 										);
 									}
 								}
@@ -552,11 +550,11 @@ export default class SimpleForm<
 							</div>
 						);
 					})}
-				{(typeof this.props.showSubmitButton === 'undefined' ? (
-					true
-				) : (
-					this.props.showSubmitButton
-				)) ? (
+				{(
+					typeof this.props.showSubmitButton === 'undefined'
+						? true
+						: this.props.showSubmitButton
+				) ? (
 					<div className="formbar">
 						<div className="label-formbox" />
 						<div className="input-formbox">
@@ -581,7 +579,7 @@ export default class SimpleForm<
 					style={{
 						overflow: 'auto',
 						clear: 'both',
-						height: 1
+						height: 1,
 					}}
 				/>
 			</form>
@@ -635,7 +633,7 @@ export default class SimpleForm<
 				this.props.values,
 				this.fieldsError,
 				this.fieldsChanged,
-				this.hasError
+				this.hasError,
 			);
 		}
 	}
@@ -656,7 +654,7 @@ export interface BasicFormProps<T> extends FormProps<T> {
 }
 
 const clearFix: React.CSSProperties = {
-	clear: 'both'
+	clear: 'both',
 };
 
 /**
@@ -683,15 +681,15 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 				? {
 						text: 'Submit',
 						className: 'submit',
-						disabled: false
+						disabled: false,
 				  }
 				: Object.assign(
 						{
 							text: 'Submit',
 							className: 'submit',
-							disabled: false
+							disabled: false,
 						},
-						this.props.submitInfo
+						this.props.submitInfo,
 				  );
 
 		return (
@@ -713,7 +711,7 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 									onUpdate: this.onChange,
 									onInitialize: this.onInitialize,
 									value,
-									key: i
+									key: i,
 								})}
 							</div>
 						);
@@ -760,5 +758,5 @@ export {
 	TeamSelector,
 	MemberSelector,
 	TeamMemberInput,
-	PermissionsEdit
+	PermissionsEdit,
 };

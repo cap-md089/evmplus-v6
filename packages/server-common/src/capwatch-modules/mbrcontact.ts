@@ -39,7 +39,7 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
 				Contact: duties.Contact,
 				UsrID: duties.UsrID,
 				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				DoNotContact: duties.DoNotContact
+				DoNotContact: duties.DoNotContact,
 			};
 
 			await mbrContactCollection.add(values).execute();

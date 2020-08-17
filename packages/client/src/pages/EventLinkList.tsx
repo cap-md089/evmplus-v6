@@ -22,7 +22,7 @@ import {
 	Either,
 	EventStatus,
 	RadioReturnWithOther,
-	RawEventObject
+	RawEventObject,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -85,19 +85,19 @@ function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 
 export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public async componentDidMount() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/eventlinklist',
-				text: 'Event list'
-			}
+				text: 'Event list',
+			},
 		]);
 
 		this.props.updateSideNav([]);
@@ -112,16 +112,16 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			if (Either.isLeft(eventListEither)) {
 				this.setState({
 					state: 'ERROR',
-					message: eventListEither.value.message
+					message: eventListEither.value.message,
 				});
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
 				let events = eventListEither.value.sort(
-					(a, b) => a.startDateTime - b.startDateTime
+					(a, b) => a.startDateTime - b.startDateTime,
 				);
 
 				events = events.filter(
-					event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000
+					event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000,
 				);
 
 				const eventsThatAreLinked = events.filter(event => !!event.sourceEvent);
@@ -129,7 +129,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 				this.setState({
 					state: 'LOADED',
 					events,
-					eventsThatAreLinked
+					eventsThatAreLinked,
 				});
 			}
 		}
@@ -202,12 +202,12 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								</td>
 								<td
 									style={{
-										whiteSpace: 'nowrap'
+										whiteSpace: 'nowrap',
 									}}
 								>
 									{DateTime.fromMillis(event.startDateTime).toLocaleString({
 										...DateTime.DATETIME_SHORT,
-										hour12: false
+										hour12: false,
 									})}
 								</td>
 								<td>{getEventStatus(event.status)}</td>

@@ -45,5 +45,5 @@ export default (raw: RawServerConfiguration): ServerConfiguration => ({
 	AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
 	AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,
 
-	RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET
+	RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET,
 });

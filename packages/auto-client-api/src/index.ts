@@ -42,7 +42,7 @@ if (require.main === module) {
 
 	(async (inputProjectConfigFile: string, programOutputDirectory: string) => {
 		await promisify(mkdir)(programOutputDirectory, {
-			recursive: true
+			recursive: true,
 		});
 
 		const host: ts.ParseConfigFileHost = ts.sys as any;
@@ -59,12 +59,12 @@ if (require.main === module) {
 
 		const program = ts.createProgram({
 			rootNames: fileNames,
-			options
+			options,
 		});
 
 		const transformers: ts.CustomTransformers = {
 			before: [transformer(program)],
-			after: []
+			after: [],
 		};
 
 		const { emitSkipped, diagnostics } = program.emit(
@@ -72,7 +72,7 @@ if (require.main === module) {
 			undefined,
 			undefined,
 			false,
-			transformers
+			transformers,
 		);
 
 		if (emitSkipped) {
@@ -100,7 +100,7 @@ const isImportExpression = (node: ts.Node): node is ts.ImportDeclaration => {
 			require.resolve(
 				module.startsWith('.')
 					? resolve(dirname(node.getSourceFile().fileName), module)
-					: module
+					: module,
 			)
 		);
 	} catch (e) {
@@ -112,7 +112,7 @@ const indexDTs = resolve(__dirname, '..', 'index.d.ts');
 
 const isFunctionCallExpression = (name: string) => (
 	node: ts.Node,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ): node is ts.CallExpression => {
 	if (!ts.isCallExpression(node)) {
 		return false;
@@ -144,23 +144,23 @@ const isGenerateAPITreeCallExpression = isFunctionCallExpression('generateAPITre
 function visitNodeAndChildren(
 	node: ts.SourceFile,
 	program: ts.Program,
-	context: ts.TransformationContext
+	context: ts.TransformationContext,
 ): ts.SourceFile;
 function visitNodeAndChildren(
 	node: ts.Node,
 	program: ts.Program,
-	context: ts.TransformationContext
+	context: ts.TransformationContext,
 ): ts.Node | undefined;
 
 function visitNodeAndChildren(
 	node: ts.Node,
 	program: ts.Program,
-	context: ts.TransformationContext
+	context: ts.TransformationContext,
 ): ts.Node | undefined {
 	return ts.visitEachChild(
 		visitNode(node, program),
 		childNode => visitNodeAndChildren(childNode, program, context),
-		context
+		context,
 	);
 }
 

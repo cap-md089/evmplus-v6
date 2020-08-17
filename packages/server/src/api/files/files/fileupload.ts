@@ -29,7 +29,7 @@ import {
 	SessionType,
 	toReference,
 	User,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import {
 	accountRequestTransformer,
@@ -38,7 +38,7 @@ import {
 	getFilePath,
 	MySQLRequest,
 	PAM,
-	uploadFile
+	uploadFile,
 } from 'server-common';
 import { v4 as uuid } from 'uuid';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
@@ -65,7 +65,7 @@ export const func = () =>
 			.flatMap(request =>
 				getFileObject(false)(req.mysqlx)(request.account)(parentID).map<
 					[User, AccountObject, RawFileObject]
-				>(file => [request.member, request.account, file])
+				>(file => [request.member, request.account, file]),
 			)
 			.join();
 
@@ -109,8 +109,8 @@ export const func = () =>
 			headers: req.headers,
 			limits: {
 				files: 1,
-				fields: 1
-			}
+				fields: 1,
+			},
 		});
 
 		req.pipe(busboy);
@@ -133,28 +133,28 @@ export const func = () =>
 				permissions: [
 					{
 						type: FileUserAccessControlType.OTHER,
-						permission: FileUserAccessControlPermissions.READ
-					}
+						permission: FileUserAccessControlPermissions.READ,
+					},
 				],
 				owner,
-				parentID
+				parentID,
 			};
 
 			Promise.all([
 				uploadFile(req.configuration)(uploadedFile)(file),
-				filesCollection.add(uploadedFile).execute()
+				filesCollection.add(uploadedFile).execute(),
 			])
 				.then(async () => {
 					const fullFileObject: FullFileObject = await getFileObject(false)(req.mysqlx)(
-						account
+						account,
 					)(id)
 						.flatMap<FullFileObject>(newFile =>
 							getFilePath(req.mysqlx)(account)(newFile)
 								.map<FileObject>(folderPath => ({
 									...newFile,
-									folderPath
+									folderPath,
 								}))
-								.flatMap<FullFileObject>(expandFileObject(req.mysqlx)(account))
+								.flatMap<FullFileObject>(expandFileObject(req.mysqlx)(account)),
 						)
 						.fullJoin();
 

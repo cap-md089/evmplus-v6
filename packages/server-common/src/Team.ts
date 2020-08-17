@@ -48,7 +48,7 @@ import {
 	ServerError,
 	set,
 	TeamPublicity,
-	User
+	User,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import { getMemberName } from './Members';
@@ -60,18 +60,18 @@ import {
 	findAndBindC,
 	generateResults,
 	getNewID,
-	saveToCollectionA
+	saveToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
 
 // TODO: Simplify
 export const getStaffTeam = (schema: Schema) => (
-	account: RawCAPSquadronAccountObject
+	account: RawCAPSquadronAccountObject,
 ): ServerEither<RawTeamObject> =>
 	asyncRight(
 		(async () => {
 			const cadetDutyPositions = schema.getCollection<NHQ.CadetDutyPosition>(
-				'NHQ_CadetDutyPosition'
+				'NHQ_CadetDutyPosition',
 			);
 			const dutyPositions = schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition');
 
@@ -85,7 +85,7 @@ export const getStaffTeam = (schema: Schema) => (
 				seniorCoach: Maybe.none(),
 				seniorMentor: Maybe.none(),
 				teamHistory: [],
-				visibility: TeamPublicity.PROTECTED
+				visibility: TeamPublicity.PROTECTED,
 			};
 
 			const cadetGenerators = [];
@@ -94,9 +94,9 @@ export const getStaffTeam = (schema: Schema) => (
 				cadetGenerators.push(
 					generateResults(
 						findAndBind(cadetDutyPositions, {
-							ORGID
-						})
-					)
+							ORGID,
+						}),
+					),
 				);
 			}
 
@@ -112,14 +112,14 @@ export const getStaffTeam = (schema: Schema) => (
 					if (cadetDutyPosition.Duty === 'Cadet Commander') {
 						teamObject.cadetLeader = Maybe.some({
 							type: 'CAPNHQMember',
-							id: cadetDutyPosition.CAPID
+							id: cadetDutyPosition.CAPID,
 						});
 					}
 
 					if (!cadets[cadetDutyPosition.CAPID]) {
 						cadets[cadetDutyPosition.CAPID] = {
 							positions: [cadetDutyPosition.Duty],
-							joined: +DateTime.fromISO(cadetDutyPosition.DateMod)
+							joined: +DateTime.fromISO(cadetDutyPosition.DateMod),
 						};
 					} else {
 						const cadet = cadets[cadetDutyPosition.CAPID];
@@ -127,7 +127,7 @@ export const getStaffTeam = (schema: Schema) => (
 						cadet.positions.push(cadetDutyPosition.Duty);
 						cadet.joined = Math.min(
 							cadet.joined,
-							+DateTime.fromISO(cadetDutyPosition.DateMod)
+							+DateTime.fromISO(cadetDutyPosition.DateMod),
 						);
 					}
 				}
@@ -140,8 +140,8 @@ export const getStaffTeam = (schema: Schema) => (
 						joined: cadets[cadet].joined,
 						reference: {
 							type: 'CAPNHQMember',
-							id: parseInt(cadet, 10)
-						}
+							id: parseInt(cadet, 10),
+						},
 					});
 				}
 			}
@@ -149,32 +149,32 @@ export const getStaffTeam = (schema: Schema) => (
 			const deputyCommanderDutyPositionGenerator = generateResults(
 				findAndBind(dutyPositions, {
 					Duty: 'Deputy Commander for Cadets',
-					ORGID: account.mainOrg
-				})
+					ORGID: account.mainOrg,
+				}),
 			);
 
 			for await (const senior of deputyCommanderDutyPositionGenerator) {
 				if (senior.Asst === 0) {
 					teamObject.seniorMentor = Maybe.some({
 						type: 'CAPNHQMember',
-						id: senior.CAPID
+						id: senior.CAPID,
 					});
 				}
 			}
 
 			return teamObject;
 		})(),
-		errorGenerator('Could not get cadet staff team')
+		errorGenerator('Could not get cadet staff team'),
 	);
 
 export const getTeam = (schema: Schema) => (account: AccountObject) => (
-	teamID: number
+	teamID: number,
 ): ServerEither<RawTeamObject> =>
 	asyncRight(parseInt(teamID + '', 10), errorGenerator('Could not get team information'))
 		.filter(num => !isNaN(num), {
 			type: 'OTHER',
 			code: 400,
-			message: 'Invalid Team ID provided'
+			message: 'Invalid Team ID provided',
 		})
 		.flatMap(id =>
 			id === 0 && account.type === AccountType.CAPSQUADRON
@@ -183,51 +183,51 @@ export const getTeam = (schema: Schema) => (account: AccountObject) => (
 				? asyncLeft({
 						type: 'OTHER',
 						code: 404,
-						message: 'Cannot get team'
+						message: 'Cannot get team',
 				  })
 				: asyncRight(
 						schema.getCollection<RawTeamObject>('Teams'),
-						errorGenerator('Could not get team information')
+						errorGenerator('Could not get team information'),
 				  )
 						.map(
 							findAndBindC<RawTeamObject>({
 								id,
-								accountID: account.id
-							})
+								accountID: account.id,
+							}),
 						)
 						.map(collectResults)
 						.filter(results => results.length === 1, {
 							type: 'OTHER',
 							code: 404,
-							message: 'Cannot get team'
+							message: 'Cannot get team',
 						})
-						.map(get(0))
+						.map(get(0)),
 		);
 
 const maybeGetTeamLeaderName = (schema: Schema) => (account: AccountObject) => (
-	maybeReference: MaybeObj<MemberReference>
+	maybeReference: MaybeObj<MemberReference>,
 ): ServerEither<MaybeObj<string>> =>
 	Maybe.cata<MemberReference, ServerEither<MaybeObj<string>>>(() =>
-		asyncRight(Maybe.none(), errorGenerator('Could not get member name'))
+		asyncRight(Maybe.none(), errorGenerator('Could not get member name')),
 	)(memberReference => getMemberName(schema)(account)(memberReference).map(Maybe.some))(
-		maybeReference
+		maybeReference,
 	);
 
 function getTeamMemberName(
-	schema: Schema
+	schema: Schema,
 ): (
-	account: AccountObject
+	account: AccountObject,
 ) => (teamMember: RawPreviousTeamMember) => ServerEither<FullPreviousTeamMember>;
 function getTeamMemberName(schema: Schema) {
 	return (account: AccountObject) => (teamMember: RawTeamMember): ServerEither<FullTeamMember> =>
 		getMemberName(schema)(account)(teamMember.reference).map(name => ({
 			...teamMember,
-			name
+			name,
 		}));
 }
 
 export const expandTeam = (schema: Schema) => (account: AccountObject) => (
-	rawTeam: RawTeamObject
+	rawTeam: RawTeamObject,
 ): ServerEither<FullTeamObject> => {
 	const leaderNameGetter = maybeGetTeamLeaderName(schema)(account);
 	const memberNameGetter = getTeamMemberName(schema)(account);
@@ -240,36 +240,36 @@ export const expandTeam = (schema: Schema) => (account: AccountObject) => (
 			Promise.all(
 				rawTeam.members
 					.map(memberNameGetter)
-					.map(name => name.cata<MaybeObj<FullTeamMember>>(Maybe.none, Maybe.some))
+					.map(name => name.cata<MaybeObj<FullTeamMember>>(Maybe.none, Maybe.some)),
 			),
-			errorGenerator('Could not get team members')
+			errorGenerator('Could not get team members'),
 		),
 		asyncRight(
 			Promise.all(
 				rawTeam.teamHistory
 					.map(memberNameGetter)
 					.map(name =>
-						name.cata<MaybeObj<FullPreviousTeamMember>>(Maybe.none, Maybe.some)
-					)
+						name.cata<MaybeObj<FullPreviousTeamMember>>(Maybe.none, Maybe.some),
+					),
 			),
-			errorGenerator('Could not get team history')
-		)
+			errorGenerator('Could not get team history'),
+		),
 	]).map(([cadetLeaderName, seniorCoachName, seniorMentorName, members, teamHistory]) => ({
 		...rawTeam,
 		members: members.filter(Maybe.isSome).map(get('value')),
 		seniorCoachName,
 		cadetLeaderName,
 		seniorMentorName,
-		teamHistory: teamHistory.filter(Maybe.isSome).map(get('value'))
+		teamHistory: teamHistory.filter(Maybe.isSome).map(get('value')),
 	}));
 };
 
 export const createTeamFunc = (now = Date.now) => (emitter: MemberUpdateEventEmitter) => (
-	schema: Schema
+	schema: Schema,
 ) => (account: AccountObject) => (newTeam: NewTeamObject): ServerEither<RawTeamObject> =>
 	asyncRight(
 		schema.getCollection<RawTeamObject>('Teams'),
-		errorGenerator('Could not get team ID')
+		errorGenerator('Could not get team ID'),
 	)
 		.flatMap(getNewID(account))
 		.map(id => ({
@@ -277,7 +277,7 @@ export const createTeamFunc = (now = Date.now) => (emitter: MemberUpdateEventEmi
 			id,
 			members: [],
 			teamHistory: [],
-			accountID: account.id
+			accountID: account.id,
 		}))
 		.flatMap(addToCollection(schema.getCollection<RawTeamObject>('Teams')))
 		.map(addMembersToTeamFunc(now)(account)(emitter)(newTeam.members));
@@ -291,18 +291,18 @@ export const saveTeam = (schema: Schema) => (team: RawTeamObject): ServerEither<
 				.flatMap(saveToCollectionA(schema.getCollection<RawTeamObject>('Teams')));
 
 export const modfiyTeamMember = (member: NewTeamMember) => (
-	team: RawTeamObject
+	team: RawTeamObject,
 ): RawTeamObject => ({
 	...team,
 	members: team.members.map(teamMember =>
 		areMembersTheSame(member.reference)(teamMember.reference)
 			? { ...teamMember, ...member }
-			: teamMember
-	)
+			: teamMember,
+	),
 });
 
 export const addMemberToTeamFunc = (now = Date.now) => (emitter: MemberUpdateEventEmitter) => (
-	account: AccountObject
+	account: AccountObject,
 ) => (member: NewTeamMember) => (team: RawTeamObject) => {
 	const newTeam = {
 		...team,
@@ -310,15 +310,15 @@ export const addMemberToTeamFunc = (now = Date.now) => (emitter: MemberUpdateEve
 			...team.members,
 			{
 				...member,
-				joined: now()
-			}
-		]
+				joined: now(),
+			},
+		],
 	};
 
 	emitter.emit('teamMemberAdd', {
 		member: member.reference,
 		account,
-		team: newTeam
+		team: newTeam,
 	});
 
 	return newTeam;
@@ -326,19 +326,19 @@ export const addMemberToTeamFunc = (now = Date.now) => (emitter: MemberUpdateEve
 export const addMemberToTeam = addMemberToTeamFunc();
 
 export const addMembersToTeamFunc = (now = Date.now) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (members: NewTeamMember[]) => (initialTeam: RawTeamObject): RawTeamObject =>
 	members.reduce(
 		(team, newMember) =>
 			isPartOfTeam(newMember.reference)(team)
 				? modfiyTeamMember(newMember)(team)
 				: addMemberToTeamFunc(now)(emitter)(account)(newMember)(team),
-		initialTeam
+		initialTeam,
 	);
 export const addMembersToTeam = addMembersToTeamFunc();
 
 export const removeMemberFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (member: MemberReference) => (team: RawTeamObject) => {
 	if (isPartOfTeam(member)(team) && !isTeamLeader(member)(team)) {
 		const isOldMember = areMembersTheSame(member);
@@ -354,15 +354,15 @@ export const removeMemberFromTeamFunc = (now = Date.now) => (account: AccountObj
 					job: oldPart.job,
 					joined: oldPart.joined,
 					reference: oldPart.reference,
-					removed: now()
-				}
-			]
+					removed: now(),
+				},
+			],
 		};
 
 		emitter.emit('teamMemberRemove', {
 			member,
 			account,
-			team: newTeam
+			team: newTeam,
 		});
 
 		return newTeam;
@@ -373,11 +373,11 @@ export const removeMemberFromTeamFunc = (now = Date.now) => (account: AccountObj
 export const removeMemberFromTeam = removeMemberFromTeamFunc();
 
 export const removeMembersFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (members: MemberReference[]) => (initialTeam: RawTeamObject) =>
 	members.reduce(
 		(team, member) => removeMemberFromTeamFunc(now)(account)(emitter)(member)(team),
-		initialTeam
+		initialTeam,
 	);
 
 export const convertTeamToSaveObject = (team: RawTeamObject): RawTeamObject => ({
@@ -385,18 +385,18 @@ export const convertTeamToSaveObject = (team: RawTeamObject): RawTeamObject => (
 	members: team.members.map(({ reference, job, joined }) => ({
 		job,
 		joined,
-		reference
+		reference,
 	})),
 	teamHistory: team.teamHistory.map(({ reference, job, joined, removed }) => ({
 		job,
 		joined,
 		reference,
-		removed
-	}))
+		removed,
+	})),
 });
 
 const removeTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEventEmitter) => (
-	team: RawTeamObject
+	team: RawTeamObject,
 ) => (type: 'cadetLeader' | 'seniorMentor' | 'seniorCoach') => {
 	const leader = team[type];
 
@@ -406,20 +406,20 @@ const removeTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEvent
 
 	const newTeam = {
 		...team,
-		[type]: Maybe.none()
+		[type]: Maybe.none(),
 	};
 
 	emitter.emit('teamMemberRemove', {
 		account,
 		team: newTeam,
-		member: leader.value
+		member: leader.value,
 	});
 
 	return newTeam;
 };
 
 const setTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEventEmitter) => (
-	team: RawTeamObject
+	team: RawTeamObject,
 ) => (type: 'cadetLeader' | 'seniorMentor' | 'seniorCoach') => (member: MemberReference) => {
 	if (Maybe.isSome(team[type])) {
 		removeTeamLeader(account)(emitter)(team)(type);
@@ -427,20 +427,20 @@ const setTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEventEmi
 
 	const newTeam = {
 		...team,
-		[type]: Maybe.some(member)
+		[type]: Maybe.some(member),
 	};
 
 	emitter.emit('teamMemberAdd', {
 		account,
 		member,
-		team: newTeam
+		team: newTeam,
 	});
 
 	return newTeam;
 };
 
 const updateTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEventEmitter) => (
-	type: 'cadetLeader' | 'seniorMentor' | 'seniorCoach'
+	type: 'cadetLeader' | 'seniorMentor' | 'seniorCoach',
 ) => (member: MaybeObj<MemberReference>) => (team: RawTeamObject) =>
 	Maybe.isSome(member)
 		? setTeamLeader(account)(emitter)(team)(type)(member.value)
@@ -449,29 +449,29 @@ const updateTeamLeader = (account: AccountObject) => (emitter: MemberUpdateEvent
 export const handlePermissions = (member: MaybeObj<User>) => (publicity: TeamPublicity) => <
 	T extends RawTeamMember
 >(
-	members: T[]
+	members: T[],
 ): T[] => (Maybe.isSome(member) || publicity === TeamPublicity.PUBLIC ? members : []);
 
 export const httpStripTeamObject = (member: MaybeObj<User>) => <T extends RawTeamObject>(
-	team: T
+	team: T,
 ): T => ({
 	...team,
 	members: handlePermissions(member)(team.visibility)(team.members),
-	teamHistory: handlePermissions(member)(team.visibility)(team.teamHistory)
+	teamHistory: handlePermissions(member)(team.visibility)(team.teamHistory),
 });
 
 export const deleteTeam = (schema: Schema) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (team: RawTeamObject) =>
 	(team.id === 0
 		? asyncLeft<ServerError, Collection<RawTeamObject>>({
 				type: 'OTHER',
 				code: 400,
-				message: 'Cannot operate on a dynamic team'
+				message: 'Cannot operate on a dynamic team',
 		  })
 		: asyncRight(
 				schema.getCollection<RawTeamObject>('Teams'),
-				errorGenerator('Could not delete team')
+				errorGenerator('Could not delete team'),
 		  )
 	)
 		.tap(() => {
@@ -484,24 +484,24 @@ export const deleteTeam = (schema: Schema) => (account: AccountObject) => (
 		.flatMap(deleteFromCollectionA(team));
 
 const getDifferentTeamMembers = getItemsNotInSecondArray<NewTeamMember>(mem1 => mem2 =>
-	areMembersTheSame(mem1.reference)(mem2.reference)
+	areMembersTheSame(mem1.reference)(mem2.reference),
 );
 
 export const updateTeamMembersFunc = (now = Date.now) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (newMembers: NewTeamMember[]) => (team: RawTeamObject) =>
 	pipe(
 		removeMembersFromTeamFunc(now)(account)(emitter)(
-			getDifferentTeamMembers(team.members)(newMembers).map(get('reference'))
+			getDifferentTeamMembers(team.members)(newMembers).map(get('reference')),
 		),
 		addMembersToTeamFunc(now)(account)(emitter)(
-			getDifferentTeamMembers(newMembers)(team.members)
-		)
+			getDifferentTeamMembers(newMembers)(team.members),
+		),
 	)(team);
 export const updateTeamMembers = updateTeamMembersFunc();
 
 export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
-	emitter: MemberUpdateEventEmitter
+	emitter: MemberUpdateEventEmitter,
 ) => (team: RawTeamObject) => (newTeamInfo: NewTeamObject): RawTeamObject =>
 	pipe(
 		updateTeamMembersFunc(now)(account)(emitter)(newTeamInfo.members),
@@ -510,6 +510,6 @@ export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
 		updateTeamLeader(account)(emitter)('seniorMentor')(newTeamInfo.seniorMentor),
 		set<RawTeamObject, 'name'>('name')(newTeamInfo.name),
 		set<RawTeamObject, 'description'>('description')(newTeamInfo.description),
-		set<RawTeamObject, 'visibility'>('visibility')(newTeamInfo.visibility)
+		set<RawTeamObject, 'visibility'>('visibility')(newTeamInfo.visibility),
 	)(team);
 export const updateTeam = updateTeamFunc();

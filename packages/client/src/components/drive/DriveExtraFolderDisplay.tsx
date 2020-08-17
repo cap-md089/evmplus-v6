@@ -26,7 +26,7 @@ import {
 	FileUserAccessControlPermissions,
 	get,
 	pipe,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi from '../../lib/apis';
@@ -40,12 +40,12 @@ export default class ExtraFolderDisplay extends React.Component<
 > {
 	public static getDerivedStateFromProps(props: ExtraDisplayProps) {
 		return {
-			comments: props.file.comments
+			comments: props.file.comments,
 		};
 	}
 
 	public state = {
-		comments: this.props.file.comments
+		comments: this.props.file.comments,
 	};
 
 	constructor(props: ExtraDisplayProps & { currentFolderID: string }) {
@@ -61,7 +61,7 @@ export default class ExtraFolderDisplay extends React.Component<
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
 				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
-					this.props.parentFile
+					this.props.parentFile,
 				) ? (
 					<>
 						<Button buttonType="none" onClick={this.saveFiles}>
@@ -73,7 +73,7 @@ export default class ExtraFolderDisplay extends React.Component<
 				) : null}
 				<h3>Comments:</h3>
 				{userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
-					this.props.file
+					this.props.file,
 				) ? (
 					<Form<CommentsForm>
 						id=""
@@ -95,7 +95,7 @@ export default class ExtraFolderDisplay extends React.Component<
 	private onFormChange(formState: CommentsForm) {
 		this.props.fileModify({
 			...this.props.file,
-			...formState
+			...formState,
 		});
 	}
 
@@ -104,12 +104,12 @@ export default class ExtraFolderDisplay extends React.Component<
 			await fetchApi.files.files.setInfo(
 				{ fileid: this.props.file.id },
 				formState,
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			this.props.fileModify({
 				...this.props.file,
-				...formState
+				...formState,
 			});
 		}
 	}
@@ -124,7 +124,7 @@ export default class ExtraFolderDisplay extends React.Component<
 		const childrenEither = await fetchApi.files.children.getBasic(
 			{ parentid: this.props.file.id },
 			{},
-			member.sessionID
+			member.sessionID,
 		);
 
 		if (Either.isLeft(childrenEither)) {
@@ -138,11 +138,11 @@ export default class ExtraFolderDisplay extends React.Component<
 				fetchApi.files.children.add(
 					{ parentid: this.props.parentFile.id },
 					{ childid: file.id },
-					member.sessionID
-				)
+					member.sessionID,
+				),
 			),
 			asyncIterMap(Either.isRight),
-			asyncIterReduce<boolean, boolean>((prev, curr) => prev || curr)(false)
+			asyncIterReduce<boolean, boolean>((prev, curr) => prev || curr)(false),
 		)(children);
 
 		if (!moveSuccess) {
@@ -153,7 +153,7 @@ export default class ExtraFolderDisplay extends React.Component<
 		const result = await fetchApi.files.files.delete(
 			{ fileid: this.props.file.id },
 			{},
-			member.sessionID
+			member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {

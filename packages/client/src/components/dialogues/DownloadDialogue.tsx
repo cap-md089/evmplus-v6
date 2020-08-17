@@ -69,7 +69,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 > {
 	public state: DownloadDialogueState<T> = {
 		values: null,
-		selectedValues: []
+		selectedValues: [],
 	};
 
 	constructor(props: DownloadDialogueProps<T>) {
@@ -87,7 +87,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			this.props.valuePromise.then(values => this.setState({ values }));
 		} else {
 			this.setState({
-				values: this.props.valuePromise
+				values: this.props.valuePromise,
 			});
 		}
 	}
@@ -106,7 +106,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			filters: this.props.filters,
 			filterValues: this.props.filterValues,
 			overflow: this.props.overflow,
-			onFilterValuesChange: this.props.onFilterValuesChange
+			onFilterValuesChange: this.props.onFilterValuesChange,
 		};
 
 		if (this.props.multiple) {
@@ -190,7 +190,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 
 	private onChange(selectedValues: T[]) {
 		this.setState({
-			selectedValues
+			selectedValues,
 		});
 	}
 }

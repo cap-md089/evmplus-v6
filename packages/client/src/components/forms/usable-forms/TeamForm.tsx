@@ -25,7 +25,7 @@ import {
 	MemberReference,
 	NewTeamMember,
 	NewTeamObject,
-	TeamPublicity
+	TeamPublicity,
 } from 'common-lib';
 import * as React from 'react';
 import MemberSelector from '../../dialogues/MemberSelector';
@@ -39,7 +39,7 @@ import SimpleForm, {
 	ListEditor,
 	SimpleRadioButton,
 	TextBox,
-	TextInput
+	TextInput,
 } from '../SimpleForm';
 
 export interface NewTeamMemberEdit {
@@ -65,20 +65,20 @@ export const collapseTeamEditToObject = (team: TeamObjectEdit): MaybeObj<NewTeam
 			team.members.map(member =>
 				Maybe.map<MemberReference, NewTeamMember>(reference => ({
 					reference,
-					job: member.job
-				}))(member.reference)
-			)
-		)
+					job: member.job,
+				}))(member.reference),
+			),
+		),
 	);
 
 export const expandTeamObjectToEdit = (team: NewTeamObject): TeamObjectEdit => ({
 	...team,
-	members: team.members.map(({ reference, job }) => ({ reference: Maybe.some(reference), job }))
+	members: team.members.map(({ reference, job }) => ({ reference: Maybe.some(reference), job })),
 });
 
 const teamValidator: FormValidator<TeamObjectEdit> = {
 	name: name => name !== '',
-	members: members => !members.map(get('reference')).some(Maybe.isNone)
+	members: members => !members.map(get('reference')).some(Maybe.isNone),
 };
 
 export default class TeamForm extends React.Component<TeamFormProps> {
@@ -95,7 +95,7 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 				onChange={this.onTeamChange}
 				onSubmit={this.onTeamSubmit}
 				submitInfo={{
-					text: this.props.isTeamUpdate ? 'Update team' : 'Create team'
+					text: this.props.isTeamUpdate ? 'Update team' : 'Create team',
 				}}
 				disableOnInvalid={true}
 				values={this.props.team}
@@ -147,10 +147,10 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 					name="members"
 					addNew={() => ({
 						reference: Maybe.none(),
-						job: ''
+						job: '',
 					})}
 					extraProps={{
-						memberList: this.props.memberList
+						memberList: this.props.memberList,
 					}}
 					inputComponent={TeamMemberInput}
 					fullWidth={true}
@@ -170,7 +170,7 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 		team: TeamObjectEdit,
 		errors: BooleanFields<TeamObjectEdit>,
 		changed: BooleanFields<TeamObjectEdit>,
-		hasError: boolean
+		hasError: boolean,
 	) {
 		this.props.onTeamFormSubmit(hasError ? Maybe.none() : Maybe.some(team));
 	}

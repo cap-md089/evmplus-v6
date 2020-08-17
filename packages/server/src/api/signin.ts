@@ -37,7 +37,7 @@ import {
 	Right,
 	ServerError,
 	SuccessfulSigninReturn,
-	toReference
+	toReference,
 } from 'common-lib';
 import {
 	getAdminAccountIDsForMember,
@@ -45,18 +45,18 @@ import {
 	getUnreadNotificationCount,
 	PAM,
 	resolveReference,
-	ServerEither
+	ServerEither,
 } from 'server-common';
 import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
 
 const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninSuccess
+	result: PAM.SigninSuccess,
 ): ServerEither<SuccessfulSigninReturn> => {
 	return AsyncEither.All([
 		resolveReference(req.mysqlx)(req.account)(result.member),
 		asyncRight(
 			getPermissionsForMemberInAccountDefault(req.mysqlx, result.member, req.account),
-			errorGenerator('Could not get permissions for member')
+			errorGenerator('Could not get permissions for member'),
 		),
 		getUnreadNotificationCount(req.mysqlx)(req.account)(result.member),
 		getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(result.member),
@@ -67,52 +67,52 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 						EitherObj<ServerError, AccountLinkTarget>,
 						Right<AccountLinkTarget>
 					>(Either.isRight)(
-						getAdminAccountIDsForMember(req.mysqlx)(toReference(result.member))
-					)
-				)
+						getAdminAccountIDsForMember(req.mysqlx)(toReference(result.member)),
+					),
+				),
 			),
-			errorGenerator('Could not get admin account IDs for member')
-		)
+			errorGenerator('Could not get admin account IDs for member'),
+		),
 	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
 		error: MemberCreateError.NONE,
 		member: {
 			...member,
 			sessionID: result.sessionID,
-			permissions
+			permissions,
 		},
 		sessionID: result.sessionID,
 		notificationCount,
 		taskCount,
-		linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id)
+		linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
 	}));
 };
 
 const handlePasswordExpired = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninPasswordOld
+	result: PAM.SigninPasswordOld,
 ): ServerEither<ExpiredSuccessfulSigninReturn> =>
 	asyncRight<ServerError, ExpiredSuccessfulSigninReturn>(
 		{
 			error: MemberCreateError.PASSWORD_EXPIRED,
-			sessionID: result.sessionID
+			sessionID: result.sessionID,
 		},
-		errorGenerator('Could not handle failure')
+		errorGenerator('Could not handle failure'),
 	);
 
 const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninFailed
+	result: PAM.SigninFailed,
 ): ServerEither<FailedSigninReturn> =>
 	result.result === MemberCreateError.SERVER_ERROR ||
 	result.result === MemberCreateError.UNKOWN_SERVER_ERROR
 		? asyncLeft({
 				type: 'OTHER',
 				code: 500,
-				message: 'Unknown error occurred'
+				message: 'Unknown error occurred',
 		  })
 		: asyncRight<ServerError, FailedSigninReturn>(
 				{
-					error: result.result
+					error: result.result,
 				},
-				errorGenerator('Could not handle failure')
+				errorGenerator('Could not handle failure'),
 		  );
 
 export const func: ServerAPIEndpoint<api.Signin> = req => {
@@ -122,16 +122,16 @@ export const func: ServerAPIEndpoint<api.Signin> = req => {
 			req.body.username,
 			req.body.password,
 			req.body.recaptcha,
-			req.configuration
+			req.configuration,
 		),
-		errorGenerator('Could not sign in')
+		errorGenerator('Could not sign in'),
 	).flatMap<SuccessfulSigninReturn | FailedSigninReturn | ExpiredSuccessfulSigninReturn>(
 		results =>
 			results.result === MemberCreateError.NONE
 				? handleSuccess(req)(results)
 				: results.result === MemberCreateError.PASSWORD_EXPIRED
 				? handlePasswordExpired(req)(results)
-				: handleFailure(req)(results)
+				: handleFailure(req)(results),
 	);
 };
 

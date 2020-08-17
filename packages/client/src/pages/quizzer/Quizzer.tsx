@@ -55,7 +55,7 @@ enum GradeLevel {
 	LINDBERGH,
 	DOOLITTLE,
 	GODDARD,
-	ARMSTRONG
+	ARMSTRONG,
 }
 interface Grade {
 	isFirstSergeant: boolean;
@@ -64,7 +64,7 @@ interface Grade {
 }
 const getRandomGrade = (): Grade => ({
 	level: getRandomEnum<GradeLevel>(GradeLevel)(),
-	isFirstSergeant: getRandomBoolean()
+	isFirstSergeant: getRandomBoolean(),
 });
 const getGradeString = (grade: Grade) =>
 	({
@@ -79,7 +79,7 @@ const getGradeString = (grade: Grade) =>
 			: 'This cadet is a Cadet Chief Master Sergeant, and serves as the First Sergeant at their squadron.',
 		[GradeLevel.ARMSTRONG]: grade.isFirstSergeant
 			? 'This cadet is a Chief Master Sergeant and has the Armstrong Achievement.'
-			: 'This cadet is a Chief Master Sergeant and has the Armstrong Achievement, and serves as the First Sergeant at their squadron.'
+			: 'This cadet is a Chief Master Sergeant and has the Armstrong Achievement, and serves as the First Sergeant at their squadron.',
 	}[grade.level]);
 
 /**
@@ -90,7 +90,7 @@ enum CACLevel {
 	REGION,
 	WING,
 	GROUP,
-	NONE
+	NONE,
 }
 const getRandomCACLevel = getRandomEnum<CACLevel>(CACLevel);
 const getCACLevelString = (level: CACLevel) =>
@@ -99,7 +99,7 @@ const getCACLevelString = (level: CACLevel) =>
 		[CACLevel.GROUP]: 'This cadet has served on the group CAC.',
 		[CACLevel.WING]: 'This cadet has served on the wing CAC.',
 		[CACLevel.REGION]: 'This cadet has served on the regional CAC.',
-		[CACLevel.NATIONAL]: 'This cadet has served on the national CAC.'
+		[CACLevel.NATIONAL]: 'This cadet has served on the national CAC.',
 	}[level]);
 
 /**
@@ -110,7 +110,7 @@ enum ColorGuardLevel {
 	REGION,
 	WING,
 	SQUADRON,
-	NONE
+	NONE,
 }
 const getRandomColorGuardLevel = getRandomEnum<ColorGuardLevel>(ColorGuardLevel);
 const getColorGuardString = (level: ColorGuardLevel) =>
@@ -123,7 +123,7 @@ const getColorGuardString = (level: ColorGuardLevel) =>
 		[ColorGuardLevel.REGION]:
 			'This cadet has served on a color guard in the Region Cadet Competition.',
 		[ColorGuardLevel.NATIONAL]:
-			'This cadet has served on a color guard in the National Cadet Competition.'
+			'This cadet has served on a color guard in the National Cadet Competition.',
 	}[level]);
 
 /**
@@ -134,7 +134,7 @@ enum CommunityServiceLevel {
 	HOURS40,
 	HOURS60,
 	HOURS80,
-	NONE
+	NONE,
 }
 const getRandomCommunityServiceLevel = getRandomEnum<CommunityServiceLevel>(CommunityServiceLevel);
 const getCommunityServiceString = (service: CommunityServiceLevel) =>
@@ -147,7 +147,7 @@ const getCommunityServiceString = (service: CommunityServiceLevel) =>
 			'This cadet has 60 hours of community service outside of CAP.',
 		[CommunityServiceLevel.HOURS80]:
 			'This cadet has 80 hours of community service outside of CAP.',
-		[CommunityServiceLevel.NONE]: undefined
+		[CommunityServiceLevel.NONE]: undefined,
 	}[service]);
 
 /**
@@ -158,7 +158,7 @@ enum AirSAR {
 	SORTIES10,
 	SORTIES20,
 	SORTIES30,
-	NONE
+	NONE,
 }
 const getRandomAirSAR = getRandomEnum<AirSAR>(AirSAR);
 const getAirSARString = (airSar: AirSAR) =>
@@ -167,7 +167,7 @@ const getAirSARString = (airSar: AirSAR) =>
 		[AirSAR.SORTIES10]: 'This cadet has participated in 10 air search and rescue sorties.',
 		[AirSAR.SORTIES20]: 'This cadet has participated in 20 air search and rescue sorties.',
 		[AirSAR.SORTIES30]: 'This cadet has participated in 30 air search and rescue sorties.',
-		[AirSAR.NONE]: undefined
+		[AirSAR.NONE]: undefined,
 	}[airSar]);
 
 /**
@@ -285,7 +285,7 @@ function generateQuiz(): Quiz {
 		vfwNCOofTheYear: getRandomBoolean(),
 		disasterRelief: getRandomBoolean(),
 		findRibbon: getRandomBoolean(),
-		afaRibbon: getRandomBoolean()
+		afaRibbon: getRandomBoolean(),
 	};
 }
 
@@ -330,7 +330,7 @@ function getEmptyQuizInput(): QuizInput {
 		afaChecked: false,
 		redService: false,
 
-		grade: null
+		grade: null,
 	};
 }
 
@@ -547,7 +547,7 @@ function getErrorsForQuizInput(quiz: Quiz, input: QuizInput): string[] {
 		quiz.activityAttendance.type === 'ATTENDED_ENCAMPMENT' &&
 			quiz.activityAttendance.ncsas > 0 &&
 			!input.nCSAsChecked &&
-			`The cadet has attended at least 1 NCSA and the NCSA ribbon is not checked`
+			`The cadet has attended at least 1 NCSA and the NCSA ribbon is not checked`,
 	].filter((s): s is string => !!s);
 }
 
@@ -595,7 +595,7 @@ function getBiography(quiz: Quiz): string {
 			: undefined,
 		quiz.silverMedalOfValor ? 'This cadet has recieved a Silver Medal of Valor.' : undefined,
 		quiz.bronzeMedalOfValor ? 'This cadet has recieved a Bronze Medal of Valor.' : undefined,
-		quiz.afaRibbon ? 'This cadet has recieved the AFA ribbon.' : undefined
+		quiz.afaRibbon ? 'This cadet has recieved the AFA ribbon.' : undefined,
 	]
 		.filter(item => !!item)
 		.join(' ');
@@ -649,14 +649,14 @@ type QuizzerState = QuizzerStateForInput | QuizzerStateForResults;
 
 const spanStyle: React.CSSProperties = {
 	display: 'inline-block',
-	margin: '3px'
+	margin: '3px',
 };
 
 export class Quizzer extends Page<PageProps, QuizzerState> {
 	public state: QuizzerState = {
 		type: 'INPUT',
 		quiz: generateQuiz(),
-		quizInput: getEmptyQuizInput()
+		quizInput: getEmptyQuizInput(),
 	};
 
 	public constructor(props: PageProps) {
@@ -708,7 +708,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.LINDBERGH,
-							isFirstSergeant: false
+							isFirstSergeant: false,
 						})}
 					/>
 					<InsigniaRadio
@@ -719,7 +719,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.DOOLITTLE,
-							isFirstSergeant: false
+							isFirstSergeant: false,
 						})}
 					/>
 					<InsigniaRadio
@@ -730,7 +730,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.GODDARD,
-							isFirstSergeant: false
+							isFirstSergeant: false,
 						})}
 					/>
 					<br />
@@ -742,7 +742,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.LINDBERGH,
-							isFirstSergeant: true
+							isFirstSergeant: true,
 						})}
 					/>
 					<InsigniaRadio
@@ -753,7 +753,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.DOOLITTLE,
-							isFirstSergeant: true
+							isFirstSergeant: true,
 						})}
 					/>
 					<InsigniaRadio
@@ -764,7 +764,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 						}
 						onCheck={this.handleRadioChecked({
 							level: GradeLevel.GODDARD,
-							isFirstSergeant: true
+							isFirstSergeant: true,
 						})}
 					/>
 
@@ -969,10 +969,10 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 							type: 'INPUT',
 							quizInput: {
 								...prevState.quizInput,
-								grade
+								grade,
 							},
-							quiz: prevState.quiz
-					  }
+							quiz: prevState.quiz,
+					  },
 			);
 		};
 	}
@@ -986,10 +986,10 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 							type: 'INPUT',
 							quizInput: {
 								...prevState.quizInput,
-								[imageKey]: !prevState.quizInput[imageKey]
+								[imageKey]: !prevState.quizInput[imageKey],
 							},
-							quiz: prevState.quiz
-					  }
+							quiz: prevState.quiz,
+					  },
 			);
 		};
 	}
@@ -1005,7 +1005,7 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 			type: 'RESULTS',
 			errors,
 			quizInput: this.state.quizInput,
-			quiz: this.state.quiz
+			quiz: this.state.quiz,
 		});
 
 		// this.state.quizInput
@@ -1016,14 +1016,14 @@ export class Quizzer extends Page<PageProps, QuizzerState> {
 		this.setState({
 			type: 'INPUT',
 			quizInput: this.state.quizInput,
-			quiz: this.state.quiz
+			quiz: this.state.quiz,
 		});
 	}
 	private newQuiz() {
 		this.setState({
 			type: 'INPUT',
 			quizInput: getEmptyQuizInput(),
-			quiz: generateQuiz()
+			quiz: generateQuiz(),
 		});
 	}
 }

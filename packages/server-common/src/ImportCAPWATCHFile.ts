@@ -43,43 +43,43 @@ const modules: {
 }[] = [
 	{
 		module: memberParse,
-		file: 'Member.txt'
+		file: 'Member.txt',
 	},
 	{
 		module: dutyPosition,
-		file: 'DutyPosition.txt'
+		file: 'DutyPosition.txt',
 	},
 	{
 		module: mbrContact,
-		file: 'MbrContact.txt'
+		file: 'MbrContact.txt',
 	},
 	{
 		module: cadetDutyPosition,
-		file: 'CadetDutyPositions.txt'
+		file: 'CadetDutyPositions.txt',
 	},
 	{
 		module: cadetActivities,
-		file: 'CadetActivities.txt'
+		file: 'CadetActivities.txt',
 	},
 	{
 		module: oFlight,
-		file: 'OFlight.txt'
+		file: 'OFlight.txt',
 	},
 	{
 		module: mbrAchievements,
-		file: 'MbrAchievements.txt'
+		file: 'MbrAchievements.txt',
 	},
 	{
 		module: cadetAchv,
-		file: 'CadetAchv.txt'
+		file: 'CadetAchv.txt',
 	},
 	{
 		module: cadetAchvAprs,
-		file: 'CadetAchvAprs.txt'
+		file: 'CadetAchvAprs.txt',
 	},
 	{
 		module: cadetAchievementEnumParse,
-		file: 'CdtAchvEnum.txt'
+		file: 'CdtAchvEnum.txt',
 	},
 	/*	{
 		module: seniorAwards,
@@ -112,7 +112,7 @@ const modules: {
 	},*/
 	{
 		module: organization,
-		file: 'Organization.txt'
+		file: 'Organization.txt',
 	} /*
 	{
 		module: orgAddresses,
@@ -125,7 +125,7 @@ const modules: {
 	{
 		module: orgMeeting,
 		file: 'OrganizationMeetings.txt'
-	}*/
+	}*/,
 ];
 
 interface CAPWATCHModuleResult {
@@ -133,11 +133,11 @@ interface CAPWATCHModuleResult {
 	file: string;
 }
 
-export default async function*(
+export default async function* (
 	zipFileLocation: string,
 	schema: Schema,
 	session: Session,
-	files: string[] = modules.map(mod => mod.file)
+	files: string[] = modules.map(mod => mod.file),
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
 	await session.startTransaction();
 
@@ -159,7 +159,7 @@ export default async function*(
 		const zippedFile = spawn('unzip', ['-op', zipFileLocation, mod.file]).stdout;
 
 		const parser = csv({
-			columns: true
+			columns: true,
 		});
 
 		parser.on('readable', () => {
@@ -174,7 +174,7 @@ export default async function*(
 			parser.on('end', async () => {
 				res({
 					error: await mod.module(rows, schema),
-					file: mod.file
+					file: mod.file,
 				});
 			});
 

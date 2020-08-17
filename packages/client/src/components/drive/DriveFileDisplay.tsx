@@ -41,7 +41,7 @@ export default (props: FileDisplayProps) => (
 			{!!props.file.contentType.match(/image\//) ? (
 				<div
 					style={{
-						backgroundImage: `url('/api/files/${props.file.id}/export')`
+						backgroundImage: `url('/api/files/${props.file.id}/export')`,
 					}}
 				/>
 			) : null}

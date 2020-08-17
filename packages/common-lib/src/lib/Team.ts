@@ -24,7 +24,7 @@ import {
 	NewTeamObject,
 	RawTeamMember,
 	RawTeamObject,
-	TeamPublicity
+	TeamPublicity,
 } from '../typings/types';
 import { Maybe, MaybeObj } from './Maybe';
 import { areMembersTheSame } from './Member';
@@ -60,7 +60,7 @@ export const canSeeMembership = (member: MaybeObj<MemberReference>) => {
 		pipe(
 			Maybe.map<MemberReference, (team: NewTeamObject) => boolean>(isPartOfTeam),
 			Maybe.map(call(team)),
-			Maybe.orSome(false)
+			Maybe.orSome(false),
 		)(member);
 
 	return (team: NewTeamObject | RawTeamObject) =>

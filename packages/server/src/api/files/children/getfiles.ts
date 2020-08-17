@@ -24,7 +24,7 @@ import {
 	asyncIterMap,
 	FileUserAccessControlPermissions,
 	Maybe,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, getChildren, getFileObject } from 'server-common';
 
@@ -35,7 +35,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member cannot read the file requested'
+			message: 'Member cannot read the file requested',
 		})
 		.flatMap(getChildren(req.mysqlx)(req.account))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))

@@ -65,7 +65,7 @@ export default class Button<C> extends React.Component<
 
 		this.handleClick = this.handleClick.bind(this);
 		this.state = {
-			disabled: false
+			disabled: false,
 		};
 	}
 

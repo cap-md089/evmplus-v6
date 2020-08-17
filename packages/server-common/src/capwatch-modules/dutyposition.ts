@@ -56,7 +56,7 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async (fileData, schema) 
 				Asst: parseInt(duties.Asst + '', 10),
 				UsrID: duties.UsrID,
 				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				ORGID: parseInt(duties.ORGID + '', 10)
+				ORGID: parseInt(duties.ORGID + '', 10),
 			};
 
 			await dutyPositionCollection.add(values).execute();

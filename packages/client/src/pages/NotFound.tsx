@@ -27,8 +27,8 @@ export default class NotFound extends Page<PageProps> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
-			}
+				text: 'Home',
+			},
 		]);
 		this.props.updateSideNav([]);
 		this.updateTitle('Not found');

@@ -68,7 +68,7 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 				cadetAchievementCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute()
+					.execute(),
 			]);
 
 			const values = {
@@ -102,8 +102,10 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 				HFZID: member.HFZID,
 				StaffServiceDate: convertNHQDate(member.StaffServiceDate).toISOString(),
 				TechnicalWritingAssignment: member.TechnicalWritingAssignment,
-				TechnicalWritingAssignmentDate: convertNHQDate(member.TechnicalWritingAssignmentDate).toISOString(),
-				OralPresentationDate: convertNHQDate(member.OralPresentationDate).toISOString()
+				TechnicalWritingAssignmentDate: convertNHQDate(
+					member.TechnicalWritingAssignmentDate,
+				).toISOString(),
+				OralPresentationDate: convertNHQDate(member.OralPresentationDate).toISOString(),
 			};
 
 			await cadetAchievementCollection.add(values).execute();

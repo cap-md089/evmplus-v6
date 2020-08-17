@@ -28,7 +28,7 @@ export default (schema: Schema) => async (serverID: string): Promise<MaybeObj<Ac
 		findAndBind(collection, {
 			// @ts-ignore
 			discordServer: { hasValue: true, value: { serverID } },
-		})
+		}),
 	);
 
 	if (results.length !== 1) {

@@ -29,7 +29,7 @@ import {
 	MaybeObj,
 	getFullMemberName,
 	toReference,
-	areMembersTheSame
+	areMembersTheSame,
 } from 'common-lib';
 
 interface MemberInputProps extends InputProps<MaybeObj<MemberReference>> {
@@ -46,7 +46,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 	public state: MemberInputState = {
 		open: false,
 		selectedValue: null,
-		filterValues: []
+		filterValues: [],
 	};
 
 	constructor(props: MemberInputProps) {
@@ -88,15 +88,15 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 
 									try {
 										return !!getFullMemberName(member).match(
-											new RegExp(input, 'gi')
+											new RegExp(input, 'gi'),
 										);
 									} catch (e) {
 										return false;
 									}
 								},
 								displayText: 'Member name',
-								filterInput: TextInput
-							}
+								filterInput: TextInput,
+							},
 						]}
 						onValueClick={this.setSelectedMember}
 						onValueSelect={this.selectMember}
@@ -123,20 +123,20 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 
 	private openDialogue() {
 		this.setState({
-			open: true
+			open: true,
 		});
 	}
 
 	private setSelectedMember(selectedValue: Member | null) {
 		this.setState({
-			selectedValue
+			selectedValue,
 		});
 	}
 
 	private selectMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue,
-			open: false
+			open: false,
 		});
 
 		const value: MaybeObj<MemberReference> = M.map(toReference)(M.fromValue(selectedValue));
@@ -148,7 +148,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 	}

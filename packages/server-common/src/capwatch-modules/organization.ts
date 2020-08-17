@@ -63,7 +63,7 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (fileData, sch
 				FirstUsr: organization.FirstUsr,
 				DateCreated: organization.DateCreated,
 				DateReceived: organization.DateReceived,
-				OrgNotes: organization.OrgNotes
+				OrgNotes: organization.OrgNotes,
 			};
 
 			await organizationCollection.add(values).execute();

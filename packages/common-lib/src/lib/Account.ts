@@ -43,13 +43,13 @@ import {
 	Permissions,
 	RawCAPSquadronAccountObject,
 	RegularCAPAccountObject,
-	User
+	User,
 } from '../typings/types';
 import { Maybe, MaybeObj } from './Maybe';
 import { hasPermission, isCAPMember, isRioux } from './Member';
 
 export const isRegularCAPAccountObject = (
-	account: AccountObject
+	account: AccountObject,
 ): account is RegularCAPAccountObject =>
 	account.type === AccountType.CAPGROUP ||
 	account.type === AccountType.CAPREGION ||
@@ -64,7 +64,7 @@ export const renderAccountID = (account: RawCAPSquadronAccountObject) =>
 
 export const getEmbedLink = (account: AccountObject) =>
 	`<iframe src=\"https://calendar.google.com/calendar/embed?src=${encodeURIComponent(
-		account.mainCalendarID
+		account.mainCalendarID,
 	)}&ctz=America%2FNew_York\" style=\"border: 0\" width=\"720\" height=\"540\" frameborder=\"0\" scrolling=\"no\"></iframe>`;
 
 export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<number[]> =>
@@ -81,7 +81,7 @@ export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (user: Use
 		.filter(
 			duty =>
 				duty.type === 'CAPUnit' ||
-				Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(parent)).includes(duty.orgid)
+				Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(parent)).includes(duty.orgid),
 		)
 		.map(({ duty }) => duty);
 

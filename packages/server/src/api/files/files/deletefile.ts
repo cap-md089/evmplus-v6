@@ -28,7 +28,7 @@ export const func: ServerAPIEndpoint<api.files.files.Delete> = req =>
 		.filter(canDeleteFile(req.member), {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member cannot delete file'
+			message: 'Member cannot delete file',
 		})
 		.flatMap(deleteFileObject(req.configuration)(req.mysqlx)(req.account));
 

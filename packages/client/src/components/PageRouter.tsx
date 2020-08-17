@@ -24,7 +24,7 @@ import {
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	User
+	User,
 } from 'common-lib';
 import * as React from 'react';
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
@@ -70,167 +70,167 @@ const pages: Array<{
 	{
 		url: '/',
 		component: Main,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/eventform',
 		component: AddEvent,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/addevent',
 		component: AddEvent,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/eventviewer/:id',
 		component: EventViewer,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/eventlinklist',
 		component: LinkList,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/eventform/:id',
 		component: ModifyEvent,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/modifyevent/:id',
 		component: ModifyEvent,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/calendar/:month?/:year?',
 		component: Calendar,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/filemanagement',
 		component: Drive,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/drive',
 		component: Drive,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/multiadd/:id',
 		component: AttendanceMultiAdd,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/create',
 		component: TeamAdd,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team',
 		component: TeamList,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/teamlist',
 		component: TeamList,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/list',
 		component: TeamList,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/teamview/:id',
 		component: TeamView,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/emails/:id',
 		component: TeamEmailList,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/view/:id',
 		component: TeamView,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/edit/:id',
 		component: TeamEdit,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/team/:id',
 		component: TeamView,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/admin',
 		component: Admin,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/regedit',
 		component: RegEdit,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/flightassign',
 		component: FlightAssign,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/notifications',
 		component: Notifications,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/debug',
 		component: Debug,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/signin',
 		component: Signin,
-		exact: false
+		exact: false,
 	},
 	{
 		url: '/finishaccount/:token',
 		component: FinishSignup,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/create-account',
 		component: Signup,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/passwordreset',
 		component: RequestPasswordResetForm,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/usernamerequest',
 		component: RequestUsernameForm,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/finishpasswordreset/:token',
 		component: FinishPasswordResetForm,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/registerdiscord/:discordid',
 		component: RegisterDiscord,
-		exact: true
+		exact: true,
 	},
 	{
 		url: '/capr393quizzer',
 		component: Quizzer,
-		exact: false
+		exact: false,
 	},
 
 	// THIS GOES LAST
@@ -238,8 +238,8 @@ const pages: Array<{
 	{
 		url: '/',
 		component: NotFound,
-		exact: false
-	}
+		exact: false,
+	},
 ];
 
 const composeElement = (
@@ -251,7 +251,7 @@ const composeElement = (
 	registry: RegistryValues,
 	member: User | null,
 	fullMemberDetails: SigninReturn,
-	updateApp: () => void
+	updateApp: () => void,
 ) => (props: RouteComponentProps<any>) => {
 	return (
 		<PageDisplayer
@@ -360,7 +360,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		this.state = {
 			loading: false,
 			previousHash: props.location.hash,
-			previousPath: ''
+			previousPath: '',
 		};
 	}
 
@@ -398,7 +398,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 			this.setState({
 				loading: true,
 				previousHash: this.props.location.hash,
-				previousPath: this.props.location.pathname
+				previousPath: this.props.location.pathname,
 			});
 
 			const { member } = this.props;
@@ -412,7 +412,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 						this.props.authorizeUser(ret);
 
 						this.setState({
-							loading: false
+							loading: false,
 						});
 					});
 			}
@@ -458,7 +458,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 									this.props.registry,
 									this.props.member,
 									this.props.fullMemberDetails,
-									this.props.updateApp
+									this.props.updateApp,
 								)}
 							/>
 						);

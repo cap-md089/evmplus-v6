@@ -32,7 +32,7 @@ enum FileDialogueView {
 	MYDRIVE,
 	// SHAREDWITHME,
 	// RECENT,
-	UPLOAD
+	UPLOAD,
 }
 
 export interface ItemProps {
@@ -88,7 +88,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		hovering: false,
 		selectedFolder: '',
 		selectedFiles: [],
-		currentFolder: null
+		currentFolder: null,
 	};
 
 	constructor(props: FileDialogueProps) {
@@ -115,10 +115,10 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 
 	public render() {
 		const folderFiles = (this.state.files || []).filter(
-			f => f.contentType !== 'application/folder'
+			f => f.contentType !== 'application/folder',
 		);
 		const folderFolders = (this.state.files || []).filter(
-			f => f.contentType === 'application/folder'
+			f => f.contentType === 'application/folder',
 		);
 
 		let props: DialogueWithOK | DialogueWithOKCancel;
@@ -129,7 +129,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				labels: ['Cancel'],
 				onClose: this.onDialogueCloseCancel,
 				open: this.props.open,
-				title: ''
+				title: '',
 			};
 		} else {
 			props = {
@@ -139,7 +139,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				onOk: this.onDialogueClose,
 				onClose: () => void 0,
 				open: this.props.open,
-				title: ''
+				title: '',
 			};
 		}
 
@@ -198,7 +198,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 					  this.state.files.length === 0 ? (
 						<div
 							style={{
-								margin: '0 auto'
+								margin: '0 auto',
 							}}
 						>
 							No files to select
@@ -218,7 +218,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 													}}
 													style={{
 														color: '#2875d7',
-														cursor: 'pointer'
+														cursor: 'pointer',
 													}}
 													className="linkButton"
 												>
@@ -271,11 +271,11 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				this.setState({
 					error: false,
 					view,
-					files: null
+					files: null,
 				});
 			} else {
 				this.setState({
-					view
+					view,
 				});
 			}
 			e.preventDefault();
@@ -286,13 +286,13 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		// basically set state with folder id
 		if (selected) {
 			this.setState({
-				selectedFolder: ''
+				selectedFolder: '',
 			});
 
 			this.goToFolder(folder.id);
 		} else {
 			this.setState({
-				selectedFolder: folder.id
+				selectedFolder: folder.id,
 			});
 		}
 	}
@@ -301,15 +301,15 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		// add file to selected files if it is not selected else remove
 		if (selected) {
 			const selectedFiles = this.state.selectedFiles.filter(
-				filterFile => filterFile.id !== file.id
+				filterFile => filterFile.id !== file.id,
 			);
 			this.setState({
-				selectedFiles
+				selectedFiles,
 			});
 		} else {
 			const selectedFiles = this.multiple ? [...this.state.selectedFiles, file] : [file];
 			this.setState({
-				selectedFiles
+				selectedFiles,
 			});
 		}
 	}
@@ -324,17 +324,17 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		if (this.props.multiple) {
 			this.setState(prev => ({
 				selectedFiles: [...prev.selectedFiles, file].filter(
-					this.props.filter || (() => true)
-				)
+					this.props.filter || (() => true),
+				),
 			}));
 		} else if (this.props.filter === undefined) {
 			this.setState({
-				selectedFiles: [file]
+				selectedFiles: [file],
 			});
 		} else {
 			if (this.props.filter(file, 0, [file])) {
 				this.setState({
-					selectedFiles: [file]
+					selectedFiles: [file],
 				});
 			}
 		}
@@ -343,30 +343,30 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 	private async goToFolder(id: string) {
 		const fileInfoEither = await AsyncEither.All([
 			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member.sessionID),
-			fetchApi.files.files.get({ id }, {}, this.props.member.sessionID)
+			fetchApi.files.files.get({ id }, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(fileInfoEither)) {
 			this.setState({
-				error: true
+				error: true,
 			});
 		} else {
 			const [files, currentFolder] = fileInfoEither.value;
 
 			this.setState({
 				files: files.filter(Either.isRight).map(get('value')),
-				currentFolder
+				currentFolder,
 			});
 		}
 	}
 
 	private onDialogueClose() {
 		this.props.onReturn(
-			this.state.selectedFiles.filter(this.props.filter ? this.props.filter : () => true)
+			this.state.selectedFiles.filter(this.props.filter ? this.props.filter : () => true),
 		);
 
 		this.setState({
-			selectedFiles: []
+			selectedFiles: [],
 		});
 	}
 
@@ -374,7 +374,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		this.props.onReturn([]);
 
 		this.setState({
-			selectedFiles: []
+			selectedFiles: [],
 		});
 	}
 }

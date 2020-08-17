@@ -34,7 +34,7 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 	}
 
 	const cadetActivitiesCollection = schema.getCollection<NHQ.CadetActivities>(
-		'NHQ_CadetActivities'
+		'NHQ_CadetActivities',
 	);
 
 	for (const cadetActivitiesConst of fileData) {
@@ -45,7 +45,7 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 				Location: cadetActivitiesConst.Location,
 				Completed: convertNHQDate(cadetActivitiesConst.Completed).toISOString(),
 				UsrID: cadetActivitiesConst.UsrID,
-				DateMod: convertNHQDate(cadetActivitiesConst.DateMod).toISOString()
+				DateMod: convertNHQDate(cadetActivitiesConst.DateMod).toISOString(),
 			};
 			try {
 				await cadetActivitiesCollection.add(values).execute();
@@ -54,7 +54,7 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 				await modifyAndBind(cadetActivitiesCollection, {
 					CAPID: values.CAPID,
 					Type: values.Type,
-					Completed: values.Completed
+					Completed: values.Completed,
 				})
 					.patch(values)
 					.execute();

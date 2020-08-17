@@ -30,7 +30,7 @@ import {
 	Maybe,
 	RegistryValues,
 	ServerError,
-	UserAccountInformation
+	UserAccountInformation,
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
 
@@ -49,46 +49,46 @@ const emailText = (memberName: string) => (resetUrl: string) =>
 	`This link will expire within 24 hours.\n\nLink: ${resetUrl}`;
 
 const getMemberAndSendEmail = (emailFunction: typeof sendEmail) => (
-	req: ServerAPIRequestParameter<api.member.account.PasswordResetRequest>
+	req: ServerAPIRequestParameter<api.member.account.PasswordResetRequest>,
 ) => (account: UserAccountInformation) => (registry: RegistryValues) => (resetUrl: string) =>
 	resolveReference(req.mysqlx)(req.account)(account.member).flatMap(member =>
 		Maybe.cata<string, AsyncEither<ServerError, void>>(() =>
 			asyncLeft<ServerError, void>({
 				type: 'OTHER',
 				code: 400,
-				message: 'Member does not have an email'
-			})
+				message: 'Member does not have an email',
+			}),
 		)(email =>
 			emailFunction(true)(registry)(`Password reset for ${getFullMemberName(member)}`)(email)(
-				emailHtml(getFullMemberName(member))(resetUrl)
-			)(emailText(getFullMemberName(member))(resetUrl))
-		)(getMemberEmail(member.contact))
+				emailHtml(getFullMemberName(member))(resetUrl),
+			)(emailText(getFullMemberName(member))(resetUrl)),
+		)(getMemberEmail(member.contact)),
 	);
 
 export const func: (
-	emailFunction?: typeof sendEmail
+	emailFunction?: typeof sendEmail,
 ) => ServerAPIEndpoint<api.member.account.PasswordResetRequest> = (
-	emailFunction = sendEmail
+	emailFunction = sendEmail,
 ) => req =>
 	asyncRight(req, errorGenerator('Could not request username'))
 		.filter(() => PAM.verifyCaptcha(req.body.captchaToken, req.configuration), {
 			type: 'OTHER',
 			code: 400,
-			message: 'Could not verify reCAPTCHA'
+			message: 'Could not verify reCAPTCHA',
 		})
 		.flatMap(() =>
 			AsyncEither.All([
 				asyncRight(
 					PAM.getInformationForUser(req.mysqlx, req.body.username),
-					errorGenerator('Could not load website configuration')
+					errorGenerator('Could not load website configuration'),
 				),
-				getRegistry(req.mysqlx)(req.account)
-			])
+				getRegistry(req.mysqlx)(req.account),
+			]),
 		)
 		.flatMap(([account, registry]) =>
 			PAM.createPasswordResetToken(req.mysqlx, account.username)
 				.map(formatUrl(req.account))
-				.flatMap(getMemberAndSendEmail(emailFunction)(req)(account)(registry))
+				.flatMap(getMemberAndSendEmail(emailFunction)(req)(account)(registry)),
 		);
 
 export default func();

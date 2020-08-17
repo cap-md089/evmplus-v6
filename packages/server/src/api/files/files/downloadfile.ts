@@ -26,7 +26,7 @@ import {
 	RawFileObject,
 	SessionType,
 	User,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { accountRequestTransformer, downloadFileObject, getFileObject, PAM } from 'server-common';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
@@ -40,7 +40,7 @@ export const func = () =>
 			.flatMap(request =>
 				getFileObject(true)(req.mysqlx)(request.account)(request.params.fileid).map<
 					[RawFileObject, MaybeObj<User>]
-				>(f => [f, request.member])
+				>(f => [f, request.member]),
 			)
 			.join();
 

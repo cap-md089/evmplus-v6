@@ -41,7 +41,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 		files: [],
 		hovering: false,
 		progress: 0,
-		doneWithCurrentFile: true
+		doneWithCurrentFile: true,
 	};
 
 	public constructor(props: FileUploaderProps) {
@@ -63,22 +63,22 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 		}
 
 		this.setState({
-			doneWithCurrentFile: false
+			doneWithCurrentFile: false,
 		});
 
 		for await (const event of uploadFile(this.props.member)(this.props.currentFolder.id)(
-			this.state.files[0]
+			this.state.files[0],
 		)) {
 			if (event.event === 'PROGRESS') {
 				this.setState({
-					progress: event.progress
+					progress: event.progress,
 				});
 			} else if (event.event === 'FINISH') {
 				this.props.onFileUpload(event.file);
 				this.setState(prev => ({
 					files: prev.files.slice(1),
 					doneWithCurrentFile: true,
-					progress: 0
+					progress: 0,
 				}));
 			}
 		}
@@ -108,7 +108,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 						borderWidth: 2,
 						borderStyle: 'dashed',
 						padding: 30,
-						display: this.props.display ? 'block' : 'none'
+						display: this.props.display ? 'block' : 'none',
 					}}
 				>
 					<div
@@ -116,7 +116,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 							margin: '0px auto',
 							overflow: 'auto',
 							textAlign: 'center',
-							clear: 'both'
+							clear: 'both',
 						}}
 						className="verticalCenter"
 					>
@@ -130,7 +130,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 							className="primaryButton"
 							style={{
 								display: 'inline-block',
-								margin: '2px auto'
+								margin: '2px auto',
 							}}
 						>
 							Select files to upload
@@ -146,7 +146,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 								overflow: 'hidden',
 								position: 'fixed',
 								left: -20,
-								zIndex: -1
+								zIndex: -1,
 							}}
 							onChange={this.handleSelectChange}
 						/>
@@ -160,7 +160,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 		return (e: React.DragEvent<HTMLDivElement>) => {
 			e.preventDefault();
 			this.setState({
-				hovering
+				hovering,
 			});
 		};
 	}
@@ -186,7 +186,7 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 		}
 
 		this.setState({
-			hovering: false
+			hovering: false,
 		});
 	}
 

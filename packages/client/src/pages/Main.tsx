@@ -26,7 +26,7 @@ import {
 	MaybeObj,
 	pipe,
 	presentMultCheckboxReturn,
-	RawEventObject
+	RawEventObject,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -57,7 +57,7 @@ type MainState = MainStateUnloaded | MainStateLoaded | MainStateError;
 
 export default class Main extends Page<PageProps, MainState> {
 	public state: MainState = {
-		state: 'UNLOADED'
+		state: 'UNLOADED',
 	};
 
 	public async componentDidMount() {
@@ -65,15 +65,15 @@ export default class Main extends Page<PageProps, MainState> {
 			{
 				target: '/team',
 				text: 'Team list',
-				type: 'Link'
-			}
+				type: 'Link',
+			},
 		];
 
 		if (this.props.member) {
 			links.push({
 				target: '/admin',
 				text: 'Administration',
-				type: 'Link'
+				type: 'Link',
 			});
 		}
 
@@ -81,19 +81,19 @@ export default class Main extends Page<PageProps, MainState> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
-			}
+				text: 'Home',
+			},
 		]);
 		this.updateTitle();
 
 		const infoEither = await AsyncEither.All([
 			fetchApi.events.events.getNextRecurring({}, {}),
-			fetchApi.events.events.getUpcoming({}, {})
+			fetchApi.events.events.getUpcoming({}, {}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
 			this.setState({
-				state: 'ERROR'
+				state: 'ERROR',
 			});
 		} else {
 			const [nextEvent, events] = infoEither.value;
@@ -101,7 +101,7 @@ export default class Main extends Page<PageProps, MainState> {
 			this.setState({
 				state: 'LOADED',
 				events,
-				nextEvent
+				nextEvent,
 			});
 		}
 	}
@@ -122,7 +122,7 @@ export default class Main extends Page<PageProps, MainState> {
 								<>
 									<h3
 										style={{
-											textAlign: 'center'
+											textAlign: 'center',
 										}}
 									>
 										Next meeting
@@ -131,7 +131,7 @@ export default class Main extends Page<PageProps, MainState> {
 									<br />
 									<strong>Time</strong>:{' '}
 									{DateTime.fromMillis(
-										this.state.nextEvent.value.meetDateTime
+										this.state.nextEvent.value.meetDateTime,
 									).toLocaleString({
 										year: 'numeric',
 										weekday: 'short',
@@ -139,7 +139,7 @@ export default class Main extends Page<PageProps, MainState> {
 										day: '2-digit',
 										hour: '2-digit',
 										minute: '2-digit',
-										hour12: false
+										hour12: false,
 									})}
 									<br />
 									<strong>Location</strong>:{' '}
@@ -148,16 +148,16 @@ export default class Main extends Page<PageProps, MainState> {
 									<strong>Uniform of the day</strong>:{' '}
 									{pipe(
 										M.map(uniform => <>{uniform}</>),
-										M.orSome(<i>No uniform specified</i>)
+										M.orSome(<i>No uniform specified</i>),
 									)(
 										presentMultCheckboxReturn(
-											this.state.nextEvent.value.uniform
-										)
+											this.state.nextEvent.value.uniform,
+										),
 									)}
 									<br />
 									<Link
 										to={`/eventviewer/${getURIComponent(
-											this.state.nextEvent.value
+											this.state.nextEvent.value,
 										)}`}
 									>
 										View details
@@ -170,7 +170,7 @@ export default class Main extends Page<PageProps, MainState> {
 								<h3
 									style={{
 										textAlign: 'center',
-										lineHeight: 'initial'
+										lineHeight: 'initial',
 									}}
 								>
 									No upcoming events
@@ -179,7 +179,7 @@ export default class Main extends Page<PageProps, MainState> {
 								<h3
 									style={{
 										textAlign: 'center',
-										lineHeight: 'initial'
+										lineHeight: 'initial',
 									}}
 								>
 									Upcoming events
@@ -191,10 +191,10 @@ export default class Main extends Page<PageProps, MainState> {
 										<span style={{ color: 'red' }}>
 											<strong>
 												{DateTime.fromMillis(
-													ev.meetDateTime
+													ev.meetDateTime,
 												).toLocaleString({
 													day: '2-digit',
-													month: 'long'
+													month: 'long',
 												})}
 											</strong>{' '}
 											<Link to={`/eventviewer/${getURIComponent(ev)}`}>
@@ -206,10 +206,10 @@ export default class Main extends Page<PageProps, MainState> {
 										<span>
 											<strong>
 												{DateTime.fromMillis(
-													ev.meetDateTime
+													ev.meetDateTime,
 												).toLocaleString({
 													day: '2-digit',
-													month: 'long'
+													month: 'long',
 												})}
 											</strong>{' '}
 											<Link to={`/eventviewer/${getURIComponent(ev)}`}>

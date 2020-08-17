@@ -28,11 +28,11 @@ export type ProvidedKeys = 'value' | 'name' | 'onUpdate' | 'index';
 const clearFix: React.CSSProperties = {
 	content: '',
 	clear: 'both',
-	height: 15
+	height: 15,
 };
 
 const upperMargin = {
-	marginTop: 10
+	marginTop: 10,
 };
 
 export interface ListEditorProps<T, P extends InputProps<T>, R extends React.ComponentType<P>>
@@ -59,7 +59,7 @@ export default class ListEditor<
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: this.props.value || []
+				value: this.props.value || [],
 			});
 		}
 	}
@@ -73,7 +73,7 @@ export default class ListEditor<
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '100%' : undefined,
-					...this.props.boxStyles
+					...this.props.boxStyles,
 				}}
 			>
 				{this.props.hasError && this.props.errorMessage ? (
@@ -87,14 +87,14 @@ export default class ListEditor<
 								value,
 								name: '',
 								onUpdate: this.getChangeHandler(index),
-								index
+								index,
 							};
 
 							// Don't know why Omit<P, T> & Pick<P, T> doesn't equal P
 							// @ts-ignore
 							const props: P = {
 								...knownProps,
-								...extraProps
+								...extraProps,
 							};
 
 							// @ts-ignore
@@ -108,7 +108,7 @@ export default class ListEditor<
 											style={{
 												width: 220,
 												height: 2,
-												float: 'left'
+												float: 'left',
 											}}
 										/>
 									) : null}
@@ -139,7 +139,7 @@ export default class ListEditor<
 						style={{
 							width: 220,
 							height: 2,
-							float: 'left'
+							float: 'left',
 						}}
 					/>
 				) : null}
@@ -165,7 +165,7 @@ export default class ListEditor<
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: oldValues
+					value: oldValues,
 				});
 			}
 
@@ -185,7 +185,7 @@ export default class ListEditor<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: oldValues
+				value: oldValues,
 			});
 		}
 
@@ -203,7 +203,7 @@ export default class ListEditor<
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value
+					value,
 				});
 			}
 

@@ -27,7 +27,7 @@ export default class DriveFolderDisplay extends React.Component<
 	{ hovering: boolean }
 > {
 	public state = {
-		hovering: false
+		hovering: false,
 	};
 
 	constructor(props: FileDisplayProps & { refresh: () => void }) {
@@ -65,20 +65,20 @@ export default class DriveFolderDisplay extends React.Component<
 
 		if (
 			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
-				this.props.file
+				this.props.file,
 			)
 		) {
 			return;
 		}
 
 		this.setState({
-			hovering: true
+			hovering: true,
 		});
 	}
 
 	private handleOff() {
 		this.setState({
-			hovering: false
+			hovering: false,
 		});
 	}
 
@@ -88,7 +88,7 @@ export default class DriveFolderDisplay extends React.Component<
 
 		if (
 			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
-				this.props.file
+				this.props.file,
 			)
 		) {
 			return;
@@ -115,12 +115,12 @@ export default class DriveFolderDisplay extends React.Component<
 		await fetchApi.files.children.add(
 			{ parentid: this.props.file.id },
 			{ childid: id },
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.props.refresh();
 		this.setState({
-			hovering: false
+			hovering: false,
 		});
 	}
 

@@ -45,8 +45,8 @@ export class Maybe {
 			MaybeObj<V7>,
 			MaybeObj<V8>,
 			MaybeObj<V9>,
-			MaybeObj<V10>
-		]
+			MaybeObj<V10>,
+		],
 	): MaybeObj<[V1, V2, V3, V4, V5, V6, V7, V8, V9, V10]>;
 	public static And<V1, V2, V3, V4, V5, V6, V7, V8, V9>(
 		values: [
@@ -58,8 +58,8 @@ export class Maybe {
 			MaybeObj<V6>,
 			MaybeObj<V7>,
 			MaybeObj<V8>,
-			MaybeObj<V9>
-		]
+			MaybeObj<V9>,
+		],
 	): MaybeObj<[V1, V2, V3, V4, V5, V6, V7, V8, V9]>;
 	public static And<V1, V2, V3, V4, V5, V6, V7, V8>(
 		values: [
@@ -70,8 +70,8 @@ export class Maybe {
 			MaybeObj<V5>,
 			MaybeObj<V6>,
 			MaybeObj<V7>,
-			MaybeObj<V8>
-		]
+			MaybeObj<V8>,
+		],
 	): MaybeObj<[V1, V2, V3, V4, V5, V6, V7, V8]>;
 	public static And<V1, V2, V3, V4, V5, V6, V7>(
 		values: [
@@ -81,20 +81,27 @@ export class Maybe {
 			MaybeObj<V4>,
 			MaybeObj<V5>,
 			MaybeObj<V6>,
-			MaybeObj<V7>
-		]
+			MaybeObj<V7>,
+		],
 	): MaybeObj<[V1, V2, V3, V4, V5, V6, V7]>;
 	public static And<V1, V2, V3, V4, V5, V6>(
-		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>, MaybeObj<V4>, MaybeObj<V5>, MaybeObj<V6>]
+		values: [
+			MaybeObj<V1>,
+			MaybeObj<V2>,
+			MaybeObj<V3>,
+			MaybeObj<V4>,
+			MaybeObj<V5>,
+			MaybeObj<V6>,
+		],
 	): MaybeObj<[V1, V2, V3, V4, V5, V6]>;
 	public static And<V1, V2, V3, V4, V5>(
-		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>, MaybeObj<V4>, MaybeObj<V5>]
+		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>, MaybeObj<V4>, MaybeObj<V5>],
 	): MaybeObj<[V1, V2, V3, V4, V5]>;
 	public static And<V1, V2, V3, V4>(
-		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>, MaybeObj<V4>]
+		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>, MaybeObj<V4>],
 	): MaybeObj<[V1, V2, V3, V4]>;
 	public static And<V1, V2, V3>(
-		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>]
+		values: [MaybeObj<V1>, MaybeObj<V2>, MaybeObj<V3>],
 	): MaybeObj<[V1, V2, V3]>;
 	public static And<V1, V2>(values: [MaybeObj<V1>, MaybeObj<V2>]): MaybeObj<[V1, V2]>;
 	public static And<V>(values: [MaybeObj<V>]): MaybeObj<[V]>;
@@ -133,7 +140,7 @@ export class Maybe {
 		m.hasValue && f(m.value) ? m : noneObj;
 
 	public static filterType = <T, U extends T = T>(f: (v: T) => v is U) => (
-		m: MaybeObj<T>
+		m: MaybeObj<T>,
 	): MaybeObj<U> => Maybe.filter(f)(m) as MaybeObj<U>;
 
 	public static cata = <T, U>(nf: () => U) => (f: (v: T) => U) => (m: MaybeObj<T>) =>

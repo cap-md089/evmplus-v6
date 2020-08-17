@@ -37,7 +37,7 @@ const TimeZoneDisplays: { [P in Timezone]: string } = {
 	'America/Arizona': 'Arizona',
 	'America/Anchorage': 'Alaska',
 	'America/Hawaii': 'Hawaii',
-	'America/Puerto_Rico': 'Puerto Rico'
+	'America/Puerto_Rico': 'Puerto Rico',
 };
 
 type SupportedTimeZones = keyof typeof TimeZoneDisplays;
@@ -67,7 +67,7 @@ export const MONTHS = [
 	'September',
 	'October',
 	'November',
-	'December'
+	'December',
 ];
 
 interface DateTimeState {
@@ -92,7 +92,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: +start
+				value: +start,
 			});
 		}
 
@@ -100,7 +100,7 @@ export default class DateTimeInput extends React.Component<
 			guiOpen: false,
 			guiCurrentMonth: start.month,
 			guiCurrentYear: start.year,
-			focused: false
+			focused: false,
 		};
 
 		this.onFocus = this.onFocus.bind(this);
@@ -150,13 +150,13 @@ export default class DateTimeInput extends React.Component<
 
 	private onFocus() {
 		this.setState({
-			focused: true
+			focused: true,
 		});
 	}
 
 	private onBlur() {
 		this.setState({
-			focused: false
+			focused: false,
 		});
 	}
 
@@ -164,7 +164,7 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: +date
+				value: +date,
 			});
 		}
 

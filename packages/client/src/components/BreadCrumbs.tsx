@@ -28,7 +28,7 @@ export interface BreadCrumb {
 const dividerStyle: React.CSSProperties = {
 	margin: '2px 10px',
 	padding: '0 1px 0 1px',
-	color: '#999'
+	color: '#999',
 };
 
 export class BreadCrumbsPresentation extends React.Component<
@@ -55,7 +55,7 @@ export class BreadCrumbsPresentation extends React.Component<
 								</li>,
 								<li key={i}>
 									<Link to={link.target}>{link.text}</Link>
-								</li>
+								</li>,
 							];
 						}
 					})}

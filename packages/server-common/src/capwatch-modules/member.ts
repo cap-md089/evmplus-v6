@@ -55,7 +55,7 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (fileData, schema) => {
 				memberContactCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute()
+					.execute(),
 			]);
 
 			const values = {
@@ -86,7 +86,7 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (fileData, schema) => {
 				MbrStatus: member.MbrStatus,
 				PicStatus: member.PicStatus,
 				PicDate: convertNHQDate(member.PicDate).toISOString(),
-				CdtWaiver: member.CdtWaiver
+				CdtWaiver: member.CdtWaiver,
 			};
 
 			await memberCollection.add(values).execute();

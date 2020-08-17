@@ -26,7 +26,7 @@ import {
 	UserAccountInformation,
 	SessionType,
 	UserSession,
-	ServerConfiguration
+	ServerConfiguration,
 } from 'common-lib';
 import * as rp from 'request-promise';
 import { checkIfPasswordValid } from './Password';
@@ -57,7 +57,7 @@ export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
 
 export const verifyCaptcha = async (
 	response: string,
-	conf: ServerConfiguration
+	conf: ServerConfiguration,
 ): Promise<boolean> => {
 	if (process.env.NODE_ENV === 'test') {
 		return true;
@@ -69,10 +69,10 @@ export const verifyCaptcha = async (
 			method: 'POST',
 			form: {
 				secret: conf.RECAPTCHA_SECRET,
-				response
+				response,
 			},
 			resolveWithFullResponse: false,
-			simple: true
+			simple: true,
 		});
 
 		return JSON.parse(results).success;
@@ -85,7 +85,7 @@ const getUserID = async (schema: Schema, username: string): Promise<MemberRefere
 	const userMappingCollection = schema.getCollection<UserAccountInformation>('UserAccountInfo');
 
 	const userFinder = findAndBind(userMappingCollection, {
-		username
+		username,
 	});
 
 	const userList = await collectResults(userFinder);
@@ -111,32 +111,32 @@ export const trySignin = async (
 	username: string,
 	password: string,
 	recaptchaCode: string,
-	conf: ServerConfiguration
+	conf: ServerConfiguration,
 ): Promise<SigninResult> => {
 	if (!(await verifyCaptcha(recaptchaCode, conf))) {
 		return {
-			result: MemberCreateError.RECAPTCHA_INVALID
+			result: MemberCreateError.RECAPTCHA_INVALID,
 		};
 	}
 
 	const valid = await checkIfPasswordValid(schema, username, password);
 	if (valid === PasswordResult.INVALID) {
 		return {
-			result: MemberCreateError.INCORRRECT_CREDENTIALS
+			result: MemberCreateError.INCORRRECT_CREDENTIALS,
 		};
 	}
 
 	const [member, userInformation] = await Promise.all([
 		getUserID(schema, username),
-		getInformationForUser(schema, username)
+		getInformationForUser(schema, username),
 	]);
 
 	const session = await createSessionForUser(schema, userInformation).join();
 
 	return Either.cata(() =>
 		Promise.resolve<SigninResult>({
-			result: MemberCreateError.SERVER_ERROR
-		})
+			result: MemberCreateError.SERVER_ERROR,
+		}),
 	)(async (sess: UserSession) => {
 		if (valid === PasswordResult.VALID_EXPIRED) {
 			return setSessionType(schema, sess, SessionType.PASSWORD_RESET)
@@ -146,16 +146,16 @@ export const trySignin = async (
 						() =>
 							({
 								result: MemberCreateError.PASSWORD_EXPIRED,
-								sessionID: sess.id
-							} as SigninResult)
-					)
+								sessionID: sess.id,
+							} as SigninResult),
+					),
 				);
 		}
 
 		return {
 			result: MemberCreateError.NONE,
 			member,
-			sessionID: sess.id
+			sessionID: sess.id,
 		};
 	})(session);
 };

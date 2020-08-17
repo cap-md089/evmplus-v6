@@ -25,13 +25,13 @@ const call = (identifier: ts.Expression) => <
 	T extends keyof typeof Validator = keyof typeof Validator
 >(
 	name: T,
-	args: ts.Expression[]
+	args: ts.Expression[],
 ) => ts.createCall(ts.createPropertyAccess(identifier, name as string), undefined, args);
 
 const get = (identifier: ts.Expression) => <
 	T extends keyof typeof Validator = keyof typeof Validator
 >(
-	name: T
+	name: T,
 ) => ts.createPropertyAccess(identifier, name as string);
 
 const getName = (identifier: ts.EntityName) =>
@@ -39,7 +39,7 @@ const getName = (identifier: ts.EntityName) =>
 
 const getFullGenericType = (
 	typeNode: ts.Node | undefined,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ): [ts.TypeNode, ts.TypeNode[]] | undefined => {
 	if (!typeNode) {
 		return undefined;
@@ -63,7 +63,7 @@ const getFullGenericType = (
 };
 
 const getGenericParameter = (
-	typeParameterList: readonly ts.TypeNode[] | ts.Symbol[] | undefined
+	typeParameterList: readonly ts.TypeNode[] | ts.Symbol[] | undefined,
 ) => (inputParameterList: readonly ts.TypeNode[] | undefined) => (parameter: ts.Symbol) => {
 	if (!inputParameterList || !typeParameterList) {
 		return undefined;
@@ -87,7 +87,7 @@ const getGenericParameter = (
 			? ts.isTypeReferenceNode(typeNode)
 				? getName(typeNode.typeName) === typeName
 				: false
-			: typeNode.name === typeName
+			: typeNode.name === typeName,
 	);
 
 	return inputParameterList[index];
@@ -97,13 +97,13 @@ const getObjectValidatorProperties = (
 	validatorIdentifier: ts.Expression,
 	validatorCreator: (
 		typeNode: ts.TypeNode,
-		typeParameters: readonly ts.TypeNode[] | undefined
+		typeParameters: readonly ts.TypeNode[] | undefined,
 	) => ts.Expression,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ) => (
 	properties: ts.Symbol[],
 	inputTypeParameters: readonly ts.TypeNode[] | undefined,
-	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined
+	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined,
 ) => {
 	const caller = call(validatorIdentifier);
 
@@ -125,11 +125,11 @@ const getObjectValidatorProperties = (
 					}
 
 					objectProperties[property.name] = caller('Optional', [
-						validatorCreator(parameter, inputTypeParameters)
+						validatorCreator(parameter, inputTypeParameters),
 					]);
 				} else {
 					objectProperties[property.name] = caller('Optional', [
-						validatorCreator(decl.type, inputTypeParameters)
+						validatorCreator(decl.type, inputTypeParameters),
 					]);
 				}
 			} else {
@@ -142,12 +142,12 @@ const getObjectValidatorProperties = (
 
 					objectProperties[property.name] = validatorCreator(
 						parameter,
-						inputTypeParameters
+						inputTypeParameters,
 					);
 				} else {
 					objectProperties[property.name] = validatorCreator(
 						decl.type,
-						inputTypeParameters
+						inputTypeParameters,
 					);
 				}
 			}
@@ -163,18 +163,18 @@ const createObjectValidator = (
 	validatorIdentifier: ts.Expression,
 	validatorCreator: (
 		typeNode: ts.TypeNode,
-		typeParameters: readonly ts.TypeNode[] | undefined
+		typeParameters: readonly ts.TypeNode[] | undefined,
 	) => ts.Expression,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ) => (
 	properties: ts.Symbol[],
 	inputTypeParameters: readonly ts.TypeNode[] | undefined,
-	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined
+	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined,
 ) => {
 	const objectProperties = getObjectValidatorProperties(
 		validatorIdentifier,
 		validatorCreator,
-		typeChecker
+		typeChecker,
 	)(properties, inputTypeParameters, typeParameters);
 
 	return ts.createNew(validatorIdentifier, undefined, [toNLExpression(objectProperties)]);
@@ -184,18 +184,18 @@ const createRequiredValidator = (
 	validatorIdentifier: ts.Expression,
 	validatorCreator: (
 		typeNode: ts.TypeNode,
-		typeParameters: readonly ts.TypeNode[] | undefined
+		typeParameters: readonly ts.TypeNode[] | undefined,
 	) => ts.Expression,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ) => (
 	properties: ts.Symbol[],
 	inputTypeParameters: readonly ts.TypeNode[] | undefined,
-	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined
+	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined,
 ) => {
 	const objectProperties = getObjectValidatorProperties(
 		validatorIdentifier,
 		validatorCreator,
-		typeChecker
+		typeChecker,
 	)(properties, inputTypeParameters, typeParameters);
 
 	return call(validatorIdentifier)('Required', [toNLExpression(objectProperties)]);
@@ -205,18 +205,18 @@ const createPartialValidator = (
 	validatorIdentifier: ts.Expression,
 	validatorCreator: (
 		typeNode: ts.TypeNode,
-		typeParameters: readonly ts.TypeNode[] | undefined
+		typeParameters: readonly ts.TypeNode[] | undefined,
 	) => ts.Expression,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ) => (
 	properties: ts.Symbol[],
 	inputTypeParameters: readonly ts.TypeNode[] | undefined,
-	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined
+	typeParameters: readonly ts.TypeNode[] | ts.Symbol[] | undefined,
 ) => {
 	const objectProperties = getObjectValidatorProperties(
 		validatorIdentifier,
 		validatorCreator,
-		typeChecker
+		typeChecker,
 	)(properties, inputTypeParameters, typeParameters);
 
 	return call(validatorIdentifier)('Partial', [toNLExpression(objectProperties)]);
@@ -225,7 +225,7 @@ const createPartialValidator = (
 export const createValidator = (
 	parent: ts.Node,
 	validatorIdentifier: ts.Expression,
-	typeChecker: ts.TypeChecker
+	typeChecker: ts.TypeChecker,
 ) => (typeNode: ts.TypeNode, typeParameters: readonly ts.TypeNode[] = []): ts.Expression => {
 	const caller = call(validatorIdentifier);
 	const getter = get(validatorIdentifier);
@@ -247,23 +247,23 @@ export const createValidator = (
 						.filter(
 							subTypeNode =>
 								typeChecker.getTypeFromTypeNode(subTypeNode).flags !==
-								ts.TypeFlags.Undefined
+								ts.TypeFlags.Undefined,
 						)
-						.map(subType => subValidator(subType))
-				])
+						.map(subType => subValidator(subType)),
+				]),
 			]);
 		}
 
 		return caller('Or', [
 			ts.createLiteral(typeChecker.typeToString(type)),
-			...typeNode.types.map(subType => subValidator(subType, typeParameters))
+			...typeNode.types.map(subType => subValidator(subType, typeParameters)),
 		]);
 	}
 
 	if (ts.isIntersectionTypeNode(typeNode)) {
 		return caller('And', [
 			ts.createLiteral(typeChecker.typeToString(type)),
-			...typeNode.types.map(subType => subValidator(subType, typeParameters))
+			...typeNode.types.map(subType => subValidator(subType, typeParameters)),
 		]);
 	}
 
@@ -303,8 +303,8 @@ export const createValidator = (
 				createValidator(
 					parent,
 					validatorIdentifier,
-					typeChecker
-				)(arrayTypeArg[0], arrayTypeArg[1])
+					typeChecker,
+				)(arrayTypeArg[0], arrayTypeArg[1]),
 			]);
 		}
 	}
@@ -348,7 +348,7 @@ export const createValidator = (
 				typeParameters,
 				'localTypeParameters' in aliasedType
 					? aliasedType.localTypeParameters?.map(p => p.symbol) ?? []
-					: []
+					: [],
 			);
 		}
 
@@ -362,7 +362,7 @@ export const createValidator = (
 				return createRequiredValidator(validatorIdentifier, subValidator, typeChecker)(
 					properties.getProperties(),
 					typeParameters,
-					typeNodeArguments
+					typeNodeArguments,
 				);
 			}
 		}
@@ -377,7 +377,7 @@ export const createValidator = (
 				return createPartialValidator(validatorIdentifier, subValidator, typeChecker)(
 					properties.getProperties(),
 					typeParameters,
-					typeNodeArguments
+					typeNodeArguments,
 				);
 			}
 		}
@@ -388,8 +388,8 @@ export const createValidator = (
 				createValidator(
 					parent,
 					validatorIdentifier,
-					typeChecker
-				)(arrayTypeArg![0], arrayTypeArg?.[1] ?? [])
+					typeChecker,
+				)(arrayTypeArg![0], arrayTypeArg?.[1] ?? []),
 			]);
 		}
 
@@ -419,13 +419,13 @@ export const createValidator = (
 				members.push(
 					initializer.kind === ts.SyntaxKind.NumericLiteral
 						? ts.createNumericLiteral(initializer.getText())
-						: initializer
+						: initializer,
 				);
 			});
 
 			return caller(
 				'OneOfStrict',
-				[ts.createLiteral(typeChecker.typeToString(type)), ...members]
+				[ts.createLiteral(typeChecker.typeToString(type)), ...members],
 				// declaration.members.map(enumMember => enumMember).map(ts.createLiteral)
 			);
 		}
@@ -435,7 +435,10 @@ export const createValidator = (
 		}
 
 		throw new Error(
-			'Cannot handle type ' + aliasSymbol.name + ' of type ' + ts.SyntaxKind[declaration.kind]
+			'Cannot handle type ' +
+				aliasSymbol.name +
+				' of type ' +
+				ts.SyntaxKind[declaration.kind],
 		);
 	}
 
@@ -443,7 +446,7 @@ export const createValidator = (
 		return createObjectValidator(validatorIdentifier, subValidator, typeChecker)(
 			type.getProperties(),
 			typeParameters,
-			typeParameters
+			typeParameters,
 		);
 	}
 
@@ -459,7 +462,7 @@ export const createValidator = (
 			return createObjectValidator(validatorIdentifier, subValidator, typeChecker)(
 				type.getProperties(),
 				typeParameters,
-				typeParameters
+				typeParameters,
 			);
 		}
 	}
@@ -480,12 +483,16 @@ export const createValidator = (
 		return createObjectValidator(validatorIdentifier, subValidator, typeChecker)(
 			type.getProperties(),
 			typeParameters,
-			typeParameters
+			typeParameters,
 		);
 	}
 
 	throw new Error(
-		'Unrecognized type: ' + ts.TypeFlags[type.flags] + ' (' + ts.SyntaxKind[typeNode.kind] + ')'
+		'Unrecognized type: ' +
+			ts.TypeFlags[type.flags] +
+			' (' +
+			ts.SyntaxKind[typeNode.kind] +
+			')',
 	);
 };
 
@@ -500,6 +507,6 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 	return createValidator(
 		node,
 		argument,
-		typeChecker
+		typeChecker,
 	)(typeArgument, ts.isTypeReferenceNode(typeArgument) ? typeArgument.typeArguments ?? [] : []);
 };

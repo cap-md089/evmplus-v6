@@ -45,7 +45,7 @@ import {
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
-	stripProp
+	stripProp,
 } from 'common-lib';
 import { createWriteStream } from 'fs';
 import { get } from 'https';
@@ -58,10 +58,10 @@ import { collectResults, findAndBindC } from '../../../MySQLUtil';
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 	asyncRight(
 		schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact'),
-		errorGenerator('Could not get member contact information')
+		errorGenerator('Could not get member contact information'),
 	)
 		.map(
-			findAndBindC<NHQ.MbrContact>({ CAPID: id })
+			findAndBindC<NHQ.MbrContact>({ CAPID: id }),
 		)
 		.map(collectResults)
 		.map(capwatchContact => {
@@ -80,7 +80,7 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 				RADIO: {},
 				TELEX: {},
 				WORKFAX: {},
-				WORKPHONE: {}
+				WORKPHONE: {},
 			};
 
 			capwatchContact.forEach(val => {
@@ -95,7 +95,7 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 		});
 
 const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
-	CAPID: number
+	CAPID: number,
 ): AsyncEither<ServerError, ShortDutyPosition[]> =>
 	asyncRight(
 		Promise.all([
@@ -103,16 +103,16 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 				schema
 					.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition')
 					.find('CAPID = :CAPID')
-					.bind('CAPID', CAPID)
+					.bind('CAPID', CAPID),
 			),
 			collectResults(
 				schema
 					.getCollection<NHQ.CadetDutyPosition>('NHQ_CadetDutyPosition')
 					.find('CAPID = :CAPID')
-					.bind('CAPID', CAPID)
-			)
+					.bind('CAPID', CAPID),
+			),
 		]),
-		errorGenerator('Could not get duty positions')
+		errorGenerator('Could not get duty positions'),
 	)
 		.map(([duties, cadetDuties]) => [...duties, ...cadetDuties])
 		.map(
@@ -120,8 +120,8 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 				duty: item.Duty,
 				date: +DateTime.fromISO(item.DateMod),
 				orgid: item.ORGID,
-				type: 'NHQ' as const
-			}))
+				type: 'NHQ' as const,
+			})),
 		)
 		.map(iterFilter(item => orgids.includes(item.orgid)))
 		.map(collectGenerator);
@@ -129,22 +129,22 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 	asyncRight(
 		schema.getCollection<NHQ.NHQMember>('NHQ_Member'),
-		errorGenerator('Could not get member information')
+		errorGenerator('Could not get member information'),
 	)
 		.map(
-			findAndBindC<NHQ.NHQMember>({ CAPID })
+			findAndBindC<NHQ.NHQMember>({ CAPID }),
 		)
 		.map(collectResults)
 		.filter(results => results.length === 1, {
 			message: 'Could not find member',
 			code: 404,
-			type: 'OTHER'
+			type: 'OTHER',
 		})
 		.map(results => results[0])
 		.map(stripProp('_id'));
 
 export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[]
+	teamObjects?: RawTeamObject[],
 ) => (info: NHQ.NHQMember) =>
 	asyncRight(info.CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
@@ -153,18 +153,18 @@ export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
 				Maybe.orSome<AsyncEither<ServerError, ShortDutyPosition[]>>(
 					asyncRight(
 						[] as ShortDutyPosition[],
-						errorGenerator('Could not get duty positions')
-					)
+						errorGenerator('Could not get duty positions'),
+					),
 				)(
 					Maybe.map((orgids: number[]) => getNHQDutyPositions(schema)(orgids)(id))(
-						getORGIDsFromCAPAccount(account)
-					)
+						getORGIDsFromCAPAccount(account),
+					),
 				),
 				loadExtraCAPMemberInformation(schema)(account)({
 					id,
-					type: 'CAPNHQMember'
-				})(teamObjects)
-			])
+					type: 'CAPNHQMember',
+				})(teamObjects),
+			]),
 		)
 		.map<CAPNHQMemberObject>(([contact, dutyPositions, extraInformation]) => ({
 			absenteeInformation: extraInformation.absentee,
@@ -178,9 +178,9 @@ export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
 							date: item.assigned,
 							duty: item.Duty,
 							expires: item.validUntil,
-							type: 'CAPUnit'
-						} as ShortDutyPosition)
-				)
+							type: 'CAPUnit',
+						} as ShortDutyPosition),
+				),
 			],
 			expirationDate: +DateTime.fromISO(info.Expiration),
 			flight: extraInformation.flight,
@@ -195,11 +195,11 @@ export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
 			squadron: `${info.Region}-${info.Wing}-${info.Unit}`,
 			type: 'CAPNHQMember',
 			usrID: info.UsrID,
-			teamIDs: extraInformation.teamIDs
+			teamIDs: extraInformation.teamIDs,
 		}));
 
 export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[]
+	teamObjects?: RawTeamObject[],
 ) => (CAPID: number) =>
 	asyncRight(CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
@@ -209,18 +209,18 @@ export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 				Maybe.orSome<AsyncEither<ServerError, ShortDutyPosition[]>>(
 					asyncRight(
 						[] as ShortDutyPosition[],
-						errorGenerator('Could not get duty positions')
-					)
+						errorGenerator('Could not get duty positions'),
+					),
 				)(
 					Maybe.map((orgids: number[]) => getNHQDutyPositions(schema)(orgids)(id))(
-						getORGIDsFromCAPAccount(account)
-					)
+						getORGIDsFromCAPAccount(account),
+					),
 				),
 				loadExtraCAPMemberInformation(schema)(account)({
 					id,
-					type: 'CAPNHQMember'
-				})(teamObjects)
-			])
+					type: 'CAPNHQMember',
+				})(teamObjects),
+			]),
 		)
 		.map<CAPNHQMemberObject>(([info, contact, dutyPositions, extraInformation]) => ({
 			absenteeInformation: extraInformation.absentee,
@@ -234,9 +234,9 @@ export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 							date: item.assigned,
 							duty: item.Duty,
 							expires: item.validUntil,
-							type: 'CAPUnit'
-						} as ShortDutyPosition)
-				)
+							type: 'CAPUnit',
+						} as ShortDutyPosition),
+				),
 			],
 			expirationDate: +DateTime.fromISO(info.Expiration),
 			flight: extraInformation.flight,
@@ -251,18 +251,18 @@ export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 			squadron: `${info.Region}-${info.Wing}-${info.Unit}`,
 			type: 'CAPNHQMember',
 			usrID: info.UsrID,
-			teamIDs: extraInformation.teamIDs
+			teamIDs: extraInformation.teamIDs,
 		}));
 
 export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
-	member: CAPNHQMemberObject
+	member: CAPNHQMemberObject,
 ): CAPExtraMemberInformation => ({
 	absentee: member.absenteeInformation,
 	accountID: account.id,
 	flight: member.flight,
 	member: {
 		type: 'CAPNHQMember',
-		id: member.id
+		id: member.id,
 	},
 	teamIDs: [],
 	temporaryDutyPositions: member.dutyPositions
@@ -270,8 +270,8 @@ export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
 		.map(({ date, duty, expires }) => ({
 			Duty: duty,
 			assigned: date,
-			validUntil: expires
-		}))
+			validUntil: expires,
+		})),
 });
 
 export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemberReference) =>
@@ -281,29 +281,27 @@ export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemb
 				nameFirst: result.NameFirst,
 				nameMiddle: result.NameMiddle,
 				nameLast: result.NameLast,
-				nameSuffix: result.NameSuffix
-			})}`
+				nameSuffix: result.NameSuffix,
+			})}`,
 	);
 
 export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema: Schema) => (
-	member: CAPNHQMemberObject
+	member: CAPNHQMemberObject,
 ): AsyncIter<EitherObj<ServerError, CAPAccountObject>> =>
 	accountGetter.byOrgid(schema)(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id)
-		.map(getProp('DOB'))
-		.map(DateTime.fromISO);
+	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
 
 export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 	orgid: number,
 	capid: number,
-	password: string
+	password: string,
 ) => {
 	const today = new Date();
 	const fileName = join(
 		conf.CAPWATCH_DOWNLOAD_PATH,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}.zip`
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');
@@ -317,15 +315,15 @@ export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 				url,
 				{
 					headers: {
-						authorization: `Basic ${encodedAuth}`
-					}
+						authorization: `Basic ${encodedAuth}`,
+					},
 				},
 				result => {
 					if (!result.statusCode || result.statusCode >= 299) {
 						return rej(
 							new Error(
-								'Member could not download CAPWATCH file: ' + result.statusCode
-							)
+								'Member could not download CAPWATCH file: ' + result.statusCode,
+							),
 						);
 					}
 
@@ -342,9 +340,9 @@ export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 					storageLocation.on('error', err => {
 						rej(err);
 					});
-				}
+				},
 			);
 		}),
-		errorGenerator('Could not download CAPWATCH file')
+		errorGenerator('Could not download CAPWATCH file'),
 	).map(always(fileName));
 };

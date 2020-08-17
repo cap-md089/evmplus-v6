@@ -52,9 +52,9 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			{
 				pooling: {
 					enabled: true,
-					maxSize: conf.DB_POOL_SIZE
-				}
-			}
+					maxSize: conf.DB_POOL_SIZE,
+				},
+			},
 		);
 	}
 
@@ -75,7 +75,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			}
 		},
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
-		allowedHeaders: ['Authorization', 'Content-Type', 'authorization', 'content-type']
+		allowedHeaders: ['Authorization', 'Content-Type', 'authorization', 'content-type'],
 	};
 
 	router.use(cors(corsOptions));
@@ -85,7 +85,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	const setupDatabase = async (
 		request: express.Request,
 		res: express.Response,
-		next: express.NextFunction
+		next: express.NextFunction,
 	) => {
 		const req = (request as unknown) as MySQLRequest;
 
@@ -148,8 +148,8 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			value: {
 				type: 'OTHER',
 				code: 404,
-				message: 'API not found'
-			}
+				message: 'API not found',
+			},
 		});
 	});
 
@@ -158,6 +158,6 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	return {
 		router,
 		capwatchEmitter: updateEmitter,
-		mysqlConn
+		mysqlConn,
 	};
 };

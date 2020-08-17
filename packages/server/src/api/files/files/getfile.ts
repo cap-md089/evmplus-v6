@@ -26,7 +26,7 @@ import {
 	RawFileObject,
 	SessionType,
 	User,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import * as fs from 'fs';
 import { accountRequestTransformer, downloadFileObject, getFileObject, PAM } from 'server-common';
@@ -41,7 +41,7 @@ export const func = (createReadStreamFunc = fs.createReadStream) =>
 			.flatMap(request =>
 				getFileObject(true)(req.mysqlx)(request.account)(request.params.fileid).map<
 					[RawFileObject, MaybeObj<User>]
-				>(f => [f, request.member])
+				>(f => [f, request.member]),
 			)
 			.join();
 

@@ -33,7 +33,7 @@ import {
 	isRioux,
 	Maybe,
 	MaybeObj,
-	ServerErrorObject
+	ServerErrorObject,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -54,7 +54,7 @@ interface ErrorListWidgetState {
 
 export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> {
 	public state: ErrorListWidgetState = {
-		errors: Maybe.none()
+		errors: Maybe.none(),
 	};
 
 	public async componentDidMount() {
@@ -63,7 +63,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 		}
 
 		const errors = Maybe.some(
-			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID)
+			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID),
 		);
 
 		this.setState({ errors });
@@ -77,7 +77,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 				</Link>
 				<div className="widget-body">
 					{Maybe.cata<APIEndpointReturnValue<api.errors.GetErrors>, React.ReactChild>(
-						always(<LoaderShort />)
+						always(<LoaderShort />),
 					)(
 						Either.cata<HTTPError, Errors[], React.ReactChild>(err => (
 							<div>{err.message}</div>
@@ -91,7 +91,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 									Check {errors.length === 1 ? 'it' : 'them'} out
 								</Link>
 							</div>
-						))
+						)),
 					)}
 				</div>
 			</div>
@@ -100,7 +100,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 }
 
 const titleStyle = {
-	borderBottom: '1px solid #2b357b'
+	borderBottom: '1px solid #2b357b',
 };
 
 interface ErrorListPageState {
@@ -109,7 +109,7 @@ interface ErrorListPageState {
 
 export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	public state: ErrorListPageState = {
-		errors: Maybe.none()
+		errors: Maybe.none(),
 	};
 
 	public constructor(props: PageProps) {
@@ -124,7 +124,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		}
 
 		const errors = Maybe.some(
-			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID)
+			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID),
 		);
 
 		this.setState({ errors });
@@ -233,7 +233,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					<DropDownList<ServerErrorObject>
 						titles={error =>
 							`${error.requestMethod} ${error.requestedPath} (${JSON.stringify(
-								error.requestedUser
+								error.requestedUser,
 							)})`
 						}
 						onlyOneOpen={true}
@@ -383,9 +383,9 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 				fileName: error.stack[0].filename,
 				line: error.stack[0].line,
 				message: error.message,
-				type: error.type
+				type: error.type,
 			},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		const comparer = areErrorObjectsTheSame(error);
@@ -395,11 +395,11 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 				errors: Maybe.map<
 					APIEndpointReturnValue<api.errors.GetErrors>,
 					APIEndpointReturnValue<api.errors.GetErrors>
-				>(Either.map(items => items.filter(complement(comparer))))(errors.errors)
+				>(Either.map(items => items.filter(complement(comparer))))(errors.errors),
 			}),
 			() => {
 				this.updateSideNav(this.state.errors);
-			}
+			},
 		);
 	}
 
@@ -419,26 +419,26 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 						? Maybe.some({
 								target: 'client-errors',
 								text: 'Client Errors',
-								type: 'Reference' as const
+								type: 'Reference' as const,
 						  })
 						: Maybe.none(),
 					hasServerError
 						? Maybe.some({
 								target: 'server-errors',
 								text: 'Server Errors',
-								type: 'Reference' as const
+								type: 'Reference' as const,
 						  })
 						: Maybe.none(),
 					hasDiscordError
 						? Maybe.some({
 								target: 'discord-errors',
 								text: 'Discord Bot Errors',
-								type: 'Reference' as const
+								type: 'Reference' as const,
 						  })
-						: Maybe.none()
+						: Maybe.none(),
 				]
 					.filter(Maybe.isSome)
-					.map(get('value'))
+					.map(get('value')),
 			);
 		}
 	}

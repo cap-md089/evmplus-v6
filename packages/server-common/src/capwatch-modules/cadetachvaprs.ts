@@ -21,7 +21,10 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async (fileData, schema) => {
+const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async (
+	fileData,
+	schema,
+) => {
 	if (
 		fileData.length === 0 ||
 		typeof fileData[0].CAPID === 'undefined' ||
@@ -40,7 +43,9 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 		return CAPWATCHError.BADDATA;
 	}
 
-	const cadetAchievementApprovalsCollection = schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs');
+	const cadetAchievementApprovalsCollection = schema.getCollection<NHQ.CadetAchvAprs>(
+		'NHQ_CadetAchvAprs',
+	);
 
 	for (const member of fileData) {
 		try {
@@ -48,7 +53,7 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 				cadetAchievementApprovalsCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute()
+					.execute(),
 			]);
 
 			const values = {
@@ -63,7 +68,7 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				PrintedCert: member.PrintedCert
+				PrintedCert: member.PrintedCert,
 			};
 
 			await cadetAchievementApprovalsCollection.add(values).execute();

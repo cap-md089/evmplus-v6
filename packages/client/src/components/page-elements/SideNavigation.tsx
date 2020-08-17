@@ -62,7 +62,7 @@ export interface SideNavigationProps extends RouteComponentProps<{}> {
 }
 
 const cursor: React.CSSProperties = {
-	cursor: 'pointer'
+	cursor: 'pointer',
 };
 
 interface SideNavigationState {
@@ -75,7 +75,7 @@ const sidenavOffset = 136 + 45;
 export class SideNavigation extends React.Component<SideNavigationProps, SideNavigationState> {
 	public state: SideNavigationState = {
 		open: false,
-		stuck: false
+		stuck: false,
 	};
 
 	private menuRef = React.createRef<HTMLDivElement>();
@@ -172,7 +172,7 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 
 	private signOut() {
 		this.props.authorizeUser({
-			error: MemberCreateError.INVALID_SESSION_ID
+			error: MemberCreateError.INVALID_SESSION_ID,
 		});
 		localStorage.removeItem('sessionID');
 		this.close();
@@ -197,24 +197,24 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 				if (this.state.stuck) {
 					$(this.menuRef.current).animate(
 						{
-							height: '100%'
+							height: '100%',
 						},
 						200,
-						'linear'
+						'linear',
 					);
 				} else {
 					$(this.menuRef.current).animate(
 						{
-							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!)
+							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!),
 						},
 						200,
-						'linear'
+						'linear',
 					);
 				}
 			}
 		}
 		this.setState({
-			open: true
+			open: true,
 		});
 	}
 
@@ -223,15 +223,15 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 			if (this.menuRef.current) {
 				$(this.menuRef.current).animate(
 					{
-						height: 45
+						height: 45,
 					},
 					200,
-					'linear'
+					'linear',
 				);
 			}
 		}
 		this.setState({
-			open: false
+			open: false,
 		});
 	}
 
@@ -240,11 +240,11 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 			const scroll = $(window).scrollTop();
 			if (scroll && scroll > sidenavOffset) {
 				this.setState({
-					stuck: true
+					stuck: true,
 				});
 			} else if (this.state.stuck) {
 				this.setState({
-					stuck: false
+					stuck: false,
 				});
 			}
 
@@ -252,20 +252,20 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 				if (this.state.stuck) {
 					if (this.menuRef.current) {
 						$(this.menuRef.current).css({
-							height: $(window).height()!
+							height: $(window).height()!,
 						});
 					}
 				} else {
 					if (this.menuRef.current) {
 						$(this.menuRef.current).css({
-							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!)
+							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!),
 						});
 					}
 				}
 			} else {
 				if (this.menuRef.current) {
 					$(this.menuRef.current).css({
-						height: 45
+						height: 45,
 					});
 				}
 			}

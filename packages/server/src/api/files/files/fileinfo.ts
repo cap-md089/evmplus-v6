@@ -23,7 +23,7 @@ import {
 	FileUserAccessControlPermissions,
 	Maybe,
 	User,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, getFileObject } from 'server-common';
 
@@ -35,7 +35,7 @@ export const func: ServerAPIEndpoint<api.files.files.GetFile> = req =>
 		.filter(canRead(orNull(req.member)), {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member does not have permission to do that'
+			message: 'Member does not have permission to do that',
 		})
 		.flatMap(expandRawFileObject(req.mysqlx)(req.account));
 

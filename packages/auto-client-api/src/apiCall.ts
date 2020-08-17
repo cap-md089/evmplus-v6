@@ -36,7 +36,7 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 	const url = getStringLiteralFromType(properties.find(sym => sym.name === 'url'));
 	const method = getStringLiteralFromType(properties.find(sym => sym.name === 'method'));
 	const requiresMember = getStringLiteralFromType(
-		properties.find(sym => sym.name === 'requiresMember')
+		properties.find(sym => sym.name === 'requiresMember'),
 	);
 	const needsToken = getBooleanLiteralFromType(properties.find(sym => sym.name === 'needsToken'));
 
@@ -57,14 +57,14 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 			[
 				ts.createPropertyAssignment(
 					'paramKeys',
-					ts.createArrayLiteral(paramKeys.map(ts.createStringLiteral))
+					ts.createArrayLiteral(paramKeys.map(ts.createStringLiteral)),
 				),
 				ts.createPropertyAssignment('url', ts.createLiteral(url)),
 				ts.createPropertyAssignment('method', ts.createLiteral(method)),
 				ts.createPropertyAssignment('requiresMember', ts.createLiteral(requiresMember)),
-				ts.createPropertyAssignment('needsToken', ts.createLiteral(needsToken))
+				ts.createPropertyAssignment('needsToken', ts.createLiteral(needsToken)),
 			],
-			true
-		)
+			true,
+		),
 	]);
 };

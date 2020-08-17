@@ -32,7 +32,7 @@ export const getMonth = (month: number, year: number) =>
 	DateTime.utc()
 		.set({
 			year,
-			month
+			month,
 		})
 		.startOf('month');
 
@@ -48,7 +48,7 @@ export const MONTHS = [
 	'September',
 	'October',
 	'November',
-	'December'
+	'December',
 ];
 
 const offsets: { [K in Timezone]: number } = {
@@ -59,7 +59,7 @@ const offsets: { [K in Timezone]: number } = {
 	'America/Denver': 7 * 3600 * 1000,
 	'America/Chicago': 6 * 3600 * 1000,
 	'America/New_York': 5 * 3600 * 1000,
-	'America/Puerto_Rico': 4 * 3600 * 1000
+	'America/Puerto_Rico': 4 * 3600 * 1000,
 };
 
 export const getPositionIndices = (
@@ -67,7 +67,7 @@ export const getPositionIndices = (
 	calendarStart: DateTime,
 	calendarEnd: DateTime,
 	month: number,
-	year: number
+	year: number,
 ): { weekNumber: number; dayNumber: number } => {
 	const daysDifference = date.diff(calendarStart, ['days']).get('days');
 
@@ -76,20 +76,20 @@ export const getPositionIndices = (
 		const numberWeeks = Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) - 1;
 		return {
 			weekNumber: numberWeeks,
-			dayNumber: 6
+			dayNumber: 6,
 		};
 	}
 
 	if (+date < +calendarStart) {
 		return {
 			weekNumber: 0,
-			dayNumber: 0
+			dayNumber: 0,
 		};
 	}
 
 	return {
 		weekNumber: Math.floor(daysDifference / 7),
-		dayNumber: Math.floor(daysDifference % 7)
+		dayNumber: Math.floor(daysDifference % 7),
 	};
 };
 
@@ -110,7 +110,7 @@ export default class Calendar extends Page<
 	} = {
 		events: null,
 		start: null,
-		end: null
+		end: null,
 	};
 
 	public constructor(props: PageProps<{ month?: string; year?: string }>) {
@@ -125,12 +125,12 @@ export default class Calendar extends Page<
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/calendar',
-				text: 'Calendar'
-			}
+				text: 'Calendar',
+			},
 		]);
 
 		this.updateTitle('Calendar');
@@ -157,8 +157,8 @@ export default class Calendar extends Page<
 				? lastMonth.minus(Duration.fromObject({ days: 1 }))
 				: lastMonth.startOf('week').minus(
 						Duration.fromObject({
-							days: 1
-						})
+							days: 1,
+						}),
 				  );
 		const end = monthEnd.endOf('week').day === 5 ? monthEnd : monthEnd.endOf('week');
 
@@ -167,10 +167,10 @@ export default class Calendar extends Page<
 		const resEither = await fetchApi.events.events.getRange(
 			{
 				timestart: (+startOfLastMonthWeek + offset).toString(),
-				timeend: (+end + offset).toString()
+				timeend: (+end + offset).toString(),
 			},
 			{},
-			this.props.member?.sessionID
+			this.props.member?.sessionID,
 		);
 
 		if (Either.isLeft(resEither)) {
@@ -182,7 +182,7 @@ export default class Calendar extends Page<
 		this.setState({
 			events,
 			start: DateTime.fromMillis(+startOfLastMonthWeek + offset),
-			end: DateTime.fromMillis(+end)
+			end: DateTime.fromMillis(+end),
 		});
 	}
 

@@ -30,7 +30,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>> {
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: props.name,
-				value: !!this.props.value
+				value: !!this.props.value,
 			});
 		}
 	}
@@ -66,7 +66,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>> {
 
 		this.props.onUpdate?.({
 			name: this.props.name,
-			value
+			value,
 		});
 
 		this.props.onChange?.(value);

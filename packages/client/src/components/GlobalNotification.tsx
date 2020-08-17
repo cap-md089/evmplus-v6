@@ -26,7 +26,7 @@ import {
 	NotificationCauseType,
 	NotificationDataMessage,
 	NotificationEveryoneTarget,
-	NotificationObject
+	NotificationObject,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi from '../lib/apis';
@@ -50,7 +50,7 @@ export default class GlobalNotification extends React.Component<
 > {
 	public state: NotificationState = {
 		closed: null,
-		notification: Maybe.none()
+		notification: Maybe.none(),
 	};
 
 	private timer?: number;
@@ -103,14 +103,14 @@ export default class GlobalNotification extends React.Component<
 
 		if (Either.isRight(notificationEither)) {
 			this.setState({
-				notification: notificationEither.value
+				notification: notificationEither.value,
 			});
 		}
 	}
 
 	private onButtonClick() {
 		this.setState(prev => ({
-			closed: prev.notification.hasValue ? prev.notification.value.id : null
+			closed: prev.notification.hasValue ? prev.notification.value.id : null,
 		}));
 	}
 }

@@ -37,7 +37,7 @@ export interface ServerInitializationOptions {
 export default async (
 	conf: ServerConfiguration,
 	port: number = conf.PORT,
-	mysqlConn?: Client
+	mysqlConn?: Client,
 ): Promise<ServerInitializationOptions> => {
 	const app: express.Application = express();
 
@@ -50,7 +50,7 @@ export default async (
 
 	const { router: apiRouter, capwatchEmitter, mysqlConn: mysql } = await getRouter(
 		conf,
-		mysqlConn
+		mysqlConn,
 	);
 
 	app.use((req, res, next) => {
@@ -115,6 +115,6 @@ export default async (
 			app.get('*', (req, res) => {
 				res.sendFile(path.join(conf.CLIENT_PATH, 'build', 'index.html'));
 			});
-		}
+		},
 	};
 };

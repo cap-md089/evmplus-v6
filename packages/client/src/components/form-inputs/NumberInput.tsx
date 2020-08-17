@@ -60,7 +60,7 @@ export default (props: NumberInputProps) => (
 			if (props.onUpdate && e) {
 				props.onUpdate({
 					name: e.name,
-					value: e.value === '' ? null : parseInt(e.value, props.radix || 10)
+					value: e.value === '' ? null : parseInt(e.value, props.radix || 10),
 				});
 			}
 		}}
@@ -69,7 +69,7 @@ export default (props: NumberInputProps) => (
 			if (props.onInitialize && e) {
 				props.onInitialize({
 					name: e.name,
-					value: e.value === '' ? null : parseInt(e.value, props.radix || 10)
+					value: e.value === '' ? null : parseInt(e.value, props.radix || 10),
 				});
 			}
 		}}

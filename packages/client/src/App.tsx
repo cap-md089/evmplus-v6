@@ -27,7 +27,7 @@ import {
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	User
+	User,
 } from 'common-lib';
 import * as React from 'react';
 import './App.scss';
@@ -63,7 +63,7 @@ export default class App extends React.Component<
 
 	public state: AppState = {
 		member: {
-			error: MemberCreateError.INVALID_SESSION_ID
+			error: MemberCreateError.INVALID_SESSION_ID,
 		},
 		loading: true,
 		account: null,
@@ -72,7 +72,7 @@ export default class App extends React.Component<
 		breadCrumbs: [],
 		allowedSlideshowIDs: [],
 		fullMember: null,
-		loadError: false
+		loadError: false,
 	};
 
 	private timer: NodeJS.Timer | null = null;
@@ -95,7 +95,7 @@ export default class App extends React.Component<
 		const sessionID = localStorage.getItem('sessionID');
 
 		this.setState({
-			loading: true
+			loading: true,
 		});
 
 		window.addEventListener('storage', this.onStorageChange);
@@ -109,15 +109,15 @@ export default class App extends React.Component<
 				sessionID ? getMember(sessionID) : { error: MemberCreateError.INVALID_SESSION_ID },
 				{
 					code: 500,
-					message: 'Could not get account information'
-				}
-			)
+					message: 'Could not get account information',
+				},
+			),
 		]);
 
 		if (Either.isLeft(infoEither)) {
 			this.setState({
 				loadError: true,
-				loading: false
+				loading: false,
 			});
 			return;
 		}
@@ -135,7 +135,7 @@ export default class App extends React.Component<
 			account,
 			member,
 			loading: false,
-			fullMember
+			fullMember,
 		});
 	}
 
@@ -222,7 +222,7 @@ export default class App extends React.Component<
 
 		this.setState({
 			member,
-			fullMember
+			fullMember,
 		});
 		if (member.error === MemberCreateError.NONE) {
 			localStorage.setItem('sessionID', member.sessionID);
@@ -234,7 +234,7 @@ export default class App extends React.Component<
 	private onStorageChange(e: StorageEvent) {
 		if (e.key === 'sessionID' && e.newValue !== '') {
 			this.setState({
-				loading: true
+				loading: true,
 			});
 			getMember(e.newValue || '')
 				.then(member => {
@@ -246,16 +246,16 @@ export default class App extends React.Component<
 				.catch(() => {
 					this.setState({
 						member: {
-							error: MemberCreateError.INVALID_SESSION_ID
+							error: MemberCreateError.INVALID_SESSION_ID,
 						},
-						loading: false
+						loading: false,
 					});
 				});
 		} else if (e.key === 'sessionID') {
 			this.setState({
 				member: {
-					error: MemberCreateError.INVALID_SESSION_ID
-				}
+					error: MemberCreateError.INVALID_SESSION_ID,
+				},
 			});
 		}
 	}

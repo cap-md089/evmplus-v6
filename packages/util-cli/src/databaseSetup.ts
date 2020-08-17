@@ -26,7 +26,7 @@ process.on('unhandledRejection', up => {
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 
 	// @ts-ignore
@@ -61,7 +61,7 @@ process.on('unhandledRejection', up => {
 		schema.createCollection('Tokens'),
 		schema.createCollection('UserAccountInfo'),
 		schema.createCollection('UserAccountTokens'),
-		schema.createCollection('UserPermissions')
+		schema.createCollection('UserPermissions'),
 	]);
 
 	process.exit();

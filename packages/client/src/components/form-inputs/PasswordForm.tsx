@@ -27,7 +27,7 @@ import './PasswordForm.css';
 enum ShowLevel {
 	NOSHOW,
 	SHOWERROR,
-	SHOWGOOD
+	SHOWGOOD,
 }
 
 const getClassFromShowLevel = (level: ShowLevel) =>
@@ -57,7 +57,7 @@ const passwordValidator = (password: string, others: PasswordFormValues) =>
 
 const formValidator = {
 	password: passwordValidator,
-	confirmPassword: passwordValidator
+	confirmPassword: passwordValidator,
 };
 
 /**
@@ -72,13 +72,13 @@ export default class PasswordForm extends React.Component<
 	public state: PasswordFormState = {
 		form: {
 			confirmPassword: '',
-			password: ''
+			password: '',
 		},
 		showLowercaseError: 0,
 		showMatchError: 0,
 		showNumberError: 0,
 		showSpecialError: 0,
-		showUppercaseError: 0
+		showUppercaseError: 0,
 	};
 
 	public constructor(props: InputProps<string | null>) {
@@ -89,7 +89,7 @@ export default class PasswordForm extends React.Component<
 		if (props.onInitialize) {
 			props.onInitialize({
 				name: this.props.name,
-				value: null
+				value: null,
 			});
 		}
 	}
@@ -143,12 +143,12 @@ export default class PasswordForm extends React.Component<
 	private onChange(
 		fields: PasswordFormValues,
 		error: BooleanForField<PasswordFormValues>,
-		changed: BooleanForField<PasswordFormValues>
+		changed: BooleanForField<PasswordFormValues>,
 	) {
 		const hasChanged = changed.confirmPassword || changed.password;
 
 		this.setState({
-			form: fields
+			form: fields,
 		});
 
 		if (!hasChanged) {
@@ -162,7 +162,7 @@ export default class PasswordForm extends React.Component<
 			showNumberError: ShowLevel.SHOWERROR,
 			showSpecialError: ShowLevel.SHOWERROR,
 			showUppercaseError: ShowLevel.SHOWERROR,
-			showMatchError: ShowLevel.SHOWERROR
+			showMatchError: ShowLevel.SHOWERROR,
 		};
 
 		if (!!fields.password.match(/[a-z]/) && !!fields.confirmPassword.match(/[a-z]/)) {
@@ -200,7 +200,7 @@ export default class PasswordForm extends React.Component<
 
 		this.setState(prev => ({
 			...prev,
-			...update
+			...update,
 		}));
 
 		if (hasError) {
@@ -211,7 +211,7 @@ export default class PasswordForm extends React.Component<
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: null
+					value: null,
 				});
 			}
 		} else {
@@ -222,7 +222,7 @@ export default class PasswordForm extends React.Component<
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: fields.password
+					value: fields.password,
 				});
 			}
 		}

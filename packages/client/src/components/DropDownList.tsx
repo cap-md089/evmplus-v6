@@ -46,7 +46,7 @@ export default class DropDownList<T> extends PureComponent<
 > {
 	public static getDerivedStateFromProps<T>(
 		props: DropDownListProps<T>,
-		state: DropDownListState<T>
+		state: DropDownListState<T>,
 	): DropDownListState<T> | null {
 		let open = props.open ?? state.open;
 
@@ -54,19 +54,19 @@ export default class DropDownList<T> extends PureComponent<
 			open = props.values.map(val =>
 				state.previousValues.includes(val)
 					? state.open[state.previousValues.indexOf(val)]
-					: false
+					: false,
 			);
 		}
 
 		return {
 			open,
-			previousValues: props.values
+			previousValues: props.values,
 		};
 	}
 
 	public state: DropDownListState<T> = {
 		open: this.props.values.map(() => false),
-		previousValues: [...this.props.values]
+		previousValues: [...this.props.values],
 	};
 
 	private divRefs: Array<HTMLDivElement | null> = [];

@@ -42,7 +42,7 @@ const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
 	<div
 		className="fileDisplay"
 		style={{
-			clear: 'both'
+			clear: 'both',
 		}}
 	>
 		{file.fileName}
@@ -68,7 +68,7 @@ interface FileInputProps extends InputProps<string[]> {
 export default class FileInput extends React.Component<FileInputProps, FileInputState> {
 	public static getDerivedStateFromProps(
 		props: InputProps<string[]>,
-		state: FileInputState
+		state: FileInputState,
 	): FileInputState | null {
 		if (props.value === state.files.map(f => f.id)) {
 			return null;
@@ -80,7 +80,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 	public state: FileInputState = {
 		loaded: false,
 		dialogueOpen: false,
-		files: []
+		files: [],
 	};
 
 	private previousFiles: string[] = [];
@@ -95,7 +95,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: this.props.value || []
+				value: this.props.value || [],
 			});
 		}
 	}
@@ -107,21 +107,21 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 					fetchApi.files.files.get(
 						{ id: id.toString() },
 						{},
-						this.props.member?.sessionID
-					)
-				)
+						this.props.member?.sessionID,
+					),
+				),
 			);
 
 			if (Either.isRight(files)) {
 				this.setState({
 					files: files.value,
-					loaded: true
+					loaded: true,
 				});
 			}
 		} else {
 			this.setState({
 				files: [],
-				loaded: true
+				loaded: true,
 			});
 		}
 	}
@@ -145,7 +145,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: this.state.files.map(f => f.id)
+				value: this.state.files.map(f => f.id),
 			});
 		}
 
@@ -162,7 +162,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (typeof this.props.member === 'undefined') {
 			throw new Error(
 				'No member variable passed, will not work when people are signed in. ' +
-					'If this is intentional, pass `null` to member'
+					'If this is intentional, pass `null` to member',
 			);
 		}
 
@@ -191,7 +191,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 					<Button
 						onClick={() => {
 							this.setState({
-								dialogueOpen: true
+								dialogueOpen: true,
 							});
 						}}
 					>
@@ -227,13 +227,13 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 
 		this.setState({
 			files: newFiles,
-			dialogueOpen: false
+			dialogueOpen: false,
 		});
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: newFiles.map(f => f.id)
+				value: newFiles.map(f => f.id),
 			});
 		}
 
@@ -252,7 +252,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: files.map(f => f.id)
+				value: files.map(f => f.id),
 			});
 		}
 
@@ -263,7 +263,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 
 	private closeErrorDialogue() {
 		this.setState({
-			dialogueOpen: false
+			dialogueOpen: false,
 		});
 	}
 }

@@ -30,18 +30,13 @@ import {
 	Member,
 	MemberReference,
 	pipe,
-	toReference
+	toReference,
 } from 'common-lib';
 import { addToCollection, collectResults } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 	asyncRight(req.mysqlx.getCollection<Errors>('Errors'), errorGenerator('Could not get new ID'))
-		.map(collection =>
-			collection
-				.find('true')
-				.sort('id DESC')
-				.limit(1)
-		)
+		.map(collection => collection.find('true').sort('id DESC').limit(1))
 		.map(collectResults)
 		.map(Maybe.fromArray)
 		.map(Maybe.map<{ id: number }, number>(i => i.id + 1))
@@ -57,14 +52,14 @@ export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 				name: item.name,
 				filename: item.filename,
 				line: item.line,
-				column: item.column
+				column: item.column,
 			})),
 			timestamp: Date.now(),
 			type: 'Client',
 			user: pipe(
 				Maybe.map<Member, MemberReference>(toReference),
-				Maybe.orSome<MemberReference | null>(null)
-			)(req.member)
+				Maybe.orSome<MemberReference | null>(null),
+			)(req.member),
 		}))
 		.map(addToCollection(req.mysqlx.getCollection<Errors>('Errors')))
 

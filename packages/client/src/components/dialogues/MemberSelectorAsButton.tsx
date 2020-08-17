@@ -49,7 +49,7 @@ export default class MemberSelectorButton extends React.Component<
 		members: null,
 		open: false,
 		selectedValue: null,
-		filterValues: []
+		filterValues: [],
 	};
 
 	constructor(props: MemberSelectorButtonProps) {
@@ -64,7 +64,7 @@ export default class MemberSelectorButton extends React.Component<
 		const members = await this.props.memberList;
 
 		this.setState({
-			members
+			members,
 		});
 	}
 
@@ -100,15 +100,15 @@ export default class MemberSelectorButton extends React.Component<
 
 								try {
 									return !!getFullMemberName(member).match(
-										new RegExp(input, 'gi')
+										new RegExp(input, 'gi'),
 									);
 								} catch (e) {
 									return false;
 								}
 							},
 							displayText: 'Member name',
-							filterInput: TextInput
-						}
+							filterInput: TextInput,
+						},
 					]}
 					onValueClick={this.setSelectedMember}
 					onValueSelect={this.selectMember}
@@ -120,20 +120,20 @@ export default class MemberSelectorButton extends React.Component<
 
 	private openDialogue() {
 		this.setState({
-			open: true
+			open: true,
 		});
 	}
 
 	private setSelectedMember(selectedValue: Member | null) {
 		this.setState({
-			selectedValue
+			selectedValue,
 		});
 	}
 
 	private selectMember(selectedValue: Member | null) {
 		this.setState({
 			selectedValue,
-			open: false
+			open: false,
 		});
 
 		this.props.onMemberSelect(selectedValue);

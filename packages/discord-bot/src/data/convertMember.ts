@@ -24,11 +24,11 @@ import { resolveReference } from 'server-common';
 import getMember from './getMember';
 
 export const toCAPUnit = (schema: Schema) => (account: AccountObject) => (
-	guildMember: GuildMember
+	guildMember: GuildMember,
 ) =>
 	asyncRight(getMember(schema)(guildMember), errorGenerator('Could not get member information'))
 		.map(Maybe.map(get('member')))
 		.map(Maybe.map(resolveReference(schema)(account)))
 		.flatMap(member =>
-			member.hasValue ? member.value.map(Maybe.some) : Either.right(Maybe.none())
+			member.hasValue ? member.value.map(Maybe.some) : Either.right(Maybe.none()),
 		);

@@ -26,12 +26,12 @@ import {
 	errorGenerator,
 	RawCAPWingAccountObject,
 	ServerError,
-	SessionType
+	SessionType,
 } from 'common-lib';
 import { createCAPEventAccountFunc, PAM } from 'server-common';
 
 export const func: (
-	now?: typeof Date.now
+	now?: typeof Date.now,
 ) => ServerAPIEndpoint<api.events.accounts.AddEventAccount> = (now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		asyncRight(req.account, errorGenerator('Could not create Account'))
@@ -39,19 +39,19 @@ export const func: (
 				account.type === AccountType.CAPWING
 					? asyncRight<ServerError, RawCAPWingAccountObject>(
 							account,
-							errorGenerator('Could not create Account')
+							errorGenerator('Could not create Account'),
 					  )
 					: asyncLeft({
 							type: 'OTHER',
 							code: 400,
-							message: 'Parent Account must be a Wing account'
-					  })
+							message: 'Parent Account must be a Wing account',
+					  }),
 			)
 			.flatMap(parentAccount =>
 				createCAPEventAccountFunc(now)(req.configuration)(req.mysqlxSession)(req.mysqlx)(
-					parentAccount
-				)(req.member)(req.body.accountID)(req.body.accountName)(req.body.event)
-			)
+					parentAccount,
+				)(req.member)(req.body.accountID)(req.body.accountName)(req.body.event),
+			),
 	);
 
 export default func();

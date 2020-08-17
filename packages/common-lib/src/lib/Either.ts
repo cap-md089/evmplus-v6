@@ -47,23 +47,23 @@ export class Either {
 		Either.isRight(eith) ? Either.right(f(eith.value)) : eith;
 
 	public static flatMap = <L, R, R2>(f: (val: R) => EitherObj<L, R2>) => (
-		eith: EitherObj<L, R>
+		eith: EitherObj<L, R>,
 	) => (Either.isRight(eith) ? f(eith.value) : eith);
 
 	public static cata = <L, R, T>(lf: (v: L) => T) => (rf: (v: R) => T) => (
-		eith: EitherObj<L, R>
+		eith: EitherObj<L, R>,
 	) => (Either.isRight(eith) ? rf(eith.value) : lf(eith.value));
 
 	public static filter = <L, R>(predicate: (val: R) => boolean) => (filterError: L) =>
 		Either.cata<L, R, EitherObj<L, R>>(Either.left)(right =>
-			predicate(right) ? Either.right(right) : Either.left(filterError)
+			predicate(right) ? Either.right(right) : Either.left(filterError),
 		);
 
 	public static filterType = <L, R, S extends R>(predicate: (val: R) => val is S) => (
-		filterError: L
+		filterError: L,
 	) =>
 		Either.cata<L, R, EitherObj<L, S>>(Either.left)(right =>
-			predicate(right) ? Either.right(right) : Either.left(filterError)
+			predicate(right) ? Either.right(right) : Either.left(filterError),
 		);
 
 	public static isValidEither = (value: any): value is EitherObj<any, any> =>

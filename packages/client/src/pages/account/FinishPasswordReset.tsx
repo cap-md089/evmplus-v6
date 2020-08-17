@@ -42,11 +42,11 @@ export default class FinishPasswordResetForm extends Page<
 > {
 	public state: FinishPasswordResetState = {
 		form: {
-			newPassword: ''
+			newPassword: '',
 		},
 		error: null,
 		tryingSubmit: false,
-		success: false
+		success: false,
 	};
 
 	public constructor(props: PageProps<{ token: string }>) {
@@ -63,11 +63,11 @@ export default class FinishPasswordResetForm extends Page<
 				onSubmit={this.submit}
 				disableOnInvalid={true}
 				validator={{
-					newPassword: val => val !== null
+					newPassword: val => val !== null,
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSubmit,
-					text: 'Request password reset'
+					text: 'Request password reset',
 				}}
 			>
 				<Title>Password reset</Title>
@@ -100,18 +100,18 @@ export default class FinishPasswordResetForm extends Page<
 		this.setState({
 			tryingSubmit: true,
 			error: null,
-			success: false
+			success: false,
 		});
 
 		const fetchResult = await fetchApi.member.account.finishPasswordReset(
 			{},
-			{ token: this.props.routeProps.match.params.token, newPassword }
+			{ token: this.props.routeProps.match.params.token, newPassword },
 		);
 
 		if (Either.isLeft(fetchResult)) {
 			this.setState({
 				tryingSubmit: false,
-				error: fetchResult.value.message
+				error: fetchResult.value.message,
 			});
 		} else {
 			const member = await getMember(fetchResult.value.sessionID);

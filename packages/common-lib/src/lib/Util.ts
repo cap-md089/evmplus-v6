@@ -30,7 +30,7 @@ export const get = <T, K extends keyof T>(prop: K) => (obj: T): T[K] => obj[prop
 
 export const set = <T, K extends keyof T>(prop: K) => (value: T[K]) => (obj: T): T => ({
 	...obj,
-	[prop]: value
+	[prop]: value,
 });
 
 type KeysThatAreFunctions<T, K extends keyof T = keyof T> = T[K] extends (...args: any[]) => any
@@ -47,7 +47,7 @@ export const identity = <T>(v: T): T => v;
 export const give = <T>(v: T) => (): T => v;
 
 export const stripProp = <T extends object, K extends string = Extract<keyof T, string>>(
-	prop: K
+	prop: K,
 ) => (obj: T): Omit<T, K> => {
 	const result = {} as T;
 
@@ -103,11 +103,11 @@ export const getTargetYear = (timestamp: number): number => {
 export const always = <T>(value: T) => () => value;
 
 export const complement = <T extends any[]>(
-	func: (...args: T) => boolean
+	func: (...args: T) => boolean,
 ): ((...args: T) => boolean) => (...args) => !func(...args);
 
 export const getItemsNotInSecondArray = <T>(
-	equalityCheckFunction: (item1: T) => (item2: T) => boolean
+	equalityCheckFunction: (item1: T) => (item2: T) => boolean,
 ) => (list1: T[]) => (list2: T[]) => list1.filter(item => !list2.some(equalityCheckFunction(item)));
 
 export const memoize = <Return, Arg extends any>(func: (arg: Arg) => Return) => {

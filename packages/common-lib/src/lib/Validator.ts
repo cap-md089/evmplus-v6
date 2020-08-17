@@ -62,7 +62,7 @@ type ValidatorFunc<T> = ValidatorImpl<T>;
 export type ValidateRuleSet<T> = { [P in keyof T]: ValidatorImpl<T[P]> };
 
 const callValidator = <T>(func: ValidatorImpl<T>) => (keyName: string) => (
-	input: unknown
+	input: unknown,
 ): EitherObj<ValidatorFail, T> => func.validate(input, keyName);
 
 export default class Validator<T extends object> implements ValidatorImpl<T> {
@@ -74,12 +74,12 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: 'null',
 						message: `${keyName} must be null`,
-						valueReceived: input
-				  })
+						valueReceived: input,
+				  }),
 	};
 
 	public static Anything: ValidatorFunction<any> = {
-		validate: Either.right
+		validate: Either.right,
 	};
 
 	public static Number: ValidatorFunction<number> = {
@@ -90,8 +90,8 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: 'number',
 						message: `${keyName} must be a number`,
-						valueReceived: input
-				  })
+						valueReceived: input,
+				  }),
 	};
 
 	public static String: ValidatorFunction<string> = {
@@ -102,8 +102,8 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: 'string',
 						message: `${keyName} must be a string`,
-						valueReceived: input
-				  })
+						valueReceived: input,
+				  }),
 	};
 
 	public static Boolean: ValidatorFunction<boolean> = {
@@ -114,15 +114,15 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: 'boolean',
 						message: `${keyName} must be a boolean`,
-						valueReceived: input
-				  })
+						valueReceived: input,
+				  }),
 	};
 
 	public static Optional = <T>(func: ValidatorImpl<T>): ValidatorFunction<T | undefined> => ({
 		validate: (input, keyName) =>
 			input === undefined
 				? Either.right<ValidatorFail, T | undefined>(undefined)
-				: callValidator<T>(func)(keyName)(input)
+				: callValidator<T>(func)(keyName)(input),
 	});
 
 	public static Required = <T>(validators: ValidateRuleSet<T>): ValidatorImpl<Required<T>> => {
@@ -144,7 +144,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 					keyName,
 					correctType: 'Partial<object>',
 					message: `${keyName} is null or not an object`,
-					valueReceived: input
+					valueReceived: input,
 				});
 			}
 
@@ -176,15 +176,15 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						correctType: 'Partial<object>',
 						message: `${keyName} has invalid properties`,
 						valueReceived: input,
-						errors
+						errors,
 				  })
 				: Either.right(result);
-		}
+		},
 	});
 
 	public static Enum = <E extends number>(
 		value: any,
-		enumName: string
+		enumName: string,
 	): ValidatorFunction<E> => ({
 		validate: (input, keyName) =>
 			typeof value[input as any] !== 'string'
@@ -192,9 +192,9 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: enumName,
 						message: `${keyName} must be an element of the enum '${enumName}'`,
-						valueReceived: input
+						valueReceived: input,
 				  })
-				: Either.right(input as E)
+				: Either.right(input as E),
 	});
 
 	public static ArrayOf = <S>(validator: ValidatorFunc<S>): ValidatorFunction<S[]> => ({
@@ -204,7 +204,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 					correctType: 'array',
 					keyName,
 					message: 'object must be an array',
-					valueReceived: input
+					valueReceived: input,
 				});
 			}
 
@@ -219,29 +219,29 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						errors: results.filter(Either.isLeft).map(get('value')),
 						keyName,
 						message: 'object must be an array with properly shaped elements',
-						valueReceived: input
+						valueReceived: input,
 				  });
-		}
+		},
 	});
 
 	public static Or<S1>(correctType: string, validator1: ValidatorFunc<S1>): ValidatorFunction<S1>;
 	public static Or<S1, S2>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
-		validator2: ValidatorFunc<S2>
+		validator2: ValidatorFunc<S2>,
 	): ValidatorFunction<S1 | S2>;
 	public static Or<S1, S2, S3>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
 		validator2: ValidatorFunc<S2>,
-		validator3: ValidatorFunc<S3>
+		validator3: ValidatorFunc<S3>,
 	): ValidatorFunction<S1 | S2 | S3>;
 	public static Or<S1, S2, S3, S4>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
 		validator2: ValidatorFunc<S2>,
 		validator3: ValidatorFunc<S3>,
-		validator4: ValidatorFunc<S4>
+		validator4: ValidatorFunc<S4>,
 	): ValidatorFunction<S1 | S2 | S3 | S4>;
 	public static Or<S1, S2, S3, S4, S5>(
 		correctType: string,
@@ -249,7 +249,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator2: ValidatorFunc<S2>,
 		validator3: ValidatorFunc<S3>,
 		validator4: ValidatorFunc<S4>,
-		validator5: ValidatorFunc<S5>
+		validator5: ValidatorFunc<S5>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5>;
 	public static Or<S1, S2, S3, S4, S5, S6>(
 		correctType: string,
@@ -258,7 +258,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator3: ValidatorFunc<S3>,
 		validator4: ValidatorFunc<S4>,
 		validator5: ValidatorFunc<S5>,
-		validator6: ValidatorFunc<S6>
+		validator6: ValidatorFunc<S6>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6>;
 	public static Or<S1, S2, S3, S4, S5, S6, S7>(
 		correctType: string,
@@ -268,7 +268,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator4: ValidatorFunc<S4>,
 		validator5: ValidatorFunc<S5>,
 		validator6: ValidatorFunc<S6>,
-		validator7: ValidatorFunc<S7>
+		validator7: ValidatorFunc<S7>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7>;
 	public static Or<S1, S2, S3, S4, S5, S6, S7, S8>(
 		correctType: string,
@@ -279,7 +279,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator5: ValidatorFunc<S4>,
 		validator6: ValidatorFunc<S5>,
 		validator7: ValidatorFunc<S6>,
-		validator8: ValidatorFunc<S7>
+		validator8: ValidatorFunc<S7>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8>;
 	public static Or<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
 		correctType: string,
@@ -291,7 +291,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator6: ValidatorFunc<S6>,
 		validator7: ValidatorFunc<S7>,
 		validator8: ValidatorFunc<S8>,
-		validator9: ValidatorFunc<S9>
+		validator9: ValidatorFunc<S9>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9>;
 	public static Or<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
 		correctType: string,
@@ -304,7 +304,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator7: ValidatorFunc<S7>,
 		validator8: ValidatorFunc<S8>,
 		validator9: ValidatorFunc<S9>,
-		validator10: ValidatorFunc<S10>
+		validator10: ValidatorFunc<S10>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
 
 	public static Or(
@@ -313,10 +313,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 	): ValidatorFunction<any> {
 		return {
 			validate: (input, keyName) => {
-				const results = validators
-					.map(callValidator)
-					.map(call(keyName))
-					.map(call(input));
+				const results = validators.map(callValidator).map(call(keyName)).map(call(input));
 
 				const errors = results.filter(Either.isLeft).map(get('value'));
 
@@ -329,33 +326,33 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 							message: 'Object did not match one of the required types',
 							keyName,
 							errors,
-							valueReceived: input
+							valueReceived: input,
 					  });
-			}
+			},
 		};
 	}
 
 	public static And<S1>(
 		correctType: string,
-		validator1: ValidatorFunc<S1>
+		validator1: ValidatorFunc<S1>,
 	): ValidatorFunction<S1>;
 	public static And<S1, S2>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
-		validator2: ValidatorFunc<S2>
+		validator2: ValidatorFunc<S2>,
 	): ValidatorFunction<S1 & S2>;
 	public static And<S1, S2, S3>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
 		validator2: ValidatorFunc<S2>,
-		validator3: ValidatorFunc<S3>
+		validator3: ValidatorFunc<S3>,
 	): ValidatorFunction<S1 & S2 & S3>;
 	public static And<S1, S2, S3, S4>(
 		correctType: string,
 		validator1: ValidatorFunc<S1>,
 		validator2: ValidatorFunc<S2>,
 		validator3: ValidatorFunc<S3>,
-		validator4: ValidatorFunc<S4>
+		validator4: ValidatorFunc<S4>,
 	): ValidatorFunction<S1 & S2 & S3 & S4>;
 	public static And<S1, S2, S3, S4, S5>(
 		correctType: string,
@@ -363,7 +360,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator2: ValidatorFunc<S2>,
 		validator3: ValidatorFunc<S3>,
 		validator4: ValidatorFunc<S4>,
-		validator5: ValidatorFunc<S5>
+		validator5: ValidatorFunc<S5>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5>;
 	public static And<S1, S2, S3, S4, S5, S6>(
 		correctType: string,
@@ -372,7 +369,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator3: ValidatorFunc<S3>,
 		validator4: ValidatorFunc<S4>,
 		validator5: ValidatorFunc<S5>,
-		validator6: ValidatorFunc<S6>
+		validator6: ValidatorFunc<S6>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6>;
 	public static And<S1, S2, S3, S4, S5, S6, S7>(
 		correctType: string,
@@ -382,7 +379,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator4: ValidatorFunc<S4>,
 		validator5: ValidatorFunc<S5>,
 		validator6: ValidatorFunc<S6>,
-		validator7: ValidatorFunc<S7>
+		validator7: ValidatorFunc<S7>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7>;
 	public static And<S1, S2, S3, S4, S5, S6, S7, S8>(
 		correctType: string,
@@ -393,7 +390,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator5: ValidatorFunc<S5>,
 		validator6: ValidatorFunc<S6>,
 		validator7: ValidatorFunc<S7>,
-		validator8: ValidatorFunc<S8>
+		validator8: ValidatorFunc<S8>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8>;
 	public static And<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
 		correctType: string,
@@ -405,7 +402,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator6: ValidatorFunc<S6>,
 		validator7: ValidatorFunc<S7>,
 		validator8: ValidatorFunc<S8>,
-		validator9: ValidatorFunc<S9>
+		validator9: ValidatorFunc<S9>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9>;
 	public static And<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
 		correctType: string,
@@ -418,7 +415,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator7: ValidatorFunc<S7>,
 		validator8: ValidatorFunc<S8>,
 		validator9: ValidatorFunc<S9>,
-		validator10: ValidatorFunc<S10>
+		validator10: ValidatorFunc<S10>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10>;
 
 	public static And(
@@ -440,9 +437,9 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 							keyName,
 							message: 'Object did not match all the required types',
 							errors,
-							valueReceived: input
+							valueReceived: input,
 					  });
-			}
+			},
 		};
 	}
 
@@ -454,28 +451,28 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						correctType: 'const',
 						keyName,
 						message: `Provided value did not match input value: ${input} vs ${value}`,
-						valueReceived: input
-				  })
+						valueReceived: input,
+				  }),
 	});
 
 	public static OneOfStrict<S1>(correctType: string, validator1: S1): ValidatorFunction<S1>;
 	public static OneOfStrict<S1, S2>(
 		correctType: string,
 		validator1: S1,
-		validator2: S2
+		validator2: S2,
 	): ValidatorFunction<S1 | S2>;
 	public static OneOfStrict<S1, S2, S3>(
 		correctType: string,
 		validator1: S1,
 		validator2: S2,
-		validator3: S3
+		validator3: S3,
 	): ValidatorFunction<S1 | S2 | S3>;
 	public static OneOfStrict<S1, S2, S3, S4>(
 		correctType: string,
 		validator1: S1,
 		validator2: S2,
 		validator3: S3,
-		validator4: S4
+		validator4: S4,
 	): ValidatorFunction<S1 | S2 | S3 | S4>;
 	public static OneOfStrict<S1, S2, S3, S4, S5>(
 		correctType: string,
@@ -483,7 +480,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator2: S2,
 		validator3: S3,
 		validator4: S4,
-		validator5: S5
+		validator5: S5,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5>;
 	public static OneOfStrict<S1, S2, S3, S4, S5, S6>(
 		correctType: string,
@@ -492,7 +489,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator3: S3,
 		validator4: S4,
 		validator5: S5,
-		validator6: S6
+		validator6: S6,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6>;
 	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7>(
 		correctType: string,
@@ -502,7 +499,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator4: S4,
 		validator5: S5,
 		validator6: S6,
-		validator7: S7
+		validator7: S7,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7>;
 	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8>(
 		correctType: string,
@@ -513,7 +510,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator5: S5,
 		validator6: S6,
 		validator7: S7,
-		validator8: S8
+		validator8: S8,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8>;
 	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8, S9>(
 		correctType: string,
@@ -525,7 +522,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator6: S6,
 		validator7: S7,
 		validator8: S8,
-		validator9: S9
+		validator9: S9,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9>;
 	public static OneOfStrict<S1, S2, S3, S4, S5, S6, S7, S8, S9, S10>(
 		correctType: string,
@@ -538,7 +535,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator7: S7,
 		validator8: S8,
 		validator9: S9,
-		validator10: S10
+		validator10: S10,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
 	public static OneOfStrict<T extends any>(
 		correctType: string,
@@ -554,7 +551,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 	}
 
 	public static Values<T>(
-		valueValidator: ValidatorFunc<T>
+		valueValidator: ValidatorFunc<T>,
 	): ValidatorFunction<{ [key: string]: T }> {
 		return {
 			validate: (input, keyName) => {
@@ -563,7 +560,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						correctType: 'object',
 						keyName,
 						message: 'not defined',
-						valueReceived: input
+						valueReceived: input,
 					});
 				}
 
@@ -572,7 +569,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						correctType: 'object',
 						keyName,
 						message: 'not an object',
-						valueReceived: input
+						valueReceived: input,
 					});
 				}
 
@@ -599,14 +596,14 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 							keyName,
 							message: 'object properties do not match ',
 							errors,
-							valueReceived: input
+							valueReceived: input,
 					  });
-			}
+			},
 		};
 	}
 
 	private static RequiredPropertyWrapper = <T>(
-		func: ValidatorImpl<T | undefined>
+		func: ValidatorImpl<T | undefined>,
 	): ValidatorImpl<T> => ({
 		validate: (input, keyName) =>
 			input === undefined
@@ -614,9 +611,9 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						keyName,
 						correctType: 'not undefined',
 						message: `${keyName} is required`,
-						valueReceived: input
+						valueReceived: input,
 				  })
-				: (func as ValidatorImpl<T>).validate(input, keyName)
+				: (func as ValidatorImpl<T>).validate(input, keyName),
 	});
 
 	public constructor(public readonly rules: ValidateRuleSet<T>) {
@@ -625,14 +622,14 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 
 	public validate(
 		obj: any,
-		keyName = ''
+		keyName = '',
 	): EitherObj<ValidatorFailObject<T> | ValidatorFailBase, T> {
 		if (obj === undefined || obj === null) {
 			return Either.left({
 				correctType: 'object',
 				keyName,
 				message: 'Object cannot be undefined or null',
-				valueReceived: obj
+				valueReceived: obj,
 			});
 		}
 
@@ -663,7 +660,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 					errors,
 					keyName,
 					message: 'Object was unable to be verified',
-					valueReceived: obj
+					valueReceived: obj,
 			  })
 			: Either.right(returnObject);
 	}

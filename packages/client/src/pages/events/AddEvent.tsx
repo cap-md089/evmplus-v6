@@ -27,12 +27,12 @@ import {
 	effectiveManageEventPermission,
 	Permissions,
 	MaybeObj,
-	Maybe
+	Maybe,
 } from 'common-lib';
 import EventForm, {
 	emptyEventFormValues,
 	NewEventFormValues,
-	convertFormValuesToEvent
+	convertFormValuesToEvent,
 } from '../../components/forms/usable-forms/EventForm';
 import fetchApi from '../../lib/apis';
 import SigninLink from '../../components/SigninLink';
@@ -66,7 +66,7 @@ type AddEventState = (AddEventLoadingState | AddEventErrorState | AddEventLoaded
 export default class AddEvent extends Page<PageProps, AddEventState> {
 	public state: AddEventState = {
 		state: 'LOADING',
-		saving: false
+		saving: false,
 	};
 
 	constructor(props: PageProps) {
@@ -87,14 +87,14 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 
 		const infoEither = await AsyncEither.All([
 			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID)
+			fetchApi.team.list({}, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(infoEither)) {
 			return this.setState({
 				state: 'ERROR',
 				message: 'Could not load member or team information',
-				saving: false
+				saving: false,
 			});
 		}
 
@@ -106,59 +106,59 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			state: 'LOADED',
 			event: emptyEventFormValues(),
 			memberList,
-			teamList
+			teamList,
 		}));
 
 		this.props.updateSideNav([
 			{
 				target: 'main-information',
 				text: 'Main information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'activity-information',
 				text: 'Activity Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'logistics-information',
 				text: 'Logistics Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'points-of-contact',
 				text: 'Points of Contact',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'custom-attendance-fields',
 				text: 'Custom Attendance Fields',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'extra-information',
 				text: 'Extra Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'team-information',
 				text: 'Team Information',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/calendar',
-				text: 'Calendar'
+				text: 'Calendar',
 			},
 			{
 				target: '/eventform',
-				text: 'Create event'
-			}
+				text: 'Create event',
+			},
 		]);
 		this.updateTitle('Create event');
 	}
@@ -204,7 +204,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		const maybeFullEvent = Maybe.flatMap(convertFormValuesToEvent)(maybeEvent);
 
 		this.setState({
-			saving: true
+			saving: true,
 		});
 
 		if (!maybeFullEvent.hasValue) {
@@ -214,14 +214,14 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		const createResult = await fetchApi.events.events.add(
 			{},
 			maybeFullEvent.value,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(createResult)) {
 			this.setState({
 				saving: false,
 				state: 'ERROR',
-				message: 'Could not create event'
+				message: 'Could not create event',
 			});
 		} else {
 			this.props.routeProps.history.push(`/eventviewer/${createResult.value.id}`);
@@ -235,7 +235,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 
 		this.setState(prev => ({
 			...prev,
-			event
+			event,
 		}));
 	}
 }

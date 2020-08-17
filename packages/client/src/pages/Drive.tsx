@@ -25,7 +25,7 @@ import {
 	get,
 	hasPermission,
 	Maybe,
-	Permissions
+	Permissions,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
@@ -70,7 +70,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		currentFolder: null,
 		showingExtraInfo: true,
 		error: false,
-		errorReason: null
+		errorReason: null,
 	};
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
@@ -112,7 +112,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 	public componentDidUpdate() {
 		if (!this.state.showingExtraInfo && this.extraInfoRef.current) {
 			this.setState({
-				showingExtraInfo: true
+				showingExtraInfo: true,
 			});
 
 			$(this.extraInfoRef.current).slideDown(250);
@@ -122,20 +122,20 @@ export default class Drive extends Page<PageProps, DriveState> {
 			this.props.updateBreadCrumbs([
 				{
 					target: '/',
-					text: 'Home'
+					text: 'Home',
 				},
 				{
 					target: '/admin',
-					text: 'Administration'
+					text: 'Administration',
 				},
 				{
 					target: '/drive',
-					text: 'Drive'
+					text: 'Drive',
 				},
 				...this.state.currentFolder.folderPath.map(item => ({
 					target: `/drive/${item.id}`,
-					text: `View folder '${item.name}'`
-				}))
+					text: `View folder '${item.name}'`,
+				})),
 			]);
 
 			this.updateTitle(`View folder ${this.state.currentFolder.fileName}`);
@@ -184,7 +184,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		const indices = {
 			row: 0,
-			column: 0
+			column: 0,
 		};
 		if (isFileOrFolderSelected) {
 			if (selectedFile[0].contentType === 'application/folder') {
@@ -210,19 +210,19 @@ export default class Drive extends Page<PageProps, DriveState> {
 			<div>
 				{this.props.member &&
 				hasPermission('FileManagement')(Permissions.FileManagement.FULL)(
-					this.props.member
+					this.props.member,
 				) ? (
 					<div>
 						<Form<{ name: string }>
 							id=""
 							values={{
-								name: this.state.newFoldername
+								name: this.state.newFoldername,
 							}}
 							onChange={this.updateNewFolderForm}
 							onSubmit={this.createFolder}
 							submitInfo={{
 								text: 'Add folder',
-								className: 'primaryButton drive-newfoldername-submit'
+								className: 'primaryButton drive-newfoldername-submit',
 							}}
 							rowClassName="drive-newfoldername-row"
 						>
@@ -308,12 +308,12 @@ export default class Drive extends Page<PageProps, DriveState> {
 			this.goToFolder(file.id, true);
 			this.setState({
 				currentlySelected: '',
-				showingExtraInfo: true
+				showingExtraInfo: true,
 			});
 		} else {
 			this.setState({
 				currentlySelected: file.id,
-				showingExtraInfo: false
+				showingExtraInfo: false,
 			});
 		}
 	}
@@ -323,31 +323,31 @@ export default class Drive extends Page<PageProps, DriveState> {
 			prev.currentlySelected === file.id
 				? {
 						currentlySelected: '',
-						showingExtraInfo: true
+						showingExtraInfo: true,
 				  }
 				: {
 						currentlySelected: file.id,
-						showingExtraInfo: false
-				  }
+						showingExtraInfo: false,
+				  },
 		);
 	}
 
 	private updateNewFolderForm({ name: newFoldername }: { name: string }) {
 		this.setState({
-			newFoldername
+			newFoldername,
 		});
 	}
 
 	private async goToFolder(id: string, update = true) {
 		const folderInfoEither = await AsyncEither.All([
 			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member?.sessionID),
-			fetchApi.files.files.get({ id }, {}, this.props.member?.sessionID)
+			fetchApi.files.files.get({ id }, {}, this.props.member?.sessionID),
 		]);
 
 		if (Either.isLeft(folderInfoEither)) {
 			return this.setState({
 				error: true,
-				errorReason: folderInfoEither.value.message
+				errorReason: folderInfoEither.value.message,
 			});
 		}
 
@@ -358,7 +358,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		this.setState(
 			{
 				files,
-				currentFolder
+				currentFolder,
 			},
 			() => {
 				if (update) {
@@ -368,10 +368,10 @@ export default class Drive extends Page<PageProps, DriveState> {
 				this.props.updateBreadCrumbs(
 					currentFolder.folderPath.map(folder => ({
 						text: folder.name,
-						target: `/${this.path}/${folder.id}`
-					}))
+						target: `/${this.path}/${folder.id}`,
+					})),
 				);
-			}
+			},
 		);
 	}
 
@@ -383,17 +383,17 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 		const fileObject: FullFileObject = {
 			...file,
-			uploader: Maybe.some(this.props.member)
+			uploader: Maybe.some(this.props.member),
 		};
 
 		this.setState(prev => ({
-			files: [...prev.files!, fileObject]
+			files: [...prev.files!, fileObject],
 		}));
 	}
 
 	private fileDeleted(file: FileObject) {
 		this.setState(prev => ({
-			files: (prev.files || []).filter(f => f.id !== file.id)
+			files: (prev.files || []).filter(f => f.id !== file.id),
 		}));
 	}
 
@@ -424,7 +424,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			const result = await fetchApi.files.files.createFolder(
 				{ parentid: this.state.currentFolder.id, name: this.state.newFoldername },
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(result)) {

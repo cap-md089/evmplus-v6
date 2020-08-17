@@ -39,13 +39,13 @@ import {
 	ServerError,
 	SigninReturn,
 	toReference,
-	User
+	User,
 } from 'common-lib';
 import {
 	getAdminAccountIDsForMember,
 	getUnfinishedTaskCountForMember,
 	getUnreadNotificationCount,
-	ServerEither
+	ServerEither,
 } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.Check> = req =>
@@ -53,11 +53,11 @@ export const func: ServerAPIEndpoint<api.Check> = req =>
 		always(
 			asyncRight<ServerError, SigninReturn>(
 				{
-					error: MemberCreateError.INVALID_SESSION_ID
+					error: MemberCreateError.INVALID_SESSION_ID,
 				},
-				errorGenerator('What?')
-			)
-		)
+				errorGenerator('What?'),
+			),
+		),
 	)(user =>
 		AsyncEither.All([
 			getUnreadNotificationCount(req.mysqlx)(req.account)(user),
@@ -69,12 +69,12 @@ export const func: ServerAPIEndpoint<api.Check> = req =>
 							EitherObj<ServerError, AccountLinkTarget>,
 							Right<AccountLinkTarget>
 						>(Either.isRight)(
-							getAdminAccountIDsForMember(req.mysqlx)(toReference(user))
-						)
-					)
+							getAdminAccountIDsForMember(req.mysqlx)(toReference(user)),
+						),
+					),
 				),
-				errorGenerator('Could not get admin account IDs for member')
-			)
+				errorGenerator('Could not get admin account IDs for member'),
+			),
 		]).map(([notificationCount, taskCount, linkableAccounts]) => ({
 			error: MemberCreateError.NONE,
 			sessionID: user.sessionID,
@@ -83,8 +83,8 @@ export const func: ServerAPIEndpoint<api.Check> = req =>
 				: user,
 			notificationCount,
 			taskCount,
-			linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id)
-		}))
+			linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+		})),
 	)(req.member);
 
 export default func;

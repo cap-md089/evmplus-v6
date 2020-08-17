@@ -21,7 +21,7 @@ import {
 	RawEventObject,
 	EventStatus,
 	effectiveManageEventPermission,
-	Permissions
+	Permissions,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -54,7 +54,7 @@ const isIndexFree = (
 	startDay: number,
 	endDay: number,
 	week: number,
-	index: number
+	index: number,
 ) => {
 	for (let i = startDay; i <= endDay; i++) {
 		if (calendar[week][i].events[index] !== undefined) {
@@ -134,7 +134,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				day: startOfLastMonthWeek.day + i - (isWeekWeird ? 0 : 1),
 				month: lastMonth.month,
 				year: lastMonth.year,
-				events: []
+				events: [],
 			};
 		}
 
@@ -143,7 +143,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				day: i - firstDay + 1,
 				month: thisMonth.month,
 				year: thisMonth.year,
-				events: []
+				events: [],
 			};
 		}
 
@@ -157,7 +157,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 					day: start + j,
 					month: thisMonth.get('month'),
 					year: thisMonth.get('year'),
-					events: []
+					events: [],
 				};
 			}
 		}
@@ -169,7 +169,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				day: i,
 				month: thisMonth.get('month'),
 				year: thisMonth.get('year'),
-				events: []
+				events: [],
 			};
 		}
 
@@ -179,13 +179,13 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 					day: i,
 					month: nextMonth.get('month'),
 					year: nextMonth.get('year'),
-					events: []
+					events: [],
 				};
 			}
 		}
 
 		events.sort(
-			(a, b) => b.endDateTime - b.pickupDateTime - (a.endDateTime - a.pickupDateTime)
+			(a, b) => b.endDateTime - b.pickupDateTime - (a.endDateTime - a.pickupDateTime),
 		);
 
 		events = events.reverse();
@@ -199,14 +199,14 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				this.props.start,
 				this.props.end,
 				month,
-				year
+				year,
 			);
 			const { weekNumber: endWeek, dayNumber: endDay } = getPositionIndices(
 				endDate,
 				this.props.start,
 				this.props.end,
 				month,
-				year
+				year,
 			);
 
 			for (let k = startWeek; k <= endWeek; k++) {
@@ -218,7 +218,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 						event: val,
 						width: Math.max(0, (endDay % 7) - (startDay % 7)) + 1,
 						mergeLeft: false,
-						mergeRight: false
+						mergeRight: false,
 					};
 
 					for (let l = (startDay % 7) + 1; l <= endDay % 7; l++) {
@@ -227,7 +227,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							event: val,
 							width: 0,
 							mergeLeft: false,
-							mergeRight: false
+							mergeRight: false,
 						};
 					}
 				} else if (k === startWeek) {
@@ -238,7 +238,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 						event: val,
 						width: Math.max(0, 6 - (startDay % 7)) + 1,
 						mergeLeft: false,
-						mergeRight: true
+						mergeRight: true,
 					};
 
 					for (let l = (startDay % 7) + 1; l < 7; l++) {
@@ -247,7 +247,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							event: val,
 							width: 0,
 							mergeLeft: false,
-							mergeRight: false
+							mergeRight: false,
 						};
 					}
 				} else if (k === endWeek) {
@@ -258,7 +258,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 						event: val,
 						width: Math.max(0, endDay % 7) + 1,
 						mergeLeft: true,
-						mergeRight: false
+						mergeRight: false,
 					};
 
 					for (let l = 1; l < endDay % 7; l++) {
@@ -267,7 +267,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							event: val,
 							width: 0,
 							mergeLeft: false,
-							mergeRight: false
+							mergeRight: false,
 						};
 					}
 				} else {
@@ -278,7 +278,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 						event: val,
 						width: 7,
 						mergeLeft: true,
-						mergeRight: true
+						mergeRight: true,
 					};
 
 					for (let l = 1; l < 7; l++) {
@@ -287,7 +287,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							event: val,
 							width: 0,
 							mergeLeft: false,
-							mergeRight: false
+							mergeRight: false,
 						};
 					}
 				}
@@ -355,7 +355,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 													<div
 														className="event-container"
 														style={{
-															width: `${val.width * 100}%`
+															width: `${val.width * 100}%`,
 														}}
 													>
 														<Link
@@ -377,14 +377,14 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 																		? ' mergeRight'
 																		: ''
 																}${getClassNameFromEvent(
-																	val.event
+																	val.event,
 																)}`}
 															>
 																{val.event.name}
 															</div>
 														</Link>
 													</div>
-												)
+												),
 											)}
 										</div>
 									</td>

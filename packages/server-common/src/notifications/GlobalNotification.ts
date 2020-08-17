@@ -33,7 +33,7 @@ import {
 	NotificationDataType,
 	NotificationEveryoneTarget,
 	NotificationObject,
-	NotificationTargetType
+	NotificationTargetType,
 } from 'common-lib';
 import { findAndBindC, generateResults } from '../MySQLUtil';
 import { ServerEither } from '../servertypes';
@@ -41,7 +41,7 @@ import { ServerEither } from '../servertypes';
 export const hasGlobalNotification = (schema: Schema) => (account: AccountObject) =>
 	asyncRight(
 		schema.getCollection<GlobalNotification>('Notifications'),
-		errorGenerator('Could not get notifications')
+		errorGenerator('Could not get notifications'),
 	)
 		.map(
 			findAndBindC<GlobalNotification>({
@@ -49,21 +49,21 @@ export const hasGlobalNotification = (schema: Schema) => (account: AccountObject
 				// @ts-ignore
 				target: {
 					accountID: account.id,
-					type: NotificationTargetType.EVERYONE
-				}
-			})
+					type: NotificationTargetType.EVERYONE,
+				},
+			}),
 		)
 		.map<AsyncIterableIterator<GlobalNotification>>(generateResults)
 		.map(
 			asyncIterFilter<GlobalNotification>(
-				notif => notif.target.expires > Date.now() && !notif.read
-			)
+				notif => notif.target.expires > Date.now() && !notif.read,
+			),
 		)
 		.map(countAsync)
 		.map(result => result === 1);
 
 export const getCurrentGlobalNotification = (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ): ServerEither<
 	MaybeObj<
 		NotificationObject<NotificationCause, NotificationEveryoneTarget, NotificationDataMessage>
@@ -71,7 +71,7 @@ export const getCurrentGlobalNotification = (schema: Schema) => (
 > =>
 	asyncRight(
 		schema.getCollection<GlobalNotification>('Notifications'),
-		errorGenerator('Could not get notifications')
+		errorGenerator('Could not get notifications'),
 	)
 		.map(
 			findAndBindC<GlobalNotification>({
@@ -79,9 +79,9 @@ export const getCurrentGlobalNotification = (schema: Schema) => (
 				// @ts-ignore
 				target: {
 					accountID: account.id,
-					type: NotificationTargetType.EVERYONE
-				}
-			})
+					type: NotificationTargetType.EVERYONE,
+				},
+			}),
 		)
 		.map<AsyncIterableIterator<GlobalNotification>>(generateResults)
 		.map(
@@ -103,8 +103,8 @@ export const getCurrentGlobalNotification = (schema: Schema) => (
 									NotificationCause,
 									NotificationEveryoneTarget,
 									NotificationDataMessage
-								>
+								>,
 						  )
-					: prev
-			)(Maybe.none())
+					: prev,
+			)(Maybe.none()),
 		);

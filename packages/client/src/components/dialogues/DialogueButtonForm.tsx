@@ -105,7 +105,7 @@ export default class DialogueButtonForm<T> extends React.Component<
 
 		this.state = {
 			open: false,
-			formValues: props.values || ({} as T)
+			formValues: props.values || ({} as T),
 		};
 
 		this.formChange = this.formChange.bind(this);
@@ -128,7 +128,7 @@ export default class DialogueButtonForm<T> extends React.Component<
 					title: this.props.title,
 					displayButtons: DialogueButtons.OK,
 					onClose: props.onClose,
-					labels: this.props.labels as [string]
+					labels: this.props.labels as [string],
 				};
 				break;
 
@@ -139,7 +139,7 @@ export default class DialogueButtonForm<T> extends React.Component<
 					onCancel: props.onCancel,
 					onOk: this.onOK,
 					onClose: props.onClose,
-					labels: this.props.labels as [string, string]
+					labels: this.props.labels as [string, string],
 				};
 				break;
 
@@ -151,7 +151,7 @@ export default class DialogueButtonForm<T> extends React.Component<
 					onYes: this.onYes,
 					onNo: this.onNo,
 					onClose: props.onClose,
-					labels: this.props.labels as [string, string, string]
+					labels: this.props.labels as [string, string, string],
 				};
 				break;
 
@@ -179,7 +179,7 @@ export default class DialogueButtonForm<T> extends React.Component<
 
 	private formChange(formValues: T) {
 		this.setState({
-			formValues
+			formValues,
 		});
 	}
 

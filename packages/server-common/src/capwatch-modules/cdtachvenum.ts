@@ -41,9 +41,7 @@ const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileDa
 	for (const member of fileData) {
 		try {
 			await Promise.all([
-				cadetAchievementEnumCollection
-					.remove('FirstUsr = "coopertd"')
-					.execute()
+				cadetAchievementEnumCollection.remove('FirstUsr = "coopertd"').execute(),
 			]);
 
 			const values = {
@@ -54,7 +52,7 @@ const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileDa
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				Rank: member.Rank
+				Rank: member.Rank,
 			};
 
 			await cadetAchievementEnumCollection.add(values).execute();

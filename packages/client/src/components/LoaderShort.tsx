@@ -22,7 +22,7 @@ import './LoaderShort.css';
 
 export default class LoaderShort extends React.Component<{}, { display: boolean }> {
 	public state = {
-		display: false
+		display: false,
 	};
 
 	private handle: NodeJS.Timer | null = null;
@@ -30,7 +30,7 @@ export default class LoaderShort extends React.Component<{}, { display: boolean 
 	public componentDidMount() {
 		this.handle = setInterval(() => {
 			this.setState({
-				display: true
+				display: true,
 			});
 			if (this.handle) {
 				clearInterval(this.handle);

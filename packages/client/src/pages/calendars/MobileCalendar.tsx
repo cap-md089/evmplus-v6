@@ -29,7 +29,7 @@ import './MobileCalendar.scss';
 
 export default class MobileCalendar extends Page<CalendarProps> {
 	public state = {
-		events: null
+		events: null,
 	};
 
 	public render() {
@@ -99,7 +99,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 
 	private renderEventListForDay = (month: DateTime) => (
 		events: RawEventObject[],
-		index: number
+		index: number,
 	) => {
 		if (events.length === 0) {
 			return null;

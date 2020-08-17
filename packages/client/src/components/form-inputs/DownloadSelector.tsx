@@ -44,7 +44,7 @@ export default class DownloadSelector<T extends Identifiable> extends React.Comp
 	public state: DownloadSelectorState<T> = {
 		loaded: false,
 		values: [],
-		error: false
+		error: false,
 	};
 
 	public async componentDidMount() {
@@ -53,12 +53,12 @@ export default class DownloadSelector<T extends Identifiable> extends React.Comp
 
 			this.setState({
 				values,
-				loaded: true
+				loaded: true,
 			});
 		} catch (e) {
 			this.setState({
 				error: true,
-				loaded: true
+				loaded: true,
 			});
 		}
 	}

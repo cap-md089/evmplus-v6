@@ -31,7 +31,7 @@ import {
 	CAPWingMemberPermissions,
 	CAPGroupMemberPermissions,
 	CAPEventMemberPermissions,
-	CAPSquadronMemberPermissions
+	CAPSquadronMemberPermissions,
 } from 'common-lib';
 import * as React from 'react';
 import { deepCompare } from '../../pages/Page';
@@ -49,7 +49,7 @@ enum PermissionLevel {
 	MEMBER,
 	CADETSTAFF,
 	MANAGER,
-	ADMIN
+	ADMIN,
 }
 
 type PermissionFormValues = MemberPermissions & {
@@ -61,7 +61,7 @@ const stripPermissionLevel = (values: PermissionFormValues): MemberPermissions =
 	stripProp('permissionlevel')(stripProp('showAdvanced')(values)) as MemberPermissions;
 
 const permissionLevelFromPermissions = (accountType: AccountType) => (
-	permissions: MemberPermissions
+	permissions: MemberPermissions,
 ): PermissionLevel =>
 	deepCompare(permissions, getDefaultMemberPermissions(accountType))
 		? PermissionLevel.MEMBER
@@ -82,7 +82,7 @@ export default class PermissionsEdit extends React.Component<
 	PermissionsEditState
 > {
 	public state: PermissionsEditState = {
-		showAdvanced: false
+		showAdvanced: false,
 	};
 
 	constructor(props: PermissionsEditProps) {
@@ -93,7 +93,7 @@ export default class PermissionsEdit extends React.Component<
 
 			this.props.onInitialize({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 
@@ -115,7 +115,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced
+					showAdvanced,
 				}}
 				onFormChange={this.handleChange}
 			>
@@ -136,7 +136,7 @@ export default class PermissionsEdit extends React.Component<
 		err: BooleanForField<PermissionFormValues>,
 		chang: BooleanForField<PermissionFormValues>,
 		err2: boolean,
-		changedField: keyof PermissionFormValues
+		changedField: keyof PermissionFormValues,
 	) {
 		let newValues: MemberPermissions;
 		if (changedField === 'permissionlevel') {
@@ -163,7 +163,7 @@ export default class PermissionsEdit extends React.Component<
 
 		if (changedField === 'showAdvanced') {
 			this.setState({
-				showAdvanced: values.showAdvanced
+				showAdvanced: values.showAdvanced,
 			});
 		}
 
@@ -171,7 +171,7 @@ export default class PermissionsEdit extends React.Component<
 
 		this.props.onUpdate?.({
 			name: this.props.name,
-			value: newValues
+			value: newValues,
 		});
 	}
 
@@ -189,7 +189,7 @@ export default class PermissionsEdit extends React.Component<
 
 	private renderAdvancedSquadronInput(
 		value: CAPSquadronMemberPermissions,
-		permissionlevel: PermissionLevel
+		permissionlevel: PermissionLevel,
 	) {
 		return (
 			<FormBlock<PermissionFormValues>
@@ -197,7 +197,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced: true
+					showAdvanced: true,
 				}}
 				onFormChange={this.handleChange}
 			>
@@ -339,7 +339,7 @@ export default class PermissionsEdit extends React.Component<
 
 	private renderAdvancedEventInput(
 		value: CAPEventMemberPermissions,
-		permissionlevel: PermissionLevel
+		permissionlevel: PermissionLevel,
 	) {
 		return (
 			<FormBlock<PermissionFormValues>
@@ -347,7 +347,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced: true
+					showAdvanced: true,
 				}}
 				onFormChange={this.handleChange}
 			>
@@ -472,7 +472,7 @@ export default class PermissionsEdit extends React.Component<
 
 	private renderAdvancedGroupInput(
 		value: CAPGroupMemberPermissions,
-		permissionlevel: PermissionLevel
+		permissionlevel: PermissionLevel,
 	) {
 		return (
 			<FormBlock<PermissionFormValues>
@@ -480,7 +480,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced: true
+					showAdvanced: true,
 				}}
 				onFormChange={this.handleChange}
 			>
@@ -584,7 +584,7 @@ export default class PermissionsEdit extends React.Component<
 
 	private renderAdvancedWingInput(
 		value: CAPWingMemberPermissions,
-		permissionlevel: PermissionLevel
+		permissionlevel: PermissionLevel,
 	) {
 		return (
 			<FormBlock<PermissionFormValues>
@@ -592,7 +592,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced: true
+					showAdvanced: true,
 				}}
 				onFormChange={this.handleChange}
 			>
@@ -703,7 +703,7 @@ export default class PermissionsEdit extends React.Component<
 
 	private renderAdvancedRegionInput(
 		value: CAPRegionMemberPermissions,
-		permissionlevel: PermissionLevel
+		permissionlevel: PermissionLevel,
 	) {
 		return (
 			<FormBlock<PermissionFormValues>
@@ -711,7 +711,7 @@ export default class PermissionsEdit extends React.Component<
 				value={{
 					...value,
 					permissionlevel,
-					showAdvanced: true
+					showAdvanced: true,
 				}}
 				onFormChange={this.handleChange}
 			>

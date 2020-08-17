@@ -38,7 +38,7 @@ export default class LaxAutocomplete extends React.Component<LaxAutocompleteProp
 	private update(value: string) {
 		this.props.onUpdate?.({
 			name: this.props.name,
-			value
+			value,
 		});
 
 		this.props.onChange?.(value);

@@ -34,7 +34,7 @@ export default class Select<E extends number = number> extends React.Component<S
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: typeof this.props.value !== 'number' ? -1 : this.props.value
+				value: typeof this.props.value !== 'number' ? -1 : this.props.value,
 			});
 		}
 
@@ -72,7 +72,7 @@ export default class Select<E extends number = number> extends React.Component<S
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 	}

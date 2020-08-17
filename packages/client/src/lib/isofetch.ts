@@ -24,7 +24,7 @@ import 'whatwg-fetch';
 
 export const fetchFunction: (
 	url: RequestInfo | string,
-	options?: RequestInit
+	options?: RequestInit,
 ) => Promise<Response> =
 	process.env.NODE_ENV === 'test'
 		? (url: string | RequestInfo, options: RequestInit = {}) =>
@@ -49,7 +49,7 @@ export const fetchFunction: (
 // 	}
 // 	return promise.then(res => (res.ok && continueOnFail ? Promise.resolve(res) : Promise.reject(res)));
 // }
-export default async function(url: string, options: RequestInit = {}): Promise<Response> {
+export default async function (url: string, options: RequestInit = {}): Promise<Response> {
 	const promise = fetchFunction(url, options);
 
 	const res = await promise;

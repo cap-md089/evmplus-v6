@@ -26,7 +26,7 @@ import {
 	errorGenerator,
 	ValidatorError,
 	ValidatorFail,
-	ValidatorImpl
+	ValidatorImpl,
 } from 'common-lib';
 import { BasicAccountRequest, ServerEither } from 'server-common';
 
@@ -44,10 +44,10 @@ type ReqWithFunctions<
 	};
 
 export const schemaApply = <T extends InputFunctions<Schema>, R extends BasicMySQLRequest>(
-	funcs: T
+	funcs: T,
 ) => (req: R): ReqWithFunctions<R, Schema, T> => {
 	const newReq = {
-		...req
+		...req,
 	} as ReqWithFunctions<R, Schema, T>;
 
 	for (const func in funcs) {
@@ -63,10 +63,10 @@ export const accountApply = <
 	T extends InputFunctions<AccountObject>,
 	R extends BasicAccountRequest
 >(
-	funcs: T
+	funcs: T,
 ) => (req: R): ReqWithFunctions<R, AccountObject, T> => {
 	const newReq = {
-		...req
+		...req,
 	} as ReqWithFunctions<R, AccountObject, T>;
 
 	for (const func in funcs) {
@@ -81,14 +81,14 @@ export const accountApply = <
 export const validateRequest = <T extends any>(validator: ValidatorImpl<T>) => <
 	R extends { body: unknown }
 >(
-	req: R
+	req: R,
 ): ServerEither<Omit<R, 'body'> & { body: T }> =>
 	asyncEither(
 		Either.leftMap<ValidatorFail, ValidatorError, T>(validatorState => ({
 			type: 'VALIDATOR',
 			code: 400,
 			message: 'There was a problem with the request body',
-			validatorState
+			validatorState,
 		}))(validator.validate(req.body, 'body')),
-		errorGenerator('Could not validate body')
+		errorGenerator('Could not validate body'),
 	).map<Omit<R, 'body'> & { body: T }>(body => ({ ...req, body }));

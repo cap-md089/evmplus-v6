@@ -38,7 +38,7 @@ process.on('unhandledRejection', up => {
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,
 		port: conf.DB_PORT,
-		user: conf.DB_USER
+		user: conf.DB_USER,
 	});
 
 	// @ts-ignore

@@ -29,7 +29,7 @@ import {
 	Maybe,
 	Member,
 	pipe,
-	UserAccountInformation
+	UserAccountInformation,
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail, ServerEither } from 'server-common';
 
@@ -42,52 +42,52 @@ const textEmailBody = (memberInfo: Member, accountInfo: UserAccountInformation) 
 Please respond to this email if you have questions regarding your CAPUnit.com account.`;
 
 const sendEmailToMember = (emailFunction: typeof sendEmail) => (
-	req: ServerAPIRequestParameter<api.member.account.capnhq.UsernameRequest>
+	req: ServerAPIRequestParameter<api.member.account.capnhq.UsernameRequest>,
 ) => (info: UserAccountInformation<CAPNHQMemberReference>) => (member: Member) => (email: string) =>
 	getRegistry(req.mysqlx)(req.account)
 		.map(emailFunction(true))
 		.flatMap(sender =>
 			sender('Username request')(email)(htmlEmailBody(member, info))(
-				textEmailBody(member, info)
-			)
+				textEmailBody(member, info),
+			),
 		);
 
 export const func: (
-	emailFunction?: typeof sendEmail
+	emailFunction?: typeof sendEmail,
 ) => ServerAPIEndpoint<api.member.account.capnhq.UsernameRequest> = (
-	emailFunction = sendEmail
+	emailFunction = sendEmail,
 ) => req =>
 	asyncRight(
 		PAM.verifyCaptcha(req.body.captchaToken, req.configuration),
-		errorGenerator('Could not verify CAPTCHA token')
+		errorGenerator('Could not verify CAPTCHA token'),
 	)
 		.filter(success => success, {
 			type: 'OTHER',
 			code: 400,
-			message: 'Could not verify CAPTCHA token'
+			message: 'Could not verify CAPTCHA token',
 		})
 		.map(() =>
 			PAM.getInformationForMember(req.mysqlx, {
 				type: 'CAPNHQMember' as const,
-				id: req.body.capid
-			})
+				id: req.body.capid,
+			}),
 		)
 		.flatMap(info =>
 			resolveReference(req.mysqlx)(req.account)(info.member).flatMap(member =>
 				pipe(
 					Maybe.map<string, ServerEither<void>>(
-						sendEmailToMember(emailFunction)(req)(info)(member)
+						sendEmailToMember(emailFunction)(req)(info)(member),
 					),
 					Maybe.orSome<ServerEither<void>>(
 						asyncLeft({
 							type: 'OTHER',
 							code: 400,
 							message:
-								'There is no email address associated with the account requested'
-						})
-					)
-				)(getMemberEmail(member.contact))
-			)
+								'There is no email address associated with the account requested',
+						}),
+					),
+				)(getMemberEmail(member.contact)),
+			),
 		);
 
 export default func();

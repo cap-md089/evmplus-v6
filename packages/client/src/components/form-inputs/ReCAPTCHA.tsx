@@ -34,7 +34,7 @@ export default class ReCAPTCHAInput extends Component<InputProps<string | null>>
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
 				name: this.props.name,
-				value: null
+				value: null,
 			});
 		}
 	}
@@ -55,7 +55,7 @@ export default class ReCAPTCHAInput extends Component<InputProps<string | null>>
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value: token
+				value: token,
 			});
 		}
 	}

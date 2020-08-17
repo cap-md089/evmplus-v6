@@ -59,7 +59,7 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
 				FltTime: oFlightConst.FltTime,
 				LstUsr: oFlightConst.LstUsr,
 				LstDateMod: oFlightConst.LstDateMod,
-				Comments: oFlightConst.Comments
+				Comments: oFlightConst.Comments,
 			};
 			try {
 				await oFlightCollection.add(values).execute();
@@ -79,7 +79,7 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
 					FltTime: values.FltTime,
 					LstUsr: values.LstUsr,
 					LstDateMod: values.LstDateMod,
-					Comments: values.Comments
+					Comments: values.Comments,
 				})
 					.patch(values)
 					.execute();

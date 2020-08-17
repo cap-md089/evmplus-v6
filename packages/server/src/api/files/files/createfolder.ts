@@ -26,7 +26,7 @@ import {
 	Maybe,
 	RawFileObject,
 	toReference,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, getFileObject } from 'server-common';
 import { v4 as uuid } from 'uuid';
@@ -35,18 +35,18 @@ const canAddSubfolder = userHasFilePermission(FileUserAccessControlPermissions.M
 
 export const func: (
 	uuidFunc?: typeof uuid,
-	now?: () => number
+	now?: () => number,
 ) => ServerAPIEndpoint<api.files.files.CreateFolder> = (uuidFunc = uuid, now = Date.now) => req =>
 	getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid)
 		.filter(canAddSubfolder(req.member), {
 			type: 'OTHER',
 			code: 403,
-			message: 'You do not have permission to do that'
+			message: 'You do not have permission to do that',
 		})
 		.filter(file => file.contentType === 'application/folder', {
 			type: 'OTHER',
 			code: 403,
-			message: 'You can only add a subfolder to a folder'
+			message: 'You can only add a subfolder to a folder',
 		})
 		.map(({ id: parentID }) => {
 			const id = uuidFunc().replace(/-/g, '');
@@ -71,20 +71,17 @@ export const func: (
 					{
 						type: FileUserAccessControlType.USER,
 						reference: owner,
-						permission: FileUserAccessControlPermissions.FULLCONTROL
-					}
-				]
+						permission: FileUserAccessControlPermissions.FULLCONTROL,
+					},
+				],
 			};
 
-			return fileCollection
-				.add(newFile)
-				.execute()
-				.then(always(newFile));
+			return fileCollection.add(newFile).execute().then(always(newFile));
 		})
 		.flatMap(expandRawFileObject(req.mysqlx)(req.account))
 		.map(file => ({
 			...file,
-			uploader: Maybe.some(req.member)
+			uploader: Maybe.some(req.member),
 		}));
 
 export default func();

@@ -40,11 +40,11 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 	public state: RequestUsernameState = {
 		form: {
 			capid: null,
-			captchaToken: null
+			captchaToken: null,
 		},
 		error: null,
 		tryingSubmit: false,
-		success: false
+		success: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -62,11 +62,11 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				disableOnInvalid={true}
 				validator={{
 					captchaToken: val => val !== null,
-					capid: val => val !== null && val >= 100000
+					capid: val => val !== null && val >= 100000,
 				}}
 				submitInfo={{
 					disabled: this.state.tryingSubmit,
-					text: 'Request login'
+					text: 'Request login',
 				}}
 			>
 				<Title>Request login</Title>
@@ -117,24 +117,24 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 		this.setState({
 			tryingSubmit: true,
 			error: null,
-			success: false
+			success: false,
 		});
 
 		const result = await fetchApi.member.account.capnhq.usernameRequest(
 			{},
-			{ capid: form.capid, captchaToken: form.captchaToken }
+			{ capid: form.capid, captchaToken: form.captchaToken },
 		);
 
 		if (Either.isLeft(result)) {
 			this.setState({
 				tryingSubmit: false,
-				error: result.value.message
+				error: result.value.message,
 			});
 		} else {
 			this.setState({
 				success: true,
 				error: null,
-				tryingSubmit: false
+				tryingSubmit: false,
 			});
 		}
 	}

@@ -55,7 +55,7 @@ const signinErrorMessages = {
 	[MemberCreateError.SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in',
-	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA'
+	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA',
 };
 
 const validateNotEmpty = (val: string | null) => !!val;
@@ -67,16 +67,16 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		signinFormValues: {
 			username: '',
 			password: '',
-			recaptcha: null
+			recaptcha: null,
 		},
 		resetFormValues: {
-			password: ''
+			password: '',
 		},
 		error: MemberCreateError.NONE,
 		passwordSetResult: '',
 		updatePasswordSessionID: null,
 		tryingSignin: false,
-		tryingPasswordReset: false
+		tryingPasswordReset: false,
 	};
 
 	private get returnUrl(): string {
@@ -120,11 +120,11 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					validator={{
 						username: validateNotEmpty,
 						password: validateNotEmpty,
-						recaptcha: validateNotEmpty
+						recaptcha: validateNotEmpty,
 					}}
 					submitInfo={{
 						text: 'Sign in',
-						disabled: this.state.tryingSignin
+						disabled: this.state.tryingSignin,
 					}}
 					disableOnInvalid={true}
 				>
@@ -151,11 +151,11 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				<SimpleForm<ResetPasswordFormValues>
 					onSubmit={this.resetPassword}
 					validator={{
-						password: validateNewPasswords
+						password: validateNewPasswords,
 					}}
 					submitInfo={{
 						text: 'Update password',
-						disabled: this.state.tryingPasswordReset
+						disabled: this.state.tryingPasswordReset,
 					}}
 					values={this.state.resetFormValues}
 					onChange={resetFormValues => this.setState({ resetFormValues })}
@@ -182,7 +182,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 	private async trySignin() {
 		this.setState({
 			tryingSignin: true,
-			error: MemberCreateError.NONE
+			error: MemberCreateError.NONE,
 		});
 
 		if (!this.state.signinFormValues.recaptcha) {
@@ -195,8 +195,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				{
 					username: this.state.signinFormValues.username,
 					password: this.state.signinFormValues.password,
-					recaptcha: this.state.signinFormValues.recaptcha
-				}
+					recaptcha: this.state.signinFormValues.recaptcha,
+				},
 			)
 			.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))
 			.fullJoin();
@@ -208,33 +208,33 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			this.setState({
 				error: signinResults.error,
 				tryingSignin: false,
-				updatePasswordSessionID: signinResults.sessionID
+				updatePasswordSessionID: signinResults.sessionID,
 			});
 		} else {
 			// @ts-ignore
 			window.grecaptcha.reset();
 			this.setState({
 				error: signinResults.error,
-				tryingSignin: false
+				tryingSignin: false,
 			});
 		}
 	}
 
 	private async resetPassword() {
 		this.setState({
-			tryingPasswordReset: true
+			tryingPasswordReset: true,
 		});
 
 		const resetPasswordResult = await fetchApi.member.passwordReset(
 			{},
 			{ password: this.state.resetFormValues.password },
-			this.state.updatePasswordSessionID!
+			this.state.updatePasswordSessionID!,
 		);
 
 		if (Either.isLeft(resetPasswordResult)) {
 			this.setState({
 				passwordSetResult: resetPasswordResult.value.message,
-				tryingPasswordReset: false
+				tryingPasswordReset: false,
 			});
 		} else {
 			const member = await getMember(this.state.updatePasswordSessionID!);

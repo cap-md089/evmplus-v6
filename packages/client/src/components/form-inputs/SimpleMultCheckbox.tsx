@@ -68,14 +68,14 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 				values: [
 					...inputValue.values.slice(0, index),
 					isChecked,
-					...inputValue.values.slice(index + 1)
-				]
+					...inputValue.values.slice(index + 1),
+				],
 			};
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value
+					value,
 				});
 			}
 

@@ -23,7 +23,7 @@ import Page, { PageProps } from '../Page';
 import EventForm, {
 	NewEventFormValues,
 	convertToFormValues,
-	convertFormValuesToEvent
+	convertFormValuesToEvent,
 } from '../../components/forms/usable-forms/EventForm';
 import {
 	EventObject,
@@ -34,7 +34,7 @@ import {
 	Permissions,
 	FullTeamObject,
 	MaybeObj,
-	Maybe
+	Maybe,
 } from 'common-lib';
 import fetchApi from '../../lib/apis';
 import SigninLink from '../../components/SigninLink';
@@ -67,7 +67,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 	public state: ModifyEventState = {
 		stage: 'LOADING',
 
-		saving: false
+		saving: false,
 	};
 
 	constructor(props: PageProps<{ id: string }>) {
@@ -86,10 +86,10 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			fetchApi.events.events.get(
 				{ id: this.props.routeProps.match.params.id.split('-')[0] },
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			),
 			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID)
+			fetchApi.team.list({}, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -97,7 +97,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 				stage: 'ERROR',
 				errorMessage: 'Could not load event information',
 
-				saving: false
+				saving: false,
 			});
 		}
 
@@ -111,7 +111,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 				stage: 'ERROR',
 				errorMessage: 'You do not have permission to modify this event',
 
-				saving: false
+				saving: false,
 			});
 		}
 
@@ -122,60 +122,60 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			event,
 			memberList,
 			teamList,
-			eventFormValues: convertToFormValues(event)
+			eventFormValues: convertToFormValues(event),
 		}));
 
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: `/eventviewer/${event.id}`,
-				text: `View event "${event.name}"`
+				text: `View event "${event.name}"`,
 			},
 			{
 				target: `/eventform/${event.id}`,
-				text: `Modify event "${event.name}"`
-			}
+				text: `Modify event "${event.name}"`,
+			},
 		]);
 
 		this.props.updateSideNav([
 			{
 				target: 'main-information',
 				text: 'Main information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'activity-information',
 				text: 'Activity Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'logistics-information',
 				text: 'Logistics Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'points-of-contact',
 				text: 'Points of Contact',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'custom-attendance-fields',
 				text: 'Custom Attendance Fields',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'extra-information',
 				text: 'Extra Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'team-information',
 				text: 'Team Information',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 
 		this.updateTitle(`Modify event "${event.name}"`);
@@ -218,7 +218,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 
 		this.setState(prev => ({
 			...prev,
-			eventFormValues
+			eventFormValues,
 		}));
 	}
 
@@ -238,24 +238,24 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		}
 
 		this.setState({
-			saving: true
+			saving: true,
 		});
 
 		const resultEither = await fetchApi.events.events.set(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			properEventValues.value,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(resultEither)) {
 			this.setState({
 				saving: false,
 				stage: 'ERROR',
-				errorMessage: 'Could not save event information'
+				errorMessage: 'Could not save event information',
 			});
 		} else {
 			this.props.routeProps.history.push(
-				`/eventviewer/${this.props.routeProps.match.params.id.split('-')[0]}`
+				`/eventviewer/${this.props.routeProps.match.params.id.split('-')[0]}`,
 			);
 		}
 	}

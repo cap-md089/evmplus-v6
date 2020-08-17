@@ -30,23 +30,23 @@ import {
 	SessionType,
 	stringifyMemberReference,
 	toReference,
-	ValidatorError
+	ValidatorError,
 } from 'common-lib';
 import { getAttendanceForMember, getEvent, PAM, RawAttendanceDBRecord } from 'server-common';
 
 const stripEvent = (record: RawAttendanceDBRecord) => (
-	event: RawEventObject
+	event: RawEventObject,
 ): api.member.attendance.EventAttendanceRecordEventInformation => ({
 	attendanceComments: record.comments,
 	endDateTime: event.endDateTime,
 	id: event.id,
 	location: event.location,
 	name: event.name,
-	startDateTime: event.startDateTime
+	startDateTime: event.startDateTime,
 });
 
 export const expandRecord = (getEventFunc: typeof getEvent) => (
-	req: ServerAPIRequestParameter<api.member.attendance.Get>
+	req: ServerAPIRequestParameter<api.member.attendance.Get>,
 ) => (record: RawAttendanceDBRecord) =>
 	getEventFunc(req.mysqlx)(req.account)(record.eventID)
 		.map(stripEvent(record))
@@ -56,29 +56,29 @@ export const expandRecord = (getEventFunc: typeof getEvent) => (
 			event,
 			member: {
 				name: record.memberName,
-				reference: record.memberID
-			}
+				reference: record.memberID,
+			},
 		}))
 		.leftMap(
 			err => ({
 				...(err as Exclude<ServerError, ValidatorError>),
 				message: `Record could not be shown for ${
 					record.memberName
-				} (${stringifyMemberReference(record.memberID)})`
+				} (${stringifyMemberReference(record.memberID)})`,
 			}),
 			errorGenerator(
 				`Record could not be shown for ${record.memberName} (${stringifyMemberReference(
-					record.memberID
-				)})`
-			)
+					record.memberID,
+				)})`,
+			),
 		);
 
 export const func: ServerAPIEndpoint<api.member.attendance.Get> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(req =>
 	getAttendanceForMember(req.mysqlx)(req.account)(toReference(req.member)).map(
-		asyncIterMap(expandRecord(getEvent)(req))
-	)
+		asyncIterMap(expandRecord(getEvent)(req)),
+	),
 );
 
 export default func;

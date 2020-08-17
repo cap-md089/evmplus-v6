@@ -28,7 +28,7 @@ import {
 	isRioux,
 	Maybe,
 	MaybeObj,
-	Member
+	Member,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -36,7 +36,7 @@ import SimpleForm, { Label, TextInput } from '../../components/forms/SimpleForm'
 import EventForm, {
 	convertFormValuesToEvent,
 	emptyEventFormValues,
-	NewEventFormValues
+	NewEventFormValues,
 } from '../../components/forms/usable-forms/EventForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
@@ -47,7 +47,7 @@ const calendarIDStyles = {
 	color: 'black',
 	display: 'inline-block',
 	padding: '3px',
-	fontSize: '1.1em'
+	fontSize: '1.1em',
 };
 
 interface CreateAccountLoadingState {
@@ -89,7 +89,7 @@ type CreateAccountState =
 
 export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 	public state: CreateAccountState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	constructor(props: PageProps) {
@@ -104,52 +104,52 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 			{
 				target: 'main-information',
 				text: 'Main information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'activity-information',
 				text: 'Activity Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'logistics-information',
 				text: 'Logistics Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'points-of-contact',
 				text: 'Points of Contact',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'custom-attendance-fields',
 				text: 'Custom Attendance Fields',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'extra-information',
 				text: 'Extra Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'team-information',
 				text: 'Team Information',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Admin'
+				text: 'Admin',
 			},
 			{
 				target: '/admin/createeventaccount',
-				text: 'Create event account'
-			}
+				text: 'Create event account',
+			},
 		]);
 		this.updateTitle('Create event');
 
@@ -159,14 +159,14 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 
 		const infoEither = await AsyncEither.All([
 			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID)
+			fetchApi.team.list({}, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(infoEither)) {
 			return this.setState({
 				state: 'ERROR',
 
-				error: infoEither.value.message
+				error: infoEither.value.message,
 			});
 		}
 
@@ -179,7 +179,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 			memberList,
 			teamList,
 			newAccountID: `${this.props.account.id}-`,
-			newAccountName: ''
+			newAccountName: '',
 		});
 	}
 
@@ -201,8 +201,8 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 				duty =>
 					duty.type === 'CAPUnit' ||
 					Maybe.orSome<number[]>([])(
-						getORGIDsFromCAPAccount(this.props.account)
-					).includes(duty.orgid)
+						getORGIDsFromCAPAccount(this.props.account),
+					).includes(duty.orgid),
 			)
 			.map(({ duty }) => duty);
 
@@ -289,12 +289,12 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 				<SimpleForm<{ accountName: string; accountID: string }>
 					values={{
 						accountName: this.state.newAccountName,
-						accountID: this.state.newAccountID
+						accountID: this.state.newAccountID,
 					}}
 					validator={{
 						accountName: name => name !== '',
 						accountID: id =>
-							id !== this.props.account.id || id.startsWith(this.props.account.id)
+							id !== this.props.account.id || id.startsWith(this.props.account.id),
 					}}
 					showSubmitButton={false}
 					onChange={({ accountName, accountID }) =>
@@ -304,9 +304,9 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 										...prev,
 										state: 'FORM',
 										newAccountID: accountID,
-										newAccountName: accountName
+										newAccountName: accountName,
 								  }
-								: prev
+								: prev,
 						)
 					}
 				>
@@ -366,7 +366,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		const newEvent = realEventMaybe.value;
 
 		this.setState({
-			state: 'SAVING'
+			state: 'SAVING',
 		});
 
 		const accountResult = await fetchApi.events.account.create(
@@ -374,20 +374,20 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 			{
 				accountID: this.state.newAccountID,
 				accountName: this.state.newAccountName,
-				event: newEvent
+				event: newEvent,
 			},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(accountResult)) {
 			this.setState({
 				state: 'ERROR',
-				error: accountResult.value.message
+				error: accountResult.value.message,
 			});
 		} else {
 			this.setState({
 				state: 'CREATED',
-				account: accountResult.value
+				account: accountResult.value,
 			});
 		}
 	}
@@ -396,7 +396,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		this.setState(prev => ({
 			...prev,
 			state: 'FORM',
-			event
+			event,
 		}));
 	}
 }

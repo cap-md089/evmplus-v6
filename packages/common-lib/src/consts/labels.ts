@@ -26,7 +26,7 @@ export const Uniforms = [
 	'Blue Utilities (Senior Members)',
 	'Civilian Attire',
 	'Flight Suit',
-	'Not Applicable'
+	'Not Applicable',
 ];
 export const Activities = [
 	'Squadron Meeting',
@@ -34,7 +34,7 @@ export const Activities = [
 	'Backcountry',
 	'Flying',
 	'Physically Rigorous',
-	'Recurring Meeting'
+	'Recurring Meeting',
 ];
 export const RequiredForms = [
 	'CAP Identification Card',
@@ -43,14 +43,14 @@ export const RequiredForms = [
 	'CAPF 101 Specialty Qualification Card',
 	'CAPF 160 CAP Member Health History Form',
 	'CAPF 161 Emergency Information',
-	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
+	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication',
 ];
 export const Meals = ['No meals provided', 'Meals provided', 'Bring own food', 'Bring money'];
 export const LodgingArrangments = [
 	'Hotel or individual room',
 	'Open bay building',
 	'Large tent',
-	'Individual tent'
+	'Individual tent',
 ];
 export const EventStatus = [
 	'Draft',
@@ -58,5 +58,5 @@ export const EventStatus = [
 	'Confirmed',
 	'Complete',
 	'Cancelled',
-	'Information Only'
+	'Information Only',
 ];

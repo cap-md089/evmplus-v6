@@ -44,7 +44,7 @@ import {
 	stripProp,
 	ValidatorError,
 	ValidatorFail,
-	ValidatorImpl
+	ValidatorImpl,
 } from 'common-lib';
 import * as express from 'express';
 import { accountRequestTransformer, BasicAccountRequest, PAM } from 'server-common';
@@ -52,10 +52,10 @@ import { tokenTransformer } from '../api/formtoken';
 import saveServerError, { Requests } from './saveServerError';
 
 export const addMember = (memberRequirement: MemberRequirement) => <P extends ParamType, B>(
-	request: Requests<P, B>
+	request: Requests<P, B>,
 ) => (req: BasicAccountRequest<P, B>): AsyncEither<ServerError, Requests<P, B>> => {
 	const tapFunction = (
-		newReq: PAM.BasicMemberRequest<P, B> | PAM.BasicMaybeMemberRequest<P, B>
+		newReq: PAM.BasicMemberRequest<P, B> | PAM.BasicMaybeMemberRequest<P, B>,
 	) => {
 		(request as any).member = newReq.member;
 	};
@@ -64,13 +64,13 @@ export const addMember = (memberRequirement: MemberRequirement) => <P extends Pa
 		return PAM.memberRequestTransformer(
 			// tslint:disable-next-line:no-bitwise
 			SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
-			true
+			true,
 		)(req).tap(tapFunction);
 	} else if (memberRequirement === 'optional') {
 		return PAM.memberRequestTransformer(
 			// tslint:disable-next-line:no-bitwise
 			SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
-			false
+			false,
 		)(req).tap(tapFunction);
 	} else {
 		return asyncRight(req, errorGenerator('Could not handle request'));
@@ -81,20 +81,20 @@ export const validateBody = <
 	T extends APIEndpoint<string, any, any, any, any, any, any>,
 	R extends { body: any }
 >(
-	validator: ValidatorImpl<APIEndpointBody<T>>
+	validator: ValidatorImpl<APIEndpointBody<T>>,
 ) => (req: R): EitherObj<ServerError, Omit<R, 'body'> & { body: APIEndpointBody<T> }> =>
 	Either.map<ServerError, APIEndpointBody<T>, Omit<R, 'body'> & { body: APIEndpointBody<T> }>(
 		body => ({
 			...req,
-			body
-		})
+			body,
+		}),
 	)(
 		Either.leftMap<ValidatorFail, ValidatorError, APIEndpointBody<T>>(validatorState => ({
 			type: 'VALIDATOR',
 			code: 400,
 			message: 'There was a problem with the request body',
-			validatorState
-		}))(validator.validate(req.body, 'request body'))
+			validatorState,
+		}))(validator.validate(req.body, 'request body')),
 	);
 
 type Sender<T> = (request: Requests) => (response: express.Response) => (value: T) => Promise<void>;
@@ -158,7 +158,7 @@ const sendObject: Sender<object | null> = request => response => async value => 
 };
 
 export const send = (request: Requests) => (response: express.Response) => async (
-	value: AsyncRepr<unknown>
+	value: AsyncRepr<unknown>,
 ) => {
 	const validEither = Either.isValidEither as (e: unknown) => e is EitherObj<ServerError, any>;
 
@@ -188,7 +188,7 @@ export const send = (request: Requests) => (response: express.Response) => async
 };
 
 export const sendResponse = <T extends APIEndpoint<string, any, any, any, any, any, any>>(
-	request: Requests
+	request: Requests,
 ) => (response: express.Response) => async (result: ServerAPIReturnValue<T>) => {
 	response.header('Content-type', 'application/json');
 
@@ -209,7 +209,7 @@ export const sendResponse = <T extends APIEndpoint<string, any, any, any, any, a
 };
 
 export const sendError = (request: Requests) => (response: express.Response) => async (
-	err: ServerError
+	err: ServerError,
 ) => {
 	if (err.type === 'CRASH') {
 		await saveServerError(err.error, request, err);
@@ -220,23 +220,23 @@ export const sendError = (request: Requests) => (response: express.Response) => 
 };
 
 export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, any, any>>(
-	app: express.Application | express.Router
+	app: express.Application | express.Router,
 ) => (
 	url: APIEndpointURL<T>,
 	method: APIEndpointMethod<T>,
 	memberRequirement: APIEndpointMember<T>,
 	tokenRequired: APIEndpointToken<T>,
 	useValidator: APIEndpointUsesValidator<T>,
-	validator: ValidatorImpl<APIEndpointBody<T>>
+	validator: ValidatorImpl<APIEndpointBody<T>>,
 ) => (
 	endpoint: (
-		req: RequestType<APIEndpointParams<T>, APIEndpointBody<T>, APIEndpointMember<T>>
-	) => ReturnValue<APIEndpointReturnValue<T>>
+		req: RequestType<APIEndpointParams<T>, APIEndpointBody<T>, APIEndpointMember<T>>,
+	) => ReturnValue<APIEndpointReturnValue<T>>,
 ) => {
 	app[method](
 		url,
 		bodyParser.json({
-			strict: false
+			strict: false,
 		}),
 		(req: Requests, res: express.Response, next: express.NextFunction) => {
 			if (typeof req.body !== 'undefined' && req.body === 'teapot') {
@@ -248,8 +248,8 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 					Either.left({
 						code: 400,
 						message:
-							'Request body is not recognized as properly formatted JSON. Either the JSON is invalid or a "content-type" header is missing'
-					}) as APIEither<any>
+							'Request body is not recognized as properly formatted JSON. Either the JSON is invalid or a "content-type" header is missing',
+					}) as APIEither<any>,
 				);
 			} else {
 				next();
@@ -257,11 +257,11 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 		},
 		(
 			request: Requests<APIEndpointParams<T>, APIEndpointBody<T>>,
-			response: express.Response
+			response: express.Response,
 		) => {
 			asyncRight<ServerError, BasicMySQLRequest<APIEndpointParams<T>, APIEndpointBody<T>>>(
 				request,
-				errorGenerator('Could not process request')
+				errorGenerator('Could not process request'),
 			)
 				.flatMap<BasicAccountRequest>(accountRequestTransformer)
 				.tap(accountReq => {
@@ -274,7 +274,7 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 								ServerError,
 								Requests
 						  >)
-						: Either.right(req)
+						: Either.right(req),
 				)
 				.flatMap(useValidator ? validateBody(validator) : Either.right)
 
@@ -284,8 +284,8 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 							APIEndpointParams<T>,
 							APIEndpointBody<T>,
 							APIEndpointMember<T>
-						>
-					)
+						>,
+					),
 				)
 
 				.tap(sendResponse(request)(response))
@@ -295,6 +295,6 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 
 					return eith;
 				});
-		}
+		},
 	);
 };

@@ -27,7 +27,7 @@ import SimpleForm, {
 	Label,
 	Selector,
 	SimpleRadioButton,
-	TextInput
+	TextInput,
 } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import Page, { PageProps } from '../Page';
@@ -58,15 +58,11 @@ const memberRanks = [
 	'briggen',
 	'majgen',
 	'ltgen',
-	'gen'
+	'gen',
 ];
 
 const normalizeRankInput = (rank: string) =>
-	(rank || '')
-		.toLowerCase()
-		.replace('/', '')
-		.replace('2nd', '2d')
-		.replace(' ', '');
+	(rank || '').toLowerCase().replace('/', '').replace('2nd', '2d').replace(' ', '');
 
 interface EmailListLoadingState {
 	state: 'LOADING';
@@ -104,19 +100,19 @@ type EmailListState = EmailListUIState &
 enum SortFunction {
 	LASTNAME,
 	FIRSTNAME,
-	CAPID
+	CAPID,
 }
 
 const sortFunctions: Array<(a: Member, b: Member) => number> = [
 	(a, b) => a.nameLast.localeCompare(b.nameLast),
 	(a, b) => a.nameFirst.localeCompare(b.nameFirst),
-	(a, b) => a.id.toString().localeCompare(b.id.toString())
+	(a, b) => a.id.toString().localeCompare(b.id.toString()),
 ];
 
 enum MemberList {
 	CADET,
 	SENIOR,
-	ALL
+	ALL,
 }
 
 const nameInput: CheckInput<Member, string> = {
@@ -137,7 +133,7 @@ const nameInput: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Name:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankGreaterThan: CheckInput<Member, string> = {
@@ -160,7 +156,7 @@ const rankGreaterThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank greater than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const rankLessThan: CheckInput<Member, string> = {
@@ -183,7 +179,7 @@ const rankLessThan: CheckInput<Member, string> = {
 		}
 	},
 	displayText: 'Rank less than:',
-	filterInput: TextInput
+	filterInput: TextInput,
 };
 
 const memberFilter: CheckInput<Member, MemberList> = {
@@ -200,13 +196,13 @@ const memberFilter: CheckInput<Member, MemberList> = {
 			onUpdate={props.onUpdate}
 		/>
 	),
-	displayText: 'Member type'
+	displayText: 'Member type',
 };
 
 const memberFilters: Array<(a: Member) => boolean> = [
 	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? !a.seniorMember : false),
 	a => (a.type === 'CAPNHQMember' || a.type === 'CAPProspectiveMember' ? a.seniorMember : true),
-	() => true
+	() => true,
 ];
 
 const advancedFilters = [nameInput, rankGreaterThan, rankLessThan, memberFilter];
@@ -225,8 +221,8 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 			memberFilter: MemberList.ALL,
 			nameInput: '',
 			rankGreaterThan: '',
-			rankLessThan: ''
-		}
+			rankLessThan: '',
+		},
 	};
 
 	private selectableDiv = React.createRef<HTMLDivElement>();
@@ -243,16 +239,16 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: `/team/view/${id}`,
-				text: 'View team'
+				text: 'View team',
 			},
 			{
 				target: '/emailselector',
-				text: 'Email selector'
-			}
+				text: 'Email selector',
+			},
 		]);
 
 		this.props.updateSideNav([]);
@@ -263,20 +259,20 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 			const membersEither = await fetchApi.team.members.list(
 				{ id },
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(membersEither)) {
 				this.setState(prev => ({
 					...prev,
 					state: 'ERROR',
-					error: membersEither.value.message
+					error: membersEither.value.message,
 				}));
 			} else {
 				this.setState(prev => ({
 					...prev,
 					state: 'LOADED',
-					members: membersEither.value
+					members: membersEither.value,
 				}));
 			}
 		}
@@ -309,9 +305,9 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 								prev.state === 'LOADED'
 									? {
 											...prev,
-											selectedMembers: (prev.members || []).slice(0)
+											selectedMembers: (prev.members || []).slice(0),
 									  }
-									: prev
+									: prev,
 							);
 						}}
 					>
@@ -328,8 +324,8 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 								const selectedMembers = [
 									...prev.selectedMembers,
 									...prev.visibleItems.filter(
-										item => !prev.selectedMembers.some(areMembersTheSame(item))
-									)
+										item => !prev.selectedMembers.some(areMembersTheSame(item)),
+									),
 								];
 
 								return { ...prev, selectedMembers };
@@ -342,7 +338,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 					<Button
 						onClick={() => {
 							this.setState({
-								selectedMembers: []
+								selectedMembers: [],
 							});
 						}}
 					>
@@ -366,14 +362,14 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 							members: this.state.selectedMembers,
 							sortFunction: this.state.sortFunction,
 							displayAdvanced: this.state.displayAdvanced,
-							addParentEmails: this.state.addParentEmails
+							addParentEmails: this.state.addParentEmails,
 						}}
 						onChange={({ members, sortFunction, displayAdvanced, addParentEmails }) => {
 							this.setState({
 								selectedMembers: members,
 								sortFunction,
 								displayAdvanced,
-								addParentEmails
+								addParentEmails,
 							});
 						}}
 						id="none"
@@ -397,7 +393,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 							showIDField={this.state.displayAdvanced}
 							onChangeVisible={newVisibleItems => {
 								this.setState({
-									visibleItems: newVisibleItems
+									visibleItems: newVisibleItems,
 								});
 							}}
 							overflow={750}
@@ -408,8 +404,8 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 										filterValues: {
 											...prev.filterValues,
 											nameInput: values[0],
-											memberFilter: values[1]
-										}
+											memberFilter: values[1],
+										},
 									}));
 								} else {
 									this.setState({
@@ -417,8 +413,8 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 											nameInput: values[1],
 											rankGreaterThan: values[2],
 											rankLessThan: values[3],
-											memberFilter: values[4]
-										}
+											memberFilter: values[4],
+										},
 									});
 								}
 							}}
@@ -428,7 +424,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 											filterValues.nameInput,
 											filterValues.rankGreaterThan,
 											filterValues.rankLessThan,
-											filterValues.memberFilter
+											filterValues.memberFilter,
 									  ]
 									: [filterValues.nameInput, filterValues.memberFilter]
 							}
@@ -451,7 +447,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 							boxSizing: 'border-box',
 							padding: 5,
 							margin: 0,
-							fontStyle: 'italic'
+							fontStyle: 'italic',
 						}}
 						onClick={this.selectText}
 						ref={this.selectableDiv}
@@ -484,7 +480,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 					member.contact.EMAIL.SECONDARY,
 					member.contact.CADETPARENTEMAIL.SECONDARY,
 					member.contact.EMAIL.EMERGENCY,
-					member.contact.CADETPARENTEMAIL.EMERGENCY
+					member.contact.CADETPARENTEMAIL.EMERGENCY,
 			  ]
 			: [
 					member.contact.EMAIL.PRIMARY ||
@@ -492,7 +488,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 						member.contact.EMAIL.SECONDARY ||
 						member.contact.CADETPARENTEMAIL.SECONDARY ||
 						member.contact.EMAIL.EMERGENCY ||
-						member.contact.CADETPARENTEMAIL.EMERGENCY
+						member.contact.CADETPARENTEMAIL.EMERGENCY,
 			  ]
 		).filter((s): s is string => !!s);
 	}

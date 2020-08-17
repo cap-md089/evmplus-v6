@@ -41,7 +41,7 @@ export interface TextInputProps extends InputProps<string> {
  */
 export default class TextInput extends React.Component<TextInputProps, { changed: boolean }> {
 	public state: { changed: boolean } = {
-		changed: false
+		changed: false,
 	};
 
 	constructor(props: TextInputProps) {
@@ -52,7 +52,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 		if (props.onInitialize) {
 			props.onInitialize({
 				name: props.name,
-				value: props.value || ''
+				value: props.value || '',
 			});
 		}
 	}
@@ -71,7 +71,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 			if (typeof this.props.onUpdate !== 'undefined') {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: text
+					value: text,
 				});
 			}
 
@@ -90,7 +90,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '90%' : undefined,
-					...this.props.boxStyles
+					...this.props.boxStyles,
 				}}
 			>
 				<input
@@ -100,7 +100,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 					name={this.props.name}
 					style={{
 						width: this.props.fullWidth ? '100%' : undefined,
-						...this.props.inputStyles
+						...this.props.inputStyles,
 					}}
 					placeholder={this.props.placeholder}
 					disabled={this.props.disabled}

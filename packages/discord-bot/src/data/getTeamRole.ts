@@ -25,7 +25,7 @@ const renderTeamName = (team: RawTeamObject) =>
 	team.name.toLowerCase().includes('team') ? team.name : `${team.name} Team`;
 
 export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
-	team: RawTeamObject
+	team: RawTeamObject,
 ): Promise<[MaybeObj<Role>, MaybeObj<Role>, MaybeObj<Role>]> => {
 	const genericTeamMemberRole = M.fromValue(guild.roles.find(byName('Team Member')));
 
@@ -39,13 +39,13 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 		const position = Math.min(
 			M.orSome(Number.POSITIVE_INFINITY)(
 				M.map<Role, number>(r => r.position)(
-					M.fromValue(guild.roles.find(byName('Team Member')))
-				)
+					M.fromValue(guild.roles.find(byName('Team Member'))),
+				),
 			),
 			guild.roles
 				.filter(role => role.name.toLowerCase().includes('team lead'))
 				.map(role => role.position)
-				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY)
+				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY),
 		);
 
 		teamLeaderRole = M.some(
@@ -55,8 +55,8 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 				mentionable: false,
 				name: `Team Lead - ${team.name}`,
 				position,
-				permissions
-			})
+				permissions,
+			}),
 		);
 	}
 
@@ -66,17 +66,17 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 		const position = Math.min(
 			M.orSome(Number.POSITIVE_INFINITY)(
 				M.map<Role, number>(r => r.position)(
-					M.fromValue(guild.roles.find(byName('Team Member')))
-				)
+					M.fromValue(guild.roles.find(byName('Team Member'))),
+				),
 			),
 			guild.roles
 				.filter(
 					role =>
 						role.name.toLowerCase().includes('team') &&
-						!role.hexColor.toLowerCase().endsWith('71368a')
+						!role.hexColor.toLowerCase().endsWith('71368a'),
 				)
 				.map(role => role.position)
-				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY)
+				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY),
 		);
 
 		teamMemberRole = M.some(
@@ -86,8 +86,8 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 				mentionable: false,
 				name: renderTeamName(team),
 				position,
-				permissions
-			})
+				permissions,
+			}),
 		);
 	}
 

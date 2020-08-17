@@ -33,13 +33,13 @@ export default class RegisterDiscord extends Page<
 	RegisterDiscordState
 > {
 	public state: RegisterDiscordState = {
-		result: Maybe.none()
+		result: Maybe.none(),
 	};
 
 	public async componentDidMount() {
 		if (!this.props.member) {
 			this.props.routeProps.history.push(
-				`/signin/?returnurl=/registerdiscord/${this.props.routeProps.match.params.discordid}`
+				`/signin/?returnurl=/registerdiscord/${this.props.routeProps.match.params.discordid}`,
 			);
 			return;
 		}
@@ -49,9 +49,9 @@ export default class RegisterDiscord extends Page<
 				await fetchApi.member.account.registerDiscord(
 					{ discordID: this.props.routeProps.match.params.discordid },
 					{},
-					this.props.member.sessionID
-				)
-			)
+					this.props.member.sessionID,
+				),
+			),
 		});
 	}
 

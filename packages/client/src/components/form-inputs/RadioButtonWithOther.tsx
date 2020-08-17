@@ -36,8 +36,8 @@ export default class RadioButton<E extends number = number> extends React.Compon
 				value: this.props.value || {
 					labels: this.props.labels.slice(),
 					otherValueSelected: false,
-					selection: 0 as E
-				}
+					selection: 0 as E,
+				},
 			});
 		}
 
@@ -51,9 +51,9 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		const isChecked = (i: number) =>
 			pipe(
 				M.map<RadioReturnWithOther<E>, boolean>(ret =>
-					ret.otherValueSelected ? false : ret.selection === i
+					ret.otherValueSelected ? false : ret.selection === i,
 				),
-				M.orSome(false)
+				M.orSome(false),
 			)(value);
 
 		const name = (i: number) =>
@@ -63,14 +63,14 @@ export default class RadioButton<E extends number = number> extends React.Compon
 
 		const isOtherChecked = pipe(
 			M.map<RadioReturnWithOther<E>, boolean>(get('otherValueSelected')),
-			M.orSome(false)
+			M.orSome(false),
 		)(value);
 
 		const otherText = pipe(
 			M.flatMap<RadioReturnWithOther<E>, string>(ret =>
-				ret.otherValueSelected ? M.some(ret.otherValue) : M.none()
+				ret.otherValueSelected ? M.some(ret.otherValue) : M.none(),
 			),
-			M.orSome('')
+			M.orSome(''),
 		)(value);
 
 		return (
@@ -124,7 +124,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 			const value = {
 				labels: this.props.labels,
 				otherValueSelected: false as const,
-				selection: index
+				selection: index,
 			};
 
 			if (this.props.onChange) {
@@ -134,7 +134,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value
+					value,
 				});
 			}
 		};
@@ -146,7 +146,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		const value = {
 			labels: this.props.labels,
 			otherValueSelected: true as const,
-			otherValue: text
+			otherValue: text,
 		};
 
 		if (this.props.onChange) {
@@ -156,7 +156,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 	}
@@ -164,15 +164,15 @@ export default class RadioButton<E extends number = number> extends React.Compon
 	private selectOther() {
 		const otherText = pipe(
 			M.flatMap<RadioReturnWithOther<E>, string>(ret =>
-				ret.otherValueSelected ? M.some(ret.otherValue) : M.none()
+				ret.otherValueSelected ? M.some(ret.otherValue) : M.none(),
 			),
-			M.orSome('')
+			M.orSome(''),
 		)(M.fromValue(this.props.value));
 
 		const value = {
 			labels: this.props.labels,
 			otherValue: otherText,
-			otherValueSelected: true as const
+			otherValueSelected: true as const,
 		};
 
 		if (this.props.onChange) {
@@ -182,7 +182,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 	}

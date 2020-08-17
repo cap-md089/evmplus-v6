@@ -32,7 +32,7 @@ import {
 	RawFileObject,
 	Right,
 	ServerError,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, findAndBindC, generateResults } from 'server-common';
 
@@ -41,8 +41,8 @@ export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
 		.map(
 			findAndBindC<RawFileObject>({
 				forSlideshow: true,
-				accountID: req.account.id
-			})
+				accountID: req.account.id,
+			}),
 		)
 		.map(generateResults)
 		.map(asyncIterFilter(userHasFilePermission(FileUserAccessControlPermissions.READ)(null)))

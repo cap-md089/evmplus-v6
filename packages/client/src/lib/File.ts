@@ -31,7 +31,7 @@ interface UploadFinishEvent {
 }
 
 export const uploadFile = (user: User) => (parentid: string) =>
-	async function*(file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
+	async function* (file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
 		const tokenEither = await fetchApi.token({}, {}, user.sessionID);
 
 		if (Either.isLeft(tokenEither)) {
@@ -73,7 +73,7 @@ export const uploadFile = (user: User) => (parentid: string) =>
 				if (results.callback) {
 					results.callback();
 				}
-			}
+			},
 		};
 		let done = false;
 
@@ -81,7 +81,7 @@ export const uploadFile = (user: User) => (parentid: string) =>
 			if (ev.lengthComputable) {
 				results.push({
 					event: 'PROGRESS',
-					progress: ev.loaded / ev.total
+					progress: ev.loaded / ev.total,
 				});
 			}
 		});
@@ -89,7 +89,7 @@ export const uploadFile = (user: User) => (parentid: string) =>
 		xhr.upload.addEventListener('loadend', () => {
 			results.push({
 				event: 'PROGRESS',
-				progress: 1
+				progress: 1,
 			});
 
 			done = true;
@@ -98,13 +98,13 @@ export const uploadFile = (user: User) => (parentid: string) =>
 		});
 
 		const uploadPromise = new Promise<UploadFinishEvent>((res, rej) => {
-			xhr.addEventListener('readystatechange', function(evt: Event) {
+			xhr.addEventListener('readystatechange', function (evt: Event) {
 				if (this.readyState === 4) {
 					const resp = JSON.parse(this.responseText) as FullFileObject;
 
 					res({
 						event: 'FINISH',
-						file: resp
+						file: resp,
 					});
 				}
 			});

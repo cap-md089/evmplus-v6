@@ -56,11 +56,11 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 	const url = getStringLiteralFromType(properties.find(sym => sym.name === 'url'));
 	const method = getStringLiteralFromType(properties.find(sym => sym.name === 'method'));
 	const requiresMember = getStringLiteralFromType(
-		properties.find(sym => sym.name === 'requiresMember')
+		properties.find(sym => sym.name === 'requiresMember'),
 	);
 	const needsToken = getBooleanLiteralFromType(properties.find(sym => sym.name === 'needsToken'));
 	const usesValidator = getBooleanLiteralFromType(
-		properties.find(sym => sym.name === 'useValidator')
+		properties.find(sym => sym.name === 'useValidator'),
 	);
 
 	if (
@@ -85,9 +85,9 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 			ts.createLiteral(usesValidator),
 			usesValidator
 				? createValidator(node, validatorArgument, typeChecker)(bodyType)
-				: ts.createNew(validatorArgument, [], [ts.createObjectLiteral([])])
+				: ts.createNew(validatorArgument, [], [ts.createObjectLiteral([])]),
 		]),
 		undefined,
-		[endpointArgument]
+		[endpointArgument],
 	);
 };

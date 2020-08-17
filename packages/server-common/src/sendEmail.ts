@@ -24,7 +24,7 @@ import {
 	asyncRight,
 	errorGenerator,
 	RegistryValues,
-	ServerError
+	ServerError,
 } from 'common-lib';
 
 aws.config.update({ region: 'us-east-1' });
@@ -101,7 +101,7 @@ export const EMAIL_CHARSET = 'UTF-8';
 
 const formatHtmlEmail = (
 	reg: RegistryValues,
-	body: string
+	body: string,
 ) => `<div style="background-color:#f0f8ff;padding:20px">
 <header style="background:#28497e;padding:20px;margin:0">
 <a href="https://${reg.accountID}.capunit.com/">
@@ -129,45 +129,45 @@ export const getEmailMessageBody = (
 	registry: RegistryValues,
 	subject: string,
 	htmlBody: string,
-	textBody: string
+	textBody: string,
 ): aws.SES.Message => ({
 	Body: {
 		Html: {
 			Charset: EMAIL_CHARSET,
-			Data: formatHtmlEmail(registry, htmlBody)
+			Data: formatHtmlEmail(registry, htmlBody),
 		},
 		Text: {
 			Charset: EMAIL_CHARSET,
-			Data: formatTextEmail(registry, textBody)
-		}
+			Data: formatTextEmail(registry, textBody),
+		},
 	},
-	Subject: { Charset: EMAIL_CHARSET, Data: subject }
+	Subject: { Charset: EMAIL_CHARSET, Data: subject },
 });
 
 export const sendEmail = (bccCapStMarys: boolean) => (registry: RegistryValues) => (
-	subject: string
+	subject: string,
 ) => (email: string | string[]) => (htmlBody: string) => (
-	textBody: string
+	textBody: string,
 ): AsyncEither<ServerError, void> =>
 	asyncRight(
 		(async () => new aws.SES({ apiVersion: '2010-12-01' }))(),
-		errorGenerator('Could not send email')
+		errorGenerator('Could not send email'),
 	)
 		.map(handle =>
 			handle
 				.sendEmail({
 					Destination: {
 						BccAddresses: bccCapStMarys ? ['capstmarys@gmail.com'] : [],
-						ToAddresses: typeof email === 'string' ? [email] : email
+						ToAddresses: typeof email === 'string' ? [email] : email,
 					},
 					Message: getEmailMessageBody(registry, subject, htmlBody, textBody),
 					Source: `"CAPUnit.com Support" <support@capunit.com>`,
-					ReplyToAddresses: [`"CAPUnit.com Support" <support@capunit.com>`]
+					ReplyToAddresses: [`"CAPUnit.com Support" <support@capunit.com>`],
 				})
-				.promise()
+				.promise(),
 		)
 		.flatMap(result =>
 			!!result.$response.error
 				? asyncLeft(errorGenerator('Could not send email')(result.$response.error))
-				: asyncRight(void 0, errorGenerator('Could not send email'))
+				: asyncRight(void 0, errorGenerator('Could not send email')),
 		);

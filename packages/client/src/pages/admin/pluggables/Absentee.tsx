@@ -40,8 +40,8 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 	public state: AbsenteeState = {
 		absentee: {
 			absentUntil: Date.now(),
-			comments: ''
-		}
+			comments: '',
+		},
 	};
 
 	public constructor(props: AbsenteeProps) {
@@ -53,8 +53,8 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 		) {
 			this.state = {
 				absentee: {
-					...this.props.member.absenteeInformation
-				}
+					...this.props.member.absenteeInformation,
+				},
 			};
 		}
 
@@ -71,7 +71,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 						className="absentee-form"
 						submitInfo={{
 							text: 'Submit',
-							className: 'primaryButton submit'
+							className: 'primaryButton submit',
 						}}
 						values={this.state.absentee}
 						onChange={this.onFormChange}
@@ -94,7 +94,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 
 	public onFormChange(absentee: AbsenteeInformation) {
 		this.setState({
-			absentee
+			absentee,
 		});
 	}
 
@@ -109,12 +109,12 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			error: MemberCreateError.NONE,
 			member: {
 				...this.props.member,
-				absenteeInformation: this.state.absentee
+				absenteeInformation: this.state.absentee,
 			},
 			notificationCount: this.props.fullMemberDetails.notificationCount,
 			sessionID: this.props.member.sessionID,
 			taskCount: this.props.fullMemberDetails.taskCount,
-			linkableAccounts: this.props.fullMemberDetails.linkableAccounts
+			linkableAccounts: this.props.fullMemberDetails.linkableAccounts,
 		});
 	}
 }

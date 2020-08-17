@@ -31,7 +31,7 @@ import {
 	toReference,
 	getMemberPhone,
 	InternalPointOfContact,
-	areMembersTheSame
+	areMembersTheSame,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../Button';
@@ -50,7 +50,7 @@ export interface InternalPointOfContactEdit
 }
 
 export const upgradeDisplayInternalPointOfContactToEdit = (
-	poc: DisplayInternalPointOfContact
+	poc: DisplayInternalPointOfContact,
 ): InternalPointOfContactEdit => ({
 	email: poc.email,
 	memberReference: Maybe.some(poc.memberReference),
@@ -59,11 +59,11 @@ export const upgradeDisplayInternalPointOfContactToEdit = (
 	receiveRoster: poc.receiveRoster,
 	receiveSignUpUpdates: poc.receiveSignUpUpdates,
 	receiveUpdates: poc.receiveUpdates,
-	type: PointOfContactType.INTERNAL
+	type: PointOfContactType.INTERNAL,
 });
 
 export const simplifyDisplayInternalPointOfContactFromEdit = (
-	poc: InternalPointOfContactEdit
+	poc: InternalPointOfContactEdit,
 ): MaybeObj<InternalPointOfContact> =>
 	Maybe.map<MemberReference, InternalPointOfContact>(memberReference => ({
 		email: poc.email,
@@ -73,7 +73,7 @@ export const simplifyDisplayInternalPointOfContactFromEdit = (
 		receiveRoster: poc.receiveRoster,
 		receiveSignUpUpdates: poc.receiveSignUpUpdates,
 		receiveUpdates: poc.receiveUpdates,
-		type: PointOfContactType.INTERNAL
+		type: PointOfContactType.INTERNAL,
 	}))(poc.memberReference);
 
 export interface POCInputProps
@@ -92,7 +92,7 @@ export default class POCInput extends React.Component<
 	public state = {
 		memberSelectOpen: false,
 		filterValues: [],
-		selectedValue: null
+		selectedValue: null,
 	};
 
 	public constructor(props: POCInputProps) {
@@ -109,8 +109,8 @@ export default class POCInput extends React.Component<
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
-					receiveUpdates: false
-				}
+					receiveUpdates: false,
+				},
 			});
 		}
 
@@ -144,12 +144,12 @@ export default class POCInput extends React.Component<
 							Maybe.map(getFullMemberName)(
 								Maybe.flatMap<MemberReference, Member>(member =>
 									Maybe.fromArray(
-										this.props.memberList.filter(areMembersTheSame(member))
-									)
-								)(this.props.value.memberReference)
-							)
+										this.props.memberList.filter(areMembersTheSame(member)),
+									),
+								)(this.props.value.memberReference),
+							),
 					  )
-					: this.props.value.name
+					: this.props.value.name,
 		};
 
 		return (
@@ -203,7 +203,7 @@ export default class POCInput extends React.Component<
 		error: any,
 		changed: any,
 		hasError: any,
-		name: keyof (InternalPointOfContactEdit | ExternalPointOfContact)
+		name: keyof (InternalPointOfContactEdit | ExternalPointOfContact),
 	) {
 		if (name === 'type') {
 			if (poc.type === PointOfContactType.INTERNAL) {
@@ -215,7 +215,7 @@ export default class POCInput extends React.Component<
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
-					receiveUpdates: false
+					receiveUpdates: false,
 				};
 			} else {
 				poc = {
@@ -226,7 +226,7 @@ export default class POCInput extends React.Component<
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
-					receiveUpdates: false
+					receiveUpdates: false,
 				};
 			}
 		}
@@ -234,14 +234,14 @@ export default class POCInput extends React.Component<
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: `pocInput-${this.props.index}`,
-				value: poc
+				value: poc,
 			});
 		}
 	}
 
 	private onMemberSelectClick() {
 		this.setState({
-			memberSelectOpen: true
+			memberSelectOpen: true,
 		});
 	}
 
@@ -255,20 +255,20 @@ export default class POCInput extends React.Component<
 				...(this.props.value as InternalPointOfContactEdit)!,
 				email: Maybe.orSome('')(getMemberEmail(member.contact)),
 				memberReference: Maybe.some(toReference(member)),
-				phone: Maybe.orSome('')(getMemberPhone(member.contact))
+				phone: Maybe.orSome('')(getMemberPhone(member.contact)),
 			};
 
 			this.onUpdate(value, null, null, null, 'email');
 		}
 
 		this.setState({
-			memberSelectOpen: false
+			memberSelectOpen: false,
 		});
 	}
 
 	private setSelectedValue(selectedValue: Member | null) {
 		this.setState({
-			selectedValue
+			selectedValue,
 		});
 	}
 
@@ -313,15 +313,15 @@ export default class POCInput extends React.Component<
 
 								try {
 									return !!getFullMemberName(memberToCheck).match(
-										new RegExp(input, 'gi')
+										new RegExp(input, 'gi'),
 									);
 								} catch (e) {
 									return false;
 								}
 							},
 							displayText: 'Member name',
-							filterInput: TextInput
-						}
+							filterInput: TextInput,
+						},
 					]}
 					filterValues={this.state.filterValues}
 					onFilterValuesChange={this.updateFilterValues}

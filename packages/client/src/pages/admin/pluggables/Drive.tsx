@@ -44,25 +44,25 @@ type DriveWidgetState = DriveWidgetErrorState | DriveWidgetLoadedState | DriveWi
 
 export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 	public state: DriveWidgetState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public async componentDidMount() {
 		const root = await fetchApi.files.children.getBasic(
 			{ parentid: 'root' },
 			{},
-			this.props.member?.sessionID
+			this.props.member?.sessionID,
 		);
 
 		if (Either.isLeft(root)) {
 			this.setState({
 				state: 'ERROR',
-				message: root.value.message
+				message: root.value.message,
 			});
 		} else {
 			this.setState({
 				state: 'LOADED',
-				list: root.value.filter(Either.isRight).map(get('value'))
+				list: root.value.filter(Either.isRight).map(get('value')),
 			});
 		}
 	}

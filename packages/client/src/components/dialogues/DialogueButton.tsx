@@ -98,7 +98,7 @@ export default class DialogueButton extends React.Component<
 	IsOpen
 > {
 	public state = {
-		open: false
+		open: false,
 	};
 
 	public constructor(props: DialogueButtonProps & DialogueButtonPropsBase) {
@@ -120,7 +120,7 @@ export default class DialogueButton extends React.Component<
 					title: this.props.title,
 					displayButtons: DialogueButtons.OK,
 					onClose: this.onClose,
-					labels: this.props.labels as [string]
+					labels: this.props.labels as [string],
 				};
 				break;
 
@@ -131,7 +131,7 @@ export default class DialogueButton extends React.Component<
 					onCancel: props.onCancel || noop,
 					onOk: props.onOk || noop,
 					onClose: this.onClose,
-					labels: this.props.labels as [string, string]
+					labels: this.props.labels as [string, string],
 				};
 				break;
 
@@ -143,7 +143,7 @@ export default class DialogueButton extends React.Component<
 					onCancel: props.onCancel || noop,
 					onNo: props.onNo || noop,
 					onYes: props.onYes || noop,
-					labels: this.props.labels as [string, string, string]
+					labels: this.props.labels as [string, string, string],
 				};
 				break;
 
@@ -170,13 +170,13 @@ export default class DialogueButton extends React.Component<
 
 	private open() {
 		this.setState({
-			open: true
+			open: true,
 		});
 	}
 
 	private close() {
 		this.setState({
-			open: false
+			open: false,
 		});
 	}
 

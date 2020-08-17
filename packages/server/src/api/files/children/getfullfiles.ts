@@ -26,7 +26,7 @@ import {
 	errorGenerator,
 	FileUserAccessControlPermissions,
 	Maybe,
-	userHasFilePermission
+	userHasFilePermission,
 } from 'common-lib';
 import { expandFileObject, expandRawFileObject, getChildren, getFileObject } from 'server-common';
 
@@ -37,7 +37,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member cannot read the file requested'
+			message: 'Member cannot read the file requested',
 		})
 		.flatMap(getChildren(req.mysqlx)(req.account))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
@@ -45,9 +45,9 @@ export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
 		.map(
 			asyncIterMap(file =>
 				asyncEither(file, errorGenerator('Could not get full file information')).flatMap(
-					expandFileObject(req.mysqlx)(req.account)
-				)
-			)
+					expandFileObject(req.mysqlx)(req.account),
+				),
+			),
 		);
 
 export default func;

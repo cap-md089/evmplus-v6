@@ -88,7 +88,7 @@ export default abstract class Page<
 		state:
 			| ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null)
 			| (Pick<S, K> | S | null),
-		callback?: () => void
+		callback?: () => void,
 	) {
 		this.updatingState = true;
 		super.setState(state, callback);
@@ -98,7 +98,7 @@ export default abstract class Page<
 
 	protected updateTitle(...text: string[]) {
 		document.title = `${[this.props.registry.Website.Name, ...text].join(
-			` ${this.props.registry.Website.Separator} `
+			` ${this.props.registry.Website.Separator} `,
 		)}`;
 	}
 

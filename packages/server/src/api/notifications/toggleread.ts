@@ -25,21 +25,21 @@ import {
 	markAsRead,
 	markAsUnread,
 	PAM,
-	saveNotification
+	saveNotification,
 } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.notifications.ToggleNotificationRead> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(req =>
 	getNotification(req.mysqlx)(req.account)(req.params.id)
 		.filter(canSeeNotification(req.member), {
 			type: 'OTHER',
 			code: 403,
-			message: 'Cannot view notification'
+			message: 'Cannot view notification',
 		})
 		.map(notif => (notif.read ? markAsUnread(notif) : markAsRead(notif)))
 		.flatMap(saveNotification(req.mysqlx))
-		.map(destroy)
+		.map(destroy),
 );
 
 export default func;

@@ -30,7 +30,7 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (fileData, sc
 
 	try {
 		const mbrAchievementsCollection = schema.getCollection<NHQ.MbrAchievements>(
-			'NHQ_MbrAchievements'
+			'NHQ_MbrAchievements',
 		);
 
 		const clearedORGIDs: { [key: string]: boolean } = {};
@@ -69,7 +69,7 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (fileData, sc
 				RecID: parseInt(achv.RecID.toString(), 10),
 				Source: achv.Source,
 				Status: achv.Status,
-				UsrID: achv.UsrID
+				UsrID: achv.UsrID,
 			};
 
 			await mbrAchievementsCollection.add(values).execute();

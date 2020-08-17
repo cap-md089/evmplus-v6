@@ -25,7 +25,7 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	Member,
-	RawEventObject
+	RawEventObject,
 } from '../../typings/types';
 
 const EventStatus = [
@@ -290,7 +290,14 @@ export const AttendanceXL = (
 			);
 		}
 		widths = widths.map((width, index) =>
-			Math.max(width, (row[index] ?? '').toString().split('\n').map(get('length')).reduce((prev, curr) => Math.max(prev, curr), 0)),
+			Math.max(
+				width,
+				(row[index] ?? '')
+					.toString()
+					.split('\n')
+					.map(get('length'))
+					.reduce((prev, curr) => Math.max(prev, curr), 0),
+			),
 		);
 		retVal.push(row);
 	}

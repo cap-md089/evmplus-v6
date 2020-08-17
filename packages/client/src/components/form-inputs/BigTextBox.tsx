@@ -30,7 +30,7 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 		if (props.onInitialize) {
 			props.onInitialize({
 				name: props.name,
-				value: props.value || ''
+				value: props.value || '',
 			});
 		}
 	}
@@ -42,7 +42,7 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 				style={{
 					clear: this.props.fullWidth ? 'both' : undefined,
 					width: this.props.fullWidth ? '90%' : undefined,
-					...this.props.boxStyles
+					...this.props.boxStyles,
 				}}
 			>
 				<textarea
@@ -51,7 +51,7 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 					style={{
 						resize: 'none',
 						width: this.props.fullWidth ? '100%' : undefined,
-						...this.props.inputStyles
+						...this.props.inputStyles,
 					}}
 					cols={50}
 					rows={5}
@@ -76,7 +76,7 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 			if (typeof this.props.onUpdate !== 'undefined') {
 				this.props.onUpdate({
 					name: this.props.name,
-					value: text
+					value: text,
 				});
 			}
 

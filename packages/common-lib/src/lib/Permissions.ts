@@ -24,7 +24,7 @@ import {
 	CAPRegionMemberPermissions,
 	CAPSquadronMemberPermissions,
 	CAPWingMemberPermissions,
-	Permissions
+	Permissions,
 } from '../typings/types';
 
 const CAPEventDefault: Readonly<CAPEventMemberPermissions> = {
@@ -51,7 +51,7 @@ const CAPEventDefault: Readonly<CAPEventMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPEventStaff: Readonly<CAPEventMemberPermissions> = {
@@ -78,7 +78,7 @@ const CAPEventStaff: Readonly<CAPEventMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPEventManager: Readonly<CAPEventMemberPermissions> = {
@@ -105,7 +105,7 @@ const CAPEventManager: Readonly<CAPEventMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPEventAdmin: Readonly<CAPEventMemberPermissions> = {
@@ -132,7 +132,7 @@ const CAPEventAdmin: Readonly<CAPEventMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.FULL,
 	CreateNotifications: Permissions.Notify.GLOBAL,
 	RegistryEdit: Permissions.RegistryEdit.YES,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES,
 };
 
 const CAPSquadronDefault: Readonly<CAPSquadronMemberPermissions> = {
@@ -162,7 +162,7 @@ const CAPSquadronDefault: Readonly<CAPSquadronMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPSquadronStaff: Readonly<CAPSquadronMemberPermissions> = {
@@ -192,7 +192,7 @@ const CAPSquadronStaff: Readonly<CAPSquadronMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPSquadronManager: Readonly<CAPSquadronMemberPermissions> = {
@@ -222,7 +222,7 @@ const CAPSquadronManager: Readonly<CAPSquadronMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPSquadronAdmin: Readonly<CAPSquadronMemberPermissions> = {
@@ -252,7 +252,7 @@ const CAPSquadronAdmin: Readonly<CAPSquadronMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.FULL,
 	CreateNotifications: Permissions.Notify.GLOBAL,
 	RegistryEdit: Permissions.RegistryEdit.YES,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES,
 };
 
 const CAPGroupDefault: Readonly<CAPGroupMemberPermissions> = {
@@ -276,7 +276,7 @@ const CAPGroupDefault: Readonly<CAPGroupMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPGroupStaff: Readonly<CAPGroupMemberPermissions> = {
@@ -300,7 +300,7 @@ const CAPGroupStaff: Readonly<CAPGroupMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPGroupManager: Readonly<CAPGroupMemberPermissions> = {
@@ -324,7 +324,7 @@ const CAPGroupManager: Readonly<CAPGroupMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.NONE,
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
 };
 
 const CAPGroupAdmin: Readonly<CAPGroupMemberPermissions> = {
@@ -348,7 +348,7 @@ const CAPGroupAdmin: Readonly<CAPGroupMemberPermissions> = {
 	PermissionManagement: Permissions.PermissionManagement.FULL,
 	CreateNotifications: Permissions.Notify.GLOBAL,
 	RegistryEdit: Permissions.RegistryEdit.YES,
-	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES
+	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES,
 };
 
 const CAPWingDefault: Readonly<CAPWingMemberPermissions> = {
@@ -373,7 +373,7 @@ const CAPWingDefault: Readonly<CAPWingMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPWingStaff: Readonly<CAPWingMemberPermissions> = {
@@ -398,7 +398,7 @@ const CAPWingStaff: Readonly<CAPWingMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPWingManager: Readonly<CAPWingMemberPermissions> = {
@@ -423,7 +423,7 @@ const CAPWingManager: Readonly<CAPWingMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPWingAdmin: Readonly<CAPWingMemberPermissions> = {
@@ -448,7 +448,7 @@ const CAPWingAdmin: Readonly<CAPWingMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.GLOBAL,
 	RegistryEdit: Permissions.RegistryEdit.YES,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES,
-	CreateEventAccount: Permissions.CreateEventAccount.YES
+	CreateEventAccount: Permissions.CreateEventAccount.YES,
 };
 
 const CAPRegionDefault: Readonly<CAPRegionMemberPermissions> = {
@@ -473,7 +473,7 @@ const CAPRegionDefault: Readonly<CAPRegionMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPRegionStaff: Readonly<CAPRegionMemberPermissions> = {
@@ -498,7 +498,7 @@ const CAPRegionStaff: Readonly<CAPRegionMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPRegionManager: Readonly<CAPRegionMemberPermissions> = {
@@ -523,7 +523,7 @@ const CAPRegionManager: Readonly<CAPRegionMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.NO,
 	RegistryEdit: Permissions.RegistryEdit.NO,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.NO,
-	CreateEventAccount: Permissions.CreateEventAccount.NO
+	CreateEventAccount: Permissions.CreateEventAccount.NO,
 };
 
 const CAPRegionAdmin: Readonly<CAPRegionMemberPermissions> = {
@@ -548,7 +548,7 @@ const CAPRegionAdmin: Readonly<CAPRegionMemberPermissions> = {
 	CreateNotifications: Permissions.Notify.GLOBAL,
 	RegistryEdit: Permissions.RegistryEdit.YES,
 	ViewAccountNotifications: Permissions.ViewAccountNotifications.YES,
-	CreateEventAccount: Permissions.CreateEventAccount.YES
+	CreateEventAccount: Permissions.CreateEventAccount.YES,
 };
 
 const DefaultPermissions = {
@@ -556,7 +556,7 @@ const DefaultPermissions = {
 	[AccountType.CAPSQUADRON]: CAPSquadronDefault,
 	[AccountType.CAPGROUP]: CAPGroupDefault,
 	[AccountType.CAPWING]: CAPWingDefault,
-	[AccountType.CAPREGION]: CAPRegionDefault
+	[AccountType.CAPREGION]: CAPRegionDefault,
 };
 
 const StaffPermissions = {
@@ -564,7 +564,7 @@ const StaffPermissions = {
 	[AccountType.CAPSQUADRON]: CAPSquadronStaff,
 	[AccountType.CAPGROUP]: CAPGroupStaff,
 	[AccountType.CAPWING]: CAPWingStaff,
-	[AccountType.CAPREGION]: CAPRegionStaff
+	[AccountType.CAPREGION]: CAPRegionStaff,
 };
 
 const ManagerPermissions = {
@@ -572,7 +572,7 @@ const ManagerPermissions = {
 	[AccountType.CAPSQUADRON]: CAPSquadronManager,
 	[AccountType.CAPGROUP]: CAPGroupManager,
 	[AccountType.CAPWING]: CAPWingManager,
-	[AccountType.CAPREGION]: CAPRegionManager
+	[AccountType.CAPREGION]: CAPRegionManager,
 };
 
 const AdminPermissions = {
@@ -580,7 +580,7 @@ const AdminPermissions = {
 	[AccountType.CAPSQUADRON]: CAPSquadronAdmin,
 	[AccountType.CAPGROUP]: CAPGroupAdmin,
 	[AccountType.CAPWING]: CAPWingAdmin,
-	[AccountType.CAPREGION]: CAPRegionAdmin
+	[AccountType.CAPREGION]: CAPRegionAdmin,
 };
 
 export const getDefaultMemberPermissions = (accountType: AccountType) =>

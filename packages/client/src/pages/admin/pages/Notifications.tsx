@@ -30,7 +30,7 @@ import {
 	NotificationObject,
 	NotificationTarget,
 	Either,
-	get
+	get,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -45,10 +45,10 @@ interface NotificationRenderer<T extends NotificationData = NotificationData> {
 	render: (
 		notification: NotificationObject<NotificationCause, NotificationTarget, T>,
 		member: Member,
-		account: AccountObject
+		account: AccountObject,
 	) => React.ReactChild;
 	shouldRender: (
-		notification: NotificationObject<NotificationCause, NotificationTarget, any>
+		notification: NotificationObject<NotificationCause, NotificationTarget, any>,
 	) => notification is NotificationObject<NotificationCause, NotificationTarget, T>;
 }
 
@@ -57,11 +57,11 @@ type NO<T extends NotificationData> = NotificationObject<NotificationCause, Noti
 const renderers: [
 	NotificationRenderer<NotificationDataMessage>,
 	NotificationRenderer<NotificationDataEvent>,
-	NotificationRenderer<NotificationDataPermissions>
+	NotificationRenderer<NotificationDataPermissions>,
 ] = [
 	{
 		shouldRender: (notif): notif is NO<NotificationDataMessage> => notif.extraData === null,
-		render: notif => <div>{notif.extraData.message}</div>
+		render: notif => <div>{notif.extraData.message}</div>,
 	},
 	{
 		shouldRender: (notif): notif is NO<NotificationDataEvent> =>
@@ -84,7 +84,7 @@ const renderers: [
 						on{' '}
 						{DateTime.fromMillis(notif.created).toLocaleString({
 							...DateTime.DATETIME_SHORT,
-							hour12: false
+							hour12: false,
 						})}
 					</div>
 				) : (
@@ -103,12 +103,12 @@ const renderers: [
 						on{' '}
 						{DateTime.fromMillis(notif.created).toLocaleString({
 							...DateTime.DATETIME_SHORT,
-							hour12: false
+							hour12: false,
 						})}
 					</div>
 				)}
 			</div>
-		)
+		),
 	},
 	{
 		shouldRender: (notif): notif is NO<NotificationDataPermissions> =>
@@ -126,12 +126,12 @@ const renderers: [
 					on{' '}
 					{DateTime.fromMillis(notif.created).toLocaleString({
 						...DateTime.DATETIME_SHORT,
-						hour12: false
+						hour12: false,
 					})}
 				</div>
 			);
-		}
-	}
+		},
+	},
 ];
 
 interface NotificationsLoadingState {
@@ -175,7 +175,7 @@ const simpleText = (notif: NotificationObject) =>
 export default class Notifications extends Page<PageProps, NotificationsState> {
 	public state: NotificationsState = {
 		state: 'LOADING',
-		currentViewed: null
+		currentViewed: null,
 	};
 
 	public constructor(props: PageProps) {
@@ -188,16 +188,16 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/notifications',
-				text: 'Notifications'
-			}
+				text: 'Notifications',
+			},
 		]);
 
 		if (!this.props.member) {
@@ -207,7 +207,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		const notificationsEither = await fetchApi.notifications.list(
 			{},
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(notificationsEither)) {
@@ -215,7 +215,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				...prev,
 
 				state: 'ERROR',
-				message: notificationsEither.value.message
+				message: notificationsEither.value.message,
 			}));
 		}
 
@@ -226,7 +226,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		this.setState({
 			currentViewed: null,
 			state: 'LOADED',
-			notifications
+			notifications,
 		});
 	}
 
@@ -241,8 +241,8 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				.map(notif => ({
 					type: 'Reference' as const,
 					text: simpleText(notif),
-					target: `notification-${notif.id}`
-				}))
+					target: `notification-${notif.id}`,
+				})),
 		);
 	}
 
@@ -290,7 +290,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 									<td>
 										{DateTime.fromMillis(notif.created).toLocaleString({
 											...DateTime.DATETIME_SHORT,
-											hour12: false
+											hour12: false,
 										})}
 									</td>
 								</tr>
@@ -329,7 +329,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			}
 
 			this.setState(prev => ({
-				currentViewed: prev.currentViewed === index ? null : index
+				currentViewed: prev.currentViewed === index ? null : index,
 			}));
 
 			const notification = this.state.notifications[index];
@@ -340,7 +340,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 
 			if (notification.read) {
 				this.setState(prev => ({
-					currentViewed: prev.currentViewed === index ? null : index
+					currentViewed: prev.currentViewed === index ? null : index,
 				}));
 
 				return;
@@ -349,11 +349,11 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			await fetchApi.notifications.toggleRead(
 				{ id: index.toString() },
 				{},
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			this.setState(prev => ({
-				currentViewed: prev.currentViewed === index ? null : index
+				currentViewed: prev.currentViewed === index ? null : index,
 			}));
 		};
 	}
@@ -372,11 +372,11 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		await fetchApi.notifications.toggleRead(
 			{ id: index.toString() },
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.setState({
-			currentViewed: null
+			currentViewed: null,
 		});
 	}
 
@@ -386,7 +386,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				return i.render(
 					notif as NotificationObject<NotificationCause, NotificationTarget, any>,
 					this.props.member!,
-					this.props.account
+					this.props.account,
 				);
 			}
 		}

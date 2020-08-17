@@ -41,21 +41,21 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		const isChecked = (i: number) =>
 			pipe(
 				M.flatMap<OtherMultCheckboxReturn, boolean>(ret =>
-					ret.otherSelected ? M.some(false) : M.fromValue(ret.values[i])
+					ret.otherSelected ? M.some(false) : M.fromValue(ret.values[i]),
 				),
-				M.orSome(false)
+				M.orSome(false),
 			)(value);
 
 		const isOtherChecked = pipe(
 			M.map<OtherMultCheckboxReturn, boolean>(get('otherSelected')),
-			M.orSome(false)
+			M.orSome(false),
 		)(value);
 
 		const otherText = pipe(
 			M.flatMap<OtherMultCheckboxReturn, string>(ret =>
-				ret.otherSelected ? M.some(ret.otherValue) : M.none()
+				ret.otherSelected ? M.some(ret.otherValue) : M.none(),
 			),
-			M.orSome('')
+			M.orSome(''),
 		)(value);
 
 		return (
@@ -109,14 +109,14 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 				values: [
 					...inputValue.values.slice(0, index),
 					isChecked,
-					...inputValue.values.slice(index + 1)
-				]
+					...inputValue.values.slice(index + 1),
+				],
 			};
 
 			if (this.props.onUpdate) {
 				this.props.onUpdate({
 					name: this.props.name,
-					value
+					value,
 				});
 			}
 
@@ -131,13 +131,13 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		const value = {
 			...inputValue,
 			otherSelected: true,
-			otherValue: inputValue.otherSelected ? inputValue.otherValue : ''
+			otherValue: inputValue.otherSelected ? inputValue.otherValue : '',
 		};
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 
@@ -154,17 +154,17 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 			? {
 					...inputValue,
 					otherSelected: true,
-					otherValue: inputValue.otherSelected ? inputValue.otherValue : ''
+					otherValue: inputValue.otherSelected ? inputValue.otherValue : '',
 			  }
 			: {
 					...inputValue,
-					otherSelected: false
+					otherSelected: false,
 			  };
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 
@@ -178,13 +178,13 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		const value = {
 			...inputValue,
 			otherSelected: true,
-			otherValue: inputValue.otherSelected ? e.currentTarget.value : ''
+			otherValue: inputValue.otherSelected ? e.currentTarget.value : '',
 		};
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
-				value
+				value,
 			});
 		}
 
