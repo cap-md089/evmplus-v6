@@ -28,7 +28,7 @@ import {
 	APIEndpointParams,
 	APIEndpointReturnValue,
 	APIEndpointToken,
-	HTTPError
+	HTTPError,
 } from '../typings/api';
 
 type SessionID<
@@ -52,36 +52,36 @@ export type EitherReturn<
 const errorGenerator = (message: string) => (error: Error): HTTPError & { error?: Error } => ({
 	code: 500,
 	message,
-	error
+	error,
 });
 
 const getToken = (fetchFunction: FetchFunction) => (
-	authorization: string
+	authorization: string,
 ): AsyncEither<HTTPError, string> =>
 	asyncRight(
 		fetchFunction(`/api/token`, {
 			headers: {
-				authorization
-			}
+				authorization,
+			},
 		}),
-		errorGenerator('Could not get token')
+		errorGenerator('Could not get token'),
 	).flatMap(resp => resp.json() as Promise<APIEndpointReturnValue<api.FormToken>>);
 
 export default (fetchFunction: FetchFunction) => <
 	T extends APIEndpoint<string, any, any, any, any, any, any>
 >(
-	values: Pick<T, 'url' | 'method' | 'requiresMember' | 'needsToken'> & { paramKeys: string[] }
+	values: Pick<T, 'url' | 'method' | 'requiresMember' | 'needsToken'> & { paramKeys: string[] },
 ) => {
 	let mutatedUrl = values.url;
 	for (const key of values.paramKeys) {
-		const match = mutatedUrl.match(new RegExp(`/:${key}(/|$)`, 'g'));
+		const match = mutatedUrl.match(new RegExp(`/:${key}\\??(/|$)`, 'g'));
 		if (!match || match.length !== 1) {
 			throw new Error(
-				`Invalid key in URL ${values.method.toUpperCase()} ${values.url}: ${key}`
+				`Invalid key in URL ${values.method.toUpperCase()} ${values.url}: ${key}`,
 			);
 		}
 
-		mutatedUrl = mutatedUrl.replace(new RegExp(`:${key}`), '');
+		mutatedUrl = mutatedUrl.replace(new RegExp(`:${key}\\??`), '');
 	}
 
 	if (mutatedUrl.includes(':')) {
@@ -100,8 +100,8 @@ export default (fetchFunction: FetchFunction) => <
 
 		throw new Error(
 			`Keys remaining in URL ${values.method.toUpperCase()} ${values.url}: '${unusedKeys.join(
-				"', '"
-			)}'`
+				"', '",
+			)}'`,
 		);
 	}
 
@@ -109,9 +109,11 @@ export default (fetchFunction: FetchFunction) => <
 		let newURL = url;
 		for (const param in params) {
 			if (params.hasOwnProperty(param)) {
-				newURL = newURL.replace(`:${param}`, params[param]);
+				newURL = newURL.replace(new RegExp(`:${param}\\??`), params[param]);
 			}
 		}
+
+		newURL = newURL.replace(/:\w*\?/g, '');
 
 		return newURL;
 	};
@@ -121,13 +123,13 @@ export default (fetchFunction: FetchFunction) => <
 	return (
 		params: APIEndpointParams<T>,
 		body: APIEndpointBody<T>,
-		sessionID: SessionID<T>
+		sessionID: SessionID<T>,
 	): AsyncEither<HTTPError, APIEndpointReturnValue<T>> =>
 		(values.needsToken
 			? (getToken(fetchFunction)(sessionID!) as AsyncEither<HTTPError, undefined | string>)
 			: asyncRight<HTTPError, undefined | string>(
 					undefined,
-					errorGenerator('Could not get token')
+					errorGenerator('Could not get token'),
 			  )
 		)
 			.map<RequestInit>(token =>
@@ -136,40 +138,40 @@ export default (fetchFunction: FetchFunction) => <
 					: token
 					? {
 							headers: {
-								'content-type': 'application/json'
+								'content-type': 'application/json',
 							},
 							body: JSON.stringify({
 								...(body || {}),
-								token
+								token,
 							}),
-							method: values.method
+							method: values.method,
 					  }
 					: !!body
 					? {
 							headers: {
-								'content-type': 'application/json'
+								'content-type': 'application/json',
 							},
 							body: JSON.stringify(body),
-							method: values.method
+							method: values.method,
 					  }
-					: {}
+					: {},
 			)
 			.map<RequestInit>(request => ({
 				...request,
 				headers: {
 					...(request.headers || {}),
-					authorization: sessionID ?? ''
-				}
+					authorization: sessionID ?? '',
+				},
 			}))
 			.map(
 				request => fetchFunction(customURLReplacer(params), request),
-				errorGenerator('Could not complete request')
+				errorGenerator('Could not complete request'),
 			)
 			.flatMap(response =>
 				response.status === 204
 					? Either.right(void 0 as APIEndpointReturnValue<T>)
 					: (response.json.apply(response) as Promise<
 							APIEither<APIEndpointReturnValue<T>>
-					  >)
+					  >),
 			);
 };

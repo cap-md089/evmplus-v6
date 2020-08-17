@@ -87,7 +87,7 @@ export default function setup(
 			.map(collectGeneratorAsync)
 			.fullJoin();
 
-		for await (const member of getMembers(schema)(account.value)) {
+		for await (const member of getMembers(schema)(account.value)()) {
 			if (Either.isLeft(member)) {
 				continue;
 			}

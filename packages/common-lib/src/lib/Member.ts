@@ -30,7 +30,7 @@ import {
 	MemberReference,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
-	User
+	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
 import { Maybe } from './Maybe';
@@ -39,23 +39,23 @@ export const stringifyMemberReference = (ref: MemberReference) => `${ref.type}-$
 
 const toCAPNHQReference = (id: number): CAPNHQMemberReference => ({
 	type: 'CAPNHQMember',
-	id
+	id,
 });
 
-export const toReference = (member: MemberReference): MemberReference =>
+export const toReference = <T extends MemberReference>(member: T): T =>
 	({
 		type: member.type,
-		id: member.id
-	} as MemberReference);
+		id: member.id,
+	} as T);
 
 export const parseStringMemberReference: (
-	ref: string
+	ref: string,
 ) => EitherObj<ServerError, MemberReference> = pipe(
 	Either.right,
 	Either.map<ServerError, string, string[]>(str => str.split('-')),
 	Either.map<ServerError, string[], [string, string]>(([type, ...idparts]) => [
 		type,
-		idparts.join('-')
+		idparts.join('-'),
 	]),
 	Either.flatMap<ServerError, string[], CAPMemberReference>(([type, id]) =>
 		type === 'CAPNHQMember'
@@ -65,21 +65,21 @@ export const parseStringMemberReference: (
 					Either.filter<ServerError, number>(complement(isNaN))({
 						type: 'OTHER',
 						code: 400,
-						message: 'Invalid member ID'
+						message: 'Invalid member ID',
 					}),
-					Either.map(toCAPNHQReference)
+					Either.map(toCAPNHQReference),
 			  )(id)
 			: type === 'CAPProspectiveMember'
 			? Either.right<ServerError, CAPProspectiveMemberReference>({
 					type: 'CAPProspectiveMember',
-					id
+					id,
 			  })
 			: Either.left({
 					type: 'OTHER',
 					code: 400,
-					message: 'Invalid member type'
-			  })
-	)
+					message: 'Invalid member type',
+			  }),
+	),
 );
 
 export const getMemberPhone = (contact: CAPMemberContact) =>
@@ -95,7 +95,7 @@ export const getMemberPhone = (contact: CAPMemberContact) =>
 			contact.CELLPHONE.EMERGENCY ||
 			contact.WORKPHONE.EMERGENCY ||
 			contact.HOMEPHONE.EMERGENCY ||
-			contact.CADETPARENTPHONE.EMERGENCY
+			contact.CADETPARENTPHONE.EMERGENCY,
 	);
 
 export const getMemberEmail = (contact: CAPMemberContact) =>
@@ -105,7 +105,7 @@ export const getMemberEmail = (contact: CAPMemberContact) =>
 			contact.EMAIL.SECONDARY ||
 			contact.CADETPARENTEMAIL.SECONDARY ||
 			contact.EMAIL.EMERGENCY ||
-			contact.CADETPARENTEMAIL.EMERGENCY
+			contact.CADETPARENTEMAIL.EMERGENCY,
 	);
 
 export const areMembersTheSame = (ref1: MemberReference) => (ref2: MemberReference) =>
@@ -138,14 +138,14 @@ export const getFullMemberName = (member: {
 // : Maybe.none();
 
 export const hasSpecificPermission = <T extends MemberPermission>(permission: T) => (
-	threshold: number
+	threshold: number,
 ) => (user: User) =>
 	// @ts-ignore
 	(user.permissions[permission] ?? 0) === threshold || isRioux(user);
 
-export const hasPermission = <T extends MemberPermission>(permission: T) => (
-	threshold: number = 0
-) => (user: User) =>
+export const hasPermission = <T extends MemberPermission>(permission: T) => (threshold: number) => (
+	user: User,
+) =>
 	// @ts-ignore
 	(user.permissions[permission] ?? 0) >= threshold || isRioux(user);
 
@@ -153,11 +153,11 @@ export const asReference = (member: Member): MemberReference =>
 	member.type === 'CAPNHQMember'
 		? {
 				type: 'CAPNHQMember',
-				id: member.id
+				id: member.id,
 		  }
 		: {
 				type: 'CAPProspectiveMember',
-				id: member.id
+				id: member.id,
 		  };
 
 export const hasDutyPosition = (dutyPosition: string) => (member: CAPMember) =>
@@ -227,5 +227,5 @@ export const isCAPMember = (member: Member): member is CAPMember =>
 	member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember';
 
 export const isCAPUnitDutyPosition = (
-	dutyPosition: ShortDutyPosition
+	dutyPosition: ShortDutyPosition,
 ): dutyPosition is ShortCAPUnitDutyPosition => dutyPosition.type === 'CAPUnit';

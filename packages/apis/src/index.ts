@@ -78,6 +78,8 @@ type Tree = {
 			};
 			capprospective: {
 				requestProspectiveAccount: api.member.account.capprospective.CreateProspectiveAccount;
+				deleteProspectiveAccount: api.member.account.capprospective.DeleteProspectiveAccount;
+				upgradeProspectiveAccount: api.member.account.capprospective.UpgradeProspectiveAccount;
 			};
 			registerDiscord: api.member.account.RegisterDiscord;
 			passwordResetRequest: api.member.account.PasswordResetRequest;

@@ -71,7 +71,9 @@ import {
 	stripProp,
 	toReference,
 	User,
-	yieldObjAsync
+	yieldObjAsync,
+	MemberType,
+	StoredProspectiveMemberObject,
 } from 'common-lib';
 import { copyFile } from 'fs';
 import { join } from 'path';
@@ -86,7 +88,7 @@ import {
 	findAndBind,
 	findAndBindC,
 	generateResults,
-	safeBind
+	safeBind,
 } from './MySQLUtil';
 import { getRegistry, getRegistryById, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
@@ -98,7 +100,7 @@ export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 }
 
 export const accountRequestTransformer = <T extends BasicMySQLRequest>(
-	req: T
+	req: T,
 ): AsyncEither<ServerError, T & BasicAccountRequest> =>
 	asyncRight(req.hostname.split('.'), errorGenerator('Could not get account'))
 		.flatMap<string>(parts => {
@@ -123,7 +125,7 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 				return Either.left({
 					type: 'OTHER',
 					code: 404,
-					message: 'Could not get account ID from URL'
+					message: 'Could not get account ID from URL',
 				});
 			}
 		})
@@ -131,15 +133,15 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 		.map(account => ({ ...req, account }));
 
 export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	session: Session
+	session: Session,
 ) => (schema: Schema) => (parentAccount: RawCAPWingAccountObject) => (author: User) => (
-	accountID: string
+	accountID: string,
 ) => (accountName: string) => (newEvent: NewEventObject): ServerEither<RawCAPEventAccountObject> =>
 	asyncRight(
 		(async () => {
 			const dutyPositions = author.dutyPositions
 				.filter(
-					duty => duty.type === 'CAPUnit' || parentAccount.orgIDs.includes(duty.orgid)
+					duty => duty.type === 'CAPUnit' || parentAccount.orgIDs.includes(duty.orgid),
 				)
 				.map(({ duty }) => duty);
 
@@ -151,7 +153,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 				return Either.left({
 					type: 'OTHER' as const,
 					code: 403,
-					message: 'You do not have permission to do that'
+					message: 'You do not have permission to do that',
 				});
 			}
 
@@ -159,7 +161,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 				return Either.left({
 					type: 'OTHER' as const,
 					code: 400,
-					message: `The account ID must start with '${parentAccount.id}'`
+					message: `The account ID must start with '${parentAccount.id}'`,
 				});
 			}
 
@@ -167,7 +169,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 				return Either.left({
 					type: 'OTHER' as const,
 					code: 400,
-					message: 'Cannot create duplicate account'
+					message: 'Cannot create duplicate account',
 				});
 			}
 
@@ -177,21 +179,21 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 					.leftFlatMap(always(Either.right<ServerError, AccountObject | null>(null))),
 				asyncRight(
 					session.startTransaction(),
-					errorGenerator('Could not create save point')
-				)
+					errorGenerator('Could not create save point'),
+				),
 			]);
 		})(),
-		errorGenerator('Could not create a CAP Event account')
+		errorGenerator('Could not create a CAP Event account'),
 	)
 		.flatMap(identity)
 		.filter(([account]) => account === null, {
 			type: 'OTHER',
 			code: 400,
-			message: 'Cannot create duplicate account'
+			message: 'Cannot create duplicate account',
 		})
 		.map(
 			() => createGoogleCalendarForEvent(newEvent.name, accountName, accountID, config),
-			errorGenerator('Could not create Google calendar')
+			errorGenerator('Could not create Google calendar'),
 		)
 		.map<RawCAPEventAccountObject>(mainCalendarID => ({
 			aliases: [],
@@ -202,7 +204,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 			parent: Maybe.some(parentAccount.id),
 			wingCalendarID: parentAccount.wingCalendarID,
 
-			type: AccountType.CAPEVENT
+			type: AccountType.CAPEVENT,
 		}))
 		.flatMap(addToCollection(schema.getCollection<RawCAPEventAccountObject>('Accounts')))
 		// Account setup
@@ -213,8 +215,8 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						...registry,
 						Website: {
 							...registry.Website,
-							Name: accountName
-						}
+							Name: accountName,
+						},
 					}))
 					.flatMap(saveRegistry(schema)),
 				asyncRight(
@@ -222,17 +224,17 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						schema,
 						toReference(author),
 						getDefaultAdminPermissions(AccountType.CAPEVENT),
-						newAccount
+						newAccount,
 					),
-					errorGenerator('Could not set permissions for member in new account')
-				)
-			])
+					errorGenerator('Could not set permissions for member in new account'),
+				),
+			]),
 		)
 		.tap(newAccount =>
 			promisify(copyFile)(
 				join(config.GOOGLE_KEYS_PATH, `${parentAccount.id}.json`),
-				join(config.GOOGLE_KEYS_PATH, `${newAccount.id}.json`)
-			)
+				join(config.GOOGLE_KEYS_PATH, `${newAccount.id}.json`),
+			),
 		)
 		.tap(newAccount =>
 			createEventFunc(now)(config)(schema)(newAccount)(toReference(author))(newEvent)
@@ -240,23 +242,23 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 					addMemberToAttendanceFunc(now)(schema)(newAccount)({
 						...event,
 						attendance: [],
-						pointsOfContact: event.pointsOfContact as FullPointOfContact[]
+						pointsOfContact: event.pointsOfContact as FullPointOfContact[],
 					})({
 						comments: '',
 						customAttendanceFieldValues: applyCustomAttendanceFields(
-							newEvent.customAttendanceFields
+							newEvent.customAttendanceFields,
 						)([]),
 						memberID: toReference(author),
 						planToUseCAPTransportation: false,
 						shiftTime: null,
-						status: AttendanceStatus.COMMITTEDATTENDED
-					})
+						status: AttendanceStatus.COMMITTEDATTENDED,
+					}),
 				)
 				.tap(event =>
 					linkEventFunc(now)(config)(schema)(newAccount)(event)(toReference(author))(
-						parentAccount
-					)
-				)
+						parentAccount,
+					),
+				),
 		)
 		.tap(() => session.commit())
 		.leftTap(() => session.rollback());
@@ -270,32 +272,32 @@ export interface AccountGetter {
 export const getAccount = (schema: Schema) => (accountID: string) =>
 	asyncRight(
 		schema.getCollection<AccountObject>('Accounts'),
-		errorGenerator('Could not get accounts')
+		errorGenerator('Could not get accounts'),
 	)
 		.map(collection => generateResults(collection.find('true')))
 		.map<AsyncIterableIterator<AccountObject>>(
 			asyncIterFilter(
 				(account): account is AccountObject =>
-					account.id === accountID || account.aliases.includes(accountID)
-			)
+					account.id === accountID || account.aliases.includes(accountID),
+			),
 		)
 		.map(collectGeneratorAsync)
 		.filter(ofLength(1), {
 			code: 404,
 			type: 'OTHER',
-			message: 'Could not find account'
+			message: 'Could not find account',
 		})
 		.map(items => items[0]);
 
 export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 	asyncEitherIterMap<CAPAccountObject, CAPAccountObject>(
-		stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject
+		stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
 	)(
 		asyncIterHandler<CAPAccountObject>(errorGenerator('Could not get account for member'))(
 			asyncIterFilter(
 				statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
-					(account, state) => [!state[account.id], { ...state, [account.id]: true }]
-				)
+					(account, state) => [!state[account.id], { ...state, [account.id]: true }],
+				),
 			)(
 				asyncIterConcat<CAPAccountObject>(
 					generateResults(
@@ -306,35 +308,35 @@ export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 								| RawCAPRegionAccountObject
 							>('Accounts')
 							.find('orgid = :orgid')
-							.bind('orgid', orgid)
-					)
+							.bind('orgid', orgid),
+					),
 				)(() =>
 					asyncIterConcat<AccountObject>(
 						generateResults<AccountObject>(
 							schema
 								.getCollection<RawCAPSquadronAccountObject>('Accounts')
 								.find('mainOrg = :mainOrg')
-								.bind('mainOrg', orgid)
-						)
+								.bind('mainOrg', orgid),
+						),
 					)(() =>
 						generateResults<AccountObject>(
 							schema
 								.getCollection<RawCAPSquadronAccountObject>('Accounts')
 								.find(':orgIDs in orgIDs')
-								.bind('orgIDs', orgid)
-						)
-					)
-				)
-			)
-		)
+								.bind('orgIDs', orgid),
+						),
+					),
+				),
+			),
+		),
 	);
 
 export const buildURI = (account: AccountObject) => (...identifiers: string[]) =>
 	(process.env.NODE_ENV === 'development' ? `/` : `https://${account.id}.capunit.com/`) +
 	[].slice.call(identifiers).join('/');
 
-export const getMembers = (schema: Schema) =>
-	async function*(account: AccountObject) {
+export const getMembers = (schema: Schema) => (account: AccountObject) =>
+	async function*(type?: MemberType | undefined) {
 		const teamObjects = await getTeamObjects(schema)(account)
 			.map(collectGeneratorAsync)
 			.cata(() => [], identity);
@@ -342,11 +344,57 @@ export const getMembers = (schema: Schema) =>
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
-			const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
+			if (type === 'CAPNHQMember' || type === undefined) {
+				const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
 
-			for (const ORGID of account.orgIDs) {
+				for (const ORGID of account.orgIDs) {
+					const memberFind = findAndBind(memberCollection, {
+						ORGID,
+					});
+
+					for await (const member of generateResults(memberFind)) {
+						foundMembers[
+							stringifyMemberReference({ type: 'CAPNHQMember', id: member.CAPID })
+						] = true;
+
+						const mem = await CAP.expandNHQMember(schema)(account)(teamObjects)(member);
+
+						yield mem;
+					}
+				}
+			}
+
+			if (type === 'CAPProspectiveMember' || type === undefined) {
+				const prospectiveMembersCollection = schema.getCollection<
+					StoredProspectiveMemberObject
+				>('ProspectiveMembers');
+
+				const prospectiveMemberFind = findAndBind(prospectiveMembersCollection, {
+					accountID: account.id,
+				});
+
+				for await (const prospectiveMember of generateResults(prospectiveMemberFind)) {
+					foundMembers[stringifyMemberReference(prospectiveMember)] = true;
+
+					if (prospectiveMember.hasNHQReference) {
+						continue;
+					}
+
+					yield CAP.expandProspectiveMember(schema)(account)(teamObjects)(
+						prospectiveMember,
+					);
+				}
+			}
+		} else if (
+			account.type === AccountType.CAPGROUP ||
+			account.type === AccountType.CAPWING ||
+			account.type === AccountType.CAPREGION
+		) {
+			if (type === 'CAPNHQMember' || type === undefined) {
+				const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
+
 				const memberFind = findAndBind(memberCollection, {
-					ORGID
+					ORGID: account.orgid,
 				});
 
 				for await (const member of generateResults(memberFind)) {
@@ -354,42 +402,8 @@ export const getMembers = (schema: Schema) =>
 						stringifyMemberReference({ type: 'CAPNHQMember', id: member.CAPID })
 					] = true;
 
-					const mem = await CAP.expandNHQMember(schema)(account)(teamObjects)(member);
-
-					yield mem;
+					yield CAP.expandNHQMember(schema)(account)(teamObjects)(member);
 				}
-			}
-
-			const prospectiveMembersCollection = schema.getCollection<CAPProspectiveMemberObject>(
-				'ProspectiveMembers'
-			);
-
-			const prospectiveMemberFind = findAndBind(prospectiveMembersCollection, {
-				accountID: account.id
-			});
-
-			for await (const prospectiveMember of generateResults(prospectiveMemberFind)) {
-				foundMembers[stringifyMemberReference(prospectiveMember)] = true;
-
-				yield CAP.expandProspectiveMember(schema)(account)(teamObjects)(prospectiveMember);
-			}
-		} else if (
-			account.type === AccountType.CAPGROUP ||
-			account.type === AccountType.CAPWING ||
-			account.type === AccountType.CAPREGION
-		) {
-			const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
-
-			const memberFind = findAndBind(memberCollection, {
-				ORGID: account.orgid
-			});
-
-			for await (const member of generateResults(memberFind)) {
-				foundMembers[
-					stringifyMemberReference({ type: 'CAPNHQMember', id: member.CAPID })
-				] = true;
-
-				yield CAP.expandNHQMember(schema)(account)(teamObjects)(member);
 			}
 		} else if (account.type === AccountType.CAPEVENT) {
 			const attendanceCollection = schema.getCollection<{
@@ -400,11 +414,15 @@ export const getMembers = (schema: Schema) =>
 			const accountEvents = generateResults(
 				findAndBind(attendanceCollection, { accountID: account.id })
 					.fields(['accountID', 'memberID'])
-					.groupBy(['accountID', 'memberID'])
+					.groupBy(['accountID', 'memberID']),
 			);
 
 			for await (const record of accountEvents) {
 				const memberID = record.memberID;
+
+				if (type !== undefined && memberID.type !== type) {
+					continue;
+				}
 
 				foundMembers[stringifyMemberReference(memberID)] = true;
 
@@ -413,17 +431,21 @@ export const getMembers = (schema: Schema) =>
 		}
 
 		const extraMemberCollection = schema.getCollection<StoredAccountMembership>(
-			'ExtraAccountMembership'
+			'ExtraAccountMembership',
 		);
 
 		const extraMembersGenerator = generateResults(
 			findAndBind(extraMemberCollection, { accountID: account.id })
 				.fields(['member'])
-				.groupBy(['member'])
+				.groupBy(['member']),
 		);
 
 		for await (const record of extraMembersGenerator) {
 			if (!foundMembers[stringifyMemberReference(record.member)]) {
+				if (type !== undefined && record.member.type !== type) {
+					continue;
+				}
+
 				yield resolveReference(schema)(account)(record.member);
 			}
 		}
@@ -438,13 +460,13 @@ export const getMemberIDs = (schema: Schema) =>
 
 			for (const ORGID of account.orgIDs) {
 				const memberFind = findAndBind(memberCollection, {
-					ORGID
+					ORGID,
 				});
 
 				for await (const member of generateResults(memberFind)) {
 					const memberID = {
 						type: 'CAPNHQMember' as const,
-						id: member.CAPID
+						id: member.CAPID,
 					};
 
 					foundMembers[stringifyMemberReference(memberID)] = true;
@@ -454,11 +476,11 @@ export const getMemberIDs = (schema: Schema) =>
 			}
 
 			const prospectiveMembersCollection = schema.getCollection<CAPProspectiveMemberObject>(
-				'ProspectiveMembers'
+				'ProspectiveMembers',
 			);
 
 			const prospectiveMemberFind = findAndBind(prospectiveMembersCollection, {
-				accountID: account.id
+				accountID: account.id,
 			});
 
 			for await (const prospectiveMember of generateResults(prospectiveMemberFind)) {
@@ -474,13 +496,13 @@ export const getMemberIDs = (schema: Schema) =>
 			const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
 
 			const memberFind = findAndBind(memberCollection, {
-				ORGID: account.orgid
+				ORGID: account.orgid,
 			});
 
 			for await (const member of generateResults(memberFind)) {
 				const memberID = {
 					type: 'CAPNHQMember' as const,
-					id: member.CAPID
+					id: member.CAPID,
 				};
 
 				foundMembers[stringifyMemberReference(memberID)] = true;
@@ -496,7 +518,7 @@ export const getMemberIDs = (schema: Schema) =>
 			const accountEvents = generateResults(
 				findAndBind(attendanceCollection, { accountID: account.id })
 					.fields(['memberID', 'accountID'])
-					.groupBy(['memberID', 'accountID'])
+					.groupBy(['memberID', 'accountID']),
 			);
 
 			for await (const record of accountEvents) {
@@ -509,13 +531,13 @@ export const getMemberIDs = (schema: Schema) =>
 		}
 
 		const extraMemberCollection = schema.getCollection<StoredAccountMembership>(
-			'ExtraAccountMembership'
+			'ExtraAccountMembership',
 		);
 
 		const extraMembersGenerator = generateResults(
 			findAndBind(extraMemberCollection, { accountID: account.id })
 				.fields(['member'])
-				.groupBy(['member'])
+				.groupBy(['member']),
 		);
 
 		for await (const record of extraMembersGenerator) {
@@ -531,14 +553,14 @@ export const getFiles = (includeWWW = true) => (schema: Schema) => (account: Acc
 	return generateResults(
 		includeWWW
 			? safeBind(fileCollection.find('accountID = :accountID or accountID = "www"'), {
-					accountID: account.id
+					accountID: account.id,
 			  })
-			: findAndBind(fileCollection, { accountID: account.id })
+			: findAndBind(fileCollection, { accountID: account.id }),
 	);
 };
 
 export const getEvents = (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ): AsyncIterator<EitherObj<ServerError, RawEventObject>> => {
 	const eventCollection = schema.getCollection<RawEventObject>('Events');
 
@@ -546,22 +568,22 @@ export const getEvents = (schema: Schema) => (
 
 	return asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
 		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
-			generateResults(find)
-		)
+			generateResults(find),
+		),
 	);
 };
 
 export const queryEvents = (query: string) => (schema: Schema) => (account: AccountObject) => (
-	bind: any
+	bind: any,
 ) =>
 	asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
 		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
-			generateResults(queryEventsFind(query)(schema)(account)(bind))
-		)
+			generateResults(queryEventsFind(query)(schema)(account)(bind)),
+		),
 	);
 
 export const queryEventsFind = (query: string) => (schema: Schema) => (account: AccountObject) => (
-	bind: any
+	bind: any,
 ) => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
@@ -574,13 +596,13 @@ export const queryEventsFind = (query: string) => (schema: Schema) => (account: 
 };
 
 export const getEventsInRange = (schema: Schema) => (account: AccountObject) => (start: number) => (
-	end: number
+	end: number,
 ) => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const iterator = eventCollection
 		.find(
-			'accountID = :accountID AND ((pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime))'
+			'accountID = :accountID AND ((pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime))',
 		)
 		.bind('accountID', account.id)
 		.bind('pickupDateTime', start)
@@ -588,8 +610,8 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 
 	return asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
 		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
-			generateResults(iterator)
-		)
+			generateResults(iterator),
+		),
 	);
 };
 
@@ -604,27 +626,27 @@ export const saveAccount = (schema: Schema) => async (account: AccountObject) =>
 };
 
 const getNormalTeamObjects = (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
 	asyncRight(
 		schema.getCollection<RawTeamObject>('Teams'),
-		errorGenerator('Could not get teams for account')
+		errorGenerator('Could not get teams for account'),
 	)
 		.map(
 			findAndBindC<RawTeamObject>({
-				accountID: account.id
-			})
+				accountID: account.id,
+			}),
 		)
 		.map(generateResults);
 
 export const getTeamObjects = (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
 	account.type === AccountType.CAPSQUADRON
 		? getStaffTeam(schema)(account).flatMap(team =>
 				getNormalTeamObjects(schema)(account).map(objectIter =>
-					asyncIterConcat(yieldObjAsync(Promise.resolve(team)))(() => objectIter)
-				)
+					asyncIterConcat(yieldObjAsync(Promise.resolve(team)))(() => objectIter),
+				),
 		  )
 		: getNormalTeamObjects(schema)(account);
 
@@ -632,7 +654,7 @@ export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const eventIterator = findAndBind(eventCollection, {
-		accountID: account.id
+		accountID: account.id,
 	}).sort('pickupDateTime ASC');
 
 	return generateResults(eventIterator);
@@ -641,24 +663,24 @@ export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
 const getCAPOrganization = (schema: Schema) => (ORGID: number) =>
 	asyncRight(
 		schema.getCollection<NHQ.Organization>('NHQ_Organization'),
-		errorGenerator('Could not get CAP Organization data')
+		errorGenerator('Could not get CAP Organization data'),
 	)
 		.map(
 			findAndBindC<NHQ.Organization>({
-				ORGID
-			})
+				ORGID,
+			}),
 		)
 		.map(collectResults)
 		.map(Maybe.fromArray);
 
 export const getOrgName = (accountGetter: Partial<AccountGetter>) => (schema: Schema) => (
-	account: AccountObject
+	account: AccountObject,
 ) => {
 	const orgInfoGetter = memoize(getCAPOrganization(schema));
 	const getter: AccountGetter = {
 		byId: getAccount,
 		byOrgid: getCAPAccountsForORGID,
-		...accountGetter
+		...accountGetter,
 	};
 	const registryByIdGetter = memoize(getRegistryById(schema));
 
@@ -667,13 +689,13 @@ export const getOrgName = (accountGetter: Partial<AccountGetter>) => (schema: Sc
 			case 'CAPNHQMember':
 				return asyncRight(
 					collectGeneratorAsync(getter.byOrgid(schema)(member.orgid)),
-					errorGenerator('Could not get Accounts')
+					errorGenerator('Could not get Accounts'),
 				)
 					.map(onlyRights)
 					.map(results =>
 						results.filter(({ id }) => id === account.id).length === 1
 							? [account]
-							: results
+							: results,
 					)
 					.flatMap(results =>
 						results.length === 1
@@ -681,7 +703,7 @@ export const getOrgName = (accountGetter: Partial<AccountGetter>) => (schema: Sc
 									.map(get('Website'))
 									.map(get('Name'))
 									.map(Maybe.some)
-							: orgInfoGetter(member.orgid).map(Maybe.map(get('Name')))
+							: orgInfoGetter(member.orgid).map(Maybe.map(get('Name'))),
 					);
 
 			case 'CAPProspectiveMember':

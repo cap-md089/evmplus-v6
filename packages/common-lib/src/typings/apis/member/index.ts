@@ -23,7 +23,13 @@
  */
 
 import { APIEither } from '../../api';
-import { AbsenteeInformation, Member, MemberReference, PasswordSetResult } from '../../types';
+import {
+	AbsenteeInformation,
+	Member,
+	MemberReference,
+	MemberType,
+	PasswordSetResult,
+} from '../../types';
 
 export * as account from './account';
 export * as attendance from './attendance';
@@ -70,9 +76,9 @@ export interface PasswordReset {
  * Gets information for all the members in the unit
  */
 export interface Members {
-	(params: {}, body: {}): APIEither<Member[]>;
+	(params: { type?: MemberType }, body: {}): APIEither<Member[]>;
 
-	url: '/api/member';
+	url: '/api/member/:type?';
 
 	method: 'get';
 

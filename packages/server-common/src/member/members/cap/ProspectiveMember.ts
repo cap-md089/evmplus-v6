@@ -29,6 +29,7 @@ import {
 	asyncRight,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
+	CAPNHQMemberObject,
 	CAPProspectiveMemberObject,
 	CAPProspectiveMemberReference,
 	Either,
@@ -47,23 +48,35 @@ import {
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	StoredProspectiveMemberObject,
 	stripProp,
 	yieldObjAsync,
+	CAPNHQMemberReference,
+	always,
+	destroy,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
+import { CAP } from '..';
 import { AccountGetter } from '../../../Account';
-import { addToCollection, collectResults, findAndBindC } from '../../../MySQLUtil';
+import {
+	addToCollection,
+	collectResults,
+	deleteFromCollectionA,
+	findAndBindC,
+	addItemToCollection,
+} from '../../../MySQLUtil';
 import { getRegistry } from '../../../Registry';
+import { getNameForCAPNHQMember } from './NHQMember';
 
 const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject) => (
 	reference: CAPProspectiveMemberReference,
-) =>
+): AsyncEither<ServerError, StoredProspectiveMemberObject> =>
 	asyncRight(
-		schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
+		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
 		errorGenerator('Could not get member information'),
 	)
 		.map(
-			findAndBindC<RawCAPProspectiveMemberObject>({
+			findAndBindC<StoredProspectiveMemberObject>({
 				id: reference.id,
 				accountID: account.id,
 			}),
@@ -75,7 +88,7 @@ const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject)
 			type: 'OTHER',
 		})
 		.map(get(0))
-		.map(stripProp('_id'));
+		.map(obj => stripProp('_id')(obj) as StoredProspectiveMemberObject);
 
 export const expandProspectiveMember = (schema: Schema) => (
 	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>,
@@ -109,6 +122,7 @@ export const expandProspectiveMember = (schema: Schema) => (
 				nameLast: info.nameLast,
 				nameMiddle: info.nameMiddle,
 				nameSuffix: info.nameSuffix,
+				hasNHQReference: false,
 				seniorMember: info.seniorMember,
 				squadron: registry.Website.Name,
 				type: 'CAPProspectiveMember',
@@ -121,7 +135,9 @@ export const expandProspectiveMember = (schema: Schema) => (
 
 export const getProspectiveMember = (schema: Schema) => (account: AccountObject) => (
 	teamObjects?: RawTeamObject[],
-) => (prospectiveID: string): AsyncEither<ServerError, CAPProspectiveMemberObject> =>
+) => (
+	prospectiveID: string,
+): AsyncEither<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject> =>
 	getRegistry(schema)(account).flatMap(registry =>
 		isRegularCAPAccountObject(account)
 			? asyncRight(prospectiveID, errorGenerator('Could not get member information'))
@@ -137,38 +153,49 @@ export const getProspectiveMember = (schema: Schema) => (account: AccountObject)
 							})(teamObjects),
 						]),
 					)
-					.map<CAPProspectiveMemberObject>(([info, extraInformation]) => ({
-						absenteeInformation: extraInformation.absentee,
-						contact: info.contact,
-						dutyPositions: [
-							...extraInformation.temporaryDutyPositions.map(
-								item =>
-									({
-										date: item.assigned,
-										duty: item.Duty,
-										expires: item.validUntil,
-										type: 'CAPUnit',
-									} as ShortDutyPosition),
-							),
-						],
-						flight: extraInformation.flight,
-						id: info.id,
-						memberRank: info.memberRank,
-						nameFirst: info.nameFirst,
-						nameLast: info.nameLast,
-						nameMiddle: info.nameMiddle,
-						nameSuffix: info.nameSuffix,
-						seniorMember: info.seniorMember,
-						squadron: registry.Website.Name,
-						type: 'CAPProspectiveMember',
-						orgid:
-							account.type === AccountType.CAPSQUADRON
-								? account.mainOrg
-								: account.orgid,
-						accountID: account.id,
-						usrID: info.usrID,
-						teamIDs: extraInformation.teamIDs,
-					}))
+					.flatMap<CAPProspectiveMemberObject | CAPNHQMemberObject>(
+						([info, extraInformation]) =>
+							info.hasNHQReference
+								? CAP.resolveCAPReference(schema)(account)(info.nhqReference)
+								: asyncRight(
+										{
+											absenteeInformation: extraInformation.absentee,
+											contact: info.contact,
+											dutyPositions: [
+												...extraInformation.temporaryDutyPositions.map(
+													item =>
+														({
+															date: item.assigned,
+															duty: item.Duty,
+															expires: item.validUntil,
+															type: 'CAPUnit',
+														} as ShortDutyPosition),
+												),
+											],
+											flight: extraInformation.flight,
+											id: info.id,
+											memberRank: info.memberRank,
+											nameFirst: info.nameFirst,
+											nameLast: info.nameLast,
+											nameMiddle: info.nameMiddle,
+											nameSuffix: info.nameSuffix,
+											seniorMember: info.seniorMember,
+											hasNHQReference: false,
+											squadron: registry.Website.Name,
+											type: 'CAPProspectiveMember',
+											orgid:
+												account.type === AccountType.CAPSQUADRON
+													? account.mainOrg
+													: account.orgid,
+											accountID: account.id,
+											usrID: info.usrID,
+											teamIDs: extraInformation.teamIDs,
+										},
+										errorGenerator(
+											'Could not get prospective member information',
+										),
+								  ),
+					)
 			: asyncLeft({
 					type: 'OTHER',
 					code: 400,
@@ -199,25 +226,29 @@ export const getExtraInformationFromProspectiveMember = (account: AccountObject)
 export const getNameForCAPProspectiveMember = (schema: Schema) => (account: AccountObject) => (
 	reference: CAPProspectiveMemberReference,
 ): AsyncEither<ServerError, string> =>
-	getRowsForProspectiveMember(schema)(account)(reference).map(
-		result =>
-			`${result.memberRank} ${getMemberName({
-				nameFirst: result.nameFirst,
-				nameMiddle: result.nameMiddle,
-				nameLast: result.nameLast,
-				nameSuffix: result.nameSuffix,
-			})}`,
+	getRowsForProspectiveMember(schema)(account)(reference).flatMap(result =>
+		result.hasNHQReference
+			? getNameForCAPNHQMember(schema)(result.nhqReference)
+			: asyncRight(
+					`${result.memberRank} ${getMemberName({
+						nameFirst: result.nameFirst,
+						nameMiddle: result.nameMiddle,
+						nameLast: result.nameLast,
+						nameSuffix: result.nameSuffix,
+					})}`,
+					errorGenerator('Could not get prospective member name'),
+			  ),
 	);
 
 export const createCAPProspectiveMember = (schema: Schema) => (
 	account: RawCAPSquadronAccountObject,
 ) => (data: NewCAPProspectiveMember): AsyncEither<ServerError, CAPProspectiveMemberObject> =>
 	asyncRight(
-		schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
+		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
 		errorGenerator('Could not create member'),
 	).flatMap(collection =>
 		asyncRight(
-			findAndBindC<RawCAPProspectiveMemberObject>({
+			findAndBindC<StoredProspectiveMemberObject>({
 				accountID: account.id,
 			})(collection)
 				.sort('id DESC')
@@ -237,6 +268,7 @@ export const createCAPProspectiveMember = (schema: Schema) => (
 					absenteeInformation: null,
 					accountID: account.id,
 					dutyPositions: [],
+					hasNHQReference: false,
 					memberRank: data.seniorMember ? 'SM' : 'CADET',
 					orgid: account.mainOrg,
 					squadron: registry.Website.Name,
@@ -258,3 +290,32 @@ export const getProspectiveMemberAccountsFunc = (accountGetter: AccountGetter) =
 	asyncIterMap<EitherObj<ServerError, AccountObject>, EitherObj<ServerError, AccountObject>>(
 		Either.map(stripProp('_id') as (obj: AccountObject) => AccountObject),
 	)(yieldObjAsync(accountGetter.byId(schema)(member.accountID)));
+
+export const deleteProspectiveMember = (schema: Schema) => (member: CAPProspectiveMemberObject) =>
+	asyncRight(
+		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
+		errorGenerator('Could not delete prospective member'),
+	).flatMap(deleteFromCollectionA(member));
+
+export const upgradeProspectiveMemberToCAPNHQ = (schema: Schema) => (
+	member: CAPProspectiveMemberObject,
+) => (nhqReference: CAPNHQMemberReference) =>
+	asyncRight(
+		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
+		errorGenerator('Could not delete prospective member'),
+	)
+		.flatMap(collection =>
+			deleteFromCollectionA(member as StoredProspectiveMemberObject)(collection).map(
+				always(collection),
+			),
+		)
+		.flatMap(
+			addItemToCollection({
+				hasNHQReference: true,
+				accountID: member.accountID,
+				id: member.id,
+				nhqReference,
+				type: 'CAPProspectiveMember',
+			} as StoredProspectiveMemberObject),
+		)
+		.map(destroy);

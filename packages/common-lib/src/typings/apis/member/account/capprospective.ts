@@ -22,7 +22,11 @@
  */
 
 import { APIEither } from '../../../api';
-import { CAPProspectiveMemberPasswordCreation, NewCAPProspectiveMember } from '../../../types';
+import {
+	CAPNHQMemberReference,
+	CAPProspectiveMemberPasswordCreation,
+	NewCAPProspectiveMember,
+} from '../../../types';
 
 interface ProspectiveAccountBody {
 	member: NewCAPProspectiveMember;
@@ -38,6 +42,44 @@ export interface CreateProspectiveAccount {
 	url: '/api/member/account/capprospective/requestaccount';
 
 	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: false;
+}
+
+/**
+ * Allows an admin to make it so that all CAPProspectiveMemberReferences point to a CAPNHQMemberReference
+ *
+ * `account` is a stringified CAPProspectiveMemberReference
+ */
+export interface UpgradeProspectiveAccount {
+	(params: { account: string }, body: { nhqReference: CAPNHQMemberReference }): APIEither<void>;
+
+	url: '/api/member/account/capprospective/:account';
+
+	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: true;
+}
+
+/**
+ * Allows an admin to delete a Prospective member account
+ *
+ * `account` is a stringified CAPProspectiveMemberReference
+ */
+export interface DeleteProspectiveAccount {
+	(params: { account: string }, body: {}): APIEither<void>;
+
+	url: '/api/member/account/capprospective/:account';
+
+	method: 'delete';
 
 	requiresMember: 'required';
 

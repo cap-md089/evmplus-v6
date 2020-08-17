@@ -39,6 +39,8 @@ import { getFormToken as formtoken } from './formtoken';
 import { func as getSlideshowImageIDs } from './getSlideshowImageIDs';
 import { func as setabsent } from './member/absent';
 import { func as createprospective } from './member/account/capprospective/createprospective';
+import { func as deleteprospective } from './member/account/capprospective/deleteprospective';
+import { func as upgradeprospective } from './member/account/capprospective/upgradeprospective';
 import { func as finishaccount } from './member/account/finishaccount';
 import { func as finishpasswordreset } from './member/account/finishpasswordreset';
 import { func as requestaccount } from './member/account/nhq/requestaccount';
@@ -139,6 +141,8 @@ export const api = {
 		account: {
 			capprospective: {
 				createprospective,
+				deleteprospective,
+				upgradeprospective,
 			},
 			nhq: {
 				requestaccount,

@@ -2372,12 +2372,39 @@ export interface RawCAPProspectiveMemberObject extends RawCAPMember, AccountIden
 	 */
 	flight: string | null;
 	/**
-	 * Prospective member duty positions are stored in the database
+	 * Prospective member duty positions are stored in the ExtraMemberInformation table
 	 *
 	 * There is no way to modify this
 	 */
 	dutyPositions: ShortDutyPosition[];
+	/**
+	 * Tells resolvereference to continue resolving this member information, or to stop here
+	 */
+	hasNHQReference: false;
 }
+
+export interface RawCAPProspectiveUpgradedMemberObject extends AccountIdentifiable {
+	/**
+	 * We use string IDs for this account type
+	 */
+	id: string;
+	/**
+	 * Descriminant
+	 */
+	type: 'CAPProspectiveMember';
+	/**
+	 * Tells resolveReference to go further and resolve to a CAP NHQ member
+	 */
+	hasNHQReference: true;
+	/**
+	 * The NHQ member this prospective member object is replaced by
+	 */
+	nhqReference: CAPNHQMemberReference;
+}
+
+export type StoredProspectiveMemberObject =
+	| RawCAPProspectiveMemberObject
+	| RawCAPProspectiveUpgradedMemberObject;
 
 /**
  * A full ProspectiveMember is similar to a CAPMember
@@ -2405,6 +2432,7 @@ export type NewCAPProspectiveMember = Omit<
 	| 'memberRank'
 	| 'orgid'
 	| 'squadron'
+	| 'hasNHQReference'
 	| '_id'
 >;
 
@@ -3719,8 +3747,7 @@ export type AuditableEvents<O extends AuditableObjects & Identifiable> =
 	| CreateEvent<O>
 	| DeleteEvent<O>;
 
-
-export interface CadetPromotionRequirements{
+export interface CadetPromotionRequirements {
 	/**
 	 * The Achievement ID number (integer from 1 to 21)
 	 */
@@ -3830,10 +3857,9 @@ export interface CadetPromotionRequirements{
 	 * The download links for the drill tests for the first 9 achievements
 	 */
 	DrillTestWebLink: string;
-
 }
 
-export interface CadetPromotionStatus{
+export interface CadetPromotionStatus {
 	/**
 	 * The Achievement name
 	 */
@@ -3903,6 +3929,4 @@ export interface CadetPromotionStatus{
 	 * Status of RCLS requirement, needed for Eaker, should have Encampment and C/MSgt before eligible
 	 */
 	RCLS: string;
-
-
 }

@@ -17,7 +17,7 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { hasPermission, isRioux } from 'common-lib';
+import { hasPermission, isRioux, AccountType, Permissions } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
 import SigninLink from '../../components/SigninLink';
@@ -37,13 +37,15 @@ import { canUseCreate, CreateWidget } from './pluggables/Create';
 import { DriveWidget } from './pluggables/Drive';
 import FlightContact, {
 	FlightContactWidget,
-	shouldRenderFlightContactWidget
+	shouldRenderFlightContactWidget,
 } from './pluggables/FlightContact';
 import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import SuWidget, { canUseSu } from './pluggables/Su';
 import './Widget.css';
 import CreateProspectiveMember from '../account/CreateProspectiveMember';
+import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
+import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -63,42 +65,52 @@ type AdminState = LoadedAdminState | UnloadedAdminState;
 const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
 	{
 		canuse: shouldRenderNotifications,
-		widget: NotificationsPlug
+		widget: NotificationsPlug,
 	},
 	{
-		canuse: ({ member }) => !!member && hasPermission('FileManagement')()(member),
-		widget: DriveWidget
+		canuse: ({ member }) =>
+			!!member && hasPermission('FileManagement')(Permissions.FileManagement.FULL)(member),
+		widget: DriveWidget,
 	},
 	{
 		canuse: shouldRenderSiteAdmin,
-		widget: SiteAdminWidget
+		widget: SiteAdminWidget,
 	},
 	{
 		canuse: canUseCreate,
-		widget: CreateWidget
+		widget: CreateWidget,
 	},
 	{
 		canuse: canUseAbsentee,
-		widget: AbsenteeWidget
+		widget: AbsenteeWidget,
 	},
 	{
 		canuse: shouldRenderFlightContactWidget,
-		widget: FlightContactWidget
+		widget: FlightContactWidget,
 	},
 	{
 		canuse: canUseSu,
-		widget: SuWidget
+		widget: SuWidget,
 	},
 	{
 		canuse: shouldRenderErrorList,
-		widget: ErrorListWidget
-	}
+		widget: ErrorListWidget,
+	},
+	{
+		canuse: ({ member, account }) =>
+			!!member &&
+			hasPermission('ProspectiveMemberManagement')(
+				Permissions.ProspectiveMemberManagement.FULL,
+			)(member) &&
+			account.type === AccountType.CAPSQUADRON,
+		widget: ProspectiveMemberManagementWidget,
+	},
 ];
 
 export default class Admin extends Page<PageProps, AdminState> {
 	public state: AdminState = {
 		loaded: false,
-		absneteeInformation: null
+		absneteeInformation: null,
 	};
 
 	constructor(props: PageProps) {
@@ -113,12 +125,12 @@ export default class Admin extends Page<PageProps, AdminState> {
 			this.props.updateBreadCrumbs([
 				{
 					target: '/',
-					text: 'Home'
+					text: 'Home',
 				},
 				{
 					target: '/admin',
-					text: 'Administration'
-				}
+					text: 'Administration',
+				},
 			]);
 			this.updateTitle('Administration');
 		}
@@ -187,6 +199,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 					render={this.pageRenderer(CreateProspectiveMember)}
 					exact={false}
 				/>
+				<Route
+					path="/admin/prospectivemembermanagement"
+					render={this.pageRenderer(ProspectiveMemberManagement)}
+					exact={false}
+				/>
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>
@@ -205,7 +222,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 				{widgets.map((val, i) =>
 					val.canuse(this.props) || isRioux(member) ? (
 						<val.widget {...this.props} key={i} />
-					) : null
+					) : null,
 				)}
 			</div>
 		);

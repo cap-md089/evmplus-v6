@@ -118,7 +118,7 @@ export type MemberRequirement = 'required' | 'optional' | 'unused';
 export interface APIEndpoint<
 	URL extends string,
 	Return extends APIEither<any>,
-	Params extends { [key: string]: string },
+	Params extends { [key: string]: string | undefined },
 	Body extends object,
 	Method extends HTTPMethod,
 	RequiresMember extends MemberRequirement,
