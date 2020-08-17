@@ -42,7 +42,8 @@ import {
 	RadioReturnWithOther,
 	RegistryValues,
 	SimpleMultCheckboxReturn,
-	User
+	User,
+	AccountType,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -66,7 +67,7 @@ import SimpleForm, {
 	TeamSelector,
 	TextBox,
 	TextInput,
-	Title
+	Title,
 } from '../SimpleForm';
 
 export const Uniforms = [
@@ -78,7 +79,7 @@ export const Uniforms = [
 	'Blue Utilities (Senior Members)',
 	'Civilian Attire',
 	'Flight Suit',
-	'Not Applicable'
+	'Not Applicable',
 ];
 export const Activities = [
 	'Squadron Meeting',
@@ -86,7 +87,7 @@ export const Activities = [
 	'Backcountry',
 	'Flying',
 	'Physically Rigorous',
-	'Recurring Meeting'
+	'Recurring Meeting',
 ];
 export const RequiredForms = [
 	'CAP Identification Card',
@@ -95,14 +96,14 @@ export const RequiredForms = [
 	'CAPF 101 Specialty Qualification Card',
 	'CAPF 160 CAP Member Health History Form',
 	'CAPF 161 Emergency Information',
-	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
+	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication',
 ];
 export const Meals = ['No meals provided', 'Meals provided', 'Bring own food', 'Bring money'];
 export const LodgingArrangments = [
 	'Hotel or individual room',
 	'Open bay building',
 	'Large tent',
-	'Individual tent'
+	'Individual tent',
 ];
 export const EventStatus = [
 	'Draft',
@@ -110,7 +111,7 @@ export const EventStatus = [
 	'Confirmed',
 	'Complete',
 	'Cancelled',
-	'Information Only'
+	'Information Only',
 ];
 
 interface EventFormProps {
@@ -225,7 +226,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		transportationProvided: event.transportationProvided,
 		uniform: event.uniform,
 		wingEventNumber: event.wingEventNumber,
-		privateAttendance: event.privateAttendance
+		privateAttendance: event.privateAttendance,
 	}))(
 		Maybe.And(
 			event.pointsOfContact.map<MaybeObj<InternalPointOfContact | ExternalPointOfContact>>(
@@ -240,10 +241,10 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 								receiveRoster: poc.receiveRoster,
 								receiveSignUpUpdates: poc.receiveSignUpUpdates,
 								receiveUpdates: poc.receiveUpdates,
-								type: PointOfContactType.INTERNAL
-						  }))(poc.memberReference)
-			)
-		)
+								type: PointOfContactType.INTERNAL,
+						  }))(poc.memberReference),
+			),
+		),
 	);
 
 export const emptyEventFormValues = (): NewEventFormValues => ({
@@ -262,12 +263,12 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	useRegistration: false,
 	registration: {
 		deadline: Date.now(),
-		information: ''
+		information: '',
 	},
 	useParticipationFee: false,
 	participationFee: {
 		feeAmount: 0,
-		feeDue: Date.now()
+		feeDue: Date.now(),
 	},
 	mealsDescription: emptyFromLabels(Meals),
 	lodgingArrangments: emptyFromLabels(LodgingArrangments),
@@ -293,7 +294,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	teamID: null,
 	limitSignupsToTeam: false,
 	fileIDs: [],
-	privateAttendance: false
+	privateAttendance: false,
 });
 
 export const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
@@ -316,7 +317,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	name: event.name,
 	participationFee: event.participationFee || {
 		feeAmount: 0,
-		feeDue: Date.now()
+		feeDue: Date.now(),
 	},
 	useParticipationFee: !!event.participationFee,
 	pickupDateTime: event.pickupDateTime,
@@ -332,15 +333,15 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
 					receiveUpdates: poc.receiveUpdates,
 					memberReference: Maybe.some(poc.memberReference),
-					type: PointOfContactType.INTERNAL
-			  }
+					type: PointOfContactType.INTERNAL,
+			  },
 	),
 	customAttendanceFields: event.customAttendanceFields,
 	publishToWingCalendar: event.publishToWingCalendar,
 	regionEventNumber: event.regionEventNumber,
 	registration: event.registration || {
 		deadline: Date.now(),
-		information: ''
+		information: '',
 	},
 	useRegistration: !!event.registration,
 	requiredEquipment: event.requiredEquipment,
@@ -356,7 +357,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	uniform: event.uniform,
 	wingEventNumber: event.wingEventNumber,
 	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
-	privateAttendance: event.privateAttendance
+	privateAttendance: event.privateAttendance,
 });
 
 const eventValidator: FormValidator<NewEventFormValues> = {
@@ -370,7 +371,7 @@ const eventValidator: FormValidator<NewEventFormValues> = {
 	pickupDateTime: (pickup, values) => pickup >= values.endDateTime,
 	uniform: isOneOfSelected,
 	requiredEquipment: equipment =>
-		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true)
+		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true),
 };
 
 export default class EventForm extends React.Component<EventFormProps> {
@@ -395,7 +396,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 						: this.props.isEventUpdate
 						? 'Update event'
 						: 'Create event',
-					disabled: this.props.saving
+					disabled: this.props.saving,
 				}}
 				validator={eventValidator}
 				disableOnInvalid={true}
@@ -462,7 +463,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Comments</Label>
 				<TextInput
 					boxStyles={{
-						height: '50px'
+						height: '50px',
 					}}
 					name="comments"
 				/>
@@ -556,14 +557,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 						receiveEventUpdates: false,
 						receiveRoster: false,
 						receiveSignUpUpdates: false,
-						receiveUpdates: false
+						receiveUpdates: false,
 					})}
 					buttonText="Add point of contact"
 					fullWidth={true}
 					extraProps={{
 						account: this.props.account,
 						member: this.props.member,
-						memberList: this.props.memberList
+						memberList: this.props.memberList,
 					}}
 				/>
 
@@ -577,7 +578,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 						title: '',
 						preFill: '',
 						displayToMember: false,
-						allowMemberToModify: false
+						allowMemberToModify: false,
 					})}
 					buttonText="Add Custom Attendance Field"
 					fullWidth={true}
@@ -621,8 +622,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Entry complete</Label>
 				<Checkbox name="complete" />
 
-				<Label>Publish to wing</Label>
-				<Checkbox name="publishToWingCalendar" />
+				{this.props.account.type === AccountType.CAPEVENT ||
+				this.props.account.type === AccountType.CAPGROUP ||
+				this.props.account.type === AccountType.CAPWING ? (
+					<>
+						<Label>Publish to wing</Label>
+						<Checkbox name="publishToWingCalendar" />
+					</>
+				) : null}
 
 				<Label>Show upcoming</Label>
 				<Checkbox name="showUpcoming" />
@@ -650,7 +657,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 		event: NewEventFormValues,
 		errors: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
-		error: boolean
+		error: boolean,
 	) {
 		if (!this.props.isEventUpdate) {
 			const dateTimesHaveBeenModified =
@@ -679,7 +686,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 		event: NewEventFormValues,
 		error: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
-		hasError: boolean
+		hasError: boolean,
 	) {
 		const valid = !hasError;
 
@@ -707,7 +714,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 		// }
 
 		this.setState({
-			valid
+			valid,
 		});
 
 		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());

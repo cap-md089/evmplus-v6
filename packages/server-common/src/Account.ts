@@ -202,7 +202,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 			id: accountID,
 			mainCalendarID,
 			parent: Maybe.some(parentAccount.id),
-			wingCalendarID: parentAccount.wingCalendarID,
+			wingCalendarID: parentAccount.mainCalendarID,
 
 			type: AccountType.CAPEVENT,
 		}))

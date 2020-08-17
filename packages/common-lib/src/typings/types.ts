@@ -904,10 +904,6 @@ export interface RawCAPGroupAccountObject extends NewCAPGroupAccountObject, Acco
 
 export interface NewCAPWingAccountObject extends NewAccountBase {
 	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
-	/**
 	 * The main organization of the account
 	 */
 	orgid: number;
@@ -933,10 +929,6 @@ export interface RawCAPWingAccountObject extends NewCAPWingAccountObject, Accoun
 }
 
 export interface NewCAPRegionAccountObject extends NewAccountBase {
-	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
 	/**
 	 * The main organization of the account
 	 */

@@ -26,7 +26,8 @@ import {
 	Maybe,
 	presentMultCheckboxReturn,
 	RawEventObject,
-	ServerConfiguration
+	ServerConfiguration,
+	AccountType,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
@@ -42,7 +43,7 @@ export const Uniforms = [
 	'Blue Utilities (Senior Members)',
 	'Civilian Attire',
 	'Flight Suit',
-	'Not Applicable'
+	'Not Applicable',
 ];
 export const Activities = [
 	'Squadron Meeting',
@@ -50,7 +51,7 @@ export const Activities = [
 	'Backcountry',
 	'Flying',
 	'Physically Rigorous',
-	'Recurring Meeting'
+	'Recurring Meeting',
 ];
 export const RequiredForms = [
 	'CAP Identification Card',
@@ -59,14 +60,14 @@ export const RequiredForms = [
 	'CAPF 101 Specialty Qualification Card',
 	'CAPF 160 CAP Member Health History Form',
 	'CAPF 161 Emergency Information',
-	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
+	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication',
 ];
 export const Meals = ['No meals provided', 'Meals provided', 'Bring own food', 'Bring money'];
 export const LodgingArrangments = [
 	'Hotel or individual room',
 	'Open bay building',
 	'Large tent',
-	'Individual tent'
+	'Individual tent',
 ];
 
 function buildEventDescription(inEvent: RawEventObject): string {
@@ -198,14 +199,14 @@ function buildDeadlineDescription(inEvent: RawEventObject, inStatement: string):
 export async function createGoogleCalendar(
 	accountID: string,
 	name: string,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ) {
 	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json');
 	const jwtClient = new google.auth.JWT(
 		privateKey.client_email,
 		undefined,
 		privateKey.private_key,
-		['https://www.googleapis.com/auth/calendar']
+		['https://www.googleapis.com/auth/calendar'],
 	);
 
 	await jwtClient.authorize();
@@ -213,12 +214,12 @@ export async function createGoogleCalendar(
 	const calendar = google.calendar({ version: 'v3' });
 
 	const requestBody = {
-		summary: name
+		summary: name,
 	};
 
 	const newCalendar = await calendar.calendars.insert({
 		requestBody,
-		auth: jwtClient
+		auth: jwtClient,
 	});
 
 	if (!newCalendar.data.id) {
@@ -230,10 +231,10 @@ export async function createGoogleCalendar(
 		requestBody: {
 			role: 'reader',
 			scope: {
-				type: 'default'
-			}
+				type: 'default',
+			},
 		},
-		calendarId: newCalendar.data.id
+		calendarId: newCalendar.data.id,
 	});
 
 	return newCalendar.data.id;
@@ -243,7 +244,7 @@ export async function createGoogleCalendarForEvent(
 	newEventName: string,
 	newAccountName: string,
 	accountID: string,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ) {
 	const name = `${newAccountName} - ${newEventName}`;
 
@@ -254,14 +255,14 @@ export async function createGoogleCalendarEvents(
 	schema: Schema,
 	inEvent: RawEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ): Promise<[string | null, string | null, string | null, string | null]> {
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
 		privatekey.private_key,
-		['https://www.googleapis.com/auth/calendar']
+		['https://www.googleapis.com/auth/calendar'],
 	);
 	const myReg = await getRegistry(schema)(inAccount).fullJoin();
 	// authenticate request
@@ -274,13 +275,16 @@ export async function createGoogleCalendarEvents(
 
 	return Promise.all([
 		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-		inEvent.publishToWingCalendar
+		inEvent.publishToWingCalendar &&
+		(inAccount.type === AccountType.CAPEVENT ||
+			inAccount.type === AccountType.CAPGROUP ||
+			inAccount.type === AccountType.CAPSQUADRON)
 			? updateWingEvent(
 					myCalendar,
 					jwtClient,
 					inEvent,
 					inAccount.wingCalendarID,
-					myReg.Website.Name
+					myReg.Website.Name,
 			  )
 			: null,
 		typeof inEvent.registration !== 'undefined'
@@ -288,7 +292,7 @@ export async function createGoogleCalendarEvents(
 			: null,
 		typeof inEvent.participationFee !== 'undefined'
 			? updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
-			: null
+			: null,
 	]) as Promise<[string, string | null, string | null, string | null]>;
 }
 
@@ -296,14 +300,14 @@ export default async function updateGoogleCalendars(
 	schema: Schema,
 	inEvent: RawEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ) {
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
 		privatekey.private_key,
-		['https://www.googleapis.com/auth/calendar']
+		['https://www.googleapis.com/auth/calendar'],
 	);
 	// authenticate request
 	const myReg = await getRegistry(schema)(inAccount).fullJoin();
@@ -313,143 +317,134 @@ export default async function updateGoogleCalendars(
 	// 999999999 is there a guarantee that the function return values will always be in the same order???
 	return Promise.all([
 		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-		updateWingEvent(
-			myCalendar,
-			jwtClient,
-			inEvent,
-			inAccount.wingCalendarID,
-			myReg.Website.Name
-		),
+		inAccount.type === AccountType.CAPEVENT ||
+		inAccount.type === AccountType.CAPGROUP ||
+		inAccount.type === AccountType.CAPSQUADRON
+			? updateWingEvent(
+					myCalendar,
+					jwtClient,
+					inEvent,
+					inAccount.wingCalendarID,
+					myReg.Website.Name,
+			  )
+			: null,
 		updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-		updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+		updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 	]) as Promise<[string, string | null, string | null, string | null]>;
 }
 
 export async function removeGoogleCalendarEvents(
 	inEvent: RawEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ) {
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
 		privatekey.private_key,
-		['https://www.googleapis.com/auth/calendar']
+		['https://www.googleapis.com/auth/calendar'],
 	);
 	// authenticate request
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
 	// 999999999 need to catch the deleteCalendarEvents return error and provide notification
-	await deleteCalendarEvents(myCalendar, jwtClient, inEvent, [
-		inAccount.mainCalendarID,
-		inAccount.wingCalendarID
-	]);
+	await deleteCalendarEvents(
+		myCalendar,
+		jwtClient,
+		inEvent,
+		inAccount.type === AccountType.CAPEVENT ||
+			inAccount.type === AccountType.CAPGROUP ||
+			inAccount.type === AccountType.CAPSQUADRON
+			? [inAccount.mainCalendarID, inAccount.wingCalendarID]
+			: [inAccount.mainCalendarID],
+	);
 }
 
 export async function deleteAllGoogleCalendarEvents(
 	inAccount: AccountObject,
-	config: ServerConfiguration
+	config: ServerConfiguration,
 ) {
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
 		privatekey.private_key,
-		['https://www.googleapis.com/auth/calendar']
+		['https://www.googleapis.com/auth/calendar'],
 	);
 	// authenticate request
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
-
-	let iteration = 0;
-	let count = 0;
 
 	console.log(`Deleting events for ${inAccount.mainCalendarID} (${inAccount.id})`);
 
 	let events = (
 		await myCalendar.events.list({
 			auth: jwtClient,
-			calendarId: inAccount.mainCalendarID
+			calendarId: inAccount.mainCalendarID,
 		})
 	)?.data.items;
 	while (events === null || events === undefined || events.length > 0) {
 		if (events !== null && events !== undefined) {
-			console.log(`Deleting ${events.length} events for iteration ${iteration}...`);
 			for (const event of events) {
 				await myCalendar.events.delete({
 					auth: jwtClient,
 					calendarId: inAccount.mainCalendarID,
-					eventId: event.id as string
+					eventId: event.id as string,
 				});
 
 				await new Promise(res => {
 					setTimeout(res, 500);
 				});
 			}
-
-			iteration++;
-			count += events.length;
-			console.log(
-				`Completed ${iteration}th iteration of deleting events (${events.length} items)...`
-			);
 		} else {
 			console.log('Received null list!');
 		}
 		events = (
 			await myCalendar.events.list({
 				auth: jwtClient,
-				calendarId: inAccount.mainCalendarID
+				calendarId: inAccount.mainCalendarID,
 			})
 		)?.data.items;
 	}
 
-	console.log(`Deleted ${count} events for ${inAccount.wingCalendarID} (${inAccount.id})`);
-
-	iteration = 0;
-	count = 0;
-
-	console.log(`Deleting events for ${inAccount.wingCalendarID} (${inAccount.id})`);
-
-	let wingevents = (
-		await myCalendar.events.list({
-			auth: jwtClient,
-			calendarId: inAccount.wingCalendarID
-		})
-	)?.data.items;
-	while (wingevents === null || wingevents === undefined || wingevents.length > 0) {
-		if (wingevents !== null && wingevents !== undefined) {
-			console.log(`Deleting ${wingevents.length} events for iteration ${iteration}...`);
-			for (const event of wingevents) {
-				await myCalendar.events.delete({
-					auth: jwtClient,
-					calendarId: inAccount.wingCalendarID,
-					eventId: event.id as string
-				});
-
-				await new Promise(res => {
-					setTimeout(res, 500);
-				});
-			}
-			iteration++;
-			count += wingevents.length;
-			console.log(
-				`Completed ${iteration}th iteration of deleting events (${wingevents.length} items)...`
-			);
-		} else {
-			console.log('Received null list!');
-		}
-
-		wingevents = (
+	if (
+		inAccount.type === AccountType.CAPEVENT ||
+		inAccount.type === AccountType.CAPSQUADRON ||
+		inAccount.type === AccountType.CAPGROUP
+	) {
+		let wingevents = (
 			await myCalendar.events.list({
 				auth: jwtClient,
-				calendarId: inAccount.mainCalendarID
+				calendarId: inAccount.wingCalendarID,
 			})
 		)?.data.items;
-	}
+		while (wingevents === null || wingevents === undefined || wingevents.length > 0) {
+			if (wingevents !== null && wingevents !== undefined) {
+				for (const event of wingevents) {
+					await myCalendar.events.delete({
+						auth: jwtClient,
+						calendarId: inAccount.wingCalendarID,
+						eventId: event.id as string,
+					});
 
-	console.log(`Deleted ${count} wing events for ${inAccount.wingCalendarID} (${inAccount.id})`);
+					await new Promise(res => {
+						setTimeout(res, 500);
+					});
+				}
+			} else {
+				console.log('Received null list!');
+			}
+
+			wingevents = (
+				await myCalendar.events.list({
+					auth: jwtClient,
+					calendarId: inAccount.wingCalendarID,
+				})
+			)?.data.items;
+		}
+	}
 
 	// const clearMainResponse = await myCalendar.calendars.clear ({
 	// 	auth: jwtClient,
@@ -468,7 +463,7 @@ async function deleteCalendarEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	eventUUID: string,
-	id: string
+	id: string,
 ) {
 	if (eventUUID.length > 0) {
 		let deleteResponse;
@@ -476,7 +471,7 @@ async function deleteCalendarEvent(
 			deleteResponse = await myCalendar.events.delete({
 				auth: jwtClient,
 				calendarId: id,
-				eventId: eventUUID
+				eventId: eventUUID,
 			});
 		} catch (error) {
 			// 		console.log("delete event error: " + eventUUID);  9999999999 this shouldn't happen.  Should probably log
@@ -501,7 +496,7 @@ async function deleteCalendarEvents(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	ids: string[]
+	ids: string[],
 ) {
 	let errorFlag = false;
 	if (!!inEvent.googleCalendarIds.mainId && inEvent.googleCalendarIds.mainId.length > 0) {
@@ -510,7 +505,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.mainId,
-				ids[0]
+				ids[0],
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -522,7 +517,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.wingId,
-				ids[1]
+				ids[1],
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -534,7 +529,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.regId,
-				ids[0]
+				ids[0],
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -546,7 +541,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.feeId,
-				ids[0]
+				ids[0],
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -584,8 +579,8 @@ function buildEvent(inEvent: RawEventObject) {
 	if (endDateTime !== inEvent.pickupDateTime) {
 		console.log(
 			`Using different pickup date time (${new Date(endDateTime).toISOString()} vs ${new Date(
-				inEvent.pickupDateTime
-			).toISOString()})`
+				inEvent.pickupDateTime,
+			).toISOString()})`,
 		);
 	}
 	const event = {
@@ -595,13 +590,13 @@ function buildEvent(inEvent: RawEventObject) {
 		colorId: eventColor.toString(),
 		start: {
 			dateTime: new Date(inEvent.meetDateTime).toISOString(),
-			timeZone: 'America/New_York'
+			timeZone: 'America/New_York',
 		},
 		end: {
 			dateTime: new Date(endDateTime).toISOString(),
-			timeZone: 'America/New_York'
+			timeZone: 'America/New_York',
 		},
-		id: uniqueId
+		id: uniqueId,
 	};
 	return event;
 }
@@ -623,13 +618,13 @@ function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string
 		colorId: eventColor.toString(),
 		start: {
 			dateTime: startDate,
-			timeZone: 'America/New_York'
+			timeZone: 'America/New_York',
 		},
 		end: {
 			dateTime: endDate,
-			timeZone: 'America/New_York'
+			timeZone: 'America/New_York',
 		},
-		id: uniqueId
+		id: uniqueId,
 	};
 	return event;
 }
@@ -638,7 +633,7 @@ async function updateFeeEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	googleId: string
+	googleId: string,
 ) {
 	let response = { status: 200 };
 	if (inEvent.participationFee !== null) {
@@ -658,7 +653,7 @@ async function updateFeeEvent(
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
-				requestBody: event
+				requestBody: event,
 			});
 		} else {
 			const inEventId = inEvent.googleCalendarIds.feeId as string;
@@ -667,7 +662,7 @@ async function updateFeeEvent(
 				auth: jwtClient,
 				calendarId: googleId,
 				eventId: inEventId,
-				requestBody: event
+				requestBody: event,
 			});
 		}
 
@@ -683,7 +678,7 @@ async function updateFeeEvent(
 		response = await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.feeId
+			eventId: inEvent.googleCalendarIds.feeId,
 		});
 		return null;
 	} else {
@@ -695,7 +690,7 @@ async function updateRegEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	googleId: string
+	googleId: string,
 ) {
 	let response = { status: 200 };
 	if (inEvent.registration !== null) {
@@ -715,7 +710,7 @@ async function updateRegEvent(
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
-				requestBody: event
+				requestBody: event,
 			});
 		} else {
 			const inEventId = inEvent.googleCalendarIds.regId as string;
@@ -724,7 +719,7 @@ async function updateRegEvent(
 				auth: jwtClient,
 				calendarId: googleId,
 				eventId: inEventId,
-				requestBody: event
+				requestBody: event,
 			});
 		}
 
@@ -740,7 +735,7 @@ async function updateRegEvent(
 		response = await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.regId
+			eventId: inEvent.googleCalendarIds.regId,
 		});
 		return null;
 	} else {
@@ -752,7 +747,7 @@ async function updateMainEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
-	googleId: string
+	googleId: string,
 ) {
 	const event = buildEvent(inEvent);
 	let response = { status: 200 };
@@ -761,7 +756,7 @@ async function updateMainEvent(
 		response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
-			requestBody: event
+			requestBody: event,
 		});
 	} else {
 		try {
@@ -771,7 +766,7 @@ async function updateMainEvent(
 				auth: jwtClient,
 				calendarId: googleId,
 				eventId: inEventId,
-				requestBody: event
+				requestBody: event,
 			});
 		} catch (e) {
 			console.error(e);
@@ -782,7 +777,7 @@ async function updateMainEvent(
 				response = await myCalendar.events.insert({
 					auth: jwtClient,
 					calendarId: googleId,
-					requestBody: event
+					requestBody: event,
 				});
 			}
 		}
@@ -803,7 +798,7 @@ async function updateWingEvent(
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
 	googleId: string,
-	accountName: string
+	accountName: string,
 ) {
 	let response = { status: 200 };
 	if (inEvent.publishToWingCalendar) {
@@ -814,7 +809,7 @@ async function updateWingEvent(
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
-				requestBody: event
+				requestBody: event,
 			});
 		} else {
 			const inEventId = inEvent.googleCalendarIds.wingId as string;
@@ -823,7 +818,7 @@ async function updateWingEvent(
 				auth: jwtClient,
 				calendarId: googleId,
 				eventId: inEventId,
-				requestBody: event
+				requestBody: event,
 			});
 		}
 
@@ -840,7 +835,7 @@ async function updateWingEvent(
 		response = await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.wingId
+			eventId: inEvent.googleCalendarIds.wingId,
 		});
 		return null;
 	} else {
