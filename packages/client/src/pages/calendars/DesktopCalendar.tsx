@@ -81,7 +81,7 @@ export const getClassNameFromEvent = (obj: RawEventObject) => {
 			return ' cancelled';
 
 		case EventStatus.DRAFT:
-			return obj.teamID !== null ? ' draft team' : ' draft';
+			return obj.teamID !== null && obj.teamID !== undefined ? ' draft team' : ' draft';
 
 		case EventStatus.INFORMATIONONLY:
 			return ' info';
@@ -92,7 +92,7 @@ export const getClassNameFromEvent = (obj: RawEventObject) => {
 		case EventStatus.COMPLETE:
 		case EventStatus.CONFIRMED:
 		default:
-			return obj.teamID !== null ? ' team' : '';
+			return obj.teamID !== null && obj.teamID !== undefined ? ' team' : '';
 	}
 };
 
@@ -303,7 +303,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 		}
 
 		return (
-			<div className="calendar-desktop">
+			<div className="calendar calendar-desktop">
 				{this.props.member &&
 				effectiveManageEventPermission(this.props.member) !==
 					Permissions.ManageEvent.NONE ? (

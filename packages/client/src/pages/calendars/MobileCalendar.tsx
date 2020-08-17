@@ -67,7 +67,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		});
 
 		return (
-			<div className="calendar-mobile">
+			<div className="calendar calendar-mobile">
 				{this.props.member &&
 				effectiveManageEventPermission(this.props.member) !==
 					Permissions.ManageEvent.NONE ? (

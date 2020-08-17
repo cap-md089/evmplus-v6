@@ -17,20 +17,20 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-.events-list .event-item.draft {
+.calendar .events-list .event-item.draft {
 	background-color: #151;
 	background-image: repeating-linear-gradient(-45deg, #151, #151 10px, #171 10px, #171 20px);
 	border-color: #131;
 	color: #fff;
 }
 
-.events-list .event-item.team {
+.calendar .events-list .event-item.team {
 	background-color: #51b749;
 	border-color: #113;
 	color: #fff;
 }
 
-.events-list .event-item.draft.team {
+.calendar .events-list .event-item.draft.team {
 	background-color: #7ae7bf;
 	background-image: repeating-linear-gradient(
 		-45deg,
@@ -42,13 +42,13 @@
 	color: #000;
 }
 
-.events-list .event-item.tentative {
+.calendar .events-list .event-item.tentative {
 	background-color: #46d6db;
 	border-color: #113;
 	color: #000;
 }
 
-.events-list .event-item.cancelled {
+.calendar .events-list .event-item.cancelled {
 	background-color: #dc2127;
 	background-image: repeating-linear-gradient(
 		-45deg,
@@ -61,7 +61,7 @@
 	color: #fff;
 }
 
-.events-list .event-item.info {
+.calendar .events-list .event-item.info {
 	background-color: #a4bdfc;
 	border-color: #000;
 	color: #000;
