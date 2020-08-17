@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.5.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.4.0...capunit-com-server@6.5.0) (2020-08-17)
+
+
+### Bug Fixes
+
+* **permissions:** fixed client acting like all members had all permissions ([fcc59ea](http://github.com//cap-md089/capunit-com-v6/commit/fcc59ea127eb7cec3e0973b7f7797f6e6080483f))
+* exported APIs from server so they can be used by util-cli ([96dbbb4](http://github.com//cap-md089/capunit-com-v6/commit/96dbbb41c6f1404142cd01ed40d0406c52154a4f))
+* **discord-bot:** fixed not being able to update flight membership ([6c836ad](http://github.com//cap-md089/capunit-com-v6/commit/6c836ad9e0d98ab99d8af5bd855972fdcb644c12))
+* fixed version command on the server ([7388205](http://github.com//cap-md089/capunit-com-v6/commit/7388205fd2feb6105e15bbbd43d9cd11dc49c396))
+
+
+### Features
+
+* **prospectivemembers:** added a prospective member management page ([73b07b3](http://github.com//cap-md089/capunit-com-v6/commit/73b07b3b9077ba52e82849a97463225c4a68154d)), closes [#4](http://github.com//cap-md089/capunit-com-v6/issues/4)
+
+
+
+
+
 ## [6.4.1](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.4.0...capunit-com-server@6.4.1) (2020-08-13)
 
 

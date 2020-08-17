@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.2.0...apis@1.3.0) (2020-08-17)
+
+
+### Features
+
+* **prospectivemembers:** added a prospective member management page ([73b07b3](http://github.com//cap-md089/capunit-com-v6/commit/73b07b3b9077ba52e82849a97463225c4a68154d)), closes [#4](http://github.com//cap-md089/capunit-com-v6/issues/4)
+
+
+
+
+
 ## [1.2.1](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.2.0...apis@1.2.1) (2020-08-13)
 
 **Note:** Version bump only for package apis

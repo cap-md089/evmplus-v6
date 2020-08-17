@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.4.0](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.3.1...discord-bot@1.4.0) (2020-08-17)
+
+
+### Bug Fixes
+
+* **discord-bot:** fixed not being able to update flight membership ([6c836ad](http://github.com//cap-md089/capunit-com-v6/commit/6c836ad9e0d98ab99d8af5bd855972fdcb644c12))
+
+
+### Features
+
+* **prospectivemembers:** added a prospective member management page ([73b07b3](http://github.com//cap-md089/capunit-com-v6/commit/73b07b3b9077ba52e82849a97463225c4a68154d)), closes [#4](http://github.com//cap-md089/capunit-com-v6/issues/4)
+
+
+
+
+
 ## [1.3.2](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.3.1...discord-bot@1.3.2) (2020-08-13)
 
 
