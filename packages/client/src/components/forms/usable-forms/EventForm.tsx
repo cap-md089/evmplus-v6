@@ -560,6 +560,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 						receiveUpdates: false,
 					})}
 					buttonText="Add point of contact"
+					removeText="Remove point of contact"
 					fullWidth={true}
 					extraProps={{
 						account: this.props.account,
@@ -581,6 +582,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 						allowMemberToModify: false,
 					})}
 					buttonText="Add Custom Attendance Field"
+					removeText="Remove Custom Attendance Field"
 					fullWidth={true}
 					extraProps={{}}
 				/>

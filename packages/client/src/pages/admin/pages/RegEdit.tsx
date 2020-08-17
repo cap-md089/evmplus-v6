@@ -256,6 +256,8 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 						extraProps={{}}
 						inputComponent={TextInput}
 						name="Flights"
+						removeText="Remove flight"
+						buttonText="Add flight"
 					/>
 				</FormBlock>
 

@@ -155,6 +155,7 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 					inputComponent={TeamMemberInput}
 					fullWidth={true}
 					buttonText="Add team member"
+					removeText="Remove team member"
 				/>
 
 				<Divider />
