@@ -29,17 +29,21 @@ import {
 	NotificationEveryoneTarget,
 	NotificationObject,
 	NotificationTargetType,
+	Permissions,
 	ServerError,
 	SessionType,
-	toReference
+	toReference,
 } from 'common-lib';
 import { createNotification, PAM } from 'server-common';
 import { hasGlobalNotification } from 'server-common/dist/notifications';
 
 export const func: ServerAPIEndpoint<api.notifications.global.CreateGlobalNotification> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('CreateNotifications')(req =>
+	PAM.RequiresPermission(
+		'CreateNotifications',
+		Permissions.Notify.GLOBAL,
+	)(req =>
 		hasGlobalNotification(req.mysqlx)(req.account).flatMap(hasNotification =>
 			hasNotification
 				? asyncLeft<
@@ -52,26 +56,27 @@ export const func: ServerAPIEndpoint<api.notifications.global.CreateGlobalNotifi
 				  >({
 						type: 'OTHER',
 						code: 400,
-						message: 'Cannot create a global notification when one is already in effect'
+						message:
+							'Cannot create a global notification when one is already in effect',
 				  })
 				: createNotification(req.mysqlx)(req.account)({
 						cause: {
 							type: NotificationCauseType.MEMBER,
 							from: toReference(req.member),
-							fromName: getFullMemberName(req.member)
+							fromName: getFullMemberName(req.member),
 						},
 						extraData: {
 							type: NotificationDataType.MESSAGE,
-							message: req.body.text
+							message: req.body.text,
 						},
 						target: {
 							type: NotificationTargetType.EVERYONE,
 							accountID: req.account.id,
-							expires: req.body.expires
-						}
-				  })
-		)
-	)
+							expires: req.body.expires,
+						},
+				  }),
+		),
+	),
 );
 
 export default func;

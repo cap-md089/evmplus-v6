@@ -17,11 +17,19 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, hasPermission, Maybe, MaybeObj, Member, TeamPublicity } from 'common-lib';
+import {
+	Either,
+	hasPermission,
+	Maybe,
+	MaybeObj,
+	Member,
+	TeamPublicity,
+	Permissions,
+} from 'common-lib';
 import * as React from 'react';
 import TeamForm, {
 	collapseTeamEditToObject,
-	TeamObjectEdit
+	TeamObjectEdit,
 } from '../../components/forms/usable-forms/TeamForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
@@ -71,10 +79,10 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			description: '',
 			members: [],
 			name: '',
-			visibility: TeamPublicity.PRIVATE
+			visibility: TeamPublicity.PRIVATE,
 		},
 		state: 'LOADING',
-		result: 'UNSUBMITTED'
+		result: 'UNSUBMITTED',
 	};
 
 	public constructor(props: PageProps) {
@@ -85,7 +93,10 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 	}
 
 	public async componentDidMount() {
-		if (!this.props.member || !hasPermission('ManageTeam')()(this.props.member)) {
+		if (
+			!this.props.member ||
+			!hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member)
+		) {
 			return;
 		}
 
@@ -95,14 +106,14 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			this.setState({
 				state: 'ERROR',
 				result: 'UNSUBMITTED',
-				team: this.state.team
+				team: this.state.team,
 			});
 		} else {
 			this.setState({
 				state: 'LOADED',
 				members: memberEither.value,
 				result: 'UNSUBMITTED',
-				team: this.state.team
+				team: this.state.team,
 			});
 		}
 	}
@@ -112,7 +123,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (!hasPermission('ManageTeam')()(this.props.member)) {
+		if (!hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member)) {
 			return <div>You do not have permission to do that action</div>;
 		}
 
@@ -142,7 +153,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 
 	private onTeamChange(team: TeamObjectEdit) {
 		this.setState({
-			team
+			team,
 		});
 	}
 
@@ -157,19 +168,19 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
-		if (!hasPermission('ManageTeam')()(this.props.member)) {
+		if (!hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member)) {
 			return;
 		}
 
 		const newTeamEither = await fetchApi.team.create(
 			{},
 			teamObj.value,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(newTeamEither)) {
 			this.setState({
-				result: 'ERROR'
+				result: 'ERROR',
 			});
 		} else {
 			this.props.routeProps.history.push(`/team/${newTeamEither.value.id}`);

@@ -27,30 +27,31 @@ import {
 	MemberPermissions,
 	MemberReference,
 	parseStringMemberReference,
+	Permissions,
 	Right,
 	SessionType,
 	StoredMemberPermissions,
 	stringifyMemberReference,
-	toReference
+	toReference,
 } from 'common-lib';
 import { PAM } from 'server-common';
 import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
 
 const getHighestPermissionsObject = (perms1: MemberPermissions) => (
-	perms2: MemberPermissions
+	perms2: MemberPermissions,
 ): MemberPermissions =>
 	(Object.fromEntries(
 		Object.keys(perms1).map((key: string) => [
 			key,
-			Math.max(perms1[key as keyof typeof perms1], perms2[key as keyof typeof perms2])
-		])
+			Math.max(perms1[key as keyof typeof perms1], perms2[key as keyof typeof perms2]),
+		]),
 	) as unknown) as MemberPermissions;
 
 const simplifyInputs = (
 	roles: Array<{
 		member: MemberReference;
 		permissions: MemberPermissions;
-	}>
+	}>,
 ): Array<{
 	member: MemberReference;
 	permissions: MemberPermissions;
@@ -60,30 +61,31 @@ const simplifyInputs = (
 	for (const role of roles) {
 		const key = stringifyMemberReference(role.member);
 		members[key] = getHighestPermissionsObject(members[key] ?? role.permissions)(
-			role.permissions
+			role.permissions,
 		);
 	}
 
 	return Object.keys(members).map(key => ({
 		member: (parseStringMemberReference(key) as Right<MemberReference>).value,
-		permissions: members[key]
+		permissions: members[key],
 	}));
 };
 
 export const func: ServerAPIEndpoint<api.member.permissions.SetPermissions> = PAM.RequiresPermission(
-	'PermissionManagement'
+	'PermissionManagement',
+	Permissions.PermissionManagement.FULL,
 )(
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		asyncRight(
 			req.mysqlxSession.startTransaction(),
-			errorGenerator('Could not save permissions')
+			errorGenerator('Could not save permissions'),
 		)
 			.tap(() =>
 				req.mysqlx
 					.getCollection<StoredMemberPermissions>('UserPermissions')
 					.remove('accountID = :accountID')
 					.bind('accountID', req.account.id)
-					.execute()
+					.execute(),
 			)
 			.tap(() =>
 				AsyncEither.All([
@@ -95,17 +97,17 @@ export const func: ServerAPIEndpoint<api.member.permissions.SetPermissions> = PA
 									req.mysqlx,
 									toReference(newRole.member),
 									newRole.permissions,
-									req.account
+									req.account,
 								),
-								errorGenerator('Could not save permissions')
-							)
-						)
-				])
+								errorGenerator('Could not save permissions'),
+							),
+						),
+				]),
 			)
 			.tap(() => req.mysqlxSession.commit())
 			.leftTap(() => req.mysqlxSession.rollback())
-			.map(destroy)
-	)
+			.map(destroy),
+	),
 );
 
 export default func;

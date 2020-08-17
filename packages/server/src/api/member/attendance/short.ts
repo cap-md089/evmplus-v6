@@ -44,14 +44,14 @@ import {
 	ServerError,
 	SessionType,
 	toReference,
-	User
+	User,
 } from 'common-lib';
 import {
 	getEvent,
 	getLatestAttendanceForMember,
 	getMembers,
 	PAM,
-	RawAttendanceDBRecord
+	RawAttendanceDBRecord,
 } from 'server-common';
 import { expandRecord } from './basic';
 
@@ -73,20 +73,20 @@ const groupTarget = (member: User) => {
 };
 
 export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(req =>
 	asyncRight(groupTarget(req.member), errorGenerator('Could not get member attendance'))
 		.filter(target => target !== GroupTarget.NONE, {
 			type: 'OTHER',
 			code: 403,
-			message: 'Member does not have permission to get the attendance for a flight or unit'
+			message: 'Member does not have permission to get the attendance for a flight or unit',
 		})
 		.map(target =>
 			asyncIterFilter<EitherObj<ServerError, Member>>(
 				target === GroupTarget.FLIGHT
 					? member => Either.isRight(member) && member.value.flight === req.member.flight
-					: Either.isRight
-			)(getMembers(req.mysqlx)(req.account))
+					: Either.isRight,
+			)(getMembers(req.mysqlx)(req.account)()),
 		)
 		.map(asyncEitherIterMap(toReference))
 		.map<AsyncIter<EitherObj<ServerError, MaybeObj<RawAttendanceDBRecord>>>>(
@@ -96,8 +96,8 @@ export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.Re
 			>(eith =>
 				eith.direction === 'right'
 					? getLatestAttendanceForMember(req.mysqlx)(req.account)(eith.value)
-					: asyncLeft<ServerError, MaybeObj<RawAttendanceDBRecord>>(eith.value)
-			)
+					: asyncLeft<ServerError, MaybeObj<RawAttendanceDBRecord>>(eith.value),
+			),
 		)
 		.map(
 			asyncEitherIterMap<
@@ -106,13 +106,13 @@ export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.Re
 			>(rec =>
 				Maybe.isSome(rec)
 					? expandRecord(always(always(memoize(getEvent(req.mysqlx)(req.account)))))(req)(
-							rec.value
+							rec.value,
 					  )
 							.map(Maybe.some)
 							.cata(Maybe.none, identity)
-					: Maybe.none()
-			)
-		)
+					: Maybe.none(),
+			),
+		),
 );
 
 export default func;

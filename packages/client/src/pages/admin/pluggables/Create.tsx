@@ -17,17 +17,16 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import {
+	canCreateCAPEventAccount,
+	effectiveManageEventPermission,
+	hasPermission,
+	Permissions,
+	User,
+} from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
-import {
-	effectiveManageEventPermission,
-	Permissions,
-	hasPermission,
-	User,
-	AccountType,
-	canCreateCAPEventAccount
-} from 'common-lib';
 
 export const canUseCreate = (props: PageProps) => {
 	if (!props.member) {
@@ -36,8 +35,10 @@ export const canUseCreate = (props: PageProps) => {
 
 	return (
 		effectiveManageEventPermission(props.member) !== Permissions.ManageEvent.NONE ||
-		hasPermission('ManageTeam')()(props.member) ||
-		hasPermission('ProspectiveMemberManagement')()(props.member)
+		hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(props.member) ||
+		hasPermission('ProspectiveMemberManagement')(Permissions.ProspectiveMemberManagement.FULL)(
+			props.member,
+		)
 	);
 };
 
@@ -59,18 +60,9 @@ export class CreateWidget extends Page<CreateWidgetProps> {
 							<br />
 						</>
 					) : null}
-					{hasPermission('ManageTeam')()(this.props.member) ? (
+					{hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) ? (
 						<>
 							<Link to="/team/create">Add a team</Link>
-							<br />
-						</>
-					) : null}
-					{hasPermission('ProspectiveMemberManagement')()(this.props.member) &&
-					this.props.account.type === AccountType.CAPSQUADRON ? (
-						<>
-							<Link to="/admin/createcapprospectiveaccount">
-								Create a prospective member account
-							</Link>
 							<br />
 						</>
 					) : null}

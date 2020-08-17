@@ -24,21 +24,25 @@ import {
 	destroy,
 	errorGenerator,
 	NewTeamObject,
+	Permissions,
 	ServerError,
 	SessionType,
-	Validator
+	Validator,
 } from 'common-lib';
 import { getTeam, PAM, saveTeam, updateTeam } from 'server-common';
 import { validateRequest } from '../../lib/requestUtils';
 
 const teamPartialValidator = Validator.Partial(
-	(validator<NewTeamObject>(Validator) as Validator<NewTeamObject>).rules
+	(validator<NewTeamObject>(Validator) as Validator<NewTeamObject>).rules,
 );
 
 export const func: ServerAPIEndpoint<api.team.SetTeamData> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('ManageTeam')(request =>
+	PAM.RequiresPermission(
+		'ManageTeam',
+		Permissions.ManageTeam.FULL,
+	)(request =>
 		validateRequest(teamPartialValidator)(request).flatMap(req =>
 			getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10)).flatMap(oldTeam =>
 				asyncRight<ServerError, NewTeamObject>(
@@ -49,16 +53,16 @@ export const func: ServerAPIEndpoint<api.team.SetTeamData> = PAM.RequireSessionT
 						name: req.body.name ?? oldTeam.name,
 						seniorCoach: req.body.seniorCoach ?? oldTeam.seniorCoach,
 						seniorMentor: req.body.seniorMentor ?? oldTeam.seniorMentor,
-						visibility: req.body.visibility ?? oldTeam.visibility
+						visibility: req.body.visibility ?? oldTeam.visibility,
 					},
-					errorGenerator('Could not update team')
+					errorGenerator('Could not update team'),
 				)
 					.map(updateTeam(req.account)(req.memberUpdateEmitter)(oldTeam))
 					.map(saveTeam(req.mysqlx))
-					.map(destroy)
-			)
-		)
-	)
+					.map(destroy),
+			),
+		),
+	),
 );
 
 export default func;

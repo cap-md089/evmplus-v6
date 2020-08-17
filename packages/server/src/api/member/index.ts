@@ -44,11 +44,6 @@ const router = express.Router();
 
 const adder = endpointAdder(router) as () => () => void;
 
-addAPI(Validator, adder, getmembers);
-addAPI(Validator, adder, passwordreset);
-addAPI(Validator, adder, absent);
-addAPI(Validator, adder, su);
-
 addAPI(Validator, adder, getdutypositions);
 addAPI(Validator, adder, setdutypositions);
 
@@ -65,6 +60,11 @@ addAPI(Validator, adder, flightmembers);
 addAPI(Validator, adder, basic);
 addAPI(Validator, adder, short);
 addAPI(Validator, adder, other);
+
+addAPI(Validator, adder, passwordreset);
+addAPI(Validator, adder, absent);
+addAPI(Validator, adder, su);
+addAPI(Validator, adder, getmembers);
 
 router.use(account);
 

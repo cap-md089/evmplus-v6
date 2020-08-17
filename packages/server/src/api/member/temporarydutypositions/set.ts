@@ -25,9 +25,10 @@ import {
 	destroy,
 	errorGenerator,
 	parseStringMemberReference,
+	Permissions,
 	SessionType,
 	ShortCAPUnitDutyPosition,
-	ShortDutyPosition
+	ShortDutyPosition,
 } from 'common-lib';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
@@ -36,50 +37,53 @@ const getDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) 
 	oldPositions.find(({ duty: oldDuty, type }) => duty === oldDuty && type === 'CAPUnit') ?? {
 		type: 'CAPUnit' as const,
 		duty,
-		date: now()
+		date: now(),
 	};
 
 const updateDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) => ({
 	duty,
-	expires
+	expires,
 }: ShortCAPUnitDutyPosition) => ({
 	...getDutyPosition(now)(oldPositions)(duty),
-	expires
+	expires,
 });
 
 const getNewPositions = (now = Date.now) => (
-	newPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>
+	newPositions: Array<Omit<ShortCAPUnitDutyPosition, 'date'>>,
 ) => (oldPositions: ShortDutyPosition[]): ShortDutyPosition[] => [
 	...newPositions.map(updateDutyPosition(now)(oldPositions)),
-	...oldPositions.filter(({ type }) => type !== 'CAPUnit')
+	...oldPositions.filter(({ type }) => type !== 'CAPUnit'),
 ];
 
 export const func: () => ServerAPIEndpoint<
 	api.member.temporarydutypositions.SetTemporaryDutyPositions
 > = (now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(
-		PAM.RequiresPermission('AssignTemporaryDutyPositions')(req =>
+		PAM.RequiresPermission(
+			'AssignTemporaryDutyPositions',
+			Permissions.AssignTemporaryDutyPosition.YES,
+		)(req =>
 			asyncEither(
 				parseStringMemberReference(req.params.id),
-				errorGenerator('Could not parse member ID')
+				errorGenerator('Could not parse member ID'),
 			)
 				.flatMap(resolveReference(req.mysqlx)(req.account))
 				.map<CAPMember>(member => ({
 					...member,
 					dutyPositions: getNewPositions(now)(req.body.dutyPositions)(
-						member.dutyPositions
-					)
+						member.dutyPositions,
+					),
 				}))
 				.tap(member => {
 					req.memberUpdateEmitter.emit('memberChange', {
 						member,
-						account: req.account
+						account: req.account,
 					});
 				})
 				.flatMap(getExtraMemberInformationForCAPMember(req.account))
 				.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
-				.map(destroy)
-		)
+				.map(destroy),
+		),
 	);
 
 export default func();

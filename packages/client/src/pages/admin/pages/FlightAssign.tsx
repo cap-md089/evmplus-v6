@@ -28,7 +28,8 @@ import {
 	hasPermission,
 	Either,
 	areMembersTheSame,
-	toReference
+	toReference,
+	Permissions,
 } from 'common-lib';
 import fetchApi from '../../../lib/apis';
 
@@ -54,11 +55,11 @@ type FlightAssignState = FlightAssignStateLoaded | FlightAssignStateUnloaded;
 
 const saveButtonMargin = {
 	margin: 15,
-	marginRight: 35
+	marginRight: 35,
 };
 
 const saveMessage = {
-	marginLeft: 10
+	marginLeft: 10,
 };
 
 export default class FlightAssign extends Page<PageProps, FlightAssignState> {
@@ -68,7 +69,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		open: true,
 		highlighted: null,
 		saving: false,
-		saved: false
+		saved: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -80,7 +81,10 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	}
 
 	public async componentDidMount() {
-		if (!this.props.member || !hasPermission('FlightAssign')()(this.props.member)) {
+		if (
+			!this.props.member ||
+			!hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(this.props.member)
+		) {
 			return;
 		}
 
@@ -89,32 +93,32 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			...this.props.registry.RankAndFile.Flights.map((flight, i) => ({
 				text: flight,
 				target: flight.toLowerCase() + '-' + i,
-				type: 'Reference' as 'Reference'
+				type: 'Reference' as 'Reference',
 			})),
 			{
 				target: 'unassigned-' + this.props.registry.RankAndFile.Flights.length,
 				text: 'Unassigned',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'save',
 				text: 'Save',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/flightassign',
-				text: 'Flight Assignment'
-			}
+				text: 'Flight Assignment',
+			},
 		]);
 
 		const membersEither = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
@@ -124,7 +128,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		} else {
 			this.setState({
 				members: membersEither.value,
-				loaded: true
+				loaded: true,
 			});
 		}
 	}
@@ -191,7 +195,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	private onDragStart(flight: string) {
 		this.setState({
 			open: false,
-			highlighted: flight
+			highlighted: flight,
 		});
 	}
 
@@ -205,7 +209,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			this.setState({
 				highlighted: null,
 				open: true,
-				saved: false
+				saved: false,
 			});
 		};
 	}
@@ -217,33 +221,33 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 				newFlight: string | null;
 			}>;
 		} = {
-			members: []
+			members: [],
 		};
 
 		for (const i of this.state.members!) {
 			if (i.flight && this.props.registry.RankAndFile.Flights.indexOf(i.flight) > -1) {
 				payload.members.push({
 					member: toReference(i),
-					newFlight: i.flight
+					newFlight: i.flight,
 				});
 			} else {
 				payload.members.push({
 					member: toReference(i),
-					newFlight: null
+					newFlight: null,
 				});
 			}
 		}
 
 		this.setState({
 			saved: false,
-			saving: true
+			saving: true,
 		});
 
 		await fetchApi.member.flight.assignBulk({}, payload, this.props.member!.sessionID);
 
 		this.setState({
 			saved: true,
-			saving: false
+			saving: false,
 		});
 	}
 }

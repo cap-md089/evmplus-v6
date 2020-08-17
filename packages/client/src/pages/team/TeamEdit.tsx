@@ -17,12 +17,20 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AsyncEither, Either, hasPermission, Maybe, MaybeObj, Member } from 'common-lib';
+import {
+	AsyncEither,
+	Either,
+	hasPermission,
+	Maybe,
+	MaybeObj,
+	Member,
+	Permissions,
+} from 'common-lib';
 import * as React from 'react';
 import TeamForm, {
 	collapseTeamEditToObject,
 	expandTeamObjectToEdit,
-	TeamObjectEdit
+	TeamObjectEdit,
 } from '../../components/forms/usable-forms/TeamForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
@@ -46,7 +54,7 @@ type TeamEditState = TeamEditLoadedState | TeamEditLoadingState | TeamEditErrorS
 
 export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditState> {
 	public state: TeamEditState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public constructor(props: PageProps<{ id: string }>) {
@@ -70,14 +78,14 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 				fetchApi.team.get(
 					{ id: this.props.routeProps.match.params.id },
 					{},
-					this.props.member.sessionID
+					this.props.member.sessionID,
 				),
-				fetchApi.member.memberList({}, {}, this.props.member.sessionID)
+				fetchApi.member.memberList({}, {}, this.props.member.sessionID),
 			]);
 
 			if (Either.isLeft(teamInfoEither)) {
 				return this.setState({
-					state: 'ERROR'
+					state: 'ERROR',
 				});
 			}
 
@@ -86,22 +94,22 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 			this.setState({
 				state: 'LOADED',
 				team: expandTeamObjectToEdit(team),
-				memberList
+				memberList,
 			});
 
 			this.props.updateBreadCrumbs([
 				{
 					target: '/',
-					text: 'Home'
+					text: 'Home',
 				},
 				{
 					target: `/team/${team.id}`,
-					text: `View team "${team.name}"`
+					text: `View team "${team.name}"`,
 				},
 				{
 					target: `/team/edit/${team.id}`,
-					text: `Edit team "${team.name}"`
-				}
+					text: `Edit team "${team.name}"`,
+				},
 			]);
 			this.updateTitle(`Edit team "${team.name}"`);
 		}
@@ -126,7 +134,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		if (
 			!(
 				// Server only checks for ManageTeam permission, not team leadership
-				hasPermission('ManageTeam')()(this.props.member) // ||
+				hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) // ||
 				// leaderChecker(this.state.team.cadetLeader) ||
 				// leaderChecker(this.state.team.seniorCoach) ||
 				// leaderChecker(this.state.team.seniorMentor)
@@ -154,7 +162,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		this.setState({
 			state: 'LOADED',
 			memberList: this.state.memberList,
-			team
+			team,
 		});
 	}
 
@@ -172,7 +180,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		await fetchApi.team.set(
 			{ id: this.props.routeProps.match.params.id },
 			newTeam.value,
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.props.routeProps.history.push(`/team/${this.props.routeProps.match.params.id}`);

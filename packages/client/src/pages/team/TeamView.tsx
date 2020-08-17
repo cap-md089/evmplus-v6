@@ -33,7 +33,7 @@ import {
 	Member,
 	MemberReference,
 	Permissions,
-	pipe
+	pipe,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -78,7 +78,7 @@ const findMemberInTeam = (members: FullTeamMember[]) => (memberToCheck: MemberRe
 
 export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewState> {
 	public state: TeamViewState = {
-		type: 'LOADING'
+		type: 'LOADING',
 	};
 
 	public constructor(props: PageProps<{ id: string }>) {
@@ -93,12 +93,12 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/team',
-				text: 'Team list'
-			}
+				text: 'Team list',
+			},
 		]);
 		this.props.updateSideNav([]);
 
@@ -106,40 +106,40 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			team = await fetchApi.team.get(
 				{ id: this.props.routeProps.match.params.id },
 				{},
-				this.props.member?.sessionID
+				this.props.member?.sessionID,
 			);
 		} catch (e) {
 			return this.setState({
 				type: 'ERROR',
-				message: 'A connection error occurred'
+				message: 'A connection error occurred',
 			});
 		}
 
 		if (Either.isLeft(team)) {
 			return this.setState({
 				type: 'ERROR',
-				message: team.value.message
+				message: team.value.message,
 			});
 		}
 
 		this.setState({
 			type: 'HASTEAM',
-			team: team.value
+			team: team.value,
 		});
 
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/team',
-				text: 'Team list'
+				text: 'Team list',
 			},
 			{
 				target: `/team/${team.value.id}`,
-				text: `View team "${team.value.name}"`
-			}
+				text: `View team "${team.value.name}"`,
+			},
 		]);
 		this.updateTitle(`View team "${team.value.name}"`);
 
@@ -147,19 +147,19 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			const members = await fetchApi.team.members.list(
 				{ id: this.props.routeProps.match.params.id },
 				{},
-				this.props.member!.sessionID
+				this.props.member!.sessionID,
 			);
 
 			if (members.direction === 'left') {
 				this.setState({
 					type: 'ERROR',
-					message: members.value.message
+					message: members.value.message,
 				});
 			} else {
 				this.setState({
 					type: 'HASMEMBERS',
 					team: team.value,
-					members: members.value
+					members: members.value,
 				});
 			}
 		}
@@ -179,26 +179,26 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		const renderMemberInfo = (
 			className: string,
 			memRef: MaybeObj<MemberReference>,
-			memName: MaybeObj<string>
+			memName: MaybeObj<string>,
 		) =>
 			pipe(
 				M.map<[MemberReference, string], [MaybeObj<Member>, string]>(([ref, name]) => [
 					this.state.type === 'HASMEMBERS'
 						? M.fromArray(this.state.members.filter(areMembersTheSame(ref)))
 						: M.none(),
-					name
+					name,
 				]),
 				M.map<[MaybeObj<Member>, string], [MaybeObj<string>, string]>(
 					([maybeMem, name]) => [
 						M.flatMap<Member, string>(m => getMemberEmail(m.contact))(maybeMem),
-						name
-					]
+						name,
+					],
 				),
 				M.map(([emailMaybe, name]) => (
 					<>
 						{name}{' '}
 						{M.orSome<React.ReactChild | null>(null)(
-							M.map(email => <i key={`${className}-email`}>({email})</i>)(emailMaybe)
+							M.map(email => <i key={`${className}-email`}>({email})</i>)(emailMaybe),
 						)}
 					</>
 				)),
@@ -208,7 +208,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 						{renderedName}
 					</p>
 				)),
-				M.orSome<React.ReactChild | null>(null)
+				M.orSome<React.ReactChild | null>(null),
 			)(M.And([memRef, memName]));
 
 		return (
@@ -248,7 +248,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 				{renderMemberInfo(
 					'Senior member mentor: ',
 					team.seniorMentor,
-					team.seniorMentorName
+					team.seniorMentorName,
 				)}
 				{renderMemberInfo('Cadet leader: ', team.cadetLeader, team.cadetLeaderName)}
 
@@ -261,12 +261,12 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 										{getFullMemberName(member)}: {teamMember.job}
 									</div>
 								)),
-								M.orSome<React.ReactChild | null>(null)
+								M.orSome<React.ReactChild | null>(null),
 							)(
 								findMemberInTeam((this.state as TeamHasMembersState).team.members)(
-									member
-								)
-							)
+									member,
+								),
+							),
 					  )
 					: team.members.map((member, i) => (
 							<div key={i}>
@@ -286,14 +286,14 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return;
 		}
 
-		if (!hasPermission('ManageTeam')()(this.props.member)) {
+		if (!hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member)) {
 			return;
 		}
 
 		await fetchApi.team.delete(
 			{ id: this.state.team.id.toString() },
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		this.props.routeProps.history.push('/team');

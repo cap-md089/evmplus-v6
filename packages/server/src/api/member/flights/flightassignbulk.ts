@@ -33,6 +33,7 @@ import {
 	get,
 	Member,
 	MemberReference,
+	Permissions,
 	Right,
 	ServerError,
 	SessionType,
@@ -43,7 +44,10 @@ import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member
 export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.RequireSessionType(
 	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('FlightAssign')(req =>
+	PAM.RequiresPermission(
+		'FlightAssign',
+		Permissions.FlightAssign.YES,
+	)(req =>
 		asyncRight(req.body.members, errorGenerator('Could not update member information'))
 			.map(
 				asyncIterMap<

@@ -32,7 +32,8 @@ import {
 	pipe,
 	stringifyMemberReference,
 	stripProp,
-	toReference
+	toReference,
+	Permissions,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
@@ -43,7 +44,7 @@ import SimpleForm, {
 	Label,
 	PermissionsEdit,
 	TextBox,
-	Title
+	Title,
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import fetchApi from '../../../lib/apis';
@@ -80,7 +81,7 @@ interface PermissionInformation {
 export default class PermissionAssign extends Page<PageProps, PermissionAssignState> {
 	public state: PermissionAssignState = {
 		state: 'LOADING',
-		submitSuccess: false
+		submitSuccess: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -96,20 +97,24 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		if (!hasPermission('PermissionManagement')()(this.props.member)) {
+		if (
+			!hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
+				this.props.member,
+			)
+		) {
 			return;
 		}
 
 		const membersEither = await AsyncEither.All([
 			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.member.permissions.get({}, {}, this.props.member.sessionID)
+			fetchApi.member.permissions.get({}, {}, this.props.member.sessionID),
 		]);
 
 		if (Either.isLeft(membersEither)) {
 			this.setState(prev => ({
 				...prev,
 				state: 'ERROR',
-				message: membersEither.value.message
+				message: membersEither.value.message,
 			}));
 			return;
 		}
@@ -119,40 +124,40 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		const getName = (member: MemberReference): string =>
 			pipe(
 				Maybe.map(getFullMemberName),
-				Maybe.orSome(stringifyMemberReference(member))
+				Maybe.orSome(stringifyMemberReference(member)),
 			)(Maybe.fromArray(availableMembers.filter(areMembersTheSame(member))));
 
 		const membersWithPermissions = permissions.map(perms => ({
 			...perms,
-			name: getName(perms.member)
+			name: getName(perms.member),
 		}));
 
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/permissions',
-				text: 'Permission Management'
-			}
+				text: 'Permission Management',
+			},
 		]);
 
 		this.props.updateSideNav([
 			...membersWithPermissions.map(({ name }) => ({
 				target: Title.GenerateID(name),
 				text: name,
-				type: 'Reference' as const
+				type: 'Reference' as const,
 			})),
 			{
 				target: 'bottom',
 				text: 'Bottom',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 
 		this.setState(prev => ({
@@ -160,7 +165,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 
 			state: 'LOADED',
 			membersWithPermissions,
-			availableMembers
+			availableMembers,
 		}));
 	}
 
@@ -169,7 +174,11 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return <h3>Please sign in</h3>;
 		}
 
-		if (!hasPermission('PermissionManagement')()(this.props.member)) {
+		if (
+			!hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
+				this.props.member,
+			)
+		) {
 			return <h3>You don't have permission to do that</h3>;
 		}
 
@@ -202,7 +211,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				<Button onClick={this.getRemover(value.member)} buttonType="primaryButton">
 					Remove {value.name}
 				</Button>
-			</TextBox>
+			</TextBox>,
 		]);
 
 		return (
@@ -212,7 +221,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				onSubmit={this.handleSubmit}
 				successMessage={state.submitSuccess && 'Saved!'}
 				submitInfo={{
-					text: 'Save changes'
+					text: 'Save changes',
 				}}
 				children={[
 					...children,
@@ -223,8 +232,8 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 							memberList={state.availableMembers.filter(
 								mem =>
 									!state.membersWithPermissions.some(permMember =>
-										areMembersTheSame(permMember.member)(mem)
-									)
+										areMembersTheSame(permMember.member)(mem),
+									),
 							)}
 							title="Select a member"
 							displayButtons={DialogueButtons.OK_CANCEL}
@@ -236,7 +245,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 									: 'Select another member'}
 							</span>
 						</MemberSelectorButton>
-					</TextBox>
+					</TextBox>,
 				]}
 			/>
 		);
@@ -259,20 +268,20 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 					const memberID = memberIDEither.value;
 
 					const memberMaybe = Maybe.fromArray(
-						this.state.availableMembers.filter(areMembersTheSame(memberID))
+						this.state.availableMembers.filter(areMembersTheSame(memberID)),
 					);
 
 					if (Maybe.isSome(memberMaybe)) {
 						membersWithPermissions.push({
 							member: memberID,
 							name: getFullMemberName(memberMaybe.value),
-							permissions: values[memberIDString]
+							permissions: values[memberIDString],
 						});
 					} else {
 						membersWithPermissions.push({
 							member: memberID,
 							name: stringifyMemberReference(memberID),
-							permissions: values[memberIDString]
+							permissions: values[memberIDString],
 						});
 					}
 				}
@@ -283,7 +292,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			...prev,
 
 			state: 'LOADED',
-			membersWithPermissions
+			membersWithPermissions,
 		}));
 	}
 
@@ -323,12 +332,12 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 									ProspectiveMemberManagement: 0,
 									RegistryEdit: 0,
 									ScanAdd: 0,
-									ViewAccountNotifications: 0
-								}
-							}
-						]
+									ViewAccountNotifications: 0,
+								},
+							},
+						],
 				  }
-				: prev
+				: prev,
 		);
 	}
 
@@ -344,16 +353,16 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		const result = await fetchApi.member.permissions.set(
 			{},
 			{ newRoles: this.state.membersWithPermissions.map(stripProp('name')) },
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
 			this.setState({
-				submitSuccess: true
+				submitSuccess: true,
 			});
 		} else {
 			this.setState({
-				submitSuccess: false
+				submitSuccess: false,
 			});
 		}
 	}
@@ -365,10 +374,10 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 					? {
 							...prev,
 							membersWithPermissions: prev.membersWithPermissions.filter(
-								mem => !areMembersTheSame(index)(mem.member)
-							)
+								mem => !areMembersTheSame(index)(mem.member),
+							),
 					  }
-					: prev
+					: prev,
 			);
 		};
 	}

@@ -22,6 +22,8 @@ import { Validator } from 'common-lib';
 import { Router } from 'express';
 import { endpointAdder } from '../../../lib/API';
 import createprospective from './capprospective/createprospective';
+import deleteprospective from './capprospective/deleteprospective';
+import upgradeprospective from './capprospective/upgradeprospective';
 import finishaccount from './finishaccount';
 import finishpasswordreset from './finishpasswordreset';
 import requestnhqaccount from './nhq/requestaccount';
@@ -37,10 +39,13 @@ addAPI(Validator, adder, requestnhqusername);
 addAPI(Validator, adder, requestnhqaccount);
 
 addAPI(Validator, adder, createprospective);
+addAPI(Validator, adder, deleteprospective);
+addAPI(Validator, adder, upgradeprospective);
 
 addAPI(Validator, adder, finishaccount);
 addAPI(Validator, adder, finishpasswordreset);
 addAPI(Validator, adder, requestpasswordreset);
+
 addAPI(Validator, adder, registerdiscord);
 
 export default router;

@@ -17,7 +17,14 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { TeamPublicity, Either, always, FullTeamObject, hasPermission } from 'common-lib';
+import {
+	TeamPublicity,
+	Either,
+	always,
+	FullTeamObject,
+	hasPermission,
+	Permissions,
+} from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../../components/Loader';
@@ -41,7 +48,7 @@ type TeamListState = TeamListLoadedState | TeamListLoadingState | TeamListErrorS
 
 export default class TeamList extends Page<PageProps, TeamListState> {
 	public state: TeamListState = {
-		state: 'LOADING'
+		state: 'LOADING',
 	};
 
 	public constructor(props: PageProps) {
@@ -52,12 +59,12 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/team/list',
-				text: 'Team list'
-			}
+				text: 'Team list',
+			},
 		]);
 		this.props.updateSideNav([]);
 		this.updateTitle('Team list');
@@ -67,8 +74,8 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		if (Either.isLeft(teamsEither)) {
 			this.setState(
 				always({
-					state: 'ERROR'
-				})
+					state: 'ERROR',
+				}),
 			);
 		} else {
 			const teams = teamsEither.value;
@@ -77,13 +84,13 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 				teams.map(team => ({
 					target: team.id.toString(),
 					text: team.name,
-					type: 'Reference' as 'Reference'
-				}))
+					type: 'Reference' as 'Reference',
+				})),
 			);
 
 			this.setState({
 				state: 'LOADED',
-				teams
+				teams,
 			});
 		}
 	}
@@ -99,7 +106,8 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 
 		return (
 			<div>
-				{this.props.member && hasPermission('ManageTeam')()(this.props.member) ? (
+				{this.props.member &&
+				hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) ? (
 					<Link to="/team/create">Add team</Link>
 				) : null}
 				{this.state.teams.map((team, i) => (

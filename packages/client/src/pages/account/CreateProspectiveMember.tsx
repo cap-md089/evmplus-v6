@@ -20,14 +20,12 @@
 import {
 	CAPMemberContact,
 	CAPMemberContactInstance,
+	CAPProspectiveMemberPasswordCreation,
+	CAPProspectiveMemberPasswordCreationType,
 	getMemberEmail,
 	Maybe,
 	MaybeObj,
-	CAPProspectiveMemberPasswordCreation,
-	CAPProspectiveMemberPasswordCreationType,
-	Either,
-	HTTPError,
-	NewCAPProspectiveMember
+	NewCAPProspectiveMember,
 } from 'common-lib';
 import React, { FunctionComponent } from 'react';
 import { InputProps } from '../../components/form-inputs/Input';
@@ -39,14 +37,14 @@ import SimpleForm, {
 	SimpleRadioButton,
 	TextBox,
 	TextInput,
-	Title
+	Title,
 } from '../../components/forms/SimpleForm';
-import Page, { PageProps } from '../Page';
 import fetchApi from '../../lib/apis';
+import Page, { PageProps } from '../Page';
 
 enum SeniorMember {
 	CADET,
-	SENIORMEMBER
+	SENIORMEMBER,
 }
 
 interface CreateAccountForm {
@@ -80,20 +78,20 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 	onUpdate,
 	onChange,
 	hasError,
-	errorMessage
+	errorMessage,
 }) => {
 	const renderEmailLink = () => [];
 
 	const renderRandomPassword = () => [
 		<Label key="1">Username</Label>,
-		<TextInput key="2" name="username" />
+		<TextInput key="2" name="username" />,
 	];
 
 	const renderUsernamePassword = () => [
 		<Label key="1">Username</Label>,
 		<TextInput key="2" name="username" />,
 
-		<PasswordForm key="3" name="password" fullWidth={true} />
+		<PasswordForm key="3" name="password" fullWidth={true} />,
 	];
 
 	value = value ?? { type: CAPProspectiveMemberPasswordCreationType.EMAILLINK };
@@ -117,7 +115,7 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 				labels={[
 					'Set one now',
 					'Email a link to finish account creation',
-					'Email a random password'
+					'Email a random password',
 				]}
 			/>
 
@@ -160,7 +158,7 @@ export const ContactInput: FunctionComponent<InputProps<CAPMemberContact>> = ({
 	value,
 	onChange,
 	onInitialize,
-	onUpdate
+	onUpdate,
 }) => (
 	<FormBlock<CAPMemberContact>
 		name={name}
@@ -211,7 +209,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 				RADIO: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				TELEX: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				WORKFAX: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				WORKPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' }
+				WORKPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 			},
 			flight: this.props.registry.RankAndFile.Flights.length,
 			nameFirst: '',
@@ -219,12 +217,12 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 			nameMiddle: '',
 			nameSuffix: '',
 			password: {
-				type: CAPProspectiveMemberPasswordCreationType.EMAILLINK
+				type: CAPProspectiveMemberPasswordCreationType.EMAILLINK,
 			},
-			seniorMember: SeniorMember.CADET
+			seniorMember: SeniorMember.CADET,
 		},
 		error: Maybe.none(),
-		submitting: false
+		submitting: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -239,32 +237,32 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 			{
 				target: 'general-information',
 				text: 'General Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'parent-email',
 				text: 'Contact Information',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'password-information',
 				text: 'Password Information',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/createprospectiveaccount',
-				text: 'Create Prospective Member Account'
-			}
+				text: 'Create Prospective Member Account',
+			},
 		]);
 		this.updateTitle('Create Prospective Member');
 	}
@@ -275,13 +273,13 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		return (
 			<>
 				{Maybe.orSome<null | React.ReactElement>(null)(
-					Maybe.map<string, React.ReactElement>(err => <p key="1">{err}</p>)(error)
+					Maybe.map<string, React.ReactElement>(err => <p key="1">{err}</p>)(error),
 				)}
 				<SimpleForm<CreateAccountForm>
 					values={form}
 					submitInfo={{
 						text: this.state.submitting ? 'Creating account...' : 'Create account',
-						disabled: this.state.submitting
+						disabled: this.state.submitting,
 					}}
 					validator={{
 						password(password, others) {
@@ -295,7 +293,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 							return getMemberEmail(others.contact).hasValue;
 						},
 						nameFirst: name => name.length > 0,
-						nameLast: name => name.length > 0
+						nameLast: name => name.length > 0,
 					}}
 					disableOnInvalid={true}
 					onSubmit={this.onFormSubmit}
@@ -345,7 +343,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		this.setState(prev => ({
 			form,
 			submitting: prev.submitting,
-			error: Maybe.none()
+			error: Maybe.none(),
 		}));
 	}
 
@@ -365,36 +363,26 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 				nameLast: form.nameLast,
 				nameMiddle: form.nameMiddle,
 				nameSuffix: form.nameSuffix,
-				seniorMember: !!form.seniorMember
+				seniorMember: !!form.seniorMember,
 			};
 
 			const password: CAPProspectiveMemberPasswordCreation = form.password;
 
-			const result = await fetchApi.member.account.capprospective.requestProspectiveAccount(
-				{},
-				{
-					member: newMem,
-					login: password
-				},
-				this.props.member.sessionID
-			);
-
-			this.setState({
-				error: Maybe.some(
-					Either.cata<HTTPError, any, string>(({ message }) => message)(
-						() =>
-							`Successfully created user account${
-								form.password.type !==
-								CAPProspectiveMemberPasswordCreationType.WITHPASSWORD
-									? ' and sent email'
-									: ''
-							}`
-					)(result)
+			await fetchApi.member.account.capprospective
+				.requestProspectiveAccount(
+					{},
+					{
+						member: newMem,
+						login: password,
+					},
+					this.props.member.sessionID,
 				)
-			});
+				.fullJoin();
+
+			this.props.routeProps.history.push('/admin/prospectivemembermanagement');
 		} catch (e) {
 			this.setState({
-				error: Maybe.some('There was a problem communicating with the server')
+				error: Maybe.some('There was a problem communicating with the server'),
 			});
 		}
 	}

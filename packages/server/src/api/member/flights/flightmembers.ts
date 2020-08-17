@@ -59,7 +59,7 @@ export const func: ServerAPIEndpoint<api.member.flight.FlightMembersFull> = PAM.
 					message: 'Member does not have permission to do that',
 			  })
 		)
-			.map(() => getMembers(req.mysqlx)(req.account))
+			.map(() => getMembers(req.mysqlx)(req.account)())
 			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
 			.map(asyncIterMap(get('value')))
 			.map(asyncIterFilter(mem => !mem.seniorMember))

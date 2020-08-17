@@ -25,28 +25,32 @@ import {
 	errorGenerator,
 	MemberReference,
 	parseStringMemberReference,
-	SessionType
+	Permissions,
+	SessionType,
 } from 'common-lib';
 import { getTeam, PAM, removeMemberFromTeam, saveTeam } from 'server-common';
 
 const removeMemberFromTeamWithRequest = (req: APIRequest<api.team.members.DeleteTeamMember>) => (
-	ref: MemberReference
+	ref: MemberReference,
 ) =>
 	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
 		.map(removeMemberFromTeam(req.account)(req.memberUpdateEmitter)(ref))
 		.flatMap(saveTeam(req.mysqlx));
 
 export const func: ServerAPIEndpoint<api.team.members.DeleteTeamMember> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('ManageTeam')(req =>
+	PAM.RequiresPermission(
+		'ManageTeam',
+		Permissions.ManageTeam.FULL,
+	)(req =>
 		asyncEither(
 			parseStringMemberReference(req.params.memberid),
-			errorGenerator('Could not remove member from team')
+			errorGenerator('Could not remove member from team'),
 		)
 			.flatMap(removeMemberFromTeamWithRequest(req))
-			.map(destroy)
-	)
+			.map(destroy),
+	),
 );
 
 export default func;

@@ -17,29 +17,43 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
+import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
 	api,
+	asyncEither,
 	asyncIterFilter,
 	asyncIterMap,
-	asyncRight,
 	Either,
 	EitherObj,
 	errorGenerator,
 	get,
 	Member,
+	MemberType,
 	Right,
 	ServerError,
-	SessionType
+	SessionType,
+	Validator,
+	ValidatorFail,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
 
+const typeValidator = validator<MemberType | undefined>(Validator);
+
 export const func: ServerAPIEndpoint<api.member.Members> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(req =>
-	asyncRight(getMembers(req.mysqlx)(req.account), errorGenerator('Could not get members'))
+	asyncEither(
+		Either.leftMap<ValidatorFail, ServerError, MemberType | undefined>(validatorState => ({
+			type: 'VALIDATOR',
+			code: 400,
+			message: 'Invalid member type',
+			validatorState,
+		}))(typeValidator.validate(req.params.type, 'type')),
+		errorGenerator('Could not get member type'),
+	)
+		.map(getMembers(req.mysqlx)(req.account))
 		.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-		.map(asyncIterMap(get('value')))
+		.map(asyncIterMap(get('value'))),
 );
 
 export default func;

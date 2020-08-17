@@ -23,7 +23,8 @@ import {
 	RankAndFileInformation,
 	RegistryValues,
 	Timezone,
-	WebsiteContact
+	WebsiteContact,
+	Permissions,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
@@ -36,7 +37,7 @@ import SimpleForm, {
 	NumberInput,
 	TextBox,
 	TextInput,
-	Title
+	Title,
 } from '../../../components/forms/SimpleForm';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
@@ -53,7 +54,7 @@ const timezones: Timezone[] = [
 	'America/Chicago',
 	'America/Denver',
 	'America/New_York',
-	'America/Puerto_Rico'
+	'America/Puerto_Rico',
 ];
 
 interface RegEditState {
@@ -75,7 +76,7 @@ interface RegEditFormValues {
 }
 
 const saveMessage = {
-	marginLeft: 10
+	marginLeft: 10,
 };
 
 const convertStateToForm = (values: RegEditValues): RegEditFormValues => ({
@@ -83,8 +84,8 @@ const convertStateToForm = (values: RegEditValues): RegEditFormValues => ({
 	Website: {
 		...values.Website,
 		FaviconID: Maybe.toArray(values.Website.FaviconID),
-		Timezone: timezones.indexOf(values.Website.Timezone)
-	}
+		Timezone: timezones.indexOf(values.Website.Timezone),
+	},
 });
 
 const convertFormToState = (values: RegEditFormValues): RegEditValues => ({
@@ -92,8 +93,8 @@ const convertFormToState = (values: RegEditFormValues): RegEditValues => ({
 	Website: {
 		...values.Website,
 		FaviconID: Maybe.fromArray(values.Website.FaviconID),
-		Timezone: timezones[values.Website.Timezone]
-	}
+		Timezone: timezones[values.Website.Timezone],
+	},
 });
 
 export default class RegEdit extends Page<PageProps, RegEditState> {
@@ -106,28 +107,28 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				LinkedIn: this.props.registry.Contact.LinkedIn || '',
 				MailingAddress: this.props.registry.Contact.MailingAddress
 					? {
-							...this.props.registry.Contact.MailingAddress
+							...this.props.registry.Contact.MailingAddress,
 					  }
 					: {
 							FirstLine: '',
 							Name: '',
-							SecondLine: ''
+							SecondLine: '',
 					  },
 				MeetingAddress: this.props.registry.Contact.MeetingAddress
 					? {
-							...this.props.registry.Contact.MeetingAddress
+							...this.props.registry.Contact.MeetingAddress,
 					  }
 					: {
 							FirstLine: '',
 							Name: '',
-							SecondLine: ''
+							SecondLine: '',
 					  },
 				Twitter: this.props.registry.Contact.Twitter || '',
 				YouTube: this.props.registry.Contact.YouTube || '',
-				Discord: this.props.registry.Contact.Discord || ''
+				Discord: this.props.registry.Contact.Discord || '',
 			},
 			RankAndFile: {
-				Flights: this.props.registry.RankAndFile.Flights.slice()
+				Flights: this.props.registry.RankAndFile.Flights.slice(),
 			},
 			Website: {
 				Name: this.props.registry.Website.Name,
@@ -135,10 +136,10 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				Separator: this.props.registry.Website.Separator,
 				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount,
 				Timezone: this.props.registry.Website.Timezone,
-				FaviconID: this.props.registry.Website.FaviconID
-			}
+				FaviconID: this.props.registry.Website.FaviconID,
+			},
 		},
-		showSave: false
+		showSave: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -154,32 +155,32 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 			{
 				target: 'contact',
 				text: 'Contact',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'rank-&-file',
 				text: 'Rank & File',
-				type: 'Reference'
+				type: 'Reference',
 			},
 			{
 				target: 'website',
 				text: 'Website',
-				type: 'Reference'
-			}
+				type: 'Reference',
+			},
 		]);
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
-				text: 'Home'
+				text: 'Home',
 			},
 			{
 				target: '/admin',
-				text: 'Administration'
+				text: 'Administration',
 			},
 			{
 				target: '/admin/regedit',
-				text: 'Site configuration'
-			}
+				text: 'Site configuration',
+			},
 		]);
 		this.updateTitle('Site configuration');
 	}
@@ -189,7 +190,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 			return <div>Please sign in</div>;
 		}
 
-		if (!hasPermission('RegistryEdit')()(this.props.member)) {
+		if (!hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)) {
 			return <div>You do not have permission to do that</div>;
 		}
 
@@ -341,7 +342,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		await this.onFormSubmit(convertStateToForm(this.state.values));
 
 		this.setState({
-			showSave: true
+			showSave: true,
 		});
 	}
 }

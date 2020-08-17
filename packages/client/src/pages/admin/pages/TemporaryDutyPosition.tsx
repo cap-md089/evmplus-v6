@@ -28,7 +28,8 @@ import {
 	MaybeObj,
 	Member,
 	ShortCAPUnitDutyPosition,
-	stringifyMemberReference
+	stringifyMemberReference,
+	Permissions,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -83,7 +84,7 @@ type TemporaryDutyPositionViewerEditorState = TemporaryDutyPositionViewerEditorU
 	TemporaryDutyPositionMemberState;
 
 const highMarginTop = {
-	marginTop: 40
+	marginTop: 40,
 };
 
 const temporaryDutyPositions = [
@@ -159,7 +160,7 @@ const temporaryDutyPositions = [
 	'Commander',
 	'Deputy Commander for Seniors',
 	'Squadron Leadership Officer',
-	'Supply Officer'
+	'Supply Officer',
 ];
 
 export default class TemporaryDutyPositions extends Page<
@@ -170,9 +171,9 @@ export default class TemporaryDutyPositions extends Page<
 		state: 'CANCELLED',
 		addDutyPosition: {
 			position: '',
-			endDate: Date.now()
+			endDate: Date.now(),
 		},
-		showDutyPositionSave: false
+		showDutyPositionSave: false,
 	};
 
 	public constructor(props: PageProps) {
@@ -187,16 +188,16 @@ export default class TemporaryDutyPositions extends Page<
 		this.props.updateBreadCrumbs([
 			{
 				text: 'Home',
-				target: '/'
+				target: '/',
 			},
 			{
 				text: 'Administration',
-				target: '/admin'
+				target: '/admin',
 			},
 			{
 				text: 'Temporary Duty Positions',
-				target: '/admin/tempdutypositions'
-			}
+				target: '/admin/tempdutypositions',
+			},
 		]);
 
 		this.props.updateSideNav([]);
@@ -204,18 +205,22 @@ export default class TemporaryDutyPositions extends Page<
 			return;
 		}
 
-		if (!hasPermission('AssignTemporaryDutyPositions')()(this.props.member)) {
+		if (
+			!hasPermission('AssignTemporaryDutyPositions')(
+				Permissions.AssignTemporaryDutyPosition.YES,
+			)(this.props.member)
+		) {
 			return;
 		}
 
 		this.setState({
-			state: 'LOADING'
+			state: 'LOADING',
 		});
 
 		const memberListEither = await fetchApi.member.memberList(
 			{},
 			{},
-			this.props.member.sessionID
+			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(memberListEither)) {
@@ -223,7 +228,7 @@ export default class TemporaryDutyPositions extends Page<
 				...prev,
 
 				state: 'ERROR',
-				message: memberListEither.value.message
+				message: memberListEither.value.message,
 			}));
 		} else {
 			this.setState(prev => ({
@@ -231,7 +236,7 @@ export default class TemporaryDutyPositions extends Page<
 
 				state: 'LOADED',
 				members: memberListEither.value,
-				currentMember: Maybe.none()
+				currentMember: Maybe.none(),
 			}));
 		}
 	}
@@ -248,7 +253,7 @@ export default class TemporaryDutyPositions extends Page<
 		}
 
 		const currentTemporaryDutyPositions = this.props.member.dutyPositions.filter(
-			isCAPUnitDutyPosition
+			isCAPUnitDutyPosition,
 		);
 
 		const positionsView = (
@@ -263,7 +268,7 @@ export default class TemporaryDutyPositions extends Page<
 								{pos.duty} (Expires{' '}
 								{DateTime.fromMillis(pos.expires).toLocaleString({
 									...DateTime.DATETIME_SHORT,
-									hour12: false
+									hour12: false,
 								})}
 								)
 							</li>
@@ -273,7 +278,9 @@ export default class TemporaryDutyPositions extends Page<
 			</>
 		);
 
-		const positionsEdit = hasPermission('AssignTemporaryDutyPositions')()(this.props.member) ? (
+		const positionsEdit = hasPermission('AssignTemporaryDutyPositions')(
+			Permissions.AssignTemporaryDutyPosition.YES,
+		)(this.props.member) ? (
 			<div style={highMarginTop}>
 				<h3>Assign temporary duty positions</h3>
 				{this.state.state === 'LOADING' || this.state.state === 'CANCELLED' ? (
@@ -314,9 +321,9 @@ export default class TemporaryDutyPositions extends Page<
 				prev.state === 'LOADED'
 					? {
 							...prev,
-							currentMember: Maybe.fromValue(currentMember)
+							currentMember: Maybe.fromValue(currentMember),
 					  }
-					: prev
+					: prev,
 			);
 		}
 	}
@@ -331,24 +338,24 @@ export default class TemporaryDutyPositions extends Page<
 			}
 
 			const dutyPositions = this.state.currentMember.value.dutyPositions.filter(
-				({ duty, type }) => type !== 'CAPUnit' || duty !== positionToRemove
+				({ duty, type }) => type !== 'CAPUnit' || duty !== positionToRemove,
 			);
 
 			await fetchApi.member.temporaryDutyPositions.set(
 				{ id: stringifyMemberReference(this.state.currentMember.value) },
 				{ dutyPositions: dutyPositions.filter(isCAPUnitDutyPosition) },
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			const newMember = {
 				...this.state.currentMember.value,
-				dutyPositions
+				dutyPositions,
 			};
 
 			this.setState({
 				...this.state,
 
-				currentMember: Maybe.some(newMember)
+				currentMember: Maybe.some(newMember),
 			});
 		};
 	}
@@ -366,13 +373,13 @@ export default class TemporaryDutyPositions extends Page<
 			<>
 				<ul>
 					{(state.currentMember.value.dutyPositions.filter(
-						pos => pos.type === 'CAPUnit'
+						pos => pos.type === 'CAPUnit',
 					) as ShortCAPUnitDutyPosition[]).map((pos, index) => (
 						<li key={index}>
 							{pos.duty} (Expires{' '}
 							{DateTime.fromMillis(pos.expires).toLocaleString({
 								...DateTime.DATETIME_SHORT,
-								hour12: false
+								hour12: false,
 							})}
 							){' '}
 							<Button buttonType="none" onClick={this.getRemover(pos.duty)}>
@@ -436,23 +443,23 @@ export default class TemporaryDutyPositions extends Page<
 						date: Date.now(),
 						duty: data.position,
 						expires: data.endDate,
-						type: 'CAPUnit' as const
-					}
-				]
+						type: 'CAPUnit' as const,
+					},
+				],
 			};
 
 			await fetchApi.member.temporaryDutyPositions.set(
 				{ id: stringifyMemberReference(state.currentMember.value) },
 				{ dutyPositions: newMember.dutyPositions.filter(isCAPUnitDutyPosition) },
-				this.props.member.sessionID
+				this.props.member.sessionID,
 			);
 
 			this.setState({
 				showDutyPositionSave: true,
 				addDutyPosition: {
 					endDate: Date.now(),
-					position: ''
-				}
+					position: '',
+				},
 			});
 		};
 	}
@@ -460,7 +467,7 @@ export default class TemporaryDutyPositions extends Page<
 	private onDutyPositionAddChange(data: AddDutyPositionData) {
 		this.setState({
 			addDutyPosition: data,
-			showDutyPositionSave: false
+			showDutyPositionSave: false,
 		});
 	}
 }

@@ -18,17 +18,20 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, destroy, SessionType } from 'common-lib';
+import { api, destroy, Permissions, SessionType } from 'common-lib';
 import { deleteTeam, getTeam, PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.team.DeleteTeam> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('ManageTeam')(req =>
+	PAM.RequiresPermission(
+		'ManageTeam',
+		Permissions.ManageTeam.FULL,
+	)(req =>
 		getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
 			.flatMap(deleteTeam(req.mysqlx)(req.account)(req.memberUpdateEmitter))
-			.map(destroy)
-	)
+			.map(destroy),
+	),
 );
 
 export default func;

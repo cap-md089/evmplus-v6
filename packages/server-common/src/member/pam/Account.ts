@@ -38,7 +38,7 @@ import {
 	stripProp,
 	User,
 	UserAccountInformation,
-	getDefaultMemberPermissions
+	getDefaultMemberPermissions,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { resolveReference } from '../../Members';
@@ -47,7 +47,7 @@ import {
 	findAndBind,
 	generateResults,
 	modifyAndBind,
-	safeBind
+	safeBind,
 } from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { addPasswordForUser } from './Password';
@@ -64,7 +64,7 @@ const ACCOUNT_TOKEN_AGE = 24 * 60 * 60 * 1000;
 
 const getUserAccountCreationTokens = async (
 	schema: Schema,
-	token: string
+	token: string,
 ): Promise<AccountCreationToken[]> => {
 	await cleanAccountCreationTokens(schema);
 
@@ -72,12 +72,12 @@ const getUserAccountCreationTokens = async (
 
 	const results = generateResults(
 		findAndBind(collection, {
-			token
-		})
+			token,
+		}),
 	);
 
 	return collectGeneratorAsync<AccountCreationToken>(
-		asyncIterMap<AccountCreationToken, AccountCreationToken>(stripProp('_id'))(results)
+		asyncIterMap<AccountCreationToken, AccountCreationToken>(stripProp('_id'))(results),
 	);
 };
 
@@ -85,7 +85,7 @@ const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
 	await safeBind(collection.remove('created < :created'), {
-		created: Date.now() - ACCOUNT_TOKEN_AGE
+		created: Date.now() - ACCOUNT_TOKEN_AGE,
 	}).execute();
 };
 
@@ -105,7 +105,7 @@ const getTokenCountForUser = async (schema: Schema, member: MemberReference) => 
 
 export const addUserAccountCreationToken = async (
 	schema: Schema,
-	member: MemberReference
+	member: MemberReference,
 ): Promise<string> => {
 	let info = null;
 	try {
@@ -132,7 +132,7 @@ export const addUserAccountCreationToken = async (
 		.add({
 			member,
 			created: Date.now(),
-			token
+			token,
 		})
 		.execute();
 
@@ -141,7 +141,7 @@ export const addUserAccountCreationToken = async (
 
 export const validateUserAccountCreationToken = async (
 	schema: Schema,
-	token: string
+	token: string,
 ): Promise<MemberReference> => {
 	await cleanAccountCreationTokens(schema);
 
@@ -162,10 +162,10 @@ export const addUserAccount = async (
 	username: string,
 	password: string,
 	member: MemberReference,
-	token: string
+	token: string,
 ): Promise<UserAccountInformation> => {
 	const userInformationCollection = schema.getCollection<UserAccountInformation>(
-		'UserAccountInfo'
+		'UserAccountInfo',
 	);
 
 	let user = null;
@@ -185,8 +185,8 @@ export const addUserAccount = async (
 	// requirements and leave a dangling, inaccessible account
 	const resultsForReference = await collectResults(
 		findAndBind(userInformationCollection, {
-			member
-		})
+			member,
+		}),
 	);
 	if (
 		!(resultsForReference.length === 0 || resultsForReference[0].passwordHistory.length === 0)
@@ -203,7 +203,7 @@ export const addUserAccount = async (
 	const newAccount: UserAccountInformation = {
 		member,
 		username,
-		passwordHistory: []
+		passwordHistory: [],
 	};
 
 	// Only add a copy if the member actually needs to be added
@@ -235,16 +235,16 @@ export const addUserAccount = async (
  */
 export const getInformationForMember = async <T extends MemberReference>(
 	schema: Schema,
-	member: T
+	member: T,
 ): Promise<UserAccountInformation<T>> => {
 	const userInformationCollection = schema.getCollection<UserAccountInformation>(
-		'UserAccountInfo'
+		'UserAccountInfo',
 	);
 
 	const userList = await collectResults(
 		findAndBind(userInformationCollection, {
-			member
-		})
+			member,
+		}),
 	);
 
 	if (userList.length !== 1) {
@@ -264,16 +264,16 @@ export const getInformationForMember = async <T extends MemberReference>(
  */
 export const getInformationForUser = async (
 	schema: Schema,
-	username: string
+	username: string,
 ): Promise<UserAccountInformation> => {
 	const userInformationCollection = schema.getCollection<UserAccountInformation>(
-		'UserAccountInfo'
+		'UserAccountInfo',
 	);
 
 	const userList = await collectResults(
 		findAndBind(userInformationCollection, {
-			username
-		})
+			username,
+		}),
 	);
 
 	if (userList.length !== 1) {
@@ -294,11 +294,11 @@ export const getInformationForUser = async (
  */
 export const saveInformationForUser = async (schema: Schema, member: UserAccountInformation) => {
 	const userInformationCollection = schema.getCollection<UserAccountInformation>(
-		'UserAccountInfo'
+		'UserAccountInfo',
 	);
 
 	await modifyAndBind(userInformationCollection, {
-		member: member.member
+		member: member.member,
 	})
 		.patch(member)
 		.execute();
@@ -321,14 +321,14 @@ const MEMBER_PERMISSIONS_TABLE = 'UserPermissions';
 const getPermissionsRecordForMemberInAccount = async (
 	schema: Schema,
 	member: MemberReference,
-	account: AccountObject
+	account: AccountObject,
 ): Promise<StoredMemberPermissions> => {
 	const permissionsCollection = schema.getCollection<StoredMemberPermissions>(
-		MEMBER_PERMISSIONS_TABLE
+		MEMBER_PERMISSIONS_TABLE,
 	);
 
 	const permissions = await collectResults(
-		findAndBind(permissionsCollection, { member, accountID: account.id })
+		findAndBind(permissionsCollection, { member, accountID: account.id }),
 	);
 
 	if (permissions.length !== 1) {
@@ -341,7 +341,7 @@ const getPermissionsRecordForMemberInAccount = async (
 export const getPermissionsForMemberInAccountDefault = async (
 	schema: Schema,
 	member: MemberReference,
-	account: AccountObject
+	account: AccountObject,
 ): Promise<MemberPermissions> => {
 	try {
 		const permissions = await getPermissionsForMemberInAccount(schema, member, account);
@@ -359,7 +359,7 @@ export const getPermissionsForMemberInAccountDefault = async (
 export const getPermissionsForMemberInAccount = async (
 	schema: Schema,
 	member: MemberReference,
-	account: AccountObject
+	account: AccountObject,
 ): Promise<MemberPermissions> => {
 	const record = await getPermissionsRecordForMemberInAccount(schema, member, account);
 
@@ -370,10 +370,10 @@ export const setPermissionsForMemberInAccount = async (
 	schema: Schema,
 	member: MemberReference,
 	permissions: MemberPermissions,
-	account: AccountObject
+	account: AccountObject,
 ): Promise<void> => {
 	const permissionsCollection = schema.getCollection<StoredMemberPermissions>(
-		MEMBER_PERMISSIONS_TABLE
+		MEMBER_PERMISSIONS_TABLE,
 	);
 
 	try {
@@ -383,10 +383,10 @@ export const setPermissionsForMemberInAccount = async (
 
 		await modifyAndBind(permissionsCollection, {
 			member,
-			accountID: account.id
+			accountID: account.id,
 		})
 			.patch({
-				permissions
+				permissions,
 			})
 			.execute();
 	} catch (e) {
@@ -396,7 +396,7 @@ export const setPermissionsForMemberInAccount = async (
 			.add({
 				accountID: account.id,
 				member,
-				permissions
+				permissions,
 			})
 			.execute();
 	}
@@ -404,18 +404,18 @@ export const setPermissionsForMemberInAccount = async (
 
 export const RequiresPermission = <T extends MemberPermission>(
 	permission: T,
-	threshold: number = 1,
-	message = 'Member does not have permission to perform the requested action'
+	threshold: number,
+	message = 'Member does not have permission to perform the requested action',
 ) => <R extends { member?: MaybeObj<User> | User }, V>(func: (req: R) => ServerEither<V>) => (
-	req: R
+	req: R,
 ) => checkPermissions(permission)(threshold)(message)(req).flatMap(func);
 
 export const checkPermissions = <T extends MemberPermission>(permission: T) => (
-	threshold: number
+	threshold: number,
 ) => (message = 'Member does not have permission to perform the requested action') => <
 	R extends { member?: MaybeObj<User> | User }
 >(
-	req: R
+	req: R,
 ): ServerEither<R> =>
 	'member' in req && !!req.member
 		? 'hasValue' in req.member
@@ -424,26 +424,26 @@ export const checkPermissions = <T extends MemberPermission>(permission: T) => (
 				: asyncLeft<ServerError, R>({
 						type: 'OTHER',
 						code: 403,
-						message
+						message,
 				  })
 			: hasPermission(permission)(threshold)(req.member)
 			? asyncRight<ServerError, R>(req, errorGenerator('Could not process request'))
 			: asyncLeft<ServerError, R>({
 					type: 'OTHER',
 					code: 403,
-					message
+					message,
 			  })
 		: asyncLeft<ServerError, R>({
 				type: 'OTHER',
 				code: 403,
-				message
+				message,
 		  });
 
 export const RequiresMemberType = <T extends MemberType>(...types: T[]) => <
 	R extends { member: MaybeObj<User> | User },
 	V
 >(
-	func: (req: R) => ServerEither<V>
+	func: (req: R) => ServerEither<V>,
 ) => (req: R): ServerEither<V> =>
 	('hasValue' in req.member
 		? req.member.hasValue && types.includes(req.member.value.type as T)
@@ -451,14 +451,14 @@ export const RequiresMemberType = <T extends MemberType>(...types: T[]) => <
 			: asyncLeft<ServerError, R>({
 					type: 'OTHER',
 					code: 404,
-					message: 'This API endpoint does not exist for this member type'
+					message: 'This API endpoint does not exist for this member type',
 			  })
 		: types.includes(req.member.type as T)
 		? asyncRight(req, errorGenerator('Could not process request'))
 		: asyncLeft<ServerError, R>({
 				type: 'OTHER',
 				code: 404,
-				message: 'This API endpoint does not exist for this member type'
+				message: 'This API endpoint does not exist for this member type',
 		  })
 	).flatMap(func);
 

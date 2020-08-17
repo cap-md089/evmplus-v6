@@ -18,26 +18,29 @@
  */
 
 import { ServerAPIEndpoint, validator } from 'auto-client-api';
-import { api, destroy, RegistryValues, SessionType, Validator } from 'common-lib';
+import { api, destroy, Permissions, RegistryValues, SessionType, Validator } from 'common-lib';
 import { getRegistry, PAM, saveRegistry } from 'server-common';
 import { validateRequest } from '../../lib/requestUtils';
 
 const partialRegistryValidator = Validator.Partial(
-	(validator<RegistryValues>(Validator) as Validator<RegistryValues>).rules
+	(validator<RegistryValues>(Validator) as Validator<RegistryValues>).rules,
 );
 
 export const func: ServerAPIEndpoint<api.registry.SetRegistry> = PAM.RequireSessionType(
-	SessionType.REGULAR
+	SessionType.REGULAR,
 )(
-	PAM.RequiresPermission('RegistryEdit')(request =>
+	PAM.RequiresPermission(
+		'RegistryEdit',
+		Permissions.RegistryEdit.YES,
+	)(request =>
 		validateRequest(partialRegistryValidator)(request).flatMap(req =>
 			getRegistry(req.mysqlx)(req.account)
 				.map(oldRegistry => ({ ...oldRegistry, ...req.body }))
 				.tap(console.log)
 				.flatMap(saveRegistry(req.mysqlx))
-				.map(destroy)
-		)
-	)
+				.map(destroy),
+		),
+	),
 );
 
 export default func;

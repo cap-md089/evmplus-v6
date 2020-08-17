@@ -17,7 +17,7 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { User, hasPermission, hasOneDutyPosition, AccountType } from 'common-lib';
+import { User, hasPermission, hasOneDutyPosition, AccountType, Permissions } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
@@ -37,9 +37,11 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 		return (
 			<div className="widget">
 				<div className="widget-title">
-					{hasPermission('RegistryEdit')()(this.props.member)
+					{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)
 						? 'Site '
-						: hasPermission('FlightAssign')()(this.props.member) ||
+						: hasPermission('FlightAssign')(Permissions.RegistryEdit.YES)(
+								this.props.member,
+						  ) ||
 						  ((this.props.member.type === 'CAPNHQMember' ||
 								this.props.member.type === 'CAPProspectiveMember') &&
 								this.props.member.seniorMember)
@@ -52,19 +54,25 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
 					{this.props.account.type === AccountType.CAPSQUADRON &&
-					hasPermission('FlightAssign')()(this.props.member) ? (
+					hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
+						this.props.member,
+					) ? (
 						<>
 							<br />
 							<Link to="/admin/flightassign">Assign flight members</Link>
 						</>
 					) : null}
-					{hasPermission('RegistryEdit')()(this.props.member) ? (
+					{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(
+						this.props.member,
+					) ? (
 						<>
 							<br />
 							<Link to="/admin/regedit">Site configuration</Link>
 						</>
 					) : null}
-					{hasPermission('PermissionManagement')()(this.props.member) ? (
+					{hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
+						this.props.member,
+					) ? (
 						<>
 							<br />
 							<Link to="/admin/permissions">Permission management</Link>
@@ -76,7 +84,7 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 						hasOneDutyPosition([
 							'Cadet Commander',
 							'Cadet Deputy Commander',
-							'Cadet Executive Officer'
+							'Cadet Executive Officer',
 						])(this.props.member)) ? (
 						<>
 							<br />

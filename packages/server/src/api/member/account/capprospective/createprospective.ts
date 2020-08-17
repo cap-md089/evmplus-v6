@@ -40,6 +40,7 @@ import {
 	getMemberEmail,
 	Maybe,
 	NewCAPProspectiveMember,
+	Permissions,
 	RawCAPProspectiveMemberObject,
 	RawCAPSquadronAccountObject,
 	SessionType,
@@ -172,7 +173,10 @@ export const func: (
 	emailFunction = sendEmail,
 ) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(
-		PAM.RequiresPermission('ProspectiveMemberManagement')(request =>
+		PAM.RequiresPermission(
+			'ProspectiveMemberManagement',
+			Permissions.ProspectiveMemberManagement.FULL,
+		)(request =>
 			validateRequest(newProspectiveMemberAccountValidator)(request).flatMap(req =>
 				asyncRight(req.account, errorGenerator('Could not create prospective member'))
 					.filter(account => account.type === AccountType.CAPSQUADRON, {
