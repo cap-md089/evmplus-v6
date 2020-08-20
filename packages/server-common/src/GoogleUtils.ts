@@ -693,7 +693,7 @@ async function updateRegEvent(
 	googleId: string,
 ) {
 	let response = { status: 200 };
-	if (inEvent.registration !== null) {
+	if (!!inEvent.registration) {
 		const deadlineNumber = !!inEvent.registration ? inEvent.registration.deadline : 0;
 		const deadlineInfo: string = !!inEvent.registration
 			? inEvent.registration.information || ''
@@ -706,14 +706,14 @@ async function updateRegEvent(
 			'\n' +
 			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
 		const event = buildDeadline(inEvent, deadlineNumber, deadlineString);
-		if (!!inEvent.googleCalendarIds.regId) {
+		if (!inEvent.googleCalendarIds.regId) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
 				requestBody: event,
 			});
 		} else {
-			const inEventId = inEvent.googleCalendarIds.regId as string;
+			const inEventId = inEvent.googleCalendarIds.regId;
 			event.id = inEventId;
 			response = await myCalendar.events.patch({
 				auth: jwtClient,
@@ -805,14 +805,14 @@ async function updateWingEvent(
 		const event = buildEvent(inEvent);
 		event.description = 'A ' + accountName + ' Event\n\n' + event.description;
 
-		if (!!inEvent.googleCalendarIds.wingId) {
+		if (!inEvent.googleCalendarIds.wingId) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
 				requestBody: event,
 			});
 		} else {
-			const inEventId = inEvent.googleCalendarIds.wingId as string;
+			const inEventId = inEvent.googleCalendarIds.wingId;
 			event.id = inEventId;
 			response = await myCalendar.events.patch({
 				auth: jwtClient,
