@@ -28,7 +28,7 @@ import {
 	Member,
 	MemberReference,
 	MemberType,
-	PasswordSetResult,
+	PasswordSetResult
 } from '../../types';
 
 export * as account from './account';
@@ -36,6 +36,7 @@ export * as attendance from './attendance';
 export * as capwatch from './capwatch';
 export * as flight from './flight';
 export * as permissions from './permissions';
+export * as promotionrequirements from './promotionrequirements';
 export * as temporarydutypositions from './temporarydutypositions';
 
 /**

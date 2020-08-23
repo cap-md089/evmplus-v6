@@ -19,10 +19,16 @@
 
 import {
 	AsyncEither,
+	asyncRight,
+	CadetPromotionStatus,
+	CadetPromotionRequirementsMap,
 	Either,
+	errorGenerator,
 	EventStatus,
 	getURIComponent,
+	HTTPError,
 	Maybe as M,
+	Maybe,
 	MaybeObj,
 	pipe,
 	presentMultCheckboxReturn,
@@ -46,6 +52,7 @@ interface MainStateLoaded {
 	state: 'LOADED';
 	events: RawEventObject[];
 	nextEvent: MaybeObj<RawEventObject>;
+	promotionRequirements: MaybeObj<CadetPromotionStatus>;
 }
 
 interface MainStateError {
@@ -89,6 +96,19 @@ export default class Main extends Page<PageProps, MainState> {
 		const infoEither = await AsyncEither.All([
 			fetchApi.events.events.getNextRecurring({}, {}),
 			fetchApi.events.events.getUpcoming({}, {}),
+			this.props.member
+				? this.props.member.seniorMember
+					? asyncRight<HTTPError, MaybeObj<CadetPromotionStatus>>(
+							Maybe.none(),
+							errorGenerator('Unable to retrieve promotion requirements'),
+					  )
+					: fetchApi.member.promotionrequirements
+							.currentuser({}, {}, this.props.member.sessionID)
+							.map(Maybe.some)
+				: asyncRight<HTTPError, MaybeObj<CadetPromotionStatus>>(
+						Maybe.none(),
+						errorGenerator('Unable to retrieve promotion requirements'),
+				  ),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -96,12 +116,13 @@ export default class Main extends Page<PageProps, MainState> {
 				state: 'ERROR',
 			});
 		} else {
-			const [nextEvent, events] = infoEither.value;
+			const [nextEvent, events, promotionRequirements] = infoEither.value;
 
 			this.setState({
 				state: 'LOADED',
 				events,
 				nextEvent,
+				promotionRequirements,
 			});
 		}
 	}
@@ -115,7 +136,21 @@ export default class Main extends Page<PageProps, MainState> {
 					<div>{this.state.message}</div>
 				) : (
 					<>
-						<section className="halfSection" style={{ float: 'left' }}>
+						{this.props.member && !this.props.member.seniorMember && this.state.promotionRequirements.hasValue ? (
+							<section className="halfSection">
+								<h1>Stuff</h1>
+								
+							</section>
+						) : null}
+						<section
+							className="halfSection"
+							style={{
+								float:
+									this.props.member && !this.props.member.seniorMember
+										? 'right'
+										: 'left',
+							}}
+						>
 							{!this.state.nextEvent.hasValue ? (
 								<h3 style={{ textAlign: 'center' }}>No upcoming meeting</h3>
 							) : (
@@ -165,7 +200,7 @@ export default class Main extends Page<PageProps, MainState> {
 								</>
 							)}
 						</section>
-						<section className="halfSection">
+						<section className="halfSection" style={{ float: 'right', clear: 'right' }}>
 							{this.state.events.length === 0 ? (
 								<h3
 									style={{

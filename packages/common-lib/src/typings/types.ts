@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of CAPUnit.com.
  *
@@ -3853,72 +3853,27 @@ export interface CadetPromotionRequirements {
 
 export interface CadetPromotionStatus {
 	/**
-	 * The Achievement name
+	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
 	 */
-	AchvName: string;
+	NextCadetAchvID: number;
 
 	/**
-	 * The capmembers.com web page for the promotion requirements
+	 * The current highest achievement data
 	 */
-	ReqsWebLink: string;
+	CurrentCadetAchv: NHQ.CadetAchv;
 
 	/**
-	 * Status of PT as avaialble from eServices
+	 * The date of the last promotion approval
 	 */
-	PT: string;
+	LastAprvDate: MaybeObj<number>;
 
 	/**
-	 * Status of oath requirement **************************************************************************
+	 * The date of completion of encampment (required for Mitchell)
 	 */
-	Oath: boolean;
+	EncampDate: MaybeObj<number>;
 
 	/**
-	 * Status of leadership requirement, include web link if requirement active, table lookup
+	 * The date of completion of RCLS (should have Encampment and C/MSgt before eligible)
 	 */
-	Leadership: string;
-
-	/**
-	 * Status of mentor activity - future capability, not currently present in CAPWATCH downloads
-	 */
-	Mentor: string;
-
-	/**
-	 * Status of SDA Service
-	 */
-	SDAService: string;
-
-	/**
-	 * Status of SDA Writing
-	 */
-	SDAWriting: string;
-
-	/**
-	 * Status of SDA Presentation
-	 */
-	SDAPresentation: string;
-
-	/**
-	 * Status of drill test, include web link if requirement active
-	 */
-	Drill: string;
-
-	/**
-	 * Status of aerospace test, include web link if requirement active
-	 */
-	Aerospace: string;
-
-	/**
-	 * Status of character development requirement, including wingman course
-	 */
-	CharDev: string;
-
-	/**
-	 * Status of encampment requirement, needed for Mitchell
-	 */
-	Encampment: string;
-
-	/**
-	 * Status of RCLS requirement, needed for Eaker, should have Encampment and C/MSgt before eligible
-	 */
-	RCLS: string;
+	RCLSDate: MaybeObj<number>;
 }

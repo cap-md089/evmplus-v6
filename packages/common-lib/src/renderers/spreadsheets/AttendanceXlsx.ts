@@ -71,28 +71,28 @@ const GetBestPhones = (inMember: Member) => {
 	let numbersData = '';
 
 	if (inMember.contact.CELLPHONE.PRIMARY) {
-		numbersData += 'CP ' + formatPhone(inMember.contact.CELLPHONE.PRIMARY) + '\n\r';
+		numbersData += 'CP ' + formatPhone(inMember.contact.CELLPHONE.PRIMARY) + '\n';
 	}
 	if (inMember.contact.CELLPHONE.SECONDARY) {
-		numbersData += 'CS ' + formatPhone(inMember.contact.CELLPHONE.SECONDARY) + '\n\r';
+		numbersData += 'CS ' + formatPhone(inMember.contact.CELLPHONE.SECONDARY) + '\n';
 	}
 	if (inMember.contact.CELLPHONE.EMERGENCY) {
-		numbersData += 'CE ' + formatPhone(inMember.contact.CELLPHONE.EMERGENCY) + '\n\r';
+		numbersData += 'CE ' + formatPhone(inMember.contact.CELLPHONE.EMERGENCY) + '\n';
 	}
 	if (inMember.contact.CADETPARENTPHONE.PRIMARY) {
-		numbersData += 'PP ' + formatPhone(inMember.contact.CADETPARENTPHONE.PRIMARY) + '\n\r';
+		numbersData += 'PP ' + formatPhone(inMember.contact.CADETPARENTPHONE.PRIMARY) + '\n';
 	}
 	if (inMember.contact.CADETPARENTPHONE.SECONDARY) {
-		numbersData += 'PS ' + formatPhone(inMember.contact.CADETPARENTPHONE.SECONDARY) + '\n\r';
+		numbersData += 'PS ' + formatPhone(inMember.contact.CADETPARENTPHONE.SECONDARY) + '\n';
 	}
 	if (inMember.contact.CADETPARENTPHONE.EMERGENCY) {
-		numbersData += 'PE ' + formatPhone(inMember.contact.CADETPARENTPHONE.EMERGENCY) + '\n\r';
+		numbersData += 'PE ' + formatPhone(inMember.contact.CADETPARENTPHONE.EMERGENCY) + '\n';
 	}
 	if (inMember.contact.HOMEPHONE.PRIMARY) {
-		numbersData += 'HP ' + formatPhone(inMember.contact.HOMEPHONE.PRIMARY) + '\n\r';
+		numbersData += 'HP ' + formatPhone(inMember.contact.HOMEPHONE.PRIMARY) + '\n';
 	}
 	if (inMember.contact.HOMEPHONE.EMERGENCY) {
-		numbersData += 'HE ' + formatPhone(inMember.contact.HOMEPHONE.EMERGENCY) + '\n\r';
+		numbersData += 'HE ' + formatPhone(inMember.contact.HOMEPHONE.EMERGENCY) + '\n';
 	}
 	if (numbersData.length > 2) {
 		numbersData = numbersData.substring(0, numbersData.length - 1);
@@ -106,22 +106,22 @@ const GetBestEmails = (inMember: Member) => {
 	let numbersData = '';
 
 	if (inMember.contact.EMAIL.PRIMARY) {
-		numbersData += 'EP ' + inMember.contact.EMAIL.PRIMARY + '\n\r';
+		numbersData += 'EP ' + inMember.contact.EMAIL.PRIMARY + '\n';
 	}
 	if (inMember.contact.EMAIL.SECONDARY) {
-		numbersData += 'ES ' + inMember.contact.EMAIL.SECONDARY + '\n\r';
+		numbersData += 'ES ' + inMember.contact.EMAIL.SECONDARY + '\n';
 	}
 	if (inMember.contact.EMAIL.EMERGENCY) {
-		numbersData += 'EE ' + inMember.contact.EMAIL.EMERGENCY + '\n\r';
+		numbersData += 'EE ' + inMember.contact.EMAIL.EMERGENCY + '\n';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.PRIMARY) {
-		numbersData += 'PP ' + inMember.contact.CADETPARENTEMAIL.PRIMARY + '\n\r';
+		numbersData += 'PP ' + inMember.contact.CADETPARENTEMAIL.PRIMARY + '\n';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.SECONDARY) {
-		numbersData += 'PS ' + inMember.contact.CADETPARENTEMAIL.SECONDARY + '\n\r';
+		numbersData += 'PS ' + inMember.contact.CADETPARENTEMAIL.SECONDARY + '\n';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.EMERGENCY) {
-		numbersData += 'PE ' + inMember.contact.CADETPARENTEMAIL.EMERGENCY + '\n\r';
+		numbersData += 'PE ' + inMember.contact.CADETPARENTEMAIL.EMERGENCY + '\n';
 	}
 	if (numbersData.length > 2) {
 		numbersData = numbersData.substring(0, numbersData.length - 1);

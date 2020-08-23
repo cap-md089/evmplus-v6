@@ -36,6 +36,7 @@ import getmembers from './getmembers';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions from './permissions/setpermissions';
+import currentuser from './promotionrequirements/currentuser';
 import su from './su';
 import getdutypositions from './temporarydutypositions/get';
 import setdutypositions from './temporarydutypositions/set';
@@ -46,6 +47,8 @@ const adder = endpointAdder(router) as () => () => void;
 
 addAPI(Validator, adder, getdutypositions);
 addAPI(Validator, adder, setdutypositions);
+
+addAPI(Validator, adder, currentuser);
 
 addAPI(Validator, adder, setpermissions);
 addAPI(Validator, adder, getpermissions);

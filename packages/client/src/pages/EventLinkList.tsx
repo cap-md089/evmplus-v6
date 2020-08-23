@@ -156,7 +156,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		) : (
 			<div className="eventlinklist">
 				<h3>
-					Click '<span style={{ color: 'magenta' }}>Confirmed</span>' Status to set Status
+					Click '<span style={{ color: 'magenta' }}>Confirmed</span>' to set Status
 					to '<span style={{ color: 'green' }}>Complete</span>'
 				</h3>
 				<table>
@@ -171,12 +171,6 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							<th>
 								<span style={{ color: 'green' }}>GP</span> Evt No.
 							</th>
-							<th>
-								<span style={{ color: 'gray' }}>WG</span> Evt No.
-							</th>
-							<th>
-								<span style={{ color: 'red' }}>RG</span> Evt No.
-							</th>
 							<th>Wing Cal</th>
 							<th>Debrief</th>
 						</tr>
@@ -184,7 +178,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							<tr key={i}>
 								<td>
 									{event.accountID}-{event.id} ::{'  '}
-									<Link to={`/eventviewer/${event.id}`}>{event.name}</Link>
+									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
 									{` `}
 									{event.sourceEvent ? (
 										<>
@@ -212,8 +206,6 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								</td>
 								<td>{getEventStatus(event.status)}</td>
 								<td>{getEventNumber(event.groupEventNumber)}</td>
-								<td>{getEventNumber(event.wingEventNumber)}</td>
-								<td>{getEventNumber(event.regionEventNumber)}</td>
 								<td>{event.publishToWingCalendar}</td>
 								<td>{event.debrief}</td>
 							</tr>
