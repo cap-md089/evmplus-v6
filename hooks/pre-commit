@@ -8,7 +8,7 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "master" ]; then
 
 	# Check for compile errors
-	if lerna run check; then
+	if lerna run check --since master; then
 		# Everything compiles
 		:
 	else
@@ -26,7 +26,7 @@ if [ "$branch" = "master" ]; then
 	# fi
 
 	# Lint code
-	if lerna run lint; then
+	if lerna run lint --since master; then
 		# Code is lint free
 		:
 	else
