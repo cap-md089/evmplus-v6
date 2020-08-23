@@ -209,6 +209,16 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				year,
 			);
 
+			if (calendar[startWeek] === undefined || calendar[endWeek] === undefined) {
+				console.error(
+					'Cannot render event!',
+					val,
+					new Date(val.meetDateTime),
+					new Date(val.pickupDateTime),
+				);
+				return;
+			}
+
 			for (let k = startWeek; k <= endWeek; k++) {
 				if (k === startWeek && k === endWeek) {
 					const index = findIndex(calendar, startDay % 7, endDay % 7, k);
