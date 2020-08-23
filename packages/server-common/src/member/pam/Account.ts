@@ -39,6 +39,7 @@ import {
 	User,
 	UserAccountInformation,
 	getDefaultMemberPermissions,
+	MemberForMemberType,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { resolveReference } from '../../Members';
@@ -439,23 +440,38 @@ export const checkPermissions = <T extends MemberPermission>(permission: T) => (
 				message,
 		  });
 
+type ReqWithMemberType<R extends { member: MaybeObj<User> | User }, T extends MemberType> = Omit<
+	R,
+	'member'
+> & {
+	member: R['member'] extends MaybeObj<User>
+		? MaybeObj<MemberForMemberType<T> & User>
+		: MemberForMemberType<T> & User;
+};
+
 export const RequiresMemberType = <T extends MemberType>(...types: T[]) => <
 	R extends { member: MaybeObj<User> | User },
 	V
 >(
-	func: (req: R) => ServerEither<V>,
+	func: (req: ReqWithMemberType<R, T>) => ServerEither<V>,
 ) => (req: R): ServerEither<V> =>
 	('hasValue' in req.member
 		? req.member.hasValue && types.includes(req.member.value.type as T)
-			? asyncRight(req, errorGenerator('Could not process request'))
-			: asyncLeft<ServerError, R>({
+			? asyncRight(
+					(req as unknown) as ReqWithMemberType<R, T>,
+					errorGenerator('Could not process request'),
+			  )
+			: asyncLeft<ServerError, ReqWithMemberType<R, T>>({
 					type: 'OTHER',
 					code: 404,
 					message: 'This API endpoint does not exist for this member type',
 			  })
 		: types.includes(req.member.type as T)
-		? asyncRight(req, errorGenerator('Could not process request'))
-		: asyncLeft<ServerError, R>({
+		? asyncRight(
+				(req as unknown) as ReqWithMemberType<R, T>,
+				errorGenerator('Could not process request'),
+		  )
+		: asyncLeft<ServerError, ReqWithMemberType<R, T>>({
 				type: 'OTHER',
 				code: 404,
 				message: 'This API endpoint does not exist for this member type',

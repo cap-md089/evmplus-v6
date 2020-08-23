@@ -201,7 +201,10 @@ const renderName = (renderMember: User | null) => (event: RawEventObject) => (
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
+	attendance: eventViewer.attendees
+		.filter(Either.isRight)
+		.map(get('value'))
+		.map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 
@@ -413,6 +416,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		} = eventViewerInfo;
 		const { member, fullMemberDetails } = this.props;
 
+		const linkableAccounts =
+			fullMemberDetails.error !== MemberCreateError.NONE
+				? []
+				: fullMemberDetails.linkableAccounts.filter(
+						({ id }) => !linkedEvents.find(linkedEvent => linkedEvent.accountID === id),
+				  );
+
 		return (
 			<>
 				<div className="eventviewerroot">
@@ -508,22 +518,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					) : null}
 					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) &&
-					fullMemberDetails.error === MemberCreateError.NONE &&
-					fullMemberDetails.linkableAccounts.length > 0 &&
+					linkableAccounts.length > 0 &&
 					!event.sourceEvent
 						? ' | '
 						: null}
-					{fullMemberDetails.error !== MemberCreateError.NONE ||
-					!!event.sourceEvent ||
-					fullMemberDetails.linkableAccounts.length === 0 ? null : fullMemberDetails
-							.linkableAccounts.length === 1 ? (
+					{!!event.sourceEvent ||
+					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
 						<Button
-							onClick={() =>
-								this.linkEventTo(fullMemberDetails.linkableAccounts[0].id)
-							}
+							onClick={() => this.linkEventTo(linkableAccounts[0].id)}
 							buttonType="none"
 						>
-							Link event to {fullMemberDetails.linkableAccounts[0].name}
+							Link event to {linkableAccounts[0].name}
 						</Button>
 					) : (
 						<>
@@ -534,7 +539,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								Link event
 							</Button>
 							<DownloadDialogue
-								valuePromise={fullMemberDetails.linkableAccounts}
+								valuePromise={linkableAccounts}
 								displayValue={get('name')}
 								multiple={false}
 								onValueClick={selectedAccountToLinkTo =>

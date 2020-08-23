@@ -626,11 +626,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				{this.props.account.type === AccountType.CAPEVENT ||
 				this.props.account.type === AccountType.CAPGROUP ||
-				this.props.account.type === AccountType.CAPWING ? (
-					<>
-						<Label>Publish to wing</Label>
-						<Checkbox name="publishToWingCalendar" />
-					</>
+				this.props.account.type === AccountType.CAPSQUADRON ? (
+					<Label>Publish to wing</Label>
+				) : null}
+
+				{this.props.account.type === AccountType.CAPEVENT ||
+				this.props.account.type === AccountType.CAPGROUP ||
+				this.props.account.type === AccountType.CAPSQUADRON ? (
+					<Checkbox name="publishToWingCalendar" />
 				) : null}
 
 				<Label>Show upcoming</Label>
@@ -667,8 +670,8 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 			if (!dateTimesHaveBeenModified) {
 				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
-				event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
-				event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
+				event.endDateTime = event.meetDateTime + (900 + 7200) * 1000; // Two hours, 15 minutes
+				event.pickupDateTime = event.meetDateTime + (900 + 7200 + 900) * 1000; // Two hours, 30 minutes
 			} else if (!changed.pickupDateTime) {
 				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
 			}

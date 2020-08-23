@@ -2487,11 +2487,15 @@ export type MemberReference = CAPMemberReference;
 export type Member = CAPMember;
 export type User = Member & UserObject;
 
-export type MemberForReference<T extends MemberReference> = T extends CAPNHQMemberReference
+export type MemberForMemberType<
+	T extends MemberReference['type']
+> = T extends CAPNHQMemberReference['type']
 	? CAPNHQMemberObject
-	: T extends CAPProspectiveMemberReference
+	: T extends CAPProspectiveMemberReference['type']
 	? CAPProspectiveMemberObject
 	: Member;
+
+export type MemberForReference<T extends MemberReference> = MemberForMemberType<T['type']>;
 
 export type ReferenceForMember<T extends Member> = T extends CAPNHQMemberReference
 	? CAPNHQMemberReference
