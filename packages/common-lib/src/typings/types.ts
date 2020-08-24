@@ -67,7 +67,7 @@ export namespace NHQ {
 	export interface CadetAchvAprs {
 		CAPID: number;
 		CadetAchvID: number;
-		Status: string;
+		Status: CadetAprvStatus;
 		AprCAPID: number;
 		DspReason: string;
 		AwardNo: number;
@@ -3867,6 +3867,11 @@ export interface CadetPromotionStatus {
 	CurrentCadetAchv: NHQ.CadetAchv;
 
 	/**
+	 * The current highest achievement data
+	 */
+	CurrentAprvStatus: CadetAprvStatus;
+
+	/**
 	 * The date of the last promotion approval
 	 */
 	LastAprvDate: MaybeObj<number>;
@@ -3881,3 +3886,5 @@ export interface CadetPromotionStatus {
 	 */
 	RCLSDate: MaybeObj<number>;
 }
+
+export type CadetAprvStatus = 'INC' | 'PND' | 'APR';

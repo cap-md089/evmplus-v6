@@ -21,6 +21,7 @@ import {
 	AsyncEither,
 	asyncRight,
 	CadetPromotionStatus,
+	CadetAprvStatus,
 	CadetPromotionRequirementsMap,
 	Either,
 	errorGenerator,
@@ -139,7 +140,7 @@ export default class Main extends Page<PageProps, MainState> {
 						{this.props.member && !this.props.member.seniorMember && this.state.promotionRequirements.hasValue ? (
 							<section className="halfSection">
 								<h1>Stuff</h1>
-								
+								{/* {RequirementsBuild(this.state.promotionRequirements)} */}
 							</section>
 						) : null}
 						<section
@@ -280,4 +281,11 @@ export default class Main extends Page<PageProps, MainState> {
 			</div>
 		);
 	}
+}
+
+function RequirementsBuild(cps: CadetPromotionStatus): string {
+	let response = "<h3>Promotion Requirements</h3>";
+	response += CadetPromotionRequirementsMap[cps.CurrentCadetAchv.CadetAchvID];
+	response += cps.CurrentAprvStatus;
+	return response;
 }

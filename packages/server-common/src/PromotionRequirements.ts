@@ -57,6 +57,13 @@ export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQ
 							.limit(1),
 					),
 					collectResults(
+						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
+							CAPID: member.id,
+						})
+							.sort('CadetAchvID DESC')
+							.limit(1),
+					),
+					collectResults(
 						findAndBind(
 							schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'),
 							{
@@ -78,20 +85,22 @@ export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQ
 				errorGenerator('Could not load promotion requirements'),
 		  )
 				.map(
-					([maxAchv, maxAprv, encampResults, rclsResults]) =>
+					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) =>
 						[
 							maxAchv.length === 1
 								? maxAchv[0]
 								: { ...emptyCadetAchv, CAPID: member.id },
 							maxAprv,
+							maxAprvStatus[0].Status,
 							encampResults,
 							rclsResults,
 						] as const,
 				)
 				.map<CadetPromotionStatus>(
-					([maxAchv, maxAprv, encampResults, rclsResults]) => ({
+					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) => ({
 						NextCadetAchvID: maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
 						CurrentCadetAchv: maxAchv,
+						CurrentAprvStatus: maxAprvStatus,
 						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(aprv => +new Date(aprv.DateMod))(Maybe.fromArray(maxAprv)),
 						EncampDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(encampResults)),
 						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(rclsResults)),

@@ -21,7 +21,6 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
-	CAPNHQMemberObject,
 	SessionType
 } from 'common-lib';
 import { getCadetPromotionRequirements, PAM } from 'server-common';
@@ -30,7 +29,7 @@ export const func: ServerAPIEndpoint<api.member.promotionrequirements.Requiremen
 	'CAPNHQMember',
 )(
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getCadetPromotionRequirements(req.mysqlx)(req.member as CAPNHQMemberObject),
+		getCadetPromotionRequirements(req.mysqlx)(req.member),
 	),
 );
 
