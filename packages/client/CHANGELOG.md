@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.1](http://github.com//cap-md089/capunit-com-v6/compare/client@1.6.0...client@1.6.1) (2020-08-25)
+
+
+### Bug Fixes
+
+* fixed "publish to wing calendar" button not appearing for non wing accounts ([b1378c9](http://github.com//cap-md089/capunit-com-v6/commit/b1378c95af2adf3e99179ca0e7646a8f25a7c577)), closes [#10](http://github.com//cap-md089/capunit-com-v6/issues/10)
+* fixed calendar crashing when trying to render events that aren't within the viewed month ([e9ff6c7](http://github.com//cap-md089/capunit-com-v6/commit/e9ff6c7a0271eda610ade56ea9722de6c986d46e))
+* fixed link event button showing up when already linked to an account ([c3fcb13](http://github.com//cap-md089/capunit-com-v6/commit/c3fcb1346d70724e36be152bc17b8b0eb6fd8112)), closes [#12](http://github.com//cap-md089/capunit-com-v6/issues/12)
+
+
+
+
+
 # [1.6.0](http://github.com//cap-md089/capunit-com-v6/compare/client@1.5.0...client@1.6.0) (2020-08-17)
 
 

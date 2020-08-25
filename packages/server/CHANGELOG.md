@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.5.1](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.5.1) (2020-08-25)
+
+**Note:** Version bump only for package capunit-com-server
+
+
+
+
+
 # [6.5.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.4.0...capunit-com-server@6.5.0) (2020-08-17)
 
 

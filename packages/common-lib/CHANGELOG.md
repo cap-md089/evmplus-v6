@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.8.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.7.0...common-lib@1.8.0) (2020-08-25)
+
+
+### Features
+
+* made PAM.RequireMemberType smarter ([fbbc6ed](http://github.com//cap-md089/capunit-com-v6/commit/fbbc6eda975457e8fcee52c33d227c31e6ce5c7b))
+
+
+
+
+
 # [1.7.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.6.0...common-lib@1.7.0) (2020-08-17)
 
 

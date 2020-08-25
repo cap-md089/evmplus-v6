@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.5.0](http://github.com//cap-md089/capunit-com-v6/compare/server-common@1.4.0...server-common@1.5.0) (2020-08-25)
+
+
+### Bug Fixes
+
+* fixed google calendar update tripping up on modifying registration and wing events ([03d87ee](http://github.com//cap-md089/capunit-com-v6/commit/03d87ee8113bf748869e66ce2ddf76a324695913)), closes [#9](http://github.com//cap-md089/capunit-com-v6/issues/9)
+
+
+### Features
+
+* made PAM.RequireMemberType smarter ([fbbc6ed](http://github.com//cap-md089/capunit-com-v6/commit/fbbc6eda975457e8fcee52c33d227c31e6ce5c7b))
+
+
+
+
+
 # [1.4.0](http://github.com//cap-md089/capunit-com-v6/compare/server-common@1.3.0...server-common@1.4.0) (2020-08-17)
 
 
