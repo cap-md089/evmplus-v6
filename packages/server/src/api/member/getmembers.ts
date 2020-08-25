@@ -17,7 +17,7 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, validator } from 'auto-client-api';
+import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -34,10 +34,17 @@ import {
 	SessionType,
 	Validator,
 	ValidatorFail,
+	ValidatorImpl,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
 
-const typeValidator = validator<MemberType | undefined>(Validator);
+const typeValidator: ValidatorImpl<MemberType | undefined> = Validator.Optional(
+	Validator.Or(
+		'MemberType',
+		Validator.StrictValue('CAPNHQMember'),
+		Validator.StrictValue('CAPProspectiveMember'),
+	),
+);
 
 export const func: ServerAPIEndpoint<api.member.Members> = PAM.RequireSessionType(
 	SessionType.REGULAR,
