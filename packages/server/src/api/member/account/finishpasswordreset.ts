@@ -25,6 +25,7 @@ import {
 	createSessionForUser,
 	getInformationForUser,
 	removePasswordValidationToken,
+	simplifyUserInformation,
 } from 'server-common/dist/member/pam';
 
 const passwordResetErrorMessages = {
@@ -55,6 +56,7 @@ export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = r
 			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),
 		)
 		.map(username => getInformationForUser(req.mysqlx, username))
+		.map(simplifyUserInformation)
 		.flatMap(account => createSessionForUser(req.mysqlx, account))
 		.map(session => ({ sessionID: session.id }));
 

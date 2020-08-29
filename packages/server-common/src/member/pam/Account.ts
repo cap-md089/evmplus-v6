@@ -40,6 +40,7 @@ import {
 	UserAccountInformation,
 	getDefaultMemberPermissions,
 	MemberForMemberType,
+	SafeUserAccountInformation,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { resolveReference } from '../../Members';
@@ -283,6 +284,19 @@ export const getInformationForUser = async (
 
 	return stripProp('_id')(userList[0]) as UserAccountInformation;
 };
+
+/**
+ * Takes user account info and secures it by removing the password history, so that it can safely be
+ * passed around to other functions
+ *
+ * @param userInfo the information to secure
+ */
+export const simplifyUserInformation = (
+	userInfo: UserAccountInformation,
+): SafeUserAccountInformation => ({
+	...userInfo,
+	passwordHistory: [],
+});
 
 /**
  * Updates information for a user

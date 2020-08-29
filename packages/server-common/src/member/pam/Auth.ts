@@ -23,16 +23,16 @@ import {
 	MemberCreateError,
 	MemberReference,
 	PasswordResult,
-	UserAccountInformation,
-	SessionType,
-	UserSession,
 	ServerConfiguration,
+	SessionType,
+	UserAccountInformation,
+	UserSession,
 } from 'common-lib';
 import * as rp from 'request-promise';
+import { collectResults, findAndBind } from '../../MySQLUtil';
+import { getInformationForUser, simplifyUserInformation } from './Account';
 import { checkIfPasswordValid } from './Password';
-import { getInformationForUser } from './Account';
-import { createSessionForUser, setSessionType } from './Session';
-import { findAndBind, collectResults } from '../../MySQLUtil';
+import { createSessionForUser, updateSession } from './Session';
 
 export interface SigninSuccess {
 	result: MemberCreateError.NONE;
@@ -131,7 +131,10 @@ export const trySignin = async (
 		getInformationForUser(schema, username),
 	]);
 
-	const session = await createSessionForUser(schema, userInformation).join();
+	const session = await createSessionForUser(
+		schema,
+		simplifyUserInformation(userInformation),
+	).join();
 
 	return Either.cata(() =>
 		Promise.resolve<SigninResult>({
@@ -139,7 +142,10 @@ export const trySignin = async (
 		}),
 	)(async (sess: UserSession) => {
 		if (valid === PasswordResult.VALID_EXPIRED) {
-			return setSessionType(schema, sess, SessionType.PASSWORD_RESET)
+			return updateSession(schema, {
+				...sess,
+				type: SessionType.PASSWORD_RESET,
+			})
 				.join()
 				.then(
 					Either.cata(() => ({ result: MemberCreateError.SERVER_ERROR } as SigninResult))(

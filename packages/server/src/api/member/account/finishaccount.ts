@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator } from 'common-lib';
 import { PAM } from 'server-common';
+import { simplifyUserInformation } from 'server-common/dist/member/pam';
 
 export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = req =>
 	asyncRight(
@@ -51,6 +52,7 @@ export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = re
 								'An unknown error occurred while trying to finish creating your account',
 					  },
 		)
+		.map(simplifyUserInformation)
 		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
 		.map(({ id }) => ({ sessionID: id }));
 

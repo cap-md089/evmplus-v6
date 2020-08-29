@@ -3500,6 +3500,19 @@ export interface UserAccountInformation<T extends MemberReference = MemberRefere
 	passwordHistory: AccountPasswordInformation[];
 }
 
+export type SafeUserAccountInformation<T extends MemberReference = MemberReference> = Omit<
+	UserAccountInformation<T>,
+	'passwordHistory'
+> & {
+	/**
+	 * Don't pass around passwordHistory; this is something that should only be in the database.
+	 *
+	 * It cannot simply be left at being omitted, due to the sturctural nature of TypeScript, it
+	 * can still be passed around without throwing a compile time error
+	 */
+	passwordHistory: [];
+};
+
 export interface PasswordResetTokenInformation {
 	/**
 	 * When the token expires
@@ -3654,14 +3667,28 @@ export enum SessionType {
 	SCAN_ADD = 4,
 }
 
-export interface UserSession<T extends MemberReference = MemberReference> {
+export type ExtraSessionData<T extends SessionType> = T extends SessionType.SCAN_ADD
+	? {
+			accountID: string;
+			eventID: number;
+	  }
+	: null;
+
+export interface UserSession<
+	T extends MemberReference = MemberReference,
+	S extends SessionType = SessionType
+> {
 	id: SessionID;
-	created: number;
-	userAccount: UserAccountInformation<T>;
-	type: SessionType;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: S;
+	sessionData: ExtraSessionData<S>;
 }
 
-export interface ActiveSession<T extends MemberReference = MemberReference> extends UserSession<T> {
+export interface ActiveSession<
+	T extends MemberReference = MemberReference,
+	S extends SessionType = SessionType
+> extends UserSession<T, S> {
 	user: UserForReference<T>;
 }
 

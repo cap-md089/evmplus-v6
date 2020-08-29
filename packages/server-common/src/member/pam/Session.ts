@@ -37,6 +37,7 @@ import {
 	MemberCreateError,
 	MemberReference,
 	ParamType,
+	SafeUserAccountInformation,
 	ServerError,
 	SessionID,
 	SessionType,
@@ -59,7 +60,12 @@ const promisedRandomBytes = promisify(randomBytes);
 
 //#region Sessions
 
-const SESSION_AGE = 10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1);
+const SESSION_AGES = {
+	[SessionType.PASSWORD_RESET]:
+		10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
+	[SessionType.REGULAR]: 10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
+	[SessionType.SCAN_ADD]: 0,
+};
 const SESSION_ID_BYTE_COUNT = 64;
 const SESSION_TABLE = 'Sessions';
 
@@ -101,8 +107,8 @@ const removeOldSessions = (schema: Schema): AsyncEither<MemberCreateError, void>
 	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
 		.map(collection =>
-			safeBind(collection.remove('created < :created'), {
-				created: Date.now() - SESSION_AGE,
+			safeBind(collection.remove('expires < :expires'), {
+				expires: Date.now(),
 			}).execute(),
 		)
 		.map(destroy);
@@ -111,21 +117,24 @@ const updateSessionExpireTime = (
 	schema: Schema,
 	session: UserSession,
 ): AsyncEither<MemberCreateError, UserSession> =>
-	asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
-		.map(s => s.getCollection<UserSession>(SESSION_TABLE))
-		.map(collection =>
-			safeBind(collection.modify('sessionID = :sessionID'), {
-				sessionID: session.id,
-			})
-				.set('created', Date.now())
-				.execute(),
-		)
-		.map(
-			always({
-				...session,
-				created: Date.now(),
-			}),
-		);
+	(session.type === SessionType.SCAN_ADD
+		? asyncRight(void 0, MemberCreateError.UNKOWN_SERVER_ERROR)
+		: asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
+				.map(s => s.getCollection<UserSession>(SESSION_TABLE))
+				.map(collection =>
+					safeBind(collection.modify('id = :id'), {
+						id: session.id,
+					})
+						.set('expires', session.expires + SESSION_AGES[session.type])
+						.execute(),
+				)
+				.map(destroy)
+	).map(
+		always({
+			...session,
+			expires: Date.now(),
+		}),
+	);
 
 const getSessionFromID = (
 	schema: Schema,
@@ -140,41 +149,39 @@ const getSessionFromID = (
 
 export const createSessionForUser = (
 	schema: Schema,
-	userAccount: UserAccountInformation,
+	userAccount: SafeUserAccountInformation,
 ): AsyncEither<ServerError, UserSession> =>
 	asyncRight<ServerError, Buffer>(
 		promisedRandomBytes(SESSION_ID_BYTE_COUNT),
 		errorGenerator('Could not create session for user'),
 	)
 		.map<string>(bytes => bytes.toString('hex'))
-		.map<UserSession>(sessionID => ({
+		.map<UserSession<MemberReference, SessionType.REGULAR>>(sessionID => ({
 			id: sessionID,
-			created: Date.now(),
+			expires: Date.now() + SESSION_AGES[SessionType.REGULAR],
 			userAccount,
+			sessionData: null,
 			type: SessionType.REGULAR,
 		}))
 		.flatMap(session => addSessionToDatabase(schema, session));
 
-export const setSessionType = (
+export const updateSession = (
 	schema: Schema,
 	session: UserSession,
-	type: SessionType,
 ): AsyncEither<ServerError, UserSession> =>
-	asyncRight<ServerError, UserSession>(session, errorGenerator('Could not update user session'))
-		.map<UserSession>(sess => ({
-			...sess,
-			type,
-		}))
-		.tap(sess =>
-			safeBind(
-				schema.getCollection<UserSession>(SESSION_TABLE).modify('sessionID = :sessionID'),
-				{
-					sessionID: sess.id,
-				},
-			)
-				.set('type', type)
-				.execute(),
-		);
+	asyncRight<ServerError, UserSession>(
+		session,
+		errorGenerator('Could not update user session'),
+	).tap(sess =>
+		safeBind(
+			schema.getCollection<UserSession>(SESSION_TABLE).modify('sessionID = :sessionID'),
+			{
+				sessionID: sess.id,
+			},
+		)
+			.patch(sess)
+			.execute(),
+	);
 
 export const restoreFromSession = (schema: Schema) => (account: AccountObject) => <
 	T extends MemberReference = MemberReference
@@ -196,14 +203,13 @@ export const restoreFromSession = (schema: Schema) => (account: AccountObject) =
 			} as UserObject),
 		}))
 		.map<ActiveSession<T>>(user => ({
-			created: session.created,
+			expires: session.expires,
 			id: session.id,
 			type: session.type,
 			user,
 			userAccount: session.userAccount,
+			sessionData: session.sessionData,
 		}));
-
-export const sessionLength = (session: UserSession) => Date.now() - session.created;
 
 export const validateSession = (
 	schema: Schema,
@@ -323,13 +329,13 @@ const TOKEN_TABLE = 'Tokens';
 interface TokenObject {
 	token: string;
 	created: number;
-	member: UserAccountInformation;
+	member: SafeUserAccountInformation;
 }
 
 const addTokenToDatabase = async (
 	schema: Schema,
 	token: string,
-	member: UserAccountInformation,
+	member: SafeUserAccountInformation,
 ) => {
 	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
 
@@ -364,9 +370,9 @@ const invalidateToken = async (schema: Schema, token: string) => {
 
 export const getTokenForUser = async (
 	schema: Schema,
-	user: UserAccountInformation,
+	user: SafeUserAccountInformation,
 ): Promise<string> => {
-	const token = (await randomBytes(TOKEN_BYTE_COUNT)).toString('hex');
+	const token = (await promisedRandomBytes(TOKEN_BYTE_COUNT)).toString('hex');
 
 	await addTokenToDatabase(schema, token, user);
 

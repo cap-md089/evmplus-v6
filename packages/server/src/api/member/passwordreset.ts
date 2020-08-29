@@ -39,9 +39,7 @@ export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSess
 		)
 		.flatMap<PasswordSetResult>(result => {
 			if (request.session.type === SessionType.PASSWORD_RESET) {
-				return PAM.setSessionType(request.mysqlx, request.session, SessionType.REGULAR).map(
-					always(result),
-				);
+				return PAM.updateSession(request.mysqlx, request.session).map(always(result));
 			} else {
 				return Either.right(result);
 			}
