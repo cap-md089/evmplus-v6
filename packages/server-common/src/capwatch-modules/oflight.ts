@@ -45,18 +45,18 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
 
 	for (const oFlightConst of fileData) {
 		try {
-			const values = {
+			const values: NHQ.OFlight = {
 				CAPID: parseInt(oFlightConst.CAPID + '', 10),
 				Wing: oFlightConst.Wing,
 				Unit: oFlightConst.Unit,
-				Amount: oFlightConst.Amount,
-				Syllabus: oFlightConst.Syllabus,
-				Type: oFlightConst.Type,
+				Amount: parseInt(oFlightConst.Amount, 10),
+				Syllabus: parseInt(oFlightConst.Syllabus, 10),
+				Type: parseInt(oFlightConst.Type, 10),
 				FltDate: convertNHQDate(oFlightConst.FltDate).toISOString(),
 				TransDate: convertNHQDate(oFlightConst.TransDate).toISOString(),
 				FltRlsNum: oFlightConst.FltRlsNum,
 				AcftTailNum: oFlightConst.AcftTailNum,
-				FltTime: oFlightConst.FltTime,
+				FltTime: parseInt(oFlightConst.FltTime, 10),
 				LstUsr: oFlightConst.LstUsr,
 				LstDateMod: oFlightConst.LstDateMod,
 				Comments: oFlightConst.Comments,

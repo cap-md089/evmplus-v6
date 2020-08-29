@@ -71,7 +71,7 @@ export namespace NHQ {
 		AprCAPID: number;
 		DspReason: string;
 		AwardNo: number;
-		JROTCWaiver: number;
+		JROTCWaiver: boolean;
 		UsrID: string;
 		DateMod: string;
 		FirstUsr: string;
@@ -147,7 +147,7 @@ export namespace NHQ {
 		Contact: string;
 		UsrID: string;
 		DateMod: string;
-		DoNotContact: number;
+		DoNotContact: boolean;
 	}
 
 	export interface NHQMember {

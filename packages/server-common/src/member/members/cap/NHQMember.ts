@@ -84,7 +84,11 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 			};
 
 			capwatchContact.forEach(val => {
-				if ((val.Type as string) !== '' && (val.Type as string) !== '--Select Type--') {
+				if (
+					(val.Type as string) !== '' &&
+					(val.Type as string) !== '--Select Type--' &&
+					!val.DoNotContact
+				) {
 					memberContact[val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType][
 						val.Priority
 					] = val.Contact;
@@ -291,7 +295,9 @@ export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema:
 	accountGetter.byOrgid(schema)(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
+	getNHQMemberRows(schema)(member.id)
+		.map(getProp('DOB'))
+		.map(DateTime.fromISO);
 
 export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 	orgid: number,

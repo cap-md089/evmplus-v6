@@ -17,7 +17,7 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { NHQ, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
@@ -29,17 +29,17 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
 	try {
 		const mbrContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
 
-		let values;
+		let values: NHQ.MbrContact;
 
 		for (const duties of fileData) {
 			values = {
 				CAPID: parseInt(duties.CAPID.toString(), 10),
-				Type: duties.Type,
-				Priority: duties.Priority,
+				Type: duties.Type as CAPMemberContactType,
+				Priority: duties.Priority as CAPMemberContactPriority,
 				Contact: duties.Contact,
 				UsrID: duties.UsrID,
 				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				DoNotContact: duties.DoNotContact,
+				DoNotContact: duties.DoNotContact === 'True',
 			};
 
 			await mbrContactCollection.add(values).execute();

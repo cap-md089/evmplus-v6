@@ -56,19 +56,19 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 					.execute(),
 			]);
 
-			const values = {
-				CAPID: parseInt(member.CAPID + '', 10),
-				CadetAchvID: member.CadetAchvID,
+			const values: NHQ.CadetAchvAprs = {
+				CAPID: parseInt(member.CAPID, 10),
+				CadetAchvID: parseInt(member.CadetAchvID, 10),
 				Status: member.Status,
-				AprCAPID: member.AprCAPID,
+				AprCAPID: parseInt(member.AprCAPID, 10),
 				DspReason: member.DspReason,
-				AwardNo: member.AwardNo,
-				JROTCWaiver: member.JROTCWaiver,
+				AwardNo: parseInt(member.AwardNo, 10),
+				JROTCWaiver: member.JROTCWaiver === 'True',
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				PrintedCert: member.PrintedCert,
+				PrintedCert: +convertNHQDate(member.PrintedCert),
 			};
 
 			await cadetAchievementApprovalsCollection.add(values).execute();

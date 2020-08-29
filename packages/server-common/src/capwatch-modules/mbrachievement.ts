@@ -68,7 +68,7 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (fileData, sc
 				OriginallyAccomplished: +convertNHQDate(achv.OriginallyAccomplished.toString()),
 				RecID: parseInt(achv.RecID.toString(), 10),
 				Source: achv.Source,
-				Status: achv.Status,
+				Status: achv.Status as NHQ.MbrAchievements['Status'],
 				UsrID: achv.UsrID,
 			};
 
