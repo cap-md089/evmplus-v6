@@ -1,5 +1,7 @@
 #!/bin/sh
 
+git stash -q --keep-index
+
 # Check for master branch
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
@@ -41,3 +43,20 @@ fi
 FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
 echo "$FILES" | xargs node_modules/.bin/prettier --write
 echo "$FILES" | xargs git add
+
+# Check for files that don't have a copyright
+echo "Checking files for copyright information..."
+failed=false
+
+for file in $FILES; do
+	if [[ -f $file ]] && ! grep -iq "copyright" $file; then
+		echo "'$file' does not have a copyright"
+		failed=true
+	fi
+done
+
+if "$failed" = "true"; then
+	echo "A file does not have a copyright; check notice above."
+fi
+
+git stash pop -q
