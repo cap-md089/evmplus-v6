@@ -3667,30 +3667,48 @@ export enum SessionType {
 	SCAN_ADD = 4,
 }
 
-export type ExtraSessionData<T extends SessionType> = T extends SessionType.SCAN_ADD
-	? {
-			accountID: string;
-			eventID: number;
-	  }
-	: null;
+export type SessionForSessionType<
+	S extends SessionType,
+	M extends MemberReference
+> = S extends SessionType.REGULAR
+	? RegularSession<M>
+	: S extends SessionType.PASSWORD_RESET
+	? PasswordResetSession<M>
+	: ScanAddSession<M>;
 
-export interface UserSession<
-	T extends MemberReference = MemberReference,
-	S extends SessionType = SessionType
-> {
+export interface ScanAddSession<T extends MemberReference = MemberReference> {
 	id: SessionID;
 	expires: number;
 	userAccount: SafeUserAccountInformation<T>;
-	type: S;
-	sessionData: ExtraSessionData<S>;
+	type: SessionType.SCAN_ADD;
+	sessionData: {
+		accountID: string;
+		eventID: number;
+	};
 }
 
-export interface ActiveSession<
-	T extends MemberReference = MemberReference,
-	S extends SessionType = SessionType
-> extends UserSession<T, S> {
-	user: UserForReference<T>;
+export interface RegularSession<T extends MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.REGULAR;
 }
+
+export interface PasswordResetSession<T extends MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.PASSWORD_RESET;
+}
+
+export type UserSession<T extends MemberReference = MemberReference> =
+	| ScanAddSession<T>
+	| RegularSession<T>
+	| PasswordResetSession<T>;
+
+export type ActiveSession<T extends MemberReference = MemberReference> = UserSession<T> & {
+	user: UserForReference<T>;
+};
 
 export type AuditableObjects =
 	| NewEventObject

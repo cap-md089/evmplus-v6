@@ -132,7 +132,7 @@ export const getSimplePointsOfContact = (
 			  },
 	);
 
-const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRecord>(rec => ({
+export const attendanceRecordMapper = (rec: RawAttendanceDBRecord): AttendanceRecord => ({
 	comments: rec.comments,
 	customAttendanceFieldValues: rec.customAttendanceFieldValues,
 	memberID: rec.memberID,
@@ -144,7 +144,9 @@ const attendanceRecordMapper = asyncIterMap<RawAttendanceDBRecord, AttendanceRec
 	shiftTime: rec.shiftTime,
 	sourceAccountID: rec.accountID,
 	sourceEventID: rec.eventID,
-}));
+});
+
+export const attendanceRecordIterMapper = asyncIterMap(attendanceRecordMapper);
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
 	member: MemberReference,
@@ -223,7 +225,7 @@ export const getAttendanceForEvent = (schema: Schema) => ({
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID }),
 		)
 		.map(generateResults)
-		.map(attendanceRecordMapper)
+		.map(attendanceRecordIterMapper)
 		.map(iter =>
 			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(accountID)(eventID)),
 		);
@@ -239,7 +241,7 @@ export const getEventAttendance = (schema: Schema) => (account: AccountObject) =
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id }),
 		)
 		.map(generateResults)
-		.map(attendanceRecordMapper)
+		.map(attendanceRecordIterMapper)
 		.map(iter =>
 			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(account.id)(eventID)),
 		);

@@ -109,6 +109,8 @@ type Tree = {
 			set: api.member.temporarydutypositions.SetTemporaryDutyPositions;
 		};
 		session: {
+			setScanAdd: api.member.session.SetScanAddSession;
+			clone: api.member.session.Clone;
 			su: api.member.session.Su;
 		};
 		setAbsentee: api.member.SetAbsenteeInformation;

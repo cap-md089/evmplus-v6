@@ -61,6 +61,7 @@ import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
 import { Quizzer } from '../pages/quizzer/Quizzer';
 import TeamEmailList from '../pages/team/TeamEmail';
+import ScanAdd from '../pages/events/ScanAdd';
 
 const pages: Array<{
 	url: string;
@@ -230,6 +231,11 @@ const pages: Array<{
 	{
 		url: '/capr393quizzer',
 		component: Quizzer,
+		exact: false,
+	},
+	{
+		url: '/events/scanadd/:id',
+		component: ScanAdd,
 		exact: false,
 	},
 

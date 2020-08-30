@@ -36,8 +36,9 @@ interface NumberInputProps extends InputProps<number | null> {
 	shouldUpdate?: (value: number) => boolean;
 }
 
-export default (props: NumberInputProps) => (
+export default React.forwardRef<HTMLInputElement, NumberInputProps>((props, ref) => (
 	<TextInput
+		ref={ref}
 		name={props.name}
 		value={props.value === null ? '' : (props.value || 0).toString()}
 		shouldUpdate={val =>
@@ -76,4 +77,4 @@ export default (props: NumberInputProps) => (
 		hasError={props.hasError}
 		errorMessage={props.errorMessage}
 	/>
-);
+));

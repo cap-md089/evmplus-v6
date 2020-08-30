@@ -52,7 +52,7 @@ import { randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { BasicAccountRequest } from '../../Account';
 import { resolveReference } from '../../Members';
-import { collectResults, findAndBind, safeBind } from '../../MySQLUtil';
+import { collectResults, findAndBind, modifyAndBind, safeBind } from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
 
@@ -64,8 +64,8 @@ const SESSION_AGES = {
 	[SessionType.PASSWORD_RESET]:
 		10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
 	[SessionType.REGULAR]: 10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
-	[SessionType.SCAN_ADD]: 0,
 };
+
 const SESSION_ID_BYTE_COUNT = 64;
 const SESSION_TABLE = 'Sessions';
 
@@ -117,24 +117,25 @@ const updateSessionExpireTime = (
 	schema: Schema,
 	session: UserSession,
 ): AsyncEither<MemberCreateError, UserSession> =>
-	(session.type === SessionType.SCAN_ADD
-		? asyncRight(void 0, MemberCreateError.UNKOWN_SERVER_ERROR)
+	session.type === SessionType.SCAN_ADD
+		? asyncRight(session, MemberCreateError.UNKOWN_SERVER_ERROR)
 		: asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 				.map(s => s.getCollection<UserSession>(SESSION_TABLE))
 				.map(collection =>
-					safeBind(collection.modify('id = :id'), {
+					modifyAndBind(collection, {
 						id: session.id,
 					})
-						.set('expires', session.expires + SESSION_AGES[session.type])
+						.patch({
+							expires: Date.now() + SESSION_AGES[session.type],
+						})
 						.execute(),
 				)
-				.map(destroy)
-	).map(
-		always({
-			...session,
-			expires: Date.now(),
-		}),
-	);
+				.map(
+					always({
+						...session,
+						expires: Date.now() + SESSION_AGES[session.type],
+					}),
+				);
 
 const getSessionFromID = (
 	schema: Schema,
@@ -145,7 +146,7 @@ const getSessionFromID = (
 		.map(collection => collectResults(findAndBind(collection, { id: sessionID })))
 		.filter(sessions => sessions.length === 1, MemberCreateError.INVALID_SESSION_ID)
 		.map(get(0))
-		.map(stripProp('_id'));
+		.map(session => stripProp('_id')(session as any) as UserSession);
 
 export const createSessionForUser = (
 	schema: Schema,
@@ -156,7 +157,7 @@ export const createSessionForUser = (
 		errorGenerator('Could not create session for user'),
 	)
 		.map<string>(bytes => bytes.toString('hex'))
-		.map<UserSession<MemberReference, SessionType.REGULAR>>(sessionID => ({
+		.map<UserSession<MemberReference>>(sessionID => ({
 			id: sessionID,
 			expires: Date.now() + SESSION_AGES[SessionType.REGULAR],
 			userAccount,
@@ -165,23 +166,18 @@ export const createSessionForUser = (
 		}))
 		.flatMap(session => addSessionToDatabase(schema, session));
 
-export const updateSession = (
+export const updateSession = <S extends UserSession>(
 	schema: Schema,
-	session: UserSession,
-): AsyncEither<ServerError, UserSession> =>
-	asyncRight<ServerError, UserSession>(
-		session,
-		errorGenerator('Could not update user session'),
-	).tap(sess =>
-		safeBind(
-			schema.getCollection<UserSession>(SESSION_TABLE).modify('sessionID = :sessionID'),
-			{
-				sessionID: sess.id,
-			},
+	session: S,
+): AsyncEither<ServerError, S> =>
+	asyncRight<ServerError, S>(session, errorGenerator('Could not update user session'))
+		.map(sess =>
+			modifyAndBind(schema.getCollection<UserSession>(SESSION_TABLE), {
+				id: sess.id,
+			}),
 		)
-			.patch(sess)
-			.execute(),
-	);
+		.map(modify => modify.patch(session).execute())
+		.map(always(session));
 
 export const restoreFromSession = (schema: Schema) => (account: AccountObject) => <
 	T extends MemberReference = MemberReference
@@ -202,14 +198,24 @@ export const restoreFromSession = (schema: Schema) => (account: AccountObject) =
 				sessionID: session.id,
 			} as UserObject),
 		}))
-		.map<ActiveSession<T>>(user => ({
-			expires: session.expires,
-			id: session.id,
-			type: session.type,
-			user,
-			userAccount: session.userAccount,
-			sessionData: session.sessionData,
-		}));
+		.map<ActiveSession<T>>(user =>
+			session.type === SessionType.SCAN_ADD
+				? {
+						expires: session.expires,
+						id: session.id,
+						type: session.type,
+						user,
+						userAccount: session.userAccount,
+						sessionData: session.sessionData,
+				  }
+				: {
+						expires: session.expires,
+						id: session.id,
+						type: session.type,
+						user,
+						userAccount: session.userAccount,
+				  },
+		);
 
 export const validateSession = (
 	schema: Schema,

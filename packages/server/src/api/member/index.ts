@@ -36,7 +36,8 @@ import getmembers from './getmembers';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions from './permissions/setpermissions';
-import su from './su';
+import setscanaddsession from './session/setscanaddsession';
+import su from './session/su';
 import getdutypositions from './temporarydutypositions/get';
 import setdutypositions from './temporarydutypositions/set';
 
@@ -64,6 +65,7 @@ addAPI(Validator, adder, other);
 addAPI(Validator, adder, passwordreset);
 addAPI(Validator, adder, absent);
 addAPI(Validator, adder, su);
+addAPI(Validator, adder, setscanaddsession);
 addAPI(Validator, adder, getmembers);
 
 router.use(account);

@@ -19,24 +19,30 @@
 
 import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	always,
 	api,
 	applyCustomAttendanceFields,
+	AsyncEither,
 	asyncRight,
-	destroy,
+	canSignUpForEvent,
 	effectiveManageEventPermissionForEvent,
+	Either,
 	errorGenerator,
 	EventObject,
 	isValidMemberReference,
 	Maybe,
 	NewAttendanceRecord,
 	Permissions,
+	ServerError,
 	SessionType,
 	toReference,
 } from 'common-lib';
 import {
 	addMemberToAttendance,
+	attendanceRecordMapper,
 	getEvent,
 	getFullEventObject,
+	getTeam,
 	PAM,
 	resolveReference,
 } from 'server-common';
@@ -59,16 +65,50 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 			memberID,
 		}));
 
+const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
+	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(event =>
+			AsyncEither.All([
+				getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member))(event),
+				event.teamID !== undefined && event.teamID !== null
+					? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)
+					: asyncRight(Maybe.none(), errorGenerator('Could not get team information')),
+			]),
+		)
+		.flatMap(([event, teamMaybe]) =>
+			getRecord(req)(event)
+				.flatMap(rec =>
+					Either.map<ServerError, void, Required<NewAttendanceRecord>>(always(rec))(
+						Either.leftMap<string, ServerError, void>(err => ({
+							type: 'OTHER',
+							code: 400,
+							message: err,
+						}))(canSignUpForEvent(event)(teamMaybe)(rec.memberID)),
+					),
+				)
+				.flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event))
+				.map(attendanceRecordMapper),
+		);
+
 export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
 	// tslint:disable-next-line: no-bitwise
 	SessionType.REGULAR | SessionType.SCAN_ADD,
-)(req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
-		.flatMap(event =>
-			getRecord(req)(event).flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event)),
+)(request =>
+	asyncRight(request, errorGenerator('Could not process request'))
+		.filter(
+			req =>
+				!(
+					req.session.type === SessionType.SCAN_ADD &&
+					(req.session.sessionData.accountID !== req.account.id ||
+						req.session.sessionData.eventID.toString() !== req.params.id)
+				),
+			{
+				type: 'OTHER',
+				code: 403,
+				message: 'Current session cannot add attendance to this event',
+			},
 		)
-		.map(destroy),
+		.flatMap(addAttendance),
 );
 
 export default func;
