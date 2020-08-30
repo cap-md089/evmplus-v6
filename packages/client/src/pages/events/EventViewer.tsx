@@ -599,6 +599,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									)
 								) : null}
 							</Dialogue>
+							{' | '}
+							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
 						</>
 					)}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
@@ -990,13 +992,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				: {
 						...prev,
 						eventInformation: {
+							...prev.eventInformation,
 							attendees: prev.eventInformation.attendees.filter(
 								mem =>
 									Either.isLeft(mem) ||
 									!areMembersTheSame(mem.value.record.memberID)(record.memberID),
 							),
-							event: prev.eventInformation.event,
-							pointsOfContact: prev.eventInformation.pointsOfContact,
 						},
 				  },
 		);
