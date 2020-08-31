@@ -52,6 +52,8 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 				<div className="widget-body">
 					<Link to="/admin/attendance">View Attendance</Link>
 					<br />
+					<Link to="/admin/setupmfa">Setup MFA</Link>
+					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
 					{this.props.account.type === AccountType.CAPSQUADRON &&
 					hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(

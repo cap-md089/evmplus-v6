@@ -18,7 +18,7 @@
  */
 
 import { APIEither } from '../../api';
-import { MemberReference, ScanAddSession } from '../../types';
+import { MemberReference, RegularSession, ScanAddSession } from '../../types';
 
 /**
  * Developer tool, strictly locked down
@@ -64,6 +64,63 @@ export interface SetScanAddSession {
 	(params: {}, body: { eventID: number }): APIEither<ScanAddSession>;
 
 	url: '/api/member/session/scanadd';
+
+	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: true;
+}
+
+/**
+ * Makes a request to upgrade a session to a regular session after the session was
+ * initially denied to allow for Multi-Factor Authentication (MFA)
+ */
+export interface FinishMFA {
+	(params: {}, body: { mfaToken: string }): APIEither<RegularSession>;
+
+	url: '/api/member/session/finishmfa';
+
+	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: true;
+}
+
+/**
+ * Starts the process of allowing a user to use MFA for their account
+ */
+export interface StartMFASetup {
+	(params: {}, body: {}): APIEither<string>;
+
+	url: '/api/member/session/startmfasetup';
+
+	method: 'post';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: false;
+}
+
+/**
+ * Makes a request to finish setting up an MFA session for a user
+ */
+export interface FinishMFASetup {
+	(
+		params: {},
+		body: {
+			mfaToken: string;
+		},
+	): APIEither<void>;
+
+	url: '/api/member/session/finishmfasetup';
 
 	method: 'post';
 

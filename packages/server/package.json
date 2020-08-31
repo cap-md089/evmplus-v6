@@ -37,6 +37,7 @@
 		"request-promise": "^4.2.2",
 		"serve-favicon": "^2.4.5",
 		"server-common": "^1.5.0",
+		"speakeasy": "^2.0.0",
 		"ssh2-sftp-client": "^5.2.1",
 		"uuid": "^3.2.1"
 	},
@@ -62,6 +63,7 @@
 		"@types/react": "^16.8.4",
 		"@types/request-promise": "^4.1.44",
 		"@types/request-promise-native": "^1.0.15",
+		"@types/speakeasy": "^2.0.5",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^3.4.3",
 		"express-unit": "^2.1.1",

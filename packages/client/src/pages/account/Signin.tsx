@@ -52,6 +52,7 @@ const signinErrorMessages = {
 	[MemberCreateError.INCORRRECT_CREDENTIALS]: 'The username and password could not be verified',
 	[MemberCreateError.INVALID_SESSION_ID]: 'Invalid session',
 	[MemberCreateError.PASSWORD_EXPIRED]: '',
+	[MemberCreateError.ACCOUNT_USES_MFA]: '',
 	[MemberCreateError.SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in',
@@ -99,7 +100,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 	}
 
 	public render() {
-		return this.state.error !== MemberCreateError.PASSWORD_EXPIRED ? (
+		return this.state.error !== MemberCreateError.PASSWORD_EXPIRED &&
+			this.state.error !== MemberCreateError.ACCOUNT_USES_MFA ? (
 			<div>
 				Enter your capunit.com login information below to sign in to the site. By logging
 				into this site you agree to the terms and conditions located{' '}
@@ -146,7 +148,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					<ReCAPTCHAInput name="recaptcha" />
 				</SimpleForm>
 			</div>
-		) : (
+		) : this.state.error === MemberCreateError.ACCOUNT_USES_MFA ? null : (
 			<div>
 				<SimpleForm<ResetPasswordFormValues>
 					onSubmit={this.resetPassword}

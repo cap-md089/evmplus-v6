@@ -303,6 +303,7 @@ export enum MemberCreateError {
 	RECAPTCHA_INVALID = 4,
 	UNKOWN_SERVER_ERROR = 5,
 	DATABASE_ERROR = 6,
+	ACCOUNT_USES_MFA = 7,
 }
 
 export enum PointOfContactType {
@@ -3665,6 +3666,7 @@ export enum SessionType {
 	REGULAR = 1,
 	PASSWORD_RESET = 2,
 	SCAN_ADD = 4,
+	IN_PROGRESS_MFA = 8,
 }
 
 export type SessionForSessionType<
@@ -3674,6 +3676,8 @@ export type SessionForSessionType<
 	? RegularSession<M>
 	: S extends SessionType.PASSWORD_RESET
 	? PasswordResetSession<M>
+	: S extends SessionType.IN_PROGRESS_MFA
+	? InProgressMFASession<M>
 	: ScanAddSession<M>;
 
 export interface ScanAddSession<T extends MemberReference = MemberReference> {
@@ -3687,24 +3691,32 @@ export interface ScanAddSession<T extends MemberReference = MemberReference> {
 	};
 }
 
-export interface RegularSession<T extends MemberReference> {
+export interface RegularSession<T extends MemberReference = MemberReference> {
 	id: SessionID;
 	expires: number;
 	userAccount: SafeUserAccountInformation<T>;
 	type: SessionType.REGULAR;
 }
 
-export interface PasswordResetSession<T extends MemberReference> {
+export interface PasswordResetSession<T extends MemberReference = MemberReference> {
 	id: SessionID;
 	expires: number;
 	userAccount: SafeUserAccountInformation<T>;
 	type: SessionType.PASSWORD_RESET;
 }
 
+export interface InProgressMFASession<T extends MemberReference = MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.IN_PROGRESS_MFA;
+}
+
 export type UserSession<T extends MemberReference = MemberReference> =
 	| ScanAddSession<T>
 	| RegularSession<T>
-	| PasswordResetSession<T>;
+	| PasswordResetSession<T>
+	| InProgressMFASession<T>;
 
 export type ActiveSession<T extends MemberReference = MemberReference> = UserSession<T> & {
 	user: UserForReference<T>;
@@ -3970,4 +3982,19 @@ export interface CadetPromotionStatus {
 	 * Status of RCLS requirement, needed for Eaker, should have Encampment and C/MSgt before eligible
 	 */
 	RCLS: string;
+}
+
+/**
+ * Represents the MFA tokens that are stored for a user
+ */
+export interface StoredMFASecret {
+	/**
+	 * The MFA token itself
+	 */
+	secret: string;
+
+	/**
+	 * The user the token belongs to
+	 */
+	member: MemberReference;
 }
