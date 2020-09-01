@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.10.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.7.0...common-lib@1.10.0) (2020-09-01)
+
+
+### Bug Fixes
+
+* fixed CAPWATCH import not deleting records properly ([dce238b](http://github.com//cap-md089/capunit-com-v6/commit/dce238b0f92959a372e15551fbf66dc1e5c30374))
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed ImportCAPWATCHFile types to more accurately reflect the types of a CAPWATCH CSV file ([fffae38](http://github.com//cap-md089/capunit-com-v6/commit/fffae38d6ba729c7592b1567242e4ea97cfe185e))
+
+
+### Features
+
+* added ability to have Discord bot message a role ([047c7ae](http://github.com//cap-md089/capunit-com-v6/commit/047c7ae876e2cac7e52b4466e013a7e1d1a70c9a))
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+* made PAM.RequireMemberType smarter ([fbbc6ed](http://github.com//cap-md089/capunit-com-v6/commit/fbbc6eda975457e8fcee52c33d227c31e6ce5c7b))
+
+
+
+
+
 # [1.9.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.7.0...common-lib@1.9.0) (2020-08-31)
 
 
