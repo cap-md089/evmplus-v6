@@ -70,6 +70,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 			: Maybe.some({
 					serverID,
 					displayFlight: true,
+					staffChannel: null,
 			  });
 
 	const mainCalendarID = await asker('What is the main Google calendar ID? - ');
