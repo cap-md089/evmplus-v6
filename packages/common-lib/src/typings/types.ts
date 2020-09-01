@@ -76,7 +76,7 @@ export namespace NHQ {
 		DateMod: string;
 		FirstUsr: string;
 		DateCreated: string;
-		PrintedCert: number;
+		PrintedCert: boolean;
 	}
 
 	export interface CdtAchvEnum {

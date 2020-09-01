@@ -29,17 +29,28 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
 	try {
 		const mbrContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
 
+		const addedCAPIDs: { [key: string]: boolean } = {};
+
 		let values: NHQ.MbrContact;
 
-		for (const duties of fileData) {
+		for (const contact of fileData) {
+			if (!addedCAPIDs[contact.CAPID]) {
+				await mbrContactCollection
+					.remove('CAPID = :CAPID')
+					.bind('CAPID', parseInt(contact.CAPID, 10))
+					.execute();
+			}
+
+			addedCAPIDs[contact.CAPID] = true;
+
 			values = {
-				CAPID: parseInt(duties.CAPID.toString(), 10),
-				Type: duties.Type as CAPMemberContactType,
-				Priority: duties.Priority as CAPMemberContactPriority,
-				Contact: duties.Contact,
-				UsrID: duties.UsrID,
-				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				DoNotContact: duties.DoNotContact === 'True',
+				CAPID: parseInt(contact.CAPID.toString(), 10),
+				Type: contact.Type as CAPMemberContactType,
+				Priority: contact.Priority as CAPMemberContactPriority,
+				Contact: contact.Contact,
+				UsrID: contact.UsrID,
+				DateMod: convertNHQDate(contact.DateMod).toISOString(),
+				DoNotContact: contact.DoNotContact === 'True',
 			};
 
 			await mbrContactCollection.add(values).execute();

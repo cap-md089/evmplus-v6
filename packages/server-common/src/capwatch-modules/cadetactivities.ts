@@ -18,7 +18,7 @@
  */
 
 import { NHQ } from 'common-lib';
-import { convertNHQDate, modifyAndBind } from '..';
+import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
 const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, schema) => {
@@ -37,8 +37,19 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 		'NHQ_CadetActivities',
 	);
 
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
 	for (const cadetActivitiesConst of fileData) {
 		try {
+			if (!removedCAPIDs[cadetActivitiesConst.CAPID]) {
+				await cadetActivitiesCollection
+					.remove('CAPID = :CAPID')
+					.bind('CAPID', parseInt(cadetActivitiesConst.CAPID, 10))
+					.execute();
+			}
+
+			removedCAPIDs[cadetActivitiesConst.CAPID] = true;
+
 			const values = {
 				CAPID: parseInt(cadetActivitiesConst.CAPID + '', 10),
 				Type: cadetActivitiesConst.Type,
@@ -47,18 +58,8 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 				UsrID: cadetActivitiesConst.UsrID,
 				DateMod: convertNHQDate(cadetActivitiesConst.DateMod).toISOString(),
 			};
-			try {
-				await cadetActivitiesCollection.add(values).execute();
-			} catch (e) {
-				console.warn(e);
-				await modifyAndBind(cadetActivitiesCollection, {
-					CAPID: values.CAPID,
-					Type: values.Type,
-					Completed: values.Completed,
-				})
-					.patch(values)
-					.execute();
-			}
+
+			await cadetActivitiesCollection.add(values).execute();
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;
