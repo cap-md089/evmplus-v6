@@ -11,32 +11,108 @@
 			"group": "build"
 		},
 		{
-			"label": "Test client",
-			"type": "npm",
-			"script": "test",
-			"path": "client/",
-			"problemMatcher": [],
-			"isBackground": true,
-			"group": "test"
-		},
-		{
-			"label": "Develop server",
-			"type": "npm",
-			"script": "develop",
-			"path": "server/",
+			"type": "typescript",
+			"tsconfig": "packages/server/tsconfig.json",
+			"option": "watch",
 			"problemMatcher": [
-				"$gulp-tsc",
-				"$tslint5"
+				"$tsc-watch"
 			],
-			"group": "build"
+			"label": "tsc: watch - packages/server/tsconfig.json"
 		},
 		{
-			"label": "Test server",
-			"type": "npm",
-			"script": "test",
-			"path": "server/",
-			"problemMatcher": [],
-			"group": "test"
+			"type": "typescript",
+			"tsconfig": "packages/apis/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/apis/tsconfig.json"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "packages/auto-client-api/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/auto-client-api/tsconfig.json"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "packages/common-lib/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/common-lib/tsconfig.json"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "packages/discord-bot/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/discord-bot/tsconfig.json"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "packages/server/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/server/tsconfig.json"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "packages/server-common/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "tsc: watch - packages/server-common/tsconfig.json"
+		},
+		{
+			"label": "Build client",
+			"dependsOn": [
+				"tsc: watch - packages/apis/tsconfig.json",
+				"tsc: watch - packages/common-lib/tsconfig.json",
+				"Start Client"
+			]
+		},
+		{
+			"label": "Build server - with Discord",
+			"dependsOn": [
+				"tsc: watch - packages/server/tsconfig.json",
+				"tsc: watch - packages/server-common/tsconfig.json",
+				"tsc: watch - packages/common-lib/tsconfig.json",
+				"tsc: watch - packages/discord-bot/tsconfig.json"
+			]
+		},
+		{
+			"label": "Build server - without Discord",
+			"dependsOn": [
+				"tsc: watch - packages/server/tsconfig.json",
+				"tsc: watch - packages/server-common/tsconfig.json",
+				"tsc: watch - packages/common-lib/tsconfig.json"
+			]
+		},
+		{
+			"label": "Build all",
+			"dependsOn": [
+				"tsc: watch - packages/apis/tsconfig.json",
+				"tsc: watch - packages/auto-client-api/tsconfig.json",
+				"tsc: watch - packages/common-lib/tsconfig.json",
+				"tsc: watch - packages/discord-bot/tsconfig.json",
+				"tsc: watch - packages/server/tsconfig.json",
+				"tsc: watch - packages/server-common/tsconfig.json",
+				"Start Client"
+			],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true
 		}
 	]
 }
