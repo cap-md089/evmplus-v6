@@ -519,9 +519,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) &&
 					linkableAccounts.length > 0 &&
-					!event.sourceEvent
-						? ' | '
-						: null}
+					!event.sourceEvent ? (
+						<br />
+					) : null}
 					{!!event.sourceEvent ||
 					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
 						<Button
@@ -609,7 +609,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) >=
 						Permissions.ManageEvent.FULL ? (
-						<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+						<>
+							{linkableAccounts.length === 0 || !!event.sourceEvent ? <br /> : null}
+							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+						</>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
