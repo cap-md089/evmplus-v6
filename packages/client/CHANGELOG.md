@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.9.0](http://github.com//cap-md089/capunit-com-v6/compare/client@1.6.0...client@1.9.0) (2020-09-02)
+
+
+### Bug Fixes
+
+* fixed "publish to wing calendar" button not appearing for non wing accounts ([b1378c9](http://github.com//cap-md089/capunit-com-v6/commit/b1378c95af2adf3e99179ca0e7646a8f25a7c577)), closes [#10](http://github.com//cap-md089/capunit-com-v6/issues/10)
+* fixed calendar crashing when trying to render events that aren't within the viewed month ([e9ff6c7](http://github.com//cap-md089/capunit-com-v6/commit/e9ff6c7a0271eda610ade56ea9722de6c986d46e))
+* fixed event viewer crashing, added scanadd link ([e4b7843](http://github.com//cap-md089/capunit-com-v6/commit/e4b7843979002ed2b47288b3241627aa5ad839f4)), closes [#22](http://github.com//cap-md089/capunit-com-v6/issues/22)
+* fixed scan add link on event viewer not showing up appropriately ([f0c9a0a](http://github.com//cap-md089/capunit-com-v6/commit/f0c9a0a5128ace6e5a9ad8978c8b6a9f937b548d))
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed link event button showing up when already linked to an account ([c3fcb13](http://github.com//cap-md089/capunit-com-v6/commit/c3fcb1346d70724e36be152bc17b8b0eb6fd8112)), closes [#12](http://github.com//cap-md089/capunit-com-v6/issues/12)
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
 # [1.8.0](http://github.com//cap-md089/capunit-com-v6/compare/client@1.6.0...client@1.8.0) (2020-09-01)
 
 
