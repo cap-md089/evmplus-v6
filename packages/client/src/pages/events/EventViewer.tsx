@@ -599,10 +599,18 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									)
 								) : null}
 							</Dialogue>
-							{' | '}
-							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+							{member &&
+							effectiveManageEventPermissionForEvent(member)(event) >=
+								Permissions.ManageEvent.FULL
+								? ' | '
+								: null}
 						</>
 					)}
+					{member &&
+					effectiveManageEventPermissionForEvent(member)(event) >=
+						Permissions.ManageEvent.FULL ? (
+						<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
 						fullMemberDetails.linkableAccounts.length > 0 &&
