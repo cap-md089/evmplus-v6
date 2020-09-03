@@ -36,6 +36,8 @@ import {
 	MemberCreateError,
 	Right,
 	ServerError,
+	SigninRequiresMFA,
+	SigninReturn,
 	SuccessfulSigninReturn,
 	toReference,
 } from 'common-lib';
@@ -115,8 +117,19 @@ const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
 				errorGenerator('Could not handle failure'),
 		  );
 
-export const func: ServerAPIEndpoint<api.Signin> = req => {
-	return asyncRight(
+const handleMFA = (req: ServerAPIRequestParameter<api.Signin>) => (
+	result: PAM.SigninRequiresMFA,
+): ServerEither<SigninRequiresMFA> =>
+	asyncRight<ServerError, SigninRequiresMFA>(
+		{
+			error: MemberCreateError.ACCOUNT_USES_MFA,
+			sessionID: result.sessionID,
+		},
+		errorGenerator('Could not handle failure'),
+	);
+
+export const func: ServerAPIEndpoint<api.Signin> = req =>
+	asyncRight(
 		PAM.trySignin(
 			req.mysqlx,
 			req.body.username,
@@ -125,14 +138,14 @@ export const func: ServerAPIEndpoint<api.Signin> = req => {
 			req.configuration,
 		),
 		errorGenerator('Could not sign in'),
-	).flatMap<SuccessfulSigninReturn | FailedSigninReturn | ExpiredSuccessfulSigninReturn>(
-		results =>
-			results.result === MemberCreateError.NONE
-				? handleSuccess(req)(results)
-				: results.result === MemberCreateError.PASSWORD_EXPIRED
-				? handlePasswordExpired(req)(results)
-				: handleFailure(req)(results),
+	).flatMap<SigninReturn>(results =>
+		results.result === MemberCreateError.NONE
+			? handleSuccess(req)(results)
+			: results.result === MemberCreateError.PASSWORD_EXPIRED
+			? handlePasswordExpired(req)(results)
+			: results.result === MemberCreateError.ACCOUNT_USES_MFA
+			? handleMFA(req)(results)
+			: handleFailure(req)(results),
 	);
-};
 
 export default func;

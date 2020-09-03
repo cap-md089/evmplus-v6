@@ -18,11 +18,29 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, SessionType, toReference } from 'common-lib';
+import { api, MemberCreateError, SessionType, toReference } from 'common-lib';
 import { PAM } from 'server-common';
 
-export const func: ServerAPIEndpoint<api.member.session.FinishMFASetup> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req => PAM.finishMFASetup(req.mysqlx)(toReference(req.member))(req.body.mfaToken));
+export const func: ServerAPIEndpoint<api.member.session.FinishMFA> = PAM.RequireSessionType(
+	SessionType.IN_PROGRESS_MFA,
+)(req =>
+	PAM.verifyMFAToken(req.mysqlx)(toReference(req.member))(req.body.mfaToken)
+		.flatMap(() => PAM.checkIfPasswordExpired(req.mysqlx)(req.session.userAccount.username))
+		.tap(console.log)
+		.tap(passwordExpired =>
+			passwordExpired
+				? PAM.updateSession(req.mysqlx, {
+						...req.session,
+						type: SessionType.PASSWORD_RESET,
+				  })
+				: PAM.updateSession(req.mysqlx, {
+						...req.session,
+						type: SessionType.REGULAR,
+				  }),
+		)
+		.map(passwordExpired =>
+			passwordExpired ? MemberCreateError.PASSWORD_EXPIRED : MemberCreateError.NONE,
+		),
+);
 
 export default func;

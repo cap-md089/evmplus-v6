@@ -37,14 +37,22 @@ interface SigninFormValues {
 	recaptcha: string | null;
 }
 
+interface MFAFormValues {
+	token: string;
+}
+
 interface SigninState {
 	signinFormValues: SigninFormValues;
 	resetFormValues: ResetPasswordFormValues;
+	mfaFormValues: MFAFormValues;
 	error: MemberCreateError;
 	passwordSetResult: string;
+	mfaResult: string;
 	updatePasswordSessionID: string | null;
+	finishMFASessionID: string | null;
 	tryingSignin: boolean;
 	tryingPasswordReset: boolean;
+	tryingMFAToken: boolean;
 }
 
 const signinErrorMessages = {
@@ -78,6 +86,12 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		updatePasswordSessionID: null,
 		tryingSignin: false,
 		tryingPasswordReset: false,
+		mfaFormValues: {
+			token: '',
+		},
+		mfaResult: '',
+		finishMFASessionID: null,
+		tryingMFAToken: false,
 	};
 
 	private get returnUrl(): string {
@@ -97,6 +111,13 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 		this.trySignin = this.trySignin.bind(this);
 		this.resetPassword = this.resetPassword.bind(this);
+		this.useMFAToken = this.useMFAToken.bind(this);
+	}
+
+	public componentDidMount() {
+		if (this.props.member) {
+			this.props.routeProps.history.push(this.returnUrl);
+		}
 	}
 
 	public render() {
@@ -148,7 +169,35 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					<ReCAPTCHAInput name="recaptcha" />
 				</SimpleForm>
 			</div>
-		) : this.state.error === MemberCreateError.ACCOUNT_USES_MFA ? null : (
+		) : this.state.error === MemberCreateError.ACCOUNT_USES_MFA ? (
+			<div>
+				<SimpleForm<MFAFormValues>
+					onSubmit={this.useMFAToken}
+					validator={{
+						token: token => token.length === 6 && !isNaN(parseInt(token, 10)),
+					}}
+					onChange={mfaFormValues => this.setState({ mfaFormValues })}
+					values={this.state.mfaFormValues}
+					disableOnInvalid={true}
+					submitInfo={{
+						text: 'Submit challenge',
+						disabled: this.state.tryingMFAToken,
+					}}
+				>
+					<Title>Multi-factor challenge</Title>
+
+					{this.state.mfaResult !== '' ? <Label /> : null}
+					{this.state.mfaResult !== '' ? (
+						<TextBox>
+							<b>{this.state.mfaResult}</b>
+						</TextBox>
+					) : null}
+
+					<Label>Please input a multi-factor token</Label>
+					<TextInput name="token" />
+				</SimpleForm>
+			</div>
+		) : (
 			<div>
 				<SimpleForm<ResetPasswordFormValues>
 					onSubmit={this.resetPassword}
@@ -212,6 +261,12 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				tryingSignin: false,
 				updatePasswordSessionID: signinResults.sessionID,
 			});
+		} else if (signinResults.error === MemberCreateError.ACCOUNT_USES_MFA) {
+			this.setState({
+				error: signinResults.error,
+				tryingSignin: false,
+				finishMFASessionID: signinResults.sessionID,
+			});
 		} else {
 			// @ts-ignore
 			window.grecaptcha.reset();
@@ -243,6 +298,38 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push(this.returnUrl);
+		}
+	}
+
+	private async useMFAToken() {
+		this.setState({
+			tryingMFAToken: true,
+		});
+
+		const mfaTokenResult = await fetchApi.member.session.finishMFA(
+			{},
+			{ mfaToken: this.state.mfaFormValues.token },
+			this.state.finishMFASessionID!,
+		);
+
+		if (Either.isLeft(mfaTokenResult)) {
+			this.setState({
+				mfaResult: mfaTokenResult.value.message,
+				tryingMFAToken: false,
+			});
+		} else {
+			if (mfaTokenResult.value === MemberCreateError.NONE) {
+				const member = await getMember(this.state.finishMFASessionID!);
+
+				this.props.authorizeUser(member);
+				this.props.routeProps.history.push(this.returnUrl);
+			} else {
+				this.setState({
+					error: MemberCreateError.PASSWORD_EXPIRED,
+					tryingMFAToken: false,
+					updatePasswordSessionID: this.state.finishMFASessionID,
+				});
+			}
 		}
 	}
 }

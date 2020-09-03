@@ -2655,6 +2655,17 @@ export interface FailedSigninReturn {
 		| MemberCreateError.RECAPTCHA_INVALID;
 }
 
+export interface SigninRequiresMFA {
+	/**
+	 * Reports the fact that the account may need to submit MFA information
+	 */
+	error: MemberCreateError.ACCOUNT_USES_MFA;
+	/**
+	 * Session ID to update user and get a full session
+	 */
+	sessionID: string;
+}
+
 /**
  * Allows for multiplexing the data together but still have type inference and
  * not use try/catch
@@ -2662,7 +2673,8 @@ export interface FailedSigninReturn {
 export type SigninReturn =
 	| SuccessfulSigninReturn
 	| ExpiredSuccessfulSigninReturn
-	| FailedSigninReturn;
+	| FailedSigninReturn
+	| SigninRequiresMFA;
 
 /**
  * Used by the different files to indicate what they are

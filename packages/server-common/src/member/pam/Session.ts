@@ -587,7 +587,7 @@ export const verifyMFATokenFunc = (totp: Totp) => (schema: Schema) => (member: M
 	token: string,
 ) =>
 	asyncRight(
-		findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {
+		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
 			member: toReference(member),
 		}),
 		errorGenerator('Could not save MFA setup'),
@@ -596,16 +596,16 @@ export const verifyMFATokenFunc = (totp: Totp) => (schema: Schema) => (member: M
 		.map(Maybe.fromArray)
 		.flatMap<StoredMFASecret>(res =>
 			Maybe.isSome(res)
-				? asyncRight(res.value, errorGenerator('Could not save MFA setup'))
+				? asyncRight(res.value, errorGenerator('Could not verify token'))
 				: asyncLeft({
 						type: 'OTHER',
 						code: 400,
-						message: 'No MFA setup exists to finish setting up',
+						message: 'No MFA setup exists',
 				  }),
 		)
 		.flatMap<void>(res =>
 			innerVerifyToken(totp)(res.secret)(token)
-				? asyncRight(void 0, errorGenerator('Could not save MFA setup'))
+				? asyncRight(void 0, errorGenerator('Could not verify token'))
 				: asyncLeft({
 						type: 'OTHER',
 						code: 400,
@@ -616,7 +616,7 @@ export const verifyMFAToken = verifyMFATokenFunc(speakeasy.totp.bind(speakeasy))
 
 export const memberUsesMFA = (schema: Schema) => (member: MemberReference) =>
 	asyncRight(
-		findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {
+		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
 			member: toReference(member),
 		}),
 		errorGenerator('Could not check MFA tokens'),

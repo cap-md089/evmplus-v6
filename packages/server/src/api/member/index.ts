@@ -36,6 +36,7 @@ import getmembers from './getmembers';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions from './permissions/setpermissions';
+import finishmfa from './session/finishmfa';
 import finishmfasetup from './session/finishmfasetup';
 import setscanaddsession from './session/setscanaddsession';
 import startmfasetup from './session/startmfasetup';
@@ -69,6 +70,7 @@ addAPI(Validator, adder, absent);
 addAPI(Validator, adder, su);
 addAPI(Validator, adder, startmfasetup);
 addAPI(Validator, adder, finishmfasetup);
+addAPI(Validator, adder, finishmfa);
 addAPI(Validator, adder, setscanaddsession);
 addAPI(Validator, adder, getmembers);
 

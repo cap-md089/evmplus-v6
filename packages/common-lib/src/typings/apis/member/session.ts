@@ -18,7 +18,7 @@
  */
 
 import { APIEither } from '../../api';
-import { MemberReference, RegularSession, ScanAddSession } from '../../types';
+import { MemberCreateError, MemberReference, ScanAddSession } from '../../types';
 
 /**
  * Developer tool, strictly locked down
@@ -79,7 +79,9 @@ export interface SetScanAddSession {
  * initially denied to allow for Multi-Factor Authentication (MFA)
  */
 export interface FinishMFA {
-	(params: {}, body: { mfaToken: string }): APIEither<RegularSession>;
+	(params: {}, body: { mfaToken: string }): APIEither<
+		MemberCreateError.NONE | MemberCreateError.PASSWORD_EXPIRED
+	>;
 
 	url: '/api/member/session/finishmfa';
 
