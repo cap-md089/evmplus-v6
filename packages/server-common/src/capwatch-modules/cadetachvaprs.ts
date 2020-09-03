@@ -47,14 +47,16 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 		'NHQ_CadetAchvAprs',
 	);
 
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
 	for (const member of fileData) {
 		try {
-			await Promise.all([
-				cadetAchievementApprovalsCollection
+			if (!removedCAPIDs[member.CAPID]) {
+				await cadetAchievementApprovalsCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-			]);
+					.execute();
+			}
 
 			const values: NHQ.CadetAchvAprs = {
 				CAPID: parseInt(member.CAPID, 10),
@@ -68,7 +70,7 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				PrintedCert: +convertNHQDate(member.PrintedCert),
+				PrintedCert: member.PrintedCert === 'True',
 			};
 
 			await cadetAchievementApprovalsCollection.add(values).execute();

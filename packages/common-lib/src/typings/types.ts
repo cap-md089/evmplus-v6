@@ -76,7 +76,7 @@ export namespace NHQ {
 		DateMod: string;
 		FirstUsr: string;
 		DateCreated: string;
-		PrintedCert: number;
+		PrintedCert: boolean;
 	}
 
 	export interface CdtAchvEnum {
@@ -801,6 +801,12 @@ export interface DiscordServerInformation {
 	 * Whether or not to display what flight the member is a part of
 	 */
 	displayFlight: boolean;
+	/**
+	 * Which channel to use to send out reminders to staff
+	 *
+	 * If null/undefined, don't send out reminders
+	 */
+	staffChannel: string | null | undefined;
 }
 
 /**

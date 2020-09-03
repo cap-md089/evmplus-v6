@@ -38,7 +38,7 @@ const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileDa
 
 	const cadetAchievementEnumCollection = schema.getCollection<NHQ.CdtAchvEnum>('NHQ_CdtAchvEnum');
 
-	await Promise.all([cadetAchievementEnumCollection.remove('FirstUsr = "coopertd"').execute()]);
+	await cadetAchievementEnumCollection.remove('FirstUsr = "coopertd"').execute();
 
 	for (const member of fileData) {
 		try {

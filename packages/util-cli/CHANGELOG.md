@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.5.0](http://github.com//cap-md089/capunit-com-v6/compare/util-cli@1.3.2...util-cli@1.5.0) (2020-09-02)
+
+
+### Features
+
+* added ability to have Discord bot message a role ([047c7ae](http://github.com//cap-md089/capunit-com-v6/commit/047c7ae876e2cac7e52b4466e013a7e1d1a70c9a))
+
+
+
+
+
+# [1.4.0](http://github.com//cap-md089/capunit-com-v6/compare/util-cli@1.3.2...util-cli@1.4.0) (2020-09-01)
+
+
+### Features
+
+* added ability to have Discord bot message a role ([047c7ae](http://github.com//cap-md089/capunit-com-v6/commit/047c7ae876e2cac7e52b4466e013a7e1d1a70c9a))
+
+
+
+
+
+## [1.3.4](http://github.com//cap-md089/capunit-com-v6/compare/util-cli@1.3.2...util-cli@1.3.4) (2020-08-31)
+
+**Note:** Version bump only for package util-cli
+
+
+
+
+
 ## [1.3.3](http://github.com//cap-md089/capunit-com-v6/compare/util-cli@1.3.2...util-cli@1.3.3) (2020-08-25)
 
 **Note:** Version bump only for package util-cli

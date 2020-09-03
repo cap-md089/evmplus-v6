@@ -3,6 +3,54 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.6.0](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.3.0...apis@1.6.0) (2020-09-02)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
+# [1.5.0](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.3.0...apis@1.5.0) (2020-09-01)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
+# [1.4.0](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.3.0...apis@1.4.0) (2020-08-31)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
 ## [1.3.1](http://github.com//cap-md089/capunit-com-v6/compare/apis@1.3.0...apis@1.3.1) (2020-08-25)
 
 **Note:** Version bump only for package apis

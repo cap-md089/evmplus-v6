@@ -39,8 +39,9 @@ import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
-import setupDiscordServer from './data/setupDiscordServer';
 import setupUser from './data/setupUser';
+import setupServer from './cli/setupServer';
+import notifyRole from './cli/notifyRole';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
@@ -337,9 +338,32 @@ if (require.main === module) {
 			},
 		);
 
+		if (process.argv.length === 2) {
+			console.error('Not enough arguments!');
+			process.exit(1);
+		}
+
 		return new Promise((resolve, reject) => {
+			const command = process.argv[2];
+
+			const availableCommands: { [key: string]: typeof setupServer } = {
+				setupserver: setupServer,
+				notifyrole: notifyRole,
+			};
+
+			const commandFunction = availableCommands[command.toLowerCase()];
+
+			if (!commandFunction) {
+				console.error('Available commands:', Object.keys(availableCommands));
+				return reject(new Error(`Unknown command ${command.toLowerCase()}`));
+			}
+
 			client.on('ready', async () => {
 				try {
+					const args = process.argv.slice(3);
+
+					await commandFunction(mysqlClient, conf, client, args);
+
 					// const session = await mysqlClient.getSession();
 					// const schema = session.getSchema('EventManagementv6');
 
@@ -367,23 +391,6 @@ if (require.main === module) {
 					// 	discordID: '192688519045578762',
 					// 	member: { type: 'CAPNHQMember', id: 542488 },
 					// });
-
-					await setupDiscordServer(conf)(mysqlClient)(client)('437034622090477568')({
-						deleteOldRoles: false,
-						addCACRepresentativeRoles: false,
-						addCadetExecutiveStaffRoles: false,
-						addCadetLineStaffRoles: false,
-						addCadetSquadronCommanderRoles: false,
-						addCadetSupportStaffRoles: false,
-						// addFlightMemberRoles:  defaults to ones in Registry
-						addFlightMemberRoles: [],
-						addTeamRoles: false,
-						itOfficerAdmin: false,
-						addSeniorMemberRoles: false,
-						addESRoles: false,
-						preserveRoles: ['ALS Commander'],
-					});
-
 					resolve();
 				} catch (e) {
 					reject(e);

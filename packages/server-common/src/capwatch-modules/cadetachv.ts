@@ -62,14 +62,18 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 
 	const cadetAchievementCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv');
 
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
 	for (const member of fileData) {
 		try {
-			await Promise.all([
-				cadetAchievementCollection
+			if (!removedCAPIDs[member.CAPID]) {
+				await cadetAchievementCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-			]);
+					.execute();
+			}
+
+			removedCAPIDs[member.CAPID] = true;
 
 			const values: NHQ.CadetAchv = {
 				CAPID: parseInt(member.CAPID, 10),

@@ -50,6 +50,7 @@ import {
 	CAPExtraMemberInformation,
 	stringifyMemberReference,
 	RegistryValues,
+	DiscordServerInformation,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -252,6 +253,14 @@ process.on('unhandledRejection', up => {
 	const v5accountsCollection = v5schema.getCollection<V5RawAccountObject>('Accounts');
 	const v6accountsCollection = v6schema.getCollection<AccountObject>('Accounts');
 
+	const discordServerMapper = Maybe.map<V5DiscordServerInformation, DiscordServerInformation>(
+		di => ({
+			displayFlight: di.displayFlight,
+			serverID: di.serverID,
+			staffChannel: null,
+		}),
+	);
+
 	console.log('Moving Accounts...');
 	console.log(
 		await mapFromOneToOther<V5RawAccountObject, AccountObject>(account => {
@@ -260,7 +269,7 @@ process.on('unhandledRejection', up => {
 					return {
 						aliases: account.aliases,
 						comments: account.comments,
-						discordServer: account.discordServer,
+						discordServer: discordServerMapper(account.discordServer),
 						id: account.id,
 						mainCalendarID: account.mainCalendarID,
 						parent: Maybe.some('md001'),
@@ -273,7 +282,7 @@ process.on('unhandledRejection', up => {
 					return {
 						aliases: account.aliases,
 						comments: account.comments,
-						discordServer: account.discordServer,
+						discordServer: discordServerMapper(account.discordServer),
 						id: account.id,
 						mainCalendarID: account.mainCalendarID,
 						orgid: account.mainOrg,
@@ -290,7 +299,7 @@ process.on('unhandledRejection', up => {
 					return {
 						aliases: account.aliases,
 						comments: account.comments,
-						discordServer: account.discordServer,
+						discordServer: discordServerMapper(account.discordServer),
 						id: account.id,
 						mainCalendarID: account.mainCalendarID,
 						mainOrg: account.mainOrg,
@@ -308,7 +317,7 @@ process.on('unhandledRejection', up => {
 					return {
 						aliases: account.aliases,
 						comments: account.comments,
-						discordServer: account.discordServer,
+						discordServer: discordServerMapper(account.discordServer),
 						id: account.id,
 						mainCalendarID: account.mainCalendarID,
 						orgIDs: account.orgIDs,
@@ -505,7 +514,10 @@ process.on('unhandledRejection', up => {
 	const stringifyRecord = (rec: CAPExtraMemberInformation) =>
 		`${rec.accountID}-${stringifyMemberReference(rec.member)}`;
 
-	await v6schema.getCollection('ExtraMemberInformation').remove('true').execute();
+	await v6schema
+		.getCollection('ExtraMemberInformation')
+		.remove('true')
+		.execute();
 
 	let count = 0;
 	for await (const i of generateResults(

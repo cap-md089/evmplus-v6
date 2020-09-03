@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.8.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.8.0) (2020-09-02)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed prospectivemember widget on admin page not being able to load prospective members ([e20ffe6](http://github.com//cap-md089/capunit-com-v6/commit/e20ffe60ecd1382f656dfe98837cac7162114bda))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
+# [6.7.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.7.0) (2020-09-01)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed prospectivemember widget on admin page not being able to load prospective members ([e20ffe6](http://github.com//cap-md089/capunit-com-v6/commit/e20ffe60ecd1382f656dfe98837cac7162114bda))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
+# [6.6.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.6.0) (2020-08-31)
+
+
+### Bug Fixes
+
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed prospectivemember widget on admin page not being able to load prospective members ([e20ffe6](http://github.com//cap-md089/capunit-com-v6/commit/e20ffe60ecd1382f656dfe98837cac7162114bda))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+
+
+
+
+
 ## [6.5.1](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.5.1) (2020-08-25)
 
 **Note:** Version bump only for package capunit-com-server
