@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
@@ -19,7 +17,6 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
->>>>>>> Stashed changes
 import { Client } from 'discord.js';
 import * as mysql from '@mysql/xdevapi';
 import { ServerConfiguration } from 'common-lib';
