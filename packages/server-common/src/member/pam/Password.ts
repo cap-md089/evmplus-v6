@@ -268,6 +268,14 @@ export const checkIfPasswordValid = async (
 	return PasswordResult.VALID;
 };
 
+export const checkIfPasswordExpired = (schema: Schema) => (username: string) =>
+	asyncRight(
+		getInformationForUser(schema, username),
+		errorGenerator('Could not get password expiry information'),
+	)
+		.map(info => info.passwordHistory[0].created)
+		.map(created => created + PASSWORD_MAX_AGE < Date.now());
+
 export const createPasswordResetToken = (
 	schema: Schema,
 	username: string,
@@ -310,7 +318,10 @@ export const validatePasswordResetToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute(),
 		)
 		.flatMap(collection =>
 			asyncRight(
@@ -338,7 +349,10 @@ export const removePasswordValidationToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute(),
 		)
 		.map(collection =>
 			collection

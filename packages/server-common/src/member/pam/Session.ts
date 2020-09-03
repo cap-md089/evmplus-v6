@@ -41,7 +41,9 @@ import {
 	ServerError,
 	SessionID,
 	SessionType,
+	StoredMFASecret,
 	stripProp,
+	toReference,
 	User,
 	UserAccountInformation,
 	UserForReference,
@@ -49,20 +51,28 @@ import {
 	UserSession,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
+import type { Totp } from 'speakeasy';
 import { promisify } from 'util';
 import { BasicAccountRequest } from '../../Account';
 import { resolveReference } from '../../Members';
-import { collectResults, findAndBind, modifyAndBind, safeBind } from '../../MySQLUtil';
+import {
+	addToCollection,
+	collectResults,
+	findAndBind,
+	modifyAndBind,
+	safeBind,
+} from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
 
+// tslint:disable-next-line: no-var-requires
+const speakeasy = require('speakeasy');
+speakeasy.generateSecret = speakeasy.generateSecret.bind(speakeasy);
 const promisedRandomBytes = promisify(randomBytes);
 
 //#region Sessions
 
 const SESSION_AGES = {
-	[SessionType.PASSWORD_RESET]:
-		10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
 	[SessionType.REGULAR]: 10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
 };
 
@@ -78,6 +88,7 @@ const MEMBER_CREATE_ERRORS = {
 	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA provided',
 	[MemberCreateError.SERVER_ERROR]: 'Unknown server error',
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'Unknown server error',
+	[MemberCreateError.ACCOUNT_USES_MFA]: 'Extra factor required for signin',
 };
 
 export interface BasicMemberRequest<P extends ParamType = {}, B = any>
@@ -117,7 +128,9 @@ const updateSessionExpireTime = (
 	schema: Schema,
 	session: UserSession,
 ): AsyncEither<MemberCreateError, UserSession> =>
-	session.type === SessionType.SCAN_ADD
+	session.type === SessionType.SCAN_ADD ||
+	session.type === SessionType.PASSWORD_RESET ||
+	session.type === SessionType.IN_PROGRESS_MFA
 		? asyncRight(session, MemberCreateError.UNKOWN_SERVER_ERROR)
 		: asyncRight<MemberCreateError, Schema>(schema, MemberCreateError.SERVER_ERROR)
 				.map(s => s.getCollection<UserSession>(SESSION_TABLE))
@@ -463,5 +476,152 @@ export const RequireSessionType = (
 				message,
 		  })
 	).flatMap(f);
+
+//#endregion
+
+//#region MFA
+
+export const startMFASetupFunc = (generateSecret: typeof speakeasy.generateSecret) => (
+	schema: Schema,
+) => (member: MemberReference) =>
+	asyncRight(
+		Promise.all([
+			findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {
+				member: toReference(member),
+			}),
+			findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
+				member: toReference(member),
+			}),
+		]),
+		errorGenerator('Could not save MFA setup'),
+	)
+		.map(([bind1, bind2]) => Promise.all([collectResults(bind1), collectResults(bind2)]))
+		.filter(([results1, results2]) => results1.length === 0 && results2.length === 0, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Cannot setup MFA with MFA already enabled',
+		})
+		.flatMap(() =>
+			asyncRight(
+				generateSecret({
+					otpauth_url: true,
+					name: 'CAPUnit.com',
+					length: 64,
+				}),
+				errorGenerator('Could not generate MFA secrets'),
+			).flatMap(({ otpauth_url, base32 }) =>
+				asyncRight(
+					{
+						member: toReference(member),
+						secret: base32,
+					},
+					errorGenerator('Could not save MFA secret'),
+				)
+					.map(addToCollection(schema.getCollection<StoredMFASecret>('MFASetup')))
+					.map(always(otpauth_url)),
+			),
+		);
+export const startMFASetup = startMFASetupFunc(speakeasy.generateSecret);
+
+/**
+ * Used because for some reason, generating a token and comparing it works better than using
+ * the verify function (which generates a token and compares it?)
+ *
+ * Has to do with stupid JavaScript bind rules...
+ */
+const innerVerifyToken = (totp: Totp) => (secret: string) => (token: string) => {
+	const innerToken = totp({
+		secret,
+		encoding: 'base32',
+	});
+
+	return token === innerToken;
+};
+
+export const finishMFASetupFunc = (totp: Totp) => (schema: Schema) => (member: MemberReference) => (
+	token: string,
+) =>
+	asyncRight(
+		findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {
+			member: toReference(member),
+		}),
+		errorGenerator('Could not save MFA setup'),
+	)
+		.map(collectResults)
+		.map(Maybe.fromArray)
+		.flatMap<StoredMFASecret>(res =>
+			Maybe.isSome(res)
+				? asyncRight(res.value, errorGenerator('Could not save MFA setup'))
+				: asyncLeft({
+						type: 'OTHER',
+						code: 400,
+						message: 'No MFA setup exists to finish setting up',
+				  }),
+		)
+		.flatMap<StoredMFASecret>(res =>
+			innerVerifyToken(totp)(res.secret)(token)
+				? asyncRight(res, errorGenerator('Could not save MFA setup'))
+				: asyncLeft({
+						type: 'OTHER',
+						code: 400,
+						message: 'Token provided is invalid',
+				  }),
+		)
+		.tap(res =>
+			Promise.all([
+				schema
+					.getCollection<StoredMFASecret>('MFASetup')
+					.remove('member.id = :member_id AND member.type = :member_type')
+					// @ts-ignore
+					.bind('member_id', member.id)
+					// @ts-ignore
+					.bind('member_type', member.type)
+					.execute(),
+				schema.getCollection<StoredMFASecret>('MFATokens').add(res).execute(),
+			]),
+		)
+		.map(destroy);
+export const finishMFASetup = finishMFASetupFunc(speakeasy.totp.bind(speakeasy));
+
+export const verifyMFATokenFunc = (totp: Totp) => (schema: Schema) => (member: MemberReference) => (
+	token: string,
+) =>
+	asyncRight(
+		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
+			member: toReference(member),
+		}),
+		errorGenerator('Could not save MFA setup'),
+	)
+		.map(collectResults)
+		.map(Maybe.fromArray)
+		.flatMap<StoredMFASecret>(res =>
+			Maybe.isSome(res)
+				? asyncRight(res.value, errorGenerator('Could not verify token'))
+				: asyncLeft({
+						type: 'OTHER',
+						code: 400,
+						message: 'No MFA setup exists',
+				  }),
+		)
+		.flatMap<void>(res =>
+			innerVerifyToken(totp)(res.secret)(token)
+				? asyncRight(void 0, errorGenerator('Could not verify token'))
+				: asyncLeft({
+						type: 'OTHER',
+						code: 400,
+						message: 'Token provided is invalid',
+				  }),
+		);
+export const verifyMFAToken = verifyMFATokenFunc(speakeasy.totp.bind(speakeasy));
+
+export const memberUsesMFA = (schema: Schema) => (member: MemberReference) =>
+	asyncRight(
+		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
+			member: toReference(member),
+		}),
+		errorGenerator('Could not check MFA tokens'),
+	)
+		.map(collectResults)
+		.map(({ length }) => length === 1);
 
 //#endregion

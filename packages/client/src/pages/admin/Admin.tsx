@@ -46,6 +46,7 @@ import './Widget.css';
 import CreateProspectiveMember from '../account/CreateProspectiveMember';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
+import SetupMFA from '../account/SetupMFA';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -204,6 +205,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 					render={this.pageRenderer(ProspectiveMemberManagement)}
 					exact={false}
 				/>
+				<Route path="/admin/setupmfa" render={this.pageRenderer(SetupMFA)} exact={false} />
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>

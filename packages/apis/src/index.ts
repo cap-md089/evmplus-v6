@@ -111,6 +111,9 @@ type Tree = {
 		session: {
 			setScanAdd: api.member.session.SetScanAddSession;
 			clone: api.member.session.Clone;
+			startMFASetup: api.member.session.StartMFASetup;
+			finishMFASetup: api.member.session.FinishMFASetup;
+			finishMFA: api.member.session.FinishMFA;
 			su: api.member.session.Su;
 		};
 		setAbsentee: api.member.SetAbsenteeInformation;

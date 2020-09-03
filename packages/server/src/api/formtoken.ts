@@ -18,26 +18,14 @@
  */
 
 import type { ServerAPIEndpoint } from 'auto-client-api';
-import {
-	api,
-	AsyncEither,
-	asyncLeft,
-	asyncRight,
-	errorGenerator,
-	ServerError,
-	SessionType,
-} from 'common-lib';
+import { api, AsyncEither, asyncLeft, asyncRight, errorGenerator, ServerError } from 'common-lib';
 import { PAM } from 'server-common';
 
-export const getFormToken: ServerAPIEndpoint<api.FormToken> = PAM.RequireSessionType(
-	// tslint:disable-next-line:no-bitwise
-	SessionType.REGULAR | SessionType.SCAN_ADD | SessionType.PASSWORD_RESET,
-)(req =>
+export const getFormToken: ServerAPIEndpoint<api.FormToken> = req =>
 	asyncRight(
 		PAM.getTokenForUser(req.mysqlx, req.session.userAccount),
 		errorGenerator('Could not get form token'),
-	),
-);
+	);
 
 export function tokenTransformer<T extends PAM.BasicMemberRequest>(
 	req: T,
