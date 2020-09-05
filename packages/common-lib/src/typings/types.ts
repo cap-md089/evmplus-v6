@@ -3867,7 +3867,7 @@ export interface CadetPromotionStatus {
 	CurrentCadetAchv: NHQ.CadetAchv;
 
 	/**
-	 * The current highest achievement data
+	 * The current highest achievement status
 	 */
 	CurrentAprvStatus: CadetAprvStatus;
 
