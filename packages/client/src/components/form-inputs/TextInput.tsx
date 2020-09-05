@@ -36,15 +36,19 @@ export interface TextInputProps extends InputProps<string> {
 	password?: boolean;
 }
 
+interface InnerTextInputProps extends TextInputProps {
+	innerRef: React.Ref<HTMLInputElement>;
+}
+
 /**
  * A text input that can be used by a Form
  */
-export default class TextInput extends React.Component<TextInputProps, { changed: boolean }> {
+export class TextInput extends React.Component<InnerTextInputProps, { changed: boolean }> {
 	public state: { changed: boolean } = {
 		changed: false,
 	};
 
-	constructor(props: TextInputProps) {
+	constructor(props: InnerTextInputProps) {
 		super(props);
 
 		this.onChange = this.onChange.bind(this);
@@ -112,3 +116,7 @@ export default class TextInput extends React.Component<TextInputProps, { changed
 		);
 	}
 }
+
+export default React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => (
+	<TextInput {...props} innerRef={ref} />
+));

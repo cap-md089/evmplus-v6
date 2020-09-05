@@ -23,16 +23,16 @@ import {
 	MemberCreateError,
 	MemberReference,
 	PasswordResult,
-	UserAccountInformation,
-	SessionType,
-	UserSession,
 	ServerConfiguration,
+	SessionType,
+	UserAccountInformation,
+	UserSession,
 } from 'common-lib';
 import * as rp from 'request-promise';
+import { collectResults, findAndBind } from '../../MySQLUtil';
+import { getInformationForUser, simplifyUserInformation } from './Account';
 import { checkIfPasswordValid } from './Password';
-import { getInformationForUser } from './Account';
-import { createSessionForUser, setSessionType } from './Session';
-import { findAndBind, collectResults } from '../../MySQLUtil';
+import { createSessionForUser, updateSession, memberUsesMFA } from './Session';
 
 export interface SigninSuccess {
 	result: MemberCreateError.NONE;
@@ -53,7 +53,12 @@ export interface SigninFailed {
 		| MemberCreateError.RECAPTCHA_INVALID;
 }
 
-export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed;
+export interface SigninRequiresMFA {
+	result: MemberCreateError.ACCOUNT_USES_MFA;
+	sessionID: string;
+}
+
+export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed | SigninRequiresMFA;
 
 export const verifyCaptcha = async (
 	response: string,
@@ -131,15 +136,48 @@ export const trySignin = async (
 		getInformationForUser(schema, username),
 	]);
 
-	const session = await createSessionForUser(schema, userInformation).join();
+	let usesMFA: boolean;
+	try {
+		usesMFA = await memberUsesMFA(schema)(member).fullJoin();
+	} catch (e) {
+		return {
+			result: MemberCreateError.UNKOWN_SERVER_ERROR,
+		};
+	}
+
+	console.log(usesMFA);
+
+	const session = await createSessionForUser(
+		schema,
+		simplifyUserInformation(userInformation),
+	).join();
 
 	return Either.cata(() =>
 		Promise.resolve<SigninResult>({
 			result: MemberCreateError.SERVER_ERROR,
 		}),
 	)(async (sess: UserSession) => {
+		if (usesMFA) {
+			return updateSession(schema, {
+				...sess,
+				type: SessionType.IN_PROGRESS_MFA,
+			})
+				.join()
+				.then(
+					Either.cata<any, any, SigninResult>(() => ({
+						result: MemberCreateError.SERVER_ERROR,
+					}))(() => ({
+						result: MemberCreateError.ACCOUNT_USES_MFA,
+						sessionID: sess.id,
+					})),
+				);
+		}
+
 		if (valid === PasswordResult.VALID_EXPIRED) {
-			return setSessionType(schema, sess, SessionType.PASSWORD_RESET)
+			return updateSession(schema, {
+				...sess,
+				type: SessionType.PASSWORD_RESET,
+			})
 				.join()
 				.then(
 					Either.cata(() => ({ result: MemberCreateError.SERVER_ERROR } as SigninResult))(

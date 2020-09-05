@@ -18,32 +18,29 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import {
-	always,
-	api,
-	asyncRight,
-	Either,
-	errorGenerator,
-	PasswordSetResult,
-	SessionType,
-} from 'common-lib';
+import { api, MemberCreateError, SessionType, toReference } from 'common-lib';
 import { PAM } from 'server-common';
 
-export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSessionType(
-	// tslint:disable-next-line:no-bitwise
-	SessionType.REGULAR | SessionType.PASSWORD_RESET,
-)(request =>
-	asyncRight(request, errorGenerator('Could not reset password for user'))
-		.map(req =>
-			PAM.addPasswordForUser(req.mysqlx, req.session.userAccount.username, req.body.password),
+export const func: ServerAPIEndpoint<api.member.session.FinishMFA> = PAM.RequireSessionType(
+	SessionType.IN_PROGRESS_MFA,
+)(req =>
+	PAM.verifyMFAToken(req.mysqlx)(toReference(req.member))(req.body.mfaToken)
+		.flatMap(() => PAM.checkIfPasswordExpired(req.mysqlx)(req.session.userAccount.username))
+		.tap(console.log)
+		.tap(passwordExpired =>
+			passwordExpired
+				? PAM.updateSession(req.mysqlx, {
+						...req.session,
+						type: SessionType.PASSWORD_RESET,
+				  })
+				: PAM.updateSession(req.mysqlx, {
+						...req.session,
+						type: SessionType.REGULAR,
+				  }),
 		)
-		.flatMap<PasswordSetResult>(result => {
-			if (request.session.type === SessionType.PASSWORD_RESET) {
-				return PAM.updateSession(request.mysqlx, request.session).map(always(result));
-			} else {
-				return Either.right(result);
-			}
-		}),
+		.map(passwordExpired =>
+			passwordExpired ? MemberCreateError.PASSWORD_EXPIRED : MemberCreateError.NONE,
+		),
 );
 
 export default func;

@@ -58,9 +58,9 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (fileData, schema) => {
 					.execute(),
 			]);
 
-			const values = {
-				CAPID: parseInt(member.CAPID + '', 10),
-				SSN: member.SSN,
+			const values: NHQ.NHQMember = {
+				CAPID: parseInt(member.CAPID, 10),
+				SSN: '',
 				NameLast: member.NameLast,
 				NameFirst: member.NameFirst,
 				NameMiddle: member.NameMiddle,
@@ -80,7 +80,7 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (fileData, schema) => {
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				LSCode: member.LSCode,
-				Type: member.Type,
+				Type: member.Type as NHQ.NHQMember['Type'],
 				RankDate: convertNHQDate(member.RankDate).toISOString(),
 				Region: member.Region,
 				MbrStatus: member.MbrStatus,

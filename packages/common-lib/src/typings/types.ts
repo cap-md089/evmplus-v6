@@ -71,12 +71,12 @@ export namespace NHQ {
 		AprCAPID: number;
 		DspReason: string;
 		AwardNo: number;
-		JROTCWaiver: number;
+		JROTCWaiver: boolean;
 		UsrID: string;
 		DateMod: string;
 		FirstUsr: string;
 		DateCreated: string;
-		PrintedCert: number;
+		PrintedCert: boolean;
 	}
 
 	export interface CdtAchvEnum {
@@ -147,7 +147,7 @@ export namespace NHQ {
 		Contact: string;
 		UsrID: string;
 		DateMod: string;
-		DoNotContact: number;
+		DoNotContact: boolean;
 	}
 
 	export interface NHQMember {
@@ -303,6 +303,7 @@ export enum MemberCreateError {
 	RECAPTCHA_INVALID = 4,
 	UNKOWN_SERVER_ERROR = 5,
 	DATABASE_ERROR = 6,
+	ACCOUNT_USES_MFA = 7,
 }
 
 export enum PointOfContactType {
@@ -800,6 +801,12 @@ export interface DiscordServerInformation {
 	 * Whether or not to display what flight the member is a part of
 	 */
 	displayFlight: boolean;
+	/**
+	 * Which channel to use to send out reminders to staff
+	 *
+	 * If null/undefined, don't send out reminders
+	 */
+	staffChannel: string | null | undefined;
 }
 
 /**
@@ -2654,6 +2661,17 @@ export interface FailedSigninReturn {
 		| MemberCreateError.RECAPTCHA_INVALID;
 }
 
+export interface SigninRequiresMFA {
+	/**
+	 * Reports the fact that the account may need to submit MFA information
+	 */
+	error: MemberCreateError.ACCOUNT_USES_MFA;
+	/**
+	 * Session ID to update user and get a full session
+	 */
+	sessionID: string;
+}
+
 /**
  * Allows for multiplexing the data together but still have type inference and
  * not use try/catch
@@ -2661,7 +2679,8 @@ export interface FailedSigninReturn {
 export type SigninReturn =
 	| SuccessfulSigninReturn
 	| ExpiredSuccessfulSigninReturn
-	| FailedSigninReturn;
+	| FailedSigninReturn
+	| SigninRequiresMFA;
 
 /**
  * Used by the different files to indicate what they are
@@ -3500,6 +3519,19 @@ export interface UserAccountInformation<T extends MemberReference = MemberRefere
 	passwordHistory: AccountPasswordInformation[];
 }
 
+export type SafeUserAccountInformation<T extends MemberReference = MemberReference> = Omit<
+	UserAccountInformation<T>,
+	'passwordHistory'
+> & {
+	/**
+	 * Don't pass around passwordHistory; this is something that should only be in the database.
+	 *
+	 * It cannot simply be left at being omitted, due to the sturctural nature of TypeScript, it
+	 * can still be passed around without throwing a compile time error
+	 */
+	passwordHistory: [];
+};
+
 export interface PasswordResetTokenInformation {
 	/**
 	 * When the token expires
@@ -3652,18 +3684,61 @@ export enum SessionType {
 	REGULAR = 1,
 	PASSWORD_RESET = 2,
 	SCAN_ADD = 4,
+	IN_PROGRESS_MFA = 8,
 }
 
-export interface UserSession<T extends MemberReference = MemberReference> {
+export type SessionForSessionType<
+	S extends SessionType,
+	M extends MemberReference
+> = S extends SessionType.REGULAR
+	? RegularSession<M>
+	: S extends SessionType.PASSWORD_RESET
+	? PasswordResetSession<M>
+	: S extends SessionType.IN_PROGRESS_MFA
+	? InProgressMFASession<M>
+	: ScanAddSession<M>;
+
+export interface ScanAddSession<T extends MemberReference = MemberReference> {
 	id: SessionID;
-	created: number;
-	userAccount: UserAccountInformation<T>;
-	type: SessionType;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.SCAN_ADD;
+	sessionData: {
+		accountID: string;
+		eventID: number;
+	};
 }
 
-export interface ActiveSession<T extends MemberReference = MemberReference> extends UserSession<T> {
-	user: UserForReference<T>;
+export interface RegularSession<T extends MemberReference = MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.REGULAR;
 }
+
+export interface PasswordResetSession<T extends MemberReference = MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.PASSWORD_RESET;
+}
+
+export interface InProgressMFASession<T extends MemberReference = MemberReference> {
+	id: SessionID;
+	expires: number;
+	userAccount: SafeUserAccountInformation<T>;
+	type: SessionType.IN_PROGRESS_MFA;
+}
+
+export type UserSession<T extends MemberReference = MemberReference> =
+	| ScanAddSession<T>
+	| RegularSession<T>
+	| PasswordResetSession<T>
+	| InProgressMFASession<T>;
+
+export type ActiveSession<T extends MemberReference = MemberReference> = UserSession<T> & {
+	user: UserForReference<T>;
+};
 
 export type AuditableObjects =
 	| NewEventObject
@@ -3888,3 +3963,17 @@ export interface CadetPromotionStatus {
 }
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
+/**
+ * Represents the MFA tokens that are stored for a user
+ */
+export interface StoredMFASecret {
+	/**
+	 * The MFA token itself
+	 */
+	secret: string;
+
+	/**
+	 * The user the token belongs to
+	 */
+	member: MemberReference;
+}

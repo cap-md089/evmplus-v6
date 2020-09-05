@@ -48,7 +48,7 @@ export interface GetAttendance {
  * Otherwise, the person making the request is added
  */
 export interface Add {
-	(params: { id: string }, body: NewAttendanceRecord): APIEither<void>;
+	(params: { id: string }, body: NewAttendanceRecord): APIEither<AttendanceRecord>;
 
 	url: '/api/events/:id/attendance';
 

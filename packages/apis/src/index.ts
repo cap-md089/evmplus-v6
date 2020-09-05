@@ -111,10 +111,17 @@ type Tree = {
 			get: api.member.temporarydutypositions.GetTemporaryDutyPositions;
 			set: api.member.temporarydutypositions.SetTemporaryDutyPositions;
 		};
+		session: {
+			setScanAdd: api.member.session.SetScanAddSession;
+			clone: api.member.session.Clone;
+			startMFASetup: api.member.session.StartMFASetup;
+			finishMFASetup: api.member.session.FinishMFASetup;
+			finishMFA: api.member.session.FinishMFA;
+			su: api.member.session.Su;
+		};
 		setAbsentee: api.member.SetAbsenteeInformation;
 		passwordReset: api.member.PasswordReset;
 		memberList: api.member.Members;
-		su: api.member.Su;
 	};
 	notifications: {
 		global: {

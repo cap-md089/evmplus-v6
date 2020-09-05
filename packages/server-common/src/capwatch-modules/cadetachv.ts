@@ -62,44 +62,48 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 
 	const cadetAchievementCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv');
 
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
 	for (const member of fileData) {
 		try {
-			await Promise.all([
-				cadetAchievementCollection
+			if (!removedCAPIDs[member.CAPID]) {
+				await cadetAchievementCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-			]);
+					.execute();
+			}
 
-			const values = {
-				CAPID: parseInt(member.CAPID + '', 10),
-				CadetAchvID: member.CadetAchvID,
+			removedCAPIDs[member.CAPID] = true;
+
+			const values: NHQ.CadetAchv = {
+				CAPID: parseInt(member.CAPID, 10),
+				CadetAchvID: parseInt(member.CadetAchvID, 10),
 				PhyFitTest: convertNHQDate(member.PhyFitTest).toISOString(),
 				LeadLabDateP: convertNHQDate(member.LeadLabDateP).toISOString(),
-				LeadLabScore: member.LeadLabScore,
+				LeadLabScore: parseInt(member.LeadLabScore, 10),
 				AEDateP: convertNHQDate(member.AEDateP).toISOString(),
-				AEScore: member.AEScore,
-				AEMod: member.AEMod,
-				AETest: member.AETest,
+				AEScore: parseInt(member.AEScore, 10),
+				AEMod: parseInt(member.AEMod, 10),
+				AETest: parseInt(member.AETest, 10),
 				MoralLDateP: convertNHQDate(member.MoralLDateP).toISOString(),
-				ActivePart: member.ActivePart,
-				OtherReq: member.OtherReq,
-				SDAReport: member.SDAReport,
+				ActivePart: parseInt(member.ActivePart, 10),
+				OtherReq: parseInt(member.OtherReq, 10),
+				SDAReport: parseInt(member.SDAReport, 10),
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
 				DrillDate: convertNHQDate(member.DrillDate).toISOString(),
-				DrillScore: member.DrillScore,
+				DrillScore: parseInt(member.DrillScore, 10),
 				LeadCurr: member.LeadCurr,
-				CadetOath: member.CadetOath,
+				CadetOath: parseInt(member.CadetOath, 10),
 				AEBookValue: member.AEBookValue,
-				MileRun: member.MileRun,
-				ShuttleRun: member.ShuttleRun,
-				SitAndReach: member.SitAndReach,
-				PushUps: member.PushUps,
-				CurlUps: member.CurlUps,
-				HFZID: member.HFZID,
+				MileRun: parseInt(member.MileRun, 10),
+				ShuttleRun: parseInt(member.ShuttleRun, 10),
+				SitAndReach: parseInt(member.SitAndReach, 10),
+				PushUps: parseInt(member.PushUps, 10),
+				CurlUps: parseInt(member.CurlUps, 10),
+				HFZID: parseInt(member.HFZID, 10),
 				StaffServiceDate: convertNHQDate(member.StaffServiceDate).toISOString(),
 				TechnicalWritingAssignment: member.TechnicalWritingAssignment,
 				TechnicalWritingAssignmentDate: convertNHQDate(

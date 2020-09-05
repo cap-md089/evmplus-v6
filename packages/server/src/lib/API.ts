@@ -63,13 +63,19 @@ export const addMember = (memberRequirement: MemberRequirement) => <P extends Pa
 	if (memberRequirement === 'required') {
 		return PAM.memberRequestTransformer(
 			// tslint:disable-next-line:no-bitwise
-			SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
+			SessionType.PASSWORD_RESET |
+				SessionType.REGULAR |
+				SessionType.SCAN_ADD |
+				SessionType.IN_PROGRESS_MFA,
 			true,
 		)(req).tap(tapFunction);
 	} else if (memberRequirement === 'optional') {
 		return PAM.memberRequestTransformer(
 			// tslint:disable-next-line:no-bitwise
-			SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
+			SessionType.PASSWORD_RESET |
+				SessionType.REGULAR |
+				SessionType.SCAN_ADD |
+				SessionType.IN_PROGRESS_MFA,
 			false,
 		)(req).tap(tapFunction);
 	} else {

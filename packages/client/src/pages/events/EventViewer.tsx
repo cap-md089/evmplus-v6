@@ -519,9 +519,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) &&
 					linkableAccounts.length > 0 &&
-					!event.sourceEvent
-						? ' | '
-						: null}
+					!event.sourceEvent ? (
+						<br />
+					) : null}
 					{!!event.sourceEvent ||
 					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
 						<Button
@@ -599,8 +599,21 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									)
 								) : null}
 							</Dialogue>
+							{member &&
+							effectiveManageEventPermissionForEvent(member)(event) >=
+								Permissions.ManageEvent.FULL
+								? ' | '
+								: null}
 						</>
 					)}
+					{member &&
+					effectiveManageEventPermissionForEvent(member)(event) >=
+						Permissions.ManageEvent.FULL ? (
+						<>
+							{linkableAccounts.length === 0 || !!event.sourceEvent ? <br /> : null}
+							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+						</>
+					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
 						fullMemberDetails.linkableAccounts.length > 0 &&
@@ -990,13 +1003,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				: {
 						...prev,
 						eventInformation: {
+							...prev.eventInformation,
 							attendees: prev.eventInformation.attendees.filter(
 								mem =>
 									Either.isLeft(mem) ||
 									!areMembersTheSame(mem.value.record.memberID)(record.memberID),
 							),
-							event: prev.eventInformation.event,
-							pointsOfContact: prev.eventInformation.pointsOfContact,
 						},
 				  },
 		);

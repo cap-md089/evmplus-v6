@@ -113,7 +113,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 			return;
 		}
 
-		const newMember = await fetchApi.member
+		const newMember = await fetchApi.member.session
 			.su({}, toReference(member), this.props.member.sessionID)
 			.flatMap(() => fetchApi.check({}, {}, localStorage.getItem('sessionID')!));
 

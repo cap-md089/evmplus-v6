@@ -23,13 +23,7 @@
  */
 
 import { APIEither } from '../../api';
-import {
-	AbsenteeInformation,
-	Member,
-	MemberReference,
-	MemberType,
-	PasswordSetResult
-} from '../../types';
+import { AbsenteeInformation, Member, MemberType, PasswordSetResult } from '../../types';
 
 export * as account from './account';
 export * as attendance from './attendance';
@@ -37,6 +31,7 @@ export * as capwatch from './capwatch';
 export * as flight from './flight';
 export * as permissions from './permissions';
 export * as promotionrequirements from './promotionrequirements';
+export * as session from './session';
 export * as temporarydutypositions from './temporarydutypositions';
 
 /**
@@ -88,41 +83,4 @@ export interface Members {
 	needsToken: false;
 
 	useValidator: true;
-}
-
-/**
- * Developer tool, strictly locked down
- */
-export interface Su {
-	(params: {}, body: MemberReference): APIEither<void>;
-
-	url: '/api/member/su';
-
-	method: 'post';
-
-	requiresMember: 'required';
-
-	needsToken: true;
-
-	useValidator: true;
-}
-
-/**
- * Developer tool, strictly locked down
- *
- * Clones the current session, returning a session ID to the new
- * session. Allows for creating a new session without signing in
- */
-export interface CLone {
-	(params: {}, body: {}): APIEither<string>;
-
-	url: '/api/member/clone';
-
-	method: 'post';
-
-	requiresMember: 'required';
-
-	needsToken: true;
-
-	useValidator: false;
 }

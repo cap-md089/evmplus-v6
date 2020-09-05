@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.6](http://github.com//cap-md089/capunit-com-v6/compare/auto-client-api@1.3.2...auto-client-api@1.3.6) (2020-09-02)
+
+**Note:** Version bump only for package auto-client-api
+
+
+
+
+
+## [1.3.5](http://github.com//cap-md089/capunit-com-v6/compare/auto-client-api@1.3.2...auto-client-api@1.3.5) (2020-09-01)
+
+**Note:** Version bump only for package auto-client-api
+
+
+
+
+
+## [1.3.4](http://github.com//cap-md089/capunit-com-v6/compare/auto-client-api@1.3.2...auto-client-api@1.3.4) (2020-08-31)
+
+**Note:** Version bump only for package auto-client-api
+
+
+
+
+
+## [1.3.3](http://github.com//cap-md089/capunit-com-v6/compare/auto-client-api@1.3.2...auto-client-api@1.3.3) (2020-08-25)
+
+**Note:** Version bump only for package auto-client-api
+
+
+
+
+
 ## [1.3.2](http://github.com//cap-md089/capunit-com-v6/compare/auto-client-api@1.3.0...auto-client-api@1.3.2) (2020-08-17)
 
 **Note:** Version bump only for package auto-client-api

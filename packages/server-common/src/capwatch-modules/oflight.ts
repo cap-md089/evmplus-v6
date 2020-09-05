@@ -18,7 +18,7 @@
  */
 
 import { NHQ } from 'common-lib';
-import { convertNHQDate, modifyAndBind } from '..';
+import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
 const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
@@ -43,47 +43,37 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
 
 	const oFlightCollection = schema.getCollection<NHQ.OFlight>('NHQ_OFlight');
 
-	for (const oFlightConst of fileData) {
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	for await (const oFlightConst of fileData) {
 		try {
-			const values = {
+			if (!removedCAPIDs[oFlightConst.CAPID]) {
+				await oFlightCollection
+					.remove('CAPID = :CAPID')
+					.bind('CAPID', parseInt(oFlightConst.CAPID, 10))
+					.execute();
+			}
+
+			removedCAPIDs[oFlightConst.CAPID] = true;
+
+			const values: NHQ.OFlight = {
 				CAPID: parseInt(oFlightConst.CAPID + '', 10),
 				Wing: oFlightConst.Wing,
 				Unit: oFlightConst.Unit,
-				Amount: oFlightConst.Amount,
-				Syllabus: oFlightConst.Syllabus,
-				Type: oFlightConst.Type,
+				Amount: parseInt(oFlightConst.Amount, 10),
+				Syllabus: parseInt(oFlightConst.Syllabus, 10),
+				Type: parseInt(oFlightConst.Type, 10),
 				FltDate: convertNHQDate(oFlightConst.FltDate).toISOString(),
 				TransDate: convertNHQDate(oFlightConst.TransDate).toISOString(),
 				FltRlsNum: oFlightConst.FltRlsNum,
 				AcftTailNum: oFlightConst.AcftTailNum,
-				FltTime: oFlightConst.FltTime,
+				FltTime: parseInt(oFlightConst.FltTime, 10),
 				LstUsr: oFlightConst.LstUsr,
 				LstDateMod: oFlightConst.LstDateMod,
 				Comments: oFlightConst.Comments,
 			};
-			try {
-				await oFlightCollection.add(values).execute();
-			} catch (e) {
-				console.warn(e);
-				await modifyAndBind(oFlightCollection, {
-					CAPID: values.CAPID,
-					Wing: values.Wing,
-					Unit: values.Unit,
-					Amount: values.Amount,
-					Syllabus: values.Syllabus,
-					Type: values.Type,
-					FltDate: values.FltDate,
-					TransDate: values.TransDate,
-					FltRlsNum: values.FltRlsNum,
-					AcftTailNum: values.AcftTailNum,
-					FltTime: values.FltTime,
-					LstUsr: values.LstUsr,
-					LstDateMod: values.LstDateMod,
-					Comments: values.Comments,
-				})
-					.patch(values)
-					.execute();
-			}
+
+			await oFlightCollection.add(values).execute();
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;

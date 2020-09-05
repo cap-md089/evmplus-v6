@@ -17,19 +17,12 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import apiGenerator from 'apis';
-import { fetchFunction } from './isofetch';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, SessionType, toReference } from 'common-lib';
+import { PAM } from 'server-common';
 
-export const fetchApi = apiGenerator(fetchFunction);
-export default fetchApi;
+export const func: ServerAPIEndpoint<api.member.session.StartMFASetup> = PAM.RequireSessionType(
+	SessionType.REGULAR,
+)(req => PAM.startMFASetup(req.mysqlx)(toReference(req.member)));
 
-export const fetchAPIForAccount = (accountID: string) =>
-	apiGenerator((url: RequestInfo, opts?: RequestInit) => {
-		const newUrl = `${window.location.protocol}//${accountID}.${
-			process.env.NODE_ENV === 'development' ? 'localcapunit' : 'capunit'
-		}.com${process.env.NODE_ENV === 'development' ? ':3001' : ''}${
-			typeof url === 'string' ? (!url.startsWith('/') ? `/${url}` : url) : url.url
-		}`;
-
-		return fetchFunction(newUrl, opts);
-	});
+export default func;

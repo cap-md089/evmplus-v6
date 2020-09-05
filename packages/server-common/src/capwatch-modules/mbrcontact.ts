@@ -17,7 +17,7 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { NHQ, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
@@ -29,17 +29,28 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
 	try {
 		const mbrContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
 
-		let values;
+		const addedCAPIDs: { [key: string]: boolean } = {};
 
-		for (const duties of fileData) {
+		let values: NHQ.MbrContact;
+
+		for (const contact of fileData) {
+			if (!addedCAPIDs[contact.CAPID]) {
+				await mbrContactCollection
+					.remove('CAPID = :CAPID')
+					.bind('CAPID', parseInt(contact.CAPID, 10))
+					.execute();
+			}
+
+			addedCAPIDs[contact.CAPID] = true;
+
 			values = {
-				CAPID: parseInt(duties.CAPID.toString(), 10),
-				Type: duties.Type,
-				Priority: duties.Priority,
-				Contact: duties.Contact,
-				UsrID: duties.UsrID,
-				DateMod: convertNHQDate(duties.DateMod).toISOString(),
-				DoNotContact: duties.DoNotContact,
+				CAPID: parseInt(contact.CAPID.toString(), 10),
+				Type: contact.Type as CAPMemberContactType,
+				Priority: contact.Priority as CAPMemberContactPriority,
+				Contact: contact.Contact,
+				UsrID: contact.UsrID,
+				DateMod: convertNHQDate(contact.DateMod).toISOString(),
+				DoNotContact: contact.DoNotContact === 'True',
 			};
 
 			await mbrContactCollection.add(values).execute();

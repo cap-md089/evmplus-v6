@@ -47,12 +47,12 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (fileData, sch
 
 	for (const organization of fileData) {
 		try {
-			const values = {
-				ORGID: parseInt(organization.ORGID.toString(), 10),
+			const values: NHQ.Organization = {
+				ORGID: parseInt(organization.ORGID, 10),
 				Region: organization.Region,
 				Wing: organization.Wing,
 				Unit: organization.Unit,
-				NextLevel: organization.NextLevel,
+				NextLevel: parseInt(organization.NextLevel, 10),
 				Name: organization.Name,
 				Type: organization.Type,
 				DateChartered: organization.DateChartered,

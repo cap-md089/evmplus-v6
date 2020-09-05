@@ -35,7 +35,14 @@ import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
-export type CAPWATCHModule<T> = (fileData: T[], schema: Schema) => Promise<CAPWATCHImportErrors>;
+type FileData<T> = {
+	[P in keyof T]: string;
+};
+
+export type CAPWATCHModule<T> = (
+	fileData: FileData<T>[],
+	schema: Schema,
+) => Promise<CAPWATCHImportErrors>;
 
 const modules: {
 	module: CAPWATCHModule<any>;
@@ -133,7 +140,7 @@ interface CAPWATCHModuleResult {
 	file: string;
 }
 
-export default async function* (
+export default async function*(
 	zipFileLocation: string,
 	schema: Schema,
 	session: Session,

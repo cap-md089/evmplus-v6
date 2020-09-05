@@ -47,28 +47,30 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 		'NHQ_CadetAchvAprs',
 	);
 
+	const removedCAPIDs: { [key: string]: boolean } = {};
+
 	for (const member of fileData) {
 		try {
-			await Promise.all([
-				cadetAchievementApprovalsCollection
+			if (!removedCAPIDs[member.CAPID]) {
+				await cadetAchievementApprovalsCollection
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-			]);
+					.execute();
+			}
 
-			const values = {
-				CAPID: parseInt(member.CAPID + '', 10),
-				CadetAchvID: member.CadetAchvID,
+			const values: NHQ.CadetAchvAprs = {
+				CAPID: parseInt(member.CAPID, 10),
+				CadetAchvID: parseInt(member.CadetAchvID, 10),
 				Status: member.Status,
-				AprCAPID: member.AprCAPID,
+				AprCAPID: parseInt(member.AprCAPID, 10),
 				DspReason: member.DspReason,
-				AwardNo: member.AwardNo,
-				JROTCWaiver: member.JROTCWaiver,
+				AwardNo: parseInt(member.AwardNo, 10),
+				JROTCWaiver: member.JROTCWaiver === 'True',
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
 				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
-				PrintedCert: member.PrintedCert,
+				PrintedCert: member.PrintedCert === 'True',
 			};
 
 			await cadetAchievementApprovalsCollection.add(values).execute();
