@@ -21,26 +21,32 @@ import { Schema } from '@mysql/xdevapi';
 import { promisify } from 'bluebird';
 import {
 	AccountObject,
+	always,
+	AsyncEither,
 	asyncIterMap,
 	asyncLeft,
 	asyncRight,
 	collectGeneratorAsync,
+	Either,
+	EitherObj,
 	errorGenerator,
+	getDefaultMemberPermissions,
 	hasPermission,
+	Maybe,
 	MaybeObj,
+	MemberForMemberType,
 	MemberPermission,
 	MemberPermissions,
 	MemberReference,
 	MemberType,
 	PasswordSetResult,
+	SafeUserAccountInformation,
 	ServerError,
 	StoredMemberPermissions,
 	stripProp,
+	toReference,
 	User,
 	UserAccountInformation,
-	getDefaultMemberPermissions,
-	MemberForMemberType,
-	SafeUserAccountInformation,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { resolveReference } from '../../Members';
@@ -100,46 +106,52 @@ const removeAccountToken = async (schema: Schema, token: string): Promise<void> 
 const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
 	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
 
+	await cleanAccountCreationTokens(schema);
+
 	const results = await collectResults(findAndBind(collection, { member }));
 
 	return results.length;
 };
 
-export const addUserAccountCreationToken = async (
-	schema: Schema,
-	member: MemberReference,
-): Promise<string> => {
-	let info = null;
-	try {
-		info = await getInformationForMember(schema, member);
-	} catch (e) {
-		// If this happens, then everything is ok
-		// An account couldn't be found, which means the request is valid
-	}
-
-	if (info !== null) {
-		throw new Error('User already has an account');
-	}
-
-	const tokenCount = await getTokenCountForUser(schema, member);
-	if (tokenCount > 0) {
-		throw new Error('User already has token');
-	}
-
-	const token = (await promisify(randomBytes)(48)).toString('hex');
-
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
-
-	await collection
-		.add({
-			member,
-			created: Date.now(),
-			token,
+export const addUserAccountCreationToken = (schema: Schema, member: MemberReference) =>
+	asyncRight<ServerError, MaybeObj<UserAccountInformation>>(
+		getInformationForMember(schema, member)
+			.then(simplifyUserInformation)
+			.then(Maybe.some)
+			.catch(Maybe.none),
+		errorGenerator('Could not get user account information'),
+	)
+		.filter(Maybe.isNone, {
+			type: 'OTHER',
+			code: 400,
+			message: 'User already has an account',
 		})
-		.execute();
-
-	return token;
-};
+		.map(
+			() => getTokenCountForUser(schema, member),
+			errorGenerator('Could not get user creation information'),
+		)
+		.filter(count => count === 0, {
+			type: 'OTHER',
+			code: 400,
+			message: 'User is already in the process of creating an account',
+		})
+		.map(() => promisify(randomBytes)(48))
+		.map(token => token.toString('hex'))
+		.tap(token =>
+			asyncRight(
+				{
+					token,
+					member,
+					created: Date.now(),
+				},
+				errorGenerator('Could not store user creation information'),
+			).map(tokenInfo =>
+				schema
+					.getCollection<AccountCreationToken>('UserAccountTokens')
+					.add(tokenInfo)
+					.execute(),
+			),
+		);
 
 export const validateUserAccountCreationToken = async (
 	schema: Schema,
@@ -156,74 +168,94 @@ export const validateUserAccountCreationToken = async (
 	return tokens[0].member;
 };
 
-export class UserError extends Error {}
-
-export const addUserAccount = async (
+export const addUserAccount = (
 	schema: Schema,
 	account: AccountObject,
 	username: string,
 	password: string,
 	member: MemberReference,
 	token: string,
-): Promise<UserAccountInformation> => {
-	const userInformationCollection = schema.getCollection<UserAccountInformation>(
-		'UserAccountInfo',
+	// ): AsyncEither<ServerError, UserAccountInformation> =>
+): AsyncEither<ServerError, any> =>
+	asyncRight(
+		schema.getCollection<UserAccountInformation>('UserAccountInfo'),
+		errorGenerator('Could not create user account information'),
+	).flatMap(userInformationCollection =>
+		asyncRight(
+			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
+			errorGenerator('Could not get user account information'),
+		)
+			.filter(user => Maybe.isSome(user) && !isUserValid(user.value), {
+				type: 'OTHER',
+				code: 400,
+				message: 'Account already exists with the given username',
+			})
+			.filter(
+				async () => {
+					const resultsForReference = await collectResults(
+						findAndBind(userInformationCollection, {
+							member: toReference(member),
+						}),
+					);
+
+					return (
+						resultsForReference.length !== 1 ||
+						resultsForReference[0].passwordHistory.length === 0
+					);
+				},
+				{
+					type: 'OTHER',
+					code: 400,
+					message: 'Account already exists for member',
+				},
+			)
+			.filter(
+				() =>
+					resolveReference(schema)(account)(member)
+						.map(always(true))
+						.leftFlatMap(always(Either.right(false))),
+				{
+					type: 'OTHER',
+					code: 400,
+					message: 'Member does not exist',
+				},
+			)
+			.map(async user => {
+				if (Maybe.isNone(user)) {
+					const newAccount: UserAccountInformation = {
+						member,
+						username,
+						passwordHistory: [],
+					};
+
+					await userInformationCollection.add(newAccount).execute();
+
+					return newAccount;
+				} else {
+					return user.value;
+				}
+			})
+			.flatMap(() =>
+				addPasswordForUser(schema, username, password).cata<
+					EitherObj<ServerError, UserAccountInformation>
+				>(
+					result =>
+						result === PasswordSetResult.COMPLEXITY
+							? Either.left({
+									type: 'OTHER',
+									code: 400,
+									message: 'Password does not meet complexity requirements',
+							  })
+							: Either.left({
+									type: 'OTHER',
+									code: 400,
+									message: 'There was an unknown server error',
+							  }),
+					Either.right,
+				),
+			)
+			.tap(() => removeAccountToken(schema, token)),
 	);
-
-	let user = null;
-	try {
-		user = await getInformationForUser(schema, username);
-	} catch (e) {
-		// do nothing, as user will still be null and we can check later
-	}
-
-	if (isUserValid(user)) {
-		throw new UserError('Account already exists with given username');
-	}
-
-	// Checks for account and password
-	// It is possible for an account to exist without a password,
-	// as during the account creation phase a password may fail to meet
-	// requirements and leave a dangling, inaccessible account
-	const resultsForReference = await collectResults(
-		findAndBind(userInformationCollection, {
-			member,
-		}),
-	);
-	if (
-		!(resultsForReference.length === 0 || resultsForReference[0].passwordHistory.length === 0)
-	) {
-		throw new UserError('Account already exists for member');
-	}
-
-	try {
-		await resolveReference(schema)(account)(member).fullJoin();
-	} catch (e) {
-		throw new UserError('Member does not exist');
-	}
-
-	const newAccount: UserAccountInformation = {
-		member,
-		username,
-		passwordHistory: [],
-	};
-
-	// Only add a copy if the member actually needs to be added
-	// There are cases where a member may be added, just not fully made
-	if (user === null) {
-		await userInformationCollection.add(newAccount).execute();
-	}
-
-	const passwordResult = await addPasswordForUser(schema, username, password);
-
-	if (passwordResult === PasswordSetResult.COMPLEXITY) {
-		throw new UserError('Password does not meet complexity requirements');
-	}
-
-	await removeAccountToken(schema, token);
-
-	return newAccount;
-};
 
 //#endregion
 

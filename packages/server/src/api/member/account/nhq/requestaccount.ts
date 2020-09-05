@@ -70,13 +70,10 @@ export const getProperEmailAndSendType = (schema: Schema) => (email: string) => 
 		})
 		.map<[string, EmailSentType]>(i => i as [string, EmailSentType])
 		.flatMap(([newEmail, emailType]) =>
-			asyncRight(
-				PAM.addUserAccountCreationToken(schema, {
-					id,
-					type: 'CAPNHQMember',
-				}),
-				errorGenerator('Could not add user account creation token'),
-			).map<[string, string, EmailSentType]>(token => [token, newEmail, emailType]),
+			PAM.addUserAccountCreationToken(schema, {
+				id,
+				type: 'CAPNHQMember',
+			}).map<[string, string, EmailSentType]>(token => [token, newEmail, emailType]),
 		);
 
 const emailText = (account: AccountObject) => (token: string) => `You're almost there!
@@ -92,13 +89,13 @@ const emailHtml = (account: AccountObject) => (member: Member) => (
 }.capunit.com/finishaccount/${token}">Confirm account creation</a></p>
 <h4>Please respond to this email if you have questions regarding your CAPUnit.com account. If you did not request this account, simply disregard this email.</h4>`;
 
-const writeEmail = (
+const writeEmail = (emailFunction = sendEmail) => (
 	req: ServerAPIRequestParameter<api.member.account.capnhq.RequestNHQAccount>,
 ) => (member: Member) => ([[token, email, sentType], registry]: [
 	[string, string, EmailSentType],
 	RegistryValues,
 ]) =>
-	sendEmail(true)(registry)('CAPUnit.com Account Creation')(email)(
+	emailFunction(true)(registry)('CAPUnit.com Account Creation')(email)(
 		emailHtml(req.account)(member)(token),
 	)(emailText(req.account)(token)).map(always(sentType));
 
@@ -129,7 +126,7 @@ export const func: (
 							member,
 						),
 						getRegistry(req.mysqlx)(req.account),
-					]).flatMap(writeEmail(req)(member)),
+					]).flatMap(writeEmail(emailFunction)(req)(member)),
 				),
 		);
 
