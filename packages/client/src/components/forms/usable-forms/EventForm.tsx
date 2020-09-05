@@ -43,7 +43,6 @@ import {
 	RegistryValues,
 	SimpleMultCheckboxReturn,
 	User,
-	AccountType,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -146,7 +145,6 @@ export interface NewEventFormValues {
 	comments: string;
 	acceptSignups: boolean;
 	signUpDenyMessage: null | string;
-	publishToWingCalendar: boolean;
 	showUpcoming: boolean;
 	complete: boolean;
 	administrationComments: string;
@@ -164,7 +162,6 @@ export interface NewEventFormValues {
 	fileIDs: string[];
 	privateAttendance: boolean;
 	groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
-	wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 
 	// These are special values used
@@ -204,7 +201,6 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		pickupLocation: event.pickupLocation,
 		pointsOfContact,
 		customAttendanceFields: event.customAttendanceFields,
-		publishToWingCalendar: event.publishToWingCalendar,
 		regionEventNumber: event.regionEventNumber,
 		registration: event.useRegistration ? event.registration : null,
 		requiredEquipment: event.requiredEquipment,
@@ -225,7 +221,6 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		transportationDescription: event.transportationDescription,
 		transportationProvided: event.transportationProvided,
 		uniform: event.uniform,
-		wingEventNumber: event.wingEventNumber,
 		privateAttendance: event.privateAttendance,
 	}))(
 		Maybe.And(
@@ -280,10 +275,8 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	comments: '',
 	acceptSignups: true,
 	signUpDenyMessage: '',
-	publishToWingCalendar: false,
 	showUpcoming: true,
 	groupEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
-	wingEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
 	regionEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
 	complete: false,
 	administrationComments: '',
@@ -337,7 +330,6 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 			  },
 	),
 	customAttendanceFields: event.customAttendanceFields,
-	publishToWingCalendar: event.publishToWingCalendar,
 	regionEventNumber: event.regionEventNumber,
 	registration: event.registration || {
 		deadline: Date.now(),
@@ -355,7 +347,6 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
 	uniform: event.uniform,
-	wingEventNumber: event.wingEventNumber,
 	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
 	privateAttendance: event.privateAttendance,
 });
@@ -598,12 +589,6 @@ export default class EventForm extends React.Component<EventFormProps> {
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
 				/>
 
-				<Label>Wing event number</Label>
-				<RadioButtonWithOther<EchelonEventNumber>
-					name="wingEventNumber"
-					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-				/>
-
 				<Label>Region event number</Label>
 				<RadioButtonWithOther<EchelonEventNumber>
 					name="regionEventNumber"
@@ -623,18 +608,6 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Label>Entry complete</Label>
 				<Checkbox name="complete" />
-
-				{this.props.account.type === AccountType.CAPEVENT ||
-				this.props.account.type === AccountType.CAPGROUP ||
-				this.props.account.type === AccountType.CAPSQUADRON ? (
-					<Label>Publish to wing</Label>
-				) : null}
-
-				{this.props.account.type === AccountType.CAPEVENT ||
-				this.props.account.type === AccountType.CAPGROUP ||
-				this.props.account.type === AccountType.CAPSQUADRON ? (
-					<Checkbox name="publishToWingCalendar" />
-				) : null}
 
 				<Label>Show upcoming</Label>
 				<Checkbox name="showUpcoming" />

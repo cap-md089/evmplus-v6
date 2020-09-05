@@ -15,6 +15,7 @@ if [ "$branch" = "master" ]; then
 		:
 	else
 		echo "Compile failure"
+		git stash pop -q
 		exit 1
 	fi
 
@@ -33,6 +34,7 @@ if [ "$branch" = "master" ]; then
 		:
 	else
 		echo "Code fails lint check"
+		git stash pop -q
 		exit 1
 	fi
 fi

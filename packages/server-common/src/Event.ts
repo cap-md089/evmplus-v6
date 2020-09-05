@@ -443,7 +443,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 		updateGoogleCalendars(schema, event, account, config),
 		errorGenerator('Could not update google calendar'),
 	)
-		.map<RawEventObject>(([mainId, wingId, regId, feeId]) => ({
+		.map<RawEventObject>(([mainId, regId, feeId]) => ({
 			acceptSignups: event.acceptSignups,
 			accountID: event.accountID,
 			activity: event.activity,
@@ -459,7 +459,6 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			fileIDs: event.fileIDs,
 			googleCalendarIds: {
 				mainId,
-				wingId,
 				regId,
 				feeId,
 			},
@@ -478,7 +477,6 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			pickupLocation: event.pickupLocation,
 			pointsOfContact: getSimplePointsOfContact(event.pointsOfContact),
 			privateAttendance: event.privateAttendance,
-			publishToWingCalendar: event.publishToWingCalendar,
 			regionEventNumber: event.regionEventNumber,
 			registration: event.registration,
 			requiredEquipment: event.requiredEquipment,
@@ -495,7 +493,6 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
-			wingEventNumber: event.wingEventNumber,
 		}))
 		.flatMap(newEvent => {
 			const isInternalPOC = (poc: PointOfContact): poc is InternalPointOfContact =>
@@ -563,7 +560,6 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			pickupLocation: data.pickupLocation,
 			pointsOfContact: data.pointsOfContact,
 			privateAttendance: data.privateAttendance,
-			publishToWingCalendar: data.publishToWingCalendar,
 			regionEventNumber: data.regionEventNumber,
 			registration: data.registration,
 			requiredEquipment: data.requiredEquipment,
@@ -577,7 +573,6 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			transportationDescription: data.transportationDescription,
 			transportationProvided: data.transportationProvided,
 			uniform: data.uniform,
-			wingEventNumber: data.wingEventNumber,
 
 			id,
 			accountID: account.id,
@@ -591,11 +586,10 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			asyncRight(
 				createGoogleCalendarEvents(schema, event, account, config),
 				errorGenerator('Could not create Google calendar events'),
-			).map<RawEventObject>(([mainId, wingId, regId, feeId]) => ({
+			).map<RawEventObject>(([mainId, regId, feeId]) => ({
 				...event,
 				googleCalendarIds: {
 					mainId,
-					wingId,
 					regId,
 					feeId,
 				},

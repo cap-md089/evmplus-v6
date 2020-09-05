@@ -31,12 +31,12 @@ import {
 	MemberReference,
 	RawCAPSquadronAccountObject,
 	RawServerConfiguration,
+	RegistryValues,
 	Validator,
 } from 'common-lib';
 import 'dotenv/config';
 import { createInterface } from 'readline';
-import { confFromRaw } from 'server-common';
-import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
+import { PAM, confFromRaw, createGoogleCalendar, getRegistry, saveRegistry } from 'server-common';
 
 const configurationValidator = validator<RawServerConfiguration>(Validator);
 
@@ -81,6 +81,14 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		id = await asker('What will be the ID of the new account? - ');
 	}
 
+	let name = null;
+	while (!name) {
+		if (name !== null) {
+			console.log('Website name cannot be blank');
+		}
+		name = await asker('What is the name of the new account?');
+	}
+
 	const serverID = await asker('Is there a Discord server associated with this unit? - ');
 	const discordServer: MaybeObj<DiscordServerInformation> =
 		serverID === ''
@@ -91,7 +99,13 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 					staffChannel: null,
 			  });
 
-	const mainCalendarID = await asker('What is the main Google calendar ID? - ');
+	let mainCalendarID = await asker(
+		'What is the main Google calendar ID? (leave empty to create one) - ',
+	);
+
+	if (mainCalendarID === '') {
+		mainCalendarID = await createGoogleCalendar(id, name, conf);
+	}
 
 	const aliases = [];
 	let aliasInput = null;
@@ -104,10 +118,6 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 			aliases.push(aliasInput);
 		}
 	}
-
-	const wingCalendarID = await asker(
-		'What is the Google calendar ID of the calendar being published to your Wing? - ',
-	);
 
 	let mainOrgInput = '';
 	while (isNaN(parseInt(mainOrgInput, 10))) {
@@ -126,7 +136,6 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		parentGroup: Maybe.none(),
 		parentWing: Maybe.none(),
 		type: AccountType.CAPSQUADRON,
-		wingCalendarID,
 	};
 
 	const session = await getSession({
@@ -151,12 +160,24 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		id: parseInt(capidInput, 10),
 	};
 
-	await setPermissionsForMemberInAccount(
+	await PAM.setPermissionsForMemberInAccount(
 		session.getSchema(conf.DB_SCHEMA),
 		member,
 		getDefaultAdminPermissions(AccountType.CAPSQUADRON),
 		accountObj,
 	);
+
+	const registry = await getRegistry(session.getSchema(conf.DB_SCHEMA))(accountObj).fullJoin();
+
+	const registryWithName: RegistryValues = {
+		...registry,
+		Website: {
+			...registry.Website,
+			Name: name,
+		},
+	};
+
+	await saveRegistry(session.getSchema(conf.DB_SCHEMA))(registryWithName).fullJoin();
 
 	await session.close();
 

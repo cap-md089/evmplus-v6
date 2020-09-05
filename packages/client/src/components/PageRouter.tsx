@@ -43,7 +43,7 @@ import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
 import Drive from '../pages/Drive';
-import LinkList from '../pages/EventLinkList';
+import LinkList from '../pages/events/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import EventViewer from '../pages/events/EventViewer';

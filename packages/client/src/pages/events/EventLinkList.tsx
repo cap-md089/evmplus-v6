@@ -27,10 +27,10 @@ import {
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Loader from '../components/Loader';
-import fetchApi from '../lib/apis';
+import Loader from '../../components/Loader';
+import fetchApi from '../../lib/apis';
 import './EventLinkList.css';
-import Page, { PageProps } from './Page';
+import Page, { PageProps } from '../Page';
 
 interface EventLinkListLoadingState {
 	state: 'LOADING';
@@ -212,9 +212,9 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								</td>
 								<td>{getEventStatus(event.status)}</td>
 								<td>{getEventNumber(event.groupEventNumber)}</td>
-								<td>{getEventNumber(event.wingEventNumber)}</td>
+								<td />
 								<td>{getEventNumber(event.regionEventNumber)}</td>
-								<td>{event.publishToWingCalendar}</td>
+								<td />
 								<td>{event.debrief}</td>
 							</tr>
 						))}
