@@ -602,13 +602,13 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 	schema: Schema,
 ) => (account: AccountObject) => (event: RawEventObject) => (author: MemberReference) => (
 	newStartTime: number,
-) => (copyStatus = false) => (copyFiles = false) =>
+) => (newStatus: EventStatus) => (copyFiles = false) =>
 	asyncRight(newStartTime - event.startDateTime, errorGenerator('Could not copy event'))
 		.map(timeDelta => ({
 			...event,
 
 			fileIDs: copyFiles ? event.fileIDs : [],
-			status: copyStatus ? event.status : EventStatus.INFORMATIONONLY,
+			status: newStatus,
 
 			meetDateTime: event.meetDateTime + timeDelta,
 			startDateTime: event.startDateTime + timeDelta,

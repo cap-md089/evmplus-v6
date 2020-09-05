@@ -58,6 +58,7 @@ import {
 	RawEventObject,
 	Right,
 	spreadsheets,
+	labels,
 	stringifyMemberReference,
 	User,
 } from 'common-lib';
@@ -71,7 +72,14 @@ import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
-import { DateTimeInput, Label, TextBox, TextInput } from '../../components/forms/SimpleForm';
+import {
+	DateTimeInput,
+	Label,
+	TextBox,
+	TextInput,
+	Checkbox,
+	SimpleRadioButton,
+} from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
@@ -126,6 +134,8 @@ type EventViewerTeamState =
 interface EventViewerUIState {
 	previousUpdatedMember: MaybeObj<MemberReference>;
 	newTime: number;
+	copyFiles: boolean;
+	newStatus: EventStatus;
 	cadetRoster: Member[] | null;
 	seniorRoster: Member[] | null;
 	eventRegistry: boolean;
@@ -223,6 +233,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		teamState: 'LOADING',
 		previousUpdatedMember: Maybe.none(),
 		newTime: 0,
+		newStatus: 0,
+		copyFiles: true,
 		cadetRoster: null,
 		seniorRoster: null,
 		eventRegistry: false,
@@ -432,7 +444,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<>
 							<Link to={`/eventform/${event.id}`}>Edit event "{event.name}"</Link>
 							{' | '}
-							<DialogueButtonForm<{ newTime: number }>
+							<DialogueButtonForm<{
+								newTime: number;
+								copyFiles: boolean;
+							}>
 								buttonText="Move event"
 								buttonClass="underline-button"
 								buttonType="none"
@@ -443,6 +458,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								labels={['Move event', 'Copy move event', 'Cancel']}
 								values={{
 									newTime: event.startDateTime,
+									copyFiles: true,
 								}}
 							>
 								<TextBox name="null">
@@ -465,6 +481,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									</span>
 								</TextBox>
 
+								<Label>Copy files to new event</Label>
+								<Checkbox name="copyFiles" />
+
 								<Label>New start time of event</Label>
 								<DateTimeInput
 									name="newTime"
@@ -473,7 +492,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								/>
 							</DialogueButtonForm>
 							{' | '}
-							<DialogueButtonForm<{ newTime: number }>
+							<DialogueButtonForm<{
+								newTime: number;
+								copyFiles: boolean;
+								newStatus: EventStatus;
+							}>
 								buttonText="Copy event"
 								buttonType="none"
 								buttonClass="underline-button"
@@ -483,8 +506,16 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								labels={['Copy event', 'Cancel']}
 								values={{
 									newTime: event.startDateTime,
+									copyFiles: true,
+									newStatus: event.status,
 								}}
 							>
+								<Label>New event status</Label>
+								<SimpleRadioButton name="newStatus" labels={labels.EventStatus} />
+
+								<Label>Copy files to new event</Label>
+								<Checkbox name="copyFiles" />
+
 								<Label>Start time of new event</Label>
 								<DateTimeInput
 									name="newTime"
@@ -1061,7 +1092,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		});
 	}
 
-	private async copyMoveEvent({ newTime }: { newTime: number }) {
+	private async copyMoveEvent({ newTime, copyFiles }: { newTime: number; copyFiles: boolean }) {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1086,7 +1117,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			),
 			fetchApi.events.events.copy(
 				{ id: event.id.toString() },
-				{ newTime, copyStatus: false, copyFiles: false },
+				{ newTime, copyFiles, newStatus: event.status },
 				this.props.member.sessionID,
 			),
 		]);
@@ -1096,7 +1127,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 	}
 
-	private async copyEvent({ newTime }: { newTime: number }) {
+	private async copyEvent({
+		newTime,
+		copyFiles,
+		newStatus,
+	}: {
+		newTime: number;
+		copyFiles: boolean;
+		newStatus: EventStatus;
+	}) {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1109,7 +1148,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 		const result = await fetchApi.events.events.copy(
 			{ id: state.eventInformation.event.id.toString() },
-			{ newTime, copyStatus: false, copyFiles: false },
+			{ newTime, copyFiles, newStatus },
 			this.props.member.sessionID,
 		);
 

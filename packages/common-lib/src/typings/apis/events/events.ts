@@ -27,6 +27,7 @@ import {
 	AttendanceRecord,
 	DisplayInternalPointOfContact,
 	EventObject,
+	EventStatus,
 	ExternalPointOfContact,
 	Member,
 	NewEventObject,
@@ -85,7 +86,7 @@ export interface Copy {
 		params: { id: string },
 		body: {
 			newTime: number;
-			copyStatus: boolean | undefined | null;
+			newStatus: EventStatus | undefined | null;
 			copyFiles: boolean | undefined | null;
 		},
 	): APIEither<EventObject>;

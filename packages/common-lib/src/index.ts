@@ -40,3 +40,4 @@ export * from './typings/api';
 export * from './typings/types';
 export { default as defaultAPICallBase } from './api/defaultAPICallBase';
 export * from './renderers';
+export * as labels from './consts/labels';
