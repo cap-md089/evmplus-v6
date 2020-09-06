@@ -845,10 +845,6 @@ export interface AccountBase {
  */
 export interface NewCAPSquadronAccountObject extends NewAccountBase {
 	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
-	/**
 	 * The main organization of the account
 	 */
 	mainOrg: number;
@@ -884,10 +880,6 @@ export interface RawCAPSquadronAccountObject extends NewCAPSquadronAccountObject
 }
 
 export interface NewCAPGroupAccountObject extends NewAccountBase {
-	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
 	/**
 	 * The main organization of the account
 	 */
@@ -954,10 +946,6 @@ export interface RawCAPRegionAccountObject extends NewCAPRegionAccountObject, Ac
 }
 
 export interface NewCAPEventAccountObject extends NewAccountBase {
-	/**
-	 * The ID of the wing Google calendar
-	 */
-	wingCalendarID: string;
 	/**
 	 * A reference to the account that belongs to the wing that this group belongs to
 	 *
@@ -1063,10 +1051,6 @@ export interface RawEventObject extends AccountIdentifiable, NewEventObject {
 		 * UUID of the Google Caldendar event on the main calendar
 		 */
 		mainId?: null | string;
-		/**
-		 * UUID of the Google Calendar event on the Wing published calendar
-		 */
-		wingId?: null | string;
 		/**
 		 * UUID of the Google Calendar registration deadline event on the main calendar
 		 */
@@ -1233,10 +1217,6 @@ export interface NewEventObject {
 	 */
 	signUpDenyMessage: null | string;
 	/**
-	 * If the wing calendar needs to have this event, publish to the Google calendar
-	 */
-	publishToWingCalendar: boolean;
-	/**
 	 * Show on the upcoming events portion of the main page
 	 */
 	showUpcoming: boolean;
@@ -1244,10 +1224,6 @@ export interface NewEventObject {
 	 * Is there a valid group number available?
 	 */
 	groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
-	/**
-	 * What is the wing event number
-	 */
-	wingEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	/**
 	 * What is the region event number
 	 */
@@ -3963,9 +3939,17 @@ export interface CadetPromotionStatus {
 }
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
+
+export interface CadetPromotionResponse {
+	/**
+	 * Items that go in the 
+	 */
+}
+
 /**
  * Represents the MFA tokens that are stored for a user
  */
+
 export interface StoredMFASecret {
 	/**
 	 * The MFA token itself

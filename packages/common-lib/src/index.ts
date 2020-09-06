@@ -19,6 +19,7 @@
 
 export { compose, pipe } from 'ramda';
 export { default as defaultAPICallBase } from './api/defaultAPICallBase';
+export * as labels from './consts/labels';
 export * from './consts/promotionRequirements';
 export * from './lib/Account';
 export * from './lib/AsyncEither';
@@ -41,4 +42,3 @@ export { default as Validator } from './lib/Validator';
 export * from './renderers';
 export * from './typings/api';
 export * from './typings/types';
-

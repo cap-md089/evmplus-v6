@@ -24,12 +24,14 @@ import {
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	Either,
 	errorGenerator,
 	getFullMemberName,
 	getMemberEmail,
 	Maybe,
 	RegistryValues,
 	ServerError,
+	Some,
 	UserAccountInformation,
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
@@ -79,16 +81,29 @@ export const func: (
 		.flatMap(() =>
 			AsyncEither.All([
 				asyncRight(
-					PAM.getInformationForUser(req.mysqlx, req.body.username),
+					PAM.getInformationForUser(req.mysqlx, req.body.username)
+						.then(Maybe.some)
+						.catch(Maybe.none),
 					errorGenerator('Could not load website configuration'),
 				),
 				getRegistry(req.mysqlx)(req.account),
 			]),
 		)
+		.filter(([info, _]) => Maybe.isSome(info), {
+			type: 'OTHER',
+			code: 400,
+			message: 'There is no account with that username',
+		})
+		.map(v => v as [Some<UserAccountInformation>, RegistryValues])
 		.flatMap(([account, registry]) =>
-			PAM.createPasswordResetToken(req.mysqlx, account.username)
+			PAM.createPasswordResetToken(req.mysqlx, account.value.username)
 				.map(formatUrl(req.account))
-				.flatMap(getMemberAndSendEmail(emailFunction)(req)(account)(registry)),
+				.flatMap(getMemberAndSendEmail(emailFunction)(req)(account.value)(registry)),
+		)
+		.leftFlatMap(err =>
+			err.message === 'There is no account with that username'
+				? Either.right(void 0)
+				: Either.left(err),
 		);
 
 export default func();

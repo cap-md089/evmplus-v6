@@ -23,15 +23,19 @@ import {
 	asyncLeft,
 	asyncRight,
 	CAPNHQMemberReference,
+	Either,
 	errorGenerator,
 	getFullMemberName,
 	getMemberEmail,
 	Maybe,
 	Member,
 	pipe,
+	SafeUserAccountInformation,
+	Some,
 	UserAccountInformation,
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail, ServerEither } from 'server-common';
+import { simplifyUserInformation } from 'server-common/dist/member/pam';
 
 const htmlEmailBody = (memberInfo: Member, accountInfo: UserAccountInformation) =>
 	`${getFullMemberName(memberInfo)}, your login is ${accountInfo.username}.<br />
@@ -70,13 +74,22 @@ export const func: (
 			PAM.getInformationForMember(req.mysqlx, {
 				type: 'CAPNHQMember' as const,
 				id: req.body.capid,
-			}),
+			})
+				.then(simplifyUserInformation)
+				.then(Maybe.some)
+				.catch(Maybe.none),
 		)
+		.filter(Maybe.isSome, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Username not found',
+		})
+		.map(info => info as Some<SafeUserAccountInformation<CAPNHQMemberReference>>)
 		.flatMap(info =>
-			resolveReference(req.mysqlx)(req.account)(info.member).flatMap(member =>
+			resolveReference(req.mysqlx)(req.account)(info.value.member).flatMap(member =>
 				pipe(
 					Maybe.map<string, ServerEither<void>>(
-						sendEmailToMember(emailFunction)(req)(info)(member),
+						sendEmailToMember(emailFunction)(req)(info.value)(member),
 					),
 					Maybe.orSome<ServerEither<void>>(
 						asyncLeft({
@@ -88,6 +101,9 @@ export const func: (
 					),
 				)(getMemberEmail(member.contact)),
 			),
+		)
+		.leftFlatMap(err =>
+			err.message === 'Username not found' ? Either.right(void 0) : Either.left(err),
 		);
 
 export default func();

@@ -34,8 +34,12 @@ export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSess
 	SessionType.REGULAR | SessionType.PASSWORD_RESET,
 )(request =>
 	asyncRight(request, errorGenerator('Could not reset password for user'))
-		.map(req =>
-			PAM.addPasswordForUser(req.mysqlx, req.session.userAccount.username, req.body.password),
+		.flatMap(req =>
+			PAM.addPasswordForUser(
+				req.mysqlx,
+				req.session.userAccount.username,
+				req.body.password,
+			).cata(Either.right, always(Either.right(PasswordSetResult.OK))),
 		)
 		.flatMap<PasswordSetResult>(result => {
 			if (request.session.type === SessionType.PASSWORD_RESET) {

@@ -18,7 +18,7 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { always, api, asyncLeft, asyncRight, errorGenerator, PasswordSetResult } from 'common-lib';
+import { always, api, errorGenerator, PasswordSetResult, ServerError } from 'common-lib';
 import { PAM } from 'server-common';
 import {
 	addPasswordForUser,
@@ -39,18 +39,16 @@ const passwordResetErrorMessages = {
 export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
 	PAM.validatePasswordResetToken(req.mysqlx, req.body.token)
 		.flatMap(username =>
-			asyncRight(
-				addPasswordForUser(req.mysqlx, username, req.body.newPassword),
-				errorGenerator('Could not add new password'),
-			).flatMap<string>(setResult =>
-				setResult === PasswordSetResult.OK
-					? asyncRight(username, errorGenerator('Could not create new session for user'))
-					: asyncLeft({
-							type: 'OTHER',
-							code: 400,
-							message: passwordResetErrorMessages[setResult],
-					  }),
-			),
+			addPasswordForUser(req.mysqlx, username, req.body.newPassword)
+				.map(always(username))
+				.leftMap<ServerError>(
+					setResult => ({
+						type: 'OTHER',
+						code: 400,
+						message: passwordResetErrorMessages[setResult],
+					}),
+					errorGenerator('Could not handle failure'),
+				),
 		)
 		.flatMap(username =>
 			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),

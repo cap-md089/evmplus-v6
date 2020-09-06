@@ -93,10 +93,7 @@ Please respond to this email if you have any questions`),
 const createWithPassword = (req: Req) => (username: string) => (password: string) => (
 	member: RawCAPProspectiveMemberObject,
 ) =>
-	asyncRight(
-		PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
-		errorGenerator('Could not get user account creation token'),
-	)
+	PAM.addUserAccountCreationToken(req.mysqlx, toReference(member))
 		.map(token =>
 			PAM.addUserAccount(
 				req.mysqlx,
@@ -123,10 +120,7 @@ const createWithRandomPassword = (emailFunction: typeof sendEmail) => (req: Req)
 	).flatMap(email =>
 		AsyncEither.All([
 			getRegistry(req.mysqlx)(req.account),
-			asyncRight(
-				PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
-				errorGenerator('Could not create user account creation token'),
-			),
+			PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
 			asyncRight(
 				promisify(randomBytes)(10),
 				errorGenerator('Could not get random password'),

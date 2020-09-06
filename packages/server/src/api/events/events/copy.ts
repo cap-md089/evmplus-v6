@@ -23,6 +23,7 @@ import {
 	asyncRight,
 	canManageEvent,
 	errorGenerator,
+	EventStatus,
 	Maybe,
 	Permissions,
 	SessionType,
@@ -43,7 +44,11 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 			.map(copyEvent(req.configuration)(req.mysqlx)(req.account))
 			.map(copier => copier(toReference(req.member)))
 			.map(copier => copier(req.body.newTime))
-			.map(copier => copier(!!req.body.copyStatus))
+			.map(copier =>
+				copier(
+					Maybe.orSome(EventStatus.INFORMATIONONLY)(Maybe.fromValue(req.body.newStatus)),
+				),
+			)
 			.flatMap(copier => copier(!!req.body.copyFiles))
 			.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member))),
 	),

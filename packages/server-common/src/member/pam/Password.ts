@@ -182,48 +182,46 @@ export const updatePasswordForUser = async (
 /**
  * Adds a password to the user, adding the new password to the history
  *
- * Does perform security checks, unlinke `updatePasswordForUser`
+ * Does perform security checks, unlike `updatePasswordForUser`
  *
  * @param schema the schema that stores the account information
  * @param userID the ID of the user to update the password for
  * @param password the password to set
  */
-export const addPasswordForUser = async (
+export const addPasswordForUser = (
 	schema: Schema,
 	username: string,
 	password: string,
-): Promise<PasswordSetResult> => {
-	const userInfo = await getInformationForUser(schema, username);
-
-	if (!passwordMeetsRequirements(password)) {
-		return PasswordSetResult.COMPLEXITY;
-	}
-
-	if (await hasPasswordBeenUsed(password, userInfo.passwordHistory)) {
-		return PasswordSetResult.IN_HISTORY;
-	}
-
-	const salt = (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex');
-	const newPassword = (await hashPassword(password, salt, PASSWORD_NEW_ALGORITHM)).toString(
-		'hex',
+): AsyncEither<PasswordSetResult, UserAccountInformation> =>
+	asyncRight(getInformationForUser(schema, username), PasswordSetResult.SERVER_ERROR).flatMap(
+		userInfo =>
+			asyncRight(password, PasswordSetResult.SERVER_ERROR)
+				.filter(passwordMeetsRequirements, PasswordSetResult.COMPLEXITY)
+				.filter(
+					pass => hasPasswordBeenUsed(pass, userInfo.passwordHistory),
+					PasswordSetResult.IN_HISTORY,
+				)
+				.map(async pass => ({
+					salt: (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex'),
+					pass,
+				}))
+				.map<AccountPasswordInformation>(async ({ pass, salt }) => ({
+					created: Date.now(),
+					password: (await hashPassword(pass, salt, PASSWORD_NEW_ALGORITHM)).toString(
+						'hex',
+					),
+					iterations: DEFAULT_PASSWORD_ITERATION_COUNT,
+					salt,
+					algorithm: PASSWORD_NEW_ALGORITHM,
+				}))
+				.map(passwordItem => ({
+					...userInfo,
+					passwordHistory: [passwordItem, ...userInfo.passwordHistory].filter(
+						(_, i) => i < PASSWORD_HISTORY_LENGTH,
+					),
+				}))
+				.tap(info => saveInformationForUser(schema, info)),
 	);
-
-	userInfo.passwordHistory.unshift({
-		created: Date.now(),
-		password: newPassword,
-		salt,
-		iterations: DEFAULT_PASSWORD_ITERATION_COUNT,
-		algorithm: PASSWORD_NEW_ALGORITHM,
-	});
-
-	while (userInfo.passwordHistory.length > PASSWORD_HISTORY_LENGTH) {
-		userInfo.passwordHistory.pop();
-	}
-
-	await saveInformationForUser(schema, userInfo);
-
-	return PasswordSetResult.OK;
-};
 
 /**
  * Checks if a password is valid for the provided member
@@ -318,10 +316,7 @@ export const validatePasswordResetToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.flatMap(collection =>
 			asyncRight(
@@ -349,10 +344,7 @@ export const removePasswordValidationToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.map(collection =>
 			collection

@@ -27,30 +27,15 @@ export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = re
 		PAM.validateUserAccountCreationToken(req.mysqlx, req.body.token),
 		errorGenerator('Could not find token'),
 	)
-		.map(
-			member =>
-				PAM.addUserAccount(
-					req.mysqlx,
-					req.account,
-					req.body.username,
-					req.body.password,
-					member,
-					req.body.token,
-				),
-			error =>
-				error instanceof PAM.UserError
-					? {
-							type: 'OTHER',
-							code: 400,
-							message: error.message,
-					  }
-					: {
-							type: 'CRASH',
-							code: 500,
-							error,
-							message:
-								'An unknown error occurred while trying to finish creating your account',
-					  },
+		.flatMap(member =>
+			PAM.addUserAccount(
+				req.mysqlx,
+				req.account,
+				req.body.username,
+				req.body.password,
+				member,
+				req.body.token,
+			),
 		)
 		.map(simplifyUserInformation)
 		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
