@@ -30,6 +30,7 @@ export * as attendance from './attendance';
 export * as capwatch from './capwatch';
 export * as flight from './flight';
 export * as permissions from './permissions';
+export * as promotionrequirements from './promotionrequirements';
 export * as session from './session';
 export * as temporarydutypositions from './temporarydutypositions';
 

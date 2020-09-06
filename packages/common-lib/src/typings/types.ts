@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of CAPUnit.com.
  *
@@ -67,7 +67,7 @@ export namespace NHQ {
 	export interface CadetAchvAprs {
 		CAPID: number;
 		CadetAchvID: number;
-		Status: string;
+		Status: CadetAprvStatus;
 		AprCAPID: number;
 		DspReason: string;
 		AwardNo: number;
@@ -3908,79 +3908,48 @@ export interface CadetPromotionRequirements {
 
 export interface CadetPromotionStatus {
 	/**
-	 * The Achievement name
+	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
 	 */
-	AchvName: string;
+	NextCadetAchvID: number;
 
 	/**
-	 * The capmembers.com web page for the promotion requirements
+	 * The current highest achievement data
 	 */
-	ReqsWebLink: string;
+	CurrentCadetAchv: NHQ.CadetAchv;
 
 	/**
-	 * Status of PT as avaialble from eServices
+	 * The current highest achievement status
 	 */
-	PT: string;
+	CurrentAprvStatus: CadetAprvStatus;
 
 	/**
-	 * Status of oath requirement **************************************************************************
+	 * The date of the last promotion approval
 	 */
-	Oath: boolean;
+	LastAprvDate: MaybeObj<number>;
 
 	/**
-	 * Status of leadership requirement, include web link if requirement active, table lookup
+	 * The date of completion of encampment (required for Mitchell)
 	 */
-	Leadership: string;
+	EncampDate: MaybeObj<number>;
 
 	/**
-	 * Status of mentor activity - future capability, not currently present in CAPWATCH downloads
+	 * The date of completion of RCLS (should have Encampment and C/MSgt before eligible)
 	 */
-	Mentor: string;
+	RCLSDate: MaybeObj<number>;
+}
 
-	/**
-	 * Status of SDA Service
-	 */
-	SDAService: string;
+export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
 
+export interface CadetPromotionResponse {
 	/**
-	 * Status of SDA Writing
+	 * Items that go in the 
 	 */
-	SDAWriting: string;
-
-	/**
-	 * Status of SDA Presentation
-	 */
-	SDAPresentation: string;
-
-	/**
-	 * Status of drill test, include web link if requirement active
-	 */
-	Drill: string;
-
-	/**
-	 * Status of aerospace test, include web link if requirement active
-	 */
-	Aerospace: string;
-
-	/**
-	 * Status of character development requirement, including wingman course
-	 */
-	CharDev: string;
-
-	/**
-	 * Status of encampment requirement, needed for Mitchell
-	 */
-	Encampment: string;
-
-	/**
-	 * Status of RCLS requirement, needed for Eaker, should have Encampment and C/MSgt before eligible
-	 */
-	RCLS: string;
 }
 
 /**
  * Represents the MFA tokens that are stored for a user
  */
+
 export interface StoredMFASecret {
 	/**
 	 * The MFA token itself

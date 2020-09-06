@@ -27,6 +27,7 @@ export * from './Members';
 export * from './MySQLUtil';
 export * from './Notification';
 export * from './Organizations';
+export * from './PromotionRequirements';
 export * from './Registry';
 export * from './sendEmail';
 export * from './servertypes';

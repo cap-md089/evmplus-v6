@@ -71,6 +71,9 @@ type Tree = {
 		};
 	};
 	member: {
+		promotionrequirements: {
+			currentuser: api.member.promotionrequirements.RequirementsForCurrentUser;
+		}
 		account: {
 			capnhq: {
 				usernameRequest: api.member.account.capnhq.UsernameRequest;

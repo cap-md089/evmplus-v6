@@ -61,7 +61,7 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 			const values: NHQ.CadetAchvAprs = {
 				CAPID: parseInt(member.CAPID, 10),
 				CadetAchvID: parseInt(member.CadetAchvID, 10),
-				Status: member.Status,
+				Status: member.Status as NHQ.CadetAchvAprs['Status'],
 				AprCAPID: parseInt(member.AprCAPID, 10),
 				DspReason: member.DspReason,
 				AwardNo: parseInt(member.AwardNo, 10),

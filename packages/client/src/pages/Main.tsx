@@ -19,10 +19,16 @@
 
 import {
 	AsyncEither,
+	asyncRight,
+	CadetPromotionStatus,
+	CadetPromotionRequirementsMap,
 	Either,
+	errorGenerator,
 	EventStatus,
 	getURIComponent,
+	HTTPError,
 	Maybe as M,
+	Maybe,
 	MaybeObj,
 	pipe,
 	presentMultCheckboxReturn,
@@ -46,6 +52,7 @@ interface MainStateLoaded {
 	state: 'LOADED';
 	events: RawEventObject[];
 	nextEvent: MaybeObj<RawEventObject>;
+	promotionRequirements: MaybeObj<CadetPromotionStatus>;
 }
 
 interface MainStateError {
@@ -89,6 +96,19 @@ export default class Main extends Page<PageProps, MainState> {
 		const infoEither = await AsyncEither.All([
 			fetchApi.events.events.getNextRecurring({}, {}),
 			fetchApi.events.events.getUpcoming({}, {}),
+			this.props.member
+				? this.props.member.seniorMember
+					? asyncRight<HTTPError, MaybeObj<CadetPromotionStatus>>(
+							Maybe.none(),
+							errorGenerator('Unable to retrieve promotion requirements'),
+					  )
+					: fetchApi.member.promotionrequirements
+							.currentuser({}, {}, this.props.member.sessionID)
+							.map(Maybe.some)
+				: asyncRight<HTTPError, MaybeObj<CadetPromotionStatus>>(
+						Maybe.none(),
+						errorGenerator('Unable to retrieve promotion requirements'),
+				  ),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -96,12 +116,13 @@ export default class Main extends Page<PageProps, MainState> {
 				state: 'ERROR',
 			});
 		} else {
-			const [nextEvent, events] = infoEither.value;
+			const [nextEvent, events, promotionRequirements] = infoEither.value;
 
 			this.setState({
 				state: 'LOADED',
 				events,
 				nextEvent,
+				promotionRequirements,
 			});
 		}
 	}
@@ -115,7 +136,21 @@ export default class Main extends Page<PageProps, MainState> {
 					<div>{this.state.message}</div>
 				) : (
 					<>
-						<section className="halfSection" style={{ float: 'left' }}>
+						{this.props.member && !this.props.member.seniorMember && this.state.promotionRequirements.hasValue ? (
+							<section className="halfSection">
+								<h3>Promotion Requirements</h3>
+								{RequirementsBuild(this.state.promotionRequirements.value)}
+							</section>
+						) : null}
+						<section
+							className="halfSection"
+							style={{
+								float:
+									this.props.member && !this.props.member.seniorMember
+										? 'right'
+										: 'left',
+							}}
+						>
 							{!this.state.nextEvent.hasValue ? (
 								<h3 style={{ textAlign: 'center' }}>No upcoming meeting</h3>
 							) : (
@@ -165,7 +200,7 @@ export default class Main extends Page<PageProps, MainState> {
 								</>
 							)}
 						</section>
-						<section className="halfSection">
+						<section className="halfSection" style={{ float: 'right', clear: 'right' }}>
 							{this.state.events.length === 0 ? (
 								<h3
 									style={{
@@ -245,4 +280,54 @@ export default class Main extends Page<PageProps, MainState> {
 			</div>
 		);
 	}
+}
+
+function RequirementsBuild(cps: CadetPromotionStatus): string {
+	// constants
+	const days = 60 * 60 * 24 * 1000;
+	const promoReqs = CadetPromotionRequirementsMap[cps.CurrentCadetAchv.CadetAchvID];
+	// const EPOCH = 0;
+
+	// handle maybe
+	if (!cps) { return "Promotion Requirements</br>Promotion Requirements could not be processed at this time"; }
+	// ^^^^^^    HELP HERE
+
+	// calculate next available promotion date
+	let promotionAvailability = "You are eligible to promote as soon as all of your promotion requirements are complete";
+	if(!Maybe.isNone(cps.LastAprvDate)) {
+		const lastDate = cps.LastAprvDate as unknown as number;
+		const availablePromotionDate = lastDate + (56 * days);
+		const nowDate = Date.now as unknown as number;
+		if(availablePromotionDate > nowDate) {
+			promotionAvailability = "you are eligible for promotion on " + DateTime.fromMillis(availablePromotionDate);
+		}
+	}
+
+	// build promotion status message
+	let promotionStatus = "";
+	switch(cps.CurrentAprvStatus) {
+		case 'PND': {
+			promotionStatus = "Approval for your next promotion is pending.  Review " +
+				'the requirements for your next grade at this link: ' + promoReqs.ReqsWebLink;
+			break;
+		}
+		default: { // this is the caase for both 'APR' and 'PND'
+			promotionStatus = "Promotion requirements for your next grade are not yet complete.  Review " +
+			'the requirements at this link: ' + promoReqs.ReqsWebLink;
+			break;
+		}
+	}
+
+	// build promotion requirements messages
+	// if (convertNHQDate(cps.CurrentCadetAchv.LeadLabDateP) < EPOCH ) {
+
+	// }
+
+	// build response
+	let response = "Promotion Requirements";
+	response += promotionAvailability;
+	response += promotionStatus;
+
+	response += "Complete these requirements to promote";
+	return response;
 }

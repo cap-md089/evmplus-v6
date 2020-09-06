@@ -192,7 +192,7 @@ export default class POCInput extends React.Component<
 				<Label>Receive updates</Label>
 				<Checkbox name="receiveUpdates" index={this.props.index} />
 
-				<Label>Publicly display contact info</Label>
+				<Label>Show contact info to public</Label>
 				<Checkbox name="publicDisplay" index={this.props.index} />
 			</FormBlock>
 		);

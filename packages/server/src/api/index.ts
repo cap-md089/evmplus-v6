@@ -76,6 +76,7 @@ import { func as getmembers } from './member/getmembers';
 import { func as passwordreset } from './member/passwordreset';
 import { func as getpermissions } from './member/permissions/getpermissions';
 import { func as setpermissions } from './member/permissions/setpermissions';
+import { func as currentuser } from './member/promotionrequirements/currentuser';
 import { func as su } from './member/session/su';
 import { func as gettemporarydutypositions } from './member/temporarydutypositions/get';
 import { func as settemporarydutypositions } from './member/temporarydutypositions/set';
@@ -157,6 +158,9 @@ export const api = {
 		},
 	},
 	member: {
+		promotionrequirements: {
+			currentuser,
+		},
 		account: {
 			capprospective: {
 				createprospective,
