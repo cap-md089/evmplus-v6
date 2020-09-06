@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.12.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.7.0...common-lib@1.12.0) (2020-09-06)
+
+
+### Bug Fixes
+
+* removed Wing calendar ([b7f6d84](http://github.com//cap-md089/capunit-com-v6/commit/b7f6d84f1a9f203297111d9d2386ee5569434894)), closes [#24](http://github.com//cap-md089/capunit-com-v6/issues/24)
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed ImportCAPWATCHFile types to more accurately reflect the types of a CAPWATCH CSV file ([fffae38](http://github.com//cap-md089/capunit-com-v6/commit/fffae38d6ba729c7592b1567242e4ea97cfe185e))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+* added MFA using an OTPA ([900239b](http://github.com//cap-md089/capunit-com-v6/commit/900239b673598e22194bd0cb0edbdfef6a3d4cfa))
+* made PAM.RequireMemberType smarter ([fbbc6ed](http://github.com//cap-md089/capunit-com-v6/commit/fbbc6eda975457e8fcee52c33d227c31e6ce5c7b))
+* provided better copy event dialogues ([00901ec](http://github.com//cap-md089/capunit-com-v6/commit/00901ec4028c18a5d3cabc990439d493f322b14e)), closes [#13](http://github.com//cap-md089/capunit-com-v6/issues/13)
+
+
+
+
+
 # [1.11.0](http://github.com//cap-md089/capunit-com-v6/compare/common-lib@1.7.0...common-lib@1.11.0) (2020-09-02)
 
 
