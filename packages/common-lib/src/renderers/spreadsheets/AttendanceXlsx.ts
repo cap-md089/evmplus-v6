@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import type * as XLSX from 'xlsx';
@@ -135,7 +135,7 @@ const CustomAttendanceFieldType = ['Text', 'Number', 'Date', 'Checkbox', 'File']
 
 export const EventXL = (event: RawEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
-		'CAPUnit.com Event Information and Sign-up/Attendance Roster',
+		'EvMPlus.org Event Information and Sign-up/Attendance Roster',
 	];
 	const retVal: Array<Array<string | number>> = [];
 	retVal.push(row);
@@ -205,7 +205,7 @@ export const EventXL = (event: RawEventObject): Array<Array<string | number>> =>
 	return retVal;
 };
 
-export const FormatEventXL = (evt: string, sheet: XLSX.Sheet): XLSX.Sheet => {
+export const FormatEventXL = (evt: string, sheet: XLSX.Sheet, hostname: string): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
 	const dateWidth = dateFormat.length;
 	const aid = evt.split('-')[0];
@@ -220,7 +220,7 @@ export const FormatEventXL = (evt: string, sheet: XLSX.Sheet): XLSX.Sheet => {
 	sheet.A2.t = 't';
 	sheet.D2.t = 'd';
 	sheet.D2.z = dateFormat;
-	sheet.A5.l = { Target: 'https://' + aid + '.capunit.com/eventviewer/' + eid };
+	sheet.A5.l = { Target: `https://${aid}.${hostname}/eventviewer/${eid}` };
 
 	sheet.C5.t = 'd';
 	sheet.C5.z = dateFormat;

@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 const zeroPad = (n: number, a = 2) => ('00' + n).substr(-a);
@@ -42,9 +42,9 @@ export const formatGoogleCalendarDate = (date: number) => {
 	const month = dateObject.getMonth();
 	const year = dateObject.getFullYear();
 
-	return `${hour === 12 ? 12 : hour % 12}:${zeroPad(minute)} ${hour >= 12 ? 'PM' : 'AM'} on ${
-		month + 1
-	}/${day}/${year}`;
+	return `${hour === 12 ? 12 : hour % 12}:${zeroPad(minute)} ${
+		hour >= 12 ? 'PM' : 'AM'
+	} on ${month + 1}/${day}/${year}`;
 };
 
 export function formatPhone(phone: string) {

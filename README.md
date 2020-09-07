@@ -1,12 +1,12 @@
-# CAPUnit.com v6
+# EvMPlus.org v6
 
 The premiere event and unit management site for Civil Air Patrol
 
 Current units running the CAPUnit suite:
 
-1. [MD089 - St. Mary's Composite Squadron](https://md089.capunit.com/)
-2. [MD008 - Harford Composite Squadron](https://md008.capunit.com/)
-3. [MD003 - Frederick Composite Squadron](https://md003.capunit.com/)
+1. [MD089 - St. Mary's Composite Squadron](https://md089.evmplus.org/)
+2. [MD008 - Harford Composite Squadron](https://md008.evmplus.org/)
+3. [MD003 - Frederick Composite Squadron](https://md003.evmplus.org/)
 
 ## Requirements for building and running
 
@@ -85,7 +85,7 @@ The following instructions will be for a Linux server
 
 In the repository directory, build the docker image:
 
-`docker build --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag capunit-com .`
+`docker build --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag evmplus.org .`
 
 When you change the server configuration, you will have to run this command again
 
@@ -93,7 +93,7 @@ When you change the server configuration, you will have to run this command agai
 
 As it is a docker image, you can run the following:
 
-`docker run -rm --name=capunit-com --restart=always -v /google-keys:/google-keys -p 80:3001 capunit-com:latest`
+`docker run -rm --name=evmplus.org --restart=always -v /google-keys:/google-keys -p 80:3001 evmplus.org:latest`
 
 The target of the virtual bind must be `/google-keys`; this must be a virtual mount as the Google keys change and has to persist between changes in images
 
@@ -106,17 +106,17 @@ Once the account is created, you will need to run `util-cli/dist/importCapwatch.
 
 ### Accessing the site
 
-To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.capunit.com`.
+To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.evmplus.org`.
 
 ## Alternatively...
 
-If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `support@capunit.com` to request an official CAPUnit.com website.
+If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `support@evmplus.org` to request an official EvMPlus.org website.
 
-This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the CAPUnit.com domain.
+This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the EvMPlus.org domain.
 
-## Developing CAPUnit.com
+## Developing EvMPlus.org
 
-The development requirements for CAPUnit.com are a bit different. The server will require the same configuration and external services as a production system, but the keys and database do not need to be the same.
+The development requirements for EvMPlus.org are a bit different. The server will require the same configuration and external services as a production system, but the keys and database do not need to be the same.
 
 1. Install required software
     - Node 13
