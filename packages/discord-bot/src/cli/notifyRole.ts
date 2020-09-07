@@ -19,7 +19,7 @@
 
 import * as mysql from '@mysql/xdevapi';
 import { ServerConfiguration, Maybe } from 'common-lib';
-import { Client, GuildChannel, TextChannel } from 'discord.js';
+import { Client, GuildChannel, TextChannel, Role } from 'discord.js';
 import { getAccount } from 'server-common';
 import { byName, byProp } from '../data/setupUser';
 
@@ -29,12 +29,17 @@ export default async (
 	client: Client,
 	args: string[],
 ) => {
-	if (args.length < 3) {
-		throw new Error('Command requires account ID, role name, and message to send');
+	if (args.length < 4) {
+		throw new Error(
+			'Command requires account ID, role name, channel name, and message to send',
+		);
 	}
 
-	const [accountID, roleName, ...messageBits] = args;
+	console.log(args);
+
+	const [accountID, roleNamesCombined, channelName, ...messageBits] = args;
 	const message = messageBits.join(' ');
+	const roleNames = roleNamesCombined.split(',');
 
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
@@ -52,19 +57,23 @@ export default async (
 		throw new Error('There was an issue getting guild information');
 	}
 
-	const role = guild.roles.find(byName(roleName));
+	const rolesToMention: Role[] = [];
 
-	if (!role) {
-		throw new Error(`Could not find role by the name of "${roleName}"`);
+	for (const roleName of roleNames) {
+		const role = guild.roles.find(byName(roleName));
+
+		if (!role) {
+			throw new Error(`Could not find role by the name of "${roleName}"`);
+		}
+
+		rolesToMention.push(role);
 	}
 
-	if (!discordServer.value.staffChannel) {
-		throw new Error('This account does not have a designated staff channel');
+	if (rolesToMention.length === 0) {
+		throw new Error('No roles are being mentioned');
 	}
 
-	const channel = guild.channels.find(
-		byProp<GuildChannel>('id')(discordServer.value.staffChannel),
-	);
+	const channel = guild.channels.find(byProp<GuildChannel>('name')(channelName));
 
 	if (!channel) {
 		throw new Error('There was an issue getting the staff channel');
@@ -76,5 +85,7 @@ export default async (
 
 	const textChannel = channel as TextChannel;
 
-	await textChannel.send(`<@&${role.id}> ${message}`);
+	const mentionPartOfMessage = rolesToMention.map(role => `<@&${role.id}>`).join(', ');
+
+	await textChannel.send(`${mentionPartOfMessage} ${message}`);
 };

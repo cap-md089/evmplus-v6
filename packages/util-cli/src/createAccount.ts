@@ -47,11 +47,6 @@ if (Either.isLeft(confEither)) {
 	process.exit(1);
 }
 
-if (process.argv.length !== 3) {
-	console.error('Error! CAPWATCH file not provided');
-	process.exit(2);
-}
-
 const conf = confEither.value;
 
 process.on('unhandledRejection', up => {
@@ -86,10 +81,12 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		if (name !== null) {
 			console.log('Website name cannot be blank');
 		}
-		name = await asker('What is the name of the new account?');
+		name = await asker('What is the name of the new account? - ');
 	}
 
-	const serverID = await asker('Is there a Discord server associated with this unit? - ');
+	const serverID = await asker(
+		'Is there a Discord server associated with this unit (optional) ? - ',
+	);
 	const discordServer: MaybeObj<DiscordServerInformation> =
 		serverID === ''
 			? Maybe.none()
@@ -153,7 +150,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 
 	let capidInput = '';
 	while (isNaN(parseInt(capidInput, 10))) {
-		capidInput = await asker('What is your CAP ID number? - ');
+		capidInput = await asker('What is the CAP ID of the new admin? - ');
 	}
 	const member: MemberReference = {
 		type: 'CAPNHQMember',
