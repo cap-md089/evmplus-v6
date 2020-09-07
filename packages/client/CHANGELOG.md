@@ -3,11 +3,6 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [1.12.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.6.0...client@1.12.0) (2020-09-07)
-
-### Bug Fixes
-
--   fixed "publish to wing calendar" button not appearing for non wing accounts ([b1378c9](http://github.com//cap-md089/evmplus-v6/commit/b1378c95af2adf3e99179ca0e7646a8f25a7c577)), closes [#10](http://github.com//cap-md089/evmplus-v6/issues/10)
 -   fixed calendar crashing when trying to render events that aren't within the viewed month ([e9ff6c7](http://github.com//cap-md089/evmplus-v6/commit/e9ff6c7a0271eda610ade56ea9722de6c986d46e))
 -   fixed event viewer crashing, added scanadd link ([e4b7843](http://github.com//cap-md089/evmplus-v6/commit/e4b7843979002ed2b47288b3241627aa5ad839f4)), closes [#22](http://github.com//cap-md089/evmplus-v6/issues/22)
 -   removed Wing calendar ([b7f6d84](http://github.com//cap-md089/evmplus-v6/commit/b7f6d84f1a9f203297111d9d2386ee5569434894)), closes [#24](http://github.com//cap-md089/evmplus-v6/issues/24)

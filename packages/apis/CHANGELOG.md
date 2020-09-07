@@ -3,17 +3,6 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [1.9.0](http://github.com//cap-md089/evmplus-v6/compare/apis@1.3.0...apis@1.9.0) (2020-09-07)
-
-### Bug Fixes
-
--   **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/evmplus-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
-
-### Features
-
--   added attendancescanner ([70f9feb](http://github.com//cap-md089/evmplus-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/evmplus-v6/issues/19)
--   adding cadet promotion requirements display ([6659e57](http://github.com//cap-md089/evmplus-v6/commit/6659e571bcf938370ffb0954c053d24f907d24f4))
-
 # [1.8.0](http://github.com//cap-md089/evmplus-v6/compare/apis@1.3.0...apis@1.8.0) (2020-09-07)
 
 ### Bug Fixes
