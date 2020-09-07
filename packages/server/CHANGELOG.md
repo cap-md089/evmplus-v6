@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.10.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.10.0) (2020-09-07)
+
+
+### Bug Fixes
+
+* fixed error messages for most PAM apis by updating some functions to use AsyncEither ([1e19f85](http://github.com//cap-md089/capunit-com-v6/commit/1e19f852ff73ad2cd0a45feed1df15a228b3a1bb))
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+* fixed prospectivemember widget on admin page not being able to load prospective members ([e20ffe6](http://github.com//cap-md089/capunit-com-v6/commit/e20ffe60ecd1382f656dfe98837cac7162114bda))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+* added MFA using an OTPA ([900239b](http://github.com//cap-md089/capunit-com-v6/commit/900239b673598e22194bd0cb0edbdfef6a3d4cfa))
+* adding cadet promotion requirements display ([6659e57](http://github.com//cap-md089/capunit-com-v6/commit/6659e571bcf938370ffb0954c053d24f907d24f4))
+* provided better copy event dialogues ([00901ec](http://github.com//cap-md089/capunit-com-v6/commit/00901ec4028c18a5d3cabc990439d493f322b14e)), closes [#13](http://github.com//cap-md089/capunit-com-v6/issues/13)
+* **new:** continued development on cadet promotion requirements ([67c0a78](http://github.com//cap-md089/capunit-com-v6/commit/67c0a7891e6fca07454c48a0a182054dd45e87e8))
+
+
+
+
+
 # [6.9.0](http://github.com//cap-md089/capunit-com-v6/compare/capunit-com-server@6.5.0...capunit-com-server@6.9.0) (2020-09-06)
 
 
