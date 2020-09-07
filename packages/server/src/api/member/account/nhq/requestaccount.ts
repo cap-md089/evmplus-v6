@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema } from '@mysql/xdevapi';
@@ -76,18 +76,18 @@ export const getProperEmailAndSendType = (schema: Schema) => (email: string) => 
 			}).map<[string, string, EmailSentType]>(token => [token, newEmail, emailType]),
 		);
 
-const emailText = (account: AccountObject) => (token: string) => `You're almost there!
-To complete your CAPUnit.com account creation: visit the link below:
-https://${account.id}.capunit.com/finishaccount/${token}`;
+const emailText = (host: string) => (account: AccountObject) => (
+	token: string,
+) => `You're almost there!
+To complete your EvMPlus.org account creation: visit the link below:
+https://${account.id}.${host}/finishaccount/${token}`;
 
-const emailHtml = (account: AccountObject) => (member: Member) => (
+const emailHtml = (host: string) => (account: AccountObject) => (member: Member) => (
 	token: string,
 ) => `<h2>You're almost there ${getFullMemberName(member)}!</h2>
-<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>
-<p><a href="https://${
-	account.id
-}.capunit.com/finishaccount/${token}">Confirm account creation</a></p>
-<h4>Please respond to this email if you have questions regarding your CAPUnit.com account. If you did not request this account, simply disregard this email.</h4>`;
+<p>To complete your EvMPlus.org account creation, click or visit the link below:</p>
+<p><a href="https://${account.id}.${host}/finishaccount/${token}">Confirm account creation</a></p>
+<h4>Please respond to this email if you have questions regarding your EvMPlus.org account. If you did not request this account, simply disregard this email.</h4>`;
 
 const writeEmail = (emailFunction = sendEmail) => (
 	req: ServerAPIRequestParameter<api.member.account.capnhq.RequestNHQAccount>,
@@ -95,9 +95,9 @@ const writeEmail = (emailFunction = sendEmail) => (
 	[string, string, EmailSentType],
 	RegistryValues,
 ]) =>
-	emailFunction(true)(registry)('CAPUnit.com Account Creation')(email)(
-		emailHtml(req.account)(member)(token),
-	)(emailText(req.account)(token)).map(always(sentType));
+	emailFunction(req.configuration)(true)(registry)('EvMPlus.org Account Creation')(email)(
+		emailHtml(req.configuration.HOST_NAME)(req.account)(member)(token),
+	)(emailText(req.configuration.HOST_NAME)(req.account)(token)).map(always(sentType));
 
 export const func: (
 	email?: typeof sendEmail,

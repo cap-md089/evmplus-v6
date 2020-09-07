@@ -2,20 +2,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { getSession } from '@mysql/xdevapi';
@@ -45,11 +45,6 @@ const confEither = Either.map(confFromRaw)(configurationValidator.validate(proce
 if (Either.isLeft(confEither)) {
 	console.error('Configuration error!', confEither.value);
 	process.exit(1);
-}
-
-if (process.argv.length !== 3) {
-	console.error('Error! CAPWATCH file not provided');
-	process.exit(2);
 }
 
 const conf = confEither.value;
@@ -86,10 +81,12 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		if (name !== null) {
 			console.log('Website name cannot be blank');
 		}
-		name = await asker('What is the name of the new account?');
+		name = await asker('What is the name of the new account? - ');
 	}
 
-	const serverID = await asker('Is there a Discord server associated with this unit? - ');
+	const serverID = await asker(
+		'Is there a Discord server associated with this unit (optional) ? - ',
+	);
 	const discordServer: MaybeObj<DiscordServerInformation> =
 		serverID === ''
 			? Maybe.none()
@@ -153,7 +150,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 
 	let capidInput = '';
 	while (isNaN(parseInt(capidInput, 10))) {
-		capidInput = await asker('What is your CAP ID number? - ');
+		capidInput = await asker('What is the CAP ID of the new admin? - ');
 	}
 	const member: MemberReference = {
 		type: 'CAPNHQMember',

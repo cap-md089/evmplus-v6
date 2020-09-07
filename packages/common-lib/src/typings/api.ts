@@ -1,11 +1,11 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
  * This file and all of the files in `apis` document how to communicate
  * with the server.  All of these expect to be run from a browser; this means that
- * a host header is expected to be set with the format `${accountID}.capunit.com`
+ * a host header is expected to be set with the format `${accountID}.evmplus.org`
  *
  * Each interface defines:
  * 	- The URL parameters and where in the URL it is to be located
@@ -29,18 +29,18 @@
  * 		If it is needed, a `token` property needs to be added to the request body
  * 		A token can be fetched from '/api/token', and is valid for one use
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { EitherObj } from '../lib/Either';

@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema } from '@mysql/xdevapi';
@@ -68,9 +68,9 @@ export const LodgingArrangments = [
 	'Individual tent',
 ];
 
-function buildEventDescription(inEvent: RawEventObject): string {
+function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObject): string {
 	// set status message
-	let status = 'invalid.  Please contact support@capunit.com to report this.';
+	let status = 'invalid.  Please contact support@evmplus.org to report this.';
 	if (inEvent.status === EventStatus.TENTATIVE) {
 		status =
 			'TENTATIVELY planned.  Please contact the POC directly BEFORE traveling to the event.';
@@ -92,8 +92,7 @@ function buildEventDescription(inEvent: RawEventObject): string {
 		'<---->Please contact the POC listed below directly with questions or comments.\n\n';
 	description +=
 		'<---->Event Information Link\n(Page includes event information, POC contact information, and applicable download links):\n';
-	description +=
-		'https://' + inEvent.accountID + '.capunit.com/eventviewer/' + inEvent.id + '/\n\n';
+	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
 	description += '<---->Status\nThis event is ' + status + '\n\n';
 	// second block
 	description += '<---->Times and Location(s)\n';
@@ -165,9 +164,13 @@ function buildEventDescription(inEvent: RawEventObject): string {
 	return description;
 }
 
-function buildDeadlineDescription(inEvent: RawEventObject, inStatement: string): string {
+function buildDeadlineDescription(
+	config: ServerConfiguration,
+	inEvent: RawEventObject,
+	inStatement: string,
+): string {
 	// set status message
-	let status = 'invalid.  Please contact support@capunit.com to report this.';
+	let status = `invalid.  Please contact support@evmplus.org to report this.`;
 	if (inEvent.status === EventStatus.TENTATIVE) {
 		status =
 			'TENTATIVELY planned.  Please contact the POC directly BEFORE traveling to the event.';
@@ -187,8 +190,7 @@ function buildDeadlineDescription(inEvent: RawEventObject, inStatement: string):
 		'<---->Please contact the POC listed in the event link directly with questions or comments.\n\n';
 	description +=
 		'<---->Event Information Link\n(Page includes event information, POC contact information, and applicable download links):\n';
-	description +=
-		'https://' + inEvent.accountID + '.capunit.com/eventviewer/' + inEvent.id + '/\n\n';
+	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
 	description += '<---->Status\nThe parent event is ' + status + '\n\n';
 
 	return description;
@@ -271,12 +273,12 @@ export async function createGoogleCalendarEvents(
 	}
 
 	return Promise.all([
-		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 		typeof inEvent.registration !== 'undefined'
-			? updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			? updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
 			: null,
 		typeof inEvent.participationFee !== 'undefined'
-			? updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			? updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
 			: null,
 	]) as Promise<[string, string | null, string | null]>;
 }
@@ -300,9 +302,9 @@ export default async function updateGoogleCalendars(
 
 	// 999999999 is there a guarantee that the function return values will always be in the same order???
 	return Promise.all([
-		updateMainEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-		updateRegEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-		updateFeeEvent(myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 	]) as Promise<[string, string | null, string | null]>;
 }
 
@@ -483,7 +485,7 @@ function getEventColor(inStatus: EventStatus) {
 	return eventColor;
 }
 
-function buildEvent(inEvent: RawEventObject) {
+function buildEvent(config: ServerConfiguration, inEvent: RawEventObject) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -500,7 +502,7 @@ function buildEvent(inEvent: RawEventObject) {
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
-		description: buildEventDescription(inEvent),
+		description: buildEventDescription(config, inEvent),
 		colorId: eventColor.toString(),
 		start: {
 			dateTime: new Date(inEvent.meetDateTime).toISOString(),
@@ -515,7 +517,12 @@ function buildEvent(inEvent: RawEventObject) {
 	return event;
 }
 
-function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string) {
+function buildDeadline(
+	config: ServerConfiguration,
+	inEvent: RawEventObject,
+	inDate: number,
+	inString: string,
+) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -528,7 +535,7 @@ function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
-		description: buildDeadlineDescription(inEvent, inString),
+		description: buildDeadlineDescription(config, inEvent, inString),
 		colorId: eventColor.toString(),
 		start: {
 			dateTime: startDate,
@@ -544,6 +551,7 @@ function buildDeadline(inEvent: RawEventObject, inDate: number, inString: string
 }
 
 async function updateFeeEvent(
+	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
@@ -562,7 +570,7 @@ async function updateFeeEvent(
 			inEvent.id +
 			'\n' +
 			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
-		const event = buildDeadline(inEvent, deadlineNumber, deadlineString);
+		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!!inEvent.googleCalendarIds.feeId) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
@@ -601,6 +609,7 @@ async function updateFeeEvent(
 }
 
 async function updateRegEvent(
+	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
@@ -619,7 +628,7 @@ async function updateRegEvent(
 			inEvent.id +
 			'\n' +
 			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
-		const event = buildDeadline(inEvent, deadlineNumber, deadlineString);
+		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!inEvent.googleCalendarIds.regId) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
@@ -658,12 +667,13 @@ async function updateRegEvent(
 }
 
 async function updateMainEvent(
+	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
 	googleId: string,
 ) {
-	const event = buildEvent(inEvent);
+	const event = buildEvent(config, inEvent);
 	let response = { status: 200 };
 
 	if (!inEvent.googleCalendarIds.mainId) {

@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema } from '@mysql/xdevapi';
@@ -28,7 +28,6 @@ import {
 	passwordMeetsRequirements,
 	PasswordResetTokenInformation,
 	PasswordResult,
-	PasswordSetResult,
 	ServerError,
 	UserAccountInformation,
 } from 'common-lib';
@@ -192,35 +191,43 @@ export const addPasswordForUser = (
 	schema: Schema,
 	username: string,
 	password: string,
-): AsyncEither<PasswordSetResult, UserAccountInformation> =>
-	asyncRight(getInformationForUser(schema, username), PasswordSetResult.SERVER_ERROR).flatMap(
-		userInfo =>
-			asyncRight(password, PasswordSetResult.SERVER_ERROR)
-				.filter(passwordMeetsRequirements, PasswordSetResult.COMPLEXITY)
-				.filter(
-					pass => hasPasswordBeenUsed(pass, userInfo.passwordHistory),
-					PasswordSetResult.IN_HISTORY,
-				)
-				.map(async pass => ({
-					salt: (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex'),
-					pass,
-				}))
-				.map<AccountPasswordInformation>(async ({ pass, salt }) => ({
-					created: Date.now(),
-					password: (await hashPassword(pass, salt, PASSWORD_NEW_ALGORITHM)).toString(
-						'hex',
-					),
-					iterations: DEFAULT_PASSWORD_ITERATION_COUNT,
-					salt,
-					algorithm: PASSWORD_NEW_ALGORITHM,
-				}))
-				.map(passwordItem => ({
-					...userInfo,
-					passwordHistory: [passwordItem, ...userInfo.passwordHistory].filter(
-						(_, i) => i < PASSWORD_HISTORY_LENGTH,
-					),
-				}))
-				.tap(info => saveInformationForUser(schema, info)),
+): AsyncEither<ServerError, UserAccountInformation> =>
+	asyncRight(
+		getInformationForUser(schema, username),
+		errorGenerator('Could not get user information'),
+	).flatMap(userInfo =>
+		asyncRight(password, errorGenerator('Could not validate password'))
+			.filter(passwordMeetsRequirements, {
+				type: 'OTHER',
+				code: 400,
+				message: 'Password does not meet complexity requirements',
+			})
+			.filter(pass => hasPasswordBeenUsed(pass, userInfo.passwordHistory).then(res => !res), {
+				type: 'OTHER',
+				code: 400,
+				message: 'Password has been used too recently',
+			})
+			.map(async pass => ({
+				salt: (await promisedRandomBytes(DEFAULT_SALT_SIZE)).toString('hex'),
+				pass,
+			}))
+			.map<AccountPasswordInformation>(async ({ pass, salt }) => ({
+				created: Date.now(),
+				password: (await hashPassword(pass, salt, PASSWORD_NEW_ALGORITHM)).toString('hex'),
+				iterations: DEFAULT_PASSWORD_ITERATION_COUNT,
+				salt,
+				algorithm: PASSWORD_NEW_ALGORITHM,
+			}))
+			.map(passwordItem => ({
+				...userInfo,
+				passwordHistory: [passwordItem, ...userInfo.passwordHistory].filter(
+					(_, i) => i < PASSWORD_HISTORY_LENGTH,
+				),
+			}))
+			.tap(
+				info => saveInformationForUser(schema, info),
+				errorGenerator('Could not save password'),
+			),
 	);
 
 /**
@@ -316,7 +323,10 @@ export const validatePasswordResetToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute(),
 		)
 		.flatMap(collection =>
 			asyncRight(
@@ -344,7 +354,10 @@ export const removePasswordValidationToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
+			collection
+				.remove('expires < :expires')
+				.bind('expires', Date.now())
+				.execute(),
 		)
 		.map(collection =>
 			collection

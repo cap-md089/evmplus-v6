@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema } from '@mysql/xdevapi';
@@ -98,15 +98,21 @@ export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQ
 				)
 				.map<CadetPromotionStatus>(
 					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) => ({
-						NextCadetAchvID: maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
+						NextCadetAchvID:
+							maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
 						CurrentCadetAchv: maxAchv,
 						CurrentAprvStatus: maxAprvStatus,
-						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(aprv => +new Date(aprv.DateMod))(Maybe.fromArray(maxAprv)),
-						EncampDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(encampResults)),
-						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(rclsResults)),
+						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
+							aprv => +new Date(aprv.DateMod),
+						)(Maybe.fromArray(maxAprv)),
+						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromArray(encampResults)),
+						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromArray(rclsResults)),
 					}),
 				);
-				
 
 export const emptyCadetAchv: NHQ.CadetAchv = {
 	CAPID: 0,

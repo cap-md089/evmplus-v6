@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
@@ -22,6 +22,7 @@ import {
 	always,
 	api,
 	asyncRight,
+	destroy,
 	Either,
 	errorGenerator,
 	PasswordSetResult,
@@ -39,13 +40,15 @@ export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSess
 				req.mysqlx,
 				req.session.userAccount.username,
 				req.body.password,
-			).cata(Either.right, always(Either.right(PasswordSetResult.OK))),
+			).map(destroy),
 		)
-		.flatMap<PasswordSetResult>(result => {
+		.flatMap<PasswordSetResult>(() => {
 			if (request.session.type === SessionType.PASSWORD_RESET) {
-				return PAM.updateSession(request.mysqlx, request.session).map(always(result));
+				return PAM.updateSession(request.mysqlx, request.session).map(
+					always(PasswordSetResult.OK),
+				);
 			} else {
-				return Either.right(result);
+				return Either.right(PasswordSetResult.OK);
 			}
 		}),
 );

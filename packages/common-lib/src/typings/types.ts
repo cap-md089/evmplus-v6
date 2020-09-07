@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import type { Schema, Session } from '@mysql/xdevapi';
@@ -2249,7 +2249,7 @@ export interface NewShortCAPUnitDutyPosition {
 }
 
 /**
- * Short duty positions for use by CAPUnit.com
+ * Short duty positions for use by EvMPlus.org
  */
 export interface ShortCAPUnitDutyPosition extends NewShortCAPUnitDutyPosition {
 	/**
@@ -3525,7 +3525,7 @@ export interface PasswordResetTokenInformation {
 
 export interface DiscordAccount {
 	/**
-	 * The ID of the member we are associating with a CAPUnit.com account
+	 * The ID of the member we are associating with a EvMPlus.org account
 	 */
 	discordID: string;
 	/**
@@ -3558,6 +3558,8 @@ export interface ServerConfiguration {
 	REMOTE_DRIVE_KEY_FILE: string;
 	REMOTE_DRIVE_USER: string;
 
+	HOST_NAME: string;
+
 	AWS_ACCESS_KEY_ID: string;
 	AWS_SECRET_ACCESS_KEY: string;
 
@@ -3587,6 +3589,8 @@ export interface RawServerConfiguration {
 	REMOTE_DRIVE_PORT: string;
 	REMOTE_DRIVE_KEY_FILE: string;
 	REMOTE_DRIVE_USER: string;
+
+	HOST_NAME: string;
 
 	AWS_ACCESS_KEY_ID: string;
 	AWS_SECRET_ACCESS_KEY: string;

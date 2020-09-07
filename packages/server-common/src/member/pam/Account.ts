@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema } from '@mysql/xdevapi';
@@ -28,7 +28,6 @@ import {
 	asyncRight,
 	collectGeneratorAsync,
 	Either,
-	EitherObj,
 	errorGenerator,
 	getDefaultMemberPermissions,
 	hasPermission,
@@ -39,7 +38,6 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
-	PasswordSetResult,
 	SafeUserAccountInformation,
 	ServerError,
 	StoredMemberPermissions,
@@ -175,17 +173,18 @@ export const addUserAccount = (
 	password: string,
 	member: MemberReference,
 	token: string,
-	// ): AsyncEither<ServerError, UserAccountInformation> =>
-): AsyncEither<ServerError, any> =>
+): AsyncEither<ServerError, UserAccountInformation> =>
 	asyncRight(
 		schema.getCollection<UserAccountInformation>('UserAccountInfo'),
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
+			getInformationForUser(schema, username)
+				.then(Maybe.some)
+				.catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
 		)
-			.filter(user => Maybe.isSome(user) && !isUserValid(user.value), {
+			.filter(user => Maybe.isNone(user) || !isUserValid(user.value), {
 				type: 'OTHER',
 				code: 400,
 				message: 'Account already exists with the given username',
@@ -235,25 +234,7 @@ export const addUserAccount = (
 					return user.value;
 				}
 			})
-			.flatMap(() =>
-				addPasswordForUser(schema, username, password).cata<
-					EitherObj<ServerError, UserAccountInformation>
-				>(
-					result =>
-						result === PasswordSetResult.COMPLEXITY
-							? Either.left({
-									type: 'OTHER',
-									code: 400,
-									message: 'Password does not meet complexity requirements',
-							  })
-							: Either.left({
-									type: 'OTHER',
-									code: 400,
-									message: 'There was an unknown server error',
-							  }),
-					Either.right,
-				),
-			)
+			.flatMap(() => addPasswordForUser(schema, username, password))
 			.tap(() => removeAccountToken(schema, token)),
 	);
 
