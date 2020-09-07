@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -73,18 +73,18 @@ const sendPasswordLink = (emailFunction: typeof sendEmail) => (req: Req) => (
 				errorGenerator('Could not create user account creation token'),
 			),
 		]).flatMap(([registry, token]) =>
-			emailFunction(true)(registry)('Finish CAPUnit.com Account Creation')(
+			emailFunction(req.configuration)(true)(registry)('Finish EvMPlus.org Account Creation')(
 				email,
 			)(`<h2>You're almost there ${getFullMemberName(member)}!</h2>
-<p>To complete your CAPUnit.com account creation, click or visit the link below:</p>
-<p><a href="https://${
-				req.account.id
-			}.capunit.com/finishaccount/${token}/">Confirm account creation</a></p>
+<p>To complete your EvMPlus.org account creation, click or visit the link below:</p>
+<p><a href="https://${req.account.id}.${
+				req.configuration.HOST_NAME
+			}/finishaccount/${token}/">Confirm account creation</a></p>
 <h4>Please respond to this email if you have any questions.</h4>`)(`You're almost there ${getFullMemberName(
 				member,
 			)}!
 
-To complete your CAPUnit.com account creation, copy and paste the link below into a web browser:
+To complete your EvMPlus.org account creation, copy and paste the link below into a web browser:
 
 Please respond to this email if you have any questions`),
 		),
@@ -137,10 +137,10 @@ const createWithRandomPassword = (emailFunction: typeof sendEmail) => (req: Req)
 				),
 			)
 			.flatMap(([registry, _, password]) =>
-				emailFunction(true)(registry)('Finish CAPUnit.com Account Creation')(
-					email,
-				)(`<h4>Your account has been created!</h4>
-				<p>You can now <a href="https://${req.account.id}.capunit.com/signin?returnurl=%2F">sign in</a> with the username ${username} and the password <b>${password}</b>.`)(`Your account has been created!
+				emailFunction(req.configuration)(true)(registry)(
+					'Finish EvMPlus.org Account Creation',
+				)(email)(`<h4>Your account has been created!</h4>
+				<p>You can now <a href="https://${req.account.id}.${req.configuration.HOST_NAME}/signin?returnurl=%2F">sign in</a> with the username ${username} and the password <b>${password}</b>.`)(`Your account has been created!
 
 You can now sign in with the username ${username} and the password ${password}.`),
 			),

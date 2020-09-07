@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -619,7 +619,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											<br />
 											<br />
 											<a
-												href={`https://${this.state.linkEventResult.accountID}.capunit.com/eventviewer/${this.state.linkEventResult.id}`}
+												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
 												rel="noopener _blank"
 											>
 												View it here
@@ -659,7 +659,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							<>
 								<strong>
 									<a
-										href={`https://${event.sourceEvent.accountID}.capunit.com/eventviewer/${event.sourceEvent.id}`}
+										href={`https://${event.sourceEvent.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.sourceEvent.id}`}
 										rel="noopener _blank"
 									>
 										Event linked from{' '}
@@ -679,7 +679,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										({ id, accountID, name, accountName }, index) => (
 											<li key={index}>
 												<a
-													href={`https://${accountID}.capunit.com/eventviewer/${id}`}
+													href={`https://${accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${id}`}
 													target="noopener _blank"
 												>
 													{accountName} - {name}
@@ -1218,7 +1218,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const fontGetter =
 			process.env.NODE_ENV === 'production'
 				? (fontName: string) =>
-						`https://${this.props.account.id}.capunit.com/images/fonts/${fontName}`
+						`https://${this.props.account.id}.${process.env.REACT_APP_HOST_NAME}/images/fonts/${fontName}`
 				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
 
 		const fonts: TFontDictionary = {

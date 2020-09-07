@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
@@ -36,8 +36,8 @@ import {
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
 
-const formatUrl = (account: AccountObject) => (token: string) =>
-	`https://${account.id}.capunit.com/finishpasswordreset/${token}`;
+const formatUrl = (host: string) => (account: AccountObject) => (token: string) =>
+	`https://${account.id}.${host}/finishpasswordreset/${token}`;
 
 const emailHtml = (memberName: string) => (resetUrl: string) =>
 	`We have detected that a password reset was requested for you, ${memberName}. ` +
@@ -61,9 +61,11 @@ const getMemberAndSendEmail = (emailFunction: typeof sendEmail) => (
 				message: 'Member does not have an email',
 			}),
 		)(email =>
-			emailFunction(true)(registry)(`Password reset for ${getFullMemberName(member)}`)(email)(
-				emailHtml(getFullMemberName(member))(resetUrl),
-			)(emailText(getFullMemberName(member))(resetUrl)),
+			emailFunction(req.configuration)(true)(registry)(
+				`Password reset for ${getFullMemberName(member)}`,
+			)(email)(emailHtml(getFullMemberName(member))(resetUrl))(
+				emailText(getFullMemberName(member))(resetUrl),
+			),
 		)(getMemberEmail(member.contact)),
 	);
 
@@ -97,7 +99,7 @@ export const func: (
 		.map(v => v as [Some<UserAccountInformation>, RegistryValues])
 		.flatMap(([account, registry]) =>
 			PAM.createPasswordResetToken(req.mysqlx, account.value.username)
-				.map(formatUrl(req.account))
+				.map(formatUrl(req.configuration.HOST_NAME)(req.account))
 				.flatMap(getMemberAndSendEmail(emailFunction)(req)(account.value)(registry)),
 		)
 		.leftFlatMap(err =>

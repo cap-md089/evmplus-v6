@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { always, Either, MemberCreateError } from 'common-lib';
@@ -124,7 +124,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		return this.state.error !== MemberCreateError.PASSWORD_EXPIRED &&
 			this.state.error !== MemberCreateError.ACCOUNT_USES_MFA ? (
 			<div>
-				Enter your capunit.com login information below to sign in to the site. By logging
+				Enter your EvMPlus.org login information below to sign in to the site. By logging
 				into this site you agree to the terms and conditions located{' '}
 				<Link to="/terms-and-conditions">here</Link>. Our Privacy Policy may be accessed at{' '}
 				<Link to="/privacy-policy">this page</Link>.

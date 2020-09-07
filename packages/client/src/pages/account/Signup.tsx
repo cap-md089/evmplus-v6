@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Either } from 'common-lib';
@@ -104,11 +104,11 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				<Label />
 				<TextBox>
 					Enter your CAPID and email address as stored in eServices to register for a
-					CAPUnit.com account. You will receive an email with a link to select a username
-					and password and complete the account registration process. Only one CAPUnit.com
+					EvMPlus.org account. You will receive an email with a link to select a username
+					and password and complete the account registration process. Only one EvMPlus.org
 					account may be created per CAP ID.
 					{/* <br />
-					If you have signed up for an account on any of CAPUnit.com's subdomains, you can
+					If you have signed up for an account on any of EvMPlus.org's subdomains, you can
 					use that account instead */}
 				</TextBox>
 

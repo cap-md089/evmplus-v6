@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema, Session } from '@mysql/xdevapi';
@@ -112,10 +112,10 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 				// localhost
 				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
 			} else if (parts.length === 2) {
-				// capunit.com
-				return Either.right('sales');
+				// evmplus.org
+				return Either.right('www');
 			} else if (parts.length === 3) {
-				// md089.capunit.com
+				// md089.evmplus.org
 				return Either.right(parts[0]);
 			} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
 				// 192.168.1.128
@@ -332,11 +332,13 @@ export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 	);
 
 export const buildURI = (account: AccountObject) => (...identifiers: string[]) =>
-	(process.env.NODE_ENV === 'development' ? `/` : `https://${account.id}.capunit.com/`) +
+	(process.env.NODE_ENV === 'development'
+		? `/`
+		: `https://${account.id}.${process.env.REACT_APP_HOST_NAME}/`) +
 	[].slice.call(identifiers).join('/');
 
 export const getMembers = (schema: Schema) => (account: AccountObject) =>
-	async function* (type?: MemberType | undefined) {
+	async function*(type?: MemberType | undefined) {
 		const teamObjects = await getTeamObjects(schema)(account)
 			.map(collectGeneratorAsync)
 			.cata(() => [], identity);
@@ -452,7 +454,7 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 	};
 
 export const getMemberIDs = (schema: Schema) =>
-	async function* (account: AccountObject): AsyncIter<MemberReference> {
+	async function*(account: AccountObject): AsyncIter<MemberReference> {
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
@@ -618,7 +620,11 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
-	await collection.modify('id = :id').bind('id', account.id).patch(account).execute();
+	await collection
+		.modify('id = :id')
+		.bind('id', account.id)
+		.patch(account)
+		.execute();
 };
 
 const getNormalTeamObjects = (schema: Schema) => (

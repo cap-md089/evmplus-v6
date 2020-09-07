@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { RawServerConfiguration, ServerConfiguration } from 'common-lib';
@@ -41,6 +41,8 @@ export default (raw: RawServerConfiguration): ServerConfiguration => ({
 	REMOTE_DRIVE_KEY_FILE: raw.REMOTE_DRIVE_KEY_FILE,
 	REMOTE_DRIVE_PORT: parseInt(raw.REMOTE_DRIVE_PORT, 10),
 	REMOTE_DRIVE_USER: raw.REMOTE_DRIVE_USER,
+
+	HOST_NAME: raw.HOST_NAME,
 
 	AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
 	AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,

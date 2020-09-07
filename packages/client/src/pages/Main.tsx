@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -136,7 +136,9 @@ export default class Main extends Page<PageProps, MainState> {
 					<div>{this.state.message}</div>
 				) : (
 					<>
-						{this.props.member && !this.props.member.seniorMember && this.state.promotionRequirements.hasValue ? (
+						{this.props.member &&
+						!this.props.member.seniorMember &&
+						this.state.promotionRequirements.hasValue ? (
 							<section className="halfSection">
 								<h3>Promotion Requirements</h3>
 								{RequirementsBuild(this.state.promotionRequirements.value)}
@@ -289,31 +291,40 @@ function RequirementsBuild(cps: CadetPromotionStatus): string {
 	// const EPOCH = 0;
 
 	// handle maybe
-	if (!cps) { return "Promotion Requirements</br>Promotion Requirements could not be processed at this time"; }
+	if (!cps) {
+		return 'Promotion Requirements</br>Promotion Requirements could not be processed at this time';
+	}
 	// ^^^^^^    HELP HERE
 
 	// calculate next available promotion date
-	let promotionAvailability = "You are eligible to promote as soon as all of your promotion requirements are complete";
-	if(!Maybe.isNone(cps.LastAprvDate)) {
-		const lastDate = cps.LastAprvDate as unknown as number;
-		const availablePromotionDate = lastDate + (56 * days);
-		const nowDate = Date.now as unknown as number;
-		if(availablePromotionDate > nowDate) {
-			promotionAvailability = "you are eligible for promotion on " + DateTime.fromMillis(availablePromotionDate);
+	let promotionAvailability =
+		'You are eligible to promote as soon as all of your promotion requirements are complete';
+	if (!Maybe.isNone(cps.LastAprvDate)) {
+		const lastDate = (cps.LastAprvDate as unknown) as number;
+		const availablePromotionDate = lastDate + 56 * days;
+		const nowDate = (Date.now as unknown) as number;
+		if (availablePromotionDate > nowDate) {
+			promotionAvailability =
+				'you are eligible for promotion on ' + DateTime.fromMillis(availablePromotionDate);
 		}
 	}
 
 	// build promotion status message
-	let promotionStatus = "";
-	switch(cps.CurrentAprvStatus) {
+	let promotionStatus = '';
+	switch (cps.CurrentAprvStatus) {
 		case 'PND': {
-			promotionStatus = "Approval for your next promotion is pending.  Review " +
-				'the requirements for your next grade at this link: ' + promoReqs.ReqsWebLink;
+			promotionStatus =
+				'Approval for your next promotion is pending.  Review ' +
+				'the requirements for your next grade at this link: ' +
+				promoReqs.ReqsWebLink;
 			break;
 		}
-		default: { // this is the caase for both 'APR' and 'PND'
-			promotionStatus = "Promotion requirements for your next grade are not yet complete.  Review " +
-			'the requirements at this link: ' + promoReqs.ReqsWebLink;
+		default: {
+			// this is the caase for both 'APR' and 'PND'
+			promotionStatus =
+				'Promotion requirements for your next grade are not yet complete.  Review ' +
+				'the requirements at this link: ' +
+				promoReqs.ReqsWebLink;
 			break;
 		}
 	}
@@ -324,10 +335,10 @@ function RequirementsBuild(cps: CadetPromotionStatus): string {
 	// }
 
 	// build response
-	let response = "Promotion Requirements";
+	let response = 'Promotion Requirements';
 	response += promotionAvailability;
 	response += promotionStatus;
 
-	response += "Complete these requirements to promote";
+	response += 'Complete these requirements to promote';
 	return response;
 }

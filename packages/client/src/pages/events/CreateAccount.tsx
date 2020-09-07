@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of CAPUnit.com.
+ * This file is part of EvMPlus.org.
  *
- * CAPUnit.com is free software: you can redistribute it and/or modify
+ * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * CAPUnit.com is distributed in the hope that it will be useful,
+ * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -228,12 +228,15 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 					<br />
 					<br />
 					You can visit your new account{' '}
-					<a href={`https://${this.state.account.id}.capunit.com/`} rel="_blank noopener">
+					<a
+						href={`https://${this.state.account.id}.${process.env.REACT_APP_HOST_NAME}/`}
+						rel="_blank noopener"
+					>
 						here
 					</a>
 					. Please also take some time to configure your new site{' '}
 					<a
-						href={`https://${this.state.account.id}.capunit.com/regedit`}
+						href={`https://${this.state.account.id}.${process.env.REACT_APP_HOST_NAME}/regedit`}
 						rel="_blank noopener"
 					>
 						here
@@ -277,7 +280,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 					<br />
 					If you are hosting a yearly event and want an alias, for instance mdtwe to point
 					to md001twe2020, then please email{' '}
-					<a href="mailto:support@capunit.com">support@capunit.com</a> to request an alias
+					<a href="mailto:support@evmplus.org">support@evmplus.org</a> to request an alias
 					or to request that an alias is reassigned. For instance, you can request to
 					reassign the alias "mdtwe" from "md001twe2020" to "md001twe2021". The longer ID
 					will still be required, however. You will be able to request multiple aliases.
