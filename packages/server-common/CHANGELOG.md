@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.11.0](http://github.com//cap-md089/capunit-com-v6/compare/server-common@1.4.0...server-common@1.11.0) (2020-09-07)
+
+
+### Bug Fixes
+
+* fixed error messages for most PAM apis by updating some functions to use AsyncEither ([1e19f85](http://github.com//cap-md089/capunit-com-v6/commit/1e19f852ff73ad2cd0a45feed1df15a228b3a1bb))
+* fixed google calendar update tripping up on modifying registration and wing events ([03d87ee](http://github.com//cap-md089/capunit-com-v6/commit/03d87ee8113bf748869e66ce2ddf76a324695913)), closes [#9](http://github.com//cap-md089/capunit-com-v6/issues/9)
+* fixed ImportCAPWATCHFile types to more accurately reflect the types of a CAPWATCH CSV file ([fffae38](http://github.com//cap-md089/capunit-com-v6/commit/fffae38d6ba729c7592b1567242e4ea97cfe185e))
+* fixed not being able to sign up for an account ([7f9938b](http://github.com//cap-md089/capunit-com-v6/commit/7f9938be4aa41802f1c9ae9dddf613a1e727c1e6)), closes [#30](http://github.com//cap-md089/capunit-com-v6/issues/30)
+* fixed user account sign ups ([ebf8821](http://github.com//cap-md089/capunit-com-v6/commit/ebf882136c73c1c001ebadacb2945fb543c12854))
+* removed Wing calendar ([b7f6d84](http://github.com//cap-md089/capunit-com-v6/commit/b7f6d84f1a9f203297111d9d2386ee5569434894)), closes [#24](http://github.com//cap-md089/capunit-com-v6/issues/24)
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/capunit-com-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+
+
+### Features
+
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/capunit-com-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/capunit-com-v6/issues/19)
+* added MFA using an OTPA ([900239b](http://github.com//cap-md089/capunit-com-v6/commit/900239b673598e22194bd0cb0edbdfef6a3d4cfa))
+* adding cadet promotion requirements display ([6659e57](http://github.com//cap-md089/capunit-com-v6/commit/6659e571bcf938370ffb0954c053d24f907d24f4))
+* provided better copy event dialogues ([00901ec](http://github.com//cap-md089/capunit-com-v6/commit/00901ec4028c18a5d3cabc990439d493f322b14e)), closes [#13](http://github.com//cap-md089/capunit-com-v6/issues/13)
+* **new:** continued development on cadet promotion requirements ([67c0a78](http://github.com//cap-md089/capunit-com-v6/commit/67c0a7891e6fca07454c48a0a182054dd45e87e8))
+* made PAM.RequireMemberType smarter ([fbbc6ed](http://github.com//cap-md089/capunit-com-v6/commit/fbbc6eda975457e8fcee52c33d227c31e6ce5c7b))
+
+
+
+
+
 # [1.10.0](http://github.com//cap-md089/capunit-com-v6/compare/server-common@1.4.0...server-common@1.10.0) (2020-09-07)
 
 

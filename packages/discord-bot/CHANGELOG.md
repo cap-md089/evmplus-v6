@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.3](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.4.0...discord-bot@1.6.3) (2020-09-07)
+
+
+### Bug Fixes
+
+* stabilized command line interfaces ([18bc3d0](http://github.com//cap-md089/capunit-com-v6/commit/18bc3d0ec4e351c63fe900f51ae5de0cf92e361e))
+
+
+
+
+
 ## [1.6.2](http://github.com//cap-md089/capunit-com-v6/compare/discord-bot@1.4.0...discord-bot@1.6.2) (2020-09-07)
 
 
