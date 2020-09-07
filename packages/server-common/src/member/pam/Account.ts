@@ -182,10 +182,12 @@ export const addUserAccount = (
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
+			getInformationForUser(schema, username)
+				.then(Maybe.some)
+				.catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
 		)
-			.filter(user => Maybe.isSome(user) && !isUserValid(user.value), {
+			.filter(user => Maybe.isNone(user) || !isUserValid(user.value), {
 				type: 'OTHER',
 				code: 400,
 				message: 'Account already exists with the given username',
