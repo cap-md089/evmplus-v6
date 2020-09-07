@@ -17,13 +17,12 @@
  * along with CAPUnit.com.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 import { CadetPromotionRequirements } from '../typings/types';
 
 /*
- * This array maps the Cadet Achievement ID from 0, 1, 2, ... 21 to 
+ * This array maps the Cadet Achievement ID from 0, 1, 2, ... 21 to
  * the achivement requirements to achieve that grade
-*/
+ */
 
 export const CadetPromotionRequirementsMap: ReadonlyArray<CadetPromotionRequirements> = [
 	{
@@ -433,7 +432,7 @@ export const CadetPromotionRequirementsMap: ReadonlyArray<CadetPromotionRequirem
 		ReqsWebLink:
 			'https://www.gocivilairpatrol.com/programs/cadets/stripes-to-diamonds/achievement12/',
 		LeadTestWebLink: 'https://www.capnhq.gov/CAP.LMS.Web/Quiz/quiz_start.aspx?qid=73',
-		AeroTestWebLink: 'https://www.capnhq.gov/CAP.CadetTesting.Web/Modules/JoFTests.aspx',
+		AeroTestWebLink: 'None',
 		DrillTestWebLink: 'None',
 	},
 	{
@@ -458,7 +457,7 @@ export const CadetPromotionRequirementsMap: ReadonlyArray<CadetPromotionRequirem
 		ReqsWebLink:
 			'https://www.gocivilairpatrol.com/programs/cadets/stripes-to-diamonds/achievement13/',
 		LeadTestWebLink: 'https://www.capnhq.gov/CAP.LMS.Web/Quiz/quiz_start.aspx?qid=74',
-		AeroTestWebLink: 'https://www.capnhq.gov/CAP.CadetTesting.Web/Modules/JoFTests.aspx',
+		AeroTestWebLink: 'None',
 		DrillTestWebLink: 'None',
 	},
 	{

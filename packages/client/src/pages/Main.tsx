@@ -32,7 +32,7 @@ import {
 	MaybeObj,
 	pipe,
 	presentMultCheckboxReturn,
-	RawEventObject,
+RawEventObject
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -136,10 +136,11 @@ export default class Main extends Page<PageProps, MainState> {
 					<div>{this.state.message}</div>
 				) : (
 					<>
-						{this.props.member && !this.props.member.seniorMember && this.state.promotionRequirements.hasValue ? (
+						{this.props.member &&
+						!this.props.member.seniorMember &&
+						this.state.promotionRequirements.hasValue ? (
 							<section className="halfSection">
-								<h3>Promotion Requirements</h3>
-								{RequirementsBuild(this.state.promotionRequirements.value)}
+								<RequirementsBuild {...this.state.promotionRequirements.value} />
 							</section>
 						) : null}
 						<section
@@ -282,52 +283,195 @@ export default class Main extends Page<PageProps, MainState> {
 	}
 }
 
-function RequirementsBuild(cps: CadetPromotionStatus): string {
+function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 	// constants
 	const days = 60 * 60 * 24 * 1000;
-	const promoReqs = CadetPromotionRequirementsMap[cps.CurrentCadetAchv.CadetAchvID];
-	// const EPOCH = 0;
+	const promoReqs =
+		CadetPromotionRequirementsMap[
+			cps.CurrentAprvStatus === 'INC'
+				? cps.CurrentCadetAchv.CadetAchvID
+				: cps.CurrentCadetAchv.CadetAchvID + 1
+		];
+	const cadetTrackReport = 'https://www.capnhq.gov/CAP.eServices.Web/Reports.aspx?id=161';
+	const cadetOath = 'http://www.capli.com/oath.html';
+	const sdaLink =
+		'https://www.gocivilairpatrol.com/programs/cadets/library/cadet-staff-duty-analysis';
+	const encampmentDate = cps.EncampDate ? cps.EncampDate : -1;
 
-	// handle maybe
-	if (!cps) { return "Promotion Requirements</br>Promotion Requirements could not be processed at this time"; }
-	// ^^^^^^    HELP HERE
+	// Check for Spaatz cadets
+	if (!promoReqs) {
+		return null;
+	}
 
 	// calculate next available promotion date
-	let promotionAvailability = "You are eligible to promote as soon as all of your promotion requirements are complete";
-	if(!Maybe.isNone(cps.LastAprvDate)) {
-		const lastDate = cps.LastAprvDate as unknown as number;
-		const availablePromotionDate = lastDate + (56 * days);
-		const nowDate = Date.now as unknown as number;
-		if(availablePromotionDate > nowDate) {
-			promotionAvailability = "you are eligible for promotion on " + DateTime.fromMillis(availablePromotionDate);
+	let promotionAvailability =
+		'You are eligible to promote as soon as all of your promotion requirements are complete';
+	if (Maybe.isSome(cps.LastAprvDate)) {
+		const lastDate = cps.LastAprvDate.value;
+		const availablePromotionDate = lastDate + 56 * days;
+		const nowDate = Date.now();
+		if (availablePromotionDate > nowDate) {
+			promotionAvailability =
+				'You will be eligible for promotion on ' +
+				new Date(availablePromotionDate).toDateString();
 		}
 	}
 
-	// build promotion status message
-	let promotionStatus = "";
-	switch(cps.CurrentAprvStatus) {
-		case 'PND': {
-			promotionStatus = "Approval for your next promotion is pending.  Review " +
-				'the requirements for your next grade at this link: ' + promoReqs.ReqsWebLink;
-			break;
-		}
-		default: { // this is the caase for both 'APR' and 'PND'
-			promotionStatus = "Promotion requirements for your next grade are not yet complete.  Review " +
-			'the requirements at this link: ' + promoReqs.ReqsWebLink;
-			break;
-		}
-	}
-
-	// build promotion requirements messages
-	// if (convertNHQDate(cps.CurrentCadetAchv.LeadLabDateP) < EPOCH ) {
-
-	// }
-
-	// build response
-	let response = "Promotion Requirements";
-	response += promotionAvailability;
-	response += promotionStatus;
-
-	response += "Complete these requirements to promote";
-	return response;
+	return (
+		<div>
+			<h3>Promotion requirements</h3>
+			{cps.CurrentAprvStatus === 'PND' ? (
+				<p>
+					Your achievement completion is pending approval. Review the requirements for
+					your next achievement <a href={promoReqs.ReqsWebLink}>here</a>
+				</p>
+			) : cps.NextCadetAchvID <= 8 ||
+			  cps.NextCadetAchvID === 10 ||
+			  cps.NextCadetAchvID === 12 ||
+			  cps.NextCadetAchvID === 14 ||
+			  cps.NextCadetAchvID === 17 ||
+			  cps.NextCadetAchvID === 20 ||
+			  cps.NextCadetAchvID === 21 ? (
+				<p>
+					Requirements for your promotion to {promoReqs.Grade} are not yet complete.
+					Review the requirements{' '}
+					<a href={promoReqs.ReqsWebLink} target="_blank">
+						here
+					</a>
+				</p>
+			) : (
+				<p>
+					Requirements for your next achievement are not yet complete. Review the
+					requirements{' '}
+					<a href={promoReqs.ReqsWebLink} target="_blank">
+						here
+					</a>
+				</p>
+			)}
+			{<p>{promotionAvailability}</p>}
+			<h3>Incomplete Promotion Requirements</h3>
+			Check your eServices Cadet Track Report{' '}
+			<a href={cadetTrackReport} target="_blank">
+				here
+			</a>
+			<h4>Complete these requirements to promote</h4>
+			<ul>
+				{promoReqs.Leadership === 'Milestone' ? (
+					+new Date(cps.CurrentCadetAchv.LeadLabDateP) <= 0 ? (
+						<li>
+							<p>
+								You need to pass a milestone leadership test. The test must be
+								proctored. Go{' '}
+								<a href={promoReqs.LeadTestWebLink} target="_blank">
+									here
+								</a>{' '}
+								to take the test
+							</p>
+						</li>
+					) : null
+				) : promoReqs.Leadership === 'Pt 1' ? (
+					+new Date(cps.CurrentCadetAchv.LeadLabDateP) <= 0 ? (
+						<li>
+							<p>
+								You need to pass the Wright Brothers leadership test. The test must
+								be proctored. Go{' '}
+								<a href={promoReqs.LeadTestWebLink} target="_blank">
+									here
+								</a>{' '}
+								to take the test
+							</p>
+						</li>
+					) : null
+				) : promoReqs.Leadership !== 'None' ? (
+					+new Date(cps.CurrentCadetAchv.LeadLabDateP) <= 0 ? (
+						<li>
+							<p>
+								You need to pass a leadership test. Go{' '}
+								<a href={promoReqs.LeadTestWebLink} target="_blank">
+									here
+								</a>{' '}
+								to take the test
+							</p>
+						</li>
+					) : null
+				) : null}
+				{promoReqs.Aerospace === 'Milestone' ? (
+					+new Date(cps.CurrentCadetAchv.AEDateP) <= 0 ? (
+						<li>
+							<p>
+								You need to pass the Spaatz aerospace test. The test must be
+								proctored. See your Senior Member staff for details.
+							</p>
+						</li>
+					) : null
+				) : promoReqs.Aerospace !== 'None' ? (
+					+new Date(cps.CurrentCadetAchv.AEDateP) <= 0 ? (
+						<li>
+							<p>
+								You need to pass an aerospace test. Go{' '}
+								<a href={promoReqs.AeroTestWebLink} target="_blank">
+									here
+								</a>{' '}
+								to take the test
+							</p>
+						</li>
+					) : null
+				) : null}
+				{promoReqs.Oath === false
+					? "CPFT requirements can't be determined at this time!!  HFZ information is not available in CAPWATCH files"
+					: null}
+				{promoReqs.CharDev === true ? (
+					+new Date(cps.CurrentCadetAchv.MoralLDateP) <= 0 ? (
+						<li>
+							<p>You need to attend a Character Development session</p>
+						</li>
+					) : null
+				) : null}
+				{promoReqs.Drill !== 'None' ? (
+					+new Date(cps.CurrentCadetAchv.DrillDate) <= 0 ? (
+						<li>
+							<p>
+								You need credit for a drill test. Study the requirements for your
+								next test{' '}
+								<a href={promoReqs.DrillTestWebLink} target="_blank">
+									here
+								</a>
+							</p>
+						</li>
+					) : null
+				) : null}
+				{promoReqs.Oath === true ? (
+					<li>
+						<p>
+							You need to recite the Cadet Oath word for word. Study the oath text
+							located{' '}
+							<a href={cadetOath} target="_blank">
+								here
+							</a>
+						</p>
+					</li>
+				) : null}
+				{promoReqs.SDAWriting === true ? (
+					+new Date(cps.CurrentCadetAchv.TechnicalWritingAssignmentDate) <= 0 ? (
+						<li>
+							<p>
+								You need to complete a Staff Duty Assignment Report. Review SDA
+								requirements <a href={sdaLink}>here</a>
+							</p>
+						</li>
+					) : null
+				) : null}
+				{cps.NextCadetAchvID <= 10 ? (
+					encampmentDate <= 0 ? (
+						<li>
+							<p>
+								You need to complete Encampment in order to earn the Mitchell award.
+								Complete Encampment at your first opportunity!
+							</p>
+						</li>
+					) : null
+				) : null}
+			</ul>
+		</div>
+	);
 }

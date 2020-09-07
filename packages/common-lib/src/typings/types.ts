@@ -3940,12 +3940,6 @@ export interface CadetPromotionStatus {
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
 
-export interface CadetPromotionResponse {
-	/**
-	 * Items that go in the 
-	 */
-}
-
 /**
  * Represents the MFA tokens that are stored for a user
  */
