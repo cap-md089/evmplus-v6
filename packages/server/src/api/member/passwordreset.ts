@@ -22,6 +22,7 @@ import {
 	always,
 	api,
 	asyncRight,
+	destroy,
 	Either,
 	errorGenerator,
 	PasswordSetResult,
@@ -39,13 +40,15 @@ export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSess
 				req.mysqlx,
 				req.session.userAccount.username,
 				req.body.password,
-			).cata(Either.right, always(Either.right(PasswordSetResult.OK))),
+			).map(destroy),
 		)
-		.flatMap<PasswordSetResult>(result => {
+		.flatMap<PasswordSetResult>(() => {
 			if (request.session.type === SessionType.PASSWORD_RESET) {
-				return PAM.updateSession(request.mysqlx, request.session).map(always(result));
+				return PAM.updateSession(request.mysqlx, request.session).map(
+					always(PasswordSetResult.OK),
+				);
 			} else {
-				return Either.right(result);
+				return Either.right(PasswordSetResult.OK);
 			}
 		}),
 );

@@ -98,15 +98,21 @@ export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQ
 				)
 				.map<CadetPromotionStatus>(
 					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) => ({
-						NextCadetAchvID: maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
+						NextCadetAchvID:
+							maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
 						CurrentCadetAchv: maxAchv,
 						CurrentAprvStatus: maxAprvStatus,
-						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(aprv => +new Date(aprv.DateMod))(Maybe.fromArray(maxAprv)),
-						EncampDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(encampResults)),
-						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(acti => +new Date(acti.Completed))(Maybe.fromArray(rclsResults)),
+						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
+							aprv => +new Date(aprv.DateMod),
+						)(Maybe.fromArray(maxAprv)),
+						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromArray(encampResults)),
+						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromArray(rclsResults)),
 					}),
 				);
-				
 
 export const emptyCadetAchv: NHQ.CadetAchv = {
 	CAPID: 0,

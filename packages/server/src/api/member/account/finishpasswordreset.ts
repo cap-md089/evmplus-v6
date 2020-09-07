@@ -18,7 +18,7 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { always, api, errorGenerator, PasswordSetResult, ServerError } from 'common-lib';
+import { always, api } from 'common-lib';
 import { PAM } from 'server-common';
 import {
 	addPasswordForUser,
@@ -28,27 +28,10 @@ import {
 	simplifyUserInformation,
 } from 'server-common/dist/member/pam';
 
-const passwordResetErrorMessages = {
-	[PasswordSetResult.COMPLEXITY]: 'Password fails to meet complexity requirements',
-	[PasswordSetResult.IN_HISTORY]: 'Password has been used too recently',
-	[PasswordSetResult.MIN_AGE]: 'Password is not old enough to change',
-	[PasswordSetResult.OK]: '',
-	[PasswordSetResult.SERVER_ERROR]: 'There was an error with the server',
-};
-
 export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
 	PAM.validatePasswordResetToken(req.mysqlx, req.body.token)
 		.flatMap(username =>
-			addPasswordForUser(req.mysqlx, username, req.body.newPassword)
-				.map(always(username))
-				.leftMap<ServerError>(
-					setResult => ({
-						type: 'OTHER',
-						code: 400,
-						message: passwordResetErrorMessages[setResult],
-					}),
-					errorGenerator('Could not handle failure'),
-				),
+			addPasswordForUser(req.mysqlx, username, req.body.newPassword).map(always(username)),
 		)
 		.flatMap(username =>
 			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),

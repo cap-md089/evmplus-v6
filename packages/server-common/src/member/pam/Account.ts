@@ -28,7 +28,6 @@ import {
 	asyncRight,
 	collectGeneratorAsync,
 	Either,
-	EitherObj,
 	errorGenerator,
 	getDefaultMemberPermissions,
 	hasPermission,
@@ -39,7 +38,6 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
-	PasswordSetResult,
 	SafeUserAccountInformation,
 	ServerError,
 	StoredMemberPermissions,
@@ -175,8 +173,7 @@ export const addUserAccount = (
 	password: string,
 	member: MemberReference,
 	token: string,
-	// ): AsyncEither<ServerError, UserAccountInformation> =>
-): AsyncEither<ServerError, any> =>
+): AsyncEither<ServerError, UserAccountInformation> =>
 	asyncRight(
 		schema.getCollection<UserAccountInformation>('UserAccountInfo'),
 		errorGenerator('Could not create user account information'),
@@ -237,25 +234,7 @@ export const addUserAccount = (
 					return user.value;
 				}
 			})
-			.flatMap(() =>
-				addPasswordForUser(schema, username, password).cata<
-					EitherObj<ServerError, UserAccountInformation>
-				>(
-					result =>
-						result === PasswordSetResult.COMPLEXITY
-							? Either.left({
-									type: 'OTHER',
-									code: 400,
-									message: 'Password does not meet complexity requirements',
-							  })
-							: Either.left({
-									type: 'OTHER',
-									code: 400,
-									message: 'There was an unknown server error',
-							  }),
-					Either.right,
-				),
-			)
+			.flatMap(() => addPasswordForUser(schema, username, password))
 			.tap(() => removeAccountToken(schema, token)),
 	);
 
