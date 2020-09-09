@@ -1204,6 +1204,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			this.state.eventInformation.event,
 			this.state.eventInformation.pointsOfContact,
 			this.props.member,
+			process.env.REACT_APP_HOST_NAME!,
 		);
 
 		await this.printForm(
@@ -1270,7 +1271,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		let wsName = 'EventInfo';
 		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
 		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
-		let sheet = spreadsheets.FormatEventXL(evtID, ws);
+		let sheet = spreadsheets.FormatEventXL(evtID, ws, process.env.REACT_APP_HOST_NAME!);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		wsName = 'Attendance';
