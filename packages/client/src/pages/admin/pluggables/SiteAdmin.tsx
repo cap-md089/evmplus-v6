@@ -55,7 +55,8 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					<Link to="/admin/setupmfa">Setup MFA</Link>
 					<br />
 					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
-					{this.props.account.type === AccountType.CAPSQUADRON &&
+					{(this.props.account.type === AccountType.CAPSQUADRON ||
+						this.props.account.type === AccountType.CAPEVENT) &&
 					hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
 						this.props.member,
 					) ? (
