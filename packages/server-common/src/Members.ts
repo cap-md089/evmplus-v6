@@ -21,13 +21,17 @@ import type { Schema } from '@mysql/xdevapi';
 import {
 	AccountLinkTarget,
 	AccountObject,
+	AccountType,
 	AllExtraMemberInformation,
+	always,
 	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
 	asyncIterConcat,
 	asyncIterFilter,
+	asyncIterHandler,
 	asyncIterMap,
+	asyncIterReduce,
 	asyncLeft,
 	asyncRight,
 	countAsync,
@@ -41,6 +45,8 @@ import {
 	MemberPermissions,
 	MemberReference,
 	Permissions,
+	pipe,
+	RawCAPEventAccountObject,
 	RawTeamObject,
 	ServerError,
 	StoredAccountMembership,
@@ -49,9 +55,10 @@ import {
 	User,
 } from 'common-lib';
 import { AccountGetter, getAccount } from './Account';
+import { RawAttendanceDBRecord } from './Event';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
-import { findAndBind, generateResults, modifyAndBind } from './MySQLUtil';
+import { findAndBind, findAndBindC, generateResults, modifyAndBind } from './MySQLUtil';
 import { getMemberNotifications } from './notifications';
 import { getRegistryById } from './Registry';
 import { getTasksForMember } from './Task';
@@ -139,11 +146,46 @@ export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) 
 	schema: Schema,
 ) => (member: Member) => CAP.getHomeAccountsForMember(accountGetter)(schema)(member);
 
+export const accountHasMemberInAttendance = (schema: Schema) => (member: MemberReference) => (
+	account: AccountObject,
+) =>
+	asyncRight(
+		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+		errorGenerator('Could not check attendance for member'),
+	)
+		.map(
+			findAndBindC<RawAttendanceDBRecord>({
+				memberID: toReference(member),
+				accountID: account.id,
+			}),
+		)
+		.map(generateResults)
+		.map(asyncIterReduce(always(true))(false));
+
+export const getEventAccountsForMember = (schema: Schema) => (member: MemberReference) =>
+	pipe(
+		asyncIterFilter(account =>
+			accountHasMemberInAttendance(schema)(member)(account).fullJoin().catch(always(false)),
+		),
+		asyncIterHandler<RawCAPEventAccountObject>(
+			errorGenerator('Could not get account information'),
+		),
+	)(
+		generateResults(
+			findAndBind(schema.getCollection<RawCAPEventAccountObject>('Accounts'), {
+				type: AccountType.CAPEVENT,
+			}),
+		),
+	);
+
 export const getExtraAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
 	schema: Schema,
 ) => (member: MemberReference): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterMap((accountGetter.byId ?? getAccount)(schema))(
-		asyncIterMap(get<StoredAccountMembership, 'accountID'>('accountID'))(
+	asyncIterConcat(
+		pipe(
+			asyncIterMap(get<StoredAccountMembership, 'accountID'>('accountID')),
+			asyncIterMap((accountGetter.byId ?? getAccount)(schema)),
+		)(
 			generateResults(
 				findAndBind(
 					schema.getCollection<StoredAccountMembership>('ExtraAccountMembership'),
@@ -153,7 +195,7 @@ export const getExtraAccountsForMember = (accountGetter: Partial<AccountGetter>)
 				),
 			),
 		),
-	);
+	)(() => getEventAccountsForMember(schema)(member));
 
 export const getAllAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
 	schema: Schema,

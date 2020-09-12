@@ -599,8 +599,10 @@ export default (client: Client) => (schema: Schema) => (guildID: string) => (
 		const member = await resolveReference(schema)(account)(discordUser.member).fullJoin();
 
 		if (guild.ownerID !== discordUser.discordID) {
-			await user.setNickname(getFullMemberName(member));
-			await setupRoles(guild)(schema)(account)(user)(teamObjects)(member);
+			await Promise.all([
+				user.setNickname(getFullMemberName(member)),
+				setupRoles(guild)(schema)(account)(user)(teamObjects)(member),
+			]);
 		}
 	} catch (e) {
 		console.error(e);

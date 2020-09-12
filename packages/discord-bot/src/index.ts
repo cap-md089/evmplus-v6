@@ -42,6 +42,7 @@ import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser from './data/setupUser';
 import setupServer from './cli/setupServer';
 import notifyRole from './cli/notifyRole';
+import updateServers from './cli/updateServers';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
@@ -349,6 +350,7 @@ if (require.main === module) {
 			const availableCommands: { [key: string]: typeof setupServer } = {
 				setupserver: setupServer,
 				notifyrole: notifyRole,
+				updateservers: updateServers,
 			};
 
 			const commandFunction = availableCommands[command.toLowerCase()];
@@ -364,35 +366,12 @@ if (require.main === module) {
 
 					await commandFunction(mysqlClient, conf, client, args);
 
-					// const session = await mysqlClient.getSession();
-					// const schema = session.getSchema('EventManagementv6');
+					await client.destroy();
 
-					// const accountMaybe = await getAccount(schema)('437034622090477568');
-
-					// if (!accountMaybe.hasValue) {
-					// 	return;
-					// }
-
-					// const teams = await getTeamObjects(schema)(accountMaybe.value)
-					// 	// block the staff team
-					// 	.map(asyncIterFilter((team) => team.id !== 0))
-					// 	.map(
-					// 		asyncIterFilter<RawTeamObject>(
-					// 			isPartOfTeam({ type: 'CAPNHQMember', id: 542488 })
-					// 		)
-					// 	)
-					// 	.map(asyncIterMap(get('id')))
-					// 	.map(collectGeneratorAsync)
-					// 	.fullJoin();
-
-					// await setupUser(client)(schema)('437034622090477568')(accountMaybe.value)(
-					// 	teams
-					// )({
-					// 	discordID: '192688519045578762',
-					// 	member: { type: 'CAPNHQMember', id: 542488 },
-					// });
 					resolve();
 				} catch (e) {
+					await client.destroy();
+
 					reject(e);
 				}
 			});
