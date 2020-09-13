@@ -436,6 +436,11 @@ export enum GroupTarget {
 	ACCOUNT,
 }
 
+export enum EventType {
+	REGULAR = 1,
+	LINKED,
+}
+
 // tslint:disable-next-line: no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
@@ -1030,22 +1035,7 @@ export interface RawEventObject extends AccountIdentifiable, NewEventObject {
 	 * comment provided by a member
 	 */
 	debrief: DebriefItem[];
-	/**
-	 * If this is a linked event this will be present
-	 *
-	 * Linking events allows for one account to copy an event of another account
-	 * and receive updates and such
-	 */
-	sourceEvent?: null | {
-		/**
-		 * ID of the event it came from
-		 */
-		id: number;
-		/**
-		 * The account linked from
-		 */
-		accountID: string;
-	};
+
 	googleCalendarIds: {
 		/**
 		 * UUID of the Google Caldendar event on the main calendar
@@ -1060,7 +1050,37 @@ export interface RawEventObject extends AccountIdentifiable, NewEventObject {
 		 */
 		feeId?: null | string;
 	};
+
+	type: EventType.REGULAR;
 }
+
+export interface RawLinkedEvent extends AccountIdentifiable {
+	/**
+	 * ID of the link to the event
+	 */
+	id: number;
+	/**
+	 * Who it is that established this link
+	 */
+	linkAuthor: MemberReference;
+	/**
+	 * The event ID that this link references
+	 */
+	targetEventID: number;
+	/**
+	 * The account ID that the event this link references belongs to
+	 */
+	targetAccountID: string;
+	/**
+	 * Specify that this is a linked event
+	 */
+	type: EventType.LINKED;
+}
+
+/**
+ * Represents the information stored in the database
+ */
+export type StoredEventObject = RawLinkedEvent | RawEventObject;
 
 export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 
@@ -1079,6 +1099,8 @@ export interface EventObject extends RawEventObject {
 	 */
 	pointsOfContact: FullPointOfContact[];
 }
+
+export type FullEventObject = EventObject | (Omit<EventObject, 'type'> & RawLinkedEvent);
 
 /**
  * Used for transfer when creating a new event object, as it cannot know what
@@ -3962,22 +3984,22 @@ export interface StoredMFASecret {
 
 export interface SignInLogData {
 	/**
-	 * 
+	 *
 	 */
 	memberRef: MemberReference;
 
 	/**
-	 * 
+	 *
 	 */
 	accountID: string;
 
 	/**
-	 * 
+	 *
 	 */
 	lastAccessTime: number;
 
 	/**
-	 * 
+	 *
 	 */
 	accessCount: number;
 }
