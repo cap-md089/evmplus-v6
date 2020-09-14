@@ -3959,3 +3959,25 @@ export interface StoredMFASecret {
 	 */
 	member: MemberReference;
 }
+
+export interface SignInLogData {
+	/**
+	 * 
+	 */
+	memberRef: MemberReference;
+
+	/**
+	 * 
+	 */
+	accountID: string;
+
+	/**
+	 * 
+	 */
+	lastAccessTime: number;
+
+	/**
+	 * 
+	 */
+	accessCount: number;
+}

@@ -35,11 +35,13 @@ import {
 	asyncLeft,
 	asyncRight,
 	countAsync,
+	destroy,
 	EitherObj,
 	errorGenerator,
 	get,
 	isPartOfTeam,
 	isRioux,
+	Maybe,
 	Member,
 	MemberForReference,
 	MemberPermissions,
@@ -49,6 +51,7 @@ import {
 	RawCAPEventAccountObject,
 	RawTeamObject,
 	ServerError,
+	SignInLogData,
 	StoredAccountMembership,
 	StoredMemberPermissions,
 	toReference,
@@ -58,7 +61,13 @@ import { AccountGetter, getAccount } from './Account';
 import { RawAttendanceDBRecord } from './Event';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
-import { findAndBind, findAndBindC, generateResults, modifyAndBind } from './MySQLUtil';
+import {
+	collectResults,
+	findAndBind,
+	findAndBindC,
+	generateResults,
+	modifyAndBind,
+} from './MySQLUtil';
 import { getMemberNotifications } from './notifications';
 import { getRegistryById } from './Registry';
 import { getTasksForMember } from './Task';
@@ -77,6 +86,57 @@ export const resolveReference = (schema: Schema) => (account: AccountObject) => 
 				message: 'Invalid member type',
 				code: 400,
 		  });
+
+export const logSigninFunc = (now: () => number = Date.now) => (schema: Schema) => (
+	account: AccountObject,
+) => (ref: MemberReference) =>
+	asyncRight(
+		schema.getCollection<SignInLogData>('SignInLog'),
+		errorGenerator('Could not save sign in log'),
+	)
+		.map(collection =>
+			findAndBind(collection, {
+				memberRef: toReference(ref),
+				accountID: account.id,
+			}),
+		)
+		.map(collectResults)
+		.map(Maybe.fromArray)
+		.tap(async maybeResult => {
+			if (Maybe.isNone(maybeResult)) {
+				const collection = schema.getCollection<SignInLogData>('SignInLog');
+				await collection
+					.add({
+						accessCount: 0,
+						accountID: account.id,
+						lastAccessTime: 0,
+						memberRef: toReference(ref),
+					})
+					.execute();
+			}
+		})
+		.map(
+			Maybe.orSome({
+				accessCount: 0,
+				accountID: account.id,
+				lastAccessTime: 0,
+				memberRef: toReference(ref),
+			}),
+		)
+		.map(rec =>
+			modifyAndBind(schema.getCollection<SignInLogData>('SignInLog'), {
+				memberRef: rec.memberRef,
+				accountID: account.id,
+			})
+				.patch({
+					accessCount: rec.accessCount + 1,
+					lastAccessTime: now(),
+				})
+				.execute(),
+		)
+		.map(destroy);
+
+export const logSignin = logSigninFunc();
 
 export const getMemberName = (schema: Schema) => (account: AccountObject) => (
 	ref: MemberReference,
