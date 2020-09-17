@@ -23,12 +23,12 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
-	EventObject,
 	MemberReference,
 	Permissions,
 	PointOfContactType,
-	RawEventObject,
+	RawRegularEventObject,
 	RawTeamObject,
+	RegularEventObject,
 	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
@@ -37,7 +37,7 @@ import { areMembersTheSame, hasOneDutyPosition, hasPermission, isRioux } from '.
 import { isPartOfTeam } from './Team';
 import { complement, destroy, get } from './Util';
 
-export const isPOCOf = (member: MemberReference, event: RawEventObject) =>
+export const isPOCOf = (member: MemberReference, event: RawRegularEventObject) =>
 	(member.type === 'CAPNHQMember' && (member.id === 546319 || member.id === 542488)) ||
 	areMembersTheSame(member)(event.author) ||
 	event.pointsOfContact
@@ -48,7 +48,7 @@ export const isPOCOf = (member: MemberReference, event: RawEventObject) =>
 		)
 		.reduce((prev, curr) => prev || curr, false);
 
-export const canSignUpForEvent = (event: EventObject) => (
+export const canSignUpForEvent = (event: RegularEventObject) => (
 	eventTeam: MaybeObj<RawTeamObject>,
 ): ((memberInput?: MemberReference | null) => EitherObj<string, void>) =>
 	pipe(
@@ -78,10 +78,10 @@ export const canSignUpForEvent = (event: EventObject) => (
 		Either.map(destroy),
 	);
 
-export const getURIComponent = (event: RawEventObject) =>
+export const getURIComponent = (event: RawRegularEventObject) =>
 	`${event.id}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 
-export const hasMember = (event: EventObject) => (member: MemberReference) =>
+export const hasMember = (event: RegularEventObject) => (member: MemberReference) =>
 	event.attendance.map(get('memberID')).filter(areMembersTheSame(member)).length > 0;
 
 export const hasBasicEventPermissions = (member: User) =>
@@ -103,12 +103,12 @@ export const getAttendanceRecordForMember = (attendance: AttendanceRecord[]) => 
 
 export const canManageEvent = (
 	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: User) => (event: RawEventObject) =>
+) => (member: User) => (event: RawRegularEventObject) =>
 	isPOCOf(member, event) || effectiveManageEventPermissionForEvent(member)(event) >= threshold;
 
 export const canMaybeManageEvent = (
 	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: MaybeObj<User>) => (event: RawEventObject) =>
+) => (member: MaybeObj<User>) => (event: RawRegularEventObject) =>
 	Maybe.isSome(member) ? canManageEvent(threshold)(member.value)(event) : false;
 
 export const effectiveManageEventPermission = (member: User) =>
@@ -134,7 +134,9 @@ export const effectiveManageEventPermission = (member: User) =>
 		isRioux(member) ? Permissions.ManageEvent.FULL : Permissions.ManageEvent.NONE,
 	);
 
-export const effectiveManageEventPermissionForEvent = (member: User) => (event: RawEventObject) =>
+export const effectiveManageEventPermissionForEvent = (member: User) => (
+	event: RawRegularEventObject,
+) =>
 	Math.max(
 		effectiveManageEventPermission(member),
 		isPOCOf(member, event) ? Permissions.ManageEvent.FULL : Permissions.ManageEvent.NONE,

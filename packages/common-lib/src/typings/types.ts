@@ -1013,7 +1013,7 @@ export interface DebriefItem extends NewDebriefItem {
 
 export type RawPointOfContact = InternalPointOfContact | ExternalPointOfContact;
 
-export interface RawEventObject extends AccountIdentifiable, NewEventObject {
+export interface RawRegularEventObject extends AccountIdentifiable, NewEventObject {
 	/**
 	 * ID of the Event, can be expressed as the event number
 	 */
@@ -1039,14 +1039,20 @@ export interface RawEventObject extends AccountIdentifiable, NewEventObject {
 	googleCalendarIds: {
 		/**
 		 * UUID of the Google Caldendar event on the main calendar
+		 *
+		 * Is null when the event is not to be published, such as a draft event
 		 */
 		mainId?: null | string;
 		/**
 		 * UUID of the Google Calendar registration deadline event on the main calendar
+		 *
+		 * Not present if there is no registration deadline
 		 */
 		regId?: null | string;
 		/**
 		 * UUID of the Goodle Calendar fee deadline event on the main calendar
+		 *
+		 * Not present if there is not a fee deadline
 		 */
 		feeId?: null | string;
 	};
@@ -1072,6 +1078,16 @@ export interface RawLinkedEvent extends AccountIdentifiable {
 	 */
 	targetAccountID: string;
 	/**
+	 * Mirrors the information for a regular event object. This is present
+	 * because a Google calendar will need items for the linked events as
+	 * well
+	 */
+	googleCalendarIds: {
+		mainId?: null | string;
+		regId?: null | string;
+		feeId?: null | string;
+	};
+	/**
 	 * Specify that this is a linked event
 	 */
 	type: EventType.LINKED;
@@ -1080,7 +1096,7 @@ export interface RawLinkedEvent extends AccountIdentifiable {
 /**
  * Represents the information stored in the database
  */
-export type StoredEventObject = RawLinkedEvent | RawEventObject;
+export type RawEventObject = RawLinkedEvent | RawRegularEventObject;
 
 export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 
@@ -1088,7 +1104,7 @@ export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOf
  * The meat of what this website is designed for; events can be signed up for
  * and hold information to facilitate easy information distribution
  */
-export interface EventObject extends RawEventObject {
+export interface RegularEventObject extends RawRegularEventObject {
 	/**
 	 * New events start with no attendance, but there can be procedurally
 	 * generated attendance on the client side to include internal POCs
@@ -1100,7 +1116,7 @@ export interface EventObject extends RawEventObject {
 	pointsOfContact: FullPointOfContact[];
 }
 
-export type FullEventObject = EventObject | (Omit<EventObject, 'type'> & RawLinkedEvent);
+export type EventObject = RegularEventObject | (Omit<RegularEventObject, 'type'> & RawLinkedEvent);
 
 /**
  * Used for transfer when creating a new event object, as it cannot know what

@@ -25,8 +25,8 @@ import {
 	isOneOfSelected,
 	Maybe,
 	presentMultCheckboxReturn,
-	RawEventObject,
 	ServerConfiguration,
+	RawRegularEventObject,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
@@ -68,7 +68,10 @@ export const LodgingArrangments = [
 	'Individual tent',
 ];
 
-function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObject): string {
+function buildEventDescription(
+	config: ServerConfiguration,
+	inEvent: RawRegularEventObject,
+): string {
 	// set status message
 	let status = 'invalid.  Please contact support@evmplus.org to report this.';
 	if (inEvent.status === EventStatus.TENTATIVE) {
@@ -166,7 +169,7 @@ function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObj
 
 function buildDeadlineDescription(
 	config: ServerConfiguration,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	inStatement: string,
 ): string {
 	// set status message
@@ -253,7 +256,7 @@ export async function createGoogleCalendarForEvent(
 
 export async function createGoogleCalendarEvents(
 	schema: Schema,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
@@ -285,10 +288,10 @@ export async function createGoogleCalendarEvents(
 
 export default async function updateGoogleCalendars(
 	schema: Schema,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
-) {
+): Promise<[string | null, string | null, string | null]> {
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
@@ -305,11 +308,11 @@ export default async function updateGoogleCalendars(
 		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 		updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 		updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
-	]) as Promise<[string, string | null, string | null]>;
+	]);
 }
 
 export async function removeGoogleCalendarEvents(
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ) {
@@ -423,7 +426,7 @@ async function deleteCalendarEvent(
 async function deleteCalendarEvents(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	ids: string,
 ) {
 	let errorFlag = false;
@@ -485,7 +488,7 @@ function getEventColor(inStatus: EventStatus) {
 	return eventColor;
 }
 
-function buildEvent(config: ServerConfiguration, inEvent: RawEventObject) {
+function buildEvent(config: ServerConfiguration, inEvent: RawRegularEventObject) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -519,7 +522,7 @@ function buildEvent(config: ServerConfiguration, inEvent: RawEventObject) {
 
 function buildDeadline(
 	config: ServerConfiguration,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	inDate: number,
 	inString: string,
 ) {
@@ -554,7 +557,7 @@ async function updateFeeEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	googleId: string,
 ) {
 	let response = { status: 200 };
@@ -612,7 +615,7 @@ async function updateRegEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	googleId: string,
 ) {
 	let response = { status: 200 };
@@ -670,7 +673,7 @@ async function updateMainEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawEventObject,
+	inEvent: RawRegularEventObject,
 	googleId: string,
 ) {
 	const event = buildEvent(config, inEvent);
