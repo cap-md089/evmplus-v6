@@ -24,10 +24,9 @@ import {
 	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
-	asyncIterConcat,
-	asyncIterFilter,
-	asyncIterFlatMap,
+	asyncIterHandler,
 	asyncIterMap,
+	asyncIterTap,
 	asyncLeft,
 	asyncRight,
 	AttendanceRecord,
@@ -37,7 +36,6 @@ import {
 	destroy,
 	DisplayInternalPointOfContact,
 	Either,
-	EitherObj,
 	errorGenerator,
 	EventObject,
 	EventStatus,
@@ -46,7 +44,6 @@ import {
 	get,
 	getFullMemberName,
 	getItemsNotInSecondArray,
-	identity,
 	InternalPointOfContact,
 	isPOCOf,
 	Maybe,
@@ -64,13 +61,10 @@ import {
 	RawLinkedEvent,
 	RawRegularEventObject,
 	RegularEventObject,
-	Right,
 	ServerConfiguration,
 	ServerError,
 	stripProp,
 	toReference,
-	asyncIterTap,
-	asyncIterHandler,
 } from 'common-lib';
 import { getAccount } from './Account';
 import updateGoogleCalendars, {
@@ -204,25 +198,6 @@ const getLinkedEvents = (schema: Schema) => (accountID: string) => (
 		}),
 	);
 
-const getLinkedEventsAttendance = (schema: Schema) => (accountID: string) => (
-	eventID: number,
-): AsyncIter<AttendanceRecord> =>
-	asyncIterFlatMap(identity)(
-		asyncIterMap<
-			Right<AsyncIterableIterator<AttendanceRecord>>,
-			AsyncIterableIterator<AttendanceRecord>
-		>(get('value'))(
-			asyncIterFilter<
-				EitherObj<ServerError, AsyncIterableIterator<AttendanceRecord>>,
-				Right<AsyncIterableIterator<AttendanceRecord>>
-			>(Either.isRight)(
-				asyncIterMap(getAttendanceForEvent(schema))(
-					getLinkedEvents(schema)(accountID)(eventID),
-				),
-			),
-		),
-	);
-
 export const getAttendanceForEvent = (schema: Schema) => ({
 	id: eventID,
 	accountID,
@@ -235,10 +210,7 @@ export const getAttendanceForEvent = (schema: Schema) => ({
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID }),
 		)
 		.map(generateResults)
-		.map(attendanceRecordIterMapper)
-		.map(iter =>
-			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(accountID)(eventID)),
-		);
+		.map(attendanceRecordIterMapper);
 
 export const getEventAttendance = (schema: Schema) => (account: AccountObject) => (
 	eventID: number,
@@ -251,10 +223,7 @@ export const getEventAttendance = (schema: Schema) => (account: AccountObject) =
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id }),
 		)
 		.map(generateResults)
-		.map(attendanceRecordIterMapper)
-		.map(iter =>
-			asyncIterConcat(iter)(() => getLinkedEventsAttendance(schema)(account.id)(eventID)),
-		);
+		.map(attendanceRecordIterMapper);
 
 type PartialResolvedRawEventObject = RawRegularEventObject & Omit<RawRegularEventObject, 'type'>;
 type PartialRawEventObject = PartialResolvedRawEventObject | RawRegularEventObject;
@@ -545,52 +514,9 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			uniform: event.uniform,
 			type: EventType.REGULAR,
 		}))
-		.flatMap(newEvent => {
-			const isInternalPOC = (poc: PointOfContact): poc is InternalPointOfContact =>
-				poc.type === PointOfContactType.INTERNAL;
-			const oldInternalPOCs = oldEvent.pointsOfContact.filter(isInternalPOC);
-			const newInternalPOCs = newEvent.pointsOfContact.filter(isInternalPOC);
-
-			const pocGetter = getItemsNotInSecondArray<InternalPointOfContact>(item1 => item2 =>
-				areMembersTheSame(item1.memberReference)(item2.memberReference),
-			);
-
-			const removedPOCs = pocGetter(oldInternalPOCs)(newInternalPOCs);
-			const addedPOCs = pocGetter(newInternalPOCs)(oldInternalPOCs);
-
-			return AsyncEither.All([
-				sendPOCRemovedNotifications(schema)(account)(newEvent)(removedPOCs),
-				sendPOCAddedNotifications(schema)(account)(newEvent)(addedPOCs),
-			]).map(always(newEvent));
-		})
+		.tap(notifyEventPOCs(schema)(account)(oldEvent))
 		.flatMap(saveToCollectionA(schema.getCollection<RawRegularEventObject>('Events')))
-		.tap(savedEvent =>
-			collectGeneratorAsync(
-				asyncIterHandler(errorGenerator('Could not handle updating sub google calendars'))(
-					asyncIterTap<[RawLinkedEvent, AccountObject]>(([linkedEvent, eventAccount]) =>
-						updateGoogleCalendars(
-							schema,
-							{
-								...savedEvent,
-								...linkedEvent,
-								type: EventType.REGULAR,
-							},
-							eventAccount,
-							config,
-						).then(destroy),
-					)(
-						asyncIterMap<RawLinkedEvent, [RawLinkedEvent, AccountObject]>(linkedEvent =>
-							getAccount(schema)(linkedEvent.targetAccountID)
-								.map<[RawLinkedEvent, AccountObject]>(linkedAccount => [
-									linkedEvent,
-									linkedAccount,
-								])
-								.fullJoin(),
-						)(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
-					),
-				),
-			),
-		);
+		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema));
 export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
@@ -735,3 +661,53 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 			),
 		)
 		.flatMap(addToCollection(schema.getCollection<RawEventObject>('Events')));
+
+const updateGoogleCalendarsForLinkedEvents = (config: ServerConfiguration) => (schema: Schema) => (
+	savedEvent: RawRegularEventObject,
+) =>
+	collectGeneratorAsync(
+		asyncIterHandler(errorGenerator('Could not handle updating sub google calendars'))(
+			asyncIterTap<[RawLinkedEvent, AccountObject]>(([linkedEvent, eventAccount]) =>
+				updateGoogleCalendars(
+					schema,
+					{
+						...savedEvent,
+						...linkedEvent,
+						type: EventType.REGULAR,
+					},
+					eventAccount,
+					config,
+				).then(destroy),
+			)(
+				asyncIterMap<RawLinkedEvent, [RawLinkedEvent, AccountObject]>(linkedEvent =>
+					getAccount(schema)(linkedEvent.targetAccountID)
+						.map<[RawLinkedEvent, AccountObject]>(linkedAccount => [
+							linkedEvent,
+							linkedAccount,
+						])
+						.fullJoin(),
+				)(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+			),
+		),
+	);
+
+const notifyEventPOCs = (schema: Schema) => (account: AccountObject) => (
+	oldEvent: RawRegularEventObject,
+) => (newEvent: RawRegularEventObject) => {
+	const isInternalPOC = (poc: PointOfContact): poc is InternalPointOfContact =>
+		poc.type === PointOfContactType.INTERNAL;
+	const oldInternalPOCs = oldEvent.pointsOfContact.filter(isInternalPOC);
+	const newInternalPOCs = newEvent.pointsOfContact.filter(isInternalPOC);
+
+	const pocGetter = getItemsNotInSecondArray<InternalPointOfContact>(item1 => item2 =>
+		areMembersTheSame(item1.memberReference)(item2.memberReference),
+	);
+
+	const removedPOCs = pocGetter(oldInternalPOCs)(newInternalPOCs);
+	const addedPOCs = pocGetter(newInternalPOCs)(oldInternalPOCs);
+
+	return AsyncEither.All([
+		sendPOCRemovedNotifications(schema)(account)(newEvent)(removedPOCs),
+		sendPOCAddedNotifications(schema)(account)(newEvent)(addedPOCs),
+	]);
+};
