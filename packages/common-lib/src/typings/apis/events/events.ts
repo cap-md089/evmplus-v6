@@ -31,7 +31,6 @@ import {
 	ExternalPointOfContact,
 	Member,
 	NewEventObject,
-	RawEventObject,
 	RawResolvedEventObject,
 } from '../../types';
 
@@ -110,7 +109,7 @@ export interface Copy {
  * TODO: Allow this to be done
  */
 export interface GetList {
-	(params: {}, body: {}): APIEither<RawEventObject[]>;
+	(params: {}, body: {}): APIEither<RawResolvedEventObject[]>;
 
 	url: '/api/events';
 
@@ -167,7 +166,7 @@ export interface GetEventViewerData {
  * Get's the next meeting with the 'Recurring Meeting' activity type set
  */
 export interface GetNextRecurring {
-	(params: {}, body: {}): APIEither<MaybeObj<RawEventObject>>;
+	(params: {}, body: {}): APIEither<MaybeObj<RawResolvedEventObject>>;
 
 	url: '/api/events/recurring';
 
@@ -184,7 +183,9 @@ export interface GetNextRecurring {
  * Creates a link between the specified account and event
  */
 export interface Link {
-	(params: { eventid: string; targetaccount: string }, body: {}): APIEither<RawEventObject>;
+	(params: { eventid: string; targetaccount: string }, body: {}): APIEither<
+		RawResolvedEventObject
+	>;
 
 	url: '/api/events/:eventid/link/:targetaccount';
 
@@ -201,7 +202,7 @@ export interface Link {
  * Gets the next `X` events, where `X` is defined in the Registry as `Website.ShowUpcomingEventCount`
  */
 export interface GetUpcoming {
-	(params: {}, body: {}): APIEither<RawEventObject[]>;
+	(params: {}, body: {}): APIEither<RawResolvedEventObject[]>;
 
 	url: '/api/events/upcoming';
 
@@ -255,7 +256,7 @@ export interface Delete {
  * from Date.now()
  */
 export interface GetRange {
-	(params: { timestart: string; timeend: string }, body: {}): APIEither<RawEventObject[]>;
+	(params: { timestart: string; timeend: string }, body: {}): APIEither<RawResolvedEventObject[]>;
 
 	url: '/api/events/:timestart/:timeend';
 

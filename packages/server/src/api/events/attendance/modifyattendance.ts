@@ -17,6 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Schema } from '@mysql/xdevapi';
 import {
 	ServerAPIEndpoint,
 	ServerAPIRequestParameter,
@@ -24,6 +25,7 @@ import {
 	validator,
 } from 'auto-client-api';
 import {
+	AccountObject,
 	api,
 	APIEndpointBody,
 	asyncRight,
@@ -33,6 +35,7 @@ import {
 	Maybe,
 	MaybeObj,
 	Member,
+	MemberReference,
 	NewAttendanceRecord,
 	RawResolvedEventObject,
 	RawTeamObject,
@@ -43,6 +46,7 @@ import {
 	ensureResolvedEvent,
 	getEvent,
 	getTeam,
+	isMemberPartOfAccount,
 	modifyEventAttendanceRecord,
 	PAM,
 	resolveReference,
@@ -57,7 +61,15 @@ export const getMember = (
 	hasBasicAttendanceManagementPermission(req.member)(event)(team)
 		? Maybe.orSome<ServerEither<Member>>(
 				asyncRight(req.member, errorGenerator('Could not get member information')),
-		  )(Maybe.map(resolveReference(req.mysqlx)(req.account))(Maybe.fromValue(body.memberID)))
+		  )(
+				Maybe.map(resolveReference(req.mysqlx)(req.account))(
+					Maybe.fromValue(body.memberID),
+				),
+		  ).filter(isAttendanceRecordInScope(req.mysqlx)(req.account), {
+				type: 'OTHER',
+				code: 403,
+				message: 'You do not have permission to modify this attendance record',
+		  })
 		: asyncRight(req.member, errorGenerator('Could not get member information'));
 
 export const attendanceModifyValidator = Validator.Partial(
@@ -71,6 +83,13 @@ export const maybeGetTeam = (
 	event.teamID === null || event.teamID === undefined
 		? asyncRight(Maybe.none(), errorGenerator('Could not get team membership information'))
 		: getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some);
+
+export const isAttendanceRecordInScope = (schema: Schema) => (account: AccountObject) => (
+	attendanceRecordOwner: MemberReference,
+) =>
+	resolveReference(schema)(account)(attendanceRecordOwner)
+		.map(isMemberPartOfAccount({})(schema))
+		.flatMap(f => f(account));
 
 export const func: ServerAPIEndpoint<api.events.attendance.ModifyAttendance> = PAM.RequireSessionType(
 	SessionType.REGULAR,

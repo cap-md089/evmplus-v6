@@ -26,12 +26,15 @@ import {
 	AttendanceRecord,
 	AttendanceStatus,
 	CAPEventMemberPermissions,
+	CAPExtraMemberInformation,
 	CAPGroupMemberPermissions,
 	CAPRegionMemberPermissions,
 	CAPSquadronMemberPermissions,
 	CAPWingMemberPermissions,
 	CustomAttendanceFieldValue,
+	DiscordServerInformation,
 	Either,
+	errorGenerator,
 	ExternalPointOfContact,
 	identity,
 	InternalPointOfContact,
@@ -40,17 +43,14 @@ import {
 	MemberReference,
 	Permissions,
 	PointOfContactType,
-	RawEventObject,
+	RawRegularEventObject,
 	RawServerConfiguration,
 	RawTeamObject,
+	RegistryValues,
 	StoredMemberPermissions,
+	stringifyMemberReference,
 	stripProp,
 	Validator,
-	errorGenerator,
-	CAPExtraMemberInformation,
-	stringifyMemberReference,
-	RegistryValues,
-	DiscordServerInformation,
 } from 'common-lib';
 import 'dotenv/config';
 import { confFromRaw, generateResults, getAccount } from 'server-common';
@@ -217,8 +217,8 @@ process.on('unhandledRejection', up => {
 	);
 	console.log('Moved teams.\n');
 
-	const v5eventsCollection = v5schema.getCollection<RawEventObject>('Events');
-	const v6eventsCollection = v6schema.getCollection<RawEventObject>('Events');
+	const v5eventsCollection = v5schema.getCollection<RawRegularEventObject>('Events');
+	const v6eventsCollection = v6schema.getCollection<RawRegularEventObject>('Events');
 
 	const correctPOC = (
 		poc:
@@ -242,7 +242,7 @@ process.on('unhandledRejection', up => {
 
 	console.log('Moving events...');
 	console.log(
-		await moveFromOneToOther<RawEventObject>(event => ({
+		await moveFromOneToOther<RawRegularEventObject>(event => ({
 			...event,
 			pointsOfContact: event.pointsOfContact.map(correctPOC),
 		}))(v5eventsCollection, v6eventsCollection),

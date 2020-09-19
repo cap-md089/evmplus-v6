@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, RawEventObject, Timezone } from 'common-lib';
+import { Either, RawEventObject, Timezone, RawResolvedEventObject } from 'common-lib';
 import { DateTime, Duration } from 'luxon';
 import React from 'react';
 import Loader from '../components/Loader';
@@ -94,7 +94,7 @@ export const getPositionIndices = (
 };
 
 export interface CalendarProps extends PageProps<{ month?: string; year?: string }> {
-	events: RawEventObject[];
+	events: RawResolvedEventObject[];
 	start: DateTime;
 	end: DateTime;
 }
@@ -104,7 +104,7 @@ export default class Calendar extends Page<
 	{ events: RawEventObject[] | null; start: DateTime | null; end: DateTime | null }
 > {
 	public state: {
-		events: RawEventObject[] | null;
+		events: RawResolvedEventObject[] | null;
 		start: DateTime | null;
 		end: DateTime | null;
 	} = {

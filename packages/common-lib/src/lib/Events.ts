@@ -23,14 +23,13 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
+	EventObject,
 	EventType,
 	MemberReference,
 	Permissions,
 	PointOfContactType,
-	RawRegularEventObject,
 	RawResolvedEventObject,
 	RawTeamObject,
-	RegularEventObject,
 	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
@@ -57,7 +56,7 @@ export const isPOCOf = (member: MemberReference, event: RawResolvedEventObject) 
 		)
 		.reduce((prev, curr) => prev || curr, false);
 
-export const canSignUpForEvent = (event: RegularEventObject) => (
+export const canSignUpForEvent = (event: EventObject) => (
 	eventTeam: MaybeObj<RawTeamObject>,
 ): ((memberInput?: MemberReference | null) => EitherObj<string, void>) =>
 	pipe(
@@ -87,10 +86,10 @@ export const canSignUpForEvent = (event: RegularEventObject) => (
 		Either.map(destroy),
 	);
 
-export const getURIComponent = (event: RawRegularEventObject) =>
+export const getURIComponent = (event: RawResolvedEventObject) =>
 	`${event.id}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 
-export const hasMember = (event: RegularEventObject) => (member: MemberReference) =>
+export const hasMember = (event: EventObject) => (member: MemberReference) =>
 	event.attendance.map(get('memberID')).filter(areMembersTheSame(member)).length > 0;
 
 export const hasBasicEventPermissions = (member: User) =>

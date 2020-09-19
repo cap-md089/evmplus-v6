@@ -18,10 +18,30 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator } from 'common-lib';
-import { getSortedEvents } from 'server-common';
+import {
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	asyncRight,
+	Either,
+	EitherObj,
+	errorGenerator,
+	get,
+	RawResolvedEventObject,
+	Right,
+	ServerError,
+} from 'common-lib';
+import { ensureResolvedEvent, getSortedEvents } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
-	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'));
+	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'))
+		.map(asyncIterMap(ensureResolvedEvent(req.mysqlx)))
+		.map(
+			asyncIterFilter<
+				EitherObj<ServerError, RawResolvedEventObject>,
+				Right<RawResolvedEventObject>
+			>(Either.isRight),
+		)
+		.map(asyncIterMap(get('value')));
 
 export default func;

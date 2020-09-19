@@ -22,14 +22,15 @@ import {
 	areMembersTheSame,
 	AsyncEither,
 	asyncIterMap,
+	asyncRight,
 	AttendanceStatus,
 	collectGeneratorAsync,
-	effectiveManageEventPermissionForEvent,
 	Either,
+	errorGenerator,
 	get,
 	getFullMemberName,
+	hasBasicAttendanceManagementPermission,
 	Maybe,
-	Permissions,
 	ServerConfiguration,
 	toReference,
 	User,
@@ -37,9 +38,11 @@ import {
 import { Client, Message, VoiceChannel } from 'discord.js';
 import {
 	addMemberToAttendance,
+	ensureResolvedEvent,
 	getAttendanceForEvent,
 	getEvent,
 	getFullPointsOfContact,
+	getTeam,
 	resolveReference,
 } from 'server-common';
 import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
@@ -139,7 +142,9 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		return;
 	}
 
-	const eventEither = await getEvent(schema)(account.value)(eventID);
+	const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
+		ensureResolvedEvent(schema),
+	);
 
 	if (Either.isLeft(eventEither)) {
 		console.error(eventEither.value);
@@ -151,7 +156,14 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 
 	const event = eventEither.value;
 
-	if (effectiveManageEventPermissionForEvent(adderUser)(event) === Permissions.ManageEvent.NONE) {
+	const teamMaybe = await (event.teamID !== null && event.teamID !== undefined
+		? getTeam(schema)(account.value)(event.teamID).map(Maybe.some)
+		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+	)
+		.fullJoin()
+		.catch(Maybe.none);
+
+	if (!hasBasicAttendanceManagementPermission(adderUser)(event)(teamMaybe)) {
 		await session.close();
 		await message.reply(
 			'You do not have permission to add members to attendance of this event',

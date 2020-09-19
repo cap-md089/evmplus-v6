@@ -28,6 +28,7 @@ import {
 	EventType,
 	hasBasicEventPermissions,
 	RawRegularEventObject,
+	RawResolvedEventObject,
 	toReference,
 	User,
 } from 'common-lib';
@@ -64,6 +65,13 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 					linkEvent(req.configuration)(req.mysqlx)(req.account)(event)(
 						toReference(req.member),
 					),
+				)
+				.map(
+					linkedEvent =>
+						({
+							...event,
+							...linkedEvent,
+						} as RawResolvedEventObject),
 				),
 		);
 

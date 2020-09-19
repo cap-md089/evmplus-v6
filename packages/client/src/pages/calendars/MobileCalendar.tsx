@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { RawEventObject, effectiveManageEventPermission, Permissions } from 'common-lib';
+import { effectiveManageEventPermission, Permissions, RawResolvedEventObject } from 'common-lib';
 import { DateTime } from 'luxon';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -98,7 +98,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 	}
 
 	private renderEventListForDay = (month: DateTime) => (
-		events: RawEventObject[],
+		events: RawResolvedEventObject[],
 		index: number,
 	) => {
 		if (events.length === 0) {

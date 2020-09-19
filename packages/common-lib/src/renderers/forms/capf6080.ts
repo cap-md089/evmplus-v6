@@ -21,7 +21,7 @@ import { DateTime } from 'luxon';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { presentMultCheckboxReturn } from '../../lib/forms';
 import { Maybe } from '../../lib/Maybe';
-import { FullPointOfContact, Member, RawRegularEventObject } from '../../typings/types';
+import { FullPointOfContact, Member, RawResolvedEventObject } from '../../typings/types';
 
 export function formatPhone(phone: string) {
 	// strip spaces and non-numeric characters
@@ -160,7 +160,7 @@ const GetBestEmails = (inMember: Member) => {
 	}
 };
 
-const GetOtherForms = (inEvent: RawRegularEventObject) => {
+const GetOtherForms = (inEvent: RawResolvedEventObject) => {
 	if (inEvent.requiredForms.otherSelected) {
 		return inEvent.requiredForms.otherValue;
 	} else {
@@ -169,7 +169,7 @@ const GetOtherForms = (inEvent: RawRegularEventObject) => {
 };
 
 export const capf6080DocumentDefinition = (
-	event: RawRegularEventObject,
+	event: RawResolvedEventObject,
 	pointsOfContact: FullPointOfContact[],
 	member: Member,
 	hostname: string,

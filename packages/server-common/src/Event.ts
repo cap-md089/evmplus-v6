@@ -62,7 +62,6 @@ import {
 	RawLinkedEvent,
 	RawRegularEventObject,
 	RawResolvedEventObject,
-	RegularEventObject,
 	ServerConfiguration,
 	ServerError,
 	stripProp,
@@ -149,17 +148,6 @@ export const attendanceRecordMapper = (rec: RawAttendanceDBRecord): AttendanceRe
 });
 
 export const attendanceRecordIterMapper = asyncIterMap(attendanceRecordMapper);
-
-const getSourceIDForEvent = (event: RawResolvedEventObject) =>
-	event.type === EventType.LINKED
-		? {
-				accountID: event.targetAccountID,
-				id: event.targetEventID,
-		  }
-		: {
-				accountID: event.accountID,
-				id: event.id,
-		  };
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
 	member: MemberReference,
@@ -336,7 +324,7 @@ const sendSignupDenyMessage = (message: string): ServerEither<void> =>
 
 export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) => (
 	account: AccountObject,
-) => (event: RegularEventObject) => (attendee: Required<NewAttendanceRecord>) =>
+) => (event: EventObject) => (attendee: Required<NewAttendanceRecord>) =>
 	(event.teamID !== null && event.teamID !== undefined
 		? getTeam(schema)(account)(event.teamID).map(Maybe.some)
 		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
@@ -352,8 +340,9 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 			getMemberName(schema)(account)(attendee.memberID).flatMap(memberName =>
 				addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
 					...attendee,
-					accountID: event.accountID,
-					eventID: event.id,
+					accountID:
+						event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
+					eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
 					timestamp: now(),
 					memberName,
 					summaryEmailSent: false,
@@ -375,8 +364,9 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (account: Account
 	)
 		.map(
 			modifyAndBindC<RawAttendanceDBRecord>({
-				accountID: account.id,
-				eventID: event.id,
+				accountID:
+					event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
+				eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
 				memberID: toReference(member),
 			}),
 		)
@@ -661,7 +651,7 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 	account: AccountObject,
 ) => (linkedEvent: RawRegularEventObject) => (linkAuthor: MemberReference) => (
 	targetAccount: AccountObject,
-) =>
+): ServerEither<RawLinkedEvent> =>
 	asyncRight(linkedEvent, errorGenerator('Could not link event'))
 		.filter(({ type }) => type === EventType.REGULAR, {
 			type: 'OTHER',
@@ -693,7 +683,7 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 				})),
 			),
 		)
-		.flatMap(addToCollection(schema.getCollection<RawEventObject>('Events')));
+		.flatMap(addToCollection(schema.getCollection<RawLinkedEvent>('Events')));
 
 const updateGoogleCalendarsForLinkedEvents = (config: ServerConfiguration) => (schema: Schema) => (
 	savedEvent: RawRegularEventObject,
