@@ -2,7 +2,7 @@
 
 The premiere event and unit management site for Civil Air Patrol
 
-Current units running the CAPUnit suite:
+Current units running the EventManagement+ suite:
 
 1. [MD089 - St. Mary's Composite Squadron](https://md089.evmplus.org/)
 2. [MD008 - Harford Composite Squadron](https://md008.evmplus.org/)
@@ -101,8 +101,9 @@ The target of the virtual bind must be `/google-keys`; this must be a virtual mo
 
 When you have all the parts together, you can run the `util-cli/dist/createAccount.js` file to create your squadron account
 
-Once the account is created, you will need to run `util-cli/dist/importCapwatch.js` to load squadron data, providing a path to a CAPWATCH file
-**Note: this has to be done on a Linux machine**
+Once the account is created, you will need to run `util-cli/dist/importCapwatch.js` to load squadron data, providing a path to a CAPWATCH file downloaded from [here](https://www.capnhq.gov/cap.capwatch.web/splash.aspx).
+
+**Note: this has to be done on a Linux machine.**
 
 ### Accessing the site
 
@@ -113,6 +114,10 @@ To access the site, you have to use a domain name that starts with the account I
 If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `support@evmplus.org` to request an official EvMPlus.org website.
 
 This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the EvMPlus.org domain.
+
+There are no hosting fees that come with requesting an account. Regarding how to upload CAPWATCH data through the hosted option, currently an encrypted CAPWATCH file can be sent via email to `support@evmplus.org` with the password sent via another channel established during account setup.
+
+There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a evmplus.org hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
 
 ## Developing EvMPlus.org
 

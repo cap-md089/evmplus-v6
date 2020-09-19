@@ -303,6 +303,10 @@ export default async function updateGoogleCalendars(
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
+	if (inEvent.status === EventStatus.DRAFT) {
+		return [null, null, null];
+	}
+
 	// 999999999 is there a guarantee that the function return values will always be in the same order???
 	return Promise.all([
 		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
