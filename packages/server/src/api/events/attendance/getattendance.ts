@@ -26,12 +26,13 @@ import {
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { getAttendanceForEvent, getEvent, PAM } from 'server-common';
+import { ensureResolvedEvent, getAttendanceForEvent, getEvent, PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.events.attendance.GetAttendance> = PAM.RequireSessionType(
 	SessionType.REGULAR,
 )(req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(ensureResolvedEvent(req.mysqlx))
 		.filter(
 			event =>
 				!event.privateAttendance ||

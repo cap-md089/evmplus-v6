@@ -23,21 +23,30 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
+	EventType,
 	MemberReference,
 	Permissions,
 	PointOfContactType,
 	RawRegularEventObject,
+	RawResolvedEventObject,
 	RawTeamObject,
 	RegularEventObject,
 	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
 import { Maybe, MaybeObj } from './Maybe';
-import { areMembersTheSame, hasOneDutyPosition, hasPermission, isRioux } from './Member';
-import { isPartOfTeam } from './Team';
+import {
+	areMembersTheSame,
+	hasDutyPositions,
+	hasOneDutyPosition,
+	hasPermission,
+	isCAPMember,
+	isRioux,
+} from './Member';
+import { isPartOfTeam, isTeamLeader } from './Team';
 import { complement, destroy, get } from './Util';
 
-export const isPOCOf = (member: MemberReference, event: RawRegularEventObject) =>
+export const isPOCOf = (member: MemberReference, event: RawResolvedEventObject) =>
 	(member.type === 'CAPNHQMember' && (member.id === 546319 || member.id === 542488)) ||
 	areMembersTheSame(member)(event.author) ||
 	event.pointsOfContact
@@ -103,12 +112,12 @@ export const getAttendanceRecordForMember = (attendance: AttendanceRecord[]) => 
 
 export const canManageEvent = (
 	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: User) => (event: RawRegularEventObject) =>
+) => (member: User) => (event: RawResolvedEventObject) =>
 	isPOCOf(member, event) || effectiveManageEventPermissionForEvent(member)(event) >= threshold;
 
 export const canMaybeManageEvent = (
 	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: MaybeObj<User>) => (event: RawRegularEventObject) =>
+) => (member: MaybeObj<User>) => (event: RawResolvedEventObject) =>
 	Maybe.isSome(member) ? canManageEvent(threshold)(member.value)(event) : false;
 
 export const effectiveManageEventPermission = (member: User) =>
@@ -135,7 +144,7 @@ export const effectiveManageEventPermission = (member: User) =>
 	);
 
 export const effectiveManageEventPermissionForEvent = (member: User) => (
-	event: RawRegularEventObject,
+	event: RawResolvedEventObject,
 ) =>
 	Math.max(
 		effectiveManageEventPermission(member),
@@ -164,3 +173,29 @@ export const applyCustomAttendanceFields = (eventFields: CustomAttendanceField[]
 			memberFields.find(({ title }) => title === customField.title) ??
 			defaultCustomAttendanceFieldValue(customField),
 	);
+
+/**
+ * See if someone has the ability to add attendeees to an event and modify attendance for
+ * an event
+ *
+ * @param member the member to check permissions for
+ * @param event the event that has attendance the member wants to modify
+ * @param team the team that belongs to the event, used for checking team leadership
+ */
+export const hasBasicAttendanceManagementPermission = (member: User) => (
+	event: RawResolvedEventObject,
+) => (team: MaybeObj<RawTeamObject>) =>
+	// Event management permissions
+	effectiveManageEventPermissionForEvent(member)(event) === Permissions.ManageEvent.FULL ||
+	// CAP duty positions
+	(isCAPMember(member) &&
+		hasDutyPositions([
+			'Cadet Executive Officer',
+			'Cadet Administrative Officer',
+			'Cadet Administrative NCO',
+		])(member)) ||
+	// Team leadership
+	(Maybe.isSome(team) &&
+		team.value.id === event.teamID &&
+		(event.type === EventType.REGULAR || event.targetAccountID === team.value.accountID) &&
+		isTeamLeader(member)(team.value));

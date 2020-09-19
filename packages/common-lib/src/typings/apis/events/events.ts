@@ -32,6 +32,7 @@ import {
 	Member,
 	NewEventObject,
 	RawEventObject,
+	RawResolvedEventObject,
 } from '../../types';
 
 /**
@@ -47,7 +48,7 @@ export interface EventViewerAttendanceRecord {
  * Contains information needed to display an event in EVentViewer.tsx
  */
 export interface EventViewerData {
-	event: RawEventObject;
+	event: RawResolvedEventObject;
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
 	attendees: Array<APIEither<EventViewerAttendanceRecord>>;
 	sourceAccountName?: string | undefined;

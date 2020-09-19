@@ -271,6 +271,11 @@ export interface AccountGetter {
 	byOrgid: typeof getCAPAccountsForORGID;
 }
 
+export const getMemoizedAccountGetter = (schema: Schema): AccountGetter => ({
+	byId: always(memoize(getAccount(schema))),
+	byOrgid: always(memoize(getCAPAccountsForORGID(schema))),
+});
+
 export const getAccount = (schema: Schema) => (accountID: string) =>
 	asyncRight(
 		schema.getCollection<AccountObject>('Accounts'),

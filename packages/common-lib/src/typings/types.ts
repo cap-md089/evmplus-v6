@@ -1098,6 +1098,10 @@ export interface RawLinkedEvent extends AccountIdentifiable {
  */
 export type RawEventObject = RawLinkedEvent | RawRegularEventObject;
 
+export type RawResolvedEventObject =
+	| RawRegularEventObject
+	| (Omit<RawRegularEventObject, 'type'> & RawLinkedEvent);
+
 export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 
 /**

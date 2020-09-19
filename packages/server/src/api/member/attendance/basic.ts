@@ -25,17 +25,23 @@ import {
 	Either,
 	errorGenerator,
 	Maybe,
-	RawEventObject,
+	RawResolvedEventObject,
 	ServerError,
 	SessionType,
 	stringifyMemberReference,
 	toReference,
 	ValidatorError,
 } from 'common-lib';
-import { getAttendanceForMember, getEvent, PAM, RawAttendanceDBRecord } from 'server-common';
+import {
+	ensureResolvedEvent,
+	getAttendanceForMember,
+	getEvent,
+	PAM,
+	RawAttendanceDBRecord,
+} from 'server-common';
 
 const stripEvent = (record: RawAttendanceDBRecord) => (
-	event: RawEventObject,
+	event: RawResolvedEventObject,
 ): api.member.attendance.EventAttendanceRecordEventInformation => ({
 	attendanceComments: record.comments,
 	endDateTime: event.endDateTime,
@@ -49,6 +55,7 @@ export const expandRecord = (getEventFunc: typeof getEvent) => (
 	req: ServerAPIRequestParameter<api.member.attendance.Get>,
 ) => (record: RawAttendanceDBRecord) =>
 	getEventFunc(req.mysqlx)(req.account)(record.eventID)
+		.flatMap(ensureResolvedEvent(req.mysqlx))
 		.map(stripEvent(record))
 		.map(Maybe.some)
 		.leftFlatMap(always(Either.right(Maybe.none())))

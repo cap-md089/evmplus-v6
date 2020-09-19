@@ -36,9 +36,11 @@ import {
 	asyncRight,
 	countAsync,
 	destroy,
+	Either,
 	EitherObj,
 	errorGenerator,
 	get,
+	getORGIDsFromCAPAccount,
 	isPartOfTeam,
 	isRioux,
 	Maybe,
@@ -284,3 +286,30 @@ export const getAdminAccountIDsForMember = (schema: Schema) => (
 			),
 		),
 	);
+
+const isPartOfAccountSlow = (accountGetter: Partial<AccountGetter>) => (schema: Schema) => (
+	member: Member,
+) => (account: AccountObject) =>
+	asyncIterReduce<EitherObj<ServerError, AccountObject>, boolean>(
+		(prev, curr) => prev && (Either.isLeft(curr) || account.id === curr.value.id),
+	)(false)(getAllAccountsForMember(accountGetter)(schema)(member));
+
+export const isMemberPartOfAccount = (accountGetter: Partial<AccountGetter>) => (
+	schema: Schema,
+) => (member: Member) => (account: AccountObject) =>
+	member.type === 'CAPProspectiveMember' &&
+	account.type === AccountType.CAPSQUADRON &&
+	account.id === member.id
+		? asyncRight(true, errorGenerator('Could not verify account membership'))
+		: member.type === 'CAPNHQMember'
+		? Maybe.orSome(false)(
+				Maybe.map<number[], boolean>(ids => ids.includes(member.orgid))(
+					getORGIDsFromCAPAccount(account),
+				),
+		  )
+			? asyncRight(true, errorGenerator('Could not verify account membership'))
+			: asyncRight(
+					isPartOfAccountSlow(accountGetter)(schema)(member)(account),
+					errorGenerator('Could not verify account membership'),
+			  )
+		: asyncRight(false, errorGenerator('Could not verify account membership'));

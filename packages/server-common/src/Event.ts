@@ -24,6 +24,7 @@ import {
 	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
+	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncIterTap,
@@ -60,18 +61,19 @@ import {
 	RawEventObject,
 	RawLinkedEvent,
 	RawRegularEventObject,
+	RawResolvedEventObject,
 	RegularEventObject,
 	ServerConfiguration,
 	ServerError,
 	stripProp,
 	toReference,
 } from 'common-lib';
-import { getAccount } from './Account';
+import { AccountGetter, getAccount, getMemoizedAccountGetter } from './Account';
 import updateGoogleCalendars, {
 	createGoogleCalendarEvents,
 	removeGoogleCalendarEvents,
 } from './GoogleUtils';
-import { getMemberName } from './Members';
+import { getMemberName, isMemberPartOfAccount, resolveReference } from './Members';
 import {
 	addToCollection,
 	collectResults,
@@ -148,6 +150,17 @@ export const attendanceRecordMapper = (rec: RawAttendanceDBRecord): AttendanceRe
 
 export const attendanceRecordIterMapper = asyncIterMap(attendanceRecordMapper);
 
+const getSourceIDForEvent = (event: RawResolvedEventObject) =>
+	event.type === EventType.LINKED
+		? {
+				accountID: event.targetAccountID,
+				id: event.targetEventID,
+		  }
+		: {
+				accountID: event.accountID,
+				id: event.id,
+		  };
+
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
 	member: MemberReference,
 ) => (collection: Collection<RawAttendanceDBRecord>) =>
@@ -187,7 +200,7 @@ export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) =
 		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults);
 export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 
-const getLinkedEvents = (schema: Schema) => (accountID: string) => (
+export const getLinkedEvents = (schema: Schema) => (accountID: string) => (
 	eventID: number,
 ): AsyncIter<RawLinkedEvent> =>
 	generateResults(
@@ -198,10 +211,24 @@ const getLinkedEvents = (schema: Schema) => (accountID: string) => (
 		}),
 	);
 
+const attendanceRecordBelongsToAccount = (accountGetter: AccountGetter) => (schema: Schema) => (
+	accountID: string,
+) => (attendanceRecord: AttendanceRecord) =>
+	accountGetter
+		.byId(schema)(accountID)
+		.flatMap(account =>
+			resolveReference(schema)(account)(attendanceRecord.memberID).flatMap(member =>
+				isMemberPartOfAccount(accountGetter)(schema)(member)(account),
+			),
+		);
+
 export const getAttendanceForEvent = (schema: Schema) => ({
 	id: eventID,
 	accountID,
-}: RawEventObject) =>
+}: {
+	id: number;
+	accountID: string;
+}) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not get attendance records'),
@@ -210,20 +237,21 @@ export const getAttendanceForEvent = (schema: Schema) => ({
 			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID }),
 		)
 		.map(generateResults)
-		.map(attendanceRecordIterMapper);
+		.map(attendanceRecordIterMapper)
+		.map(
+			asyncIterFilter(record =>
+				attendanceRecordBelongsToAccount(getMemoizedAccountGetter(schema))(schema)(
+					accountID,
+				)(record)
+					.fullJoin()
+					.catch(always(false)),
+			),
+		);
 
 export const getEventAttendance = (schema: Schema) => (account: AccountObject) => (
 	eventID: number,
 ): ServerEither<AsyncIter<AttendanceRecord>> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records'),
-	)
-		.map(
-			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID: account.id }),
-		)
-		.map(generateResults)
-		.map(attendanceRecordIterMapper);
+	getAttendanceForEvent(schema)({ accountID: account.id, id: eventID });
 
 type PartialResolvedRawEventObject = RawRegularEventObject & Omit<RawRegularEventObject, 'type'>;
 type PartialRawEventObject = PartialResolvedRawEventObject | RawRegularEventObject;
@@ -315,7 +343,7 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 	)
 		.map(canSignUpForEvent(event))
 		.map(call(attendee.memberID))
-		.map(
+		.flatMap(
 			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
 				asyncRight(void 0, errorGenerator('Could not add member to attendance')),
 			),
@@ -339,7 +367,7 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 export const addMemberToAttendance = addMemberToAttendanceFunc(Date.now);
 
 export const modifyEventAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
-	event: RawRegularEventObject,
+	event: RawResolvedEventObject,
 ) => (member: Member) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
@@ -415,15 +443,20 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 
 export const ensureResolvedEvent = (schema: Schema) => (
 	event: RawEventObject,
-): ServerEither<RawRegularEventObject> =>
+): ServerEither<RawResolvedEventObject> =>
 	event.type === EventType.LINKED
-		? getAccount(schema)(event.targetAccountID).flatMap(
-				account =>
-					// Links cannot be made to links, so by resolving a link we actually get an event
-					getEvent(schema)(account)(event.targetEventID) as AsyncEither<
-						ServerError,
-						RawRegularEventObject
-					>,
+		? getAccount(schema)(event.targetAccountID).flatMap(account =>
+				// Links cannot be made to links, so by resolving a link we actually get an event
+				(getEvent(schema)(account)(event.targetEventID) as AsyncEither<
+					ServerError,
+					RawRegularEventObject
+				>).map<RawResolvedEventObject>(
+					resolvedEvent =>
+						({
+							...resolvedEvent,
+							...event,
+						} as RawResolvedEventObject),
+				),
 		  )
 		: asyncRight(event, errorGenerator('Could not resolve event reference'));
 
