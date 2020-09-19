@@ -54,6 +54,7 @@ import {
 	getCAPAccountsForORGID,
 	getEvent,
 	getFullPointsOfContact,
+	getMemberName,
 	getOrgName,
 	getRegistry,
 	getRegistryById,
@@ -141,13 +142,15 @@ export const getFullEventInformation = (
 			? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(reg => reg.Website.Name)
 			: asyncRight(void 0, errorGenerator('Could not get account name')),
 		getLinkedEvents(req)(event),
+		getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some),
 	]).map<AsyncRepr<api.events.events.EventViewerData>>(
-		([attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
+		([attendees, pointsOfContact, sourceAccountName, linkedEvents, authorFullName]) => ({
 			event,
 			attendees,
 			pointsOfContact,
 			sourceAccountName,
 			linkedEvents,
+			authorFullName,
 		}),
 	);
 
@@ -176,8 +179,21 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 						  )
 						: asyncRight(void 0, errorGenerator('Could not get account name')),
 					getLinkedEvents(req)(event),
+					Maybe.isSome(req.member)
+						? getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some)
+						: asyncRight(
+								Maybe.none(),
+								errorGenerator('Could not get event author name'),
+						  ),
 			  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
-					([registry, attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
+					([
+						registry,
+						attendees,
+						pointsOfContact,
+						sourceAccountName,
+						linkedEvents,
+						authorFullName,
+					]) => ({
 						event,
 						attendees:
 							event.privateAttendance &&
@@ -193,6 +209,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 						pointsOfContact,
 						sourceAccountName,
 						linkedEvents,
+						authorFullName,
 					}),
 			  ),
 	);

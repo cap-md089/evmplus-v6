@@ -51,7 +51,7 @@ echo "Checking files for copyright information..."
 failed=false
 
 for file in $FILES; do
-	if [[ -f $file ]] && ! grep -iq "copyright" $file; then
+	if test -f $file && ! grep -iq "copyright" $file; then
 		echo "'$file' does not have a copyright"
 		failed=true
 	fi

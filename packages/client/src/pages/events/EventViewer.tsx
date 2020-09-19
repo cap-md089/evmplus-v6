@@ -425,6 +425,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			pointsOfContact,
 			sourceAccountName,
 			linkedEvents,
+			authorFullName,
 		} = eventViewerInfo;
 		const { member, fullMemberDetails } = this.props;
 
@@ -641,7 +642,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					effectiveManageEventPermissionForEvent(member)(event) >=
 						Permissions.ManageEvent.FULL ? (
 						<>
-							{linkableAccounts.length === 0 || !!event.sourceEvent ? <br /> : null}
+							{linkableAccounts.length === 0 || !!event.sourceEvent ? <br /> : ' | '}
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
 						</>
 					) : null}
@@ -758,6 +759,26 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						<strong>Desired number of participants:</strong>{' '}
 						{event.desiredNumberOfParticipants}
+						<br />
+						{event.eventWebsite !== '' ? (
+							<>
+								<strong>Website:</strong>{' '}
+								<a
+									href={event.eventWebsite}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{event.eventWebsite}
+								</a>
+							</>
+						) : null}
+						<br />
+						{Maybe.isSome(authorFullName) ? (
+							<>
+								<strong>Event Author:</strong> {authorFullName.value}
+								<br />
+							</>
+						) : null}
 						<h2>Contact information</h2>
 						<div>
 							{pointsOfContact.map((poc, i) =>
