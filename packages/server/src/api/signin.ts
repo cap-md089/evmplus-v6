@@ -45,6 +45,7 @@ import {
 	getAdminAccountIDsForMember,
 	getUnfinishedTaskCountForMember,
 	getUnreadNotificationCount,
+	logSignin,
 	PAM,
 	resolveReference,
 	ServerEither,
@@ -75,6 +76,7 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 			),
 			errorGenerator('Could not get admin account IDs for member'),
 		),
+		logSignin(req.mysqlx)(req.account)(result.member),
 	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
 		error: MemberCreateError.NONE,
 		member: {

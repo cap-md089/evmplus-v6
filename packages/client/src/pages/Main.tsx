@@ -323,7 +323,10 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 			{cps.CurrentAprvStatus === 'PND' ? (
 				<p>
 					Your achievement completion is pending approval. Review the requirements for
-					your next achievement <a href={promoReqs.ReqsWebLink}>here</a>
+					your next achievement{' '}
+					<a href={promoReqs.ReqsWebLink} rel="noopener noreferrer">
+						here
+					</a>
 				</p>
 			) : cps.NextCadetAchvID <= 8 ||
 			  cps.NextCadetAchvID === 10 ||
@@ -335,7 +338,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 				<p>
 					Requirements for your promotion to {promoReqs.Grade} are not yet complete.
 					Review the requirements{' '}
-					<a href={promoReqs.ReqsWebLink} target="_blank">
+					<a href={promoReqs.ReqsWebLink} target="_blank" rel="noopener noreferrer">
 						here
 					</a>
 				</p>
@@ -343,7 +346,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 				<p>
 					Requirements for your next achievement are not yet complete. Review the
 					requirements{' '}
-					<a href={promoReqs.ReqsWebLink} target="_blank">
+					<a href={promoReqs.ReqsWebLink} target="_blank" rel="noopener noreferrer">
 						here
 					</a>
 				</p>
@@ -351,7 +354,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 			{<p>{promotionAvailability}</p>}
 			<h3>Incomplete Promotion Requirements</h3>
 			Check your eServices Cadet Track Report{' '}
-			<a href={cadetTrackReport} target="_blank">
+			<a href={cadetTrackReport} target="_blank" rel="noopener noreferrer">
 				here
 			</a>
 			<h4>Complete these requirements to promote</h4>
@@ -362,7 +365,11 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 							<p>
 								You need to pass a milestone leadership test. The test must be
 								proctored. Go{' '}
-								<a href={promoReqs.LeadTestWebLink} target="_blank">
+								<a
+									href={promoReqs.LeadTestWebLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									here
 								</a>{' '}
 								to take the test
@@ -375,7 +382,11 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 							<p>
 								You need to pass the Wright Brothers leadership test. The test must
 								be proctored. Go{' '}
-								<a href={promoReqs.LeadTestWebLink} target="_blank">
+								<a
+									href={promoReqs.LeadTestWebLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									here
 								</a>{' '}
 								to take the test
@@ -387,7 +398,11 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 						<li>
 							<p>
 								You need to pass a leadership test. Go{' '}
-								<a href={promoReqs.LeadTestWebLink} target="_blank">
+								<a
+									href={promoReqs.LeadTestWebLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									here
 								</a>{' '}
 								to take the test
@@ -409,7 +424,11 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 						<li>
 							<p>
 								You need to pass an aerospace test. Go{' '}
-								<a href={promoReqs.AeroTestWebLink} target="_blank">
+								<a
+									href={promoReqs.AeroTestWebLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									here
 								</a>{' '}
 								to take the test
@@ -433,7 +452,11 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 							<p>
 								You need credit for a drill test. Study the requirements for your
 								next test{' '}
-								<a href={promoReqs.DrillTestWebLink} target="_blank">
+								<a
+									href={promoReqs.DrillTestWebLink}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
 									here
 								</a>
 							</p>
@@ -445,7 +468,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 						<p>
 							You need to recite the Cadet Oath word for word. Study the oath text
 							located{' '}
-							<a href={cadetOath} target="_blank">
+							<a href={cadetOath} target="_blank" rel="noopener noreferrer">
 								here
 							</a>
 						</p>
@@ -456,7 +479,10 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 						<li>
 							<p>
 								You need to complete a Staff Duty Assignment Report. Review SDA
-								requirements <a href={sdaLink}>here</a>
+								requirements{' '}
+								<a href={sdaLink} rel="noopener noreferrer">
+									here
+								</a>
 							</p>
 						</li>
 					) : null
