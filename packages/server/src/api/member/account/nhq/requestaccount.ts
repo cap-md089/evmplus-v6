@@ -115,7 +115,7 @@ export const func: (
 				type: 'CAPNHQMember' as const,
 				id: req.body.capid,
 			})
-				.filter(hasEmail(req.body.email), {
+				.filter(hasEmail(req.body.email.toLowerCase()), {
 					type: 'OTHER',
 					code: 400,
 					message: 'Email provided does not match email in database',
