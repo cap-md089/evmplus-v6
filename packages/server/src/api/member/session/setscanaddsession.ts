@@ -19,7 +19,7 @@
 
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canManageEvent, Permissions, SessionType } from 'common-lib';
-import { getEvent, PAM } from 'server-common';
+import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
 import { updateSession } from 'server-common/dist/member/pam';
 
 export const func: (
@@ -32,6 +32,7 @@ export const func: (
 				code: 403,
 				message: 'You do not have permission to manage this event',
 			})
+			.flatMap(ensureResolvedEvent(req.mysqlx))
 			.filter(event => event.meetDateTime > now(), {
 				type: 'OTHER',
 				code: 403,

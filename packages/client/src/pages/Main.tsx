@@ -20,8 +20,8 @@
 import {
 	AsyncEither,
 	asyncRight,
-	CadetPromotionStatus,
 	CadetPromotionRequirementsMap,
+	CadetPromotionStatus,
 	Either,
 	errorGenerator,
 	EventStatus,
@@ -32,7 +32,7 @@ import {
 	MaybeObj,
 	pipe,
 	presentMultCheckboxReturn,
-	RawEventObject,
+	RawResolvedEventObject,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -50,8 +50,8 @@ interface MainStateUnloaded {
 
 interface MainStateLoaded {
 	state: 'LOADED';
-	events: RawEventObject[];
-	nextEvent: MaybeObj<RawEventObject>;
+	events: RawResolvedEventObject[];
+	nextEvent: MaybeObj<RawResolvedEventObject>;
 	promotionRequirements: MaybeObj<CadetPromotionStatus>;
 }
 

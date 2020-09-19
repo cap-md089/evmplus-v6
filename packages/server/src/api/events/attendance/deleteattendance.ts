@@ -17,43 +17,69 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Schema } from '@mysql/xdevapi';
 import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	AccountObject,
 	api,
 	APIEndpointBody,
+	AsyncEither,
 	asyncRight,
 	canManageEvent,
 	destroy,
-	effectiveManageEventPermissionForEvent,
 	errorGenerator,
+	EventType,
+	hasBasicAttendanceManagementPermission,
 	Maybe,
 	MemberReference,
 	Permissions,
-	RawEventObject,
+	RawResolvedEventObject,
 	SessionType,
 	toReference,
+	User,
 } from 'common-lib';
-import { getAccount, getEvent, PAM, removeMemberFromEventAttendance } from 'server-common';
+import {
+	ensureResolvedEvent,
+	getEvent,
+	getTeam,
+	isMemberPartOfAccount,
+	PAM,
+	removeMemberFromEventAttendance,
+	resolveReference,
+} from 'server-common';
 
-export const getMember = (
-	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>,
-) => (body: APIEndpointBody<api.events.attendance.Delete>) => (event: RawEventObject) =>
+export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
+	body: APIEndpointBody<api.events.attendance.Delete>,
+) => (event: RawResolvedEventObject) =>
 	canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
 		? Maybe.orSome<MemberReference>(toReference(req.member))(Maybe.fromValue(body.member))
 		: toReference(req.member);
+
+export const canDeleteAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
+	requester: User,
+) => (member: MemberReference) => (event: RawResolvedEventObject) =>
+	AsyncEither.All([
+		resolveReference(schema)(account)(member)
+			.map(isMemberPartOfAccount({})(schema))
+			.flatMap(f => f(account)),
+		event.type !== EventType.LINKED && event.teamID !== null && event.teamID !== undefined
+			? getTeam(schema)(account)(event.teamID).map(Maybe.some)
+			: asyncRight(Maybe.none(), errorGenerator('Could not get team information')),
+	]).map(
+		([isPartOfAccount, teamMaybe]) =>
+			isPartOfAccount && hasBasicAttendanceManagementPermission(requester)(event)(teamMaybe),
+	);
 
 export const func: ServerAPIEndpoint<api.events.attendance.Delete> = PAM.RequireSessionType(
 	SessionType.REGULAR,
 )(req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(event =>
-			effectiveManageEventPermissionForEvent(req.member)(event) ===
-				Permissions.ManageEvent.FULL || !event.sourceEvent
-				? asyncRight(event, errorGenerator('Could not get event information'))
-				: getAccount(req.mysqlx)(event.sourceEvent.accountID).flatMap(account =>
-						getEvent(req.mysqlx)(account)(event.sourceEvent!.id),
-				  ),
-		)
+		.flatMap(ensureResolvedEvent(req.mysqlx))
+		.filter(canDeleteAttendanceRecord(req.mysqlx)(req.account)(req.member)(req.body.member), {
+			type: 'OTHER',
+			code: 403,
+			message: 'You do not have permission to perform that action',
+		})
 		.flatMap(event =>
 			removeMemberFromEventAttendance(req.mysqlx)(req.account)(event)(
 				getMember(req)(req.body)(event),

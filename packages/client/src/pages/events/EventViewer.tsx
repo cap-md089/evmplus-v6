@@ -35,6 +35,7 @@ import {
 	EitherObj,
 	EventObject,
 	EventStatus,
+	EventType,
 	formatEventViewerDate as formatDate,
 	forms,
 	FullTeamObject,
@@ -44,6 +45,7 @@ import {
 	getMemberPhone,
 	getURIComponent,
 	HTTPError,
+	labels,
 	Maybe,
 	MaybeObj,
 	Member,
@@ -55,10 +57,9 @@ import {
 	pipe,
 	PointOfContactType,
 	presentMultCheckboxReturn,
-	RawEventObject,
+	RawResolvedEventObject,
 	Right,
 	spreadsheets,
-	labels,
 	stringifyMemberReference,
 	User,
 } from 'common-lib';
@@ -73,12 +74,12 @@ import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import {
+	Checkbox,
 	DateTimeInput,
 	Label,
+	SimpleRadioButton,
 	TextBox,
 	TextInput,
-	Checkbox,
-	SimpleRadioButton,
 } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
@@ -171,7 +172,7 @@ export const attendanceStatusLabels = [
 	'Rescinded commitment to attend',
 ];
 
-const renderName = (renderMember: User | null) => (event: RawEventObject) => (
+const renderName = (renderMember: User | null) => (event: RawResolvedEventObject) => (
 	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
 	const defaultRenderName = `${member.record.memberID.id}: ${member.record.memberName}`;
@@ -550,10 +551,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) &&
 					linkableAccounts.length > 0 &&
-					!event.sourceEvent ? (
+					event.type !== EventType.LINKED ? (
 						<br />
 					) : null}
-					{!!event.sourceEvent ||
+					{event.type === EventType.LINKED ||
 					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
 						<Button
 							onClick={() => this.linkEventTo(linkableAccounts[0].id)}
@@ -641,30 +642,31 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					effectiveManageEventPermissionForEvent(member)(event) >=
 						Permissions.ManageEvent.FULL ? (
 						<>
-							{linkableAccounts.length === 0 || !!event.sourceEvent ? <br /> : null}
+							{linkableAccounts.length === 0 || event.type === EventType.LINKED ? (
+								<br />
+							) : null}
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
 						</>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
 						fullMemberDetails.linkableAccounts.length > 0 &&
-						event.sourceEvent === null) ? (
+						event.type === EventType.REGULAR) ? (
 						<>
 							<br />
 							<br />
 						</>
 					) : null}
 					<div id="information">
-						{event.sourceEvent ? (
+						{event.type === EventType.LINKED ? (
 							<>
 								<strong>
 									<a
-										href={`https://${event.sourceEvent.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.sourceEvent.id}`}
+										href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
 										rel="noopener _blank"
 									>
 										Event linked from{' '}
-										{sourceAccountName ??
-											event.sourceEvent.accountID.toUpperCase()}
+										{sourceAccountName ?? event.targetAccountID.toUpperCase()}
 									</a>
 								</strong>
 								<br />

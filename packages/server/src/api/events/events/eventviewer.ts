@@ -34,31 +34,35 @@ import {
 	asyncRight,
 	AttendanceRecord,
 	canMaybeManageEvent,
-	collectGeneratorAsync,
+	DisplayInternalPointOfContact,
 	Either,
 	EitherObj,
 	errorGenerator,
+	EventType,
+	ExternalPointOfContact,
 	get,
 	Maybe,
-	memoize,
 	Permissions,
-	RawEventObject,
+	RawLinkedEvent,
+	RawResolvedEventObject,
+	RegistryValues,
 	Right,
 	ServerError,
 } from 'common-lib';
 import {
-	findAndBind,
-	generateResults,
-	getAccount,
+	ensureResolvedEvent,
 	getAttendanceForEvent,
-	getCAPAccountsForORGID,
 	getEvent,
 	getFullPointsOfContact,
+	getLinkedEvents,
+	getMemoizedAccountGetter,
 	getOrgName,
 	getRegistry,
 	getRegistryById,
 	resolveReference,
 } from 'server-common';
+
+type Req = ServerAPIRequestParameter<api.events.events.GetEventViewerData>;
 
 interface LinkedEventInfo {
 	id: number;
@@ -67,11 +71,10 @@ interface LinkedEventInfo {
 	accountName: string;
 }
 
-export const expandLinkedEvent = (schema: Schema) => ({
+export const expandLinkedEvent = (schema: Schema) => (name: string) => ({
 	id,
-	name,
 	accountID,
-}: RawEventObject): ServerEither<LinkedEventInfo> =>
+}: RawLinkedEvent): ServerEither<LinkedEventInfo> =>
 	getRegistryById(schema)(accountID).map(({ Website: { Name: accountName } }) => ({
 		accountName,
 		name,
@@ -79,39 +82,73 @@ export const expandLinkedEvent = (schema: Schema) => ({
 		accountID,
 	}));
 
-export const getLinkedEvents = (
-	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>,
-) => (event: RawEventObject): ServerEither<LinkedEventInfo[]> =>
-	asyncRight(
-		collectGeneratorAsync(
-			asyncIterMap<Right<LinkedEventInfo>, LinkedEventInfo>(get('value'))(
-				asyncIterFilter<EitherObj<ServerError, LinkedEventInfo>, Right<LinkedEventInfo>>(
-					Either.isRight,
-				)(
-					asyncIterMap<RawEventObject, EitherObj<ServerError, LinkedEventInfo>>(
-						expandLinkedEvent(req.mysqlx),
-					)(
-						generateResults(
-							findAndBind(req.mysqlx.getCollection<RawEventObject>('Events'), {
-								sourceEvent: { id: event.id, accountID: event.accountID },
-							}),
-						),
-					),
-				),
-			),
-		),
-		errorGenerator('Could not get events linked to this one'),
+export const getSourceAccountName = (
+	event: RawResolvedEventObject,
+	req: Req,
+): AsyncEither<ServerError, string | undefined> =>
+	event.type === EventType.LINKED
+		? getRegistryById(req.mysqlx)(event.targetAccountID).map(reg => reg.Website.Name)
+		: asyncRight(void 0, errorGenerator('Could not get account name'));
+
+export const getEventPOCs = (
+	req: Req,
+	event: RawResolvedEventObject,
+): AsyncEither<ServerError, Array<DisplayInternalPointOfContact | ExternalPointOfContact>> =>
+	getFullPointsOfContact(req.mysqlx)(req.account)(
+		event.pointsOfContact.map(poc => ({
+			...poc,
+			email: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.email : '',
+			phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
+		})),
 	);
 
-export const getFullEventInformation = (
-	req: ServerAPIRequestParameter<api.events.events.GetEventViewerData>,
-) => (event: RawEventObject): ServerEither<AsyncRepr<api.events.events.EventViewerData>> =>
+const checkAttendeesForRequest = (
+	event: RawResolvedEventObject,
+	req: Req,
+	registry: RegistryValues,
+	attendees: AsyncIter<AttendanceRecord>,
+): AsyncRepr<Array<EitherObj<ServerError, api.events.events.EventViewerAttendanceRecord>>> =>
+	event.privateAttendance && !canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+		? []
+		: asyncIterMap((record: AttendanceRecord) =>
+				Either.right({
+					member: Maybe.none(),
+					record,
+					orgName: Maybe.some(registry.Website.Name),
+				}),
+		  )(attendees);
+
+export const getAttendanceForNonAdmin = (
+	req: Req,
+	event: RawResolvedEventObject,
+): AsyncEither<ServerError, AsyncIter<AttendanceRecord>> =>
+	Maybe.isSome(req.member)
+		? getAttendanceForEvent(req.mysqlx)(event)
+		: asyncRight<ServerError, AsyncIter<AttendanceRecord>>([], errorGenerator());
+
+export const getLinkedEventsForViewer = (
+	req: Req,
+	event: RawResolvedEventObject,
+): AsyncEither<ServerError, AsyncIter<LinkedEventInfo>> =>
+	asyncRight(
+		asyncIterMap(expandLinkedEvent(req.mysqlx)(event.name))(
+			getLinkedEvents(req.mysqlx)(event.accountID)(event.id),
+		),
+		errorGenerator('Could not get linked events'),
+	)
+		.map(
+			asyncIterFilter<EitherObj<ServerError, LinkedEventInfo>, Right<LinkedEventInfo>>(
+				Either.isRight,
+			),
+		)
+		.map(asyncIterMap(get('value')));
+
+export const getFullEventInformation = (req: Req) => (
+	event: RawResolvedEventObject,
+): ServerEither<AsyncRepr<api.events.events.EventViewerData>> =>
 	AsyncEither.All([
 		asyncRight(
-			getOrgName({
-				byId: always(memoize(getAccount(req.mysqlx))),
-				byOrgid: always(memoize(getCAPAccountsForORGID(req.mysqlx))),
-			})(req.mysqlx)(req.account),
+			getOrgName(getMemoizedAccountGetter(req.mysqlx))(req.mysqlx)(req.account),
 			errorGenerator('Could not get stuff'),
 		).flatMap(orgNameGetter =>
 			getAttendanceForEvent(req.mysqlx)(event).map(
@@ -137,10 +174,8 @@ export const getFullEventInformation = (
 			),
 		),
 		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
-		event.sourceEvent
-			? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(reg => reg.Website.Name)
-			: asyncRight(void 0, errorGenerator('Could not get account name')),
-		getLinkedEvents(req)(event),
+		getSourceAccountName(event, req),
+		getLinkedEventsForViewer(req, event),
 	]).map<AsyncRepr<api.events.events.EventViewerData>>(
 		([attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
 			event,
@@ -152,49 +187,32 @@ export const getFullEventInformation = (
 	);
 
 export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(event =>
-		canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
-			? getFullEventInformation(req)(event)
-			: AsyncEither.All([
-					getRegistry(req.mysqlx)(req.account),
-					Maybe.isSome(req.member)
-						? getAttendanceForEvent(req.mysqlx)(event)
-						: asyncRight<ServerError, AsyncIter<AttendanceRecord>>(
-								[],
-								errorGenerator(),
-						  ),
-					getFullPointsOfContact(req.mysqlx)(req.account)(
-						event.pointsOfContact.map(poc => ({
-							...poc,
-							email: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.email : '',
-							phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
-						})),
-					),
-					event.sourceEvent
-						? getRegistryById(req.mysqlx)(event.sourceEvent.accountID).map(
-								reg => reg.Website.Name,
-						  )
-						: asyncRight(void 0, errorGenerator('Could not get account name')),
-					getLinkedEvents(req)(event),
-			  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
-					([registry, attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
-						event,
-						attendees:
-							event.privateAttendance &&
-							!canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
-								? []
-								: asyncIterMap((record: AttendanceRecord) =>
-										Either.right({
-											member: Maybe.none(),
-											record,
-											orgName: Maybe.some(registry.Website.Name),
-										}),
-								  )(attendees),
-						pointsOfContact,
-						sourceAccountName,
-						linkedEvents,
-					}),
-			  ),
-	);
+	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(ensureResolvedEvent(req.mysqlx))
+		.flatMap(event =>
+			canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+				? getFullEventInformation(req)(event)
+				: AsyncEither.All([
+						getRegistry(req.mysqlx)(req.account),
+						getAttendanceForNonAdmin(req, event),
+						getEventPOCs(req, event),
+						getSourceAccountName(event, req),
+						getLinkedEventsForViewer(req, event),
+				  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
+						([
+							registry,
+							attendees,
+							pointsOfContact,
+							sourceAccountName,
+							linkedEvents,
+						]) => ({
+							event,
+							attendees: checkAttendeesForRequest(event, req, registry, attendees),
+							pointsOfContact,
+							sourceAccountName,
+							linkedEvents,
+						}),
+				  ),
+		);
 
 export default func;

@@ -18,8 +18,18 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api } from 'common-lib';
-import { generateResults, getRegistry, queryEventsFind } from 'server-common';
+import {
+	api,
+	asyncIterFilter,
+	asyncIterMap,
+	Either,
+	EitherObj,
+	get,
+	RawResolvedEventObject,
+	Right,
+	ServerError,
+} from 'common-lib';
+import { ensureResolvedEvent, generateResults, getRegistry, queryEventsFind } from 'server-common';
 
 const upcomingQuery = queryEventsFind('showUpcoming = true AND endDateTime > :endDateTime');
 
@@ -34,6 +44,14 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 				.sort('endDateTime ASC')
 				.limit(registry.Website.ShowUpcomingEventCount),
 		)
-		.map(generateResults);
+		.map(generateResults)
+		.map(asyncIterMap(ensureResolvedEvent(req.mysqlx)))
+		.map(
+			asyncIterFilter<
+				EitherObj<ServerError, RawResolvedEventObject>,
+				Right<RawResolvedEventObject>
+			>(Either.isRight),
+		)
+		.map(asyncIterMap(get('value')));
 
 export default func();

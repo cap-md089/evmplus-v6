@@ -18,7 +18,15 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { always, api, get, RawEventObject, SessionType, toReference } from 'common-lib';
+import {
+	always,
+	api,
+	EventType,
+	get,
+	RawRegularEventObject,
+	SessionType,
+	toReference,
+} from 'common-lib';
 import { getEvent, PAM, saveEventFunc } from 'server-common';
 
 export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.Add> = (
@@ -26,20 +34,27 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 ) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.map<[RawEventObject, RawEventObject]>(oldEvent => [
-				oldEvent,
-				{
-					...oldEvent,
-					debrief: [
-						...oldEvent.debrief,
-						{
-							debriefText: req.body.debriefText,
-							memberRef: toReference(req.member),
-							timeSubmitted: now(),
-						},
-					],
-				},
-			])
+			.filter(event => event.type === EventType.REGULAR, {
+				type: 'OTHER',
+				code: 403,
+				message: 'You cannot modify debrief items of a linked event',
+			})
+			.map<[RawRegularEventObject, RawRegularEventObject]>(
+				(oldEvent: RawRegularEventObject) => [
+					oldEvent,
+					{
+						...oldEvent,
+						debrief: [
+							...oldEvent.debrief,
+							{
+								debriefText: req.body.debriefText,
+								memberRef: toReference(req.member),
+								timeSubmitted: now(),
+							},
+						],
+					},
+				],
+			)
 			.flatMap(([oldEvent, newEvent]) =>
 				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
 					newEvent,

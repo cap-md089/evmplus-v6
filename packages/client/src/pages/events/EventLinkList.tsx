@@ -22,15 +22,16 @@ import {
 	Either,
 	EventStatus,
 	RadioReturnWithOther,
-	RawEventObject,
+	RawResolvedEventObject,
+	EventType,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
-import './EventLinkList.css';
 import Page, { PageProps } from '../Page';
+import './EventLinkList.css';
 
 interface EventLinkListLoadingState {
 	state: 'LOADING';
@@ -39,8 +40,8 @@ interface EventLinkListLoadingState {
 interface EventLinkListLoadedState {
 	state: 'LOADED';
 
-	events: RawEventObject[];
-	eventsThatAreLinked: RawEventObject[];
+	events: RawResolvedEventObject[];
+	eventsThatAreLinked: RawResolvedEventObject[];
 }
 
 interface EventLinkListErrorState {
@@ -124,7 +125,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					event => event.startDateTime > +DateTime.utc() - 13 * 60 * 60 * 24 * 30 * 1000,
 				);
 
-				const eventsThatAreLinked = events.filter(event => !!event.sourceEvent);
+				const eventsThatAreLinked = events.filter(event => event.type === EventType.LINKED);
 
 				this.setState({
 					state: 'LOADED',
@@ -180,15 +181,15 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									{event.accountID}-{event.id} ::{'  '}
 									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
 									{` `}
-									{event.sourceEvent ? (
+									{event.type === EventType.LINKED ? (
 										<>
 											{` - [`}
 											<a
-												href={`https://${event.sourceEvent.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.sourceEvent.id}`}
+												href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
 												target="_blank"
 												rel="noopener noreferrer"
 											>
-												{event.sourceEvent.accountID}-{event.sourceEvent.id}
+												{event.targetAccountID}-{event.targetEventID}
 											</a>
 											{`]`}
 										</>
