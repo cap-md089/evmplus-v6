@@ -21,15 +21,17 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	EventStatus,
-	formatGoogleCalendarDate,
 	isOneOfSelected,
 	Maybe,
 	presentMultCheckboxReturn,
 	RawEventObject,
+	RegistryValues,
 	ServerConfiguration,
+	Timezone,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { v4 as uuid } from 'uuid';
+import { getRegistryById } from './Registry';
 
 // 99999999  these five arrays need to go to a common area between client and server
 export const Uniforms = [
@@ -68,7 +70,13 @@ export const LodgingArrangments = [
 	'Individual tent',
 ];
 
-function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObject): string {
+function buildEventDescription(
+	config: ServerConfiguration,
+	registry: RegistryValues,
+	inEvent: RawEventObject,
+): string {
+	const dateFormatter = formatGoogleCalendarDate(registry);
+
 	// set status message
 	let status = 'invalid.  Please contact support@evmplus.org to report this.';
 	if (inEvent.status === EventStatus.TENTATIVE) {
@@ -89,29 +97,19 @@ function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObj
 
 	// first block
 	let description =
-		'<---->Please contact the POC listed below directly with questions or comments.\n\n';
-	description +=
 		'<---->Event Information Link\n(Page includes event information, POC contact information, and applicable download links):\n';
 	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
 	description += '<---->Status\nThis event is ' + status + '\n\n';
 	// second block
 	description += '<---->Times and Location(s)\n';
 	description +=
-		'--Meet at ' +
-		formatGoogleCalendarDate(inEvent.meetDateTime) +
-		' at ' +
-		inEvent.meetLocation +
-		'\n';
+		'--Meet at ' + dateFormatter(inEvent.meetDateTime) + ' at ' + inEvent.meetLocation + '\n';
 	description +=
-		'--Start at ' +
-		formatGoogleCalendarDate(inEvent.startDateTime) +
-		' at ' +
-		inEvent.location +
-		'\n';
-	description += '--End at ' + formatGoogleCalendarDate(inEvent.endDateTime) + '\n';
+		'--Start at ' + dateFormatter(inEvent.startDateTime) + ' at ' + inEvent.location + '\n';
+	description += '--End at ' + dateFormatter(inEvent.endDateTime) + '\n';
 	description +=
 		'--Pickup at ' +
-		formatGoogleCalendarDate(inEvent.pickupDateTime) +
+		dateFormatter(inEvent.pickupDateTime) +
 		' at ' +
 		inEvent.pickupLocation +
 		'\n\n';
@@ -138,17 +136,13 @@ function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObj
 	}
 	if (!!inEvent.registration) {
 		description +=
-			'--Registration deadline: ' +
-			formatGoogleCalendarDate(inEvent.registration.deadline) +
-			'\n';
+			'--Registration deadline: ' + dateFormatter(inEvent.registration.deadline) + '\n';
 		description += '--Registration information: ' + inEvent.registration.information + '\n';
 	}
 	if (!!inEvent.participationFee) {
 		description += '--Participation fee: ' + inEvent.participationFee.feeAmount + '\n';
 		description +=
-			'--Participation fee due: ' +
-			formatGoogleCalendarDate(inEvent.participationFee.feeDue) +
-			'\n';
+			'--Participation fee due: ' + dateFormatter(inEvent.participationFee.feeDue) + '\n';
 	}
 	const showMeals = isOneOfSelected(inEvent.mealsDescription);
 	if (showMeals === true) {
@@ -160,9 +154,26 @@ function buildEventDescription(config: ServerConfiguration, inEvent: RawEventObj
 	if (inEvent.comments.length > 0) {
 		description += '--Comments: ' + inEvent.comments + '\n';
 	}
+	if (inEvent.eventWebsite.length > 0) {
+		description += '--Website: ' + inEvent.eventWebsite + '\n';
+	}
 
 	return description;
 }
+
+const getDateFormatter = (timeZone: Timezone) =>
+	new Intl.DateTimeFormat('en-US', {
+		timeZone,
+		timeZoneName: 'short',
+		hour: 'numeric',
+		minute: 'numeric',
+		day: 'numeric',
+		month: 'numeric',
+		year: 'numeric',
+	});
+
+const formatGoogleCalendarDate = (registry: RegistryValues) => (indate: number): string =>
+	getDateFormatter(registry.Website.Timezone).format(new Date(indate));
 
 function buildDeadlineDescription(
 	config: ServerConfiguration,
@@ -186,8 +197,6 @@ function buildDeadlineDescription(
 	}
 	// first block
 	let description = '<---->' + inStatement;
-	description +=
-		'<---->Please contact the POC listed in the event link directly with questions or comments.\n\n';
 	description +=
 		'<---->Event Information Link\n(Page includes event information, POC contact information, and applicable download links):\n';
 	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
@@ -272,8 +281,10 @@ export async function createGoogleCalendarEvents(
 		return [null, null, null];
 	}
 
+	const registry = await getRegistryById(schema)(inAccount.id).fullJoin();
+
 	return Promise.all([
-		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, registry),
 		typeof inEvent.registration !== 'undefined'
 			? updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
 			: null,
@@ -300,9 +311,11 @@ export default async function updateGoogleCalendars(
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
+	const registry = await getRegistryById(schema)(inAccount.id).fullJoin();
+
 	// 999999999 is there a guarantee that the function return values will always be in the same order???
 	return Promise.all([
-		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
+		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, registry),
 		updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 		updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID),
 	]) as Promise<[string, string | null, string | null]>;
@@ -485,7 +498,11 @@ function getEventColor(inStatus: EventStatus) {
 	return eventColor;
 }
 
-function buildEvent(config: ServerConfiguration, inEvent: RawEventObject) {
+function buildEvent(
+	config: ServerConfiguration,
+	registry: RegistryValues,
+	inEvent: RawEventObject,
+) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -502,7 +519,7 @@ function buildEvent(config: ServerConfiguration, inEvent: RawEventObject) {
 	const event = {
 		summary: inEvent.name,
 		location: inEvent.meetLocation,
-		description: buildEventDescription(config, inEvent),
+		description: buildEventDescription(config, registry, inEvent),
 		colorId: eventColor.toString(),
 		start: {
 			dateTime: new Date(inEvent.meetDateTime).toISOString(),
@@ -672,8 +689,9 @@ async function updateMainEvent(
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
 	googleId: string,
+	registry: RegistryValues,
 ) {
-	const event = buildEvent(config, inEvent);
+	const event = buildEvent(config, registry, inEvent);
 	let response = { status: 200 };
 
 	if (!inEvent.googleCalendarIds.mainId) {
@@ -696,12 +714,12 @@ async function updateMainEvent(
 			console.error(e);
 
 			if (e.code === 404) {
-				delete event.id;
+				const { id, ...rest } = event;
 
 				response = await myCalendar.events.insert({
 					auth: jwtClient,
 					calendarId: googleId,
-					requestBody: event,
+					requestBody: rest,
 				});
 			}
 		}
