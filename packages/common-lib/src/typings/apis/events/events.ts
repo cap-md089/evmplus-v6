@@ -57,6 +57,7 @@ export interface EventViewerData {
 		name: string;
 		accountName: string;
 	}>;
+	authorFullName: MaybeObj<string>;
 }
 
 /**

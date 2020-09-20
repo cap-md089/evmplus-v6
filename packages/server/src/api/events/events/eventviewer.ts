@@ -55,6 +55,7 @@ import {
 	getEvent,
 	getFullPointsOfContact,
 	getLinkedEvents,
+	getMemberName,
 	getMemoizedAccountGetter,
 	getOrgName,
 	getRegistry,
@@ -176,13 +177,15 @@ export const getFullEventInformation = (req: Req) => (
 		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
 		getSourceAccountName(event, req),
 		getLinkedEventsForViewer(req, event),
+		getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some),
 	]).map<AsyncRepr<api.events.events.EventViewerData>>(
-		([attendees, pointsOfContact, sourceAccountName, linkedEvents]) => ({
+		([attendees, pointsOfContact, sourceAccountName, linkedEvents, authorFullName]) => ({
 			event,
 			attendees,
 			pointsOfContact,
 			sourceAccountName,
 			linkedEvents,
+			authorFullName,
 		}),
 	);
 
@@ -198,6 +201,12 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 						getEventPOCs(req, event),
 						getSourceAccountName(event, req),
 						getLinkedEventsForViewer(req, event),
+						Maybe.isSome(req.member)
+							? getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some)
+							: asyncRight(
+									Maybe.none(),
+									errorGenerator('Could not get event author name'),
+							  ),
 				  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
 						([
 							registry,
@@ -205,12 +214,14 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 							pointsOfContact,
 							sourceAccountName,
 							linkedEvents,
+							authorFullName,
 						]) => ({
 							event,
 							attendees: checkAttendeesForRequest(event, req, registry, attendees),
 							pointsOfContact,
 							sourceAccountName,
 							linkedEvents,
+							authorFullName,
 						}),
 				  ),
 		);

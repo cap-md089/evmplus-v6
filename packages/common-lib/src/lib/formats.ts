@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -30,21 +30,6 @@ export const formatEventViewerDate = (date: number) => {
 	const year = dateObject.getFullYear();
 
 	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(month + 1)}/${zeroPad(day)}/${year}`;
-};
-
-export const formatGoogleCalendarDate = (date: number) => {
-	const dateObject = new Date(date);
-
-	const hour = dateObject.getHours();
-	const minute = dateObject.getMinutes();
-
-	const day = dateObject.getDate();
-	const month = dateObject.getMonth();
-	const year = dateObject.getFullYear();
-
-	return `${hour === 12 ? 12 : hour % 12}:${zeroPad(minute)} ${
-		hour >= 12 ? 'PM' : 'AM'
-	} on ${month + 1}/${day}/${year}`;
 };
 
 export function formatPhone(phone: string) {
