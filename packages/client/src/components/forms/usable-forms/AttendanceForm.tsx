@@ -26,13 +26,13 @@ import {
 	CustomAttendanceFieldValue,
 	effectiveManageEventPermissionForEvent,
 	Either,
+	Member,
 	NewAttendanceRecord,
 	Permissions,
-	RawEventObject,
+	RawResolvedEventObject,
 	RegistryValues,
 	toReference,
 	User,
-	Member,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
@@ -57,7 +57,7 @@ type FormState = NewAttendanceRecord & { usePartTime: boolean };
 export interface AttendanceFormProps {
 	account: AccountObject;
 	member: User;
-	event: RawEventObject;
+	event: RawResolvedEventObject;
 	registry: RegistryValues;
 	record?: AttendanceRecord;
 	updateRecord: (record: Required<NewAttendanceRecord>, member: Member) => void;
@@ -355,7 +355,10 @@ export default class AttendanceForm extends React.Component<
 		);
 	}
 
-	private getCustomFields(event: RawEventObject, rawFields: CustomAttendanceFieldValue[]) {
+	private getCustomFields(
+		event: RawResolvedEventObject,
+		rawFields: CustomAttendanceFieldValue[],
+	) {
 		if (this.props.record) {
 			if (effectiveManageEventPermissionForEvent(this.props.member)(event)) {
 				const fields = rawFields;

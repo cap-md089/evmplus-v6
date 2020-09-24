@@ -18,18 +18,18 @@
  */
 
 import {
-	RawEventObject,
-	EventStatus,
 	effectiveManageEventPermission,
+	EventStatus,
 	Permissions,
+	RawResolvedEventObject,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { MONTHS } from '../../components/form-inputs/DateTimeInput';
 import { CalendarProps, getMonth, getPositionIndices } from '../Calendar';
 import Page from '../Page';
 import './DesktopCalendar.css';
-import { MONTHS } from '../../components/form-inputs/DateTimeInput';
 
 export type CalendarData = Array<
 	Array<{
@@ -38,7 +38,7 @@ export type CalendarData = Array<
 		year: number;
 		events: Array<
 			| {
-					event: RawEventObject;
+					event: RawResolvedEventObject;
 					width: number;
 					block: boolean;
 					mergeLeft: boolean;
@@ -75,7 +75,7 @@ const findIndex = (calendar: CalendarData, startDay: number, endDay: number, wee
 	return testIndex;
 };
 
-export const getClassNameFromEvent = (obj: RawEventObject) => {
+export const getClassNameFromEvent = (obj: RawResolvedEventObject) => {
 	switch (obj.status) {
 		case EventStatus.CANCELLED:
 			return ' cancelled';

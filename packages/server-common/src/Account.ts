@@ -50,6 +50,7 @@ import {
 	MaybeObj,
 	Member,
 	MemberReference,
+	MemberType,
 	memoize,
 	NewEventObject,
 	NHQ,
@@ -62,23 +63,23 @@ import {
 	RawCAPSquadronAccountObject,
 	RawCAPWingAccountObject,
 	RawEventObject,
+	RawRegularEventObject,
 	RawTeamObject,
 	ServerConfiguration,
 	ServerError,
 	statefulFunction,
 	StoredAccountMembership,
+	StoredProspectiveMemberObject,
 	stringifyMemberReference,
 	stripProp,
 	toReference,
 	User,
 	yieldObjAsync,
-	MemberType,
-	StoredProspectiveMemberObject,
 } from 'common-lib';
 import { copyFile } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import { addMemberToAttendanceFunc, createEventFunc, linkEventFunc } from './Event';
+import { addMemberToAttendanceFunc, createEventFunc, linkEvent } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
 import { setPermissionsForMemberInAccount } from './member/pam';
 import { CAP, resolveReference } from './Members';
@@ -238,6 +239,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 		)
 		.tap(newAccount =>
 			createEventFunc(now)(config)(schema)(newAccount)(toReference(author))(newEvent)
+				.map<RawRegularEventObject>(event => event as RawRegularEventObject)
 				.tap(event =>
 					addMemberToAttendanceFunc(now)(schema)(newAccount)({
 						...event,
@@ -254,11 +256,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						status: AttendanceStatus.COMMITTEDATTENDED,
 					}),
 				)
-				.tap(event =>
-					linkEventFunc(now)(config)(schema)(newAccount)(event)(toReference(author))(
-						parentAccount,
-					),
-				),
+				.tap(event => linkEvent(config)(schema)(event)(toReference(author))(parentAccount)),
 		)
 		.tap(() => session.commit())
 		.leftTap(() => session.rollback());
@@ -268,6 +266,11 @@ export interface AccountGetter {
 	byId: typeof getAccount;
 	byOrgid: typeof getCAPAccountsForORGID;
 }
+
+export const getMemoizedAccountGetter = (schema: Schema): AccountGetter => ({
+	byId: always(memoize(getAccount(schema))),
+	byOrgid: always(memoize(getCAPAccountsForORGID(schema))),
+});
 
 export const getAccount = (schema: Schema) => (accountID: string) =>
 	asyncRight(

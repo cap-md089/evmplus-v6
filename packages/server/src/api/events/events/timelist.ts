@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
+	asyncEitherIterFlatMap,
 	asyncIterFilter,
 	asyncIterMap,
 	asyncRight,
@@ -34,11 +35,12 @@ import {
 	Permissions,
 	pipe,
 	RawEventObject,
+	RawResolvedEventObject,
 	Right,
 	ServerError,
 	User,
 } from 'common-lib';
-import { getEventsInRange } from 'server-common';
+import { ensureResolvedEvent, getEventsInRange } from 'server-common';
 
 const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) =>
 	pipe(
@@ -61,14 +63,16 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 		.map(([timestart, timeend]) =>
 			getEventsInRange(req.mysqlx)(req.account)(timestart)(timeend),
 		)
+		.map(asyncEitherIterFlatMap(ensureResolvedEvent(req.mysqlx)))
 		.map(
-			asyncIterFilter<EitherObj<ServerError, RawEventObject>, Right<RawEventObject>>(
-				Either.isRight,
-			),
+			asyncIterFilter<
+				EitherObj<ServerError, RawResolvedEventObject>,
+				Right<RawResolvedEventObject>
+			>(Either.isRight),
 		)
 		.map(asyncIterMap(get('value')))
 		.map(
-			asyncIterFilter(
+			asyncIterFilter<RawResolvedEventObject>(
 				event =>
 					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member),
 			),

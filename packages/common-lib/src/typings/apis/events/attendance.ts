@@ -82,12 +82,9 @@ export interface AddBulk {
 
 /**
  * Removes the member from attendance
- *
- * If a member is specified in the request body and the requester has permission, the member in the request body is removed
- * Otherwise, the person making the request is removed
  */
 export interface Delete {
-	(params: { id: string }, body: { member?: MemberReference }): APIEither<void>;
+	(params: { id: string }, body: { member: MemberReference }): APIEither<void>;
 
 	url: '/api/events/:id/attendance';
 

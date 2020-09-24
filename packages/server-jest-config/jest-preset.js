@@ -17,31 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import {
-	api,
-	asyncIterFilter,
-	asyncIterMap,
-	asyncRight,
-	Either,
-	EitherObj,
-	errorGenerator,
-	get,
-	RawResolvedEventObject,
-	Right,
-	ServerError,
-} from 'common-lib';
-import { ensureResolvedEvent, getSortedEvents } from 'server-common';
+const { resolve } = require('path');
 
-export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
-	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'))
-		.map(asyncIterMap(ensureResolvedEvent(req.mysqlx)))
-		.map(
-			asyncIterFilter<
-				EitherObj<ServerError, RawResolvedEventObject>,
-				Right<RawResolvedEventObject>
-			>(Either.isRight),
-		)
-		.map(asyncIterMap(get('value')));
-
-export default func;
+module.exports = {
+	globalSetup: require(resolve(__dirname, 'setup.js')),
+	globalTeardown: require(resolve(__dirname, 'teardown.js')),
+};

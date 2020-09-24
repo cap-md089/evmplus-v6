@@ -25,7 +25,7 @@ import {
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	Member,
-	RawEventObject,
+	RawResolvedEventObject,
 } from '../../typings/types';
 
 const EventStatus = [
@@ -133,7 +133,7 @@ const GetBestEmails = (inMember: Member) => {
 
 const CustomAttendanceFieldType = ['Text', 'Number', 'Date', 'Checkbox', 'File'];
 
-export const EventXL = (event: RawEventObject): Array<Array<string | number>> => {
+export const EventXL = (event: RawResolvedEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
 		'EvMPlus.org Event Information and Sign-up/Attendance Roster',
 	];
@@ -240,7 +240,7 @@ export const FormatEventXL = (evt: string, sheet: XLSX.Sheet, hostname: string):
 };
 
 export const AttendanceXL = (
-	event: RawEventObject,
+	event: RawResolvedEventObject,
 	attendance: EventViewerAttendanceRecord[],
 ): [Array<Array<string | number>>, number[]] => {
 	let widths: number[] = [];

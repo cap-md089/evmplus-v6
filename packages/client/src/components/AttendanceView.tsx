@@ -27,7 +27,7 @@ import {
 	effectiveManageEventPermissionForEvent,
 	Member,
 	NewAttendanceRecord,
-	RawEventObject,
+	RawResolvedEventObject,
 	RegistryValues,
 	User,
 } from 'common-lib';
@@ -50,7 +50,7 @@ const renderCustomAttendanceField = (attendanceFieldItem: CustomAttendanceFieldV
 	);
 
 interface AttendanceItemViewProps {
-	owningEvent: RawEventObject;
+	owningEvent: RawResolvedEventObject;
 	owningAccount: AccountObject;
 	member: User;
 	registry: RegistryValues;

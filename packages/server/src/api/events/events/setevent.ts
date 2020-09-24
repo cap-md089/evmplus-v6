@@ -22,10 +22,11 @@ import {
 	always,
 	api,
 	canManageEvent,
+	EventType,
 	Maybe,
 	NewEventObject,
 	Permissions,
-	RawEventObject,
+	RawRegularEventObject,
 	SessionType,
 	Validator,
 } from 'common-lib';
@@ -42,27 +43,38 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(partialEventValidator)(request).flatMap(req =>
 			getEvent(req.mysqlx)(req.account)(req.params.id)
+				.filter(event => event.type === EventType.REGULAR, {
+					type: 'OTHER',
+					code: 400,
+					message: 'You cannot modify a linked event',
+				})
 				.filter(canManageEvent(Permissions.ManageEvent.ADDDRAFTEVENTS)(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member does not have permission to perform that action',
 				})
-				.map<[RawEventObject, RawEventObject]>(event => [
-					{
-						...event,
-						...req.body,
-						status: canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
-							? req.body.status ?? event.status
-							: event.status,
-					},
-					event,
-				])
+				.map<[RawRegularEventObject, RawRegularEventObject]>(
+					(event: RawRegularEventObject) => [
+						{
+							...event,
+							...req.body,
+							status: canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+								? req.body.status ?? event.status
+								: event.status,
+						},
+						event,
+					],
+				)
 				.flatMap(([newEvent, oldEvent]) =>
 					saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
 						newEvent,
 					).map(always(newEvent)),
 				)
-				.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member))),
+				.flatMap(
+					getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(
+						Maybe.some(req.member),
+					),
+				),
 		),
 	);
 

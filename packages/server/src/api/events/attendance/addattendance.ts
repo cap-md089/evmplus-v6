@@ -22,17 +22,17 @@ import {
 	always,
 	api,
 	applyCustomAttendanceFields,
-	AsyncEither,
 	asyncRight,
 	canSignUpForEvent,
-	effectiveManageEventPermissionForEvent,
 	Either,
 	errorGenerator,
 	EventObject,
+	hasBasicAttendanceManagementPermission,
 	isValidMemberReference,
 	Maybe,
+	MaybeObj,
 	NewAttendanceRecord,
-	Permissions,
+	RawTeamObject,
 	ServerError,
 	SessionType,
 	toReference,
@@ -49,9 +49,9 @@ import {
 
 const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) => (
 	event: EventObject,
-) =>
+) => (teamMaybe: MaybeObj<RawTeamObject>) =>
 	(isValidMemberReference(req.body.memberID) &&
-	effectiveManageEventPermissionForEvent(req.member)(event) === Permissions.ManageEvent.FULL
+	hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe)
 		? resolveReference(req.mysqlx)(req.account)(req.body.memberID)
 		: asyncRight(req.member, errorGenerator('Could not get member'))
 	)
@@ -67,16 +67,15 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 
 const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member)))
 		.flatMap(event =>
-			AsyncEither.All([
-				getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member))(event),
-				event.teamID !== undefined && event.teamID !== null
-					? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)
-					: asyncRight(Maybe.none(), errorGenerator('Could not get team information')),
-			]),
+			(event.teamID !== undefined && event.teamID !== null
+				? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)
+				: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+			).map(teamMaybe => [event, teamMaybe] as const),
 		)
 		.flatMap(([event, teamMaybe]) =>
-			getRecord(req)(event)
+			getRecord(req)(event)(teamMaybe)
 				.flatMap(rec =>
 					Either.map<ServerError, void, Required<NewAttendanceRecord>>(always(rec))(
 						Either.leftMap<string, ServerError, void>(err => ({

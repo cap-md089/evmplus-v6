@@ -23,15 +23,17 @@ import {
 	asyncIterHandler,
 	canManageEvent,
 	errorGenerator,
+	Maybe,
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { getAttendanceForEvent, getEvent, PAM } from 'server-common';
+import { ensureResolvedEvent, getAttendanceForEvent, getEvent, PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.events.attendance.GetAttendance> = PAM.RequireSessionType(
 	SessionType.REGULAR,
 )(req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(ensureResolvedEvent(req.mysqlx))
 		.filter(
 			event =>
 				!event.privateAttendance ||
@@ -42,7 +44,7 @@ export const func: ServerAPIEndpoint<api.events.attendance.GetAttendance> = PAM.
 				message: 'Member cannot view private attendance',
 			},
 		)
-		.flatMap(getAttendanceForEvent(req.mysqlx))
+		.flatMap(getAttendanceForEvent(req.mysqlx)(Maybe.some(req.account)))
 		.map(asyncIterHandler(errorGenerator('Could not get attendance records for event'))),
 );
 
