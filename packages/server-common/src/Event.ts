@@ -45,6 +45,7 @@ import {
 	get,
 	getFullMemberName,
 	getItemsNotInSecondArray,
+	identity,
 	InternalPointOfContact,
 	isPOCOf,
 	Maybe,
@@ -100,6 +101,17 @@ export interface RawAttendanceDBRecord
 }
 
 export { EventStatus };
+
+export const getEventID = (event: RawEventObject) =>
+	event.type === EventType.LINKED
+		? {
+				id: event.targetEventID,
+				accountID: event.targetAccountID,
+		  }
+		: {
+				id: event.id,
+				accountID: event.accountID,
+		  };
 
 export const getFullPointsOfContact = (schema: Schema) => (account: AccountObject) => (
 	records: POCRaw,
@@ -210,45 +222,41 @@ const attendanceRecordBelongsToAccount = (accountGetter: AccountGetter) => (sche
 			),
 		);
 
-export const getAttendanceForEvent = (schema: Schema) => ({
-	id: eventID,
+const getAttendanceEventIdentifier = ({ id, accountID }: { id: number; accountID: string }) => ({
+	eventID: id,
 	accountID,
-}: {
-	id: number;
-	accountID: string;
-}) =>
+});
+
+export const getAttendanceForEvent = (schema: Schema) => (
+	viewingAccount: MaybeObj<AccountObject>,
+) => (event: RawEventObject) =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not get attendance records'),
 	)
-		.map(
-			findAndBindC<RawAttendanceDBRecord>({ eventID, accountID }),
-		)
+		.map(findAndBindC<RawAttendanceDBRecord>(getAttendanceEventIdentifier(getEventID(event))))
 		.map(generateResults)
 		.map(attendanceRecordIterMapper)
 		.map(
-			asyncIterFilter(record =>
-				attendanceRecordBelongsToAccount(getMemoizedAccountGetter(schema))(schema)(
-					accountID,
-				)(record)
-					.fullJoin()
-					.catch(always(false)),
-			),
+			Maybe.isSome(viewingAccount)
+				? asyncIterFilter(record =>
+						attendanceRecordBelongsToAccount(getMemoizedAccountGetter(schema))(schema)(
+							viewingAccount.value.id,
+						)(record)
+							.fullJoin()
+							.catch(always(false)),
+				  )
+				: identity,
 		);
-
-export const getEventAttendance = (schema: Schema) => (account: AccountObject) => (
-	eventID: number,
-): ServerEither<AsyncIter<AttendanceRecord>> =>
-	getAttendanceForEvent(schema)({ accountID: account.id, id: eventID });
 
 type PartialResolvedRawEventObject = RawRegularEventObject & Omit<RawRegularEventObject, 'type'>;
 type PartialRawEventObject = PartialResolvedRawEventObject | RawRegularEventObject;
 
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
-	viewer: MaybeObj<MemberReference>,
-) => (event: RawEventObject): ServerEither<EventObject> =>
+	viewingAccount: MaybeObj<AccountObject>,
+) => (viewer: MaybeObj<MemberReference>) => (event: RawEventObject): ServerEither<EventObject> =>
 	(event.type === EventType.LINKED
-		? getEvent(schema)(account)(event.targetEventID).map(
+		? getEvent(schema)({ id: event.targetAccountID } as AccountObject)(event.targetEventID).map(
 				resolvedEvent =>
 					({
 						...event,
@@ -270,7 +278,7 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 			  })
 		).flatMap(pointsOfContact =>
 			viewer.hasValue && (!eventInfo.privateAttendance || isPOCOf(viewer.value, eventInfo))
-				? getAttendanceForEvent(schema)(event)
+				? getAttendanceForEvent(schema)(viewingAccount)(event)
 						.map(collectGeneratorAsync)
 						.map<EventObject>(attendance => ({
 							...eventInfo,
@@ -281,7 +289,7 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 						{
 							...eventInfo,
 							pointsOfContact,
-							attendance: [] as AttendanceRecord[],
+							attendance: [],
 						},
 						errorGenerator('Could not get event with attendance'),
 				  ),
@@ -648,8 +656,8 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 export const copyEvent = copyEventFunc(Date.now);
 
 export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
-	account: AccountObject,
-) => (linkedEvent: RawRegularEventObject) => (linkAuthor: MemberReference) => (
+	linkedEvent: RawRegularEventObject,
+) => (linkAuthor: MemberReference) => (
 	targetAccount: AccountObject,
 ): ServerEither<RawLinkedEvent> =>
 	asyncRight(linkedEvent, errorGenerator('Could not link event'))
@@ -659,7 +667,7 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 			message: 'Cannot link to a linked event',
 		})
 		.flatMap(event =>
-			getNewID(account)(schema.getCollection<RawEventObject>('Events')).flatMap(id =>
+			getNewID(targetAccount)(schema.getCollection<RawEventObject>('Events')).flatMap(id =>
 				asyncRight(
 					createGoogleCalendarEvents(
 						schema,
@@ -680,6 +688,8 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 						regId,
 						feeId,
 					},
+					meetDateTime: event.meetDateTime,
+					pickupDateTime: event.pickupDateTime,
 				})),
 			),
 		)

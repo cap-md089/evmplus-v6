@@ -256,11 +256,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						status: AttendanceStatus.COMMITTEDATTENDED,
 					}),
 				)
-				.tap(event =>
-					linkEvent(config)(schema)(newAccount)(event)(toReference(author))(
-						parentAccount,
-					),
-				),
+				.tap(event => linkEvent(config)(schema)(event)(toReference(author))(parentAccount)),
 		)
 		.tap(() => session.commit())
 		.leftTap(() => session.rollback());

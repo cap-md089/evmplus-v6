@@ -61,11 +61,7 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 						'Member does not have permission to perform this action in the specified account',
 				})
 				.map(always(targetAccount))
-				.flatMap(
-					linkEvent(req.configuration)(req.mysqlx)(req.account)(event)(
-						toReference(req.member),
-					),
-				)
+				.flatMap(linkEvent(req.configuration)(req.mysqlx)(event)(toReference(req.member)))
 				.map(
 					linkedEvent =>
 						({

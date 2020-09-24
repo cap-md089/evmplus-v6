@@ -1078,6 +1078,14 @@ export interface RawLinkedEvent extends AccountIdentifiable {
 	 */
 	targetAccountID: string;
 	/**
+	 * Used for quick rendering the calendar
+	 */
+	pickupDateTime: number;
+	/**
+	 * Used for quick rendering the calendar
+	 */
+	meetDateTime: number;
+	/**
 	 * Mirrors the information for a regular event object. This is present
 	 * because a Google calendar will need items for the linked events as
 	 * well

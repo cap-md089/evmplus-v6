@@ -62,7 +62,11 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 					code: 403,
 					message: 'Member cannot perform this action',
 				})
-				.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
+				.flatMap(
+					getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(
+						Maybe.some(req.member),
+					),
+				)
 
 				.flatMap<RawEventObject>(event =>
 					asyncRight(
@@ -75,7 +79,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 					).map(always(event)),
 				)
 
-				.flatMap(getAttendanceForEvent(req.mysqlx))
+				.flatMap(getAttendanceForEvent(req.mysqlx)(Maybe.some(req.account)))
 				.map(asyncIterHandler(errorGenerator('Could not get attendance record'))),
 		),
 	);

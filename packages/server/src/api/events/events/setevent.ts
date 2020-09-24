@@ -70,7 +70,11 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 						newEvent,
 					).map(always(newEvent)),
 				)
-				.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.member))),
+				.flatMap(
+					getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(
+						Maybe.some(req.member),
+					),
+				),
 		),
 	);
 

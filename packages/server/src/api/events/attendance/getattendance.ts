@@ -23,6 +23,7 @@ import {
 	asyncIterHandler,
 	canManageEvent,
 	errorGenerator,
+	Maybe,
 	Permissions,
 	SessionType,
 } from 'common-lib';
@@ -43,7 +44,7 @@ export const func: ServerAPIEndpoint<api.events.attendance.GetAttendance> = PAM.
 				message: 'Member cannot view private attendance',
 			},
 		)
-		.flatMap(getAttendanceForEvent(req.mysqlx))
+		.flatMap(getAttendanceForEvent(req.mysqlx)(Maybe.some(req.account)))
 		.map(asyncIterHandler(errorGenerator('Could not get attendance records for event'))),
 );
 

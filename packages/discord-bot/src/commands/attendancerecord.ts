@@ -184,7 +184,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 	await message.channel.send('Looking to add ' + members.length + ' members');
 
 	const fullInfoEither = await AsyncEither.All([
-		getAttendanceForEvent(schema)(event).map(collectGeneratorAsync),
+		getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
 		getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
 	]);
 

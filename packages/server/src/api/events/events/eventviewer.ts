@@ -25,6 +25,7 @@ import {
 	ServerEither,
 } from 'auto-client-api';
 import {
+	AccountObject,
 	always,
 	api,
 	AsyncEither,
@@ -71,6 +72,9 @@ interface LinkedEventInfo {
 	name: string;
 	accountName: string;
 }
+
+export const getViewingAccount = (account: AccountObject) => (event: RawResolvedEventObject) =>
+	event.type === EventType.LINKED ? Maybe.some(account) : Maybe.none();
 
 export const expandLinkedEvent = (schema: Schema) => (name: string) => ({
 	id,
@@ -124,7 +128,7 @@ export const getAttendanceForNonAdmin = (
 	event: RawResolvedEventObject,
 ): AsyncEither<ServerError, AsyncIter<AttendanceRecord>> =>
 	Maybe.isSome(req.member)
-		? getAttendanceForEvent(req.mysqlx)(event)
+		? getAttendanceForEvent(req.mysqlx)(getViewingAccount(req.account)(event))(event)
 		: asyncRight<ServerError, AsyncIter<AttendanceRecord>>([], errorGenerator());
 
 export const getLinkedEventsForViewer = (
@@ -150,9 +154,9 @@ export const getFullEventInformation = (req: Req) => (
 	AsyncEither.All([
 		asyncRight(
 			getOrgName(getMemoizedAccountGetter(req.mysqlx))(req.mysqlx)(req.account),
-			errorGenerator('Could not get stuff'),
+			errorGenerator('Could not get member record information'),
 		).flatMap(orgNameGetter =>
-			getAttendanceForEvent(req.mysqlx)(event).map(
+			getAttendanceForEvent(req.mysqlx)(getViewingAccount(req.account)(event))(event).map(
 				asyncIterMap(record =>
 					resolveReference(req.mysqlx)(req.account)(record.memberID)
 						.flatMap(member =>
