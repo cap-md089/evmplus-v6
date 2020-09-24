@@ -39,13 +39,6 @@ if [ "$branch" = "master" ]; then
 	fi
 fi
 
-# Apply prettier rules
-# This now applies the rules instead of checking, as checking was causing issues
-#	For some reason, when prettier writes it doesn't necessarily pass its own checks
-FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
-echo "$FILES" | xargs node_modules/.bin/prettier --write
-echo "$FILES" | xargs git add
-
 # Check for files that don't have a copyright
 echo "Checking files for copyright information..."
 failed=false
@@ -62,3 +55,10 @@ if "$failed" = "true"; then
 fi
 
 git stash pop -q
+
+# Apply prettier rules
+# This now applies the rules instead of checking, as checking was causing issues
+#	For some reason, when prettier writes it doesn't necessarily pass its own checks
+FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" "*.tsx" | sed 's| |\\ |g')
+echo "$FILES" | xargs node_modules/.bin/prettier --write
+echo "$FILES" | xargs git add
