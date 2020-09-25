@@ -700,7 +700,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
 						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
-						{event.location}
+						{event.meetLocation}
 						<br />
 						<strong>Start</strong> at {formatDate(event.startDateTime)} at{' '}
 						{event.location}
