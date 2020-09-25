@@ -783,7 +783,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<br />
 							</>
 						) : null}
-						<h2>Contact information</h2>
+						{pointsOfContact.length > 0 ? <h2>Contact information</h2> : null}
 						<div>
 							{pointsOfContact.map((poc, i) =>
 								poc.type === PointOfContactType.INTERNAL ? (
@@ -839,74 +839,83 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							<div>{this.state.teamMessage}</div>
 						) : (
 							<>
-								{this.state.eventInformation.attendees.some(
-									rec =>
-										Either.isRight(rec) &&
-										rec.value.record.memberID.type === 'CAPNHQMember',
-								) ? (
-									<Button
-										buttonType="none"
-										onClick={() => this.setState({ showingCAPIDs: true })}
-									>
-										Show CAP IDs
-									</Button>
-								) : null}
-								{attendees.filter(Either.isRight).length > 0 &&
-								effectiveManageEventPermissionForEvent(member)(event) ? (
-									<>
-										{' | '}
-										<Button
-											buttonType="none"
-											onClick={this.createAttendanceSpreadsheet}
-										>
-											Download Attendance Spreadsheet
-										</Button>
-									</>
-								) : null}
-								<Dialogue
-									displayButtons={DialogueButtons.OK}
-									open={this.state.showingCAPIDs}
-									title="CAP IDs"
-									onClose={() => this.setState({ showingCAPIDs: false })}
-								>
-									{this.state.eventInformation.attendees
-										.filter(
-											(
-												val,
-											): val is Right<
-												api.events.events.EventViewerAttendanceRecord
-											> =>
-												Either.isRight(val) &&
-												val.value.record.memberID.type === 'CAPNHQMember',
-										)
-										.flatMap((rec, i) => [
-											(rec.value.record.memberID as CAPNHQMemberReference).id,
-											i < attendees.length - 1 ? ', ' : null,
-										])}
-								</Dialogue>
 								<div id="signup">
 									{Either.cata<string, void, React.ReactElement | null>(err =>
 										err !== 'Member is already in attendance' ? (
 											<p>Cannot sign up for event: {err}</p>
 										) : null,
 									)(() => (
-										<AttendanceForm
-											account={this.props.account}
-											event={viewerDataToEventObject(eventViewerInfo)}
-											member={member}
-											updateRecord={this.addAttendanceRecord}
-											updated={false}
-											clearUpdated={this.clearPreviousMember}
-											removeRecord={noop}
-											signup={true}
-											registry={this.props.registry}
-										/>
+										<>
+											<h2>Sign up</h2>
+											<AttendanceForm
+												account={this.props.account}
+												event={viewerDataToEventObject(eventViewerInfo)}
+												member={member}
+												updateRecord={this.addAttendanceRecord}
+												updated={false}
+												clearUpdated={this.clearPreviousMember}
+												removeRecord={noop}
+												signup={true}
+												registry={this.props.registry}
+											/>
+										</>
 									))(
 										canEitherMaybeSignUpForEvent(eventViewerInfo)(
 											this.state.teamInformation,
 										)(member),
 									)}
 									<h2 id="attendance">Attendance</h2>
+
+									{this.state.eventInformation.attendees.some(
+										rec =>
+											Either.isRight(rec) &&
+											rec.value.record.memberID.type === 'CAPNHQMember',
+									) ? (
+										<Button
+											buttonType="none"
+											onClick={() => this.setState({ showingCAPIDs: true })}
+										>
+											Show CAP IDs
+										</Button>
+									) : null}
+									{attendees.filter(Either.isRight).length > 0 &&
+									effectiveManageEventPermissionForEvent(member)(event) ? (
+										<>
+											{' | '}
+											<Button
+												buttonType="none"
+												onClick={this.createAttendanceSpreadsheet}
+											>
+												Download Attendance Spreadsheet
+											</Button>
+											<br />
+											<br />
+										</>
+									) : null}
+									<Dialogue
+										displayButtons={DialogueButtons.OK}
+										open={this.state.showingCAPIDs}
+										title="CAP IDs"
+										onClose={() => this.setState({ showingCAPIDs: false })}
+									>
+										{this.state.eventInformation.attendees
+											.filter(
+												(
+													val,
+												): val is Right<
+													api.events.events.EventViewerAttendanceRecord
+												> =>
+													Either.isRight(val) &&
+													val.value.record.memberID.type ===
+														'CAPNHQMember',
+											)
+											.flatMap((rec, i) => [
+												(rec.value.record.memberID as CAPNHQMemberReference)
+													.id,
+												i < attendees.length - 1 ? ', ' : null,
+											])}
+									</Dialogue>
+
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
 										titles={renderName(member)(event)}
 										values={attendees.filter(Either.isRight).map(get('value'))}
