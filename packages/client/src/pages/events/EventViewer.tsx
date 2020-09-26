@@ -175,10 +175,10 @@ export const attendanceStatusLabels = [
 const getCalendarDate = (inDate: number) => {
 	const dateObject = new Date(inDate);
 	const nowObject = new Date();
-	return dateObject.getMonth + '/' + dateObject.getFullYear ===
-		nowObject.getMonth + '/' + nowObject.getFullYear
+	return dateObject.getMonth() + '/' + dateObject.getFullYear() ===
+		nowObject.getMonth() + '/' + nowObject.getFullYear()
 		? ''
-		: dateObject.getMonth + '/' + dateObject.getFullYear;
+		: dateObject.getMonth() + 1 + '/' + dateObject.getFullYear();
 };
 
 const renderName = (renderMember: User | null) => (event: RawResolvedEventObject) => (
