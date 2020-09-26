@@ -250,7 +250,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		sortFunction: SortFunction.LASTNAME,
 		visibleItems: [],
 		displayAdvanced: false,
-		addParentEmails: false,
+		addParentEmails: true,
 		filterValues: {
 			flightInput: '',
 			memberFilter: MemberList.ALL,

@@ -172,6 +172,15 @@ export const attendanceStatusLabels = [
 	'Rescinded commitment to attend',
 ];
 
+const getCalendarDate = (inDate: number) => {
+	const dateObject = new Date(inDate);
+	const nowObject = new Date();
+	return dateObject.getMonth + '/' + dateObject.getFullYear ===
+		nowObject.getMonth + '/' + nowObject.getFullYear
+		? ''
+		: dateObject.getMonth + '/' + dateObject.getFullYear;
+};
+
 const renderName = (renderMember: User | null) => (event: RawResolvedEventObject) => (
 	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
@@ -312,7 +321,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				target: '/',
 			},
 			{
-				target: '/calendar',
+				target: '/calendar/' + getCalendarDate(eventInformation.value.event.startDateTime),
 				text: 'Calendar',
 			},
 			{

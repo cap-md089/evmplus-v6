@@ -108,7 +108,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		if (this.props.member) {
 			const eventListEither = await fetchApi.events.events
 				.getList({}, {}, this.props.member.sessionID)
-				.map(events => events.sort((a, b) => a.startDateTime - b.startDateTime));
+				.map(events => events.sort((a, b) => b.startDateTime - a.startDateTime));
 
 			if (Either.isLeft(eventListEither)) {
 				this.setState({
@@ -118,7 +118,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
 				let events = eventListEither.value.sort(
-					(a, b) => a.startDateTime - b.startDateTime,
+					(a, b) => b.startDateTime - a.startDateTime,
 				);
 
 				events = events.filter(
