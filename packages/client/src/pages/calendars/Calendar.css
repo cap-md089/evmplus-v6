@@ -50,13 +50,6 @@
 
 .calendar .events-list .event-item.cancelled {
 	background-color: #dc2127;
-	background-image: repeating-linear-gradient(
-		-45deg,
-		#dc2127,
-		#dc2127 10px,
-		#f77 10px,
-		#f77 20px
-	);
 	border-color: #faa;
 	color: #fff;
 }
