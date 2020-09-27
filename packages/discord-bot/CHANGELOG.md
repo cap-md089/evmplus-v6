@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.8.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.4.0...discord-bot@1.8.0) (2020-09-27)
+
+
+### Bug Fixes
+
+* fixed linking events and attendance management ([78cb150](http://github.com//cap-md089/evmplus-v6/commit/78cb150039463240ef89b493d842d185c3b3d36a))
+* stabilized command line interfaces ([18bc3d0](http://github.com//cap-md089/evmplus-v6/commit/18bc3d0ec4e351c63fe900f51ae5de0cf92e361e))
+
+
+### Features
+
+* updated Discord CLI to allow for bot to update servers after CAPWATCH updates ([bc4125f](http://github.com//cap-md089/evmplus-v6/commit/bc4125f054df6ee7a77ada7bd73301305ec11d94))
+
+
+
+
+
 # [1.7.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.4.0...discord-bot@1.7.0) (2020-09-24)
 
 

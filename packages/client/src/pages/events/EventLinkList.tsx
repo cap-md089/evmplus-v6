@@ -24,6 +24,7 @@ import {
 	RadioReturnWithOther,
 	RawResolvedEventObject,
 	EventType,
+	DebriefItem,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -74,14 +75,28 @@ function getEventStatus(status: EventStatus) {
 
 function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 	if (gen.otherValueSelected) {
-		return null;
+		return <span style={{ color: 'green' }}>{gen.otherValue}</span>;
 	}
 
 	switch (gen.selection) {
+		case EchelonEventNumber.NOT_REQUIRED:
+			return <span style={{ color: 'green' }}>N/R</span>;
+		case EchelonEventNumber.TO_BE_APPLIED_FOR:
+			return <span style={{ color: 'blue' }}>Required</span>;
 		case EchelonEventNumber.APPLIED_FOR:
-			return <span style={{ color: 'blue' }}>N/R</span>;
+			return <span style={{ color: 'magenta' }}>Requested</span>;
+		case EchelonEventNumber.DENIED:
+			return <span style={{ color: 'red' }}>Denied</span>;
 	}
 	return null;
+}
+
+function getEventDebrief(ged: DebriefItem[]) {
+	if (ged.length === 0) {
+		return <span style={{ color: 'red' }}>No</span>;
+	} else {
+		return <span style={{ color: 'green' }}>Yes</span>;
+	}
 }
 
 export default class EventLinkList extends Page<PageProps, EventLinkListState> {
@@ -108,7 +123,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		if (this.props.member) {
 			const eventListEither = await fetchApi.events.events
 				.getList({}, {}, this.props.member.sessionID)
-				.map(events => events.sort((a, b) => a.startDateTime - b.startDateTime));
+				.map(events => events.sort((a, b) => b.startDateTime - a.startDateTime));
 
 			if (Either.isLeft(eventListEither)) {
 				this.setState({
@@ -118,7 +133,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
 				let events = eventListEither.value.sort(
-					(a, b) => a.startDateTime - b.startDateTime,
+					(a, b) => b.startDateTime - a.startDateTime,
 				);
 
 				events = events.filter(
@@ -157,8 +172,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		) : (
 			<div className="eventlinklist">
 				<h3>
-					Click '<span style={{ color: 'magenta' }}>Confirmed</span>' to set Status to '
-					<span style={{ color: 'green' }}>Complete</span>'
+					Click on the event number to view details.  Click on the event name to edit event.
 				</h3>
 				<table>
 					<tbody>
@@ -170,15 +184,16 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							<th>Start Date</th>
 							<th>Status</th>
 							<th>
-								<span style={{ color: 'green' }}>GP</span> Evt No.
+								GP Evt No.
 							</th>
-							<th>Region Cal</th>
 							<th>Debrief</th>
 						</tr>
 						{this.state.events.map((event, i) => (
 							<tr key={i}>
 								<td>
-									{event.accountID}-{event.id} ::{'  '}
+									{event.accountID}-
+									<Link to={`/eventviewer/${event.id}`}>
+									{event.id}</Link> ::{'  '}
 									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
 									{` `}
 									{event.type === EventType.LINKED ? (
@@ -207,8 +222,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								</td>
 								<td>{getEventStatus(event.status)}</td>
 								<td>{getEventNumber(event.groupEventNumber)}</td>
-								<td>{getEventNumber(event.regionEventNumber)}</td>
-								<td>{event.debrief}</td>
+								<td>{getEventDebrief(event.debrief)}</td>
 							</tr>
 						))}
 					</tbody>

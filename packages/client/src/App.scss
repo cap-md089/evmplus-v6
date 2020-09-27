@@ -83,11 +83,11 @@ body {
 	background: #0f407c;
 	margin: 0;
 	padding: 0;
-	background: #002149 url('/images/bg-body.jpg') top left repeat-x;
 }
 
 @media screen {
 	#root {
+		background: #002149 url('/images/bg-body.jpg') top left repeat-x;
 		display: grid;
 		grid-template-areas:
 			'. header header header header .'
@@ -321,6 +321,7 @@ a {
 
 @media (max-width: 1028px) {
 	#root {
+		background: #002149 url('/images/bg-body.jpg') top left repeat-x;
 		grid-template-areas:
 			'header'
 			'top-nav'
