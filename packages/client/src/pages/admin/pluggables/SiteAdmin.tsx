@@ -50,6 +50,8 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 					administration
 				</div>
 				<div className="widget-body">
+					<Link to="/eventlinklist">Event List</Link>
+					<br />
 					<Link to="/admin/attendance">View Attendance</Link>
 					<br />
 					<Link to="/admin/setupmfa">Setup MFA</Link>
