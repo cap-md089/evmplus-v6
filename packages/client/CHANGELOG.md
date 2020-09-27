@@ -3,6 +3,44 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.15.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.6.0...client@1.15.0) (2020-09-27)
+
+
+### Bug Fixes
+
+* addressed issue [#59](http://github.com//cap-md089/evmplus-v6/issues/59) ([4d6c3d5](http://github.com//cap-md089/evmplus-v6/commit/4d6c3d5ba817f43098b1b17f2789d49e5707491c))
+* **eventviewer:** fixed logic error in event viewer calendar breadcrumb code ([735c360](http://github.com//cap-md089/evmplus-v6/commit/735c36011396f7dfc231a7a2841330e0bacee90b))
+* Cleared out warnings ([e847444](http://github.com//cap-md089/evmplus-v6/commit/e84744405597f73b9fb91aff8f43268de667f869))
+* fixed "publish to wing calendar" button not appearing for non wing accounts ([b1378c9](http://github.com//cap-md089/evmplus-v6/commit/b1378c95af2adf3e99179ca0e7646a8f25a7c577)), closes [#10](http://github.com//cap-md089/evmplus-v6/issues/10)
+* fixed calendar crashing when trying to render events that aren't within the viewed month ([e9ff6c7](http://github.com//cap-md089/evmplus-v6/commit/e9ff6c7a0271eda610ade56ea9722de6c986d46e))
+* fixed compile error referencing hostname ([bfa4025](http://github.com//cap-md089/evmplus-v6/commit/bfa4025b9cdd0908475cd2d3d564c97a30517453))
+* fixed event viewer crashing, added scanadd link ([e4b7843](http://github.com//cap-md089/evmplus-v6/commit/e4b7843979002ed2b47288b3241627aa5ad839f4)), closes [#22](http://github.com//cap-md089/evmplus-v6/issues/22)
+* fixed event viewer not showing the appropriate meet location ([e74f37d](http://github.com//cap-md089/evmplus-v6/commit/e74f37d557bcf33e3d5b0c1fbf4846dad4f938b8)), closes [#57](http://github.com//cap-md089/evmplus-v6/issues/57)
+* fixed event website not displaying on the eventviewer ([9aeb97b](http://github.com//cap-md089/evmplus-v6/commit/9aeb97beff013dc4808e8c481155d95f1d7cd980)), closes [#43](http://github.com//cap-md089/evmplus-v6/issues/43)
+* fixed flight assignment link not showing up ([93eb5b6](http://github.com//cap-md089/evmplus-v6/commit/93eb5b6f6c2658be783859aae0c8d3269f1c3717)), closes [#31](http://github.com//cap-md089/evmplus-v6/issues/31)
+* fixed link event button showing up when already linked to an account ([c3fcb13](http://github.com//cap-md089/evmplus-v6/commit/c3fcb1346d70724e36be152bc17b8b0eb6fd8112)), closes [#12](http://github.com//cap-md089/evmplus-v6/issues/12)
+* fixed pre commit hook, fixed background image not sticking ([16895bc](http://github.com//cap-md089/evmplus-v6/commit/16895bc9a8f4748c9d6ab3fcb3bc8ed48dc35cce))
+* removed Wing calendar ([b7f6d84](http://github.com//cap-md089/evmplus-v6/commit/b7f6d84f1a9f203297111d9d2386ee5569434894)), closes [#24](http://github.com//cap-md089/evmplus-v6/issues/24)
+* **sessions:** fixed session timeout not updating ([253e86d](http://github.com//cap-md089/evmplus-v6/commit/253e86d07422be45b9fb03a286ed067cece28eac))
+
+
+### Features
+
+* **event viewer:** rearranged some elements and incorporated context sensitive headers ([3ce2895](http://github.com//cap-md089/evmplus-v6/commit/3ce2895c82c72d52c2158aace116f3a4063a31d7)), closes [#61](http://github.com//cap-md089/evmplus-v6/issues/61) [#34](http://github.com//cap-md089/evmplus-v6/issues/34)
+* **eventviewer and eventlist:** adjusted calendar breadcrumb links, defaulted 'add parent email' on ([e39c1c0](http://github.com//cap-md089/evmplus-v6/commit/e39c1c0a1a0b8ff33f3b516e207d800f30253d47)), closes [#60](http://github.com//cap-md089/evmplus-v6/issues/60) [#55](http://github.com//cap-md089/evmplus-v6/issues/55)
+* **main.tsx:** continued work on adding cadet promotion requirements to main page ([47c96f3](http://github.com//cap-md089/evmplus-v6/commit/47c96f39f818e479c5ea774f21babec1322d9e6a))
+* **siteadmin, eventlinklist:** added access to eventlinklist and improved list presentation ([1b122e7](http://github.com//cap-md089/evmplus-v6/commit/1b122e7daff81618031cde99c6714401696bc562)), closes [#15](http://github.com//cap-md089/evmplus-v6/issues/15)
+* added attendancescanner ([70f9feb](http://github.com//cap-md089/evmplus-v6/commit/70f9feba454f823fb9d33a43e404eafa18fe64ab)), closes [#19](http://github.com//cap-md089/evmplus-v6/issues/19)
+* added MFA using an OTPA ([900239b](http://github.com//cap-md089/evmplus-v6/commit/900239b673598e22194bd0cb0edbdfef6a3d4cfa))
+* adding cadet promotion requirements display ([6659e57](http://github.com//cap-md089/evmplus-v6/commit/6659e571bcf938370ffb0954c053d24f907d24f4))
+* completed adding Cadet Promotion Requirements display on Main ([f2982b1](http://github.com//cap-md089/evmplus-v6/commit/f2982b1cc97dbce6d2b31f432e91499bfd39f627)), closes [#5](http://github.com//cap-md089/evmplus-v6/issues/5)
+* provided better copy event dialogues ([00901ec](http://github.com//cap-md089/evmplus-v6/commit/00901ec4028c18a5d3cabc990439d493f322b14e)), closes [#13](http://github.com//cap-md089/evmplus-v6/issues/13)
+* **new:** continued development on cadet promotion requirements ([67c0a78](http://github.com//cap-md089/evmplus-v6/commit/67c0a7891e6fca07454c48a0a182054dd45e87e8))
+
+
+
+
+
 # [1.14.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.6.0...client@1.14.0) (2020-09-24)
 
 
