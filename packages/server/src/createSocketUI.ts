@@ -82,6 +82,15 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 				sock.write(`Discord bot version: ${discordBotVersion}\n`);
 				sock.write(`Server common version: ${serverCommonVersion}\n`);
 				sock.write(`TypeScript version: ${typescriptVersion}\n`);
+			} else if (cmd === 'set') {
+				const [target, value] = cmd.slice(4).split(' ');
+				if (!value || !target) {
+					sock.write('Target and value must be set\n');
+					return;
+				}
+				if (target === 'account') {
+					process.env.DEFAULT_ACCOUNT = value;
+				}
 			} else {
 				sock.write('Invalid command\n');
 			}

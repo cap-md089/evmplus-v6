@@ -25,6 +25,11 @@
 			"path": "./node_modules/cz-conventional-changelog"
 		}
 	},
+	"commitlint": {
+		"extends": [
+			"@commitlint/config-conventional"
+		]
+	},
 	"husky": {
 		"hooks": {
 			"pre-commit": "hooks/pre-commit",
