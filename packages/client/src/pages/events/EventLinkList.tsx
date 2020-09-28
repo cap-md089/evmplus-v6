@@ -25,6 +25,7 @@ import {
 	RawResolvedEventObject,
 	EventType,
 	DebriefItem,
+	AccountType,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -178,20 +179,20 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					<tbody>
 						<tr>
 							<th>
-								Event ID :: Name
+								{this.props.account.id} Event ID :: Name
 								{eventsAreLinked ? ' - [Source Event]' : null}
 							</th>
 							<th>Start Date</th>
 							<th>Status</th>
+							{this.props.account.type===AccountType.CAPSQUADRON ? 
 							<th>
 								GP Evt No.
-							</th>
+							</th> : null}
 							<th>Debrief</th>
 						</tr>
 						{this.state.events.map((event, i) => (
 							<tr key={i}>
 								<td>
-									{event.accountID}-
 									<Link to={`/eventviewer/${event.id}`}>
 									{event.id}</Link> ::{'  '}
 									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
@@ -221,7 +222,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									})}
 								</td>
 								<td>{getEventStatus(event.status)}</td>
-								<td>{getEventNumber(event.groupEventNumber)}</td>
+								{this.props.account.type===AccountType.CAPSQUADRON ? 
+								<td>{getEventNumber(event.groupEventNumber)}</td> : null}
 								<td>{getEventDebrief(event.debrief)}</td>
 							</tr>
 						))}

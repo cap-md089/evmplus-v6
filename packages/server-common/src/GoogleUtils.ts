@@ -408,30 +408,34 @@ async function deleteCalendarEvent(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	eventUUID: string,
-	id: string,
+	calendarID: string,
 ) {
 	if (eventUUID.length > 0) {
 		let deleteResponse;
 		try {
 			deleteResponse = await myCalendar.events.delete({
 				auth: jwtClient,
-				calendarId: id,
+				calendarId: calendarID,
 				eventId: eventUUID,
 			});
 		} catch (error) {
-			// 		console.log("delete event error: " + eventUUID);  9999999999 this shouldn't happen.  Should probably log
+			// 		console.log("delete event error: " + eventUUID);  
+			// 9999999999 this shouldn't happen.  Should probably log
 			// 			this occurrence so that leaks can be plugged.
+			// this occurs when the eveneUUID doesn't exist on the Google calendar,
+			// such as when the Google event is deleted manually then the web event is Deleted
 			return error;
 		}
 		if (typeof deleteResponse !== 'undefined') {
 			if (deleteResponse.status === 200) {
-				// 			console.log('Response status ' + deleteResponse.statusText); // 99999999 need to look at possible responses and catch errors
+				//  			console.log('Response status ' + deleteResponse.statusText); // 99999999 need to look at possible responses and catch errors
 				return 'Success';
 			} else {
+				// console.log('Failure', deleteResponse, eventUUID);
 				return 'Error';
 			}
 		} else {
-			console.log('Delete response undefined');
+			// console.log('Delete response undefined');
 			return 'Undefined delete response';
 		}
 	}
@@ -441,8 +445,9 @@ async function deleteCalendarEvents(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawRegularEventObject,
-	ids: string,
+	calendarID: string,
 ) {
+	// console.log('in deleteCalendarEvents', inEvent);
 	let errorFlag = false;
 	if (!!inEvent.googleCalendarIds.mainId && inEvent.googleCalendarIds.mainId.length > 0) {
 		if (
@@ -450,7 +455,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.mainId,
-				ids[0],
+				calendarID,
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -462,7 +467,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.regId,
-				ids[0],
+				calendarID,
 			)) !== 'Success'
 		) {
 			errorFlag = true;
@@ -474,7 +479,7 @@ async function deleteCalendarEvents(
 				myCalendar,
 				jwtClient,
 				inEvent.googleCalendarIds.feeId,
-				ids[0],
+				calendarID,
 			)) !== 'Success'
 		) {
 			errorFlag = true;
