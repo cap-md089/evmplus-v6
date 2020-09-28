@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.7](http://github.com//cap-md089/evmplus-v6/compare/util-cli@1.3.2...util-cli@1.5.7) (2020-09-28)
+
+
+### Bug Fixes
+
+* removed Wing calendar ([b7f6d84](http://github.com//cap-md089/evmplus-v6/commit/b7f6d84f1a9f203297111d9d2386ee5569434894)), closes [#24](http://github.com//cap-md089/evmplus-v6/issues/24)
+* stabilized command line interfaces ([18bc3d0](http://github.com//cap-md089/evmplus-v6/commit/18bc3d0ec4e351c63fe900f51ae5de0cf92e361e))
+
+
+
+
+
 ## [1.5.6](http://github.com//cap-md089/evmplus-v6/compare/util-cli@1.3.2...util-cli@1.5.6) (2020-09-27)
 
 
