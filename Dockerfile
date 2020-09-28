@@ -29,7 +29,7 @@ ENV REMOTE_DRIVE_KEY_FILE /usr/evm-plus/remote_drive_key
 COPY lerna.json package.json tsconfig.* yarn.lock ./
 COPY packages ./packages
 COPY types ./types
-RUN yarn install
+RUN lerna bootstrap
 RUN lerna run build
 
 CMD [ "npm", "--prefix", "packages/server", "start" ]
