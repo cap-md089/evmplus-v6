@@ -705,6 +705,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</>
 						) : null}
 						<h1>{event.name}</h1>
+						{event.subtitle ? 
+						<h2>{event.subtitle}</h2> : null }
 						<h2>Meeting information</h2>
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
@@ -738,6 +740,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						<strong>Comments:</strong> {event.comments}
 						<br />
+						{member ? 
+							<>
+							 <strong>Member Viewable Comments:</strong> {event.memberComments}
+							 <br /> 
+							 </>
+							 : null }
 						<strong>Activity:</strong>{' '}
 						{pipe(
 							Maybe.map(activities => <>{activities}</>),
@@ -786,7 +794,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</>
 						) : null}
 						<br />
-						{Maybe.isSome(authorFullName) ? (
+						{member && Maybe.isSome(authorFullName) ? (
 							<>
 								<strong>Event Author:</strong> {authorFullName.value}
 								<br />

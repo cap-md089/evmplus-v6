@@ -96,66 +96,69 @@ function buildEventDescription(
 	const orBlank = Maybe.orSome('');
 
 	// first block
-	let description =
-		'<---->Event Information Link\n(Page includes event information, POC contact information, and applicable download links):\n';
+	let description = `<h2>${inEvent.name}</h2>`;
+	inEvent.subtitle ? description += `<h3>${inEvent.subtitle}</h3>\n` : description += ``;
+	description += `<h3>Event Information Link</h3>`
+	description +=
+		'(Page includes event information, POC contact information, and applicable download links):\n';
 	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
-	description += '<---->Status\nThis event is ' + status + '\n\n';
+	description += `<h3>Status</h3>` + 'This event is ' + status + '\n\n';
 	// second block
-	description += '<---->Times and Location(s)\n';
+	description += `<h3>Times and Location(s)</h3>`;
 	description +=
-		'--Meet at ' + dateFormatter(inEvent.meetDateTime) + ' at ' + inEvent.meetLocation + '\n';
+		'<b>Meet at</b> ' + dateFormatter(inEvent.meetDateTime) + ' at ' + inEvent.meetLocation + '\n';
 	description +=
-		'--Start at ' + dateFormatter(inEvent.startDateTime) + ' at ' + inEvent.location + '\n';
-	description += '--End at ' + dateFormatter(inEvent.endDateTime) + '\n';
+		'<b>Start at</b> ' + dateFormatter(inEvent.startDateTime) + ' at ' + inEvent.location + '\n';
+	description += '<b>End at</b> ' + dateFormatter(inEvent.endDateTime) + '\n';
 	description +=
-		'--Pickup at ' +
+		'<b>Pickup at</b> ' +
 		dateFormatter(inEvent.pickupDateTime) +
 		' at ' +
 		inEvent.pickupLocation +
 		'\n\n';
 	// third block
-	description += '<---->Logistics\n';
+	description += '<h3>Logistics</h3>';
 	description +=
-		'--Transportation Provided: ' +
+		'<b>Transportation Provided:</b> ' +
 		(inEvent.transportationProvided === true ? 'YES' : 'NO') +
 		'\n';
-	description += '--Uniform: ' + orBlank(presentMultCheckboxReturn(inEvent.uniform)) + '\n';
-	description += '--Activity: ' + orBlank(presentMultCheckboxReturn(inEvent.activity)) + '\n';
+	description += '<b>Uniform:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.uniform)) + '\n';
+	description += '<b>Activity:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.activity)) + '\n';
 	const showForms = isOneOfSelected(inEvent.requiredForms);
 	if (showForms === true) {
 		description +=
-			'--Required forms: ' + orBlank(presentMultCheckboxReturn(inEvent.requiredForms)) + '\n';
+			'<b>Required forms:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.requiredForms)) + '\n';
 	}
 	const showLodging = isOneOfSelected(inEvent.lodgingArrangments);
 	if (showLodging === true) {
 		description +=
-			'--Lodging: ' + orBlank(presentMultCheckboxReturn(inEvent.lodgingArrangments)) + '\n';
+			'<b>Lodging:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.lodgingArrangments)) + '\n';
 	}
 	if (inEvent.requiredEquipment.length > 0) {
-		description += '--Required equipment: ' + inEvent.requiredEquipment + '\n';
+		description += '<b>Required equipment:</b> ' + inEvent.requiredEquipment + '\n';
 	}
 	if (!!inEvent.registration) {
 		description +=
-			'--Registration deadline: ' + dateFormatter(inEvent.registration.deadline) + '\n';
-		description += '--Registration information: ' + inEvent.registration.information + '\n';
+			'<b>Registration deadline:</b> ' + dateFormatter(inEvent.registration.deadline) + '\n';
+		description += '<b>Registration information:</b> ' + inEvent.registration.information + '\n';
 	}
 	if (!!inEvent.participationFee) {
-		description += '--Participation fee: ' + inEvent.participationFee.feeAmount + '\n';
+		description += '<b>Participation fee:</b> ' + inEvent.participationFee.feeAmount + '\n';
 		description +=
-			'--Participation fee due: ' + dateFormatter(inEvent.participationFee.feeDue) + '\n';
+			'<b>Participation fee due:</b> ' + dateFormatter(inEvent.participationFee.feeDue) + '\n';
 	}
 	const showMeals = isOneOfSelected(inEvent.mealsDescription);
 	if (showMeals === true) {
 		description +=
-			'--Meals: ' + orBlank(presentMultCheckboxReturn(inEvent.mealsDescription)) + '\n';
+			'<b>Meals:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.mealsDescription)) + '\n';
 	}
 	description +=
-		'--Desired number of participants: ' + inEvent.desiredNumberOfParticipants + '\n';
+		'<b>Desired number of participants:</b> ' + inEvent.desiredNumberOfParticipants + '\n';
 	if (inEvent.comments.length > 0) {
-		description += '--Comments: ' + inEvent.comments + '\n';
+		description += '<b>Comments:</b> ' + inEvent.comments + '\n';
 	}
 	if (inEvent.eventWebsite.length > 0) {
-		description += '--Website: ' + inEvent.eventWebsite + '\n';
+		description += '<b>Website:</b> ' + inEvent.eventWebsite + '\n';
 	}
 
 	return description;
