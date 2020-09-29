@@ -1,6 +1,6 @@
 {
 	"name": "common-lib",
-	"version": "1.17.0",
+	"version": "1.18.0",
 	"description": "Common types for CAPUnit.com to use in TypeScript",
 	"author": "Andrew Rioux",
 	"main": "./dist/index.js",
