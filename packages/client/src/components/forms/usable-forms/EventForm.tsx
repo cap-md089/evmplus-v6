@@ -52,6 +52,7 @@ import { InputProps } from '../../form-inputs/Input';
 import POCInput, { InternalPointOfContactEdit, POCInputProps } from '../../form-inputs/POCInput';
 import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
 import SimpleForm, {
+	BigTextBox,
 	Checkbox,
 	DateTimeInput,
 	FileInput,
@@ -129,6 +130,7 @@ interface EventFormProps {
 
 export interface NewEventFormValues {
 	name: string;
+	subtitle: string;
 	meetDateTime: number;
 	meetLocation: string;
 	startDateTime: number;
@@ -143,6 +145,7 @@ export interface NewEventFormValues {
 	requiredEquipment: string[];
 	eventWebsite: string;
 	comments: string;
+	memberComments: string;
 	acceptSignups: boolean;
 	signUpDenyMessage: null | string;
 	showUpcoming: boolean;
@@ -183,6 +186,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		activity: event.activity,
 		administrationComments: event.administrationComments,
 		comments: event.comments,
+		memberComments: event.memberComments,
 		complete: event.complete,
 		desiredNumberOfParticipants: event.desiredNumberOfParticipants,
 		endDateTime: event.endDateTime,
@@ -210,6 +214,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		signUpPartTime: event.signUpPartTime,
 		startDateTime: event.startDateTime,
 		status: event.status,
+		subtitle: event.subtitle,
 		teamID:
 			event.teamID === null || (event.teamID as any) === '' || event.teamID === undefined
 				? null
@@ -244,6 +249,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 
 export const emptyEventFormValues = (): NewEventFormValues => ({
 	name: '',
+	subtitle: '',
 	meetDateTime: +DateTime.utc(),
 	meetLocation: '',
 	startDateTime: +DateTime.utc(),
@@ -273,6 +279,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	eventWebsite: '',
 	requiredForms: emptyFromLabels(RequiredForms),
 	comments: '',
+	memberComments: '',
 	acceptSignups: true,
 	signUpDenyMessage: '',
 	showUpcoming: true,
@@ -307,6 +314,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	mealsDescription: event.mealsDescription,
 	meetDateTime: event.meetDateTime,
 	meetLocation: event.meetLocation,
+	memberComments: event.memberComments,
 	name: event.name,
 	participationFee: event.participationFee || {
 		feeAmount: 0,
@@ -343,6 +351,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	signUpPartTime: event.signUpPartTime,
 	startDateTime: event.startDateTime,
 	status: event.status,
+	subtitle: event.subtitle,
 	teamID: event.teamID ?? null,
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
@@ -400,6 +409,13 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Event Name*</Label>
 				<TextInput name="name" errorMessage="Event must have a name" />
 
+				<Label>Subtitle</Label>
+				<TextInput 
+					boxStyles={{
+						height: '50px',
+					}}
+				name="subtitle"/>
+
 				<Label>Meet date and time*</Label>
 				<DateTimeInput
 					name="meetDateTime"
@@ -451,12 +467,20 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Title>Activity Information</Title>
 
-				<Label>Comments</Label>
-				<TextInput
-					boxStyles={{
-						height: '50px',
-					}}
+				<Label>Comments (Visible to the public)</Label>
+				<BigTextBox
+					// boxStyles={{
+					// 	height: '50px',
+					// }}
 					name="comments"
+				/>
+
+				<Label>Member Comments (Visible only when signed in)</Label>
+				<BigTextBox
+					// boxStyles={{
+					// 	height: '50px',
+					// }}
+					name="memberComments"
 				/>
 
 				<Label>Activity type</Label>

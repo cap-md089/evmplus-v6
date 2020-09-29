@@ -1140,6 +1140,10 @@ export interface NewEventObject {
 	 */
 	name: string;
 	/**
+	 * The subtitle or subtext of the event name
+	 */
+	subtitle: string;
+	/**
 	 * When the event meets
 	 */
 	meetDateTime: number;
@@ -1257,6 +1261,10 @@ export interface NewEventObject {
 	 * Comments from the event author, description, etc.
 	 */
 	comments: string;
+	/**
+	 * Comments intended to be displayed to signed in members
+	 */
+	memberComments: string;
 	/**
 	 * Whether or not signups are accepted
 	 */
