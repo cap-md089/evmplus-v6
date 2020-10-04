@@ -419,9 +419,13 @@ export const createValidator = (
 				members.push(
 					initializer.kind === ts.SyntaxKind.NumericLiteral
 						? ts.createNumericLiteral(initializer.getText())
+						: initializer.kind === ts.SyntaxKind.StringLiteral
+						? ts.createStringLiteral((initializer as ts.StringLiteral).text)
 						: initializer,
 				);
 			});
+
+			console.log(members);
 
 			return caller(
 				'OneOfStrict',

@@ -18,10 +18,8 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, SessionType } from 'common-lib';
-import { canFullyManageEvent } from 'common-lib/src/lib/Events';
+import { api, canFullyManageEvent, SessionType } from 'common-lib';
 import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
-import { updateSession } from 'server-common/dist/member/pam';
 
 export const func: (
 	now?: () => number,
@@ -40,7 +38,7 @@ export const func: (
 				message: 'You cannot record attendance for this event until it has started',
 			})
 			.flatMap(({ pickupDateTime, id }) =>
-				updateSession(req.mysqlx, {
+				PAM.updateSession(req.mysqlx, {
 					expires: pickupDateTime,
 					id: req.session.id,
 					sessionData: {
