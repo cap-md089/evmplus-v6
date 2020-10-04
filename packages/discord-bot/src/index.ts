@@ -52,7 +52,7 @@ export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: my
 	return { session, schema: session.getSchema(DB_SCHEMA) };
 };
 
-export default function setup(
+export default function setupDiscordBot(
 	conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
 	mysqlClient: mysql.Client,

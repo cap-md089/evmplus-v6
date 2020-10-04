@@ -134,9 +134,10 @@ export const func: ServerAPIEndpoint<api.Signin> = req =>
 	asyncRight(
 		PAM.trySignin(
 			req.mysqlx,
+			req.account,
 			req.body.username,
 			req.body.password,
-			req.body.recaptcha,
+			req.body.token,
 			req.configuration,
 		),
 		errorGenerator('Could not sign in'),

@@ -55,6 +55,7 @@ import { func as fullfileinfo } from './files/files/fullfileinfo';
 import { func as getfile } from './files/files/getfile';
 import { func as setfileinfo } from './files/files/setfileinfo';
 import { getFormToken as formtoken } from './formtoken';
+import { func as getsigninnonce } from './getsigninnonce';
 import { func as getSlideshowImageIDs } from './getSlideshowImageIDs';
 import { func as setabsent } from './member/absent';
 import { func as createprospective } from './member/account/capprospective/createprospective';
@@ -240,4 +241,5 @@ export const api = {
 	formtoken,
 	getSlideshowImageIDs,
 	signin,
+	getsigninnonce,
 };

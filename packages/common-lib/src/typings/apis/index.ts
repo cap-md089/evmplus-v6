@@ -23,7 +23,7 @@
  */
 
 import { APIEither } from '../api';
-import { AccountObject, FileObject, SigninReturn } from '../types';
+import { AccountObject, FileObject, SigninRequest, SigninReturn } from '../types';
 
 export * as errors from './errors';
 export * as events from './events';
@@ -110,14 +110,7 @@ export interface FormToken {
  * user information to include a session ID
  */
 export interface Signin {
-	(
-		params: {},
-		body: {
-			username: string;
-			password: string;
-			recaptcha: string;
-		},
-	): APIEither<SigninReturn>;
+	(params: {}, body: SigninRequest): APIEither<SigninReturn>;
 
 	url: '/api/signin';
 
@@ -128,6 +121,24 @@ export interface Signin {
 	needsToken: false;
 
 	useValidator: true;
+}
+
+/**
+ * Gets a cryptographic nonce for some of the SigninTokens used
+ * for the signin function above
+ */
+export interface GetSigninToken {
+	(params: { signatureID: string }, body: {}): APIEither<string>;
+
+	url: '/api/signintoken/:signatureID';
+
+	method: 'get';
+
+	requiresMember: 'unused';
+
+	needsToken: false;
+
+	useValidator: false;
 }
 
 /**

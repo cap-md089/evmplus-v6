@@ -2634,6 +2634,99 @@ export interface AccountLinkTarget {
 	name: string;
 }
 
+export enum SigninKeyScopeType {
+	GLOBAL,
+	ACCOUNT,
+	USER,
+}
+
+export interface SigninKeyGlobalScope {
+	type: SigninKeyScopeType.GLOBAL;
+}
+
+export interface SigninKeyAccountScope {
+	type: SigninKeyScopeType.ACCOUNT;
+
+	accountID: string;
+}
+
+export interface SigninKeyUserAccountScope {
+	type: SigninKeyScopeType.USER;
+
+	member: MemberReference;
+}
+
+export type SigninKeyScope =
+	| SigninKeyGlobalScope
+	| SigninKeyAccountScope
+	| SigninKeyUserAccountScope;
+
+/**
+ * Used to allow for sending out private keys to use to authenticate
+ */
+export interface StoredSigninKey {
+	signatureID: string;
+
+	publicKey: string;
+
+	scope: SigninKeyScope;
+}
+
+/**
+ * Used to allow for sending out private keys to use to authenticate
+ */
+export interface StoredSigninNonce {
+	nonce: string;
+
+	signatureID: string;
+
+	expireTime: number;
+}
+
+export enum SigninTokenType {
+	RECAPTCHA,
+	SIGNATURE,
+}
+
+export interface RecaptchaSigninToken {
+	type: SigninTokenType.RECAPTCHA;
+
+	recaptchToken: string;
+}
+
+/**
+ * Uses an RSA public/private key pair to verify a signature of the nonce
+ */
+export interface SignatureSigninToken {
+	type: SigninTokenType.SIGNATURE;
+
+	nonce: string;
+
+	signature: string;
+
+	signatureID: string;
+}
+
+export type SigninToken = RecaptchaSigninToken | SignatureSigninToken;
+
+/**
+ * Represents the request body used to try and sign someone in
+ */
+export interface SigninRequest {
+	/**
+	 * Represents the login credentials for a user
+	 */
+	username: string;
+	/**
+	 * Represents the login credentials for a user
+	 */
+	password: string;
+	/**
+	 * Allows for proving the person signing in isn't a bot
+	 */
+	token: SigninToken;
+}
+
 /**
  * The object that represents a successful session, as signing in
  * returns a session
