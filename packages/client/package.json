@@ -23,6 +23,7 @@
 		"react-router-dom": "4.2.0",
 		"react-scripts": "^3.4.1",
 		"react-twitter-embed": "3.0.3",
+		"simplemde": "^1.11.2",
 		"timeago": "1.6.7",
 		"timeago.js": "4.0.2",
 		"typescript": "^3.9.5",

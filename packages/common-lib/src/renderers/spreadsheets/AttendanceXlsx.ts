@@ -248,6 +248,7 @@ export const AttendanceXL = (
 		'Timestamp',
 		'CAPID',
 		'Grade/Name',
+		'Squadron',
 		'Arrival Time',
 		'Departure Time',
 		'Status',
@@ -271,6 +272,7 @@ export const AttendanceXL = (
 			attendee.record.timestamp,
 			attendee.record.memberID.id + ' ',
 			attendee.record.memberName,
+			(attendee.member.hasValue ? attendee.member.value.squadron : ''),
 			attendee.record.shiftTime.arrivalTime,
 			attendee.record.shiftTime.departureTime,
 			AttendanceStatus[attendee.record.status],
@@ -324,10 +326,10 @@ export const FormatAttendanceXL = (
 		rowCount = 0;
 		sheet['A' + j].t = 'd';
 		sheet['A' + j].z = dateFormat;
-		sheet['D' + j].t = 'd';
-		sheet['D' + j].z = dateFormat;
 		sheet['E' + j].t = 'd';
 		sheet['E' + j].z = dateFormat;
+		sheet['F' + j].t = 'd';
+		sheet['F' + j].z = dateFormat;
 
 		for (let i = 0; i < customAttendanceFieldValues.length; i++) {
 			const type = customAttendanceFieldValues[i].type;

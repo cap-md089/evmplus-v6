@@ -452,6 +452,10 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					}}
 					onChange={this.handleChange}
 					onSubmit={this.addMembers}
+					submitInfo={{
+						text: this.state.capidSaving ? 'Adding...' : 'Add',
+						disabled: this.state.capidSaving,
+					}}
 				>
 					<Label>Select how to sort</Label>
 					<SimpleRadioButton<SortFunction>
