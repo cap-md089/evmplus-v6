@@ -28,6 +28,7 @@ import {
 	Member,
 	MemberPermission,
 	MemberReference,
+	PermissionForName,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
 	User,
@@ -151,11 +152,11 @@ export const hasSpecificPermission = <T extends MemberPermission>(permission: T)
 	// @ts-ignore
 	(user.permissions[permission] ?? 0) === threshold || isRioux(user);
 
-export const hasPermission = <T extends MemberPermission>(permission: T) => (threshold: number) => (
-	user: User,
-) =>
+export const hasPermission = <T extends MemberPermission>(permission: T) => (
+	threshold: PermissionForName<T>,
+) => (user: User) =>
 	// @ts-ignore
-	(user.permissions[permission] ?? 0) >= threshold || isRioux(user);
+	user.permissions[permission] === threshold || isRioux(user);
 
 export const asReference = (member: Member): MemberReference =>
 	member.type === 'CAPNHQMember'

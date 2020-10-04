@@ -25,7 +25,6 @@ import {
 	EventType,
 	Maybe,
 	NewEventObject,
-	Permissions,
 	RawRegularEventObject,
 	SessionType,
 	Validator,
@@ -48,7 +47,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 					code: 400,
 					message: 'You cannot modify a linked event',
 				})
-				.filter(canManageEvent(Permissions.ManageEvent.ADDDRAFTEVENTS)(req.member), {
+				.filter(canManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member does not have permission to perform that action',
@@ -58,7 +57,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 						{
 							...event,
 							...req.body,
-							status: canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+							status: canManageEvent(req.member)(event)
 								? req.body.status ?? event.status
 								: event.status,
 						},

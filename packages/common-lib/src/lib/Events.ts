@@ -109,46 +109,66 @@ export const getAttendanceRecordForMember = (attendance: AttendanceRecord[]) => 
 	member: MemberReference,
 ): AttendanceRecord | undefined => attendance.find(val => areMembersTheSame(member)(val.memberID));
 
-export const canManageEvent = (
-	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: User) => (event: RawResolvedEventObject) =>
-	isPOCOf(member, event) || effectiveManageEventPermissionForEvent(member)(event) >= threshold;
+export const canManageEvent = (member: User) => (event: RawResolvedEventObject) =>
+	isPOCOf(member, event) ||
+	[Permissions.ManageEvent.FULL, Permissions.ManageEvent.ADDDRAFTEVENTS].includes(
+		effectiveManageEventPermissionForEvent(member)(event),
+	);
 
-export const canMaybeManageEvent = (
-	threshold: Permissions.ManageEvent = Permissions.ManageEvent.FULL,
-) => (member: MaybeObj<User>) => (event: RawResolvedEventObject) =>
-	Maybe.isSome(member) ? canManageEvent(threshold)(member.value)(event) : false;
+export const canFullyManageEvent = (member: User) => (event: RawResolvedEventObject) =>
+	isPOCOf(member, event) ||
+	effectiveManageEventPermissionForEvent(member)(event) === Permissions.ManageEvent.FULL;
+
+export const canMaybeManageEvent = (member: MaybeObj<User>) => (event: RawResolvedEventObject) =>
+	Maybe.isSome(member) ? canManageEvent(member.value)(event) : false;
+
+export const canMaybeFullyManageEvent = (member: MaybeObj<User>) => (
+	event: RawResolvedEventObject,
+) => (Maybe.isSome(member) ? canFullyManageEvent(member.value)(event) : false);
+
+const orderedManageEventPermissions = [
+	Permissions.ManageEvent.NONE,
+	Permissions.ManageEvent.ADDDRAFTEVENTS,
+	Permissions.ManageEvent.FULL,
+];
+
+const permissionIndex = (perm: Permissions.ManageEvent) =>
+	orderedManageEventPermissions.indexOf(perm);
 
 export const effectiveManageEventPermission = (member: User) =>
-	Math.max(
-		(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
-			hasOneDutyPosition([
-				'Operations Officer',
-				'Activities Officer',
-				'Squadron Activities Officer',
-			])(member)
-			? Permissions.ManageEvent.FULL
-			: Permissions.ManageEvent.NONE,
-		(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
-			hasOneDutyPosition([
-				'Cadet Operations Officer',
-				'Cadet Operations NCO',
-				'Cadet Activities Officer',
-				'Cadet Activities NCO',
-			])(member)
-			? Permissions.ManageEvent.ADDDRAFTEVENTS
-			: Permissions.ManageEvent.NONE,
-		member.permissions.ManageEvent,
-		isRioux(member) ? Permissions.ManageEvent.FULL : Permissions.ManageEvent.NONE,
-	);
+	orderedManageEventPermissions[
+		Math.max(
+			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
+				hasOneDutyPosition([
+					'Operations Officer',
+					'Activities Officer',
+					'Squadron Activities Officer',
+				])(member)
+				? 2
+				: 0,
+			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
+				hasOneDutyPosition([
+					'Cadet Operations Officer',
+					'Cadet Operations NCO',
+					'Cadet Activities Officer',
+					'Cadet Activities NCO',
+				])(member)
+				? 1
+				: 0,
+			permissionIndex(member.permissions.ManageEvent),
+			isRioux(member) ? 2 : 0,
+		)
+	];
 
 export const effectiveManageEventPermissionForEvent = (member: User) => (
 	event: RawResolvedEventObject,
 ) =>
-	Math.max(
-		effectiveManageEventPermission(member),
-		isPOCOf(member, event) ? Permissions.ManageEvent.FULL : Permissions.ManageEvent.NONE,
-	);
+	orderedManageEventPermissions[
+		Math.max(
+			permissionIndex(effectiveManageEventPermission(member)),
+			isPOCOf(member, event) ? 2 : 0,
+		)
+	];
 
 export const defaultCustomAttendanceFieldValue = (
 	field: CustomAttendanceField,

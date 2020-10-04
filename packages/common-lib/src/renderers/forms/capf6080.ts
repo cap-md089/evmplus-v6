@@ -21,7 +21,12 @@ import { DateTime } from 'luxon';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { presentMultCheckboxReturn } from '../../lib/forms';
 import { Maybe } from '../../lib/Maybe';
-import { FullPointOfContact, Member, RawResolvedEventObject } from '../../typings/types';
+import {
+	EventStatus,
+	FullPointOfContact,
+	Member,
+	RawResolvedEventObject,
+} from '../../typings/types';
 
 export function formatPhone(phone: string) {
 	// strip spaces and non-numeric characters
@@ -46,14 +51,14 @@ export function formatPhone(phone: string) {
 	}
 }
 
-const EventStatus = [
-	'Draft',
-	'Tentative',
-	'Confirmed',
-	'Complete',
-	'Cancelled',
-	'Information Only',
-];
+const EventStatusDisplay = {
+	[EventStatus.DRAFT]: 'Draft',
+	[EventStatus.TENTATIVE]: 'Tentative',
+	[EventStatus.CONFIRMED]: 'Confirmed',
+	[EventStatus.COMPLETE]: 'Complete',
+	[EventStatus.CANCELLED]: 'Cancelled',
+	[EventStatus.INFORMATIONONLY]: 'Information Only',
+};
 
 const zeroPad = (n: number, a = 2) => ('00' + n).substr(-a);
 
@@ -224,7 +229,11 @@ export const capf6080DocumentDefinition = (
 				{
 					text: [
 						{ text: 'Event Status: ', bold: true, fontSize: myTextFontSize },
-						{ text: EventStatus[event.status], bold: false, fontSize: myTextFontSize },
+						{
+							text: EventStatusDisplay[event.status],
+							bold: false,
+							fontSize: myTextFontSize,
+						},
 					],
 				},
 		  ]

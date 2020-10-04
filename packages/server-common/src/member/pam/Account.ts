@@ -38,6 +38,7 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
+	PermissionForName,
 	SafeUserAccountInformation,
 	ServerError,
 	StoredMemberPermissions,
@@ -432,14 +433,14 @@ export const setPermissionsForMemberInAccount = async (
 
 export const RequiresPermission = <T extends MemberPermission>(
 	permission: T,
-	threshold: number,
+	permissionValue: PermissionForName<T>,
 	message = 'Member does not have permission to perform the requested action',
 ) => <R extends { member?: MaybeObj<User> | User }, V>(func: (req: R) => ServerEither<V>) => (
 	req: R,
-) => checkPermissions(permission)(threshold)(message)(req).flatMap(func);
+) => checkPermissions(permission)(permissionValue)(message)(req).flatMap(func);
 
 export const checkPermissions = <T extends MemberPermission>(permission: T) => (
-	threshold: number,
+	value: PermissionForName<T>,
 ) => (message = 'Member does not have permission to perform the requested action') => <
 	R extends { member?: MaybeObj<User> | User }
 >(
@@ -447,14 +448,14 @@ export const checkPermissions = <T extends MemberPermission>(permission: T) => (
 ): ServerEither<R> =>
 	'member' in req && !!req.member
 		? 'hasValue' in req.member
-			? req.member.hasValue && hasPermission(permission)(threshold)(req.member.value)
+			? req.member.hasValue && hasPermission(permission)(value)(req.member.value)
 				? asyncRight<ServerError, R>(req, errorGenerator('Could not process request'))
 				: asyncLeft<ServerError, R>({
 						type: 'OTHER',
 						code: 403,
 						message,
 				  })
-			: hasPermission(permission)(threshold)(req.member)
+			: hasPermission(permission)(value)(req.member)
 			? asyncRight<ServerError, R>(req, errorGenerator('Could not process request'))
 			: asyncLeft<ServerError, R>({
 					type: 'OTHER',

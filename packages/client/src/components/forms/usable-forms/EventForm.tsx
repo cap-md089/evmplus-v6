@@ -26,11 +26,12 @@ import {
 	effectiveManageEventPermission,
 	emptyFromLabels,
 	emptySimpleFromLabels,
-	EventStatus as EventStatusEnum,
+	EventStatus,
 	ExternalPointOfContact,
 	FullTeamObject,
 	InternalPointOfContact,
 	isOneOfSelected,
+	labels,
 	Maybe,
 	MaybeObj,
 	Member,
@@ -47,6 +48,7 @@ import {
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
+import EnumRadioButton from '../../form-inputs/EnumRadioButton';
 import { BooleanForField } from '../../form-inputs/FormBlock';
 import { InputProps } from '../../form-inputs/Input';
 import POCInput, { InternalPointOfContactEdit, POCInputProps } from '../../form-inputs/POCInput';
@@ -63,56 +65,11 @@ import SimpleForm, {
 	NumberInput,
 	OtherMultCheckbox,
 	RadioButtonWithOther,
-	SimpleRadioButton,
 	TeamSelector,
 	TextBox,
 	TextInput,
 	Title,
 } from '../SimpleForm';
-
-export const Uniforms = [
-	'Dress Blue A',
-	'Dress Blue B',
-	'Battle Dress Uniform or Airman Battle Uniform (BDU/ABU)',
-	'PT Gear',
-	'Polo Shirts (Senior Members)',
-	'Blue Utilities (Senior Members)',
-	'Civilian Attire',
-	'Flight Suit',
-	'Not Applicable',
-];
-export const Activities = [
-	'Squadron Meeting',
-	'Classroom/Tour/Light',
-	'Backcountry',
-	'Flying',
-	'Physically Rigorous',
-	'Recurring Meeting',
-];
-export const RequiredForms = [
-	'CAP Identification Card',
-	'CAPF 31 Application For CAP Encampment Or Special Activity',
-	'CAPF 60-80 Civil Air Patrol Cadet Activity Permission Slip',
-	'CAPF 101 Specialty Qualification Card',
-	'CAPF 160 CAP Member Health History Form',
-	'CAPF 161 Emergency Information',
-	'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication',
-];
-export const Meals = ['No meals provided', 'Meals provided', 'Bring own food', 'Bring money'];
-export const LodgingArrangments = [
-	'Hotel or individual room',
-	'Open bay building',
-	'Large tent',
-	'Individual tent',
-];
-export const EventStatus = [
-	'Draft',
-	'Tentative',
-	'Confirmed',
-	'Complete',
-	'Cancelled',
-	'Information Only',
-];
 
 interface EventFormProps {
 	registry: RegistryValues;
@@ -151,7 +108,7 @@ export interface NewEventFormValues {
 	showUpcoming: boolean;
 	complete: boolean;
 	administrationComments: string;
-	status: EventStatusEnum;
+	status: EventStatus;
 	pointsOfContact: Array<InternalPointOfContactEdit | ExternalPointOfContact>;
 	customAttendanceFields: CustomAttendanceField[];
 	signUpPartTime: boolean;
@@ -259,7 +216,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: emptySimpleFromLabels(Uniforms),
+	uniform: emptySimpleFromLabels(labels.Uniforms),
 	desiredNumberOfParticipants: 8,
 	useRegistration: false,
 	registration: {
@@ -271,13 +228,13 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 		feeAmount: 0,
 		feeDue: Date.now(),
 	},
-	mealsDescription: emptyFromLabels(Meals),
-	lodgingArrangments: emptyFromLabels(LodgingArrangments),
-	activity: emptyFromLabels(Activities),
+	mealsDescription: emptyFromLabels(labels.Meals),
+	lodgingArrangments: emptyFromLabels(labels.LodgingArrangments),
+	activity: emptyFromLabels(labels.Activities),
 	highAdventureDescription: '',
 	requiredEquipment: [],
 	eventWebsite: '',
-	requiredForms: emptyFromLabels(RequiredForms),
+	requiredForms: emptyFromLabels(labels.RequiredForms),
 	comments: '',
 	memberComments: '',
 	acceptSignups: true,
@@ -287,7 +244,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	regionEventNumber: defaultRadioFromLabels(['Not Required', 'To Be Applied For', 'Applied For']),
 	complete: false,
 	administrationComments: '',
-	status: 0,
+	status: EventStatus.DRAFT,
 	pointsOfContact: [],
 	customAttendanceFields: [],
 	signUpPartTime: false,
@@ -485,10 +442,10 @@ export default class EventForm extends React.Component<EventFormProps> {
 				/>
 
 				<Label>Activity type</Label>
-				<OtherMultCheckbox name="activity" labels={Activities} />
+				<OtherMultCheckbox name="activity" labels={labels.Activities} />
 
 				<Label>Lodging arrangement</Label>
-				<OtherMultCheckbox name="lodgingArrangments" labels={LodgingArrangments} />
+				<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
 
 				<Label>Event website</Label>
 				<TextInput name="eventWebsite" />
@@ -501,12 +458,12 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Uniform*</Label>
 				<SimpleMultCheckbox
 					name="uniform"
-					labels={Uniforms}
+					labels={labels.Uniforms}
 					errorMessage="Uniform selection is required"
 				/>
 
 				<Label>Required participant forms</Label>
-				<OtherMultCheckbox name="requiredForms" labels={RequiredForms} />
+				<OtherMultCheckbox name="requiredForms" labels={labels.RequiredForms} />
 
 				<Label>Required equipment</Label>
 				<ListEditor<string, InputProps<string>>
@@ -557,7 +514,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 				</FormBlock>
 
 				<Label>Meals</Label>
-				<OtherMultCheckbox name="mealsDescription" labels={Meals} />
+				<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
 
 				<Title>Points of Contact</Title>
 
@@ -621,14 +578,28 @@ export default class EventForm extends React.Component<EventFormProps> {
 				/>
 
 				<Label>Event status</Label>
-				<SimpleRadioButton
+				<EnumRadioButton<EventStatus>
 					name="status"
 					labels={
-						effectiveManageEventPermission(this.props.member) >=
+						effectiveManageEventPermission(this.props.member) ===
 						Permissions.ManageEvent.FULL
-							? EventStatus
+							? labels.EventStatusLabels
 							: ['Draft']
 					}
+					values={
+						effectiveManageEventPermission(this.props.member) ===
+						Permissions.ManageEvent.FULL
+							? [
+									EventStatus.DRAFT,
+									EventStatus.TENTATIVE,
+									EventStatus.CONFIRMED,
+									EventStatus.COMPLETE,
+									EventStatus.CANCELLED,
+									EventStatus.INFORMATIONONLY,
+							  ]
+							: [EventStatus.DRAFT]
+					}
+					defaultValue={EventStatus.DRAFT}
 				/>
 
 				<Label>Entry complete</Label>

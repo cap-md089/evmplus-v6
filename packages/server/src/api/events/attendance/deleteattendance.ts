@@ -25,14 +25,13 @@ import {
 	APIEndpointBody,
 	AsyncEither,
 	asyncRight,
-	canManageEvent,
+	canFullyManageEvent,
 	destroy,
 	errorGenerator,
 	EventType,
 	hasBasicAttendanceManagementPermission,
 	Maybe,
 	MemberReference,
-	Permissions,
 	RawResolvedEventObject,
 	SessionType,
 	toReference,
@@ -51,7 +50,7 @@ import {
 export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
 	body: APIEndpointBody<api.events.attendance.Delete>,
 ) => (event: RawResolvedEventObject) =>
-	canManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+	canFullyManageEvent(req.member)(event)
 		? Maybe.orSome<MemberReference>(toReference(req.member))(Maybe.fromValue(body.member))
 		: toReference(req.member);
 

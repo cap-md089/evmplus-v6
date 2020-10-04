@@ -18,7 +18,8 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, canManageEvent, Permissions, SessionType } from 'common-lib';
+import { api, SessionType } from 'common-lib';
+import { canFullyManageEvent } from 'common-lib/src/lib/Events';
 import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
 import { updateSession } from 'server-common/dist/member/pam';
 
@@ -27,7 +28,7 @@ export const func: (
 ) => ServerAPIEndpoint<api.member.session.SetScanAddSession> = (now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		getEvent(req.mysqlx)(req.account)(req.body.eventID)
-			.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'You do not have permission to manage this event',

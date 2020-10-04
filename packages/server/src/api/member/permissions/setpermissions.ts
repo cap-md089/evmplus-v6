@@ -39,13 +39,7 @@ import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam'
 
 const getHighestPermissionsObject = (perms1: MemberPermissions) => (
 	perms2: MemberPermissions,
-): MemberPermissions =>
-	(Object.fromEntries(
-		Object.keys(perms1).map((key: string) => [
-			key,
-			Math.max(perms1[key as keyof typeof perms1], perms2[key as keyof typeof perms2]),
-		]),
-	) as unknown) as MemberPermissions;
+): MemberPermissions => perms2;
 
 const simplifyInputs = (
 	roles: Array<{

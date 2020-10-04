@@ -21,11 +21,10 @@ import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncRight,
-	canManageEvent,
+	canFullyManageEvent,
 	errorGenerator,
 	EventStatus,
 	Maybe,
-	Permissions,
 	SessionType,
 	toReference,
 } from 'common-lib';
@@ -36,7 +35,7 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 )(req =>
 	asyncRight(req, errorGenerator('Could not get information')).flatMap(() =>
 		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'Member does not have permission to perform that action',

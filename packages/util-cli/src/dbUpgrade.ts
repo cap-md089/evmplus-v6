@@ -23,7 +23,6 @@ import { validator } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
-	CAPGroupMemberPermissions,
 	CAPWingMemberPermissions,
 	CustomAttendanceField,
 	CustomAttendanceFieldValue,
@@ -176,7 +175,7 @@ process.on('unhandledRejection', up => {
 		...ev,
 		type: EventType.REGULAR,
 		status: (EventStatusMap[
-			ev.status as keyof typeof EventStatusMap
+			(ev.status as unknown) as keyof typeof EventStatusMap
 		] as unknown) as EventStatus,
 		pointsOfContact: ev.pointsOfContact.map(
 			poc =>
@@ -239,7 +238,7 @@ process.on('unhandledRejection', up => {
 	try {
 		await Promise.all([
 			upgradeTable(schema.getCollection<RawEventObject>('Events'), ev =>
-				ev.type === (2 as EventType.LINKED) || ev.type === EventType.LINKED
+				ev.type === ((2 as unknown) as EventType.LINKED) || ev.type === EventType.LINKED
 					? {
 							...(ev as RawLinkedEvent),
 							type: EventType.LINKED as const,
@@ -304,17 +303,18 @@ process.on('unhandledRejection', up => {
 									...updateCommonPerms(perms.permissions),
 
 									FlightAssign: (BasicPermissionMap[
-										perms.permissions.FlightAssign as 0
+										(perms.permissions.FlightAssign as unknown) as 0
 									] as unknown) as Permissions.FlightAssign,
 									MusterSheet: (BasicPermissionMap[
-										perms.permissions.MusterSheet as 0
+										(perms.permissions.MusterSheet as unknown) as 0
 									] as unknown) as Permissions.MusterSheet,
 									AdministerPT: (BasicPermissionMap[
-										perms.permissions.AdministerPT as 0
+										(perms.permissions.AdministerPT as unknown) as 0
 									] as unknown) as Permissions.AdministerPT,
 
 									ProspectiveMemberManagement: (FullOrNonePermissionsMap[
-										perms.permissions.ProspectiveMemberManagement as 0
+										(perms.permissions
+											.ProspectiveMemberManagement as unknown) as 0
 									] as unknown) as Permissions.ProspectiveMemberManagement,
 								},
 								member: perms.member,
@@ -335,7 +335,7 @@ process.on('unhandledRejection', up => {
 									type: AccountType.CAPWING as const,
 									...updateCommonPerms(perms.permissions),
 									CreateEventAccount: (BasicPermissionMap[
-										perms.permissions.CreateEventAccount as 0
+										(perms.permissions.CreateEventAccount as unknown) as 0
 									] as unknown) as Permissions.CreateEventAccount,
 								} as CAPWingMemberPermissions,
 								member: perms.member,
@@ -347,7 +347,7 @@ process.on('unhandledRejection', up => {
 									type: AccountType.CAPREGION as const,
 									...updateCommonPerms(perms.permissions),
 									CreateEventAccount: (BasicPermissionMap[
-										perms.permissions.CreateEventAccount as 0
+										(perms.permissions.CreateEventAccount as unknown) as 0
 									] as unknown) as Permissions.CreateEventAccount,
 								},
 								member: perms.member,
@@ -358,7 +358,7 @@ process.on('unhandledRejection', up => {
 									type: AccountType.CAPEVENT as const,
 									...updateCommonPerms(perms.permissions),
 									FlightAssign: (BasicPermissionMap[
-										perms.permissions.FlightAssign as 0
+										(perms.permissions.FlightAssign as unknown) as 0
 									] as unknown) as Permissions.FlightAssign,
 								},
 								member: perms.member,

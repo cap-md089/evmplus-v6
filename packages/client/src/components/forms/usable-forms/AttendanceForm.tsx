@@ -38,6 +38,7 @@ import * as React from 'react';
 import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
 import Button from '../../Button';
+import EnumRadioButton from '../../form-inputs/EnumRadioButton';
 import SimpleForm, {
 	BigTextBox,
 	Checkbox,
@@ -45,7 +46,6 @@ import SimpleForm, {
 	FormBlock,
 	Label,
 	NumberInput,
-	SimpleRadioButton,
 	TextBox,
 	TextInput,
 } from '../SimpleForm';
@@ -319,16 +319,28 @@ export default class AttendanceForm extends React.Component<
 
 				<Label>Attendance status</Label>
 				{!!this.props.record ? (
-					<SimpleRadioButton<AttendanceStatus>
+					<EnumRadioButton<AttendanceStatus>
 						name="status"
 						index={this.props.index}
 						labels={attendanceStatusLabels}
+						values={[
+							AttendanceStatus.COMMITTEDATTENDED,
+							AttendanceStatus.RESCINDEDCOMMITMENTTOATTEND,
+							AttendanceStatus.NOSHOW,
+							AttendanceStatus.NOTPLANNINGTOATTEND,
+						]}
+						defaultValue={AttendanceStatus.COMMITTEDATTENDED}
 					/>
 				) : (
-					<SimpleRadioButton<AttendanceStatus>
+					<EnumRadioButton<AttendanceStatus>
 						name="status"
 						index={this.props.index}
 						labels={['I will attend', 'I will NOT attend']}
+						values={[
+							AttendanceStatus.COMMITTEDATTENDED,
+							AttendanceStatus.NOTPLANNINGTOATTEND,
+						]}
+						defaultValue={AttendanceStatus.COMMITTEDATTENDED}
 					/>
 				)}
 
@@ -478,11 +490,7 @@ export default class AttendanceForm extends React.Component<
 				comments: attendanceSignup.comments,
 				shiftTime,
 				planToUseCAPTransportation: attendanceSignup.planToUseCAPTransportation,
-				status: !!this.props.record
-					? attendanceSignup.status
-					: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
-					? AttendanceStatus.COMMITTEDATTENDED
-					: AttendanceStatus.NOSHOW,
+				status: attendanceSignup.status,
 				customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues,
 			},
 			usePartTime: attendanceSignup.usePartTime,
@@ -531,11 +539,7 @@ export default class AttendanceForm extends React.Component<
 			planToUseCAPTransportation: this.props.event.transportationProvided
 				? attendanceSignup.planToUseCAPTransportation
 				: false,
-			status: this.props.record
-				? attendanceSignup.status
-				: attendanceSignup.status === AttendanceStatus.COMMITTEDATTENDED
-				? AttendanceStatus.COMMITTEDATTENDED
-				: AttendanceStatus.NOSHOW,
+			status: attendanceSignup.status,
 			customAttendanceFieldValues: attendanceSignup.customAttendanceFieldValues,
 		};
 

@@ -24,12 +24,11 @@ import {
 	asyncIterHandler,
 	asyncIterMap,
 	asyncRight,
-	canManageEvent,
+	canFullyManageEvent,
 	collectGeneratorAsync,
 	errorGenerator,
 	Maybe,
 	NewAttendanceRecord,
-	Permissions,
 	RawEventObject,
 	SessionType,
 	Validator,
@@ -57,7 +56,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(bulkAttendanceValidator)(request).flatMap(req =>
 			getEvent(req.mysqlx)(req.account)(req.params.id)
-				.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+				.filter(canFullyManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member cannot perform this action',

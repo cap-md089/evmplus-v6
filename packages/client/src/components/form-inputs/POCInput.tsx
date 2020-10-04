@@ -18,27 +18,27 @@
  */
 
 import {
+	areMembersTheSame,
 	DisplayInternalPointOfContact,
 	ExternalPointOfContact,
-	Member,
-	PointOfContact,
-	PointOfContactType,
-	MaybeObj,
-	MemberReference,
-	Maybe,
 	getFullMemberName,
 	getMemberEmail,
-	toReference,
 	getMemberPhone,
 	InternalPointOfContact,
-	areMembersTheSame,
+	Maybe,
+	MaybeObj,
+	Member,
+	MemberReference,
+	PointOfContact,
+	PointOfContactType,
+	toReference,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
 import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
+import EnumRadioButton from './EnumRadioButton';
 import { NotOptionalInputProps } from './Input';
-import SimpleRadioButton from './SimpleRadioButton';
 import TextBox from './TextBox';
 
 const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
@@ -134,8 +134,6 @@ export default class POCInput extends React.Component<
 			throw new Error('Account required');
 		}
 
-		const POCType = SimpleRadioButton as new () => SimpleRadioButton<PointOfContactType>;
-
 		const value = {
 			...this.props.value,
 			name:
@@ -160,10 +158,12 @@ export default class POCInput extends React.Component<
 				value={value}
 			>
 				<Label>POC Type</Label>
-				<POCType
+				<EnumRadioButton
 					name="type"
 					labels={['Internal', 'External']}
 					index={this.props.index}
+					values={[PointOfContactType.INTERNAL, PointOfContactType.EXTERNAL]}
+					defaultValue={PointOfContactType.INTERNAL}
 					key="type"
 				/>
 
@@ -282,7 +282,7 @@ export default class POCInput extends React.Component<
 		return isInternalPOC(value) ? (
 			<FormBlock name="memberReference" value={value.memberReference}>
 				<Label>ID</Label>
-				<DisabledText name="id" />
+				<DisabledText name="id" value={value.memberReference.id.toString()} />
 			</FormBlock>
 		) : null;
 	}

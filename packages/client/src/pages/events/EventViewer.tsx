@@ -73,11 +73,11 @@ import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
+import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import {
 	Checkbox,
 	DateTimeInput,
 	Label,
-	SimpleRadioButton,
 	TextBox,
 	TextInput,
 } from '../../components/forms/SimpleForm';
@@ -171,6 +171,7 @@ export const attendanceStatusLabels = [
 	'Commited/Attended',
 	'No show',
 	'Rescinded commitment to attend',
+	'Not planning on attending',
 ];
 
 const getCalendarDate = (inDate: number) => {
@@ -261,7 +262,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		teamState: 'LOADING',
 		previousUpdatedMember: Maybe.none(),
 		newTime: 0,
-		newStatus: 0,
+		newStatus: EventStatus.DRAFT,
 		copyFiles: true,
 		cadetRoster: null,
 		seniorRoster: null,
@@ -541,7 +542,19 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								}}
 							>
 								<Label>New event status</Label>
-								<SimpleRadioButton name="newStatus" labels={labels.EventStatus} />
+								<EnumRadioButton
+									name="newStatus"
+									labels={labels.EventStatusLabels}
+									values={[
+										EventStatus.DRAFT,
+										EventStatus.TENTATIVE,
+										EventStatus.CONFIRMED,
+										EventStatus.COMPLETE,
+										EventStatus.CANCELLED,
+										EventStatus.INFORMATIONONLY,
+									]}
+									defaultValue={EventStatus.INFORMATIONONLY}
+								/>
 
 								<Label>Copy files to new event</Label>
 								<Checkbox name="copyFiles" />

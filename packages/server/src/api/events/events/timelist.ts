@@ -24,7 +24,7 @@ import {
 	asyncIterFilter,
 	asyncIterMap,
 	asyncRight,
-	canManageEvent,
+	canFullyManageEvent,
 	Either,
 	EitherObj,
 	errorGenerator,
@@ -32,7 +32,6 @@ import {
 	get,
 	Maybe,
 	MaybeObj,
-	Permissions,
 	pipe,
 	RawEventObject,
 	RawResolvedEventObject,
@@ -44,9 +43,7 @@ import { ensureResolvedEvent, getEventsInRange } from 'server-common';
 
 const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) =>
 	pipe(
-		Maybe.map<User, (e: RawEventObject) => boolean>(
-			canManageEvent(Permissions.ManageEvent.FULL),
-		),
+		Maybe.map<User, (e: RawEventObject) => boolean>(canFullyManageEvent),
 		Maybe.orSome<(e: RawEventObject) => boolean>(() => false),
 	)(member)(event);
 

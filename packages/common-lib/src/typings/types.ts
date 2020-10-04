@@ -2124,6 +2124,15 @@ export type MemberPermission = keyof Omit<
 	'type'
 >;
 
+export type PermissionForName<T extends MemberPermission> = (Omit<
+	CAPSquadronMemberPermissions,
+	'type'
+> &
+	Omit<CAPWingMemberPermissions, 'type'> &
+	Omit<CAPEventMemberPermissions, 'type'> &
+	Omit<CAPRegionMemberPermissions, 'type'> &
+	Omit<CAPGroupMemberPermissions, 'type'>)[T];
+
 export interface StoredMemberPermissions {
 	member: MemberReference;
 	accountID: string;

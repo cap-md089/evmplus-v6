@@ -29,6 +29,7 @@ import {
 } from 'common-lib';
 import * as React from 'react';
 import MemberSelector from '../../dialogues/MemberSelector';
+import EnumRadioButton from '../../form-inputs/EnumRadioButton';
 import TeamMemberInput, { TeamMemberInputProps } from '../../form-inputs/TeamMemberInput';
 import SimpleForm, {
 	BigTextBox,
@@ -37,7 +38,6 @@ import SimpleForm, {
 	FormValidator,
 	Label,
 	ListEditor,
-	SimpleRadioButton,
 	TextBox,
 	TextInput,
 } from '../SimpleForm';
@@ -131,14 +131,16 @@ export default class TeamForm extends React.Component<TeamFormProps> {
 					Protected means that the names and contact information require being signed in
 					to see
 					<br />
-					Public means that anyone can see names and contact information
+					Public means that anyone can see names
 				</TextBox>
 
 				<Label>Team visibility</Label>
-				<SimpleRadioButton<TeamPublicity>
+				<EnumRadioButton<TeamPublicity>
 					labels={['Private', 'Protected', 'Public']}
 					name="visibility"
 					errorMessage="Please select a publicity"
+					values={[TeamPublicity.PRIVATE, TeamPublicity.PROTECTED, TeamPublicity.PUBLIC]}
+					defaultValue={TeamPublicity.PROTECTED}
 				/>
 
 				<Divider />

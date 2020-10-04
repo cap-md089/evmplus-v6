@@ -52,6 +52,8 @@ import {
 	ContactInstanceInput,
 	PasswordType,
 } from '../../pages/account/CreateProspectiveMember';
+import EnumRadioButton from '../form-inputs/EnumRadioButton';
+import EnumSelect from '../form-inputs/EnumSelect';
 
 const saveMessage = {
 	marginLeft: 10,
@@ -179,7 +181,9 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === ContactInput ||
 		el.type === ContactInstanceInput ||
 		el.type === PasswordType ||
-		el.type === LaxAutocomplete
+		el.type === LaxAutocomplete ||
+		el.type === EnumRadioButton ||
+		el.type === EnumSelect
 	);
 }
 
