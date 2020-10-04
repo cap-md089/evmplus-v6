@@ -410,11 +410,12 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<TextInput name="name" errorMessage="Event must have a name" />
 
 				<Label>Subtitle</Label>
-				<TextInput 
+				<TextInput
 					boxStyles={{
 						height: '50px',
 					}}
-				name="subtitle"/>
+					name="subtitle"
+				/>
 
 				<Label>Meet date and time*</Label>
 				<DateTimeInput
@@ -504,7 +505,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Uniform selection is required"
 				/>
 
-				<Label>Required forms</Label>
+				<Label>Required participant forms</Label>
 				<OtherMultCheckbox name="requiredForms" labels={RequiredForms} />
 
 				<Label>Required equipment</Label>
