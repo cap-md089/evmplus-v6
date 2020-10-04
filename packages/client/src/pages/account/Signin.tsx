@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { always, Either, MemberCreateError } from 'common-lib';
+import { always, Either, MemberCreateError, SigninTokenType } from 'common-lib';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PasswordForm from '../../components/form-inputs/PasswordForm';
@@ -246,7 +246,10 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				{
 					username: this.state.signinFormValues.username,
 					password: this.state.signinFormValues.password,
-					recaptcha: this.state.signinFormValues.recaptcha,
+					token: {
+						type: SigninTokenType.RECAPTCHA,
+						recaptchToken: this.state.signinFormValues.recaptcha,
+					},
 				},
 			)
 			.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))

@@ -20,7 +20,7 @@
 
 import { validator } from 'auto-client-api';
 import { Either, RawServerConfiguration, Validator } from 'common-lib';
-import setup from 'discord-bot';
+import setupDiscordBot from 'discord-bot';
 import 'dotenv/config';
 import { confFromRaw } from 'server-common';
 import { api } from './api';
@@ -40,18 +40,17 @@ if (Either.isLeft(confEither)) {
 
 const conf = confEither.value;
 
-getServer(conf)
-	.then(({ finishServerSetup, capwatchEmitter, mysqlConn, app }) => {
-		setup(conf, capwatchEmitter, mysqlConn);
+if (require.main === module) {
+	getServer(conf).then(({ finishServerSetup, capwatchEmitter, mysqlConn }) => {
+		setupDiscordBot(conf, capwatchEmitter, mysqlConn);
 
 		createSocketUI(conf, mysqlConn);
 
-		return finishServerSetup;
-	})
-	.then(val => {
-		val();
-		console.log('Server bound');
+		finishServerSetup();
+
+		console.log('Server setup');
 	});
+}
 
 process.on('unhandledRejection', up => {
 	throw up;
