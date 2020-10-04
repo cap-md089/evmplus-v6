@@ -31,8 +31,8 @@ import {
 import { PAM } from 'server-common';
 
 export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSessionType(
-	// tslint:disable-next-line:no-bitwise
-	SessionType.REGULAR | SessionType.PASSWORD_RESET,
+	SessionType.REGULAR,
+	SessionType.PASSWORD_RESET,
 )(request =>
 	asyncRight(request, errorGenerator('Could not reset password for user'))
 		.flatMap(req =>

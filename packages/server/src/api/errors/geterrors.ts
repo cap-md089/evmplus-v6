@@ -19,25 +19,14 @@
 
 import { Schema } from '@mysql/xdevapi';
 import { ServerAPIEndpoint } from 'auto-client-api';
-import {
-	api,
-	asyncRight,
-	errorGenerator,
-	ErrorResolvedStatus,
-	Errors,
-	SessionType,
-} from 'common-lib';
-import { findAndBindC, generateResults, isRequesterRioux, PAM } from 'server-common';
+import { api, asyncRight, errorGenerator, Errors, SessionType } from 'common-lib';
+import { generateResults, isRequesterRioux, PAM } from 'server-common';
 
 export const getErrors = (schema: Schema) =>
 	asyncRight(
-		schema.getCollection<Errors>('Errors'),
+		schema.getCollection<Errors>('Errors').find('true'),
 		errorGenerator('Could not get error objects'),
-	)
-		.map(
-			findAndBindC<Errors>({ resolved: ErrorResolvedStatus.UNRESOLVED }),
-		)
-		.map(generateResults);
+	).map(generateResults);
 
 export const func: ServerAPIEndpoint<api.errors.GetErrors> = PAM.RequireSessionType(
 	SessionType.REGULAR,

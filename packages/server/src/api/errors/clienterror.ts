@@ -24,7 +24,6 @@ import {
 	ClientErrorObject,
 	destroy,
 	errorGenerator,
-	ErrorResolvedStatus,
 	Errors,
 	Maybe,
 	Member,
@@ -52,7 +51,6 @@ export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 			id,
 			message: req.body.message,
 			pageURL: req.body.pageURL,
-			resolved: ErrorResolvedStatus.UNRESOLVED,
 			stack: req.body.stack.map(item => ({
 				name: item.name,
 				filename: item.filename,

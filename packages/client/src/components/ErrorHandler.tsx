@@ -19,7 +19,7 @@
 
 import esp, { StackFrame } from 'error-stack-parser';
 import * as React from 'react';
-import { NewClientErrorObject, ErrorResolvedStatus, User, AccountObject } from 'common-lib';
+import { NewClientErrorObject, User, AccountObject } from 'common-lib';
 import fetchApi from '../lib/apis';
 
 export default class ErrorHandler extends React.PureComponent<
@@ -51,7 +51,6 @@ export default class ErrorHandler extends React.PureComponent<
 			componentStack: errorInfo.componentStack,
 			message: error.message,
 			pageURL: window.location.href,
-			resolved: ErrorResolvedStatus.UNRESOLVED,
 			stack: stacks.map(stack => ({
 				filename: stack.getFileName(),
 				line: stack.getLineNumber(),

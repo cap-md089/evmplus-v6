@@ -467,33 +467,17 @@ export const checkPermissions = <T extends MemberPermission>(permission: T) => (
 				message,
 		  });
 
-type ReqWithMemberType<R extends { member: MaybeObj<User> | User }, T extends MemberType> = Omit<
-	R,
-	'member'
-> & {
-	member: R['member'] extends MaybeObj<User>
-		? MaybeObj<MemberForMemberType<T> & User>
-		: MemberForMemberType<T> & User;
+type ReqWithMemberType<R extends { member: User }, T extends MemberType> = Omit<R, 'member'> & {
+	member: MemberForMemberType<T> & User;
 };
 
 export const RequiresMemberType = <T extends MemberType>(...types: T[]) => <
-	R extends { member: MaybeObj<User> | User },
+	R extends { member: User },
 	V
 >(
 	func: (req: ReqWithMemberType<R, T>) => ServerEither<V>,
 ) => (req: R): ServerEither<V> =>
-	('hasValue' in req.member
-		? req.member.hasValue && types.includes(req.member.value.type as T)
-			? asyncRight(
-					(req as unknown) as ReqWithMemberType<R, T>,
-					errorGenerator('Could not process request'),
-			  )
-			: asyncLeft<ServerError, ReqWithMemberType<R, T>>({
-					type: 'OTHER',
-					code: 404,
-					message: 'This API endpoint does not exist for this member type',
-			  })
-		: types.includes(req.member.type as T)
+	(types.includes(req.member.type as T)
 		? asyncRight(
 				(req as unknown) as ReqWithMemberType<R, T>,
 				errorGenerator('Could not process request'),

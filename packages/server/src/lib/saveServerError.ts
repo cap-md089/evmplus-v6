@@ -23,7 +23,6 @@ import {
 	BasicMySQLRequest,
 	Either,
 	EitherObj,
-	ErrorResolvedStatus,
 	Errors,
 	get,
 	HTTPRequestMethod,
@@ -116,7 +115,6 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 				filename: stacks[0].getFileName(),
 
 				timestamp: Date.now(),
-				resolved: ErrorResolvedStatus.UNRESOLVED,
 				type: 'Server',
 			};
 
