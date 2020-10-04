@@ -159,11 +159,11 @@ process.on('unhandledRejection', up => {
 				continue;
 			}
 
+			await table.removeOne(obj._id!);
+
 			const result = await table.add(await map(obj)).execute();
 			const [newID] = result.getGeneratedIds();
 			foundIDs.set(newID, true);
-
-			await table.removeOne(obj._id!);
 		}
 
 		return foundIDs.size;
