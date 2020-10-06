@@ -27,7 +27,6 @@ import {
 	collectGeneratorAsync,
 	destroy,
 	errorGenerator,
-	ErrorResolvedStatus,
 	Errors,
 	get,
 	SessionType,
@@ -70,10 +69,7 @@ export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSe
 				.map(errorIDs =>
 					req.mysqlx
 						.getCollection<Errors>('Errors')
-						.modify(`id in [${errorIDs.join(',')}]`)
-						.patch({
-							resolved: ErrorResolvedStatus.RESOLVED,
-						})
+						.remove(`id in [${errorIDs.join(',')}]`)
 						.execute(),
 				)
 				.map(destroy),

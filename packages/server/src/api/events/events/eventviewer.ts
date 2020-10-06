@@ -34,7 +34,7 @@ import {
 	asyncIterMap,
 	asyncRight,
 	AttendanceRecord,
-	canMaybeManageEvent,
+	canMaybeFullyManageEvent,
 	DisplayInternalPointOfContact,
 	Either,
 	EitherObj,
@@ -43,7 +43,6 @@ import {
 	ExternalPointOfContact,
 	get,
 	Maybe,
-	Permissions,
 	RawLinkedEvent,
 	RawResolvedEventObject,
 	RegistryValues,
@@ -113,7 +112,7 @@ const checkAttendeesForRequest = (
 	registry: RegistryValues,
 	attendees: AsyncIter<AttendanceRecord>,
 ): AsyncRepr<Array<EitherObj<ServerError, api.events.events.EventViewerAttendanceRecord>>> =>
-	event.privateAttendance && !canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+	event.privateAttendance && !canMaybeFullyManageEvent(req.member)(event)
 		? []
 		: asyncIterMap((record: AttendanceRecord) =>
 				Either.right({
@@ -197,7 +196,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 	getEvent(req.mysqlx)(req.account)(req.params.id)
 		.flatMap(ensureResolvedEvent(req.mysqlx))
 		.flatMap(event =>
-			canMaybeManageEvent(Permissions.ManageEvent.FULL)(req.member)(event)
+			canMaybeFullyManageEvent(req.member)(event)
 				? getFullEventInformation(req)(event)
 				: AsyncEither.All([
 						getRegistry(req.mysqlx)(req.account),

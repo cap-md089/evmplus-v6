@@ -90,17 +90,15 @@ const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 		);
 
 export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
-	// tslint:disable-next-line: no-bitwise
-	SessionType.REGULAR | SessionType.SCAN_ADD,
+	SessionType.REGULAR,
+	SessionType.SCAN_ADD,
 )(request =>
 	asyncRight(request, errorGenerator('Could not process request'))
 		.filter(
 			req =>
-				!(
-					req.session.type === SessionType.SCAN_ADD &&
-					(req.session.sessionData.accountID !== req.account.id ||
-						req.session.sessionData.eventID.toString() !== req.params.id)
-				),
+				req.session.type === SessionType.REGULAR ||
+				(req.session.sessionData.accountID === req.account.id &&
+					req.session.sessionData.eventID.toString() === req.params.id),
 			{
 				type: 'OTHER',
 				code: 403,

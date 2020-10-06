@@ -35,11 +35,14 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.A
 ) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		asyncRight(request, errorGenerator('Could not create event'))
-			.filter(req => effectiveManageEventPermission(req.member) !== 0, {
-				type: 'OTHER',
-				code: 403,
-				message: 'You do not have permission to do that',
-			})
+			.filter(
+				req => effectiveManageEventPermission(req.member) !== Permissions.ManageEvent.NONE,
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'You do not have permission to do that',
+				},
+			)
 			.map(req => ({
 				...req,
 				body: {

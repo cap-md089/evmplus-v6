@@ -39,6 +39,7 @@ import {
 	ParamType,
 	SafeUserAccountInformation,
 	ServerError,
+	SessionForSessionType,
 	SessionID,
 	SessionType,
 	StoredMFASecret,
@@ -239,7 +240,6 @@ export const validateSession = (
 		.flatMap(session => updateSessionExpireTime(schema, session));
 
 export function memberRequestTransformer(
-	sessionType: SessionType,
 	memberRequired: false,
 ): <T extends BasicAccountRequest>(
 	req: T,
@@ -248,7 +248,6 @@ export function memberRequestTransformer(
 	BasicMaybeMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
 >;
 export function memberRequestTransformer(
-	sessionType: SessionType,
 	memberRequired: true,
 ): <T extends BasicAccountRequest>(
 	req: T,
@@ -257,10 +256,7 @@ export function memberRequestTransformer(
 	BasicMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
 >;
 
-export function memberRequestTransformer(
-	sessionType: SessionType,
-	memberRequired: boolean = false,
-) {
+export function memberRequestTransformer(memberRequired: boolean = false) {
 	return <T extends BasicAccountRequest>(
 		req: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
@@ -283,12 +279,6 @@ export function memberRequestTransformer(
 						errorGenerator('Could not validate sesion'),
 					),
 				)
-				// tslint:disable-next-line:no-bitwise
-				.filter(session => (sessionType & session.type) !== 0, {
-					type: 'OTHER',
-					code: 400,
-					message: 'Invalid session type',
-				})
 				.flatMap<ActiveSession>(restoreFromSession(req.mysqlx)(req.account))
 				.cata<EitherObj<ServerError, T & BasicMaybeMemberRequest>>(
 					err => {
@@ -328,14 +318,6 @@ export const su = async (schema: Schema, session: UserSession, newUser: MemberRe
 		.set('userAccount', userAccount)
 		.execute();
 };
-
-export const addSessionTypes = (...sessionTypes: SessionType[]) =>
-	// tslint:disable-next-line:no-bitwise
-	sessionTypes.reduce((prev, curr) => prev | curr, 0);
-
-export const filterSession = (sessionType: SessionType) => (request: BasicMemberRequest) =>
-	// tslint:disable-next-line:no-bitwise
-	(request.session.type & sessionType) !== 0;
 
 //#endregion
 
@@ -440,40 +422,49 @@ export const getMemberForWeakToken = async (
 	return storedTokenObject.member;
 };
 
-export const RequireSessionType = (
-	sessionType: SessionType,
-	message = 'Member cannot perform the requested action with their current session. Try signing out and back in',
-) => <R extends { session?: MaybeObj<ActiveSession> | ActiveSession }, V>(
-	f: (req: R) => ServerEither<V>,
-) => (req: R) =>
-	('session' in req && !!req.session
-		? 'hasValue' in req.session
-			? req.session.hasValue
-				? // tslint:disable-next-line:no-bitwise
-				  (sessionType & req.session.value.type) !== 0
-					? asyncRight<ServerError, R>(req, errorGenerator('Could not process request'))
-					: asyncLeft<ServerError, R>({
-							type: 'OTHER',
-							code: 403,
-							message,
-					  })
-				: asyncLeft<ServerError, R>({
-						type: 'OTHER',
-						code: 403,
-						message,
-				  })
-			: // tslint:disable-next-line:no-bitwise
-			(sessionType & req.session.type) !== 0
-			? asyncRight<ServerError, R>(req, errorGenerator('Could not process request'))
-			: asyncLeft<ServerError, R>({
+type ReqWithSessionType<
+	R extends { session: MaybeObj<ActiveSession> | ActiveSession },
+	T extends SessionType
+> = Omit<R, 'session'> & {
+	session: R['session'] extends MaybeObj<ActiveSession>
+		? MaybeObj<
+				SessionForSessionType<T, MemberReference> & {
+					user: User;
+				}
+		  >
+		: SessionForSessionType<T, MemberReference> & {
+				user: User;
+		  };
+};
+
+export const RequireSessionType = <T extends SessionType>(...sessionTypes: T[]) => <
+	R extends { session: MaybeObj<ActiveSession> | ActiveSession },
+	V
+>(
+	f: (req: ReqWithSessionType<R, T>) => ServerEither<V>,
+) => (req: R): ServerEither<V> =>
+	('hasValue' in req.session
+		? req.session.hasValue && sessionTypes.includes(req.session.value.type as T)
+			? asyncRight<ServerError, ReqWithSessionType<R, T>>(
+					(req as unknown) as ReqWithSessionType<R, T>,
+					errorGenerator('Could not process request'),
+			  )
+			: asyncLeft<ServerError, ReqWithSessionType<R, T>>({
 					type: 'OTHER',
 					code: 403,
-					message,
+					message:
+						'Member cannot perform the requested action with their current session. Try signing out and back in',
 			  })
-		: asyncLeft<ServerError, R>({
+		: sessionTypes.includes(req.session.type as T)
+		? asyncRight<ServerError, ReqWithSessionType<R, T>>(
+				(req as unknown) as ReqWithSessionType<R, T>,
+				errorGenerator('Could not process request'),
+		  )
+		: asyncLeft<ServerError, ReqWithSessionType<R, T>>({
 				type: 'OTHER',
 				code: 403,
-				message,
+				message:
+					'Member cannot perform the requested action with their current session. Try signing out and back in',
 		  })
 	).flatMap(f);
 

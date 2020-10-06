@@ -18,16 +18,15 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, canManageEvent, Permissions, SessionType } from 'common-lib';
+import { api, canFullyManageEvent, SessionType } from 'common-lib';
 import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
-import { updateSession } from 'server-common/dist/member/pam';
 
 export const func: (
 	now?: () => number,
 ) => ServerAPIEndpoint<api.member.session.SetScanAddSession> = (now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		getEvent(req.mysqlx)(req.account)(req.body.eventID)
-			.filter(canManageEvent(Permissions.ManageEvent.FULL)(req.member), {
+			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'You do not have permission to manage this event',
@@ -39,7 +38,7 @@ export const func: (
 				message: 'You cannot record attendance for this event until it has started',
 			})
 			.flatMap(({ pickupDateTime, id }) =>
-				updateSession(req.mysqlx, {
+				PAM.updateSession(req.mysqlx, {
 					expires: pickupDateTime,
 					id: req.session.id,
 					sessionData: {

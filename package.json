@@ -15,6 +15,18 @@
 			"path": "./node_modules/cz-lerna-changelog"
 		}
 	},
+	"workspaces": [
+		"packages/apis",
+		"packages/auto-api-tests",
+		"packages/auto-client-api",
+		"packages/client",
+		"packages/common-lib",
+		"packages/discord-bot",
+		"packages/server",
+		"packages/server-common",
+		"packages/server-jest-config",
+		"packages/util-cli"
+	],
 	"commitlint": {
 		"extends": [
 			"@commitlint/config-conventional"

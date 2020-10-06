@@ -17,6 +17,8 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { EventStatus } from '../typings/types';
+
 export const Uniforms = [
 	'Dress Blue A',
 	'Dress Blue B',
@@ -52,7 +54,8 @@ export const LodgingArrangments = [
 	'Large tent',
 	'Individual tent',
 ];
-export const EventStatus = [
+
+export const EventStatusLabels = [
 	'Draft',
 	'Tentative',
 	'Confirmed',
@@ -60,3 +63,12 @@ export const EventStatus = [
 	'Cancelled',
 	'Information Only',
 ];
+
+export const EventStatusDisplay = {
+	[EventStatus.DRAFT]: 'Draft',
+	[EventStatus.TENTATIVE]: 'Tentative',
+	[EventStatus.CONFIRMED]: 'Confirmed',
+	[EventStatus.COMPLETE]: 'Complete',
+	[EventStatus.CANCELLED]: 'Cancelled',
+	[EventStatus.INFORMATIONONLY]: 'Information Only',
+};

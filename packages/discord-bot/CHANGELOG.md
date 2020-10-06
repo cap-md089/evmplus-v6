@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.11.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.10.0...discord-bot@1.11.0) (2020-10-06)
+
+
+### Features
+
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.10.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.4.0...discord-bot@1.10.0) (2020-09-29)
 
 

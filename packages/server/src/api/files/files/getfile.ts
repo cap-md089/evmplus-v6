@@ -24,7 +24,6 @@ import {
 	Maybe,
 	MaybeObj,
 	RawFileObject,
-	SessionType,
 	User,
 	userHasFilePermission,
 } from 'common-lib';
@@ -37,7 +36,7 @@ const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ)
 export const func = (createReadStreamFunc = fs.createReadStream) =>
 	asyncErrorHandler(async (req: BasicMySQLRequest<{ fileid: string }>, res) => {
 		const fileEither = await accountRequestTransformer(req)
-			.flatMap(PAM.memberRequestTransformer(SessionType.REGULAR, false))
+			.flatMap(PAM.memberRequestTransformer(false))
 			.flatMap(request =>
 				getFileObject(true)(req.mysqlx)(request.account)(request.params.fileid).map<
 					[RawFileObject, MaybeObj<User>]

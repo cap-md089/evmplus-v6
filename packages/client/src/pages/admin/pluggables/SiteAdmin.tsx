@@ -39,7 +39,7 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 				<div className="widget-title">
 					{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)
 						? 'Site '
-						: hasPermission('FlightAssign')(Permissions.RegistryEdit.YES)(
+						: hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
 								this.props.member,
 						  ) ||
 						  ((this.props.member.type === 'CAPNHQMember' ||

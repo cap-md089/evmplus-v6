@@ -1,11 +1,11 @@
 {
 	"name": "client",
-	"version": "1.17.0",
+	"version": "1.18.0",
 	"private": true,
 	"license": "GPL-2.0",
 	"dependencies": {
-		"apis": "^1.14.0",
-		"common-lib": "^1.19.0",
+		"apis": "^1.14.1",
+		"common-lib": "^1.20.0",
 		"error-stack-parser": "2.0.2",
 		"http-proxy-middleware": "0.19.1",
 		"jquery": "^3.5.1",
@@ -23,6 +23,7 @@
 		"react-router-dom": "4.2.0",
 		"react-scripts": "^3.4.1",
 		"react-twitter-embed": "3.0.3",
+		"simplemde": "^1.11.2",
 		"timeago": "1.6.7",
 		"timeago.js": "4.0.2",
 		"typescript": "^3.9.5",

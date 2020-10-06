@@ -31,9 +31,9 @@ import {
 	NumberInput,
 	TextInput,
 } from '../forms/SimpleForm';
-import { InputProps } from './Input';
-import SimpleRadioButton from './SimpleRadioButton';
+import EnumRadioButton from './EnumRadioButton';
 import { BooleanForField } from './FormBlock';
+import { InputProps } from './Input';
 
 export default class CustomAttendanceFieldInput extends React.Component<
 	InputProps<CustomAttendanceField>
@@ -62,10 +62,6 @@ export default class CustomAttendanceFieldInput extends React.Component<
 			throw new Error('Value required');
 		}
 
-		const CAFEntryType = SimpleRadioButton as new () => SimpleRadioButton<
-			CustomAttendanceFieldEntryType
-		>;
-
 		const value = this.props.value;
 
 		return (
@@ -76,9 +72,17 @@ export default class CustomAttendanceFieldInput extends React.Component<
 				value={value}
 			>
 				<Label>Custom Field Type</Label>
-				<CAFEntryType
+				<EnumRadioButton<CustomAttendanceFieldEntryType>
 					name="type"
 					labels={['Text', 'Number', 'Date', 'Checkbox', 'File']}
+					values={[
+						CustomAttendanceFieldEntryType.TEXT,
+						CustomAttendanceFieldEntryType.NUMBER,
+						CustomAttendanceFieldEntryType.DATE,
+						CustomAttendanceFieldEntryType.CHECKBOX,
+						CustomAttendanceFieldEntryType.FILE,
+					]}
+					defaultValue={CustomAttendanceFieldEntryType.TEXT}
 					index={this.props.index}
 					key="type"
 				/>

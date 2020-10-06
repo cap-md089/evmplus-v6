@@ -19,12 +19,26 @@
 
 import { Schema } from '@mysql/xdevapi';
 import {
+	AccountObject,
+	areMembersTheSame,
+	asyncIterReduce,
+	asyncRight,
 	Either,
+	EitherObj,
+	errorGenerator,
+	Member,
 	MemberCreateError,
 	MemberReference,
 	PasswordResult,
 	ServerConfiguration,
+	ServerError,
 	SessionType,
+	SignatureSigninToken,
+	SigninKeyScopeType,
+	SigninToken,
+	SigninTokenType,
+	StoredSigninKey,
+	StoredSigninNonce,
 	UserAccountInformation,
 	UserSession,
 } from 'common-lib';
@@ -33,6 +47,15 @@ import { collectResults, findAndBind } from '../../MySQLUtil';
 import { getInformationForUser, simplifyUserInformation } from './Account';
 import { checkIfPasswordValid } from './Password';
 import { createSessionForUser, updateSession, memberUsesMFA } from './Session';
+import { createVerify, createPublicKey, randomBytes } from 'crypto';
+import { ServerEither } from '../../servertypes';
+import { promisify } from 'util';
+import { getMembers } from '../../Account';
+
+const randomBytesPromise = promisify(randomBytes);
+
+// Expire in 30 seconds
+const NONCE_EXPIRE_TIME = 30 * 1000;
 
 export interface SigninSuccess {
 	result: MemberCreateError.NONE;
@@ -86,6 +109,136 @@ export const verifyCaptcha = async (
 	}
 };
 
+export const addSignatureNonceFunc = (now: () => number) => (schema: Schema) => (
+	signatureID: string,
+): ServerEither<string> =>
+	asyncRight(
+		schema.getCollection<StoredSigninNonce>('SignatureNonces'),
+		errorGenerator('Could not create nonce'),
+	).flatMap<string>(collection =>
+		asyncRight(randomBytesPromise(32), errorGenerator('Could not create nonce'))
+			.map<string>(buf => buf.toString('hex'))
+			.tap(async buf => {
+				await collection
+					.add({
+						expireTime: Date.now() + NONCE_EXPIRE_TIME,
+						nonce: buf,
+						signatureID,
+					})
+					.execute();
+			}),
+	);
+export const addSignatureNonce = addSignatureNonceFunc(Date.now);
+
+export const verifySignatureToken = async (
+	schema: Schema,
+	account: AccountObject,
+	userInformation: UserAccountInformation,
+	token: SignatureSigninToken,
+	conf: ServerConfiguration,
+): Promise<boolean> => {
+	const [fastNonces, keys] = await Promise.all([
+		collectResults(
+			findAndBind(schema.getCollection<StoredSigninNonce>('SignatureNonces'), {
+				nonce: token.nonce,
+				signatureID: token.signatureID,
+			}),
+		),
+		collectResults(
+			findAndBind(schema.getCollection<StoredSigninKey>('SigninKeys'), {
+				signatureID: token.signatureID,
+			}),
+		),
+		schema
+			.getCollection<StoredSigninNonce>('SignatureNonces')
+			.remove('expireTime < :expireTime')
+			.bind('expireTime', Date.now())
+			.execute(),
+	]);
+
+	const nonces = fastNonces.filter(n => n.expireTime > Date.now());
+
+	const removeNonces = schema
+		.getCollection<StoredSigninNonce>('SignatureNonces')
+		.remove('signatureID = :signatureID and nonce = :nonce')
+		.bind({
+			nonce: token.nonce,
+			signatureID: token.signatureID,
+		})
+		.execute();
+
+	if (keys.length !== 1) {
+		await removeNonces;
+		console.error('Unknown key signature:', token.signatureID);
+		return false;
+	}
+
+	if (nonces.length !== 1) {
+		await removeNonces;
+		console.error('Could not find cryptographic nonce for key:', token.signatureID);
+		return false;
+	}
+
+	const key = keys[0];
+	const pubKey = createPublicKey(key.publicKey);
+
+	const verifier = createVerify('SHA256');
+	verifier.update(`${token.nonce}`);
+	verifier.end();
+
+	if (!verifier.verify(pubKey, Buffer.from(token.signature, 'hex'))) {
+		await removeNonces;
+		return false;
+	}
+
+	const scope = key.scope;
+	switch (scope.type) {
+		case SigninKeyScopeType.GLOBAL: {
+			await removeNonces;
+			return true;
+		}
+
+		case SigninKeyScopeType.ACCOUNT: {
+			return (
+				await Promise.all([
+					asyncIterReduce<EitherObj<ServerError, Member>, boolean>(
+						(prev, member) =>
+							prev ||
+							(Either.isRight(member) &&
+								areMembersTheSame(member.value)(userInformation.member)),
+					)(false)(getMembers(schema)(account)()),
+					removeNonces,
+				])
+			)[0];
+		}
+
+		case SigninKeyScopeType.USER: {
+			await removeNonces;
+			return areMembersTheSame(scope.member)(userInformation.member);
+		}
+	}
+};
+
+export const verifySigninToken = async (
+	schema: Schema,
+	account: AccountObject,
+	userInformation: UserAccountInformation,
+	token: SigninToken,
+	conf: ServerConfiguration,
+): Promise<boolean> => {
+	switch (token.type) {
+		case SigninTokenType.RECAPTCHA:
+			return verifyCaptcha(token.recaptchToken, conf);
+
+		case SigninTokenType.SIGNATURE:
+			try {
+				return await verifySignatureToken(schema, account, userInformation, token, conf);
+			} catch (e) {
+				return false;
+			}
+	}
+};
+
 const getUserID = async (schema: Schema, username: string): Promise<MemberReference> => {
 	const userMappingCollection = schema.getCollection<UserAccountInformation>('UserAccountInfo');
 
@@ -113,28 +266,28 @@ const getUserID = async (schema: Schema, username: string): Promise<MemberRefere
  */
 export const trySignin = async (
 	schema: Schema,
+	account: AccountObject,
 	username: string,
 	password: string,
-	recaptchaCode: string,
+	signinToken: SigninToken,
 	conf: ServerConfiguration,
 ): Promise<SigninResult> => {
-	if (!(await verifyCaptcha(recaptchaCode, conf))) {
+	const userInformation = await getInformationForUser(schema, username);
+
+	if (!(await verifySigninToken(schema, account, userInformation, signinToken, conf))) {
 		return {
 			result: MemberCreateError.RECAPTCHA_INVALID,
 		};
 	}
 
-	const valid = await checkIfPasswordValid(schema, username, password);
+	const valid = await checkIfPasswordValid(schema, username, password, userInformation);
 	if (valid === PasswordResult.INVALID) {
 		return {
 			result: MemberCreateError.INCORRRECT_CREDENTIALS,
 		};
 	}
 
-	const [member, userInformation] = await Promise.all([
-		getUserID(schema, username),
-		getInformationForUser(schema, username),
-	]);
+	const member = await getUserID(schema, username);
 
 	let usesMFA: boolean;
 	try {
@@ -144,8 +297,6 @@ export const trySignin = async (
 			result: MemberCreateError.UNKOWN_SERVER_ERROR,
 		};
 	}
-
-	console.log(usesMFA);
 
 	const session = await createSessionForUser(
 		schema,

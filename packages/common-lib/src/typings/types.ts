@@ -278,12 +278,12 @@ export namespace NHQ {
 }
 
 export enum EventStatus {
-	DRAFT,
-	TENTATIVE,
-	CONFIRMED,
-	COMPLETE,
-	CANCELLED,
-	INFORMATIONONLY,
+	DRAFT = 'Draft',
+	TENTATIVE = 'Tentative',
+	CONFIRMED = 'Confirmed',
+	COMPLETE = 'Complete',
+	CANCELLED = 'Cancelled',
+	INFORMATIONONLY = 'Information Only',
 }
 
 export enum EchelonEventNumber {
@@ -295,58 +295,58 @@ export enum EchelonEventNumber {
 }
 
 export enum MemberCreateError {
-	NONE = -1,
-	INCORRRECT_CREDENTIALS = 0,
-	SERVER_ERROR = 1,
-	PASSWORD_EXPIRED = 2,
-	INVALID_SESSION_ID = 3,
-	RECAPTCHA_INVALID = 4,
-	UNKOWN_SERVER_ERROR = 5,
-	DATABASE_ERROR = 6,
-	ACCOUNT_USES_MFA = 7,
+	NONE = 'None',
+	INCORRRECT_CREDENTIALS = 'IncorrectCredentials',
+	SERVER_ERROR = 'ServerError',
+	PASSWORD_EXPIRED = 'PasswordExpired',
+	INVALID_SESSION_ID = 'InvalidSessionID',
+	RECAPTCHA_INVALID = 'TokenInvalid',
+	UNKOWN_SERVER_ERROR = 'UnknownServerError',
+	DATABASE_ERROR = 'DatabaseError',
+	ACCOUNT_USES_MFA = 'MFAChallengeRequired',
 }
 
 export enum PointOfContactType {
-	INTERNAL,
-	EXTERNAL,
+	INTERNAL = 'Internal',
+	EXTERNAL = 'External',
 }
 
 export enum TeamPublicity {
-	PRIVATE, // Nothing visible, not shown on Browse unless signed in and member of team
+	PRIVATE = 'Private', // Nothing visible, not shown on Browse unless signed in and member of team
 	// Names are visible to those signed in
-	PROTECTED, // Names and contact information available to those who sign in
-	PUBLIC, // Full visibility
+	PROTECTED = 'Protected', // Names and contact information available to those who sign in
+	PUBLIC = 'Public', // Names shown to those who sign in
 }
 
 export enum CAPProspectiveMemberPasswordCreationType {
-	WITHPASSWORD,
-	EMAILLINK,
-	RANDOMPASSWORD,
+	WITHPASSWORD = 'WithPassword',
+	EMAILLINK = 'EmailLink',
+	RANDOMPASSWORD = 'RandomPassword',
 }
 
 export enum MemberCAPWATCHErrors {
-	INVALID_PERMISSIONS,
-	NO_NHQ_ACTION,
+	INVALID_PERMISSIONS = 'InvalidPermissions',
+	NO_NHQ_ACTION = 'NoNHQAction',
 }
 
 export enum CAPWATCHImportErrors {
-	NONE,
-	BADDATA,
-	INSERT,
-	CLEAR,
+	NONE = 'None',
+	BADDATA = 'BadData',
+	INSERT = 'BadInsert',
+	CLEAR = 'BadClear',
 }
 
 export enum AttendanceStatus {
-	COMMITTEDATTENDED,
-	NOSHOW,
-	RESCINDEDCOMMITMENTTOATTEND,
-	NOTPLANNINGTOATTEND,
+	COMMITTEDATTENDED = 'CommittedAttended',
+	NOSHOW = 'NoShow',
+	RESCINDEDCOMMITMENTTOATTEND = 'RescindedCommitment',
+	NOTPLANNINGTOATTEND = 'NotPlanningToAttend',
 }
 
 export enum AuditableEventType {
-	MODIFY = 1,
-	ADD = 2,
-	DELETE = 3,
+	MODIFY = 'Modify',
+	ADD = 'Add',
+	DELETE = 'Delete',
 }
 
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
@@ -362,196 +362,196 @@ export enum FileUserAccessControlPermissions {
 }
 
 export enum FileUserAccessControlType {
-	USER,
-	TEAM,
-	ACCOUNTMEMBER,
-	SIGNEDIN,
-	OTHER,
+	USER = 'User',
+	TEAM = 'Team',
+	ACCOUNTMEMBER = 'AccountMember',
+	SIGNEDIN = 'SignedIn',
+	OTHER = 'Public',
 }
 
 // For some reason MySQL doesn't like 0...
 export enum NotificationTargetType {
-	MEMBER = 1,
-	ADMINS,
-	EVERYONE,
+	MEMBER = 'Member',
+	ADMINS = 'Admins',
+	EVERYONE = 'Everyone',
 }
 
 // For some reason MySQL doesn't like 0...
 export enum NotificationCauseType {
-	MEMBER = 1,
-	SYSTEM,
+	MEMBER = 'Member',
+	SYSTEM = 'System',
 }
 
 export enum NotificationDataType {
-	PROSPECTIVEMEMBER,
-	PERSONNELFILES,
-	EVENT,
-	PERMISSIONCHANGE,
-	MESSAGE,
+	PROSPECTIVEMEMBER = 'ProspectiveMember',
+	PERSONNELFILES = 'PersonnelFiles',
+	EVENT = 'Event',
+	PERMISSIONCHANGE = 'PermissionChange',
+	MESSAGE = 'Message',
 }
 
 export enum CustomAttendanceFieldEntryType {
-	TEXT,
-	NUMBER,
-	DATE,
-	CHECKBOX,
-	FILE,
+	TEXT = 'Text',
+	NUMBER = 'Number',
+	DATE = 'Date',
+	CHECKBOX = 'Checkbox',
+	FILE = 'File',
 }
 
 export enum CAPWATCHImportUpdate {
-	CAPWATCHFileDownloaded,
-	FileImported,
-	CAPWATCHFileDone,
-	ProgressInitialization,
+	CAPWATCHFileDownloaded = 'Downloaded',
+	FileImported = 'Imported',
+	CAPWATCHFileDone = 'Done',
+	ProgressInitialization = 'Init',
 }
 
 export enum PasswordResult {
-	VALID,
-	VALID_EXPIRED,
-	INVALID,
+	VALID = 'Valid',
+	VALID_EXPIRED = 'Expired',
+	INVALID = 'Invalid',
 }
 
 export enum PasswordSetResult {
-	OK,
-	IN_HISTORY,
-	COMPLEXITY,
-	MIN_AGE,
-	SERVER_ERROR,
+	OK = 'Ok',
+	IN_HISTORY = 'InHistory',
+	COMPLEXITY = 'Complexity',
+	MIN_AGE = 'MinimumAge',
+	SERVER_ERROR = 'ServerError',
 }
 
 export enum EmailSentType {
-	TOPARENT,
-	TOCADET,
+	TOPARENT = 'ToParent',
+	TOCADET = 'ToCadet',
 }
 
 export enum ProspectiveMemberPasswordCreationType {
-	WITHPASSWORD,
-	EMAILLINK,
-	RANDOMPASSWORD,
+	WITHPASSWORD = 'WithPassword',
+	EMAILLINK = 'WithEmailLink',
+	RANDOMPASSWORD = 'WithRandomPassword',
 }
 
 export enum GroupTarget {
-	NONE,
-	FLIGHT,
-	ACCOUNT,
+	NONE = 'None',
+	FLIGHT = 'Flight',
+	ACCOUNT = 'Account',
 }
 
 export enum EventType {
-	REGULAR = 1,
-	LINKED,
+	REGULAR = 'Regular',
+	LINKED = 'Linked',
 }
 
 // tslint:disable-next-line: no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum MusterSheet {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum PTSheet {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum PromotionManagement {
-		NONE,
-		FULL,
+		NONE = 'None',
+		FULL = 'Full',
 	}
 
 	export enum AssignTasks {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum AdministerPT {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum ManageEvent {
-		NONE,
-		ADDDRAFTEVENTS,
-		FULL,
+		NONE = 'None',
+		ADDDRAFTEVENTS = 'AddDraftEvents',
+		FULL = 'Full',
 	}
 
 	export enum EventContactSheet {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum ORMOPORD {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum AssignTemporaryDutyPosition {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum ProspectiveMemberManagement {
-		NONE,
-		FULL,
+		NONE = 'None',
+		FULL = 'Full',
 	}
 
 	export enum EventLinkList {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum ManageTeam {
-		NONE,
-		FULL,
+		NONE = 'None',
+		FULL = 'Full',
 	}
 
 	export enum FileManagement {
-		NONE,
-		FULL,
+		NONE = 'None',
+		FULL = 'Full',
 	}
 
 	export enum PermissionManagement {
-		NONE,
-		FULL,
+		NONE = 'None',
+		FULL = 'Full',
 	}
 
 	export enum DownloadCAPWATCH {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum Notify {
-		NO,
-		GLOBAL,
+		NO = 'No',
+		GLOBAL = 'Global',
 	}
 
 	export enum RegistryEdit {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum ScanAdd {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum AttendanceView {
-		PERSONAL,
-		OTHER,
+		PERSONAL = 'Personal',
+		OTHER = 'Other',
 	}
 
 	export enum ViewAccountNotifications {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 
 	export enum CreateEventAccount {
-		NO,
-		YES,
+		NO = 'No',
+		YES = 'Yes',
 	}
 }
 
@@ -644,11 +644,6 @@ export interface ErrorStack {
 	column: number;
 }
 
-export enum ErrorResolvedStatus {
-	UNRESOLVED = 1,
-	RESOLVED,
-}
-
 export type ErrorType = 'Server' | 'Client' | 'DiscordBot';
 
 /**
@@ -667,10 +662,6 @@ export interface ErrorObject {
 	 * What is the error message?
 	 */
 	message: string;
-	/**
-	 * If resolved, it does not display
-	 */
-	resolved: ErrorResolvedStatus;
 	/**
 	 * TypeScript descriminator
 	 */
@@ -787,11 +778,11 @@ export type Errors = ClientErrorObject | ServerErrorObject | DiscordBotErrorObje
  * Differentiates between accounts
  */
 export enum AccountType {
-	CAPSQUADRON = 1,
-	CAPGROUP = 2,
-	CAPWING = 3,
-	CAPREGION = 4,
-	CAPEVENT = 5,
+	CAPSQUADRON = 'CAPSquadron',
+	CAPGROUP = 'CAPGroup',
+	CAPWING = 'CAPWing',
+	CAPREGION = 'CAPRegion',
+	CAPEVENT = 'CAPEvent',
 }
 
 /**
@@ -2133,6 +2124,15 @@ export type MemberPermission = keyof Omit<
 	'type'
 >;
 
+export type PermissionForName<T extends MemberPermission> = (Omit<
+	CAPSquadronMemberPermissions,
+	'type'
+> &
+	Omit<CAPWingMemberPermissions, 'type'> &
+	Omit<CAPEventMemberPermissions, 'type'> &
+	Omit<CAPRegionMemberPermissions, 'type'> &
+	Omit<CAPGroupMemberPermissions, 'type'>)[T];
+
 export interface StoredMemberPermissions {
 	member: MemberReference;
 	accountID: string;
@@ -2632,6 +2632,99 @@ export interface AccountLinkTarget {
 	 * A pretty name for an account
 	 */
 	name: string;
+}
+
+export enum SigninKeyScopeType {
+	GLOBAL = 'Global',
+	ACCOUNT = 'Account',
+	USER = 'User',
+}
+
+export interface SigninKeyGlobalScope {
+	type: SigninKeyScopeType.GLOBAL;
+}
+
+export interface SigninKeyAccountScope {
+	type: SigninKeyScopeType.ACCOUNT;
+
+	accountID: string;
+}
+
+export interface SigninKeyUserAccountScope {
+	type: SigninKeyScopeType.USER;
+
+	member: MemberReference;
+}
+
+export type SigninKeyScope =
+	| SigninKeyGlobalScope
+	| SigninKeyAccountScope
+	| SigninKeyUserAccountScope;
+
+/**
+ * Used to allow for sending out private keys to use to authenticate
+ */
+export interface StoredSigninKey {
+	signatureID: string;
+
+	publicKey: string;
+
+	scope: SigninKeyScope;
+}
+
+/**
+ * Used to allow for sending out private keys to use to authenticate
+ */
+export interface StoredSigninNonce {
+	nonce: string;
+
+	signatureID: string;
+
+	expireTime: number;
+}
+
+export enum SigninTokenType {
+	RECAPTCHA = 'Recaptcha',
+	SIGNATURE = 'Signature',
+}
+
+export interface RecaptchaSigninToken {
+	type: SigninTokenType.RECAPTCHA;
+
+	recaptchToken: string;
+}
+
+/**
+ * Uses an RSA public/private key pair to verify a signature of the nonce
+ */
+export interface SignatureSigninToken {
+	type: SigninTokenType.SIGNATURE;
+
+	nonce: string;
+
+	signature: string;
+
+	signatureID: string;
+}
+
+export type SigninToken = RecaptchaSigninToken | SignatureSigninToken;
+
+/**
+ * Represents the request body used to try and sign someone in
+ */
+export interface SigninRequest {
+	/**
+	 * Represents the login credentials for a user
+	 */
+	username: string;
+	/**
+	 * Represents the login credentials for a user
+	 */
+	password: string;
+	/**
+	 * Allows for proving the person signing in isn't a bot
+	 */
+	token: SigninToken;
 }
 
 /**
@@ -3719,10 +3812,10 @@ export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
 }
 
 export enum SessionType {
-	REGULAR = 1,
-	PASSWORD_RESET = 2,
-	SCAN_ADD = 4,
-	IN_PROGRESS_MFA = 8,
+	REGULAR = 'Regular',
+	PASSWORD_RESET = 'PasswordReset',
+	SCAN_ADD = 'ScanAdd',
+	IN_PROGRESS_MFA = 'MFAInProgress',
 }
 
 export type SessionForSessionType<

@@ -61,7 +61,13 @@ export const func = () =>
 		const parentID = req.params.parentid ?? 'root';
 
 		const reqEither = await accountRequestTransformer(req)
-			.flatMap(PAM.memberRequestTransformer(SessionType.REGULAR, true))
+			.flatMap(PAM.memberRequestTransformer(true))
+			.filter(request => request.session.type === SessionType.REGULAR, {
+				type: 'OTHER',
+				code: 403,
+				message:
+					'Member cannot perform the requested action with their current session. Try signing out and back in',
+			})
 			.flatMap(request =>
 				getFileObject(false)(req.mysqlx)(request.account)(parentID).map<
 					[User, AccountObject, RawFileObject]

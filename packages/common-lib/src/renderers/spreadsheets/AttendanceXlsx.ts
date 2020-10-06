@@ -22,27 +22,29 @@ import { Maybe } from '../../lib/Maybe';
 import { get } from '../../lib/Util';
 import { EventViewerAttendanceRecord } from '../../typings/apis/events/events';
 import {
+	AttendanceStatus,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
+	EventStatus,
 	Member,
 	RawResolvedEventObject,
 } from '../../typings/types';
 
-const EventStatus = [
-	'Draft',
-	'Tentative',
-	'Confirmed',
-	'Complete',
-	'Cancelled',
-	'Information Only',
-];
+const EventStatusDisplay = {
+	[EventStatus.DRAFT]: 'Draft',
+	[EventStatus.TENTATIVE]: 'Tentative',
+	[EventStatus.CONFIRMED]: 'Confirmed',
+	[EventStatus.COMPLETE]: 'Complete',
+	[EventStatus.CANCELLED]: 'Cancelled',
+	[EventStatus.INFORMATIONONLY]: 'Information Only',
+};
 
-const AttendanceStatus = [
-	'Committed/Attended',
-	'No Show',
-	'Rescinded Commitment',
-	'Not Planning to Attend',
-];
+const DisplayAttendanceStatus = {
+	[AttendanceStatus.COMMITTEDATTENDED]: 'Committed/Attended',
+	[AttendanceStatus.NOSHOW]: 'No Show',
+	[AttendanceStatus.RESCINDEDCOMMITMENTTOATTEND]: 'Rescinded Commitment',
+	[AttendanceStatus.NOTPLANNINGTOATTEND]: 'Not Planning to Attend',
+};
 
 export function formatPhone(phone: string) {
 	// strip spaces and non-numeric characters
@@ -131,7 +133,13 @@ const GetBestEmails = (inMember: Member) => {
 	}
 };
 
-const CustomAttendanceFieldType = ['Text', 'Number', 'Date', 'Checkbox', 'File'];
+const CustomAttendanceFieldTypeDisplay = {
+	[CustomAttendanceFieldEntryType.TEXT]: 'Text',
+	[CustomAttendanceFieldEntryType.NUMBER]: 'Number',
+	[CustomAttendanceFieldEntryType.DATE]: 'Date',
+	[CustomAttendanceFieldEntryType.CHECKBOX]: 'Checkbox',
+	[CustomAttendanceFieldEntryType.FILE]: 'File',
+};
 
 export const EventXL = (event: RawResolvedEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
@@ -155,7 +163,7 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 	retVal.push([]);
 	row = ['Status', 'Event Name'];
 	retVal.push(row);
-	row = [EventStatus[event.status], event.name];
+	row = [EventStatusDisplay[event.status], event.name];
 	retVal.push(row);
 
 	retVal.push([]);
@@ -192,7 +200,7 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 			row = [
 				'',
 				customField.title,
-				CustomAttendanceFieldType[customField.type],
+				CustomAttendanceFieldTypeDisplay[customField.type],
 				fieldPreFill,
 				'',
 				customField.displayToMember ? 'Y' : 'N',
@@ -248,6 +256,7 @@ export const AttendanceXL = (
 		'Timestamp',
 		'CAPID',
 		'Grade/Name',
+		'Squadron',
 		'Arrival Time',
 		'Departure Time',
 		'Status',
@@ -271,9 +280,10 @@ export const AttendanceXL = (
 			attendee.record.timestamp,
 			attendee.record.memberID.id + ' ',
 			attendee.record.memberName,
+			attendee.member.hasValue ? attendee.member.value.squadron : '',
 			attendee.record.shiftTime.arrivalTime,
 			attendee.record.shiftTime.departureTime,
-			AttendanceStatus[attendee.record.status],
+			DisplayAttendanceStatus[attendee.record.status],
 			attendee.record.planToUseCAPTransportation ? 'Y' : 'N',
 			orEmptyString(Maybe.map(GetBestEmails)(attendee.member)),
 			orEmptyString(Maybe.map(GetBestPhones)(attendee.member)),
@@ -324,10 +334,10 @@ export const FormatAttendanceXL = (
 		rowCount = 0;
 		sheet['A' + j].t = 'd';
 		sheet['A' + j].z = dateFormat;
-		sheet['D' + j].t = 'd';
-		sheet['D' + j].z = dateFormat;
 		sheet['E' + j].t = 'd';
 		sheet['E' + j].z = dateFormat;
+		sheet['F' + j].t = 'd';
+		sheet['F' + j].z = dateFormat;
 
 		for (let i = 0; i < customAttendanceFieldValues.length; i++) {
 			const type = customAttendanceFieldValues[i].type;

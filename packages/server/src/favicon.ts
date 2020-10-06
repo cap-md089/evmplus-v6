@@ -25,7 +25,6 @@ import {
 	Maybe,
 	RawFileObject,
 	ServerError,
-	SessionType,
 	userHasFilePermission,
 } from 'common-lib';
 import * as express from 'express';
@@ -35,19 +34,13 @@ import {
 	getFileObject,
 	getRegistry,
 	MySQLRequest,
+	PAM,
 } from 'server-common';
-import { memberRequestTransformer } from 'server-common/dist/member/pam';
 
 export default async (request: express.Request, res: express.Response) => {
 	const req = (request as unknown) as MySQLRequest;
 	const fileEither = await accountRequestTransformer(req)
-		.flatMap(
-			memberRequestTransformer(
-				// tslint:disable-next-line:no-bitwise
-				SessionType.PASSWORD_RESET | SessionType.REGULAR | SessionType.SCAN_ADD,
-				false,
-			),
-		)
+		.flatMap(PAM.memberRequestTransformer(false))
 		.flatMap(r =>
 			getRegistry(r.mysqlx)(r.account).flatMap(registry =>
 				Maybe.orSome(

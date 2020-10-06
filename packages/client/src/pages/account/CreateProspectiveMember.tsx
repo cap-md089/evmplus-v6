@@ -28,6 +28,7 @@ import {
 	NewCAPProspectiveMember,
 } from 'common-lib';
 import React, { FunctionComponent } from 'react';
+import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import { InputProps } from '../../components/form-inputs/Input';
 import PasswordForm from '../../components/form-inputs/PasswordForm';
 import Select from '../../components/form-inputs/Select';
@@ -110,13 +111,19 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 				</TextBox>
 			)}
 			<Label>How should the member have their password set?</Label>
-			<SimpleRadioButton<CAPProspectiveMemberPasswordCreationType>
+			<EnumRadioButton<CAPProspectiveMemberPasswordCreationType>
 				name="type"
 				labels={[
 					'Set one now',
 					'Email a link to finish account creation',
 					'Email a random password',
 				]}
+				values={[
+					CAPProspectiveMemberPasswordCreationType.EMAILLINK,
+					CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD,
+					CAPProspectiveMemberPasswordCreationType.WITHPASSWORD,
+				]}
+				defaultValue={CAPProspectiveMemberPasswordCreationType.EMAILLINK}
 			/>
 
 			{value.type === CAPProspectiveMemberPasswordCreationType.EMAILLINK

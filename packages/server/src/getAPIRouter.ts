@@ -34,6 +34,7 @@ import servererror from './api/errors/servererror';
 import events from './api/events';
 import files from './api/files';
 import { getFormToken } from './api/formtoken';
+import getsigninnonce from './api/getsigninnonce';
 import getSlideshowImageIDs from './api/getSlideshowImageIDs';
 import member from './api/member';
 import notifications from './api/notifications';
@@ -132,6 +133,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	addAPI(Validator, adder, check);
 	addAPI(Validator, adder, accountcheck);
 	addAPI(Validator, adder, echo);
+	addAPI(Validator, adder, getsigninnonce);
 
 	router.use((servererror as unknown) as express.ErrorRequestHandler);
 

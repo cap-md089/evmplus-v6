@@ -17,27 +17,11 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator, Errors, SessionType } from 'common-lib';
-import { generateResults, isRequesterRioux, PAM } from 'server-common';
+import { api } from 'common-lib';
+import { PAM } from 'server-common';
 
-export const getErrors = (schema: Schema) =>
-	asyncRight(
-		schema.getCollection<Errors>('Errors').find('true'),
-		errorGenerator('Could not get error objects'),
-	).map(generateResults);
-
-export const func: ServerAPIEndpoint<api.errors.GetErrors> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(request =>
-	asyncRight(request, errorGenerator('Could not get error list'))
-		.filter(isRequesterRioux, {
-			type: 'OTHER',
-			code: 403,
-			message: 'Member does not have the required permissions',
-		})
-		.flatMap(req => getErrors(req.mysqlx)),
-);
+export const func: ServerAPIEndpoint<api.GetSigninToken> = req =>
+	PAM.addSignatureNonce(req.mysqlx)(req.params.signatureID);
 
 export default func;

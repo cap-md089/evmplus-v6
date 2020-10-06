@@ -29,7 +29,6 @@ import {
 	AttendanceRecord,
 	canSignUpForEvent,
 	CAPMemberContact,
-	CAPNHQMemberReference,
 	effectiveManageEventPermissionForEvent,
 	Either,
 	EitherObj,
@@ -41,6 +40,7 @@ import {
 	FullTeamObject,
 	get,
 	getMemberEmail,
+	getMemberEmails,
 	getMemberName,
 	getMemberPhone,
 	getURIComponent,
@@ -73,11 +73,11 @@ import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
+import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import {
 	Checkbox,
 	DateTimeInput,
 	Label,
-	SimpleRadioButton,
 	TextBox,
 	TextInput,
 } from '../../components/forms/SimpleForm';
@@ -141,6 +141,7 @@ interface EventViewerUIState {
 	seniorRoster: Member[] | null;
 	eventRegistry: boolean;
 	showingCAPIDs: boolean;
+	showingemails: boolean;
 	openLinkEventDialogue: boolean;
 	selectedAccountToLinkTo: AccountLinkTarget | null;
 	accountFilterValues: any[];
@@ -170,6 +171,7 @@ export const attendanceStatusLabels = [
 	'Commited/Attended',
 	'No show',
 	'Rescinded commitment to attend',
+	'Not planning on attending',
 ];
 
 const getCalendarDate = (inDate: number) => {
@@ -219,6 +221,23 @@ const renderName = (renderMember: User | null) => (event: RawResolvedEventObject
 	}
 };
 
+const getEmails = (renderMember: User | null) => (event: RawResolvedEventObject) => (
+	member: api.events.events.EventViewerAttendanceRecord,
+) => {
+	const noEmail = ``;
+	if (!!renderMember) {
+		const contactEmails = pipe(
+			Maybe.map<Member, CAPMemberContact>(get('contact')),
+			Maybe.map(getMemberEmails),
+			Maybe.orSome([] as string[]),
+		)(member.member);
+
+		return contactEmails.join(', ');
+	} else {
+		return noEmail;
+	}
+};
+
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
 	attendance: eventViewer.attendees
@@ -243,12 +262,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		teamState: 'LOADING',
 		previousUpdatedMember: Maybe.none(),
 		newTime: 0,
-		newStatus: 0,
+		newStatus: EventStatus.DRAFT,
 		copyFiles: true,
 		cadetRoster: null,
 		seniorRoster: null,
 		eventRegistry: false,
 		showingCAPIDs: false,
+		showingemails: false,
 		accountFilterValues: [],
 		linkEventResult: null,
 		openLinkEventDialogue: false,
@@ -522,7 +542,19 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								}}
 							>
 								<Label>New event status</Label>
-								<SimpleRadioButton name="newStatus" labels={labels.EventStatus} />
+								<EnumRadioButton
+									name="newStatus"
+									labels={labels.EventStatusLabels}
+									values={[
+										EventStatus.DRAFT,
+										EventStatus.TENTATIVE,
+										EventStatus.CONFIRMED,
+										EventStatus.COMPLETE,
+										EventStatus.CANCELLED,
+										EventStatus.INFORMATIONONLY,
+									]}
+									defaultValue={EventStatus.INFORMATIONONLY}
+								/>
 
 								<Label>Copy files to new event</Label>
 								<Checkbox name="copyFiles" />
@@ -705,9 +737,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							</>
 						) : null}
 						<h1>{event.name}</h1>
-						{event.subtitle ? 
-						<h2>{event.subtitle}</h2> : null }
-						<h2>Meeting information</h2>
+						{event.subtitle ? <h2>{event.subtitle}</h2> : null}
+						<h3>Meeting information</h3>
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
 						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
@@ -738,37 +769,80 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							Maybe.orSome(<i>No uniform specified</i>),
 						)(presentMultCheckboxReturn(event.uniform))}
 						<br />
-						<strong>Comments:</strong> {event.comments}
-						<br />
-						{member ? 
+						{event.comments ? (
 							<>
-							 <strong>Member Viewable Comments:</strong> {event.memberComments}
-							 <br /> 
-							 </>
-							 : null }
+								<strong>Comments:</strong> {event.comments}
+								<br />
+							</>
+						) : null}
+						{member && event.memberComments ? (
+							<>
+								<strong>Member Viewable Comments:</strong> {event.memberComments}
+								<br />
+							</>
+						) : null}
 						<strong>Activity:</strong>{' '}
 						{pipe(
 							Maybe.map(activities => <>{activities}</>),
 							Maybe.orSome(<i>Unknown activity type</i>),
 						)(presentMultCheckboxReturn(event.activity))}
 						<br />
-						<strong>Required forms:</strong>{' '}
+						{member &&
+						effectiveManageEventPermissionForEvent(member)(event) >=
+							Permissions.ManageEvent.FULL ? (
+							<>
+								<strong>
+									Organizer form links: (displayed only to those with event edit
+									permission)
+								</strong>
+								<ul>
+									<li>
+										<a
+											href="https://www.gocivilairpatrol.com/media/cms/CAPF160_7_May_2020_D185E324398F9.pdf"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											CAPF 160 Deliberate Risk Assessment Worksheet
+										</a>
+									</li>
+									<li>
+										<a
+											href="https://www.gocivilairpatrol.com/media/cms/CAPF160HL__Final_for_publication__2_D25311B050546.pdf"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											CAPF 160HL Hazard Listing Worksheet
+										</a>
+									</li>
+									<li>
+										<a
+											href="https://www.gocivilairpatrol.com/media/cms/CAPF160_S_7_May_2020_F5840F67449A8.pdf"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											CAPF 160S Real Time Risk Assessment Worksheet
+										</a>
+									</li>
+								</ul>
+								<strong>Required participant forms:</strong>
+							</>
+						) : (
+							<strong>Required forms:</strong>
+						)}
 						{pipe(
 							(renderedForms: JSX.Element[]) =>
 								renderedForms.length === 0
 									? Maybe.none()
 									: Maybe.some(renderedForms),
-							Maybe.map<JSX.Element[], Array<JSX.Element | null>>(renderedForms =>
-								renderedForms.flatMap((form, index, { length }) => [
-									React.cloneElement(form, { key: index }),
-									index < length - 1 ? <>, </> : null,
-								]),
-							),
-							Maybe.orSome<Array<JSX.Element | null>>([
-								<i key={0}>No forms required</i>,
-							]),
+							Maybe.map<JSX.Element[], JSX.Element>(renderedForms => (
+								<ol key={0}>
+									{renderedForms.map((form, index) => (
+										<li key={index}>{form}</li>
+									))}
+								</ol>
+							)),
+							Maybe.orSome<JSX.Element>(<i key={0}>No forms required</i>),
 						)(advancedMultCheckboxReturn(event.requiredForms, this.renderFormsButtons))}
-						<br />
 						{event.requiredEquipment.length > 0 ? (
 							<>
 								<strong>Required equipment:</strong>{' '}
@@ -800,7 +874,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<br />
 							</>
 						) : null}
-						{pointsOfContact.length > 0 ? <h2>Contact information</h2> : null}
+						{pointsOfContact.length > 0 ? <h3>Contact information</h3> : null}
 						<div>
 							{pointsOfContact.map((poc, i) =>
 								poc.type === PointOfContactType.INTERNAL ? (
@@ -861,39 +935,54 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										err !== 'Member is already in attendance' ? (
 											<p>Cannot sign up for event: {err}</p>
 										) : null,
-									)(() => (
-										<>
-											<h2>Sign up</h2>
-											<AttendanceForm
-												account={this.props.account}
-												event={viewerDataToEventObject(eventViewerInfo)}
-												member={member}
-												updateRecord={this.addAttendanceRecord}
-												updated={false}
-												clearUpdated={this.clearPreviousMember}
-												removeRecord={noop}
-												signup={true}
-												registry={this.props.registry}
-											/>
-										</>
-									))(
+									)(() =>
+										Date.now() < event.pickupDateTime ? (
+											<>
+												<h3>Sign up</h3>
+												<AttendanceForm
+													account={this.props.account}
+													event={viewerDataToEventObject(eventViewerInfo)}
+													member={member}
+													updateRecord={this.addAttendanceRecord}
+													updated={false}
+													clearUpdated={this.clearPreviousMember}
+													removeRecord={noop}
+													signup={true}
+													registry={this.props.registry}
+												/>
+											</>
+										) : null,
+									)(
 										canEitherMaybeSignUpForEvent(eventViewerInfo)(
 											this.state.teamInformation,
 										)(member),
 									)}
-									<h2 id="attendance">Attendance</h2>
+									<h3 id="attendance">Attendance</h3>
 
 									{this.state.eventInformation.attendees.some(
 										rec =>
 											Either.isRight(rec) &&
 											rec.value.record.memberID.type === 'CAPNHQMember',
 									) ? (
-										<Button
-											buttonType="none"
-											onClick={() => this.setState({ showingCAPIDs: true })}
-										>
-											Show CAP IDs
-										</Button>
+										<>
+											<Button
+												buttonType="none"
+												onClick={() =>
+													this.setState({ showingemails: true })
+												}
+											>
+												Show emails
+											</Button>
+											{' | '}
+											<Button
+												buttonType="none"
+												onClick={() =>
+													this.setState({ showingCAPIDs: true })
+												}
+											>
+												Show CAP IDs
+											</Button>
+										</>
 									) : null}
 									{attendees.filter(Either.isRight).length > 0 &&
 									effectiveManageEventPermissionForEvent(member)(event) ? (
@@ -926,13 +1015,20 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													val.value.record.memberID.type ===
 														'CAPNHQMember',
 											)
-											.flatMap((rec, i) => [
-												(rec.value.record.memberID as CAPNHQMemberReference)
-													.id,
-												i < attendees.length - 1 ? ', ' : null,
-											])}
+											.map(rec => rec.value.record.memberID.id)
+											.join(', ')}
 									</Dialogue>
-
+									<Dialogue
+										displayButtons={DialogueButtons.OK}
+										open={this.state.showingemails}
+										title="Emails"
+										onClose={() => this.setState({ showingemails: false })}
+									>
+										{this.state.eventInformation.attendees
+											.filter(Either.isRight)
+											.map(rec => getEmails(member)(event)(rec.value))
+											.join(', ')}
+									</Dialogue>
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
 										titles={renderName(member)(event)}
 										values={attendees.filter(Either.isRight).map(get('value'))}
@@ -1240,6 +1336,39 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				<Button buttonType="none" onClick={this.createCAPF6080}>
 					{formName}
 				</Button>
+			);
+		} else if (formName === 'CAPF 160 CAP Member Health History Form') {
+			return (
+				<a
+					href="https://www.gocivilairpatrol.com/media/cms/F160_158EAB9B13D02.pdf"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{formName}
+				</a>
+			);
+		} else if (formName === 'CAPF 161 Emergency Information') {
+			return (
+				<a
+					href="https://www.gocivilairpatrol.com/media/cms/F161_023ECA81C03FB.pdf"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{formName}
+				</a>
+			);
+		} else if (
+			formName ===
+			'CAPF 163 Permission For Provision Of Minor Cadet Over-The-Counter Medication'
+		) {
+			return (
+				<a
+					href="https://www.gocivilairpatrol.com/media/cms/F163_7154E3E39FAFE.pdf"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{formName}
+				</a>
 			);
 		} else {
 			return <>{formName}</>;

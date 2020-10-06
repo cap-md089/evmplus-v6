@@ -28,6 +28,7 @@ import {
 	Member,
 	MemberPermission,
 	MemberReference,
+	PermissionForName,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
 	User,
@@ -108,6 +109,14 @@ export const getMemberEmail = (contact: CAPMemberContact) =>
 			contact.CADETPARENTEMAIL.EMERGENCY,
 	);
 
+export const getMemberEmails = (contact: CAPMemberContact) =>
+	[
+		contact.EMAIL.PRIMARY,
+		contact.CADETPARENTEMAIL.PRIMARY,
+		contact.EMAIL.SECONDARY,
+		contact.CADETPARENTEMAIL.SECONDARY,
+	].filter((v): v is string => !!v);
+
 export const areMembersTheSame = (ref1: MemberReference) => (ref2: MemberReference) =>
 	ref1.type === ref2.type && ref1.id === ref2.id;
 
@@ -143,11 +152,11 @@ export const hasSpecificPermission = <T extends MemberPermission>(permission: T)
 	// @ts-ignore
 	(user.permissions[permission] ?? 0) === threshold || isRioux(user);
 
-export const hasPermission = <T extends MemberPermission>(permission: T) => (threshold: number) => (
-	user: User,
-) =>
+export const hasPermission = <T extends MemberPermission>(permission: T) => (
+	threshold: PermissionForName<T>,
+) => (user: User) =>
 	// @ts-ignore
-	(user.permissions[permission] ?? 0) >= threshold || isRioux(user);
+	user.permissions[permission] === threshold || isRioux(user);
 
 export const asReference = (member: Member): MemberReference =>
 	member.type === 'CAPNHQMember'

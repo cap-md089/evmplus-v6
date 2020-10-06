@@ -241,14 +241,8 @@ export const checkIfPasswordValid = async (
 	schema: Schema,
 	username: string,
 	password: string,
+	userInfo: UserAccountInformation,
 ): Promise<PasswordResult> => {
-	let userInfo;
-	try {
-		userInfo = await getInformationForUser(schema, username);
-	} catch (e) {
-		return PasswordResult.INVALID;
-	}
-
 	if (!isUserValid(userInfo)) {
 		return PasswordResult.INVALID;
 	}
