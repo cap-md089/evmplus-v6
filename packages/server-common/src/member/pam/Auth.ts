@@ -186,9 +186,6 @@ export const verifySignatureToken = async (
 	verifier.update(`${token.nonce}`);
 	verifier.end();
 
-	console.log(token);
-	console.log(pubKey);
-
 	if (!verifier.verify(pubKey, Buffer.from(token.signature, 'hex'))) {
 		await removeNonces;
 		return false;
