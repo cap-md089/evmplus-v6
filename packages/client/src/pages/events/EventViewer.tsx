@@ -841,7 +841,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									))}
 								</ol>
 							)),
-							Maybe.orSome<JSX.Element>(<i key={0}>No forms required</i>),
+							Maybe.orSome<JSX.Element>(
+								<>
+									<i key={0}>No forms required</i>
+									<br />
+								</>,
+							),
 						)(advancedMultCheckboxReturn(event.requiredForms, this.renderFormsButtons))}
 						{event.requiredEquipment.length > 0 ? (
 							<>
