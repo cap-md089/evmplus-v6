@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.18.0](http://github.com//cap-md089/evmplus-v6/compare/server-common@1.16.0...server-common@1.18.0) (2020-10-08)
+
+
+### Bug Fixes
+
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+
+
+### Features
+
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.17.0](http://github.com//cap-md089/evmplus-v6/compare/server-common@1.16.0...server-common@1.17.0) (2020-10-06)
 
 
