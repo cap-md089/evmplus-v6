@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.16](http://github.com//cap-md089/evmplus-v6/compare/auto-client-api@1.3.14...auto-client-api@1.3.16) (2020-10-08)
+
+
+### Bug Fixes
+
+* fixed macro error for string enum literal values ([a2d23d0](http://github.com//cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+
+
+
+
+
 ## [1.3.15](http://github.com//cap-md089/evmplus-v6/compare/auto-client-api@1.3.14...auto-client-api@1.3.15) (2020-10-06)
 
 

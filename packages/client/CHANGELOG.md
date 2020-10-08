@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.19.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.19.0) (2020-10-08)
+
+
+### Bug Fixes
+
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed eventform crashing trying to render interal POCs ([86b5806](http://github.com//cap-md089/evmplus-v6/commit/86b5806f841ec04356d26e02b451bf00515e3776))
+* prepared eventform for wing demonstration ([7a899ad](http://github.com//cap-md089/evmplus-v6/commit/7a899adfe47e96a818b80ca323962765df748751))
+
+
+### Features
+
+* fixed formatting on EventViewer ([4c442ec](http://github.com//cap-md089/evmplus-v6/commit/4c442ec35ae7dd68a3971658ba925277f09023b1))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.18.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.18.0) (2020-10-06)
 
 
