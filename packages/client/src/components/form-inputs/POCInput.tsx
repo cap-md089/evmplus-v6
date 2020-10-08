@@ -37,7 +37,7 @@ import {
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
+import { DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import EnumRadioButton from './EnumRadioButton';
 import { NotOptionalInputProps } from './Input';
 import TextBox from './TextBox';
@@ -181,7 +181,7 @@ export default class POCInput extends React.Component<
 				<Label>POC Phone</Label>
 				<TextInput name="phone" />
 
-				<Label>Receive event updates</Label>
+				{/* <Label>Receive event updates</Label>
 				<Checkbox name="receiveEventUpdates" index={this.props.index} />
 
 				<Label>Receive roster</Label>
@@ -194,7 +194,7 @@ export default class POCInput extends React.Component<
 				<Checkbox name="receiveUpdates" index={this.props.index} />
 
 				<Label>Show contact info to public</Label>
-				<Checkbox name="publicDisplay" index={this.props.index} />
+				<Checkbox name="publicDisplay" index={this.props.index} /> */}
 			</FormBlock>
 		);
 	}

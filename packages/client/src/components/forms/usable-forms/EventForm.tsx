@@ -19,6 +19,7 @@
 
 import {
 	AccountObject,
+	AccountType,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	defaultRadioFromLabels,
@@ -57,7 +58,6 @@ import SimpleForm, {
 	BigTextBox,
 	Checkbox,
 	DateTimeInput,
-	FileInput,
 	FormBlock,
 	FormValidator,
 	Label,
@@ -565,17 +565,21 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Desired number of participants</Label>
 				<NumberInput name="desiredNumberOfParticipants" />
 
-				<Label>Group event number</Label>
-				<RadioButtonWithOther<EchelonEventNumber>
-					name="groupEventNumber"
-					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-				/>
+				{this.props.account.type === AccountType.CAPSQUADRON ? (
+					<Label>Group event number</Label>
+				) : null}
+				{this.props.account.type === AccountType.CAPSQUADRON ? (
+					<RadioButtonWithOther<EchelonEventNumber>
+						name="groupEventNumber"
+						labels={['Not Required', 'To Be Applied For', 'Applied For']}
+					/>
+				) : null}
 
-				<Label>Region event number</Label>
+				{/* <Label>Region event number</Label>
 				<RadioButtonWithOther<EchelonEventNumber>
 					name="regionEventNumber"
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-				/>
+				/> */}
 
 				<Label>Event status</Label>
 				<EnumRadioButton<EventStatus>
@@ -608,11 +612,11 @@ export default class EventForm extends React.Component<EventFormProps> {
 				<Label>Show upcoming</Label>
 				<Checkbox name="showUpcoming" />
 
-				<Label>Administration comments</Label>
-				<TextInput name="administrationComments" />
+				<Label>Administrative comments</Label>
+				<BigTextBox name="administrationComments" />
 
-				<Label>Event files</Label>
-				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} />
+				{/* <Label>Event files</Label>
+				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
 
 				<Label>Keep attendance private</Label>
 				<Checkbox name="privateAttendance" />
