@@ -24,6 +24,7 @@ import {
 	getFullMemberName,
 	getMemberEmail,
 	getMemberPhone,
+	Identifiable,
 	InternalPointOfContact,
 	Maybe,
 	MaybeObj,
@@ -41,7 +42,7 @@ import EnumRadioButton from './EnumRadioButton';
 import { NotOptionalInputProps } from './Input';
 import TextBox from './TextBox';
 
-const isInternalPOC = (poc: PointOfContact): poc is DisplayInternalPointOfContact =>
+const isInternalPOC = (poc: PointOfContact): poc is InternalPointOfContactEdit & { name: string } =>
 	poc.type === PointOfContactType.INTERNAL;
 
 export interface InternalPointOfContactEdit
@@ -280,9 +281,12 @@ export default class POCInput extends React.Component<
 		}
 
 		return isInternalPOC(value) ? (
-			<FormBlock name="memberReference" value={value.memberReference}>
+			<FormBlock
+				name="memberReference"
+				value={Maybe.orSome<Identifiable>({ id: '' })(value.memberReference)}
+			>
 				<Label>ID</Label>
-				<DisabledText name="id" value={value.memberReference.id.toString()} />
+				<DisabledText name="id" />
 			</FormBlock>
 		) : null;
 	}
