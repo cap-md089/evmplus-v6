@@ -283,7 +283,7 @@ export enum EventStatus {
 	CONFIRMED = 'Confirmed',
 	COMPLETE = 'Complete',
 	CANCELLED = 'Cancelled',
-	INFORMATIONONLY = 'Information Only',
+	INFORMATIONONLY = 'InformationOnly',
 }
 
 export enum EchelonEventNumber {
