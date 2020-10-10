@@ -87,6 +87,7 @@ import SigninLink from '../../components/SigninLink';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
+// import SimpleMDE from '../../../../../node_modules/simplemde';
 
 const noop = () => void 0;
 
@@ -681,7 +682,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					)}
 					{member &&
-					effectiveManageEventPermissionForEvent(member)(event) >=
+					effectiveManageEventPermissionForEvent(member)(event) ===
 						Permissions.ManageEvent.FULL ? (
 						<>
 							{linkableAccounts.length === 0 || event.type === EventType.LINKED ? (
@@ -788,7 +789,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						)(presentMultCheckboxReturn(event.activity))}
 						<br />
 						{member &&
-						effectiveManageEventPermissionForEvent(member)(event) >=
+						effectiveManageEventPermissionForEvent(member)(event) ===
 							Permissions.ManageEvent.FULL ? (
 							<>
 								<strong>

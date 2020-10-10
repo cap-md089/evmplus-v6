@@ -360,13 +360,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 				formDisabled={this.props.formDisabled}
 			>
 				<TextBox>An asterisk (*) denotes a required field</TextBox>
+				<TextBox>A tilde (~) deontes Google Calendar publishing</TextBox>
 
 				<Title>Main information</Title>
 
-				<Label>Event Name*</Label>
+				<Label>Event Name*~</Label>
 				<TextInput name="name" errorMessage="Event must have a name" />
 
-				<Label>Subtitle</Label>
+				<Label>Subtitle~</Label>
 				<TextInput
 					boxStyles={{
 						height: '50px',
@@ -374,17 +375,17 @@ export default class EventForm extends React.Component<EventFormProps> {
 					name="subtitle"
 				/>
 
-				<Label>Meet date and time*</Label>
+				<Label>Meet date and time*~</Label>
 				<DateTimeInput
 					name="meetDateTime"
 					time={true}
 					originalTimeZoneOffset={this.props.registry.Website.Timezone}
 				/>
 
-				<Label>Meet location*</Label>
+				<Label>Meet location*~</Label>
 				<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
 
-				<Label>Start date and time*</Label>
+				<Label>Start date and time*~</Label>
 				<DateTimeInput
 					name="startDateTime"
 					time={true}
@@ -392,10 +393,10 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot start before meeting"
 				/>
 
-				<Label>Event location*</Label>
+				<Label>Event location*~</Label>
 				<TextInput name="location" errorMessage="Event must have a location" />
 
-				<Label>End date and time*</Label>
+				<Label>End date and time*~</Label>
 				<DateTimeInput
 					name="endDateTime"
 					time={true}
@@ -403,7 +404,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot end before it starts"
 				/>
 
-				<Label>Pickup date and time*</Label>
+				<Label>Pickup date and time*~</Label>
 				<DateTimeInput
 					name="pickupDateTime"
 					time={true}
@@ -411,10 +412,10 @@ export default class EventForm extends React.Component<EventFormProps> {
 					errorMessage="Event cannot have a pickup before it ends"
 				/>
 
-				<Label>Pickup location*</Label>
+				<Label>Pickup location*~</Label>
 				<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
 
-				<Label>Transportation provided</Label>
+				<Label>Transportation provided~</Label>
 				<Checkbox name="transportationProvided" />
 
 				<Label>Transportation description</Label>
@@ -425,7 +426,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Title>Activity Information</Title>
 
-				<Label>Comments (Visible to the public)</Label>
+				<Label>Comments (Visible to the public)~</Label>
 				<BigTextBox
 					// boxStyles={{
 					// 	height: '50px',
@@ -441,13 +442,13 @@ export default class EventForm extends React.Component<EventFormProps> {
 					name="memberComments"
 				/>
 
-				<Label>Activity type</Label>
+				<Label>Activity type~</Label>
 				<OtherMultCheckbox name="activity" labels={labels.Activities} />
 
 				<Label>Lodging arrangement</Label>
 				<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
 
-				<Label>Event website</Label>
+				<Label>Event website~</Label>
 				<TextInput name="eventWebsite" />
 
 				<Label>High adventure description</Label>
@@ -455,14 +456,14 @@ export default class EventForm extends React.Component<EventFormProps> {
 
 				<Title>Logistics Information</Title>
 
-				<Label>Uniform*</Label>
+				<Label>Uniform*~</Label>
 				<SimpleMultCheckbox
 					name="uniform"
 					labels={labels.Uniforms}
 					errorMessage="Uniform selection is required"
 				/>
 
-				<Label>Required participant forms</Label>
+				<Label>Required participant forms~</Label>
 				<OtherMultCheckbox name="requiredForms" labels={labels.RequiredForms} />
 
 				<Label>Required equipment</Label>
@@ -513,7 +514,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					/>
 				</FormBlock>
 
-				<Label>Meals</Label>
+				<Label>Meals~</Label>
 				<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
 
 				<Title>Points of Contact</Title>
@@ -581,7 +582,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 					labels={['Not Required', 'To Be Applied For', 'Applied For']}
 				/> */}
 
-				<Label>Event status</Label>
+				<Label>Event status~</Label>
 				<EnumRadioButton<EventStatus>
 					name="status"
 					labels={

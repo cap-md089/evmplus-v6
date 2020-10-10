@@ -97,8 +97,8 @@ function buildEventDescription(
 
 	// first block
 	let description = `<h2>${inEvent.name}</h2>`;
-	inEvent.subtitle ? description += `<h3>${inEvent.subtitle}</h3>\n` : description += ``;
-	description += `<h3>Event Information Link</h3>`
+	inEvent.subtitle ? (description += `<h3>${inEvent.subtitle}</h3>\n`) : (description += ``);
+	description += `<h3>Event Information Link</h3>`;
 	description +=
 		'(Page includes event information, POC contact information, and applicable download links):\n';
 	description += `https://${inEvent.accountID}.${config.HOST_NAME}/eventviewer/${inEvent.id}/\n\n`;
@@ -106,9 +106,17 @@ function buildEventDescription(
 	// second block
 	description += `<h3>Times and Location(s)</h3>`;
 	description +=
-		'<b>Meet at</b> ' + dateFormatter(inEvent.meetDateTime) + ' at ' + inEvent.meetLocation + '\n';
+		'<b>Meet at</b> ' +
+		dateFormatter(inEvent.meetDateTime) +
+		' at ' +
+		inEvent.meetLocation +
+		'\n';
 	description +=
-		'<b>Start at</b> ' + dateFormatter(inEvent.startDateTime) + ' at ' + inEvent.location + '\n';
+		'<b>Start at</b> ' +
+		dateFormatter(inEvent.startDateTime) +
+		' at ' +
+		inEvent.location +
+		'\n';
 	description += '<b>End at</b> ' + dateFormatter(inEvent.endDateTime) + '\n';
 	description +=
 		'<b>Pickup at</b> ' +
@@ -123,16 +131,21 @@ function buildEventDescription(
 		(inEvent.transportationProvided === true ? 'YES' : 'NO') +
 		'\n';
 	description += '<b>Uniform:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.uniform)) + '\n';
-	description += '<b>Activity:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.activity)) + '\n';
+	description +=
+		'<b>Activity:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.activity)) + '\n';
 	const showForms = isOneOfSelected(inEvent.requiredForms);
 	if (showForms === true) {
 		description +=
-			'<b>Required forms:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.requiredForms)) + '\n';
+			'<b>Required forms:</b> ' +
+			orBlank(presentMultCheckboxReturn(inEvent.requiredForms)) +
+			'\n';
 	}
 	const showLodging = isOneOfSelected(inEvent.lodgingArrangments);
 	if (showLodging === true) {
 		description +=
-			'<b>Lodging:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.lodgingArrangments)) + '\n';
+			'<b>Lodging:</b> ' +
+			orBlank(presentMultCheckboxReturn(inEvent.lodgingArrangments)) +
+			'\n';
 	}
 	if (inEvent.requiredEquipment.length > 0) {
 		description += '<b>Required equipment:</b> ' + inEvent.requiredEquipment + '\n';
@@ -140,12 +153,15 @@ function buildEventDescription(
 	if (!!inEvent.registration) {
 		description +=
 			'<b>Registration deadline:</b> ' + dateFormatter(inEvent.registration.deadline) + '\n';
-		description += '<b>Registration information:</b> ' + inEvent.registration.information + '\n';
+		description +=
+			'<b>Registration information:</b> ' + inEvent.registration.information + '\n';
 	}
 	if (!!inEvent.participationFee) {
 		description += '<b>Participation fee:</b> ' + inEvent.participationFee.feeAmount + '\n';
 		description +=
-			'<b>Participation fee due:</b> ' + dateFormatter(inEvent.participationFee.feeDue) + '\n';
+			'<b>Participation fee due:</b> ' +
+			dateFormatter(inEvent.participationFee.feeDue) +
+			'\n';
 	}
 	const showMeals = isOneOfSelected(inEvent.mealsDescription);
 	if (showMeals === true) {
@@ -422,11 +438,16 @@ async function deleteCalendarEvent(
 				eventId: eventUUID,
 			});
 		} catch (error) {
-			// 		console.log("delete event error: " + eventUUID);  
+			// 		console.log("delete event error: " + eventUUID);
 			// 9999999999 this shouldn't happen.  Should probably log
 			// 			this occurrence so that leaks can be plugged.
-			// this occurs when the eveneUUID doesn't exist on the Google calendar,
+			// this occurs when the event UUID doesn't exist on the Google calendar,
 			// such as when the Google event is deleted manually then the web event is Deleted
+
+			// when the Google Calendar event is missing, the code errors out here, stopping
+			// exectuion
+			// need to catch and handle this error so that when attempting to delete or move
+			// events the code succeeds in execution
 			return error;
 		}
 		if (typeof deleteResponse !== 'undefined') {
@@ -746,173 +767,3 @@ async function updateMainEvent(
 	}
 	return event.id;
 }
-
-// export default async function updateCalendarEvent(inEvent: NewEventObject) {
-// 	const privatekey = require('/home/grioux/typescript-capunit/server/src/lib/googleapi-key.json');
-// 	const jwtClient = new google.auth.JWT(
-// 		privatekey.client_email,
-// 		undefined,
-// 		privatekey.private_key,
-// 		[
-// 			'https://www.googleapis.com/auth/spreadsheets',
-// 			'https://www.googleapis.com/auth/drive',
-// 			'https://www.googleapis.com/auth/calendar'
-// 		]
-// 	);
-// 	// authenticate request
-// 	const tokens = await jwtClient.authorize();
-
-// 	console.log('Successfully connected!');
-// 	console.log('Tokens:', tokens);
-
-// 	/*
-// 	// Google Sheets API
-// 	const mySpreadsheetId = '1PHxLX6BKNeljggx9EUVtsNQJJFhEeVuoAiNK_15te4s';
-// 	const sheetName = 'Sheet1!D4:D7';
-// 	const sheets = google.sheets('v4');
-// 	const response = await sheets.spreadsheets.values.get({
-// 		auth: jwtClient,
-// 		spreadsheetId: mySpreadsheetId,
-// 		range: sheetName
-// 	});
-
-// 	console.log('Spec list from Google Sheets:');
-// 	if (!!response?.data?.values) {
-// 		// tslint:disable-next-line: prefer-const
-// 		for (let row of response.data.values) {
-// 			console.log('Spec [%s]', row[0]);
-// 		}
-// 	} else {
-// 		console.log('Spec list response null');
-// 	}
-// */
-
-// 	/*
-// // Google Drive API
-// const drive = google.drive('v3');
-// drive.files.list({
-//    auth: jwtClient,
-//    q: "name contains 'USNTPS'"
-// }, (err, response) => {
-//    if (err) {
-//        console.log('The API returned an error: ' + err);
-//        return;
-//    }
-//    if(typeof response !== 'undefined' && !!response) {
-// 	   const files = response.data.files;
-// 	   if(typeof files !== 'undefined') {
-// 		   if (files.length === 0) {
-// 		       console.log('No files found.');
-// 		   } else {
-// 		       console.log('Files from Google Drive:');
-// 		       // tslint:disable-next-line: prefer-for-of
-// 		       for (let i = 0; i < files.length; i++) {
-// 		           // tslint:disable-next-line: prefer-const
-// 		           let file = files[i];
-// 		           console.log('%s (%s)', file.name, file.id);
-// 		       }
-// 		   }
-// 		} else {
-// 			console.log('typeof files undefined');
-// 		}
-// 	} else {
-// 		console.log('Empty Drive API response');
-// 	}
-// });
-// */
-
-// 	// Google Calendar API
-// 	const calendar = google.calendar('v3');
-
-// 	const uniqueId = uuid().replace(/-/g,'');
-// 	console.log('UUID: ', uniqueId);
-// 	const event = {
-// 		'summary': 'Event test',
-// 		'location': 'Civil Air Patrol St. Mary\'s Composite Squadron',
-// 		'description': 'This will be the extensive description of the event',
-// 		'colorId': '11',
-// 		'start': {
-// 			'dateTime': '2020-01-31T15:00:00',
-// 			'timeZone': 'America/New_York'
-// 		},
-// 		'end': {
-// 			'dateTime': '2020-01-31T15:45:00',
-// 			'timeZone': 'America/New_York'
-// 		},
-// 		'id': uniqueId
-// 	}
-// 	console.log('auth: ', jwtClient);
-
-// 	const response = await calendar.events.insert({
-// 		auth: jwtClient,
-// 		calendarId: 'grioux@gmail.com',
-// 		requestBody: event
-// 	});
-// 	console.log('requestBody: ', event);
-
-// 	if(typeof response !== 'undefined') {
-// 		console.log('Response: ', response);
-// 		if(response.status === 200) {
-// 			console.log('Response status ' + response.statusText);  // 99999999 need to look at possible responses and catch errors
-// 		}
-// 	} else {
-// 		console.log('Response undefined');
-// 	}
-
-// 	const myEvent = await calendar.events.get({
-// 		auth: jwtClient,
-// 		calendarId: 'grioux@gmail.com',
-// 		eventId: uniqueId
-// 	});
-// 	console.log('Retrieved event: ', myEvent.data);
-
-// /*
-// 	const response = await calendar.events.list({
-// 		auth: jwtClient,
-// 		calendarId: 'grioux@gmail.com'
-// 	});
-// 	if (!!response) {
-// 		const events = response.data.items;
-// 		if (typeof events !== 'undefined') {
-// 			if (events.length === 0) {
-// 				console.log('No events found.');
-// 			} else {
-// 				console.log('Event from Google Calendar:');
-// 				if (
-// 					typeof response !== 'undefined' &&
-// 					!!response &&
-// 					typeof response.data.items !== 'undefined'
-// 				) {
-// 					let counter = 0;
-// 					for (const event of response.data.items) {
-// 						if (
-// 							typeof event.creator !== 'undefined' &&
-// 							typeof event.start !== 'undefined'
-// 						) {
-// 							console.log(
-// 								'Event name: %s, Creator name: %s, Create date: %s',
-// 								event.summary,
-// 								event.creator.displayName,
-// 								event.start.date
-// 							);
-// 						} else {
-// 							console.log('Event name: %s', event.summary);
-// 						}
-// 						counter += 1;
-// 						if(counter > 2) { break }
-// 					}
-// 				} else {
-// 					console.log('calendar response undefined');
-// 				}
-// 			}
-// 		} else {
-// 			console.log('typeof events undefined');
-// 		}
-// 	} else {
-// 		console.log('Calendar response null');
-// 	}
-// 	*/
-
-// 	return 'The end';
-// }
-// */

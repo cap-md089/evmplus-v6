@@ -24,7 +24,7 @@ import {
 	RadioReturnWithOther,
 	RawResolvedEventObject,
 	EventType,
-	DebriefItem,
+	// DebriefItem,
 	AccountType,
 } from 'common-lib';
 import { DateTime } from 'luxon';
@@ -92,11 +92,19 @@ function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 	return null;
 }
 
-function getEventDebrief(ged: DebriefItem[]) {
-	if (ged.length === 0) {
-		return <span style={{ color: 'red' }}>No</span>;
+// function getEventDebrief(ged: DebriefItem[]) {
+// 	if (ged.length === 0) {
+// 		return <span style={{ color: 'red' }}>No</span>;
+// 	} else {
+// 		return <span style={{ color: 'green' }}>Yes</span>;
+// 	}
+// }
+
+function getComplete(gc: boolean) {
+	if (gc === true) {
+		return <span style={{ color: 'green' }}>Y</span>;
 	} else {
-		return <span style={{ color: 'green' }}>Yes</span>;
+		return <span style={{ color: 'red' }}>N</span>;
 	}
 }
 
@@ -173,7 +181,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		) : (
 			<div className="eventlinklist">
 				<h3>
-					Click on the event number to view details.  Click on the event name to edit event.
+					Click on the event number to view details. Click on the event name to edit
+					event.
 				</h3>
 				<table>
 					<tbody>
@@ -184,17 +193,16 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							</th>
 							<th>Start Date</th>
 							<th>Status</th>
-							{this.props.account.type===AccountType.CAPSQUADRON ? 
-							<th>
-								GP Evt No.
-							</th> : null}
-							<th>Debrief</th>
+							<th>Complete</th>
+							{this.props.account.type === AccountType.CAPSQUADRON ? (
+								<th>GP Evt No.</th>
+							) : null}
+							{/* <th>Debrief</th> */}
 						</tr>
 						{this.state.events.map((event, i) => (
 							<tr key={i}>
 								<td>
-									<Link to={`/eventviewer/${event.id}`}>
-									{event.id}</Link> ::{'  '}
+									<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::{'  '}
 									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
 									{` `}
 									{event.type === EventType.LINKED ? (
@@ -222,9 +230,11 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									})}
 								</td>
 								<td>{getEventStatus(event.status)}</td>
-								{this.props.account.type===AccountType.CAPSQUADRON ? 
-								<td>{getEventNumber(event.groupEventNumber)}</td> : null}
-								<td>{getEventDebrief(event.debrief)}</td>
+								<td>{getComplete(event.complete)}</td>
+								{this.props.account.type === AccountType.CAPSQUADRON ? (
+									<td>{getEventNumber(event.groupEventNumber)}</td>
+								) : null}
+								{/* <td>{getEventDebrief(event.debrief)}</td> */}
 							</tr>
 						))}
 					</tbody>
