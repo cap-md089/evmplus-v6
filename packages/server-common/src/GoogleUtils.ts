@@ -622,14 +622,14 @@ async function updateFeeEvent(
 			'\n' +
 			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
-		if (!!inEvent.googleCalendarIds.feeId) {
+		if (!inEvent.googleCalendarIds.feeId) {
 			response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
 				requestBody: event,
 			});
 		} else {
-			const inEventId = inEvent.googleCalendarIds.feeId as string;
+			const inEventId = inEvent.googleCalendarIds.feeId;
 			event.id = inEventId;
 			response = await myCalendar.events.patch({
 				auth: jwtClient,
@@ -728,7 +728,6 @@ async function updateMainEvent(
 	const event = buildEvent(config, registry, inEvent);
 	let response = { status: 200 };
 
-	// console.log(arguments);
 	if (!inEvent.googleCalendarIds.mainId) {
 		response = await myCalendar.events.insert({
 			auth: jwtClient,
