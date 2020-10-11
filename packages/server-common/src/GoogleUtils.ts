@@ -170,8 +170,9 @@ function buildEventDescription(
 	}
 	description +=
 		'<b>Desired number of participants:</b> ' + inEvent.desiredNumberOfParticipants + '\n';
+	const markdown = require( "markdown" ).markdown;
 	if (inEvent.comments.length > 0) {
-		description += '<b>Comments:</b> ' + inEvent.comments + '\n';
+		description += '<b>Comments:</b> ' + markdown.toHTML(inEvent.comments) + '\n';
 	}
 	if (inEvent.eventWebsite.length > 0) {
 		description += '<b>Website:</b> ' + inEvent.eventWebsite + '\n';
@@ -727,6 +728,7 @@ async function updateMainEvent(
 	const event = buildEvent(config, registry, inEvent);
 	let response = { status: 200 };
 
+	// console.log(arguments);
 	if (!inEvent.googleCalendarIds.mainId) {
 		response = await myCalendar.events.insert({
 			auth: jwtClient,

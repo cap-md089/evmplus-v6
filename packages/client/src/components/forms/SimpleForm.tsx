@@ -183,7 +183,8 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === PasswordType ||
 		el.type === LaxAutocomplete ||
 		el.type === EnumRadioButton ||
-		el.type === EnumSelect
+		el.type === EnumSelect ||
+		el.type === 'textarea'
 	);
 }
 
@@ -435,7 +436,9 @@ export default class SimpleForm<
 						let ret;
 						let childFullWidth = false;
 						let hidden = false;
-						if (!isInput(child)) {
+						if (typeof child === 'object' && child !== null && (child as React.ReactElement).type === 'div') {
+							ret = [child];
+						} else if (!isInput(child)) {
 							// This algorithm handles labels for inputs by handling inputs
 							// Puts out titles on their own line
 							// Disregards spare labels and such

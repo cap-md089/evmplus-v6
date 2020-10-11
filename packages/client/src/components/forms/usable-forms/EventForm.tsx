@@ -331,7 +331,22 @@ const eventValidator: FormValidator<NewEventFormValues> = {
 		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true),
 };
 
-export default class EventForm extends React.Component<EventFormProps> {
+interface EventFormState {
+	mde: null | typeof import('simplemde');
+	comments: null | SimpleMDE;
+	memberComments: null | SimpleMDE;
+}
+
+export default class EventForm extends React.Component<EventFormProps, EventFormState> {
+	public state: EventFormState = {
+		mde: null,
+		comments: null,
+		memberComments: null,
+	};
+
+	private commentsRef = React.createRef<HTMLTextAreaElement>();
+	private mbrcommentsRef = React.createRef<HTMLTextAreaElement>();
+
 	public constructor(props: EventFormProps) {
 		super(props);
 
@@ -339,296 +354,335 @@ export default class EventForm extends React.Component<EventFormProps> {
 		this.onEventSubmit = this.onEventSubmit.bind(this);
 	}
 
+	public async componentDidMount() {
+		const { default: mde } = await import('simplemde');
+
+		this.setState({ mde });
+
+		const mdeOptions = {
+			hideIcons: ["preview", "side-by-side", "fullscreen"],
+			blockStyles: { italic: "_" },
+			insertTexts: {
+				horizontalRule: ["", "\n\n-----\n\n"],
+				image: ["![](http://", ")"],
+				link: ["[", "](http://)"],
+				table: ["", "\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text      | Text     |\n\n"],
+			},
+			showIcons: ["table"],
+			toolbar: ["bold", "italic", "strikethrough", "|", "heading-smaller", "heading-bigger", "|", "horizontal-rule", "table", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "guide"]
+		};
+
+		if (this.commentsRef.current) {
+			this.setState({
+				comments: new mde({ element: this.commentsRef.current, ...mdeOptions, initialValue: this.props.event.comments })
+			});
+		}
+		if (this.mbrcommentsRef.current) {
+			this.setState({
+				memberComments: new mde({ element: this.mbrcommentsRef.current, ...mdeOptions, initialValue: this.props.event.memberComments })
+			});
+		}
+	}
+
 	public render() {
 		const values = this.props.event;
 
 		return (
-			<SimpleForm<NewEventFormValues>
-				onChange={this.onEventChange}
-				onSubmit={this.onEventSubmit}
-				values={values}
-				submitInfo={{
-					text: this.props.saving
-						? 'Saving...'
-						: this.props.isEventUpdate
-						? 'Update event'
-						: 'Create event',
-					disabled: this.props.saving,
-				}}
-				validator={eventValidator}
-				disableOnInvalid={true}
-				formDisabled={this.props.formDisabled}
-			>
-				<TextBox>An asterisk (*) denotes a required field</TextBox>
-				<TextBox>A tilde (~) deontes Google Calendar publishing</TextBox>
-
-				<Title>Main information</Title>
-
-				<Label>Event Name*~</Label>
-				<TextInput name="name" errorMessage="Event must have a name" />
-
-				<Label>Subtitle~</Label>
-				<TextInput
-					boxStyles={{
-						height: '50px',
+			<>
+				<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css" />
+				<SimpleForm<NewEventFormValues>
+					onChange={this.onEventChange}
+					onSubmit={this.onEventSubmit}
+					values={values}
+					submitInfo={{
+						text: this.props.saving
+							? 'Saving...'
+							: this.props.isEventUpdate
+							? 'Update event'
+							: 'Create event',
+						disabled: this.props.saving,
 					}}
-					name="subtitle"
-				/>
+					validator={eventValidator}
+					disableOnInvalid={true}
+					formDisabled={this.props.formDisabled}
+				>
+					<TextBox>An asterisk (*) denotes a required field</TextBox>
+					<TextBox>A tilde (~) deontes Google Calendar publishing</TextBox>
 
-				<Label>Meet date and time*~</Label>
-				<DateTimeInput
-					name="meetDateTime"
-					time={true}
-					originalTimeZoneOffset={this.props.registry.Website.Timezone}
-				/>
+					<Title>Main information</Title>
 
-				<Label>Meet location*~</Label>
-				<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
+					<Label>Event Name*~</Label>
+					<TextInput name="name" errorMessage="Event must have a name" />
 
-				<Label>Start date and time*~</Label>
-				<DateTimeInput
-					name="startDateTime"
-					time={true}
-					originalTimeZoneOffset={this.props.registry.Website.Timezone}
-					errorMessage="Event cannot start before meeting"
-				/>
+					<Label>Subtitle~</Label>
+					<TextInput
+						boxStyles={{
+							height: '50px',
+						}}
+						name="subtitle"
+					/>
 
-				<Label>Event location*~</Label>
-				<TextInput name="location" errorMessage="Event must have a location" />
-
-				<Label>End date and time*~</Label>
-				<DateTimeInput
-					name="endDateTime"
-					time={true}
-					originalTimeZoneOffset={this.props.registry.Website.Timezone}
-					errorMessage="Event cannot end before it starts"
-				/>
-
-				<Label>Pickup date and time*~</Label>
-				<DateTimeInput
-					name="pickupDateTime"
-					time={true}
-					originalTimeZoneOffset={this.props.registry.Website.Timezone}
-					errorMessage="Event cannot have a pickup before it ends"
-				/>
-
-				<Label>Pickup location*~</Label>
-				<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
-
-				<Label>Transportation provided~</Label>
-				<Checkbox name="transportationProvided" />
-
-				<Label>Transportation description</Label>
-				<TextInput
-					name="transportationDescription"
-					errorMessage="Transportation description required if there is transportation provided"
-				/>
-
-				<Title>Activity Information</Title>
-
-				<Label>Comments (Visible to the public)~</Label>
-				<BigTextBox
-					// boxStyles={{
-					// 	height: '50px',
-					// }}
-					name="comments"
-				/>
-
-				<Label>Member Comments (Visible only when signed in)</Label>
-				<BigTextBox
-					// boxStyles={{
-					// 	height: '50px',
-					// }}
-					name="memberComments"
-				/>
-
-				<Label>Activity type~</Label>
-				<OtherMultCheckbox name="activity" labels={labels.Activities} />
-
-				<Label>Lodging arrangement</Label>
-				<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
-
-				<Label>Event website~</Label>
-				<TextInput name="eventWebsite" />
-
-				<Label>High adventure description</Label>
-				<TextInput name="highAdventureDescription" />
-
-				<Title>Logistics Information</Title>
-
-				<Label>Uniform*~</Label>
-				<SimpleMultCheckbox
-					name="uniform"
-					labels={labels.Uniforms}
-					errorMessage="Uniform selection is required"
-				/>
-
-				<Label>Required participant forms~</Label>
-				<OtherMultCheckbox name="requiredForms" labels={labels.RequiredForms} />
-
-				<Label>Required equipment</Label>
-				<ListEditor<string, InputProps<string>>
-					name="requiredEquipment"
-					addNew={() => ''}
-					inputComponent={TextInput}
-					extraProps={{}}
-					errorMessage="Items cannot be empty"
-				/>
-
-				<Label>Use registration deadline</Label>
-				<Checkbox name="useRegistration" />
-
-				<FormBlock hidden={!values.useRegistration} name="registration">
-					<Label>Registration information</Label>
-					<TextInput name="information" />
-
-					<Label>Registration deadline</Label>
+					<Label>Meet date and time*~</Label>
 					<DateTimeInput
-						name="deadline"
+						name="meetDateTime"
 						time={true}
 						originalTimeZoneOffset={this.props.registry.Website.Timezone}
 					/>
-				</FormBlock>
 
-				<Label>Accept signups</Label>
-				<Checkbox name="acceptSignups" />
+					<Label>Meet location*~</Label>
+					<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
 
-				<Label>Sign up deny message</Label>
-				<TextInput name="signUpDenyMessage" />
-
-				<Label>Allow signing up part time</Label>
-				<Checkbox name="signUpPartTime" />
-
-				<Label>Use participation fee</Label>
-				<Checkbox name="useParticipationFee" />
-
-				<FormBlock hidden={!values.useParticipationFee} name="participationFee">
-					<Label>Participation fee</Label>
-					<NumberInput name="feeAmount" />
-
-					<Label>Participation fee due</Label>
+					<Label>Start date and time*~</Label>
 					<DateTimeInput
-						name="feeDue"
+						name="startDateTime"
 						time={true}
 						originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						errorMessage="Event cannot start before meeting"
 					/>
-				</FormBlock>
 
-				<Label>Meals~</Label>
-				<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
+					<Label>Event location*~</Label>
+					<TextInput name="location" errorMessage="Event must have a location" />
 
-				<Title>Points of Contact</Title>
+					<Label>End date and time*~</Label>
+					<DateTimeInput
+						name="endDateTime"
+						time={true}
+						originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						errorMessage="Event cannot end before it starts"
+					/>
 
-				<ListEditor<InternalPointOfContactEdit | ExternalPointOfContact, POCInputProps>
-					name="pointsOfContact"
-					inputComponent={POCInput}
-					addNew={() => ({
-						type: PointOfContactType.INTERNAL,
-						email: '',
-						name: '',
-						memberReference: Maybe.none(),
-						phone: '',
-						receiveEventUpdates: false,
-						receiveRoster: false,
-						receiveSignUpUpdates: false,
-						receiveUpdates: false,
-					})}
-					buttonText="Add point of contact"
-					removeText="Remove point of contact"
-					fullWidth={true}
-					extraProps={{
-						account: this.props.account,
-						member: this.props.member,
-						memberList: this.props.memberList,
-					}}
-				/>
+					<Label>Pickup date and time*~</Label>
+					<DateTimeInput
+						name="pickupDateTime"
+						time={true}
+						originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						errorMessage="Event cannot have a pickup before it ends"
+					/>
 
-				<Title>Custom Attendance Fields</Title>
+					<Label>Pickup location*~</Label>
+					<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
 
-				<ListEditor<CustomAttendanceField, InputProps<CustomAttendanceField>>
-					name="customAttendanceFields"
-					inputComponent={CustomAttendanceFieldInput}
-					addNew={() => ({
-						type: CustomAttendanceFieldEntryType.TEXT,
-						title: '',
-						preFill: '',
-						displayToMember: false,
-						allowMemberToModify: false,
-					})}
-					buttonText="Add Custom Attendance Field"
-					removeText="Remove Custom Attendance Field"
-					fullWidth={true}
-					extraProps={{}}
-				/>
+					<Label>Transportation provided~</Label>
+					<Checkbox name="transportationProvided" />
 
-				<Title>Extra information</Title>
+					<Label>Transportation description</Label>
+					<TextInput
+						name="transportationDescription"
+						errorMessage="Transportation description required if there is transportation provided"
+					/>
 
-				<Label>Desired number of participants</Label>
-				<NumberInput name="desiredNumberOfParticipants" />
+					<Title>Activity Information</Title>
 
-				{this.props.account.type === AccountType.CAPSQUADRON ? (
-					<Label>Group event number</Label>
-				) : null}
-				{this.props.account.type === AccountType.CAPSQUADRON ? (
+					<Label>Comments (Visible to the public)~</Label>
+					{/* <BigTextBox
+						// boxStyles={{
+						// 	height: '50px',
+						// }}
+						name="comments"
+					/> */}
+					<div className="formbox">
+						<textarea ref={this.commentsRef} />
+					</div>
+
+					<Label>Member Comments (Visible only when signed in)</Label>
+					{/* <BigTextBox
+						// boxStyles={{
+						// 	height: '50px',
+						// }}
+						name="memberComments"
+					/> */}
+					<div className="formbox">
+						<textarea ref={this.mbrcommentsRef} />
+					</div>
+
+					<Label>Activity type~</Label>
+					<OtherMultCheckbox name="activity" labels={labels.Activities} />
+
+					<Label>Lodging arrangement</Label>
+					<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
+
+					<Label>Event website~</Label>
+					<TextInput name="eventWebsite" />
+
+					<Label>High adventure description</Label>
+					<TextInput name="highAdventureDescription" />
+
+					<Title>Logistics Information</Title>
+
+					<Label>Uniform*~</Label>
+					<SimpleMultCheckbox
+						name="uniform"
+						labels={labels.Uniforms}
+						errorMessage="Uniform selection is required"
+					/>
+
+					<Label>Required participant forms~</Label>
+					<OtherMultCheckbox name="requiredForms" labels={labels.RequiredForms} />
+
+					<Label>Required equipment</Label>
+					<ListEditor<string, InputProps<string>>
+						name="requiredEquipment"
+						addNew={() => ''}
+						inputComponent={TextInput}
+						extraProps={{}}
+						errorMessage="Items cannot be empty"
+					/>
+
+					<Label>Use registration deadline</Label>
+					<Checkbox name="useRegistration" />
+
+					<FormBlock hidden={!values.useRegistration} name="registration">
+						<Label>Registration information</Label>
+						<TextInput name="information" />
+
+						<Label>Registration deadline</Label>
+						<DateTimeInput
+							name="deadline"
+							time={true}
+							originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						/>
+					</FormBlock>
+
+					<Label>Accept signups</Label>
+					<Checkbox name="acceptSignups" />
+
+					<Label>Sign up deny message</Label>
+					<TextInput name="signUpDenyMessage" />
+
+					<Label>Allow signing up part time</Label>
+					<Checkbox name="signUpPartTime" />
+
+					<Label>Use participation fee</Label>
+					<Checkbox name="useParticipationFee" />
+
+					<FormBlock hidden={!values.useParticipationFee} name="participationFee">
+						<Label>Participation fee</Label>
+						<NumberInput name="feeAmount" />
+
+						<Label>Participation fee due</Label>
+						<DateTimeInput
+							name="feeDue"
+							time={true}
+							originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						/>
+					</FormBlock>
+
+					<Label>Meals~</Label>
+					<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
+
+					<Title>Points of Contact</Title>
+
+					<ListEditor<InternalPointOfContactEdit | ExternalPointOfContact, POCInputProps>
+						name="pointsOfContact"
+						inputComponent={POCInput}
+						addNew={() => ({
+							type: PointOfContactType.INTERNAL,
+							email: '',
+							name: '',
+							memberReference: Maybe.none(),
+							phone: '',
+							receiveEventUpdates: false,
+							receiveRoster: false,
+							receiveSignUpUpdates: false,
+							receiveUpdates: false,
+						})}
+						buttonText="Add point of contact"
+						removeText="Remove point of contact"
+						fullWidth={true}
+						extraProps={{
+							account: this.props.account,
+							member: this.props.member,
+							memberList: this.props.memberList,
+						}}
+					/>
+
+					<Title>Custom Attendance Fields</Title>
+
+					<ListEditor<CustomAttendanceField, InputProps<CustomAttendanceField>>
+						name="customAttendanceFields"
+						inputComponent={CustomAttendanceFieldInput}
+						addNew={() => ({
+							type: CustomAttendanceFieldEntryType.TEXT,
+							title: '',
+							preFill: '',
+							displayToMember: false,
+							allowMemberToModify: false,
+						})}
+						buttonText="Add Custom Attendance Field"
+						removeText="Remove Custom Attendance Field"
+						fullWidth={true}
+						extraProps={{}}
+					/>
+
+					<Title>Extra information</Title>
+
+					<Label>Desired number of participants</Label>
+					<NumberInput name="desiredNumberOfParticipants" />
+
+					{this.props.account.type === AccountType.CAPSQUADRON ? (
+						<Label>Group event number</Label>
+					) : null}
+					{this.props.account.type === AccountType.CAPSQUADRON ? (
+						<RadioButtonWithOther<EchelonEventNumber>
+							name="groupEventNumber"
+							labels={['Not Required', 'To Be Applied For', 'Applied For']}
+						/>
+					) : null}
+
+					{/* <Label>Region event number</Label>
 					<RadioButtonWithOther<EchelonEventNumber>
-						name="groupEventNumber"
+						name="regionEventNumber"
 						labels={['Not Required', 'To Be Applied For', 'Applied For']}
+					/> */}
+
+					<Label>Event status~</Label>
+					<EnumRadioButton<EventStatus>
+						name="status"
+						labels={
+							effectiveManageEventPermission(this.props.member) ===
+							Permissions.ManageEvent.FULL
+								? labels.EventStatusLabels
+								: ['Draft']
+						}
+						values={
+							effectiveManageEventPermission(this.props.member) ===
+							Permissions.ManageEvent.FULL
+								? [
+										EventStatus.DRAFT,
+										EventStatus.TENTATIVE,
+										EventStatus.CONFIRMED,
+										EventStatus.COMPLETE,
+										EventStatus.CANCELLED,
+										EventStatus.INFORMATIONONLY,
+								]
+								: [EventStatus.DRAFT]
+						}
+						defaultValue={EventStatus.DRAFT}
 					/>
-				) : null}
 
-				{/* <Label>Region event number</Label>
-				<RadioButtonWithOther<EchelonEventNumber>
-					name="regionEventNumber"
-					labels={['Not Required', 'To Be Applied For', 'Applied For']}
-				/> */}
+					<Label>Entry complete</Label>
+					<Checkbox name="complete" />
 
-				<Label>Event status~</Label>
-				<EnumRadioButton<EventStatus>
-					name="status"
-					labels={
-						effectiveManageEventPermission(this.props.member) ===
-						Permissions.ManageEvent.FULL
-							? labels.EventStatusLabels
-							: ['Draft']
-					}
-					values={
-						effectiveManageEventPermission(this.props.member) ===
-						Permissions.ManageEvent.FULL
-							? [
-									EventStatus.DRAFT,
-									EventStatus.TENTATIVE,
-									EventStatus.CONFIRMED,
-									EventStatus.COMPLETE,
-									EventStatus.CANCELLED,
-									EventStatus.INFORMATIONONLY,
-							  ]
-							: [EventStatus.DRAFT]
-					}
-					defaultValue={EventStatus.DRAFT}
-				/>
+					<Label>Show upcoming</Label>
+					<Checkbox name="showUpcoming" />
 
-				<Label>Entry complete</Label>
-				<Checkbox name="complete" />
+					<Label>Administrative comments</Label>
+					<BigTextBox name="administrationComments" />
 
-				<Label>Show upcoming</Label>
-				<Checkbox name="showUpcoming" />
+					{/* <Label>Event files</Label>
+					<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
 
-				<Label>Administrative comments</Label>
-				<BigTextBox name="administrationComments" />
+					<Label>Keep attendance private</Label>
+					<Checkbox name="privateAttendance" />
 
-				{/* <Label>Event files</Label>
-				<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
+					<Title>Team information</Title>
 
-				<Label>Keep attendance private</Label>
-				<Checkbox name="privateAttendance" />
+					<TeamSelector teamList={this.props.teamList} name="teamID" />
 
-				<Title>Team information</Title>
-
-				<TeamSelector teamList={this.props.teamList} name="teamID" />
-
-				<Label>Limit sign ups to team members</Label>
-				<Checkbox name="limitSignupsToTeam" />
-			</SimpleForm>
+					<Label>Limit sign ups to team members</Label>
+					<Checkbox name="limitSignupsToTeam" />
+				</SimpleForm>
+			</>
 		);
 	}
 
@@ -662,7 +716,7 @@ export default class EventForm extends React.Component<EventFormProps> {
 	}
 
 	private onEventSubmit(
-		event: NewEventFormValues,
+		mdFreeEvent: NewEventFormValues,
 		error: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
 		hasError: boolean,
@@ -692,9 +746,11 @@ export default class EventForm extends React.Component<EventFormProps> {
 		// 	}
 		// }
 
-		this.setState({
-			valid,
-		});
+		const event = {
+			...mdFreeEvent,
+			comments: this.state.comments?.value() ?? mdFreeEvent.comments,
+			memberComments: this.state.memberComments?.value() ?? mdFreeEvent.memberComments,
+		};
 
 		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());
 	}

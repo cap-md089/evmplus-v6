@@ -87,7 +87,7 @@ import SigninLink from '../../components/SigninLink';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
-// import SimpleMDE from '../../../../../node_modules/simplemde';
+import MarkdownRenderer from 'react-markdown-renderer';
 
 const noop = () => void 0;
 
@@ -772,13 +772,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						{event.comments ? (
 							<>
-								<strong>Comments:</strong> {event.comments}
+								<strong>Comments:</strong> <MarkdownRenderer markdown={event.comments} />
 								<br />
 							</>
 						) : null}
 						{member && event.memberComments ? (
 							<>
-								<strong>Member Viewable Comments:</strong> {event.memberComments}
+								<strong>Member Viewable Comments:</strong> <MarkdownRenderer markdown={event.memberComments} />
 								<br />
 							</>
 						) : null}
