@@ -46,6 +46,7 @@ import linkevent from './events/linkevent';
 import list from './events/list';
 import listupcoming from './events/listupcoming';
 import setevent from './events/setevent';
+import shortlist from './events/shortlist';
 import timelist from './events/timelist';
 
 const router = express.Router();
@@ -72,6 +73,7 @@ addAPI(Validator, adder, copy);
 addAPI(Validator, adder, deleteevent);
 addAPI(Validator, adder, eventviewer);
 addAPI(Validator, adder, list);
+addAPI(Validator, adder, shortlist);
 addAPI(Validator, adder, getnextrecurring);
 addAPI(Validator, adder, listupcoming);
 addAPI(Validator, adder, linkevent);

@@ -18,14 +18,16 @@
  */
 
 import {
+	// DebriefItem,
+	AccountType, 
 	EchelonEventNumber,
+	effectiveManageEventPermissionForEvent, 
 	Either,
 	EventStatus,
-	RadioReturnWithOther,
-	RawResolvedEventObject,
 	EventType,
-	// DebriefItem,
-	AccountType,
+	Permissions,
+	RadioReturnWithOther,
+	RawResolvedEventObject
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -200,42 +202,47 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							{/* <th>Debrief</th> */}
 						</tr>
 						{this.state.events.map((event, i) => (
-							<tr key={i}>
-								<td>
-									<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::{'  '}
-									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
-									{` `}
-									{event.type === EventType.LINKED ? (
-										<>
-											{` - [`}
-											<a
-												href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												{event.targetAccountID}-{event.targetEventID}
-											</a>
-											{`]`}
-										</>
-									) : null}
-								</td>
-								<td
-									style={{
-										whiteSpace: 'nowrap',
-									}}
-								>
-									{DateTime.fromMillis(event.startDateTime).toLocaleString({
-										...DateTime.DATETIME_SHORT,
-										hour12: false,
-									})}
-								</td>
-								<td>{getEventStatus(event.status)}</td>
-								<td>{getComplete(event.complete)}</td>
-								{this.props.account.type === AccountType.CAPSQUADRON ? (
-									<td>{getEventNumber(event.groupEventNumber)}</td>
-								) : null}
-								{/* <td>{getEventDebrief(event.debrief)}</td> */}
-							</tr>
+								<>
+									<tr key={i}>
+										<td>
+											<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::{'  '}
+											{effectiveManageEventPermissionForEvent(this.props.member!)(event) ===
+												Permissions.ManageEvent.FULL ? (
+												<Link to={`/eventform/${event.id}`}>{event.name}</Link> 
+											) : <>{event.name}</>}
+											{` `}
+											{event.type === EventType.LINKED ? (
+												<>
+													{` - [`}
+													<a
+														href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{event.targetAccountID}-{event.targetEventID}
+													</a>
+													{`]`}
+												</>
+											) : null}
+										</td>
+										<td
+											style={{
+												whiteSpace: 'nowrap',
+											}}
+										>
+											{DateTime.fromMillis(event.startDateTime).toLocaleString({
+												...DateTime.DATETIME_SHORT,
+												hour12: false,
+											})}
+										</td>
+										<td>{getEventStatus(event.status)}</td>
+										<td>{getComplete(event.complete)}</td>
+										{this.props.account.type === AccountType.CAPSQUADRON ? (
+											<td>{getEventNumber(event.groupEventNumber)}</td>
+										) : null}
+										{/* <td>{getEventDebrief(event.debrief)}</td> */}
+									</tr>
+								</>
 						))}
 					</tbody>
 				</table>
