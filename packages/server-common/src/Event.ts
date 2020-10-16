@@ -549,7 +549,8 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 		}))
 		.tap(notifyEventPOCs(schema)(account)(oldEvent))
 		.flatMap(saveToCollectionA(schema.getCollection<RawRegularEventObject>('Events')))
-		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema));
+		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema))
+		.tap(updateLinkedEvents(schema));
 export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
@@ -699,6 +700,21 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 		)
 		.flatMap(addToCollection(schema.getCollection<RawLinkedEvent>('Events')));
 
+const updateLinkedEvents = (schema: Schema) => (savedEvent: RawRegularEventObject) =>
+	collectGeneratorAsync(
+		asyncIterHandler(errorGenerator('Could not handle updating sub google calendars'))(
+			asyncIterTap<RawLinkedEvent>(ev =>
+				saveToCollectionA(schema.getCollection<RawLinkedEvent>('Events'))(ev).then(destroy),
+			)(
+				asyncIterMap<RawLinkedEvent, RawLinkedEvent>(event => ({
+					...event,
+					pickupDateTime: savedEvent.pickupDateTime,
+					meetDateTime: savedEvent.meetDateTime,
+				}))(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+			),
+		),
+	);
+
 const updateGoogleCalendarsForLinkedEvents = (config: ServerConfiguration) => (schema: Schema) => (
 	savedEvent: RawRegularEventObject,
 ) =>
@@ -717,7 +733,7 @@ const updateGoogleCalendarsForLinkedEvents = (config: ServerConfiguration) => (s
 				).then(destroy),
 			)(
 				asyncIterMap<RawLinkedEvent, [RawLinkedEvent, AccountObject]>(linkedEvent =>
-					getAccount(schema)(linkedEvent.targetAccountID)
+					getAccount(schema)(linkedEvent.accountID)
 						.map<[RawLinkedEvent, AccountObject]>(linkedAccount => [
 							linkedEvent,
 							linkedAccount,
