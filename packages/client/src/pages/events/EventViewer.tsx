@@ -87,6 +87,7 @@ import SigninLink from '../../components/SigninLink';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
+import MarkdownRenderer from 'react-markdown-renderer';
 
 const noop = () => void 0;
 
@@ -512,8 +513,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									</span>
 								</TextBox>
 
-								<Label>Copy files to new event</Label>
-								<Checkbox name="copyFiles" />
+								{/* <Label>Copy files to new event</Label>
+								<Checkbox name="copyFiles" /> */}
 
 								<Label>New start time of event</Label>
 								<DateTimeInput
@@ -523,50 +524,55 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								/>
 							</DialogueButtonForm>
 							{' | '}
-							<DialogueButtonForm<{
-								newTime: number;
-								copyFiles: boolean;
-								newStatus: EventStatus;
-							}>
-								buttonText="Copy event"
-								buttonType="none"
-								buttonClass="underline-button"
-								displayButtons={DialogueButtons.OK_CANCEL}
-								onOk={this.copyEvent}
-								title="Copy event"
-								labels={['Copy event', 'Cancel']}
-								values={{
-									newTime: event.startDateTime,
-									copyFiles: true,
-									newStatus: event.status,
-								}}
-							>
-								<Label>New event status</Label>
-								<EnumRadioButton
-									name="newStatus"
-									labels={labels.EventStatusLabels}
-									values={[
-										EventStatus.DRAFT,
-										EventStatus.TENTATIVE,
-										EventStatus.CONFIRMED,
-										EventStatus.COMPLETE,
-										EventStatus.CANCELLED,
-										EventStatus.INFORMATIONONLY,
-									]}
-									defaultValue={EventStatus.INFORMATIONONLY}
-								/>
+							{ effectiveManageEventPermissionForEvent(member)(event) ===
+								Permissions.ManageEvent.FULL ? (
+								<>
+									<DialogueButtonForm<{
+										newTime: number;
+										copyFiles: boolean;
+										newStatus: EventStatus;
+									}>
+										buttonText="Copy event"
+										buttonType="none"
+										buttonClass="underline-button"
+										displayButtons={DialogueButtons.OK_CANCEL}
+										onOk={this.copyEvent}
+										title="Copy event"
+										labels={['Copy event', 'Cancel']}
+										values={{
+											newTime: event.startDateTime,
+											copyFiles: true,
+											newStatus: event.status,
+										}}
+									>
+										<Label>New event status</Label>
+										<EnumRadioButton
+											name="newStatus"
+											labels={labels.EventStatusLabels}
+											values={[
+												EventStatus.DRAFT,
+												EventStatus.TENTATIVE,
+												EventStatus.CONFIRMED,
+												EventStatus.COMPLETE,
+												EventStatus.CANCELLED,
+												EventStatus.INFORMATIONONLY,
+											]}
+											defaultValue={EventStatus.INFORMATIONONLY}
+										/>
 
-								<Label>Copy files to new event</Label>
-								<Checkbox name="copyFiles" />
+										<Label>Copy files to new event</Label>
+										<Checkbox name="copyFiles" />
 
-								<Label>Start time of new event</Label>
-								<DateTimeInput
-									name="newTime"
-									time={true}
-									originalTimeZoneOffset={'America/New_York'}
-								/>
-							</DialogueButtonForm>
-							{' | '}
+										<Label>Start time of new event</Label>
+										<DateTimeInput
+											name="newTime"
+											time={true}
+											originalTimeZoneOffset={'America/New_York'}
+										/>
+									</DialogueButtonForm>
+									{' | '}
+								</>
+							) : null }
 							<DialogueButton
 								buttonText="Delete event"
 								buttonType="none"
@@ -681,7 +687,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					)}
 					{member &&
-					effectiveManageEventPermissionForEvent(member)(event) >=
+					effectiveManageEventPermissionForEvent(member)(event) ===
 						Permissions.ManageEvent.FULL ? (
 						<>
 							{linkableAccounts.length === 0 || event.type === EventType.LINKED ? (
@@ -771,13 +777,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						{event.comments ? (
 							<>
-								<strong>Comments:</strong> {event.comments}
+								<strong>Comments:</strong> <MarkdownRenderer markdown={event.comments} />
 								<br />
 							</>
 						) : null}
 						{member && event.memberComments ? (
 							<>
-								<strong>Member Viewable Comments:</strong> {event.memberComments}
+								<strong>Member Viewable Comments:</strong> <MarkdownRenderer markdown={event.memberComments} />
 								<br />
 							</>
 						) : null}
@@ -788,12 +794,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						)(presentMultCheckboxReturn(event.activity))}
 						<br />
 						{member &&
-						effectiveManageEventPermissionForEvent(member)(event) >=
-							Permissions.ManageEvent.FULL ? (
+						effectiveManageEventPermissionForEvent(member)(event) !==
+							Permissions.ManageEvent.NONE ? (
 							<>
 								<strong>
-									Organizer form links: (displayed only to those with event edit
-									permission)
+									Organizer form links:
 								</strong>
 								<ul>
 									<li>

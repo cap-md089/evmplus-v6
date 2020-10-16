@@ -38,6 +38,7 @@
 		"error-stack-parser": "^2.0.6",
 		"googleapis": "^50.0.0",
 		"luxon": "^1.24.1",
+		"markdown": "^0.5.0",
 		"request-promise": "^4.2.5",
 		"ssh2-sftp-client": "^5.2.1",
 		"uuid": "^8.0.0"

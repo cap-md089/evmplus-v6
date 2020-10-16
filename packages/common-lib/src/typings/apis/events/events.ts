@@ -124,6 +124,26 @@ export interface GetList {
 }
 
 /**
+ * Gets a filtered list of events
+ *
+ * For optimal results, specify a page and page size
+ * TODO: Allow this to be done
+ */
+export interface GetShortList {
+	(params: {}, body: {}): APIEither<RawResolvedEventObject[]>;
+
+	url: '/api/events';
+
+	method: 'get';
+
+	requiresMember: 'optional';
+
+	needsToken: false;
+
+	useValidator: true;
+}
+
+/**
  * Gets full event information for the requested event
  */
 export interface Get {

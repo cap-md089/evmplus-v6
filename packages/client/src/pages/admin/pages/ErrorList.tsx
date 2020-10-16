@@ -241,6 +241,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					>
 						{(error, i) => (
 							<div key={i}>
+								<h3>Timestamp</h3>
+								{new Date(error.timestamp).toString()}
 								<h3>Payload</h3>
 								<pre>{error.payload}</pre>
 								<h3>Stack</h3>
@@ -296,6 +298,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					>
 						{(error, i) => (
 							<div key={i}>
+								<h3>Timestamp</h3>
+								{new Date(error.timestamp).toString()}
 								<h3>Stack</h3>
 								<ul>
 									{error.stack.map((err, ind) => (
@@ -349,6 +353,8 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 					>
 						{(error, i) => (
 							<div key={i}>
+								<h3>Timestamp</h3>
+								{new Date(error.timestamp).toString()}
 								<h3>Page url</h3>
 								<pre>{error.pageURL}</pre>
 								<h3>Stack</h3>

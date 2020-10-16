@@ -179,7 +179,7 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 		}
 		retVal.push(['Custom Attendance Fields', '', '', '', '', 'Can Member']);
 
-		row = ['', 'Field Name', 'Field Type', 'Prefill Value', '', 'See?', 'Edit?'];
+		row = ['Field Name', '', 'Field Type', 'Prefill Value', '', 'See?', 'Edit?'];
 		retVal.push(row);
 		retVal.push([]);
 		let fieldPreFill: string;
@@ -198,8 +198,8 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 				fieldPreFill = 'N/A';
 			}
 			row = [
-				'',
 				customField.title,
+				'',
 				CustomAttendanceFieldTypeDisplay[customField.type],
 				fieldPreFill,
 				'',

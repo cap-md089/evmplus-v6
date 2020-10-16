@@ -18,14 +18,16 @@
  */
 
 import {
+	// DebriefItem,
+	AccountType, 
 	EchelonEventNumber,
+	effectiveManageEventPermissionForEvent, 
 	Either,
 	EventStatus,
-	RadioReturnWithOther,
-	RawResolvedEventObject,
 	EventType,
-	DebriefItem,
-	AccountType,
+	Permissions,
+	RadioReturnWithOther,
+	RawResolvedEventObject
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -92,11 +94,19 @@ function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 	return null;
 }
 
-function getEventDebrief(ged: DebriefItem[]) {
-	if (ged.length === 0) {
-		return <span style={{ color: 'red' }}>No</span>;
+// function getEventDebrief(ged: DebriefItem[]) {
+// 	if (ged.length === 0) {
+// 		return <span style={{ color: 'red' }}>No</span>;
+// 	} else {
+// 		return <span style={{ color: 'green' }}>Yes</span>;
+// 	}
+// }
+
+function getComplete(gc: boolean) {
+	if (gc === true) {
+		return <span style={{ color: 'green' }}>Y</span>;
 	} else {
-		return <span style={{ color: 'green' }}>Yes</span>;
+		return <span style={{ color: 'red' }}>N</span>;
 	}
 }
 
@@ -173,7 +183,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		) : (
 			<div className="eventlinklist">
 				<h3>
-					Click on the event number to view details.  Click on the event name to edit event.
+					Click on the event number to view details. Click on the event name to edit
+					event.
 				</h3>
 				<table>
 					<tbody>
@@ -184,48 +195,54 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							</th>
 							<th>Start Date</th>
 							<th>Status</th>
-							{this.props.account.type===AccountType.CAPSQUADRON ? 
-							<th>
-								GP Evt No.
-							</th> : null}
-							<th>Debrief</th>
+							<th>Complete</th>
+							{this.props.account.type === AccountType.CAPSQUADRON ? (
+								<th>GP Evt No.</th>
+							) : null}
+							{/* <th>Debrief</th> */}
 						</tr>
 						{this.state.events.map((event, i) => (
-							<tr key={i}>
-								<td>
-									<Link to={`/eventviewer/${event.id}`}>
-									{event.id}</Link> ::{'  '}
-									<Link to={`/eventform/${event.id}`}>{event.name}</Link>
-									{` `}
-									{event.type === EventType.LINKED ? (
-										<>
-											{` - [`}
-											<a
-												href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												{event.targetAccountID}-{event.targetEventID}
-											</a>
-											{`]`}
-										</>
-									) : null}
-								</td>
-								<td
-									style={{
-										whiteSpace: 'nowrap',
-									}}
-								>
-									{DateTime.fromMillis(event.startDateTime).toLocaleString({
-										...DateTime.DATETIME_SHORT,
-										hour12: false,
-									})}
-								</td>
-								<td>{getEventStatus(event.status)}</td>
-								{this.props.account.type===AccountType.CAPSQUADRON ? 
-								<td>{getEventNumber(event.groupEventNumber)}</td> : null}
-								<td>{getEventDebrief(event.debrief)}</td>
-							</tr>
+								<>
+									<tr key={i}>
+										<td>
+											<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::{'  '}
+											{effectiveManageEventPermissionForEvent(this.props.member!)(event) ===
+												Permissions.ManageEvent.FULL ? (
+												<Link to={`/eventform/${event.id}`}>{event.name}</Link> 
+											) : <>{event.name}</>}
+											{` `}
+											{event.type === EventType.LINKED ? (
+												<>
+													{` - [`}
+													<a
+														href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{event.targetAccountID}-{event.targetEventID}
+													</a>
+													{`]`}
+												</>
+											) : null}
+										</td>
+										<td
+											style={{
+												whiteSpace: 'nowrap',
+											}}
+										>
+											{DateTime.fromMillis(event.startDateTime).toLocaleString({
+												...DateTime.DATETIME_SHORT,
+												hour12: false,
+											})}
+										</td>
+										<td>{getEventStatus(event.status)}</td>
+										<td>{getComplete(event.complete)}</td>
+										{this.props.account.type === AccountType.CAPSQUADRON ? (
+											<td>{getEventNumber(event.groupEventNumber)}</td>
+										) : null}
+										{/* <td>{getEventDebrief(event.debrief)}</td> */}
+									</tr>
+								</>
 						))}
 					</tbody>
 				</table>
