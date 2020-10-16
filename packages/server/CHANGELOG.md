@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.19.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.19.0) (2020-10-16)
+
+
+### Bug Fixes
+
+* fixed creation of prospective members ([6011736](http://github.com//cap-md089/evmplus-v6/commit/60117367e3c33c9bf37a523f5525e09740034b04))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed macro error for string enum literal values ([a2d23d0](http://github.com//cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+
+
+### Features
+
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [6.18.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.18.0) (2020-10-08)
 
 
