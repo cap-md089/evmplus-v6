@@ -71,6 +71,7 @@ export default function setupDiscordBot(
 		const discordServer = accountObj.discordServer;
 
 		if (!discordServer.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -78,6 +79,7 @@ export default function setupDiscordBot(
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -114,6 +116,7 @@ export default function setupDiscordBot(
 		const discordServer = accountObj.discordServer;
 
 		if (!discordServer.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -121,6 +124,7 @@ export default function setupDiscordBot(
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -135,12 +139,14 @@ export default function setupDiscordBot(
 		const discordServer = account.discordServer;
 
 		if (!discordServer.hasValue) {
+			await session.close();
 			return;
 		}
 
 		const guild = client.guilds.get(discordServer.value.serverID);
 
 		if (!guild) {
+			await session.close();
 			return;
 		}
 
@@ -150,12 +156,14 @@ export default function setupDiscordBot(
 		]);
 
 		if (!discordAccountMaybe.hasValue) {
+			await session.close();
 			return;
 		}
 
 		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
 
 		if (!guildMember) {
+			await session.close();
 			return;
 		}
 
@@ -191,6 +199,7 @@ export default function setupDiscordBot(
 		const discordServer = account.discordServer;
 
 		if (!discordServer.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -206,12 +215,15 @@ export default function setupDiscordBot(
 		]);
 
 		if (!discordAccountMaybe.hasValue) {
+			await session.close();
+			await session.close();
 			return;
 		}
 
 		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
 
 		if (!guildMember) {
+			await session.close();
 			return;
 		}
 
@@ -242,6 +254,7 @@ export default function setupDiscordBot(
 		const discordServer = accountObj.discordServer;
 
 		if (!discordServer.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -249,12 +262,14 @@ export default function setupDiscordBot(
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
+			await session.close();
 			return;
 		}
 
 		const userAccount = await getDiscordAccount(schema)(toReference(member));
 
 		if (!userAccount.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -272,6 +287,7 @@ export default function setupDiscordBot(
 		const account = await getAccount(schema)(member.guild.id);
 
 		if (!account.hasValue) {
+			await session.close();
 			return;
 		}
 
@@ -279,6 +295,8 @@ export default function setupDiscordBot(
 
 		if (capunitMember.hasValue) {
 			await setupUser(client)(schema)(member.guild.id)(account.value)()(capunitMember.value);
+
+			await session.close();
 		} else {
 			const registry = await getRegistry(schema)(account.value).fullJoin();
 

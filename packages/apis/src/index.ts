@@ -49,6 +49,7 @@ type Tree = {
 			getNextRecurring: api.events.events.GetNextRecurring;
 			getUpcoming: api.events.events.GetUpcoming;
 			getList: api.events.events.GetList;
+			getShortList: api.events.events.GetShortList;
 			getRange: api.events.events.GetRange;
 			link: api.events.events.Link;
 			set: api.events.events.Set;

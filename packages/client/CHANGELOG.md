@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.20.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.20.0) (2020-10-16)
+
+
+### Bug Fixes
+
+* fixed creation of prospective members ([6011736](http://github.com//cap-md089/evmplus-v6/commit/60117367e3c33c9bf37a523f5525e09740034b04))
+* **googleutils:** fixed event move not working, added time stamp display to errors ([d4ab35e](http://github.com//cap-md089/evmplus-v6/commit/d4ab35e8d77ad83b4f7d4df6c20c9ef8a3c62476)), closes [#77](http://github.com//cap-md089/evmplus-v6/issues/77)
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed eventform crashing trying to render interal POCs ([86b5806](http://github.com//cap-md089/evmplus-v6/commit/86b5806f841ec04356d26e02b451bf00515e3776))
+* prepared eventform for wing demonstration ([7a899ad](http://github.com//cap-md089/evmplus-v6/commit/7a899adfe47e96a818b80ca323962765df748751))
+
+
+### Features
+
+* **event comments editing and display:** implemented markdown on event editor, display, and rendere ([5355fff](http://github.com//cap-md089/evmplus-v6/commit/5355fff8564a6ddbd26720636f50d7a394ea8a68))
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* fixed formatting on EventViewer ([4c442ec](http://github.com//cap-md089/evmplus-v6/commit/4c442ec35ae7dd68a3971658ba925277f09023b1))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.19.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.19.0) (2020-10-08)
 
 

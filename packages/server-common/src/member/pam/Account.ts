@@ -112,7 +112,10 @@ const getTokenCountForUser = async (schema: Schema, member: MemberReference) => 
 	return results.length;
 };
 
-export const addUserAccountCreationToken = (schema: Schema, member: MemberReference) =>
+export const addUserAccountCreationToken = (
+	schema: Schema,
+	member: MemberReference,
+): ServerEither<string> =>
 	asyncRight<ServerError, MaybeObj<UserAccountInformation>>(
 		getInformationForMember(schema, member)
 			.then(simplifyUserInformation)
@@ -126,7 +129,7 @@ export const addUserAccountCreationToken = (schema: Schema, member: MemberRefere
 			message: 'User already has an account',
 		})
 		.map(
-			() => getTokenCountForUser(schema, member),
+			() => getTokenCountForUser(schema, toReference(member)),
 			errorGenerator('Could not get user creation information'),
 		)
 		.filter(count => count === 0, {
@@ -140,7 +143,7 @@ export const addUserAccountCreationToken = (schema: Schema, member: MemberRefere
 			asyncRight(
 				{
 					token,
-					member,
+					member: toReference(member),
 					created: Date.now(),
 				},
 				errorGenerator('Could not store user creation information'),
