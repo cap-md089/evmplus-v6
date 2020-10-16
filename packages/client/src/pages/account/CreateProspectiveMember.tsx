@@ -119,9 +119,9 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 					'Email a random password',
 				]}
 				values={[
+					CAPProspectiveMemberPasswordCreationType.WITHPASSWORD,
 					CAPProspectiveMemberPasswordCreationType.EMAILLINK,
 					CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD,
-					CAPProspectiveMemberPasswordCreationType.WITHPASSWORD,
 				]}
 				defaultValue={CAPProspectiveMemberPasswordCreationType.EMAILLINK}
 			/>

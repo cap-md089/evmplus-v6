@@ -68,10 +68,7 @@ const sendPasswordLink = (emailFunction: typeof sendEmail) => (req: Req) => (
 	).flatMap(email =>
 		AsyncEither.All([
 			getRegistry(req.mysqlx)(req.account),
-			asyncRight(
-				PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
-				errorGenerator('Could not create user account creation token'),
-			),
+			PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
 		]).flatMap(([registry, token]) =>
 			emailFunction(req.configuration)(true)(registry)('Finish EvMPlus.org Account Creation')(
 				email,
