@@ -48,8 +48,11 @@ import {
 	RadioReturnWithOther,
 	RegistryValues,
 	SimpleMultCheckboxReturn,
+<<<<<<< HEAD
 	stringifyMemberReference,
 	toReference,
+=======
+>>>>>>> f88b3dbd1295febad588dba8aad657aed0b20e68
 	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
@@ -376,7 +379,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		this.setState({ mde });
 
 		const mdeOptions = {
+<<<<<<< HEAD
 			hideIcons: ['preview', 'side-by-side', 'fullscreen', 'image'],
+=======
+			hideIcons: ['preview', 'side-by-side', 'fullscreen'],
+>>>>>>> f88b3dbd1295febad588dba8aad657aed0b20e68
 			blockStyles: { italic: '_' },
 			insertTexts: {
 				horizontalRule: ['', '\n\n-----\n\n'],
@@ -438,7 +445,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
 				/>
+<<<<<<< HEAD
 				<SimpleForm<NewEventFormValues & { addPOCbyID: number | null }>
+=======
+				<SimpleForm<NewEventFormValues>
+>>>>>>> f88b3dbd1295febad588dba8aad657aed0b20e68
 					onChange={this.onEventChange}
 					onSubmit={this.onEventSubmit}
 					values={{

@@ -170,8 +170,8 @@ const eventStatus = (stat: EventStatus): string =>
 
 export const attendanceStatusLabels = [
 	'Commited/Attended',
-	'No show',
 	'Rescinded commitment to attend',
+	'No show',
 	'Not planning on attending',
 ];
 
