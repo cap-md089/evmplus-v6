@@ -83,8 +83,8 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				<TextBox>
 					Please select a user name for use in authenticating your access to EvMPlus.org.
 					<br />
-					User names should be 45 characters or less. Only one user name may be associated
-					with each CAPID.
+					ClientUserntUser names should be 45 characters or less. Only one user name may
+					be associated with each CAPID.
 					<br />
 				</TextBox>
 
@@ -121,7 +121,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				error: fetchResult.value.message,
 			});
 		} else {
-			const member = await getMember(fetchResult.value.sessionID);
+			const member = await getMember();
 
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push('/admin');

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.15.0](http://github.com//cap-md089/evmplus-v6/compare/apis@1.14.0...apis@1.15.0) (2020-10-16)
+
+
+### Features
+
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+
+
+
+
+
 ## [1.14.2](http://github.com//cap-md089/evmplus-v6/compare/apis@1.14.0...apis@1.14.2) (2020-10-08)
 
 **Note:** Version bump only for package apis

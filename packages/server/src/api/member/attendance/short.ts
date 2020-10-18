@@ -53,6 +53,7 @@ import {
 	PAM,
 	RawAttendanceDBRecord,
 } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 import { expandRecord } from './basic';
 
 const groupTarget = (member: User) => {
@@ -112,7 +113,8 @@ export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.Re
 							.cata(Maybe.none, identity)
 					: Maybe.none(),
 			),
-		),
+		)
+		.map(wrapper),
 );
 
 export default func;

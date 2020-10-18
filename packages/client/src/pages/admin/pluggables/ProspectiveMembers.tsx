@@ -58,7 +58,6 @@ export class ProspectiveMemberManagementWidget extends Page<
 			const memberEither = await fetchApi.member.memberList(
 				{ type: 'CAPProspectiveMember' },
 				{},
-				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(memberEither)) {

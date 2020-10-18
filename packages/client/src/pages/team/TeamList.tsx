@@ -69,7 +69,7 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		this.props.updateSideNav([]);
 		this.updateTitle('Team list');
 
-		const teamsEither = await fetchApi.team.list({}, {}, this.props.member?.sessionID);
+		const teamsEither = await fetchApi.team.list({}, {});
 
 		if (Either.isLeft(teamsEither)) {
 			this.setState(

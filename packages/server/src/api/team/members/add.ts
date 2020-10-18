@@ -20,6 +20,7 @@
 import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
 import { always, api, destroy, Permissions, RawTeamObject, SessionType } from 'common-lib';
 import { addMemberToTeam, getTeam, PAM, resolveReference, saveTeam } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const checkIfMemberExists = (req: APIRequest<api.team.members.AddTeamMember>) => (
 	team: RawTeamObject,
@@ -36,7 +37,8 @@ export const func: ServerAPIEndpoint<api.team.members.AddTeamMember> = PAM.Requi
 			.flatMap(checkIfMemberExists(req))
 			.map(addMemberToTeam(req.memberUpdateEmitter)(req.account)(req.body))
 			.flatMap(saveTeam(req.mysqlx))
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

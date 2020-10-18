@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, FileUserAccessControlPermissions, userHasFilePermission } from 'common-lib';
 import { deleteFileObject, getFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canDeleteFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
@@ -30,6 +31,7 @@ export const func: ServerAPIEndpoint<api.files.files.Delete> = req =>
 			code: 403,
 			message: 'Member cannot delete file',
 		})
-		.flatMap(deleteFileObject(req.configuration)(req.mysqlx)(req.account));
+		.flatMap(deleteFileObject(req.configuration)(req.mysqlx)(req.account))
+		.map(wrapper);
 
 export default func;

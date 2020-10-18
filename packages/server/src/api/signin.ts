@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
+import { AsyncRepr, ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
 	AccountLinkTarget,
 	api,
@@ -51,11 +51,23 @@ import {
 	ServerEither,
 } from 'server-common';
 import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
+import wrapper from '../lib/wrapper';
+
+interface Wrapped<T> {
+	response: AsyncRepr<T>;
+	cookies: Record<
+		string,
+		{
+			value: string;
+			expires: number;
+		}
+	>;
+}
 
 const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 	result: PAM.SigninSuccess,
-): ServerEither<SuccessfulSigninReturn> => {
-	return AsyncEither.All([
+): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
+	AsyncEither.All([
 		resolveReference(req.mysqlx)(req.account)(result.member),
 		asyncRight(
 			getPermissionsForMemberInAccountDefault(req.mysqlx, result.member, req.account),
@@ -78,36 +90,46 @@ const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
 		),
 		logSignin(req.mysqlx)(req.account)(result.member),
 	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
-		error: MemberCreateError.NONE,
-		member: {
-			...member,
-			sessionID: result.sessionID,
-			permissions,
+		response: {
+			error: MemberCreateError.NONE,
+			member: {
+				...member,
+				permissions,
+			},
+			notificationCount,
+			taskCount,
+			linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
 		},
-		sessionID: result.sessionID,
-		notificationCount,
-		taskCount,
-		linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+		cookies: {
+			sessionID: {
+				expires: result.expires,
+				value: result.sessionID,
+			},
+		},
 	}));
-};
 
-const handlePasswordExpired = (req: ServerAPIRequestParameter<api.Signin>) => (
+const handlePasswordExpired = (
 	result: PAM.SigninPasswordOld,
-): ServerEither<ExpiredSuccessfulSigninReturn> =>
-	asyncRight<ServerError, ExpiredSuccessfulSigninReturn>(
+): ServerEither<Wrapped<ExpiredSuccessfulSigninReturn>> =>
+	asyncRight<ServerError, Wrapped<ExpiredSuccessfulSigninReturn>>(
 		{
-			error: MemberCreateError.PASSWORD_EXPIRED,
-			sessionID: result.sessionID,
+			response: {
+				error: MemberCreateError.PASSWORD_EXPIRED,
+			},
+			cookies: {
+				sessionID: {
+					expires: result.expires,
+					value: result.sessionID,
+				},
+			},
 		},
 		errorGenerator('Could not handle failure'),
 	);
 
-const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninFailed,
-): ServerEither<FailedSigninReturn> =>
-	result.result === MemberCreateError.SERVER_ERROR ||
+const handleFailure = (result: PAM.SigninFailed): ServerEither<Wrapped<FailedSigninReturn>> =>
+	(result.result === MemberCreateError.SERVER_ERROR ||
 	result.result === MemberCreateError.UNKOWN_SERVER_ERROR
-		? asyncLeft({
+		? asyncLeft<ServerError, FailedSigninReturn>({
 				type: 'OTHER',
 				code: 500,
 				message: 'Unknown error occurred',
@@ -117,15 +139,23 @@ const handleFailure = (req: ServerAPIRequestParameter<api.Signin>) => (
 					error: result.result,
 				},
 				errorGenerator('Could not handle failure'),
-		  );
+		  )
+	).map(wrapper);
 
 const handleMFA = (req: ServerAPIRequestParameter<api.Signin>) => (
 	result: PAM.SigninRequiresMFA,
-): ServerEither<SigninRequiresMFA> =>
-	asyncRight<ServerError, SigninRequiresMFA>(
+): ServerEither<Wrapped<SigninRequiresMFA>> =>
+	asyncRight<ServerError, Wrapped<SigninRequiresMFA>>(
 		{
-			error: MemberCreateError.ACCOUNT_USES_MFA,
-			sessionID: result.sessionID,
+			response: {
+				error: MemberCreateError.ACCOUNT_USES_MFA,
+			},
+			cookies: {
+				sessionID: {
+					expires: result.expires,
+					value: result.sessionID,
+				},
+			},
 		},
 		errorGenerator('Could not handle failure'),
 	);
@@ -141,14 +171,14 @@ export const func: ServerAPIEndpoint<api.Signin> = req =>
 			req.configuration,
 		),
 		errorGenerator('Could not sign in'),
-	).flatMap<SigninReturn>(results =>
+	).flatMap<Wrapped<SigninReturn>>(results =>
 		results.result === MemberCreateError.NONE
 			? handleSuccess(req)(results)
 			: results.result === MemberCreateError.PASSWORD_EXPIRED
-			? handlePasswordExpired(req)(results)
+			? handlePasswordExpired(results)
 			: results.result === MemberCreateError.ACCOUNT_USES_MFA
 			? handleMFA(req)(results)
-			: handleFailure(req)(results),
+			: handleFailure(results),
 	);
 
 export default func;

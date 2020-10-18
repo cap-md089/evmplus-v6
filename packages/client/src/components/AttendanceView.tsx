@@ -29,7 +29,7 @@ import {
 	NewAttendanceRecord,
 	RawResolvedEventObject,
 	RegistryValues,
-	User,
+	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import React, { Component } from 'react';
@@ -52,7 +52,7 @@ const renderCustomAttendanceField = (attendanceFieldItem: CustomAttendanceFieldV
 interface AttendanceItemViewProps {
 	owningEvent: RawResolvedEventObject;
 	owningAccount: AccountObject;
-	member: User;
+	member: ClientUser;
 	registry: RegistryValues;
 	attendanceRecord: AttendanceRecord;
 	removeAttendance: (record: AttendanceRecord) => void;

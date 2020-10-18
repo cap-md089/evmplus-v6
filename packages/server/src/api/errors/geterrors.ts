@@ -21,6 +21,7 @@ import { Schema } from '@mysql/xdevapi';
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator, Errors, SessionType } from 'common-lib';
 import { generateResults, isRequesterRioux, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const getErrors = (schema: Schema) =>
 	asyncRight(
@@ -37,7 +38,8 @@ export const func: ServerAPIEndpoint<api.errors.GetErrors> = PAM.RequireSessionT
 			code: 403,
 			message: 'Member does not have the required permissions',
 		})
-		.flatMap(req => getErrors(req.mysqlx)),
+		.flatMap(req => getErrors(req.mysqlx))
+		.map(wrapper),
 );
 
 export default func;

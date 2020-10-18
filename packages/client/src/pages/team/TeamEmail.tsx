@@ -260,11 +260,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 		this.updateTitle('Team email selector');
 
 		if (this.props.member) {
-			const membersEither = await fetchApi.team.members.list(
-				{ id },
-				{},
-				this.props.member.sessionID,
-			);
+			const membersEither = await fetchApi.team.members.list({ id }, {});
 
 			if (Either.isLeft(membersEither)) {
 				this.setState(prev => ({

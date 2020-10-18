@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AccountObject, User } from 'common-lib';
+import { AccountObject, ClientUser } from 'common-lib';
 import * as React from 'react';
 
 export interface InputProps<V> {
@@ -73,7 +73,7 @@ export interface InputProps<V> {
 	/**
 	 * Used by some components. They should throw an error if they are not defined
 	 */
-	member?: User | null;
+	member?: ClientUser | null;
 	account?: AccountObject | null;
 	/**
 	 * Whether or not there is an error with this component
@@ -104,6 +104,6 @@ export interface InputProps<V> {
 }
 
 export interface NotOptionalInputProps<V> extends InputProps<V> {
-	member: User;
+	member: ClientUser;
 	account: AccountObject;
 }

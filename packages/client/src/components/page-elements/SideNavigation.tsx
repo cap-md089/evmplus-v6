@@ -17,10 +17,11 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { getFullMemberName, MemberCreateError, SigninReturn, User } from 'common-lib';
+import { getFullMemberName, MemberCreateError, SigninReturn, ClientUser } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
+import fetchApi from '../../lib/apis';
 import SigninLink from '../SigninLink';
 import './SideNavigation.scss';
 
@@ -56,7 +57,7 @@ export type SideNavigationItem =
 
 export interface SideNavigationProps extends RouteComponentProps<{}> {
 	links: SideNavigationItem[];
-	member: User | null;
+	member: ClientUser | null;
 	fullMemberDetails: SigninReturn;
 	authorizeUser: (arg: SigninReturn) => void;
 }
@@ -174,7 +175,7 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 		this.props.authorizeUser({
 			error: MemberCreateError.INVALID_SESSION_ID,
 		});
-		localStorage.removeItem('sessionID');
+		fetchApi.member.session.logout({}, {});
 		this.close();
 	}
 

@@ -30,6 +30,7 @@ import {
 	ServerError,
 } from 'common-lib';
 import { ensureResolvedEvent, generateResults, getRegistry, queryEventsFind } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const upcomingQuery = queryEventsFind('showUpcoming = true AND endDateTime > :endDateTime');
 
@@ -52,6 +53,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 				Right<RawResolvedEventObject>
 			>(Either.isRight),
 		)
-		.map(asyncIterMap(get('value')));
+		.map(asyncIterMap(get('value')))
+		.map(wrapper);
 
 export default func();

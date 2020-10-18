@@ -119,9 +119,9 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 					'Email a random password',
 				]}
 				values={[
+					CAPProspectiveMemberPasswordCreationType.WITHPASSWORD,
 					CAPProspectiveMemberPasswordCreationType.EMAILLINK,
 					CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD,
-					CAPProspectiveMemberPasswordCreationType.WITHPASSWORD,
 				]}
 				defaultValue={CAPProspectiveMemberPasswordCreationType.EMAILLINK}
 			/>
@@ -382,7 +382,6 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 						member: newMem,
 						login: password,
 					},
-					this.props.member.sessionID,
 				)
 				.fullJoin();
 

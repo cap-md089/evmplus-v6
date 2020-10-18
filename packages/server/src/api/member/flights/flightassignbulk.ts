@@ -40,6 +40,7 @@ import {
 } from 'common-lib';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -98,7 +99,8 @@ export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.Require
 			.map(asyncIterMap(get('value')))
 			.map(asyncIterMap(saveExtraMemberInformation(req.mysqlx)(req.account)))
 			.map(collectGeneratorAsync)
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

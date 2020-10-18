@@ -32,6 +32,7 @@ import {
 	ServerError,
 } from 'common-lib';
 import { ensureResolvedEvent, getSortedEvents } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
 	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'))
@@ -42,6 +43,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
 				Right<RawResolvedEventObject>
 			>(Either.isRight),
 		)
-		.map(asyncIterMap(get('value')));
+		.map(asyncIterMap(get('value')))
+		.map(wrapper);
 
 export default func;

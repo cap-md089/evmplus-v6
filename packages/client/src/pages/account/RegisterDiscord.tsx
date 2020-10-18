@@ -49,7 +49,6 @@ export default class RegisterDiscord extends Page<
 				await fetchApi.member.account.registerDiscord(
 					{ discordID: this.props.routeProps.match.params.discordid },
 					{},
-					this.props.member.sessionID,
 				),
 			),
 		});

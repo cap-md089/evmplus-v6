@@ -68,7 +68,6 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		const result = await fetchApi.member.session.setScanAdd(
 			{},
 			{ eventID: parseInt(this.props.routeProps.match.params.id, 10) },
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result) && result.value.code !== 403) {
@@ -142,7 +141,6 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 					type: 'CAPNHQMember',
 				},
 			},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {

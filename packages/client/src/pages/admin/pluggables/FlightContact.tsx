@@ -110,11 +110,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 			!this.props.member.seniorMember &&
 			hasAllowedDutyPosition(this.props.member)
 		) {
-			const memberEither = await fetchApi.member.flight.membersBasic(
-				{},
-				{},
-				this.props.member.sessionID,
-			);
+			const memberEither = await fetchApi.member.flight.membersBasic({}, {});
 
 			if (Either.isLeft(memberEither)) {
 				this.setState({
@@ -412,11 +408,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 			isCAPMember(this.props.member) &&
 			hasAllowedDutyPosition(this.props.member)
 		) {
-			const memberEither = await fetchApi.member.flight.membersFull(
-				{},
-				{},
-				this.props.member.sessionID,
-			);
+			const memberEither = await fetchApi.member.flight.membersFull({}, {});
 
 			if (Either.isLeft(memberEither)) {
 				this.setState(prev => ({

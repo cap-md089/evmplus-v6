@@ -19,9 +19,19 @@
 
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator } from 'common-lib';
-import wrapper from '../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.AccountCheck> = req =>
-	asyncRight(req.account, errorGenerator('What?')).map(wrapper);
+export const func: ServerAPIEndpoint<api.member.session.Logout> = () =>
+	asyncRight(
+		{
+			response: void 0,
+			cookies: {
+				sessionID: {
+					value: '',
+					expires: 0,
+				},
+			},
+		},
+		errorGenerator('Could not sign out'),
+	);
 
 export default func;

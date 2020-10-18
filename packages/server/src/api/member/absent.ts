@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncEither, destroy, errorGenerator, SessionType } from 'common-lib';
 import { CAP, PAM, saveExtraMemberInformation } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.SetAbsenteeInformation> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -29,7 +30,8 @@ export const func: ServerAPIEndpoint<api.member.SetAbsenteeInformation> = PAM.Re
 		errorGenerator('Could not save extra member information'),
 	)
 		.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

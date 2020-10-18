@@ -28,6 +28,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { getEvent, PAM, saveEventFunc } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.Add> = (
 	now = Date.now,
@@ -60,7 +61,8 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 					newEvent,
 				).map(always(newEvent)),
 			)
-			.map(get('debrief')),
+			.map(get('debrief'))
+			.map(wrapper),
 	);
 
 export default func();

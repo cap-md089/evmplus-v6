@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AccountObject, RegistryValues, SigninReturn, User } from 'common-lib';
+import { AccountObject, RegistryValues, SigninReturn, ClientUser } from 'common-lib';
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { BreadCrumb } from '../components/BreadCrumbs';
@@ -28,7 +28,7 @@ import fetchApi from '../lib/apis';
 // Other pages extend this so that I can use `typeof Page` in route composition
 
 export interface PageProps<R = {}> {
-	member: User | null;
+	member: ClientUser | null;
 	account: AccountObject;
 	routeProps: RouteComponentProps<R>;
 	registry: RegistryValues;
@@ -63,8 +63,8 @@ export default abstract class Page<
 			nextProps.routeProps.location.pathname !== this.okURL &&
 			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
 
-		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
+		const nextID = nextProps.member?.id;
+		const currentID = this.props.member?.id;
 
 		const areStatesEqual = this.isShallowOk
 			? shallowCompare(nextState, this.state)
@@ -74,7 +74,7 @@ export default abstract class Page<
 			this.updatingState ||
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
-			nextSID !== currentSID ||
+			nextID !== currentID ||
 			urlChanged ||
 			nextProps.routeProps.location.hash !== this.props.routeProps.location.hash ||
 			!areStatesEqual;
@@ -111,7 +111,7 @@ export default abstract class Page<
 	protected async refreshSession() {
 		const { member } = this.props;
 		if (member) {
-			const result = await fetchApi.check({}, {}, member.sessionID);
+			const result = await fetchApi.check({}, {});
 
 			if (result.direction === 'right') {
 				this.props.authorizeUser(result.value);

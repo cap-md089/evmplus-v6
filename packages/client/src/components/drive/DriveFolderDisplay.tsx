@@ -112,11 +112,7 @@ export default class DriveFolderDisplay extends React.Component<
 			return;
 		}
 
-		await fetchApi.files.children.add(
-			{ parentid: this.props.file.id },
-			{ childid: id },
-			this.props.member.sessionID,
-		);
+		await fetchApi.files.children.add({ parentid: this.props.file.id }, { childid: id });
 
 		this.props.refresh();
 		this.setState({

@@ -86,10 +86,9 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			fetchApi.events.events.get(
 				{ id: this.props.routeProps.match.params.id.split('-')[0] },
 				{},
-				this.props.member.sessionID,
 			),
-			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID),
+			fetchApi.member.memberList({}, {}),
+			fetchApi.team.list({}, {}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -244,7 +243,6 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		const resultEither = await fetchApi.events.events.set(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			properEventValues.value,
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(resultEither)) {

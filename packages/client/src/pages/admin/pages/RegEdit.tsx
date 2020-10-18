@@ -335,7 +335,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		this.props.registry.RankAndFile = values.RankAndFile;
 		this.props.registry.Website = values.Website;
 
-		await fetchApi.registry.set({}, this.props.registry, this.props.member.sessionID);
+		await fetchApi.registry.set({}, this.props.registry);
 
 		this.props.updateApp();
 	}

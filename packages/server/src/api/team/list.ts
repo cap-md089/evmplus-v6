@@ -38,6 +38,7 @@ import {
 	User,
 } from 'common-lib';
 import { expandTeam, getTeamObjects, httpStripTeamObject } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 const isTeamMemberOrLeaderIfPrivate = (maybeUser: MaybeObj<User>) => (team: FullTeamObject) =>
 	team.visibility === TeamPublicity.PRIVATE
@@ -61,6 +62,7 @@ export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
 		)
 		.map(asyncIterMap<Right<FullTeamObject>, FullTeamObject>(get('value')))
 		.map(asyncIterFilter(isTeamMemberOrLeaderIfPrivate(req.member)))
-		.map(asyncIterMap(httpStripTeamObject(req.member)));
+		.map(asyncIterMap(httpStripTeamObject(req.member)))
+		.map(wrapper);
 
 export default func;

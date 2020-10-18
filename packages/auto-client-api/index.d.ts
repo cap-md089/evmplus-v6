@@ -35,7 +35,7 @@ export type SessionID<
 	: string | undefined;
 
 type EndpointFunc<T extends APIEndpoint<string, any, any, any, any, any, any>, R> = (
-	values: Pick<T, 'url' | 'method' | 'requiresMember' | 'needsToken'> & { paramKeys: string[] }
+	values: Pick<T, 'url' | 'method' | 'requiresMember' | 'needsToken'> & { paramKeys: string[] },
 ) => (params: APIEndpointParams<T>, body: APIEndpointBody<T>, sessionID: SessionID<T>) => R;
 
 export type EitherReturn<R> = [R] extends [EitherObj<infer Left, infer Right>]
@@ -46,7 +46,7 @@ export function apiCall<
 	T extends APIEndpoint<string, any, any, any, any, any, any>,
 	R = EitherReturn<APIEndpointReturnValue<T>>
 >(
-	endpointFunc: EndpointFunc<T, R>
+	endpointFunc: EndpointFunc<T, R>,
 ): (params: APIEndpointParams<T>, body: APIEndpointBody<T>, sessionID: SessionID<T>) => R;
 
 type APIInfo = {
@@ -55,27 +55,19 @@ type APIInfo = {
 
 type APITree<T extends APIInfo> = {
 	[P in keyof T]: T[P] extends APIEndpoint<string, any, any, any, any, any, any, any>
-		? SessionID<T[P]> extends never
-			? (
-					params: APIEndpointParams<T[P]>,
-					body: APIEndpointBody<T[P]>
-			  ) => APIEndpointReturnValue<T[P]> extends APIEither<infer R>
-					? AsyncEither<HTTPError, R>
-					: never
-			: (
-					params: APIEndpointParams<T[P]>,
-					body: APIEndpointBody<T[P]>,
-					sessionID: SessionID<T[P]>
-			  ) => APIEndpointReturnValue<T[P]> extends APIEither<infer R>
-					? AsyncEither<HTTPError, R>
-					: never
+		? (
+				params: APIEndpointParams<T[P]>,
+				body: APIEndpointBody<T[P]>,
+		  ) => APIEndpointReturnValue<T[P]> extends APIEither<infer R>
+				? AsyncEither<HTTPError, R>
+				: never
 		: T[P] extends APIInfo
 		? APITree<T[P]>
 		: never;
 };
 
 export function generateAPITree<T extends APIInfo>(
-	endpointFunc: EndpointFunc<any, any>
+	endpointFunc: EndpointFunc<any, any>,
 ): APITree<T>;
 
 export function apiURL<
@@ -102,7 +94,7 @@ export type APIRequest<
 export type ServerEither<T> = AsyncEither<ServerError, T>;
 
 export type ReturnValue<Return extends APIEither<any>> = [Return] extends [
-	EitherObj<infer Left, infer Right>
+	EitherObj<infer Left, infer Right>,
 ]
 	? Right extends Array<infer ArrayItem>
 		? ServerEither<Right> | ServerEither<AsyncIter<ArrayItem>>
@@ -124,7 +116,16 @@ export type ServerAPIRequestParameter<
 export type ServerAPIReturnValue<
 	T extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>
 > = T extends APIEndpoint<string, APIEither<infer Right>, any, any, any, any, any, any>
-	? ServerEither<AsyncRepr<Right>>
+	? ServerEither<{
+			response: AsyncRepr<Right>;
+			cookies: Record<
+				string,
+				{
+					expires: number;
+					value: string;
+				}
+			>;
+	  }>
 	: never;
 
 export type AsyncRepr<T> = [T] extends [Array<infer ArrayItem>]
@@ -157,7 +158,7 @@ export function addAPI<T extends APIEndpoint<string, any, any, any, any, any, an
 		memberRequirement: APIEndpointMember<T>,
 		tokenRequired: APIEndpointToken<T>,
 		usesValidator: APIEndpointUsesValidator<T>,
-		validator: ValidatorImpl<APIEndpointBody<T>>
+		validator: ValidatorImpl<APIEndpointBody<T>>,
 	) => (endpoint: ServerAPIEndpoint<T>) => void,
-	endpoint: ServerAPIEndpoint<T>
+	endpoint: ServerAPIEndpoint<T>,
 ): void;

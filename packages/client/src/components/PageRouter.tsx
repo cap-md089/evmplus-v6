@@ -24,7 +24,7 @@ import {
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	User,
+	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
@@ -255,7 +255,7 @@ const composeElement = (
 	updateSideNav: (links: SideNavigationItem[]) => void,
 	updateBreadcrumbs: (links: BreadCrumb[]) => void,
 	registry: RegistryValues,
-	member: User | null,
+	member: ClientUser | null,
 	fullMemberDetails: SigninReturn,
 	updateApp: () => void,
 ) => (props: RouteComponentProps<any>) => {
@@ -282,7 +282,7 @@ interface PageDisplayerProps {
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
 	registry: RegistryValues;
-	member: User | null;
+	member: ClientUser | null;
 	fullMemberDetails: SigninReturn;
 	routeProps: RouteComponentProps<any>;
 	updateApp: () => void;
@@ -298,9 +298,6 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 	}
 
 	public shouldComponentUpdate(nextProps: PageDisplayerProps) {
-		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
-
 		const urlChanged =
 			nextProps.routeProps.location.pathname !== this.okURL &&
 			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
@@ -308,7 +305,6 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 		const shouldUpdate =
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
-			nextSID !== currentSID ||
 			urlChanged ||
 			nextProps.routeProps.location.hash !== this.props.routeProps.location.hash;
 
@@ -345,7 +341,7 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 interface PageRouterProps extends RouteComponentProps<any> {
 	updateSideNav: (links: SideNavigationItem[]) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
-	member: User | null;
+	member: ClientUser | null;
 	account: AccountObject;
 	authorizeUser: (arg: SigninReturn) => void;
 	registry: RegistryValues;
@@ -366,18 +362,31 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		this.state = {
 			loading: false,
 			previousHash: props.location.hash,
-			previousPath: '',
+			previousPath: props.location.pathname,
 		};
 	}
 
+	private get shouldLoad(): boolean {
+		// Need to keep track of the previous path and hash ourselves,
+		// so that it doesn't get stuck in a loop of infinite updates
+		// It's only supposed to run if the page changes and the component
+		// hasn't finished updating the session ID
+		return (
+			this.props.member !== null &&
+			this.state.loading === false &&
+			(this.props.location.hash !== this.state.previousHash ||
+				this.props.location.pathname !== this.state.previousPath)
+		);
+	}
+
 	public shouldComponentUpdate(nextProps: PageRouterProps, nextState: PageRouterState) {
-		const nextSID = nextProps.member ? nextProps.member.sessionID : '';
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
+		const nextID = nextProps.member?.id;
+		const currentID = this.props.member?.id;
 
 		const shouldUpdate =
 			(this.props.account === null && nextProps.account !== null) ||
 			(this.props.registry === null && nextProps.registry !== null) ||
-			nextSID !== currentSID ||
+			nextID !== currentID ||
 			nextProps.location.pathname !== this.props.location.pathname ||
 			(nextState.loading === false && this.state.loading === true);
 
@@ -385,19 +394,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 	}
 
 	public componentDidUpdate() {
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
-
-		// Need to keep track of the previous path and hash ourselves,
-		// so that it doesn't get stuck in a loop of infinite updates
-		// It's only supposed to run if the page changes and the component
-		// hasn't finished updating the session ID
-		if (
-			currentSID !== '' &&
-			currentSID !== null &&
-			this.state.loading === false &&
-			(this.props.location.hash !== this.state.previousHash ||
-				this.props.location.pathname !== this.state.previousPath)
-		) {
+		if (this.shouldLoad) {
 			// tslint:disable-next-line:no-console
 			console.log('Refreshing session ID');
 
@@ -407,44 +404,22 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 				previousPath: this.props.location.pathname,
 			});
 
-			const { member } = this.props;
+			fetchApi
+				.check({}, {})
+				.leftFlatMap(always(Either.right({ error: MemberCreateError.SERVER_ERROR })))
+				.fullJoin()
+				.then(ret => {
+					this.props.authorizeUser(ret);
 
-			if (member) {
-				fetchApi
-					.check({}, {}, member.sessionID)
-					.leftFlatMap(always(Either.right({ error: MemberCreateError.SERVER_ERROR })))
-					.fullJoin()
-					.then(ret => {
-						this.props.authorizeUser(ret);
-
-						this.setState({
-							loading: false,
-						});
+					this.setState({
+						loading: false,
 					});
-			}
+				});
 		}
 	}
 
 	public render() {
-		const currentSID = this.props.member ? this.props.member.sessionID : '';
-
-		const loading =
-			this.state.loading ||
-			(currentSID !== '' &&
-				currentSID !== null &&
-				this.state.loading === false &&
-				(this.props.location.hash !== this.state.previousHash ||
-					(this.props.location.pathname !== this.state.previousPath &&
-						this.state.previousPath !== '')));
-
-		if (!loading) {
-			// tslint:disable-next-line:no-console
-			console.log('');
-			// tslint:disable-next-line:no-console
-			console.log('Rendering page');
-		}
-
-		return loading ? (
+		return this.state.loading || this.shouldLoad ? (
 			<Loader />
 		) : (
 			<div id="pageblock">

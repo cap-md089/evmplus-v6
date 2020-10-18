@@ -31,6 +31,7 @@ import {
 } from 'common-lib';
 import { getTeam, PAM, saveTeam, updateTeam } from 'server-common';
 import { validateRequest } from '../../lib/requestUtils';
+import wrapper from '../../lib/wrapper';
 
 const teamPartialValidator = Validator.Partial(
 	(validator<NewTeamObject>(Validator) as Validator<NewTeamObject>).rules,
@@ -59,7 +60,8 @@ export const func: ServerAPIEndpoint<api.team.SetTeamData> = PAM.RequireSessionT
 				)
 					.map(updateTeam(req.account)(req.memberUpdateEmitter)(oldTeam))
 					.map(saveTeam(req.mysqlx))
-					.map(destroy),
+					.map(destroy)
+					.map(wrapper),
 			),
 		),
 	),

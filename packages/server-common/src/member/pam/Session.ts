@@ -65,6 +65,7 @@ import {
 } from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
+import { parse } from 'cookie';
 
 // tslint:disable-next-line: no-var-requires
 const speakeasy = require('speakeasy');
@@ -261,16 +262,23 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 		req: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
 		new AsyncEither(
-			(typeof req.headers !== 'undefined' && typeof req.headers.authorization !== 'undefined'
-				? asyncRight(req, errorGenerator('Could not get information for session'))
-				: asyncLeft<ServerError, T>({
-						type: 'OTHER',
-						code: 400,
-						message: 'Authorization header not provided',
-				  })
+			(!!req.headers.cookie
+				? asyncRight(
+						parse(req.headers.cookie),
+						errorGenerator('Could not get session information'),
+				  ).map<string | undefined>(cookies => cookies.sessionID)
+				: asyncRight<ServerError, string | undefined>(
+						req.headers.authorization,
+						errorGenerator('Could not get session information'),
+				  )
 			)
-				.flatMap<UserSession>(() =>
-					validateSession(req.mysqlx, req.headers.authorization!).leftMap(
+				.filter(cookie => !!cookie, {
+					type: 'OTHER',
+					code: 403,
+					message: 'Authorization token not provided',
+				})
+				.flatMap<UserSession>(authToken =>
+					validateSession(req.mysqlx, authToken!).leftMap(
 						code => ({
 							type: 'OTHER',
 							code: 400,

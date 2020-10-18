@@ -20,6 +20,7 @@
 import { pipe } from 'ramda';
 import {
 	AttendanceRecord,
+	ClientUser,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
@@ -135,7 +136,7 @@ const orderedManageEventPermissions = [
 const permissionIndex = (perm: Permissions.ManageEvent) =>
 	orderedManageEventPermissions.indexOf(perm);
 
-export const effectiveManageEventPermission = (member: User) =>
+export const effectiveManageEventPermission = (member: ClientUser) =>
 	orderedManageEventPermissions[
 		Math.max(
 			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
@@ -160,7 +161,7 @@ export const effectiveManageEventPermission = (member: User) =>
 		)
 	];
 
-export const effectiveManageEventPermissionForEvent = (member: User) => (
+export const effectiveManageEventPermissionForEvent = (member: ClientUser) => (
 	event: RawResolvedEventObject,
 ) =>
 	orderedManageEventPermissions[

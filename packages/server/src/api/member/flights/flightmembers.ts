@@ -38,6 +38,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.flight.FlightMembersFull> = PAM.RequiresMemberType(
 	'CAPNHQMember',
@@ -74,7 +75,8 @@ export const func: ServerAPIEndpoint<api.member.flight.FlightMembersFull> = PAM.
 						: always(true),
 				),
 			)
-			.map(asyncIterHandler(errorGenerator('Could not get member ID'))),
+			.map(asyncIterHandler(errorGenerator('Could not get member ID')))
+			.map(wrapper),
 	),
 );
 

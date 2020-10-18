@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator, Maybe } from 'common-lib';
 import { collectResults, queryEventsFind } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const getNextRecurringQuery = queryEventsFind(
 	'activity.values[5] = true AND endDateTime > :endDateTime',
@@ -33,6 +34,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 		errorGenerator('Could not get event information'),
 	)
 		.map(collectResults)
-		.map(Maybe.fromArray);
+		.map(Maybe.fromArray)
+		.map(wrapper);
 
 export default func();

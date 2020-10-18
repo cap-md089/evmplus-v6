@@ -204,11 +204,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			return;
 		}
 
-		const notificationsEither = await fetchApi.notifications.list(
-			{},
-			{},
-			this.props.member.sessionID,
-		);
+		const notificationsEither = await fetchApi.notifications.list({}, {});
 
 		if (Either.isLeft(notificationsEither)) {
 			return this.setState(prev => ({
@@ -346,11 +342,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 				return;
 			}
 
-			await fetchApi.notifications.toggleRead(
-				{ id: index.toString() },
-				{},
-				this.props.member.sessionID,
-			);
+			await fetchApi.notifications.toggleRead({ id: index.toString() }, {});
 
 			this.setState(prev => ({
 				currentViewed: prev.currentViewed === index ? null : index,
@@ -369,11 +361,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 			return;
 		}
 
-		await fetchApi.notifications.toggleRead(
-			{ id: index.toString() },
-			{},
-			this.props.member.sessionID,
-		);
+		await fetchApi.notifications.toggleRead({ id: index.toString() }, {});
 
 		this.setState({
 			currentViewed: null,

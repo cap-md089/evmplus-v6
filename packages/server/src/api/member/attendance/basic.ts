@@ -39,6 +39,7 @@ import {
 	PAM,
 	RawAttendanceDBRecord,
 } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const stripEvent = (record: RawAttendanceDBRecord) => (
 	event: RawResolvedEventObject,
@@ -83,9 +84,9 @@ export const expandRecord = (getEventFunc: typeof getEvent) => (
 export const func: ServerAPIEndpoint<api.member.attendance.Get> = PAM.RequireSessionType(
 	SessionType.REGULAR,
 )(req =>
-	getAttendanceForMember(req.mysqlx)(req.account)(toReference(req.member)).map(
-		asyncIterMap(expandRecord(getEvent)(req)),
-	),
+	getAttendanceForMember(req.mysqlx)(req.account)(toReference(req.member))
+		.map(asyncIterMap(expandRecord(getEvent)(req)))
+		.map(wrapper),
 );
 
 export default func;

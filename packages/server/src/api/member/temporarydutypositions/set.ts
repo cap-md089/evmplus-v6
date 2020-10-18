@@ -32,6 +32,7 @@ import {
 } from 'common-lib';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
+import wrapper from '../../../lib/wrapper';
 
 const getDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) => (duty: string) =>
 	oldPositions.find(({ duty: oldDuty, type }) => duty === oldDuty && type === 'CAPUnit') ?? {
@@ -82,7 +83,8 @@ export const func: () => ServerAPIEndpoint<
 				})
 				.flatMap(getExtraMemberInformationForCAPMember(req.account))
 				.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
-				.map(destroy),
+				.map(destroy)
+				.map(wrapper),
 		),
 	);
 

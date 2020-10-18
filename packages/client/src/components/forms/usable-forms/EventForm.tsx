@@ -50,7 +50,7 @@ import {
 	SimpleMultCheckboxReturn,
 	stringifyMemberReference,
 	toReference,
-	User,
+	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -85,7 +85,7 @@ interface EventFormProps {
 	event: NewEventFormValues;
 	isEventUpdate?: boolean;
 	account: AccountObject;
-	member: User;
+	member: ClientUser;
 	teamList: FullTeamObject[];
 	memberList: Member[];
 	onEventChange: (event: NewEventFormValues, valid: boolean) => void;
@@ -850,7 +850,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				}),
 			},
 			{},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {

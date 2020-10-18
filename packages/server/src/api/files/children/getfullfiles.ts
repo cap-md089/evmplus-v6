@@ -29,6 +29,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import { expandFileObject, expandRawFileObject, getChildren, getFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
@@ -48,6 +49,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
 					expandFileObject(req.mysqlx)(req.account),
 				),
 			),
-		);
+		)
+		.map(wrapper);
 
 export default func;

@@ -32,7 +32,7 @@ import {
 	RawResolvedEventObject,
 	RegistryValues,
 	toReference,
-	User,
+	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
@@ -56,7 +56,7 @@ type FormState = NewAttendanceRecord & { usePartTime: boolean };
 
 export interface AttendanceFormProps {
 	account: AccountObject;
-	member: User;
+	member: ClientUser;
 	event: RawResolvedEventObject;
 	registry: RegistryValues;
 	record?: AttendanceRecord;
@@ -556,7 +556,6 @@ export default class AttendanceForm extends React.Component<
 			const result = await api.events.attendance.modify(
 				{ id: this.props.record.sourceEventID.toString() },
 				{ ...newRecord, memberID: this.props.record.memberID },
-				this.props.member.sessionID,
 			);
 
 			this.setState({
@@ -567,7 +566,6 @@ export default class AttendanceForm extends React.Component<
 			const result = await fetchApi.events.attendance.add(
 				{ id: this.props.event.id.toString() },
 				{ ...newRecord, memberID: toReference(this.props.member) },
-				this.props.member.sessionID,
 			);
 
 			this.setState({
@@ -607,7 +605,6 @@ export default class AttendanceForm extends React.Component<
 		await api.events.attendance.delete(
 			{ id: this.props.record.sourceEventID.toString() },
 			{ member: toReference(this.props.record.memberID) },
-			this.props.member.sessionID,
 		);
 
 		this.setState({

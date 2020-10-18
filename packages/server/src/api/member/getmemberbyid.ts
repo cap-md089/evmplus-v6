@@ -26,6 +26,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { PAM, resolveReference } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.MemberGet> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -33,7 +34,9 @@ export const func: ServerAPIEndpoint<api.member.MemberGet> = PAM.RequireSessionT
 	asyncEither(
 		parseStringMemberReference(req.params.id),
 		errorGenerator('Could not get member reference'),
-	).flatMap(resolveReference(req.mysqlx)(req.account)),
+	)
+		.flatMap(resolveReference(req.mysqlx)(req.account))
+		.map(wrapper),
 );
 
 export default func;

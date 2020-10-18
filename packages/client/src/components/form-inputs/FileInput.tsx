@@ -103,13 +103,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 	public async componentDidMount() {
 		if (this.props.value && this.props.member) {
 			const files = await AsyncEither.All(
-				this.props.value.map(id =>
-					fetchApi.files.files.get(
-						{ id: id.toString() },
-						{},
-						this.props.member?.sessionID,
-					),
-				),
+				this.props.value.map(id => fetchApi.files.files.get({ id: id.toString() }, {})),
 			);
 
 			if (Either.isRight(files)) {

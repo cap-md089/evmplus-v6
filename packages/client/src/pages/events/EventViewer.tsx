@@ -61,7 +61,7 @@ import {
 	Right,
 	spreadsheets,
 	stringifyMemberReference,
-	User,
+	ClientUser,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -184,7 +184,7 @@ const getCalendarDate = (inDate: number) => {
 		: dateObject.getMonth() + 1 + '/' + dateObject.getFullYear();
 };
 
-const renderName = (renderMember: User | null) => (event: RawResolvedEventObject) => (
+const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEventObject) => (
 	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
 	const defaultRenderName = `${member.record.memberID.id}: ${member.record.memberName}`;
@@ -222,7 +222,7 @@ const renderName = (renderMember: User | null) => (event: RawResolvedEventObject
 	}
 };
 
-const getEmails = (renderMember: User | null) => (event: RawResolvedEventObject) => (
+const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventObject) => (
 	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
 	const noEmail = ``;
@@ -298,7 +298,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const eventInformation = await fetchApi.events.events.getViewerData(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{},
-			this.props.member?.sessionID,
 		);
 
 		if (Either.isLeft(eventInformation)) {
@@ -355,7 +354,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 		if (event.teamID !== null && event.teamID !== undefined) {
 			const teamInfoEither = await fetchApi.team
-				.get({ id: event.teamID.toString() }, {}, this.props.member?.sessionID)
+				.get({ id: event.teamID.toString() }, {})
 				.map(Maybe.some)
 				.map(Maybe.map(Either.right));
 
@@ -1231,11 +1230,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			pickupDateTime: event.pickupDateTime + timeDelta,
 		};
 
-		await fetchApi.events.events.set(
-			{ id: event.id.toString() },
-			newEvent,
-			this.props.member.sessionID,
-		);
+		await fetchApi.events.events.set({ id: event.id.toString() }, newEvent);
 
 		this.setState({
 			...state,
@@ -1268,15 +1263,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		};
 
 		const result = await AsyncEither.All([
-			fetchApi.events.events.set(
-				{ id: event.id.toString() },
-				newEvent,
-				this.props.member.sessionID,
-			),
+			fetchApi.events.events.set({ id: event.id.toString() }, newEvent),
 			fetchApi.events.events.copy(
 				{ id: event.id.toString() },
 				{ newTime, copyFiles, newStatus: event.status },
-				this.props.member.sessionID,
 			),
 		]);
 
@@ -1307,7 +1297,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const result = await fetchApi.events.events.copy(
 			{ id: state.eventInformation.event.id.toString() },
 			{ newTime, copyFiles, newStatus },
-			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -1329,7 +1318,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const result = await fetchApi.events.events.delete(
 			{ id: state.eventInformation.event.id.toString() },
 			{},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -1497,7 +1485,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const result = await fetchApi.events.events.link(
 			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
 			{},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {

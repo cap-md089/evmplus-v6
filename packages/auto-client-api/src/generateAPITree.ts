@@ -66,6 +66,11 @@ const convertEndpointToFunction = (
 	const properties = type.getProperties();
 	const callSignatures = type.getCallSignatures();
 
+	if (callSignatures.length !== 1) {
+		console.log('Invalid API:', typeChecker.typeToString(type));
+		throw new Error('Invalid API');
+	}
+
 	const paramKeys = getKeysForSymbol(callSignatures[0].parameters[0], typeChecker);
 	const url = getStringLiteralFromType(properties.find(sym => sym.name === 'url'));
 	const method = getStringLiteralFromType(properties.find(sym => sym.name === 'method'));

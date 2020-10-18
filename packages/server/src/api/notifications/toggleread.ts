@@ -27,6 +27,7 @@ import {
 	PAM,
 	saveNotification,
 } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.notifications.ToggleNotificationRead> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -39,7 +40,8 @@ export const func: ServerAPIEndpoint<api.notifications.ToggleNotificationRead> =
 		})
 		.map(notif => (notif.read ? markAsUnread(notif) : markAsRead(notif)))
 		.flatMap(saveNotification(req.mysqlx))
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

@@ -29,6 +29,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { CAP, PAM, resolveReference } from 'server-common';
+import wrapper from '../../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.account.capprospective.UpgradeProspectiveAccount> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -52,7 +53,8 @@ export const func: ServerAPIEndpoint<api.member.account.capprospective.UpgradePr
 				resolveReference(req.mysqlx)(req.account)(req.body.nhqReference)
 					.map(toReference)
 					.flatMap(CAP.upgradeProspectiveMemberToCAPNHQ(req.mysqlx)(member)),
-			),
+			)
+			.map(wrapper),
 	),
 );
 

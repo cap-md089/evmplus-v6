@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.22.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.22.0) (2020-10-16)
+
+
+### Bug Fixes
+
+* fixed code to match data ([b7bd7b9](http://github.com//cap-md089/evmplus-v6/commit/b7bd7b9c118deba04b30804ab9273122478839dd))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+
+
+### Features
+
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.21.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.21.0) (2020-10-08)
 
 

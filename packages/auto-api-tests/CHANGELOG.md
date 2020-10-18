@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.17](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.17) (2020-10-16)
+
+**Note:** Version bump only for package auto-api-tests
+
+
+
+
+
 ## [1.3.16](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.16) (2020-10-08)
 
 **Note:** Version bump only for package auto-api-tests

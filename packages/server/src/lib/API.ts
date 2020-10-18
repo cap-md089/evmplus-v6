@@ -46,7 +46,7 @@ import {
 	ValidatorImpl,
 } from 'common-lib';
 import * as express from 'express';
-import { accountRequestTransformer, BasicAccountRequest, PAM } from 'server-common';
+import { accountRequestTransformer, BasicAccountRequest, PAM, ServerEither } from 'server-common';
 import { tokenTransformer } from '../api/formtoken';
 import saveServerError, { Requests } from './saveServerError';
 
@@ -178,12 +178,29 @@ export const send = (request: Requests) => (response: express.Response) => async
 	}
 };
 
-export const sendResponse = <T extends APIEndpoint<string, any, any, any, any, any, any>>(
+export const sendResponse = <
+	T extends APIEndpoint<string, any, any, any, any, any, any>,
+	R extends ServerAPIReturnValue<T>
+>(
 	request: Requests,
-) => (response: express.Response) => async (result: ServerAPIReturnValue<T>) => {
+) => (response: express.Response) => async (
+	result: R extends ServerEither<infer A> ? A : never,
+) => {
 	response.header('Content-type', 'application/json');
 
 	const awaitedResult = await result;
+
+	for (const cookieName in awaitedResult.cookies) {
+		if (awaitedResult.cookies.hasOwnProperty(cookieName)) {
+			const cookie = awaitedResult.cookies[cookieName];
+			response.cookie(cookieName, cookie.value, {
+				domain: `.${request.configuration.HOST_NAME}`,
+				secure: process.env.NODE_ENV === 'production',
+				httpOnly: true,
+				expires: new Date(cookie.expires),
+			});
+		}
+	}
 
 	if (awaitedResult === null || awaitedResult === undefined) {
 		response.status(204);
@@ -193,7 +210,7 @@ export const sendResponse = <T extends APIEndpoint<string, any, any, any, any, a
 		response.status(200);
 
 		response.write('{"direction":"right","value":');
-		await send(request)(response)(awaitedResult);
+		await send(request)(response)(awaitedResult.response);
 		response.write('}');
 		response.end();
 	}

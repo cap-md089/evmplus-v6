@@ -34,6 +34,7 @@ import {
 	RegistryValues,
 } from 'common-lib';
 import { CAP, getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
+import wrapper from '../../../../lib/wrapper';
 
 const hasEmail = (email: string) => (member: CAPMemberObject) =>
 	!!(
@@ -128,6 +129,7 @@ export const func: (
 						getRegistry(req.mysqlx)(req.account),
 					]).flatMap(writeEmail(emailFunction)(req)(member)),
 				),
-		);
+		)
+		.map(wrapper);
 
 export default func();
