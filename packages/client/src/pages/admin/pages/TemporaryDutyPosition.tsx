@@ -217,11 +217,7 @@ export default class TemporaryDutyPositions extends Page<
 			state: 'LOADING',
 		});
 
-		const memberListEither = await fetchApi.member.memberList(
-			{},
-			{},
-			this.props.member.sessionID,
-		);
+		const memberListEither = await fetchApi.member.memberList({}, {});
 
 		if (Either.isLeft(memberListEither)) {
 			this.setState(prev => ({
@@ -344,7 +340,6 @@ export default class TemporaryDutyPositions extends Page<
 			await fetchApi.member.temporaryDutyPositions.set(
 				{ id: stringifyMemberReference(this.state.currentMember.value) },
 				{ dutyPositions: dutyPositions.filter(isCAPUnitDutyPosition) },
-				this.props.member.sessionID,
 			);
 
 			const newMember = {
@@ -451,7 +446,6 @@ export default class TemporaryDutyPositions extends Page<
 			await fetchApi.member.temporaryDutyPositions.set(
 				{ id: stringifyMemberReference(state.currentMember.value) },
 				{ dutyPositions: newMember.dutyPositions.filter(isCAPUnitDutyPosition) },
-				this.props.member.sessionID,
 			);
 
 			this.setState({

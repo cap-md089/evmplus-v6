@@ -20,8 +20,9 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api } from 'common-lib';
 import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.notifications.global.GetGlobalNotification> = req =>
-	getCurrentGlobalNotification(req.mysqlx)(req.account);
+	getCurrentGlobalNotification(req.mysqlx)(req.account).map(wrapper);
 
 export default func;

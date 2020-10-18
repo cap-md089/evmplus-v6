@@ -17,7 +17,13 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { User, hasPermission, hasOneDutyPosition, AccountType, Permissions } from 'common-lib';
+import {
+	ClientUser,
+	hasPermission,
+	hasOneDutyPosition,
+	AccountType,
+	Permissions,
+} from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
@@ -27,7 +33,7 @@ export const shouldRenderSiteAdmin = (props: PageProps) => {
 };
 
 export interface RequiredMember extends PageProps {
-	member: User;
+	member: ClientUser;
 }
 
 export class SiteAdminWidget extends Page<RequiredMember> {

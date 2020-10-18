@@ -33,6 +33,7 @@ import {
 	User,
 } from 'common-lib';
 import { getAccount, getEvent, linkEvent, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 	AsyncEither.All([
@@ -69,6 +70,7 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 							...linkedEvent,
 						} as RawResolvedEventObject),
 				),
-		);
+		)
+		.map(wrapper);
 
 export default func;

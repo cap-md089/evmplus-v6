@@ -27,6 +27,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import { getFileObject, saveFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
@@ -48,6 +49,7 @@ export const func: ServerAPIEndpoint<api.files.children.AddChild> = req =>
 			parentID: req.params.parentid,
 		}))
 		.map(saveFileObject(req.mysqlx))
-		.map(destroy);
+		.map(destroy)
+		.map(wrapper);
 
 export default func;

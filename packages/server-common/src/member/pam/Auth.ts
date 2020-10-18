@@ -60,12 +60,14 @@ const NONCE_EXPIRE_TIME = 30 * 1000;
 export interface SigninSuccess {
 	result: MemberCreateError.NONE;
 	sessionID: string;
+	expires: number;
 	member: MemberReference;
 }
 
 export interface SigninPasswordOld {
 	result: MemberCreateError.PASSWORD_EXPIRED;
 	sessionID: string;
+	expires: number;
 }
 
 export interface SigninFailed {
@@ -79,6 +81,7 @@ export interface SigninFailed {
 export interface SigninRequiresMFA {
 	result: MemberCreateError.ACCOUNT_USES_MFA;
 	sessionID: string;
+	expires: number;
 }
 
 export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed | SigninRequiresMFA;
@@ -320,6 +323,7 @@ export const trySignin = async (
 					}))(() => ({
 						result: MemberCreateError.ACCOUNT_USES_MFA,
 						sessionID: sess.id,
+						expires: sess.expires,
 					})),
 				);
 		}
@@ -336,6 +340,7 @@ export const trySignin = async (
 							({
 								result: MemberCreateError.PASSWORD_EXPIRED,
 								sessionID: sess.id,
+								expires: sess.expires,
 							} as SigninResult),
 					),
 				);
@@ -345,6 +350,7 @@ export const trySignin = async (
 			result: MemberCreateError.NONE,
 			member,
 			sessionID: sess.id,
+			expires: sess.expires,
 		};
 	})(session);
 };

@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, destroy, SessionType } from 'common-lib';
 import { canSeeNotification, deleteNotification, getNotification, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.notifications.DeleteNotification> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -31,7 +32,8 @@ export const func: ServerAPIEndpoint<api.notifications.DeleteNotification> = PAM
 			message: 'Member cannot delete notification',
 		})
 		.flatMap(deleteNotification(req.mysqlx))
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

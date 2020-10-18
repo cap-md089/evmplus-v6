@@ -32,6 +32,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { addToCollection, collectResults } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 	asyncRight(req.mysqlx.getCollection<Errors>('Errors'), errorGenerator('Could not get new ID'))
@@ -66,6 +67,7 @@ export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 		}))
 		.map(addToCollection(req.mysqlx.getCollection<Errors>('Errors')))
 
-		.map(destroy);
+		.map(destroy)
+		.map(wrapper);
 
 export default func;

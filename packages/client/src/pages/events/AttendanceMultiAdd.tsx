@@ -335,8 +335,8 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		}
 
 		const resultsEither = await AsyncEither.All([
-			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.events.events.get({ id: eventID.toString() }, {}, this.props.member.sessionID),
+			fetchApi.member.memberList({}, {}),
+			fetchApi.events.events.get({ id: eventID.toString() }, {}),
 		]);
 
 		if (Either.isLeft(resultsEither)) {
@@ -559,7 +559,6 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					customAttendanceFieldValues: [],
 				})),
 			},
-			member.sessionID,
 		);
 
 		if (Either.isRight(result)) {
@@ -664,7 +663,6 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		const result = await fetchApi.events.attendance.add(
 			{ id: this.state.event.id.toString() },
 			record,
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {

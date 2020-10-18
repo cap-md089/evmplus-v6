@@ -41,6 +41,7 @@ import {
 	PAM,
 } from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
+import wrapper from '../../../lib/wrapper';
 
 const bulkAttendanceValidator = new Validator({
 	members: Validator.ArrayOf(
@@ -79,7 +80,8 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 				)
 
 				.flatMap(getAttendanceForEvent(req.mysqlx)(Maybe.some(req.account)))
-				.map(asyncIterHandler(errorGenerator('Could not get attendance record'))),
+				.map(asyncIterHandler(errorGenerator('Could not get attendance record')))
+				.map(wrapper),
 		),
 	);
 

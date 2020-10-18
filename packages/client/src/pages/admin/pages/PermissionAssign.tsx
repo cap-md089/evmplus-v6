@@ -106,8 +106,8 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		}
 
 		const membersEither = await AsyncEither.All([
-			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.member.permissions.get({}, {}, this.props.member.sessionID),
+			fetchApi.member.memberList({}, {}),
+			fetchApi.member.permissions.get({}, {}),
 		]);
 
 		if (Either.isLeft(membersEither)) {
@@ -353,7 +353,6 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		const result = await fetchApi.member.permissions.set(
 			{},
 			{ newRoles: this.state.membersWithPermissions.map(stripProp('name')) },
-			this.props.member.sessionID,
 		);
 
 		if (Either.isRight(result)) {

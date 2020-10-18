@@ -31,6 +31,7 @@ import {
 	ShortDutyPosition,
 } from 'common-lib';
 import { PAM, resolveReference } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.temporarydutypositions.GetTemporaryDutyPositions> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -47,7 +48,8 @@ export const func: ServerAPIEndpoint<api.member.temporarydutypositions.GetTempor
 					dutyPosition.type === 'CAPUnit',
 			),
 		)
-		.map(collectGenerator),
+		.map(collectGenerator)
+		.map(wrapper),
 );
 
 export default func;

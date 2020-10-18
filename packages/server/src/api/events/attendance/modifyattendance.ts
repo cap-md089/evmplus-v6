@@ -52,6 +52,7 @@ import {
 	resolveReference,
 } from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
+import wrapper from '../../../lib/wrapper';
 
 export const getMember = (
 	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>,
@@ -106,7 +107,8 @@ export const func: ServerAPIEndpoint<api.events.attendance.ModifyAttendance> = P
 					),
 				),
 			)
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

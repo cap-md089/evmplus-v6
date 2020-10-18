@@ -44,7 +44,7 @@ import {
 	RadioReturnWithOther,
 	RegistryValues,
 	SimpleMultCheckboxReturn,
-	User,
+	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -76,7 +76,7 @@ interface EventFormProps {
 	event: NewEventFormValues;
 	isEventUpdate?: boolean;
 	account: AccountObject;
-	member: User;
+	member: ClientUser;
 	teamList: FullTeamObject[];
 	memberList: Member[];
 	onEventChange: (event: NewEventFormValues, valid: boolean) => void;
@@ -360,26 +360,55 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		this.setState({ mde });
 
 		const mdeOptions = {
-			hideIcons: ["preview", "side-by-side", "fullscreen"],
-			blockStyles: { italic: "_" },
+			hideIcons: ['preview', 'side-by-side', 'fullscreen'],
+			blockStyles: { italic: '_' },
 			insertTexts: {
-				horizontalRule: ["", "\n\n-----\n\n"],
-				image: ["![](http://", ")"],
-				link: ["[", "](http://)"],
-				table: ["", "\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text      | Text     |\n\n"],
+				horizontalRule: ['', '\n\n-----\n\n'],
+				image: ['![](http://', ')'],
+				link: ['[', '](http://)'],
+				table: [
+					'',
+					'\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text      | Text     |\n\n',
+				],
 			},
-			showIcons: ["table"],
-			toolbar: ["bold", "italic", "strikethrough", "|", "heading-smaller", "heading-bigger", "|", "horizontal-rule", "table", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "guide"]
+			showIcons: ['table'],
+			toolbar: [
+				'bold',
+				'italic',
+				'strikethrough',
+				'|',
+				'heading-smaller',
+				'heading-bigger',
+				'|',
+				'horizontal-rule',
+				'table',
+				'quote',
+				'unordered-list',
+				'ordered-list',
+				'|',
+				'link',
+				'image',
+				'|',
+				'guide',
+			],
 		};
 
 		if (this.commentsRef.current) {
 			this.setState({
-				comments: new mde({ element: this.commentsRef.current, ...mdeOptions, initialValue: this.props.event.comments })
+				comments: new mde({
+					element: this.commentsRef.current,
+					...mdeOptions,
+					initialValue: this.props.event.comments,
+				}),
 			});
 		}
 		if (this.mbrcommentsRef.current) {
 			this.setState({
-				memberComments: new mde({ element: this.mbrcommentsRef.current, ...mdeOptions, initialValue: this.props.event.memberComments })
+				memberComments: new mde({
+					element: this.mbrcommentsRef.current,
+					...mdeOptions,
+					initialValue: this.props.event.memberComments,
+				}),
 			});
 		}
 	}
@@ -389,7 +418,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 		return (
 			<>
-				<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css" />
+				<link
+					rel="stylesheet"
+					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
+				/>
 				<SimpleForm<NewEventFormValues>
 					onChange={this.onEventChange}
 					onSubmit={this.onEventSubmit}
@@ -460,7 +492,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					/>
 
 					<Label>Pickup location*~</Label>
-					<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
+					<TextInput
+						name="pickupLocation"
+						errorMessage="Event must have a pickup location"
+					/>
 
 					<Label>Transportation provided~</Label>
 					<Checkbox name="transportationProvided" />
@@ -499,7 +534,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<OtherMultCheckbox name="activity" labels={labels.Activities} />
 
 					<Label>Lodging arrangement</Label>
-					<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
+					<OtherMultCheckbox
+						name="lodgingArrangments"
+						labels={labels.LodgingArrangments}
+					/>
 
 					<Label>Event website~</Label>
 					<TextInput name="eventWebsite" />
@@ -654,7 +692,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 										EventStatus.COMPLETE,
 										EventStatus.CANCELLED,
 										EventStatus.INFORMATIONONLY,
-								]
+								  ]
 								: [EventStatus.DRAFT]
 						}
 						defaultValue={EventStatus.DRAFT}

@@ -61,7 +61,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 			return;
 		}
 
-		const members = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
+		const members = await fetchApi.member.memberList({}, {});
 
 		if (members.direction === 'left') {
 			this.setState({
@@ -114,8 +114,8 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		}
 
 		const newMember = await fetchApi.member.session
-			.su({}, toReference(member), this.props.member.sessionID)
-			.flatMap(() => fetchApi.check({}, {}, localStorage.getItem('sessionID')!));
+			.su({}, toReference(member))
+			.flatMap(() => fetchApi.check({}, {}));
 
 		if (Either.isLeft(newMember)) {
 			this.setState({

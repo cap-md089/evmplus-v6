@@ -29,6 +29,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { createEventFunc, getFullEventObject, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.Add> = (
 	now = Date.now,
@@ -63,7 +64,8 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.A
 				getFullEventObject(request.mysqlx)(request.account)(Maybe.none())(
 					Maybe.some(request.member),
 				),
-			),
+			)
+			.map(wrapper),
 	);
 
 export default func();

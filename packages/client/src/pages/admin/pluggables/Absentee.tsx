@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AbsenteeInformation, isCAPMember, Maybe, MemberCreateError, User } from 'common-lib';
+import { AbsenteeInformation, isCAPMember, Maybe, MemberCreateError, ClientUser } from 'common-lib';
 import * as React from 'react';
 import { DateTimeInput, Form, Label, TextInput } from '../../../components/forms/SimpleForm';
 import fetchApi from '../../../lib/apis';
@@ -29,7 +29,7 @@ interface AbsenteeState {
 }
 
 interface AbsenteeProps extends PageProps {
-	member: User;
+	member: ClientUser;
 }
 
 export const canUseAbsentee = (props: PageProps) => {
@@ -103,7 +103,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			return;
 		}
 
-		await fetchApi.member.setAbsentee({}, this.state.absentee, this.props.member.sessionID);
+		await fetchApi.member.setAbsentee({}, this.state.absentee);
 
 		this.props.authorizeUser({
 			error: MemberCreateError.NONE,
@@ -112,7 +112,6 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 				absenteeInformation: this.state.absentee,
 			},
 			notificationCount: this.props.fullMemberDetails.notificationCount,
-			sessionID: this.props.member.sessionID,
 			taskCount: this.props.fullMemberDetails.taskCount,
 			linkableAccounts: this.props.fullMemberDetails.linkableAccounts,
 		});

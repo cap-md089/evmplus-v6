@@ -20,9 +20,10 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, SessionType } from 'common-lib';
 import { getTasksForMember, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.tasks.ListTasks> = PAM.RequireSessionType(
 	SessionType.REGULAR,
-)(req => getTasksForMember(req.mysqlx)(req.account)(req.member));
+)(req => getTasksForMember(req.mysqlx)(req.account)(req.member).map(wrapper));
 
 export default func;

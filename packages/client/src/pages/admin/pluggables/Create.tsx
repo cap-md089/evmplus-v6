@@ -22,7 +22,7 @@ import {
 	effectiveManageEventPermission,
 	hasPermission,
 	Permissions,
-	User,
+	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
@@ -43,7 +43,7 @@ export const canUseCreate = (props: PageProps) => {
 };
 
 interface CreateWidgetProps extends PageProps {
-	member: User;
+	member: ClientUser;
 }
 
 export class CreateWidget extends Page<CreateWidgetProps> {

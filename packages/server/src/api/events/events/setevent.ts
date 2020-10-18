@@ -31,6 +31,7 @@ import {
 } from 'common-lib';
 import { getEvent, getFullEventObject, PAM, saveEventFunc } from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
+import wrapper from '../../../lib/wrapper';
 
 const partialEventValidator = Validator.Partial(
 	(validator<NewEventObject>(Validator) as Validator<NewEventObject>).rules,
@@ -73,7 +74,8 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 					getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(
 						Maybe.some(req.member),
 					),
-				),
+				)
+				.map(wrapper),
 		),
 	);
 

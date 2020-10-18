@@ -119,6 +119,7 @@ type Tree = {
 			finishMFASetup: api.member.session.FinishMFASetup;
 			finishMFA: api.member.session.FinishMFA;
 			su: api.member.session.Su;
+			logout: api.member.session.Logout;
 		};
 		setAbsentee: api.member.SetAbsenteeInformation;
 		passwordReset: api.member.PasswordReset;

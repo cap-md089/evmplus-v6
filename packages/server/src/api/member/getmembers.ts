@@ -37,6 +37,7 @@ import {
 	ValidatorImpl,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 const typeValidator: ValidatorImpl<MemberType | undefined> = Validator.Optional(
 	Validator.Or(
@@ -60,7 +61,8 @@ export const func: ServerAPIEndpoint<api.member.Members> = PAM.RequireSessionTyp
 	)
 		.map(getMembers(req.mysqlx)(req.account))
 		.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-		.map(asyncIterMap(get('value'))),
+		.map(asyncIterMap(get('value')))
+		.map(wrapper),
 );
 
 export default func;

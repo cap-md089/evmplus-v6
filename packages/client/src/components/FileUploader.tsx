@@ -17,13 +17,13 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FileObject, AccountObject, User } from 'common-lib';
+import { FileObject, AccountObject, ClientUser } from 'common-lib';
 import * as React from 'react';
 import { uploadFile } from '../lib/File';
 
 interface FileUploaderProps {
 	onFileUpload: (file: FileObject) => void;
-	member: User;
+	member: ClientUser;
 	account: AccountObject;
 	currentFolder: FileObject;
 	display: boolean;

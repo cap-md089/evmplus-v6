@@ -20,10 +20,11 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, Maybe } from 'common-lib';
 import { getEvent, getFullEventObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Get> = req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id).flatMap(
-		getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member),
-	);
+	getEvent(req.mysqlx)(req.account)(req.params.id)
+		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member))
+		.map(wrapper);
 
 export default func;

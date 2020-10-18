@@ -210,7 +210,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		if (member) {
 			this.loadAttendanceForMember(member);
 
-			const memberListEither = await fetchApi.member.memberList({}, {}, member.sessionID);
+			const memberListEither = await fetchApi.member.memberList({}, {});
 
 			if (Either.isLeft(memberListEither)) {
 				this.setState(prev => ({
@@ -350,15 +350,14 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		}
 
 		const func = areMembersTheSame(this.props.member)(member)
-			? (sessionID: string) => fetchApi.member.attendance.get({}, {}, sessionID)
-			: (sessionID: string) =>
+			? () => fetchApi.member.attendance.get({}, {})
+			: () =>
 					fetchApi.member.attendance.getForMember(
 						{ reference: stringifyMemberReference(member) },
 						{},
-						sessionID,
 					);
 
-		const dataEither = await func(this.props.member.sessionID);
+		const dataEither = await func();
 
 		if (Either.isLeft(dataEither)) {
 			this.setState(prev => ({
@@ -385,11 +384,7 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 			return;
 		}
 
-		const dataEither = await fetchApi.member.attendance.getForGroup(
-			{},
-			{},
-			this.props.member.sessionID,
-		);
+		const dataEither = await fetchApi.member.attendance.getForGroup({}, {});
 
 		if (Either.isLeft(dataEither)) {
 			this.setState(prev => ({

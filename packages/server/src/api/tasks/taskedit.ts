@@ -20,6 +20,7 @@
 import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
 import { api, destroy, hasPermissionForTask, RawTaskObject, SessionType } from 'common-lib';
 import { getTask, PAM, saveTask } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 const mergeRequestBody = (req: APIRequest<api.tasks.EditTask>) => (task: RawTaskObject) => ({
 	...task,
@@ -37,7 +38,8 @@ export const func: ServerAPIEndpoint<api.tasks.EditTask> = PAM.RequireSessionTyp
 		})
 		.map(mergeRequestBody(req))
 		.flatMap(saveTask(req.mysqlx))
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

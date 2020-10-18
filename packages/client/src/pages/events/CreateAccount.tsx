@@ -158,8 +158,8 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		}
 
 		const infoEither = await AsyncEither.All([
-			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID),
+			fetchApi.member.memberList({}, {}),
+			fetchApi.team.list({}, {}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -379,7 +379,6 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 				accountName: this.state.newAccountName,
 				event: newEvent,
 			},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(accountResult)) {

@@ -36,6 +36,7 @@ import {
 } from 'common-lib';
 import { PAM } from 'server-common';
 import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
+import wrapper from '../../../lib/wrapper';
 
 const getHighestPermissionsObject = (perms1: MemberPermissions) => (
 	perms2: MemberPermissions,
@@ -100,7 +101,8 @@ export const func: ServerAPIEndpoint<api.member.permissions.SetPermissions> = PA
 			)
 			.tap(() => req.mysqlxSession.commit())
 			.leftTap(() => req.mysqlxSession.rollback())
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

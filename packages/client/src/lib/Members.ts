@@ -28,9 +28,8 @@ export const isCAPMember = (m?: Member): m is CAPMember =>
  *
  * @param sessionID The session ID for the member to get
  */
-export function getMember(sessionID: string): Promise<SigninReturn> {
-	return fetchApi
-		.check({}, {}, sessionID)
+export const getMember = (): Promise<SigninReturn> =>
+	fetchApi
+		.check({}, {})
 		.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))
 		.fullJoin();
-}

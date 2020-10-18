@@ -24,22 +24,10 @@ import {
 	APIEither,
 	APIEndpoint,
 	APIEndpointBody,
-	APIEndpointMember,
 	APIEndpointParams,
 	APIEndpointReturnValue,
-	APIEndpointToken,
 	HTTPError,
 } from '../typings/api';
-
-type SessionID<
-	Endpoint extends APIEndpoint<string, any, any, any, any, any, any>
-> = APIEndpointToken<Endpoint> extends true
-	? string
-	: APIEndpointMember<Endpoint> extends 'unused'
-	? never
-	: APIEndpointMember<Endpoint> extends 'required'
-	? string
-	: string | undefined;
 
 type FetchFunction = (url: string, options: RequestInit) => Promise<Response>;
 
@@ -55,14 +43,10 @@ const errorGenerator = (message: string) => (error: Error): HTTPError & { error?
 	error,
 });
 
-const getToken = (fetchFunction: FetchFunction) => (
-	authorization: string,
-): AsyncEither<HTTPError, string> =>
+const getToken = (fetchFunction: FetchFunction): AsyncEither<HTTPError, string> =>
 	asyncRight(
 		fetchFunction(`/api/token`, {
-			headers: {
-				authorization,
-			},
+			credentials: 'include',
 		}),
 		errorGenerator('Could not get token'),
 	).flatMap(resp => resp.json() as Promise<APIEndpointReturnValue<api.FormToken>>);
@@ -123,10 +107,9 @@ export default (fetchFunction: FetchFunction) => <
 	return (
 		params: APIEndpointParams<T>,
 		body: APIEndpointBody<T>,
-		sessionID: SessionID<T>,
 	): AsyncEither<HTTPError, APIEndpointReturnValue<T>> =>
 		(values.needsToken
-			? (getToken(fetchFunction)(sessionID!) as AsyncEither<HTTPError, undefined | string>)
+			? getToken(fetchFunction)
 			: asyncRight<HTTPError, undefined | string>(
 					undefined,
 					errorGenerator('Could not get token'),
@@ -158,10 +141,7 @@ export default (fetchFunction: FetchFunction) => <
 			)
 			.map<RequestInit>(request => ({
 				...request,
-				headers: {
-					...(request.headers || {}),
-					authorization: sessionID ?? '',
-				},
+				credentials: 'include',
 			}))
 			.map(
 				request => fetchFunction(customURLReplacer(params), request),

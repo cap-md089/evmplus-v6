@@ -67,11 +67,7 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 			return;
 		}
 
-		const otpauthUrlResult = await fetchApi.member.session.startMFASetup(
-			{},
-			{},
-			this.props.member.sessionID,
-		);
+		const otpauthUrlResult = await fetchApi.member.session.startMFASetup({}, {});
 
 		if (Either.isLeft(otpauthUrlResult)) {
 			return this.setState(prev => ({
@@ -138,11 +134,7 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 			return;
 		}
 
-		const result = await fetchApi.member.session.finishMFASetup(
-			{},
-			{ mfaToken: inputCode },
-			this.props.member.sessionID,
-		);
+		const result = await fetchApi.member.session.finishMFASetup({}, { mfaToken: inputCode });
 
 		if (Either.isLeft(result)) {
 			this.setState({

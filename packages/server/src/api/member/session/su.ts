@@ -29,6 +29,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.session.Su> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -47,7 +48,8 @@ export const func: ServerAPIEndpoint<api.member.session.Su> = PAM.RequireSession
 				  }),
 		)
 		.map(req => PAM.su(req.mysqlx, req.session, req.body))
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

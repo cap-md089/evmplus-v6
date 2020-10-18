@@ -29,6 +29,7 @@ import {
 } from 'common-lib';
 import { getFileObject, PAM, saveFileObject } from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
+import wrapper from '../../../lib/wrapper';
 
 const canModifyFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
@@ -52,7 +53,8 @@ export const func: ServerAPIEndpoint<api.files.files.SetInfo> = PAM.RequireSessi
 				...req.body,
 			}))
 			.map(saveFileObject(req.mysqlx))
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

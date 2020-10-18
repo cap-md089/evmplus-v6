@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canFullyManageEvent, SessionType } from 'common-lib';
 import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: (
 	now?: () => number,
@@ -48,7 +49,8 @@ export const func: (
 					type: SessionType.SCAN_ADD,
 					userAccount: req.session.userAccount,
 				}),
-			),
+			)
+			.map(wrapper),
 	);
 
 export default func();

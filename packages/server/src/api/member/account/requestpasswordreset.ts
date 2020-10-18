@@ -35,6 +35,7 @@ import {
 	UserAccountInformation,
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const formatUrl = (host: string) => (account: AccountObject) => (token: string) =>
 	`https://${account.id}.${host}/finishpasswordreset/${token}`;
@@ -106,6 +107,7 @@ export const func: (
 			err.message === 'There is no account with that username'
 				? Either.right(void 0)
 				: Either.left(err),
-		);
+		)
+		.map(wrapper);
 
 export default func();

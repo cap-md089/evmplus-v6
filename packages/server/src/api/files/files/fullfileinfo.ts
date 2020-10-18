@@ -26,6 +26,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import { expandFileObject, expandRawFileObject, getFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const orNull = Maybe.orSome<null | User>(null);
@@ -38,6 +39,7 @@ export const func: ServerAPIEndpoint<api.files.files.GetFullFile> = req =>
 			message: 'Member does not have permission to do that',
 		})
 		.flatMap(expandRawFileObject(req.mysqlx)(req.account))
-		.flatMap(expandFileObject(req.mysqlx)(req.account));
+		.flatMap(expandFileObject(req.mysqlx)(req.account))
+		.map(wrapper);
 
 export default func;

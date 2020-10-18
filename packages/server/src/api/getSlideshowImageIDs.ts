@@ -35,6 +35,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, findAndBindC, generateResults } from 'server-common';
+import wrapper from '../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
 	asyncRight(req.mysqlx.getCollection<RawFileObject>('Files'), errorGenerator('Could not get '))
@@ -48,6 +49,7 @@ export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
 		.map(asyncIterFilter(userHasFilePermission(FileUserAccessControlPermissions.READ)(null)))
 		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
 		.map(asyncIterFilter<EitherObj<ServerError, FileObject>, Right<FileObject>>(Either.isRight))
-		.map(asyncIterMap(get('value')));
+		.map(asyncIterMap(get('value')))
+		.map(wrapper);
 
 export default func;

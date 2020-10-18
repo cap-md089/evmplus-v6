@@ -382,7 +382,6 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 						member: newMem,
 						login: password,
 					},
-					this.props.member.sessionID,
 				)
 				.fullJoin();
 

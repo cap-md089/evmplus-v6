@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AccountObject, AsyncEither, Either, FileObject, get, User } from 'common-lib';
+import { AccountObject, AsyncEither, Either, FileObject, get, ClientUser } from 'common-lib';
 import * as React from 'react';
 import fetchApi from '../../lib/apis';
 import { FolderDisplayer } from '../drive/FolderDisplayer';
@@ -53,7 +53,7 @@ interface FileDialogueState {
 }
 
 export interface FileDialogueProps {
-	member: User;
+	member: ClientUser;
 	account: AccountObject;
 
 	open: boolean;
@@ -342,8 +342,8 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 
 	private async goToFolder(id: string) {
 		const fileInfoEither = await AsyncEither.All([
-			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member.sessionID),
-			fetchApi.files.files.get({ id }, {}, this.props.member.sessionID),
+			fetchApi.files.children.getBasic({ parentid: id }, {}),
+			fetchApi.files.files.get({ id }, {}),
 		]);
 
 		if (Either.isLeft(fileInfoEither)) {

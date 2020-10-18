@@ -18,17 +18,17 @@
  */
 
 import {
+	ClientUser,
 	FileTeamControlList,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
 	FileUserControlList,
 	RawFileObject,
-	User,
 } from '../typings/types';
 import { areMembersTheSame, isRioux } from './Member';
 
 export const userHasFilePermission = (permission: FileUserAccessControlPermissions) => (
-	member?: User | null | undefined,
+	member?: ClientUser | null | undefined,
 ) => (file: RawFileObject) => {
 	if (member && isRioux(member)) {
 		return true;

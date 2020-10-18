@@ -51,6 +51,7 @@ import { randomBytes } from 'crypto';
 import { CAP, getRegistry, PAM, sendEmail } from 'server-common';
 import { promisify } from 'util';
 import { validateRequest } from '../../../../lib/requestUtils';
+import wrapper from '../../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.member.account.capprospective.CreateProspectiveAccount>;
 
@@ -168,28 +169,33 @@ export const func: (
 			'ProspectiveMemberManagement',
 			Permissions.ProspectiveMemberManagement.FULL,
 		)(request =>
-			validateRequest(newProspectiveMemberAccountValidator)(request).flatMap(req =>
-				asyncRight(req.account, errorGenerator('Could not create prospective member'))
-					.filter(account => account.type === AccountType.CAPSQUADRON, {
-						type: 'OTHER',
-						code: 400,
-						message:
-							'CAP Prospective member accounts may only be created for a CAP Squadron account',
-					})
-					.map(account => account as RawCAPSquadronAccountObject)
-					.map(CAP.createCAPProspectiveMember(req.mysqlx))
-					.flatMap(call(req.body.member))
-					.flatMap(
-						req.body.login.type === CAPProspectiveMemberPasswordCreationType.EMAILLINK
-							? sendPasswordLink(emailFunction)(req)
-							: req.body.login.type ===
-							  CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD
-							? createWithRandomPassword(emailFunction)(req)(req.body.login.username)
-							: createWithPassword(req)(req.body.login.username)(
-									req.body.login.password,
-							  ),
-					),
-			),
+			validateRequest(newProspectiveMemberAccountValidator)(request)
+				.flatMap(req =>
+					asyncRight(req.account, errorGenerator('Could not create prospective member'))
+						.filter(account => account.type === AccountType.CAPSQUADRON, {
+							type: 'OTHER',
+							code: 400,
+							message:
+								'CAP Prospective member accounts may only be created for a CAP Squadron account',
+						})
+						.map(account => account as RawCAPSquadronAccountObject)
+						.map(CAP.createCAPProspectiveMember(req.mysqlx))
+						.flatMap(call(req.body.member))
+						.flatMap(
+							req.body.login.type ===
+								CAPProspectiveMemberPasswordCreationType.EMAILLINK
+								? sendPasswordLink(emailFunction)(req)
+								: req.body.login.type ===
+								  CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD
+								? createWithRandomPassword(emailFunction)(req)(
+										req.body.login.username,
+								  )
+								: createWithPassword(req)(req.body.login.username)(
+										req.body.login.password,
+								  ),
+						),
+				)
+				.map(wrapper),
 		),
 	);
 

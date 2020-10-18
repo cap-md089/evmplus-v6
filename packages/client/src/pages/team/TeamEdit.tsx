@@ -75,12 +75,8 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 			this.updateTitle();
 
 			const teamInfoEither = await AsyncEither.All([
-				fetchApi.team.get(
-					{ id: this.props.routeProps.match.params.id },
-					{},
-					this.props.member.sessionID,
-				),
-				fetchApi.member.memberList({}, {}, this.props.member.sessionID),
+				fetchApi.team.get({ id: this.props.routeProps.match.params.id }, {}),
+				fetchApi.member.memberList({}, {}),
 			]);
 
 			if (Either.isLeft(teamInfoEither)) {
@@ -177,11 +173,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 			return;
 		}
 
-		await fetchApi.team.set(
-			{ id: this.props.routeProps.match.params.id },
-			newTeam.value,
-			this.props.member.sessionID,
-		);
+		await fetchApi.team.set({ id: this.props.routeProps.match.params.id }, newTeam.value);
 
 		this.props.routeProps.history.push(`/team/${this.props.routeProps.match.params.id}`);
 	}

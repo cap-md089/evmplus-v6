@@ -132,3 +132,20 @@ export interface FinishMFASetup {
 
 	useValidator: true;
 }
+
+/**
+ * Sends a header to delete a session cookie
+ */
+export interface Logout {
+	(params: {}, body: {}): APIEither<void>;
+
+	url: '/api/member/session/logout';
+
+	method: 'post';
+
+	requiresMember: 'unused';
+
+	needsToken: false;
+
+	useValidator: false;
+}

@@ -62,9 +62,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 			throw new Error('What??');
 		}
 
-		const errors = Maybe.some(
-			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID),
-		);
+		const errors = Maybe.some(await fetchApi.errors.getErrors({}, {}));
 
 		this.setState({ errors });
 	}
@@ -123,9 +121,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 			throw new Error('What??');
 		}
 
-		const errors = Maybe.some(
-			await fetchApi.errors.getErrors({}, {}, this.props.member.sessionID),
-		);
+		const errors = Maybe.some(await fetchApi.errors.getErrors({}, {}));
 
 		this.setState({ errors });
 
@@ -391,7 +387,6 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 				message: error.message,
 				type: error.type,
 			},
-			this.props.member.sessionID,
 		);
 
 		const comparer = areErrorObjectsTheSame(error);

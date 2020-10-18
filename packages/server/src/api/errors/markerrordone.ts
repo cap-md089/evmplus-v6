@@ -32,6 +32,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { isRequesterRioux, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 import { getErrors } from './geterrors';
 
 const errorHandler = errorGenerator('Could not mark error as resolved');
@@ -72,7 +73,8 @@ export const func: ServerAPIEndpoint<api.errors.MarkErrorAsDone> = PAM.RequireSe
 						.remove(`id in [${errorIDs.join(',')}]`)
 						.execute(),
 				)
-				.map(destroy),
+				.map(destroy)
+				.map(wrapper),
 		),
 );
 

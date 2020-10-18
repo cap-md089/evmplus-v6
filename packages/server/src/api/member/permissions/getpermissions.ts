@@ -18,10 +18,13 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator, StoredMemberPermissions } from 'common-lib';
-import { findAndBindC, generateResults } from 'server-common';
+import { api, asyncRight, errorGenerator, SessionType, StoredMemberPermissions } from 'common-lib';
+import { findAndBindC, generateResults, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.permissions.GetPermissions> = req =>
+export const func: ServerAPIEndpoint<api.member.permissions.GetPermissions> = PAM.RequireSessionType(
+	SessionType.REGULAR,
+)(req =>
 	asyncRight(
 		req.mysqlx.getCollection<StoredMemberPermissions>('UserPermissions'),
 		errorGenerator('Could not get member permissions'),
@@ -29,6 +32,8 @@ export const func: ServerAPIEndpoint<api.member.permissions.GetPermissions> = re
 		.map(
 			findAndBindC<StoredMemberPermissions>({ accountID: req.account.id }),
 		)
-		.map(generateResults);
+		.map(generateResults)
+		.map(wrapper),
+);
 
 export default func;

@@ -40,15 +40,6 @@ export const fetchFunction: (
  * @param url The url to go to
  * @param options The options for a request
  */
-// export default function(url: string, options: RequestInit = {}, continueOnFail = false): Promise<Response> {
-// 	let promise;
-// 	if (process && process.env && process.env.NODE_ENV === 'test') {
-// 		promise = fetch2('http://localhost:3001' + url, options);
-// 	} else {
-// 		promise = fetch(url, options);
-// 	}
-// 	return promise.then(res => (res.ok && continueOnFail ? Promise.resolve(res) : Promise.reject(res)));
-// }
 export default async function(url: string, options: RequestInit = {}): Promise<Response> {
 	const promise = fetchFunction(url, options);
 

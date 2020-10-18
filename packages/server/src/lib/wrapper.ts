@@ -17,11 +17,19 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator } from 'common-lib';
-import wrapper from '../lib/wrapper';
+import { AsyncRepr } from 'auto-client-api';
 
-export const func: ServerAPIEndpoint<api.AccountCheck> = req =>
-	asyncRight(req.account, errorGenerator('What?')).map(wrapper);
+export default function wrapper<T>(response: T): { response: T; cookies: {} } {
+	return { response, cookies: {} };
+}
 
-export default func;
+export interface Wrapped<T> {
+	response: AsyncRepr<T>;
+	cookies: Record<
+		string,
+		{
+			value: string;
+			expires: number;
+		}
+	>;
+}

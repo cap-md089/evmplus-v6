@@ -114,7 +114,7 @@ export default class FinishPasswordResetForm extends Page<
 				error: fetchResult.value.message,
 			});
 		} else {
-			const member = await getMember(fetchResult.value.sessionID);
+			const member = await getMember();
 
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push('/admin');

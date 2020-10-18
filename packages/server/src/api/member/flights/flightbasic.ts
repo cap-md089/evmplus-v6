@@ -39,6 +39,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { getMembers, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.flight.FlightMembersBasic> = PAM.RequiresMemberType(
 	'CAPNHQMember',
@@ -76,7 +77,8 @@ export const func: ServerAPIEndpoint<api.member.flight.FlightMembersBasic> = PAM
 				),
 			)
 			.map(asyncIterMap(toReference))
-			.map(asyncIterHandler(errorGenerator('Could not get member ID'))),
+			.map(asyncIterHandler(errorGenerator('Could not get member ID')))
+			.map(wrapper),
 	),
 );
 

@@ -170,7 +170,6 @@ export default class Calendar extends Page<
 				timeend: (+end + offset).toString(),
 			},
 			{},
-			this.props.member?.sessionID,
 		);
 
 		if (Either.isLeft(resEither)) {

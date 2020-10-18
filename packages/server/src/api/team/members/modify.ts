@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, destroy, Permissions, SessionType } from 'common-lib';
 import { getTeam, modfiyTeamMember, PAM, saveTeam } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.team.members.ModifyTeamMember> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -31,7 +32,8 @@ export const func: ServerAPIEndpoint<api.team.members.ModifyTeamMember> = PAM.Re
 		getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
 			.map(modfiyTeamMember(req.body))
 			.flatMap(saveTeam(req.mysqlx))
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

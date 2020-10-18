@@ -124,11 +124,7 @@ export default class ProspectiveMemberManagement extends Page<
 				Permissions.ProspectiveMemberManagement.FULL,
 			)(this.props.member)
 		) {
-			const memberEither = await fetchApi.member.memberList(
-				{},
-				{},
-				this.props.member.sessionID,
-			);
+			const memberEither = await fetchApi.member.memberList({}, {});
 
 			if (Either.isLeft(memberEither)) {
 				this.setState(prev => ({
@@ -294,7 +290,6 @@ export default class ProspectiveMemberManagement extends Page<
 			.upgradeProspectiveAccount(
 				{ account: stringifyMemberReference(memberTarget) },
 				{ nhqReference: toReference(targetMember) },
-				this.props.member.sessionID,
 			)
 			.fullJoin();
 
@@ -319,11 +314,7 @@ export default class ProspectiveMemberManagement extends Page<
 		const memberTarget = this.state.deleteMemberTarget.value;
 
 		await fetchApi.member.account.capprospective
-			.deleteProspectiveAccount(
-				{ account: stringifyMemberReference(memberTarget) },
-				{},
-				this.props.member.sessionID,
-			)
+			.deleteProspectiveAccount({ account: stringifyMemberReference(memberTarget) }, {})
 			.fullJoin();
 
 		this.setState(prev =>

@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FileObject, User } from 'common-lib';
+import { FileObject, ClientUser } from 'common-lib';
 import * as React from 'react';
 
 export interface FileDisplayProps {
@@ -25,7 +25,7 @@ export interface FileDisplayProps {
 	parent: FileObject;
 	onSelect: (file: FileObject) => void;
 	selected: boolean;
-	member: User | null;
+	member: ClientUser | null;
 }
 
 export default (props: FileDisplayProps) => (

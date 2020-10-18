@@ -102,9 +102,7 @@ export default class Main extends Page<PageProps, MainState> {
 							Maybe.none(),
 							errorGenerator('Unable to retrieve promotion requirements'),
 					  )
-					: fetchApi.member.promotionrequirements
-							.currentuser({}, {}, this.props.member.sessionID)
-							.map(Maybe.some)
+					: fetchApi.member.promotionrequirements.currentuser({}, {}).map(Maybe.some)
 				: asyncRight<HTTPError, MaybeObj<CadetPromotionStatus>>(
 						Maybe.none(),
 						errorGenerator('Unable to retrieve promotion requirements'),

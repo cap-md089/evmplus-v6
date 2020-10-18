@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canFullyManageEvent, SessionType } from 'common-lib';
 import { deleteEvent, getEvent, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Delete> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -30,7 +31,8 @@ export const func: ServerAPIEndpoint<api.events.events.Delete> = PAM.RequireSess
 			code: 403,
 			message: 'Member cannot perform that action',
 		})
-		.flatMap(deleteEvent(req.configuration)(req.mysqlx)(req.account)),
+		.flatMap(deleteEvent(req.configuration)(req.mysqlx)(req.account))
+		.map(wrapper),
 );
 
 export default func;
