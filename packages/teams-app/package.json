@@ -1,0 +1,20 @@
+{
+	"name": "teams-app",
+	"version": "1.0.0",
+	"description": "Microsoft Teams integration for units",
+	"author": "Andrew Rioux <rioux.d.andrew@gmail.com>",
+	"homepage": "",
+	"license": "GPL-2.0",
+	"main": "dist/index.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com//cap-md089/evmplus-v6.git"
+	},
+	"scripts": {
+		"build": "tsc --project tsconfig.build.json",
+		"check": "tsc --project tsconfig.build.json --noEmit"
+	},
+	"devDependencies": {
+		"typescript": "^4.0.3"
+	}
+}

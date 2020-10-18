@@ -1,0 +1,10 @@
+{
+	"extends": "../../tsconfig.common.json",
+	"compilerOptions": {
+		"target": "es2018",
+		"rootDir": "./src",
+		"outDir": "./dist"
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"]
+}

@@ -1,0 +1,4 @@
+service/.env
+.publish/Development.env
+.publish/Development.zip
+.publish/manifest.json

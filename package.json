@@ -25,6 +25,7 @@
 		"packages/server",
 		"packages/server-common",
 		"packages/server-jest-config",
+		"packages/teams-app",
 		"packages/util-cli"
 	],
 	"commitlint": {
