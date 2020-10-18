@@ -123,6 +123,7 @@ type Tree = {
 		setAbsentee: api.member.SetAbsenteeInformation;
 		passwordReset: api.member.PasswordReset;
 		memberList: api.member.Members;
+		getByID: api.member.MemberGet;
 	};
 	notifications: {
 		global: {

@@ -32,6 +32,7 @@ import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
 import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
+import getmember from './getmemberbyid';
 import getmembers from './getmembers';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
@@ -76,6 +77,7 @@ addAPI(Validator, adder, finishmfasetup);
 addAPI(Validator, adder, finishmfa);
 addAPI(Validator, adder, setscanaddsession);
 addAPI(Validator, adder, getmembers);
+addAPI(Validator, adder, getmember);
 
 router.use(account);
 

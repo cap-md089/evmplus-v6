@@ -20,16 +20,20 @@
 import {
 	AccountObject,
 	AccountType,
+	areMembersTheSame,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	defaultRadioFromLabels,
 	EchelonEventNumber,
 	effectiveManageEventPermission,
+	Either,
 	emptyFromLabels,
 	emptySimpleFromLabels,
 	EventStatus,
 	ExternalPointOfContact,
 	FullTeamObject,
+	getMemberEmail,
+	getMemberPhone,
 	InternalPointOfContact,
 	isOneOfSelected,
 	labels,
@@ -44,10 +48,14 @@ import {
 	RadioReturnWithOther,
 	RegistryValues,
 	SimpleMultCheckboxReturn,
+	stringifyMemberReference,
+	toReference,
 	User,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
+import fetchApi from '../../../lib/apis';
+import Button from '../../Button';
 import CustomAttendanceFieldInput from '../../form-inputs/CustomAttendanceFieldInput';
 import EnumRadioButton from '../../form-inputs/EnumRadioButton';
 import { BooleanForField } from '../../form-inputs/FormBlock';
@@ -58,6 +66,7 @@ import SimpleForm, {
 	BigTextBox,
 	Checkbox,
 	DateTimeInput,
+	Divider,
 	FormBlock,
 	FormValidator,
 	Label,
@@ -335,6 +344,9 @@ interface EventFormState {
 	mde: null | typeof import('simplemde');
 	comments: null | SimpleMDE;
 	memberComments: null | SimpleMDE;
+	addPOCbyID: number | null;
+	addingPOCbyID: boolean;
+	pocAddbyIDError: string | null;
 }
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -342,6 +354,9 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		mde: null,
 		comments: null,
 		memberComments: null,
+		addPOCbyID: null,
+		addingPOCbyID: false,
+		pocAddbyIDError: null,
 	};
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
@@ -352,6 +367,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 		this.onEventChange = this.onEventChange.bind(this);
 		this.onEventSubmit = this.onEventSubmit.bind(this);
+		this.onAddPOC = this.onAddPOC.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -360,26 +376,55 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		this.setState({ mde });
 
 		const mdeOptions = {
-			hideIcons: ["preview", "side-by-side", "fullscreen"],
-			blockStyles: { italic: "_" },
+			hideIcons: ['preview', 'side-by-side', 'fullscreen', 'image'],
+			blockStyles: { italic: '_' },
 			insertTexts: {
-				horizontalRule: ["", "\n\n-----\n\n"],
-				image: ["![](http://", ")"],
-				link: ["[", "](http://)"],
-				table: ["", "\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text      | Text     |\n\n"],
+				horizontalRule: ['', '\n\n-----\n\n'],
+				image: ['![](http://', ')'],
+				link: ['[', '](http://)'],
+				table: [
+					'',
+					'\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text      | Text     |\n\n',
+				],
 			},
-			showIcons: ["table"],
-			toolbar: ["bold", "italic", "strikethrough", "|", "heading-smaller", "heading-bigger", "|", "horizontal-rule", "table", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "guide"]
+			showIcons: ['table'],
+			toolbar: [
+				'bold',
+				'italic',
+				'strikethrough',
+				'|',
+				'heading-smaller',
+				'heading-bigger',
+				'|',
+				'horizontal-rule',
+				'table',
+				'quote',
+				'unordered-list',
+				'ordered-list',
+				'|',
+				'link',
+				'image',
+				'|',
+				'guide',
+			],
 		};
 
 		if (this.commentsRef.current) {
 			this.setState({
-				comments: new mde({ element: this.commentsRef.current, ...mdeOptions, initialValue: this.props.event.comments })
+				comments: new mde({
+					element: this.commentsRef.current,
+					...mdeOptions,
+					initialValue: this.props.event.comments,
+				}),
 			});
 		}
 		if (this.mbrcommentsRef.current) {
 			this.setState({
-				memberComments: new mde({ element: this.mbrcommentsRef.current, ...mdeOptions, initialValue: this.props.event.memberComments })
+				memberComments: new mde({
+					element: this.mbrcommentsRef.current,
+					...mdeOptions,
+					initialValue: this.props.event.memberComments,
+				}),
 			});
 		}
 	}
@@ -389,11 +434,17 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 		return (
 			<>
-				<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css" />
-				<SimpleForm<NewEventFormValues>
+				<link
+					rel="stylesheet"
+					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
+				/>
+				<SimpleForm<NewEventFormValues & { addPOCbyID: number | null }>
 					onChange={this.onEventChange}
 					onSubmit={this.onEventSubmit}
-					values={values}
+					values={{
+						...values,
+						addPOCbyID: this.state.addPOCbyID,
+					}}
 					submitInfo={{
 						text: this.props.saving
 							? 'Saving...'
@@ -460,7 +511,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					/>
 
 					<Label>Pickup location*~</Label>
-					<TextInput name="pickupLocation" errorMessage="Event must have a pickup location" />
+					<TextInput
+						name="pickupLocation"
+						errorMessage="Event must have a pickup location"
+					/>
 
 					<Label>Transportation provided~</Label>
 					<Checkbox name="transportationProvided" />
@@ -474,23 +528,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Title>Activity Information</Title>
 
 					<Label>Comments (Visible to the public)~</Label>
-					{/* <BigTextBox
-						// boxStyles={{
-						// 	height: '50px',
-						// }}
-						name="comments"
-					/> */}
 					<div className="formbox">
 						<textarea ref={this.commentsRef} />
 					</div>
 
 					<Label>Member Comments (Visible only when signed in)</Label>
-					{/* <BigTextBox
-						// boxStyles={{
-						// 	height: '50px',
-						// }}
-						name="memberComments"
-					/> */}
 					<div className="formbox">
 						<textarea ref={this.mbrcommentsRef} />
 					</div>
@@ -499,7 +541,10 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<OtherMultCheckbox name="activity" labels={labels.Activities} />
 
 					<Label>Lodging arrangement</Label>
-					<OtherMultCheckbox name="lodgingArrangments" labels={labels.LodgingArrangments} />
+					<OtherMultCheckbox
+						name="lodgingArrangments"
+						labels={labels.LodgingArrangments}
+					/>
 
 					<Label>Event website~</Label>
 					<TextInput name="eventWebsite" />
@@ -571,6 +616,18 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
 
 					<Title>Points of Contact</Title>
+
+					{!!this.state.pocAddbyIDError && (
+						<TextBox>{this.state.pocAddbyIDError}</TextBox>
+					)}
+					<NumberInput name="addPOCbyID" />
+					<TextBox>
+						<Button onClick={this.onAddPOC} disabled={this.state.addingPOCbyID}>
+							Add Internal POC by CAPID
+						</Button>
+					</TextBox>
+					<Divider />
+					<TextBox />
 
 					<ListEditor<InternalPointOfContactEdit | ExternalPointOfContact, POCInputProps>
 						name="pointsOfContact"
@@ -654,7 +711,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 										EventStatus.COMPLETE,
 										EventStatus.CANCELLED,
 										EventStatus.INFORMATIONONLY,
-								]
+								  ]
 								: [EventStatus.DRAFT]
 						}
 						defaultValue={EventStatus.DRAFT}
@@ -687,32 +744,37 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 	}
 
 	private onEventChange(
-		event: NewEventFormValues,
+		event: NewEventFormValues & { addPOCbyID: number | null },
 		errors: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
 		error: boolean,
+		fieldChanged: keyof NewEventFormValues | 'addPOCbyID',
 	) {
-		if (!this.props.isEventUpdate) {
-			const dateTimesHaveBeenModified =
-				changed.startDateTime || changed.endDateTime || changed.pickupDateTime;
+		if (fieldChanged !== 'addPOCbyID') {
+			if (!this.props.isEventUpdate) {
+				const dateTimesHaveBeenModified =
+					changed.startDateTime || changed.endDateTime || changed.pickupDateTime;
 
-			if (!dateTimesHaveBeenModified) {
-				event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
-				event.endDateTime = event.meetDateTime + (900 + 7200) * 1000; // Two hours, 15 minutes
-				event.pickupDateTime = event.meetDateTime + (900 + 7200 + 900) * 1000; // Two hours, 30 minutes
-			} else if (!changed.pickupDateTime) {
-				event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
+				if (!dateTimesHaveBeenModified) {
+					event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
+					event.endDateTime = event.meetDateTime + (900 + 7200) * 1000; // Two hours, 15 minutes
+					event.pickupDateTime = event.meetDateTime + (900 + 7200 + 900) * 1000; // Two hours, 30 minutes
+				} else if (!changed.pickupDateTime) {
+					event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
+				}
+
+				const locationsHaveBeenModified = changed.location || changed.pickupLocation;
+
+				if (!locationsHaveBeenModified) {
+					event.location = event.meetLocation;
+					event.pickupLocation = event.meetLocation;
+				}
 			}
 
-			const locationsHaveBeenModified = changed.location || changed.pickupLocation;
-
-			if (!locationsHaveBeenModified) {
-				event.location = event.meetLocation;
-				event.pickupLocation = event.meetLocation;
-			}
+			this.props.onEventChange(event, !error);
+		} else {
+			this.setState({ addPOCbyID: event.addPOCbyID, pocAddbyIDError: null });
 		}
-
-		this.props.onEventChange(event, !error);
 	}
 
 	private onEventSubmit(
@@ -753,5 +815,71 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		};
 
 		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());
+	}
+
+	private async onAddPOC() {
+		if (!this.state.addPOCbyID || this.state.addingPOCbyID) {
+			return;
+		}
+
+		if (this.state.addPOCbyID <= 100000 || this.state.addPOCbyID >= 999999) {
+			this.setState({ pocAddbyIDError: 'Invalid CAPID' });
+			return;
+		}
+
+		// add duplicate POC check here
+		const ref = { type: 'CAPNHQMember' as const, id: this.state.addPOCbyID };
+		if (
+			this.props.event.pointsOfContact.find(
+				poc =>
+					poc.type === PointOfContactType.INTERNAL &&
+					Maybe.orSome(false)(Maybe.map(areMembersTheSame(ref))(poc.memberReference)),
+			)
+		) {
+			this.setState({ pocAddbyIDError: 'POC Already Present' });
+			return;
+		}
+
+		this.setState({ addingPOCbyID: true });
+
+		const result = await fetchApi.member.getByID(
+			{
+				id: stringifyMemberReference({
+					type: 'CAPNHQMember' as const,
+					id: this.state.addPOCbyID,
+				}),
+			},
+			{},
+			this.props.member.sessionID,
+		);
+
+		if (Either.isLeft(result)) {
+			this.setState({
+				addPOCbyID: null,
+				addingPOCbyID: false,
+				pocAddbyIDError: result.value.message,
+			});
+		} else {
+			const event: NewEventFormValues = {
+				...this.props.event,
+				pointsOfContact: [
+					...this.props.event.pointsOfContact,
+					{
+						type: PointOfContactType.INTERNAL,
+						email: Maybe.orSome('')(getMemberEmail(result.value.contact)),
+						phone: Maybe.orSome('')(getMemberPhone(result.value.contact)),
+						memberReference: Maybe.some(toReference(result.value)),
+						receiveEventUpdates: false,
+						receiveRoster: false,
+						receiveSignUpUpdates: false,
+						receiveUpdates: false,
+						publicDisplay: false,
+					},
+				],
+			};
+			this.props.memberList.push(result.value);
+			this.props.onEventChange(event, false);
+			this.setState({ addingPOCbyID: false, addPOCbyID: null });
+		}
 	}
 }

@@ -524,8 +524,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								/>
 							</DialogueButtonForm>
 							{' | '}
-							{ effectiveManageEventPermissionForEvent(member)(event) ===
-								Permissions.ManageEvent.FULL ? (
+							{effectiveManageEventPermissionForEvent(member)(event) ===
+							Permissions.ManageEvent.FULL ? (
 								<>
 									<DialogueButtonForm<{
 										newTime: number;
@@ -572,7 +572,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									</DialogueButtonForm>
 									{' | '}
 								</>
-							) : null }
+							) : null}
 							<DialogueButton
 								buttonText="Delete event"
 								buttonType="none"
@@ -759,6 +759,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						{event.pickupLocation}
 						<br />
 						<br />
+						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						<br />
 						<strong>Transportation provided:</strong>{' '}
 						{event.transportationProvided ? 'YES' : 'NO'}
 						<br />
@@ -777,13 +780,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						{event.comments ? (
 							<>
-								<strong>Comments:</strong> <MarkdownRenderer markdown={event.comments} />
+								<strong>Comments:</strong>{' '}
+								<MarkdownRenderer markdown={event.comments} />
 								<br />
 							</>
 						) : null}
 						{member && event.memberComments ? (
 							<>
-								<strong>Member Viewable Comments:</strong> <MarkdownRenderer markdown={event.memberComments} />
+								<strong>Member Viewable Comments:</strong>{' '}
+								<MarkdownRenderer markdown={event.memberComments} />
 								<br />
 							</>
 						) : null}
@@ -797,9 +802,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						effectiveManageEventPermissionForEvent(member)(event) !==
 							Permissions.ManageEvent.NONE ? (
 							<>
-								<strong>
-									Organizer form links:
-								</strong>
+								<strong>Organizer form links:</strong>
 								<ul>
 									<li>
 										<a
@@ -860,8 +863,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<br />
 							</>
 						) : null}
-						<strong>Event status:</strong> {eventStatus(event.status)}
-						<br />
 						<strong>Desired number of participants:</strong>{' '}
 						{event.desiredNumberOfParticipants}
 						<br />
