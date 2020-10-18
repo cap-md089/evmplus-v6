@@ -126,7 +126,7 @@ export const getMemberName = (member: {
 	nameLast: string;
 	nameSuffix: string;
 }) =>
-	[member.nameFirst, member.nameMiddle.charAt(0), member.nameLast, member.nameSuffix]
+	[member.nameFirst, member.nameLast, member.nameSuffix]
 		.filter(s => !!s)
 		.map(value => value.trimLeft().trimRight())
 		.map(value => value.replace(/\r\n/gm, ''))
