@@ -1043,6 +1043,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										titles={renderName(member)(event)}
 										values={attendees.filter(Either.isRight).map(get('value'))}
 										onlyOneOpen={true}
+										keyFunc={rec =>
+											stringifyMemberReference(rec.record.memberID)
+										}
 									>
 										{(val, i) => (
 											<AttendanceItemView
@@ -1063,7 +1066,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													),
 													Maybe.orSome(false),
 												)(this.state.previousUpdatedMember)}
-												key={i}
+												key={stringifyMemberReference(val.record.memberID)}
 												index={i}
 											/>
 										)}

@@ -108,6 +108,9 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 					values={this.state}
 					onChange={({ capid }) => this.setState({ capid })}
 					onSubmit={this.onSubmit}
+					validator={{
+						capid: id => id !== null && id > 100000 && id <= 999999,
+					}}
 				>
 					<Label>Scan your CAP ID</Label>
 
