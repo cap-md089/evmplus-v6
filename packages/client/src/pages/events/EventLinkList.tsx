@@ -25,6 +25,8 @@ import {
 	Either,
 	EventStatus,
 	EventType,
+	labels,
+	NewEventObject,
 	Permissions,
 	RadioReturnWithOther,
 	RawResolvedEventObject,
@@ -32,6 +34,10 @@ import {
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { DialogueButtons } from '../../components/dialogues/Dialogue';
+import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
+import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
+import { Label } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
@@ -46,6 +52,7 @@ interface EventLinkListLoadedState {
 
 	events: RawResolvedEventObject[];
 	eventsThatAreLinked: RawResolvedEventObject[];
+	eventToSet: string;
 }
 
 interface EventLinkListErrorState {
@@ -54,12 +61,18 @@ interface EventLinkListErrorState {
 	message: string;
 }
 
-type EventLinkListState =
+interface EventLinkListStatusState {
+	newStatus: EventStatus;
+}
+
+type EventLinkListState = (
 	| EventLinkListErrorState
 	| EventLinkListLoadedState
-	| EventLinkListLoadingState;
+	| EventLinkListLoadingState
+) &
+	EventLinkListStatusState;
 
-function getEventStatus(status: EventStatus) {
+function getEventStatusColored(status: EventStatus) {
 	switch (status) {
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;
@@ -73,6 +86,23 @@ function getEventStatus(status: EventStatus) {
 			return <span style={{ color: 'blue' }}>Info Only</span>;
 		case EventStatus.TENTATIVE:
 			return <span style={{ color: 'orange' }}>Tentative</span>;
+	}
+}
+
+function getEventStatus(status: EventStatus) {
+	switch (status) {
+		case EventStatus.COMPLETE:
+			return 'Complete';
+		case EventStatus.CANCELLED:
+			return 'Cancelled';
+		case EventStatus.CONFIRMED:
+			return 'Confirmed';
+		case EventStatus.DRAFT:
+			return 'Draft';
+		case EventStatus.INFORMATIONONLY:
+			return 'Info Only';
+		case EventStatus.TENTATIVE:
+			return 'Tentative';
 	}
 }
 
@@ -113,13 +143,23 @@ function getComplete(gc: boolean) {
 export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
 		state: 'LOADING',
+		newStatus: EventStatus.DRAFT,
 	};
+
+	public constructor(props: PageProps) {
+		super(props);
+		this.setStatus = this.setStatus.bind(this);
+	}
 
 	public async componentDidMount() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
 				text: 'Home',
+			},
+			{
+				target: '/admin',
+				text: 'Administration',
 			},
 			{
 				target: '/eventlinklist',
@@ -140,6 +180,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 				this.setState({
 					state: 'ERROR',
 					message: eventListEither.value.message,
+					newStatus: EventStatus.DRAFT,
 				});
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
@@ -157,6 +198,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					state: 'LOADED',
 					events,
 					eventsThatAreLinked,
+					newStatus: EventStatus.DRAFT,
 				});
 			}
 		}
@@ -194,16 +236,16 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								{eventsAreLinked ? ' - [Source Event]' : null}
 							</th>
 							<th>Start Date</th>
-							<th>Status</th>
-							<th>Complete</th>
+							<th>Event Status</th>
+							<th>Entry Complete</th>
 							{this.props.account.type === AccountType.CAPSQUADRON ? (
 								<th>GP Evt No.</th>
 							) : null}
 							{/* <th>Debrief</th> */}
 						</tr>
-						{this.state.events.map((event, i) => (
+						{this.state.events.map(event => (
 							<>
-								<tr key={i}>
+								<tr key={event.id}>
 									<td>
 										<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::
 										{'  '}
@@ -239,7 +281,50 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 											hour12: false,
 										})}
 									</td>
-									<td>{getEventStatus(event.status)}</td>
+									{/* <td>{getEventStatus(event.status)}</td> */}
+									{/* return <span style={{ color: 'orange' }}>Tentative</span>; */}
+									{/* <span style={{ color: {getStatusColor(event.status)} }}> */}
+									<td>
+										{effectiveManageEventPermissionForEvent(this.props.member!)(
+											event,
+										) === Permissions.ManageEvent.FULL ? (
+											<DialogueButtonForm<{
+												eventToSet: number;
+												newStatus: EventStatus;
+											}>
+												key={event.id}
+												buttonText={getEventStatus(event.status)}
+												buttonType="none"
+												buttonClass="underline-button"
+												displayButtons={DialogueButtons.OK_CANCEL}
+												onOk={this.setStatus}
+												title="Set status"
+												labels={['Set status', 'Cancel']}
+												values={{
+													eventToSet: event.id,
+													newStatus: event.status,
+												}}
+											>
+												<Label>New event status</Label>
+												<EnumRadioButton
+													index={event.id}
+													name="newStatus"
+													labels={labels.EventStatusLabels}
+													values={[
+														EventStatus.DRAFT,
+														EventStatus.TENTATIVE,
+														EventStatus.CONFIRMED,
+														EventStatus.COMPLETE,
+														EventStatus.CANCELLED,
+														EventStatus.INFORMATIONONLY,
+													]}
+													defaultValue={EventStatus.INFORMATIONONLY}
+												/>
+											</DialogueButtonForm>
+										) : (
+											<>{getEventStatusColored(event.status)}</>
+										)}
+									</td>
 									<td>{getComplete(event.complete)}</td>
 									{this.props.account.type === AccountType.CAPSQUADRON ? (
 										<td>{getEventNumber(event.groupEventNumber)}</td>
@@ -252,5 +337,29 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 				</table>
 			</div>
 		);
+	}
+
+	private async setStatus({
+		eventToSet,
+		newStatus,
+	}: {
+		eventToSet: number;
+		newStatus: EventStatus;
+	}) {
+		if (!this.props.member) {
+			return;
+		}
+
+		const newEvent: Partial<NewEventObject> = {
+			status: newStatus,
+		};
+
+		if (!!eventToSet) {
+			await fetchApi.events.events.set({ id: eventToSet.toString() }, newEvent);
+
+			// if (Either.isRight(result)) {
+			// 	this.props.routeProps.history.push(`/eventlinklist/`);
+			// }
+		}
 	}
 }

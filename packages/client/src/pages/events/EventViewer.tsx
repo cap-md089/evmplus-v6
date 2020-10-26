@@ -758,6 +758,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						{event.pickupLocation}
 						<br />
 						<br />
+						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						<br />
 						<strong>Transportation provided:</strong>{' '}
 						{event.transportationProvided ? 'YES' : 'NO'}
 						<br />
@@ -859,8 +862,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								<br />
 							</>
 						) : null}
-						<strong>Event status:</strong> {eventStatus(event.status)}
-						<br />
 						<strong>Desired number of participants:</strong>{' '}
 						{event.desiredNumberOfParticipants}
 						<br />

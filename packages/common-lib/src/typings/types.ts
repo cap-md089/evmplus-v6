@@ -90,7 +90,26 @@ export namespace NHQ {
 		Rank: string;
 	}
 
-	/*  CAPID,Type,Location,Completed,UsrID,DateMod  */
+	export interface CadetHFZInformation {
+		HFZID: number;
+		CAPID: number;
+		DateTaken: string;
+		ORGID: number;
+		IsPassed: boolean;
+		WeatherWaiver: boolean;
+		PacerRun: string;
+		PacerRunWaiver: boolean;
+		PacerRunPassed: boolean;
+		MileRun: string;
+		MileRunWaiver: boolean;
+		MileRunPassed: boolean;
+		CurlUp: string;
+		CurlUpWaiver: boolean;
+		CurlUpPassed: boolean;
+		SitAndReach: string;
+		SitAndReachWaiver: boolean;
+		SitAndReachPassed: boolean;
+	}
 
 	export interface CadetActivities {
 		CAPID: number;

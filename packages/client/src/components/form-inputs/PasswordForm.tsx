@@ -106,8 +106,8 @@ export default class PasswordForm extends React.Component<
 				<TextBox>
 					Please enter and confirm a password.
 					<br />
-					Passwords must be greater than 10 characters in length, and must consist of at
-					least one of each of the following:
+					Passwords must be at least 11 characters in length, and must consist of at least
+					one of each of the following:
 					<ul>
 						<li className={getClassFromShowLevel(this.state.showUppercaseError)}>
 							Uppercase character

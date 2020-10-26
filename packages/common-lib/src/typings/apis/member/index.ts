@@ -74,7 +74,7 @@ export interface PasswordReset {
 export interface Members {
 	(params: { type?: MemberType }, body: {}): APIEither<Member[]>;
 
-	url: '/api/member/:type?';
+	url: '/api/member/list/:type?';
 
 	method: 'get';
 
@@ -82,5 +82,22 @@ export interface Members {
 
 	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
+}
+
+/**
+ * Gets information for one member in the unit
+ */
+export interface MemberGet {
+	(params: { id: string }, body: {}): APIEither<Member>;
+
+	url: '/api/member/byid/:id';
+
+	method: 'get';
+
+	requiresMember: 'required';
+
+	needsToken: false;
+
+	useValidator: false;
 }

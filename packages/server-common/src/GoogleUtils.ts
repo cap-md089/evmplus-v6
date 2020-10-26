@@ -24,9 +24,10 @@ import {
 	isOneOfSelected,
 	Maybe,
 	presentMultCheckboxReturn,
-	ServerConfiguration,
 	RawRegularEventObject,
+	RawResolvedEventObject,
 	RegistryValues,
+	ServerConfiguration,
 	Timezone,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
@@ -73,7 +74,7 @@ export const LodgingArrangments = [
 function buildEventDescription(
 	config: ServerConfiguration,
 	registry: RegistryValues,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 ): string {
 	const dateFormatter = formatGoogleCalendarDate(registry);
 
@@ -170,7 +171,7 @@ function buildEventDescription(
 	}
 	description +=
 		'<b>Desired number of participants:</b> ' + inEvent.desiredNumberOfParticipants + '\n';
-	const markdown = require( "markdown" ).markdown;
+	const markdown = require('markdown').markdown;
 	if (inEvent.comments.length > 0) {
 		description += '<b>Comments:</b> ' + markdown.toHTML(inEvent.comments) + '\n';
 	}
@@ -197,7 +198,7 @@ const formatGoogleCalendarDate = (registry: RegistryValues) => (indate: number):
 
 function buildDeadlineDescription(
 	config: ServerConfiguration,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	inStatement: string,
 ): string {
 	// set status message
@@ -282,7 +283,7 @@ export async function createGoogleCalendarForEvent(
 
 export async function createGoogleCalendarEvents(
 	schema: Schema,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
@@ -346,7 +347,7 @@ export default async function updateGoogleCalendars(
 }
 
 export async function removeGoogleCalendarEvents(
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ) {
@@ -469,7 +470,7 @@ async function deleteCalendarEvent(
 async function deleteCalendarEvents(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	calendarID: string,
 ) {
 	// console.log('in deleteCalendarEvents', inEvent);
@@ -535,7 +536,7 @@ function getEventColor(inStatus: EventStatus) {
 function buildEvent(
 	config: ServerConfiguration,
 	registry: RegistryValues,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 ) {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
@@ -570,7 +571,7 @@ function buildEvent(
 
 function buildDeadline(
 	config: ServerConfiguration,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	inDate: number,
 	inString: string,
 ) {
@@ -605,12 +606,11 @@ async function updateFeeEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	googleId: string,
-) {
-	let response = { status: 200 };
-	if (inEvent.participationFee !== null) {
-		const deadlineNumber = inEvent.participationFee?.feeDue ?? 0;
+): Promise<string | null> {
+	if (!!inEvent.participationFee) {
+		const deadlineNumber = !!inEvent.participationFee ? inEvent.participationFee.feeDue : 0;
 		const deadlineInfo: number = !!inEvent.participationFee
 			? inEvent.participationFee.feeAmount
 			: 0;
@@ -623,32 +623,40 @@ async function updateFeeEvent(
 			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!inEvent.googleCalendarIds.feeId) {
-			response = await myCalendar.events.insert({
+			const response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
 				requestBody: event,
 			});
+			return response.data.id!;
 		} else {
-			const inEventId = inEvent.googleCalendarIds.feeId;
-			event.id = inEventId;
-			response = await myCalendar.events.patch({
-				auth: jwtClient,
-				calendarId: googleId,
-				eventId: inEventId,
-				requestBody: event,
-			});
-		}
+			try {
+				const inEventId = inEvent.googleCalendarIds.feeId;
+				event.id = inEventId;
+				await myCalendar.events.patch({
+					auth: jwtClient,
+					calendarId: googleId,
+					eventId: inEventId,
+					requestBody: event,
+				});
+				return inEventId;
+			} catch (e) {
+				if (e.code === 404) {
+					const { id, ...rest } = event;
 
-		if (typeof response !== 'undefined') {
-			if (response.status === 200) {
-				// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+					const insertResponse = await myCalendar.events.insert({
+						auth: jwtClient,
+						calendarId: googleId,
+						requestBody: rest,
+					});
+					return insertResponse.data.id!;
+				} else {
+					throw e;
+				}
 			}
-		} else {
-			console.log('Response undefined');
 		}
-		return event.id;
 	} else if (!!inEvent.googleCalendarIds.feeId) {
-		response = await myCalendar.events.delete({
+		await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
 			eventId: inEvent.googleCalendarIds.feeId,
@@ -663,10 +671,9 @@ async function updateRegEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	googleId: string,
-) {
-	let response = { status: 200 };
+): Promise<string | null> {
 	if (!!inEvent.registration) {
 		const deadlineNumber = !!inEvent.registration ? inEvent.registration.deadline : 0;
 		const deadlineInfo: string = !!inEvent.registration
@@ -681,32 +688,40 @@ async function updateRegEvent(
 			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!inEvent.googleCalendarIds.regId) {
-			response = await myCalendar.events.insert({
+			const response = await myCalendar.events.insert({
 				auth: jwtClient,
 				calendarId: googleId,
 				requestBody: event,
 			});
+			return response.data.id!;
 		} else {
-			const inEventId = inEvent.googleCalendarIds.regId;
-			event.id = inEventId;
-			response = await myCalendar.events.patch({
-				auth: jwtClient,
-				calendarId: googleId,
-				eventId: inEventId,
-				requestBody: event,
-			});
-		}
+			try {
+				const inEventId = inEvent.googleCalendarIds.regId;
+				event.id = inEventId;
+				await myCalendar.events.patch({
+					auth: jwtClient,
+					calendarId: googleId,
+					eventId: inEventId,
+					requestBody: event,
+				});
+				return inEventId;
+			} catch (e) {
+				if (e.code === 404) {
+					const { id, ...rest } = event;
 
-		if (typeof response !== 'undefined') {
-			if (response.status === 200) {
-				// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
+					const insertResponse = await myCalendar.events.insert({
+						auth: jwtClient,
+						calendarId: googleId,
+						requestBody: rest,
+					});
+					return insertResponse.data.id!;
+				} else {
+					throw e;
+				}
 			}
-		} else {
-			console.log('Response undefined');
 		}
-		return event.id;
 	} else if (!!inEvent.googleCalendarIds.regId) {
-		response = await myCalendar.events.delete({
+		await myCalendar.events.delete({
 			auth: jwtClient,
 			calendarId: googleId,
 			eventId: inEvent.googleCalendarIds.regId,
@@ -721,50 +736,43 @@ async function updateMainEvent(
 	config: ServerConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawRegularEventObject,
+	inEvent: RawResolvedEventObject,
 	googleId: string,
 	registry: RegistryValues,
-) {
+): Promise<string> {
 	const event = buildEvent(config, registry, inEvent);
-	let response = { status: 200 };
 
 	if (!inEvent.googleCalendarIds.mainId) {
-		response = await myCalendar.events.insert({
+		const response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
 			requestBody: event,
 		});
+		return response.data.id!;
 	} else {
 		try {
 			const inEventId = inEvent.googleCalendarIds.mainId;
 			event.id = inEventId;
-			response = await myCalendar.events.patch({
+			await myCalendar.events.patch({
 				auth: jwtClient,
 				calendarId: googleId,
 				eventId: inEventId,
 				requestBody: event,
 			});
+			return inEventId;
 		} catch (e) {
-			console.error(e);
-
 			if (e.code === 404) {
 				const { id, ...rest } = event;
 
-				response = await myCalendar.events.insert({
+				const insertResponse = await myCalendar.events.insert({
 					auth: jwtClient,
 					calendarId: googleId,
 					requestBody: rest,
 				});
+				return insertResponse.data.id!;
+			} else {
+				throw e;
 			}
 		}
 	}
-
-	if (typeof response !== 'undefined') {
-		if (response.status === 200) {
-			// 			console.log('Response status ' + response.statusText); // 99999999 need to look at possible responses and catch errors
-		}
-	} else {
-		console.log('Response undefined');
-	}
-	return event.id;
 }

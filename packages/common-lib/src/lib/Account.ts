@@ -44,7 +44,6 @@ import {
 	Permissions,
 	RawCAPSquadronAccountObject,
 	RegularCAPAccountObject,
-	User,
 } from '../typings/types';
 import { Maybe, MaybeObj } from './Maybe';
 import { hasPermission, isCAPMember, isRioux } from './Member';
