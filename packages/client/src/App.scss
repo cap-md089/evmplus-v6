@@ -79,7 +79,7 @@ body,
 body {
 	color: $primary-color;
 	font-size: 14px;
-	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+	font-family: $text-font;
 	background: #0f407c;
 	margin: 0;
 	padding: 0;
@@ -330,7 +330,6 @@ a {
 			'footer';
 		grid-template-columns: 100%;
 		grid-template-rows: 136px 46px 45px min-content 267px;
-		// grid-template-rows: 136px 46px min-content min-content 35px 267px;
 	}
 
 	.background {
@@ -344,5 +343,12 @@ a {
 		.halfSection {
 			width: 100%;
 		}
+	}
+}
+
+@supports (-ms-ime-align: auto) {
+	// This makes the site ugly for MS Edge 12-18, but it makes it work
+	.background {
+		display: none;
 	}
 }

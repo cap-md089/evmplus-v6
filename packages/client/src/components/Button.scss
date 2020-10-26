@@ -20,7 +20,7 @@
 @import '../theme';
 
 %button {
-	font-family: 'RobotoMedium', Arial, Helvetica, sans-serif;
+	font-family: $text-font;
 	font-size: 14px;
 	line-height: 18px;
 	color: white;
