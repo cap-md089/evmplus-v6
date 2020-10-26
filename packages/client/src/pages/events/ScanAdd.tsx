@@ -105,27 +105,20 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 					<div className="banner">{this.state.message.value.value}</div>
 				) : null}
 				<SimpleForm<{ capid: number | null }>
-					validator={{
-						capid: id => id !== null && id > 100000 && id <= 999999,
-					}}
 					values={this.state}
 					onChange={({ capid }) => this.setState({ capid })}
 					onSubmit={this.onSubmit}
 				>
 					<Label>Scan your CAP ID</Label>
 
-					<NumberInput
-						ref={this.inputRef}
-						name="capid"
-						errorMessage="Number must be a valid CAP ID"
-					/>
+					<NumberInput ref={this.inputRef} name="capid" />
 				</SimpleForm>
 			</>
 		);
 	}
 
 	private async onSubmit({ capid }: { capid: number | null }) {
-		if (!capid || !this.props.member) {
+		if (!capid || !this.props.member || capid < 100000 || capid > 999999) {
 			return;
 		}
 
