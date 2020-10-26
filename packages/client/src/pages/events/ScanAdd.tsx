@@ -145,7 +145,7 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 
 		if (Either.isLeft(result)) {
 			this.setState({
-				message: Maybe.some(Either.left('Failed to add member to attendance')),
+				message: Maybe.some(Either.left(result.value.message)),
 				capid: null,
 			});
 		} else {
