@@ -18,7 +18,6 @@
  */
 
 import {
-	// DebriefItem,
 	AccountType,
 	EchelonEventNumber,
 	effectiveManageEventPermissionForEvent,
@@ -26,7 +25,8 @@ import {
 	EventStatus,
 	EventType,
 	labels,
-	NewEventObject,
+	Maybe,
+	MaybeObj,
 	Permissions,
 	RadioReturnWithOther,
 	RawResolvedEventObject,
@@ -34,7 +34,7 @@ import {
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { DialogueButtons } from '../../components/dialogues/Dialogue';
+import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import { Label } from '../../components/forms/SimpleForm';
@@ -63,6 +63,7 @@ interface EventLinkListErrorState {
 
 interface EventLinkListStatusState {
 	newStatus: EventStatus;
+	statusSetError: MaybeObj<string>;
 }
 
 type EventLinkListState = (
@@ -144,6 +145,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
 		state: 'LOADING',
 		newStatus: EventStatus.DRAFT,
+		statusSetError: Maybe.none(),
 	};
 
 	public constructor(props: PageProps) {
@@ -181,6 +183,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					state: 'ERROR',
 					message: eventListEither.value.message,
 					newStatus: EventStatus.DRAFT,
+					statusSetError: Maybe.none(),
 				});
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
@@ -199,6 +202,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					events,
 					eventsThatAreLinked,
 					newStatus: EventStatus.DRAFT,
+					statusSetError: Maybe.none(),
 				});
 			}
 		}
@@ -228,6 +232,14 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					Click on the event number to view details. Click on the event name to edit
 					event.
 				</h3>
+				<Dialogue
+					open={Maybe.isSome(this.state.statusSetError)}
+					displayButtons={DialogueButtons.OK}
+					title="Error"
+					onClose={() => this.setState({ statusSetError: Maybe.none() })}
+				>
+					{Maybe.orSome('')(this.state.statusSetError)}
+				</Dialogue>
 				<table>
 					<tbody>
 						<tr>
@@ -350,16 +362,26 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			return;
 		}
 
-		const newEvent: Partial<NewEventObject> = {
-			status: newStatus,
-		};
+		const result = await fetchApi.events.events.set(
+			{ id: eventToSet.toString() },
+			{ status: newStatus },
+		);
 
-		if (!!eventToSet) {
-			await fetchApi.events.events.set({ id: eventToSet.toString() }, newEvent);
-
-			// if (Either.isRight(result)) {
-			// 	this.props.routeProps.history.push(`/eventlinklist/`);
-			// }
+		if (Either.isRight(result)) {
+			this.setState(prev =>
+				prev.state === 'LOADED'
+					? {
+							...prev,
+							events: prev.events.map(event =>
+								event.id === result.value.id ? result.value : event,
+							),
+					  }
+					: prev,
+			);
+		} else {
+			this.setState({
+				statusSetError: Maybe.some(result.value.message),
+			});
 		}
 	}
 }
