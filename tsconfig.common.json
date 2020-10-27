@@ -28,6 +28,7 @@
 		"sourceMap": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"declarationMap": true
+		"declarationMap": true,
+		"noFallthroughCasesInSwitch": true
 	}
 }

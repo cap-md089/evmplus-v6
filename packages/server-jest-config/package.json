@@ -8,5 +8,8 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com//cap-md089/evmplus-org-com-v6.git"
+	},
+	"devDependencies": {
+		"typescript": "^4.0.5"
 	}
 }
