@@ -101,11 +101,7 @@ export default class ExtraFolderDisplay extends React.Component<
 
 	private async onFileChangeFormSubmit(formState: CommentsForm) {
 		if (this.props.member) {
-			await fetchApi.files.files.setInfo(
-				{ fileid: this.props.file.id },
-				formState,
-				this.props.member.sessionID,
-			);
+			await fetchApi.files.files.setInfo({ fileid: this.props.file.id }, formState);
 
 			this.props.fileModify({
 				...this.props.file,
@@ -124,7 +120,6 @@ export default class ExtraFolderDisplay extends React.Component<
 		const childrenEither = await fetchApi.files.children.getBasic(
 			{ parentid: this.props.file.id },
 			{},
-			member.sessionID,
 		);
 
 		if (Either.isLeft(childrenEither)) {
@@ -138,7 +133,6 @@ export default class ExtraFolderDisplay extends React.Component<
 				fetchApi.files.children.add(
 					{ parentid: this.props.parentFile.id },
 					{ childid: file.id },
-					member.sessionID,
 				),
 			),
 			asyncIterMap(Either.isRight),
@@ -150,11 +144,7 @@ export default class ExtraFolderDisplay extends React.Component<
 			return;
 		}
 
-		const result = await fetchApi.files.files.delete(
-			{ fileid: this.props.file.id },
-			{},
-			member.sessionID,
-		);
+		const result = await fetchApi.files.files.delete({ fileid: this.props.file.id }, {});
 
 		if (Either.isLeft(result)) {
 			// TODO: Show error message

@@ -46,6 +46,7 @@ import {
 	PAM,
 	resolveReference,
 } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) => (
 	event: EventObject,
@@ -87,7 +88,8 @@ const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 				)
 				.flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event))
 				.map(attendanceRecordMapper),
-		);
+		)
+		.map(wrapper);
 
 export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
 	SessionType.REGULAR,

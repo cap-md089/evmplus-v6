@@ -340,8 +340,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 	private async goToFolder(id: string, update = true) {
 		const folderInfoEither = await AsyncEither.All([
-			fetchApi.files.children.getBasic({ parentid: id }, {}, this.props.member?.sessionID),
-			fetchApi.files.files.get({ id }, {}, this.props.member?.sessionID),
+			fetchApi.files.children.getBasic({ parentid: id }, {}),
+			fetchApi.files.files.get({ id }, {}),
 		]);
 
 		if (Either.isLeft(folderInfoEither)) {
@@ -424,7 +424,6 @@ export default class Drive extends Page<PageProps, DriveState> {
 			const result = await fetchApi.files.files.createFolder(
 				{ parentid: this.state.currentFolder.id, name: this.state.newFoldername },
 				{},
-				this.props.member.sessionID,
 			);
 
 			if (Either.isLeft(result)) {

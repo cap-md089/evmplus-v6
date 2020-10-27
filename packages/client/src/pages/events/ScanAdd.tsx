@@ -68,7 +68,6 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		const result = await fetchApi.member.session.setScanAdd(
 			{},
 			{ eventID: parseInt(this.props.routeProps.match.params.id, 10) },
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result) && result.value.code !== 403) {
@@ -106,27 +105,23 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 					<div className="banner">{this.state.message.value.value}</div>
 				) : null}
 				<SimpleForm<{ capid: number | null }>
-					validator={{
-						capid: id => id !== null && id > 100000 && id <= 999999,
-					}}
 					values={this.state}
 					onChange={({ capid }) => this.setState({ capid })}
 					onSubmit={this.onSubmit}
+					validator={{
+						capid: id => id !== null && id > 100000 && id <= 999999,
+					}}
 				>
 					<Label>Scan your CAP ID</Label>
 
-					<NumberInput
-						ref={this.inputRef}
-						name="capid"
-						errorMessage="Number must be a valid CAP ID"
-					/>
+					<NumberInput ref={this.inputRef} name="capid" />
 				</SimpleForm>
 			</>
 		);
 	}
 
 	private async onSubmit({ capid }: { capid: number | null }) {
-		if (!capid || !this.props.member) {
+		if (!capid || !this.props.member || capid < 100000 || capid > 999999) {
 			return;
 		}
 
@@ -142,12 +137,11 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 					type: 'CAPNHQMember',
 				},
 			},
-			this.props.member.sessionID,
 		);
 
 		if (Either.isLeft(result)) {
 			this.setState({
-				message: Maybe.some(Either.left('Failed to add member to attendance')),
+				message: Maybe.some(Either.left(result.value.message)),
 				capid: null,
 			});
 		} else {

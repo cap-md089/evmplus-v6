@@ -29,6 +29,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -42,15 +43,14 @@ export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSess
 				req.body.password,
 			).map(destroy),
 		)
-		.flatMap<PasswordSetResult>(() => {
-			if (request.session.type === SessionType.PASSWORD_RESET) {
-				return PAM.updateSession(request.mysqlx, request.session).map(
-					always(PasswordSetResult.OK),
-				);
-			} else {
-				return Either.right(PasswordSetResult.OK);
-			}
-		}),
+		.flatMap<PasswordSetResult>(() =>
+			request.session.type === SessionType.PASSWORD_RESET
+				? PAM.updateSession(request.mysqlx, request.session).map(
+						always(PasswordSetResult.OK),
+				  )
+				: Either.right(PasswordSetResult.OK),
+		)
+		.map(wrapper),
 );
 
 export default func;

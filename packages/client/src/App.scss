@@ -32,33 +32,33 @@
 
 @font-face {
 	font-family: 'RobotoMedium';
-	src: url('/images/Medium/Roboto-Medium-webfont.eot');
-	src: url('/images/Medium/Roboto-Medium-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/images/Medium/Roboto-Medium-webfont.woff') format('woff'),
-		url('/images/Medium/Roboto-Medium-webfont.ttf') format('truetype'),
-		url('/images/Medium/Roboto-Medium-webfont.svg#RobotoMedium') format('svg');
+	src: url('/images/medium/Roboto-Medium-webfont.eot');
+	src: url('/images/medium/Roboto-Medium-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/images/medium/Roboto-Medium-webfont.woff') format('woff'),
+		url('/images/medium/Roboto-Medium-webfont.ttf') format('truetype'),
+		url('/images/medium/Roboto-Medium-webfont.svg#RobotoMedium') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'RobotoLight';
-	src: url('/images/Light/Roboto-Light-webfont.eot');
-	src: url('/images/Light/Roboto-Light-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/images/Light/Roboto-Light-webfont.woff') format('woff'),
-		url('/images/Light/Roboto-Light-webfont.ttf') format('truetype'),
-		url('/images/Light/Roboto-Light-webfont.svg#RobotoLight') format('svg');
+	src: url('/images/light/Roboto-Light-webfont.eot');
+	src: url('/images/light/Roboto-Light-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/images/light/Roboto-Light-webfont.woff') format('woff'),
+		url('/images/light/Roboto-Light-webfont.ttf') format('truetype'),
+		url('/images/light/Roboto-Light-webfont.svg#RobotoLight') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'RobotoBold';
-	src: url('/images/Bold/Roboto-Bold-webfont.eot');
-	src: url('/images/Bold/Roboto-Bold-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/images/Bold/Roboto-Bold-webfont.woff') format('woff'),
-		url('/images/Bold/Roboto-Bold-webfont.ttf') format('truetype'),
-		url('/images/Bold/Roboto-Bold-webfont.svg#RobotoBold') format('svg');
+	src: url('/images/bold/Roboto-Bold-webfont.eot');
+	src: url('/images/bold/Roboto-Bold-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/images/bold/Roboto-Bold-webfont.woff') format('woff'),
+		url('/images/bold/Roboto-Bold-webfont.ttf') format('truetype'),
+		url('/images/bold/Roboto-Bold-webfont.svg#RobotoBold') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
@@ -79,7 +79,7 @@ body,
 body {
 	color: $primary-color;
 	font-size: 14px;
-	font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+	font-family: $text-font;
 	background: #0f407c;
 	margin: 0;
 	padding: 0;
@@ -330,7 +330,6 @@ a {
 			'footer';
 		grid-template-columns: 100%;
 		grid-template-rows: 136px 46px 45px min-content 267px;
-		// grid-template-rows: 136px 46px min-content min-content 35px 267px;
 	}
 
 	.background {
@@ -344,5 +343,12 @@ a {
 		.halfSection {
 			width: 100%;
 		}
+	}
+}
+
+@supports (-ms-ime-align: auto) {
+	// This makes the site ugly for MS Edge 12-18, but it makes it work
+	.background {
+		display: none;
 	}
 }

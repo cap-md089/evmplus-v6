@@ -21,13 +21,13 @@ import {
 	AccountObject,
 	AsyncEither,
 	asyncRight,
+	ClientUser,
 	Either,
 	FileObject,
 	Maybe,
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	User,
 } from 'common-lib';
 import * as React from 'react';
 import './App.scss';
@@ -44,7 +44,7 @@ import { getMember } from './lib/Members';
 interface AppState {
 	Registry: RegistryValues | null;
 	member: SigninReturn;
-	fullMember: User | null;
+	fullMember: ClientUser | null;
 	loading: boolean;
 	account: AccountObject | null;
 	sideNavLinks: SideNavigationItem[];
@@ -92,8 +92,6 @@ export default class App extends React.Component<
 			.slideshowImageIDs({}, {})
 			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }));
 
-		const sessionID = localStorage.getItem('sessionID');
-
 		this.setState({
 			loading: true,
 		});
@@ -105,13 +103,10 @@ export default class App extends React.Component<
 			fetchApi.registry.get({}, {}),
 
 			// The following should not fail
-			asyncRight(
-				sessionID ? getMember(sessionID) : { error: MemberCreateError.INVALID_SESSION_ID },
-				{
-					code: 500,
-					message: 'Could not get account information',
-				},
-			),
+			asyncRight(getMember(), {
+				code: 500,
+				message: 'Could not get account information',
+			}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -211,8 +206,6 @@ export default class App extends React.Component<
 		if (member.error === MemberCreateError.NONE && fullMember) {
 			if (member.member.id !== fullMember.id) {
 				fullMember = member.member;
-			} else {
-				fullMember.sessionID = member.sessionID;
 			}
 		} else if (member.error === MemberCreateError.NONE) {
 			fullMember = member.member;
@@ -224,11 +217,6 @@ export default class App extends React.Component<
 			member,
 			fullMember,
 		});
-		if (member.error === MemberCreateError.NONE) {
-			localStorage.setItem('sessionID', member.sessionID);
-		} else {
-			localStorage.removeItem('sessionID');
-		}
 	}
 
 	private onStorageChange(e: StorageEvent) {
@@ -236,7 +224,7 @@ export default class App extends React.Component<
 			this.setState({
 				loading: true,
 			});
-			getMember(e.newValue || '')
+			getMember()
 				.then(member => {
 					if (member.error !== MemberCreateError.NONE) {
 						localStorage.removeItem('sessionID');

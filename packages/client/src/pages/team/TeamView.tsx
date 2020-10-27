@@ -103,11 +103,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		this.props.updateSideNav([]);
 
 		try {
-			team = await fetchApi.team.get(
-				{ id: this.props.routeProps.match.params.id },
-				{},
-				this.props.member?.sessionID,
-			);
+			team = await fetchApi.team.get({ id: this.props.routeProps.match.params.id }, {});
 		} catch (e) {
 			return this.setState({
 				type: 'ERROR',
@@ -147,7 +143,6 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			const members = await fetchApi.team.members.list(
 				{ id: this.props.routeProps.match.params.id },
 				{},
-				this.props.member!.sessionID,
 			);
 
 			if (members.direction === 'left') {
@@ -290,11 +285,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			return;
 		}
 
-		await fetchApi.team.delete(
-			{ id: this.state.team.id.toString() },
-			{},
-			this.props.member.sessionID,
-		);
+		await fetchApi.team.delete({ id: this.state.team.id.toString() }, {});
 
 		this.props.routeProps.history.push('/team');
 	}

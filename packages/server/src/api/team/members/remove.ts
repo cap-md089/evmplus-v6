@@ -29,6 +29,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { getTeam, PAM, removeMemberFromTeam, saveTeam } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const removeMemberFromTeamWithRequest = (req: APIRequest<api.team.members.DeleteTeamMember>) => (
 	ref: MemberReference,
@@ -49,7 +50,8 @@ export const func: ServerAPIEndpoint<api.team.members.DeleteTeamMember> = PAM.Re
 			errorGenerator('Could not remove member from team'),
 		)
 			.flatMap(removeMemberFromTeamWithRequest(req))
-			.map(destroy),
+			.map(destroy)
+			.map(wrapper),
 	),
 );
 

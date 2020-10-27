@@ -19,12 +19,12 @@
 
 import esp, { StackFrame } from 'error-stack-parser';
 import * as React from 'react';
-import { NewClientErrorObject, User, AccountObject } from 'common-lib';
+import { NewClientErrorObject, ClientUser, AccountObject } from 'common-lib';
 import fetchApi from '../lib/apis';
 
 export default class ErrorHandler extends React.PureComponent<
 	{
-		member: User | null;
+		member: ClientUser | null;
 		account: AccountObject;
 	},
 	{
@@ -35,7 +35,7 @@ export default class ErrorHandler extends React.PureComponent<
 		crash: false,
 	};
 
-	constructor(props: { member: User | null; account: AccountObject }) {
+	constructor(props: { member: ClientUser | null; account: AccountObject }) {
 		super(props);
 
 		this.tryAgain = this.tryAgain.bind(this);
@@ -61,7 +61,7 @@ export default class ErrorHandler extends React.PureComponent<
 			type: 'Client',
 		};
 
-		fetchApi.errors.clientError({}, errorObject, this.props.member?.sessionID).then(
+		fetchApi.errors.clientError({}, errorObject).then(
 			() => {
 				// tslint:disable-next-line:no-console
 				console.log('Error logged');

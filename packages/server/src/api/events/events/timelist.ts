@@ -40,6 +40,7 @@ import {
 	User,
 } from 'common-lib';
 import { ensureResolvedEvent, getEventsInRange } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) =>
 	pipe(
@@ -73,6 +74,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 				event =>
 					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member),
 			),
-		);
+		)
+		.map(wrapper);
 
 export default func;

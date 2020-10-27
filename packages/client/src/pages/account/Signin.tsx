@@ -48,8 +48,6 @@ interface SigninState {
 	error: MemberCreateError;
 	passwordSetResult: string;
 	mfaResult: string;
-	updatePasswordSessionID: string | null;
-	finishMFASessionID: string | null;
 	tryingSignin: boolean;
 	tryingPasswordReset: boolean;
 	tryingMFAToken: boolean;
@@ -83,14 +81,12 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		},
 		error: MemberCreateError.NONE,
 		passwordSetResult: '',
-		updatePasswordSessionID: null,
 		tryingSignin: false,
 		tryingPasswordReset: false,
 		mfaFormValues: {
 			token: '',
 		},
 		mfaResult: '',
-		finishMFASessionID: null,
 		tryingMFAToken: false,
 	};
 
@@ -262,13 +258,11 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			this.setState({
 				error: signinResults.error,
 				tryingSignin: false,
-				updatePasswordSessionID: signinResults.sessionID,
 			});
 		} else if (signinResults.error === MemberCreateError.ACCOUNT_USES_MFA) {
 			this.setState({
 				error: signinResults.error,
 				tryingSignin: false,
-				finishMFASessionID: signinResults.sessionID,
 			});
 		} else {
 			// @ts-ignore
@@ -288,7 +282,6 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		const resetPasswordResult = await fetchApi.member.passwordReset(
 			{},
 			{ password: this.state.resetFormValues.password },
-			this.state.updatePasswordSessionID!,
 		);
 
 		if (Either.isLeft(resetPasswordResult)) {
@@ -297,7 +290,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				tryingPasswordReset: false,
 			});
 		} else {
-			const member = await getMember(this.state.updatePasswordSessionID!);
+			const member = await getMember();
 
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push(this.returnUrl);
@@ -312,7 +305,6 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		const mfaTokenResult = await fetchApi.member.session.finishMFA(
 			{},
 			{ mfaToken: this.state.mfaFormValues.token },
-			this.state.finishMFASessionID!,
 		);
 
 		if (Either.isLeft(mfaTokenResult)) {
@@ -322,7 +314,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			});
 		} else {
 			if (mfaTokenResult.value === MemberCreateError.NONE) {
-				const member = await getMember(this.state.finishMFASessionID!);
+				const member = await getMember();
 
 				this.props.authorizeUser(member);
 				this.props.routeProps.history.push(this.returnUrl);
@@ -330,7 +322,6 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				this.setState({
 					error: MemberCreateError.PASSWORD_EXPIRED,
 					tryingMFAToken: false,
-					updatePasswordSessionID: this.state.finishMFASessionID,
 				});
 			}
 		}

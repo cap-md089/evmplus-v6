@@ -27,6 +27,7 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import { expandRawFileObject, getChildren, getFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
@@ -39,6 +40,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
 		})
 		.flatMap(getChildren(req.mysqlx)(req.account))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)));
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
+		.map(wrapper);
 
 export default func;

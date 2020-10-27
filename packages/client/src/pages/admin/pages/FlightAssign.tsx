@@ -121,7 +121,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			},
 		]);
 
-		const membersEither = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
+		const membersEither = await fetchApi.member.memberList({}, {});
 
 		if (Either.isLeft(membersEither)) {
 			// TODO: add error message
@@ -243,7 +243,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			saving: true,
 		});
 
-		await fetchApi.member.flight.assignBulk({}, payload, this.props.member!.sessionID);
+		await fetchApi.member.flight.assignBulk({}, payload);
 
 		this.setState({
 			saved: true,

@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.18](http://github.com//cap-md089/evmplus-v6/compare/auto-client-api@1.3.14...auto-client-api@1.3.18) (2020-10-27)
+
+
+### Bug Fixes
+
+* fixed linked events not being fully updated when the parent event is modified ([55806cc](http://github.com//cap-md089/evmplus-v6/commit/55806cc12e5a0f75152434c22d4377add79019a1))
+* fixed macro error for string enum literal values ([a2d23d0](http://github.com//cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+
+
+
 ## [1.3.17](http://github.com//cap-md089/evmplus-v6/compare/auto-client-api@1.3.14...auto-client-api@1.3.17) (2020-10-16)
 
 

@@ -28,6 +28,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { CAP, PAM, resolveReference } from 'server-common';
+import wrapper from '../../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.account.capprospective.DeleteProspectiveAccount> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -47,7 +48,8 @@ export const func: ServerAPIEndpoint<api.member.account.capprospective.DeletePro
 			})
 			.map(ref => ref as CAPProspectiveMemberReference)
 			.flatMap(resolveReference(req.mysqlx)(req.account))
-			.flatMap(CAP.deleteProspectiveMember(req.mysqlx)),
+			.flatMap(CAP.deleteProspectiveMember(req.mysqlx))
+			.map(wrapper),
 	),
 );
 

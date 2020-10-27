@@ -19,9 +19,9 @@
 
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator } from 'common-lib';
+import wrapper from '../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.Echo> = req => {
-	return asyncRight(req.body, errorGenerator('What?'));
-};
+export const func: ServerAPIEndpoint<api.Echo> = req =>
+	asyncRight(req.body, errorGenerator('What?')).map(wrapper);
 
 export default func;

@@ -73,6 +73,7 @@ import { func as flightassign } from './member/flights/flightassign';
 import { func as flightassignbulk } from './member/flights/flightassignbulk';
 import { func as flightbasic } from './member/flights/flightbasic';
 import { func as flightmembers } from './member/flights/flightmembers';
+import { func as getmemberbyid } from './member/getmemberbyid';
 import { func as getmembers } from './member/getmembers';
 import { func as passwordreset } from './member/passwordreset';
 import { func as getpermissions } from './member/permissions/getpermissions';
@@ -197,6 +198,7 @@ export const api = {
 			settemporarydutypositions,
 		},
 		setabsent,
+		getmemberbyid,
 		getmembers,
 		passwordreset,
 		su,

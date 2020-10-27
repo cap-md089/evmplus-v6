@@ -29,6 +29,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { collectResults, findAndBind, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.member.account.RegisterDiscord>;
 
@@ -77,6 +78,10 @@ const addToCollectionWithCheck = (req: Req) =>
 
 export const func: ServerAPIEndpoint<api.member.account.RegisterDiscord> = PAM.RequireSessionType(
 	SessionType.REGULAR,
-)(req => addToCollectionWithCheck(req).map(destroy));
+)(req =>
+	addToCollectionWithCheck(req)
+		.map(destroy)
+		.map(wrapper),
+);
 
 export default func;

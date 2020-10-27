@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, MemberCreateError, SessionType, toReference } from 'common-lib';
 import { PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.session.FinishMFA> = PAM.RequireSessionType(
 	SessionType.IN_PROGRESS_MFA,
@@ -39,8 +40,11 @@ export const func: ServerAPIEndpoint<api.member.session.FinishMFA> = PAM.Require
 				  }),
 		)
 		.map(passwordExpired =>
-			passwordExpired ? MemberCreateError.PASSWORD_EXPIRED : MemberCreateError.NONE,
-		),
+			passwordExpired
+				? (MemberCreateError.PASSWORD_EXPIRED as const)
+				: (MemberCreateError.NONE as const),
+		)
+		.map(wrapper),
 );
 
 export default func;

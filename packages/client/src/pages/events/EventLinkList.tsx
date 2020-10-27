@@ -18,20 +18,26 @@
  */
 
 import {
-	// DebriefItem,
-	AccountType, 
+	AccountType,
 	EchelonEventNumber,
-	effectiveManageEventPermissionForEvent, 
+	effectiveManageEventPermissionForEvent,
 	Either,
 	EventStatus,
 	EventType,
+	labels,
+	Maybe,
+	MaybeObj,
 	Permissions,
 	RadioReturnWithOther,
-	RawResolvedEventObject
+	RawResolvedEventObject,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
+import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
+import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
+import { Label } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
 import Page, { PageProps } from '../Page';
@@ -46,6 +52,7 @@ interface EventLinkListLoadedState {
 
 	events: RawResolvedEventObject[];
 	eventsThatAreLinked: RawResolvedEventObject[];
+	eventToSet: string;
 }
 
 interface EventLinkListErrorState {
@@ -54,12 +61,19 @@ interface EventLinkListErrorState {
 	message: string;
 }
 
-type EventLinkListState =
+interface EventLinkListStatusState {
+	newStatus: EventStatus;
+	statusSetError: MaybeObj<string>;
+}
+
+type EventLinkListState = (
 	| EventLinkListErrorState
 	| EventLinkListLoadedState
-	| EventLinkListLoadingState;
+	| EventLinkListLoadingState
+) &
+	EventLinkListStatusState;
 
-function getEventStatus(status: EventStatus) {
+function getEventStatusColored(status: EventStatus) {
 	switch (status) {
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;
@@ -73,6 +87,23 @@ function getEventStatus(status: EventStatus) {
 			return <span style={{ color: 'blue' }}>Info Only</span>;
 		case EventStatus.TENTATIVE:
 			return <span style={{ color: 'orange' }}>Tentative</span>;
+	}
+}
+
+function getEventStatus(status: EventStatus) {
+	switch (status) {
+		case EventStatus.COMPLETE:
+			return 'Complete';
+		case EventStatus.CANCELLED:
+			return 'Cancelled';
+		case EventStatus.CONFIRMED:
+			return 'Confirmed';
+		case EventStatus.DRAFT:
+			return 'Draft';
+		case EventStatus.INFORMATIONONLY:
+			return 'Info Only';
+		case EventStatus.TENTATIVE:
+			return 'Tentative';
 	}
 }
 
@@ -113,13 +144,24 @@ function getComplete(gc: boolean) {
 export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 	public state: EventLinkListState = {
 		state: 'LOADING',
+		newStatus: EventStatus.DRAFT,
+		statusSetError: Maybe.none(),
 	};
+
+	public constructor(props: PageProps) {
+		super(props);
+		this.setStatus = this.setStatus.bind(this);
+	}
 
 	public async componentDidMount() {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
 				text: 'Home',
+			},
+			{
+				target: '/admin',
+				text: 'Administration',
 			},
 			{
 				target: '/eventlinklist',
@@ -133,13 +175,15 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 
 		if (this.props.member) {
 			const eventListEither = await fetchApi.events.events
-				.getList({}, {}, this.props.member.sessionID)
+				.getList({}, {})
 				.map(events => events.sort((a, b) => b.startDateTime - a.startDateTime));
 
 			if (Either.isLeft(eventListEither)) {
 				this.setState({
 					state: 'ERROR',
 					message: eventListEither.value.message,
+					newStatus: EventStatus.DRAFT,
+					statusSetError: Maybe.none(),
 				});
 			} else {
 				// eventList = eventList.sort((a, b) => a.name.localeCompare(b.name));
@@ -157,6 +201,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					state: 'LOADED',
 					events,
 					eventsThatAreLinked,
+					newStatus: EventStatus.DRAFT,
+					statusSetError: Maybe.none(),
 				});
 			}
 		}
@@ -186,6 +232,14 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 					Click on the event number to view details. Click on the event name to edit
 					event.
 				</h3>
+				<Dialogue
+					open={Maybe.isSome(this.state.statusSetError)}
+					displayButtons={DialogueButtons.OK}
+					title="Error"
+					onClose={() => this.setState({ statusSetError: Maybe.none() })}
+				>
+					{Maybe.orSome('')(this.state.statusSetError)}
+				</Dialogue>
 				<table>
 					<tbody>
 						<tr>
@@ -194,59 +248,140 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 								{eventsAreLinked ? ' - [Source Event]' : null}
 							</th>
 							<th>Start Date</th>
-							<th>Status</th>
-							<th>Complete</th>
+							<th>Event Status</th>
+							<th>Entry Complete</th>
 							{this.props.account.type === AccountType.CAPSQUADRON ? (
 								<th>GP Evt No.</th>
 							) : null}
 							{/* <th>Debrief</th> */}
 						</tr>
-						{this.state.events.map((event, i) => (
-								<>
-									<tr key={i}>
-										<td>
-											<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::{'  '}
-											{effectiveManageEventPermissionForEvent(this.props.member!)(event) ===
-												Permissions.ManageEvent.FULL ? (
-												<Link to={`/eventform/${event.id}`}>{event.name}</Link> 
-											) : <>{event.name}</>}
-											{` `}
-											{event.type === EventType.LINKED ? (
-												<>
-													{` - [`}
-													<a
-														href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														{event.targetAccountID}-{event.targetEventID}
-													</a>
-													{`]`}
-												</>
-											) : null}
-										</td>
-										<td
-											style={{
-												whiteSpace: 'nowrap',
-											}}
-										>
-											{DateTime.fromMillis(event.startDateTime).toLocaleString({
-												...DateTime.DATETIME_SHORT,
-												hour12: false,
-											})}
-										</td>
-										<td>{getEventStatus(event.status)}</td>
-										<td>{getComplete(event.complete)}</td>
-										{this.props.account.type === AccountType.CAPSQUADRON ? (
-											<td>{getEventNumber(event.groupEventNumber)}</td>
+						{this.state.events.map(event => (
+							<>
+								<tr key={event.id}>
+									<td>
+										<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::
+										{'  '}
+										{effectiveManageEventPermissionForEvent(this.props.member!)(
+											event,
+										) === Permissions.ManageEvent.FULL ? (
+											<Link to={`/eventform/${event.id}`}>{event.name}</Link>
+										) : (
+											<>{event.name}</>
+										)}
+										{` `}
+										{event.type === EventType.LINKED ? (
+											<>
+												{` - [`}
+												<a
+													href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{event.targetAccountID}-{event.targetEventID}
+												</a>
+												{`]`}
+											</>
 										) : null}
-										{/* <td>{getEventDebrief(event.debrief)}</td> */}
-									</tr>
-								</>
+									</td>
+									<td
+										style={{
+											whiteSpace: 'nowrap',
+										}}
+									>
+										{DateTime.fromMillis(event.startDateTime).toLocaleString({
+											...DateTime.DATETIME_SHORT,
+											hour12: false,
+										})}
+									</td>
+									{/* <td>{getEventStatus(event.status)}</td> */}
+									{/* return <span style={{ color: 'orange' }}>Tentative</span>; */}
+									{/* <span style={{ color: {getStatusColor(event.status)} }}> */}
+									<td>
+										{effectiveManageEventPermissionForEvent(this.props.member!)(
+											event,
+										) === Permissions.ManageEvent.FULL ? (
+											<DialogueButtonForm<{
+												eventToSet: number;
+												newStatus: EventStatus;
+											}>
+												key={event.id}
+												buttonText={getEventStatus(event.status)}
+												buttonType="none"
+												buttonClass="underline-button"
+												displayButtons={DialogueButtons.OK_CANCEL}
+												onOk={this.setStatus}
+												title="Set status"
+												labels={['Set status', 'Cancel']}
+												values={{
+													eventToSet: event.id,
+													newStatus: event.status,
+												}}
+											>
+												<Label>New event status</Label>
+												<EnumRadioButton
+													index={event.id}
+													name="newStatus"
+													labels={labels.EventStatusLabels}
+													values={[
+														EventStatus.DRAFT,
+														EventStatus.TENTATIVE,
+														EventStatus.CONFIRMED,
+														EventStatus.COMPLETE,
+														EventStatus.CANCELLED,
+														EventStatus.INFORMATIONONLY,
+													]}
+													defaultValue={EventStatus.INFORMATIONONLY}
+												/>
+											</DialogueButtonForm>
+										) : (
+											<>{getEventStatusColored(event.status)}</>
+										)}
+									</td>
+									<td>{getComplete(event.complete)}</td>
+									{this.props.account.type === AccountType.CAPSQUADRON ? (
+										<td>{getEventNumber(event.groupEventNumber)}</td>
+									) : null}
+									{/* <td>{getEventDebrief(event.debrief)}</td> */}
+								</tr>
+							</>
 						))}
 					</tbody>
 				</table>
 			</div>
 		);
+	}
+
+	private async setStatus({
+		eventToSet,
+		newStatus,
+	}: {
+		eventToSet: number;
+		newStatus: EventStatus;
+	}) {
+		if (!this.props.member) {
+			return;
+		}
+
+		const result = await fetchApi.events.events.set(
+			{ id: eventToSet.toString() },
+			{ status: newStatus },
+		);
+
+		if (Either.isRight(result)) {
+			this.setState(prev =>
+				prev.state === 'LOADED'
+					? {
+							...prev,
+							events: prev.events.map(event =>
+								event.id === result.value.id ? result.value : event,
+							),
+					  }
+					: prev,
+			);
+		} else {
+			this.setState({
+				statusSetError: Maybe.some(result.value.message),
+			});
+		}
 	}
 }

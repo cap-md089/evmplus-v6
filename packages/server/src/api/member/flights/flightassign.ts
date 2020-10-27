@@ -21,6 +21,7 @@ import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncEither, destroy, errorGenerator, Permissions, SessionType } from 'common-lib';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.flight.Assign> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -46,7 +47,8 @@ export const func: ServerAPIEndpoint<api.member.flight.Assign> = PAM.RequireSess
 							account: req.account,
 						}),
 					)
-					.map(destroy),
+					.map(destroy)
+					.map(wrapper),
 			),
 	),
 );

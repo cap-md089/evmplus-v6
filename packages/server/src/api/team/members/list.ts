@@ -40,6 +40,7 @@ import {
 	User,
 } from 'common-lib';
 import { getTeam, PAM, resolveReference } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canMemberViewPrivateTeam = (member: MaybeObj<User>) => (team: RawTeamObject) =>
 	team.visibility === TeamPublicity.PRIVATE
@@ -82,7 +83,8 @@ export const func: ServerAPIEndpoint<api.team.members.ListTeamMembers> = PAM.Req
 		.map(getTeamMembersList)
 		.map(asyncIterMap(resolveReference(req.mysqlx)(req.account)))
 		.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-		.map(asyncIterMap(get('value'))),
+		.map(asyncIterMap(get('value')))
+		.map(wrapper),
 );
 
 export default func;

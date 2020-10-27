@@ -46,6 +46,7 @@ import {
 	removeMemberFromEventAttendance,
 	resolveReference,
 } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
 	body: APIEndpointBody<api.events.attendance.Delete>,
@@ -84,7 +85,8 @@ export const func: ServerAPIEndpoint<api.events.attendance.Delete> = PAM.Require
 				getMember(req)(req.body)(event),
 			),
 		)
-		.map(destroy),
+		.map(destroy)
+		.map(wrapper),
 );
 
 export default func;

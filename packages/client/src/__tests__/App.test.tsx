@@ -17,8 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable */
 // @ts-ignore
 import React from 'react';
+/* eslint-enable */
 // import App from '../App';
 // import { BrowserRouter } from 'react-router-dom';
 

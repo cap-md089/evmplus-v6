@@ -62,6 +62,7 @@ import {
 	getRegistryById,
 	resolveReference,
 } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.events.events.GetEventViewerData>;
 
@@ -227,6 +228,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 							authorFullName,
 						}),
 				  ),
-		);
+		)
+		.map(wrapper);
 
 export default func;

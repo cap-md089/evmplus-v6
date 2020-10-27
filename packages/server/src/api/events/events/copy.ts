@@ -29,6 +29,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { copyEvent, getEvent, getFullEventObject, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -51,7 +52,8 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 			.flatMap(copier => copier(!!req.body.copyFiles))
 			.flatMap(
 				getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member)),
-			),
+			)
+			.map(wrapper),
 	),
 );
 

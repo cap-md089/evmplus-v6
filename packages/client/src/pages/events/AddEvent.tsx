@@ -86,8 +86,8 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		}
 
 		const infoEither = await AsyncEither.All([
-			fetchApi.member.memberList({}, {}, this.props.member.sessionID),
-			fetchApi.team.list({}, {}, this.props.member.sessionID),
+			fetchApi.member.memberList({}, {}),
+			fetchApi.team.list({}, {}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
@@ -211,11 +211,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			return;
 		}
 
-		const createResult = await fetchApi.events.events.add(
-			{},
-			maybeFullEvent.value,
-			this.props.member.sessionID,
-		);
+		const createResult = await fetchApi.events.events.add({}, maybeFullEvent.value);
 
 		if (Either.isLeft(createResult)) {
 			this.setState({

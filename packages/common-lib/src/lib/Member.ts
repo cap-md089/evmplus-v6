@@ -25,13 +25,13 @@ import {
 	CAPMemberReference,
 	CAPNHQMemberReference,
 	CAPProspectiveMemberReference,
+	ClientUser,
 	Member,
 	MemberPermission,
 	MemberReference,
 	PermissionForName,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
-	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
 import { Maybe } from './Maybe';
@@ -126,7 +126,7 @@ export const getMemberName = (member: {
 	nameLast: string;
 	nameSuffix: string;
 }) =>
-	[member.nameFirst, member.nameMiddle.charAt(0), member.nameLast, member.nameSuffix]
+	[member.nameFirst, member.nameLast, member.nameSuffix]
 		.filter(s => !!s)
 		.map(value => value.trimLeft().trimRight())
 		.map(value => value.replace(/\r\n/gm, ''))
@@ -148,13 +148,13 @@ export const getFullMemberName = (member: {
 
 export const hasSpecificPermission = <T extends MemberPermission>(permission: T) => (
 	threshold: number,
-) => (user: User) =>
+) => (user: ClientUser) =>
 	// @ts-ignore
-	(user.permissions[permission] ?? 0) === threshold || isRioux(user);
+	user.permissions[permission] === threshold || isRioux(user);
 
 export const hasPermission = <T extends MemberPermission>(permission: T) => (
 	threshold: PermissionForName<T>,
-) => (user: User) =>
+) => (user: ClientUser) =>
 	// @ts-ignore
 	user.permissions[permission] === threshold || isRioux(user);
 

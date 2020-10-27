@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -32,6 +32,7 @@ import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
 import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
+import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
@@ -88,6 +89,10 @@ const modules: {
 		module: cadetAchievementEnumParse,
 		file: 'CdtAchvEnum.txt',
 	},
+	{
+		module: cadetHFZInformationParse,
+		file: 'CadetHFZInformation.txt',
+	},
 	/*	{
 		module: seniorAwards,
 		file: 'SeniorAwards.txt'
@@ -106,14 +111,6 @@ const modules: {
 	},*/
 	/* the following modules need only be imported occassionally as they do not change often */
 	/*	{
-		module: cdtAchvEnum,
-		file: 'CadetAchievementsEnumeration.txt'
-	},
-	{
-		module: achievements,
-		file: 'Achievements.txt'
-	},
-	{
 		module: commanders,
 		file: 'Commanders.txt'
 	},*/

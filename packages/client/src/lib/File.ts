@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, FullFileObject, User } from 'common-lib';
+import { Either, FullFileObject, ClientUser } from 'common-lib';
 import fetchApi from './apis';
 
 interface UploadProgressEvent {
@@ -30,9 +30,9 @@ interface UploadFinishEvent {
 	file: FullFileObject;
 }
 
-export const uploadFile = (user: User) => (parentid: string) =>
+export const uploadFile = (user: ClientUser) => (parentid: string) =>
 	async function*(file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
-		const tokenEither = await fetchApi.token({}, {}, user.sessionID);
+		const tokenEither = await fetchApi.token({}, {});
 
 		if (Either.isLeft(tokenEither)) {
 			throw new Error('Could not get token');
@@ -46,7 +46,8 @@ export const uploadFile = (user: User) => (parentid: string) =>
 		const xhr = new XMLHttpRequest();
 		xhr.open('POST', `/api/files/upload/${parentid}`);
 
-		xhr.setRequestHeader('authorization', user.sessionID);
+		xhr.withCredentials = true;
+
 		xhr.setRequestHeader('token', token);
 
 		const results = {

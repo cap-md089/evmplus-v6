@@ -285,11 +285,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		this.updateTitle('Email selector');
 
 		if (this.props.member) {
-			const membersEither = await fetchApi.member.memberList(
-				{},
-				{},
-				this.props.member.sessionID,
-			);
+			const membersEither = await fetchApi.member.memberList({}, {});
 
 			if (Either.isLeft(membersEither)) {
 				this.setState(prev => ({

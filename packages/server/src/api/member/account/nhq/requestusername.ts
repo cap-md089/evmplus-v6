@@ -36,6 +36,7 @@ import {
 } from 'common-lib';
 import { getRegistry, PAM, resolveReference, sendEmail, ServerEither } from 'server-common';
 import { simplifyUserInformation } from 'server-common/dist/member/pam';
+import wrapper from '../../../../lib/wrapper';
 
 const htmlEmailBody = (memberInfo: Member, accountInfo: UserAccountInformation) =>
 	`${getFullMemberName(memberInfo)}, your login is ${accountInfo.username}.<br />
@@ -104,6 +105,7 @@ export const func: (
 		)
 		.leftFlatMap(err =>
 			err.message === 'Username not found' ? Either.right(void 0) : Either.left(err),
-		);
+		)
+		.map(wrapper);
 
 export default func();

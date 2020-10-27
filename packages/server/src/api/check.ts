@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	AccountLinkTarget,
+	ActiveSession,
 	always,
 	api,
 	AsyncEither,
@@ -47,18 +48,19 @@ import {
 	getUnreadNotificationCount,
 	ServerEither,
 } from 'server-common';
+import wrapper, { Wrapped } from '../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.Check> = req =>
-	Maybe.cata<User, ServerEither<SigninReturn>>(
+	Maybe.cata<[User, ActiveSession], ServerEither<Wrapped<SigninReturn>>>(
 		always(
 			asyncRight<ServerError, SigninReturn>(
 				{
 					error: MemberCreateError.INVALID_SESSION_ID,
 				},
 				errorGenerator('What?'),
-			),
+			).map(wrapper),
 		),
-	)(user =>
+	)(([user, session]) =>
 		AsyncEither.All([
 			getUnreadNotificationCount(req.mysqlx)(req.account)(user),
 			getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(user),
@@ -76,15 +78,22 @@ export const func: ServerAPIEndpoint<api.Check> = req =>
 				errorGenerator('Could not get admin account IDs for member'),
 			),
 		]).map(([notificationCount, taskCount, linkableAccounts]) => ({
-			error: MemberCreateError.NONE,
-			sessionID: user.sessionID,
-			member: isRioux(user)
-				? { ...user, permissions: getDefaultAdminPermissions(req.account.type) }
-				: user,
-			notificationCount,
-			taskCount,
-			linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+			response: {
+				error: MemberCreateError.NONE,
+				member: isRioux(user)
+					? { ...user, permissions: getDefaultAdminPermissions(req.account.type) }
+					: user,
+				notificationCount,
+				taskCount,
+				linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+			},
+			cookies: {
+				sessionID: {
+					expires: session.expires,
+					value: session.id,
+				},
+			},
 		})),
-	)(req.member);
+	)(Maybe.And([req.member, req.session]));
 
 export default func;

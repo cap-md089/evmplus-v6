@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, hasPermissionForTask, SessionType } from 'common-lib';
 import { deleteTask, getTask, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.tasks.DeleteTask> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -30,7 +31,8 @@ export const func: ServerAPIEndpoint<api.tasks.DeleteTask> = PAM.RequireSessionT
 			code: 403,
 			message: 'Member does not have permission to delete the specified task',
 		})
-		.flatMap(deleteTask(req.mysqlx)),
+		.flatMap(deleteTask(req.mysqlx))
+		.map(wrapper),
 );
 
 export default func;

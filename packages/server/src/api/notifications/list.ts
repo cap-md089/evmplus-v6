@@ -30,6 +30,7 @@ import {
 } from 'common-lib';
 import { expandNotification, PAM } from 'server-common';
 import { getAdminNotifications, getMemberNotifications } from 'server-common/dist/notifications';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.notifications.GetNotificationList> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -39,7 +40,8 @@ export const func: ServerAPIEndpoint<api.notifications.GetNotificationList> = PA
 		getAdminNotifications(req.mysqlx)(req.account)(req.member),
 	])
 		.map(([iter1, iter2]) => asyncIterConcat<RawNotificationObject>(iter1)(always(iter2)))
-		.map(asyncIterMap(expandNotification(req.mysqlx)(req.account))),
+		.map(asyncIterMap(expandNotification(req.mysqlx)(req.account)))
+		.map(wrapper),
 );
 
 export default func;

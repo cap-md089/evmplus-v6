@@ -67,7 +67,7 @@ export interface Check {
 
 	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }
 
 /**

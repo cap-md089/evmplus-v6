@@ -118,7 +118,7 @@ export default class FormBlock<T extends object> extends React.Component<
 						if (isLabel(child) && child.type === Title) {
 							return child;
 						}
-						return;
+						return null;
 					} else {
 						const childName: keyof T = child.props.name as keyof T;
 
@@ -170,11 +170,11 @@ export default class FormBlock<T extends object> extends React.Component<
 							typeof usedChildren === 'number' ||
 							typeof usedChildren === 'boolean'
 						) {
-							return;
+							return null;
 						}
 
 						if (!Array.isArray(usedChildren)) {
-							return;
+							return null;
 						}
 
 						const previousChild = usedChildren[i - 1];

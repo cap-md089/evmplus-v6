@@ -17,6 +17,21 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DateTime } from 'luxon';
+import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, asyncRight, errorGenerator } from 'common-lib';
 
-export default () => DateTime.utc().startOf('day');
+export const func: ServerAPIEndpoint<api.member.session.Logout> = () =>
+	asyncRight(
+		{
+			response: void 0,
+			cookies: {
+				sessionID: {
+					value: '',
+					expires: 0,
+				},
+			},
+		},
+		errorGenerator('Could not sign out'),
+	);
+
+export default func;

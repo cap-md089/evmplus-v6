@@ -17,8 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// import 'core-js/stable';
-import 'promise-polyfill/src/polyfill';
+import 'core-js';
+// import 'promise-polyfill/src/polyfill';
+import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 // import registerServiceWorker from './registerServiceWorker';
@@ -26,6 +27,8 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import 'regenerator-runtime/runtime';
 import App from './App';
 import './_theme.scss';
+
+import './redux-utils';
 
 ReactDOM.render(
 	<Router>

@@ -100,7 +100,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
-		const memberEither = await fetchApi.member.memberList({}, {}, this.props.member.sessionID);
+		const memberEither = await fetchApi.member.memberList({}, {});
 
 		if (Either.isLeft(memberEither)) {
 			this.setState({
@@ -172,11 +172,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
-		const newTeamEither = await fetchApi.team.create(
-			{},
-			teamObj.value,
-			this.props.member.sessionID,
-		);
+		const newTeamEither = await fetchApi.team.create({}, teamObj.value);
 
 		if (Either.isLeft(newTeamEither)) {
 			this.setState({

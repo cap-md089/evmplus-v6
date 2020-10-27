@@ -20,6 +20,7 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, Permissions, SessionType } from 'common-lib';
 import { createTeam, expandTeam, PAM } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.team.CreateTeam> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -28,9 +29,9 @@ export const func: ServerAPIEndpoint<api.team.CreateTeam> = PAM.RequireSessionTy
 		'ManageTeam',
 		Permissions.ManageTeam.FULL,
 	)(req =>
-		createTeam(req.memberUpdateEmitter)(req.mysqlx)(req.account)(req.body).flatMap(
-			expandTeam(req.mysqlx)(req.account),
-		),
+		createTeam(req.memberUpdateEmitter)(req.mysqlx)(req.account)(req.body)
+			.flatMap(expandTeam(req.mysqlx)(req.account))
+			.map(wrapper),
 	),
 );
 

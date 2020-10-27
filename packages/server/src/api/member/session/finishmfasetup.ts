@@ -20,9 +20,10 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, SessionType, toReference } from 'common-lib';
 import { PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.session.FinishMFASetup> = PAM.RequireSessionType(
 	SessionType.REGULAR,
-)(req => PAM.finishMFASetup(req.mysqlx)(toReference(req.member))(req.body.mfaToken));
+)(req => PAM.finishMFASetup(req.mysqlx)(toReference(req.member))(req.body.mfaToken).map(wrapper));
 
 export default func;

@@ -1,6 +1,6 @@
 {
 	"name": "server-jest-config",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"private": true,
 	"description": "Adds configuration options for jest that will start up and tear down a MySQL instance",
 	"author": "Andrew Rioux <rioux.d.andrew@gmail.com>",
@@ -8,5 +8,9 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com//cap-md089/evmplus-org-com-v6.git"
+	},
+	"devDependencies": {
+		"jest-watch-typeahead": "^0.6.1",
+		"typescript": "^4.0.5"
 	}
 }

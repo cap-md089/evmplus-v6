@@ -90,7 +90,26 @@ export namespace NHQ {
 		Rank: string;
 	}
 
-	/*  CAPID,Type,Location,Completed,UsrID,DateMod  */
+	export interface CadetHFZInformation {
+		HFZID: number;
+		CAPID: number;
+		DateTaken: string;
+		ORGID: number;
+		IsPassed: boolean;
+		WeatherWaiver: boolean;
+		PacerRun: string;
+		PacerRunWaiver: boolean;
+		PacerRunPassed: boolean;
+		MileRun: string;
+		MileRunWaiver: boolean;
+		MileRunPassed: boolean;
+		CurlUp: string;
+		CurlUpWaiver: boolean;
+		CurlUpPassed: boolean;
+		SitAndReach: string;
+		SitAndReachWaiver: boolean;
+		SitAndReachPassed: boolean;
+	}
 
 	export interface CadetActivities {
 		CAPID: number;
@@ -2248,6 +2267,21 @@ export interface UserObject {
 }
 
 /**
+ * Users are different in that they are actively using the website right now,
+ * and they have a session. They also have created an account with us
+ *
+ * This is important because this means they have a session ID and permissions
+ *
+ * Client users however do not have a session ID; they instead just have permissions as
+ * the session ID is stored in an HTTPOnly cookie
+ *
+ * Does not extend MemberObject to allow for TypeScript to discriminate between users
+ */
+export interface ClientUserObject {
+	permissions: MemberPermissions;
+}
+
+/**
  * A descriminator type used to help determine what the type of object is
  */
 export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember';
@@ -2527,6 +2561,7 @@ export type CAPMember = CAPProspectiveMemberObject | CAPNHQMemberObject;
 export type MemberReference = CAPMemberReference;
 export type Member = CAPMember;
 export type User = Member & UserObject;
+export type ClientUser = Member & ClientUserObject;
 
 export type MemberForMemberType<
 	T extends MemberReference['type']
@@ -2739,11 +2774,7 @@ export interface SuccessfulSigninReturn {
 	/**
 	 * The member details
 	 */
-	member: User;
-	/**
-	 * The ID for the session
-	 */
-	sessionID: string;
+	member: ClientUser;
 	/**
 	 * Returns the amount of notifications the member has
 	 */
@@ -2766,10 +2797,6 @@ export interface ExpiredSuccessfulSigninReturn {
 	 * Just an expired password
 	 */
 	error: MemberCreateError.PASSWORD_EXPIRED;
-	/**
-	 * A session ID to set a new password
-	 */
-	sessionID: string;
 }
 
 /**
@@ -2793,10 +2820,6 @@ export interface SigninRequiresMFA {
 	 * Reports the fact that the account may need to submit MFA information
 	 */
 	error: MemberCreateError.ACCOUNT_USES_MFA;
-	/**
-	 * Session ID to update user and get a full session
-	 */
-	sessionID: string;
 }
 
 /**

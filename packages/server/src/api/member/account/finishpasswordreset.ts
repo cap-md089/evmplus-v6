@@ -20,25 +20,22 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { always, api } from 'common-lib';
 import { PAM } from 'server-common';
-import {
-	addPasswordForUser,
-	createSessionForUser,
-	getInformationForUser,
-	removePasswordValidationToken,
-	simplifyUserInformation,
-} from 'server-common/dist/member/pam';
+import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
 	PAM.validatePasswordResetToken(req.mysqlx, req.body.token)
 		.flatMap(username =>
-			addPasswordForUser(req.mysqlx, username, req.body.newPassword).map(always(username)),
+			PAM.addPasswordForUser(req.mysqlx, username, req.body.newPassword).map(
+				always(username),
+			),
 		)
 		.flatMap(username =>
-			removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),
+			PAM.removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),
 		)
-		.map(username => getInformationForUser(req.mysqlx, username))
-		.map(simplifyUserInformation)
-		.flatMap(account => createSessionForUser(req.mysqlx, account))
-		.map(session => ({ sessionID: session.id }));
+		.map(username => PAM.getInformationForUser(req.mysqlx, username))
+		.map(PAM.simplifyUserInformation)
+		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
+		.map(session => ({ sessionID: session.id }))
+		.map(wrapper);
 
 export default func;

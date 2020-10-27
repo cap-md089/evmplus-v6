@@ -20,7 +20,7 @@
 import {
 	FileObject,
 	FileUserAccessControlPermissions,
-	User,
+	ClientUser,
 	userHasFilePermission,
 } from 'common-lib';
 import * as React from 'react';
@@ -31,7 +31,7 @@ import SimpleForm, { BigTextBox, Label } from '../forms/SimpleForm';
 export interface ExtraDisplayProps {
 	parentFile: FileObject;
 	file: FileObject;
-	member: User | null;
+	member: ClientUser | null;
 	childRef: React.RefObject<HTMLDivElement>;
 	fileDelete: (file: FileObject) => void;
 	fileModify: (file: FileObject) => void;
@@ -97,11 +97,7 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 
 	private async onDeleteFileClick() {
 		if (this.props.member) {
-			await fetchApi.files.files.delete(
-				{ fileid: this.props.file.id },
-				{},
-				this.props.member.sessionID,
-			);
+			await fetchApi.files.files.delete({ fileid: this.props.file.id }, {});
 			this.props.fileDelete(this.props.file);
 		}
 	}
@@ -113,11 +109,7 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 				...formState,
 			};
 
-			await fetchApi.files.files.setInfo(
-				{ fileid: this.props.file.id },
-				formState,
-				this.props.member.sessionID,
-			);
+			await fetchApi.files.files.setInfo({ fileid: this.props.file.id }, formState);
 
 			this.props.fileModify(newFile);
 		}

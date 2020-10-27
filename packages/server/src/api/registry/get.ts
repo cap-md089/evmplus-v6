@@ -20,8 +20,9 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api } from 'common-lib';
 import { getRegistry } from 'server-common';
+import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.registry.GetRegistry> = req =>
-	getRegistry(req.mysqlx)(req.account);
+	getRegistry(req.mysqlx)(req.account).map(wrapper);
 
 export default func;

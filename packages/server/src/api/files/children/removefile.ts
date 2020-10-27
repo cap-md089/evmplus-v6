@@ -24,14 +24,18 @@ import {
 	destroy,
 	FileUserAccessControlPermissions,
 	get,
+	SessionType,
 	userHasFilePermission,
 } from 'common-lib';
-import { getFileObject, saveFileObject } from 'server-common';
+import { getFileObject, PAM, saveFileObject } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-export const func: ServerAPIEndpoint<api.files.children.RemoveChild> = req =>
+export const func: ServerAPIEndpoint<api.files.children.RemoveChild> = PAM.RequireSessionType(
+	SessionType.REGULAR,
+)(req =>
 	AsyncEither.All([
 		getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid),
 		getFileObject(true)(req.mysqlx)(req.account)(req.params.childid),
@@ -53,6 +57,8 @@ export const func: ServerAPIEndpoint<api.files.children.RemoveChild> = req =>
 			parentID: 'root',
 		}))
 		.map(saveFileObject(req.mysqlx))
-		.map(destroy);
+		.map(destroy)
+		.map(wrapper),
+);
 
 export default func;

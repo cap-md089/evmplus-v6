@@ -40,10 +40,10 @@ import {
 	AccountObject,
 	AccountType,
 	CAPAccountObject,
+	ClientUser,
 	Permissions,
 	RawCAPSquadronAccountObject,
 	RegularCAPAccountObject,
-	User,
 } from '../typings/types';
 import { Maybe, MaybeObj } from './Maybe';
 import { hasPermission, isCAPMember, isRioux } from './Member';
@@ -76,7 +76,7 @@ export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<num
 		? Maybe.some([account.orgid, ...account.orgIDs])
 		: Maybe.none();
 
-export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (user: User) => {
+export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (user: ClientUser) => {
 	const duties = user.dutyPositions
 		.filter(
 			duty =>

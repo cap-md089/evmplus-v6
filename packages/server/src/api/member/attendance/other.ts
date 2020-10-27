@@ -28,6 +28,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { getAttendanceForMember, getEvent, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 import { expandRecord } from './basic';
 
 export const func: ServerAPIEndpoint<api.member.attendance.GetForMember> = PAM.RequireSessionType(
@@ -42,7 +43,8 @@ export const func: ServerAPIEndpoint<api.member.attendance.GetForMember> = PAM.R
 			errorGenerator('Could not parse member ID'),
 		)
 			.flatMap(getAttendanceForMember(req.mysqlx)(req.account))
-			.map(asyncIterMap(expandRecord(getEvent)(req))),
+			.map(asyncIterMap(expandRecord(getEvent)(req)))
+			.map(wrapper),
 	),
 );
 

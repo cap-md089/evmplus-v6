@@ -29,6 +29,7 @@ import {
 	SessionType,
 } from 'common-lib';
 import { createCAPEventAccountFunc, PAM } from 'server-common';
+import wrapper from '../../../lib/wrapper';
 
 export const func: (
 	now?: typeof Date.now,
@@ -51,7 +52,8 @@ export const func: (
 				createCAPEventAccountFunc(now)(req.configuration)(req.mysqlxSession)(req.mysqlx)(
 					parentAccount,
 				)(req.member)(req.body.accountID)(req.body.accountName)(req.body.event),
-			),
+			)
+			.map(wrapper),
 	);
 
 export default func();

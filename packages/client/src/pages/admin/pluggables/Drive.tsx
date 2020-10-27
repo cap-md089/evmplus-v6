@@ -48,11 +48,7 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 	};
 
 	public async componentDidMount() {
-		const root = await fetchApi.files.children.getBasic(
-			{ parentid: 'root' },
-			{},
-			this.props.member?.sessionID,
-		);
+		const root = await fetchApi.files.children.getBasic({ parentid: 'root' }, {});
 
 		if (Either.isLeft(root)) {
 			this.setState({
