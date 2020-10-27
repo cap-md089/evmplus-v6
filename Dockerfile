@@ -34,7 +34,7 @@ RUN lerna run build
 
 CMD [ "npm", "--prefix", "packages/server", "start" ]
 
-FROM node:13 AS runner
+FROM node AS runner
 
 WORKDIR /usr/evm-plus
 
