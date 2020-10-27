@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.20.0](http://github.com//cap-md089/evmplus-v6/compare/server-common@1.16.0...server-common@1.20.0) (2020-10-27)
+
+
+### Bug Fixes
+
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+* **googleutils:** fixed event move not working, added time stamp display to errors ([d4ab35e](http://github.com//cap-md089/evmplus-v6/commit/d4ab35e8d77ad83b4f7d4df6c20c9ef8a3c62476)), closes [#77](http://github.com//cap-md089/evmplus-v6/issues/77)
+* **googleutils:** updated googleutils functions to account for deleted Google calendar events ([b2e510e](http://github.com//cap-md089/evmplus-v6/commit/b2e510ecdda3aa49a607bcf37386c472c2f4c9f4))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+
+
+### Features
+
+* **event comments editing and display:** implemented markdown on event editor, display, and rendere ([5355fff](http://github.com//cap-md089/evmplus-v6/commit/5355fff8564a6ddbd26720636f50d7a394ea8a68))
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **import hfz information:** added functionality to import HFZ information file from CAPWATCH ([f5ae56d](http://github.com//cap-md089/evmplus-v6/commit/f5ae56dc7ff97befd2f94c644a08ac9469f0007e))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.19.0](http://github.com//cap-md089/evmplus-v6/compare/server-common@1.16.0...server-common@1.19.0) (2020-10-16)
 
 
