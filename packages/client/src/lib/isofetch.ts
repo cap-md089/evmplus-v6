@@ -40,7 +40,7 @@ export const fetchFunction: (
  * @param url The url to go to
  * @param options The options for a request
  */
-export default async function(url: string, options: RequestInit = {}): Promise<Response> {
+export default async function isofetch(url: string, options: RequestInit = {}): Promise<Response> {
 	const promise = fetchFunction(url, options);
 
 	const res = await promise;
