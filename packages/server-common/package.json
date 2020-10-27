@@ -23,6 +23,7 @@
 		"@types/request-promise": "^4.1.46",
 		"@types/uuid": "^7.0.3",
 		"jest": "^26",
+		"jest-watch-typeahead": "^0.6.1",
 		"ts-jest": "^26",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",

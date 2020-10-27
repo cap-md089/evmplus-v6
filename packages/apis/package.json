@@ -16,6 +16,7 @@
 		"common-lib": "^1.22.0"
 	},
 	"devDependencies": {
+		"jest-watch-typeahead": "^0.6.1",
 		"prettier": "^2.0.5",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",

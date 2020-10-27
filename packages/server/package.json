@@ -71,6 +71,7 @@
 		"gulp-shell": "^0.7.0",
 		"jest": "^26",
 		"jest-cli": "^26",
+		"jest-watch-typeahead": "^0.6.1",
 		"mysql": "^2.18.1",
 		"nodemon": "^1.19.4",
 		"prettier": "^2.0.5",

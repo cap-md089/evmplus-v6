@@ -20,6 +20,7 @@
 	"devDependencies": {
 		"@types/jest": "^26",
 		"jest": "^26",
+		"jest-watch-typeahead": "^0.6.1",
 		"ts-jest": "^26",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
