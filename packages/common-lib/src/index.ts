@@ -42,3 +42,4 @@ export { default as Validator } from './lib/Validator';
 export * from './renderers';
 export * from './typings/api';
 export * from './typings/types';
+export * as utilTypes from './typings/utils';
