@@ -74,7 +74,11 @@ export interface ActionProducer<Payload, Arguments extends any[], ActionName ext
 	 */
 	wrap: <R extends Action>(
 		wrapper: (arg: Action<ActionName, Payload>) => R,
-	) => ActionProducer<R, Arguments, string>;
+	) => ActionProducer<
+		R extends Action<any, infer P> ? P : any,
+		Arguments,
+		R extends Action<infer Name> ? Name : string
+	>;
 }
 
 /**
@@ -155,18 +159,14 @@ export type ActionHandler<
  * Converts a list of ActionHandlers and the state modified by them to a
  * union of the actions provided by the producers in the action handlers
  */
-export type ActionOrList<
-	State,
-	TL extends utilTypes.TypeList<ActionHandler<State>, any>,
-	Current = never
-> = {
+export type ActionListUnion<State, TL extends utilTypes.TypeList<ActionHandler<State>, any>> = {
 	recurse:
-		| Current
 		| ActionFor<TL['head']['0']>
 		| (TL['tail'] extends utilTypes.TypeList<ActionHandler<State>, any>
-				? ActionOrList<State, TL['tail'], Current>
+				? ActionListUnion<State, TL['tail']>
 				: never);
-	base: Current | TL['head'];
+	base: ActionFor<TL['head']['0']>;
+	// base: Current | ActionFor<TL['head']['0']>;
 }[TL extends utilTypes.TypeList<any, null> ? 'base' : 'recurse'];
 
 /**
@@ -185,20 +185,22 @@ export type ActionOrList<
 export const createReducerForActions = <State, Handlers extends Array<ActionHandler<State>>>(
 	defaultState: State,
 	...handlers: Handlers
-) =>
+) => (
+	state: State | undefined,
 	// Tested in redux-utils.test.ts
 	// @ts-ignore
-	(state: State | undefined, action: ActionOrList<State, utilTypes.TupleToTypeList<Handlers>>) =>
-		state === undefined
-			? defaultState
-			: // Tested in redux-utils.test.ts
-			  // @ts-ignore
-			  handlers.find(handler => handler[0].toString() === action.type)?.[1]?.(
-					// Tested in redux-utils.test.ts
-					// @ts-ignore
-					action.payload,
-					state,
-			  ) ?? state;
+	action: ActionListUnion<State, utilTypes.TupleToTypeList<Handlers>>,
+) =>
+	state === undefined
+		? defaultState
+		: // Tested in redux-utils.test.ts
+		  // @ts-ignore
+		  handlers.find(handler => handler[0].toString() === action.type)?.[1]?.(
+				// Tested in redux-utils.test.ts
+				// @ts-ignore
+				action.payload,
+				state,
+		  ) ?? state;
 
 /**
  * Wraps all calls to dispatch, such that the actions provided are wrapped with the

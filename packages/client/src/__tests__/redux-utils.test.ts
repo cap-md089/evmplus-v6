@@ -14,7 +14,7 @@ describe('redux-utils', () => {
 		action1.handler((payload, state: number) => state + 1),
 		action2.handler((payload, state: number) => payload),
 		wrappedAction.handler((payload, state: number) =>
-			typeof payload.payload === 'string' ? state : payload.payload,
+			payload.type === 'Increment' ? state + 1 : payload.payload,
 		),
 	);
 
@@ -31,6 +31,9 @@ describe('redux-utils', () => {
 		expect(reducer(0, action1())).toEqual(1);
 		// Action 2 sets the value
 		expect(reducer(0, action2('4'))).toEqual(4);
+		// Wrapped actions
+		expect(reducer(0, action1().wrap(wrappedAction))).toEqual(1);
+		expect(reducer(0, action2.wrap(wrappedAction)('4'))).toEqual(4);
 		// Action 3 is ignored. As there is no handler defined, not only will
 		// the reducer return the state, but TypeScript should throw an error
 		// @ts-expect-error

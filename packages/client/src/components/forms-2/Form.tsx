@@ -262,6 +262,17 @@ export interface FormOptions<Fields extends {}, Collapsed = {}> {
 	titleRenderer?: (title: string) => React.ReactNode;
 
 	/**
+	 * Used to render custom rows, with the content within
+	 *
+	 * The return value is passed to `rowRenderer` as the form element
+	 *
+	 * This function can simply do a lookup in a table and return a pre-rendered
+	 * element or whatever. The important thing is that react nodes are not stored
+	 * in the state, in the model
+	 */
+	customRowRenderer?: (key: string) => React.ReactNode;
+
+	/**
 	 * Similar to the collapse method for a form input, this just operates on a
 	 * larger scale
 	 *
@@ -341,13 +352,10 @@ export interface CustomRow {
 	type: 'Row';
 
 	/**
-	 * The key used for performance
+	 * The key used for performance and for
+	 * use in custom
 	 */
 	key: string;
-	/**
-	 * The actual row to render
-	 */
-	row: React.ReactNode;
 }
 
 /**
@@ -601,7 +609,7 @@ export const createForm = <Fields, Collapsed>(
 	const submitButtonClass = model.submitButtonClass ?? settings?.submitButtonClassName ?? '';
 	const showSubmitButton = settings?.showSubmitButton ?? true;
 
-	const submitRowRenderer = settings?.rowRenderer ?? defaultRowRenderer;
+	const rowRenderer = settings?.rowRenderer ?? defaultRowRenderer;
 	const titleRenderer = settings?.titleRenderer ?? defaultTitleRenderer;
 	const keyFunction = settings?.keyFunction ?? defaultKeyFunction;
 
@@ -630,8 +638,13 @@ export const createForm = <Fields, Collapsed>(
 			case 'Title':
 				return <React.Fragment key={key}>{titleRenderer(rowElement.title)}</React.Fragment>;
 
-			case 'Row':
-				return <React.Fragment key={key}>{rowElement.row}</React.Fragment>;
+			case 'Row': {
+				return settings?.customRowRenderer ? (
+					<React.Fragment key={key}>
+						{rowRenderer(key, settings.customRowRenderer(key))}
+					</React.Fragment>
+				) : null;
+			}
 
 			case 'Field': {
 				const fieldDefinition = items[rowElement.fieldName];
@@ -640,7 +653,7 @@ export const createForm = <Fields, Collapsed>(
 					return null;
 				}
 
-				const rowRenderer =
+				const rowRender =
 					settings?.rowRenderer ??
 					fieldDefinition.component.rowRenderer ??
 					defaultRowRenderer;
@@ -654,7 +667,7 @@ export const createForm = <Fields, Collapsed>(
 					) ?? Either.right(void 0),
 				);
 
-				return rowRenderer(
+				return rowRender(
 					key,
 					fieldDefinition.component.component(
 						{
@@ -685,7 +698,7 @@ export const createForm = <Fields, Collapsed>(
 			{model.rowElements.map(renderRowElement)}
 
 			{showSubmitButton &&
-				submitRowRenderer(
+				rowRenderer(
 					'form-submit-row',
 					<input
 						type="submit"

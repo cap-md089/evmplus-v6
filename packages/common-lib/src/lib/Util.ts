@@ -122,6 +122,18 @@ export const memoize = <Return, Arg extends any>(func: (arg: Arg) => Return) => 
 	};
 };
 
+export const weakMemoize = <Return, Arg extends object>(func: (arg: Arg) => Return) => {
+	const returns = new WeakMap<Arg, Return>();
+
+	return (arg: Arg): Return => {
+		if (!returns.has(arg)) {
+			returns.set(arg, func(arg));
+		}
+
+		return returns.get(arg)!;
+	};
+};
+
 export const onlyRights = <T>(arr: Array<EitherObj<any, T>>): T[] =>
 	arr.filter(Either.isRight).map(get('value'));
 
