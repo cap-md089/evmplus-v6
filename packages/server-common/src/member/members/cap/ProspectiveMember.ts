@@ -39,7 +39,6 @@ import {
 	getMemberName,
 	getUserID,
 	isRegularCAPAccountObject,
-	Maybe,
 	NewCAPProspectiveMember,
 	RawCAPEventAccountObject,
 	RawCAPProspectiveMemberObject,
@@ -54,6 +53,7 @@ import {
 	CAPNHQMemberReference,
 	always,
 	destroy,
+	asyncIterReduce,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
 import { CAP } from '..';
@@ -64,6 +64,7 @@ import {
 	deleteFromCollectionA,
 	findAndBindC,
 	addItemToCollection,
+	generateResults,
 } from '../../../MySQLUtil';
 import { getRegistry } from '../../../Registry';
 import { getNameForCAPNHQMember } from './NHQMember';
@@ -250,16 +251,16 @@ export const createCAPProspectiveMember = (schema: Schema) => (
 		asyncRight(
 			findAndBindC<StoredProspectiveMemberObject>({
 				accountID: account.id,
-			})(collection)
-				.sort('id DESC')
-				.limit(1),
+			})(collection),
 			errorGenerator('Could not get member ID'),
 		)
-			.map(collectResults)
-			.map(Maybe.fromArray)
-			.map(Maybe.map(({ id }) => parseInt(id.split('-')[1], 10)))
-			.map(Maybe.map(addOne))
-			.map(Maybe.orSome(1))
+			.map(generateResults)
+			.map(
+				asyncIterReduce((prev: number, curr: StoredProspectiveMemberObject) =>
+					Math.max(prev, parseInt(curr.id.split('-')[1], 10)),
+				)(1),
+			)
+			.map(addOne)
 			.map(id => `${account.id}-${id}`)
 			.flatMap(id =>
 				getRegistry(schema)(account).map<RawCAPProspectiveMemberObject>(registry => ({
