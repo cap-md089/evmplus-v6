@@ -28,8 +28,6 @@ import 'regenerator-runtime/runtime';
 import App from './App';
 import './_theme.scss';
 
-import './redux-utils';
-
 ReactDOM.render(
 	<Router>
 		<App isMobile={false} />
