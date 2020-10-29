@@ -27,49 +27,53 @@ const renderTeamName = (team: RawTeamObject) =>
 export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 	team: RawTeamObject,
 ): Promise<[MaybeObj<Role>, MaybeObj<Role>, MaybeObj<Role>]> => {
-	const genericTeamMemberRole = M.fromValue(guild.roles.find(byName('Team Member')));
+	const roles = (await guild.roles.fetch()).cache;
+
+	const genericTeamMemberRole = M.fromValue(roles.find(byName('Team Member')));
 
 	const permissions = new Permissions(Permissions.DEFAULT)
 		.remove(Permissions.FLAGS.CHANGE_NICKNAME!)
 		.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!);
 
-	let teamLeaderRole = M.fromValue(guild.roles.find(byName(`Team Lead - ${team.name}`)));
+	let teamLeaderRole = M.fromValue(roles.find(byName(`Team Lead - ${team.name}`)));
 
 	if (!teamLeaderRole.hasValue) {
 		const position = Math.min(
 			M.orSome(Number.POSITIVE_INFINITY)(
 				M.map<Role, number>(r => r.position)(
-					M.fromValue(guild.roles.find(byName('Team Member'))),
+					M.fromValue(roles.find(byName('Team Member'))),
 				),
 			),
-			guild.roles
+			roles
 				.filter(role => role.name.toLowerCase().includes('team lead'))
 				.map(role => role.position)
 				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY),
 		);
 
 		teamLeaderRole = M.some(
-			await guild.createRole({
-				color: [241, 196, 15],
-				hoist: false,
-				mentionable: false,
-				name: `Team Lead - ${team.name}`,
-				position,
-				permissions,
+			await guild.roles.create({
+				data: {
+					color: [241, 196, 15],
+					hoist: false,
+					mentionable: false,
+					name: `Team Lead - ${team.name}`,
+					position,
+					permissions,
+				},
 			}),
 		);
 	}
 
-	let teamMemberRole = M.fromValue(guild.roles.find(byName(renderTeamName(team))));
+	let teamMemberRole = M.fromValue(roles.find(byName(renderTeamName(team))));
 
 	if (!teamMemberRole.hasValue) {
 		const position = Math.min(
 			M.orSome(Number.POSITIVE_INFINITY)(
 				M.map<Role, number>(r => r.position)(
-					M.fromValue(guild.roles.find(byName('Team Member'))),
+					M.fromValue(roles.find(byName('Team Member'))),
 				),
 			),
-			guild.roles
+			roles
 				.filter(
 					role =>
 						role.name.toLowerCase().includes('team') &&
@@ -80,13 +84,15 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 		);
 
 		teamMemberRole = M.some(
-			await guild.createRole({
-				color: [194, 124, 14],
-				hoist: false,
-				mentionable: false,
-				name: renderTeamName(team),
-				position,
-				permissions,
+			await guild.roles.create({
+				data: {
+					color: [194, 124, 14],
+					hoist: false,
+					mentionable: false,
+					name: renderTeamName(team),
+					position,
+					permissions,
+				},
 			}),
 		);
 	}

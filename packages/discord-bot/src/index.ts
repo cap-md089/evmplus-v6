@@ -34,15 +34,15 @@ import {
 import { Client } from 'discord.js';
 import 'dotenv/config';
 import { confFromRaw, getMembers, getRegistry, getTeamObjects } from 'server-common';
+import notifyRole from './cli/notifyRole';
+import setupServer from './cli/setupServer';
+import updateServers from './cli/updateServers';
 import attendancerecord from './commands/attendancerecord';
 import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser from './data/setupUser';
-import setupServer from './cli/setupServer';
-import notifyRole from './cli/notifyRole';
-import updateServers from './cli/updateServers';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
@@ -138,59 +138,61 @@ export default function setupDiscordBot(
 
 		const discordServer = account.discordServer;
 
-		if (!discordServer.hasValue) {
-			await session.close();
-			return;
-		}
-
-		const guild = client.guilds.get(discordServer.value.serverID);
-
-		if (!guild) {
-			await session.close();
-			return;
-		}
-
-		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
-			getDiscordAccount(schema)(toReference(member)),
-			getOrCreateTeamRolesForTeam(guild)(team),
-		]);
-
-		if (!discordAccountMaybe.hasValue) {
-			await session.close();
-			return;
-		}
-
-		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
-
-		if (!guildMember) {
-			await session.close();
-			return;
-		}
-
-		let newRoles = guildMember.roles.clone();
-
-		if (M.isSome(leaderRole) && !isTeamLeader(member)(team)) {
-			newRoles = newRoles.filter(role => role.id !== leaderRole.value.id);
-		}
-
-		if (M.isSome(memberRole) && !isPartOfTeam(member)(team)) {
-			newRoles = newRoles.filter(role => role.id !== memberRole.value.id);
-		}
-
-		if (M.isSome(genericTeamRole)) {
-			const hasTeamRole = !!newRoles.find(
-				role =>
-					role.name.toLowerCase().includes('team') &&
-					!role.hexColor.toLowerCase().endsWith('71368a'),
-			);
-			if (!hasTeamRole) {
-				newRoles = newRoles.filter(role => role.id !== genericTeamRole.value.id);
+		try {
+			if (!discordServer.hasValue) {
+				return;
 			}
+
+			const guild = await client.guilds.fetch(discordServer.value.serverID);
+
+			if (!guild) {
+				return;
+			}
+
+			const [
+				discordAccountMaybe,
+				[genericTeamRole, leaderRole, memberRole],
+			] = await Promise.all([
+				getDiscordAccount(schema)(toReference(member)),
+				getOrCreateTeamRolesForTeam(guild)(team),
+			]);
+
+			if (!discordAccountMaybe.hasValue) {
+				return;
+			}
+
+			const guildMember = await guild.members.fetch(discordAccountMaybe.value.discordID);
+
+			if (!guildMember) {
+				await session.close();
+				return;
+			}
+
+			let newRoles = guildMember.roles.cache.clone();
+
+			if (M.isSome(leaderRole) && !isTeamLeader(member)(team)) {
+				newRoles = newRoles.filter(role => role.id !== leaderRole.value.id);
+			}
+
+			if (M.isSome(memberRole) && !isPartOfTeam(member)(team)) {
+				newRoles = newRoles.filter(role => role.id !== memberRole.value.id);
+			}
+
+			if (M.isSome(genericTeamRole)) {
+				const hasTeamRole = !!newRoles.find(
+					role =>
+						role.name.toLowerCase().includes('team') &&
+						!role.hexColor.toLowerCase().endsWith('71368a'),
+				);
+				if (!hasTeamRole) {
+					newRoles = newRoles.filter(role => role.id !== genericTeamRole.value.id);
+				}
+			}
+
+			await guildMember.roles.set(newRoles);
+		} finally {
+			await session.close();
 		}
-
-		await guildMember.setRoles(newRoles);
-
-		await session.close();
 	});
 
 	capwatchEmitter.on('teamMemberAdd', async ({ account, member, team }) => {
@@ -198,52 +200,53 @@ export default function setupDiscordBot(
 
 		const discordServer = account.discordServer;
 
-		if (!discordServer.hasValue) {
+		try {
+			if (!discordServer.hasValue) {
+				return;
+			}
+
+			const guild = await client.guilds.fetch(discordServer.value.serverID);
+
+			if (!guild) {
+				return;
+			}
+
+			const [
+				discordAccountMaybe,
+				[genericTeamRole, leaderRole, memberRole],
+			] = await Promise.all([
+				getDiscordAccount(schema)(toReference(member)),
+				getOrCreateTeamRolesForTeam(guild)(team),
+			]);
+
+			if (!discordAccountMaybe.hasValue) {
+				return;
+			}
+
+			const guildMember = await guild.members.fetch(discordAccountMaybe.value.discordID);
+
+			if (!guildMember) {
+				return;
+			}
+
+			const newRoles = guildMember.roles.cache.clone();
+
+			if (M.isSome(leaderRole) && isTeamLeader(member)(team)) {
+				newRoles.set(leaderRole.value.id, leaderRole.value);
+			}
+
+			if (M.isSome(genericTeamRole)) {
+				newRoles.set(genericTeamRole.value.id, genericTeamRole.value);
+			}
+
+			if (M.isSome(memberRole)) {
+				newRoles.set(memberRole.value.id, memberRole.value);
+			}
+
+			await guildMember.roles.set(newRoles);
+		} finally {
 			await session.close();
-			return;
 		}
-
-		const guild = client.guilds.get(discordServer.value.serverID);
-
-		if (!guild) {
-			return;
-		}
-
-		const [discordAccountMaybe, [genericTeamRole, leaderRole, memberRole]] = await Promise.all([
-			getDiscordAccount(schema)(toReference(member)),
-			getOrCreateTeamRolesForTeam(guild)(team),
-		]);
-
-		if (!discordAccountMaybe.hasValue) {
-			await session.close();
-			await session.close();
-			return;
-		}
-
-		const guildMember = guild.members.get(discordAccountMaybe.value.discordID);
-
-		if (!guildMember) {
-			await session.close();
-			return;
-		}
-
-		const newRoles = guildMember.roles.clone();
-
-		if (M.isSome(leaderRole) && isTeamLeader(member)(team)) {
-			newRoles.set(leaderRole.value.id, leaderRole.value);
-		}
-
-		if (M.isSome(genericTeamRole)) {
-			newRoles.set(genericTeamRole.value.id, genericTeamRole.value);
-		}
-
-		if (M.isSome(memberRole)) {
-			newRoles.set(memberRole.value.id, memberRole.value);
-		}
-
-		await guildMember.setRoles(newRoles);
-
-		await session.close();
 	});
 
 	capwatchEmitter.on('memberChange', async ({ member, account: accountObj }) => {
@@ -313,7 +316,7 @@ export default function setupDiscordBot(
 	client.on('message', message => {
 		const parts = message.content.split(' ');
 
-		if (parts[0] === `<@!${client.user.id}>` && message.member.id !== client.user.id) {
+		if (parts[0] === `<@!${client.user?.id}>` && message.member?.id !== client.user?.id) {
 			if (parts.length < 2) {
 				message.reply('Command needed; known commands are "attendancerecord"');
 				return;
@@ -384,13 +387,11 @@ if (require.main === module) {
 
 					await commandFunction(mysqlClient, conf, client, args);
 
-					await client.destroy();
-
 					resolve();
 				} catch (e) {
-					await client.destroy();
-
 					reject(e);
+				} finally {
+					client.destroy();
 				}
 			});
 

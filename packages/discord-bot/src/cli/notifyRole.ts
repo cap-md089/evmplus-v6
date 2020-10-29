@@ -18,8 +18,8 @@
  */
 
 import * as mysql from '@mysql/xdevapi';
-import { ServerConfiguration, Maybe } from 'common-lib';
-import { Client, GuildChannel, TextChannel, Role } from 'discord.js';
+import { Maybe, ServerConfiguration } from 'common-lib';
+import { Client, GuildChannel, Role, TextChannel } from 'discord.js';
 import { getAccount } from 'server-common';
 import { byName, byProp } from '../data/setupUser';
 
@@ -44,48 +44,52 @@ export default async (
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
-	const account = await getAccount(schema)(accountID).fullJoin();
-	const { discordServer } = account;
+	try {
+		const account = await getAccount(schema)(accountID).fullJoin();
+		const { discordServer } = account;
 
-	if (Maybe.isNone(discordServer)) {
-		throw new Error('Account does not have an associated Discord server');
-	}
-
-	const guild = client.guilds.get(discordServer.value.serverID);
-
-	if (!guild) {
-		throw new Error('There was an issue getting guild information');
-	}
-
-	const rolesToMention: Role[] = [];
-
-	for (const roleName of roleNames) {
-		const role = guild.roles.find(byName(roleName));
-
-		if (!role) {
-			throw new Error(`Could not find role by the name of "${roleName}"`);
+		if (Maybe.isNone(discordServer)) {
+			throw new Error('Account does not have an associated Discord server');
 		}
 
-		rolesToMention.push(role);
+		const guild = await client.guilds.fetch(discordServer.value.serverID);
+
+		if (!guild) {
+			throw new Error('There was an issue getting guild information');
+		}
+
+		const rolesToMention: Role[] = [];
+
+		for (const roleName of roleNames) {
+			const role = (await guild.roles.fetch()).cache.find(byName(roleName));
+
+			if (!role) {
+				throw new Error(`Could not find role by the name of "${roleName}"`);
+			}
+
+			rolesToMention.push(role);
+		}
+
+		if (rolesToMention.length === 0) {
+			throw new Error('No roles are being mentioned');
+		}
+
+		const channel = guild.channels.cache.find(byProp<GuildChannel>('name')(channelName));
+
+		if (!channel) {
+			throw new Error('There was an issue getting the staff channel');
+		}
+
+		if (channel.type !== 'text') {
+			throw new Error('Staff channel is not a text channel');
+		}
+
+		const textChannel = channel as TextChannel;
+
+		const mentionPartOfMessage = rolesToMention.map(role => `<@&${role.id}>`).join(', ');
+
+		await textChannel.send(`${mentionPartOfMessage} ${message}`);
+	} finally {
+		await session.close();
 	}
-
-	if (rolesToMention.length === 0) {
-		throw new Error('No roles are being mentioned');
-	}
-
-	const channel = guild.channels.find(byProp<GuildChannel>('name')(channelName));
-
-	if (!channel) {
-		throw new Error('There was an issue getting the staff channel');
-	}
-
-	if (channel.type !== 'text') {
-		throw new Error('Staff channel is not a text channel');
-	}
-
-	const textChannel = channel as TextChannel;
-
-	const mentionPartOfMessage = rolesToMention.map(role => `<@&${role.id}>`).join(', ');
-
-	await textChannel.send(`${mentionPartOfMessage} ${message}`);
 };
