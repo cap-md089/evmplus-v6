@@ -6,15 +6,15 @@ const lineHeight = {
 
 export const TermsAndConditions = () => (
 	<div style={lineHeight}>
-		<h2>Welcome to CAPUnit.com</h2>
+		<h2>Welcome to EvMPlus.org</h2>
 		<p>
 			These terms and conditions outline the rules and regulations for the use of
-			CAPUnit.com's Website.
+			EvMPlus.org's Website.
 		</p>{' '}
 		<br />
 		<p>
 			By accessing this website you accept these terms and conditions in full. Do not continue
-			to use CAPUnit.com's website if you do not accept all of the terms and conditions stated
+			to use EvMPlus.org's website if you do not accept all of the terms and conditions stated
 			on this page.
 		</p>
 		<p>
@@ -32,8 +32,8 @@ export const TermsAndConditions = () => (
 		</p>
 		<h2>Cookies</h2>
 		<p>
-			We employ the use of cookies. By using CAPUnit.com's website you consent to the use of
-			cookies in accordance with CAPUnit.com's privacy policy.
+			We employ the use of cookies. By using EvMPlus.org's website you consent to the use of
+			cookies in accordance with EvMPlus.org's privacy policy.
 		</p>
 		<p>
 			Most of the modern day interactive web sites use cookies to enable us to retrieve user
@@ -42,21 +42,21 @@ export const TermsAndConditions = () => (
 		</p>
 		<h2>License</h2>
 		<p>
-			Unless otherwise stated, CAPUnit.com and/or it's licensors own the intellectual property
-			rights for the presentation of all material on and downloaded from CAPUnit.com.
+			Unless otherwise stated, EvMPlus.org and/or it's licensors own the intellectual property
+			rights for the presentation of all material on and downloaded from EvMPlus.org.
 			eServices information, in the form of CAPWATCH file download and import actions, remain
 			the property of the Civil Air Patrol. All intellectual property rights are reserved. You
-			may view and/or print pages from CAPUnit.com in the performance of the CAP mission only
+			may view and/or print pages from EvMPlus.org in the performance of the CAP mission only
 			and as subject to restrictions set in these terms and conditions.
 		</p>
 		<p>You must not:</p>
 		<ol>
-			<li>Republish material from CAPUnit.com</li>
-			<li>Sell, rent or sub-license material from CAPUnit.com</li>
-			<li>Reproduce, duplicate or copy material from CAPUnit.com</li>
+			<li>Republish material from EvMPlus.org</li>
+			<li>Sell, rent or sub-license material from EvMPlus.org</li>
+			<li>Reproduce, duplicate or copy material from EvMPlus.org</li>
 		</ol>
 		<p>
-			Redistribute content from CAPUnit.com (unless content is specifically made for
+			Redistribute content from EvMPlus.org (unless content is specifically made for
 			redistribution).
 		</p>
 		<h2>Hyperlinking to our Content</h2>
@@ -121,8 +121,8 @@ export const TermsAndConditions = () => (
 		<p>
 			If you are among the organizations listed in paragraph 2 above and are interested in
 			linking to our website, you must notify us by sending an e-mail to{' '}
-			<a href="mailto:support@capunit.com" title="send an email to support@capunit.com">
-				support@capunit.com
+			<a href="mailto:support@EvMPlus.org" title="send an email to support@EvMPlus.org">
+				support@EvMPlus.org
 			</a>
 			. Please include your name, your organization name, contact information (such as a phone
 			number and/or e-mail address) as well as the URL of your site, a list of any URLs from
@@ -139,7 +139,7 @@ export const TermsAndConditions = () => (
 			</li>
 		</ol>
 		<p>
-			No use of CAPUnit.com's logo or other artwork will be allowed for linking absent a
+			No use of EvMPlus.org's logo or other artwork will be allowed for linking absent a
 			trademark license agreement.
 		</p>
 		<h2>Iframes</h2>
