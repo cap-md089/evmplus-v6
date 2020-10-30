@@ -50,7 +50,7 @@ import SetupMFA from '../account/SetupMFA';
 
 interface UnloadedAdminState {
 	loaded: false;
-	absneteeInformation: null;
+	absenteeInformation: null;
 }
 
 interface LoadedAdminState {
@@ -111,7 +111,7 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 export default class Admin extends Page<PageProps, AdminState> {
 	public state: AdminState = {
 		loaded: false,
-		absneteeInformation: null,
+		absenteeInformation: null,
 	};
 
 	constructor(props: PageProps) {
