@@ -50,7 +50,7 @@ import EventViewer from '../pages/events/EventViewer';
 import ModifyEvent from '../pages/events/ModifyEvent';
 import Main from '../pages/Main';
 import NotFound from '../pages/NotFound';
-import Page from '../pages/Page';
+import Page, { PageProps } from '../pages/Page';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamEdit from '../pages/team/TeamEdit';
 import TeamList from '../pages/team/TeamList';
@@ -62,10 +62,12 @@ import { SideNavigationItem } from './page-elements/SideNavigation';
 import { Quizzer } from '../pages/quizzer/Quizzer';
 import TeamEmailList from '../pages/team/TeamEmail';
 import ScanAdd from '../pages/events/ScanAdd';
+import TermsAndConditions from '../pages/legal/TermsAndConditions';
+import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
 
 const pages: Array<{
 	url: string;
-	component: typeof Page;
+	component: typeof Page | React.FC<PageProps>;
 	exact: boolean;
 }> = [
 	{
@@ -238,6 +240,16 @@ const pages: Array<{
 		component: ScanAdd,
 		exact: false,
 	},
+	{
+		url: '/terms-and-conditions',
+		component: TermsAndConditions,
+		exact: false,
+	},
+	{
+		url: '/privacy-policy',
+		component: PrivacyPolicy,
+		exact: false,
+	},
 
 	// THIS GOES LAST
 	// Otherwise, have fun debugging why you get a 404 for every page
@@ -249,7 +261,7 @@ const pages: Array<{
 ];
 
 const composeElement = (
-	El: typeof Page,
+	El: typeof Page | React.FC<PageProps>,
 	account: AccountObject,
 	authorizeUser: (arg: SigninReturn) => void,
 	updateSideNav: (links: SideNavigationItem[]) => void,
@@ -276,7 +288,7 @@ const composeElement = (
 };
 
 interface PageDisplayerProps {
-	El: typeof Page;
+	El: typeof Page | React.FC<PageProps>;
 	account: AccountObject;
 	authorizeUser: (arg: SigninReturn) => void;
 	updateSideNav: (links: SideNavigationItem[]) => void;
