@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.20](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.20) (2020-10-30)
+
+
+### Bug Fixes
+
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+
+
+
+## [1.3.19](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.19) (2020-10-29)
+
+
+### Bug Fixes
+
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+
+
+
+## [1.3.18](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.18) (2020-10-27)
+
+
+### Bug Fixes
+
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+
+
+
 ## [1.3.17](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.17) (2020-10-16)
 
 **Note:** Version bump only for package auto-api-tests

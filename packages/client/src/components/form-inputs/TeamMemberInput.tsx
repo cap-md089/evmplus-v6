@@ -27,7 +27,7 @@ export interface TeamMemberInputProps extends InputProps<NewTeamMemberEdit> {
 	memberList: Member[];
 }
 
-export default (props: TeamMemberInputProps) => (
+export const TeamMemberInput = (props: TeamMemberInputProps) => (
 	<FormBlock
 		onUpdate={props.onUpdate}
 		onInitialize={props.onInitialize}
@@ -40,3 +40,5 @@ export default (props: TeamMemberInputProps) => (
 		<TextInput name="job" />
 	</FormBlock>
 );
+
+export default TeamMemberInput;

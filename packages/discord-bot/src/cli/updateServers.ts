@@ -27,7 +27,7 @@ import {
 	ServerConfiguration,
 	RawTeamObject,
 } from 'common-lib';
-import { Client, Guild } from 'discord.js';
+import { Client, Guild, Role } from 'discord.js';
 import { collectResults, findAndBind, getTeamObjects } from 'server-common';
 import getAccountForDiscordServer from '../data/getAccount';
 import setupUser, { byName } from '../data/setupUser';
@@ -60,7 +60,7 @@ export default async (
 
 		const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
-		for (const member of guild.members.array()) {
+		for (const [_, member] of await guild.members.fetch()) {
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
 			if (guild.ownerID !== member.id && !member.user.bot) {
@@ -71,12 +71,16 @@ export default async (
 					)(results[0]);
 				} else {
 					await (
-						await member.setRoles([guild.roles.find(byName('Processing'))])
+						await member.roles.set(
+							[(await guild.roles.fetch()).cache.find(byName('Processing'))].filter(
+								(role): role is Role => !!role,
+							),
+						)
 					).setNickname('');
 
 					try {
 						const dmChannel = await member.createDM();
-						if (dmChannel.messages.size === 0) {
+						if (!dmChannel.messages.channel.lastMessage) {
 							// 	await dmChannel.send(
 							// 		`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`
 							// 	);
@@ -92,70 +96,78 @@ export default async (
 		console.log(`Updated ${account.id} (${id}).`);
 	};
 
-	if (args.length === 1) {
-		const guild = client.guilds.get(args[0]);
+	try {
+		if (args.length === 1) {
+			const guild = await client.guilds.fetch(args[0]);
 
-		if (!guild) {
-			throw new Error('Guild not found!');
-		}
+			if (!guild) {
+				throw new Error('Guild not found!');
+			}
 
-		await setupServer(args[0], guild);
-	} else if (args.length === 2) {
-		const guild = client.guilds.get(args[0]);
+			await setupServer(args[0], guild);
+		} else if (args.length === 2) {
+			const guild = await client.guilds.fetch(args[0]);
 
-		if (!guild) {
-			throw new Error('Guild not found!');
-		}
+			if (!guild) {
+				throw new Error('Guild not found!');
+			}
 
-		const member = guild.members.get(args[1]);
+			const member = await guild.members.fetch(args[1]);
 
-		if (!member) {
-			throw new Error('Member not found');
-		}
+			if (!member) {
+				throw new Error('Member not found');
+			}
 
-		const accountMaybe = await getAccountForDiscordServer(schema)(args[0]);
+			const accountMaybe = await getAccountForDiscordServer(schema)(args[0]);
 
-		if (Maybe.isNone(accountMaybe)) {
-			throw new Error('Guild does not have an account');
-		}
+			if (Maybe.isNone(accountMaybe)) {
+				throw new Error('Guild does not have an account');
+			}
 
-		const account = accountMaybe.value;
+			const account = accountMaybe.value;
 
-		const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
-		const results = await collectResults(findAndBind(collection, { discordID: member.id }));
+			const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
+			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
-		if (guild.ownerID !== member.id && !member.user.bot) {
-			if (results.length === 1) {
-				const teams = await getTeamObjects(schema)(accountMaybe.value)
-					// block the staff team
-					.map(asyncIterFilter(team => team.id !== 0))
-					.map(asyncIterFilter<RawTeamObject>(isPartOfTeam(results[0].member)))
-					.map(collectGeneratorAsync)
-					.fullJoin();
+			if (guild.ownerID !== member.id && !member.user.bot) {
+				if (results.length === 1) {
+					const teams = await getTeamObjects(schema)(accountMaybe.value)
+						// block the staff team
+						.map(asyncIterFilter(team => team.id !== 0))
+						.map(asyncIterFilter<RawTeamObject>(isPartOfTeam(results[0].member)))
+						.map(collectGeneratorAsync)
+						.fullJoin();
 
-				console.log(`Updating ${member.displayName}`);
-				await setupUser(client)(schema)(args[0])(account)(teams)(results[0]);
-			} else {
-				await (await member.setRoles([guild.roles.find(byName('Processing'))])).setNickname(
-					'',
-				);
+					console.log(`Updating ${member.displayName}`);
+					await setupUser(client)(schema)(args[0])(account)(teams)(results[0]);
+				} else {
+					await (
+						await member.roles.set(
+							[(await guild.roles.fetch()).cache.find(byName('Processing'))].filter(
+								(role): role is Role => !!role,
+							),
+						)
+					).setNickname('');
 
-				try {
-					const dmChannel = await member.createDM();
-					if (dmChannel.messages.size === 0) {
-						// 	await dmChannel.send(
-						// 		`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`
-						// 	);
-						console.log('Empty chat:', member.displayName);
+					try {
+						const dmChannel = await member.createDM();
+						if (!dmChannel.messages.channel.lastMessage) {
+							// 	await dmChannel.send(
+							// 		`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`
+							// 	);
+							console.log('Empty chat:', member.displayName);
+						}
+					} catch (e) {
+						console.error('Cannot send message to ', member.displayName);
 					}
-				} catch (e) {
-					console.error('Cannot send message to ', member.displayName);
 				}
 			}
+		} else {
+			for (const [id, guild] of client.guilds.cache.entries()) {
+				await setupServer(id, guild);
+			}
 		}
-	} else {
-		for (const [id, guild] of client.guilds.entries()) {
-			await setupServer(id, guild);
-		}
+	} finally {
+		await session.close();
 	}
 };

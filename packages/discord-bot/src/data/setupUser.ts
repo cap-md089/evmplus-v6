@@ -26,7 +26,6 @@ import {
 	CAPMemberObject,
 	collectGeneratorAsync,
 	DiscordAccount,
-	DiscordServerInformation,
 	Either,
 	EitherObj,
 	get,
@@ -42,7 +41,7 @@ import {
 	RawTeamObject,
 	ServerError,
 } from 'common-lib';
-import { Client, Collection, Guild, GuildMember, Permissions, Role } from 'discord.js';
+import { Client, Guild, GuildMember, GuildMemberRoleManager, Permissions, Role } from 'discord.js';
 import {
 	collectResults,
 	findAndBind,
@@ -287,8 +286,8 @@ export const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K])
 
 export const byName = byProp<{ name: string }>('name');
 
-const roleNamesToRoles = (rolesCollection: Collection<string, Role>) => (roleNames: string[]) =>
-	rolesCollection.array().filter(role => roleNames.includes(role.name));
+const roleNamesToRoles = (rolesCollection: GuildMemberRoleManager) => (roleNames: string[]) =>
+	rolesCollection.cache.array().filter(role => roleNames.includes(role.name));
 
 const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 	member: Member,
@@ -301,72 +300,80 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 
 	const extraRoles = dutyPositionNames.filter(name => !allRoles.includes(name));
 
+	const roles = (await guild.roles.fetch()).cache;
+
 	if (hasExecutiveStaffRole(dutyPositionNames)) {
-		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Executive Staff'))));
+		categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Executive Staff'))));
 
 		if (dutyPositionNames.includes('Cadet Deputy Commander')) {
-			categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Line Staff'))));
+			categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Line Staff'))));
 		}
 
 		if (dutyPositionNames.includes('Cadet Executive Officer')) {
-			categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Support Staff'))));
+			categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Support Staff'))));
 		}
 	}
 
 	if (hasLineStaffRole(dutyPositionNames)) {
-		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Line Staff'))));
+		categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Line Staff'))));
 	}
 
 	if (hasSupportStaffRole(dutyPositionNames) || extraRoles.length > 0) {
-		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('Cadet Support Staff'))));
+		categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Support Staff'))));
 	}
 
 	if (hasCACRole(dutyPositionNames)) {
-		categoryRoles.push(Maybe.fromValue(guild.roles.find(byName('CAC Representative'))));
+		categoryRoles.push(Maybe.fromValue(roles.find(byName('CAC Representative'))));
 	}
 
 	for (const role of extraRoles) {
 		if (role.includes('OIC') || role.includes('Officer')) {
-			if (guild.roles.find(byName(role))) {
+			if (roles.find(byName(role))) {
 				// Already added, just use that one
 				continue;
 			}
 
-			const position = [...guild.roles.values()]
+			const position = [...roles.values()]
 				.filter(({ name }) => name.includes('Officer') || name.includes('OIC'))
 				.map(get('position'))
 				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
-			await guild.createRole({
-				color: [17, 128, 106],
-				hoist: false,
-				mentionable: false,
-				name: role,
-				permissions: new Permissions(Permissions.DEFAULT)
-					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
-					.remove(Permissions.FLAGS.CHANGE_NICKNAME!),
-				position,
+			await guild.roles.create({
+				data: {
+					color: [17, 128, 106],
+					hoist: false,
+					mentionable: false,
+					name: role,
+					permissions: new Permissions(Permissions.DEFAULT)
+						.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
+						.remove(Permissions.FLAGS.CHANGE_NICKNAME)
+						.remove(Permissions.FLAGS.MENTION_EVERYONE),
+					position,
+				},
 			});
 		} else {
-			if (guild.roles.find(byName(role))) {
+			if (roles.find(byName(role))) {
 				// Already added, just use that one
 				continue;
 			}
 
-			const position = [...guild.roles.values()]
+			const position = [...roles.values()]
 				.filter(({ name }) => name.includes('NCO'))
 				.map(get('position'))
 				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
-			await guild.createRole({
-				color: [17, 128, 106],
-				hoist: false,
-				mentionable: false,
-				name: role,
-				permissions: new Permissions(Permissions.DEFAULT)
-					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
-					.remove(Permissions.FLAGS.CHANGE_NICKNAME!),
-				position,
+			await guild.roles.create({
+				data: {
+					color: [17, 128, 106],
+					hoist: false,
+					mentionable: false,
+					name: role,
+					permissions: new Permissions(Permissions.DEFAULT)
+						.remove(Permissions.FLAGS.MENTION_EVERYONE)
+						.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
+						.remove(Permissions.FLAGS.CHANGE_NICKNAME),
+					position,
+				},
 			});
 		}
 	}
@@ -375,30 +382,34 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 		...categoryRoles,
 		...allRoles
 			.filter(includes(dutyPositionNames))
-			.map(roleName => Maybe.fromValue(guild.roles.find(byName(roleName)))),
-		...extraRoles.map(roleName => Maybe.fromValue(guild.roles.find(byName(roleName)))),
+			.map(roleName => Maybe.fromValue(roles.find(byName(roleName)))),
+		...extraRoles.map(roleName => Maybe.fromValue(roles.find(byName(roleName)))),
 	]);
 };
 
-const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => (
+const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => async (
 	member: CAPMemberObject,
 ) => {
 	const dutyPositions = member.dutyPositions
 		.filter(position => position.type === 'NHQ' && orgids.includes(position.orgid))
 		.map(get('duty'));
 
-	return guild.roles.filterArray(role => dutyPositions.includes(role.name));
+	const roles = (await guild.roles.fetch()).cache;
+
+	return roles.array().filter(role => dutyPositions.includes(role.name));
 };
 
-const getFlightRoles = (guild: Guild) => (member: Member): Role[] => {
+const getFlightRoles = (guild: Guild) => async (member: Member): Promise<Role[]> => {
 	if (member.flight !== null) {
 		const isMatchingFlightRole = (flight: string) => (role: Role) =>
 			!!role.name.match(new RegExp(`^${flight}( flight)?$`, 'i'));
 
-		const flightRole = Maybe.fromValue(guild.roles.find(isMatchingFlightRole(member.flight)));
+		const roles = (await guild.roles.fetch()).cache;
+
+		const flightRole = Maybe.fromValue(roles.find(isMatchingFlightRole(member.flight)));
 
 		if (flightRole.hasValue) {
-			const flightCategoryRole = guild.roles.find(byName('Flight Member'));
+			const flightCategoryRole = roles.find(byName('Flight Member'));
 
 			if (flightCategoryRole) {
 				return [flightCategoryRole, flightRole.value];
@@ -420,7 +431,9 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObje
 		return [];
 	}
 
-	const roles = [Maybe.fromValue(guild.roles.find(byName('Team Member')))];
+	const roles = (await guild.roles.fetch()).cache;
+
+	const finalTeamRoles = [Maybe.fromValue(roles.find(byName('Team Member')))];
 
 	// Team name background: rgb(194, 124, 14)
 	// Team lead background: rgb(241, 196, 15)
@@ -433,13 +446,13 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObje
 		const teamRoles = await getOrCreateTeamRolesForTeam(guild)(team);
 
 		if (isTeamLeader(member)(team)) {
-			roles.push(teamRoles[1]);
+			finalTeamRoles.push(teamRoles[1]);
 		}
 
-		roles.push(teamRoles[2]);
+		finalTeamRoles.push(teamRoles[2]);
 	}
 
-	return onlyJustValues(roles);
+	return onlyJustValues(finalTeamRoles);
 };
 
 const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async (
@@ -448,6 +461,8 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 	if (member.type !== 'CAPNHQMember') {
 		return [];
 	}
+
+	const roles = (await guild.roles.fetch()).cache;
 
 	const achievementIDs = await collectResults(
 		findAndBind(schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'), {
@@ -484,13 +499,19 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 		roleNames = roleNames.filter(name => name !== 'GTM3');
 	}
 
-	return guild.roles.filter(role => roleNames.includes(role.name)).array();
+	return roles.filter(role => roleNames.includes(role.name)).array();
 };
 
 const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
 	discordUser: GuildMember,
 ) => (teams: RawTeamObject[]) => async (member: Member) => {
-	let roles: Role[];
+	const roles = (await guild.roles.fetch()).cache;
+
+	let finalRoles: Role[];
+
+	if (Maybe.isNone(account.discordServer)) {
+		return;
+	}
 
 	const beforeRoles = roleNamesToRoles(discordUser.roles)(ManualRoles);
 
@@ -501,66 +522,63 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 
 	if (isAccountMember) {
 		if (member.seniorMember) {
-			roles = [
+			finalRoles = [
 				...beforeRoles,
-				...getSeniorMemberDutyPositions(guild)(
+				...(await getSeniorMemberDutyPositions(guild)(
 					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account)),
-				)(member),
+				)(member)),
 				...(await get101CardCertificationRoles(guild)(schema)(member)),
 				...onlyJustValues([
-					Maybe.fromValue(guild.roles.find(byName('Senior Member'))),
-					Maybe.fromValue(guild.roles.find(byName('Certified Member'))),
+					Maybe.fromValue(roles.find(byName('Senior Member'))),
+					Maybe.fromValue(roles.find(byName('Certified Member'))),
 				]),
 			];
 		} else {
-			const oldRoles = discordUser.roles;
+			const oldRoles = discordUser.roles.cache;
 
-			roles = [
+			finalRoles = [
 				...beforeRoles,
 				...(await getDutyPositionRoles(guild)(
 					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account)),
 				)(member)),
-				...pipe(
-					Maybe.map<DiscordServerInformation, Role[]>(info =>
-						info.displayFlight ? getFlightRoles(guild)(member) : [],
-					),
-					Maybe.orSome([]),
-				)(account.discordServer),
+				...(account.discordServer.value.displayFlight
+					? await getFlightRoles(guild)(member)
+					: []),
 				...(await get101CardCertificationRoles(guild)(schema)(member)),
 				...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
-				...onlyJustValues([Maybe.fromValue(guild.roles.find(byName('Certified Member')))]),
+				...onlyJustValues([Maybe.fromValue(roles.find(byName('Certified Member')))]),
 			];
 
 			if (
 				oldRoles.find(byName('Cadet Commander')) &&
-				!roles.find(byName('Cadet Commander'))
+				!finalRoles.find(byName('Cadet Commander'))
 			) {
-				const prevCommanderRole = guild.roles.find(byName('Previous Cadet Commander'));
+				const prevCommanderRole = roles.find(byName('Previous Cadet Commander'));
 
 				if (prevCommanderRole) {
-					roles.push(prevCommanderRole);
+					finalRoles.push(prevCommanderRole);
 				}
 			}
 
 			if (
-				!roles.find(byName('Cadet Public Affairs NCO')) &&
-				!roles.find(byName('Cadet Public Affairs Officer'))
+				!finalRoles.find(byName('Cadet Public Affairs NCO')) &&
+				!finalRoles.find(byName('Cadet Public Affairs Officer'))
 			) {
-				roles = roles.filter(role => role.name !== 'Discord Server PAO');
+				finalRoles = finalRoles.filter(role => role.name !== 'Discord Server PAO');
 			}
 		}
 	} else {
-		roles = [
+		finalRoles = [
 			...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
 			...onlyJustValues([
-				Maybe.fromValue(guild.roles.find(byName('Certified Member'))),
-				Maybe.fromValue(guild.roles.find(byName('Guest'))),
+				Maybe.fromValue(roles.find(byName('Certified Member'))),
+				Maybe.fromValue(roles.find(byName('Guest'))),
 			]),
 		];
 	}
 
 	if (guild.ownerID !== discordUser.id) {
-		await discordUser.setRoles(roles);
+		await discordUser.roles.set(finalRoles);
 	}
 };
 
@@ -572,13 +590,13 @@ export default (client: Client) => (schema: Schema) => (guildID: string) => (
 	}
 
 	try {
-		const guild = client.guilds.get(guildID);
+		const guild = await client.guilds.fetch(guildID);
 
 		if (!guild) {
 			return;
 		}
 
-		const user = guild.members.get(discordUser.discordID);
+		const user = await guild.members.fetch(discordUser.discordID);
 
 		if (!user) {
 			return;

@@ -28,7 +28,7 @@ export interface FileDisplayProps {
 	member: ClientUser | null;
 }
 
-export default (props: FileDisplayProps) => (
+export const DriveFileDisplay = (props: FileDisplayProps) => (
 	<div
 		className={`drive-file-display ${props.selected ? 'selected' : ''}`}
 		onClick={() => props.onSelect(props.file)}
@@ -51,3 +51,5 @@ export default (props: FileDisplayProps) => (
 		</div>
 	</div>
 );
+
+export default DriveFileDisplay;
