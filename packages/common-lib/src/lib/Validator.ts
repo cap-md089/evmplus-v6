@@ -313,10 +313,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 	): ValidatorFunction<any> {
 		return {
 			validate: (input, keyName) => {
-				const results = validators
-					.map(callValidator)
-					.map(call(keyName))
-					.map(call(input));
+				const results = validators.map(callValidator).map(call(keyName)).map(call(input));
 
 				const errors = results.filter(Either.isLeft).map(get('value'));
 

@@ -71,10 +71,7 @@ export type Last<T extends TypeList<any, any>> = {
  * Converts a tuple to type list
  */
 export type TupleToTypeList<Tuple extends readonly any[]> = {
-	// @ts-ignore
-	recurse: ((...args: Tuple) => any) extends (head: infer U, ...tail: infer V) => any
-		? TypeList<U, TupleToTypeList<[...V]>>
-		: null;
+	recurse: Tuple extends [infer U, ...infer V] ? TypeList<U, TupleToTypeList<V>> : null;
 	base: null;
 }[Tuple extends [] ? 'base' : 'recurse'];
 

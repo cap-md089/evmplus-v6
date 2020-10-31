@@ -14,7 +14,7 @@
 		"@types/node": "^13.13.4",
 		"common-lib": "^1.22.0",
 		"jest-watch-typeahead": "^0.6.1",
-		"prettier": "^2.0.5",
+		"prettier": "^2.1",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
 		"typescript": "^4.0.5"

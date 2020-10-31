@@ -31,7 +31,7 @@ interface UploadFinishEvent {
 }
 
 export const uploadFile = (user: ClientUser) => (parentid: string) =>
-	async function*(file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
+	async function* (file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
 		const tokenEither = await fetchApi.token({}, {});
 
 		if (Either.isLeft(tokenEither)) {
@@ -99,7 +99,7 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 		});
 
 		const uploadPromise = new Promise<UploadFinishEvent>((res, rej) => {
-			xhr.addEventListener('readystatechange', function(evt: Event) {
+			xhr.addEventListener('readystatechange', function (evt: Event) {
 				if (this.readyState === 4) {
 					const resp = JSON.parse(this.responseText) as FullFileObject;
 

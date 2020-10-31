@@ -165,11 +165,14 @@ export default class Selector<T extends Identifiable> extends React.Component<
 							key={i}
 							onClick={this.getSelectHandler(val)}
 							className={
-								(this.props.multiple
-								? (this.props.value || []).map(value => value.id).indexOf(val.id) >
-								  -1
-								: typeof this.props.value !== 'undefined' &&
-								  this.props.value.id === val.id)
+								(
+									this.props.multiple
+										? (this.props.value || [])
+												.map(value => value.id)
+												.indexOf(val.id) > -1
+										: typeof this.props.value !== 'undefined' &&
+										  this.props.value.id === val.id
+								)
 									? 'selected'
 									: ''
 							}

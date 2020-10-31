@@ -3,7 +3,7 @@
 	"version": "6.19.0",
 	"private": true,
 	"scripts": {
-		"start": "dist/index.js",
+		"start": "node --no-warnings dist/index.js",
 		"test": "jest",
 		"build": "ttsc --project tsconfig.build.json",
 		"check": "ttsc --project tsconfig.build.json --noEmit",
@@ -74,7 +74,7 @@
 		"jest-watch-typeahead": "^0.6.1",
 		"mysql": "^2.18.1",
 		"nodemon": "^1.19.4",
-		"prettier": "^2.0.5",
+		"prettier": "^2.1",
 		"supertest": "^3.1.0",
 		"ts-jest": "^26",
 		"tslint": "^5.19.0",

@@ -241,10 +241,7 @@ const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventO
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees
-		.filter(Either.isRight)
-		.map(get('value'))
-		.map(get('record')),
+	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 

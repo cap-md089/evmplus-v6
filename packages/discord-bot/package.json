@@ -43,7 +43,7 @@
 		"jest": "^26",
 		"jest-cli": "^26",
 		"jest-watch-typeahead": "^0.6.1",
-		"prettier": "^2.0.5",
+		"prettier": "^2.1",
 		"ts-jest": "^26",
 		"tslint": "^6.0.0",
 		"tslint-config-prettier": "^1.18.0",

@@ -78,10 +78,6 @@ const addToCollectionWithCheck = (req: Req) =>
 
 export const func: ServerAPIEndpoint<api.member.account.RegisterDiscord> = PAM.RequireSessionType(
 	SessionType.REGULAR,
-)(req =>
-	addToCollectionWithCheck(req)
-		.map(destroy)
-		.map(wrapper),
-);
+)(req => addToCollectionWithCheck(req).map(destroy).map(wrapper));
 
 export default func;

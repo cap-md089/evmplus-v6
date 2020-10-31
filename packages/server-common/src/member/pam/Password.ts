@@ -317,10 +317,7 @@ export const validatePasswordResetToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.flatMap(collection =>
 			asyncRight(
@@ -348,10 +345,7 @@ export const removePasswordValidationToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.map(collection =>
 			collection

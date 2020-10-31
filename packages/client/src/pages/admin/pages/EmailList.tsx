@@ -62,11 +62,7 @@ const memberRanks = [
 ];
 
 const normalizeRankInput = (rank: string) =>
-	(rank || '')
-		.toLowerCase()
-		.replace('/', '')
-		.replace('2nd', '2d')
-		.replace(' ', '');
+	(rank || '').toLowerCase().replace('/', '').replace('2nd', '2d').replace(' ', '');
 
 interface EmailListLoadingState {
 	state: 'LOADING';

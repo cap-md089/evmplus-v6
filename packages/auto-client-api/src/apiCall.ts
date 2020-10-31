@@ -57,7 +57,7 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 			[
 				ts.createPropertyAssignment(
 					'paramKeys',
-					ts.createArrayLiteral(paramKeys.map(ts.createStringLiteral)),
+					ts.createArrayLiteral(paramKeys.map(key => ts.createStringLiteral(key))),
 				),
 				ts.createPropertyAssignment('url', ts.createLiteral(url)),
 				ts.createPropertyAssignment('method', ts.createLiteral(method)),

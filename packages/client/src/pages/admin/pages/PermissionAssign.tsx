@@ -256,9 +256,11 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			return;
 		}
 
-		const membersWithPermissions: Array<{
-			name: string;
-		} & api.member.permissions.PermissionInformation> = [];
+		const membersWithPermissions: Array<
+			{
+				name: string;
+			} & api.member.permissions.PermissionInformation
+		> = [];
 
 		for (const memberIDString in values) {
 			if (values.hasOwnProperty(memberIDString)) {

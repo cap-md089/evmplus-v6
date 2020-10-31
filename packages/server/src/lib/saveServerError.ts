@@ -75,9 +75,7 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 			if ('account' in req) {
 				account = Either.right(req.account);
 			} else {
-				account = await accountRequestTransformer(req)
-					.map(get('account'))
-					.join();
+				account = await accountRequestTransformer(req).map(get('account')).join();
 			}
 		}
 

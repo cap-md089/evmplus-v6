@@ -36,12 +36,7 @@ import wrapper from '../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.errors.ClientError> = req =>
 	asyncRight(req.mysqlx.getCollection<Errors>('Errors'), errorGenerator('Could not get new ID'))
-		.map(collection =>
-			collection
-				.find('true')
-				.sort('id DESC')
-				.limit(1),
-		)
+		.map(collection => collection.find('true').sort('id DESC').limit(1))
 		.map(collectResults)
 		.map(Maybe.fromArray)
 		.map(Maybe.map<{ id: number }, number>(i => i.id + 1))

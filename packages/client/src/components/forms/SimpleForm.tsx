@@ -105,10 +105,7 @@ const fullWidth = {
  */
 class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 	public static GenerateID = (id: string) =>
-		id
-			.toLocaleLowerCase()
-			.replace(/ +/g, '-')
-			.replace(/\//g, '');
+		id.toLocaleLowerCase().replace(/ +/g, '-').replace(/\//g, '');
 
 	public readonly IsLabel = true;
 
@@ -436,7 +433,11 @@ export default class SimpleForm<
 						let ret;
 						let childFullWidth = false;
 						let hidden = false;
-						if (typeof child === 'object' && child !== null && (child as React.ReactElement).type === 'div') {
+						if (
+							typeof child === 'object' &&
+							child !== null &&
+							(child as React.ReactElement).type === 'div'
+						) {
 							ret = [child];
 						} else if (!isInput(child)) {
 							// This algorithm handles labels for inputs by handling inputs
@@ -560,11 +561,11 @@ export default class SimpleForm<
 							</div>
 						);
 					})}
-				{(typeof this.props.showSubmitButton === 'undefined' ? (
-					true
-				) : (
-					this.props.showSubmitButton
-				)) ? (
+				{(
+					typeof this.props.showSubmitButton === 'undefined'
+						? true
+						: this.props.showSubmitButton
+				) ? (
 					<div className="formbar">
 						<div className="label-formbox" />
 						<div className="input-formbox">

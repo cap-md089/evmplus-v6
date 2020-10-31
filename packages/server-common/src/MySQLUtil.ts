@@ -60,7 +60,7 @@ export const collectResults = async <T>(
 	return ret;
 };
 
-export const generateResults = async function*<U>(
+export const generateResults = async function* <U>(
 	find: mysql.CollectionFind<U>,
 ): AsyncIterableIterator<mysql.WithoutEmpty<U>> {
 	type T = mysql.WithoutEmpty<U>;

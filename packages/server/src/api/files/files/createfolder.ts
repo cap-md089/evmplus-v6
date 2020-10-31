@@ -79,10 +79,7 @@ export const func: (
 					],
 				};
 
-				return fileCollection
-					.add(newFile)
-					.execute()
-					.then(always(newFile));
+				return fileCollection.add(newFile).execute().then(always(newFile));
 			})
 			.flatMap(expandRawFileObject(req.mysqlx)(req.account))
 			.map(file => ({

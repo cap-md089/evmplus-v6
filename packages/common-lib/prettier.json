@@ -7,5 +7,6 @@
 	"printWidth": 100,
 	"quoteProps": "consistent",
 	"filepath": "src/**/*.tsx?",
-	"trailingComma": "all"
+	"trailingComma": "all",
+	"endOfLine": "lf"
 }

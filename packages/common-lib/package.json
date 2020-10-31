@@ -26,6 +26,7 @@
 		"@types/xlsx": "^0.0.36",
 		"jest": "^26",
 		"jest-watch-typeahead": "^0.6.1",
+		"prettier": "^2.1",
 		"ts-jest": "^26",
 		"tslint": "^5.19.0",
 		"tslint-config-prettier": "^1.13.0",

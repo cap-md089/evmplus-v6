@@ -183,9 +183,7 @@ export const addUserAccount = (
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username)
-				.then(Maybe.some)
-				.catch(Maybe.none),
+			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
 		)
 			.filter(user => Maybe.isNone(user) || !isUserValid(user.value), {

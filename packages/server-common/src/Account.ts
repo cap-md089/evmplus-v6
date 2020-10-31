@@ -341,7 +341,7 @@ export const buildURI = (account: AccountObject) => (...identifiers: string[]) =
 	[].slice.call(identifiers).join('/');
 
 export const getMembers = (schema: Schema) => (account: AccountObject) =>
-	async function*(type?: MemberType | undefined) {
+	async function* (type?: MemberType | undefined) {
 		const teamObjects = await getTeamObjects(schema)(account)
 			.map(collectGeneratorAsync)
 			.cata(() => [], identity);
@@ -457,7 +457,7 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 	};
 
 export const getMemberIDs = (schema: Schema) =>
-	async function*(account: AccountObject): AsyncIter<MemberReference> {
+	async function* (account: AccountObject): AsyncIter<MemberReference> {
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
@@ -623,11 +623,7 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
-	await collection
-		.modify('id = :id')
-		.bind('id', account.id)
-		.patch(account)
-		.execute();
+	await collection.modify('id = :id').bind('id', account.id).patch(account).execute();
 };
 
 const getNormalTeamObjects = (schema: Schema) => (

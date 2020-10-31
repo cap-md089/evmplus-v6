@@ -519,14 +519,7 @@ const fullWidthStyles = { width: '100%', boxSizing: 'border-box', gridColumn: '1
  */
 const defaultTitleRenderer = (title: string): React.ReactNode => (
 	<div className="form-header" style={fullWidthStyles}>
-		<h3
-			id={title
-				.toLocaleLowerCase()
-				.replace(/ _/g, '-')
-				.replace(/\//g, '-')}
-		>
-			{title}
-		</h3>
+		<h3 id={title.toLocaleLowerCase().replace(/ _/g, '-').replace(/\//g, '-')}>{title}</h3>
 	</div>
 );
 

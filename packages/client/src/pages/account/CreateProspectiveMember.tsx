@@ -137,9 +137,11 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 	);
 };
 
-export const ContactInstanceInput: FunctionComponent<InputProps<CAPMemberContactInstance> & {
-	label: string;
-}> = ({ name, label, value, onChange, onInitialize, onUpdate }) => (
+export const ContactInstanceInput: FunctionComponent<
+	InputProps<CAPMemberContactInstance> & {
+		label: string;
+	}
+> = ({ name, label, value, onChange, onInitialize, onUpdate }) => (
 	<FormBlock<CAPMemberContactInstance>
 		name={name}
 		value={value}

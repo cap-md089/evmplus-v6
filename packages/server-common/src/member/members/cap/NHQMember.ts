@@ -295,9 +295,7 @@ export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema:
 	accountGetter.byOrgid(schema)(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id)
-		.map(getProp('DOB'))
-		.map(DateTime.fromISO);
+	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
 
 export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 	orgid: number,

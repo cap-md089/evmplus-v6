@@ -137,7 +137,7 @@ interface CAPWATCHModuleResult {
 	file: string;
 }
 
-export default async function*(
+export default async function* (
 	zipFileLocation: string,
 	schema: Schema,
 	session: Session,
