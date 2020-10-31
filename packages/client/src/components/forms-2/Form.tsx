@@ -143,6 +143,25 @@ export enum EnabledState {
 }
 
 /**
+ * This is the action creator used by form components
+ */
+export function getInputChangeAction<InputModel>(name: string) {
+	return createAction('InputChange', (newModel: InputModel) => ({
+		name,
+		newModel,
+	}));
+}
+
+/**
+ * Represents the model passed to an input in the form
+ */
+export interface SubComponentModel<InputModel> {
+	value: InputModel;
+	error: MaybeObj<FormError>;
+	changed: boolean;
+}
+
+/**
  * Represents an input that is used by the form; e.g., a text input will have a
  * component with an input of type text and a collapse function that is the identity function
  */
@@ -165,7 +184,6 @@ export interface FormInput<
 	component: SubComponent<
 		{
 			value: InputModel;
-			fullWidth: boolean;
 			error: MaybeObj<FormError>;
 			changed: boolean;
 		},
@@ -658,14 +676,14 @@ export const createForm = <Fields, Collapsed>(
 					fieldDefinition.component.rowRenderer ??
 					defaultRowRenderer;
 
-				const error = Either.cata<FormError, void, MaybeObj<FormError>>(Maybe.some)(
-					Maybe.none,
-				)(
-					settings?.validator?.[rowElement.fieldName]?.(
-						model.fieldsModels[rowElement.fieldName],
-						model.fieldsModels,
-					) ?? Either.right(void 0),
-				);
+				const error = model.fieldsChanged[rowElement.fieldName]
+					? Either.cata<FormError, void, MaybeObj<FormError>>(Maybe.some)(Maybe.none)(
+							settings?.validator?.[rowElement.fieldName]?.(
+								model.fieldsModels[rowElement.fieldName],
+								model.fieldsModels,
+							) ?? Either.right(void 0),
+					  )
+					: Maybe.none();
 
 				return rowRender(
 					key,
@@ -674,7 +692,6 @@ export const createForm = <Fields, Collapsed>(
 							value: model.fieldsModels[rowElement.fieldName],
 							error,
 							changed: model.fieldsChanged[rowElement.fieldName],
-							fullWidth: fieldDefinition.fullWidth ?? false,
 						},
 						({ payload: { name, newModel } }) =>
 							dispatch(

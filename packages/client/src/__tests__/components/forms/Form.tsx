@@ -16,22 +16,3 @@
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/* eslint-disable */
-// @ts-ignore
-import React from 'react';
-/* eslint-enable */
-// import App from '../App';
-// import { BrowserRouter } from 'react-router-dom';
-
-// import { shallow } from 'enzyme';
-
-// describe('App', () => {
-// 	it('should successfully render without crashing', () => {
-// 		shallow(
-// 			<BrowserRouter>
-// 				<App isMobile={false} />
-// 			</BrowserRouter>
-// 		);
-// 	});
-// });
