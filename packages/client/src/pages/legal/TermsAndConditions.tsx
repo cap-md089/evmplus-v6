@@ -121,8 +121,11 @@ export const TermsAndConditions = () => (
 		<p>
 			If you are among the organizations listed in paragraph 2 above and are interested in
 			linking to our website, you must notify us by sending an e-mail to{' '}
-			<a href="mailto:support@EvMPlus.org" title="send an email to support@EvMPlus.org">
-				support@EvMPlus.org
+			<a
+				href="mailto:eventsupport@md.cap.gov"
+				title="send an email to eventsupport@md.cap.gov"
+			>
+				eventsupport@md.cap.gov
 			</a>
 			. Please include your name, your organization name, contact information (such as a phone
 			number and/or e-mail address) as well as the URL of your site, a list of any URLs from
@@ -215,7 +218,7 @@ export const TermsAndConditions = () => (
 		<h2>Contact Information</h2>
 		<p>
 			If you have any queries regarding any of our terms, please contact us at{' '}
-			<a href="mailto:support@evmplus.org">support@evmplus.org</a>.
+			<a href="mailto:eventsupport@md.cap.gov">eventsupport@md.cap.gov</a>.
 		</p>
 	</div>
 );

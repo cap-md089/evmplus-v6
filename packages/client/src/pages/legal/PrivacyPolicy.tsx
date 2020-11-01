@@ -128,7 +128,7 @@ export const PrivacyPolicy = () => (
 		<h2>Contact Information</h2>
 		<p>
 			If you have any questions about this Privacy Policy, please contact us at{' '}
-			<a href="mailto:support@evmplus.org">support@evmplus.org</a>.
+			<a href="mailto:eventsupport@md.cap.gov">eventsupport@md.cap.gov</a>.
 		</p>
 	</div>
 );

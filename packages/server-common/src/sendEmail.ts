@@ -164,8 +164,8 @@ export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolea
 						ToAddresses: typeof email === 'string' ? [email] : email,
 					},
 					Message: getEmailMessageBody(config, registry, subject, htmlBody, textBody),
-					Source: `"EvMPlus.org Support" <support@evmplus.org>`,
-					ReplyToAddresses: [`"EvMPlus.org Support" <support@evmplus.org>`],
+					Source: `"EvMPlus.org Support" <eventsupport@md.cap.gov>`,
+					ReplyToAddresses: [`"EvMPlus.org Support" <eventsupport@md.cap.gov>`],
 				})
 				.promise(),
 		)

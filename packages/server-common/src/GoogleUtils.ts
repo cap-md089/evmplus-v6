@@ -79,7 +79,7 @@ function buildEventDescription(
 	const dateFormatter = formatGoogleCalendarDate(registry);
 
 	// set status message
-	let status = 'invalid.  Please contact support@evmplus.org to report this.';
+	let status = 'invalid.  Please contact eventsupport@md.cap.gov to report this.';
 	if (inEvent.status === EventStatus.TENTATIVE) {
 		status =
 			'TENTATIVELY planned.  Please contact the POC directly BEFORE traveling to the event.';
@@ -202,7 +202,7 @@ function buildDeadlineDescription(
 	inStatement: string,
 ): string {
 	// set status message
-	let status = `invalid.  Please contact support@evmplus.org to report this.`;
+	let status = `invalid.  Please contact eventsupport@md.cap.gov to report this.`;
 	if (inEvent.status === EventStatus.TENTATIVE) {
 		status =
 			'TENTATIVELY planned.  Please contact the POC directly BEFORE traveling to the event.';
