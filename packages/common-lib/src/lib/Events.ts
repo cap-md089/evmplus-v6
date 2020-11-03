@@ -87,6 +87,17 @@ export const canSignUpForEvent = (event: EventObject) => (
 		Either.map(destroy),
 	);
 
+export const canSignSomeoneElseUpForEvent = (
+	event: EventObject,
+): ((memberInput: MemberReference) => EitherObj<string, void>) =>
+	pipe(
+		Either.right,
+		Either.filter<string, MemberReference>(complement(hasMember(event)))(
+			'Member is already in attendance',
+		),
+		Either.map(destroy),
+	);
+
 export const getURIComponent = (event: RawResolvedEventObject) =>
 	`${event.id}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 
@@ -95,6 +106,7 @@ export const hasMember = (event: EventObject) => (member: MemberReference) =>
 
 export const hasBasicEventPermissions = (member: User) =>
 	hasPermission('ManageEvent')(Permissions.ManageEvent.ADDDRAFTEVENTS)(member) ||
+	hasPermission('ManageEvent')(Permissions.ManageEvent.FULL)(member) ||
 	((member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
 		hasOneDutyPosition([
 			'Operations Officer',
