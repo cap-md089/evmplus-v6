@@ -52,6 +52,13 @@ export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: my
 	return { session, schema: session.getSchema(DB_SCHEMA) };
 };
 
+export const getClient = () =>
+	new Client({
+		ws: {
+			intents: ['GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILDS', 'DIRECT_MESSAGES'],
+		},
+	});
+
 export default function setupDiscordBot(
 	conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
@@ -61,7 +68,7 @@ export default function setupDiscordBot(
 		return;
 	}
 
-	const client = new Client();
+	const client = getClient();
 
 	const userSetupFunction = setupUser(client);
 
@@ -296,19 +303,21 @@ export default function setupDiscordBot(
 
 		const capunitMember = await getMember(schema)(member);
 
-		if (capunitMember.hasValue) {
-			await setupUser(client)(schema)(member.guild.id)(account.value)()(capunitMember.value);
+		try {
+			if (capunitMember.hasValue) {
+				await setupUser(client)(schema)(member.guild.id)(account.value)()(
+					capunitMember.value,
+				);
+			} else {
+				const registry = await getRegistry(schema)(account.value).fullJoin();
 
-			await session.close();
-		} else {
-			const registry = await getRegistry(schema)(account.value).fullJoin();
+				const dmChannel = await member.createDM();
 
-			const dmChannel = await member.createDM();
-
-			dmChannel.send(
-				`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/registerdiscord/${member.id}`,
-			);
-
+				dmChannel.send(
+					`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/registerdiscord/${member.id}`,
+				);
+			}
+		} finally {
 			await session.close();
 		}
 	});
@@ -336,7 +345,7 @@ export default function setupDiscordBot(
 
 if (require.main === module) {
 	(async () => {
-		const client = new Client();
+		const client = getClient();
 
 		const configurationValidator = validator<RawServerConfiguration>(Validator);
 
