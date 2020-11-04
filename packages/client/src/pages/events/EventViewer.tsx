@@ -241,7 +241,10 @@ const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventO
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
+	attendance: eventViewer.attendees
+		.filter(Either.isRight)
+		.map(get('value'))
+		.map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 
@@ -598,7 +601,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					event.type !== EventType.LINKED ? (
 						<br />
 					) : null}
-					{event.type === EventType.LINKED ||
+					{process.env.NODE_ENV !== 'development' ||
+					event.type === EventType.LINKED ||
 					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
 						<Button
 							onClick={() => this.linkEventTo(linkableAccounts[0].id)}
@@ -704,7 +708,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					) : null}
 					<div id="information">
-						{event.type === EventType.LINKED ? (
+						{process.env.NODE_ENV === 'development' &&
+						event.type === EventType.LINKED ? (
 							<>
 								<strong>
 									<a
