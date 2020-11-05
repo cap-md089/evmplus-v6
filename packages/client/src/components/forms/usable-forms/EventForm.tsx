@@ -729,8 +729,12 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					{/* <Label>Event files</Label>
 					<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
 
-					<Label>Keep attendance private</Label>
-					<Checkbox name="privateAttendance" />
+					{process.env.NODE_ENV === 'development' && (
+						<>
+							<Label>Keep attendance private</Label>
+							<Checkbox name="privateAttendance" />
+						</>
+					)}
 
 					<Title>Team information</Title>
 
