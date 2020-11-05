@@ -40,11 +40,17 @@ import { format } from 'timeago.js';
 import Button from '../../../components/Button';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
+import SimpleForm, { DateTimeInput, Label } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
 import SigninLink from '../../../components/SigninLink';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import attendanceStyles from './AttendanceLog.module.css';
+
+interface FilterState {
+	filterStart: number;
+	filterEnd: number;
+}
 
 interface AttendanceHistoryLoading {
 	type: 'LOADING';
@@ -95,7 +101,9 @@ type AttendanceHistoryState = (
 		| AttendanceHistoryMemberListError
 		| AttendanceHistoryMemberListLoaded
 		| AttendanceHistoryMemberListLoading
-	);
+	) & {
+		filterState: FilterState;
+	};
 
 const AttendanceView: React.FunctionComponent<{
 	records: api.member.attendance.EventAttendanceRecord[];
@@ -174,15 +182,24 @@ enum GroupTarget {
 	ACCOUNT,
 }
 
-export default class AttendanceHistory extends Page<PageProps, AttendanceHistoryState> {
+export default class AttendanceHistory extends Page<
+	PageProps,
+	AttendanceHistoryState,
+	FilterState
+> {
 	public state: AttendanceHistoryState = {
 		type: 'LOADING',
 		state: 'LOADING',
+		filterState: {
+			filterEnd: 0,
+			filterStart: 0,
+		},
 	};
 
 	public constructor(props: PageProps) {
 		super(props);
 
+		this.onFilterChange = this.onFilterChange.bind(this);
 		this.handleMemberSelect = this.handleMemberSelect.bind(this);
 		this.loadMyAttendance = this.loadMyAttendance.bind(this);
 		this.loadShortGroupAttendance = this.loadShortGroupAttendance.bind(this);
@@ -243,6 +260,31 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 
 		return (
 			<div>
+				<div>
+					<div>Set date range filter</div>
+					<br />
+					<br />
+					<SimpleForm<FilterState>
+						onChange={this.onFilterChange}
+						showSubmitButton={false}
+						values={this.state.filterState}
+					>
+						<Label>Start date</Label>
+						<DateTimeInput
+							name="filterStart"
+							time={false}
+							originalTimeZoneOffset={this.props.registry.Website.Timezone}
+						/>
+
+						<Label>End date</Label>
+						<DateTimeInput
+							name="filterEnd"
+							time={false}
+							originalTimeZoneOffset={this.props.registry.Website.Timezone}
+							// errorMessage="End date cannot be before start date"
+						/>
+					</SimpleForm>
+				</div>
 				<div className={attendanceStyles.controlsBox}>
 					{hasPermission('AttendanceView')(Permissions.AttendanceView.OTHER)(member) &&
 					this.state.state === 'LOADED' ? (
@@ -295,7 +337,14 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 						<div>{state.message}</div>
 					) : (
 						<AttendanceView
-							records={state.attendanceRecords}
+							records={state.attendanceRecords.filter(
+								rec =>
+									Maybe.isSome(rec.event) &&
+									rec.event.value.endDateTime <
+										this.state.filterState.filterEnd &&
+									rec.event.value.startDateTime >
+										this.state.filterState.filterStart,
+							)}
 							isMemberTheSameAsViewer={
 								state.type === 'MEMBERLOADED' &&
 								Maybe.orSome(false)(
@@ -330,6 +379,12 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 		}
 
 		return GroupTarget.NONE;
+	}
+
+	private onFilterChange(newFilterState: FilterState) {
+		this.setState({
+			filterState: newFilterState,
+		});
 	}
 
 	private handleMemberSelect(member: Member | null) {
@@ -376,6 +431,25 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				memberBeingViewed: Maybe.some(member),
 				buttonsDisabled: false,
 			}));
+
+			this.setState({
+				filterState: {
+					filterEnd: attendanceRecords.reduce(
+						(prev, curr) =>
+							Maybe.isSome(curr.event)
+								? Math.max(prev, curr.event.value.endDateTime)
+								: prev,
+						0,
+					),
+					filterStart: attendanceRecords.reduce(
+						(prev, curr) =>
+							Maybe.isSome(curr.event)
+								? Math.min(prev, curr.event.value.startDateTime)
+								: prev,
+						Number.POSITIVE_INFINITY,
+					),
+				},
+			});
 		}
 	}
 
@@ -405,6 +479,25 @@ export default class AttendanceHistory extends Page<PageProps, AttendanceHistory
 				attendanceRecords,
 				buttonsDisabled: false,
 			}));
+
+			this.setState({
+				filterState: {
+					filterEnd: attendanceRecords.reduce(
+						(prev, curr) =>
+							Maybe.isSome(curr.event)
+								? Math.max(prev, curr.event.value.endDateTime)
+								: prev,
+						0,
+					),
+					filterStart: attendanceRecords.reduce(
+						(prev, curr) =>
+							Maybe.isSome(curr.event)
+								? Math.min(prev, curr.event.value.startDateTime)
+								: prev,
+						Number.POSITIVE_INFINITY,
+					),
+				},
+			});
 		}
 	}
 }

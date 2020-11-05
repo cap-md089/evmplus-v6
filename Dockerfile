@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node:13 AS builder
+FROM node AS builder
 
 WORKDIR /usr/evm-plus
 
@@ -34,7 +34,7 @@ RUN lerna run build
 
 CMD [ "npm", "--prefix", "packages/server", "start" ]
 
-FROM node:13 AS runner
+FROM node AS runner
 
 WORKDIR /usr/evm-plus
 
@@ -57,4 +57,6 @@ ENV NODE_ENV production
 ENV CLIENT_PATH /usr/evm-plus/packages/client
 EXPOSE 3001
 
-CMD cd /usr/evm-plus/packages/server && node dist/index.js
+# Use no warnings because @mysql/xdevapi isn't update for node 14
+# It still works, it just generates a stupid amount of warnings
+CMD cd /usr/evm-plus/packages/server && node --no-warnings dist/index.js

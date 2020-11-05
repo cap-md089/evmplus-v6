@@ -59,8 +59,12 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			'Attendance records needs an event ID and a method for selecting members to record; either "global" or "withme" (defaults to global)',
 		);
 		await message.channel.send('For example:');
-		await message.channel.send(`<@!${client.user.id}> attendancerecord 1 global`);
-		await message.channel.send(`<@!${client.user.id}> attendancerecord 2 withme`);
+		await message.channel.send(
+			`<@!${client.user?.id ?? '572536606573985794'}> attendancerecord 1 global`,
+		);
+		await message.channel.send(
+			`<@!${client.user?.id ?? '572536606573985794'}> attendancerecord 2 withme`,
+		);
 		return;
 	}
 
@@ -73,14 +77,23 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 
 	const method = parts[3] ?? 'global';
 
+	let guild;
+	try {
+		guild = await client.guilds.fetch(message.guild?.id ?? '');
+	} catch (e) {
+		console.error(e);
+		await message.reply('There was an error adding members to the event specified');
+		return;
+	}
+
 	const discordMembers =
 		method === 'global'
-			? message.guild.channels
-					.filter(v => v.type === 'voice')
+			? guild.channels.cache
 					.array()
-					.flatMap(channel => (channel as VoiceChannel).members.array())
+					.filter((v): v is VoiceChannel => v.type === 'voice')
+					.flatMap(channel => channel.members.array())
 			: method === 'withme'
-			? message.member.voiceChannel?.members.array()
+			? message.member?.voice?.channel?.members.array()
 			: undefined;
 
 	if (!discordMembers) {
@@ -91,158 +104,160 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 
 	const { schema, session } = await getXSession(conf, mysqlConn);
 
-	const account = await getAccount(schema)(message.guild.id);
-
-	if (!account.hasValue) {
-		await message.channel.send('There was an unknown error');
-
-		await session.close();
-		return;
-	}
-
-	const maybeAdder = await getMember(schema)(message.member);
-
-	if (!maybeAdder.hasValue) {
-		await message.channel.send('You are not a certified member');
-
-		await session.close();
-		return;
-	}
-
-	const memberEither = await resolveReference(schema)(account.value)(maybeAdder.value.member);
-
-	if (Either.isLeft(memberEither)) {
-		console.error(memberEither.value);
-
-		await session.close();
-		await message.channel.send('Could not get member information or permissions');
-
-		return;
-	}
-
-	const adder = memberEither.value;
-	let adderUser: User;
 	try {
-		const permissions = await getPermissionsForMemberInAccountDefault(
-			schema,
-			toReference(adder),
-			account.value,
+		const account = await getAccount(schema)(guild.id);
+
+		if (!account.hasValue) {
+			await message.channel.send('There was an unknown error');
+
+			await session.close();
+			return;
+		}
+
+		const maybeAdder = message.member ? await getMember(schema)(message.member) : Maybe.none();
+
+		if (!maybeAdder.hasValue) {
+			await message.channel.send('You are not a certified member');
+
+			await session.close();
+			return;
+		}
+
+		const memberEither = await resolveReference(schema)(account.value)(maybeAdder.value.member);
+
+		if (Either.isLeft(memberEither)) {
+			console.error(memberEither.value);
+
+			await session.close();
+			await message.channel.send('Could not get member information or permissions');
+
+			return;
+		}
+
+		const adder = memberEither.value;
+		let adderUser: User;
+		try {
+			const permissions = await getPermissionsForMemberInAccountDefault(
+				schema,
+				toReference(adder),
+				account.value,
+			);
+
+			adderUser = {
+				...adder,
+				sessionID: '',
+				permissions,
+			};
+		} catch (e) {
+			console.error(e);
+
+			await session.close();
+			message.channel.send('Could not get member information or permissions');
+			return;
+		}
+
+		const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
+			ensureResolvedEvent(schema),
 		);
 
-		adderUser = {
-			...adder,
-			sessionID: '',
-			permissions,
-		};
-	} catch (e) {
-		console.error(e);
+		if (Either.isLeft(eventEither)) {
+			console.error(eventEither.value);
 
-		await session.close();
-		message.channel.send('Could not get member information or permissions');
-		return;
-	}
+			await session.close();
+			await message.channel.send('Could not get event');
+			return;
+		}
 
-	const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
-		ensureResolvedEvent(schema),
-	);
+		const event = eventEither.value;
 
-	if (Either.isLeft(eventEither)) {
-		console.error(eventEither.value);
+		const teamMaybe = await (event.teamID !== null && event.teamID !== undefined
+			? getTeam(schema)(account.value)(event.teamID).map(Maybe.some)
+			: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+		)
+			.fullJoin()
+			.catch(Maybe.none);
 
-		await session.close();
-		await message.channel.send('Could not get event');
-		return;
-	}
+		if (!hasBasicAttendanceManagementPermission(adderUser)(event)(teamMaybe)) {
+			await session.close();
+			await message.reply(
+				'You do not have permission to add members to attendance of this event',
+			);
+			return;
+		}
 
-	const event = eventEither.value;
+		const members = await collectGeneratorAsync(
+			asyncIterMap(toCAPUnit(schema)(account.value))(discordMembers),
+		);
 
-	const teamMaybe = await (event.teamID !== null && event.teamID !== undefined
-		? getTeam(schema)(account.value)(event.teamID).map(Maybe.some)
-		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
-	)
-		.fullJoin()
-		.catch(Maybe.none);
+		const solidMembers = members
+			.filter(Either.isRight)
+			.map(get('value'))
+			.filter(Maybe.isSome)
+			.map(get('value'));
 
-	if (!hasBasicAttendanceManagementPermission(adderUser)(event)(teamMaybe)) {
-		await session.close();
+		await message.channel.send('Looking to add ' + members.length + ' members');
+
+		const fullInfoEither = await AsyncEither.All([
+			getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
+			getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
+		]);
+
+		if (Either.isLeft(fullInfoEither)) {
+			await session.close();
+			return message.channel.send('There was an issue getting event attendance');
+		}
+
+		const [attendance, pointsOfContact] = fullInfoEither.value;
+		const attendanceIDs = attendance.map(get('memberID'));
+
+		let membersAddedCount = 0,
+			membersDuplicate = 0;
+
+		for (const member of solidMembers) {
+			if (attendanceIDs.some(areMembersTheSame(member))) {
+				console.log(`${getFullMemberName(member)} is already in attendance, skipping`);
+				membersDuplicate++;
+				continue;
+			}
+
+			const result = await addMemberToAttendance(schema)(account.value)({
+				...event,
+				attendance,
+				pointsOfContact,
+			})({
+				shiftTime: {
+					arrivalTime: event.startDateTime,
+					departureTime: event.endDateTime,
+				},
+				comments: `Added by Discord bot by ${getFullMemberName(
+					adder,
+				)} on ${new Date().toLocaleString()}`,
+				customAttendanceFieldValues: [],
+				memberID: toReference(member),
+				planToUseCAPTransportation: false,
+				status: AttendanceStatus.COMMITTEDATTENDED,
+			});
+
+			if (Either.isLeft(result)) {
+				console.log(result);
+			} else {
+				membersAddedCount++;
+			}
+		}
+
+		const extraMsg =
+			membersAddedCount !== solidMembers.length && membersDuplicate !== 0
+				? ` (${membersDuplicate} already were added, ${solidMembers.length -
+						(membersDuplicate + membersAddedCount)} failed to be added)`
+				: membersDuplicate === 0
+				? ` (${solidMembers.length -
+						(membersDuplicate + membersAddedCount)} failed to be added)`
+				: ` (${membersDuplicate} already were added)`;
+
 		await message.reply(
-			'You do not have permission to add members to attendance of this event',
+			`Added ${membersAddedCount} to attendance of '${event.name}${extraMsg}`,
 		);
-		return;
-	}
-
-	const members = await collectGeneratorAsync(
-		asyncIterMap(toCAPUnit(schema)(account.value))(discordMembers),
-	);
-
-	const solidMembers = members
-		.filter(Either.isRight)
-		.map(get('value'))
-		.filter(Maybe.isSome)
-		.map(get('value'));
-
-	await message.channel.send('Looking to add ' + members.length + ' members');
-
-	const fullInfoEither = await AsyncEither.All([
-		getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
-		getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
-	]);
-
-	if (Either.isLeft(fullInfoEither)) {
+	} finally {
 		await session.close();
-		return message.channel.send('There was an issue getting event attendance');
 	}
-
-	const [attendance, pointsOfContact] = fullInfoEither.value;
-	const attendanceIDs = attendance.map(get('memberID'));
-
-	let membersAddedCount = 0,
-		membersDuplicate = 0;
-
-	for (const member of solidMembers) {
-		if (attendanceIDs.some(areMembersTheSame(member))) {
-			console.log(`${getFullMemberName(member)} is already in attendance, skipping`);
-			membersDuplicate++;
-			continue;
-		}
-
-		const result = await addMemberToAttendance(schema)(account.value)({
-			...event,
-			attendance,
-			pointsOfContact,
-		})({
-			shiftTime: {
-				arrivalTime: event.startDateTime,
-				departureTime: event.endDateTime,
-			},
-			comments: `Added by Discord bot by ${getFullMemberName(
-				adder,
-			)} on ${new Date().toLocaleString()}`,
-			customAttendanceFieldValues: [],
-			memberID: toReference(member),
-			planToUseCAPTransportation: false,
-			status: AttendanceStatus.COMMITTEDATTENDED,
-		});
-
-		if (Either.isLeft(result)) {
-			console.log(result);
-		} else {
-			membersAddedCount++;
-		}
-	}
-
-	const extraMsg =
-		membersAddedCount !== solidMembers.length && membersDuplicate !== 0
-			? ` (${membersDuplicate} already were added, ${
-					solidMembers.length - (membersDuplicate + membersAddedCount)
-			  } failed to be added)`
-			: membersDuplicate === 0
-			? ` (${
-					solidMembers.length - (membersDuplicate + membersAddedCount)
-			  } failed to be added)`
-			: ` (${membersDuplicate} already were added)`;
-
-	await message.reply(`Added ${membersAddedCount} to attendance of '${event.name}${extraMsg}`);
-
-	await session.close();
 };

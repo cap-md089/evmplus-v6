@@ -1,7 +1,7 @@
 {
 	"name": "common-lib",
-	"version": "1.22.0",
-	"description": "Common types for CAPUnit.com to use in TypeScript",
+	"version": "1.25.0",
+	"description": "Common types for EvMPlus.org to use in TypeScript",
 	"author": "Andrew Rioux",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
