@@ -76,6 +76,7 @@ export const createTextInput: (
 				)}
 			</>
 		),
+		// As best as we can tell at this level, all inputs are valid inputs
 		collapse: Either.right,
 	};
 };

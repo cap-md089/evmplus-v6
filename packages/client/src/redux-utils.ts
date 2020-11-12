@@ -224,7 +224,7 @@ export const mapDispatch = <SubAction extends Action, SuperAction extends Action
 export type SubComponent<Model, ComponentAction extends Action> = (
 	model: Model,
 	actionDispatch: (action: ComponentAction) => void,
-) => React.ReactNode;
+) => React.ReactElement;
 
 /**
  * Takes a component and produces a new component where all the actions are wrapped by

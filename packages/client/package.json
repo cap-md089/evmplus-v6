@@ -54,6 +54,7 @@
 		"not op_mini all"
 	],
 	"devDependencies": {
+		"@testing-library/react": "^11.1.1",
 		"@types/draft-js": "0.10.20",
 		"@types/http-proxy-middleware": "0.19.2",
 		"@types/isomorphic-fetch": "0.0.34",
@@ -75,8 +76,6 @@
 		"@types/timeago": "1.6.0",
 		"@types/webpack-env": "^1.15.2",
 		"@types/xlsx": "^0.0.36",
-		"enzyme": "^3.11.0",
-		"enzyme-adapter-react-16": "^1.15.5",
 		"isomorphic-fetch": "2.2.1",
 		"jest-watch-typeahead": "^0.6.1",
 		"node-sass": "^4.14.1",
@@ -84,5 +83,10 @@
 		"tslint-react": "^5.0.0",
 		"typescript": "^4.0.5"
 	},
-	"proxy": "http://localhost:3001/"
+	"proxy": "http://localhost:3001/",
+	"jest": {
+		"moduleNameMapper": {
+			"\\.scss$": "identity-obj-proxy"
+		}
+	}
 }
