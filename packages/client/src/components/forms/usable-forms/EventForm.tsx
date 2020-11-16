@@ -594,8 +594,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Sign up deny message</Label>
 					<TextInput name="signUpDenyMessage" />
 
-					<Label>Allow signing up part time</Label>
-					<Checkbox name="signUpPartTime" />
+					{/* <Label>Allow signing up part time</Label>
+					<Checkbox name="signUpPartTime" /> */}
 
 					<Label>Use participation fee</Label>
 					<Checkbox name="useParticipationFee" />

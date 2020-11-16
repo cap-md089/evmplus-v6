@@ -99,16 +99,16 @@ export namespace NHQ {
 		WeatherWaiver: boolean;
 		PacerRun: string;
 		PacerRunWaiver: boolean;
-		PacerRunPassed: boolean;
+		PacerRunPassed: string;
 		MileRun: string;
 		MileRunWaiver: boolean;
-		MileRunPassed: boolean;
+		MileRunPassed: string;
 		CurlUp: string;
 		CurlUpWaiver: boolean;
-		CurlUpPassed: boolean;
+		CurlUpPassed: string;
 		SitAndReach: string;
 		SitAndReachWaiver: boolean;
-		SitAndReachPassed: boolean;
+		SitAndReachPassed: string;
 	}
 
 	export interface CadetActivities {
