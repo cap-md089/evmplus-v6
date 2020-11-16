@@ -3,7 +3,7 @@
 	"version": "6.22.0",
 	"private": true,
 	"scripts": {
-		"start": "dist/index.js",
+		"start": "node --no-warnings dist/index.js",
 		"test": "jest",
 		"build": "ttsc --project tsconfig.build.json",
 		"check": "ttsc --project tsconfig.build.json --noEmit",
