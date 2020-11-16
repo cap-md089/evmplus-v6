@@ -29,7 +29,7 @@
 
 import { Either, EitherObj, Maybe, MaybeObj } from 'common-lib';
 import * as React from 'react';
-import { Action, createAction, ProducerFor, SubComponent } from '../../redux-utils';
+import { Action, createAction, ProducerFor, SubComponent } from '../../lib/redux-utils';
 
 import './Forms.scss';
 

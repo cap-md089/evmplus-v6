@@ -38,6 +38,16 @@ export interface Action<T extends string = any, P = any> {
 	wrap: <R extends Action>(producer: (action: Action<T, P>) => R) => R;
 }
 
+export type StateWithType<State extends { type: string }, Type extends string> = State extends {
+	type: Type;
+}
+	? State
+	: never;
+
+export type StateHandlerMap<P, State extends { type: string }> = {
+	[T in State['type']]?: (payload: P, state: StateWithType<State, T>) => State;
+};
+
 /**
  * Represents a function which can produce an action while also providing utilites to
  * create other actions or a handler with the `createReducerForActions` function below
@@ -62,6 +72,14 @@ export interface ActionProducer<Payload, Arguments extends any[], ActionName ext
 	 */
 	handler: <State>(
 		reducer: (payload: Payload, state: State) => State,
+	) => ActionHandler<State, this>;
+
+	/**
+	 * Creates another kind of handler which handles different kinds of states, and allows
+	 * for acting on a specific kind of state with the action
+	 */
+	stateHandler: <State extends { type: string }>(
+		stateHandlerMap: StateHandlerMap<Payload, State>,
 	) => ActionHandler<State, this>;
 
 	/**
@@ -112,6 +130,17 @@ export const createAction = <Payload, Arguments extends any[], ActionName extend
 	creator.handler = <State>(handler: (payload: Payload, state: State) => State) => [
 		creator,
 		handler,
+	];
+
+	creator.stateHandler = <State extends { type: string }>(
+		handlerMap: StateHandlerMap<Payload, State>,
+	) => [
+		creator,
+		(payload: Payload, state: State) =>
+			handlerMap[state.type as State['type']]?.(
+				payload,
+				state as StateWithType<State, State['type']>,
+			) ?? state,
 	];
 
 	creator.wrap = (producer: (arg: Action) => Action) =>
