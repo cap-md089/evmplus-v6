@@ -434,7 +434,7 @@ declare module "@mysql/xdevapi" {
     public bind(values: string | string[]): SqlExecute;
 
     public execute(
-      rowcb: (items: any) => void,
+      rowcb?: (items: any) => void,
       metacb?: (metadata: any) => void
     ): Promise<void>;
 
@@ -578,7 +578,7 @@ declare module "@mysql/xdevapi" {
     public getSession(): Promise<Session>;
   }
 
-  const getClient: (options: any, options2: any) => Promise<Client>;
+  const getClient: (options: any, options2: any) => Client;
 
   /**
    * Retrieve the connector version number (from package.json)
