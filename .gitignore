@@ -7,5 +7,7 @@ packages/*/node_modules
 packages/*/dist
 packages/*/.env
 packages/*/*.tsbuildinfo
+packages/*/yarn-error.log
 
+yarn-error.log
 lerna-debug.log
