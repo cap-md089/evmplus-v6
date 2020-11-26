@@ -90,6 +90,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		tryingMFAToken: false,
 	};
 
+	private mfaTokenInputRef = React.createRef<HTMLInputElement>();
+
 	private get returnUrl(): string {
 		const search = this.props.routeProps.location.search.replace(/\?/g, '');
 
@@ -114,6 +116,10 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		if (this.props.member) {
 			this.props.routeProps.history.push(this.returnUrl);
 		}
+	}
+
+	public componentDidUpdate() {
+		this.mfaTokenInputRef.current?.focus();
 	}
 
 	public render() {
@@ -190,7 +196,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					) : null}
 
 					<Label>Please input a multi-factor token</Label>
-					<TextInput name="token" />
+					<TextInput name="token" ref={this.mfaTokenInputRef} />
 				</SimpleForm>
 			</div>
 		) : (
