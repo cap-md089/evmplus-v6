@@ -262,13 +262,13 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 		req: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
 		new AsyncEither(
-			(!!req.headers.cookie
+			(!!req?.headers?.cookie
 				? asyncRight(
 						parse(req.headers.cookie),
 						errorGenerator('Could not get session information'),
 				  ).map<string | undefined>(cookies => cookies.sessionID)
 				: asyncRight<ServerError, string | undefined>(
-						req.headers.authorization,
+						req?.headers?.authorization,
 						errorGenerator('Could not get session information'),
 				  )
 			)
