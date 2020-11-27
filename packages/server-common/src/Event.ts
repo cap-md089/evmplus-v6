@@ -32,6 +32,7 @@ import {
 	asyncRight,
 	AttendanceRecord,
 	call,
+	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
 	collectGeneratorAsync,
 	destroy,
@@ -254,7 +255,9 @@ type PartialRawEventObject = PartialResolvedRawEventObject | RawRegularEventObje
 
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
 	viewingAccount: MaybeObj<AccountObject>,
-) => (viewer: MaybeObj<MemberReference>) => (event: RawEventObject): ServerEither<EventObject> =>
+) => (viewer: MaybeObj<MemberReference>) => (forceAllAttendance: boolean) => (
+	event: RawEventObject,
+): ServerEither<EventObject> =>
 	(event.type === EventType.LINKED
 		? getEvent(schema)({ id: event.targetAccountID } as AccountObject)(event.targetEventID).map(
 				resolvedEvent =>
@@ -277,7 +280,9 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 					message: 'Could not get points of contact',
 			  })
 		).flatMap(pointsOfContact =>
-			viewer.hasValue && (!eventInfo.privateAttendance || isPOCOf(viewer.value, eventInfo))
+			(viewer.hasValue &&
+				(!eventInfo.privateAttendance || isPOCOf(viewer.value, eventInfo))) ||
+			forceAllAttendance
 				? getAttendanceForEvent(schema)(viewingAccount)(event)
 						.map(collectGeneratorAsync)
 						.map<EventObject>(attendance => ({
@@ -332,12 +337,12 @@ const sendSignupDenyMessage = (message: string): ServerEither<void> =>
 
 export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) => (
 	account: AccountObject,
-) => (event: EventObject) => (attendee: Required<NewAttendanceRecord>) =>
+) => (event: EventObject) => (isAdmin: boolean) => (attendee: Required<NewAttendanceRecord>) =>
 	(event.teamID !== null && event.teamID !== undefined
 		? getTeam(schema)(account)(event.teamID).map(Maybe.some)
 		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
 	)
-		.map(canSignUpForEvent(event))
+		.map(isAdmin ? always(canSignSomeoneElseUpForEvent(event)) : canSignUpForEvent(event))
 		.map(call(attendee.memberID))
 		.flatMap(
 			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
