@@ -245,7 +245,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						...event,
 						attendance: [],
 						pointsOfContact: event.pointsOfContact as FullPointOfContact[],
-					})({
+					})(false)({
 						comments: '',
 						customAttendanceFieldValues: applyCustomAttendanceFields(
 							newEvent.customAttendanceFields,
