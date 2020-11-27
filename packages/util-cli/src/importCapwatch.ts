@@ -19,19 +19,8 @@
  */
 
 import { getSession } from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
-import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import 'dotenv/config';
-import { confFromRaw, ImportCAPWATCHFile } from 'server-common';
-
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
+import { getConf, ImportCAPWATCHFile } from 'server-common';
 
 if (process.argv.length !== 3) {
 	console.error('Error! CAPWATCH file not provided');
@@ -45,13 +34,13 @@ if (!capwatchPath.startsWith('/')) {
 	process.exit(3);
 }
 
-const conf = confEither.value;
-
 process.on('unhandledRejection', up => {
 	throw up;
 });
 
 (async () => {
+	const conf = await getConf();
+
 	const session = await getSession({
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,

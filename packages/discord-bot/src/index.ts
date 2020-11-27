@@ -18,7 +18,6 @@
  */
 
 import * as mysql from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
 import {
 	collectGeneratorAsync,
 	Either,
@@ -26,14 +25,11 @@ import {
 	isTeamLeader,
 	Maybe as M,
 	MemberUpdateEventEmitter,
-	RawServerConfiguration,
 	ServerConfiguration,
 	toReference,
-	Validator,
 } from 'common-lib';
 import { Client } from 'discord.js';
-import 'dotenv/config';
-import { confFromRaw, getMembers, getRegistry, getTeamObjects } from 'server-common';
+import { getConf, getMembers, getRegistry, getTeamObjects } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
@@ -347,18 +343,7 @@ if (require.main === module) {
 	(async () => {
 		const client = getClient();
 
-		const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-		const confEither = Either.map(confFromRaw)(
-			configurationValidator.validate(process.env, ''),
-		);
-
-		if (Either.isLeft(confEither)) {
-			console.error('Configuration error!', confEither.value);
-			process.exit(1);
-		}
-
-		const conf = confEither.value;
+		const conf = await getConf();
 
 		const mysqlClient = await mysql.getClient(
 			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
