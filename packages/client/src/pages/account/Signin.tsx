@@ -196,7 +196,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					) : null}
 
 					<Label>Please input a multi-factor token</Label>
-					<TextInput name="token" ref={this.mfaTokenInputRef} />
+					<TextInput name="token" ref={this.mfaTokenInputRef} showSuggestions={false} />
 				</SimpleForm>
 			</div>
 		) : (
