@@ -131,7 +131,7 @@ export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 			}
 		})
 		.flatMap(getAccount(req.mysqlx))
-		.map(account => ({ ...req, account }));
+		.map(account => ({ ...req, headers: req.headers, account }));
 
 export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	session: Session,
