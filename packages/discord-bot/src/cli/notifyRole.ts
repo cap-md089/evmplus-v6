@@ -18,14 +18,15 @@
  */
 
 import * as mysql from '@mysql/xdevapi';
-import { Maybe, ServerConfiguration } from 'common-lib';
+import { Maybe } from 'common-lib';
 import { Client, GuildChannel, Role, TextChannel } from 'discord.js';
 import { getAccount } from 'server-common';
 import { byName, byProp } from '../data/setupUser';
+import { DiscordCLIConfiguration } from '../getDiscordConf';
 
 export default async (
 	mysqlClient: mysql.Client,
-	conf: ServerConfiguration,
+	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
 ) => {

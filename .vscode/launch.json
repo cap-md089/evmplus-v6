@@ -5,62 +5,43 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Attach to Chrome",
-			"port": 9222,
-			"request": "attach",
-			"type": "chrome",
-			"webRoot": "${workspaceFolder}/packages/client/src"
-		},
-		{
 			"type": "node",
-			"name": "Launch Server",
-			"trace": true,
-			"protocol": "inspector",
-			"program": "${workspaceFolder}/packages/server/dist/index.js",
 			"request": "launch",
-			"skipFiles": ["<node_internals>/**"],
-			"sourceMaps": true,
+			"name": "Launch server in Docker",
+			"preLaunchTask": "Build server - with Discord",
+			"protocol": "auto",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": [ "run", "docker-debug" ],
+			"cwd": "${workspaceFolder}/packages/server",
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"port": 5858,
+			"restart": true,
+			"timeout": 15000,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "/usr/evm-plus",
 			"outFiles": [
 				"${workspaceFolder}/packages/server/dist/**/*.js",
 				"${workspaceFolder}/packages/server-common/dist/**/*.js",
 				"${workspaceFolder}/packages/discord-bot/dist/**/*.js",
 				"${workspaceFolder}/packages/common-lib/dist/**/*.js"
 			],
-			"cwd": "${workspaceFolder}/packages/server",
-			"runtimeVersion": "13.14.0",
-			"env": {
-				"NODE_ENV": "development"
-			}
+			"console": "integratedTerminal",
 		},
 		{
 			"type": "chrome",
 			"request": "launch",
-			"name": "Launch Chrome (Normal Linux)",
+			"name": "Launch Chrome",
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/packages/client/src",
-			"linux": {
-				"runtimeExecutable": "/usr/bin/chromium"
-			}
+			"preLaunchTask": "Start webpack-dev-server"
 		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Launch Chrome (Snap Linux)",
-			"url": "http://localhost:3000",
-			"webRoot": "${workspaceFolder}/packages/client/src",
-			"linux": {
-				"runtimeExecutable": "/snap/bin/chromium"
-			}
-		}
 	],
 	"compounds": [
 		{
-			"name": "Launch Server & Client (Normal Linux)",
-			"configurations": ["Launch Server", "Launch Chrome (Normal Linux)"]
-		},
-		{
-			"name": "Launch Server & Client (Snap Linux)",
-			"configurations": ["Launch Server", "Launch Chrome (Snap Linux)"]
+			"name": "Launch Server & Client",
+			"configurations": ["Launch server in Docker", "Launch Chrome"]
 		}
 	]
 }

@@ -4,6 +4,7 @@
 	"description": "Automatically generates APIs for the TypeScript EvMPlus.org server for use on a JavaScript client",
 	"scripts": {
 		"build": "tsc --project tsconfig.build.json",
+		"watch": "tsc --project tsconfig.build.json --watch",
 		"check": "tsc --project tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},

@@ -29,7 +29,7 @@ import {
 	toReference,
 } from 'common-lib';
 import { Client } from 'discord.js';
-import { getConf, getMembers, getRegistry, getTeamObjects } from 'server-common';
+import { getMembers, getRegistry, getTeamObjects } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
@@ -39,10 +39,11 @@ import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser from './data/setupUser';
+import getConf, { DiscordCLIConfiguration } from './getDiscordConf';
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
-export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: mysql.Client) => {
+export const getXSession = async ({ DB_SCHEMA }: DiscordCLIConfiguration, client: mysql.Client) => {
 	const session = await client.getSession();
 
 	return { session, schema: session.getSchema(DB_SCHEMA) };
@@ -56,13 +57,15 @@ export const getClient = () =>
 	});
 
 export default function setupDiscordBot(
-	conf: ServerConfiguration,
+	_conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
 	mysqlClient: mysql.Client,
 ) {
-	if (!conf.DISCORD_CLIENT_TOKEN) {
+	if (!_conf.DISCORD_CLIENT_TOKEN) {
 		return;
 	}
+
+	const conf = _conf as ServerConfiguration & { DISCORD_CLIENT_TOKEN: string };
 
 	const client = getClient();
 
@@ -344,6 +347,11 @@ if (require.main === module) {
 		const client = getClient();
 
 		const conf = await getConf();
+
+		if (!conf.DISCORD_CLIENT_TOKEN) {
+			console.error('No Discord bot token provided');
+			process.exit(1);
+		}
 
 		const mysqlClient = await mysql.getClient(
 			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,

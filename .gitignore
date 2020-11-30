@@ -1,4 +1,6 @@
 keys
+configs
+
 packages/server/mysqldumps
 
 node_modules

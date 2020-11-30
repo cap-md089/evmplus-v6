@@ -31,7 +31,6 @@ import {
 	getFullMemberName,
 	hasBasicAttendanceManagementPermission,
 	Maybe,
-	ServerConfiguration,
 	toReference,
 	User,
 } from 'common-lib';
@@ -50,8 +49,9 @@ import { getXSession } from '..';
 import { toCAPUnit } from '../data/convertMember';
 import getAccount from '../data/getAccount';
 import getMember from '../data/getMember';
+import { DiscordCLIConfiguration } from '../getDiscordConf';
 
-export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerConfiguration) => (
+export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCLIConfiguration) => (
 	parts: string[],
 ) => async (message: Message) => {
 	if (parts.length < 3) {

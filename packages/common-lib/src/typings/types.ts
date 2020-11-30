@@ -3717,7 +3717,6 @@ export interface ServerConfiguration {
 	DB_POOL_SIZE: number;
 
 	CLIENT_PATH: string;
-	CAPWATCH_DOWNLOAD_PATH: string;
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: number;
@@ -3737,15 +3736,13 @@ export interface ServerConfiguration {
 }
 
 export interface EnvServerConfiguration {
-	DB_SCHEMA: string;
 	DB_HOST: string;
+	DB_SCHEMA: string;
 	DB_PORT: string;
-	DB_USER: string;
 	DB_POOL_SIZE: string;
 
 	CLIENT_PATH: string;
 
-	CAPWATCH_DOWNLOAD_PATH: string;
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: string;
@@ -3766,7 +3763,6 @@ export interface RawServerConfiguration {
 	DB_POOL_SIZE: string;
 
 	CLIENT_PATH: string;
-	CAPWATCH_DOWNLOAD_PATH: string;
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: string;

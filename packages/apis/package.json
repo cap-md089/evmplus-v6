@@ -5,6 +5,7 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "ttsc --project tsconfig.build.json",
+		"watch": "ttsc --project tsconfig.build.json --watch",
 		"check": "ttsc --project tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},

@@ -17,14 +17,14 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Client } from 'discord.js';
 import * as mysql from '@mysql/xdevapi';
-import { ServerConfiguration } from 'common-lib';
+import { Client } from 'discord.js';
 import { setupCAPServer } from '../data/setupDiscordServer';
+import { DiscordCLIConfiguration } from '../getDiscordConf';
 
 export default async (
 	mysqlClient: mysql.Client,
-	conf: ServerConfiguration,
+	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
 ) => {

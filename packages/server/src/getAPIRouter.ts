@@ -79,7 +79,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 		allowedHeaders: ['Authorization', 'Content-Type', 'authorization', 'content-type'],
 	};
 
-	router.use(cors(corsOptions));
+	// router.use(cors(corsOptions));
 
 	router.options('*', cors(corsOptions));
 
