@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.17.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.10.0...discord-bot@1.17.0) (2020-12-09)
+
+
+### Bug Fixes
+
+* **client:** fixed eventform not submitting until subtitle is updated ([d168f09](http://github.com//cap-md089/evmplus-v6/commit/d168f097f53b04d700b7cb6899cd9c8e51e2fa3e))
+* **discord-bot:** added intents to the discord bot to allow it to listen to events ([7126af4](http://github.com//cap-md089/evmplus-v6/commit/7126af446134606a2a0ce823914472ae4143bc35))
+* **discord-bot:** updated discord-bot to better recognize roles that are used by St. Mary's Composit ([d1ee89c](http://github.com//cap-md089/evmplus-v6/commit/d1ee89c4a8bc3e8f1c954fa748ee1fe32a69fe49))
+* **discord-bot:** upgraded discord.js dependency ([a0e60fc](http://github.com//cap-md089/evmplus-v6/commit/a0e60fc677b9ba31c65769628bac9b18895da0ca))
+* **server:** fixed headers not being properly handled ([d0829e9](http://github.com//cap-md089/evmplus-v6/commit/d0829e9c94399c402388c26ec05512e53153615b))
+* **server-common:** fixed saveExtraMemberInformation not adding information to database when appropr ([cc70767](http://github.com//cap-md089/evmplus-v6/commit/cc7076770ced08b9a115ede1b216f4716ec625af))
+* fixed creation of prospective members ([6011736](http://github.com//cap-md089/evmplus-v6/commit/60117367e3c33c9bf37a523f5525e09740034b04))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.16.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.10.0...discord-bot@1.16.0) (2020-10-30)
 
 
