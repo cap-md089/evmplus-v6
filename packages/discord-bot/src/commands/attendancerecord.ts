@@ -206,7 +206,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 				...event,
 				attendance,
 				pointsOfContact,
-			})({
+			})(true)({
 				shiftTime: {
 					arrivalTime: event.startDateTime,
 					departureTime: event.endDateTime,
@@ -229,13 +229,11 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 
 		const extraMsg =
 			membersAddedCount !== solidMembers.length && membersDuplicate !== 0
-				? ` (${membersDuplicate} already were added, ${
-						solidMembers.length - (membersDuplicate + membersAddedCount)
-				  } failed to be added)`
+				? ` (${membersDuplicate} already were added, ${solidMembers.length -
+						(membersDuplicate + membersAddedCount)} failed to be added)`
 				: membersDuplicate === 0
-				? ` (${
-						solidMembers.length - (membersDuplicate + membersAddedCount)
-				  } failed to be added)`
+				? ` (${solidMembers.length -
+						(membersDuplicate + membersAddedCount)} failed to be added)`
 				: ` (${membersDuplicate} already were added)`;
 
 		await message.reply(
