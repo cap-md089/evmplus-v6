@@ -24,7 +24,9 @@ import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Get> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member))
+		.flatMap(
+			getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member)(false),
+		)
 		.map(wrapper);
 
 export default func;

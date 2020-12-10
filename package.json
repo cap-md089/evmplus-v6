@@ -38,5 +38,8 @@
 			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
 		}
 	},
-	"scripts": {}
+	"scripts": {},
+	"dependencies": {
+		"semantic-release": "^17.2.3"
+	}
 }

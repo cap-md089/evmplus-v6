@@ -26,7 +26,7 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 						sock.write('Failed connection!\n');
 						sock.write(e.toString());
 					}
-				} else if (target === 'sftp') {
+				} else if (target === 'sftp' && config.DRIVE_TYPE === 'Remote') {
 					sock.write('Trying connection...\n');
 					const sftp = new Client();
 

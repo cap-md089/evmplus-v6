@@ -99,16 +99,16 @@ export namespace NHQ {
 		WeatherWaiver: boolean;
 		PacerRun: string;
 		PacerRunWaiver: boolean;
-		PacerRunPassed: boolean;
+		PacerRunPassed: string;
 		MileRun: string;
 		MileRunWaiver: boolean;
-		MileRunPassed: boolean;
+		MileRunPassed: string;
 		CurlUp: string;
 		CurlUpWaiver: boolean;
-		CurlUpPassed: boolean;
+		CurlUpPassed: string;
 		SitAndReach: string;
 		SitAndReachWaiver: boolean;
-		SitAndReachPassed: boolean;
+		SitAndReachPassed: string;
 	}
 
 	export interface CadetActivities {
@@ -3708,7 +3708,7 @@ export interface DiscordAccount {
 	member: MemberReference;
 }
 
-export interface ServerConfiguration {
+export interface ServerConfigurationRemote {
 	DB_SCHEMA: string;
 	DB_HOST: string;
 	DB_PASSWORD: string;
@@ -3726,6 +3726,7 @@ export interface ServerConfiguration {
 
 	DISCORD_CLIENT_TOKEN?: string;
 
+	DRIVE_TYPE: 'Remote';
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;
 	REMOTE_DRIVE_PORT: number;
@@ -3740,7 +3741,38 @@ export interface ServerConfiguration {
 	RECAPTCHA_SECRET: string;
 }
 
-export interface RawServerConfiguration {
+export interface ServerConfigurationLocal {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: number;
+	DB_USER: string;
+	DB_POOL_SIZE: number;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: number;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_TYPE: 'Local';
+	DRIVE_STORAGE_PATH: string;
+
+	HOST_NAME: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
+}
+
+export type ServerConfiguration = ServerConfigurationLocal | ServerConfigurationRemote;
+
+export interface RawServerConfigurationRemote {
 	DB_SCHEMA: string;
 	DB_HOST: string;
 	DB_PASSWORD: string;
@@ -3758,6 +3790,7 @@ export interface RawServerConfiguration {
 
 	DISCORD_CLIENT_TOKEN?: string;
 
+	DRIVE_TYPE: 'Remote';
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;
 	REMOTE_DRIVE_PORT: string;
@@ -3771,6 +3804,37 @@ export interface RawServerConfiguration {
 
 	RECAPTCHA_SECRET: string;
 }
+
+export interface RawServerConfigurationLocal {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: string;
+	DB_USER: string;
+	DB_POOL_SIZE: string;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: string;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_TYPE: 'Local';
+	DRIVE_STORAGE_PATH: string;
+
+	HOST_NAME: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
+}
+
+export type RawServerConfiguration = RawServerConfigurationLocal | RawServerConfigurationRemote;
 
 export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;

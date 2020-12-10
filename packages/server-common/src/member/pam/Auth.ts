@@ -275,7 +275,14 @@ export const trySignin = async (
 	signinToken: SigninToken,
 	conf: ServerConfiguration,
 ): Promise<SigninResult> => {
-	const userInformation = await getInformationForUser(schema, username);
+	let userInformation;
+	try {
+		userInformation = await getInformationForUser(schema, username);
+	} catch (e) {
+		return {
+			result: MemberCreateError.INCORRRECT_CREDENTIALS,
+		};
+	}
 
 	if (!(await verifySigninToken(schema, account, userInformation, signinToken, conf))) {
 		return {

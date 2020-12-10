@@ -40,7 +40,7 @@ export const func: ServerAPIEndpoint<api.member.flight.Assign> = PAM.RequireSess
 					getExtraMemberInformationForCAPMember(req.account)(member),
 					errorGenerator('Could not save flight information'),
 				)
-					.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
+					.flatMap(saveExtraMemberInformation(req.mysqlx))
 					.tap(() =>
 						req.memberUpdateEmitter.emit('memberChange', {
 							member,

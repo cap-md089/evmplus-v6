@@ -23,6 +23,7 @@ import {
 	api,
 	applyCustomAttendanceFields,
 	asyncRight,
+	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
 	Either,
 	errorGenerator,
@@ -68,7 +69,9 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 
 const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member)))
+		.flatMap(
+			getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member))(true),
+		)
 		.flatMap(event =>
 			(event.teamID !== undefined && event.teamID !== null
 				? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)
@@ -83,10 +86,18 @@ const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 							type: 'OTHER',
 							code: 400,
 							message: err,
-						}))(canSignUpForEvent(event)(teamMaybe)(rec.memberID)),
+						}))(
+							hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe)
+								? canSignSomeoneElseUpForEvent(event)(rec.memberID)
+								: canSignUpForEvent(event)(teamMaybe)(rec.memberID),
+						),
 					),
 				)
-				.flatMap(addMemberToAttendance(req.mysqlx)(req.account)(event))
+				.flatMap(
+					addMemberToAttendance(req.mysqlx)(req.account)(event)(
+						hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe),
+					),
+				)
 				.map(attendanceRecordMapper),
 		)
 		.map(wrapper);

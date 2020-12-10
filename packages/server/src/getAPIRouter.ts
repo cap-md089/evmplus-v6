@@ -19,12 +19,18 @@
 
 import * as mysql from '@mysql/xdevapi';
 import { addAPI } from 'auto-client-api';
-import { MemberUpdateEventEmitter, ServerConfiguration, Validator } from 'common-lib';
+import {
+	always,
+	Either,
+	MemberUpdateEventEmitter,
+	ServerConfiguration,
+	Validator,
+} from 'common-lib';
 import * as cors from 'cors';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as logger from 'morgan';
-import { MySQLRequest } from 'server-common';
+import { getAccountID, MySQLRequest } from 'server-common';
 // API Routers
 import accountcheck from './api/accountcheck';
 import check from './api/check';
@@ -112,8 +118,23 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	 */
 	router.use('/api', setupDatabase);
 
-	if (conf.NODE_ENV !== 'test') {
+	if (conf.NODE_ENV === 'development') {
 		router.use(logger('dev'));
+	} else if (conf.NODE_ENV === 'production') {
+		logger.token('account', (req, res) => {
+			if ('hostname' in req && typeof (req as any).hostname === 'string') {
+				const accountID = getAccountID((req as any).hostname);
+
+				return Either.cata(always('UNKNOWN'))((id: string) => id)(accountID);
+			} else {
+				return 'UNKNOWN';
+			}
+		});
+		router.use(
+			logger(
+				':account :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length]',
+			),
+		);
 	}
 
 	router.use(errors);

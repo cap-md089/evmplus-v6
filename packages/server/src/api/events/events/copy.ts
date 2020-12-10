@@ -51,7 +51,9 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 			)
 			.flatMap(copier => copier(!!req.body.copyFiles))
 			.flatMap(
-				getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member)),
+				getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member))(
+					false,
+				),
 			)
 			.map(wrapper),
 	),

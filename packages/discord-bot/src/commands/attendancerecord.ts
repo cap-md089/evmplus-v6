@@ -71,8 +71,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 	const eventID = parseInt(parts[2], 10);
 
 	if (isNaN(eventID)) {
-		await message.channel.send('Event ID has to be a number');
-		return;
+		return await message.channel.send('Event ID has to be a number');
 	}
 
 	const method = parts[3] ?? 'global';
@@ -82,8 +81,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		guild = await client.guilds.fetch(message.guild?.id ?? '');
 	} catch (e) {
 		console.error(e);
-		await message.reply('There was an error adding members to the event specified');
-		return;
+		return await message.reply('There was an error adding members to the event specified');
 	}
 
 	const discordMembers =
@@ -108,19 +106,13 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		const account = await getAccount(schema)(guild.id);
 
 		if (!account.hasValue) {
-			await message.channel.send('There was an unknown error');
-
-			await session.close();
-			return;
+			return await message.channel.send('There was an unknown error');
 		}
 
 		const maybeAdder = message.member ? await getMember(schema)(message.member) : Maybe.none();
 
 		if (!maybeAdder.hasValue) {
-			await message.channel.send('You are not a certified member');
-
-			await session.close();
-			return;
+			return await message.channel.send('You are not a certified member');
 		}
 
 		const memberEither = await resolveReference(schema)(account.value)(maybeAdder.value.member);
@@ -128,10 +120,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		if (Either.isLeft(memberEither)) {
 			console.error(memberEither.value);
 
-			await session.close();
-			await message.channel.send('Could not get member information or permissions');
-
-			return;
+			return await message.channel.send('Could not get member information or permissions');
 		}
 
 		const adder = memberEither.value;
@@ -151,9 +140,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		} catch (e) {
 			console.error(e);
 
-			await session.close();
-			message.channel.send('Could not get member information or permissions');
-			return;
+			return await message.channel.send('Could not get member information or permissions');
 		}
 
 		const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
@@ -163,9 +150,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		if (Either.isLeft(eventEither)) {
 			console.error(eventEither.value);
 
-			await session.close();
-			await message.channel.send('Could not get event');
-			return;
+			return await message.channel.send('Could not get event');
 		}
 
 		const event = eventEither.value;
@@ -178,11 +163,9 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			.catch(Maybe.none);
 
 		if (!hasBasicAttendanceManagementPermission(adderUser)(event)(teamMaybe)) {
-			await session.close();
-			await message.reply(
+			return await message.reply(
 				'You do not have permission to add members to attendance of this event',
 			);
-			return;
 		}
 
 		const members = await collectGeneratorAsync(
@@ -203,8 +186,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		]);
 
 		if (Either.isLeft(fullInfoEither)) {
-			await session.close();
-			return message.channel.send('There was an issue getting event attendance');
+			return await message.channel.send('There was an issue getting event attendance');
 		}
 
 		const [attendance, pointsOfContact] = fullInfoEither.value;
@@ -224,7 +206,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 				...event,
 				attendance,
 				pointsOfContact,
-			})({
+			})(true)({
 				shiftTime: {
 					arrivalTime: event.startDateTime,
 					departureTime: event.endDateTime,
@@ -239,7 +221,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			});
 
 			if (Either.isLeft(result)) {
-				console.log(result);
+				console.error(result);
 			} else {
 				membersAddedCount++;
 			}

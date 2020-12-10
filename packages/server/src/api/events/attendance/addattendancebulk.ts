@@ -27,9 +27,14 @@ import {
 	canFullyManageEvent,
 	collectGeneratorAsync,
 	errorGenerator,
+	EventObject,
+	hasBasicAttendanceManagementPermission,
 	Maybe,
+	MaybeObj,
 	NewAttendanceRecord,
 	RawEventObject,
+	RawTeamObject,
+	ServerError,
 	SessionType,
 	Validator,
 } from 'common-lib';
@@ -38,6 +43,7 @@ import {
 	getAttendanceForEvent,
 	getEvent,
 	getFullEventObject,
+	getTeam,
 	PAM,
 } from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
@@ -65,14 +71,28 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 				.flatMap(
 					getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(
 						Maybe.some(req.member),
-					),
+					)(true),
+				)
+				.flatMap<[EventObject, MaybeObj<RawTeamObject>]>(event =>
+					!event.teamID
+						? asyncRight<ServerError, [EventObject, MaybeObj<RawTeamObject>]>(
+								[event, Maybe.none()],
+								errorGenerator('Could not get team information'),
+						  )
+						: getTeam(req.mysqlx)(req.account)(event.teamID).map<
+								[EventObject, MaybeObj<RawTeamObject>]
+						  >(team => [event, Maybe.some(team)]),
 				)
 
-				.flatMap<RawEventObject>(event =>
+				.flatMap<RawEventObject>(([event, teamMaybe]) =>
 					asyncRight(
 						collectGeneratorAsync(
 							asyncIterMap(
-								addMemberToAttendanceFunc(now)(req.mysqlx)(req.account)(event),
+								addMemberToAttendanceFunc(now)(req.mysqlx)(req.account)(event)(
+									hasBasicAttendanceManagementPermission(req.member)(event)(
+										teamMaybe,
+									),
+								),
 							)(req.body.members),
 						),
 						errorGenerator('Could not add attendance records'),

@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.26.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.26.0) (2020-12-09)
+
+
+### Bug Fixes
+
+* **capwatch import:** fix capwatch cadet hfz import ([e4fba7a](http://github.com//cap-md089/evmplus-v6/commit/e4fba7a5bfc32c69385098e7d67b61dc1e024cf4)), closes [#101](http://github.com//cap-md089/evmplus-v6/issues/101)
+* **client:** replaced references to old name with new name ([6752957](http://github.com//cap-md089/evmplus-v6/commit/675295781f3d0c5c8c838c09f76daa3ab974e558))
+* **server:** fixed admins not being able to link events ([cc1c48f](http://github.com//cap-md089/evmplus-v6/commit/cc1c48ffc36b547f28c0a53fd452925f23605277))
+* **server:** fixed headers not being properly handled ([d0829e9](http://github.com//cap-md089/evmplus-v6/commit/d0829e9c94399c402388c26ec05512e53153615b))
+* fixed code to match data ([b7bd7b9](http://github.com//cap-md089/evmplus-v6/commit/b7bd7b9c118deba04b30804ab9273122478839dd))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed weird rendering ([7ac923a](http://github.com//cap-md089/evmplus-v6/commit/7ac923acd9b9c48435b0a40762a2ece3ea85a707))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* **attendance spreadsheet download:** included comments in attendance spreadsheet download ([f6a9b27](http://github.com//cap-md089/evmplus-v6/commit/f6a9b27ccc95607094f0477ee8aaad7555e328e3))
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](http://github.com//cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](http://github.com//cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* **import hfz information:** added functionality to import HFZ information file from CAPWATCH ([f5ae56d](http://github.com//cap-md089/evmplus-v6/commit/f5ae56dc7ff97befd2f94c644a08ac9469f0007e))
+* **server-common:** added extra configuration for different drive locations ([fa8d141](http://github.com//cap-md089/evmplus-v6/commit/fa8d141580c801766af94f405c5e285085c5a885))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.25.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.25.0) (2020-10-30)
 
 

@@ -73,16 +73,16 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 				WeatherWaiver: member.WeatherWaiver === 'True',
 				PacerRun: member.PacerRun,
 				PacerRunWaiver: member.PacerRunWaiver === 'True',
-				PacerRunPassed: member.PacerRunPassed === 'True',
+				PacerRunPassed: member.PacerRunPassed,
 				MileRun: member.MileRun,
 				MileRunWaiver: member.MileRunWaiver === 'True',
-				MileRunPassed: member.MileRunPassed === 'True',
+				MileRunPassed: member.MileRunPassed,
 				CurlUp: member.CurlUp,
 				CurlUpWaiver: member.CurlUpWaiver === 'True',
-				CurlUpPassed: member.CurlUpPassed === 'True',
+				CurlUpPassed: member.CurlUpPassed,
 				SitAndReach: member.SitAndReach,
 				SitAndReachWaiver: member.SitAndReachWaiver === 'True',
-				SitAndReachPassed: member.SitAndReachPassed === 'True',
+				SitAndReachPassed: member.SitAndReachPassed,
 			};
 
 			await cadetHFZInformationCollection.add(values).execute();

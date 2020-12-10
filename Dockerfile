@@ -15,48 +15,54 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node AS builder
+FROM node:14 AS builder
 
 WORKDIR /usr/evm-plus
 
-RUN npm install --global lerna@3.22.1
-
-ARG REMOTE_DRIVE_KEY_FILE
-COPY $REMOTE_DRIVE_KEY_FILE /usr/evm-plus/remote_drive_key
-ENV REMOTE_DRIVE_KEY_FILE /usr/evm-plus/remote_drive_key
+RUN yarn global add lerna@3.22.1
 
 # Copy all packages and build them with development dependencies
 COPY lerna.json package.json tsconfig.* yarn.lock ./
+COPY packages/apis/package.json packages/apis/package.json
+COPY packages/auto-client-api/package.json packages/auto-client-api/package.json
+COPY packages/client/package.json packages/client/package.json
+COPY packages/common-lib/package.json packages/common-lib/package.json
+COPY packages/discord-bot/package.json packages/discord-bot/package.json
+COPY packages/server/package.json packages/server/package.json
+COPY packages/server-common/package.json packages/server-common/package.json
+COPY packages/server-jest-config/package.json packages/server-jest-config/package.json
+COPY packages/util-cli/package.json packages/util-cli/package.json
+RUN yarn install
+
+COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
-COPY types ./types
-RUN lerna bootstrap
 RUN lerna run build
 
 CMD [ "npm", "--prefix", "packages/server", "start" ]
 
-FROM node AS runner
+FROM node:14 AS runner
 
 WORKDIR /usr/evm-plus
 
-# Install the unzip command to import CAPWATCH files
+# All the packages have been downloaded already, skip some of the time spent re-downloading with this
+COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
+
+# Install the unzip command to import CAPWATCH files and the imagemagick library for favicons
 RUN apt-get update \
 	&& apt-get install -y unzip imagemagick --no-install-recommends \
-	&& npm install --global lerna@3.22.1
+	&& yarn global add lerna@3.22.1
 
-COPY --from=builder /usr/evm-plus/remote_drive_key /usr/evm-plus/remote_drive_key
 COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN lerna bootstrap -- --production
+RUN lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
 
 # Configure the server to use the right reCAPTCHA keys and built client
-ENV REMOTE_DRIVE_KEY_FILE /usr/evm-plus/remote_drive_key
-ENV GOOGLE_KEYS_PATH /google-keys
 ENV NODE_ENV production
-ENV CLIENT_PATH /usr/evm-plus/packages/client
 EXPOSE 3001
 
-# Use no warnings because @mysql/xdevapi isn't update for node 14
+# Use no warnings because @mysql/xdevapi isn't updated for node 14
 # It still works, it just generates a stupid amount of warnings
-CMD cd /usr/evm-plus/packages/server && node --no-warnings dist/index.js
+WORKDIR /usr/evm-plus/packages/server
+CMD node --no-warnings dist/index.js

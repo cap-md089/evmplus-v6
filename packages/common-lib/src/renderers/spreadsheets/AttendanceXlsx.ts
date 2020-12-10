@@ -263,6 +263,7 @@ export const AttendanceXL = (
 		'CAP Transport',
 		'Email(s)',
 		'Phone(s)',
+		'Comments',
 	];
 
 	const retVal: Array<Array<string | number>> = [];
@@ -287,6 +288,7 @@ export const AttendanceXL = (
 			attendee.record.planToUseCAPTransportation ? 'Y' : 'N',
 			orEmptyString(Maybe.map(GetBestEmails)(attendee.member)),
 			orEmptyString(Maybe.map(GetBestPhones)(attendee.member)),
+			attendee.record.comments,
 		];
 		for (const fieldVal of attendee.record.customAttendanceFieldValues) {
 			row.push(
@@ -322,7 +324,7 @@ export const FormatAttendanceXL = (
 	numRows: number,
 ): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
-	const numStaticColumns = 9;
+	const numStaticColumns = 10;
 	let rowCount = 0;
 	let emails = '';
 	let phones = '';

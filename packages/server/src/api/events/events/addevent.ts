@@ -63,7 +63,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.A
 			.flatMap(
 				getFullEventObject(request.mysqlx)(request.account)(Maybe.none())(
 					Maybe.some(request.member),
-				),
+				)(false),
 			)
 			.map(wrapper),
 	);

@@ -23,6 +23,7 @@ import {
 	AccountType,
 	always,
 	applyCustomAttendanceFields,
+	asyncEither,
 	AsyncEither,
 	asyncEitherIterMap,
 	AsyncIter,
@@ -100,38 +101,40 @@ export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	account: AccountObject;
 }
 
+export const getAccountID = (hostname: string): EitherObj<ServerError, string> =>
+	Either.flatMap<ServerError, string[], string>(parts => {
+		while (parts[0] === 'www') {
+			parts.shift();
+		}
+
+		if (parts.length === 1 && process.env.NODE_ENV === 'development') {
+			// localhost
+			return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
+		} else if (parts.length === 2) {
+			// evmplus.org
+			return Either.right('www');
+		} else if (parts.length === 3) {
+			// md089.evmplus.org
+			return Either.right(parts[0]);
+		} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
+			// 192.168.1.128
+			return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
+		} else {
+			// IP/localhost in production, otherwise invalid hostname
+			return Either.left({
+				type: 'OTHER',
+				code: 404,
+				message: 'Could not get account ID from URL',
+			});
+		}
+	})(Either.right(hostname.split('.')));
+
 export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 	req: T,
 ): AsyncEither<ServerError, T & BasicAccountRequest> =>
-	asyncRight(req.hostname.split('.'), errorGenerator('Could not get account'))
-		.flatMap<string>(parts => {
-			while (parts[0] === 'www') {
-				parts.shift();
-			}
-
-			if (parts.length === 1 && process.env.NODE_ENV === 'development') {
-				// localhost
-				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
-			} else if (parts.length === 2) {
-				// evmplus.org
-				return Either.right('www');
-			} else if (parts.length === 3) {
-				// md089.evmplus.org
-				return Either.right(parts[0]);
-			} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
-				// 192.168.1.128
-				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
-			} else {
-				// IP/localhost in production, otherwise invalid hostname
-				return Either.left({
-					type: 'OTHER',
-					code: 404,
-					message: 'Could not get account ID from URL',
-				});
-			}
-		})
+	asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
 		.flatMap(getAccount(req.mysqlx))
-		.map(account => ({ ...req, account }));
+		.map(account => ({ ...req, headers: req.headers, account }));
 
 export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	session: Session,
@@ -245,7 +248,7 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						...event,
 						attendance: [],
 						pointsOfContact: event.pointsOfContact as FullPointOfContact[],
-					})({
+					})(false)({
 						comments: '',
 						customAttendanceFieldValues: applyCustomAttendanceFields(
 							newEvent.customAttendanceFields,

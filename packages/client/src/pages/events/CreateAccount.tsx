@@ -280,10 +280,11 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 					<br />
 					If you are hosting a yearly event and want an alias, for instance mdtwe to point
 					to md001twe2020, then please email{' '}
-					<a href="mailto:support@evmplus.org">support@evmplus.org</a> to request an alias
-					or to request that an alias is reassigned. For instance, you can request to
-					reassign the alias "mdtwe" from "md001twe2020" to "md001twe2021". The longer ID
-					will still be required, however. You will be able to request multiple aliases.
+					<a href="mailto:eventsupport@md.cap.gov">eventsupport@md.cap.gov</a> to request
+					an alias or to request that an alias is reassigned. For instance, you can
+					request to reassign the alias "mdtwe" from "md001twe2020" to "md001twe2021". The
+					longer ID will still be required, however. You will be able to request multiple
+					aliases.
 					<br />
 					<br />
 					<br />

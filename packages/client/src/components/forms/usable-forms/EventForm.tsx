@@ -519,7 +519,9 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Transportation provided~</Label>
 					<Checkbox name="transportationProvided" />
 
-					<Label>Transportation description</Label>
+					<Label>
+						Transportation description{values.transportationProvided ? '*' : ''}
+					</Label>
 					<TextInput
 						name="transportationDescription"
 						errorMessage="Transportation description required if there is transportation provided"
@@ -594,8 +596,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Sign up deny message</Label>
 					<TextInput name="signUpDenyMessage" />
 
-					<Label>Allow signing up part time</Label>
-					<Checkbox name="signUpPartTime" />
+					{/* <Label>Allow signing up part time</Label>
+					<Checkbox name="signUpPartTime" /> */}
 
 					<Label>Use participation fee</Label>
 					<Checkbox name="useParticipationFee" />
@@ -729,8 +731,12 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					{/* <Label>Event files</Label>
 					<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
 
-					<Label>Keep attendance private</Label>
-					<Checkbox name="privateAttendance" />
+					{process.env.NODE_ENV === 'development' && (
+						<>
+							<Label>Keep attendance private</Label>
+							<Checkbox name="privateAttendance" />
+						</>
+					)}
 
 					<Title>Team information</Title>
 
@@ -808,7 +814,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		// 	}
 		// }
 
+		// Fix for requiring the subtitle field needing to be changed in order to submit some forms
+		// Most likely due to people modifying old events which don't have this field
+		const defaultValues = { subtitle: '' };
 		const event = {
+			...defaultValues,
 			...mdFreeEvent,
 			comments: this.state.comments?.value() ?? mdFreeEvent.comments,
 			memberComments: this.state.memberComments?.value() ?? mdFreeEvent.memberComments,

@@ -151,20 +151,42 @@ export const getMemberName = (schema: Schema) => (account: AccountObject) => (
 				code: 400,
 		  });
 
-export const saveExtraMemberInformation = (schema: Schema) => (account: AccountObject) => (
-	info: AllExtraMemberInformation,
-) =>
+const updateExtraMemberInformation = (schema: Schema) => (info: AllExtraMemberInformation) =>
 	asyncRight(
 		schema.getCollection<AllExtraMemberInformation>('ExtraMemberInformation'),
 		errorGenerator('Could not save extra member information'),
 	)
 		.map(collection =>
 			modifyAndBind(collection, {
-				accountID: account.id,
+				accountID: info.accountID,
 				member: info.member,
 			}),
 		)
 		.map(modifier => modifier.patch(info).execute());
+
+const addExtraMemberInformation = (schema: Schema) => (info: AllExtraMemberInformation) =>
+	asyncRight(
+		schema.getCollection<AllExtraMemberInformation>('ExtraMemberInformation'),
+		errorGenerator('Could not save extra member information'),
+	).map(collection => collection.add(info).execute());
+
+export const saveExtraMemberInformation = (schema: Schema) => (info: AllExtraMemberInformation) =>
+	asyncRight(
+		schema.getCollection<AllExtraMemberInformation>('ExtraMemberInformation'),
+		errorGenerator('Could not save extra member information'),
+	)
+		.map(collection =>
+			findAndBind(collection, {
+				accountID: info.accountID,
+				member: info.member,
+			}),
+		)
+		.map(collectResults)
+		.flatMap(results =>
+			results.length !== 0
+				? updateExtraMemberInformation(schema)(info)
+				: addExtraMemberInformation(schema)(info),
+		);
 
 export const getMemberTeams = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
