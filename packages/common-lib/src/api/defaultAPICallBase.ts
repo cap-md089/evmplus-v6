@@ -47,6 +47,9 @@ const getToken = (fetchFunction: FetchFunction): AsyncEither<HTTPError, string> 
 	asyncRight(
 		fetchFunction(`/api/token`, {
 			credentials: 'include',
+			headers: {
+				accept: 'application/json',
+			},
 		}),
 		errorGenerator('Could not get token'),
 	).flatMap(resp => resp.json() as Promise<APIEndpointReturnValue<api.FormToken>>);
@@ -122,6 +125,7 @@ export default (fetchFunction: FetchFunction) => <
 					? {
 							headers: {
 								'content-type': 'application/json',
+								'accept': 'application/json',
 							},
 							body: JSON.stringify({
 								...(body || {}),
@@ -133,6 +137,7 @@ export default (fetchFunction: FetchFunction) => <
 					? {
 							headers: {
 								'content-type': 'application/json',
+								'accept': 'application/json',
 							},
 							body: JSON.stringify(body),
 							method: values.method,
