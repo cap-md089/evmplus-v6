@@ -59,7 +59,7 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 	public render() {
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+				{userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 					this.props.parentFile,
 				) ? (
 					<>
@@ -71,7 +71,7 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 					</>
 				) : null}
 				<h3>Comments:</h3>
-				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+				{userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 					this.props.file,
 				) ? (
 					<SimpleForm<CommentsForm>

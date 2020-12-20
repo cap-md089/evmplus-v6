@@ -64,7 +64,7 @@ export default class DriveFolderDisplay extends React.Component<
 		e.preventDefault();
 
 		if (
-			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+			!userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 				this.props.file,
 			)
 		) {
@@ -87,7 +87,7 @@ export default class DriveFolderDisplay extends React.Component<
 		e.stopPropagation();
 
 		if (
-			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+			!userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 				this.props.file,
 			)
 		) {

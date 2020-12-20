@@ -60,7 +60,7 @@ export default class ExtraFolderDisplay extends React.Component<
 	public render() {
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+				{userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 					this.props.parentFile,
 				) ? (
 					<>
