@@ -42,7 +42,7 @@ import Notifications from '../pages/admin/pages/Notifications';
 import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
-import Drive from '../pages/Drive';
+import Drive from '../pages/drive/Drive';
 import LinkList from '../pages/events/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';

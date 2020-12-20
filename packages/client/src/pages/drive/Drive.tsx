@@ -29,16 +29,16 @@ import {
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
-import ExtraFileDisplay from '../components/drive/DriveExtraFileDisplay';
-import ExtraFolderDisplay from '../components/drive/DriveExtraFolderDisplay';
-import DriveFileDisplay from '../components/drive/DriveFileDisplay';
-import DriveFolderDisplay from '../components/drive/DriveFolderDisplay';
-import FileUploader from '../components/FileUploader';
-import { Form, TextInput } from '../components/forms/SimpleForm';
-import Loader from '../components/Loader';
-import fetchApi from '../lib/apis';
+import ExtraFileDisplay from '../../components/drive/DriveExtraFileDisplay';
+import ExtraFolderDisplay from '../../components/drive/DriveExtraFolderDisplay';
+import DriveFileDisplay from '../../components/drive/DriveFileDisplay';
+import DriveFolderDisplay from '../../components/drive/DriveFolderDisplay';
+import FileUploader from '../../components/FileUploader';
+import { Form, TextInput } from '../../components/forms/SimpleForm';
+import Loader from '../../components/Loader';
+import fetchApi from '../../lib/apis';
 import './Drive.css';
-import Page, { PageProps } from './Page';
+import Page, { PageProps } from '../Page';
 
 interface UnloadedDriveState {
 	files: null;
@@ -127,10 +127,6 @@ export default class Drive extends Page<PageProps, DriveState> {
 				{
 					target: '/admin',
 					text: 'Administration',
-				},
-				{
-					target: '/drive',
-					text: 'Drive',
 				},
 				...this.state.currentFolder.folderPath.map(item => ({
 					target: `/drive/${item.id}`,
