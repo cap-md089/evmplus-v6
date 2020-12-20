@@ -22,25 +22,40 @@ import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncIterTap,
 	FileUserAccessControlPermissions,
 	Maybe,
 	userHasFilePermission,
 } from 'common-lib';
+import * as debug from 'debug';
 import { expandRawFileObject, getChildren, getFileObject } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
+const logFunc = debug('server:api:files:children:getfiles');
+
 export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
-	getFileObject(true)(req.mysqlx)(req.account)(req.params.parentid)
+	getFileObject(true)(req.mysqlx)(req.account)(req.member)(req.params.parentid)
+		.tap(file => logFunc('Got personal drive file %O', file))
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx)(req.account))
+		.flatMap(getChildren(req.mysqlx))
+		.map(
+			asyncIterTap(file =>
+				logFunc.extend('permissions')('Checking file for permissions: %o', file),
+			),
+		)
+		.map(
+			asyncIterTap(file =>
+				logFunc('Can member read file?', canRead(Maybe.join(req.member))(file)),
+			),
+		)
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(req.member)))
 		.map(wrapper);
 
 export default func;

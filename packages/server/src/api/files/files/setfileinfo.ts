@@ -23,6 +23,7 @@ import {
 	destroy,
 	EditableFileObjectProperties,
 	FileUserAccessControlPermissions,
+	Maybe,
 	SessionType,
 	userHasFilePermission,
 	Validator,
@@ -42,7 +43,7 @@ export const func: ServerAPIEndpoint<api.files.files.SetInfo> = PAM.RequireSessi
 	SessionType.REGULAR,
 )(request =>
 	validateRequest(fileInfoValidator)(request).flatMap(req =>
-		getFileObject(false)(req.mysqlx)(req.account)(req.params.fileid)
+		getFileObject(false)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.fileid)
 			.filter(canModifyFile(req.member), {
 				type: 'OTHER',
 				code: 403,

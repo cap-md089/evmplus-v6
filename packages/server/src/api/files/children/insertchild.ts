@@ -24,6 +24,7 @@ import {
 	destroy,
 	FileUserAccessControlPermissions,
 	get,
+	Maybe,
 	userHasFilePermission,
 } from 'common-lib';
 import { getFileObject, saveFileObject } from 'server-common';
@@ -34,8 +35,8 @@ const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY)
 
 export const func: ServerAPIEndpoint<api.files.children.AddChild> = req =>
 	AsyncEither.All([
-		getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid),
-		getFileObject(true)(req.mysqlx)(req.account)(req.body.childid),
+		getFileObject(false)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid),
+		getFileObject(true)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.body.childid),
 	])
 		.filter(([parent, child]) => canModify(req.member)(parent) && canRead(req.member)(child), {
 			type: 'OTHER',

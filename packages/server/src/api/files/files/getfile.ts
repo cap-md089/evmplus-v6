@@ -38,9 +38,9 @@ export const func = (createReadStreamFunc = fs.createReadStream) =>
 		const fileEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(false))
 			.flatMap(request =>
-				getFileObject(true)(req.mysqlx)(request.account)(request.params.fileid).map<
-					[RawFileObject, MaybeObj<User>]
-				>(f => [f, request.member]),
+				getFileObject(true)(req.mysqlx)(request.account)(request.member)(
+					request.params.fileid,
+				).map<[RawFileObject, MaybeObj<User>]>(f => [f, request.member]),
 			)
 			.join();
 

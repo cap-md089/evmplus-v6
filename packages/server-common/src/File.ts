@@ -21,7 +21,9 @@ import { Collection, Schema, UndefinedToNull } from '@mysql/xdevapi';
 import {
 	AccountIdentifiable,
 	AccountObject,
+	always,
 	AsyncEither,
+	asyncIterConcat,
 	asyncLeft,
 	asyncRight,
 	destroy,
@@ -33,16 +35,25 @@ import {
 	FullFileObject,
 	get,
 	Maybe,
+	MaybeObj,
+	MemberReference,
 	memoize,
+	parseStringMemberReference,
 	RawFileObject,
+	Right,
 	ServerConfiguration,
 	ServerConfigurationRemote,
 	ServerError,
+	stringifyMemberReference,
+	toReference,
+	User,
+	yieldObjAsync,
 } from 'common-lib';
-import { readFile, createReadStream, createWriteStream, unlink } from 'fs';
+import * as debug from 'debug';
+import { createReadStream, createWriteStream, readFile, unlink } from 'fs';
 import { join } from 'path';
-import { promisify } from 'util';
 import * as Client from 'ssh2-sftp-client';
+import { promisify } from 'util';
 import { resolveReference } from './Members';
 import {
 	collectResults,
@@ -53,6 +64,8 @@ import {
 	saveItemToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
+
+const logFunc = debug('server-common:file');
 
 const promisifiedUnlink = promisify(unlink);
 
@@ -67,6 +80,70 @@ const getSFTPKeyFile = memoize(async (conf: ServerConfigurationRemote) => {
 		});
 	});
 });
+
+export const getUserFileObject = (schema: Schema) => (account: AccountObject) => (
+	member: MemberReference,
+): ServerEither<FileObject> =>
+	AsyncEither.All([
+		getRootFileObject(schema)(account),
+		asyncRight(
+			schema.getCollection<RawFileObject>('Files'),
+			errorGenerator('Could not get user drive'),
+		)
+			.map(
+				findAndBindC<RawFileObject>({
+					accountID: account.id,
+					parentID: stringifyMemberReference(member),
+				}),
+			)
+			.map(collectResults)
+			.map(fileChildren => fileChildren.map(get('id'))),
+	]).map(([root, fileChildren]) => ({
+		accountID: account.id,
+		comments: '',
+		contentType: 'application/folder',
+		created: 0,
+		fileChildren: [root, ...fileChildren],
+		fileName: 'Personal Drive',
+		forDisplay: false,
+		forSlideshow: false,
+		kind: 'drive#file',
+		permissions: [
+			{
+				type: FileUserAccessControlType.USER,
+				permission: FileUserAccessControlPermissions.FULLCONTROL,
+				reference: toReference(member),
+			},
+		],
+		id: stringifyMemberReference(member),
+		parentID: null,
+		owner: toReference(member),
+		folderPath: [
+			{
+				id: stringifyMemberReference(member),
+				name: 'Personal Drive',
+			},
+		],
+	}));
+
+export const getRootFileObjectForUser = (schema: Schema) => (account: AccountObject) => (
+	memberMaybe: MaybeObj<User>,
+): ServerEither<FileObject> =>
+	getRootFileObject(schema)(account).map(root => ({
+		...root,
+		folderPath: Maybe.orSome(root.folderPath)(
+			Maybe.map((member: User) => [
+				{
+					id: stringifyMemberReference(member),
+					name: 'Personal Drive',
+				},
+				{
+					id: 'root',
+					name: 'Drive',
+				},
+			])(memberMaybe),
+		),
+	}));
 
 export const getRootFileObject = (schema: Schema) => (
 	account: AccountObject,
@@ -124,6 +201,8 @@ const getFindForFile = (includeWWW: boolean) => (
 	);
 
 export const getFilePath = (schema: Schema) => (account: AccountObject) => (
+	member: MaybeObj<MemberReference>,
+) => (
 	file: RawFileObject,
 ): ServerEither<
 	{
@@ -131,16 +210,42 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 		name: string;
 	}[]
 > =>
-	file.parentID === 'root' || file.parentID === null
+	file.id === 'root' && Maybe.isSome(member)
 		? asyncRight(
 				[
+					{ id: stringifyMemberReference(member.value), name: 'Personal Drive' },
+					{ id: file.id, name: file.fileName },
+				],
+				errorGenerator('Could not get file path'),
+		  )
+		: file.parentID === null
+		? asyncRight(
+				[{ id: file.id, name: file.fileName }],
+				errorGenerator('Could not get file path'),
+		  )
+		: Either.isRight(parseStringMemberReference(file.parentID))
+		? asyncRight(
+				[
+					{ id: file.parentID, name: 'Personal Drive' },
+					{ id: file.id, name: file.fileName },
+				],
+				errorGenerator('Could not get file path'),
+		  )
+		: file.parentID === 'root'
+		? asyncRight(
+				[
+					...Maybe.orSome([] as { id: string; name: string }[])(
+						Maybe.map((ref: MemberReference) => [
+							{ id: stringifyMemberReference(ref), name: 'Personal Drive' },
+						])(member),
+					),
 					{ id: 'root', name: 'Drive' },
 					{ id: file.id, name: file.fileName },
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: getRegularFileObject()(schema)(account)(file.parentID).flatMap(parent =>
-				getFilePath(schema)(account)(parent).map(path => [
+		: getRegularFileObject()(schema)(account)(member)(file.parentID).flatMap(parent =>
+				getFilePath(schema)(account)(member)(parent).map(path => [
 					...path,
 					{
 						id: parent.id,
@@ -151,7 +256,7 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 
 export const getRegularFileObject = (includeWWW = true) => (schema: Schema) => (
 	account: AccountObject,
-) => (fileID: string): ServerEither<RawFileObject> =>
+) => (member: MaybeObj<MemberReference>) => (fileID: string): ServerEither<RawFileObject> =>
 	asyncRight(
 		getFindForFile(includeWWW)(schema.getCollection<RawFileObject>('Files'))({
 			accountID: account.id,
@@ -167,7 +272,7 @@ export const getRegularFileObject = (includeWWW = true) => (schema: Schema) => (
 		})
 		.map(get(0))
 		.flatMap(file =>
-			getFilePath(schema)(account)(file)
+			getFilePath(schema)(account)(member)(file)
 				.map(folderPath => ({
 					...file,
 					folderPath,
@@ -184,7 +289,7 @@ export const getRegularFileObject = (includeWWW = true) => (schema: Schema) => (
 
 export const getFileObject = (includeWWW = true) => (schema: Schema) => (
 	account: AccountObject,
-) => (fileID: string | null): ServerEither<RawFileObject> =>
+) => (member: MaybeObj<User>) => (fileID: string | null): ServerEither<RawFileObject> =>
 	(fileID === null
 		? asyncLeft<ServerError, string>({
 				type: 'OTHER',
@@ -194,25 +299,18 @@ export const getFileObject = (includeWWW = true) => (schema: Schema) => (
 		: asyncRight<ServerError, string>(fileID, errorGenerator('Could not get requested file'))
 	).flatMap(id =>
 		id === 'root'
-			? getRootFileObject(schema)(account)
-			: getRegularFileObject(includeWWW)(schema)(account)(id),
+			? getRootFileObjectForUser(schema)(account)(member)
+			: Either.isRight(parseStringMemberReference(id)) && Maybe.isSome(member)
+			? getUserFileObject(schema)(account)(
+					(parseStringMemberReference(id) as Right<MemberReference>).value,
+			  )
+			: getRegularFileObject(includeWWW)(schema)(account)(member)(id),
 	);
 
-export const getFileParent = (schema: Schema) => (account: AccountObject) => (
-	file: RawFileObject,
-): ServerEither<RawFileObject> =>
-	file.parentID === null
-		? asyncLeft({
-				type: 'OTHER',
-				code: 400,
-				message: 'Cannot get parent of orphaned file',
-		  })
-		: getFileObject()(schema)(account)(file.parentID);
-
 export const expandRawFileObject = (schema: Schema) => (account: AccountObject) => (
-	file: RawFileObject,
-): ServerEither<FileObject> =>
-	getFilePath(schema)(account)(file).map(folderPath => ({
+	member: MaybeObj<MemberReference>,
+) => (file: RawFileObject): ServerEither<FileObject> =>
+	getFilePath(schema)(account)(member)(file).map(folderPath => ({
 		...file,
 		folderPath,
 	}));
@@ -373,17 +471,38 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 				),
 		  ]).map(destroy);
 
-export const getChildren = (schema: Schema) => (account: AccountObject) => (
+export const getChildren = (schema: Schema) => (
 	file: RawFileObject,
-): ServerEither<AsyncIterableIterator<RawFileObject>> =>
-	asyncRight(
+): ServerEither<AsyncIterableIterator<RawFileObject>> => {
+	logFunc.extend('getChildren')('Getting children with query: %o', {
+		parentID: file.id,
+		accountID: file.accountID,
+	});
+
+	return asyncRight(
 		schema.getCollection<RawFileObject>('Files'),
 		errorGenerator('Could not get file children'),
 	)
 		.map(
 			findAndBindC<RawFileObject>({
 				parentID: file.id,
-				accountID: account.id,
+				accountID: file.accountID,
 			}),
 		)
-		.map(generateResults);
+		.map(generateResults)
+		.tap(() => {
+			if (Either.isRight(parseStringMemberReference(file.id))) {
+				logFunc.extend('getChildren')(
+					'Getting root file object, as this file is a personal drive',
+				);
+			}
+		})
+		.flatMap(results =>
+			Either.isRight(parseStringMemberReference(file.id))
+				? getRootFileObject(schema)({ id: file.accountID } as AccountObject)
+						.map(yieldObjAsync)
+						.map(always)
+						.map(asyncIterConcat(results))
+				: asyncRight(results, errorGenerator('Could not get file children')),
+		);
+};

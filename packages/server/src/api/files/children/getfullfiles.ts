@@ -34,15 +34,15 @@ import wrapper from '../../../lib/wrapper';
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
 export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
-	getFileObject(true)(req.mysqlx)(req.account)(req.params.parentid)
+	getFileObject(true)(req.mysqlx)(req.account)(req.member)(req.params.parentid)
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx)(req.account))
+		.flatMap(getChildren(req.mysqlx))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(req.member)))
 		.map(
 			asyncIterMap(file =>
 				asyncEither(file, errorGenerator('Could not get full file information')).flatMap(

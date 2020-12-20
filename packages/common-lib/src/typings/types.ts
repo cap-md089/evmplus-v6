@@ -372,9 +372,9 @@ export enum AuditableEventType {
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
-	// Write, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	WRITE = 1 << 1,
+	// Modify, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	MODIFY = 1 << 2,
 	FULLCONTROL = 255,

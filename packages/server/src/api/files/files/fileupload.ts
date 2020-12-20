@@ -25,6 +25,7 @@ import {
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
 	FullFileObject,
+	Maybe,
 	RawFileObject,
 	SessionType,
 	toReference,
@@ -69,9 +70,13 @@ export const func = () =>
 					'Member cannot perform the requested action with their current session. Try signing out and back in',
 			})
 			.flatMap(request =>
-				getFileObject(false)(req.mysqlx)(request.account)(parentID).map<
-					[User, AccountObject, RawFileObject]
-				>(file => [request.member, request.account, file]),
+				getFileObject(false)(req.mysqlx)(request.account)(Maybe.some(request.member))(
+					parentID,
+				).map<[User, AccountObject, RawFileObject]>(file => [
+					request.member,
+					request.account,
+					file,
+				]),
 			)
 			.join();
 
@@ -138,8 +143,9 @@ export const func = () =>
 				forSlideshow: false,
 				permissions: [
 					{
-						type: FileUserAccessControlType.OTHER,
+						type: FileUserAccessControlType.USER,
 						permission: FileUserAccessControlPermissions.READ,
+						reference: toReference(member),
 					},
 				],
 				owner,
@@ -153,9 +159,9 @@ export const func = () =>
 				.then(async () => {
 					const fullFileObject: FullFileObject = await getFileObject(false)(req.mysqlx)(
 						account,
-					)(id)
+					)(Maybe.some(member))(id)
 						.flatMap<FullFileObject>(newFile =>
-							getFilePath(req.mysqlx)(account)(newFile)
+							getFilePath(req.mysqlx)(account)(Maybe.some(member))(newFile)
 								.map<FileObject>(folderPath => ({
 									...newFile,
 									folderPath,

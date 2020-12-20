@@ -272,7 +272,9 @@ export const yieldObj = function*<T>(item: T): IterableIterator<T> {
 	yield item;
 };
 
-export const yieldObjAsync = async function*<T>(item: PromiseLike<T>): AsyncIterableIterator<T> {
+export const yieldObjAsync = async function*<T>(
+	item: T | PromiseLike<T>,
+): AsyncIterableIterator<T> {
 	yield item;
 };
 
