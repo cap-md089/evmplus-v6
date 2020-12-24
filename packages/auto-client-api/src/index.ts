@@ -19,7 +19,7 @@
 
 import { notStrictEqual } from 'assert';
 import { mkdir } from 'fs';
-import { dirname, join, resolve } from 'path';
+import { join, resolve } from 'path';
 import * as ts from 'typescript';
 import { promisify } from 'util';
 import addAPI from './addAPI';
@@ -86,8 +86,7 @@ if (require.main === module) {
 	});
 }
 
-const indexJs = join(__dirname, 'index.js');
-const isImportExpression = (node: ts.Node): node is ts.ImportDeclaration => {
+const isMacroImportExpression = (node: ts.Node): node is ts.ImportDeclaration => {
 	if (!ts.isImportDeclaration(node)) {
 		return false;
 	}
@@ -95,14 +94,7 @@ const isImportExpression = (node: ts.Node): node is ts.ImportDeclaration => {
 	const module = (node.moduleSpecifier as ts.StringLiteral).text;
 
 	try {
-		return (
-			indexJs ===
-			require.resolve(
-				module.startsWith('.')
-					? resolve(dirname(node.getSourceFile().fileName), module)
-					: module,
-			)
-		);
+		return module === 'auto-client-api';
 	} catch (e) {
 		return false;
 	}
@@ -168,8 +160,8 @@ function visitNode(node: ts.SourceFile, program: ts.Program): ts.SourceFile;
 function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined;
 
 function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
-	if (isImportExpression(node)) {
-		return node;
+	if (isMacroImportExpression(node)) {
+		return undefined;
 	}
 	const typeChecker = program.getTypeChecker();
 	if (isAPICallExpression(node, typeChecker)) {
