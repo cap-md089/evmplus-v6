@@ -38,8 +38,8 @@ export const func: ServerAPIEndpoint<api.files.children.RemoveChild> = PAM.Requi
 	SessionType.REGULAR,
 )(req =>
 	AsyncEither.All([
-		getFileObject(false)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid),
-		getFileObject(true)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.childid),
+		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid),
+		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.childid),
 	])
 		.filter(([parent, child]) => canModify(req.member)(parent) && canRead(req.member)(child), {
 			type: 'OTHER',

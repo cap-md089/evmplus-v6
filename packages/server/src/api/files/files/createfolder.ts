@@ -43,7 +43,7 @@ export const func: (
 	now?: () => number,
 ) => ServerAPIEndpoint<api.files.files.CreateFolder> = (uuidFunc = uuid, now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getFileObject(false)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid)
+		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid)
 			.tap(file => logFunc('Creating folder in %O', file))
 			.leftTap(() => logFunc("Couldn't find parent folder with id '%s'", req.params.parentid))
 			.filter(canAddSubfolder(req.member), {

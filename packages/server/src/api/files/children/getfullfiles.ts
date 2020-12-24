@@ -34,7 +34,7 @@ import wrapper from '../../../lib/wrapper';
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
 export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
-	getFileObject(true)(req.mysqlx)(req.account)(req.member)(req.params.parentid)
+	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.parentid)
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,

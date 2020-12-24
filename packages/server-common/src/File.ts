@@ -58,9 +58,9 @@ import { resolveReference } from './Members';
 import {
 	collectResults,
 	deleteItemFromCollectionA,
+	findAndBind,
 	findAndBindC,
 	generateResults,
-	safeBind,
 	saveItemToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
@@ -190,15 +190,13 @@ export const getRootFileObject = (schema: Schema) => (
 			],
 		}));
 
-const getFindForFile = (includeWWW: boolean) => (
-	collection: Collection<UndefinedToNull<RawFileObject>>,
-) => (fileObjectID: AccountIdentifiable) =>
-	safeBind(
-		includeWWW
-			? collection.find('id = :id AND (accountID = :accountID OR accountID = "www")')
-			: collection.find('id = :id AND accountID = :accountID'),
-		fileObjectID,
-	);
+const getFindForFile = (collection: Collection<UndefinedToNull<RawFileObject>>) => (
+	fileObjectID: AccountIdentifiable,
+) =>
+	findAndBind(collection, {
+		accountID: fileObjectID.accountID,
+		id: fileObjectID.id as string,
+	});
 
 export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 	member: MaybeObj<MemberReference>,
@@ -244,7 +242,7 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: getRegularFileObject()(schema)(account)(member)(file.parentID).flatMap(parent =>
+		: getRegularFileObject(schema)(account)(member)(file.parentID).flatMap(parent =>
 				getFilePath(schema)(account)(member)(parent).map(path => [
 					...path,
 					{
@@ -254,11 +252,11 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				]),
 		  );
 
-export const getRegularFileObject = (includeWWW = true) => (schema: Schema) => (
-	account: AccountObject,
-) => (member: MaybeObj<MemberReference>) => (fileID: string): ServerEither<RawFileObject> =>
+export const getRegularFileObject = (schema: Schema) => (account: AccountObject) => (
+	member: MaybeObj<MemberReference>,
+) => (fileID: string): ServerEither<RawFileObject> =>
 	asyncRight(
-		getFindForFile(includeWWW)(schema.getCollection<RawFileObject>('Files'))({
+		getFindForFile(schema.getCollection<RawFileObject>('Files'))({
 			accountID: account.id,
 			id: fileID,
 		}),
@@ -287,9 +285,9 @@ export const getRegularFileObject = (includeWWW = true) => (schema: Schema) => (
 				),
 		);
 
-export const getFileObject = (includeWWW = true) => (schema: Schema) => (
-	account: AccountObject,
-) => (member: MaybeObj<User>) => (fileID: string | null): ServerEither<RawFileObject> =>
+export const getFileObject = (schema: Schema) => (account: AccountObject) => (
+	member: MaybeObj<User>,
+) => (fileID: string | null): ServerEither<RawFileObject> =>
 	(fileID === null
 		? asyncLeft<ServerError, string>({
 				type: 'OTHER',
@@ -304,7 +302,7 @@ export const getFileObject = (includeWWW = true) => (schema: Schema) => (
 			? getUserFileObject(schema)(account)(
 					(parseStringMemberReference(id) as Right<MemberReference>).value,
 			  )
-			: getRegularFileObject(includeWWW)(schema)(account)(member)(id),
+			: getRegularFileObject(schema)(account)(member)(id),
 	);
 
 export const expandRawFileObject = (schema: Schema) => (account: AccountObject) => (

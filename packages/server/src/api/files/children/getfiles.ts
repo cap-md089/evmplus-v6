@@ -36,7 +36,7 @@ const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const logFunc = debug('server:api:files:children:getfiles');
 
 export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
-	getFileObject(true)(req.mysqlx)(req.account)(req.member)(req.params.parentid)
+	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.parentid)
 		.tap(file => logFunc('Got personal drive file %O', file))
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',

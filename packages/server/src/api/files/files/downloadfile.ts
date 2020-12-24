@@ -37,7 +37,7 @@ export const func = () =>
 		const fileEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(false))
 			.flatMap(request =>
-				getFileObject(true)(req.mysqlx)(request.account)(request.member)(
+				getFileObject(req.mysqlx)(request.account)(request.member)(
 					request.params.fileid,
 				).map<[RawFileObject, MaybeObj<User>]>(f => [f, request.member]),
 			)
@@ -59,15 +59,15 @@ export const func = () =>
 		const [file, member] = fileEither.value;
 
 		if (!canReadFile(Maybe.orSome<null | User>(null)(member))(file)) {
-			res.status(403);
-			res.end();
+			if (Maybe.isNone(member)) {
+				res.redirect('/signin?returnurl=' + req.originalUrl);
+			} else {
+				res.status(403);
+				res.end();
+			}
 			await req.mysqlxSession.close();
 			return;
 		}
-
-		// const fileRequested = createReadStream(
-		// 	join(req.configuration.DRIVE_STORAGE_PATH, file.accountID + '-' + file.id)
-		// );
 
 		res.contentType(file.contentType);
 		res.setHeader('Content-Disposition', 'attachment; filename="' + file.fileName + '"');

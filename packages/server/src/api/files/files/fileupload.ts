@@ -26,8 +26,10 @@ import {
 	FileUserAccessControlType,
 	FullFileObject,
 	Maybe,
+	MemberReference,
 	RawFileObject,
 	SessionType,
+	stringifyMemberReference,
 	toReference,
 	User,
 	userHasFilePermission,
@@ -59,7 +61,8 @@ const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.M
 */
 export const func = () =>
 	asyncErrorHandler(async (req: MySQLRequest<{ parentid?: string }>, res) => {
-		const parentID = req.params.parentid ?? 'root';
+		const getParentID = (mem: MemberReference) =>
+			req.params.parentid ?? stringifyMemberReference(mem);
 
 		const reqEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(true))
@@ -70,8 +73,8 @@ export const func = () =>
 					'Member cannot perform the requested action with their current session. Try signing out and back in',
 			})
 			.flatMap(request =>
-				getFileObject(false)(req.mysqlx)(request.account)(Maybe.some(request.member))(
-					parentID,
+				getFileObject(req.mysqlx)(request.account)(Maybe.some(request.member))(
+					getParentID(request.member),
 				).map<[User, AccountObject, RawFileObject]>(file => [
 					request.member,
 					request.account,
@@ -94,6 +97,8 @@ export const func = () =>
 		}
 
 		const [member, account, parent] = reqEither.value;
+
+		const parentID = getParentID(member);
 
 		if (
 			typeof req.headers.token !== 'string' ||
@@ -157,9 +162,9 @@ export const func = () =>
 				filesCollection.add(uploadedFile).execute(),
 			])
 				.then(async () => {
-					const fullFileObject: FullFileObject = await getFileObject(false)(req.mysqlx)(
-						account,
-					)(Maybe.some(member))(id)
+					const fullFileObject: FullFileObject = await getFileObject(req.mysqlx)(account)(
+						Maybe.some(member),
+					)(id)
 						.flatMap<FullFileObject>(newFile =>
 							getFilePath(req.mysqlx)(account)(Maybe.some(member))(newFile)
 								.map<FileObject>(folderPath => ({

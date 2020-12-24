@@ -25,7 +25,7 @@ import wrapper from '../../../lib/wrapper';
 const canDeleteFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
 export const func: ServerAPIEndpoint<api.files.files.Delete> = req =>
-	getFileObject(false)(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.fileid)
+	getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.fileid)
 		.filter(canDeleteFile(req.member), {
 			type: 'OTHER',
 			code: 403,
