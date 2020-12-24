@@ -85,6 +85,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
 		this.addFile = this.addFile.bind(this);
 		this.fileDeleted = this.fileDeleted.bind(this);
+		this.fileIDDeleted = this.fileIDDeleted.bind(this);
 		this.fileModified = this.fileModified.bind(this);
 		this.refresh = this.refresh.bind(this);
 	}
@@ -237,7 +238,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 										onSelect={this.onFolderClick}
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
-										refresh={this.refresh}
+										fileDeleteID={this.fileIDDeleted}
 										parent={this.state.currentFolder!}
 									/>
 								))}
@@ -387,10 +388,14 @@ export default class Drive extends Page<PageProps, DriveState> {
 		}));
 	}
 
-	private fileDeleted(file: FileObject) {
+	private fileIDDeleted(id: string) {
 		this.setState(prev => ({
-			files: (prev.files || []).filter(f => f.id !== file.id),
+			files: (prev.files || []).filter(f => f.id !== id),
 		}));
+	}
+
+	private fileDeleted(file: FileObject) {
+		this.fileIDDeleted(file.id);
 	}
 
 	private fileModified(file: FileObject) {
