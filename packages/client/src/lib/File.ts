@@ -19,6 +19,9 @@
 
 import { Either, FullFileObject, ClientUser } from 'common-lib';
 import fetchApi from './apis';
+import debug from 'debug';
+
+const logFunc = debug('client:lib:file');
 
 interface UploadProgressEvent {
 	event: 'PROGRESS';
@@ -76,7 +79,6 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 				}
 			},
 		};
-		let done = false;
 
 		xhr.upload.addEventListener('progress', ev => {
 			if (ev.lengthComputable) {
@@ -93,13 +95,12 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 				progress: 1,
 			});
 
-			done = true;
-
 			results.finish();
 		});
 
 		const uploadPromise = new Promise<UploadFinishEvent>((res, rej) => {
 			xhr.addEventListener('readystatechange', function(evt: Event) {
+				logFunc('Ready state changed during file upload: %d', this.readyState);
 				if (this.readyState === 4) {
 					const resp = JSON.parse(this.responseText) as FullFileObject;
 
@@ -110,12 +111,14 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 				}
 			});
 
+			logFunc('Sending file');
+
 			xhr.send(fd);
 		});
 
-		while (!done || results.queue.length > 0) {
-			try {
-				const value = await new Promise<UploadProgressEvent>((res, rej) => {
+		while (true) {
+			const value = await Promise.race([
+				new Promise<UploadProgressEvent>((res, rej) => {
 					results.doCallback(item => {
 						if (!item) {
 							rej();
@@ -123,15 +126,17 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 							res(item);
 						}
 					});
-				});
+				}),
+				uploadPromise,
+			]);
 
-				if (value) {
-					yield value;
-				}
-			} catch (e) {
-				done = true;
+			if (value.event === 'FINISH') {
+				yield value;
+				return;
+			}
+
+			if (value) {
+				yield value;
 			}
 		}
-
-		return uploadPromise;
 	};
