@@ -25,7 +25,9 @@ import {
 	get,
 	hasPermission,
 	Maybe,
+	Member,
 	Permissions,
+	RawTeamObject,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
@@ -37,8 +39,8 @@ import FileUploader from '../../components/FileUploader';
 import { Form, TextInput } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import fetchApi from '../../lib/apis';
-import './Drive.css';
 import Page, { PageProps } from '../Page';
+import './Drive.css';
 
 interface UnloadedDriveState {
 	files: null;
@@ -48,6 +50,8 @@ interface UnloadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
+	teams: null;
+	members: null;
 }
 
 interface LoadedDriveState {
@@ -58,9 +62,25 @@ interface LoadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
+	teams: RawTeamObject[];
+	members: Member[];
 }
 
-type DriveState = UnloadedDriveState | LoadedDriveState;
+interface DataUnloadedState {
+	extraLoaded: false;
+	teams: null;
+	members: null;
+}
+
+interface DataLoadedState {
+	extraLoaded: true;
+	teams: RawTeamObject[];
+	members: Member[];
+}
+
+type DataState = DataUnloadedState | DataLoadedState;
+
+type DriveState = (UnloadedDriveState | LoadedDriveState) & DataState;
 
 export default class Drive extends Page<PageProps, DriveState> {
 	public state: DriveState = {
@@ -71,6 +91,10 @@ export default class Drive extends Page<PageProps, DriveState> {
 		showingExtraInfo: true,
 		error: false,
 		errorReason: null,
+
+		extraLoaded: false,
+		teams: null,
+		members: null,
 	};
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
@@ -106,8 +130,25 @@ export default class Drive extends Page<PageProps, DriveState> {
 		return this.props.routeProps.location.pathname.split('/')[1];
 	}
 
-	public componentDidMount() {
+	public async componentDidMount() {
 		this.goToFolder(this.folderID, false);
+
+		const resultEither = await AsyncEither.All([
+			fetchApi.team.list({}, {}),
+			fetchApi.member.memberList({}, {}),
+		]);
+
+		if (Either.isLeft(resultEither)) {
+			// TODO: Add error
+		} else {
+			const [teams, members] = resultEither.value;
+
+			this.setState({
+				extraLoaded: true,
+				teams,
+				members,
+			});
+		}
 	}
 
 	public componentDidUpdate() {
@@ -146,7 +187,9 @@ export default class Drive extends Page<PageProps, DriveState> {
 			return <div>{this.state.errorReason}</div>;
 		}
 
-		if (this.state.files === null || this.state.currentFolder === null) {
+		const state = this.state;
+
+		if (this.state.files === null || this.state.currentFolder === null || !state.extraLoaded) {
 			return <Loader />;
 		}
 
@@ -253,6 +296,9 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileDelete={this.fileDeleted}
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
+									registry={this.props.registry}
+									members={state.members}
+									teams={state.teams}
 								/>
 							) : null}
 						</React.Fragment>
@@ -291,6 +337,9 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileDelete={this.fileDeleted}
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
+									registry={this.props.registry}
+									members={state.members}
+									teams={state.teams}
 								/>
 							) : null}
 						</React.Fragment>

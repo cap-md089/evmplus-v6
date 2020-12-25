@@ -34,6 +34,10 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 		return true;
 	}
 
+	if (member && areMembersTheSame(file.owner)(member)) {
+		return true;
+	}
+
 	const otherPermissions = file.permissions.filter(
 		perm => perm.type === FileUserAccessControlType.OTHER,
 	);

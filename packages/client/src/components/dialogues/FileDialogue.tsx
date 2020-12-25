@@ -17,7 +17,15 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AccountObject, AsyncEither, Either, FileObject, get, ClientUser } from 'common-lib';
+import {
+	AccountObject,
+	AsyncEither,
+	Either,
+	FileObject,
+	get,
+	ClientUser,
+	stringifyMemberReference,
+} from 'common-lib';
 import * as React from 'react';
 import fetchApi from '../../lib/apis';
 import { FolderDisplayer } from '../drive/FolderDisplayer';
@@ -106,11 +114,11 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 	}
 
 	public componentDidMount() {
-		this.goToFolder('root');
+		this.goToFolder(stringifyMemberReference(this.props.member));
 	}
 
 	private get multiple() {
-		return typeof this.props.multiple === 'undefined' ? true : this.props.multiple;
+		return this.props.multiple ?? true;
 	}
 
 	public render() {
@@ -153,7 +161,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 							(this.state.view === FileDialogueView.MYDRIVE ? 'selected' : '')
 						}
 					>
-						Squadron Drive
+						Drive
 					</button>
 					<button
 						onClick={this.getViewChanger(FileDialogueView.UPLOAD)}
