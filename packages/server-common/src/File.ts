@@ -17,9 +17,8 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Collection, Schema, UndefinedToNull } from '@mysql/xdevapi';
+import { Schema } from '@mysql/xdevapi';
 import {
-	AccountIdentifiable,
 	AccountObject,
 	always,
 	AsyncEither,
@@ -190,17 +189,7 @@ export const getRootFileObject = (schema: Schema) => (
 			],
 		}));
 
-const getFindForFile = (collection: Collection<UndefinedToNull<RawFileObject>>) => (
-	fileObjectID: AccountIdentifiable,
-) =>
-	findAndBind(collection, {
-		accountID: fileObjectID.accountID,
-		id: fileObjectID.id as string,
-	});
-
-export const getFilePath = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<MemberReference>,
-) => (
+export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference>) => (
 	file: RawFileObject,
 ): ServerEither<
 	{
@@ -242,8 +231,8 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: getRegularFileObject(schema)(account)(member)(file.parentID).flatMap(parent =>
-				getFilePath(schema)(account)(member)(parent).map(path => [
+		: getRegularFileObject(schema)(member)(file.parentID).flatMap(parent =>
+				getFilePath(schema)(member)(parent).map(path => [
 					...path,
 					{
 						id: parent.id,
@@ -252,12 +241,11 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				]),
 		  );
 
-export const getRegularFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<MemberReference>,
-) => (fileID: string): ServerEither<RawFileObject> =>
+export const getRegularFileObject = (schema: Schema) => (member: MaybeObj<MemberReference>) => (
+	fileID: string,
+): ServerEither<RawFileObject> =>
 	asyncRight(
-		getFindForFile(schema.getCollection<RawFileObject>('Files'))({
-			accountID: account.id,
+		findAndBind(schema.getCollection<RawFileObject>('Files'), {
 			id: fileID,
 		}),
 		errorGenerator('Could not get file'),
@@ -270,7 +258,7 @@ export const getRegularFileObject = (schema: Schema) => (account: AccountObject)
 		})
 		.map(get(0))
 		.flatMap(file =>
-			getFilePath(schema)(account)(member)(file)
+			getFilePath(schema)(member)(file)
 				.map(folderPath => ({
 					...file,
 					folderPath,
@@ -302,13 +290,13 @@ export const getFileObject = (schema: Schema) => (account: AccountObject) => (
 			? getUserFileObject(schema)(account)(
 					(parseStringMemberReference(id) as Right<MemberReference>).value,
 			  )
-			: getRegularFileObject(schema)(account)(member)(id),
+			: getRegularFileObject(schema)(member)(id),
 	);
 
 export const expandRawFileObject = (schema: Schema) => (account: AccountObject) => (
 	member: MaybeObj<MemberReference>,
 ) => (file: RawFileObject): ServerEither<FileObject> =>
-	getFilePath(schema)(account)(member)(file).map(folderPath => ({
+	getFilePath(schema)(member)(file).map(folderPath => ({
 		...file,
 		folderPath,
 	}));

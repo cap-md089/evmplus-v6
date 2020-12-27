@@ -166,7 +166,7 @@ export const func = () =>
 						Maybe.some(member),
 					)(id)
 						.flatMap<FullFileObject>(newFile =>
-							getFilePath(req.mysqlx)(account)(Maybe.some(member))(newFile)
+							getFilePath(req.mysqlx)(Maybe.some(member))(newFile)
 								.map<FileObject>(folderPath => ({
 									...newFile,
 									folderPath,
