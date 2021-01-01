@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FullTeamObject, get } from 'common-lib';
+import { get, RawTeamObject } from 'common-lib';
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
@@ -27,13 +27,13 @@ import { InputProps } from './Input';
 import TextInput from './TextInput';
 
 interface TeamSelectorProps extends InputProps<number | null> {
-	teamList: FullTeamObject[];
+	teamList: RawTeamObject[];
 }
 
 interface TeamSelectorState {
-	teams: FullTeamObject[] | null;
+	teams: RawTeamObject[] | null;
 	open: boolean;
-	selectedValue: FullTeamObject | null;
+	selectedValue: RawTeamObject | null;
 	filterValues: any[];
 }
 
@@ -83,7 +83,7 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 					<Button onClick={this.openTeamDialogue} buttonType="none">
 						Select a team
 					</Button>
-					<DownloadDialogue<FullTeamObject>
+					<DownloadDialogue<RawTeamObject>
 						open={this.state.open}
 						multiple={false}
 						onCancel={() => this.selectTeam(null)}
@@ -130,13 +130,13 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		});
 	}
 
-	private setSelectedTeam(selectedValue: FullTeamObject | null) {
+	private setSelectedTeam(selectedValue: RawTeamObject | null) {
 		this.setState({
 			selectedValue,
 		});
 	}
 
-	private selectTeam(selectedValue: FullTeamObject | null) {
+	private selectTeam(selectedValue: RawTeamObject | null) {
 		this.setState({
 			selectedValue,
 			open: false,

@@ -90,6 +90,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		tryingMFAToken: false,
 	};
 
+	private mfaTokenInputRef = React.createRef<HTMLInputElement>();
+
 	private get returnUrl(): string {
 		const search = this.props.routeProps.location.search.replace(/\?/g, '');
 
@@ -112,8 +114,12 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 	public componentDidMount() {
 		if (this.props.member) {
-			this.props.routeProps.history.push(this.returnUrl);
+			this.go();
 		}
+	}
+
+	public componentDidUpdate() {
+		this.mfaTokenInputRef.current?.focus();
 	}
 
 	public render() {
@@ -190,7 +196,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					) : null}
 
 					<Label>Please input a multi-factor token</Label>
-					<TextInput name="token" />
+					<TextInput name="token" ref={this.mfaTokenInputRef} showSuggestions={false} />
 				</SimpleForm>
 			</div>
 		) : (
@@ -253,7 +259,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 
 		if (signinResults.error === MemberCreateError.NONE) {
 			this.props.authorizeUser(signinResults);
-			this.props.routeProps.history.push(this.returnUrl);
+			this.go();
 		} else if (signinResults.error === MemberCreateError.PASSWORD_EXPIRED) {
 			this.setState({
 				error: signinResults.error,
@@ -293,7 +299,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			const member = await getMember();
 
 			this.props.authorizeUser(member);
-			this.props.routeProps.history.push(this.returnUrl);
+			this.go();
 		}
 	}
 
@@ -317,13 +323,25 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				const member = await getMember();
 
 				this.props.authorizeUser(member);
-				this.props.routeProps.history.push(this.returnUrl);
+				this.go();
 			} else {
 				this.setState({
 					error: MemberCreateError.PASSWORD_EXPIRED,
 					tryingMFAToken: false,
 				});
 			}
+		}
+	}
+
+	private go() {
+		const returnUrl = this.returnUrl;
+
+		if (returnUrl.startsWith('/api')) {
+			window.open(returnUrl);
+		} else if (returnUrl.startsWith('/')) {
+			this.props.routeProps.history.push(returnUrl);
+		} else {
+			window.location.href = returnUrl;
 		}
 	}
 }

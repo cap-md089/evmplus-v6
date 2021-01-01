@@ -42,6 +42,7 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
+import * as debug from 'debug';
 import {
 	getAdminAccountIDsForMember,
 	getUnfinishedTaskCountForMember,
@@ -50,8 +51,11 @@ import {
 } from 'server-common';
 import wrapper, { Wrapped } from '../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.Check> = req =>
-	Maybe.cata<[User, ActiveSession], ServerEither<Wrapped<SigninReturn>>>(
+const logFunc = debug('server:api:check');
+
+export const func: ServerAPIEndpoint<api.Check> = req => {
+	logFunc('Starting check request: %o', req.member);
+	return Maybe.cata<[User, ActiveSession], ServerEither<Wrapped<SigninReturn>>>(
 		always(
 			asyncRight<ServerError, SigninReturn>(
 				{
@@ -95,5 +99,6 @@ export const func: ServerAPIEndpoint<api.Check> = req =>
 			},
 		})),
 	)(Maybe.And([req.member, req.session]));
+};
 
 export default func;

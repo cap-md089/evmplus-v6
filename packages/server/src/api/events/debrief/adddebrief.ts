@@ -22,6 +22,7 @@ import {
 	always,
 	api,
 	EventType,
+	FromDatabase,
 	get,
 	getFullMemberName,
 	RawRegularEventObject,
@@ -41,8 +42,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 				code: 403,
 				message: 'You cannot modify debrief items of a linked event',
 			})
-			.map<[RawRegularEventObject, RawRegularEventObject]>(
-				(oldEvent: RawRegularEventObject) => [
+			.map(event => event as FromDatabase<RawRegularEventObject>)
+			.map<[FromDatabase<RawRegularEventObject>, FromDatabase<RawRegularEventObject>]>(
+				oldEvent => [
 					oldEvent,
 					{
 						...oldEvent,
@@ -60,9 +62,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 				],
 			)
 			.flatMap(([oldEvent, newEvent]) =>
-				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
-					newEvent,
-				).map(always(newEvent)),
+				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(req.member)(
+					oldEvent,
+				)(newEvent).map(always(newEvent)),
 			)
 			.map(get('debrief'))
 			.map(wrapper),

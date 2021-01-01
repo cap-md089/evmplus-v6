@@ -27,12 +27,12 @@ export const func: (
 ) => ServerAPIEndpoint<api.member.session.SetScanAddSession> = (now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		getEvent(req.mysqlx)(req.account)(req.body.eventID)
+			.flatMap(ensureResolvedEvent(req.mysqlx))
 			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'You do not have permission to manage this event',
 			})
-			.flatMap(ensureResolvedEvent(req.mysqlx))
 			.filter(event => event.meetDateTime > now(), {
 				type: 'OTHER',
 				code: 403,

@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.23.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.23.0) (2020-12-09)
+
+
+### Bug Fixes
+
+* **server-common:** fixed saveExtraMemberInformation not adding information to database when appropr ([cc70767](http://github.com//cap-md089/evmplus-v6/commit/cc7076770ced08b9a115ede1b216f4716ec625af))
+* event organizers can now add anyone to attendance so long as they aren't already in attendance; ([416b227](http://github.com//cap-md089/evmplus-v6/commit/416b227d1d6748977c9b7a823c87cf8c79f0f32e))
+* **server:** fixed headers not being properly handled ([d0829e9](http://github.com//cap-md089/evmplus-v6/commit/d0829e9c94399c402388c26ec05512e53153615b))
+* **server:** updated npm start to use the appropriate node settings ([0839145](http://github.com//cap-md089/evmplus-v6/commit/0839145c01992e7c8c90923979bafe0028eb0a13))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed macro error for string enum literal values ([a2d23d0](http://github.com//cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](http://github.com//cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](http://github.com//cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* **server:** changed logging for production ([176c3dd](http://github.com//cap-md089/evmplus-v6/commit/176c3dd134cf0255c0bf845e7acb25c5d2ec85d2))
+* **server-common:** added extra configuration for different drive locations ([fa8d141](http://github.com//cap-md089/evmplus-v6/commit/fa8d141580c801766af94f405c5e285085c5a885))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [6.22.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.22.0) (2020-10-30)
 
 

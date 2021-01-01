@@ -75,8 +75,8 @@ export const canSignUpForEvent = (event: EventObject) => (
 			member =>
 				event.teamID === null ||
 				event.teamID === undefined ||
-				(!!event.limitSignupsToTeam &&
-					Maybe.orSome(false)(Maybe.map(isPartOfTeam(member))(eventTeam))),
+				!event.limitSignupsToTeam ||
+				Maybe.orSome(false)(Maybe.map(isPartOfTeam(member))(eventTeam)),
 		)('Member is required to be a part of the team'),
 		Either.filter<string, MemberReference>(
 			() =>

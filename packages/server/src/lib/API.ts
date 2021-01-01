@@ -45,10 +45,13 @@ import {
 	ValidatorFail,
 	ValidatorImpl,
 } from 'common-lib';
+import * as debug from 'debug';
 import * as express from 'express';
 import { accountRequestTransformer, BasicAccountRequest, PAM, ServerEither } from 'server-common';
 import { tokenTransformer } from '../api/formtoken';
 import saveServerError, { Requests } from './saveServerError';
+
+const logFunc = debug('server:lib:api');
 
 export const addMember = (memberRequirement: MemberRequirement) => <P extends ParamType, B>(
 	request: Requests<P, B>,
@@ -60,8 +63,14 @@ export const addMember = (memberRequirement: MemberRequirement) => <P extends Pa
 	};
 
 	if (memberRequirement === 'required') {
+		logFunc('Member is required in request');
 		return PAM.memberRequestTransformer(true)(req).tap(tapFunction);
 	} else if (memberRequirement === 'optional') {
+		logFunc(
+			'Member is optional in request; current auth token/cookie: %s; headers: %o',
+			req.headers?.cookie ?? req.headers?.authorization,
+			req.headers,
+		);
 		return PAM.memberRequestTransformer(false)(req).tap(tapFunction);
 	} else {
 		return asyncRight(req, errorGenerator('Could not handle request'));
@@ -241,12 +250,15 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 		req: RequestType<APIEndpointParams<T>, APIEndpointBody<T>, APIEndpointMember<T>>,
 	) => ReturnValue<APIEndpointReturnValue<T>>,
 ) => {
+	logFunc.extend('init')('Setting up handler: %s %s', method, url);
 	app[method](
 		url,
 		bodyParser.json({
 			strict: false,
 		}),
 		(req: Requests, res: express.Response, next: express.NextFunction) => {
+			debug('server:lib:api:raw')('Raw request: %o', req);
+			debug('server:lib:api:raw')('Headers from raw request: %o', req.headers);
 			if (typeof req.body !== 'undefined' && req.body === 'teapot') {
 				res.status(418);
 				res.end();
@@ -273,6 +285,10 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 			)
 				.flatMap<BasicAccountRequest>(accountRequestTransformer)
 				.tap(accountReq => {
+					debug('server:lib:api:raw')(
+						'Request headers with account: %o',
+						accountReq.headers,
+					);
 					(request as BasicAccountRequest).account = accountReq.account;
 				})
 				.flatMap(addMember(memberRequirement)(request))

@@ -34,30 +34,31 @@
 	position: fixed;
 	z-index: 50;
 	background-color: rgba(0, 0, 0, 0.5);
+}
 
-	.alert-box {
-		display: inline-block;
-		background-color: white;
-		color: #999999;
+.alert-box {
+	display: inline-block;
+	background-color: white;
+	color: #999999;
+	box-sizing: border-box;
+	padding: 20px;
+	border-radius: 20px;
+	box-shadow: 0 0 1em black;
+	min-width: 615px;
+	max-width: 90%;
+	overflow: auto;
+	max-height: 80%;
+
+	& > div {
 		box-sizing: border-box;
-		padding: 20px;
-		border-radius: 20px;
-		box-shadow: 0 0 1em black;
-		min-width: 615px;
-		max-width: 90%;
-		max-height: 80%;
+		padding: 15px;
+		margin: 0.0000000001px;
+		padding-bottom: 25px;
+	}
 
-		& > div {
-			box-sizing: border-box;
-			padding: 15px;
-			margin: 0.0000000001px;
-			padding-bottom: 25px;
-		}
-
-		h2 {
-			text-align: center;
-			border-bottom: 1px solid $secondary-color;
-		}
+	h2 {
+		text-align: center;
+		border-bottom: 1px solid $secondary-color;
 	}
 }
 

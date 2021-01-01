@@ -18,14 +18,18 @@
  */
 
 import {
+	ClientUser,
 	FileObject,
 	FileUserAccessControlPermissions,
-	ClientUser,
+	Member,
+	RawTeamObject,
+	RegistryValues,
 	userHasFilePermission,
 } from 'common-lib';
 import * as React from 'react';
 import fetchApi from '../../lib/apis';
 import Button from '../Button';
+import FilePermissionsDialogue from '../dialogues/FilePermissionsDialogue';
 import SimpleForm, { BigTextBox, Label } from '../forms/SimpleForm';
 
 export interface ExtraDisplayProps {
@@ -36,15 +40,29 @@ export interface ExtraDisplayProps {
 	fileDelete: (file: FileObject) => void;
 	fileModify: (file: FileObject) => void;
 	fileUpdate: () => void;
+
+	registry: RegistryValues;
+	members: Member[];
+	teams: RawTeamObject[];
 }
 
 export interface CommentsForm {
 	comments: string;
 }
 
-export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps, CommentsForm> {
+export interface ExtraDisplayState extends CommentsForm {
+	permissionsOpen: boolean;
+}
+
+const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
+
+export default class ExtraFileDisplay extends React.Component<
+	ExtraDisplayProps,
+	ExtraDisplayState
+> {
 	public state = {
 		comments: this.props.file.comments,
+		permissionsOpen: false,
 	};
 
 	constructor(props: ExtraDisplayProps) {
@@ -54,26 +72,47 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 		this.onFileChangeFormSubmit = this.onFileChangeFormSubmit.bind(this);
 
 		this.onDeleteFileClick = this.onDeleteFileClick.bind(this);
+
+		this.onFilePermissionsSave = this.onFilePermissionsSave.bind(this);
+		this.onFilePermissionsSaveCancel = this.onFilePermissionsSaveCancel.bind(this);
+		this.openFilePermissions = this.openFilePermissions.bind(this);
 	}
 
 	public render() {
+		const userCanModify = canModify(this.props.member);
+
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>
-				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
-					this.props.parentFile,
-				) ? (
+				<FilePermissionsDialogue
+					file={this.props.file}
+					handleCancel={this.onFilePermissionsSaveCancel}
+					handleFile={this.onFilePermissionsSave}
+					open={this.state.permissionsOpen}
+					registry={this.props.registry}
+					members={this.props.members}
+					teams={this.props.teams}
+				/>
+				{userCanModify(this.props.parentFile) ? (
+					<Button buttonType="none" onClick={this.onDeleteFileClick}>
+						Delete file
+					</Button>
+				) : null}
+				{userCanModify(this.props.parentFile) && userCanModify(this.props.file) ? (
+					<> | </>
+				) : null}
+				{userCanModify(this.props.file) ? (
+					<Button buttonType="none" onClick={this.openFilePermissions}>
+						Sharing settings
+					</Button>
+				) : null}
+				{userCanModify(this.props.parentFile) || userCanModify(this.props.file) ? (
 					<>
-						<Button buttonType="none" onClick={this.onDeleteFileClick}>
-							Delete file
-						</Button>
 						<br />
 						<br />
 					</>
 				) : null}
 				<h3>Comments:</h3>
-				{userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
-					this.props.file,
-				) ? (
+				{userCanModify(this.props.file) ? (
 					<SimpleForm<CommentsForm>
 						values={{ comments: this.props.file.comments }}
 						onChange={this.onFormChange}
@@ -113,5 +152,27 @@ export default class ExtraFileDisplay extends React.Component<ExtraDisplayProps,
 
 			this.props.fileModify(newFile);
 		}
+	}
+
+	private openFilePermissions() {
+		this.setState({
+			permissionsOpen: true,
+		});
+	}
+
+	private async onFilePermissionsSave(file: FileObject) {
+		await fetchApi.files.files.setInfo({ fileid: file.id }, file).fullJoin();
+
+		this.setState({
+			permissionsOpen: false,
+		});
+
+		this.props.fileModify(file);
+	}
+
+	private onFilePermissionsSaveCancel() {
+		this.setState({
+			permissionsOpen: false,
+		});
 	}
 }

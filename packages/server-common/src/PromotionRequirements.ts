@@ -91,7 +91,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQ
 								? maxAchv[0]
 								: { ...emptyCadetAchv, CAPID: member.id },
 							maxAprv,
-							maxAprvStatus[0].Status,
+							maxAprvStatus[0]?.Status ?? 'INC',
 							encampResults,
 							rclsResults,
 						] as const,

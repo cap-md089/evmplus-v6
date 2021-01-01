@@ -29,7 +29,7 @@ export const func: ServerAPIEndpoint<api.member.SetAbsenteeInformation> = PAM.Re
 		CAP.getExtraMemberInformationForCAPMember(req.account)(req.member),
 		errorGenerator('Could not save extra member information'),
 	)
-		.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
+		.flatMap(saveExtraMemberInformation(req.mysqlx))
 		.map(destroy)
 		.map(wrapper),
 );

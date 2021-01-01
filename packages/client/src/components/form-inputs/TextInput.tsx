@@ -33,6 +33,8 @@ export interface TextInputProps extends InputProps<string> {
 	disabled?: boolean;
 	shouldUpdate?: (val: string) => boolean;
 
+	showSuggestions?: boolean;
+
 	password?: boolean;
 }
 
@@ -108,6 +110,7 @@ export class TextInput extends React.Component<InnerTextInputProps, { changed: b
 					}}
 					placeholder={this.props.placeholder}
 					disabled={this.props.disabled}
+					autoComplete={this.props.showSuggestions ?? true ? 'on' : 'off'}
 				/>
 				{this.props.hasError && this.props.errorMessage && this.state.changed ? (
 					<span className="text-error">{this.props.errorMessage}</span>

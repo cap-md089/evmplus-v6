@@ -257,6 +257,7 @@ export const allRoles = [
 	...CACRepresentativeRoles,
 ];
 
+// TODO: Update this and its usages to instead find all roles that are not automatic
 export const ManualRoles = [
 	'Squadron Commander',
 	'Deputy Commander for Cadets',
@@ -265,7 +266,12 @@ export const ManualRoles = [
 	'Presenter',
 	'Announcer',
 	'Previous Cadet Commander',
-	'CAPUnit Software Developer',
+	'EvMPlus Software Developer',
+
+	// Roles added by St. Mary's specifically
+	'Minecraft',
+	'Rocket League',
+	'Among Us',
 ];
 
 export const hasOneOf = <T>(arr1: T[]) => (arr2: T[]) =>
@@ -578,7 +584,10 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 	}
 
 	if (guild.ownerID !== discordUser.id) {
-		await discordUser.roles.set(finalRoles);
+		const unique: { [key: string]: boolean } = {};
+		await discordUser.roles.set(
+			finalRoles.filter(role => !unique[role.id] || (unique[role.id] = true)),
+		);
 	}
 };
 

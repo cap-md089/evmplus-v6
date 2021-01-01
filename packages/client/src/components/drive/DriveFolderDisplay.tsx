@@ -23,14 +23,14 @@ import { FileDisplayProps } from './DriveFileDisplay';
 import fetchApi from '../../lib/apis';
 
 export default class DriveFolderDisplay extends React.Component<
-	FileDisplayProps & { refresh: () => void },
+	FileDisplayProps & { fileDeleteID: (id: string) => void },
 	{ hovering: boolean }
 > {
 	public state = {
 		hovering: false,
 	};
 
-	constructor(props: FileDisplayProps & { refresh: () => void }) {
+	constructor(props: FileDisplayProps & { fileDeleteID: (id: string) => void }) {
 		super(props);
 
 		this.handleDrop = this.handleDrop.bind(this);
@@ -64,7 +64,7 @@ export default class DriveFolderDisplay extends React.Component<
 		e.preventDefault();
 
 		if (
-			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+			!userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 				this.props.file,
 			)
 		) {
@@ -87,7 +87,7 @@ export default class DriveFolderDisplay extends React.Component<
 		e.stopPropagation();
 
 		if (
-			!userHasFilePermission(FileUserAccessControlPermissions.WRITE)(this.props.member)(
+			!userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(this.props.member)(
 				this.props.file,
 			)
 		) {
@@ -114,7 +114,7 @@ export default class DriveFolderDisplay extends React.Component<
 
 		await fetchApi.files.children.add({ parentid: this.props.file.id }, { childid: id });
 
-		this.props.refresh();
+		this.props.fileDeleteID(id);
 		this.setState({
 			hovering: false,
 		});

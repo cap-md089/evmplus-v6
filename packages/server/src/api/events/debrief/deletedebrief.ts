@@ -18,7 +18,15 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { always, api, EventType, get, RawRegularEventObject, SessionType } from 'common-lib';
+import {
+	always,
+	api,
+	EventType,
+	FromDatabase,
+	get,
+	RawRegularEventObject,
+	SessionType,
+} from 'common-lib';
 import { getEvent, PAM, saveEventFunc } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
@@ -32,8 +40,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 				code: 400,
 				message: 'You cannot modify the debrief items of a linked event',
 			})
-			.map<[RawRegularEventObject, RawRegularEventObject]>(
-				(oldEvent: RawRegularEventObject) => [
+			.map(event => event as FromDatabase<RawRegularEventObject>)
+			.map<[FromDatabase<RawRegularEventObject>, FromDatabase<RawRegularEventObject>]>(
+				oldEvent => [
 					oldEvent,
 					{
 						...oldEvent,
@@ -45,9 +54,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 				],
 			)
 			.flatMap(([oldEvent, newEvent]) =>
-				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
-					newEvent,
-				).map(always(newEvent)),
+				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(req.member)(
+					oldEvent,
+				)(newEvent).map(always(newEvent)),
 			)
 			.map(get('debrief'))
 			.map(wrapper),

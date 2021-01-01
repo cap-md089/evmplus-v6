@@ -17,24 +17,29 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as React from 'react';
-import Page, { PageProps } from '../../Page';
-import Loader from '../../../components/Loader';
-import FlightRow from '../../../components/flightassign/FlightRow';
-import Button from '../../../components/Button';
 import {
-	MemberReference,
-	Member,
-	hasPermission,
-	Either,
 	areMembersTheSame,
-	toReference,
+	Either,
+	hasPermission,
+	Member,
+	MemberReference,
 	Permissions,
+	toReference,
 } from 'common-lib';
+import * as React from 'react';
+import Button from '../../../components/Button';
+import FlightRow from '../../../components/flightassign/FlightRow';
+import Loader from '../../../components/Loader';
 import fetchApi from '../../../lib/apis';
+import Page, { PageProps } from '../../Page';
+
+interface WrappedMember {
+	changed: boolean;
+	member: Member;
+}
 
 interface FlightAssignStateLoaded {
-	members: Member[];
+	members: WrappedMember[];
 	loaded: true;
 	open: boolean;
 	highlighted: string | null;
@@ -61,6 +66,15 @@ const saveButtonMargin = {
 const saveMessage = {
 	marginLeft: 10,
 };
+
+const wrapMember = (member: Member): WrappedMember => ({
+	changed: false,
+	member,
+});
+
+const unwrapMember = ({ member }: WrappedMember): Member => member;
+
+const memberChanged = ({ changed }: WrappedMember) => changed;
 
 export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	public state: FlightAssignState = {
@@ -127,7 +141,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			// TODO: add error message
 		} else {
 			this.setState({
-				members: membersEither.value,
+				members: membersEither.value.map(wrapMember),
 				loaded: true,
 			});
 		}
@@ -142,7 +156,10 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			return <Loader />;
 		}
 
-		const unusedMembers = this.state.members.slice().filter(mem => !mem.seniorMember);
+		const unusedMembers = this.state.members
+			.map(unwrapMember)
+			.slice()
+			.filter(mem => !mem.seniorMember);
 		const flights: Array<[string, Member[]]> = [];
 
 		for (const flight of this.props.registry.RankAndFile.Flights) {
@@ -202,15 +219,21 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	private onDrop(flight: string) {
 		return (memRef: MemberReference) => {
 			for (const member of this.state.members!) {
-				if (areMembersTheSame(memRef)(member)) {
-					member.flight = flight;
+				if (areMembersTheSame(memRef)(member.member)) {
+					member.member.flight = flight;
+					member.changed = true;
 				}
 			}
-			this.setState({
-				highlighted: null,
-				open: true,
-				saved: false,
-			});
+			this.setState(prev =>
+				prev.loaded
+					? {
+							...prev,
+							highlighted: null,
+							open: true,
+							saved: false,
+					  }
+					: prev,
+			);
 		};
 	}
 
@@ -224,15 +247,18 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			members: [],
 		};
 
-		for (const i of this.state.members!) {
-			if (i.flight && this.props.registry.RankAndFile.Flights.indexOf(i.flight) > -1) {
+		for (const i of this.state.members?.filter?.(memberChanged) ?? []) {
+			if (
+				i.member.flight &&
+				this.props.registry.RankAndFile.Flights.indexOf(i.member.flight) > -1
+			) {
 				payload.members.push({
-					member: toReference(i),
-					newFlight: i.flight,
+					member: toReference(i.member),
+					newFlight: i.member.flight,
 				});
 			} else {
 				payload.members.push({
-					member: toReference(i),
+					member: toReference(i.member),
 					newFlight: null,
 				});
 			}

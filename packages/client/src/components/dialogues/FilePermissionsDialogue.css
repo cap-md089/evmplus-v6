@@ -1,0 +1,100 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.file-permissions .link-info {
+	display: flex;
+	box-sizing: border-box;
+	padding: 3px;
+	align-items: center;
+}
+
+.file-permissions .link-info div {
+	box-sizing: border-box;
+	padding: 2px;
+}
+
+.file-permissions .link-info span {
+	box-sizing: border-box;
+	padding: 5px;
+	border: 1px solid black;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.file-permissions .link-info .copy-link-button {
+	padding: 6px;
+	height: 100%;
+	border-radius: 3px;
+	box-sizing: border-box;
+	flex-basis: auto;
+}
+
+.file-permissions .link-info .copy-link-button:hover {
+	background: rgb(255, 247, 228);
+}
+
+.file-permissions .link-info {
+	margin-bottom: 10px;
+}
+
+.group-permissions .group-input {
+	width: 100%;
+	margin-bottom: 10px;
+	box-sizing: border-box;
+}
+
+.group-permissions .group-input input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 5px;
+	border-radius: 10px;
+}
+
+.group-permissions ul {
+	margin: 0;
+	padding: 0;
+}
+
+.group-permissions .permission,
+.static-permissions .permission {
+	width: 100%;
+	box-sizing: border-box;
+	list-style-type: none;
+	display: flex;
+	justify-content: space-between;
+	padding: 10px;
+}
+
+.group-permissions .permission .permission-perm,
+.static-permissions .permission .permission-perm {
+	align-self: flex-end;
+}
+
+.group-permissions .permission .permission-perm select,
+.static-permissions .permission .permission-perm select {
+	border-radius: 5px;
+	padding: 4px;
+	background-color: white;
+	box-sizing: border-box;
+}
+
+.permission-perm.perm-owner {
+	font-style: italic;
+	padding-right: 5px;
+}

@@ -35,7 +35,7 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
-import { Client, Message, VoiceChannel } from 'discord.js';
+import { Client, GuildMember, Message, VoiceChannel } from 'discord.js';
 import {
 	addMemberToAttendance,
 	ensureResolvedEvent,
@@ -43,9 +43,9 @@ import {
 	getEvent,
 	getFullPointsOfContact,
 	getTeam,
+	PAM,
 	resolveReference,
 } from 'server-common';
-import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
 import { getXSession } from '..';
 import { toCAPUnit } from '../data/convertMember';
 import getAccount from '../data/getAccount';
@@ -71,8 +71,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 	const eventID = parseInt(parts[2], 10);
 
 	if (isNaN(eventID)) {
-		await message.channel.send('Event ID has to be a number');
-		return;
+		return await message.channel.send('Event ID has to be a number');
 	}
 
 	const method = parts[3] ?? 'global';
@@ -82,21 +81,30 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		guild = await client.guilds.fetch(message.guild?.id ?? '');
 	} catch (e) {
 		console.error(e);
-		await message.reply('There was an error adding members to the event specified');
-		return;
+		return await message.reply('There was an error adding members to the event specified');
 	}
 
-	const discordMembers =
+	const discordMembers: GuildMember[] | undefined =
 		method === 'global'
-			? guild.channels.cache
-					.array()
-					.filter((v): v is VoiceChannel => v.type === 'voice')
-					.flatMap(channel => channel.members.array())
+			? (
+					await Promise.all(
+						guild.channels.cache
+							.array()
+							.filter((v): v is VoiceChannel => v.type === 'voice')
+							.map(channel => channel.fetch(true) as Promise<VoiceChannel>),
+					)
+			  ).flatMap(channel => channel.members.array())
 			: method === 'withme'
-			? message.member?.voice?.channel?.members.array()
+			? ((await message.member?.voice?.channel?.fetch?.(
+					true,
+			  )) as VoiceChannel)?.members.array()
 			: undefined;
 
-	if (!discordMembers) {
+	if (!discordMembers && method === 'withme') {
+		await message.reply('There was a problem getting the voice channel you are in');
+		await message.reply('Please try again later or use "global"');
+		return;
+	} else if (!discordMembers) {
 		await message.reply(`Unknown member group: "${method}"`);
 		await message.channel.send('Known member groups are "withme" or "global"');
 		return;
@@ -108,19 +116,13 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		const account = await getAccount(schema)(guild.id);
 
 		if (!account.hasValue) {
-			await message.channel.send('There was an unknown error');
-
-			await session.close();
-			return;
+			return await message.channel.send('There was an unknown error');
 		}
 
 		const maybeAdder = message.member ? await getMember(schema)(message.member) : Maybe.none();
 
 		if (!maybeAdder.hasValue) {
-			await message.channel.send('You are not a certified member');
-
-			await session.close();
-			return;
+			return await message.channel.send('You are not a certified member');
 		}
 
 		const memberEither = await resolveReference(schema)(account.value)(maybeAdder.value.member);
@@ -128,16 +130,13 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		if (Either.isLeft(memberEither)) {
 			console.error(memberEither.value);
 
-			await session.close();
-			await message.channel.send('Could not get member information or permissions');
-
-			return;
+			return await message.channel.send('Could not get member information or permissions');
 		}
 
 		const adder = memberEither.value;
 		let adderUser: User;
 		try {
-			const permissions = await getPermissionsForMemberInAccountDefault(
+			const permissions = await PAM.getPermissionsForMemberInAccountDefault(
 				schema,
 				toReference(adder),
 				account.value,
@@ -151,9 +150,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		} catch (e) {
 			console.error(e);
 
-			await session.close();
-			message.channel.send('Could not get member information or permissions');
-			return;
+			return await message.channel.send('Could not get member information or permissions');
 		}
 
 		const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
@@ -163,9 +160,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		if (Either.isLeft(eventEither)) {
 			console.error(eventEither.value);
 
-			await session.close();
-			await message.channel.send('Could not get event');
-			return;
+			return await message.channel.send('Could not get event');
 		}
 
 		const event = eventEither.value;
@@ -178,11 +173,9 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			.catch(Maybe.none);
 
 		if (!hasBasicAttendanceManagementPermission(adderUser)(event)(teamMaybe)) {
-			await session.close();
-			await message.reply(
+			return await message.reply(
 				'You do not have permission to add members to attendance of this event',
 			);
-			return;
 		}
 
 		const members = await collectGeneratorAsync(
@@ -195,7 +188,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			.filter(Maybe.isSome)
 			.map(get('value'));
 
-		await message.channel.send('Looking to add ' + members.length + ' members');
+		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
 		const fullInfoEither = await AsyncEither.All([
 			getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
@@ -203,8 +196,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 		]);
 
 		if (Either.isLeft(fullInfoEither)) {
-			await session.close();
-			return message.channel.send('There was an issue getting event attendance');
+			return await message.channel.send('There was an issue getting event attendance');
 		}
 
 		const [attendance, pointsOfContact] = fullInfoEither.value;
@@ -224,7 +216,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 				...event,
 				attendance,
 				pointsOfContact,
-			})({
+			})(true)({
 				shiftTime: {
 					arrivalTime: event.startDateTime,
 					departureTime: event.endDateTime,
@@ -239,7 +231,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: ServerCon
 			});
 
 			if (Either.isLeft(result)) {
-				console.log(result);
+				console.error(result);
 			} else {
 				membersAddedCount++;
 			}

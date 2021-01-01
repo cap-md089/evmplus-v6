@@ -372,9 +372,9 @@ export enum AuditableEventType {
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
-	// Write, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	WRITE = 1 << 1,
+	// Modify, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	MODIFY = 1 << 2,
 	FULLCONTROL = 255,
@@ -618,6 +618,14 @@ export type RadioReturnWithOther<E extends number> =
  * Provides some consistency in type information at least
  */
 export type SessionID = string;
+
+/**
+ * Used mostly in conjunction with Identifiable below
+ */
+export type FromDatabase<T> = T & DatabaseIdentifiable;
+export interface DatabaseIdentifiable {
+	_id: string;
+}
 
 /**
  * Most objects are identifiable; this also allows for general purpose libraries
@@ -3718,7 +3726,7 @@ export interface DiscordAccount {
 	member: MemberReference;
 }
 
-export interface ServerConfiguration {
+export interface ServerConfigurationRemote {
 	DB_SCHEMA: string;
 	DB_HOST: string;
 	DB_PASSWORD: string;
@@ -3736,6 +3744,7 @@ export interface ServerConfiguration {
 
 	DISCORD_CLIENT_TOKEN?: string;
 
+	DRIVE_TYPE: 'Remote';
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;
 	REMOTE_DRIVE_PORT: number;
@@ -3750,7 +3759,38 @@ export interface ServerConfiguration {
 	RECAPTCHA_SECRET: string;
 }
 
-export interface RawServerConfiguration {
+export interface ServerConfigurationLocal {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: number;
+	DB_USER: string;
+	DB_POOL_SIZE: number;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: number;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_TYPE: 'Local';
+	DRIVE_STORAGE_PATH: string;
+
+	HOST_NAME: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
+}
+
+export type ServerConfiguration = ServerConfigurationLocal | ServerConfigurationRemote;
+
+export interface RawServerConfigurationRemote {
 	DB_SCHEMA: string;
 	DB_HOST: string;
 	DB_PASSWORD: string;
@@ -3768,6 +3808,7 @@ export interface RawServerConfiguration {
 
 	DISCORD_CLIENT_TOKEN?: string;
 
+	DRIVE_TYPE: 'Remote';
 	REMOTE_DRIVE_STORAGE_PATH: string;
 	REMOTE_DRIVE_HOST: string;
 	REMOTE_DRIVE_PORT: string;
@@ -3781,6 +3822,37 @@ export interface RawServerConfiguration {
 
 	RECAPTCHA_SECRET: string;
 }
+
+export interface RawServerConfigurationLocal {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: string;
+	DB_USER: string;
+	DB_POOL_SIZE: string;
+
+	CLIENT_PATH: string;
+	CAPWATCH_DOWNLOAD_PATH: string;
+	GOOGLE_KEYS_PATH: string;
+
+	PORT: string;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_TYPE: 'Local';
+	DRIVE_STORAGE_PATH: string;
+
+	HOST_NAME: string;
+
+	AWS_ACCESS_KEY_ID: string;
+	AWS_SECRET_ACCESS_KEY: string;
+
+	RECAPTCHA_SECRET: string;
+}
+
+export type RawServerConfiguration = RawServerConfigurationLocal | RawServerConfigurationRemote;
 
 export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;
@@ -3933,7 +4005,7 @@ export type ChangeRepresentation<T> = {
 	};
 };
 
-export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
+export interface ChangeEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
@@ -3942,45 +4014,63 @@ export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.MODIFY;
 }
 
-export interface CreateEvent<T extends AuditableObjects & Identifiable> {
+export interface CreateEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.ADD;
 }
 
-export interface DeleteEvent<T extends AuditableObjects & Identifiable> {
+export interface DeleteEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
+
+	objectData: T;
 
 	timestamp: number;
 
 	type: AuditableEventType.DELETE;
 }
 
-export type AuditableEvents<O extends AuditableObjects & Identifiable> =
+export type AuditableEvents<O extends AuditableObjects & DatabaseIdentifiable> =
 	| ChangeEvent<O>
 	| CreateEvent<O>
 	| DeleteEvent<O>;
+
+export type EventAuditEvents = AuditableEvents<FromDatabase<NewEventObject>>;
+export type AttendanceAuditEvents = AuditableEvents<FromDatabase<AttendanceRecord>>;
+export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectProperties>>;
+export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;
+export type PermissionsAudits = AuditableEvents<FromDatabase<MemberPermissions>>;
+
+export type AllAudits =
+	| EventAuditEvents
+	| AttendanceAuditEvents
+	| FileAuditEvents
+	| ProspectiveMemberAudits
+	| PermissionsAudits
 
 export interface CadetPromotionRequirements {
 	/**

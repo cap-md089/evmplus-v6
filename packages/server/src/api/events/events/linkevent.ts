@@ -26,6 +26,7 @@ import {
 	asyncRight,
 	errorGenerator,
 	EventType,
+	FromDatabase,
 	hasBasicEventPermissions,
 	RawRegularEventObject,
 	RawResolvedEventObject,
@@ -45,7 +46,7 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 			code: 400,
 			message: 'You cannot link to a linked event',
 		})
-		.flatMap(([event, targetAccount]: [RawRegularEventObject, AccountObject]) =>
+		.flatMap(([event, targetAccount]: [FromDatabase<RawRegularEventObject>, AccountObject]) =>
 			asyncRight(
 				PAM.getPermissionsForMemberInAccountDefault(
 					req.mysqlx,
@@ -68,7 +69,7 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 						({
 							...event,
 							...linkedEvent,
-						} as RawResolvedEventObject),
+						} as FromDatabase<RawResolvedEventObject>),
 				),
 		)
 		.map(wrapper);

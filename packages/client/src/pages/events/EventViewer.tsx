@@ -606,12 +606,38 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					) : null}
 					{event.type === EventType.LINKED ||
 					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
-						<Button
-							onClick={() => this.linkEventTo(linkableAccounts[0].id)}
-							buttonType="none"
-						>
-							Link event to {linkableAccounts[0].name}
-						</Button>
+						<>
+							<Button
+								onClick={() => this.linkEventTo(linkableAccounts[0].id)}
+								buttonType="none"
+							>
+								Link event to {linkableAccounts[0].name}
+							</Button>
+							<Dialogue
+								onClose={() => this.setState({ linkEventResult: null })}
+								displayButtons={DialogueButtons.OK}
+								title="Link event result"
+								open={this.state.linkEventResult !== null}
+							>
+								{this.state.linkEventResult !== null ? (
+									'id' in this.state.linkEventResult ? (
+										<p>
+											Your event has been linked!
+											<br />
+											<br />
+											<a
+												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
+												rel="noopener _blank"
+											>
+												View it here
+											</a>
+										</p>
+									) : (
+										this.state.linkEventResult.message
+									)
+								) : null}
+							</Dialogue>
+						</>
 					) : (
 						<>
 							<Button

@@ -82,7 +82,7 @@ export const func: () => ServerAPIEndpoint<
 					});
 				})
 				.flatMap(getExtraMemberInformationForCAPMember(req.account))
-				.flatMap(saveExtraMemberInformation(req.mysqlx)(req.account))
+				.flatMap(saveExtraMemberInformation(req.mysqlx))
 				.map(destroy)
 				.map(wrapper),
 		),
