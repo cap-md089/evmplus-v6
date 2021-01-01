@@ -62,3 +62,22 @@
 		font-size: 80%;
 	}
 }
+
+.debrieflist table {
+	border: 1px solid black;
+	border-collapse: collapse;
+	box-sizing: border-box;
+}
+.eventlinklist caption,
+.debrieflist th {
+	width: max-content;
+	border: 1px solid black;
+	border-collapse: collapse;
+	box-sizing: border-box;
+	background: lightblue;
+}
+.debrieflist td {
+	border: 1px solid black;
+	border-collapse: collapse;
+	box-sizing: border-box;
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -23,6 +23,7 @@ import {
 	api,
 	EventType,
 	get,
+	getFullMemberName,
 	RawRegularEventObject,
 	SessionType,
 	toReference,
@@ -49,7 +50,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.
 							...oldEvent.debrief,
 							{
 								debriefText: req.body.debriefText,
+								publicView: req.body.publicView,
 								memberRef: toReference(req.member),
+								memberName: getFullMemberName(req.member),
 								timeSubmitted: now(),
 							},
 						],

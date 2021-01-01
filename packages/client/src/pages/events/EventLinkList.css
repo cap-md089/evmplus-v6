@@ -17,6 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+.eventlinklist tr:nth-child(even) {background: white;}
+.eventlinklist tr:nth-child(odd) {background: lightgray;}
+.eventlinklist tr:first-child {background: lightblue;}
 .eventlinklist table,
 .eventlinklist caption,
 .eventlinklist td,

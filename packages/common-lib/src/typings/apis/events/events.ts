@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -75,6 +75,7 @@ import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import {
+	BigTextBox,
 	Checkbox,
 	DateTimeInput,
 	Label,
@@ -288,6 +289,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.copyMoveEvent = this.copyMoveEvent.bind(this);
 		this.copyEvent = this.copyEvent.bind(this);
 		this.deleteEvent = this.deleteEvent.bind(this);
+		this.addDebrief = this.addDebrief.bind(this);
+		this.deleteDebrief = this.deleteDebrief.bind(this);
 
 		this.renderFormsButtons = this.renderFormsButtons.bind(this);
 		this.createCAPF6080 = this.createCAPF6080.bind(this);
@@ -743,7 +746,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						) : null}
 						<h1>{event.name}</h1>
 						{event.subtitle ? <h2>{event.subtitle}</h2> : null}
-						<h3>Meeting information</h3>
+						<h3>Event information</h3>
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
 						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
@@ -759,6 +762,46 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						<br />
 						<br />
 						<strong>Event status:</strong> {eventStatus(event.status)}
+						<br />
+						{member &&
+						(event.status === EventStatus.COMPLETE ||
+							event.status === EventStatus.CANCELLED) ? (
+							<DialogueButtonForm<{
+								publicView: boolean;
+								debriefText: string;
+							}>
+								buttonText="Submit a debrief item for this event"
+								buttonClass="underline-button"
+								buttonType="none"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.addDebrief}
+								title="Submit Debrief"
+								labels={['Submit', 'Cancel']}
+								values={{
+									publicView: false,
+									debriefText: 'Replace this text with debrief description',
+								}}
+							>
+								<Label>
+									Select debrief visibility. 'Managers Only' will display this
+									only to Managers/POCs. 'All Members' will display this to any
+									logged in member.
+								</Label>
+								<EnumRadioButton
+									name="publicView"
+									labels={['All Members', 'Managers Only']}
+									values={[true, false]}
+									defaultValue={false}
+								/>
+
+								<Label>
+									Describe: 1) How did the event go?, 2) What specifically went
+									well, 3) What did not go well, 4) what should change for next
+									time
+								</Label>
+								<BigTextBox name="debriefText" />
+							</DialogueButtonForm>
+						) : null}
 						<br />
 						<br />
 						<strong>Transportation provided:</strong>{' '}
@@ -882,6 +925,120 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							<>
 								<strong>Event Author:</strong> {authorFullName.value}
 								<br />
+							</>
+						) : null}
+						{!member ||
+						event.debrief.length === 0 ? null : effectiveManageEventPermissionForEvent(
+								member,
+						  )(event) !== Permissions.ManageEvent.NONE ? (
+							<>
+								<div className="debrieflist">
+									<h3>All Debrief Items</h3>
+									{/* <DropDownList
+										titles={"Debrief Items", 1, new String[]}
+										values={[]}
+										onlyOneOpen={true}
+										keyFunc={rec =>
+											stringifyMemberReference(rec.record.memberID)
+										}
+									>
+
+									</DropDownList>  */}
+
+									<table>
+										<tr>
+											<th>Time Submitted</th>
+											<th>Member Name</th>
+											<th>View</th>
+											<th>Text</th>
+											<th>Link</th>
+										</tr>
+										{event.debrief.flatMap((debriefElement, index) => [
+											<tr>
+												<td>{formatDate(debriefElement.timeSubmitted)}</td>
+												<td>{debriefElement.memberName}</td>
+												<td>{debriefElement.publicView ? 'All' : 'Mgr'}</td>
+												<td>{debriefElement.debriefText}</td>
+												<td>
+													<DialogueButtonForm<{
+														timeSubmitted: number;
+													}>
+														buttonText="Delete"
+														buttonType="none"
+														buttonClass="underline-button"
+														displayButtons={DialogueButtons.OK_CANCEL}
+														onOk={this.deleteDebrief}
+														title="Really delete debrief item?"
+														values={{
+															timeSubmitted:
+																debriefElement.timeSubmitted,
+														}}
+														labels={['Yes', 'No']}
+													>
+														<Label />
+														Really delete debrief item?
+													</DialogueButtonForm>
+												</td>
+											</tr>,
+										])}
+									</table>
+								</div>
+							</>
+						) : event.debrief.filter(val => val.publicView === true).length +
+								event.debrief.filter(val => val.memberRef.id === member.id).length >
+						  0 ? (
+							<>
+								<div className="debrieflist">
+									<h3>Debrief Items</h3>
+									<table>
+										<tr>
+											<th>Time Submitted</th>
+											{event.debrief.filter(
+												val =>
+													val.publicView === true &&
+													val.memberRef.id !== member.id,
+											).length > 0 ? (
+												<th>MemberName</th>
+											) : null}
+											{event.debrief.filter(
+												val => val.memberRef.id === member.id,
+											).length > 0 ? (
+												<th>View</th>
+											) : null}
+											<th>Text</th>
+										</tr>
+										{event.debrief
+											.filter(
+												val =>
+													val.memberRef.id === member.id ||
+													val.publicView === true,
+											)
+											.flatMap((debriefElement, index) => [
+												<tr>
+													<td>
+														{formatDate(debriefElement.timeSubmitted)}
+													</td>
+													{event.debrief.filter(
+														val =>
+															val.publicView === true &&
+															val.memberRef.id !== member.id,
+													).length > 0 ? (
+														<td>{debriefElement.memberName}</td>
+													) : null}
+													{event.debrief.filter(
+														val => val.memberRef.id === member.id,
+													).length > 0 ? (
+														<td>
+															{debriefElement.publicView
+																? 'All'
+																: 'Mgr'}
+														</td>
+													) : null}
+													<td>{debriefElement.debriefText}</td>
+												</tr>,
+											])}
+									</table>
+								</div>
 							</>
 						) : null}
 						{pointsOfContact.length > 0 ? <h3>Contact information</h3> : null}
@@ -1246,6 +1403,53 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				},
 			},
 		});
+	}
+
+	private async addDebrief({
+		debriefText,
+		publicView,
+	}: {
+		debriefText: string;
+		publicView: boolean;
+	}) {
+		const state = this.state;
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to add debrief to a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const { event } = state.eventInformation;
+		await AsyncEither.All([
+			fetchApi.events.debrief.add({ id: event.id.toString() }, { debriefText, publicView }),
+		]);
+
+		//force page reload
+		window.location.reload();
+	}
+
+	private async deleteDebrief({ timeSubmitted }: { timeSubmitted: number }) {
+		const state = this.state;
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to add debrief to a null event');
+		}
+
+		if (!this.props.member) {
+			return;
+		}
+
+		const { event } = state.eventInformation;
+		await AsyncEither.All([
+			fetchApi.events.debrief.delete(
+				{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
+				{},
+			),
+		]);
+
+		//force page reload
+		window.location.reload();
 	}
 
 	private async copyMoveEvent({ newTime, copyFiles }: { newTime: number; copyFiles: boolean }) {

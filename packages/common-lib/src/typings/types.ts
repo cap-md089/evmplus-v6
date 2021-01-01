@@ -1002,6 +1002,10 @@ export interface NewDebriefItem {
 	 * The debrief item text
 	 */
 	debriefText: string;
+	/**
+	 * The debrief item visibility
+	 */
+	publicView: boolean;
 }
 
 /**
@@ -1013,8 +1017,14 @@ export interface NewDebriefItem {
 export interface DebriefItem extends NewDebriefItem {
 	/**
 	 * Reference for the member submitting the debrief item
+	 * Used to filter debrief item display to an individual member
 	 */
 	memberRef: MemberReference;
+	/**
+	 * String for the member submitting the debrief item
+	 * Used to display debrief source even after member reference is no longer valid
+	 */
+	memberName: string;
 	/**
 	 * The date and time the item was submitted
 	 */
