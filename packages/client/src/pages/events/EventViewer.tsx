@@ -1224,6 +1224,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													Maybe.orSome(false),
 												)(this.state.previousUpdatedMember)}
 												key={stringifyMemberReference(val.record.memberID)}
+												pickupDateTime={event.pickupDateTime}
 												index={i}
 											/>
 										)}
