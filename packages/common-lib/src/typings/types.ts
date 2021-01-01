@@ -4049,7 +4049,7 @@ export type AuditableEvents<O extends AuditableObjects & DatabaseIdentifiable> =
 	| CreateEvent<O>
 	| DeleteEvent<O>;
 
-export type EventAuditEvents = AuditableEvents<FromDatabase<EventObject>>;
+export type EventAuditEvents = AuditableEvents<FromDatabase<NewEventObject>>;
 export type AttendanceAuditEvents = AuditableEvents<FromDatabase<AttendanceRecord>>;
 export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectProperties>>;
 export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;

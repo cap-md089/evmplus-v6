@@ -70,6 +70,12 @@ import {
 	toReference,
 } from 'common-lib';
 import { AccountGetter, getAccount, getMemoizedAccountGetter } from './Account';
+import {
+	generateChangeAudit,
+	generateCreationAudit,
+	generateDeleteAudit,
+	saveAudit,
+} from './Audits';
 import updateGoogleCalendars, {
 	createGoogleCalendarEvents,
 	removeGoogleCalendarEvents,
@@ -250,28 +256,12 @@ export const getAttendanceForEvent = (schema: Schema) => (
 				: identity,
 		);
 
-type PartialResolvedRawEventObject = RawRegularEventObject & Omit<RawRegularEventObject, 'type'>;
-type PartialRawEventObject = PartialResolvedRawEventObject | RawRegularEventObject;
-
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
 	viewingAccount: MaybeObj<AccountObject>,
 ) => (viewer: MaybeObj<MemberReference>) => (forceAllAttendance: boolean) => (
-	event: RawEventObject,
-): ServerEither<EventObject> =>
-	(event.type === EventType.LINKED
-		? getEvent(schema)({ id: event.targetAccountID } as AccountObject)(event.targetEventID).map(
-				resolvedEvent =>
-					({
-						...event,
-						...resolvedEvent,
-						type: EventType.REGULAR,
-					} as PartialRawEventObject),
-		  )
-		: asyncRight<ServerError, PartialRawEventObject>(
-				event,
-				errorGenerator('Could not get full event information'),
-		  )
-	).flatMap(eventInfo =>
+	event: FromDatabase<RawEventObject>,
+): ServerEither<FromDatabase<EventObject>> =>
+	ensureResolvedEvent(schema)(event).flatMap(eventInfo =>
 		(Maybe.isSome(viewer)
 			? getFullPointsOfContact(schema)(account)(eventInfo.pointsOfContact)
 			: asyncRight<ServerError, POCFull>([], {
@@ -285,12 +275,12 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 			forceAllAttendance
 				? getAttendanceForEvent(schema)(viewingAccount)(event)
 						.map(collectGeneratorAsync)
-						.map<EventObject>(attendance => ({
+						.map(attendance => ({
 							...eventInfo,
 							pointsOfContact,
 							attendance,
 						}))
-				: asyncRight<ServerError, EventObject>(
+				: asyncRight(
 						{
 							...eventInfo,
 							pointsOfContact,
@@ -491,14 +481,15 @@ const sendPOCAddedNotifications = sendPOCNotifications('ADDED');
 
 export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	schema: Schema,
-) => (account: AccountObject) => (oldEvent: RawRegularEventObject) => (
-	event: RawRegularEventObject,
-) =>
+) => (account: AccountObject) => (updater: MemberReference) => (
+	oldEvent: FromDatabase<RawRegularEventObject>,
+) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawRegularEventObject>> =>
 	asyncRight(
 		updateGoogleCalendars(schema, event, account, config),
 		errorGenerator('Could not update google calendar'),
 	)
-		.map<RawRegularEventObject>(([mainId, regId, feeId]) => ({
+		.map<FromDatabase<RawRegularEventObject>>(([mainId, regId, feeId]) => ({
+			_id: oldEvent._id,
 			acceptSignups: event.acceptSignups,
 			accountID: event.accountID,
 			activity: event.activity,
@@ -552,9 +543,14 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			type: EventType.REGULAR,
 		}))
 		.tap(notifyEventPOCs(schema)(account)(oldEvent))
-		.flatMap(saveToCollectionA(schema.getCollection<RawRegularEventObject>('Events')))
+		.flatMap(
+			saveToCollectionA(schema.getCollection<FromDatabase<RawRegularEventObject>>('Events')),
+		)
 		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema))
-		.tap(updateLinkedEvents(schema));
+		.tap(updateLinkedEvents(schema))
+		.tap(newEvent =>
+			generateChangeAudit(account)(updater)(oldEvent)(newEvent).flatMap(saveAudit(schema)),
+		);
 export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
@@ -566,12 +562,17 @@ export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
 
 export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => (
 	account: AccountObject,
-) => (event: RawRegularEventObject): ServerEither<void> =>
+) => (actor: MemberReference) => (
+	event: FromDatabase<RawResolvedEventObject>,
+): ServerEither<void> =>
 	asyncRight(
 		removeGoogleCalendarEvents(event, account, config),
 		errorGenerator('Could not delete Google calendar events'),
 	)
 		.map(always(event))
+		.tap(deletedEvent =>
+			generateDeleteAudit(account)(actor)(deletedEvent).flatMap(saveAudit(schema)),
+		)
 		.flatMap(deleteItemFromCollectionA(schema.getCollection<RawEventObject>('Events')));
 
 export const createEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
@@ -632,7 +633,7 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			asyncRight(
 				createGoogleCalendarEvents(schema, event, account, config),
 				errorGenerator('Could not create Google calendar events'),
-			).map<RawEventObject>(([mainId, regId, feeId]) => ({
+			).map<RawRegularEventObject>(([mainId, regId, feeId]) => ({
 				...event,
 				googleCalendarIds: {
 					mainId,
@@ -641,12 +642,15 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 				},
 			})),
 		)
-		.flatMap(addToCollection(schema.getCollection<RawEventObject>('Events')));
+		.flatMap(
+			addToCollection(schema.getCollection<FromDatabase<RawRegularEventObject>>('Events')),
+		)
+		.tap(event => generateCreationAudit(account)(author)(event).map(saveAudit(schema)));
 export const createEvent = createEventFunc(Date.now);
 
 export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	schema: Schema,
-) => (account: AccountObject) => (event: RawRegularEventObject) => (author: MemberReference) => (
+) => (account: AccountObject) => (event: RawResolvedEventObject) => (author: MemberReference) => (
 	newStartTime: number,
 ) => (newStatus: EventStatus) => (copyFiles = false) =>
 	asyncRight(newStartTime - event.startDateTime, errorGenerator('Could not copy event'))

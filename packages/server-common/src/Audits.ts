@@ -15,6 +15,7 @@ import {
 	errorGenerator,
 	MemberReference,
 	TargetForType,
+	toReference,
 } from 'common-lib';
 import { ServerEither } from './servertypes';
 
@@ -43,7 +44,7 @@ export const generateCreationAuditFunc = (now = Date.now) => (account: AccountOb
 	asyncRight(
 		{
 			target: targetForType(object),
-			actor,
+			actor: toReference(actor),
 			accountID: account.id,
 			targetID: object._id,
 			timestamp: now(),
@@ -109,7 +110,7 @@ export const generateChangeAuditFunc = (now = Date.now) => (account: AccountObje
 		? asyncRight(
 				{
 					target: targetForType(newObject),
-					actor,
+					actor: toReference(actor),
 					changes: getChangesForObject(oldObject, newObject),
 					targetID: newObject._id,
 					timestamp: now(),
@@ -131,7 +132,7 @@ export const generateDeleteAuditFunc = (now = Date.now) => (account: AccountObje
 	asyncRight(
 		{
 			target: targetForType(obj),
-			actor,
+			actor: toReference(actor),
 			accountID: account.id,
 			targetID: obj._id,
 			objectData: obj,
