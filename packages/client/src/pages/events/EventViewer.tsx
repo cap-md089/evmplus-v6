@@ -154,20 +154,20 @@ type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerV
 
 type EventViewerProps = PageProps<{ id: string }>;
 
-const eventStatus = (stat: EventStatus): string =>
-	stat === EventStatus.COMPLETE
-		? 'Complete'
-		: stat === EventStatus.CANCELLED
-		? 'Cancelled'
-		: stat === EventStatus.CONFIRMED
-		? 'Confirmed'
-		: stat === EventStatus.DRAFT
-		? 'Draft'
-		: stat === EventStatus.INFORMATIONONLY
-		? 'Information Only'
-		: stat === EventStatus.TENTATIVE
-		? 'Tentative'
-		: '';
+// const eventStatus = (stat: EventStatus): string =>
+// 	stat === EventStatus.COMPLETE
+// 		? 'Complete'
+// 		: stat === EventStatus.CANCELLED
+// 		? 'Cancelled'
+// 		: stat === EventStatus.CONFIRMED
+// 		? 'Confirmed'
+// 		: stat === EventStatus.DRAFT
+// 		? 'Draft'
+// 		: stat === EventStatus.INFORMATIONONLY
+// 		? 'Information Only'
+// 		: stat === EventStatus.TENTATIVE
+// 		? 'Tentative'
+// 		: '';
 
 export const attendanceStatusLabels = [
 	'Commited/Attended',
@@ -761,7 +761,23 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						{event.pickupLocation}
 						<br />
 						<br />
-						<strong>Event status:</strong> {eventStatus(event.status)}
+						<strong>Event status: </strong>
+						{/* {eventStatus(event.status)} */}
+						{event.status === EventStatus.COMPLETE ? (
+							'Complete'
+						) : event.status === EventStatus.CANCELLED ? (
+							<span style={{ color: '#dc2127' }}>Cancelled!</span>
+						) : event.status === EventStatus.TENTATIVE ? (
+							<span style={{ color: '#46d6db' }}>Tentative</span>
+						) : event.status === EventStatus.CONFIRMED ? (
+							'Confirmed'
+						) : event.status === EventStatus.DRAFT ? (
+							<span style={{ color: 'darkgreen' }}>DRAFT</span>
+						) : event.status === EventStatus.INFORMATIONONLY ? (
+							'Information Only'
+						) : (
+							''
+						)}
 						<br />
 						{member &&
 						(event.status === EventStatus.COMPLETE ||
