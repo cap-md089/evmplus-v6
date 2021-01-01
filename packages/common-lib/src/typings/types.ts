@@ -620,6 +620,14 @@ export type RadioReturnWithOther<E extends number> =
 export type SessionID = string;
 
 /**
+ * Used mostly in conjunction with Identifiable below
+ */
+export type FromDatabase<T> = T & DatabaseIdentifiable;
+export interface DatabaseIdentifiable {
+	_id: string;
+}
+
+/**
  * Most objects are identifiable; this also allows for general purpose libraries
  * to filter or perform other operations on generally identifiable objects
  */
@@ -3987,7 +3995,7 @@ export type ChangeRepresentation<T> = {
 	};
 };
 
-export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
+export interface ChangeEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
@@ -3996,45 +4004,63 @@ export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.MODIFY;
 }
 
-export interface CreateEvent<T extends AuditableObjects & Identifiable> {
+export interface CreateEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.ADD;
 }
 
-export interface DeleteEvent<T extends AuditableObjects & Identifiable> {
+export interface DeleteEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
+
+	objectData: T;
 
 	timestamp: number;
 
 	type: AuditableEventType.DELETE;
 }
 
-export type AuditableEvents<O extends AuditableObjects & Identifiable> =
+export type AuditableEvents<O extends AuditableObjects & DatabaseIdentifiable> =
 	| ChangeEvent<O>
 	| CreateEvent<O>
 	| DeleteEvent<O>;
+
+export type EventAuditEvents = AuditableEvents<FromDatabase<EventObject>>;
+export type AttendanceAuditEvents = AuditableEvents<FromDatabase<AttendanceRecord>>;
+export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectProperties>>;
+export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;
+export type PermissionsAudits = AuditableEvents<FromDatabase<MemberPermissions>>;
+
+export type AllAudits =
+	| EventAuditEvents
+	| AttendanceAuditEvents
+	| FileAuditEvents
+	| ProspectiveMemberAudits
+	| PermissionsAudits
 
 export interface CadetPromotionRequirements {
 	/**

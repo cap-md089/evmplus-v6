@@ -43,6 +43,7 @@ import {
 	EventStatus,
 	EventType,
 	ExternalPointOfContact,
+	FromDatabase,
 	get,
 	getFullMemberName,
 	getItemsNotInSecondArray,
@@ -66,7 +67,6 @@ import {
 	RawResolvedEventObject,
 	ServerConfiguration,
 	ServerError,
-	stripProp,
 	toReference,
 } from 'common-lib';
 import { AccountGetter, getAccount, getMemoizedAccountGetter } from './Account';
@@ -400,7 +400,7 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (account: Account
 
 export const getSourceEvent = (schema: Schema) => (
 	event: RawEventObject,
-): ServerEither<MaybeObj<RawRegularEventObject>> =>
+): ServerEither<MaybeObj<FromDatabase<RawRegularEventObject>>> =>
 	event.type === EventType.LINKED
 		? getAccount(schema)(event.targetAccountID)
 				.flatMap(
@@ -408,7 +408,7 @@ export const getSourceEvent = (schema: Schema) => (
 						// Links cannot be made to links, so by resolving a link we actually get an event
 						getEvent(schema)(account)(event.targetEventID) as AsyncEither<
 							ServerError,
-							RawRegularEventObject
+							FromDatabase<RawRegularEventObject>
 						>,
 				)
 				.map(Maybe.some)
@@ -416,7 +416,7 @@ export const getSourceEvent = (schema: Schema) => (
 
 export const getEvent = (schema: Schema) => (account: AccountObject) => (
 	eventID: number | string,
-): ServerEither<RawEventObject> =>
+): ServerEither<FromDatabase<RawEventObject>> =>
 	asyncRight(parseInt(eventID + '', 10), errorGenerator('There was a problem getting the event'))
 		.filter(id => !isNaN(id), {
 			type: 'OTHER',
@@ -425,11 +425,11 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		})
 		.flatMap(id =>
 			asyncRight(
-				schema.getCollection<RawEventObject>('Events'),
+				schema.getCollection<FromDatabase<RawEventObject>>('Events'),
 				errorGenerator('Could not get event'),
 			)
 				.map(
-					findAndBindC<RawEventObject>({
+					findAndBindC<FromDatabase<RawEventObject>>({
 						accountID: account.id,
 						id,
 					}),
@@ -441,24 +441,23 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 			code: 404,
 			message: 'Could not find event specified',
 		})
-		.map(get(0))
-		.map(event => stripProp('_id')(event) as RawEventObject);
+		.map(get(0));
 
 export const ensureResolvedEvent = (schema: Schema) => (
-	event: RawEventObject,
-): ServerEither<RawResolvedEventObject> =>
+	event: FromDatabase<RawEventObject>,
+): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	event.type === EventType.LINKED
 		? getAccount(schema)(event.targetAccountID).flatMap(account =>
 				// Links cannot be made to links, so by resolving a link we actually get an event
 				(getEvent(schema)(account)(event.targetEventID) as AsyncEither<
 					ServerError,
-					RawRegularEventObject
-				>).map<RawResolvedEventObject>(
+					FromDatabase<RawRegularEventObject>
+				>).map<FromDatabase<RawResolvedEventObject>>(
 					resolvedEvent =>
 						({
 							...resolvedEvent,
 							...event,
-						} as RawResolvedEventObject),
+						} as FromDatabase<RawResolvedEventObject>),
 				),
 		  )
 		: asyncRight(event, errorGenerator('Could not resolve event reference'));
