@@ -71,7 +71,6 @@ import Button from '../../components/Button';
 import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
-import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import {
@@ -80,7 +79,6 @@ import {
 	DateTimeInput,
 	Label,
 	TextBox,
-	TextInput,
 } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
@@ -437,22 +435,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		const eventViewerInfo = this.state.eventInformation;
-		const {
-			event,
-			attendees,
-			pointsOfContact,
-			sourceAccountName,
-			linkedEvents,
-			authorFullName,
-		} = eventViewerInfo;
+		const { event, attendees, pointsOfContact, authorFullName } = eventViewerInfo;
 		const { member, fullMemberDetails } = this.props;
-
-		const linkableAccounts =
-			fullMemberDetails.error !== MemberCreateError.NONE
-				? []
-				: fullMemberDetails.linkableAccounts.filter(
-						({ id }) => !linkedEvents.find(linkedEvent => linkedEvent.accountID === id),
-				  );
 
 		return (
 			<>
@@ -582,130 +566,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					) : null}
 					{member &&
-					effectiveManageEventPermissionForEvent(member)(event) &&
-					linkableAccounts.length > 0 &&
-					event.type !== EventType.LINKED ? (
-						<br />
-					) : null}
-					{event.type === EventType.LINKED ||
-					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
-						<>
-							<Button
-								onClick={() => this.linkEventTo(linkableAccounts[0].id)}
-								buttonType="none"
-							>
-								Link event to {linkableAccounts[0].name}
-							</Button>
-							<Dialogue
-								onClose={() => this.setState({ linkEventResult: null })}
-								displayButtons={DialogueButtons.OK}
-								title="Link event result"
-								open={this.state.linkEventResult !== null}
-							>
-								{this.state.linkEventResult !== null ? (
-									'id' in this.state.linkEventResult ? (
-										<p>
-											Your event has been linked!
-											<br />
-											<br />
-											<a
-												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
-												rel="noopener _blank"
-											>
-												View it here
-											</a>
-										</p>
-									) : (
-										this.state.linkEventResult.message
-									)
-								) : null}
-							</Dialogue>
-						</>
-					) : (
-						<>
-							<Button
-								buttonType="none"
-								onClick={() => this.setState({ openLinkEventDialogue: true })}
-							>
-								Link event
-							</Button>
-							<DownloadDialogue
-								valuePromise={linkableAccounts}
-								displayValue={get('name')}
-								multiple={false}
-								onValueClick={selectedAccountToLinkTo =>
-									this.setState({ selectedAccountToLinkTo })
-								}
-								onCancel={() => this.setState({ openLinkEventDialogue: false })}
-								onValueSelect={info => info && this.linkEventTo(info.id)}
-								open={this.state.openLinkEventDialogue}
-								title="Select an account"
-								selectedValue={this.state.selectedAccountToLinkTo}
-								filterValues={this.state.accountFilterValues}
-								onFilterValuesChange={accountFilterValues =>
-									this.setState({ accountFilterValues })
-								}
-								filters={[
-									{
-										check: (accountInfo, input) => {
-											if (input === '' || typeof input !== 'string') {
-												return true;
-											}
-
-											try {
-												return !!accountInfo.name.match(
-													new RegExp(input, 'gi'),
-												);
-											} catch (e) {
-												return false;
-											}
-										},
-										displayText: 'Account name',
-										filterInput: TextInput,
-									},
-								]}
-								showIDField={false}
-							/>
-							<Dialogue
-								onClose={() => this.setState({ linkEventResult: null })}
-								displayButtons={DialogueButtons.OK}
-								title="Link event result"
-								open={this.state.linkEventResult !== null}
-							>
-								{this.state.linkEventResult !== null ? (
-									'id' in this.state.linkEventResult ? (
-										<p>
-											Your event has been linked!
-											<br />
-											<br />
-											<a
-												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
-												rel="noopener _blank"
-											>
-												View it here
-											</a>
-										</p>
-									) : (
-										this.state.linkEventResult.message
-									)
-								) : null}
-							</Dialogue>
-							{member &&
-							effectiveManageEventPermissionForEvent(member)(event) >=
-								Permissions.ManageEvent.FULL
-								? ' | '
-								: null}
-						</>
-					)}
-					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) ===
 						Permissions.ManageEvent.FULL ? (
 						<>
-							{linkableAccounts.length === 0 || event.type === EventType.LINKED ? (
-								<br />
-							) : (
-								' | '
-							)}
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
@@ -713,7 +576,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
-						fullMemberDetails.linkableAccounts.length > 0 &&
 						event.type === EventType.REGULAR) ? (
 						<>
 							<br />
@@ -721,40 +583,6 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					) : null}
 					<div id="information">
-						{event.type === EventType.LINKED ? (
-							<>
-								<strong>
-									<a
-										href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
-										rel="noopener _blank"
-									>
-										Event linked from{' '}
-										{sourceAccountName ?? event.targetAccountID.toUpperCase()}
-									</a>
-								</strong>
-								<br />
-								<br />
-							</>
-						) : null}
-						{linkedEvents.length > 0 ? (
-							<>
-								<h4>Events linked to this event</h4>
-								<ul>
-									{linkedEvents.map(
-										({ id, accountID, name, accountName }, index) => (
-											<li key={index}>
-												<a
-													href={`https://${accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${id}`}
-													target="noopener _blank"
-												>
-													{accountName} - {name}
-												</a>
-											</li>
-										),
-									)}
-								</ul>
-							</>
-						) : null}
 						<h1>{event.name}</h1>
 						{event.subtitle ? <h2>{event.subtitle}</h2> : null}
 						<h3>Event information</h3>
@@ -1706,33 +1534,5 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		XLSX.writeFile(wb, `Attendance ${evtID}.xlsx`);
-	}
-
-	private async linkEventTo(targetaccount: string) {
-		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
-			return;
-		}
-
-		this.setState({
-			openLinkEventDialogue: false,
-		});
-
-		const result = await fetchApi.events.events.link(
-			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
-			{},
-		);
-
-		if (Either.isLeft(result)) {
-			this.setState({
-				linkEventResult: result.value,
-			});
-		} else {
-			this.setState({
-				linkEventResult: {
-					accountID: result.value.accountID,
-					id: result.value.id,
-				},
-			});
-		}
 	}
 }
