@@ -62,6 +62,8 @@ import {
 	spreadsheets,
 	stringifyMemberReference,
 	ClientUser,
+	getFullMemberName,
+	toReference,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -290,7 +292,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.copyEvent = this.copyEvent.bind(this);
 		this.deleteEvent = this.deleteEvent.bind(this);
 		this.addDebrief = this.addDebrief.bind(this);
-		this.deleteDebrief = this.deleteDebrief.bind(this);
+		this.deleteDebriefCallbackForTimeSubmitted = this.deleteDebriefCallbackForTimeSubmitted.bind(
+			this,
+		);
 
 		this.renderFormsButtons = this.renderFormsButtons.bind(this);
 		this.createCAPF6080 = this.createCAPF6080.bind(this);
@@ -468,6 +472,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				: fullMemberDetails.linkableAccounts.filter(
 						({ id }) => !linkedEvents.find(linkedEvent => linkedEvent.accountID === id),
 				  );
+
+		const renderDebriefMemberName =
+			member &&
+			event.debrief.filter(
+				val => val.publicView === true && !areMembersTheSame(member)(val.memberRef),
+			).length > 0;
+		const renderDebriefView =
+			member &&
+			event.debrief.filter(val => areMembersTheSame(member)(val.memberRef)).length > 0;
 
 		return (
 			<>
@@ -995,90 +1008,58 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											<th>Text</th>
 											<th>Link</th>
 										</tr>
-										{event.debrief.flatMap((debriefElement, index) => [
-											<tr>
+										{event.debrief.flatMap(debriefElement => [
+											<tr key={debriefElement.timeSubmitted}>
 												<td>{formatDate(debriefElement.timeSubmitted)}</td>
 												<td>{debriefElement.memberName}</td>
 												<td>{debriefElement.publicView ? 'All' : 'Mgr'}</td>
 												<td>{debriefElement.debriefText}</td>
 												<td>
-													<DialogueButtonForm<{
-														timeSubmitted: number;
-													}>
+													<DialogueButton
 														buttonText="Delete"
 														buttonType="none"
 														buttonClass="underline-button"
 														displayButtons={DialogueButtons.OK_CANCEL}
-														onOk={this.deleteDebrief}
-														title="Really delete debrief item?"
-														values={{
-															timeSubmitted:
-																debriefElement.timeSubmitted,
-														}}
+														onOk={this.deleteDebriefCallbackForTimeSubmitted(
+															debriefElement.timeSubmitted,
+														)}
+														title="Delete debrief item"
 														labels={['Yes', 'No']}
 													>
-														<Label />
-														Really delete debrief item?
-													</DialogueButtonForm>
+														Do you really want to delete this debrief
+														item?
+													</DialogueButton>
 												</td>
 											</tr>,
 										])}
 									</table>
 								</div>
 							</>
-						) : event.debrief.filter(val => val.publicView === true).length +
-								event.debrief.filter(val => val.memberRef.id === member.id).length >
-						  0 ? (
+						) : event.debrief.length > 0 ? (
 							<>
 								<div className="debrieflist">
 									<h3>Debrief Items</h3>
 									<table>
 										<tr>
 											<th>Time Submitted</th>
-											{event.debrief.filter(
-												val =>
-													val.publicView === true &&
-													val.memberRef.id !== member.id,
-											).length > 0 ? (
-												<th>MemberName</th>
-											) : null}
-											{event.debrief.filter(
-												val => val.memberRef.id === member.id,
-											).length > 0 ? (
-												<th>View</th>
-											) : null}
+											{renderDebriefMemberName ? <th>MemberName</th> : null}
+											{renderDebriefView ? <th>View</th> : null}
 											<th>Text</th>
 										</tr>
-										{event.debrief
-											.filter(
-												val =>
-													val.memberRef.id === member.id ||
-													val.publicView === true,
-											)
-											.flatMap((debriefElement, index) => [
-												<tr>
+										{event.debrief.flatMap(debriefElement => [
+											<tr key={debriefElement.timeSubmitted}>
+												<td>{formatDate(debriefElement.timeSubmitted)}</td>
+												{renderDebriefMemberName ? (
+													<td>{debriefElement.memberName}</td>
+												) : null}
+												{renderDebriefView ? (
 													<td>
-														{formatDate(debriefElement.timeSubmitted)}
+														{debriefElement.publicView ? 'All' : 'Mgr'}
 													</td>
-													{event.debrief.filter(
-														val =>
-															val.publicView === true &&
-															val.memberRef.id !== member.id,
-													).length > 0 ? (
-														<td>{debriefElement.memberName}</td>
-													) : null}
-													{event.debrief.filter(
-														val => val.memberRef.id === member.id,
-													).length > 0 ? (
-														<td>
-															{debriefElement.publicView
-																? 'All'
-																: 'Mgr'}
-														</td>
-													) : null}
-													<td>{debriefElement.debriefText}</td>
-												</tr>,
-											])}
+												) : null}
+												<td>{debriefElement.debriefText}</td>
+											</tr>,
+										])}
 									</table>
 								</div>
 							</>
@@ -1460,7 +1441,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			throw new Error('Attempting to add debrief to a null event');
 		}
 
-		if (!this.props.member) {
+		const mem = this.props.member;
+		if (!mem) {
 			return;
 		}
 
@@ -1469,30 +1451,69 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			fetchApi.events.debrief.add({ id: event.id.toString() }, { debriefText, publicView }),
 		]);
 
-		//force page reload
-		window.location.reload();
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
+
+						eventInformation: {
+							...prev.eventInformation,
+							event: {
+								...prev.eventInformation.event,
+								debrief: [
+									...prev.eventInformation.event.debrief,
+									{
+										debriefText,
+										memberName: getFullMemberName(mem),
+										memberRef: toReference(mem),
+										publicView,
+										timeSubmitted: Date.now(),
+									},
+								],
+							},
+						},
+				  }
+				: prev,
+		);
 	}
 
-	private async deleteDebrief({ timeSubmitted }: { timeSubmitted: number }) {
-		const state = this.state;
-		if (state.viewerState !== 'LOADED') {
-			throw new Error('Attempting to add debrief to a null event');
-		}
+	private deleteDebriefCallbackForTimeSubmitted(timeSubmitted: number) {
+		return async () => {
+			const state = this.state;
+			if (state.viewerState !== 'LOADED') {
+				throw new Error('Attempting to add debrief to a null event');
+			}
 
-		if (!this.props.member) {
-			return;
-		}
+			if (!this.props.member) {
+				return;
+			}
 
-		const { event } = state.eventInformation;
-		await AsyncEither.All([
-			fetchApi.events.debrief.delete(
-				{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
-				{},
-			),
-		]);
+			const { event } = state.eventInformation;
+			await AsyncEither.All([
+				fetchApi.events.debrief.delete(
+					{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
+					{},
+				),
+			]);
 
-		//force page reload
-		window.location.reload();
+			this.setState(prev =>
+				prev.viewerState === 'LOADED'
+					? {
+							...prev,
+
+							eventInformation: {
+								...prev.eventInformation,
+								event: {
+									...prev.eventInformation.event,
+									debrief: prev.eventInformation.event.debrief.filter(
+										item => item.timeSubmitted !== timeSubmitted,
+									),
+								},
+							},
+					  }
+					: prev,
+			);
+		};
 	}
 
 	private async copyMoveEvent({ newTime, copyFiles }: { newTime: number; copyFiles: boolean }) {
