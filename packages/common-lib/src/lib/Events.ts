@@ -29,7 +29,6 @@ import {
 	MemberReference,
 	Permissions,
 	PointOfContactType,
-	RawEventObject,
 	RawResolvedEventObject,
 	RawTeamObject,
 	User,
