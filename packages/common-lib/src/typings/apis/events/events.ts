@@ -26,6 +26,7 @@ import { APIEither } from '../../api';
 import {
 	AttendanceRecord,
 	DisplayInternalPointOfContact,
+	EventAuditEvents,
 	EventObject,
 	EventStatus,
 	ExternalPointOfContact,
@@ -180,11 +181,28 @@ export interface GetEventViewerData {
 
 	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
 }
 
 /**
- * Get's the next meeting with the 'Recurring Meeting' activity type set
+ * Downloads audit data for an event
+ */
+export interface GetEventAuditData {
+	(params: { id: string }, body: {}): APIEither<EventAuditEvents[]>;
+
+	url: '/api/events/:id/audit';
+
+	method: 'get';
+
+	requiresMember: 'required';
+
+	needsToken: false;
+
+	useValidator: false;
+}
+
+/**
+ * Gets the next meeting with the 'Recurring Meeting' activity type set
  */
 export interface GetNextRecurring {
 	(params: {}, body: {}): APIEither<MaybeObj<RawResolvedEventObject>>;

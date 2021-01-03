@@ -154,21 +154,6 @@ type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerV
 
 type EventViewerProps = PageProps<{ id: string }>;
 
-// const eventStatus = (stat: EventStatus): string =>
-// 	stat === EventStatus.COMPLETE
-// 		? 'Complete'
-// 		: stat === EventStatus.CANCELLED
-// 		? 'Cancelled'
-// 		: stat === EventStatus.CONFIRMED
-// 		? 'Confirmed'
-// 		: stat === EventStatus.DRAFT
-// 		? 'Draft'
-// 		: stat === EventStatus.INFORMATIONONLY
-// 		? 'Information Only'
-// 		: stat === EventStatus.TENTATIVE
-// 		? 'Tentative'
-// 		: '';
-
 export const attendanceStatusLabels = [
 	'Commited/Attended',
 	'Rescinded commitment to attend',
@@ -587,9 +572,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								Really delete event?
 							</DialogueButton>
 							{' | '}
-							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-							{/* {' | '}
-							<Link to={`/scanadd/${event.id}`}>Scan Add attendance</Link> */}
+							<Link to={`/auditviewer/${event.id}`}>View Audit Log</Link>
 							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
@@ -724,6 +707,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								' | '
 							)}
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+							{' | '}
+							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 						</>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||

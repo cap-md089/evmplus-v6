@@ -39,6 +39,7 @@ import deletedebrief from './debrief/deletedebrief';
 import addevent from './events/addevent';
 import copy from './events/copy';
 import deleteevent from './events/deleteevent';
+import getaudit from './events/getaudit';
 import eventviewer from './events/eventviewer';
 import getevent from './events/getevent';
 import getnextrecurring from './events/getnextrecurring';
@@ -79,6 +80,7 @@ addAPI(Validator, adder, listupcoming);
 addAPI(Validator, adder, linkevent);
 addAPI(Validator, adder, setevent);
 addAPI(Validator, adder, getevent);
+addAPI(Validator, adder, getaudit);
 addAPI(Validator, adder, timelist);
 
 export default router;

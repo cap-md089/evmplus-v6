@@ -39,6 +39,7 @@ import {
 	DisplayInternalPointOfContact,
 	Either,
 	errorGenerator,
+	EventAuditEvents,
 	EventObject,
 	EventStatus,
 	EventType,
@@ -433,6 +434,23 @@ export const getEvent = (schema: Schema) => (account: AccountObject) => (
 		})
 		.map(get(0));
 
+export const getAudit = (schema: Schema) => (account: AccountObject) => (
+	eventID: number | string,
+): ServerEither<AsyncIter<FromDatabase<EventAuditEvents>>> =>
+	getEvent(schema)(account)(eventID).flatMap(auditResults =>
+		asyncRight(
+			schema.getCollection<FromDatabase<EventAuditEvents>>('Audits'),
+			errorGenerator('No audit results'),
+		)
+			.map(
+				findAndBindC<FromDatabase<EventAuditEvents>>({
+					targetID: auditResults._id,
+					target: 'Event',
+				}),
+			)
+			.map(generateResults),
+	);
+
 export const ensureResolvedEvent = (schema: Schema) => (
 	event: FromDatabase<RawEventObject>,
 ): ServerEither<FromDatabase<RawResolvedEventObject>> =>
@@ -549,7 +567,9 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema))
 		.tap(updateLinkedEvents(schema))
 		.tap(newEvent =>
-			generateChangeAudit(account)(updater)(oldEvent)(newEvent).flatMap(saveAudit(schema)),
+			generateChangeAudit(schema)(account)(updater)(oldEvent)(newEvent).flatMap(
+				saveAudit(schema),
+			),
 		);
 export const saveEvent = saveEventFunc();
 
@@ -571,7 +591,7 @@ export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => 
 	)
 		.map(always(event))
 		.tap(deletedEvent =>
-			generateDeleteAudit(account)(actor)(deletedEvent).flatMap(saveAudit(schema)),
+			generateDeleteAudit(schema)(account)(actor)(deletedEvent).flatMap(saveAudit(schema)),
 		)
 		.flatMap(deleteItemFromCollectionA(schema.getCollection<RawEventObject>('Events')));
 
@@ -645,7 +665,7 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 		.flatMap(
 			addToCollection(schema.getCollection<FromDatabase<RawRegularEventObject>>('Events')),
 		)
-		.tap(event => generateCreationAudit(account)(author)(event).map(saveAudit(schema)));
+		.tap(event => generateCreationAudit(schema)(account)(author)(event).map(saveAudit(schema)));
 export const createEvent = createEventFunc(Date.now);
 
 export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) => (

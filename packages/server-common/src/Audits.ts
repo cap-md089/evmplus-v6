@@ -13,10 +13,12 @@ import {
 	DeleteEvent,
 	destroy,
 	errorGenerator,
+	getFullMemberName,
 	MemberReference,
 	TargetForType,
 	toReference,
 } from 'common-lib';
+import { resolveReference } from './Members';
 import { ServerEither } from './servertypes';
 
 const targetForType = <T extends AuditableObjects>(obj: T): TargetForType<T> =>
@@ -38,20 +40,22 @@ export const saveAudit = (schema: Schema) => (audit: AllAudits) =>
 		.map(collection => collection.add(audit).execute())
 		.map(destroy);
 
-export const generateCreationAuditFunc = (now = Date.now) => (account: AccountObject) => (
-	actor: MemberReference,
-) => <T extends AuditableObjects & DatabaseIdentifiable>(object: T): ServerEither<CreateEvent<T>> =>
-	asyncRight(
-		{
+export const generateCreationAuditFunc = (now = Date.now) => (schema: Schema) => (
+	account: AccountObject,
+) => (actor: MemberReference) => <T extends AuditableObjects & DatabaseIdentifiable>(
+	object: T,
+): ServerEither<CreateEvent<T>> =>
+	resolveReference(schema)(account)(actor)
+		.map(getFullMemberName)
+		.map(actorName => ({
 			target: targetForType(object),
 			actor: toReference(actor),
+			actorName,
 			accountID: account.id,
 			targetID: object._id,
 			timestamp: now(),
 			type: AuditableEventType.ADD,
-		},
-		errorGenerator('Could not generate creation audit'),
-	);
+		}));
 export const generateCreationAudit = generateCreationAuditFunc(Date.now);
 
 export const areDeepEqual = <T>(a: T, b: T) => {
@@ -62,6 +66,18 @@ export const areDeepEqual = <T>(a: T, b: T) => {
 		return false;
 	}
 	if (a === null && b === null) {
+		return true;
+	}
+
+	if (Array.isArray(a) && Array.isArray(b)) {
+		if (a.length !== b.length) {
+			return false;
+		}
+		for (let looper = 0; looper < a.length; looper++) {
+			if (!areDeepEqual(a[looper], b[looper])) {
+				return false;
+			}
+		}
 		return true;
 	}
 
@@ -101,24 +117,27 @@ export const getChangesForObject = <T extends object>(
 	return changes;
 };
 
-export const generateChangeAuditFunc = (now = Date.now) => (account: AccountObject) => (
-	actor: MemberReference,
-) => <T extends AuditableObjects & DatabaseIdentifiable>(oldObject: T) => (
-	newObject: T,
-): ServerEither<ChangeEvent<T>> =>
+export const generateChangeAuditFunc = (now = Date.now) => (schema: Schema) => (
+	account: AccountObject,
+) => (actor: MemberReference) => <T extends AuditableObjects & DatabaseIdentifiable>(
+	oldObject: T,
+) => (newObject: T): ServerEither<ChangeEvent<T>> =>
 	newObject._id === oldObject._id
-		? asyncRight(
-				{
-					target: targetForType(newObject),
-					actor: toReference(actor),
-					changes: getChangesForObject(oldObject, newObject),
-					targetID: newObject._id,
-					timestamp: now(),
-					accountID: account.id,
-					type: AuditableEventType.MODIFY,
-				},
-				errorGenerator(''),
-		  )
+		? resolveReference(schema)(account)(actor)
+				.map(getFullMemberName)
+				.map(
+					actorName => ({
+						target: targetForType(newObject),
+						actor: toReference(actor),
+						actorName,
+						changes: getChangesForObject(oldObject, newObject),
+						targetID: newObject._id,
+						timestamp: now(),
+						accountID: account.id,
+						type: AuditableEventType.MODIFY,
+					}),
+					errorGenerator(''),
+				)
 		: asyncLeft({
 				type: 'OTHER',
 				code: 400,
@@ -126,19 +145,24 @@ export const generateChangeAuditFunc = (now = Date.now) => (account: AccountObje
 		  });
 export const generateChangeAudit = generateChangeAuditFunc(Date.now);
 
-export const generateDeleteAuditFunc = (now = Date.now) => (account: AccountObject) => (
-	actor: MemberReference,
-) => <T extends AuditableObjects & DatabaseIdentifiable>(obj: T): ServerEither<DeleteEvent<T>> =>
-	asyncRight(
-		{
-			target: targetForType(obj),
-			actor: toReference(actor),
-			accountID: account.id,
-			targetID: obj._id,
-			objectData: obj,
-			timestamp: now(),
-			type: AuditableEventType.DELETE,
-		},
-		errorGenerator('Could not generate delete event'),
-	);
+export const generateDeleteAuditFunc = (now = Date.now) => (schema: Schema) => (
+	account: AccountObject,
+) => (actor: MemberReference) => <T extends AuditableObjects & DatabaseIdentifiable>(
+	obj: T,
+): ServerEither<DeleteEvent<T>> =>
+	resolveReference(schema)(account)(actor)
+		.map(getFullMemberName)
+		.map(
+			actorName => ({
+				target: targetForType(obj),
+				actor: toReference(actor),
+				actorName,
+				accountID: account.id,
+				targetID: obj._id,
+				objectData: obj,
+				timestamp: now(),
+				type: AuditableEventType.DELETE,
+			}),
+			errorGenerator('Could not generate delete event'),
+		);
 export const generateDeleteAudit = generateDeleteAuditFunc(Date.now);

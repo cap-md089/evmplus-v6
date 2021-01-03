@@ -17,67 +17,24 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-.partTimeSignupDisplay {
-	padding-top: 20px;
-	margin: 20px;
-}
-
-.partTimeSignupDisplay div {
-	height: 20px;
-	box-sizing: border-box;
-	padding: 0;
-	margin: 0;
-	border-width: 0;
-	float: left;
-}
-
-.partTimeSignupDisplay .timeBefore,
-.partTimeSignupDisplay .timeAfter {
-	background: gray;
-}
-
-.partTimeSignupDisplay .timeDuring {
-	background: #0b375b;
-}
-
-.cadetroster {
-	background: white;
-	width: 100%;
-}
-
-@media print {
-	header,
-	footer,
-	aside,
-	nav,
-	form,
-	iframe {
-		display: none;
-	}
-	* {
-		color: black;
-		background: white;
-	}
-	table {
-		font-size: 80%;
-	}
-}
-
-.debrieflist table {
+.auditlist table {
 	border: 1px solid black;
 	border-collapse: collapse;
 	box-sizing: border-box;
 }
-.debrieflist caption,
-.debrieflist th {
+.auditlist caption,
+.auditlist th {
+	padding: 3px;
 	width: max-content;
 	border: 1px solid black;
 	border-collapse: collapse;
 	box-sizing: border-box;
 	background: lightblue;
 }
-.debrieflist td {
+.auditlist td {
+	padding: 3px;
 	border: 1px solid black;
 	border-collapse: collapse;
 	box-sizing: border-box;
 }
+

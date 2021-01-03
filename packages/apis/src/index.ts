@@ -46,6 +46,7 @@ type Tree = {
 			copy: api.events.events.Copy;
 			get: api.events.events.Get;
 			getViewerData: api.events.events.GetEventViewerData;
+			getAuditData: api.events.events.GetEventAuditData;
 			getNextRecurring: api.events.events.GetNextRecurring;
 			getUpcoming: api.events.events.GetUpcoming;
 			getList: api.events.events.GetList;

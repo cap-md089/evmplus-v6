@@ -4010,6 +4010,8 @@ export interface ChangeEvent<T extends AuditableObjects & DatabaseIdentifiable> 
 
 	actor: MemberReference;
 
+	actorName: string;
+
 	changes: ChangeRepresentation<Omit<T, 'id'>>;
 
 	accountID: string;
@@ -4027,6 +4029,8 @@ export interface CreateEvent<T extends AuditableObjects & DatabaseIdentifiable> 
 
 	actor: MemberReference;
 
+	actorName: string;
+
 	accountID: string;
 
 	// targetID is the _id property inserted by MySQL
@@ -4041,6 +4045,8 @@ export interface DeleteEvent<T extends AuditableObjects & DatabaseIdentifiable> 
 	target: TargetForType<T>;
 
 	actor: MemberReference;
+
+	actorName: string;
 
 	accountID: string;
 
