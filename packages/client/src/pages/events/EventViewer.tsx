@@ -569,6 +569,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 					effectiveManageEventPermissionForEvent(member)(event) ===
 						Permissions.ManageEvent.FULL ? (
 						<>
+							<br />
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
