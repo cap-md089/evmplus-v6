@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.24.0](https://github.com/cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.24.0) (2021-01-03)
+
+
+### Bug Fixes
+
+* fixed errors provided by refactor ([e138d41](https://github.com/cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed macro error for string enum literal values ([a2d23d0](https://github.com/cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+* updated jest dependencies, fixed jest for client ([b98c96a](https://github.com/cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* **client and server:** added links and display to view event audit information ([16784ec](https://github.com/cap-md089/evmplus-v6/commit/16784ecb2f8b59f905e548a75a0a8a9c1f7695d9))
+* **debriefs:** added debrief functionality to EventViewer and EventLinkList ([42ea511](https://github.com/cap-md089/evmplus-v6/commit/42ea5111f0e985c6a9116007ad4efd40231c8e3e)), closes [#65](https://github.com/cap-md089/evmplus-v6/issues/65)
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](https://github.com/cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](https://github.com/cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](https://github.com/cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](https://github.com/cap-md089/evmplus-v6/issues/81) [#80](https://github.com/cap-md089/evmplus-v6/issues/80)
+* **eventviewer:** removed linked events links ([b89016e](https://github.com/cap-md089/evmplus-v6/commit/b89016e158d2ad9c11dc799d372fd6655992fa12))
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](https://github.com/cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](https://github.com/cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [6.23.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.23.0) (2020-12-09)
 
 
