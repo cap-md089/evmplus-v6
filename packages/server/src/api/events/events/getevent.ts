@@ -18,7 +18,7 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, Maybe } from 'common-lib';
+import { api, getAppropriateDebriefItems, Maybe } from 'common-lib';
 import { getEvent, getFullEventObject } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
@@ -27,6 +27,7 @@ export const func: ServerAPIEndpoint<api.events.events.Get> = req =>
 		.flatMap(
 			getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member)(false),
 		)
+		.map(getAppropriateDebriefItems(req.member))
 		.map(wrapper);
 
 export default func;

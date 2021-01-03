@@ -29,6 +29,7 @@ import {
 	MemberReference,
 	Permissions,
 	PointOfContactType,
+	RawEventObject,
 	RawResolvedEventObject,
 	RawTeamObject,
 	User,
@@ -231,3 +232,19 @@ export const hasBasicAttendanceManagementPermission = (member: User) => (
 		team.value.id === event.teamID &&
 		(event.type === EventType.REGULAR || event.targetAccountID === team.value.accountID) &&
 		isTeamLeader(member)(team.value));
+
+export const getAppropriateDebriefItems = (viewer: MaybeObj<User>) => <
+	T extends RawResolvedEventObject
+>(
+	event: T,
+): T => ({
+	...event,
+	debrief: Maybe.isNone(viewer)
+		? []
+		: effectiveManageEventPermissionForEvent(viewer.value)(event) ===
+		  Permissions.ManageEvent.FULL
+		? event.debrief
+		: event.debrief.filter(
+				val => val.publicView || areMembersTheSame(viewer.value)(val.memberRef),
+		  ),
+});

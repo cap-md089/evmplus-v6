@@ -42,6 +42,7 @@ import {
 	EventType,
 	ExternalPointOfContact,
 	get,
+	getAppropriateDebriefItems,
 	Maybe,
 	RawLinkedEvent,
 	RawResolvedEventObject,
@@ -196,6 +197,7 @@ export const getFullEventInformation = (req: Req) => (
 export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
 		.flatMap(ensureResolvedEvent(req.mysqlx))
+		.map(getAppropriateDebriefItems(req.member))
 		.flatMap(event =>
 			canMaybeFullyManageEvent(req.member)(event)
 				? getFullEventInformation(req)(event)
