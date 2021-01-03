@@ -451,6 +451,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			member &&
 			event.debrief.filter(val => areMembersTheSame(member)(val.memberRef)).length > 0;
 
+		const renderDebriefMemberName =
+			member &&
+			event.debrief.filter(
+				val => val.publicView === true && !areMembersTheSame(member)(val.memberRef),
+			).length > 0;
+		const renderDebriefView =
+			member &&
+			event.debrief.filter(val => areMembersTheSame(member)(val.memberRef)).length > 0;
+
 		return (
 			<>
 				<div className="eventviewerroot">
