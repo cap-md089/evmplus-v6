@@ -18,6 +18,7 @@
  */
 
 export * from './Account';
+export * from './Audits';
 export * from './Error';
 export * from './Event';
 export * from './File';

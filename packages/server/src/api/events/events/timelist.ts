@@ -29,6 +29,7 @@ import {
 	EitherObj,
 	errorGenerator,
 	EventStatus,
+	FromDatabase,
 	get,
 	Maybe,
 	MaybeObj,
@@ -64,13 +65,13 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 		.map(asyncEitherIterFlatMap(ensureResolvedEvent(req.mysqlx)))
 		.map(
 			asyncIterFilter<
-				EitherObj<ServerError, RawResolvedEventObject>,
-				Right<RawResolvedEventObject>
+				EitherObj<ServerError, FromDatabase<RawResolvedEventObject>>,
+				Right<FromDatabase<RawResolvedEventObject>>
 			>(Either.isRight),
 		)
 		.map(asyncIterMap(get('value')))
 		.map(
-			asyncIterFilter<RawResolvedEventObject>(
+			asyncIterFilter<FromDatabase<RawResolvedEventObject>>(
 				event =>
 					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member),
 			),

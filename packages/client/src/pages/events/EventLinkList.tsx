@@ -230,7 +230,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			<div className="eventlinklist">
 				<h3>
 					Click on the event number to view details. Click on the event name to edit
-					event.
+					event. Click on the Event Status link to change the event status from this page.
 				</h3>
 				<Dialogue
 					open={Maybe.isSome(this.state.statusSetError)}
@@ -253,7 +253,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 							{this.props.account.type === AccountType.CAPSQUADRON ? (
 								<th>GP Evt No.</th>
 							) : null}
-							{/* <th>Debrief</th> */}
+							<th>Debrief Present</th>
 						</tr>
 						{this.state.events.map(event => (
 							<>
@@ -341,7 +341,11 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									{this.props.account.type === AccountType.CAPSQUADRON ? (
 										<td>{getEventNumber(event.groupEventNumber)}</td>
 									) : null}
-									{/* <td>{getEventDebrief(event.debrief)}</td> */}
+									<td>
+										{event.debrief.length > 0
+											? getComplete(true)
+											: getComplete(false)}
+									</td>
 								</tr>
 							</>
 						))}

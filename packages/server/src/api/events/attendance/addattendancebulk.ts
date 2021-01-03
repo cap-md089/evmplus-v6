@@ -40,6 +40,7 @@ import {
 } from 'common-lib';
 import {
 	addMemberToAttendanceFunc,
+	ensureResolvedEvent,
 	getAttendanceForEvent,
 	getEvent,
 	getFullEventObject,
@@ -63,6 +64,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(bulkAttendanceValidator)(request).flatMap(req =>
 			getEvent(req.mysqlx)(req.account)(req.params.id)
+				.flatMap(ensureResolvedEvent(req.mysqlx))
 				.filter(canFullyManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,

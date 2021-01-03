@@ -250,6 +250,7 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 		req: RequestType<APIEndpointParams<T>, APIEndpointBody<T>, APIEndpointMember<T>>,
 	) => ReturnValue<APIEndpointReturnValue<T>>,
 ) => {
+	logFunc.extend('init')('Setting up handler: %s %s', method, url);
 	app[method](
 		url,
 		bodyParser.json({

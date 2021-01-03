@@ -32,13 +32,13 @@ const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const orNull = Maybe.orSome<null | User>(null);
 
 export const func: ServerAPIEndpoint<api.files.files.GetFile> = req =>
-	getFileObject(true)(req.mysqlx)(req.account)(req.params.id)
+	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.id)
 		.filter(canRead(orNull(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member does not have permission to do that',
 		})
-		.flatMap(expandRawFileObject(req.mysqlx)(req.account))
+		.flatMap(expandRawFileObject(req.mysqlx)(req.account)(req.member))
 		.map(wrapper);
 
 export default func;

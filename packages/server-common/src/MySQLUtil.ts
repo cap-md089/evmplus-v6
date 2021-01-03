@@ -256,7 +256,10 @@ export const convertMySQLTimestampToDateTime = (datestring: string): DateTime =>
 
 export const addToCollection = <T>(targetCollection: mysql.Collection<T>) => (item: T) =>
 	asyncRight(targetCollection.add(item).execute(), errorGenerator('Could not add item')).map(
-		always(item),
+		result => ({
+			...item,
+			_id: result.getGeneratedIds()[0],
+		}),
 	);
 
 export const addItemToCollection = <T extends AccountIdentifiable>(item: T) => (

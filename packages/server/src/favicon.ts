@@ -50,7 +50,7 @@ export default async (request: express.Request, res: express.Response) => {
 						message: "Favicon doesn't exist",
 					}),
 				)(
-					Maybe.map(getFileObject(false)(r.mysqlx)(r.account))(
+					Maybe.map(getFileObject(r.mysqlx)(r.account)(r.member))(
 						registry.Website.FaviconID,
 					),
 				).filter(

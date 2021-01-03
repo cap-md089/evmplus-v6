@@ -20,7 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import { APIEither } from '../../api';
 import { DebriefItem, NewDebriefItem } from '../../types';
 

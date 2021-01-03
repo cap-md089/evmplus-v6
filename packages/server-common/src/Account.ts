@@ -42,6 +42,7 @@ import {
 	errorGenerator,
 	EventObject,
 	FileObject,
+	FromDatabase,
 	FullPointOfContact,
 	get,
 	getDefaultAdminPermissions,
@@ -616,11 +617,9 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 		.bind('pickupDateTime', start)
 		.bind('meetDateTime', end);
 
-	return asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
-		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
-			generateResults(iterator),
-		),
-	);
+	return asyncIterHandler<FromDatabase<RawEventObject>>(
+		errorGenerator('Could not get event for account'),
+	)(generateResults(iterator));
 };
 
 export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
@@ -659,7 +658,7 @@ export const getTeamObjects = (schema: Schema) => (
 		: getNormalTeamObjects(schema)(account);
 
 export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
-	const eventCollection = schema.getCollection<EventObject>('Events');
+	const eventCollection = schema.getCollection<FromDatabase<EventObject>>('Events');
 
 	const eventIterator = findAndBind(eventCollection, {
 		accountID: account.id,

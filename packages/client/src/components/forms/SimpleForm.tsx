@@ -54,6 +54,7 @@ import {
 } from '../../pages/account/CreateProspectiveMember';
 import EnumRadioButton from '../form-inputs/EnumRadioButton';
 import EnumSelect from '../form-inputs/EnumSelect';
+import { FileControlListItemInput } from '../form-inputs/FileControlListItemInput';
 
 const saveMessage = {
 	marginLeft: 10,
@@ -184,7 +185,8 @@ export function isInput(pel: React.ReactNode): pel is React.ReactElement<InputPr
 		el.type === LaxAutocomplete ||
 		el.type === EnumRadioButton ||
 		el.type === EnumSelect ||
-		el.type === 'textarea'
+		el.type === 'textarea' ||
+		el.type === FileControlListItemInput
 	);
 }
 
@@ -436,7 +438,11 @@ export default class SimpleForm<
 						let ret;
 						let childFullWidth = false;
 						let hidden = false;
-						if (typeof child === 'object' && child !== null && (child as React.ReactElement).type === 'div') {
+						if (
+							typeof child === 'object' &&
+							child !== null &&
+							(child as React.ReactElement).type === 'div'
+						) {
 							ret = [child];
 						} else if (!isInput(child)) {
 							// This algorithm handles labels for inputs by handling inputs

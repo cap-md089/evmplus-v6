@@ -29,18 +29,23 @@ import {
 	toReference,
 	userHasFilePermission,
 } from 'common-lib';
+import * as debug from 'debug';
 import { expandRawFileObject, getFileObject, PAM } from 'server-common';
 import { v4 as uuid } from 'uuid';
 import wrapper from '../../../lib/wrapper';
 
 const canAddSubfolder = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
+const logFunc = debug('server:api:files:files:createfolder');
+
 export const func: (
 	uuidFunc?: typeof uuid,
 	now?: () => number,
 ) => ServerAPIEndpoint<api.files.files.CreateFolder> = (uuidFunc = uuid, now = Date.now) =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getFileObject(false)(req.mysqlx)(req.account)(req.params.parentid)
+		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid)
+			.tap(file => logFunc('Creating folder in %O', file))
+			.leftTap(() => logFunc("Couldn't find parent folder with id '%s'", req.params.parentid))
 			.filter(canAddSubfolder(req.member), {
 				type: 'OTHER',
 				code: 403,
@@ -79,12 +84,14 @@ export const func: (
 					],
 				};
 
+				logFunc('Creating folder %O', newFile);
+
 				return fileCollection
 					.add(newFile)
 					.execute()
 					.then(always(newFile));
 			})
-			.flatMap(expandRawFileObject(req.mysqlx)(req.account))
+			.flatMap(expandRawFileObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
 			.map(file => ({
 				...file,
 				uploader: Maybe.some(req.member),

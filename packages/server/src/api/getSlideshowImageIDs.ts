@@ -29,6 +29,7 @@ import {
 	FileObject,
 	FileUserAccessControlPermissions,
 	get,
+	Maybe,
 	RawFileObject,
 	Right,
 	ServerError,
@@ -47,7 +48,7 @@ export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
 		)
 		.map(generateResults)
 		.map(asyncIterFilter(userHasFilePermission(FileUserAccessControlPermissions.READ)(null)))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)))
+		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(Maybe.none())))
 		.map(asyncIterFilter<EitherObj<ServerError, FileObject>, Right<FileObject>>(Either.isRight))
 		.map(asyncIterMap(get('value')))
 		.map(wrapper);

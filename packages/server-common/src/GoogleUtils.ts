@@ -24,6 +24,7 @@ import {
 	isOneOfSelected,
 	Maybe,
 	presentMultCheckboxReturn,
+	RawEventObject,
 	RawRegularEventObject,
 	RawResolvedEventObject,
 	RegistryValues,
@@ -347,7 +348,7 @@ export default async function updateGoogleCalendars(
 }
 
 export async function removeGoogleCalendarEvents(
-	inEvent: RawResolvedEventObject,
+	inEvent: RawEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ) {
@@ -470,7 +471,7 @@ async function deleteCalendarEvent(
 async function deleteCalendarEvents(
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
-	inEvent: RawResolvedEventObject,
+	inEvent: RawEventObject,
 	calendarID: string,
 ) {
 	// console.log('in deleteCalendarEvents', inEvent);

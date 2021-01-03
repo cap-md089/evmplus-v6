@@ -42,10 +42,11 @@ import Notifications from '../pages/admin/pages/Notifications';
 import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
-import Drive from '../pages/Drive';
+import Drive from '../pages/drive/Drive';
 import LinkList from '../pages/events/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
+import AuditViewer from '../pages/events/AuditViewer';
 import EventViewer from '../pages/events/EventViewer';
 import ModifyEvent from '../pages/events/ModifyEvent';
 import Main from '../pages/Main';
@@ -88,6 +89,11 @@ const pages: Array<{
 	{
 		url: '/eventviewer/:id',
 		component: EventViewer,
+		exact: false,
+	},
+	{
+		url: '/auditviewer/:id',
+		component: AuditViewer,
 		exact: false,
 	},
 	{

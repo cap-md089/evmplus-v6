@@ -19,10 +19,10 @@
 
 import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
-	always,
 	api,
 	canManageEvent,
 	EventType,
+	FromDatabase,
 	Maybe,
 	NewEventObject,
 	RawRegularEventObject,
@@ -48,27 +48,26 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 					code: 400,
 					message: 'You cannot modify a linked event',
 				})
+				.map(event => event as FromDatabase<RawRegularEventObject>)
 				.filter(canManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member does not have permission to perform that action',
 				})
-				.map<[RawRegularEventObject, RawRegularEventObject]>(
-					(event: RawRegularEventObject) => [
-						{
-							...event,
-							...req.body,
-							status: canManageEvent(req.member)(event)
-								? req.body.status ?? event.status
-								: event.status,
-						},
-						event,
-					],
-				)
+				.map<[RawRegularEventObject, FromDatabase<RawRegularEventObject>]>(event => [
+					{
+						...event,
+						...req.body,
+						status: canManageEvent(req.member)(event)
+							? req.body.status ?? event.status
+							: event.status,
+					},
+					event,
+				])
 				.flatMap(([newEvent, oldEvent]) =>
-					saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(oldEvent)(
-						newEvent,
-					).map(always(newEvent)),
+					saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(req.member)(
+						oldEvent,
+					)(newEvent),
 				)
 				.flatMap(
 					getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(
