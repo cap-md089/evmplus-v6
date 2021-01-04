@@ -57,7 +57,13 @@ export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: my
 export const getClient = () =>
 	new Client({
 		ws: {
-			intents: ['GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILDS', 'DIRECT_MESSAGES'],
+			intents: [
+				'GUILD_MEMBERS',
+				'GUILD_MESSAGES',
+				'GUILDS',
+				'DIRECT_MESSAGES',
+				'GUILD_PRESENCES',
+			],
 		},
 	});
 
