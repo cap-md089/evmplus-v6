@@ -886,14 +886,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>CAP Point of Contact: </b>
 										{poc.name}
 										<br />
-										{!!poc.email ? (
+										{member && !!poc.email ? (
 											<>
 												<b>CAP Point of Contact Email: </b>
 												{poc.email}
 												<br />
 											</>
 										) : null}
-										{!!poc.phone ? (
+										{member && !!poc.phone ? (
 											<>
 												<b>CAP Point of Contact Phone: </b>
 												{poc.phone}
@@ -907,14 +907,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>External Point of Contact: </b>
 										{poc.name}
 										<br />
-										{poc.email !== '' ? (
+										{member && poc.email !== '' ? (
 											<>
 												<b>External Point of Contact Email: </b>
 												{poc.email}
 												<br />
 											</>
 										) : null}
-										{poc.phone !== '' ? (
+										{member && poc.phone !== '' ? (
 											<>
 												<b>External Point of Contact Phone: </b>
 												{poc.phone}
