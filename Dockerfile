@@ -84,7 +84,6 @@ COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
 
 RUN rm -rf node_modules packages/*/node_modules \
 	&& lerna bootstrap -- --production \
