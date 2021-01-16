@@ -23,6 +23,7 @@ import {
 	AccountType,
 	always,
 	applyCustomAttendanceFields,
+	asyncEither,
 	AsyncEither,
 	asyncEitherIterMap,
 	AsyncIter,
@@ -41,6 +42,7 @@ import {
 	errorGenerator,
 	EventObject,
 	FileObject,
+	FromDatabase,
 	FullPointOfContact,
 	get,
 	getDefaultAdminPermissions,
@@ -100,36 +102,38 @@ export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	account: AccountObject;
 }
 
+export const getAccountID = (hostname: string): EitherObj<ServerError, string> =>
+	Either.flatMap<ServerError, string[], string>(parts => {
+		while (parts[0] === 'www') {
+			parts.shift();
+		}
+
+		if (parts.length === 1 && process.env.NODE_ENV === 'development') {
+			// localhost
+			return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
+		} else if (parts.length === 2) {
+			// evmplus.org
+			return Either.right('www');
+		} else if (parts.length === 3) {
+			// md089.evmplus.org
+			return Either.right(parts[0]);
+		} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
+			// 192.168.1.128
+			return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
+		} else {
+			// IP/localhost in production, otherwise invalid hostname
+			return Either.left({
+				type: 'OTHER',
+				code: 404,
+				message: 'Could not get account ID from URL',
+			});
+		}
+	})(Either.right(hostname.split('.')));
+
 export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 	req: T,
 ): AsyncEither<ServerError, T & BasicAccountRequest> =>
-	asyncRight(req.hostname.split('.'), errorGenerator('Could not get account'))
-		.flatMap<string>(parts => {
-			while (parts[0] === 'www') {
-				parts.shift();
-			}
-
-			if (parts.length === 1 && process.env.NODE_ENV === 'development') {
-				// localhost
-				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
-			} else if (parts.length === 2) {
-				// evmplus.org
-				return Either.right('www');
-			} else if (parts.length === 3) {
-				// md089.evmplus.org
-				return Either.right(parts[0]);
-			} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
-				// 192.168.1.128
-				return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
-			} else {
-				// IP/localhost in production, otherwise invalid hostname
-				return Either.left({
-					type: 'OTHER',
-					code: 404,
-					message: 'Could not get account ID from URL',
-				});
-			}
-		})
+	asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
 		.flatMap(getAccount(req.mysqlx))
 		.map(account => ({ ...req, headers: req.headers, account }));
 
@@ -613,11 +617,9 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 		.bind('pickupDateTime', start)
 		.bind('meetDateTime', end);
 
-	return asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
-		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
-			generateResults(iterator),
-		),
-	);
+	return asyncIterHandler<FromDatabase<RawEventObject>>(
+		errorGenerator('Could not get event for account'),
+	)(generateResults(iterator));
 };
 
 export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
@@ -656,7 +658,7 @@ export const getTeamObjects = (schema: Schema) => (
 		: getNormalTeamObjects(schema)(account);
 
 export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
-	const eventCollection = schema.getCollection<EventObject>('Events');
+	const eventCollection = schema.getCollection<FromDatabase<EventObject>>('Events');
 
 	const eventIterator = findAndBind(eventCollection, {
 		accountID: account.id,

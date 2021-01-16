@@ -38,9 +38,12 @@ import {
 	ServerError,
 	SessionType,
 } from 'common-lib';
+import * as debug from 'debug';
 import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
 import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
 import wrapper from '../../../lib/wrapper';
+
+const logFunc = debug('server:api:member:flight:bulk');
 
 export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.RequireSessionType(
 	SessionType.REGULAR,
@@ -78,14 +81,13 @@ export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.Require
 					info.member,
 				]),
 			)
+			.map(asyncIterFilter(([newMember, oldMember]) => newMember.flight !== oldMember.flight))
 			.map(
-				asyncIterTap(([newMember, oldMember]) => {
-					if (newMember.flight !== oldMember.flight) {
-						req.memberUpdateEmitter.emit('memberChange', {
-							member: newMember,
-							account: req.account,
-						});
-					}
+				asyncIterTap(([newMember, _]) => {
+					req.memberUpdateEmitter.emit('memberChange', {
+						member: newMember,
+						account: req.account,
+					});
 				}),
 			)
 			.map(asyncIterMap(([newMember]) => newMember))
@@ -97,7 +99,8 @@ export const func: ServerAPIEndpoint<api.member.flight.AssignBulk> = PAM.Require
 				>(Either.isRight),
 			)
 			.map(asyncIterMap(get('value')))
-			.map(asyncIterMap(saveExtraMemberInformation(req.mysqlx)(req.account)))
+			.map(asyncIterTap(val => logFunc('Updating member record: %O', val)))
+			.map(asyncIterMap(saveExtraMemberInformation(req.mysqlx)))
 			.map(collectGeneratorAsync)
 			.map(destroy)
 			.map(wrapper),

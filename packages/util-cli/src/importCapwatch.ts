@@ -20,7 +20,7 @@
 
 import { getSession } from '@mysql/xdevapi';
 import 'dotenv/config';
-import { getConf, ImportCAPWATCHFile } from 'server-common';
+import { conf, ImportCAPWATCHFile } from 'server-common';
 
 if (process.argv.length !== 3) {
 	console.error('Error! CAPWATCH file not provided');
@@ -39,17 +39,17 @@ process.on('unhandledRejection', up => {
 });
 
 (async () => {
-	const conf = await getConf();
+	const cliConf = await conf.getCLIConfiguration();
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: cliConf.DB_HOST,
+		password: cliConf.DB_PASSWORD,
+		port: cliConf.DB_PORT,
+		user: cliConf.DB_USER,
 	});
 
 	// @ts-ignore
-	const schema = session.getSchema(conf.DB_SCHEMA);
+	const schema = session.getSchema(cliConf.DB_SCHEMA);
 
 	const capImport = ImportCAPWATCHFile(capwatchPath, schema, session);
 

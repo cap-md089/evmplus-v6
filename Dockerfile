@@ -15,11 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
+FROM node:14 AS base
+
+# Install the unzip command to import CAPWATCH files and the imagemagick library for favicons
+RUN apt-get update \
+	&& apt-get install -y imagemagick --no-install-recommends \
+	&& yarn global add lerna@3.22.1 \
+	# Set up the images to use a specific user and ensure that that user is able to access
+	# all the necessary assets
+	&& useradd evmplus-server \
+	&& mkdir /usr/evm-plus \
+	&& chown -R evmplus-server /usr/evm-plus
+
+USER evmplus-server
+
 #
 # This container is used to program in a Docker environment, and access
 # secrets necessary for execution (db_password, etc)
 #
-FROM node:14 AS development
+FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
 
@@ -29,11 +43,9 @@ CMD npm run debug
 # This container is used to produce compiled production JavaScript for
 # execution
 #
-FROM node:14 AS builder
+FROM base AS builder
 
 WORKDIR /usr/evm-plus
-
-RUN yarn global add lerna@3.22.1
 
 # Copy all packages and build them with development dependencies
 COPY lerna.json package.json yarn.lock ./
@@ -56,17 +68,12 @@ RUN lerna run build
 #
 # This container is used to execute the compiled JavaScript
 #
-FROM node:14 AS website-runner
+FROM base AS website-runner
 
 WORKDIR /usr/evm-plus
 
 # All the packages have been downloaded already, skip some of the time spent re-downloading with this
 COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
-
-# Install the unzip command to import CAPWATCH files and the imagemagick library for favicons
-RUN apt-get update \
-	&& apt-get install -y imagemagick --no-install-recommends \
-	&& yarn global add lerna@3.22.1
 
 COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
@@ -91,10 +98,10 @@ CMD node --no-warnings dist/index.js
 # This container will act as a simple container to hold and execute the
 # tests for all the packages
 #
-# This container will require a link to the  Docker socket, to spawn new
+# This container will require a link to the Docker socket, to spawn new
 # Docker containers
 #
-FROM node:14 AS tests
+FROM base AS tests
 
 WORKDIR /usr/evm-plus
 
@@ -109,7 +116,7 @@ CMD lerna test
 # This container will run a cron job to import CAPWATCH and update Discord
 # every night
 #
-FROM node:14 AS capwatch-import
+FROM base AS capwatch-import
 
 WORKDIR /usr/evm-plus
 

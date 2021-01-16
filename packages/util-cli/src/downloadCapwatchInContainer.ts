@@ -31,9 +31,9 @@ const readfile = promisify(readFile);
 	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
 
 	const [nhqPassword, capwatchCAPIDStr, capwatchORGIDStr] = await Promise.all([
-		readfile('/run/secrets/nhq_password').then(toUtf8),
-		readfile('/capwatch_capid').then(toUtf8),
-		readfile('/capwatch_orgid').then(toUtf8),
+		readfile('/run/secrets/capwatch_password').then(toUtf8),
+		readfile('/run/secrets/capwatch_capid').then(toUtf8),
+		readfile('/run/secrets/capwatch_orgid').then(toUtf8),
 	]);
 
 	const capwatchCAPID = parseInt(capwatchCAPIDStr, 10);

@@ -372,9 +372,9 @@ export enum AuditableEventType {
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
-	// Write, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	WRITE = 1 << 1,
+	// Modify, for folders, means changing name and uploading files
 	// tslint:disable-next-line:no-bitwise
 	MODIFY = 1 << 2,
 	FULLCONTROL = 255,
@@ -618,6 +618,14 @@ export type RadioReturnWithOther<E extends number> =
  * Provides some consistency in type information at least
  */
 export type SessionID = string;
+
+/**
+ * Used mostly in conjunction with Identifiable below
+ */
+export type FromDatabase<T> = T & DatabaseIdentifiable;
+export interface DatabaseIdentifiable {
+	_id: string;
+}
 
 /**
  * Most objects are identifiable; this also allows for general purpose libraries
@@ -1002,6 +1010,10 @@ export interface NewDebriefItem {
 	 * The debrief item text
 	 */
 	debriefText: string;
+	/**
+	 * The debrief item visibility
+	 */
+	publicView: boolean;
 }
 
 /**
@@ -1013,8 +1025,14 @@ export interface NewDebriefItem {
 export interface DebriefItem extends NewDebriefItem {
 	/**
 	 * Reference for the member submitting the debrief item
+	 * Used to filter debrief item display to an individual member
 	 */
 	memberRef: MemberReference;
+	/**
+	 * String for the member submitting the debrief item
+	 * Used to display debrief source even after member reference is no longer valid
+	 */
+	memberName: string;
 	/**
 	 * The date and time the item was submitted
 	 */
@@ -3781,6 +3799,53 @@ export interface RawServerConfiguration {
 	RECAPTCHA_SECRET: string;
 }
 
+export interface CLIConfiguration {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: number;
+	DB_USER: string;
+	DB_POOL_SIZE: number;
+
+	GOOGLE_KEYS_PATH: string;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_STORAGE_PATH: string;
+}
+
+export interface EnvCLIConfiguration {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PORT: string;
+	DB_POOL_SIZE: string;
+
+	GOOGLE_KEYS_PATH: string;
+
+	NODE_ENV: string;
+
+	DRIVE_STORAGE_PATH: string;
+}
+
+export interface RawCLIConfiguration {
+	DB_SCHEMA: string;
+	DB_HOST: string;
+	DB_PASSWORD: string;
+	DB_PORT: string;
+	DB_USER: string;
+	DB_POOL_SIZE: string;
+
+	GOOGLE_KEYS_PATH: string;
+
+	NODE_ENV: string;
+
+	DISCORD_CLIENT_TOKEN?: string;
+
+	DRIVE_STORAGE_PATH: string;
+}
+
 export declare interface MemberUpdateEventEmitter extends EventEmitter {
 	on(event: 'capwatchImport', listener: (account: AccountObject) => void): this;
 	on(
@@ -3932,54 +3997,78 @@ export type ChangeRepresentation<T> = {
 	};
 };
 
-export interface ChangeEvent<T extends AuditableObjects & Identifiable> {
+export interface ChangeEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
+
+	actorName: string;
 
 	changes: ChangeRepresentation<Omit<T, 'id'>>;
 
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.MODIFY;
 }
 
-export interface CreateEvent<T extends AuditableObjects & Identifiable> {
+export interface CreateEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
+	actorName: string;
+
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
 
 	timestamp: number;
 
 	type: AuditableEventType.ADD;
 }
 
-export interface DeleteEvent<T extends AuditableObjects & Identifiable> {
+export interface DeleteEvent<T extends AuditableObjects & DatabaseIdentifiable> {
 	target: TargetForType<T>;
 
 	actor: MemberReference;
 
+	actorName: string;
+
 	accountID: string;
 
-	targetID: T['id'];
+	// targetID is the _id property inserted by MySQL
+	targetID: string;
+
+	objectData: T;
 
 	timestamp: number;
 
 	type: AuditableEventType.DELETE;
 }
 
-export type AuditableEvents<O extends AuditableObjects & Identifiable> =
+export type AuditableEvents<O extends AuditableObjects & DatabaseIdentifiable> =
 	| ChangeEvent<O>
 	| CreateEvent<O>
 	| DeleteEvent<O>;
+
+export type EventAuditEvents = AuditableEvents<FromDatabase<NewEventObject>>;
+export type AttendanceAuditEvents = AuditableEvents<FromDatabase<AttendanceRecord>>;
+export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectProperties>>;
+export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;
+export type PermissionsAudits = AuditableEvents<FromDatabase<MemberPermissions>>;
+
+export type AllAudits =
+	| EventAuditEvents
+	| AttendanceAuditEvents
+	| FileAuditEvents
+	| ProspectiveMemberAudits
+	| PermissionsAudits
 
 export interface CadetPromotionRequirements {
 	/**

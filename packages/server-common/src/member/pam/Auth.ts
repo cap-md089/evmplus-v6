@@ -40,17 +40,16 @@ import {
 	StoredSigninKey,
 	StoredSigninNonce,
 	UserAccountInformation,
-	UserSession,
 } from 'common-lib';
+import { createPublicKey, createVerify, randomBytes } from 'crypto';
 import * as rp from 'request-promise';
-import { collectResults, findAndBind } from '../../MySQLUtil';
-import { getInformationForUser, simplifyUserInformation } from './Account';
-import { checkIfPasswordValid } from './Password';
-import { createSessionForUser, updateSession, memberUsesMFA } from './Session';
-import { createVerify, createPublicKey, randomBytes } from 'crypto';
-import { ServerEither } from '../../servertypes';
 import { promisify } from 'util';
 import { getMembers } from '../../Account';
+import { collectResults, findAndBind } from '../../MySQLUtil';
+import { ServerEither } from '../../servertypes';
+import { getInformationForUser, simplifyUserInformation } from './Account';
+import { checkIfPasswordValid } from './Password';
+import { createSessionForUser, memberUsesMFA, updateSession } from './Session';
 
 const randomBytesPromise = promisify(randomBytes);
 
@@ -297,7 +296,14 @@ export const trySignin = async (
 		};
 	}
 
-	const member = await getUserID(schema, username);
+	let member: MemberReference;
+	try {
+		member = await getUserID(schema, username);
+	} catch (e) {
+		return {
+			result: MemberCreateError.INCORRRECT_CREDENTIALS,
+		};
+	}
 
 	let usesMFA: boolean;
 	try {
@@ -311,53 +317,47 @@ export const trySignin = async (
 	const session = await createSessionForUser(
 		schema,
 		simplifyUserInformation(userInformation),
-	).join();
+	).fullJoin();
 
-	return Either.cata(() =>
-		Promise.resolve<SigninResult>({
-			result: MemberCreateError.SERVER_ERROR,
-		}),
-	)(async (sess: UserSession) => {
-		if (usesMFA) {
-			return updateSession(schema, {
-				...sess,
-				type: SessionType.IN_PROGRESS_MFA,
-			})
-				.join()
-				.then(
-					Either.cata<any, any, SigninResult>(() => ({
-						result: MemberCreateError.SERVER_ERROR,
-					}))(() => ({
-						result: MemberCreateError.ACCOUNT_USES_MFA,
-						sessionID: sess.id,
-						expires: sess.expires,
-					})),
-				);
-		}
+	if (usesMFA) {
+		return updateSession(schema, {
+			...session,
+			type: SessionType.IN_PROGRESS_MFA,
+		})
+			.join()
+			.then(
+				Either.cata<any, any, SigninResult>(() => ({
+					result: MemberCreateError.SERVER_ERROR,
+				}))(() => ({
+					result: MemberCreateError.ACCOUNT_USES_MFA,
+					sessionID: session.id,
+					expires: session.expires,
+				})),
+			);
+	}
 
-		if (valid === PasswordResult.VALID_EXPIRED) {
-			return updateSession(schema, {
-				...sess,
-				type: SessionType.PASSWORD_RESET,
-			})
-				.join()
-				.then(
-					Either.cata(() => ({ result: MemberCreateError.SERVER_ERROR } as SigninResult))(
-						() =>
-							({
-								result: MemberCreateError.PASSWORD_EXPIRED,
-								sessionID: sess.id,
-								expires: sess.expires,
-							} as SigninResult),
-					),
-				);
-		}
+	if (valid === PasswordResult.VALID_EXPIRED) {
+		return updateSession(schema, {
+			...session,
+			type: SessionType.PASSWORD_RESET,
+		})
+			.join()
+			.then(
+				Either.cata(() => ({ result: MemberCreateError.SERVER_ERROR } as SigninResult))(
+					() =>
+						({
+							result: MemberCreateError.PASSWORD_EXPIRED,
+							sessionID: session.id,
+							expires: session.expires,
+						} as SigninResult),
+				),
+			);
+	}
 
-		return {
-			result: MemberCreateError.NONE,
-			member,
-			sessionID: sess.id,
-			expires: sess.expires,
-		};
-	})(session);
+	return {
+		result: MemberCreateError.NONE,
+		member,
+		sessionID: session.id,
+		expires: session.expires,
+	};
 };

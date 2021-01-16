@@ -29,6 +29,8 @@ export interface DialogueWithOK {
 	title: string;
 	displayButtons: DialogueButtons.OK;
 	onClose: () => void;
+	disableOk?: boolean;
+	className?: string;
 	labels?: [string];
 }
 
@@ -39,6 +41,8 @@ export interface DialogueWithOKCancel {
 	onClose: () => void;
 	onOk: () => void;
 	onCancel: () => void;
+	disableOk?: boolean;
+	className?: string;
 	labels?: [string, string];
 }
 
@@ -50,6 +54,7 @@ export interface DialogueWithYesNoCancel {
 	onYes: () => void;
 	onNo: () => void;
 	onCancel: () => void;
+	className?: string;
 	labels?: [string, string, string];
 }
 
@@ -58,6 +63,7 @@ export interface DialogueWithCustom {
 	title: string;
 	displayButtons: DialogueButtons.CUSTOM;
 	onClose: () => void;
+	className?: string;
 	labels: string[];
 }
 
@@ -66,6 +72,8 @@ export interface DialogueWithoutButtons {
 	title: string;
 	displayButtons: DialogueButtons.NONE;
 	onClose: () => void;
+	disableOk?: boolean;
+	className?: string;
 	labels?: never[];
 }
 
@@ -124,7 +132,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			>
 				<div
 					ref={this.mainDiv}
-					className="alert-box"
+					className={`alert-box ${this.props.className}`}
 					key="main-alert"
 					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
 				>
@@ -136,12 +144,15 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 								style={{
 									float: 'right',
 								}}
-								className="primaryButton"
+								className={`primaryButton${
+									!!this.props.disableOk ? ' disabled' : ''
+								}`}
 								id="ok"
 								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
 									e.preventDefault();
 									this.props.onClose();
 								}}
+								disabled={!!this.props.disableOk}
 							>
 								{this.props.labels ? this.props.labels[0] : 'OK'}
 							</button>
@@ -153,7 +164,9 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 									float: 'right',
 									marginLeft: 10,
 								}}
-								className="primaryButton"
+								className={`primaryButton${
+									!!this.props.disableOk ? ' disabled' : ''
+								}`}
 								id="cancel"
 								onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
 									e.preventDefault();
@@ -162,6 +175,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 										this.props.onCancel();
 									}
 								}}
+								disabled={!!this.props.disableOk}
 							>
 								{this.props.labels ? this.props.labels[1] : 'Cancel'}
 							</button>

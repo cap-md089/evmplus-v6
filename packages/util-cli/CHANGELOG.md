@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.12.0](http://github.com//cap-md089/evmplus-v6/compare/util-cli@1.5.8...util-cli@1.12.0) (2020-12-09)
+
+
+### Bug Fixes
+
+* **server:** fixed headers not being properly handled ([d0829e9](http://github.com//cap-md089/evmplus-v6/commit/d0829e9c94399c402388c26ec05512e53153615b))
+* fixed db upgrade script order ([5ba922c](http://github.com//cap-md089/evmplus-v6/commit/5ba922c4e869f3a52aa442a8ea6adee2110a5637))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.11.0](http://github.com//cap-md089/evmplus-v6/compare/util-cli@1.5.8...util-cli@1.11.0) (2020-10-30)
 
 

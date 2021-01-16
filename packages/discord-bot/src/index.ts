@@ -19,8 +19,6 @@
 
 import * as mysql from '@mysql/xdevapi';
 import {
-	collectGeneratorAsync,
-	Either,
 	isPartOfTeam,
 	isTeamLeader,
 	Maybe as M,
@@ -28,8 +26,10 @@ import {
 	ServerConfiguration,
 	toReference,
 } from 'common-lib';
+import * as debug from 'debug';
 import { Client } from 'discord.js';
-import { getMembers, getRegistry, getTeamObjects } from 'server-common';
+import 'dotenv/config';
+import { getRegistry } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
@@ -40,6 +40,8 @@ import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser from './data/setupUser';
 import getConf, { DiscordCLIConfiguration } from './getDiscordConf';
+
+const discordBotLog = debug('discord-bot');
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
@@ -52,7 +54,13 @@ export const getXSession = async ({ DB_SCHEMA }: DiscordCLIConfiguration, client
 export const getClient = () =>
 	new Client({
 		ws: {
-			intents: ['GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILDS', 'DIRECT_MESSAGES'],
+			intents: [
+				'GUILD_MEMBERS',
+				'GUILD_MESSAGES',
+				'GUILDS',
+				'DIRECT_MESSAGES',
+				'GUILD_PRESENCES',
+			],
 		},
 	});
 
@@ -71,50 +79,7 @@ export default function setupDiscordBot(
 
 	const userSetupFunction = setupUser(client);
 
-	capwatchEmitter.on('capwatchImport', async accountObj => {
-		const { schema, session } = await getXSession(conf, mysqlClient);
-
-		const discordServer = accountObj.discordServer;
-
-		if (!discordServer.hasValue) {
-			await session.close();
-			return;
-		}
-
-		const guildUserSetup = userSetupFunction(schema)(discordServer.value.serverID);
-		const account = await getAccount(schema)(discordServer.value.serverID);
-
-		if (!account.hasValue) {
-			await session.close();
-			return;
-		}
-
-		const setupForAccount = guildUserSetup(account.value);
-
-		console.log('Applying CAPWATCH to Discord');
-
-		const teams = await getTeamObjects(schema)(account.value)
-			.map(collectGeneratorAsync)
-			.fullJoin();
-
-		for await (const member of getMembers(schema)(account.value)()) {
-			if (Either.isLeft(member)) {
-				continue;
-			}
-
-			const userAccount = await getDiscordAccount(schema)(toReference(member.value));
-
-			if (!userAccount.hasValue) {
-				continue;
-			}
-
-			await setupForAccount(teams)(userAccount.value);
-		}
-
-		console.log('Done applying CAPWATCH to Discord');
-
-		await session.close();
-	});
+	const emitter = discordBotLog.extend('emitter');
 
 	capwatchEmitter.on('discordRegister', async ({ user, account: accountObj }) => {
 		const { schema, session } = await getXSession(conf, mysqlClient);
@@ -258,7 +223,7 @@ export default function setupDiscordBot(
 	capwatchEmitter.on('memberChange', async ({ member, account: accountObj }) => {
 		const { schema, session } = await getXSession(conf, mysqlClient);
 
-		console.log('Changing member information for', member);
+		emitter.extend('memberChange')('Changing member information for', member);
 
 		const discordServer = accountObj.discordServer;
 
@@ -367,7 +332,7 @@ if (require.main === module) {
 			process.exit(1);
 		}
 
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			const command = process.argv[2];
 
 			const availableCommands: { [key: string]: typeof setupServer } = {

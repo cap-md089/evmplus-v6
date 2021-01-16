@@ -24,6 +24,9 @@ import {
 	EnvServerConfiguration,
 	RawServerConfiguration,
 	ServerConfiguration,
+	EnvCLIConfiguration,
+	RawCLIConfiguration,
+	CLIConfiguration,
 	Validator,
 } from 'common-lib';
 import { readFile } from 'fs';
@@ -106,4 +109,44 @@ export default async (readfile = promisify(readFile)) => {
 	const envConfiguration = throws(envConfigValidator.validate(process.env, ''));
 
 	return await injectConfiguration(readfile)(envConfiguration);
+};
+
+export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguration => ({
+	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+
+	DB_HOST: raw.DB_HOST,
+	DB_PASSWORD: raw.DB_PASSWORD,
+	DB_SCHEMA: raw.DB_SCHEMA,
+	DB_USER: raw.DB_USER,
+	DB_PORT: parseInt(raw.DB_PORT, 10),
+	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
+
+	NODE_ENV: raw.NODE_ENV,
+
+	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+
+	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
+});
+
+export const getCLIConfiguration = async (readfile = promisify(readFile)) => {
+	dotenv.config();
+
+	const envConfigValidator = validator<EnvCLIConfiguration>(Validator);
+	const envConfiguration = throws(envConfigValidator.validate(process.env, ''));
+
+	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
+
+	const [DB_USER, DB_PASSWORD, DISCORD_CLIENT_TOKEN] = await Promise.all([
+		readfile('/run/secrets/db_user').then(toUtf8),
+		readfile('/run/secrets/db_password').then(toUtf8),
+		readfile('/run/secrets/discord_client_token').then(toUtf8, always(void 0)),
+	]);
+
+	return parseCLIConfiguration({
+		...envConfiguration,
+
+		DB_USER,
+		DB_PASSWORD,
+		DISCORD_CLIENT_TOKEN,
+	});
 };

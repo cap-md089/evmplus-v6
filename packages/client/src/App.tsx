@@ -83,7 +83,6 @@ export default class App extends React.Component<
 		this.authorizeUser = this.authorizeUser.bind(this);
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
-		this.onStorageChange = this.onStorageChange.bind(this);
 		this.update = this.update.bind(this);
 	}
 
@@ -95,8 +94,6 @@ export default class App extends React.Component<
 		this.setState({
 			loading: true,
 		});
-
-		window.addEventListener('storage', this.onStorageChange);
 
 		const infoEither = await AsyncEither.All([
 			fetchApi.accountCheck({}, {}),
@@ -138,8 +135,6 @@ export default class App extends React.Component<
 		if (this.timer) {
 			clearInterval(this.timer);
 		}
-
-		window.removeEventListener('storage', this.onStorageChange);
 	}
 
 	public render() {
@@ -217,35 +212,6 @@ export default class App extends React.Component<
 			member,
 			fullMember,
 		});
-	}
-
-	private onStorageChange(e: StorageEvent) {
-		if (e.key === 'sessionID' && e.newValue !== '') {
-			this.setState({
-				loading: true,
-			});
-			getMember()
-				.then(member => {
-					if (member.error !== MemberCreateError.NONE) {
-						localStorage.removeItem('sessionID');
-					}
-					this.setState({ member, loading: false });
-				})
-				.catch(() => {
-					this.setState({
-						member: {
-							error: MemberCreateError.INVALID_SESSION_ID,
-						},
-						loading: false,
-					});
-				});
-		} else if (e.key === 'sessionID') {
-			this.setState({
-				member: {
-					error: MemberCreateError.INVALID_SESSION_ID,
-				},
-			});
-		}
 	}
 
 	private update() {

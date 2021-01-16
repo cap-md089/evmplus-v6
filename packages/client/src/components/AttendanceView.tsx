@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -60,6 +60,7 @@ interface AttendanceItemViewProps {
 	clearUpdated: () => void;
 	recordMember?: Member | null;
 	updated: boolean;
+	pickupDateTime: number;
 	index: number;
 }
 
@@ -94,7 +95,8 @@ export default class AttendanceItemView extends Component<
 
 	public render() {
 		return effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ||
-			areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) ? (
+			(areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) &&
+				Date.now() < this.props.pickupDateTime) ? (
 			<AttendanceForm
 				account={this.props.owningAccount}
 				event={this.props.owningEvent}

@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, FileObject, get } from 'common-lib';
+import { Either, FileObject, get, stringifyMemberReference } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import LoaderShort from '../../../components/LoaderShort';
@@ -48,7 +48,14 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 	};
 
 	public async componentDidMount() {
-		const root = await fetchApi.files.children.getBasic({ parentid: 'root' }, {});
+		if (!this.props.member) {
+			return;
+		}
+
+		const root = await fetchApi.files.children.getBasic(
+			{ parentid: stringifyMemberReference(this.props.member) },
+			{},
+		);
 
 		if (Either.isLeft(root)) {
 			this.setState({
@@ -76,10 +83,12 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 						<div>
 							There {this.state.list.length === 1 ? 'is' : 'are'}{' '}
 							{this.state.list.length} file
-							{this.state.list.length !== 1 ? 's' : ''} in the root drive
+							{this.state.list.length !== 1 ? 's' : ''} in your drive
 							<br />
 							<br />
-							<Link to="/drive">Go there now</Link>
+							<Link to={`/drive/${stringifyMemberReference(this.props.member!)}`}>
+								Go there now
+							</Link>
 						</div>
 					)}
 				</div>

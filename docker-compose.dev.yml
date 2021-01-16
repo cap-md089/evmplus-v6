@@ -13,7 +13,7 @@ services:
             - DB_PORT=33060
             - DB_POOL_SIZE=5
             - PORT=3001
-            - DRIVE_STORAGE_PATH=/uploads
+            - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=localevmplus.org
         volumes:
             - type: bind
@@ -24,7 +24,7 @@ services:
               source: .
               target: /usr/evm-plus
 
-            - uploads:/uploads
+            - uploads:/srv/uploads
         secrets:
             - db_user
             - db_password
@@ -32,6 +32,8 @@ services:
             - aws_access_key_id
             - aws_secret_access_key
             - recaptcha_secret
+        depends_on:
+            - mysql
 
     mysql:
         image: mysql:8.0
@@ -53,6 +55,30 @@ services:
             - db_user
             - db_password
 
+    capwatch_update:
+        build:
+            context: .
+            target: capwatch-import
+        command: /usr/evm-plus/capwatch-cron/download.sh
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=50
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - capwatch_password
+            - capwatch_orgid
+            - capwatch_capid
+        depends_on:
+            - mysql
+
+    mysql_shell:
+        build:
+
+
 secrets:
     db_user:
         file: ./keys/db_user
@@ -71,6 +97,15 @@ secrets:
 
     recaptcha_secret:
         file: ./keys/recaptcha_secret
+
+    capwatch_orgid:
+        file: ./keys/capwatch_orgid
+
+    capwatch_capid:
+        file: ./keys/capwatch_capid
+
+    capwatch_password:
+        file: ./keys/capwatch_password
 
 volumes:
     db-data:

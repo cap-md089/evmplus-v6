@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.21](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.21) (2020-12-09)
+
+
+### Bug Fixes
+
+* **server:** fixed headers not being properly handled ([d0829e9](http://github.com//cap-md089/evmplus-v6/commit/d0829e9c94399c402388c26ec05512e53153615b))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+
+
+
 ## [1.3.20](http://github.com//cap-md089/evmplus-v6/compare/auto-api-tests@1.3.14...auto-api-tests@1.3.20) (2020-10-30)
 
 

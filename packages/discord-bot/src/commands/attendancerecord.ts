@@ -34,7 +34,7 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
-import { Client, Message, VoiceChannel } from 'discord.js';
+import { Client, GuildMember, Message, VoiceChannel } from 'discord.js';
 import {
 	addMemberToAttendance,
 	ensureResolvedEvent,
@@ -42,9 +42,9 @@ import {
 	getEvent,
 	getFullPointsOfContact,
 	getTeam,
+	PAM,
 	resolveReference,
 } from 'server-common';
-import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
 import { getXSession } from '..';
 import { toCAPUnit } from '../data/convertMember';
 import getAccount from '../data/getAccount';
@@ -84,17 +84,27 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		return await message.reply('There was an error adding members to the event specified');
 	}
 
-	const discordMembers =
+	const discordMembers: GuildMember[] | undefined =
 		method === 'global'
-			? guild.channels.cache
-					.array()
-					.filter((v): v is VoiceChannel => v.type === 'voice')
-					.flatMap(channel => channel.members.array())
+			? (
+					await Promise.all(
+						guild.channels.cache
+							.array()
+							.filter((v): v is VoiceChannel => v.type === 'voice')
+							.map(channel => channel.fetch(true) as Promise<VoiceChannel>),
+					)
+			  ).flatMap(channel => channel.members.array())
 			: method === 'withme'
-			? message.member?.voice?.channel?.members.array()
+			? ((await message.member?.voice?.channel?.fetch?.(
+					true,
+			  )) as VoiceChannel)?.members.array()
 			: undefined;
 
-	if (!discordMembers) {
+	if (!discordMembers && method === 'withme') {
+		await message.reply('There was a problem getting the voice channel you are in');
+		await message.reply('Please try again later or use "global"');
+		return;
+	} else if (!discordMembers) {
 		await message.reply(`Unknown member group: "${method}"`);
 		await message.channel.send('Known member groups are "withme" or "global"');
 		return;
@@ -126,7 +136,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		const adder = memberEither.value;
 		let adderUser: User;
 		try {
-			const permissions = await getPermissionsForMemberInAccountDefault(
+			const permissions = await PAM.getPermissionsForMemberInAccountDefault(
 				schema,
 				toReference(adder),
 				account.value,
@@ -178,7 +188,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 			.filter(Maybe.isSome)
 			.map(get('value'));
 
-		await message.channel.send('Looking to add ' + members.length + ' members');
+		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
 		const fullInfoEither = await AsyncEither.All([
 			getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),

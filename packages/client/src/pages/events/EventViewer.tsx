@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -62,6 +62,8 @@ import {
 	spreadsheets,
 	stringifyMemberReference,
 	ClientUser,
+	getFullMemberName,
+	toReference,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -71,15 +73,14 @@ import Button from '../../components/Button';
 import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButton from '../../components/dialogues/DialogueButton';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
-import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import {
+	BigTextBox,
 	Checkbox,
 	DateTimeInput,
 	Label,
 	TextBox,
-	TextInput,
 } from '../../components/forms/SimpleForm';
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
@@ -152,21 +153,6 @@ interface EventViewerUIState {
 type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerViewerState;
 
 type EventViewerProps = PageProps<{ id: string }>;
-
-const eventStatus = (stat: EventStatus): string =>
-	stat === EventStatus.COMPLETE
-		? 'Complete'
-		: stat === EventStatus.CANCELLED
-		? 'Cancelled'
-		: stat === EventStatus.CONFIRMED
-		? 'Confirmed'
-		: stat === EventStatus.DRAFT
-		? 'Draft'
-		: stat === EventStatus.INFORMATIONONLY
-		? 'Information Only'
-		: stat === EventStatus.TENTATIVE
-		? 'Tentative'
-		: '';
 
 export const attendanceStatusLabels = [
 	'Commited/Attended',
@@ -288,6 +274,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.copyMoveEvent = this.copyMoveEvent.bind(this);
 		this.copyEvent = this.copyEvent.bind(this);
 		this.deleteEvent = this.deleteEvent.bind(this);
+		this.addDebrief = this.addDebrief.bind(this);
+		this.deleteDebriefCallbackForTimeSubmitted = this.deleteDebriefCallbackForTimeSubmitted.bind(
+			this,
+		);
 
 		this.renderFormsButtons = this.renderFormsButtons.bind(this);
 		this.createCAPF6080 = this.createCAPF6080.bind(this);
@@ -449,22 +439,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 
 		const eventViewerInfo = this.state.eventInformation;
-		const {
-			event,
-			attendees,
-			pointsOfContact,
-			sourceAccountName,
-			linkedEvents,
-			authorFullName,
-		} = eventViewerInfo;
+		const { event, attendees, pointsOfContact, authorFullName } = eventViewerInfo;
 		const { member, fullMemberDetails } = this.props;
 
-		const linkableAccounts =
-			fullMemberDetails.error !== MemberCreateError.NONE
-				? []
-				: fullMemberDetails.linkableAccounts.filter(
-						({ id }) => !linkedEvents.find(linkedEvent => linkedEvent.accountID === id),
-				  );
+		const renderDebriefMemberName =
+			member &&
+			event.debrief.filter(
+				val => val.publicView === true && !areMembersTheSame(member)(val.memberRef),
+			).length > 0;
+		const renderDebriefView =
+			member &&
+			event.debrief.filter(val => areMembersTheSame(member)(val.memberRef)).length > 0;
 
 		return (
 			<>
@@ -584,9 +569,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								Really delete event?
 							</DialogueButton>
 							{' | '}
-							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
-							{/* {' | '}
-							<Link to={`/scanadd/${event.id}`}>Scan Add attendance</Link> */}
+							<Link to={`/auditviewer/${event.id}`}>View Audit Log</Link>
 							{/* {' | '}
 								<Button buttonType="none">Print Cadet Roster</Button>
 								{' | '}
@@ -596,110 +579,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					) : null}
 					{member &&
-					effectiveManageEventPermissionForEvent(member)(event) &&
-					linkableAccounts.length > 0 &&
-					event.type !== EventType.LINKED ? (
-						<br />
-					) : null}
-					{event.type === EventType.LINKED ||
-					linkableAccounts.length === 0 ? null : linkableAccounts.length === 1 ? (
-						<Button
-							onClick={() => this.linkEventTo(linkableAccounts[0].id)}
-							buttonType="none"
-						>
-							Link event to {linkableAccounts[0].name}
-						</Button>
-					) : (
-						<>
-							<Button
-								buttonType="none"
-								onClick={() => this.setState({ openLinkEventDialogue: true })}
-							>
-								Link event
-							</Button>
-							<DownloadDialogue
-								valuePromise={linkableAccounts}
-								displayValue={get('name')}
-								multiple={false}
-								onValueClick={selectedAccountToLinkTo =>
-									this.setState({ selectedAccountToLinkTo })
-								}
-								onCancel={() => this.setState({ openLinkEventDialogue: false })}
-								onValueSelect={info => info && this.linkEventTo(info.id)}
-								open={this.state.openLinkEventDialogue}
-								title="Select an account"
-								selectedValue={this.state.selectedAccountToLinkTo}
-								filterValues={this.state.accountFilterValues}
-								onFilterValuesChange={accountFilterValues =>
-									this.setState({ accountFilterValues })
-								}
-								filters={[
-									{
-										check: (accountInfo, input) => {
-											if (input === '' || typeof input !== 'string') {
-												return true;
-											}
-
-											try {
-												return !!accountInfo.name.match(
-													new RegExp(input, 'gi'),
-												);
-											} catch (e) {
-												return false;
-											}
-										},
-										displayText: 'Account name',
-										filterInput: TextInput,
-									},
-								]}
-								showIDField={false}
-							/>
-							<Dialogue
-								onClose={() => this.setState({ linkEventResult: null })}
-								displayButtons={DialogueButtons.OK}
-								title="Link event result"
-								open={this.state.linkEventResult !== null}
-							>
-								{this.state.linkEventResult !== null ? (
-									'id' in this.state.linkEventResult ? (
-										<p>
-											Your event has been linked!
-											<br />
-											<br />
-											<a
-												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
-												rel="noopener _blank"
-											>
-												View it here
-											</a>
-										</p>
-									) : (
-										this.state.linkEventResult.message
-									)
-								) : null}
-							</Dialogue>
-							{member &&
-							effectiveManageEventPermissionForEvent(member)(event) >=
-								Permissions.ManageEvent.FULL
-								? ' | '
-								: null}
-						</>
-					)}
-					{member &&
 					effectiveManageEventPermissionForEvent(member)(event) ===
 						Permissions.ManageEvent.FULL ? (
 						<>
-							{linkableAccounts.length === 0 || event.type === EventType.LINKED ? (
-								<br />
-							) : (
-								' | '
-							)}
+							<br />
 							<Link to={`/events/scanadd/${event.id}`}>Attendance scanner</Link>
+							{' | '}
+							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 						</>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
-						fullMemberDetails.linkableAccounts.length > 0 &&
 						event.type === EventType.REGULAR) ? (
 						<>
 							<br />
@@ -707,43 +597,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						</>
 					) : null}
 					<div id="information">
-						{event.type === EventType.LINKED ? (
-							<>
-								<strong>
-									<a
-										href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
-										rel="noopener _blank"
-									>
-										Event linked from{' '}
-										{sourceAccountName ?? event.targetAccountID.toUpperCase()}
-									</a>
-								</strong>
-								<br />
-								<br />
-							</>
-						) : null}
-						{linkedEvents.length > 0 ? (
-							<>
-								<h4>Events linked to this event</h4>
-								<ul>
-									{linkedEvents.map(
-										({ id, accountID, name, accountName }, index) => (
-											<li key={index}>
-												<a
-													href={`https://${accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${id}`}
-													target="noopener _blank"
-												>
-													{accountName} - {name}
-												</a>
-											</li>
-										),
-									)}
-								</ul>
-							</>
-						) : null}
 						<h1>{event.name}</h1>
 						{event.subtitle ? <h2>{event.subtitle}</h2> : null}
-						<h3>Meeting information</h3>
+						<h3>Event information</h3>
 						<strong>Event ID: </strong> {event.accountID.toUpperCase()}-{event.id}
 						<br />
 						<strong>Meet</strong> at {formatDate(event.meetDateTime)} at{' '}
@@ -758,7 +614,63 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						{event.pickupLocation}
 						<br />
 						<br />
-						<strong>Event status:</strong> {eventStatus(event.status)}
+						<strong>Event status: </strong>
+						{/* {eventStatus(event.status)} */}
+						{event.status === EventStatus.COMPLETE ? (
+							'Complete'
+						) : event.status === EventStatus.CANCELLED ? (
+							<span style={{ color: '#dc2127' }}>Cancelled!</span>
+						) : event.status === EventStatus.TENTATIVE ? (
+							<span style={{ color: '#46d6db' }}>Tentative</span>
+						) : event.status === EventStatus.CONFIRMED ? (
+							'Confirmed'
+						) : event.status === EventStatus.DRAFT ? (
+							<span style={{ color: 'darkgreen' }}>DRAFT</span>
+						) : event.status === EventStatus.INFORMATIONONLY ? (
+							'Information Only'
+						) : (
+							''
+						)}
+						<br />
+						{member &&
+						(event.status === EventStatus.COMPLETE ||
+							event.status === EventStatus.CANCELLED) ? (
+							<DialogueButtonForm<{
+								publicView: boolean;
+								debriefText: string;
+							}>
+								buttonText="Submit a debrief item for this event"
+								buttonClass="underline-button"
+								buttonType="none"
+								displayButtons={DialogueButtons.OK_CANCEL}
+								onOk={this.addDebrief}
+								title="Submit Debrief"
+								labels={['Submit', 'Cancel']}
+								values={{
+									publicView: false,
+									debriefText: 'Replace this text with debrief description',
+								}}
+							>
+								<Label>
+									Select debrief visibility. 'Managers Only' will display this
+									only to Managers/POCs. 'All Members' will display this to any
+									logged in member.
+								</Label>
+								<EnumRadioButton
+									name="publicView"
+									labels={['All Members', 'Managers Only']}
+									values={[true, false]}
+									defaultValue={false}
+								/>
+
+								<Label>
+									Describe: 1) How did the event go?, 2) What specifically went
+									well, 3) What did not go well, 4) what should change for next
+									time
+								</Label>
+								<BigTextBox name="debriefText" />
+							</DialogueButtonForm>
+						) : null}
 						<br />
 						<br />
 						<strong>Transportation provided:</strong>{' '}
@@ -882,6 +794,88 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							<>
 								<strong>Event Author:</strong> {authorFullName.value}
 								<br />
+							</>
+						) : null}
+						{!member ||
+						event.debrief.length === 0 ? null : effectiveManageEventPermissionForEvent(
+								member,
+						  )(event) !== Permissions.ManageEvent.NONE ? (
+							<>
+								<div className="debrieflist">
+									<h3>All Debrief Items</h3>
+									{/* <DropDownList
+										titles={"Debrief Items", 1, new String[]}
+										values={[]}
+										onlyOneOpen={true}
+										keyFunc={rec =>
+											stringifyMemberReference(rec.record.memberID)
+										}
+									>
+
+									</DropDownList>  */}
+
+									<table>
+										<tr>
+											<th>Time Submitted</th>
+											<th>Member Name</th>
+											<th>View</th>
+											<th>Text</th>
+											<th>Link</th>
+										</tr>
+										{event.debrief.flatMap(debriefElement => [
+											<tr key={debriefElement.timeSubmitted}>
+												<td>{formatDate(debriefElement.timeSubmitted)}</td>
+												<td>{debriefElement.memberName}</td>
+												<td>{debriefElement.publicView ? 'All' : 'Mgr'}</td>
+												<td>{debriefElement.debriefText}</td>
+												<td>
+													<DialogueButton
+														buttonText="Delete"
+														buttonType="none"
+														buttonClass="underline-button"
+														displayButtons={DialogueButtons.OK_CANCEL}
+														onOk={this.deleteDebriefCallbackForTimeSubmitted(
+															debriefElement.timeSubmitted,
+														)}
+														title="Delete debrief item"
+														labels={['Yes', 'No']}
+													>
+														Do you really want to delete this debrief
+														item?
+													</DialogueButton>
+												</td>
+											</tr>,
+										])}
+									</table>
+								</div>
+							</>
+						) : event.debrief.length > 0 ? (
+							<>
+								<div className="debrieflist">
+									<h3>Debrief Items</h3>
+									<table>
+										<tr>
+											<th>Time Submitted</th>
+											{renderDebriefMemberName ? <th>MemberName</th> : null}
+											{renderDebriefView ? <th>View</th> : null}
+											<th>Text</th>
+										</tr>
+										{event.debrief.flatMap(debriefElement => [
+											<tr key={debriefElement.timeSubmitted}>
+												<td>{formatDate(debriefElement.timeSubmitted)}</td>
+												{renderDebriefMemberName ? (
+													<td>{debriefElement.memberName}</td>
+												) : null}
+												{renderDebriefView ? (
+													<td>
+														{debriefElement.publicView ? 'All' : 'Mgr'}
+													</td>
+												) : null}
+												<td>{debriefElement.debriefText}</td>
+											</tr>,
+										])}
+									</table>
+								</div>
 							</>
 						) : null}
 						{pointsOfContact.length > 0 ? <h3>Contact information</h3> : null}
@@ -1067,6 +1061,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													Maybe.orSome(false),
 												)(this.state.previousUpdatedMember)}
 												key={stringifyMemberReference(val.record.memberID)}
+												pickupDateTime={event.pickupDateTime}
 												index={i}
 											/>
 										)}
@@ -1246,6 +1241,93 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				},
 			},
 		});
+	}
+
+	private async addDebrief({
+		debriefText,
+		publicView,
+	}: {
+		debriefText: string;
+		publicView: boolean;
+	}) {
+		const state = this.state;
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to add debrief to a null event');
+		}
+
+		const mem = this.props.member;
+		if (!mem) {
+			return;
+		}
+
+		const { event } = state.eventInformation;
+		await AsyncEither.All([
+			fetchApi.events.debrief.add({ id: event.id.toString() }, { debriefText, publicView }),
+		]);
+
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
+
+						eventInformation: {
+							...prev.eventInformation,
+							event: {
+								...prev.eventInformation.event,
+								debrief: [
+									...prev.eventInformation.event.debrief,
+									{
+										debriefText,
+										memberName: getFullMemberName(mem),
+										memberRef: toReference(mem),
+										publicView,
+										timeSubmitted: Date.now(),
+									},
+								],
+							},
+						},
+				  }
+				: prev,
+		);
+	}
+
+	private deleteDebriefCallbackForTimeSubmitted(timeSubmitted: number) {
+		return async () => {
+			const state = this.state;
+			if (state.viewerState !== 'LOADED') {
+				throw new Error('Attempting to add debrief to a null event');
+			}
+
+			if (!this.props.member) {
+				return;
+			}
+
+			const { event } = state.eventInformation;
+			await AsyncEither.All([
+				fetchApi.events.debrief.delete(
+					{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
+					{},
+				),
+			]);
+
+			this.setState(prev =>
+				prev.viewerState === 'LOADED'
+					? {
+							...prev,
+
+							eventInformation: {
+								...prev.eventInformation,
+								event: {
+									...prev.eventInformation.event,
+									debrief: prev.eventInformation.event.debrief.filter(
+										item => item.timeSubmitted !== timeSubmitted,
+									),
+								},
+							},
+					  }
+					: prev,
+			);
+		};
 	}
 
 	private async copyMoveEvent({ newTime, copyFiles }: { newTime: number; copyFiles: boolean }) {
@@ -1474,33 +1556,5 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		XLSX.writeFile(wb, `Attendance ${evtID}.xlsx`);
-	}
-
-	private async linkEventTo(targetaccount: string) {
-		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
-			return;
-		}
-
-		this.setState({
-			openLinkEventDialogue: false,
-		});
-
-		const result = await fetchApi.events.events.link(
-			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
-			{},
-		);
-
-		if (Either.isLeft(result)) {
-			this.setState({
-				linkEventResult: result.value,
-			});
-		} else {
-			this.setState({
-				linkEventResult: {
-					accountID: result.value.accountID,
-					id: result.value.id,
-				},
-			});
-		}
 	}
 }

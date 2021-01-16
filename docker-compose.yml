@@ -6,14 +6,12 @@ services:
             - frontend
         ports:
             - '80:80'
+            - '443:443'
         restart: always
-        links:
-            - "main:main"
-        configs:
-            - nginx
         secrets:
             - key_certificate
             - key_private
+            - nginx
 
     main:
         build:
@@ -31,7 +29,7 @@ services:
             - DB_PORT=33060
             - DB_POOL_SIZE=50
             - PORT=3001
-            - DRIVE_STORAGE_PATH=/uploads
+            - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=evmplus.org
         volumes:
             - type: bind
@@ -39,8 +37,8 @@ services:
               target: /google-keys
 
             - type: bind
-              source: /uploads
-              target: /uploads
+              source: /srv/uploads
+              target: /srv/uploads
         secrets:
             - db_user
             - db_password
@@ -58,7 +56,7 @@ services:
         restart: always
         volumes:
             - type: bind
-              source: /var/lib/mysql
+              source: /srv/mysql
               target: /var/lib/mysql
               volume:
                 nocopy: true
@@ -75,14 +73,13 @@ services:
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=50
-        configs:
-            - capwatch_orgid
-            - capwatch_capid
         secrets:
             - db_user
             - db_password
             - discord_client_token
-            - nhq_password
+            - capwatch_password
+            - capwatch_orgid
+            - capwatch_capid
 
 networks:
     frontend:
@@ -92,16 +89,6 @@ networks:
     backend:
         driver: bridge
         attachable: false
-
-configs:
-    capwatch_orgid:
-        file: ./configs/capwatch_orgid
-    
-    capwatch_capid:
-        file: ./configs/capwatch_capid
-
-    nginx:
-        file: ./configs/nginx.conf
 
 secrets:
     db_user:
@@ -122,11 +109,17 @@ secrets:
     recaptcha_secret:
         file: ./keys/recaptcha_secret
 
-    nhq_password:
-        file: ./keys/nhq_password
-
     key_certificate:
         file: ./keys/site.crt
 
     key_private:
         file: ./keys/site.pem
+
+    capwatch_orgid:
+        file: ./keys/capwatch_orgid
+    
+    capwatch_capid:
+        file: ./keys/capwatch_capid
+
+    capwatch_password:
+        file: ./keys/capwatch_password

@@ -28,7 +28,7 @@ import {
 	SessionType,
 	toReference,
 } from 'common-lib';
-import { copyEvent, getEvent, getFullEventObject, PAM } from 'server-common';
+import { copyEvent, ensureResolvedEvent, getEvent, getFullEventObject, PAM } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessionType(
@@ -36,6 +36,7 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 )(req =>
 	asyncRight(req, errorGenerator('Could not get information')).flatMap(() =>
 		getEvent(req.mysqlx)(req.account)(req.params.id)
+			.flatMap(ensureResolvedEvent(req.mysqlx))
 			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
