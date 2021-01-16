@@ -31,7 +31,8 @@ USER evmplus-server
 
 #
 # This container is used to program in a Docker environment, and access
-# secrets necessary for execution (db_password, etc)
+# secrets necessary for execution (db_password, etc). This container
+# will require a mount to /usr/evm-plus from the outside world
 #
 FROM base AS development
 
@@ -62,6 +63,10 @@ RUN yarn install
 
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
+RUN lerna run build
+
+COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
+COPY packages ./packages
 COPY tsconfig.* ./
 RUN lerna run build
 
@@ -79,6 +84,7 @@ COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
+
 RUN rm -rf node_modules packages/*/node_modules \
 	&& lerna bootstrap -- --production \
 	&& rm -rf /usr/local/share/.cache/yarn/v6
