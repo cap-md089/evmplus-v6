@@ -6,6 +6,7 @@
 	"scripts": {
 		"test": "jest",
 		"build": "ttsc --project tsconfig.build.json",
+		"watch": "ttsc --project tsconfig.build.json --watch",
 		"check": "ttsc --project tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},
@@ -57,7 +58,7 @@
 		"auto-client-api": "^1.3.21",
 		"common-lib": "^1.26.0",
 		"debug": "^4.3.1",
-		"discord.js": "12",
+		"discord.js": "^12.5.1",
 		"dotenv": "^8.2.0",
 		"server-common": "^1.23.0"
 	}

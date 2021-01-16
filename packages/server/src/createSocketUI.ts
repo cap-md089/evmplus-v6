@@ -1,9 +1,6 @@
 import * as mysql from '@mysql/xdevapi';
 import { ServerConfiguration } from 'common-lib';
-import { readFile } from 'fs';
 import { createServer } from 'net';
-import * as Client from 'ssh2-sftp-client';
-import { promisify } from 'util';
 
 export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Client) => {
 	createServer(sock => {
@@ -25,43 +22,6 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 					} catch (e) {
 						sock.write('Failed connection!\n');
 						sock.write(e.toString());
-					}
-				} else if (target === 'sftp' && config.DRIVE_TYPE === 'Remote') {
-					sock.write('Trying connection...\n');
-					const sftp = new Client();
-
-					let privateKey;
-
-					const {
-						REMOTE_DRIVE_HOST: host,
-						REMOTE_DRIVE_PORT: port,
-						REMOTE_DRIVE_USER: username,
-					} = config;
-
-					try {
-						privateKey = await promisify(readFile)(config.REMOTE_DRIVE_KEY_FILE);
-					} catch (e) {
-						sock.write('Error reading key!\n');
-						sock.write(e.message + '\n');
-						return;
-					}
-
-					try {
-						await sftp.connect({
-							host,
-							port,
-							username,
-							privateKey,
-						});
-
-						const files = await sftp.list(config.REMOTE_DRIVE_STORAGE_PATH);
-
-						await sftp.end();
-
-						sock.write(`Found ${files.length} files.`);
-					} catch (e) {
-						sock.write('SFTP error!');
-						sock.write(e.message);
 					}
 				}
 			} else if (cmd === 'version') {

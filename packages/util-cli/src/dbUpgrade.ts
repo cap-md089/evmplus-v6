@@ -19,14 +19,12 @@
  */
 
 import { Collection, getSession } from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
 	CAPWingMemberPermissions,
 	CustomAttendanceField,
 	CustomAttendanceFieldValue,
-	Either,
 	EventStatus,
 	EventType,
 	ExternalPointOfContact,
@@ -37,13 +35,11 @@ import {
 	RawFileObject,
 	RawLinkedEvent,
 	RawRegularEventObject,
-	RawServerConfiguration,
 	RawTeamObject,
 	StoredMemberPermissions,
-	Validator,
 } from 'common-lib';
 import 'dotenv/config';
-import { confFromRaw, generateResults, RawAttendanceDBRecord } from 'server-common';
+import { generateResults, getConf, RawAttendanceDBRecord } from 'server-common';
 
 const EventStatusMap = {
 	0: 'Draft',
@@ -122,22 +118,13 @@ const AccountTypeMap = {
 	5: 'CAPEvent',
 };
 
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
-
-const conf = confEither.value;
-
 process.on('unhandledRejection', up => {
 	throw up;
 });
 
 (async () => {
+	const conf = await getConf();
+
 	const session = await getSession({
 		host: conf.DB_HOST,
 		password: conf.DB_PASSWORD,

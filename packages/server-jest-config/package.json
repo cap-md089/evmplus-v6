@@ -18,6 +18,7 @@
 	},
 	"scripts": {
 		"build": "tsc --project tsconfig.build.json",
+		"watch": "tsc --project tsconfig.build.json --watch",
 		"check": "tsc --project tsconfig.build.json --noEmit",
 		"test": "jest --runInBand"
 	},

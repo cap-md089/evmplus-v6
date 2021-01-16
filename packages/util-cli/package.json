@@ -5,6 +5,7 @@
 	"private": true,
 	"scripts": {
 		"build": "ttsc --project tsconfig.build.json",
+		"watch": "ttsc --project tsconfig.build.json --build",
 		"check": "ttsc --project tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},

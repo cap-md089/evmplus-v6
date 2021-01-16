@@ -20,7 +20,9 @@
 import { Client, getClient, Schema, Session } from '@mysql/xdevapi';
 import * as Docker from 'dockerode';
 
-const dockerConn = new Docker();
+const dockerConn = new Docker({
+	socketPath: '/var/run/docker.sock',
+});
 
 interface ConnectionInfo {
 	dockerContainer: Docker.Container;

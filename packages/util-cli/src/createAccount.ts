@@ -19,35 +19,19 @@
  */
 
 import { getSession } from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
 	DiscordServerInformation,
-	Either,
 	getDefaultAdminPermissions,
 	Maybe,
 	MaybeObj,
 	MemberReference,
 	RawCAPSquadronAccountObject,
-	RawServerConfiguration,
 	RegistryValues,
-	Validator,
 } from 'common-lib';
-import 'dotenv/config';
 import { createInterface } from 'readline';
-import { PAM, confFromRaw, createGoogleCalendar, getRegistry, saveRegistry } from 'server-common';
-
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
-
-const conf = confEither.value;
+import { createGoogleCalendar, getConf, getRegistry, PAM, saveRegistry } from 'server-common';
 
 process.on('unhandledRejection', up => {
 	throw up;
@@ -61,6 +45,8 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 	});
 
 (async () => {
+	const conf = await getConf();
+
 	const readlineInterface = createInterface({
 		input: process.stdin,
 		output: process.stdout,

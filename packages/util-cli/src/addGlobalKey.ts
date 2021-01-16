@@ -21,6 +21,7 @@
 import { getSession } from '@mysql/xdevapi';
 import { SigninKeyScopeType, StoredSigninKey } from 'common-lib';
 import { generateKeyPairSync } from 'crypto';
+import 'dotenv/config';
 import { collectResults, findAndBind, getConf } from 'server-common';
 
 process.on('unhandledRejection', up => {
