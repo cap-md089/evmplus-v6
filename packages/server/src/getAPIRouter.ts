@@ -57,7 +57,12 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 		while (true) {
 			try {
 				mysqlConn = await mysql.getClient(
-					`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
+					{
+						user: conf.DB_USER,
+						password: conf.DB_PASSWORD,
+						host: conf.DB_HOST,
+						port: conf.DB_PORT,
+					},
 					{
 						pooling: {
 							enabled: true,

@@ -105,9 +105,7 @@ Only required for setting up SSL keys for HTTPS traffic as opposed to HTTP traff
 
 1. [Request CAPWATCH download permissions](https://capnhq.gov/cap.capwatch.web/Modules/CapwatchRequest.aspx)
 2. Store the ORGID in the `./keys/capwatch_orgid` file, as well as your CAP ID and eServices password in `./keys/capwatch_capid` and `./keys/capwatch_password`, respectively
-route53:ListHostedZones
-route53:GetChange
-route53:ChangeResourceRecordSets
+
 ## Using Command Line Utilities
 
 First, run `docker-compose up -d util-cli`, and keep note of the name of the container created. Then, run `docker attach {container-name}` you will be provided a shell from which you can run different utilities to perform administrative actions. Administrative actions include adding SSL keys for signin tokens, creating accounts, downloading CAPWATCH files, importing CAPWATCH files, and sending global notifications.
