@@ -11,7 +11,6 @@ services:
         volumes:
             - ./nginx:/etc/nginx/conf.d
             - ./keys/certbot/conf:/etc/letsencrypt
-            - ./keys/certbot/www:/var/www/certbot
         command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
         depends_on:
             - certbot
@@ -22,7 +21,6 @@ services:
         restart: always
         volumes:
             - ./keys/certbot/conf:/etc/letsencrypt
-            - ./keys/certbot/www:/var/www/certbot
         environment: 
             - AWS_CONFIG_FILE=/run/secrets/aws_ssl_keys
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"

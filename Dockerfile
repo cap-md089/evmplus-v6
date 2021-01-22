@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:1.2
+
 # Copyright (C) 2020 Andrew Rioux
 # 
 # This file is part of EvMPlus.org.
@@ -19,7 +21,7 @@ FROM node:14-alpine3.11 AS base
 
 # Install the imagemagick library for favicons
 RUN apk add imagemagick \
-	&& yarn global add lerna@3.22.1
+	&& yarn global add lerna@3.22
 
 #
 # This container is used to program in a Docker environment, and access
@@ -65,7 +67,7 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
 COPY tsconfig.* ./
-RUN --mount=type=cache,target=/usr/evm-plus/buildcache lerna run build
+RUN lerna run build
 
 #
 # This container is used to execute the compiled JavaScript
@@ -82,8 +84,9 @@ COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
 
-RUN rm -rf node_modules packages/*/node_modules \
-	&& --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 \
+	rm -rf node_modules packages/*/node_modules \
+	&& lerna bootstrap -- --production
 
 # Configure the server to use the right reCAPTCHA keys and built client
 ENV NODE_ENV production
