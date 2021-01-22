@@ -34,5 +34,6 @@ export * from './sendEmail';
 export * from './servertypes';
 export * from './Task';
 export * from './Team';
-export { default as confFromRaw } from './conf';
+export * as conf from './conf';
+export { default as getConf } from './conf';
 export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';

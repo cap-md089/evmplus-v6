@@ -1,9 +1,10 @@
 {
 	"extends": "../../tsconfig.common.json",
 	"compilerOptions": {
-		"target": "es2018",
 		"outDir": "./dist",
-		"rootDir": "./src"
+		"rootDir": "./src",
+		"incremental": true,
+		"tsBuildInfoFile": "../../buildcache/common-lib.build.tsbuildinfo"
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"]

@@ -19,26 +19,22 @@
  */
 
 import { getSession, Schema } from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
 import {
 	AccountObject,
-	Either,
 	getFullMemberName,
 	Maybe,
 	NotificationCauseType,
 	NotificationDataType,
 	NotificationTargetType,
-	RawServerConfiguration,
 	toReference,
-	Validator,
 } from 'common-lib';
 import {
 	createNotification,
 	generateResults,
 	getAccount,
+	getConf,
 	resolveReference,
 	saveNotification,
-	confFromRaw,
 } from 'server-common';
 import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 
@@ -49,18 +45,9 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
  * E.g., 'system is going down for maintenance'
  */
 
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
-
-const conf = confEither.value;
-
 (async () => {
+	const conf = await getConf();
+
 	const argError = () => {
 		console.error('Please provide a source, account ID, expiration date, and message');
 		console.error(

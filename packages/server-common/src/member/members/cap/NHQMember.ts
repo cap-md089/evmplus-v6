@@ -41,7 +41,6 @@ import {
 	Maybe,
 	NHQ,
 	RawTeamObject,
-	ServerConfiguration,
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
@@ -299,15 +298,17 @@ export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =
 		.map(getProp('DOB'))
 		.map(DateTime.fromISO);
 
-export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
+export const downloadCAPWATCHFile = (
 	orgid: number,
 	capid: number,
 	password: string,
+	downloadPath: string,
 ) => {
 	const today = new Date();
 	const fileName = join(
-		conf.CAPWATCH_DOWNLOAD_PATH,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}.zip`,
+		downloadPath,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth() +
+			1}-${today.getDate()}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');
@@ -316,7 +317,7 @@ export const downloadCAPWATCHFile = (conf: ServerConfiguration) => (
 	const storageLocation = createWriteStream(fileName);
 
 	return asyncRight(
-		new Promise((res, rej) => {
+		new Promise<void>((res, rej) => {
 			get(
 				url,
 				{

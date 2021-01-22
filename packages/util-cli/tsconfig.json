@@ -1,11 +1,18 @@
 {
 	"extends": "../../tsconfig.common.json",
 	"compilerOptions": {
-		"target": "es2018",
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"plugins": [{ "transform": "auto-client-api" }]
+		"plugins": [{ "transform": "auto-client-api" }],
+		"incremental": true,
+		"tsBuildInfoFile": "../../buildcache/util-cli.build.tsbuildinfo"
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../auto-client-api/tsconfig.build.json" },
+		{ "path": "../common-lib/tsconfig.build.json" },
+		{ "path": "../evmplus-org-server/tsconfig.build.json" },
+		{ "path": "../server-common/tsconfig.build.json" },
+	]
 }

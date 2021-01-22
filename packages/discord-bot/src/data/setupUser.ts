@@ -41,7 +41,15 @@ import {
 	RawTeamObject,
 	ServerError,
 } from 'common-lib';
-import { Client, Guild, GuildMember, GuildMemberRoleManager, Permissions, Role } from 'discord.js';
+import {
+	Client,
+	Guild,
+	GuildMember,
+	GuildMemberRoleManager,
+	Permissions,
+	Role,
+	Collection,
+} from 'discord.js';
 import {
 	collectResults,
 	findAndBind,
@@ -250,7 +258,7 @@ export const AchvIDToCertificationRole = {
 	256: 'MCDS',
 };
 
-export const allRoles = [
+export const AllRoles = [
 	...CadetExecutiveStaffRoles,
 	...CadetLineStaffRoles,
 	...CadetSupportStaffRoles,
@@ -304,7 +312,7 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 		.filter(dp => dp.type === 'CAPUnit' || orgids.includes(dp.orgid))
 		.map(dp => dp.duty);
 
-	const extraRoles = dutyPositionNames.filter(name => !allRoles.includes(name));
+	const extraRoles = dutyPositionNames.filter(name => !AllRoles.includes(name));
 
 	const roles = (await guild.roles.fetch()).cache;
 
@@ -386,9 +394,9 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 
 	return onlyJustValues([
 		...categoryRoles,
-		...allRoles
-			.filter(includes(dutyPositionNames))
-			.map(roleName => Maybe.fromValue(roles.find(byName(roleName)))),
+		...AllRoles.filter(includes(dutyPositionNames)).map(roleName =>
+			Maybe.fromValue(roles.find(byName(roleName))),
+		),
 		...extraRoles.map(roleName => Maybe.fromValue(roles.find(byName(roleName)))),
 	]);
 };
@@ -430,12 +438,22 @@ const getFlightRoles = (guild: Guild) => async (member: Member): Promise<Role[]>
 	}
 };
 
+let currentTeamPromise: Promise<void> | null = null;
+
 const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject) => (
 	teams: RawTeamObject[],
 ) => async (member: Member): Promise<Role[]> => {
 	if (teams.length === 0) {
 		return [];
 	}
+
+	await currentTeamPromise;
+
+	let resolve: () => void;
+
+	currentTeamPromise = new Promise(_resolve => {
+		resolve = _resolve;
+	});
 
 	const roles = (await guild.roles.fetch()).cache;
 
@@ -457,6 +475,8 @@ const getTeamRoles = (guild: Guild) => (schema: Schema) => (account: AccountObje
 
 		finalTeamRoles.push(teamRoles[2]);
 	}
+
+	resolve!();
 
 	return onlyJustValues(finalTeamRoles);
 };
@@ -513,7 +533,7 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 ) => (teams: RawTeamObject[]) => async (member: Member) => {
 	const roles = (await guild.roles.fetch()).cache;
 
-	let finalRoles: Role[];
+	const finalRoles = new Collection<string, Role>();
 
 	if (Maybe.isNone(account.discordServer)) {
 		return;
@@ -528,30 +548,55 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 
 	if (isAccountMember) {
 		if (member.seniorMember) {
-			finalRoles = [
-				...beforeRoles,
-				...(await getSeniorMemberDutyPositions(guild)(
+			const [
+				seniorMemberDutyPositions,
+				es101CardCertifications,
+				teamRoles,
+			] = await Promise.all([
+				getSeniorMemberDutyPositions(guild)(
 					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account)),
-				)(member)),
-				...(await get101CardCertificationRoles(guild)(schema)(member)),
+				)(member),
+				get101CardCertificationRoles(guild)(schema)(member),
+				getTeamRoles(guild)(schema)(account)(teams)(member),
+			]);
+
+			const newRoles = [
+				...beforeRoles,
+				...seniorMemberDutyPositions,
+				...es101CardCertifications,
+				...teamRoles,
 				...onlyJustValues([
 					Maybe.fromValue(roles.find(byName('Senior Member'))),
 					Maybe.fromValue(roles.find(byName('Certified Member'))),
 				]),
 			];
+
+			for (const role of newRoles) {
+				finalRoles.set(role.id, role);
+			}
 		} else {
+			const [
+				dutyPositionRoles,
+				flightRoles,
+				teamRoles,
+				es101CardCertifications,
+			] = await Promise.all([
+				getDutyPositionRoles(guild)(
+					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account)),
+				)(member),
+				account.discordServer.value.displayFlight ? getFlightRoles(guild)(member) : [],
+				getTeamRoles(guild)(schema)(account)(teams)(member),
+				get101CardCertificationRoles(guild)(schema)(member),
+			]);
+
 			const oldRoles = discordUser.roles.cache;
 
-			finalRoles = [
+			let newRoles = [
 				...beforeRoles,
-				...(await getDutyPositionRoles(guild)(
-					Maybe.orSome<number[]>([])(getORGIDsFromCAPAccount(account)),
-				)(member)),
-				...(account.discordServer.value.displayFlight
-					? await getFlightRoles(guild)(member)
-					: []),
-				...(await get101CardCertificationRoles(guild)(schema)(member)),
-				...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
+				...dutyPositionRoles,
+				...flightRoles,
+				...teamRoles,
+				...es101CardCertifications,
 				...onlyJustValues([Maybe.fromValue(roles.find(byName('Certified Member')))]),
 			];
 
@@ -562,7 +607,7 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 				const prevCommanderRole = roles.find(byName('Previous Cadet Commander'));
 
 				if (prevCommanderRole) {
-					finalRoles.push(prevCommanderRole);
+					newRoles.push(prevCommanderRole);
 				}
 			}
 
@@ -570,24 +615,40 @@ const setupRoles = (guild: Guild) => (schema: Schema) => (account: AccountObject
 				!finalRoles.find(byName('Cadet Public Affairs NCO')) &&
 				!finalRoles.find(byName('Cadet Public Affairs Officer'))
 			) {
-				finalRoles = finalRoles.filter(role => role.name !== 'Discord Server PAO');
+				newRoles = newRoles.filter(role => role.name !== 'Discord Server PAO');
+			}
+
+			for (const role of newRoles) {
+				finalRoles.set(role.id, role);
 			}
 		}
 	} else {
-		finalRoles = [
+		const newRoles = [
 			...(await getTeamRoles(guild)(schema)(account)(teams)(member)),
 			...onlyJustValues([
 				Maybe.fromValue(roles.find(byName('Certified Member'))),
 				Maybe.fromValue(roles.find(byName('Guest'))),
 			]),
 		];
+
+		for (const role of newRoles) {
+			finalRoles.set(role.id, role);
+		}
 	}
 
 	if (guild.ownerID !== discordUser.id) {
-		const unique: { [key: string]: boolean } = {};
-		await discordUser.roles.set(
-			finalRoles.filter(role => !unique[role.id] || (unique[role.id] = true)),
-		);
+		// If there is actually a difference...
+		if (
+			finalRoles.difference(discordUser.roles.cache).size >= 0 ||
+			discordUser.roles.cache.difference(finalRoles).size >= 0
+		) {
+			// ...set roles to avoid rate limiting
+			// not everyone has their roles updating on a nightly basis
+
+			// Set empty array because Discord acts weird otherwise
+			await discordUser.roles.set([]);
+			await discordUser.roles.set(finalRoles);
+		}
 	}
 };
 

@@ -36,12 +36,10 @@ import {
 	Maybe,
 	MaybeObj,
 	MemberReference,
-	memoize,
 	parseStringMemberReference,
 	RawFileObject,
 	Right,
 	ServerConfiguration,
-	ServerConfigurationRemote,
 	ServerError,
 	stringifyMemberReference,
 	toReference,
@@ -49,9 +47,8 @@ import {
 	yieldObjAsync,
 } from 'common-lib';
 import * as debug from 'debug';
-import { createReadStream, createWriteStream, readFile, unlink } from 'fs';
+import { createReadStream, createWriteStream, unlink } from 'fs';
 import { join } from 'path';
-import * as Client from 'ssh2-sftp-client';
 import { promisify } from 'util';
 import { resolveReference } from './Members';
 import {
@@ -65,20 +62,7 @@ import {
 import { ServerEither } from './servertypes';
 
 const logFunc = debug('server-common:file');
-
 const promisifiedUnlink = promisify(unlink);
-
-const getSFTPKeyFile = memoize(async (conf: ServerConfigurationRemote) => {
-	return new Promise((res, rej) => {
-		readFile(conf.REMOTE_DRIVE_KEY_FILE, (err, data) => {
-			if (err) {
-				rej(err);
-			} else {
-				res(data);
-			}
-		});
-	});
-});
 
 export const getUserFileObject = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
@@ -341,35 +325,17 @@ export const downloadFileObject = (conf: ServerConfiguration) => (file: RawFileO
 		  })
 		: asyncRight(
 				(async () => {
-					if (conf.DRIVE_TYPE === 'Remote') {
-						const sftp = new Client();
+					const readStream = createReadStream(
+						join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
+					);
 
-						await sftp.connect({
-							host: conf.REMOTE_DRIVE_HOST,
-							port: conf.REMOTE_DRIVE_PORT,
-							username: conf.REMOTE_DRIVE_USER,
-							privateKey: await getSFTPKeyFile(conf),
-						});
+					readStream.pipe(destination);
 
-						await sftp.get(
-							join(conf.REMOTE_DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
-							destination,
-						);
-
-						await sftp.end();
-					} else {
-						const readStream = createReadStream(
-							join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
-						);
-
-						readStream.pipe(destination);
-
-						await new Promise((resolve, reject) => {
-							readStream.on('end', resolve);
-							readStream.on('error', reject);
-							destination.on('error', reject);
-						});
-					}
+					await new Promise((resolve, reject) => {
+						readStream.on('end', resolve);
+						readStream.on('error', reject);
+						destination.on('error', reject);
+					});
 				})(),
 				errorGenerator('Could not download file'),
 		  );
@@ -379,35 +345,17 @@ export const uploadFile = (conf: ServerConfiguration) => (file: RawFileObject) =
 ): ServerEither<void> =>
 	asyncRight(
 		(async () => {
-			if (conf.DRIVE_TYPE === 'Remote') {
-				const sftp = new Client('remote-drive');
+			const writeStream = createWriteStream(
+				join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
+			);
 
-				await sftp.connect({
-					host: conf.REMOTE_DRIVE_HOST,
-					port: conf.REMOTE_DRIVE_PORT,
-					username: conf.REMOTE_DRIVE_USER,
-					privateKey: await getSFTPKeyFile(conf),
-				});
+			fileStream.pipe(writeStream);
 
-				await sftp.put(
-					fileStream,
-					join(conf.REMOTE_DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
-				);
-
-				await sftp.end();
-			} else {
-				const writeStream = createWriteStream(
-					join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
-				);
-
-				fileStream.pipe(writeStream);
-
-				await new Promise((resolve, reject) => {
-					writeStream.on('close', resolve);
-					writeStream.on('error', reject);
-					fileStream.on('error', reject);
-				});
-			}
+			await new Promise((resolve, reject) => {
+				writeStream.on('close', resolve);
+				writeStream.on('error', reject);
+				fileStream.on('error', reject);
+			});
 		})(),
 		errorGenerator('Could not upload file'),
 	);
@@ -429,29 +377,9 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 							return;
 						}
 
-						if (conf.DRIVE_TYPE === 'Remote') {
-							const sftp = new Client('remote-drive');
-
-							await sftp.connect({
-								host: conf.REMOTE_DRIVE_HOST,
-								port: conf.REMOTE_DRIVE_PORT,
-								username: conf.REMOTE_DRIVE_USER,
-								privateKey: await getSFTPKeyFile(conf),
-							});
-
-							await sftp.delete(
-								join(
-									conf.REMOTE_DRIVE_STORAGE_PATH,
-									`${file.accountID}-${file.id}`,
-								),
-							);
-
-							await sftp.end();
-						} else {
-							await promisifiedUnlink(
-								join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
-							);
-						}
+						await promisifiedUnlink(
+							join(conf.DRIVE_STORAGE_PATH, `${file.accountID}-${file.id}`),
+						);
 					})(),
 					errorGenerator('Could not delete file'),
 				),

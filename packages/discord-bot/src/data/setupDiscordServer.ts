@@ -18,10 +18,11 @@
  */
 
 import { Client as MySQLClient } from '@mysql/xdevapi';
-import { DiscordAccount, ServerConfiguration } from 'common-lib';
+import { DiscordAccount } from 'common-lib';
 import { Client, Guild, Permissions, Role } from 'discord.js';
 import { collectResults, findAndBind, getRegistry } from 'server-common';
 import { getXSession } from '..';
+import { DiscordCLIConfiguration } from '../getDiscordConf';
 import getAccount from './getAccount';
 import setupUser, {
 	AchvIDToCertificationRole,
@@ -54,7 +55,7 @@ const hasProcessing = hasRole('Processing');
 
 const seniorMemberRoles = ['Squadron Commander'];
 
-export const setupCAPServer = (config: ServerConfiguration) => (mysql: MySQLClient) => (
+export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQLClient) => (
 	client: Client,
 ) => (guildId: string) => async (rules: Partial<DiscordSetupRules>) => {
 	const { schema, session } = await getXSession(config, mysql);

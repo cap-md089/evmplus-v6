@@ -1,0 +1,252 @@
+version: '3.8'
+services:
+    proxy:
+        image: nginx:1.15-alpine
+        networks:
+            - frontend
+        ports:
+            - '80:80'
+            - '443:443'
+        restart: always
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+            - ./keys/certbot/conf:/etc/letsencrypt
+        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+        depends_on:
+            - certbot
+            - main
+
+    certbot:
+        image: certbot/dns-route53
+        restart: always
+        volumes:
+            - ./keys/certbot/conf:/etc/letsencrypt
+        environment: 
+            - AWS_CONFIG_FILE=/run/secrets/aws_ssl_keys
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        secrets:
+            - aws_ssl_keys
+
+    main:
+        build:
+            context: .
+            target: website-runner
+        networks:
+            - frontend
+            - backend
+        expose:
+            - '3001'
+        restart: always
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=50
+            - PORT=3001
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - HOST_NAME=evmplus.org
+            - NODE_ENV=production
+            - ALLOW_INSECURE=1
+        volumes:
+            - type: bind
+              source: /google-keys
+              target: /google-keys
+
+            - type: bind
+              source: /srv/uploads
+              target: /srv/uploads
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - aws_access_key_id
+            - aws_secret_access_key
+            - recaptcha_secret
+        depends_on:
+            - mysql
+
+    mysql:
+        image: mysql:8.0
+        networks:
+            - backend
+        expose:
+            - '33060'
+        environment:
+            - MYSQL_DATABASE=EventManagementv6
+            - MYSQL_USER_FILE=/run/secrets/db_user
+            - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+            - MYSQL_RANDOM_ROOT_PASSWORD=1
+        ports:
+            - '127.0.0.1:3306:3306'
+        secrets:
+            - db_user
+            - db_password
+        restart: always
+        volumes:
+            - type: bind
+              source: /srv/mysql
+              target: /var/lib/mysql
+              volume:
+                nocopy: true
+        
+            - type: bind
+              source: ./mysql-init
+              target: /docker-entrypoint-initdb.d
+
+    capwatch_update_cron:
+        build:
+            context: .
+            target: capwatch-import
+        networks:
+            - backend
+        restart: always
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=50
+            - KEEP_CAPWATCH_ZIP=1
+            - DOWNLOAD_PATH=/downloads
+
+            # These aren't actually exposed, but the environment variables are set
+            # because I'm too lazy to remove the dependency on two variables and split
+            # up the get configuration functions further
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - capwatch_password
+            - capwatch_orgid
+            - capwatch_capid
+        depends_on:
+            - mysql
+        volumes:
+            - /srv/backups/capwatch_zips:/downloads
+
+    download_capwatch_update:
+        build:
+            context: .
+            target: capwatch-import
+        command: /usr/evm-plus/capwatch-cron/download.sh
+        networks:
+            - backend
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=50
+            - KEEP_CAPWATCH_ZIP=1
+            - DOWNLOAD_PATH=/downloads
+
+            # These aren't actually exposed, but the environment variables are set
+            # because I'm too lazy to remove the dependency on two variables and split
+            # up the get configuration functions further
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - capwatch_password
+            - capwatch_orgid
+            - capwatch_capid
+        depends_on:
+            - mysql
+        volumes:
+            - /srv/backups/capwatch_zips:/downloads
+
+    mysqlsh:
+        build:
+            context: .
+            dockerfile: ./Dockerfile.mysqlsh
+        networks:
+            - backend
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+        secrets:
+            - db_user
+            - db_password
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+
+    util-cli:
+        build:
+            context: .
+            target: util-cli
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_POOL_SIZE=5
+            - DB_PORT=33060
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+            - CLIENT_PATH=/usr/evm-plus/packages/client
+            - PORT=3001
+            - HOST_NAME=localevmplus.org
+            - NODE_ENV=production
+        volumes:
+            - type: bind
+              source: ./keys/google-keys
+              target: /google-keys
+
+            - type: bind
+              source: /srv/uploads
+              target: /srv/uploads
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+        networks:
+            - backend
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - aws_access_key_id
+            - aws_secret_access_key
+            - recaptcha_secret
+
+networks:
+    frontend:
+        driver: bridge
+        attachable: false
+
+    backend:
+        driver: bridge
+        attachable: false
+
+secrets:
+    db_user:
+        file: ./keys/db_user
+
+    db_password:
+        file: ./keys/db_password
+
+    discord_client_token:
+        file: ./keys/discord_client_token
+
+    aws_ssl_keys:
+        file: ./keys/aws_ssl_keys
+
+    aws_access_key_id:
+        file: ./keys/aws_access_key_id
+
+    aws_secret_access_key:
+        file: ./keys/aws_secret_access_key
+
+    recaptcha_secret:
+        file: ./keys/recaptcha_secret
+
+    capwatch_orgid:
+        file: ./keys/capwatch_orgid
+    
+    capwatch_capid:
+        file: ./keys/capwatch_capid
+
+    capwatch_password:
+        file: ./keys/capwatch_password

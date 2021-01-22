@@ -24,17 +24,17 @@ import {
 	DiscordAccount,
 	isPartOfTeam,
 	Maybe,
-	ServerConfiguration,
 	RawTeamObject,
 } from 'common-lib';
 import { Client, Guild, Role } from 'discord.js';
 import { collectResults, findAndBind, getTeamObjects } from 'server-common';
 import getAccountForDiscordServer from '../data/getAccount';
 import setupUser, { byName } from '../data/setupUser';
+import { DiscordCLIConfiguration } from '../getDiscordConf';
 
 export default async (
 	mysqlClient: mysql.Client,
-	conf: ServerConfiguration,
+	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
 ) => {

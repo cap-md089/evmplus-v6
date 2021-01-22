@@ -2,117 +2,60 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Start client",
+			"label": "Start webpack-dev-server",
 			"type": "npm",
-			"script": "start",
-			"path": "client/",
-			"problemMatcher": [],
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/server/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/server/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/apis/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/apis/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/auto-client-api/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/auto-client-api/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/common-lib/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/common-lib/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/discord-bot/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/discord-bot/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/server/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/server/tsconfig.json"
-		},
-		{
-			"type": "typescript",
-			"tsconfig": "packages/server-common/tsconfig.json",
-			"option": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "tsc: watch - packages/server-common/tsconfig.json"
-		},
-		{
-			"label": "Build client",
+			"script": "start-quiet",
+			"path": "packages/client/",
+			"detail": "BROWSER=none npm start",
+			"problemMatcher": {
+				"owner": "typescript",
+				"fileLocation": "absolute",
+				"pattern": [
+					{
+						"regexp": "TypeScript (error|warning) in (.*)?\\((\\d+),(\\d+)\\):",
+						"severity": 1,
+						"file": 2,
+						"line": 3,
+						"column": 4
+					},
+					{
+						"regexp": "(.*)?\\.\\s+TS(\\d+)",
+						"message": 1,
+						"code": 2
+					}
+				],
+				"background": {
+					"activeOnStart": false,
+					"beginsPattern": {
+						"regexp": "(Compiling.*?|Compilation .*?starting)"
+					},
+					"endsPattern": {
+						"regexp": "(Compiled .*?successfully|Compilation .*?finished|Compiled .*?warnings)"
+					}
+				}
+			},
 			"dependsOn": [
-				"tsc: watch - packages/apis/tsconfig.json",
-				"tsc: watch - packages/common-lib/tsconfig.json",
-				"Start Client"
-			]
-		},
-		{
-			"label": "Build server - with Discord",
-			"dependsOn": [
-				"tsc: watch - packages/server/tsconfig.json",
-				"tsc: watch - packages/server-common/tsconfig.json",
-				"tsc: watch - packages/common-lib/tsconfig.json",
-				"tsc: watch - packages/discord-bot/tsconfig.json"
-			]
-		},
-		{
-			"label": "Build server - without Discord",
-			"dependsOn": [
-				"tsc: watch - packages/server/tsconfig.json",
-				"tsc: watch - packages/server-common/tsconfig.json",
-				"tsc: watch - packages/common-lib/tsconfig.json"
-			]
-		},
-		{
-			"label": "Build all",
-			"dependsOn": [
-				"tsc: watch - packages/apis/tsconfig.json",
-				"tsc: watch - packages/auto-client-api/tsconfig.json",
-				"tsc: watch - packages/common-lib/tsconfig.json",
-				"tsc: watch - packages/discord-bot/tsconfig.json",
-				"tsc: watch - packages/server/tsconfig.json",
-				"tsc: watch - packages/server-common/tsconfig.json",
-				"Start Client"
-			],
-			"problemMatcher": [
-				"$tsc-watch"
+				"tsc: watch - tsconfig.dev.json"
 			],
 			"isBackground": true
+		},
+		{
+			"type": "shell",
+			"command": "${workspaceFolder}/node_modules/.bin/ttsc",
+			"args": [
+				"--build",
+				"${workspaceFolder}/tsconfig.dev.json",
+				"--watch",
+			],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: watch - tsconfig.dev.json"
 		}
 	]
 }

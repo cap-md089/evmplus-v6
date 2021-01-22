@@ -50,6 +50,7 @@ interface PasswordFormState {
 	showNumberError: ShowLevel;
 	showSpecialError: ShowLevel;
 	showMatchError: ShowLevel;
+	showLengthError: ShowLevel;
 }
 
 const passwordValidator = (password: string, others: PasswordFormValues) =>
@@ -79,6 +80,7 @@ export default class PasswordForm extends React.Component<
 		showNumberError: 0,
 		showSpecialError: 0,
 		showUppercaseError: 0,
+		showLengthError: 0,
 	};
 
 	public constructor(props: InputProps<string | null>) {
@@ -106,8 +108,11 @@ export default class PasswordForm extends React.Component<
 				<TextBox>
 					Please enter and confirm a password.
 					<br />
-					Passwords must be at least 11 characters in length, and must consist of at least
-					one of each of the following:
+					Passwords must be at{' '}
+					<span className={getClassFromShowLevel(this.state.showLengthError)}>
+						least 11 characters
+					</span>{' '}
+					in length, and must consist of at least one of each of the following:
 					<ul>
 						<li className={getClassFromShowLevel(this.state.showUppercaseError)}>
 							Uppercase character
@@ -194,6 +199,12 @@ export default class PasswordForm extends React.Component<
 
 		if (fields.password === fields.confirmPassword) {
 			update.showMatchError = ShowLevel.SHOWGOOD;
+		} else {
+			hasError = true;
+		}
+
+		if (fields.password.length > 10) {
+			update.showLengthError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;
 		}

@@ -17,65 +17,136 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { RawServerConfiguration, ServerConfiguration } from 'common-lib';
+import {
+	always,
+	Either,
+	EitherObj,
+	EnvServerConfiguration,
+	RawServerConfiguration,
+	ServerConfiguration,
+	EnvCLIConfiguration,
+	RawCLIConfiguration,
+	CLIConfiguration,
+	Validator,
+} from 'common-lib';
+import { readFile } from 'fs';
+import { promisify } from 'util';
+import * as dotenv from 'dotenv';
+import { validator } from 'auto-client-api';
 
-export default (raw: RawServerConfiguration): ServerConfiguration =>
-	raw.DRIVE_TYPE === 'Local'
-		? ({
-				CAPWATCH_DOWNLOAD_PATH: raw.CAPWATCH_DOWNLOAD_PATH,
-				CLIENT_PATH: raw.CLIENT_PATH,
-				GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+export const parseRawConfiguration = (raw: RawServerConfiguration): ServerConfiguration => ({
+	CLIENT_PATH: raw.CLIENT_PATH,
+	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
 
-				DB_HOST: raw.DB_HOST,
-				DB_PASSWORD: raw.DB_PASSWORD,
-				DB_SCHEMA: raw.DB_SCHEMA,
-				DB_USER: raw.DB_USER,
-				DB_PORT: parseInt(raw.DB_PORT, 10),
-				DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
+	DB_HOST: raw.DB_HOST,
+	DB_PASSWORD: raw.DB_PASSWORD,
+	DB_SCHEMA: raw.DB_SCHEMA,
+	DB_USER: raw.DB_USER,
+	DB_PORT: parseInt(raw.DB_PORT, 10),
+	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
 
-				NODE_ENV: raw.NODE_ENV,
-				PORT: parseInt(raw.PORT, 10),
+	NODE_ENV: raw.NODE_ENV,
+	PORT: parseInt(raw.PORT, 10),
 
-				DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
 
-				DRIVE_TYPE: 'Local',
-				DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
+	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
 
-				HOST_NAME: raw.HOST_NAME,
+	HOST_NAME: raw.HOST_NAME,
 
-				AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
-				AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,
+	AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
+	AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,
 
-				RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET,
-		  } as const)
-		: ({
-				CAPWATCH_DOWNLOAD_PATH: raw.CAPWATCH_DOWNLOAD_PATH,
-				CLIENT_PATH: raw.CLIENT_PATH,
-				GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+	RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET,
+});
 
-				DB_HOST: raw.DB_HOST,
-				DB_PASSWORD: raw.DB_PASSWORD,
-				DB_SCHEMA: raw.DB_SCHEMA,
-				DB_USER: raw.DB_USER,
-				DB_PORT: parseInt(raw.DB_PORT, 10),
-				DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
+export const injectConfiguration = (readfile = promisify(readFile)) => async (
+	conf: EnvServerConfiguration,
+): Promise<ServerConfiguration> => {
+	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
 
-				NODE_ENV: raw.NODE_ENV,
-				PORT: parseInt(raw.PORT, 10),
+	const [
+		DB_USER,
+		DB_PASSWORD,
+		DISCORD_CLIENT_TOKEN,
+		AWS_ACCESS_KEY_ID,
+		AWS_SECRET_ACCESS_KEY,
+		RECAPTCHA_SECRET,
+	] = await Promise.all([
+		readfile('/run/secrets/db_user').then(toUtf8),
+		readfile('/run/secrets/db_password').then(toUtf8),
+		readfile('/run/secrets/discord_client_token').then(toUtf8, always(void 0)),
+		readfile('/run/secrets/aws_access_key_id').then(toUtf8),
+		readfile('/run/secrets/aws_secret_access_key').then(toUtf8),
+		readfile('/run/secrets/recaptcha_secret').then(toUtf8),
+	]);
 
-				DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+	return parseRawConfiguration({
+		...conf,
 
-				DRIVE_TYPE: 'Remote',
-				REMOTE_DRIVE_STORAGE_PATH: raw.REMOTE_DRIVE_STORAGE_PATH,
-				REMOTE_DRIVE_HOST: raw.REMOTE_DRIVE_HOST,
-				REMOTE_DRIVE_KEY_FILE: raw.REMOTE_DRIVE_KEY_FILE,
-				REMOTE_DRIVE_PORT: parseInt(raw.REMOTE_DRIVE_PORT, 10),
-				REMOTE_DRIVE_USER: raw.REMOTE_DRIVE_USER,
+		DB_USER,
+		DB_PASSWORD,
+		DISCORD_CLIENT_TOKEN,
+		AWS_ACCESS_KEY_ID,
+		AWS_SECRET_ACCESS_KEY,
 
-				HOST_NAME: raw.HOST_NAME,
+		RECAPTCHA_SECRET,
+	});
+};
 
-				AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
-				AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,
+const throws = <T>(e: EitherObj<any, T>): T => {
+	if (Either.isRight(e)) {
+		return e.value;
+	} else {
+		throw e.value;
+	}
+};
 
-				RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET,
-		  } as const);
+export default async (readfile = promisify(readFile)) => {
+	dotenv.config();
+
+	const envConfigValidator = validator<EnvServerConfiguration>(Validator);
+	const envConfiguration = throws(envConfigValidator.validate(process.env, ''));
+
+	return await injectConfiguration(readfile)(envConfiguration);
+};
+
+export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguration => ({
+	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+
+	DB_HOST: raw.DB_HOST,
+	DB_PASSWORD: raw.DB_PASSWORD,
+	DB_SCHEMA: raw.DB_SCHEMA,
+	DB_USER: raw.DB_USER,
+	DB_PORT: parseInt(raw.DB_PORT, 10),
+	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
+
+	NODE_ENV: raw.NODE_ENV,
+
+	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+
+	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
+});
+
+export const getCLIConfiguration = async (readfile = promisify(readFile)) => {
+	dotenv.config();
+
+	const envConfigValidator = validator<EnvCLIConfiguration>(Validator);
+	const envConfiguration = throws(envConfigValidator.validate(process.env, ''));
+
+	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
+
+	const [DB_USER, DB_PASSWORD, DISCORD_CLIENT_TOKEN] = await Promise.all([
+		readfile('/run/secrets/db_user').then(toUtf8),
+		readfile('/run/secrets/db_password').then(toUtf8),
+		readfile('/run/secrets/discord_client_token').then(toUtf8, always(void 0)),
+	]);
+
+	return parseCLIConfiguration({
+		...envConfiguration,
+
+		DB_USER,
+		DB_PASSWORD,
+		DISCORD_CLIENT_TOKEN,
+	});
+};
