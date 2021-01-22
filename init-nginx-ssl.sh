@@ -4,7 +4,7 @@ domains=(\*.capunit.com \*.evmplus.org)
 rsa_key_size=4096
 data_path="./keys/certbot"
 email="eventsupport@md.cap.gov"
-staging="1"
+staging="0"
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
   mkdir -p "$data_path/conf"

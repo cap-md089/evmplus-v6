@@ -47,10 +47,9 @@ services:
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=evmplus.org
             - NODE_ENV=production
-            - ALLOW_INSECURE=1
         volumes:
             - type: bind
-              source: /google-keys
+              source: ./keys/google-keys
               target: /google-keys
 
             - type: bind
