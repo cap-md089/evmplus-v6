@@ -4,53 +4,59 @@ The premiere event and unit management site for Civil Air Patrol
 
 Current units running the EventManagement+ suite:
 
-1. [MD089 - St. Mary's Composite Squadron](https://md089.evmplus.org/)
-2. [MD008 - Harford Composite Squadron](https://md008.evmplus.org/)
-3. [MD003 - Frederick Composite Squadron](https://md003.evmplus.org/)
+1. [MD001 - Maryland Wing](https://mdwg.evmplus.org/)
+2. [MD089 - St. Mary's Composite Squadron](https://stmarys.evmplus.org/)
+3. [MD008 - Harford Composite Squadron](https://harford.evmplus.org/)
+4. [MD003 - Frederick Composite Squadron](https://frederick.evmplus.org/)
+5. [MD079 - Easton Composite Squadron](https://easton.evmplus.org)
 
 ## Requirements for building and running
 
-In order to build and run the code for production, you will need Docker installed
+In order to build and run the code for production, you will need Docker and Docker Compose installed
 
 ## Server configuration
 
 This program depends on the following to fully function:
 
-1. A [MySQL server](#mysql-setup) (required)
-2. An [sFTP server](#sftp-setup) (required)
-3. [AWS SMTP credentials](#aws-setup) (required)
-4. [Google keys and calendar setup](#google-setup) (required)
-5. A [Discord bot token](#discord-bot-setup) (optional)
+1. [MySQL server](#mysql-setup)
+2. [AWS SMTP credentials](#aws-setup)
+3. [Google keys and calendar setup](#google-setup)
+4. A [Discord bot token](#discord-bot-setup)
+5. [reCAPTCHA keys](#recaptcha-setup)
+6. [CAPWATCH credentials](#capwatch-setup)
 
-To help with setup, see [building the CLI utilities.](#building-the-cli-utilities)
+Each of these sections will require creating files in the keys folder which have just the access token required. After the server is appropriately configured, you should have the following structure in the `keys` folder:
+
+- certbot: Contains certbot configuration, and can be ignored as it is automatically handled
+- google-keys:
+    - {}.json: A credential file for the service account that is used to handle Google calendar credentials
+- aws_access_key_id: AWS SES credentials
+- aws_secret_access_key: AWS SES credentials
+- capwatch_capid: CAPID of member downloading CAPWATCH files
+- capwatch_orgid: ORGID of the organization to download CAPWATCH files for
+- capwatch_password: The password of the member who is downloading CAPWATCH information
+- db_password: The password for the MySQL database
+- db_user: The username for the MySQL database. Currently, can only be `em`
+- discord_client_token: The token for managing the Discord bot
+- recaptcha_secret: The secret reCAPTCHA key for the server
+
+The `packages/client/.env` file should also have the following content:
+
+    REACT_APP_RECAPTCHA_KEY=your public key here
+    REACT_APP_VERSION=$npm_package_version
+    REACT_APP_HOST_NAME=your hostname here
+
+`your public key here` and `your hostname here` should be replaced with their respective values
 
 ### MySQL setup
 
-The MySQL server has to be installed, have the [X Plugin enabled](https://dev.mysql.com/doc/refman/8.0/en/x-plugin.html), a database created, and a user who can manage that database.
-
-Once the user is created, fill in the appropriate configuration variables in `server/.env.default`, and copy the configured file to `util-cli/.env` and `server/.env`
-
-Run `util-cli/dist/databaseSetup.js`
-
-### sFTP setup
-
-The following instructions will be for a Linux server
-
-1. On the Linux server, create the desired user to store information
-2. Create a SSL public and private key pair with the following command:
-
-    `ssh-keygen -b 2048 -f filestore_access_key`
-
-3. Copy the contents of `filestore_access_key.pub` to `~/.ssh/authorized_keys` in the user folder for the user created before
-4. Ensure the SSL key is accessible to the server process.
-    - If you are not using Docker, configure `server/.env` to point to the new SSL key
-    - If you are using Docker, make sure `REMOTE_DRIVE_KEY_FILE` points to the new SSL key when running `docker build` and is in the repository - The 'keys' directory is ignored, so it is suggested to create the 'keys' directory and place the file in there
+Create the files `./keys/db_user` and `./keys/db_password`. `db_user` has to contain the text contain `em` and `db_password` will be the password for the em user
 
 ### AWS setup
 
 1. [Acquire AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html)
 2. Manage the IAM user created to allow access to SMTP
-3. Store the AWS credentials in `server/.env`
+3. Store the AWS credentials in `./keys/aws_access_key_id` and `./keys/aws_secret_access_key`
 
 ### Google setup
 
@@ -65,45 +71,47 @@ The following instructions will be for a Linux server
     8. Don't grant access to any users
     9. Back at the 'Service accounts' page, in the actions menu on the right, click 'Create key'
     10. Select JSON
-    11. Save this to a google-keys directory accessible to the built docker image
+    11. Save this to the `./keys/google-keys` directory
         - Be sure to name it according to the following format: `${accountID}.json`, where accountID is the ID of the account you will be creating later
 2. Google calendar setup
-    1. Create two Google calendars, one to send to your Wing and one to use for local squadron use
-    2. On each calendar, add the service account from before with the ability to 'Manage Events and Sharing'
-    3. Copy the IDs of these Google calendars, they will be needed for the account setup step later
+    1. Create a Google calendar
+    2. On the calendar, add the service account from before with the ability to 'Manage Events and Sharing'
+    3. Copy the ID of this Google calendar, it will be needed for the account setup step later
 
 ### Discord bot setup
 
 1. [Create a bot and get its token](https://discordpy.readthedocs.io/en/latest/discord.html).
-2. Store this token in the `server/.env`
+2. Store this token in the `./keys/discord_client_token`
 
-## Building the CLI utilities
+### reCAPTCHA setup
 
-1. In the `util-cli` directory, run `npm install --no-package-lock`
+1. [Create a new site](https://www.google.com/recaptcha/admin/create)
+    - Be sure to add your domain
+2. Store the provided secret key in `./keys/recaptcha_secret`, e.g. '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+3. Store the public key in `./packages/client/.env`, under the key REACT_APP_RECAPTCHA_KEY, e.g.
 
-## Building the server
+    REACT_APP_RECAPTCHA_KEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
 
-In the repository directory, build the docker image:
+### CAPWATCH Credentials
 
-`docker build --build-arg REMOTE_DRIVE_KEY_FILE=keys/drive-ssl-key --tag evmplus.org .`
+1. [Request CAPWATCH download permissions](https://capnhq.gov/cap.capwatch.web/Modules/CapwatchRequest.aspx)
+2. Store the ORGID in the `./keys/capwatch_orgid` file, as well as your CAP ID and eServices password in `./keys/capwatch_capid` and `./keys/capwatch_password`, respectively
 
-When you change the server configuration, you will have to run this command again
+## Using Command Line Utilities
 
-## Running the server
+First, run `docker-compose up -d util-cli`, and keep note of the name of the container created. Then, run `docker attach {container-name}` you will be provided a shell from which you can run different utilities to perform administrative actions. Administrative actions include adding SSL keys for signin tokens, creating accounts, downloading CAPWATCH files, importing CAPWATCH files, and sending global notifications.
 
-As it is a docker image, you can run the following:
+By running `docker-compose up -d mysqlsh`, keeping note of the name of the container created, and then running `docker attach {container-name}`, you will be dropped into a mysqlsh session
 
-`docker run -rm --name=evmplus.org --restart=always -v /google-keys:/google-keys -p 80:3001 evmplus.org:latest`
+To import a new CAPWATCH file, run `docker-compose up download_capwatch_update`
 
-The target of the virtual bind must be `/google-keys`; this must be a virtual mount as the Google keys change and has to persist between changes in images
+## Building and running the server
+
+By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `./init-nginx-ssl.sh` with your email and then use `docker-compose up proxy` instead.
 
 ### Creating an account and supplying it data
 
-When you have all the parts together, you can run the `util-cli/dist/createAccount.js` file to create your squadron account
-
-Once the account is created, you will need to run `util-cli/dist/importCapwatch.js` to load squadron data, providing a path to a CAPWATCH file downloaded from [here](https://www.capnhq.gov/cap.capwatch.web/splash.aspx).
-
-**Note: this has to be done on a Linux machine.**
+From inside the util-cli container [started here](#using-command-line-utilities), you can run the `createAccount.js` file to start the process of creating an account that can be used to process data
 
 ### Accessing the site
 
@@ -115,7 +123,7 @@ If you are a unit commander or unit IT officer looking to implement this for you
 
 This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the EvMPlus.org domain.
 
-There are no hosting fees that come with requesting an account. Regarding how to upload CAPWATCH data through the hosted option, currently an encrypted CAPWATCH file can be sent via email to `eventsupport@md.cap.gov` with the password sent via another channel established during account setup.
+CAPWATCH data for all Maryland Wing members and units is already being handled.
 
 There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a evmplus.org hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
 
@@ -128,8 +136,10 @@ The development requirements for EvMPlus.org are a bit different. The server wil
     - Yarn
     - [Commitizen](https://github.com/commitizen/cz-cli)
     - Git
-2. In the project directory, run `yarn install`
+    - [Lerna](https://www.npmjs.com/package/lerna)
+    - [TTypescript](https://www.npmjs.com/package/ttypescript) and [Typescript](https://www.npmjs.com/package/typescript)
+2. In the project directory, run `lerna bootstrap`
 3. The environment should be set up to code
     - To start the webpack development server, go into `packages/client` and run `yarn start` to start developing the client code
-    - To develop the server and its sub modules, go into the module after making changes and run `yarn run build`
+    - To develop the server and its sub modules, run `ttsc --build tsconfig.dev.json --watch` in the project folder as well as `yarn start` in `packages/server`
     - The server will need to be started when developing the client

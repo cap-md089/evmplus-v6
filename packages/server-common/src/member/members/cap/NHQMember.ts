@@ -307,7 +307,8 @@ export const downloadCAPWATCHFile = (
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth()}-${today.getDate()}.zip`,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth() +
+			1}-${today.getDate()}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');
@@ -316,7 +317,7 @@ export const downloadCAPWATCHFile = (
 	const storageLocation = createWriteStream(fileName);
 
 	return asyncRight(
-		new Promise((res, rej) => {
+		new Promise<void>((res, rej) => {
 			get(
 				url,
 				{

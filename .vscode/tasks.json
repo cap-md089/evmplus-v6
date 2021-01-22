@@ -2,16 +2,6 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/apis/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "Build apis (watch)",
-			"isBackground": true
-		},
-		{
 			"label": "Start webpack-dev-server",
 			"type": "npm",
 			"script": "start-quiet",
@@ -45,69 +35,27 @@
 				}
 			},
 			"dependsOn": [
-				"Build common-lib (watch)",
-				"Build apis (watch)"
+				"tsc: watch - tsconfig.dev.json"
+			],
+			"isBackground": true
+		},
+		{
+			"type": "shell",
+			"command": "${workspaceFolder}/node_modules/.bin/ttsc",
+			"args": [
+				"--build",
+				"${workspaceFolder}/tsconfig.dev.json",
+				"--watch",
+			],
+			"problemMatcher": [
+				"$tsc-watch"
 			],
 			"isBackground": true,
-		},
-		{
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/common-lib/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "Build common-lib (watch)",
-			"isBackground": true
-		},
-		{
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/discord-bot/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "Build discord-bot (watch)",
-			"isBackground": true
-		},
-		{
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/server-common/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"label": "Build server-common (watch)",
-			"isBackground": true
-		},
-		{
-			"label": "Build server - without Discord",
-			"dependsOn": [
-				"Build common-lib (watch)",
-				"Build server-common (watch)"
-			],
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/server",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"isBackground": true
-		},
-		{
-			"label": "Build server - with Discord",
-			"dependsOn": [
-				"Build common-lib (watch)",
-				"Build server-common (watch)",
-				"Build discord-bot (watch)"
-			],
-			"type": "npm",
-			"script": "watch",
-			"path": "packages/server/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"isBackground": true
-		},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: watch - tsconfig.dev.json"
+		}
 	]
 }

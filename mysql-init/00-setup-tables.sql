@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.19, for linux-glibc2.12 (x86_64)
 --
--- Host: 192.168.1.3    Database: EventManagementv6Dev
+-- Host: 192.168.1.3    Database: EventManagementv6
 -- ------------------------------------------------------
 -- Server version	8.0.22
 
@@ -16,14 +16,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `EventManagementv6Dev`
+-- Current Database: `EventManagementv6`
 --
 
-/*!40000 DROP DATABASE IF EXISTS `EventManagementv6Dev`*/;
+/*!40000 DROP DATABASE IF EXISTS `EventManagementv6`*/;
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `EventManagementv6Dev` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `EventManagementv6` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-USE `EventManagementv6Dev`;
+USE `EventManagementv6`;
 
 --
 -- Table structure for table `Accounts`
@@ -733,45 +733,6 @@ CREATE TABLE `UserPermissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `test1`
---
-
-DROP TABLE IF EXISTS `test1`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `test1` (
-  `test1` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `test2`
---
-
-DROP TABLE IF EXISTS `test2`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `test2` (
-  `test3` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `test3`
---
-
-DROP TABLE IF EXISTS `test3`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `test3` (
-  `doc` json DEFAULT NULL,
-  `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
-  `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
-  PRIMARY KEY (`_id`),
-  CONSTRAINT `$val_strict_F357E78CABAD76FD3F1018EF85D78499B6ACC431` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

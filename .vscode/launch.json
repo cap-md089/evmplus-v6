@@ -8,17 +8,14 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Launch server in Docker",
-			"preLaunchTask": "Build server - with Discord",
+			"preLaunchTask": "tsc: watch - tsconfig.dev.json",
 			"protocol": "auto",
 			"runtimeExecutable": "npm",
 			"runtimeArgs": [ "run", "docker-debug" ],
 			"cwd": "${workspaceFolder}/packages/server",
-			"env": {
-				"NODE_ENV": "development"
-			},
 			"port": 5858,
 			"restart": true,
-			"timeout": 15000,
+			"timeout": 60000,
 			"localRoot": "${workspaceFolder}",
 			"remoteRoot": "/usr/evm-plus",
 			"outFiles": [
@@ -35,7 +32,10 @@
 			"name": "Launch Chrome",
 			"url": "http://localhost:3000",
 			"webRoot": "${workspaceFolder}/packages/client/src",
-			"preLaunchTask": "Start webpack-dev-server"
+			"preLaunchTask": "Start webpack-dev-server",
+			"linux": {
+				"runtimeExecutable": "/usr/bin/chromium"
+			}
 		},
 	],
 	"compounds": [

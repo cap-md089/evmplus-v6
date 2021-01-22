@@ -33,11 +33,11 @@ node --no-warnings dist/importCapwatch.js $CAPWATCH_ZIP_PATH
 
 echo "Done with CAPWATCH import"
 
-rm $CAPWATCH_ZIP_PATH
+[ ! -z "$KEEP_CAPWATCH_ZIP" ] && rm $CAPWATCH_ZIP_PATH
 
 echo "Performing Discord updates"
 
-cd /usr/evm-plus/packages/discord
+cd /usr/evm-plus/packages/discord-bot
 
 test -f /run/secrets/discord_client_token && node --no-warnings dist/index.js updateservers
 

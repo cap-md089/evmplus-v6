@@ -92,10 +92,10 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 
 	const aliases = [];
 	let aliasInput = null;
-	while (!aliasInput) {
-		aliasInput = await asker(
-			'What is an alias for this account? (blank to have no alias or finish) - ',
-		);
+	while (aliasInput) {
+		aliasInput = (
+			await asker('What is an alias for this account? (blank to have no alias or finish) - ')
+		).trim();
 
 		if (!!aliasInput) {
 			aliases.push(aliasInput);

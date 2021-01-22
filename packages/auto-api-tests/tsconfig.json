@@ -1,10 +1,16 @@
 {
 	"extends": "../../tsconfig.common.json",
 	"compilerOptions": {
-		"outDir": "./dist",
 		"rootDir": "./src",
-		"plugins": [{ "transform": "auto-client-api" }]
+		"outDir": "./dist",
+		"plugins": [{ "transform": "auto-client-api" }],
+		"composite": true,
+		"tsBuildInfoFile": "../../buildcache/auto-api-tests.build.tsbuildinfo"
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../auto-client-api/tsconfig.build.json" },
+		{ "path": "../common-lib/tsconfig.build.json" }
+	]
 }

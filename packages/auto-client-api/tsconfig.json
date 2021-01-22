@@ -1,10 +1,15 @@
 {
 	"extends": "../../tsconfig.common.json",
 	"compilerOptions": {
-		"outDir": "./dist",
 		"rootDir": "./src",
-		"plugins": [{ "transform": "auto-client-api" }]
+		"outDir": "./dist",
+		"composite": true,
+		"incremental": true,
+		"tsBuildInfoFile": "../../buildcache/auto-client-api.build.tsbuildinfo"
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../common-lib/tsconfig.build.json" }
+	]
 }

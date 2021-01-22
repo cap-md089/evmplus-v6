@@ -5,9 +5,9 @@
 	"main": "./dist/index.js",
 	"scripts": {
 		"test": "jest",
-		"build": "ttsc --project tsconfig.build.json",
-		"watch": "ttsc --project tsconfig.build.json --watch",
-		"check": "ttsc --project tsconfig.build.json --noEmit",
+		"build": "ttsc --build tsconfig.build.json",
+		"watch": "ttsc --build tsconfig.build.json --watch",
+		"check": "ttsc --build tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},
 	"author": "Andrew Rioux",

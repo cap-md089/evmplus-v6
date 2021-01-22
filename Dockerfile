@@ -15,19 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node:14 AS base
+FROM node:14-alpine3.11 AS base
 
-# Install the unzip command to import CAPWATCH files and the imagemagick library for favicons
-RUN apt-get update \
-	&& apt-get install -y imagemagick --no-install-recommends \
-	&& yarn global add lerna@3.22.1 \
-	# Set up the images to use a specific user and ensure that that user is able to access
-	# all the necessary assets
-	&& useradd evmplus-server \
-	&& mkdir /usr/evm-plus \
-	&& chown -R evmplus-server /usr/evm-plus
-
-USER evmplus-server
+# Install the imagemagick library for favicons
+RUN apk add imagemagick \
+	&& yarn global add lerna@3.22.1
 
 #
 # This container is used to program in a Docker environment, and access
@@ -38,7 +30,16 @@ FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
 
-CMD npm run debug
+CMD yarn run debug
+
+#
+# Another container used for 
+#
+FROM base as client-development
+
+WORKDIR /usr/evm-plus/packages/client
+
+CMD yarn run start-quiet
 
 #
 # This container is used to produce compiled production JavaScript for
@@ -47,6 +48,8 @@ CMD npm run debug
 FROM base AS builder
 
 WORKDIR /usr/evm-plus
+
+VOLUME [ "/usr/evm-plus/buildcache" ]
 
 # Copy all packages and build them with development dependencies
 COPY lerna.json package.json yarn.lock ./
@@ -60,10 +63,6 @@ COPY packages/server-common/package.json packages/server-common/package.json
 COPY packages/server-jest-config/package.json packages/server-jest-config/package.json
 COPY packages/util-cli/package.json packages/util-cli/package.json
 RUN yarn install
-
-COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
-COPY packages ./packages
-RUN lerna run build
 
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
@@ -122,18 +121,14 @@ CMD lerna test
 # This container will run a cron job to import CAPWATCH and update Discord
 # every night
 #
-FROM base AS capwatch-import
+FROM builder AS capwatch-import
 
 WORKDIR /usr/evm-plus
 
 # Get code for website
 COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
 
-RUN apt-get update \
-	&& apt-get install -y unzip cron --no-install-recommends \
-	&& yarn global add lerna@3.22.1
-
-COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
+COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
@@ -148,6 +143,27 @@ COPY capwatch-cron/download.sh ./capwatch-cron/download.sh
 RUN chmod 0744 /etc/cron.d/hello-cron \
 	&& chmod 0744 /usr/evm-plus/capwatch-cron/download.sh \
 	&& crontab /etc/cron.d/hello-cron \
-	&& touch /var/log/cron.log
+	&& touch /var/log/cron.log \
+	&& echo "0 0 * * * /usr/evm-plus/capwatch-cron/download.sh 2>&1 >> /var/log/cron.log" >> /etc/crontabs/root
 
-CMD cron && tail -f /var/log/cron.log
+CMD crond && tail -f /var/log/cron.log
+
+#
+# This container provides access to the different CLI utilities provided, such as
+# creating a squadron account, adding SSL signin keys, or sending global notifications
+#
+FROM builder AS util-cli
+
+WORKDIR /usr/evm-plus
+
+COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
+
+COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
+COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
+COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
+COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
+RUN lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
+
+WORKDIR /usr/evm-plus/packages/util-cli/dist
+
+ENTRYPOINT ["sh"]

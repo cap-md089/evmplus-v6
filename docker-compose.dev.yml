@@ -4,20 +4,26 @@ services:
         build:
             context: .
             target: development
+        # Expose random ports to access the server directly and to debug
         ports:
             - '3001:3001'
             - '5858:5858'
+        # Consistently expose the 3001 port to the Docker network
+        # for the Webpack dev server
+        expose:
+            - '3001'
         environment:
-            - DB_SCHEMA=EventManagementv6Dev
+            - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=5
             - PORT=3001
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=localevmplus.org
+            - NODE_ENV=development
         volumes:
             - type: bind
-              source: /google-keys
+              source: ./keys/google-keys
               target: /google-keys
 
             - type: bind
@@ -34,14 +40,36 @@ services:
             - recaptcha_secret
         depends_on:
             - mysql
+        networks:
+            - default
+
+    client_dev_server:
+        build:
+            context: .
+            target: client-development
+        ports:
+            - '3000:3000'
+        environment: 
+            - PROXY=main
+            - BROWSER=none
+        networks:
+            - default
+        depends_on:
+            - main
+        volumes:
+            - type: bind
+              source: .
+              target: /usr/evm-plus
 
     mysql:
         image: mysql:8.0
         ports:
             - '3306:3306'
             - '33060:33060'
+        expose:
+            - '33060'
         environment:
-            - MYSQL_DATABASE=EventManagementv6Dev
+            - MYSQL_DATABASE=EventManagementv6
             - MYSQL_USER_FILE=/run/secrets/db_user
             - MYSQL_PASSWORD_FILE=/run/secrets/db_password
             - MYSQL_RANDOM_ROOT_PASSWORD=yes
@@ -54,17 +82,23 @@ services:
         secrets:
             - db_user
             - db_password
+        networks:
+            - default
 
     capwatch_update:
         build:
             context: .
             target: capwatch-import
         command: /usr/evm-plus/capwatch-cron/download.sh
+        volumes:
+            - ./capwatch_downloads:/tmp
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=50
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
         secrets:
             - db_user
             - db_password
@@ -74,10 +108,64 @@ services:
             - capwatch_capid
         depends_on:
             - mysql
+        networks:
+            - default
 
-    mysql_shell:
+    mysqlsh:
         build:
+            context: .
+            dockerfile: ./Dockerfile.mysqlsh
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+        secrets:
+            - db_user
+            - db_password
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+        networks:
+            - default
 
+    util-cli:
+        build:
+            context: .
+            target: util-cli
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=5
+            - CLIENT_PATH=/usr/evm-plus/packages/client
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+            - PORT=3001
+            - HOST_NAME=localevmplus.org
+            - NODE_ENV=development
+        volumes:
+            - type: bind
+              source: ./keys/google-keys
+              target: /google-keys
+
+            - uploads:/srv/uploads
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+        networks:
+            - default
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - aws_access_key_id
+            - aws_secret_access_key
+            - recaptcha_secret
+
+networks:
+    default:
+        driver: bridge
 
 secrets:
     db_user:

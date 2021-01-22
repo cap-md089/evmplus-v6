@@ -1,11 +1,19 @@
 {
 	"extends": "../../tsconfig.common.json",
 	"compilerOptions": {
-		"target": "es2018",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"plugins": [{ "transform": "auto-client-api" }]
+		"plugins": [{ "transform": "auto-client-api" }],
+		"incremental": true,
+		"tsBuildInfoFile": "../../buildcache/server.build.tsbuildinfo"
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules"],
+	"references": [
+		{ "path": "../auto-client-api/tsconfig.build.json" },
+		{ "path": "../common-lib/tsconfig.build.json" },
+		{ "path": "../discord-bot/tsconfig.build.json" },
+		{ "path": "../server-common/tsconfig.build.json" },
+		{ "path": "../server-jest-config/tsconfig.build.json" }
+	]
 }

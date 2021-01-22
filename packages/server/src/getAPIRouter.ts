@@ -54,15 +54,28 @@ import { endpointAdder } from './lib/API';
 
 export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 	if (!mysqlConn) {
-		mysqlConn = await mysql.getClient(
-			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
-			{
-				pooling: {
-					enabled: true,
-					maxSize: conf.DB_POOL_SIZE,
-				},
-			},
-		);
+		while (true) {
+			try {
+				mysqlConn = await mysql.getClient(
+					`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
+					{
+						pooling: {
+							enabled: true,
+							maxSize: conf.DB_POOL_SIZE,
+						},
+					},
+				);
+
+				await mysqlConn.getSession();
+
+				break;
+			} catch (e) {
+				console.log('Could not get a connection. Waiting one second...');
+				console.error(e);
+				await new Promise<void>(res => setTimeout(res, 1000));
+				console.log(`Retrying connection to ${conf.DB_HOST}:${conf.DB_PORT}...`);
+			}
+		}
 	}
 
 	const router: express.Router = express.Router();

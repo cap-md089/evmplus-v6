@@ -1,7 +1,7 @@
 version: '3.8'
 services:
     proxy:
-        image: nginx
+        image: nginx:1.15-alpine
         networks:
             - frontend
         ports:
@@ -11,7 +11,22 @@ services:
         secrets:
             - key_certificate
             - key_private
-            - nginx
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+            - ./keys/certbot/conf:/etc/letsencrypt
+            - ./keys/certbot/www:/var/www/certbot
+        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+        depends_on:
+            - certbot
+            - main
+
+    certbot:
+        image: certbot/certbot
+        restart: always
+        volumes:
+            - ./keys/certbot/conf:/etc/letsencrypt
+            - ./keys/certbot/www:/var/www/certbot
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
     main:
         build:
@@ -20,6 +35,8 @@ services:
         networks:
             - frontend
             - backend
+        ports:
+            - '3001:3001'
         expose:
             - '3001'
         restart: always
@@ -31,6 +48,8 @@ services:
             - PORT=3001
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=evmplus.org
+            - NODE_ENV=production
+            - ALLOW_INSECURE=1
         volumes:
             - type: bind
               source: /google-keys
@@ -46,6 +65,8 @@ services:
             - aws_access_key_id
             - aws_secret_access_key
             - recaptcha_secret
+        depends_on:
+            - mysql
 
     mysql:
         image: mysql:8.0
@@ -53,6 +74,17 @@ services:
             - backend
         expose:
             - '33060'
+        environment:
+            - MYSQL_DATABASE=EventManagementv6
+            - MYSQL_USER_FILE=/run/secrets/db_user
+            - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+            - MYSQL_RANDOM_ROOT_PASSWORD=1
+        ports:
+            - '127.0.0.1:33060:33060'
+            - '127.0.0.1:3306:3306'
+        secrets:
+            - db_user
+            - db_password
         restart: always
         volumes:
             - type: bind
@@ -60,8 +92,12 @@ services:
               target: /var/lib/mysql
               volume:
                 nocopy: true
+        
+            - type: bind
+              source: ./mysql-init
+              target: /docker-entrypoint-initdb.d
 
-    capwatch_update:
+    capwatch_update_cron:
         build:
             context: .
             target: capwatch-import
@@ -73,6 +109,14 @@ services:
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=50
+            - KEEP_CAPWATCH_ZIP=1
+            - DOWNLOAD_PATH=/downloads
+
+            # These aren't actually exposed, but the environment variables are set
+            # because I'm too lazy to remove the dependency on two variables and split
+            # up the get configuration functions further
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
         secrets:
             - db_user
             - db_password
@@ -80,6 +124,96 @@ services:
             - capwatch_password
             - capwatch_orgid
             - capwatch_capid
+        depends_on:
+            - mysql
+        volumes:
+            - /srv/backups/capwatch_zips:/downloads
+
+    download_capwatch_update:
+        build:
+            context: .
+            target: capwatch-import
+        command: /usr/evm-plus/capwatch-cron/download.sh
+        networks:
+            - backend
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_PORT=33060
+            - DB_POOL_SIZE=50
+            - KEEP_CAPWATCH_ZIP=1
+            - DOWNLOAD_PATH=/downloads
+
+            # These aren't actually exposed, but the environment variables are set
+            # because I'm too lazy to remove the dependency on two variables and split
+            # up the get configuration functions further
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - capwatch_password
+            - capwatch_orgid
+            - capwatch_capid
+        depends_on:
+            - mysql
+        volumes:
+            - /srv/backups/capwatch_zips:/downloads
+
+    mysqlsh:
+        build:
+            context: .
+            dockerfile: ./Dockerfile.mysqlsh
+        networks:
+            - backend
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+        secrets:
+            - db_user
+            - db_password
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+
+    util-cli:
+        build:
+            context: .
+            target: util-cli
+        environment:
+            - DB_SCHEMA=EventManagementv6
+            - DB_HOST=mysql
+            - DB_POOL_SIZE=5
+            - DB_PORT=33060
+            - DRIVE_STORAGE_PATH=/srv/uploads
+            - GOOGLE_KEYS_PATH=/google-keys
+            - CLIENT_PATH=/usr/evm-plus/packages/client
+            - PORT=3001
+            - HOST_NAME=localevmplus.org
+            - NODE_ENV=production
+        volumes:
+            - type: bind
+              source: ./keys/google-keys
+              target: /google-keys
+
+            - type: bind
+              source: /srv/uploads
+              target: /srv/uploads
+        tty: true
+        stdin_open: true
+        depends_on:
+            - mysql
+        networks:
+            - backend
+        secrets:
+            - db_user
+            - db_password
+            - discord_client_token
+            - aws_access_key_id
+            - aws_secret_access_key
+            - recaptcha_secret
 
 networks:
     frontend:

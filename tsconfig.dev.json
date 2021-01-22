@@ -1,0 +1,11 @@
+{
+	"files": [],
+	"references": [
+		{ "path": "./packages/apis/tsconfig.build.json" },
+		{ "path": "./packages/auto-client-api/tsconfig.build.json" },
+		{ "path": "./packages/common-lib/tsconfig.build.json" },
+		{ "path": "./packages/discord-bot/tsconfig.build.json" },
+		{ "path": "./packages/server/tsconfig.build.json" },
+		{ "path": "./packages/server-common/tsconfig.build.json" }
+	]
+}

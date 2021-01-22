@@ -6,9 +6,9 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsc --project tsconfig.build.json",
-		"watch": "tsc --project tsconfig.build.json --watch",
-		"check": "tsc --project tsconfig.build.json --noEmit",
+		"build": "tsc --build tsconfig.build.json",
+		"watch": "tsc --build tsconfig.build.json --watch",
+		"check": "tsc --build tsconfig.build.json --noEmit",
 		"test": "jest",
 		"lint": "tslint --project ."
 	},

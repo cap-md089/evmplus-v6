@@ -51,7 +51,7 @@ const readfile = promisify(readFile);
 		capwatchORGID,
 		capwatchCAPID,
 		nhqPassword,
-		'/tmp',
+		process.env.DOWNLOAD_PATH || '/tmp',
 	).fullJoin();
 
 	console.log(zipPath);
