@@ -12,18 +12,19 @@ Current units running the EventManagement+ suite:
 
 ## Requirements for building and running
 
-In order to build and run the code for production, you will need Docker and Docker Compose installed
+In order to build and run the code for production, you will need Docker and Docker Compose installed. It is highly recommended that Docker BuildKit is used when setting up images.
 
 ## Server configuration
 
 This program depends on the following to fully function:
 
 1. [MySQL server](#mysql-setup)
-2. [AWS SMTP credentials](#aws-setup)
-3. [Google keys and calendar setup](#google-setup)
-4. A [Discord bot token](#discord-bot-setup)
-5. [reCAPTCHA keys](#recaptcha-setup)
-6. [CAPWATCH credentials](#capwatch-setup)
+2. [AWS SMTP credentials](#aws-smtp-setup)
+3. [AWS DNS credentials](#aws-dns-setup)
+4. [Google keys and calendar setup](#google-setup)
+5. A [Discord bot token](#discord-bot-setup)
+6. [reCAPTCHA keys](#recaptcha-setup)
+7. [CAPWATCH credentials](#capwatch-setup)
 
 Each of these sections will require creating files in the keys folder which have just the access token required. After the server is appropriately configured, you should have the following structure in the `keys` folder:
 
@@ -52,11 +53,19 @@ The `packages/client/.env` file should also have the following content:
 
 Create the files `./keys/db_user` and `./keys/db_password`. `db_user` has to contain the text contain `em` and `db_password` will be the password for the em user
 
-### AWS setup
+### AWS SMTP setup
 
 1. [Acquire AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html)
 2. Manage the IAM user created to allow access to SMTP
 3. Store the AWS credentials in `./keys/aws_access_key_id` and `./keys/aws_secret_access_key`
+
+### AWS DNS setup
+
+Only required for setting up SSL keys for HTTPS traffic as opposed to HTTP traffic
+
+1. [Acquire AWS credentials](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html)
+2. [Manage IAM user created to allow access to DNS](https://certbot-dns-route53.readthedocs.io/en/stable/#credentials)
+3. [Store the AWS crednetials in `./keys/aws_ssl_keys` according to the documentation](https://certbot-dns-route53.readthedocs.io/en/stable/#config-ini)
 
 ### Google setup
 
@@ -96,7 +105,9 @@ Create the files `./keys/db_user` and `./keys/db_password`. `db_user` has to con
 
 1. [Request CAPWATCH download permissions](https://capnhq.gov/cap.capwatch.web/Modules/CapwatchRequest.aspx)
 2. Store the ORGID in the `./keys/capwatch_orgid` file, as well as your CAP ID and eServices password in `./keys/capwatch_capid` and `./keys/capwatch_password`, respectively
-
+route53:ListHostedZones
+route53:GetChange
+route53:ChangeResourceRecordSets
 ## Using Command Line Utilities
 
 First, run `docker-compose up -d util-cli`, and keep note of the name of the container created. Then, run `docker attach {container-name}` you will be provided a shell from which you can run different utilities to perform administrative actions. Administrative actions include adding SSL keys for signin tokens, creating accounts, downloading CAPWATCH files, importing CAPWATCH files, and sending global notifications.
@@ -107,7 +118,7 @@ To import a new CAPWATCH file, run `docker-compose up download_capwatch_update`
 
 ## Building and running the server
 
-By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `./init-nginx-ssl.sh` with your email and then use `docker-compose up proxy` instead.
+By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `./init-nginx-ssl.sh` with your email and then use `docker-compose up main proxy` instead.
 
 ### Creating an account and supplying it data
 

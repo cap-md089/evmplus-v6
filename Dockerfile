@@ -49,8 +49,6 @@ FROM base AS builder
 
 WORKDIR /usr/evm-plus
 
-VOLUME [ "/usr/evm-plus/buildcache" ]
-
 # Copy all packages and build them with development dependencies
 COPY lerna.json package.json yarn.lock ./
 COPY packages/apis/package.json packages/apis/package.json
@@ -62,12 +60,12 @@ COPY packages/server/package.json packages/server/package.json
 COPY packages/server-common/package.json packages/server-common/package.json
 COPY packages/server-jest-config/package.json packages/server-jest-config/package.json
 COPY packages/util-cli/package.json packages/util-cli/package.json
-RUN yarn install
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap
 
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
 COPY tsconfig.* ./
-RUN lerna run build
+RUN --mount=type=cache,target=/usr/evm-plus/buildcache lerna run build
 
 #
 # This container is used to execute the compiled JavaScript
@@ -85,8 +83,7 @@ COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
 
 RUN rm -rf node_modules packages/*/node_modules \
-	&& lerna bootstrap -- --production \
-	&& rm -rf /usr/local/share/.cache/yarn/v6
+	&& --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production
 
 # Configure the server to use the right reCAPTCHA keys and built client
 ENV NODE_ENV production
@@ -125,14 +122,11 @@ FROM builder AS capwatch-import
 
 WORKDIR /usr/evm-plus
 
-# Get code for website
-COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
-
 COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
 
 ENV NODE_ENV production
 
@@ -156,13 +150,11 @@ FROM builder AS util-cli
 
 WORKDIR /usr/evm-plus
 
-COPY --from=builder /usr/local/share/.cache/yarn/v6 /usr/local/share/.cache/yarn/v6
-
 COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
 
 WORKDIR /usr/evm-plus/packages/util-cli/dist
 

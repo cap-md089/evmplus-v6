@@ -8,9 +8,6 @@ services:
             - '80:80'
             - '443:443'
         restart: always
-        secrets:
-            - key_certificate
-            - key_private
         volumes:
             - ./nginx:/etc/nginx/conf.d
             - ./keys/certbot/conf:/etc/letsencrypt
@@ -21,12 +18,16 @@ services:
             - main
 
     certbot:
-        image: certbot/certbot
+        image: certbot/dns-route53
         restart: always
         volumes:
             - ./keys/certbot/conf:/etc/letsencrypt
             - ./keys/certbot/www:/var/www/certbot
+        environment: 
+            - AWS_CONFIG_FILE=/run/secrets/aws_ssl_keys
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        secrets:
+            - aws_ssl_keys
 
     main:
         build:
@@ -35,8 +36,6 @@ services:
         networks:
             - frontend
             - backend
-        ports:
-            - '3001:3001'
         expose:
             - '3001'
         restart: always
@@ -80,7 +79,6 @@ services:
             - MYSQL_PASSWORD_FILE=/run/secrets/db_password
             - MYSQL_RANDOM_ROOT_PASSWORD=1
         ports:
-            - '127.0.0.1:33060:33060'
             - '127.0.0.1:3306:3306'
         secrets:
             - db_user
@@ -234,6 +232,9 @@ secrets:
     discord_client_token:
         file: ./keys/discord_client_token
 
+    aws_ssl_keys:
+        file: ./keys/aws_ssl_keys
+
     aws_access_key_id:
         file: ./keys/aws_access_key_id
 
@@ -242,12 +243,6 @@ secrets:
 
     recaptcha_secret:
         file: ./keys/recaptcha_secret
-
-    key_certificate:
-        file: ./keys/site.crt
-
-    key_private:
-        file: ./keys/site.pem
 
     capwatch_orgid:
         file: ./keys/capwatch_orgid
