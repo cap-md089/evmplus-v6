@@ -35,29 +35,29 @@ import * as dotenv from 'dotenv';
 import { validator } from 'auto-client-api';
 
 export const parseRawConfiguration = (raw: RawServerConfiguration): ServerConfiguration => ({
-	CLIENT_PATH: raw.CLIENT_PATH,
-	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+	CLIENT_PATH: raw.CLIENT_PATH.trim(),
+	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH.trim(),
 
-	DB_HOST: raw.DB_HOST,
-	DB_PASSWORD: raw.DB_PASSWORD,
-	DB_SCHEMA: raw.DB_SCHEMA,
-	DB_USER: raw.DB_USER,
+	DB_HOST: raw.DB_HOST.trim(),
+	DB_PASSWORD: raw.DB_PASSWORD.trim(),
+	DB_SCHEMA: raw.DB_SCHEMA.trim(),
+	DB_USER: raw.DB_USER.trim(),
 	DB_PORT: parseInt(raw.DB_PORT, 10),
 	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
 
-	NODE_ENV: raw.NODE_ENV,
+	NODE_ENV: raw.NODE_ENV.trim(),
 	PORT: parseInt(raw.PORT, 10),
 
-	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN?.trim?.(),
 
-	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
+	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),
 
-	HOST_NAME: raw.HOST_NAME,
+	HOST_NAME: raw.HOST_NAME.trim(),
 
-	AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID,
-	AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY,
+	AWS_ACCESS_KEY_ID: raw.AWS_ACCESS_KEY_ID.trim(),
+	AWS_SECRET_ACCESS_KEY: raw.AWS_SECRET_ACCESS_KEY.trim(),
 
-	RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET,
+	RECAPTCHA_SECRET: raw.RECAPTCHA_SECRET.trim(),
 });
 
 export const injectConfiguration = (readfile = promisify(readFile)) => async (
@@ -112,20 +112,20 @@ export default async (readfile = promisify(readFile)) => {
 };
 
 export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguration => ({
-	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH,
+	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH.trim(),
 
-	DB_HOST: raw.DB_HOST,
-	DB_PASSWORD: raw.DB_PASSWORD,
-	DB_SCHEMA: raw.DB_SCHEMA,
-	DB_USER: raw.DB_USER,
+	DB_HOST: raw.DB_HOST.trim(),
+	DB_PASSWORD: raw.DB_PASSWORD.trim(),
+	DB_SCHEMA: raw.DB_SCHEMA.trim(),
+	DB_USER: raw.DB_USER.trim(),
 	DB_PORT: parseInt(raw.DB_PORT, 10),
 	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
 
-	NODE_ENV: raw.NODE_ENV,
+	NODE_ENV: raw.NODE_ENV.trim(),
 
-	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
+	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN?.trim?.(),
 
-	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH,
+	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),
 });
 
 export const getCLIConfiguration = async (readfile = promisify(readFile)) => {

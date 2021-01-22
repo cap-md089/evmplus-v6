@@ -129,7 +129,7 @@ COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production
 
 ENV NODE_ENV production
 
@@ -157,7 +157,7 @@ COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages/
 COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
 COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
 COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production && rm -rf /usr/local/share/.cache/yarn/v6
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production
 
 WORKDIR /usr/evm-plus/packages/util-cli/dist
 

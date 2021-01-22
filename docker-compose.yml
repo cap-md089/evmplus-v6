@@ -21,6 +21,7 @@ services:
         restart: always
         volumes:
             - ./keys/certbot/conf:/etc/letsencrypt
+            - ./keys/certbot/www:/var/www/certbot
         environment: 
             - AWS_CONFIG_FILE=/run/secrets/aws_ssl_keys
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
@@ -46,10 +47,9 @@ services:
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=evmplus.org
             - NODE_ENV=production
-            - ALLOW_INSECURE=1
         volumes:
             - type: bind
-              source: /google-keys
+              source: ./keys/google-keys
               target: /google-keys
 
             - type: bind
