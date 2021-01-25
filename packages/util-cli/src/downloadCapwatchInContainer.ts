@@ -47,16 +47,17 @@ const readfile = promisify(readFile);
 		throw new Error('ORGID for downloading CAPWATCH files must be a number');
 	}
 
-	const zipPath = await CAP.downloadCAPWATCHFile(
+	await CAP.downloadCAPWATCHFile(
 		capwatchORGID,
 		capwatchCAPID,
 		nhqPassword,
 		process.env.DOWNLOAD_PATH || '/tmp',
 	).fullJoin();
-
-	console.log(zipPath);
 })().then(
-	() => process.exit(0),
+	() => {
+		console.log('Finished execution');
+		process.exit(0);
+	},
 	e => {
 		console.error(e);
 		process.exit(1);

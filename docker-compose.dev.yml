@@ -88,10 +88,11 @@ services:
     capwatch_update:
         build:
             context: .
-            target: capwatch-import
+            target: development
         command: /usr/evm-plus/capwatch-cron/download.sh
         volumes:
             - ./capwatch_downloads:/tmp
+            - .:/usr/evm-plus
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
@@ -131,7 +132,9 @@ services:
     util-cli:
         build:
             context: .
-            target: util-cli
+            target: development
+        command: sh
+        working_dir: /usr/evm-plus/packages/util-cli/dist
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
@@ -147,6 +150,10 @@ services:
             - type: bind
               source: ./keys/google-keys
               target: /google-keys
+
+            - type: bind
+              source: .
+              target: /usr/evm-plus
 
             - uploads:/srv/uploads
         tty: true

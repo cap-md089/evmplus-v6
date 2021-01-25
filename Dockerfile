@@ -32,6 +32,8 @@ FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
 
+ENV NODE_ENV=development
+
 CMD yarn run debug
 
 #

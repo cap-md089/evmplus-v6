@@ -18,9 +18,9 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import axios from 'axios';
 import {
 	AccountObject,
-	always,
 	AsyncEither,
 	AsyncIter,
 	asyncRight,
@@ -47,12 +47,12 @@ import {
 	stripProp,
 } from 'common-lib';
 import { createWriteStream } from 'fs';
-import { get } from 'https';
 import { DateTime } from 'luxon';
 import { join } from 'path';
 import { loadExtraCAPMemberInformation } from '.';
 import { AccountGetter } from '../../../Account';
 import { collectResults, findAndBindC } from '../../../MySQLUtil';
+import { ServerEither } from '../../../servertypes';
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 	asyncRight(
@@ -303,7 +303,7 @@ export const downloadCAPWATCHFile = (
 	capid: number,
 	password: string,
 	downloadPath: string,
-) => {
+): ServerEither<string> => {
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
@@ -316,40 +316,31 @@ export const downloadCAPWATCHFile = (
 
 	const storageLocation = createWriteStream(fileName);
 
+	console.log(fileName);
+
 	return asyncRight(
-		new Promise<void>((res, rej) => {
-			get(
-				url,
-				{
-					headers: {
-						authorization: `Basic ${encodedAuth}`,
-					},
-				},
-				result => {
-					if (!result.statusCode || result.statusCode >= 299) {
-						return rej(
-							new Error(
-								'Member could not download CAPWATCH file: ' + result.statusCode,
-							),
-						);
-					}
-
-					result.pipe(storageLocation);
-
-					result.on('end', () => {
-						res();
-					});
-
-					result.on('error', err => {
-						rej(err);
-					});
-
-					storageLocation.on('error', err => {
-						rej(err);
-					});
-				},
-			);
+		axios({
+			method: 'get',
+			url,
+			headers: {
+				authorization: `Basic ${encodedAuth}`,
+			},
+			responseType: 'stream',
 		}),
 		errorGenerator('Could not download CAPWATCH file'),
-	).map(always(fileName));
+	)
+		.map(({ data }) => {
+			data.pipe(storageLocation);
+
+			return Promise.all([
+				Promise.resolve(fileName),
+				new Promise<void>(res => {
+					data.on('end', res);
+				}),
+				new Promise<void>(res => {
+					storageLocation.on('end', res);
+				}),
+			]);
+		})
+		.map(([filepath]) => filepath);
 };
