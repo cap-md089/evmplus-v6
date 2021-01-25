@@ -35,6 +35,7 @@ import {
 	AttendanceStatus,
 	BasicMySQLRequest,
 	CAPAccountObject,
+	CAPNHQMemberObject,
 	CAPProspectiveMemberObject,
 	collectGeneratorAsync,
 	Either,
@@ -71,7 +72,6 @@ import {
 	ServerError,
 	statefulFunction,
 	StoredAccountMembership,
-	StoredProspectiveMemberObject,
 	stringifyMemberReference,
 	stripProp,
 	toReference,
@@ -338,14 +338,14 @@ export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 		),
 	);
 
-export const buildURI = (account: AccountObject) => (...identifiers: string[]) =>
-	(process.env.NODE_ENV === 'development'
-		? `/`
-		: `https://${account.id}.${process.env.REACT_APP_HOST_NAME}/`) +
-	[].slice.call(identifiers).join('/');
-
 export const getMembers = (schema: Schema) => (account: AccountObject) =>
-	async function*(type?: MemberType | undefined) {
+	async function*(
+		type?: MemberType | undefined,
+	): AsyncGenerator<
+		EitherObj<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject>,
+		void,
+		undefined
+	> {
 		const teamObjects = await getTeamObjects(schema)(account)
 			.map(collectGeneratorAsync)
 			.cata(() => [], identity);
@@ -354,44 +354,32 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 
 		if (account.type === AccountType.CAPSQUADRON) {
 			if (type === 'CAPNHQMember' || type === undefined) {
-				const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
+				const membersForORGIDs = await CAP.getCAPNHQMembersForORGIDs(schema)(account.id)(
+					teamObjects,
+				)(account.orgIDs);
 
-				for (const ORGID of account.orgIDs) {
-					const memberFind = findAndBind(memberCollection, {
-						ORGID,
+				if (Either.isLeft(membersForORGIDs)) {
+					yield membersForORGIDs;
+				} else {
+					membersForORGIDs.value.forEach(mem => {
+						foundMembers[stringifyMemberReference(mem)] = true;
 					});
-
-					for await (const member of generateResults(memberFind)) {
-						foundMembers[
-							stringifyMemberReference({ type: 'CAPNHQMember', id: member.CAPID })
-						] = true;
-
-						const mem = await CAP.expandNHQMember(schema)(account)(teamObjects)(member);
-
-						yield mem;
-					}
+					yield* membersForORGIDs.value.map(Either.right);
 				}
 			}
 
 			if (type === 'CAPProspectiveMember' || type === undefined) {
-				const prospectiveMembersCollection = schema.getCollection<
-					StoredProspectiveMemberObject
-				>('ProspectiveMembers');
+				const membersForAccount = await CAP.getProspectiveMembersForAccount(schema)(
+					account,
+				)(teamObjects);
 
-				const prospectiveMemberFind = findAndBind(prospectiveMembersCollection, {
-					accountID: account.id,
-				});
-
-				for await (const prospectiveMember of generateResults(prospectiveMemberFind)) {
-					foundMembers[stringifyMemberReference(prospectiveMember)] = true;
-
-					if (prospectiveMember.hasNHQReference) {
-						continue;
-					}
-
-					yield CAP.expandProspectiveMember(schema)(account)(teamObjects)(
-						prospectiveMember,
-					);
+				if (Either.isLeft(membersForAccount)) {
+					yield membersForAccount;
+				} else {
+					membersForAccount.value.forEach(mem => {
+						foundMembers[stringifyMemberReference(mem)] = true;
+					});
+					yield* membersForAccount.value.map(Either.right);
 				}
 			}
 		} else if (
@@ -400,18 +388,17 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 			account.type === AccountType.CAPREGION
 		) {
 			if (type === 'CAPNHQMember' || type === undefined) {
-				const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
+				const membersForORGIDs = await CAP.getCAPNHQMembersForORGIDs(schema)(account.id)(
+					teamObjects,
+				)([account.orgid]);
 
-				const memberFind = findAndBind(memberCollection, {
-					ORGID: account.orgid,
-				});
-
-				for await (const member of generateResults(memberFind)) {
-					foundMembers[
-						stringifyMemberReference({ type: 'CAPNHQMember', id: member.CAPID })
-					] = true;
-
-					yield CAP.expandNHQMember(schema)(account)(teamObjects)(member);
+				if (Either.isLeft(membersForORGIDs)) {
+					yield membersForORGIDs;
+				} else {
+					membersForORGIDs.value.forEach(mem => {
+						foundMembers[stringifyMemberReference(mem)] = true;
+					});
+					yield* membersForORGIDs.value.map(Either.right);
 				}
 			}
 		} else if (account.type === AccountType.CAPEVENT) {

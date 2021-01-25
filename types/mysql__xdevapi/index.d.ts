@@ -85,6 +85,11 @@ declare module "@mysql/xdevapi" {
     msg: string;
   }
 
+  class Cursor<T> {
+    fetchOne(): T;
+    fetchAll(): T[];
+  }
+
   interface Binding<T> {
     bind(parameter: Bound<T>): Binding<T>;
     bind<K extends keyof T = keyof T>(
@@ -189,6 +194,7 @@ declare module "@mysql/xdevapi" {
     public execute(
       callback: (fields: WithoutEmpty<T>) => void
     ): Promise<Result>;
+    public execute(): Promise<Cursor<T>>;
 
     public fields(projections: string[] | string): CollectionFind<T>;
 
@@ -431,12 +437,14 @@ declare module "@mysql/xdevapi" {
   }
 
   class SqlExecute implements Statement {
-    public bind(values: string | string[]): SqlExecute;
+    public bind(...values: any[]): SqlExecute;
+    public bind(values: any[]): SqlExecute;
 
     public execute(
-      rowcb?: (items: any) => void,
+      rowcb: (items: any) => void,
       metacb?: (metadata: any) => void
     ): Promise<void>;
+    public execute(): Promise<Cursor<any>>;
 
     public addArgs(args: any[]): Statement;
 
