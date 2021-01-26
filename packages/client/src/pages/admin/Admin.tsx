@@ -47,6 +47,7 @@ import CreateProspectiveMember from '../account/CreateProspectiveMember';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import SetupMFA from '../account/SetupMFA';
+import { ShowMemberInfo } from './pages/ShowMemberInfo';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -206,6 +207,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 					exact={false}
 				/>
 				<Route path="/admin/setupmfa" render={this.pageRenderer(SetupMFA)} exact={false} />
+				<Route
+					path="/admin/personalinfo"
+					render={this.pageRenderer(ShowMemberInfo)}
+					exact={false}
+				/>
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>
@@ -230,7 +236,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 		);
 	}
 
-	private pageRenderer(Component: typeof Page) {
+	private pageRenderer(Component: typeof Page | React.FC<PageProps>) {
 		return () => <Component {...this.props} />;
 	}
 }

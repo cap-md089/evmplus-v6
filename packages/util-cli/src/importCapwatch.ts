@@ -21,8 +21,6 @@
 import { getSession } from '@mysql/xdevapi';
 import { conf, ImportCAPWATCHFile } from 'server-common';
 
-console.log(process.argv);
-
 if (process.argv.length !== 3) {
 	console.error('Error! CAPWATCH file not provided');
 	process.exit(2);
