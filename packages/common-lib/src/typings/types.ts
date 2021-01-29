@@ -4068,7 +4068,7 @@ export type AllAudits =
 	| AttendanceAuditEvents
 	| FileAuditEvents
 	| ProspectiveMemberAudits
-	| PermissionsAudits
+	| PermissionsAudits;
 
 export interface CadetPromotionRequirements {
 	/**
