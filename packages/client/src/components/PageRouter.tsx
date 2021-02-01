@@ -117,12 +117,12 @@ const pages: Array<{
 		exact: false,
 	},
 	{
-		url: '/filemanagement',
+		url: '/filemanagement/:id?',
 		component: Drive,
 		exact: false,
 	},
 	{
-		url: '/drive',
+		url: '/drive/:id?',
 		component: Drive,
 		exact: false,
 	},

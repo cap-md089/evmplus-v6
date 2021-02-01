@@ -20,17 +20,20 @@
 import {
 	AsyncEither,
 	Either,
+	EitherObj,
 	FileObject,
 	FullFileObject,
+	FullTeamObject,
 	get,
 	hasPermission,
+	HTTPError,
 	Maybe,
 	Member,
 	Permissions,
-	RawTeamObject,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
+import { withMemberList, withTeamlist } from '../../globals';
 import ExtraFileDisplay from '../../components/drive/DriveExtraFileDisplay';
 import ExtraFolderDisplay from '../../components/drive/DriveExtraFolderDisplay';
 import DriveFileDisplay from '../../components/drive/DriveFileDisplay';
@@ -50,8 +53,6 @@ interface UnloadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
-	teams: null;
-	members: null;
 }
 
 interface LoadedDriveState {
@@ -62,27 +63,16 @@ interface LoadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
-	teams: RawTeamObject[];
-	members: Member[];
 }
 
-interface DataUnloadedState {
-	extraLoaded: false;
-	teams: null;
-	members: null;
+type DriveState = UnloadedDriveState | LoadedDriveState;
+
+interface DriveProps extends PageProps {
+	memberList: EitherObj<HTTPError, Member[]>;
+	teamList: EitherObj<HTTPError, FullTeamObject[]>;
 }
 
-interface DataLoadedState {
-	extraLoaded: true;
-	teams: RawTeamObject[];
-	members: Member[];
-}
-
-type DataState = DataUnloadedState | DataLoadedState;
-
-type DriveState = (UnloadedDriveState | LoadedDriveState) & DataState;
-
-export default class Drive extends Page<PageProps, DriveState> {
+export class Drive extends Page<DriveProps, DriveState> {
 	public state: DriveState = {
 		files: null,
 		currentlySelected: '',
@@ -91,15 +81,11 @@ export default class Drive extends Page<PageProps, DriveState> {
 		showingExtraInfo: true,
 		error: false,
 		errorReason: null,
-
-		extraLoaded: false,
-		teams: null,
-		members: null,
 	};
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
 
-	constructor(props: PageProps) {
+	constructor(props: DriveProps) {
 		super(props);
 
 		this.onFileClick = this.onFileClick.bind(this);
@@ -132,23 +118,6 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 	public async componentDidMount() {
 		this.goToFolder(this.folderID, false);
-
-		const resultEither = await AsyncEither.All([
-			fetchApi.team.list({}, {}),
-			fetchApi.member.memberList({}, {}),
-		]);
-
-		if (Either.isLeft(resultEither)) {
-			// TODO: Add error
-		} else {
-			const [teams, members] = resultEither.value;
-
-			this.setState({
-				extraLoaded: true,
-				teams,
-				members,
-			});
-		}
 	}
 
 	public componentDidUpdate() {
@@ -187,9 +156,17 @@ export default class Drive extends Page<PageProps, DriveState> {
 			return <div>{this.state.errorReason}</div>;
 		}
 
-		const state = this.state;
+		const { memberList, teamList } = this.props;
 
-		if (this.state.files === null || this.state.currentFolder === null || !state.extraLoaded) {
+		if (Either.isLeft(teamList)) {
+			return <div>{teamList.value}</div>;
+		}
+
+		if (Either.isLeft(memberList)) {
+			return <div>{memberList.value}</div>;
+		}
+
+		if (this.state.files === null || this.state.currentFolder === null) {
 			return <Loader />;
 		}
 
@@ -297,8 +274,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={state.members}
-									teams={state.teams}
+									members={memberList.value}
+									teams={teamList.value}
 								/>
 							) : null}
 						</React.Fragment>
@@ -338,8 +315,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={state.members}
-									teams={state.teams}
+									members={memberList.value}
+									teams={teamList.value}
 								/>
 							) : null}
 						</React.Fragment>
@@ -391,10 +368,11 @@ export default class Drive extends Page<PageProps, DriveState> {
 		]);
 
 		if (Either.isLeft(folderInfoEither)) {
-			return this.setState({
+			this.setState({
 				error: true,
 				errorReason: folderInfoEither.value.message,
 			});
+			return;
 		}
 
 		const [wrappedFiles, currentFolder] = folderInfoEither.value;
@@ -408,6 +386,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			},
 			() => {
 				if (update) {
+					this.props.prepareURL('/' + this.path + '/' + id);
 					this.props.routeProps.history.push('/' + this.path + '/' + id);
 				}
 
@@ -484,3 +463,5 @@ export default class Drive extends Page<PageProps, DriveState> {
 		}
 	}
 }
+
+export default withTeamlist(withMemberList(Drive));

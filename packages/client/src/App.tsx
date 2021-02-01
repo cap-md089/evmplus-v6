@@ -23,8 +23,12 @@ import {
 	asyncRight,
 	ClientUser,
 	Either,
+	EitherObj,
 	FileObject,
+	FullTeamObject,
+	HTTPError,
 	Maybe,
+	Member,
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
@@ -38,6 +42,7 @@ import Footer from './components/page-elements/Footer';
 import Header from './components/page-elements/Header';
 import SideNavigation, { SideNavigationItem } from './components/page-elements/SideNavigation';
 import PageRouter from './components/PageRouter';
+import { MemberDetailsProvider, MemberListProvider, TeamListProvider } from './globals';
 import fetchApi from './lib/apis';
 import { getMember } from './lib/Members';
 
@@ -51,6 +56,8 @@ interface AppState {
 	breadCrumbs: BreadCrumb[];
 	allowedSlideshowIDs: FileObject[];
 	loadError: boolean;
+	memberList: EitherObj<HTTPError, Member[]> | null;
+	teamList: EitherObj<HTTPError, FullTeamObject[]> | null;
 }
 
 export default class App extends React.Component<
@@ -73,6 +80,8 @@ export default class App extends React.Component<
 		allowedSlideshowIDs: [],
 		fullMember: null,
 		loadError: false,
+		memberList: null,
+		teamList: null,
 	};
 
 	private timer: NodeJS.Timer | null = null;
@@ -84,6 +93,8 @@ export default class App extends React.Component<
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
 		this.update = this.update.bind(this);
+		this.updateMemberList = this.updateMemberList.bind(this);
+		this.updateTeamList = this.updateTeamList.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -140,49 +151,70 @@ export default class App extends React.Component<
 	public render() {
 		return (
 			<>
-				<Header
-					loadingError={this.state.loadError}
-					registry={Maybe.fromValue(this.state.Registry)}
-				/>
-				{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
-				<div className="background">
-					<div className="main-content-bottom" />
-				</div>
-				<SideNavigation
-					links={this.state.sideNavLinks}
-					member={this.state.fullMember}
-					fullMemberDetails={this.state.member}
-					authorizeUser={this.authorizeUser}
-				/>
-				<div className="content-border left-border" />
-				<main>
-					<div className="main-content">
-						<div id="fb-root" />
-						<BreadCrumbs links={this.state.breadCrumbs} />
-						{this.state.loading ? null : (
-							<GlobalNotification account={this.state.account!} />
-						)}
-						{this.state.loading ? (
-							<Loader />
-						) : this.state.loadError ? (
-							<div>The account does not exist</div>
-						) : (
-							<PageRouter
-								updateApp={this.update}
-								updateSideNav={this.updateSideNav}
-								updateBreadCrumbs={this.updateBreadCrumbs}
+				<MemberDetailsProvider
+					value={{
+						member: this.state.fullMember,
+						fullMember: this.state.member,
+					}}
+				>
+					<MemberListProvider
+						value={{
+							state: this.state.memberList,
+							updateList: this.updateMemberList,
+						}}
+					>
+						<TeamListProvider
+							value={{
+								state: this.state.teamList,
+								updateList: this.updateTeamList,
+							}}
+						>
+							<Header
+								loadingError={this.state.loadError}
+								registry={Maybe.fromValue(this.state.Registry)}
+							/>
+							{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
+							<div className="background">
+								<div className="main-content-bottom" />
+							</div>
+							<SideNavigation
+								links={this.state.sideNavLinks}
 								member={this.state.fullMember}
 								fullMemberDetails={this.state.member}
-								account={this.state.account!}
 								authorizeUser={this.authorizeUser}
-								registry={this.state.Registry!}
-								key="pagerouter"
 							/>
-						)}
-					</div>
-				</main>
-				<div className="content-border right-border" />
-				<Footer registry={Maybe.fromValue(this.state.Registry)} />
+							<div className="content-border left-border" />
+							<main>
+								<div className="main-content">
+									<div id="fb-root" />
+									<BreadCrumbs links={this.state.breadCrumbs} />
+									{this.state.loading ? null : (
+										<GlobalNotification account={this.state.account!} />
+									)}
+									{this.state.loading ? (
+										<Loader />
+									) : this.state.loadError ? (
+										<div>The account does not exist</div>
+									) : (
+										<PageRouter
+											updateApp={this.update}
+											updateSideNav={this.updateSideNav}
+											updateBreadCrumbs={this.updateBreadCrumbs}
+											member={this.state.fullMember}
+											fullMemberDetails={this.state.member}
+											account={this.state.account!}
+											authorizeUser={this.authorizeUser}
+											registry={this.state.Registry!}
+											key="pagerouter"
+										/>
+									)}
+								</div>
+							</main>
+							<div className="content-border right-border" />
+							<Footer registry={Maybe.fromValue(this.state.Registry)} />
+						</TeamListProvider>
+					</MemberListProvider>
+				</MemberDetailsProvider>
 			</>
 		);
 	}
@@ -216,5 +248,21 @@ export default class App extends React.Component<
 
 	private update() {
 		this.forceUpdate();
+	}
+
+	private async updateTeamList() {
+		const result = await fetchApi.team.list({}, {});
+
+		this.setState({
+			teamList: result,
+		});
+	}
+
+	private async updateMemberList() {
+		const result = await fetchApi.member.memberList({}, {});
+
+		this.setState({
+			memberList: result,
+		});
 	}
 }

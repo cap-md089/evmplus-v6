@@ -156,7 +156,7 @@ export const getRootFileObject = (schema: Schema) => (
 			permissions: [
 				{
 					permission: FileUserAccessControlPermissions.READ,
-					type: FileUserAccessControlType.OTHER,
+					type: FileUserAccessControlType.ACCOUNTMEMBER,
 				},
 			],
 			id: 'root',
