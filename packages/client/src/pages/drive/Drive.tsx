@@ -30,6 +30,7 @@ import {
 	Maybe,
 	Member,
 	Permissions,
+	RawTeamObject,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
@@ -53,6 +54,8 @@ interface UnloadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
+	teams: null;
+	members: null;
 }
 
 interface LoadedDriveState {
@@ -63,9 +66,25 @@ interface LoadedDriveState {
 	showingExtraInfo: boolean;
 	error: boolean;
 	errorReason: string | null;
+	teams: RawTeamObject[];
+	members: Member[];
 }
 
-type DriveState = UnloadedDriveState | LoadedDriveState;
+interface DataUnloadedState {
+	extraLoaded: false;
+	teams: null;
+	members: null;
+}
+
+interface DataLoadedState {
+	extraLoaded: true;
+	teams: RawTeamObject[];
+	members: Member[];
+}
+
+type DataState = DataUnloadedState | DataLoadedState;
+
+type DriveState = (UnloadedDriveState | LoadedDriveState) & DataState;
 
 interface DriveProps extends PageProps {
 	memberList: EitherObj<HTTPError, Member[]>;
@@ -81,6 +100,10 @@ export class Drive extends Page<DriveProps, DriveState> {
 		showingExtraInfo: true,
 		error: false,
 		errorReason: null,
+
+		extraLoaded: false,
+		teams: null,
+		members: null,
 	};
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
@@ -118,6 +141,23 @@ export class Drive extends Page<DriveProps, DriveState> {
 
 	public async componentDidMount() {
 		this.goToFolder(this.folderID, false);
+
+		const resultEither = await AsyncEither.All([
+			fetchApi.team.list({}, {}),
+			fetchApi.member.memberList({}, {}),
+		]);
+
+		if (Either.isLeft(resultEither)) {
+			// TODO: Add error
+		} else {
+			const [teams, members] = resultEither.value;
+
+			this.setState({
+				extraLoaded: true,
+				teams,
+				members,
+			});
+		}
 	}
 
 	public componentDidUpdate() {
