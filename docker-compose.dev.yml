@@ -85,6 +85,22 @@ services:
         networks:
             - default
 
+    pre-build:
+        build:
+            context: .
+            target: development-builder
+        volumes:
+            - .:/usr/evm-plus
+        command: sh -c 'lerna bootstrap && lerna run build'
+
+    build-watch:
+        build:
+            context: .
+            target: development-builder
+        volumes:
+            - .:/usr/evm-plus
+        command: sh -c 'ttsc --build /usr/evm-plus/tsconfig.dev.json --watch'
+
     capwatch_update:
         build:
             context: .
@@ -173,30 +189,6 @@ services:
 networks:
     default:
         driver: bridge
-
-    capwatch_update:
-        build:
-            context: .
-            target: capwatch-import
-        command: /usr/evm-plus/capwatch-cron/download.sh
-        environment:
-            - DB_SCHEMA=EventManagementv6
-            - DB_HOST=mysql
-            - DB_PORT=33060
-            - DB_POOL_SIZE=50
-        secrets:
-            - db_user
-            - db_password
-            - discord_client_token
-            - capwatch_password
-            - capwatch_orgid
-            - capwatch_capid
-        depends_on:
-            - mysql
-
-    mysql_shell:
-        build:
-
 
 secrets:
     db_user:

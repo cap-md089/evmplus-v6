@@ -56,6 +56,17 @@
 				"isDefault": true
 			},
 			"label": "tsc: watch - tsconfig.dev.json"
+		},
+		{
+			"type": "shell",
+			"command": "bash -c 'docker attach ${PWD##*/}_build-watch_1'",
+			"args": [],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true,
+			"group": "build",
+			"label": "Attach to TTypescript Docker Watch"
 		}
 	]
 }
