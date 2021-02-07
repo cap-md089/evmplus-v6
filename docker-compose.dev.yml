@@ -91,7 +91,7 @@ services:
             target: development-builder
         volumes:
             - .:/usr/evm-plus
-        command: sh -c 'lerna bootstrap && lerna run build'
+        command: sh -c 'lerna bootstrap && lerna run build --ignore client'
 
     build-watch:
         build:
