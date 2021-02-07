@@ -12,7 +12,7 @@
 	"references": [
 		{ "path": "../auto-client-api/tsconfig.build.json" },
 		{ "path": "../common-lib/tsconfig.build.json" },
-		{ "path": "../evmplus-org-server/tsconfig.build.json" },
-		{ "path": "../server-common/tsconfig.build.json" },
+		{ "path": "../server/tsconfig.build.json" },
+		{ "path": "../server-common/tsconfig.build.json" }
 	]
 }

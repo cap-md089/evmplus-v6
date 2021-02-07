@@ -24,6 +24,16 @@ RUN apk add imagemagick \
 	&& yarn global add lerna@3.22
 
 #
+# This container provides the compiler used in a development environment,
+# and allows the compiler to persist
+#
+FROM base AS development-builder
+
+WORKDIR /usr/evm-plus
+
+RUN yarn global add typescript ttypescript
+
+#
 # This container is used to program in a Docker environment, and access
 # secrets necessary for execution (db_password, etc). This container
 # will require a mount to /usr/evm-plus from the outside world
