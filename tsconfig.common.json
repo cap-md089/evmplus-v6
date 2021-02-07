@@ -24,11 +24,13 @@
 		"removeComments": true,
 		"typeRoots": ["./types", "./node_modules/@types"],
 		"allowSyntheticDefaultImports": false,
-		"experimentalDecorators": true,
 		"sourceMap": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
 		"declarationMap": true,
-		"noFallthroughCasesInSwitch": true
+		"noFallthroughCasesInSwitch": true,
+		"outDir": "./dist",
+		"rootDir": ".",
+		"composite": true
 	}
 }

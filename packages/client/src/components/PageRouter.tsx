@@ -117,12 +117,12 @@ const pages: Array<{
 		exact: false,
 	},
 	{
-		url: '/filemanagement',
+		url: '/filemanagement/:id?',
 		component: Drive,
 		exact: false,
 	},
 	{
-		url: '/drive',
+		url: '/drive/:id?',
 		component: Drive,
 		exact: false,
 	},
@@ -266,29 +266,31 @@ const pages: Array<{
 	},
 ];
 
-const composeElement = (
-	El: typeof Page | React.FC<PageProps>,
-	account: AccountObject,
-	authorizeUser: (arg: SigninReturn) => void,
-	updateSideNav: (links: SideNavigationItem[]) => void,
-	updateBreadcrumbs: (links: BreadCrumb[]) => void,
-	registry: RegistryValues,
-	member: ClientUser | null,
-	fullMemberDetails: SigninReturn,
-	updateApp: () => void,
-) => (props: RouteComponentProps<any>) => {
+const composeElement = (props: {
+	El: typeof Page | React.FC<PageProps>;
+	account: AccountObject;
+	authorizeUser: (arg: SigninReturn) => void;
+	updateSideNav: (links: SideNavigationItem[]) => void;
+	updateBreadCrumbs: (links: BreadCrumb[]) => void;
+	registry: RegistryValues;
+	member: ClientUser | null;
+	fullMemberDetails: SigninReturn;
+	updateApp: () => void;
+	key: string;
+}) => (routeProps: RouteComponentProps<any>) => {
 	return (
 		<PageDisplayer
-			updateApp={updateApp}
-			El={El}
-			account={account}
-			authorizeUser={authorizeUser}
-			updateSideNav={updateSideNav}
-			updateBreadCrumbs={updateBreadcrumbs}
-			registry={registry}
-			member={member}
-			fullMemberDetails={fullMemberDetails}
-			routeProps={props}
+			key={props.key}
+			updateApp={props.updateApp}
+			El={props.El}
+			account={props.account}
+			authorizeUser={props.authorizeUser}
+			updateSideNav={props.updateSideNav}
+			updateBreadCrumbs={props.updateBreadCrumbs}
+			registry={props.registry}
+			member={props.member}
+			fullMemberDetails={props.fullMemberDetails}
+			routeProps={routeProps}
 		/>
 	);
 };
@@ -448,17 +450,18 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 								key={i}
 								path={value.url}
 								exact={value.exact}
-								component={composeElement(
-									value.component,
-									this.props.account,
-									this.props.authorizeUser,
-									this.props.updateSideNav,
-									this.props.updateBreadCrumbs,
-									this.props.registry,
-									this.props.member,
-									this.props.fullMemberDetails,
-									this.props.updateApp,
-								)}
+								component={composeElement({
+									El: value.component,
+									account: this.props.account,
+									authorizeUser: this.props.authorizeUser,
+									updateSideNav: this.props.updateSideNav,
+									updateBreadCrumbs: this.props.updateBreadCrumbs,
+									registry: this.props.registry,
+									member: this.props.member,
+									fullMemberDetails: this.props.fullMemberDetails,
+									updateApp: this.props.updateApp,
+									key: value.url,
+								})}
 							/>
 						);
 					})}

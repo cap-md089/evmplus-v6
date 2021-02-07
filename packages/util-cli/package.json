@@ -4,8 +4,9 @@
 	"description": "CLI utilities for server admins of the CAPUnit suite",
 	"private": true,
 	"scripts": {
-		"build": "ttsc --project tsconfig.build.json",
-		"check": "ttsc --project tsconfig.build.json --noEmit",
+		"build": "ttsc --build tsconfig.build.json",
+		"watch": "ttsc --build tsconfig.build.json --build",
+		"check": "ttsc --build tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."
 	},
 	"author": "Andrew Rioux",

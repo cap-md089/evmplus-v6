@@ -5,11 +5,14 @@
 	"scripts": {
 		"start": "node --no-warnings dist/index.js",
 		"test": "jest",
-		"build": "ttsc --project tsconfig.build.json",
-		"check": "ttsc --project tsconfig.build.json --noEmit",
+		"build": "ttsc --build tsconfig.build.json",
+		"watch": "ttsc --build tsconfig.build.json --watch",
+		"check": "ttsc --build tsconfig.build.json --noEmit",
 		"clean": "prettier --write 'src/**/*.ts'",
 		"clean-watch": "onchange '**/*.ts' -- prettier --write {{changed}}",
-		"lint": "tslint --project ."
+		"lint": "tslint --project .",
+		"debug": "nodemon --no-warnings --inspect=0.0.0.0:5858 ./dist/index.js",
+		"docker-debug": "docker-compose -f ../../docker-compose.dev.yml up --build main"
 	},
 	"license": "GPL-2.0",
 	"main": "dist/index.js",

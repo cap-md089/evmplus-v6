@@ -18,22 +18,18 @@
  */
 
 import * as mysql from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
 import {
-	Either,
 	isPartOfTeam,
 	isTeamLeader,
 	Maybe as M,
 	MemberUpdateEventEmitter,
-	RawServerConfiguration,
 	ServerConfiguration,
 	toReference,
-	Validator,
 } from 'common-lib';
 import * as debug from 'debug';
-import { Client } from 'discord.js';
+import { Client, Role } from 'discord.js';
 import 'dotenv/config';
-import { confFromRaw, getRegistry } from 'server-common';
+import { getRegistry } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
@@ -42,13 +38,14 @@ import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
-import setupUser from './data/setupUser';
+import setupUser, { byName } from './data/setupUser';
+import getConf, { DiscordCLIConfiguration } from './getDiscordConf';
 
 const discordBotLog = debug('discord-bot');
 
 export const getCertName = (name: string) => name.split('-')[0].trim();
 
-export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: mysql.Client) => {
+export const getXSession = async ({ DB_SCHEMA }: DiscordCLIConfiguration, client: mysql.Client) => {
 	const session = await client.getSession();
 
 	return { session, schema: session.getSchema(DB_SCHEMA) };
@@ -57,18 +54,26 @@ export const getXSession = async ({ DB_SCHEMA }: ServerConfiguration, client: my
 export const getClient = () =>
 	new Client({
 		ws: {
-			intents: ['GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILDS', 'DIRECT_MESSAGES'],
+			intents: [
+				'GUILD_MEMBERS',
+				'GUILD_MESSAGES',
+				'GUILDS',
+				'DIRECT_MESSAGES',
+				'GUILD_PRESENCES',
+			],
 		},
 	});
 
 export default function setupDiscordBot(
-	conf: ServerConfiguration,
+	_conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
 	mysqlClient: mysql.Client,
 ) {
-	if (!conf.DISCORD_CLIENT_TOKEN) {
+	if (!_conf.DISCORD_CLIENT_TOKEN) {
 		return;
 	}
+
+	const conf = _conf as ServerConfiguration & { DISCORD_CLIENT_TOKEN: string };
 
 	const client = getClient();
 
@@ -275,6 +280,14 @@ export default function setupDiscordBot(
 				dmChannel.send(
 					`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/registerdiscord/${member.id}`,
 				);
+
+				await (
+					await member.roles.set(
+						[
+							(await member.guild.roles.fetch()).cache.find(byName('Processing')),
+						].filter((role): role is Role => !!role),
+					)
+				).setNickname('');
 			}
 		} finally {
 			await session.close();
@@ -306,18 +319,12 @@ if (require.main === module) {
 	(async () => {
 		const client = getClient();
 
-		const configurationValidator = validator<RawServerConfiguration>(Validator);
+		const conf = await getConf();
 
-		const confEither = Either.map(confFromRaw)(
-			configurationValidator.validate(process.env, ''),
-		);
-
-		if (Either.isLeft(confEither)) {
-			console.error('Configuration error!', confEither.value);
+		if (!conf.DISCORD_CLIENT_TOKEN) {
+			console.error('No Discord bot token provided');
 			process.exit(1);
 		}
-
-		const conf = confEither.value;
 
 		const mysqlClient = await mysql.getClient(
 			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
@@ -333,7 +340,7 @@ if (require.main === module) {
 			process.exit(1);
 		}
 
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			const command = process.argv[2];
 
 			const availableCommands: { [key: string]: typeof setupServer } = {

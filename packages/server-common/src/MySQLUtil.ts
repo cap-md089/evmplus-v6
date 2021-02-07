@@ -60,6 +60,19 @@ export const collectResults = async <T>(
 	return ret;
 };
 
+export const bindForArray = (arr: any[]) => '(' + arr.map(() => '?').join(',') + ')';
+
+export const collectSqlResults = async <T>(
+	find: mysql.SqlExecute,
+): Promise<mysql.WithoutEmpty<T>[]> => {
+	try {
+		return (await find.execute()).fetchAll().map(item => item[0]);
+	} catch (e) {
+		console.error(e);
+		throw new Error(e);
+	}
+};
+
 export const generateResults = async function*<U>(
 	find: mysql.CollectionFind<U>,
 ): AsyncIterableIterator<mysql.WithoutEmpty<U>> {

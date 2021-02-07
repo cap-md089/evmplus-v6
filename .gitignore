@@ -1,5 +1,6 @@
 keys
 configs
+buildcache
 packages/server/mysqldumps
 
 node_modules
@@ -12,3 +13,5 @@ packages/*/yarn-error.log
 
 yarn-error.log
 lerna-debug.log
+
+capwatch_downloads

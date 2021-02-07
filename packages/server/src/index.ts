@@ -18,37 +18,28 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { validator } from 'auto-client-api';
-import { Either, RawServerConfiguration, Validator } from 'common-lib';
 import setupDiscordBot from 'discord-bot';
-import 'dotenv/config';
-import { confFromRaw } from 'server-common';
+import { getConf } from 'server-common';
 import { api } from './api';
 import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
 
 console.log = console.log.bind(console);
 
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
-
-const conf = confEither.value;
-
 if (require.main === module) {
-	getServer(conf).then(({ finishServerSetup, capwatchEmitter, mysqlConn }) => {
-		setupDiscordBot(conf, capwatchEmitter, mysqlConn);
+	(async () => {
+		const configuration = await getConf();
 
-		createSocketUI(conf, mysqlConn);
+		const { finishServerSetup, capwatchEmitter, mysqlConn } = await getServer(configuration);
+
+		setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+
+		createSocketUI(configuration, mysqlConn);
 
 		finishServerSetup();
-
-		console.log('Server setup');
+	})().catch(e => {
+		console.error(e);
+		process.exit(1);
 	});
 }
 

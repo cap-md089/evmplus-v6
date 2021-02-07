@@ -19,34 +19,17 @@
  */
 
 import { getSession } from '@mysql/xdevapi';
-import { validator } from 'auto-client-api';
-import {
-	Either,
-	RawServerConfiguration,
-	SigninKeyScopeType,
-	StoredSigninKey,
-	Validator,
-} from 'common-lib';
-import 'dotenv/config';
-import { collectResults, confFromRaw, findAndBind } from 'server-common';
+import { SigninKeyScopeType, StoredSigninKey } from 'common-lib';
 import { generateKeyPairSync } from 'crypto';
-
-const configurationValidator = validator<RawServerConfiguration>(Validator);
-
-const confEither = Either.map(confFromRaw)(configurationValidator.validate(process.env, ''));
-
-if (Either.isLeft(confEither)) {
-	console.error('Configuration error!', confEither.value);
-	process.exit(1);
-}
-
-const conf = confEither.value;
+import { collectResults, findAndBind, getConf } from 'server-common';
 
 process.on('unhandledRejection', up => {
 	throw up;
 });
 
 (async () => {
+	const conf = await getConf();
+
 	if (process.argv.length < 4) {
 		throw new Error('Command requires an account ID and a signature ID name');
 	}
