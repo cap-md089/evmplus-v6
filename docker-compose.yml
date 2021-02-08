@@ -107,6 +107,7 @@ services:
             - DB_POOL_SIZE=50
             - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
+            - HOST_NAME=evmplus.org
 
             # These aren't actually exposed, but the environment variables are set
             # because I'm too lazy to remove the dependency on two variables and split
@@ -139,6 +140,7 @@ services:
             - DB_POOL_SIZE=50
             - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
+            - HOST_NAME=evmplus.org
 
             # These aren't actually exposed, but the environment variables are set
             # because I'm too lazy to remove the dependency on two variables and split
@@ -199,8 +201,9 @@ services:
               target: /srv/uploads
         tty: true
         stdin_open: true
-        depends_on:
+        depends_on: 
             - mysql
+        command: sh
         networks:
             - backend
         secrets:

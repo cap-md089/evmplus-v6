@@ -116,6 +116,7 @@ services:
             - DB_POOL_SIZE=50
             - DRIVE_STORAGE_PATH=/srv/uploads
             - GOOGLE_KEYS_PATH=/google-keys
+            - HOST_NAME=localevmplus.org
         secrets:
             - db_user
             - db_password

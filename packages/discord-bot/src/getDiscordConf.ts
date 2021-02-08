@@ -28,6 +28,8 @@ export interface EnvDiscordCLIConfiguration {
 	DB_HOST: string;
 	DB_PORT: string;
 	DB_POOL_SIZE: string;
+
+	HOST_NAME: string;
 }
 
 export interface DiscordCLIConfiguration {
@@ -37,6 +39,8 @@ export interface DiscordCLIConfiguration {
 	DB_PORT: number;
 	DB_USER: string;
 	DB_POOL_SIZE: number;
+
+	HOST_NAME: string;
 
 	DISCORD_CLIENT_TOKEN: string;
 }
@@ -48,6 +52,8 @@ export interface RawDiscordCLIConfiguration {
 	DB_PORT: string;
 	DB_USER: string;
 	DB_POOL_SIZE: string;
+
+	HOST_NAME: string;
 
 	DISCORD_CLIENT_TOKEN: string;
 }
@@ -61,6 +67,8 @@ export const parseRawConfiguration = (
 	DB_USER: raw.DB_USER,
 	DB_PORT: parseInt(raw.DB_PORT, 10),
 	DB_POOL_SIZE: parseInt(raw.DB_POOL_SIZE, 10),
+
+	HOST_NAME: raw.HOST_NAME,
 
 	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN,
 });
