@@ -149,73 +149,79 @@ export default class App extends React.Component<
 	}
 
 	public render() {
-		return (
+		return this.renderWithProviders(
 			<>
-				<MemberDetailsProvider
-					value={{
-						member: this.state.fullMember,
-						fullMember: this.state.member,
-					}}
-				>
-					<MemberListProvider
-						value={{
-							state: this.state.memberList,
-							updateList: this.updateMemberList,
-						}}
-					>
-						<TeamListProvider
-							value={{
-								state: this.state.teamList,
-								updateList: this.updateTeamList,
-							}}
-						>
-							<Header
-								loadingError={this.state.loadError}
-								registry={Maybe.fromValue(this.state.Registry)}
-							/>
-							{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
-							<div className="background">
-								<div className="main-content-bottom" />
-							</div>
-							<SideNavigation
-								links={this.state.sideNavLinks}
+				<Header
+					loadingError={this.state.loadError}
+					registry={Maybe.fromValue(this.state.Registry)}
+				/>
+				{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
+				<div className="background">
+					<div className="main-content-bottom" />
+				</div>
+				<SideNavigation
+					links={this.state.sideNavLinks}
+					member={this.state.fullMember}
+					fullMemberDetails={this.state.member}
+					authorizeUser={this.authorizeUser}
+				/>
+				<div className="content-border left-border" />
+				<main>
+					<div className="main-content">
+						<div id="fb-root" />
+						<BreadCrumbs links={this.state.breadCrumbs} />
+						{this.state.loading ? null : (
+							<GlobalNotification account={this.state.account!} />
+						)}
+						{this.state.loading ? (
+							<Loader />
+						) : this.state.loadError ? (
+							<div>The account does not exist</div>
+						) : (
+							<PageRouter
+								updateApp={this.update}
+								updateSideNav={this.updateSideNav}
+								updateBreadCrumbs={this.updateBreadCrumbs}
 								member={this.state.fullMember}
 								fullMemberDetails={this.state.member}
+								account={this.state.account!}
 								authorizeUser={this.authorizeUser}
+								registry={this.state.Registry!}
+								key="pagerouter"
 							/>
-							<div className="content-border left-border" />
-							<main>
-								<div className="main-content">
-									<div id="fb-root" />
-									<BreadCrumbs links={this.state.breadCrumbs} />
-									{this.state.loading ? null : (
-										<GlobalNotification account={this.state.account!} />
-									)}
-									{this.state.loading ? (
-										<Loader />
-									) : this.state.loadError ? (
-										<div>The account does not exist</div>
-									) : (
-										<PageRouter
-											updateApp={this.update}
-											updateSideNav={this.updateSideNav}
-											updateBreadCrumbs={this.updateBreadCrumbs}
-											member={this.state.fullMember}
-											fullMemberDetails={this.state.member}
-											account={this.state.account!}
-											authorizeUser={this.authorizeUser}
-											registry={this.state.Registry!}
-											key="pagerouter"
-										/>
-									)}
-								</div>
-							</main>
-							<div className="content-border right-border" />
-							<Footer registry={Maybe.fromValue(this.state.Registry)} />
-						</TeamListProvider>
-					</MemberListProvider>
-				</MemberDetailsProvider>
-			</>
+						)}
+					</div>
+				</main>
+				<div className="content-border right-border" />
+				<Footer registry={Maybe.fromValue(this.state.Registry)} />
+			</>,
+		);
+	}
+
+	private renderWithProviders(el: JSX.Element): JSX.Element {
+		return (
+			<MemberDetailsProvider
+				value={{
+					member: this.state.fullMember,
+					fullMember: this.state.member,
+				}}
+			>
+				<MemberListProvider
+					value={{
+						state: this.state.memberList,
+						updateList: this.updateMemberList,
+					}}
+				>
+					<TeamListProvider
+						value={{
+							state: this.state.teamList,
+							updateList: this.updateTeamList,
+						}}
+					>
+						{el}
+					</TeamListProvider>
+				</MemberListProvider>
+			</MemberDetailsProvider>
 		);
 	}
 
@@ -250,19 +256,43 @@ export default class App extends React.Component<
 		this.forceUpdate();
 	}
 
+	private currentTeamsListRequestInProgress: boolean = false;
 	private async updateTeamList() {
+		if (this.currentTeamsListRequestInProgress) {
+			return;
+		}
+
+		this.currentTeamsListRequestInProgress = true;
+
 		const result = await fetchApi.team.list({}, {});
 
-		this.setState({
-			teamList: result,
-		});
+		this.setState(
+			{
+				teamList: result,
+			},
+			() => {
+				this.currentTeamsListRequestInProgress = false;
+			},
+		);
 	}
 
+	private currentMembersListRequestInProgress: boolean = false;
 	private async updateMemberList() {
+		if (this.currentMembersListRequestInProgress) {
+			return;
+		}
+
+		this.currentMembersListRequestInProgress = true;
+
 		const result = await fetchApi.member.memberList({}, {});
 
-		this.setState({
-			memberList: result,
-		});
+		this.setState(
+			{
+				memberList: result,
+			},
+			() => {
+				this.currentMembersListRequestInProgress = false;
+			},
+		);
 	}
 }
