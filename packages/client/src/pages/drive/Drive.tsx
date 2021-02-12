@@ -112,7 +112,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 		super(props);
 
 		this.onFileClick = this.onFileClick.bind(this);
-		this.onFolderClick = this.onFolderClick.bind(this);
+		this.onFolderNavigate = this.onFolderNavigate.bind(this);
 
 		this.createFolder = this.createFolder.bind(this);
 		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
@@ -295,7 +295,8 @@ export class Drive extends Page<DriveProps, DriveState> {
 									<DriveFolderDisplay
 										key={j}
 										file={f}
-										onSelect={this.onFolderClick}
+										onFolderNavigate={this.onFolderNavigate}
+										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 										fileDeleteID={this.fileIDDeleted}
@@ -366,19 +367,8 @@ export class Drive extends Page<DriveProps, DriveState> {
 		);
 	}
 
-	private onFolderClick(file: FileObject) {
-		if (file.id === this.state.currentlySelected) {
-			this.goToFolder(file.id, true);
-			this.setState({
-				currentlySelected: '',
-				showingExtraInfo: true,
-			});
-		} else {
-			this.setState({
-				currentlySelected: file.id,
-				showingExtraInfo: false,
-			});
-		}
+	private onFolderNavigate(file: FileObject) {
+		this.goToFolder(file.id, true);
 	}
 
 	private onFileClick(file: FileObject) {
