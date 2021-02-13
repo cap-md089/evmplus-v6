@@ -219,8 +219,8 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 				getFilePath(schema)(member)(parent).map(path => [
 					...path,
 					{
-						id: parent.id,
-						name: parent.fileName,
+						id: file.id,
+						name: file.fileName,
 					},
 				]),
 		  );
