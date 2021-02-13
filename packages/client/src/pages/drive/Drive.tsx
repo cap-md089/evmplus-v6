@@ -291,9 +291,9 @@ export class Drive extends Page<DriveProps, DriveState> {
 					{rowedFolders.map((folderList, i) => (
 						<React.Fragment key={i}>
 							<div className="drive-folder-row">
-								{folderList.map((f, j) => (
+								{folderList.map(f => (
 									<DriveFolderDisplay
-										key={j}
+										key={f.id}
 										file={f}
 										onFolderNavigate={this.onFolderNavigate}
 										onSelect={this.onFileClick}
@@ -335,9 +335,9 @@ export class Drive extends Page<DriveProps, DriveState> {
 					{rowedFiles.map((fileList, i) => (
 						<React.Fragment key={i}>
 							<div className="drive-file-row">
-								{fileList.map((f, j) => (
+								{fileList.map(f => (
 									<DriveFileDisplay
-										key={j}
+										key={f.id}
 										file={f}
 										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
