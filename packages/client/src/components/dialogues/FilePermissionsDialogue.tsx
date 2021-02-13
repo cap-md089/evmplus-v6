@@ -410,6 +410,7 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 	const onChange = useCallback((_, value) => setSearch(value), [setSearch]);
 	const onSelect = useCallback((_, item) => onAddPersonOrGroup(item), [onAddPersonOrGroup]);
 
+	// eslint-disable-next-line
 	const handleAccountMemberChange = useCallback(
 		handleStaticPermissions(FileUserAccessControlType.ACCOUNTMEMBER)(
 			currentFile,
@@ -417,10 +418,12 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 		),
 		[currentFile, setCurrentFile],
 	);
+	// eslint-disable-next-line
 	const handleSignedInMemberChange = useCallback(
 		handleStaticPermissions(FileUserAccessControlType.SIGNEDIN)(currentFile, setCurrentFile),
 		[currentFile, setCurrentFile],
 	);
+	// eslint-disable-next-line
 	const handleOtherChange = useCallback(
 		handleStaticPermissions(FileUserAccessControlType.OTHER)(currentFile, setCurrentFile),
 		[currentFile, setCurrentFile],
