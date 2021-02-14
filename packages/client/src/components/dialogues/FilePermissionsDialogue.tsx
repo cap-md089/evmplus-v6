@@ -429,6 +429,11 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 		[currentFile, setCurrentFile],
 	);
 
+	const link =
+		file.contentType === 'application/folder'
+			? `https://${registry.accountID}.${process.env.REACT_APP_HOST_NAME}/drive/${file.id}`
+			: `https://${registry.accountID}.${process.env.REACT_APP_HOST_NAME}/api/files/${file.id}/download`;
+
 	return (
 		<Dialogue
 			open={open}
@@ -442,8 +447,7 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 			<div className="link-info">
 				<div>
 					<span ref={linkSpan} onClick={handleLinkSpanClick}>
-						https://{registry.accountID}.{process.env.REACT_APP_HOST_NAME}/api/files/
-						{file.id}/download
+						{link}
 					</span>
 				</div>
 				<div>
