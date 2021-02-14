@@ -19,9 +19,7 @@
 
 import * as Busboy from 'busboy';
 import {
-	AccountObject,
 	Either,
-	FileObject,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
 	FullFileObject,
@@ -31,12 +29,11 @@ import {
 	SessionType,
 	stringifyMemberReference,
 	toReference,
-	User,
 	userHasFilePermission,
 } from 'common-lib';
+import * as debug from 'debug';
 import {
 	accountRequestTransformer,
-	expandFileObject,
 	getFileObject,
 	getFilePath,
 	MySQLRequest,
@@ -51,6 +48,8 @@ export const isImage = (ending: string): boolean =>
 	['png', 'jpg', 'jpeg', 'gif', 'bmp'].includes(ending);
 
 const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
+
+const logFunc = debug('server:api:files:files:fileupload');
 
 /*
 	File data plan:
@@ -75,11 +74,11 @@ export const func = () =>
 			.flatMap(request =>
 				getFileObject(req.mysqlx)(request.account)(Maybe.some(request.member))(
 					getParentID(request.member),
-				).map<[User, AccountObject, RawFileObject]>(file => [
-					request.member,
-					request.account,
-					file,
-				]),
+				).flatMap(file =>
+					getFilePath(req.mysqlx)(Maybe.some(request.member))(file).map(
+						filePath => [request.member, request.account, file, filePath] as const,
+					),
+				),
 			)
 			.join();
 
@@ -96,7 +95,7 @@ export const func = () =>
 			return;
 		}
 
-		const [member, account, parent] = reqEither.value;
+		const [member, account, parent, parentPath] = reqEither.value;
 
 		const parentID = getParentID(member);
 
@@ -115,7 +114,6 @@ export const func = () =>
 			return;
 		}
 
-		const id = uuid().replace(/-/g, '');
 		const created = Date.now();
 
 		const filesCollection = req.mysqlx.getCollection<RawFileObject>('Files');
@@ -123,74 +121,102 @@ export const func = () =>
 
 		const busboy = new Busboy({
 			headers: req.headers,
-			limits: {
-				files: 1,
-				fields: 1,
-			},
 		});
 
 		req.pipe(busboy);
 
 		let sentFile = false;
 
-		busboy.on('file', (fieldName, file, fileName, encoding, contentType) => {
-			sentFile = true;
+		logFunc('Handling file uploads');
 
-			const uploadedFile: RawFileObject = {
-				kind: 'drive#file',
-				id,
-				accountID: account.id,
-				comments: '',
-				contentType,
-				created,
-				fileName,
-				forDisplay: false,
-				forSlideshow: false,
-				permissions: [
-					{
-						type: FileUserAccessControlType.USER,
-						permission: FileUserAccessControlPermissions.READ,
-						reference: toReference(member),
-					},
-				],
-				owner,
-				parentID,
-			};
+		await new Promise<void>(resolve => {
+			const promises: Array<Promise<void>> = [];
 
-			Promise.all([
-				uploadFile(req.configuration)(uploadedFile)(file),
-				filesCollection.add(uploadedFile).execute(),
-			])
-				.then(async () => {
-					const fullFileObject: FullFileObject = await getFileObject(req.mysqlx)(account)(
-						Maybe.some(member),
-					)(id)
-						.flatMap<FullFileObject>(newFile =>
-							getFilePath(req.mysqlx)(Maybe.some(member))(newFile)
-								.map<FileObject>(folderPath => ({
-									...newFile,
-									folderPath,
-								}))
-								.flatMap<FullFileObject>(expandFileObject(req.mysqlx)(account)),
-						)
-						.fullJoin();
+			busboy.on('file', (fieldName, file, fileName, encoding, contentType) => {
+				logFunc('new file incoming', fileName);
+				const id = uuid().replace(/-/g, '');
 
-					res.json(fullFileObject);
+				let shouldWriteComma = true;
+				if (!sentFile) {
+					res.status(200);
+					res.write('[');
+					shouldWriteComma = false;
+				}
 
-					await req.mysqlxSession.close();
-				})
-				.catch(err => {
-					saveServerError(err, req);
-					res.status(500);
-					res.end();
-				});
-		});
+				sentFile = true;
 
-		busboy.on('end', () => {
-			if (!sentFile) {
-				res.status(400);
-				res.end();
-			}
+				const uploadedFile: RawFileObject = {
+					kind: 'drive#file',
+					id,
+					accountID: account.id,
+					comments: '',
+					contentType,
+					created,
+					fileName,
+					forDisplay: false,
+					forSlideshow: false,
+					permissions: [
+						{
+							type: FileUserAccessControlType.USER,
+							permission: FileUserAccessControlPermissions.READ,
+							reference: toReference(member),
+						},
+					],
+					owner,
+					parentID,
+				};
+
+				promises.push(
+					Promise.all([
+						uploadFile(req.configuration)(uploadedFile)(file),
+						filesCollection.add(uploadedFile).execute(),
+					])
+						.then(async () => {
+							const fullFileObject: FullFileObject = {
+								...uploadedFile,
+								folderPath: [
+									...parentPath,
+									{
+										id,
+										name: fileName,
+									},
+								],
+								uploader: Maybe.some(member),
+							};
+
+							logFunc('added file, writing metadata', fileName);
+
+							res.write(
+								(shouldWriteComma ? ', ' : '') + JSON.stringify(fullFileObject),
+							);
+						})
+						.catch(err => {
+							logFunc('encountered error', err);
+							saveServerError(err, req);
+							res.status(500);
+							res.end();
+						}),
+				);
+			});
+
+			busboy.on('finish', () => {
+				Promise.all(promises)
+					.then(() => {
+						logFunc('ended file upload');
+						if (!sentFile) {
+							res.status(400);
+							res.end();
+						} else {
+							res.write(']');
+							res.end();
+						}
+					})
+					.then(() => req.mysqlxSession.close())
+					.then(() => {
+						logFunc('closed mysql session');
+						resolve();
+					});
+			});
 		});
 	});
 
