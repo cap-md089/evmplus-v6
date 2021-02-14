@@ -166,6 +166,11 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 				type: 'Reference',
 			},
 			{
+				target: 'file-attachments',
+				text: 'File Attachments',
+				type: 'Reference',
+			},
+			{
 				target: 'extra-information',
 				text: 'Extra Information',
 				type: 'Reference',

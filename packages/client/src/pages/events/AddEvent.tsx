@@ -136,6 +136,11 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				type: 'Reference',
 			},
 			{
+				target: 'file-attachments',
+				text: 'File Attachments',
+				type: 'Reference',
+			},
+			{
 				target: 'extra-information',
 				text: 'Extra Information',
 				type: 'Reference',

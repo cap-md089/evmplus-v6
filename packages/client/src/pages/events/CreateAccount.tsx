@@ -127,6 +127,11 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 				type: 'Reference',
 			},
 			{
+				target: 'file-attachments',
+				text: 'File Attachments',
+				type: 'Reference',
+			},
+			{
 				target: 'extra-information',
 				text: 'Extra Information',
 				type: 'Reference',
