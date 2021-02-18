@@ -60,6 +60,7 @@ export const getClient = () =>
 				'GUILDS',
 				'DIRECT_MESSAGES',
 				'GUILD_PRESENCES',
+				'GUILD_VOICE_STATES',
 			],
 		},
 	});
@@ -297,9 +298,11 @@ export default function setupDiscordBot(
 	client.on('message', message => {
 		const parts = message.content.split(' ');
 
+		emitter.extend('message')('Received message');
+
 		if (parts[0] === `<@!${client.user?.id}>` && message.member?.id !== client.user?.id) {
 			if (parts.length < 2) {
-				message.reply('Command needed; known commands are "attendancerecord"');
+				message.reply('Command needed; known command is "attendancerecord"');
 				return;
 			}
 
@@ -307,6 +310,10 @@ export default function setupDiscordBot(
 				case 'attendancerecord':
 					attendancerecord(client)(mysqlClient)(conf)(parts)(message);
 
+					break;
+
+				default:
+					message.reply('Unknown command; known command is "attendancerecord"');
 					break;
 			}
 		}
