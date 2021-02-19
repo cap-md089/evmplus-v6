@@ -85,13 +85,13 @@ services:
         networks:
             - default
 
-    pre-build:
+    dev-setup:
         build:
             context: .
             target: development-builder
         volumes:
             - .:/usr/evm-plus
-        command: sh -c 'lerna bootstrap && lerna run build --ignore client'
+        command: sh -c 'git config core.hooksPath hooks && lerna bootstrap && lerna run build --ignore client'
 
     build-watch:
         build:
