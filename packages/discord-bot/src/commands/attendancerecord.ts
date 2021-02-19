@@ -197,7 +197,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
 		const fullInfoEither = await AsyncEither.All([
-			getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
+			getAttendanceForEvent(schema)(Maybe.none())(event).map(collectGeneratorAsync),
 			getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
 		]);
 
