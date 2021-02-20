@@ -31,7 +31,8 @@ FROM base AS development-builder
 
 WORKDIR /usr/evm-plus
 
-RUN yarn global add typescript ttypescript
+RUN yarn global add typescript ttypescript \
+	&& apk add git
 
 #
 # This container is used to program in a Docker environment, and access
