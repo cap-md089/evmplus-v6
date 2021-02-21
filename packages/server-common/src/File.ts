@@ -27,7 +27,6 @@ import {
 	asyncIterConcat,
 	asyncIterFilter,
 	asyncIterMap,
-	asyncIterTap,
 	asyncLeft,
 	asyncRight,
 	destroy,

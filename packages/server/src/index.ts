@@ -30,13 +30,11 @@ if (require.main === module) {
 	(async () => {
 		const configuration = await getConf();
 
-		const { finishServerSetup, capwatchEmitter, mysqlConn } = await getServer(configuration);
+		const { capwatchEmitter, mysqlConn } = await getServer(configuration);
 
 		setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
 
 		createSocketUI(configuration, mysqlConn);
-
-		finishServerSetup();
 	})().catch(e => {
 		console.error(e);
 		process.exit(1);

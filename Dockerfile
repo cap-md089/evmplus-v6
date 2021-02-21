@@ -83,6 +83,15 @@ COPY tsconfig.* ./
 RUN lerna run build
 
 #
+# By creating an nginx container like this, we can statically serve HTML,
+# JS, and CSS without bogging down the Node process
+#
+FROM nginx:1.15-alpine as website-proxy
+
+COPY --from=builder /usr/evm-plus/packages/client/build /usr/evm-plus/client
+COPY packages/server/images /usr/evm-plus/client/images
+
+#
 # This container is used to execute the compiled JavaScript
 #
 FROM base AS website-runner
