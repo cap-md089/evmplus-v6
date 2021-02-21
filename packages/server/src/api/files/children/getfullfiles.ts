@@ -40,7 +40,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx))
+		.flatMap(getChildren(req.mysqlx)(req.account)(req.member))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
 		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(req.member)))
 		.map(

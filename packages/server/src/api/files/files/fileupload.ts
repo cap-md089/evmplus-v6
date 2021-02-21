@@ -75,7 +75,7 @@ export const func = () =>
 				getFileObject(req.mysqlx)(request.account)(Maybe.some(request.member))(
 					getParentID(request.member),
 				).flatMap(file =>
-					getFilePath(req.mysqlx)(Maybe.some(request.member))(file).map(
+					getFilePath(req.mysqlx)(request.account)(Maybe.some(request.member))(file).map(
 						filePath => [request.member, request.account, file, filePath] as const,
 					),
 				),
