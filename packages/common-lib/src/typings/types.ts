@@ -1696,14 +1696,6 @@ export interface CAPMemberContact {
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	ALPHAPAGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	ASSISTANT: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	CADETPARENTEMAIL: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
@@ -1716,39 +1708,11 @@ export interface CAPMemberContact {
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	DIGITALPAGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	EMAIL: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	HOMEFAX: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	HOMEPHONE: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	INSTANTMESSENGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	ISDN: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	RADIO: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	TELEX: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	WORKFAX: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
@@ -4068,7 +4032,7 @@ export type AllAudits =
 	| AttendanceAuditEvents
 	| FileAuditEvents
 	| ProspectiveMemberAudits
-	| PermissionsAudits
+	| PermissionsAudits;
 
 export interface CadetPromotionRequirements {
 	/**
