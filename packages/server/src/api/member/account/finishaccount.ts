@@ -20,7 +20,6 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncRight, errorGenerator } from 'common-lib';
 import { PAM } from 'server-common';
-import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = req =>
 	asyncRight(
@@ -39,7 +38,14 @@ export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = re
 		)
 		.map(PAM.simplifyUserInformation)
 		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
-		.map(({ id }) => ({ sessionID: id }))
-		.map(wrapper);
+		.map(({ id, expires }) => ({
+			response: {},
+			cookies: {
+				sessionID: {
+					expires,
+					value: id,
+				},
+			},
+		}));
 
 export default func;
