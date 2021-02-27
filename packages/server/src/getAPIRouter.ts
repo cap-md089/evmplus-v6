@@ -27,7 +27,6 @@ import {
 	Validator,
 } from 'common-lib';
 import * as cors from 'cors';
-import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as logger from 'morgan';
 import { getAccountID, MySQLRequest } from 'server-common';
@@ -52,7 +51,11 @@ import favicon from './favicon';
 // Server libraries
 import { endpointAdder } from './lib/API';
 
-export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
+export default async (
+	conf: ServerConfiguration,
+	capwatchUpdateEmitter: MemberUpdateEventEmitter,
+	mysqlConn?: mysql.Client,
+) => {
 	if (!mysqlConn) {
 		while (true) {
 			try {
@@ -85,8 +88,6 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 
 	const router: express.Router = express.Router();
 
-	const updateEmitter: MemberUpdateEventEmitter = new EventEmitter();
-
 	const corsOptions: cors.CorsOptions = {
 		origin(origin, callback) {
 			if (
@@ -118,7 +119,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 			const session = await mysqlConn!.getSession();
 
 			req.mysqlx = session.getSchema(conf.DB_SCHEMA);
-			req.memberUpdateEmitter = updateEmitter;
+			req.memberUpdateEmitter = capwatchUpdateEmitter;
 			req.mysqlxSession = session;
 			req.configuration = conf;
 			req._originalUrl = req.originalUrl;
@@ -198,7 +199,7 @@ export default async (conf: ServerConfiguration, mysqlConn?: mysql.Client) => {
 
 	return {
 		router,
-		capwatchEmitter: updateEmitter,
+		capwatchEmitter: capwatchUpdateEmitter,
 		mysqlConn,
 	};
 };

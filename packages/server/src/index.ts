@@ -30,18 +30,32 @@ console.log = console.log.bind(console);
 
 if (require.main === module) {
 	if (isMaster) {
+		const forkCount = cpus().length * 2;
+
+		console.log('Spawning', forkCount, 'workers');
 		for (let i = 0; i < cpus().length * 2; i++) {
-			fork();
+			const child = fork();
+
+			child.on('message', msg => {
+				if (msg === 'ready' && i === 0) {
+					child.send('setupExtra');
+				}
+			});
 		}
 	} else {
 		(async () => {
 			const configuration = await getConf();
+			const { mysqlConn, capwatchEmitter } = await getServer(configuration);
 
-			const { capwatchEmitter, mysqlConn } = await getServer(configuration);
+			process.on('message', msg => {
+				console.log('Got message:', msg);
+				if (msg === 'setupExtra') {
+					setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+					createSocketUI(configuration, mysqlConn);
+				}
+			});
 
-			setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
-
-			createSocketUI(configuration, mysqlConn);
+			process.send!('ready');
 		})().catch(e => {
 			console.error(e);
 			process.exit(1);
