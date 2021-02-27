@@ -22,6 +22,7 @@ import {
 	Either,
 	EitherObj,
 	FileObject,
+	FileUserAccessControlPermissions,
 	FullFileObject,
 	FullTeamObject,
 	get,
@@ -31,6 +32,7 @@ import {
 	Member,
 	Permissions,
 	RawTeamObject,
+	userHasFilePermission,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
@@ -263,12 +265,17 @@ export class Drive extends Page<DriveProps, DriveState> {
 			}
 		}
 
+		const isEditableFolder =
+			this.props.member &&
+			(hasPermission('FileManagement')(Permissions.FileManagement.FULL)(this.props.member) ||
+				userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(
+					this.props.member,
+				)) &&
+			this.state.currentFolder.id !== 'personalfolders';
+
 		return (
 			<div>
-				{this.props.member &&
-				hasPermission('FileManagement')(Permissions.FileManagement.FULL)(
-					this.props.member,
-				) ? (
+				{isEditableFolder ? (
 					<div>
 						<Form<{ name: string }>
 							id=""
@@ -322,7 +329,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 						</React.Fragment>
 					))}
 				</div>
-				{this.props.member ? (
+				{this.props.member && isEditableFolder ? (
 					<FileUploader
 						onFileUpload={this.addFile}
 						member={this.props.member}

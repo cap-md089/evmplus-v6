@@ -1,7 +1,9 @@
 version: '3.8'
 services:
     proxy:
-        image: nginx:1.15-alpine
+        build:
+            context: .
+            target: website-proxy
         networks:
             - frontend
         ports:
@@ -45,7 +47,7 @@ services:
             - DB_POOL_SIZE=50
             - PORT=3001
             - DRIVE_STORAGE_PATH=/srv/uploads
-            - HOST_NAME=evmplus.org
+            - HOST_NAME=localevmplus.org
             - NODE_ENV=production
         volumes:
             - type: bind

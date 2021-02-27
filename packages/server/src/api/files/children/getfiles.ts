@@ -43,7 +43,7 @@ export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx))
+		.flatMap(getChildren(req.mysqlx)(req.account)(req.member))
 		.map(
 			asyncIterTap(file =>
 				logFunc.extend('permissions')('Checking file for permissions: %o', file),

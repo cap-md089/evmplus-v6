@@ -18,7 +18,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { fork, isMaster } from 'cluster';
 import setupDiscordBot from 'discord-bot';
+import { cpus } from 'os';
 import { getConf } from 'server-common';
 import { api } from './api';
 import { createSocketUI } from './createSocketUI';
@@ -27,20 +29,24 @@ import getServer from './getServer';
 console.log = console.log.bind(console);
 
 if (require.main === module) {
-	(async () => {
-		const configuration = await getConf();
+	if (isMaster) {
+		for (let i = 0; i < cpus().length * 2; i++) {
+			fork();
+		}
+	} else {
+		(async () => {
+			const configuration = await getConf();
 
-		const { finishServerSetup, capwatchEmitter, mysqlConn } = await getServer(configuration);
+			const { capwatchEmitter, mysqlConn } = await getServer(configuration);
 
-		setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+			setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
 
-		createSocketUI(configuration, mysqlConn);
-
-		finishServerSetup();
-	})().catch(e => {
-		console.error(e);
-		process.exit(1);
-	});
+			createSocketUI(configuration, mysqlConn);
+		})().catch(e => {
+			console.error(e);
+			process.exit(1);
+		});
+	}
 }
 
 process.on('unhandledRejection', up => {

@@ -202,20 +202,11 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 	public state: CreateAccountState = {
 		form: {
 			contact: {
-				ALPHAPAGER: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				ASSISTANT: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				CADETPARENTEMAIL: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				CADETPARENTPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				CELLPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				DIGITALPAGER: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				EMAIL: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				HOMEFAX: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				HOMEPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				INSTANTMESSENGER: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				ISDN: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				RADIO: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				TELEX: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
-				WORKFAX: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 				WORKPHONE: { EMERGENCY: '', PRIMARY: '', SECONDARY: '' },
 			},
 			flight: this.props.registry.RankAndFile.Flights.length,

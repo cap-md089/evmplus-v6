@@ -171,24 +171,3 @@ This will take advantage of the hosting and support already available, and will 
 CAPWATCH data for all Maryland Wing members and units is already being handled.
 
 There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a evmplus.org hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
-
-## Developing EvMPlus.org
-
-The software requirements for developing EvMPlus are the same as for running it in a production environment; Docker and docker-compose. It is highly recommended that you enable Docker BuildKit to build the development environment and for other builds. All of the same configuration that the production environment uses is needed, with the exception of the AWS DNS setup.
-
-To develop EvMPlus.org, first download a copy of this repository and create an initial build of the repository:
-
-```
-git pull https://github.com/cap-md089/evmplus-v6.git
-cd evmplus-v6
-git checkout development
-docker-compose -f docker-compose.dev.yml up dev-setup
-```
-
-To download CAPWATCH data to help with testing, run `docker-compose -f docker-compose.dev.yml up capwatch_update`
-
-To start the main server and client, run `docker-compose -f docker-compose.dev.yml up -d main client_dev_server`
-
-To build the code and watch for changes while developing, run `docker-compose -f docker-compose.dev.yml up -d build-watch`
-
-To use either the mysqlsh or util-cli command line utilities, run `docker-compose -f docker-compose.dev.yml up -d mysqlsh` or `docker-compose -f docker-compose.dev.yml up -d util-cli` respectively, and then attach to the created container using `docker attach [container name]`

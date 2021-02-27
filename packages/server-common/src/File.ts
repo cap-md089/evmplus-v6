@@ -21,22 +21,31 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	always,
+	areMembersTheSame,
 	AsyncEither,
+	AsyncIter,
 	asyncIterConcat,
+	asyncIterFilter,
+	asyncIterMap,
 	asyncLeft,
 	asyncRight,
 	destroy,
+	effectiveManageEventPermission,
 	Either,
+	EitherObj,
 	errorGenerator,
 	FileObject,
 	FileUserAccessControlPermissions,
 	FileUserAccessControlType,
 	FullFileObject,
 	get,
+	getFullMemberName,
 	Maybe,
 	MaybeObj,
+	Member,
 	MemberReference,
 	parseStringMemberReference,
+	Permissions,
 	RawFileObject,
 	Right,
 	ServerConfiguration,
@@ -50,6 +59,7 @@ import * as debug from 'debug';
 import { createReadStream, createWriteStream, unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
+import { getMembers } from './Account';
 import { resolveReference } from './Members';
 import {
 	collectResults,
@@ -64,55 +74,114 @@ import { ServerEither } from './servertypes';
 const logFunc = debug('server-common:file');
 const promisifiedUnlink = promisify(unlink);
 
-export const getUserFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MemberReference,
-): ServerEither<FileObject> =>
-	AsyncEither.All([
-		getRootFileObject(schema)(account),
-		asyncRight(
-			schema.getCollection<RawFileObject>('Files'),
-			errorGenerator('Could not get user drive'),
-		)
-			.map(
-				findAndBindC<RawFileObject>({
-					accountID: account.id,
-					parentID: stringifyMemberReference(member),
-				}),
-			)
-			.map(collectResults)
-			.map(fileChildren => fileChildren.map(get('id'))),
-	]).map(([root, fileChildren]) => ({
-		accountID: account.id,
-		comments: '',
-		contentType: 'application/folder',
-		created: 0,
-		fileChildren: [root, ...fileChildren],
-		fileName: 'Personal Drive',
-		forDisplay: false,
-		forSlideshow: false,
-		kind: 'drive#file',
-		permissions: [
-			{
-				type: FileUserAccessControlType.USER,
-				permission: FileUserAccessControlPermissions.FULLCONTROL,
-				reference: toReference(member),
-			},
-		],
-		id: stringifyMemberReference(member),
-		parentID: null,
-		owner: toReference(member),
-		folderPath: [
-			{
-				id: stringifyMemberReference(member),
-				name: 'Personal Drive',
-			},
-		],
-	}));
+export const EVENTS_FOLDER_ID = 'events';
+export const ROOT_FOLDER_ID = 'root';
+export const PERSONAL_DRIVES_FOLDER_ID = 'personalfolders';
 
-export const getRootFileObjectForUser = (schema: Schema) => (account: AccountObject) => (
+export const getExtraRootFilesForUser = (account: AccountObject) => (
+	user: MaybeObj<User>,
+): RawFileObject[] => [
+	getEventsFolderObject(account)(user),
+	getPersonalFoldersParentFolder(account),
+];
+
+type LoadedUserFileObject<T extends boolean> = T extends true
+	? { file: FileObject; fileChildrenCount: number }
+	: { file: FileObject };
+
+export const getUserFileObjectFunc = <T extends boolean>(loadFileChildrenCount: T) => (
+	schema: Schema,
+) => (account: AccountObject) => (requester: User) => (
+	member: MemberReference | Member,
+): ServerEither<LoadedUserFileObject<T>> =>
+	AsyncEither.All([
+		areMembersTheSame(requester)(member)
+			? asyncRight(requester, errorGenerator('Could not get member information'))
+			: 'contact' in member
+			? asyncRight(member, errorGenerator('Could not get member information'))
+			: resolveReference(schema)(account)(member),
+		loadFileChildrenCount
+			? asyncRight(
+					schema
+						.getSession()
+						.sql(
+							`
+						SELECT
+							COUNT(*) AS fileChildrenCount
+						FROM
+							${schema.getName()}.Files
+						WHERE
+							parentID = ?
+						AND
+							accountID = ?;
+					`,
+						)
+						.bind([stringifyMemberReference(member), account.id])
+						.execute(),
+					errorGenerator('Could not get file children information'),
+			  ).map(result => {
+					const [[count]] = result.fetchAll();
+					logFunc.extend('personaldrive').extend('raw')(
+						'Raw SQL results for %s: %o',
+						stringifyMemberReference(member),
+						count,
+					);
+					return count as number;
+			  })
+			: asyncRight(0, errorGenerator('Could not get file children information')),
+	]).map(([folderOwner, fileChildrenCount]) => {
+		logFunc.extend('personaldrive')(
+			'File children count for personal drive for %s: %d',
+			getFullMemberName(folderOwner),
+			fileChildrenCount,
+		);
+
+		const file = {
+			accountID: account.id,
+			comments: '',
+			contentType: 'application/folder',
+			created: 0,
+			fileName: areMembersTheSame(folderOwner)(requester)
+				? 'Personal Drive'
+				: `${getFullMemberName(folderOwner)}'s Personal Drive`,
+			forDisplay: false,
+			forSlideshow: false,
+			kind: 'drive#file',
+			permissions: [
+				{
+					type: FileUserAccessControlType.USER,
+					permission: FileUserAccessControlPermissions.FULLCONTROL,
+					reference: toReference(member),
+				},
+			],
+			id: stringifyMemberReference(member),
+			parentID: areMembersTheSame(folderOwner)(requester) ? null : PERSONAL_DRIVES_FOLDER_ID,
+			owner: toReference(member),
+			folderPath: [
+				{
+					id: stringifyMemberReference(member),
+					name: 'Personal Drive',
+				},
+			],
+		};
+
+		return loadFileChildrenCount
+			? ({
+					file,
+					fileChildrenCount,
+			  } as LoadedUserFileObject<T>)
+			: ({
+					file,
+			  } as LoadedUserFileObject<T>);
+	});
+export const getUserFileObject = getUserFileObjectFunc(false);
+
+export const getRootFileObjectForUser = (account: AccountObject) => (
 	memberMaybe: MaybeObj<User>,
-): ServerEither<FileObject> =>
-	getRootFileObject(schema)(account).map(root => ({
+): FileObject => {
+	const root = getRootFileObject(account);
+
+	return {
 		...root,
 		folderPath: Maybe.orSome(root.folderPath)(
 			Maybe.map((member: User) => [
@@ -121,59 +190,103 @@ export const getRootFileObjectForUser = (schema: Schema) => (account: AccountObj
 					name: 'Personal Drive',
 				},
 				{
-					id: 'root',
+					id: ROOT_FOLDER_ID,
 					name: 'Drive',
 				},
 			])(memberMaybe),
 		),
-	}));
+	};
+};
 
-export const getRootFileObject = (schema: Schema) => (
-	account: AccountObject,
-): ServerEither<FileObject> =>
-	asyncRight(
-		schema.getCollection<RawFileObject>('Files'),
-		errorGenerator('Could not get root file'),
-	)
-		.map(
-			findAndBindC<RawFileObject>({
-				accountID: account.id,
-				parentID: 'root',
-			}),
-		)
-		.map(collectResults)
-		.map(fileChildren => fileChildren.map(get('id')))
-		.map(fileChildren => ({
-			accountID: account.id,
-			comments: '',
-			contentType: 'application/folder',
-			created: 0,
-			fileChildren,
-			fileName: 'Drive',
-			forDisplay: false,
-			forSlideshow: false,
-			kind: 'drive#file',
-			permissions: [
-				{
-					permission: FileUserAccessControlPermissions.READ,
-					type: FileUserAccessControlType.ACCOUNTMEMBER,
-				},
-			],
-			id: 'root',
-			parentID: null,
-			owner: {
-				id: 542488,
-				type: 'CAPNHQMember',
-			},
-			folderPath: [
-				{
-					id: 'root',
-					name: 'Drive',
-				},
-			],
-		}));
+export const getRootFileObject = (account: AccountObject): FileObject => ({
+	accountID: account.id,
+	comments: '',
+	contentType: 'application/folder',
+	created: 0,
+	fileName: 'Drive',
+	forDisplay: false,
+	forSlideshow: false,
+	kind: 'drive#file',
+	permissions: [
+		{
+			permission: FileUserAccessControlPermissions.READ,
+			type: FileUserAccessControlType.ACCOUNTMEMBER,
+		},
+	],
+	id: ROOT_FOLDER_ID,
+	parentID: null,
+	owner: {
+		id: 542488,
+		type: 'CAPNHQMember',
+	},
+	folderPath: [
+		{
+			id: ROOT_FOLDER_ID,
+			name: 'Drive',
+		},
+	],
+});
 
-export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference>) => (
+export const getEventsFolderObject = (account: AccountObject) => (
+	user: MaybeObj<User>,
+): RawFileObject => ({
+	accountID: account.id,
+	comments: '',
+	contentType: 'application/folder',
+	created: 0,
+	fileName: 'Events',
+	forDisplay: false,
+	forSlideshow: false,
+	id: EVENTS_FOLDER_ID,
+	kind: 'drive#file',
+	owner: {
+		id: 542488,
+		type: 'CAPNHQMember',
+	},
+	parentID: ROOT_FOLDER_ID,
+	permissions:
+		Maybe.isNone(user) ||
+		effectiveManageEventPermission(user.value) === Permissions.ManageEvent.NONE
+			? []
+			: [
+					{
+						permission:
+							// Modify to help with managing of files currently there,
+							// read to see the files and the folder itself
+							// tslint:disable-next-line:no-bitwise
+							FileUserAccessControlPermissions.MODIFY |
+							FileUserAccessControlPermissions.READ,
+						type: FileUserAccessControlType.USER,
+						reference: toReference(user.value),
+					},
+			  ],
+});
+
+export const getPersonalFoldersParentFolder = (account: AccountObject): RawFileObject => ({
+	accountID: account.id,
+	comments: '',
+	contentType: 'application/folder',
+	created: 0,
+	fileName: 'Personal Drive Folders',
+	forDisplay: false,
+	forSlideshow: false,
+	id: PERSONAL_DRIVES_FOLDER_ID,
+	kind: 'drive#file',
+	owner: {
+		id: 542488,
+		type: 'CAPNHQMember',
+	},
+	parentID: ROOT_FOLDER_ID,
+
+	// If someone has file management permissions (the desired state for viewing this folder),
+	// they already have FULLCONTROL permissions for all files so I can just be lazy and leave
+	// that out here
+	permissions: [],
+});
+
+export const getFilePath = (schema: Schema) => (account: AccountObject) => (
+	member: MaybeObj<User>,
+) => (
 	file: RawFileObject,
 ): ServerEither<
 	{
@@ -181,7 +294,8 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 		name: string;
 	}[]
 > =>
-	file.id === 'root' && Maybe.isSome(member)
+	// The person viewing the file has a personal drive to view
+	file.id === ROOT_FOLDER_ID && Maybe.isSome(member)
 		? asyncRight(
 				[
 					{ id: stringifyMemberReference(member.value), name: 'Personal Drive' },
@@ -189,12 +303,18 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: file.parentID === null
+		: // Orphan file. Has no file path
+		file.parentID === null
 		? asyncRight(
 				[{ id: file.id, name: file.fileName }],
 				errorGenerator('Could not get file path'),
 		  )
-		: Either.isRight(parseStringMemberReference(file.parentID))
+		: // Person is viewing their own personal drive
+		Maybe.isSome(member) &&
+		  Either.isRight(parseStringMemberReference(file.parentID)) &&
+		  areMembersTheSame(
+				(parseStringMemberReference(file.parentID) as Right<MemberReference>).value,
+		  )(member.value)
 		? asyncRight(
 				[
 					{ id: file.parentID, name: 'Personal Drive' },
@@ -202,7 +322,19 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: file.parentID === 'root'
+		: // Person is viewing someone elses personal drive
+		Either.isRight(parseStringMemberReference(file.parentID))
+		? getFileObject(schema)(account)(member)(PERSONAL_DRIVES_FOLDER_ID).flatMap(parentFile =>
+				getFilePath(schema)(account)(member)(parentFile).map(path => [
+					...path,
+					{
+						id: file.id,
+						name: file.fileName,
+					},
+				]),
+		  )
+		: // The person is viewing a file in the root directory
+		file.parentID === ROOT_FOLDER_ID
 		? asyncRight(
 				[
 					...Maybe.orSome([] as { id: string; name: string }[])(
@@ -210,13 +342,14 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 							{ id: stringifyMemberReference(ref), name: 'Personal Drive' },
 						])(member),
 					),
-					{ id: 'root', name: 'Drive' },
+					{ id: ROOT_FOLDER_ID, name: 'Drive' },
 					{ id: file.id, name: file.fileName },
 				],
 				errorGenerator('Could not get file path'),
 		  )
-		: getRegularFileObject(schema)(member)(file.parentID).flatMap(parent =>
-				getFilePath(schema)(member)(parent).map(path => [
+		: // The person is viewing a file in a subfolder that isn't special enough to have a case above
+		  getFileObject(schema)(account)(member)(file.parentID).flatMap(parent =>
+				getFilePath(schema)(account)(member)(parent).map(path => [
 					...path,
 					{
 						id: file.id,
@@ -225,9 +358,9 @@ export const getFilePath = (schema: Schema) => (member: MaybeObj<MemberReference
 				]),
 		  );
 
-export const getRegularFileObject = (schema: Schema) => (member: MaybeObj<MemberReference>) => (
-	fileID: string,
-): ServerEither<RawFileObject> =>
+export const getRegularFileObject = (schema: Schema) => (account: AccountObject) => (
+	member: MaybeObj<User>,
+) => (fileID: string): ServerEither<RawFileObject> =>
 	asyncRight(
 		findAndBind(schema.getCollection<RawFileObject>('Files'), {
 			id: fileID,
@@ -242,7 +375,7 @@ export const getRegularFileObject = (schema: Schema) => (member: MaybeObj<Member
 		})
 		.map(get(0))
 		.flatMap(file =>
-			getFilePath(schema)(member)(file)
+			getFilePath(schema)(account)(member)(file)
 				.map(folderPath => ({
 					...file,
 					folderPath,
@@ -268,19 +401,32 @@ export const getFileObject = (schema: Schema) => (account: AccountObject) => (
 		  })
 		: asyncRight<ServerError, string>(fileID, errorGenerator('Could not get requested file'))
 	).flatMap(id =>
-		id === 'root'
-			? getRootFileObjectForUser(schema)(account)(member)
-			: Either.isRight(parseStringMemberReference(id)) && Maybe.isSome(member)
-			? getUserFileObject(schema)(account)(
-					(parseStringMemberReference(id) as Right<MemberReference>).value,
+		id === ROOT_FOLDER_ID
+			? asyncRight(
+					getRootFileObjectForUser(account)(member),
+					errorGenerator('Could not get requested file'),
 			  )
-			: getRegularFileObject(schema)(member)(id),
+			: id === EVENTS_FOLDER_ID
+			? asyncRight(
+					getEventsFolderObject(account)(member),
+					errorGenerator('Could not get requested file'),
+			  )
+			: id === PERSONAL_DRIVES_FOLDER_ID
+			? asyncRight(
+					getPersonalFoldersParentFolder(account),
+					errorGenerator('Could not get requested file'),
+			  )
+			: Either.isRight(parseStringMemberReference(id)) && Maybe.isSome(member)
+			? getUserFileObject(schema)(account)(member.value)(
+					(parseStringMemberReference(id) as Right<MemberReference>).value,
+			  ).map(get('file'))
+			: getRegularFileObject(schema)(account)(member)(id),
 	);
 
 export const expandRawFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<MemberReference>,
+	member: MaybeObj<User>,
 ) => (file: RawFileObject): ServerEither<FileObject> =>
-	getFilePath(schema)(member)(file).map(folderPath => ({
+	getFilePath(schema)(account)(member)(file).map(folderPath => ({
 		...file,
 		folderPath,
 	}));
@@ -303,7 +449,7 @@ export const expandFileObject = (schema: Schema) => (account: AccountObject) => 
 export const saveFileObject = (schema: Schema) => (
 	fileObject: RawFileObject,
 ): ServerEither<RawFileObject> =>
-	fileObject.id === 'root'
+	fileObject.id === ROOT_FOLDER_ID
 		? asyncLeft({
 				type: 'OTHER',
 				code: 400,
@@ -363,7 +509,7 @@ export const uploadFile = (conf: ServerConfiguration) => (file: RawFileObject) =
 export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) => (
 	account: AccountObject,
 ) => (file: RawFileObject): ServerEither<void> =>
-	file.id === 'root'
+	file.id === ROOT_FOLDER_ID
 		? asyncLeft({
 				type: 'OTHER' as const,
 				code: 400,
@@ -385,38 +531,73 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 				),
 		  ]).map(destroy);
 
-export const getChildren = (schema: Schema) => (
-	file: RawFileObject,
-): ServerEither<AsyncIterableIterator<RawFileObject>> => {
+export const getChildren = (schema: Schema) => (account: AccountObject) => (
+	requester: MaybeObj<User>,
+) => (file: RawFileObject): ServerEither<AsyncIter<RawFileObject>> => {
 	logFunc.extend('getChildren')('Getting children with query: %o', {
 		parentID: file.id,
 		accountID: file.accountID,
 	});
 
-	return asyncRight(
-		schema.getCollection<RawFileObject>('Files'),
-		errorGenerator('Could not get file children'),
-	)
-		.map(
-			findAndBindC<RawFileObject>({
-				parentID: file.id,
-				accountID: file.accountID,
-			}),
+	if (file.id === PERSONAL_DRIVES_FOLDER_ID && Maybe.isSome(requester)) {
+		return asyncRight(
+			getMembers(schema)(account)(),
+			errorGenerator('Could not get member information'),
 		)
-		.map(generateResults)
-		.tap(() => {
-			if (Either.isRight(parseStringMemberReference(file.id))) {
-				logFunc.extend('getChildren')(
-					'Getting root file object, as this file is a personal drive',
-				);
-			}
-		})
-		.flatMap(results =>
-			Either.isRight(parseStringMemberReference(file.id))
-				? getRootFileObject(schema)({ id: file.accountID } as AccountObject)
-						.map(yieldObjAsync)
-						.map(always)
-						.map(asyncIterConcat(results))
-				: asyncRight(results, errorGenerator('Could not get file children')),
-		);
+			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
+			.map(asyncIterMap(get('value')))
+			.map(asyncIterMap(getUserFileObjectFunc(true)(schema)(account)(requester.value)))
+			.map(
+				asyncIterFilter<
+					EitherObj<ServerError, { file: FileObject; fileChildrenCount: number }>,
+					Right<{ file: FileObject; fileChildrenCount: number }>
+				>(Either.isRight),
+			)
+			.map(
+				asyncIterFilter(personalFolder => {
+					if (personalFolder.value.fileChildrenCount > 0) {
+						console.log(personalFolder.value.file);
+					}
+					return personalFolder.value.fileChildrenCount > 0;
+				}),
+			)
+			.map(asyncIterMap(({ value: { file: personalFile } }) => personalFile));
+	} else {
+		return asyncRight(
+			schema.getCollection<RawFileObject>('Files'),
+			errorGenerator('Could not get file children'),
+		)
+			.map(
+				findAndBindC<RawFileObject>({
+					parentID: file.id,
+					accountID: file.accountID,
+				}),
+			)
+			.map(generateResults)
+			.tap(() => {
+				if (Either.isRight(parseStringMemberReference(file.id))) {
+					logFunc.extend('getChildren')(
+						'Getting root file object, as this file is a personal drive',
+					);
+				}
+			})
+			.flatMap(results =>
+				Either.isRight(parseStringMemberReference(file.id))
+					? asyncRight(
+							getRootFileObject({ id: file.accountID } as AccountObject),
+							errorGenerator('Could not get file information'),
+					  )
+							.map(yieldObjAsync)
+							.map(always)
+							.map(asyncIterConcat(results))
+					: file.id === ROOT_FOLDER_ID
+					? asyncRight<ServerError, typeof results>(
+							asyncIterConcat(results)(() =>
+								getExtraRootFilesForUser(account)(requester),
+							),
+							errorGenerator('Could not get file children'),
+					  )
+					: asyncRight(results, errorGenerator('Could not get file children')),
+			);
+	}
 };

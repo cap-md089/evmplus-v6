@@ -75,7 +75,7 @@ export const func = () =>
 				getFileObject(req.mysqlx)(request.account)(Maybe.some(request.member))(
 					getParentID(request.member),
 				).flatMap(file =>
-					getFilePath(req.mysqlx)(Maybe.some(request.member))(file).map(
+					getFilePath(req.mysqlx)(request.account)(Maybe.some(request.member))(file).map(
 						filePath => [request.member, request.account, file, filePath] as const,
 					),
 				),
@@ -136,15 +136,6 @@ export const func = () =>
 				logFunc('new file incoming', fileName);
 				const id = uuid().replace(/-/g, '');
 
-				let shouldWriteComma = true;
-				if (!sentFile) {
-					res.status(200);
-					res.write('[');
-					shouldWriteComma = false;
-				}
-
-				sentFile = true;
-
 				const uploadedFile: RawFileObject = {
 					kind: 'drive#file',
 					id,
@@ -185,6 +176,15 @@ export const func = () =>
 							};
 
 							logFunc('added file, writing metadata', fileName);
+
+							let shouldWriteComma = true;
+							if (!sentFile) {
+								res.status(200);
+								res.write('[');
+								shouldWriteComma = false;
+							}
+
+							sentFile = true;
 
 							res.write(
 								(shouldWriteComma ? ', ' : '') + JSON.stringify(fullFileObject),
