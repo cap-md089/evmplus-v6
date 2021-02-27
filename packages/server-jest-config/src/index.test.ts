@@ -12,94 +12,178 @@ class TestCases extends TestConnection {
 	}
 }
 
-describe('TestConnection', () => {
-	jest.setTimeout(25000);
+// If in a docker test environment set up by Docker compose,
+// there should be no tests for a docker container being set up
+// because it is already set up
+if (!process.env.IN_DOCKER_TEST_ENV) {
+	describe('Raw TestConnection', () => {
+		jest.setTimeout(25000);
 
-	beforeEach(TestCases.setup);
-	afterEach(TestCases.teardown);
+		beforeEach(TestCases.setup);
+		afterEach(TestCases.teardown);
 
-	it('should start a docker image', async done => {
-		const dockerConn = new Docker();
+		it('should start a docker image', async done => {
+			const dockerConn = new Docker();
 
-		const [containers, info] = await Promise.all([
-			dockerConn.listContainers(),
-			TestCases.connectionInfo!,
-		]);
+			const info = await TestCases.connectionInfo!;
+			const containers = await dockerConn.listContainers();
 
-		expect(
-			containers.find(container => container.Id === info.dockerContainer.id),
-		).not.toBeUndefined();
+			expect(
+				containers.find(container => container.Id === info.dockerContainer.id),
+			).not.toBeUndefined();
 
-		done();
-	}, 25000);
+			done();
+		}, 25000);
 
-	it('should be able to connect to the mysql container', async done => {
-		expect(TestCases.mysqlConnString).not.toBeUndefined();
+		it('should be able to connect to the mysql container', async done => {
+			expect(TestCases.mysqlConnString).not.toBeUndefined();
 
-		await expect(getClient(TestCases.mysqlConnString, {}).getSession()).resolves.not.toThrow();
+			await expect(
+				getClient(TestCases.mysqlConnString, {}).getSession(),
+			).resolves.not.toThrow();
 
-		done();
-	}, 25000);
+			done();
+		}, 25000);
 
-	it('should be able to create schemas', async done => {
-		const connection = await TestCases.setupSchema();
+		it('should be able to create schemas', async done => {
+			const connection = await TestCases.setupSchema();
 
-		expect(connection.getSchema.bind(connection)).not.toThrow();
+			expect(connection.getSchema.bind(connection)).not.toThrow();
 
-		done();
-	}, 25000);
+			done();
+		}, 25000);
 
-	it('should be able to create collections', async done => {
-		const connection = await TestCases.setupSchema();
+		it('should be able to create collections', async done => {
+			const connection = await TestCases.setupSchema();
 
-		await expect(connection.setupCollections()).resolves.not.toThrow();
+			await expect(connection.setupCollections()).resolves.not.toThrow();
 
-		const collections = await connection.getSchema().getCollections();
+			const collections = await connection.getSchema().getCollections();
 
-		expect(collections.map(collection => collection.getName()).sort()).toEqual(
-			COLLECTIONS_USED.slice().sort(),
-		);
-		expect(collections.length).toBeGreaterThan(0);
+			expect(collections.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
+			expect(collections.length).toBeGreaterThan(0);
 
-		done();
-	}, 25000);
+			done();
+		}, 25000);
 
-	it('should create multiple schemas', async done => {
-		const [conn1, conn2] = await Promise.all([
-			TestCases.setupSchema(),
-			TestCases.setupSchema(),
-		]);
+		it('should create multiple schemas', async done => {
+			const [conn1, conn2] = await Promise.all([
+				TestCases.setupSchema(),
+				TestCases.setupSchema(),
+			]);
 
-		expect(conn1.getSchema.bind(conn1)).not.toThrow();
-		expect(conn2.getSchema.bind(conn2)).not.toThrow();
+			expect(conn1.getSchema.bind(conn1)).not.toThrow();
+			expect(conn2.getSchema.bind(conn2)).not.toThrow();
 
-		expect(conn1.schema).not.toEqual(conn2.schema);
+			expect(conn1.schema).not.toEqual(conn2.schema);
 
-		done();
-	}, 25000);
+			done();
+		}, 25000);
 
-	it('should create collections multiple times', async done => {
-		const [conn1, conn2] = await Promise.all([
-			TestCases.setupSchema(),
-			TestCases.setupSchema(),
-		]);
+		it('should create collections multiple times', async done => {
+			const [conn1, conn2] = await Promise.all([
+				TestCases.setupSchema(),
+				TestCases.setupSchema(),
+			]);
 
-		await expect(
-			Promise.all([conn1.setupCollections(), conn2.setupCollections()]),
-		).resolves.not.toThrow();
+			await expect(
+				Promise.all([conn1.setupCollections(), conn2.setupCollections()]),
+			).resolves.not.toThrow();
 
-		const [collections1, collections2] = await Promise.all([
-			conn1.getSchema().getCollections(),
-			conn2.getSchema().getCollections(),
-		]);
+			const [collections1, collections2] = await Promise.all([
+				conn1.getSchema().getCollections(),
+				conn2.getSchema().getCollections(),
+			]);
 
-		expect(collections1.map(collection => collection.getName()).sort()).toEqual(
-			COLLECTIONS_USED.slice().sort(),
-		);
-		expect(collections2.map(collection => collection.getName()).sort()).toEqual(
-			COLLECTIONS_USED.slice().sort(),
-		);
+			expect(collections1.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
+			expect(collections2.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
 
-		done();
-	}, 25000);
-});
+			done();
+		}, 25000);
+	});
+} else {
+	describe('Docker TestConnection', () => {
+		jest.setTimeout(25000);
+
+		beforeEach(TestCases.setup);
+		afterEach(TestCases.teardown);
+
+		it('should be able to connect to the mysql container', async done => {
+			expect(TestCases.mysqlConnString).not.toBeUndefined();
+
+			await expect(
+				getClient(TestCases.mysqlConnString, {}).getSession(),
+			).resolves.not.toThrow();
+
+			done();
+		}, 25000);
+
+		it('should be able to create schemas', async done => {
+			const connection = await TestCases.setupSchema();
+
+			expect(connection.getSchema.bind(connection)).not.toThrow();
+
+			done();
+		}, 25000);
+
+		it('should be able to create collections', async done => {
+			const connection = await TestCases.setupSchema();
+
+			await expect(connection.setupCollections()).resolves.not.toThrow();
+
+			const collections = await connection.getSchema().getCollections();
+
+			expect(collections.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
+			expect(collections.length).toBeGreaterThan(0);
+
+			done();
+		}, 25000);
+
+		it('should create multiple schemas', async done => {
+			const [conn1, conn2] = await Promise.all([
+				TestCases.setupSchema(),
+				TestCases.setupSchema(),
+			]);
+
+			expect(conn1.getSchema.bind(conn1)).not.toThrow();
+			expect(conn2.getSchema.bind(conn2)).not.toThrow();
+
+			expect(conn1.schema).not.toEqual(conn2.schema);
+
+			done();
+		}, 25000);
+
+		it('should create collections multiple times', async done => {
+			const [conn1, conn2] = await Promise.all([
+				TestCases.setupSchema(),
+				TestCases.setupSchema(),
+			]);
+
+			await expect(
+				Promise.all([conn1.setupCollections(), conn2.setupCollections()]),
+			).resolves.not.toThrow();
+
+			const [collections1, collections2] = await Promise.all([
+				conn1.getSchema().getCollections(),
+				conn2.getSchema().getCollections(),
+			]);
+
+			expect(collections1.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
+			expect(collections2.map(collection => collection.getName()).sort()).toEqual(
+				COLLECTIONS_USED.slice().sort(),
+			);
+
+			done();
+		}, 25000);
+	});
+}

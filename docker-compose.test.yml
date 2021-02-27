@@ -4,7 +4,22 @@ services:
         build:
             context: .
             target: tests
-        volumes:
-            - type: bind
-              source: /var/run/docker.sock
-              target: /var/run/docker.sock
+        networks:
+            - test-network
+        environment: 
+            - IN_DOCKER_TEST_ENVIRONMENT=1
+
+    mysql:
+        image: mysql:8.0
+        networks:
+            - test-network
+        expose:
+            - '33060'
+        environment:
+            - MYSQL_ROOT_PASSWORD=toor
+        tmpfs: 
+            - /var/lib/mysql
+
+networks:
+    test-network:
+        driver: bridge
