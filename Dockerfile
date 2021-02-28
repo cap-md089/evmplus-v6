@@ -182,5 +182,3 @@ COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap -- --production
 
 WORKDIR /usr/evm-plus/packages/util-cli/dist
-
-ENTRYPOINT ["sh"]
