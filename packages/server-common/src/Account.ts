@@ -120,13 +120,13 @@ export const getAccountID = (hostname: string): EitherObj<ServerError, string> =
 		} else if (parts.length === 4 && process.env.NODE_ENV === 'development') {
 			// 192.168.1.128
 			return Either.right(process.env.DEFAULT_ACCOUNT ?? 'md089');
+		} else if (hostname === 'events.md.cap.gov') {
+			return Either.right('md001');
 		} else {
-			// IP/localhost in production, otherwise invalid hostname
-			return Either.left({
-				type: 'OTHER',
-				code: 404,
-				message: 'Could not get account ID from URL',
-			});
+			// Could now be a hostname like events.md.cap.gov or md089.events.md.cap.gov
+			// What's worse, that means implying a default account ID (md001) for a subset
+			// of URLs
+			return Either.right(parts[0]);
 		}
 	})(Either.right(hostname.split('.')));
 
@@ -339,7 +339,7 @@ export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
 	);
 
 export const getMembers = (schema: Schema) => (account: AccountObject) =>
-	async function*(
+	async function* (
 		type?: MemberType | undefined,
 	): AsyncGenerator<
 		EitherObj<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject>,
@@ -448,7 +448,7 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 	};
 
 export const getMemberIDs = (schema: Schema) =>
-	async function*(account: AccountObject): AsyncIter<MemberReference> {
+	async function* (account: AccountObject): AsyncIter<MemberReference> {
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
@@ -612,11 +612,7 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
-	await collection
-		.modify('id = :id')
-		.bind('id', account.id)
-		.patch(account)
-		.execute();
+	await collection.modify('id = :id').bind('id', account.id).patch(account).execute();
 };
 
 const getNormalTeamObjects = (schema: Schema) => (
