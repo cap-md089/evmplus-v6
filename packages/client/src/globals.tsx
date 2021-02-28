@@ -1,5 +1,6 @@
 import {
 	ClientUser,
+	Either,
 	EitherObj,
 	FullTeamObject,
 	HTTPError,
@@ -28,6 +29,10 @@ export const withMemberList = <T extends { memberList: EitherObj<HTTPError, Memb
 				details.updateList();
 
 				return <LoaderComponent />;
+			}
+
+			if (Either.isLeft(details.state)) {
+				details.updateList();
 			}
 
 			const newProps = ({

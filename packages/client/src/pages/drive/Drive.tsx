@@ -32,6 +32,7 @@ import {
 	Member,
 	Permissions,
 	RawTeamObject,
+	Right,
 	userHasFilePermission,
 } from 'common-lib';
 import $ from 'jquery';
@@ -201,11 +202,11 @@ export class Drive extends Page<DriveProps, DriveState> {
 		const { memberList, teamList } = this.props;
 
 		if (Either.isLeft(teamList)) {
-			return <div>{teamList.value}</div>;
+			return <div>{teamList.value.message}</div>;
 		}
 
-		if (Either.isLeft(memberList)) {
-			return <div>{memberList.value}</div>;
+		if (Either.isLeft(memberList) && this.props.member) {
+			return <div>{memberList.value.message}</div>;
 		}
 
 		if (this.state.files === null || this.state.currentFolder === null) {
@@ -322,7 +323,11 @@ export class Drive extends Page<DriveProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={memberList.value}
+									members={
+										!!this.props.member
+											? (memberList as Right<Member[]>).value
+											: []
+									}
 									teams={teamList.value}
 								/>
 							) : null}
@@ -363,7 +368,11 @@ export class Drive extends Page<DriveProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={memberList.value}
+									members={
+										!!this.props.member
+											? (memberList as Right<Member[]>).value
+											: []
+									}
 									teams={teamList.value}
 								/>
 							) : null}
