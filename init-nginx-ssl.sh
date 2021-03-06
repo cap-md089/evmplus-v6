@@ -3,7 +3,7 @@
 rsa_key_size=4096
 data_path="./keys/certbot"
 email="eventsupport@md.cap.gov"
-staging="1"
+staging="0"
 domain="events.md.cap.gov"
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
@@ -12,33 +12,35 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
 fi
 
-filter_func="account.id === 'md001' || (account.type === 'CAPGroup' && account.parentWing.value === 'md001') || (account.type === 'CAPSquadron' && account.parentWing.value === 'md001')"
+filter_func="account.id === 'md001' || (account.type === 'CAPGroup' && account.parentWing && account.parentWing.value === 'md001') || (account.type === 'CAPSquadron' && account.parentWing && account.parentWing.value === 'md001')"
 get_accounts_file="/usr/evm-plus/packages/util-cli/dist/getAccounts.js"
 
-unit_url_prefixes=""
+docker_compose_file_arg=""
 if [[ "$staging" == "1" ]]; then
-  unit_url_prefixes=$(docker-compose -f docker-compose.dev.yml run --use-aliases util-cli $get_accounts_file "$filter_func")
-else
-  unit_url_prefixes=$(docker-compose run --use-aliases util-cli $get_accounts_file "$filter_func")
+  docker_compose_file_arg="-f docker-compose.dev.yml"
 fi
 
+unit_url_prefixes=$(docker-compose $docker_compose_file_arg run --use-aliases util-cli $get_accounts_file "$filter_func")
+
 unit_url_prefixes=$(echo $unit_url_prefixes | tail -n 1)
+unit_url_prefixes="${unit_url_prefixes//[$'\r\n\t']}"
 
 staging_arg=""
 if [[ "$staging" == "1" ]]; then
   staging_arg="--staging"
 fi
 
-IFS=','
 domain_arg="-d $domain"
-for unit_url_prefix in "${unit_url_prefixes[@]}"; do	
+for unit_url_prefix in ${unit_url_prefixes//,/ }; do	
   domain_arg="$domain_arg -d $unit_url_prefix.$domain"
 done
 
 path="/etc/letsencrypt/live/$domain"
 
+docker-compose run --rm --entrypoint "mkdir -p $path" certbot-web
+
 docker-compose run --rm --entrypoint "\
-openssl req =x509 -nodes -newkey rsa:$rsa_key_size -days 1\
+openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
 	-keyout '$path/privkey.pem' \
 	-out '$path/fullchain.pem' \
 	-subj '/CN=localhost'" certbot-web
