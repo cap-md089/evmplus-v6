@@ -147,13 +147,20 @@ export const getEmailMessageBody = (
 	Subject: { Charset: EMAIL_CHARSET, Data: subject },
 });
 
+export const setupAWSCredentials = (config: ServerConfiguration) => {};
+
 export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolean) => (
 	registry: RegistryValues,
 ) => (subject: string) => (email: string | string[]) => (htmlBody: string) => (
 	textBody: string,
 ): AsyncEither<ServerError, void> =>
 	asyncRight(
-		(async () => new aws.SES({ apiVersion: '2010-12-01' }))(),
+		(async () =>
+			new aws.SES({
+				apiVersion: '2010-12-01',
+				accessKeyId: config.AWS_ACCESS_KEY_ID,
+				secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
+			}))(),
 		errorGenerator('Could not send email'),
 	)
 		.map(handle =>
