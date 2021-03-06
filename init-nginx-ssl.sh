@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 rsa_key_size=4096
 data_path="./keys/certbot"

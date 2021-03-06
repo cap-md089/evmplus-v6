@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 domains=(\*.capunit.com \*.evmplus.org)
 rsa_key_size=4096
