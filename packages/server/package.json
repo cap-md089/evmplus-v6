@@ -42,10 +42,10 @@
 		"server-common": "^1.23.0",
 		"speakeasy": "^2.0.0",
 		"ssh2-sftp-client": "^5.2.1",
-		"uuid": "^3.2.1"
+		"uuid": "^3.2.1",
+		"@mysql/xdevapi": "^8.0.23"
 	},
 	"devDependencies": {
-		"@mysql/xdevapi": "^8.0.19",
 		"@types/body-parser": "^1.16.8",
 		"@types/busboy": "^0.2.3",
 		"@types/cheerio": "^0.22.7",
