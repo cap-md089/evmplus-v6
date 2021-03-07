@@ -183,4 +183,4 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap --
 
 WORKDIR /usr/evm-plus/packages/util-cli/dist
 
-ENTRYPOINT ["sh"]
+RUN chmod +x *.js

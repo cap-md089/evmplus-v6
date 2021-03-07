@@ -19,6 +19,7 @@
 
 import { Client } from '@mysql/xdevapi';
 import { MemberUpdateEventEmitter, ServerConfiguration } from 'common-lib';
+import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as http from 'http';
 import getRouter from './getAPIRouter';
@@ -34,6 +35,7 @@ export interface ServerInitializationOptions {
 export default async (
 	conf: ServerConfiguration,
 	port: number = conf.PORT,
+	capwatchEmitter?: MemberUpdateEventEmitter,
 	mysqlConn?: Client,
 ): Promise<ServerInitializationOptions> => {
 	const app: express.Application = express();
@@ -45,8 +47,11 @@ export default async (
 	server.on('error', onError);
 	server.on('listening', onListening);
 
-	const { router: apiRouter, capwatchEmitter, mysqlConn: mysql } = await getRouter(
+	capwatchEmitter ??= new EventEmitter();
+
+	const { router: apiRouter, mysqlConn: mysql } = await getRouter(
 		conf,
+		capwatchEmitter,
 		mysqlConn,
 	);
 
