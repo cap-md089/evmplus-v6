@@ -108,24 +108,24 @@ const formatHtmlEmail = (
 <header style="background:#28497e;padding:20px;margin:0">
 <a href="https://${reg.accountID}.${config.HOST_NAME}/">
 <h2 style="text-align:center;color:white;">${reg.Website.Name}</h3>
-<h3 style="text-align:center;color:white;">EvMPlus.org Action</h4>
+<h3 style="text-align:center;color:white;">Event Manager Action</h4>
 </a>
 </header>
 <div style="border:5px solid #28497e;margin:0;padding:20px">
 ${body}<br /><br />
 Sincerely,<br />
-The EvMPlus.org Support Team
+The Event Manager Support Team
 </div>
-<footer style="background:#28497e;padding:25px;color:white">&copy; EvMPlus.org 2017-${new Date().getUTCFullYear()}</footer>
+<footer style="background:#28497e;padding:25px;color:white">&copy; Event Manager 2017-${new Date().getUTCFullYear()}</footer>
 </div>`;
 
 const formatTextEmail = (reg: RegistryValues, text: string) => `${reg.Website.Name}
-EvMPlus.org Action
+Event Manager Action
 
 ${text}
 
 Sincerely,
-The EvMPlus.org Support Team`;
+The Event Manager Support Team`;
 
 export const getEmailMessageBody = (
 	config: ServerConfiguration,
@@ -164,8 +164,8 @@ export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolea
 						ToAddresses: typeof email === 'string' ? [email] : email,
 					},
 					Message: getEmailMessageBody(config, registry, subject, htmlBody, textBody),
-					Source: `"EvMPlus.org Support" <support@evmplus.org>`,
-					ReplyToAddresses: [`"EvMPlus.org Support" <eventsupport@md.cap.gov>`],
+					Source: `"Event Manager Support" <support@evmplus.org>`,
+					ReplyToAddresses: [`"Event Manager Support" <eventsupport@md.cap.gov>`],
 				})
 				.promise(),
 		)
