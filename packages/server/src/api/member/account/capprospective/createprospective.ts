@@ -71,10 +71,10 @@ const sendPasswordLink = (emailFunction: typeof sendEmail) => (req: Req) => (
 			getRegistry(req.mysqlx)(req.account),
 			PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
 		]).flatMap(([registry, token]) =>
-			emailFunction(req.configuration)(true)(registry)('Finish EvMPlus.org Account Creation')(
-				email,
-			)(`<h2>You're almost there ${getFullMemberName(member)}!</h2>
-<p>To complete your EvMPlus.org account creation, click or visit the link below:</p>
+			emailFunction(req.configuration)(true)(registry)(
+				'Finish Event Manager Account Creation',
+			)(email)(`<h2>You're almost there ${getFullMemberName(member)}!</h2>
+<p>To complete your Event Manager account creation, click or visit the link below:</p>
 <p><a href="https://${req.account.id}.${
 				req.configuration.HOST_NAME
 			}/finishaccount/${token}/">Confirm account creation</a></p>
@@ -82,7 +82,7 @@ const sendPasswordLink = (emailFunction: typeof sendEmail) => (req: Req) => (
 				member,
 			)}!
 
-To complete your EvMPlus.org account creation, copy and paste the link below into a web browser:
+To complete your Event Manager account creation, copy and paste the link below into a web browser:
 
 Please respond to this email if you have any questions`),
 		),
@@ -136,7 +136,7 @@ const createWithRandomPassword = (emailFunction: typeof sendEmail) => (req: Req)
 			)
 			.flatMap(([registry, _, password]) =>
 				emailFunction(req.configuration)(true)(registry)(
-					'Finish EvMPlus.org Account Creation',
+					'Finish Event Manager Account Creation',
 				)(email)(`<h4>Your account has been created!</h4>
 				<p>You can now <a href="https://${req.account.id}.${req.configuration.HOST_NAME}/signin?returnurl=%2F">sign in</a> with the username ${username} and the password <b>${password}</b>.`)(`Your account has been created!
 

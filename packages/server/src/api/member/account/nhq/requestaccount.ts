@@ -80,15 +80,15 @@ export const getProperEmailAndSendType = (schema: Schema) => (email: string) => 
 const emailText = (host: string) => (account: AccountObject) => (
 	token: string,
 ) => `You're almost there!
-To complete your EvMPlus.org account creation: visit the link below:
+To complete your Event Manager account creation: visit the link below:
 https://${account.id}.${host}/finishaccount/${token}`;
 
 const emailHtml = (host: string) => (account: AccountObject) => (member: Member) => (
 	token: string,
 ) => `<h2>You're almost there ${getFullMemberName(member)}!</h2>
-<p>To complete your EvMPlus.org account creation, click or visit the link below:</p>
+<p>To complete your Eveent Manager account creation, click or visit the link below:</p>
 <p><a href="https://${account.id}.${host}/finishaccount/${token}">Confirm account creation</a></p>
-<h4>Please respond to this email if you have questions regarding your EvMPlus.org account. If you did not request this account, simply disregard this email.</h4>`;
+<h4>Please respond to this email if you have questions regarding your Event Manager account. If you did not request this account, simply disregard this email.</h4>`;
 
 const writeEmail = (emailFunction = sendEmail) => (
 	req: ServerAPIRequestParameter<api.member.account.capnhq.RequestNHQAccount>,
@@ -96,7 +96,7 @@ const writeEmail = (emailFunction = sendEmail) => (
 	[string, string, EmailSentType],
 	RegistryValues,
 ]) =>
-	emailFunction(req.configuration)(true)(registry)('EvMPlus.org Account Creation')(email)(
+	emailFunction(req.configuration)(true)(registry)('Event Manager Account Creation')(email)(
 		emailHtml(req.configuration.HOST_NAME)(req.account)(member)(token),
 	)(emailText(req.configuration.HOST_NAME)(req.account)(token)).map(always(sentType));
 

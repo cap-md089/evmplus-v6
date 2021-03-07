@@ -71,7 +71,8 @@ Additionally, the following folders are required in the `/srv` folder:
 
 ### MySQL setup
 
-Create the files `./keys/db_user` and `./keys/db_password`. `db_user` has to contain the text contain `em` and `db_password` will be the password for the em user
+Create the files `./keys/db_user` and `./keys/db_password`.  Place the text `em` in the `db_user` file.  Create a new 
+database password and place that text in the `db_password` file
 
 ### AWS SMTP setup
 
