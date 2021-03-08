@@ -76,7 +76,7 @@ services:
             - mysql
 
     mysql:
-        image: mysql:8.0
+        image: mysql:8.0.23
         networks:
             - backend
         expose:

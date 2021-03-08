@@ -30,10 +30,10 @@ console.log = console.log.bind(console);
 
 if (require.main === module) {
 	if (isMaster) {
-		const forkCount = cpus().length * 2;
+		const forkCount = cpus().length;
 
 		console.log('Spawning', forkCount, 'workers');
-		for (let i = 0; i < cpus().length * 2; i++) {
+		for (let i = 0; i < forkCount; i++) {
 			const child = fork();
 
 			child.on('message', msg => {
