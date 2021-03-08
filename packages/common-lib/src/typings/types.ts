@@ -1601,6 +1601,10 @@ export interface PointOfContact {
 	 * Reasons for having this are similar to reasons for having email
 	 */
 	phone: string;
+	/**
+	 * All of them can have a position but it is optional
+	 */
+	position: string;
 
 	// Email settings for a POC
 	/**

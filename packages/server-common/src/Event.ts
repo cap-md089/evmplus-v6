@@ -146,6 +146,7 @@ export const getSimplePointsOfContact = (
 					email: poc.email,
 					memberReference: poc.memberReference,
 					phone: poc.phone,
+					position: poc.position,
 					receiveEventUpdates: poc.receiveEventUpdates,
 					receiveRoster: poc.receiveRoster,
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
