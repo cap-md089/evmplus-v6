@@ -1601,6 +1601,10 @@ export interface PointOfContact {
 	 * Reasons for having this are similar to reasons for having email
 	 */
 	phone: string;
+	/**
+	 * All of them can have a position but it is optional
+	 */
+	position: string;
 
 	// Email settings for a POC
 	/**
@@ -1696,14 +1700,6 @@ export interface CAPMemberContact {
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	ALPHAPAGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	ASSISTANT: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	CADETPARENTEMAIL: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
@@ -1716,39 +1712,11 @@ export interface CAPMemberContact {
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	DIGITALPAGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	EMAIL: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
-	HOMEFAX: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
 	HOMEPHONE: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	INSTANTMESSENGER: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	ISDN: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	RADIO: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	TELEX: CAPMemberContactInstance;
-	/**
-	 * A contact method to use to get in touch with the member
-	 */
-	WORKFAX: CAPMemberContactInstance;
 	/**
 	 * A contact method to use to get in touch with the member
 	 */
@@ -3331,7 +3299,8 @@ export interface RawNotificationObject<
 	C extends NotificationCause = NotificationCause,
 	T extends NotificationTarget = NotificationTarget,
 	D extends NotificationData = NotificationData
-> extends NewNotificationObject<C, T, D>, AccountIdentifiable {
+> extends NewNotificationObject<C, T, D>,
+		AccountIdentifiable {
 	/**
 	 * Used to identify notifications
 	 */
@@ -3734,7 +3703,6 @@ export interface ServerConfiguration {
 	DB_USER: string;
 	DB_POOL_SIZE: number;
 
-	CLIENT_PATH: string;
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: number;
@@ -3759,8 +3727,6 @@ export interface EnvServerConfiguration {
 	DB_PORT: string;
 	DB_POOL_SIZE: string;
 
-	CLIENT_PATH: string;
-
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: string;
@@ -3780,7 +3746,6 @@ export interface RawServerConfiguration {
 	DB_USER: string;
 	DB_POOL_SIZE: string;
 
-	CLIENT_PATH: string;
 	GOOGLE_KEYS_PATH: string;
 
 	PORT: string;
@@ -4068,7 +4033,7 @@ export type AllAudits =
 	| AttendanceAuditEvents
 	| FileAuditEvents
 	| ProspectiveMemberAudits
-	| PermissionsAudits
+	| PermissionsAudits;
 
 export interface CadetPromotionRequirements {
 	/**

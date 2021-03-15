@@ -18,9 +18,10 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import axios from 'axios';
 import {
 	AccountObject,
-	always,
+	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
 	asyncRight,
@@ -36,6 +37,7 @@ import {
 	get as getProp,
 	getMemberName,
 	getORGIDsFromCAPAccount,
+	isPartOfTeam,
 	iterFilter,
 	iterMap,
 	Maybe,
@@ -47,12 +49,184 @@ import {
 	stripProp,
 } from 'common-lib';
 import { createWriteStream } from 'fs';
-import { get } from 'https';
 import { DateTime } from 'luxon';
 import { join } from 'path';
 import { loadExtraCAPMemberInformation } from '.';
 import { AccountGetter } from '../../../Account';
-import { collectResults, findAndBindC } from '../../../MySQLUtil';
+import {
+	bindForArray,
+	collectResults,
+	collectSqlResults,
+	findAndBind,
+	findAndBindC,
+} from '../../../MySQLUtil';
+import { ServerEither } from '../../../servertypes';
+
+export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
+	rawTeamObjects: RawTeamObject[],
+) => async (ORGIDs: number[]) => {
+	return asyncRight(
+		Promise.all([
+			collectSqlResults<NHQ.NHQMember>(
+				schema
+					.getSession()
+					.sql(
+						`
+						SELECT doc FROM
+							${schema.getName()}.NHQ_Member
+						WHERE
+							ORGID in ${bindForArray(ORGIDs)};
+						`,
+					)
+					.bind(ORGIDs),
+			),
+			collectSqlResults<NHQ.MbrContact>(
+				schema
+					.getSession()
+					.sql(
+						`
+						SELECT C.doc FROM
+							${schema.getName()}.NHQ_MbrContact AS C
+						INNER JOIN
+							${schema.getName()}.NHQ_Member AS M
+						ON
+							C.CAPID = M.CAPID
+						WHERE
+							M.ORGID in ${bindForArray(ORGIDs)};
+						`,
+					)
+					.bind(ORGIDs),
+			),
+			collectResults(
+				findAndBind(
+					schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
+					{
+						accountID,
+					},
+				),
+			),
+			collectSqlResults<NHQ.DutyPosition>(
+				schema
+					.getSession()
+					.sql(
+						`
+						SELECT doc FROM
+							${schema.getName()}.NHQ_DutyPosition
+						WHERE
+							ORGID in ${bindForArray(ORGIDs)};
+					`,
+					)
+					.bind(ORGIDs),
+			),
+			collectSqlResults<NHQ.CadetDutyPosition>(
+				schema
+					.getSession()
+					.sql(
+						`
+						SELECT doc FROM
+							${schema.getName()}.NHQ_CadetDutyPosition
+						WHERE
+							ORGID in ${bindForArray(ORGIDs)};
+					`,
+					)
+					.bind(ORGIDs),
+			),
+		]),
+		errorGenerator('Could not get member information for ORGIDs ' + ORGIDs.join(',')),
+	).map(([orgMembers, orgContacts, orgExtraInfo, orgDutyPositions, orgCadetDutyPositions]) =>
+		orgMembers.map<CAPNHQMemberObject>(member => {
+			const memberID = {
+				type: 'CAPNHQMember',
+				id: member.CAPID,
+			} as const;
+			const finder = areMembersTheSame(memberID);
+
+			const extraInfo =
+				orgExtraInfo.find(({ member: id }) => finder(id)) ??
+				({
+					accountID,
+					member: memberID,
+					temporaryDutyPositions: [],
+					flight: null,
+					teamIDs: rawTeamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
+					absentee: null,
+					type: 'CAP',
+				} as CAPExtraMemberInformation);
+
+			const contact: CAPMemberContact = {
+				CADETPARENTEMAIL: {},
+				CADETPARENTPHONE: {},
+				CELLPHONE: {},
+				EMAIL: {},
+				HOMEPHONE: {},
+				WORKPHONE: {},
+			};
+
+			orgContacts
+				.filter(contactItem => contactItem.CAPID === member.CAPID)
+				.forEach(contactItem => {
+					if (!contactItem.DoNotContact) {
+						const contactType = contactItem.Type.toUpperCase().replace(
+							/ /g,
+							'',
+						) as CAPMemberContactType;
+
+						// Handles the types we don't support
+						// Or, erroneous data left in by NHQ
+						if (contactType in contact) {
+							contact[contactType][contactItem.Priority] = contactItem.Contact;
+						}
+					}
+				});
+
+			const dutyPositions: ShortDutyPosition[] = [
+				...orgDutyPositions
+					.filter(({ CAPID }) => CAPID === member.CAPID)
+					.map(dp => ({
+						duty: dp.Duty,
+						date: +DateTime.fromISO(dp.DateMod),
+						orgid: dp.ORGID,
+						type: 'NHQ' as const,
+					})),
+				...orgCadetDutyPositions
+					.filter(({ CAPID }) => CAPID === member.CAPID)
+					.map(dp => ({
+						duty: dp.Duty,
+						date: +DateTime.fromISO(dp.DateMod),
+						orgid: dp.ORGID,
+						type: 'NHQ' as const,
+					})),
+				...extraInfo.temporaryDutyPositions.map(dp => ({
+					duty: dp.Duty,
+					date: dp.assigned,
+					expires: dp.validUntil,
+					type: 'CAPUnit' as const,
+				})),
+			];
+
+			return {
+				absenteeInformation: extraInfo.absentee,
+				contact,
+				dateOfBirth: +DateTime.fromISO(member.DOB),
+				dutyPositions,
+				expirationDate: +DateTime.fromISO(member.Expiration),
+				flight: extraInfo.flight,
+				id: member.CAPID,
+				memberRank: member.Rank,
+				nameFirst: member.NameFirst,
+				nameLast: member.NameLast,
+				nameMiddle: member.NameMiddle,
+				nameSuffix: member.NameSuffix,
+				orgid: member.ORGID,
+				seniorMember: member.Type !== 'CADET',
+				squadron: `${member.Region}-${member.Wing}-${member.Unit}`,
+				teamIDs: extraInfo.teamIDs,
+				type: 'CAPNHQMember',
+				usrID: member.UsrID,
+			};
+		}),
+	);
+};
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 	asyncRight(
@@ -65,32 +239,24 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 		.map(collectResults)
 		.map(capwatchContact => {
 			const memberContact: CAPMemberContact = {
-				ALPHAPAGER: {},
-				ASSISTANT: {},
 				CADETPARENTEMAIL: {},
 				CADETPARENTPHONE: {},
 				CELLPHONE: {},
-				DIGITALPAGER: {},
 				EMAIL: {},
-				HOMEFAX: {},
 				HOMEPHONE: {},
-				INSTANTMESSENGER: {},
-				ISDN: {},
-				RADIO: {},
-				TELEX: {},
-				WORKFAX: {},
 				WORKPHONE: {},
 			};
 
 			capwatchContact.forEach(val => {
-				if (
-					(val.Type as string) !== '' &&
-					(val.Type as string) !== '--Select Type--' &&
-					!val.DoNotContact
-				) {
-					memberContact[val.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType][
-						val.Priority
-					] = val.Contact;
+				if (!val.DoNotContact) {
+					const contactType = val.Type.toUpperCase().replace(
+						/ /g,
+						'',
+					) as CAPMemberContactType;
+
+					if (contactType in memberContact) {
+						memberContact[contactType][val.Priority] = val.Contact;
+					}
 				}
 			});
 
@@ -145,61 +311,6 @@ const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 		})
 		.map(results => results[0])
 		.map(stripProp('_id'));
-
-export const expandNHQMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[],
-) => (info: NHQ.NHQMember) =>
-	asyncRight(info.CAPID, errorGenerator('Could not get member information'))
-		.flatMap(id =>
-			AsyncEither.All([
-				getCAPWATCHContactForMember(schema)(id),
-				Maybe.orSome<AsyncEither<ServerError, ShortDutyPosition[]>>(
-					asyncRight(
-						[] as ShortDutyPosition[],
-						errorGenerator('Could not get duty positions'),
-					),
-				)(
-					Maybe.map((orgids: number[]) => getNHQDutyPositions(schema)(orgids)(id))(
-						getORGIDsFromCAPAccount(account),
-					),
-				),
-				loadExtraCAPMemberInformation(schema)(account)({
-					id,
-					type: 'CAPNHQMember',
-				})(teamObjects),
-			]),
-		)
-		.map<CAPNHQMemberObject>(([contact, dutyPositions, extraInformation]) => ({
-			absenteeInformation: extraInformation.absentee,
-			contact,
-			dateOfBirth: +DateTime.fromISO(info.DOB),
-			dutyPositions: [
-				...dutyPositions,
-				...extraInformation.temporaryDutyPositions.map(
-					item =>
-						({
-							date: item.assigned,
-							duty: item.Duty,
-							expires: item.validUntil,
-							type: 'CAPUnit',
-						} as ShortDutyPosition),
-				),
-			],
-			expirationDate: +DateTime.fromISO(info.Expiration),
-			flight: extraInformation.flight,
-			id: info.CAPID,
-			memberRank: info.Rank,
-			nameFirst: info.NameFirst,
-			nameLast: info.NameLast,
-			nameMiddle: info.NameMiddle,
-			nameSuffix: info.NameSuffix,
-			orgid: info.ORGID,
-			seniorMember: info.Type !== 'CADET',
-			squadron: `${info.Region}-${info.Wing}-${info.Unit}`,
-			type: 'CAPNHQMember',
-			usrID: info.UsrID,
-			teamIDs: extraInformation.teamIDs,
-		}));
 
 export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 	teamObjects?: RawTeamObject[],
@@ -303,7 +414,7 @@ export const downloadCAPWATCHFile = (
 	capid: number,
 	password: string,
 	downloadPath: string,
-) => {
+): ServerEither<string> => {
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
@@ -316,40 +427,31 @@ export const downloadCAPWATCHFile = (
 
 	const storageLocation = createWriteStream(fileName);
 
+	console.log(fileName);
+
 	return asyncRight(
-		new Promise<void>((res, rej) => {
-			get(
-				url,
-				{
-					headers: {
-						authorization: `Basic ${encodedAuth}`,
-					},
-				},
-				result => {
-					if (!result.statusCode || result.statusCode >= 299) {
-						return rej(
-							new Error(
-								'Member could not download CAPWATCH file: ' + result.statusCode,
-							),
-						);
-					}
-
-					result.pipe(storageLocation);
-
-					result.on('end', () => {
-						res();
-					});
-
-					result.on('error', err => {
-						rej(err);
-					});
-
-					storageLocation.on('error', err => {
-						rej(err);
-					});
-				},
-			);
+		axios({
+			method: 'get',
+			url,
+			headers: {
+				authorization: `Basic ${encodedAuth}`,
+			},
+			responseType: 'stream',
 		}),
 		errorGenerator('Could not download CAPWATCH file'),
-	).map(always(fileName));
+	)
+		.map(({ data }) => {
+			data.pipe(storageLocation);
+
+			return Promise.all([
+				Promise.resolve(fileName),
+				new Promise<void>(res => {
+					data.on('end', res);
+				}),
+				new Promise<void>(res => {
+					storageLocation.on('end', res);
+				}),
+			]);
+		})
+		.map(([filepath]) => filepath);
 };

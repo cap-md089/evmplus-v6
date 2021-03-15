@@ -33,7 +33,7 @@ node --no-warnings dist/importCapwatch.js $CAPWATCH_ZIP_PATH
 
 echo "Done with CAPWATCH import"
 
-[ ! -z "$KEEP_CAPWATCH_ZIP" ] && rm $CAPWATCH_ZIP_PATH
+[ ! -z "$KEEP_CAPWATCH_ZIP" ] || rm $CAPWATCH_ZIP_PATH
 
 echo "Performing Discord updates"
 

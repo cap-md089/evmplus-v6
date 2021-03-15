@@ -3,20 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [1.13.0](https://github.com/cap-md089/evmplus-v6/compare/util-cli@1.5.8...util-cli@1.13.0) (2021-01-03)
+# [1.13.0](http://github.com//cap-md089/evmplus-v6/compare/util-cli@1.5.8...util-cli@1.13.0) (2021-03-15)
 
 
 ### Bug Fixes
 
-* **server:** fixed headers not being properly handled ([b92f519](https://github.com/cap-md089/evmplus-v6/commit/b92f519e79b97dde07388a4af0097f0f0045be3d))
-* fixed db upgrade script order ([5ba922c](https://github.com/cap-md089/evmplus-v6/commit/5ba922c4e869f3a52aa442a8ea6adee2110a5637))
-* fixed errors provided by refactor ([e138d41](https://github.com/cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
-* updated jest dependencies, fixed jest for client ([b98c96a](https://github.com/cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+* **docker:** fixed docker configuration having syntax errors, added compiler service ([d484f65](http://github.com//cap-md089/evmplus-v6/commit/d484f6562037dd73e12aacbb36b7bec6dfbbf18d))
+* **util-cli:** fixed CAPWATCH downloads in Docker ([c535a01](http://github.com//cap-md089/evmplus-v6/commit/c535a011fe23edffde323ccf9d256bfb3b8c2b64))
+* fixed db upgrade script order ([5ba922c](http://github.com//cap-md089/evmplus-v6/commit/5ba922c4e869f3a52aa442a8ea6adee2110a5637))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
 
 
 ### Features
 
-* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](https://github.com/cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+* added nginx configuration for events.md.cap.gov and SSL configuration ([80bdfb8](http://github.com//cap-md089/evmplus-v6/commit/80bdfb8b2800244d184f4370da103757a543d031))
+* **client:** added file widget to eventform ([6b01f5f](http://github.com//cap-md089/evmplus-v6/commit/6b01f5fc73312ce411f05eb2be86604cfa0d4fdf))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
 
 
 

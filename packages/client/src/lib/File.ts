@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, FullFileObject, ClientUser } from 'common-lib';
+import { Either, FullFileObject } from 'common-lib';
 import fetchApi from './apis';
 import debug from 'debug';
 
@@ -30,11 +30,11 @@ interface UploadProgressEvent {
 
 interface UploadFinishEvent {
 	event: 'FINISH';
-	file: FullFileObject;
+	files: FullFileObject[];
 }
 
-export const uploadFile = (user: ClientUser) => (parentid: string) =>
-	async function*(file: File): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
+export const uploadFile = (parentid: string) =>
+	async function*(files: File[]): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
 		const tokenEither = await fetchApi.token({}, {});
 
 		if (Either.isLeft(tokenEither)) {
@@ -44,7 +44,9 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 		const token = tokenEither.value;
 
 		const fd = new FormData();
-		fd.append('file', file, file.name);
+		for (const file of files) {
+			fd.append('file-' + file.name, file, file.name);
+		}
 
 		const xhr = new XMLHttpRequest();
 		xhr.open('POST', `/api/files/upload/${parentid}`);
@@ -102,11 +104,11 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 			xhr.addEventListener('readystatechange', function(evt: Event) {
 				logFunc('Ready state changed during file upload: %d', this.readyState);
 				if (this.readyState === 4) {
-					const resp = JSON.parse(this.responseText) as FullFileObject;
+					const resp = JSON.parse(this.responseText) as FullFileObject[];
 
 					res({
 						event: 'FINISH',
-						file: resp,
+						files: resp,
 					});
 				}
 			});
@@ -127,7 +129,9 @@ export const uploadFile = (user: ClientUser) => (parentid: string) =>
 						}
 					});
 				}),
-				uploadPromise,
+				new Promise<UploadFinishEvent>((res, rej) => {
+					uploadPromise.then(res, rej);
+				}),
 			]);
 
 			if (value.event === 'FINISH') {

@@ -64,7 +64,7 @@ export interface PasswordResetRequest {
  * Using a password reset token, updates a password for a member. The member is recorded in the database and associated with the token
  */
 export interface FinishPasswordReset {
-	(params: {}, body: { token: string; newPassword: string }): APIEither<{ sessionID: string }>;
+	(params: {}, body: { token: string; newPassword: string }): APIEither<{}>;
 
 	url: '/api/member/account/finishpasswordreset';
 
@@ -81,9 +81,7 @@ export interface FinishPasswordReset {
  * Using an account setup token, creates a full account
  */
 export interface FinishAccountSetup {
-	(params: {}, body: { password: string; token: string; username: string }): APIEither<{
-		sessionID: string;
-	}>;
+	(params: {}, body: { password: string; token: string; username: string }): APIEither<{}>;
 
 	url: '/api/member/account/finishsetup';
 

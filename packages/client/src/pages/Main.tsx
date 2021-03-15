@@ -320,8 +320,8 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 			<h3>Promotion requirements</h3>
 			{cps.CurrentAprvStatus === 'PND' ? (
 				<p>
-					Your achievement completion is pending approval. Review the requirements for
-					your next achievement{' '}
+					Your achievement completion is pending eServices approval. Local promotion
+					requirements may apply. Review the requirements for your next achievement{' '}
 					<a href={promoReqs.ReqsWebLink} rel="noopener noreferrer">
 						here
 					</a>

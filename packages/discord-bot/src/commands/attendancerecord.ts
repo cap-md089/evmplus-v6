@@ -50,6 +50,9 @@ import { toCAPUnit } from '../data/convertMember';
 import getAccount from '../data/getAccount';
 import getMember from '../data/getMember';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
+import * as debug from 'debug';
+
+const logFunc = debug('discord-bot:commands:attendancerecord');
 
 export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCLIConfiguration) => (
 	parts: string[],
@@ -84,21 +87,22 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		return await message.reply('There was an error adding members to the event specified');
 	}
 
+	await guild.fetch();
+
 	const discordMembers: GuildMember[] | undefined =
 		method === 'global'
-			? (
-					await Promise.all(
-						guild.channels.cache
-							.array()
-							.filter((v): v is VoiceChannel => v.type === 'voice')
-							.map(channel => channel.fetch(true) as Promise<VoiceChannel>),
-					)
-			  ).flatMap(channel => channel.members.array())
+			? guild.channels.cache
+					.array()
+					.filter((v): v is VoiceChannel => v.type === 'voice')
+					.flatMap(channel => channel.members.array())
 			: method === 'withme'
-			? ((await message.member?.voice?.channel?.fetch?.(
-					true,
-			  )) as VoiceChannel)?.members.array()
+			? message.member?.voice?.channel?.members.array()
 			: undefined;
+
+	logFunc(
+		'Got voice channel members',
+		discordMembers?.map(mem => mem.nickname),
+	);
 
 	if (!discordMembers && method === 'withme') {
 		await message.reply('There was a problem getting the voice channel you are in');
@@ -113,7 +117,9 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 	const { schema, session } = await getXSession(conf, mysqlConn);
 
 	try {
+		logFunc('Getting account info for ', guild.id);
 		const account = await getAccount(schema)(guild.id);
+		logFunc('Got account info', account);
 
 		if (!account.hasValue) {
 			return await message.channel.send('There was an unknown error');
@@ -191,7 +197,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
 		const fullInfoEither = await AsyncEither.All([
-			getAttendanceForEvent(schema)(account)(event).map(collectGeneratorAsync),
+			getAttendanceForEvent(schema)(Maybe.none())(event).map(collectGeneratorAsync),
 			getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
 		]);
 

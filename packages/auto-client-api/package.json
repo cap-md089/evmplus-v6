@@ -1,26 +1,26 @@
 {
-	"name": "auto-client-api",
-	"version": "1.3.22",
-	"description": "Automatically generates APIs for the TypeScript EvMPlus.org server for use on a JavaScript client",
-	"scripts": {
-		"build": "tsc --build tsconfig.build.json",
-		"watch": "tsc --build tsconfig.build.json --watch",
-		"check": "tsc --build tsconfig.build.json --noEmit",
-		"lint": "tslint --project ."
-	},
-	"author": "Andrew Rioux",
-	"license": "GPL-2.0",
-	"private": true,
-	"dependencies": {
-		"debug": "^4.3.1",
-		"typescript": "^4.0.5"
-	},
-	"devDependencies": {
-		"@types/debug": "^4.1.5",
-		"@types/node": "^13.13.4",
-		"common-lib": "^1.27.0",
-		"prettier": "^2.0.5",
-		"tslint": "^6.1.2",
-		"tslint-config-prettier": "^1.18.0"
-	}
+    "name": "auto-client-api",
+    "version": "1.3.22",
+    "description": "Automatically generates APIs for the TypeScript EvMPlus.org server for use on a JavaScript client",
+    "scripts": {
+        "build": "tsc --build tsconfig.build.json",
+        "watch": "tsc --build tsconfig.build.json --watch",
+        "check": "tsc --build tsconfig.build.json --noEmit",
+        "lint": "tslint --project ."
+    },
+    "author": "Andrew Rioux",
+    "license": "GPL-2.0",
+    "private": true,
+    "dependencies": {
+        "debug": "^4.3.1",
+        "typescript": "^4.0.5"
+    },
+    "devDependencies": {
+        "@types/debug": "^4.1.5",
+        "@types/node": "^13.13.4",
+        "common-lib": "^1.27.0",
+        "prettier": "^2.2.1",
+        "tslint": "^6.1.2",
+        "tslint-config-prettier": "^1.18.0"
+    }
 }

@@ -10,7 +10,7 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "master" ]; then
 
 	# Check for compile errors
-	if lerna run check --since master; then
+	if docker-compose build main; then
 		# Everything compiles
 		:
 	else

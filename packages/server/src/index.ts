@@ -18,7 +18,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { fork, isMaster } from 'cluster';
 import setupDiscordBot from 'discord-bot';
+import { cpus } from 'os';
 import { getConf } from 'server-common';
 import { api } from './api';
 import { createSocketUI } from './createSocketUI';
@@ -27,20 +29,38 @@ import getServer from './getServer';
 console.log = console.log.bind(console);
 
 if (require.main === module) {
-	(async () => {
-		const configuration = await getConf();
+	if (isMaster) {
+		const forkCount = cpus().length;
 
-		const { finishServerSetup, capwatchEmitter, mysqlConn } = await getServer(configuration);
+		console.log('Spawning', forkCount, 'workers');
+		for (let i = 0; i < forkCount; i++) {
+			const child = fork();
 
-		setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+			child.on('message', msg => {
+				if (msg === 'ready' && i === 0) {
+					child.send('setupExtra');
+				}
+			});
+		}
+	} else {
+		(async () => {
+			const configuration = await getConf();
+			const { mysqlConn, capwatchEmitter } = await getServer(configuration);
 
-		createSocketUI(configuration, mysqlConn);
+			process.on('message', msg => {
+				console.log('Got message:', msg);
+				if (msg === 'setupExtra') {
+					setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+					createSocketUI(configuration, mysqlConn);
+				}
+			});
 
-		finishServerSetup();
-	})().catch(e => {
-		console.error(e);
-		process.exit(1);
-	});
+			process.send!('ready');
+		})().catch(e => {
+			console.error(e);
+			process.exit(1);
+		});
+	}
 }
 
 process.on('unhandledRejection', up => {

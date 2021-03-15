@@ -24,6 +24,17 @@ RUN apk add imagemagick \
 	&& yarn global add lerna@3.22
 
 #
+# This container provides the compiler used in a development environment,
+# and allows the compiler to persist
+#
+FROM base AS development-builder
+
+WORKDIR /usr/evm-plus
+
+RUN yarn global add typescript ttypescript \
+	&& apk add git
+
+#
 # This container is used to program in a Docker environment, and access
 # secrets necessary for execution (db_password, etc). This container
 # will require a mount to /usr/evm-plus from the outside world
@@ -31,6 +42,8 @@ RUN apk add imagemagick \
 FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
+
+ENV NODE_ENV=development
 
 CMD yarn run debug
 
@@ -68,6 +81,15 @@ COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
 COPY tsconfig.* ./
 RUN lerna run build
+
+#
+# By creating an nginx container like this, we can statically serve HTML,
+# JS, and CSS without bogging down the Node process
+#
+FROM nginx:1.15-alpine as website-proxy
+
+COPY --from=builder /usr/evm-plus/packages/client/build /usr/evm-plus/client
+COPY packages/server/images /usr/evm-plus/client/images
 
 #
 # This container is used to execute the compiled JavaScript
@@ -161,4 +183,4 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap --
 
 WORKDIR /usr/evm-plus/packages/util-cli/dist
 
-ENTRYPOINT ["sh"]
+RUN chmod +x *.js

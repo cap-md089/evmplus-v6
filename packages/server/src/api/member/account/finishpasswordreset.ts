@@ -20,7 +20,6 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { always, api } from 'common-lib';
 import { PAM } from 'server-common';
-import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
 	PAM.validatePasswordResetToken(req.mysqlx, req.body.token)
@@ -35,7 +34,9 @@ export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = r
 		.map(username => PAM.getInformationForUser(req.mysqlx, username))
 		.map(PAM.simplifyUserInformation)
 		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
-		.map(session => ({ sessionID: session.id }))
-		.map(wrapper);
+		.map(session => ({
+			response: {},
+			cookies: { sessionID: { value: session.id, expires: session.expires } },
+		}));
 
 export default func;

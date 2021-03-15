@@ -25,6 +25,7 @@ import {
 	FileObject,
 	FileUserAccessControlPermissions,
 	get,
+	parseStringMemberReference,
 	pipe,
 	userHasFilePermission,
 } from 'common-lib';
@@ -67,6 +68,16 @@ export default class ExtraFolderDisplay extends React.Component<
 
 	public render() {
 		const userCanModify = canModify(this.props.member);
+
+		// All of these file IDs represent special, virtual folders that cannot be modified by regular users
+		if (
+			this.props.file.id === 'root' ||
+			this.props.file.id === 'events' ||
+			this.props.file.id === 'personalfolders' ||
+			Either.isRight(parseStringMemberReference(this.props.file.id))
+		) {
+			return null;
+		}
 
 		return (
 			<div className="drive-file-extra-display" ref={this.props.childRef}>

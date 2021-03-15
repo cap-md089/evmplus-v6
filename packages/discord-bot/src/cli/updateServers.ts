@@ -19,6 +19,7 @@
 
 import * as mysql from '@mysql/xdevapi';
 import {
+	AccountObject,
 	asyncIterFilter,
 	collectGeneratorAsync,
 	DiscordAccount,
@@ -163,8 +164,22 @@ export default async (
 				}
 			}
 		} else {
-			for (const [id, guild] of client.guilds.cache.entries()) {
-				await setupServer(id, guild);
+			const accounts = (
+				await schema.getCollection<AccountObject>('Accounts').find('true').execute()
+			).fetchAll();
+
+			try {
+				for (const account of accounts) {
+					if (Maybe.isSome(account.discordServer)) {
+						const guild = await client.guilds.fetch(
+							account.discordServer.value.serverID,
+						);
+
+						await setupServer(account.discordServer.value.serverID, guild);
+					}
+				}
+			} catch (e) {
+				console.error('Could not update Discord server', e);
 			}
 		}
 	} finally {

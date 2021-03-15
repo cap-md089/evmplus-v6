@@ -3,12 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [1.0.7](http://github.com//cap-md089/evmplus-org-com-v6/compare/server-jest-config@1.0.2...server-jest-config@1.0.7) (2021-01-03)
+## [1.0.7](http://github.com//cap-md089/evmplus-org-com-v6/compare/server-jest-config@1.0.2...server-jest-config@1.0.7) (2021-03-15)
 
 
 ### Bug Fixes
 
-* **server:** fixed headers not being properly handled ([b92f519](http://github.com//cap-md089/evmplus-org-com-v6/commit/b92f519e79b97dde07388a4af0097f0f0045be3d))
+* **server-jest-config:** fixed server-jest-config not depending on common-lib ([64cfebf](http://github.com//cap-md089/evmplus-org-com-v6/commit/64cfebfd9847683ca46c91ddbc57499c504ba60e))
 * updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-org-com-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
 
 

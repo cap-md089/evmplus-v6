@@ -35,7 +35,6 @@ import * as dotenv from 'dotenv';
 import { validator } from 'auto-client-api';
 
 export const parseRawConfiguration = (raw: RawServerConfiguration): ServerConfiguration => ({
-	CLIENT_PATH: raw.CLIENT_PATH.trim(),
 	GOOGLE_KEYS_PATH: raw.GOOGLE_KEYS_PATH.trim(),
 
 	DB_HOST: raw.DB_HOST.trim(),

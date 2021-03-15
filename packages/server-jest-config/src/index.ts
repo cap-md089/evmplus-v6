@@ -30,12 +30,7 @@ interface ConnectionInfo {
 }
 
 const randomId = () =>
-	Math.random()
-		.toString(36)
-		.substring(2, 15) +
-	Math.random()
-		.toString(36)
-		.substring(2, 15);
+	Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 const createCollection = (schema: Schema) => (name: string) => schema.createCollection(name);
 
@@ -91,8 +86,15 @@ export class TestConnection {
 		pass: string;
 		user: 'root';
 	};
+	protected static currentComposeConnection: Client | undefined;
 
-	public static async setup() {
+	public static setup() {
+		if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
+			this._setup();
+		}
+	}
+
+	protected static async _setup() {
 		return (this.currentConnection = await (this.currentConnection = (async () => {
 			await dockerConn.pull('mysql:8.0');
 
@@ -160,7 +162,21 @@ export class TestConnection {
 	}
 
 	public static async setupSchema(): Promise<TestConnection> {
-		if (this.currentConnection instanceof Promise) {
+		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
+			const schema = randomId();
+
+			this.currentComposeConnection ??= getClient(this.mysqlConnectionString!, {
+				pooling: {
+					enabled: true,
+					maxSize: 50,
+				},
+			});
+
+			const session = await this.currentComposeConnection.getSession();
+			await session.createSchema(schema);
+
+			return new TestConnection(this.currentComposeConnection, session, schema);
+		} else if (this.currentConnection instanceof Promise) {
 			const connInfo = await this.currentConnection;
 
 			const schema = randomId();
@@ -175,7 +191,7 @@ export class TestConnection {
 
 			return new TestConnection(this.currentConnection.mysqlClient, session, schema);
 		} else {
-			const connInfo = await this.setup();
+			const connInfo = await this._setup()!;
 
 			const schema = randomId();
 			const session = await connInfo.mysqlClient.getSession();
@@ -186,27 +202,33 @@ export class TestConnection {
 	}
 
 	public static async teardown() {
-		await Promise.all(this.connections.map(conn => conn.session.close()));
+		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
+			await Promise.all(this.connections.map(conn => conn.session.close()));
 
-		const info = await this.currentConnection;
+			const info = await this.currentConnection;
 
-		if (info) {
-			await Promise.all([
-				(async () => {
-					await info.dockerContainer.stop();
-					await info.dockerContainer.remove();
-				})(),
-				info.mysqlClient.close(),
-			]);
+			if (info) {
+				await Promise.all([
+					(async () => {
+						await info.dockerContainer.stop();
+						await info.dockerContainer.remove();
+					})(),
+					info.mysqlClient.close(),
+				]);
+			}
 		}
 	}
 
 	protected static get mysqlConnectionString() {
-		if (!this.mysqlInfo) {
-			return;
+		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
+			return 'mysqlx://root:toor@mysql:33060';
+		} else {
+			if (!this.mysqlInfo) {
+				return;
+			}
+			const { host, port, user, pass } = this.mysqlInfo;
+			return `mysqlx://${user}:${pass}@${host}:${port}`;
 		}
-		const { host, port, user, pass } = this.mysqlInfo;
-		return `mysqlx://${user}:${pass}@${host}:${port}`;
 	}
 
 	protected constructor(
@@ -226,14 +248,16 @@ export class TestConnection {
 	}
 
 	public async setupCollections() {
-		await this.session.sql(`USE ${this.schema};`).execute();
-
 		await Promise.all(COLLECTIONS_USED.map(createCollection(this.getSchema())));
 	}
 }
 
 TestConnection.setup = TestConnection.setup.bind(TestConnection);
+// @ts-ignore
+TestConnection._setup = TestConnection._setup.bind(TestConnection);
 TestConnection.setupSchema = TestConnection.setupSchema.bind(TestConnection);
 TestConnection.teardown = TestConnection.teardown.bind(TestConnection);
 
 export default TestConnection;
+
+export { default as getConf } from './conf';

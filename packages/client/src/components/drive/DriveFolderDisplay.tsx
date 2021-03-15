@@ -17,20 +17,25 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FileUserAccessControlPermissions, userHasFilePermission } from 'common-lib';
+import { FileObject, FileUserAccessControlPermissions, userHasFilePermission } from 'common-lib';
 import * as React from 'react';
 import { FileDisplayProps } from './DriveFileDisplay';
 import fetchApi from '../../lib/apis';
 
+interface FolderDisplayProps extends FileDisplayProps {
+	fileDeleteID: (id: string) => void;
+	onFolderNavigate: (folder: FileObject) => void;
+}
+
 export default class DriveFolderDisplay extends React.Component<
-	FileDisplayProps & { fileDeleteID: (id: string) => void },
+	FolderDisplayProps,
 	{ hovering: boolean }
 > {
 	public state = {
 		hovering: false,
 	};
 
-	constructor(props: FileDisplayProps & { fileDeleteID: (id: string) => void }) {
+	constructor(props: FolderDisplayProps) {
 		super(props);
 
 		this.handleDrop = this.handleDrop.bind(this);
@@ -46,6 +51,7 @@ export default class DriveFolderDisplay extends React.Component<
 					this.state.hovering ? 'hovering' : ''
 				}`}
 				onClick={() => this.props.onSelect(this.props.file)}
+				onDoubleClick={() => this.props.onFolderNavigate(this.props.file)}
 				onDragOver={this.handleOver}
 				onDragEnd={this.handleOff}
 				onDragLeave={this.handleOff}

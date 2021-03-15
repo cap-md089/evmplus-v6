@@ -21,6 +21,7 @@ import {
 	AccountObject,
 	AccountType,
 	areMembersTheSame,
+	ClientUser,
 	CustomAttendanceField,
 	CustomAttendanceFieldEntryType,
 	defaultRadioFromLabels,
@@ -31,6 +32,7 @@ import {
 	emptySimpleFromLabels,
 	EventStatus,
 	ExternalPointOfContact,
+	FileObject,
 	FullTeamObject,
 	getMemberEmail,
 	getMemberPhone,
@@ -50,7 +52,6 @@ import {
 	SimpleMultCheckboxReturn,
 	stringifyMemberReference,
 	toReference,
-	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -67,6 +68,7 @@ import SimpleForm, {
 	Checkbox,
 	DateTimeInput,
 	Divider,
+	FileInput,
 	FormBlock,
 	FormValidator,
 	Label,
@@ -203,6 +205,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 								memberReference,
 								email: poc.email,
 								phone: poc.phone,
+								position: poc.position,
 								receiveEventUpdates: poc.receiveEventUpdates,
 								receiveRoster: poc.receiveRoster,
 								receiveSignUpUpdates: poc.receiveSignUpUpdates,
@@ -295,6 +298,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 			: {
 					email: poc.email,
 					phone: poc.phone,
+					position: poc.position,
 					receiveEventUpdates: poc.receiveEventUpdates,
 					receiveRoster: poc.receiveRoster,
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
@@ -347,6 +351,9 @@ interface EventFormState {
 	addPOCbyID: number | null;
 	addingPOCbyID: boolean;
 	pocAddbyIDError: string | null;
+	files: FileObject[] | null;
+	selectedFolder: string;
+	selectedFiles: FileObject[];
 }
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -357,6 +364,9 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		addPOCbyID: null,
 		addingPOCbyID: false,
 		pocAddbyIDError: null,
+		files: [],
+		selectedFolder: '',
+		selectedFiles: [],
 	};
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
@@ -638,6 +648,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 							type: PointOfContactType.INTERNAL,
 							email: '',
 							name: '',
+							position: '',
 							memberReference: Maybe.none(),
 							phone: '',
 							receiveEventUpdates: false,
@@ -671,6 +682,16 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						removeText="Remove Custom Attendance Field"
 						fullWidth={true}
 						extraProps={{}}
+					/>
+
+					<Title>File attachments</Title>
+
+					<Label>Event files</Label>
+					<FileInput
+						name="fileIDs"
+						single={true}
+						account={this.props.account}
+						member={this.props.member}
 					/>
 
 					<Title>Extra information</Title>
@@ -727,9 +748,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Label>Administrative comments</Label>
 					<BigTextBox name="administrationComments" />
-
-					{/* <Label>Event files</Label>
-					<FileInput name="fileIDs" account={this.props.account} member={this.props.member} /> */}
 
 					{process.env.NODE_ENV === 'development' && (
 						<>
@@ -877,6 +895,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						type: PointOfContactType.INTERNAL,
 						email: Maybe.orSome('')(getMemberEmail(result.value.contact)),
 						phone: Maybe.orSome('')(getMemberPhone(result.value.contact)),
+						position: '',
 						memberReference: Maybe.some(toReference(result.value)),
 						receiveEventUpdates: false,
 						receiveRoster: false,

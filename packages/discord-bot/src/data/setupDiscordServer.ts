@@ -18,7 +18,7 @@
  */
 
 import { Client as MySQLClient } from '@mysql/xdevapi';
-import { DiscordAccount } from 'common-lib';
+import { always, DiscordAccount } from 'common-lib';
 import { Client, Guild, Permissions, Role } from 'discord.js';
 import { collectResults, findAndBind, getRegistry } from 'server-common';
 import { getXSession } from '..';
@@ -255,10 +255,11 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 
 					try {
 						const dmChannel = await member.createDM();
-						if (!dmChannel.messages.channel.lastMessage) {
-							// 	await dmChannel.send(
-							// 		`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`
-							// 	);
+						const messages = await dmChannel.awaitMessages(always(true));
+						if (messages.size == 0) {
+							await dmChannel.send(
+								`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${config.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`,
+							);
 							console.log('Empty chat:', member.displayName);
 						}
 					} catch (e) {

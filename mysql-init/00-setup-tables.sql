@@ -335,9 +335,11 @@ CREATE TABLE `NHQ_CadetDutyPosition` (
   `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
   `CAPID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.CAPID'))) STORED NOT NULL,
+  `ORGID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.ORGID'))) STORED NOT NULL,
   `FunctArea` varchar(64) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.FunctArea'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
   KEY `id` (`CAPID`),
+  KEY `orgid` (`ORGID`),
   CONSTRAINT `$val_strict_7A559CDFD34D332A3527A6A8E17C0290D52BAEDB` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -354,8 +356,10 @@ CREATE TABLE `NHQ_CadetHFZInformation` (
   `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
   `CAPID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.CAPID'))) STORED NOT NULL,
+  `ORGID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.ORGID'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
   KEY `id` (`CAPID`),
+  KEY `orgid` (`ORGID`),
   CONSTRAINT `NHQ_CadetHFZInformation_chk_1` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -388,8 +392,10 @@ CREATE TABLE `NHQ_DutyPosition` (
   `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
   `CAPID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.CAPID'))) STORED NOT NULL,
+  `ORGID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.ORGID'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
   KEY `id` (`CAPID`),
+  KEY `ORGID` (`ORGID`),
   CONSTRAINT `$val_strict_0AB6639981277C1587C5694B109C7334571C16E8` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -447,7 +453,8 @@ CREATE TABLE `NHQ_Member` (
   `CAPID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.CAPID'))) STORED NOT NULL,
   `ORGID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.ORGID'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
-  KEY `ids` (`CAPID`,`ORGID`),
+  KEY `ids` (`CAPID`),
+  KEY `ORGID` (`ORGID`),
   CONSTRAINT `$val_strict_60C3811C5A99649AEDF27A7BD5FD0355DAEEE8A7` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -479,7 +486,9 @@ CREATE TABLE `NHQ_Organization` (
   `doc` json DEFAULT NULL,
   `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
+  `ORGID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.ORGID'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
+  KEY `ORGID` (`ORGID`),
   CONSTRAINT `$val_strict_B1E222D2A68B909E5A24D2E3DFFA989F3C33EC8E` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

@@ -19,16 +19,14 @@
 
 import { Client } from '@mysql/xdevapi';
 import { MemberUpdateEventEmitter, ServerConfiguration } from 'common-lib';
+import { EventEmitter } from 'events';
 import * as express from 'express';
-import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
 import getRouter from './getAPIRouter';
 
 export interface ServerInitializationOptions {
 	capwatchEmitter: MemberUpdateEventEmitter;
 	conf: ServerConfiguration;
-	finishServerSetup: () => void;
 	server: http.Server;
 	app: express.Application;
 	mysqlConn: Client;
@@ -37,6 +35,7 @@ export interface ServerInitializationOptions {
 export default async (
 	conf: ServerConfiguration,
 	port: number = conf.PORT,
+	capwatchEmitter?: MemberUpdateEventEmitter,
 	mysqlConn?: Client,
 ): Promise<ServerInitializationOptions> => {
 	const app: express.Application = express();
@@ -48,8 +47,11 @@ export default async (
 	server.on('error', onError);
 	server.on('listening', onListening);
 
-	const { router: apiRouter, capwatchEmitter, mysqlConn: mysql } = await getRouter(
+	capwatchEmitter ??= new EventEmitter();
+
+	const { router: apiRouter, mysqlConn: mysql } = await getRouter(
 		conf,
+		capwatchEmitter,
 		mysqlConn,
 	);
 
@@ -60,17 +62,6 @@ export default async (
 	app.disable('x-powered-by');
 
 	app.use(apiRouter);
-
-	app.get('/images/banner', (req, res) => {
-		fs.readdir(path.join(__dirname, '..', 'images', 'banner-images'), (err, data) => {
-			if (err) {
-				throw err;
-			}
-			const image = data[Math.round(Math.random() * (data.length - 1))];
-			res.sendFile(path.join(__dirname, '..', 'images', 'banner-images', image));
-		});
-	});
-	app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 
 	app.use('/teapot', (req, res) => {
 		res.status(418);
@@ -110,11 +101,5 @@ export default async (
 		capwatchEmitter,
 		conf,
 		mysqlConn: mysql,
-		finishServerSetup() {
-			app.use(express.static(path.join(conf.CLIENT_PATH, 'build')));
-			app.get('*', (req, res) => {
-				res.sendFile(path.join(conf.CLIENT_PATH, 'build', 'index.html'));
-			});
-		},
 	};
 };

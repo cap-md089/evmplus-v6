@@ -23,8 +23,12 @@ import {
 	asyncRight,
 	ClientUser,
 	Either,
+	EitherObj,
 	FileObject,
+	FullTeamObject,
+	HTTPError,
 	Maybe,
+	Member,
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
@@ -38,6 +42,7 @@ import Footer from './components/page-elements/Footer';
 import Header from './components/page-elements/Header';
 import SideNavigation, { SideNavigationItem } from './components/page-elements/SideNavigation';
 import PageRouter from './components/PageRouter';
+import { MemberDetailsProvider, MemberListProvider, TeamListProvider } from './globals';
 import fetchApi from './lib/apis';
 import { getMember } from './lib/Members';
 
@@ -51,6 +56,8 @@ interface AppState {
 	breadCrumbs: BreadCrumb[];
 	allowedSlideshowIDs: FileObject[];
 	loadError: boolean;
+	memberList: EitherObj<HTTPError, Member[]> | null;
+	teamList: EitherObj<HTTPError, FullTeamObject[]> | null;
 }
 
 export default class App extends React.Component<
@@ -73,6 +80,8 @@ export default class App extends React.Component<
 		allowedSlideshowIDs: [],
 		fullMember: null,
 		loadError: false,
+		memberList: null,
+		teamList: null,
 	};
 
 	private timer: NodeJS.Timer | null = null;
@@ -84,6 +93,8 @@ export default class App extends React.Component<
 		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
 		this.updateSideNav = this.updateSideNav.bind(this);
 		this.update = this.update.bind(this);
+		this.updateMemberList = this.updateMemberList.bind(this);
+		this.updateTeamList = this.updateTeamList.bind(this);
 	}
 
 	public async componentDidMount() {
@@ -138,7 +149,7 @@ export default class App extends React.Component<
 	}
 
 	public render() {
-		return (
+		return this.renderWithProviders(
 			<>
 				<Header
 					loadingError={this.state.loadError}
@@ -183,7 +194,34 @@ export default class App extends React.Component<
 				</main>
 				<div className="content-border right-border" />
 				<Footer registry={Maybe.fromValue(this.state.Registry)} />
-			</>
+			</>,
+		);
+	}
+
+	private renderWithProviders(el: JSX.Element): JSX.Element {
+		return (
+			<MemberDetailsProvider
+				value={{
+					member: this.state.fullMember,
+					fullMember: this.state.member,
+				}}
+			>
+				<MemberListProvider
+					value={{
+						state: this.state.memberList,
+						updateList: this.updateMemberList,
+					}}
+				>
+					<TeamListProvider
+						value={{
+							state: this.state.teamList,
+							updateList: this.updateTeamList,
+						}}
+					>
+						{el}
+					</TeamListProvider>
+				</MemberListProvider>
+			</MemberDetailsProvider>
 		);
 	}
 
@@ -216,5 +254,45 @@ export default class App extends React.Component<
 
 	private update() {
 		this.forceUpdate();
+	}
+
+	private currentTeamsListRequestInProgress: boolean = false;
+	private async updateTeamList() {
+		if (this.currentTeamsListRequestInProgress) {
+			return;
+		}
+
+		this.currentTeamsListRequestInProgress = true;
+
+		const result = await fetchApi.team.list({}, {});
+
+		this.setState(
+			{
+				teamList: result,
+			},
+			() => {
+				this.currentTeamsListRequestInProgress = false;
+			},
+		);
+	}
+
+	private currentMembersListRequestInProgress: boolean = false;
+	private async updateMemberList() {
+		if (this.currentMembersListRequestInProgress) {
+			return;
+		}
+
+		this.currentMembersListRequestInProgress = true;
+
+		const result = await fetchApi.member.memberList({}, {});
+
+		this.setState(
+			{
+				memberList: result,
+			},
+			() => {
+				this.currentMembersListRequestInProgress = false;
+			},
+		);
 	}
 }

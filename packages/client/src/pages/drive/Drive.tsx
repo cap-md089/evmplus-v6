@@ -20,17 +20,24 @@
 import {
 	AsyncEither,
 	Either,
+	EitherObj,
 	FileObject,
+	FileUserAccessControlPermissions,
 	FullFileObject,
+	FullTeamObject,
 	get,
 	hasPermission,
+	HTTPError,
 	Maybe,
 	Member,
 	Permissions,
 	RawTeamObject,
+	Right,
+	userHasFilePermission,
 } from 'common-lib';
 import $ from 'jquery';
 import * as React from 'react';
+import { withMemberList, withTeamlist } from '../../globals';
 import ExtraFileDisplay from '../../components/drive/DriveExtraFileDisplay';
 import ExtraFolderDisplay from '../../components/drive/DriveExtraFolderDisplay';
 import DriveFileDisplay from '../../components/drive/DriveFileDisplay';
@@ -82,7 +89,12 @@ type DataState = DataUnloadedState | DataLoadedState;
 
 type DriveState = (UnloadedDriveState | LoadedDriveState) & DataState;
 
-export default class Drive extends Page<PageProps, DriveState> {
+interface DriveProps extends PageProps {
+	memberList: EitherObj<HTTPError, Member[]>;
+	teamList: EitherObj<HTTPError, FullTeamObject[]>;
+}
+
+export class Drive extends Page<DriveProps, DriveState> {
 	public state: DriveState = {
 		files: null,
 		currentlySelected: '',
@@ -99,11 +111,11 @@ export default class Drive extends Page<PageProps, DriveState> {
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
 
-	constructor(props: PageProps) {
+	constructor(props: DriveProps) {
 		super(props);
 
 		this.onFileClick = this.onFileClick.bind(this);
-		this.onFolderClick = this.onFolderClick.bind(this);
+		this.onFolderNavigate = this.onFolderNavigate.bind(this);
 
 		this.createFolder = this.createFolder.bind(this);
 		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
@@ -187,9 +199,17 @@ export default class Drive extends Page<PageProps, DriveState> {
 			return <div>{this.state.errorReason}</div>;
 		}
 
-		const state = this.state;
+		const { memberList, teamList } = this.props;
 
-		if (this.state.files === null || this.state.currentFolder === null || !state.extraLoaded) {
+		if (Either.isLeft(teamList)) {
+			return <div>{teamList.value.message}</div>;
+		}
+
+		if (Either.isLeft(memberList) && this.props.member) {
+			return <div>{memberList.value.message}</div>;
+		}
+
+		if (this.state.files === null || this.state.currentFolder === null) {
 			return <Loader />;
 		}
 
@@ -246,12 +266,17 @@ export default class Drive extends Page<PageProps, DriveState> {
 			}
 		}
 
+		const isEditableFolder =
+			this.props.member &&
+			(hasPermission('FileManagement')(Permissions.FileManagement.FULL)(this.props.member) ||
+				userHasFilePermission(FileUserAccessControlPermissions.MODIFY)(
+					this.props.member,
+				)) &&
+			this.state.currentFolder.id !== 'personalfolders';
+
 		return (
 			<div>
-				{this.props.member &&
-				hasPermission('FileManagement')(Permissions.FileManagement.FULL)(
-					this.props.member,
-				) ? (
+				{isEditableFolder ? (
 					<div>
 						<Form<{ name: string }>
 							id=""
@@ -274,11 +299,12 @@ export default class Drive extends Page<PageProps, DriveState> {
 					{rowedFolders.map((folderList, i) => (
 						<React.Fragment key={i}>
 							<div className="drive-folder-row">
-								{folderList.map((f, j) => (
+								{folderList.map(f => (
 									<DriveFolderDisplay
-										key={j}
+										key={f.id}
 										file={f}
-										onSelect={this.onFolderClick}
+										onFolderNavigate={this.onFolderNavigate}
+										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 										fileDeleteID={this.fileIDDeleted}
@@ -297,14 +323,18 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={state.members}
-									teams={state.teams}
+									members={
+										!!this.props.member
+											? (memberList as Right<Member[]>).value
+											: []
+									}
+									teams={teamList.value}
 								/>
 							) : null}
 						</React.Fragment>
 					))}
 				</div>
-				{this.props.member ? (
+				{this.props.member && isEditableFolder ? (
 					<FileUploader
 						onFileUpload={this.addFile}
 						member={this.props.member}
@@ -317,9 +347,9 @@ export default class Drive extends Page<PageProps, DriveState> {
 					{rowedFiles.map((fileList, i) => (
 						<React.Fragment key={i}>
 							<div className="drive-file-row">
-								{fileList.map((f, j) => (
+								{fileList.map(f => (
 									<DriveFileDisplay
-										key={j}
+										key={f.id}
 										file={f}
 										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
@@ -338,8 +368,12 @@ export default class Drive extends Page<PageProps, DriveState> {
 									fileModify={this.fileModified}
 									fileUpdate={this.refresh}
 									registry={this.props.registry}
-									members={state.members}
-									teams={state.teams}
+									members={
+										!!this.props.member
+											? (memberList as Right<Member[]>).value
+											: []
+									}
+									teams={teamList.value}
 								/>
 							) : null}
 						</React.Fragment>
@@ -349,19 +383,8 @@ export default class Drive extends Page<PageProps, DriveState> {
 		);
 	}
 
-	private onFolderClick(file: FileObject) {
-		if (file.id === this.state.currentlySelected) {
-			this.goToFolder(file.id, true);
-			this.setState({
-				currentlySelected: '',
-				showingExtraInfo: true,
-			});
-		} else {
-			this.setState({
-				currentlySelected: file.id,
-				showingExtraInfo: false,
-			});
-		}
+	private onFolderNavigate(file: FileObject) {
+		this.goToFolder(file.id, true);
 	}
 
 	private onFileClick(file: FileObject) {
@@ -391,10 +414,11 @@ export default class Drive extends Page<PageProps, DriveState> {
 		]);
 
 		if (Either.isLeft(folderInfoEither)) {
-			return this.setState({
+			this.setState({
 				error: true,
 				errorReason: folderInfoEither.value.message,
 			});
+			return;
 		}
 
 		const [wrappedFiles, currentFolder] = folderInfoEither.value;
@@ -408,6 +432,7 @@ export default class Drive extends Page<PageProps, DriveState> {
 			},
 			() => {
 				if (update) {
+					this.props.prepareURL('/' + this.path + '/' + id);
 					this.props.routeProps.history.push('/' + this.path + '/' + id);
 				}
 
@@ -484,3 +509,5 @@ export default class Drive extends Page<PageProps, DriveState> {
 		}
 	}
 }
+
+export default withTeamlist(withMemberList(Drive));

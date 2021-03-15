@@ -27,7 +27,7 @@ import {
 	toReference,
 } from 'common-lib';
 import * as debug from 'debug';
-import { Client } from 'discord.js';
+import { Client, Role } from 'discord.js';
 import 'dotenv/config';
 import { getRegistry } from 'server-common';
 import notifyRole from './cli/notifyRole';
@@ -38,7 +38,7 @@ import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
-import setupUser from './data/setupUser';
+import setupUser, { byName } from './data/setupUser';
 import getConf, { DiscordCLIConfiguration } from './getDiscordConf';
 
 const discordBotLog = debug('discord-bot');
@@ -60,6 +60,7 @@ export const getClient = () =>
 				'GUILDS',
 				'DIRECT_MESSAGES',
 				'GUILD_PRESENCES',
+				'GUILD_VOICE_STATES',
 			],
 		},
 	});
@@ -280,6 +281,14 @@ export default function setupDiscordBot(
 				dmChannel.send(
 					`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/registerdiscord/${member.id}`,
 				);
+
+				await (
+					await member.roles.set(
+						[
+							(await member.guild.roles.fetch()).cache.find(byName('Processing')),
+						].filter((role): role is Role => !!role),
+					)
+				).setNickname('');
 			}
 		} finally {
 			await session.close();
@@ -289,9 +298,11 @@ export default function setupDiscordBot(
 	client.on('message', message => {
 		const parts = message.content.split(' ');
 
+		emitter.extend('message')('Received message');
+
 		if (parts[0] === `<@!${client.user?.id}>` && message.member?.id !== client.user?.id) {
 			if (parts.length < 2) {
-				message.reply('Command needed; known commands are "attendancerecord"');
+				message.reply('Command needed; known command is "attendancerecord"');
 				return;
 			}
 
@@ -299,6 +310,10 @@ export default function setupDiscordBot(
 				case 'attendancerecord':
 					attendancerecord(client)(mysqlClient)(conf)(parts)(message);
 
+					break;
+
+				default:
+					message.reply('Unknown command; known command is "attendancerecord"');
 					break;
 			}
 		}

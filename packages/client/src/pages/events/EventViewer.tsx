@@ -227,10 +227,7 @@ const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventO
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees
-		.filter(Either.isRight)
-		.map(get('value'))
-		.map(get('record')),
+	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 
@@ -886,14 +883,21 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>CAP Point of Contact: </b>
 										{poc.name}
 										<br />
-										{!!poc.email ? (
+										{poc.position ? (
+											<>
+												<b>Event Duty Position: </b>
+												{poc.position}
+												<br />
+											</>
+										) : null}
+										{member && !!poc.email ? (
 											<>
 												<b>CAP Point of Contact Email: </b>
 												{poc.email}
 												<br />
 											</>
 										) : null}
-										{!!poc.phone ? (
+										{member && !!poc.phone ? (
 											<>
 												<b>CAP Point of Contact Phone: </b>
 												{poc.phone}
@@ -907,14 +911,21 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>External Point of Contact: </b>
 										{poc.name}
 										<br />
-										{poc.email !== '' ? (
+										{poc.position ? (
+											<>
+												<b>Event Duty Position: </b>
+												{poc.position}
+												<br />
+											</>
+										) : null}
+										{member && poc.email !== '' ? (
 											<>
 												<b>External Point of Contact Email: </b>
 												{poc.email}
 												<br />
 											</>
 										) : null}
-										{poc.phone !== '' ? (
+										{member && poc.phone !== '' ? (
 											<>
 												<b>External Point of Contact Phone: </b>
 												{poc.phone}
@@ -1012,9 +1023,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											.filter(
 												(
 													val,
-												): val is Right<
-													api.events.events.EventViewerAttendanceRecord
-												> =>
+												): val is Right<api.events.events.EventViewerAttendanceRecord> =>
 													Either.isRight(val) &&
 													val.value.record.memberID.type ===
 														'CAPNHQMember',
@@ -1480,11 +1489,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 	private async printForm(docDef: TDocumentDefinitions, fileName: string) {
 		const pdfMake = await import('pdfmake');
 
-		const fontGetter =
-			process.env.NODE_ENV === 'production'
-				? (fontName: string) =>
-						`https://${this.props.account.id}.${process.env.REACT_APP_HOST_NAME}/images/fonts/${fontName}`
-				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
+		const fontGetter = (fontName: string) => `/images/fonts/${fontName}`;
 
 		const fonts: TFontDictionary = {
 			Roboto: {

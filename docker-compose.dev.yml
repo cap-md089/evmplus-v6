@@ -62,7 +62,7 @@ services:
               target: /usr/evm-plus
 
     mysql:
-        image: mysql:8.0
+        image: mysql:8.0.23
         ports:
             - '3306:3306'
             - '33060:33060'
@@ -85,13 +85,30 @@ services:
         networks:
             - default
 
+    dev-setup:
+        build:
+            context: .
+            target: development-builder
+        volumes:
+            - .:/usr/evm-plus
+        command: sh -c 'git config core.hooksPath hooks && lerna bootstrap && lerna run build --ignore client'
+
+    build-watch:
+        build:
+            context: .
+            target: development-builder
+        volumes:
+            - .:/usr/evm-plus
+        command: sh -c 'ttsc --build /usr/evm-plus/tsconfig.dev.json --watch'
+
     capwatch_update:
         build:
             context: .
-            target: capwatch-import
+            target: development
         command: /usr/evm-plus/capwatch-cron/download.sh
         volumes:
             - ./capwatch_downloads:/tmp
+            - .:/usr/evm-plus
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
@@ -99,6 +116,7 @@ services:
             - DB_POOL_SIZE=50
             - DRIVE_STORAGE_PATH=/srv/uploads
             - GOOGLE_KEYS_PATH=/google-keys
+            - HOST_NAME=localevmplus.org
         secrets:
             - db_user
             - db_password
@@ -131,7 +149,9 @@ services:
     util-cli:
         build:
             context: .
-            target: util-cli
+            target: development
+        command: sh
+        working_dir: /usr/evm-plus/packages/util-cli/dist
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
@@ -147,6 +167,10 @@ services:
             - type: bind
               source: ./keys/google-keys
               target: /google-keys
+
+            - type: bind
+              source: .
+              target: /usr/evm-plus
 
             - uploads:/srv/uploads
         tty: true

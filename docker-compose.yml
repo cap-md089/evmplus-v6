@@ -1,7 +1,9 @@
 version: '3.8'
 services:
     proxy:
-        image: nginx:1.15-alpine
+        build:
+            context: .
+            target: website-proxy
         networks:
             - frontend
         ports:
@@ -11,12 +13,12 @@ services:
         volumes:
             - ./nginx:/etc/nginx/conf.d
             - ./keys/certbot/conf:/etc/letsencrypt
+            - ./keys/certbot/www:/var/www/certbot
         command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
         depends_on:
-            - certbot
             - main
 
-    certbot:
+    certbot-dns:
         image: certbot/dns-route53
         restart: always
         volumes:
@@ -27,6 +29,14 @@ services:
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
         secrets:
             - aws_ssl_keys
+
+    certbot-web:
+        image: certbot/certbot
+        restart: always
+        volumes:
+            - ./keys/certbot/conf:/etc/letsencrypt
+            - ./keys/certbot/www:/var/www/certbot
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
     main:
         build:
@@ -45,7 +55,7 @@ services:
             - DB_POOL_SIZE=50
             - PORT=3001
             - DRIVE_STORAGE_PATH=/srv/uploads
-            - HOST_NAME=evmplus.org
+            - HOST_NAME=localevmplus.org
             - NODE_ENV=production
         volumes:
             - type: bind
@@ -66,7 +76,7 @@ services:
             - mysql
 
     mysql:
-        image: mysql:8.0
+        image: mysql:8.0.23
         networks:
             - backend
         expose:
@@ -107,6 +117,7 @@ services:
             - DB_POOL_SIZE=50
             - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
+            - HOST_NAME=evmplus.org
 
             # These aren't actually exposed, but the environment variables are set
             # because I'm too lazy to remove the dependency on two variables and split
@@ -139,6 +150,7 @@ services:
             - DB_POOL_SIZE=50
             - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
+            - HOST_NAME=evmplus.org
 
             # These aren't actually exposed, but the environment variables are set
             # because I'm too lazy to remove the dependency on two variables and split
@@ -199,8 +211,9 @@ services:
               target: /srv/uploads
         tty: true
         stdin_open: true
-        depends_on:
+        depends_on: 
             - mysql
+        command: sh
         networks:
             - backend
         secrets:

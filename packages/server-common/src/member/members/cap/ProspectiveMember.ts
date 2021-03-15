@@ -54,6 +54,9 @@ import {
 	always,
 	destroy,
 	asyncIterReduce,
+	areMembersTheSame,
+	toReference,
+	isPartOfTeam,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
 import { CAP } from '..';
@@ -65,6 +68,7 @@ import {
 	findAndBindC,
 	addItemToCollection,
 	generateResults,
+	findAndBind,
 } from '../../../MySQLUtil';
 import { getRegistry } from '../../../Registry';
 import { getNameForCAPNHQMember } from './NHQMember';
@@ -90,6 +94,82 @@ const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject)
 		})
 		.map(get(0))
 		.map(obj => stripProp('_id')(obj) as StoredProspectiveMemberObject);
+
+export const getProspectiveMembersForAccount = (schema: Schema) => (
+	account: RawCAPSquadronAccountObject,
+) => (teamObjects: RawTeamObject[]) =>
+	AsyncEither.All([
+		getRegistry(schema)(account),
+		asyncRight(
+			collectResults(
+				findAndBind(
+					schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
+					{
+						accountID: account.id,
+						hasNHQReference: false,
+					},
+				),
+			),
+			errorGenerator('Could not get prospective members for account'),
+		),
+		asyncRight(
+			collectResults(
+				findAndBind(
+					schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
+					{
+						accountID: account.id,
+					},
+				),
+			),
+			errorGenerator('Could not load prospective members for account'),
+		),
+	]).map(([registry, members, orgExtraInfo]) =>
+		members.map(member => {
+			const memberID = toReference(member);
+			const finder = areMembersTheSame(member);
+
+			const extraInfo =
+				orgExtraInfo.find(({ member: id }) => finder(id)) ??
+				({
+					accountID: account.id,
+					member: memberID,
+					temporaryDutyPositions: [],
+					flight: null,
+					teamIDs: teamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
+					absentee: null,
+					type: 'CAP',
+				} as CAPExtraMemberInformation);
+
+			return {
+				absenteeInformation: extraInfo.absentee,
+				contact: member.contact,
+				dutyPositions: extraInfo.temporaryDutyPositions.map(
+					item =>
+						({
+							date: item.assigned,
+							duty: item.Duty,
+							expires: item.validUntil,
+							type: 'CAPUnit',
+						} as ShortDutyPosition),
+				),
+				flight: extraInfo.flight,
+				id: member.id,
+				memberRank: member.memberRank,
+				nameFirst: member.nameFirst,
+				nameLast: member.nameLast,
+				nameMiddle: member.nameMiddle,
+				nameSuffix: member.nameSuffix,
+				hasNHQReference: false as const,
+				seniorMember: member.seniorMember,
+				squadron: registry.Website.Name,
+				type: 'CAPProspectiveMember' as const,
+				orgid: account.mainOrg,
+				accountID: account.id,
+				usrID: member.usrID,
+				teamIDs: extraInfo.teamIDs,
+			};
+		}),
+	);
 
 export const expandProspectiveMember = (schema: Schema) => (
 	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>,
