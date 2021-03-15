@@ -108,7 +108,7 @@ const formatHtmlEmail = (
 <header style="background:#28497e;padding:20px;margin:0">
 <a href="https://${reg.accountID}.${config.HOST_NAME}/">
 <h2 style="text-align:center;color:white;">${reg.Website.Name}</h3>
-<h3 style="text-align:center;color:white;">Event Manager Action</h4>
+<h3 style="text-align:center;color:white;">Maryland Wing CAP Event Manager Action</h4>
 </a>
 </header>
 <div style="border:5px solid #28497e;margin:0;padding:20px">
@@ -120,7 +120,7 @@ The Event Manager Support Team
 </div>`;
 
 const formatTextEmail = (reg: RegistryValues, text: string) => `${reg.Website.Name}
-Event Manager Action
+Maryland Wing CAP Event Manager Action
 
 ${text}
 

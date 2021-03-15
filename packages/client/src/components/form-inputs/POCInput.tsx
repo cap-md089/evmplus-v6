@@ -56,6 +56,7 @@ export const upgradeDisplayInternalPointOfContactToEdit = (
 	email: poc.email,
 	memberReference: Maybe.some(poc.memberReference),
 	phone: poc.phone,
+	position: poc.position,
 	receiveEventUpdates: poc.receiveEventUpdates,
 	receiveRoster: poc.receiveRoster,
 	receiveSignUpUpdates: poc.receiveSignUpUpdates,
@@ -70,6 +71,7 @@ export const simplifyDisplayInternalPointOfContactFromEdit = (
 		email: poc.email,
 		memberReference,
 		phone: poc.phone,
+		position: poc.position,
 		receiveEventUpdates: poc.receiveEventUpdates,
 		receiveRoster: poc.receiveRoster,
 		receiveSignUpUpdates: poc.receiveSignUpUpdates,
@@ -107,6 +109,7 @@ export default class POCInput extends React.Component<
 					email: '',
 					memberReference: Maybe.none(),
 					phone: '',
+					position: '',
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
@@ -181,6 +184,9 @@ export default class POCInput extends React.Component<
 				<Label>POC Phone</Label>
 				<TextInput name="phone" />
 
+				<Label>Position</Label>
+				<TextInput name="position" />
+
 				{/* <Label>Receive event updates</Label>
 				<Checkbox name="receiveEventUpdates" index={this.props.index} />
 
@@ -213,6 +219,7 @@ export default class POCInput extends React.Component<
 					email: '',
 					memberReference: Maybe.none(),
 					phone: '',
+					position: '',
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
@@ -224,6 +231,7 @@ export default class POCInput extends React.Component<
 					email: '',
 					name: '',
 					phone: '',
+					position: '',
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,

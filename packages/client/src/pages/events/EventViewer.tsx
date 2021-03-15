@@ -227,10 +227,7 @@ const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventO
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees
-		.filter(Either.isRight)
-		.map(get('value'))
-		.map(get('record')),
+	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 
@@ -886,6 +883,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>CAP Point of Contact: </b>
 										{poc.name}
 										<br />
+										{poc.position ? (
+											<>
+												<b>Event Duty Position: </b>
+												{poc.position}
+												<br />
+											</>
+										) : null}
 										{member && !!poc.email ? (
 											<>
 												<b>CAP Point of Contact Email: </b>
@@ -907,6 +911,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										<b>External Point of Contact: </b>
 										{poc.name}
 										<br />
+										{poc.position ? (
+											<>
+												<b>Event Duty Position: </b>
+												{poc.position}
+												<br />
+											</>
+										) : null}
 										{member && poc.email !== '' ? (
 											<>
 												<b>External Point of Contact Email: </b>
@@ -1012,9 +1023,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											.filter(
 												(
 													val,
-												): val is Right<
-													api.events.events.EventViewerAttendanceRecord
-												> =>
+												): val is Right<api.events.events.EventViewerAttendanceRecord> =>
 													Either.isRight(val) &&
 													val.value.record.memberID.type ===
 														'CAPNHQMember',
