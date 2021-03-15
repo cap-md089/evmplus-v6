@@ -1,6 +1,6 @@
 {
 	"name": "server-jest-config",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"private": true,
 	"description": "Adds configuration options for jest that will start up and tear down a MySQL instance",
 	"author": "Andrew Rioux <rioux.d.andrew@gmail.com>",
@@ -44,7 +44,7 @@
 		]
 	},
 	"dependencies": {
-		"debug": "^4.3.1",
-		"common-lib": "^1.26.0"
+		"common-lib": "^1.27.0",
+		"debug": "^4.3.1"
 	}
 }

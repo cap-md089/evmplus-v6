@@ -3,6 +3,45 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.24.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.24.0) (2021-03-15)
+
+
+### Bug Fixes
+
+* **discord-bot:** tentative fix for duplicate additions of attendance records ([54b7f6a](http://github.com//cap-md089/evmplus-v6/commit/54b7f6a9bc5ec0ef0b50ea7ac03f1a6270c6f2b7))
+* **server:** fixed spawning 50-100 Discord connections ([137f223](http://github.com//cap-md089/evmplus-v6/commit/137f2230cdcdc19e59ec063ef3e1d35a363d3083))
+* **server:** fixed synchronization issue with fileupload ([c7ad3e2](http://github.com//cap-md089/evmplus-v6/commit/c7ad3e27194e9af7acffd89daae3127fce7a15ff))
+* **server:** fixed when finishing account setup or password reset not immediately being signed in as ([f58fa55](http://github.com//cap-md089/evmplus-v6/commit/f58fa5501c3df8d6506e52a07fac25a4781692f3))
+* **server:** update email wording to change EvMPlus.org to Event Manager ([8cc0aeb](http://github.com//cap-md089/evmplus-v6/commit/8cc0aeb3dd309012632bc73c1e92314c2176d029))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed macro error for string enum literal values ([a2d23d0](http://github.com//cap-md089/evmplus-v6/commit/a2d23d0eed2cfef6fa6969b51892e0f0d4734ac2))
+* fixed weird configuration bugs ([bc39296](http://github.com//cap-md089/evmplus-v6/commit/bc3929641b0fbc89409f621e3ac0e38b0ab9521e))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* added the events and personalfolders folders ([82f5b48](http://github.com//cap-md089/evmplus-v6/commit/82f5b48feba7638046532ea225cd7ccdb2165b85))
+* **client:** redid FileUploader to handle folders, batch uploads, and actual progress past the firs ([6732e46](http://github.com//cap-md089/evmplus-v6/commit/6732e46bfdbcbfa3d38bbcffb1c1308b5239d2d5)), closes [#68](http://github.com//cap-md089/evmplus-v6/issues/68)
+* **client and server:** added links and display to view event audit information ([16784ec](http://github.com//cap-md089/evmplus-v6/commit/16784ecb2f8b59f905e548a75a0a8a9c1f7695d9))
+* **debriefs:** added debrief functionality to EventViewer and EventLinkList ([42ea511](http://github.com//cap-md089/evmplus-v6/commit/42ea5111f0e985c6a9116007ad4efd40231c8e3e)), closes [#65](http://github.com//cap-md089/evmplus-v6/issues/65)
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](http://github.com//cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](http://github.com//cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer:** removed linked events links ([b89016e](http://github.com//cap-md089/evmplus-v6/commit/b89016e158d2ad9c11dc799d372fd6655992fa12))
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+### Performance Improvements
+
+* **server:** added clustering for the server ([00ffd22](http://github.com//cap-md089/evmplus-v6/commit/00ffd2229c7d3195b292e93b0046eb2e1846358d))
+* **server:** moved the built client files from the node process to the nginx process ([00ddefb](http://github.com//cap-md089/evmplus-v6/commit/00ddefb01ae85b2ba78e042dc4899e48d2a5d282))
+* **server-common:** removed an N+1 query for the querying of the members from an account ([7b54560](http://github.com//cap-md089/evmplus-v6/commit/7b54560ede9f2dd8ec580e6d43855588e8c32ef1))
+
+
+
+
+
 # [6.23.0](http://github.com//cap-md089/evmplus-v6/compare/evmplus-org-server@6.16.0...evmplus-org-server@6.23.0) (2020-12-09)
 
 
