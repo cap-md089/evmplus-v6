@@ -1489,11 +1489,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 	private async printForm(docDef: TDocumentDefinitions, fileName: string) {
 		const pdfMake = await import('pdfmake');
 
-		const fontGetter =
-			process.env.NODE_ENV === 'production'
-				? (fontName: string) =>
-						`https://${this.props.account.id}.${process.env.REACT_APP_HOST_NAME}/images/fonts/${fontName}`
-				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
+		const fontGetter = (fontName: string) => `/images/fonts/${fontName}`;
 
 		const fonts: TFontDictionary = {
 			Roboto: {
