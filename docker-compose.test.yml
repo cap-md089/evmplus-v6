@@ -6,19 +6,23 @@ services:
             target: tests
         networks:
             - test-network
-        environment: 
+        environment:
             - IN_DOCKER_TEST_ENVIRONMENT=1
 
     mysql:
-        image: mysql:8.0
+        image: mysql:8.0.19
         networks:
             - test-network
         expose:
             - '33060'
         environment:
             - MYSQL_ROOT_PASSWORD=toor
-        tmpfs: 
+        cap_add:
+            - SYS_NICE
+        tmpfs:
             - /var/lib/mysql
+        volumes:
+            - ./mysql-init:/docker-entrypoint-initdb.d
 
 networks:
     test-network:
