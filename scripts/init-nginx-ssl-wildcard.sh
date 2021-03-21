@@ -19,6 +19,7 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
+cd ..
 
 domains=(\*.capunit.com \*.evmplus.org)
 rsa_key_size=4096

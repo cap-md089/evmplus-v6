@@ -19,6 +19,8 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
+cd ..
+
 STAGING="1"
 
 file_arg=""

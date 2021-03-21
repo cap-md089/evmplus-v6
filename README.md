@@ -154,7 +154,7 @@ To import a new CAPWATCH file, run `docker-compose up download_capwatch_update`
 
 ## Building and running the server
 
-By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `./init-nginx-ssl.sh` with your email and then use `docker-compose up main proxy` instead.
+By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `scripts/init-nginx-ssl.sh` with your email and then use `docker-compose up main proxy` instead.
 
 ### Creating an account and supplying it data
 
