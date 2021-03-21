@@ -105,10 +105,10 @@ services:
               source: ./mysql-init
               target: /docker-entrypoint-initdb.d
 
-    capwatch_update_cron:
+    cronjobs:
         build:
             context: .
-            target: capwatch-import
+            target: cronjobs
         networks:
             - backend
         restart: always

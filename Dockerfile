@@ -143,7 +143,7 @@ CMD lerna test
 # This container will run a cron job to import CAPWATCH and update Discord
 # every night
 #
-FROM builder AS capwatch-import
+FROM builder AS cronjobs
 
 WORKDIR /usr/evm-plus
 
@@ -156,8 +156,8 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap --
 ENV NODE_ENV production
 
 # Setup crontab
-COPY capwatch-cron/crontab /etc/cron.d/hello-cron
-COPY capwatch-cron/download.sh ./capwatch-cron/download.sh
+COPY cronjobs/crontab /etc/cron.d/hello-cron
+COPY cronjobs/download.sh ./capwatch-cron/download.sh
 
 RUN chmod 0744 /etc/cron.d/hello-cron \
 	&& chmod 0744 /usr/evm-plus/capwatch-cron/download.sh \
