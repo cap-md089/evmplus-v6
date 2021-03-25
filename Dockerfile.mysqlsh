@@ -12,7 +12,7 @@ RUN apt update \
 	&& wget https://cdn.mysql.com//Downloads/MySQL-Shell/mysql-shell-8.0.22-linux-glibc2.12-x86-64bit.tar.gz \
 	&& tar -xvf mysql-shell-8.0.22-linux-glibc2.12-x86-64bit.tar.gz
 
-COPY start-mysqlsh-in-container.sh start-mysqlsh-in-container.sh
+COPY scripts/start-mysqlsh-in-container.sh start-mysqlsh-in-container.sh
 
 RUN chmod +x start-mysqlsh-in-container.sh
 

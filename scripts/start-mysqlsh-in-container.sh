@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/sh
 
 <<LICENSE
  Copyright (C) 2021 Andrew Rioux
@@ -18,7 +18,5 @@
  You should have received a copy of the GNU General Public License
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
-
-cd ..
 
 mysql-shell-8.0.22-linux-glibc2.12-x86-64bit/bin/mysqlsh --password=$(cat /run/secrets/db_password) --user=$(cat /run/secrets/db_user) --host=$DB_HOST --schema=$DB_SCHEMA
