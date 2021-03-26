@@ -739,7 +739,7 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 
 			id,
 			accountID: account.id,
-			author,
+			author: toReference(author),
 			timeCreated: now(),
 			timeModified: now(),
 			debrief: [],
