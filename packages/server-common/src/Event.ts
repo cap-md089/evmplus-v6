@@ -66,14 +66,17 @@ import {
 	RawLinkedEvent,
 	RawRegularEventObject,
 	RawResolvedEventObject,
+	RawResolvedLinkedEvent,
 	ServerConfiguration,
 	ServerError,
+	Some,
 	toReference,
 } from 'common-lib';
 import { AccountGetter, getAccount, getMemoizedAccountGetter } from './Account';
 import {
 	generateChangeAudit,
 	generateCreationAudit,
+	areDeepEqual,
 	generateDeleteAudit,
 	saveAudit,
 } from './Audits';
@@ -466,6 +469,7 @@ export const ensureResolvedEvent = (schema: Schema) => (
 						({
 							...resolvedEvent,
 							...event,
+							...event.extraProperties,
 						} as FromDatabase<RawResolvedEventObject>),
 				),
 		  )
@@ -498,14 +502,87 @@ const sendPOCNotifications = (delta: 'ADDED' | 'REMOVED') => (schema: Schema) =>
 const sendPOCRemovedNotifications = sendPOCNotifications('REMOVED');
 const sendPOCAddedNotifications = sendPOCNotifications('ADDED');
 
-export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
+export const getEventDifferences = <T extends object>(oldObj: T, newObj: T): Partial<T> => {
+	const changes: Partial<T> = {};
+
+	for (const key in oldObj) {
+		// These aren't interesting differences
+		if (key === 'id' || key === '_id' || key === 'type' || key === 'accountID') {
+			continue;
+		}
+
+		if (
+			oldObj.hasOwnProperty(key) &&
+			newObj.hasOwnProperty(key) &&
+			!areDeepEqual(oldObj[key], newObj[key])
+		) {
+			changes[key] = newObj[key];
+		}
+	}
+
+	return changes;
+};
+
+export const saveLinkedEventFunc = (config: ServerConfiguration) => (schema: Schema) => (
+	account: AccountObject,
+) => (updater: MemberReference) => (oldEvent: FromDatabase<RawResolvedLinkedEvent>) => (
+	event: RawResolvedLinkedEvent,
+): ServerEither<FromDatabase<RawResolvedEventObject>> =>
+	AsyncEither.All([
+		asyncRight(
+			updateGoogleCalendars(
+				schema,
+				{
+					...event,
+					id: event.targetEventID,
+					accountID: event.targetAccountID,
+					type: EventType.REGULAR,
+				},
+				account,
+				config,
+			),
+			errorGenerator('Could not update Google calendar'),
+		),
+		(getSourceEvent(schema)(event).filter(Maybe.isSome, {
+			type: 'OTHER',
+			code: 404,
+			message: 'Could not find source event',
+		}) as ServerEither<Some<RawResolvedEventObject>>).map(({ value }) => value),
+	])
+		.map<FromDatabase<RawLinkedEvent>>(([[mainId, regId, feeId], sourceEvent]) => ({
+			_id: oldEvent._id,
+			accountID: event.accountID,
+			extraProperties: getEventDifferences(sourceEvent, event),
+			googleCalendarIds: {
+				mainId,
+				regId,
+				feeId,
+			},
+			id: event.id,
+			linkAuthor: event.linkAuthor,
+			meetDateTime: event.meetDateTime,
+			pickupDateTime: event.pickupDateTime,
+			targetAccountID: event.targetAccountID,
+			targetEventID: event.targetEventID,
+			type: EventType.LINKED,
+		}))
+		.flatMap(saveToCollectionA(schema.getCollection<FromDatabase<RawLinkedEvent>>('Events')))
+		// TODO: Actually change generateChangeAudit to handle linked events properly
+		// .tap(newEvent =>
+		// 	generateChangeAudit(schema)(account)(updater)(oldEvent)(newEvent).flatMap(
+		// 		saveAudit(schema),
+		// 	),
+		// )
+		.flatMap(ensureResolvedEvent(schema));
+
+export const saveRegularEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	schema: Schema,
 ) => (account: AccountObject) => (updater: MemberReference) => (
 	oldEvent: FromDatabase<RawRegularEventObject>,
-) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawRegularEventObject>> =>
+) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	asyncRight(
 		updateGoogleCalendars(schema, event, account, config),
-		errorGenerator('Could not update google calendar'),
+		errorGenerator('Could not update Google calendar'),
 	)
 		.map<FromDatabase<RawRegularEventObject>>(([mainId, regId, feeId]) => ({
 			_id: oldEvent._id,
@@ -572,6 +649,25 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 				saveAudit(schema),
 			),
 		);
+
+export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
+	schema: Schema,
+) => (account: AccountObject) => (updater: MemberReference) => <T extends RawResolvedEventObject>(
+	oldEvent: FromDatabase<T>,
+) => (event: T): ServerEither<FromDatabase<RawResolvedEventObject>> =>
+	event.type === EventType.LINKED && oldEvent.type === EventType.LINKED
+		? saveLinkedEventFunc(config)(schema)(account)(updater)(
+				(oldEvent as unknown) as FromDatabase<RawResolvedLinkedEvent>,
+		  )((event as unknown) as RawResolvedLinkedEvent)
+		: event.type === EventType.REGULAR && oldEvent.type === EventType.REGULAR
+		? saveRegularEventFunc(now)(config)(schema)(account)(updater)(
+				(oldEvent as unknown) as FromDatabase<RawRegularEventObject>,
+		  )((event as unknown) as RawRegularEventObject)
+		: asyncLeft<ServerError, FromDatabase<RawResolvedEventObject>>({
+				type: 'OTHER',
+				code: 400,
+				message: 'Mismatched event types for event save',
+		  });
 export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
@@ -690,16 +786,20 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 export const copyEvent = copyEventFunc(Date.now);
 
 export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
-	linkedEvent: RawRegularEventObject,
+	linkedEvent: RawEventObject,
 ) => (linkAuthor: MemberReference) => (
 	targetAccount: AccountObject,
 ): ServerEither<RawLinkedEvent> =>
 	asyncRight(linkedEvent, errorGenerator('Could not link event'))
-		.filter(({ type }) => type === EventType.REGULAR, {
-			type: 'OTHER',
-			code: 400,
-			message: 'Cannot link to a linked event',
-		})
+		.flatMap<RawResolvedEventObject>(event =>
+			event.type === EventType.REGULAR
+				? asyncRight(event, errorGenerator('Could not link event'))
+				: getAccount(schema)(event.targetAccountID).flatMap(account =>
+						getEvent(schema)(account)(event.targetEventID).flatMap(
+							ensureResolvedEvent(schema),
+						),
+				  ),
+		)
 		.flatMap(event =>
 			getNewID(targetAccount)(schema.getCollection<RawEventObject>('Events')).flatMap(id =>
 				asyncRight(
@@ -722,6 +822,7 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 						regId,
 						feeId,
 					},
+					extraProperties: {},
 					meetDateTime: event.meetDateTime,
 					pickupDateTime: event.pickupDateTime,
 				})),

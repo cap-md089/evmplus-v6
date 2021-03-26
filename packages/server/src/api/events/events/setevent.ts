@@ -21,15 +21,20 @@ import { ServerAPIEndpoint, validator } from 'auto-client-api';
 import {
 	api,
 	canManageEvent,
-	EventType,
 	FromDatabase,
 	Maybe,
 	NewEventObject,
-	RawRegularEventObject,
+	RawResolvedEventObject,
 	SessionType,
 	Validator,
 } from 'common-lib';
-import { getEvent, getFullEventObject, PAM, saveEventFunc } from 'server-common';
+import {
+	ensureResolvedEvent,
+	getEvent,
+	getFullEventObject,
+	PAM,
+	saveEventFunc,
+} from 'server-common';
 import { validateRequest } from '../../../lib/requestUtils';
 import wrapper from '../../../lib/wrapper';
 
@@ -43,18 +48,13 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.S
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(partialEventValidator)(request).flatMap(req =>
 			getEvent(req.mysqlx)(req.account)(req.params.id)
-				.filter(event => event.type === EventType.REGULAR, {
-					type: 'OTHER',
-					code: 400,
-					message: 'You cannot modify a linked event',
-				})
-				.map(event => event as FromDatabase<RawRegularEventObject>)
+				.flatMap(ensureResolvedEvent(req.mysqlx))
 				.filter(canManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member does not have permission to perform that action',
 				})
-				.map<[RawRegularEventObject, FromDatabase<RawRegularEventObject>]>(event => [
+				.map<[RawResolvedEventObject, FromDatabase<RawResolvedEventObject>]>(event => [
 					{
 						...event,
 						...req.body,
