@@ -11,7 +11,7 @@
 		"clean": "prettier --write 'src/**/*.ts'",
 		"clean-watch": "onchange '**/*.ts' -- prettier --write {{changed}}",
 		"lint": "tslint --project .",
-		"debug": "nodemon --no-warnings --inspect=0.0.0.0:5858 --watch ../discord-bot --watch ../server-common --watch ../common-lib ./dist/index.js",
+		"debug": "nodemon --no-warnings --inspect=0.0.0.0:5858 --watch ../discord-bot --watch ../server-common --watch ../common-lib --watch ./ ./dist/index.js",
 		"docker-debug": "docker-compose -f ../../docker-compose.dev.yml up --build main"
 	},
 	"license": "GPL-2.0",
@@ -84,7 +84,7 @@
 		"tslint": "^5.19.0",
 		"tslint-config-prettier": "^1.13.0",
 		"ttypescript": "^1.5.10",
-		"typescript": "^4.0.5"
+		"typescript": "^4.2.3"
 	},
 	"jest": {
 		"globals": {

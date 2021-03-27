@@ -14,7 +14,7 @@
 		"@types/debug": "^4.1.5",
 		"@types/dockerode": "^3.2.1",
 		"dockerode": "^3.2.1",
-		"typescript": "^4.0.5"
+		"typescript": "^4.2.3"
 	},
 	"scripts": {
 		"build": "tsc --build tsconfig.build.json",

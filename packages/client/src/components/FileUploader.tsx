@@ -465,7 +465,9 @@ export default class FileUploader extends React.Component<FileUploaderProps, Fil
 			await this.handleAction(nextAction, this.props.currentFolder.id);
 
 			await new Promise<void>(resolve =>
-				this.setState({ pendingActions: this.state.pendingActions.slice(1) }, resolve),
+				this.setState({ pendingActions: this.state.pendingActions.slice(1) }, () =>
+					resolve(),
+				),
 			);
 		}
 
