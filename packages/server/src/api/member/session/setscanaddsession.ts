@@ -20,7 +20,6 @@
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canFullyManageEvent, SessionType } from 'common-lib';
 import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
-import wrapper from '../../../lib/wrapper';
 
 export const func: (
 	now?: () => number,
@@ -50,7 +49,15 @@ export const func: (
 					userAccount: req.session.userAccount,
 				}),
 			)
-			.map(wrapper),
+			.map(({ expires, id }) => ({
+				response: void 0,
+				cookies: {
+					sessionID: {
+						expires,
+						value: id,
+					},
+				},
+			})),
 	);
 
 export default func();
