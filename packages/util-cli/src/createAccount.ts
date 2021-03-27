@@ -115,7 +115,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		id,
 		mainCalendarID,
 		mainOrg,
-		orgIDs: [],
+		orgIDs: [mainOrg],
 		parentGroup: Maybe.none(),
 		parentWing: Maybe.none(),
 		type: AccountType.CAPSQUADRON,

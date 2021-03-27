@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.19, for linux-glibc2.12 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.19, for Linux (x86_64)
 --
--- Host: 192.168.1.3    Database: EventManagementv6
+-- Host: localhost    Database: 
 -- ------------------------------------------------------
--- Server version	8.0.22
+-- Server version	8.0.19
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -10,6 +10,8 @@
 /*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
+/*!50606 SET @OLD_INNODB_STATS_AUTO_RECALC=@@INNODB_STATS_AUTO_RECALC */;
+/*!50606 SET GLOBAL INNODB_STATS_AUTO_RECALC=OFF */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
@@ -18,8 +20,6 @@
 --
 -- Current Database: `EventManagementv6`
 --
-
-/*!40000 DROP DATABASE IF EXISTS `EventManagementv6`*/;
 
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `EventManagementv6` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
@@ -55,9 +55,13 @@ CREATE TABLE `Attendance` (
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
   `accountID` varchar(30) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.accountID'))) STORED NOT NULL,
   `eventID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.eventID'))) STORED NOT NULL,
+  `memberID.id` varchar(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.memberID.id'))) STORED NOT NULL,
+  `memberID.type` varchar(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.memberID.type'))) STORED NOT NULL,
   PRIMARY KEY (`_id`),
-  KEY `ids` (`eventID`,`accountID`),
+  UNIQUE KEY `memberRecords` (`memberID.id`,`memberID.type`,`eventID`,`accountID`),
   KEY `accountAttendance` (`accountID`),
+  KEY `eventAttendance` (`eventID`,`accountID`),
+  KEY `personalRecords` (`memberID.id`,`memberID.type`),
   CONSTRAINT `$val_strict_C0A0FB5F1ED7086B1195259DD8181F967F3B05C8` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -741,15 +745,3 @@ CREATE TABLE `UserPermissions` (
   CONSTRAINT `$val_strict_73AAF9AF5B95C6CAFB343B3792345449A5144828` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2020-11-29 15:44:23

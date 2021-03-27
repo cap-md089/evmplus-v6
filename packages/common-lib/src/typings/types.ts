@@ -1124,6 +1124,10 @@ export interface RawLinkedEvent extends AccountIdentifiable {
 		feeId?: null | string;
 	};
 	/**
+	 * Allows for overriding properties on the original event
+	 */
+	extraProperties: Partial<NewEventObject>;
+	/**
 	 * Specify that this is a linked event
 	 */
 	type: EventType.LINKED;
@@ -1134,9 +1138,9 @@ export interface RawLinkedEvent extends AccountIdentifiable {
  */
 export type RawEventObject = RawLinkedEvent | RawRegularEventObject;
 
-export type RawResolvedEventObject =
-	| RawRegularEventObject
-	| (Omit<RawRegularEventObject, 'type'> & RawLinkedEvent);
+export type RawResolvedLinkedEvent = Omit<RawRegularEventObject, 'type'> & RawLinkedEvent;
+
+export type RawResolvedEventObject = RawRegularEventObject | RawResolvedLinkedEvent;
 
 export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 

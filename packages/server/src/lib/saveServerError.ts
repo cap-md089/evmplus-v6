@@ -32,6 +32,7 @@ import {
 	ParamType,
 	ServerError,
 	ServerErrorObject,
+	stripProp,
 	toReference,
 } from 'common-lib';
 import { parse } from 'error-stack-parser';
@@ -75,9 +76,7 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 			if ('account' in req) {
 				account = Either.right(req.account);
 			} else {
-				account = await accountRequestTransformer(req)
-					.map(get('account'))
-					.join();
+				account = await accountRequestTransformer(req).map(get('account')).join();
 			}
 		}
 
@@ -100,7 +99,7 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 							: toReference(req.member)
 						: null,
 				requestMethod: req.method.toUpperCase() as HTTPRequestMethod,
-				payload: !!req.body ? JSON.stringify(req.body) : '<none>',
+				payload: !!req.body ? JSON.stringify(stripProp('password')(req.body)) : '<none>',
 				accountID: Either.cata<ServerError, AccountObject, string>(always('<unknown>'))(
 					get('id'),
 				)(account),

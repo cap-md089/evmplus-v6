@@ -2377,20 +2377,12 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@mysql/xdevapi@^8.0.19", "@mysql/xdevapi@^8.0.20", "@mysql/xdevapi@^8.0.21":
-  version "8.0.21"
-  resolved "https://registry.yarnpkg.com/@mysql/xdevapi/-/xdevapi-8.0.21.tgz#95056178b655fc14cd96b9c2558dfd85a2ce18dd"
-  integrity sha512-fUfPNsMK9MBBiisBadUfUYqrBlniPrSNJnstnveJpfhHksPt6rVfVk6gEPjEd32lwe5MmihcB5LBInSnNdCxbQ==
+"@mysql/xdevapi@8.0.19":
+  version "8.0.19"
+  resolved "https://registry.yarnpkg.com/@mysql/xdevapi/-/xdevapi-8.0.19.tgz#6f30d44070c7ee7513764e4ed70f458366b91a7f"
+  integrity sha512-rnC4spN12QgTLauOVGFAF+BLuE7HxgULkqq6IIrsVtT0/JLN7QuBiCw5pvVGvKARgqeSP5TPw7mUsHA3InQ6XA==
   dependencies:
-    google-protobuf "3.11.4"
-    parsimmon "1.6.2"
-
-"@mysql/xdevapi@^8.0.23":
-  version "8.0.23"
-  resolved "https://registry.yarnpkg.com/@mysql/xdevapi/-/xdevapi-8.0.23.tgz#0fd82150d490dfa830e57dee1ab81987e0ab7856"
-  integrity sha512-hR4w9K/H87bizdrJ+jcVIN9ErZ7yhAAb2vsHgbiIO9i+WSwFEs2I+rhYweguYMt4bx2QiZHFzgFzSDcaD+uSiQ==
-  dependencies:
-    google-protobuf "3.11.4"
+    google-protobuf "3.4.0"
     parsimmon "1.6.2"
 
 "@nodelib/fs.scandir@2.1.3":
@@ -9579,10 +9571,10 @@ google-p12-pem@^3.0.0:
   dependencies:
     node-forge "^0.9.0"
 
-google-protobuf@3.11.4:
-  version "3.11.4"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.11.4.tgz#598ca405a3cfa917a2132994d008b5932ef42014"
-  integrity sha512-lL6b04rDirurUBOgsY2+LalI6Evq8eH5TcNzi7TYQ3BsIWelT0KSOQSBsXuavEkNf+odQU6c0lgz3UsZXeNX9Q==
+google-protobuf@3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.4.0.tgz#58fbe51555a0a56b2dd3fc6f6d869fa21d57ab0a"
+  integrity sha512-8gq3CyAZFyHJ5dZ0Du/OztbwxEHhHTNOtfr1cSUQYuW6lsrKjMU2DETvOlxPpYNKZ7zAW4xEE7UWqrTxH7bG6Q==
 
 googleapis-common@^3.2.0:
   version "3.2.2"

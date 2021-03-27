@@ -12,7 +12,7 @@
 	"author": "Andrew Rioux",
 	"license": "GPL-2.0",
 	"dependencies": {
-		"@mysql/xdevapi": "^8.0.21",
+		"@mysql/xdevapi": "8.0.19",
 		"auto-client-api": "^1.3.22",
 		"common-lib": "^1.27.0",
 		"debug": "^4.3.1",
