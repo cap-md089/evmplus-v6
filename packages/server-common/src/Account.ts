@@ -81,6 +81,7 @@ import {
 import { copyFile } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
+import { notImplementedError } from './backends';
 import { addMemberToAttendanceFunc, createEventFunc, linkEvent } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
 import { setPermissionsForMemberInAccount } from './member/pam';
@@ -704,3 +705,32 @@ export const getOrgName = (accountGetter: Partial<AccountGetter>) => (schema: Sc
 		}
 	};
 };
+
+export interface AccountBackend {
+	getAccount: (accountID: string) => ServerEither<AccountObject>;
+	getCAPAccountsByORGID: (orgid: number) => AsyncIter<EitherObj<ServerError, CAPAccountObject>>;
+	getMembers: (
+		account: AccountObject,
+	) => (
+		type?: MemberType | undefined,
+	) => AsyncGenerator<
+		EitherObj<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject>,
+		void,
+		undefined
+	>;
+}
+
+export const getAccountBackend = (req: BasicMySQLRequest): AccountBackend => ({
+	getAccount: memoize(getAccount(req.mysqlx)),
+	getCAPAccountsByORGID: memoize(getCAPAccountsForORGID(req.mysqlx)),
+	getMembers: memoize(getMembers(req.mysqlx)),
+});
+
+export const getEmptyAccountBackend = (): AccountBackend => ({
+	getAccount: () => notImplementedError('getAccount'),
+	getCAPAccountsByORGID: () => [],
+	getMembers: () =>
+		async function* () {
+			throw new Error('not implemented');
+		},
+});

@@ -25,6 +25,7 @@ import {
 	AllExtraMemberInformation,
 	always,
 	areMembersTheSame,
+	asyncEither,
 	AsyncEither,
 	AsyncIter,
 	asyncIterConcat,
@@ -34,6 +35,7 @@ import {
 	asyncIterReduce,
 	asyncLeft,
 	asyncRight,
+	BasicMySQLRequest,
 	countAsync,
 	destroy,
 	Either,
@@ -48,6 +50,8 @@ import {
 	MemberForReference,
 	MemberPermissions,
 	MemberReference,
+	memoize,
+	parseStringMemberReference,
 	Permissions,
 	pipe,
 	RawCAPEventAccountObject,
@@ -56,11 +60,13 @@ import {
 	SignInLogData,
 	StoredAccountMembership,
 	StoredMemberPermissions,
+	stringifyMemberReference,
 	toReference,
 	User,
 } from 'common-lib';
 import { AccountGetter, getAccount } from './Account';
-import { RawAttendanceDBRecord } from './Event';
+import { RawAttendanceDBRecord } from './Attendance';
+import { notImplementedError } from './backends';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
 import {
@@ -72,6 +78,7 @@ import {
 } from './MySQLUtil';
 import { getMemberNotifications } from './notifications';
 import { getRegistryById } from './Registry';
+import { ServerEither } from './servertypes';
 import { getTasksForMember } from './Task';
 
 export * from './member/members';
@@ -335,3 +342,30 @@ export const isMemberPartOfAccount = (accountGetter: Partial<AccountGetter>) => 
 					errorGenerator('Could not verify account membership'),
 			  )
 		: asyncRight(false, errorGenerator('Could not verify account membership'));
+
+export interface MemberBackend {
+	getMember: (
+		account: AccountObject,
+	) => <T extends MemberReference = MemberReference>(
+		ref: T,
+	) => ServerEither<MemberForReference<T>>;
+}
+
+export const getMemberBackend = (req: BasicMySQLRequest): MemberBackend => ({
+	getMember: memoize((account: AccountObject) => {
+		const memoizedFunction = memoize(
+			(ref: string): ServerEither<Member> =>
+				asyncEither(
+					parseStringMemberReference(ref),
+					errorGenerator('Could not get member information'),
+				).flatMap(resolveReference(req.mysqlx)(account)),
+		);
+
+		return <T extends MemberReference = MemberReference>(ref: T) =>
+			memoizedFunction(stringifyMemberReference(ref)) as ServerEither<MemberForReference<T>>;
+	}),
+});
+
+export const getEmptyMemberBackend = (): MemberBackend => ({
+	getMember: () => () => notImplementedError('getById'),
+});

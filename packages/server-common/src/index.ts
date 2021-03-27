@@ -18,6 +18,7 @@
  */
 
 export * from './Account';
+export * from './Attendance';
 export * from './Audits';
 export * from './Error';
 export * from './Event';
@@ -37,3 +38,10 @@ export * from './Team';
 export * as conf from './conf';
 export { default as getConf } from './conf';
 export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';
+export {
+	withBackends,
+	Backends,
+	BackedServerAPIEndpoint,
+	getTimeBackend,
+	TimeBackend,
+} from './backends';

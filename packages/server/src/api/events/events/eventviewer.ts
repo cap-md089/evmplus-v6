@@ -18,12 +18,7 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
-import {
-	AsyncRepr,
-	ServerAPIEndpoint,
-	ServerAPIRequestParameter,
-	ServerEither,
-} from 'auto-client-api';
+import { AsyncRepr, ServerAPIRequestParameter, ServerEither } from 'auto-client-api';
 import {
 	AccountObject,
 	always,
@@ -51,9 +46,10 @@ import {
 	ServerError,
 } from 'common-lib';
 import {
-	ensureResolvedEvent,
+	Backends,
+	EventsBackend,
 	getAttendanceForEvent,
-	getEvent,
+	getEventsBackend,
 	getFullPointsOfContact,
 	getLinkedEvents,
 	getMemberName,
@@ -62,7 +58,9 @@ import {
 	getRegistry,
 	getRegistryById,
 	resolveReference,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.events.events.GetEventViewerData>;
@@ -194,9 +192,13 @@ export const getFullEventInformation = (req: Req) => (
 		}),
 	);
 
-export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(ensureResolvedEvent(req.mysqlx))
+export const func: Endpoint<
+	Backends<[EventsBackend]>,
+	api.events.events.GetEventViewerData
+> = backend => req =>
+	backend
+		.getEvent(req.account)(req.params.id)
+		.flatMap(backend.ensureResolvedEvent)
 		.map(getAppropriateDebriefItems(req.member))
 		.flatMap(event =>
 			canMaybeFullyManageEvent(req.member)(event)
@@ -233,4 +235,4 @@ export const func: ServerAPIEndpoint<api.events.events.GetEventViewerData> = req
 		)
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getEventsBackend);

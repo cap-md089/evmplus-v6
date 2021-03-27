@@ -19,14 +19,20 @@
  */
 
 import { fork, isMaster } from 'cluster';
+import { APIEither, APIEndpoint } from 'common-lib';
 import setupDiscordBot from 'discord-bot';
 import { cpus } from 'os';
-import { getConf } from 'server-common';
+import { BackedServerAPIEndpoint, getConf } from 'server-common';
 import { api } from './api';
 import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
 
 console.log = console.log.bind(console);
+
+export type Endpoint<
+	T extends any,
+	A extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>
+> = BackedServerAPIEndpoint<T, A>;
 
 if (require.main === module) {
 	if (isMaster) {
