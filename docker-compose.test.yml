@@ -6,10 +6,34 @@ services:
             target: tests
         networks:
             - test-network
-        environment:
-            - IN_DOCKER_TEST_ENVIRONMENT=1
         volumes:
             - ./:/usr/evm-plus
+        depends_on:
+            - test-mysql
+
+    watch-server-tests:
+        build:
+            context: .
+            target: tests
+        networks:
+            - test-network
+        volumes:
+            - ./:/usr/evm-plus
+        depends_on:
+            - test-mysql
+        command: yarn --cwd=packages/server test --watch
+
+    watch-server-common-tests:
+        build:
+            context: .
+            target: tests
+        networks:
+            - test-network
+        volumes:
+            - ./:/usr/evm-plus
+        depends_on:
+            - test-mysql
+        command: yarn --cwd=packages/server test --watch
 
     test-mysql:
         image: mysql:8.0.19
