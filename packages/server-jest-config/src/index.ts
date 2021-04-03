@@ -83,7 +83,6 @@ export const COLLECTIONS_USED: readonly string[] = [
 
 export class TestConnection {
 	protected static currentConnection: ConnectionInfo | Promise<ConnectionInfo> | undefined;
-	protected static connections: TestConnection[] = [];
 	protected static mysqlInfo?: {
 		host: string;
 		port: string;
@@ -92,23 +91,27 @@ export class TestConnection {
 	};
 	protected static currentComposeConnection: Client | undefined;
 
-	public static async setup() {
-		if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			await this._setup();
-		} else {
-			const connString = this.mysqlConnectionString!;
+	public static setup(dbRef: DatabaseRef) {
+		return async (done?: () => void) => {
+			if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
+				await this._setup();
+			} else {
+				const connString = this.mysqlConnectionString!;
 
-			while (true) {
-				try {
-					const conn = await getSession(connString);
-					await conn.close();
+				while (true) {
+					try {
+						const conn = await getSession(connString);
+						await conn.close();
 
-					break;
-				} catch (e) {
-					await new Promise<void>(res => setTimeout(res, 1000));
+						break;
+					} catch (e) {
+						await new Promise<void>(res => setTimeout(res, 1000));
+					}
 				}
 			}
-		}
+			dbRef.connection = await this.setupSchema();
+			done?.();
+		};
 	}
 
 	protected static async _setup() {
@@ -213,20 +216,24 @@ export class TestConnection {
 		return connection;
 	}
 
-	public static async teardown() {
-		await Promise.all(this.connections.map(conn => conn.session.close()));
+	public static teardown(dbRef: DatabaseRef) {
+		return async (done?: () => void) => {
+			await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
 
-		const info = await this.currentConnection;
+			const info = await this.currentConnection;
 
-		if (info) {
-			await Promise.all([
-				(async () => {
-					await info.dockerContainer.stop();
-					await info.dockerContainer.remove();
-				})(),
-				info.mysqlClient.close(),
-			]);
-		}
+			if (info) {
+				await Promise.all([
+					(async () => {
+						await info.dockerContainer.stop();
+						await info.dockerContainer.remove();
+					})(),
+					info.mysqlClient.close(),
+				]);
+			}
+
+			done?.();
+		};
 	}
 
 	protected static get mysqlConnectionString() {
@@ -245,9 +252,7 @@ export class TestConnection {
 		public readonly client: Client,
 		public readonly session: Session,
 		public readonly schema: string,
-	) {
-		TestConnection.connections.push(this);
-	}
+	) {}
 
 	public getSchema() {
 		return this.session.getSchema(this.schema);
@@ -271,3 +276,11 @@ TestConnection.teardown = TestConnection.teardown.bind(TestConnection);
 export default TestConnection;
 
 export { default as getConf } from './conf';
+
+export interface DatabaseRef {
+	connection: TestConnection;
+}
+
+export const getDbRef = (): DatabaseRef => ({
+	connection: null!,
+});
