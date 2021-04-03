@@ -203,7 +203,7 @@ export const sendResponse = <
 		if (awaitedResult.cookies.hasOwnProperty(cookieName)) {
 			const cookie = awaitedResult.cookies[cookieName];
 			response.cookie(cookieName, cookie.value, {
-				domain: `.${request.configuration.HOST_NAME}`,
+				domain: `${request.configuration.HOST_NAME}`,
 				secure: !process.env.ALLOW_INSECURE && process.env.NODE_ENV === 'production',
 				httpOnly: true,
 				expires: new Date(cookie.expires),
