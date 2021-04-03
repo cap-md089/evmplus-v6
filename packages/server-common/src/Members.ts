@@ -28,7 +28,6 @@ import {
 	asyncEither,
 	AsyncEither,
 	AsyncIter,
-	asyncIterConcat,
 	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
@@ -54,6 +53,7 @@ import {
 	parseStringMemberReference,
 	Permissions,
 	pipe,
+	asyncIterConcat2,
 	RawCAPEventAccountObject,
 	RawTeamObject,
 	ServerError,
@@ -64,9 +64,9 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
-import { AccountGetter, getAccount } from './Account';
+import { AccountBackend, AccountGetter, getAccount } from './Account';
 import { RawAttendanceDBRecord } from './Attendance';
-import { notImplementedError } from './backends';
+import { Backends, notImplementedError } from './backends';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
 import {
@@ -75,6 +75,7 @@ import {
 	findAndBindC,
 	generateResults,
 	modifyAndBind,
+	RawMySQLBackend,
 } from './MySQLUtil';
 import { getMemberNotifications } from './notifications';
 import { getRegistryById } from './Registry';
@@ -255,45 +256,42 @@ export const accountHasMemberInAttendance = (schema: Schema) => (member: MemberR
 
 export const getEventAccountsForMember = (schema: Schema) => (member: MemberReference) =>
 	pipe(
-		asyncIterFilter(account =>
+		generateResults,
+		asyncIterFilter((account: RawCAPEventAccountObject) =>
 			accountHasMemberInAttendance(schema)(member)(account).fullJoin().catch(always(false)),
 		),
 		asyncIterHandler<RawCAPEventAccountObject>(
 			errorGenerator('Could not get account information'),
 		),
 	)(
-		generateResults(
-			findAndBind(schema.getCollection<RawCAPEventAccountObject>('Accounts'), {
-				type: AccountType.CAPEVENT,
-			}),
-		),
+		findAndBind(schema.getCollection<RawCAPEventAccountObject>('Accounts'), {
+			type: AccountType.CAPEVENT,
+		}),
 	);
 
 export const getExtraAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
 	schema: Schema,
 ) => (member: MemberReference): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterConcat(
+	asyncIterConcat2(
 		pipe(
+			generateResults,
 			asyncIterMap(get<StoredAccountMembership, 'accountID'>('accountID')),
 			asyncIterMap((accountGetter.byId ?? getAccount)(schema)),
 		)(
-			generateResults(
-				findAndBind(
-					schema.getCollection<StoredAccountMembership>('ExtraAccountMembership'),
-					{
-						member: toReference(member),
-					},
-				),
-			),
+			findAndBind(schema.getCollection<StoredAccountMembership>('ExtraAccountMembership'), {
+				member: toReference(member),
+			}),
 		),
-	)(() => getEventAccountsForMember(schema)(member));
+		getEventAccountsForMember(schema)(member),
+	);
 
 export const getAllAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
 	schema: Schema,
 ) => (member: Member): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterConcat<EitherObj<ServerError, AccountObject>>(
+	asyncIterConcat2<EitherObj<ServerError, AccountObject>>(
 		getHomeAccountsForMember(accountGetter)(schema)(member),
-	)(() => getExtraAccountsForMember(accountGetter)(schema)(toReference(member)));
+		getExtraAccountsForMember(accountGetter)(schema)(toReference(member)),
+	);
 
 export const getAdminAccountIDsForMember = (schema: Schema) => (
 	member: MemberReference,
@@ -343,12 +341,45 @@ export const isMemberPartOfAccount = (accountGetter: Partial<AccountGetter>) => 
 			  )
 		: asyncRight(false, errorGenerator('Could not verify account membership'));
 
+export const getAllMemberAccounts = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
+) => (member: Member) => null;
+
+export const newIsPartOfAccountSlow = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
+) => (member: Member) => (account: AccountObject) => null;
+
+export const newIsMemberPartOfAccount = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
+) => (member: Member) => (account: AccountObject) =>
+	member.type === 'CAPProspectiveMember' &&
+	account.type === AccountType.CAPSQUADRON &&
+	account.id === member.id
+		? asyncRight(true, errorGenerator('Could not verify account membership'))
+		: member.type === 'CAPNHQMember'
+		? Maybe.orSome(false)(
+				Maybe.map<number[], boolean>(ids => ids.includes(member.orgid))(
+					getORGIDsFromCAPAccount(account),
+				),
+		  )
+			? asyncRight(true, errorGenerator('Could not verify account membership'))
+			: newIsPartOfAccountSlow(backend)(member)(account)
+		: asyncRight(false, errorGenerator('Could not verify account membership'));
+
+export const areMembersInTheSameAccount = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
+) => (member1: Member) => (member2: Member) => {};
+
 export interface MemberBackend {
 	getMember: (
 		account: AccountObject,
 	) => <T extends MemberReference = MemberReference>(
 		ref: T,
 	) => ServerEither<MemberForReference<T>>;
+	accountHasMemberInAttendance: (
+		member: MemberReference,
+	) => (account: AccountObject) => ServerEither<boolean>;
+	saveExtraMemberInformation: (info: AllExtraMemberInformation) => ServerEither<void>;
 }
 
 export const getMemberBackend = (req: BasicMySQLRequest): MemberBackend => ({
@@ -364,8 +395,13 @@ export const getMemberBackend = (req: BasicMySQLRequest): MemberBackend => ({
 		return <T extends MemberReference = MemberReference>(ref: T) =>
 			memoizedFunction(stringifyMemberReference(ref)) as ServerEither<MemberForReference<T>>;
 	}),
+	accountHasMemberInAttendance: member => account =>
+		accountHasMemberInAttendance(req.mysqlx)(member)(account),
+	saveExtraMemberInformation: info => saveExtraMemberInformation(req.mysqlx)(info).map(destroy),
 });
 
 export const getEmptyMemberBackend = (): MemberBackend => ({
-	getMember: () => () => notImplementedError('getById'),
+	getMember: () => () => notImplementedError('getMember'),
+	accountHasMemberInAttendance: () => () => notImplementedError('accountHasMemberInAttendance'),
+	saveExtraMemberInformation: () => notImplementedError('saveExtraMemberInformation'),
 });

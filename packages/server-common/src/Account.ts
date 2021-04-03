@@ -68,6 +68,7 @@ import {
 	RawEventObject,
 	RawRegularEventObject,
 	RawTeamObject,
+	Right,
 	ServerConfiguration,
 	ServerError,
 	statefulFunction,
@@ -711,26 +712,27 @@ export interface AccountBackend {
 	getCAPAccountsByORGID: (orgid: number) => AsyncIter<EitherObj<ServerError, CAPAccountObject>>;
 	getMembers: (
 		account: AccountObject,
-	) => (
-		type?: MemberType | undefined,
-	) => AsyncGenerator<
-		EitherObj<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject>,
-		void,
-		undefined
-	>;
+	) => (type?: MemberType | undefined) => ServerEither<Member[]>;
 }
 
 export const getAccountBackend = (req: BasicMySQLRequest): AccountBackend => ({
 	getAccount: memoize(getAccount(req.mysqlx)),
 	getCAPAccountsByORGID: memoize(getCAPAccountsForORGID(req.mysqlx)),
-	getMembers: memoize(getMembers(req.mysqlx)),
+	getMembers: memoize(account =>
+		memoize(type =>
+			asyncRight(
+				getMembers(req.mysqlx)(account)(type),
+				errorGenerator('Could not get member list'),
+			)
+				.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
+				.map(asyncIterMap(get('value')))
+				.map(collectGeneratorAsync),
+		),
+	),
 });
 
 export const getEmptyAccountBackend = (): AccountBackend => ({
 	getAccount: () => notImplementedError('getAccount'),
 	getCAPAccountsByORGID: () => [],
-	getMembers: () =>
-		async function* () {
-			throw new Error('not implemented');
-		},
+	getMembers: () => () => notImplementedError('getMembers'),
 });

@@ -73,7 +73,7 @@ export const collectSqlResults = async <T>(
 	}
 };
 
-export const generateResults = async function*<U>(
+export const generateResults = async function* <U>(
 	find: mysql.CollectionFind<U>,
 ): AsyncIterableIterator<mysql.WithoutEmpty<U>> {
 	type T = mysql.WithoutEmpty<U>;
@@ -410,3 +410,15 @@ export const getNewID = (account: AccountObject) => (
 		.map(Maybe.fromArray)
 		.map(Maybe.map<AccountIdentifiable & { id: number }, number>(i => i.id + 1))
 		.map(Maybe.orSome(1));
+
+export interface RawMySQLBackend {
+	getSchema: () => mysql.Schema;
+}
+
+export const getRawMySQLBackend = (req: BasicMySQLRequest): RawMySQLBackend => ({
+	getSchema: always(req.mysqlx),
+});
+
+export const testRawMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
+	getSchema: always(schema),
+});

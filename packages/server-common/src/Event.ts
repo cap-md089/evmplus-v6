@@ -48,7 +48,6 @@ import {
 	getFullMemberName,
 	getItemsNotInSecondArray,
 	InternalPointOfContact,
-	isPOCOf,
 	Maybe,
 	MaybeObj,
 	Member,
@@ -71,7 +70,7 @@ import {
 	Some,
 	toReference,
 } from 'common-lib';
-import { getAccount } from './Account';
+import { AccountBackend, getAccount } from './Account';
 import { getAttendanceForEvent, RawAttendanceDBRecord } from './Attendance';
 import {
 	areDeepEqual,
@@ -80,7 +79,7 @@ import {
 	generateDeleteAudit,
 	saveAudit,
 } from './Audits';
-import { notImplementedError } from './backends';
+import { Backends, notImplementedError } from './backends';
 import updateGoogleCalendars, {
 	createGoogleCalendarEvents,
 	removeGoogleCalendarEvents,
@@ -164,37 +163,18 @@ export const getLinkedEvents = (schema: Schema) => (accountID: string) => (
 	);
 
 export const getFullEventObject = (schema: Schema) => (account: AccountObject) => (
-	viewingAccount: MaybeObj<AccountObject>,
-) => (viewer: MaybeObj<MemberReference>) => (forceAllAttendance: boolean) => (
 	event: FromDatabase<RawEventObject>,
 ): ServerEither<FromDatabase<EventObject>> =>
 	ensureResolvedEvent(schema)(event).flatMap(eventInfo =>
-		(Maybe.isSome(viewer)
-			? getFullPointsOfContact(schema)(account)(eventInfo.pointsOfContact)
-			: asyncRight<ServerError, POCFull>([], {
-					type: 'OTHER',
-					code: 500,
-					message: 'Could not get points of contact',
-			  })
-		).flatMap(pointsOfContact =>
-			(viewer.hasValue &&
-				(!eventInfo.privateAttendance || isPOCOf(viewer.value, eventInfo))) ||
-			forceAllAttendance
-				? getAttendanceForEvent(schema)(viewingAccount)(event)
-						.map(collectGeneratorAsync)
-						.map(attendance => ({
-							...eventInfo,
-							pointsOfContact,
-							attendance,
-						}))
-				: asyncRight(
-						{
-							...eventInfo,
-							pointsOfContact,
-							attendance: [],
-						},
-						errorGenerator('Could not get event with attendance'),
-				  ),
+		getFullPointsOfContact(schema)(account)(eventInfo.pointsOfContact).flatMap(
+			pointsOfContact =>
+				getAttendanceForEvent(schema)(event)
+					.map(collectGeneratorAsync)
+					.map(attendance => ({
+						...eventInfo,
+						pointsOfContact,
+						attendance,
+					})),
 		),
 	);
 
@@ -364,6 +344,26 @@ export const ensureResolvedEvent = (schema: Schema) => (
 		? getAccount(schema)(event.targetAccountID).flatMap(account =>
 				// Links cannot be made to links, so by resolving a link we actually get an event
 				(getEvent(schema)(account)(event.targetEventID) as AsyncEither<
+					ServerError,
+					FromDatabase<RawRegularEventObject>
+				>).map<FromDatabase<RawResolvedEventObject>>(
+					resolvedEvent =>
+						({
+							...resolvedEvent,
+							...event,
+							...event.extraProperties,
+						} as FromDatabase<RawResolvedEventObject>),
+				),
+		  )
+		: asyncRight(event, errorGenerator('Could not resolve event reference'));
+
+export const newEnsureResolvedEvent = (backend: Backends<[EventsBackend, AccountBackend]>) => (
+	event: FromDatabase<RawEventObject>,
+) =>
+	event.type === EventType.LINKED
+		? backend.getAccount(event.targetAccountID).flatMap(account =>
+				// Links cannot be made to links, so by resolving a link we actually get an event
+				(backend.getEvent(account)(event.targetEventID) as AsyncEither<
 					ServerError,
 					FromDatabase<RawRegularEventObject>
 				>).map<FromDatabase<RawResolvedEventObject>>(
@@ -822,12 +822,6 @@ export interface EventsBackend {
 	getLinkedEvents: (account: AccountObject) => (eventID: number) => AsyncIter<RawLinkedEvent>;
 	getFullEventObject: (
 		account: AccountObject,
-	) => (
-		viewingAccount: MaybeObj<AccountObject>,
-	) => (
-		viewer: MaybeObj<MemberReference>,
-	) => (
-		forceAllAttendance: boolean,
 	) => (event: FromDatabase<RawEventObject>) => ServerEither<FromDatabase<EventObject>>;
 	getSourceEvent: (
 		event: RawEventObject,
@@ -866,8 +860,7 @@ export const getEventsBackend = (req: BasicMySQLRequest): EventsBackend => ({
 		deleteEvent(req.configuration)(req.mysqlx)(account)(actor)(event),
 	fullPointsOfContact: account => records => getFullPointsOfContact(req.mysqlx)(account)(records),
 	getLinkedEvents: account => eventID => getLinkedEvents(req.mysqlx)(account.id)(eventID),
-	getFullEventObject: account => viewingAccount => viewer => forceAllAttendance => event =>
-		getFullEventObject(req.mysqlx)(account)(viewingAccount)(viewer)(forceAllAttendance)(event),
+	getFullEventObject: account => event => getFullEventObject(req.mysqlx)(account)(event),
 	getSourceEvent: event => getSourceEvent(req.mysqlx)(event),
 	ensureResolvedEvent: event => ensureResolvedEvent(req.mysqlx)(event),
 	createEvent: account => author => data =>
@@ -886,7 +879,7 @@ export const getEmptyEventsBackend = (): EventsBackend => ({
 	deleteEvent: () => () => () => notImplementedError('deleteEvent'),
 	fullPointsOfContact: () => () => notImplementedError('fullPointsOfContact'),
 	getLinkedEvents: () => () => [],
-	getFullEventObject: () => () => () => () => () => notImplementedError('getFullEventObject'),
+	getFullEventObject: () => () => notImplementedError('getFullEventObject'),
 	getSourceEvent: () => notImplementedError('getSourceEvent'),
 	ensureResolvedEvent: () => notImplementedError('ensureResolvedEvent'),
 	createEvent: () => () => () => notImplementedError('createEvent'),

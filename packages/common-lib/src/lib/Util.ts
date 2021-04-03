@@ -101,6 +101,8 @@ export const getTargetYear = (timestamp: number): number => {
 };
 
 export const always = <T>(value: T) => () => value;
+export const alwaysTrue = always(true);
+export const alwaysFalse = always(false);
 
 export const complement = <T extends any[]>(
 	func: (...args: T) => boolean,

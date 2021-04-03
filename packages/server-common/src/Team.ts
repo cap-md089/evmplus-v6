@@ -37,6 +37,7 @@ import {
 	MaybeObj,
 	MemberReference,
 	MemberUpdateEventEmitter,
+	memoize,
 	NewTeamMember,
 	NewTeamObject,
 	NHQ,
@@ -60,6 +61,7 @@ import {
 	findAndBindC,
 	generateResults,
 	getNewID,
+	MySQLRequest,
 	saveToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
@@ -513,3 +515,11 @@ export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
 		set<RawTeamObject, 'visibility'>('visibility')(newTeamInfo.visibility),
 	)(team);
 export const updateTeam = updateTeamFunc();
+
+export interface TeamsBackend {
+	getTeam: (account: AccountObject) => (teamID: number) => ServerEither<RawTeamObject>;
+}
+
+export const getTeamsBackend = (req: MySQLRequest): TeamsBackend => ({
+	getTeam: memoize(account => memoize(getTeam(req.mysqlx)(account))),
+});
