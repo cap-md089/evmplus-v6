@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-    main:
+    tests:
         build:
             context: .
             target: tests
@@ -8,8 +8,10 @@ services:
             - test-network
         environment:
             - IN_DOCKER_TEST_ENVIRONMENT=1
+        volumes:
+            - ./:/usr/evm-plus
 
-    mysql:
+    test-mysql:
         image: mysql:8.0.19
         networks:
             - test-network
@@ -21,8 +23,6 @@ services:
             - SYS_NICE
         tmpfs:
             - /var/lib/mysql
-        volumes:
-            - ./mysql-init:/docker-entrypoint-initdb.d
 
 networks:
     test-network:

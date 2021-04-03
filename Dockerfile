@@ -125,19 +125,11 @@ CMD node --no-warnings dist/index.js
 # This container will act as a simple container to hold and execute the
 # tests for all the packages
 #
-# This container will require a link to the Docker socket, to spawn new
-# Docker containers
-#
 FROM base AS tests
 
 WORKDIR /usr/evm-plus
 
-COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
-COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
-COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
-COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-
-CMD lerna test
+CMD yarn run --cwd=packages/server-jest-config test
 
 #
 # This container will run a cron job to import CAPWATCH and update Discord

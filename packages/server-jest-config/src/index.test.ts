@@ -15,7 +15,7 @@ class TestCases extends TestConnection {
 // If in a docker test environment set up by Docker compose,
 // there should be no tests for a docker container being set up
 // because it is already set up
-if (!process.env.IN_DOCKER_TEST_ENV) {
+if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
 	describe('Raw TestConnection', () => {
 		jest.setTimeout(25000);
 
@@ -56,8 +56,6 @@ if (!process.env.IN_DOCKER_TEST_ENV) {
 		it('should be able to create collections', async done => {
 			const connection = await TestCases.setupSchema();
 
-			await expect(connection.setupCollections()).resolves.not.toThrow();
-
 			const collections = await connection.getSchema().getCollections();
 
 			expect(collections.map(collection => collection.getName()).sort()).toEqual(
@@ -87,10 +85,6 @@ if (!process.env.IN_DOCKER_TEST_ENV) {
 				TestCases.setupSchema(),
 				TestCases.setupSchema(),
 			]);
-
-			await expect(
-				Promise.all([conn1.setupCollections(), conn2.setupCollections()]),
-			).resolves.not.toThrow();
 
 			const [collections1, collections2] = await Promise.all([
 				conn1.getSchema().getCollections(),
@@ -135,8 +129,6 @@ if (!process.env.IN_DOCKER_TEST_ENV) {
 		it('should be able to create collections', async done => {
 			const connection = await TestCases.setupSchema();
 
-			await expect(connection.setupCollections()).resolves.not.toThrow();
-
 			const collections = await connection.getSchema().getCollections();
 
 			expect(collections.map(collection => collection.getName()).sort()).toEqual(
@@ -166,10 +158,6 @@ if (!process.env.IN_DOCKER_TEST_ENV) {
 				TestCases.setupSchema(),
 				TestCases.setupSchema(),
 			]);
-
-			await expect(
-				Promise.all([conn1.setupCollections(), conn2.setupCollections()]),
-			).resolves.not.toThrow();
 
 			const [collections1, collections2] = await Promise.all([
 				conn1.getSchema().getCollections(),
