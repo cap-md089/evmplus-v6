@@ -58,6 +58,7 @@ interface AppState {
 	loadError: boolean;
 	memberList: EitherObj<HTTPError, Member[]> | null;
 	teamList: EitherObj<HTTPError, FullTeamObject[]> | null;
+	isEmbedded: boolean;
 }
 
 export default class App extends React.Component<
@@ -82,6 +83,7 @@ export default class App extends React.Component<
 		loadError: false,
 		memberList: null,
 		teamList: null,
+		isEmbedded: false,
 	};
 
 	private timer: NodeJS.Timer | null = null;
@@ -102,7 +104,14 @@ export default class App extends React.Component<
 			.slideshowImageIDs({}, {})
 			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }));
 
+		const isEmbedded = !!window.location.search.match(/embed=.*?\&?/);
+
+		if (isEmbedded) {
+			document.getElementById('root')?.classList.add('embedded');
+		}
+
 		this.setState({
+			isEmbedded,
 			loading: true,
 		});
 
@@ -173,23 +182,7 @@ export default class App extends React.Component<
 						{this.state.loading ? null : (
 							<GlobalNotification account={this.state.account!} />
 						)}
-						{this.state.loading ? (
-							<Loader />
-						) : this.state.loadError ? (
-							<div>The account does not exist</div>
-						) : (
-							<PageRouter
-								updateApp={this.update}
-								updateSideNav={this.updateSideNav}
-								updateBreadCrumbs={this.updateBreadCrumbs}
-								member={this.state.fullMember}
-								fullMemberDetails={this.state.member}
-								account={this.state.account!}
-								authorizeUser={this.authorizeUser}
-								registry={this.state.Registry!}
-								key="pagerouter"
-							/>
-						)}
+						{this.renderPage()}
 					</div>
 				</main>
 				<div className="content-border right-border" />
@@ -222,6 +215,26 @@ export default class App extends React.Component<
 					</TeamListProvider>
 				</MemberListProvider>
 			</MemberDetailsProvider>
+		);
+	}
+
+	private renderPage() {
+		return this.state.loading ? (
+			<Loader />
+		) : this.state.loadError ? (
+			<div>The account does not exist</div>
+		) : (
+			<PageRouter
+				updateApp={this.update}
+				updateSideNav={this.updateSideNav}
+				updateBreadCrumbs={this.updateBreadCrumbs}
+				member={this.state.fullMember}
+				fullMemberDetails={this.state.member}
+				account={this.state.account!}
+				authorizeUser={this.authorizeUser}
+				registry={this.state.Registry!}
+				key="pagerouter"
+			/>
 		);
 	}
 

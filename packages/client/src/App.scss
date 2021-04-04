@@ -352,3 +352,28 @@ a {
 		display: none;
 	}
 }
+
+#root.embedded {
+	background: white;
+	grid-template-areas: 'body';
+	grid-template-columns: 100%;
+	grid-template-rows: 100%;
+
+	.background,
+	header,
+	.side-nav,
+	.main-nav,
+	footer,
+	.content-border {
+		display: none;
+	}
+
+	main {
+		background: white;
+		min-height: 570px;
+
+		.halfSection {
+			width: 100%;
+		}
+	}
+}
