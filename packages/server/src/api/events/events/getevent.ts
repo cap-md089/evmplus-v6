@@ -17,17 +17,26 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, getAppropriateDebriefItems, Maybe } from 'common-lib';
-import { getEvent, getFullEventObject } from 'server-common';
+import { api, getAppropriateDebriefItems } from 'common-lib';
+import {
+	AccountBackend,
+	Backends,
+	EventsBackend,
+	getAccountBackend,
+	getEventsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.Get> = req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(
-			getFullEventObject(req.mysqlx)(req.account)(Maybe.some(req.account))(req.member)(false),
-		)
+export const func: Endpoint<
+	Backends<[EventsBackend, AccountBackend]>,
+	api.events.events.Get
+> = backend => req =>
+	backend
+		.getEvent(req.account)(req.params.id)
+		.flatMap(backend.getFullEventObject)
 		.map(getAppropriateDebriefItems(req.member))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getEventsBackend, getAccountBackend);

@@ -69,9 +69,7 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 
 const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(
-			getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member))(true),
-		)
+		.flatMap(getFullEventObject(req.mysqlx)(req.account))
 		.flatMap(event =>
 			(event.teamID !== undefined && event.teamID !== null
 				? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)

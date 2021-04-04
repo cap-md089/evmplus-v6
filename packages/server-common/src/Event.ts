@@ -804,9 +804,7 @@ export interface EventsBackend {
 	) => (eventID: number | string) => ServerEither<FromDatabase<RawEventObject>>;
 	saveEvent: (
 		updater: MemberReference,
-	) => <T extends RawResolvedEventObject>(
-		oldEvent: FromDatabase<T>,
-	) => (event: T) => ServerEither<FromDatabase<RawResolvedEventObject>>;
+	) => (event: RawResolvedEventObject) => ServerEither<FromDatabase<RawResolvedEventObject>>;
 	deleteEvent: (
 		actor: MemberReference,
 	) => (event: FromDatabase<RawResolvedEventObject>) => ServerEither<void>;
@@ -849,12 +847,15 @@ export interface EventsBackend {
 export const getEventsBackend = (req: BasicAccountRequest): EventsBackend => {
 	const backend: EventsBackend = {
 		getEvent: memoize((account: AccountObject) => memoize(getEvent(req.mysqlx)(account))),
-		saveEvent: updater => oldEvent => event =>
-			req.backend
-				.getAccount(oldEvent.accountID)
-				.flatMap(account =>
-					saveEvent(req.configuration)(req.mysqlx)(account)(updater)(oldEvent)(event),
-				),
+		saveEvent: updater => event =>
+			req.backend.getAccount(event.accountID).flatMap(account =>
+				backend
+					.getEvent(account)(event.id)
+					.flatMap(backend.ensureResolvedEvent)
+					.flatMap(oldEvent =>
+						saveEvent(req.configuration)(req.mysqlx)(account)(updater)(oldEvent)(event),
+					),
+			),
 		deleteEvent: actor => event =>
 			req.backend
 				.getAccount(event.accountID)
@@ -893,7 +894,7 @@ export const getEventsBackend = (req: BasicAccountRequest): EventsBackend => {
 
 export const getEmptyEventsBackend = (): EventsBackend => ({
 	getEvent: () => () => notImplementedError('getEvent'),
-	saveEvent: () => () => () => notImplementedError('saveEvent'),
+	saveEvent: () => () => notImplementedError('saveEvent'),
 	deleteEvent: () => () => notImplementedError('deleteEvent'),
 	fullPointsOfContact: () => () => notImplementedError('fullPointsOfContact'),
 	getLinkedEvents: () => () => [],

@@ -17,23 +17,31 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncRight,
 	effectiveManageEventPermission,
 	errorGenerator,
 	EventStatus,
-	Maybe,
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { createEventFunc, getFullEventObject, PAM } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	EventsBackend,
+	getAccountBackend,
+	getEventsBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.Add> = (
-	now = Date.now,
-) =>
+export const func: Endpoint<
+	Backends<[EventsBackend, AccountBackend]>,
+	api.events.events.Add
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		asyncRight(request, errorGenerator('Could not create event'))
 			.filter(
@@ -55,17 +63,9 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.A
 							: req.body.status,
 				},
 			}))
-			.flatMap(req =>
-				createEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(req.member)(
-					req.body,
-				),
-			)
-			.flatMap(
-				getFullEventObject(request.mysqlx)(request.account)(Maybe.none())(
-					Maybe.some(request.member),
-				)(false),
-			)
+			.flatMap(req => backend.createEvent(req.account)(req.member)(req.body))
+			.flatMap(backend.getFullEventObject)
 			.map(wrapper),
 	);
 
-export default func();
+export default withBackends(func, getEventsBackend, getAccountBackend);

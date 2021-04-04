@@ -46,18 +46,24 @@ import {
 	ServerError,
 } from 'common-lib';
 import {
+	AccountBackend,
 	Backends,
 	EventsBackend,
+	getAccountBackend,
 	getAttendanceForEvent,
 	getEventsBackend,
 	getFullPointsOfContact,
 	getLinkedEvents,
+	getMemberBackend,
 	getMemberName,
 	getMemoizedAccountGetter,
 	getOrgName,
 	getRegistry,
 	getRegistryById,
+	getTeamsBackend,
+	MemberBackend,
 	resolveReference,
+	TeamsBackend,
 	withBackends,
 } from 'server-common';
 import { Endpoint } from '../../..';
@@ -127,7 +133,7 @@ export const getAttendanceForNonAdmin = (
 	event: RawResolvedEventObject,
 ): AsyncEither<ServerError, AsyncIter<AttendanceRecord>> =>
 	Maybe.isSome(req.member)
-		? getAttendanceForEvent(req.mysqlx)(getViewingAccount(req.account)(event))(event)
+		? getAttendanceForEvent(req.mysqlx)(event)
 		: asyncRight<ServerError, AsyncIter<AttendanceRecord>>([], errorGenerator());
 
 export const getLinkedEventsForViewer = (
@@ -155,7 +161,7 @@ export const getFullEventInformation = (req: Req) => (
 			getOrgName(getMemoizedAccountGetter(req.mysqlx))(req.mysqlx)(req.account),
 			errorGenerator('Could not get member record information'),
 		).flatMap(orgNameGetter =>
-			getAttendanceForEvent(req.mysqlx)(getViewingAccount(req.account)(event))(event).map(
+			getAttendanceForEvent(req.mysqlx)(event).map(
 				asyncIterMap(record =>
 					resolveReference(req.mysqlx)(req.account)(record.memberID)
 						.flatMap(member =>
@@ -193,7 +199,7 @@ export const getFullEventInformation = (req: Req) => (
 	);
 
 export const func: Endpoint<
-	Backends<[EventsBackend]>,
+	Backends<[EventsBackend, AccountBackend, MemberBackend, TeamsBackend]>,
 	api.events.events.GetEventViewerData
 > = backend => req =>
 	backend
@@ -235,4 +241,10 @@ export const func: Endpoint<
 		)
 		.map(wrapper);
 
-export default withBackends(func, getEventsBackend);
+export default withBackends(
+	func,
+	getEventsBackend,
+	getAccountBackend,
+	getMemberBackend,
+	getTeamsBackend,
+);

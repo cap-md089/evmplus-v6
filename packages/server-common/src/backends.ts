@@ -17,9 +17,8 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
+import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import { APIEither, APIEndpoint, asyncLeft, BasicMySQLRequest, ServerError } from 'common-lib';
-import { BasicAccountRequest } from '.';
 
 export const notImplementedError = <T>(funcName: string) =>
 	asyncLeft<ServerError, T>({
@@ -61,15 +60,15 @@ export const combineBackends = <R extends BasicMySQLRequest, U extends ((req: R)
 export const withBackends = <
 	// Use BasicAccountRequest because API.ts forces all requests to have an Account through
 	// the use of accountRequestTransformer, which ensures a BasicAccountRequest
-	R extends BasicAccountRequest,
 	E extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>,
+	R extends ServerAPIRequestParameter<E>,
 	B extends any,
 	F extends BackedServerAPIEndpoint<B, E>,
 	U extends ((req: R) => any)[]
 >(
 	func: F,
 	...backendAdders: U
-): ServerAPIEndpoint<E> => {
+): ReturnType<F> => {
 	return (req => {
 		let backend: any = (req as any).backend ?? {};
 
@@ -81,7 +80,7 @@ export const withBackends = <
 		}
 
 		return func(backend)(req);
-	}) as ServerAPIEndpoint<E>;
+	}) as ReturnType<F>;
 };
 
 export interface TimeBackend {

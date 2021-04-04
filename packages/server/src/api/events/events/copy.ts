@@ -17,32 +17,37 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
+import { api, canFullyManageEvent, EventStatus, Maybe, SessionType, toReference } from 'common-lib';
 import {
-	api,
-	asyncRight,
-	canFullyManageEvent,
-	errorGenerator,
-	EventStatus,
-	Maybe,
-	SessionType,
-	toReference,
-} from 'common-lib';
-import { copyEvent, ensureResolvedEvent, getEvent, getFullEventObject, PAM } from 'server-common';
+	AccountBackend,
+	Backends,
+	EventsBackend,
+	getAccountBackend,
+	getEventsBackend,
+	getMemberBackend,
+	getRawMySQLBackend,
+	MemberBackend,
+	PAM,
+	RawMySQLBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	asyncRight(req, errorGenerator('Could not get information')).flatMap(() =>
-		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.flatMap(ensureResolvedEvent(req.mysqlx))
+export const func: Endpoint<
+	Backends<[RawMySQLBackend, AccountBackend, MemberBackend, EventsBackend]>,
+	api.events.events.Copy
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getEvent(req.account)(req.params.id)
+			.flatMap(backend.ensureResolvedEvent)
 			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'Member does not have permission to perform that action',
 			})
-			.map(copyEvent(req.configuration)(req.mysqlx)(req.account))
+			.map(backend.copyEvent)
 			.map(copier => copier(toReference(req.member)))
 			.map(copier => copier(req.body.newTime))
 			.map(copier =>
@@ -51,13 +56,14 @@ export const func: ServerAPIEndpoint<api.events.events.Copy> = PAM.RequireSessio
 				),
 			)
 			.flatMap(copier => copier(!!req.body.copyFiles))
-			.flatMap(
-				getFullEventObject(req.mysqlx)(req.account)(Maybe.none())(Maybe.some(req.member))(
-					false,
-				),
-			)
+			.flatMap(backend.getFullEventObject)
 			.map(wrapper),
-	),
-);
+	);
 
-export default func;
+export default withBackends(
+	func,
+	getRawMySQLBackend,
+	getAccountBackend,
+	getMemberBackend,
+	getEventsBackend,
+);
