@@ -41,31 +41,30 @@ import wrapper from '../../../lib/wrapper';
 export const func: Endpoint<
 	Backends<[EventsBackend, AccountBackend]>,
 	api.events.events.Add
-> = backend =>
-	PAM.RequireSessionType(SessionType.REGULAR)(request =>
-		asyncRight(request, errorGenerator('Could not create event'))
-			.filter(
-				req => effectiveManageEventPermission(req.member) !== Permissions.ManageEvent.NONE,
-				{
-					type: 'OTHER',
-					code: 403,
-					message: 'You do not have permission to do that',
-				},
-			)
-			.map(req => ({
-				...req,
-				body: {
-					...req.body,
-					status:
-						effectiveManageEventPermission(req.member) ===
-						Permissions.ManageEvent.ADDDRAFTEVENTS
-							? EventStatus.DRAFT
-							: req.body.status,
-				},
-			}))
-			.flatMap(req => backend.createEvent(req.account)(req.member)(req.body))
-			.flatMap(backend.getFullEventObject)
-			.map(wrapper),
-	);
+> = backend => request =>
+	asyncRight(request, errorGenerator('Could not create event'))
+		.filter(PAM.filterSession(SessionType.REGULAR), PAM.SessionFilterError)
+		.filter(
+			req => effectiveManageEventPermission(req.member) !== Permissions.ManageEvent.NONE,
+			{
+				type: 'OTHER',
+				code: 403,
+				message: 'You do not have permission to do that',
+			},
+		)
+		.map(req => ({
+			...req,
+			body: {
+				...req.body,
+				status:
+					effectiveManageEventPermission(req.member) ===
+					Permissions.ManageEvent.ADDDRAFTEVENTS
+						? EventStatus.DRAFT
+						: req.body.status,
+			},
+		}))
+		.flatMap(req => backend.createEvent(req.account)(req.member)(req.body))
+		.flatMap(backend.getFullEventObject)
+		.map(wrapper);
 
 export default withBackends(func, getEventsBackend, getAccountBackend);

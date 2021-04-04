@@ -460,6 +460,13 @@ type ReqWithSessionType<
 		  };
 };
 
+export const SessionFilterError: ServerError = {
+	type: 'OTHER',
+	code: 403,
+	message:
+		'Member cannot perform the requested action with their current session. Try signing out and back in',
+};
+
 export const RequireSessionType = <T extends SessionType>(...sessionTypes: T[]) => <
 	R extends { session: MaybeObj<ActiveSession> | ActiveSession },
 	V
@@ -472,24 +479,25 @@ export const RequireSessionType = <T extends SessionType>(...sessionTypes: T[]) 
 					(req as unknown) as ReqWithSessionType<R, T>,
 					errorGenerator('Could not process request'),
 			  )
-			: asyncLeft<ServerError, ReqWithSessionType<R, T>>({
-					type: 'OTHER',
-					code: 403,
-					message:
-						'Member cannot perform the requested action with their current session. Try signing out and back in',
-			  })
+			: asyncLeft<ServerError, ReqWithSessionType<R, T>>(SessionFilterError)
 		: sessionTypes.includes(req.session.type as T)
 		? asyncRight<ServerError, ReqWithSessionType<R, T>>(
 				(req as unknown) as ReqWithSessionType<R, T>,
 				errorGenerator('Could not process request'),
 		  )
-		: asyncLeft<ServerError, ReqWithSessionType<R, T>>({
-				type: 'OTHER',
-				code: 403,
-				message:
-					'Member cannot perform the requested action with their current session. Try signing out and back in',
-		  })
+		: asyncLeft<ServerError, ReqWithSessionType<R, T>>(SessionFilterError)
 	).flatMap(f);
+
+export const filterSession = <T extends SessionType>(...sessionTypes: T[]) => <
+	R extends { session: MaybeObj<ActiveSession> | ActiveSession }
+>(
+	req: R,
+): req is R & ReqWithSessionType<R, T> =>
+	'hasValue' in req.session
+		? req.session.hasValue
+			? sessionTypes.includes(req.session.value.type as T)
+			: false
+		: sessionTypes.includes(req.session.type as T);
 
 //#endregion
 
