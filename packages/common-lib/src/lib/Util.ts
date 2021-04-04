@@ -128,3 +128,5 @@ export const onlyRights = <T>(arr: Array<EitherObj<any, T>>): T[] =>
 	arr.filter(Either.isRight).map(get('value'));
 
 export const hasErrors = (arr: Array<EitherObj<any, any>>): boolean => arr.some(Either.isLeft);
+
+export const isNotUndefined = <T>(value: T | undefined | null): value is T => !!value;

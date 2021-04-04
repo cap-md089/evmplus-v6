@@ -264,15 +264,28 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 	public setErrorValue = (errorValue: L | ((err: Error) => L)) =>
 		new AsyncEither(this.value, errorValue);
 
-	public filter = (
+	public filter<R2 extends R>(
+		predicate: (v: R) => v is R2,
+		failedFilterResult: L,
+		errorValue?: L | ((err: Error) => L),
+	): AsyncEither<L, R2>;
+	public filter(
 		predicate: (v: R) => AsyncEither<L, boolean> | Promise<boolean> | boolean,
 		failedFilterResult: L,
+		errorValue?: L | ((err: Error) => L),
+	): AsyncEither<L, R>;
+
+	public filter<R2 extends R>(
+		predicate:
+			| ((v: R) => AsyncEither<L, boolean> | Promise<boolean> | boolean)
+			| ((v: R) => v is R2),
+		failedFilterResult: L,
 		errorValue = this.errorValue,
-	): AsyncEither<L, R> =>
-		new AsyncEither(
+	): AsyncEither<L, R2> {
+		return new AsyncEither(
 			this.value
 				.then(
-					E.cata<L, R, Promise<Either<L, R>>>(l => Promise.resolve(E.left(l)))(
+					E.cata<L, R, Promise<Either<L, R2>>>(l => Promise.resolve(E.left(l)))(
 						async r => {
 							try {
 								const pred = predicate(r);
@@ -280,8 +293,8 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 									? pred.value
 									: Promise.resolve(pred).then(E.right));
 
-								return E.flatMap<L, boolean, R>(shouldKeep =>
-									shouldKeep ? E.right(r) : E.left(failedFilterResult),
+								return E.flatMap<L, boolean, R2>(shouldKeep =>
+									shouldKeep ? E.right(r as R2) : E.left(failedFilterResult),
 								)(keep);
 							} catch (e) {
 								return errorHandler(errorValue)(e);
@@ -292,6 +305,7 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 				.catch(errorHandler(errorValue)),
 			errorValue,
 		);
+	}
 
 	// The rejected function is named something long so the formatting is pretty and consistent
 	public async then<T1 = Either<L, R>, T2 = Either<L, R>>(
