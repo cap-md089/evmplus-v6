@@ -25,6 +25,7 @@ import {
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	BasicMySQLRequest,
 	errorGenerator,
 	FullPreviousTeamMember,
 	FullTeamMember,
@@ -61,7 +62,6 @@ import {
 	findAndBindC,
 	generateResults,
 	getNewID,
-	MySQLRequest,
 	saveToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
@@ -520,6 +520,6 @@ export interface TeamsBackend {
 	getTeam: (account: AccountObject) => (teamID: number) => ServerEither<RawTeamObject>;
 }
 
-export const getTeamsBackend = (req: MySQLRequest): TeamsBackend => ({
+export const getTeamsBackend = (req: BasicMySQLRequest): TeamsBackend => ({
 	getTeam: memoize(account => memoize(getTeam(req.mysqlx)(account))),
 });

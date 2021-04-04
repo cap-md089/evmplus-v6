@@ -19,6 +19,7 @@
 
 import { ServerAPIEndpoint } from 'auto-client-api';
 import { APIEither, APIEndpoint, asyncLeft, BasicMySQLRequest, ServerError } from 'common-lib';
+import { BasicAccountRequest } from '.';
 
 export const notImplementedError = <T>(funcName: string) =>
 	asyncLeft<ServerError, T>({
@@ -58,7 +59,9 @@ export const combineBackends = <R extends BasicMySQLRequest, U extends ((req: R)
 };
 
 export const withBackends = <
-	R extends BasicMySQLRequest,
+	// Use BasicAccountRequest because API.ts forces all requests to have an Account through
+	// the use of accountRequestTransformer, which ensures a BasicAccountRequest
+	R extends BasicAccountRequest,
 	E extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>,
 	B extends any,
 	F extends BackedServerAPIEndpoint<B, E>,

@@ -29,7 +29,6 @@ import {
 	asyncIterTap,
 	asyncLeft,
 	asyncRight,
-	BasicMySQLRequest,
 	call,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
@@ -70,6 +69,7 @@ import {
 	Some,
 	toReference,
 } from 'common-lib';
+import { BasicAccountRequest } from '.';
 import { AccountBackend, getAccount } from './Account';
 import { getAttendanceForEvent, RawAttendanceDBRecord } from './Attendance';
 import {
@@ -803,15 +803,11 @@ export interface EventsBackend {
 		account: AccountObject,
 	) => (eventID: number | string) => ServerEither<FromDatabase<RawEventObject>>;
 	saveEvent: (
-		account: AccountObject,
-	) => (
 		updater: MemberReference,
 	) => <T extends RawResolvedEventObject>(
 		oldEvent: FromDatabase<T>,
 	) => (event: T) => ServerEither<FromDatabase<RawResolvedEventObject>>;
 	deleteEvent: (
-		account: AccountObject,
-	) => (
 		actor: MemberReference,
 	) => (event: FromDatabase<RawResolvedEventObject>) => ServerEither<void>;
 	fullPointsOfContact: (
@@ -821,8 +817,8 @@ export interface EventsBackend {
 	) => ServerEither<(ExternalPointOfContact | DisplayInternalPointOfContact)[]>;
 	getLinkedEvents: (account: AccountObject) => (eventID: number) => AsyncIter<RawLinkedEvent>;
 	getFullEventObject: (
-		account: AccountObject,
-	) => (event: FromDatabase<RawEventObject>) => ServerEither<FromDatabase<EventObject>>;
+		event: FromDatabase<RawEventObject>,
+	) => ServerEither<FromDatabase<EventObject>>;
 	getSourceEvent: (
 		event: RawEventObject,
 	) => ServerEither<MaybeObj<FromDatabase<RawRegularEventObject>>>;
@@ -835,8 +831,6 @@ export interface EventsBackend {
 		author: MemberReference,
 	) => (data: NewEventObject) => ServerEither<FromDatabase<RawRegularEventObject>>;
 	copyEvent: (
-		account: AccountObject,
-	) => (
 		event: RawResolvedEventObject,
 	) => (
 		author: MemberReference,
@@ -852,38 +846,62 @@ export interface EventsBackend {
 	) => (targetAccount: AccountObject) => ServerEither<RawLinkedEvent>;
 }
 
-export const getEventsBackend = (req: BasicMySQLRequest): EventsBackend => ({
-	getEvent: memoize((account: AccountObject) => memoize(getEvent(req.mysqlx)(account))),
-	saveEvent: account => updater => oldEvent => event =>
-		saveEvent(req.configuration)(req.mysqlx)(account)(updater)(oldEvent)(event),
-	deleteEvent: account => actor => event =>
-		deleteEvent(req.configuration)(req.mysqlx)(account)(actor)(event),
-	fullPointsOfContact: account => records => getFullPointsOfContact(req.mysqlx)(account)(records),
-	getLinkedEvents: account => eventID => getLinkedEvents(req.mysqlx)(account.id)(eventID),
-	getFullEventObject: account => event => getFullEventObject(req.mysqlx)(account)(event),
-	getSourceEvent: event => getSourceEvent(req.mysqlx)(event),
-	ensureResolvedEvent: event => ensureResolvedEvent(req.mysqlx)(event),
-	createEvent: account => author => data =>
-		createEvent(req.configuration)(req.mysqlx)(account)(author)(data),
-	copyEvent: account => event => author => newStartTime => newStatus => copyFiles =>
-		copyEvent(req.configuration)(req.mysqlx)(account)(event)(author)(newStartTime)(newStatus)(
-			copyFiles,
-		),
-	linkEvent: event => author => account =>
-		linkEvent(req.configuration)(req.mysqlx)(event)(author)(account),
-});
+export const getEventsBackend = (req: BasicAccountRequest): EventsBackend => {
+	const backend: EventsBackend = {
+		getEvent: memoize((account: AccountObject) => memoize(getEvent(req.mysqlx)(account))),
+		saveEvent: updater => oldEvent => event =>
+			req.backend
+				.getAccount(oldEvent.accountID)
+				.flatMap(account =>
+					saveEvent(req.configuration)(req.mysqlx)(account)(updater)(oldEvent)(event),
+				),
+		deleteEvent: actor => event =>
+			req.backend
+				.getAccount(event.accountID)
+				.flatMap(account =>
+					deleteEvent(req.configuration)(req.mysqlx)(account)(actor)(event),
+				),
+		fullPointsOfContact: account => records =>
+			getFullPointsOfContact(req.mysqlx)(account)(records),
+		getLinkedEvents: account => eventID => getLinkedEvents(req.mysqlx)(account.id)(eventID),
+		getFullEventObject: event =>
+			req.backend
+				.getAccount(event.accountID)
+				.flatMap(account => getFullEventObject(req.mysqlx)(account)(event)),
+		getSourceEvent: event => getSourceEvent(req.mysqlx)(event),
+		ensureResolvedEvent: event =>
+			newEnsureResolvedEvent({
+				...backend,
+				...req.backend,
+			})(event),
+		createEvent: account => author => data =>
+			createEvent(req.configuration)(req.mysqlx)(account)(author)(data),
+		copyEvent: event => author => newStartTime => newStatus => copyFiles =>
+			req.backend
+				.getAccount(event.accountID)
+				.flatMap(account =>
+					copyEvent(req.configuration)(req.mysqlx)(account)(event)(author)(newStartTime)(
+						newStatus,
+					)(copyFiles),
+				),
+		linkEvent: event => author => account =>
+			linkEvent(req.configuration)(req.mysqlx)(event)(author)(account),
+	};
+
+	return backend;
+};
 
 export const getEmptyEventsBackend = (): EventsBackend => ({
 	getEvent: () => () => notImplementedError('getEvent'),
-	saveEvent: () => () => () => () => notImplementedError('saveEvent'),
-	deleteEvent: () => () => () => notImplementedError('deleteEvent'),
+	saveEvent: () => () => () => notImplementedError('saveEvent'),
+	deleteEvent: () => () => notImplementedError('deleteEvent'),
 	fullPointsOfContact: () => () => notImplementedError('fullPointsOfContact'),
 	getLinkedEvents: () => () => [],
-	getFullEventObject: () => () => notImplementedError('getFullEventObject'),
+	getFullEventObject: () => notImplementedError('getFullEventObject'),
 	getSourceEvent: () => notImplementedError('getSourceEvent'),
 	ensureResolvedEvent: () => notImplementedError('ensureResolvedEvent'),
 	createEvent: () => () => () => notImplementedError('createEvent'),
-	copyEvent: () => () => () => () => () => () => notImplementedError('copyEvent'),
+	copyEvent: () => () => () => () => () => notImplementedError('copyEvent'),
 	linkEvent: () => () => () => notImplementedError('linkEvent'),
 });
 
