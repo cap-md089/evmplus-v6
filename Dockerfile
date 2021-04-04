@@ -130,8 +130,8 @@ FROM base AS tests
 WORKDIR /usr/evm-plus
 
 ENV IN_DOCKER_TEST_ENVIRONMENT=1
-
-CMD yarn run --cwd=packages/server-jest-config test
+CMD yarn run --cwd=packages/server-jest-config test && \
+	yarn run --cwd=packages/server-common test
 
 #
 # This container will run a cron job to import CAPWATCH and update Discord
