@@ -100,6 +100,8 @@ export interface BasicMemberRequest<P extends ParamType = {}, B = any>
 	member: User;
 
 	session: ActiveSession;
+
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>;
 }
 
 export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
