@@ -115,7 +115,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 					{...selectorProps}
 					multiple={true}
 					value={this.props.selectedValues || this.state.selectedValues}
-					onChange={this.onMultipleChange}
+					onChange={this.onMultipleChange as any}
 				/>
 			);
 		} else {

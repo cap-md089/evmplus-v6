@@ -20,11 +20,11 @@
 import {
 	AccountObject,
 	always,
+	ClientUser,
 	Either,
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
@@ -43,28 +43,28 @@ import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
 import Drive from '../pages/drive/Drive';
-import LinkList from '../pages/events/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import AuditViewer from '../pages/events/AuditViewer';
+import LinkList from '../pages/events/EventLinkList';
 import EventViewer from '../pages/events/EventViewer';
 import ModifyEvent from '../pages/events/ModifyEvent';
+import ScanAdd from '../pages/events/ScanAdd';
+import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
+import TermsAndConditions from '../pages/legal/TermsAndConditions';
 import Main from '../pages/Main';
 import NotFound from '../pages/NotFound';
 import Page, { PageProps } from '../pages/Page';
+import { Quizzer } from '../pages/quizzer/Quizzer';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamEdit from '../pages/team/TeamEdit';
+import TeamEmailList from '../pages/team/TeamEmail';
 import TeamList from '../pages/team/TeamList';
 import TeamView from '../pages/team/TeamView';
 import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
-import { Quizzer } from '../pages/quizzer/Quizzer';
-import TeamEmailList from '../pages/team/TeamEmail';
-import ScanAdd from '../pages/events/ScanAdd';
-import TermsAndConditions from '../pages/legal/TermsAndConditions';
-import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
 
 const pages: Array<{
 	url: string;
@@ -426,7 +426,13 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 
 			fetchApi
 				.check({}, {})
-				.leftFlatMap(always(Either.right({ error: MemberCreateError.SERVER_ERROR })))
+				.leftFlatMap(
+					always(
+						Either.right({
+							error: MemberCreateError.SERVER_ERROR as const,
+						}),
+					),
+				)
 				.fullJoin()
 				.then(ret => {
 					this.props.authorizeUser(ret);

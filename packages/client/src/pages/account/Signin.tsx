@@ -254,7 +254,9 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 					},
 				},
 			)
-			.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))
+			.leftFlatMap(
+				always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR as const })),
+			)
 			.fullJoin();
 
 		if (signinResults.error === MemberCreateError.NONE) {
