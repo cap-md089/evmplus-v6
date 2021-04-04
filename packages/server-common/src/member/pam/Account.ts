@@ -61,7 +61,7 @@ import { addPasswordForUser } from './Password';
 
 //#region Account creation
 
-interface AccountCreationToken {
+export interface AccountCreationToken {
 	member: MemberReference;
 	created: number;
 	token: string;
@@ -183,9 +183,7 @@ export const addUserAccount = (
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username)
-				.then(Maybe.some)
-				.catch(Maybe.none),
+			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
 		)
 			.filter(user => Maybe.isNone(user) || !isUserValid(user.value), {
@@ -270,9 +268,9 @@ export const getInformationForMember = async <T extends MemberReference>(
 		throw new Error('Could not find user specified');
 	}
 
-	return stripProp<UserAccountInformation, '_id'>('_id')(userList[0]) as UserAccountInformation<
-		T
-	>;
+	return stripProp<UserAccountInformation, '_id'>('_id')(
+		userList[0],
+	) as UserAccountInformation<T>;
 };
 
 /**

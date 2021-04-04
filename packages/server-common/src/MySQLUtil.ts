@@ -21,17 +21,42 @@ import * as mysql from '@mysql/xdevapi';
 import {
 	AccountIdentifiable,
 	AccountObject,
+	AllAudits,
 	always,
+	StoredMFASecret,
 	asyncRight,
 	BasicMySQLRequest,
 	destroy,
+	DiscordAccount,
 	errorGenerator,
+	NotificationCause,
+	NotificationTarget,
+	Errors,
 	Identifiable,
 	Maybe,
+	NHQ,
 	ParamType,
+	RawEventObject,
+	RawFileObject,
+	StoredAccountMembership,
+	RawNotificationObject,
+	PasswordResetTokenInformation,
+	StoredProspectiveMemberObject,
+	RegistryValues,
+	UserSession,
+	SignInLogData,
+	StoredSigninNonce,
+	StoredSigninKey,
+	RawTaskObject,
+	TaskObject,
+	RawTeamObject,
+	UserAccountInformation,
+	StoredMemberPermissions,
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
+import { PAM } from '.';
+import { RawAttendanceDBRecord } from './Attendance';
 import { ServerEither } from './servertypes';
 
 export type UpgradeRequest<T extends BasicMySQLRequest> = Omit<express.Request, 'params'> & T;
@@ -411,14 +436,62 @@ export const getNewID = (account: AccountObject) => (
 		.map(Maybe.map<AccountIdentifiable & { id: number }, number>(i => i.id + 1))
 		.map(Maybe.orSome(1));
 
+export type TableNameMap = {
+	Accounts: AccountObject;
+	Attendance: RawAttendanceDBRecord;
+	Audits: AllAudits;
+	DiscordAccounts: DiscordAccount;
+	Errors: Errors;
+	Events: RawEventObject;
+	ExtraAccountMembership: StoredAccountMembership;
+	Files: RawFileObject;
+	MFASetup: StoredMFASecret;
+	MFATokens: StoredMFASecret;
+	NHQ_CadetAchv: NHQ.CadetAchv;
+	NHQ_CadetAchvAprs: NHQ.CadetAchvAprs;
+	NHQ_CadetActivities: NHQ.CadetActivities;
+	NHQ_CadetDutyPosition: NHQ.CadetDutyPosition;
+	NHQ_CadetHFZInformation: NHQ.CadetHFZInformation;
+	NHQ_CdtAchvEnum: NHQ.CdtAchvEnum;
+	NHQ_DutyPosition: NHQ.DutyPosition;
+	NHQ_MbrAchievements: NHQ.MbrAchievements;
+	NHQ_MbrContact: NHQ.MbrContact;
+	NHQ_Member: NHQ.NHQMember;
+	NHQ_OFlight: NHQ.OFlight;
+	NHQ_Organization: NHQ.Organization;
+	Notifications: RawNotificationObject<NotificationCause, NotificationTarget>;
+	PasswordResetTokens: PasswordResetTokenInformation;
+	ProspectiveMembers: StoredProspectiveMemberObject;
+	Registry: RegistryValues;
+	Sessions: UserSession;
+	SignInLog: SignInLogData;
+	SignatureNonces: StoredSigninNonce;
+	SigninKeys: StoredSigninKey;
+	Tasks: TaskObject;
+	Teams: RawTeamObject;
+	Tokens: PAM.TokenObject;
+	UserAccountInfo: UserAccountInformation;
+	UserAccountTokens: PAM.AccountCreationToken;
+	UserPermissions: StoredMemberPermissions;
+};
+
+export type TableDataType<Name extends string> = Name extends keyof TableNameMap
+	? TableNameMap[Name]
+	: any;
+
 export interface RawMySQLBackend {
 	getSchema: () => mysql.Schema;
+	getCollection: <T extends string>(
+		tableName: T,
+	) => mysql.Collection<mysql.WithoutEmpty<TableDataType<T>>>;
 }
 
 export const getRawMySQLBackend = (req: BasicMySQLRequest): RawMySQLBackend => ({
 	getSchema: always(req.mysqlx),
+	getCollection: <T extends string>(name: T) => req.mysqlx.getCollection<TableDataType<T>>(name),
 });
 
 export const testRawMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
 	getSchema: always(schema),
+	getCollection: <T extends string>(name: T) => schema.getCollection<TableDataType<T>>(name),
 });

@@ -50,7 +50,6 @@ import * as express from 'express';
 import { accountRequestTransformer, BasicAccountRequest, PAM, ServerEither } from 'server-common';
 import { tokenTransformer } from '../api/formtoken';
 import saveServerError, { Requests } from './saveServerError';
-
 const logFunc = debug('server:lib:api');
 
 export const addMember = (memberRequirement: MemberRequirement) => <P extends ParamType, B>(
@@ -257,8 +256,8 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 			strict: false,
 		}),
 		(req: Requests, res: express.Response, next: express.NextFunction) => {
-			debug('server:lib:api:raw')('Raw request: %o', req);
-			debug('server:lib:api:raw')('Headers from raw request: %o', req.headers);
+			logFunc.extend('raw')('Raw request: %o', req);
+			logFunc.extend('raw')('Headers from raw request: %o', req.headers);
 			if (typeof req.body !== 'undefined' && req.body === 'teapot') {
 				res.status(418);
 				res.end();

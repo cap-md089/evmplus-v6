@@ -34,6 +34,29 @@ export type BackedServerAPIEndpoint<
 	A extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>
 > = (backends: B) => ServerAPIEndpoint<A>;
 
+type BackendProviderResult<T extends ((req: any) => any)[]> = T extends [
+	(req: any) => infer B,
+	...infer R
+]
+	? B & (R extends ((req: any) => any)[] ? BackendProviderResult<R> : {})
+	: {};
+
+export const combineBackends = <R extends BasicMySQLRequest, U extends ((req: R) => any)[]>(
+	req: R,
+	...backendAdders: U
+): BackendProviderResult<U> => {
+	let backend: any = {};
+
+	for (const backendAdder of backendAdders) {
+		backend = {
+			...backend,
+			...backendAdder(req as R),
+		};
+	}
+
+	return backend;
+};
+
 export const withBackends = <
 	R extends BasicMySQLRequest,
 	E extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>,
@@ -45,12 +68,12 @@ export const withBackends = <
 	...backendAdders: U
 ): ServerAPIEndpoint<E> => {
 	return (req => {
-		let backend: any = {};
+		let backend: any = (req as any).backend ?? {};
 
 		for (const backendAdder of backendAdders) {
 			backend = {
-				...backend,
 				...backendAdder(req as R),
+				...backend,
 			};
 		}
 

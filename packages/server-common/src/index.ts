@@ -44,4 +44,5 @@ export {
 	BackedServerAPIEndpoint,
 	getTimeBackend,
 	TimeBackend,
+	combineBackends,
 } from './backends';

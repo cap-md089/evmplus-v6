@@ -51,21 +51,23 @@ import {
 	UserObject,
 	UserSession,
 } from 'common-lib';
+import { parse } from 'cookie';
 import { randomBytes } from 'crypto';
 import type { Totp } from 'speakeasy';
 import { promisify } from 'util';
-import { BasicAccountRequest } from '../../Account';
-import { resolveReference } from '../../Members';
+import { AccountBackend, BasicAccountRequest } from '../../Account';
+import { Backends } from '../../backends';
+import { getMemberBackend, MemberBackend } from '../../Members';
 import {
 	addToCollection,
 	collectResults,
 	findAndBind,
 	modifyAndBind,
+	RawMySQLBackend,
 	safeBind,
 } from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
-import { parse } from 'cookie';
 
 // tslint:disable-next-line: no-var-requires
 const speakeasy = require('speakeasy');
@@ -105,6 +107,8 @@ export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
 	member: MaybeObj<User>;
 
 	session: MaybeObj<ActiveSession>;
+
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>;
 }
 
 const addSessionToDatabase = (
@@ -194,17 +198,21 @@ export const updateSession = <S extends UserSession>(
 		.map(modify => modify.patch(session).execute())
 		.map(always(session));
 
-export const restoreFromSession = (schema: Schema) => (account: AccountObject) => <
-	T extends MemberReference = MemberReference
->(
+export const restoreFromSession = (
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
+) => (account: AccountObject) => <T extends MemberReference = MemberReference>(
 	session: UserSession<T>,
 ) =>
 	AsyncEither.All([
 		asyncRight(
-			getPermissionsForMemberInAccountDefault(schema, session.userAccount.member, account),
+			getPermissionsForMemberInAccountDefault(
+				backend.getSchema(),
+				session.userAccount.member,
+				account,
+			),
 			errorGenerator('Could not get permissions for member'),
 		),
-		resolveReference(schema)(account)(session.userAccount.member),
+		backend.getMember(account)(session.userAccount.member),
 	])
 		.map<UserForReference<T>>(([permissions, member]) => ({
 			...member,
@@ -259,9 +267,18 @@ export function memberRequestTransformer(
 
 export function memberRequestTransformer(memberRequired: boolean = false) {
 	return <T extends BasicAccountRequest>(
-		req: T,
+		request: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
-		new AsyncEither(
+		asyncRight(
+			{
+				...request,
+				backend: {
+					...request.backend,
+					...getMemberBackend(request),
+				},
+			},
+			errorGenerator('Could not get session information'),
+		).flatMap(req =>
 			(!!req.headers?.cookie
 				? asyncRight(
 						parse(req.headers.cookie),
@@ -272,13 +289,13 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 						errorGenerator('Could not get session information'),
 				  )
 			)
-				.filter(cookie => !!cookie, {
+				.filter((cookie): cookie is string => !!cookie, {
 					type: 'OTHER',
 					code: 403,
 					message: 'Authorization token not provided',
 				})
 				.flatMap<UserSession>(authToken =>
-					validateSession(req.mysqlx, authToken!).leftMap(
+					validateSession(req.mysqlx, authToken).leftMap(
 						code => ({
 							type: 'OTHER',
 							code: 400,
@@ -287,17 +304,16 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 						errorGenerator('Could not validate sesion'),
 					),
 				)
-				.flatMap<ActiveSession>(restoreFromSession(req.mysqlx)(req.account))
+				.flatMap<ActiveSession>(restoreFromSession(req.backend)(req.account))
 				.cata<EitherObj<ServerError, T & BasicMaybeMemberRequest>>(
-					err => {
-						return err.code === 500 || memberRequired
+					err =>
+						err.code === 500 || memberRequired
 							? Either.left<ServerError, T & BasicMaybeMemberRequest>(err)
 							: Either.right<ServerError, T & BasicMaybeMemberRequest>({
 									...req,
 									member: Maybe.none(),
 									session: Maybe.none(),
-							  });
-					},
+							  }),
 					session =>
 						Either.right<ServerError, T & BasicMaybeMemberRequest>({
 							...req,
@@ -308,7 +324,6 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 							session: memberRequired ? session : Maybe.some(session),
 						} as T & BasicMaybeMemberRequest),
 				),
-			errorGenerator('Could not get user information'),
 		);
 }
 
@@ -335,7 +350,7 @@ const TOKEN_BYTE_COUNT = 64;
 const TOKEN_AGE = 20 * 1000;
 const TOKEN_TABLE = 'Tokens';
 
-interface TokenObject {
+export interface TokenObject {
 	token: string;
 	created: number;
 	member: SafeUserAccountInformation;

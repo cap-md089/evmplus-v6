@@ -82,7 +82,7 @@ import {
 import { copyFile } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import { notImplementedError } from './backends';
+import { Backends, combineBackends, notImplementedError } from './backends';
 import { addMemberToAttendanceFunc, createEventFunc, linkEvent } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
 import { setPermissionsForMemberInAccount } from './member/pam';
@@ -93,6 +93,8 @@ import {
 	findAndBind,
 	findAndBindC,
 	generateResults,
+	getRawMySQLBackend,
+	RawMySQLBackend,
 	safeBind,
 } from './MySQLUtil';
 import { getRegistry, getRegistryById, saveRegistry } from './Registry';
@@ -102,6 +104,7 @@ import { getStaffTeam } from './Team';
 export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	extends BasicMySQLRequest<P, B> {
 	account: AccountObject;
+	backend: Backends<[RawMySQLBackend, AccountBackend]>;
 }
 
 export const getAccountID = (hostname: string): EitherObj<ServerError, string> =>
@@ -135,9 +138,14 @@ export const getAccountID = (hostname: string): EitherObj<ServerError, string> =
 export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 	req: T,
 ): AsyncEither<ServerError, T & BasicAccountRequest> =>
-	asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
-		.flatMap(getAccount(req.mysqlx))
-		.map(account => ({ ...req, headers: req.headers, account }));
+	asyncRight(
+		combineBackends(req, getAccountBackend, getRawMySQLBackend),
+		errorGenerator('Could not get account'),
+	).flatMap(backend =>
+		asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
+			.flatMap(backend.getAccount)
+			.map(account => ({ ...req, headers: req.headers, account, backend })),
+	);
 
 export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
 	session: Session,
