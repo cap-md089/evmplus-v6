@@ -2,7 +2,8 @@
 
 1. [Code of Conduct](#code-of-conduct)
 2. [Your First Code Contribution](#your-first-code-contribution)
-	1. [Local Development](#local-development)
+    1. [Local Development](#local-development)
+3. [Pull Requests](#pull-requests)
 
 ## Code of Conduct
 
@@ -37,4 +38,4 @@ To use either the mysqlsh or util-cli command line utilities, run `docker-compos
 
 ## Pull Requests
 
-All pull requests must be a single commit and address a single issue (see [how to squash commits](https://stackoverflow.com/questions/5189560/squash-my-last-x-commits-together-using-git)). Each commit will have to be tested before it can be merged, so adding unit tests, while not required at this time, are recommended. Unit tests will eventually become mandatory as they become more standardized.
+All pull requests must be a single commit and address a single issue (see [how to squash commits](https://stackoverflow.com/questions/5189560/squash-my-last-x-commits-together-using-git)). The target of the pull requests will be the development branch. Each commit will have to be tested before it can be merged, so adding unit tests, while not required at this time, are recommended. Unit tests will eventually become mandatory as they become more standardized. To easily run unit tests, run the npm test script in the root directory
