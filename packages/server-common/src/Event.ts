@@ -227,21 +227,35 @@ export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) =>
 			),
 		)
 		.flatMap(() =>
-			getMemberName(schema)(account)(attendee.memberID).flatMap(memberName =>
-				addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
-					...attendee,
-					accountID:
-						event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
-					eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
-					timestamp: now(),
-					memberName,
-					summaryEmailSent: false,
-					shiftTime: attendee.shiftTime ?? {
-						arrivalTime: event.meetDateTime,
-						departureTime: event.pickupDateTime,
-					},
-				}),
-			),
+			getMemberName(schema)(account)(attendee.memberID)
+				.flatMap(memberName =>
+					addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
+						...attendee,
+						accountID:
+							event.type === EventType.LINKED
+								? event.targetAccountID
+								: event.accountID,
+						eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
+						timestamp: now(),
+						memberName,
+						summaryEmailSent: false,
+						shiftTime: attendee.shiftTime ?? {
+							arrivalTime: event.meetDateTime,
+							departureTime: event.pickupDateTime,
+						},
+					}),
+				)
+				.leftFlatMap(err =>
+					err.type === 'CRASH' &&
+					(err.error as any)?.info?.msg ===
+						'Document contains a field value that is not unique but required to be'
+						? Either.left({
+								type: 'OTHER',
+								code: 400,
+								message: 'Member is already in attendance',
+						  })
+						: Either.left(err),
+				),
 		);
 export const addMemberToAttendance = addMemberToAttendanceFunc(Date.now);
 
