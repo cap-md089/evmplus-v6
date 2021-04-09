@@ -247,3 +247,47 @@ export const getAppropriateDebriefItems = (viewer: MaybeObj<User>) => <
 				val => val.publicView || areMembersTheSame(viewer.value)(val.memberRef),
 		  ),
 });
+
+export const appropriatelyFilterPointsOfContact = (viewer: MaybeObj<User>) => <
+	T extends RawResolvedEventObject
+>(
+	event: T,
+): T => ({
+	...event,
+	pointsOfContact: Maybe.isNone(viewer)
+		? event.pointsOfContact.map(poc => ({
+				...poc,
+				email: poc.publicDisplay ? poc.email : '',
+				phone: poc.publicDisplay ? poc.phone : '',
+				receiveEventUpdates: false,
+				receiveRoster: false,
+				receiveSignUpUpdates: false,
+				receiveUpdates: false,
+		  }))
+		: effectiveManageEventPermissionForEvent(viewer.value)(event) ===
+		  Permissions.ManageEvent.FULL
+		? event.pointsOfContact
+		: event.pointsOfContact.map(poc => ({
+				...poc,
+				receiveEventUpdates: false,
+				receiveRoster: false,
+				receiveSignUpUpdates: false,
+				receiveUpdates: false,
+		  })),
+});
+
+export const filterMemberComments = (viewer: MaybeObj<User>) => <T extends RawResolvedEventObject>(
+	event: T,
+): T => ({
+	...event,
+	memberComments: Maybe.isSome(viewer) ? event.memberComments : '',
+});
+
+export const filterEventInformation = (
+	viewer: MaybeObj<User>,
+): (<T extends RawResolvedEventObject>(event: T) => T) =>
+	pipe(
+		appropriatelyFilterPointsOfContact(viewer),
+		getAppropriateDebriefItems(viewer),
+		filterMemberComments(viewer),
+	);
