@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { api, getAppropriateDebriefItems } from 'common-lib';
+import { api, filterEventInformation } from 'common-lib';
 import {
 	AccountBackend,
 	Backends,
@@ -36,7 +36,7 @@ export const func: Endpoint<
 	backend
 		.getEvent(req.account)(req.params.id)
 		.flatMap(backend.getFullEventObject)
-		.map(getAppropriateDebriefItems(req.member))
+		.map(filterEventInformation(req.member))
 		.map(wrapper);
 
 export default withBackends(func, getEventsBackend, getAccountBackend);

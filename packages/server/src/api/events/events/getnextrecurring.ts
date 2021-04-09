@@ -18,7 +18,7 @@
  */
 
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator, Maybe } from 'common-lib';
+import { api, asyncRight, errorGenerator, filterEventInformation, Maybe } from 'common-lib';
 import { collectResults, queryEventsFind } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
@@ -35,6 +35,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 	)
 		.map(collectResults)
 		.map(Maybe.fromArray)
+		.map(Maybe.map(filterEventInformation(Maybe.none())))
 		.map(wrapper);
 
 export default func();

@@ -36,6 +36,7 @@ import {
 	errorGenerator,
 	EventType,
 	ExternalPointOfContact,
+	filterEventInformation,
 	get,
 	getAppropriateDebriefItems,
 	Maybe,
@@ -230,7 +231,7 @@ export const func: Endpoint<
 							linkedEvents,
 							authorFullName,
 						]) => ({
-							event,
+							event: filterEventInformation(req.member)(event),
 							attendees: checkAttendeesForRequest(event, req, registry, attendees),
 							pointsOfContact,
 							sourceAccountName,

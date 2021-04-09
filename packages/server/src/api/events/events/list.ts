@@ -26,6 +26,7 @@ import {
 	Either,
 	EitherObj,
 	errorGenerator,
+	filterEventInformation,
 	get,
 	RawResolvedEventObject,
 	Right,
@@ -44,6 +45,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
 			>(Either.isRight),
 		)
 		.map(asyncIterMap(get('value')))
+		.map(asyncIterMap(filterEventInformation(req.member)))
 		.map(wrapper);
 
 export default func;

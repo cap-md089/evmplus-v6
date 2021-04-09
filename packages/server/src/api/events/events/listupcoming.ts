@@ -24,7 +24,9 @@ import {
 	asyncIterMap,
 	Either,
 	EitherObj,
+	filterEventInformation,
 	get,
+	Maybe,
 	RawResolvedEventObject,
 	Right,
 	ServerError,
@@ -54,6 +56,7 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 			>(Either.isRight),
 		)
 		.map(asyncIterMap(get('value')))
+		.map(asyncIterMap(filterEventInformation(Maybe.none())))
 		.map(wrapper);
 
 export default func();

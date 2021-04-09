@@ -29,6 +29,7 @@ import {
 	EitherObj,
 	errorGenerator,
 	EventStatus,
+	filterEventInformation,
 	FromDatabase,
 	get,
 	Maybe,
@@ -76,6 +77,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member),
 			),
 		)
+		.map(asyncIterMap(filterEventInformation(req.member)))
 		.map(wrapper);
 
 export default func;
