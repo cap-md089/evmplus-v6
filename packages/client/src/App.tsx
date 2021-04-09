@@ -104,7 +104,7 @@ export default class App extends React.Component<
 			.slideshowImageIDs({}, {})
 			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }));
 
-		const isEmbedded = !!window.location.search.match(/embed=.*?\&?/);
+		const isEmbedded = !!window.location.search.match(/embed=.*?&?/);
 
 		if (isEmbedded) {
 			document.getElementById('root')?.classList.add('embedded');
