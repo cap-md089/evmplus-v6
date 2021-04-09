@@ -197,7 +197,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
 		const fullInfoEither = await AsyncEither.All([
-			getAttendanceForEvent(schema)(Maybe.none())(event).map(collectGeneratorAsync),
+			getAttendanceForEvent(schema)(event).map(collectGeneratorAsync),
 			getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
 		]);
 
@@ -236,7 +236,13 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 				status: AttendanceStatus.COMMITTEDATTENDED,
 			});
 
-			if (Either.isLeft(result)) {
+			if (
+				Either.isLeft(result) &&
+				result.value.message === 'Member is already in attendance'
+			) {
+				console.log(`${getFullMemberName(member)} is already in attendance, skipping`);
+				membersDuplicate++;
+			} else if (Either.isLeft(result)) {
 				console.error(result);
 			} else {
 				membersAddedCount++;
@@ -245,11 +251,13 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 
 		const extraMsg =
 			membersAddedCount !== solidMembers.length && membersDuplicate !== 0
-				? ` (${membersDuplicate} already were added, ${solidMembers.length -
-						(membersDuplicate + membersAddedCount)} failed to be added)`
+				? ` (${membersDuplicate} already were added, ${
+						solidMembers.length - (membersDuplicate + membersAddedCount)
+				  } failed to be added)`
 				: membersDuplicate === 0
-				? ` (${solidMembers.length -
-						(membersDuplicate + membersAddedCount)} failed to be added)`
+				? ` (${
+						solidMembers.length - (membersDuplicate + membersAddedCount)
+				  } failed to be added)`
 				: ` (${membersDuplicate} already were added)`;
 
 		await message.reply(
