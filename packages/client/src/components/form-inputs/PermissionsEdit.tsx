@@ -372,7 +372,7 @@ export default class PermissionsEdit extends React.Component<
 				<EnumSelect<Permissions.AttendanceView>
 					key="33"
 					name="AttendanceView"
-					labels={['Peronsal', 'Others']}
+					labels={['Personal', 'Others']}
 					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
 					defaultValue={Permissions.AttendanceView.PERSONAL}
 				/>
@@ -564,7 +564,7 @@ export default class PermissionsEdit extends React.Component<
 				<EnumSelect<Permissions.AttendanceView>
 					key="33"
 					name="AttendanceView"
-					labels={['Peronsal', 'Others']}
+					labels={['Personal', 'Others']}
 					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
 					defaultValue={Permissions.AttendanceView.PERSONAL}
 				/>
@@ -729,7 +729,7 @@ export default class PermissionsEdit extends React.Component<
 				<EnumSelect<Permissions.AttendanceView>
 					key="33"
 					name="AttendanceView"
-					labels={['Peronsal', 'Others']}
+					labels={['Personal', 'Others']}
 					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
 					defaultValue={Permissions.AttendanceView.PERSONAL}
 				/>
@@ -894,7 +894,7 @@ export default class PermissionsEdit extends React.Component<
 				<EnumSelect<Permissions.AttendanceView>
 					key="33"
 					name="AttendanceView"
-					labels={['Peronsal', 'Others']}
+					labels={['Personal', 'Others']}
 					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
 					defaultValue={Permissions.AttendanceView.PERSONAL}
 				/>
@@ -1068,7 +1068,7 @@ export default class PermissionsEdit extends React.Component<
 				<EnumSelect<Permissions.AttendanceView>
 					key="33"
 					name="AttendanceView"
-					labels={['Peronsal', 'Others']}
+					labels={['Personal', 'Others']}
 					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
 					defaultValue={Permissions.AttendanceView.PERSONAL}
 				/>
