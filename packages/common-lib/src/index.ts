@@ -42,3 +42,5 @@ export { default as Validator } from './lib/Validator';
 export * from './renderers';
 export * from './typings/api';
 export * from './typings/types';
+export * from './typings/schemas';
+export * as PAMTypes from './typings/pam';

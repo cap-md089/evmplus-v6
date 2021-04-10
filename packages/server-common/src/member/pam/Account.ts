@@ -38,6 +38,7 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
+	PAMTypes,
 	PermissionForName,
 	SafeUserAccountInformation,
 	ServerError,
@@ -61,21 +62,15 @@ import { addPasswordForUser } from './Password';
 
 //#region Account creation
 
-export interface AccountCreationToken {
-	member: MemberReference;
-	created: number;
-	token: string;
-}
-
 const ACCOUNT_TOKEN_AGE = 24 * 60 * 60 * 1000;
 
 const getUserAccountCreationTokens = async (
 	schema: Schema,
 	token: string,
-): Promise<AccountCreationToken[]> => {
+): Promise<PAMTypes.AccountCreationToken[]> => {
 	await cleanAccountCreationTokens(schema);
 
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	const results = generateResults(
 		findAndBind(collection, {
@@ -83,13 +78,15 @@ const getUserAccountCreationTokens = async (
 		}),
 	);
 
-	return collectGeneratorAsync<AccountCreationToken>(
-		asyncIterMap<AccountCreationToken, AccountCreationToken>(stripProp('_id'))(results),
+	return collectGeneratorAsync<PAMTypes.AccountCreationToken>(
+		asyncIterMap<PAMTypes.AccountCreationToken, PAMTypes.AccountCreationToken>(
+			stripProp('_id'),
+		)(results),
 	);
 };
 
 const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await safeBind(collection.remove('created < :created'), {
 		created: Date.now() - ACCOUNT_TOKEN_AGE,
@@ -97,13 +94,13 @@ const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
 };
 
 const removeAccountToken = async (schema: Schema, token: string): Promise<void> => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
 const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await cleanAccountCreationTokens(schema);
 
@@ -149,7 +146,7 @@ export const addUserAccountCreationToken = (
 				errorGenerator('Could not store user creation information'),
 			).map(tokenInfo =>
 				schema
-					.getCollection<AccountCreationToken>('UserAccountTokens')
+					.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens')
 					.add(tokenInfo)
 					.execute(),
 			),

@@ -18,7 +18,7 @@
  */
 
 import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
-import { memoize } from 'common-lib';
+import { memoize, TableNames, TableDataType } from 'common-lib';
 import * as Docker from 'dockerode';
 
 const getDockerConn = memoize(
@@ -284,3 +284,27 @@ export interface DatabaseRef {
 export const getDbRef = (): DatabaseRef => ({
 	connection: null!,
 });
+
+export type PresetRecords = {
+	[key in TableNames]?: TableDataType<key>[];
+};
+
+export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) => {
+	for (const tableName in map) {
+		if (map.hasOwnProperty(tableName)) {
+			const table = tableName as TableNames;
+
+			const records = map[table];
+
+			if (!records || records.length === 0) continue;
+
+			let adder = schema.getCollection(table).add(records[0]);
+
+			for (const record of records.slice(1)) {
+				adder = adder.add(record);
+			}
+
+			await adder.execute();
+		}
+	}
+};

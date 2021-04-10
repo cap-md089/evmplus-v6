@@ -1437,6 +1437,12 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 	sourceAccountID: string;
 }
 
+export interface RawAttendanceDBRecord
+	extends Omit<AttendanceRecord, 'sourceAccountID' | 'sourceEventID'> {
+	accountID: string;
+	eventID: number;
+}
+
 export interface FullAttendanceRecord extends AttendanceRecord {
 	memberEmail: string;
 }

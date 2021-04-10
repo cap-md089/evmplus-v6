@@ -36,6 +36,7 @@ import {
 	MaybeObj,
 	MemberCreateError,
 	MemberReference,
+	PAMTypes,
 	ParamType,
 	SafeUserAccountInformation,
 	ServerError,
@@ -352,18 +353,12 @@ const TOKEN_BYTE_COUNT = 64;
 const TOKEN_AGE = 20 * 1000;
 const TOKEN_TABLE = 'Tokens';
 
-export interface TokenObject {
-	token: string;
-	created: number;
-	member: SafeUserAccountInformation;
-}
-
 const addTokenToDatabase = async (
 	schema: Schema,
 	token: string,
 	member: SafeUserAccountInformation,
 ) => {
-	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
+	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	await tokenCollection
 		.add({
@@ -375,7 +370,7 @@ const addTokenToDatabase = async (
 };
 
 const removeOldTokens = async (schema: Schema) => {
-	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
+	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	await safeBind(tokenCollection.remove('created < :created'), {
 		created: Date.now() - TOKEN_AGE,
@@ -383,13 +378,13 @@ const removeOldTokens = async (schema: Schema) => {
 };
 
 const getTokenList = async (schema: Schema, token: string) => {
-	const tokenCollection = schema.getCollection<TokenObject>(TOKEN_TABLE);
+	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	return await collectResults(findAndBind(tokenCollection, { token }));
 };
 
 const invalidateToken = async (schema: Schema, token: string) => {
-	const collection = schema.getCollection<TokenObject>('Tokens');
+	const collection = schema.getCollection<PAMTypes.TokenObject>('Tokens');
 
 	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
