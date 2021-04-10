@@ -112,15 +112,26 @@ export const getItemsNotInSecondArray = <T>(
 	equalityCheckFunction: (item1: T) => (item2: T) => boolean,
 ) => (list1: T[]) => (list2: T[]) => list1.filter(item => !list2.some(equalityCheckFunction(item)));
 
-export const memoize = <Return, Arg extends any>(func: (arg: Arg) => Return) => {
-	const returns = new Map<Arg, Return>();
+export const memoize = <Return, Arg extends any>(
+	func: (arg: Arg) => Return,
+	serialize?: (arg: Arg) => string,
+) => {
+	const returns = new Map<Arg | string, Return>();
 
 	return (arg: Arg): Return => {
-		if (!returns.has(arg)) {
-			returns.set(arg, func(arg));
-		}
+		if (serialize) {
+			if (!returns.has(serialize(arg))) {
+				returns.set(serialize(arg), func(arg));
+			}
 
-		return returns.get(arg)!;
+			return returns.get(arg)!;
+		} else {
+			if (!returns.has(arg)) {
+				returns.set(arg, func(arg));
+			}
+
+			return returns.get(arg)!;
+		}
 	};
 };
 

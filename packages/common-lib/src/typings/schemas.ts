@@ -67,6 +67,4 @@ export interface TableNameMap {
 
 export type TableNames = keyof TableNameMap;
 
-export type TableDataType<Name extends string> = Name extends keyof TableNameMap
-	? TableNameMap[Name]
-	: any;
+export type TableDataType<Name extends TableNames> = TableNameMap[Name];

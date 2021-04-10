@@ -18,6 +18,7 @@
  */
 
 import { errorGenerator, ServerError } from '../typings/api';
+import { Identifiable } from '../typings/types';
 import { AsyncEither, asyncEither } from './AsyncEither';
 import { Either, EitherObj } from './Either';
 import { alwaysFalse, identity } from './Util';
@@ -284,6 +285,26 @@ export const asyncIterConcat2 = async function* <T>(...iters: Array<AsyncIter<T>
 	for (const iter of iters) {
 		for await (const item of iter) {
 			yield item;
+		}
+	}
+};
+
+export const asyncFilterUnique = async function* <T extends Identifiable | number | string>(
+	iter: AsyncIter<T>,
+): AsyncIter<T> {
+	const found: { [key: string]: boolean } = {};
+
+	for await (const item of iter) {
+		if (typeof item === 'string' || typeof item === 'number') {
+			if (!found[item.toString()]) {
+				found[item.toString()] = true;
+				yield item;
+			}
+		} else {
+			if (!found[item.id]) {
+				found[item.id] = true;
+				yield item;
+			}
 		}
 	}
 };
