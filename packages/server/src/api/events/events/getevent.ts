@@ -35,7 +35,7 @@ export const func: Endpoint<
 > = backend => req =>
 	backend
 		.getEvent(req.account)(req.params.id)
-		.flatMap(backend.getFullEventObject)
+		.flatMap(backend.ensureResolvedEvent)
 		.map(filterEventInformation(req.member))
 		.map(wrapper);
 
