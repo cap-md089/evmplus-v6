@@ -49,7 +49,7 @@ import {
 	UserAccountInformation,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
-import { resolveReference } from '../../Members';
+import { MemberBackend } from '../../Members';
 import {
 	collectResults,
 	findAndBind,
@@ -169,6 +169,7 @@ export const validateUserAccountCreationToken = async (
 
 export const addUserAccount = (
 	schema: Schema,
+	backend: MemberBackend,
 	account: AccountObject,
 	username: string,
 	password: string,
@@ -209,7 +210,8 @@ export const addUserAccount = (
 			)
 			.filter(
 				() =>
-					resolveReference(schema)(account)(member)
+					backend
+						.getMember(account)(member)
 						.map(always(true))
 						.leftFlatMap(always(Either.right(false))),
 				{
@@ -303,9 +305,9 @@ export const getInformationForUser = async (
  *
  * @param userInfo the information to secure
  */
-export const simplifyUserInformation = (
-	userInfo: UserAccountInformation,
-): SafeUserAccountInformation => ({
+export const simplifyUserInformation = <T extends MemberReference>(
+	userInfo: UserAccountInformation<T>,
+): SafeUserAccountInformation<T> => ({
 	...userInfo,
 	passwordHistory: [],
 });
@@ -364,6 +366,9 @@ const getPermissionsRecordForMemberInAccount = async (
 
 	return stripProp('_id')(permissions[0]) as StoredMemberPermissions;
 };
+
+export const getDefaultPermissions = (account: AccountObject) =>
+	Maybe.orSome(getDefaultMemberPermissions(account.type));
 
 export const getPermissionsForMemberInAccountDefault = async (
 	schema: Schema,

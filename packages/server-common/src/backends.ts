@@ -17,8 +17,19 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
-import { APIEither, APIEndpoint, asyncLeft, BasicMySQLRequest, ServerError } from 'common-lib';
+import { ServerAPIEndpoint, ServerEither } from 'auto-client-api';
+import {
+	APIEither,
+	APIEndpoint,
+	asyncLeft,
+	asyncRight,
+	errorGenerator,
+	ServerError,
+} from 'common-lib';
+import { randomBytes } from 'crypto';
+import { promisify } from 'util';
+import { v4 as uuid } from 'uuid';
+import { BasicAccountRequest } from './Account';
 
 export const notImplementedError = <T>(funcName: string) =>
 	asyncLeft<ServerError, T>({
@@ -27,6 +38,16 @@ export const notImplementedError = <T>(funcName: string) =>
 		message: `Function '${funcName}' not implemented`,
 	});
 
+export class NotImplementedException extends Error {
+	public constructor(public readonly functionName: string) {
+		super(`Function ${functionName} not implemented`);
+	}
+}
+
+export const notImplementedException = (funcName: string) => {
+	throw new NotImplementedException(funcName);
+};
+
 export type Backends<T extends any[]> = T extends [infer B, ...infer R] ? B & Backends<R> : {};
 
 export type BackedServerAPIEndpoint<
@@ -34,23 +55,25 @@ export type BackedServerAPIEndpoint<
 	A extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>
 > = (backends: B) => ServerAPIEndpoint<A>;
 
-type BackendProviderResult<T extends ((req: any) => any)[]> = T extends [
-	(req: any) => infer B,
-	...infer R
-]
-	? B & (R extends ((req: any) => any)[] ? BackendProviderResult<R> : {})
-	: {};
+type BackendProviders<Request, ProvidedBackends extends any[], CurrentBackend extends {} = {}> = {
+	recurse: ProvidedBackends extends [infer Current, ...infer Rest]
+		? [
+				(req: Request, current: CurrentBackend) => Current,
+				...BackendProviders<Request, Rest, Current & CurrentBackend>
+		  ]
+		: never;
+	base: [];
+}[ProvidedBackends extends [] ? 'base' : 'recurse'];
 
-export const combineBackends = <R extends BasicMySQLRequest, U extends ((req: R) => any)[]>(
-	req: R,
-	...backendAdders: U
-): BackendProviderResult<U> => {
+export const combineBackends = <R, U extends any[]>(
+	...backendAdders: BackendProviders<R, U>
+): ((req: R) => Backends<U>) => req => {
 	let backend: any = {};
 
-	for (const backendAdder of backendAdders) {
+	for (const backendAdder of backendAdders as any) {
 		backend = {
+			...backendAdder(req as R, backend),
 			...backend,
-			...backendAdder(req as R),
 		};
 	}
 
@@ -61,23 +84,14 @@ export const withBackends = <
 	// Use BasicAccountRequest because API.ts forces all requests to have an Account through
 	// the use of accountRequestTransformer, which ensures a BasicAccountRequest
 	E extends APIEndpoint<string, APIEither<any>, any, any, any, any, any, any>,
-	R extends ServerAPIRequestParameter<E>,
-	B extends any,
-	F extends BackedServerAPIEndpoint<B, E>,
-	U extends ((req: R) => any)[]
+	R extends BasicAccountRequest,
+	F extends BackedServerAPIEndpoint<any, E>
 >(
 	func: F,
-	...backendAdders: U
+	backendGenerator: (req: R) => F extends BackedServerAPIEndpoint<infer B, E> ? B : never,
 ): ReturnType<F> => {
 	return (req => {
-		let backend: any = (req as any).backend ?? {};
-
-		for (const backendAdder of backendAdders) {
-			backend = {
-				...backendAdder(req as R),
-				...backend,
-			};
-		}
+		const backend = backendGenerator(req as R);
 
 		return func(backend)(req);
 	}) as ReturnType<F>;
@@ -90,3 +104,31 @@ export interface TimeBackend {
 export const getTimeBackend = () => ({
 	now: Date.now,
 });
+
+export interface RandomBackend {
+	randomBytes: (length: number) => ServerEither<Buffer>;
+	randomNumber: () => number;
+	uuid: () => string;
+}
+
+export const getRandomBackend = (): RandomBackend => ({
+	randomBytes: length =>
+		asyncRight(
+			promisify(randomBytes)(length),
+			errorGenerator('Could not generate random bytes'),
+		),
+	randomNumber: () => Math.random(),
+	uuid: () => uuid(),
+});
+
+export const getEmptyRandomBackend = (): RandomBackend => ({
+	randomBytes: () => notImplementedError('randomBytes'),
+	randomNumber: () => notImplementedException('randomNumber'),
+	uuid: () => notImplementedException('uuid'),
+});
+
+export type GenBackend<BackendGenerator extends (req: any) => any> = BackendGenerator extends (
+	req: any,
+) => infer Backend
+	? Backend
+	: never;

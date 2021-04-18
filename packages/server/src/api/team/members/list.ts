@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
@@ -39,7 +38,19 @@ import {
 	TeamPublicity,
 	User,
 } from 'common-lib';
-import { getTeam, PAM, resolveReference } from 'server-common';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	GenBackend,
+	getCombinedMemberBackend,
+	getTeamsBackend,
+	MemberBackend,
+	PAM,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canMemberViewPrivateTeam = (member: MaybeObj<User>) => (team: RawTeamObject) =>
@@ -64,27 +75,36 @@ const getTeamMembersList = (team: RawTeamObject): MemberReference[] =>
 		.filter(Maybe.isSome)
 		.map(get('value'));
 
-export const func: ServerAPIEndpoint<api.team.members.ListTeamMembers> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
-		.filter(canMemberViewPrivateTeam(req.member), {
-			type: 'OTHER',
-			code: 403,
-			message:
-				'Member does not have permission to view the member information of a private team',
-		})
-		.filter(canMemberViewProtectedTeam(req.member), {
-			type: 'OTHER',
-			code: 403,
-			message:
-				'Member does not have permission to view the member information of a protected team',
-		})
-		.map(getTeamMembersList)
-		.map(asyncIterMap(resolveReference(req.mysqlx)(req.account)))
-		.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-		.map(asyncIterMap(get('value')))
-		.map(wrapper),
-);
+export const func: Endpoint<
+	Backends<[MemberBackend, TeamsBackend]>,
+	api.team.members.ListTeamMembers
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getTeam(req.account)(parseInt(req.params.id, 10))
+			.filter(canMemberViewPrivateTeam(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message:
+					'Member does not have permission to view the member information of a private team',
+			})
+			.filter(canMemberViewProtectedTeam(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message:
+					'Member does not have permission to view the member information of a protected team',
+			})
+			.map(getTeamMembersList)
+			.map(asyncIterMap(backend.getMember(req.account)))
+			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
+			.map(asyncIterMap(get('value')))
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<typeof getCombinedMemberBackend>, TeamsBackend]
+	>(getCombinedMemberBackend, getTeamsBackend),
+);

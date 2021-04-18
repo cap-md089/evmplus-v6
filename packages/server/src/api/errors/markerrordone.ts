@@ -29,9 +29,10 @@ import {
 	errorGenerator,
 	Errors,
 	get,
+	isRequesterRioux,
 	SessionType,
 } from 'common-lib';
-import { isRequesterRioux, PAM } from 'server-common';
+import { PAM } from 'server-common';
 import wrapper from '../../lib/wrapper';
 import { getErrors } from './geterrors';
 

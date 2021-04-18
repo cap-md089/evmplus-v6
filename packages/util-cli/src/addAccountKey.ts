@@ -21,14 +21,14 @@
 import { getSession } from '@mysql/xdevapi';
 import { SigninKeyScopeType, StoredSigninKey } from 'common-lib';
 import { generateKeyPairSync } from 'crypto';
-import { collectResults, findAndBind, getConf } from 'server-common';
+import { collectResults, conf, findAndBind } from 'server-common';
 
 process.on('unhandledRejection', up => {
 	throw up;
 });
 
 (async () => {
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 
 	if (process.argv.length < 4) {
 		throw new Error('Command requires an account ID and a signature ID name');
@@ -38,13 +38,13 @@ process.on('unhandledRejection', up => {
 	const signatureIDName = process.argv[3];
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
-	const schema = session.getSchema(conf.DB_SCHEMA);
+	const schema = session.getSchema(config.DB_SCHEMA);
 
 	const collection = schema.getCollection<StoredSigninKey>('SigninKeys');
 

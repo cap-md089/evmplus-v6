@@ -17,10 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
-import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	AccountObject,
 	always,
 	api,
 	AsyncEither,
@@ -33,7 +30,22 @@ import {
 	Member,
 	RegistryValues,
 } from 'common-lib';
-import { CAP, getRegistry, PAM, resolveReference, sendEmail } from 'server-common';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EmailBackend,
+	EmailSetup,
+	getCombinedMemberBackend,
+	getEmailBackend,
+	getRegistryBackend,
+	MemberBackend,
+	PAM,
+	RegistryBackend,
+	SUPPORT_BCC_ADDRESS,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../../..';
 import wrapper from '../../../../lib/wrapper';
 
 const hasEmail = (email: string) => (member: CAPMemberObject) =>
@@ -50,10 +62,11 @@ const hasEmail = (email: string) => (member: CAPMemberObject) =>
 		(member.contact.EMAIL.EMERGENCY && member.contact.EMAIL.EMERGENCY.toLowerCase() === email)
 	);
 
-export const getProperEmailAndSendType = (schema: Schema) => (email: string) => (id: number) => (
-	member: CAPNHQMemberObject,
-) =>
-	CAP.getBirthday(schema)(member)
+export const getProperEmailAndSendType = (backends: Backends<[MemberBackend, PAM.PAMBackend]>) => (
+	email: string,
+) => (id: number) => (member: CAPNHQMemberObject) =>
+	backends
+		.getBirthday(member)
 		.map<[string | undefined, EmailSentType]>(birthday =>
 			+birthday > +new Date() - 13 * 365 * 24 * 3600 * 1000
 				? [
@@ -71,51 +84,48 @@ export const getProperEmailAndSendType = (schema: Schema) => (email: string) => 
 		})
 		.map<[string, EmailSentType]>(i => i as [string, EmailSentType])
 		.flatMap(([newEmail, emailType]) =>
-			PAM.addUserAccountCreationToken(schema, {
-				id,
-				type: 'CAPNHQMember',
-			}).map<[string, string, EmailSentType]>(token => [token, newEmail, emailType]),
+			backends
+				.addUserAccountCreationToken({
+					id,
+					type: 'CAPNHQMember',
+				})
+				.map<[string, string, EmailSentType]>(token => [token, newEmail, emailType]),
 		);
 
-const emailText = (host: string) => (account: AccountObject) => (
-	token: string,
-) => `You're almost there!
+const getEmail = (member: Member) => (email: string) => (token: string): EmailSetup => ({
+	url,
+}) => ({
+	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	to: [email],
+	subject: 'Event Manager Account Creation',
+	textBody: `You're almost there!
 To complete your Event Manager account creation: visit the link below:
-https://${account.id}.${host}/finishaccount/${token}`;
-
-const emailHtml = (host: string) => (account: AccountObject) => (member: Member) => (
-	token: string,
-) => `<h2>You're almost there ${getFullMemberName(member)}!</h2>
+${url}/finishaccount/${token}`,
+	htmlBody: `<h2>You're almost there ${getFullMemberName(member)}!</h2>
 <p>To complete your Eveent Manager account creation, click or visit the link below:</p>
-<p><a href="https://${account.id}.${host}/finishaccount/${token}">Confirm account creation</a></p>
-<h4>Please respond to this email if you have questions regarding your Event Manager account. If you did not request this account, simply disregard this email.</h4>`;
+<p><a href="${url}/finishaccount/${token}">Confirm account creation</a></p>
+<h4>Please respond to this email if you have questions regarding your Event Manager account. If you did not request this account, simply disregard this email.</h4>`,
+});
 
-const writeEmail = (emailFunction = sendEmail) => (
-	req: ServerAPIRequestParameter<api.member.account.capnhq.RequestNHQAccount>,
-) => (member: Member) => ([[token, email, sentType], registry]: [
-	[string, string, EmailSentType],
-	RegistryValues,
-]) =>
-	emailFunction(req.configuration)(true)(registry)('Event Manager Account Creation')(email)(
-		emailHtml(req.configuration.HOST_NAME)(req.account)(member)(token),
-	)(emailText(req.configuration.HOST_NAME)(req.account)(token)).map(always(sentType));
+const writeEmail = (backend: EmailBackend) => (member: Member) => ([
+	[token, email, sentType],
+	registry,
+]: [[string, string, EmailSentType], RegistryValues]) =>
+	backend.sendEmail(registry)(getEmail(member)(email)(token)).map(always(sentType));
 
-export const func: (
-	email?: typeof sendEmail,
-) => ServerAPIEndpoint<api.member.account.capnhq.RequestNHQAccount> = (
-	emailFunction = sendEmail,
-) => request =>
+export const func: Endpoint<
+	Backends<[RegistryBackend, EmailBackend, PAM.PAMBackend, MemberBackend]>,
+	api.member.account.capnhq.RequestNHQAccount
+> = backend => request =>
 	asyncRight(request, errorGenerator('Could not create account'))
-		.filter(req => PAM.verifyCaptcha(req.body.recaptcha, req.configuration), {
+		.filter(req => backend.verifyCaptcha(req.body.recaptcha), {
 			type: 'OTHER',
 			code: 400,
 			message: 'Could not verify reCAPTCHA',
 		})
 		.flatMap(req =>
-			resolveReference(req.mysqlx)(req.account)({
-				type: 'CAPNHQMember' as const,
-				id: req.body.capid,
-			})
+			backend
+				.getMember(req.account)({ type: 'CAPNHQMember', id: req.body.capid })
 				.filter(hasEmail(req.body.email.toLowerCase()), {
 					type: 'OTHER',
 					code: 400,
@@ -123,13 +133,17 @@ export const func: (
 				})
 				.flatMap(member =>
 					AsyncEither.All([
-						getProperEmailAndSendType(req.mysqlx)(req.body.email)(req.body.capid)(
-							member,
-						),
-						getRegistry(req.mysqlx)(req.account),
-					]).flatMap(writeEmail(emailFunction)(req)(member)),
+						getProperEmailAndSendType(backend)(req.body.email)(req.body.capid)(member),
+						backend.getRegistry(req.account),
+					]).flatMap(writeEmail(backend)(member)),
 				),
 		)
 		.map(wrapper);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[RegistryBackend, EmailBackend, MemberBackend, PAM.PAMBackend]
+	>(getRegistryBackend, getEmailBackend, getCombinedMemberBackend, PAM.getPAMBackend),
+);

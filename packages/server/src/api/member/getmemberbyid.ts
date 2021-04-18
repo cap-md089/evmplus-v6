@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -25,18 +24,24 @@ import {
 	parseStringMemberReference,
 	SessionType,
 } from 'common-lib';
-import { PAM, resolveReference } from 'server-common';
+import {
+	Backends,
+	getCombinedMemberBackend,
+	MemberBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.MemberGet> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	asyncEither(
-		parseStringMemberReference(req.params.id),
-		errorGenerator('Could not get member reference'),
-	)
-		.flatMap(resolveReference(req.mysqlx)(req.account))
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[MemberBackend]>, api.member.MemberGet> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		asyncEither(
+			parseStringMemberReference(req.params.id),
+			errorGenerator('Could not get member reference'),
+		)
+			.flatMap(backend.getMember(req.account))
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend);

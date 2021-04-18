@@ -21,7 +21,8 @@
 import * as mysql from '@mysql/xdevapi';
 import { getSession } from '@mysql/xdevapi';
 import { FromDatabase, RawRegularEventObject } from 'common-lib';
-import { getAccount, getConf, getEvent, saveItemToCollectionA } from 'server-common';
+import { conf, saveItemToCollectionA } from 'server-common';
+import { backendGenerator } from './lib/backend';
 
 export const collectLegacySqlResults = async <T>(
 	find: mysql.SqlExecute,
@@ -39,13 +40,13 @@ process.on('unhandledRejection', up => {
 });
 
 (async () => {
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
 	const FIDs = await collectLegacySqlResults<{ EID: number; FileID: string }>(
@@ -54,14 +55,16 @@ process.on('unhandledRejection', up => {
 		),
 	);
 
-	const schema = session.getSchema(conf.DB_SCHEMA);
+	const schema = session.getSchema(config.DB_SCHEMA);
 
-	const account = await getAccount(schema)('md089').fullJoin();
+	const backend = backendGenerator(schema);
+
+	const account = await backend.getAccount('md089').fullJoin();
 
 	for (const fid of FIDs) {
-		const activeEvent = (await getEvent(schema)(account)(fid.EID).fullJoin()) as FromDatabase<
-			RawRegularEventObject
-		>;
+		const activeEvent = (await backend
+			.getEvent(account)(fid.EID)
+			.fullJoin()) as FromDatabase<RawRegularEventObject>;
 
 		if (activeEvent.fileIDs.includes(fid.FileID)) continue;
 

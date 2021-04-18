@@ -17,22 +17,22 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, hasPermissionForTask, SessionType } from 'common-lib';
-import { deleteTask, getTask, PAM } from 'server-common';
+import { Backends, getCombinedTasksBackend, PAM, TaskBackend, withBackends } from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.tasks.DeleteTask> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getTask(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
-		.filter(hasPermissionForTask(req.member), {
-			type: 'OTHER',
-			code: 403,
-			message: 'Member does not have permission to delete the specified task',
-		})
-		.flatMap(deleteTask(req.mysqlx))
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.DeleteTask> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getTask(req.account)(parseInt(req.params.id, 10))
+			.filter(hasPermissionForTask(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message: 'Member does not have permission to delete the specified task',
+			})
+			.flatMap(backend.deleteTask)
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedTasksBackend);

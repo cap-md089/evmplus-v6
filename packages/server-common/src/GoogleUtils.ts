@@ -20,6 +20,7 @@
 import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
+	CLIConfiguration,
 	EventStatus,
 	isOneOfSelected,
 	Maybe,
@@ -230,7 +231,7 @@ function buildDeadlineDescription(
 export async function createGoogleCalendar(
 	accountID: string,
 	name: string,
-	config: ServerConfiguration,
+	config: CLIConfiguration,
 ) {
 	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json');
 	const jwtClient = new google.auth.JWT(

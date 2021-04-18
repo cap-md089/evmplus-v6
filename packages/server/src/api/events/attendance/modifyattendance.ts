@@ -17,13 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
-import {
-	ServerAPIEndpoint,
-	ServerAPIRequestParameter,
-	ServerEither,
-	validator,
-} from 'auto-client-api';
+import { ServerAPIRequestParameter, ServerEither, validator } from 'auto-client-api';
 import {
 	AccountObject,
 	api,
@@ -43,73 +37,94 @@ import {
 	Validator,
 } from 'common-lib';
 import {
-	ensureResolvedEvent,
-	getEvent,
-	getTeam,
-	isMemberPartOfAccount,
-	modifyEventAttendanceRecord,
+	AccountBackend,
+	AttendanceBackend,
+	Backends,
+	EventsBackend,
+	getCombinedAttendanceBackend,
+	MemberBackend,
 	PAM,
-	resolveReference,
+	TeamsBackend,
+	TimeBackend,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import { validateRequest } from '../../../lib/requestUtils';
 import wrapper from '../../../lib/wrapper';
 
+type Backend = Backends<
+	[AccountBackend, TimeBackend, MemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]
+>;
+
+export const attendanceModifyValidator = Validator.Partial(
+	(validator<NewAttendanceRecord>(Validator) as Validator<NewAttendanceRecord>).rules,
+);
+
 export const getMember = (
 	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>,
+	backend: Backend,
 ) => (body: APIEndpointBody<api.events.attendance.ModifyAttendance>) => (
 	event: RawResolvedEventObject,
 ) => (team: MaybeObj<RawTeamObject>) =>
 	hasBasicAttendanceManagementPermission(req.member)(event)(team)
 		? Maybe.orSome<ServerEither<Member>>(
 				asyncRight(req.member, errorGenerator('Could not get member information')),
-		  )(
-				Maybe.map(resolveReference(req.mysqlx)(req.account))(
-					Maybe.fromValue(body.memberID),
-				),
-		  ).filter(isAttendanceRecordInScope(req.mysqlx)(req.account), {
-				type: 'OTHER',
-				code: 403,
-				message: 'You do not have permission to modify this attendance record',
-		  })
+		  )(Maybe.map(backend.getMember(req.account))(Maybe.fromValue(body.memberID))).filter(
+				isAttendanceRecordInScope(backend)(req.account),
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'You do not have permission to modify this attendance record',
+				},
+		  )
 		: asyncRight(req.member, errorGenerator('Could not get member information'));
-
-export const attendanceModifyValidator = Validator.Partial(
-	(validator<NewAttendanceRecord>(Validator) as Validator<NewAttendanceRecord>).rules,
-);
 
 export const maybeGetTeam = (
 	event: RawResolvedEventObject,
 	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>,
+	backend: Backend,
 ) =>
 	event.teamID === null || event.teamID === undefined
 		? asyncRight(Maybe.none(), errorGenerator('Could not get team membership information'))
-		: getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some);
+		: backend.getTeam(req.account)(event.teamID).map(Maybe.some);
 
-export const isAttendanceRecordInScope = (schema: Schema) => (account: AccountObject) => (
+export const isAttendanceRecordInScope = (backend: Backend) => (account: AccountObject) => (
 	attendanceRecordOwner: MemberReference,
-) =>
-	resolveReference(schema)(account)(attendanceRecordOwner)
-		.map(isMemberPartOfAccount({})(schema))
-		.flatMap(f => f(account));
+) => backend.getMember(account)(attendanceRecordOwner).flatMap(backend.accountHasMember(account));
 
-export const func: ServerAPIEndpoint<api.events.attendance.ModifyAttendance> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(request =>
-	validateRequest(attendanceModifyValidator)(request).flatMap(req =>
-		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.flatMap(ensureResolvedEvent(req.mysqlx))
-			.flatMap(event =>
-				maybeGetTeam(event, req).flatMap(maybeTeam =>
-					getMember(req)(req.body)(event)(maybeTeam).flatMap(member =>
-						modifyEventAttendanceRecord(req.mysqlx)(req.account)(event)(member)(
-							req.body,
+export const func: Endpoint<Backend, api.events.attendance.ModifyAttendance> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(request =>
+		validateRequest(attendanceModifyValidator)(request).flatMap(req =>
+			backend
+				.getEvent(req.account)(req.params.id)
+				.flatMap(backend.ensureResolvedEvent)
+				.flatMap(event =>
+					maybeGetTeam(event, req, backend).flatMap(maybeTeam =>
+						getMember(
+							req,
+							backend,
+						)(req.body)(event)(maybeTeam).flatMap(member =>
+							backend
+								.getMemberAttendanceRecordForEvent(event)(member)
+								.flatMap(record =>
+									Maybe.isSome(record)
+										? backend.applyAttendanceRecordUpdates(req.member)(
+												record.value,
+										  )({
+												...record.value,
+												...req.body,
+										  })
+										: asyncRight(
+												void 0,
+												errorGenerator('Could not update attendance'),
+										  ),
+								),
 						),
 					),
-				),
-			)
-			.map(destroy)
-			.map(wrapper),
-	),
-);
+				)
+				.map(destroy)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedAttendanceBackend);

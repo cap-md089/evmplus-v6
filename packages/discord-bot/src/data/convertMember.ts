@@ -17,18 +17,20 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
 import { AccountObject, asyncRight, Either, errorGenerator, get, Maybe } from 'common-lib';
 import { GuildMember } from 'discord.js';
-import { resolveReference } from 'server-common';
+import { Backends, MemberBackend, RawMySQLBackend } from 'server-common';
 import getMember from './getMember';
 
-export const toCAPUnit = (schema: Schema) => (account: AccountObject) => (
-	guildMember: GuildMember,
-) =>
-	asyncRight(getMember(schema)(guildMember), errorGenerator('Could not get member information'))
+export const toCAPUnit = (backend: Backends<[MemberBackend, RawMySQLBackend]>) => (
+	account: AccountObject,
+) => (guildMember: GuildMember) =>
+	asyncRight(
+		getMember(backend.getSchema())(guildMember),
+		errorGenerator('Could not get member information'),
+	)
 		.map(Maybe.map(get('member')))
-		.map(Maybe.map(resolveReference(schema)(account)))
+		.map(Maybe.map(backend.getMember(account)))
 		.flatMap(member =>
 			member.hasValue ? member.value.map(Maybe.some) : Either.right(Maybe.none()),
 		);

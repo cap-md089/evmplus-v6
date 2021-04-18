@@ -17,17 +17,15 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	always,
+	alwaysTrue,
 	api,
 	asyncEitherIterMap,
 	AsyncIter,
 	asyncIterFilter,
 	asyncIterMap,
-	asyncLeft,
 	asyncRight,
-	Either,
+	AttendanceRecord,
 	EitherObj,
 	errorGenerator,
 	GroupTarget,
@@ -39,7 +37,6 @@ import {
 	MaybeObj,
 	Member,
 	MemberReference,
-	memoize,
 	Permissions,
 	ServerError,
 	SessionType,
@@ -47,12 +44,20 @@ import {
 	User,
 } from 'common-lib';
 import {
-	getEvent,
-	getLatestAttendanceForMember,
-	getMembers,
+	AccountBackend,
+	AttendanceBackend,
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	EventsBackend,
+	getAccountBackend,
+	getCombinedAttendanceBackend,
 	PAM,
-	RawAttendanceDBRecord,
+	TeamsBackend,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 import { expandRecord } from './basic';
 
@@ -73,48 +78,59 @@ const groupTarget = (member: User) => {
 	return GroupTarget.NONE;
 };
 
-export const func: ServerAPIEndpoint<api.member.attendance.GetForGroup> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	asyncRight(groupTarget(req.member), errorGenerator('Could not get member attendance'))
-		.filter(target => target !== GroupTarget.NONE, {
-			type: 'OTHER',
-			code: 403,
-			message: 'Member does not have permission to get the attendance for a flight or unit',
-		})
-		.map(target =>
-			asyncIterFilter<EitherObj<ServerError, Member>>(
-				target === GroupTarget.FLIGHT
-					? member => Either.isRight(member) && member.value.flight === req.member.flight
-					: Either.isRight,
-			)(getMembers(req.mysqlx)(req.account)()),
-		)
-		.map(asyncEitherIterMap(toReference))
-		.map<AsyncIter<EitherObj<ServerError, MaybeObj<RawAttendanceDBRecord>>>>(
-			asyncIterMap<
-				EitherObj<ServerError, MemberReference>,
-				EitherObj<ServerError, MaybeObj<RawAttendanceDBRecord>>
-			>(eith =>
-				eith.direction === 'right'
-					? getLatestAttendanceForMember(req.mysqlx)(req.account)(eith.value)
-					: asyncLeft<ServerError, MaybeObj<RawAttendanceDBRecord>>(eith.value),
-			),
-		)
-		.map(
-			asyncEitherIterMap<
-				MaybeObj<RawAttendanceDBRecord>,
-				MaybeObj<api.member.attendance.EventAttendanceRecord>
-			>(rec =>
-				Maybe.isSome(rec)
-					? expandRecord(always(always(memoize(getEvent(req.mysqlx)(req.account)))))(req)(
-							rec.value,
-					  )
-							.map(Maybe.some)
-							.cata(Maybe.none, identity)
-					: Maybe.none(),
-			),
-		)
-		.map(wrapper),
-);
+export const func: Endpoint<
+	Backends<
+		[AccountBackend, CAP.CAPMemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]
+	>,
+	api.member.attendance.GetForGroup
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		asyncRight(groupTarget(req.member), errorGenerator('Could not get member attendance'))
+			.filter(target => target !== GroupTarget.NONE, {
+				type: 'OTHER',
+				code: 403,
+				message:
+					'Member does not have permission to get the attendance for a flight or unit',
+			})
+			.flatMap(target =>
+				backend
+					.getMembers(backend)(req.account)()
+					.map(
+						asyncIterFilter<Member>(
+							target === GroupTarget.FLIGHT
+								? member => member.flight === req.member.flight
+								: alwaysTrue,
+						),
+					),
+			)
+			.map(asyncIterMap(toReference))
+			.map<AsyncIter<EitherObj<ServerError, MaybeObj<AttendanceRecord>>>>(
+				asyncIterMap<MemberReference, EitherObj<ServerError, MaybeObj<AttendanceRecord>>>(
+					backend.getLatestAttendanceForMember(req.account),
+				),
+			)
+			.map(
+				asyncEitherIterMap<
+					MaybeObj<AttendanceRecord>,
+					MaybeObj<api.member.attendance.EventAttendanceRecord>
+				>(rec =>
+					Maybe.isSome(rec)
+						? expandRecord(backend)(rec.value)
+								.map(Maybe.some)
+								.cata(Maybe.none, identity)
+						: Maybe.none(),
+				),
+			)
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[
+			AccountBackend,
+			Backends<[CAP.CAPMemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]>,
+		]
+	>(getAccountBackend, getCombinedAttendanceBackend),
+);

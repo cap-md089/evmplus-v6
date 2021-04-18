@@ -55,15 +55,17 @@ export const PASSWORD_MIN_AGE = 7 * 24 * 60 * 60 * 1000;
 export const PASSWORD_NEW_ALGORITHM: AlgorithmType = 'pbkdf2';
 export const PASSWORD_RESET_TOKEN_EXPIRE_TIME = 24 * 60 * 60 * 1000;
 
-const algorithms: {
-	[key: string]: (
+type Algorithms<T extends AlgorithmType = AlgorithmType> = {
+	[K in T]: (
 		password: string,
 		salt: string,
 		iterationCount: number,
 		length: number,
-		algorithm: string,
+		hashingAlgorithm: string,
 	) => Promise<Buffer>;
-} = {
+};
+
+const algorithms: Algorithms = {
 	pbkdf2: promisedPbkdf2,
 };
 
@@ -317,10 +319,7 @@ export const validatePasswordResetToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.flatMap(collection =>
 			asyncRight(
@@ -348,10 +347,7 @@ export const removePasswordValidationToken = (
 		errorGenerator('Could not validate password reset token'),
 	)
 		.tap(collection =>
-			collection
-				.remove('expires < :expires')
-				.bind('expires', Date.now())
-				.execute(),
+			collection.remove('expires < :expires').bind('expires', Date.now()).execute(),
 		)
 		.map(collection =>
 			collection

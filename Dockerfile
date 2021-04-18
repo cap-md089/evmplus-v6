@@ -43,6 +43,8 @@ FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
 
+RUN apk add snap && snap install code-insiders --classic
+
 ENV NODE_ENV=development
 
 CMD yarn run debug

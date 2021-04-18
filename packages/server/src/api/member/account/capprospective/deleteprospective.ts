@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -27,30 +26,43 @@ import {
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { CAP, PAM, resolveReference } from 'server-common';
+import {
+	Backends,
+	CAP,
+	getCombinedMemberBackend,
+	MemberBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../../..';
 import wrapper from '../../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.account.capprospective.DeleteProspectiveAccount> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'ProspectiveMemberManagement',
-		Permissions.ProspectiveMemberManagement.FULL,
-	)(req =>
-		asyncEither(
-			parseStringMemberReference(req.params.account),
-			errorGenerator('Could not parse member reference'),
-		)
-			.filter(({ type }) => type === 'CAPProspectiveMember', {
-				type: 'OTHER',
-				code: 400,
-				message: 'Cannot delete a member other than a prospective member',
-			})
-			.map(ref => ref as CAPProspectiveMemberReference)
-			.flatMap(resolveReference(req.mysqlx)(req.account))
-			.flatMap(CAP.deleteProspectiveMember(req.mysqlx))
-			.map(wrapper),
-	),
-);
+export const func: Endpoint<
+	Backends<[MemberBackend, CAP.CAPMemberBackend]>,
+	api.member.account.capprospective.DeleteProspectiveAccount
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'ProspectiveMemberManagement',
+			Permissions.ProspectiveMemberManagement.FULL,
+		)(req =>
+			asyncEither(
+				parseStringMemberReference(req.params.account),
+				errorGenerator('Could not parse member reference'),
+			)
+				.filter(
+					(member): member is CAPProspectiveMemberReference =>
+						member.type === 'CAPProspectiveMember',
+					{
+						type: 'OTHER',
+						code: 400,
+						message: 'Cannot delete a member other than a prospective member',
+					},
+				)
+				.flatMap(backend.getMember(req.account))
+				.flatMap(backend.deleteProspectiveMember)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend);

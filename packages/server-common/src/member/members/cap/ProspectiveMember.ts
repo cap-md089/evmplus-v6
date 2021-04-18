@@ -17,61 +17,88 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
+import { Collection, CollectionFind, Schema } from '@mysql/xdevapi';
+import { ServerEither } from 'auto-client-api';
 import {
 	AccountObject,
 	AccountType,
 	addOne,
+	AllAudits,
+	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
 	asyncIterMap,
+	asyncIterReduce,
 	asyncLeft,
 	asyncRight,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
 	CAPNHQMemberObject,
+	CAPNHQMemberReference,
 	CAPProspectiveMemberObject,
 	CAPProspectiveMemberReference,
+	destroy,
+	DiscordAccount,
 	Either,
 	EitherObj,
 	errorGenerator,
+	EventType,
+	FromDatabase,
 	get,
+	getFullMemberName,
+	getMemberEmail,
 	getMemberName,
+	getMemberPhone,
 	getUserID,
+	isPartOfTeam,
 	isRegularCAPAccountObject,
+	Maybe,
 	NewCAPProspectiveMember,
+	NotificationCause,
+	NotificationCauseType,
+	NotificationData,
+	NotificationMemberCause,
+	NotificationMemberTarget,
+	NotificationTarget,
+	NotificationTargetType,
+	PointOfContactType,
+	RawAttendanceDBRecord,
 	RawCAPEventAccountObject,
 	RawCAPProspectiveMemberObject,
 	RawCAPSquadronAccountObject,
-	RawTeamObject,
+	RawEventObject,
+	RawFileObject,
+	RawNotificationObject,
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	SignInLogData,
+	StoredMemberPermissions,
+	StoredMFASecret,
 	StoredProspectiveMemberObject,
 	stripProp,
-	yieldObjAsync,
-	CAPNHQMemberReference,
-	always,
-	destroy,
-	asyncIterReduce,
-	areMembersTheSame,
+	TableNames,
+	TaskObject,
 	toReference,
-	isPartOfTeam,
+	UserAccountInformation,
+	yieldObjAsync,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
-import { CAP } from '..';
-import { AccountGetter } from '../../../Account';
+import { AccountBackend } from '../../..';
+import { Backends } from '../../../backends';
+import { MemberBackend } from '../../../Members';
 import {
 	addToCollection,
 	collectResults,
 	deleteFromCollectionA,
-	findAndBindC,
-	addItemToCollection,
-	generateResults,
 	findAndBind,
+	findAndBindC,
+	generateResults,
+	RawMySQLBackend,
 } from '../../../MySQLUtil';
 import { getRegistry } from '../../../Registry';
-import { getNameForCAPNHQMember } from './NHQMember';
+import { getEmptyTeamsBackend, TeamsBackend } from '../../../Team';
+import { getNameForCAPNHQMember, getNHQMember } from './NHQMember';
 
 const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject) => (
 	reference: CAPProspectiveMemberReference,
@@ -96,8 +123,8 @@ const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject)
 		.map(obj => stripProp('_id')(obj) as StoredProspectiveMemberObject);
 
 export const getProspectiveMembersForAccount = (schema: Schema) => (
-	account: RawCAPSquadronAccountObject,
-) => (teamObjects: RawTeamObject[]) =>
+	backend: Backends<[TeamsBackend]>,
+) => (account: RawCAPSquadronAccountObject) =>
 	AsyncEither.All([
 		getRegistry(schema)(account),
 		asyncRight(
@@ -123,7 +150,8 @@ export const getProspectiveMembersForAccount = (schema: Schema) => (
 			),
 			errorGenerator('Could not load prospective members for account'),
 		),
-	]).map(([registry, members, orgExtraInfo]) =>
+		backend.getTeams(account),
+	]).map(([registry, members, orgExtraInfo, teamObjects]) =>
 		members.map(member => {
 			const memberID = toReference(member);
 			const finder = areMembersTheSame(member);
@@ -171,17 +199,17 @@ export const getProspectiveMembersForAccount = (schema: Schema) => (
 		}),
 	);
 
-export const expandProspectiveMember = (schema: Schema) => (
+export const expandProspectiveMember = (schema: Schema) => (backends: Backends<[TeamsBackend]>) => (
 	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>,
-) => (teamObjects?: RawTeamObject[]) => (info: RawCAPProspectiveMemberObject) =>
+) => (info: RawCAPProspectiveMemberObject) =>
 	getRegistry(schema)(account).flatMap(registry =>
 		asyncRight(info.id, errorGenerator('Could not get member information'))
 			.flatMap(id =>
 				AsyncEither.All([
-					loadExtraCAPMemberInformation(schema)(account)({
+					loadExtraCAPMemberInformation(schema)(backends)(account)({
 						id,
 						type: 'CAPProspectiveMember',
-					})(teamObjects),
+					}),
 				]),
 			)
 			.map<CAPProspectiveMemberObject>(([extraInformation]) => ({
@@ -214,8 +242,8 @@ export const expandProspectiveMember = (schema: Schema) => (
 			})),
 	);
 
-export const getProspectiveMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[],
+export const getProspectiveMember = (schema: Schema) => (backends: Backends<[TeamsBackend]>) => (
+	account: AccountObject,
 ) => (
 	prospectiveID: string,
 ): AsyncEither<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject> =>
@@ -228,16 +256,16 @@ export const getProspectiveMember = (schema: Schema) => (account: AccountObject)
 								type: 'CAPProspectiveMember',
 								id,
 							}),
-							loadExtraCAPMemberInformation(schema)(account)({
+							loadExtraCAPMemberInformation(schema)(backends)(account)({
 								id,
 								type: 'CAPProspectiveMember',
-							})(teamObjects),
+							}),
 						]),
 					)
 					.flatMap<CAPProspectiveMemberObject | CAPNHQMemberObject>(
 						([info, extraInformation]) =>
 							info.hasNHQReference
-								? CAP.resolveCAPReference(schema)(account)(info.nhqReference)
+								? getNHQMember(schema)(backends)(account)(info.nhqReference.id)
 								: asyncRight(
 										{
 											absenteeInformation: extraInformation.absentee,
@@ -362,15 +390,20 @@ export const createCAPProspectiveMember = (schema: Schema) => (
 					schema.getCollection<RawCAPProspectiveMemberObject>('ProspectiveMembers'),
 				),
 			)
-			.flatMap(expandProspectiveMember(schema)(account)([])),
+			.flatMap(
+				expandProspectiveMember(schema)({
+					...getEmptyTeamsBackend(),
+					getTeams: () => asyncRight([], errorGenerator('wut?')),
+				})(account),
+			),
 	);
 
-export const getProspectiveMemberAccountsFunc = (accountGetter: AccountGetter) => (
-	schema: Schema,
-) => (member: CAPProspectiveMemberObject): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+export const getProspectiveMemberAccounts = (backend: Backends<[AccountBackend]>) => (
+	member: CAPProspectiveMemberObject,
+): AsyncIter<EitherObj<ServerError, AccountObject>> =>
 	asyncIterMap<EitherObj<ServerError, AccountObject>, EitherObj<ServerError, AccountObject>>(
 		Either.map(stripProp('_id') as (obj: AccountObject) => AccountObject),
-	)(yieldObjAsync(accountGetter.byId(schema)(member.accountID)));
+	)(yieldObjAsync(backend.getAccount(member.accountID)));
 
 export const deleteProspectiveMember = (schema: Schema) => (member: CAPProspectiveMemberObject) =>
 	asyncRight(
@@ -378,25 +411,230 @@ export const deleteProspectiveMember = (schema: Schema) => (member: CAPProspecti
 		errorGenerator('Could not delete prospective member'),
 	).flatMap(deleteFromCollectionA(member));
 
-export const upgradeProspectiveMemberToCAPNHQ = (schema: Schema) => (
-	member: CAPProspectiveMemberObject,
-) => (nhqReference: CAPNHQMemberReference) =>
-	asyncRight(
-		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
-		errorGenerator('Could not delete prospective member'),
-	)
-		.flatMap(collection =>
-			deleteFromCollectionA(member as StoredProspectiveMemberObject)(collection).map(
-				always(collection),
+const getAllRecords = <T>(
+	collection: Collection<FromDatabase<T>>,
+): CollectionFind<FromDatabase<T>> => collection.find('true');
+
+const updateCollection = <T>(
+	recordUpdater: (
+		prev: T,
+		member: CAPNHQMemberObject,
+		prevMember: CAPProspectiveMemberReference,
+	) => T,
+	generateFind: (
+		collection: Collection<FromDatabase<T>>,
+		prevMember: CAPProspectiveMemberReference,
+	) => CollectionFind<FromDatabase<T>> = getAllRecords,
+) => (prevMember: CAPProspectiveMemberReference, member: CAPNHQMemberObject) => (
+	collection: Collection<FromDatabase<T>>,
+) => {
+	const generator = generateResults(generateFind(collection, prevMember));
+
+	return asyncRight(
+		(async () => {
+			const promises = [];
+
+			for await (const record of generator) {
+				const updatedRecord = recordUpdater(record as T, member, prevMember);
+
+				promises.push(collection.replaceOne(record._id!, updatedRecord as FromDatabase<T>));
+			}
+
+			await Promise.all(promises);
+		})(),
+		errorGenerator('Could not upgrade member information'),
+	);
+};
+
+const attendanceUpdater = updateCollection<RawAttendanceDBRecord>(
+	(record, member) => ({
+		...record,
+		memberID: toReference(member),
+		memberName: getFullMemberName(member),
+	}),
+	(collection, memberID) => findAndBind(collection, { memberID }),
+);
+
+const auditsUpdater = updateCollection<AllAudits>(
+	(record, member) => ({
+		...record,
+		actor: toReference(member),
+		actorName: getFullMemberName(member),
+	}),
+	(collection, actor) => findAndBind(collection, { actor }),
+);
+
+const discordAccountUpdater = updateCollection<DiscordAccount>(
+	(record, member) => ({
+		...record,
+		member: toReference(member),
+	}),
+	(collection, member) => findAndBind(collection, { member }),
+);
+
+const eventsUpdater = updateCollection<RawEventObject>((record, member, prevMember) =>
+	record.type === EventType.LINKED
+		? {
+				...record,
+				linkAuthor: areMembersTheSame(prevMember)(record.linkAuthor)
+					? toReference(member)
+					: record.linkAuthor,
+		  }
+		: {
+				...record,
+				author: areMembersTheSame(prevMember)(record.author)
+					? toReference(member)
+					: record.author,
+				pointsOfContact: record.pointsOfContact.map(poc =>
+					poc.type === PointOfContactType.INTERNAL &&
+					areMembersTheSame(prevMember)(poc.memberReference)
+						? {
+								...poc,
+								memberReference: toReference(member),
+								name: getFullMemberName(member),
+								email: Maybe.orSome('')(getMemberEmail(member.contact)),
+								phone: Maybe.orSome('')(getMemberPhone(member.contact)),
+						  }
+						: poc,
+				),
+		  },
+);
+
+const extraAccountMembershipUpdater = updateCollection<CAPExtraMemberInformation>(
+	(record, member) => ({
+		...record,
+		member: toReference(member),
+	}),
+	(collection, member) => findAndBind(collection, { member }),
+);
+
+const filesUpdater = updateCollection<RawFileObject>(
+	(record, member) => ({
+		...record,
+		owner: toReference(member),
+	}),
+	(collection, owner) => findAndBind(collection, { owner }),
+);
+
+const mfaTokensUpdater = updateCollection<StoredMFASecret>(
+	(record, member) => ({
+		...record,
+		member: toReference(member),
+	}),
+	(collection, member) => findAndBind(collection, { member }),
+);
+
+const receivedNotificationsUpdater = updateCollection<
+	RawNotificationObject<NotificationCause, NotificationMemberTarget, NotificationData>
+>(
+	(record, member) => ({
+		...record,
+		target: {
+			type: NotificationTargetType.MEMBER,
+			to: toReference(member),
+		},
+	}),
+	(collection, to) =>
+		findAndBind(collection, { target: { type: NotificationTargetType.MEMBER, to } }),
+);
+
+const sentNotificationUpdater = updateCollection<
+	RawNotificationObject<NotificationMemberCause, NotificationTarget, NotificationData>
+>(
+	(record, member) => ({
+		...record,
+		cause: {
+			from: toReference(member),
+			fromName: getFullMemberName(member),
+			type: NotificationCauseType.MEMBER,
+		},
+	}),
+	(collection, from) =>
+		findAndBind(collection, {
+			cause: { from, type: NotificationCauseType.MEMBER } as NotificationMemberCause,
+		}),
+);
+
+const signInLogUpdater = updateCollection<SignInLogData>(
+	(record, member) => ({
+		...record,
+		memberRef: toReference(member),
+	}),
+	(collection, memberRef) => findAndBind(collection, { memberRef }),
+);
+
+const tasksSentUpdater = updateCollection<TaskObject>(
+	(record, member) => ({
+		...record,
+		tasker: toReference(member),
+	}),
+	(collection, tasker) => findAndBind(collection, { tasker }),
+);
+
+const tasksReceivedUpdater = updateCollection<TaskObject>((record, member, prevMember) => ({
+	...record,
+	results: record.results.map(result =>
+		areMembersTheSame(prevMember)(result.tasked)
+			? { ...result, tasked: toReference(member) }
+			: result,
+	),
+}));
+
+const userAccountInfoUpdater = updateCollection<UserAccountInformation>(
+	(record, member) => ({
+		...record,
+		member: toReference(member),
+	}),
+	(collection, member) => findAndBind(collection, { member }),
+);
+
+const userPermissionsUpdater = updateCollection<StoredMemberPermissions>(
+	(record, member) => ({
+		...record,
+		member: toReference(member),
+	}),
+	(collection, member) => findAndBind(collection, { member }),
+);
+
+const updateFunctions = [
+	[attendanceUpdater, 'Attendance'],
+	[auditsUpdater, 'Audits'],
+	[discordAccountUpdater, 'DiscordAccounts'],
+	[eventsUpdater, 'Events'],
+	[extraAccountMembershipUpdater, 'ExtraAccountMembership'],
+	[filesUpdater, 'Files'],
+	[mfaTokensUpdater, 'MFATokens'],
+	[receivedNotificationsUpdater, 'Notifications'],
+	[sentNotificationUpdater, 'Notifications'],
+	[signInLogUpdater, 'SignInLog'],
+	[tasksSentUpdater, 'Tasks'],
+	[tasksReceivedUpdater, 'Tasks'],
+	[userAccountInfoUpdater, 'UserAccountInfo'],
+	[userPermissionsUpdater, 'UserPermissions'],
+] as [
+	(
+		prevMember: CAPProspectiveMemberObject,
+		member: CAPNHQMemberObject,
+	) => (collection: Collection) => ServerEither<void>,
+	TableNames,
+][];
+
+export const upgradeProspectiveMemberToCAPNHQ = (
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
+) => (member: CAPProspectiveMemberObject) => (nhqReference: CAPNHQMemberReference) =>
+	AsyncEither.All([
+		asyncRight(
+			backend.getCollection('ProspectiveMembers'),
+			errorGenerator('Could not delete prospective member'),
+		).flatMap(deleteFromCollectionA(member)),
+		backend
+			.getAccount(member.accountID)
+			.flatMap(account => backend.getMember(account)(nhqReference))
+			.flatMap(newMember =>
+				AsyncEither.All(
+					updateFunctions.map(([func, tableName]) =>
+						func(member, newMember)(backend.getCollection(tableName)),
+					),
+				),
 			),
-		)
-		.flatMap(
-			addItemToCollection({
-				hasNHQReference: true,
-				accountID: member.accountID,
-				id: member.id,
-				nhqReference,
-				type: 'CAPProspectiveMember',
-			} as StoredProspectiveMemberObject),
-		)
-		.map(destroy);
+	]).map(destroy);

@@ -17,12 +17,14 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api } from 'common-lib';
-import { getRegistry } from 'server-common';
+import { Backends, getRegistryBackend, RegistryBackend, withBackends } from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.registry.GetRegistry> = req =>
-	getRegistry(req.mysqlx)(req.account).map(wrapper);
+export const func: Endpoint<
+	Backends<[RegistryBackend]>,
+	api.registry.GetRegistry
+> = backend => req => backend.getRegistry(req.account).map(wrapper);
 
-export default func;
+export default withBackends(func, getRegistryBackend);

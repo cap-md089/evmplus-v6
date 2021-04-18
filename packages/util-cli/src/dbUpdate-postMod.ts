@@ -37,9 +37,10 @@ import {
 	RawRegularEventObject,
 	RawTeamObject,
 	StoredMemberPermissions,
+	RawAttendanceDBRecord,
 } from 'common-lib';
 import 'dotenv/config';
-import { generateResults, getConf, RawAttendanceDBRecord } from 'server-common';
+import { conf, generateResults } from 'server-common';
 
 const EventStatusMap = {
 	0: 'Draft',
@@ -123,16 +124,16 @@ process.on('unhandledRejection', up => {
 });
 
 (async () => {
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
-	const schema = session.getSchema(conf.DB_SCHEMA);
+	const schema = session.getSchema(config.DB_SCHEMA);
 
 	// @ts-ignore
 	const upgradeTable = async <T>(

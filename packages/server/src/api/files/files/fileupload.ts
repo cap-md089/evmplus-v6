@@ -34,11 +34,12 @@ import {
 import * as debug from 'debug';
 import {
 	accountRequestTransformer,
-	getFileObject,
-	getFilePath,
+	combineBackends,
+	FileBackend,
+	getCombinedFileBackend,
+	getCombinedPAMBackend,
 	MySQLRequest,
 	PAM,
-	uploadFile,
 } from 'server-common';
 import { v4 as uuid } from 'uuid';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
@@ -51,6 +52,11 @@ const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.M
 
 const logFunc = debug('server:api:files:files:fileupload');
 
+const pamFileBackend = combineBackends<MySQLRequest, [PAM.PAMBackend, FileBackend]>(
+	getCombinedPAMBackend,
+	getCombinedFileBackend,
+);
+
 /*
 	File data plan:
 
@@ -58,10 +64,12 @@ const logFunc = debug('server:api:files:files:fileupload');
 	2. Filename will be a UUID (there already happens to be a UUID library for tokens...)
 	3. MySQL database will store METADATA (Author, filename, etc)
 */
-export const func = () =>
+export const func = (backendGenerator = pamFileBackend) =>
 	asyncErrorHandler(async (req: MySQLRequest<{ parentid?: string }>, res) => {
 		const getParentID = (mem: MemberReference) =>
 			req.params.parentid ?? stringifyMemberReference(mem);
+
+		const backend = backendGenerator(req);
 
 		const reqEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(true))
@@ -72,13 +80,18 @@ export const func = () =>
 					'Member cannot perform the requested action with their current session. Try signing out and back in',
 			})
 			.flatMap(request =>
-				getFileObject(req.mysqlx)(request.account)(Maybe.some(request.member))(
-					getParentID(request.member),
-				).flatMap(file =>
-					getFilePath(req.mysqlx)(request.account)(Maybe.some(request.member))(file).map(
-						filePath => [request.member, request.account, file, filePath] as const,
+				backend
+					.getFileObject(request.account)(Maybe.some(request.member))(
+						getParentID(request.member),
+					)
+					.flatMap(file =>
+						backend
+							.getFilePath(Maybe.some(request.member))(file)
+							.map(
+								filePath =>
+									[request.member, request.account, file, filePath] as const,
+							),
 					),
-				),
 			)
 			.join();
 
@@ -101,7 +114,7 @@ export const func = () =>
 
 		if (
 			typeof req.headers.token !== 'string' ||
-			!(await PAM.isTokenValid(req.mysqlx, member, req.headers.token))
+			!(await backend.isTokenValid(member)(req.headers.token))
 		) {
 			res.status(401);
 			res.end();
@@ -159,7 +172,7 @@ export const func = () =>
 
 				promises.push(
 					Promise.all([
-						uploadFile(req.configuration)(uploadedFile)(file),
+						backend.uploadFile(uploadedFile)(file),
 						filesCollection.add(uploadedFile).execute(),
 					])
 						.then(async () => {

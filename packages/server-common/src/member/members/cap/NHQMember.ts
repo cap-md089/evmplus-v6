@@ -52,7 +52,8 @@ import { createWriteStream } from 'fs';
 import { DateTime } from 'luxon';
 import { join } from 'path';
 import { loadExtraCAPMemberInformation } from '.';
-import { AccountGetter } from '../../../Account';
+import { AccountBackend } from '../../..';
+import { Backends } from '../../../backends';
 import {
 	bindForArray,
 	collectResults,
@@ -61,11 +62,12 @@ import {
 	findAndBindC,
 } from '../../../MySQLUtil';
 import { ServerEither } from '../../../servertypes';
+import { TeamsBackend } from '../../../Team';
 
 export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
 	rawTeamObjects: RawTeamObject[],
-) => async (ORGIDs: number[]) => {
-	return asyncRight(
+) => (ORGIDs: number[]) =>
+	asyncRight(
 		Promise.all([
 			collectSqlResults<NHQ.NHQMember>(
 				schema
@@ -226,7 +228,6 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 			};
 		}),
 	);
-};
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 	asyncRight(
@@ -312,8 +313,8 @@ const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 		.map(results => results[0])
 		.map(stripProp('_id'));
 
-export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[],
+export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
+	account: AccountObject,
 ) => (CAPID: number) =>
 	asyncRight(CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
@@ -330,10 +331,10 @@ export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 						getORGIDsFromCAPAccount(account),
 					),
 				),
-				loadExtraCAPMemberInformation(schema)(account)({
+				loadExtraCAPMemberInformation(schema)(backend)(account)({
 					id,
 					type: 'CAPNHQMember',
-				})(teamObjects),
+				}),
 			]),
 		)
 		.map<CAPNHQMemberObject>(([info, contact, dutyPositions, extraInformation]) => ({
@@ -399,15 +400,13 @@ export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemb
 			})}`,
 	);
 
-export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema: Schema) => (
+export const getNHQMemberAccount = (backend: Backends<[AccountBackend]>) => (
 	member: CAPNHQMemberObject,
 ): AsyncIter<EitherObj<ServerError, CAPAccountObject>> =>
-	accountGetter.byOrgid(schema)(member.orgid);
+	backend.getCAPAccountsByORGID(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id)
-		.map(getProp('DOB'))
-		.map(DateTime.fromISO);
+	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
 
 export const downloadCAPWATCHFile = (
 	orgid: number,
@@ -418,8 +417,9 @@ export const downloadCAPWATCHFile = (
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth() +
-			1}-${today.getDate()}.zip`,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${
+			today.getMonth() + 1
+		}-${today.getDate()}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');

@@ -17,30 +17,34 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import type { ServerAPIEndpoint } from 'auto-client-api';
 import { api, AsyncEither, asyncLeft, asyncRight, errorGenerator, ServerError } from 'common-lib';
-import { PAM } from 'server-common';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '..';
 import wrapper from '../lib/wrapper';
 
-export const getFormToken: ServerAPIEndpoint<api.FormToken> = req =>
-	asyncRight(
-		PAM.getTokenForUser(req.mysqlx, req.session.userAccount),
-		errorGenerator('Could not get form token'),
-	).map(wrapper);
+export const getFormTokenFunc: Endpoint<
+	Backends<[PAM.PAMBackend]>,
+	api.FormToken
+> = backend => req => backend.getTokenForUser(req.session.userAccount).map(wrapper);
 
-export function tokenTransformer<T extends PAM.BasicMemberRequest>(
+export const getFormToken = withBackends(getFormTokenFunc, getCombinedPAMBackend);
+
+export const tokenTransformer = (backendGenerator = getCombinedPAMBackend) => <
+	T extends PAM.BasicMemberRequest
+>(
 	req: T,
-): AsyncEither<ServerError, T> {
-	return asyncRight(
-		PAM.isTokenValid(req.mysqlx, req.member, req.body.token),
-		errorGenerator('Could not validate token'),
-	).flatMap(valid =>
-		valid
-			? asyncRight(req, errorGenerator('Could not validate token'))
-			: asyncLeft({
-					type: 'OTHER',
-					code: 403,
-					message: 'Could not validate token',
-			  }),
-	);
-}
+): AsyncEither<ServerError, T> => {
+	const backend = backendGenerator(req);
+
+	return backend
+		.isTokenValid(req.member)(req.body.token)
+		.flatMap(valid =>
+			valid
+				? asyncRight(req, errorGenerator('Could not validate token'))
+				: asyncLeft({
+						type: 'OTHER',
+						code: 403,
+						message: 'Could not validate token',
+				  }),
+		);
+};

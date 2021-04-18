@@ -34,8 +34,7 @@ import {
 	SessionType,
 	toReference,
 } from 'common-lib';
-import { createNotification, PAM } from 'server-common';
-import { hasGlobalNotification } from 'server-common/dist/notifications';
+import { createNotification, hasGlobalNotification, PAM } from 'server-common';
 import wrapper from '../../../lib/wrapper';
 
 export const func: ServerAPIEndpoint<api.notifications.global.CreateGlobalNotification> = PAM.RequireSessionType(

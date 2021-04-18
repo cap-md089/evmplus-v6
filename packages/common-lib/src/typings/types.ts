@@ -4038,12 +4038,7 @@ export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectPro
 export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;
 export type PermissionsAudits = AuditableEvents<FromDatabase<MemberPermissions>>;
 
-export type AllAudits =
-	| EventAuditEvents
-	| AttendanceAuditEvents
-	| FileAuditEvents
-	| ProspectiveMemberAudits
-	| PermissionsAudits;
+export type AllAudits = AuditableEvents<AuditableObjects & DatabaseIdentifiable>;
 
 export interface CadetPromotionRequirements {
 	/**

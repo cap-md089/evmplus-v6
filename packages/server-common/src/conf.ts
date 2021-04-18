@@ -101,7 +101,7 @@ const throws = <T>(e: EitherObj<any, T>): T => {
 	}
 };
 
-export default async (readfile = promisify(readFile)) => {
+export const getConf = async (readfile = promisify(readFile)) => {
 	dotenv.config();
 
 	const envConfigValidator = validator<EnvServerConfiguration>(Validator);

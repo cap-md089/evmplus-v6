@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2021 Andrew Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -17,16 +17,18 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { api, Permissions, SessionType } from 'common-lib';
-import { Backends, getCombinedTasksBackend, PAM, TaskBackend, withBackends } from 'server-common';
-import { Endpoint } from '../..';
-import wrapper from '../../lib/wrapper';
+import {
+	CAPMemberBackend,
+	downloadCAPWATCHFile,
+	getCAPMemberBackend,
+	getExtraMemberInformationForCAPMember,
+	getRequestFreeCAPMemberBackend,
+} from '.';
 
-export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.CreateTask> = backend =>
-	PAM.RequireSessionType(SessionType.REGULAR)(request =>
-		PAM.checkPermissions('AssignTasks')(Permissions.AssignTasks.YES)()(request).flatMap(req =>
-			backend.createTask(req.account)(req.body).map(wrapper),
-		),
-	);
-
-export default withBackends(func, getCombinedTasksBackend);
+export {
+	CAPMemberBackend,
+	getCAPMemberBackend,
+	getRequestFreeCAPMemberBackend,
+	getExtraMemberInformationForCAPMember,
+	downloadCAPWATCHFile,
+};

@@ -12,7 +12,8 @@
 		"clean-watch": "onchange '**/*.ts' -- prettier --write {{changed}}",
 		"lint": "tslint --project .",
 		"debug": "nodemon --no-warnings --inspect=0.0.0.0:5858 --watch ../discord-bot --watch ../server-common --watch ../common-lib --watch ./ ./dist/index.js",
-		"docker-debug": "docker-compose -f ../../docker-compose.dev.yml up --build main"
+		"debug:brk": "nodemon --no-warnings --inspect-brk=0.0.0.0:5858 --watch ../discord-bot --watch ../server-common --watch ../common-lib --watch ./ ./dist/index.js",
+		"docker-debug": "cd ../.. && docker-compose -f docker-compose.dev.yml up main"
 	},
 	"license": "GPL-2.0",
 	"main": "dist/index.js",

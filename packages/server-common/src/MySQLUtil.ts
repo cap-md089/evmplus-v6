@@ -29,7 +29,9 @@ import {
 	Identifiable,
 	Maybe,
 	ParamType,
+	ServerError,
 	TableDataType,
+	TableNames,
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
@@ -193,8 +195,13 @@ type RecursivePartial<T> = {
 		: T[P];
 };
 
-export const findAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
-	find: mysql.Collection<T>,
+export const isDuplicateRecordError = (err: ServerError): boolean =>
+	err.type === 'CRASH' &&
+	(err.error as any)?.info?.msg ===
+		'Document contains a field value that is not unique but required to be';
+
+export const findAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => <U extends T>(
+	find: mysql.Collection<U>,
 ) => findAndBind(find, bind);
 
 export const findAndBind = <T>(
@@ -414,17 +421,18 @@ export const getNewID = (account: AccountObject) => (
 
 export interface RawMySQLBackend {
 	getSchema: () => mysql.Schema;
-	getCollection: <T extends string>(
+	getCollection: <T extends TableNames>(
 		tableName: T,
 	) => mysql.Collection<mysql.WithoutEmpty<TableDataType<T>>>;
 }
 
 export const getRawMySQLBackend = (req: BasicMySQLRequest): RawMySQLBackend => ({
 	getSchema: always(req.mysqlx),
-	getCollection: <T extends string>(name: T) => req.mysqlx.getCollection<TableDataType<T>>(name),
+	getCollection: <T extends TableNames>(name: T) =>
+		req.mysqlx.getCollection<TableDataType<T>>(name),
 });
 
-export const testRawMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
+export const requestlessMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
 	getSchema: always(schema),
-	getCollection: <T extends string>(name: T) => schema.getCollection<TableDataType<T>>(name),
+	getCollection: <T extends TableNames>(name: T) => schema.getCollection<TableDataType<T>>(name),
 });

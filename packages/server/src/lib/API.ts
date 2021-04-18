@@ -47,7 +47,13 @@ import {
 } from 'common-lib';
 import * as debug from 'debug';
 import * as express from 'express';
-import { accountRequestTransformer, BasicAccountRequest, PAM, ServerEither } from 'server-common';
+import {
+	accountRequestTransformer,
+	BasicAccountRequest,
+	getCombinedPAMBackend,
+	PAM,
+	ServerEither,
+} from 'server-common';
 import { tokenTransformer } from '../api/formtoken';
 import saveServerError, { Requests } from './saveServerError';
 const logFunc = debug('server:lib:api');
@@ -235,7 +241,9 @@ export const sendError = (request: Requests) => (response: express.Response) => 
 	response.json(Either.left(stripProp('type')(stripProp('error')(err))) as APIEither<any>);
 };
 
-export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, any, any>>(
+export const endpointAdderFunc = (backendGenerator = getCombinedPAMBackend) => <
+	T extends APIEndpoint<string, any, any, any, any, any, any>
+>(
 	app: express.Application | express.Router,
 ) => (
 	url: APIEndpointURL<T>,
@@ -293,10 +301,9 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 				.flatMap(addMember(memberRequirement)(request))
 				.flatMap(req =>
 					tokenRequired
-						? (tokenTransformer(req as PAM.BasicMemberRequest) as AsyncEither<
-								ServerError,
-								Requests
-						  >)
+						? (tokenTransformer(backendGenerator)(
+								req as PAM.BasicMemberRequest,
+						  ) as AsyncEither<ServerError, Requests>)
 						: Either.right(req),
 				)
 				.flatMap(useValidator ? validateBody(validator) : Either.right)
@@ -321,3 +328,5 @@ export const endpointAdder = <T extends APIEndpoint<string, any, any, any, any, 
 		},
 	);
 };
+
+export const endpointAdder = endpointAdderFunc(getCombinedPAMBackend);

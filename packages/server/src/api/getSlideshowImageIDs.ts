@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
@@ -35,11 +34,22 @@ import {
 	ServerError,
 	userHasFilePermission,
 } from 'common-lib';
-import { expandRawFileObject, findAndBindC, generateResults } from 'server-common';
+import {
+	Backends,
+	FileBackend,
+	findAndBindC,
+	generateResults,
+	getCombinedFileBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '..';
 import wrapper from '../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
-	asyncRight(req.mysqlx.getCollection<RawFileObject>('Files'), errorGenerator('Could not get '))
+export const func: Endpoint<Backends<[FileBackend]>, api.SlideshowImageIDs> = backend => req =>
+	asyncRight(
+		req.mysqlx.getCollection<RawFileObject>('Files'),
+		errorGenerator('Could not get files'),
+	)
 		.map(
 			findAndBindC<RawFileObject>({
 				forSlideshow: true,
@@ -48,9 +58,9 @@ export const func: ServerAPIEndpoint<api.SlideshowImageIDs> = req =>
 		)
 		.map(generateResults)
 		.map(asyncIterFilter(userHasFilePermission(FileUserAccessControlPermissions.READ)(null)))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(Maybe.none())))
+		.map(asyncIterMap(backend.expandRawFileObject(Maybe.none())))
 		.map(asyncIterFilter<EitherObj<ServerError, FileObject>, Right<FileObject>>(Either.isRight))
 		.map(asyncIterMap(get('value')))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedFileBackend);

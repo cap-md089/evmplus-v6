@@ -17,12 +17,17 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, SessionType, toReference } from 'common-lib';
-import { PAM } from 'server-common';
+import { api, SessionType } from 'common-lib';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
+import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.session.StartMFASetup> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req => PAM.startMFASetup(req.mysqlx)(toReference(req.member)));
+export const func: Endpoint<
+	Backends<[PAM.PAMBackend]>,
+	api.member.session.StartMFASetup
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend.startMFASetup(req.member).map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend);

@@ -27,19 +27,33 @@ import {
 	User,
 	userHasFilePermission,
 } from 'common-lib';
-import { accountRequestTransformer, downloadFileObject, getFileObject, PAM } from 'server-common';
+import {
+	accountRequestTransformer,
+	combineBackends,
+	FileBackend,
+	getCombinedFileBackend,
+	getCombinedPAMBackend,
+	PAM,
+} from 'server-common';
 import asyncErrorHandler from '../../../lib/asyncErrorHandler';
 
 const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
-export const func = () =>
+const pamFileBackend = combineBackends<BasicMySQLRequest, [PAM.PAMBackend, FileBackend]>(
+	getCombinedPAMBackend,
+	getCombinedFileBackend,
+);
+
+export const func = (getBackend = pamFileBackend) =>
 	asyncErrorHandler(async (req: BasicMySQLRequest<{ fileid: string }>, res) => {
+		const backend = getBackend(req);
+
 		const fileEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(false))
 			.flatMap(request =>
-				getFileObject(req.mysqlx)(request.account)(request.member)(
-					request.params.fileid,
-				).map<[RawFileObject, MaybeObj<User>]>(f => [f, request.member]),
+				backend
+					.getFileObject(request.account)(request.member)(request.params.fileid)
+					.map<[RawFileObject, MaybeObj<User>]>(f => [f, request.member]),
 			)
 			.join();
 
@@ -74,7 +88,7 @@ export const func = () =>
 
 		await req.mysqlxSession.close();
 
-		await downloadFileObject(req.configuration)(file)(res);
+		await backend.downloadFileObject(file)(res);
 	});
 
 export default func();

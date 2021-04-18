@@ -17,40 +17,24 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import {
-	always,
-	api,
-	asyncRight,
-	destroy,
-	Either,
-	errorGenerator,
-	PasswordSetResult,
-	SessionType,
-} from 'common-lib';
-import { PAM } from 'server-common';
+import { always, api, Either, PasswordSetResult, SessionType } from 'common-lib';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.PasswordReset> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-	SessionType.PASSWORD_RESET,
-)(request =>
-	asyncRight(request, errorGenerator('Could not reset password for user'))
-		.flatMap(req =>
-			PAM.addPasswordForUser(
-				req.mysqlx,
-				req.session.userAccount.username,
-				req.body.password,
-			).map(destroy),
-		)
-		.flatMap<PasswordSetResult>(() =>
-			request.session.type === SessionType.PASSWORD_RESET
-				? PAM.updateSession(request.mysqlx, request.session).map(
-						always(PasswordSetResult.OK),
-				  )
-				: Either.right(PasswordSetResult.OK),
-		)
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.PasswordReset> = backend =>
+	PAM.RequireSessionType(
+		SessionType.REGULAR,
+		SessionType.PASSWORD_RESET,
+	)(req =>
+		backend
+			.addPasswordForUser([req.session.userAccount.username, req.body.password])
+			.flatMap<PasswordSetResult>(() =>
+				req.session.type === SessionType.PASSWORD_RESET
+					? backend.updateSession(req.session).map(always(PasswordSetResult.OK))
+					: Either.right(PasswordSetResult.OK),
+			)
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend);

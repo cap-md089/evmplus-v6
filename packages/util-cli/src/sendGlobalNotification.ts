@@ -29,14 +29,13 @@ import {
 	toReference,
 } from 'common-lib';
 import {
+	conf,
 	createNotification,
 	generateResults,
-	getAccount,
-	getConf,
-	resolveReference,
+	getCurrentGlobalNotification,
 	saveNotification,
 } from 'server-common';
-import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
+import { backendGenerator } from './lib/backend';
 
 /**
  * This script is meant to be run from the command line, and provides a way
@@ -46,7 +45,7 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
  */
 
 (async () => {
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 
 	const argError = () => {
 		console.error('Please provide a source, account ID, expiration date, and message');
@@ -95,6 +94,18 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 	).getTime();
 	const message = check[8];
 
+	// Establish a connection
+	const session = await getSession({
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
+	});
+
+	const emSchema = session.getSchema(config.DB_SCHEMA);
+
+	const backend = backendGenerator(emSchema);
+
 	const alertAccount = async (account: AccountObject, db: Schema) => {
 		try {
 			// Allow overriding the accounts notification
@@ -125,7 +136,7 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 				}).fullJoin();
 			} else {
 				// Get the member sending the notification
-				const member = await resolveReference(db)(account)(from.from!).fullJoin();
+				const member = await backend.getMember(account)(from.from!).fullJoin();
 
 				await createNotification(db)(account)({
 					cause: {
@@ -149,16 +160,6 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 		}
 	};
 
-	// Establish a connection
-	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
-	});
-
-	const emSchema = session.getSchema(conf.DB_SCHEMA);
-
 	if (accountID.toLowerCase() === 'all') {
 		const accountsCollection = emSchema.getCollection<AccountObject>('Accounts');
 		const accounts = generateResults(accountsCollection.find('true'));
@@ -167,7 +168,7 @@ import { getCurrentGlobalNotification } from 'server-common/dist/notifications';
 			await alertAccount(account, emSchema);
 		}
 	} else {
-		const account = await getAccount(emSchema)(accountID).fullJoin();
+		const account = await backend.getAccount(accountID).fullJoin();
 
 		await alertAccount(account, emSchema);
 	}

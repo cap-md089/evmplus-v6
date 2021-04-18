@@ -19,8 +19,8 @@
 
 import { Schema } from '@mysql/xdevapi';
 import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator, Errors, SessionType } from 'common-lib';
-import { generateResults, isRequesterRioux, PAM } from 'server-common';
+import { api, asyncRight, errorGenerator, Errors, isRequesterRioux, SessionType } from 'common-lib';
+import { generateResults, PAM } from 'server-common';
 import wrapper from '../../lib/wrapper';
 
 export const getErrors = (schema: Schema) =>

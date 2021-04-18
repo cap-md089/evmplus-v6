@@ -21,51 +21,66 @@ import type { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	AsyncEither,
+	AsyncIter,
 	asyncLeft,
 	asyncRight,
+	CAPAccountObject,
 	CAPExtraMemberInformation,
 	CAPMember,
 	CAPMemberObject,
 	CAPMemberReference,
-	collectGeneratorAsync,
+	CAPNHQMemberObject,
+	CAPNHQMemberReference,
+	CAPProspectiveMemberObject,
 	Either,
 	EitherObj,
 	errorGenerator,
+	get,
+	getORGIDsFromCAPAccount,
 	isPartOfTeam,
 	iterFind,
+	Maybe,
+	MaybeObj,
 	MemberForReference,
-	RawTeamObject,
+	memoize,
+	NewCAPProspectiveMember,
+	RawCAPProspectiveMemberObject,
+	RawCAPSquadronAccountObject,
 	ServerError,
 	ShortDutyPosition,
+	Some,
+	stringifyMemberReference,
 	stripProp,
 	TemporaryDutyPosition,
-	asyncIterFilter,
-	asyncIterMap,
-	get,
 } from 'common-lib';
-import {
-	getAccount,
-	getTeamObjects,
-	AccountGetter,
-	getCAPAccountsForORGID,
-} from '../../../Account';
-import { collectResults, findAndBind } from '../../../MySQLUtil';
+import { DateTime } from 'luxon';
+import { AccountBackend } from '../../..';
+import { BasicAccountRequest } from '../../../Account';
+import { Backends, notImplementedError, notImplementedException } from '../../../backends';
+import { MemberBackend } from '../../../Members';
+import { collectResults, findAndBind, RawMySQLBackend } from '../../../MySQLUtil';
 import { ServerEither } from '../../../servertypes';
+import { TeamsBackend } from '../../../Team';
 import {
+	getBirthday,
+	getCAPNHQMembersForORGIDs,
 	getExtraInformationFromCAPNHQMember,
 	getNameForCAPNHQMember,
-	getNHQHomeAccountsFunc,
 	getNHQMember,
+	getNHQMemberAccount,
 } from './NHQMember';
 import {
+	createCAPProspectiveMember,
+	deleteProspectiveMember,
 	getExtraInformationFromProspectiveMember,
 	getNameForCAPProspectiveMember,
 	getProspectiveMember,
-	getProspectiveMemberAccountsFunc,
+	getProspectiveMemberAccounts,
+	getProspectiveMembersForAccount,
+	upgradeProspectiveMemberToCAPNHQ,
 } from './ProspectiveMember';
 
-export * from './NHQMember';
-export * from './ProspectiveMember';
+export { downloadCAPWATCHFile } from './NHQMember';
 
 const invalidTypeLeft = asyncLeft<ServerError, any>({
 	type: 'OTHER',
@@ -93,15 +108,15 @@ export const getExtraMemberInformationForCAPMember = (account: AccountObject) =>
 				code: 400,
 		  });
 
-export const resolveCAPReference = (schema: Schema) => (account: AccountObject) => <
-	T extends CAPMemberReference = CAPMemberReference
->(
+export const resolveCAPReference = (schema: Schema) => (backends: Backends<[TeamsBackend]>) => (
+	account: AccountObject,
+) => <T extends CAPMemberReference = CAPMemberReference>(
 	reference: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	reference.type === 'CAPNHQMember' && typeof reference.id === 'number'
-		? getNHQMember(schema)(account)()(reference.id)
+		? getNHQMember(schema)(backends)(account)(reference.id)
 		: reference.type === 'CAPProspectiveMember' && typeof reference.id === 'string'
-		? getProspectiveMember(schema)(account)()(reference.id)
+		? getProspectiveMember(schema)(backends)(account)(reference.id)
 		: invalidTypeLeft;
 
 export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => (
@@ -113,20 +128,12 @@ export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => 
 		? getNameForCAPProspectiveMember(schema)(account)(reference)
 		: invalidTypeLeft;
 
-export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema,
-) => (member: CAPMember) =>
+export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
+	member: CAPMember,
+): AsyncIter<EitherObj<ServerError, AccountObject>> =>
 	member.type === 'CAPNHQMember'
-		? getNHQHomeAccountsFunc({
-				byId: getAccount,
-				byOrgid: getCAPAccountsForORGID,
-				...accountGetter,
-		  })(schema)(member)
-		: getProspectiveMemberAccountsFunc({
-				byId: getAccount,
-				byOrgid: getCAPAccountsForORGID,
-				...accountGetter,
-		  })(schema)(member);
+		? getNHQMemberAccount(backend)(member)
+		: getProspectiveMemberAccounts(backend)(member);
 
 // -------------------------------------------------
 //
@@ -179,15 +186,11 @@ export const removeTemporaryDutyPosition = (duty: string) => (
 	),
 });
 
-const getTeamIDs = (schema: Schema) => (account: AccountObject) => (memberID: CAPMemberReference) =>
-	getTeamObjects(schema)(account)
-		.map(asyncIterFilter<RawTeamObject>(isPartOfTeam(memberID)))
-		.map(asyncIterMap<RawTeamObject, number>(get('id')))
-		.map(collectGeneratorAsync);
-
-export const loadExtraCAPMemberInformation = (schema: Schema) => (account: AccountObject) => (
+export const loadExtraCAPMemberInformation = (schema: Schema) => (
+	backend: Backends<[TeamsBackend]>,
+) => (account: AccountObject) => (
 	memberID: CAPMemberReference,
-) => (teamObjects?: RawTeamObject[]): ServerEither<CAPExtraMemberInformation> =>
+): ServerEither<CAPExtraMemberInformation> =>
 	asyncRight(
 		schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
 		errorGenerator('Could not load extra member information'),
@@ -203,12 +206,9 @@ export const loadExtraCAPMemberInformation = (schema: Schema) => (account: Accou
 					),
 					errorGenerator('Could not get extra member results'),
 				),
-				teamObjects
-					? asyncRight(
-							teamObjects.filter(isPartOfTeam(memberID)).map(obj => obj.id),
-							errorGenerator('Could not get Team IDs'),
-					  )
-					: getTeamIDs(schema)(account)(memberID),
+				backend
+					.getTeams(account)
+					.map(teams => teams.filter(isPartOfTeam(memberID)).map(team => team.id)),
 			]),
 		)
 		.map<CAPExtraMemberInformation>(([results, teams]) =>
@@ -231,3 +231,68 @@ export const loadExtraCAPMemberInformation = (schema: Schema) => (account: Accou
 				v => v.validUntil > Date.now(),
 			),
 		}));
+
+export interface CAPMemberBackend {
+	deleteProspectiveMember: (member: RawCAPProspectiveMemberObject) => ServerEither<void>;
+	createProspectiveMember: (
+		account: RawCAPSquadronAccountObject,
+	) => (member: NewCAPProspectiveMember) => ServerEither<CAPProspectiveMemberObject>;
+	getAccountsForMember: (member: CAPMember) => AsyncIter<EitherObj<ServerError, AccountObject>>;
+	getNHQMembersInAccount: (
+		backend: Backends<[TeamsBackend]>,
+	) => (account: CAPAccountObject) => ServerEither<MaybeObj<CAPNHQMemberObject[]>>;
+	getProspectiveMembersInAccount: (
+		backend: Backends<[TeamsBackend]>,
+	) => (account: RawCAPSquadronAccountObject) => ServerEither<CAPProspectiveMemberObject[]>;
+	upgradeProspectiveMember: (
+		backend: MemberBackend,
+	) => (
+		member: CAPProspectiveMemberObject,
+	) => (newMember: CAPNHQMemberReference) => ServerEither<void>;
+	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
+}
+
+export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend =>
+	getRequestFreeCAPMemberBackend(req.mysqlx, req.backend);
+
+export const getRequestFreeCAPMemberBackend = (
+	mysqlx: Schema,
+	prevBackends: Backends<[AccountBackend, RawMySQLBackend]>,
+): CAPMemberBackend => ({
+	deleteProspectiveMember: deleteProspectiveMember(mysqlx),
+	createProspectiveMember: account => member =>
+		createCAPProspectiveMember(mysqlx)(account)(member),
+	getAccountsForMember: getAccountsForMember(prevBackends),
+	getNHQMembersInAccount: memoize(prevBackend =>
+		memoize(
+			account =>
+				prevBackend
+					.getTeams(account)
+					.flatMap(teams =>
+						Maybe.isSome(getORGIDsFromCAPAccount(account))
+							? getCAPNHQMembersForORGIDs(mysqlx)(account.id)(teams)(
+									(getORGIDsFromCAPAccount(account) as Some<number[]>).value,
+							  ).map(Maybe.some)
+							: asyncRight(Maybe.none(), errorGenerator('Could not get members')),
+					),
+			get('id'),
+		),
+	),
+	getProspectiveMembersInAccount: memoize(backend =>
+		memoize(getProspectiveMembersForAccount(mysqlx)(backend), get('id')),
+	),
+	upgradeProspectiveMember: backend =>
+		upgradeProspectiveMemberToCAPNHQ({ ...backend, ...prevBackends }),
+	getBirthday: memoize(getBirthday(mysqlx), stringifyMemberReference),
+});
+
+export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
+	deleteProspectiveMember: () => notImplementedError('deleteProspectiveMember'),
+	createProspectiveMember: () => () => notImplementedError('createProspectiveMember'),
+	getAccountsForMember: () => notImplementedException('getAccountsForMember'),
+	getNHQMembersInAccount: () => () => notImplementedError('getNHQMembersInAccount'),
+	getProspectiveMembersInAccount: () => () =>
+		notImplementedError('getProspectiveMembersInAccount'),
+	upgradeProspectiveMember: () => () => () => notImplementedError('upgradeProspectiveMember'),
+	getBirthday: () => notImplementedError('getBirthday'),
+});

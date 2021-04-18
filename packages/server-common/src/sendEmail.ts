@@ -17,6 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { ServerEither } from 'auto-client-api';
 import * as aws from 'aws-sdk';
 import {
 	AsyncEither,
@@ -26,79 +27,15 @@ import {
 	RegistryValues,
 	ServerError,
 	ServerConfiguration,
+	BasicMySQLRequest,
 } from 'common-lib';
+import { notImplementedError } from './backends';
+
+export const SUPPORT_BCC_ADDRESS = 'capstmarys@gmail.com';
 
 aws.config.update({ region: 'us-east-1' });
 
-// export async function getTestTools(testconf: typeof Configuration) {
-// 	const devAccount: AccountObject = {
-// 		mainCalendarID: 'r2lu9p16lh7qa5r69bv14h85i8@group.calendar.google.com',
-// 		wingCalendarID: '6t22lk6thigsg6udc7rkpap2tg@group.calendar.google.com',
-// 		serviceAccount: Maybe.some('md089-capunit-calendar@md089-capunit.iam.gserviceaccount.com'),
-// 		shareLink: '',
-// 		comments: '',
-// 		id: 'mdx89',
-// 		mainOrg: 916,
-// 		orgIDs: [916, 2529],
-// 		aliases: ['test'],
-// 		discordServer: { hasValue: false },
-// 		type: AccountType.CAPSQUADRON,
-// 		parent: Maybe.none()
-// 	};
-
-// 	const conn = testconf.database.connection;
-
-// 	testSession =
-// 		testSession ||
-// 		(await mysql.getSession({
-// 			user: conn.user,
-// 			password: conn.password,
-// 			host: conn.host,
-// 			port: conn.port
-// 		}));
-
-// 	if (testSession === undefined) {
-// 		throw new Error('Could not get MySQL session!');
-// 	}
-
-// 	const schema = testSession.getSchema(testconf.database.connection.database);
-
-// 	if (schema === undefined) {
-// 		throw new Error('Could not get test schema!');
-// 	}
-
-// 	try {
-// 		testAccount = testAccount || (await Account.Get('mdx89', schema));
-// 	} catch (e) {
-// 		testAccount = await Account.Create(devAccount, schema);
-// 	}
-
-// 	// 626814
-
-// 	return {
-// 		account: testAccount,
-// 		schema,
-// 		session: testSession
-// 	};
-// }
-
-// export async function getTestTools2(
-// 	testconf: typeof Configuration
-// ): Promise<[Account, mysql.Schema, mysql.Session]> {
-// 	const results = await getTestTools(testconf);
-
-// 	return [results.account, results.schema, results.session];
-// }
-
-export type EventuallyStringFunction<T> = (param: T) => EventuallyString<T>;
-export type EventuallyString<T> = string | EventuallyStringFunction<T>;
-
-export const makeString = <T>(eventuallyString: EventuallyString<T>, param: T): string =>
-	typeof eventuallyString === 'string'
-		? eventuallyString
-		: makeString(eventuallyString(param), param);
-
-export const EMAIL_CHARSET = 'UTF-8';
+const EMAIL_CHARSET = 'UTF-8';
 
 const formatHtmlEmail = (
 	config: ServerConfiguration,
@@ -147,9 +84,7 @@ export const getEmailMessageBody = (
 	Subject: { Charset: EMAIL_CHARSET, Data: subject },
 });
 
-export const setupAWSCredentials = (config: ServerConfiguration) => {};
-
-export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolean) => (
+export const sendEmail = (config: ServerConfiguration) => (bccAddresses: string[]) => (
 	registry: RegistryValues,
 ) => (subject: string) => (email: string | string[]) => (htmlBody: string) => (
 	textBody: string,
@@ -167,7 +102,7 @@ export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolea
 			handle
 				.sendEmail({
 					Destination: {
-						BccAddresses: bccCapStMarys ? ['capstmarys@gmail.com'] : [],
+						BccAddresses: bccAddresses,
 						ToAddresses: typeof email === 'string' ? [email] : email,
 					},
 					Message: getEmailMessageBody(config, registry, subject, htmlBody, textBody),
@@ -181,3 +116,39 @@ export const sendEmail = (config: ServerConfiguration) => (bccCapStMarys: boolea
 				? asyncLeft(errorGenerator('Could not send email')(result.$response.error))
 				: asyncRight(void 0, errorGenerator('Could not send email')),
 		);
+
+export interface EmailToSend {
+	to: string[];
+	bccAddresses: string[];
+	subject: string;
+	htmlBody: string;
+	textBody: string;
+}
+
+export interface EmailParameters {
+	url: string;
+}
+
+export type EmailSetup = (parameters: EmailParameters) => EmailToSend;
+
+export interface EmailBackend {
+	sendEmail: (
+		registry: RegistryValues,
+	) => (emailGenerator: (url: EmailParameters) => EmailToSend) => ServerEither<void>;
+}
+
+export const getEmailBackend = (req: BasicMySQLRequest): EmailBackend => ({
+	sendEmail: registry => emailGenerator => {
+		const email = emailGenerator({
+			url: `https://${registry.accountID}.${req.configuration.HOST_NAME}`,
+		});
+
+		return sendEmail(req.configuration)(email.bccAddresses)(registry)(email.subject)(email.to)(
+			email.htmlBody,
+		)(email.textBody);
+	},
+});
+
+export const getEmptyEmailBackend = (): EmailBackend => ({
+	sendEmail: () => () => notImplementedError('sendEmail'),
+});

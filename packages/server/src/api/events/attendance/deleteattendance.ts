@@ -17,35 +17,31 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
-import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
+import { ServerAPIRequestParameter } from 'auto-client-api';
 import {
-	AccountObject,
 	api,
 	APIEndpointBody,
-	AsyncEither,
-	asyncRight,
 	canFullyManageEvent,
 	destroy,
-	errorGenerator,
-	EventType,
-	hasBasicAttendanceManagementPermission,
 	Maybe,
 	MemberReference,
 	RawResolvedEventObject,
 	SessionType,
 	toReference,
-	User,
 } from 'common-lib';
 import {
-	ensureResolvedEvent,
-	getEvent,
-	getTeam,
-	isMemberPartOfAccount,
+	AccountBackend,
+	AttendanceBackend,
+	Backends,
+	EventsBackend,
+	getCombinedAttendanceBackend,
+	MemberBackend,
 	PAM,
-	removeMemberFromEventAttendance,
-	resolveReference,
+	TeamsBackend,
+	TimeBackend,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
@@ -55,38 +51,43 @@ export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.D
 		? Maybe.orSome<MemberReference>(toReference(req.member))(Maybe.fromValue(body.member))
 		: toReference(req.member);
 
-export const canDeleteAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
-	requester: User,
-) => (member: MemberReference) => (event: RawResolvedEventObject) =>
-	AsyncEither.All([
-		resolveReference(schema)(account)(member)
-			.map(isMemberPartOfAccount({})(schema))
-			.flatMap(f => f(account)),
-		event.type !== EventType.LINKED && event.teamID !== null && event.teamID !== undefined
-			? getTeam(schema)(account)(event.teamID).map(Maybe.some)
-			: asyncRight(Maybe.none(), errorGenerator('Could not get team information')),
-	]).map(
-		([isPartOfAccount, teamMaybe]) =>
-			isPartOfAccount && hasBasicAttendanceManagementPermission(requester)(event)(teamMaybe),
+// export const canDeleteAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
+// 	requester: User,
+// ) => (member: MemberReference) => (event: RawResolvedEventObject) =>
+// 	AsyncEither.All([
+// 		resolveReference(schema)(account)(member)
+// 			.map(isMemberPartOfAccount({})(schema))
+// 			.flatMap(f => f(account)),
+// 		event.type !== EventType.LINKED && event.teamID !== null && event.teamID !== undefined
+// 			? getTeam(schema)(account)(event.teamID).map(Maybe.some)
+// 			: asyncRight(Maybe.none(), errorGenerator('Could not get team information')),
+// 	]).map(
+// 		([isPartOfAccount, teamMaybe]) =>
+// 			isPartOfAccount && hasBasicAttendanceManagementPermission(requester)(event)(teamMaybe),
+// 	);
+
+export const func: Endpoint<
+	Backends<
+		[AccountBackend, TimeBackend, MemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]
+	>,
+	api.events.attendance.Delete
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getEvent(req.account)(req.params.id)
+			.flatMap(backend.ensureResolvedEvent)
+			.filter(
+				backend.canMemberDeleteRecord(req.member),
+				// canDeleteAttendanceRecord(req.mysqlx)(req.account)(req.member)(req.body.member),
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'You do not have permission to perform that action',
+				},
+			)
+			.flatMap(backend.removeMemberFromEventAttendance(req.member)(req.body.member))
+			.map(destroy)
+			.map(wrapper),
 	);
 
-export const func: ServerAPIEndpoint<api.events.attendance.Delete> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(ensureResolvedEvent(req.mysqlx))
-		.filter(canDeleteAttendanceRecord(req.mysqlx)(req.account)(req.member)(req.body.member), {
-			type: 'OTHER',
-			code: 403,
-			message: 'You do not have permission to perform that action',
-		})
-		.flatMap(event =>
-			removeMemberFromEventAttendance(req.mysqlx)(req.account)(event)(
-				getMember(req)(req.body)(event),
-			),
-		)
-		.map(destroy)
-		.map(wrapper),
-);
-
-export default func;
+export default withBackends(func, getCombinedAttendanceBackend);

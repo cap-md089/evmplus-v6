@@ -22,7 +22,7 @@ import { fork, isMaster } from 'cluster';
 import { APIEither, APIEndpoint } from 'common-lib';
 import setupDiscordBot from 'discord-bot';
 import { cpus } from 'os';
-import { BackedServerAPIEndpoint, getConf } from 'server-common';
+import { BackedServerAPIEndpoint, conf } from 'server-common';
 import { api } from './api';
 import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
@@ -35,7 +35,7 @@ export type Endpoint<
 > = BackedServerAPIEndpoint<T, A>;
 
 if (require.main === module) {
-	if (isMaster) {
+	if (isMaster && process.env.NODE_ENV === 'production') {
 		const forkCount = cpus().length;
 
 		console.log('Spawning', forkCount, 'workers');
@@ -50,18 +50,26 @@ if (require.main === module) {
 		}
 	} else {
 		(async () => {
-			const configuration = await getConf();
+			const configuration = await conf.getConf();
 			const { mysqlConn, capwatchEmitter } = await getServer(configuration);
 
-			process.on('message', msg => {
-				console.log('Got message:', msg);
-				if (msg === 'setupExtra') {
-					setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
-					createSocketUI(configuration, mysqlConn);
-				}
-			});
+			const extraSetup = () => {
+				setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
+				createSocketUI(configuration, mysqlConn);
+			};
 
-			process.send!('ready');
+			if (process.env.NODE_ENV === 'production') {
+				process.on('message', msg => {
+					console.log('Got message:', msg);
+					if (msg === 'setupExtra') {
+						extraSetup();
+					}
+				});
+
+				process.send!('ready');
+			} else {
+				extraSetup();
+			}
 		})().catch(e => {
 			console.error(e);
 			process.exit(1);

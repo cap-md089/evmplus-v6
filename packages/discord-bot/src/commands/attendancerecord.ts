@@ -20,7 +20,6 @@
 import * as mysql from '@mysql/xdevapi';
 import {
 	areMembersTheSame,
-	AsyncEither,
 	asyncIterMap,
 	asyncRight,
 	AttendanceStatus,
@@ -34,23 +33,15 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
+import * as debug from 'debug';
 import { Client, GuildMember, Message, VoiceChannel } from 'discord.js';
-import {
-	addMemberToAttendance,
-	ensureResolvedEvent,
-	getAttendanceForEvent,
-	getEvent,
-	getFullPointsOfContact,
-	getTeam,
-	PAM,
-	resolveReference,
-} from 'server-common';
+import { PAM } from 'server-common';
 import { getXSession } from '..';
 import { toCAPUnit } from '../data/convertMember';
 import getAccount from '../data/getAccount';
+import { getDiscordBackend } from '../data/getDiscordBackend';
 import getMember from '../data/getMember';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
-import * as debug from 'debug';
 
 const logFunc = debug('discord-bot:commands:attendancerecord');
 
@@ -116,6 +107,8 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 
 	const { schema, session } = await getXSession(conf, mysqlConn);
 
+	const backend = getDiscordBackend(schema);
+
 	try {
 		logFunc('Getting account info for ', guild.id);
 		const account = await getAccount(schema)(guild.id);
@@ -131,7 +124,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 			return await message.channel.send('You are not a certified member');
 		}
 
-		const memberEither = await resolveReference(schema)(account.value)(maybeAdder.value.member);
+		const memberEither = await backend.getMember(account.value)(maybeAdder.value.member);
 
 		if (Either.isLeft(memberEither)) {
 			console.error(memberEither.value);
@@ -142,11 +135,10 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		const adder = memberEither.value;
 		let adderUser: User;
 		try {
-			const permissions = await PAM.getPermissionsForMemberInAccountDefault(
-				schema,
-				toReference(adder),
-				account.value,
-			);
+			const permissions = await backend
+				.getPermissionsForMemberInAccount(account.value)(adder)
+				.map(PAM.getDefaultPermissions(account.value))
+				.fullJoin();
 
 			adderUser = {
 				...adder,
@@ -159,9 +151,9 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 			return await message.channel.send('Could not get member information or permissions');
 		}
 
-		const eventEither = await getEvent(schema)(account.value)(eventID).flatMap(
-			ensureResolvedEvent(schema),
-		);
+		const eventEither = await backend
+			.getEvent(account.value)(eventID)
+			.flatMap(backend.ensureResolvedEvent);
 
 		if (Either.isLeft(eventEither)) {
 			console.error(eventEither.value);
@@ -172,7 +164,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		const event = eventEither.value;
 
 		const teamMaybe = await (event.teamID !== null && event.teamID !== undefined
-			? getTeam(schema)(account.value)(event.teamID).map(Maybe.some)
+			? backend.getTeam(account.value)(event.teamID).map(Maybe.some)
 			: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
 		)
 			.fullJoin()
@@ -185,7 +177,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 		}
 
 		const members = await collectGeneratorAsync(
-			asyncIterMap(toCAPUnit(schema)(account.value))(discordMembers),
+			asyncIterMap(toCAPUnit(backend)(account.value))(discordMembers),
 		);
 
 		const solidMembers = members
@@ -196,17 +188,15 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 
 		await message.channel.send('Looking to add ' + solidMembers.length + ' members');
 
-		const fullInfoEither = await AsyncEither.All([
-			getAttendanceForEvent(schema)(event).map(collectGeneratorAsync),
-			getFullPointsOfContact(schema)(account.value)(event.pointsOfContact),
-		]);
+		const attendanceEither = await backend
+			.getAttendanceForEvent(event)
+			.map(collectGeneratorAsync);
 
-		if (Either.isLeft(fullInfoEither)) {
+		if (Either.isLeft(attendanceEither)) {
 			return await message.channel.send('There was an issue getting event attendance');
 		}
 
-		const [attendance, pointsOfContact] = fullInfoEither.value;
-		const attendanceIDs = attendance.map(get('memberID'));
+		const attendanceIDs = attendanceEither.value.map(get('memberID'));
 
 		let membersAddedCount = 0,
 			membersDuplicate = 0;
@@ -218,11 +208,7 @@ export default (client: Client) => (mysqlConn: mysql.Client) => (conf: DiscordCL
 				continue;
 			}
 
-			const result = await addMemberToAttendance(schema)(account.value)({
-				...event,
-				attendance,
-				pointsOfContact,
-			})(true)({
+			const result = await backend.addMemberToAttendance(event)(true)({
 				shiftTime: {
 					arrivalTime: event.startDateTime,
 					departureTime: event.endDateTime,

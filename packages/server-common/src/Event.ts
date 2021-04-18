@@ -29,13 +29,9 @@ import {
 	asyncIterTap,
 	asyncLeft,
 	asyncRight,
-	call,
-	canSignSomeoneElseUpForEvent,
-	canSignUpForEvent,
 	collectGeneratorAsync,
 	destroy,
 	DisplayInternalPointOfContact,
-	Either,
 	errorGenerator,
 	EventAuditEvents,
 	EventObject,
@@ -44,15 +40,12 @@ import {
 	ExternalPointOfContact,
 	FromDatabase,
 	get,
-	getFullMemberName,
 	getItemsNotInSecondArray,
 	InternalPointOfContact,
 	Maybe,
 	MaybeObj,
-	Member,
 	MemberReference,
 	memoize,
-	NewAttendanceRecord,
 	NewEventObject,
 	NotificationCauseType,
 	NotificationDataType,
@@ -69,17 +62,11 @@ import {
 	Some,
 	toReference,
 } from 'common-lib';
-import { BasicAccountRequest } from '.';
-import { AccountBackend, getAccount } from './Account';
-import { getAttendanceForEvent, RawAttendanceDBRecord } from './Attendance';
-import {
-	areDeepEqual,
-	generateChangeAudit,
-	generateCreationAudit,
-	generateDeleteAudit,
-	saveAudit,
-} from './Audits';
-import { Backends, notImplementedError } from './backends';
+import { AuditsBackend } from '.';
+import { AccountBackend, BasicAccountRequest, getAccount } from './Account';
+import { getAttendanceForEvent } from './Attendance';
+import { areDeepEqual } from './Audits';
+import { Backends, notImplementedError, TimeBackend } from './backends';
 import updateGoogleCalendars, {
 	createGoogleCalendarEvents,
 	removeGoogleCalendarEvents,
@@ -91,16 +78,12 @@ import {
 	deleteItemFromCollectionA,
 	findAndBind,
 	findAndBindC,
-	generateBindObject,
-	generateFindStatement,
 	generateResults,
 	getNewID,
-	modifyAndBindC,
 	saveToCollectionA,
 } from './MySQLUtil';
 import { createNotification } from './Notification';
 import { ServerEither } from './servertypes';
-import { getTeam } from './Team';
 
 type POCRaw = (ExternalPointOfContact | InternalPointOfContact)[];
 type POCFull = (ExternalPointOfContact | DisplayInternalPointOfContact)[];
@@ -177,117 +160,6 @@ export const getFullEventObject = (schema: Schema) => (account: AccountObject) =
 					})),
 		),
 	);
-
-export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
-	event: RawEventObject,
-) => (member: MemberReference) =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not delete attendance record'),
-	)
-		.map(collection =>
-			collection
-				.remove(
-					generateFindStatement({
-						accountID: account.id,
-						eventID: event.id,
-						memberID: toReference(member),
-					}),
-				)
-				.bind(
-					generateBindObject({
-						accountID: account.id,
-						eventID: event.id,
-						memberID: toReference(member),
-					}),
-				)
-				.execute(),
-		)
-		.map(destroy);
-
-const sendSignupDenyMessage = (message: string): ServerEither<void> =>
-	asyncLeft({
-		type: 'OTHER',
-		code: 400,
-		message,
-	});
-
-export const addMemberToAttendanceFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject,
-) => (event: EventObject) => (isAdmin: boolean) => (attendee: Required<NewAttendanceRecord>) =>
-	(event.teamID !== null && event.teamID !== undefined
-		? getTeam(schema)(account)(event.teamID).map(Maybe.some)
-		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
-	)
-		.map(isAdmin ? always(canSignSomeoneElseUpForEvent(event)) : canSignUpForEvent(event))
-		.map(call(attendee.memberID))
-		.flatMap(
-			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
-				asyncRight(void 0, errorGenerator('Could not add member to attendance')),
-			),
-		)
-		.flatMap(() =>
-			getMemberName(schema)(account)(attendee.memberID)
-				.flatMap(memberName =>
-					addToCollection(schema.getCollection<RawAttendanceDBRecord>('Attendance'))({
-						...attendee,
-						accountID:
-							event.type === EventType.LINKED
-								? event.targetAccountID
-								: event.accountID,
-						eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
-						timestamp: now(),
-						memberName,
-						summaryEmailSent: false,
-						shiftTime: attendee.shiftTime ?? {
-							arrivalTime: event.meetDateTime,
-							departureTime: event.pickupDateTime,
-						},
-					}),
-				)
-				.leftFlatMap(err =>
-					err.type === 'CRASH' &&
-					(err.error as any)?.info?.msg ===
-						'Document contains a field value that is not unique but required to be'
-						? Either.left({
-								type: 'OTHER',
-								code: 400,
-								message: 'Member is already in attendance',
-						  })
-						: Either.left(err),
-				),
-		);
-export const addMemberToAttendance = addMemberToAttendanceFunc(Date.now);
-
-export const modifyEventAttendanceRecord = (schema: Schema) => (account: AccountObject) => (
-	event: RawResolvedEventObject,
-) => (member: Member) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>) =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not save attendance record'),
-	)
-		.map(
-			modifyAndBindC<RawAttendanceDBRecord>({
-				accountID:
-					event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
-				eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
-				memberID: toReference(member),
-			}),
-		)
-		.map(collection =>
-			collection
-				.patch({
-					...record,
-					memberID: toReference(member),
-					memberName: getFullMemberName(member),
-					shiftTime: record.shiftTime ?? {
-						arrivalTime: event.meetDateTime,
-						departureTime: event.pickupDateTime,
-					},
-				})
-				.execute(),
-		)
-		.map(destroy);
 
 export const getSourceEvent = (schema: Schema) => (
 	event: RawEventObject,
@@ -491,9 +363,9 @@ export const saveLinkedEventFunc = (config: ServerConfiguration) => (schema: Sch
 		// )
 		.flatMap(ensureResolvedEvent(schema));
 
-export const saveRegularEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema,
-) => (account: AccountObject) => (updater: MemberReference) => (
+export const saveRegularEventFunc = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
+	config: ServerConfiguration,
+) => (schema: Schema) => (account: AccountObject) => (updater: MemberReference) => (
 	oldEvent: FromDatabase<RawRegularEventObject>,
 ) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	asyncRight(
@@ -548,7 +420,7 @@ export const saveRegularEventFunc = (now = Date.now) => (config: ServerConfigura
 			subtitle: event.subtitle,
 			teamID: event.teamID,
 			timeCreated: event.timeCreated,
-			timeModified: now(),
+			timeModified: backend.now(),
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
 			uniform: event.uniform,
@@ -560,15 +432,13 @@ export const saveRegularEventFunc = (now = Date.now) => (config: ServerConfigura
 		)
 		.tap(updateGoogleCalendarsForLinkedEvents(config)(schema))
 		.tap(updateLinkedEvents(schema))
-		.tap(newEvent =>
-			generateChangeAudit(schema)(account)(updater)(oldEvent)(newEvent).flatMap(
-				saveAudit(schema),
-			),
-		);
+		.tap(newEvent => backend.generateChangeAudit(account)(updater)([oldEvent, newEvent]));
 
-export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema,
-) => (account: AccountObject) => (updater: MemberReference) => <T extends RawResolvedEventObject>(
+export const saveEvent = (backends: Backends<[TimeBackend, AuditsBackend]>) => (
+	config: ServerConfiguration,
+) => (schema: Schema) => (account: AccountObject) => (updater: MemberReference) => <
+	T extends RawResolvedEventObject
+>(
 	oldEvent: FromDatabase<T>,
 ) => (event: T): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	event.type === EventType.LINKED && oldEvent.type === EventType.LINKED
@@ -576,7 +446,7 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 				(oldEvent as unknown) as FromDatabase<RawResolvedLinkedEvent>,
 		  )((event as unknown) as RawResolvedLinkedEvent)
 		: event.type === EventType.REGULAR && oldEvent.type === EventType.REGULAR
-		? saveRegularEventFunc(now)(config)(schema)(account)(updater)(
+		? saveRegularEventFunc(backends)(config)(schema)(account)(updater)(
 				(oldEvent as unknown) as FromDatabase<RawRegularEventObject>,
 		  )((event as unknown) as RawRegularEventObject)
 		: asyncLeft<ServerError, FromDatabase<RawResolvedEventObject>>({
@@ -584,7 +454,6 @@ export const saveEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 				code: 400,
 				message: 'Mismatched event types for event save',
 		  });
-export const saveEvent = saveEventFunc();
 
 export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
 	timeToRemove: number,
@@ -593,9 +462,9 @@ export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
 	debrief: event.debrief.filter(({ timeSubmitted }) => timeSubmitted !== timeToRemove),
 });
 
-export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => (
-	account: AccountObject,
-) => (actor: MemberReference) => (
+export const deleteEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
+	config: ServerConfiguration,
+) => (schema: Schema) => (account: AccountObject) => (actor: MemberReference) => (
 	event: FromDatabase<RawResolvedEventObject>,
 ): ServerEither<void> =>
 	asyncRight(
@@ -603,14 +472,14 @@ export const deleteEvent = (config: ServerConfiguration) => (schema: Schema) => 
 		errorGenerator('Could not delete Google calendar events'),
 	)
 		.map(always(event))
-		.tap(deletedEvent =>
-			generateDeleteAudit(schema)(account)(actor)(deletedEvent).flatMap(saveAudit(schema)),
-		)
+		.tap(backend.generateDeleteAudit(account)(actor))
 		.flatMap(deleteItemFromCollectionA(schema.getCollection<RawEventObject>('Events')));
 
-export const createEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema,
-) => (account: AccountObject) => (author: MemberReference) => (data: NewEventObject) =>
+export const createEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
+	config: ServerConfiguration,
+) => (schema: Schema) => (account: AccountObject) => (author: MemberReference) => (
+	data: NewEventObject,
+) =>
 	getNewID(account)(schema.getCollection<RawEventObject>('Events'))
 		.map<RawRegularEventObject>(id => ({
 			acceptSignups: data.acceptSignups,
@@ -656,8 +525,8 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 			id,
 			accountID: account.id,
 			author: toReference(author),
-			timeCreated: now(),
-			timeModified: now(),
+			timeCreated: backend.now(),
+			timeModified: backend.now(),
 			debrief: [],
 			googleCalendarIds: {},
 			type: EventType.REGULAR,
@@ -678,14 +547,13 @@ export const createEventFunc = (now = Date.now) => (config: ServerConfiguration)
 		.flatMap(
 			addToCollection(schema.getCollection<FromDatabase<RawRegularEventObject>>('Events')),
 		)
-		.tap(event => generateCreationAudit(schema)(account)(author)(event).map(saveAudit(schema)));
-export const createEvent = createEventFunc(Date.now);
+		.tap(backend.generateCreationAudit(account)(author));
 
-export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	schema: Schema,
-) => (account: AccountObject) => (event: RawResolvedEventObject) => (author: MemberReference) => (
-	newStartTime: number,
-) => (newStatus: EventStatus) => (copyFiles = false) =>
+export const copyEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
+	config: ServerConfiguration,
+) => (schema: Schema) => (account: AccountObject) => (event: RawResolvedEventObject) => (
+	author: MemberReference,
+) => (newStartTime: number) => (newStatus: EventStatus) => (copyFiles = false) =>
 	asyncRight(newStartTime - event.startDateTime, errorGenerator('Could not copy event'))
 		.map(timeDelta => ({
 			...event,
@@ -698,8 +566,7 @@ export const copyEventFunc = (now = Date.now) => (config: ServerConfiguration) =
 			endDateTime: event.endDateTime + timeDelta,
 			pickupDateTime: event.pickupDateTime + timeDelta,
 		}))
-		.flatMap(createEventFunc(now)(config)(schema)(account)(author));
-export const copyEvent = copyEventFunc(Date.now);
+		.flatMap(createEvent(backend)(config)(schema)(account)(author));
 
 export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 	linkedEvent: RawEventObject,
@@ -856,51 +723,75 @@ export interface EventsBackend {
 	) => (
 		linkAuthor: MemberReference,
 	) => (targetAccount: AccountObject) => ServerEither<RawLinkedEvent>;
+	getAudit: (
+		account: AccountObject,
+	) => (eventID: number | string) => ServerEither<AsyncIter<FromDatabase<EventAuditEvents>>>;
+	getFullPointsOfContact: (account: AccountObject) => (records: POCRaw) => ServerEither<POCFull>;
 }
 
-export const getEventsBackend = (req: BasicAccountRequest): EventsBackend => {
+export const getEventsBackend = (
+	req: BasicAccountRequest,
+	prevBackend: Backends<[TimeBackend, AuditsBackend]>,
+): EventsBackend => {
 	const backend: EventsBackend = {
-		getEvent: memoize((account: AccountObject) => memoize(getEvent(req.mysqlx)(account))),
+		...getRequestFreeEventsBackend(req.mysqlx, { ...prevBackend, ...req.backend }),
 		saveEvent: updater => event =>
 			req.backend.getAccount(event.accountID).flatMap(account =>
 				backend
 					.getEvent(account)(event.id)
 					.flatMap(backend.ensureResolvedEvent)
 					.flatMap(oldEvent =>
-						saveEvent(req.configuration)(req.mysqlx)(account)(updater)(oldEvent)(event),
+						saveEvent(prevBackend)(req.configuration)(req.mysqlx)(account)(updater)(
+							oldEvent,
+						)(event),
 					),
 			),
 		deleteEvent: actor => event =>
 			req.backend
 				.getAccount(event.accountID)
 				.flatMap(account =>
-					deleteEvent(req.configuration)(req.mysqlx)(account)(actor)(event),
+					deleteEvent(prevBackend)(req.configuration)(req.mysqlx)(account)(actor)(event),
 				),
-		fullPointsOfContact: account => records =>
-			getFullPointsOfContact(req.mysqlx)(account)(records),
-		getLinkedEvents: account => eventID => getLinkedEvents(req.mysqlx)(account.id)(eventID),
-		getFullEventObject: event =>
-			req.backend
-				.getAccount(event.accountID)
-				.flatMap(account => getFullEventObject(req.mysqlx)(account)(event)),
-		getSourceEvent: event => getSourceEvent(req.mysqlx)(event),
-		ensureResolvedEvent: event =>
-			newEnsureResolvedEvent({
-				...backend,
-				...req.backend,
-			})(event),
-		createEvent: account => author => data =>
-			createEvent(req.configuration)(req.mysqlx)(account)(author)(data),
+		createEvent: createEvent(prevBackend)(req.configuration)(req.mysqlx),
 		copyEvent: event => author => newStartTime => newStatus => copyFiles =>
 			req.backend
 				.getAccount(event.accountID)
 				.flatMap(account =>
-					copyEvent(req.configuration)(req.mysqlx)(account)(event)(author)(newStartTime)(
-						newStatus,
-					)(copyFiles),
+					copyEvent(prevBackend)(req.configuration)(req.mysqlx)(account)(event)(author)(
+						newStartTime,
+					)(newStatus)(copyFiles),
 				),
 		linkEvent: event => author => account =>
 			linkEvent(req.configuration)(req.mysqlx)(event)(author)(account),
+	};
+
+	return backend;
+};
+
+export const getRequestFreeEventsBackend = (
+	mysqlx: Schema,
+	prevBackend: Backends<[TimeBackend, AuditsBackend, AccountBackend]>,
+): EventsBackend => {
+	const backend: EventsBackend = {
+		getEvent: memoize((account: AccountObject) => memoize(getEvent(mysqlx)(account))),
+		saveEvent: () => () => notImplementedError('saveEvent'),
+		deleteEvent: () => () => notImplementedError('deleteEvent'),
+		fullPointsOfContact: account => records => getFullPointsOfContact(mysqlx)(account)(records),
+		getLinkedEvents: account => eventID => getLinkedEvents(mysqlx)(account.id)(eventID),
+		getFullEventObject: event =>
+			prevBackend
+				.getAccount(event.accountID)
+				.flatMap(account => getFullEventObject(mysqlx)(account)(event)),
+		getSourceEvent: event => getSourceEvent(mysqlx)(event),
+		ensureResolvedEvent: event => newEnsureResolvedEvent({ ...prevBackend, ...backend })(event),
+		createEvent: () => () => () => notImplementedError('createEvent'),
+		copyEvent: () => () => () => () => () => notImplementedError('copyEvent'),
+		linkEvent: () => () => () => notImplementedError('linkEvent'),
+		getAudit: account => eventID => getAudit(mysqlx)(account)(eventID),
+		getFullPointsOfContact: memoize(
+			account => memoize(records => getFullPointsOfContact(mysqlx)(account)(records)),
+			get('id'),
+		),
 	};
 
 	return backend;
@@ -918,6 +809,8 @@ export const getEmptyEventsBackend = (): EventsBackend => ({
 	createEvent: () => () => () => notImplementedError('createEvent'),
 	copyEvent: () => () => () => () => () => notImplementedError('copyEvent'),
 	linkEvent: () => () => () => notImplementedError('linkEvent'),
+	getAudit: () => () => notImplementedError('getAudit'),
+	getFullPointsOfContact: () => () => notImplementedError('getFullPointsOfContact'),
 });
 
 //#endregion

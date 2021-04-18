@@ -23,8 +23,7 @@ import {
 	AccountBackend,
 	Backends,
 	EventsBackend,
-	getAccountBackend,
-	getEventsBackend,
+	getCombinedEventsBackend,
 	PAM,
 	withBackends,
 } from 'server-common';
@@ -63,4 +62,4 @@ export const func: Endpoint<
 		),
 	);
 
-export default withBackends(func, getAccountBackend, getEventsBackend);
+export default withBackends(func, getCombinedEventsBackend);

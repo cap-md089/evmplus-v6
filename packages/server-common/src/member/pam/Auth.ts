@@ -21,17 +21,13 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	areMembersTheSame,
-	asyncIterReduce,
 	asyncRight,
 	Either,
-	EitherObj,
 	errorGenerator,
-	Member,
 	MemberCreateError,
 	MemberReference,
 	PasswordResult,
 	ServerConfiguration,
-	ServerError,
 	SessionType,
 	SignatureSigninToken,
 	SigninKeyScopeType,
@@ -44,7 +40,8 @@ import {
 import { createPublicKey, createVerify, randomBytes } from 'crypto';
 import * as rp from 'request-promise';
 import { promisify } from 'util';
-import { getMembers } from '../../Account';
+import { Backends } from '../../backends';
+import { MemberBackend } from '../../Members';
 import { collectResults, findAndBind } from '../../MySQLUtil';
 import { ServerEither } from '../../servertypes';
 import { getInformationForUser, simplifyUserInformation } from './Account';
@@ -134,10 +131,10 @@ export const addSignatureNonce = addSignatureNonceFunc(Date.now);
 
 export const verifySignatureToken = async (
 	schema: Schema,
+	backends: Backends<[MemberBackend]>,
 	account: AccountObject,
 	userInformation: UserAccountInformation,
 	token: SignatureSigninToken,
-	conf: ServerConfiguration,
 ): Promise<boolean> => {
 	const [fastNonces, keys] = await Promise.all([
 		collectResults(
@@ -203,12 +200,10 @@ export const verifySignatureToken = async (
 		case SigninKeyScopeType.ACCOUNT: {
 			return (
 				await Promise.all([
-					asyncIterReduce<EitherObj<ServerError, Member>, boolean>(
-						(prev, member) =>
-							prev ||
-							(Either.isRight(member) &&
-								areMembersTheSame(member.value)(userInformation.member)),
-					)(false)(getMembers(schema)(account)()),
+					backends
+						.getMember(account)(userInformation.member)
+						.flatMap(backends.accountHasMember(account))
+						.fullJoin(),
 					removeNonces,
 				])
 			)[0];
@@ -223,6 +218,7 @@ export const verifySignatureToken = async (
 
 export const verifySigninToken = async (
 	schema: Schema,
+	backends: Backends<[MemberBackend]>,
 	account: AccountObject,
 	userInformation: UserAccountInformation,
 	token: SigninToken,
@@ -234,7 +230,13 @@ export const verifySigninToken = async (
 
 		case SigninTokenType.SIGNATURE:
 			try {
-				return await verifySignatureToken(schema, account, userInformation, token, conf);
+				return await verifySignatureToken(
+					schema,
+					backends,
+					account,
+					userInformation,
+					token,
+				);
 			} catch (e) {
 				return false;
 			}
@@ -268,6 +270,7 @@ const getUserID = async (schema: Schema, username: string): Promise<MemberRefere
  */
 export const trySignin = async (
 	schema: Schema,
+	backend: Backends<[MemberBackend]>,
 	account: AccountObject,
 	username: string,
 	password: string,
@@ -283,7 +286,7 @@ export const trySignin = async (
 		};
 	}
 
-	if (!(await verifySigninToken(schema, account, userInformation, signinToken, conf))) {
+	if (!(await verifySigninToken(schema, backend, account, userInformation, signinToken, conf))) {
 		return {
 			result: MemberCreateError.RECAPTCHA_INVALID,
 		};

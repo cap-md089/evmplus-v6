@@ -17,14 +17,11 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	AccountObject,
 	always,
 	api,
 	AsyncEither,
-	asyncRight,
-	errorGenerator,
 	EventType,
 	FromDatabase,
 	hasBasicEventPermissions,
@@ -33,13 +30,29 @@ import {
 	toReference,
 	User,
 } from 'common-lib';
-import { getAccount, getEvent, linkEvent, PAM } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	GenBackend,
+	getCombinedEventsBackend,
+	getCombinedMemberBackend,
+	MemberBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
+export const func: Endpoint<
+	Backends<[AccountBackend, EventsBackend, PAM.PAMBackend]>,
+	api.events.events.Link
+> = backend => req =>
 	AsyncEither.All([
-		getEvent(req.mysqlx)(req.account)(req.params.eventid),
-		getAccount(req.mysqlx)(req.params.targetaccount),
+		backend.getEvent(req.account)(req.params.eventid),
+		backend.getAccount(req.params.targetaccount),
 	])
 		.filter(([event]) => event.type === EventType.REGULAR, {
 			type: 'OTHER',
@@ -47,14 +60,9 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 			message: 'You cannot link to a linked event',
 		})
 		.flatMap(([event, targetAccount]: [FromDatabase<RawRegularEventObject>, AccountObject]) =>
-			asyncRight(
-				PAM.getPermissionsForMemberInAccountDefault(
-					req.mysqlx,
-					toReference(req.member),
-					targetAccount,
-				),
-				errorGenerator('Could not get permissions for account'),
-			)
+			backend
+				.getPermissionsForMemberInAccount(targetAccount)(req.member)
+				.map(PAM.getDefaultPermissions(req.account))
 				.map<User>(permissions => ({ ...req.member, permissions }))
 				.filter(hasBasicEventPermissions, {
 					type: 'OTHER',
@@ -63,7 +71,7 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 						'Member does not have permission to perform this action in the specified account',
 				})
 				.map(always(targetAccount))
-				.flatMap(linkEvent(req.configuration)(req.mysqlx)(event)(toReference(req.member)))
+				.flatMap(backend.linkEvent(event)(toReference(req.member)))
 				.map(
 					linkedEvent =>
 						({
@@ -74,4 +82,10 @@ export const func: ServerAPIEndpoint<api.events.events.Link> = req =>
 		)
 		.map(wrapper);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<typeof getCombinedEventsBackend>, MemberBackend, PAM.PAMBackend]
+	>(getCombinedEventsBackend, getCombinedMemberBackend, PAM.getPAMBackend),
+);

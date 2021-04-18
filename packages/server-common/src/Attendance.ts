@@ -26,23 +26,50 @@ import {
 	AsyncIter,
 	asyncIterEitherFilter,
 	asyncIterMap,
+	asyncLeft,
 	asyncRight,
 	AttendanceRecord,
+	call,
+	canSignSomeoneElseUpForEvent,
+	canSignUpForEvent,
 	CustomAttendanceFieldValue,
+	destroy,
+	Either,
 	errorGenerator,
+	EventObject,
+	EventType,
+	get,
+	getFullMemberName,
 	hasBasicAttendanceManagementPermission,
 	identity,
 	Maybe,
 	MaybeObj,
+	Member,
 	MemberReference,
+	memoize,
+	NewAttendanceRecord,
+	pipe,
 	RawEventObject,
+	RawResolvedEventObject,
+	stringifyMemberReference,
+	toReference,
 	User,
 } from 'common-lib';
-import { AccountBackend } from './Account';
-import { Backends } from './backends';
+import { AccountBackend, BasicAccountRequest } from './Account';
+import { Backends, notImplementedError, notImplementedException, TimeBackend } from './backends';
 import { EventsBackend, getEventID, newEnsureResolvedEvent } from './Event';
 import { MemberBackend } from './Members';
-import { collectResults, findAndBindC, generateResults } from './MySQLUtil';
+import {
+	addToCollection,
+	collectResults,
+	findAndBindC,
+	generateBindObject,
+	generateFindStatement,
+	generateResults,
+	isDuplicateRecordError,
+	modifyAndBindC,
+	RawMySQLBackend,
+} from './MySQLUtil';
 import { ServerEither } from './servertypes';
 import { TeamsBackend } from './Team';
 
@@ -91,6 +118,20 @@ export const attendanceRecordMapper = (rec: RawAttendanceDBRecord): AttendanceRe
 	sourceEventID: rec.eventID,
 });
 
+export const rawAttendanceRecordWrapper = (rec: AttendanceRecord): RawAttendanceDBRecord => ({
+	comments: rec.comments,
+	customAttendanceFieldValues: rec.customAttendanceFieldValues,
+	memberID: rec.memberID,
+	accountID: rec.sourceAccountID,
+	eventID: rec.sourceEventID,
+	memberName: rec.memberName,
+	planToUseCAPTransportation: rec.planToUseCAPTransportation,
+	shiftTime: rec.shiftTime,
+	status: rec.status,
+	summaryEmailSent: rec.summaryEmailSent,
+	timestamp: rec.timestamp,
+});
+
 export const attendanceRecordIterMapper = asyncIterMap(attendanceRecordMapper);
 
 const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
@@ -110,7 +151,7 @@ const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject)
 
 export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
 	account: AccountObject,
-) => (member: MemberReference): ServerEither<MaybeObj<RawAttendanceDBRecord>> =>
+) => (member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not get attendance records'),
@@ -118,7 +159,8 @@ export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Sch
 		.map(findForMemberFunc(now)(account)(member))
 		.map(find => find.limit(1).sort('shiftTime.departureTime DESC'))
 		.map(collectResults)
-		.map(Maybe.fromArray);
+		.map(Maybe.fromArray)
+		.map(Maybe.map(attendanceRecordMapper));
 export const getLatestAttendanceForMember = getLatestAttendanceForMemberFunc(Date.now);
 
 export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
@@ -129,7 +171,8 @@ export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) =
 		errorGenerator('Could not get attendance records'),
 	)
 		.map(findForMemberFunc(now)(account)(member))
-		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults);
+		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults)
+		.map(attendanceRecordIterMapper);
 export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 
 const attendanceFilterError = errorGenerator('Could not verify attendance permissions');
@@ -197,47 +240,56 @@ export const getDetailedAttendanceFilter = (
 
 export const applyAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendance: AsyncIter<AttendanceRecord>) =>
-	asyncIterMap<AttendanceRecord, AttendanceRecord>(record =>
-		AsyncEither.All([
-			backend
-				.getAccount(record.sourceAccountID)
-				.flatMap(account => backend.getEvent(account)(record.sourceEventID)),
-			getDetailedAttendanceFilter(backend)(attendanceViewer)(record),
-		])
-			.map(([event, canSeeDetails]) =>
-				canSeeDetails
-					? record
-					: ({
-							comments: '',
-							customAttendanceFieldValues: [],
-							memberID: record.memberID,
-							memberName: record.memberName,
-							planToUseCAPTransportation: false,
-							shiftTime: {
-								arrivalTime: event.meetDateTime,
-								departureTime: event.pickupDateTime,
-							},
-							sourceAccountID: record.sourceAccountID,
-							sourceEventID: record.sourceEventID,
-							status: record.status,
-							summaryEmailSent: false,
-							timestamp: record.timestamp,
-					  } as AttendanceRecord),
-			)
-			.fullJoin()
-			.then(identity, always(record)),
-	)(asyncIterEitherFilter(getAttendanceFilter(backend)(attendanceViewer))(attendance));
+) => (attendanceViewer: User) =>
+	pipe(
+		asyncIterEitherFilter(getAttendanceFilter(backend)(attendanceViewer)),
+		asyncIterMap<AttendanceRecord, AttendanceRecord>(record =>
+			AsyncEither.All([
+				backend
+					.getAccount(record.sourceAccountID)
+					.flatMap(account => backend.getEvent(account)(record.sourceEventID)),
+				getDetailedAttendanceFilter(backend)(attendanceViewer)(record),
+			])
+				.map(([event, canSeeDetails]) =>
+					canSeeDetails
+						? record
+						: ({
+								comments: '',
+								customAttendanceFieldValues: [],
+								memberID: record.memberID,
+								memberName: record.memberName,
+								planToUseCAPTransportation: false,
+								shiftTime: {
+									arrivalTime: event.meetDateTime,
+									departureTime: event.pickupDateTime,
+								},
+								sourceAccountID: record.sourceAccountID,
+								sourceEventID: record.sourceEventID,
+								status: record.status,
+								summaryEmailSent: false,
+								timestamp: record.timestamp,
+						  } as AttendanceRecord),
+				)
+				.fullJoin()
+				.then(identity, always(record)),
+		),
+	);
 
 export const canMemberModifyRecord = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 ) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
 	asyncRight(false, attendanceFilterError);
 
-export const canMemberSeeCustomAttendanceField = (
+export const canMemberDeleteRecord = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (customAttendanceField: CustomAttendanceFieldValue) =>
+) => (attendanceDeleter: User) => (event: RawResolvedEventObject): ServerEither<boolean> =>
 	asyncRight(false, attendanceFilterError);
+
+export const visibleCustomAttendanceFields = (
+	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+) => (attendanceViewer: User) => (
+	customAttendanceField: AttendanceRecord,
+): ServerEither<CustomAttendanceFieldValue[]> => asyncRight([], attendanceFilterError);
 
 export const canMemberModifyCustomAttendanceField = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
@@ -246,5 +298,254 @@ export const canMemberModifyCustomAttendanceField = (
 
 export const applyAttendanceRecordUpdates = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) =>
-	asyncRight(void 0, errorGenerator('Could not update member attendance record'));
+) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
+	changes: NewAttendanceRecord,
+) => asyncRight(void 0, errorGenerator('Could not update member attendance record'));
+
+export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
+	event: RawEventObject,
+) => (member: MemberReference) =>
+	asyncRight(
+		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+		errorGenerator('Could not delete attendance record'),
+	)
+		.map(collection =>
+			collection
+				.remove(
+					generateFindStatement({
+						accountID: account.id,
+						eventID: event.id,
+						memberID: toReference(member),
+					}),
+				)
+				.bind(
+					generateBindObject({
+						accountID: account.id,
+						eventID: event.id,
+						memberID: toReference(member),
+					}),
+				)
+				.execute(),
+		)
+		.map(destroy);
+
+const sendSignupDenyMessage = (message: string): ServerEither<void> =>
+	asyncLeft({
+		type: 'OTHER',
+		code: 400,
+		message,
+	});
+
+export const addMemberToAttendance = (
+	backend: Backends<[TeamsBackend, TimeBackend, RawMySQLBackend, MemberBackend]>,
+) => (account: AccountObject) => (event: EventObject) => (isAdmin: boolean) => (
+	attendee: Required<NewAttendanceRecord>,
+) =>
+	(event.teamID !== null && event.teamID !== undefined
+		? backend.getTeam(account)(event.teamID).map(Maybe.some)
+		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+	)
+		.map(isAdmin ? always(canSignSomeoneElseUpForEvent(event)) : canSignUpForEvent(event))
+		.map(call(attendee.memberID))
+		.flatMap(
+			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
+				asyncRight(void 0, errorGenerator('Could not add member to attendance')),
+			),
+		)
+		.flatMap(() =>
+			backend
+				.getMemberName(account)(attendee.memberID)
+				.flatMap(memberName =>
+					addToCollection(backend.getCollection('Attendance'))({
+						...attendee,
+						accountID:
+							event.type === EventType.LINKED
+								? event.targetAccountID
+								: event.accountID,
+						eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
+						timestamp: backend.now(),
+						memberName,
+						summaryEmailSent: false,
+						shiftTime: attendee.shiftTime ?? {
+							arrivalTime: event.meetDateTime,
+							departureTime: event.pickupDateTime,
+						},
+					}),
+				)
+				.leftFlatMap(err =>
+					isDuplicateRecordError(err)
+						? Either.left({
+								type: 'OTHER',
+								code: 400,
+								message: 'Member is already in attendance',
+						  })
+						: Either.left(err),
+				),
+		);
+
+export const modifyEventAttendanceRecord = (schema: Schema) => (event: RawResolvedEventObject) => (
+	member: Member,
+) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>) =>
+	asyncRight(
+		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+		errorGenerator('Could not save attendance record'),
+	)
+		.map(
+			modifyAndBindC<RawAttendanceDBRecord>({
+				accountID:
+					event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
+				eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
+				memberID: toReference(member),
+			}),
+		)
+		.map(collection =>
+			collection
+				.patch({
+					...record,
+					memberID: toReference(member),
+					memberName: getFullMemberName(member),
+					shiftTime: record.shiftTime ?? {
+						arrivalTime: event.meetDateTime,
+						departureTime: event.pickupDateTime,
+					},
+				})
+				.execute(),
+		)
+		.map(destroy);
+
+export const deleteAttendanceRecord = (schema: Schema) => (actor: User) => (
+	member: MemberReference,
+) => (event: RawResolvedEventObject) =>
+	asyncRight(void 0, errorGenerator('Could not delete record'));
+
+export const getMemberAttendanceRecordForEvent = (backend: Backends<[RawMySQLBackend]>) => (
+	event: RawEventObject,
+) => (member: MemberReference) =>
+	asyncRight(
+		backend.getCollection('Attendance'),
+		errorGenerator('Could not get member attendance'),
+	)
+		.map(
+			findAndBindC<RawAttendanceDBRecord>({
+				accountID: event.accountID,
+				eventID: event.id,
+				memberID: toReference(member),
+			}),
+		)
+		.map(collectResults)
+		.map(Maybe.fromArray)
+		.map(Maybe.map(attendanceRecordMapper));
+
+export interface AttendanceBackend {
+	getAttendanceForEvent: (event: RawEventObject) => ServerEither<AsyncIter<AttendanceRecord>>;
+	getMemberAttendanceRecordForEvent: (
+		event: RawEventObject,
+	) => (member: MemberReference) => ServerEither<MaybeObj<AttendanceRecord>>;
+	getLatestAttendanceForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<MaybeObj<AttendanceRecord>>;
+	getAttendanceForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<AsyncIter<AttendanceRecord>>;
+	getAttendanceFilter: (actor: User) => (attendance: AttendanceRecord) => ServerEither<boolean>;
+	getDetailedAttendanceFilter: (
+		actor: User,
+	) => (attendance: AttendanceRecord) => ServerEither<boolean>;
+	canMemberModifyRecord: (actor: User) => (record: AttendanceRecord) => ServerEither<boolean>;
+	canMemberDeleteRecord: (
+		actor: User,
+	) => (event: RawResolvedEventObject) => ServerEither<boolean>;
+	applyAttendanceFilter: (
+		actor: User,
+	) => (attendance: AsyncIter<AttendanceRecord>) => AsyncIter<AttendanceRecord>;
+	applyAttendanceRecordUpdates: (
+		actor: User,
+	) => (record: AttendanceRecord) => (changes: NewAttendanceRecord) => ServerEither<void>;
+	removeMemberFromEventAttendance: (
+		actor: User,
+	) => (member: MemberReference) => (event: RawResolvedEventObject) => ServerEither<void>;
+	addMemberToAttendance: (
+		event: RawResolvedEventObject,
+	) => (
+		forceAdd: boolean,
+	) => (attendee: Required<NewAttendanceRecord>) => ServerEither<AttendanceRecord>;
+}
+
+export const getRequestFreeAttendanceBackend = (
+	mysqlx: Schema,
+	prevBackend: Backends<
+		[AccountBackend, TimeBackend, MemberBackend, TeamsBackend, EventsBackend, RawMySQLBackend]
+	>,
+): AttendanceBackend => ({
+	getAttendanceForEvent: memoize(event => getAttendanceForEvent(mysqlx)(event), get('id')),
+	getAttendanceForMember: memoize(
+		account =>
+			memoize(
+				member => getAttendanceForMember(mysqlx)(account)(member),
+				stringifyMemberReference,
+			),
+		get('id'),
+	),
+	getLatestAttendanceForMember: memoize(
+		account =>
+			memoize(
+				member => getLatestAttendanceForMember(mysqlx)(account)(member),
+				stringifyMemberReference,
+			),
+		get('id'),
+	),
+	getAttendanceFilter: user => record => getAttendanceFilter(prevBackend)(user)(record),
+	getDetailedAttendanceFilter: user => record =>
+		getDetailedAttendanceFilter(prevBackend)(user)(record),
+	canMemberModifyRecord: user => record => canMemberModifyRecord(prevBackend)(user)(record),
+	canMemberDeleteRecord: user => record => canMemberDeleteRecord(prevBackend)(user)(record),
+	applyAttendanceFilter: user => attendance =>
+		applyAttendanceFilter(prevBackend)(user)(attendance),
+	applyAttendanceRecordUpdates: actor => record => changes =>
+		applyAttendanceRecordUpdates(prevBackend)(actor)(record)(changes),
+	removeMemberFromEventAttendance: actor => member => event =>
+		deleteAttendanceRecord(mysqlx)(actor)(member)(event),
+	getMemberAttendanceRecordForEvent: memoize(
+		event =>
+			memoize(
+				getMemberAttendanceRecordForEvent(prevBackend)(event),
+				stringifyMemberReference,
+			),
+		get('id'),
+	),
+	addMemberToAttendance: event => forceAdd => attendee =>
+		prevBackend.getAccount(event.accountID).flatMap(account =>
+			prevBackend
+				.getEvent(account)(event.id)
+				.flatMap(prevBackend.getFullEventObject)
+				.map(addMemberToAttendance(prevBackend)(account))
+				.flatMap(f => f(forceAdd)(attendee))
+				.map(attendanceRecordMapper),
+		),
+});
+
+export const getAttendanceBackend = (
+	req: BasicAccountRequest,
+	prevBackend: Backends<
+		[AccountBackend, TimeBackend, MemberBackend, TeamsBackend, EventsBackend]
+	>,
+): AttendanceBackend =>
+	getRequestFreeAttendanceBackend(req.mysqlx, { ...prevBackend, ...req.backend });
+
+export const getEmptyAttendanceBackend = (): AttendanceBackend => ({
+	getAttendanceForEvent: () => notImplementedError('getAttendanceForEvent'),
+	getAttendanceForMember: () => () => notImplementedError('getAttendanceForMember'),
+	getLatestAttendanceForMember: () => () => notImplementedError('getLatestAttendanceForMember'),
+	applyAttendanceFilter: () => () => notImplementedException('applyAttendanceFilter'),
+	applyAttendanceRecordUpdates: () => () => () =>
+		notImplementedError('applyAttendanceRecordUpdates'),
+	canMemberDeleteRecord: () => () => notImplementedError('canMemberDeleteRecord'),
+	canMemberModifyRecord: () => () => notImplementedError('canMemberModifyRecord'),
+	getAttendanceFilter: () => () => notImplementedError('getAttendanceFilter'),
+	getDetailedAttendanceFilter: () => () => notImplementedError('getDetailedAttendanceFilter'),
+	removeMemberFromEventAttendance: () => () => () =>
+		notImplementedError('deleteAttendanceRecord'),
+	getMemberAttendanceRecordForEvent: () => () =>
+		notImplementedError('getMemberAttendanceRecordForEvent'),
+	addMemberToAttendance: () => () => () => notImplementedError('addMemberToAttendance'),
+});

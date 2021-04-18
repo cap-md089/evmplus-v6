@@ -20,10 +20,11 @@
 import { Client as MySQLClient } from '@mysql/xdevapi';
 import { always, DiscordAccount } from 'common-lib';
 import { Client, Guild, Permissions, Role } from 'discord.js';
-import { collectResults, findAndBind, getRegistry } from 'server-common';
+import { collectResults, findAndBind } from 'server-common';
 import { getXSession } from '..';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
 import getAccount from './getAccount';
+import { getDiscordBackend } from './getDiscordBackend';
 import setupUser, {
 	AchvIDToCertificationRole,
 	byName,
@@ -60,6 +61,8 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 ) => (guildId: string) => async (rules: Partial<DiscordSetupRules>) => {
 	const { schema, session } = await getXSession(config, mysql);
 
+	const backend = getDiscordBackend(schema);
+
 	try {
 		const guild = await client.guilds.fetch(guildId);
 
@@ -73,7 +76,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 			throw new Error('No account is associated with that guild');
 		}
 
-		const registry = await getRegistry(schema)(account.value).fullJoin();
+		const registry = await backend.getRegistry(account.value).fullJoin();
 
 		const usedRules: DiscordSetupRules = {
 			deleteOldRoles: true,
@@ -243,7 +246,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 
 			if (guild.ownerID !== member.id && !member.user.bot) {
 				if (results.length === 1) {
-					await setupUser(client)(schema)(guildId)(account.value)()(results[0]);
+					await setupUser(client)(backend)(guildId)(account.value)()(results[0]);
 				} else {
 					await (
 						await member.roles.set(
@@ -256,7 +259,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 					try {
 						const dmChannel = await member.createDM();
 						const messages = await dmChannel.awaitMessages(always(true));
-						if (messages.size == 0) {
+						if (messages.size === 0) {
 							await dmChannel.send(
 								`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${config.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`,
 							);

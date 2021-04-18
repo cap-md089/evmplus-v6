@@ -28,8 +28,9 @@ import {
 	RawTeamObject,
 } from 'common-lib';
 import { Client, Guild, Role } from 'discord.js';
-import { collectResults, findAndBind, getTeamObjects } from 'server-common';
+import { collectResults, findAndBind } from 'server-common';
 import getAccountForDiscordServer from '../data/getAccount';
+import { getDiscordBackend } from '../data/getDiscordBackend';
 import setupUser, { byName } from '../data/setupUser';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
 
@@ -42,6 +43,8 @@ export default async (
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
+	const backend = getDiscordBackend(schema);
+
 	const setupServer = async (id: string, guild: Guild) => {
 		const accountMaybe = await getAccountForDiscordServer(schema)(id);
 
@@ -53,7 +56,8 @@ export default async (
 
 		console.log(`Updating ${account.id} (${id})...`);
 
-		const teams = await getTeamObjects(schema)(accountMaybe.value)
+		const teams = await backend
+			.getTeams(accountMaybe.value)
 			// block the staff team
 			.map(asyncIterFilter(team => team.id !== 0))
 			.map(collectGeneratorAsync)
@@ -67,7 +71,7 @@ export default async (
 			if (guild.ownerID !== member.id && !member.user.bot) {
 				if (results.length === 1) {
 					console.log(`Updating ${member.displayName}`);
-					await setupUser(client)(schema)(id)(account)(
+					await setupUser(client)(backend)(id)(account)(
 						teams.filter(isPartOfTeam(results[0].member)),
 					)(results[0]);
 				} else {
@@ -132,7 +136,8 @@ export default async (
 
 			if (guild.ownerID !== member.id && !member.user.bot) {
 				if (results.length === 1) {
-					const teams = await getTeamObjects(schema)(accountMaybe.value)
+					const teams = await backend
+						.getTeams(accountMaybe.value)
 						// block the staff team
 						.map(asyncIterFilter(team => team.id !== 0))
 						.map(asyncIterFilter<RawTeamObject>(isPartOfTeam(results[0].member)))
@@ -140,7 +145,7 @@ export default async (
 						.fullJoin();
 
 					console.log(`Updating ${member.displayName}`);
-					await setupUser(client)(schema)(args[0])(account)(teams)(results[0]);
+					await setupUser(client)(backend)(args[0])(account)(teams)(results[0]);
 				} else {
 					await (
 						await member.roles.set(

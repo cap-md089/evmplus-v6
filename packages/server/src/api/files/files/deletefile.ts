@@ -17,21 +17,22 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, FileUserAccessControlPermissions, Maybe, userHasFilePermission } from 'common-lib';
-import { deleteFileObject, getFileObject } from 'server-common';
+import { Backends, FileBackend, getCombinedFileBackend, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canDeleteFile = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-export const func: ServerAPIEndpoint<api.files.files.Delete> = req =>
-	getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.fileid)
+export const func: Endpoint<Backends<[FileBackend]>, api.files.files.Delete> = backend => req =>
+	backend
+		.getFileObject(req.account)(Maybe.some(req.member))(req.params.fileid)
 		.filter(canDeleteFile(req.member), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member cannot delete file',
 		})
-		.flatMap(deleteFileObject(req.configuration)(req.mysqlx)(req.account))
+		.flatMap(backend.deleteFileObject)
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedFileBackend);

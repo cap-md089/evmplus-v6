@@ -28,7 +28,10 @@ import {
 	ServerError,
 	Timezone,
 	Maybe,
+	BasicMySQLRequest,
+	memoize,
 } from 'common-lib';
+import { notImplementedError } from './backends';
 import {
 	addItemToCollection,
 	collectResults,
@@ -128,3 +131,27 @@ export const saveRegistry = (schema: Schema) => (
 		schema.getCollection<RegistryValues>('Registry'),
 		errorGenerator('Could not save registry'),
 	).flatMap(saveItemToCollectionA(registry));
+
+export interface RegistryBackend {
+	getRegistry: (account: AccountObject) => ServerEither<RegistryValues>;
+	getRegistryUnsafe: (accountID: string) => ServerEither<RegistryValues>;
+	saveRegistry: (registry: RegistryValues) => ServerEither<RegistryValues>;
+}
+
+export const getRegistryBackend = (req: BasicMySQLRequest): RegistryBackend => ({
+	getRegistry: memoize(getRegistry(req.mysqlx), get('id')),
+	getRegistryUnsafe: memoize(getRegistryById(req.mysqlx)),
+	saveRegistry: saveRegistry(req.mysqlx),
+});
+
+export const getEmptyRegistryBackend = (): RegistryBackend => ({
+	getRegistry: () => notImplementedError('getRegistry'),
+	getRegistryUnsafe: () => notImplementedError('getRegistryUnsafe'),
+	saveRegistry: () => notImplementedError('saveRegistry'),
+});
+
+export const getRequestFreeRegistryBackend = (mysqlx: Schema): RegistryBackend => ({
+	getRegistry: memoize(getRegistry(mysqlx), get('id')),
+	getRegistryUnsafe: memoize(getRegistryById(mysqlx)),
+	saveRegistry: saveRegistry(mysqlx),
+});

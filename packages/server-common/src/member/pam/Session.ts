@@ -58,7 +58,8 @@ import type { Totp } from 'speakeasy';
 import { promisify } from 'util';
 import { AccountBackend, BasicAccountRequest } from '../../Account';
 import { Backends } from '../../backends';
-import { getMemberBackend, MemberBackend } from '../../Members';
+import { getCombinedMemberBackend } from '../../defaultBackends';
+import { MemberBackend } from '../../Members';
 import {
 	addToCollection,
 	collectResults,
@@ -67,6 +68,7 @@ import {
 	RawMySQLBackend,
 	safeBind,
 } from '../../MySQLUtil';
+import { RegistryBackend } from '../../Registry';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
 
@@ -102,7 +104,7 @@ export interface BasicMemberRequest<P extends ParamType = {}, B = any>
 
 	session: ActiveSession;
 
-	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>;
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend, RegistryBackend]>;
 }
 
 export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
@@ -111,7 +113,7 @@ export interface BasicMaybeMemberRequest<P extends ParamType = {}, B = any>
 
 	session: MaybeObj<ActiveSession>;
 
-	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>;
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend, RegistryBackend]>;
 }
 
 const addSessionToDatabase = (
@@ -276,8 +278,8 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 			{
 				...request,
 				backend: {
+					...getCombinedMemberBackend(request),
 					...request.backend,
-					...getMemberBackend(request),
 				},
 			},
 			errorGenerator('Could not get session information'),
@@ -502,7 +504,7 @@ export const filterSession = <T extends SessionType>(...sessionTypes: T[]) => <
 
 export const startMFASetupFunc = (generateSecret: typeof speakeasy.generateSecret) => (
 	schema: Schema,
-) => (member: MemberReference) =>
+) => (member: MemberReference): ServerEither<string> =>
 	asyncRight(
 		Promise.all([
 			findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {

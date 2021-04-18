@@ -17,18 +17,25 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, SessionType } from 'common-lib';
-import { expandTeam, getTeam, httpStripTeamObject, PAM } from 'server-common';
+import {
+	Backends,
+	getCombinedTeamsBackend,
+	httpStripTeamObject,
+	PAM,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.team.GetTeam> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
-		.flatMap(expandTeam(req.mysqlx)(req.account))
-		.map(httpStripTeamObject(req.member))
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[TeamsBackend]>, api.team.GetTeam> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getTeam(req.account)(parseInt(req.params.id, 10))
+			.flatMap(backend.expandTeam)
+			.map(httpStripTeamObject(req.member))
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedTeamsBackend);

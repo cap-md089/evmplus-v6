@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
 import { AsyncRepr, ServerAPIRequestParameter, ServerEither } from 'auto-client-api';
 import {
 	AccountObject,
@@ -40,30 +39,26 @@ import {
 	get,
 	getAppropriateDebriefItems,
 	Maybe,
+	MaybeObj,
 	RawLinkedEvent,
 	RawResolvedEventObject,
 	RegistryValues,
 	Right,
 	ServerError,
+	User,
 } from 'common-lib';
 import {
 	AccountBackend,
+	AttendanceBackend,
 	Backends,
+	BasicAccountRequest,
+	combineBackends,
 	EventsBackend,
-	getAccountBackend,
-	getAttendanceForEvent,
-	getEventsBackend,
-	getFullPointsOfContact,
-	getLinkedEvents,
-	getMemberBackend,
-	getMemberName,
-	getMemoizedAccountGetter,
-	getOrgName,
-	getRegistry,
-	getRegistryById,
-	getTeamsBackend,
+	GenBackend,
+	getCombinedAttendanceBackend,
+	getRegistryBackend,
 	MemberBackend,
-	resolveReference,
+	RegistryBackend,
 	TeamsBackend,
 	withBackends,
 } from 'server-common';
@@ -71,6 +66,9 @@ import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.events.events.GetEventViewerData>;
+type Backend = Backends<
+	[EventsBackend, AccountBackend, MemberBackend, TeamsBackend, RegistryBackend, AttendanceBackend]
+>;
 
 interface LinkedEventInfo {
 	id: number;
@@ -82,11 +80,11 @@ interface LinkedEventInfo {
 export const getViewingAccount = (account: AccountObject) => (event: RawResolvedEventObject) =>
 	event.type === EventType.LINKED ? Maybe.some(account) : Maybe.none();
 
-export const expandLinkedEvent = (schema: Schema) => (name: string) => ({
+export const expandLinkedEvent = (backend: Backends<[RegistryBackend]>) => (name: string) => ({
 	id,
 	accountID,
 }: RawLinkedEvent): ServerEither<LinkedEventInfo> =>
-	getRegistryById(schema)(accountID).map(({ Website: { Name: accountName } }) => ({
+	backend.getRegistryUnsafe(accountID).map(({ Website: { Name: accountName } }) => ({
 		accountName,
 		name,
 		id,
@@ -95,22 +93,25 @@ export const expandLinkedEvent = (schema: Schema) => (name: string) => ({
 
 export const getSourceAccountName = (
 	event: RawResolvedEventObject,
-	req: Req,
+	backend: Backend,
 ): AsyncEither<ServerError, string | undefined> =>
 	event.type === EventType.LINKED
-		? getRegistryById(req.mysqlx)(event.targetAccountID).map(reg => reg.Website.Name)
+		? backend.getRegistryUnsafe(event.targetAccountID).map(reg => reg.Website.Name)
 		: asyncRight(void 0, errorGenerator('Could not get account name'));
 
 export const getEventPOCs = (
-	req: Req,
+	backend: Backend,
 	event: RawResolvedEventObject,
+	viewer: MaybeObj<User>,
 ): AsyncEither<ServerError, Array<DisplayInternalPointOfContact | ExternalPointOfContact>> =>
-	getFullPointsOfContact(req.mysqlx)(req.account)(
-		event.pointsOfContact.map(poc => ({
-			...poc,
-			email: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.email : '',
-			phone: !!poc.publicDisplay || Maybe.isSome(req.member) ? poc.phone : '',
-		})),
+	backend.getAccount(event.accountID).flatMap(account =>
+		backend.getFullPointsOfContact(account)(
+			event.pointsOfContact.map(poc => ({
+				...poc,
+				email: !!poc.publicDisplay || Maybe.isSome(viewer) ? poc.email : '',
+				phone: !!poc.publicDisplay || Maybe.isSome(viewer) ? poc.phone : '',
+			})),
+		),
 	);
 
 const checkAttendeesForRequest = (
@@ -130,23 +131,26 @@ const checkAttendeesForRequest = (
 		  )(attendees);
 
 export const getAttendanceForNonAdmin = (
-	req: Req,
+	backend: Backend,
+	member: MaybeObj<User>,
 	event: RawResolvedEventObject,
 ): AsyncEither<ServerError, AsyncIter<AttendanceRecord>> =>
-	Maybe.isSome(req.member)
-		? getAttendanceForEvent(req.mysqlx)(event)
+	Maybe.isSome(member)
+		? backend.getAttendanceForEvent(event)
 		: asyncRight<ServerError, AsyncIter<AttendanceRecord>>([], errorGenerator());
 
 export const getLinkedEventsForViewer = (
 	req: Req,
+	backend: Backend,
 	event: RawResolvedEventObject,
 ): AsyncEither<ServerError, AsyncIter<LinkedEventInfo>> =>
-	asyncRight(
-		asyncIterMap(expandLinkedEvent(req.mysqlx)(event.name))(
-			getLinkedEvents(req.mysqlx)(event.accountID)(event.id),
-		),
-		errorGenerator('Could not get linked events'),
-	)
+	backend
+		.getAccount(event.accountID)
+		.map(account =>
+			asyncIterMap(expandLinkedEvent(backend)(event.name))(
+				backend.getLinkedEvents(account)(event.id),
+			),
+		)
 		.map(
 			asyncIterFilter<EitherObj<ServerError, LinkedEventInfo>, Right<LinkedEventInfo>>(
 				Either.isRight,
@@ -154,40 +158,40 @@ export const getLinkedEventsForViewer = (
 		)
 		.map(asyncIterMap(get('value')));
 
-export const getFullEventInformation = (req: Req) => (
+export const getFullEventInformation = (
+	req: Req,
 	event: RawResolvedEventObject,
+	backend: Backend,
 ): ServerEither<AsyncRepr<api.events.events.EventViewerData>> =>
 	AsyncEither.All([
-		asyncRight(
-			getOrgName(getMemoizedAccountGetter(req.mysqlx))(req.mysqlx)(req.account),
-			errorGenerator('Could not get member record information'),
-		).flatMap(orgNameGetter =>
-			getAttendanceForEvent(req.mysqlx)(event).map(
-				asyncIterMap(record =>
-					resolveReference(req.mysqlx)(req.account)(record.memberID)
-						.flatMap(member =>
-							orgNameGetter(member).map(orgName => ({
+		backend.getAttendanceForEvent(event).map(
+			asyncIterMap(record =>
+				backend
+					.getMember(req.account)(record.memberID)
+					.flatMap(member =>
+						backend
+							.getOrgNameForMember(req.account)(member)
+							.map(orgName => ({
 								member: Maybe.some(member),
 								record,
 								orgName,
 							})),
-						)
-						.leftFlatMap(
-							always(
-								Either.right({
-									member: Maybe.none(),
-									record,
-									orgName: Maybe.none(),
-								}),
-							),
+					)
+					.leftFlatMap(
+						always(
+							Either.right({
+								member: Maybe.none(),
+								record,
+								orgName: Maybe.none(),
+							}),
 						),
-				),
+					),
 			),
 		),
-		getFullPointsOfContact(req.mysqlx)(req.account)(event.pointsOfContact),
-		getSourceAccountName(event, req),
-		getLinkedEventsForViewer(req, event),
-		getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some),
+		backend.getFullPointsOfContact(req.account)(event.pointsOfContact),
+		getSourceAccountName(event, backend),
+		getLinkedEventsForViewer(req, backend, event),
+		backend.getMemberName(req.account)(event.author).map(Maybe.some),
 	]).map<AsyncRepr<api.events.events.EventViewerData>>(
 		([attendees, pointsOfContact, sourceAccountName, linkedEvents, authorFullName]) => ({
 			event,
@@ -199,25 +203,22 @@ export const getFullEventInformation = (req: Req) => (
 		}),
 	);
 
-export const func: Endpoint<
-	Backends<[EventsBackend, AccountBackend, MemberBackend, TeamsBackend]>,
-	api.events.events.GetEventViewerData
-> = backend => req =>
+export const func: Endpoint<Backend, api.events.events.GetEventViewerData> = backend => req =>
 	backend
 		.getEvent(req.account)(req.params.id)
 		.flatMap(backend.ensureResolvedEvent)
 		.map(getAppropriateDebriefItems(req.member))
 		.flatMap(event =>
 			canMaybeFullyManageEvent(req.member)(event)
-				? getFullEventInformation(req)(event)
+				? getFullEventInformation(req, event, backend)
 				: AsyncEither.All([
-						getRegistry(req.mysqlx)(req.account),
-						getAttendanceForNonAdmin(req, event),
-						getEventPOCs(req, event),
-						getSourceAccountName(event, req),
-						getLinkedEventsForViewer(req, event),
+						backend.getRegistry(req.account),
+						getAttendanceForNonAdmin(backend, req.member, event),
+						getEventPOCs(backend, event, req.member),
+						getSourceAccountName(event, backend),
+						getLinkedEventsForViewer(req, backend, event),
 						Maybe.isSome(req.member)
-							? getMemberName(req.mysqlx)(req.account)(event.author).map(Maybe.some)
+							? backend.getMemberName(req.account)(event.author).map(Maybe.some)
 							: asyncRight(
 									Maybe.none(),
 									errorGenerator('Could not get event author name'),
@@ -244,8 +245,8 @@ export const func: Endpoint<
 
 export default withBackends(
 	func,
-	getEventsBackend,
-	getAccountBackend,
-	getMemberBackend,
-	getTeamsBackend,
+	combineBackends<
+		BasicAccountRequest,
+		[RegistryBackend, GenBackend<typeof getCombinedAttendanceBackend>]
+	>(getRegistryBackend, getCombinedAttendanceBackend),
 );

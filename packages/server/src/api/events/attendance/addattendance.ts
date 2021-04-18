@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
+import { ServerAPIRequestParameter } from 'auto-client-api';
 import {
 	always,
 	api,
@@ -39,22 +39,30 @@ import {
 	toReference,
 } from 'common-lib';
 import {
-	addMemberToAttendance,
-	attendanceRecordMapper,
-	getEvent,
-	getFullEventObject,
-	getTeam,
+	AttendanceBackend,
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	getCombinedAttendanceBackend,
+	getRawMySQLBackend,
+	MemberBackend,
 	PAM,
-	resolveReference,
+	RawMySQLBackend,
+	TeamsBackend,
+	TimeBackend,
+	withBackends,
+	GenBackend,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) => (
-	event: EventObject,
-) => (teamMaybe: MaybeObj<RawTeamObject>) =>
+const getRecord = (backend: Backends<[MemberBackend]>) => (
+	req: ServerAPIRequestParameter<api.events.attendance.Add>,
+) => (event: EventObject) => (teamMaybe: MaybeObj<RawTeamObject>) =>
 	(isValidMemberReference(req.body.memberID) &&
 	hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe)
-		? resolveReference(req.mysqlx)(req.account)(req.body.memberID)
+		? backend.getMember(req.account)(req.body.memberID)
 		: asyncRight(req.member, errorGenerator('Could not get member'))
 	)
 		.map(toReference)
@@ -67,17 +75,30 @@ const getRecord = (req: ServerAPIRequestParameter<api.events.attendance.Add>) =>
 			memberID,
 		}));
 
-const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(getFullEventObject(req.mysqlx)(req.account))
+const addAttendance: Endpoint<
+	Backends<
+		[
+			TimeBackend,
+			EventsBackend,
+			TeamsBackend,
+			MemberBackend,
+			RawMySQLBackend,
+			AttendanceBackend,
+		]
+	>,
+	api.events.attendance.Add
+> = backend => req =>
+	backend
+		.getEvent(req.account)(req.params.id)
+		.flatMap(backend.getFullEventObject)
 		.flatMap(event =>
 			(event.teamID !== undefined && event.teamID !== null
-				? getTeam(req.mysqlx)(req.account)(event.teamID).map(Maybe.some)
+				? backend.getTeam(req.account)(event.teamID).map(Maybe.some)
 				: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
 			).map(teamMaybe => [event, teamMaybe] as const),
 		)
 		.flatMap(([event, teamMaybe]) =>
-			getRecord(req)(event)(teamMaybe)
+			getRecord(backend)(req)(event)(teamMaybe)
 				.flatMap(rec =>
 					Either.map<ServerError, void, Required<NewAttendanceRecord>>(always(rec))(
 						Either.leftMap<string, ServerError, void>(err => ({
@@ -92,31 +113,49 @@ const addAttendance: ServerAPIEndpoint<api.events.attendance.Add> = req =>
 					),
 				)
 				.flatMap(
-					addMemberToAttendance(req.mysqlx)(req.account)(event)(
+					backend.addMemberToAttendance(event)(
 						hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe),
 					),
-				)
-				.map(attendanceRecordMapper),
+				),
 		)
 		.map(wrapper);
 
-export const func: ServerAPIEndpoint<api.events.attendance.Add> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-	SessionType.SCAN_ADD,
-)(request =>
-	asyncRight(request, errorGenerator('Could not process request'))
-		.filter(
-			req =>
-				req.session.type === SessionType.REGULAR ||
-				(req.session.sessionData.accountID === req.account.id &&
-					req.session.sessionData.eventID.toString() === req.params.id),
-			{
-				type: 'OTHER',
-				code: 403,
-				message: 'Current session cannot add attendance to this event',
-			},
-		)
-		.flatMap(addAttendance),
-);
+export const func: Endpoint<
+	Backends<
+		[
+			TimeBackend,
+			EventsBackend,
+			TeamsBackend,
+			MemberBackend,
+			RawMySQLBackend,
+			AttendanceBackend,
+		]
+	>,
+	api.events.attendance.Add
+> = backend =>
+	PAM.RequireSessionType(
+		SessionType.REGULAR,
+		SessionType.SCAN_ADD,
+	)(request =>
+		asyncRight(request, errorGenerator('Could not process request'))
+			.filter(
+				req =>
+					req.session.type === SessionType.REGULAR ||
+					(req.session.sessionData.accountID === req.account.id &&
+						req.session.sessionData.eventID.toString() === req.params.id),
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'Current session cannot add attendance to this event',
+				},
+			)
+			.flatMap(addAttendance(backend)),
+	);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[RawMySQLBackend, GenBackend<typeof getCombinedAttendanceBackend>]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend),
+);

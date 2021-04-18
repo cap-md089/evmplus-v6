@@ -17,40 +17,49 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, asyncEither, destroy, errorGenerator, Permissions, SessionType } from 'common-lib';
-import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
-import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
+import {
+	Backends,
+	CAP,
+	getCombinedMemberBackend,
+	MemberBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.flight.Assign> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'FlightAssign',
-		Permissions.FlightAssign.YES,
-	)(req =>
-		resolveReference(req.mysqlx)(req.account)(req.body.member)
-			.map(member => ({
-				...member,
-				flight: req.body.flight,
-			}))
-			.flatMap(member =>
-				asyncEither(
-					getExtraMemberInformationForCAPMember(req.account)(member),
-					errorGenerator('Could not save flight information'),
-				)
-					.flatMap(saveExtraMemberInformation(req.mysqlx))
-					.tap(() =>
-						req.memberUpdateEmitter.emit('memberChange', {
-							member,
-							account: req.account,
-						}),
+export const func: Endpoint<
+	Backends<[CAP.CAPMemberBackend, MemberBackend]>,
+	api.member.flight.Assign
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'FlightAssign',
+			Permissions.FlightAssign.YES,
+		)(req =>
+			backend
+				.getMember(req.account)(req.body.member)
+				.map(member => ({
+					...member,
+					flight: req.body.flight,
+				}))
+				.flatMap(member =>
+					asyncEither(
+						CAP.getExtraMemberInformationForCAPMember(req.account)(member),
+						errorGenerator('Could not save flight information'),
 					)
-					.map(destroy)
-					.map(wrapper),
-			),
-	),
-);
+						.flatMap(backend.saveExtraMemberInformation)
+						.tap(() =>
+							req.memberUpdateEmitter.emit('memberChange', {
+								member,
+								account: req.account,
+							}),
+						)
+						.map(destroy)
+						.map(wrapper),
+				),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend);

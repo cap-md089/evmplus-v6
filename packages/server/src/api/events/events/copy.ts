@@ -19,25 +19,16 @@
 
 import { api, canFullyManageEvent, EventStatus, Maybe, SessionType, toReference } from 'common-lib';
 import {
-	AccountBackend,
 	Backends,
 	EventsBackend,
-	getAccountBackend,
-	getEventsBackend,
-	getMemberBackend,
-	getRawMySQLBackend,
-	MemberBackend,
+	getCombinedEventsBackend,
 	PAM,
-	RawMySQLBackend,
 	withBackends,
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: Endpoint<
-	Backends<[RawMySQLBackend, AccountBackend, MemberBackend, EventsBackend]>,
-	api.events.events.Copy
-> = backend =>
+export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Copy> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		backend
 			.getEvent(req.account)(req.params.id)
@@ -60,10 +51,4 @@ export const func: Endpoint<
 			.map(wrapper),
 	);
 
-export default withBackends(
-	func,
-	getRawMySQLBackend,
-	getAccountBackend,
-	getMemberBackend,
-	getEventsBackend,
-);
+export default withBackends(func, getCombinedEventsBackend);

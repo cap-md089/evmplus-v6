@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, validator } from 'auto-client-api';
+import { validator } from 'auto-client-api';
 import {
 	always,
 	api,
@@ -39,14 +39,22 @@ import {
 	Validator,
 } from 'common-lib';
 import {
-	addMemberToAttendanceFunc,
-	ensureResolvedEvent,
-	getAttendanceForEvent,
-	getEvent,
-	getFullEventObject,
-	getTeam,
+	AttendanceBackend,
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	GenBackend,
+	getCombinedAttendanceBackend,
+	getRawMySQLBackend,
+	MemberBackend,
 	PAM,
+	RawMySQLBackend,
+	TeamsBackend,
+	TimeBackend,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '../../..';
 import { validateRequest } from '../../../lib/requestUtils';
 import wrapper from '../../../lib/wrapper';
 
@@ -58,35 +66,49 @@ const bulkAttendanceValidator = new Validator({
 	),
 });
 
-export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendance.AddBulk> = (
-	now = Date.now,
-) =>
+export const func: Endpoint<
+	Backends<
+		[
+			EventsBackend,
+			TeamsBackend,
+			RawMySQLBackend,
+			TimeBackend,
+			MemberBackend,
+			AttendanceBackend,
+		]
+	>,
+	api.events.attendance.AddBulk
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(bulkAttendanceValidator)(request).flatMap(req =>
-			getEvent(req.mysqlx)(req.account)(req.params.id)
-				.flatMap(ensureResolvedEvent(req.mysqlx))
+			backend
+				.getEvent(req.account)(req.params.id)
+				.flatMap(backend.ensureResolvedEvent)
 				.filter(canFullyManageEvent(req.member), {
 					type: 'OTHER',
 					code: 403,
 					message: 'Member cannot perform this action',
 				})
-				.flatMap(getFullEventObject(req.mysqlx)(req.account))
+				.flatMap(backend.getFullEventObject)
 				.flatMap<[EventObject, MaybeObj<RawTeamObject>]>(event =>
 					!event.teamID
 						? asyncRight<ServerError, [EventObject, MaybeObj<RawTeamObject>]>(
 								[event, Maybe.none()],
 								errorGenerator('Could not get team information'),
 						  )
-						: getTeam(req.mysqlx)(req.account)(event.teamID).map<
-								[EventObject, MaybeObj<RawTeamObject>]
-						  >(team => [event, Maybe.some(team)]),
+						: backend
+								.getTeam(req.account)(event.teamID)
+								.map<[EventObject, MaybeObj<RawTeamObject>]>(team => [
+									event,
+									Maybe.some(team),
+								]),
 				)
 
 				.flatMap<RawEventObject>(([event, teamMaybe]) =>
 					asyncRight(
 						collectGeneratorAsync(
 							asyncIterMap(
-								addMemberToAttendanceFunc(now)(req.mysqlx)(req.account)(event)(
+								backend.addMemberToAttendance(event)(
 									hasBasicAttendanceManagementPermission(req.member)(event)(
 										teamMaybe,
 									),
@@ -97,10 +119,16 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.attendan
 					).map(always(event)),
 				)
 
-				.flatMap(getAttendanceForEvent(req.mysqlx))
+				.flatMap(backend.getAttendanceForEvent)
 				.map(asyncIterHandler(errorGenerator('Could not get attendance record')))
 				.map(wrapper),
 		),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[RawMySQLBackend, GenBackend<typeof getCombinedAttendanceBackend>]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend),
+);

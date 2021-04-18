@@ -25,46 +25,42 @@ import {
 	AllExtraMemberInformation,
 	always,
 	areMembersTheSame,
-	asyncEither,
 	AsyncEither,
+	asyncFilterUnique,
 	AsyncIter,
+	asyncIterConcat2,
 	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncIterReduce,
 	asyncLeft,
 	asyncRight,
-	BasicMySQLRequest,
 	countAsync,
 	destroy,
-	Either,
 	EitherObj,
 	errorGenerator,
 	get,
 	getORGIDsFromCAPAccount,
 	isPartOfTeam,
-	isRioux,
 	Maybe,
 	Member,
 	MemberForReference,
 	MemberPermissions,
 	MemberReference,
 	memoize,
-	parseStringMemberReference,
 	Permissions,
 	pipe,
-	asyncIterConcat2,
 	RawCAPEventAccountObject,
 	RawTeamObject,
 	ServerError,
 	SignInLogData,
-	StoredAccountMembership,
 	StoredMemberPermissions,
 	stringifyMemberReference,
+	TableDataType,
 	toReference,
-	User,
 } from 'common-lib';
-import { AccountBackend, AccountGetter, getAccount } from './Account';
+import { DateTime } from 'luxon';
+import { AccountBackend, BasicAccountRequest } from './Account';
 import { RawAttendanceDBRecord } from './Attendance';
 import { Backends, notImplementedError } from './backends';
 import { CAP } from './member/members';
@@ -78,19 +74,20 @@ import {
 	RawMySQLBackend,
 } from './MySQLUtil';
 import { getMemberNotifications } from './notifications';
-import { getRegistryById } from './Registry';
+import { getRegistryById, RegistryBackend } from './Registry';
 import { ServerEither } from './servertypes';
 import { getTasksForMember } from './Task';
+import { TeamsBackend } from './Team';
 
 export * from './member/members';
 
-export const resolveReference = (schema: Schema) => (account: AccountObject) => <
-	T extends MemberReference = MemberReference
->(
+export const resolveReference = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
+	account: AccountObject,
+) => <T extends MemberReference = MemberReference>(
 	ref: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	ref.type === 'CAPNHQMember' || ref.type === 'CAPProspectiveMember'
-		? resolveCAPReference(schema)(account)<T>(ref)
+		? resolveCAPReference(schema)(backend)(account)<T>(ref)
 		: asyncLeft({
 				type: 'OTHER',
 				message: 'Invalid member type',
@@ -232,12 +229,6 @@ export const getUnreadNotificationCount = (schema: Schema) => (account: AccountO
 		.map(asyncIterFilter(notification => !notification.read))
 		.map(countAsync);
 
-export const isRequesterRioux = <T extends { member: User }>(req: T) => isRioux(req.member);
-
-export const getHomeAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema,
-) => (member: Member) => CAP.getHomeAccountsForMember(accountGetter)(schema)(member);
-
 export const accountHasMemberInAttendance = (schema: Schema) => (member: MemberReference) => (
 	account: AccountObject,
 ) =>
@@ -269,30 +260,6 @@ export const getEventAccountsForMember = (schema: Schema) => (member: MemberRefe
 		}),
 	);
 
-export const getExtraAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema,
-) => (member: MemberReference): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterConcat2(
-		pipe(
-			generateResults,
-			asyncIterMap(get<StoredAccountMembership, 'accountID'>('accountID')),
-			asyncIterMap((accountGetter.byId ?? getAccount)(schema)),
-		)(
-			findAndBind(schema.getCollection<StoredAccountMembership>('ExtraAccountMembership'), {
-				member: toReference(member),
-			}),
-		),
-		getEventAccountsForMember(schema)(member),
-	);
-
-export const getAllAccountsForMember = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema,
-) => (member: Member): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterConcat2<EitherObj<ServerError, AccountObject>>(
-		getHomeAccountsForMember(accountGetter)(schema)(member),
-		getExtraAccountsForMember(accountGetter)(schema)(toReference(member)),
-	);
-
 export const getAdminAccountIDsForMember = (schema: Schema) => (
 	member: MemberReference,
 ): AsyncIter<EitherObj<ServerError, AccountLinkTarget>> =>
@@ -314,15 +281,57 @@ export const getAdminAccountIDsForMember = (schema: Schema) => (
 		),
 	);
 
-const isPartOfAccountSlow = (accountGetter: Partial<AccountGetter>) => (schema: Schema) => (
+export const getExtraAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
 	member: Member,
-) => (account: AccountObject) =>
-	asyncIterReduce<EitherObj<ServerError, AccountObject>, boolean>(
-		(prev, curr) => prev && (Either.isLeft(curr) || account.id === curr.value.id),
-	)(false)(getAllAccountsForMember(accountGetter)(schema)(member));
+) =>
+	pipe(
+		findAndBindC<TableDataType<'ExtraAccountMembership'>>({
+			member: toReference(member),
+		}),
+		generateResults,
+		asyncIterMap(get('accountID')),
+		asyncFilterUnique,
+		asyncIterMap(backend.getAccount),
+	)(backend.getCollection('ExtraAccountMembership'));
 
-export const isMemberPartOfAccount = (accountGetter: Partial<AccountGetter>) => (
-	schema: Schema,
+export const getHomeMemberAccounts = (
+	backend: Backends<[AccountBackend, CAP.CAPMemberBackend]>,
+) => (member: Member): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+	backend.getAccountsForMember(member);
+
+export const getEventAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
+	member: Member,
+): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+	pipe(
+		findAndBindC<AccountObject>({
+			type: AccountType.CAPEVENT,
+		}),
+		generateResults,
+		asyncIterFilter(account =>
+			accountHasMemberInAttendance(backend.getSchema())(member)(account)
+				.fullJoin()
+				.catch(always(false)),
+		),
+		asyncIterHandler<RawCAPEventAccountObject>(
+			errorGenerator('Could not get account information'),
+		),
+	)(backend.getCollection('Accounts'));
+
+export const getBasicMemberAccounts = (
+	backend: Backends<[AccountBackend, RawMySQLBackend, CAP.CAPMemberBackend]>,
+) => (member: Member) =>
+	asyncIterConcat2(
+		getHomeMemberAccounts(backend)(member),
+		getExtraAccountMembership(backend)(member),
+	);
+
+export const isPartOfAccountSlow = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
+) => (member: Member) => (account: AccountObject) =>
+	asyncRight(false, errorGenerator('Could not verify account membership'));
+
+export const isMemberPartOfAccount = (
+	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
 ) => (member: Member) => (account: AccountObject) =>
 	member.type === 'CAPProspectiveMember' &&
 	account.type === AccountType.CAPSQUADRON &&
@@ -335,40 +344,12 @@ export const isMemberPartOfAccount = (accountGetter: Partial<AccountGetter>) => 
 				),
 		  )
 			? asyncRight(true, errorGenerator('Could not verify account membership'))
-			: asyncRight(
-					isPartOfAccountSlow(accountGetter)(schema)(member)(account),
-					errorGenerator('Could not verify account membership'),
-			  )
-		: asyncRight(false, errorGenerator('Could not verify account membership'));
-
-export const getAllMemberAccounts = (
-	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member: Member) => null;
-
-export const newIsPartOfAccountSlow = (
-	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member: Member) => (account: AccountObject) => null;
-
-export const newIsMemberPartOfAccount = (
-	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member: Member) => (account: AccountObject) =>
-	member.type === 'CAPProspectiveMember' &&
-	account.type === AccountType.CAPSQUADRON &&
-	account.id === member.id
-		? asyncRight(true, errorGenerator('Could not verify account membership'))
-		: member.type === 'CAPNHQMember'
-		? Maybe.orSome(false)(
-				Maybe.map<number[], boolean>(ids => ids.includes(member.orgid))(
-					getORGIDsFromCAPAccount(account),
-				),
-		  )
-			? asyncRight(true, errorGenerator('Could not verify account membership'))
-			: newIsPartOfAccountSlow(backend)(member)(account)
+			: isPartOfAccountSlow(backend)(member)(account)
 		: asyncRight(false, errorGenerator('Could not verify account membership'));
 
 export const areMembersInTheSameAccount = (
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member1: Member) => (member2: Member) => {};
+) => (member1: Member) => (member2: Member) => null;
 
 export interface MemberBackend {
 	getMember: (
@@ -380,28 +361,133 @@ export interface MemberBackend {
 		member: MemberReference,
 	) => (account: AccountObject) => ServerEither<boolean>;
 	saveExtraMemberInformation: (info: AllExtraMemberInformation) => ServerEither<void>;
+	getBasicMemberAccounts: (member: Member) => AsyncIter<EitherObj<ServerError, AccountObject>>;
+	getEventAccountMembership: (member: Member) => AsyncIter<EitherObj<ServerError, AccountObject>>;
+	getAdminAccountIDs: (
+		member: MemberReference,
+	) => AsyncIter<EitherObj<ServerError, AccountLinkTarget>>;
+	logSignin: (account: AccountObject) => (member: MemberReference) => ServerEither<void>;
+	getUnfinishedTaskCountForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<number>;
+	getUnreadNotificationCountForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<number>;
+	getMemberName: (account: AccountObject) => (ref: MemberReference) => ServerEither<string>;
+	memberBelongsToAccount: (member: Member) => (account: AccountObject) => ServerEither<boolean>;
+	accountHasMember: (account: AccountObject) => (member: Member) => ServerEither<boolean>;
+	getBirthday: (member: Member) => ServerEither<DateTime>;
 }
 
-export const getMemberBackend = (req: BasicMySQLRequest): MemberBackend => ({
-	getMember: memoize((account: AccountObject) => {
-		const memoizedFunction = memoize(
-			(ref: string): ServerEither<Member> =>
-				asyncEither(
-					parseStringMemberReference(ref),
-					errorGenerator('Could not get member information'),
-				).flatMap(resolveReference(req.mysqlx)(account)),
-		);
+export const getMemberBackend = (
+	req: BasicAccountRequest,
+	prevBackend: Backends<[CAP.CAPMemberBackend, TeamsBackend]>,
+): MemberBackend => {
+	const backend: MemberBackend = {
+		getMember: memoize(
+			account =>
+				memoize(
+					resolveReference(req.mysqlx)(prevBackend)(account),
+					stringifyMemberReference,
+				) as <T extends MemberReference = MemberReference>(
+					ref: T,
+				) => ServerEither<MemberForReference<T>>,
+			get('id'),
+		),
+		accountHasMemberInAttendance: member => account =>
+			accountHasMemberInAttendance(req.mysqlx)(member)(account),
+		saveExtraMemberInformation: info =>
+			saveExtraMemberInformation(req.mysqlx)(info).map(destroy),
+		getBasicMemberAccounts: memoize(
+			(member: Member) => getBasicMemberAccounts({ ...req.backend, ...prevBackend })(member),
+			stringifyMemberReference,
+		),
+		getEventAccountMembership: memoize(
+			(member: Member) => getEventAccountMembership(req.backend)(member),
+			stringifyMemberReference,
+		),
+		getAdminAccountIDs: memoize(
+			getAdminAccountIDsForMember(req.mysqlx),
+			stringifyMemberReference,
+		),
+		logSignin: account => member => logSignin(req.mysqlx)(account)(toReference(member)),
+		getUnfinishedTaskCountForMember: memoize(
+			account =>
+				memoize(
+					getUnfinishedTaskCountForMember(req.mysqlx)(account),
+					stringifyMemberReference,
+				),
+			get('id'),
+		),
+		getUnreadNotificationCountForMember: memoize(
+			account =>
+				memoize(getUnreadNotificationCount(req.mysqlx)(account), stringifyMemberReference),
+			get('id'),
+		),
+		getMemberName: memoize(
+			account => memoize(getMemberName(req.mysqlx)(account), stringifyMemberReference),
+			get('id'),
+		),
+		memberBelongsToAccount: member => account =>
+			isMemberPartOfAccount({ ...req.backend, ...backend })(member)(account),
+		accountHasMember: account => member =>
+			isMemberPartOfAccount({ ...req.backend, ...backend })(member)(account),
+		getBirthday: prevBackend.getBirthday,
+	};
 
-		return <T extends MemberReference = MemberReference>(ref: T) =>
-			memoizedFunction(stringifyMemberReference(ref)) as ServerEither<MemberForReference<T>>;
-	}),
-	accountHasMemberInAttendance: member => account =>
-		accountHasMemberInAttendance(req.mysqlx)(member)(account),
-	saveExtraMemberInformation: info => saveExtraMemberInformation(req.mysqlx)(info).map(destroy),
-});
+	return backend;
+};
 
 export const getEmptyMemberBackend = (): MemberBackend => ({
 	getMember: () => () => notImplementedError('getMember'),
 	accountHasMemberInAttendance: () => () => notImplementedError('accountHasMemberInAttendance'),
 	saveExtraMemberInformation: () => notImplementedError('saveExtraMemberInformation'),
+	getBasicMemberAccounts: () => [],
+	getEventAccountMembership: () => [],
+	getAdminAccountIDs: () => [],
+	logSignin: () => () => notImplementedError('logSignin'),
+	getUnfinishedTaskCountForMember: () => () =>
+		notImplementedError('getUnfinishedTaskCountForMember'),
+	getUnreadNotificationCountForMember: () => () =>
+		notImplementedError('getUnreadNotificationCountForMember'),
+	getMemberName: () => () => notImplementedError('getMemberName'),
+	memberBelongsToAccount: () => () => notImplementedError('memberBelongsToAccount'),
+	accountHasMember: () => () => notImplementedError('accountHasMember'),
+	getBirthday: () => notImplementedError('getBirthday'),
 });
+
+export const getRequestFreeMemberBackend = (
+	db: Schema,
+	prevBackend: Backends<
+		[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend, TeamsBackend]
+	>,
+) => {
+	const backend: MemberBackend = {
+		getMember: memoize(
+			account =>
+				memoize(resolveReference(db)(prevBackend)(account), stringifyMemberReference) as <
+					T extends MemberReference = MemberReference
+				>(
+					ref: T,
+				) => ServerEither<MemberForReference<T>>,
+			get('id'),
+		),
+		accountHasMemberInAttendance: accountHasMemberInAttendance(db),
+		accountHasMember: account => member =>
+			isMemberPartOfAccount({ ...prevBackend, ...backend })(member)(account),
+		getAdminAccountIDs: getAdminAccountIDsForMember(db),
+		getBasicMemberAccounts: member =>
+			getBasicMemberAccounts({ ...prevBackend, ...backend })(member),
+		getEventAccountMembership: getEventAccountMembership(prevBackend),
+		getMemberName: getMemberName(db),
+		getUnfinishedTaskCountForMember: getUnfinishedTaskCountForMember(db),
+		getUnreadNotificationCountForMember: getUnreadNotificationCount(db),
+		logSignin: logSignin(db),
+		memberBelongsToAccount: member =>
+			isMemberPartOfAccount({ ...prevBackend, ...backend })(member),
+		saveExtraMemberInformation: info => saveExtraMemberInformation(db)(info).map(destroy),
+		getBirthday: prevBackend.getBirthday,
+	};
+
+	return backend;
+};

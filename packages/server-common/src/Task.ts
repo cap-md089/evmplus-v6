@@ -21,15 +21,18 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	areMembersTheSame,
+	AsyncIter,
 	asyncIterFilter,
 	asyncRight,
 	errorGenerator,
 	get,
 	MemberReference,
+	memoize,
 	NewTaskObject,
 	TaskObject,
 	toReference,
 } from 'common-lib';
+import { BasicAccountRequest } from './Account';
 import {
 	addToCollection,
 	deleteFromCollectionA,
@@ -110,3 +113,21 @@ export const saveTask = (schema: Schema) => (task: TaskObject) =>
 		schema.getCollection<TaskObject>('Tasks'),
 		errorGenerator('Could not save task'),
 	).flatMap(saveItemToCollectionA(task));
+
+export interface TaskBackend {
+	getTask: (account: AccountObject) => (id: number) => ServerEither<TaskObject>;
+	createTask: (account: AccountObject) => (task: NewTaskObject) => ServerEither<TaskObject>;
+	deleteTask: (task: TaskObject) => ServerEither<void>;
+	saveTask: (task: TaskObject) => ServerEither<TaskObject>;
+	getTasksForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<AsyncIter<TaskObject>>;
+}
+
+export const getTaskBackend = (req: BasicAccountRequest): TaskBackend => ({
+	getTask: memoize(account => memoize(getTask(req.mysqlx)(account)), get('id')),
+	createTask: createTask(req.mysqlx),
+	deleteTask: deleteTask(req.mysqlx),
+	saveTask: saveTask(req.mysqlx),
+	getTasksForMember: getTasksForMember(req.mysqlx),
+});

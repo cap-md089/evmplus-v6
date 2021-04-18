@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
@@ -32,12 +31,22 @@ import {
 	Right,
 	ServerError,
 } from 'common-lib';
-import { ensureResolvedEvent, getSortedEvents } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	EventsBackend,
+	getCombinedEventsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
-	asyncRight(getSortedEvents(req.mysqlx)(req.account), errorGenerator('Could not get events'))
-		.map(asyncIterMap(ensureResolvedEvent(req.mysqlx)))
+export const func: Endpoint<
+	Backends<[AccountBackend, EventsBackend]>,
+	api.events.events.GetList
+> = backend => req =>
+	asyncRight(backend.getSortedEvents(req.account), errorGenerator('Could not get events'))
+		.map(asyncIterMap(backend.ensureResolvedEvent))
 		.map(
 			asyncIterFilter<
 				EitherObj<ServerError, RawResolvedEventObject>,
@@ -48,4 +57,4 @@ export const func: ServerAPIEndpoint<api.events.events.GetList> = req =>
 		.map(asyncIterMap(filterEventInformation(req.member)))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedEventsBackend);

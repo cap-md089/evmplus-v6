@@ -24,6 +24,10 @@ const errorHandler = <L>(errorValue: L | ((err: Error) => L)) => (err: Error): L
 
 export const isPromise = (v: any): v is Promise<any> => !!v && !!v.then;
 
+type Arg0Either<F, L, R2> = F extends (arg: infer A) => AsyncEither<L, R2> ? A : never;
+
+type Arg0<F, L, R2> = F extends (arg: infer A) => R2 ? A : never;
+
 // Used because the current setup doesn't always include errors like type errors easily
 const errorWrap = async <L, R, T extends any[]>(
 	f: (...args: T) => R | Promise<R>,
@@ -31,7 +35,11 @@ const errorWrap = async <L, R, T extends any[]>(
 	...args: T
 ): Promise<Either<L, R>> => {
 	try {
-		const value = await f(...args);
+		let value = f(...args);
+
+		if (value instanceof Promise) {
+			value = await value;
+		}
 
 		return E.right(value);
 	} catch (e) {
@@ -306,6 +314,18 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 			errorValue,
 		);
 	}
+
+	public apply = <R2, A extends Arg0<R, L, R2>>(value: A, errorValue = this.errorValue) =>
+		this.map(func => ((func as unknown) as (arg: A) => R2)(value), errorValue);
+
+	public flatApply = <R2, A extends Arg0Either<R, L, R2>>(
+		value: A,
+		errorValue = this.errorValue,
+	) =>
+		this.flatMap(
+			func => ((func as unknown) as (arg: A) => AsyncEither<L, R2>)(value),
+			errorValue,
+		);
 
 	// The rejected function is named something long so the formatting is pretty and consistent
 	public async then<T1 = Either<L, R>, T2 = Either<L, R>>(

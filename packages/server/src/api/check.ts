@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	AccountLinkTarget,
 	ActiveSession,
@@ -44,16 +43,18 @@ import {
 } from 'common-lib';
 import * as debug from 'debug';
 import {
-	getAdminAccountIDsForMember,
-	getUnfinishedTaskCountForMember,
-	getUnreadNotificationCount,
+	Backends,
+	getCombinedMemberBackend,
+	MemberBackend,
 	ServerEither,
+	withBackends,
 } from 'server-common';
+import { Endpoint } from '..';
 import wrapper, { Wrapped } from '../lib/wrapper';
 
 const logFunc = debug('server:api:check');
 
-export const func: ServerAPIEndpoint<api.Check> = req => {
+export const func: Endpoint<Backends<[MemberBackend]>, api.Check> = backend => req => {
 	logFunc('Starting check request: %o', req.member);
 	return Maybe.cata<[User, ActiveSession], ServerEither<Wrapped<SigninReturn>>>(
 		always(
@@ -66,17 +67,15 @@ export const func: ServerAPIEndpoint<api.Check> = req => {
 		),
 	)(([user, session]) =>
 		AsyncEither.All([
-			getUnreadNotificationCount(req.mysqlx)(req.account)(user),
-			getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(user),
+			backend.getUnreadNotificationCountForMember(req.account)(user),
+			backend.getUnfinishedTaskCountForMember(req.account)(user),
 			asyncRight<ServerError, AccountLinkTarget[]>(
 				collectGeneratorAsync(
 					asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
 						asyncIterFilter<
 							EitherObj<ServerError, AccountLinkTarget>,
 							Right<AccountLinkTarget>
-						>(Either.isRight)(
-							getAdminAccountIDsForMember(req.mysqlx)(toReference(user)),
-						),
+						>(Either.isRight)(backend.getAdminAccountIDs(toReference(user))),
 					),
 				),
 				errorGenerator('Could not get admin account IDs for member'),
@@ -101,4 +100,4 @@ export const func: ServerAPIEndpoint<api.Check> = req => {
 	)(Maybe.And([req.member, req.session]));
 };
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend);

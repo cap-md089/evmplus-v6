@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -27,25 +26,36 @@ import {
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { getAttendanceForMember, getEvent, PAM } from 'server-common';
+import {
+	AccountBackend,
+	AttendanceBackend,
+	Backends,
+	EventsBackend,
+	getCombinedAttendanceBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 import { expandRecord } from './basic';
 
-export const func: ServerAPIEndpoint<api.member.attendance.GetForMember> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'AttendanceView',
-		Permissions.AttendanceView.OTHER,
-	)(req =>
-		asyncEither(
-			parseStringMemberReference(req.params.reference),
-			errorGenerator('Could not parse member ID'),
-		)
-			.flatMap(getAttendanceForMember(req.mysqlx)(req.account))
-			.map(asyncIterMap(expandRecord(getEvent)(req)))
-			.map(wrapper),
-	),
-);
+export const func: Endpoint<
+	Backends<[EventsBackend, AccountBackend, AttendanceBackend]>,
+	api.member.attendance.GetForMember
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'AttendanceView',
+			Permissions.AttendanceView.OTHER,
+		)(req =>
+			asyncEither(
+				parseStringMemberReference(req.params.reference),
+				errorGenerator('Could not parse member ID'),
+			)
+				.flatMap(backend.getAttendanceForMember(req.account))
+				.map(asyncIterMap(expandRecord(backend)))
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedAttendanceBackend);

@@ -17,34 +17,34 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, MemberCreateError, SessionType, toReference } from 'common-lib';
-import { PAM } from 'server-common';
+import { api, MemberCreateError, SessionType } from 'common-lib';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.session.FinishMFA> = PAM.RequireSessionType(
-	SessionType.IN_PROGRESS_MFA,
-)(req =>
-	PAM.verifyMFAToken(req.mysqlx)(toReference(req.member))(req.body.mfaToken)
-		.flatMap(() => PAM.checkIfPasswordExpired(req.mysqlx)(req.session.userAccount.username))
-		.tap(console.log)
-		.tap(passwordExpired =>
-			passwordExpired
-				? PAM.updateSession(req.mysqlx, {
-						...req.session,
-						type: SessionType.PASSWORD_RESET,
-				  })
-				: PAM.updateSession(req.mysqlx, {
-						...req.session,
-						type: SessionType.REGULAR,
-				  }),
-		)
-		.map(passwordExpired =>
-			passwordExpired
-				? (MemberCreateError.PASSWORD_EXPIRED as const)
-				: (MemberCreateError.NONE as const),
-		)
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.session.FinishMFA> = backend =>
+	PAM.RequireSessionType(SessionType.IN_PROGRESS_MFA)(req =>
+		backend
+			.verifyMFAToken(req.member)(req.body.mfaToken)
+			.flatMap(() => backend.checkIfPasswordExpired(req.session.userAccount.username))
+			.tap(console.log)
+			.tap(passwordExpired =>
+				passwordExpired
+					? backend.updateSession({
+							...req.session,
+							type: SessionType.PASSWORD_RESET,
+					  })
+					: backend.updateSession({
+							...req.session,
+							type: SessionType.REGULAR,
+					  }),
+			)
+			.map(passwordExpired =>
+				passwordExpired
+					? (MemberCreateError.PASSWORD_EXPIRED as const)
+					: (MemberCreateError.NONE as const),
+			)
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend);

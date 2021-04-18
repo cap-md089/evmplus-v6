@@ -17,26 +17,30 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { always, api } from 'common-lib';
-import { PAM } from 'server-common';
+import { api, get, Maybe } from 'common-lib';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 
-export const func: ServerAPIEndpoint<api.member.account.FinishPasswordReset> = req =>
-	PAM.validatePasswordResetToken(req.mysqlx, req.body.token)
-		.flatMap(username =>
-			PAM.addPasswordForUser(req.mysqlx, username, req.body.newPassword).map(
-				always(username),
-			),
-		)
-		.flatMap(username =>
-			PAM.removePasswordValidationToken(req.mysqlx, req.body.token).map(always(username)),
-		)
-		.map(username => PAM.getInformationForUser(req.mysqlx, username))
+export const func: Endpoint<
+	Backends<[PAM.PAMBackend]>,
+	api.member.account.FinishPasswordReset
+> = backend => req =>
+	backend
+		.validatePasswordResetToken(req.body.token)
+		.tap(username => backend.addPasswordForUser([username, req.body.newPassword]))
+		.tap(() => backend.removePasswordValidationToken(req.body.token))
+		.flatMap(backend.getUserInformationForUser)
+		.filter(Maybe.isSome, {
+			type: 'OTHER',
+			code: 400,
+			message: 'Could not find member specified',
+		})
+		.map(get('value'))
 		.map(PAM.simplifyUserInformation)
-		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
+		.flatMap(backend.createSessionForUser)
 		.map(session => ({
 			response: {},
 			cookies: { sessionID: { value: session.id, expires: session.expires } },
 		}));
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend);

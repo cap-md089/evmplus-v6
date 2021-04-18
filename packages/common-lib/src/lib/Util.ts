@@ -114,9 +114,9 @@ export const getItemsNotInSecondArray = <T>(
 
 export const memoize = <Return, Arg extends any>(
 	func: (arg: Arg) => Return,
-	serialize?: (arg: Arg) => string,
+	serialize?: (arg: Arg) => string | number,
 ) => {
-	const returns = new Map<Arg | string, Return>();
+	const returns = new Map<Arg | string | number, Return>();
 
 	return (arg: Arg): Return => {
 		if (serialize) {
@@ -124,7 +124,7 @@ export const memoize = <Return, Arg extends any>(
 				returns.set(serialize(arg), func(arg));
 			}
 
-			return returns.get(arg)!;
+			return returns.get(serialize(arg))!;
 		} else {
 			if (!returns.has(arg)) {
 				returns.set(arg, func(arg));

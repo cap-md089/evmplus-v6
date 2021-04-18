@@ -18,25 +18,15 @@
  */
 
 import { api, filterEventInformation } from 'common-lib';
-import {
-	AccountBackend,
-	Backends,
-	EventsBackend,
-	getAccountBackend,
-	getEventsBackend,
-	withBackends,
-} from 'server-common';
+import { Backends, EventsBackend, getCombinedEventsBackend, withBackends } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: Endpoint<
-	Backends<[EventsBackend, AccountBackend]>,
-	api.events.events.Get
-> = backend => req =>
+export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Get> = backend => req =>
 	backend
 		.getEvent(req.account)(req.params.id)
 		.flatMap(backend.ensureResolvedEvent)
 		.map(filterEventInformation(req.member))
 		.map(wrapper);
 
-export default withBackends(func, getEventsBackend, getAccountBackend);
+export default withBackends(func, getCombinedEventsBackend);

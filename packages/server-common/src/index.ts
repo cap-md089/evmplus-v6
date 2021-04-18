@@ -17,32 +17,88 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * from './Account';
-export * from './Attendance';
-export * from './Audits';
+// Regular exports
+export {
+	AccountBackend,
+	accountRequestTransformer,
+	BasicAccountRequest,
+	getAccountBackend,
+	getAccountID,
+	getEmptyAccountBackend,
+	getRequestFreeAccountsBackend,
+} from './Account';
+export {
+	AttendanceBackend,
+	getAttendanceBackend,
+	getEmptyAttendanceBackend,
+	getRequestFreeAttendanceBackend,
+} from './Attendance';
+export { AuditsBackend, getAuditsBackend, getRequestFreeAuditsBackend } from './Audits';
+export {
+	BackedServerAPIEndpoint,
+	Backends,
+	combineBackends,
+	GenBackend,
+	getEmptyRandomBackend,
+	getRandomBackend,
+	getTimeBackend,
+	RandomBackend,
+	TimeBackend,
+	withBackends,
+} from './backends';
+export * as conf from './conf';
 export * from './Error';
-export * from './Event';
-export * from './File';
+export {
+	EventsBackend,
+	getEmptyEventsBackend,
+	getEventsBackend,
+	getRequestFreeEventsBackend,
+} from './Event';
+export {
+	FileBackend,
+	getFileBackend,
+	getRequestFreeFileBackend,
+	getRootFileObject,
+	getRootFileObjectForUser,
+} from './File';
 export * from './GoogleUtils';
+export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';
 export * as PAM from './member/pam';
-export * from './Members';
+export {
+	CAP,
+	getEmptyMemberBackend,
+	getMemberBackend,
+	getRequestFreeMemberBackend,
+	MemberBackend,
+} from './Members';
 export * from './MySQLUtil';
 export * from './Notification';
 export * from './Organizations';
 export * from './PromotionRequirements';
-export * from './Registry';
-export * from './sendEmail';
-export * from './servertypes';
-export * from './Task';
-export * from './Team';
-export * as conf from './conf';
-export { default as getConf } from './conf';
-export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';
 export {
-	withBackends,
-	Backends,
-	BackedServerAPIEndpoint,
-	getTimeBackend,
-	TimeBackend,
-	combineBackends,
-} from './backends';
+	getEmptyRegistryBackend,
+	getRegistryBackend,
+	getRequestFreeRegistryBackend,
+	RegistryBackend,
+} from './Registry';
+export {
+	EmailBackend,
+	EmailParameters,
+	EmailSetup,
+	EmailToSend,
+	getEmailBackend,
+	getEmailMessageBody,
+	getEmptyEmailBackend,
+	SUPPORT_BCC_ADDRESS,
+} from './sendEmail';
+export * from './servertypes';
+export { getTaskBackend, TaskBackend } from './Task';
+export {
+	getRequestFreeTeamsBackend,
+	getTeamsBackend,
+	httpStripTeamObject,
+	TeamsBackend,
+} from './Team';
+
+// Needs to be last, as it imports stuff from all of the files above and uses them immediately
+export * from './defaultBackends';

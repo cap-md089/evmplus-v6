@@ -6,12 +6,25 @@
 	"configurations": [
 		{
 			"type": "node",
+			"request": "attach",
+			"protocol": "auto",
+			"name": "Docker: attach to server",
+			"cwd": "${workspaceFolder}/packages/server",
+			"remoteRoot": "/usr/evm-plus",
+			"localRoot": "${workspaceFolder}",
+			"restart": true,
+			"port": 5858,
+			"timeout": 60000,
+			"preLaunchTask": "Start server with Docker"
+		},
+		{
+			"type": "node",
 			"request": "launch",
 			"name": "Launch server in Docker",
 			"preLaunchTask": "tsc: watch - tsconfig.dev.json",
 			"protocol": "auto",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": [ "run", "docker-debug" ],
+			"runtimeArgs": ["run", "docker-debug"],
 			"cwd": "${workspaceFolder}/packages/server",
 			"port": 5858,
 			"restart": true,
@@ -24,7 +37,7 @@
 				"${workspaceFolder}/packages/discord-bot/dist/**/*.js",
 				"${workspaceFolder}/packages/common-lib/dist/**/*.js"
 			],
-			"console": "integratedTerminal",
+			"console": "integratedTerminal"
 		},
 		{
 			"type": "chrome",
@@ -36,7 +49,7 @@
 			"linux": {
 				"runtimeExecutable": "/usr/bin/chromium"
 			}
-		},
+		}
 	],
 	"compounds": [
 		{

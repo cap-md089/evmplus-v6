@@ -20,7 +20,7 @@
 import * as mysql from '@mysql/xdevapi';
 import { Maybe } from 'common-lib';
 import { Client, GuildChannel, Role, TextChannel } from 'discord.js';
-import { getAccount } from 'server-common';
+import { getDiscordBackend } from '../data/getDiscordBackend';
 import { byName, byProp } from '../data/setupUser';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
 
@@ -36,8 +36,6 @@ export default async (
 		);
 	}
 
-	console.log(args);
-
 	const [accountID, roleNamesCombined, channelName, ...messageBits] = args;
 	const message = messageBits.join(' ');
 	const roleNames = roleNamesCombined.split(',');
@@ -45,8 +43,10 @@ export default async (
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
+	const backend = getDiscordBackend(schema);
+
 	try {
-		const account = await getAccount(schema)(accountID).fullJoin();
+		const account = await backend.getAccount(accountID).fullJoin();
 		const { discordServer } = account;
 
 		if (Maybe.isNone(discordServer)) {

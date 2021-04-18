@@ -32,6 +32,7 @@ import {
 	PermissionForName,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
 import { Maybe } from './Maybe';
@@ -238,3 +239,5 @@ export const isCAPMember = (member: Member): member is CAPMember =>
 export const isCAPUnitDutyPosition = (
 	dutyPosition: ShortDutyPosition,
 ): dutyPosition is ShortCAPUnitDutyPosition => dutyPosition.type === 'CAPUnit';
+
+export const isRequesterRioux = <T extends { member: User }>(req: T) => isRioux(req.member);

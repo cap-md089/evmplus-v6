@@ -29,13 +29,13 @@ import {
 import * as debug from 'debug';
 import { Client, Role } from 'discord.js';
 import 'dotenv/config';
-import { getRegistry } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
 import attendancerecord from './commands/attendancerecord';
 import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
+import { getDiscordBackend } from './data/getDiscordBackend';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser, { byName } from './data/setupUser';
@@ -92,7 +92,9 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const guildUserSetup = userSetupFunction(schema)(discordServer.value.serverID);
+		const backend = getDiscordBackend(schema);
+
+		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
@@ -233,7 +235,9 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const guildUserSetup = userSetupFunction(schema)(discordServer.value.serverID);
+		const backend = getDiscordBackend(schema);
+
+		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
@@ -268,13 +272,15 @@ export default function setupDiscordBot(
 
 		const capunitMember = await getMember(schema)(member);
 
+		const backend = getDiscordBackend(schema);
+
 		try {
 			if (capunitMember.hasValue) {
-				await setupUser(client)(schema)(member.guild.id)(account.value)()(
+				await setupUser(client)(backend)(member.guild.id)(account.value)()(
 					capunitMember.value,
 				);
 			} else {
-				const registry = await getRegistry(schema)(account.value).fullJoin();
+				const registry = await backend.getRegistry(account.value).fullJoin();
 
 				const dmChannel = await member.createDM();
 

@@ -56,6 +56,8 @@ import {
 import { canSeeAdminNotification, canSeeMemberNotification } from './notifications';
 import { ServerEither } from './servertypes';
 
+export * from './notifications';
+
 export const getNotification = (schema: Schema) => (account: AccountObject) => <
 	C extends NotificationCause,
 	T extends NotificationTarget,

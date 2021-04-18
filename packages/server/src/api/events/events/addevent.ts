@@ -30,8 +30,7 @@ import {
 	AccountBackend,
 	Backends,
 	EventsBackend,
-	getAccountBackend,
-	getEventsBackend,
+	getCombinedEventsBackend,
 	PAM,
 	withBackends,
 } from 'server-common';
@@ -67,4 +66,4 @@ export const func: Endpoint<
 		.flatMap(backend.getFullEventObject)
 		.map(wrapper);
 
-export default withBackends(func, getEventsBackend, getAccountBackend);
+export default withBackends(func, getCombinedEventsBackend);

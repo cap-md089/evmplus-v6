@@ -21,8 +21,8 @@
 import * as mysql from '@mysql/xdevapi';
 import { getSession } from '@mysql/xdevapi';
 import { Either, Maybe } from 'common-lib';
-import { getAccount, getConf, getFileObject, saveFileObject } from 'server-common';
-
+import { conf } from 'server-common';
+import { backendGenerator } from './lib/backend';
 
 export const collectLegacySqlResults = async <T>(
 	find: mysql.SqlExecute,
@@ -35,45 +35,42 @@ export const collectLegacySqlResults = async <T>(
 	}
 };
 
-
-
-
 process.on('unhandledRejection', up => {
 	throw up;
 });
 
 (async () => {
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
-
-
-
 	const FIDs = await collectLegacySqlResults<[FileID: string]>(
-		session.sql('SELECT FileID FROM EventManagement.FileEventAssignments WHERE EID > 555 GROUP BY FileID;')
+		session.sql(
+			'SELECT FileID FROM EventManagement.FileEventAssignments WHERE EID > 555 GROUP BY FileID;',
+		),
 	);
 
-	const schema = session.getSchema(conf.DB_SCHEMA);
+	const schema = session.getSchema(config.DB_SCHEMA);
 
-	const account = await getAccount(schema)("md089").fullJoin();
+	const backend = backendGenerator(schema);
+
+	const account = await backend.getAccount('md089').fullJoin();
 
 	for (const fid of FIDs) {
 		const [FileID] = fid;
-		console.log("FID: ", FileID);
-		const activeFile = await getFileObject(schema)(account)(Maybe.none())(FileID);
+		console.log('FID: ', FileID);
+		const activeFile = await backend.getFileObject(account)(Maybe.none())(FileID);
 
 		if (Either.isRight(activeFile)) {
-
-			activeFile.value.parentID = "Events";
-			await saveFileObject(schema)(activeFile.value).fullJoin();
+			activeFile.value.parentID = 'Events';
+			await backend.saveFileObject(activeFile.value).fullJoin();
 		} else {
-			console.log("failed");
+			console.log('failed');
 		}
 	}
 
@@ -81,4 +78,3 @@ process.on('unhandledRejection', up => {
 
 	process.exit();
 })();
-
