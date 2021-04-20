@@ -82,7 +82,15 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
 COPY tsconfig.* ./
-RUN lerna run build
+RUN --mount=type=cache,target=/usr/evm-plus/packages/apis/dist/ \
+	--mount=type=cache,target=/usr/evm-plus/packages/auto-api-tests/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/auto-client-api/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/common-lib/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/discord-bot/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server-common/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/util-cli/apis/dist \
+	lerna run build --ignore server-jest-config
 
 #
 # By creating an nginx container like this, we can statically serve HTML,
