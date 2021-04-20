@@ -21,7 +21,6 @@ import type { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	AsyncEither,
-	AsyncIter,
 	asyncLeft,
 	asyncRight,
 	CAPAccountObject,
@@ -130,7 +129,7 @@ export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => 
 
 export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
 	member: CAPMember,
-): AsyncIter<EitherObj<ServerError, AccountObject>> =>
+): ServerEither<AccountObject[]> =>
 	member.type === 'CAPNHQMember'
 		? getNHQMemberAccount(backend)(member)
 		: getProspectiveMemberAccounts(backend)(member);
@@ -237,7 +236,7 @@ export interface CAPMemberBackend {
 	createProspectiveMember: (
 		account: RawCAPSquadronAccountObject,
 	) => (member: NewCAPProspectiveMember) => ServerEither<CAPProspectiveMemberObject>;
-	getAccountsForMember: (member: CAPMember) => AsyncIter<EitherObj<ServerError, AccountObject>>;
+	getAccountsForMember: (member: CAPMember) => ServerEither<AccountObject[]>;
 	getNHQMembersInAccount: (
 		backend: Backends<[TeamsBackend]>,
 	) => (account: CAPAccountObject) => ServerEither<MaybeObj<CAPNHQMemberObject[]>>;
@@ -262,7 +261,7 @@ export const getRequestFreeCAPMemberBackend = (
 	deleteProspectiveMember: deleteProspectiveMember(mysqlx),
 	createProspectiveMember: account => member =>
 		createCAPProspectiveMember(mysqlx)(account)(member),
-	getAccountsForMember: getAccountsForMember(prevBackends),
+	getAccountsForMember: memoize(getAccountsForMember(prevBackends), stringifyMemberReference),
 	getNHQMembersInAccount: memoize(prevBackend =>
 		memoize(
 			account =>

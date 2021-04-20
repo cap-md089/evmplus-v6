@@ -25,9 +25,8 @@ import {
 	applyCustomAttendanceFields,
 	asyncEither,
 	AsyncEither,
-	asyncEitherIterMap,
 	AsyncIter,
-	asyncIterConcat,
+	asyncIterConcat2,
 	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
@@ -57,8 +56,8 @@ import {
 	NewEventObject,
 	NHQ,
 	ofLength,
-	onlyRights,
 	ParamType,
+	pipe,
 	RawCAPEventAccountObject,
 	RawCAPGroupAccountObject,
 	RawCAPRegionAccountObject,
@@ -296,44 +295,43 @@ export const getAccount = (schema: Schema) => (accountID: string) =>
 		})
 		.map(items => items[0]);
 
-export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
-	asyncEitherIterMap<CAPAccountObject, CAPAccountObject>(
-		stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
+export const getCAPAccountsForORGID = (schema: Schema) => (
+	orgid: number,
+): ServerEither<CAPAccountObject[]> =>
+	pipe(
+		asyncIterFilter(
+			statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
+				(account, state) => [!state[account.id], { ...state, [account.id]: true }],
+			),
+		),
+		asyncIterMap<CAPAccountObject, CAPAccountObject>(
+			stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
+		),
+		collectGeneratorAsync,
+		results => asyncRight(results, errorGenerator('Could not get account objects')),
 	)(
-		asyncIterHandler<CAPAccountObject>(errorGenerator('Could not get account for member'))(
-			asyncIterFilter(
-				statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
-					(account, state) => [!state[account.id], { ...state, [account.id]: true }],
-				),
-			)(
-				asyncIterConcat<CAPAccountObject>(
-					generateResults(
-						schema
-							.getCollection<
-								| RawCAPGroupAccountObject
-								| RawCAPWingAccountObject
-								| RawCAPRegionAccountObject
-							>('Accounts')
-							.find('orgid = :orgid')
-							.bind('orgid', orgid),
-					),
-				)(() =>
-					asyncIterConcat<AccountObject>(
-						generateResults<AccountObject>(
-							schema
-								.getCollection<RawCAPSquadronAccountObject>('Accounts')
-								.find('mainOrg = :mainOrg')
-								.bind('mainOrg', orgid),
-						),
-					)(() =>
-						generateResults<AccountObject>(
-							schema
-								.getCollection<RawCAPSquadronAccountObject>('Accounts')
-								.find(':orgIDs in orgIDs')
-								.bind('orgIDs', orgid),
-						),
-					),
-				),
+		asyncIterConcat2<CAPAccountObject>(
+			generateResults(
+				schema
+					.getCollection<
+						| RawCAPGroupAccountObject
+						| RawCAPWingAccountObject
+						| RawCAPRegionAccountObject
+					>('Accounts')
+					.find('orgid = :orgid')
+					.bind('orgid', orgid),
+			),
+			generateResults<CAPAccountObject>(
+				schema
+					.getCollection<RawCAPSquadronAccountObject>('Accounts')
+					.find('mainOrg = :mainOrg')
+					.bind('mainOrg', orgid),
+			),
+			generateResults<AccountObject>(
+				schema
+					.getCollection<RawCAPSquadronAccountObject>('Accounts')
+					.find(':orgIDs in orgIDs')
+					.bind('orgIDs', orgid),
 			),
 		),
 	);
@@ -647,11 +645,8 @@ export const getOrgNameForMember = (
 ) => {
 	switch (member.type) {
 		case 'CAPNHQMember':
-			return asyncRight(
-				backend.getCAPAccountsByORGID(member.orgid),
-				errorGenerator('Could not get Accounts'),
-			)
-				.map(onlyRights)
+			return backend
+				.getCAPAccountsByORGID(member.orgid)
 				.map(results =>
 					results.filter(({ id }) => id === account.id).length === 1
 						? [account]
@@ -678,7 +673,7 @@ export const getOrgNameForMember = (
 
 export interface AccountBackend {
 	getAccount: (accountID: string) => ServerEither<AccountObject>;
-	getCAPAccountsByORGID: (orgid: number) => AsyncIter<EitherObj<ServerError, CAPAccountObject>>;
+	getCAPAccountsByORGID: (orgid: number) => ServerEither<CAPAccountObject[]>;
 	getMembers: (
 		backend: Backends<[CAP.CAPMemberBackend, TeamsBackend]>,
 	) => (account: AccountObject) => (type?: MemberType | undefined) => ServerEither<Member[]>;
@@ -770,7 +765,7 @@ export const getRequestFreeAccountsBackend = (
 
 export const getEmptyAccountBackend = (): AccountBackend => ({
 	getAccount: () => notImplementedError('getAccount'),
-	getCAPAccountsByORGID: () => [],
+	getCAPAccountsByORGID: () => notImplementedError('getCAPAccountsByORGID'),
 	getMembers: () => () => () => notImplementedError('getMembers'),
 	queryEvents: () => () => () => notImplementedException('queryEvents'),
 	getSortedEvents: () => notImplementedException('getSortedEvents'),

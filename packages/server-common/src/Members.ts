@@ -26,10 +26,11 @@ import {
 	always,
 	areMembersTheSame,
 	AsyncEither,
-	asyncFilterUnique,
+	asyncEitherIterFlatMap,
 	AsyncIter,
-	asyncIterConcat2,
 	asyncIterFilter,
+	filterUnique,
+	iterToArray,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncIterReduce,
@@ -37,11 +38,13 @@ import {
 	asyncRight,
 	countAsync,
 	destroy,
+	Either,
 	EitherObj,
 	errorGenerator,
 	get,
 	getORGIDsFromCAPAccount,
 	isPartOfTeam,
+	iterMap,
 	Maybe,
 	Member,
 	MemberForReference,
@@ -62,7 +65,7 @@ import {
 import { DateTime } from 'luxon';
 import { AccountBackend, BasicAccountRequest } from './Account';
 import { RawAttendanceDBRecord } from './Attendance';
-import { Backends, notImplementedError } from './backends';
+import { Backends, notImplementedError, notImplementedException } from './backends';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
 import {
@@ -284,20 +287,22 @@ export const getAdminAccountIDsForMember = (schema: Schema) => (
 export const getExtraAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
 	member: Member,
 ) =>
-	pipe(
-		findAndBindC<TableDataType<'ExtraAccountMembership'>>({
-			member: toReference(member),
-		}),
-		generateResults,
-		asyncIterMap(get('accountID')),
-		asyncFilterUnique,
-		asyncIterMap(backend.getAccount),
-	)(backend.getCollection('ExtraAccountMembership'));
+	asyncRight(
+		backend.getCollection('ExtraAccountMembership'),
+		errorGenerator('Could not get member accounts'),
+	)
+		.map(
+			findAndBindC<TableDataType<'ExtraAccountMembership'>>({ member: toReference(member) }),
+		)
+		.map(collectResults)
+		.map(iterMap(get('accountID')))
+		.map(filterUnique)
+		.map(iterToArray)
+		.flatMap(accounts => AsyncEither.All(accounts.map(backend.getAccount)));
 
 export const getHomeMemberAccounts = (
 	backend: Backends<[AccountBackend, CAP.CAPMemberBackend]>,
-) => (member: Member): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	backend.getAccountsForMember(member);
+) => (member: Member): ServerEither<AccountObject[]> => backend.getAccountsForMember(member);
 
 export const getEventAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
 	member: Member,
@@ -320,10 +325,15 @@ export const getEventAccountMembership = (backend: Backends<[RawMySQLBackend, Ac
 export const getBasicMemberAccounts = (
 	backend: Backends<[AccountBackend, RawMySQLBackend, CAP.CAPMemberBackend]>,
 ) => (member: Member) =>
-	asyncIterConcat2(
-		getHomeMemberAccounts(backend)(member),
-		getExtraAccountMembership(backend)(member),
-	);
+	getHomeMemberAccounts(backend)(member)
+		.flatMap(homeAccounts =>
+			getExtraAccountMembership(backend)(member).map(extraAccounts => [
+				...extraAccounts,
+				...homeAccounts,
+			]),
+		)
+		.map(filterUnique)
+		.map(iterToArray);
 
 export const isPartOfAccountSlow = (
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
@@ -348,8 +358,18 @@ export const isMemberPartOfAccount = (
 		: asyncRight(false, errorGenerator('Could not verify account membership'));
 
 export const areMembersInTheSameAccount = (
-	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member1: Member) => (member2: Member) => null;
+	backend: Backends<[AccountBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]>,
+) => (member1: Member) => (member2: Member) =>
+	backend
+		.getAccountsForMember(member1)
+		.map(asyncIterMap(Either.right))
+		.map(asyncEitherIterFlatMap(backend.memberBelongsToAccount(member2)))
+		.map(
+			asyncIterReduce(
+				(prev: boolean, curr: EitherObj<ServerError, boolean>) =>
+					prev || (Either.isRight(curr) ? curr.value : false),
+			)(false),
+		);
 
 export interface MemberBackend {
 	getMember: (
@@ -361,7 +381,7 @@ export interface MemberBackend {
 		member: MemberReference,
 	) => (account: AccountObject) => ServerEither<boolean>;
 	saveExtraMemberInformation: (info: AllExtraMemberInformation) => ServerEither<void>;
-	getBasicMemberAccounts: (member: Member) => AsyncIter<EitherObj<ServerError, AccountObject>>;
+	getBasicMemberAccounts: (member: Member) => ServerEither<AccountObject[]>;
 	getEventAccountMembership: (member: Member) => AsyncIter<EitherObj<ServerError, AccountObject>>;
 	getAdminAccountIDs: (
 		member: MemberReference,
@@ -377,6 +397,7 @@ export interface MemberBackend {
 	memberBelongsToAccount: (member: Member) => (account: AccountObject) => ServerEither<boolean>;
 	accountHasMember: (account: AccountObject) => (member: Member) => ServerEither<boolean>;
 	getBirthday: (member: Member) => ServerEither<DateTime>;
+	areMembersInTheSameAccount: (member1: Member) => (member2: Member) => ServerEither<boolean>;
 }
 
 export const getMemberBackend = (
@@ -399,7 +420,7 @@ export const getMemberBackend = (
 		saveExtraMemberInformation: info =>
 			saveExtraMemberInformation(req.mysqlx)(info).map(destroy),
 		getBasicMemberAccounts: memoize(
-			(member: Member) => getBasicMemberAccounts({ ...req.backend, ...prevBackend })(member),
+			getBasicMemberAccounts({ ...req.backend, ...prevBackend }),
 			stringifyMemberReference,
 		),
 		getEventAccountMembership: memoize(
@@ -433,6 +454,16 @@ export const getMemberBackend = (
 		accountHasMember: account => member =>
 			isMemberPartOfAccount({ ...req.backend, ...backend })(member)(account),
 		getBirthday: prevBackend.getBirthday,
+		areMembersInTheSameAccount: memoize(
+			(mem1: Member) =>
+				memoize(
+					areMembersInTheSameAccount({ ...prevBackend, ...backend, ...req.backend })(
+						mem1,
+					),
+					stringifyMemberReference,
+				),
+			stringifyMemberReference,
+		),
 	};
 
 	return backend;
@@ -442,8 +473,8 @@ export const getEmptyMemberBackend = (): MemberBackend => ({
 	getMember: () => () => notImplementedError('getMember'),
 	accountHasMemberInAttendance: () => () => notImplementedError('accountHasMemberInAttendance'),
 	saveExtraMemberInformation: () => notImplementedError('saveExtraMemberInformation'),
-	getBasicMemberAccounts: () => [],
-	getEventAccountMembership: () => [],
+	getBasicMemberAccounts: () => notImplementedError('getBasicMemberAccounts'),
+	getEventAccountMembership: () => notImplementedException('getEventAccountMembership'),
 	getAdminAccountIDs: () => [],
 	logSignin: () => () => notImplementedError('logSignin'),
 	getUnfinishedTaskCountForMember: () => () =>
@@ -454,6 +485,7 @@ export const getEmptyMemberBackend = (): MemberBackend => ({
 	memberBelongsToAccount: () => () => notImplementedError('memberBelongsToAccount'),
 	accountHasMember: () => () => notImplementedError('accountHasMember'),
 	getBirthday: () => notImplementedError('getBirthday'),
+	areMembersInTheSameAccount: () => () => notImplementedError('areMembersInTheSameAccount'),
 });
 
 export const getRequestFreeMemberBackend = (
@@ -476,8 +508,10 @@ export const getRequestFreeMemberBackend = (
 		accountHasMember: account => member =>
 			isMemberPartOfAccount({ ...prevBackend, ...backend })(member)(account),
 		getAdminAccountIDs: getAdminAccountIDsForMember(db),
-		getBasicMemberAccounts: member =>
-			getBasicMemberAccounts({ ...prevBackend, ...backend })(member),
+		getBasicMemberAccounts: memoize(
+			(member: Member) => getBasicMemberAccounts({ ...prevBackend, ...backend })(member),
+			stringifyMemberReference,
+		),
 		getEventAccountMembership: getEventAccountMembership(prevBackend),
 		getMemberName: getMemberName(db),
 		getUnfinishedTaskCountForMember: getUnfinishedTaskCountForMember(db),
@@ -487,6 +521,14 @@ export const getRequestFreeMemberBackend = (
 			isMemberPartOfAccount({ ...prevBackend, ...backend })(member),
 		saveExtraMemberInformation: info => saveExtraMemberInformation(db)(info).map(destroy),
 		getBirthday: prevBackend.getBirthday,
+		areMembersInTheSameAccount: memoize(
+			(mem1: Member) =>
+				memoize(
+					areMembersInTheSameAccount({ ...prevBackend, ...backend })(mem1),
+					stringifyMemberReference,
+				),
+			stringifyMemberReference,
+		),
 	};
 
 	return backend;

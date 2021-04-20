@@ -42,7 +42,6 @@ import {
 	MaybeObj,
 	RawLinkedEvent,
 	RawResolvedEventObject,
-	RegistryValues,
 	Right,
 	ServerError,
 	User,
@@ -114,21 +113,11 @@ export const getEventPOCs = (
 		),
 	);
 
-const checkAttendeesForRequest = (
-	event: RawResolvedEventObject,
-	req: Req,
-	registry: RegistryValues,
-	attendees: AsyncIter<AttendanceRecord>,
-): AsyncRepr<Array<EitherObj<ServerError, api.events.events.EventViewerAttendanceRecord>>> =>
-	event.privateAttendance && !canMaybeFullyManageEvent(req.member)(event)
-		? []
-		: asyncIterMap((record: AttendanceRecord) =>
-				Either.right({
-					member: Maybe.none(),
-					record,
-					orgName: Maybe.some(registry.Website.Name),
-				}),
-		  )(attendees);
+const attendanceViewerRecordMapper = (record: AttendanceRecord) => ({
+	member: Maybe.none(),
+	record,
+	orgName: Maybe.none(),
+});
 
 export const getAttendanceForNonAdmin = (
 	backend: Backend,
@@ -136,7 +125,7 @@ export const getAttendanceForNonAdmin = (
 	event: RawResolvedEventObject,
 ): AsyncEither<ServerError, AsyncIter<AttendanceRecord>> =>
 	Maybe.isSome(member)
-		? backend.getAttendanceForEvent(event)
+		? backend.getAttendanceForEvent(event).map(backend.applyAttendanceFilter(member.value))
 		: asyncRight<ServerError, AsyncIter<AttendanceRecord>>([], errorGenerator());
 
 export const getLinkedEventsForViewer = (
@@ -185,7 +174,8 @@ export const getFullEventInformation = (
 								orgName: Maybe.none(),
 							}),
 						),
-					),
+					)
+					.fullJoin(),
 			),
 		),
 		backend.getFullPointsOfContact(req.account)(event.pointsOfContact),
@@ -213,7 +203,9 @@ export const func: Endpoint<Backend, api.events.events.GetEventViewerData> = bac
 				? getFullEventInformation(req, event, backend)
 				: AsyncEither.All([
 						backend.getRegistry(req.account),
-						getAttendanceForNonAdmin(backend, req.member, event),
+						getAttendanceForNonAdmin(backend, req.member, event).map(
+							asyncIterMap(attendanceViewerRecordMapper),
+						),
 						getEventPOCs(backend, event, req.member),
 						getSourceAccountName(event, backend),
 						getLinkedEventsForViewer(req, backend, event),
@@ -233,7 +225,7 @@ export const func: Endpoint<Backend, api.events.events.GetEventViewerData> = bac
 							authorFullName,
 						]) => ({
 							event: filterEventInformation(req.member)(event),
-							attendees: checkAttendeesForRequest(event, req, registry, attendees),
+							attendees,
 							pointsOfContact,
 							sourceAccountName,
 							linkedEvents,

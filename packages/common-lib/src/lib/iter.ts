@@ -29,6 +29,16 @@ export function* iterFromArray<T>(array: T[]): Iter<T> {
 	}
 }
 
+export function iterToArray<T>(iter: Iter<T>): T[] {
+	const result: T[] = [];
+
+	for (const i of iter) {
+		result.push(i);
+	}
+
+	return result;
+}
+
 export const iterMap = <T, U>(map: (v: T) => U) =>
 	function* (iter: Iter<T>): Iter<U> {
 		for (const i of iter) {
@@ -105,6 +115,27 @@ export const iterConcat = <T>(iter1: Iter<T>) =>
 			yield item;
 		}
 	};
+
+export const filterUnique = function* <T extends Identifiable | number | string>(
+	iter: Iter<T>,
+): Iter<T> {
+	const found: { [key: string]: boolean } = {};
+
+	for (const item of iter) {
+		if ('id' in item) {
+			const item2 = item as Identifiable;
+			if (!found[item2.id]) {
+				found[item2.id] = true;
+				yield item;
+			}
+		} else {
+			if (!found[item.toString()]) {
+				found[item.toString()] = true;
+				yield item;
+			}
+		}
+	}
+};
 
 export const asyncIterHandler = <T>(errorHandler: (err: Error) => ServerError) =>
 	async function* (iter: AsyncIterableIterator<T>) {

@@ -34,6 +34,7 @@ import {
 	canSignUpForEvent,
 	CustomAttendanceFieldValue,
 	destroy,
+	effectiveManageEventPermissionForEvent,
 	Either,
 	errorGenerator,
 	EventObject,
@@ -48,6 +49,7 @@ import {
 	MemberReference,
 	memoize,
 	NewAttendanceRecord,
+	Permissions,
 	pipe,
 	RawEventObject,
 	RawResolvedEventObject,
@@ -181,32 +183,26 @@ const arrayHasOneTrue = (arr: boolean[]) => arr.some(identity);
 export const getAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 ) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord) =>
-	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
-		backend
-			.getEvent(account)(attendanceRecord.sourceEventID)
-			.flatMap(newEnsureResolvedEvent(backend))
-			.flatMap(event =>
+	backend
+		.getAccount(attendanceRecord.sourceAccountID)
+		.flatMap(account =>
+			AsyncEither.All([
+				backend
+					.getEvent(account)(attendanceRecord.sourceEventID)
+					.flatMap(newEnsureResolvedEvent(backend)),
+				backend.getMember(account)(attendanceRecord.memberID),
+			]).flatMap(([event, member]) =>
 				AsyncEither.All([
-					asyncRight(
-						areMembersTheSame(attendanceViewer)(attendanceRecord.memberID),
-						attendanceFilterError,
-					),
-					event.teamID === undefined || event.teamID === null
+					getDetailedAttendanceFilter(backend)(attendanceViewer)(attendanceRecord),
+					event.privateAttendance
 						? asyncRight(
-								hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
-									Maybe.none(),
-								),
-								attendanceFilterError,
+								false,
+								errorGenerator('Could not verify attendance permissions'),
 						  )
-						: backend
-								.getTeam(account)(event.teamID)
-								.map(Maybe.some)
-								.map(
-									hasBasicAttendanceManagementPermission(attendanceViewer)(event),
-								),
+						: backend.areMembersInTheSameAccount(attendanceViewer)(member),
 				]).map(arrayHasOneTrue),
 			),
-	);
+		);
 
 export const getDetailedAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
@@ -234,6 +230,11 @@ export const getDetailedAttendanceFilter = (
 								.map(
 									hasBasicAttendanceManagementPermission(attendanceViewer)(event),
 								),
+					asyncRight(
+						effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
+							Permissions.ManageEvent.FULL,
+						errorGenerator('Could not verify attendance permissions'),
+					),
 				]).map(arrayHasOneTrue),
 			),
 	);
@@ -494,17 +495,13 @@ export const getRequestFreeAttendanceBackend = (
 			),
 		get('id'),
 	),
-	getAttendanceFilter: user => record => getAttendanceFilter(prevBackend)(user)(record),
-	getDetailedAttendanceFilter: user => record =>
-		getDetailedAttendanceFilter(prevBackend)(user)(record),
-	canMemberModifyRecord: user => record => canMemberModifyRecord(prevBackend)(user)(record),
-	canMemberDeleteRecord: user => record => canMemberDeleteRecord(prevBackend)(user)(record),
-	applyAttendanceFilter: user => attendance =>
-		applyAttendanceFilter(prevBackend)(user)(attendance),
-	applyAttendanceRecordUpdates: actor => record => changes =>
-		applyAttendanceRecordUpdates(prevBackend)(actor)(record)(changes),
-	removeMemberFromEventAttendance: actor => member => event =>
-		deleteAttendanceRecord(mysqlx)(actor)(member)(event),
+	getAttendanceFilter: user => getAttendanceFilter(prevBackend)(user),
+	getDetailedAttendanceFilter: user => getDetailedAttendanceFilter(prevBackend)(user),
+	canMemberModifyRecord: canMemberModifyRecord(prevBackend),
+	canMemberDeleteRecord: canMemberDeleteRecord(prevBackend),
+	applyAttendanceFilter: applyAttendanceFilter(prevBackend),
+	applyAttendanceRecordUpdates: applyAttendanceRecordUpdates(prevBackend),
+	removeMemberFromEventAttendance: deleteAttendanceRecord(mysqlx),
 	getMemberAttendanceRecordForEvent: memoize(
 		event =>
 			memoize(

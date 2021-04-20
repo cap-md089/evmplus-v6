@@ -26,8 +26,6 @@ import {
 	AllAudits,
 	areMembersTheSame,
 	AsyncEither,
-	AsyncIter,
-	asyncIterMap,
 	asyncIterReduce,
 	asyncLeft,
 	asyncRight,
@@ -39,8 +37,6 @@ import {
 	CAPProspectiveMemberReference,
 	destroy,
 	DiscordAccount,
-	Either,
-	EitherObj,
 	errorGenerator,
 	EventType,
 	FromDatabase,
@@ -81,7 +77,6 @@ import {
 	TaskObject,
 	toReference,
 	UserAccountInformation,
-	yieldObjAsync,
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
 import { AccountBackend } from '../../..';
@@ -400,10 +395,8 @@ export const createCAPProspectiveMember = (schema: Schema) => (
 
 export const getProspectiveMemberAccounts = (backend: Backends<[AccountBackend]>) => (
 	member: CAPProspectiveMemberObject,
-): AsyncIter<EitherObj<ServerError, AccountObject>> =>
-	asyncIterMap<EitherObj<ServerError, AccountObject>, EitherObj<ServerError, AccountObject>>(
-		Either.map(stripProp('_id') as (obj: AccountObject) => AccountObject),
-	)(yieldObjAsync(backend.getAccount(member.accountID)));
+): ServerEither<CAPAccountObject[]> =>
+	backend.getAccount(member.accountID).map(account => [account]);
 
 export const deleteProspectiveMember = (schema: Schema) => (member: CAPProspectiveMemberObject) =>
 	asyncRight(

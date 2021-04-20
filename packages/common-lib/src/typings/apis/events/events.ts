@@ -50,7 +50,7 @@ export interface EventViewerAttendanceRecord {
 export interface EventViewerData {
 	event: RawResolvedEventObject;
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
-	attendees: Array<APIEither<EventViewerAttendanceRecord>>;
+	attendees: EventViewerAttendanceRecord[];
 	sourceAccountName?: string | undefined;
 	linkedEvents: Array<{
 		id: number;

@@ -106,6 +106,22 @@ export const func: Endpoint<Backend, api.events.attendance.ModifyAttendance> = b
 						)(req.body)(event)(maybeTeam).flatMap(member =>
 							backend
 								.getMemberAttendanceRecordForEvent(event)(member)
+								.filter(
+									record =>
+										Maybe.isSome(record)
+											? backend.canMemberModifyRecord(req.member)(
+													record.value,
+											  )
+											: asyncRight(
+													true,
+													errorGenerator('Could not verify permissions'),
+											  ),
+									{
+										type: 'OTHER',
+										code: 403,
+										message: 'You do not have permission to do that',
+									},
+								)
 								.flatMap(record =>
 									Maybe.isSome(record)
 										? backend.applyAttendanceRecordUpdates(req.member)(

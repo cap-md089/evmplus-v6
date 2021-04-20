@@ -23,7 +23,6 @@ import {
 	AccountObject,
 	areMembersTheSame,
 	AsyncEither,
-	AsyncIter,
 	asyncRight,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
@@ -32,7 +31,6 @@ import {
 	CAPNHQMemberObject,
 	CAPNHQMemberReference,
 	collectGenerator,
-	EitherObj,
 	errorGenerator,
 	get as getProp,
 	getMemberName,
@@ -402,8 +400,7 @@ export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemb
 
 export const getNHQMemberAccount = (backend: Backends<[AccountBackend]>) => (
 	member: CAPNHQMemberObject,
-): AsyncIter<EitherObj<ServerError, CAPAccountObject>> =>
-	backend.getCAPAccountsByORGID(member.orgid);
+): ServerEither<CAPAccountObject[]> => backend.getCAPAccountsByORGID(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
 	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);

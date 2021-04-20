@@ -60,7 +60,6 @@ import {
 	PointOfContactType,
 	presentMultCheckboxReturn,
 	RawResolvedEventObject,
-	Right,
 	spreadsheets,
 	stringifyMemberReference,
 	toReference,
@@ -229,7 +228,7 @@ const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventO
 
 const viewerDataToEventObject = (eventViewer: api.events.events.EventViewerData): EventObject => ({
 	...eventViewer.event,
-	attendance: eventViewer.attendees.filter(Either.isRight).map(get('value')).map(get('record')),
+	attendance: eventViewer.attendees.map(get('record')),
 	pointsOfContact: eventViewer.pointsOfContact,
 });
 
@@ -1141,9 +1140,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									<h3 id="attendance">Attendance</h3>
 
 									{this.state.eventInformation.attendees.some(
-										rec =>
-											Either.isRight(rec) &&
-											rec.value.record.memberID.type === 'CAPNHQMember',
+										rec => rec.record.memberID.type === 'CAPNHQMember',
 									) ? (
 										<>
 											<Button
@@ -1165,7 +1162,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											</Button>
 										</>
 									) : null}
-									{attendees.filter(Either.isRight).length > 0 &&
+									{attendees.length > 0 &&
 									effectiveManageEventPermissionForEvent(member)(event) ? (
 										<>
 											{' | '}
@@ -1187,14 +1184,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 									>
 										{this.state.eventInformation.attendees
 											.filter(
-												(
-													val,
-												): val is Right<api.events.events.EventViewerAttendanceRecord> =>
-													Either.isRight(val) &&
-													val.value.record.memberID.type ===
-														'CAPNHQMember',
+												val => val.record.memberID.type === 'CAPNHQMember',
 											)
-											.map(rec => rec.value.record.memberID.id)
+											.map(rec => rec.record.memberID.id)
 											.join(', ')}
 									</Dialogue>
 									<Dialogue
@@ -1204,13 +1196,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										onClose={() => this.setState({ showingemails: false })}
 									>
 										{this.state.eventInformation.attendees
-											.filter(Either.isRight)
-											.map(rec => getEmails(member)(event)(rec.value))
+											.map(rec => getEmails(member)(event)(rec))
 											.join(', ')}
 									</Dialogue>
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
 										titles={renderName(member)(event)}
-										values={attendees.filter(Either.isRight).map(get('value'))}
+										values={attendees}
 										onlyOneOpen={true}
 										keyFunc={rec =>
 											stringifyMemberReference(rec.record.memberID)
@@ -1278,19 +1269,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						eventInformation: {
 							...prev.eventInformation,
 							attendees: prev.eventInformation.attendees.map(rec =>
-								Either.isLeft(rec) ||
-								member === null ||
-								!areMembersTheSame(member)(rec.value.record.memberID)
+								member === null || !areMembersTheSame(member)(rec.record.memberID)
 									? rec
-									: Either.right<
-											HTTPError,
-											api.events.events.EventViewerAttendanceRecord
-									  >({
+									: {
 											member: Maybe.fromValue(member),
 											orgName: Maybe.some(this.props.registry.Website.Name),
 											record: {
 												...record,
-												timestamp: rec.value.record.timestamp,
+												timestamp: rec.record.timestamp,
 												summaryEmailSent: false,
 												sourceAccountID: this.props.account.id,
 												sourceEventID: prev.eventInformation.event.id,
@@ -1308,7 +1294,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 													),
 												),
 											},
-									  }),
+									  },
 							),
 						},
 				  }
@@ -1366,9 +1352,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						eventInformation: {
 							...prev.eventInformation,
 							attendees: prev.eventInformation.attendees.filter(
-								mem =>
-									Either.isLeft(mem) ||
-									!areMembersTheSame(mem.value.record.memberID)(record.memberID),
+								mem => !areMembersTheSame(mem.record.memberID)(record.memberID),
 							),
 						},
 				  },
@@ -1716,9 +1700,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		wsName = 'Attendance';
 		const [wsDataAttendance, widths] = spreadsheets.AttendanceXL(
 			this.state.eventInformation.event,
-			this.state.eventInformation.attendees
-				.filter(Either.isRight)
-				.map(record => record.value),
+			this.state.eventInformation.attendees,
 		);
 		ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
 		sheet = spreadsheets.FormatAttendanceXL(
