@@ -372,3 +372,5 @@ expect.extend({
 		};
 	},
 });
+
+export * from './data';
