@@ -63,4 +63,4 @@ export const func: Endpoint<Backends<[FileBackend]>, api.SlideshowImageIDs> = ba
 		.map(asyncIterMap(get('value')))
 		.map(wrapper);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

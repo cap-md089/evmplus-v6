@@ -21,6 +21,7 @@ import { Schema } from '@mysql/xdevapi';
 import { ServerEither } from 'auto-client-api';
 import {
 	AccountObject,
+	asyncLeft,
 	asyncRight,
 	Crash,
 	destroy,
@@ -41,9 +42,9 @@ import {
 	UserAccountInformation,
 	UserSession,
 } from 'common-lib';
-import { BasicAccountRequest } from '../../Account';
-import { Backends, notImplementedError } from '../../backends';
-import { MemberBackend } from '../../Members';
+import type { BasicAccountRequest } from '../../Account';
+import type { Backends } from '../../backends';
+import type { MemberBackend } from '../../Members';
 import {
 	addUserAccount,
 	addUserAccountCreationToken,
@@ -188,7 +189,12 @@ export const getRequestFreePAMBackend = (
 			setPermissionsForMemberInAccount(mysqlx, member, permissions, account),
 			errorGenerator('Could not set member permissions'),
 		),
-	verifyCaptcha: () => notImplementedError('verifyCaptcha'),
+	verifyCaptcha: () =>
+		asyncLeft({
+			type: 'OTHER',
+			code: 400,
+			message: `Function 'verifyCaptcha' not implemented`,
+		}),
 	getUserInformationForMember: memoize(
 		member =>
 			asyncRight(
@@ -268,7 +274,12 @@ export const getRequestFreePAMBackend = (
 					  }) as ServerError,
 		).map(destroy),
 	addSignatureNonce: signatureID => addSignatureNonce(mysqlx)(signatureID),
-	trySignin: () => () => () => notImplementedError('trySignin'),
+	trySignin: () => () => () =>
+		asyncLeft({
+			type: 'OTHER',
+			code: 400,
+			message: `Function 'trySignin' not implemented`,
+		}),
 	getTokenForUser: account =>
 		asyncRight(getTokenForUser(mysqlx, account), errorGenerator('Could not get token')),
 	isTokenValid: member => token =>

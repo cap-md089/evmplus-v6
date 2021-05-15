@@ -55,7 +55,7 @@ export default async (request: express.Request, res: express.Response) => {
 		getRegistryBackend,
 		getAccountBackend,
 		CAP.getCAPMemberBackend,
-		getCombinedMemberBackend,
+		getCombinedMemberBackend(),
 		getFileBackend,
 	)(req);
 

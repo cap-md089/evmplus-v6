@@ -64,4 +64,4 @@ export const func: Endpoint<Backends<[FileBackend]>, api.files.children.RemoveCh
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

@@ -90,4 +90,4 @@ export const func: Endpoint<
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedAttendanceBackend);
+export default withBackends(func, getCombinedAttendanceBackend());

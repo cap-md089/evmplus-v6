@@ -72,4 +72,4 @@ export const func: Endpoint<Backends<[TeamsBackend]>, api.team.ListTeams> = back
 		.map(asyncIterMap(httpStripTeamObject(req.member)))
 		.map(wrapper);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

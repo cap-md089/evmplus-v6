@@ -79,6 +79,6 @@ export default withBackends(
 	func,
 	combineBackends<BasicAccountRequest, [TimeBackend, EventsBackend]>(
 		getTimeBackend,
-		getCombinedEventsBackend,
+		getCombinedEventsBackend(),
 	),
 );

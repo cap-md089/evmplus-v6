@@ -44,4 +44,4 @@ export const func: Endpoint<Backends<[MemberBackend]>, api.member.MemberGet> = b
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedMemberBackend);
+export default withBackends(func, getCombinedMemberBackend());

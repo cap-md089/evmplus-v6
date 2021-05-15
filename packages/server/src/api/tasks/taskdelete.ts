@@ -35,4 +35,4 @@ export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.DeleteTask> = bac
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedTasksBackend);
+export default withBackends(func, getCombinedTasksBackend());

@@ -56,4 +56,4 @@ export const func: Endpoint<
 		.map(destroy)
 		.map(wrapper);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

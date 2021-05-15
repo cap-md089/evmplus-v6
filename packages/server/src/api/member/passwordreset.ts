@@ -37,4 +37,4 @@ export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.PasswordReset
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

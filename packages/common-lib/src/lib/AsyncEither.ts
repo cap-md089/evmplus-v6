@@ -37,7 +37,7 @@ const errorWrap = async <L, R, T extends any[]>(
 	try {
 		let value = f(...args);
 
-		if (value instanceof Promise) {
+		if (typeof value === 'object' && 'then' in value) {
 			value = await value;
 		}
 

@@ -30,4 +30,4 @@ export const func: Endpoint<
 		backend.finishMFASetup(toReference(req.member))(req.body.mfaToken).map(wrapper),
 	);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

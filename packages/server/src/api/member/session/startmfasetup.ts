@@ -30,4 +30,4 @@ export const func: Endpoint<
 		backend.startMFASetup(req.member).map(wrapper),
 	);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

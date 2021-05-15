@@ -60,4 +60,4 @@ export const func: Endpoint<Backends<[FileBackend]>, api.files.files.SetInfo> = 
 		),
 	);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

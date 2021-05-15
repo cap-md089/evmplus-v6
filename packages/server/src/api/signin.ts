@@ -179,6 +179,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[GenBackend<typeof getCombinedMemberBackend>, PAM.PAMBackend]
-	>(getCombinedMemberBackend, PAM.getPAMBackend),
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, PAM.PAMBackend]
+	>(getCombinedMemberBackend(), PAM.getPAMBackend),
 );

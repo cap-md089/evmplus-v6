@@ -78,9 +78,9 @@ export default withBackends(
 		BasicAccountRequest,
 		[AccountBackend, MemberBackend, CAP.CAPMemberBackend, TeamsBackend]
 	>(
-		getDefaultAccountBackend,
-		getCombinedMemberBackend,
+		getDefaultAccountBackend(),
+		getCombinedMemberBackend(),
 		CAP.getCAPMemberBackend,
-		getCombinedTeamsBackend,
+		getCombinedTeamsBackend(),
 	),
 );

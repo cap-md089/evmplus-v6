@@ -34,7 +34,7 @@ const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ)
 
 export const func = (backendGenerator = getCombinedFileBackend) =>
 	asyncErrorHandler(async (req: BasicMySQLRequest<{ fileid: string }>, res) => {
-		const backend = backendGenerator(req);
+		const backend = backendGenerator()(req);
 
 		const fileEither = await accountRequestTransformer(req)
 			.flatMap(PAM.memberRequestTransformer(false))

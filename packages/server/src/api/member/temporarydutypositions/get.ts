@@ -60,4 +60,4 @@ export const func: Endpoint<
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedMemberBackend);
+export default withBackends(func, getCombinedMemberBackend());

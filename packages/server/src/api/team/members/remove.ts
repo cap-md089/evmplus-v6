@@ -59,4 +59,4 @@ export const func: Endpoint<
 		),
 	);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

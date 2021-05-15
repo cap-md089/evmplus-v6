@@ -118,4 +118,4 @@ export const func: Endpoint<Backends<[MemberBackend]>, api.member.flight.AssignB
 		),
 	);
 
-export default withBackends(func, getCombinedMemberBackend);
+export default withBackends(func, getCombinedMemberBackend());

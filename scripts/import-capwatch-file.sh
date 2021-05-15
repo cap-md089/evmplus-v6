@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 <<LICENSE
- Copyright (C) 2021 Andrew Rioux
+ Copyright (C) 2020 Andrew Rioux
  
  This file is part of EvMPlus.org.
  
@@ -19,4 +19,11 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-mysql-shell-8.0.25-linux-glibc2.12-x86-64bit/bin/mysqlsh --password=$(cat /run/secrets/db_password) --user=$(cat /run/secrets/db_user) --host=$DB_HOST --schema=$DB_SCHEMA
+STAGING="1"
+
+file_arg=""
+if [ "$STAGING" = "1" ]; then
+	file_arg="-f docker-compose.dev.yml"
+fi
+
+docker-compose $file_arg run --volume=$1:/tmp/capwatch.zip util-cli /usr/evm-plus/packages/util-cli/dist/importCapwatch.js /tmp/capwatch.zip

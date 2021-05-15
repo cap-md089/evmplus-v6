@@ -100,4 +100,4 @@ export const func: Endpoint<Backends<[MemberBackend]>, api.Check> = backend => r
 	)(Maybe.And([req.member, req.session]));
 };
 
-export default withBackends(func, getCombinedMemberBackend);
+export default withBackends(func, getCombinedMemberBackend());

@@ -87,4 +87,4 @@ export const func: Endpoint<
 		.map(asyncIterMap(filterEventInformation(req.member)))
 		.map(wrapper);
 
-export default withBackends(func, getCombinedEventsBackend);
+export default withBackends(func, getCombinedEventsBackend());

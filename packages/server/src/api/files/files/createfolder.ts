@@ -113,6 +113,6 @@ export default withBackends(
 	combineBackends<BasicAccountRequest, [TimeBackend, RandomBackend, FileBackend]>(
 		getTimeBackend,
 		getRandomBackend,
-		getCombinedFileBackend,
+		getCombinedFileBackend(),
 	),
 );

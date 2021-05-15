@@ -142,6 +142,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			if (Either.isLeft(result)) {
 				this.setState({
 					error: result.value.message,
+					tryingSignup: false,
 				});
 			} else {
 				this.setState({

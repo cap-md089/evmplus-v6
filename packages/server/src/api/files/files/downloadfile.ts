@@ -40,8 +40,8 @@ import asyncErrorHandler from '../../../lib/asyncErrorHandler';
 const canReadFile = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
 const pamFileBackend = combineBackends<BasicMySQLRequest, [PAM.PAMBackend, FileBackend]>(
-	getCombinedPAMBackend,
-	getCombinedFileBackend,
+	getCombinedPAMBackend(),
+	getCombinedFileBackend(),
 );
 
 export const func = (getBackend = pamFileBackend) =>

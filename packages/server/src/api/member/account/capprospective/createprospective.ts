@@ -267,7 +267,7 @@ export default withBackends(
 		getEmailBackend,
 		getRegistryBackend,
 		CAP.getCAPMemberBackend,
-		getCombinedTeamsBackend,
+		getCombinedTeamsBackend(),
 		getMemberBackend,
 		PAM.getPAMBackend,
 	),

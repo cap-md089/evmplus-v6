@@ -27,14 +27,14 @@ export const getFormTokenFunc: Endpoint<
 	api.FormToken
 > = backend => req => backend.getTokenForUser(req.session.userAccount).map(wrapper);
 
-export const getFormToken = withBackends(getFormTokenFunc, getCombinedPAMBackend);
+export const getFormToken = withBackends(getFormTokenFunc, getCombinedPAMBackend());
 
 export const tokenTransformer = (backendGenerator = getCombinedPAMBackend) => <
 	T extends PAM.BasicMemberRequest
 >(
 	req: T,
 ): AsyncEither<ServerError, T> => {
-	const backend = backendGenerator(req);
+	const backend = backendGenerator()(req);
 
 	return backend
 		.isTokenValid(req.member)(req.body.token)

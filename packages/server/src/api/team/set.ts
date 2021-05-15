@@ -69,4 +69,4 @@ export const func: Endpoint<Backends<[TeamsBackend]>, api.team.SetTeamData> = ba
 		),
 	);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

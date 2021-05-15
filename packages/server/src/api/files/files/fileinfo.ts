@@ -42,4 +42,4 @@ export const func: Endpoint<Backends<[FileBackend]>, api.files.files.GetFile> = 
 		.flatMap(backend.expandRawFileObject(req.member))
 		.map(wrapper);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

@@ -51,4 +51,4 @@ export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Copy> =
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedEventsBackend);
+export default withBackends(func, getCombinedEventsBackend());

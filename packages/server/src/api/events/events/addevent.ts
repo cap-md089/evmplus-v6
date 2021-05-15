@@ -66,4 +66,4 @@ export const func: Endpoint<
 		.flatMap(backend.getFullEventObject)
 		.map(wrapper);
 
-export default withBackends(func, getCombinedEventsBackend);
+export default withBackends(func, getCombinedEventsBackend());

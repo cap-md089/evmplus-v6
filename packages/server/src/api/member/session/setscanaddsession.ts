@@ -77,7 +77,7 @@ export default withBackends(
 	func,
 	combineBackends<BasicAccountRequest, [TimeBackend, EventsBackend, PAM.PAMBackend]>(
 		getTimeBackend,
-		getCombinedEventsBackend,
-		getCombinedPAMBackend,
+		getCombinedEventsBackend(),
+		getCombinedPAMBackend(),
 	),
 );

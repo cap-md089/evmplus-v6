@@ -38,4 +38,4 @@ export const func: Endpoint<Backends<[TeamsBackend]>, api.team.GetTeam> = backen
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

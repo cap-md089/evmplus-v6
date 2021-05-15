@@ -21,6 +21,7 @@ services:
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=localevmplus.org
             - NODE_ENV=development
+            - GOOGLE_KEYS_PATH=/google-keys
         volumes:
             - type: bind
               source: ./keys/google-keys
@@ -105,7 +106,7 @@ services:
         build:
             context: .
             target: development
-        command: /usr/evm-plus/capwatch-cron/download.sh
+        command: /usr/evm-plus/cronjobs/download.sh
         volumes:
             - ./capwatch_downloads:/tmp
             - .:/usr/evm-plus

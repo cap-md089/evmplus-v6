@@ -25,4 +25,4 @@ import wrapper from '../lib/wrapper';
 export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.GetSigninToken> = backend => req =>
 	backend.addSignatureNonce(req.params.signatureID).map(wrapper);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

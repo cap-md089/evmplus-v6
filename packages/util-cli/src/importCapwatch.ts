@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/local/bin/node --no-warnings
 /**
  * Copyright (C) 2020 Andrew Rioux
  *

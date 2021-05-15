@@ -138,5 +138,5 @@ export default withBackends(
 	combineBackends<
 		BasicAccountRequest,
 		[RegistryBackend, MemberBackend, EmailBackend, PAM.PAMBackend]
-	>(getRegistryBackend, getCombinedMemberBackend, getEmailBackend, PAM.getPAMBackend),
+	>(getRegistryBackend, getCombinedMemberBackend(), getEmailBackend, PAM.getPAMBackend),
 );

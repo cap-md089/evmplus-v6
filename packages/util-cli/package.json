@@ -4,7 +4,7 @@
 	"description": "CLI utilities for server admins of the CAPUnit suite",
 	"private": true,
 	"scripts": {
-		"build": "ttsc --build tsconfig.build.json",
+		"build": "ttsc --build tsconfig.build.json && chmod +x dist/*.js",
 		"watch": "ttsc --build tsconfig.build.json --build",
 		"check": "ttsc --build tsconfig.build.json --noEmit",
 		"lint": "tslint --project ."

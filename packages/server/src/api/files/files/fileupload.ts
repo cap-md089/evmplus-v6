@@ -53,8 +53,8 @@ const canSaveToFolder = userHasFilePermission(FileUserAccessControlPermissions.M
 const logFunc = debug('server:api:files:files:fileupload');
 
 const pamFileBackend = combineBackends<MySQLRequest, [PAM.PAMBackend, FileBackend]>(
-	getCombinedPAMBackend,
-	getCombinedFileBackend,
+	getCombinedPAMBackend(),
+	getCombinedFileBackend(),
 );
 
 /*

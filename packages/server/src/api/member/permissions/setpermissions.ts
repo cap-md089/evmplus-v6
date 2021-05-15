@@ -102,4 +102,4 @@ export const func: Endpoint<
 		),
 	);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

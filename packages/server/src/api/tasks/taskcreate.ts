@@ -29,4 +29,4 @@ export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.CreateTask> = bac
 		),
 	);
 
-export default withBackends(func, getCombinedTasksBackend);
+export default withBackends(func, getCombinedTasksBackend());

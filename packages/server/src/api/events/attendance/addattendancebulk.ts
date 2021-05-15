@@ -129,6 +129,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RawMySQLBackend, GenBackend<typeof getCombinedAttendanceBackend>]
-	>(getRawMySQLBackend, getCombinedAttendanceBackend),
+		[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend()),
 );

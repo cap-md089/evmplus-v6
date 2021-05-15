@@ -58,4 +58,4 @@ export const func: Endpoint<
 		),
 	);
 
-export default withBackends(func, getCombinedAttendanceBackend);
+export default withBackends(func, getCombinedAttendanceBackend());

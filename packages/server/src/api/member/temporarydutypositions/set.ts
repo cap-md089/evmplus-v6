@@ -103,6 +103,6 @@ export default withBackends(
 	func,
 	combineBackends<BasicAccountRequest, [TimeBackend, MemberBackend]>(
 		getTimeBackend,
-		getCombinedMemberBackend,
+		getCombinedMemberBackend(),
 	),
 );

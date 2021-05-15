@@ -143,4 +143,4 @@ export const func: Endpoint<Backend, api.events.attendance.ModifyAttendance> = b
 		),
 	);
 
-export default withBackends(func, getCombinedAttendanceBackend);
+export default withBackends(func, getCombinedAttendanceBackend());

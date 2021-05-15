@@ -205,9 +205,9 @@ export default withBackends(
 		BasicAccountRequest,
 		[
 			RawMySQLBackend,
-			GenBackend<typeof getCombinedAttendanceBackend>,
+			GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>,
 			EmailBackend,
 			RegistryBackend,
 		]
-	>(getRawMySQLBackend, getCombinedAttendanceBackend, getEmailBackend, getRegistryBackend),
+	>(getRawMySQLBackend, getCombinedAttendanceBackend(), getEmailBackend, getRegistryBackend),
 );
