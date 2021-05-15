@@ -43,4 +43,4 @@ export const func: Endpoint<
 			cookies: { sessionID: { value: session.id, expires: session.expires } },
 		}));
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

@@ -35,4 +35,4 @@ export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.session.Su> =
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedPAMBackend);
+export default withBackends(func, getCombinedPAMBackend());

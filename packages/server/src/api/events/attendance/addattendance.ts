@@ -44,6 +44,7 @@ import {
 	BasicAccountRequest,
 	combineBackends,
 	EventsBackend,
+	GenBackend,
 	getCombinedAttendanceBackend,
 	getRawMySQLBackend,
 	MemberBackend,
@@ -52,7 +53,6 @@ import {
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
-	GenBackend,
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
@@ -156,6 +156,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RawMySQLBackend, GenBackend<typeof getCombinedAttendanceBackend>]
-	>(getRawMySQLBackend, getCombinedAttendanceBackend),
+		[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend()),
 );

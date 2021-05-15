@@ -29,4 +29,4 @@ export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Get> = 
 		.map(filterEventInformation(req.member))
 		.map(wrapper);
 
-export default withBackends(func, getCombinedEventsBackend);
+export default withBackends(func, getCombinedEventsBackend());

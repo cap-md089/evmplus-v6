@@ -27,4 +27,4 @@ export const func: Endpoint<
 	api.events.events.GetEventAuditData
 > = backend => req => backend.getAudit(req.account)(req.params.id).map(wrapper);
 
-export default withBackends(func, getCombinedEventsBackend);
+export default withBackends(func, getCombinedEventsBackend());

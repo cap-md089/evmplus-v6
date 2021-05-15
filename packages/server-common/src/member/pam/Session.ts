@@ -219,13 +219,16 @@ export const restoreFromSession = (
 		),
 		backend.getMember(account)(session.userAccount.member),
 	])
-		.map<UserForReference<T>>(([permissions, member]) => ({
-			...member,
-			...({
-				permissions,
-				sessionID: session.id,
-			} as UserObject),
-		}))
+		.map<UserForReference<T>>(
+			([permissions, member]) =>
+				(({
+					...member,
+					...({
+						permissions,
+						sessionID: session.id,
+					} as UserObject),
+				} as unknown) as UserForReference<T>),
+		)
 		.map<ActiveSession<T>>(user =>
 			session.type === SessionType.SCAN_ADD
 				? {
@@ -278,7 +281,7 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 			{
 				...request,
 				backend: {
-					...getCombinedMemberBackend(request),
+					...getCombinedMemberBackend()(request),
 					...request.backend,
 				},
 			},

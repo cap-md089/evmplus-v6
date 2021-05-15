@@ -29,17 +29,17 @@ import {
 	Backends,
 	BasicAccountRequest,
 	combineBackends,
+	GenBackend,
 	getCombinedAttendanceBackend,
 	getCombinedPAMBackend,
 	PAM,
 	withBackends,
-	GenBackend,
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 export const func: Endpoint<
-	Backends<[GenBackend<typeof getCombinedAttendanceBackend>, PAM.PAMBackend]>,
+	Backends<[GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>, PAM.PAMBackend]>,
 	api.events.accounts.AddEventAccount
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
@@ -65,6 +65,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[GenBackend<typeof getCombinedAttendanceBackend>, PAM.PAMBackend]
-	>(getCombinedAttendanceBackend, getCombinedPAMBackend),
+		[GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>, PAM.PAMBackend]
+	>(getCombinedAttendanceBackend(), getCombinedPAMBackend()),
 );

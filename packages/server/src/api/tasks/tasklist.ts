@@ -27,4 +27,4 @@ export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.ListTasks> = back
 		backend.getTasksForMember(req.account)(req.member).map(wrapper),
 	);
 
-export default withBackends(func, getCombinedTasksBackend);
+export default withBackends(func, getCombinedTasksBackend());

@@ -35,4 +35,4 @@ export const func: Endpoint<Backends<[FileBackend]>, api.files.files.Delete> = b
 		.flatMap(backend.deleteFileObject)
 		.map(wrapper);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());

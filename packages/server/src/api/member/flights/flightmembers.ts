@@ -94,6 +94,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[GenBackend<typeof getCombinedMemberBackend>, TeamsBackend]
-	>(getCombinedMemberBackend, getTeamsBackend),
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, TeamsBackend]
+	>(getCombinedMemberBackend(), getTeamsBackend),
 );

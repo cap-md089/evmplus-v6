@@ -239,6 +239,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RegistryBackend, GenBackend<typeof getCombinedAttendanceBackend>]
-	>(getRegistryBackend, getCombinedAttendanceBackend),
+		[RegistryBackend, GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>]
+	>(getRegistryBackend, getCombinedAttendanceBackend()),
 );

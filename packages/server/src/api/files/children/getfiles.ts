@@ -79,5 +79,5 @@ export default withBackends(
 	combineBackends<
 		BasicAccountRequest,
 		[Backends<[AccountBackend, TeamsBackend, MemberBackend, CAP.CAPMemberBackend]>, FileBackend]
-	>(getCombinedMemberBackend, getFileBackend),
+	>(getCombinedMemberBackend(), getFileBackend),
 );

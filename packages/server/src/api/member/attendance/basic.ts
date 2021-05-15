@@ -111,5 +111,5 @@ export default withBackends(
 			AccountBackend,
 			Backends<[CAP.CAPMemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]>,
 		]
-	>(getAccountBackend, getCombinedAttendanceBackend),
+	>(getAccountBackend, getCombinedAttendanceBackend()),
 );

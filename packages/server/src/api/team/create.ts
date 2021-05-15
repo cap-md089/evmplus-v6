@@ -32,4 +32,4 @@ export const func: Endpoint<Backends<[TeamsBackend]>, api.team.CreateTeam> = bac
 		),
 	);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

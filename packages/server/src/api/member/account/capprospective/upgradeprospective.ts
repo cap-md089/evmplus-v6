@@ -71,4 +71,4 @@ export const func: Endpoint<
 		),
 	);
 
-export default withBackends(func, getCombinedMemberBackend);
+export default withBackends(func, getCombinedMemberBackend());

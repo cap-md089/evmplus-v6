@@ -75,5 +75,5 @@ export default withBackends(
 	combineBackends<
 		BasicMySQLRequest,
 		[TimeBackend, RegistryBackend, AccountBackend, EventsBackend]
-	>(getTimeBackend, getRegistryBackend, getAccountBackend, getCombinedEventsBackend),
+	>(getTimeBackend, getRegistryBackend, getAccountBackend, getCombinedEventsBackend()),
 );

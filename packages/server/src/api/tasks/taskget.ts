@@ -34,4 +34,4 @@ export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.GetTask> = backen
 			.map(wrapper),
 	);
 
-export default withBackends(func, getCombinedTasksBackend);
+export default withBackends(func, getCombinedTasksBackend());

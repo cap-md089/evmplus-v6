@@ -36,4 +36,4 @@ export const func: Endpoint<Backends<[TeamsBackend]>, api.team.DeleteTeam> = bac
 		),
 	);
 
-export default withBackends(func, getCombinedTeamsBackend);
+export default withBackends(func, getCombinedTeamsBackend());

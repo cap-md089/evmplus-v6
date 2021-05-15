@@ -81,5 +81,5 @@ export default withBackends(
 	combineBackends<
 		BasicAccountRequest,
 		[TimeBackend, AccountBackend, EventsBackend, RegistryBackend]
-	>(getTimeBackend, getDefaultAccountBackend, getCombinedEventsBackend, getRegistryBackend),
+	>(getTimeBackend, getDefaultAccountBackend(), getCombinedEventsBackend(), getRegistryBackend),
 );

@@ -46,4 +46,4 @@ export const func: Endpoint<
 		.flatMap(backend.expandFileObject)
 		.map(wrapper);
 
-export default withBackends(func, getCombinedFileBackend);
+export default withBackends(func, getCombinedFileBackend());
