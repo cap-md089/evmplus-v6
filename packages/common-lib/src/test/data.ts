@@ -20,6 +20,7 @@
 import { labels } from '..';
 import { applyCustomAttendanceFields } from '../lib/Events';
 import { defaultRadioFromLabels, emptyFromLabels, emptySimpleFromLabels } from '../lib/forms';
+import { Maybe } from '../lib/Maybe';
 import {
 	AttendanceRecord,
 	AttendanceStatus,
@@ -69,6 +70,7 @@ export const getTestNewEvent = (): NewEventObject => ({
 	limitSignupsToTeam: false,
 	fileIDs: [],
 	privateAttendance: false,
+	emailBody: Maybe.none(),
 });
 
 export const getTestEvent = (): RawRegularEventObject => ({

@@ -165,17 +165,15 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 			orgContacts
 				.filter(contactItem => contactItem.CAPID === member.CAPID)
 				.forEach(contactItem => {
-					if (!contactItem.DoNotContact) {
-						const contactType = contactItem.Type.toUpperCase().replace(
-							/ /g,
-							'',
-						) as CAPMemberContactType;
+					const contactType = contactItem.Type.toUpperCase().replace(
+						/ /g,
+						'',
+					) as CAPMemberContactType;
 
-						// Handles the types we don't support
-						// Or, erroneous data left in by NHQ
-						if (contactType in contact) {
-							contact[contactType][contactItem.Priority] = contactItem.Contact;
-						}
+					// Handles the types we don't support
+					// Or, erroneous data left in by NHQ
+					if (contactType in contact) {
+						contact[contactType][contactItem.Priority] = contactItem.Contact;
 					}
 				});
 
@@ -247,15 +245,13 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 			};
 
 			capwatchContact.forEach(val => {
-				if (!val.DoNotContact) {
-					const contactType = val.Type.toUpperCase().replace(
-						/ /g,
-						'',
-					) as CAPMemberContactType;
+				const contactType = val.Type.toUpperCase().replace(
+					/ /g,
+					'',
+				) as CAPMemberContactType;
 
-					if (contactType in memberContact) {
-						memberContact[contactType][val.Priority] = val.Contact;
-					}
+				if (contactType in memberContact) {
+					memberContact[contactType][val.Priority] = val.Contact;
 				}
 			});
 

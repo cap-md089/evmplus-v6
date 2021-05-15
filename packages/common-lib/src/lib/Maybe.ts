@@ -31,6 +31,8 @@ export interface None {
 	hasValue: false;
 }
 
+export type SomeFromMaybe<T extends MaybeObj<any>> = T extends MaybeObj<infer V> ? Some<V> : never;
+
 const noneObj: None = { hasValue: false };
 
 export class Maybe {
