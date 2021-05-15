@@ -18,7 +18,7 @@
  */
 
 import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
-import { memoize, TableNames, TableDataType } from 'common-lib';
+import { memoize, TableDataType, TableNames } from 'common-lib';
 import * as Docker from 'dockerode';
 
 const getDockerConn = memoize(
@@ -28,21 +28,15 @@ const getDockerConn = memoize(
 		}),
 );
 
-interface ConnectionInfo {
-	dockerContainer: Docker.Container;
-	mysqlClient: Client;
-}
-
 const randomId = () =>
 	Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-const createCollection = (schema: Schema) => (name: string) => schema.createCollection(name);
 
 export const COLLECTIONS_USED: readonly string[] = [
 	'Accounts',
 	'Attendance',
 	'Audits',
 	'ChangeEvents',
+	'ChangeLog',
 	'DiscordAccounts',
 	'Errors',
 	'Events',
@@ -82,31 +76,18 @@ export const COLLECTIONS_USED: readonly string[] = [
 ];
 
 export class TestConnection {
-	protected static currentConnection: ConnectionInfo | Promise<ConnectionInfo> | undefined;
-	protected static mysqlInfo?: {
-		host: string;
-		port: string;
-		pass: string;
-		user: 'root';
-	};
-	protected static currentComposeConnection: Client | undefined;
-
 	public static setup(dbRef: DatabaseRef) {
 		return async (done?: () => void) => {
-			if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-				await this._setup();
-			} else {
-				const connString = this.mysqlConnectionString!;
+			const connString = this.mysqlConnectionString;
 
-				while (true) {
-					try {
-						const conn = await getSession(connString);
-						await conn.close();
+			while (true) {
+				try {
+					const conn = await getSession(connString);
+					await conn.close();
 
-						break;
-					} catch (e) {
-						await new Promise<void>(res => setTimeout(res, 1000));
-					}
+					break;
+				} catch (e) {
+					await new Promise<void>(res => setTimeout(res, 1000));
 				}
 			}
 			dbRef.connection = await this.setupSchema();
@@ -114,138 +95,35 @@ export class TestConnection {
 		};
 	}
 
-	protected static async _setup() {
-		return (this.currentConnection = await (this.currentConnection = (async () => {
-			await getDockerConn(void 0).pull('mysql:8.0.19');
-
-			const password = randomId();
-
-			const dockerContainer = await getDockerConn(void 0).createContainer({
-				Image: 'mysql:8.0.19',
-
-				Tty: true,
-				AttachStderr: true,
-				AttachStdout: true,
-				AttachStdin: false,
-				OpenStdin: false,
-				StdinOnce: false,
-
-				Env: [`MYSQL_ROOT_PASSWORD=${password}`],
-				HostConfig: {
-					PortBindings: {
-						'33060/tcp': [{ HostPort: '0' }],
-					},
-					Tmpfs: {
-						'/var/lib/mysql': 'rw,noexec',
-					},
-				},
-			});
-
-			await dockerContainer.start();
-
-			const containerInfo = (await dockerContainer.inspect()).NetworkSettings;
-			const networkSettings = containerInfo as Required<typeof containerInfo>;
-
-			const {
-				HostIp,
-				HostPort,
-			}: { HostIp: string; HostPort: string } = networkSettings.Ports['33060/tcp'][0];
-
-			TestConnection.mysqlInfo = {
-				host: HostIp === '0.0.0.0' ? '127.0.0.1' : HostIp || '127.0.0.1',
-				port: HostPort,
-				pass: password,
-				user: 'root',
-			};
-
-			const mysqlClient = getClient(this.mysqlConnectionString!, {
-				pooling: {
-					enabled: true,
-					maxSize: 50,
-				},
-			});
-
-			while (true) {
-				try {
-					await mysqlClient.getSession();
-					break;
-				} catch (e) {
-					await new Promise(resolve => setTimeout(resolve, 5000));
-				}
-			}
-
-			return {
-				dockerContainer,
-				mysqlClient,
-			};
-		})()));
-	}
-
-	public static async setupSchema(): Promise<TestConnection> {
+	private static async setupSchema(): Promise<TestConnection> {
 		const schema = randomId();
-		let session: Session;
-		let client: Client;
 
-		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			client = this.currentComposeConnection ??= getClient(this.mysqlConnectionString!, {
-				pooling: {
-					enabled: true,
-					maxSize: 50,
-				},
-			});
+		await TestConnection.setupCollections(schema);
 
-			session = await this.currentComposeConnection.getSession();
-		} else if (this.currentConnection instanceof Promise) {
-			const connInfo = await this.currentConnection;
+		const client = getClient(this.mysqlConnectionString, {
+			pooling: {
+				enabled: true,
+				maxSize: 10,
+			},
+		});
 
-			session = await connInfo.mysqlClient.getSession();
-			client = connInfo.mysqlClient;
-		} else if (this.currentConnection) {
-			session = await this.currentConnection.mysqlClient.getSession();
-			client = this.currentConnection.mysqlClient;
-		} else {
-			const connInfo = await this._setup()!;
+		const session = await client.getSession();
 
-			session = await connInfo.mysqlClient.getSession();
-			client = connInfo.mysqlClient;
-		}
-
-		await session.createSchema(schema);
 		const connection = new TestConnection(client, session, schema);
-		await connection.setupCollections();
 		return connection;
 	}
 
 	public static teardown(dbRef: DatabaseRef) {
 		return async (done?: () => void) => {
+			await dbRef.connection.session.dropSchema(dbRef.connection.schema);
 			await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
-
-			const info = await this.currentConnection;
-
-			if (info) {
-				await Promise.all([
-					(async () => {
-						await info.dockerContainer.stop();
-						await info.dockerContainer.remove();
-					})(),
-					info.mysqlClient.close(),
-				]);
-			}
 
 			done?.();
 		};
 	}
 
-	protected static get mysqlConnectionString() {
-		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			return 'mysqlx://root:toor@test-mysql:33060';
-		} else {
-			if (!this.mysqlInfo) {
-				return;
-			}
-			const { host, port, user, pass } = this.mysqlInfo;
-			return `mysqlx://${user}:${pass}@${host}:${port}`;
-		}
+	public static get mysqlConnectionString() {
+		return 'mysqlx://root:toor@test-mysql:33060';
 	}
 
 	protected constructor(
@@ -262,14 +140,48 @@ export class TestConnection {
 		return this.client.getSession();
 	}
 
-	public async setupCollections() {
-		await Promise.all(COLLECTIONS_USED.map(createCollection(this.getSchema())));
+	private static async setupCollections(schema: string) {
+		const dockerConn = getDockerConn(void 0);
+
+		const container = dockerConn.getContainer('evmplus_test-mysql');
+
+		const exec = await container.exec({
+			Cmd: ['sh', 'setup-schema.sh', schema],
+			Tty: true,
+			AttachStdout: false,
+			AttachStderr: false,
+			AttachStdin: false,
+			Env: [],
+			WorkingDir: '/usr/evm-plus/packages/server-jest-config/mysql-configuration',
+		});
+
+		const stream = await exec.start({});
+
+		container.modem.demuxStream(stream, process.stdout, process.stderr);
+
+		await new Promise(resolve => {
+			stream.on('end', resolve);
+		});
+
+		await exec.inspect();
+
+		const session = await getSession('mysqlx://root:toor@test-mysql:33060');
+
+		let collections;
+
+		do {
+			if (collections) {
+				await new Promise(res => setTimeout(res, 500));
+			}
+			collections = await session.getSchema(schema).getCollections();
+		} while (collections.length !== COLLECTIONS_USED.length);
+
+		await session.close();
 	}
 }
 
 TestConnection.setup = TestConnection.setup.bind(TestConnection);
 // @ts-ignore
-TestConnection._setup = TestConnection._setup.bind(TestConnection);
 TestConnection.setupSchema = TestConnection.setupSchema.bind(TestConnection);
 TestConnection.teardown = TestConnection.teardown.bind(TestConnection);
 
@@ -307,4 +219,18 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) =
 			await adder.execute();
 		}
 	}
+};
+
+export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseRef) => async (
+	done?: () => void,
+) => {
+	await Promise.all(
+		COLLECTIONS_USED.map(name =>
+			ref.connection.getSchema().getCollection(name).remove('true').execute(),
+		),
+	);
+
+	await addPresetRecords(ref.connection.getSchema())(records);
+
+	done?.();
 };

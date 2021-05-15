@@ -521,7 +521,7 @@ declare module "@mysql/xdevapi" {
     public execute(
       rowcb?: (item: T) => void,
       metacb?: (metadata: any) => void
-    ): Promise<Result>;
+    ): Promise<Cursor<T>>;
 
     public getViewDefinition(): string;
 
