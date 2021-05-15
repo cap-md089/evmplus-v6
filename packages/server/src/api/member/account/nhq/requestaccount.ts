@@ -82,7 +82,6 @@ export const getProperEmailAndSendType = (backends: Backends<[MemberBackend, PAM
 			code: 400,
 			message: 'There is no associated cadet parent email for you',
 		})
-		.map<[string, EmailSentType]>(i => i as [string, EmailSentType])
 		.flatMap(([newEmail, emailType]) =>
 			backends
 				.addUserAccountCreationToken({

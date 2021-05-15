@@ -96,6 +96,8 @@ interface EventFormProps {
 	formDisabled?: boolean;
 }
 
+export const defaultEmailBody = 'signed up for event';
+
 export interface NewEventFormValues {
 	name: string;
 	subtitle: string;
@@ -146,6 +148,10 @@ export interface NewEventFormValues {
 		feeAmount: number;
 		feeDue: number;
 	};
+	useEmailBody: boolean;
+	emailBody: {
+		body: string;
+	};
 }
 
 export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<NewEventObject> =>
@@ -195,6 +201,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		transportationProvided: event.transportationProvided,
 		uniform: event.uniform,
 		privateAttendance: event.privateAttendance,
+		emailBody: event.useEmailBody ? Maybe.some(event.emailBody) : Maybe.none(),
 	}))(
 		Maybe.And(
 			event.pointsOfContact.map<MaybeObj<InternalPointOfContact | ExternalPointOfContact>>(
@@ -264,6 +271,8 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	limitSignupsToTeam: false,
 	fileIDs: [],
 	privateAttendance: false,
+	useEmailBody: false,
+	emailBody: { body: defaultEmailBody },
 });
 
 export const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
@@ -328,6 +337,8 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	uniform: event.uniform,
 	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
 	privateAttendance: event.privateAttendance,
+	useEmailBody: Maybe.isSome(event.emailBody),
+	emailBody: Maybe.isSome(event.emailBody) ? event.emailBody.value : { body: defaultEmailBody },
 });
 
 const eventValidator: FormValidator<NewEventFormValues> = {
@@ -348,6 +359,7 @@ interface EventFormState {
 	mde: null | typeof import('simplemde');
 	comments: null | SimpleMDE;
 	memberComments: null | SimpleMDE;
+	emailBody: null | SimpleMDE;
 	addPOCbyID: number | null;
 	addingPOCbyID: boolean;
 	pocAddbyIDError: string | null;
@@ -361,6 +373,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		mde: null,
 		comments: null,
 		memberComments: null,
+		emailBody: null,
 		addPOCbyID: null,
 		addingPOCbyID: false,
 		pocAddbyIDError: null,
@@ -371,6 +384,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
 	private mbrcommentsRef = React.createRef<HTMLTextAreaElement>();
+	private emailBodyRef = React.createRef<HTMLTextAreaElement>();
 
 	public constructor(props: EventFormProps) {
 		super(props);
@@ -434,6 +448,15 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					element: this.mbrcommentsRef.current,
 					...mdeOptions,
 					initialValue: this.props.event.memberComments,
+				}),
+			});
+		}
+		if (this.emailBodyRef.current) {
+			this.setState({
+				emailBody: new mde({
+					element: this.emailBodyRef.current,
+					...mdeOptions,
+					initialValue: this.props.event.emailBody.body,
 				}),
 			});
 		}
@@ -605,6 +628,24 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Label>Sign up deny message</Label>
 					<TextInput name="signUpDenyMessage" />
+
+					<Label>Send signup email</Label>
+					<Checkbox name="useEmailBody" />
+
+					<FormBlock hidden={!values.useEmailBody} name="emailBody">
+						<Label>
+							Signup Email Message Body
+							<br />
+							<br />
+							Use <code>%%MEMBER_NAME%%</code> to address the member signing up
+							directly
+							<br />
+							Like C/CMSgt John Doe
+						</Label>
+						<div className="formbox">
+							<textarea ref={this.emailBodyRef} />
+						</div>
+					</FormBlock>
 
 					{/* <Label>Allow signing up part time</Label>
 					<Checkbox name="signUpPartTime" /> */}
@@ -809,29 +850,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 	) {
 		const valid = !hasError;
 
-		// if (!this.props.isEventUpdate) {
-		// 	const dateTimesHaveBeenModified =
-		// 		this.state.changed.startDateTime ||
-		// 		this.state.changed.endDateTime ||
-		// 		this.state.changed.pickupDateTime;
-
-		// 	if (!dateTimesHaveBeenModified) {
-		// 		event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
-		// 		event.endDateTime = event.meetDateTime + (900 + 3600) * 1000; // 75 minutes
-		// 		event.pickupDateTime = event.meetDateTime + (900 + 3600 + 900) * 1000; // 90 minutes
-		// 	} else if (!this.state.changed.pickupDateTime) {
-		// 		event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
-		// 	}
-
-		// 	const locationsHaveBeenModified =
-		// 		this.state.changed.location || this.state.changed.pickupLocation;
-
-		// 	if (!locationsHaveBeenModified) {
-		// 		event.location = event.meetLocation;
-		// 		event.pickupLocation = event.meetLocation;
-		// 	}
-		// }
-
 		// Fix for requiring the subtitle field needing to be changed in order to submit some forms
 		// Most likely due to people modifying old events which don't have this field
 		const defaultValues = { subtitle: '' };
@@ -840,6 +858,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			...mdFreeEvent,
 			comments: this.state.comments?.value() ?? mdFreeEvent.comments,
 			memberComments: this.state.memberComments?.value() ?? mdFreeEvent.memberComments,
+			emailBody: { body: this.state.emailBody?.value() ?? mdFreeEvent.emailBody.body },
 		};
 
 		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());

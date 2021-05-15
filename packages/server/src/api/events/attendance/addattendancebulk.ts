@@ -21,35 +21,49 @@ import { validator } from 'auto-client-api';
 import {
 	always,
 	api,
+	AsyncEither,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncRight,
 	canFullyManageEvent,
 	collectGeneratorAsync,
+	destroy,
 	errorGenerator,
 	EventObject,
+	getFullMemberName,
+	getMemberEmail,
 	hasBasicAttendanceManagementPermission,
 	Maybe,
 	MaybeObj,
+	Member,
 	NewAttendanceRecord,
 	RawEventObject,
+	RawResolvedEventObject,
 	RawTeamObject,
+	RegistryValues,
 	ServerError,
 	SessionType,
 	Validator,
 } from 'common-lib';
+import { toHTML } from 'markdown';
 import {
 	AttendanceBackend,
 	Backends,
 	BasicAccountRequest,
 	combineBackends,
+	EmailBackend,
+	EmailSetup,
 	EventsBackend,
 	GenBackend,
 	getCombinedAttendanceBackend,
+	getEmailBackend,
 	getRawMySQLBackend,
+	getRegistryBackend,
 	MemberBackend,
 	PAM,
 	RawMySQLBackend,
+	RegistryBackend,
+	SUPPORT_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -75,44 +89,51 @@ export const func: Endpoint<
 			TimeBackend,
 			MemberBackend,
 			AttendanceBackend,
+			EmailBackend,
+			RegistryBackend,
 		]
 	>,
 	api.events.attendance.AddBulk
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
 		validateRequest(bulkAttendanceValidator)(request).flatMap(req =>
-			backend
-				.getEvent(req.account)(req.params.id)
-				.flatMap(backend.ensureResolvedEvent)
-				.filter(canFullyManageEvent(req.member), {
-					type: 'OTHER',
-					code: 403,
-					message: 'Member cannot perform this action',
-				})
-				.flatMap(backend.getFullEventObject)
-				.flatMap<[EventObject, MaybeObj<RawTeamObject>]>(event =>
-					!event.teamID
-						? asyncRight<ServerError, [EventObject, MaybeObj<RawTeamObject>]>(
-								[event, Maybe.none()],
-								errorGenerator('Could not get team information'),
-						  )
-						: backend
-								.getTeam(req.account)(event.teamID)
-								.map<[EventObject, MaybeObj<RawTeamObject>]>(team => [
-									event,
-									Maybe.some(team),
-								]),
-				)
+			AsyncEither.All([
+				backend
+					.getEvent(req.account)(req.params.id)
+					.flatMap(backend.ensureResolvedEvent)
+					.filter(canFullyManageEvent(req.member), {
+						type: 'OTHER',
+						code: 403,
+						message: 'Member cannot perform this action',
+					})
+					.flatMap(backend.getFullEventObject)
+					.flatMap<[EventObject, MaybeObj<RawTeamObject>]>(event =>
+						!event.teamID
+							? asyncRight<ServerError, [EventObject, MaybeObj<RawTeamObject>]>(
+									[event, Maybe.none()],
+									errorGenerator('Could not get team information'),
+							  )
+							: backend
+									.getTeam(req.account)(event.teamID)
+									.map<[EventObject, MaybeObj<RawTeamObject>]>(team => [
+										event,
+										Maybe.some(team),
+									]),
+					),
+				backend.getRegistry(req.account),
+			])
 
-				.flatMap<RawEventObject>(([event, teamMaybe]) =>
+				.flatMap<RawEventObject>(([[event, teamMaybe], registry]) =>
 					asyncRight(
 						collectGeneratorAsync(
-							asyncIterMap(
-								backend.addMemberToAttendance(event)(
-									hasBasicAttendanceManagementPermission(req.member)(event)(
-										teamMaybe,
-									),
-								),
+							asyncIterMap((rec: Required<NewAttendanceRecord>) =>
+								backend
+									.addMemberToAttendance(event)(
+										hasBasicAttendanceManagementPermission(req.member)(event)(
+											teamMaybe,
+										),
+									)(rec)
+									.tap(writeEmail(backend)(registry)(req.member)(event)),
 							)(req.body.members),
 						),
 						errorGenerator('Could not add attendance records'),
@@ -125,10 +146,40 @@ export const func: Endpoint<
 		),
 	);
 
+const getEmail = (member: Member) => (email: string) => (
+	event: RawResolvedEventObject,
+) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
+	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	to: [email],
+	subject: 'Event Signup Notice',
+	textBody: emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member)),
+	htmlBody: toHTML(emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))),
+});
+
+const writeEmail = (backend: EmailBackend) => (registry: RegistryValues) => (member: Member) => (
+	event: RawResolvedEventObject,
+) => () => {
+	const emailMaybe = getMemberEmail(member.contact);
+	const emailBody = event.emailBody ?? Maybe.none();
+
+	if (Maybe.isSome(emailMaybe) && Maybe.isSome(emailBody)) {
+		return backend
+			.sendEmail(registry)(getEmail(member)(emailMaybe.value)(event)(emailBody.value))
+			.map(destroy);
+	} else {
+		return asyncRight(void 0, errorGenerator('Could not send email'));
+	}
+};
+
 export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>]
-	>(getRawMySQLBackend, getCombinedAttendanceBackend()),
+		[
+			RawMySQLBackend,
+			GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>,
+			EmailBackend,
+			RegistryBackend,
+		]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend(), getEmailBackend, getRegistryBackend),
 );

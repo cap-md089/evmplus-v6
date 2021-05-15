@@ -1259,6 +1259,12 @@ export interface NewEventObject {
 		feeAmount: number;
 	};
 	/**
+	 * custom email signup notification markdown text
+	 */
+	emailBody: MaybeObj<{
+		body: string;
+	}>;
+	/**
 	 * Describes the options for meals
 	 */
 	mealsDescription: OtherMultCheckboxReturn;

@@ -22,34 +22,48 @@ import {
 	always,
 	api,
 	applyCustomAttendanceFields,
+	AsyncEither,
 	asyncRight,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
+	destroy,
 	Either,
 	errorGenerator,
 	EventObject,
+	getFullMemberName,
+	getMemberEmail,
 	hasBasicAttendanceManagementPermission,
 	isValidMemberReference,
 	Maybe,
 	MaybeObj,
+	Member,
 	NewAttendanceRecord,
+	RawResolvedEventObject,
 	RawTeamObject,
+	RegistryValues,
 	ServerError,
 	SessionType,
 	toReference,
 } from 'common-lib';
+import { toHTML } from 'markdown';
 import {
 	AttendanceBackend,
 	Backends,
 	BasicAccountRequest,
 	combineBackends,
+	EmailBackend,
+	EmailSetup,
 	EventsBackend,
 	GenBackend,
 	getCombinedAttendanceBackend,
+	getEmailBackend,
 	getRawMySQLBackend,
+	getRegistryBackend,
 	MemberBackend,
 	PAM,
 	RawMySQLBackend,
+	RegistryBackend,
+	SUPPORT_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -84,20 +98,25 @@ const addAttendance: Endpoint<
 			MemberBackend,
 			RawMySQLBackend,
 			AttendanceBackend,
+			EmailBackend,
+			RegistryBackend,
 		]
 	>,
 	api.events.attendance.Add
 > = backend => req =>
-	backend
-		.getEvent(req.account)(req.params.id)
-		.flatMap(backend.getFullEventObject)
-		.flatMap(event =>
-			(event.teamID !== undefined && event.teamID !== null
-				? backend.getTeam(req.account)(event.teamID).map(Maybe.some)
-				: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
-			).map(teamMaybe => [event, teamMaybe] as const),
-		)
-		.flatMap(([event, teamMaybe]) =>
+	AsyncEither.All([
+		backend
+			.getEvent(req.account)(req.params.id)
+			.flatMap(backend.getFullEventObject)
+			.flatMap(event =>
+				(event.teamID !== undefined && event.teamID !== null
+					? backend.getTeam(req.account)(event.teamID).map(Maybe.some)
+					: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
+				).map(teamMaybe => [event, teamMaybe] as const),
+			),
+		backend.getRegistry(req.account),
+	])
+		.flatMap(([[event, teamMaybe], registry]) =>
 			getRecord(backend)(req)(event)(teamMaybe)
 				.flatMap(rec =>
 					Either.map<ServerError, void, Required<NewAttendanceRecord>>(always(rec))(
@@ -116,7 +135,8 @@ const addAttendance: Endpoint<
 					backend.addMemberToAttendance(event)(
 						hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe),
 					),
-				),
+				)
+				.tap(writeEmail(backend)(registry)(req.member)(event)),
 		)
 		.map(wrapper);
 
@@ -129,6 +149,8 @@ export const func: Endpoint<
 			MemberBackend,
 			RawMySQLBackend,
 			AttendanceBackend,
+			EmailBackend,
+			RegistryBackend,
 		]
 	>,
 	api.events.attendance.Add
@@ -152,10 +174,40 @@ export const func: Endpoint<
 			.flatMap(addAttendance(backend)),
 	);
 
+const getEmail = (member: Member) => (email: string) => (
+	event: RawResolvedEventObject,
+) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
+	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	to: [email],
+	subject: 'Event Signup Notice',
+	textBody: emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member)),
+	htmlBody: toHTML(emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))),
+});
+
+const writeEmail = (backend: EmailBackend) => (registry: RegistryValues) => (member: Member) => (
+	event: RawResolvedEventObject,
+) => () => {
+	const emailMaybe = getMemberEmail(member.contact);
+	const emailBody = event.emailBody ?? Maybe.none();
+
+	if (Maybe.isSome(emailMaybe) && Maybe.isSome(emailBody)) {
+		return backend
+			.sendEmail(registry)(getEmail(member)(emailMaybe.value)(event)(emailBody.value))
+			.map(destroy);
+	} else {
+		return asyncRight(void 0, errorGenerator('Could not send email'));
+	}
+};
+
 export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>]
-	>(getRawMySQLBackend, getCombinedAttendanceBackend()),
+		[
+			RawMySQLBackend,
+			GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>,
+			EmailBackend,
+			RegistryBackend,
+		]
+	>(getRawMySQLBackend, getCombinedAttendanceBackend(), getEmailBackend, getRegistryBackend),
 );

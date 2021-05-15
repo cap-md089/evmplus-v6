@@ -18,3 +18,6 @@
  */
 
 declare module 'ssh2-sftp-client';
+declare module 'markdown' {
+	export function toHTML(markdown: string): string;
+}

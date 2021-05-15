@@ -1646,29 +1646,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
 
 		const fonts: TFontDictionary = {
-			Roboto: {
-				normal: fontGetter('Roboto-Regular.ttf'),
-				bold: fontGetter('Roboto-Medium.ttf'),
-				italics: fontGetter('Roboto-Italic.ttf'),
-				bolditalics: fontGetter('Roboto-MediumItalic.ttf'),
-			},
-			FreeMono: {
-				normal: fontGetter('FreeMono.ttf'),
-				bold: fontGetter('FreeMonoBold.ttf'),
-				italics: fontGetter('FreeMonoOblique.ttf'),
-				bolditalics: fontGetter('FreeMonoBoldOblique.ttf'),
-			},
 			FreeSans: {
 				normal: fontGetter('FreeSans.ttf'),
 				bold: fontGetter('FreeSansBold.ttf'),
 				italics: fontGetter('FreeSansOblique.ttf'),
 				bolditalics: fontGetter('FreeSansBoldOblique.ttf'),
-			},
-			FreeSerif: {
-				normal: fontGetter('FreeSerif.ttf'),
-				bold: fontGetter('FreeSerifBold.ttf'),
-				italics: fontGetter('FreeSerifItalic.ttf'),
-				bolditalics: fontGetter('FreeSerifBoldItalic.ttf'),
 			},
 		};
 
