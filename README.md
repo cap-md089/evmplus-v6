@@ -4,11 +4,11 @@ The premiere event and unit management site for Civil Air Patrol
 
 Current units running the EventManagement+ suite:
 
-1. [MD001 - Maryland Wing](https://mdwg.evmplus.org/)
-2. [MD089 - St. Mary's Composite Squadron](https://stmarys.evmplus.org/)
-3. [MD008 - Harford Composite Squadron](https://harford.evmplus.org/)
-4. [MD003 - Frederick Composite Squadron](https://frederick.evmplus.org/)
-5. [MD079 - Easton Composite Squadron](https://easton.evmplus.org)
+1. [MD001 - Maryland Wing](https://events.md.cap.gov/)
+2. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
+3. [MD008 - Harford Composite Squadron](https://harford.events.md.cap.gov/)
+4. [MD003 - Frederick Composite Squadron](https://frederick.events.md.cap.gov/)
+5. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
 
 **Table Of Contents**
 
