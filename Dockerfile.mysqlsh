@@ -9,8 +9,8 @@ RUN apt update \
 	ca-certificates apt-transport-https wget libpython2.7 python locales bash \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
-	&& wget https://cdn.mysql.com//Downloads/MySQL-Shell/mysql-shell-8.0.22-linux-glibc2.12-x86-64bit.tar.gz \
-	&& tar -xvf mysql-shell-8.0.22-linux-glibc2.12-x86-64bit.tar.gz
+	&& wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
+	&& tar -xvf mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz
 
 COPY scripts/start-mysqlsh-in-container.sh start-mysqlsh-in-container.sh
 

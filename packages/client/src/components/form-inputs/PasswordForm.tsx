@@ -25,9 +25,9 @@ import { BooleanForField } from './FormBlock';
 import './PasswordForm.css';
 
 enum ShowLevel {
-	NOSHOW,
-	SHOWERROR,
-	SHOWGOOD,
+	NOSHOW = -1,
+	SHOWERROR = 0,
+	SHOWGOOD = 1,
 }
 
 const getClassFromShowLevel = (level: ShowLevel) =>
@@ -108,23 +108,40 @@ export default class PasswordForm extends React.Component<
 				<TextBox>
 					Please enter and confirm a password.
 					<br />
-					Passwords must be at{' '}
-					<span className={getClassFromShowLevel(this.state.showLengthError)}>
-						least 11 characters
-					</span>{' '}
-					in length, and must consist of at least one of each of the following:
+					Passwords must meet the following requirements:
 					<ul>
-						<li className={getClassFromShowLevel(this.state.showUppercaseError)}>
-							Uppercase character
+						<li className={getClassFromShowLevel(this.state.showLengthError)}>
+							Length of at least 8 characters
 						</li>
-						<li className={getClassFromShowLevel(this.state.showLowercaseError)}>
-							Lowercase character
-						</li>
-						<li className={getClassFromShowLevel(this.state.showNumberError)}>
-							Number
-						</li>
-						<li className={getClassFromShowLevel(this.state.showSpecialError)}>
-							Special character*
+						<li
+							className={getClassFromShowLevel(
+								this.state.showUppercaseError &&
+									this.state.showLowercaseError &&
+									this.state.showNumberError &&
+									this.state.showSpecialError,
+							)}
+						>
+							<span>
+								Password must contain one of each of the following characters:
+							</span>
+							<ul>
+								<li
+									className={getClassFromShowLevel(this.state.showUppercaseError)}
+								>
+									Uppercase character
+								</li>
+								<li
+									className={getClassFromShowLevel(this.state.showLowercaseError)}
+								>
+									Lowercase character
+								</li>
+								<li className={getClassFromShowLevel(this.state.showNumberError)}>
+									Number
+								</li>
+								<li className={getClassFromShowLevel(this.state.showSpecialError)}>
+									Special character*
+								</li>
+							</ul>
 						</li>
 					</ul>
 					* A special character is a space character or one of the following symbols:
@@ -162,12 +179,13 @@ export default class PasswordForm extends React.Component<
 
 		let hasError = false;
 
-		const update: Partial<PasswordFormState> = {
+		const update: Omit<PasswordFormState, 'form'> = {
 			showLowercaseError: ShowLevel.SHOWERROR,
 			showNumberError: ShowLevel.SHOWERROR,
 			showSpecialError: ShowLevel.SHOWERROR,
 			showUppercaseError: ShowLevel.SHOWERROR,
 			showMatchError: ShowLevel.SHOWERROR,
+			showLengthError: ShowLevel.SHOWERROR,
 		};
 
 		if (!!fields.password.match(/[a-z]/) && !!fields.confirmPassword.match(/[a-z]/)) {
@@ -203,7 +221,7 @@ export default class PasswordForm extends React.Component<
 			hasError = true;
 		}
 
-		if (fields.password.length > 10) {
+		if (fields.password.length >= 8) {
 			update.showLengthError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;

@@ -136,6 +136,7 @@ export const addUserAccountCreationToken = (
 		})
 		.map(() => promisify(randomBytes)(48))
 		.map(token => token.toString('hex'))
+		.tap(token => console.log('Got token', token))
 		.tap(token =>
 			asyncRight(
 				{
