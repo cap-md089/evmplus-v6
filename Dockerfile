@@ -17,7 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node:14-alpine3.11 AS base
+#
+# This container is what is used by most of the node containers
+#
+FROM node:14-buster AS base
 
 # Install the imagemagick library for favicons
 RUN apk add imagemagick \
@@ -147,7 +150,20 @@ CMD yarn run --cwd=packages/server-jest-config test && \
 # This container will run a cron job to import CAPWATCH and update Discord
 # every night
 #
-FROM builder AS cronjobs
+FROM base AS cronjobs
+
+WORKDIR /usr/mysqlsh
+
+ENV LANG en_US.UTF-8
+
+RUN apt update \
+	&& apt install -y --no-install-recommends \
+	ca-certificates apt-transport-https wget libpython2.7 python locales bash \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
+	&& wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
+	&& tar -xvf mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
+	&& mv mysql-shell-8.0.25-linux-glibc2.12-x86-64bit /usr/local/mysql-shell
 
 WORKDIR /usr/evm-plus
 
@@ -161,13 +177,17 @@ ENV NODE_ENV production
 
 # Setup crontab
 COPY cronjobs/crontab /etc/cron.d/hello-cron
-COPY cronjobs/download.sh ./capwatch-cron/download.sh
+COPY cronjobs/download.sh ./cronjobs/download.sh
+COPY cronjobs/backup.sh ./cronjobs/backup.sh
+COPY scripts/database-dump.js ./cronjobs/database-dump.js
 
 RUN chmod 0744 /etc/cron.d/hello-cron \
-	&& chmod 0744 /usr/evm-plus/capwatch-cron/download.sh \
+	&& chmod 0744 /usr/evm-plus/cronjobs/download.sh \
+	&& chmod 0744 /usr/evm-plus/cronjobs/backup.sh \
 	&& crontab /etc/cron.d/hello-cron \
 	&& touch /var/log/cron.log
 
+ENTRYPOINT [ "sh" ]
 CMD crond && tail -f /var/log/cron.log
 
 #

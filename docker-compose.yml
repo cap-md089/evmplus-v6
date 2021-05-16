@@ -81,6 +81,7 @@ services:
             - backend
         expose:
             - '33060'
+        command: mysqld --local-infile=ON
         environment:
             - MYSQL_DATABASE=EventManagementv6
             - MYSQL_USER_FILE=/run/secrets/db_user
@@ -133,10 +134,12 @@ services:
             - capwatch_password
             - capwatch_orgid
             - capwatch_capid
+            - mysql_root_password
         depends_on:
             - mysql
         volumes:
             - /srv/backups/capwatch_zips:/downloads
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     download_capwatch_update:
         build:
@@ -181,12 +184,13 @@ services:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
         secrets:
-            - db_user
-            - db_password
+            - mysql_root_password
         tty: true
         stdin_open: true
         depends_on:
             - mysql
+        volumes:
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     util-cli:
         build:
@@ -265,3 +269,6 @@ secrets:
 
     capwatch_password:
         file: ./keys/capwatch_password
+
+    mysql_root_password:
+        file: ./keys/mysql_root_password

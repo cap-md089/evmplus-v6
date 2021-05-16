@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 <<LICENSE
- Copyright (C) 2021 Andrew Rioux
+ Copyright (C) 2020 Andrew Rioux
  
  This file is part of EvMPlus.org.
  
@@ -19,4 +19,13 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-/usr/local/mysql-shell/bin/mysqlsh --password=$(cat /run/secrets/mysql_root_password) --user=root --host=$DB_HOST --schema=$DB_SCHEMA "$@"
+/usr/local/mysql-shell/bin/mysqlsh --file  /usr/evm-plus/cronjobs/database-dump.js
+
+printf -v date "%(%a_%b_%e_%Y)T"
+
+pushd /srv/backups/mysqldumps
+
+zip -r mysql-dump-$date.zip mysql-dump-$date
+rm -rf mysql-dump-$date
+
+popd

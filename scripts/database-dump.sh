@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 <<LICENSE
  Copyright (C) 2021 Andrew Rioux
@@ -19,4 +19,21 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-/usr/local/mysql-shell/bin/mysqlsh --password=$(cat /run/secrets/mysql_root_password) --user=root --host=$DB_HOST --schema=$DB_SCHEMA "$@"
+STAGING=1
+
+file_arg=""
+if [ "$STAGING" = "1" ]; then
+	file_arg="-f docker-compose.dev.yml"
+fi
+
+docker-compose $file_arg run mysqlsh --file database-dump.js
+
+printf -v date "%(%a_%b_%e_%Y)T"
+
+pushd /srv/backups/mysqldumps
+
+sudo rm -rf mysql-dump-$date.zip
+sudo zip -jr mysql-dump-$date.zip mysql-dump-$date
+sudo rm -rf mysql-dump-$date
+
+popd
