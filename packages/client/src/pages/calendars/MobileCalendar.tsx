@@ -62,7 +62,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 				+endDate < +thisMonth ? 0 : +endDate >= +nextMonth ? thisMonth.day : endDate.day;
 
 			for (let i = startDay; i < endDay; i++) {
-				days[i].push(event);
+				days[i]?.push?.(event);
 			}
 		});
 
