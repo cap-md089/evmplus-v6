@@ -166,8 +166,7 @@ COPY cronjobs/download.sh ./capwatch-cron/download.sh
 RUN chmod 0744 /etc/cron.d/hello-cron \
 	&& chmod 0744 /usr/evm-plus/capwatch-cron/download.sh \
 	&& crontab /etc/cron.d/hello-cron \
-	&& touch /var/log/cron.log \
-	&& echo "0 0 * * * /usr/evm-plus/capwatch-cron/download.sh 2>&1 >> /var/log/cron.log" >> /etc/crontabs/root
+	&& touch /var/log/cron.log
 
 CMD crond && tail -f /var/log/cron.log
 
