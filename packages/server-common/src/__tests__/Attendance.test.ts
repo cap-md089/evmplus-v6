@@ -27,11 +27,11 @@ import {
 	PointOfContactType,
 	RawEventObject,
 } from 'common-lib';
-import { getDbRef, TestConnection } from 'server-jest-config';
+import { getDbHandle, TestConnection } from 'server-jest-config';
 import { getAttendanceForEvent, RawAttendanceDBRecord } from '../Attendance';
 
 describe('Attendance', () => {
-	const dbref = getDbRef();
+	const dbref = getDbHandle();
 
 	beforeAll(TestConnection.setup(dbref));
 	afterAll(TestConnection.teardown(dbref));

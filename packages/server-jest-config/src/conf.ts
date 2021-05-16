@@ -1,6 +1,7 @@
 import { ServerConfiguration } from 'common-lib';
+import TestConnection from '.';
 
-export default (): ServerConfiguration => {
+export default (connection: TestConnection): ServerConfiguration => {
 	return {
 		AWS_ACCESS_KEY_ID: '',
 		AWS_SECRET_ACCESS_KEY: '',
@@ -8,7 +9,7 @@ export default (): ServerConfiguration => {
 		DB_PASSWORD: 'toor',
 		DB_POOL_SIZE: 50,
 		DB_PORT: 33060,
-		DB_SCHEMA: 'random',
+		DB_SCHEMA: connection.schema,
 		DB_USER: 'root',
 		DRIVE_STORAGE_PATH: '/srv/uploads',
 		GOOGLE_KEYS_PATH: '/google-keys',

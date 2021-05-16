@@ -31,6 +31,9 @@ const getDockerConn = memoize(
 const randomId = () =>
 	Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
+/**
+ * This is supposed to match the configuration provided by the mysql dump file
+ */
 export const COLLECTIONS_USED: readonly string[] = [
 	'Accounts',
 	'Attendance',
@@ -75,8 +78,26 @@ export const COLLECTIONS_USED: readonly string[] = [
 	'UserPermissions',
 ];
 
+/**
+ * Represents the connection to a test database as well as a handle on a unique, clean schema
+ *
+ * This class initializes a MySQL schema for each of the test suites
+ */
 export class TestConnection {
-	public static setup(dbRef: DatabaseRef) {
+	/**
+	 * Initializes dbRef to hold a test database connection. This function returns a callback to
+	 * be used by Jest, e.g.:
+	 *
+	 * <code>
+	 * 	const ref = getDbRef();
+	 *
+	 * 	beforeAll(TestConnection.setup(ref));
+	 * </code>
+	 *
+	 * @param dbRef a handle to a database connection
+	 * @returns a callback function to pass to beforeAll()
+	 */
+	public static setup(dbRef: DatabaseHandle) {
 		return async (done?: () => void) => {
 			const connString = this.mysqlConnectionString;
 
@@ -95,6 +116,11 @@ export class TestConnection {
 		};
 	}
 
+	/**
+	 * Creates a new schema and sets up the collections using the mysql dump script
+	 *
+	 * @returns the new connection with the schema set up
+	 */
 	private static async setupSchema(): Promise<TestConnection> {
 		const schema = randomId();
 
@@ -113,7 +139,20 @@ export class TestConnection {
 		return connection;
 	}
 
-	public static teardown(dbRef: DatabaseRef) {
+	/**
+	 * Closes the database connection and performs cleanup. Returns a function intended to
+	 * be called by afterAll()
+	 *
+	 * <code>
+	 * 	const ref = getDbRef();
+	 *
+	 * 	beforeAll(TestConnection.setup(ref));
+	 * 	afterAll(TestConnection.teardown(ref));
+	 * </code>
+	 * @param dbRef
+	 * @returns
+	 */
+	public static teardown(dbRef: DatabaseHandle) {
 		return async (done?: () => void) => {
 			await dbRef.connection.session.dropSchema(dbRef.connection.schema);
 			await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
@@ -122,24 +161,39 @@ export class TestConnection {
 		};
 	}
 
+	/**
+	 * Returns the constant connection string for connecting to the test mysql database
+	 */
 	public static get mysqlConnectionString() {
 		return 'mysqlx://root:toor@test-mysql:33060';
 	}
 
-	protected constructor(
+	private constructor(
 		public readonly client: Client,
 		public readonly session: Session,
 		public readonly schema: string,
 	) {}
 
+	/**
+	 * @returns the current schema that is used for the test
+	 */
 	public getSchema() {
 		return this.session.getSchema(this.schema);
 	}
 
+	/**
+	 * @returns a new session for when multiple sessions are needed
+	 */
 	public getNewSession() {
 		return this.client.getSession();
 	}
 
+	/**
+	 * Sets up the different collections in a schema by using the docker
+	 * connection to execute the setup-schema script inside of the MySQL container
+	 *
+	 * @param schema the name of the schema to setup
+	 */
 	private static async setupCollections(schema: string) {
 		const dockerConn = getDockerConn(void 0);
 
@@ -171,7 +225,7 @@ export class TestConnection {
 
 		do {
 			if (collections) {
-				await new Promise(res => setTimeout(res, 500));
+				await new Promise(res => setTimeout(res, 250));
 			}
 			collections = await session.getSchema(schema).getCollections();
 		} while (collections.length !== COLLECTIONS_USED.length);
@@ -189,19 +243,62 @@ export default TestConnection;
 
 export { default as getConf } from './conf';
 
-export interface DatabaseRef {
+/**
+ * Interface for holding both the connection and the ability to set it up as well as
+ * tear it down before and after all tests
+ *
+ * While technically it could be used before and after each test, it's not necessary
+ */
+export interface DatabaseHandle {
+	/**
+	 * Holds the test connection information
+	 */
 	connection: TestConnection;
+	/**
+	 * A shorthand for TestConnection.setup(ref)
+	 *
+	 * @param done done callback provided by beforeAll
+	 */
+	setup(done?: () => void): void;
+	/**
+	 * A shorthand for TestConnection.teardown(ref)
+	 *
+	 * @param done done callback provided by afterAll
+	 */
+	teardown(done?: () => void): void;
 }
 
-export const getDbRef = (): DatabaseRef => ({
-	connection: null!,
-});
+/**
+ * Initializes a database handle for use in tests
+ */
+export const getDbHandle = (): DatabaseHandle => {
+	const ref: DatabaseHandle = {
+		connection: null!,
+		async setup(done) {
+			await TestConnection.setup(ref)(done);
+		},
+		async teardown(done) {
+			await TestConnection.teardown(ref)(done);
+		},
+	};
+
+	return ref;
+};
 
 export type PresetRecords = {
 	[key in TableNames]?: TableDataType<key>[];
 };
 
+/**
+ * Adds all of the records specified by the PresetRecords map, where each field
+ * represents a table and the array values are added to that table
+ *
+ * @param schema the schema to modify and set up
+ * @param map the data to set up in the schema
+ */
 export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) => {
+	const promises = [];
+
 	for (const tableName in map) {
 		if (map.hasOwnProperty(tableName)) {
 			const table = tableName as TableNames;
@@ -216,12 +313,38 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) =
 				adder = adder.add(record);
 			}
 
-			await adder.execute();
+			promises.push(adder.execute());
 		}
 	}
+
+	await Promise.all(promises);
 };
 
-export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseRef) => async (
+/**
+ * Adds all of the records specified by the PresetRecords map, where each field
+ * represents a table and the array values are added to that table
+ *
+ * This function is intended to be called by beforeEach
+ *
+ * <code>
+ * 	const testSetup = setPresetRecords({
+ * 		...
+ * 	})
+ *
+ * 	describe('test suite', () => {
+ * 		const dbHandle = getDbHandle();
+ *
+ * 		beforeAll(dbHandle.setup);
+ * 		afterAll(dbHandle.teardown);
+ *
+ * 		beforeEach(testSetup(dbHandle))
+ * 	})
+ * </code>
+ *
+ * @param schema the schema to modify and set up
+ * @param map the data to set up in the schema
+ */
+export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseHandle) => async (
 	done?: () => void,
 ) => {
 	await Promise.all(
