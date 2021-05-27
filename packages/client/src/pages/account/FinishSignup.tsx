@@ -61,7 +61,12 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				values={this.state.form}
 				onChange={form => this.setState({ form })}
 				validator={{
-					username: name => !!name && name.length > 0 && name.length < 45,
+					username: name =>
+						!!name &&
+						name.length > 0 &&
+						name.length < 45 &&
+						!name.startsWith(' ') &&
+						!name.endsWith(' '),
 					password: password => password !== null,
 				}}
 				onSubmit={this.finishAccount}
@@ -89,7 +94,10 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				</TextBox>
 
 				<Label>Please choose a username</Label>
-				<TextInput name="username" />
+				<TextInput
+					name="username"
+					errorMessage="Username cannot be empty, must be between 0 and 45 characters and cannot start or end with a space"
+				/>
 
 				<PasswordForm name="password" fullWidth={true} />
 			</SimpleForm>

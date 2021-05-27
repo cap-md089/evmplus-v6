@@ -182,7 +182,9 @@ export const addUserAccount = (
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username).then(Maybe.some).catch(Maybe.none),
+			getInformationForUser(schema, username.trimLeft().trimRight())
+				.then(Maybe.some)
+				.catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
 		)
 			.filter(user => Maybe.isNone(user) || !isUserValid(user.value), {
@@ -225,7 +227,7 @@ export const addUserAccount = (
 				if (Maybe.isNone(user)) {
 					const newAccount: UserAccountInformation = {
 						member,
-						username,
+						username: username.trimLeft().trimRight(),
 						passwordHistory: [],
 					};
 
@@ -236,7 +238,7 @@ export const addUserAccount = (
 					return user.value;
 				}
 			})
-			.flatMap(() => addPasswordForUser(schema, username, password))
+			.flatMap(() => addPasswordForUser(schema, username.trimLeft().trimRight(), password))
 			.tap(() => removeAccountToken(schema, token)),
 	);
 
