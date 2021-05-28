@@ -28,7 +28,7 @@ export interface FileDisplayProps {
 	member: ClientUser | null;
 }
 
-export const DriveFileDisplay = (props: FileDisplayProps) => (
+export const DriveFileDisplay = (props: FileDisplayProps): JSX.Element => (
 	<div
 		className={`drive-file-display ${props.selected ? 'selected' : ''}`}
 		onClick={() => props.onSelect(props.file)}
@@ -38,7 +38,7 @@ export const DriveFileDisplay = (props: FileDisplayProps) => (
 		}}
 	>
 		<div className="display-image">
-			{!!props.file.contentType.match(/image\//) ? (
+			{!!/image\//.exec(props.file.contentType) ? (
 				<div
 					style={{
 						backgroundImage: `url('/api/files/${props.file.id}/export')`,

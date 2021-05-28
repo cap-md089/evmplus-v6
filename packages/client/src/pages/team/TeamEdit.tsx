@@ -57,14 +57,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		state: 'LOADING',
 	};
 
-	public constructor(props: PageProps<{ id: string }>) {
-		super(props);
-
-		this.onTeamChange = this.onTeamChange.bind(this);
-		this.onTeamSubmit = this.onTeamSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (parseInt(this.props.routeProps.match.params.id, 10) === 0) {
 			this.props.routeProps.history.push('/team/view/0');
 		}
@@ -111,7 +104,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -150,7 +143,7 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		);
 	}
 
-	private onTeamChange(team: TeamObjectEdit) {
+	private onTeamChange = (team: TeamObjectEdit): void => {
 		if (this.state.state !== 'LOADED') {
 			return;
 		}
@@ -160,9 +153,9 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 			memberList: this.state.memberList,
 			team,
 		});
-	}
+	};
 
-	private async onTeamSubmit(team: MaybeObj<TeamObjectEdit>) {
+	private onTeamSubmit = async (team: MaybeObj<TeamObjectEdit>): Promise<void> => {
 		if (!this.props.member || this.state.state !== 'LOADED') {
 			return;
 		}
@@ -176,5 +169,5 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 		await fetchApi.team.set({ id: this.props.routeProps.match.params.id }, newTeam.value);
 
 		this.props.routeProps.history.push(`/team/${this.props.routeProps.match.params.id}`);
-	}
+	};
 }

@@ -58,7 +58,7 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 
 	otherPermissions.forEach(
 		perm =>
-			// tslint:disable-next-line:no-bitwise
+			// eslint-disable-next-line no-bitwise
 			(valid = valid || (perm.permission & permission) > 0),
 	);
 
@@ -68,7 +68,7 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 
 	signedInPermissions.forEach(
 		perm =>
-			// tslint:disable-next-line:no-bitwise
+			// eslint-disable-next-line no-bitwise
 			(valid = valid || (perm.permission & permission) > 0),
 	);
 
@@ -78,7 +78,7 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 
 	accountPermissions.forEach(
 		perm =>
-			// tslint:disable-next-line:no-bitwise
+			// eslint-disable-next-line no-bitwise
 			(valid = valid || (perm.permission & permission) > 0),
 	);
 
@@ -91,7 +91,7 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 			perm =>
 				(valid =
 					valid ||
-					// tslint:disable-next-line:no-bitwise
+					// eslint-disable-next-line no-bitwise
 					((perm.permission & permission) > 0 &&
 						areMembersTheSame(member)(perm.reference))),
 		);
@@ -110,7 +110,7 @@ export const userHasFilePermission = (permission: FileUserAccessControlPermissio
 					(valid =
 						valid ||
 						(perm.teamID === i &&
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							(perm.permission & permission) > 0)),
 			),
 		);

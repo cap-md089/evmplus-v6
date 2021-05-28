@@ -35,37 +35,30 @@ export default class DriveFolderDisplay extends React.Component<
 		hovering: false,
 	};
 
-	constructor(props: FolderDisplayProps) {
+	public constructor(props: FolderDisplayProps) {
 		super(props);
-
-		this.handleDrop = this.handleDrop.bind(this);
-		this.handleOff = this.handleOff.bind(this);
-		this.handleOver = this.handleOver.bind(this);
-		this.handleDragStart = this.handleDragStart.bind(this);
 	}
 
-	public render() {
-		return (
-			<div
-				className={`drive-folder-display ${this.props.selected ? 'selected' : ''} ${
-					this.state.hovering ? 'hovering' : ''
-				}`}
-				onClick={() => this.props.onSelect(this.props.file)}
-				onDoubleClick={() => this.props.onFolderNavigate(this.props.file)}
-				onDragOver={this.handleOver}
-				onDragEnd={this.handleOff}
-				onDragLeave={this.handleOff}
-				onDragEnter={this.handleOver}
-				onDrop={this.handleDrop}
-				draggable={true}
-				onDragStart={this.handleDragStart}
-			>
-				{this.props.file.fileName}
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div
+			className={`drive-folder-display ${this.props.selected ? 'selected' : ''} ${
+				this.state.hovering ? 'hovering' : ''
+			}`}
+			onClick={() => this.props.onSelect(this.props.file)}
+			onDoubleClick={() => this.props.onFolderNavigate(this.props.file)}
+			onDragOver={this.handleOver}
+			onDragEnd={this.handleOff}
+			onDragLeave={this.handleOff}
+			onDragEnter={this.handleOver}
+			onDrop={this.handleDrop}
+			draggable={true}
+			onDragStart={this.handleDragStart}
+		>
+			{this.props.file.fileName}
+		</div>
+	);
 
-	private handleOver(e: React.DragEvent<HTMLDivElement>) {
+	private handleOver = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.stopPropagation();
 		e.preventDefault();
 
@@ -80,15 +73,15 @@ export default class DriveFolderDisplay extends React.Component<
 		this.setState({
 			hovering: true,
 		});
-	}
+	};
 
-	private handleOff() {
+	private handleOff = (): void => {
 		this.setState({
 			hovering: false,
 		});
-	}
+	};
 
-	private async handleDrop(e: React.DragEvent<HTMLDivElement>) {
+	private handleDrop = async (e: React.DragEvent<HTMLDivElement>): Promise<void> => {
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -110,7 +103,7 @@ export default class DriveFolderDisplay extends React.Component<
 			return;
 		}
 
-		if (!id.match(/^[0-9a-f]{32}$/)) {
+		if (!/^[0-9a-f]{32}$/.exec(id)) {
 			return;
 		}
 
@@ -124,9 +117,9 @@ export default class DriveFolderDisplay extends React.Component<
 		this.setState({
 			hovering: false,
 		});
-	}
+	};
 
-	private handleDragStart(e: React.DragEvent<HTMLDivElement>) {
+	private handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.dataTransfer.setData('text', this.props.file.id);
-	}
+	};
 }

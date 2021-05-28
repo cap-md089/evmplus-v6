@@ -50,7 +50,8 @@ import SimpleForm, {
 	TextInput,
 } from '../SimpleForm';
 
-const clamp = (min: number, max: number, input: number) => Math.max(min, Math.min(max, input));
+const clamp = (min: number, max: number, input: number): number =>
+	Math.max(min, Math.min(max, input));
 
 type FormState = NewAttendanceRecord & { usePartTime: boolean };
 
@@ -127,8 +128,9 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 			name={`ignore-${index}-${indexInside}`}
 			onChange={value =>
 				!disabled &&
+				value !== null &&
 				onChange({
-					value: value!,
+					value,
 					type: CustomAttendanceFieldEntryType.NUMBER,
 					title: field.title,
 				})
@@ -201,7 +203,7 @@ export default class AttendanceForm extends React.Component<
 		this.removeAttendanceRecord = this.removeAttendanceRecord.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const canUsePartTime = this.props.event.signUpPartTime;
 
 		const usePartTime = canUsePartTime && this.state.usePartTime;
@@ -370,7 +372,7 @@ export default class AttendanceForm extends React.Component<
 	private getCustomFields(
 		event: RawResolvedEventObject,
 		rawFields: CustomAttendanceFieldValue[],
-	) {
+	): Array<JSX.Element | null> {
 		if (this.props.record) {
 			if (effectiveManageEventPermissionForEvent(this.props.member)(event)) {
 				const fields = rawFields;
@@ -432,7 +434,7 @@ export default class AttendanceForm extends React.Component<
 		}
 	}
 
-	private getFieldChanger(title: string) {
+	private getFieldChanger(title: string): (value: CustomAttendanceFieldValue) => void {
 		const prevRec = { ...this.state.attendance, usePartTime: this.state.usePartTime };
 
 		console.log(title);
@@ -459,13 +461,13 @@ export default class AttendanceForm extends React.Component<
 		};
 	}
 
-	private onAttendanceFormChange(
+	private onAttendanceFormChange = (
 		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean },
 		error: any,
 		chnaged: any,
 		hasError: any,
 		fieldChanged: keyof FormState,
-	) {
+	): void => {
 		if ((fieldChanged as string).startsWith('ignore')) {
 			return;
 		}
@@ -498,11 +500,15 @@ export default class AttendanceForm extends React.Component<
 		});
 
 		this.props.clearUpdated();
-	}
+	};
 
-	private async onAttendanceFormSubmit(
+	private onAttendanceFormSubmit = async (
 		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean },
-	) {
+	): Promise<void> => {
+		if (!this.props.recordMember) {
+			return;
+		}
+
 		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
 		let departureTime =
 			attendanceSignup.shiftTime?.departureTime || this.props.event.pickupDateTime;
@@ -580,11 +586,11 @@ export default class AttendanceForm extends React.Component<
 				shiftTime: this.props.record?.shiftTime ?? null,
 				memberID: this.props.record?.memberID ?? toReference(this.props.member),
 			},
-			this.props.recordMember!,
+			this.props.recordMember,
 		);
-	}
+	};
 
-	private async removeAttendanceRecord() {
+	private removeAttendanceRecord = async (): Promise<void> => {
 		if (!this.props.record) {
 			return;
 		}
@@ -612,5 +618,5 @@ export default class AttendanceForm extends React.Component<
 		});
 
 		this.props.removeRecord(this.props.record);
-	}
+	};
 }

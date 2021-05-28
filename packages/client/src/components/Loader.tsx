@@ -27,7 +27,7 @@ export default class Loader extends React.Component<{}, { display: boolean }> {
 
 	private handle: NodeJS.Timer | null = null;
 
-	public componentDidMount() {
+	public componentDidMount(): void {
 		this.handle = setInterval(() => {
 			this.setState({
 				display: true,
@@ -38,14 +38,14 @@ export default class Loader extends React.Component<{}, { display: boolean }> {
 		}, 200);
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		if (this.handle) {
 			clearInterval(this.handle);
 		}
 	}
 
-	public render() {
-		return this.state.display ? (
+	public render = (): JSX.Element | null =>
+		this.state.display ? (
 			<div>
 				<div
 					className="uil-default-css"
@@ -201,5 +201,4 @@ export default class Loader extends React.Component<{}, { display: boolean }> {
 				</div>
 			</div>
 		) : null;
-	}
 }

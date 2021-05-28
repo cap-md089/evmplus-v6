@@ -32,9 +32,8 @@ interface AbsenteeProps extends PageProps {
 	member: ClientUser;
 }
 
-export const canUseAbsentee = (props: PageProps) => {
-	return Maybe.orSome(false)(Maybe.map(isCAPMember)(Maybe.fromValue(props.member)));
-};
+export const canUseAbsentee = (props: PageProps): boolean =>
+	Maybe.orSome(false)(Maybe.map(isCAPMember)(Maybe.fromValue(props.member)));
 
 export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 	public state: AbsenteeState = {
@@ -62,43 +61,41 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 		this.onSubmit = this.onSubmit.bind(this);
 	}
 
-	public render() {
-		return (
-			<div className="widget">
-				<div className="widget-title">Absent?</div>
-				<div className="widget-body">
-					<Form<AbsenteeInformation>
-						className="absentee-form"
-						submitInfo={{
-							text: 'Submit',
-							className: 'primaryButton submit',
-						}}
-						values={this.state.absentee}
-						onChange={this.onFormChange}
-						onSubmit={this.onSubmit}
-					>
-						<Label>When will you be absent until?</Label>
-						<DateTimeInput
-							name="absentUntil"
-							time={true}
-							originalTimeZoneOffset={'America/New_York'}
-						/>
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<div className="widget-title">Absent?</div>
+			<div className="widget-body">
+				<Form<AbsenteeInformation>
+					className="absentee-form"
+					submitInfo={{
+						text: 'Submit',
+						className: 'primaryButton submit',
+					}}
+					values={this.state.absentee}
+					onChange={this.onFormChange}
+					onSubmit={this.onSubmit}
+				>
+					<Label>When will you be absent until?</Label>
+					<DateTimeInput
+						name="absentUntil"
+						time={true}
+						originalTimeZoneOffset={'America/New_York'}
+					/>
 
-						<Label>Is there a reason?</Label>
-						<TextInput name="comments" />
-					</Form>
-				</div>
+					<Label>Is there a reason?</Label>
+					<TextInput name="comments" />
+				</Form>
 			</div>
-		);
-	}
+		</div>
+	);
 
-	public onFormChange(absentee: AbsenteeInformation) {
+	public onFormChange = (absentee: AbsenteeInformation): void => {
 		this.setState({
 			absentee,
 		});
-	}
+	};
 
-	public async onSubmit() {
+	public onSubmit = async (): Promise<void> => {
 		if (this.props.fullMemberDetails.error !== MemberCreateError.NONE) {
 			return;
 		}
@@ -115,5 +112,5 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			taskCount: this.props.fullMemberDetails.taskCount,
 			linkableAccounts: this.props.fullMemberDetails.linkableAccounts,
 		});
-	}
+	};
 }

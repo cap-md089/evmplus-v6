@@ -48,7 +48,7 @@ import * as api from './apis';
  */
 export interface HTTPError {
 	code: number;
-	message: any;
+	message: string;
 }
 
 /**

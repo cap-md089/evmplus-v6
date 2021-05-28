@@ -86,7 +86,7 @@ export default class PermissionsEdit extends React.Component<
 		showAdvanced: false,
 	};
 
-	constructor(props: PermissionsEditProps) {
+	public constructor(props: PermissionsEditProps) {
 		super(props);
 
 		if (this.props.onInitialize) {
@@ -97,11 +97,9 @@ export default class PermissionsEdit extends React.Component<
 				value,
 			});
 		}
-
-		this.handleChange = this.handleChange.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const value = this.props.value || getDefaultMemberPermissions(this.props.account.type);
 
 		const permissionlevel = permissionLevelFromPermissions(this.props.account.type)(value);
@@ -132,13 +130,13 @@ export default class PermissionsEdit extends React.Component<
 		);
 	}
 
-	private handleChange(
+	private handleChange = (
 		values: PermissionFormValues,
 		err: BooleanForField<PermissionFormValues>,
 		chang: BooleanForField<PermissionFormValues>,
 		err2: boolean,
 		changedField: keyof PermissionFormValues,
-	) {
+	): void => {
 		let newValues: MemberPermissions;
 		if (changedField === 'permissionlevel') {
 			switch (values[changedField]) {
@@ -174,10 +172,10 @@ export default class PermissionsEdit extends React.Component<
 			name: this.props.name,
 			value: newValues,
 		});
-	}
+	};
 
-	private renderAdvancedInput(value: MemberPermissions, level: PermissionLevel) {
-		return value.type === AccountType.CAPEVENT
+	private renderAdvancedInput = (value: MemberPermissions, level: PermissionLevel): JSX.Element =>
+		value.type === AccountType.CAPEVENT
 			? this.renderAdvancedEventInput(value, level)
 			: value.type === AccountType.CAPSQUADRON
 			? this.renderAdvancedSquadronInput(value, level)
@@ -186,935 +184,924 @@ export default class PermissionsEdit extends React.Component<
 			: value.type === AccountType.CAPWING
 			? this.renderAdvancedWingInput(value, level)
 			: this.renderAdvancedRegionInput(value, level);
-	}
 
-	private renderAdvancedSquadronInput(
+	private renderAdvancedSquadronInput = (
 		value: CAPSquadronMemberPermissions,
 		permissionlevel: PermissionLevel,
-	) {
-		return (
-			<FormBlock<PermissionFormValues>
-				name="memberPermissionEditor"
-				value={{
-					...value,
-					permissionlevel,
-					showAdvanced: true,
-				}}
-				onFormChange={this.handleChange}
-			>
-				<Label>Permission level</Label>
-				<Select<PermissionLevel>
-					name="permissionlevel"
-					labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
-				/>
+	): JSX.Element => (
+		<FormBlock<PermissionFormValues>
+			name="memberPermissionEditor"
+			value={{
+				...value,
+				permissionlevel,
+				showAdvanced: true,
+			}}
+			onFormChange={this.handleChange}
+		>
+			<Label>Permission level</Label>
+			<Select<PermissionLevel>
+				name="permissionlevel"
+				labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
+			/>
 
-				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" index={this.props.index} />
+			<Label>Show full settings</Label>
+			<Checkbox name="showAdvanced" index={this.props.index} />
 
-				<Label key="0">Administer PT</Label>
-				<EnumSelect<Permissions.AdministerPT>
-					key="1"
-					name="AdministerPT"
-					labels={['No', 'Yes']}
-					values={[Permissions.AdministerPT.NO, Permissions.AdministerPT.YES]}
-					defaultValue={Permissions.AdministerPT.NO}
-				/>
+			<Label key="0">Administer PT</Label>
+			<EnumSelect<Permissions.AdministerPT>
+				key="1"
+				name="AdministerPT"
+				labels={['No', 'Yes']}
+				values={[Permissions.AdministerPT.NO, Permissions.AdministerPT.YES]}
+				defaultValue={Permissions.AdministerPT.NO}
+			/>
 
-				<Label key="2">Assign tasks</Label>
-				<EnumSelect<Permissions.AssignTasks>
-					key="3"
-					name="AssignTasks"
-					labels={['No', 'Yes']}
-					values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
-					defaultValue={Permissions.AssignTasks.NO}
-				/>
+			<Label key="2">Assign tasks</Label>
+			<EnumSelect<Permissions.AssignTasks>
+				key="3"
+				name="AssignTasks"
+				labels={['No', 'Yes']}
+				values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
+				defaultValue={Permissions.AssignTasks.NO}
+			/>
 
-				<Label key="4">File management</Label>
-				<EnumSelect<Permissions.FileManagement>
-					key="5"
-					name="FileManagement"
-					labels={['Default', 'Full']}
-					values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
-					defaultValue={Permissions.FileManagement.NONE}
-				/>
+			<Label key="4">File management</Label>
+			<EnumSelect<Permissions.FileManagement>
+				key="5"
+				name="FileManagement"
+				labels={['Default', 'Full']}
+				values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
+				defaultValue={Permissions.FileManagement.NONE}
+			/>
 
-				<Label key="6">Flight Assign</Label>
-				<EnumSelect<Permissions.FlightAssign>
-					key="7"
-					name="FlightAssign"
-					labels={['No', 'Yes']}
-					values={[Permissions.FlightAssign.NO, Permissions.FlightAssign.YES]}
-					defaultValue={Permissions.FlightAssign.NO}
-				/>
+			<Label key="6">Flight Assign</Label>
+			<EnumSelect<Permissions.FlightAssign>
+				key="7"
+				name="FlightAssign"
+				labels={['No', 'Yes']}
+				values={[Permissions.FlightAssign.NO, Permissions.FlightAssign.YES]}
+				defaultValue={Permissions.FlightAssign.NO}
+			/>
 
-				<Label key="8">Muster sheet</Label>
-				<EnumSelect<Permissions.MusterSheet>
-					key="9"
-					name="MusterSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.MusterSheet.NO, Permissions.MusterSheet.YES]}
-					defaultValue={Permissions.MusterSheet.NO}
-				/>
+			<Label key="8">Muster sheet</Label>
+			<EnumSelect<Permissions.MusterSheet>
+				key="9"
+				name="MusterSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.MusterSheet.NO, Permissions.MusterSheet.YES]}
+				defaultValue={Permissions.MusterSheet.NO}
+			/>
 
-				<Label key="10">PT Sheet Management</Label>
-				<EnumSelect<Permissions.PTSheet>
-					key="11"
-					name="PTSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.PTSheet.NO, Permissions.PTSheet.YES]}
-					defaultValue={Permissions.PTSheet.NO}
-				/>
+			<Label key="10">PT Sheet Management</Label>
+			<EnumSelect<Permissions.PTSheet>
+				key="11"
+				name="PTSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.PTSheet.NO, Permissions.PTSheet.YES]}
+				defaultValue={Permissions.PTSheet.NO}
+			/>
 
-				<Label key="12">Promotion Management</Label>
-				<EnumSelect<Permissions.PromotionManagement>
-					key="13"
-					name="PromotionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PromotionManagement.NONE,
-						Permissions.PromotionManagement.FULL,
-					]}
-					defaultValue={Permissions.PromotionManagement.NONE}
-				/>
+			<Label key="12">Promotion Management</Label>
+			<EnumSelect<Permissions.PromotionManagement>
+				key="13"
+				name="PromotionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PromotionManagement.NONE,
+					Permissions.PromotionManagement.FULL,
+				]}
+				defaultValue={Permissions.PromotionManagement.NONE}
+			/>
 
-				<Label key="14">Assign temporary duty positions</Label>
-				<EnumSelect<Permissions.AssignTemporaryDutyPosition>
-					key="15"
-					name="AssignTemporaryDutyPositions"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.AssignTemporaryDutyPosition.NO,
-						Permissions.AssignTemporaryDutyPosition.YES,
-					]}
-					defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
-				/>
+			<Label key="14">Assign temporary duty positions</Label>
+			<EnumSelect<Permissions.AssignTemporaryDutyPosition>
+				key="15"
+				name="AssignTemporaryDutyPositions"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.AssignTemporaryDutyPosition.NO,
+					Permissions.AssignTemporaryDutyPosition.YES,
+				]}
+				defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
+			/>
 
-				<Label key="16">Event contact sheet</Label>
-				<EnumSelect<Permissions.EventContactSheet>
-					key="17"
-					name="EventContactSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
-					defaultValue={Permissions.EventContactSheet.NO}
-				/>
+			<Label key="16">Event contact sheet</Label>
+			<EnumSelect<Permissions.EventContactSheet>
+				key="17"
+				name="EventContactSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
+				defaultValue={Permissions.EventContactSheet.NO}
+			/>
 
-				<Label key="18">Event link list</Label>
-				<EnumSelect<Permissions.EventLinkList>
-					key="19"
-					name="EventLinkList"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
-					defaultValue={Permissions.EventLinkList.NO}
-				/>
+			<Label key="18">Event link list</Label>
+			<EnumSelect<Permissions.EventLinkList>
+				key="19"
+				name="EventLinkList"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
+				defaultValue={Permissions.EventLinkList.NO}
+			/>
 
-				<Label key="20">ORM OPORD</Label>
-				<EnumSelect<Permissions.ORMOPORD>
-					key="21"
-					name="ORMOPORD"
-					labels={['No', 'Yes']}
-					values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
-					defaultValue={Permissions.ORMOPORD.NO}
-				/>
+			<Label key="20">ORM OPORD</Label>
+			<EnumSelect<Permissions.ORMOPORD>
+				key="21"
+				name="ORMOPORD"
+				labels={['No', 'Yes']}
+				values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
+				defaultValue={Permissions.ORMOPORD.NO}
+			/>
 
-				<Label key="22">Prospective Member Management</Label>
-				<EnumSelect<Permissions.ProspectiveMemberManagement>
-					key="23"
-					name="ProspectiveMemberManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ProspectiveMemberManagement.NONE,
-						Permissions.ProspectiveMemberManagement.FULL,
-					]}
-					defaultValue={Permissions.ProspectiveMemberManagement.NONE}
-				/>
+			<Label key="22">Prospective Member Management</Label>
+			<EnumSelect<Permissions.ProspectiveMemberManagement>
+				key="23"
+				name="ProspectiveMemberManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ProspectiveMemberManagement.NONE,
+					Permissions.ProspectiveMemberManagement.FULL,
+				]}
+				defaultValue={Permissions.ProspectiveMemberManagement.NONE}
+			/>
 
-				<Label key="24">Create notifications</Label>
-				<EnumSelect<Permissions.Notify>
-					key="25"
-					name="CreateNotifications"
-					labels={['None', 'Global']}
-					values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
-					defaultValue={Permissions.Notify.NO}
-				/>
+			<Label key="24">Create notifications</Label>
+			<EnumSelect<Permissions.Notify>
+				key="25"
+				name="CreateNotifications"
+				labels={['None', 'Global']}
+				values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
+				defaultValue={Permissions.Notify.NO}
+			/>
 
-				<Label key="26">Manage events</Label>
-				<EnumSelect<Permissions.ManageEvent>
-					key="27"
-					name="ManageEvent"
-					labels={['No', 'Add draft events', 'Full']}
-					values={[
-						Permissions.ManageEvent.NONE,
-						Permissions.ManageEvent.ADDDRAFTEVENTS,
-						Permissions.ManageEvent.FULL,
-					]}
-					defaultValue={Permissions.ManageEvent.NONE}
-				/>
+			<Label key="26">Manage events</Label>
+			<EnumSelect<Permissions.ManageEvent>
+				key="27"
+				name="ManageEvent"
+				labels={['No', 'Add draft events', 'Full']}
+				values={[
+					Permissions.ManageEvent.NONE,
+					Permissions.ManageEvent.ADDDRAFTEVENTS,
+					Permissions.ManageEvent.FULL,
+				]}
+				defaultValue={Permissions.ManageEvent.NONE}
+			/>
 
-				<Label key="28">Manage teams</Label>
-				<EnumSelect<Permissions.ManageTeam>
-					key="29"
-					name="ManageTeam"
-					labels={['No', 'Yes']}
-					values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
-					defaultValue={Permissions.ManageTeam.NONE}
-				/>
+			<Label key="28">Manage teams</Label>
+			<EnumSelect<Permissions.ManageTeam>
+				key="29"
+				name="ManageTeam"
+				labels={['No', 'Yes']}
+				values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
+				defaultValue={Permissions.ManageTeam.NONE}
+			/>
 
-				<Label key="30">Set up Event Attendance Scanners</Label>
-				<EnumSelect<Permissions.ScanAdd>
-					key="31"
-					name="ScanAdd"
-					labels={['No', 'Yes']}
-					values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
-					defaultValue={Permissions.ScanAdd.NO}
-				/>
+			<Label key="30">Set up Event Attendance Scanners</Label>
+			<EnumSelect<Permissions.ScanAdd>
+				key="31"
+				name="ScanAdd"
+				labels={['No', 'Yes']}
+				values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
+				defaultValue={Permissions.ScanAdd.NO}
+			/>
 
-				<Label key="32">View attendance</Label>
-				<EnumSelect<Permissions.AttendanceView>
-					key="33"
-					name="AttendanceView"
-					labels={['Personal', 'Others']}
-					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
-					defaultValue={Permissions.AttendanceView.PERSONAL}
-				/>
+			<Label key="32">View attendance</Label>
+			<EnumSelect<Permissions.AttendanceView>
+				key="33"
+				name="AttendanceView"
+				labels={['Personal', 'Others']}
+				values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
+				defaultValue={Permissions.AttendanceView.PERSONAL}
+			/>
 
-				<Label key="35">Permission management</Label>
-				<EnumSelect<Permissions.PermissionManagement>
-					key="36"
-					name="PermissionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PermissionManagement.NONE,
-						Permissions.PermissionManagement.FULL,
-					]}
-					defaultValue={Permissions.PermissionManagement.NONE}
-				/>
+			<Label key="35">Permission management</Label>
+			<EnumSelect<Permissions.PermissionManagement>
+				key="36"
+				name="PermissionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PermissionManagement.NONE,
+					Permissions.PermissionManagement.FULL,
+				]}
+				defaultValue={Permissions.PermissionManagement.NONE}
+			/>
 
-				<Label key="37">View admin notifications</Label>
-				<EnumSelect<Permissions.ViewAccountNotifications>
-					key="38"
-					name="ViewAccountNotifications"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ViewAccountNotifications.NO,
-						Permissions.ViewAccountNotifications.YES,
-					]}
-					defaultValue={Permissions.ViewAccountNotifications.NO}
-				/>
+			<Label key="37">View admin notifications</Label>
+			<EnumSelect<Permissions.ViewAccountNotifications>
+				key="38"
+				name="ViewAccountNotifications"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ViewAccountNotifications.NO,
+					Permissions.ViewAccountNotifications.YES,
+				]}
+				defaultValue={Permissions.ViewAccountNotifications.NO}
+			/>
 
-				<Label key="39">Configure website</Label>
-				<EnumSelect<Permissions.RegistryEdit>
-					key="40"
-					name="RegistryEdit"
-					labels={['No', 'Yes']}
-					values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
-					defaultValue={Permissions.RegistryEdit.NO}
-				/>
-			</FormBlock>
-		);
-	}
+			<Label key="39">Configure website</Label>
+			<EnumSelect<Permissions.RegistryEdit>
+				key="40"
+				name="RegistryEdit"
+				labels={['No', 'Yes']}
+				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
+				defaultValue={Permissions.RegistryEdit.NO}
+			/>
+		</FormBlock>
+	);
 
-	private renderAdvancedEventInput(
+	private renderAdvancedEventInput = (
 		value: CAPEventMemberPermissions,
 		permissionlevel: PermissionLevel,
-	) {
-		return (
-			<FormBlock<PermissionFormValues>
-				name="memberPermissionEditor"
-				value={{
-					...value,
-					permissionlevel,
-					showAdvanced: true,
-				}}
-				onFormChange={this.handleChange}
-			>
-				<Label>Permission level</Label>
-				<Select<PermissionLevel>
-					name="permissionlevel"
-					labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
-				/>
+	): JSX.Element => (
+		<FormBlock<PermissionFormValues>
+			name="memberPermissionEditor"
+			value={{
+				...value,
+				permissionlevel,
+				showAdvanced: true,
+			}}
+			onFormChange={this.handleChange}
+		>
+			<Label>Permission level</Label>
+			<Select<PermissionLevel>
+				name="permissionlevel"
+				labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
+			/>
 
-				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" index={this.props.index} />
+			<Label>Show full settings</Label>
+			<Checkbox name="showAdvanced" index={this.props.index} />
 
-				<Label key="0">Administer PT</Label>
-				<EnumSelect<Permissions.AdministerPT>
-					key="1"
-					name="AdministerPT"
-					labels={['No', 'Yes']}
-					values={[Permissions.AdministerPT.NO, Permissions.AdministerPT.YES]}
-					defaultValue={Permissions.AdministerPT.NO}
-				/>
+			<Label key="0">Administer PT</Label>
+			<EnumSelect<Permissions.AdministerPT>
+				key="1"
+				name="AdministerPT"
+				labels={['No', 'Yes']}
+				values={[Permissions.AdministerPT.NO, Permissions.AdministerPT.YES]}
+				defaultValue={Permissions.AdministerPT.NO}
+			/>
 
-				<Label key="2">Assign tasks</Label>
-				<EnumSelect<Permissions.AssignTasks>
-					key="3"
-					name="AssignTasks"
-					labels={['No', 'Yes']}
-					values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
-					defaultValue={Permissions.AssignTasks.NO}
-				/>
+			<Label key="2">Assign tasks</Label>
+			<EnumSelect<Permissions.AssignTasks>
+				key="3"
+				name="AssignTasks"
+				labels={['No', 'Yes']}
+				values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
+				defaultValue={Permissions.AssignTasks.NO}
+			/>
 
-				<Label key="4">File management</Label>
-				<EnumSelect<Permissions.FileManagement>
-					key="5"
-					name="FileManagement"
-					labels={['Default', 'Full']}
-					values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
-					defaultValue={Permissions.FileManagement.NONE}
-				/>
+			<Label key="4">File management</Label>
+			<EnumSelect<Permissions.FileManagement>
+				key="5"
+				name="FileManagement"
+				labels={['Default', 'Full']}
+				values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
+				defaultValue={Permissions.FileManagement.NONE}
+			/>
 
-				<Label key="6">Flight Assign</Label>
-				<EnumSelect<Permissions.FlightAssign>
-					key="7"
-					name="FlightAssign"
-					labels={['No', 'Yes']}
-					values={[Permissions.FlightAssign.NO, Permissions.FlightAssign.YES]}
-					defaultValue={Permissions.FlightAssign.NO}
-				/>
+			<Label key="6">Flight Assign</Label>
+			<EnumSelect<Permissions.FlightAssign>
+				key="7"
+				name="FlightAssign"
+				labels={['No', 'Yes']}
+				values={[Permissions.FlightAssign.NO, Permissions.FlightAssign.YES]}
+				defaultValue={Permissions.FlightAssign.NO}
+			/>
 
-				<Label key="8">Muster sheet</Label>
-				<EnumSelect<Permissions.MusterSheet>
-					key="9"
-					name="MusterSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.MusterSheet.NO, Permissions.MusterSheet.YES]}
-					defaultValue={Permissions.MusterSheet.NO}
-				/>
+			<Label key="8">Muster sheet</Label>
+			<EnumSelect<Permissions.MusterSheet>
+				key="9"
+				name="MusterSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.MusterSheet.NO, Permissions.MusterSheet.YES]}
+				defaultValue={Permissions.MusterSheet.NO}
+			/>
 
-				<Label key="14">Assign temporary duty positions</Label>
-				<EnumSelect<Permissions.AssignTemporaryDutyPosition>
-					key="15"
-					name="AssignTemporaryDutyPositions"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.AssignTemporaryDutyPosition.NO,
-						Permissions.AssignTemporaryDutyPosition.YES,
-					]}
-					defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
-				/>
+			<Label key="14">Assign temporary duty positions</Label>
+			<EnumSelect<Permissions.AssignTemporaryDutyPosition>
+				key="15"
+				name="AssignTemporaryDutyPositions"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.AssignTemporaryDutyPosition.NO,
+					Permissions.AssignTemporaryDutyPosition.YES,
+				]}
+				defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
+			/>
 
-				<Label key="16">Event contact sheet</Label>
-				<EnumSelect<Permissions.EventContactSheet>
-					key="17"
-					name="EventContactSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
-					defaultValue={Permissions.EventContactSheet.NO}
-				/>
+			<Label key="16">Event contact sheet</Label>
+			<EnumSelect<Permissions.EventContactSheet>
+				key="17"
+				name="EventContactSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
+				defaultValue={Permissions.EventContactSheet.NO}
+			/>
 
-				<Label key="18">Event link list</Label>
-				<EnumSelect<Permissions.EventLinkList>
-					key="19"
-					name="EventLinkList"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
-					defaultValue={Permissions.EventLinkList.NO}
-				/>
+			<Label key="18">Event link list</Label>
+			<EnumSelect<Permissions.EventLinkList>
+				key="19"
+				name="EventLinkList"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
+				defaultValue={Permissions.EventLinkList.NO}
+			/>
 
-				<Label key="20">ORM OPORD</Label>
-				<EnumSelect<Permissions.ORMOPORD>
-					key="21"
-					name="ORMOPORD"
-					labels={['No', 'Yes']}
-					values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
-					defaultValue={Permissions.ORMOPORD.NO}
-				/>
+			<Label key="20">ORM OPORD</Label>
+			<EnumSelect<Permissions.ORMOPORD>
+				key="21"
+				name="ORMOPORD"
+				labels={['No', 'Yes']}
+				values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
+				defaultValue={Permissions.ORMOPORD.NO}
+			/>
 
-				<Label key="24">Create notifications</Label>
-				<EnumSelect<Permissions.Notify>
-					key="25"
-					name="CreateNotifications"
-					labels={['None', 'Global']}
-					values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
-					defaultValue={Permissions.Notify.NO}
-				/>
+			<Label key="24">Create notifications</Label>
+			<EnumSelect<Permissions.Notify>
+				key="25"
+				name="CreateNotifications"
+				labels={['None', 'Global']}
+				values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
+				defaultValue={Permissions.Notify.NO}
+			/>
 
-				<Label key="26">Manage events</Label>
-				<EnumSelect<Permissions.ManageEvent>
-					key="27"
-					name="ManageEvent"
-					labels={['No', 'Add draft events', 'Full']}
-					values={[
-						Permissions.ManageEvent.NONE,
-						Permissions.ManageEvent.ADDDRAFTEVENTS,
-						Permissions.ManageEvent.FULL,
-					]}
-					defaultValue={Permissions.ManageEvent.NONE}
-				/>
+			<Label key="26">Manage events</Label>
+			<EnumSelect<Permissions.ManageEvent>
+				key="27"
+				name="ManageEvent"
+				labels={['No', 'Add draft events', 'Full']}
+				values={[
+					Permissions.ManageEvent.NONE,
+					Permissions.ManageEvent.ADDDRAFTEVENTS,
+					Permissions.ManageEvent.FULL,
+				]}
+				defaultValue={Permissions.ManageEvent.NONE}
+			/>
 
-				<Label key="28">Manage teams</Label>
-				<EnumSelect<Permissions.ManageTeam>
-					key="29"
-					name="ManageTeam"
-					labels={['No', 'Yes']}
-					values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
-					defaultValue={Permissions.ManageTeam.NONE}
-				/>
+			<Label key="28">Manage teams</Label>
+			<EnumSelect<Permissions.ManageTeam>
+				key="29"
+				name="ManageTeam"
+				labels={['No', 'Yes']}
+				values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
+				defaultValue={Permissions.ManageTeam.NONE}
+			/>
 
-				<Label key="30">Set up Event Attendance Scanners</Label>
-				<EnumSelect<Permissions.ScanAdd>
-					key="31"
-					name="ScanAdd"
-					labels={['No', 'Yes']}
-					values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
-					defaultValue={Permissions.ScanAdd.NO}
-				/>
+			<Label key="30">Set up Event Attendance Scanners</Label>
+			<EnumSelect<Permissions.ScanAdd>
+				key="31"
+				name="ScanAdd"
+				labels={['No', 'Yes']}
+				values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
+				defaultValue={Permissions.ScanAdd.NO}
+			/>
 
-				<Label key="32">View attendance</Label>
-				<EnumSelect<Permissions.AttendanceView>
-					key="33"
-					name="AttendanceView"
-					labels={['Personal', 'Others']}
-					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
-					defaultValue={Permissions.AttendanceView.PERSONAL}
-				/>
+			<Label key="32">View attendance</Label>
+			<EnumSelect<Permissions.AttendanceView>
+				key="33"
+				name="AttendanceView"
+				labels={['Personal', 'Others']}
+				values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
+				defaultValue={Permissions.AttendanceView.PERSONAL}
+			/>
 
-				<Label key="35">Permission management</Label>
-				<EnumSelect<Permissions.PermissionManagement>
-					key="36"
-					name="PermissionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PermissionManagement.NONE,
-						Permissions.PermissionManagement.FULL,
-					]}
-					defaultValue={Permissions.PermissionManagement.NONE}
-				/>
+			<Label key="35">Permission management</Label>
+			<EnumSelect<Permissions.PermissionManagement>
+				key="36"
+				name="PermissionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PermissionManagement.NONE,
+					Permissions.PermissionManagement.FULL,
+				]}
+				defaultValue={Permissions.PermissionManagement.NONE}
+			/>
 
-				<Label key="37">View admin notifications</Label>
-				<EnumSelect<Permissions.ViewAccountNotifications>
-					key="38"
-					name="ViewAccountNotifications"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ViewAccountNotifications.NO,
-						Permissions.ViewAccountNotifications.YES,
-					]}
-					defaultValue={Permissions.ViewAccountNotifications.NO}
-				/>
+			<Label key="37">View admin notifications</Label>
+			<EnumSelect<Permissions.ViewAccountNotifications>
+				key="38"
+				name="ViewAccountNotifications"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ViewAccountNotifications.NO,
+					Permissions.ViewAccountNotifications.YES,
+				]}
+				defaultValue={Permissions.ViewAccountNotifications.NO}
+			/>
 
-				<Label key="39">Configure website</Label>
-				<EnumSelect<Permissions.RegistryEdit>
-					key="40"
-					name="RegistryEdit"
-					labels={['No', 'Yes']}
-					values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
-					defaultValue={Permissions.RegistryEdit.NO}
-				/>
-			</FormBlock>
-		);
-	}
+			<Label key="39">Configure website</Label>
+			<EnumSelect<Permissions.RegistryEdit>
+				key="40"
+				name="RegistryEdit"
+				labels={['No', 'Yes']}
+				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
+				defaultValue={Permissions.RegistryEdit.NO}
+			/>
+		</FormBlock>
+	);
 
-	private renderAdvancedGroupInput(
+	private renderAdvancedGroupInput = (
 		value: CAPGroupMemberPermissions,
 		permissionlevel: PermissionLevel,
-	) {
-		return (
-			<FormBlock<PermissionFormValues>
-				name="memberPermissionEditor"
-				value={{
-					...value,
-					permissionlevel,
-					showAdvanced: true,
-				}}
-				onFormChange={this.handleChange}
-			>
-				<Label>Permission level</Label>
-				<Select<PermissionLevel>
-					name="permissionlevel"
-					labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
-				/>
+	): JSX.Element => (
+		<FormBlock<PermissionFormValues>
+			name="memberPermissionEditor"
+			value={{
+				...value,
+				permissionlevel,
+				showAdvanced: true,
+			}}
+			onFormChange={this.handleChange}
+		>
+			<Label>Permission level</Label>
+			<Select<PermissionLevel>
+				name="permissionlevel"
+				labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
+			/>
 
-				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" index={this.props.index} />
+			<Label>Show full settings</Label>
+			<Checkbox name="showAdvanced" index={this.props.index} />
 
-				<Label key="2">Assign tasks</Label>
-				<EnumSelect<Permissions.AssignTasks>
-					key="3"
-					name="AssignTasks"
-					labels={['No', 'Yes']}
-					values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
-					defaultValue={Permissions.AssignTasks.NO}
-				/>
+			<Label key="2">Assign tasks</Label>
+			<EnumSelect<Permissions.AssignTasks>
+				key="3"
+				name="AssignTasks"
+				labels={['No', 'Yes']}
+				values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
+				defaultValue={Permissions.AssignTasks.NO}
+			/>
 
-				<Label key="4">File management</Label>
-				<EnumSelect<Permissions.FileManagement>
-					key="5"
-					name="FileManagement"
-					labels={['Default', 'Full']}
-					values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
-					defaultValue={Permissions.FileManagement.NONE}
-				/>
+			<Label key="4">File management</Label>
+			<EnumSelect<Permissions.FileManagement>
+				key="5"
+				name="FileManagement"
+				labels={['Default', 'Full']}
+				values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
+				defaultValue={Permissions.FileManagement.NONE}
+			/>
 
-				<Label key="14">Assign temporary duty positions</Label>
-				<EnumSelect<Permissions.AssignTemporaryDutyPosition>
-					key="15"
-					name="AssignTemporaryDutyPositions"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.AssignTemporaryDutyPosition.NO,
-						Permissions.AssignTemporaryDutyPosition.YES,
-					]}
-					defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
-				/>
+			<Label key="14">Assign temporary duty positions</Label>
+			<EnumSelect<Permissions.AssignTemporaryDutyPosition>
+				key="15"
+				name="AssignTemporaryDutyPositions"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.AssignTemporaryDutyPosition.NO,
+					Permissions.AssignTemporaryDutyPosition.YES,
+				]}
+				defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
+			/>
 
-				<Label key="16">Event contact sheet</Label>
-				<EnumSelect<Permissions.EventContactSheet>
-					key="17"
-					name="EventContactSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
-					defaultValue={Permissions.EventContactSheet.NO}
-				/>
+			<Label key="16">Event contact sheet</Label>
+			<EnumSelect<Permissions.EventContactSheet>
+				key="17"
+				name="EventContactSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
+				defaultValue={Permissions.EventContactSheet.NO}
+			/>
 
-				<Label key="18">Event link list</Label>
-				<EnumSelect<Permissions.EventLinkList>
-					key="19"
-					name="EventLinkList"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
-					defaultValue={Permissions.EventLinkList.NO}
-				/>
+			<Label key="18">Event link list</Label>
+			<EnumSelect<Permissions.EventLinkList>
+				key="19"
+				name="EventLinkList"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
+				defaultValue={Permissions.EventLinkList.NO}
+			/>
 
-				<Label key="20">ORM OPORD</Label>
-				<EnumSelect<Permissions.ORMOPORD>
-					key="21"
-					name="ORMOPORD"
-					labels={['No', 'Yes']}
-					values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
-					defaultValue={Permissions.ORMOPORD.NO}
-				/>
+			<Label key="20">ORM OPORD</Label>
+			<EnumSelect<Permissions.ORMOPORD>
+				key="21"
+				name="ORMOPORD"
+				labels={['No', 'Yes']}
+				values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
+				defaultValue={Permissions.ORMOPORD.NO}
+			/>
 
-				<Label key="24">Create notifications</Label>
-				<EnumSelect<Permissions.Notify>
-					key="25"
-					name="CreateNotifications"
-					labels={['None', 'Global']}
-					values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
-					defaultValue={Permissions.Notify.NO}
-				/>
+			<Label key="24">Create notifications</Label>
+			<EnumSelect<Permissions.Notify>
+				key="25"
+				name="CreateNotifications"
+				labels={['None', 'Global']}
+				values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
+				defaultValue={Permissions.Notify.NO}
+			/>
 
-				<Label key="26">Manage events</Label>
-				<EnumSelect<Permissions.ManageEvent>
-					key="27"
-					name="ManageEvent"
-					labels={['No', 'Add draft events', 'Full']}
-					values={[
-						Permissions.ManageEvent.NONE,
-						Permissions.ManageEvent.ADDDRAFTEVENTS,
-						Permissions.ManageEvent.FULL,
-					]}
-					defaultValue={Permissions.ManageEvent.NONE}
-				/>
+			<Label key="26">Manage events</Label>
+			<EnumSelect<Permissions.ManageEvent>
+				key="27"
+				name="ManageEvent"
+				labels={['No', 'Add draft events', 'Full']}
+				values={[
+					Permissions.ManageEvent.NONE,
+					Permissions.ManageEvent.ADDDRAFTEVENTS,
+					Permissions.ManageEvent.FULL,
+				]}
+				defaultValue={Permissions.ManageEvent.NONE}
+			/>
 
-				<Label key="28">Manage teams</Label>
-				<EnumSelect<Permissions.ManageTeam>
-					key="29"
-					name="ManageTeam"
-					labels={['No', 'Yes']}
-					values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
-					defaultValue={Permissions.ManageTeam.NONE}
-				/>
+			<Label key="28">Manage teams</Label>
+			<EnumSelect<Permissions.ManageTeam>
+				key="29"
+				name="ManageTeam"
+				labels={['No', 'Yes']}
+				values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
+				defaultValue={Permissions.ManageTeam.NONE}
+			/>
 
-				<Label key="30">Set up Event Attendance Scanners</Label>
-				<EnumSelect<Permissions.ScanAdd>
-					key="31"
-					name="ScanAdd"
-					labels={['No', 'Yes']}
-					values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
-					defaultValue={Permissions.ScanAdd.NO}
-				/>
+			<Label key="30">Set up Event Attendance Scanners</Label>
+			<EnumSelect<Permissions.ScanAdd>
+				key="31"
+				name="ScanAdd"
+				labels={['No', 'Yes']}
+				values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
+				defaultValue={Permissions.ScanAdd.NO}
+			/>
 
-				<Label key="32">View attendance</Label>
-				<EnumSelect<Permissions.AttendanceView>
-					key="33"
-					name="AttendanceView"
-					labels={['Personal', 'Others']}
-					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
-					defaultValue={Permissions.AttendanceView.PERSONAL}
-				/>
+			<Label key="32">View attendance</Label>
+			<EnumSelect<Permissions.AttendanceView>
+				key="33"
+				name="AttendanceView"
+				labels={['Personal', 'Others']}
+				values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
+				defaultValue={Permissions.AttendanceView.PERSONAL}
+			/>
 
-				<Label key="35">Permission management</Label>
-				<EnumSelect<Permissions.PermissionManagement>
-					key="36"
-					name="PermissionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PermissionManagement.NONE,
-						Permissions.PermissionManagement.FULL,
-					]}
-					defaultValue={Permissions.PermissionManagement.NONE}
-				/>
+			<Label key="35">Permission management</Label>
+			<EnumSelect<Permissions.PermissionManagement>
+				key="36"
+				name="PermissionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PermissionManagement.NONE,
+					Permissions.PermissionManagement.FULL,
+				]}
+				defaultValue={Permissions.PermissionManagement.NONE}
+			/>
 
-				<Label key="37">View admin notifications</Label>
-				<EnumSelect<Permissions.ViewAccountNotifications>
-					key="38"
-					name="ViewAccountNotifications"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ViewAccountNotifications.NO,
-						Permissions.ViewAccountNotifications.YES,
-					]}
-					defaultValue={Permissions.ViewAccountNotifications.NO}
-				/>
+			<Label key="37">View admin notifications</Label>
+			<EnumSelect<Permissions.ViewAccountNotifications>
+				key="38"
+				name="ViewAccountNotifications"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ViewAccountNotifications.NO,
+					Permissions.ViewAccountNotifications.YES,
+				]}
+				defaultValue={Permissions.ViewAccountNotifications.NO}
+			/>
 
-				<Label key="39">Configure website</Label>
-				<EnumSelect<Permissions.RegistryEdit>
-					key="40"
-					name="RegistryEdit"
-					labels={['No', 'Yes']}
-					values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
-					defaultValue={Permissions.RegistryEdit.NO}
-				/>
-			</FormBlock>
-		);
-	}
+			<Label key="39">Configure website</Label>
+			<EnumSelect<Permissions.RegistryEdit>
+				key="40"
+				name="RegistryEdit"
+				labels={['No', 'Yes']}
+				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
+				defaultValue={Permissions.RegistryEdit.NO}
+			/>
+		</FormBlock>
+	);
 
-	private renderAdvancedWingInput(
+	private renderAdvancedWingInput = (
 		value: CAPWingMemberPermissions,
 		permissionlevel: PermissionLevel,
-	) {
-		return (
-			<FormBlock<PermissionFormValues>
-				name="memberPermissionEditor"
-				value={{
-					...value,
-					permissionlevel,
-					showAdvanced: true,
-				}}
-				onFormChange={this.handleChange}
-			>
-				<Label>Permission level</Label>
-				<Select<PermissionLevel>
-					name="permissionlevel"
-					labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
-				/>
+	): JSX.Element => (
+		<FormBlock<PermissionFormValues>
+			name="memberPermissionEditor"
+			value={{
+				...value,
+				permissionlevel,
+				showAdvanced: true,
+			}}
+			onFormChange={this.handleChange}
+		>
+			<Label>Permission level</Label>
+			<Select<PermissionLevel>
+				name="permissionlevel"
+				labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
+			/>
 
-				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" index={this.props.index} />
+			<Label>Show full settings</Label>
+			<Checkbox name="showAdvanced" index={this.props.index} />
 
-				<Label key="2">Assign tasks</Label>
-				<EnumSelect<Permissions.AssignTasks>
-					key="3"
-					name="AssignTasks"
-					labels={['No', 'Yes']}
-					values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
-					defaultValue={Permissions.AssignTasks.NO}
-				/>
+			<Label key="2">Assign tasks</Label>
+			<EnumSelect<Permissions.AssignTasks>
+				key="3"
+				name="AssignTasks"
+				labels={['No', 'Yes']}
+				values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
+				defaultValue={Permissions.AssignTasks.NO}
+			/>
 
-				<Label key="4">File management</Label>
-				<EnumSelect<Permissions.FileManagement>
-					key="5"
-					name="FileManagement"
-					labels={['Default', 'Full']}
-					values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
-					defaultValue={Permissions.FileManagement.NONE}
-				/>
+			<Label key="4">File management</Label>
+			<EnumSelect<Permissions.FileManagement>
+				key="5"
+				name="FileManagement"
+				labels={['Default', 'Full']}
+				values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
+				defaultValue={Permissions.FileManagement.NONE}
+			/>
 
-				<Label key="14">Assign temporary duty positions</Label>
-				<EnumSelect<Permissions.AssignTemporaryDutyPosition>
-					key="15"
-					name="AssignTemporaryDutyPositions"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.AssignTemporaryDutyPosition.NO,
-						Permissions.AssignTemporaryDutyPosition.YES,
-					]}
-					defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
-				/>
+			<Label key="14">Assign temporary duty positions</Label>
+			<EnumSelect<Permissions.AssignTemporaryDutyPosition>
+				key="15"
+				name="AssignTemporaryDutyPositions"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.AssignTemporaryDutyPosition.NO,
+					Permissions.AssignTemporaryDutyPosition.YES,
+				]}
+				defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
+			/>
 
-				<Label key="16">Event contact sheet</Label>
-				<EnumSelect<Permissions.EventContactSheet>
-					key="17"
-					name="EventContactSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
-					defaultValue={Permissions.EventContactSheet.NO}
-				/>
+			<Label key="16">Event contact sheet</Label>
+			<EnumSelect<Permissions.EventContactSheet>
+				key="17"
+				name="EventContactSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
+				defaultValue={Permissions.EventContactSheet.NO}
+			/>
 
-				<Label key="18">Event link list</Label>
-				<EnumSelect<Permissions.EventLinkList>
-					key="19"
-					name="EventLinkList"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
-					defaultValue={Permissions.EventLinkList.NO}
-				/>
+			<Label key="18">Event link list</Label>
+			<EnumSelect<Permissions.EventLinkList>
+				key="19"
+				name="EventLinkList"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
+				defaultValue={Permissions.EventLinkList.NO}
+			/>
 
-				<Label key="20">ORM OPORD</Label>
-				<EnumSelect<Permissions.ORMOPORD>
-					key="21"
-					name="ORMOPORD"
-					labels={['No', 'Yes']}
-					values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
-					defaultValue={Permissions.ORMOPORD.NO}
-				/>
+			<Label key="20">ORM OPORD</Label>
+			<EnumSelect<Permissions.ORMOPORD>
+				key="21"
+				name="ORMOPORD"
+				labels={['No', 'Yes']}
+				values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
+				defaultValue={Permissions.ORMOPORD.NO}
+			/>
 
-				<Label key="24">Create notifications</Label>
-				<EnumSelect<Permissions.Notify>
-					key="25"
-					name="CreateNotifications"
-					labels={['None', 'Global']}
-					values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
-					defaultValue={Permissions.Notify.NO}
-				/>
+			<Label key="24">Create notifications</Label>
+			<EnumSelect<Permissions.Notify>
+				key="25"
+				name="CreateNotifications"
+				labels={['None', 'Global']}
+				values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
+				defaultValue={Permissions.Notify.NO}
+			/>
 
-				<Label key="26">Manage events</Label>
-				<EnumSelect<Permissions.ManageEvent>
-					key="27"
-					name="ManageEvent"
-					labels={['No', 'Add draft events', 'Full']}
-					values={[
-						Permissions.ManageEvent.NONE,
-						Permissions.ManageEvent.ADDDRAFTEVENTS,
-						Permissions.ManageEvent.FULL,
-					]}
-					defaultValue={Permissions.ManageEvent.NONE}
-				/>
+			<Label key="26">Manage events</Label>
+			<EnumSelect<Permissions.ManageEvent>
+				key="27"
+				name="ManageEvent"
+				labels={['No', 'Add draft events', 'Full']}
+				values={[
+					Permissions.ManageEvent.NONE,
+					Permissions.ManageEvent.ADDDRAFTEVENTS,
+					Permissions.ManageEvent.FULL,
+				]}
+				defaultValue={Permissions.ManageEvent.NONE}
+			/>
 
-				<Label key="28">Manage teams</Label>
-				<EnumSelect<Permissions.ManageTeam>
-					key="29"
-					name="ManageTeam"
-					labels={['No', 'Yes']}
-					values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
-					defaultValue={Permissions.ManageTeam.NONE}
-				/>
+			<Label key="28">Manage teams</Label>
+			<EnumSelect<Permissions.ManageTeam>
+				key="29"
+				name="ManageTeam"
+				labels={['No', 'Yes']}
+				values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
+				defaultValue={Permissions.ManageTeam.NONE}
+			/>
 
-				<Label key="30">Set up Event Attendance Scanners</Label>
-				<EnumSelect<Permissions.ScanAdd>
-					key="31"
-					name="ScanAdd"
-					labels={['No', 'Yes']}
-					values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
-					defaultValue={Permissions.ScanAdd.NO}
-				/>
+			<Label key="30">Set up Event Attendance Scanners</Label>
+			<EnumSelect<Permissions.ScanAdd>
+				key="31"
+				name="ScanAdd"
+				labels={['No', 'Yes']}
+				values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
+				defaultValue={Permissions.ScanAdd.NO}
+			/>
 
-				<Label key="32">View attendance</Label>
-				<EnumSelect<Permissions.AttendanceView>
-					key="33"
-					name="AttendanceView"
-					labels={['Personal', 'Others']}
-					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
-					defaultValue={Permissions.AttendanceView.PERSONAL}
-				/>
+			<Label key="32">View attendance</Label>
+			<EnumSelect<Permissions.AttendanceView>
+				key="33"
+				name="AttendanceView"
+				labels={['Personal', 'Others']}
+				values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
+				defaultValue={Permissions.AttendanceView.PERSONAL}
+			/>
 
-				<Label key="35">Permission management</Label>
-				<EnumSelect<Permissions.PermissionManagement>
-					key="36"
-					name="PermissionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PermissionManagement.NONE,
-						Permissions.PermissionManagement.FULL,
-					]}
-					defaultValue={Permissions.PermissionManagement.NONE}
-				/>
+			<Label key="35">Permission management</Label>
+			<EnumSelect<Permissions.PermissionManagement>
+				key="36"
+				name="PermissionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PermissionManagement.NONE,
+					Permissions.PermissionManagement.FULL,
+				]}
+				defaultValue={Permissions.PermissionManagement.NONE}
+			/>
 
-				<Label key="37">View admin notifications</Label>
-				<EnumSelect<Permissions.ViewAccountNotifications>
-					key="38"
-					name="ViewAccountNotifications"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ViewAccountNotifications.NO,
-						Permissions.ViewAccountNotifications.YES,
-					]}
-					defaultValue={Permissions.ViewAccountNotifications.NO}
-				/>
+			<Label key="37">View admin notifications</Label>
+			<EnumSelect<Permissions.ViewAccountNotifications>
+				key="38"
+				name="ViewAccountNotifications"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ViewAccountNotifications.NO,
+					Permissions.ViewAccountNotifications.YES,
+				]}
+				defaultValue={Permissions.ViewAccountNotifications.NO}
+			/>
 
-				<Label key="39">Configure website</Label>
-				<EnumSelect<Permissions.RegistryEdit>
-					key="40"
-					name="RegistryEdit"
-					labels={['No', 'Yes']}
-					values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
-					defaultValue={Permissions.RegistryEdit.NO}
-				/>
+			<Label key="39">Configure website</Label>
+			<EnumSelect<Permissions.RegistryEdit>
+				key="40"
+				name="RegistryEdit"
+				labels={['No', 'Yes']}
+				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
+				defaultValue={Permissions.RegistryEdit.NO}
+			/>
 
-				<Label key="41">Create Event Account</Label>
-				<EnumSelect<Permissions.CreateEventAccount>
-					key="42"
-					name="CreateEventAccount"
-					labels={['No', 'Yes']}
-					values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
-					defaultValue={Permissions.CreateEventAccount.NO}
-				/>
-			</FormBlock>
-		);
-	}
+			<Label key="41">Create Event Account</Label>
+			<EnumSelect<Permissions.CreateEventAccount>
+				key="42"
+				name="CreateEventAccount"
+				labels={['No', 'Yes']}
+				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
+				defaultValue={Permissions.CreateEventAccount.NO}
+			/>
+		</FormBlock>
+	);
 
-	private renderAdvancedRegionInput(
+	private renderAdvancedRegionInput = (
 		value: CAPRegionMemberPermissions,
 		permissionlevel: PermissionLevel,
-	) {
-		return (
-			<FormBlock<PermissionFormValues>
-				name="memberPermissionEditor"
-				value={{
-					...value,
-					permissionlevel,
-					showAdvanced: true,
-				}}
-				onFormChange={this.handleChange}
-			>
-				<Label>Permission level</Label>
-				<Select<PermissionLevel>
-					name="permissionlevel"
-					labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
-				/>
+	): JSX.Element => (
+		<FormBlock<PermissionFormValues>
+			name="memberPermissionEditor"
+			value={{
+				...value,
+				permissionlevel,
+				showAdvanced: true,
+			}}
+			onFormChange={this.handleChange}
+		>
+			<Label>Permission level</Label>
+			<Select<PermissionLevel>
+				name="permissionlevel"
+				labels={['Custom', 'Member', 'Cadet Staff', 'Manager', 'Admin']}
+			/>
 
-				<Label>Show full settings</Label>
-				<Checkbox name="showAdvanced" index={this.props.index} />
+			<Label>Show full settings</Label>
+			<Checkbox name="showAdvanced" index={this.props.index} />
 
-				<Label key="2">Assign tasks</Label>
-				<EnumSelect<Permissions.AssignTasks>
-					key="3"
-					name="AssignTasks"
-					labels={['No', 'Yes']}
-					values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
-					defaultValue={Permissions.AssignTasks.NO}
-				/>
+			<Label key="2">Assign tasks</Label>
+			<EnumSelect<Permissions.AssignTasks>
+				key="3"
+				name="AssignTasks"
+				labels={['No', 'Yes']}
+				values={[Permissions.AssignTasks.NO, Permissions.AssignTasks.YES]}
+				defaultValue={Permissions.AssignTasks.NO}
+			/>
 
-				<Label key="4">File management</Label>
-				<EnumSelect<Permissions.FileManagement>
-					key="5"
-					name="FileManagement"
-					labels={['Default', 'Full']}
-					values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
-					defaultValue={Permissions.FileManagement.NONE}
-				/>
+			<Label key="4">File management</Label>
+			<EnumSelect<Permissions.FileManagement>
+				key="5"
+				name="FileManagement"
+				labels={['Default', 'Full']}
+				values={[Permissions.FileManagement.NONE, Permissions.FileManagement.FULL]}
+				defaultValue={Permissions.FileManagement.NONE}
+			/>
 
-				<Label key="14">Assign temporary duty positions</Label>
-				<EnumSelect<Permissions.AssignTemporaryDutyPosition>
-					key="15"
-					name="AssignTemporaryDutyPositions"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.AssignTemporaryDutyPosition.NO,
-						Permissions.AssignTemporaryDutyPosition.YES,
-					]}
-					defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
-				/>
+			<Label key="14">Assign temporary duty positions</Label>
+			<EnumSelect<Permissions.AssignTemporaryDutyPosition>
+				key="15"
+				name="AssignTemporaryDutyPositions"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.AssignTemporaryDutyPosition.NO,
+					Permissions.AssignTemporaryDutyPosition.YES,
+				]}
+				defaultValue={Permissions.AssignTemporaryDutyPosition.NO}
+			/>
 
-				<Label key="16">Event contact sheet</Label>
-				<EnumSelect<Permissions.EventContactSheet>
-					key="17"
-					name="EventContactSheet"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
-					defaultValue={Permissions.EventContactSheet.NO}
-				/>
+			<Label key="16">Event contact sheet</Label>
+			<EnumSelect<Permissions.EventContactSheet>
+				key="17"
+				name="EventContactSheet"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventContactSheet.NO, Permissions.EventContactSheet.YES]}
+				defaultValue={Permissions.EventContactSheet.NO}
+			/>
 
-				<Label key="18">Event link list</Label>
-				<EnumSelect<Permissions.EventLinkList>
-					key="19"
-					name="EventLinkList"
-					labels={['No', 'Yes']}
-					values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
-					defaultValue={Permissions.EventLinkList.NO}
-				/>
+			<Label key="18">Event link list</Label>
+			<EnumSelect<Permissions.EventLinkList>
+				key="19"
+				name="EventLinkList"
+				labels={['No', 'Yes']}
+				values={[Permissions.EventLinkList.NO, Permissions.EventLinkList.YES]}
+				defaultValue={Permissions.EventLinkList.NO}
+			/>
 
-				<Label key="20">ORM OPORD</Label>
-				<EnumSelect<Permissions.ORMOPORD>
-					key="21"
-					name="ORMOPORD"
-					labels={['No', 'Yes']}
-					values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
-					defaultValue={Permissions.ORMOPORD.NO}
-				/>
+			<Label key="20">ORM OPORD</Label>
+			<EnumSelect<Permissions.ORMOPORD>
+				key="21"
+				name="ORMOPORD"
+				labels={['No', 'Yes']}
+				values={[Permissions.ORMOPORD.NO, Permissions.ORMOPORD.YES]}
+				defaultValue={Permissions.ORMOPORD.NO}
+			/>
 
-				<Label key="24">Create notifications</Label>
-				<EnumSelect<Permissions.Notify>
-					key="25"
-					name="CreateNotifications"
-					labels={['None', 'Global']}
-					values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
-					defaultValue={Permissions.Notify.NO}
-				/>
+			<Label key="24">Create notifications</Label>
+			<EnumSelect<Permissions.Notify>
+				key="25"
+				name="CreateNotifications"
+				labels={['None', 'Global']}
+				values={[Permissions.Notify.NO, Permissions.Notify.GLOBAL]}
+				defaultValue={Permissions.Notify.NO}
+			/>
 
-				<Label key="26">Manage events</Label>
-				<EnumSelect<Permissions.ManageEvent>
-					key="27"
-					name="ManageEvent"
-					labels={['No', 'Add draft events', 'Full']}
-					values={[
-						Permissions.ManageEvent.NONE,
-						Permissions.ManageEvent.ADDDRAFTEVENTS,
-						Permissions.ManageEvent.FULL,
-					]}
-					defaultValue={Permissions.ManageEvent.NONE}
-				/>
+			<Label key="26">Manage events</Label>
+			<EnumSelect<Permissions.ManageEvent>
+				key="27"
+				name="ManageEvent"
+				labels={['No', 'Add draft events', 'Full']}
+				values={[
+					Permissions.ManageEvent.NONE,
+					Permissions.ManageEvent.ADDDRAFTEVENTS,
+					Permissions.ManageEvent.FULL,
+				]}
+				defaultValue={Permissions.ManageEvent.NONE}
+			/>
 
-				<Label key="28">Manage teams</Label>
-				<EnumSelect<Permissions.ManageTeam>
-					key="29"
-					name="ManageTeam"
-					labels={['No', 'Yes']}
-					values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
-					defaultValue={Permissions.ManageTeam.NONE}
-				/>
+			<Label key="28">Manage teams</Label>
+			<EnumSelect<Permissions.ManageTeam>
+				key="29"
+				name="ManageTeam"
+				labels={['No', 'Yes']}
+				values={[Permissions.ManageTeam.NONE, Permissions.ManageTeam.FULL]}
+				defaultValue={Permissions.ManageTeam.NONE}
+			/>
 
-				<Label key="30">Set up Event Attendance Scanners</Label>
-				<EnumSelect<Permissions.ScanAdd>
-					key="31"
-					name="ScanAdd"
-					labels={['No', 'Yes']}
-					values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
-					defaultValue={Permissions.ScanAdd.NO}
-				/>
+			<Label key="30">Set up Event Attendance Scanners</Label>
+			<EnumSelect<Permissions.ScanAdd>
+				key="31"
+				name="ScanAdd"
+				labels={['No', 'Yes']}
+				values={[Permissions.ScanAdd.NO, Permissions.ScanAdd.YES]}
+				defaultValue={Permissions.ScanAdd.NO}
+			/>
 
-				<Label key="32">View attendance</Label>
-				<EnumSelect<Permissions.AttendanceView>
-					key="33"
-					name="AttendanceView"
-					labels={['Personal', 'Others']}
-					values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
-					defaultValue={Permissions.AttendanceView.PERSONAL}
-				/>
+			<Label key="32">View attendance</Label>
+			<EnumSelect<Permissions.AttendanceView>
+				key="33"
+				name="AttendanceView"
+				labels={['Personal', 'Others']}
+				values={[Permissions.AttendanceView.PERSONAL, Permissions.AttendanceView.OTHER]}
+				defaultValue={Permissions.AttendanceView.PERSONAL}
+			/>
 
-				<Label key="35">Permission management</Label>
-				<EnumSelect<Permissions.PermissionManagement>
-					key="36"
-					name="PermissionManagement"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.PermissionManagement.NONE,
-						Permissions.PermissionManagement.FULL,
-					]}
-					defaultValue={Permissions.PermissionManagement.NONE}
-				/>
+			<Label key="35">Permission management</Label>
+			<EnumSelect<Permissions.PermissionManagement>
+				key="36"
+				name="PermissionManagement"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.PermissionManagement.NONE,
+					Permissions.PermissionManagement.FULL,
+				]}
+				defaultValue={Permissions.PermissionManagement.NONE}
+			/>
 
-				<Label key="37">View admin notifications</Label>
-				<EnumSelect<Permissions.ViewAccountNotifications>
-					key="38"
-					name="ViewAccountNotifications"
-					labels={['No', 'Yes']}
-					values={[
-						Permissions.ViewAccountNotifications.NO,
-						Permissions.ViewAccountNotifications.YES,
-					]}
-					defaultValue={Permissions.ViewAccountNotifications.NO}
-				/>
+			<Label key="37">View admin notifications</Label>
+			<EnumSelect<Permissions.ViewAccountNotifications>
+				key="38"
+				name="ViewAccountNotifications"
+				labels={['No', 'Yes']}
+				values={[
+					Permissions.ViewAccountNotifications.NO,
+					Permissions.ViewAccountNotifications.YES,
+				]}
+				defaultValue={Permissions.ViewAccountNotifications.NO}
+			/>
 
-				<Label key="39">Configure website</Label>
-				<EnumSelect<Permissions.RegistryEdit>
-					key="40"
-					name="RegistryEdit"
-					labels={['No', 'Yes']}
-					values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
-					defaultValue={Permissions.RegistryEdit.NO}
-				/>
+			<Label key="39">Configure website</Label>
+			<EnumSelect<Permissions.RegistryEdit>
+				key="40"
+				name="RegistryEdit"
+				labels={['No', 'Yes']}
+				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
+				defaultValue={Permissions.RegistryEdit.NO}
+			/>
 
-				<Label key="41">Create Event Account</Label>
-				<EnumSelect<Permissions.CreateEventAccount>
-					key="42"
-					name="CreateEventAccount"
-					labels={['No', 'Yes']}
-					values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
-					defaultValue={Permissions.CreateEventAccount.NO}
-				/>
-			</FormBlock>
-		);
-	}
+			<Label key="41">Create Event Account</Label>
+			<EnumSelect<Permissions.CreateEventAccount>
+				key="42"
+				name="CreateEventAccount"
+				labels={['No', 'Yes']}
+				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
+				defaultValue={Permissions.CreateEventAccount.NO}
+			/>
+		</FormBlock>
+	);
 }

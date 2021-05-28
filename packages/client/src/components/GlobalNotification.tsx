@@ -62,18 +62,18 @@ export default class GlobalNotification extends React.Component<
 		this.onButtonClick = this.onButtonClick.bind(this);
 	}
 
-	public componentDidMount() {
-		this.updateNotification();
+	public componentDidMount(): void {
+		void this.updateNotification();
 
-		this.timer = window.setInterval(this.updateNotification, 5 * 60 * 1000);
+		this.timer = window.setInterval(() => void this.updateNotification(), 5 * 60 * 1000);
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		window.clearInterval(this.timer);
 		this.timer = undefined;
 	}
 
-	public render() {
+	public render(): JSX.Element | null {
 		if (
 			!this.state.notification.hasValue ||
 			this.state.closed === this.state.notification.value.id
@@ -98,7 +98,7 @@ export default class GlobalNotification extends React.Component<
 		);
 	}
 
-	private async updateNotification() {
+	private updateNotification = async (): Promise<void> => {
 		const notificationEither = await fetchApi.notifications.global.get({}, {});
 
 		if (Either.isRight(notificationEither)) {
@@ -106,11 +106,11 @@ export default class GlobalNotification extends React.Component<
 				notification: notificationEither.value,
 			});
 		}
-	}
+	};
 
-	private onButtonClick() {
+	private onButtonClick = (): void => {
 		this.setState(prev => ({
 			closed: prev.notification.hasValue ? prev.notification.value.id : null,
 		}));
-	}
+	};
 }

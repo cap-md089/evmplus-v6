@@ -259,7 +259,7 @@ export const getEventsFolderObject = (account: AccountObject) => (
 						permission:
 							// Modify to help with managing of files currently there,
 							// read to see the files and the folder itself
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							FileUserAccessControlPermissions.MODIFY |
 							FileUserAccessControlPermissions.READ,
 						type: FileUserAccessControlType.USER,

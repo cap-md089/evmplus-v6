@@ -87,7 +87,17 @@ module.exports = {
         ],
         "@typescript-eslint/consistent-type-assertions": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
-        "@typescript-eslint/dot-notation": "error",
+        "@typescript-eslint/dot-notation": "off",
+        "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+                allowExpressions: true,
+                allowTypedFunctionExpressions: true,
+                allowHigherOrderFunctions: true,
+                allowDirectConstAssertionInArrowFunctions: true,
+                allowConciseArrowFunctionExpressionsStartingWithVoid: true
+            }
+        ],
         "@typescript-eslint/explicit-member-accessibility": [
             "error",
             {

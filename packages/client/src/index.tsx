@@ -43,7 +43,7 @@ ReactDOM.render(
 
 // window.addEventListener('error', async ev => {
 // 	const error = ev.error;
-// 	// tslint:disable-next-line:no-console
+// 	// eslint-disable-next-line no-console
 // 	console.log('Caught error', ev.error);
 
 // 	const stacks = parse(error);
@@ -68,7 +68,6 @@ ReactDOM.render(
 // 	return true;
 // });
 
-// This is done to store a global variable without webpack mangling the name, so that I can actually find it
-// @ts-ignore
-// tslint:disable-next-line:no-string-literal
+// @ts-ignore: This is done to store a global variable without webpack mangling the name, so that I can actually find it
+// eslint-disable-next-line dot-notation
 window['CLIENT_VERSION'] = process.env.REACT_APP_VERSION;

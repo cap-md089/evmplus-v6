@@ -82,99 +82,90 @@ const teamValidator: FormValidator<TeamObjectEdit> = {
 };
 
 export default class TeamForm extends React.Component<TeamFormProps> {
-	public constructor(props: TeamFormProps) {
-		super(props);
+	public render = (): JSX.Element => (
+		<SimpleForm<TeamObjectEdit>
+			onChange={this.onTeamChange}
+			onSubmit={this.onTeamSubmit}
+			submitInfo={{
+				text: this.props.isTeamUpdate ? 'Update team' : 'Create team',
+			}}
+			disableOnInvalid={true}
+			values={this.props.team}
+			validator={teamValidator}
+		>
+			<Label>Team name</Label>
+			<TextInput name="name" errorMessage="Team name must not be empty" />
 
-		this.onTeamChange = this.onTeamChange.bind(this);
-		this.onTeamSubmit = this.onTeamSubmit.bind(this);
-	}
+			<Label>Team description</Label>
+			<BigTextBox name="description" />
 
-	public render() {
-		return (
-			<SimpleForm<TeamObjectEdit>
-				onChange={this.onTeamChange}
-				onSubmit={this.onTeamSubmit}
-				submitInfo={{
-					text: this.props.isTeamUpdate ? 'Update team' : 'Create team',
+			<Label>Cadet team leader</Label>
+			<MemberSelector memberList={this.props.memberList} name="cadetLeader" />
+
+			<Divider />
+
+			<Label>Senior mentor</Label>
+			<MemberSelector memberList={this.props.memberList} name="seniorMentor" />
+
+			<Divider />
+
+			<Label>Senior coach</Label>
+			<MemberSelector memberList={this.props.memberList} name="seniorCoach" />
+
+			<Divider />
+
+			<TextBox>
+				Team visibility impacts how the members are viewed
+				<br />
+				Private means members have to sign in to see member names, but can only see contact
+				information if they are part of the team
+				<br />
+				Protected means that the names and contact information require being signed in to
+				see
+				<br />
+				Public means that anyone can see names
+			</TextBox>
+
+			<Label>Team visibility</Label>
+			<EnumRadioButton<TeamPublicity>
+				labels={['Private', 'Protected', 'Public']}
+				name="visibility"
+				errorMessage="Please select a publicity"
+				values={[TeamPublicity.PRIVATE, TeamPublicity.PROTECTED, TeamPublicity.PUBLIC]}
+				defaultValue={TeamPublicity.PROTECTED}
+			/>
+
+			<Divider />
+
+			<ListEditor<NewTeamMemberEdit, TeamMemberInputProps>
+				name="members"
+				addNew={() => ({
+					reference: Maybe.none(),
+					job: '',
+				})}
+				extraProps={{
+					memberList: this.props.memberList,
 				}}
-				disableOnInvalid={true}
-				values={this.props.team}
-				validator={teamValidator}
-			>
-				<Label>Team name</Label>
-				<TextInput name="name" errorMessage="Team name must not be empty" />
+				inputComponent={TeamMemberInput}
+				fullWidth={true}
+				buttonText="Add team member"
+				removeText="Remove team member"
+			/>
 
-				<Label>Team description</Label>
-				<BigTextBox name="description" />
+			<Divider />
+		</SimpleForm>
+	);
 
-				<Label>Cadet team leader</Label>
-				<MemberSelector memberList={this.props.memberList} name="cadetLeader" />
-
-				<Divider />
-
-				<Label>Senior mentor</Label>
-				<MemberSelector memberList={this.props.memberList} name="seniorMentor" />
-
-				<Divider />
-
-				<Label>Senior coach</Label>
-				<MemberSelector memberList={this.props.memberList} name="seniorCoach" />
-
-				<Divider />
-
-				<TextBox>
-					Team visibility impacts how the members are viewed
-					<br />
-					Private means members have to sign in to see member names, but can only see
-					contact information if they are part of the team
-					<br />
-					Protected means that the names and contact information require being signed in
-					to see
-					<br />
-					Public means that anyone can see names
-				</TextBox>
-
-				<Label>Team visibility</Label>
-				<EnumRadioButton<TeamPublicity>
-					labels={['Private', 'Protected', 'Public']}
-					name="visibility"
-					errorMessage="Please select a publicity"
-					values={[TeamPublicity.PRIVATE, TeamPublicity.PROTECTED, TeamPublicity.PUBLIC]}
-					defaultValue={TeamPublicity.PROTECTED}
-				/>
-
-				<Divider />
-
-				<ListEditor<NewTeamMemberEdit, TeamMemberInputProps>
-					name="members"
-					addNew={() => ({
-						reference: Maybe.none(),
-						job: '',
-					})}
-					extraProps={{
-						memberList: this.props.memberList,
-					}}
-					inputComponent={TeamMemberInput}
-					fullWidth={true}
-					buttonText="Add team member"
-					removeText="Remove team member"
-				/>
-
-				<Divider />
-			</SimpleForm>
-		);
-	}
-
-	private onTeamChange(team: TeamObjectEdit) {
+	private onTeamChange = (team: TeamObjectEdit): void => {
 		this.props.onTeamChange(team);
-	}
+	};
 
-	private onTeamSubmit(
+	private onTeamSubmit = (
 		team: TeamObjectEdit,
 		errors: BooleanFields<TeamObjectEdit>,
 		changed: BooleanFields<TeamObjectEdit>,
 		hasError: boolean,
-	) {
+	): void => {
 		this.props.onTeamFormSubmit(hasError ? Maybe.none() : Maybe.some(team));
-	}
+	};
 }

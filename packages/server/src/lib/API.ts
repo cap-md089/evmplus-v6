@@ -65,7 +65,7 @@ export const addMember = (memberRequirement: MemberRequirement) => <P extends Pa
 ) => (req: BasicAccountRequest<P, B>): AsyncEither<ServerError, Requests<P, B>> => {
 	const tapFunction = (
 		newReq: PAM.BasicMemberRequest<P, B> | PAM.BasicMaybeMemberRequest<P, B>,
-	) => {
+	): void => {
 		(request as { member: User | MaybeObj<User> }).member = newReq.member;
 	};
 

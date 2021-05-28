@@ -1,39 +1,30 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
- * 
+ * Copyright (C) 2021 Andrew Rioux
+ *
  * This file is part of EvMPlus.org.
- * 
+ *
  * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-.pagination-controls {
-	width: 100%;
-	margin: 0;
-	padding: 10px;
-	border-top: 1px solid #0b375b;
-	border-bottom: 1px solid #0b375b;
-	display: flex;
-	justify-content: center;
+declare global {
+	interface Window {
+		grecaptcha: {
+			reset: () => void;
+		};
+	}
 }
 
-.pagination-controls span {
-	cursor: pointer;
-	display: inline-block;
-	padding: 2px;
-}
-
-.pagination-controls span.highlighted {
-	color: #2875d7;
-	text-decoration: underline;
-}
+export const resetCaptcha = (): void => {
+	window.grecaptcha.reset();
+};

@@ -39,7 +39,7 @@ const get = (identifier: ts.Expression) => <
 	name: T,
 ) => ts.createPropertyAccess(identifier, name as string);
 
-const getName = (identifier: ts.EntityName) =>
+const getName = (identifier: ts.EntityName): string =>
 	ts.isQualifiedName(identifier) ? identifier.right.text : identifier.text;
 
 const getFullGenericType = (

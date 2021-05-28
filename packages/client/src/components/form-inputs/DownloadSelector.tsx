@@ -34,7 +34,10 @@ interface DownloadSelectorState<T extends Identifiable> {
 	error: boolean;
 }
 
-export type CombinedDownloadSelectorProps<T extends Identifiable> = CombinedSelectorProps<T> &
+export type CombinedDownloadSelectorProps<T extends Identifiable> = CombinedSelectorProps<
+	T,
+	any[]
+> &
 	DownloadSelectorProps<T>;
 
 export default class DownloadSelector<T extends Identifiable> extends React.Component<
@@ -47,7 +50,7 @@ export default class DownloadSelector<T extends Identifiable> extends React.Comp
 		error: false,
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		try {
 			const values = await this.props.values;
 
@@ -63,13 +66,12 @@ export default class DownloadSelector<T extends Identifiable> extends React.Comp
 		}
 	}
 
-	public render() {
-		return !this.state.loaded ? (
+	public render = (): JSX.Element | string =>
+		!this.state.loaded ? (
 			<Loader />
 		) : this.state.error ? (
 			this.props.errorMessage || 'Could not load values'
 		) : (
 			<Selector {...this.props} values={this.state.values} />
 		);
-	}
 }

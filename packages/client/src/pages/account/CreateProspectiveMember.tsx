@@ -81,14 +81,14 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 	hasError,
 	errorMessage,
 }) => {
-	const renderEmailLink = () => [];
+	const renderEmailLink = (): JSX.Element[] => [];
 
-	const renderRandomPassword = () => [
+	const renderRandomPassword = (): JSX.Element[] => [
 		<Label key="1">Username</Label>,
 		<TextInput key="2" name="username" />,
 	];
 
-	const renderUsernamePassword = () => [
+	const renderUsernamePassword = (): JSX.Element[] => [
 		<Label key="1">Username</Label>,
 		<TextInput key="2" name="username" />,
 
@@ -137,9 +137,11 @@ export const PasswordType: FunctionComponent<InputProps<CAPProspectiveMemberPass
 	);
 };
 
-export const ContactInstanceInput: FunctionComponent<InputProps<CAPMemberContactInstance> & {
-	label: string;
-}> = ({ name, label, value, onChange, onInitialize, onUpdate }) => (
+export const ContactInstanceInput: FunctionComponent<
+	InputProps<CAPMemberContactInstance> & {
+		label: string;
+	}
+> = ({ name, label, value, onChange, onInitialize, onUpdate }) => (
 	<FormBlock<CAPMemberContactInstance>
 		name={name}
 		value={value}
@@ -223,14 +225,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		submitting: false,
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.onFormChange = this.onFormChange.bind(this);
-		this.onFormSubmit = this.onFormSubmit.bind(this);
-	}
-
-	public componentDidMount() {
+	public componentDidMount(): void {
 		this.props.updateSideNav([
 			{
 				target: 'general-information',
@@ -265,7 +260,7 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		this.updateTitle('Create Prospective Member');
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const { form, error } = this.state;
 
 		return (
@@ -337,15 +332,15 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 		);
 	}
 
-	private onFormChange(form: CreateAccountForm) {
+	private onFormChange = (form: CreateAccountForm): void => {
 		this.setState(prev => ({
 			form,
 			submitting: prev.submitting,
 			error: Maybe.none(),
 		}));
-	}
+	};
 
-	private async onFormSubmit(form: CreateAccountForm) {
+	private onFormSubmit = async (form: CreateAccountForm): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -382,5 +377,5 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 				error: Maybe.some('There was a problem communicating with the server'),
 			});
 		}
-	}
+	};
 }

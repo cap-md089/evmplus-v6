@@ -45,7 +45,7 @@ export default async (
 
 	const backend = getDiscordBackend(schema);
 
-	const setupServer = async (id: string, guild: Guild) => {
+	const setupServer = async (id: string, guild: Guild): Promise<void> => {
 		const accountMaybe = await getAccountForDiscordServer(schema)(id);
 
 		if (Maybe.isNone(accountMaybe)) {

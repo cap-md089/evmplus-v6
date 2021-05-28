@@ -36,24 +36,16 @@ class SigninLink extends React.Component<FullSigninLinkProps> {
 			: this.props.returnUrl;
 	}
 
-	constructor(props: FullSigninLinkProps) {
-		super(props);
+	public render = (): JSX.Element => (
+		<Button buttonType="none" onClick={this.move}>
+			{this.props.children}
+		</Button>
+	);
 
-		this.move = this.move.bind(this);
-	}
-
-	public render() {
-		return (
-			<Button buttonType="none" onClick={this.move}>
-				{this.props.children}
-			</Button>
-		);
-	}
-
-	private move(): void {
+	private move = (): void => {
 		this.props.history.push('/signin?returnurl=' + encodeURIComponent(this.returnUrl));
 		this.props.onClick?.();
-	}
+	};
 }
 
 export default withRouter(SigninLink);

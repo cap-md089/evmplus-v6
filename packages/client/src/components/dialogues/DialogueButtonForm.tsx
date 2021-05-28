@@ -100,21 +100,12 @@ export default class DialogueButtonForm<T> extends React.Component<
 	DialogueButtonProps<T> & DialogueButtonPropsBase & UsedFormProps<T>,
 	DialogueButtonFormValues<T>
 > {
-	constructor(props: DialogueButtonProps<T> & DialogueButtonPropsBase & UsedFormProps<T>) {
-		super(props);
+	public state = {
+		open: false,
+		formValues: this.props.values || ({} as T),
+	};
 
-		this.state = {
-			open: false,
-			formValues: props.values || ({} as T),
-		};
-
-		this.formChange = this.formChange.bind(this);
-		this.onOK = this.onOK.bind(this);
-		this.onNo = this.onNo.bind(this);
-		this.onYes = this.onYes.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element {
 		let dialogueProps:
 			| DialogueButtonPropsOK
 			| DialogueButtonPropsOKCancel
@@ -177,33 +168,33 @@ export default class DialogueButtonForm<T> extends React.Component<
 		);
 	}
 
-	private formChange(formValues: T) {
+	private formChange = (formValues: T): void => {
 		this.setState({
 			formValues,
 		});
-	}
+	};
 
-	private onOK() {
+	private onOK = (): void => {
 		const props = this.props as DialogueWithOKCancel<T>;
 
 		if (props.onOk) {
 			props.onOk(this.state.formValues);
 		}
-	}
+	};
 
-	private onNo() {
+	private onNo = (): void => {
 		const props = this.props as DialogueWithYesNoCancel<T>;
 
 		if (props.onNo) {
 			props.onNo(this.state.formValues);
 		}
-	}
+	};
 
-	private onYes() {
+	private onYes = (): void => {
 		const props = this.props as DialogueWithYesNoCancel<T>;
 
 		if (props.onYes) {
 			props.onYes(this.state.formValues);
 		}
-	}
+	};
 }

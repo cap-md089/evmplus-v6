@@ -24,6 +24,7 @@ import DownloadDialogue from '../dialogues/DownloadDialogue';
 import { DisabledText, FormBlock, Label, TextBox } from '../forms/SimpleForm';
 import Loader from '../Loader';
 import { InputProps } from './Input';
+import { CheckInput } from './Selector';
 import TextInput from './TextInput';
 
 interface TeamSelectorProps extends InputProps<number | null> {
@@ -34,13 +35,13 @@ interface TeamSelectorState {
 	teams: RawTeamObject[] | null;
 	open: boolean;
 	selectedValue: RawTeamObject | null;
-	filterValues: any[];
+	filterValues: [string];
 }
 
 export default class TeamSelector extends React.Component<TeamSelectorProps, TeamSelectorState> {
 	public state: TeamSelectorState = {
 		open: false,
-		filterValues: [],
+		filterValues: [''],
 		selectedValue: null,
 		teams: null,
 	};
@@ -54,14 +55,14 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		this.openTeamDialogue = this.openTeamDialogue.bind(this);
 	}
 
-	public async componentDidMount() {
-		const teams = await this.props.teamList;
+	public componentDidMount(): void {
+		const teams = this.props.teamList;
 		this.setState({
 			teams,
 		});
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.teams === null) {
 			return <Loader />;
 		}
@@ -83,7 +84,7 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 					<Button onClick={this.openTeamDialogue} buttonType="none">
 						Select a team
 					</Button>
-					<DownloadDialogue<RawTeamObject>
+					<DownloadDialogue<RawTeamObject, [string]>
 						open={this.state.open}
 						multiple={false}
 						onCancel={() => this.selectTeam(null)}
@@ -92,26 +93,29 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 						showIDField={false}
 						displayValue={get('name')}
 						valuePromise={this.state.teams}
-						filters={[
-							{
-								check: (team, input) => {
-									if (input === '' || typeof input !== 'string') {
-										return true;
-									}
+						filters={
+							[
+								{
+									check: (team, input) => {
+										if (input === '' || typeof input !== 'string') {
+											return true;
+										}
 
-									try {
-										return !!team.name.match(new RegExp(input, 'gi'));
-									} catch (e) {
-										return false;
-									}
-								},
-								displayText: 'Team name',
-								filterInput: TextInput,
-							},
-						]}
+										try {
+											return !!new RegExp(input, 'gi').exec(team.name);
+										} catch (e) {
+											return false;
+										}
+									},
+									displayText: 'Team name',
+									filterInput: TextInput,
+								} as CheckInput<RawTeamObject, string>,
+							] as const
+						}
 						onValueClick={this.setSelectedTeam}
 						onValueSelect={this.selectTeam}
 						selectedValue={this.state.selectedValue}
+						filterValues={this.state.filterValues}
 					/>
 				</TextBox>
 
@@ -124,19 +128,19 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 		);
 	}
 
-	private onTeamDialogueFilterValueChange(filterValues: any[]) {
+	private onTeamDialogueFilterValueChange = (filterValues: [string]): void => {
 		this.setState({
 			filterValues,
 		});
-	}
+	};
 
-	private setSelectedTeam(selectedValue: RawTeamObject | null) {
+	private setSelectedTeam = (selectedValue: RawTeamObject | null): void => {
 		this.setState({
 			selectedValue,
 		});
-	}
+	};
 
-	private selectTeam(selectedValue: RawTeamObject | null) {
+	private selectTeam = (selectedValue: RawTeamObject | null): void => {
 		this.setState({
 			selectedValue,
 			open: false,
@@ -152,11 +156,11 @@ export default class TeamSelector extends React.Component<TeamSelectorProps, Tea
 				value: selectedValue ? selectedValue.id : null,
 			});
 		}
-	}
+	};
 
-	private openTeamDialogue() {
+	private openTeamDialogue = (): void => {
 		this.setState({
 			open: true,
 		});
-	}
+	};
 }

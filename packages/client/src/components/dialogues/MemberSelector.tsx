@@ -49,15 +49,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 		filterValues: [],
 	};
 
-	constructor(props: MemberInputProps) {
-		super(props);
-
-		this.openDialogue = this.openDialogue.bind(this);
-		this.setSelectedMember = this.setSelectedMember.bind(this);
-		this.selectMember = this.selectMember.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element {
 		const memberRef: MaybeObj<MemberReference> = this.props.value ?? M.none();
 
 		const targetMember = memberRef.hasValue
@@ -87,8 +79,8 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 									}
 
 									try {
-										return !!getFullMemberName(member).match(
-											new RegExp(input, 'gi'),
+										return !!new RegExp(input, 'gi').exec(
+											getFullMemberName(member),
 										);
 									} catch (e) {
 										return false;
@@ -121,19 +113,19 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 		);
 	}
 
-	private openDialogue() {
+	private openDialogue = (): void => {
 		this.setState({
 			open: true,
 		});
-	}
+	};
 
-	private setSelectedMember(selectedValue: Member | null) {
+	private setSelectedMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 		});
-	}
+	};
 
-	private selectMember(selectedValue: Member | null) {
+	private selectMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 			open: false,
@@ -151,5 +143,5 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 				value,
 			});
 		}
-	}
+	};
 }

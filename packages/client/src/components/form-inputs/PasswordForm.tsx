@@ -30,7 +30,7 @@ enum ShowLevel {
 	SHOWGOOD = 1,
 }
 
-const getClassFromShowLevel = (level: ShowLevel) =>
+const getClassFromShowLevel = (level: ShowLevel): string =>
 	level === ShowLevel.SHOWERROR
 		? 'password-item-bad'
 		: level === ShowLevel.SHOWGOOD
@@ -53,7 +53,7 @@ interface PasswordFormState {
 	showLengthError: ShowLevel;
 }
 
-const passwordValidator = (password: string, others: PasswordFormValues) =>
+const passwordValidator = (password: string, others: PasswordFormValues): boolean =>
 	!!password && passwordMeetsRequirements(password) && others.password === others.confirmPassword;
 
 const formValidator = {
@@ -96,77 +96,69 @@ export default class PasswordForm extends React.Component<
 		}
 	}
 
-	public render() {
-		return (
-			<FormBlock<PasswordFormValues>
-				name={this.props.name}
-				value={this.state.form}
-				onFormChange={this.onChange}
-				validator={formValidator}
-			>
-				<Label />
-				<TextBox>
-					Please enter and confirm a password.
-					<br />
-					Passwords must meet the following requirements:
-					<ul>
-						<li className={getClassFromShowLevel(this.state.showLengthError)}>
-							Length of at least 8 characters
-						</li>
-						<li
-							className={getClassFromShowLevel(
-								this.state.showUppercaseError &&
-									this.state.showLowercaseError &&
-									this.state.showNumberError &&
-									this.state.showSpecialError,
-							)}
-						>
-							<span>
-								Password must contain one of each of the following characters:
-							</span>
-							<ul>
-								<li
-									className={getClassFromShowLevel(this.state.showUppercaseError)}
-								>
-									Uppercase character
-								</li>
-								<li
-									className={getClassFromShowLevel(this.state.showLowercaseError)}
-								>
-									Lowercase character
-								</li>
-								<li className={getClassFromShowLevel(this.state.showNumberError)}>
-									Number
-								</li>
-								<li className={getClassFromShowLevel(this.state.showSpecialError)}>
-									Special character*
-								</li>
-							</ul>
-						</li>
-					</ul>
-					* A special character is a space character or one of the following symbols:
-					<br />^ ! @ # $ % ^ &amp; * ( ) {'{'} {'}'} _ + - = {'<'} {'>'} , . ? / [ ] \ |
-					; ' "
-					<br />
-					<span className={getClassFromShowLevel(this.state.showMatchError)}>
-						Passwords must also match
-					</span>
-				</TextBox>
+	public render = (): JSX.Element => (
+		<FormBlock<PasswordFormValues>
+			name={this.props.name}
+			value={this.state.form}
+			onFormChange={this.onChange}
+			validator={formValidator}
+		>
+			<Label />
+			<TextBox>
+				Please enter and confirm a password.
+				<br />
+				Passwords must meet the following requirements:
+				<ul>
+					<li className={getClassFromShowLevel(this.state.showLengthError)}>
+						Length of at least 8 characters
+					</li>
+					<li
+						className={getClassFromShowLevel(
+							this.state.showUppercaseError &&
+								this.state.showLowercaseError &&
+								this.state.showNumberError &&
+								this.state.showSpecialError,
+						)}
+					>
+						<span>Password must contain one of each of the following characters:</span>
+						<ul>
+							<li className={getClassFromShowLevel(this.state.showUppercaseError)}>
+								Uppercase character
+							</li>
+							<li className={getClassFromShowLevel(this.state.showLowercaseError)}>
+								Lowercase character
+							</li>
+							<li className={getClassFromShowLevel(this.state.showNumberError)}>
+								Number
+							</li>
+							<li className={getClassFromShowLevel(this.state.showSpecialError)}>
+								Special character*
+							</li>
+						</ul>
+					</li>
+				</ul>
+				* A special character is a space character or one of the following symbols:
+				<br />^ ! @ # $ % ^ &amp; * ( ) {'{'} {'}'} _ + - = {'<'} {'>'} , . ? / [ ] \ | ; '
+				"
+				<br />
+				<span className={getClassFromShowLevel(this.state.showMatchError)}>
+					Passwords must also match
+				</span>
+			</TextBox>
 
-				<Label>Enter password</Label>
-				<TextInput name="password" password={true} />
+			<Label>Enter password</Label>
+			<TextInput name="password" password={true} />
 
-				<Label>Confirm password</Label>
-				<TextInput name="confirmPassword" password={true} />
-			</FormBlock>
-		);
-	}
+			<Label>Confirm password</Label>
+			<TextInput name="confirmPassword" password={true} />
+		</FormBlock>
+	);
 
-	private onChange(
+	private onChange = (
 		fields: PasswordFormValues,
 		error: BooleanForField<PasswordFormValues>,
 		changed: BooleanForField<PasswordFormValues>,
-	) {
+	): void => {
 		const hasChanged = changed.confirmPassword || changed.password;
 
 		this.setState({
@@ -188,27 +180,27 @@ export default class PasswordForm extends React.Component<
 			showLengthError: ShowLevel.SHOWERROR,
 		};
 
-		if (!!fields.password.match(/[a-z]/) && !!fields.confirmPassword.match(/[a-z]/)) {
+		if (!!/[a-z]/.exec(fields.password) && !!/[a-z]/.exec(fields.confirmPassword)) {
 			update.showLowercaseError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;
 		}
 
-		if (!!fields.password.match(/[A-Z]/) && !!fields.confirmPassword.match(/[A-Z]/)) {
+		if (!!/[A-Z]/.exec(fields.password) && !!/[A-Z]/.exec(fields.confirmPassword)) {
 			update.showUppercaseError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;
 		}
 
-		if (!!fields.password.match(/[0-9]/) && !!fields.confirmPassword.match(/[0-9]/)) {
+		if (!!/[0-9]/.exec(fields.password) && !!/[0-9]/.exec(fields.confirmPassword)) {
 			update.showNumberError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;
 		}
 
 		if (
-			!!fields.password.match(/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/) &&
-			!!fields.confirmPassword.match(/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/)
+			!!/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/.exec(fields.password) &&
+			!!/[ ^!@#$%&*(){}+=_\-<>,.?/[\]\\|;'"]/.exec(fields.confirmPassword)
 		) {
 			update.showSpecialError = ShowLevel.SHOWGOOD;
 		} else {
@@ -255,5 +247,5 @@ export default class PasswordForm extends React.Component<
 				});
 			}
 		}
-	}
+	};
 }

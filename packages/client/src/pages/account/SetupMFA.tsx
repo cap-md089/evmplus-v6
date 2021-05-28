@@ -62,7 +62,7 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 		this.checkToken = this.checkToken.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -88,7 +88,7 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 		}));
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -129,7 +129,7 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 		);
 	}
 
-	private async checkToken({ inputCode }: { inputCode: string }) {
+	private checkToken = async ({ inputCode }: { inputCode: string }): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -144,5 +144,5 @@ export default class SetupMFA extends Page<PageProps, SetupMFAState> {
 		} else {
 			this.props.routeProps.history.push('/admin');
 		}
-	}
+	};
 }

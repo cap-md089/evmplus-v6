@@ -29,7 +29,5 @@ interface AutocompleteProps<T> extends InputProps<T> {
 export default class Autocomplete<T extends Identifiable> extends React.Component<
 	AutocompleteProps<T>
 > {
-	public render() {
-		return <div />;
-	}
+	public render = (): JSX.Element => <div />;
 }

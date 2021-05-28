@@ -55,7 +55,7 @@ const isIndexFree = (
 	endDay: number,
 	week: number,
 	index: number,
-) => {
+): boolean => {
 	for (let i = startDay; i <= endDay; i++) {
 		if (calendar[week][i].events[index] !== undefined) {
 			return false;
@@ -65,7 +65,12 @@ const isIndexFree = (
 	return true;
 };
 
-const findIndex = (calendar: CalendarData, startDay: number, endDay: number, week: number) => {
+const findIndex = (
+	calendar: CalendarData,
+	startDay: number,
+	endDay: number,
+	week: number,
+): number => {
 	let testIndex = 0;
 
 	while (!isIndexFree(calendar, startDay, endDay, week, testIndex)) {
@@ -75,7 +80,7 @@ const findIndex = (calendar: CalendarData, startDay: number, endDay: number, wee
 	return testIndex;
 };
 
-export const getClassNameFromEvent = (obj: RawResolvedEventObject) => {
+export const getClassNameFromEvent = (obj: RawResolvedEventObject): string => {
 	switch (obj.status) {
 		case EventStatus.CANCELLED:
 			return ' cancelled';
@@ -99,7 +104,7 @@ export const getClassNameFromEvent = (obj: RawResolvedEventObject) => {
 export default class DesktopCalendar extends Page<CalendarProps> {
 	public state: {} = {};
 
-	public render() {
+	public render(): JSX.Element {
 		let events = this.props.events;
 
 		const year =

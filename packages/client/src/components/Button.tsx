@@ -60,16 +60,11 @@ export default class Button<C> extends React.Component<
 		disabled: boolean;
 	}
 > {
-	constructor(props: ButtonPropsWithData<C> | ButtonProps) {
-		super(props);
+	public state = {
+		disabled: false,
+	};
 
-		this.handleClick = this.handleClick.bind(this);
-		this.state = {
-			disabled: false,
-		};
-	}
-
-	public handleClick(e: React.MouseEvent<HTMLButtonElement>): void {
+	public handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
 		e.preventDefault();
 
 		if (this.props.onClick) {
@@ -79,23 +74,21 @@ export default class Button<C> extends React.Component<
 				this.props.onClick();
 			}
 		}
-	}
+	};
 
-	public render() {
-		return (
-			<button
-				onClick={this.handleClick}
-				className={
-					(this.props.buttonType === 'none' ? 'linkButton ' : '') +
-					(typeof this.props.buttonType === 'string'
-						? ` ${this.props.buttonType}`
-						: 'primaryButton') +
-					(this.props.className ? ` ${this.props.className}` : ' asyncButton') +
-					(this.props.disabled ? ' disabled' : '')
-				}
-			>
-				{this.props.children}
-			</button>
-		);
-	}
+	public render = (): JSX.Element => (
+		<button
+			onClick={this.handleClick}
+			className={
+				(this.props.buttonType === 'none' ? 'linkButton ' : '') +
+				(typeof this.props.buttonType === 'string'
+					? ` ${this.props.buttonType}`
+					: 'primaryButton') +
+				(this.props.className ? ` ${this.props.className}` : ' asyncButton') +
+				(this.props.disabled ? ' disabled' : '')
+			}
+		>
+			{this.props.children}
+		</button>
+	);
 }

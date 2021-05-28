@@ -33,33 +33,31 @@ interface LaxAutocompleteProps extends Omit<AutocompleteProps<string>, 'renderIt
 }
 
 export default class LaxAutocomplete extends React.Component<LaxAutocompleteProps> {
-	public render() {
-		return (
-			<div className="input-formbox">
-				<ReactAutocomplete
-					autoHighlight={true}
-					items={this.props.items}
-					getItemValue={identity}
-					renderItem={(value, isHighlighted) => (
-						<div>{(this.props.renderItem ?? identity)(value, isHighlighted)}</div>
-					)}
-					value={this.props.value ?? ''}
-					onChange={e => this.update(e.target.value)}
-					onSelect={val => this.update(val)}
-					shouldItemRender={(item, value) =>
-						item.toLowerCase().includes(value.toLowerCase())
-					}
-				/>
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div className="input-formbox">
+			<ReactAutocomplete
+				autoHighlight={true}
+				items={this.props.items}
+				getItemValue={identity}
+				renderItem={(value, isHighlighted) => (
+					<div>{(this.props.renderItem ?? identity)(value, isHighlighted)}</div>
+				)}
+				value={this.props.value ?? ''}
+				onChange={e => this.update(e.target.value)}
+				onSelect={val => this.update(val)}
+				shouldItemRender={(item: string, value) =>
+					item.toLowerCase().includes(value.toLowerCase())
+				}
+			/>
+		</div>
+	);
 
-	private update(value: string) {
+	private update = (value: string): void => {
 		this.props.onUpdate?.({
 			name: this.props.name,
 			value,
 		});
 
 		this.props.onChange?.(value);
-	}
+	};
 }

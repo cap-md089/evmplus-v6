@@ -142,15 +142,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		showSave: false,
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.onFormChange = this.onFormChange.bind(this);
-		this.onFormSubmit = this.onFormSubmit.bind(this);
-		this.onSaveClick = this.onSaveClick.bind(this);
-	}
-
-	public componentDidMount() {
+	public componentDidMount(): void {
 		this.props.updateSideNav([
 			{
 				target: 'contact',
@@ -185,7 +177,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		this.updateTitle('Site configuration');
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -303,12 +295,12 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		);
 	}
 
-	private onFormChange(formValues: RegEditFormValues) {
+	private onFormChange = (formValues: RegEditFormValues): void => {
 		const values = convertFormToState(formValues);
 		this.setState({ values, showSave: false });
-	}
+	};
 
-	private async onFormSubmit(formValues: RegEditFormValues) {
+	private onFormSubmit = async (formValues: RegEditFormValues): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -338,13 +330,13 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 		await fetchApi.registry.set({}, this.props.registry);
 
 		this.props.updateApp();
-	}
+	};
 
-	private async onSaveClick() {
+	private onSaveClick = async (): Promise<void> => {
 		await this.onFormSubmit(convertStateToForm(this.state.values));
 
 		this.setState({
 			showSave: true,
 		});
-	}
+	};
 }

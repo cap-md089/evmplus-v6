@@ -52,15 +52,7 @@ export default class MemberSelectorButton extends React.Component<
 		filterValues: [],
 	};
 
-	constructor(props: MemberSelectorButtonProps) {
-		super(props);
-
-		this.openDialogue = this.openDialogue.bind(this);
-		this.setSelectedMember = this.setSelectedMember.bind(this);
-		this.selectMember = this.selectMember.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const members = await this.props.memberList;
 
 		this.setState({
@@ -68,7 +60,7 @@ export default class MemberSelectorButton extends React.Component<
 		});
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.state.members) {
 			return this.props.useShortLoader ? <LoaderShort /> : <Loader />;
 		}
@@ -99,8 +91,8 @@ export default class MemberSelectorButton extends React.Component<
 								}
 
 								try {
-									return !!getFullMemberName(member).match(
-										new RegExp(input, 'gi'),
+									return !!new RegExp(input, 'gi').exec(
+										getFullMemberName(member),
 									);
 								} catch (e) {
 									return false;
@@ -118,24 +110,24 @@ export default class MemberSelectorButton extends React.Component<
 		);
 	}
 
-	private openDialogue() {
+	private openDialogue = (): void => {
 		this.setState({
 			open: true,
 		});
-	}
+	};
 
-	private setSelectedMember(selectedValue: Member | null) {
+	private setSelectedMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 		});
-	}
+	};
 
-	private selectMember(selectedValue: Member | null) {
+	private selectMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 			open: false,
 		});
 
 		this.props.onMemberSelect(selectedValue);
-	}
+	};
 }

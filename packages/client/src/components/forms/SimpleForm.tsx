@@ -64,7 +64,10 @@ const hiddenStyles = {
 	display: 'none',
 };
 
-export const defaultFullWidthElements = [FormBlock, TeamSelector];
+export const defaultFullWidthElements: Array<React.JSXElementConstructor<any> | string> = [
+	FormBlock,
+	TeamSelector,
+];
 
 /**
  * Creates a label to be used in the form
@@ -76,25 +79,15 @@ class Label extends React.Component<{
 }> {
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean; style?: React.CSSProperties; id: string }) {
-		super(props);
-
-		this.IsLabel = true;
-	}
-
-	public render() {
-		return (
-			<div className="label-formbox has-content" style={this.props.style} id={this.props.id}>
-				{this.props.children}
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div className="label-formbox has-content" style={this.props.style} id={this.props.id}>
+			{this.props.children}
+		</div>
+	);
 }
 
 class Divider extends React.Component {
-	public render() {
-		return <div className="divider" />;
-	}
+	public render = (): JSX.Element => <div className="divider" />;
 }
 
 const fullWidth = {
@@ -105,21 +98,12 @@ const fullWidth = {
  * Creates a title to use in the form
  */
 class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
-	public static GenerateID = (id: string) =>
-		id
-			.toLocaleLowerCase()
-			.replace(/ +/g, '-')
-			.replace(/\//g, '');
-
 	public readonly IsLabel = true;
 
-	constructor(props: { fullWidth: boolean; id: string }) {
-		super(props);
+	public static GenerateID = (id: string): string =>
+		id.toLocaleLowerCase().replace(/ +/g, '-').replace(/\//g, '');
 
-		this.IsLabel = true;
-	}
-
-	public render() {
+	public render = (): JSX.Element => {
 		const id = this.props.id
 			? Title.GenerateID(this.props.id)
 			: typeof this.props.children === 'string'
@@ -138,7 +122,7 @@ class Title extends React.Component<{ fullWidth?: boolean; id?: string }> {
 				<h3 id={id}>{this.props.children}</h3>
 			</div>
 		);
-	}
+	};
 }
 
 /**
@@ -345,6 +329,7 @@ export interface FormProps<F> {
  * The form itself
  *
  * To use with type checking in the submit function, you can do something similar to the following:
+ *
  * @example
  * type SampleForm = new () => Form<{x: string}>
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
@@ -361,6 +346,8 @@ export default class SimpleForm<
 		disabled: boolean;
 	}
 > {
+	public state: { disabled: boolean } = { disabled: false };
+
 	protected fieldsChanged: { [K in keyof C]: boolean } = {} as { [K in keyof C]: boolean };
 
 	protected get fieldsError(): { [K in keyof C]: boolean } {
@@ -374,10 +361,9 @@ export default class SimpleForm<
 
 		if (this.props.validator) {
 			for (const i in this.props.validator) {
-				// @ts-ignore
 				if (this.props.validator.hasOwnProperty(i)) {
 					const field = i as keyof C;
-					// @ts-ignore
+					// @ts-ignore: this is something that can be checked manually
 					fieldsError[field] = !this.props.validator[field](
 						this.props.values[i],
 						this.props.values,
@@ -390,31 +376,11 @@ export default class SimpleForm<
 	}
 
 	protected get hasError(): boolean {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		return (Object.values(this.fieldsError) as boolean[]).reduce(
 			(prev, curr) => prev || curr,
 			false,
 		);
-	}
-
-	/**
-	 * Create a form
-	 *
-	 * ID is required
-	 * SubmitInfo describes the submit button
-	 * onSubmit is the callback to use when the form is submitted
-	 *
-	 * @param {P} props The properties
-	 */
-	constructor(props: P) {
-		super(props);
-
-		this.state = {
-			disabled: false,
-		};
-
-		this.onChange = this.onChange.bind(this);
-		this.onInitialize = this.onInitialize.bind(this);
-		this.submit = this.submit.bind(this);
 	}
 
 	/**
@@ -459,14 +425,13 @@ export default class SimpleForm<
 							hidden = isHideableElement(child) && !!child.props.hidden;
 
 							const childName: keyof C = child.props.name as keyof C;
-							const value =
-								typeof child.props.value !== 'undefined'
-									? child.props.value
-									: typeof this.props.values === 'undefined'
-									? ''
-									: typeof (this.props.values as C)[childName] === 'undefined'
-									? ''
-									: (this.props.values as C)[childName];
+							const value = (typeof child.props.value !== 'undefined'
+								? child.props.value
+								: typeof this.props.values === 'undefined'
+								? ''
+								: typeof (this.props.values as C)[childName] === 'undefined'
+								? ''
+								: (this.props.values as C)[childName]) as C[typeof childName];
 
 							// typeof this.props.values !== 'undefined'
 							// 	? typeof this.props.values[
@@ -487,7 +452,6 @@ export default class SimpleForm<
 								childFullWidth = false;
 							}
 
-							// @ts-ignore
 							if (defaultFullWidthElements.includes(child.type)) {
 								childFullWidth = true;
 							}
@@ -537,10 +501,8 @@ export default class SimpleForm<
 										</Label>,
 									);
 								} else {
-									// @ts-ignore
-									if (isLabel(previousChild!) && previousChild!.type !== Title) {
+									if (isLabel(previousChild) && previousChild.type !== Title) {
 										ret.unshift(
-											// @ts-ignore
 											React.cloneElement(previousChild, {
 												onUpdate: this.onChange,
 												onInitialize: this.onInitialize,
@@ -566,11 +528,11 @@ export default class SimpleForm<
 							</div>
 						);
 					})}
-				{(typeof this.props.showSubmitButton === 'undefined' ? (
-					true
-				) : (
-					this.props.showSubmitButton
-				)) ? (
+				{(
+					typeof this.props.showSubmitButton === 'undefined'
+						? true
+						: this.props.showSubmitButton
+				) ? (
 					<div className="formbar">
 						<div className="label-formbox" />
 						<div className="input-formbox">
@@ -605,44 +567,54 @@ export default class SimpleForm<
 	/**
 	 * What is used to describe when a form element changes
 	 */
-	protected onChange(e: { name: string; value: any }) {
+	protected onChange = (e: { name: string; value: any }): void => {
 		const name = e.name as keyof C;
 		const fields = { ...this.props.values };
-		fields[name] = e.value;
+		fields[name] = e.value as C[typeof name];
 		this.fieldsChanged[e.name as keyof C] = true;
 
 		let error = false;
-		const validator = this.props.validator ? this.props.validator[name] : null;
+		const validator = this.props.validator
+			? (this.props.validator[name as keyof P['validator']] as (
+					val: C[typeof name],
+					allVals: C,
+			  ) => boolean)
+			: null;
 		if (validator) {
 			error = !validator(e.value, fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
 		this.props.onChange?.(fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
-	}
+	};
 
-	protected onInitialize(e: { name: string; value: any }) {
+	protected onInitialize = (e: { name: string; value: any }): void => {
 		const name = e.name as keyof C;
 		const fields = { ...this.props.values };
-		fields[name] = e.value;
+		fields[name] = e.value as C[typeof name];
 		this.fieldsChanged[e.name as keyof C] = false;
 
 		let error = false;
-		const validator = this.props.validator ? this.props.validator[name] : null;
+		const validator = this.props.validator
+			? (this.props.validator[name as keyof P['validator']] as (
+					val: C[typeof name],
+					allVals: C,
+			  ) => boolean)
+			: null;
 		if (validator) {
 			error = !validator(e.value, fields);
 		}
 		this.fieldsError[e.name as keyof C] = error;
 
 		this.props.onChange?.(fields, this.fieldsError, this.fieldsChanged, this.hasError, name);
-	}
+	};
 
 	/**
 	 * Function called when the form is submitted
 	 *
 	 * @param {React.MouseEvent<HTMLInputElement>} e Event
 	 */
-	protected submit(e: React.MouseEvent<HTMLInputElement>) {
+	protected submit = (e: React.MouseEvent<HTMLInputElement>): void => {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
 			this.props.onSubmit(
@@ -652,7 +624,7 @@ export default class SimpleForm<
 				this.hasError,
 			);
 		}
-	}
+	};
 }
 
 /**
@@ -677,6 +649,7 @@ const clearFix: React.CSSProperties = {
  * The form itself
  *
  * To use with type checking in the submit function, you can do something similar to the following:
+ *
  * @example
  * type SampleForm = new () => Form<{x: string}>
  * let SampleForm = Form as SampleForm // Sometimes `as any as Sampleform`
@@ -709,18 +682,17 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 				  );
 
 		return (
-			<form className={`${this.props.className ? `${this.props.className} ` : ''}`}>
+			<form className={`${this.props.className ? `${this.props.className ?? ''} ` : ''}`}>
 				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (isInput(child)) {
 						const childName: keyof C = child.props.name as keyof C;
-						const value =
-							typeof this.props.values !== 'undefined'
-								? typeof (this.props.values as C)[childName] === 'undefined'
-									? ''
-									: (this.props.values as C)[childName]
-								: typeof child.props.value === 'undefined'
+						const value = (typeof this.props.values !== 'undefined'
+							? typeof (this.props.values as C)[childName] === 'undefined'
 								? ''
-								: child.props.value;
+								: (this.props.values as C)[childName]
+							: typeof child.props.value === 'undefined'
+							? ''
+							: child.props.value) as C[typeof childName];
 						return (
 							<div className={this.props.rowClassName || 'basic-form-bar'}>
 								{React.cloneElement(child, {

@@ -21,7 +21,6 @@ import {
 	AsyncEither,
 	AuditableEvents,
 	ChangeEvent,
-	CreateEvent,
 	DeleteEvent,
 	effectiveManageEventPermissionForEvent,
 	Either,
@@ -62,13 +61,13 @@ type AuditViewerState = AuditViewerErrorState | AuditViewerLoadedState | AuditVi
 
 type AuditViewerProps = PageProps<{ id: string }>;
 
-const getCalendarDate = (inDate: number) => {
+const getCalendarDate = (inDate: number): string => {
 	const dateObject = new Date(inDate);
 	const nowObject = new Date();
-	return dateObject.getMonth() + '/' + dateObject.getFullYear() ===
-		nowObject.getMonth() + '/' + nowObject.getFullYear()
+	return `${dateObject.getMonth()}/${dateObject.getFullYear()}` ===
+		`${nowObject.getMonth()}/${nowObject.getFullYear()}`
 		? ''
-		: dateObject.getMonth() + 1 + '/' + dateObject.getFullYear();
+		: `${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
 };
 
 export default class AuditViewer extends Page<AuditViewerProps> {
@@ -76,7 +75,7 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 		viewerState: 'LOADING',
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const informationEither = await AsyncEither.All([
 			fetchApi.events.events.getAuditData(
 				{ id: this.props.routeProps.match.params.id.split('-')[0] },
@@ -132,7 +131,7 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 		]);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.viewerState === 'LOADING') {
 			return <Loader />;
 		}
@@ -174,16 +173,10 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 					>
 						{val =>
 							'changes' in val
-								? FormatEventAuditChange(
-										val as ChangeEvent<FromDatabase<NewEventObject>>,
-								  )
+								? FormatEventAuditChange(val)
 								: 'objectData' in val
-								? FormatEventAuditDelete(
-										val as DeleteEvent<FromDatabase<NewEventObject>>,
-								  )
-								: FormatEventAuditCreate(
-										val as CreateEvent<FromDatabase<NewEventObject>>,
-								  )
+								? FormatEventAuditDelete(val)
+								: FormatEventAuditCreate()
 						}
 					</DropDownList>
 				</div>
@@ -192,11 +185,11 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 	}
 }
 
-function setAuditType(inData: AuditableEvents<FromDatabase<NewEventObject>>) {
+function setAuditType(inData: AuditableEvents<FromDatabase<NewEventObject>>): string {
 	if (inData.type === 'Add') {
 		return 'Created';
 	} else if (inData.type === 'Modify') {
-		let debriefFlag: boolean = false;
+		let debriefFlag = false;
 		if ('debrief' in inData.changes) {
 			debriefFlag = true;
 		}
@@ -210,48 +203,46 @@ function setAuditType(inData: AuditableEvents<FromDatabase<NewEventObject>>) {
 	}
 }
 
-function FormatEventAuditChange(auditRecord: ChangeEvent<FromDatabase<NewEventObject>>) {
-	return (
-		<>
-			<div className="auditlist">
-				<table>
-					<tr>
-						<th>Key</th>
-						<th>Before Value</th>
-						<th>After Value</th>
-					</tr>
-					{Object.keys(auditRecord.changes)
-						.map(key => (key as any) as keyof typeof auditRecord.changes)
-						.flatMap(key => [
-							<>
-								<tr>
-									{changeValues(
-										key,
-										auditRecord.changes[key]?.oldValue,
-										auditRecord.changes[key]?.newValue,
-									)}
-								</tr>
-							</>,
-						])}
-				</table>
-			</div>
-		</>
-	);
-}
+const FormatEventAuditChange = (
+	auditRecord: ChangeEvent<FromDatabase<NewEventObject>>,
+): JSX.Element => (
+	<>
+		<div className="auditlist">
+			<table>
+				<tr>
+					<th>Key</th>
+					<th>Before Value</th>
+					<th>After Value</th>
+				</tr>
+				{Object.keys(auditRecord.changes)
+					.map(key => (key as any) as keyof typeof auditRecord.changes)
+					.flatMap(key => [
+						<>
+							<tr>
+								{changeValues(
+									key,
+									auditRecord.changes[key]?.oldValue,
+									auditRecord.changes[key]?.newValue,
+								)}
+							</tr>
+						</>,
+					])}
+			</table>
+		</div>
+	</>
+);
 
-function FormatEventAuditDelete(auditRecord: DeleteEvent<FromDatabase<NewEventObject>>) {
-	return (
-		<>
-			<div>This event was deleted by {auditRecord.actorName}</div>
-		</>
-	);
-}
+const FormatEventAuditDelete = (
+	auditRecord: DeleteEvent<FromDatabase<NewEventObject>>,
+): JSX.Element => (
+	<>
+		<div>This event was deleted by {auditRecord.actorName}</div>
+	</>
+);
 
-function FormatEventAuditCreate(auditRecord: CreateEvent<FromDatabase<NewEventObject>>) {
-	return <></>;
-}
+const FormatEventAuditCreate = (): JSX.Element => <></>;
 
-function changeValues(inKey: string, oldValue: any, newValue: any) {
+function changeValues(inKey: string, oldValue: any, newValue: any): JSX.Element {
 	const inType = typeof newValue;
 	if (inType === 'string') {
 		// any string

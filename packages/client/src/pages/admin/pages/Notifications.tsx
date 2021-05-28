@@ -64,7 +64,7 @@ const renderers: [
 		render: notif => <div>{notif.extraData.message}</div>,
 	},
 	{
-		shouldRender: (notif): notif is NO<NotificationDataEvent> =>
+		shouldRender: (notif: NO<NotificationData>): notif is NO<NotificationDataEvent> =>
 			notif.extraData.type === NotificationDataType.EVENT,
 		render: notif => (
 			<div>
@@ -111,26 +111,24 @@ const renderers: [
 		),
 	},
 	{
-		shouldRender: (notif): notif is NO<NotificationDataPermissions> =>
+		shouldRender: (notif: NO<NotificationData>): notif is NO<NotificationDataPermissions> =>
 			notif.extraData.type === NotificationDataType.PERMISSIONCHANGE,
-		render: notif => {
-			return (
-				<div>
-					Your permission levels have changed
-					<br />
-					<br />
-					This was done by{' '}
-					{notif.cause.type === NotificationCauseType.MEMBER
-						? notif.cause.fromName
-						: 'SYSTEM'}{' '}
-					on{' '}
-					{DateTime.fromMillis(notif.created).toLocaleString({
-						...DateTime.DATETIME_SHORT,
-						hour12: false,
-					})}
-				</div>
-			);
-		},
+		render: notif => (
+			<div>
+				Your permission levels have changed
+				<br />
+				<br />
+				This was done by{' '}
+				{notif.cause.type === NotificationCauseType.MEMBER
+					? notif.cause.fromName
+					: 'SYSTEM'}{' '}
+				on{' '}
+				{DateTime.fromMillis(notif.created).toLocaleString({
+					...DateTime.DATETIME_SHORT,
+					hour12: false,
+				})}
+			</div>
+		),
 	},
 ];
 
@@ -161,7 +159,7 @@ type NotificationsState = (
 ) &
 	NotificationsUIState;
 
-const simpleText = (notif: NotificationObject) =>
+const simpleText = (notif: NotificationObject): string =>
 	notif.extraData.type === NotificationDataType.EVENT
 		? `Event "${notif.extraData.eventName}" notification`
 		: notif.extraData.type === NotificationDataType.MESSAGE
@@ -184,7 +182,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		this.markUnread = this.markUnread.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -226,7 +224,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		});
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		if (this.state.state !== 'LOADED') {
 			return;
 		}
@@ -242,7 +240,7 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in to view your notifications</div>;
 		}
@@ -318,39 +316,37 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		);
 	}
 
-	private notificationClick(index: number) {
-		return async () => {
-			if (this.state.state !== 'LOADED' || !this.props.member) {
-				return;
-			}
+	private notificationClick = (index: number) => async () => {
+		if (this.state.state !== 'LOADED' || !this.props.member) {
+			return;
+		}
 
+		this.setState(prev => ({
+			currentViewed: prev.currentViewed === index ? null : index,
+		}));
+
+		const notification = this.state.notifications[index];
+
+		if (!notification) {
+			return;
+		}
+
+		if (notification.read) {
 			this.setState(prev => ({
 				currentViewed: prev.currentViewed === index ? null : index,
 			}));
 
-			const notification = this.state.notifications[index];
+			return;
+		}
 
-			if (!notification) {
-				return;
-			}
+		await fetchApi.notifications.toggleRead({ id: index.toString() }, {});
 
-			if (notification.read) {
-				this.setState(prev => ({
-					currentViewed: prev.currentViewed === index ? null : index,
-				}));
+		this.setState(prev => ({
+			currentViewed: prev.currentViewed === index ? null : index,
+		}));
+	};
 
-				return;
-			}
-
-			await fetchApi.notifications.toggleRead({ id: index.toString() }, {});
-
-			this.setState(prev => ({
-				currentViewed: prev.currentViewed === index ? null : index,
-			}));
-		};
-	}
-
-	private async markUnread(index: number) {
+	private markUnread = async (index: number): Promise<void> => {
 		if (!this.props.member || this.state.state !== 'LOADED') {
 			return;
 		}
@@ -366,14 +362,18 @@ export default class Notifications extends Page<PageProps, NotificationsState> {
 		this.setState({
 			currentViewed: null,
 		});
-	}
+	};
 
-	private renderNotification(notif: NotificationObject) {
+	private renderNotification(notif: NotificationObject): React.ReactChild | null {
+		if (!this.props.member) {
+			return null;
+		}
+
 		for (const i of renderers) {
 			if (i.shouldRender(notif)) {
 				return i.render(
 					notif as NotificationObject<NotificationCause, NotificationTarget, any>,
-					this.props.member!,
+					this.props.member,
 					this.props.account,
 				);
 			}

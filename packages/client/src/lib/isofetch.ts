@@ -28,7 +28,7 @@ export const fetchFunction: (
 ) => Promise<Response> =
 	process.env.NODE_ENV === 'test'
 		? (url: string | RequestInfo, options: RequestInit = {}) =>
-				fetch2('http://localhost:3001' + url, options)
+				fetch2(`http://localhost:3001${url.toString()}`, options)
 		: fetch;
 
 /**

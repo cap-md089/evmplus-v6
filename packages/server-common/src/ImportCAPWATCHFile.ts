@@ -137,7 +137,7 @@ interface CAPWATCHModuleResult {
 	file: string;
 }
 
-export default async function*(
+export default async function* (
 	zipFileLocation: string,
 	schema: Schema,
 	session: Session,
@@ -168,7 +168,7 @@ export default async function*(
 
 		parser.on('readable', () => {
 			let record;
-			// tslint:disable-next-line: no-conditional-assignment
+			// eslint-disable-next-line  no-conditional-assignment
 			while ((record = parser.read())) {
 				rows.push(record);
 			}

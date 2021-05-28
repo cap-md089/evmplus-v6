@@ -36,7 +36,7 @@ export default class RegisterDiscord extends Page<
 		result: Maybe.none(),
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			this.props.routeProps.history.push(
 				`/signin/?returnurl=/registerdiscord/${this.props.routeProps.match.params.discordid}`,
@@ -54,7 +54,7 @@ export default class RegisterDiscord extends Page<
 		});
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <SigninLink>You need to sign in to view this page</SigninLink>;
 		}

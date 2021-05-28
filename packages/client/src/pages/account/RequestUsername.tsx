@@ -53,65 +53,62 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 		this.submit = this.submit.bind(this);
 	}
 
-	public render() {
-		return (
-			<SimpleForm<RequestUsernameFormValues>
-				values={this.state.form}
-				onChange={form => this.setState({ form })}
-				onSubmit={this.submit}
-				disableOnInvalid={true}
-				validator={{
-					captchaToken: val => val !== null,
-					capid: val => val !== null && val >= 100000,
-				}}
-				submitInfo={{
-					disabled: this.state.tryingSubmit,
-					text: 'Request login',
-				}}
-			>
-				<Title>Request login</Title>
+	public render = (): JSX.Element => (
+		<SimpleForm<RequestUsernameFormValues>
+			values={this.state.form}
+			onChange={form => this.setState({ form })}
+			onSubmit={this.submit}
+			disableOnInvalid={true}
+			validator={{
+				captchaToken: val => val !== null,
+				capid: val => val !== null && val >= 100000,
+			}}
+			submitInfo={{
+				disabled: this.state.tryingSubmit,
+				text: 'Request login',
+			}}
+		>
+			<Title>Request login</Title>
 
-				{this.state.success ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.success ? (
-					<TextBox>
-						Login request successful. Please check the email associated with the CAP ID
-						entered for an email with your CAP account.
-					</TextBox>
-				) : null}
-
-				{this.state.error !== null ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.error !== null ? (
-					<TextBox>
-						<b style={{ color: 'red' }}>{this.state.error}</b>
-					</TextBox>
-				) : null}
-
+			{this.state.success ? (
+				// Used for spacing
 				<Label />
+			) : null}
+			{this.state.success ? (
 				<TextBox>
-					Enter your CAP ID below. Once your request is submitted, please check the email
-					account associated with your CAP ID in eServices.
+					Login request successful. Please check the email associated with the CAP ID
+					entered for an email with your CAP account.
 				</TextBox>
+			) : null}
 
-				<Label>CAP ID</Label>
-				<NumberInput name="capid" />
+			{this.state.error !== null ? (
+				// Used for spacing
+				<Label />
+			) : null}
+			{this.state.error !== null ? (
+				<TextBox>
+					<b style={{ color: 'red' }}>{this.state.error}</b>
+				</TextBox>
+			) : null}
 
-				<ReCAPTCHAInput name="captchaToken" />
-			</SimpleForm>
-		);
-	}
+			<Label />
+			<TextBox>
+				Enter your CAP ID below. Once your request is submitted, please check the email
+				account associated with your CAP ID in eServices.
+			</TextBox>
 
-	private async submit(form: RequestUsernameFormValues) {
+			<Label>CAP ID</Label>
+			<NumberInput name="capid" />
+
+			<ReCAPTCHAInput name="captchaToken" />
+		</SimpleForm>
+	);
+
+	private submit = async (form: RequestUsernameFormValues): Promise<void> => {
 		if (!form.capid || !form.captchaToken) {
 			return;
 		}
 
-		// @ts-ignore
 		window.grecaptcha.reset();
 
 		this.setState({
@@ -137,5 +134,5 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				tryingSubmit: false,
 			});
 		}
-	}
+	};
 }

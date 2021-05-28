@@ -19,11 +19,11 @@
 
 import { Either, EitherObj } from './Either';
 
-export const destroy = () => void 0;
+export const destroy = (): undefined => void 0;
 
-export const call = <U extends any[], V>(...args: U) => (f: (...args: U) => V) => f(...args);
+export const call = <U extends any[], V>(...args: U) => (f: (...funcArgs: U) => V): V => f(...args);
 
-export const ofLength = (length: number) => (lengthy: { length: number }) =>
+export const ofLength = (length: number) => (lengthy: { length: number }): boolean =>
 	lengthy.length === length;
 
 export const get = <T, K extends keyof T>(prop: K) => (obj: T): T[K] => obj[prop];
@@ -32,15 +32,6 @@ export const set = <T, K extends keyof T>(prop: K) => (value: T[K]) => (obj: T):
 	...obj,
 	[prop]: value,
 });
-
-type KeysThatAreFunctions<T, K extends keyof T = keyof T> = T[K] extends (...args: any[]) => any
-	? K
-	: never;
-
-export const execute = <T, K extends KeysThatAreFunctions<T>, F extends any[]>(
-	prop: T[K] extends (...args: F) => any ? K : never,
-	...args: F
-) => (obj: T): T[K] extends (...args: F) => infer V ? V : never => obj[prop](...args);
 
 export const identity = <T>(v: T): T => v;
 
@@ -100,7 +91,7 @@ export const getTargetYear = (timestamp: number): number => {
 	return date.getFullYear();
 };
 
-export const always = <T>(value: T) => () => value;
+export const always = <T>(value: T) => (): T => value;
 export const alwaysTrue = always(true);
 export const alwaysFalse = always(false);
 
@@ -110,27 +101,34 @@ export const complement = <T extends any[]>(
 
 export const getItemsNotInSecondArray = <T>(
 	equalityCheckFunction: (item1: T) => (item2: T) => boolean,
-) => (list1: T[]) => (list2: T[]) => list1.filter(item => !list2.some(equalityCheckFunction(item)));
+) => (list1: T[]) => (list2: T[]): T[] =>
+	list1.filter(item => !list2.some(equalityCheckFunction(item)));
 
 export const memoize = <Return, Arg extends any>(
 	func: (arg: Arg) => Return,
 	serialize?: (arg: Arg) => string | number,
-) => {
+): ((arg: Arg) => Return) => {
 	const returns = new Map<Arg | string | number, Return>();
 
 	return (arg: Arg): Return => {
 		if (serialize) {
-			if (!returns.has(serialize(arg))) {
-				returns.set(serialize(arg), func(arg));
+			let value = returns.get(serialize(arg));
+
+			if (!value) {
+				value = func(arg);
+				returns.set(serialize(arg), value);
 			}
 
-			return returns.get(serialize(arg))!;
+			return value;
 		} else {
-			if (!returns.has(arg)) {
-				returns.set(arg, func(arg));
+			let value = returns.get(arg);
+
+			if (!value) {
+				value = func(arg);
+				returns.set(arg, value);
 			}
 
-			return returns.get(arg)!;
+			return value;
 		}
 	};
 };
@@ -141,3 +139,19 @@ export const onlyRights = <T>(arr: Array<EitherObj<any, T>>): T[] =>
 export const hasErrors = (arr: Array<EitherObj<any, any>>): boolean => arr.some(Either.isLeft);
 
 export const isNotUndefined = <T>(value: T | undefined | null): value is T => !!value;
+
+export type ZippedArrays<T extends readonly any[], U extends readonly any[]> = T extends [
+	infer F1,
+	...infer R1
+]
+	? U extends [infer F2, ...infer R2]
+		? [[F1, F2], ...ZippedArrays<R1, R2>]
+		: []
+	: [];
+
+export const zip = <T extends readonly any[], U extends readonly any[]>(
+	arr1: T,
+	arr2: U,
+): ZippedArrays<T, U> =>
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	arr1.map((v1, i) => [v1, arr2[i]]) as ZippedArrays<T, U>;

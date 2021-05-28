@@ -27,10 +27,10 @@ interface SimpleMultCheckboxProps extends InputProps<SimpleMultCheckboxReturn> {
 }
 
 export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckboxProps> {
-	public render() {
+	public render(): JSX.Element {
 		const value = this.props.value || emptyFromLabels(this.props.labels);
 
-		const isChecked = (i: number) => value.values[i];
+		const isChecked = (i: number): boolean => value.values[i];
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -45,12 +45,12 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 							<input
 								type="checkbox"
 								checked={isChecked(i)}
-								name={this.props.name + '-' + i}
-								id={this.props.name + '-' + i}
+								name={`${this.props.name}-${i}`}
+								id={`${this.props.name}-${i}`}
 								onChange={this.onCheckboxChange(i)}
 							/>
-							<label htmlFor={this.props.name + '-' + i} />
-							<label htmlFor={this.props.name + '-' + i}>{label}</label>
+							<label htmlFor={`${this.props.name}-${i}`} />
+							<label htmlFor={`${this.props.name}-${i}`}>{label}</label>
 						</div>
 					))}
 				</section>
@@ -58,30 +58,28 @@ export default class SimpleMultCheckbox extends React.Component<SimpleMultCheckb
 		);
 	}
 
-	private onCheckboxChange(index: number) {
-		return (e: React.ChangeEvent<HTMLInputElement>) => {
-			const isChecked = e.currentTarget.checked;
+	private onCheckboxChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+		const isChecked = e.currentTarget.checked;
 
-			const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
-			const value = {
-				...inputValue,
-				values: [
-					...inputValue.values.slice(0, index),
-					isChecked,
-					...inputValue.values.slice(index + 1),
-				],
-			};
-
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value,
-				});
-			}
-
-			if (this.props.onChange) {
-				this.props.onChange(value);
-			}
+		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+		const value = {
+			...inputValue,
+			values: [
+				...inputValue.values.slice(0, index),
+				isChecked,
+				...inputValue.values.slice(index + 1),
+			],
 		};
-	}
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value,
+			});
+		}
+
+		if (this.props.onChange) {
+			this.props.onChange(value);
+		}
+	};
 }

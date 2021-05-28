@@ -69,7 +69,7 @@ export default async (
 	});
 
 	if (conf.NODE_ENV === 'production') {
-		// tslint:disable-next-line:no-console
+		// eslint-disable-next-line no-console
 		console.log('Server set up');
 	}
 

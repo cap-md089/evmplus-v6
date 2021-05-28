@@ -21,7 +21,7 @@ import { Guild, Role, Permissions } from 'discord.js';
 import { RawTeamObject, MaybeObj, Maybe as M } from 'common-lib';
 import { byName } from './setupUser';
 
-const renderTeamName = (team: RawTeamObject) =>
+const renderTeamName = (team: RawTeamObject): string =>
 	team.name.toLowerCase().includes('team') ? team.name : `${team.name} Team`;
 
 export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (

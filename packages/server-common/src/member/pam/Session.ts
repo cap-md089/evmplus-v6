@@ -72,7 +72,7 @@ import { RegistryBackend } from '../../Registry';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
 
-// tslint:disable-next-line: no-var-requires
+// eslint-disable-next-line  no-var-requires
 const speakeasy = require('speakeasy');
 speakeasy.generateSecret = speakeasy.generateSecret.bind(speakeasy);
 const promisedRandomBytes = promisify(randomBytes);

@@ -29,7 +29,7 @@ const getDockerConn = memoize(
 		}),
 );
 
-const randomId = () =>
+const randomId = (): string =>
 	Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 /**
@@ -173,7 +173,7 @@ export class TestConnection {
 	 *
 	 * @param schema the name of the schema to setup
 	 */
-	private static async setupCollections(schema: string) {
+	private static async setupCollections(schema: string): Promise<void> {
 		const dockerConn = getDockerConn(void 0);
 
 		const container = dockerConn.getContainer('evmplus_test-mysql');
@@ -227,16 +227,12 @@ export class TestConnection {
 	/**
 	 * @returns the current schema that is used for the test
 	 */
-	public getSchema(): Schema {
-		return this.session.getSchema(this.schema);
-	}
+	public getSchema = (): Schema => this.session.getSchema(this.schema);
 
 	/**
 	 * @returns a new session for when multiple sessions are needed
 	 */
-	public getNewSession(): Promise<Session> {
-		return this.client.getSession();
-	}
+	public getNewSession = (): Promise<Session> => this.client.getSession();
 }
 
 export default TestConnection;

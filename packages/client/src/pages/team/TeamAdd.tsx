@@ -85,14 +85,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 		result: 'UNSUBMITTED',
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.onTeamChange = this.onTeamChange.bind(this);
-		this.onTeamSubmit = this.onTeamSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (
 			!this.props.member ||
 			!hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member)
@@ -118,7 +111,7 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -151,13 +144,13 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 		);
 	}
 
-	private onTeamChange(team: TeamObjectEdit) {
+	private onTeamChange = (team: TeamObjectEdit): void => {
 		this.setState({
 			team,
 		});
-	}
+	};
 
-	private async onTeamSubmit(team: MaybeObj<TeamObjectEdit>) {
+	private onTeamSubmit = async (team: MaybeObj<TeamObjectEdit>): Promise<void> => {
 		const teamObj = Maybe.flatMap(collapseTeamEditToObject)(team);
 
 		if (!teamObj.hasValue) {
@@ -181,5 +174,5 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 		} else {
 			this.props.routeProps.history.push(`/team/${newTeamEither.value.id}`);
 		}
-	}
+	};
 }

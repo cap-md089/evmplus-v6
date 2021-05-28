@@ -29,15 +29,13 @@ interface SlideshowState {
 }
 
 export default class Slideshow extends React.PureComponent<SlideshowProps, SlideshowState> {
-	public render() {
-		return (
-			<section className="slideshow-box">
-				<div className="slideshow-top" />
-				<div className="slideshow">
-					<div className="image" />
-				</div>
-				<div className="slideshow-bottom" />
-			</section>
-		);
-	}
+	public render = (): JSX.Element => (
+		<section className="slideshow-box">
+			<div className="slideshow-top" />
+			<div className="slideshow">
+				<div className="image" />
+			</div>
+			<div className="slideshow-bottom" />
+		</section>
+	);
 }

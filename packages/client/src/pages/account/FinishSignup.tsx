@@ -48,66 +48,55 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		tryingFinish: false,
 	};
 
-	constructor(props: PageProps<{ token: string }>) {
-		super(props);
+	public render = (): JSX.Element => (
+		<SimpleForm<FormValues>
+			disableOnInvalid={true}
+			values={this.state.form}
+			onChange={form => this.setState({ form })}
+			validator={{
+				username: name =>
+					!!name &&
+					name.length > 0 &&
+					name.length < 45 &&
+					!name.startsWith(' ') &&
+					!name.endsWith(' '),
+				password: password => password !== null,
+			}}
+			onSubmit={this.finishAccount}
+			submitInfo={{
+				disabled: this.state.tryingFinish,
+				text: this.state.tryingFinish ? 'Finalizing...' : 'Finish creating account',
+			}}
+		>
+			<Title>Finish account setup</Title>
 
-		this.finishAccount = this.finishAccount.bind(this);
-	}
-
-	public render() {
-		return (
-			<SimpleForm<FormValues>
-				disableOnInvalid={true}
-				values={this.state.form}
-				onChange={form => this.setState({ form })}
-				validator={{
-					username: name => {
-						return (
-							!!name &&
-							name.length > 0 &&
-							name.length < 45 &&
-							!name.startsWith(' ') &&
-							!name.endsWith(' ')
-						);
-					},
-					password: password => password !== null,
-				}}
-				onSubmit={this.finishAccount}
-				submitInfo={{
-					disabled: this.state.tryingFinish,
-					text: this.state.tryingFinish ? 'Finalizing...' : 'Finish creating account',
-				}}
-			>
-				<Title>Finish account setup</Title>
-
-				{this.state.error !== null ? <Label /> : null}
-				{this.state.error !== null ? (
-					<TextBox>
-						<b style={{ color: 'red' }}>{this.state.error}</b>
-					</TextBox>
-				) : null}
-
-				<Label />
+			{this.state.error !== null ? <Label /> : null}
+			{this.state.error !== null ? (
 				<TextBox>
-					Please select a user name for use in authenticating your access to EvMPlus.org.
-					<br />
-					User names should be 45 characters or less. Only one user name may be associated
-					with each CAPID.
-					<br />
+					<b style={{ color: 'red' }}>{this.state.error}</b>
 				</TextBox>
+			) : null}
 
-				<Label>Please choose a username</Label>
-				<TextInput
-					name="username"
-					errorMessage="Username cannot be empty, must be between 0 and 45 characters and cannot start or end with a space"
-				/>
+			<Label />
+			<TextBox>
+				Please select a user name for use in authenticating your access to EvMPlus.org.
+				<br />
+				User names should be 45 characters or less. Only one user name may be associated
+				with each CAPID.
+				<br />
+			</TextBox>
 
-				<PasswordForm name="password" fullWidth={true} />
-			</SimpleForm>
-		);
-	}
+			<Label>Please choose a username</Label>
+			<TextInput
+				name="username"
+				errorMessage="Username cannot be empty, must be between 0 and 45 characters and cannot start or end with a space"
+			/>
 
-	private async finishAccount() {
+			<PasswordForm name="password" fullWidth={true} />
+		</SimpleForm>
+	);
+
+	private finishAccount = async (): Promise<void> => {
 		const token = this.props.routeProps.match.params.token;
 		const { username, password } = this.state.form;
 
@@ -137,5 +126,5 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push('/admin');
 		}
-	}
+	};
 }

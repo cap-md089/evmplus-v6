@@ -25,31 +25,26 @@ import fetchApi from '../../lib/apis';
 import SigninLink from '../SigninLink';
 import './SideNavigation.scss';
 
-export const isMobile = () => window.innerWidth < 1028;
+export const isMobile = (): boolean => window.innerWidth < 1028;
 
-class SideNavigationLink extends React.Component<{ target: string; onClick: () => void }> {
-	public render() {
-		return (
-			<Link to={this.props.target} onClick={this.props.onClick}>
-				<span className="arrow" />
-				<span>{this.props.children}</span>
-			</Link>
-		);
-	}
-}
-class SideNavigationReferenceLink extends React.Component<{
+interface LinkInformation {
 	target: string;
 	onClick: () => void;
-}> {
-	public render() {
-		return (
-			<a href={`#${this.props.target}`} onClick={this.props.onClick}>
-				<span className="arrow" />
-				<span>{this.props.children}</span>
-			</a>
-		);
-	}
 }
+
+const SideNavigationLink: React.FC<LinkInformation> = ({ target, onClick, children }) => (
+	<Link to={target} onClick={onClick}>
+		<span className="arrow" />
+		<span>{children}</span>
+	</Link>
+);
+
+const SideNavigationReferenceLink: React.FC<LinkInformation> = ({ target, onClick, children }) => (
+	<a href={`#${target}`} onClick={onClick}>
+		<span className="arrow" />
+		<span>{children}</span>
+	</a>
+);
 
 export type SideNavigationItem =
 	| { type: 'Reference'; target: string; text: React.ReactChild }
@@ -81,118 +76,97 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 
 	private menuRef = React.createRef<HTMLDivElement>();
 
-	constructor(props: SideNavigationProps) {
-		super(props);
-
-		this.toggleOpen = this.toggleOpen.bind(this);
-		this.signOut = this.signOut.bind(this);
-		this.goBack = this.goBack.bind(this);
-		this.close = this.close.bind(this);
-		this.open = this.open.bind(this);
-
-		this.handleScroll = this.handleScroll.bind(this);
-	}
-
-	public componentDidMount() {
+	public componentDidMount(): void {
 		window.addEventListener('scroll', this.handleScroll);
 		window.addEventListener('resize', () => this.forceUpdate());
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		window.removeEventListener('scroll', this.handleScroll);
 		window.removeEventListener('resize', () => this.forceUpdate());
 	}
 
-	public render() {
-		return (
-			<nav
-				className={`side-nav ${this.state.open ? 'parent-open' : 'parent-closed'} ${
-					this.state.stuck ? 'stuck' : 'unstuck'
-				}`}
-				ref={this.menuRef}
-			>
-				{isMobile() ? (
-					<div className="nav-item mobile-opener">
-						<button onClick={this.toggleOpen} style={cursor}>
+	public render = (): JSX.Element => (
+		<nav
+			className={`side-nav ${this.state.open ? 'parent-open' : 'parent-closed'} ${
+				this.state.stuck ? 'stuck' : 'unstuck'
+			}`}
+			ref={this.menuRef}
+		>
+			{isMobile() ? (
+				<div className="nav-item mobile-opener">
+					<button onClick={this.toggleOpen} style={cursor}>
+						<span className="arrow" />
+						<span>Menu</span>
+					</button>
+				</div>
+			) : null}
+			<ul id="nav" className={this.state.open ? 'open' : 'closed'}>
+				<li className="nav-item">
+					{this.props.member ? (
+						<button onClick={this.signOut} style={cursor}>
 							<span className="arrow" />
-							<span>Menu</span>
+							<span>Sign out {getFullMemberName(this.props.member)}</span>
 						</button>
-					</div>
-				) : null}
-				<ul id="nav" className={this.state.open ? 'open' : 'closed'}>
+					) : (
+						<SigninLink onClick={this.close}>
+							<span className="arrow" />
+							<span>Sign in</span>
+						</SigninLink>
+					)}
+				</li>
+				{this.props.fullMemberDetails.error === MemberCreateError.NONE ? (
 					<li className="nav-item">
-						{this.props.member ? (
-							<button onClick={this.signOut} style={cursor}>
-								<span className="arrow" />
-								<span>Sign out {getFullMemberName(this.props.member)}</span>
-							</button>
+						<SideNavigationLink target={'/admin/notifications'} onClick={this.close}>
+							Unread Notifications: {this.props.fullMemberDetails.notificationCount}
+						</SideNavigationLink>
+					</li>
+				) : null}
+				<li className="nav-item">
+					<button onClick={this.goBack} style={cursor}>
+						<span className="arrow" />
+						<span>Go back</span>
+					</button>
+				</li>
+				{this.props.links.map((link, i) => (
+					<li key={i} className="nav-item">
+						{link.type === 'Link' ? (
+							<SideNavigationLink target={link.target} onClick={this.close}>
+								{link.text}
+							</SideNavigationLink>
 						) : (
-							<SigninLink onClick={this.close}>
-								<span className="arrow" />
-								<span>Sign in</span>
-							</SigninLink>
+							<SideNavigationReferenceLink target={link.target} onClick={this.close}>
+								{link.text}
+							</SideNavigationReferenceLink>
 						)}
 					</li>
-					{this.props.fullMemberDetails.error === MemberCreateError.NONE ? (
-						<li className="nav-item">
-							<SideNavigationLink
-								target={'/admin/notifications'}
-								onClick={this.close}
-							>
-								Unread Notifications:{' '}
-								{this.props.fullMemberDetails.notificationCount}
-							</SideNavigationLink>
-						</li>
-					) : null}
-					<li className="nav-item">
-						<button onClick={this.goBack} style={cursor}>
-							<span className="arrow" />
-							<span>Go back</span>
-						</button>
-					</li>
-					{this.props.links.map((link, i) => (
-						<li key={i} className="nav-item">
-							{link.type === 'Link' ? (
-								<SideNavigationLink target={link.target} onClick={this.close}>
-									{link.text}
-								</SideNavigationLink>
-							) : (
-								<SideNavigationReferenceLink
-									target={link.target}
-									onClick={this.close}
-								>
-									{link.text}
-								</SideNavigationReferenceLink>
-							)}
-						</li>
-					))}
-				</ul>
-			</nav>
-		);
-	}
+				))}
+			</ul>
+		</nav>
+	);
 
-	private signOut() {
+	private signOut = (): void => {
 		this.props.authorizeUser({
 			error: MemberCreateError.INVALID_SESSION_ID,
 		});
-		fetchApi.member.session.logout({}, {});
+		void fetchApi.member.session.logout({}, {});
 		this.close();
-	}
+	};
 
-	private goBack() {
+	private goBack = (): void => {
 		this.props.history.goBack();
 		this.close();
-	}
+	};
 
-	private toggleOpen() {
+	private toggleOpen = (): void => {
 		if (this.state.open) {
 			this.close();
 		} else {
 			this.open();
 		}
-	}
+	};
 
-	private open() {
+	private open = (): void => {
 		if (isMobile()) {
 			if (this.menuRef.current) {
 				if (this.state.stuck) {
@@ -206,6 +180,7 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 				} else {
 					$(this.menuRef.current).animate(
 						{
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!),
 						},
 						200,
@@ -217,9 +192,9 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 		this.setState({
 			open: true,
 		});
-	}
+	};
 
-	private close() {
+	private close = (): void => {
 		if (isMobile()) {
 			if (this.menuRef.current) {
 				$(this.menuRef.current).animate(
@@ -234,9 +209,9 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 		this.setState({
 			open: false,
 		});
-	}
+	};
 
-	private handleScroll(ev: Event) {
+	private handleScroll = (): void => {
 		if (isMobile()) {
 			const scroll = $(window).scrollTop();
 			if (scroll && scroll > sidenavOffset) {
@@ -253,12 +228,14 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 				if (this.state.stuck) {
 					if (this.menuRef.current) {
 						$(this.menuRef.current).css({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							height: $(window).height()!,
 						});
 					}
 				} else {
 					if (this.menuRef.current) {
 						$(this.menuRef.current).css({
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							height: $(window).height()! - (sidenavOffset - $(window).scrollTop()!),
 						});
 					}
@@ -271,7 +248,7 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 				}
 			}
 		}
-	}
+	};
 }
 
 export default withRouter(SideNavigation);

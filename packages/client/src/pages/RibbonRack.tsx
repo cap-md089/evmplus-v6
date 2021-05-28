@@ -65,7 +65,7 @@ interface Ribbons {
 class Ribbon extends React.Component<{
 	source: keyof Ribbons;
 }> {
-	public render() {
+	public render(): JSX.Element {
 		const names: { [P in keyof Ribbons]: string } = {
 			SilverValor: 'Silver Medal of Valor',
 			BronzeValor: 'Bronze Medal of Valor',
@@ -124,7 +124,7 @@ class Ribbon extends React.Component<{
 	}
 }
 
-const Spacer = (props: { size: number }) => (
+const Spacer = (props: { size: number }): JSX.Element => (
 	<div
 		style={{
 			flex: `${6 / props.size} 1 ${100 / props.size}%`,
@@ -134,7 +134,7 @@ const Spacer = (props: { size: number }) => (
 );
 
 class RibbonRack extends React.Component<Partial<Ribbons>> {
-	public render() {
+	public render(): JSX.Element {
 		const ribbons: JSX.Element[] = [];
 
 		for (const i in this.props) {
@@ -171,26 +171,24 @@ class RibbonRack extends React.Component<Partial<Ribbons>> {
 export default class RibbonRackBuilder extends Page {
 	public state: {} = {};
 
-	public render() {
-		return (
-			<RibbonRack
-				Earhart={true}
-				Mitchell={true}
-				Armstrong={true}
-				Goddard={true}
-				Doolittle={true}
-				Lindbergh={true}
-				Rickenbacker={true}
-				Wright={true}
-				Feik={true}
-				Arnold={true}
-				Curry={true}
-				RedService={true}
-				NCSA={true}
-				Encampment={true}
-				Recruiter={true}
-				CommunityService={true}
-			/>
-		);
-	}
+	public render = (): JSX.Element => (
+		<RibbonRack
+			Earhart={true}
+			Mitchell={true}
+			Armstrong={true}
+			Goddard={true}
+			Doolittle={true}
+			Lindbergh={true}
+			Rickenbacker={true}
+			Wright={true}
+			Feik={true}
+			Arnold={true}
+			Curry={true}
+			RedService={true}
+			NCSA={true}
+			Encampment={true}
+			Recruiter={true}
+			CommunityService={true}
+		/>
+	);
 }

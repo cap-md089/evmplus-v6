@@ -394,7 +394,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		this.onAddPOC = this.onAddPOC.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const { default: mde } = await import('simplemde');
 
 		this.setState({ mde });
@@ -462,7 +462,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const values = this.props.event;
 
 		return (
@@ -808,13 +808,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		);
 	}
 
-	private onEventChange(
+	private onEventChange = (
 		event: NewEventFormValues & { addPOCbyID: number | null },
 		errors: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
 		error: boolean,
 		fieldChanged: keyof NewEventFormValues | 'addPOCbyID',
-	) {
+	): void => {
 		if (fieldChanged !== 'addPOCbyID') {
 			if (!this.props.isEventUpdate) {
 				const dateTimesHaveBeenModified =
@@ -840,14 +840,14 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		} else {
 			this.setState({ addPOCbyID: event.addPOCbyID, pocAddbyIDError: null });
 		}
-	}
+	};
 
-	private onEventSubmit(
+	private onEventSubmit = (
 		mdFreeEvent: NewEventFormValues,
 		error: BooleanForField<NewEventFormValues>,
 		changed: BooleanForField<NewEventFormValues>,
 		hasError: boolean,
-	) {
+	): void => {
 		const valid = !hasError;
 
 		// Fix for requiring the subtitle field needing to be changed in order to submit some forms
@@ -862,9 +862,9 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		};
 
 		this.props.onEventFormSubmit(valid ? Maybe.some(event) : Maybe.none());
-	}
+	};
 
-	private async onAddPOC() {
+	private onAddPOC = async (): Promise<void> => {
 		if (!this.state.addPOCbyID || this.state.addingPOCbyID) {
 			return;
 		}
@@ -928,5 +928,5 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			this.props.onEventChange(event, false);
 			this.setState({ addingPOCbyID: false, addPOCbyID: null });
 		}
-	}
+	};
 }

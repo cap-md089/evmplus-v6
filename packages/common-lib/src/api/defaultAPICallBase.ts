@@ -76,7 +76,7 @@ export default (fetchFunction: FetchFunction) => <
 		const unusedKeys: string[] = [];
 
 		let m;
-		// tslint:disable-next-line: no-conditional-assignment
+		// eslint-disable-next-line  no-conditional-assignment
 		while ((m = regex.exec(mutatedUrl)) !== null) {
 			if (m.index === regex.lastIndex) {
 				regex.lastIndex++;

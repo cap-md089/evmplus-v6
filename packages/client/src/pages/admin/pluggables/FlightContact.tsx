@@ -37,7 +37,10 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
-import Selector, { CheckInput } from '../../../components/form-inputs/Selector';
+import Selector, {
+	CheckInput,
+	SelectorPropsMultiple,
+} from '../../../components/form-inputs/Selector';
 import SimpleForm, {
 	Checkbox,
 	Label,
@@ -68,14 +71,11 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Deputy Commander For Cadets',
 ]);
 
-export const shouldRenderFlightContactWidget = (props: PageProps) => {
-	return (
-		!!props.member &&
-		isCAPMember(props.member) &&
-		!props.member.seniorMember &&
-		hasAllowedDutyPosition(props.member)
-	);
-};
+export const shouldRenderFlightContactWidget = (props: PageProps): boolean =>
+	!!props.member &&
+	isCAPMember(props.member) &&
+	!props.member.seniorMember &&
+	hasAllowedDutyPosition(props.member);
 
 interface FlightContactLoadingState {
 	state: 'LOADING';
@@ -103,7 +103,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 		state: 'LOADING',
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (
 			this.props.member &&
 			isCAPMember(this.props.member) &&
@@ -126,44 +126,42 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 		}
 	}
 
-	public render() {
-		return (
-			<div className="widget">
-				<Link
-					to={`/admin/${
-						isFlightStaff(this.props.member) ? 'flightcontact' : 'squadroncontact'
-					}`}
-				>
-					<div className="widget-title">Flight Contact</div>
-				</Link>
-				<div className="widget-body">
-					{this.state.state === 'LOADING' ? (
-						<LoaderShort />
-					) : this.state.state === 'ERROR' ? (
-						<div>{this.state.message}</div>
-					) : (
-						<div>
-							There {this.state.members.length === 1 ? 'is' : 'are'}{' '}
-							{this.state.members.length} member
-							{this.state.members.length === 1 ? '' : 's'} in your{' '}
-							{isFlightStaff(this.props.member) ? 'flight' : 'unit'}
-							<br />
-							<br />
-							<Link
-								to={`/admin/${
-									isFlightStaff(this.props.member)
-										? 'flightcontact'
-										: 'squadroncontact'
-								}`}
-							>
-								Connect with them
-							</Link>
-						</div>
-					)}
-				</div>
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<Link
+				to={`/admin/${
+					isFlightStaff(this.props.member) ? 'flightcontact' : 'squadroncontact'
+				}`}
+			>
+				<div className="widget-title">Flight Contact</div>
+			</Link>
+			<div className="widget-body">
+				{this.state.state === 'LOADING' ? (
+					<LoaderShort />
+				) : this.state.state === 'ERROR' ? (
+					<div>{this.state.message}</div>
+				) : (
+					<div>
+						There {this.state.members.length === 1 ? 'is' : 'are'}{' '}
+						{this.state.members.length} member
+						{this.state.members.length === 1 ? '' : 's'} in your{' '}
+						{isFlightStaff(this.props.member) ? 'flight' : 'unit'}
+						<br />
+						<br />
+						<Link
+							to={`/admin/${
+								isFlightStaff(this.props.member)
+									? 'flightcontact'
+									: 'squadroncontact'
+							}`}
+						>
+							Connect with them
+						</Link>
+					</div>
+				)}
 			</div>
-		);
-	}
+		</div>
+	);
 }
 
 const memberRanks = [
@@ -195,7 +193,7 @@ const memberRanks = [
 	'gen',
 ];
 
-const normalizeRankInput = (rank: string) =>
+const normalizeRankInput = (rank: string): string =>
 	(rank || '')
 		.toLowerCase()
 		.replace('/', '')
@@ -255,10 +253,10 @@ const nameInput: CheckInput<MemberObject, string> = {
 		try {
 			const reg = new RegExp(input, 'i');
 			return (
-				!!mem.nameFirst.match(reg) ||
-				!!mem.nameLast.match(reg) ||
-				!!mem.nameMiddle.match(reg) ||
-				!!mem.nameSuffix.match(reg)
+				!!reg.exec(mem.nameFirst) ||
+				!!reg.exec(mem.nameFirst) ||
+				!!reg.exec(mem.nameMiddle) ||
+				!!reg.exec(mem.nameSuffix)
 			);
 		} catch (e) {
 			return true;
@@ -329,7 +327,7 @@ const flightInput: CheckInput<Member, string> = {
 				(mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') &&
 				mem.flight !== null
 			) {
-				return !!mem.flight.match(new RegExp(input, 'i'));
+				return !!new RegExp(input, 'i').exec(mem.flight);
 			} else {
 				return false;
 			}
@@ -341,11 +339,11 @@ const flightInput: CheckInput<Member, string> = {
 	filterInput: TextInput,
 };
 
-const advancedFilters1 = [nameInput, rankGreaterThan, rankLessThan, flightInput];
-const advancedFilters2 = [nameInput, rankGreaterThan, rankLessThan];
+const advancedFiltersWithFlight = [nameInput, rankGreaterThan, rankLessThan, flightInput] as const;
+const advancedFilters = [nameInput, rankGreaterThan, rankLessThan] as const;
 
-const simpleFilters1 = [nameInput, flightInput];
-const simpleFilters2 = [nameInput];
+const simpleFiltersWithFlight = [nameInput, flightInput] as const;
+const simpleFilters = [nameInput] as const;
 
 interface SelectorFormValues {
 	members: Member[];
@@ -383,7 +381,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		this.selectAllVisible = this.selectAllVisible.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -426,7 +424,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -446,6 +444,119 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
 		const filterValues = this.state.filterValues;
+
+		const getSelector = (state: EmailListLoadedState & EmailListUIState): JSX.Element => {
+			const selectorProps: Omit<
+				SelectorPropsMultiple<Member, any[]>,
+				'filters' | 'onFilterValuesChange' | 'filterValues'
+			> = {
+				fullWidth: true,
+				name: 'members',
+				values: state.members.slice(0).sort(currentSortFunction),
+				multiple: true,
+				showIDField: state.displayAdvanced,
+				onChangeVisible: newVisibleItems =>
+					this.setState({
+						visibleItems: newVisibleItems,
+					}),
+				overflow: 750,
+				displayValue: getFullMemberName,
+			};
+
+			const showFlightFilter =
+				this.props.member &&
+				isCAPMember(this.props.member) &&
+				hasOneDutyPosition([
+					'Cadet Commander',
+					'Cadet Deputy Commander',
+					'Cadet Executive Officer',
+					'Deputy Commander for Cadets',
+				])(this.props.member);
+
+			return state.displayAdvanced && showFlightFilter ? (
+				<Selector<
+					Member,
+					[
+						nameInput: string,
+						rankGreaterThan: string,
+						rankLessThan: string,
+						flight: string,
+					]
+				>
+					{...selectorProps}
+					filters={advancedFiltersWithFlight}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+								rankGreaterThan: values[1],
+								rankLessThan: values[2],
+								flightInput: values[3],
+							},
+						}))
+					}
+					filterValues={[
+						filterValues.nameInput,
+						filterValues.rankGreaterThan,
+						filterValues.rankLessThan,
+						filterValues.flightInput,
+					]}
+				/>
+			) : state.displayAdvanced ? (
+				<Selector<
+					Member,
+					[nameInput: string, rankGreaterThan: string, rankLessThan: string]
+				>
+					{...selectorProps}
+					filters={advancedFilters}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+								rankGreaterThan: values[1],
+								rankLessThan: values[2],
+							},
+						}))
+					}
+					filterValues={[
+						filterValues.nameInput,
+						filterValues.rankGreaterThan,
+						filterValues.rankLessThan,
+					]}
+				/>
+			) : showFlightFilter ? (
+				<Selector<Member, [nameInput: string, flight: string]>
+					{...selectorProps}
+					filters={simpleFiltersWithFlight}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+								flightInput: values[1],
+							},
+						}))
+					}
+					filterValues={[filterValues.nameInput, filterValues.flightInput]}
+				/>
+			) : (
+				<Selector<Member, [nameInput: string]>
+					{...selectorProps}
+					filters={simpleFilters}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+							},
+						}))
+					}
+					filterValues={[filterValues.nameInput]}
+				/>
+			);
+		};
 
 		return (
 			<>
@@ -511,51 +622,7 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 					<Label>Show advanced filters</Label>
 					<Checkbox name="displayAdvanced" />
 
-					<Selector<Member>
-						fullWidth={true}
-						name="members"
-						values={this.state.members.slice(0).sort(currentSortFunction)}
-						displayValue={getFullMemberName}
-						multiple={true}
-						showIDField={this.state.displayAdvanced}
-						onChangeVisible={newVisibleItems => {
-							this.setState({
-								visibleItems: newVisibleItems,
-							});
-						}}
-						overflow={750}
-						filters={this.getFilters()}
-						onFilterValuesChange={values => {
-							if (!this.state.displayAdvanced) {
-								this.setState(prev => ({
-									filterValues: {
-										...prev.filterValues,
-										nameInput: values[0],
-										flightInput: values[1],
-									},
-								}));
-							} else {
-								this.setState({
-									filterValues: {
-										nameInput: values[0],
-										rankGreaterThan: values[1],
-										rankLessThan: values[2],
-										flightInput: values[3],
-									},
-								});
-							}
-						}}
-						filterValues={
-							this.state.displayAdvanced
-								? [
-										filterValues.nameInput,
-										filterValues.rankGreaterThan,
-										filterValues.rankLessThan,
-										filterValues.flightInput,
-								  ]
-								: [filterValues.nameInput, filterValues.flightInput]
-						}
-					/>
+					{getSelector(this.state)}
 				</SimpleForm>
 				<div>
 					{this.state.selectedMembers.length} member
@@ -601,11 +668,10 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		);
 	}
 
-	private getEmail(member: Member): string | undefined {
-		return Maybe.orSome<string | undefined>(undefined)(getMemberEmail(member.contact));
-	}
+	private getEmail = (member: Member): string | undefined =>
+		Maybe.orSome<string | undefined>(undefined)(getMemberEmail(member.contact));
 
-	private selectText() {
+	private selectText = (): void => {
 		if (this.selectableDiv.current) {
 			try {
 				const range = document.createRange();
@@ -621,37 +687,15 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				return;
 			}
 		}
-	}
+	};
 
-	private getFilters() {
-		if (this.props.member && isCAPMember(this.props.member)) {
-			if (
-				hasOneDutyPosition([
-					'Cadet Commander',
-					'Cadet Deputy Comander',
-					'Cadet Executive Officer',
-					'Deputy Commander for Cadets',
-				])(this.props.member)
-			) {
-				return this.state.displayAdvanced ? advancedFilters1 : simpleFilters1;
-			} else {
-				return this.state.displayAdvanced ? advancedFilters2 : simpleFilters2;
-			}
-		} else if (!this.props.member) {
-			// Do nothing for now, there are no non-CAP members
-		} else {
-			throw new Error('Weird');
-		}
-	}
-
-	private getPhoneNumbers() {
-		return this.state
-			.selectedMembers!.map(this.renderMember)
+	private getPhoneNumbers = (): JSX.Element[] =>
+		this.state.selectedMembers
+			.map(this.renderMember)
 			.filter(item => item.phoneCount > 0)
 			.map(item => item.element);
-	}
 
-	private getEmails() {
+	private getEmails(): string {
 		const emails: { [key: string]: true } = {};
 
 		(this.state.selectedMembers
@@ -661,7 +705,10 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 		return Object.keys(emails).join('; ');
 	}
 
-	private renderMember(member: Member, index: number) {
+	private renderMember = (
+		member: Member,
+		index: number,
+	): { phoneCount: number; element: JSX.Element } => {
 		const phoneCount = [
 			member.contact.CELLPHONE.PRIMARY,
 			member.contact.CELLPHONE.SECONDARY,
@@ -741,9 +788,9 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				</div>
 			),
 		};
-	}
+	};
 
-	private selectAllVisible() {
+	private selectAllVisible = (): void => {
 		this.setState(prev => {
 			const selectedMembers: Member[] = prev.selectedMembers.slice(0);
 
@@ -755,5 +802,5 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 
 			return { selectedMembers };
 		});
-	}
+	};
 }
