@@ -31,6 +31,7 @@ import {
 	toReference,
 	areMembersTheSame,
 } from 'common-lib';
+import { CheckInput } from '../form-inputs/Selector';
 
 interface MemberInputProps extends InputProps<MaybeObj<MemberReference>> {
 	memberList: Member[];
@@ -39,14 +40,14 @@ interface MemberInputProps extends InputProps<MaybeObj<MemberReference>> {
 interface MemberInputState {
 	open: boolean;
 	selectedValue: Member | null;
-	filterValues: any[];
+	filterValues: [string];
 }
 
 export default class MemberSelector extends React.Component<MemberInputProps, MemberInputState> {
 	public state: MemberInputState = {
 		open: false,
 		selectedValue: null,
-		filterValues: [],
+		filterValues: [''],
 	};
 
 	public render(): JSX.Element {
@@ -62,7 +63,7 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 
 				<TextBox>
 					<Button onClick={this.openDialogue}>Select a member</Button>
-					<DownloadDialogue<Member>
+					<DownloadDialogue<Member, [string]>
 						open={this.state.open}
 						multiple={false}
 						overflow={400}
@@ -71,28 +72,31 @@ export default class MemberSelector extends React.Component<MemberInputProps, Me
 						displayValue={getFullMemberName}
 						valuePromise={this.props.memberList}
 						onCancel={() => this.selectMember(null)}
-						filters={[
-							{
-								check: (member, input) => {
-									if (input === '' || typeof input !== 'string') {
-										return true;
-									}
+						filters={
+							[
+								{
+									check: (member, input) => {
+										if (input === '' || typeof input !== 'string') {
+											return true;
+										}
 
-									try {
-										return !!new RegExp(input, 'gi').exec(
-											getFullMemberName(member),
-										);
-									} catch (e) {
-										return false;
-									}
-								},
-								displayText: 'Member name',
-								filterInput: TextInput,
-							},
-						]}
+										try {
+											return !!new RegExp(input, 'gi').exec(
+												getFullMemberName(member),
+											);
+										} catch (e) {
+											return false;
+										}
+									},
+									displayText: 'Member name',
+									filterInput: TextInput,
+								} as CheckInput<Member, string>,
+							] as const
+						}
 						onValueClick={this.setSelectedMember}
 						onValueSelect={this.selectMember}
 						selectedValue={this.state.selectedValue}
+						filterValues={this.state.filterValues}
 					/>
 				</TextBox>
 

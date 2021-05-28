@@ -20,7 +20,7 @@
 import React, { ReactNode, PureComponent } from 'react';
 import jQuery from 'jquery';
 import './DropDownList.scss';
-import { alwaysFalse } from '../../../common-lib/dist';
+import { alwaysFalse } from 'common-lib';
 
 interface DropDownListProps<T> {
 	open?: boolean[];
@@ -63,10 +63,10 @@ export default class DropDownList<T> extends PureComponent<
 		return this.props.keyFunc ?? toString;
 	}
 
-	public static getDerivedStateFromProps<T>(
-		props: DropDownListProps<T>,
-		state: DropDownListState<T>,
-	): DropDownListState<T> | null {
+	public static getDerivedStateFromProps<U>(
+		props: DropDownListProps<U>,
+		state: DropDownListState<U>,
+	): DropDownListState<U> | null {
 		let open = props.open ?? state.open;
 
 		if (open.length !== props.values.length) {

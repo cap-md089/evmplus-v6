@@ -25,6 +25,7 @@ import LoaderShort from '../LoaderShort';
 import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';
 import { Member, getFullMemberName } from 'common-lib';
+import { CheckInput } from '../form-inputs/Selector';
 
 type MemberSelectorButtonProps = DialogueButtonProps & {
 	memberList: Promise<Member[]> | Member[];
@@ -38,7 +39,7 @@ interface MemberSelectorButtonState {
 	members: Member[] | null;
 	open: boolean;
 	selectedValue: Member | null;
-	filterValues: any[];
+	filterValues: [string];
 }
 
 export default class MemberSelectorButton extends React.Component<
@@ -49,7 +50,7 @@ export default class MemberSelectorButton extends React.Component<
 		members: null,
 		open: false,
 		selectedValue: null,
-		filterValues: [],
+		filterValues: [''],
 	};
 
 	public async componentDidMount(): Promise<void> {
@@ -74,7 +75,7 @@ export default class MemberSelectorButton extends React.Component<
 				>
 					{this.props.children}
 				</Button>
-				<DownloadDialogue<Member>
+				<DownloadDialogue<Member, [string]>
 					open={this.state.open}
 					multiple={false}
 					overflow={400}
@@ -83,28 +84,31 @@ export default class MemberSelectorButton extends React.Component<
 					displayValue={getFullMemberName}
 					onCancel={() => this.selectMember(null)}
 					valuePromise={this.state.members}
-					filters={[
-						{
-							check: (member, input) => {
-								if (input === '' || typeof input !== 'string') {
-									return true;
-								}
+					filters={
+						[
+							{
+								check: (member, input) => {
+									if (input === '' || typeof input !== 'string') {
+										return true;
+									}
 
-								try {
-									return !!new RegExp(input, 'gi').exec(
-										getFullMemberName(member),
-									);
-								} catch (e) {
-									return false;
-								}
-							},
-							displayText: 'Member name',
-							filterInput: TextInput,
-						},
-					]}
+									try {
+										return !!new RegExp(input, 'gi').exec(
+											getFullMemberName(member),
+										);
+									} catch (e) {
+										return false;
+									}
+								},
+								displayText: 'Member name',
+								filterInput: TextInput,
+							} as CheckInput<Member, string>,
+						] as const
+					}
 					onValueClick={this.setSelectedMember}
 					onValueSelect={this.selectMember}
 					selectedValue={this.state.selectedValue}
+					filterValues={this.state.filterValues}
 				/>
 			</>
 		);

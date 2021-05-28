@@ -88,13 +88,13 @@ export default class POCInput extends React.Component<
 	POCInputProps,
 	{
 		memberSelectOpen: boolean;
-		filterValues: any[];
+		filterValues: [string];
 		selectedValue: null | Member;
 	}
 > {
 	public state = {
 		memberSelectOpen: false,
-		filterValues: [],
+		filterValues: [''] as [string],
 		selectedValue: null,
 	};
 
@@ -254,7 +254,7 @@ export default class POCInput extends React.Component<
 		});
 	};
 
-	private updateFilterValues = (filterValues: any[]): void => {
+	private updateFilterValues = (filterValues: [string]): void => {
 		this.setState({ filterValues });
 	};
 
@@ -300,7 +300,7 @@ export default class POCInput extends React.Component<
 	}
 
 	private getMemberSelector(): JSX.Element | null {
-		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<Member>;
+		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<Member, [string]>;
 
 		return this.props.value && isInternalPOC(this.props.value) ? (
 			<TextBox>

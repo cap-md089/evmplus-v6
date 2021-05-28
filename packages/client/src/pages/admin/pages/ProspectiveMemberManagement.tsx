@@ -60,7 +60,7 @@ interface ProspectiveMemberManagementLoadedState {
 interface ProspectiveMemberManagementUIState {
 	upgradeMemberTarget: MaybeObj<CAPProspectiveMemberObject>;
 	deleteMemberTarget: MaybeObj<CAPProspectiveMemberObject>;
-	upgradeMemberFilterValues: any[];
+	upgradeMemberFilterValues: [string];
 	selectedUpgradeMember: CAPNHQMemberObject | null;
 }
 
@@ -158,7 +158,7 @@ export default class ProspectiveMemberManagement extends Page<
 		return (
 			<>
 				{Maybe.isSome(this.state.upgradeMemberTarget) ? null : null}
-				<DownloadDialogue<CAPNHQMemberObject>
+				<DownloadDialogue<CAPNHQMemberObject, [string]>
 					open={Maybe.isSome(this.state.upgradeMemberTarget)}
 					multiple={false}
 					overflow={400}
@@ -313,7 +313,7 @@ export default class ProspectiveMemberManagement extends Page<
 		);
 	};
 
-	private updateFilterValues = (filterValues: any[]): void => {
+	private updateFilterValues = (filterValues: [string]): void => {
 		this.setState({
 			upgradeMemberFilterValues: filterValues,
 		});

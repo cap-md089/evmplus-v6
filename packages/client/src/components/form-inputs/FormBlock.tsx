@@ -68,25 +68,25 @@ export default class FormBlock<T extends object> extends React.Component<
 		this.render = this.render.bind(this);
 	}
 
-	public static getDerivedStateFromProps<T>(
-		props: FormBlockProps<T>,
-		state: FormBlockState<T>,
-	): FormBlockState<T> {
+	public static getDerivedStateFromProps<U>(
+		props: FormBlockProps<U>,
+		state: FormBlockState<U>,
+	): FormBlockState<U> {
 		if (!props.value) {
 			return {
 				fieldsError: {},
 				fieldsChanged: {},
-			} as FormBlockState<T>;
+			} as FormBlockState<U>;
 		}
 
-		const newState: FormBlockState<T> = {
+		const newState: FormBlockState<U> = {
 			fieldsChanged: { ...state.fieldsChanged },
-			fieldsError: {} as BooleanForField<T>,
+			fieldsError: {} as BooleanForField<U>,
 		};
 
 		// eslint-disable-next-line guard-for-in
 		for (const _ in props.value) {
-			const i: keyof T = _;
+			const i: keyof U = _;
 
 			if (props.validator && props.validator[i]) {
 				const validator = props.validator[i];
