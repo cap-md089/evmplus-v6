@@ -29,7 +29,7 @@ export default async (
 	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
-) => {
+): Promise<void> => {
 	if (args.length < 4) {
 		throw new Error(
 			'Command requires account ID, role name, channel name, and message to send',

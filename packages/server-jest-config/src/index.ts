@@ -22,6 +22,7 @@ import { memoize, TableDataType, TableNames } from 'common-lib';
 import * as Docker from 'dockerode';
 
 const getDockerConn = memoize(
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	(a?: undefined) =>
 		new Docker({
 			socketPath: '/var/run/docker.sock',
@@ -84,6 +85,12 @@ export const COLLECTIONS_USED: readonly string[] = [
  * This class initializes a MySQL schema for each of the test suites
  */
 export class TestConnection {
+	private constructor(
+		public readonly client: Client,
+		public readonly session: Session,
+		public readonly schema: string, // eslint-disable-next-line no-empty-function
+	) {}
+
 	/**
 	 * Initializes dbRef to hold a test database connection. This function returns a callback to
 	 * be used by Jest, e.g.:
@@ -97,24 +104,45 @@ export class TestConnection {
 	 * @param dbRef a handle to a database connection
 	 * @returns a callback function to pass to beforeAll()
 	 */
-	public static setup(dbRef: DatabaseHandle) {
-		return async (done?: () => void) => {
-			const connString = this.mysqlConnectionString;
+	public static setup = (dbRef: DatabaseHandle) => async (done?: () => void): Promise<void> => {
+		const connString = TestConnection.mysqlConnectionString;
 
-			while (true) {
-				try {
-					const conn = await getSession(connString);
-					await conn.close();
+		while (true) {
+			try {
+				const conn = await getSession(connString);
+				await conn.close();
 
-					break;
-				} catch (e) {
-					await new Promise<void>(res => setTimeout(res, 1000));
-				}
+				break;
+			} catch (e) {
+				await new Promise<void>(res => setTimeout(res, 1000));
 			}
-			dbRef.connection = await this.setupSchema();
-			done?.();
-		};
-	}
+		}
+		dbRef.connection = await TestConnection.setupSchema();
+		done?.();
+	};
+
+	/**
+	 * Closes the database connection and performs cleanup. Returns a function intended to
+	 * be called by afterAll()
+	 *
+	 * <code>
+	 * 	const ref = getDbRef();
+	 *
+	 * 	beforeAll(TestConnection.setup(ref));
+	 * 	afterAll(TestConnection.teardown(ref));
+	 * </code>
+	 *
+	 * @param dbRef
+	 * @returns
+	 */
+	public static teardown = (dbRef: DatabaseHandle) => async (
+		done?: () => void,
+	): Promise<void> => {
+		await dbRef.connection.session.dropSchema(dbRef.connection.schema);
+		await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
+
+		done?.();
+	};
 
 	/**
 	 * Creates a new schema and sets up the collections using the mysql dump script
@@ -140,55 +168,6 @@ export class TestConnection {
 	}
 
 	/**
-	 * Closes the database connection and performs cleanup. Returns a function intended to
-	 * be called by afterAll()
-	 *
-	 * <code>
-	 * 	const ref = getDbRef();
-	 *
-	 * 	beforeAll(TestConnection.setup(ref));
-	 * 	afterAll(TestConnection.teardown(ref));
-	 * </code>
-	 * @param dbRef
-	 * @returns
-	 */
-	public static teardown(dbRef: DatabaseHandle) {
-		return async (done?: () => void) => {
-			await dbRef.connection.session.dropSchema(dbRef.connection.schema);
-			await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
-
-			done?.();
-		};
-	}
-
-	/**
-	 * Returns the constant connection string for connecting to the test mysql database
-	 */
-	public static get mysqlConnectionString() {
-		return 'mysqlx://root:toor@test-mysql:33060';
-	}
-
-	private constructor(
-		public readonly client: Client,
-		public readonly session: Session,
-		public readonly schema: string,
-	) {}
-
-	/**
-	 * @returns the current schema that is used for the test
-	 */
-	public getSchema() {
-		return this.session.getSchema(this.schema);
-	}
-
-	/**
-	 * @returns a new session for when multiple sessions are needed
-	 */
-	public getNewSession() {
-		return this.client.getSession();
-	}
-
-	/**
 	 * Sets up the different collections in a schema by using the docker
 	 * connection to execute the setup-schema script inside of the MySQL container
 	 *
@@ -211,7 +190,13 @@ export class TestConnection {
 
 		const stream = await exec.start({});
 
-		container.modem.demuxStream(stream, process.stdout, process.stderr);
+		(container.modem as {
+			demuxStream(
+				inputStream: typeof stream,
+				out: typeof process.stdout,
+				err: typeof process.stderr,
+			): void;
+		}).demuxStream(stream, process.stdout, process.stderr);
 
 		await new Promise(resolve => {
 			stream.on('end', resolve);
@@ -232,12 +217,27 @@ export class TestConnection {
 
 		await session.close();
 	}
-}
 
-TestConnection.setup = TestConnection.setup.bind(TestConnection);
-// @ts-ignore
-TestConnection.setupSchema = TestConnection.setupSchema.bind(TestConnection);
-TestConnection.teardown = TestConnection.teardown.bind(TestConnection);
+	/**
+	 * Returns the constant connection string for connecting to the test mysql database
+	 */
+	public static get mysqlConnectionString(): string {
+		return 'mysqlx://root:toor@test-mysql:33060';
+	}
+	/**
+	 * @returns the current schema that is used for the test
+	 */
+	public getSchema(): Schema {
+		return this.session.getSchema(this.schema);
+	}
+
+	/**
+	 * @returns a new session for when multiple sessions are needed
+	 */
+	public getNewSession(): Promise<Session> {
+		return this.client.getSession();
+	}
+}
 
 export default TestConnection;
 
@@ -259,13 +259,13 @@ export interface DatabaseHandle {
 	 *
 	 * @param done done callback provided by beforeAll
 	 */
-	setup(done?: () => void): void;
+	setup(this: void, done?: () => void): void;
 	/**
 	 * A shorthand for TestConnection.teardown(ref)
 	 *
 	 * @param done done callback provided by afterAll
 	 */
-	teardown(done?: () => void): void;
+	teardown(this: void, done?: () => void): void;
 }
 
 /**
@@ -273,6 +273,7 @@ export interface DatabaseHandle {
  */
 export const getDbHandle = (): DatabaseHandle => {
 	const ref: DatabaseHandle = {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		connection: null!,
 		async setup(done) {
 			await TestConnection.setup(ref)(done);
@@ -286,7 +287,7 @@ export const getDbHandle = (): DatabaseHandle => {
 };
 
 export type PresetRecords = {
-	[key in TableNames]?: TableDataType<key>[];
+	[key in TableNames]?: Array<TableDataType<key>>;
 };
 
 /**
@@ -296,7 +297,7 @@ export type PresetRecords = {
  * @param schema the schema to modify and set up
  * @param map the data to set up in the schema
  */
-export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) => {
+export const addPresetRecords = (schema: Schema) => async (map: PresetRecords): Promise<void> => {
 	const promises = [];
 
 	for (const tableName in map) {
@@ -305,7 +306,9 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) =
 
 			const records = map[table];
 
-			if (!records || records.length === 0) continue;
+			if (!records || records.length === 0) {
+				continue;
+			}
 
 			let adder = schema.getCollection(table).add(records[0]);
 
@@ -346,7 +349,7 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords) =
  */
 export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseHandle) => async (
 	done?: () => void,
-) => {
+): Promise<void> => {
 	await Promise.all(
 		COLLECTIONS_USED.map(name =>
 			ref.connection.getSchema().getCollection(name).remove('true').execute(),

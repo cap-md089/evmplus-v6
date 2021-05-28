@@ -26,12 +26,10 @@ describe('Docker TestConnection', () => {
 		done();
 	});
 
-	it('should be able to create schemas', async done => {
+	it('should be able to create schemas', () => {
 		const { connection } = dbRef;
 
 		expect(connection.getSchema.bind(connection)).not.toThrow();
-
-		done();
 	});
 
 	it('should be able to create collections', async done => {

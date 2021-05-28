@@ -27,7 +27,7 @@ export default async (
 	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
-) => {
+): Promise<void> => {
 	if (args.length === 0) {
 		throw new Error('Guild ID not provided');
 	}

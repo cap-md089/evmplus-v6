@@ -7,7 +7,7 @@
 		"build": "ttsc --build tsconfig.build.json && chmod +x dist/*.js",
 		"watch": "ttsc --build tsconfig.build.json --build",
 		"check": "ttsc --build tsconfig.build.json --noEmit",
-		"lint": "tslint --project ."
+		"lint": "eslint src/**/*.ts"
 	},
 	"author": "Andrew Rioux",
 	"license": "GPL-2.0",
@@ -22,6 +22,10 @@
 	},
 	"devDependencies": {
 		"@types/debug": "^4.1.5",
+		"@typescript-eslint/eslint-plugin": "^4.25.0",
+		"@typescript-eslint/parser": "^4.25.0",
+		"eslint": "^7.27.0",
+		"eslint-config-prettier": "^8.3.0",
 		"jest-watch-typeahead": "^0.6.1",
 		"tslint": "^6.1.3",
 		"tslint-config-prettier": "^1.18.0",

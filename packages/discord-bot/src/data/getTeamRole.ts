@@ -32,7 +32,9 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 	const genericTeamMemberRole = M.fromValue(roles.find(byName('Team Member')));
 
 	const permissions = new Permissions(Permissions.DEFAULT)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		.remove(Permissions.FLAGS.CHANGE_NICKNAME!)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!);
 
 	let teamLeaderRole = M.fromValue(roles.find(byName(`Team Lead - ${team.name}`)));

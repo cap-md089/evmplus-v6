@@ -29,7 +29,7 @@ describe('backends', () => {
 	});
 
 	it('should fail to compile if the backend generators are in the wrong order', () => {
-		// @ts-expect-error
+		// @ts-expect-error: test case
 		combineBackends<number, [Backend1, Backend2]>(backendGenerator2, backendGenerator1);
 	});
 
@@ -40,7 +40,7 @@ describe('backends', () => {
 				backendGenerator1,
 				backendGenerator2,
 			) as any,
-		);
+		) as (req: number) => number;
 
 		expect(endpointWithBackends(3)).toEqual(5);
 	});

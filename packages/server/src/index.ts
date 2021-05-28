@@ -27,6 +27,7 @@ import { api } from './api';
 import { createSocketUI } from './createSocketUI';
 import getServer from './getServer';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 console.log = console.log.bind(console);
 
 export type Endpoint<
@@ -66,7 +67,7 @@ if (require.main === module) {
 					}
 				});
 
-				process.send!('ready');
+				process.send?.('ready');
 			} else {
 				extraSetup();
 			}

@@ -23,7 +23,7 @@ import saveServerError from './saveServerError';
 
 export const asyncErrorHandler = (
 	f: (req: MySQLRequest<any>, response: express.Response) => Promise<void>,
-) => (req: express.Request, response: express.Response) =>
+) => (req: express.Request, response: express.Response): Promise<void> =>
 	f((req as any) as MySQLRequest<any>, response).catch(async err => {
 		await saveServerError(err, (req as any) as MySQLRequest<any>);
 

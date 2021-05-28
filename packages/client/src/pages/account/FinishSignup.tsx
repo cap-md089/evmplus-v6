@@ -61,12 +61,15 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 				values={this.state.form}
 				onChange={form => this.setState({ form })}
 				validator={{
-					username: name =>
-						!!name &&
-						name.length > 0 &&
-						name.length < 45 &&
-						!name.startsWith(' ') &&
-						!name.endsWith(' '),
+					username: name => {
+						return (
+							!!name &&
+							name.length > 0 &&
+							name.length < 45 &&
+							!name.startsWith(' ') &&
+							!name.endsWith(' ')
+						);
+					},
 					password: password => password !== null,
 				}}
 				onSubmit={this.finishAccount}

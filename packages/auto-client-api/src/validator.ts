@@ -26,7 +26,12 @@ const call = (identifier: ts.Expression) => <
 >(
 	name: T,
 	args: ts.Expression[],
-) => ts.createCall(ts.createPropertyAccess(identifier, name as string), undefined, args);
+) =>
+	ts.factory.createCallExpression(
+		ts.createPropertyAccess(identifier, name as string),
+		undefined,
+		args,
+	);
 
 const get = (identifier: ts.Expression) => <
 	T extends keyof typeof Validator = keyof typeof Validator
@@ -39,7 +44,6 @@ const getName = (identifier: ts.EntityName) =>
 
 const getFullGenericType = (
 	typeNode: ts.Node | undefined,
-	typeChecker: ts.TypeChecker,
 ): [ts.TypeNode, ts.TypeNode[]] | undefined => {
 	if (!typeNode) {
 		return undefined;
@@ -267,7 +271,7 @@ export const createValidator = (
 		]);
 	}
 
-	// tslint:disable-next-line: no-bitwise
+	// eslint-disable-next-line no-bitwise
 	if ((type.flags & ts.TypeFlags.EnumLiteral) !== 0 && ts.isTypeReferenceNode(typeNode)) {
 		if (typeNode.typeName.kind === ts.SyntaxKind.QualifiedName && 'value' in type) {
 			return caller('StrictValue', [ts.createLiteral((type as ts.LiteralType).value)]);
@@ -297,7 +301,7 @@ export const createValidator = (
 	}
 
 	if (ts.isArrayTypeNode(typeNode)) {
-		const arrayTypeArg = getFullGenericType(typeNode, typeChecker);
+		const arrayTypeArg = getFullGenericType(typeNode);
 		if (arrayTypeArg) {
 			return caller('ArrayOf', [
 				createValidator(
@@ -354,10 +358,12 @@ export const createValidator = (
 
 		if (typeName === 'Required') {
 			// TODO: FIXME
-			if (!getFullGenericType(typeNode, typeChecker)) {
+			if (!getFullGenericType(typeNode)) {
 				// TODO: FIXME
 			} else {
-				const [subTypeNode, typeNodeArguments] = getFullGenericType(typeNode, typeChecker)!;
+				// Can be disabled as we know it's a generic type
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const [subTypeNode, typeNodeArguments] = getFullGenericType(typeNode)!;
 				const properties = typeChecker.getTypeAtLocation(subTypeNode);
 				return createRequiredValidator(validatorIdentifier, subValidator, typeChecker)(
 					properties.getProperties(),
@@ -369,10 +375,12 @@ export const createValidator = (
 
 		if (typeName === 'Partial') {
 			// TODO: FIXME
-			if (!getFullGenericType(typeNode, typeChecker)) {
+			if (!getFullGenericType(typeNode)) {
 				// TODO: FIXME
 			} else {
-				const [subTypeNode, typeNodeArguments] = getFullGenericType(typeNode, typeChecker)!;
+				// Can be disabled as we know it's a generic type
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const [subTypeNode, typeNodeArguments] = getFullGenericType(typeNode)!;
 				const properties = typeChecker.getTypeAtLocation(subTypeNode);
 				return createPartialValidator(validatorIdentifier, subValidator, typeChecker)(
 					properties.getProperties(),
@@ -383,12 +391,14 @@ export const createValidator = (
 		}
 
 		if (typeName === 'Array') {
-			const arrayTypeArg = getFullGenericType(typeNode, typeChecker);
+			const arrayTypeArg = getFullGenericType(typeNode);
 			return caller('ArrayOf', [
 				createValidator(
 					parent,
 					validatorIdentifier,
 					typeChecker,
+					// Can be disabled as we know it's a generic type
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				)(arrayTypeArg![0], arrayTypeArg?.[1] ?? []),
 			]);
 		}
@@ -413,7 +423,7 @@ export const createValidator = (
 				const initializer = value.valueDeclaration.initializer;
 
 				if (!initializer) {
-					throw new Error('Enum field is not inialized: ' + key);
+					throw new Error(`Enum field is not inialized: ${key.toString()}`);
 				}
 
 				members.push(
@@ -500,7 +510,7 @@ export const createValidator = (
 	);
 };
 
-export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
+export default (node: ts.CallExpression, typeChecker: ts.TypeChecker): ts.Node => {
 	const typeArgument = node.typeArguments?.[0];
 	const argument = node.arguments[0];
 

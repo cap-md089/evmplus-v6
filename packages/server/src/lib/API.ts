@@ -37,10 +37,12 @@ import {
 	Either,
 	EitherObj,
 	errorGenerator,
+	MaybeObj,
 	MemberRequirement,
 	ParamType,
 	ServerError,
 	stripProp,
+	User,
 	ValidatorError,
 	ValidatorFail,
 	ValidatorImpl,
@@ -64,7 +66,7 @@ export const addMember = (memberRequirement: MemberRequirement) => <P extends Pa
 	const tapFunction = (
 		newReq: PAM.BasicMemberRequest<P, B> | PAM.BasicMaybeMemberRequest<P, B>,
 	) => {
-		(request as any).member = newReq.member;
+		(request as { member: User | MaybeObj<User> }).member = newReq.member;
 	};
 
 	if (memberRequirement === 'required') {
@@ -139,7 +141,7 @@ const sendEither: Sender<EitherObj<ServerError, any>> = request => response => a
 	}
 };
 
-const sendObject: Sender<object | null> = request => response => async value => {
+const sendObject: Sender<Record<string, unknown> | null> = request => response => async value => {
 	if (value === null) {
 		response.write('null');
 		return;
@@ -154,7 +156,7 @@ const sendObject: Sender<object | null> = request => response => async value => 
 			}
 
 			response.write(`"${key}":`);
-			await send(request)(response)((value as any)[key] as any);
+			await send(request)(response)(value[key]);
 
 			dataWritten = true;
 		}
@@ -164,7 +166,7 @@ const sendObject: Sender<object | null> = request => response => async value => 
 
 export const send = (request: Requests) => (response: express.Response) => async (
 	value: AsyncRepr<unknown>,
-) => {
+): Promise<void> => {
 	const validEither = Either.isValidEither as (e: unknown) => e is EitherObj<ServerError, any>;
 
 	if (value === null || value === undefined) {
@@ -176,18 +178,19 @@ export const send = (request: Requests) => (response: express.Response) => async
 		response.write(JSON.stringify(value));
 	} else if (
 		typeof value === 'object' &&
-		(Symbol.asyncIterator in value! || Symbol.iterator in value!)
+		value !== null &&
+		(Symbol.asyncIterator in value || Symbol.iterator in value)
 	) {
 		await sendIter(request)(response)(value as AsyncIter<any>);
 	} else if (validEither(value)) {
 		await sendEither(request)(response)(value);
 	} else if (value instanceof AsyncEither) {
 		await sendEither(request)(response)(await value);
-	} else if (typeof value === 'object') {
-		if ('then' in value!) {
-			await sendObject(request)(response)(await value);
+	} else if (typeof value === 'object' && value !== null) {
+		if ('then' in value) {
+			await send(request)(response)(await (value as Promise<unknown>));
 		} else {
-			await sendObject(request)(response)(value);
+			await sendObject(request)(response)(value as Record<string, unknown>);
 		}
 	}
 };
@@ -199,9 +202,10 @@ export const sendResponse = <
 	request: Requests,
 ) => (response: express.Response) => async (
 	result: R extends ServerEither<infer A> ? A : never,
-) => {
+): Promise<void> => {
 	response.header('Content-type', 'application/json');
 
+	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const awaitedResult = await result;
 
 	for (const cookieName in awaitedResult.cookies) {
@@ -232,9 +236,9 @@ export const sendResponse = <
 
 export const sendError = (request: Requests) => (response: express.Response) => async (
 	err: ServerError,
-) => {
+): Promise<void> => {
 	if (err.type === 'CRASH') {
-		await saveServerError(err.error, request, err);
+		await saveServerError(err.error, request);
 	}
 
 	response.status(err.code);
@@ -256,8 +260,9 @@ export const endpointAdderFunc = (backendGenerator = getCombinedPAMBackend) => <
 	endpoint: (
 		req: RequestType<APIEndpointParams<T>, APIEndpointBody<T>, APIEndpointMember<T>>,
 	) => ReturnValue<APIEndpointReturnValue<T>>,
-) => {
+): void => {
 	logFunc.extend('init')('Setting up handler: %s %s', method, url);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	app[method](
 		url,
 		bodyParser.json({
@@ -286,10 +291,10 @@ export const endpointAdderFunc = (backendGenerator = getCombinedPAMBackend) => <
 			request: Requests<APIEndpointParams<T>, APIEndpointBody<T>>,
 			response: express.Response,
 		) => {
-			asyncRight<ServerError, BasicMySQLRequest<APIEndpointParams<T>, APIEndpointBody<T>>>(
-				request,
-				errorGenerator('Could not process request'),
-			)
+			void asyncRight<
+				ServerError,
+				BasicMySQLRequest<APIEndpointParams<T>, APIEndpointBody<T>>
+			>(request, errorGenerator('Could not process request'))
 				.flatMap<BasicAccountRequest>(accountRequestTransformer)
 				.tap(accountReq => {
 					debug('server:lib:api:raw')(

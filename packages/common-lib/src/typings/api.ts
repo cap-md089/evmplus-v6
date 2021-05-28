@@ -8,12 +8,7 @@
  * a host header is expected to be set with the format `${accountID}.evmplus.org`
  *
  * Each interface defines:
- * 	- The URL parameters and where in the URL it is to be located
- * 		(e.g:
- * 			with params: { id: string }
- * 			and url: '/api/event/:id'
- * 			get event 1 with the URL '/api/event/1'
- * 		)
+ * 	- The URL parameters and where in the URL it is to be located (e.g: with params: { id: string }, and url: '/api/event/:id', get event 1 with the URL '/api/event/1')
  *  - The request body (JSON formatted, empty if body is {})
  * 	- The return body (JSON formatted)
  * 	- The HTTP method
@@ -125,8 +120,6 @@ export interface APIEndpoint<
 	NeedsToken extends boolean = Method extends 'get' ? false : true,
 	UseValidator extends boolean = false
 > {
-	(params: Params, body: Body): Return;
-
 	url: URL;
 
 	method: Method;
@@ -136,6 +129,8 @@ export interface APIEndpoint<
 	needsToken: NeedsToken;
 
 	useValidator: UseValidator;
+
+	(params: Params, body: Body): Return;
 }
 
 //

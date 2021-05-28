@@ -20,7 +20,7 @@
 import * as ts from 'typescript';
 import { getStringLiteralFromType } from './util';
 
-export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
+export default (node: ts.CallExpression, typeChecker: ts.TypeChecker): ts.Node | undefined => {
 	const typeArgument = node.typeArguments?.[0];
 
 	if (!typeArgument) {
@@ -38,5 +38,5 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 		return node;
 	}
 
-	return ts.createLiteral(url);
+	return ts.factory.createStringLiteral(url);
 };

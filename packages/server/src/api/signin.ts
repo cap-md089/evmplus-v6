@@ -141,9 +141,7 @@ const handleFailure = (result: PAM.SigninFailed): ServerEither<Wrapped<FailedSig
 		  )
 	).map(wrapper);
 
-const handleMFA = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninRequiresMFA,
-): ServerEither<Wrapped<SigninRequiresMFA>> =>
+const handleMFA = (result: PAM.SigninRequiresMFA): ServerEither<Wrapped<SigninRequiresMFA>> =>
 	asyncRight<ServerError, Wrapped<SigninRequiresMFA>>(
 		{
 			response: {
@@ -171,7 +169,7 @@ export const func: Endpoint<
 				: results.result === MemberCreateError.PASSWORD_EXPIRED
 				? handlePasswordExpired(results)
 				: results.result === MemberCreateError.ACCOUNT_USES_MFA
-				? handleMFA(req)(results)
+				? handleMFA(results)
 				: handleFailure(results),
 		);
 

@@ -36,8 +36,12 @@ export const tokenTransformer = (backendGenerator = getCombinedPAMBackend) => <
 ): AsyncEither<ServerError, T> => {
 	const backend = backendGenerator()(req);
 
+	const body = req.body as { token?: string | any };
+
 	return backend
-		.isTokenValid(req.member)(req.body.token)
+		.isTokenValid(req.member)(
+			'token' in req.body && typeof body.token === 'string' ? body.token : '',
+		)
 		.flatMap(valid =>
 			valid
 				? asyncRight(req, errorGenerator('Could not validate token'))

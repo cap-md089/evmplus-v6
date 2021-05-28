@@ -17,74 +17,13 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { notStrictEqual } from 'assert';
-import { mkdir } from 'fs';
 import { join, resolve } from 'path';
 import * as ts from 'typescript';
-import { promisify } from 'util';
 import addAPI from './addAPI';
 import apiCall from './apiCall';
 import apiURL from './apiURL';
 import generateAPITree from './generateAPITree';
 import validator from './validator';
-
-const args = process.argv.slice();
-const argsWithoutOptions = args.filter(arg => arg !== '--watch');
-
-const outputDirectory = argsWithoutOptions[2];
-const inputConfigFile = argsWithoutOptions[3];
-
-// const watch = args.includes('--watch');
-
-if (require.main === module) {
-	notStrictEqual(outputDirectory, undefined);
-	notStrictEqual(inputConfigFile, undefined);
-
-	(async (inputProjectConfigFile: string, programOutputDirectory: string) => {
-		await promisify(mkdir)(programOutputDirectory, {
-			recursive: true,
-		});
-
-		const host: ts.ParseConfigFileHost = ts.sys as any;
-		host.onUnRecoverableConfigFileDiagnostic = () => void 0;
-		const parsedCmd = ts.getParsedCommandLineOfConfigFile(inputProjectConfigFile, {}, host);
-		// @ts-ignore
-		host.onUnRecoverableConfigFileDiagnostic = undefined;
-
-		if (!parsedCmd) {
-			throw new Error('Could not get configuration');
-		}
-
-		const { options, fileNames } = parsedCmd;
-
-		const program = ts.createProgram({
-			rootNames: fileNames,
-			options,
-		});
-
-		const transformers: ts.CustomTransformers = {
-			before: [transformer(program)],
-			after: [],
-		};
-
-		const { emitSkipped, diagnostics } = program.emit(
-			undefined,
-			undefined,
-			undefined,
-			false,
-			transformers,
-		);
-
-		if (emitSkipped) {
-			throw new Error(diagnostics.map(diagnostic => diagnostic.messageText).join('\n'));
-		}
-
-		process.exit(0);
-	})(inputConfigFile, outputDirectory).catch(err => {
-		console.error(err);
-		process.exit(1);
-	});
-}
 
 const isMacroImportExpression = (node: ts.Node): node is ts.ImportDeclaration => {
 	if (!ts.isImportDeclaration(node)) {
@@ -144,21 +83,31 @@ function visitNodeAndChildren(
 	context: ts.TransformationContext,
 ): ts.Node | undefined;
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function visitNodeAndChildren(
 	node: ts.Node,
 	program: ts.Program,
 	context: ts.TransformationContext,
 ): ts.Node | undefined {
 	return ts.visitEachChild(
-		visitNode(node, program),
+		visitNode(node, program, context),
 		childNode => visitNodeAndChildren(childNode, program, context),
 		context,
 	);
 }
 
-function visitNode(node: ts.SourceFile, program: ts.Program): ts.SourceFile;
-function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined;
+function visitNode(
+	node: ts.SourceFile,
+	program: ts.Program,
+	context: ts.TransformationContext,
+): ts.SourceFile;
+function visitNode(
+	node: ts.Node,
+	program: ts.Program,
+	context: ts.TransformationContext,
+): ts.Node | undefined;
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 	if (isMacroImportExpression(node)) {
 		return undefined;
@@ -183,6 +132,9 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 	return node;
 }
 
-export default function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
-	return context => file => visitNodeAndChildren(file, program, context);
-}
+const transformer = (
+	program: ts.Program,
+): ts.TransformerFactory<ts.SourceFile> => context => file =>
+	visitNodeAndChildren(file, program, context);
+
+export default transformer;

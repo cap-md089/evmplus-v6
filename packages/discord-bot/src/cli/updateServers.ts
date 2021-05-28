@@ -39,7 +39,7 @@ export default async (
 	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
-) => {
+): Promise<void> => {
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
@@ -65,7 +65,7 @@ export default async (
 
 		const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
-		for (const [_, member] of await guild.members.fetch()) {
+		for (const [, member] of await guild.members.fetch()) {
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
 			if (guild.ownerID !== member.id && !member.user.bot) {
