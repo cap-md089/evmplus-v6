@@ -20,20 +20,18 @@
 import * as React from 'react';
 import { InputProps } from './Input';
 
-// @ts-ignore
+// @ts-ignore: this is the one input that doesn't need a name, and it just looks stupid
 interface TextBoxProps extends InputProps<undefined> {
 	name?: string;
 }
 
 export default class TextBox extends React.Component<TextBoxProps> {
-	public render() {
-		return (
-			<div
-				className="input-formbox"
-				style={{ lineHeight: 'initial', paddingTop: 2, paddingBottom: 5 }}
-			>
-				{this.props.children}
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div
+			className="input-formbox"
+			style={{ lineHeight: 'initial', paddingTop: 2, paddingBottom: 5 }}
+		>
+			{this.props.children}
+		</div>
+	);
 }

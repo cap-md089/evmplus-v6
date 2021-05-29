@@ -20,27 +20,23 @@
 import { ItemProps } from '../FileDialogue';
 import * as React from 'react';
 
-export class SelectedFileDisplayer extends React.Component<
+export const SelectedFileDisplayer: React.FC<
 	ItemProps & {
 		red: boolean;
 	}
-> {
-	public render() {
-		return (
-			<div
-				className="selectedFile"
-				onClick={e => {
-					e.stopPropagation();
-					this.props.onClick(this.props.file, this.props.selected);
-				}}
-			>
-				<div
-					className={'box selected' + (this.props.red ? ' red' : '')}
-					title={this.props.red ? 'Invalid file selected' : this.props.file.fileName}
-				>
-					{this.props.file.fileName}
-				</div>
-			</div>
-		);
-	}
-}
+> = ({ onClick, file, selected, red }) => (
+	<div
+		className="selectedFile"
+		onClick={e => {
+			e.stopPropagation();
+			onClick(file, selected);
+		}}
+	>
+		<div
+			className={'box selected' + (red ? ' red' : '')}
+			title={red ? 'Invalid file selected' : file.fileName}
+		>
+			{file.fileName}
+		</div>
+	</div>
+);

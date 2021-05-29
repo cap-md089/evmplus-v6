@@ -79,8 +79,8 @@ const genericTypeStringValidator = validator<GenericType<string>>(Validator);
 const genericTypeBasicTypeValidator = validator<GenericType<BasicType>>(Validator);
 const intersectValidator = validator<TypeIntersect>(Validator);
 const genericIntersectValidator = validator<GenericIntersect<number>>(Validator);
+// eslint-disable-next-line @typescript-eslint/array-type
 const genericArrayValidator = validator<GenericType<string>[]>(Validator);
-// tslint:disable-next-line: array-type
 const genericArrayValidator2 = validator<Array<GenericType<string>>>(Validator);
 
 describe('Validator', () => {
@@ -365,7 +365,7 @@ describe('Validator', () => {
 
 		describe('Arrays', () => {
 			const arrayValidator = validator<string[]>(Validator);
-			// tslint:disable-next-line: array-type
+			// eslint-disable-next-line @typescript-eslint/array-type
 			const arrayValidator2 = validator<Array<string>>(Validator);
 			const arrayValidator3 = validator<any[]>(Validator);
 

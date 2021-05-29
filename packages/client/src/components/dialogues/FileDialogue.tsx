@@ -99,29 +99,15 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		currentFolder: null,
 	};
 
-	constructor(props: FileDialogueProps) {
-		super(props);
-
-		this.onFileClick = this.onFileClick.bind(this);
-		this.onFolderClick = this.onFolderClick.bind(this);
-		this.handleSelectedFileDelete = this.handleSelectedFileDelete.bind(this);
-
-		this.addFile = this.addFile.bind(this);
-		this.goToFolder = this.goToFolder.bind(this);
-
-		this.onDialogueClose = this.onDialogueClose.bind(this);
-		this.onDialogueCloseCancel = this.onDialogueCloseCancel.bind(this);
+	public async componentDidMount(): Promise<void> {
+		await this.goToFolder(stringifyMemberReference(this.props.member));
 	}
 
-	public componentDidMount() {
-		this.goToFolder(stringifyMemberReference(this.props.member));
-	}
-
-	private get multiple() {
+	private get multiple(): boolean {
 		return this.props.multiple ?? true;
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const folderFiles = (this.state.files || []).filter(
 			f => f.contentType !== 'application/folder',
 		);
@@ -221,7 +207,7 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 												<button
 													onClick={e => {
 														e.preventDefault();
-														this.goToFolder(path.id);
+														void this.goToFolder(path.id);
 														return false;
 													}}
 													style={{
@@ -272,40 +258,42 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		);
 	}
 
-	private getViewChanger(view: FileDialogueView) {
-		return (e: React.MouseEvent<HTMLButtonElement>) => {
-			if (view === FileDialogueView.MYDRIVE) {
-				this.goToFolder(this.state.currentFolder!.id);
+	private getViewChanger = (view: FileDialogueView) => async (
+		e: React.MouseEvent<HTMLButtonElement>,
+	) => {
+		if (view === FileDialogueView.MYDRIVE) {
+			if (this.state.currentFolder) {
+				await this.goToFolder(this.state.currentFolder.id);
 				this.setState({
 					error: false,
 					view,
 					files: null,
 				});
-			} else {
-				this.setState({
-					view,
-				});
 			}
-			e.preventDefault();
-		};
-	}
+		} else {
+			this.setState({
+				view,
+			});
+		}
+		e.preventDefault();
+	};
 
-	private onFolderClick(folder: FileObject, selected: boolean) {
+	private onFolderClick = async (folder: FileObject, selected: boolean): Promise<void> => {
 		// basically set state with folder id
 		if (selected) {
 			this.setState({
 				selectedFolder: '',
 			});
 
-			this.goToFolder(folder.id);
+			await this.goToFolder(folder.id);
 		} else {
 			this.setState({
 				selectedFolder: folder.id,
 			});
 		}
-	}
+	};
 
-	private onFileClick(file: FileObject, selected: boolean) {
+	private onFileClick = (file: FileObject, selected: boolean): void => {
 		// add file to selected files if it is not selected else remove
 		if (selected) {
 			const selectedFiles = this.state.selectedFiles.filter(
@@ -320,15 +308,15 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				selectedFiles,
 			});
 		}
-	}
+	};
 
-	private handleSelectedFileDelete(file: FileObject, selected: boolean) {
+	private handleSelectedFileDelete = (file: FileObject): void => {
 		// delete the file from this.state.selectedFiles
 		const selectedFiles = this.state.selectedFiles.filter(f => f.id !== file.id);
 		this.setState({ selectedFiles });
-	}
+	};
 
-	private addFile(file: FileObject) {
+	private addFile = (file: FileObject): void => {
 		if (this.props.multiple) {
 			this.setState(prev => ({
 				selectedFiles: [...prev.selectedFiles, file].filter(
@@ -346,9 +334,9 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				});
 			}
 		}
-	}
+	};
 
-	private async goToFolder(id: string) {
+	private goToFolder = async (id: string): Promise<void> => {
 		const fileInfoEither = await AsyncEither.All([
 			fetchApi.files.children.getBasic({ parentid: id }, {}),
 			fetchApi.files.files.get({ id }, {}),
@@ -366,9 +354,9 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 				currentFolder,
 			});
 		}
-	}
+	};
 
-	private onDialogueClose() {
+	private onDialogueClose = (): void => {
 		this.props.onReturn(
 			this.state.selectedFiles.filter(this.props.filter ? this.props.filter : () => true),
 		);
@@ -376,13 +364,13 @@ export default class FileDialogue extends React.Component<FileDialogueProps, Fil
 		this.setState({
 			selectedFiles: [],
 		});
-	}
+	};
 
-	private onDialogueCloseCancel() {
+	private onDialogueCloseCancel = (): void => {
 		this.props.onReturn([]);
 
 		this.setState({
 			selectedFiles: [],
 		});
-	}
+	};
 }

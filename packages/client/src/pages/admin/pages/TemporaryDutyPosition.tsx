@@ -183,7 +183,7 @@ export default class TemporaryDutyPositions extends Page<
 		this.onDutyPositionAddChange = this.onDutyPositionAddChange.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.updateTitle('Administration', 'Temporary Duty Positions');
 		this.props.updateBreadCrumbs([
 			{
@@ -237,7 +237,7 @@ export default class TemporaryDutyPositions extends Page<
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in to view your temporary duty positions</div>;
 		}
@@ -311,7 +311,7 @@ export default class TemporaryDutyPositions extends Page<
 		);
 	}
 
-	private selectMember(currentMember: Member | null) {
+	private selectMember = (currentMember: Member | null): void => {
 		if (currentMember === null || isCAPMember(currentMember)) {
 			this.setState(prev =>
 				prev.state === 'LOADED'
@@ -322,42 +322,42 @@ export default class TemporaryDutyPositions extends Page<
 					: prev,
 			);
 		}
-	}
+	};
 
-	private getRemover(positionToRemove: string) {
-		return async () => {
-			if (this.state.state !== 'LOADED' || !this.state.currentMember.hasValue) {
-				return;
-			}
-			if (!this.props.member) {
-				return;
-			}
-
-			const dutyPositions = this.state.currentMember.value.dutyPositions.filter(
-				({ duty, type }) => type !== 'CAPUnit' || duty !== positionToRemove,
-			);
-
-			await fetchApi.member.temporaryDutyPositions.set(
-				{ id: stringifyMemberReference(this.state.currentMember.value) },
-				{ dutyPositions: dutyPositions.filter(isCAPUnitDutyPosition) },
-			);
-
-			const newMember = {
-				...this.state.currentMember.value,
-				dutyPositions,
-			};
-
-			this.setState({
-				...this.state,
-
-				currentMember: Maybe.some(newMember),
-			});
-		};
-	}
-
-	private getDutyPositionListForMember(state: TemporaryDutyPositionMemberLoadedState) {
-		if (!state.currentMember.hasValue) {
+	private getRemover = (positionToRemove: string) => async () => {
+		if (this.state.state !== 'LOADED' || !this.state.currentMember.hasValue) {
 			return;
+		}
+		if (!this.props.member) {
+			return;
+		}
+
+		const dutyPositions = this.state.currentMember.value.dutyPositions.filter(
+			({ duty, type }) => type !== 'CAPUnit' || duty !== positionToRemove,
+		);
+
+		await fetchApi.member.temporaryDutyPositions.set(
+			{ id: stringifyMemberReference(this.state.currentMember.value) },
+			{ dutyPositions: dutyPositions.filter(isCAPUnitDutyPosition) },
+		);
+
+		const newMember = {
+			...this.state.currentMember.value,
+			dutyPositions,
+		};
+
+		this.setState({
+			...this.state,
+
+			currentMember: Maybe.some(newMember),
+		});
+	};
+
+	private getDutyPositionListForMember(
+		state: TemporaryDutyPositionMemberLoadedState,
+	): JSX.Element | null {
+		if (!state.currentMember.hasValue) {
+			return null;
 		}
 
 		if (state.currentMember.value.dutyPositions.length === 0) {
@@ -387,9 +387,11 @@ export default class TemporaryDutyPositions extends Page<
 		);
 	}
 
-	private getDutyPositionAddForm(state: TemporaryDutyPositionMemberLoadedState) {
+	private getDutyPositionAddForm(
+		state: TemporaryDutyPositionMemberLoadedState,
+	): JSX.Element | null {
 		if (!state.currentMember.hasValue) {
-			return;
+			return null;
 		}
 
 		return (
@@ -421,47 +423,47 @@ export default class TemporaryDutyPositions extends Page<
 		);
 	}
 
-	private newDutyPositionSubmitter(state: TemporaryDutyPositionMemberLoadedState) {
-		return async (data: AddDutyPositionData) => {
-			if (!state.currentMember.hasValue) {
-				return;
-			}
-			if (!this.props.member) {
-				return;
-			}
+	private newDutyPositionSubmitter = (state: TemporaryDutyPositionMemberLoadedState) => async (
+		data: AddDutyPositionData,
+	) => {
+		if (!state.currentMember.hasValue) {
+			return;
+		}
+		if (!this.props.member) {
+			return;
+		}
 
-			const newMember = {
-				...state.currentMember.value,
-				dutyPositions: [
-					...state.currentMember.value.dutyPositions,
-					{
-						date: Date.now(),
-						duty: data.position,
-						expires: data.endDate,
-						type: 'CAPUnit' as const,
-					},
-				],
-			};
-
-			await fetchApi.member.temporaryDutyPositions.set(
-				{ id: stringifyMemberReference(state.currentMember.value) },
-				{ dutyPositions: newMember.dutyPositions.filter(isCAPUnitDutyPosition) },
-			);
-
-			this.setState({
-				showDutyPositionSave: true,
-				addDutyPosition: {
-					endDate: Date.now(),
-					position: '',
+		const newMember = {
+			...state.currentMember.value,
+			dutyPositions: [
+				...state.currentMember.value.dutyPositions,
+				{
+					date: Date.now(),
+					duty: data.position,
+					expires: data.endDate,
+					type: 'CAPUnit' as const,
 				},
-			});
+			],
 		};
-	}
 
-	private onDutyPositionAddChange(data: AddDutyPositionData) {
+		await fetchApi.member.temporaryDutyPositions.set(
+			{ id: stringifyMemberReference(state.currentMember.value) },
+			{ dutyPositions: newMember.dutyPositions.filter(isCAPUnitDutyPosition) },
+		);
+
+		this.setState({
+			showDutyPositionSave: true,
+			addDutyPosition: {
+				endDate: Date.now(),
+				position: '',
+			},
+		});
+	};
+
+	private onDutyPositionAddChange = (data: AddDutyPositionData): void => {
 		this.setState({
 			addDutyPosition: data,
 			showDutyPositionSave: false,
 		});
-	}
+	};
 }

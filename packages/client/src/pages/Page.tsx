@@ -51,14 +51,14 @@ export default abstract class Page<
 	S = {},
 	SS = {}
 > extends React.Component<P, S, SS> {
-	public abstract state: S;
-
 	protected isShallowOk = false;
 
 	private updatingState = false;
 	private okURL = '';
 
-	public shouldComponentUpdate(nextProps: P, nextState: S) {
+	public abstract state: S;
+
+	public shouldComponentUpdate(nextProps: P, nextState: S): boolean {
 		const urlChanged =
 			nextProps.routeProps.location.pathname !== this.okURL &&
 			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
@@ -89,26 +89,24 @@ export default abstract class Page<
 			| ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null)
 			| (Pick<S, K> | S | null),
 		callback?: () => void,
-	) {
+	): void {
 		this.updatingState = true;
 		super.setState(state, callback);
 	}
 
-	public abstract render(): JSX.Element | null;
-
-	protected updateTitle(...text: string[]) {
+	protected updateTitle(...text: string[]): void {
 		document.title = `${[this.props.registry.Website.Name, ...text].join(
 			` ${this.props.registry.Website.Separator} `,
 		)}`;
 	}
 
-	protected updateURL(text: string) {
+	protected updateURL(text: string): void {
 		this.okURL = text;
 		this.props.prepareURL(text);
 		this.props.routeProps.history.replace(text);
 	}
 
-	protected async refreshSession() {
+	protected async refreshSession(): Promise<void> {
 		const { member } = this.props;
 		if (member) {
 			const result = await fetchApi.check({}, {});
@@ -118,9 +116,11 @@ export default abstract class Page<
 			}
 		}
 	}
+
+	public abstract render(): JSX.Element | null;
 }
 
-export const shallowCompare = <T extends {}>(a: T, b: T) => {
+export const shallowCompare = <T extends {}>(a: T, b: T): boolean => {
 	let same = true;
 
 	if (a === null && b !== null) {
@@ -145,7 +145,7 @@ export const shallowCompare = <T extends {}>(a: T, b: T) => {
 	return same;
 };
 
-export const deepCompare = <T extends {}>(a: T, b: T) => {
+export const deepCompare = <T extends {}>(a: T, b: T): boolean => {
 	let same = true;
 
 	if (a === null && b !== null) {

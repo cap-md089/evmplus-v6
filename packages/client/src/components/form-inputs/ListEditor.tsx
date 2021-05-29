@@ -51,10 +51,8 @@ export default class ListEditor<
 	P extends InputProps<T> = InputProps<T>,
 	R extends React.ComponentType<P> = React.ComponentType<P>
 > extends React.Component<ListEditorProps<T, P, R>> {
-	constructor(props: ListEditorProps<T, P, R>) {
+	public constructor(props: ListEditorProps<T, P, R>) {
 		super(props);
-
-		this.addItem = this.addItem.bind(this);
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
@@ -64,7 +62,7 @@ export default class ListEditor<
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const Input = this.props.inputComponent;
 
 		return (
@@ -90,14 +88,13 @@ export default class ListEditor<
 								index,
 							};
 
-							// Don't know why Omit<P, T> & Pick<P, T> doesn't equal P
-							// @ts-ignore
+							// @ts-ignore: Don't know why Omit<P, T> & Pick<P, T> doesn't equal P
 							const props: P = {
 								...knownProps,
 								...extraProps,
 							};
 
-							// @ts-ignore
+							// @ts-ignore: Don't know why Omit<P, T> & Pick<P, T> doesn't equal P
 							const input = <Input {...props} />;
 
 							return (
@@ -116,7 +113,7 @@ export default class ListEditor<
 										<Button
 											buttonType="secondaryButton"
 											onClick={this.getRemoveItem(index)}
-											className={`listEditor-removeItem${props.fullWidth}`}
+											className={`listEditor-removeItem`}
 										>
 											{this.props.removeText || 'Remove item'}
 										</Button>
@@ -156,28 +153,31 @@ export default class ListEditor<
 		);
 	}
 
-	private getChangeHandler(index: number) {
-		return ({ value }: { value: T; name: string }) => {
-			const oldValues = (this.props.value || []).slice();
+	private getChangeHandler = (index: number) => ({
+		value,
+	}: {
+		value: T;
+		name: string;
+	}): boolean => {
+		const oldValues = (this.props.value || []).slice();
 
-			oldValues[index] = value;
+		oldValues[index] = value;
 
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value: oldValues,
-				});
-			}
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: oldValues,
+			});
+		}
 
-			if (this.props.onChange) {
-				this.props.onChange(oldValues);
-			}
+		if (this.props.onChange) {
+			this.props.onChange(oldValues);
+		}
 
-			return typeof this.props.allowChange === 'undefined' ? true : this.props.allowChange;
-		};
-	}
+		return typeof this.props.allowChange === 'undefined' ? true : this.props.allowChange;
+	};
 
-	private addItem() {
+	private addItem = (): void => {
 		const oldValues = (this.props.value || []).slice();
 
 		oldValues.push(this.props.addNew());
@@ -192,24 +192,22 @@ export default class ListEditor<
 		if (this.props.onChange) {
 			this.props.onChange(oldValues);
 		}
-	}
+	};
 
-	private getRemoveItem(index: number) {
-		return () => {
-			const value = (this.props.value || []).slice();
+	private getRemoveItem = (index: number) => (): void => {
+		const value = (this.props.value || []).slice();
 
-			value.splice(index, 1);
+		value.splice(index, 1);
 
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value,
-				});
-			}
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value,
+			});
+		}
 
-			if (this.props.onChange) {
-				this.props.onChange(value);
-			}
-		};
-	}
+		if (this.props.onChange) {
+			this.props.onChange(value);
+		}
+	};
 }

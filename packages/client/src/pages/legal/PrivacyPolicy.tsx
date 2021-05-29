@@ -4,7 +4,7 @@ const lineHeight = {
 	lineHeight: '1.6em',
 } as const;
 
-export const PrivacyPolicy = () => (
+export const PrivacyPolicy = (): JSX.Element => (
 	<div style={lineHeight}>
 		<h2>Welcome to EvMPlus.org</h2>
 		<h3>Your privacy is critically important to us.</h3>

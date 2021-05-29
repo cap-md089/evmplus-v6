@@ -19,7 +19,7 @@
 
 import { collectGeneratorAsync } from 'common-lib';
 import { getTestEvent, getTestRawAttendanceRecord } from 'common-lib/dist/test';
-import { getDbRef, setPresetRecords, TestConnection } from 'server-jest-config';
+import { getDbHandle, setPresetRecords, TestConnection } from 'server-jest-config';
 import { getAttendanceForEvent } from '../Attendance';
 
 const testEvent = getTestEvent();
@@ -43,7 +43,7 @@ const testSetup = setPresetRecords({
 });
 
 describe('Attendance', () => {
-	const dbref = getDbRef();
+	const dbref = getDbHandle();
 
 	beforeAll(TestConnection.setup(dbref));
 	afterAll(TestConnection.teardown(dbref));

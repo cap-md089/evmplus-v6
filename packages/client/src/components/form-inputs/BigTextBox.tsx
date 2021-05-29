@@ -22,10 +22,8 @@ import { TextInputProps } from './TextInput';
 import './BigTextBox.scss';
 
 export default class BigTextBox extends React.Component<TextInputProps> {
-	constructor(props: TextInputProps) {
+	public constructor(props: TextInputProps) {
 		super(props);
-
-		this.onChange = this.onChange.bind(this);
 
 		if (props.onInitialize) {
 			props.onInitialize({
@@ -35,34 +33,32 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 		}
 	}
 
-	public render() {
-		return (
-			<div
-				className="input-formbox"
+	public render = (): JSX.Element => (
+		<div
+			className="input-formbox"
+			style={{
+				clear: this.props.fullWidth ? 'both' : undefined,
+				width: this.props.fullWidth ? '90%' : undefined,
+				...this.props.boxStyles,
+			}}
+		>
+			<textarea
+				onChange={this.onChange}
+				value={this.props.value}
 				style={{
-					clear: this.props.fullWidth ? 'both' : undefined,
-					width: this.props.fullWidth ? '90%' : undefined,
-					...this.props.boxStyles,
+					resize: 'none',
+					width: this.props.fullWidth ? '100%' : undefined,
+					...this.props.inputStyles,
 				}}
-			>
-				<textarea
-					onChange={this.onChange}
-					value={this.props.value}
-					style={{
-						resize: 'none',
-						width: this.props.fullWidth ? '100%' : undefined,
-						...this.props.inputStyles,
-					}}
-					cols={50}
-					rows={5}
-					placeholder={this.props.placeholder}
-					disabled={this.props.disabled}
-				/>
-			</div>
-		);
-	}
+				cols={50}
+				rows={5}
+				placeholder={this.props.placeholder}
+				disabled={this.props.disabled}
+			/>
+		</div>
+	);
 
-	private onChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+	private onChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
 		const text = e.currentTarget.value;
 
 		let change = true;
@@ -84,5 +80,5 @@ export default class BigTextBox extends React.Component<TextInputProps> {
 				this.props.onChange(text);
 			}
 		}
-	}
+	};
 }

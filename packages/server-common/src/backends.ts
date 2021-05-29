@@ -18,21 +18,14 @@
  */
 
 import { ServerAPIEndpoint, ServerEither } from 'auto-client-api';
-import {
-	APIEither,
-	APIEndpoint,
-	asyncLeft,
-	asyncRight,
-	errorGenerator,
-	ServerError,
-} from 'common-lib';
+import { APIEither, APIEndpoint, asyncLeft, asyncRight, errorGenerator } from 'common-lib';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { v4 as uuid } from 'uuid';
 import { BasicAccountRequest } from './Account';
 
-export const notImplementedError = <T>(funcName: string) =>
-	asyncLeft<ServerError, T>({
+export const notImplementedError = <T>(funcName: string): ServerEither<T> =>
+	asyncLeft({
 		type: 'OTHER',
 		code: 400,
 		message: `Function '${funcName}' not implemented`,
@@ -44,7 +37,7 @@ export class NotImplementedException extends Error {
 	}
 }
 
-export const notImplementedException = (funcName: string) => {
+export const notImplementedException = (funcName: string): never => {
 	throw new NotImplementedException(funcName);
 };
 
@@ -71,12 +64,15 @@ export const combineBackends = <R, U extends any[]>(
 	let backend: any = {};
 
 	for (const backendAdder of backendAdders as any) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		backend = {
-			...backendAdder(req as R, backend),
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+			...backendAdder(req, backend),
 			...backend,
 		};
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return backend;
 };
 
@@ -89,19 +85,13 @@ export const withBackends = <
 >(
 	func: F,
 	backendGenerator: (req: R) => F extends BackedServerAPIEndpoint<infer B, E> ? B : never,
-): ReturnType<F> => {
-	return (req => {
-		const backend = backendGenerator(req as R);
-
-		return func(backend)(req);
-	}) as ReturnType<F>;
-};
+): ReturnType<F> => (req => func(backendGenerator(req as R))(req)) as ReturnType<F>;
 
 export interface TimeBackend {
 	now: () => number;
 }
 
-export const getTimeBackend = () => ({
+export const getTimeBackend = (): TimeBackend => ({
 	now: Date.now,
 });
 

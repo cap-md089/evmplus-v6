@@ -42,31 +42,16 @@ export default class ExtraFolderDisplay extends React.Component<
 	ExtraDisplayProps & { currentFolderID: string },
 	ExtraDisplayState
 > {
-	public static getDerivedStateFromProps(props: ExtraDisplayProps) {
-		return {
-			comments: props.file.comments,
-		};
-	}
-
 	public state = {
 		comments: this.props.file.comments,
 		permissionsOpen: false,
 	};
 
-	constructor(props: ExtraDisplayProps & { currentFolderID: string }) {
-		super(props);
+	public static getDerivedStateFromProps = (props: ExtraDisplayProps): { comments: string } => ({
+		comments: props.file.comments,
+	});
 
-		this.onFormChange = this.onFormChange.bind(this);
-		this.onFileChangeFormSubmit = this.onFileChangeFormSubmit.bind(this);
-
-		this.saveFiles = this.saveFiles.bind(this);
-
-		this.openPermissions = this.openPermissions.bind(this);
-		this.onPermissionsChange = this.onPermissionsChange.bind(this);
-		this.onPermissionsCancel = this.onPermissionsCancel.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element | null {
 		const userCanModify = canModify(this.props.member);
 
 		// All of these file IDs represent special, virtual folders that cannot be modified by regular users
@@ -128,14 +113,14 @@ export default class ExtraFolderDisplay extends React.Component<
 		);
 	}
 
-	private onFormChange(formState: CommentsForm) {
+	private onFormChange = (formState: CommentsForm): void => {
 		this.props.fileModify({
 			...this.props.file,
 			...formState,
 		});
-	}
+	};
 
-	private async onFileChangeFormSubmit(formState: CommentsForm) {
+	private onFileChangeFormSubmit = async (formState: CommentsForm): Promise<void> => {
 		if (this.props.member) {
 			await fetchApi.files.files.setInfo({ fileid: this.props.file.id }, formState);
 
@@ -144,9 +129,9 @@ export default class ExtraFolderDisplay extends React.Component<
 				...formState,
 			});
 		}
-	}
+	};
 
-	private async saveFiles() {
+	private saveFiles = async (): Promise<void> => {
 		const member = this.props.member;
 
 		if (!member) {
@@ -164,7 +149,7 @@ export default class ExtraFolderDisplay extends React.Component<
 
 		const children = childrenEither.value.filter(Either.isRight).map(get('value'));
 
-		const moveSuccess = pipe(
+		const moveSuccess = await pipe(
 			asyncIterMap<FileObject, APIEither<void>>((file: FileObject) =>
 				fetchApi.files.children.add(
 					{ parentid: this.props.parentFile.id },
@@ -188,21 +173,21 @@ export default class ExtraFolderDisplay extends React.Component<
 		}
 
 		this.props.fileDelete(this.props.file);
-	}
+	};
 
-	private openPermissions() {
+	private openPermissions = (): void => {
 		this.setState({
 			permissionsOpen: true,
 		});
-	}
+	};
 
-	private onPermissionsCancel() {
+	private onPermissionsCancel = (): void => {
 		this.setState({
 			permissionsOpen: false,
 		});
-	}
+	};
 
-	private async onPermissionsChange(file: FileObject) {
+	private onPermissionsChange = async (file: FileObject): Promise<void> => {
 		await fetchApi.files.files.setInfo({ fileid: file.id }, file);
 
 		this.setState({
@@ -210,5 +195,5 @@ export default class ExtraFolderDisplay extends React.Component<
 		});
 
 		this.props.fileModify(file);
-	}
+	};
 }

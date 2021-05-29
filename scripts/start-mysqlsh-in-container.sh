@@ -19,4 +19,4 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-mysql-shell-8.0.25-linux-glibc2.12-x86-64bit/bin/mysqlsh --password=$(cat /run/secrets/db_password) --user=$(cat /run/secrets/db_user) --host=$DB_HOST --schema=$DB_SCHEMA
+/usr/local/mysql-shell/bin/mysqlsh --password=$(cat /run/secrets/mysql_root_password) --user=root --host=$DB_HOST --schema=$DB_SCHEMA "$@"

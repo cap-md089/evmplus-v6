@@ -30,7 +30,9 @@ import { Maybe, MaybeObj } from './Maybe';
 import { areMembersTheSame } from './Member';
 import { call, get } from './Util';
 
-export const isPartOfTeam = (member: MemberReference) => {
+export const isPartOfTeam = (
+	member: MemberReference,
+): ((team: NewTeamObject | RawTeamObject) => boolean) => {
 	const checker = areMembersTheSame(member);
 
 	const leaderChecker = pipe(Maybe.map(checker), Maybe.orSome(false));
@@ -44,7 +46,9 @@ export const isPartOfTeam = (member: MemberReference) => {
 			.some(areMembersTheSame(member));
 };
 
-export const isTeamLeader = (member: MemberReference) => {
+export const isTeamLeader = (
+	member: MemberReference,
+): ((team: NewTeamObject | RawTeamObject) => boolean) => {
 	const checker = areMembersTheSame(member);
 
 	const leaderChecker = pipe(Maybe.map(checker), Maybe.orSome(false));
@@ -55,8 +59,10 @@ export const isTeamLeader = (member: MemberReference) => {
 		leaderChecker(team.seniorMentor);
 };
 
-export const canSeeMembership = (member: MaybeObj<MemberReference>) => {
-	const isPartOfTeamChecker = (team: NewTeamObject) =>
+export const canSeeMembership = (
+	member: MaybeObj<MemberReference>,
+): ((team: NewTeamObject | RawTeamObject) => boolean) => {
+	const isPartOfTeamChecker = (team: NewTeamObject): boolean =>
 		pipe(
 			Maybe.map<MemberReference, (team: NewTeamObject) => boolean>(isPartOfTeam),
 			Maybe.map(call(team)),

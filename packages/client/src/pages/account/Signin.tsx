@@ -65,9 +65,9 @@ const signinErrorMessages = {
 	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA',
 };
 
-const validateNotEmpty = (val: string | null) => !!val;
+const validateNotEmpty = (val: string | null): val is string => !!val;
 
-const validateNewPasswords = (val: string, others: ResetPasswordFormValues) => !!val;
+const validateNewPasswords = (val: string): boolean => !!val;
 
 export default class Signin extends Page<PageProps<{ returnurl?: string }>, SigninState> {
 	public state: SigninState = {
@@ -104,27 +104,19 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 		return params.returnurl || '/';
 	}
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.trySignin = this.trySignin.bind(this);
-		this.resetPassword = this.resetPassword.bind(this);
-		this.useMFAToken = this.useMFAToken.bind(this);
-	}
-
-	public componentDidMount() {
+	public componentDidMount(): void {
 		if (this.props.member) {
 			this.go();
 		}
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		this.mfaTokenInputRef.current?.focus();
 	}
 
-	public render() {
-		return this.state.error !== MemberCreateError.PASSWORD_EXPIRED &&
-			this.state.error !== MemberCreateError.ACCOUNT_USES_MFA ? (
+	public render = (): JSX.Element =>
+		this.state.error !== MemberCreateError.PASSWORD_EXPIRED &&
+		this.state.error !== MemberCreateError.ACCOUNT_USES_MFA ? (
 			<div>
 				Enter your EvMPlus.org login information below to sign in to the site. By logging
 				into this site you agree to the terms and conditions located{' '}
@@ -230,9 +222,8 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				</SimpleForm>
 			</div>
 		);
-	}
 
-	private async trySignin() {
+	private trySignin = async (): Promise<void> => {
 		this.setState({
 			tryingSignin: true,
 			error: MemberCreateError.NONE,
@@ -273,16 +264,16 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				tryingSignin: false,
 			});
 		} else {
-			// @ts-ignore
 			window.grecaptcha.reset();
+
 			this.setState({
 				error: signinResults.error,
 				tryingSignin: false,
 			});
 		}
-	}
+	};
 
-	private async resetPassword() {
+	private resetPassword = async (): Promise<void> => {
 		this.setState({
 			tryingPasswordReset: true,
 		});
@@ -303,9 +294,9 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 			this.props.authorizeUser(member);
 			this.go();
 		}
-	}
+	};
 
-	private async useMFAToken() {
+	private useMFAToken = async (): Promise<void> => {
 		this.setState({
 			tryingMFAToken: true,
 		});
@@ -333,9 +324,9 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				});
 			}
 		}
-	}
+	};
 
-	private go() {
+	private go(): void {
 		const returnUrl = this.returnUrl;
 
 		if (returnUrl.startsWith('/api')) {

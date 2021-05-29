@@ -55,42 +55,40 @@ export default class FinishPasswordResetForm extends Page<
 		this.submit = this.submit.bind(this);
 	}
 
-	public render() {
-		return (
-			<SimpleForm<FinishPasswordResetFormValues>
-				values={this.state.form}
-				onChange={form => this.setState({ form })}
-				onSubmit={this.submit}
-				disableOnInvalid={true}
-				validator={{
-					newPassword: val => val !== null,
-				}}
-				submitInfo={{
-					disabled: this.state.tryingSubmit,
-					text: 'Request password reset',
-				}}
-			>
-				<Title>Password reset</Title>
+	public render = (): JSX.Element => (
+		<SimpleForm<FinishPasswordResetFormValues>
+			values={this.state.form}
+			onChange={form => this.setState({ form })}
+			onSubmit={this.submit}
+			disableOnInvalid={true}
+			validator={{
+				newPassword: val => val !== null,
+			}}
+			submitInfo={{
+				disabled: this.state.tryingSubmit,
+				text: 'Request password reset',
+			}}
+		>
+			<Title>Password reset</Title>
 
-				{this.state.error !== null ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.error !== null ? (
-					<TextBox>
-						<b style={{ color: 'red' }}>{this.state.error}</b>
-					</TextBox>
-				) : null}
-
+			{this.state.error !== null ? (
+				// Used for spacing
 				<Label />
-				<TextBox>Enter a new password</TextBox>
+			) : null}
+			{this.state.error !== null ? (
+				<TextBox>
+					<b style={{ color: 'red' }}>{this.state.error}</b>
+				</TextBox>
+			) : null}
 
-				<PasswordForm name="newPassword" fullWidth={true} />
-			</SimpleForm>
-		);
-	}
+			<Label />
+			<TextBox>Enter a new password</TextBox>
 
-	private async submit(form: FinishPasswordResetFormValues) {
+			<PasswordForm name="newPassword" fullWidth={true} />
+		</SimpleForm>
+	);
+
+	private submit = async (form: FinishPasswordResetFormValues): Promise<void> => {
 		const { newPassword } = form;
 
 		if (!newPassword) {
@@ -119,5 +117,5 @@ export default class FinishPasswordResetForm extends Page<
 			this.props.authorizeUser(member);
 			this.props.routeProps.history.push('/admin');
 		}
-	}
+	};
 }

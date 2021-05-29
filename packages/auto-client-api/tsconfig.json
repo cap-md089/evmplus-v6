@@ -7,7 +7,7 @@
 		"incremental": true,
 		"tsBuildInfoFile": "../../buildcache/auto-client-api.build.tsbuildinfo"
 	},
-	"include": ["src/**/*.ts"],
+	"include": ["src/**/*.ts", "index.d.ts"],
 	"exclude": ["node_modules"],
 	"references": [
 		{ "path": "../common-lib/tsconfig.build.json" }

@@ -82,6 +82,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validate: Either.right,
 	};
 
+	// eslint-disable-next-line id-blacklist
 	public static Number: ValidatorFunction<number> = {
 		validate: (input, keyName) =>
 			typeof input === 'number'
@@ -94,6 +95,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 				  }),
 	};
 
+	// eslint-disable-next-line id-blacklist
 	public static String: ValidatorFunction<string> = {
 		validate: (input, keyName) =>
 			typeof input === 'string'
@@ -106,6 +108,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 				  }),
 	};
 
+	// eslint-disable-next-line id-blacklist
 	public static Boolean: ValidatorFunction<boolean> = {
 		validate: (input, keyName) =>
 			typeof input === 'boolean'
@@ -118,15 +121,15 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 				  }),
 	};
 
-	public static Optional = <T>(func: ValidatorImpl<T>): ValidatorFunction<T | undefined> => ({
+	public static Optional = <U>(func: ValidatorImpl<U>): ValidatorFunction<U | undefined> => ({
 		validate: (input, keyName) =>
 			input === undefined
-				? Either.right<ValidatorFail, T | undefined>(undefined)
-				: callValidator<T>(func)(keyName)(input),
+				? Either.right<ValidatorFail, U | undefined>(undefined)
+				: callValidator<U>(func)(keyName)(input),
 	});
 
-	public static Required = <T>(validators: ValidateRuleSet<T>): ValidatorImpl<Required<T>> => {
-		const fields: ValidateRuleSet<Required<T>> = {} as any;
+	public static Required = <U>(validators: ValidateRuleSet<U>): ValidatorImpl<Required<U>> => {
+		const fields = ({} as unknown) as ValidateRuleSet<Required<U>>;
 
 		for (const field in validators) {
 			if (validators.hasOwnProperty(field)) {
@@ -137,7 +140,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		return new Validator(fields);
 	};
 
-	public static Partial = <T>(validators: ValidateRuleSet<T>): ValidatorImpl<Partial<T>> => ({
+	public static Partial = <U>(validators: ValidateRuleSet<U>): ValidatorImpl<Partial<U>> => ({
 		validate: (input, keyName) => {
 			if (typeof input !== 'object' || input === null) {
 				return Either.left({
@@ -148,8 +151,8 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 				});
 			}
 
-			const errors: ValidatorFailObject<T>['errors'] = {};
-			const result: Partial<T> = {};
+			const errors: ValidatorFailObject<U>['errors'] = {};
+			const result: Partial<U> = {};
 
 			let hasError = false,
 				validator,
@@ -183,10 +186,12 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 	});
 
 	public static Enum = <E extends number>(
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 		value: any,
 		enumName: string,
 	): ValidatorFunction<E> => ({
 		validate: (input, keyName) =>
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			typeof value[input as any] !== 'string'
 				? Either.left({
 						keyName,
@@ -307,16 +312,14 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator10: ValidatorFunc<S10>,
 	): ValidatorFunction<S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 | S10>;
 
+	// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 	public static Or(
 		correctType: string,
 		...validators: Array<Validator<any> | ValidatorFunction<any>>
 	): ValidatorFunction<any> {
 		return {
 			validate: (input, keyName) => {
-				const results = validators
-					.map(callValidator)
-					.map(call(keyName))
-					.map(call(input));
+				const results = validators.map(callValidator).map(call(keyName)).map(call(input));
 
 				const errors = results.filter(Either.isLeft).map(get('value'));
 
@@ -421,6 +424,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		validator10: ValidatorFunc<S10>,
 	): ValidatorFunction<S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10>;
 
+	// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 	public static And(
 		correctType: string,
 		...validators: Array<Validator<any> | ValidatorFunction<any>>
@@ -446,14 +450,16 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		};
 	}
 
-	public static StrictValue = <T>(value: T): ValidatorFunction<T> => ({
+	public static StrictValue = <U>(value: U): ValidatorFunction<U> => ({
 		validate: (input, keyName) =>
 			input === value
-				? Either.right(input as T)
+				? Either.right(input as U)
 				: Either.left({
 						correctType: 'const',
 						keyName,
-						message: `Provided value did not match input value: ${input} vs ${value}`,
+						message: `Provided value did not match input value: ${input as string} vs ${
+							(value as unknown) as string
+						}`,
 						valueReceived: input,
 				  }),
 	});
@@ -545,69 +551,69 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 		...values: T[]
 	): ValidatorFunction<T>;
 
-	public static OneOfStrict<T extends any[]>(
+	// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+	public static OneOfStrict<U extends any[]>(
 		correctType: string,
-		...values: T
+		...values: U
 	): ValidatorFunction<any> {
-		// @ts-ignore
+		// @ts-ignore: OneOfStrict is essentially Or just with strict values
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return Validator.Or.apply({}, [correctType, ...values.map(Validator.StrictValue)]);
 	}
 
-	public static Values<T>(
-		valueValidator: ValidatorFunc<T>,
-	): ValidatorFunction<{ [key: string]: T }> {
-		return {
-			validate: (input, keyName) => {
-				if (input === undefined || input === null) {
-					return Either.left({
-						correctType: 'object',
-						keyName,
-						message: 'not defined',
-						valueReceived: input,
-					});
-				}
+	public static Values = <U>(
+		valueValidator: ValidatorFunc<U>,
+	): ValidatorFunction<{ [key: string]: U }> => ({
+		validate: (input, keyName) => {
+			if (input === undefined || input === null) {
+				return Either.left({
+					correctType: 'object',
+					keyName,
+					message: 'not defined',
+					valueReceived: input,
+				});
+			}
 
-				if (typeof input !== 'object') {
-					return Either.left({
-						correctType: 'object',
-						keyName,
-						message: 'not an object',
-						valueReceived: input,
-					});
-				}
+			if (typeof input !== 'object') {
+				return Either.left({
+					correctType: 'object',
+					keyName,
+					message: 'not an object',
+					valueReceived: input,
+				});
+			}
 
-				const errors: ValidatorFailMap['errors'] = {};
-				const newInput = input as { [key: string]: unknown };
-				let hasError = false;
+			const errors: ValidatorFailMap['errors'] = {};
+			const newInput = input as { [key: string]: unknown };
+			let hasError = false;
 
-				for (const key in newInput) {
-					if (newInput.hasOwnProperty(key)) {
-						const obj = newInput[key];
+			for (const key in newInput) {
+				if (newInput.hasOwnProperty(key)) {
+					const obj = newInput[key];
 
-						const result = callValidator(valueValidator)(keyName)(obj);
-						if (result.direction === 'left') {
-							errors[key] = result.value;
-							hasError = true;
-						}
+					const result = callValidator(valueValidator)(keyName)(obj);
+					if (result.direction === 'left') {
+						errors[key] = result.value;
+						hasError = true;
 					}
 				}
+			}
 
-				return !hasError
-					? Either.right(input as { [key: string]: T })
-					: Either.left({
-							correctType: 'object',
-							keyName,
-							message: 'object properties do not match ',
-							errors,
-							valueReceived: input,
-					  });
-			},
-		};
-	}
+			return !hasError
+				? Either.right(input as { [key: string]: U })
+				: Either.left({
+						correctType: 'object',
+						keyName,
+						message: 'object properties do not match ',
+						errors,
+						valueReceived: input,
+				  });
+		},
+	});
 
-	private static RequiredPropertyWrapper = <T>(
-		func: ValidatorImpl<T | undefined>,
-	): ValidatorImpl<T> => ({
+	private static RequiredPropertyWrapper = <U>(
+		func: ValidatorImpl<U | undefined>,
+	): ValidatorImpl<U> => ({
 		validate: (input, keyName) =>
 			input === undefined
 				? Either.left({
@@ -616,17 +622,25 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 						message: `${keyName} is required`,
 						valueReceived: input,
 				  })
-				: (func as ValidatorImpl<T>).validate(input, keyName),
+				: (func as ValidatorImpl<U>).validate(input, keyName),
 	});
 
-	public constructor(public readonly rules: ValidateRuleSet<T>) {
-		this.validate = this.validate.bind(this);
-	}
+	// eslint-disable-next-line no-empty-function
+	public constructor(public readonly rules: ValidateRuleSet<T>) {}
 
-	public validate(
-		obj: any,
+	public validate = (
+		obj: unknown,
 		keyName = '',
-	): EitherObj<ValidatorFailObject<T> | ValidatorFailBase, T> {
+	): EitherObj<ValidatorFailObject<T> | ValidatorFailBase, T> => {
+		if (typeof obj !== 'object') {
+			return Either.left({
+				correctType: 'object',
+				keyName,
+				message: 'Value received is not an object',
+				valueReceived: obj,
+			});
+		}
+
 		if (obj === undefined || obj === null) {
 			return Either.left({
 				correctType: 'object',
@@ -643,8 +657,8 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 
 		for (const key in this.rules) {
 			if (this.rules.hasOwnProperty(key)) {
-				const value = obj[key];
-				const rule = this.rules[key];
+				const value: unknown = obj[key as keyof object];
+				const rule = this.rules[key as keyof T];
 
 				const result = callValidator(rule)(key)(value);
 
@@ -652,7 +666,7 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 					hasError = true;
 					errors[key] = result.value;
 				} else {
-					returnObject[key] = result.value;
+					returnObject[key as keyof T] = result.value;
 				}
 			}
 		}
@@ -666,5 +680,5 @@ export default class Validator<T extends object> implements ValidatorImpl<T> {
 					valueReceived: obj,
 			  })
 			: Either.right(returnObject);
-	}
+	};
 }

@@ -17,9 +17,11 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { generateAPITree } from 'auto-client-api';
+import { APITree, generateAPITree } from 'auto-client-api';
 import { api, defaultAPICallBase } from 'common-lib';
 
+// Must be type definition to work with macros
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type Tree = {
 	errors: {
 		clientError: api.errors.ClientError;
@@ -169,7 +171,7 @@ type Tree = {
 	token: api.FormToken;
 };
 
-export default (fetchFunction: typeof fetch) => {
+export default (fetchFunction: typeof fetch): APITree<Tree> => {
 	const caller = defaultAPICallBase(fetchFunction);
 
 	return generateAPITree<Tree>(caller);

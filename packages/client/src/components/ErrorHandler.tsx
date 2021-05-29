@@ -17,9 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import esp, { StackFrame } from 'error-stack-parser';
+import { AccountObject, ClientUser, NewClientErrorObject } from 'common-lib';
+import esp from 'error-stack-parser';
 import * as React from 'react';
-import { NewClientErrorObject, ClientUser, AccountObject } from 'common-lib';
 import fetchApi from '../lib/apis';
 
 export default class ErrorHandler extends React.PureComponent<
@@ -35,17 +35,11 @@ export default class ErrorHandler extends React.PureComponent<
 		crash: false,
 	};
 
-	constructor(props: { member: ClientUser | null; account: AccountObject }) {
-		super(props);
-
-		this.tryAgain = this.tryAgain.bind(this);
-	}
-
-	public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-		// tslint:disable-next-line:no-console
+	public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+		// eslint-disable-next-line no-console
 		console.log(error);
 
-		const stacks = esp.parse.bind(esp)(error) as StackFrame[];
+		const stacks = esp.parse.bind(esp)(error);
 
 		const errorObject: NewClientErrorObject = {
 			componentStack: errorInfo.componentStack,
@@ -63,11 +57,11 @@ export default class ErrorHandler extends React.PureComponent<
 
 		fetchApi.errors.clientError({}, errorObject).then(
 			() => {
-				// tslint:disable-next-line:no-console
+				// eslint-disable-next-line no-console
 				console.log('Error logged');
 			},
 			() => {
-				// tslint:disable-next-line:no-console
+				// eslint-disable-next-line no-console
 				console.log('Failed to log error');
 			},
 		);
@@ -77,8 +71,8 @@ export default class ErrorHandler extends React.PureComponent<
 		});
 	}
 
-	public render() {
-		return this.state.crash ? (
+	public render = (): JSX.Element | React.ReactNode =>
+		this.state.crash ? (
 			<div>
 				<h1>Uh oh! Something bad happened on our end...</h1>
 				The page appears to have crashed. The developers have been notified so that they may
@@ -87,15 +81,14 @@ export default class ErrorHandler extends React.PureComponent<
 					please refresh the page
 				</button>
 				.{' '}
-				{/*If you want to provide feedback, please submit feedback
+				{/* If you want to provide feedback, please submit feedback
 				through our feedback form */}
 			</div>
 		) : (
 			this.props.children
 		);
-	}
 
-	private tryAgain() {
+	private tryAgain = (): void => {
 		this.setState({ crash: false });
-	}
+	};
 }

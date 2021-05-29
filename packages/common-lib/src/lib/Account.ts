@@ -56,13 +56,13 @@ export const isRegularCAPAccountObject = (
 	account.type === AccountType.CAPSQUADRON ||
 	account.type === AccountType.CAPWING;
 
-export const getORGIDFromAccount = (account: RegularCAPAccountObject) =>
+export const getORGIDFromAccount = (account: RegularCAPAccountObject): number =>
 	account.type === AccountType.CAPSQUADRON ? account.mainOrg : account.orgid;
 
-export const renderAccountID = (account: RawCAPSquadronAccountObject) =>
+export const renderAccountID = (account: RawCAPSquadronAccountObject): string =>
 	`${account.id.replace(/([a-zA-Z]{3})([a-zA-Z]{2})([0-9]*)/, '$1-$2-$3').toUpperCase()}`;
 
-export const getEmbedLink = (account: AccountObject) =>
+export const getEmbedLink = (account: AccountObject): string =>
 	`<iframe src=\"https://calendar.google.com/calendar/embed?src=${encodeURIComponent(
 		account.mainCalendarID,
 	)}&ctz=America%2FNew_York\" style=\"border: 0\" width=\"720\" height=\"540\" frameborder=\"0\" scrolling=\"no\"></iframe>`;
@@ -76,7 +76,9 @@ export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<num
 		? Maybe.some([account.orgid, ...account.orgIDs])
 		: Maybe.none();
 
-export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (user: ClientUser) => {
+export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (
+	user: ClientUser,
+): boolean => {
 	const duties = user.dutyPositions
 		.filter(
 			duty =>

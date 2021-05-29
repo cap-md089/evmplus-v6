@@ -60,7 +60,7 @@ interface ProspectiveMemberManagementLoadedState {
 interface ProspectiveMemberManagementUIState {
 	upgradeMemberTarget: MaybeObj<CAPProspectiveMemberObject>;
 	deleteMemberTarget: MaybeObj<CAPProspectiveMemberObject>;
-	upgradeMemberFilterValues: any[];
+	upgradeMemberFilterValues: [string];
 	selectedUpgradeMember: CAPNHQMemberObject | null;
 }
 
@@ -83,24 +83,7 @@ export default class ProspectiveMemberManagement extends Page<
 		selectedUpgradeMember: null,
 	};
 
-	constructor(props: PageProps) {
-		super(props);
-
-		this.startDeleteMember = this.startDeleteMember.bind(this);
-		this.startUpgradeMember = this.startUpgradeMember.bind(this);
-
-		this.upgradeMember = this.upgradeMember.bind(this);
-		this.deleteMember = this.deleteMember.bind(this);
-
-		this.cancelDeleteMember = this.cancelDeleteMember.bind(this);
-		this.cancelUpgradeMember = this.cancelUpgradeMember.bind(this);
-
-		this.updateFilterValues = this.updateFilterValues.bind(this);
-
-		this.selectUpgradeMember = this.selectUpgradeMember.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.updateTitle('Prospective Member Management');
 		this.props.updateSideNav([]);
 		this.props.updateBreadCrumbs([
@@ -154,7 +137,7 @@ export default class ProspectiveMemberManagement extends Page<
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (
 			!this.props.member ||
 			!hasPermission('ProspectiveMemberManagement')(
@@ -175,7 +158,7 @@ export default class ProspectiveMemberManagement extends Page<
 		return (
 			<>
 				{Maybe.isSome(this.state.upgradeMemberTarget) ? null : null}
-				<DownloadDialogue<CAPNHQMemberObject>
+				<DownloadDialogue<CAPNHQMemberObject, [string]>
 					open={Maybe.isSome(this.state.upgradeMemberTarget)}
 					multiple={false}
 					overflow={400}
@@ -194,8 +177,8 @@ export default class ProspectiveMemberManagement extends Page<
 								}
 
 								try {
-									return !!getFullMemberName(memberToCheck).match(
-										new RegExp(input, 'gi'),
+									return !!new RegExp(input, 'gi').exec(
+										getFullMemberName(memberToCheck),
 									);
 								} catch (e) {
 									return false;
@@ -255,31 +238,31 @@ export default class ProspectiveMemberManagement extends Page<
 		);
 	}
 
-	private startDeleteMember(member: CAPProspectiveMemberObject) {
+	private startDeleteMember = (member: CAPProspectiveMemberObject): void => {
 		this.setState({
 			deleteMemberTarget: Maybe.some(member),
 		});
-	}
+	};
 
-	private startUpgradeMember(member: CAPProspectiveMemberObject) {
+	private startUpgradeMember = (member: CAPProspectiveMemberObject): void => {
 		this.setState({
 			upgradeMemberTarget: Maybe.some(member),
 		});
-	}
+	};
 
-	private cancelDeleteMember() {
+	private cancelDeleteMember = (): void => {
 		this.setState({
 			upgradeMemberTarget: Maybe.none(),
 		});
-	}
+	};
 
-	private cancelUpgradeMember() {
+	private cancelUpgradeMember = (): void => {
 		this.setState({
 			upgradeMemberTarget: Maybe.none(),
 		});
-	}
+	};
 
-	private async upgradeMember(targetMember: CAPNHQMemberObject | null) {
+	private upgradeMember = async (targetMember: CAPNHQMemberObject | null): Promise<void> => {
 		if (!targetMember || Maybe.isNone(this.state.upgradeMemberTarget) || !this.props.member) {
 			return;
 		}
@@ -304,9 +287,9 @@ export default class ProspectiveMemberManagement extends Page<
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private async deleteMember() {
+	private deleteMember = async (): Promise<void> => {
 		if (Maybe.isNone(this.state.deleteMemberTarget) || !this.props.member) {
 			return;
 		}
@@ -328,17 +311,17 @@ export default class ProspectiveMemberManagement extends Page<
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private updateFilterValues(filterValues: any[]) {
+	private updateFilterValues = (filterValues: [string]): void => {
 		this.setState({
 			upgradeMemberFilterValues: filterValues,
 		});
-	}
+	};
 
-	private selectUpgradeMember(member: CAPNHQMemberObject | null) {
+	private selectUpgradeMember = (member: CAPNHQMemberObject | null): void => {
 		this.setState({
 			selectedUpgradeMember: member,
 		});
-	}
+	};
 }

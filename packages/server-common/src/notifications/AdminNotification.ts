@@ -23,10 +23,6 @@ import {
 	asyncRight,
 	errorGenerator,
 	hasPermission,
-	NotificationAdminTarget,
-	NotificationCause,
-	NotificationData,
-	NotificationObject,
 	Permissions,
 	RawAdminNotification,
 	User,
@@ -35,9 +31,8 @@ import {
 import { findAndBindC, generateResults } from '../MySQLUtil';
 import { ServerEither } from '../servertypes';
 
-export const canSeeAdminNotification = (member: User) => (
-	notification: NotificationObject<NotificationCause, NotificationAdminTarget, NotificationData>,
-) => hasPermission('ViewAccountNotifications')(Permissions.ViewAccountNotifications.YES)(member);
+export const canSeeAdminNotification = (member: User): boolean =>
+	hasPermission('ViewAccountNotifications')(Permissions.ViewAccountNotifications.YES)(member);
 
 export const getAdminNotifications = (schema: Schema) => (account: AccountObject) => (
 	member: User,

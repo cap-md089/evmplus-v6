@@ -36,43 +36,40 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 		this.handleOver = this.handleOver.bind(this);
 	}
 
-	public shouldComponentUpdate(newProps: FlightMemberProps) {
-		return newProps.member.id !== this.props.member.id;
-	}
+	public shouldComponentUpdate = (newProps: FlightMemberProps): boolean =>
+		newProps.member.id !== this.props.member.id;
 
-	public render() {
-		return (
-			<div
-				draggable={true}
-				className="flightmember-box"
-				onDragStart={this.onDragStart}
-				onDrop={this.onDrop}
-				onDragOver={this.handleOver}
-				onDragEnd={this.handleOver}
-				onDragExit={this.handleOver}
-				onDragLeave={this.handleOver}
-				onDragEnter={this.handleOver}
-			>
-				{getFullMemberName(this.props.member)}
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div
+			draggable={true}
+			className="flightmember-box"
+			onDragStart={this.onDragStart}
+			onDrop={this.onDrop}
+			onDragOver={this.handleOver}
+			onDragEnd={this.handleOver}
+			onDragExit={this.handleOver}
+			onDragLeave={this.handleOver}
+			onDragEnter={this.handleOver}
+		>
+			{getFullMemberName(this.props.member)}
+		</div>
+	);
 
-	private onDragStart(e: React.DragEvent<HTMLDivElement>) {
+	private onDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
 		this.props.onDragStart();
 
 		e.dataTransfer.setData('text', JSON.stringify(toReference(this.props.member)));
-	}
+	};
 
-	private onDrop(e: React.DragEvent<HTMLDivElement>) {
+	private onDrop = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault();
 		e.stopPropagation();
 
 		this.props.onDrop(e);
-	}
+	};
 
-	private handleOver(e: React.DragEvent<HTMLDivElement>) {
+	private handleOver = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.stopPropagation();
 		e.preventDefault();
-	}
+	};
 }

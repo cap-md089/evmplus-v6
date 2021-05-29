@@ -104,7 +104,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 	private mainDiv = React.createRef<HTMLDivElement>();
 	private cover = React.createRef<HTMLDivElement>();
 
-	public componentDidMount() {
+	public componentDidMount(): void {
 		if (this.mainDiv.current) {
 			$(this.mainDiv.current).css({
 				opacity: 0,
@@ -114,12 +114,12 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 		this.displayDialogue();
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		this.displayDialogue();
 	}
 
-	public render() {
-		return createPortal(
+	public render = (): React.ReactPortal =>
+		createPortal(
 			<div
 				className="cover"
 				style={{
@@ -132,7 +132,7 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			>
 				<div
 					ref={this.mainDiv}
-					className={`alert-box ${this.props.className}`}
+					className={`alert-box ${this.props.className ?? ''}`}
 					key="main-alert"
 					onClick={e => !e.isPropagationStopped() && e.stopPropagation()}
 				>
@@ -259,12 +259,11 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 			</div>,
 			document.getElementById('dialogue-box') as HTMLElement,
 		);
-	}
 
-	private displayDialogue() {
-		if (this.mainDiv.current) {
+	private displayDialogue = (): void => {
+		if (this.mainDiv.current && this.cover.current) {
 			const div = $(this.mainDiv.current);
-			const cover = $(this.cover.current!);
+			const cover = $(this.cover.current);
 
 			const firstInput = div.find('input[type=text]')[0];
 			if (
@@ -314,5 +313,5 @@ export default class Dialogue extends React.Component<DialogueProps, DialogueSta
 				);
 			}
 		}
-	}
+	};
 }

@@ -46,7 +46,7 @@ import {
 import { isPartOfTeam, isTeamLeader } from './Team';
 import { complement, destroy, get } from './Util';
 
-export const isPOCOf = (member: MemberReference, event: RawResolvedEventObject) =>
+export const isPOCOf = (member: MemberReference, event: RawResolvedEventObject): boolean =>
 	(member.type === 'CAPNHQMember' && (member.id === 546319 || member.id === 542488)) ||
 	areMembersTheSame(member)(event.author) ||
 	event.pointsOfContact
@@ -98,13 +98,13 @@ export const canSignSomeoneElseUpForEvent = (
 		Either.map(destroy),
 	);
 
-export const getURIComponent = (event: RawResolvedEventObject) =>
+export const getURIComponent = (event: RawResolvedEventObject): string =>
 	`${event.id}-${event.name.toLocaleLowerCase().replace(/ /g, '-')}`;
 
-export const hasMember = (event: EventObject) => (member: MemberReference) =>
+export const hasMember = (event: EventObject) => (member: MemberReference): boolean =>
 	event.attendance.map(get('memberID')).filter(areMembersTheSame(member)).length > 0;
 
-export const hasBasicEventPermissions = (member: User) =>
+export const hasBasicEventPermissions = (member: User): boolean =>
 	hasPermission('ManageEvent')(Permissions.ManageEvent.ADDDRAFTEVENTS)(member) ||
 	hasPermission('ManageEvent')(Permissions.ManageEvent.FULL)(member) ||
 	((member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
@@ -122,22 +122,23 @@ export const getAttendanceRecordForMember = (attendance: AttendanceRecord[]) => 
 	member: MemberReference,
 ): AttendanceRecord | undefined => attendance.find(val => areMembersTheSame(member)(val.memberID));
 
-export const canManageEvent = (member: User) => (event: RawResolvedEventObject) =>
+export const canManageEvent = (member: User) => (event: RawResolvedEventObject): boolean =>
 	isPOCOf(member, event) ||
 	[Permissions.ManageEvent.FULL, Permissions.ManageEvent.ADDDRAFTEVENTS].includes(
 		effectiveManageEventPermissionForEvent(member)(event),
 	);
 
-export const canFullyManageEvent = (member: User) => (event: RawResolvedEventObject) =>
+export const canFullyManageEvent = (member: User) => (event: RawResolvedEventObject): boolean =>
 	isPOCOf(member, event) ||
 	effectiveManageEventPermissionForEvent(member)(event) === Permissions.ManageEvent.FULL;
 
-export const canMaybeManageEvent = (member: MaybeObj<User>) => (event: RawResolvedEventObject) =>
-	Maybe.isSome(member) ? canManageEvent(member.value)(event) : false;
+export const canMaybeManageEvent = (member: MaybeObj<User>) => (
+	event: RawResolvedEventObject,
+): boolean => (Maybe.isSome(member) ? canManageEvent(member.value)(event) : false);
 
 export const canMaybeFullyManageEvent = (member: MaybeObj<User>) => (
 	event: RawResolvedEventObject,
-) => (Maybe.isSome(member) ? canFullyManageEvent(member.value)(event) : false);
+): boolean => (Maybe.isSome(member) ? canFullyManageEvent(member.value)(event) : false);
 
 const orderedManageEventPermissions = [
 	Permissions.ManageEvent.NONE,
@@ -145,10 +146,10 @@ const orderedManageEventPermissions = [
 	Permissions.ManageEvent.FULL,
 ];
 
-const permissionIndex = (perm: Permissions.ManageEvent) =>
+const permissionIndex = (perm: Permissions.ManageEvent): number =>
 	orderedManageEventPermissions.indexOf(perm);
 
-export const effectiveManageEventPermission = (member: ClientUser) =>
+export const effectiveManageEventPermission = (member: ClientUser): Permissions.ManageEvent =>
 	orderedManageEventPermissions[
 		Math.max(
 			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
@@ -175,7 +176,7 @@ export const effectiveManageEventPermission = (member: ClientUser) =>
 
 export const effectiveManageEventPermissionForEvent = (member: ClientUser) => (
 	event: RawResolvedEventObject,
-) =>
+): Permissions.ManageEvent =>
 	orderedManageEventPermissions[
 		Math.max(
 			permissionIndex(effectiveManageEventPermission(member)),
@@ -199,7 +200,7 @@ export const defaultCustomAttendanceFieldValue = (
 
 export const applyCustomAttendanceFields = (eventFields: CustomAttendanceField[]) => (
 	memberFields: CustomAttendanceFieldValue[],
-) =>
+): CustomAttendanceFieldValue[] =>
 	eventFields.map(
 		customField =>
 			memberFields.find(({ title }) => title === customField.title) ??
@@ -216,7 +217,7 @@ export const applyCustomAttendanceFields = (eventFields: CustomAttendanceField[]
  */
 export const hasBasicAttendanceManagementPermission = (member: User) => (
 	event: RawResolvedEventObject,
-) => (team: MaybeObj<RawTeamObject>) =>
+) => (team: MaybeObj<RawTeamObject>): boolean =>
 	// Event management permissions
 	effectiveManageEventPermissionForEvent(member)(event) === Permissions.ManageEvent.FULL ||
 	// CAP duty positions

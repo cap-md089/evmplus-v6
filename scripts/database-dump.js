@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2021 Andrew Rioux
  * 
  * This file is part of EvMPlus.org.
  * 
@@ -17,23 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-.pagination-controls {
-	width: 100%;
-	margin: 0;
-	padding: 10px;
-	border-top: 1px solid #0b375b;
-	border-bottom: 1px solid #0b375b;
-	display: flex;
-	justify-content: center;
-}
+/// <reference path="../types/mysql-shell/index.d.ts" />
 
-.pagination-controls span {
-	cursor: pointer;
-	display: inline-block;
-	padding: 2px;
-}
+var currentDate = new Date();
 
-.pagination-controls span.highlighted {
-	color: #2875d7;
-	text-decoration: underline;
-}
+var dumpName = '/srv/backups/mysqldumps/mysql-dump-' + currentDate.toDateString().replace(/ /g, '_')
+
+util.dumpInstance(dumpName);

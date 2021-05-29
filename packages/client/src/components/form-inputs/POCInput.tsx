@@ -88,13 +88,13 @@ export default class POCInput extends React.Component<
 	POCInputProps,
 	{
 		memberSelectOpen: boolean;
-		filterValues: any[];
+		filterValues: [string];
 		selectedValue: null | Member;
 	}
 > {
 	public state = {
 		memberSelectOpen: false,
-		filterValues: [],
+		filterValues: [''] as [string],
 		selectedValue: null,
 	};
 
@@ -125,7 +125,7 @@ export default class POCInput extends React.Component<
 		this.setSelectedValue = this.setSelectedValue.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.value) {
 			throw new Error('Value required');
 		}
@@ -156,7 +156,7 @@ export default class POCInput extends React.Component<
 
 		return (
 			<FormBlock<InternalPointOfContactEdit | ExternalPointOfContact>
-				name={`pocInput-${this.props.index}`}
+				name={`pocInput-${this.props.index ?? 0}`}
 				onFormChange={this.onUpdate}
 				onInitialize={this.props.onInitialize}
 				value={value}
@@ -205,13 +205,13 @@ export default class POCInput extends React.Component<
 		);
 	}
 
-	private onUpdate(
+	private onUpdate = (
 		poc: InternalPointOfContactEdit | ExternalPointOfContact,
 		error: any,
 		changed: any,
 		hasError: any,
 		name: keyof (InternalPointOfContactEdit | ExternalPointOfContact),
-	) {
+	): void => {
 		if (name === 'type') {
 			if (poc.type === PointOfContactType.INTERNAL) {
 				poc = {
@@ -242,26 +242,26 @@ export default class POCInput extends React.Component<
 
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
-				name: `pocInput-${this.props.index}`,
+				name: `pocInput-${this.props.index ?? 0}`,
 				value: poc,
 			});
 		}
-	}
+	};
 
-	private onMemberSelectClick() {
+	private onMemberSelectClick = (): void => {
 		this.setState({
 			memberSelectOpen: true,
 		});
-	}
+	};
 
-	private updateFilterValues(filterValues: any[]) {
+	private updateFilterValues = (filterValues: [string]): void => {
 		this.setState({ filterValues });
-	}
+	};
 
-	private selectMember(member: Member | null) {
+	private selectMember = (member: Member | null): void => {
 		if (member !== null) {
 			const value: InternalPointOfContactEdit = {
-				...(this.props.value as InternalPointOfContactEdit)!,
+				...(this.props.value as InternalPointOfContactEdit),
 				email: Maybe.orSome('')(getMemberEmail(member.contact)),
 				memberReference: Maybe.some(toReference(member)),
 				phone: Maybe.orSome('')(getMemberPhone(member.contact)),
@@ -273,18 +273,18 @@ export default class POCInput extends React.Component<
 		this.setState({
 			memberSelectOpen: false,
 		});
-	}
+	};
 
-	private setSelectedValue(selectedValue: Member | null) {
+	private setSelectedValue = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 		});
-	}
+	};
 
-	private getIDViewer() {
-		const value = this.props.value!;
+	private getIDViewer(): JSX.Element | null {
+		const value = this.props.value;
 
-		if (value.type !== PointOfContactType.INTERNAL) {
+		if (!value || value.type !== PointOfContactType.INTERNAL) {
 			return null;
 		}
 
@@ -299,12 +299,10 @@ export default class POCInput extends React.Component<
 		) : null;
 	}
 
-	private getMemberSelector() {
-		const value = this.props.value!;
+	private getMemberSelector(): JSX.Element | null {
+		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<Member, [string]>;
 
-		const MemberDialogue = DownloadDialogue as new () => DownloadDialogue<Member>;
-
-		return isInternalPOC(value) ? (
+		return this.props.value && isInternalPOC(this.props.value) ? (
 			<TextBox>
 				<Button onClick={this.onMemberSelectClick}>Select a member</Button>
 				<MemberDialogue
@@ -324,8 +322,8 @@ export default class POCInput extends React.Component<
 								}
 
 								try {
-									return !!getFullMemberName(memberToCheck).match(
-										new RegExp(input, 'gi'),
+									return !!new RegExp(input, 'gi').exec(
+										getFullMemberName(memberToCheck),
 									);
 								} catch (e) {
 									return false;

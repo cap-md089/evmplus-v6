@@ -18,10 +18,15 @@
  */
 
 import * as ts from 'typescript';
-import { getBooleanLiteralFromType, getStringLiteralFromType, getTypeNodeForSymbol } from './util';
+import {
+	createBooleanLiteral,
+	getBooleanLiteralFromType,
+	getStringLiteralFromType,
+	getTypeNodeForSymbol,
+} from './util';
 import { createValidator } from './validator';
 
-export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
+export default (node: ts.CallExpression, typeChecker: ts.TypeChecker): ts.Node | undefined => {
 	const typeArgument = node.typeArguments?.[0];
 	const validatorArgument = node.arguments[0];
 	const adderArgument = node.arguments[1];
@@ -76,16 +81,20 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker) => {
 		return node;
 	}
 
-	return ts.createCall(
-		ts.createCall(adderArgument, undefined, [
-			ts.createLiteral(url),
-			ts.createLiteral(method),
-			ts.createLiteral(requiresMember),
-			ts.createLiteral(needsToken),
-			ts.createLiteral(usesValidator),
+	return ts.factory.createCallExpression(
+		ts.factory.createCallExpression(adderArgument, undefined, [
+			ts.factory.createStringLiteral(url),
+			ts.factory.createStringLiteral(method),
+			ts.factory.createStringLiteral(requiresMember),
+			createBooleanLiteral(needsToken),
+			createBooleanLiteral(usesValidator),
 			usesValidator
 				? createValidator(node, validatorArgument, typeChecker)(bodyType)
-				: ts.createNew(validatorArgument, [], [ts.createObjectLiteral([])]),
+				: ts.factory.createNewExpression(
+						validatorArgument,
+						[],
+						[ts.factory.createObjectLiteralExpression([])],
+				  ),
 		]),
 		undefined,
 		[endpointArgument],

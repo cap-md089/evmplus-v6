@@ -23,13 +23,12 @@ import { fetchFunction } from './isofetch';
 export const fetchApi = apiGenerator(fetchFunction);
 export default fetchApi;
 
-export const fetchAPIForAccount = (accountID: string) =>
+export const fetchAPIForAccount = (accountID: string): typeof fetchApi =>
 	apiGenerator((url: RequestInfo, opts?: RequestInit) => {
 		const newUrl = `${window.location.protocol}//${accountID}.${
-			process.env.NODE_ENV === 'development' ? 'localcapunit' : 'capunit'
-		}.com${process.env.NODE_ENV === 'development' ? ':3001' : ''}${
+			process.env.NODE_ENV === 'development' ? 'localevmplus' : 'evmplus'
+		}.org${process.env.NODE_ENV === 'development' ? ':3001' : ''}${
 			typeof url === 'string' ? (!url.startsWith('/') ? `/${url}` : url) : url.url
 		}`;
-
 		return fetchFunction(newUrl, opts);
 	});

@@ -43,13 +43,13 @@ import {
 	PAM,
 } from 'server-common';
 
-export type Requests<P extends ParamType = {}, B = any> =
+export type Requests<P extends ParamType = ParamType, B = any> =
 	| BasicMySQLRequest<P, B>
 	| BasicAccountRequest<P, B>
 	| PAM.BasicMemberRequest<P, B>
 	| PAM.BasicMaybeMemberRequest<P, B>;
 
-export default async (err: Error, req: Requests, l?: ServerError) => {
+export default async (err: Error, req: Requests): Promise<void> => {
 	if (err.message.startsWith('Not allowed by CORS')) {
 		return;
 	}
@@ -87,6 +87,7 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 			const errorObject: ServerErrorObject = {
 				id,
 
+				// eslint-disable-next-line no-underscore-dangle
 				requestedPath: req._originalUrl,
 				requestedUser:
 					'member' in req
@@ -123,8 +124,11 @@ export default async (err: Error, req: Requests, l?: ServerError) => {
 				console.log('Could not record error!', e);
 			}
 		}
-	} catch (err) {
+	} catch (handleError) {
 		// Wrapped in a try-catch because it is crucial this doesn't fail, similar to C++'s noexcept
-		console.error('Additionally, another error occurred while trying to save the error', err);
+		console.error(
+			'Additionally, another error occurred while trying to save the error',
+			handleError,
+		);
 	}
 };

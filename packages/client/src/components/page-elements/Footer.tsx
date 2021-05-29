@@ -17,7 +17,15 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { get, Maybe, MaybeObj, pipe, RegistryValues, WebsiteContact } from 'common-lib';
+import {
+	alwaysFalse,
+	get,
+	Maybe,
+	MaybeObj,
+	pipe,
+	RegistryValues,
+	WebsiteContact,
+} from 'common-lib';
 import * as React from 'react';
 import './Footer.scss';
 
@@ -25,15 +33,13 @@ interface FooterProps {
 	registry: MaybeObj<RegistryValues>;
 }
 
-const preventClick = (ev: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-	return false;
-};
+const preventClick = alwaysFalse;
 
 const addressToDisplay = ({
 	Name,
 	FirstLine,
 	SecondLine,
-}: Exclude<WebsiteContact['MeetingAddress'], null>) => (
+}: Exclude<WebsiteContact['MeetingAddress'], null>): JSX.Element => (
 	<div>
 		<div className="footerBoxTitle">Meeting Address</div>
 		<p>

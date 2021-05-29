@@ -38,7 +38,7 @@ interface FileDisplayProps {
 	file: FileObject;
 }
 
-const FileDisplay = ({ onClick, file }: FileDisplayProps) => (
+const FileDisplay = ({ onClick, file }: FileDisplayProps): JSX.Element => (
 	<div
 		className="fileDisplay"
 		style={{
@@ -66,17 +66,6 @@ interface FileInputProps extends InputProps<string[]> {
 }
 
 export default class FileInput extends React.Component<FileInputProps, FileInputState> {
-	public static getDerivedStateFromProps(
-		props: InputProps<string[]>,
-		state: FileInputState,
-	): FileInputState | null {
-		if (props.value === state.files.map(f => f.id)) {
-			return null;
-		} else {
-			return state;
-		}
-	}
-
 	public state: FileInputState = {
 		loaded: false,
 		dialogueOpen: false,
@@ -85,7 +74,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 
 	private previousFiles: string[] = [];
 
-	constructor(props: FileInputProps) {
+	public constructor(props: FileInputProps) {
 		super(props);
 
 		this.handleFileSelect = this.handleFileSelect.bind(this);
@@ -100,7 +89,18 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		}
 	}
 
-	public async componentDidMount() {
+	public static getDerivedStateFromProps(
+		props: InputProps<string[]>,
+		state: FileInputState,
+	): FileInputState | null {
+		if (props.value === state.files.map(f => f.id)) {
+			return null;
+		} else {
+			return state;
+		}
+	}
+
+	public async componentDidMount(): Promise<void> {
 		if (this.props.value && this.props.member) {
 			const files = await AsyncEither.All(
 				this.props.value.map(id => fetchApi.files.files.get({ id: id.toString() }, {})),
@@ -120,15 +120,15 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		}
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		let shouldUpdate = false;
 		const files = this.state.files.map(f => f.id);
 
-		for (const i in files) {
-			if (files[i] !== this.previousFiles[i]) {
+		files.forEach((file, i) => {
+			if (file !== this.previousFiles[i]) {
 				shouldUpdate = true;
 			}
-		}
+		});
 
 		if (!shouldUpdate) {
 			return;
@@ -148,7 +148,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.account) {
 			throw new Error('Account not provided');
 		}
@@ -203,7 +203,7 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		);
 	}
 
-	private handleFileSelect(files: FileObject[]) {
+	private handleFileSelect = (files: FileObject[]): void => {
 		const newFiles = this.state.files.slice(0);
 
 		for (const file of files) {
@@ -234,9 +234,9 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (this.props.onChange) {
 			this.props.onChange(newFiles.map(f => f.id));
 		}
-	}
+	};
 
-	private onFileRemove(file: FileObject) {
+	private onFileRemove = (file: FileObject): void => {
 		let files = this.state.files.slice(0);
 
 		files = files.filter(f => f.id !== file.id);
@@ -253,11 +253,11 @@ export default class FileInput extends React.Component<FileInputProps, FileInput
 		if (this.props.onChange) {
 			this.props.onChange(files.map(f => f.id));
 		}
-	}
+	};
 
-	private closeErrorDialogue() {
+	private closeErrorDialogue = (): void => {
 		this.setState({
 			dialogueOpen: false,
 		});
-	}
+	};
 }

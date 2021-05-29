@@ -40,7 +40,7 @@ import { findAndBindC, generateResults } from '../MySQLUtil';
 
 export const canSeeMemberNotification = (member: Member) => (
 	notification: RawNotificationObject<NotificationCause, NotificationMemberTarget>,
-) => areMembersTheSame(member)(notification.target.to);
+): boolean => areMembersTheSame(member)(notification.target.to);
 
 export const getMemberNotifications = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,

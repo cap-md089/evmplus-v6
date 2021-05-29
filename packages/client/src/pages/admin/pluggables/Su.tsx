@@ -43,7 +43,7 @@ interface SuErrorState {
 
 type SuState = SuLoadedState | SuLoadingState | SuErrorState;
 
-export const canUseSu = (props: PageProps) => !!props.member && isRioux(props.member);
+export const canUseSu = (props: PageProps): boolean => !!props.member && isRioux(props.member);
 
 export default class SuWidget extends Page<PageProps, SuState> {
 	public state: SuState = {
@@ -56,7 +56,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		this.suMember = this.suMember.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -76,39 +76,37 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		}
 	}
 
-	public render() {
-		return (
-			<div className="widget">
-				<div className="widget-title">Su</div>
-				<div className="widget-body">
-					{this.state.state === 'LOADING' ? (
-						<LoaderShort />
-					) : this.state.state === 'ERROR' ? (
-						<div>{this.state.message}</div>
-					) : (
-						<div>
-							There are {this.state.members.length} members in your unit
-							<br />
-							<br />
-							<MemberSelectorButton
-								useShortLoader={true}
-								memberList={Promise.resolve(this.state.members)}
-								title="Select member"
-								displayButtons={DialogueButtons.OK_CANCEL}
-								labels={['Select', 'Cancel']}
-								onMemberSelect={this.suMember}
-								buttonType="none"
-							>
-								Select a member
-							</MemberSelectorButton>
-						</div>
-					)}
-				</div>
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<div className="widget-title">Su</div>
+			<div className="widget-body">
+				{this.state.state === 'LOADING' ? (
+					<LoaderShort />
+				) : this.state.state === 'ERROR' ? (
+					<div>{this.state.message}</div>
+				) : (
+					<div>
+						There are {this.state.members.length} members in your unit
+						<br />
+						<br />
+						<MemberSelectorButton
+							useShortLoader={true}
+							memberList={Promise.resolve(this.state.members)}
+							title="Select member"
+							displayButtons={DialogueButtons.OK_CANCEL}
+							labels={['Select', 'Cancel']}
+							onMemberSelect={this.suMember}
+							buttonType="none"
+						>
+							Select a member
+						</MemberSelectorButton>
+					</div>
+				)}
 			</div>
-		);
-	}
+		</div>
+	);
 
-	private async suMember(member: Member | null) {
+	private suMember = async (member: Member | null): Promise<void> => {
 		if (!member || !this.props.member) {
 			return;
 		}
@@ -125,5 +123,5 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		} else {
 			this.props.authorizeUser(newMember.value);
 		}
-	}
+	};
 }

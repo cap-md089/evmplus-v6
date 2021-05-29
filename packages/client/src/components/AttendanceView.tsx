@@ -35,7 +35,9 @@ import { DateTime } from 'luxon';
 import React, { Component } from 'react';
 import AttendanceForm from './forms/usable-forms/AttendanceForm';
 
-const renderCustomAttendanceField = (attendanceFieldItem: CustomAttendanceFieldValue) =>
+const renderCustomAttendanceField = (
+	attendanceFieldItem: CustomAttendanceFieldValue,
+): JSX.Element =>
 	attendanceFieldItem.type === CustomAttendanceFieldEntryType.CHECKBOX ? (
 		<span style={{ color: attendanceFieldItem.value ? 'green' : 'red' }}>
 			{attendanceFieldItem.value ? 'YES' : 'NO'}
@@ -93,10 +95,10 @@ export default class AttendanceItemView extends Component<
 		super(props);
 	}
 
-	public render() {
-		return effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ||
-			(areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) &&
-				Date.now() < this.props.pickupDateTime) ? (
+	public render = (): JSX.Element =>
+		effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ||
+		(areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) &&
+			Date.now() < this.props.pickupDateTime) ? (
 			<AttendanceForm
 				account={this.props.owningAccount}
 				event={this.props.owningEvent}
@@ -133,13 +135,12 @@ export default class AttendanceItemView extends Component<
 						).toLocaleString()}
 					</>
 				) : null}
-				{this.props.attendanceRecord.customAttendanceFieldValues.map((field, index) => (
-					<>
+				{this.props.attendanceRecord.customAttendanceFieldValues.map(field => (
+					<React.Fragment key={field.title}>
 						<br />
 						{field.title}: {renderCustomAttendanceField(field)}
-					</>
+					</React.Fragment>
 				))}
 			</div>
 		);
-	}
 }

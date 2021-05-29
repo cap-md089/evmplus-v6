@@ -49,6 +49,11 @@ export const getStringLiteralFromType = (sym?: ts.Symbol): string | undefined =>
 	return sym.valueDeclaration.type.literal.text;
 };
 
+export const createBooleanLiteral = (bool: boolean): ts.BooleanLiteral =>
+	bool
+		? ts.factory.createToken(ts.SyntaxKind.TrueKeyword)
+		: ts.factory.createToken(ts.SyntaxKind.FalseKeyword);
+
 export const getBooleanLiteralFromType = (sym?: ts.Symbol): boolean | undefined => {
 	if (
 		!sym ||
@@ -125,11 +130,11 @@ export const toExpression = (multiLine = true) => (obj: {
 
 	for (const key in obj) {
 		if (obj.hasOwnProperty(key)) {
-			expr.push(ts.createPropertyAssignment(key, obj[key]));
+			expr.push(ts.factory.createPropertyAssignment(key, obj[key]));
 		}
 	}
 
-	return ts.createObjectLiteral(expr, multiLine);
+	return ts.factory.createObjectLiteralExpression(expr, multiLine);
 };
 
 export const toNLExpression = toExpression();

@@ -274,21 +274,22 @@ export const ManualRoles = [
 	'Among Us',
 ];
 
-export const hasOneOf = <T>(arr1: T[]) => (arr2: T[]) =>
+export const hasOneOf = <T>(arr1: T[]) => (arr2: T[]): boolean =>
 	arr2.map(includes(arr1)).reduce((prev, curr) => prev || curr, false);
 
-export const includes = <T>(arr: T[]) => (elem: T) => arr.includes(elem);
+export const includes = <T>(arr: T[]) => (elem: T): boolean => arr.includes(elem);
 
 export const hasExecutiveStaffRole = hasOneOf(CadetExecutiveStaffRoles);
 export const hasSupportStaffRole = hasOneOf(CadetSupportStaffRoles);
 export const hasLineStaffRole = hasOneOf(CadetLineStaffRoles);
 export const hasCACRole = hasOneOf(CACRepresentativeRoles);
 
-export const onlyJustValues = <T>(arr: MaybeObj<T>[]): T[] =>
+export const onlyJustValues = <T>(arr: Array<MaybeObj<T>>): T[] =>
 	arr.filter(Maybe.isSome).map(Maybe.join) as T[];
 
-export const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K]) => (val: T) =>
-	val[prop] === value;
+export const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K]) => (
+	val: T,
+): boolean => val[prop] === value;
 
 export const byName = byProp<{ name: string }>('name');
 
@@ -408,7 +409,7 @@ const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => asy
 const getFlightRoles = (guild: Guild) => async (member: Member): Promise<Role[]> => {
 	if (member.flight !== null) {
 		const isMatchingFlightRole = (flight: string) => (role: Role) =>
-			!!role.name.match(new RegExp(`^${flight}( flight)?$`, 'i'));
+			!!new RegExp(`^${flight}( flight)?$`, 'i').exec(role.name);
 
 		const roles = (await guild.roles.fetch()).cache;
 
@@ -441,9 +442,9 @@ const getTeamRoles = (guild: Guild) => (teams: RawTeamObject[]) => async (
 
 	await currentTeamPromise;
 
-	let resolve: () => void;
+	let resolve: (() => void) | undefined;
 
-	currentTeamPromise = new Promise(_resolve => {
+	currentTeamPromise = new Promise<void>(_resolve => {
 		resolve = _resolve;
 	});
 
@@ -468,7 +469,7 @@ const getTeamRoles = (guild: Guild) => (teams: RawTeamObject[]) => async (
 		finalTeamRoles.push(teamRoles[2]);
 	}
 
-	resolve!();
+	resolve?.();
 
 	return onlyJustValues(finalTeamRoles);
 };
@@ -645,7 +646,7 @@ const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Sche
 
 export default (client: Client) => (backend: DiscordBackends) => (guildID: string) => (
 	account: AccountObject,
-) => (teamObjects?: RawTeamObject[]) => async (discordUser: DiscordAccount) => {
+) => (teamObjects?: RawTeamObject[]) => async (discordUser: DiscordAccount): Promise<void> => {
 	if (!account.discordServer.hasValue) {
 		return;
 	}

@@ -21,7 +21,7 @@ import { Guild, Role, Permissions } from 'discord.js';
 import { RawTeamObject, MaybeObj, Maybe as M } from 'common-lib';
 import { byName } from './setupUser';
 
-const renderTeamName = (team: RawTeamObject) =>
+const renderTeamName = (team: RawTeamObject): string =>
 	team.name.toLowerCase().includes('team') ? team.name : `${team.name} Team`;
 
 export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
@@ -32,7 +32,9 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 	const genericTeamMemberRole = M.fromValue(roles.find(byName('Team Member')));
 
 	const permissions = new Permissions(Permissions.DEFAULT)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		.remove(Permissions.FLAGS.CHANGE_NICKNAME!)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!);
 
 	let teamLeaderRole = M.fromValue(roles.find(byName(`Team Lead - ${team.name}`)));

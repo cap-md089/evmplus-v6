@@ -58,7 +58,7 @@ const seniorMemberRoles = ['Squadron Commander'];
 
 export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQLClient) => (
 	client: Client,
-) => (guildId: string) => async (rules: Partial<DiscordSetupRules>) => {
+) => (guildId: string) => async (rules: Partial<DiscordSetupRules>): Promise<void> => {
 	const { schema, session } = await getXSession(config, mysql);
 
 	const backend = getDiscordBackend(schema);
@@ -96,7 +96,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 		};
 
 		if (usedRules.deleteOldRoles) {
-			for (const [_, role] of (await guild.roles.fetch()).cache.entries()) {
+			for (const [, role] of (await guild.roles.fetch()).cache.entries()) {
 				if (!usedRules.preserveRoles.includes(role.name)) {
 					try {
 						await role.delete();
@@ -111,7 +111,9 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 		}
 
 		const permissions = new Permissions(Permissions.DEFAULT)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.remove(Permissions.FLAGS.CHANGE_NICKNAME!);
 
 		const createRole = (color: [number, number, number]) => (name: string) =>
@@ -185,6 +187,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 							mentionable: false,
 							name,
 							permissions: new Permissions(Permissions.DEFAULT).add(
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								Permissions.FLAGS.ADMINISTRATOR!,
 							),
 							position: 0,

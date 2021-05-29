@@ -114,14 +114,8 @@ export default class Admin extends Page<PageProps, AdminState> {
 		absenteeInformation: null,
 	};
 
-	constructor(props: PageProps) {
-		super(props);
-
-		this.defaultPage = this.defaultPage.bind(this);
-	}
-
-	public componentDidMount() {
-		if (!document.location.pathname.match(/\/admin\/.*/)) {
+	public componentDidMount(): void {
+		if (!/\/admin\/.*/.exec(document.location.pathname)) {
 			this.props.updateSideNav([]);
 			this.props.updateBreadCrumbs([
 				{
@@ -137,7 +131,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <SigninLink>Please sign in</SigninLink>;
 		}
@@ -212,7 +206,7 @@ export default class Admin extends Page<PageProps, AdminState> {
 		);
 	}
 
-	private defaultPage() {
+	private defaultPage = (): JSX.Element => {
 		const member = this.props.member;
 
 		if (!member) {
@@ -228,9 +222,9 @@ export default class Admin extends Page<PageProps, AdminState> {
 				)}
 			</div>
 		);
-	}
+	};
 
-	private pageRenderer(Component: typeof Page) {
-		return () => <Component key="/admin" {...this.props} />;
-	}
+	private pageRenderer = (Component: typeof Page) => () => (
+		<Component key="/admin" {...this.props} />
+	);
 }

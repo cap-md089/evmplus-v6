@@ -50,7 +50,6 @@ export interface DateTimeInputProps extends InputProps<number> {
 	originalTimeZoneOffset: SupportedTimeZones;
 }
 
-// @ts-ignore
 export interface DateInputProps extends DateTimeInputProps {
 	time: false;
 }
@@ -77,14 +76,14 @@ interface DateTimeState {
 	focused: boolean;
 }
 
-const normalizeInput = (value: number | DateTime | undefined, offset: SupportedTimeZones) =>
+const normalizeInput = (value: number | DateTime | undefined): DateTime =>
 	typeof value !== 'undefined' && value !== null ? DateTime.fromMillis(+value) : DateTime.local();
 
 export default class DateTimeInput extends React.Component<
 	DateTimeInputProps | DateInputProps,
 	DateTimeState
 > {
-	constructor(props: DateTimeInputProps | DateInputProps) {
+	public constructor(props: DateTimeInputProps | DateInputProps) {
 		super(props);
 
 		const start = this.props.value ? DateTime.fromMillis(+this.props.value) : DateTime.utc();
@@ -111,14 +110,14 @@ export default class DateTimeInput extends React.Component<
 		this.onChange = this.onChange.bind(this);
 	}
 
-	public render() {
-		const start = normalizeInput(this.props.value, this.props.originalTimeZoneOffset);
+	public render(): JSX.Element {
+		const start = normalizeInput(this.props.value);
 
-		// @ts-ignore
-		const currentZone: SupportedTimeZones = start.zone.name;
+		const currentZone = ((start as unknown) as {
+			zone: { name: SupportedTimeZones };
+		}).zone.name;
 
 		// const sameTimezone = start.offsetNameShort === DateTime.local().offsetNameShort;
-		// @ts-ignore
 		const sameTimezone = currentZone === this.props.originalTimeZoneOffset;
 
 		return (
@@ -148,19 +147,19 @@ export default class DateTimeInput extends React.Component<
 		);
 	}
 
-	private onFocus() {
+	private onFocus = (): void => {
 		this.setState({
 			focused: true,
 		});
-	}
+	};
 
-	private onBlur() {
+	private onBlur = (): void => {
 		this.setState({
 			focused: false,
 		});
-	}
+	};
 
-	private onChange(date: Date) {
+	private onChange = (date: Date): void => {
 		if (this.props.onUpdate) {
 			this.props.onUpdate({
 				name: this.props.name,
@@ -171,9 +170,9 @@ export default class DateTimeInput extends React.Component<
 		if (this.props.onChange) {
 			this.props.onChange(+date);
 		}
-	}
+	};
 
-	private onChangeDate(e: React.ChangeEvent<HTMLInputElement>) {
+	private onChangeDate = (): void => {
 		// const input = quickNormalize(this.props);
 		// if (e.currentTarget.value === '') {
 		// 	this.forceUpdate();
@@ -193,9 +192,9 @@ export default class DateTimeInput extends React.Component<
 		// if (this.props.onChange) {
 		// 	this.props.onChange(+result);
 		// }
-	}
+	};
 
-	private onChangeTime(e: React.ChangeEvent<HTMLInputElement>) {
+	private onChangeTime = (): void => {
 		// const input = quickNormalize(this.props);
 		// if (e.currentTarget.value === '') {
 		// 	this.forceUpdate();
@@ -214,5 +213,5 @@ export default class DateTimeInput extends React.Component<
 		// if (this.props.onChange) {
 		// 	this.props.onChange(+result);
 		// }
-	}
+	};
 }

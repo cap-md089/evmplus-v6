@@ -109,7 +109,7 @@ export default class DialogueButton extends React.Component<
 		this.onClose = this.onClose.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		let dialogueProps: DialogueWithOK | DialogueWithOKCancel | DialogueWithYesNoCancel;
 
 		const props = this.props;
@@ -168,20 +168,20 @@ export default class DialogueButton extends React.Component<
 		);
 	}
 
-	private open() {
+	private open = (): void => {
 		this.setState({
 			open: true,
 		});
-	}
+	};
 
-	private close() {
+	private close = (): void => {
 		this.setState({
 			open: false,
 		});
-	}
+	};
 
-	private onClose() {
+	private onClose = (): void => {
 		this.close();
 		(this.props.onClose || noop)();
-	}
+	};
 }

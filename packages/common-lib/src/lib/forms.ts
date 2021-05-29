@@ -23,6 +23,7 @@ import {
 	SimpleMultCheckboxReturn,
 } from '../typings/types';
 import { Maybe as M, MaybeObj as Maybe } from './Maybe';
+import { alwaysFalse } from './Util';
 
 export const isOneOfSelected = (
 	input: OtherMultCheckboxReturn | SimpleMultCheckboxReturn,
@@ -36,12 +37,12 @@ export const isSelected = (
 export const emptyFromLabels = (labels: string[]): OtherMultCheckboxReturn => ({
 	labels,
 	otherSelected: false,
-	values: labels.map(_ => false),
+	values: labels.map(alwaysFalse),
 });
 
 export const emptySimpleFromLabels = (labels: string[]): SimpleMultCheckboxReturn => ({
 	labels,
-	values: labels.map(_ => false),
+	values: labels.map(alwaysFalse),
 });
 
 export const presentMultCheckboxReturn = (

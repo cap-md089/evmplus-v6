@@ -55,30 +55,43 @@ export default class FormBlock<T extends object> extends React.Component<
 	FormBlockProps<T>,
 	FormBlockState<T>
 > {
-	public static getDerivedStateFromProps<T>(
-		props: FormBlockProps<T>,
-		state: FormBlockState<T>,
-	): FormBlockState<T> {
+	public state: FormBlockState<T> = {
+		fieldsError: {} as BooleanForField<T>,
+		fieldsChanged: {} as BooleanForField<T>,
+	};
+
+	public constructor(props: FormBlockProps<T>) {
+		super(props);
+
+		this.onUpdate = this.onUpdate.bind(this);
+		this.onInitialize = this.onInitialize.bind(this);
+		this.render = this.render.bind(this);
+	}
+
+	public static getDerivedStateFromProps<U>(
+		props: FormBlockProps<U>,
+		state: FormBlockState<U>,
+	): FormBlockState<U> {
 		if (!props.value) {
 			return {
 				fieldsError: {},
 				fieldsChanged: {},
-			} as FormBlockState<T>;
+			} as FormBlockState<U>;
 		}
 
-		const newState: FormBlockState<T> = {
+		const newState: FormBlockState<U> = {
 			fieldsChanged: { ...state.fieldsChanged },
-			fieldsError: {} as BooleanForField<T>,
+			fieldsError: {} as BooleanForField<U>,
 		};
 
-		// tslint:disable-next-line: forin
+		// eslint-disable-next-line guard-for-in
 		for (const _ in props.value) {
-			const i: keyof T = _;
+			const i: keyof U = _;
 
 			if (props.validator && props.validator[i]) {
-				const validator = props.validator[i]!;
+				const validator = props.validator[i];
 
-				if (!validator(props.value[i], props.value)) {
+				if (validator && !validator(props.value[i], props.value)) {
 					newState.fieldsError[i] = true;
 				}
 			}
@@ -87,20 +100,9 @@ export default class FormBlock<T extends object> extends React.Component<
 		return newState;
 	}
 
-	public state: FormBlockState<T> = {
-		fieldsError: {} as BooleanForField<T>,
-		fieldsChanged: {} as BooleanForField<T>,
-	};
-
-	constructor(props: FormBlockProps<T>) {
-		super(props);
-
-		this.onUpdate = this.onUpdate.bind(this);
-		this.onInitialize = this.onInitialize.bind(this);
-		this.render = this.render.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element {
+		// This is to prevent React and the DOM from throwing warnings about how name, onInitialize, and onUpdate cannot be part of a div
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { onInitialize, onUpdate, name, value, children, ...props } = this.props;
 
 		const usedChildren = Array.isArray(children)
@@ -122,15 +124,13 @@ export default class FormBlock<T extends object> extends React.Component<
 					} else {
 						const childName: keyof T = child.props.name as keyof T;
 
-						const childValue =
-							typeof child.props.value !== 'undefined'
-								? child.props.value
-								: typeof value === 'undefined'
-								? ''
-								: this.props.value === null ||
-								  typeof (value as T)[childName] === 'undefined'
-								? ''
-								: this.props.value![childName];
+						const childValue = (typeof child.props.value !== 'undefined'
+							? child.props.value
+							: typeof value === 'undefined'
+							? ''
+							: this.props.value === null || this.props.value === undefined
+							? ''
+							: this.props.value[childName]) as T[typeof childName];
 						if (
 							!(value === null || typeof value === 'undefined') &&
 							typeof value[childName] === 'undefined'
@@ -145,7 +145,6 @@ export default class FormBlock<T extends object> extends React.Component<
 							fullWidth = false;
 						}
 
-						// @ts-ignore
 						if (child.type === FormBlock) {
 							fullWidth = true;
 						}
@@ -193,7 +192,6 @@ export default class FormBlock<T extends object> extends React.Component<
 						} else {
 							if (isLabel(previousChild) && previousChild.type !== Title) {
 								ret.unshift(
-									// @ts-ignore
 									React.cloneElement(previousChild, {
 										key: i - 1,
 										onUpdate: this.onUpdate,
@@ -224,18 +222,18 @@ export default class FormBlock<T extends object> extends React.Component<
 		);
 	}
 
-	private onUpdate(e: { name: string; value: any }) {
+	private onUpdate = (e: { name: string; value: any }): void => {
 		this.handleChange(e, true);
-	}
+	};
 
-	private handleChange(e: { name: string; value: any }, hasChanged: boolean) {
+	private handleChange = (e: { name: string; value: any }, hasChanged: boolean): void => {
 		const name = e.name as keyof T;
 
 		const value: T = { ...this.props.value } as T;
 		const fieldsChanged = { ...this.state.fieldsChanged };
 		const fieldsError = { ...this.state.fieldsError };
 
-		value[name] = e.value;
+		value[name] = e.value as T[typeof name];
 		fieldsChanged[name] = hasChanged;
 
 		this.setState(
@@ -276,9 +274,9 @@ export default class FormBlock<T extends object> extends React.Component<
 				}
 			},
 		);
-	}
+	};
 
-	private onInitialize(e: { name: string; value: any }) {
+	private onInitialize = (e: { name: string; value: any }): void => {
 		this.handleChange(e, false);
-	}
+	};
 }

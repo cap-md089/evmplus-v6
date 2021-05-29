@@ -53,7 +53,7 @@ export class ProspectiveMemberManagementWidget extends Page<
 		state: 'LOADING',
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (this.props.member) {
 			const memberEither = await fetchApi.member.memberList(
 				{ type: 'CAPProspectiveMember' },
@@ -74,34 +74,32 @@ export class ProspectiveMemberManagementWidget extends Page<
 		}
 	}
 
-	public render() {
-		return (
-			<div className="widget">
-				<Link to="/admin/prospectivemembermanagement">
-					<div className="widget-title">Prospective Member Management</div>
-				</Link>
-				<div className="widget-body">
-					{this.state.state === 'LOADING' ? (
-						<LoaderShort />
-					) : this.state.state === 'ERROR' ? (
-						<div>{this.state.message}</div>
-					) : (
-						<div>
-							<Link to="/admin/createcapprospectiveaccount">
-								Create a prospective member account
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<Link to="/admin/prospectivemembermanagement">
+				<div className="widget-title">Prospective Member Management</div>
+			</Link>
+			<div className="widget-body">
+				{this.state.state === 'LOADING' ? (
+					<LoaderShort />
+				) : this.state.state === 'ERROR' ? (
+					<div>{this.state.message}</div>
+				) : (
+					<div>
+						<Link to="/admin/createcapprospectiveaccount">
+							Create a prospective member account
+						</Link>
+						<br />
+						<br />
+						{this.state.members.length > 0 ? (
+							<Link to="/admin/prospectivemembermanagement">
+								Manage {this.state.members.length} prospective member account
+								{this.state.members.length === 1 ? '' : 's'}
 							</Link>
-							<br />
-							<br />
-							{this.state.members.length > 0 ? (
-								<Link to="/admin/prospectivemembermanagement">
-									Manage {this.state.members.length} prospective member account
-									{this.state.members.length === 1 ? '' : 's'}
-								</Link>
-							) : null}
-						</div>
-					)}
-				</div>
+						) : null}
+					</div>
+				)}
 			</div>
-		);
-	}
+		</div>
+	);
 }

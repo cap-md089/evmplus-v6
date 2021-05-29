@@ -57,7 +57,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 		errors: Maybe.none(),
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!shouldRenderErrorList(this.props)) {
 			throw new Error('What??');
 		}
@@ -67,34 +67,32 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 		this.setState({ errors });
 	}
 
-	public render() {
-		return (
-			<div className="widget">
-				<Link to="/admin/errorlist">
-					<div className="widget-title">Errors</div>
-				</Link>
-				<div className="widget-body">
-					{Maybe.cata<APIEndpointReturnValue<api.errors.GetErrors>, React.ReactChild>(
-						always(<LoaderShort />),
-					)(
-						Either.cata<HTTPError, Errors[], React.ReactChild>(err => (
-							<div>{err.message}</div>
-						))(errors => (
-							<div>
-								There {errors.length === 1 ? 'is' : 'are'} {errors.length} error
-								{errors.length === 1 ? '' : 's'}.
-								<br />
-								<br />
-								<Link to="/admin/errorlist">
-									Check {errors.length === 1 ? 'it' : 'them'} out
-								</Link>
-							</div>
-						)),
-					)}
-				</div>
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<Link to="/admin/errorlist">
+				<div className="widget-title">Errors</div>
+			</Link>
+			<div className="widget-body">
+				{Maybe.cata<APIEndpointReturnValue<api.errors.GetErrors>, React.ReactChild>(
+					always(<LoaderShort />),
+				)(
+					Either.cata<HTTPError, Errors[], React.ReactChild>(err => (
+						<div>{err.message}</div>
+					))(errors => (
+						<div>
+							There {errors.length === 1 ? 'is' : 'are'} {errors.length} error
+							{errors.length === 1 ? '' : 's'}.
+							<br />
+							<br />
+							<Link to="/admin/errorlist">
+								Check {errors.length === 1 ? 'it' : 'them'} out
+							</Link>
+						</div>
+					)),
+				)}
 			</div>
-		);
-	}
+		</div>
+	);
 }
 
 const titleStyle = {
@@ -110,13 +108,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		errors: Maybe.none(),
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.resolveError = this.resolveError.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			throw new Error('What??');
 		}
@@ -128,7 +120,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		this.updateSideNav(errors);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			return <div>You do not have permission to view this page</div>;
 		}
@@ -150,7 +142,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		);
 	}
 
-	private renderErrorList(errors: Errors[], type: ErrorType) {
+	private renderErrorList(errors: Errors[], type: ErrorType): JSX.Element | null {
 		const title =
 			type === 'Client' ? (
 				<h1 id="client-errors">Client errors</h1>
@@ -200,7 +192,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 	// That is, they all have the same message, line, column, file, and type
 	// However, they can differ in HTTP paths or members
 
-	private renderServerErrorObject(errorInfo: ServerErrorObject[]) {
+	private renderServerErrorObject(errorInfo: ServerErrorObject[]): JSX.Element {
 		const id = errorInfo[0].id;
 
 		return (
@@ -261,7 +253,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		);
 	}
 
-	private renderDiscordBotErrorObject(errorInfo: DiscordBotErrorObject[]) {
+	private renderDiscordBotErrorObject(errorInfo: DiscordBotErrorObject[]): JSX.Element {
 		const id = errorInfo[0].id;
 
 		return (
@@ -316,7 +308,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		);
 	}
 
-	private renderClientErrorObject(errorInfo: ClientErrorObject[]) {
+	private renderClientErrorObject(errorInfo: ClientErrorObject[]): JSX.Element {
 		const id = errorInfo[0].id;
 
 		return (
@@ -373,7 +365,7 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 		);
 	}
 
-	private async resolveError(error: Errors) {
+	private resolveError = async (error: Errors): Promise<void> => {
 		if (!this.props.member || !shouldRenderErrorList(this.props)) {
 			throw new Error('No!');
 		}
@@ -402,9 +394,9 @@ export default class ErrorListPage extends Page<PageProps, ErrorListPageState> {
 				this.updateSideNav(this.state.errors);
 			},
 		);
-	}
+	};
 
-	private updateSideNav(errors: MaybeObj<APIEndpointReturnValue<api.errors.GetErrors>>) {
+	private updateSideNav(errors: MaybeObj<APIEndpointReturnValue<api.errors.GetErrors>>): void {
 		if (Maybe.isNone(errors) || Either.isLeft(errors.value)) {
 			this.props.updateSideNav([]);
 		} else {

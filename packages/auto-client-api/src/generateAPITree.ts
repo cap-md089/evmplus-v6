@@ -18,7 +18,12 @@
  */
 
 import * as ts from 'typescript';
-import { getKeysForSymbol, getStringLiteralFromType, getBooleanLiteralFromType } from './util';
+import {
+	getKeysForSymbol,
+	getStringLiteralFromType,
+	getBooleanLiteralFromType,
+	createBooleanLiteral,
+} from './util';
 
 const convertObjectToMap = (
 	type: ts.Type,
@@ -51,11 +56,11 @@ const convertObjectToMap = (
 						argument,
 				  );
 
-			return ts.createPropertyAssignment(name, value);
+			return ts.factory.createPropertyAssignment(name, value);
 		})
 		.filter((v): v is ts.PropertyAssignment => !!v);
 
-	return ts.createObjectLiteral(objectProperties);
+	return ts.factory.createObjectLiteralExpression(objectProperties);
 };
 
 const convertEndpointToFunction = (
@@ -93,26 +98,34 @@ const convertEndpointToFunction = (
 			[requiresMember, 'requiresMember'],
 			[needsToken, 'needsToken'],
 		]
-			.filter(item => !!item[0])
-			.map(item => `${item[1]} is missing`)
+			.filter((item): item is Array<string | string[]> | Array<string | boolean> => !!item[0])
+			.map(item => `${item[1].toString()} is missing`)
 			.join(',');
 
 		console.error('Could not find required properties for generateAPITree<T>: ' + errors);
 
-		return ts.createNull();
+		return ts.factory.createNull();
 	}
 
-	return ts.createCall(argument, undefined, [
-		ts.createObjectLiteral(
+	return ts.factory.createCallExpression(argument, undefined, [
+		ts.factory.createObjectLiteralExpression(
 			[
-				ts.createPropertyAssignment(
+				ts.factory.createPropertyAssignment(
 					'paramKeys',
-					ts.createArrayLiteral(paramKeys.map(key => ts.createStringLiteral(key))),
+					ts.factory.createArrayLiteralExpression(
+						paramKeys.map(key => ts.factory.createStringLiteral(key)),
+					),
 				),
-				ts.createPropertyAssignment('url', ts.createLiteral(url)),
-				ts.createPropertyAssignment('method', ts.createLiteral(method)),
-				ts.createPropertyAssignment('requiresMember', ts.createLiteral(requiresMember)),
-				ts.createPropertyAssignment('needsToken', ts.createLiteral(needsToken)),
+				ts.factory.createPropertyAssignment('url', ts.factory.createStringLiteral(url)),
+				ts.factory.createPropertyAssignment(
+					'method',
+					ts.factory.createStringLiteral(method),
+				),
+				ts.factory.createPropertyAssignment(
+					'requiresMember',
+					ts.factory.createStringLiteral(requiresMember),
+				),
+				ts.factory.createPropertyAssignment('needsToken', createBooleanLiteral(needsToken)),
 			],
 			true,
 		),
@@ -132,6 +145,6 @@ export default (node: ts.CallExpression, typeChecker: ts.TypeChecker): ts.Node =
 
 		return convertObjectToMap(aliasedType, typeChecker, argument);
 	} else {
-		return ts.createNull();
+		return ts.factory.createNull();
 	}
 };

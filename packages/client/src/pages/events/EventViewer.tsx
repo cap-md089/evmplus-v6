@@ -76,6 +76,7 @@ import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import DownloadDialogue from '../../components/dialogues/DownloadDialogue';
 import DropDownList from '../../components/DropDownList';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
+import { CheckInput } from '../../components/form-inputs/Selector';
 import {
 	BigTextBox,
 	Checkbox,
@@ -147,7 +148,7 @@ interface EventViewerUIState {
 	showingemails: boolean;
 	openLinkEventDialogue: boolean;
 	selectedAccountToLinkTo: AccountLinkTarget | null;
-	accountFilterValues: any[];
+	accountFilterValues: [string];
 	linkEventResult: null | HTTPError | { id: number; accountID: string };
 }
 
@@ -162,13 +163,13 @@ export const attendanceStatusLabels = [
 	'Not planning on attending',
 ];
 
-const getCalendarDate = (inDate: number) => {
+const getCalendarDate = (inDate: number): string => {
 	const dateObject = new Date(inDate);
 	const nowObject = new Date();
-	return dateObject.getMonth() + '/' + dateObject.getFullYear() ===
-		nowObject.getMonth() + '/' + nowObject.getFullYear()
+	return `${dateObject.getMonth()}/${dateObject.getFullYear()}` ===
+		`${nowObject.getMonth()}/${nowObject.getFullYear()}`
 		? ''
-		: dateObject.getMonth() + 1 + '/' + dateObject.getFullYear();
+		: `${dateObject.getMonth() + 1}/${dateObject.getFullYear()}`;
 };
 
 const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEventObject) => (
@@ -186,7 +187,7 @@ const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEvent
 		} = member.record;
 
 		const accountName = pipe(
-			Maybe.map(name => `[${name}]`),
+			Maybe.map((name: string) => `[${name}]`),
 			Maybe.orSome(''),
 		)(member.orgName);
 
@@ -209,7 +210,7 @@ const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEvent
 	}
 };
 
-const getEmails = (renderMember: ClientUser | null) => (event: RawResolvedEventObject) => (
+const getEmails = (renderMember: ClientUser | null) => (
 	member: api.events.events.EventViewerAttendanceRecord,
 ) => {
 	const noEmail = ``;
@@ -254,35 +255,13 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		eventRegistry: false,
 		showingCAPIDs: false,
 		showingemails: false,
-		accountFilterValues: [],
+		accountFilterValues: [''],
 		linkEventResult: null,
 		openLinkEventDialogue: false,
 		selectedAccountToLinkTo: null,
 	};
 
-	constructor(props: EventViewerProps) {
-		super(props);
-
-		this.addAttendanceRecord = this.addAttendanceRecord.bind(this);
-		this.clearPreviousMember = this.clearPreviousMember.bind(this);
-		this.removeAttendanceRecord = this.removeAttendanceRecord.bind(this);
-		this.modifyAttendanceRecord = this.modifyAttendanceRecord.bind(this);
-
-		this.moveEvent = this.moveEvent.bind(this);
-		this.copyMoveEvent = this.copyMoveEvent.bind(this);
-		this.copyEvent = this.copyEvent.bind(this);
-		this.deleteEvent = this.deleteEvent.bind(this);
-		this.addDebrief = this.addDebrief.bind(this);
-		this.deleteDebriefCallbackForTimeSubmitted = this.deleteDebriefCallbackForTimeSubmitted.bind(
-			this,
-		);
-
-		this.renderFormsButtons = this.renderFormsButtons.bind(this);
-		this.createCAPF6080 = this.createCAPF6080.bind(this);
-		this.createAttendanceSpreadsheet = this.createAttendanceSpreadsheet.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const eventInformation = await fetchApi.events.events.getViewerData(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{},
@@ -427,7 +406,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		this.updateTitle(`View event ${eventInformation.value.event.name}`);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.viewerState === 'LOADING') {
 			return <Loader />;
 		}
@@ -618,6 +597,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											<br />
 											<br />
 											<a
+												// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
 												rel="noopener _blank"
 											>
@@ -638,7 +618,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							>
 								Link event
 							</Button>
-							<DownloadDialogue
+							<DownloadDialogue<AccountLinkTarget, [string]>
 								valuePromise={linkableAccounts}
 								displayValue={get('name')}
 								multiple={false}
@@ -654,25 +634,27 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 								onFilterValuesChange={accountFilterValues =>
 									this.setState({ accountFilterValues })
 								}
-								filters={[
-									{
-										check: (accountInfo, input) => {
-											if (input === '' || typeof input !== 'string') {
-												return true;
-											}
+								filters={
+									[
+										{
+											check: (accountInfo, input) => {
+												if (input === '' || typeof input !== 'string') {
+													return true;
+												}
 
-											try {
-												return !!accountInfo.name.match(
-													new RegExp(input, 'gi'),
-												);
-											} catch (e) {
-												return false;
-											}
-										},
-										displayText: 'Account name',
-										filterInput: TextInput,
-									},
-								]}
+												try {
+													return !!new RegExp(input, 'gi').exec(
+														accountInfo.name,
+													);
+												} catch (e) {
+													return false;
+												}
+											},
+											displayText: 'Account name',
+											filterInput: TextInput,
+										} as CheckInput<AccountLinkTarget, string>,
+									] as const
+								}
 								showIDField={false}
 							/>
 							<Dialogue
@@ -688,6 +670,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											<br />
 											<br />
 											<a
+												// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 												href={`https://${this.state.linkEventResult.accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${this.state.linkEventResult.id}`}
 												rel="noopener _blank"
 											>
@@ -729,6 +712,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							<>
 								<strong>
 									<a
+										// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 										href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
 										rel="noopener _blank"
 									>
@@ -748,6 +732,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										({ id, accountID, name, accountName }, index) => (
 											<li key={index}>
 												<a
+													// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 													href={`https://${accountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${id}`}
 													target="noopener _blank"
 												>
@@ -1196,7 +1181,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										onClose={() => this.setState({ showingemails: false })}
 									>
 										{this.state.eventInformation.attendees
-											.map(rec => getEmails(member)(event)(rec))
+											.map(getEmails(member))
 											.join(', ')}
 									</Dialogue>
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
@@ -1255,7 +1240,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		);
 	}
 
-	private modifyAttendanceRecord(record: Required<NewAttendanceRecord>, member: Member | null) {
+	private modifyAttendanceRecord = (
+		record: Required<NewAttendanceRecord>,
+		member: Member | null,
+	): void => {
 		if (this.state.viewerState !== 'LOADED') {
 			return;
 		}
@@ -1300,12 +1288,14 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private addAttendanceRecord(record: Required<NewAttendanceRecord>) {
-		if (this.state.viewerState !== 'LOADED') {
+	private addAttendanceRecord = (record: Required<NewAttendanceRecord>): void => {
+		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
 			return;
 		}
+
+		const member = this.props.member;
 
 		this.setState(prev =>
 			prev.viewerState === 'LOADED'
@@ -1331,7 +1321,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											arrivalTime: prev.eventInformation.event.pickupDateTime,
 											departureTime: prev.eventInformation.event.meetDateTime,
 										},
-										memberName: getMemberName(this.props.member!),
+										memberName: getMemberName(member),
 									},
 									member: Maybe.fromValue(this.props.member),
 									orgName: Maybe.some(this.props.registry.Website.Name),
@@ -1341,9 +1331,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private removeAttendanceRecord(record: AttendanceRecord) {
+	private removeAttendanceRecord = (record: AttendanceRecord): void => {
 		this.setState(prev =>
 			prev.viewerState !== 'LOADED'
 				? prev
@@ -1357,15 +1347,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 						},
 				  },
 		);
-	}
+	};
 
-	private clearPreviousMember() {
+	private clearPreviousMember = (): void => {
 		this.setState({
 			previousUpdatedMember: Maybe.none(),
 		});
-	}
+	};
 
-	private async moveEvent({ newTime }: { newTime: number }) {
+	private moveEvent = async ({ newTime }: { newTime: number }): Promise<void> => {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1400,15 +1390,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				},
 			},
 		});
-	}
+	};
 
-	private async addDebrief({
+	private addDebrief = async ({
 		debriefText,
 		publicView,
 	}: {
 		debriefText: string;
 		publicView: boolean;
-	}) {
+	}): Promise<void> => {
 		const state = this.state;
 		if (state.viewerState !== 'LOADED') {
 			throw new Error('Attempting to add debrief to a null event');
@@ -1448,48 +1438,52 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private deleteDebriefCallbackForTimeSubmitted(timeSubmitted: number) {
-		return async () => {
-			const state = this.state;
-			if (state.viewerState !== 'LOADED') {
-				throw new Error('Attempting to add debrief to a null event');
-			}
+	private deleteDebriefCallbackForTimeSubmitted = (timeSubmitted: number) => async () => {
+		const state = this.state;
+		if (state.viewerState !== 'LOADED') {
+			throw new Error('Attempting to add debrief to a null event');
+		}
 
-			if (!this.props.member) {
-				return;
-			}
+		if (!this.props.member) {
+			return;
+		}
 
-			const { event } = state.eventInformation;
-			await AsyncEither.All([
-				fetchApi.events.debrief.delete(
-					{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
-					{},
-				),
-			]);
+		const { event } = state.eventInformation;
+		await AsyncEither.All([
+			fetchApi.events.debrief.delete(
+				{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
+				{},
+			),
+		]);
 
-			this.setState(prev =>
-				prev.viewerState === 'LOADED'
-					? {
-							...prev,
+		this.setState(prev =>
+			prev.viewerState === 'LOADED'
+				? {
+						...prev,
 
-							eventInformation: {
-								...prev.eventInformation,
-								event: {
-									...prev.eventInformation.event,
-									debrief: prev.eventInformation.event.debrief.filter(
-										item => item.timeSubmitted !== timeSubmitted,
-									),
-								},
+						eventInformation: {
+							...prev.eventInformation,
+							event: {
+								...prev.eventInformation.event,
+								debrief: prev.eventInformation.event.debrief.filter(
+									item => item.timeSubmitted !== timeSubmitted,
+								),
 							},
-					  }
-					: prev,
-			);
-		};
-	}
+						},
+				  }
+				: prev,
+		);
+	};
 
-	private async copyMoveEvent({ newTime, copyFiles }: { newTime: number; copyFiles: boolean }) {
+	private copyMoveEvent = async ({
+		newTime,
+		copyFiles,
+	}: {
+		newTime: number;
+		copyFiles: boolean;
+	}): Promise<void> => {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1517,9 +1511,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		if (Either.isRight(result)) {
 			this.props.routeProps.history.push(`/eventviewer/${result.value[1].id}`);
 		}
-	}
+	};
 
-	private async copyEvent({
+	private copyEvent = async ({
 		newTime,
 		copyFiles,
 		newStatus,
@@ -1527,7 +1521,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		newTime: number;
 		copyFiles: boolean;
 		newStatus: EventStatus;
-	}) {
+	}): Promise<void> => {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1546,9 +1540,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		if (Either.isRight(result)) {
 			this.props.routeProps.history.push(`/eventviewer/${result.value.id}`);
 		}
-	}
+	};
 
-	private async deleteEvent() {
+	private deleteEvent = async (): Promise<void> => {
 		const state = this.state;
 
 		if (state.viewerState !== 'LOADED') {
@@ -1567,9 +1561,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		if (Either.isRight(result)) {
 			this.props.routeProps.history.push(`/calendar/`);
 		}
-	}
+	};
 
-	private renderFormsButtons(formName: string): JSX.Element {
+	private renderFormsButtons = (formName: string): JSX.Element => {
 		if (!this.props.member) {
 			return <>{formName}</>;
 		}
@@ -1616,9 +1610,9 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		} else {
 			return <>{formName}</>;
 		}
-	}
+	};
 
-	private async createCAPF6080() {
+	private createCAPF6080 = async (): Promise<void> => {
 		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
 			return;
 		}
@@ -1627,6 +1621,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			this.state.eventInformation.event,
 			this.state.eventInformation.pointsOfContact,
 			this.props.member,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			process.env.REACT_APP_HOST_NAME!,
 		);
 
@@ -1634,15 +1629,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			docDef,
 			`CAPF6080-${this.props.account.id}-${this.state.eventInformation.event.id}.pdf`,
 		);
-	}
+	};
 
-	private async printForm(docDef: TDocumentDefinitions, fileName: string) {
+	private async printForm(docDef: TDocumentDefinitions, fileName: string): Promise<void> {
 		const pdfMake = await import('pdfmake');
 
 		const fontGetter =
 			process.env.NODE_ENV === 'production'
 				? (fontName: string) =>
-						`https://${this.props.account.id}.${process.env.REACT_APP_HOST_NAME}/images/fonts/${fontName}`
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						`https://${this.props.account.id}.${process.env
+							.REACT_APP_HOST_NAME!}/images/fonts/${fontName}`
 				: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
 
 		const fonts: TFontDictionary = {
@@ -1654,13 +1651,17 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			},
 		};
 
-		// @ts-ignore
-		const docPrinter = pdfMake.createPdf(docDef, null, fonts);
+		// @ts-ignore: the types lie, as has been verified with tests
+		const docPrinter = (pdfMake.createPdf as (
+			def: TDocumentDefinitions,
+			idk: null,
+			fontDictionary: TFontDictionary,
+		) => { download(filename: string): void })(docDef, null, fonts);
 
 		docPrinter.download(fileName);
 	}
 
-	private async createAttendanceSpreadsheet() {
+	private createAttendanceSpreadsheet = async (): Promise<void> => {
 		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
 			return;
 		}
@@ -1668,14 +1669,12 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		const XLSX = await import('xlsx');
 
 		const wb = XLSX.utils.book_new();
-		const evtID =
-			this.state.eventInformation.event.accountID +
-			'-' +
-			this.state.eventInformation.event.id;
+		const evtID = `${this.state.eventInformation.event.accountID}-${this.state.eventInformation.event.id}`;
 
 		let wsName = 'EventInfo';
 		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
 		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		let sheet = spreadsheets.FormatEventXL(evtID, ws, process.env.REACT_APP_HOST_NAME!);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
@@ -1689,15 +1688,15 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			ws,
 			widths,
 			this.state.eventInformation.event.customAttendanceFields,
-			XLSX.utils.encode_cell,
+			address => XLSX.utils.encode_cell(address),
 			wsDataAttendance.length,
 		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		XLSX.writeFile(wb, `Attendance ${evtID}.xlsx`);
-	}
+	};
 
-	private async linkEventTo(targetaccount: string) {
+	private async linkEventTo(targetaccount: string): Promise<void> {
 		if (this.state.viewerState !== 'LOADED' || !this.props.member) {
 			return;
 		}

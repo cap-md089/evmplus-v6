@@ -92,14 +92,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		state: 'LOADING',
 	};
 
-	constructor(props: PageProps) {
-		super(props);
-
-		this.updateNewEvent = this.updateNewEvent.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateSideNav([
 			{
 				target: 'main-information',
@@ -188,7 +181,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		});
 	}
 
-	public get hasPermission() {
+	public get hasPermission(): boolean {
 		if (!this.props.member) {
 			return false;
 		}
@@ -217,7 +210,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.state === 'SAVING' || this.state.state === 'LOADING') {
 			return <Loader />;
 		}
@@ -234,6 +227,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 					<br />
 					You can visit your new account{' '}
 					<a
+						// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 						href={`https://${this.state.account.id}.${process.env.REACT_APP_HOST_NAME}/`}
 						rel="_blank noopener"
 					>
@@ -241,6 +235,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 					</a>
 					. Please also take some time to configure your new site{' '}
 					<a
+						// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 						href={`https://${this.state.account.id}.${process.env.REACT_APP_HOST_NAME}/regedit`}
 						rel="_blank noopener"
 					>
@@ -353,7 +348,7 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 		);
 	}
 
-	private async handleSubmit(event: MaybeObj<NewEventFormValues>) {
+	private handleSubmit = async (event: MaybeObj<NewEventFormValues>): Promise<void> => {
 		if (this.state.state !== 'FORM') {
 			return;
 		}
@@ -398,13 +393,13 @@ export default class CreateAccount extends Page<PageProps, CreateAccountState> {
 				account: accountResult.value,
 			});
 		}
-	}
+	};
 
-	private updateNewEvent(event: NewEventFormValues) {
+	private updateNewEvent = (event: NewEventFormValues): void => {
 		this.setState(prev => ({
 			...prev,
 			state: 'FORM',
 			event,
 		}));
-	}
+	};
 }

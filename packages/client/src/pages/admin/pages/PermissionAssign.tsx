@@ -84,15 +84,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		submitSuccess: false,
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-
-		this.addMember = this.addMember.bind(this);
-		this.handleChange = this.handleChange.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -169,7 +161,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		}));
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <h3>Please sign in</h3>;
 		}
@@ -251,14 +243,16 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 		);
 	}
 
-	private handleChange(values: PermissionInformation) {
+	private handleChange = (values: PermissionInformation): void => {
 		if (this.state.state !== 'LOADED') {
 			return;
 		}
 
-		const membersWithPermissions: Array<{
-			name: string;
-		} & api.member.permissions.PermissionInformation> = [];
+		const membersWithPermissions: Array<
+			{
+				name: string;
+			} & api.member.permissions.PermissionInformation
+		> = [];
 
 		for (const memberIDString in values) {
 			if (values.hasOwnProperty(memberIDString)) {
@@ -294,9 +288,9 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 			state: 'LOADED',
 			membersWithPermissions,
 		}));
-	}
+	};
 
-	private async addMember(member: Member | null) {
+	private addMember = (member: Member | null): void => {
 		if (!member) {
 			return;
 		}
@@ -339,9 +333,9 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private async handleSubmit() {
+	private handleSubmit = async (): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -364,20 +358,18 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 				submitSuccess: false,
 			});
 		}
-	}
+	};
 
-	private getRemover(index: MemberReference) {
-		return () => {
-			this.setState(prev =>
-				prev.state === 'LOADED'
-					? {
-							...prev,
-							membersWithPermissions: prev.membersWithPermissions.filter(
-								mem => !areMembersTheSame(index)(mem.member),
-							),
-					  }
-					: prev,
-			);
-		};
-	}
+	private getRemover = (index: MemberReference) => () => {
+		this.setState(prev =>
+			prev.state === 'LOADED'
+				? {
+						...prev,
+						membersWithPermissions: prev.membersWithPermissions.filter(
+							mem => !areMembersTheSame(index)(mem.member),
+						),
+				  }
+				: prev,
+		);
+	};
 }

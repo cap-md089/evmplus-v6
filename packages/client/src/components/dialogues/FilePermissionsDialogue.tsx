@@ -69,7 +69,7 @@ const inputProps = {
 	className: 'group-input',
 };
 
-const renderItem = (item: any, isHighlighted: boolean) => (
+const renderItem = (item: any, isHighlighted: boolean): JSX.Element => (
 	<div key={getName(item)} style={isHighlighted ? highlightedStyle : unhighlightedStyle}>
 		{getName(item)}
 	</div>
@@ -80,10 +80,13 @@ interface PermissionSelectProps {
 	handleNewPermission: (perm: FileUserAccessControlPermissions | null) => void;
 }
 
-const PermissionSelect = ({ permission, handleNewPermission }: PermissionSelectProps) => (
+const PermissionSelect = ({
+	permission,
+	handleNewPermission,
+}: PermissionSelectProps): JSX.Element => (
 	<select
 		onChange={useCallback(
-			e =>
+			(e: React.ChangeEvent<HTMLSelectElement>) =>
 				e.target.value === 'null'
 					? handleNewPermission(null)
 					: handleNewPermission(parseInt(e.target.value, 10)),
@@ -101,7 +104,7 @@ const PermissionSelect = ({ permission, handleNewPermission }: PermissionSelectP
 		</option>
 		<option
 			selected={
-				// tslint:disable-next-line: no-bitwise
+				// eslint-disable-next-line  no-bitwise
 				permission !== null && (permission & FileUserAccessControlPermissions.MODIFY) !== 0
 			}
 			value={FileUserAccessControlPermissions.MODIFY.toString()}
@@ -121,10 +124,10 @@ const PermissionSelectWithRemove = ({
 	permission,
 	handleNewPermission,
 	handleRemovePermission,
-}: PermissionSelectWithRemoveProps) => (
+}: PermissionSelectWithRemoveProps): JSX.Element => (
 	<select
 		onChange={useCallback(
-			e =>
+			(e: React.ChangeEvent<HTMLSelectElement>) =>
 				e.target.value === '_remove-permission'
 					? handleRemovePermission()
 					: handleNewPermission(parseInt(e.target.value, 10)),
@@ -138,7 +141,7 @@ const PermissionSelectWithRemove = ({
 			View
 		</option>
 		<option
-			// tslint:disable-next-line: no-bitwise
+			// eslint-disable-next-line  no-bitwise
 			selected={(permission & FileUserAccessControlPermissions.MODIFY) !== 0}
 			value={FileUserAccessControlPermissions.MODIFY.toString()}
 		>
@@ -194,7 +197,7 @@ const PersonPerm = <T extends EditableFileObjectProperties>({
 	members: Member[];
 	setFile: React.Dispatch<React.SetStateAction<T>>;
 	perm: FileUserControlList;
-}) => (
+}): JSX.Element => (
 	<li className="permission member-permission">
 		<div className="permission-holder-name">
 			{members.filter(areMembersTheSame(perm.reference)).map(getName)[0] ??
@@ -225,7 +228,7 @@ const TeamPerm = <T extends EditableFileObjectProperties>({
 	teams: RawTeamObject[];
 	setFile: React.Dispatch<React.SetStateAction<T>>;
 	perm: FileTeamControlList;
-}) => (
+}): JSX.Element => (
 	<li className="permission team-permission">
 		<div className="permission-holder-name">
 			{teams.filter(team => team.id === perm.teamID).map(getName) ?? '<Unknown team>'}
@@ -279,33 +282,35 @@ const handleStaticPermissions = (permType: FileUserAccessControlType) => <T exte
 	currentFile: T,
 	setCurrentFile: React.Dispatch<React.SetStateAction<T>>,
 ) => (permission: FileUserAccessControlPermissions | null) => {
-	permission === null
-		? setCurrentFile({
-				...currentFile,
-				permissions: currentFile.permissions.filter(item => item.type !== permType),
-		  })
-		: !!currentFile.permissions.find(item => item.type === permType)
-		? setCurrentFile({
-				...currentFile,
-				permissions: currentFile.permissions.map(perm =>
-					perm.type === permType
-						? {
-								type: permType,
-								permission,
-						  }
-						: perm,
-				),
-		  })
-		: setCurrentFile({
-				...currentFile,
-				permissions: [
-					...currentFile.permissions,
-					{
-						type: permType,
-						permission,
-					},
-				],
-		  });
+	if (permission === null) {
+		setCurrentFile({
+			...currentFile,
+			permissions: currentFile.permissions.filter(item => item.type !== permType),
+		});
+	} else if (!!currentFile.permissions.find(item => item.type === permType)) {
+		setCurrentFile({
+			...currentFile,
+			permissions: currentFile.permissions.map(perm =>
+				perm.type === permType
+					? {
+							type: permType,
+							permission,
+					  }
+					: perm,
+			),
+		});
+	} else {
+		setCurrentFile({
+			...currentFile,
+			permissions: [
+				...currentFile.permissions,
+				{
+					type: permType,
+					permission,
+				},
+			],
+		});
+	}
 };
 
 export const FilePermissionsDialogue = <T extends RawFileObject>({
@@ -316,7 +321,7 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 	open,
 	teams,
 	registry,
-}: FilePermissionsDialogueProps<T>) => {
+}: FilePermissionsDialogueProps<T>): JSX.Element => {
 	const [currentFile, setCurrentFile] = useState(file);
 	const [search, setSearch] = useState('');
 
@@ -401,10 +406,7 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 				: currentFile.permissions.find(
 						perm =>
 							perm.type === FileUserAccessControlType.TEAM && perm.teamID === item.id,
-				  )) &&
-			getName(item)
-				.toLowerCase()
-				.includes(input.toLowerCase()),
+				  )) && getName(item).toLowerCase().includes(input.toLowerCase()),
 		[currentFile],
 	);
 	const onChange = useCallback((_, value) => setSearch(value), [setSearch]);
@@ -431,8 +433,12 @@ export const FilePermissionsDialogue = <T extends RawFileObject>({
 
 	const link =
 		file.contentType === 'application/folder'
-			? `https://${registry.accountID}.${process.env.REACT_APP_HOST_NAME}/drive/${file.id}`
-			: `https://${registry.accountID}.${process.env.REACT_APP_HOST_NAME}/api/files/${file.id}/download`;
+			? `https://${registry.accountID}.${
+					process.env.REACT_APP_HOST_NAME ?? 'events.md.cap.gov'
+			  }/drive/${file.id}`
+			: `https://${registry.accountID}.${
+					process.env.REACT_APP_HOST_NAME ?? 'events.md.cap.gov'
+			  }/api/files/${file.id}/download`;
 
 	return (
 		<Dialogue

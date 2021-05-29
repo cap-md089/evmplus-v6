@@ -28,7 +28,7 @@ export interface SimpleRadioProps<E extends number = number> extends InputProps<
 export default class SimpleRadioButton<E extends number = number> extends React.Component<
 	SimpleRadioProps<E>
 > {
-	constructor(props: SimpleRadioProps<E>) {
+	public constructor(props: SimpleRadioProps<E>) {
 		super(props);
 
 		if (this.props.onInitialize) {
@@ -39,8 +39,8 @@ export default class SimpleRadioButton<E extends number = number> extends React.
 		}
 	}
 
-	public render() {
-		const index = typeof this.props.index === 'undefined' ? '' : '-' + this.props.index;
+	public render(): JSX.Element {
+		const index = typeof this.props.index === 'undefined' ? '' : `-${this.props.index}`;
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -69,18 +69,16 @@ export default class SimpleRadioButton<E extends number = number> extends React.
 		);
 	}
 
-	private getChangeHandler(index: E) {
-		return () => {
-			if (this.props.onChange) {
-				this.props.onChange(index);
-			}
+	private getChangeHandler = (index: E) => () => {
+		if (this.props.onChange) {
+			this.props.onChange(index);
+		}
 
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value: index,
-				});
-			}
-		};
-	}
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value: index,
+			});
+		}
+	};
 }

@@ -60,7 +60,7 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		this.onSubmit = this.onSubmit.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -86,7 +86,7 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>You need to sign in to view this page</div>;
 		}
@@ -120,7 +120,7 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		);
 	}
 
-	private async onSubmit({ capid }: { capid: number | null }) {
+	private onSubmit = async ({ capid }: { capid: number | null }): Promise<void> => {
 		if (!capid || !this.props.member || capid < 100000 || capid > 999999) {
 			return;
 		}
@@ -160,5 +160,5 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 				message: Maybe.none(),
 			});
 		}, 5000);
-	}
+	};
 }

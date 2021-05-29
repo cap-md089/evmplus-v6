@@ -73,7 +73,7 @@ type EventLinkListState = (
 ) &
 	EventLinkListStatusState;
 
-function getEventStatusColored(status: EventStatus) {
+function getEventStatusColored(status: EventStatus): JSX.Element {
 	switch (status) {
 		case EventStatus.COMPLETE:
 			return <span style={{ color: 'green' }}>Complete</span>;
@@ -90,7 +90,7 @@ function getEventStatusColored(status: EventStatus) {
 	}
 }
 
-function getEventStatus(status: EventStatus) {
+function getEventStatus(status: EventStatus): string {
 	switch (status) {
 		case EventStatus.COMPLETE:
 			return 'Complete';
@@ -107,7 +107,7 @@ function getEventStatus(status: EventStatus) {
 	}
 }
 
-function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
+function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>): JSX.Element | null {
 	if (gen.otherValueSelected) {
 		return <span style={{ color: 'green' }}>{gen.otherValue}</span>;
 	}
@@ -133,7 +133,7 @@ function getEventNumber(gen: RadioReturnWithOther<EchelonEventNumber>) {
 // 	}
 // }
 
-function getComplete(gc: boolean) {
+function getComplete(gc: boolean): JSX.Element {
 	if (gc === true) {
 		return <span style={{ color: 'green' }}>Y</span>;
 	} else {
@@ -153,7 +153,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		this.setStatus = this.setStatus.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -208,11 +208,13 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		// need to check for sessionid here and return login error if not current
 		if (!this.props.member) {
 			return <div>Please sign in to view this content</div>;
 		}
+
+		const member = this.props.member;
 
 		if (this.state.state === 'LOADING') {
 			return <Loader />;
@@ -261,9 +263,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									<td>
 										<Link to={`/eventviewer/${event.id}`}>{event.id}</Link> ::
 										{'  '}
-										{effectiveManageEventPermissionForEvent(this.props.member!)(
-											event,
-										) === Permissions.ManageEvent.FULL ? (
+										{effectiveManageEventPermissionForEvent(member)(event) ===
+										Permissions.ManageEvent.FULL ? (
 											<Link to={`/eventform/${event.id}`}>{event.name}</Link>
 										) : (
 											<>{event.name}</>
@@ -273,6 +274,7 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 											<>
 												{` - [`}
 												<a
+													// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 													href={`https://${event.targetAccountID}.${process.env.REACT_APP_HOST_NAME}/eventviewer/${event.targetEventID}`}
 													target="_blank"
 													rel="noopener noreferrer"
@@ -297,9 +299,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 									{/* return <span style={{ color: 'orange' }}>Tentative</span>; */}
 									{/* <span style={{ color: {getStatusColor(event.status)} }}> */}
 									<td>
-										{effectiveManageEventPermissionForEvent(this.props.member!)(
-											event,
-										) === Permissions.ManageEvent.FULL ? (
+										{effectiveManageEventPermissionForEvent(member)(event) ===
+										Permissions.ManageEvent.FULL ? (
 											<DialogueButtonForm<{
 												eventToSet: number;
 												newStatus: EventStatus;
@@ -355,13 +356,13 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 		);
 	}
 
-	private async setStatus({
+	private setStatus = async ({
 		eventToSet,
 		newStatus,
 	}: {
 		eventToSet: number;
 		newStatus: EventStatus;
-	}) {
+	}): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -387,5 +388,5 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 				statusSetError: Maybe.some(result.value.message),
 			});
 		}
-	}
+	};
 }

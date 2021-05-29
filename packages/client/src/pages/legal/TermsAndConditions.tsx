@@ -4,7 +4,7 @@ const lineHeight = {
 	lineHeight: '1.6em',
 } as const;
 
-export const TermsAndConditions = () => (
+export const TermsAndConditions = (): JSX.Element => (
 	<div style={lineHeight}>
 		<h2>Welcome to EvMPlus.org</h2>
 		<p>

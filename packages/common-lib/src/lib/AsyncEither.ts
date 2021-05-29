@@ -22,15 +22,16 @@ import { Either as E, EitherObj as Either, Left } from './Either';
 const errorHandler = <L>(errorValue: L | ((err: Error) => L)) => (err: Error): Left<L> =>
 	E.left(typeof errorValue === 'function' ? (errorValue as (err: Error) => L)(err) : errorValue);
 
-export const isPromise = (v: any): v is Promise<any> => !!v && !!v.then;
+export const isPromise = (v: unknown): v is Promise<any> =>
+	!!v && typeof v === 'object' && v !== null && 'then' in v;
 
 type Arg0Either<F, L, R2> = F extends (arg: infer A) => AsyncEither<L, R2> ? A : never;
 
-type Arg0<F, L, R2> = F extends (arg: infer A) => R2 ? A : never;
+type Arg0<F, R2> = F extends (arg: infer A) => R2 ? A : never;
 
 // Used because the current setup doesn't always include errors like type errors easily
 const errorWrap = async <L, R, T extends any[]>(
-	f: (...args: T) => R | Promise<R>,
+	f: (...funcArgs: T) => R | Promise<R>,
 	errorValue: L | ((err: Error) => L),
 	...args: T
 ): Promise<Either<L, R>> => {
@@ -131,28 +132,30 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 	public static All<L, R>(values: [AsyncEither<L, R>]): AsyncEither<L, [R]>;
 	public static All<L, R>(values: Array<AsyncEither<L, R>>): AsyncEither<L, R[]>;
 
-	public static All<L, R>(values: any[]): AsyncEither<L, any> {
+	public static All<L>(values: Array<AsyncEither<L, any>>): AsyncEither<L, any> {
 		const results = Promise.all(values.map(value => value.fullJoin()));
 		// This works because the value rejected in Promise.all would be the value rejected by an AsyncEither<L, R> type
 		// Ensuring that the value passed to Promise.reject is of type L
 		return asyncRight(results, (err: Error): L => (err as unknown) as L);
 	}
 
-	public static Left = <L, R>(value: L) =>
-		new AsyncEither<L, R>(Promise.resolve(E.left<L, R>(value)), value);
+	public static Left = <sL, sR>(value: sL): AsyncEither<sL, sR> =>
+		new AsyncEither<sL, sR>(Promise.resolve(E.left<sL, sR>(value)), value);
 
-	public static Right = <L, R>(value: R | Promise<R>, errorValue: L | ((err: Error) => L)) => {
-		return new AsyncEither<L, R>(
+	public static Right = <sL, sR>(
+		value: sR | Promise<sR>,
+		errorValue: sL | ((err: Error) => sL),
+	): AsyncEither<sL, sR> =>
+		new AsyncEither<sL, sR>(
 			isPromise(value)
-				? value.then(v => E.right<L, R>(v), errorHandler(errorValue))
-				: Promise.resolve(E.right<L, R>(value)),
+				? value.then(v => E.right<sL, sR>(v), errorHandler(errorValue))
+				: Promise.resolve(E.right<sL, sR>(value)),
 			errorValue,
 		);
-	};
 
 	public constructor(
 		public readonly value: Promise<Either<L, R>>,
-		public readonly errorValue: L | ((err: Error) => L),
+		public readonly errorValue: L | ((err: Error) => L), // eslint-disable-next-line no-empty-function
 	) {}
 
 	public isLeft = (): Promise<boolean> => this.value.then(E.isLeft, () => true);
@@ -269,7 +272,7 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 			errorValue,
 		);
 
-	public setErrorValue = (errorValue: L | ((err: Error) => L)) =>
+	public setErrorValue = (errorValue: L | ((err: Error) => L)): AsyncEither<L, R> =>
 		new AsyncEither(this.value, errorValue);
 
 	public filter<R2 extends R>(
@@ -283,6 +286,7 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 		errorValue?: L | ((err: Error) => L),
 	): AsyncEither<L, R>;
 
+	// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 	public filter<R2 extends R>(
 		predicate:
 			| ((v: R) => AsyncEither<L, boolean> | Promise<boolean> | boolean)
@@ -315,13 +319,16 @@ export class AsyncEither<L, R> implements PromiseLike<Either<L, R>> {
 		);
 	}
 
-	public apply = <R2, A extends Arg0<R, L, R2>>(value: A, errorValue = this.errorValue) =>
+	public apply = <R2, A extends Arg0<R, R2>>(
+		value: A,
+		errorValue = this.errorValue,
+	): AsyncEither<L, R2> =>
 		this.map(func => ((func as unknown) as (arg: A) => R2)(value), errorValue);
 
 	public flatApply = <R2, A extends Arg0Either<R, L, R2>>(
 		value: A,
 		errorValue = this.errorValue,
-	) =>
+	): AsyncEither<L, R2> =>
 		this.flatMap(
 			func => ((func as unknown) as (arg: A) => AsyncEither<L, R2>)(value),
 			errorValue,

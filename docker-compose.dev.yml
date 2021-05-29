@@ -67,6 +67,7 @@ services:
         ports:
             - '3306:3306'
             - '33060:33060'
+        command: mysqld --local-infile=ON
         expose:
             - '33060'
         environment:
@@ -138,14 +139,15 @@ services:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
         secrets:
-            - db_user
-            - db_password
+            - mysql_root_password
         tty: true
         stdin_open: true
         depends_on:
             - mysql
         networks:
             - default
+        volumes:
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     util-cli:
         build:
@@ -219,6 +221,9 @@ secrets:
 
     capwatch_password:
         file: ./keys/capwatch_password
+
+    mysql_root_password:
+        file: ./keys/mysql_root_password
 
 volumes:
     db-data:

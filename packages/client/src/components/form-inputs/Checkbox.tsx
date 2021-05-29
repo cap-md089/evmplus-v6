@@ -22,10 +22,8 @@ import './Checkbox.scss';
 import { InputProps } from './Input';
 
 export default class Checkbox extends React.Component<InputProps<boolean>> {
-	constructor(props: InputProps<boolean>) {
+	public constructor(props: InputProps<boolean>) {
 		super(props);
-
-		this.onChange = this.onChange.bind(this);
 
 		if (this.props.onInitialize) {
 			this.props.onInitialize({
@@ -35,7 +33,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const name = !!this.props.index
 			? `${this.props.name}-${this.props.index}`
 			: this.props.name;
@@ -57,7 +55,7 @@ export default class Checkbox extends React.Component<InputProps<boolean>> {
 		);
 	}
 
-	private onChange(e: React.ChangeEvent<HTMLInputElement>) {
+	private onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		if (this.props.disabled) {
 			return;
 		}
@@ -70,5 +68,5 @@ export default class Checkbox extends React.Component<InputProps<boolean>> {
 		});
 
 		this.props.onChange?.(value);
-	}
+	};
 }

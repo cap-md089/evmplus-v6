@@ -28,7 +28,7 @@ export interface EnumRadioProps<E> extends InputProps<E> {
 }
 
 export default class EnumRadioButton<E> extends React.Component<EnumRadioProps<E>> {
-	constructor(props: EnumRadioProps<E>) {
+	public constructor(props: EnumRadioProps<E>) {
 		super(props);
 
 		if (this.props.onInitialize) {
@@ -39,8 +39,8 @@ export default class EnumRadioButton<E> extends React.Component<EnumRadioProps<E
 		}
 	}
 
-	public render() {
-		const index = typeof this.props.index === 'undefined' ? '' : '-' + this.props.index;
+	public render(): JSX.Element {
+		const index = typeof this.props.index === 'undefined' ? '' : `-${this.props.index ?? 0}`;
 
 		return (
 			<div className="input-formbox" style={this.props.boxStyles}>
@@ -69,18 +69,16 @@ export default class EnumRadioButton<E> extends React.Component<EnumRadioProps<E
 		);
 	}
 
-	private getChangeHandler(value: E) {
-		return () => {
-			if (this.props.onChange) {
-				this.props.onChange(value);
-			}
+	private getChangeHandler = (value: E) => (): void => {
+		if (this.props.onChange) {
+			this.props.onChange(value);
+		}
 
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value,
-				});
-			}
-		};
-	}
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value,
+			});
+		}
+	};
 }

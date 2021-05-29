@@ -28,7 +28,7 @@ import DesktopCalendar from './calendars/DesktopCalendar';
 import MobileCalendar from './calendars/MobileCalendar';
 import Page, { PageProps } from './Page';
 
-export const getMonth = (month: number, year: number) =>
+export const getMonth = (month: number, year: number): DateTime =>
 	DateTime.utc()
 		.set({
 			year,
@@ -119,7 +119,7 @@ export default class Calendar extends Page<
 		this.checkToUpdate = this.checkToUpdate.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		window.addEventListener('resize', this.checkToUpdate);
 
 		this.props.updateBreadCrumbs([
@@ -185,11 +185,11 @@ export default class Calendar extends Page<
 		});
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		window.removeEventListener('resize', this.checkToUpdate);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.events === null || this.state.start === null || this.state.end === null) {
 			return <Loader />;
 		}
@@ -211,7 +211,7 @@ export default class Calendar extends Page<
 		);
 	}
 
-	private checkToUpdate() {
+	private checkToUpdate = (): void => {
 		this.forceUpdate();
-	}
+	};
 }

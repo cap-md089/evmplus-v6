@@ -39,13 +39,13 @@ export default async (
 	conf: DiscordCLIConfiguration,
 	client: Client,
 	args: string[],
-) => {
+): Promise<void> => {
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
 	const backend = getDiscordBackend(schema);
 
-	const setupServer = async (id: string, guild: Guild) => {
+	const setupServer = async (id: string, guild: Guild): Promise<void> => {
 		const accountMaybe = await getAccountForDiscordServer(schema)(id);
 
 		if (Maybe.isNone(accountMaybe)) {
@@ -65,7 +65,7 @@ export default async (
 
 		const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
-		for (const [_, member] of await guild.members.fetch()) {
+		for (const [, member] of await guild.members.fetch()) {
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
 			if (guild.ownerID !== member.id && !member.user.bot) {

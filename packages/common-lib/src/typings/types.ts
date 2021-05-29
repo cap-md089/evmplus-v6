@@ -27,7 +27,7 @@ import type { MaybeObj } from '../lib/Maybe';
  *
  * Documentation is not provided by NHQ
  */
-// tslint:disable-next-line: no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NHQ {
 	export interface CadetAchv {
 		CAPID: number;
@@ -372,10 +372,10 @@ export enum AuditableEventType {
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
-	// tslint:disable-next-line:no-bitwise
+	// eslint-disable-next-line no-bitwise
 	WRITE = 1 << 1,
 	// Modify, for folders, means changing name and uploading files
-	// tslint:disable-next-line:no-bitwise
+	// eslint-disable-next-line no-bitwise
 	MODIFY = 1 << 2,
 	FULLCONTROL = 255,
 }
@@ -460,7 +460,7 @@ export enum EventType {
 	LINKED = 'Linked',
 }
 
-// tslint:disable-next-line: no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
 		NO = 'No',
@@ -3863,7 +3863,7 @@ export interface ParamType {
 	[key: string]: string | undefined;
 }
 
-export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
+export interface BasicMySQLRequest<P extends ParamType = ParamType, B = any> {
 	/**
 	 * Contains basic properties from express.Request
 	 */

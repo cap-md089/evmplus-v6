@@ -32,7 +32,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		events: null,
 	};
 
-	public render() {
+	public render(): JSX.Element {
 		const events = this.props.events;
 
 		const year =
@@ -48,7 +48,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		const thisMonth = getMonth(month, year);
 		const nextMonth = getMonth(month + 1, year);
 
-		const days = Array(thisMonth.daysInMonth);
+		const days = Array(thisMonth.daysInMonth) as RawResolvedEventObject[][];
 		for (let i = 0; i < days.length; i++) {
 			days[i] = [];
 		}
@@ -62,7 +62,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 				+endDate < +thisMonth ? 0 : +endDate >= +nextMonth ? thisMonth.day : endDate.day;
 
 			for (let i = startDay; i < endDay; i++) {
-				days[i].push(event);
+				days[i]?.push?.(event);
 			}
 		});
 
@@ -108,7 +108,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		return (
 			<li key={index}>
 				<div className="day-title">
-					{('0' + (index + 1)).substr(-2)}. {month.set({ day: index + 1 }).weekdayLong}
+					{`0${index + 1}`.substr(-2)}. {month.set({ day: index + 1 }).weekdayLong}
 				</div>
 				<ul className="events-list">
 					{events.map((event, i) => (

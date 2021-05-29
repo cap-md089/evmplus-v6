@@ -74,7 +74,7 @@ const wrapMember = (member: Member): WrappedMember => ({
 
 const unwrapMember = ({ member }: WrappedMember): Member => member;
 
-const memberChanged = ({ changed }: WrappedMember) => changed;
+const memberChanged = ({ changed }: WrappedMember): boolean => changed;
 
 export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 	public state: FlightAssignState = {
@@ -94,7 +94,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		this.onSaveClick = this.onSaveClick.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (
 			!this.props.member ||
 			!hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(this.props.member)
@@ -106,11 +106,11 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		this.props.updateSideNav([
 			...this.props.registry.RankAndFile.Flights.map((flight, i) => ({
 				text: flight,
-				target: flight.toLowerCase() + '-' + i,
-				type: 'Reference' as 'Reference',
+				target: `${flight.toLowerCase()}-${i}`,
+				type: 'Reference' as const,
 			})),
 			{
-				target: 'unassigned-' + this.props.registry.RankAndFile.Flights.length,
+				target: `unassigned-${this.props.registry.RankAndFile.Flights.length}`,
 				text: 'Unassigned',
 				type: 'Reference',
 			},
@@ -147,7 +147,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <div>Please sign in</div>;
 		}
@@ -209,35 +209,37 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		);
 	}
 
-	private onDragStart(flight: string) {
+	private onDragStart = (flight: string): void => {
 		this.setState({
 			open: false,
 			highlighted: flight,
 		});
-	}
+	};
 
-	private onDrop(flight: string) {
-		return (memRef: MemberReference) => {
-			for (const member of this.state.members!) {
-				if (areMembersTheSame(memRef)(member.member)) {
-					member.member.flight = flight;
-					member.changed = true;
-				}
+	private onDrop = (flight: string) => (memRef: MemberReference) => {
+		if (!this.state.members) {
+			return;
+		}
+
+		for (const member of this.state.members) {
+			if (areMembersTheSame(memRef)(member.member)) {
+				member.member.flight = flight;
+				member.changed = true;
 			}
-			this.setState(prev =>
-				prev.loaded
-					? {
-							...prev,
-							highlighted: null,
-							open: true,
-							saved: false,
-					  }
-					: prev,
-			);
-		};
-	}
+		}
+		this.setState(prev =>
+			prev.loaded
+				? {
+						...prev,
+						highlighted: null,
+						open: true,
+						saved: false,
+				  }
+				: prev,
+		);
+	};
 
-	private async onSaveClick() {
+	private onSaveClick = async (): Promise<void> => {
 		const payload: {
 			members: Array<{
 				member: MemberReference;
@@ -275,5 +277,5 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			saved: true,
 			saving: false,
 		});
-	}
+	};
 }

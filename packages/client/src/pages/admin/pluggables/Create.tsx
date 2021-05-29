@@ -28,7 +28,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
 
-export const canUseCreate = (props: PageProps) => {
+export const canUseCreate = (props: PageProps): boolean => {
 	if (!props.member) {
 		return false;
 	}
@@ -48,31 +48,30 @@ interface CreateWidgetProps extends PageProps {
 
 export class CreateWidget extends Page<CreateWidgetProps> {
 	public state: {} = {};
-	public render() {
-		return (
-			<div className="widget">
-				<div className="widget-title">Create something</div>
-				<div className="widget-body">
-					{effectiveManageEventPermission(this.props.member) !==
-					Permissions.ManageEvent.NONE ? (
-						<>
-							<Link to="/addevent">Draft an event</Link>
-							<br />
-						</>
-					) : null}
-					{hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) ? (
-						<>
-							<Link to="/team/create">Add a team</Link>
-							<br />
-						</>
-					) : null}
-					{canCreateCAPEventAccount(this.props.account)(this.props.member) ? (
-						<>
-							<Link to="/admin/createeventaccount">Create a special event</Link>
-						</>
-					) : null}
-				</div>
+
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<div className="widget-title">Create something</div>
+			<div className="widget-body">
+				{effectiveManageEventPermission(this.props.member) !==
+				Permissions.ManageEvent.NONE ? (
+					<>
+						<Link to="/addevent">Draft an event</Link>
+						<br />
+					</>
+				) : null}
+				{hasPermission('ManageTeam')(Permissions.ManageTeam.FULL)(this.props.member) ? (
+					<>
+						<Link to="/team/create">Add a team</Link>
+						<br />
+					</>
+				) : null}
+				{canCreateCAPEventAccount(this.props.account)(this.props.member) ? (
+					<>
+						<Link to="/admin/createeventaccount">Create a special event</Link>
+					</>
+				) : null}
 			</div>
-		);
-	}
+		</div>
+	);
 }
