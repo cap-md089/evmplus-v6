@@ -275,7 +275,7 @@ export const createCAPEventAccountFunc = (
 		.tap(() => session.commit())
 		.leftTap(() => session.rollback());
 
-export const getAccount = (schema: Schema) => (accountID: string) =>
+export const getAccount = (schema: Schema) => (accountID: string): ServerEither<AccountObject> =>
 	asyncRight(
 		schema.getCollection<AccountObject>('Accounts'),
 		errorGenerator('Could not get accounts'),
@@ -543,7 +543,9 @@ export const getMemberIDs = (schema: Schema) =>
 		}
 	};
 
-export const getFiles = (includeWWW = true) => (schema: Schema) => (account: AccountObject) => {
+export const getFiles = (includeWWW = true) => (schema: Schema) => (
+	account: AccountObject,
+): AsyncIter<FileObject> => {
 	const fileCollection = schema.getCollection<FileObject>('Files');
 
 	return generateResults(
@@ -557,7 +559,7 @@ export const getFiles = (includeWWW = true) => (schema: Schema) => (account: Acc
 
 export const getEvents = (schema: Schema) => (
 	account: AccountObject,
-): AsyncIterator<EitherObj<ServerError, RawEventObject>> => {
+): AsyncIter<EitherObj<ServerError, RawEventObject>> => {
 	const eventCollection = schema.getCollection<RawEventObject>('Events');
 
 	const find = eventCollection.find(`accountID = :accountID`).bind('accountID', account.id);
@@ -570,8 +572,9 @@ export const getEvents = (schema: Schema) => (
 };
 
 export const queryEvents = (query: string) => (schema: Schema) => (account: AccountObject) => (
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	bind: any,
-) =>
+): AsyncIter<EitherObj<ServerError, RawEventObject>> =>
 	asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
 		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
 			generateResults(queryEventsFind(query)(schema)(account)(bind)),
@@ -579,8 +582,9 @@ export const queryEvents = (query: string) => (schema: Schema) => (account: Acco
 	);
 
 export const queryEventsFind = (query: string) => (schema: Schema) => (account: AccountObject) => (
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	bind: any,
-) => {
+): CollectionFind<FromDatabase<EventObject>> => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const find = eventCollection
@@ -593,7 +597,7 @@ export const queryEventsFind = (query: string) => (schema: Schema) => (account: 
 
 export const getEventsInRange = (schema: Schema) => (account: AccountObject) => (start: number) => (
 	end: number,
-) => {
+): AsyncIter<EitherObj<ServerError, FromDatabase<RawEventObject>>> => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const iterator = eventCollection
@@ -609,13 +613,15 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 	)(generateResults(iterator));
 };
 
-export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
+export const saveAccount = (schema: Schema) => async (account: AccountObject): Promise<void> => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
 	await collection.modify('id = :id').bind('id', account.id).patch(account).execute();
 };
 
-export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
+export const getSortedEvents = (schema: Schema) => (
+	account: AccountObject,
+): AsyncIter<FromDatabase<RawEventObject>> => {
 	const eventCollection = schema.getCollection<FromDatabase<EventObject>>('Events');
 
 	const eventIterator = findAndBind(eventCollection, {
@@ -642,7 +648,7 @@ export const getOrgNameForMember = (
 	orgInfoGetter: (ORGID: number) => ServerEither<MaybeObj<NHQ.Organization>>,
 ) => (backend: Backends<[AccountBackend, RegistryBackend]>) => (account: AccountObject) => (
 	member: Member,
-) => {
+): ServerEither<MaybeObj<string>> => {
 	switch (member.type) {
 		case 'CAPNHQMember':
 			return backend

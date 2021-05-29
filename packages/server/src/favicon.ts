@@ -45,7 +45,7 @@ import {
 	RegistryBackend,
 } from 'server-common';
 
-export default async (request: express.Request, res: express.Response) => {
+export default async (request: express.Request, res: express.Response): Promise<void> => {
 	const req = (request as unknown) as MySQLRequest;
 
 	const backend = combineBackends<

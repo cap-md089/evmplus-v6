@@ -8,7 +8,7 @@
 		"build": "ttsc --build tsconfig.build.json",
 		"watch": "ttsc --build tsconfig.build.json --watch",
 		"check": "ttsc --build tsconfig.build.json --noEmit",
-		"lint": "eslint src/**/*.ts"
+		"lint": "eslint src/**/*.ts src/*.ts"
 	},
 	"author": "Andrew Rioux",
 	"license": "GPL-2.0",

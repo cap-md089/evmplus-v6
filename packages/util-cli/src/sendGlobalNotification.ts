@@ -23,6 +23,7 @@ import {
 	AccountObject,
 	getFullMemberName,
 	Maybe,
+	NotificationCause,
 	NotificationCauseType,
 	NotificationDataType,
 	NotificationTargetType,
@@ -44,10 +45,10 @@ import { backendGenerator } from './lib/backend';
  * E.g., 'system is going down for maintenance'
  */
 
-(async () => {
+void (async () => {
 	const config = await conf.getCLIConfiguration();
 
-	const argError = () => {
+	const argError = (): never => {
 		console.error('Please provide a source, account ID, expiration date, and message');
 		console.error(
 			'node sendGlobalNotification.js [CAPID|SYS] [Account ID|ALL] [YYYY-MM-DD] [HH:MM] [message...]',
@@ -61,7 +62,7 @@ import { backendGenerator } from './lib/backend';
 	}
 
 	const cliargs = process.argv.slice(2).join(' ');
-	const check = cliargs.match(/^(\d{6}|SYS) (\S*) (\d{4})-(\d{2})-(\d{2}) (\d{2}):?(\d{2}) (.*)/);
+	const check = /^(\d{6}|SYS) (\S*) (\d{4})-(\d{2})-(\d{2}) (\d{2}):?(\d{2}) (.*)/.exec(cliargs);
 
 	// Check if valid
 	if (check === null) {
@@ -72,17 +73,18 @@ import { backendGenerator } from './lib/backend';
 	/**
 	 * Parse the results of user information, get targets, from, expiration and message
 	 */
-	const from =
+	const from: NotificationCause =
 		check[1].toLowerCase() === 'sys'
 			? {
-					type: NotificationCauseType.SYSTEM,
+					type: NotificationCauseType.SYSTEM as const,
 			  }
 			: {
-					type: NotificationCauseType.MEMBER,
+					type: NotificationCauseType.MEMBER as const,
 					from: {
 						id: parseInt(check[1], 10),
 						type: 'CAPNHQMember' as const,
 					},
+					fromName: '',
 			  };
 	const accountID = check[2];
 	const expire = new Date(
@@ -106,7 +108,7 @@ import { backendGenerator } from './lib/backend';
 
 	const backend = backendGenerator(emSchema);
 
-	const alertAccount = async (account: AccountObject, db: Schema) => {
+	const alertAccount = async (account: AccountObject, db: Schema): Promise<void> => {
 		try {
 			// Allow overriding the accounts notification
 			const saveMaybe = await getCurrentGlobalNotification(db)(account)
@@ -136,7 +138,7 @@ import { backendGenerator } from './lib/backend';
 				}).fullJoin();
 			} else {
 				// Get the member sending the notification
-				const member = await backend.getMember(account)(from.from!).fullJoin();
+				const member = await backend.getMember(account)(from.from).fullJoin();
 
 				await createNotification(db)(account)({
 					cause: {

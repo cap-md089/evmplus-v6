@@ -32,7 +32,9 @@ import { getRegistryBackend, RegistryBackend } from './Registry';
 import { getTaskBackend, TaskBackend } from './Task';
 import { getTeamsBackend, TeamsBackend } from './Team';
 
-export const getCombinedMemberBackend = () =>
+export const getCombinedMemberBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<[AccountBackend, CAP.CAPMemberBackend, TimeBackend, TeamsBackend, MemberBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[AccountBackend, CAP.CAPMemberBackend, TimeBackend, TeamsBackend, MemberBackend]
@@ -44,31 +46,41 @@ export const getCombinedMemberBackend = () =>
 		getMemberBackend,
 	);
 
-export const getCombinedTeamsBackend = () =>
+export const getCombinedTeamsBackend = (): ((
+	req: BasicAccountRequest,
+) => Backends<[TimeBackend, TeamsBackend]>) =>
 	combineBackends<BasicAccountRequest, [TimeBackend, TeamsBackend]>(
 		getTimeBackend,
 		getTeamsBackend,
 	);
 
-export const getDefaultAccountBackend = () =>
+export const getDefaultAccountBackend = (): ((
+	req: BasicAccountRequest,
+) => Backends<[RawMySQLBackend, AccountBackend, RegistryBackend]>) =>
 	combineBackends<
 		BasicAccountRequest,
 		[Backends<[RawMySQLBackend, AccountBackend, RegistryBackend]>]
 	>(req => req.backend);
 
-export const getCombinedAuditsBackend = () =>
+export const getCombinedAuditsBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<[TimeBackend, CAP.CAPMemberBackend, TeamsBackend, MemberBackend, AuditsBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[TimeBackend, Backends<[CAP.CAPMemberBackend, TeamsBackend, MemberBackend]>, AuditsBackend]
 	>(getTimeBackend, getCombinedMemberBackend(), getAuditsBackend);
 
-export const getCombinedPAMBackend = () =>
+export const getCombinedPAMBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<[TimeBackend, AccountBackend, MemberBackend, PAMBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[TimeBackend, Backends<[AccountBackend, MemberBackend]>, PAMBackend]
 	>(getTimeBackend, getCombinedMemberBackend(), getPAMBackend);
 
-export const getCombinedEventsBackend = () =>
+export const getCombinedEventsBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, EventsBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, EventsBackend]
@@ -80,7 +92,19 @@ export const getCombinedEventsBackend = () =>
 		getEventsBackend,
 	);
 
-export const getCombinedAttendanceBackend = () =>
+export const getCombinedAttendanceBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<
+	[
+		AccountBackend,
+		TimeBackend,
+		CAP.CAPMemberBackend,
+		TeamsBackend,
+		MemberBackend,
+		EventsBackend,
+		AttendanceBackend,
+	]
+>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[
@@ -102,13 +126,17 @@ export const getCombinedAttendanceBackend = () =>
 		getAttendanceBackend,
 	);
 
-export const getCombinedFileBackend = () =>
+export const getCombinedFileBackend = (): ((
+	req: BasicMySQLRequest,
+) => Backends<[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
 		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]
 	>(getCombinedMemberBackend(), getFileBackend);
 
-export const getCombinedTasksBackend = () =>
+export const getCombinedTasksBackend = (): ((
+	req: BasicAccountRequest,
+) => Backends<[GenBackend<typeof getDefaultAccountBackend>, TimeBackend, TaskBackend]>) =>
 	combineBackends<
 		BasicAccountRequest,
 		[GenBackend<typeof getDefaultAccountBackend>, TimeBackend, TaskBackend]

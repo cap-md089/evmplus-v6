@@ -19,14 +19,6 @@
  */
 
 import { Collection, getSession } from '@mysql/xdevapi';
-import {
-	EventType,
-	ExternalPointOfContact,
-	InternalPointOfContact,
-	RawEventObject,
-	RawLinkedEvent,
-	RawRegularEventObject,
-} from 'common-lib';
 import 'dotenv/config';
 import { conf, generateResults } from 'server-common';
 
@@ -34,7 +26,7 @@ process.on('unhandledRejection', up => {
 	throw up;
 });
 
-(async () => {
+void (async () => {
 	const config = await conf.getCLIConfiguration();
 
 	const session = await getSession({
@@ -44,20 +36,25 @@ process.on('unhandledRejection', up => {
 		user: config.DB_USER,
 	});
 
+	// @ts-ignore: this function is only sometimes used
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const schema = session.getSchema(config.DB_SCHEMA);
 
-	// @ts-ignore
+	// @ts-ignore: this function is only sometimes used
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const upgradeTable = async <T>(
 		table: Collection<T>,
 		map: (prev: { [p in keyof T]: any }) => PromiseLike<T> | T,
-	) => {
+	): Promise<number> => {
 		const foundIDs = new Map<string, boolean>();
 
 		for await (const obj of generateResults(table.find('true'))) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			if (foundIDs.has(obj._id!)) {
 				continue;
 			}
 
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			await table.removeOne(obj._id!);
 
 			const result = await table.add(await map(obj)).execute();
@@ -70,28 +67,8 @@ process.on('unhandledRejection', up => {
 
 	await session.startTransaction();
 
-	const fixRawRegularEventObject = (ev: RawRegularEventObject): RawRegularEventObject => ({
-		...ev,
-		pointsOfContact: ev.pointsOfContact.map(
-			poc =>
-				(({
-					...poc,
-					position: poc.position ?? '',
-				} as unknown) as InternalPointOfContact | ExternalPointOfContact),
-		),
-	});
-
 	try {
-		await Promise.all([
-			upgradeTable(schema.getCollection<RawEventObject>('Events'), ev =>
-				ev.type === EventType.LINKED
-					? {
-							...(ev as RawLinkedEvent),
-							type: EventType.LINKED as const,
-					  }
-					: fixRawRegularEventObject(ev as RawRegularEventObject),
-			),
-		]);
+		await Promise.all([]);
 
 		await session.commit();
 	} catch (e) {

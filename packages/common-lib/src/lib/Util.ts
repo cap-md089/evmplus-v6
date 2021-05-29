@@ -18,6 +18,7 @@
  */
 
 import { Either, EitherObj } from './Either';
+import { AsyncIter } from './iter';
 
 export const destroy = (): undefined => void 0;
 
@@ -67,7 +68,7 @@ export const collectGenerator = <T>(gen: IterableIterator<T> | T[]): T[] => {
 	return ret;
 };
 
-export const collectGeneratorAsync = async <T>(gen: AsyncIterableIterator<T>): Promise<T[]> => {
+export const collectGeneratorAsync = async <T>(gen: AsyncIter<T>): Promise<T[]> => {
 	const ret: T[] = [];
 
 	for await (const i of gen) {

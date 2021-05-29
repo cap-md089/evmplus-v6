@@ -53,6 +53,7 @@ import {
 	ServerConfiguration,
 	ServerError,
 	stringifyMemberReference,
+	toAsyncIterableIterator,
 	toReference,
 	User,
 	yieldObjAsync,
@@ -127,13 +128,13 @@ export const getUserFileObject = (backend: Backends<[MemberBackend]>) => (schema
 						.execute(),
 					errorGenerator('Could not get file children information'),
 			  ).map(result => {
-					const [[count]] = result.fetchAll();
+					const [[count]] = result.fetchAll() as [[number]];
 					logFunc.extend('personaldrive').extend('raw')(
 						'Raw SQL results for %s: %o',
 						stringifyMemberReference(member),
 						count,
 					);
-					return count as number;
+					return count;
 			  })
 			: asyncRight(0, errorGenerator('Could not get file children information')),
 	]).map(([folderOwner, fileChildrenCount]) => {
@@ -295,10 +296,10 @@ export const getFilePath = (schema: Schema) => (
 ) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	file: RawFileObject,
 ): ServerEither<
-	{
+	Array<{
 		id: string;
 		name: string;
-	}[]
+	}>
 > =>
 	// The person viewing the file has a personal drive to view
 	file.id === ROOT_FOLDER_ID && Maybe.isSome(member)
@@ -344,7 +345,7 @@ export const getFilePath = (schema: Schema) => (
 		file.parentID === ROOT_FOLDER_ID
 		? asyncRight(
 				[
-					...Maybe.orSome([] as { id: string; name: string }[])(
+					...Maybe.orSome([] as Array<{ id: string; name: string }>)(
 						Maybe.map((ref: MemberReference) => [
 							{ id: stringifyMemberReference(ref), name: 'Personal Drive' },
 						])(member),
@@ -521,8 +522,8 @@ export const uploadFile = (conf: ServerConfiguration) => (file: RawFileObject) =
 	);
 
 export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) => (
-	account: AccountObject,
-) => (file: RawFileObject): ServerEither<void> =>
+	file: RawFileObject,
+): ServerEither<void> =>
 	file.id === ROOT_FOLDER_ID
 		? asyncLeft({
 				type: 'OTHER' as const,
@@ -606,8 +607,10 @@ export const getChildren = (schema: Schema) => (
 							.map(asyncIterConcat(results))
 					: file.id === ROOT_FOLDER_ID
 					? asyncRight<ServerError, typeof results>(
-							asyncIterConcat(results)(() =>
-								getExtraRootFilesForUser(account)(requester),
+							toAsyncIterableIterator(
+								asyncIterConcat(results)(() =>
+									getExtraRootFilesForUser(account)(requester),
+								),
 							),
 							errorGenerator('Could not get file children'),
 					  )
@@ -629,7 +632,7 @@ export interface FileBackend {
 	expandFileObject: (file: FileObject) => ServerEither<FullFileObject>;
 	getFilePath: (
 		user: MaybeObj<User>,
-	) => (file: RawFileObject) => ServerEither<{ id: string; name: string }[]>;
+	) => (file: RawFileObject) => ServerEither<Array<{ id: string; name: string }>>;
 	uploadFile: (
 		uploadedFile: RawFileObject,
 	) => (stream: NodeJS.ReadableStream) => ServerEither<void>;
@@ -652,11 +655,7 @@ export const getFileBackend = (
 		...getRequestFreeFileBackend(req.mysqlx, prevBackend),
 		downloadFileObject: downloadFileObject(req.configuration),
 		uploadFile: uploadFile(req.configuration),
-		deleteFileObject: file =>
-			prevBackend
-				.getAccount(file.accountID)
-				.map(deleteFileObject(req.configuration)(req.mysqlx))
-				.flatApply(file),
+		deleteFileObject: deleteFileObject(req.configuration)(req.mysqlx),
 	};
 
 	return backend;

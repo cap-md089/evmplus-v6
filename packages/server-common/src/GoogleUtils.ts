@@ -33,6 +33,7 @@ import {
 	Timezone,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
+import { markdown } from 'markdown';
 import { v4 as uuid } from 'uuid';
 import { getRegistryById } from './Registry';
 
@@ -100,7 +101,9 @@ function buildEventDescription(
 
 	// first block
 	let description = `<h2>${inEvent.name}</h2>`;
-	inEvent.subtitle ? (description += `<h3>${inEvent.subtitle}</h3>\n`) : (description += ``);
+	if (inEvent.subtitle) {
+		description += `<h3>${inEvent.subtitle}</h3>\n`;
+	}
 	description += `<h3>Event Information Link</h3>`;
 	description +=
 		'(Page includes event information, POC contact information, and applicable download links):\n';
@@ -151,7 +154,7 @@ function buildEventDescription(
 			'\n';
 	}
 	if (inEvent.requiredEquipment.length > 0) {
-		description += '<b>Required equipment:</b> ' + inEvent.requiredEquipment + '\n';
+		description += `<b>Required equipment:</b> ${inEvent.requiredEquipment.join(', ')}\n`;
 	}
 	if (!!inEvent.registration) {
 		description +=
@@ -160,7 +163,7 @@ function buildEventDescription(
 			'<b>Registration information:</b> ' + inEvent.registration.information + '\n';
 	}
 	if (!!inEvent.participationFee) {
-		description += '<b>Participation fee:</b> ' + inEvent.participationFee.feeAmount + '\n';
+		description += `<b>Participation fee:</b> ${inEvent.participationFee.feeAmount}\n`;
 		description +=
 			'<b>Participation fee due:</b> ' +
 			dateFormatter(inEvent.participationFee.feeDue) +
@@ -171,11 +174,9 @@ function buildEventDescription(
 		description +=
 			'<b>Meals:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.mealsDescription)) + '\n';
 	}
-	description +=
-		'<b>Desired number of participants:</b> ' + inEvent.desiredNumberOfParticipants + '\n';
-	const markdown = require('markdown').markdown;
+	description += `<b>Desired number of participants:</b> ${inEvent.desiredNumberOfParticipants}\n`;
 	if (inEvent.comments.length > 0) {
-		description += '<b>Comments:</b> ' + markdown.toHTML(inEvent.comments) + '\n';
+		description += `<b>Comments:</b> ${markdown.toHTML(inEvent.comments)}\n`;
 	}
 	if (inEvent.eventWebsite.length > 0) {
 		description += '<b>Website:</b> ' + inEvent.eventWebsite + '\n';
@@ -184,7 +185,7 @@ function buildEventDescription(
 	return description;
 }
 
-const getDateFormatter = (timeZone: Timezone) =>
+const getDateFormatter = (timeZone: Timezone): Intl.DateTimeFormat =>
 	new Intl.DateTimeFormat('en-US', {
 		timeZone,
 		timeZoneName: 'short',
@@ -232,8 +233,12 @@ export async function createGoogleCalendar(
 	accountID: string,
 	name: string,
 	config: CLIConfiguration,
-) {
-	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json');
+): Promise<string> {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json') as {
+		client_email: string;
+		private_key: string;
+	};
 	const jwtClient = new google.auth.JWT(
 		privateKey.client_email,
 		undefined,
@@ -277,7 +282,7 @@ export async function createGoogleCalendarForEvent(
 	newAccountName: string,
 	accountID: string,
 	config: ServerConfiguration,
-) {
+): Promise<string> {
 	const name = `${newAccountName} - ${newEventName}`;
 
 	return createGoogleCalendar(accountID, name, config);
@@ -289,7 +294,11 @@ export async function createGoogleCalendarEvents(
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
-	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
+		client_email: string;
+		private_key: string;
+	};
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
@@ -314,7 +323,7 @@ export async function createGoogleCalendarEvents(
 		typeof inEvent.participationFee !== 'undefined'
 			? updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
 			: null,
-	]) as Promise<[string, string | null, string | null]>;
+	]);
 }
 
 export default async function updateGoogleCalendars(
@@ -323,7 +332,11 @@ export default async function updateGoogleCalendars(
 	inAccount: AccountObject,
 	config: ServerConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
-	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
+		client_email: string;
+		private_key: string;
+	};
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
@@ -352,8 +365,12 @@ export async function removeGoogleCalendarEvents(
 	inEvent: RawEventObject,
 	inAccount: AccountObject,
 	config: ServerConfiguration,
-) {
-	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
+): Promise<void> {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
+		client_email: string;
+		private_key: string;
+	};
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
@@ -371,8 +388,12 @@ export async function removeGoogleCalendarEvents(
 export async function deleteAllGoogleCalendarEvents(
 	inAccount: AccountObject,
 	config: ServerConfiguration,
-) {
-	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json');
+): Promise<void> {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
+		client_email: string;
+		private_key: string;
+	};
 	const jwtClient = new google.auth.JWT(
 		privatekey.client_email,
 		undefined,
@@ -432,7 +453,7 @@ async function deleteCalendarEvent(
 	jwtClient: JWTClient,
 	eventUUID: string,
 	calendarID: string,
-) {
+): Promise<void> {
 	if (eventUUID.length > 0) {
 		let deleteResponse;
 		try {
@@ -452,19 +473,18 @@ async function deleteCalendarEvent(
 			// exectuion
 			// need to catch and handle this error so that when attempting to delete or move
 			// events the code succeeds in execution
-			return error;
+			throw error;
 		}
 		if (typeof deleteResponse !== 'undefined') {
-			if (deleteResponse.status === 200) {
-				//  			console.log('Response status ' + deleteResponse.statusText); // 99999999 need to look at possible responses and catch errors
-				return 'Success';
-			} else {
+			if (deleteResponse.status >= 400) {
 				// console.log('Failure', deleteResponse, eventUUID);
-				return 'Error';
+				throw new Error(
+					`Error deleting google calendar event: ${deleteResponse.status} ${deleteResponse.statusText}`,
+				);
 			}
 		} else {
 			// console.log('Delete response undefined');
-			return 'Undefined delete response';
+			throw new Error('Undefined Google calendar response');
 		}
 	}
 }
@@ -474,72 +494,53 @@ async function deleteCalendarEvents(
 	jwtClient: JWTClient,
 	inEvent: RawEventObject,
 	calendarID: string,
-) {
+): Promise<void> {
 	// console.log('in deleteCalendarEvents', inEvent);
-	let errorFlag = false;
 	if (!!inEvent.googleCalendarIds.mainId && inEvent.googleCalendarIds.mainId.length > 0) {
-		if (
-			(await deleteCalendarEvent(
-				myCalendar,
-				jwtClient,
-				inEvent.googleCalendarIds.mainId,
-				calendarID,
-			)) !== 'Success'
-		) {
-			errorFlag = true;
-		}
+		await deleteCalendarEvent(
+			myCalendar,
+			jwtClient,
+			inEvent.googleCalendarIds.mainId,
+			calendarID,
+		);
 	}
 	if (!!inEvent.googleCalendarIds.regId && inEvent.googleCalendarIds.regId.length > 0) {
-		if (
-			(await deleteCalendarEvent(
-				myCalendar,
-				jwtClient,
-				inEvent.googleCalendarIds.regId,
-				calendarID,
-			)) !== 'Success'
-		) {
-			errorFlag = true;
-		}
+		await deleteCalendarEvent(
+			myCalendar,
+			jwtClient,
+			inEvent.googleCalendarIds.regId,
+			calendarID,
+		);
 	}
 	if (!!inEvent.googleCalendarIds.feeId && inEvent.googleCalendarIds.feeId.length > 0) {
-		if (
-			(await deleteCalendarEvent(
-				myCalendar,
-				jwtClient,
-				inEvent.googleCalendarIds.feeId,
-				calendarID,
-			)) !== 'Success'
-		) {
-			errorFlag = true;
-		}
+		await deleteCalendarEvent(
+			myCalendar,
+			jwtClient,
+			inEvent.googleCalendarIds.feeId,
+			calendarID,
+		);
 	}
-	return errorFlag;
 }
 
-function getEventColor(inStatus: EventStatus) {
-	let eventColor = 9;
+function getEventColor(inStatus: EventStatus): number {
 	switch (inStatus) {
 		case EventStatus.CANCELLED:
-			eventColor = 11;
-			break;
+			return 11;
 		case EventStatus.DRAFT:
-			eventColor = 5;
-			break;
+			return 5;
 		case EventStatus.TENTATIVE:
-			eventColor = 7;
-			break;
+			return 7;
 		case EventStatus.INFORMATIONONLY:
-			eventColor = 1;
-			break;
+			return 1;
 	}
-	return eventColor;
+	return 9;
 }
 
 function buildEvent(
 	config: ServerConfiguration,
 	registry: RegistryValues,
 	inEvent: RawResolvedEventObject,
-) {
+): calendar_v3.Schema$Event {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -576,7 +577,7 @@ function buildDeadline(
 	inEvent: RawResolvedEventObject,
 	inDate: number,
 	inString: string,
-) {
+): calendar_v3.Schema$Event {
 	const uniqueId = uuid().replace(/-/g, '');
 	let eventColor = getEventColor(inEvent.status);
 	if (inEvent.teamID !== 0) {
@@ -617,11 +618,7 @@ async function updateFeeEvent(
 			? inEvent.participationFee.feeAmount
 			: 0;
 		const deadlineString =
-			'This is a fee deadline for event ' +
-			inEvent.accountID +
-			'-' +
-			inEvent.id +
-			'\n' +
+			`This is a fee deadline for event ${inEvent.accountID}-${inEvent.id}\n` +
 			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!inEvent.googleCalendarIds.feeId) {
@@ -630,7 +627,10 @@ async function updateFeeEvent(
 				calendarId: googleId,
 				requestBody: event,
 			});
-			return response.data.id!;
+			if (!response.data.id) {
+				throw new Error('Could not insert fee deadline event');
+			}
+			return response.data.id;
 		} else {
 			try {
 				const inEventId = inEvent.googleCalendarIds.feeId;
@@ -643,7 +643,8 @@ async function updateFeeEvent(
 				});
 				return inEventId;
 			} catch (e) {
-				if (e.code === 404) {
+				if ((e as { code: number }).code === 404) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					const { id, ...rest } = event;
 
 					const insertResponse = await myCalendar.events.insert({
@@ -651,7 +652,12 @@ async function updateFeeEvent(
 						calendarId: googleId,
 						requestBody: rest,
 					});
-					return insertResponse.data.id!;
+
+					if (!insertResponse.data.id) {
+						throw new Error('Could not insert new fee deadline event');
+					}
+
+					return insertResponse.data.id;
 				} else {
 					throw e;
 				}
@@ -682,11 +688,7 @@ async function updateRegEvent(
 			? inEvent.registration.information || ''
 			: '';
 		const deadlineString =
-			'This is a registration deadline for event ' +
-			inEvent.accountID +
-			'-' +
-			inEvent.id +
-			'\n' +
+			`This is a registration deadline for event ${inEvent.accountID}-${inEvent.id}\n` +
 			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
 		if (!inEvent.googleCalendarIds.regId) {
@@ -695,7 +697,14 @@ async function updateRegEvent(
 				calendarId: googleId,
 				requestBody: event,
 			});
-			return response.data.id!;
+
+			if (!response.data.id) {
+				throw new Error(
+					'Invalid response from Google calendar when creating Google calendar event',
+				);
+			}
+
+			return response.data.id;
 		} else {
 			try {
 				const inEventId = inEvent.googleCalendarIds.regId;
@@ -708,7 +717,8 @@ async function updateRegEvent(
 				});
 				return inEventId;
 			} catch (e) {
-				if (e.code === 404) {
+				if ((e as { code: number }).code === 404) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					const { id, ...rest } = event;
 
 					const insertResponse = await myCalendar.events.insert({
@@ -716,7 +726,14 @@ async function updateRegEvent(
 						calendarId: googleId,
 						requestBody: rest,
 					});
-					return insertResponse.data.id!;
+
+					if (!insertResponse.data.id) {
+						throw new Error(
+							'Invalid response from Google calendar when creating Google calendar event',
+						);
+					}
+
+					return insertResponse.data.id;
 				} else {
 					throw e;
 				}
@@ -750,7 +767,12 @@ async function updateMainEvent(
 			calendarId: googleId,
 			requestBody: event,
 		});
-		return response.data.id!;
+
+		if (!response.data.id) {
+			throw new Error('Could not insert new main event');
+		}
+
+		return response.data.id;
 	} else {
 		try {
 			const inEventId = inEvent.googleCalendarIds.mainId;
@@ -763,7 +785,8 @@ async function updateMainEvent(
 			});
 			return inEventId;
 		} catch (e) {
-			if (e.code === 404) {
+			if ((e as { code: number }).code === 404) {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { id, ...rest } = event;
 
 				const insertResponse = await myCalendar.events.insert({
@@ -771,7 +794,12 @@ async function updateMainEvent(
 					calendarId: googleId,
 					requestBody: rest,
 				});
-				return insertResponse.data.id!;
+
+				if (!insertResponse.data.id) {
+					throw new Error('Could not create new Google calendar event');
+				}
+
+				return insertResponse.data.id;
 			} else {
 				throw e;
 			}

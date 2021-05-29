@@ -137,6 +137,12 @@ export const filterUnique = function* <T extends Identifiable | number | string>
 	}
 };
 
+export async function* toAsyncIterableIterator<T>(iter: AsyncIter<T>): AsyncIterableIterator<T> {
+	for await (const i of iter) {
+		yield i;
+	}
+}
+
 export const asyncIterHandler = <T>(errorHandler: (err: Error) => ServerError) =>
 	async function* (iter: AsyncIterableIterator<T>): AsyncIter<EitherObj<ServerError, T>> {
 		const errorIter: AsyncIterator<EitherObj<ServerError, T>> = {

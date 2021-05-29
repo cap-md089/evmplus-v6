@@ -54,7 +54,7 @@ if (require.main === module) {
 			const configuration = await conf.getConf();
 			const { mysqlConn, capwatchEmitter } = await getServer(configuration);
 
-			const extraSetup = () => {
+			const extraSetup = (): void => {
 				setupDiscordBot(configuration, capwatchEmitter, mysqlConn);
 				createSocketUI(configuration, mysqlConn);
 			};

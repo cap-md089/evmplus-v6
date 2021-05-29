@@ -60,6 +60,7 @@ import {
 	ServerConfiguration,
 	ServerError,
 	Some,
+	toAsyncIterableIterator,
 	toReference,
 } from 'common-lib';
 import { AuditsBackend } from '.';
@@ -85,12 +86,12 @@ import {
 import { createNotification } from './Notification';
 import { ServerEither } from './servertypes';
 
-type POCRaw = (ExternalPointOfContact | InternalPointOfContact)[];
-type POCFull = (ExternalPointOfContact | DisplayInternalPointOfContact)[];
+type POCRaw = Array<ExternalPointOfContact | InternalPointOfContact>;
+type POCFull = Array<ExternalPointOfContact | DisplayInternalPointOfContact>;
 
 export { EventStatus };
 
-export const getEventID = (event: RawEventObject) =>
+export const getEventID = (event: RawEventObject): { id: number; accountID: string } =>
 	event.type === EventType.LINKED
 		? {
 				id: event.targetEventID,
@@ -116,7 +117,7 @@ export const getFullPointsOfContact = (schema: Schema) => (account: AccountObjec
 	);
 
 export const getSimplePointsOfContact = (
-	records: (ExternalPointOfContact | InternalPointOfContact | DisplayInternalPointOfContact)[],
+	records: Array<ExternalPointOfContact | InternalPointOfContact | DisplayInternalPointOfContact>,
 ): POCRaw =>
 	records.map(poc =>
 		poc.type === PointOfContactType.EXTERNAL
@@ -180,7 +181,10 @@ export const getSourceEvent = (schema: Schema) => (
 export const getEvent = (schema: Schema) => (account: AccountObject) => (
 	eventID: number | string,
 ): ServerEither<FromDatabase<RawEventObject>> =>
-	asyncRight(parseInt(eventID + '', 10), errorGenerator('There was a problem getting the event'))
+	asyncRight(
+		parseInt(eventID.toString(), 10),
+		errorGenerator('There was a problem getting the event'),
+	)
 		.filter(id => !isNaN(id), {
 			type: 'OTHER',
 			code: 400,
@@ -245,7 +249,7 @@ export const ensureResolvedEvent = (schema: Schema) => (
 
 export const newEnsureResolvedEvent = (backend: Backends<[EventsBackend, AccountBackend]>) => (
 	event: FromDatabase<RawEventObject>,
-) =>
+): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	event.type === EventType.LINKED
 		? backend.getAccount(event.targetAccountID).flatMap(account =>
 				// Links cannot be made to links, so by resolving a link we actually get an event
@@ -313,7 +317,7 @@ export const getEventDifferences = <T extends object>(oldObj: T, newObj: T): Par
 
 export const saveLinkedEventFunc = (config: ServerConfiguration) => (schema: Schema) => (
 	account: AccountObject,
-) => (updater: MemberReference) => (oldEvent: FromDatabase<RawResolvedLinkedEvent>) => (
+) => (oldEvent: FromDatabase<RawResolvedLinkedEvent>) => (
 	event: RawResolvedLinkedEvent,
 ): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	AsyncEither.All([
@@ -443,7 +447,7 @@ export const saveEvent = (backends: Backends<[TimeBackend, AuditsBackend]>) => (
 	oldEvent: FromDatabase<T>,
 ) => (event: T): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	event.type === EventType.LINKED && oldEvent.type === EventType.LINKED
-		? saveLinkedEventFunc(config)(schema)(account)(updater)(
+		? saveLinkedEventFunc(config)(schema)(account)(
 				(oldEvent as unknown) as FromDatabase<RawResolvedLinkedEvent>,
 		  )((event as unknown) as RawResolvedLinkedEvent)
 		: event.type === EventType.REGULAR && oldEvent.type === EventType.REGULAR
@@ -456,9 +460,9 @@ export const saveEvent = (backends: Backends<[TimeBackend, AuditsBackend]>) => (
 				message: 'Mismatched event types for event save',
 		  });
 
-export const removeItemFromEventDebrief = (event: RawRegularEventObject) => (
+export const removeItemFromEventDebrief = <T extends RawRegularEventObject>(event: T) => (
 	timeToRemove: number,
-) => ({
+): T => ({
 	...event,
 	debrief: event.debrief.filter(({ timeSubmitted }) => timeSubmitted !== timeToRemove),
 });
@@ -480,7 +484,7 @@ export const createEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => 
 	config: ServerConfiguration,
 ) => (schema: Schema) => (account: AccountObject) => (author: MemberReference) => (
 	data: NewEventObject,
-) =>
+): ServerEither<FromDatabase<RawRegularEventObject>> =>
 	getNewID(account)(schema.getCollection<RawEventObject>('Events'))
 		.map<RawRegularEventObject>(id => ({
 			acceptSignups: data.acceptSignups,
@@ -555,7 +559,9 @@ export const copyEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
 	config: ServerConfiguration,
 ) => (schema: Schema) => (account: AccountObject) => (event: RawResolvedEventObject) => (
 	author: MemberReference,
-) => (newStartTime: number) => (newStatus: EventStatus) => (copyFiles = false) =>
+) => (newStartTime: number) => (newStatus: EventStatus) => (
+	copyFiles = false,
+): ServerEither<FromDatabase<RawRegularEventObject>> =>
 	asyncRight(newStartTime - event.startDateTime, errorGenerator('Could not copy event'))
 		.map(timeDelta => ({
 			...event,
@@ -618,14 +624,18 @@ export const linkEvent = (config: ServerConfiguration) => (schema: Schema) => (
 const updateLinkedEvents = (schema: Schema) => (savedEvent: RawRegularEventObject) =>
 	collectGeneratorAsync(
 		asyncIterHandler(errorGenerator('Could not handle updating sub google calendars'))(
-			asyncIterTap<RawLinkedEvent>(ev =>
-				saveToCollectionA(schema.getCollection<RawLinkedEvent>('Events'))(ev).then(destroy),
-			)(
-				asyncIterMap<RawLinkedEvent, RawLinkedEvent>(event => ({
-					...event,
-					pickupDateTime: savedEvent.pickupDateTime,
-					meetDateTime: savedEvent.meetDateTime,
-				}))(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+			toAsyncIterableIterator(
+				asyncIterTap<RawLinkedEvent>(ev =>
+					saveToCollectionA(schema.getCollection<RawLinkedEvent>('Events'))(ev).then(
+						destroy,
+					),
+				)(
+					asyncIterMap<RawLinkedEvent, RawLinkedEvent>(event => ({
+						...event,
+						pickupDateTime: savedEvent.pickupDateTime,
+						meetDateTime: savedEvent.meetDateTime,
+					}))(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+				),
 			),
 		),
 	);
@@ -635,26 +645,28 @@ const updateGoogleCalendarsForLinkedEvents = (config: ServerConfiguration) => (s
 ) =>
 	collectGeneratorAsync(
 		asyncIterHandler(errorGenerator('Could not handle updating sub google calendars'))(
-			asyncIterTap<[RawLinkedEvent, AccountObject]>(([linkedEvent, eventAccount]) =>
-				updateGoogleCalendars(
-					schema,
-					{
-						...savedEvent,
-						...linkedEvent,
-						type: EventType.REGULAR,
-					},
-					eventAccount,
-					config,
-				).then(destroy),
-			)(
-				asyncIterMap<RawLinkedEvent, [RawLinkedEvent, AccountObject]>(linkedEvent =>
-					getAccount(schema)(linkedEvent.accountID)
-						.map<[RawLinkedEvent, AccountObject]>(linkedAccount => [
-							linkedEvent,
-							linkedAccount,
-						])
-						.fullJoin(),
-				)(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+			toAsyncIterableIterator(
+				asyncIterTap<[RawLinkedEvent, AccountObject]>(([linkedEvent, eventAccount]) =>
+					updateGoogleCalendars(
+						schema,
+						{
+							...savedEvent,
+							...linkedEvent,
+							type: EventType.REGULAR,
+						},
+						eventAccount,
+						config,
+					).then(destroy),
+				)(
+					asyncIterMap<RawLinkedEvent, [RawLinkedEvent, AccountObject]>(linkedEvent =>
+						getAccount(schema)(linkedEvent.accountID)
+							.map<[RawLinkedEvent, AccountObject]>(linkedAccount => [
+								linkedEvent,
+								linkedAccount,
+							])
+							.fullJoin(),
+					)(getLinkedEvents(schema)(savedEvent.accountID)(savedEvent.id)),
+				),
 			),
 		),
 	);
@@ -680,7 +692,7 @@ const notifyEventPOCs = (schema: Schema) => (account: AccountObject) => (
 	]);
 };
 
-//#region Backends
+// #region Backends
 export interface EventsBackend {
 	getEvent: (
 		account: AccountObject,
@@ -694,8 +706,8 @@ export interface EventsBackend {
 	fullPointsOfContact: (
 		account: AccountObject,
 	) => (
-		records: (ExternalPointOfContact | InternalPointOfContact)[],
-	) => ServerEither<(ExternalPointOfContact | DisplayInternalPointOfContact)[]>;
+		records: Array<ExternalPointOfContact | InternalPointOfContact>,
+	) => ServerEither<Array<ExternalPointOfContact | DisplayInternalPointOfContact>>;
 	getLinkedEvents: (account: AccountObject) => (eventID: number) => AsyncIter<RawLinkedEvent>;
 	getFullEventObject: (
 		event: FromDatabase<RawEventObject>,
@@ -815,4 +827,4 @@ export const getEmptyEventsBackend = (): EventsBackend => ({
 	getFullPointsOfContact: () => () => notImplementedError('getFullPointsOfContact'),
 });
 
-//#endregion
+// #endregion

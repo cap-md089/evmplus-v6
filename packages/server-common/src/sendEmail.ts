@@ -41,7 +41,7 @@ const formatHtmlEmail = (
 	config: ServerConfiguration,
 	reg: RegistryValues,
 	body: string,
-) => `<div style="background-color:#f0f8ff;padding:20px">
+): string => `<div style="background-color:#f0f8ff;padding:20px">
 <header style="background:#28497e;padding:20px;margin:0">
 <a href="https://${reg.accountID}.${config.HOST_NAME}/">
 <h2 style="text-align:center;color:white;">${reg.Website.Name}</h3>
@@ -56,7 +56,7 @@ The Event Manager Support Team
 <footer style="background:#28497e;padding:25px;color:white">&copy; Event Manager 2017-${new Date().getUTCFullYear()}</footer>
 </div>`;
 
-const formatTextEmail = (reg: RegistryValues, text: string) => `${reg.Website.Name}
+const formatTextEmail = (reg: RegistryValues, text: string): string => `${reg.Website.Name}
 Maryland Wing CAP Event Manager Action
 
 ${text}
@@ -90,7 +90,7 @@ export const sendEmail = (config: ServerConfiguration) => (bccAddresses: string[
 	textBody: string,
 ): AsyncEither<ServerError, void> =>
 	asyncRight(
-		(async () =>
+		(() =>
 			new aws.SES({
 				apiVersion: '2010-12-01',
 				accessKeyId: config.AWS_ACCESS_KEY_ID,

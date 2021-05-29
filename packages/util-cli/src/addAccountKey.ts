@@ -27,7 +27,7 @@ process.on('unhandledRejection', up => {
 	throw up;
 });
 
-(async () => {
+void (async () => {
 	const config = await conf.getCLIConfiguration();
 
 	if (process.argv.length < 4) {

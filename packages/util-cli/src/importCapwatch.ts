@@ -39,7 +39,7 @@ process.on('unhandledRejection', up => {
 	throw up;
 });
 
-(async () => {
+void (async () => {
 	const cliConf = await conf.getCLIConfiguration();
 
 	const session = await getSession({

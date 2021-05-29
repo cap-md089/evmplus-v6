@@ -76,7 +76,7 @@ export const parseRawConfiguration = (
 export const injectConfiguration = (readfile = promisify(readFile)) => async (
 	conf: EnvDiscordCLIConfiguration,
 ): Promise<DiscordCLIConfiguration> => {
-	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
+	const toUtf8 = (buf: Buffer): string => buf.toString('utf-8');
 
 	const [DB_USER, DB_PASSWORD, DISCORD_CLIENT_TOKEN] = await Promise.all([
 		readfile('/run/secrets/db_user').then(toUtf8),
@@ -101,7 +101,7 @@ const throws = <T>(e: EitherObj<any, T>): T => {
 	}
 };
 
-export default async (readfile = promisify(readFile)) => {
+export default async (readfile = promisify(readFile)): Promise<DiscordCLIConfiguration> => {
 	dotenv.config();
 
 	const envConfigValidator = validator<EnvDiscordCLIConfiguration>(Validator);

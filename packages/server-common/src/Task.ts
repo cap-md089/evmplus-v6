@@ -25,6 +25,7 @@ import {
 	asyncIterFilter,
 	asyncRight,
 	errorGenerator,
+	FromDatabase,
 	get,
 	MemberReference,
 	memoize,
@@ -46,7 +47,7 @@ import { ServerEither } from './servertypes';
 
 export const createTaskFunc = (now = Date.now) => (schema: Schema) => (account: AccountObject) => (
 	task: NewTaskObject,
-) =>
+): ServerEither<FromDatabase<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not create tasks'))
 		.flatMap(getNewID(account))
 		.map<TaskObject>(id => ({
@@ -57,7 +58,7 @@ export const createTaskFunc = (now = Date.now) => (schema: Schema) => (account: 
 			})),
 			accountID: account.id,
 			archived: false,
-			assigned: Date.now(),
+			assigned: now(),
 			description: task.description,
 			name: task.name,
 			tasker: task.tasker,
@@ -81,7 +82,7 @@ export const getTask = (schema: Schema) => (account: AccountObject) => (
 
 export const getSentTasks = (schema: Schema) => (account: AccountObject) => (
 	sender: MemberReference,
-) =>
+): ServerEither<AsyncIter<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not get tasks'))
 		.map(
 			findAndBindC<TaskObject>({ accountID: account.id, tasker: toReference(sender) }),
@@ -90,7 +91,7 @@ export const getSentTasks = (schema: Schema) => (account: AccountObject) => (
 
 export const getTasksForMember = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) =>
+): ServerEither<AsyncIter<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not get tasks'))
 		.map(
 			findAndBindC<TaskObject>({ accountID: account.id }),
@@ -102,13 +103,13 @@ export const getTasksForMember = (schema: Schema) => (account: AccountObject) =>
 			),
 		);
 
-export const deleteTask = (schema: Schema) => (task: TaskObject) =>
+export const deleteTask = (schema: Schema) => (task: TaskObject): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<TaskObject>('Tasks'),
 		errorGenerator('Could not delete task'),
 	).flatMap(deleteFromCollectionA(task));
 
-export const saveTask = (schema: Schema) => (task: TaskObject) =>
+export const saveTask = (schema: Schema) => (task: TaskObject): ServerEither<TaskObject> =>
 	asyncRight(
 		schema.getCollection<TaskObject>('Tasks'),
 		errorGenerator('Could not save task'),

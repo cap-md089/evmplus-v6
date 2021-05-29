@@ -23,11 +23,15 @@ import { AccountObject } from 'common-lib';
 import { conf } from 'server-common';
 
 (async () => {
+	// eslint-disable-next-line @typescript-eslint/no-implied-eval
 	const typeFilter = new Function('account', `return !!(${process.argv[2] ?? 'true'})`) as (
 		account: AccountObject,
 	) => boolean;
 
-	const flattenAccountList = (account: AccountObject) => [account.id, ...account.aliases];
+	const flattenAccountList = (account: AccountObject): string[] => [
+		account.id,
+		...account.aliases,
+	];
 
 	const config = await conf.getCLIConfiguration();
 	const session = await getSession({
@@ -50,7 +54,10 @@ import { conf } from 'server-common';
 	} finally {
 		await session.close();
 	}
-})().then(process.exit, e => {
-	console.error(e);
-	process.exit(1);
-});
+})().then(
+	code => process.exit(code),
+	e => {
+		console.error(e);
+		process.exit(1);
+	},
+);

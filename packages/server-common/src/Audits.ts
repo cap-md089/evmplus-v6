@@ -34,7 +34,7 @@ const targetForType = <T extends AuditableObjects>(obj: T): TargetForType<T> =>
 		? 'Permissions'
 		: 'CAPProspectiveMember') as TargetForType<T>;
 
-export const saveAudit = (schema: Schema) => (audit: AllAudits) =>
+export const saveAudit = (schema: Schema) => (audit: AllAudits): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<AllAudits>('Audits'),
 		errorGenerator('Could not save audit information'),
@@ -59,7 +59,7 @@ export const generateCreationAudit = (backend: Backends<[TimeBackend, MemberBack
 			type: AuditableEventType.ADD,
 		}));
 
-export const areDeepEqual = <T>(a: T, b: T) => {
+export const areDeepEqual = <T>(a: T, b: T): boolean => {
 	if (a === null && b !== null) {
 		return false;
 	}
@@ -84,7 +84,7 @@ export const areDeepEqual = <T>(a: T, b: T) => {
 
 	if (typeof a === 'object' && typeof b === 'object') {
 		for (const i in a) {
-			if ((a as any).hasOwnProperty(i)) {
+			if ((a as { hasOwnProperty(key: typeof i): boolean }).hasOwnProperty(i)) {
 				if (!areDeepEqual(a[i], b[i])) {
 					return false;
 				}

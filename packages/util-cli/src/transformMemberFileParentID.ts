@@ -32,9 +32,9 @@ import { backendGenerator } from './lib/backend';
 
 export const collectLegacySqlResults = async <T>(
 	find: mysql.SqlExecute,
-): Promise<mysql.WithoutEmpty<T>[]> => {
+): Promise<Array<mysql.WithoutEmpty<T>>> => {
 	try {
-		return (await find.execute()).fetchAll();
+		return (await find.execute()).fetchAll() as Array<mysql.WithoutEmpty<T>>;
 	} catch (e) {
 		console.error(e);
 		throw new Error(e);
@@ -45,7 +45,7 @@ process.on('unhandledRejection', up => {
 	throw up;
 });
 
-(async () => {
+void (async () => {
 	const config = await conf.getCLIConfiguration();
 
 	const session = await getSession({

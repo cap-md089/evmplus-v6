@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Collection, Schema } from '@mysql/xdevapi';
+import { Collection, Schema, WithoutEmpty } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	always,
@@ -39,6 +39,7 @@ import {
 	errorGenerator,
 	EventObject,
 	EventType,
+	FromDatabase,
 	get,
 	getFullMemberName,
 	hasBasicAttendanceManagementPermission,
@@ -92,12 +93,23 @@ export interface RawAttendanceDBRecord
 // 			),
 // 		);
 
-const getAttendanceEventIdentifier = ({ id, accountID }: { id: number; accountID: string }) => ({
+const getAttendanceEventIdentifier = ({
+	id,
+	accountID,
+}: {
+	id: number;
+	accountID: string;
+}): {
+	eventID: number;
+	accountID: string;
+} => ({
 	eventID: id,
 	accountID,
 });
 
-export const getAttendanceForEvent = (schema: Schema) => (event: RawEventObject) =>
+export const getAttendanceForEvent = (schema: Schema) => (
+	event: RawEventObject,
+): ServerEither<AsyncIter<AttendanceRecord>> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not get attendance records'),
@@ -143,13 +155,10 @@ const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject)
 		.find(
 			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime',
 		)
-		// @ts-ignore
-		.bind('member_id', member.id)
-		// @ts-ignore
-		.bind('member_type', member.type)
+		.bind('member_id' as any, member.id)
+		.bind('member_type' as any, member.type)
 		.bind('accountID', accountID)
-		// @ts-ignore
-		.bind('endDateTime', now());
+		.bind('endDateTime' as any, now());
 
 export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
 	account: AccountObject,
@@ -167,7 +176,7 @@ export const getLatestAttendanceForMember = getLatestAttendanceForMemberFunc(Dat
 
 export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
 	account: AccountObject,
-) => (member: MemberReference) =>
+) => (member: MemberReference): ServerEither<AsyncIter<AttendanceRecord>> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not get attendance records'),
@@ -178,11 +187,11 @@ export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) =
 export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 
 const attendanceFilterError = errorGenerator('Could not verify attendance permissions');
-const arrayHasOneTrue = (arr: boolean[]) => arr.some(identity);
+const arrayHasOneTrue = (arr: boolean[]): boolean => arr.some(identity);
 
 export const getAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord) =>
+) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
 	backend
 		.getAccount(attendanceRecord.sourceAccountID)
 		.flatMap(account =>
@@ -206,7 +215,7 @@ export const getAttendanceFilter = (
 
 export const getDetailedAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord) =>
+) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
 	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
 		backend
 			.getEvent(account)(attendanceRecord.sourceEventID)
@@ -241,7 +250,9 @@ export const getDetailedAttendanceFilter = (
 
 export const applyAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) =>
+) => (
+	attendanceViewer: User,
+): ((iter: AsyncIter<AttendanceRecord>) => AsyncIter<AttendanceRecord>) =>
 	pipe(
 		asyncIterEitherFilter(getAttendanceFilter(backend)(attendanceViewer)),
 		asyncIterMap<AttendanceRecord, AttendanceRecord>(record =>
@@ -277,35 +288,50 @@ export const applyAttendanceFilter = (
 	);
 
 export const canMemberModifyRecord = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
 	asyncRight(false, attendanceFilterError);
 
 export const canMemberDeleteRecord = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (attendanceDeleter: User) => (event: RawResolvedEventObject): ServerEither<boolean> =>
 	asyncRight(false, attendanceFilterError);
 
 export const visibleCustomAttendanceFields = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (attendanceViewer: User) => (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	customAttendanceField: AttendanceRecord,
 ): ServerEither<CustomAttendanceFieldValue[]> => asyncRight([], attendanceFilterError);
 
 export const canMemberModifyCustomAttendanceField = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceModifier: User) => (customAttendanceField: CustomAttendanceFieldValue) =>
-	asyncRight(false, attendanceFilterError);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+) => (attendanceModifier: User) => (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	customAttendanceField: CustomAttendanceFieldValue,
+): ServerEither<boolean> => asyncRight(false, attendanceFilterError);
 
 export const applyAttendanceRecordUpdates = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	changes: NewAttendanceRecord,
-) => asyncRight(void 0, errorGenerator('Could not update member attendance record'));
+): ServerEither<void> =>
+	asyncRight(void 0, errorGenerator('Could not update member attendance record'));
 
 export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
 	event: RawEventObject,
-) => (member: MemberReference) =>
+) => (member: MemberReference): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not delete attendance record'),
@@ -341,7 +367,7 @@ export const addMemberToAttendance = (
 	backend: Backends<[TeamsBackend, TimeBackend, RawMySQLBackend, MemberBackend]>,
 ) => (account: AccountObject) => (event: EventObject) => (isAdmin: boolean) => (
 	attendee: Required<NewAttendanceRecord>,
-) =>
+): ServerEither<FromDatabase<WithoutEmpty<RawAttendanceDBRecord>>> =>
 	(event.teamID !== null && event.teamID !== undefined
 		? backend.getTeam(account)(event.teamID).map(Maybe.some)
 		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
@@ -386,7 +412,7 @@ export const addMemberToAttendance = (
 
 export const modifyEventAttendanceRecord = (schema: Schema) => (event: RawResolvedEventObject) => (
 	member: Member,
-) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>) =>
+) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not save attendance record'),
@@ -414,14 +440,17 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (event: RawResolv
 		)
 		.map(destroy);
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const deleteAttendanceRecord = (schema: Schema) => (actor: User) => (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	member: MemberReference,
-) => (event: RawResolvedEventObject) =>
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+) => (event: RawResolvedEventObject): ServerEither<void> =>
 	asyncRight(void 0, errorGenerator('Could not delete record'));
 
 export const getMemberAttendanceRecordForEvent = (backend: Backends<[RawMySQLBackend]>) => (
 	event: RawEventObject,
-) => (member: MemberReference) =>
+) => (member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
 	asyncRight(
 		backend.getCollection('Attendance'),
 		errorGenerator('Could not get member attendance'),

@@ -45,7 +45,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		rl.question(question, res);
 	});
 
-(async () => {
+void (async () => {
 	const config = await conf.getCLIConfiguration();
 
 	const readlineInterface = createInterface({

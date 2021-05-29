@@ -23,6 +23,7 @@ import {
 	AccountType,
 	areMembersTheSame,
 	AsyncEither,
+	AsyncIter,
 	asyncIterConcat,
 	asyncLeft,
 	asyncRight,
@@ -177,7 +178,7 @@ export const getStaffTeam = (schema: Schema) => (
 export const getTeam = (schema: Schema) => (account: AccountObject) => (
 	teamID: number,
 ): ServerEither<RawTeamObject> =>
-	asyncRight(parseInt(teamID + '', 10), errorGenerator('Could not get team information'))
+	asyncRight(parseInt(teamID.toString(), 10), errorGenerator('Could not get team information'))
 		.filter(num => !isNaN(num), {
 			type: 'OTHER',
 			code: 400,
@@ -310,7 +311,7 @@ export const modifyTeamMember = (member: NewTeamMember) => (
 
 export const addMemberToTeamFunc = (now = Date.now) => (emitter: MemberUpdateEventEmitter) => (
 	account: AccountObject,
-) => (member: NewTeamMember) => (team: RawTeamObject) => {
+) => (member: NewTeamMember) => (team: RawTeamObject): RawTeamObject => {
 	const newTeam = {
 		...team,
 		members: [
@@ -346,11 +347,15 @@ export const addMembersToTeam = addMembersToTeamFunc();
 
 export const removeMemberFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (member: MemberReference) => (team: RawTeamObject) => {
+) => (member: MemberReference) => (team: RawTeamObject): RawTeamObject => {
 	if (isPartOfTeam(member)(team) && !isTeamLeader(member)(team)) {
 		const isOldMember = areMembersTheSame(member);
 
-		const oldPart = team.members.find(teamMember => isOldMember(teamMember.reference))!;
+		const oldPart = team.members.find(teamMember => isOldMember(teamMember.reference));
+
+		if (!oldPart) {
+			return team;
+		}
 
 		const newTeam: RawTeamObject = {
 			...team,
@@ -381,7 +386,7 @@ export const removeMemberFromTeam = removeMemberFromTeamFunc();
 
 export const removeMembersFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (members: MemberReference[]) => (initialTeam: RawTeamObject) =>
+) => (members: MemberReference[]) => (initialTeam: RawTeamObject): RawTeamObject =>
 	members.reduce(
 		(team, member) => removeMemberFromTeamFunc(now)(account)(emitter)(member)(team),
 		initialTeam,
@@ -469,7 +474,7 @@ export const httpStripTeamObject = (member: MaybeObj<User>) => <T extends RawTea
 
 export const deleteTeam = (schema: Schema) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (team: RawTeamObject) =>
+) => (team: RawTeamObject): ServerEither<void> =>
 	(team.id === 0
 		? asyncLeft<ServerError, Collection<RawTeamObject>>({
 				type: 'OTHER',
@@ -496,7 +501,7 @@ const getDifferentTeamMembers = getItemsNotInSecondArray<NewTeamMember>(mem1 => 
 
 export const updateTeamMembersFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (newMembers: NewTeamMember[]) => (team: RawTeamObject) =>
+) => (newMembers: NewTeamMember[]) => (team: RawTeamObject): RawTeamObject =>
 	pipe(
 		removeMembersFromTeamFunc(now)(account)(emitter)(
 			getDifferentTeamMembers(team.members)(newMembers).map(get('reference')),
@@ -536,7 +541,7 @@ const getNormalTeamObjects = (schema: Schema) => (
 
 export const getTeamObjects = (schema: Schema) => (
 	account: AccountObject,
-): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
+): ServerEither<AsyncIter<RawTeamObject>> =>
 	account.type === AccountType.CAPSQUADRON
 		? getStaffTeam(schema)(account).flatMap(team =>
 				getNormalTeamObjects(schema)(account).map(objectIter =>

@@ -29,8 +29,6 @@ import {
 	asyncEitherIterFlatMap,
 	AsyncIter,
 	asyncIterFilter,
-	filterUnique,
-	iterToArray,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncIterReduce,
@@ -41,10 +39,12 @@ import {
 	Either,
 	EitherObj,
 	errorGenerator,
+	filterUnique,
 	get,
 	getORGIDsFromCAPAccount,
 	isPartOfTeam,
 	iterMap,
+	iterToArray,
 	Maybe,
 	Member,
 	MemberForReference,
@@ -99,7 +99,7 @@ export const resolveReference = (schema: Schema) => (backend: Backends<[TeamsBac
 
 export const logSigninFunc = (now: () => number = Date.now) => (schema: Schema) => (
 	account: AccountObject,
-) => (ref: MemberReference) =>
+) => (ref: MemberReference): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<SignInLogData>('SignInLog'),
 		errorGenerator('Could not save sign in log'),
@@ -178,7 +178,9 @@ const addExtraMemberInformation = (schema: Schema) => (info: AllExtraMemberInfor
 		errorGenerator('Could not save extra member information'),
 	).map(collection => collection.add(info).execute());
 
-export const saveExtraMemberInformation = (schema: Schema) => (info: AllExtraMemberInformation) =>
+export const saveExtraMemberInformation = (schema: Schema) => (
+	info: AllExtraMemberInformation,
+): ServerEither<AllExtraMemberInformation> =>
 	asyncRight(
 		schema.getCollection<AllExtraMemberInformation>('ExtraMemberInformation'),
 		errorGenerator('Could not save extra member information'),
@@ -194,11 +196,12 @@ export const saveExtraMemberInformation = (schema: Schema) => (info: AllExtraMem
 			results.length !== 0
 				? updateExtraMemberInformation(schema)(info)
 				: addExtraMemberInformation(schema)(info),
-		);
+		)
+		.map(always(info));
 
 export const getMemberTeams = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) =>
+): ServerEither<AsyncIter<RawTeamObject>> =>
 	asyncRight(schema.getCollection<RawTeamObject>('Teams'), errorGenerator('Could not get teams'))
 		.map(collection =>
 			findAndBind(collection, {
@@ -210,7 +213,7 @@ export const getMemberTeams = (schema: Schema) => (account: AccountObject) => (
 
 export const getUnfinishedTaskCountForMember = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) =>
+): ServerEither<number> =>
 	getTasksForMember(schema)(account)(member)
 		.map(
 			asyncIterFilter(
@@ -223,18 +226,18 @@ export const getUnfinishedTaskCountForMember = (schema: Schema) => (account: Acc
 
 export const getNotificationCount = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) => getMemberNotifications(schema)(account)(member).map(countAsync);
+): ServerEither<number> => getMemberNotifications(schema)(account)(member).map(countAsync);
 
 export const getUnreadNotificationCount = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) =>
+): ServerEither<number> =>
 	getMemberNotifications(schema)(account)(member)
 		.map(asyncIterFilter(notification => !notification.read))
 		.map(countAsync);
 
 export const accountHasMemberInAttendance = (schema: Schema) => (member: MemberReference) => (
 	account: AccountObject,
-) =>
+): ServerEither<boolean> =>
 	asyncRight(
 		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
 		errorGenerator('Could not check attendance for member'),
@@ -248,7 +251,9 @@ export const accountHasMemberInAttendance = (schema: Schema) => (member: MemberR
 		.map(generateResults)
 		.map(asyncIterReduce(always(true))(false));
 
-export const getEventAccountsForMember = (schema: Schema) => (member: MemberReference) =>
+export const getEventAccountsForMember = (schema: Schema) => (
+	member: MemberReference,
+): AsyncIter<EitherObj<ServerError, RawCAPEventAccountObject>> =>
 	pipe(
 		generateResults,
 		asyncIterFilter((account: RawCAPEventAccountObject) =>
@@ -286,7 +291,7 @@ export const getAdminAccountIDsForMember = (schema: Schema) => (
 
 export const getExtraAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
 	member: Member,
-) =>
+): ServerEither<AccountObject[]> =>
 	asyncRight(
 		backend.getCollection('ExtraAccountMembership'),
 		errorGenerator('Could not get member accounts'),
@@ -324,7 +329,7 @@ export const getEventAccountMembership = (backend: Backends<[RawMySQLBackend, Ac
 
 export const getBasicMemberAccounts = (
 	backend: Backends<[AccountBackend, RawMySQLBackend, CAP.CAPMemberBackend]>,
-) => (member: Member) =>
+) => (member: Member): ServerEither<AccountObject[]> =>
 	getHomeMemberAccounts(backend)(member)
 		.flatMap(homeAccounts =>
 			getExtraAccountMembership(backend)(member).map(extraAccounts => [
@@ -336,13 +341,15 @@ export const getBasicMemberAccounts = (
 		.map(iterToArray);
 
 export const isPartOfAccountSlow = (
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member: Member) => (account: AccountObject) =>
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+) => (member: Member) => (account: AccountObject): ServerEither<boolean> =>
 	asyncRight(false, errorGenerator('Could not verify account membership'));
 
 export const isMemberPartOfAccount = (
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-) => (member: Member) => (account: AccountObject) =>
+) => (member: Member) => (account: AccountObject): ServerEither<boolean> =>
 	member.type === 'CAPProspectiveMember' &&
 	account.type === AccountType.CAPSQUADRON &&
 	account.id === member.id
@@ -359,7 +366,7 @@ export const isMemberPartOfAccount = (
 
 export const areMembersInTheSameAccount = (
 	backend: Backends<[AccountBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]>,
-) => (member1: Member) => (member2: Member) =>
+) => (member1: Member) => (member2: Member): ServerEither<boolean> =>
 	backend
 		.getAccountsForMember(member1)
 		.map(asyncIterMap(Either.right))
@@ -493,7 +500,7 @@ export const getRequestFreeMemberBackend = (
 	prevBackend: Backends<
 		[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend, TeamsBackend]
 	>,
-) => {
+): MemberBackend => {
 	const backend: MemberBackend = {
 		getMember: memoize(
 			account =>

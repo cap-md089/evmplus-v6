@@ -84,14 +84,14 @@ export default async (
 
 	function onListening(): void {
 		const addr = server.address();
-		const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
+		const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port ?? 0}`;
 		if (conf.NODE_ENV === 'production') {
 			console.log(`Bound on ${bind}`);
 		}
 	}
 
 	process.on('beforeExit', () => {
-		mysql.close();
+		void mysql.close();
 		server.close();
 	});
 

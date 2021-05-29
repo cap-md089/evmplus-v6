@@ -9,7 +9,7 @@
 		"check": "ttsc --build tsconfig.build.json --noEmit",
 		"pretest": "npm run build",
 		"test": "jest",
-		"lint": "eslint src/**/*.ts"
+		"lint": "eslint src/**/*.ts src/*.ts"
 	},
 	"author": "Andrew Rioux",
 	"license": "GPL-2.0",
