@@ -17,9 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const zeroPad = (n: number, a = 2) => ('00' + n).substr(-a);
+export const zeroPad = (n: number, a = 2): string => `00${n}`.substr(-a);
 
-export const formatEventViewerDate = (date: number) => {
+export const formatEventViewerDate = (date: number): string => {
 	const dateObject = new Date(date);
 
 	const hour = dateObject.getHours();
@@ -32,9 +32,9 @@ export const formatEventViewerDate = (date: number) => {
 	return `${zeroPad(hour)}:${zeroPad(minute)} on ${zeroPad(month + 1)}/${zeroPad(day)}/${year}`;
 };
 
-export function formatPhone(phone: string) {
+export const formatPhone = (phone: string): string => {
 	// strip spaces and non-numeric characters
 	phone.trimLeft().trimRight();
 	// add 2 dots
 	return phone.substring(0, 3) + '.' + phone.substring(3, 6) + '.' + phone.substring(6, 10);
-}
+};

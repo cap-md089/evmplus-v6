@@ -24,6 +24,7 @@ import {
 	CAPRegionMemberPermissions,
 	CAPSquadronMemberPermissions,
 	CAPWingMemberPermissions,
+	MemberPermissions,
 	Permissions,
 } from '../typings/types';
 
@@ -583,14 +584,14 @@ const AdminPermissions = {
 	[AccountType.CAPREGION]: CAPRegionAdmin,
 };
 
-export const getDefaultMemberPermissions = (accountType: AccountType) =>
+export const getDefaultMemberPermissions = (accountType: AccountType): MemberPermissions =>
 	DefaultPermissions[accountType];
 
-export const getDefaultStaffPermissions = (accountType: AccountType) =>
+export const getDefaultStaffPermissions = (accountType: AccountType): MemberPermissions =>
 	StaffPermissions[accountType];
 
-export const getDefaultManagerPermissions = (accountType: AccountType) =>
+export const getDefaultManagerPermissions = (accountType: AccountType): MemberPermissions =>
 	ManagerPermissions[accountType];
 
-export const getDefaultAdminPermissions = (accountType: AccountType) =>
+export const getDefaultAdminPermissions = (accountType: AccountType): MemberPermissions =>
 	AdminPermissions[accountType];

@@ -51,7 +51,7 @@ export interface Assign {
 export interface AssignBulk {
 	(
 		params: {},
-		// eslint-disable-next-line array-type
+		// eslint-disable-next-line @typescript-eslint/array-type
 		body: { members: { member: MemberReference; newFlight: string | null }[] },
 	): APIEither<void>;
 

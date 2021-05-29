@@ -145,17 +145,19 @@ export class Maybe {
 		m: MaybeObj<T>,
 	): MaybeObj<U> => Maybe.filter(f)(m) as MaybeObj<U>;
 
-	public static cata = <T, U>(nf: () => U) => (f: (v: T) => U) => (m: MaybeObj<T>) =>
+	public static cata = <T, U>(nf: () => U) => (f: (v: T) => U) => (m: MaybeObj<T>): U =>
 		m.hasValue ? f(m.value) : nf();
 
-	public static chain = <T, U>(f: (v: T) => U) => (m: MaybeObj<T>) => Maybe.join(Maybe.map(f)(m));
+	public static chain = <T, U>(f: (v: T) => U) => (m: MaybeObj<T>): U | null =>
+		Maybe.join(Maybe.map(f)(m));
 
-	public static orSome = <T>(val: T) => (m: MaybeObj<T>) =>
+	public static orSome = <T>(val: T) => (m: MaybeObj<T>): T =>
 		pipe(Maybe.orElse(val), v => (v as Some<T>).value)(m);
 
-	public static some = <T>(value: T): MaybeObj<T> => {
-		return { hasValue: true, value };
-	};
+	public static some = <T>(value: T): MaybeObj<T> => ({
+		hasValue: true,
+		value,
+	});
 
 	public static none = (): None => noneObj;
 

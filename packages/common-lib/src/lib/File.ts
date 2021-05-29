@@ -29,7 +29,7 @@ import { areMembersTheSame, isRioux } from './Member';
 
 export const userHasFilePermission = (permission: FileUserAccessControlPermissions) => (
 	member?: ClientUser | null | undefined,
-) => (file: RawFileObject) => {
+) => (file: RawFileObject): boolean => {
 	if (member && isRioux(member)) {
 		return true;
 	}

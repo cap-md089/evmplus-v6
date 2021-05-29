@@ -58,13 +58,18 @@ export default (fetchFunction: FetchFunction) => <
 	T extends APIEndpoint<string, any, any, any, any, any, any>
 >(
 	values: Pick<T, 'url' | 'method' | 'requiresMember' | 'needsToken'> & { paramKeys: string[] },
-) => {
+): ((
+	params: APIEndpointParams<T>,
+	body: APIEndpointBody<T>,
+) => AsyncEither<HTTPError, APIEndpointReturnValue<T>>) => {
 	let mutatedUrl = values.url;
 	for (const key of values.paramKeys) {
 		const match = mutatedUrl.match(new RegExp(`/:${key}\\??(/|$)`, 'g'));
 		if (!match || match.length !== 1) {
 			throw new Error(
-				`Invalid key in URL ${values.method.toUpperCase()} ${values.url}: ${key}`,
+				`Invalid key in URL ${(values.method as string).toUpperCase()} ${
+					values.url
+				}: ${key}`,
 			);
 		}
 
@@ -76,7 +81,6 @@ export default (fetchFunction: FetchFunction) => <
 		const unusedKeys: string[] = [];
 
 		let m;
-		// eslint-disable-next-line  no-conditional-assignment
 		while ((m = regex.exec(mutatedUrl)) !== null) {
 			if (m.index === regex.lastIndex) {
 				regex.lastIndex++;
@@ -86,15 +90,16 @@ export default (fetchFunction: FetchFunction) => <
 		}
 
 		throw new Error(
-			`Keys remaining in URL ${values.method.toUpperCase()} ${values.url}: '${unusedKeys.join(
-				"', '",
-			)}'`,
+			`Keys remaining in URL ${(values.method as string).toUpperCase()} ${
+				values.url
+			}: '${unusedKeys.join("', '")}'`,
 		);
 	}
 
 	const urlReplacer = (url: string) => (params: APIEndpointParams<T>): string => {
 		let newURL = url;
 		for (const param in params) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			if (params.hasOwnProperty(param)) {
 				newURL = newURL.replace(new RegExp(`:${param}\\??`), params[param]);
 			}
@@ -119,7 +124,7 @@ export default (fetchFunction: FetchFunction) => <
 			  )
 		)
 			.map<RequestInit>(token =>
-				values.method.toUpperCase() === 'GET'
+				(values.method as string).toUpperCase() === 'GET'
 					? {}
 					: token
 					? {

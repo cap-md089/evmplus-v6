@@ -24,7 +24,7 @@ import { CadetPromotionRequirements } from '../typings/types';
  * the achivement requirements to achieve that grade
  */
 
-export const CadetPromotionRequirementsMap: ReadonlyArray<CadetPromotionRequirements> = [
+export const CadetPromotionRequirementsMap: readonly CadetPromotionRequirements[] = [
 	{
 		CadetAchvID: 0,
 		AchvName: 'Cadet Basic',
