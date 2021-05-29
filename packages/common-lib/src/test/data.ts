@@ -27,6 +27,7 @@ import {
 	EventStatus,
 	EventType,
 	NewEventObject,
+	RawAttendanceDBRecord,
 	RawRegularEventObject,
 } from '../typings/types';
 
@@ -102,7 +103,29 @@ export const getTestAttendanceRecord = (event: RawRegularEventObject): Attendanc
 		departureTime: 0,
 	},
 	sourceAccountID: '',
-	sourceEventID: 0,
+	sourceEventID: event.id,
+	status: AttendanceStatus.COMMITTEDATTENDED,
+	summaryEmailSent: false,
+	timestamp: 0,
+});
+
+export const getTestRawAttendanceRecord = (
+	event: RawRegularEventObject,
+): RawAttendanceDBRecord => ({
+	comments: '',
+	customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)([]),
+	memberID: {
+		type: 'CAPNHQMember',
+		id: 0,
+	},
+	memberName: '',
+	planToUseCAPTransportation: false,
+	shiftTime: {
+		arrivalTime: 0,
+		departureTime: 0,
+	},
+	accountID: '',
+	eventID: event.id,
 	status: AttendanceStatus.COMMITTEDATTENDED,
 	summaryEmailSent: false,
 	timestamp: 0,
