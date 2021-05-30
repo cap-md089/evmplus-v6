@@ -28,7 +28,7 @@ import { readFile } from 'fs';
 const readfile = promisify(readFile);
 
 (async () => {
-	const toUtf8 = (buf: Buffer): string => buf.toString('utf-8');
+	const toUtf8 = (buf: Buffer): string => buf.toString('utf-8').trim();
 
 	const [nhqPassword, capwatchCAPIDStr, capwatchORGIDStr] = await Promise.all([
 		readfile('/run/secrets/capwatch_password').then(toUtf8),

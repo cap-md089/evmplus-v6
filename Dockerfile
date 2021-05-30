@@ -23,7 +23,8 @@
 FROM node:14-buster AS base
 
 # Install the imagemagick library for favicons
-RUN apk add imagemagick \
+RUN apt update && \
+	apt install imagemagick \
 	&& yarn global add lerna@3.22
 
 #
@@ -35,7 +36,7 @@ FROM base AS development-builder
 WORKDIR /usr/evm-plus
 
 RUN yarn global add typescript ttypescript \
-	&& apk add git
+	&& apt install git
 
 #
 # This container is used to program in a Docker environment, and access
@@ -108,6 +109,8 @@ COPY packages/server/images /usr/evm-plus/client/images
 # This container is used to execute the compiled JavaScript
 #
 FROM base AS website-runner
+
+RUN rm -rf /var/lib/{apt,dpkg,cache,log}
 
 WORKDIR /usr/evm-plus
 

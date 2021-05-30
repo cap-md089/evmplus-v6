@@ -33,7 +33,6 @@ module.exports = {
         "sourceType": "module"
     },
     "plugins": [
-        "eslint-plugin-react",
         "eslint-plugin-import",
         "eslint-plugin-jsdoc",
         "eslint-plugin-prefer-arrow",

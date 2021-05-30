@@ -55,24 +55,6 @@ else
 		git stash pop -q
 		exit 1
 	fi
-else
-	if lerna run build --ignore client --since HEAD; then
-		# Everything compiles
-		:
-	else
-		echo "Code fails to build"
-		git stash pop -q
-		exit 1
-	fi
-
-	if lerna run lint --since HEAD; then
-		# Code is lint free
-		:
-	else
-		echo "Code fails lint check"
-		git stash pop -q
-		exit 1
-	fi
 fi
 
 # Check for files that don't have a copyright
