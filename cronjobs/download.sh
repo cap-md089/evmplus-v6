@@ -27,13 +27,22 @@ echo "Downloading CAPWATCH file"
 
 CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
 
+if [ ! -s $CAPWATCH_ZIP_PATH ]; then
+	echo "CAPWATCH file failed to download"
+	rm $CAPWATCH_ZIP_PATH
+	exit 1
+fi
+
 echo "Starting CAPWATCH import"
 
 node --no-warnings dist/importCapwatch.js $CAPWATCH_ZIP_PATH
 
 echo "Done with CAPWATCH import"
 
-[ ! -z "$KEEP_CAPWATCH_ZIP" ] || rm $CAPWATCH_ZIP_PATH
+if [ "$KEEP_CAPWATCH_ZIP" != "1" ]; then
+	echo "Deleting CAPWATCH zip"
+	rm $CAPWATCH_ZIP_PATH
+fi
 
 echo "Performing Discord updates"
 
