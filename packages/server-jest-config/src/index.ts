@@ -185,7 +185,7 @@ export class TestConnection {
 			AttachStderr: false,
 			AttachStdin: false,
 			Env: [],
-			WorkingDir: '/usr/evm-plus/packages/server-jest-config/mysql-configuration',
+			WorkingDir: '/usr/evm-plus/packages/server-jest-config/test-data',
 		});
 
 		const stream = await exec.start({});
@@ -356,3 +356,28 @@ export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseHandle
 
 	done?.();
 };
+
+type Names =
+	| 'Member'
+	| 'DutyPosition'
+	| 'MbrContact'
+	| 'CadetDutyPositions'
+	| 'CadetActivities'
+	| 'OFlight'
+	| 'MbrAchievements'
+	| 'CadetAchv'
+	| 'CadetAchvAprs'
+	| 'CdtAchvEnum'
+	| 'CadetHFZInformation'
+	| 'Organization';
+
+type DBNames = Exclude<Names, 'CadetDutyPositions'> | 'CadetDutyPosition';
+
+type TableForm<T extends string> = `NHQ_${T}`;
+
+/**
+ * Loads CAPWATCH data that can be used for unit tests
+ */
+export const getCAPWATCHTestData = (): Pick<PresetRecords, TableForm<DBNames>> =>
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as PresetRecords;
