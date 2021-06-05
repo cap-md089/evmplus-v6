@@ -18,8 +18,22 @@
  */
 
 import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
-import { memoize, TableDataType, TableNames } from 'common-lib';
+import {
+	AccountType,
+	CAPMemberContact,
+	CAPMemberContactType,
+	CAPNHQMemberObject,
+	CAPNHQMemberReference,
+	getDefaultMemberPermissions,
+	Member,
+	memoize,
+	ShortDutyPosition,
+	TableDataType,
+	TableNames,
+	User,
+} from 'common-lib';
 import * as Docker from 'dockerode';
+import { DateTime } from 'luxon';
 
 const getDockerConn = memoize(
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -378,6 +392,90 @@ type TableForm<T extends string> = `NHQ_${T}`;
 /**
  * Loads CAPWATCH data that can be used for unit tests
  */
-export const getCAPWATCHTestData = (): Pick<PresetRecords, TableForm<DBNames>> =>
+export const getCAPWATCHTestData = (): Required<Pick<PresetRecords, TableForm<DBNames>>> =>
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as PresetRecords;
+	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as Required<
+		Pick<PresetRecords, TableForm<DBNames>>
+	>;
+
+/**
+ * Given CAPWATCH data, finds a member. Assumes that the member exists and throws an exception otherwise
+ *
+ * ORGIDs must be provided to load duty positions
+ */
+export const getMemberFromTestData = (
+	member: CAPNHQMemberReference,
+	...orgids: number[]
+): CAPNHQMemberObject => {
+	const data = getCAPWATCHTestData();
+
+	const CAPID = member.id;
+
+	const baseDetails = data.NHQ_Member.find(mem => mem.CAPID === CAPID);
+
+	if (!baseDetails) {
+		throw new Error('Invalid member!');
+	}
+
+	const dutyPositions = [
+		...data.NHQ_DutyPosition.filter(row => row.CAPID === CAPID && orgids.includes(row.ORGID)),
+		...data.NHQ_CadetDutyPosition.filter(
+			row => row.CAPID === CAPID && orgids.includes(row.ORGID),
+		),
+	].map(
+		(dp): ShortDutyPosition => ({
+			duty: dp.Duty,
+			date: +DateTime.fromISO(dp.DateMod),
+			orgid: dp.ORGID,
+			type: 'NHQ',
+		}),
+	);
+
+	const contactRows = data.NHQ_MbrContact.filter(row => row.CAPID === CAPID);
+	const contact: CAPMemberContact = {
+		CADETPARENTEMAIL: {},
+		CADETPARENTPHONE: {},
+		CELLPHONE: {},
+		EMAIL: {},
+		HOMEPHONE: {},
+		WORKPHONE: {},
+	};
+
+	contactRows.forEach(item => {
+		const contactType = item.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType;
+
+		if (contactType in contact) {
+			contact[contactType][item.Priority] = item.Contact;
+		}
+	});
+
+	return {
+		absenteeInformation: null,
+		contact,
+		dateOfBirth: +DateTime.fromISO(baseDetails.DOB),
+		dutyPositions,
+		expirationDate: +DateTime.fromISO(baseDetails.Expiration),
+		flight: null,
+		id: CAPID,
+		memberRank: baseDetails.Rank,
+		nameFirst: baseDetails.NameFirst,
+		nameMiddle: baseDetails.NameMiddle,
+		nameLast: baseDetails.NameLast,
+		nameSuffix: baseDetails.NameSuffix,
+		orgid: baseDetails.ORGID,
+		seniorMember: baseDetails.Type !== 'CADET',
+		squadron: `${baseDetails.Region}-${baseDetails.Wing}-${baseDetails.Unit}`,
+		teamIDs: [],
+		type: 'CAPNHQMember',
+		usrID: baseDetails.UsrID,
+	};
+};
+
+/**
+ * Given a member, upgrades them to a user by giving them default squadron permissions
+ */
+export const getTestUserForMember = (member: Member): User => ({
+	...member,
+	sessionID: '',
+	permissions: getDefaultMemberPermissions(AccountType.CAPSQUADRON),
+});

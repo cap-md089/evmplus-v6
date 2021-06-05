@@ -2652,7 +2652,7 @@ export interface CAPExtraMemberInformation extends ExtraMemberInformation {
 	/**
 	 * Descriminates the type
 	 */
-	member: CAPMemberReference;
+	type: 'CAP';
 }
 
 export type AllExtraMemberInformation = CAPExtraMemberInformation;

@@ -381,6 +381,7 @@ export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
 			assigned: date,
 			validUntil: expires,
 		})),
+	type: 'CAP',
 });
 
 export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemberReference) =>
