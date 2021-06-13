@@ -288,11 +288,35 @@ export const applyAttendanceFilter = (
 	);
 
 export const canMemberModifyRecord = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	backend: Backends<[TimeBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 ) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	asyncRight(false, attendanceFilterError);
+	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+		backend
+			.getEvent(account)(attendanceRecord.sourceEventID)
+			.flatMap(backend.ensureResolvedEvent)
+			.flatMap(event =>
+				AsyncEither.All([
+					asyncRight(
+						areMembersTheSame(attendanceModifier)(attendanceRecord.memberID),
+						errorGenerator('Could not verify attendance record owner'),
+					),
+					asyncRight(
+						event.startDateTime > backend.now(),
+						errorGenerator('Could not verify event start time'),
+					),
+					(event.teamID !== undefined && event.teamID !== null
+						? backend.getTeam(account)(event.teamID).map(Maybe.some)
+						: asyncRight(
+								Maybe.none(),
+								errorGenerator('Could not verify event permissions'),
+						  )
+					).map(hasBasicAttendanceManagementPermission(attendanceModifier)(event)),
+				]).map(
+					([sameMember, pastEditDate, hasManagementPermission]) =>
+						(sameMember && !pastEditDate) || hasManagementPermission,
+				),
+			),
+	);
 
 export const canMemberDeleteRecord = (
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
