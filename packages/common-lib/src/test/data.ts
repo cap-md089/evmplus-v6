@@ -22,10 +22,13 @@ import { applyCustomAttendanceFields } from '../lib/Events';
 import { defaultRadioFromLabels, emptyFromLabels, emptySimpleFromLabels } from '../lib/forms';
 import { Maybe } from '../lib/Maybe';
 import {
+	AccountObject,
+	AccountType,
 	AttendanceRecord,
 	AttendanceStatus,
 	EventStatus,
 	EventType,
+	Identifiable,
 	NewEventObject,
 	RawAttendanceDBRecord,
 	RawRegularEventObject,
@@ -74,7 +77,20 @@ export const getTestNewEvent = (): NewEventObject => ({
 	emailBody: Maybe.none(),
 });
 
-export const getTestEvent = (): RawRegularEventObject => ({
+export const getTestAccount = (): AccountObject => ({
+	aliases: ['vsqdn1'],
+	comments: '',
+	discordServer: Maybe.none(),
+	id: 'vw101',
+	mainCalendarID: '',
+	mainOrg: 9006,
+	orgIDs: [9006],
+	parentGroup: { value: 'vw011', hasValue: true },
+	parentWing: { value: 'vw001', hasValue: true },
+	type: AccountType.CAPSQUADRON,
+});
+
+export const getTestEvent = (account: Identifiable): RawRegularEventObject => ({
 	...getTestNewEvent(),
 	id: 0,
 	timeModified: 0,
@@ -86,7 +102,7 @@ export const getTestEvent = (): RawRegularEventObject => ({
 	debrief: [],
 	googleCalendarIds: {},
 	type: EventType.REGULAR,
-	accountID: '',
+	accountID: account.id as string,
 });
 
 export const getTestAttendanceRecord = (event: RawRegularEventObject): AttendanceRecord => ({

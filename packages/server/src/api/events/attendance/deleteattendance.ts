@@ -19,10 +19,12 @@
 
 import { ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	always,
 	api,
 	APIEndpointBody,
 	canFullyManageEvent,
 	destroy,
+	get,
 	Maybe,
 	MemberReference,
 	RawResolvedEventObject,
@@ -76,14 +78,25 @@ export const func: Endpoint<
 		backend
 			.getEvent(req.account)(req.params.id)
 			.flatMap(backend.ensureResolvedEvent)
-			.filter(
-				backend.canMemberDeleteRecord(req.member),
-				// canDeleteAttendanceRecord(req.mysqlx)(req.account)(req.member)(req.body.member),
-				{
-					type: 'OTHER',
-					code: 403,
-					message: 'You do not have permission to perform that action',
-				},
+			.flatMap(event =>
+				backend
+					.getMemberAttendanceRecordForEvent(event)(req.member)
+					.filter(Maybe.isSome, {
+						type: 'OTHER',
+						code: 404,
+						message: 'Member does not have an attendance record',
+					})
+					.map(get('value'))
+					.filter(
+						backend.canMemberDeleteRecord(req.member),
+						// canDeleteAttendanceRecord(req.mysqlx)(req.account)(req.member)(req.body.member),
+						{
+							type: 'OTHER',
+							code: 403,
+							message: 'You do not have permission to perform that action',
+						},
+					)
+					.map(always(event)),
 			)
 			.flatMap(backend.removeMemberFromEventAttendance(req.member)(req.body.member))
 			.map(destroy)

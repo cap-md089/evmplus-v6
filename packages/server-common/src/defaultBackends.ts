@@ -17,20 +17,27 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { BasicMySQLRequest } from 'common-lib';
-import { AuditsBackend, getAuditsBackend } from '.';
-import { AccountBackend, BasicAccountRequest, getAccountBackend } from './Account';
+import * as mysql from '@mysql/xdevapi';
+import { always, BasicMySQLRequest } from 'common-lib';
+import { AuditsBackend, getAuditsBackend, getRequestFreeEventsBackend } from '.';
+import {
+	AccountBackend,
+	BasicAccountRequest,
+	getAccountBackend,
+	getRequestFreeAccountsBackend,
+} from './Account';
 import { getAttendanceBackend, AttendanceBackend } from './Attendance';
+import { getRequestFreeAuditsBackend } from './Audits';
 import { Backends, combineBackends, GenBackend, getTimeBackend, TimeBackend } from './backends';
 import { EventsBackend, getEventsBackend } from './Event';
 import { FileBackend, getFileBackend } from './File';
 import { CAP } from './member/members';
 import { getPAMBackend, PAMBackend } from './member/pam';
-import { getMemberBackend, MemberBackend } from './Members';
-import { RawMySQLBackend } from './MySQLUtil';
-import { getRegistryBackend, RegistryBackend } from './Registry';
+import { getMemberBackend, MemberBackend, getRequestFreeMemberBackend } from './Members';
+import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
+import { getRegistryBackend, RegistryBackend, getRequestFreeRegistryBackend } from './Registry';
 import { getTaskBackend, TaskBackend } from './Task';
-import { getTeamsBackend, TeamsBackend } from './Team';
+import { getTeamsBackend, TeamsBackend, getRequestFreeTeamsBackend } from './Team';
 
 export const getCombinedMemberBackend = (): ((
 	req: BasicMySQLRequest,
@@ -141,3 +148,48 @@ export const getCombinedTasksBackend = (): ((
 		BasicAccountRequest,
 		[GenBackend<typeof getDefaultAccountBackend>, TimeBackend, TaskBackend]
 	>(getDefaultAccountBackend, getTimeBackend, getTaskBackend);
+
+export const getDefaultTestBackend = <T>(
+	overrides?: T,
+): ((
+	mysql: mysql.Schema,
+) => Backends<
+	[
+		T,
+		RawMySQLBackend,
+		TimeBackend,
+		RegistryBackend,
+		AccountBackend,
+		TeamsBackend,
+		CAP.CAPMemberBackend,
+		MemberBackend,
+		AuditsBackend,
+		EventsBackend,
+	]
+>) =>
+	combineBackends<
+		mysql.Schema,
+		[
+			T,
+			RawMySQLBackend,
+			TimeBackend,
+			RegistryBackend,
+			AccountBackend,
+			TeamsBackend,
+			CAP.CAPMemberBackend,
+			MemberBackend,
+			AuditsBackend,
+			EventsBackend,
+		]
+	>(
+		always(overrides) as () => T,
+		requestlessMySQLBackend,
+		getTimeBackend,
+		getRequestFreeRegistryBackend,
+		getRequestFreeAccountsBackend,
+		getRequestFreeTeamsBackend,
+		CAP.getRequestFreeCAPMemberBackend,
+		getRequestFreeMemberBackend,
+		getRequestFreeAuditsBackend,
+		getRequestFreeEventsBackend,
+	);
