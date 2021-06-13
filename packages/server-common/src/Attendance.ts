@@ -322,7 +322,7 @@ export const canMemberDeleteRecord = (
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-) => (attendanceDeleter: User) => (event: RawResolvedEventObject): ServerEither<boolean> =>
+) => (attendanceDeleter: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
 	asyncRight(false, attendanceFilterError);
 
 export const visibleCustomAttendanceFields = (
@@ -506,9 +506,7 @@ export interface AttendanceBackend {
 		actor: User,
 	) => (attendance: AttendanceRecord) => ServerEither<boolean>;
 	canMemberModifyRecord: (actor: User) => (record: AttendanceRecord) => ServerEither<boolean>;
-	canMemberDeleteRecord: (
-		actor: User,
-	) => (event: RawResolvedEventObject) => ServerEither<boolean>;
+	canMemberDeleteRecord: (actor: User) => (record: AttendanceRecord) => ServerEither<boolean>;
 	applyAttendanceFilter: (
 		actor: User,
 	) => (attendance: AsyncIter<AttendanceRecord>) => AsyncIter<AttendanceRecord>;
