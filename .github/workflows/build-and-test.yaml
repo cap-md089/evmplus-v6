@@ -10,6 +10,10 @@ on:
             - master
             - development
 
+env:
+    COMPOSE_DOCKER_CLI_BUILD: 1
+    DOCKER_BUILDKIT: 1
+
 jobs:
     build:
         runs-on: ubuntu-latest

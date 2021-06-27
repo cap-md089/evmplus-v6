@@ -128,6 +128,7 @@ export const getSimplePointsOfContact = (
 					memberReference: poc.memberReference,
 					phone: poc.phone,
 					position: poc.position,
+					publicDisplay: poc.publicDisplay,
 					receiveEventUpdates: poc.receiveEventUpdates,
 					receiveRoster: poc.receiveRoster,
 					receiveSignUpUpdates: poc.receiveSignUpUpdates,
