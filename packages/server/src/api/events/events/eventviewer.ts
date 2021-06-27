@@ -226,7 +226,17 @@ export const func: Endpoint<Backend, api.events.events.GetEventViewerData> = bac
 						]) => ({
 							event: filterEventInformation(req.member)(event),
 							attendees,
-							pointsOfContact,
+							pointsOfContact: pointsOfContact.filter(poc => {
+								console.log(
+									'display',
+									poc.name,
+									':',
+									poc.publicDisplay,
+									Maybe.isSome(req.member),
+								);
+
+								return poc.publicDisplay || Maybe.isSome(req.member);
+							}),
 							sourceAccountName,
 							linkedEvents,
 							authorFullName,

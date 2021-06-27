@@ -1644,7 +1644,7 @@ export interface PointOfContact {
 	 *
 	 * Value may not exist due to backwards compatability; if it doesn't, don't show info
 	 */
-	publicDisplay?: boolean;
+	publicDisplay: boolean | undefined;
 }
 
 /**

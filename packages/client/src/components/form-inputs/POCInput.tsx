@@ -37,7 +37,7 @@ import {
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import { DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
+import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import EnumRadioButton from './EnumRadioButton';
 import { NotOptionalInputProps } from './Input';
 import TextBox from './TextBox';
@@ -62,6 +62,7 @@ export const upgradeDisplayInternalPointOfContactToEdit = (
 	receiveSignUpUpdates: poc.receiveSignUpUpdates,
 	receiveUpdates: poc.receiveUpdates,
 	type: PointOfContactType.INTERNAL,
+	publicDisplay: poc.publicDisplay,
 });
 
 export const simplifyDisplayInternalPointOfContactFromEdit = (
@@ -77,6 +78,7 @@ export const simplifyDisplayInternalPointOfContactFromEdit = (
 		receiveSignUpUpdates: poc.receiveSignUpUpdates,
 		receiveUpdates: poc.receiveUpdates,
 		type: PointOfContactType.INTERNAL,
+		publicDisplay: poc.publicDisplay,
 	}))(poc.memberReference);
 
 export interface POCInputProps
@@ -110,6 +112,7 @@ export default class POCInput extends React.Component<
 					memberReference: Maybe.none(),
 					phone: '',
 					position: '',
+					publicDisplay: true,
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
@@ -187,6 +190,9 @@ export default class POCInput extends React.Component<
 				<Label>Position</Label>
 				<TextInput name="position" />
 
+				<Label>Display publicly</Label>
+				<Checkbox name="publicDisplay" />
+
 				{/* <Label>Receive event updates</Label>
 				<Checkbox name="receiveEventUpdates" index={this.props.index} />
 
@@ -220,6 +226,7 @@ export default class POCInput extends React.Component<
 					memberReference: Maybe.none(),
 					phone: '',
 					position: '',
+					publicDisplay: true,
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,
@@ -232,6 +239,7 @@ export default class POCInput extends React.Component<
 					name: '',
 					phone: '',
 					position: '',
+					publicDisplay: true,
 					receiveEventUpdates: false,
 					receiveRoster: false,
 					receiveSignUpUpdates: false,

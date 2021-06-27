@@ -284,6 +284,13 @@ export const filterMemberComments = (viewer: MaybeObj<User>) => <T extends RawRe
 	memberComments: Maybe.isSome(viewer) ? event.memberComments : '',
 });
 
+export const filterPOCs = (viewer: MaybeObj<User>) => <T extends RawResolvedEventObject>(
+	event: T,
+): T => ({
+	...event,
+	pointsOfContact: event.pointsOfContact.filter(poc => poc.publicDisplay || Maybe.isSome(viewer)),
+});
+
 export const filterEventInformation = (
 	viewer: MaybeObj<User>,
 ): (<T extends RawResolvedEventObject>(event: T) => T) =>
@@ -291,4 +298,5 @@ export const filterEventInformation = (
 		appropriatelyFilterPointsOfContact(viewer),
 		getAppropriateDebriefItems(viewer),
 		filterMemberComments(viewer),
+		filterPOCs(viewer),
 	);

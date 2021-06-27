@@ -38,6 +38,13 @@ export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Copy> =
 				code: 403,
 				message: 'Member does not have permission to perform that action',
 			})
+			.map(event => ({
+				...event,
+				pointsOfContact: event.pointsOfContact.map(poc => ({
+					publicDisplay: true,
+					...poc,
+				})),
+			}))
 			.map(backend.copyEvent)
 			.map(copier => copier(toReference(req.member)))
 			.map(copier => copier(req.body.newTime))
