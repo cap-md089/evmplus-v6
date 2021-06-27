@@ -144,8 +144,8 @@ services:
     download_capwatch_update:
         build:
             context: .
-            target: capwatch-import
-        command: /usr/evm-plus/capwatch-cron/download.sh
+            target: cronjobs
+        command: /usr/evm-plus/cronjobs/download.sh
         networks:
             - backend
         environment:
