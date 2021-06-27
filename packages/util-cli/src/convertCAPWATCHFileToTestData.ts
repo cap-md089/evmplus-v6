@@ -24,7 +24,7 @@ import * as csv from 'csv-parse';
 import { promises as fs } from 'fs';
 import { convertNHQDate } from 'server-common';
 import { dirname } from 'path';
-import { PresetRecords } from 'server-jest-config';
+import type { PresetRecords } from 'server-jest-config';
 
 if (process.argv.length !== 4) {
 	console.error('Error! CAPWATCH file and conversion destination not provided');

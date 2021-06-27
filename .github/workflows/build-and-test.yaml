@@ -26,11 +26,11 @@ jobs:
                 echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
                 docker-compose build
 
-    test:
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@v2
-            - run: |
-                docker-compose -f docker-compose.dev.yml run dev-setup
-                docker-compose -f docker-compose.test.yml up tests
+#    test:
+#        runs-on: ubuntu-latest
+#
+#        steps:
+#            - uses: actions/checkout@v2
+#            - run: |
+#                docker-compose -f docker-compose.dev.yml run dev-setup
+#                docker-compose -f docker-compose.test.yml up tests

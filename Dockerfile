@@ -93,8 +93,9 @@ RUN --mount=type=cache,target=/usr/evm-plus/packages/apis/dist/ \
 	--mount=type=cache,target=/usr/evm-plus/packages/discord-bot/apis/dist \
 	--mount=type=cache,target=/usr/evm-plus/packages/server/apis/dist \
 	--mount=type=cache,target=/usr/evm-plus/packages/server-common/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server-jest-config/apis/dist \
 	--mount=type=cache,target=/usr/evm-plus/packages/util-cli/apis/dist \
-	lerna run build --ignore server-jest-config
+	lerna run build
 
 #
 # By creating an nginx container like this, we can statically serve HTML,
