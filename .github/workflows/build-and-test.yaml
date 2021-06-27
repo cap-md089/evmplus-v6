@@ -1,0 +1,26 @@
+name: Build and Test
+
+on:
+    push:
+        branches:
+            - master
+            - development
+    pull_request:
+        branches:
+            - master
+            - development
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - run: docker-compose build
+
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - run: docker-compose -f docker-compose.test.yml up tests
