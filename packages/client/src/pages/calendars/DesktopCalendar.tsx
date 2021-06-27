@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -105,100 +105,87 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 	public state: {} = {};
 
 	public render(): JSX.Element {
-		let events = this.props.events;
+		const events = this.props.events;
 
+		// year of calendar display
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
 				? new Date().getUTCFullYear()
 				: parseInt(this.props.routeProps.match.params.year, 10);
+		// month of calendar display
 		const month =
 			typeof this.props.routeProps.match.params.month === 'undefined'
 				? new Date().getUTCMonth() + 1
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
+		// month previous to display month (minus one millisecond from start of month)
 		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
+		// first millisecond of display month
 		const thisMonth = getMonth(month, year);
+		// first millisecond of month after display month
 		const nextMonth = getMonth(month + 1, year);
-
-		const firstDay = thisMonth.weekday % 7;
-
-		const numberWeeks = Math.ceil((thisMonth.daysInMonth + (thisMonth.weekday % 7)) / 7) + 1;
 
 		const calendar: CalendarData = [];
 
-		const isWeekWeird = lastMonth.startOf('week').day === lastMonth.day - 6;
+		// create js Date object with intended month
+		const displayDate = new Date(year, month - 1);
+		// "day of month" first day
+		const dayOfMonthFirst = new Date(displayDate.getTime());
+		// "day of month" last day
+		const dayOfMonthLast = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
+		// "day of calendar" start day, start with current month
+		const dayOfCalendarStart = new Date(year, dayOfMonthFirst.getMonth(), 1);
+		// doc start day, modify to be the Sunday before the first day of the display month
+		dayOfCalendarStart.setDate(-(dayOfCalendarStart.getDay() - 1));
+		// "day of calendar" end day, start with last day of current month
+		const dayOfCalendarEnd = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
+		// doc end day, modify to be the Saturday after the last day of the display month
+		dayOfCalendarEnd.setDate(dayOfMonthLast.getDate() + (6 - dayOfMonthLast.getDay()));
 
-		const startOfLastMonthWeek = isWeekWeird ? lastMonth : lastMonth.startOf('week');
+		// value in milliseconds of one day of time
+		const oneDay = 1000 * 3600 * 24;
+		// the number of weeks to display the calendar.  Should be 5 the overwhelming majority of the time.
+		// will be 4 when February starts on a Sunday.  Will be 6 when long month starts on Friday or Saturday
+		const numberWeeks =
+			Math.ceil((dayOfCalendarEnd.getTime() - dayOfCalendarStart.getTime()) / oneDay) / 7;
 
 		let i;
 		let j;
 
-		calendar[0] = [];
-		for (i = 0; i < firstDay; i++) {
-			calendar[0][i] = {
-				day: startOfLastMonthWeek.day + i - (isWeekWeird ? 0 : 1),
-				month: lastMonth.month,
-				year: lastMonth.year,
-				events: [],
-			};
+		for (i = 0; i < numberWeeks; i++) {
+			calendar.push([]);
 		}
 
-		for (i = firstDay; i < 7; i++) {
-			calendar[0][i] = {
-				day: i - firstDay + 1,
-				month: thisMonth.month,
-				year: thisMonth.year,
-				events: [],
-			};
-		}
-
-		let start: number;
-
-		for (i = 1; i < numberWeeks - 2; i++) {
-			start = calendar[i - 1][6].day + 1;
-			calendar[i] = [];
+		let calDisp = new Date(dayOfCalendarStart);
+		for (i = 0; i < numberWeeks; i++) {
 			for (j = 0; j < 7; j++) {
+				console.log('calDisp Date: ' + calDisp.getDate().toString());
+				console.log('calDisp Month: ' + calDisp.getMonth().toString());
+				console.log('calDisp Year: ' + calDisp.getFullYear().toString());
 				calendar[i][j] = {
-					day: start + j,
-					month: thisMonth.get('month'),
-					year: thisMonth.get('year'),
+					day: calDisp.getDate(),
+					month: calDisp.getMonth(),
+					year: calDisp.getFullYear(),
 					events: [],
 				};
+				calDisp = new Date(calDisp.getTime() + oneDay);
 			}
 		}
 
-		start = calendar[calendar.length - 1][6].day + 1;
-		calendar[calendar.length] = [];
-		for (i = start, j = 0; i <= thisMonth.daysInMonth; i++, j++) {
-			calendar[calendar.length - 1][j] = {
-				day: i,
-				month: thisMonth.get('month'),
-				year: thisMonth.get('year'),
-				events: [],
-			};
-		}
-
-		if (j !== 7) {
-			for (i = 1; j < 7; i++, j++) {
-				calendar[calendar.length - 1][j] = {
-					day: i,
-					month: nextMonth.get('month'),
-					year: nextMonth.get('year'),
-					events: [],
-				};
-			}
-		}
-
+		// sort events by length to place longer events near the top of the calendar display
 		events.sort(
-			(a, b) => b.endDateTime - b.pickupDateTime - (a.endDateTime - a.pickupDateTime),
+			(b, a) => a.pickupDateTime - a.meetDateTime - (b.pickupDateTime - b.meetDateTime),
 		);
 
-		events = events.reverse();
-
+		// for each event in the list, determine the display start week and day and
+		// the display end week and day, then populate the 2d calendar array with that event
+		// in each appropriate day
 		events.forEach(val => {
 			const startDate = DateTime.fromMillis(val.meetDateTime);
 			const endDate = DateTime.fromMillis(val.pickupDateTime);
 
+			// get startWeek and startDay
+			// getPositionIndices truncates to 0, 0 as appropriate
 			const { weekNumber: startWeek, dayNumber: startDay } = getPositionIndices(
 				startDate,
 				this.props.start,
@@ -206,6 +193,8 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				month,
 				year,
 			);
+			// get endWeek and endDay
+			// getPositionIndices truncates to numberWeeks, 6 as appropriate
 			const { weekNumber: endWeek, dayNumber: endDay } = getPositionIndices(
 				endDate,
 				this.props.start,
@@ -224,7 +213,10 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				return;
 			}
 
+			// iterate through each display week, populating calendar array with
+			// information for this event
 			for (let k = startWeek; k <= endWeek; k++) {
+				// if event is contained in a single week
 				if (k === startWeek && k === endWeek) {
 					const index = findIndex(calendar, startDay % 7, endDay % 7, k);
 
@@ -245,6 +237,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							mergeRight: false,
 						};
 					}
+					// leading partial week of multi-week display
 				} else if (k === startWeek) {
 					const index = findIndex(calendar, startDay % 7, 6, k);
 
@@ -265,6 +258,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							mergeRight: false,
 						};
 					}
+					// trailing partial week of multi-week display
 				} else if (k === endWeek) {
 					const index = findIndex(calendar, 0, endDay % 7, k);
 
@@ -285,6 +279,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							mergeRight: false,
 						};
 					}
+					// inclusive full weeks
 				} else {
 					const index = findIndex(calendar, 0, 6, k);
 
@@ -356,7 +351,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 									<td
 										key={l}
 										className={
-											item.month === thisMonth.get('month')
+											item.month === thisMonth.get('month') - 1
 												? 'calendar-inmonth'
 												: 'calendar-outmonth'
 										}
