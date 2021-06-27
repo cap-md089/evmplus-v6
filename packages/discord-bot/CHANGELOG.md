@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.19.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.10.0...discord-bot@1.19.0) (2021-06-27)
+
+
+### Bug Fixes
+
+* found that eslint wasn't checking certain files ([25be1cc](http://github.com//cap-md089/evmplus-v6/commit/25be1cc5b028540339a05dc713563b88d226e214))
+* **discord-bot:** added intents to the discord bot to allow it to listen to events ([7126af4](http://github.com//cap-md089/evmplus-v6/commit/7126af446134606a2a0ce823914472ae4143bc35))
+* **discord-bot:** enabled better handling of duplicate attendance records ([cc94a59](http://github.com//cap-md089/evmplus-v6/commit/cc94a5984353144f24e6baa86fdfab8367a0ff1f))
+* **discord-bot:** finally fixed the attendance record command completely ([237837f](http://github.com//cap-md089/evmplus-v6/commit/237837f2e2a83e0630136700801dd7974e450411))
+* **discord-bot:** fixed DMs being sent when the setup DM was already sent ([303d757](http://github.com//cap-md089/evmplus-v6/commit/303d75700e2c7aff02113e0cb4ebea7028c248f8))
+* **discord-bot:** fixed not adding Processing role ([787301e](http://github.com//cap-md089/evmplus-v6/commit/787301e6a99427e9a4868bb9448f7085d3563bb8)), closes [#100](http://github.com//cap-md089/evmplus-v6/issues/100)
+* **discord-bot:** fixed the discord bot not updating servers when running the update servers command ([0713f8a](http://github.com//cap-md089/evmplus-v6/commit/0713f8a3a6bcf577285bc461066ef55aad2a9f6d))
+* **discord-bot:** hopefully fixed the bot not detecting people joining ([edf047f](http://github.com//cap-md089/evmplus-v6/commit/edf047f89ccc6cd901d4d2e35aafede70fc9c3ce))
+* **discord-bot:** tentative fix for duplicate additions of attendance records ([54b7f6a](http://github.com//cap-md089/evmplus-v6/commit/54b7f6a9bc5ec0ef0b50ea7ac03f1a6270c6f2b7))
+* **discord-bot:** upgraded discord.js dependency ([a0e60fc](http://github.com//cap-md089/evmplus-v6/commit/a0e60fc677b9ba31c65769628bac9b18895da0ca))
+* **server:** downgraded the MySQL database and driver versions to rollback from bug introduced where ([a3d88cb](http://github.com//cap-md089/evmplus-v6/commit/a3d88cb43d6f189079a25cb0e7c96fa4c91fa31c))
+* fixed creation of prospective members ([6011736](http://github.com//cap-md089/evmplus-v6/commit/60117367e3c33c9bf37a523f5525e09740034b04))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.18.0](http://github.com//cap-md089/evmplus-v6/compare/discord-bot@1.10.0...discord-bot@1.18.0) (2021-03-15)
 
 

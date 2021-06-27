@@ -3,6 +3,89 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.26.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.26.0) (2021-06-27)
+
+
+### Bug Fixes
+
+* fixing the client build environment somewhat ([1952da8](http://github.com//cap-md089/evmplus-v6/commit/1952da8a00738e0950bfae76997dbd8f2296fb67))
+* made client easier to build right off the bat and fixed github actions again ([7cea4e8](http://github.com//cap-md089/evmplus-v6/commit/7cea4e83ce7b7f4382ec26adf44022af1fea13de))
+* **client:** change wording of cadet promotion statement ([b976720](http://github.com//cap-md089/evmplus-v6/commit/b9767202f2af55b0d94c95ead258919783d9ab7e))
+* **client:** fixed calendar bugs ([3de1c1e](http://github.com//cap-md089/evmplus-v6/commit/3de1c1e618ff47bab578d47acb1f4152f3b87c94)), closes [#84](http://github.com//cap-md089/evmplus-v6/issues/84) [#90](http://github.com//cap-md089/evmplus-v6/issues/90)
+* **client:** fixed compile errors from a previous commit ([6e48583](http://github.com//cap-md089/evmplus-v6/commit/6e485832539246f3a8adc7d159e4bcff660c7dd7))
+* **client:** fixed compile warning ([4a59cd0](http://github.com//cap-md089/evmplus-v6/commit/4a59cd0d68595914a89b1fd6f9aab9607a585188))
+* **client:** fixed font fail to download for pdf generation on alias domains ([78a3b06](http://github.com//cap-md089/evmplus-v6/commit/78a3b066c9faa2148e6b2cb42998f65834277660)), closes [#155](http://github.com//cap-md089/evmplus-v6/issues/155)
+* **client:** fixed password form not checking for password length ([e061e52](http://github.com//cap-md089/evmplus-v6/commit/e061e52728e54e5941e21d38e4d4241441df425d))
+* **client:** fixed PDF fonts failing to load, for real ([440d595](http://github.com//cap-md089/evmplus-v6/commit/440d595489801a330ab39a481f4df2b2f6970427)), closes [#155](http://github.com//cap-md089/evmplus-v6/issues/155)
+* **client:** made it so that double clicking on a folder is done better for the Drive ([3b94dbf](http://github.com//cap-md089/evmplus-v6/commit/3b94dbf34f6a99a6b0278844730a653cd59ed8c4))
+* **util-cli:** fixed the handling of newlines inserted by most editors ([2e07f54](http://github.com//cap-md089/evmplus-v6/commit/2e07f54cae31f2e3ad5e53e3b69af30f37d09c0e))
+* ensured that the attendance filters are in place in the server code ([21e1acf](http://github.com//cap-md089/evmplus-v6/commit/21e1acf73f9f88e6402a236643a050ae0a724a1e))
+* fixed client compile error with typescript upgrade ([d383e5e](http://github.com//cap-md089/evmplus-v6/commit/d383e5eb24d89a0484f276f4b8d9161df1ed258f))
+* found that eslint wasn't checking certain files ([25be1cc](http://github.com//cap-md089/evmplus-v6/commit/25be1cc5b028540339a05dc713563b88d226e214))
+* **client:** added privacy policy and terms and conditions from v4 ([21ad932](http://github.com//cap-md089/evmplus-v6/commit/21ad93261fa4b59f8813b5c5506269fe168586f9))
+* **client:** disabling private attendance for now ([9b92d5e](http://github.com//cap-md089/evmplus-v6/commit/9b92d5ea9fff91ac521790fe71990c139a7a329e))
+* **client:** fixed compile warnings from version upgrade ([3699ae5](http://github.com//cap-md089/evmplus-v6/commit/3699ae52ecd71326ba386637e1dee9cfac9a38a3))
+* **client:** fixed compiler error on the client side ([fbeedf4](http://github.com//cap-md089/evmplus-v6/commit/fbeedf4e7e2c480217d508d331e8fa632e5e329d))
+* **client:** fixed error messages appearing after CAP ID is entered ([3340104](http://github.com//cap-md089/evmplus-v6/commit/3340104615e5c955d4ced803179d94b69f554c4c))
+* **client:** fixed scan add providing cryptic error messages ([f40fafc](http://github.com//cap-md089/evmplus-v6/commit/f40fafcdc6a5303e16e4fd645e3879029ad7a9d6)), closes [#63](http://github.com//cap-md089/evmplus-v6/issues/63)
+* **client:** fixed styles and polyfills to make site work on MS Edge 18 ([2b77c11](http://github.com//cap-md089/evmplus-v6/commit/2b77c11d2cd6030a55f31830b3eabf76ef1f2af6)), closes [#89](http://github.com//cap-md089/evmplus-v6/issues/89)
+* **client:** fixed the share link for the file permission dialogue ([542de0d](http://github.com//cap-md089/evmplus-v6/commit/542de0d1a52574d344a43cf1d66826177af6bfcc))
+* **client:** fixed the withMemberList function causing issues with the drive for people not signed i ([2b25ea2](http://github.com//cap-md089/evmplus-v6/commit/2b25ea2024a468be3d1d03af579c47c3677ce24f))
+* **client:** prevented past attendance record information from being changed by non-manager members ([7133234](http://github.com//cap-md089/evmplus-v6/commit/713323430368bded1993ad5a71dee4067cc79d55)), closes [#99](http://github.com//cap-md089/evmplus-v6/issues/99)
+* **client:** removed a reference to a file in a different branch ([f1a95df](http://github.com//cap-md089/evmplus-v6/commit/f1a95df461cd63a26840be444a10f048c077fc3d))
+* **client:** replaced references to old name with new name ([6752957](http://github.com//cap-md089/evmplus-v6/commit/675295781f3d0c5c8c838c09f76daa3ab974e558))
+* **client-server:** added 'position' field for POC entries in events ([b09d475](http://github.com//cap-md089/evmplus-v6/commit/b09d47510315147e048a0f70c5cdbdcaf9514c09)), closes [#143](http://github.com//cap-md089/evmplus-v6/issues/143)
+* **discord-bot:** fixed not adding Processing role ([787301e](http://github.com//cap-md089/evmplus-v6/commit/787301e6a99427e9a4868bb9448f7085d3563bb8)), closes [#100](http://github.com//cap-md089/evmplus-v6/issues/100)
+* **eventviewer:** added session check to email and phone display ([7e20143](http://github.com//cap-md089/evmplus-v6/commit/7e20143bb67836c66706fb276ecbf817dbe72e54)), closes [#122](http://github.com//cap-md089/evmplus-v6/issues/122)
+* added error catching to the event link list ([25828cc](http://github.com//cap-md089/evmplus-v6/commit/25828ccdfcca0bb5f1c82222f1ad09531d5231c9))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed eventform crashing trying to render interal POCs ([86b5806](http://github.com//cap-md089/evmplus-v6/commit/86b5806f841ec04356d26e02b451bf00515e3776))
+* fixed merge pains ([cdba40d](http://github.com//cap-md089/evmplus-v6/commit/cdba40d4fbdea24785683e52ad4c907472b43945))
+* fixed the security and performance of debrief viewer ([22cc9ee](http://github.com//cap-md089/evmplus-v6/commit/22cc9eec34b28a5aecb38789164a7b0006bfe7e9))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+* **googleutils:** fixed event move not working, added time stamp display to errors ([d4ab35e](http://github.com//cap-md089/evmplus-v6/commit/d4ab35e8d77ad83b4f7d4df6c20c9ef8a3c62476)), closes [#77](http://github.com//cap-md089/evmplus-v6/issues/77)
+* **googleutils:** updated googleutils functions to account for deleted Google calendar events ([b2e510e](http://github.com//cap-md089/evmplus-v6/commit/b2e510ecdda3aa49a607bcf37386c472c2f4c9f4))
+* prepared eventform for wing demonstration ([7a899ad](http://github.com//cap-md089/evmplus-v6/commit/7a899adfe47e96a818b80ca323962765df748751))
+
+
+### Features
+
+* re-added public display option for POCs and fixed copy event bug ([0514f44](http://github.com//cap-md089/evmplus-v6/commit/0514f44a0d1e979ac03c22aa13ee1b9b83340951))
+* **attendance:** added date filter to attendance history page ([412a58c](http://github.com//cap-md089/evmplus-v6/commit/412a58c0398bf29730209a5aec14af1bcfa4d392)), closes [#21](http://github.com//cap-md089/evmplus-v6/issues/21)
+* **client:** added file widget to eventform ([6b01f5f](http://github.com//cap-md089/evmplus-v6/commit/6b01f5fc73312ce411f05eb2be86604cfa0d4fdf))
+* **client:** made client embed friendly ([725b543](http://github.com//cap-md089/evmplus-v6/commit/725b5430ad5a6604051e7c0f0c5e12d7ba339283)), closes [#133](http://github.com//cap-md089/evmplus-v6/issues/133)
+* **client:** redid FileUploader to handle folders, batch uploads, and actual progress past the firs ([6732e46](http://github.com//cap-md089/evmplus-v6/commit/6732e46bfdbcbfa3d38bbcffb1c1308b5239d2d5)), closes [#68](http://github.com//cap-md089/evmplus-v6/issues/68)
+* **client and server:** added links and display to view event audit information ([16784ec](http://github.com//cap-md089/evmplus-v6/commit/16784ecb2f8b59f905e548a75a0a8a9c1f7695d9))
+* **debriefs:** added debrief functionality to EventViewer and EventLinkList ([42ea511](http://github.com//cap-md089/evmplus-v6/commit/42ea5111f0e985c6a9116007ad4efd40231c8e3e)), closes [#65](http://github.com//cap-md089/evmplus-v6/issues/65)
+* **event comments editing and display:** implemented markdown on event editor, display, and rendere ([5355fff](http://github.com//cap-md089/evmplus-v6/commit/5355fff8564a6ddbd26720636f50d7a394ea8a68))
+* **event link list:** added popup selection to change event status directly from link list page ([5e68eae](http://github.com//cap-md089/evmplus-v6/commit/5e68eae9bf2fe58ec762b5fa6ec45f1e20d861ed)), closes [#14](http://github.com//cap-md089/evmplus-v6/issues/14)
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](http://github.com//cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](http://github.com//cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer:** added color coding to event status text based on event status value ([90ca6d5](http://github.com//cap-md089/evmplus-v6/commit/90ca6d5adfce53295de000bbdec78b41099b727a))
+* **eventviewer:** disabled linked event code ([3ee1b58](http://github.com//cap-md089/evmplus-v6/commit/3ee1b58cb430d98597da31fbf3c8c477b0542b26))
+* **eventviewer:** fixed display glitch regarding attendance links ([09ed0a2](http://github.com//cap-md089/evmplus-v6/commit/09ed0a2252fcd62ff8f45f2b9cc28cd0d7652222))
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* **server client common-lib:** implemented email notification of event sign up ([da85e04](http://github.com//cap-md089/evmplus-v6/commit/da85e041bc841e6ee5eacb777f009197b9359774))
+* added the ability to modify linked events ([c219817](http://github.com//cap-md089/evmplus-v6/commit/c219817c51c189f84ce04876be2b56ecd1dcd2a0))
+* added the events and personalfolders folders ([82f5b48](http://github.com//cap-md089/evmplus-v6/commit/82f5b48feba7638046532ea225cd7ccdb2165b85))
+* **eventviewer:** removed linked events links ([b89016e](http://github.com//cap-md089/evmplus-v6/commit/b89016e158d2ad9c11dc799d372fd6655992fa12))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+* fixed formatting on EventViewer ([4c442ec](http://github.com//cap-md089/evmplus-v6/commit/4c442ec35ae7dd68a3971658ba925277f09023b1))
+
+
+### Performance Improvements
+
+* **client:** added context API to allow for caching of downloading member and team lists ([99a9651](http://github.com//cap-md089/evmplus-v6/commit/99a9651404379dc1797ed747b925901449297123))
+* **client:** changed the keys of elements from array indices to file IDs in the drive ([142cb66](http://github.com//cap-md089/evmplus-v6/commit/142cb669f3730053d98e25f1aa2686f95b632be7))
+* **client:** minor changes to keys used and display for scan add ([ea51dce](http://github.com//cap-md089/evmplus-v6/commit/ea51dce1dd44cd14126156962cd6f201362eff22))
+* **client:** prevented double mounts for pages ([c4bb02c](http://github.com//cap-md089/evmplus-v6/commit/c4bb02ce70764609952a5d6590d4843167c2a9ee))
+* **server:** moved the built client files from the node process to the nginx process ([00ddefb](http://github.com//cap-md089/evmplus-v6/commit/00ddefb01ae85b2ba78e042dc4899e48d2a5d282))
+
+
+
+
+
 # [1.25.0](http://github.com//cap-md089/evmplus-v6/compare/client@1.17.0...client@1.25.0) (2021-03-15)
 
 

@@ -3,6 +3,54 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.28.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.28.0) (2021-06-27)
+
+
+### Bug Fixes
+
+* **server-common:** fixed code to match tests ([d2edf8d](http://github.com//cap-md089/evmplus-v6/commit/d2edf8d2e226d5a849c30d8b3b5256a421de6df0))
+* ensured that the attendance filters are in place in the server code ([21e1acf](http://github.com//cap-md089/evmplus-v6/commit/21e1acf73f9f88e6402a236643a050ae0a724a1e))
+* found that eslint wasn't checking certain files ([25be1cc](http://github.com//cap-md089/evmplus-v6/commit/25be1cc5b028540339a05dc713563b88d226e214))
+* **capwatch import:** fix capwatch cadet hfz import ([e4fba7a](http://github.com//cap-md089/evmplus-v6/commit/e4fba7a5bfc32c69385098e7d67b61dc1e024cf4)), closes [#101](http://github.com//cap-md089/evmplus-v6/issues/101)
+* **client:** replaced references to old name with new name ([6752957](http://github.com//cap-md089/evmplus-v6/commit/675295781f3d0c5c8c838c09f76daa3ab974e558))
+* **client-server:** added 'position' field for POC entries in events ([b09d475](http://github.com//cap-md089/evmplus-v6/commit/b09d47510315147e048a0f70c5cdbdcaf9514c09)), closes [#143](http://github.com//cap-md089/evmplus-v6/issues/143)
+* **common-lib:** provided better filtering for event information ([945d32a](http://github.com//cap-md089/evmplus-v6/commit/945d32a98c49e8717528e66787d6a4ec8d1131c1))
+* **server:** fixed session timeout for scan add sessions ([84fb4d8](http://github.com//cap-md089/evmplus-v6/commit/84fb4d8bcefced80dca17822063bb036d83f0570))
+* **server:** fixed when finishing account setup or password reset not immediately being signed in as ([f58fa55](http://github.com//cap-md089/evmplus-v6/commit/f58fa5501c3df8d6506e52a07fac25a4781692f3))
+* fixed code to match data ([b7bd7b9](http://github.com//cap-md089/evmplus-v6/commit/b7bd7b9c118deba04b30804ab9273122478839dd))
+* fixed errors provided by refactor ([e138d41](http://github.com//cap-md089/evmplus-v6/commit/e138d411ce31460f3ff4c391b06937a535651c32))
+* fixed merge pains ([cdba40d](http://github.com//cap-md089/evmplus-v6/commit/cdba40d4fbdea24785683e52ad4c907472b43945))
+* fixed weird rendering ([7ac923a](http://github.com//cap-md089/evmplus-v6/commit/7ac923acd9b9c48435b0a40762a2ece3ea85a707))
+* removed unused contact types ([0cf2f68](http://github.com//cap-md089/evmplus-v6/commit/0cf2f68c178d7334f3db10211ec4f372fa3bf8d3))
+* **server:** fixed admins not being able to link events ([cc1c48f](http://github.com//cap-md089/evmplus-v6/commit/cc1c48ffc36b547f28c0a53fd452925f23605277))
+* updated jest dependencies, fixed jest for client ([b98c96a](http://github.com//cap-md089/evmplus-v6/commit/b98c96a97dac6840308775bad73aec6801391690))
+
+
+### Features
+
+* re-added public display option for POCs and fixed copy event bug ([0514f44](http://github.com//cap-md089/evmplus-v6/commit/0514f44a0d1e979ac03c22aa13ee1b9b83340951))
+* **attendance spreadsheet download:** included comments in attendance spreadsheet download ([f6a9b27](http://github.com//cap-md089/evmplus-v6/commit/f6a9b27ccc95607094f0477ee8aaad7555e328e3))
+* **client and server:** added links and display to view event audit information ([16784ec](http://github.com//cap-md089/evmplus-v6/commit/16784ecb2f8b59f905e548a75a0a8a9c1f7695d9))
+* **common-lib:** added the ability to filter types as well as values for AsyncEither ([c65a551](http://github.com//cap-md089/evmplus-v6/commit/c65a551c9c0fd2d759ff9cbb5700dad977bb04d5))
+* **debriefs:** added debrief functionality to EventViewer and EventLinkList ([42ea511](http://github.com//cap-md089/evmplus-v6/commit/42ea5111f0e985c6a9116007ad4efd40231c8e3e)), closes [#65](http://github.com//cap-md089/evmplus-v6/issues/65)
+* **eventform:** added functionality to add internal member as poc by capid ([c6d1021](http://github.com//cap-md089/evmplus-v6/commit/c6d10214f182ad6809c818060203e31436299c99)), closes [#37](http://github.com//cap-md089/evmplus-v6/issues/37)
+* **EventForm, viewer, linklist:** added indication of which fields are written to Google Calendar, ([b4a1d64](http://github.com//cap-md089/evmplus-v6/commit/b4a1d6466c4ea66af820b6979a62345966ba392e)), closes [#81](http://github.com//cap-md089/evmplus-v6/issues/81) [#80](http://github.com//cap-md089/evmplus-v6/issues/80)
+* **eventviewer:** removed linked events links ([b89016e](http://github.com//cap-md089/evmplus-v6/commit/b89016e158d2ad9c11dc799d372fd6655992fa12))
+* **eventviewer and linklist changes in line with mdwg business rules:** eventviewer and linklist ch ([d21210d](http://github.com//cap-md089/evmplus-v6/commit/d21210db05d89a340a3288acad5555cdde01edf6))
+* **eventviewer, eventform, attendancemultiadd, attendancexls:** multiple EventViewer interface and ([e1a0eca](http://github.com//cap-md089/evmplus-v6/commit/e1a0ecadd76fdf7337f73c3e521995a6ded9972d)), closes [#71](http://github.com//cap-md089/evmplus-v6/issues/71) [#72](http://github.com//cap-md089/evmplus-v6/issues/72) [#73](http://github.com//cap-md089/evmplus-v6/issues/73) [#74](http://github.com//cap-md089/evmplus-v6/issues/74) [#75](http://github.com//cap-md089/evmplus-v6/issues/75)
+* **import hfz information:** added functionality to import HFZ information file from CAPWATCH ([f5ae56d](http://github.com//cap-md089/evmplus-v6/commit/f5ae56dc7ff97befd2f94c644a08ac9469f0007e))
+* **server:** added attendance unit tests ([f1d742f](http://github.com//cap-md089/evmplus-v6/commit/f1d742fdbe27b9776abef1e2a1a98612b9102eac))
+* **server client common-lib:** implemented email notification of event sign up ([da85e04](http://github.com//cap-md089/evmplus-v6/commit/da85e041bc841e6ee5eacb777f009197b9359774))
+* **server-jest-config:** added extra data functions to help with generating server side tests ([f9ed16d](http://github.com//cap-md089/evmplus-v6/commit/f9ed16d8b1ca7a9f95c0a2fcac4d9197f59eb380))
+* added the ability to generate preset data for tests ([4ae8a29](http://github.com//cap-md089/evmplus-v6/commit/4ae8a29f972f120ee62f8217ca956edde80ef1af))
+* **server-common:** adding more backends and more things using backends ([ea37ec5](http://github.com//cap-md089/evmplus-v6/commit/ea37ec591b8bc770703eb949103dc4ef3688e721))
+* added the ability to modify linked events ([c219817](http://github.com//cap-md089/evmplus-v6/commit/c219817c51c189f84ce04876be2b56ecd1dcd2a0))
+* added the ability to, given a public/private key pair, sign in skipping reCAPTCHA ([e1ae8fc](http://github.com//cap-md089/evmplus-v6/commit/e1ae8fcfc8cb4012a37efc906e4cf0bc7e5c38f8))
+
+
+
+
+
 # [1.27.0](http://github.com//cap-md089/evmplus-v6/compare/common-lib@1.19.0...common-lib@1.27.0) (2021-03-15)
 
 

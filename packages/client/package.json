@@ -1,11 +1,11 @@
 {
 	"name": "client",
-	"version": "1.25.0",
+	"version": "1.26.0",
 	"private": true,
 	"license": "GPL-2.0",
 	"dependencies": {
-		"apis": "^1.20.0",
-		"common-lib": "^1.27.0",
+		"apis": "^1.21.0",
+		"common-lib": "^1.28.0",
 		"debug": "^4.3.1",
 		"error-stack-parser": "2.0.2",
 		"http-proxy-middleware": "0.19.1",
