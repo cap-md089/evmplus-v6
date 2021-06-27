@@ -17,3 +17,4 @@
 
 0 0 * * * /usr/evm-plus/cronjobs/download.sh 2>&1 >> /var/log/cron.log
 1 0 * * 0 /usr/evm-plus/cronjobs/backup.sh 2>&1 >> /var/log/cron.log
+
