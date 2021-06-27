@@ -20,6 +20,7 @@ services:
             - test-network
         volumes:
             - ./:/usr/evm-plus
+            - /var/run/docker.sock:/var/run/docker.sock
         depends_on:
             - test-mysql
         command: yarn --cwd=packages/server test --watch
@@ -32,9 +33,10 @@ services:
             - test-network
         volumes:
             - ./:/usr/evm-plus
+            - /var/run/docker.sock:/var/run/docker.sock
         depends_on:
             - test-mysql
-        command: yarn --cwd=packages/server test --watch
+        command: yarn --cwd=packages/server-common test --watch
 
     test-mysql:
         container_name: evmplus_test-mysql

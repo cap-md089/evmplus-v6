@@ -30,6 +30,7 @@ import {
 	asyncRight,
 	AttendanceRecord,
 	call,
+	canFullyManageEvent,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
 	CustomAttendanceFieldValue,
@@ -213,6 +214,37 @@ export const getAttendanceFilter = (
 			),
 		);
 
+export const getDetailedAttendanceFilterSansMember = (
+	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+		backend
+			.getEvent(account)(attendanceRecord.sourceEventID)
+			.flatMap(newEnsureResolvedEvent(backend))
+			.flatMap(event =>
+				AsyncEither.All([
+					event.teamID === undefined || event.teamID === null
+						? asyncRight(
+								hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
+									Maybe.none(),
+								),
+								attendanceFilterError,
+						  )
+						: backend
+								.getTeam(account)(event.teamID)
+								.map(Maybe.some)
+								.map(
+									hasBasicAttendanceManagementPermission(attendanceViewer)(event),
+								),
+					asyncRight(
+						effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
+							Permissions.ManageEvent.FULL,
+						errorGenerator('Could not verify attendance permissions'),
+					),
+				]).map(arrayHasOneTrue),
+			),
+	);
+
 export const getDetailedAttendanceFilter = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 ) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
@@ -259,13 +291,27 @@ export const applyAttendanceFilter = (
 			AsyncEither.All([
 				backend
 					.getAccount(record.sourceAccountID)
-					.flatMap(account => backend.getEvent(account)(record.sourceEventID)),
-				getDetailedAttendanceFilter(backend)(attendanceViewer)(record),
+					.flatMap(account => backend.getEvent(account)(record.sourceEventID))
+					.flatMap(backend.ensureResolvedEvent),
+				getDetailedAttendanceFilterSansMember(backend)(attendanceViewer)(record),
+				asyncRight(
+					areMembersTheSame(attendanceViewer)(record.memberID),
+					attendanceFilterError,
+				),
 			])
-				.map(([event, canSeeDetails]) =>
-					canSeeDetails
-						? record
-						: ({
+				.map(([event, canSeeDetails, membersTheSame]) =>
+					canSeeDetails || membersTheSame
+						? {
+								...record,
+								customAttendanceFieldValues: record.customAttendanceFieldValues.filter(
+									value =>
+										canSeeDetails ||
+										!!event.customAttendanceFields.find(
+											field => field.title === value.title,
+										)?.displayToMember,
+								),
+						  }
+						: {
 								comments: '',
 								customAttendanceFieldValues: [],
 								memberID: record.memberID,
@@ -280,7 +326,7 @@ export const applyAttendanceFilter = (
 								status: record.status,
 								summaryEmailSent: false,
 								timestamp: record.timestamp,
-						  } as AttendanceRecord),
+						  },
 				)
 				.fullJoin()
 				.then(identity, always(record)),
@@ -301,7 +347,7 @@ export const canMemberModifyRecord = (
 						errorGenerator('Could not verify attendance record owner'),
 					),
 					asyncRight(
-						event.startDateTime > backend.now(),
+						event.endDateTime < backend.now(),
 						errorGenerator('Could not verify event start time'),
 					),
 					(event.teamID !== undefined && event.teamID !== null
@@ -323,7 +369,14 @@ export const canMemberDeleteRecord = (
 	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (attendanceDeleter: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	asyncRight(false, attendanceFilterError);
+	backend
+		.getAccount(attendanceRecord.sourceAccountID)
+		.flatMap(account =>
+			backend
+				.getEvent(account)(attendanceRecord.sourceEventID)
+				.flatMap(backend.ensureResolvedEvent)
+				.map(canFullyManageEvent(attendanceDeleter)),
+		);
 
 export const visibleCustomAttendanceFields = (
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -20,10 +20,18 @@
 import {
 	AccountType,
 	always,
+	applyCustomAttendanceFields,
+	areMembersTheSame,
 	collectGeneratorAsync,
+	CustomAttendanceField,
+	CustomAttendanceFieldEntryType,
+	Either,
 	getDefaultAdminPermissions,
 	getDefaultMemberPermissions,
 	getDefaultStaffPermissions,
+	getFullMemberName,
+	RawAttendanceDBRecord,
+	RawResolvedEventObject,
 } from 'common-lib';
 import { getTestAccount, getTestEvent, getTestRawAttendanceRecord } from 'common-lib/dist/test';
 import {
@@ -46,31 +54,70 @@ import { resolveReference } from '../Members';
 
 const testAccount = getTestAccount();
 
-const testEvent = {
+const displayedCustomAttendanceField: CustomAttendanceField = {
+	type: CustomAttendanceFieldEntryType.CHECKBOX,
+	allowMemberToModify: true,
+	displayToMember: true,
+	preFill: false,
+	title: 'field 1',
+};
+const hiddenCustomAttendanceField: CustomAttendanceField = {
+	type: CustomAttendanceFieldEntryType.CHECKBOX,
+	allowMemberToModify: true,
+	displayToMember: false,
+	preFill: false,
+	title: 'field 2',
+};
+
+const testEvent: RawResolvedEventObject = {
 	...getTestEvent(testAccount),
 	endDateTime: 1,
+	customAttendanceFields: [displayedCustomAttendanceField, hiddenCustomAttendanceField],
 };
 
 const testRec1 = {
 	...getTestRawAttendanceRecord(testEvent),
 	memberID: { id: 911111, type: 'CAPNHQMember' as const },
+	memberName: getFullMemberName(getMemberFromTestData({ id: 911111, type: 'CAPNHQMember' })),
+	customAttendanceFieldValues: applyCustomAttendanceFields(testEvent.customAttendanceFields)([]),
 };
 const testRec2 = {
 	...getTestRawAttendanceRecord(testEvent),
 	memberID: { id: 911112, type: 'CAPNHQMember' as const },
+	memberName: getFullMemberName(getMemberFromTestData({ id: 911112, type: 'CAPNHQMember' })),
+	customAttendanceFieldValues: applyCustomAttendanceFields(testEvent.customAttendanceFields)([]),
 };
 const testRec3 = {
 	...getTestRawAttendanceRecord(testEvent),
 	memberID: { id: 911113, type: 'CAPNHQMember' as const },
+	memberName: getFullMemberName(getMemberFromTestData({ id: 911113, type: 'CAPNHQMember' })),
+	customAttendanceFieldValues: applyCustomAttendanceFields(testEvent.customAttendanceFields)([]),
 };
 
-const testSetup = setPresetRecords({
+const db = {
 	...getCAPWATCHTestData(),
+	Accounts: [testAccount],
 	Events: [testEvent],
 	Attendance: [testRec1, testRec2, testRec3],
-});
+};
+
+const testSetup = setPresetRecords(db);
+
+const removeHiddenAttendanceFields = (event: RawResolvedEventObject) => (
+	record: RawAttendanceDBRecord,
+) =>
+	attendanceRecordMapper({
+		...record,
+		customAttendanceFieldValues: record.customAttendanceFieldValues.filter(
+			fieldValue =>
+				!!event.customAttendanceFields.find(field => field.title === fieldValue.title)
+					?.displayToMember,
+		),
+	});
 
 describe('Attendance', () => {
+	jest.setTimeout(15000);
+
 	const dbref = getDbHandle();
 
 	beforeAll(TestConnection.setup(dbref));
@@ -88,9 +135,7 @@ describe('Attendance', () => {
 	it('default member can view own attendance record', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend()(schema);
-		const member = await resolveReference(schema)(backend)(testAccount)(
-			testRec1.memberID,
-		).fullJoin();
+		const member = getMemberFromTestData(testRec1.memberID);
 
 		await expect(
 			getAttendanceForEvent(schema)(testEvent)
@@ -103,15 +148,13 @@ describe('Attendance', () => {
 				)
 				.map(collectGeneratorAsync)
 				.fullJoin(),
-		).resolves.toContainEqual(testRec1);
+		).resolves.toContainEqual(removeHiddenAttendanceFields(testEvent)(testRec1));
 		done();
 	});
 	it('cadet staff can view own attendance record', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend()(schema);
-		const member = await resolveReference(schema)(backend)(testAccount)(
-			testRec1.memberID,
-		).fullJoin();
+		const member = getMemberFromTestData(testRec1.memberID);
 
 		await expect(
 			getAttendanceForEvent(schema)(testEvent)
@@ -124,7 +167,7 @@ describe('Attendance', () => {
 				)
 				.map(collectGeneratorAsync)
 				.fullJoin(),
-		).resolves.toContainEqual(testRec1);
+		).resolves.toContainEqual(removeHiddenAttendanceFields(testEvent)(testRec1));
 		done();
 	});
 	it('admin member can view own attendance record', async done => {
@@ -145,7 +188,7 @@ describe('Attendance', () => {
 				)
 				.map(collectGeneratorAsync)
 				.fullJoin(),
-		).resolves.toContainEqual(testRec1);
+		).resolves.toContainEqual(attendanceRecordMapper(testRec1));
 		done();
 	});
 	it('can edit own attendance record before event end time', async done => {
@@ -157,7 +200,7 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberModifyRecord(backend)(member)(attendanceRecordMapper(testRec1)),
-		).resolves.toEqualRight(true);
+		).resolves.toEqual(Either.right(true));
 		done();
 	});
 	it('default member cannot edit own attendance record after event end time', async done => {
@@ -169,7 +212,7 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberModifyRecord(backend)(member)(attendanceRecordMapper(testRec1)),
-		).resolves.toEqualRight(false);
+		).resolves.toEqual(Either.right(false));
 		done();
 	});
 	it('admin can edit own attendance record after event end time', async done => {
@@ -184,15 +227,59 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberModifyRecord(backend)(member)(attendanceRecordMapper(testRec1)),
-		).resolves.toEqualRight(true);
+		).resolves.toEqual(Either.right(true));
+		done();
+	});
+	it('can show custom attendance fields of other attendees to admins', async done => {
+		const schema = dbref.connection.getSchema();
+		const backend = getDefaultTestBackend()(schema);
+		const member = {
+			...getTestUserForMember(getMemberFromTestData(testRec1.memberID)),
+			permissions: getDefaultAdminPermissions(AccountType.CAPSQUADRON),
+		};
+
+		const attendanceRecords = await getAttendanceForEvent(schema)(testEvent)
+			.map(applyAttendanceFilter(backend)(member))
+			.map(collectGeneratorAsync)
+			.fullJoin();
+
+		expect(attendanceRecords.length).not.toEqual(0);
+
+		for (const record of attendanceRecords) {
+			expect(record.customAttendanceFieldValues.length).toEqual(2);
+		}
+
+		done();
+	});
+	it('shows the appropriate custom attendance fields', async done => {
+		const schema = dbref.connection.getSchema();
+		const backend = getDefaultTestBackend()(schema);
+		const member = {
+			...getTestUserForMember(getMemberFromTestData(testRec2.memberID)),
+		};
+
+		const attendanceRecords = await getAttendanceForEvent(schema)(testEvent)
+			.map(applyAttendanceFilter(backend)(member))
+			.map(collectGeneratorAsync)
+			.fullJoin();
+
+		expect(attendanceRecords.length).not.toEqual(0);
+
+		for (const record of attendanceRecords) {
+			if (!areMembersTheSame(record.memberID)(member)) {
+				expect(record.customAttendanceFieldValues.length).toEqual(0);
+			} else {
+				// One hidden, one shown
+				expect(record.customAttendanceFieldValues.length).toEqual(1);
+			}
+		}
+
 		done();
 	});
 	it('can view grades/names of other attendees', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend()(schema);
-		const member = await resolveReference(schema)(backend)(testAccount)(
-			testRec1.memberID,
-		).fullJoin();
+		const member = getMemberFromTestData(testRec1.memberID);
 
 		const attendanceRecords = await getAttendanceForEvent(schema)(testEvent)
 			.map(
@@ -204,6 +291,8 @@ describe('Attendance', () => {
 			)
 			.map(collectGeneratorAsync)
 			.fullJoin();
+
+		expect(attendanceRecords.length).not.toEqual(0);
 
 		for (const record of attendanceRecords) {
 			expect(record.memberName).not.toEqual('');
@@ -218,17 +307,17 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberModifyRecord(backend)(member)(attendanceRecordMapper(testRec2)),
-		).resolves.toEqualRight(false);
+		).resolves.toEqual(Either.right(false));
 		done();
 	});
-	it('default member cannot edit other attendees attendance records', async done => {
+	it('default member cannot delete personal attendance records', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend()(schema);
 		const member = getTestUserForMember(getMemberFromTestData(testRec1.memberID));
 
 		await expect(
-			canMemberModifyRecord(backend)(member)(attendanceRecordMapper(testRec2)),
-		).resolves.toEqualRight(false);
+			canMemberDeleteRecord(backend)(member)(attendanceRecordMapper(testRec2)),
+		).resolves.toEqual(Either.right(false));
 		done();
 	});
 	it('admin can delete other attendees attendance records', async done => {
@@ -241,7 +330,7 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberDeleteRecord(backend)(member)(attendanceRecordMapper(testRec2)),
-		).resolves.toEqualRight(true);
+		).resolves.toEqual(Either.right(true));
 		done();
 	});
 	it('admin can delete other attendees attendance records', async done => {
@@ -254,7 +343,7 @@ describe('Attendance', () => {
 
 		await expect(
 			canMemberDeleteRecord(backend)(member)(attendanceRecordMapper(testRec2)),
-		).resolves.toEqualRight(true);
+		).resolves.toEqual(Either.right(true));
 		done();
 	});
 });
