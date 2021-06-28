@@ -50,7 +50,7 @@ export interface EventViewerAttendanceRecord {
 export interface EventViewerData {
 	event: RawResolvedEventObject;
 	pointsOfContact: Array<DisplayInternalPointOfContact | ExternalPointOfContact>;
-	attendees: Array<APIEither<EventViewerAttendanceRecord>>;
+	attendees: EventViewerAttendanceRecord[];
 	sourceAccountName?: string | undefined;
 	linkedEvents: Array<{
 		id: number;
@@ -148,7 +148,7 @@ export interface GetShortList {
  * Gets full event information for the requested event
  */
 export interface Get {
-	(params: { id: string }, body: {}): APIEither<EventObject>;
+	(params: { id: string }, body: {}): APIEither<RawResolvedEventObject>;
 
 	url: '/api/events/:id';
 
@@ -222,9 +222,10 @@ export interface GetNextRecurring {
  * Creates a link between the specified account and event
  */
 export interface Link {
-	(params: { eventid: string; targetaccount: string }, body: {}): APIEither<
-		RawResolvedEventObject
-	>;
+	(
+		params: { eventid: string; targetaccount: string },
+		body: {},
+	): APIEither<RawResolvedEventObject>;
 
 	url: '/api/events/:eventid/link/:targetaccount';
 

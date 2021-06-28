@@ -38,6 +38,7 @@ import {
 	MemberPermissions,
 	MemberReference,
 	MemberType,
+	PAMTypes,
 	PermissionForName,
 	SafeUserAccountInformation,
 	ServerError,
@@ -48,7 +49,7 @@ import {
 	UserAccountInformation,
 } from 'common-lib';
 import { randomBytes } from 'crypto';
-import { resolveReference } from '../../Members';
+import { MemberBackend } from '../../Members';
 import {
 	collectResults,
 	findAndBind,
@@ -61,21 +62,15 @@ import { addPasswordForUser } from './Password';
 
 //#region Account creation
 
-interface AccountCreationToken {
-	member: MemberReference;
-	created: number;
-	token: string;
-}
-
 const ACCOUNT_TOKEN_AGE = 24 * 60 * 60 * 1000;
 
 const getUserAccountCreationTokens = async (
 	schema: Schema,
 	token: string,
-): Promise<AccountCreationToken[]> => {
+): Promise<PAMTypes.AccountCreationToken[]> => {
 	await cleanAccountCreationTokens(schema);
 
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	const results = generateResults(
 		findAndBind(collection, {
@@ -83,13 +78,15 @@ const getUserAccountCreationTokens = async (
 		}),
 	);
 
-	return collectGeneratorAsync<AccountCreationToken>(
-		asyncIterMap<AccountCreationToken, AccountCreationToken>(stripProp('_id'))(results),
+	return collectGeneratorAsync<PAMTypes.AccountCreationToken>(
+		asyncIterMap<PAMTypes.AccountCreationToken, PAMTypes.AccountCreationToken>(
+			stripProp('_id'),
+		)(results),
 	);
 };
 
 const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await safeBind(collection.remove('created < :created'), {
 		created: Date.now() - ACCOUNT_TOKEN_AGE,
@@ -97,13 +94,13 @@ const cleanAccountCreationTokens = async (schema: Schema): Promise<void> => {
 };
 
 const removeAccountToken = async (schema: Schema, token: string): Promise<void> => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
 const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
-	const collection = schema.getCollection<AccountCreationToken>('UserAccountTokens');
+	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await cleanAccountCreationTokens(schema);
 
@@ -139,6 +136,7 @@ export const addUserAccountCreationToken = (
 		})
 		.map(() => promisify(randomBytes)(48))
 		.map(token => token.toString('hex'))
+		.tap(token => console.log('Got token', token))
 		.tap(token =>
 			asyncRight(
 				{
@@ -149,7 +147,7 @@ export const addUserAccountCreationToken = (
 				errorGenerator('Could not store user creation information'),
 			).map(tokenInfo =>
 				schema
-					.getCollection<AccountCreationToken>('UserAccountTokens')
+					.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens')
 					.add(tokenInfo)
 					.execute(),
 			),
@@ -172,6 +170,7 @@ export const validateUserAccountCreationToken = async (
 
 export const addUserAccount = (
 	schema: Schema,
+	backend: MemberBackend,
 	account: AccountObject,
 	username: string,
 	password: string,
@@ -183,7 +182,7 @@ export const addUserAccount = (
 		errorGenerator('Could not create user account information'),
 	).flatMap(userInformationCollection =>
 		asyncRight(
-			getInformationForUser(schema, username)
+			getInformationForUser(schema, username.trimLeft().trimRight())
 				.then(Maybe.some)
 				.catch(Maybe.none),
 			errorGenerator('Could not get user account information'),
@@ -214,7 +213,8 @@ export const addUserAccount = (
 			)
 			.filter(
 				() =>
-					resolveReference(schema)(account)(member)
+					backend
+						.getMember(account)(member)
 						.map(always(true))
 						.leftFlatMap(always(Either.right(false))),
 				{
@@ -227,7 +227,7 @@ export const addUserAccount = (
 				if (Maybe.isNone(user)) {
 					const newAccount: UserAccountInformation = {
 						member,
-						username,
+						username: username.trimLeft().trimRight(),
 						passwordHistory: [],
 					};
 
@@ -238,7 +238,7 @@ export const addUserAccount = (
 					return user.value;
 				}
 			})
-			.flatMap(() => addPasswordForUser(schema, username, password))
+			.flatMap(() => addPasswordForUser(schema, username.trimLeft().trimRight(), password))
 			.tap(() => removeAccountToken(schema, token)),
 	);
 
@@ -270,9 +270,9 @@ export const getInformationForMember = async <T extends MemberReference>(
 		throw new Error('Could not find user specified');
 	}
 
-	return stripProp<UserAccountInformation, '_id'>('_id')(userList[0]) as UserAccountInformation<
-		T
-	>;
+	return stripProp<UserAccountInformation, '_id'>('_id')(
+		userList[0],
+	) as UserAccountInformation<T>;
 };
 
 /**
@@ -308,9 +308,9 @@ export const getInformationForUser = async (
  *
  * @param userInfo the information to secure
  */
-export const simplifyUserInformation = (
-	userInfo: UserAccountInformation,
-): SafeUserAccountInformation => ({
+export const simplifyUserInformation = <T extends MemberReference>(
+	userInfo: UserAccountInformation<T>,
+): SafeUserAccountInformation<T> => ({
 	...userInfo,
 	passwordHistory: [],
 });
@@ -369,6 +369,9 @@ const getPermissionsRecordForMemberInAccount = async (
 
 	return stripProp('_id')(permissions[0]) as StoredMemberPermissions;
 };
+
+export const getDefaultPermissions = (account: AccountObject) =>
+	Maybe.orSome(getDefaultMemberPermissions(account.type));
 
 export const getPermissionsForMemberInAccountDefault = async (
 	schema: Schema,

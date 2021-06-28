@@ -26,7 +26,7 @@ export default (schema: Schema) => async (serverID: string): Promise<MaybeObj<Ac
 
 	const results = await collectResults<AccountObject>(
 		findAndBind(collection, {
-			// @ts-ignore
+			// @ts-ignore: Error occurs from discordServer being MaybeObj, but the query only recognizes Some
 			discordServer: { hasValue: true, value: { serverID } },
 		}),
 	);

@@ -14,7 +14,7 @@ services:
             - ./nginx:/etc/nginx/conf.d
             - ./keys/certbot/conf:/etc/letsencrypt
             - ./keys/certbot/www:/var/www/certbot
-        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+        command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
         depends_on:
             - main
 
@@ -24,7 +24,7 @@ services:
         volumes:
             - ./keys/certbot/conf:/etc/letsencrypt
             - ./keys/certbot/www:/var/www/certbot
-        environment: 
+        environment:
             - AWS_CONFIG_FILE=/run/secrets/aws_ssl_keys
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
         secrets:
@@ -76,11 +76,12 @@ services:
             - mysql
 
     mysql:
-        image: mysql:8.0.23
+        image: mysql:8.0.19
         networks:
             - backend
         expose:
             - '33060'
+        command: mysqld --local-infile=ON
         environment:
             - MYSQL_DATABASE=EventManagementv6
             - MYSQL_USER_FILE=/run/secrets/db_user
@@ -88,6 +89,8 @@ services:
             - MYSQL_RANDOM_ROOT_PASSWORD=1
         ports:
             - '127.0.0.1:3306:3306'
+        cap_add:
+            - SYS_NICE
         secrets:
             - db_user
             - db_password
@@ -97,16 +100,16 @@ services:
               source: /srv/mysql
               target: /var/lib/mysql
               volume:
-                nocopy: true
-        
+                  nocopy: true
+
             - type: bind
               source: ./mysql-init
               target: /docker-entrypoint-initdb.d
 
-    capwatch_update_cron:
+    cronjobs:
         build:
             context: .
-            target: capwatch-import
+            target: cronjobs
         networks:
             - backend
         restart: always
@@ -131,16 +134,18 @@ services:
             - capwatch_password
             - capwatch_orgid
             - capwatch_capid
+            - mysql_root_password
         depends_on:
             - mysql
         volumes:
             - /srv/backups/capwatch_zips:/downloads
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     download_capwatch_update:
         build:
             context: .
-            target: capwatch-import
-        command: /usr/evm-plus/capwatch-cron/download.sh
+            target: cronjobs
+        command: /usr/evm-plus/cronjobs/download.sh
         networks:
             - backend
         environment:
@@ -179,12 +184,13 @@ services:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
         secrets:
-            - db_user
-            - db_password
+            - mysql_root_password
         tty: true
         stdin_open: true
         depends_on:
             - mysql
+        volumes:
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     util-cli:
         build:
@@ -211,7 +217,7 @@ services:
               target: /srv/uploads
         tty: true
         stdin_open: true
-        depends_on: 
+        depends_on:
             - mysql
         command: sh
         networks:
@@ -257,9 +263,12 @@ secrets:
 
     capwatch_orgid:
         file: ./keys/capwatch_orgid
-    
+
     capwatch_capid:
         file: ./keys/capwatch_capid
 
     capwatch_password:
         file: ./keys/capwatch_password
+
+    mysql_root_password:
+        file: ./keys/mysql_root_password

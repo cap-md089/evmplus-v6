@@ -17,29 +17,41 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canFullyManageEvent, SessionType } from 'common-lib';
-import { ensureResolvedEvent, getEvent, PAM } from 'server-common';
-import wrapper from '../../../lib/wrapper';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	getCombinedEventsBackend,
+	getCombinedPAMBackend,
+	getTimeBackend,
+	PAM,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 
-export const func: (
-	now?: () => number,
-) => ServerAPIEndpoint<api.member.session.SetScanAddSession> = (now = Date.now) =>
+export const func: Endpoint<
+	Backends<[EventsBackend, TimeBackend, PAM.PAMBackend]>,
+	api.member.session.SetScanAddSession
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getEvent(req.mysqlx)(req.account)(req.body.eventID)
-			.flatMap(ensureResolvedEvent(req.mysqlx))
+		backend
+			.getEvent(req.account)(req.body.eventID)
+			.flatMap(backend.ensureResolvedEvent)
 			.filter(canFullyManageEvent(req.member), {
 				type: 'OTHER',
 				code: 403,
 				message: 'You do not have permission to manage this event',
 			})
-			.filter(event => event.meetDateTime > now(), {
+			.filter(event => event.pickupDateTime > backend.now(), {
 				type: 'OTHER',
 				code: 403,
-				message: 'You cannot record attendance for this event until it has started',
+				message: 'You cannot record attendance for this event after it has ended',
 			})
 			.flatMap(({ pickupDateTime, id }) =>
-				PAM.updateSession(req.mysqlx, {
+				backend.updateSession({
 					expires: pickupDateTime,
 					id: req.session.id,
 					sessionData: {
@@ -50,7 +62,22 @@ export const func: (
 					userAccount: req.session.userAccount,
 				}),
 			)
-			.map(wrapper),
+			.map(({ expires, id }) => ({
+				response: void 0,
+				cookies: {
+					sessionID: {
+						expires,
+						value: id,
+					},
+				},
+			})),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<BasicAccountRequest, [TimeBackend, EventsBackend, PAM.PAMBackend]>(
+		getTimeBackend,
+		getCombinedEventsBackend(),
+		getCombinedPAMBackend(),
+	),
+);

@@ -29,13 +29,13 @@ import {
 import * as debug from 'debug';
 import { Client, Role } from 'discord.js';
 import 'dotenv/config';
-import { getRegistry } from 'server-common';
 import notifyRole from './cli/notifyRole';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
 import attendancerecord from './commands/attendancerecord';
 import getAccount from './data/getAccount';
 import getDiscordAccount from './data/getDiscordAccount';
+import { getDiscordBackend } from './data/getDiscordBackend';
 import getMember from './data/getMember';
 import { getOrCreateTeamRolesForTeam } from './data/getTeamRole';
 import setupUser, { byName } from './data/setupUser';
@@ -43,15 +43,18 @@ import getConf, { DiscordCLIConfiguration } from './getDiscordConf';
 
 const discordBotLog = debug('discord-bot');
 
-export const getCertName = (name: string) => name.split('-')[0].trim();
+export const getCertName = (name: string): string => name.split('-')[0].trim();
 
-export const getXSession = async ({ DB_SCHEMA }: DiscordCLIConfiguration, client: mysql.Client) => {
+export const getXSession = async (
+	{ DB_SCHEMA }: DiscordCLIConfiguration,
+	client: mysql.Client,
+): Promise<{ session: mysql.Session; schema: mysql.Schema }> => {
 	const session = await client.getSession();
 
 	return { session, schema: session.getSchema(DB_SCHEMA) };
 };
 
-export const getClient = () =>
+export const getClient = (): Client =>
 	new Client({
 		ws: {
 			intents: [
@@ -69,7 +72,7 @@ export default function setupDiscordBot(
 	_conf: ServerConfiguration,
 	capwatchEmitter: MemberUpdateEventEmitter,
 	mysqlClient: mysql.Client,
-) {
+): void {
 	if (!_conf.DISCORD_CLIENT_TOKEN) {
 		return;
 	}
@@ -92,7 +95,9 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const guildUserSetup = userSetupFunction(schema)(discordServer.value.serverID);
+		const backend = getDiscordBackend(schema);
+
+		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
@@ -233,7 +238,9 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const guildUserSetup = userSetupFunction(schema)(discordServer.value.serverID);
+		const backend = getDiscordBackend(schema);
+
+		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
 
 		if (!account.hasValue) {
@@ -268,17 +275,19 @@ export default function setupDiscordBot(
 
 		const capunitMember = await getMember(schema)(member);
 
+		const backend = getDiscordBackend(schema);
+
 		try {
 			if (capunitMember.hasValue) {
-				await setupUser(client)(schema)(member.guild.id)(account.value)()(
+				await setupUser(client)(backend)(member.guild.id)(account.value)()(
 					capunitMember.value,
 				);
 			} else {
-				const registry = await getRegistry(schema)(account.value).fullJoin();
+				const registry = await backend.getRegistry(account.value).fullJoin();
 
 				const dmChannel = await member.createDM();
 
-				dmChannel.send(
+				await dmChannel.send(
 					`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${conf.HOST_NAME}/registerdiscord/${member.id}`,
 				);
 
@@ -295,31 +304,31 @@ export default function setupDiscordBot(
 		}
 	});
 
-	client.on('message', message => {
+	client.on('message', async message => {
 		const parts = message.content.split(' ');
 
 		emitter.extend('message')('Received message');
 
-		if (parts[0] === `<@!${client.user?.id}>` && message.member?.id !== client.user?.id) {
+		if (parts[0] === `<@!${client.user?.id ?? ''}>` && message.member?.id !== client.user?.id) {
 			if (parts.length < 2) {
-				message.reply('Command needed; known command is "attendancerecord"');
+				await message.reply('Command needed; known command is "attendancerecord"');
 				return;
 			}
 
 			switch (parts[1].toLowerCase()) {
 				case 'attendancerecord':
-					attendancerecord(client)(mysqlClient)(conf)(parts)(message);
+					await attendancerecord(client)(mysqlClient)(conf)(parts)(message);
 
 					break;
 
 				default:
-					message.reply('Unknown command; known command is "attendancerecord"');
+					await message.reply('Unknown command; known command is "attendancerecord"');
 					break;
 			}
 		}
 	});
 
-	client.login(conf.DISCORD_CLIENT_TOKEN);
+	void client.login(conf.DISCORD_CLIENT_TOKEN);
 }
 
 if (require.main === module) {
@@ -333,7 +342,7 @@ if (require.main === module) {
 			process.exit(1);
 		}
 
-		const mysqlClient = await mysql.getClient(
+		const mysqlClient = mysql.getClient(
 			`mysqlx://${conf.DB_USER}:${conf.DB_PASSWORD}@${conf.DB_HOST}:${conf.DB_PORT}`,
 			{
 				pooling: {
@@ -377,7 +386,7 @@ if (require.main === module) {
 				}
 			});
 
-			client.login(conf.DISCORD_CLIENT_TOKEN);
+			void client.login(conf.DISCORD_CLIENT_TOKEN);
 		});
 	})().then(
 		() => {

@@ -18,7 +18,7 @@
  */
 
 import { APIEither } from '../../api';
-import { MemberCreateError, MemberReference, ScanAddSession } from '../../types';
+import { MemberCreateError, MemberReference } from '../../types';
 
 /**
  * Developer tool, strictly locked down
@@ -61,7 +61,7 @@ export interface Clone {
  * Makes a request to downgrade a session to a ScanAdd session for a specific event
  */
 export interface SetScanAddSession {
-	(params: {}, body: { eventID: number }): APIEither<ScanAddSession>;
+	(params: {}, body: { eventID: number }): APIEither<void>;
 
 	url: '/api/member/session/scanadd';
 

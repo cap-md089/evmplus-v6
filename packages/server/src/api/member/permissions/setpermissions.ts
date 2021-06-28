@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	AsyncEither,
@@ -32,10 +31,9 @@ import {
 	SessionType,
 	StoredMemberPermissions,
 	stringifyMemberReference,
-	toReference,
 } from 'common-lib';
-import { PAM } from 'server-common';
-import { setPermissionsForMemberInAccount } from 'server-common/dist/member/pam';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const getHighestPermissionsObject = (perms1: MemberPermissions) => (
@@ -66,44 +64,42 @@ const simplifyInputs = (
 	}));
 };
 
-export const func: ServerAPIEndpoint<api.member.permissions.SetPermissions> = PAM.RequiresPermission(
-	'PermissionManagement',
-	Permissions.PermissionManagement.FULL,
-)(
-	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		asyncRight(
-			req.mysqlxSession.startTransaction(),
-			errorGenerator('Could not save permissions'),
-		)
-			.tap(() =>
-				req.mysqlx
-					.getCollection<StoredMemberPermissions>('UserPermissions')
-					.remove('accountID = :accountID')
-					.bind('accountID', req.account.id)
-					.execute(),
+export const func: Endpoint<
+	Backends<[PAM.PAMBackend]>,
+	api.member.permissions.SetPermissions
+> = backend =>
+	PAM.RequiresPermission(
+		'PermissionManagement',
+		Permissions.PermissionManagement.FULL,
+	)(
+		PAM.RequireSessionType(SessionType.REGULAR)(req =>
+			asyncRight(
+				req.mysqlxSession.startTransaction(),
+				errorGenerator('Could not save permissions'),
 			)
-			.tap(() =>
-				AsyncEither.All([
-					...simplifyInputs(req.body.newRoles)
-						.filter(role => role.permissions.type === req.account.type)
-						.map(newRole =>
-							asyncRight(
-								setPermissionsForMemberInAccount(
-									req.mysqlx,
-									toReference(newRole.member),
+				.tap(() =>
+					req.mysqlx
+						.getCollection<StoredMemberPermissions>('UserPermissions')
+						.remove('accountID = :accountID')
+						.bind('accountID', req.account.id)
+						.execute(),
+				)
+				.tap(() =>
+					AsyncEither.All([
+						...simplifyInputs(req.body.newRoles)
+							.filter(role => role.permissions.type === req.account.type)
+							.map(newRole =>
+								backend.setPermissions(req.account)(newRole.member)(
 									newRole.permissions,
-									req.account,
 								),
-								errorGenerator('Could not save permissions'),
 							),
-						),
-				]),
-			)
-			.tap(() => req.mysqlxSession.commit())
-			.leftTap(() => req.mysqlxSession.rollback())
-			.map(destroy)
-			.map(wrapper),
-	),
-);
+					]),
+				)
+				.tap(() => req.mysqlxSession.commit())
+				.leftTap(() => req.mysqlxSession.rollback())
+				.map(destroy)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend());

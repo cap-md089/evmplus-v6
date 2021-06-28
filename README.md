@@ -4,11 +4,11 @@ The premiere event and unit management site for Civil Air Patrol
 
 Current units running the EventManagement+ suite:
 
-1. [MD001 - Maryland Wing](https://mdwg.evmplus.org/)
-2. [MD089 - St. Mary's Composite Squadron](https://stmarys.evmplus.org/)
-3. [MD008 - Harford Composite Squadron](https://harford.evmplus.org/)
-4. [MD003 - Frederick Composite Squadron](https://frederick.evmplus.org/)
-5. [MD079 - Easton Composite Squadron](https://easton.evmplus.org)
+1. [MD001 - Maryland Wing](https://events.md.cap.gov/)
+2. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
+3. [MD008 - Harford Composite Squadron](https://harford.events.md.cap.gov/)
+4. [MD003 - Frederick Composite Squadron](https://frederick.events.md.cap.gov/)
+5. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
 
 **Table Of Contents**
 
@@ -28,6 +28,7 @@ Current units running the EventManagement+ suite:
     2. [Accessing the site](#accessing-the-site)
 5. [Alternatively...](#alternatively)
 6. [Developing EvMPlus.org](#developing-evmplus.org)
+
 ## Requirements for building and running
 
 In order to build and run the code for production, you will need Docker and Docker Compose installed. It is highly recommended that Docker BuildKit is used when setting up images. Code should theoretically work on Windows, but is solely tested on Linux.
@@ -47,19 +48,19 @@ This program depends on the following to fully function:
 
 Each of these sections will require creating files in the keys folder which have just the access token required. After the server is appropriately configured, you should have the following structure in the `keys` folder:
 
-- certbot: Contains certbot configuration, and can be ignored as it is automatically handled
-- google-keys:
-    - {}.json: A credential file for the service account that is used to handle Google calendar credentials
-- aws_ssl_keys: AWS DNS credentials used to acquire Let's Encrypt SSL keys
-- aws_access_key_id: AWS SES credentials
-- aws_secret_access_key: AWS SES credentials
-- capwatch_capid: CAPID of member downloading CAPWATCH files
-- capwatch_orgid: ORGID of the organization to download CAPWATCH files for
-- capwatch_password: The password of the member who is downloading CAPWATCH information
-- db_password: The password for the MySQL database
-- db_user: The username for the MySQL database. Currently, can only be `em`
-- discord_client_token: The token for managing the Discord bot
-- recaptcha_secret: The secret reCAPTCHA key for the server
+-   certbot: Contains certbot configuration, and can be ignored as it is automatically handled
+-   google-keys:
+    -   {}.json: A credential file for the service account that is used to handle Google calendar credentials
+-   aws_ssl_keys: AWS DNS credentials used to acquire Let's Encrypt SSL keys
+-   aws_access_key_id: AWS SES credentials
+-   aws_secret_access_key: AWS SES credentials
+-   capwatch_capid: CAPID of member downloading CAPWATCH files
+-   capwatch_orgid: ORGID of the organization to download CAPWATCH files for
+-   capwatch_password: The password of the member who is downloading CAPWATCH information
+-   db_password: The password for the MySQL database
+-   db_user: The username for the MySQL database. Currently, can only be `em`
+-   discord_client_token: The token for managing the Discord bot
+-   recaptcha_secret: The secret reCAPTCHA key for the server
 
 At the end of all of these files in ./keys, ensure that there are no newline characters at the end (with the exception of aws_ssl_keys)
 
@@ -71,8 +72,9 @@ Additionally, the following folders are required in the `/srv` folder:
 
 ### MySQL setup
 
-Create the files `./keys/db_user` and `./keys/db_password`.  Place the text `em` in the `db_user` file.  Create a new 
-database password and place that text in the `db_password` file
+Create the files `./keys/db_user` and `./keys/db_password`. Place the text `em` in the `db_user` file. Create a new database password and place that text in the `db_password` file
+
+When creating the MySQL database for the first time using `docker-compose [-f docker-compose.dev.yml] up mysql`, `docker-compose [-f docker-compose.dev.yml] up main`, or `docker-compose up proxy`, check the logs for "Generated root password" and store this root password in `keys/mysql_root_password`. Docker compose will complain when initially starting up; just touch the file and make sure it exists and is empty, and replace the file with the generated root password.
 
 ### AWS SMTP setup
 
@@ -126,11 +128,11 @@ Only required for setting up SSL keys for HTTPS traffic as opposed to HTTP traff
 
 1. [Create a new site using the v2 'I'm not a Robot' reCAPTCHA option](https://www.google.com/recaptcha/admin/create)
     - Be sure to add your domain
-3. Store the public key in `./packages/client/.env`, under the key REACT_APP_RECAPTCHA_KEY, e.g.
+2. Store the public key in `./packages/client/.env`, under the key REACT_APP_RECAPTCHA_KEY, e.g.
 
     REACT_APP_RECAPTCHA_KEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
 
-2. Store the provided secret key in `./keys/recaptcha_secret`, e.g. '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+3. Store the provided secret key in `./keys/recaptcha_secret`, e.g. '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 
 ### Client setup
 
@@ -152,7 +154,7 @@ To import a new CAPWATCH file, run `docker-compose up download_capwatch_update`
 
 ## Building and running the server
 
-By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `./init-nginx-ssl.sh` with your email and then use `docker-compose up main proxy` instead.
+By running `docker-compose up main`, it will build and start the MySQL database as well as the server itself. To get SSL for HTTPS as well, modify and then run `scripts/init-nginx-ssl.sh` with your email and then use `docker-compose up main proxy` instead.
 
 ### Creating an account and supplying it data
 

@@ -21,6 +21,7 @@ services:
             - DRIVE_STORAGE_PATH=/srv/uploads
             - HOST_NAME=localevmplus.org
             - NODE_ENV=development
+            - GOOGLE_KEYS_PATH=/google-keys
         volumes:
             - type: bind
               source: ./keys/google-keys
@@ -49,7 +50,7 @@ services:
             target: client-development
         ports:
             - '3000:3000'
-        environment: 
+        environment:
             - PROXY=main
             - BROWSER=none
         networks:
@@ -62,10 +63,11 @@ services:
               target: /usr/evm-plus
 
     mysql:
-        image: mysql:8.0.23
+        image: mysql:8.0.19
         ports:
             - '3306:3306'
             - '33060:33060'
+        command: mysqld --local-infile=ON
         expose:
             - '33060'
         environment:
@@ -105,7 +107,7 @@ services:
         build:
             context: .
             target: development
-        command: /usr/evm-plus/capwatch-cron/download.sh
+        command: /usr/evm-plus/cronjobs/download.sh
         volumes:
             - ./capwatch_downloads:/tmp
             - .:/usr/evm-plus
@@ -137,14 +139,15 @@ services:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
         secrets:
-            - db_user
-            - db_password
+            - mysql_root_password
         tty: true
         stdin_open: true
         depends_on:
             - mysql
         networks:
             - default
+        volumes:
+            - /srv/backups/mysqldumps:/srv/backups/mysqldumps
 
     util-cli:
         build:
@@ -218,6 +221,9 @@ secrets:
 
     capwatch_password:
         file: ./keys/capwatch_password
+
+    mysql_root_password:
+        file: ./keys/mysql_root_password
 
 volumes:
     db-data:

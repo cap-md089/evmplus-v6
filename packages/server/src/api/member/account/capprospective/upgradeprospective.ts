@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -28,34 +27,48 @@ import {
 	SessionType,
 	toReference,
 } from 'common-lib';
-import { CAP, PAM, resolveReference } from 'server-common';
+import {
+	Backends,
+	CAP,
+	getCombinedMemberBackend,
+	MemberBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../../..';
 import wrapper from '../../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.account.capprospective.UpgradeProspectiveAccount> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'ProspectiveMemberManagement',
-		Permissions.ProspectiveMemberManagement.FULL,
-	)(req =>
-		asyncEither(
-			parseStringMemberReference(req.params.account),
-			errorGenerator('Could not parse member reference'),
-		)
-			.filter(({ type }) => type === 'CAPProspectiveMember', {
-				type: 'OTHER',
-				code: 400,
-				message: 'Cannot delete a member other than a prospective member',
-			})
-			.map(ref => ref as CAPProspectiveMemberReference)
-			.flatMap(resolveReference(req.mysqlx)(req.account))
-			.flatMap(member =>
-				resolveReference(req.mysqlx)(req.account)(req.body.nhqReference)
-					.map(toReference)
-					.flatMap(CAP.upgradeProspectiveMemberToCAPNHQ(req.mysqlx)(member)),
+export const func: Endpoint<
+	Backends<[CAP.CAPMemberBackend, MemberBackend]>,
+	api.member.account.capprospective.UpgradeProspectiveAccount
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'ProspectiveMemberManagement',
+			Permissions.ProspectiveMemberManagement.FULL,
+		)(req =>
+			asyncEither(
+				parseStringMemberReference(req.params.account),
+				errorGenerator('Could not parse member reference'),
 			)
-			.map(wrapper),
-	),
-);
+				.filter(
+					(member): member is CAPProspectiveMemberReference =>
+						member.type === 'CAPProspectiveMember',
+					{
+						type: 'OTHER',
+						code: 400,
+						message: 'Cannot delete a member other than a prospective member',
+					},
+				)
+				.flatMap(backend.getMember(req.account))
+				.flatMap(member =>
+					backend
+						.getMember(req.account)(req.body.nhqReference)
+						.map(toReference)
+						.flatMap(backend.upgradeProspectiveMember(backend)(member)),
+				)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend());

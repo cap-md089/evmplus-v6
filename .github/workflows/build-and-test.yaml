@@ -1,0 +1,36 @@
+name: Build and Test
+
+on:
+    push:
+        branches:
+            - master
+            - development
+    pull_request:
+        branches:
+            - master
+            - development
+
+env:
+    COMPOSE_DOCKER_CLI_BUILD: 1
+    DOCKER_BUILDKIT: 1
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - run: |
+                echo "REACT_APP_HOST_NAME=events.md.cap.gov" >> packages/client/.env
+                echo "REACT_APP_RECAPTCHA_KEY={{ secrets.RECAPTCHA_PUBLIC_KEY }}" >> packages/client/.env
+                echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
+                docker-compose build
+
+#    test:
+#        runs-on: ubuntu-latest
+#
+#        steps:
+#            - uses: actions/checkout@v2
+#            - run: |
+#                docker-compose -f docker-compose.dev.yml run dev-setup
+#                docker-compose -f docker-compose.test.yml up tests

@@ -46,12 +46,13 @@ const DisplayAttendanceStatus = {
 	[AttendanceStatus.NOTPLANNINGTOATTEND]: 'Not Planning to Attend',
 };
 
-export function formatPhone(phone: string) {
+export function formatPhone(phone: string): string {
 	// strip spaces and non-numeric characters
 	phone.trimLeft().trimRight();
 	if (phone) {
-		if (phone!.match(/\d+/g)) {
-			phone = phone!.match(/\d+/g)!.join('').toString();
+		const result = phone.match(/\d+/g);
+		if (result) {
+			phone = result.join('');
 			// add formatting
 			return (
 				'(' +
@@ -69,7 +70,7 @@ export function formatPhone(phone: string) {
 	}
 }
 
-const GetBestPhones = (inMember: Member) => {
+const GetBestPhones = (inMember: Member): string => {
 	let numbersData = '';
 
 	if (inMember.contact.CELLPHONE.PRIMARY) {
@@ -104,7 +105,7 @@ const GetBestPhones = (inMember: Member) => {
 	}
 };
 
-const GetBestEmails = (inMember: Member) => {
+const GetBestEmails = (inMember: Member): string => {
 	let numbersData = '';
 
 	if (inMember.contact.EMAIL.PRIMARY) {
@@ -152,7 +153,7 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 	row = ['Account-Event', '', 'Start Date/Time', 'End Date/Time', 'Location'];
 	retVal.push(row);
 	row = [
-		event.accountID + '-' + event.id,
+		`${event.accountID}-${event.id}`,
 		'',
 		event.startDateTime,
 		event.endDateTime,
@@ -224,17 +225,20 @@ export const FormatEventXL = (evt: string, sheet: XLSX.Sheet, hostname: string):
 		{ s: { c: 1, r: 7 }, e: { c: 4, r: 7 } },
 		{ s: { c: 0, r: 10 }, e: { c: 4, r: 15 } },
 	];
-	sheet.A1.s = [{ font: { bold: true } }, { alignment: { horizontal: 'center' } }];
-	sheet.A2.t = 't';
-	sheet.D2.t = 'd';
-	sheet.D2.z = dateFormat;
-	sheet.A5.l = { Target: `https://${aid}.${hostname}/eventviewer/${eid}` };
+	(sheet.A1 as XLSX.CellObject).s = [
+		{ font: { bold: true } },
+		{ alignment: { horizontal: 'center' } },
+	];
+	(sheet.A2 as XLSX.CellObject).t = 't' as XLSX.ExcelDataType;
+	(sheet.D2 as XLSX.CellObject).t = 'd';
+	(sheet.D2 as XLSX.CellObject).z = dateFormat;
+	(sheet.A5 as XLSX.CellObject).l = { Target: `https://${aid}.${hostname}/eventviewer/${eid}` };
 
-	sheet.C5.t = 'd';
-	sheet.C5.z = dateFormat;
-	sheet.D5.t = 'd';
-	sheet.D5.z = dateFormat;
-	sheet.A11.t = 't';
+	(sheet.C5 as XLSX.CellObject).t = 'd';
+	(sheet.C5 as XLSX.CellObject).z = dateFormat;
+	(sheet.D5 as XLSX.CellObject).t = 'd';
+	(sheet.D5 as XLSX.CellObject).z = dateFormat;
+	(sheet.A11 as XLSX.CellObject).t = 't' as XLSX.ExcelDataType;
 	sheet['!cols'] = [
 		{ width: 12 },
 		{ width: 12 },
@@ -279,7 +283,7 @@ export const AttendanceXL = (
 	for (const attendee of attendance) {
 		row = [
 			attendee.record.timestamp,
-			attendee.record.memberID.id + ' ',
+			`${attendee.record.memberID.id} `,
 			attendee.record.memberName,
 			attendee.member.hasValue ? attendee.member.value.squadron : '',
 			attendee.record.shiftTime.arrivalTime,
@@ -297,7 +301,7 @@ export const AttendanceXL = (
 						? 'Y'
 						: 'N'
 					: Array.isArray(fieldVal.value)
-					? `${fieldVal.value} files`
+					? `${fieldVal.value.length} files`
 					: fieldVal.value,
 			);
 		}
@@ -334,32 +338,35 @@ export const FormatAttendanceXL = (
 	let j = 2;
 	while (j <= numRows) {
 		rowCount = 0;
-		sheet['A' + j].t = 'd';
-		sheet['A' + j].z = dateFormat;
-		sheet['E' + j].t = 'd';
-		sheet['E' + j].z = dateFormat;
-		sheet['F' + j].t = 'd';
-		sheet['F' + j].z = dateFormat;
+		(sheet[`A${j}`] as XLSX.CellObject).t = 'd';
+		(sheet[`A${j}`] as XLSX.CellObject).z = dateFormat;
+		(sheet[`E${j}`] as XLSX.CellObject).t = 'd';
+		(sheet[`E${j}`] as XLSX.CellObject).z = dateFormat;
+		(sheet[`F${j}`] as XLSX.CellObject).t = 'd';
+		(sheet[`F${j}`] as XLSX.CellObject).z = dateFormat;
 
 		for (let i = 0; i < customAttendanceFieldValues.length; i++) {
 			const type = customAttendanceFieldValues[i].type;
 
 			if (type === CustomAttendanceFieldEntryType.DATE) {
-				sheet[encodeCell({ c: i + (numStaticColumns + 1), r: j })].t = 'd';
-				sheet[encodeCell({ c: i + (numStaticColumns + 1), r: j })].z = dateFormat;
+				const cell = sheet[
+					encodeCell({ c: i + (numStaticColumns + 1), r: j })
+				] as XLSX.CellObject;
+				cell.t = 'd';
+				cell.z = dateFormat;
 			}
 		}
 		// adjust row height here depending on number of phone or emails
-		emails = sheet['H' + j]?.v ?? '';
-		phones = sheet['I' + j]?.v ?? '';
+		emails = ((sheet[`H${j}`] as XLSX.CellObject)?.v as string) ?? '';
+		phones = ((sheet[`I${j}`] as XLSX.CellObject)?.v as string) ?? '';
 		rowCount = Math.max(emails.split('\n').length, phones.split('\n').length);
-		sheet['!rows'].push({ hpt: rowHeight + rowCount * rowHeight });
+		(sheet['!rows'] as XLSX.RowInfo[]).push({ hpt: rowHeight + rowCount * rowHeight });
 		j += 1;
 	}
 	sheet['!cols'] = columnMaxWidths.map(wch => ({ wch }));
 
-	sheet.A1.t = 't';
-	sheet.A1.v = 'Timestamp';
+	(sheet.A1 as XLSX.CellObject).t = 't' as XLSX.ExcelDataType;
+	(sheet.A1 as XLSX.CellObject).v = 'Timestamp';
 
 	return sheet;
 };

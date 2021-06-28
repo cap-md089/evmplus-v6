@@ -81,13 +81,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		type: 'LOADING',
 	};
 
-	public constructor(props: PageProps<{ id: string }>) {
-		super(props);
-
-		this.deleteTeam = this.deleteTeam.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		let team: APIEndpointReturnValue<api.team.GetTeam>;
 
 		this.props.updateBreadCrumbs([
@@ -160,7 +154,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.type === 'ERROR') {
 			return <div>{this.state.message}</div>;
 		}
@@ -175,7 +169,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 			className: string,
 			memRef: MaybeObj<MemberReference>,
 			memName: MaybeObj<string>,
-		) =>
+		): React.ReactChild | null =>
 			pipe(
 				M.map<[MemberReference, string], [MaybeObj<Member>, string]>(([ref, name]) => [
 					this.state.type === 'HASMEMBERS'
@@ -272,7 +266,7 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		);
 	}
 
-	private async deleteTeam() {
+	private deleteTeam = async (): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -288,5 +282,5 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 		await fetchApi.team.delete({ id: this.state.team.id.toString() }, {});
 
 		this.props.routeProps.history.push('/team');
-	}
+	};
 }

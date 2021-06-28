@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
+import { APIRequest } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -28,31 +28,35 @@ import {
 	Permissions,
 	SessionType,
 } from 'common-lib';
-import { getTeam, PAM, removeMemberFromTeam, saveTeam } from 'server-common';
+import { Backends, getCombinedTeamsBackend, PAM, TeamsBackend, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const removeMemberFromTeamWithRequest = (req: APIRequest<api.team.members.DeleteTeamMember>) => (
-	ref: MemberReference,
-) =>
-	getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
-		.map(removeMemberFromTeam(req.account)(req.memberUpdateEmitter)(ref))
-		.flatMap(saveTeam(req.mysqlx));
+const removeMemberFromTeamWithRequest = (backend: Backends<[TeamsBackend]>) => (
+	req: APIRequest<api.team.members.DeleteTeamMember>,
+) => (ref: MemberReference) =>
+	backend
+		.getTeam(req.account)(parseInt(req.params.id, 10))
+		.flatMap(backend.removeMemberFromTeam(ref))
+		.flatMap(backend.saveTeam);
 
-export const func: ServerAPIEndpoint<api.team.members.DeleteTeamMember> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'ManageTeam',
-		Permissions.ManageTeam.FULL,
-	)(req =>
-		asyncEither(
-			parseStringMemberReference(req.params.memberid),
-			errorGenerator('Could not remove member from team'),
-		)
-			.flatMap(removeMemberFromTeamWithRequest(req))
-			.map(destroy)
-			.map(wrapper),
-	),
-);
+export const func: Endpoint<
+	Backends<[TeamsBackend]>,
+	api.team.members.DeleteTeamMember
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'ManageTeam',
+			Permissions.ManageTeam.FULL,
+		)(req =>
+			asyncEither(
+				parseStringMemberReference(req.params.memberid),
+				errorGenerator('Could not remove member from team'),
+			)
+				.flatMap(removeMemberFromTeamWithRequest(backend)(req))
+				.map(destroy)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedTeamsBackend());

@@ -49,9 +49,9 @@ export function apiCall<
 	endpointFunc: EndpointFunc<T, R>,
 ): (params: APIEndpointParams<T>, body: APIEndpointBody<T>, sessionID: SessionID<T>) => R;
 
-type APIInfo = {
+interface APIInfo {
 	[key: string]: APIInfo | APIEndpoint<string, any, any, any, any, any, any, any>;
-};
+}
 
 type APITree<T extends APIInfo> = {
 	[P in keyof T]: T[P] extends APIEndpoint<string, any, any, any, any, any, any, any>
@@ -85,7 +85,8 @@ export type RequestType<P, B, M extends MemberRequirement> = Omit<
 		? { member: MaybeObj<User>; session: MaybeObj<ActiveSession> }
 		: M extends 'required'
 		? { member: User; session: ActiveSession }
-		: {});
+		: // eslint-disable-next-line @typescript-eslint/ban-types
+		  {});
 
 export type APIRequest<
 	T extends APIEndpoint<string, any, any, any, any, any, any, any>
@@ -94,7 +95,7 @@ export type APIRequest<
 export type ServerEither<T> = AsyncEither<ServerError, T>;
 
 export type ReturnValue<Return extends APIEither<any>> = [Return] extends [
-	EitherObj<infer Left, infer Right>,
+	EitherObj<any, infer Right>,
 ]
 	? Right extends Array<infer ArrayItem>
 		? ServerEither<Right> | ServerEither<AsyncIter<ArrayItem>>
@@ -131,14 +132,16 @@ export type ServerAPIReturnValue<
 export type AsyncRepr<T> = [T] extends [Array<infer ArrayItem>]
 	? T | AsyncIter<ArrayItem> | PromiseLike<T>
 	: T extends APIEither<infer R>
-	? T | PromiseLike<R> | R extends object
+	? // eslint-disable-next-line @typescript-eslint/ban-types
+	  T | PromiseLike<R> | R extends {}
 		? PromiseLike<
 				{
 					[P in keyof R]: AsyncRepr<R[P]>;
 				}
 		  >
 		: never
-	: T extends object
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	T extends {}
 	?
 			| {
 					[P in keyof T]: AsyncRepr<T[P]>;

@@ -20,11 +20,11 @@
 import {
 	AccountObject,
 	always,
+	ClientUser,
 	Either,
 	MemberCreateError,
 	RegistryValues,
 	SigninReturn,
-	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router-dom';
@@ -43,28 +43,28 @@ import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
 import Drive from '../pages/drive/Drive';
-import LinkList from '../pages/events/EventLinkList';
 import AddEvent from '../pages/events/AddEvent';
 import AttendanceMultiAdd from '../pages/events/AttendanceMultiAdd';
 import AuditViewer from '../pages/events/AuditViewer';
+import LinkList from '../pages/events/EventLinkList';
 import EventViewer from '../pages/events/EventViewer';
 import ModifyEvent from '../pages/events/ModifyEvent';
+import ScanAdd from '../pages/events/ScanAdd';
+import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
+import TermsAndConditions from '../pages/legal/TermsAndConditions';
 import Main from '../pages/Main';
 import NotFound from '../pages/NotFound';
 import Page, { PageProps } from '../pages/Page';
+import { Quizzer } from '../pages/quizzer/Quizzer';
 import TeamAdd from '../pages/team/TeamAdd';
 import TeamEdit from '../pages/team/TeamEdit';
+import TeamEmailList from '../pages/team/TeamEmail';
 import TeamList from '../pages/team/TeamList';
 import TeamView from '../pages/team/TeamView';
 import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
-import { Quizzer } from '../pages/quizzer/Quizzer';
-import TeamEmailList from '../pages/team/TeamEmail';
-import ScanAdd from '../pages/events/ScanAdd';
-import TermsAndConditions from '../pages/legal/TermsAndConditions';
-import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
 
 const pages: Array<{
 	url: string;
@@ -277,23 +277,21 @@ const composeElement = (props: {
 	fullMemberDetails: SigninReturn;
 	updateApp: () => void;
 	key: string;
-}) => (routeProps: RouteComponentProps<any>) => {
-	return (
-		<PageDisplayer
-			key={props.key}
-			updateApp={props.updateApp}
-			El={props.El}
-			account={props.account}
-			authorizeUser={props.authorizeUser}
-			updateSideNav={props.updateSideNav}
-			updateBreadCrumbs={props.updateBreadCrumbs}
-			registry={props.registry}
-			member={props.member}
-			fullMemberDetails={props.fullMemberDetails}
-			routeProps={routeProps}
-		/>
-	);
-};
+}) => (routeProps: RouteComponentProps<any>) => (
+	<PageDisplayer
+		key={props.key}
+		updateApp={props.updateApp}
+		El={props.El}
+		account={props.account}
+		authorizeUser={props.authorizeUser}
+		updateSideNav={props.updateSideNav}
+		updateBreadCrumbs={props.updateBreadCrumbs}
+		registry={props.registry}
+		member={props.member}
+		fullMemberDetails={props.fullMemberDetails}
+		routeProps={routeProps}
+	/>
+);
 
 interface PageDisplayerProps {
 	El: typeof Page | React.FC<PageProps>;
@@ -317,7 +315,7 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 		this.prepareURL = this.prepareURL.bind(this);
 	}
 
-	public shouldComponentUpdate(nextProps: PageDisplayerProps) {
+	public shouldComponentUpdate(nextProps: PageDisplayerProps): boolean {
 		const urlChanged =
 			nextProps.routeProps.location.pathname !== this.okURL &&
 			nextProps.routeProps.location.pathname !== this.props.routeProps.location.pathname;
@@ -331,8 +329,8 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 		return shouldUpdate;
 	}
 
-	public render() {
-		// tslint:disable-next-line:no-console
+	public render(): JSX.Element {
+		// eslint-disable-next-line no-console
 		console.log('Rendering component');
 		return (
 			<ErrorHandler member={this.props.member} account={this.props.account}>
@@ -353,9 +351,9 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 		);
 	}
 
-	private prepareURL(url: string) {
+	private prepareURL = (url: string): void => {
 		this.okURL = url;
-	}
+	};
 }
 
 interface PageRouterProps extends RouteComponentProps<any> {
@@ -376,15 +374,11 @@ interface PageRouterState {
 }
 
 class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
-	constructor(props: PageRouterProps) {
-		super(props);
-
-		this.state = {
-			loading: false,
-			previousHash: props.location.hash,
-			previousPath: props.location.pathname,
-		};
-	}
+	public state = {
+		loading: false,
+		previousHash: this.props.location.hash,
+		previousPath: this.props.location.pathname,
+	};
 
 	private get shouldLoad(): boolean {
 		// Need to keep track of the previous path and hash ourselves,
@@ -399,7 +393,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		);
 	}
 
-	public shouldComponentUpdate(nextProps: PageRouterProps, nextState: PageRouterState) {
+	public shouldComponentUpdate(nextProps: PageRouterProps, nextState: PageRouterState): boolean {
 		const nextID = nextProps.member?.id;
 		const currentID = this.props.member?.id;
 
@@ -413,9 +407,9 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		return shouldUpdate;
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		if (this.shouldLoad) {
-			// tslint:disable-next-line:no-console
+			// eslint-disable-next-line no-console
 			console.log('Refreshing session ID');
 
 			this.setState({
@@ -424,9 +418,15 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 				previousPath: this.props.location.pathname,
 			});
 
-			fetchApi
+			void fetchApi
 				.check({}, {})
-				.leftFlatMap(always(Either.right({ error: MemberCreateError.SERVER_ERROR })))
+				.leftFlatMap(
+					always(
+						Either.right({
+							error: MemberCreateError.SERVER_ERROR as const,
+						}),
+					),
+				)
 				.fullJoin()
 				.then(ret => {
 					this.props.authorizeUser(ret);
@@ -438,37 +438,34 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		}
 	}
 
-	public render() {
-		return this.state.loading || this.shouldLoad ? (
+	public render = (): JSX.Element =>
+		this.state.loading || this.shouldLoad ? (
 			<Loader />
 		) : (
 			<div id="pageblock">
 				<Switch>
-					{pages.map((value, i) => {
-						return (
-							<Route
-								key={i}
-								path={value.url}
-								exact={value.exact}
-								component={composeElement({
-									El: value.component,
-									account: this.props.account,
-									authorizeUser: this.props.authorizeUser,
-									updateSideNav: this.props.updateSideNav,
-									updateBreadCrumbs: this.props.updateBreadCrumbs,
-									registry: this.props.registry,
-									member: this.props.member,
-									fullMemberDetails: this.props.fullMemberDetails,
-									updateApp: this.props.updateApp,
-									key: value.url,
-								})}
-							/>
-						);
-					})}
+					{pages.map((value, i) => (
+						<Route
+							key={i}
+							path={value.url}
+							exact={value.exact}
+							component={composeElement({
+								El: value.component,
+								account: this.props.account,
+								authorizeUser: this.props.authorizeUser,
+								updateSideNav: this.props.updateSideNav,
+								updateBreadCrumbs: this.props.updateBreadCrumbs,
+								registry: this.props.registry,
+								member: this.props.member,
+								fullMemberDetails: this.props.fullMemberDetails,
+								updateApp: this.props.updateApp,
+								key: value.url,
+							})}
+						/>
+					))}
 				</Switch>
 			</div>
 		);
-	}
 }
 
 export default withRouter(PageRouter);

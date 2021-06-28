@@ -29,6 +29,7 @@ import {
 	asyncIterMap,
 	asyncLeft,
 	asyncRight,
+	BasicMySQLRequest,
 	destroy,
 	effectiveManageEventPermission,
 	Either,
@@ -44,6 +45,7 @@ import {
 	MaybeObj,
 	Member,
 	MemberReference,
+	memoize,
 	parseStringMemberReference,
 	Permissions,
 	RawFileObject,
@@ -51,6 +53,7 @@ import {
 	ServerConfiguration,
 	ServerError,
 	stringifyMemberReference,
+	toAsyncIterableIterator,
 	toReference,
 	User,
 	yieldObjAsync,
@@ -59,8 +62,10 @@ import * as debug from 'debug';
 import { createReadStream, createWriteStream, unlink } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import { getMembers } from './Account';
-import { resolveReference } from './Members';
+import { AccountBackend } from './Account';
+import { Backends, notImplementedError } from './backends';
+import { CAP } from './member/members';
+import { MemberBackend } from './Members';
 import {
 	collectResults,
 	deleteItemFromCollectionA,
@@ -70,6 +75,7 @@ import {
 	saveItemToCollectionA,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
+import { TeamsBackend } from './Team';
 
 const logFunc = debug('server-common:file');
 const promisifiedUnlink = promisify(unlink);
@@ -89,8 +95,10 @@ type LoadedUserFileObject<T extends boolean> = T extends true
 	? { file: FileObject; fileChildrenCount: number }
 	: { file: FileObject };
 
-export const getUserFileObjectFunc = <T extends boolean>(loadFileChildrenCount: T) => (
-	schema: Schema,
+export const getUserFileObject = (backend: Backends<[MemberBackend]>) => (schema: Schema) => <
+	T extends boolean
+>(
+	loadFileChildrenCount: T,
 ) => (account: AccountObject) => (requester: User) => (
 	member: MemberReference | Member,
 ): ServerEither<LoadedUserFileObject<T>> =>
@@ -99,7 +107,7 @@ export const getUserFileObjectFunc = <T extends boolean>(loadFileChildrenCount: 
 			? asyncRight(requester, errorGenerator('Could not get member information'))
 			: 'contact' in member
 			? asyncRight(member, errorGenerator('Could not get member information'))
-			: resolveReference(schema)(account)(member),
+			: backend.getMember(account)(member),
 		loadFileChildrenCount
 			? asyncRight(
 					schema
@@ -120,13 +128,13 @@ export const getUserFileObjectFunc = <T extends boolean>(loadFileChildrenCount: 
 						.execute(),
 					errorGenerator('Could not get file children information'),
 			  ).map(result => {
-					const [[count]] = result.fetchAll();
+					const [[count]] = result.fetchAll() as [[number]];
 					logFunc.extend('personaldrive').extend('raw')(
 						'Raw SQL results for %s: %o',
 						stringifyMemberReference(member),
 						count,
 					);
-					return count as number;
+					return count;
 			  })
 			: asyncRight(0, errorGenerator('Could not get file children information')),
 	]).map(([folderOwner, fileChildrenCount]) => {
@@ -174,7 +182,6 @@ export const getUserFileObjectFunc = <T extends boolean>(loadFileChildrenCount: 
 					file,
 			  } as LoadedUserFileObject<T>);
 	});
-export const getUserFileObject = getUserFileObjectFunc(false);
 
 export const getRootFileObjectForUser = (account: AccountObject) => (
 	memberMaybe: MaybeObj<User>,
@@ -253,7 +260,7 @@ export const getEventsFolderObject = (account: AccountObject) => (
 						permission:
 							// Modify to help with managing of files currently there,
 							// read to see the files and the folder itself
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							FileUserAccessControlPermissions.MODIFY |
 							FileUserAccessControlPermissions.READ,
 						type: FileUserAccessControlType.USER,
@@ -284,15 +291,15 @@ export const getPersonalFoldersParentFolder = (account: AccountObject): RawFileO
 	permissions: [],
 });
 
-export const getFilePath = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<User>,
-) => (
+export const getFilePath = (schema: Schema) => (
+	backend: Backends<[FileBackend, MemberBackend]>,
+) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	file: RawFileObject,
 ): ServerEither<
-	{
+	Array<{
 		id: string;
 		name: string;
-	}[]
+	}>
 > =>
 	// The person viewing the file has a personal drive to view
 	file.id === ROOT_FOLDER_ID && Maybe.isSome(member)
@@ -324,20 +331,21 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 		  )
 		: // Person is viewing someone elses personal drive
 		Either.isRight(parseStringMemberReference(file.parentID))
-		? getFileObject(schema)(account)(member)(PERSONAL_DRIVES_FOLDER_ID).flatMap(parentFile =>
-				getFilePath(schema)(account)(member)(parentFile).map(path => [
-					...path,
-					{
-						id: file.id,
-						name: file.fileName,
-					},
-				]),
+		? getFileObject(schema)(backend)(account)(member)(PERSONAL_DRIVES_FOLDER_ID).flatMap(
+				parentFile =>
+					getFilePath(schema)(backend)(account)(member)(parentFile).map(path => [
+						...path,
+						{
+							id: file.id,
+							name: file.fileName,
+						},
+					]),
 		  )
 		: // The person is viewing a file in the root directory
 		file.parentID === ROOT_FOLDER_ID
 		? asyncRight(
 				[
-					...Maybe.orSome([] as { id: string; name: string }[])(
+					...Maybe.orSome([] as Array<{ id: string; name: string }>)(
 						Maybe.map((ref: MemberReference) => [
 							{ id: stringifyMemberReference(ref), name: 'Personal Drive' },
 						])(member),
@@ -348,8 +356,8 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				errorGenerator('Could not get file path'),
 		  )
 		: // The person is viewing a file in a subfolder that isn't special enough to have a case above
-		  getFileObject(schema)(account)(member)(file.parentID).flatMap(parent =>
-				getFilePath(schema)(account)(member)(parent).map(path => [
+		  getFileObject(schema)(backend)(account)(member)(file.parentID).flatMap(parent =>
+				getFilePath(schema)(backend)(account)(member)(parent).map(path => [
 					...path,
 					{
 						id: file.id,
@@ -358,9 +366,11 @@ export const getFilePath = (schema: Schema) => (account: AccountObject) => (
 				]),
 		  );
 
-export const getRegularFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<User>,
-) => (fileID: string): ServerEither<RawFileObject> =>
+export const getRegularFileObject = (schema: Schema) => (
+	backend: Backends<[FileBackend, MemberBackend]>,
+) => (account: AccountObject) => (member: MaybeObj<User>) => (
+	fileID: string,
+): ServerEither<RawFileObject> =>
 	asyncRight(
 		findAndBind(schema.getCollection<RawFileObject>('Files'), {
 			id: fileID,
@@ -375,7 +385,7 @@ export const getRegularFileObject = (schema: Schema) => (account: AccountObject)
 		})
 		.map(get(0))
 		.flatMap(file =>
-			getFilePath(schema)(account)(member)(file)
+			getFilePath(schema)(backend)(account)(member)(file)
 				.map(folderPath => ({
 					...file,
 					folderPath,
@@ -390,9 +400,11 @@ export const getRegularFileObject = (schema: Schema) => (account: AccountObject)
 				),
 		);
 
-export const getFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<User>,
-) => (fileID: string | null): ServerEither<RawFileObject> =>
+export const getFileObject = (schema: Schema) => (
+	backend: Backends<[FileBackend, MemberBackend]>,
+) => (account: AccountObject) => (member: MaybeObj<User>) => (
+	fileID: string | null,
+): ServerEither<RawFileObject> =>
 	(fileID === null
 		? asyncLeft<ServerError, string>({
 				type: 'OTHER',
@@ -417,24 +429,27 @@ export const getFileObject = (schema: Schema) => (account: AccountObject) => (
 					errorGenerator('Could not get requested file'),
 			  )
 			: Either.isRight(parseStringMemberReference(id)) && Maybe.isSome(member)
-			? getUserFileObject(schema)(account)(member.value)(
+			? getUserFileObject(backend)(schema)(false)(account)(member.value)(
 					(parseStringMemberReference(id) as Right<MemberReference>).value,
 			  ).map(get('file'))
-			: getRegularFileObject(schema)(account)(member)(id),
+			: getRegularFileObject(schema)(backend)(account)(member)(id),
 	);
 
-export const expandRawFileObject = (schema: Schema) => (account: AccountObject) => (
-	member: MaybeObj<User>,
-) => (file: RawFileObject): ServerEither<FileObject> =>
-	getFilePath(schema)(account)(member)(file).map(folderPath => ({
+export const expandRawFileObject = (schema: Schema) => (
+	backend: Backends<[MemberBackend, FileBackend]>,
+) => (account: AccountObject) => (member: MaybeObj<User>) => (
+	file: RawFileObject,
+): ServerEither<FileObject> =>
+	getFilePath(schema)(backend)(account)(member)(file).map(folderPath => ({
 		...file,
 		folderPath,
 	}));
 
-export const expandFileObject = (schema: Schema) => (account: AccountObject) => (
-	file: FileObject,
-): ServerEither<FullFileObject> =>
-	resolveReference(schema)(account)(file.owner)
+export const expandFileObject = (backend: Backends<[MemberBackend, FileBackend]>) => (
+	account: AccountObject,
+) => (file: FileObject): ServerEither<FullFileObject> =>
+	backend
+		.getMember(account)(file.owner)
 		.map(uploader => ({
 			...file,
 			uploader: Maybe.some(uploader),
@@ -507,8 +522,8 @@ export const uploadFile = (conf: ServerConfiguration) => (file: RawFileObject) =
 	);
 
 export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) => (
-	account: AccountObject,
-) => (file: RawFileObject): ServerEither<void> =>
+	file: RawFileObject,
+): ServerEither<void> =>
 	file.id === ROOT_FOLDER_ID
 		? asyncLeft({
 				type: 'OTHER' as const,
@@ -531,22 +546,22 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 				),
 		  ]).map(destroy);
 
-export const getChildren = (schema: Schema) => (account: AccountObject) => (
-	requester: MaybeObj<User>,
-) => (file: RawFileObject): ServerEither<AsyncIter<RawFileObject>> => {
+export const getChildren = (schema: Schema) => (
+	backend: Backends<
+		[AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
+	>,
+) => (account: AccountObject) => (requester: MaybeObj<User>) => (
+	file: RawFileObject,
+): ServerEither<AsyncIter<RawFileObject>> => {
 	logFunc.extend('getChildren')('Getting children with query: %o', {
 		parentID: file.id,
 		accountID: file.accountID,
 	});
 
 	if (file.id === PERSONAL_DRIVES_FOLDER_ID && Maybe.isSome(requester)) {
-		return asyncRight(
-			getMembers(schema)(account)(),
-			errorGenerator('Could not get member information'),
-		)
-			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-			.map(asyncIterMap(get('value')))
-			.map(asyncIterMap(getUserFileObjectFunc(true)(schema)(account)(requester.value)))
+		return backend
+			.getMembers(backend)(account)()
+			.map(asyncIterMap(getUserFileObject(backend)(schema)(true)(account)(requester.value)))
 			.map(
 				asyncIterFilter<
 					EitherObj<ServerError, { file: FileObject; fileChildrenCount: number }>,
@@ -592,12 +607,107 @@ export const getChildren = (schema: Schema) => (account: AccountObject) => (
 							.map(asyncIterConcat(results))
 					: file.id === ROOT_FOLDER_ID
 					? asyncRight<ServerError, typeof results>(
-							asyncIterConcat(results)(() =>
-								getExtraRootFilesForUser(account)(requester),
+							toAsyncIterableIterator(
+								asyncIterConcat(results)(() =>
+									getExtraRootFilesForUser(account)(requester),
+								),
 							),
 							errorGenerator('Could not get file children'),
 					  )
 					: asyncRight(results, errorGenerator('Could not get file children')),
 			);
 	}
+};
+
+export interface FileBackend {
+	getFileObject: (
+		account: AccountObject,
+	) => (member: MaybeObj<User>) => (id: string) => ServerEither<RawFileObject>;
+	downloadFileObject: (
+		file: RawFileObject,
+	) => (output: NodeJS.WritableStream) => ServerEither<void>;
+	expandRawFileObject: (
+		member: MaybeObj<User>,
+	) => (file: RawFileObject) => ServerEither<FileObject>;
+	expandFileObject: (file: FileObject) => ServerEither<FullFileObject>;
+	getFilePath: (
+		user: MaybeObj<User>,
+	) => (file: RawFileObject) => ServerEither<Array<{ id: string; name: string }>>;
+	uploadFile: (
+		uploadedFile: RawFileObject,
+	) => (stream: NodeJS.ReadableStream) => ServerEither<void>;
+	deleteFileObject: (file: RawFileObject) => ServerEither<void>;
+	saveFileObject: (file: RawFileObject) => ServerEither<RawFileObject>;
+	getChildren: (
+		backends: Backends<
+			[AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
+		>,
+	) => (
+		member: MaybeObj<User>,
+	) => (file: RawFileObject) => ServerEither<AsyncIter<RawFileObject>>;
+}
+
+export const getFileBackend = (
+	req: BasicMySQLRequest,
+	prevBackend: Backends<[AccountBackend, MemberBackend]>,
+): FileBackend => {
+	const backend: FileBackend = {
+		...getRequestFreeFileBackend(req.mysqlx, prevBackend),
+		downloadFileObject: downloadFileObject(req.configuration),
+		uploadFile: uploadFile(req.configuration),
+		deleteFileObject: deleteFileObject(req.configuration)(req.mysqlx),
+	};
+
+	return backend;
+};
+
+export const getRequestFreeFileBackend = (
+	mysqlx: Schema,
+	prevBackend: Backends<[AccountBackend, MemberBackend]>,
+): FileBackend => {
+	const backend: FileBackend = {
+		getFileObject: memoize(
+			account =>
+				memoize(
+					member =>
+						memoize(id =>
+							getFileObject(mysqlx)({ ...prevBackend, ...backend })(account)(member)(
+								id,
+							),
+						),
+					val => (Maybe.isSome(val) ? stringifyMemberReference(val.value) : 'None'),
+				),
+			get('id'),
+		),
+		expandRawFileObject: member => file =>
+			prevBackend
+				.getAccount(file.accountID)
+				.flatMap(account =>
+					expandRawFileObject(mysqlx)({ ...prevBackend, ...backend })(account)(member)(
+						file,
+					),
+				),
+		expandFileObject: file =>
+			prevBackend
+				.getAccount(file.accountID)
+				.flatMap(account =>
+					expandFileObject({ ...prevBackend, ...backend })(account)(file),
+				),
+		getFilePath: member => file =>
+			prevBackend
+				.getAccount(file.accountID)
+				.flatMap(account =>
+					getFilePath(mysqlx)({ ...prevBackend, ...backend })(account)(member)(file),
+				),
+		saveFileObject: file => saveFileObject(mysqlx)(file),
+		getChildren: backends => member => file =>
+			prevBackend
+				.getAccount(file.accountID)
+				.flatMap(account => getChildren(mysqlx)(backends)(account)(member)(file)),
+		deleteFileObject: () => notImplementedError('deleteFile'),
+		downloadFileObject: () => () => notImplementedError('downloadFileObject'),
+		uploadFile: () => () => notImplementedError('uploadFile'),
+	};
+
+	return backend;
 };

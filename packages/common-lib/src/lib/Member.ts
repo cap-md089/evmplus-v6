@@ -32,11 +32,12 @@ import {
 	PermissionForName,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	User,
 } from '../typings/types';
 import { Either, EitherObj } from './Either';
-import { Maybe } from './Maybe';
+import { Maybe, MaybeObj } from './Maybe';
 
-export const stringifyMemberReference = (ref: MemberReference) => `${ref.type}-${ref.id}`;
+export const stringifyMemberReference = (ref: MemberReference): string => `${ref.type}-${ref.id}`;
 
 const toCAPNHQReference = (id: number): CAPNHQMemberReference => ({
 	type: 'CAPNHQMember',
@@ -83,7 +84,7 @@ export const parseStringMemberReference: (
 	),
 );
 
-export const getMemberPhone = (contact: CAPMemberContact) =>
+export const getMemberPhone = (contact: CAPMemberContact): MaybeObj<string> =>
 	Maybe.fromValue(
 		contact.CELLPHONE.PRIMARY ||
 			contact.WORKPHONE.PRIMARY ||
@@ -99,7 +100,7 @@ export const getMemberPhone = (contact: CAPMemberContact) =>
 			contact.CADETPARENTPHONE.EMERGENCY,
 	);
 
-export const getMemberEmail = (contact: CAPMemberContact) =>
+export const getMemberEmail = (contact: CAPMemberContact): MaybeObj<string> =>
 	Maybe.fromValue(
 		contact.EMAIL.PRIMARY ||
 			contact.CADETPARENTEMAIL.PRIMARY ||
@@ -109,7 +110,7 @@ export const getMemberEmail = (contact: CAPMemberContact) =>
 			contact.CADETPARENTEMAIL.EMERGENCY,
 	);
 
-export const getMemberEmails = (contact: CAPMemberContact) =>
+export const getMemberEmails = (contact: CAPMemberContact): string[] =>
 	[
 		contact.EMAIL.PRIMARY,
 		contact.CADETPARENTEMAIL.PRIMARY,
@@ -117,7 +118,7 @@ export const getMemberEmails = (contact: CAPMemberContact) =>
 		contact.CADETPARENTEMAIL.SECONDARY,
 	].filter((v): v is string => !!v);
 
-export const areMembersTheSame = (ref1: MemberReference) => (ref2: MemberReference) =>
+export const areMembersTheSame = (ref1: MemberReference) => (ref2: MemberReference): boolean =>
 	ref1.type === ref2.type && ref1.id === ref2.id;
 
 export const getMemberName = (member: {
@@ -125,7 +126,7 @@ export const getMemberName = (member: {
 	nameMiddle: string;
 	nameLast: string;
 	nameSuffix: string;
-}) =>
+}): string =>
 	[member.nameFirst, member.nameLast, member.nameSuffix]
 		.filter(s => !!s)
 		.map(value => value.trimLeft().trimRight())
@@ -148,14 +149,14 @@ export const getFullMemberName = (member: {
 
 export const hasSpecificPermission = <T extends MemberPermission>(permission: T) => (
 	threshold: number,
-) => (user: ClientUser) =>
-	// @ts-ignore
+) => (user: ClientUser): boolean =>
+	// @ts-ignore: enum type specificity vs reality is a pain
 	user.permissions[permission] === threshold || isRioux(user);
 
 export const hasPermission = <T extends MemberPermission>(permission: T) => (
 	threshold: PermissionForName<T>,
-) => (user: ClientUser) =>
-	// @ts-ignore
+) => (user: ClientUser): boolean =>
+	// @ts-ignore: enum type specificity vs reality is a pain
 	user.permissions[permission] === threshold || isRioux(user);
 
 export const asReference = (member: Member): MemberReference =>
@@ -169,10 +170,10 @@ export const asReference = (member: Member): MemberReference =>
 				id: member.id,
 		  };
 
-export const hasDutyPosition = (dutyPosition: string) => (member: CAPMember) =>
+export const hasDutyPosition = (dutyPosition: string) => (member: CAPMember): boolean =>
 	isRioux(member) || member.dutyPositions.map(duty => duty.duty).includes(dutyPosition);
 
-export const hasDutyPositions = (dutyPositions: string[]) => (member: CAPMember) =>
+export const hasDutyPositions = (dutyPositions: string[]) => (member: CAPMember): boolean =>
 	dutyPositions.some(duty => hasDutyPosition(duty)(member));
 
 export const hasOneDutyPosition = hasDutyPositions;
@@ -197,24 +198,26 @@ export function getUserID(name: string[]): string {
 	return usrID.toLocaleLowerCase();
 }
 
-export function isValidMemberReference(value: any): value is MemberReference {
+export function isValidMemberReference(value: unknown): value is MemberReference {
 	if (typeof value !== 'object' || value === null || value === undefined) {
 		return false;
 	}
 
-	if (typeof value.type === 'undefined') {
+	if (
+		!('type' in value) ||
+		typeof (value as { type: unknown }).type !== 'string' ||
+		!('id' in value)
+	) {
 		return false;
 	}
 
-	if (value.type === 'Null') {
+	const val2 = value as { type: string; id: unknown };
+
+	if (val2.type === 'CAPNHQMember' && typeof val2.id === 'number') {
 		return true;
 	}
 
-	if (value.type === 'CAPNHQMember' && typeof value.id === 'number') {
-		return true;
-	}
-
-	if (value.type === 'CAPProspectiveMember' && typeof value.id === 'string') {
+	if (val2.type === 'CAPProspectiveMember' && typeof val2.id === 'string') {
 		return true;
 	}
 
@@ -238,3 +241,6 @@ export const isCAPMember = (member: Member): member is CAPMember =>
 export const isCAPUnitDutyPosition = (
 	dutyPosition: ShortDutyPosition,
 ): dutyPosition is ShortCAPUnitDutyPosition => dutyPosition.type === 'CAPUnit';
+
+export const isRequesterRioux = <T extends { member: User }>(req: T): boolean =>
+	isRioux(req.member);

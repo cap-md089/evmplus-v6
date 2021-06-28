@@ -18,10 +18,12 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
-import { DiscordAccount, MemberReference, Maybe } from 'common-lib';
+import { DiscordAccount, MemberReference, Maybe, MaybeObj } from 'common-lib';
 import { findAndBind, collectResults } from 'server-common';
 
-export default (schema: Schema) => async (member: MemberReference) => {
+export default (schema: Schema) => async (
+	member: MemberReference,
+): Promise<MaybeObj<DiscordAccount>> => {
 	const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
 	const results = await collectResults(findAndBind(collection, { member }));

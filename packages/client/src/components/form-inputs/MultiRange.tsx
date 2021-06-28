@@ -40,7 +40,7 @@ export default class MultiRange extends React.Component<
 > {
 	private range: HTMLInputElement | null = null;
 
-	constructor(props: MultiRangeProps) {
+	public constructor(props: MultiRangeProps) {
 		super(props);
 
 		const { min, max } = this.props;
@@ -74,7 +74,7 @@ export default class MultiRange extends React.Component<
 		}
 	}
 
-	public componentDidMount() {
+	public componentDidMount(): void {
 		if (!this.range) {
 			return;
 		}
@@ -90,7 +90,7 @@ export default class MultiRange extends React.Component<
 
 		(input.parentElement as HTMLDivElement).insertBefore(ghost, input.nextSibling);
 
-		const update = () => {
+		const update = (): void => {
 			const high = Math.max(+input.value, +ghost.value);
 			const low = Math.min(+input.value, +ghost.value);
 
@@ -114,8 +114,8 @@ export default class MultiRange extends React.Component<
 				this.props.onChange([parsedLow, parsedHigh]);
 			}
 
-			ghost.style.setProperty('--low', low + 1 + '%');
-			ghost.style.setProperty('--high', high - 1 + '%');
+			ghost.style.setProperty('--low', `${low + 1}%`);
+			ghost.style.setProperty('--high', `${high - 1}%`);
 		};
 
 		input.addEventListener('input', update);
@@ -127,7 +127,7 @@ export default class MultiRange extends React.Component<
 		update();
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const { min, max } = this.props;
 		const parsedLow = (this.state.low / 100) * (max - min) + min;
 		const parsedHigh = (this.state.high / 100) * (max - min) + min;
@@ -142,7 +142,7 @@ export default class MultiRange extends React.Component<
 				<input
 					type="range"
 					defaultValue={`${this.state.low},${this.state.high}`}
-					ref={el => {
+					ref={(el): void => {
 						this.range = el;
 					}}
 					step={this.props.step || 1}

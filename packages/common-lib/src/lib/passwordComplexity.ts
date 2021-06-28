@@ -22,9 +22,9 @@
  *
  * @param password the password to check
  */
-export const passwordMeetsRequirements = (password: string) =>
+export const passwordMeetsRequirements = (password: string): boolean =>
 	password.length > 32 ||
-	(password.length > 10 &&
+	(password.length >= 8 &&
 		// lowercase letter
 		!!password.match(/[a-z]/g) &&
 		// uppercase letter

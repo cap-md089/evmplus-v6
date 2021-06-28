@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -28,28 +27,51 @@ import {
 	Maybe,
 	userHasFilePermission,
 } from 'common-lib';
-import { expandFileObject, expandRawFileObject, getChildren, getFileObject } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	FileBackend,
+	getCombinedMemberBackend,
+	getFileBackend,
+	MemberBackend,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
-export const func: ServerAPIEndpoint<api.files.children.GetFullFiles> = req =>
-	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.parentid)
+export const func: Endpoint<
+	Backends<[AccountBackend, TeamsBackend, FileBackend, MemberBackend, CAP.CAPMemberBackend]>,
+	api.files.children.GetFullFiles
+> = backend => req =>
+	backend
+		.getFileObject(req.account)(req.member)(req.params.parentid)
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx)(req.account)(req.member))
+		.flatMap(backend.getChildren(backend)(req.member))
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(req.member)))
+		.map(asyncIterMap(backend.expandRawFileObject(req.member)))
 		.map(
 			asyncIterMap(file =>
 				asyncEither(file, errorGenerator('Could not get full file information')).flatMap(
-					expandFileObject(req.mysqlx)(req.account),
+					backend.expandFileObject,
 				),
 			),
 		)
 		.map(wrapper);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[Backends<[AccountBackend, TeamsBackend, MemberBackend, CAP.CAPMemberBackend]>, FileBackend]
+	>(getCombinedMemberBackend(), getFileBackend),
+);

@@ -34,22 +34,14 @@
 					}
 				}
 			},
-			"dependsOn": [
-				"tsc: watch - tsconfig.dev.json"
-			],
+			"dependsOn": ["tsc: watch - tsconfig.dev.json"],
 			"isBackground": true
 		},
 		{
 			"type": "shell",
 			"command": "${workspaceFolder}/node_modules/.bin/ttsc",
-			"args": [
-				"--build",
-				"${workspaceFolder}/tsconfig.dev.json",
-				"--watch",
-			],
-			"problemMatcher": [
-				"$tsc-watch"
-			],
+			"args": ["--build", "${workspaceFolder}/tsconfig.dev.json", "--watch"],
+			"problemMatcher": ["$tsc-watch"],
 			"isBackground": true,
 			"group": {
 				"kind": "build",
@@ -61,12 +53,17 @@
 			"type": "shell",
 			"command": "bash -c 'docker attach ${PWD##*/}_build-watch_1'",
 			"args": [],
-			"problemMatcher": [
-				"$tsc-watch"
-			],
+			"problemMatcher": ["$tsc-watch"],
 			"isBackground": true,
 			"group": "build",
 			"label": "Attach to TTypescript Docker Watch"
+		},
+		{
+			"type": "shell",
+			"label": "Start server with Docker",
+			"command": "docker-compose",
+			"args": ["-f", "docker-compose.dev.yml", "up", "main"],
+			"isBackground": true
 		}
 	]
 }

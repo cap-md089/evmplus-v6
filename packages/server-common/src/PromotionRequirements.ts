@@ -18,6 +18,7 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import { ServerEither } from 'auto-client-api';
 import {
 	asyncLeft,
 	asyncRight,
@@ -32,7 +33,9 @@ import { collectResults, findAndBind } from './MySQLUtil';
 
 // need to have functions to return single cadet or all cadets for an account
 
-export const getCadetPromotionRequirements = (schema: Schema) => (member: CAPNHQMemberObject) =>
+export const getCadetPromotionRequirements = (schema: Schema) => (
+	member: CAPNHQMemberObject,
+): ServerEither<CadetPromotionStatus> =>
 	member.seniorMember
 		? asyncLeft<ServerError, CadetPromotionStatus>({
 				type: 'OTHER',

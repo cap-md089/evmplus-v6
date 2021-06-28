@@ -17,31 +17,47 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterHandler,
 	canFullyManageEvent,
 	errorGenerator,
-	Maybe,
 	SessionType,
 } from 'common-lib';
-import { ensureResolvedEvent, getAttendanceForEvent, getEvent, PAM } from 'server-common';
+import {
+	AccountBackend,
+	AttendanceBackend,
+	Backends,
+	EventsBackend,
+	getCombinedAttendanceBackend,
+	MemberBackend,
+	PAM,
+	TeamsBackend,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.attendance.GetAttendance> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(ensureResolvedEvent(req.mysqlx))
-		.filter(event => !event.privateAttendance || canFullyManageEvent(req.member)(event), {
-			type: 'OTHER',
-			code: 403,
-			message: 'Member cannot view private attendance',
-		})
-		.flatMap(getAttendanceForEvent(req.mysqlx)(Maybe.some(req.account)))
-		.map(asyncIterHandler(errorGenerator('Could not get attendance records for event')))
-		.map(wrapper),
-);
+export const func: Endpoint<
+	Backends<
+		[AccountBackend, TimeBackend, MemberBackend, TeamsBackend, EventsBackend, AttendanceBackend]
+	>,
+	api.events.attendance.GetAttendance
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getEvent(req.account)(req.params.id)
+			.flatMap(backend.ensureResolvedEvent)
+			.filter(event => !event.privateAttendance || canFullyManageEvent(req.member)(event), {
+				type: 'OTHER',
+				code: 403,
+				message: 'Member cannot view private attendance',
+			})
+			.flatMap(backend.getAttendanceForEvent)
+			.map(backend.applyAttendanceFilter(req.member))
+			.map(asyncIterHandler(errorGenerator('Could not get attendance records for event')))
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedAttendanceBackend());

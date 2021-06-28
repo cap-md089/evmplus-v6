@@ -53,65 +53,62 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		this.submit = this.submit.bind(this);
 	}
 
-	public render() {
-		return (
-			<SimpleForm<RequestPasswordResetFormValues>
-				values={this.state.form}
-				onChange={form => this.setState({ form })}
-				onSubmit={this.submit}
-				disableOnInvalid={true}
-				validator={{
-					captchaToken: val => val !== null,
-					username: val => val?.length > 0,
-				}}
-				submitInfo={{
-					disabled: this.state.tryingSubmit,
-					text: 'Request password reset',
-				}}
-			>
-				<Title>Request password reset</Title>
+	public render = (): JSX.Element => (
+		<SimpleForm<RequestPasswordResetFormValues>
+			values={this.state.form}
+			onChange={form => this.setState({ form })}
+			onSubmit={this.submit}
+			disableOnInvalid={true}
+			validator={{
+				captchaToken: val => val !== null,
+				username: val => val?.length > 0,
+			}}
+			submitInfo={{
+				disabled: this.state.tryingSubmit,
+				text: 'Request password reset',
+			}}
+		>
+			<Title>Request password reset</Title>
 
-				{this.state.success ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.success ? (
-					<TextBox>
-						Password reset request succesful. Please check your inbox for a password
-						reset link.
-					</TextBox>
-				) : null}
-
-				{this.state.error !== null ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.error !== null ? (
-					<TextBox>
-						<b style={{ color: 'red' }}>{this.state.error}</b>
-					</TextBox>
-				) : null}
-
+			{this.state.success ? (
+				// Used for spacing
 				<Label />
+			) : null}
+			{this.state.success ? (
 				<TextBox>
-					Enter your username, and if it exists an email containing a password reset link
-					will be sent to the associated email address.
+					Password reset request succesful. Please check your inbox for a password reset
+					link.
 				</TextBox>
+			) : null}
 
-				<Label>Username</Label>
-				<TextInput name="username" />
+			{this.state.error !== null ? (
+				// Used for spacing
+				<Label />
+			) : null}
+			{this.state.error !== null ? (
+				<TextBox>
+					<b style={{ color: 'red' }}>{this.state.error}</b>
+				</TextBox>
+			) : null}
 
-				<ReCAPTCHAInput name="captchaToken" />
-			</SimpleForm>
-		);
-	}
+			<Label />
+			<TextBox>
+				Enter your username, and if it exists an email containing a password reset link will
+				be sent to the associated email address.
+			</TextBox>
 
-	private async submit(form: RequestPasswordResetFormValues) {
+			<Label>Username</Label>
+			<TextInput name="username" />
+
+			<ReCAPTCHAInput name="captchaToken" />
+		</SimpleForm>
+	);
+
+	private submit = async (form: RequestPasswordResetFormValues): Promise<void> => {
 		if (!form.captchaToken) {
 			return;
 		}
 
-		// @ts-ignore
 		window.grecaptcha.reset();
 
 		this.setState({
@@ -140,5 +137,5 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 				tryingSubmit: false,
 			});
 		}
-	}
+	};
 }

@@ -21,7 +21,7 @@ import { Permissions, TaskObject, User } from '../typings/types';
 import { areMembersTheSame, hasPermission } from './Member';
 import { get } from './Util';
 
-export const hasPermissionForTask = (member: User) => (task: TaskObject) =>
+export const hasPermissionForTask = (member: User) => (task: TaskObject): boolean =>
 	hasPermission('AssignTasks')(Permissions.AssignTasks.YES)(member) ||
 	areMembersTheSame(member)(task.tasker) ||
 	task.results.map(get('tasked')).some(areMembersTheSame(member));

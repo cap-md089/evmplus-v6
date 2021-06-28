@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/local/bin/node --no-warnings
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
@@ -39,7 +39,7 @@ process.on('unhandledRejection', up => {
 	throw up;
 });
 
-(async () => {
+void (async () => {
 	const cliConf = await conf.getCLIConfiguration();
 
 	const session = await getSession({

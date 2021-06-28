@@ -27,18 +27,10 @@ interface OtherMultCheckboxProps extends InputProps<OtherMultCheckboxReturn> {
 }
 
 export default class OtherMultCheckbox extends React.Component<OtherMultCheckboxProps> {
-	constructor(props: OtherMultCheckboxProps) {
-		super(props);
-
-		this.addOther = this.addOther.bind(this);
-		this.updateText = this.updateText.bind(this);
-		this.onOtherCheckboxChange = this.onOtherCheckboxChange.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element {
 		const value = M.fromValue(this.props.value);
 
-		const isChecked = (i: number) =>
+		const isChecked = (i: number): boolean =>
 			pipe(
 				M.flatMap<OtherMultCheckboxReturn, boolean>(ret =>
 					ret.otherSelected ? M.some(false) : M.fromValue(ret.values[i]),
@@ -66,12 +58,12 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 							<input
 								type="checkbox"
 								checked={isChecked(i)}
-								name={this.props.name + '-' + i}
-								id={this.props.name + '-' + i}
+								name={`${this.props.name}-${i}`}
+								id={`${this.props.name}-${i}`}
 								onChange={this.onCheckboxChange(i)}
 							/>
-							<label htmlFor={this.props.name + '-' + i} />
-							<label htmlFor={this.props.name + '-' + i}>{label}</label>
+							<label htmlFor={`${this.props.name}-${i}`} />
+							<label htmlFor={`${this.props.name}-${i}`}>{label}</label>
 						</div>
 					))}
 					<div className="checkboxDiv checkboxDivMult">
@@ -99,34 +91,32 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		);
 	}
 
-	private onCheckboxChange(index: number) {
-		return (e: React.ChangeEvent<HTMLInputElement>) => {
-			const isChecked = e.currentTarget.checked;
+	private onCheckboxChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+		const isChecked = e.currentTarget.checked;
 
-			const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
-			const value = {
-				...inputValue,
-				values: [
-					...inputValue.values.slice(0, index),
-					isChecked,
-					...inputValue.values.slice(index + 1),
-				],
-			};
-
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value,
-				});
-			}
-
-			if (this.props.onChange) {
-				this.props.onChange(value);
-			}
+		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
+		const value = {
+			...inputValue,
+			values: [
+				...inputValue.values.slice(0, index),
+				isChecked,
+				...inputValue.values.slice(index + 1),
+			],
 		};
-	}
 
-	private addOther() {
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value,
+			});
+		}
+
+		if (this.props.onChange) {
+			this.props.onChange(value);
+		}
+	};
+
+	private addOther = (): void => {
 		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
 		const value = {
 			...inputValue,
@@ -144,9 +134,9 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		if (this.props.onChange) {
 			this.props.onChange(value);
 		}
-	}
+	};
 
-	private onOtherCheckboxChange(e: React.ChangeEvent<HTMLInputElement>) {
+	private onOtherCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		const isChecked = e.currentTarget.checked;
 
 		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
@@ -171,9 +161,9 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		if (this.props.onChange) {
 			this.props.onChange(value);
 		}
-	}
+	};
 
-	private updateText(e: React.ChangeEvent<HTMLInputElement>) {
+	private updateText = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		const inputValue = this.props.value ?? emptyFromLabels(this.props.labels);
 		const value = {
 			...inputValue,
@@ -191,5 +181,5 @@ export default class OtherMultCheckbox extends React.Component<OtherMultCheckbox
 		if (this.props.onChange) {
 			this.props.onChange(value);
 		}
-	}
+	};
 }

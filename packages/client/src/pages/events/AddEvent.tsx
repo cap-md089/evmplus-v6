@@ -69,14 +69,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		saving: false,
 	};
 
-	constructor(props: PageProps) {
-		super(props);
-
-		this.updateNewEvent = this.updateNewEvent.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -168,7 +161,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		this.updateTitle('Create event');
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <SigninLink>Please sign in.</SigninLink>;
 		}
@@ -201,7 +194,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		);
 	}
 
-	private async handleSubmit(maybeEvent: MaybeObj<NewEventFormValues>) {
+	private handleSubmit = async (maybeEvent: MaybeObj<NewEventFormValues>): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -227,9 +220,9 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 		} else {
 			this.props.routeProps.history.push(`/eventviewer/${createResult.value.id}`);
 		}
-	}
+	};
 
-	private updateNewEvent(event: NewEventFormValues) {
+	private updateNewEvent = (event: NewEventFormValues): void => {
 		if (this.state.state !== 'LOADED') {
 			return;
 		}
@@ -238,5 +231,5 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 			...prev,
 			event,
 		}));
-	}
+	};
 }

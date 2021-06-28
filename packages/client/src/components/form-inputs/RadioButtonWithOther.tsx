@@ -27,7 +27,7 @@ export interface RadioProps<E extends number = number> extends InputProps<RadioR
 }
 
 export default class RadioButton<E extends number = number> extends React.Component<RadioProps<E>> {
-	constructor(props: RadioProps<E>) {
+	public constructor(props: RadioProps<E>) {
 		super(props);
 
 		if (this.props.onUpdate) {
@@ -40,15 +40,12 @@ export default class RadioButton<E extends number = number> extends React.Compon
 				},
 			});
 		}
-
-		this.updateOtherText = this.updateOtherText.bind(this);
-		this.selectOther = this.selectOther.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const value = M.fromValue(this.props.value);
 
-		const isChecked = (i: number) =>
+		const isChecked = (i: number): boolean =>
 			pipe(
 				M.map<RadioReturnWithOther<E>, boolean>(ret =>
 					ret.otherValueSelected ? false : ret.selection === i,
@@ -56,7 +53,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 				M.orSome(false),
 			)(value);
 
-		const name = (i: number) =>
+		const name = (i: number): string =>
 			`${this.props.name}-${
 				this.props.index === undefined ? '' : `-${this.props.index}`
 			}-${i}`;
@@ -91,13 +88,13 @@ export default class RadioButton<E extends number = number> extends React.Compon
 					))}
 					<div className="radio-button-container">
 						<input
-							id={this.props.name + '-' + this.props.labels.length}
+							id={`${this.props.name}-${this.props.labels.length}`}
 							type="radio"
 							value={this.props.labels.length}
 							onChange={this.selectOther}
 							checked={isOtherChecked}
 						/>
-						<label htmlFor={this.props.name + '-' + this.props.labels.length}>
+						<label htmlFor={`${this.props.name}-${this.props.labels.length}`}>
 							Other:
 							<input
 								id={this.props.name + 'Other'}
@@ -110,7 +107,7 @@ export default class RadioButton<E extends number = number> extends React.Compon
 							/>
 						</label>
 						<label
-							htmlFor={this.props.name + '-' + this.props.labels.length}
+							htmlFor={`${this.props.name}-${this.props.labels.length}`}
 							className="check"
 						/>
 					</div>
@@ -119,28 +116,26 @@ export default class RadioButton<E extends number = number> extends React.Compon
 		);
 	}
 
-	private getChangeHandler(index: E) {
-		return () => {
-			const value = {
-				labels: this.props.labels,
-				otherValueSelected: false as const,
-				selection: index,
-			};
-
-			if (this.props.onChange) {
-				this.props.onChange(value);
-			}
-
-			if (this.props.onUpdate) {
-				this.props.onUpdate({
-					name: this.props.name,
-					value,
-				});
-			}
+	private getChangeHandler = (index: E) => () => {
+		const value = {
+			labels: this.props.labels,
+			otherValueSelected: false as const,
+			selection: index,
 		};
-	}
 
-	private updateOtherText(e: React.ChangeEvent<HTMLInputElement>) {
+		if (this.props.onChange) {
+			this.props.onChange(value);
+		}
+
+		if (this.props.onUpdate) {
+			this.props.onUpdate({
+				name: this.props.name,
+				value,
+			});
+		}
+	};
+
+	private updateOtherText = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		const text = e.target.value;
 
 		const value = {
@@ -159,9 +154,9 @@ export default class RadioButton<E extends number = number> extends React.Compon
 				value,
 			});
 		}
-	}
+	};
 
-	private selectOther() {
+	private selectOther = (): void => {
 		const otherText = pipe(
 			M.flatMap<RadioReturnWithOther<E>, string>(ret =>
 				ret.otherValueSelected ? M.some(ret.otherValue) : M.none(),
@@ -185,5 +180,5 @@ export default class RadioButton<E extends number = number> extends React.Compon
 				value,
 			});
 		}
-	}
+	};
 }

@@ -28,9 +28,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Page, { PageProps } from '../../Page';
 
-export const shouldRenderSiteAdmin = (props: PageProps) => {
-	return !!props.member;
-};
+export const shouldRenderSiteAdmin = (props: PageProps): boolean => !!props.member;
 
 export interface RequiredMember extends PageProps {
 	member: ClientUser;
@@ -39,71 +37,65 @@ export interface RequiredMember extends PageProps {
 export class SiteAdminWidget extends Page<RequiredMember> {
 	public state: {} = {};
 
-	public render() {
-		return (
-			<div className="widget">
-				<div className="widget-title">
-					{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)
-						? 'Site '
-						: hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
-								this.props.member,
-						  ) ||
-						  ((this.props.member.type === 'CAPNHQMember' ||
-								this.props.member.type === 'CAPProspectiveMember') &&
-								this.props.member.seniorMember)
-						? 'Account '
-						: 'Personal '}
-					administration
-				</div>
-				<div className="widget-body">
-					<Link to="/eventlinklist">Event List</Link>
-					<br />
-					<Link to="/admin/attendance">View Attendance</Link>
-					<br />
-					<Link to="/admin/setupmfa">Setup MFA</Link>
-					<br />
-					<Link to="/admin/tempdutypositions">Manage duty positions</Link>
-					{(this.props.account.type === AccountType.CAPSQUADRON ||
-						this.props.account.type === AccountType.CAPEVENT) &&
-					hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
-						this.props.member,
-					) ? (
-						<>
-							<br />
-							<Link to="/admin/flightassign">Assign flight members</Link>
-						</>
-					) : null}
-					{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(
-						this.props.member,
-					) ? (
-						<>
-							<br />
-							<Link to="/admin/regedit">Site configuration</Link>
-						</>
-					) : null}
-					{hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
-						this.props.member,
-					) ? (
-						<>
-							<br />
-							<Link to="/admin/permissions">Permission management</Link>
-						</>
-					) : null}
-					{(this.props.member.type === 'CAPProspectiveMember' ||
-						this.props.member.type === 'CAPNHQMember') &&
-					(this.props.member.seniorMember ||
-						hasOneDutyPosition([
-							'Cadet Commander',
-							'Cadet Deputy Commander',
-							'Cadet Executive Officer',
-						])(this.props.member)) ? (
-						<>
-							<br />
-							<Link to="/admin/emaillist">Email selector</Link>
-						</>
-					) : null}
-				</div>
+	public render = (): JSX.Element => (
+		<div className="widget">
+			<div className="widget-title">
+				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)
+					? 'Site '
+					: hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
+							this.props.member,
+					  ) ||
+					  ((this.props.member.type === 'CAPNHQMember' ||
+							this.props.member.type === 'CAPProspectiveMember') &&
+							this.props.member.seniorMember)
+					? 'Account '
+					: 'Personal '}
+				administration
 			</div>
-		);
-	}
+			<div className="widget-body">
+				<Link to="/eventlinklist">Event List</Link>
+				<br />
+				<Link to="/admin/attendance">View Attendance</Link>
+				<br />
+				<Link to="/admin/setupmfa">Setup MFA</Link>
+				<br />
+				<Link to="/admin/tempdutypositions">Manage duty positions</Link>
+				{(this.props.account.type === AccountType.CAPSQUADRON ||
+					this.props.account.type === AccountType.CAPEVENT) &&
+				hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(this.props.member) ? (
+					<>
+						<br />
+						<Link to="/admin/flightassign">Assign flight members</Link>
+					</>
+				) : null}
+				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member) ? (
+					<>
+						<br />
+						<Link to="/admin/regedit">Site configuration</Link>
+					</>
+				) : null}
+				{hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
+					this.props.member,
+				) ? (
+					<>
+						<br />
+						<Link to="/admin/permissions">Permission management</Link>
+					</>
+				) : null}
+				{(this.props.member.type === 'CAPProspectiveMember' ||
+					this.props.member.type === 'CAPNHQMember') &&
+				(this.props.member.seniorMember ||
+					hasOneDutyPosition([
+						'Cadet Commander',
+						'Cadet Deputy Commander',
+						'Cadet Executive Officer',
+					])(this.props.member)) ? (
+					<>
+						<br />
+						<Link to="/admin/emaillist">Email selector</Link>
+					</>
+				) : null}
+			</div>
+		</div>
+	);
 }

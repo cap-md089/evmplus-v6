@@ -20,10 +20,11 @@
 import { Client as MySQLClient } from '@mysql/xdevapi';
 import { always, DiscordAccount } from 'common-lib';
 import { Client, Guild, Permissions, Role } from 'discord.js';
-import { collectResults, findAndBind, getRegistry } from 'server-common';
+import { collectResults, findAndBind } from 'server-common';
 import { getXSession } from '..';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
 import getAccount from './getAccount';
+import { getDiscordBackend } from './getDiscordBackend';
 import setupUser, {
 	AchvIDToCertificationRole,
 	byName,
@@ -57,8 +58,10 @@ const seniorMemberRoles = ['Squadron Commander'];
 
 export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQLClient) => (
 	client: Client,
-) => (guildId: string) => async (rules: Partial<DiscordSetupRules>) => {
+) => (guildId: string) => async (rules: Partial<DiscordSetupRules>): Promise<void> => {
 	const { schema, session } = await getXSession(config, mysql);
+
+	const backend = getDiscordBackend(schema);
 
 	try {
 		const guild = await client.guilds.fetch(guildId);
@@ -73,7 +76,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 			throw new Error('No account is associated with that guild');
 		}
 
-		const registry = await getRegistry(schema)(account.value).fullJoin();
+		const registry = await backend.getRegistry(account.value).fullJoin();
 
 		const usedRules: DiscordSetupRules = {
 			deleteOldRoles: true,
@@ -93,7 +96,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 		};
 
 		if (usedRules.deleteOldRoles) {
-			for (const [_, role] of (await guild.roles.fetch()).cache.entries()) {
+			for (const [, role] of (await guild.roles.fetch()).cache.entries()) {
 				if (!usedRules.preserveRoles.includes(role.name)) {
 					try {
 						await role.delete();
@@ -108,7 +111,9 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 		}
 
 		const permissions = new Permissions(Permissions.DEFAULT)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE!)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.remove(Permissions.FLAGS.CHANGE_NICKNAME!);
 
 		const createRole = (color: [number, number, number]) => (name: string) =>
@@ -182,6 +187,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 							mentionable: false,
 							name,
 							permissions: new Permissions(Permissions.DEFAULT).add(
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								Permissions.FLAGS.ADMINISTRATOR!,
 							),
 							position: 0,
@@ -243,7 +249,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 
 			if (guild.ownerID !== member.id && !member.user.bot) {
 				if (results.length === 1) {
-					await setupUser(client)(schema)(guildId)(account.value)()(results[0]);
+					await setupUser(client)(backend)(guildId)(account.value)()(results[0]);
 				} else {
 					await (
 						await member.roles.set(
@@ -256,7 +262,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 					try {
 						const dmChannel = await member.createDM();
 						const messages = await dmChannel.awaitMessages(always(true));
-						if (messages.size == 0) {
+						if (messages.size === 0) {
 							await dmChannel.send(
 								`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${config.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`,
 							);

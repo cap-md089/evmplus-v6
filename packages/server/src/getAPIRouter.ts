@@ -55,36 +55,41 @@ export default async (
 	conf: ServerConfiguration,
 	capwatchUpdateEmitter: MemberUpdateEventEmitter,
 	mysqlConn?: mysql.Client,
-) => {
-	if (!mysqlConn) {
-		while (true) {
-			try {
-				mysqlConn = await mysql.getClient(
-					{
-						user: conf.DB_USER,
-						password: conf.DB_PASSWORD,
-						host: conf.DB_HOST,
-						port: conf.DB_PORT,
+): Promise<{
+	router: express.Router;
+	capwatchEmitter: MemberUpdateEventEmitter;
+	mysqlConn: mysql.Client;
+}> => {
+	while (!mysqlConn) {
+		try {
+			mysqlConn = mysql.getClient(
+				{
+					user: conf.DB_USER,
+					password: conf.DB_PASSWORD,
+					host: conf.DB_HOST,
+					port: conf.DB_PORT,
+				},
+				{
+					pooling: {
+						enabled: true,
+						maxSize: conf.DB_POOL_SIZE,
 					},
-					{
-						pooling: {
-							enabled: true,
-							maxSize: conf.DB_POOL_SIZE,
-						},
-					},
-				);
+				},
+			);
 
-				await mysqlConn.getSession();
+			await mysqlConn.getSession();
 
-				break;
-			} catch (e) {
-				console.log('Could not get a connection. Waiting one second...');
-				console.error(e);
-				await new Promise<void>(res => setTimeout(res, 1000));
-				console.log(`Retrying connection to ${conf.DB_HOST}:${conf.DB_PORT}...`);
-			}
+			break;
+		} catch (e) {
+			console.log('Could not get a connection. Waiting one second...');
+			console.error(e);
+			mysqlConn = undefined;
+			await new Promise<void>(res => setTimeout(res, 1000));
+			console.log(`Retrying connection to ${conf.DB_HOST}:${conf.DB_PORT}...`);
 		}
 	}
+
+	const finalMySQLConn = mysqlConn;
 
 	const router: express.Router = express.Router();
 
@@ -112,11 +117,11 @@ export default async (
 		request: express.Request,
 		res: express.Response,
 		next: express.NextFunction,
-	) => {
+	): Promise<void> => {
 		const req = (request as unknown) as MySQLRequest;
 
 		try {
-			const session = await mysqlConn!.getSession();
+			const session = await finalMySQLConn.getSession();
 
 			req.mysqlx = session.getSchema(conf.DB_SCHEMA);
 			req.memberUpdateEmitter = capwatchUpdateEmitter;
@@ -140,9 +145,12 @@ export default async (
 	if (conf.NODE_ENV === 'development') {
 		router.use(logger('dev'));
 	} else if (conf.NODE_ENV === 'production') {
-		logger.token('account', (req, res) => {
-			if ('hostname' in req && typeof (req as any).hostname === 'string') {
-				const accountID = getAccountID((req as any).hostname);
+		logger.token('account', req => {
+			if (
+				'hostname' in req &&
+				typeof ((req as unknown) as { hostname: string }).hostname === 'string'
+			) {
+				const accountID = getAccountID(((req as unknown) as { hostname: string }).hostname);
 
 				return Either.cata(always('UNKNOWN'))((id: string) => id)(accountID);
 			} else {

@@ -27,12 +27,12 @@ export interface TeamMemberInputProps extends InputProps<NewTeamMemberEdit> {
 	memberList: Member[];
 }
 
-export const TeamMemberInput = (props: TeamMemberInputProps) => (
+export const TeamMemberInput = (props: TeamMemberInputProps): JSX.Element => (
 	<FormBlock
 		onUpdate={props.onUpdate}
 		onInitialize={props.onInitialize}
 		value={props.value}
-		name={`teamMemberInput-${props.index}`}
+		name={`teamMemberInput-${props.index ?? 0}`}
 	>
 		<MemberSelector name="reference" memberList={props.memberList} />
 

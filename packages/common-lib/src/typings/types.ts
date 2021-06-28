@@ -27,7 +27,7 @@ import type { MaybeObj } from '../lib/Maybe';
  *
  * Documentation is not provided by NHQ
  */
-// tslint:disable-next-line: no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NHQ {
 	export interface CadetAchv {
 		CAPID: number;
@@ -372,10 +372,10 @@ export enum AuditableEventType {
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
 	READ = 1,
-	// tslint:disable-next-line:no-bitwise
+	// eslint-disable-next-line no-bitwise
 	WRITE = 1 << 1,
 	// Modify, for folders, means changing name and uploading files
-	// tslint:disable-next-line:no-bitwise
+	// eslint-disable-next-line no-bitwise
 	MODIFY = 1 << 2,
 	FULLCONTROL = 255,
 }
@@ -460,7 +460,7 @@ export enum EventType {
 	LINKED = 'Linked',
 }
 
-// tslint:disable-next-line: no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Permissions {
 	export enum FlightAssign {
 		NO = 'No',
@@ -1124,6 +1124,10 @@ export interface RawLinkedEvent extends AccountIdentifiable {
 		feeId?: null | string;
 	};
 	/**
+	 * Allows for overriding properties on the original event
+	 */
+	extraProperties: Partial<NewEventObject>;
+	/**
 	 * Specify that this is a linked event
 	 */
 	type: EventType.LINKED;
@@ -1134,9 +1138,9 @@ export interface RawLinkedEvent extends AccountIdentifiable {
  */
 export type RawEventObject = RawLinkedEvent | RawRegularEventObject;
 
-export type RawResolvedEventObject =
-	| RawRegularEventObject
-	| (Omit<RawRegularEventObject, 'type'> & RawLinkedEvent);
+export type RawResolvedLinkedEvent = Omit<RawRegularEventObject, 'type'> & RawLinkedEvent;
+
+export type RawResolvedEventObject = RawRegularEventObject | RawResolvedLinkedEvent;
 
 export type FullPointOfContact = DisplayInternalPointOfContact | ExternalPointOfContact;
 
@@ -1254,6 +1258,12 @@ export interface NewEventObject {
 		 */
 		feeAmount: number;
 	};
+	/**
+	 * custom email signup notification markdown text
+	 */
+	emailBody: MaybeObj<{
+		body: string;
+	}>;
 	/**
 	 * Describes the options for meals
 	 */
@@ -1431,6 +1441,12 @@ export interface AttendanceRecord extends NewAttendanceRecord {
 	// Details where the record come from
 	sourceEventID: number;
 	sourceAccountID: string;
+}
+
+export interface RawAttendanceDBRecord
+	extends Omit<AttendanceRecord, 'sourceAccountID' | 'sourceEventID'> {
+	accountID: string;
+	eventID: number;
 }
 
 export interface FullAttendanceRecord extends AttendanceRecord {
@@ -1628,7 +1644,7 @@ export interface PointOfContact {
 	 *
 	 * Value may not exist due to backwards compatability; if it doesn't, don't show info
 	 */
-	publicDisplay?: boolean;
+	publicDisplay: boolean | undefined;
 }
 
 /**
@@ -2636,7 +2652,7 @@ export interface CAPExtraMemberInformation extends ExtraMemberInformation {
 	/**
 	 * Descriminates the type
 	 */
-	member: CAPMemberReference;
+	type: 'CAP';
 }
 
 export type AllExtraMemberInformation = CAPExtraMemberInformation;
@@ -3847,7 +3863,7 @@ export interface ParamType {
 	[key: string]: string | undefined;
 }
 
-export interface BasicMySQLRequest<P extends ParamType = {}, B = any> {
+export interface BasicMySQLRequest<P extends ParamType = ParamType, B = any> {
 	/**
 	 * Contains basic properties from express.Request
 	 */
@@ -4028,12 +4044,7 @@ export type FileAuditEvents = AuditableEvents<FromDatabase<EditableFileObjectPro
 export type ProspectiveMemberAudits = AuditableEvents<FromDatabase<NewCAPProspectiveMember>>;
 export type PermissionsAudits = AuditableEvents<FromDatabase<MemberPermissions>>;
 
-export type AllAudits =
-	| EventAuditEvents
-	| AttendanceAuditEvents
-	| FileAuditEvents
-	| ProspectiveMemberAudits
-	| PermissionsAudits;
+export type AllAudits = AuditableEvents<AuditableObjects & DatabaseIdentifiable>;
 
 export interface CadetPromotionRequirements {
 	/**

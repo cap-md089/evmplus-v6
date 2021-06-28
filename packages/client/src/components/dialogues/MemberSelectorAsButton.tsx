@@ -25,6 +25,7 @@ import LoaderShort from '../LoaderShort';
 import { DialogueButtonProps } from './DialogueButton';
 import DownloadDialogue from './DownloadDialogue';
 import { Member, getFullMemberName } from 'common-lib';
+import { CheckInput } from '../form-inputs/Selector';
 
 type MemberSelectorButtonProps = DialogueButtonProps & {
 	memberList: Promise<Member[]> | Member[];
@@ -38,7 +39,7 @@ interface MemberSelectorButtonState {
 	members: Member[] | null;
 	open: boolean;
 	selectedValue: Member | null;
-	filterValues: any[];
+	filterValues: [string];
 }
 
 export default class MemberSelectorButton extends React.Component<
@@ -49,18 +50,10 @@ export default class MemberSelectorButton extends React.Component<
 		members: null,
 		open: false,
 		selectedValue: null,
-		filterValues: [],
+		filterValues: [''],
 	};
 
-	constructor(props: MemberSelectorButtonProps) {
-		super(props);
-
-		this.openDialogue = this.openDialogue.bind(this);
-		this.setSelectedMember = this.setSelectedMember.bind(this);
-		this.selectMember = this.selectMember.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const members = await this.props.memberList;
 
 		this.setState({
@@ -68,7 +61,7 @@ export default class MemberSelectorButton extends React.Component<
 		});
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.state.members) {
 			return this.props.useShortLoader ? <LoaderShort /> : <Loader />;
 		}
@@ -82,7 +75,7 @@ export default class MemberSelectorButton extends React.Component<
 				>
 					{this.props.children}
 				</Button>
-				<DownloadDialogue<Member>
+				<DownloadDialogue<Member, [string]>
 					open={this.state.open}
 					multiple={false}
 					overflow={400}
@@ -91,51 +84,54 @@ export default class MemberSelectorButton extends React.Component<
 					displayValue={getFullMemberName}
 					onCancel={() => this.selectMember(null)}
 					valuePromise={this.state.members}
-					filters={[
-						{
-							check: (member, input) => {
-								if (input === '' || typeof input !== 'string') {
-									return true;
-								}
+					filters={
+						[
+							{
+								check: (member, input) => {
+									if (input === '' || typeof input !== 'string') {
+										return true;
+									}
 
-								try {
-									return !!getFullMemberName(member).match(
-										new RegExp(input, 'gi'),
-									);
-								} catch (e) {
-									return false;
-								}
-							},
-							displayText: 'Member name',
-							filterInput: TextInput,
-						},
-					]}
+									try {
+										return !!new RegExp(input, 'gi').exec(
+											getFullMemberName(member),
+										);
+									} catch (e) {
+										return false;
+									}
+								},
+								displayText: 'Member name',
+								filterInput: TextInput,
+							} as CheckInput<Member, string>,
+						] as const
+					}
 					onValueClick={this.setSelectedMember}
 					onValueSelect={this.selectMember}
 					selectedValue={this.state.selectedValue}
+					filterValues={this.state.filterValues}
 				/>
 			</>
 		);
 	}
 
-	private openDialogue() {
+	private openDialogue = (): void => {
 		this.setState({
 			open: true,
 		});
-	}
+	};
 
-	private setSelectedMember(selectedValue: Member | null) {
+	private setSelectedMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 		});
-	}
+	};
 
-	private selectMember(selectedValue: Member | null) {
+	private selectMember = (selectedValue: Member | null): void => {
 		this.setState({
 			selectedValue,
 			open: false,
 		});
 
 		this.props.onMemberSelect(selectedValue);
-	}
+	};
 }

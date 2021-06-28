@@ -51,11 +51,7 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		state: 'LOADING',
 	};
 
-	public constructor(props: PageProps) {
-		super(props);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -84,7 +80,7 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 				teams.map(team => ({
 					target: team.id.toString(),
 					text: team.name,
-					type: 'Reference' as 'Reference',
+					type: 'Reference' as const,
 				})),
 			);
 
@@ -95,7 +91,7 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.state === 'LOADING') {
 			return <Loader />;
 		}

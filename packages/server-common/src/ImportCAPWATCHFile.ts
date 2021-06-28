@@ -41,14 +41,14 @@ type FileData<T> = {
 };
 
 export type CAPWATCHModule<T> = (
-	fileData: FileData<T>[],
+	fileData: Array<FileData<T>>,
 	schema: Schema,
 ) => Promise<CAPWATCHImportErrors>;
 
-const modules: {
+const modules: Array<{
 	module: CAPWATCHModule<any>;
 	file: string;
-}[] = [
+}> = [
 	{
 		module: memberParse,
 		file: 'Member.txt',
@@ -137,7 +137,7 @@ interface CAPWATCHModuleResult {
 	file: string;
 }
 
-export default async function*(
+export default async function* (
 	zipFileLocation: string,
 	schema: Schema,
 	session: Session,
@@ -167,19 +167,21 @@ export default async function*(
 		});
 
 		parser.on('readable', () => {
-			let record;
-			// tslint:disable-next-line: no-conditional-assignment
+			let record: any;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			while ((record = parser.read())) {
 				rows.push(record);
 			}
 		});
 
 		yield new Promise<CAPWATCHModuleResult>(res => {
-			parser.on('end', async () => {
-				res({
-					error: await mod.module(rows, schema),
-					file: mod.file,
-				});
+			parser.on('end', () => {
+				void mod.module(rows, schema).then(error =>
+					res({
+						error,
+						file: mod.file,
+					}),
+				);
 			});
 
 			zippedFile.pipe(parser);

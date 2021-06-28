@@ -19,8 +19,10 @@
 
 import {
 	AsyncEither,
+	asyncRight,
 	Either,
 	EitherObj,
+	errorGenerator,
 	FileObject,
 	FileUserAccessControlPermissions,
 	FullFileObject,
@@ -111,22 +113,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 
 	private extraInfoRef = React.createRef<HTMLDivElement>();
 
-	constructor(props: DriveProps) {
-		super(props);
-
-		this.onFileClick = this.onFileClick.bind(this);
-		this.onFolderNavigate = this.onFolderNavigate.bind(this);
-
-		this.createFolder = this.createFolder.bind(this);
-		this.updateNewFolderForm = this.updateNewFolderForm.bind(this);
-		this.addFile = this.addFile.bind(this);
-		this.fileDeleted = this.fileDeleted.bind(this);
-		this.fileIDDeleted = this.fileIDDeleted.bind(this);
-		this.fileModified = this.fileModified.bind(this);
-		this.refresh = this.refresh.bind(this);
-	}
-
-	public get folderID() {
+	public get folderID(): string {
 		const parts = this.props.routeProps.location.pathname.split('/');
 
 		const last = parts[parts.length - 1];
@@ -138,16 +125,18 @@ export class Drive extends Page<DriveProps, DriveState> {
 		}
 	}
 
-	public get path() {
+	public get path(): string {
 		return this.props.routeProps.location.pathname.split('/')[1];
 	}
 
-	public async componentDidMount() {
-		this.goToFolder(this.folderID, false);
-
+	public async componentDidMount(): Promise<void> {
 		const resultEither = await AsyncEither.All([
 			fetchApi.team.list({}, {}),
 			fetchApi.member.memberList({}, {}),
+			asyncRight<HTTPError, void>(
+				this.goToFolder(this.folderID, false),
+				errorGenerator('Could not go to folder'),
+			),
 		]);
 
 		if (Either.isLeft(resultEither)) {
@@ -163,7 +152,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 		}
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		if (!this.state.showingExtraInfo && this.extraInfoRef.current) {
 			this.setState({
 				showingExtraInfo: true,
@@ -194,7 +183,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.error) {
 			return <div>{this.state.errorReason}</div>;
 		}
@@ -274,6 +263,8 @@ export class Drive extends Page<DriveProps, DriveState> {
 				)) &&
 			this.state.currentFolder.id !== 'personalfolders';
 
+		const { currentFolder } = this.state;
+
 		return (
 			<div>
 				{isEditableFolder ? (
@@ -308,14 +299,14 @@ export class Drive extends Page<DriveProps, DriveState> {
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
 										fileDeleteID={this.fileIDDeleted}
-										parent={this.state.currentFolder!}
+										parent={currentFolder}
 									/>
 								))}
 							</div>
 							{isFolderSelected && i === indices.row ? (
 								<ExtraFolderDisplay
-									parentFile={this.state.currentFolder!}
-									currentFolderID={this.state.currentFolder!.id}
+									parentFile={currentFolder}
+									currentFolderID={currentFolder.id}
 									file={folderList[indices.column]}
 									member={this.props.member}
 									childRef={this.extraInfoRef}
@@ -339,7 +330,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 						onFileUpload={this.addFile}
 						member={this.props.member}
 						account={this.props.account}
-						currentFolder={this.state.currentFolder!}
+						currentFolder={currentFolder}
 						display={true}
 					/>
 				) : null}
@@ -354,13 +345,13 @@ export class Drive extends Page<DriveProps, DriveState> {
 										onSelect={this.onFileClick}
 										selected={f.id === this.state.currentlySelected}
 										member={this.props.member}
-										parent={this.state.currentFolder!}
+										parent={currentFolder}
 									/>
 								))}
 							</div>
 							{isFileSelected && i === indices.row ? (
 								<ExtraFileDisplay
-									parentFile={this.state.currentFolder!}
+									parentFile={currentFolder}
 									file={fileList[indices.column]}
 									member={this.props.member}
 									childRef={this.extraInfoRef}
@@ -383,11 +374,11 @@ export class Drive extends Page<DriveProps, DriveState> {
 		);
 	}
 
-	private onFolderNavigate(file: FileObject) {
-		this.goToFolder(file.id, true);
-	}
+	private onFolderNavigate = async (file: FileObject): Promise<void> => {
+		await this.goToFolder(file.id, true);
+	};
 
-	private onFileClick(file: FileObject) {
+	private onFileClick = (file: FileObject): void => {
 		this.setState(prev =>
 			prev.currentlySelected === file.id
 				? {
@@ -399,15 +390,15 @@ export class Drive extends Page<DriveProps, DriveState> {
 						showingExtraInfo: false,
 				  },
 		);
-	}
+	};
 
-	private updateNewFolderForm({ name: newFoldername }: { name: string }) {
+	private updateNewFolderForm = ({ name: newFoldername }: { name: string }): void => {
 		this.setState({
 			newFoldername,
 		});
-	}
+	};
 
-	private async goToFolder(id: string, update = true) {
+	private async goToFolder(id: string, update = true): Promise<void> {
 		const folderInfoEither = await AsyncEither.All([
 			fetchApi.files.children.getBasic({ parentid: id }, {}),
 			fetchApi.files.files.get({ id }, {}),
@@ -446,7 +437,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 		);
 	}
 
-	private addFile(file: FileObject) {
+	private addFile = (file: FileObject): void => {
 		if (!this.props.member) {
 			// Probably an error if it reaches here
 			return;
@@ -457,22 +448,27 @@ export class Drive extends Page<DriveProps, DriveState> {
 			uploader: Maybe.some(this.props.member),
 		};
 
-		this.setState(prev => ({
-			files: [...prev.files!, fileObject],
-		}));
-	}
+		this.setState(prev =>
+			prev.files === null
+				? prev
+				: {
+						...prev,
+						files: [...prev.files, fileObject],
+				  },
+		);
+	};
 
-	private fileIDDeleted(id: string) {
+	private fileIDDeleted = (id: string): void => {
 		this.setState(prev => ({
 			files: (prev.files || []).filter(f => f.id !== id),
 		}));
-	}
+	};
 
-	private fileDeleted(file: FileObject) {
+	private fileDeleted = (file: FileObject): void => {
 		this.fileIDDeleted(file.id);
-	}
+	};
 
-	private fileModified(file: FileObject) {
+	private fileModified = (file: FileObject): void => {
 		const files = (this.state.files || []).slice();
 
 		let index = 0;
@@ -486,15 +482,15 @@ export class Drive extends Page<DriveProps, DriveState> {
 		files[index] = file;
 
 		this.setState({ files });
-	}
+	};
 
-	private refresh() {
+	private refresh = async (): Promise<void> => {
 		if (this.state.currentFolder) {
-			this.goToFolder(this.state.currentFolder.id, false);
+			await this.goToFolder(this.state.currentFolder.id, false);
 		}
-	}
+	};
 
-	private async createFolder() {
+	private createFolder = async (): Promise<void> => {
 		if (this.props.member && this.state.newFoldername !== '' && this.state.currentFolder) {
 			const result = await fetchApi.files.files.createFolder(
 				{ parentid: this.state.currentFolder.id, name: this.state.newFoldername },
@@ -507,7 +503,7 @@ export class Drive extends Page<DriveProps, DriveState> {
 				this.addFile(result.value);
 			}
 		}
-	}
+	};
 }
 
 export default withTeamlist(withMemberList(Drive));

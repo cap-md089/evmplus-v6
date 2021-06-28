@@ -17,10 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node:14-alpine3.11 AS base
+#
+# This container is what is used by most of the node containers
+#
+FROM node:14-buster AS base
 
 # Install the imagemagick library for favicons
-RUN apk add imagemagick \
+RUN apt update && \
+	apt install imagemagick \
 	&& yarn global add lerna@3.22
 
 #
@@ -32,7 +36,7 @@ FROM base AS development-builder
 WORKDIR /usr/evm-plus
 
 RUN yarn global add typescript ttypescript \
-	&& apk add git
+	&& apt install git
 
 #
 # This container is used to program in a Docker environment, and access
@@ -42,6 +46,8 @@ RUN yarn global add typescript ttypescript \
 FROM base AS development
 
 WORKDIR /usr/evm-plus/packages/server
+
+# RUN apk add snap && snap install code-insiders --classic
 
 ENV NODE_ENV=development
 
@@ -80,7 +86,16 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap
 COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
 COPY packages ./packages
 COPY tsconfig.* ./
-RUN lerna run build
+RUN --mount=type=cache,target=/usr/evm-plus/packages/apis/dist/ \
+	--mount=type=cache,target=/usr/evm-plus/packages/auto-api-tests/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/auto-client-api/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/common-lib/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/discord-bot/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server-common/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/server-jest-config/apis/dist \
+	--mount=type=cache,target=/usr/evm-plus/packages/util-cli/apis/dist \
+	lerna run build
 
 #
 # By creating an nginx container like this, we can statically serve HTML,
@@ -95,6 +110,8 @@ COPY packages/server/images /usr/evm-plus/client/images
 # This container is used to execute the compiled JavaScript
 #
 FROM base AS website-runner
+
+RUN rm -rf /var/lib/{apt,dpkg,cache,log}
 
 WORKDIR /usr/evm-plus
 
@@ -125,25 +142,32 @@ CMD node --no-warnings dist/index.js
 # This container will act as a simple container to hold and execute the
 # tests for all the packages
 #
-# This container will require a link to the Docker socket, to spawn new
-# Docker containers
-#
 FROM base AS tests
 
 WORKDIR /usr/evm-plus
 
-COPY --from=builder /usr/evm-plus/packages /usr/evm-plus/packages
-COPY --from=builder /usr/evm-plus/package.json /usr/evm-plus/package.json
-COPY --from=builder /usr/evm-plus/lerna.json /usr/evm-plus/lerna.json
-COPY --from=builder /usr/evm-plus/yarn.lock /usr/evm-plus/yarn.lock
-
-CMD lerna test
+ENV IN_DOCKER_TEST_ENVIRONMENT=1
+CMD yarn run --cwd=packages/server-jest-config test && \
+	yarn run --cwd=packages/server-common test
 
 #
 # This container will run a cron job to import CAPWATCH and update Discord
 # every night
 #
-FROM builder AS capwatch-import
+FROM base AS cronjobs
+
+WORKDIR /usr/mysqlsh
+
+ENV LANG en_US.UTF-8
+
+RUN apt update \
+	&& apt install -y --no-install-recommends \
+	ca-certificates apt-transport-https wget libpython2.7 python locales bash cron \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
+	&& wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
+	&& tar -xvf mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
+	&& mv mysql-shell-8.0.25-linux-glibc2.12-x86-64bit /usr/local/mysql-shell
 
 WORKDIR /usr/evm-plus
 
@@ -156,15 +180,18 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap --
 ENV NODE_ENV production
 
 # Setup crontab
-COPY capwatch-cron/crontab /etc/cron.d/hello-cron
-COPY capwatch-cron/download.sh ./capwatch-cron/download.sh
+COPY cronjobs/crontab /etc/cron.d/hello-cron
+COPY cronjobs/download.sh ./cronjobs/download.sh
+COPY cronjobs/backup.sh ./cronjobs/backup.sh
+COPY scripts/database-dump.js ./cronjobs/database-dump.js
 
 RUN chmod 0744 /etc/cron.d/hello-cron \
-	&& chmod 0744 /usr/evm-plus/capwatch-cron/download.sh \
+	&& chmod 0744 /usr/evm-plus/cronjobs/download.sh \
+	&& chmod 0744 /usr/evm-plus/cronjobs/backup.sh \
 	&& crontab /etc/cron.d/hello-cron \
-	&& touch /var/log/cron.log \
-	&& echo "0 0 * * * /usr/evm-plus/capwatch-cron/download.sh 2>&1 >> /var/log/cron.log" >> /etc/crontabs/root
+	&& touch /var/log/cron.log
 
+ENTRYPOINT [ "sh" ]
 CMD crond && tail -f /var/log/cron.log
 
 #

@@ -4,8 +4,15 @@
 	"devDependencies": {
 		"@commitlint/cli": "^11.0.0",
 		"@commitlint/config-conventional": "^11.0.0",
+		"@typescript-eslint/eslint-plugin": "^4.25.0",
+		"@typescript-eslint/parser": "^4.25.0",
 		"cz-conventional-changelog": "3.3.0",
 		"cz-lerna-changelog": "^2.0.3",
+		"eslint": "^7.27.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-import": "^2.23.3",
+		"eslint-plugin-jsdoc": "^35.0.0",
+		"eslint-plugin-prefer-arrow": "^1.2.3",
 		"husky": "^4.3.0",
 		"lerna": "^3.22.1",
 		"standard-version": "^9.0.0"
@@ -38,7 +45,9 @@
 			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
 		}
 	},
-	"scripts": {},
+	"scripts": {
+		"test": "docker-compose -f docker-compose.test.yml up tests && docker-compose -f docker-compose.test.yml down"
+	},
 	"dependencies": {
 		"semantic-release": "^17.2.3"
 	}

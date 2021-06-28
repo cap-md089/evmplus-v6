@@ -21,7 +21,11 @@ import * as React from 'react';
 import { InputProps } from './Input';
 import './Selector.css';
 import TextInput from './TextInput';
-import { Identifiable } from 'common-lib';
+import { Identifiable, zip } from 'common-lib';
+
+export type Filters<Type, T extends any[]> = T extends [infer F, ...infer R]
+	? readonly [CheckInput<Type, F>, ...Filters<Type, R>]
+	: readonly [];
 
 export interface CheckInput<I, T = any> {
 	displayText: string;
@@ -29,46 +33,50 @@ export interface CheckInput<I, T = any> {
 	check: (value: I, input: T) => boolean;
 }
 
-export interface SelectorProps<T extends Identifiable> {
+export interface SelectorProps<T extends Identifiable, FilterValues extends any[]> {
 	showIDField: boolean;
 	returnIDs?: boolean;
-	filters?: Array<CheckInput<T>>;
+	filters: Filters<T, FilterValues>;
 	displayValue: (val: T) => React.ReactChild;
 	values: T[];
 	onChangeVisible?: (visible: T[]) => void;
 	blacklistFunction?: (value: T) => boolean;
 	overflow?: number;
-	filterValues?: any[];
-	onFilterValuesChange?: (filterValues: any[]) => void;
+	filterValues: FilterValues;
+	onFilterValuesChange?: (filterValues: FilterValues) => void;
 }
 
-interface SelectorPropsSingle<T extends Identifiable> extends InputProps<T>, SelectorProps<T> {
+export interface SelectorPropsSingle<T extends Identifiable, FilterValues extends any[]>
+	extends InputProps<T>,
+		SelectorProps<T, FilterValues> {
 	multiple: false;
 }
 
-interface SelectorPropsMultiple<T extends Identifiable> extends InputProps<T[]>, SelectorProps<T> {
+export interface SelectorPropsMultiple<T extends Identifiable, FilterValues extends any[]>
+	extends InputProps<T[]>,
+		SelectorProps<T, FilterValues> {
 	multiple: true;
 }
 
-interface SelectorState {
+interface SelectorState<FilterValues extends any[]> {
 	filterID: string;
-	filterValues: any;
+	filterValues: FilterValues;
 }
 
-export type CombinedSelectorProps<T extends Identifiable> =
-	| SelectorPropsSingle<T>
-	| SelectorPropsMultiple<T>;
+export type CombinedSelectorProps<T extends Identifiable, FilterValues extends any[]> =
+	| SelectorPropsSingle<T, FilterValues>
+	| SelectorPropsMultiple<T, FilterValues>;
 
-export default class Selector<T extends Identifiable> extends React.Component<
-	CombinedSelectorProps<T>,
-	SelectorState
-> {
-	public state: SelectorState = {
+export default class Selector<
+	T extends Identifiable,
+	FilterValues extends any[]
+> extends React.Component<CombinedSelectorProps<T, FilterValues>, SelectorState<FilterValues>> {
+	public state: SelectorState<FilterValues> = {
 		filterID: '',
-		filterValues: [],
+		filterValues: ([] as any[]) as FilterValues,
 	};
 
-	public constructor(props: CombinedSelectorProps<T>) {
+	public constructor(props: CombinedSelectorProps<T, FilterValues>) {
 		super(props);
 
 		if (typeof this.props.onInitialize !== 'undefined' && this.props.multiple) {
@@ -91,8 +99,10 @@ export default class Selector<T extends Identifiable> extends React.Component<
 			const filterValues = (this.props.filterValues || this.state.filterValues).slice();
 
 			const filteredValues = this.filteredIDValues.filter(val =>
-				(this.props.filters || [])
-					.map(({ check }, j) => check(val, filterValues[j]))
+				this.props.filters
+					.map(<U extends any>({ check }: CheckInput<T, U>, j: number) =>
+						check(val, filterValues[j]),
+					)
 					.reduce((prev, curr) => prev && curr, true),
 			);
 
@@ -100,17 +110,21 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		}
 
 		this.state.filterValues =
-			this.props.filterValues || new Array((props.filters || []).length);
+			this.props.filterValues || (new Array((props.filters || []).length) as FilterValues);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const filterValues = this.props.filterValues || this.state.filterValues;
 
 		const filteredValues = this.filteredIDValues.filter(val =>
-			(this.props.filters || [])
-				.map(({ check }, i) => check(val, filterValues[i]))
+			this.props.filters
+				.map(<U extends any>({ check }: CheckInput<T, U>, j: number) =>
+					check(val, filterValues[j]),
+				)
 				.reduce((prev, curr) => prev && curr, true),
 		);
+
+		type FilterWithValue<U extends any = any> = [CheckInput<T, U>, U];
 
 		return (
 			<div
@@ -134,23 +148,23 @@ export default class Selector<T extends Identifiable> extends React.Component<
 								</div>
 							</li>
 						) : null}
-						{(this.props.filters || []).map((value, i) => (
-							<li key={i}>
-								<div className="selector-left-filter">{value.displayText}</div>
-								<div className="selector-right-filter">
-									<value.filterInput
-										value={
-											typeof filterValues[i] === 'undefined'
-												? ''
-												: filterValues[i]
-										}
-										name="null"
-										onChange={this.getFilterValueUpdater(i)}
-										// onInitialize={this.getInitializer(i)}
-									/>
-								</div>
-							</li>
-						))}
+						{/* eslint-disable-next-line @typescript-eslint/no-unsafe-call */}
+						{(zip(this.props.filters, filterValues) as FilterWithValue[]).map(
+							([filter, value], i) => (
+								<li key={i}>
+									<div className="selector-left-filter">{filter.displayText}</div>
+									<div className="selector-right-filter">
+										<filter.filterInput
+											// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+											value={value}
+											name="null"
+											onChange={this.getFilterValueUpdater(i)}
+											// onInitialize={this.getInitializer(i)}
+										/>
+									</div>
+								</li>
+							),
+						)}
 					</ul>
 				</div>
 				<ul
@@ -165,11 +179,14 @@ export default class Selector<T extends Identifiable> extends React.Component<
 							key={i}
 							onClick={this.getSelectHandler(val)}
 							className={
-								(this.props.multiple
-								? (this.props.value || []).map(value => value.id).indexOf(val.id) >
-								  -1
-								: typeof this.props.value !== 'undefined' &&
-								  this.props.value.id === val.id)
+								(
+									this.props.multiple
+										? (this.props.value || [])
+												.map(value => value.id)
+												.indexOf(val.id) > -1
+										: typeof this.props.value !== 'undefined' &&
+										  this.props.value.id === val.id
+								)
 									? 'selected'
 									: ''
 							}
@@ -182,40 +199,42 @@ export default class Selector<T extends Identifiable> extends React.Component<
 		);
 	}
 
-	private getFilterValueUpdater(i: number) {
-		return (e: any) => {
-			const filterValues = (this.props.filterValues || this.state.filterValues).slice();
+	private getFilterValueUpdater = (i: number) => (e: any) => {
+		const filterValues: FilterValues = (
+			this.props.filterValues || this.state.filterValues
+		).slice() as FilterValues;
 
-			filterValues[i] = e;
+		filterValues[i] = e as FilterValues[typeof i];
 
-			const filteredValues = this.filteredIDValues.filter(val =>
-				(this.props.filters || [])
-					.map(({ check }, j) => check(val, filterValues[j]))
-					.reduce((prev, curr) => prev && curr, true),
-			);
+		const filteredValues = this.filteredIDValues.filter(val =>
+			this.props.filters
+				.map(<U extends any>({ check }: CheckInput<T, U>, j: number) =>
+					check(val, filterValues[j]),
+				)
+				.reduce((prev, curr) => prev && curr, true),
+		);
 
-			if (filteredValues.length === 1 && this.props.onChange) {
-				if (this.props.multiple) {
-					this.props.onChange([...(this.props.value || []), filteredValues[0]]);
-				} else {
-					this.props.onChange(filteredValues[0]);
-				}
-			}
-
-			if (
-				typeof this.props.filterValues !== 'undefined' &&
-				typeof this.props.onFilterValuesChange !== 'undefined'
-			) {
-				this.props.onFilterValuesChange(filterValues);
+		if (filteredValues.length === 1 && this.props.onChange) {
+			if (this.props.multiple) {
+				this.props.onChange([...(this.props.value || []), filteredValues[0]]);
 			} else {
-				this.setState({ filterValues });
+				this.props.onChange(filteredValues[0]);
 			}
+		}
 
-			if (this.props.onChangeVisible) {
-				this.props.onChangeVisible(filteredValues);
-			}
-		};
-	}
+		if (
+			typeof this.props.filterValues !== 'undefined' &&
+			typeof this.props.onFilterValuesChange !== 'undefined'
+		) {
+			this.props.onFilterValuesChange(filterValues);
+		} else {
+			this.setState({ filterValues });
+		}
+
+		if (this.props.onChangeVisible) {
+			this.props.onChangeVisible(filteredValues);
+		}
+	};
 
 	// private getInitializer(i: number) {
 	// 	return ((e: {name: string, value: any}) => {
@@ -250,62 +269,60 @@ export default class Selector<T extends Identifiable> extends React.Component<
 	// 	}).bind(this);
 	// }
 
-	private getSelectHandler(val: T) {
-		return (e: any) => {
-			if (this.props.blacklistFunction && !this.props.blacklistFunction(val)) {
-				return;
+	private getSelectHandler = (val: T) => () => {
+		if (this.props.blacklistFunction && !this.props.blacklistFunction(val)) {
+			return;
+		}
+
+		if (!this.props.multiple) {
+			if (this.props.onChange) {
+				this.props.onChange(val);
 			}
 
-			if (!this.props.multiple) {
-				if (this.props.onChange) {
-					this.props.onChange(val);
-				}
-
-				if (this.props.onUpdate) {
-					this.props.onUpdate({
-						name: this.props.name,
-						value: val,
-					});
-				}
-
-				return;
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: val,
+				});
 			}
 
-			const index = (this.props.value || []).map(value => value.id).indexOf(val.id);
+			return;
+		}
 
-			if (index > -1) {
-				const newList = (this.props.value || []).slice();
+		const index = (this.props.value || []).map(value => value.id).indexOf(val.id);
 
-				newList.splice(index, 1);
+		if (index > -1) {
+			const newList = (this.props.value || []).slice();
 
-				if (this.props.onChange) {
-					this.props.onChange(newList);
-				}
+			newList.splice(index, 1);
 
-				if (this.props.onUpdate) {
-					this.props.onUpdate({
-						name: this.props.name,
-						value: newList,
-					});
-				}
-			} else {
-				const newList = [...(this.props.value || []), val];
-
-				if (this.props.onChange) {
-					this.props.onChange(newList);
-				}
-
-				if (this.props.onUpdate) {
-					this.props.onUpdate({
-						name: this.props.name,
-						value: newList,
-					});
-				}
+			if (this.props.onChange) {
+				this.props.onChange(newList);
 			}
-		};
-	}
 
-	private get filteredIDValues() {
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: newList,
+				});
+			}
+		} else {
+			const newList = [...(this.props.value || []), val];
+
+			if (this.props.onChange) {
+				this.props.onChange(newList);
+			}
+
+			if (this.props.onUpdate) {
+				this.props.onUpdate({
+					name: this.props.name,
+					value: newList,
+				});
+			}
+		}
+	};
+
+	private get filteredIDValues(): T[] {
 		try {
 			const filteredIDValues =
 				this.state.filterID === ''

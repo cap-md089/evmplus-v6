@@ -65,20 +65,7 @@ export default class ExtraFileDisplay extends React.Component<
 		permissionsOpen: false,
 	};
 
-	constructor(props: ExtraDisplayProps) {
-		super(props);
-
-		this.onFormChange = this.onFormChange.bind(this);
-		this.onFileChangeFormSubmit = this.onFileChangeFormSubmit.bind(this);
-
-		this.onDeleteFileClick = this.onDeleteFileClick.bind(this);
-
-		this.onFilePermissionsSave = this.onFilePermissionsSave.bind(this);
-		this.onFilePermissionsSaveCancel = this.onFilePermissionsSaveCancel.bind(this);
-		this.openFilePermissions = this.openFilePermissions.bind(this);
-	}
-
-	public render() {
+	public render(): JSX.Element {
 		const userCanModify = canModify(this.props.member);
 
 		return (
@@ -129,19 +116,19 @@ export default class ExtraFileDisplay extends React.Component<
 		);
 	}
 
-	private onFormChange(formState: CommentsForm) {
+	private onFormChange = (formState: CommentsForm): void => {
 		this.props.file.comments = formState.comments;
 		this.props.fileModify(this.props.file);
-	}
+	};
 
-	private async onDeleteFileClick() {
+	private onDeleteFileClick = async (): Promise<void> => {
 		if (this.props.member) {
 			await fetchApi.files.files.delete({ fileid: this.props.file.id }, {});
 			this.props.fileDelete(this.props.file);
 		}
-	}
+	};
 
-	private async onFileChangeFormSubmit(formState: CommentsForm) {
+	private onFileChangeFormSubmit = async (formState: CommentsForm): Promise<void> => {
 		if (this.props.member) {
 			const newFile: FileObject = {
 				...this.props.file,
@@ -152,15 +139,15 @@ export default class ExtraFileDisplay extends React.Component<
 
 			this.props.fileModify(newFile);
 		}
-	}
+	};
 
-	private openFilePermissions() {
+	private openFilePermissions = (): void => {
 		this.setState({
 			permissionsOpen: true,
 		});
-	}
+	};
 
-	private async onFilePermissionsSave(file: FileObject) {
+	private onFilePermissionsSave = async (file: FileObject): Promise<void> => {
 		await fetchApi.files.files.setInfo({ fileid: file.id }, file).fullJoin();
 
 		this.setState({
@@ -168,11 +155,11 @@ export default class ExtraFileDisplay extends React.Component<
 		});
 
 		this.props.fileModify(file);
-	}
+	};
 
-	private onFilePermissionsSaveCancel() {
+	private onFilePermissionsSaveCancel = (): void => {
 		this.setState({
 			permissionsOpen: false,
 		});
-	}
+	};
 }

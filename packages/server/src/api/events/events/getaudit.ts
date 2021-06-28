@@ -17,12 +17,14 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api } from 'common-lib';
-import { getAudit } from 'server-common';
+import { Backends, EventsBackend, getCombinedEventsBackend, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.GetEventAuditData> = req =>
-	getAudit(req.mysqlx)(req.account)(req.params.id).map(wrapper);
+export const func: Endpoint<
+	Backends<[EventsBackend]>,
+	api.events.events.GetEventAuditData
+> = backend => req => backend.getAudit(req.account)(req.params.id).map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedEventsBackend());

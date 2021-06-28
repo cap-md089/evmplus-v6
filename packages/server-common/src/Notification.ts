@@ -21,7 +21,6 @@ import { Collection, Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	addOne,
-	AdminNotification,
 	AsyncEither,
 	asyncIterMap,
 	asyncRight,
@@ -56,6 +55,9 @@ import {
 import { canSeeAdminNotification, canSeeMemberNotification } from './notifications';
 import { ServerEither } from './servertypes';
 
+export * from './notifications';
+export * as notifications from './notifications';
+
 export const getNotification = (schema: Schema) => (account: AccountObject) => <
 	C extends NotificationCause,
 	T extends NotificationTarget,
@@ -75,8 +77,11 @@ export const getNotification = (schema: Schema) => (account: AccountObject) => <
 		)
 		.map(val => ({
 			...val,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cause: val.cause!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			extraData: val.extraData!,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			target: val.target!,
 		}));
 
@@ -145,13 +150,19 @@ export const toggleRead = <T extends RawNotificationObject>(notification: T): T 
 	read: !notification.read,
 });
 
-export const deleteNotification = (schema: Schema) => (notification: NotificationObject) =>
+export const deleteNotification = (schema: Schema) => (
+	notification: NotificationObject,
+): ServerEither<void> =>
 	deleteItemFromCollectionA(schema.getCollection<RawNotificationObject>('Notifications'))(
 		notification,
 	);
 
-export const saveNotification = (schema: Schema) => (notification: NotificationObject) =>
-	saveToCollectionA(schema.getCollection<RawNotificationObject>('Notifications'))(notification);
+export const saveNotification = (schema: Schema) => <T extends NotificationObject>(
+	notification: T,
+): ServerEither<T> =>
+	saveToCollectionA(schema.getCollection<RawNotificationObject>('Notifications'))(
+		notification,
+	) as ServerEither<T>;
 
 export const createNotification = (schema: Schema) => (account: AccountObject) => <
 	C extends NotificationCause = NotificationCause,
@@ -176,13 +187,11 @@ export const createNotification = (schema: Schema) => (account: AccountObject) =
 			),
 		);
 
-export const canSeeNotification = (user: User) => (notification: NotificationObject) =>
+export const canSeeNotification = (user: User) => (notification: NotificationObject): boolean =>
 	notification.target.type === NotificationTargetType.ADMINS
-		? canSeeAdminNotification(user)(notification as AdminNotification)
+		? canSeeAdminNotification(user)
 		: notification.target.type === NotificationTargetType.MEMBER
 		? canSeeMemberNotification(user)(notification as MemberNotification)
 		: notification.target.type === NotificationTargetType.EVERYONE
 		? true
 		: false;
-
-export * as notifications from './notifications';

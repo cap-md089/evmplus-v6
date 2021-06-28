@@ -39,7 +39,7 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import Button from '../../components/Button';
 import { InputProps } from '../../components/form-inputs/Input';
-import Selector, { CheckInput } from '../../components/form-inputs/Selector';
+import Selector, { CheckInput, SelectorPropsMultiple } from '../../components/form-inputs/Selector';
 import SimpleRadioButton from '../../components/form-inputs/SimpleRadioButton';
 import SimpleForm, {
 	Checkbox,
@@ -136,12 +136,8 @@ const memberRanks = [
 	'gen',
 ];
 
-const normalizeRankInput = (rank: string) =>
-	(rank || '')
-		.toLowerCase()
-		.replace('/', '')
-		.replace('2nd', '2d')
-		.replace(' ', '');
+const normalizeRankInput = (rank: string): string =>
+	(rank || '').toLowerCase().replace('/', '').replace('2nd', '2d').replace(' ', '');
 
 const sortFunctions: Array<(a: Member, b: Member) => number> = [
 	(a, b) => a.nameLast.localeCompare(b.nameLast),
@@ -161,7 +157,7 @@ const flightInput: CheckInput<Member, string> = {
 			return true;
 		}
 
-		if (!!input.match(/senior/i)) {
+		if (!!/senior/i.exec(input)) {
 			if (mem.type === 'CAPNHQMember' || mem.type === 'CAPProspectiveMember') {
 				return mem.seniorMember;
 			}
@@ -172,7 +168,7 @@ const flightInput: CheckInput<Member, string> = {
 				(mem.type === 'CAPProspectiveMember' || mem.type === 'CAPNHQMember') &&
 				mem.flight !== null
 			) {
-				return !!mem.flight.match(new RegExp(input, 'i'));
+				return !!new RegExp(input, 'i').exec(mem.flight);
 			} else {
 				return false;
 			}
@@ -192,10 +188,10 @@ const nameInput: CheckInput<MemberObject, string> = {
 		try {
 			const reg = new RegExp(input, 'i');
 			return (
-				!!mem.nameFirst.match(reg) ||
-				!!mem.nameLast.match(reg) ||
-				!!mem.nameMiddle.match(reg) ||
-				!!mem.nameSuffix.match(reg)
+				!!reg.exec(mem.nameFirst) ||
+				!!reg.exec(mem.nameFirst) ||
+				!!reg.exec(mem.nameMiddle) ||
+				!!reg.exec(mem.nameSuffix)
 			);
 		} catch (e) {
 			return true;
@@ -252,9 +248,7 @@ const rankLessThan: CheckInput<Member, string> = {
 };
 
 const memberFilter: CheckInput<Member, MemberList> = {
-	check: (mem, input) => {
-		return memberFilters[Maybe.orSome(MemberList.ALL)(Maybe.fromValue(input))](mem);
-	},
+	check: (mem, input) => memberFilters[Maybe.orSome(MemberList.ALL)(Maybe.fromValue(input))](mem),
 	filterInput: (props: InputProps<MemberList>) => (
 		<SimpleRadioButton<MemberList>
 			labels={['Cadets', 'Senior Members', 'All']}
@@ -274,9 +268,15 @@ const memberFilters: Array<(a: Member) => boolean> = [
 	() => true,
 ];
 
-const advancedFilters = [flightInput, nameInput, rankGreaterThan, rankLessThan, memberFilter];
+const advancedFilters = [
+	flightInput,
+	nameInput,
+	rankGreaterThan,
+	rankLessThan,
+	memberFilter,
+] as const;
 
-const simpleFilters = [nameInput, memberFilter];
+const simpleFilters = [nameInput, memberFilter] as const;
 
 export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, MultiAddState> {
 	public state: MultiAddState = {
@@ -298,24 +298,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		capidError: null,
 	};
 
-	constructor(props: PageProps<{ id: string }>) {
-		super(props);
-
-		this.renderMember = this.renderMember.bind(this);
-
-		this.selectAll = this.selectAll.bind(this);
-		this.selectVisible = this.selectVisible.bind(this);
-		this.deselectAll = this.deselectAll.bind(this);
-		this.handleChange = this.handleChange.bind(this);
-		this.addMembers = this.addMembers.bind(this);
-		this.handleDifferentVisibleItems = this.handleDifferentVisibleItems.bind(this);
-		this.addMembers = this.addMembers.bind(this);
-		this.onFilterValuesChange = this.onFilterValuesChange.bind(this);
-		this.modifyCAPID = this.modifyCAPID.bind(this);
-		this.addCAPID = this.addCAPID.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.updateTitle('Attendance add');
 
 		if (!this.props.member) {
@@ -390,7 +373,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		this.props.updateSideNav([]);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <SigninLink>Please sign in to continue.</SigninLink>;
 		}
@@ -405,15 +388,65 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
-		const filterValues = this.state.displayAdvanced
-			? [
-					this.state.filterValues.flightInput,
-					this.state.filterValues.nameInput,
-					this.state.filterValues.rankGreaterThan,
-					this.state.filterValues.rankLessThan,
-					this.state.filterValues.memberFilter,
-			  ]
-			: [this.state.filterValues.nameInput, this.state.filterValues.memberFilter];
+		const getSelector = (state: MultiAddUIState & MultiAddMemberLoadedState): JSX.Element => {
+			const selectorProps: Omit<
+				SelectorPropsMultiple<Member, any[]>,
+				'filters' | 'onFilterValuesChange' | 'filterValues'
+			> = {
+				fullWidth: true,
+				name: 'members',
+				values: state.members.slice(0).sort(currentSortFunction),
+				multiple: true,
+				showIDField: state.displayAdvanced,
+				onChangeVisible: newVisibleItems =>
+					this.setState({
+						visibleItems: newVisibleItems,
+					}),
+				overflow: 750,
+				displayValue: this.renderMember,
+			};
+
+			return !state.displayAdvanced ? (
+				<Selector<Member, [string, MemberList]>
+					{...selectorProps}
+					filters={simpleFilters}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+								memberFilter: values[1],
+							},
+						}))
+					}
+					filterValues={[state.filterValues.nameInput, state.filterValues.memberFilter]}
+				/>
+			) : (
+				<Selector<Member, [string, string, string, string, MemberList]>
+					{...selectorProps}
+					filters={advancedFilters}
+					onFilterValuesChange={values =>
+						this.setState(prev => ({
+							filterValues: {
+								...prev.filterValues,
+								nameInput: values[0],
+								flightInput: values[1],
+								rankGreaterThan: values[2],
+								rankLessThan: values[3],
+								memberFilter: values[4],
+							},
+						}))
+					}
+					filterValues={[
+						state.filterValues.nameInput,
+						state.filterValues.flightInput,
+						state.filterValues.rankGreaterThan,
+						state.filterValues.rankLessThan,
+						state.filterValues.memberFilter,
+					]}
+				/>
+			);
+		};
 
 		return (
 			<>
@@ -466,25 +499,13 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					<Label>Show advanced filters</Label>
 					<Checkbox name="displayAdvanced" />
 
-					<Selector<Member>
-						fullWidth={true}
-						name="members"
-						values={this.state.members!.slice(0).sort(currentSortFunction)}
-						displayValue={this.renderMember}
-						multiple={true}
-						showIDField={this.state.displayAdvanced}
-						onChangeVisible={this.handleDifferentVisibleItems}
-						overflow={750}
-						filters={this.state.displayAdvanced ? advancedFilters : simpleFilters}
-						filterValues={filterValues}
-						onFilterValuesChange={this.onFilterValuesChange}
-					/>
+					{getSelector(this.state)}
 				</SimpleForm>
 			</>
 		);
 	}
 
-	private renderMember(member: Member) {
+	private renderMember = (member: Member): JSX.Element => {
 		if (this.state.state !== 'LOADED') {
 			return <div>{getFullMemberName(member)}</div>;
 		}
@@ -496,9 +517,9 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		) : (
 			<div>{getFullMemberName(member)}</div>
 		);
-	}
+	};
 
-	private filterMembers(members: Member[]) {
+	private filterMembers(members: Member[]): Member[] {
 		if (this.state.state !== 'LOADED') {
 			return [];
 		}
@@ -506,7 +527,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		return members.filter(complement(hasMember(this.state.event)));
 	}
 
-	private selectAll() {
+	private selectAll = (): void => {
 		this.setState(prev =>
 			prev.state === 'LOADED'
 				? {
@@ -515,29 +536,33 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 				  }
 				: prev,
 		);
-	}
+	};
 
-	private selectVisible() {
+	private selectVisible = (): void => {
 		this.setState(prev => ({
 			selectedMembers: this.filterMembers(prev.visibleItems),
 		}));
-	}
+	};
 
-	private deselectAll() {
+	private deselectAll = (): void => {
 		this.setState({
 			selectedMembers: [],
 		});
-	}
+	};
 
-	private handleChange({ members, sortFunction, displayAdvanced }: SelectorFormValues) {
+	private handleChange = ({
+		members,
+		sortFunction,
+		displayAdvanced,
+	}: SelectorFormValues): void => {
 		this.setState({
 			selectedMembers: this.filterMembers(members),
 			sortFunction,
 			displayAdvanced,
 		});
-	}
+	};
 
-	private async addMembers({ members }: SelectorFormValues) {
+	private addMembers = async ({ members }: SelectorFormValues): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -579,45 +604,17 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		} else {
 			// TODO: Handle error case
 		}
-	}
+	};
 
-	private handleDifferentVisibleItems(visibleItems: Member[]) {
-		this.setState({
-			visibleItems,
-		});
-	}
-
-	private onFilterValuesChange(values: any) {
-		if (!this.state.displayAdvanced) {
-			this.setState(prev => ({
-				filterValues: {
-					...prev.filterValues,
-					nameInput: values[0],
-					memberFilter: values[1],
-				},
-			}));
-		} else {
-			this.setState({
-				filterValues: {
-					flightInput: values[0],
-					nameInput: values[1],
-					rankGreaterThan: values[2],
-					rankLessThan: values[3],
-					memberFilter: values[4],
-				},
-			});
-		}
-	}
-
-	private async modifyCAPID({ capid }: { capid: number | null }) {
+	private modifyCAPID = ({ capid }: { capid: number | null }): void => {
 		this.setState({
 			capidAdd: capid,
 			capidSaved: false,
 			capidError: null,
 		});
-	}
+	};
 
-	private async addCAPID({ capid }: { capid: number | null }) {
+	private addCAPID = async ({ capid }: { capid: number | null }): Promise<void> => {
 		if (capid === null || this.state.state !== 'LOADED' || !this.props.member) {
 			return;
 		}
@@ -690,5 +687,5 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 					  },
 			);
 		}
-	}
+	};
 }

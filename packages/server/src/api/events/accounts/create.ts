@@ -17,43 +17,54 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	AccountType,
 	api,
-	asyncLeft,
 	asyncRight,
 	errorGenerator,
 	RawCAPWingAccountObject,
-	ServerError,
 	SessionType,
 } from 'common-lib';
-import { createCAPEventAccountFunc, PAM } from 'server-common';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	GenBackend,
+	getCombinedAttendanceBackend,
+	getCombinedPAMBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: (
-	now?: typeof Date.now,
-) => ServerAPIEndpoint<api.events.accounts.AddEventAccount> = (now = Date.now) =>
+export const func: Endpoint<
+	Backends<[GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>, PAM.PAMBackend]>,
+	api.events.accounts.AddEventAccount
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		asyncRight(req.account, errorGenerator('Could not create Account'))
-			.flatMap<RawCAPWingAccountObject>(account =>
-				account.type === AccountType.CAPWING
-					? asyncRight<ServerError, RawCAPWingAccountObject>(
-							account,
-							errorGenerator('Could not create Account'),
-					  )
-					: asyncLeft({
-							type: 'OTHER',
-							code: 400,
-							message: 'Parent Account must be a Wing account',
-					  }),
+			.filter(
+				(account): account is RawCAPWingAccountObject =>
+					account.type === AccountType.CAPWING,
+				{
+					type: 'OTHER',
+					code: 400,
+					message: 'Parent Account must be a wing account',
+				},
 			)
 			.flatMap(parentAccount =>
-				createCAPEventAccountFunc(now)(req.configuration)(req.mysqlxSession)(req.mysqlx)(
-					parentAccount,
-				)(req.member)(req.body.accountID)(req.body.accountName)(req.body.event),
+				backend.createCAPEventAccount(backend)(parentAccount)(req.member)(
+					req.body.accountID,
+				)(req.body.accountName)(req.body.event),
 			)
 			.map(wrapper),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<ReturnType<typeof getCombinedAttendanceBackend>>, PAM.PAMBackend]
+	>(getCombinedAttendanceBackend(), getCombinedPAMBackend()),
+);

@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	FileUserAccessControlPermissions,
@@ -25,20 +24,22 @@ import {
 	User,
 	userHasFilePermission,
 } from 'common-lib';
-import { expandRawFileObject, getFileObject } from 'server-common';
+import { Backends, FileBackend, getCombinedFileBackend, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const orNull = Maybe.orSome<null | User>(null);
 
-export const func: ServerAPIEndpoint<api.files.files.GetFile> = req =>
-	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.id)
+export const func: Endpoint<Backends<[FileBackend]>, api.files.files.GetFile> = backend => req =>
+	backend
+		.getFileObject(req.account)(req.member)(req.params.id)
 		.filter(canRead(orNull(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member does not have permission to do that',
 		})
-		.flatMap(expandRawFileObject(req.mysqlx)(req.account)(req.member))
+		.flatMap(backend.expandRawFileObject(req.member))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedFileBackend());

@@ -17,23 +17,29 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, canFullyManageEvent, SessionType } from 'common-lib';
-import { deleteEvent, ensureResolvedEvent, getEvent, PAM } from 'server-common';
+import {
+	Backends,
+	EventsBackend,
+	getCombinedEventsBackend,
+	PAM,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.events.events.Delete> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(req =>
-	getEvent(req.mysqlx)(req.account)(req.params.id)
-		.flatMap(ensureResolvedEvent(req.mysqlx))
-		.filter(canFullyManageEvent(req.member), {
-			type: 'OTHER',
-			code: 403,
-			message: 'Member cannot perform that action',
-		})
-		.flatMap(deleteEvent(req.configuration)(req.mysqlx)(req.account)(req.member))
-		.map(wrapper),
-);
+export const func: Endpoint<Backends<[EventsBackend]>, api.events.events.Delete> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(req =>
+		backend
+			.getEvent(req.account)(req.params.id)
+			.flatMap(backend.ensureResolvedEvent)
+			.filter(canFullyManageEvent(req.member), {
+				type: 'OTHER',
+				code: 403,
+				message: 'Member cannot perform that action',
+			})
+			.flatMap(backend.deleteEvent(req.member))
+			.map(wrapper),
+	);
 
-export default func;
+export default withBackends(func, getCombinedEventsBackend());

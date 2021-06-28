@@ -21,15 +21,19 @@ import { Schema } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	areMembersTheSame,
+	AsyncIter,
 	asyncIterFilter,
 	asyncRight,
 	errorGenerator,
+	FromDatabase,
 	get,
 	MemberReference,
+	memoize,
 	NewTaskObject,
 	TaskObject,
 	toReference,
 } from 'common-lib';
+import { BasicAccountRequest } from './Account';
 import {
 	addToCollection,
 	deleteFromCollectionA,
@@ -43,7 +47,7 @@ import { ServerEither } from './servertypes';
 
 export const createTaskFunc = (now = Date.now) => (schema: Schema) => (account: AccountObject) => (
 	task: NewTaskObject,
-) =>
+): ServerEither<FromDatabase<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not create tasks'))
 		.flatMap(getNewID(account))
 		.map<TaskObject>(id => ({
@@ -54,7 +58,7 @@ export const createTaskFunc = (now = Date.now) => (schema: Schema) => (account: 
 			})),
 			accountID: account.id,
 			archived: false,
-			assigned: Date.now(),
+			assigned: now(),
 			description: task.description,
 			name: task.name,
 			tasker: task.tasker,
@@ -78,7 +82,7 @@ export const getTask = (schema: Schema) => (account: AccountObject) => (
 
 export const getSentTasks = (schema: Schema) => (account: AccountObject) => (
 	sender: MemberReference,
-) =>
+): ServerEither<AsyncIter<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not get tasks'))
 		.map(
 			findAndBindC<TaskObject>({ accountID: account.id, tasker: toReference(sender) }),
@@ -87,7 +91,7 @@ export const getSentTasks = (schema: Schema) => (account: AccountObject) => (
 
 export const getTasksForMember = (schema: Schema) => (account: AccountObject) => (
 	member: MemberReference,
-) =>
+): ServerEither<AsyncIter<TaskObject>> =>
 	asyncRight(schema.getCollection<TaskObject>('Tasks'), errorGenerator('Could not get tasks'))
 		.map(
 			findAndBindC<TaskObject>({ accountID: account.id }),
@@ -99,14 +103,32 @@ export const getTasksForMember = (schema: Schema) => (account: AccountObject) =>
 			),
 		);
 
-export const deleteTask = (schema: Schema) => (task: TaskObject) =>
+export const deleteTask = (schema: Schema) => (task: TaskObject): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<TaskObject>('Tasks'),
 		errorGenerator('Could not delete task'),
 	).flatMap(deleteFromCollectionA(task));
 
-export const saveTask = (schema: Schema) => (task: TaskObject) =>
+export const saveTask = (schema: Schema) => (task: TaskObject): ServerEither<TaskObject> =>
 	asyncRight(
 		schema.getCollection<TaskObject>('Tasks'),
 		errorGenerator('Could not save task'),
 	).flatMap(saveItemToCollectionA(task));
+
+export interface TaskBackend {
+	getTask: (account: AccountObject) => (id: number) => ServerEither<TaskObject>;
+	createTask: (account: AccountObject) => (task: NewTaskObject) => ServerEither<TaskObject>;
+	deleteTask: (task: TaskObject) => ServerEither<void>;
+	saveTask: (task: TaskObject) => ServerEither<TaskObject>;
+	getTasksForMember: (
+		account: AccountObject,
+	) => (member: MemberReference) => ServerEither<AsyncIter<TaskObject>>;
+}
+
+export const getTaskBackend = (req: BasicAccountRequest): TaskBackend => ({
+	getTask: memoize(account => memoize(getTask(req.mysqlx)(account)), get('id')),
+	createTask: createTask(req.mysqlx),
+	deleteTask: deleteTask(req.mysqlx),
+	saveTask: saveTask(req.mysqlx),
+	getTasksForMember: getTasksForMember(req.mysqlx),
+});

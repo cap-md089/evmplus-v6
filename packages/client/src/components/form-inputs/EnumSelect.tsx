@@ -43,25 +43,23 @@ export default class EnumSelect<E> extends React.Component<EnumSelectProps<E>> {
 		this.selectChange = this.selectChange.bind(this);
 	}
 
-	public render() {
-		return (
-			<div className="input-formbox" style={this.props.boxStyles}>
-				<select
-					className="select"
-					value={((this.props.value ?? this.props.defaultValue) as unknown) as string}
-					onChange={this.selectChange}
-				>
-					{this.props.labels.map((label, i) => (
-						<option key={i} value={(this.props.values[i] as unknown) as string}>
-							{label}
-						</option>
-					))}
-				</select>
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div className="input-formbox" style={this.props.boxStyles}>
+			<select
+				className="select"
+				value={((this.props.value ?? this.props.defaultValue) as unknown) as string}
+				onChange={this.selectChange}
+			>
+				{this.props.labels.map((label, i) => (
+					<option key={i} value={(this.props.values[i] as unknown) as string}>
+						{label}
+					</option>
+				))}
+			</select>
+		</div>
+	);
 
-	private selectChange(event: React.FormEvent<HTMLSelectElement>) {
+	private selectChange = (event: React.FormEvent<HTMLSelectElement>): void => {
 		const value = (event.currentTarget.value as unknown) as E;
 
 		if (this.props.onChange) {
@@ -74,5 +72,5 @@ export default class EnumSelect<E> extends React.Component<EnumSelectProps<E>> {
 				value,
 			});
 		}
-	}
+	};
 }

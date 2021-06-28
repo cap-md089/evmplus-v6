@@ -17,10 +17,15 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { always } from 'ramda';
 import { Either, EitherObj, Maybe, MaybeObj } from '..';
+import { Left, Right } from '../lib/Either';
+import { None, Some } from '../lib/Maybe';
 
+export * from './data';
 export {};
 declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace jest {
 		interface Matchers<R> {
 			toBeRight(): R;
@@ -46,61 +51,59 @@ declare global {
 	}
 }
 
-const isValidEitherObj = (obj: any): obj is EitherObj<any, any> =>
+const isValidEitherObj = (obj: unknown): obj is EitherObj<unknown, unknown> =>
 	typeof obj === 'object' &&
 	obj !== null &&
-	typeof obj.direction === 'string' &&
-	obj.value !== undefined;
+	'direction' in obj &&
+	typeof (obj as { direction: unknown }).direction === 'string' &&
+	((obj as { direction: string }).direction === ('Left' as Left<any>['direction']) ||
+		(obj as { direction: string }).direction === ('Right' as Right<any>['direction'])) &&
+	'value' in obj &&
+	(obj as { direction: unknown }).direction !== undefined;
 
-const isValidMaybeObj = (obj: any): obj is MaybeObj<any> =>
+const isValidMaybeObj = (obj: unknown): obj is MaybeObj<unknown> =>
 	typeof obj === 'object' &&
 	obj !== null &&
-	typeof obj.hasValue === 'boolean' &&
-	(!obj.hasValue || obj.value !== undefined);
+	'hasValue' in obj &&
+	typeof (obj as { hasValue: unknown }).hasValue === 'boolean' &&
+	(!(obj as None).hasValue || (obj as Some<unknown>).value !== undefined);
+
+const emptyMessage = always('');
 
 expect.extend({
 	toBeRight(received) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		return {
-			message: () => {
-				return `Value received is ${this.isNot ? 'right' : 'left'}: ${JSON.stringify(
+			message: always(
+				`Value received is ${this.isNot ? 'right' : 'left'}: ${JSON.stringify(
 					received.value,
-				)}`;
-			},
+				)}`,
+			),
 			pass: this.isNot ? received.direction === 'left' : received.direction === 'right',
 		};
 	},
-	// @ts-ignore
 	toEqualRight(received, value: any) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.direction === 'right') {
 			return {
-				message() {
-					return `Value is right: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is right: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
-				message() {
-					return `Value is left: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is left: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		}
@@ -116,31 +119,25 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
-	// @ts-ignore
 	toMatchRight(received, value: any) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.direction === 'right') {
 			return {
-				message() {
-					return `Value is right: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is right: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
-				message() {
-					return `Value is left: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is left: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		}
@@ -156,50 +153,42 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
 	toBeLeft(received) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		return {
-			message: () => {
-				return `Value received is ${this.isNot ? 'left' : 'right'}: ${JSON.stringify(
+			message: always(
+				`Value received is ${this.isNot ? 'left' : 'right'}: ${JSON.stringify(
 					received.value,
-				)}`;
-			},
+				)}`,
+			),
 			pass: this.isNot ? received.direction === 'right' : received.direction === 'left',
 		};
 	},
-	// @ts-ignore
 	toEqualLeft(received, value: any) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.direction === 'right') {
 			return {
-				message() {
-					return `Value is right: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is right: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'left') {
 			return {
-				message() {
-					return `Value is left: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is left: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		}
@@ -215,31 +204,25 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
-	// @ts-ignore
 	toMatchLeft(received, value: any) {
 		if (!isValidEitherObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid EitherObj';
-				},
+				message: always('Value received is not a valid EitherObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.direction === 'left') {
 			return {
-				message() {
-					return `Value is left: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is left: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		} else if (!this.isNot && received.direction === 'right') {
 			return {
-				message() {
-					return `Value is right: ${JSON.stringify(received.value)}`;
-				},
+				message: always(`Value is right: ${JSON.stringify(received.value)}`),
 				pass: false,
 			};
 		}
@@ -255,48 +238,38 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
 	toBeSome(received) {
 		if (!isValidMaybeObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid MaybeObj';
-				},
+				message: always('Value received is not a valid MaybeObj'),
 				pass: false,
 			};
 		}
 
 		return {
-			message: () => {
-				return `Value does ${this.isNot ? '' : 'not '}have a value`;
-			},
+			message: always(`Value does ${this.isNot ? '' : 'not '}have a value`),
 			pass: this.isNot ? received.hasValue : !received.hasValue,
 		};
 	},
-	// @ts-ignore
 	toEqualSome(received, value: any) {
 		if (!isValidMaybeObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid MaybeObj';
-				},
+				message: always('Value received is not a valid MaybeObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.hasValue) {
 			return {
-				message() {
-					return `Maybe object has value, expected none`;
-				},
+				message: always(`Maybe object has value, expected none`),
 				pass: false,
 			};
 		} else if (!this.isNot && !received.hasValue) {
 			return {
-				message() {
-					return `Maybe object is none, expected some`;
-				},
+				message: always(`Maybe object is none, expected some`),
 				pass: false,
 			};
 		}
@@ -312,31 +285,25 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
-	// @ts-ignore
 	toMatchSome(received, value: any) {
 		if (!isValidMaybeObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid MaybeObj';
-				},
+				message: always('Value received is not a valid MaybeObj'),
 				pass: false,
 			};
 		}
 
 		if (this.isNot && received.hasValue) {
 			return {
-				message() {
-					return `Maybe object has value, expected none`;
-				},
+				message: always(`Maybe object has value, expected none`),
 				pass: false,
 			};
 		} else if (!this.isNot && !received.hasValue) {
 			return {
-				message() {
-					return `Maybe object is none, expected some`;
-				},
+				message: always(`Maybe object is none, expected some`),
 				pass: false,
 			};
 		}
@@ -352,22 +319,19 @@ expect.extend({
 		// `true` when used normally, and `false` when `.not` was used.
 		return {
 			pass: !this.isNot,
+			message: emptyMessage,
 		};
 	},
 	toBeNone(received) {
 		if (!isValidMaybeObj(received)) {
 			return {
-				message() {
-					return 'Value received is not a valid MaybeObj';
-				},
+				message: always('Value received is not a valid MaybeObj'),
 				pass: false,
 			};
 		}
 
 		return {
-			message: () => {
-				return `Value does ${this.isNot ? 'not ' : ''}have a value`;
-			},
+			message: always(`Value does ${this.isNot ? 'not ' : ''}have a value`),
 			pass: this.isNot ? !received.hasValue : received.hasValue,
 		};
 	},

@@ -23,7 +23,6 @@ import {
 	AccountObject,
 	areMembersTheSame,
 	AsyncEither,
-	AsyncIter,
 	asyncRight,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
@@ -32,7 +31,6 @@ import {
 	CAPNHQMemberObject,
 	CAPNHQMemberReference,
 	collectGenerator,
-	EitherObj,
 	errorGenerator,
 	get as getProp,
 	getMemberName,
@@ -52,7 +50,8 @@ import { createWriteStream } from 'fs';
 import { DateTime } from 'luxon';
 import { join } from 'path';
 import { loadExtraCAPMemberInformation } from '.';
-import { AccountGetter } from '../../../Account';
+import { AccountBackend } from '../../..';
+import { Backends } from '../../../backends';
 import {
 	bindForArray,
 	collectResults,
@@ -61,11 +60,12 @@ import {
 	findAndBindC,
 } from '../../../MySQLUtil';
 import { ServerEither } from '../../../servertypes';
+import { TeamsBackend } from '../../../Team';
 
 export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
 	rawTeamObjects: RawTeamObject[],
-) => async (ORGIDs: number[]) => {
-	return asyncRight(
+) => (ORGIDs: number[]) =>
+	asyncRight(
 		Promise.all([
 			collectSqlResults<NHQ.NHQMember>(
 				schema
@@ -165,17 +165,15 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 			orgContacts
 				.filter(contactItem => contactItem.CAPID === member.CAPID)
 				.forEach(contactItem => {
-					if (!contactItem.DoNotContact) {
-						const contactType = contactItem.Type.toUpperCase().replace(
-							/ /g,
-							'',
-						) as CAPMemberContactType;
+					const contactType = contactItem.Type.toUpperCase().replace(
+						/ /g,
+						'',
+					) as CAPMemberContactType;
 
-						// Handles the types we don't support
-						// Or, erroneous data left in by NHQ
-						if (contactType in contact) {
-							contact[contactType][contactItem.Priority] = contactItem.Contact;
-						}
+					// Handles the types we don't support
+					// Or, erroneous data left in by NHQ
+					if (contactType in contact) {
+						contact[contactType][contactItem.Priority] = contactItem.Contact;
 					}
 				});
 
@@ -226,7 +224,6 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 			};
 		}),
 	);
-};
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 	asyncRight(
@@ -248,15 +245,13 @@ const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
 			};
 
 			capwatchContact.forEach(val => {
-				if (!val.DoNotContact) {
-					const contactType = val.Type.toUpperCase().replace(
-						/ /g,
-						'',
-					) as CAPMemberContactType;
+				const contactType = val.Type.toUpperCase().replace(
+					/ /g,
+					'',
+				) as CAPMemberContactType;
 
-					if (contactType in memberContact) {
-						memberContact[contactType][val.Priority] = val.Contact;
-					}
+				if (contactType in memberContact) {
+					memberContact[contactType][val.Priority] = val.Contact;
 				}
 			});
 
@@ -312,8 +307,8 @@ const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 		.map(results => results[0])
 		.map(stripProp('_id'));
 
-export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
-	teamObjects?: RawTeamObject[],
+export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
+	account: AccountObject,
 ) => (CAPID: number) =>
 	asyncRight(CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
@@ -330,10 +325,10 @@ export const getNHQMember = (schema: Schema) => (account: AccountObject) => (
 						getORGIDsFromCAPAccount(account),
 					),
 				),
-				loadExtraCAPMemberInformation(schema)(account)({
+				loadExtraCAPMemberInformation(schema)(backend)(account)({
 					id,
 					type: 'CAPNHQMember',
-				})(teamObjects),
+				}),
 			]),
 		)
 		.map<CAPNHQMemberObject>(([info, contact, dutyPositions, extraInformation]) => ({
@@ -386,6 +381,7 @@ export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
 			assigned: date,
 			validUntil: expires,
 		})),
+	type: 'CAP',
 });
 
 export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemberReference) =>
@@ -399,15 +395,12 @@ export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemb
 			})}`,
 	);
 
-export const getNHQHomeAccountsFunc = (accountGetter: AccountGetter) => (schema: Schema) => (
+export const getNHQMemberAccount = (backend: Backends<[AccountBackend]>) => (
 	member: CAPNHQMemberObject,
-): AsyncIter<EitherObj<ServerError, CAPAccountObject>> =>
-	accountGetter.byOrgid(schema)(member.orgid);
+): ServerEither<CAPAccountObject[]> => backend.getCAPAccountsByORGID(member.orgid);
 
 export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id)
-		.map(getProp('DOB'))
-		.map(DateTime.fromISO);
+	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
 
 export const downloadCAPWATCHFile = (
 	orgid: number,
@@ -418,8 +411,9 @@ export const downloadCAPWATCHFile = (
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${today.getMonth() +
-			1}-${today.getDate()}.zip`,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${
+			today.getMonth() + 1
+		}-${today.getDate()}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');

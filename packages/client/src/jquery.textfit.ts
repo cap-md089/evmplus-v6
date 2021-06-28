@@ -11,18 +11,18 @@
 
 import $ from 'jquery/dist/jquery.slim';
 
-export const innerWrap = (el: JQuery) => {
+export const innerWrap = (el: JQuery): JQuery => {
 	// Wrap the content of the target element in a div with
 	// with the same width
 	el.wrapInner($('<div id="textfit-inner"></div>').css('width', el.css('width')));
 	return $('#textfit-inner');
 };
 
-export const removeWrap = (el: JQuery<HTMLElement>) => {
+export const removeWrap = (el: JQuery<HTMLElement>): void => {
 	el.replaceWith(el.contents() as JQuery<HTMLElement>);
 };
 
-export const bestfit = (el: JQuery) => {
+export const bestfit = (el: JQuery): JQuery => {
 	let fs = parseInt(el.css('font-size'), 10);
 
 	// Wrap the content of the target element in a div with
@@ -32,7 +32,7 @@ export const bestfit = (el: JQuery) => {
 	// Keep reducing the font size of the target element
 	// until the inner div fits
 	while ((i.height() as number) > (el.height() as number)) {
-		el.css('font-size', --fs + 'px');
+		el.css('font-size', `${--fs}px`);
 	}
 
 	removeWrap(i);

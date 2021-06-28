@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	AsyncEither,
@@ -27,16 +26,20 @@ import {
 	Maybe,
 	userHasFilePermission,
 } from 'common-lib';
-import { getFileObject, saveFileObject } from 'server-common';
+import { Backends, FileBackend, getCombinedFileBackend, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const canModify = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
-export const func: ServerAPIEndpoint<api.files.children.AddChild> = req =>
+export const func: Endpoint<
+	Backends<[FileBackend]>,
+	api.files.children.AddChild
+> = backend => req =>
 	AsyncEither.All([
-		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid),
-		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.body.childid),
+		backend.getFileObject(req.account)(Maybe.some(req.member))(req.params.parentid),
+		backend.getFileObject(req.account)(Maybe.some(req.member))(req.body.childid),
 	])
 		.filter(([parent, child]) => canModify(req.member)(parent) && canRead(req.member)(child), {
 			type: 'OTHER',
@@ -49,8 +52,8 @@ export const func: ServerAPIEndpoint<api.files.children.AddChild> = req =>
 			...child,
 			parentID: req.params.parentid,
 		}))
-		.map(saveFileObject(req.mysqlx))
+		.map(backend.saveFileObject)
 		.map(destroy)
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedFileBackend());

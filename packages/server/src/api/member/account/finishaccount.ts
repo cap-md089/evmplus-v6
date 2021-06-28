@@ -17,27 +17,23 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
-import { api, asyncRight, errorGenerator } from 'common-lib';
-import { PAM } from 'server-common';
+import { api } from 'common-lib';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 
-export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = req =>
-	asyncRight(
-		PAM.validateUserAccountCreationToken(req.mysqlx, req.body.token),
-		errorGenerator('Could not find token'),
-	)
+export const func: Endpoint<
+	Backends<[PAM.PAMBackend]>,
+	api.member.account.FinishAccountSetup
+> = backend => req =>
+	backend
+		.validateUserAccountCreationToken(req.body.token)
 		.flatMap(member =>
-			PAM.addUserAccount(
-				req.mysqlx,
-				req.account,
-				req.body.username,
-				req.body.password,
-				member,
+			backend.addUserAccount(req.account)(member)([req.body.username, req.body.password])(
 				req.body.token,
 			),
 		)
 		.map(PAM.simplifyUserInformation)
-		.flatMap(account => PAM.createSessionForUser(req.mysqlx, account))
+		.flatMap(backend.createSessionForUser)
 		.map(({ id, expires }) => ({
 			response: {},
 			cookies: {
@@ -48,4 +44,4 @@ export const func: ServerAPIEndpoint<api.member.account.FinishAccountSetup> = re
 			},
 		}));
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend());

@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, validator } from 'auto-client-api';
+import { validator } from 'auto-client-api';
 import {
 	api,
 	destroy,
@@ -28,7 +28,8 @@ import {
 	userHasFilePermission,
 	Validator,
 } from 'common-lib';
-import { getFileObject, PAM, saveFileObject } from 'server-common';
+import { Backends, FileBackend, getCombinedFileBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '../../..';
 import { validateRequest } from '../../../lib/requestUtils';
 import wrapper from '../../../lib/wrapper';
 
@@ -39,24 +40,24 @@ const fileInfoValidator = Validator.Partial(
 		.rules,
 );
 
-export const func: ServerAPIEndpoint<api.files.files.SetInfo> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(request =>
-	validateRequest(fileInfoValidator)(request).flatMap(req =>
-		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.fileid)
-			.filter(canModifyFile(req.member), {
-				type: 'OTHER',
-				code: 403,
-				message: 'Member does not have permission to carry out this action',
-			})
-			.map(file => ({
-				...file,
-				...req.body,
-			}))
-			.map(saveFileObject(req.mysqlx))
-			.map(destroy)
-			.map(wrapper),
-	),
-);
+export const func: Endpoint<Backends<[FileBackend]>, api.files.files.SetInfo> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(request =>
+		validateRequest(fileInfoValidator)(request).flatMap(req =>
+			backend
+				.getFileObject(req.account)(Maybe.some(req.member))(req.params.fileid)
+				.filter(canModifyFile(req.member), {
+					type: 'OTHER',
+					code: 403,
+					message: 'Member does not have permission to carry out this action',
+				})
+				.map(file => ({
+					...file,
+					...req.body,
+				}))
+				.map(backend.saveFileObject)
+				.map(destroy)
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedFileBackend());

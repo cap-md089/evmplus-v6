@@ -19,26 +19,30 @@
  */
 
 import { getSession } from '@mysql/xdevapi';
-import { getConf } from 'server-common';
 import { AccountObject } from 'common-lib';
+import { conf } from 'server-common';
 
 (async () => {
+	// eslint-disable-next-line @typescript-eslint/no-implied-eval
 	const typeFilter = new Function('account', `return !!(${process.argv[2] ?? 'true'})`) as (
 		account: AccountObject,
 	) => boolean;
 
-	const flattenAccountList = (account: AccountObject) => [account.id, ...account.aliases];
+	const flattenAccountList = (account: AccountObject): string[] => [
+		account.id,
+		...account.aliases,
+	];
 
-	const conf = await getConf();
+	const config = await conf.getCLIConfiguration();
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
 	try {
-		const schema = session.getSchema(conf.DB_SCHEMA);
+		const schema = session.getSchema(config.DB_SCHEMA);
 
 		const accountsCollection = schema.getCollection<AccountObject>('Accounts');
 
@@ -50,7 +54,10 @@ import { AccountObject } from 'common-lib';
 	} finally {
 		await session.close();
 	}
-})().then(process.exit, e => {
-	console.error(e);
-	process.exit(1);
-});
+})().then(
+	code => process.exit(code),
+	e => {
+		console.error(e);
+		process.exit(1);
+	},
+);

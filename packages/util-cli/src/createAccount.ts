@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/local/bin/node --no-warnings
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
@@ -31,7 +31,8 @@ import {
 	RegistryValues,
 } from 'common-lib';
 import { createInterface } from 'readline';
-import { createGoogleCalendar, getConf, getRegistry, PAM, saveRegistry } from 'server-common';
+import { conf, createGoogleCalendar } from 'server-common';
+import { backendGenerator } from './lib/backend';
 
 process.on('unhandledRejection', up => {
 	throw up;
@@ -44,8 +45,8 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		rl.question(question, res);
 	});
 
-(async () => {
-	const conf = await getConf();
+void (async () => {
+	const config = await conf.getCLIConfiguration();
 
 	const readlineInterface = createInterface({
 		input: process.stdin,
@@ -87,7 +88,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 	);
 
 	if (mainCalendarID === '') {
-		mainCalendarID = await createGoogleCalendar(id, name, conf);
+		mainCalendarID = await createGoogleCalendar(id, name, config);
 	}
 
 	const aliases = [];
@@ -115,21 +116,21 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		id,
 		mainCalendarID,
 		mainOrg,
-		orgIDs: [],
+		orgIDs: [mainOrg],
 		parentGroup: Maybe.none(),
 		parentWing: Maybe.none(),
 		type: AccountType.CAPSQUADRON,
 	};
 
 	const session = await getSession({
-		host: conf.DB_HOST,
-		password: conf.DB_PASSWORD,
-		port: conf.DB_PORT,
-		user: conf.DB_USER,
+		host: config.DB_HOST,
+		password: config.DB_PASSWORD,
+		port: config.DB_PORT,
+		user: config.DB_USER,
 	});
 
 	await session
-		.getSchema(conf.DB_SCHEMA)
+		.getSchema(config.DB_SCHEMA)
 		.getCollection<AccountObject>('Accounts')
 		.add(accountObj)
 		.execute();
@@ -143,14 +144,13 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		id: parseInt(capidInput, 10),
 	};
 
-	await PAM.setPermissionsForMemberInAccount(
-		session.getSchema(conf.DB_SCHEMA),
-		member,
+	const backend = backendGenerator(session.getSchema(config.DB_SCHEMA));
+
+	await backend.setPermissions(accountObj)(member)(
 		getDefaultAdminPermissions(AccountType.CAPSQUADRON),
-		accountObj,
 	);
 
-	const registry = await getRegistry(session.getSchema(conf.DB_SCHEMA))(accountObj).fullJoin();
+	const registry = await backend.getRegistry(accountObj).fullJoin();
 
 	const registryWithName: RegistryValues = {
 		...registry,
@@ -160,7 +160,7 @@ const askQuestion = (rl: ReturnType<typeof createInterface>) => (
 		},
 	};
 
-	await saveRegistry(session.getSchema(conf.DB_SCHEMA))(registryWithName).fullJoin();
+	await backend.saveRegistry(registryWithName).fullJoin();
 
 	await session.close();
 

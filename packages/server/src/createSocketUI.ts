@@ -2,7 +2,7 @@ import * as mysql from '@mysql/xdevapi';
 import { ServerConfiguration } from 'common-lib';
 import { createServer } from 'net';
 
-export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Client) => {
+export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Client): void => {
 	createServer(sock => {
 		sock.on('data', async dataIn => {
 			const cmd = dataIn.toString('utf-8').trim();
@@ -21,18 +21,40 @@ export const createSocketUI = (config: ServerConfiguration, mysqlConn: mysql.Cli
 						sock.write('Success!\n');
 					} catch (e) {
 						sock.write('Failed connection!\n');
-						sock.write(e.toString());
+						sock.write((e as Error).message);
 					}
 				}
 			} else if (cmd === 'version') {
-				const { version: serverVersion } = require('../package.json');
-				const { version: apiVersion } = require('apis/package.json');
-				const { version: compilerVersion } = require('auto-client-api/package.json');
-				const { version: clientVersion } = require('../../client/package.json');
-				const { version: libVersion } = require('common-lib/package.json');
-				const { version: discordBotVersion } = require('discord-bot/package.json');
-				const { version: serverCommonVersion } = require('server-common/package.json');
-				const { version: typescriptVersion } = require('typescript/package.json');
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: serverVersion } = require('../package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: apiVersion } = require('apis/package.json') as { version: string };
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: compilerVersion } = require('auto-client-api/package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: clientVersion } = require('../../client/package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: libVersion } = require('common-lib/package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: discordBotVersion } = require('discord-bot/package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: serverCommonVersion } = require('server-common/package.json') as {
+					version: string;
+				};
+				// eslint-disable-next-line @typescript-eslint/no-var-requires
+				const { version: typescriptVersion } = require('typescript/package.json') as {
+					version: string;
+				};
 
 				sock.write(`Server version: ${serverVersion}\n`);
 				sock.write(`API version: ${apiVersion}\n`);

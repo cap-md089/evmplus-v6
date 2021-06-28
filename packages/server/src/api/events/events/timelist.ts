@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEitherIterFlatMap,
@@ -29,6 +28,7 @@ import {
 	EitherObj,
 	errorGenerator,
 	EventStatus,
+	filterEventInformation,
 	FromDatabase,
 	get,
 	Maybe,
@@ -40,7 +40,14 @@ import {
 	ServerError,
 	User,
 } from 'common-lib';
-import { ensureResolvedEvent, getEventsInRange } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	EventsBackend,
+	getCombinedEventsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) =>
@@ -49,8 +56,11 @@ const canMaybeManageEvent = (event: RawEventObject) => (member: MaybeObj<User>) 
 		Maybe.orSome<(e: RawEventObject) => boolean>(() => false),
 	)(member)(event);
 
-export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
-	asyncRight(
+export const func: Endpoint<
+	Backends<[EventsBackend, AccountBackend]>,
+	api.events.events.GetRange
+> = backend => req =>
+	asyncRight<ServerError, [number, number]>(
 		[parseInt(req.params.timestart, 10), parseInt(req.params.timeend, 10)],
 		errorGenerator('Could not get events in range'),
 	)
@@ -59,10 +69,8 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 			code: 400,
 			message: 'The provided range start and end are invalid',
 		})
-		.map(([timestart, timeend]) =>
-			getEventsInRange(req.mysqlx)(req.account)(timestart)(timeend),
-		)
-		.map(asyncEitherIterFlatMap(ensureResolvedEvent(req.mysqlx)))
+		.map(backend.getEventsInRange(req.account))
+		.map(asyncEitherIterFlatMap(backend.ensureResolvedEvent))
 		.map(
 			asyncIterFilter<
 				EitherObj<ServerError, FromDatabase<RawResolvedEventObject>>,
@@ -76,6 +84,7 @@ export const func: ServerAPIEndpoint<api.events.events.GetRange> = req =>
 					event.status !== EventStatus.DRAFT || canMaybeManageEvent(event)(req.member),
 			),
 		)
+		.map(asyncIterMap(filterEventInformation(req.member)))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedEventsBackend());

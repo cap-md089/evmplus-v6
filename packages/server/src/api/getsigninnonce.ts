@@ -17,12 +17,12 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api } from 'common-lib';
-import { PAM } from 'server-common';
+import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
+import { Endpoint } from '..';
 import wrapper from '../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.GetSigninToken> = req =>
-	PAM.addSignatureNonce(req.mysqlx)(req.params.signatureID).map(wrapper);
+export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.GetSigninToken> = backend => req =>
+	backend.addSignatureNonce(req.params.signatureID).map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedPAMBackend());

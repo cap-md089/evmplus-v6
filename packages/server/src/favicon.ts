@@ -20,6 +20,7 @@
 import { spawn } from 'child_process';
 import {
 	asyncLeft,
+	BasicMySQLRequest,
 	Either,
 	FileUserAccessControlPermissions,
 	Maybe,
@@ -29,20 +30,39 @@ import {
 } from 'common-lib';
 import * as express from 'express';
 import {
+	AccountBackend,
 	accountRequestTransformer,
-	downloadFileObject,
-	getFileObject,
-	getRegistry,
+	CAP,
+	combineBackends,
+	FileBackend,
+	getAccountBackend,
+	getCombinedMemberBackend,
+	getFileBackend,
+	getRegistryBackend,
+	MemberBackend,
 	MySQLRequest,
 	PAM,
+	RegistryBackend,
 } from 'server-common';
 
-export default async (request: express.Request, res: express.Response) => {
+export default async (request: express.Request, res: express.Response): Promise<void> => {
 	const req = (request as unknown) as MySQLRequest;
+
+	const backend = combineBackends<
+		BasicMySQLRequest,
+		[RegistryBackend, AccountBackend, CAP.CAPMemberBackend, MemberBackend, FileBackend]
+	>(
+		getRegistryBackend,
+		getAccountBackend,
+		CAP.getCAPMemberBackend,
+		getCombinedMemberBackend(),
+		getFileBackend,
+	)(req);
+
 	const fileEither = await accountRequestTransformer(req)
 		.flatMap(PAM.memberRequestTransformer(false))
 		.flatMap(r =>
-			getRegistry(r.mysqlx)(r.account).flatMap(registry =>
+			backend.getRegistry(r.account).flatMap(registry =>
 				Maybe.orSome(
 					asyncLeft<ServerError, RawFileObject>({
 						type: 'OTHER',
@@ -50,7 +70,7 @@ export default async (request: express.Request, res: express.Response) => {
 						message: "Favicon doesn't exist",
 					}),
 				)(
-					Maybe.map(getFileObject(r.mysqlx)(r.account)(r.member))(
+					Maybe.map(backend.getFileObject(r.account)(r.member))(
 						registry.Website.FaviconID,
 					),
 				).filter(
@@ -85,7 +105,7 @@ export default async (request: express.Request, res: express.Response) => {
 	const convertProcess = spawn('convert', ['-', '-resize', '64x64', 'ico:-']);
 
 	try {
-		await downloadFileObject(req.configuration)(file)(convertProcess.stdin);
+		await backend.downloadFileObject(file)(convertProcess.stdin);
 		await req.mysqlxSession.close();
 	} catch (e) {
 		res.status(500);

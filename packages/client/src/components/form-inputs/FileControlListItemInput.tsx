@@ -81,7 +81,7 @@ const permissionsConstructor = {
 	[FileUserAccessControlType.OTHER]: newOtherControlListEditItem,
 };
 
-export const isValid = (permissionEdit: FileControlListItemEdit) =>
+export const isValid = (permissionEdit: FileControlListItemEdit): boolean =>
 	permissionEdit.type === FileUserAccessControlType.USER
 		? Maybe.isSome(permissionEdit.reference)
 		: permissionEdit.type === FileUserAccessControlType.TEAM
@@ -131,14 +131,12 @@ interface FileUserAccessControlPermissionsProps
 	isFolder: boolean;
 }
 
-class FileUserAccessControlPermissionsInput extends Component<
-	FileUserAccessControlPermissionsProps
-> {
+class FileUserAccessControlPermissionsInput extends Component<FileUserAccessControlPermissionsProps> {
 	public constructor(props: FileUserAccessControlPermissionsProps) {
 		super(props);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const value = this.props.value ?? 0;
 
 		return (
@@ -152,20 +150,20 @@ class FileUserAccessControlPermissionsInput extends Component<
 					<div className="checkboxDiv checkboxDivMult" key={0}>
 						<input
 							type="checkbox"
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							checked={(FileUserAccessControlPermissions.READ & value) !== 0}
-							name={`${this.props.name}-read-${this.props.index}`}
+							name={`${this.props.name}-read-${this.props.index ?? 0}`}
 							onChange={this.onChange(FileUserAccessControlPermissions.READ)}
 						/>
-						<label htmlFor={`${this.props.name}-read-${this.props.index}`} />
-						<label htmlFor={`${this.props.name}-read-${this.props.index}`}>
+						<label htmlFor={`${this.props.name}-read-${this.props.index ?? 0}`} />
+						<label htmlFor={`${this.props.name}-read-${this.props.index ?? 0}`}>
 							{this.props.isFolder ? 'See items in folder' : 'Download file'}
 						</label>
 					</div>
 					{/* <div className="checkboxDiv checkboxDivMult" key={0}>
 						<input
 							type="checkbox"
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							checked={(FileUserAccessControlPermissions.WRITE & value) !== 0}
 							name={`${this.props.name}-write-${this.props.index}`}
 						/>
@@ -175,13 +173,13 @@ class FileUserAccessControlPermissionsInput extends Component<
 					<div className="checkboxDiv checkboxDivMult" key={0}>
 						<input
 							type="checkbox"
-							// tslint:disable-next-line:no-bitwise
+							// eslint-disable-next-line no-bitwise
 							checked={(FileUserAccessControlPermissions.MODIFY & value) !== 0}
-							name={`${this.props.name}-modify-${this.props.index}`}
+							name={`${this.props.name}-modify-${this.props.index ?? 0}`}
 							onChange={this.onChange(FileUserAccessControlPermissions.MODIFY)}
 						/>
-						<label htmlFor={`${this.props.name}-modify-${this.props.index}`} />
-						<label htmlFor={`${this.props.name}-modify-${this.props.index}`}>
+						<label htmlFor={`${this.props.name}-modify-${this.props.index ?? 0}`} />
+						<label htmlFor={`${this.props.name}-modify-${this.props.index ?? 0}`}>
 							{this.props.isFolder
 								? 'Upload files, delete folder, and change comments'
 								: 'Delete file and change comments'}
@@ -192,24 +190,24 @@ class FileUserAccessControlPermissionsInput extends Component<
 		);
 	}
 
-	private onChange(updater: FileUserAccessControlPermissions) {
-		return (ev: React.ChangeEvent<HTMLInputElement>) => {
-			const checked = ev.currentTarget.checked;
-			const value = this.props.value ?? 0;
-			const newValue = checked
-				? // tslint:disable-next-line:no-bitwise
-				  value | updater
-				: // tslint:disable-next-line:no-bitwise
-				  value & ~updater;
+	private onChange = (updater: FileUserAccessControlPermissions) => (
+		ev: React.ChangeEvent<HTMLInputElement>,
+	): void => {
+		const checked = ev.currentTarget.checked;
+		const value = this.props.value ?? 0;
+		const newValue = checked
+			? // eslint-disable-next-line no-bitwise
+			  value | updater
+			: // eslint-disable-next-line no-bitwise
+			  value & ~updater;
 
-			this.props.onChange?.(newValue);
+		this.props.onChange?.(newValue);
 
-			this.props.onUpdate?.({
-				name: this.props.name,
-				value: newValue,
-			});
-		};
-	}
+		this.props.onUpdate?.({
+			name: this.props.name,
+			value: newValue,
+		});
+	};
 }
 
 const PermissionType = (
@@ -217,9 +215,9 @@ const PermissionType = (
 	index: number | undefined,
 	permissions: FileUserAccessControlPermissions,
 	onChange: (permissions: FileControlListItemEdit) => void,
-) => (
+): JSX.Element => (
 	<EnumRadioButton<FileUserAccessControlType>
-		name={`${name}-type-${index}`}
+		name={`${name}-type-${index ?? 0}`}
 		labels={['User', 'Team', 'Account member', 'EvMPlus user', 'Internet']}
 		values={[
 			FileUserAccessControlType.USER,
@@ -241,7 +239,7 @@ type FileUserControlListEditProps = Omit<InputProps<FileControlListItemEdit>, 'v
 	members: Member[];
 };
 
-const FileUserControlListEditInput = (props: FileUserControlListEditProps) => (
+const FileUserControlListEditInput = (props: FileUserControlListEditProps): JSX.Element => (
 	<FormBlock name={props.name}>
 		<Label>Group to apply permissions to</Label>
 		{PermissionType(props.name, props.index, props.value?.permission ?? 0, val => {
@@ -284,7 +282,7 @@ type FileTeamControlListEditProps = Omit<InputProps<FileControlListItemEdit>, 'v
 	teams: RawTeamObject[];
 };
 
-const FileTeamControlListEditInput = (props: FileTeamControlListEditProps) => (
+const FileTeamControlListEditInput = (props: FileTeamControlListEditProps): JSX.Element => (
 	<FormBlock name={props.name}>
 		<Label>Group to apply permissions to</Label>
 		{PermissionType(props.name, props.index, props.value?.permission ?? 0, val => {
@@ -326,7 +324,7 @@ type FileAccountControlListProps = Omit<InputProps<FileControlListItemEdit>, 'va
 	isFolder: boolean;
 };
 
-const FileAccountControlListInput = (props: FileAccountControlListProps) => (
+const FileAccountControlListInput = (props: FileAccountControlListProps): JSX.Element => (
 	<FormBlock name={props.name}>
 		<Label>Group to apply permissions to</Label>
 		{PermissionType(props.name, props.index, props.value?.permission ?? 0, val => {
@@ -354,7 +352,7 @@ type FileSignedInControlListProps = Omit<InputProps<FileControlListItemEdit>, 'v
 	isFolder: boolean;
 };
 
-const FileSignedInControlListInput = (props: FileSignedInControlListProps) => (
+const FileSignedInControlListInput = (props: FileSignedInControlListProps): JSX.Element => (
 	<FormBlock name={props.name}>
 		<Label>Group to apply permissions to</Label>
 		{PermissionType(props.name, props.index, props.value?.permission ?? 0, val => {
@@ -382,7 +380,7 @@ type FileOtherControlListProps = Omit<InputProps<FileControlListItemEdit>, 'valu
 	isFolder: boolean;
 };
 
-const FileOtherControlListInput = (props: FileOtherControlListProps) => (
+const FileOtherControlListInput = (props: FileOtherControlListProps): JSX.Element => (
 	<FormBlock name={props.name}>
 		<Label>Group to apply permissions to</Label>
 		{PermissionType(props.name, props.index, props.value?.permission ?? 0, val => {
@@ -411,7 +409,7 @@ export interface FileControlListItemInputProps extends InputProps<FileControlLis
 	teams: RawTeamObject[];
 }
 
-export const FileControlListItemInput = (props: FileControlListItemInputProps) =>
+export const FileControlListItemInput = (props: FileControlListItemInputProps): JSX.Element =>
 	props.value?.type === FileUserAccessControlType.USER
 		? FileUserControlListEditInput({
 				name: props.name,

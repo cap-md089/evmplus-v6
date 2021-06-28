@@ -18,8 +18,10 @@
  */
 
 import { errorGenerator, ServerError } from '../typings/api';
+import { Identifiable } from '../typings/types';
 import { AsyncEither, asyncEither } from './AsyncEither';
 import { Either, EitherObj } from './Either';
+import { alwaysFalse, identity } from './Util';
 
 export function* iterFromArray<T>(array: T[]): Iter<T> {
 	for (const i of array) {
@@ -27,8 +29,18 @@ export function* iterFromArray<T>(array: T[]): Iter<T> {
 	}
 }
 
+export function iterToArray<T>(iter: Iter<T>): T[] {
+	const result: T[] = [];
+
+	for (const i of iter) {
+		result.push(i);
+	}
+
+	return result;
+}
+
 export const iterMap = <T, U>(map: (v: T) => U) =>
-	function*(iter: Iter<T>): Iter<U> {
+	function* (iter: Iter<T>): Iter<U> {
 		for (const i of iter) {
 			yield map(i);
 		}
@@ -47,7 +59,7 @@ export function iterFilter<T, S extends T>(
 ): (iter: Iter<T>) => IterableIterator<S>;
 
 export function iterFilter<T>(filter: (v: T) => boolean) {
-	return function*(iter: Iter<T>): Iter<T> {
+	return function* (iter: Iter<T>): Iter<T> {
 		for (const i of iter) {
 			if (filter(i)) {
 				yield i;
@@ -58,7 +70,7 @@ export function iterFilter<T>(filter: (v: T) => boolean) {
 
 export const iterReduce = <T, U>(reducer: (prev: U, curr: T) => U) => (initialValue: U) => (
 	iter: Iter<T>,
-) => {
+): U => {
 	let value = initialValue;
 
 	for (const i of iter) {
@@ -94,7 +106,7 @@ export const iterIncludes = <T>(value: T) => (iter: Iter<T>): boolean => {
 };
 
 export const iterConcat = <T>(iter1: Iter<T>) =>
-	function*(iter2: Iter<T>): Iter<T> {
+	function* (iter2: Iter<T>): Iter<T> {
 		for (const item of iter1) {
 			yield item;
 		}
@@ -104,8 +116,35 @@ export const iterConcat = <T>(iter1: Iter<T>) =>
 		}
 	};
 
+export const filterUnique = function* <T extends Identifiable | number | string>(
+	iter: Iter<T>,
+): Iter<T> {
+	const found: { [key: string]: boolean } = {};
+
+	for (const item of iter) {
+		if ('id' in item) {
+			const item2 = item as Identifiable;
+			if (!found[item2.id]) {
+				found[item2.id] = true;
+				yield item;
+			}
+		} else {
+			if (!found[item.toString()]) {
+				found[item.toString()] = true;
+				yield item;
+			}
+		}
+	}
+};
+
+export async function* toAsyncIterableIterator<T>(iter: AsyncIter<T>): AsyncIterableIterator<T> {
+	for await (const i of iter) {
+		yield i;
+	}
+}
+
 export const asyncIterHandler = <T>(errorHandler: (err: Error) => ServerError) =>
-	async function*(iter: AsyncIterableIterator<T>) {
+	async function* (iter: AsyncIterableIterator<T>): AsyncIter<EitherObj<ServerError, T>> {
 		const errorIter: AsyncIterator<EitherObj<ServerError, T>> = {
 			async next(...args: [] | [undefined]) {
 				try {
@@ -128,7 +167,7 @@ export const asyncIterHandler = <T>(errorHandler: (err: Error) => ServerError) =
 	};
 
 export const asyncEitherIterMap = <T, U>(map: (v: T) => U | PromiseLike<U>) =>
-	async function*(
+	async function* (
 		iter: AsyncIter<EitherObj<ServerError, T>>,
 	): AsyncIterableIterator<EitherObj<ServerError, U>> {
 		for await (const i of iter) {
@@ -141,7 +180,7 @@ export const asyncEitherIterMap = <T, U>(map: (v: T) => U | PromiseLike<U>) =>
 	};
 
 export const asyncEitherIterFlatMap = <T, U>(map: (v: T) => AsyncEither<ServerError, U>) =>
-	async function*(
+	async function* (
 		iter: AsyncIter<EitherObj<ServerError, T>>,
 	): AsyncIterableIterator<EitherObj<ServerError, U>> {
 		for await (const i of iter) {
@@ -154,7 +193,7 @@ export const asyncEitherIterFlatMap = <T, U>(map: (v: T) => AsyncEither<ServerEr
 	};
 
 export const asyncIterMap = <T, U>(map: (v: T) => U | PromiseLike<U>) =>
-	async function*(iter: AsyncIter<T>): AsyncIterableIterator<U> {
+	async function* (iter: AsyncIter<T>): AsyncIterableIterator<U> {
 		for await (const i of iter) {
 			yield map(i);
 		}
@@ -166,15 +205,15 @@ export const asyncIterStatefulMap = <S>(initialState: S) => <T, U>(
 		state: S,
 	) => [S, U | PromiseLike<U>] | PromiseLike<[S, U]> | AsyncEither<ServerError, [S, U]>,
 ) => (iter: AsyncIter<T>): [Promise<S>, AsyncIterableIterator<U>] => {
-	let res: (state: S) => void;
-	let rej: (err: Error) => void;
+	let res: ((state: S) => void) | undefined;
+	let rej: ((err: Error) => void) | undefined;
 
 	return [
 		new Promise<S>((resolve, reject) => {
 			res = resolve;
 			rej = reject;
 		}),
-		(async function*() {
+		(async function* () {
 			let state = typeof initialState === 'object' ? { ...initialState } : initialState;
 			let yieldValue;
 
@@ -191,16 +230,16 @@ export const asyncIterStatefulMap = <S>(initialState: S) => <T, U>(
 					yield yieldValue;
 				}
 			} catch (e) {
-				rej!(e);
+				rej?.(e);
 			}
 
-			res!(state);
+			res?.(state);
 		})(),
 	];
 };
 
 export const asyncIterFlatMap = <T, U>(map: (v: T) => U | PromiseLike<U>) =>
-	async function*(iter: AsyncIter<AsyncIter<T>>): AsyncIterableIterator<U> {
+	async function* (iter: AsyncIter<AsyncIter<T>>): AsyncIterableIterator<U> {
 		for await (const i of iter) {
 			for await (const j of i) {
 				yield map(j);
@@ -216,9 +255,20 @@ export function asyncIterFilter<T, S extends T>(
 ): (iter: AsyncIter<T>) => AsyncIterableIterator<S>;
 
 export function asyncIterFilter<T>(filter: (v: T) => boolean | PromiseLike<boolean>) {
-	return async function*(iter: AsyncIter<T>): AsyncIterableIterator<T> {
+	return async function* (iter: AsyncIter<T>): AsyncIterableIterator<T> {
 		for await (const i of iter) {
 			if (await filter(i)) {
+				yield i;
+			}
+		}
+	};
+}
+
+export function asyncIterEitherFilter<T>(filter: (v: T) => AsyncEither<any, boolean>) {
+	return async function* (iter: AsyncIter<T>): AsyncIterableIterator<T> {
+		for await (const i of iter) {
+			const res = filter(i).fullJoin().then(identity, alwaysFalse);
+			if (await res) {
 				yield i;
 			}
 		}
@@ -250,7 +300,7 @@ export const asyncIterAny = <T>(predicate: (item: T) => boolean) => async (
 };
 
 export const asyncIterTap = <T>(tapfunction: (value: T) => void | Promise<void>) =>
-	async function*(iter: AsyncIter<T>) {
+	async function* (iter: AsyncIter<T>): AsyncIter<T> {
 		for await (const i of iter) {
 			await tapfunction(i);
 			yield i;
@@ -258,7 +308,7 @@ export const asyncIterTap = <T>(tapfunction: (value: T) => void | Promise<void>)
 	};
 
 export const asyncIterConcat = <T>(iter1: AsyncIter<T>) =>
-	async function*(iter2: () => AsyncIter<T>) {
+	async function* (iter2: () => AsyncIter<T>): AsyncIter<T> {
 		for await (const item of iter1) {
 			yield item;
 		}
@@ -268,23 +318,54 @@ export const asyncIterConcat = <T>(iter1: AsyncIter<T>) =>
 		}
 	};
 
-export const yieldObj = function*<T>(item: T): IterableIterator<T> {
+export const asyncIterConcat2 = async function* <T>(...iters: Array<AsyncIter<T>>): AsyncIter<T> {
+	for (const iter of iters) {
+		for await (const item of iter) {
+			yield item;
+		}
+	}
+};
+
+export const asyncFilterUnique = async function* <T extends Identifiable | number | string>(
+	iter: AsyncIter<T>,
+): AsyncIter<T> {
+	const found: { [key: string]: boolean } = {};
+
+	for await (const item of iter) {
+		if (typeof item === 'string' || typeof item === 'number') {
+			if (!found[item.toString()]) {
+				found[item.toString()] = true;
+				yield item;
+			}
+		} else {
+			if (!(item.id in found)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				found[item.id] = true;
+				yield item;
+			}
+		}
+	}
+};
+
+export const yieldObj = function* <T>(item: T): IterableIterator<T> {
 	yield item;
 };
 
-export const yieldObjAsync = async function*<T>(
+// eslint-disable-next-line @typescript-eslint/require-await
+export const yieldObjAsync = async function* <T>(
 	item: T | PromiseLike<T>,
 ): AsyncIterableIterator<T> {
 	yield item;
 };
 
-export const yieldAsyncEither = async function*<T>(
+// eslint-disable-next-line @typescript-eslint/require-await
+export const yieldAsyncEither = async function* <T>(
 	item: AsyncEither<ServerError, T>,
 ): AsyncIterableIterator<EitherObj<ServerError, T>> {
 	yield item;
 };
 
-export const yieldEmpty = async function*<T>(): AsyncIterableIterator<T> {
+export const yieldEmpty = async function* <T>(): AsyncIterableIterator<T> {
 	// does nothing
 };
 
@@ -303,7 +384,7 @@ export const min = iterReduce(Math.min)(Number.POSITIVE_INFINITY);
 
 export const statefulFunction = <S>(initialState: S) => <T, U>(
 	func: (val: T, state: S) => [U, S],
-) => {
+): ((val: T) => U) => {
 	let state = initialState;
 	let returnValue;
 

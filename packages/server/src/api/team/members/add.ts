@@ -17,29 +17,50 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { APIRequest, ServerAPIEndpoint } from 'auto-client-api';
+import { APIRequest } from 'auto-client-api';
 import { always, api, destroy, Permissions, RawTeamObject, SessionType } from 'common-lib';
-import { addMemberToTeam, getTeam, PAM, resolveReference, saveTeam } from 'server-common';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	GenBackend,
+	getCombinedMemberBackend,
+	getTeamsBackend,
+	MemberBackend,
+	PAM,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const checkIfMemberExists = (req: APIRequest<api.team.members.AddTeamMember>) => (
-	team: RawTeamObject,
-) => resolveReference(req.mysqlx)(req.account)(req.body.reference).map(always(team));
+const checkIfMemberExists = (backend: Backends<[MemberBackend]>) => (
+	req: APIRequest<api.team.members.AddTeamMember>,
+) => (team: RawTeamObject) => backend.getMember(req.account)(req.body.reference).map(always(team));
 
-export const func: ServerAPIEndpoint<api.team.members.AddTeamMember> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'ManageTeam',
-		Permissions.ManageTeam.FULL,
-	)(req =>
-		getTeam(req.mysqlx)(req.account)(parseInt(req.params.id, 10))
-			.flatMap(checkIfMemberExists(req))
-			.map(addMemberToTeam(req.memberUpdateEmitter)(req.account)(req.body))
-			.flatMap(saveTeam(req.mysqlx))
-			.map(destroy)
-			.map(wrapper),
-	),
+export const func: Endpoint<
+	Backends<[TeamsBackend, MemberBackend]>,
+	api.team.members.AddTeamMember
+> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'ManageTeam',
+			Permissions.ManageTeam.FULL,
+		)(req =>
+			backend
+				.getTeam(req.account)(parseInt(req.params.id, 10))
+				.flatMap(checkIfMemberExists(backend)(req))
+				.flatMap(backend.addMemberToTeam(req.body))
+				.flatMap(backend.saveTeam)
+				.map(destroy)
+				.map(wrapper),
+		),
+	);
+
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, TeamsBackend]
+	>(getCombinedMemberBackend(), getTeamsBackend),
 );
-
-export default func;

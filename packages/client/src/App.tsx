@@ -46,19 +46,33 @@ import { MemberDetailsProvider, MemberListProvider, TeamListProvider } from './g
 import fetchApi from './lib/apis';
 import { getMember } from './lib/Members';
 
-interface AppState {
-	Registry: RegistryValues | null;
-	member: SigninReturn;
-	fullMember: ClientUser | null;
-	loading: boolean;
-	account: AccountObject | null;
+interface AppUIState {
 	sideNavLinks: SideNavigationItem[];
 	breadCrumbs: BreadCrumb[];
 	allowedSlideshowIDs: FileObject[];
-	loadError: boolean;
 	memberList: EitherObj<HTTPError, Member[]> | null;
 	teamList: EitherObj<HTTPError, FullTeamObject[]> | null;
+	isEmbedded: boolean;
 }
+
+interface UnloadedAppState {
+	state: 'LOADING';
+}
+
+interface LoadedAppState {
+	state: 'LOADED';
+
+	Registry: RegistryValues;
+	member: SigninReturn;
+	account: AccountObject;
+	fullMember: ClientUser | null;
+}
+
+interface ErrorAppState {
+	state: 'ERROR';
+}
+
+type AppState = AppUIState & (ErrorAppState | UnloadedAppState | LoadedAppState);
 
 export default class App extends React.Component<
 	{
@@ -69,41 +83,33 @@ export default class App extends React.Component<
 	public key: number | null = null;
 
 	public state: AppState = {
-		member: {
-			error: MemberCreateError.INVALID_SESSION_ID,
-		},
-		loading: true,
-		account: null,
-		Registry: null,
+		state: 'LOADING',
 		sideNavLinks: [],
 		breadCrumbs: [],
 		allowedSlideshowIDs: [],
-		fullMember: null,
-		loadError: false,
 		memberList: null,
 		teamList: null,
+		isEmbedded: false,
 	};
 
+	private currentMembersListRequestInProgress = false;
+	private currentTeamsListRequestInProgress = false;
 	private timer: NodeJS.Timer | null = null;
 
-	constructor(props: { isMobile: boolean }) {
-		super(props);
-
-		this.authorizeUser = this.authorizeUser.bind(this);
-		this.updateBreadCrumbs = this.updateBreadCrumbs.bind(this);
-		this.updateSideNav = this.updateSideNav.bind(this);
-		this.update = this.update.bind(this);
-		this.updateMemberList = this.updateMemberList.bind(this);
-		this.updateTeamList = this.updateTeamList.bind(this);
-	}
-
-	public async componentDidMount() {
-		fetchApi
+	public async componentDidMount(): Promise<void> {
+		const getAllowedSlideshowIDsPromise = fetchApi
 			.slideshowImageIDs({}, {})
-			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }));
+			.tap(allowedSlideshowIDs => this.setState({ allowedSlideshowIDs }))
+			.fullJoin();
+
+		const isEmbedded = !!/embed=.*?&?/.exec(window.location.search);
+
+		if (isEmbedded) {
+			document.getElementById('root')?.classList.add('embedded');
+		}
 
 		this.setState({
-			loading: true,
+			isEmbedded,
 		});
 
 		const infoEither = await AsyncEither.All([
@@ -119,8 +125,7 @@ export default class App extends React.Component<
 
 		if (Either.isLeft(infoEither)) {
 			this.setState({
-				loadError: true,
-				loading: false,
+				state: 'ERROR',
 			});
 			return;
 		}
@@ -133,27 +138,32 @@ export default class App extends React.Component<
 
 		const fullMember = member.error !== MemberCreateError.NONE ? null : member.member;
 
-		this.setState({
+		this.setState(prev => ({
+			...prev,
 			Registry: registry,
 			account,
 			member,
-			loading: false,
+			state: 'LOADED',
 			fullMember,
-		});
+		}));
+
+		await getAllowedSlideshowIDsPromise;
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		if (this.timer) {
 			clearInterval(this.timer);
 		}
 	}
 
-	public render() {
-		return this.renderWithProviders(
+	public render = (): JSX.Element =>
+		this.renderWithProviders(
 			<>
 				<Header
-					loadingError={this.state.loadError}
-					registry={Maybe.fromValue(this.state.Registry)}
+					loadingError={this.state.state === 'ERROR'}
+					registry={Maybe.fromValue(
+						this.state.state === 'LOADED' ? this.state.Registry : undefined,
+					)}
 				/>
 				{/* <Slideshow fileIDs={this.state.allowedSlideshowIDs.map(item => item.id)} /> */}
 				<div className="background">
@@ -161,8 +171,14 @@ export default class App extends React.Component<
 				</div>
 				<SideNavigation
 					links={this.state.sideNavLinks}
-					member={this.state.fullMember}
-					fullMemberDetails={this.state.member}
+					member={this.state.state === 'LOADED' ? this.state.fullMember : null}
+					fullMemberDetails={
+						this.state.state === 'LOADED'
+							? this.state.member
+							: {
+									error: MemberCreateError.INVALID_SESSION_ID,
+							  }
+					}
 					authorizeUser={this.authorizeUser}
 				/>
 				<div className="content-border left-border" />
@@ -170,71 +186,80 @@ export default class App extends React.Component<
 					<div className="main-content">
 						<div id="fb-root" />
 						<BreadCrumbs links={this.state.breadCrumbs} />
-						{this.state.loading ? null : (
-							<GlobalNotification account={this.state.account!} />
-						)}
-						{this.state.loading ? (
-							<Loader />
-						) : this.state.loadError ? (
-							<div>The account does not exist</div>
-						) : (
-							<PageRouter
-								updateApp={this.update}
-								updateSideNav={this.updateSideNav}
-								updateBreadCrumbs={this.updateBreadCrumbs}
-								member={this.state.fullMember}
-								fullMemberDetails={this.state.member}
-								account={this.state.account!}
-								authorizeUser={this.authorizeUser}
-								registry={this.state.Registry!}
-								key="pagerouter"
-							/>
-						)}
+						{this.state.state === 'LOADED' ? (
+							<GlobalNotification account={this.state.account} />
+						) : null}
+						{this.renderPage()}
 					</div>
 				</main>
 				<div className="content-border right-border" />
-				<Footer registry={Maybe.fromValue(this.state.Registry)} />
+				<Footer
+					registry={Maybe.fromValue(
+						this.state.state === 'LOADED' ? this.state.Registry : undefined,
+					)}
+				/>
 			</>,
 		);
-	}
 
-	private renderWithProviders(el: JSX.Element): JSX.Element {
-		return (
-			<MemberDetailsProvider
+	private renderWithProviders = (el: JSX.Element): JSX.Element => (
+		<MemberDetailsProvider
+			value={{
+				member: this.state.state === 'LOADED' ? this.state.fullMember : null,
+				fullMember:
+					this.state.state === 'LOADED'
+						? this.state.member
+						: {
+								error: MemberCreateError.INVALID_SESSION_ID,
+						  },
+			}}
+		>
+			<MemberListProvider
 				value={{
-					member: this.state.fullMember,
-					fullMember: this.state.member,
+					state: this.state.memberList,
+					updateList: this.updateMemberList,
 				}}
 			>
-				<MemberListProvider
+				<TeamListProvider
 					value={{
-						state: this.state.memberList,
-						updateList: this.updateMemberList,
+						state: this.state.teamList,
+						updateList: this.updateTeamList,
 					}}
 				>
-					<TeamListProvider
-						value={{
-							state: this.state.teamList,
-							updateList: this.updateTeamList,
-						}}
-					>
-						{el}
-					</TeamListProvider>
-				</MemberListProvider>
-			</MemberDetailsProvider>
+					{el}
+				</TeamListProvider>
+			</MemberListProvider>
+		</MemberDetailsProvider>
+	);
+
+	private renderPage = (): JSX.Element =>
+		this.state.state === 'LOADING' ? (
+			<Loader />
+		) : this.state.state === 'ERROR' ? (
+			<div>The account does not exist</div>
+		) : (
+			<PageRouter
+				updateApp={this.update}
+				updateSideNav={this.updateSideNav}
+				updateBreadCrumbs={this.updateBreadCrumbs}
+				member={this.state.fullMember}
+				fullMemberDetails={this.state.member}
+				account={this.state.account}
+				authorizeUser={this.authorizeUser}
+				registry={this.state.Registry}
+				key="pagerouter"
+			/>
 		);
-	}
 
-	private updateSideNav(sideNavLinks: SideNavigationItem[], force = false) {
+	private updateSideNav = (sideNavLinks: SideNavigationItem[]): void => {
 		this.setState({ sideNavLinks });
-	}
+	};
 
-	private updateBreadCrumbs(breadCrumbs: BreadCrumb[]) {
+	private updateBreadCrumbs = (breadCrumbs: BreadCrumb[]): void => {
 		this.setState({ breadCrumbs });
-	}
+	};
 
-	private authorizeUser(member: SigninReturn) {
-		let fullMember = this.state.fullMember;
+	private authorizeUser = (member: SigninReturn): void => {
+		let fullMember = this.state.state === 'LOADED' ? this.state.fullMember : null;
 
 		if (member.error === MemberCreateError.NONE && fullMember) {
 			if (member.member.id !== fullMember.id) {
@@ -246,18 +271,22 @@ export default class App extends React.Component<
 			fullMember = null;
 		}
 
-		this.setState({
-			member,
-			fullMember,
-		});
-	}
+		this.setState(prev =>
+			prev.state === 'LOADED'
+				? {
+						...prev,
+						member,
+						fullMember,
+				  }
+				: prev,
+		);
+	};
 
-	private update() {
+	private update = (): void => {
 		this.forceUpdate();
-	}
+	};
 
-	private currentTeamsListRequestInProgress: boolean = false;
-	private async updateTeamList() {
+	private updateTeamList = async (): Promise<void> => {
 		if (this.currentTeamsListRequestInProgress) {
 			return;
 		}
@@ -274,10 +303,9 @@ export default class App extends React.Component<
 				this.currentTeamsListRequestInProgress = false;
 			},
 		);
-	}
+	};
 
-	private currentMembersListRequestInProgress: boolean = false;
-	private async updateMemberList() {
+	private updateMemberList = async (): Promise<void> => {
 		if (this.currentMembersListRequestInProgress) {
 			return;
 		}
@@ -294,5 +322,5 @@ export default class App extends React.Component<
 				this.currentMembersListRequestInProgress = false;
 			},
 		);
-	}
+	};
 }

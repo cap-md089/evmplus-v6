@@ -10,7 +10,7 @@ branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "master" ]; then
 
 	# Check for compile errors
-	if docker-compose build main; then
+	if lerna run build; then
 		# Everything compiles
 		:
 	else
@@ -20,16 +20,34 @@ if [ "$branch" = "master" ]; then
 	fi
 
 	# Run tests
-	# if lerna run test; then
-	# 	# We passed
-	# 	:
-	# else
-	# 	echo "Unit tests have failed"
-	# 	exit 1
-	# fi
+	if yarn test; then
+		# We passed
+		:
+	else
+		echo "Unit tests have failed"
+		exit 1
+	fi
 
 	# Lint code
-	if lerna run lint --since master; then
+	if lerna run lint --parallel --since master; then
+		# Code is lint free
+		:
+	else
+		echo "Code fails lint check"
+		git stash pop -q
+		exit 1
+	fi
+else
+	if lerna run build --ignore client --since HEAD; then
+		# Everything compiles
+		:
+	else
+		echo "Code fails to build"
+		git stash pop -q
+		exit 1
+	fi
+
+	if lerna run lint --parallel --since HEAD; then
 		# Code is lint free
 		:
 	else

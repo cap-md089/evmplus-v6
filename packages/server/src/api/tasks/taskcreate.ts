@@ -17,17 +17,16 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, Permissions, SessionType } from 'common-lib';
-import { createTask, PAM } from 'server-common';
+import { Backends, getCombinedTasksBackend, PAM, TaskBackend, withBackends } from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.tasks.CreateTask> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(request =>
-	PAM.checkPermissions('AssignTasks')(Permissions.AssignTasks.YES)()(request).flatMap(req =>
-		createTask(req.mysqlx)(req.account)(req.body).map(wrapper),
-	),
-);
+export const func: Endpoint<Backends<[TaskBackend]>, api.tasks.CreateTask> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(request =>
+		PAM.checkPermissions('AssignTasks')(Permissions.AssignTasks.YES)()(request).flatMap(req =>
+			backend.createTask(req.account)(req.body).map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedTasksBackend());

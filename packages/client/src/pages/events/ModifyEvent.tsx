@@ -70,14 +70,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		saving: false,
 	};
 
-	constructor(props: PageProps<{ id: string }>) {
-		super(props);
-
-		this.updateNewEvent = this.updateNewEvent.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
-	}
-
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -185,7 +178,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		this.updateTitle(`Modify event "${event.name}"`);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.member) {
 			return <SigninLink>Please sign in</SigninLink>;
 		}
@@ -215,7 +208,7 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		);
 	}
 
-	private updateNewEvent(eventFormValues: NewEventFormValues) {
+	private updateNewEvent = (eventFormValues: NewEventFormValues): void => {
 		if (this.state.stage !== 'LOADED') {
 			return;
 		}
@@ -224,9 +217,9 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 			...prev,
 			eventFormValues,
 		}));
-	}
+	};
 
-	private async handleSubmit(event: MaybeObj<NewEventFormValues>) {
+	private handleSubmit = async (event: MaybeObj<NewEventFormValues>): Promise<void> => {
 		if (!this.props.member) {
 			return;
 		}
@@ -261,5 +254,5 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 				`/eventviewer/${this.props.routeProps.match.params.id.split('-')[0]}`,
 			);
 		}
-	}
+	};
 }

@@ -17,67 +17,83 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	always,
 	api,
 	asyncIterFilter,
 	asyncIterHandler,
-	asyncIterMap,
 	asyncLeft,
 	asyncRight,
-	Either,
-	EitherObj,
 	errorGenerator,
-	get,
 	hasOneDutyPosition,
 	isRioux,
-	Member,
-	Right,
 	ServerError,
 	SessionType,
 } from 'common-lib';
-import { getMembers, PAM } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	GenBackend,
+	getCombinedMemberBackend,
+	getTeamsBackend,
+	MemberBackend,
+	PAM,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.flight.FlightMembersFull> = PAM.RequiresMemberType(
-	'CAPNHQMember',
-	'CAPProspectiveMember',
-)(
-	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		(hasOneDutyPosition([
-			'Cadet Flight Commander',
-			'Cadet Flight Sergeant',
-			'Cadet Commander',
-			'Cadet Deputy Commander',
-			'Cadet Executive Officer',
-			'Cadet Deputy Commander',
-		])(req.member)
-			? asyncRight(req, errorGenerator('Could not process request'))
-			: asyncLeft<ServerError, typeof req>({
-					type: 'OTHER',
-					code: 403,
-					message: 'Member does not have permission to do that',
-			  })
-		)
-			.map(() => getMembers(req.mysqlx)(req.account)())
-			.map(asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight))
-			.map(asyncIterMap(get('value')))
-			.map(asyncIterFilter(mem => !mem.seniorMember))
-			.map(
-				asyncIterFilter(
-					isRioux(req.member)
-						? always(true)
-						: hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])(
-								req.member,
-						  )
-						? mem => mem.flight === req.member.flight && mem.flight !== null
-						: always(true),
-				),
+export const func: Endpoint<
+	Backends<[MemberBackend, TeamsBackend, AccountBackend, CAP.CAPMemberBackend]>,
+	api.member.flight.FlightMembersFull
+> = backend =>
+	PAM.RequiresMemberType(
+		'CAPNHQMember',
+		'CAPProspectiveMember',
+	)(
+		PAM.RequireSessionType(SessionType.REGULAR)(req =>
+			(hasOneDutyPosition([
+				'Cadet Flight Commander',
+				'Cadet Flight Sergeant',
+				'Cadet Commander',
+				'Cadet Deputy Commander',
+				'Cadet Executive Officer',
+				'Cadet Deputy Commander',
+			])(req.member)
+				? asyncRight(req, errorGenerator('Could not process request'))
+				: asyncLeft<ServerError, typeof req>({
+						type: 'OTHER',
+						code: 403,
+						message: 'Member does not have permission to do that',
+				  })
 			)
-			.map(asyncIterHandler(errorGenerator('Could not get member ID')))
-			.map(wrapper),
-	),
-);
+				.flatMap(() => backend.getMembers(backend)(req.account)())
+				.map(asyncIterFilter(mem => !mem.seniorMember))
+				.map(
+					asyncIterFilter(
+						isRioux(req.member)
+							? always(true)
+							: hasOneDutyPosition([
+									'Cadet Flight Commander',
+									'Cadet Flight Sergeant',
+							  ])(req.member)
+							? mem => mem.flight === req.member.flight && mem.flight !== null
+							: always(true),
+					),
+				)
+				.map(asyncIterHandler(errorGenerator('Could not get member ID')))
+				.map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, TeamsBackend]
+	>(getCombinedMemberBackend(), getTeamsBackend),
+);

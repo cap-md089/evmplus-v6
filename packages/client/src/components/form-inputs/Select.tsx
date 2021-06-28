@@ -41,28 +41,26 @@ export default class Select<E extends number = number> extends React.Component<S
 		this.selectChange = this.selectChange.bind(this);
 	}
 
-	public render() {
-		return (
-			<div className="input-formbox" style={this.props.boxStyles}>
-				<select
-					className="select"
-					value={(typeof this.props.value === 'undefined'
-						? '-1'
-						: this.props.value
-					).toString()}
-					onChange={this.selectChange}
-				>
-					{this.props.labels.map((label, i) => (
-						<option key={i} value={i.toString()}>
-							{label}
-						</option>
-					))}
-				</select>
-			</div>
-		);
-	}
+	public render = (): JSX.Element => (
+		<div className="input-formbox" style={this.props.boxStyles}>
+			<select
+				className="select"
+				value={(typeof this.props.value === 'undefined'
+					? '-1'
+					: this.props.value
+				).toString()}
+				onChange={this.selectChange}
+			>
+				{this.props.labels.map((label, i) => (
+					<option key={i} value={i.toString()}>
+						{label}
+					</option>
+				))}
+			</select>
+		</div>
+	);
 
-	private selectChange(event: React.FormEvent<HTMLSelectElement>) {
+	private selectChange = (event: React.FormEvent<HTMLSelectElement>): void => {
 		const value = parseInt(event.currentTarget.value.toString(), 10) as E;
 
 		if (this.props.onChange) {
@@ -75,5 +73,5 @@ export default class Select<E extends number = number> extends React.Component<S
 				value,
 			});
 		}
-	}
+	};
 }

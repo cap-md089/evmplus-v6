@@ -47,7 +47,7 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 		state: 'LOADING',
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -70,7 +70,11 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element | null {
+		if (!this.props.member) {
+			return null;
+		}
+
 		return (
 			<div className="widget">
 				<div className="widget-title">Drive information</div>
@@ -86,7 +90,7 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 							{this.state.list.length !== 1 ? 's' : ''} in your drive
 							<br />
 							<br />
-							<Link to={`/drive/${stringifyMemberReference(this.props.member!)}`}>
+							<Link to={`/drive/${stringifyMemberReference(this.props.member)}`}>
 								Go there now
 							</Link>
 						</div>

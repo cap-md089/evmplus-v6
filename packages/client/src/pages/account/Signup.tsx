@@ -61,87 +61,89 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 		this.signup = this.signup.bind(this);
 	}
 
-	public render() {
-		return (
-			<SimpleForm<SignupFormValues>
-				values={this.state.form}
-				onChange={form => this.setState({ form })}
-				onSubmit={this.signup}
-				disableOnInvalid={true}
-				validator={{
-					capid: id => id !== null && id >= 100000,
-					email: email => !!email && !!email.match(/.*?@.*/),
-					recaptcha: val => val !== null,
-				}}
-				submitInfo={{
-					disabled: this.state.tryingSignup,
-					text: 'Sign up',
-				}}
-			>
-				<Title>Create account</Title>
+	public render = (): JSX.Element => (
+		<SimpleForm<SignupFormValues>
+			values={this.state.form}
+			onChange={form => this.setState({ form })}
+			onSubmit={this.signup}
+			disableOnInvalid={true}
+			validator={{
+				capid: id => id !== null && id >= 100000,
+				email: email => !!email && !!/.*?@.*/.exec(email),
+				recaptcha: val => val !== null,
+			}}
+			submitInfo={{
+				disabled: this.state.tryingSignup,
+				text: 'Sign up',
+			}}
+		>
+			<Title>Create account</Title>
 
-				{this.state.error !== null ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.error !== null ? (
-					<TextBox>
-						<b style={{ color: 'red' }}>{this.state.error}</b>
-					</TextBox>
-				) : null}
-
-				{this.state.success ? (
-					// Used for spacing
-					<Label />
-				) : null}
-				{this.state.success ? (
-					<TextBox>
-						Account request successful. Check your inbox and spam folder for a link to
-						finish creating your account
-					</TextBox>
-				) : null}
-
+			{this.state.error !== null ? (
+				// Used for spacing
 				<Label />
+			) : null}
+			{this.state.error !== null ? (
 				<TextBox>
-					Enter your CAPID and email address as stored in eServices to register for a
-					EvMPlus.org account. You will receive an email with a link to select a username
-					and password and complete the account registration process. Only one EvMPlus.org
-					account may be created per CAP ID.
-					{/* <br />
+					<b style={{ color: 'red' }}>{this.state.error}</b>
+				</TextBox>
+			) : null}
+
+			{this.state.success ? (
+				// Used for spacing
+				<Label />
+			) : null}
+			{this.state.success ? (
+				<TextBox>
+					Account request successful. Check your inbox and spam folder for a link to
+					finish creating your account
+				</TextBox>
+			) : null}
+
+			<Label />
+			<TextBox>
+				Enter your CAPID and email address as stored in eServices to register for a
+				EvMPlus.org account. You will receive an email with a link to select a username and
+				password and complete the account registration process. Only one EvMPlus.org account
+				may be created per CAP ID.
+				{/* <br />
 					If you have signed up for an account on any of EvMPlus.org's subdomains, you can
 					use that account instead */}
-				</TextBox>
+			</TextBox>
 
-				<Label>CAP ID number</Label>
-				<NumberInput name="capid" />
+			<Label>CAP ID number</Label>
+			<NumberInput name="capid" />
 
-				<Label>Email Address</Label>
-				<TextInput name="email" />
+			<Label>Email Address</Label>
+			<TextInput name="email" />
 
-				<ReCAPTCHAInput name="recaptcha" />
-			</SimpleForm>
-		);
-	}
+			<ReCAPTCHAInput name="recaptcha" />
+		</SimpleForm>
+	);
 
-	private async signup(values: SignupFormValues) {
+	private signup = async (values: SignupFormValues): Promise<void> => {
 		try {
+			if (!values.capid || !values.recaptcha) {
+				return;
+			}
+
 			this.setState({
 				tryingSignup: true,
 				success: false,
 				error: null,
 			});
 
-			// @ts-ignore
 			window.grecaptcha.reset();
 
 			const result = await fetchApi.member.account.capnhq.requestNHQAccount(
 				{},
-				{ capid: values.capid!, recaptcha: values.recaptcha!, email: values.email },
+				{ capid: values.capid, recaptcha: values.recaptcha, email: values.email },
 			);
 
 			if (Either.isLeft(result)) {
 				this.setState({
 					error: result.value.message,
+					tryingSignup: false,
 				});
 			} else {
 				this.setState({
@@ -155,5 +157,5 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 				tryingSignup: false,
 			});
 		}
-	}
+	};
 }

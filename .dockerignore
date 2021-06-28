@@ -4,3 +4,4 @@ packages/*/build
 packages/server/npm-debug.log
 packages/server/mysqldumps
 packages/server/capwatch-zips
+keys

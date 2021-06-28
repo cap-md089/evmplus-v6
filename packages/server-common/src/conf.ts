@@ -62,7 +62,7 @@ export const parseRawConfiguration = (raw: RawServerConfiguration): ServerConfig
 export const injectConfiguration = (readfile = promisify(readFile)) => async (
 	conf: EnvServerConfiguration,
 ): Promise<ServerConfiguration> => {
-	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
+	const toUtf8 = (buf: Buffer): string => buf.toString('utf-8');
 
 	const [
 		DB_USER,
@@ -101,7 +101,7 @@ const throws = <T>(e: EitherObj<any, T>): T => {
 	}
 };
 
-export default async (readfile = promisify(readFile)) => {
+export const getConf = async (readfile = promisify(readFile)): Promise<ServerConfiguration> => {
 	dotenv.config();
 
 	const envConfigValidator = validator<EnvServerConfiguration>(Validator);
@@ -127,13 +127,15 @@ export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguratio
 	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),
 });
 
-export const getCLIConfiguration = async (readfile = promisify(readFile)) => {
+export const getCLIConfiguration = async (
+	readfile = promisify(readFile),
+): Promise<CLIConfiguration> => {
 	dotenv.config();
 
 	const envConfigValidator = validator<EnvCLIConfiguration>(Validator);
 	const envConfiguration = throws(envConfigValidator.validate(process.env, ''));
 
-	const toUtf8 = (buf: Buffer) => buf.toString('utf-8');
+	const toUtf8 = (buf: Buffer): string => buf.toString('utf-8');
 
 	const [DB_USER, DB_PASSWORD, DISCORD_CLIENT_TOKEN] = await Promise.all([
 		readfile('/run/secrets/db_user').then(toUtf8),

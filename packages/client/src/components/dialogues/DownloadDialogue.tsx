@@ -17,12 +17,12 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as React from 'react';
-import Dialogue, { DialogueButtons } from './Dialogue';
-import Selector, { CheckInput } from '../form-inputs/Selector';
 import { Identifiable } from 'common-lib';
+import * as React from 'react';
+import Selector, { Filters } from '../form-inputs/Selector';
+import Dialogue, { DialogueButtons } from './Dialogue';
 
-interface DownloadProps<T extends Identifiable> {
+interface DownloadProps<T extends Identifiable, FilterValues extends any[]> {
 	valuePromise: Promise<T[]> | T[];
 	// Properties for the dialogue
 	open: boolean;
@@ -31,60 +31,52 @@ interface DownloadProps<T extends Identifiable> {
 
 	// Properties for the selector
 	showIDField?: boolean;
-	filters?: Array<CheckInput<T>>;
+	filters: Filters<T, FilterValues>;
 	onChangeVisible?: (visible: T[]) => void;
 	overflow?: number;
-	filterValues?: any[];
-	onFilterValuesChange?: (filterValues: any[]) => void;
+	filterValues: FilterValues;
+	onFilterValuesChange?: (filterValues: FilterValues) => void;
 	displayValue: (value: T) => React.ReactChild;
 	valueFilter?: (value: T) => boolean;
 }
 
-interface DownloadPropsSingle<T extends Identifiable> extends DownloadProps<T> {
+interface DownloadPropsSingle<T extends Identifiable, FilterValues extends any[]>
+	extends DownloadProps<T, FilterValues> {
 	multiple: false;
 	onValueClick: (value: T | null) => void;
 	onValueSelect: (value: T | null) => void;
 	selectedValue?: T | null;
 }
 
-interface DownloadPropsMultiple<T extends Identifiable> extends DownloadProps<T> {
+interface DownloadPropsMultiple<T extends Identifiable, FilterValues extends any[]>
+	extends DownloadProps<T, FilterValues> {
 	multiple: true;
 	onValuesClick: (values: T[]) => void;
 	onValuesSelect: (values: T[]) => void;
 	selectedValues?: T[];
 }
 
-type DownloadDialogueProps<T extends Identifiable> =
-	| DownloadPropsMultiple<T>
-	| DownloadPropsSingle<T>;
+type DownloadDialogueProps<T extends Identifiable, FilterValues extends any[]> =
+	| DownloadPropsMultiple<T, FilterValues>
+	| DownloadPropsSingle<T, FilterValues>;
 
 interface DownloadDialogueState<T> {
 	values: T[] | null;
 	selectedValues: T[];
 }
 
-export default class DownloadDialogue<T extends Identifiable> extends React.Component<
-	DownloadDialogueProps<T>,
-	DownloadDialogueState<T>
-> {
+export default class DownloadDialogue<
+	T extends Identifiable,
+	FilterValues extends any[] = any[]
+> extends React.Component<DownloadDialogueProps<T, FilterValues>, DownloadDialogueState<T>> {
 	public state: DownloadDialogueState<T> = {
 		values: null,
 		selectedValues: [],
 	};
 
-	constructor(props: DownloadDialogueProps<T>) {
-		super(props);
-
-		this.onOk = this.onOk.bind(this);
-		this.onCancel = this.onCancel.bind(this);
-		this.onChange = this.onChange.bind(this);
-		this.onSingleChange = this.onSingleChange.bind(this);
-		this.onMultipleChange = this.onMultipleChange.bind(this);
-	}
-
-	public componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		if (this.props.valuePromise instanceof Promise) {
-			this.props.valuePromise.then(values => this.setState({ values }));
+			await this.props.valuePromise.then(values => this.setState({ values }));
 		} else {
 			this.setState({
 				values: this.props.valuePromise,
@@ -92,7 +84,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element | null {
 		if (this.state.values === null) {
 			return null;
 		}
@@ -111,7 +103,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 
 		if (this.props.multiple) {
 			selector = (
-				<Selector
+				<Selector<T, FilterValues>
 					{...selectorProps}
 					multiple={true}
 					value={this.props.selectedValues || this.state.selectedValues}
@@ -120,7 +112,7 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 			);
 		} else {
 			selector = (
-				<Selector
+				<Selector<T, FilterValues>
 					{...selectorProps}
 					multiple={false}
 					value={this.props.selectedValue || this.state.selectedValues[0]}
@@ -160,37 +152,40 @@ export default class DownloadDialogue<T extends Identifiable> extends React.Comp
 		return ret;
 	}
 
-	private onOk() {
+	private onOk = (): void => {
 		if (this.props.multiple) {
-			this.props.onValuesSelect(this.state.values!.filter(val => this.hasValue(val)));
+			if (!this.state.values) {
+				return;
+			}
+			this.props.onValuesSelect(this.state.values.filter(val => this.hasValue(val)));
 		} else {
 			this.props.onValueSelect(this.props.selectedValue ? this.props.selectedValue : null);
 		}
-	}
+	};
 
-	private onCancel() {
+	private onCancel = (): void => {
 		this.props.onCancel();
-	}
+	};
 
-	private onSingleChange(value: T) {
+	private onSingleChange = (value: T): void => {
 		this.onChange([value]);
 
 		if (!this.props.multiple) {
 			this.props.onValueClick(value);
 		}
-	}
+	};
 
-	private onMultipleChange(values: T[]) {
+	private onMultipleChange = (values: T[]): void => {
 		this.onChange(values);
 
 		if (this.props.multiple) {
 			this.props.onValuesClick(values);
 		}
-	}
+	};
 
-	private onChange(selectedValues: T[]) {
+	private onChange = (selectedValues: T[]): void => {
 		this.setState({
 			selectedValues,
 		});
-	}
+	};
 }

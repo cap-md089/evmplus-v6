@@ -34,7 +34,9 @@ interface UploadFinishEvent {
 }
 
 export const uploadFile = (parentid: string) =>
-	async function*(files: File[]): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
+	async function* (
+		files: File[],
+	): AsyncIterableIterator<UploadProgressEvent | UploadFinishEvent> {
 		const tokenEither = await fetchApi.token({}, {});
 
 		if (Either.isLeft(tokenEither)) {
@@ -100,8 +102,8 @@ export const uploadFile = (parentid: string) =>
 			results.finish();
 		});
 
-		const uploadPromise = new Promise<UploadFinishEvent>((res, rej) => {
-			xhr.addEventListener('readystatechange', function(evt: Event) {
+		const uploadPromise = new Promise<UploadFinishEvent>(res => {
+			xhr.addEventListener('readystatechange', function () {
 				logFunc('Ready state changed during file upload: %d', this.readyState);
 				if (this.readyState === 4) {
 					const resp = JSON.parse(this.responseText) as FullFileObject[];

@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
@@ -37,7 +36,14 @@ import {
 	TeamPublicity,
 	User,
 } from 'common-lib';
-import { expandTeam, getTeamObjects, httpStripTeamObject } from 'server-common';
+import {
+	Backends,
+	getCombinedTeamsBackend,
+	httpStripTeamObject,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
 const isTeamMemberOrLeaderIfPrivate = (maybeUser: MaybeObj<User>) => (team: FullTeamObject) =>
@@ -52,9 +58,10 @@ const isTeamMemberOrLeaderIfPrivate = (maybeUser: MaybeObj<User>) => (team: Full
 		  )(maybeUser)
 		: true;
 
-export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
-	getTeamObjects(req.mysqlx)(req.account)
-		.map(asyncIterMap(expandTeam(req.mysqlx)(req.account)))
+export const func: Endpoint<Backends<[TeamsBackend]>, api.team.ListTeams> = backend => req =>
+	backend
+		.getTeams(req.account)
+		.map(asyncIterMap(backend.expandTeam))
 		.map(
 			asyncIterFilter<EitherObj<ServerError, FullTeamObject>, Right<FullTeamObject>>(
 				Either.isRight,
@@ -65,4 +72,4 @@ export const func: ServerAPIEndpoint<api.team.ListTeams> = req =>
 		.map(asyncIterMap(httpStripTeamObject(req.member)))
 		.map(wrapper);
 
-export default func;
+export default withBackends(func, getCombinedTeamsBackend());

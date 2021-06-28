@@ -32,7 +32,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		events: null,
 	};
 
-	public render() {
+	public render(): JSX.Element {
 		const events = this.props.events;
 
 		const year =
@@ -48,21 +48,34 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		const thisMonth = getMonth(month, year);
 		const nextMonth = getMonth(month + 1, year);
 
-		const days = Array(thisMonth.daysInMonth);
+		const days = Array(thisMonth.daysInMonth) as RawResolvedEventObject[][];
 		for (let i = 0; i < days.length; i++) {
 			days[i] = [];
 		}
 
 		events.forEach(event => {
-			const startDate = DateTime.fromMillis(event.meetDateTime);
-			const endDate = DateTime.fromMillis(event.pickupDateTime);
+			// only display events which have days within this calendar month
+			if (event.meetDateTime > +nextMonth || event.pickupDateTime < +thisMonth) {
+				return;
+			}
+			// get Date object of first day of event
+			const eventStart = new Date(event.meetDateTime);
+			// first display day is later of event start day or first day of display month
+			const startDate =
+				eventStart.getMonth() === new Date(year, month - 1).getMonth()
+					? eventStart.getDate()
+					: 1;
+			// get Date object of last day of event
+			const eventEnd = new Date(event.pickupDateTime);
+			// last display day is earlier of event end day or last day of display month
+			const endDate =
+				eventEnd.getMonth() === new Date(year, month - 1).getMonth()
+					? eventEnd.getDate()
+					: thisMonth.daysInMonth;
 
-			const startDay = +startDate < +thisMonth ? 0 : startDate.day - 1;
-			const endDay =
-				+endDate < +thisMonth ? 0 : +endDate >= +nextMonth ? thisMonth.day : endDate.day;
-
-			for (let i = startDay; i < endDay; i++) {
-				days[i].push(event);
+			// load zero-based array of display days
+			for (let i = startDate - 1; i < endDate; i++) {
+				days[i]?.push?.(event);
 			}
 		});
 
@@ -108,7 +121,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 		return (
 			<li key={index}>
 				<div className="day-title">
-					{('0' + (index + 1)).substr(-2)}. {month.set({ day: index + 1 }).weekdayLong}
+					{`0${index + 1}`.substr(-2)}. {month.set({ day: index + 1 }).weekdayLong}
 				</div>
 				<ul className="events-list">
 					{events.map((event, i) => (

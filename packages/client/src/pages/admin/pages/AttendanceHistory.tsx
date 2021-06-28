@@ -32,6 +32,10 @@ import {
 	pipe,
 	stringifyMemberReference,
 	Permissions,
+	errorGenerator,
+	AsyncEither,
+	asyncRight,
+	HTTPError,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
@@ -205,7 +209,7 @@ export default class AttendanceHistory extends Page<
 		this.loadShortGroupAttendance = this.loadShortGroupAttendance.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',
@@ -225,9 +229,13 @@ export default class AttendanceHistory extends Page<
 
 		const member = this.props.member;
 		if (member) {
-			this.loadAttendanceForMember(member);
-
-			const memberListEither = await fetchApi.member.memberList({}, {});
+			const memberListEither = await AsyncEither.All([
+				asyncRight<HTTPError, void>(
+					this.loadAttendanceForMember(member),
+					errorGenerator('Could not load attendance for member'),
+				),
+				fetchApi.member.memberList({}, {}),
+			]);
 
 			if (Either.isLeft(memberListEither)) {
 				this.setState(prev => ({
@@ -239,13 +247,13 @@ export default class AttendanceHistory extends Page<
 				this.setState(prev => ({
 					...prev,
 					state: 'LOADED',
-					members: memberListEither.value,
+					members: memberListEither.value[1],
 				}));
 			}
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		const { member } = this.props;
 		const state = this.state;
 
@@ -358,7 +366,7 @@ export default class AttendanceHistory extends Page<
 		);
 	}
 
-	private get groupTarget() {
+	private get groupTarget(): GroupTarget {
 		if (!this.props.member) {
 			return GroupTarget.NONE;
 		}
@@ -381,25 +389,25 @@ export default class AttendanceHistory extends Page<
 		return GroupTarget.NONE;
 	}
 
-	private onFilterChange(newFilterState: FilterState) {
+	private onFilterChange = (newFilterState: FilterState): void => {
 		this.setState({
 			filterState: newFilterState,
 		});
-	}
+	};
 
-	private handleMemberSelect(member: Member | null) {
+	private handleMemberSelect = async (member: Member | null): Promise<void> => {
 		if (member) {
-			this.loadAttendanceForMember(member);
+			await this.loadAttendanceForMember(member);
 		}
-	}
+	};
 
-	private loadMyAttendance() {
+	private loadMyAttendance = async (): Promise<void> => {
 		if (this.props.member) {
-			this.loadAttendanceForMember(this.props.member);
+			await this.loadAttendanceForMember(this.props.member);
 		}
-	}
+	};
 
-	private async loadAttendanceForMember(member: MemberReference) {
+	private async loadAttendanceForMember(member: MemberReference): Promise<void> {
 		if (!this.props.member) {
 			return;
 		}
@@ -453,7 +461,7 @@ export default class AttendanceHistory extends Page<
 		}
 	}
 
-	private async loadShortGroupAttendance() {
+	private loadShortGroupAttendance = async (): Promise<void> => {
 		if (!this.props.member || this.state.type === 'LOADING') {
 			return;
 		}
@@ -499,5 +507,5 @@ export default class AttendanceHistory extends Page<
 				},
 			});
 		}
-	}
+	};
 }

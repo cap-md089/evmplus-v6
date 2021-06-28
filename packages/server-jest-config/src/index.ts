@@ -17,28 +17,44 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Client, getClient, Schema, Session } from '@mysql/xdevapi';
+import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
+import {
+	AccountType,
+	CAPMemberContact,
+	CAPMemberContactType,
+	CAPNHQMemberObject,
+	CAPNHQMemberReference,
+	getDefaultMemberPermissions,
+	Member,
+	memoize,
+	ShortDutyPosition,
+	TableDataType,
+	TableNames,
+	User,
+} from 'common-lib';
 import * as Docker from 'dockerode';
+import { DateTime } from 'luxon';
 
-const dockerConn = new Docker({
-	socketPath: '/var/run/docker.sock',
-});
+const getDockerConn = memoize(
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	(a?: undefined) =>
+		new Docker({
+			socketPath: '/var/run/docker.sock',
+		}),
+);
 
-interface ConnectionInfo {
-	dockerContainer: Docker.Container;
-	mysqlClient: Client;
-}
-
-const randomId = () =>
+const randomId = (): string =>
 	Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-const createCollection = (schema: Schema) => (name: string) => schema.createCollection(name);
-
+/**
+ * This is supposed to match the configuration provided by the mysql dump file
+ */
 export const COLLECTIONS_USED: readonly string[] = [
 	'Accounts',
 	'Attendance',
 	'Audits',
 	'ChangeEvents',
+	'ChangeLog',
 	'DiscordAccounts',
 	'Errors',
 	'Events',
@@ -77,187 +93,389 @@ export const COLLECTIONS_USED: readonly string[] = [
 	'UserPermissions',
 ];
 
+/**
+ * Represents the connection to a test database as well as a handle on a unique, clean schema
+ *
+ * This class initializes a MySQL schema for each of the test suites
+ */
 export class TestConnection {
-	protected static currentConnection: ConnectionInfo | Promise<ConnectionInfo> | undefined;
-	protected static connections: TestConnection[] = [];
-	protected static mysqlInfo?: {
-		host: string;
-		port: string;
-		pass: string;
-		user: 'root';
-	};
-	protected static currentComposeConnection: Client | undefined;
-
-	public static setup() {
-		if (!process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			this._setup();
-		}
-	}
-
-	protected static async _setup() {
-		return (this.currentConnection = await (this.currentConnection = (async () => {
-			await dockerConn.pull('mysql:8.0');
-
-			const password = randomId();
-
-			const dockerContainer = await dockerConn.createContainer({
-				Image: 'mysql:8.0',
-
-				Tty: true,
-				AttachStderr: true,
-				AttachStdout: true,
-				AttachStdin: false,
-				OpenStdin: false,
-				StdinOnce: false,
-
-				Env: [`MYSQL_ROOT_PASSWORD=${password}`],
-				HostConfig: {
-					PortBindings: {
-						'33060/tcp': [{ HostPort: '0' }],
-					},
-					Tmpfs: {
-						'/var/lib/mysql': 'rw,noexec',
-					},
-				},
-			});
-
-			await dockerContainer.start();
-
-			const containerInfo = (await dockerContainer.inspect()).NetworkSettings;
-			const networkSettings = containerInfo as Required<typeof containerInfo>;
-
-			const {
-				HostIp,
-				HostPort,
-			}: { HostIp: string; HostPort: string } = networkSettings.Ports['33060/tcp'][0];
-
-			TestConnection.mysqlInfo = {
-				host: HostIp === '0.0.0.0' ? '127.0.0.1' : HostIp || '127.0.0.1',
-				port: HostPort,
-				pass: password,
-				user: 'root',
-			};
-
-			const mysqlClient = getClient(this.mysqlConnectionString!, {
-				pooling: {
-					enabled: true,
-					maxSize: 50,
-				},
-			});
-
-			while (true) {
-				try {
-					await mysqlClient.getSession();
-					break;
-				} catch (e) {
-					await new Promise(resolve => setTimeout(resolve, 5000));
-				}
-			}
-
-			return {
-				dockerContainer,
-				mysqlClient,
-			};
-		})()));
-	}
-
-	public static async setupSchema(): Promise<TestConnection> {
-		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			const schema = randomId();
-
-			this.currentComposeConnection ??= getClient(this.mysqlConnectionString!, {
-				pooling: {
-					enabled: true,
-					maxSize: 50,
-				},
-			});
-
-			const session = await this.currentComposeConnection.getSession();
-			await session.createSchema(schema);
-
-			return new TestConnection(this.currentComposeConnection, session, schema);
-		} else if (this.currentConnection instanceof Promise) {
-			const connInfo = await this.currentConnection;
-
-			const schema = randomId();
-			const session = await connInfo.mysqlClient.getSession();
-			await session.createSchema(schema);
-
-			return new TestConnection(connInfo.mysqlClient, session, schema);
-		} else if (this.currentConnection) {
-			const schema = randomId();
-			const session = await this.currentConnection.mysqlClient.getSession();
-			await session.createSchema(schema);
-
-			return new TestConnection(this.currentConnection.mysqlClient, session, schema);
-		} else {
-			const connInfo = await this._setup()!;
-
-			const schema = randomId();
-			const session = await connInfo.mysqlClient.getSession();
-			await session.createSchema(schema);
-
-			return new TestConnection(connInfo.mysqlClient, session, schema);
-		}
-	}
-
-	public static async teardown() {
-		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			await Promise.all(this.connections.map(conn => conn.session.close()));
-
-			const info = await this.currentConnection;
-
-			if (info) {
-				await Promise.all([
-					(async () => {
-						await info.dockerContainer.stop();
-						await info.dockerContainer.remove();
-					})(),
-					info.mysqlClient.close(),
-				]);
-			}
-		}
-	}
-
-	protected static get mysqlConnectionString() {
-		if (process.env.IN_DOCKER_TEST_ENVIRONMENT) {
-			return 'mysqlx://root:toor@mysql:33060';
-		} else {
-			if (!this.mysqlInfo) {
-				return;
-			}
-			const { host, port, user, pass } = this.mysqlInfo;
-			return `mysqlx://${user}:${pass}@${host}:${port}`;
-		}
-	}
-
-	protected constructor(
+	private constructor(
 		public readonly client: Client,
 		public readonly session: Session,
-		public readonly schema: string,
-	) {
-		TestConnection.connections.push(this);
+		public readonly schema: string, // eslint-disable-next-line no-empty-function
+	) {}
+
+	/**
+	 * Initializes dbRef to hold a test database connection. This function returns a callback to
+	 * be used by Jest, e.g.:
+	 *
+	 * <code>
+	 * 	const ref = getDbRef();
+	 *
+	 * 	beforeAll(TestConnection.setup(ref));
+	 * </code>
+	 *
+	 * @param dbRef a handle to a database connection
+	 * @returns a callback function to pass to beforeAll()
+	 */
+	public static setup = (dbRef: DatabaseHandle) => async (done?: () => void): Promise<void> => {
+		const connString = TestConnection.mysqlConnectionString;
+
+		while (true) {
+			try {
+				const conn = await getSession(connString);
+				await conn.close();
+
+				break;
+			} catch (e) {
+				await new Promise<void>(res => setTimeout(res, 1000));
+			}
+		}
+		dbRef.connection = await TestConnection.setupSchema();
+		done?.();
+	};
+
+	/**
+	 * Closes the database connection and performs cleanup. Returns a function intended to
+	 * be called by afterAll()
+	 *
+	 * <code>
+	 * 	const ref = getDbRef();
+	 *
+	 * 	beforeAll(TestConnection.setup(ref));
+	 * 	afterAll(TestConnection.teardown(ref));
+	 * </code>
+	 *
+	 * @param dbRef
+	 * @returns
+	 */
+	public static teardown = (dbRef: DatabaseHandle) => async (
+		done?: () => void,
+	): Promise<void> => {
+		await dbRef.connection.session.dropSchema(dbRef.connection.schema);
+		await Promise.all([dbRef.connection.client.close(), dbRef.connection.session.close()]);
+
+		done?.();
+	};
+
+	/**
+	 * Creates a new schema and sets up the collections using the mysql dump script
+	 *
+	 * @returns the new connection with the schema set up
+	 */
+	private static async setupSchema(): Promise<TestConnection> {
+		const schema = randomId();
+
+		await TestConnection.setupCollections(schema);
+
+		const client = getClient(this.mysqlConnectionString, {
+			pooling: {
+				enabled: true,
+				maxSize: 10,
+			},
+		});
+
+		const session = await client.getSession();
+
+		const connection = new TestConnection(client, session, schema);
+		return connection;
 	}
 
-	public getSchema() {
-		return this.session.getSchema(this.schema);
+	/**
+	 * Sets up the different collections in a schema by using the docker
+	 * connection to execute the setup-schema script inside of the MySQL container
+	 *
+	 * @param schema the name of the schema to setup
+	 */
+	private static async setupCollections(schema: string): Promise<void> {
+		const dockerConn = getDockerConn(void 0);
+
+		const container = dockerConn.getContainer('evmplus_test-mysql');
+
+		const exec = await container.exec({
+			Cmd: ['sh', 'setup-schema.sh', schema],
+			Tty: true,
+			AttachStdout: false,
+			AttachStderr: false,
+			AttachStdin: false,
+			Env: [],
+			WorkingDir: '/usr/evm-plus/packages/server-jest-config/test-data',
+		});
+
+		const stream = await exec.start({});
+
+		(container.modem as {
+			demuxStream(
+				inputStream: typeof stream,
+				out: typeof process.stdout,
+				err: typeof process.stderr,
+			): void;
+		}).demuxStream(stream, process.stdout, process.stderr);
+
+		await new Promise(resolve => {
+			stream.on('end', resolve);
+		});
+
+		await exec.inspect();
+
+		const session = await getSession('mysqlx://root:toor@test-mysql:33060');
+
+		let collections;
+
+		do {
+			if (collections) {
+				await new Promise(res => setTimeout(res, 250));
+			}
+			collections = await session.getSchema(schema).getCollections();
+		} while (collections.length !== COLLECTIONS_USED.length);
+
+		await session.close();
 	}
 
-	public getNewSession() {
-		return this.client.getSession();
+	/**
+	 * Returns the constant connection string for connecting to the test mysql database
+	 */
+	public static get mysqlConnectionString(): string {
+		return 'mysqlx://root:toor@test-mysql:33060';
 	}
+	/**
+	 * @returns the current schema that is used for the test
+	 */
+	public getSchema = (): Schema => this.session.getSchema(this.schema);
 
-	public async setupCollections() {
-		await Promise.all(COLLECTIONS_USED.map(createCollection(this.getSchema())));
-	}
+	/**
+	 * @returns a new session for when multiple sessions are needed
+	 */
+	public getNewSession = (): Promise<Session> => this.client.getSession();
 }
-
-TestConnection.setup = TestConnection.setup.bind(TestConnection);
-// @ts-ignore
-TestConnection._setup = TestConnection._setup.bind(TestConnection);
-TestConnection.setupSchema = TestConnection.setupSchema.bind(TestConnection);
-TestConnection.teardown = TestConnection.teardown.bind(TestConnection);
 
 export default TestConnection;
 
 export { default as getConf } from './conf';
+
+/**
+ * Interface for holding both the connection and the ability to set it up as well as
+ * tear it down before and after all tests
+ *
+ * While technically it could be used before and after each test, it's not necessary
+ */
+export interface DatabaseHandle {
+	/**
+	 * Holds the test connection information
+	 */
+	connection: TestConnection;
+	/**
+	 * A shorthand for TestConnection.setup(ref)
+	 *
+	 * @param done done callback provided by beforeAll
+	 */
+	setup(this: void, done?: () => void): void;
+	/**
+	 * A shorthand for TestConnection.teardown(ref)
+	 *
+	 * @param done done callback provided by afterAll
+	 */
+	teardown(this: void, done?: () => void): void;
+}
+
+/**
+ * Initializes a database handle for use in tests
+ */
+export const getDbHandle = (): DatabaseHandle => {
+	const ref: DatabaseHandle = {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		connection: null!,
+		async setup(done) {
+			await TestConnection.setup(ref)(done);
+		},
+		async teardown(done) {
+			await TestConnection.teardown(ref)(done);
+		},
+	};
+
+	return ref;
+};
+
+export type PresetRecords = {
+	[key in TableNames]?: Array<TableDataType<key>>;
+};
+
+/**
+ * Adds all of the records specified by the PresetRecords map, where each field
+ * represents a table and the array values are added to that table
+ *
+ * @param schema the schema to modify and set up
+ * @param map the data to set up in the schema
+ */
+export const addPresetRecords = (schema: Schema) => async (map: PresetRecords): Promise<void> => {
+	const promises = [];
+
+	for (const tableName in map) {
+		if (map.hasOwnProperty(tableName)) {
+			const table = tableName as TableNames;
+
+			const records = map[table];
+
+			if (!records || records.length === 0) {
+				continue;
+			}
+
+			let adder = schema.getCollection(table).add(records[0]);
+
+			for (const record of records.slice(1)) {
+				adder = adder.add(record);
+			}
+
+			promises.push(adder.execute());
+		}
+	}
+
+	await Promise.all(promises);
+};
+
+/**
+ * Adds all of the records specified by the PresetRecords map, where each field
+ * represents a table and the array values are added to that table
+ *
+ * This function is intended to be called by beforeEach
+ *
+ * <code>
+ * 	const testSetup = setPresetRecords({
+ * 		...
+ * 	})
+ *
+ * 	describe('test suite', () => {
+ * 		const dbHandle = getDbHandle();
+ *
+ * 		beforeAll(dbHandle.setup);
+ * 		afterAll(dbHandle.teardown);
+ *
+ * 		beforeEach(testSetup(dbHandle))
+ * 	})
+ * </code>
+ *
+ * @param schema the schema to modify and set up
+ * @param map the data to set up in the schema
+ */
+export const setPresetRecords = (records: PresetRecords) => (ref: DatabaseHandle) => async (
+	done?: () => void,
+): Promise<void> => {
+	await Promise.all(
+		COLLECTIONS_USED.map(name =>
+			ref.connection.getSchema().getCollection(name).remove('true').execute(),
+		),
+	);
+
+	await addPresetRecords(ref.connection.getSchema())(records);
+
+	done?.();
+};
+
+type Names =
+	| 'Member'
+	| 'DutyPosition'
+	| 'MbrContact'
+	| 'CadetDutyPositions'
+	| 'CadetActivities'
+	| 'OFlight'
+	| 'MbrAchievements'
+	| 'CadetAchv'
+	| 'CadetAchvAprs'
+	| 'CdtAchvEnum'
+	| 'CadetHFZInformation'
+	| 'Organization';
+
+type DBNames = Exclude<Names, 'CadetDutyPositions'> | 'CadetDutyPosition';
+
+type TableForm<T extends string> = `NHQ_${T}`;
+
+/**
+ * Loads CAPWATCH data that can be used for unit tests
+ */
+export const getCAPWATCHTestData = (): Required<Pick<PresetRecords, TableForm<DBNames>>> =>
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as Required<
+		Pick<PresetRecords, TableForm<DBNames>>
+	>;
+
+/**
+ * Given CAPWATCH data, finds a member. Assumes that the member exists and throws an exception otherwise
+ *
+ * ORGIDs must be provided to load duty positions
+ */
+export const getMemberFromTestData = (
+	member: CAPNHQMemberReference,
+	...orgids: number[]
+): CAPNHQMemberObject => {
+	const data = getCAPWATCHTestData();
+
+	const CAPID = member.id;
+
+	const baseDetails = data.NHQ_Member.find(mem => mem.CAPID === CAPID);
+
+	if (!baseDetails) {
+		throw new Error('Invalid member!');
+	}
+
+	const dutyPositions = [
+		...data.NHQ_DutyPosition.filter(row => row.CAPID === CAPID && orgids.includes(row.ORGID)),
+		...data.NHQ_CadetDutyPosition.filter(
+			row => row.CAPID === CAPID && orgids.includes(row.ORGID),
+		),
+	].map(
+		(dp): ShortDutyPosition => ({
+			duty: dp.Duty,
+			date: +DateTime.fromISO(dp.DateMod),
+			orgid: dp.ORGID,
+			type: 'NHQ',
+		}),
+	);
+
+	const contactRows = data.NHQ_MbrContact.filter(row => row.CAPID === CAPID);
+	const contact: CAPMemberContact = {
+		CADETPARENTEMAIL: {},
+		CADETPARENTPHONE: {},
+		CELLPHONE: {},
+		EMAIL: {},
+		HOMEPHONE: {},
+		WORKPHONE: {},
+	};
+
+	contactRows.forEach(item => {
+		const contactType = item.Type.toUpperCase().replace(/ /g, '') as CAPMemberContactType;
+
+		if (contactType in contact) {
+			contact[contactType][item.Priority] = item.Contact;
+		}
+	});
+
+	return {
+		absenteeInformation: null,
+		contact,
+		dateOfBirth: +DateTime.fromISO(baseDetails.DOB),
+		dutyPositions,
+		expirationDate: +DateTime.fromISO(baseDetails.Expiration),
+		flight: null,
+		id: CAPID,
+		memberRank: baseDetails.Rank,
+		nameFirst: baseDetails.NameFirst,
+		nameMiddle: baseDetails.NameMiddle,
+		nameLast: baseDetails.NameLast,
+		nameSuffix: baseDetails.NameSuffix,
+		orgid: baseDetails.ORGID,
+		seniorMember: baseDetails.Type !== 'CADET',
+		squadron: `${baseDetails.Region}-${baseDetails.Wing}-${baseDetails.Unit}`,
+		teamIDs: [],
+		type: 'CAPNHQMember',
+		usrID: baseDetails.UsrID,
+	};
+};
+
+/**
+ * Given a member, upgrades them to a user by giving them default squadron permissions
+ */
+export const getTestUserForMember = (member: Member): User => ({
+	...member,
+	sessionID: '',
+	permissions: getDefaultMemberPermissions(AccountType.CAPSQUADRON),
+});

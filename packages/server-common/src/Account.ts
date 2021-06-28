@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema, Session } from '@mysql/xdevapi';
+import { CollectionFind, Schema, Session } from '@mysql/xdevapi';
 import {
 	AccountObject,
 	AccountType,
@@ -25,9 +25,8 @@ import {
 	applyCustomAttendanceFields,
 	asyncEither,
 	AsyncEither,
-	asyncEitherIterMap,
 	AsyncIter,
-	asyncIterConcat,
+	asyncIterConcat2,
 	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
@@ -44,7 +43,6 @@ import {
 	EventObject,
 	FileObject,
 	FromDatabase,
-	FullPointOfContact,
 	get,
 	getDefaultAdminPermissions,
 	identity,
@@ -58,8 +56,8 @@ import {
 	NewEventObject,
 	NHQ,
 	ofLength,
-	onlyRights,
 	ParamType,
+	pipe,
 	RawCAPEventAccountObject,
 	RawCAPGroupAccountObject,
 	RawCAPRegionAccountObject,
@@ -67,23 +65,30 @@ import {
 	RawCAPWingAccountObject,
 	RawEventObject,
 	RawRegularEventObject,
-	RawTeamObject,
+	Right,
 	ServerConfiguration,
 	ServerError,
 	statefulFunction,
 	StoredAccountMembership,
 	stringifyMemberReference,
 	stripProp,
+	TableDataType,
 	toReference,
-	User,
-	yieldObjAsync,
 } from 'common-lib';
 import { copyFile } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import { addMemberToAttendanceFunc, createEventFunc, linkEvent } from './Event';
+import { AttendanceBackend } from './Attendance';
+import {
+	Backends,
+	combineBackends,
+	notImplementedError,
+	notImplementedException,
+	TimeBackend,
+} from './backends';
+import { EventsBackend } from './Event';
 import { createGoogleCalendarForEvent } from './GoogleUtils';
-import { setPermissionsForMemberInAccount } from './member/pam';
+import { PAMBackend } from './member/pam';
 import { CAP, resolveReference } from './Members';
 import {
 	addToCollection,
@@ -91,15 +96,18 @@ import {
 	findAndBind,
 	findAndBindC,
 	generateResults,
+	getRawMySQLBackend,
+	RawMySQLBackend,
 	safeBind,
 } from './MySQLUtil';
-import { getRegistry, getRegistryById, saveRegistry } from './Registry';
+import { getRegistry, getRegistryBackend, RegistryBackend, saveRegistry } from './Registry';
 import { ServerEither } from './servertypes';
-import { getStaffTeam } from './Team';
+import { TeamsBackend } from './Team';
 
 export interface BasicAccountRequest<P extends ParamType = {}, B = any>
 	extends BasicMySQLRequest<P, B> {
 	account: AccountObject;
+	backend: Backends<[RawMySQLBackend, AccountBackend, RegistryBackend]>;
 }
 
 export const getAccountID = (hostname: string): EitherObj<ServerError, string> =>
@@ -133,15 +141,26 @@ export const getAccountID = (hostname: string): EitherObj<ServerError, string> =
 export const accountRequestTransformer = <T extends BasicMySQLRequest>(
 	req: T,
 ): AsyncEither<ServerError, T & BasicAccountRequest> =>
-	asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
-		.flatMap(getAccount(req.mysqlx))
-		.map(account => ({ ...req, headers: req.headers, account }));
+	asyncRight(
+		combineBackends<T, [RawMySQLBackend, RegistryBackend, AccountBackend]>(
+			getRawMySQLBackend,
+			getRegistryBackend,
+			getAccountBackend,
+		)(req),
+		errorGenerator('Could not get account'),
+	).flatMap(backend =>
+		asyncEither(getAccountID(req.hostname), errorGenerator('Could not get account'))
+			.flatMap(backend.getAccount)
+			.map(account => ({ ...req, headers: req.headers, account, backend })),
+	);
 
-export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConfiguration) => (
-	session: Session,
-) => (schema: Schema) => (parentAccount: RawCAPWingAccountObject) => (author: User) => (
-	accountID: string,
-) => (accountName: string) => (newEvent: NewEventObject): ServerEither<RawCAPEventAccountObject> =>
+export const createCAPEventAccountFunc = (
+	backend: Backends<[TimeBackend, AttendanceBackend, EventsBackend, PAMBackend]>,
+) => (config: ServerConfiguration) => (session: Session) => (schema: Schema) => (
+	parentAccount: RawCAPWingAccountObject,
+) => (author: Member) => (accountID: string) => (accountName: string) => (
+	newEvent: NewEventObject,
+): ServerEither<RawCAPEventAccountObject> =>
 	asyncRight(
 		(async () => {
 			const dutyPositions = author.dutyPositions
@@ -224,14 +243,8 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						},
 					}))
 					.flatMap(saveRegistry(schema)),
-				asyncRight(
-					setPermissionsForMemberInAccount(
-						schema,
-						toReference(author),
-						getDefaultAdminPermissions(AccountType.CAPEVENT),
-						newAccount,
-					),
-					errorGenerator('Could not set permissions for member in new account'),
+				backend.setPermissions(newAccount)(toReference(author))(
+					getDefaultAdminPermissions(AccountType.CAPEVENT),
 				),
 			]),
 		)
@@ -242,14 +255,11 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 			),
 		)
 		.tap(newAccount =>
-			createEventFunc(now)(config)(schema)(newAccount)(toReference(author))(newEvent)
+			backend
+				.createEvent(newAccount)(toReference(author))(newEvent)
 				.map<RawRegularEventObject>(event => event as RawRegularEventObject)
 				.tap(event =>
-					addMemberToAttendanceFunc(now)(schema)(newAccount)({
-						...event,
-						attendance: [],
-						pointsOfContact: event.pointsOfContact as FullPointOfContact[],
-					})(false)({
+					backend.addMemberToAttendance(event)(false)({
 						comments: '',
 						customAttendanceFieldValues: applyCustomAttendanceFields(
 							newEvent.customAttendanceFields,
@@ -260,23 +270,12 @@ export const createCAPEventAccountFunc = (now = Date.now) => (config: ServerConf
 						status: AttendanceStatus.COMMITTEDATTENDED,
 					}),
 				)
-				.tap(event => linkEvent(config)(schema)(event)(toReference(author))(parentAccount)),
+				.tap(event => backend.linkEvent(event)(toReference(author))(parentAccount)),
 		)
 		.tap(() => session.commit())
 		.leftTap(() => session.rollback());
-export const createCAPEventAccount = createCAPEventAccountFunc(Date.now);
 
-export interface AccountGetter {
-	byId: typeof getAccount;
-	byOrgid: typeof getCAPAccountsForORGID;
-}
-
-export const getMemoizedAccountGetter = (schema: Schema): AccountGetter => ({
-	byId: always(memoize(getAccount(schema))),
-	byOrgid: always(memoize(getCAPAccountsForORGID(schema))),
-});
-
-export const getAccount = (schema: Schema) => (accountID: string) =>
+export const getAccount = (schema: Schema) => (accountID: string): ServerEither<AccountObject> =>
 	asyncRight(
 		schema.getCollection<AccountObject>('Accounts'),
 		errorGenerator('Could not get accounts'),
@@ -296,49 +295,50 @@ export const getAccount = (schema: Schema) => (accountID: string) =>
 		})
 		.map(items => items[0]);
 
-export const getCAPAccountsForORGID = (schema: Schema) => (orgid: number) =>
-	asyncEitherIterMap<CAPAccountObject, CAPAccountObject>(
-		stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
+export const getCAPAccountsForORGID = (schema: Schema) => (
+	orgid: number,
+): ServerEither<CAPAccountObject[]> =>
+	pipe(
+		asyncIterFilter(
+			statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
+				(account, state) => [!state[account.id], { ...state, [account.id]: true }],
+			),
+		),
+		asyncIterMap<CAPAccountObject, CAPAccountObject>(
+			stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
+		),
+		collectGeneratorAsync,
+		results => asyncRight(results, errorGenerator('Could not get account objects')),
 	)(
-		asyncIterHandler<CAPAccountObject>(errorGenerator('Could not get account for member'))(
-			asyncIterFilter(
-				statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
-					(account, state) => [!state[account.id], { ...state, [account.id]: true }],
-				),
-			)(
-				asyncIterConcat<CAPAccountObject>(
-					generateResults(
-						schema
-							.getCollection<
-								| RawCAPGroupAccountObject
-								| RawCAPWingAccountObject
-								| RawCAPRegionAccountObject
-							>('Accounts')
-							.find('orgid = :orgid')
-							.bind('orgid', orgid),
-					),
-				)(() =>
-					asyncIterConcat<AccountObject>(
-						generateResults<AccountObject>(
-							schema
-								.getCollection<RawCAPSquadronAccountObject>('Accounts')
-								.find('mainOrg = :mainOrg')
-								.bind('mainOrg', orgid),
-						),
-					)(() =>
-						generateResults<AccountObject>(
-							schema
-								.getCollection<RawCAPSquadronAccountObject>('Accounts')
-								.find(':orgIDs in orgIDs')
-								.bind('orgIDs', orgid),
-						),
-					),
-				),
+		asyncIterConcat2<CAPAccountObject>(
+			generateResults(
+				schema
+					.getCollection<
+						| RawCAPGroupAccountObject
+						| RawCAPWingAccountObject
+						| RawCAPRegionAccountObject
+					>('Accounts')
+					.find('orgid = :orgid')
+					.bind('orgid', orgid),
+			),
+			generateResults<CAPAccountObject>(
+				schema
+					.getCollection<RawCAPSquadronAccountObject>('Accounts')
+					.find('mainOrg = :mainOrg')
+					.bind('mainOrg', orgid),
+			),
+			generateResults<AccountObject>(
+				schema
+					.getCollection<RawCAPSquadronAccountObject>('Accounts')
+					.find(':orgIDs in orgIDs')
+					.bind('orgIDs', orgid),
 			),
 		),
 	);
 
-export const getMembers = (schema: Schema) => (account: AccountObject) =>
+export const getMembers = (schema: Schema) => (
+	backend: Backends<[TeamsBackend, CAP.CAPMemberBackend]>,
+) => (account: AccountObject) =>
 	async function* (
 		type?: MemberType | undefined,
 	): AsyncGenerator<
@@ -346,32 +346,30 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 		void,
 		undefined
 	> {
-		const teamObjects = await getTeamObjects(schema)(account)
-			.map(collectGeneratorAsync)
-			.cata(() => [], identity);
-
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
 			if (type === 'CAPNHQMember' || type === undefined) {
-				const membersForORGIDs = await CAP.getCAPNHQMembersForORGIDs(schema)(account.id)(
-					teamObjects,
-				)(account.orgIDs);
+				const membersForORGIDs = await backend.getNHQMembersInAccount(backend)(account);
 
 				if (Either.isLeft(membersForORGIDs)) {
 					yield membersForORGIDs;
 				} else {
-					membersForORGIDs.value.forEach(mem => {
+					if (Maybe.isNone(membersForORGIDs.value)) {
+						return;
+					}
+
+					membersForORGIDs.value.value.forEach(mem => {
 						foundMembers[stringifyMemberReference(mem)] = true;
 					});
-					yield* membersForORGIDs.value.map(Either.right);
+					yield* membersForORGIDs.value.value.map(Either.right);
 				}
 			}
 
 			if (type === 'CAPProspectiveMember' || type === undefined) {
-				const membersForAccount = await CAP.getProspectiveMembersForAccount(schema)(
+				const membersForAccount = await backend.getProspectiveMembersInAccount(backend)(
 					account,
-				)(teamObjects);
+				);
 
 				if (Either.isLeft(membersForAccount)) {
 					yield membersForAccount;
@@ -388,17 +386,19 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 			account.type === AccountType.CAPREGION
 		) {
 			if (type === 'CAPNHQMember' || type === undefined) {
-				const membersForORGIDs = await CAP.getCAPNHQMembersForORGIDs(schema)(account.id)(
-					teamObjects,
-				)([account.orgid]);
+				const membersForORGIDs = await backend.getNHQMembersInAccount(backend)(account);
 
 				if (Either.isLeft(membersForORGIDs)) {
 					yield membersForORGIDs;
 				} else {
-					membersForORGIDs.value.forEach(mem => {
+					if (Maybe.isNone(membersForORGIDs.value)) {
+						return;
+					}
+
+					membersForORGIDs.value.value.forEach(mem => {
 						foundMembers[stringifyMemberReference(mem)] = true;
 					});
-					yield* membersForORGIDs.value.map(Either.right);
+					yield* membersForORGIDs.value.value.map(Either.right);
 				}
 			}
 		} else if (account.type === AccountType.CAPEVENT) {
@@ -422,7 +422,7 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 
 				foundMembers[stringifyMemberReference(memberID)] = true;
 
-				yield resolveReference(schema)(account)(memberID);
+				yield resolveReference(schema)(backend)(account)(memberID);
 			}
 		}
 
@@ -442,7 +442,7 @@ export const getMembers = (schema: Schema) => (account: AccountObject) =>
 					continue;
 				}
 
-				yield resolveReference(schema)(account)(record.member);
+				yield resolveReference(schema)(backend)(account)(record.member);
 			}
 		}
 	};
@@ -543,7 +543,9 @@ export const getMemberIDs = (schema: Schema) =>
 		}
 	};
 
-export const getFiles = (includeWWW = true) => (schema: Schema) => (account: AccountObject) => {
+export const getFiles = (includeWWW = true) => (schema: Schema) => (
+	account: AccountObject,
+): AsyncIter<FileObject> => {
 	const fileCollection = schema.getCollection<FileObject>('Files');
 
 	return generateResults(
@@ -557,7 +559,7 @@ export const getFiles = (includeWWW = true) => (schema: Schema) => (account: Acc
 
 export const getEvents = (schema: Schema) => (
 	account: AccountObject,
-): AsyncIterator<EitherObj<ServerError, RawEventObject>> => {
+): AsyncIter<EitherObj<ServerError, RawEventObject>> => {
 	const eventCollection = schema.getCollection<RawEventObject>('Events');
 
 	const find = eventCollection.find(`accountID = :accountID`).bind('accountID', account.id);
@@ -570,8 +572,9 @@ export const getEvents = (schema: Schema) => (
 };
 
 export const queryEvents = (query: string) => (schema: Schema) => (account: AccountObject) => (
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	bind: any,
-) =>
+): AsyncIter<EitherObj<ServerError, RawEventObject>> =>
 	asyncIterHandler<RawEventObject>(errorGenerator('Could not get event for account'))(
 		asyncIterMap(stripProp('_id') as (ev: RawEventObject) => RawEventObject)(
 			generateResults(queryEventsFind(query)(schema)(account)(bind)),
@@ -579,8 +582,9 @@ export const queryEvents = (query: string) => (schema: Schema) => (account: Acco
 	);
 
 export const queryEventsFind = (query: string) => (schema: Schema) => (account: AccountObject) => (
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	bind: any,
-) => {
+): CollectionFind<FromDatabase<EventObject>> => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const find = eventCollection
@@ -593,7 +597,7 @@ export const queryEventsFind = (query: string) => (schema: Schema) => (account: 
 
 export const getEventsInRange = (schema: Schema) => (account: AccountObject) => (start: number) => (
 	end: number,
-) => {
+): AsyncIter<EitherObj<ServerError, FromDatabase<RawEventObject>>> => {
 	const eventCollection = schema.getCollection<EventObject>('Events');
 
 	const iterator = eventCollection
@@ -609,38 +613,15 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 	)(generateResults(iterator));
 };
 
-export const saveAccount = (schema: Schema) => async (account: AccountObject) => {
+export const saveAccount = (schema: Schema) => async (account: AccountObject): Promise<void> => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
 	await collection.modify('id = :id').bind('id', account.id).patch(account).execute();
 };
 
-const getNormalTeamObjects = (schema: Schema) => (
+export const getSortedEvents = (schema: Schema) => (
 	account: AccountObject,
-): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
-	asyncRight(
-		schema.getCollection<RawTeamObject>('Teams'),
-		errorGenerator('Could not get teams for account'),
-	)
-		.map(
-			findAndBindC<RawTeamObject>({
-				accountID: account.id,
-			}),
-		)
-		.map(generateResults);
-
-export const getTeamObjects = (schema: Schema) => (
-	account: AccountObject,
-): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
-	account.type === AccountType.CAPSQUADRON
-		? getStaffTeam(schema)(account).flatMap(team =>
-				getNormalTeamObjects(schema)(account).map(objectIter =>
-					asyncIterConcat(yieldObjAsync(Promise.resolve(team)))(() => objectIter),
-				),
-		  )
-		: getNormalTeamObjects(schema)(account);
-
-export const getSortedEvents = (schema: Schema) => (account: AccountObject) => {
+): AsyncIter<FromDatabase<RawEventObject>> => {
 	const eventCollection = schema.getCollection<FromDatabase<EventObject>>('Events');
 
 	const eventIterator = findAndBind(eventCollection, {
@@ -663,44 +644,139 @@ const getCAPOrganization = (schema: Schema) => (ORGID: number) =>
 		.map(collectResults)
 		.map(Maybe.fromArray);
 
-export const getOrgName = (accountGetter: Partial<AccountGetter>) => (schema: Schema) => (
-	account: AccountObject,
-) => {
-	const orgInfoGetter = memoize(getCAPOrganization(schema));
-	const getter: AccountGetter = {
-		byId: getAccount,
-		byOrgid: getCAPAccountsForORGID,
-		...accountGetter,
-	};
-	const registryByIdGetter = memoize(getRegistryById(schema));
-
-	return (member: Member): ServerEither<MaybeObj<string>> => {
-		switch (member.type) {
-			case 'CAPNHQMember':
-				return asyncRight(
-					collectGeneratorAsync(getter.byOrgid(schema)(member.orgid)),
-					errorGenerator('Could not get Accounts'),
+export const getOrgNameForMember = (
+	orgInfoGetter: (ORGID: number) => ServerEither<MaybeObj<NHQ.Organization>>,
+) => (backend: Backends<[AccountBackend, RegistryBackend]>) => (account: AccountObject) => (
+	member: Member,
+): ServerEither<MaybeObj<string>> => {
+	switch (member.type) {
+		case 'CAPNHQMember':
+			return backend
+				.getCAPAccountsByORGID(member.orgid)
+				.map(results =>
+					results.filter(({ id }) => id === account.id).length === 1
+						? [account]
+						: results,
 				)
-					.map(onlyRights)
-					.map(results =>
-						results.filter(({ id }) => id === account.id).length === 1
-							? [account]
-							: results,
-					)
-					.flatMap(results =>
-						results.length === 1
-							? registryByIdGetter(results[0].id)
-									.map(get('Website'))
-									.map(get('Name'))
-									.map(Maybe.some)
-							: orgInfoGetter(member.orgid).map(Maybe.map(get('Name'))),
-					);
+				.flatMap(results =>
+					results.length === 1
+						? backend
+								.getRegistryUnsafe(results[0].id)
+								.map(get('Website'))
+								.map(get('Name'))
+								.map(Maybe.some)
+						: orgInfoGetter(member.orgid).map(Maybe.map(get('Name'))),
+				);
 
-			case 'CAPProspectiveMember':
-				return registryByIdGetter(member.accountID)
-					.map(get('Website'))
-					.map(get('Name'))
-					.map(Maybe.some);
-		}
-	};
+		case 'CAPProspectiveMember':
+			return backend
+				.getRegistryUnsafe(member.accountID)
+				.map(get('Website'))
+				.map(get('Name'))
+				.map(Maybe.some);
+	}
 };
+
+export interface AccountBackend {
+	getAccount: (accountID: string) => ServerEither<AccountObject>;
+	getCAPAccountsByORGID: (orgid: number) => ServerEither<CAPAccountObject[]>;
+	getMembers: (
+		backend: Backends<[CAP.CAPMemberBackend, TeamsBackend]>,
+	) => (account: AccountObject) => (type?: MemberType | undefined) => ServerEither<Member[]>;
+	queryEvents: (
+		query: string,
+	) => (
+		account: AccountObject,
+	) => (bind: any) => CollectionFind<FromDatabase<TableDataType<'Events'>>>;
+	getSortedEvents: (account: AccountObject) => AsyncIter<TableDataType<'Events'>>;
+	getEventsInRange: (
+		account: AccountObject,
+	) => (
+		range: [start: number, end: number],
+	) => AsyncIter<EitherObj<ServerError, FromDatabase<TableDataType<'Events'>>>>;
+	createCAPEventAccount: (
+		backend: Backends<[TimeBackend, AttendanceBackend, EventsBackend, PAMBackend]>,
+	) => (
+		parent: RawCAPWingAccountObject,
+	) => (
+		author: Member,
+	) => (
+		accountID: string,
+	) => (
+		accountName: string,
+	) => (newEvent: NewEventObject) => ServerEither<RawCAPEventAccountObject>;
+	getOrgNameForMember: (
+		account: AccountObject,
+	) => (member: Member) => ServerEither<MaybeObj<string>>;
+}
+
+export const getAccountBackend = (
+	req: BasicMySQLRequest | BasicAccountRequest,
+	prevBackend: RegistryBackend,
+): AccountBackend =>
+	'backend' in req
+		? req.backend
+		: {
+				...getRequestFreeAccountsBackend(req.mysqlx, prevBackend),
+				createCAPEventAccount: eventsBackend => parent => author => accountID => accountName => newEvent =>
+					createCAPEventAccountFunc(eventsBackend)(req.configuration)(req.mysqlxSession)(
+						req.mysqlx,
+					)(parent)(author)(accountID)(accountName)(newEvent),
+		  };
+
+export const getRequestFreeAccountsBackend = (
+	mysqlx: Schema,
+	prevBackend: Backends<[RegistryBackend]>,
+): AccountBackend => {
+	const getCAPOrgInfo = memoize(getCAPOrganization(mysqlx));
+
+	const backend: AccountBackend = {
+		getAccount: memoize(getAccount(mysqlx)),
+		getCAPAccountsByORGID: memoize(getCAPAccountsForORGID(mysqlx)),
+		getMembers: memoize(memberBackend =>
+			memoize(account =>
+				memoize(type =>
+					asyncRight(
+						getMembers(mysqlx)(memberBackend)(account)(type),
+						errorGenerator('Could not get member list'),
+					)
+						.map(
+							asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(
+								Either.isRight,
+							),
+						)
+						.map(asyncIterMap(get('value')))
+						.map(collectGeneratorAsync),
+				),
+			),
+		),
+		queryEvents: query => account => bind => queryEventsFind(query)(mysqlx)(account)(bind),
+		getSortedEvents: account => getSortedEvents(mysqlx)(account),
+		getEventsInRange: account => ([start, end]) =>
+			getEventsInRange(mysqlx)(account)(start)(end),
+		createCAPEventAccount: () => () => () => () => () => () =>
+			notImplementedError('createCAPEventAccount'),
+		getOrgNameForMember: memoize(
+			account =>
+				memoize(
+					getOrgNameForMember(getCAPOrgInfo)({ ...prevBackend, ...backend })(account),
+					stringifyMemberReference,
+				),
+			get('id'),
+		),
+	};
+
+	return backend;
+};
+
+export const getEmptyAccountBackend = (): AccountBackend => ({
+	getAccount: () => notImplementedError('getAccount'),
+	getCAPAccountsByORGID: () => notImplementedError('getCAPAccountsByORGID'),
+	getMembers: () => () => () => notImplementedError('getMembers'),
+	queryEvents: () => () => () => notImplementedException('queryEvents'),
+	getSortedEvents: () => notImplementedException('getSortedEvents'),
+	getEventsInRange: () => () => notImplementedException('getEventsInRange'),
+	createCAPEventAccount: () => () => () => () => () => () =>
+		notImplementedError('createCAPEventAccount'),
+	getOrgNameForMember: () => () => notImplementedError('getOrgName'),
+});

@@ -17,9 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint, validator } from 'auto-client-api';
+import { validator } from 'auto-client-api';
 import { api, destroy, Permissions, RegistryValues, SessionType, Validator } from 'common-lib';
-import { getRegistry, PAM, saveRegistry } from 'server-common';
+import { Backends, getRegistryBackend, PAM, RegistryBackend, withBackends } from 'server-common';
+import { Endpoint } from '../..';
 import { validateRequest } from '../../lib/requestUtils';
 import wrapper from '../../lib/wrapper';
 
@@ -27,21 +28,21 @@ const partialRegistryValidator = Validator.Partial(
 	(validator<RegistryValues>(Validator) as Validator<RegistryValues>).rules,
 );
 
-export const func: ServerAPIEndpoint<api.registry.SetRegistry> = PAM.RequireSessionType(
-	SessionType.REGULAR,
-)(
-	PAM.RequiresPermission(
-		'RegistryEdit',
-		Permissions.RegistryEdit.YES,
-	)(request =>
-		validateRequest(partialRegistryValidator)(request).flatMap(req =>
-			getRegistry(req.mysqlx)(req.account)
-				.map(oldRegistry => ({ ...oldRegistry, ...req.body }))
-				.flatMap(saveRegistry(req.mysqlx))
-				.map(destroy)
-				.map(wrapper),
+export const func: Endpoint<Backends<[RegistryBackend]>, api.registry.SetRegistry> = backend =>
+	PAM.RequireSessionType(SessionType.REGULAR)(
+		PAM.RequiresPermission(
+			'RegistryEdit',
+			Permissions.RegistryEdit.YES,
+		)(request =>
+			validateRequest(partialRegistryValidator)(request).flatMap(req =>
+				backend
+					.getRegistry(req.account)
+					.map(oldRegistry => ({ ...oldRegistry, ...req.body }))
+					.flatMap(backend.saveRegistry)
+					.map(destroy)
+					.map(wrapper),
+			),
 		),
-	),
-);
+	);
 
-export default func;
+export default withBackends(func, getRegistryBackend);

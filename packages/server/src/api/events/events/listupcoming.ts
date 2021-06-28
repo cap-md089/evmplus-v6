@@ -17,36 +17,55 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
 	Either,
 	EitherObj,
+	filterEventInformation,
 	get,
+	Maybe,
 	RawResolvedEventObject,
 	Right,
 	ServerError,
 } from 'common-lib';
-import { ensureResolvedEvent, generateResults, getRegistry, queryEventsFind } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	generateResults,
+	getCombinedEventsBackend,
+	getDefaultAccountBackend,
+	getRegistryBackend,
+	getTimeBackend,
+	RegistryBackend,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const upcomingQuery = queryEventsFind('showUpcoming = true AND endDateTime > :endDateTime');
+const upcomingQuery = 'showUpcoming = true AND endDateTime > :endDateTime';
 
-export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.GetUpcoming> = (
-	now = Date.now,
-) => req =>
-	getRegistry(req.mysqlx)(req.account)
+export const func: Endpoint<
+	Backends<[TimeBackend, AccountBackend, EventsBackend, RegistryBackend]>,
+	api.events.events.GetUpcoming
+> = backend => req =>
+	backend
+		.getRegistry(req.account)
 		.map(registry =>
-			upcomingQuery(req.mysqlx)(req.account)({
-				endDateTime: now(),
-			})
+			backend
+				.queryEvents(upcomingQuery)(req.account)({
+					endDateTime: backend.now(),
+				})
 				.sort('endDateTime ASC')
 				.limit(registry.Website.ShowUpcomingEventCount),
 		)
 		.map(generateResults)
-		.map(asyncIterMap(ensureResolvedEvent(req.mysqlx)))
+		.map(asyncIterMap(backend.ensureResolvedEvent))
 		.map(
 			asyncIterFilter<
 				EitherObj<ServerError, RawResolvedEventObject>,
@@ -54,6 +73,13 @@ export const func: (now?: () => number) => ServerAPIEndpoint<api.events.events.G
 			>(Either.isRight),
 		)
 		.map(asyncIterMap(get('value')))
+		.map(asyncIterMap(filterEventInformation(Maybe.none())))
 		.map(wrapper);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[TimeBackend, AccountBackend, EventsBackend, RegistryBackend]
+	>(getTimeBackend, getDefaultAccountBackend(), getCombinedEventsBackend(), getRegistryBackend),
+);

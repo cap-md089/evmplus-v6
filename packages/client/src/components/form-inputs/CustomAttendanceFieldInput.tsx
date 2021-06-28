@@ -53,11 +53,9 @@ export default class CustomAttendanceFieldInput extends React.Component<
 				},
 			});
 		}
-
-		this.onUpdate = this.onUpdate.bind(this);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (!this.props.value) {
 			throw new Error('Value required');
 		}
@@ -66,7 +64,7 @@ export default class CustomAttendanceFieldInput extends React.Component<
 
 		return (
 			<FormBlock<CustomAttendanceField>
-				name={`customAttendanceFieldInput-${this.props.index}`}
+				name={`customAttendanceFieldInput-${this.props.index ?? 0}`}
 				onFormChange={this.onUpdate}
 				onInitialize={this.props.onInitialize}
 				value={value}
@@ -108,14 +106,14 @@ export default class CustomAttendanceFieldInput extends React.Component<
 		);
 	}
 
-	private onUpdate(
+	private onUpdate = (
 		newValue: CustomAttendanceField,
 		error: BooleanForField<CustomAttendanceField>,
 		changed: BooleanForField<CustomAttendanceField>,
 		hasError: boolean,
 		fieldChanged: keyof CustomAttendanceField,
-	) {
-		const name = `customAttendanceFieldInput-${this.props.index}`;
+	): void => {
+		const name = `customAttendanceFieldInput-${this.props.index ?? 0}`;
 
 		if (fieldChanged === 'type') {
 			if (newValue.type === CustomAttendanceFieldEntryType.CHECKBOX) {
@@ -181,9 +179,9 @@ export default class CustomAttendanceFieldInput extends React.Component<
 				value: newValue,
 			});
 		}
-	}
+	};
 
-	private getPreFillInput(inValue: CustomAttendanceField) {
+	private getPreFillInput = (inValue: CustomAttendanceField): JSX.Element | null => {
 		switch (inValue.type) {
 			case CustomAttendanceFieldEntryType.TEXT:
 				return <TextInput key="prefill" name="preFill" value={inValue.preFill} />;
@@ -211,5 +209,5 @@ export default class CustomAttendanceFieldInput extends React.Component<
 			default:
 				return null;
 		}
-	}
+	};
 }

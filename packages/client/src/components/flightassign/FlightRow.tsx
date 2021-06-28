@@ -62,7 +62,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		this.handleOver = this.handleOver.bind(this);
 	}
 
-	public shouldComponentUpdate(newProps: FlightRowProps, newState: FlightRowState) {
+	public shouldComponentUpdate(newProps: FlightRowProps, newState: FlightRowState): boolean {
 		if (this.props.open !== newProps.open) {
 			return true;
 		}
@@ -86,15 +86,17 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		return false;
 	}
 
-	public componentDidUpdate() {
+	public componentDidUpdate(): void {
 		if (this.state.open && !this.props.open && this.namesDiv.current && this.titleDiv.current) {
+			const namesDiv = this.namesDiv.current;
+			const titleDiv = this.titleDiv.current;
 			setTimeout(() => {
-				jQuery(this.namesDiv.current!).slideUp(() => {
+				jQuery(namesDiv).slideUp(() => {
 					this.setState({
 						open: false,
 					});
 				});
-				jQuery(this.titleDiv.current!).animate({
+				jQuery(titleDiv).animate({
 					'height': 40,
 					'font-size': 32,
 				});
@@ -128,7 +130,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		}
 	}
 
-	public componentDidMount() {
+	public componentDidMount(): void {
 		if (this.namesDiv.current) {
 			this.setState({
 				divHeight: this.namesDiv.current.scrollHeight,
@@ -136,70 +138,68 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 		}
 	}
 
-	public render() {
-		return (
+	public render = (): JSX.Element => (
+		<div
+			className="flightrow"
+			style={this.props.first ? topBorder : undefined}
+			onDrop={this.onDrop}
+			onDragOver={this.handleOver}
+			onDragEnd={this.handleOver}
+			onDragExit={this.handleOver}
+			onDragLeave={this.handleOver}
+			onDragEnter={this.handleOver}
+			id={`${this.props.name.toLowerCase()}-${this.props.index ?? 0}`}
+		>
 			<div
-				className="flightrow"
-				style={this.props.first ? topBorder : undefined}
+				className="flightrow-name"
 				onDrop={this.onDrop}
 				onDragOver={this.handleOver}
 				onDragEnd={this.handleOver}
 				onDragExit={this.handleOver}
 				onDragLeave={this.handleOver}
 				onDragEnter={this.handleOver}
-				id={this.props.name.toLowerCase() + '-' + this.props.index}
+				ref={this.titleDiv}
 			>
-				<div
-					className="flightrow-name"
-					onDrop={this.onDrop}
-					onDragOver={this.handleOver}
-					onDragEnd={this.handleOver}
-					onDragExit={this.handleOver}
-					onDragLeave={this.handleOver}
-					onDragEnter={this.handleOver}
-					ref={this.titleDiv}
-				>
-					{this.props.name} ({this.props.members.length} member
-					{this.props.members.length === 1 ? '' : 's'})
-				</div>
-				<div
-					className={this.state.hidenames ? '' : 'flightrow-names-open'}
-					onDrop={this.onDrop}
-					onDragOver={this.handleOver}
-					onDragEnd={this.handleOver}
-					onDragExit={this.handleOver}
-					onDragLeave={this.handleOver}
-					onDragEnter={this.handleOver}
-					ref={this.namesDiv}
-				>
-					{this.props.members.map((mem, index) => (
-						<FlightMember
-							member={mem}
-							key={index}
-							onDrop={this.onDrop}
-							onDragStart={this.onDragStart}
-						/>
-					))}
-				</div>
+				{this.props.name} ({this.props.members.length} member
+				{this.props.members.length === 1 ? '' : 's'})
 			</div>
-		);
-	}
+			<div
+				className={this.state.hidenames ? '' : 'flightrow-names-open'}
+				onDrop={this.onDrop}
+				onDragOver={this.handleOver}
+				onDragEnd={this.handleOver}
+				onDragExit={this.handleOver}
+				onDragLeave={this.handleOver}
+				onDragEnter={this.handleOver}
+				ref={this.namesDiv}
+			>
+				{this.props.members.map((mem, index) => (
+					<FlightMember
+						member={mem}
+						key={index}
+						onDrop={this.onDrop}
+						onDragStart={this.onDragStart}
+					/>
+				))}
+			</div>
+		</div>
+	);
 
-	private onDragStart() {
+	private onDragStart = (): void => {
 		this.props.onDragStart(this.props.name);
-	}
+	};
 
-	private onDrop(e: React.DragEvent<HTMLDivElement>) {
+	private onDrop = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault();
 		e.stopPropagation();
 
 		const ref = JSON.parse(e.dataTransfer.getData('text')) as MemberReference;
 
 		this.props.onDrop(ref);
-	}
+	};
 
-	private handleOver(e: React.DragEvent<HTMLDivElement>) {
+	private handleOver = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault();
 		e.stopPropagation();
-	}
+	};
 }

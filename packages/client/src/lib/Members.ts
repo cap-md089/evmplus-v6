@@ -31,5 +31,7 @@ export const isCAPMember = (m?: Member): m is CAPMember =>
 export const getMember = (): Promise<SigninReturn> =>
 	fetchApi
 		.check({}, {})
-		.leftFlatMap(always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR })))
+		.leftFlatMap(
+			always(Either.right({ error: MemberCreateError.UNKOWN_SERVER_ERROR as const })),
+		)
 		.fullJoin();

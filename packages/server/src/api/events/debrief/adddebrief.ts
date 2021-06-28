@@ -17,9 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
-	always,
 	api,
 	EventType,
 	FromDatabase,
@@ -29,45 +27,58 @@ import {
 	SessionType,
 	toReference,
 } from 'common-lib';
-import { getEvent, PAM, saveEventFunc } from 'server-common';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	EventsBackend,
+	getCombinedEventsBackend,
+	getTimeBackend,
+	PAM,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: (now?: () => number) => ServerAPIEndpoint<api.events.debrief.Add> = (
-	now = Date.now,
-) =>
+export const func: Endpoint<
+	Backends<[TimeBackend, EventsBackend]>,
+	api.events.debrief.Add
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getEvent(req.mysqlx)(req.account)(req.params.id)
-			.filter(event => event.type === EventType.REGULAR, {
-				type: 'OTHER',
-				code: 403,
-				message: 'You cannot modify debrief items of a linked event',
-			})
-			.map(event => event as FromDatabase<RawRegularEventObject>)
-			.map<[FromDatabase<RawRegularEventObject>, FromDatabase<RawRegularEventObject>]>(
-				oldEvent => [
-					oldEvent,
+		backend
+			.getEvent(req.account)(req.params.id)
+			.filter(
+				(event): event is FromDatabase<RawRegularEventObject> =>
+					event.type === EventType.REGULAR,
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'You cannot modify debrief items of a linked event',
+				},
+			)
+			.map(oldEvent => ({
+				...oldEvent,
+				debrief: [
+					...oldEvent.debrief,
 					{
-						...oldEvent,
-						debrief: [
-							...oldEvent.debrief,
-							{
-								debriefText: req.body.debriefText,
-								publicView: req.body.publicView,
-								memberRef: toReference(req.member),
-								memberName: getFullMemberName(req.member),
-								timeSubmitted: now(),
-							},
-						],
+						debriefText: req.body.debriefText,
+						publicView: req.body.publicView,
+						memberRef: toReference(req.member),
+						memberName: getFullMemberName(req.member),
+						timeSubmitted: backend.now(),
 					},
 				],
-			)
-			.flatMap(([oldEvent, newEvent]) =>
-				saveEventFunc(now)(req.configuration)(req.mysqlx)(req.account)(req.member)(
-					oldEvent,
-				)(newEvent).map(always(newEvent)),
-			)
+			}))
+			.flatMap(backend.saveEvent(req.member))
 			.map(get('debrief'))
 			.map(wrapper),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<BasicAccountRequest, [TimeBackend, EventsBackend]>(
+		getTimeBackend,
+		getCombinedEventsBackend(),
+	),
+);

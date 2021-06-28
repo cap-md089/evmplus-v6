@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AsyncRepr, ServerAPIEndpoint, ServerAPIRequestParameter } from 'auto-client-api';
+import { AsyncRepr, ServerAPIRequestParameter } from 'auto-client-api';
 import {
 	AccountLinkTarget,
 	api,
@@ -42,15 +42,17 @@ import {
 	toReference,
 } from 'common-lib';
 import {
-	getAdminAccountIDsForMember,
-	getUnfinishedTaskCountForMember,
-	getUnreadNotificationCount,
-	logSignin,
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	GenBackend,
+	getCombinedMemberBackend,
+	MemberBackend,
 	PAM,
-	resolveReference,
 	ServerEither,
+	withBackends,
 } from 'server-common';
-import { getPermissionsForMemberInAccountDefault } from 'server-common/dist/member/pam';
+import { Endpoint } from '..';
 import wrapper from '../lib/wrapper';
 
 interface Wrapped<T> {
@@ -64,31 +66,28 @@ interface Wrapped<T> {
 	>;
 }
 
-const handleSuccess = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninSuccess,
-): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
+const handleSuccess = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
+	req: ServerAPIRequestParameter<api.Signin>,
+) => (result: PAM.SigninSuccess): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
 	AsyncEither.All([
-		resolveReference(req.mysqlx)(req.account)(result.member),
-		asyncRight(
-			getPermissionsForMemberInAccountDefault(req.mysqlx, result.member, req.account),
-			errorGenerator('Could not get permissions for member'),
-		),
-		getUnreadNotificationCount(req.mysqlx)(req.account)(result.member),
-		getUnfinishedTaskCountForMember(req.mysqlx)(req.account)(result.member),
+		backend.getMember(req.account)(result.member),
+		backend
+			.getPermissionsForMemberInAccount(req.account)(result.member)
+			.map(PAM.getDefaultPermissions(req.account)),
+		backend.getUnreadNotificationCountForMember(req.account)(result.member),
+		backend.getUnfinishedTaskCountForMember(req.account)(result.member),
 		asyncRight<ServerError, AccountLinkTarget[]>(
 			collectGeneratorAsync(
 				asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
 					asyncIterFilter<
 						EitherObj<ServerError, AccountLinkTarget>,
 						Right<AccountLinkTarget>
-					>(Either.isRight)(
-						getAdminAccountIDsForMember(req.mysqlx)(toReference(result.member)),
-					),
+					>(Either.isRight)(backend.getAdminAccountIDs(toReference(result.member))),
 				),
 			),
 			errorGenerator('Could not get admin account IDs for member'),
 		),
-		logSignin(req.mysqlx)(req.account)(result.member),
+		backend.logSignin(req.account)(result.member),
 	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
 		response: {
 			error: MemberCreateError.NONE,
@@ -142,9 +141,7 @@ const handleFailure = (result: PAM.SigninFailed): ServerEither<Wrapped<FailedSig
 		  )
 	).map(wrapper);
 
-const handleMFA = (req: ServerAPIRequestParameter<api.Signin>) => (
-	result: PAM.SigninRequiresMFA,
-): ServerEither<Wrapped<SigninRequiresMFA>> =>
+const handleMFA = (result: PAM.SigninRequiresMFA): ServerEither<Wrapped<SigninRequiresMFA>> =>
 	asyncRight<ServerError, Wrapped<SigninRequiresMFA>>(
 		{
 			response: {
@@ -160,25 +157,26 @@ const handleMFA = (req: ServerAPIRequestParameter<api.Signin>) => (
 		errorGenerator('Could not handle failure'),
 	);
 
-export const func: ServerAPIEndpoint<api.Signin> = req =>
-	asyncRight(
-		PAM.trySignin(
-			req.mysqlx,
-			req.account,
-			req.body.username,
-			req.body.password,
-			req.body.token,
-			req.configuration,
-		),
-		errorGenerator('Could not sign in'),
-	).flatMap<Wrapped<SigninReturn>>(results =>
-		results.result === MemberCreateError.NONE
-			? handleSuccess(req)(results)
-			: results.result === MemberCreateError.PASSWORD_EXPIRED
-			? handlePasswordExpired(results)
-			: results.result === MemberCreateError.ACCOUNT_USES_MFA
-			? handleMFA(req)(results)
-			: handleFailure(results),
-	);
+export const func: Endpoint<
+	Backends<[MemberBackend, PAM.PAMBackend]>,
+	api.Signin
+> = backend => req =>
+	backend
+		.trySignin(req.account)([req.body.username, req.body.password])(req.body.token)
+		.flatMap<Wrapped<SigninReturn>>(results =>
+			results.result === MemberCreateError.NONE
+				? handleSuccess(backend)(req)(results)
+				: results.result === MemberCreateError.PASSWORD_EXPIRED
+				? handlePasswordExpired(results)
+				: results.result === MemberCreateError.ACCOUNT_USES_MFA
+				? handleMFA(results)
+				: handleFailure(results),
+		);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, PAM.PAMBackend]
+	>(getCombinedMemberBackend(), PAM.getPAMBackend),
+);

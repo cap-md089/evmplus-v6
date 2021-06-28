@@ -17,4 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare module 'ssh2-sftp-client';
+declare module 'markdown' {
+	interface Markdown {
+		toHTML(md: string): string;
+	}
+
+	const markdown: Markdown;
+}

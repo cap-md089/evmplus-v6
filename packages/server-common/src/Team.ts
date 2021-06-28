@@ -23,8 +23,11 @@ import {
 	AccountType,
 	areMembersTheSame,
 	AsyncEither,
+	AsyncIter,
+	asyncIterConcat,
 	asyncLeft,
 	asyncRight,
+	collectGeneratorAsync,
 	errorGenerator,
 	FullPreviousTeamMember,
 	FullTeamMember,
@@ -37,6 +40,7 @@ import {
 	MaybeObj,
 	MemberReference,
 	MemberUpdateEventEmitter,
+	memoize,
 	NewTeamMember,
 	NewTeamObject,
 	NHQ,
@@ -49,8 +53,12 @@ import {
 	set,
 	TeamPublicity,
 	User,
+	yieldObjAsync,
 } from 'common-lib';
+import { EventEmitter } from 'events';
 import { DateTime } from 'luxon';
+import { AccountBackend, BasicAccountRequest } from './Account';
+import { Backends, notImplementedError, notImplementedException, TimeBackend } from './backends';
 import { getMemberName } from './Members';
 import {
 	addToCollection,
@@ -170,7 +178,7 @@ export const getStaffTeam = (schema: Schema) => (
 export const getTeam = (schema: Schema) => (account: AccountObject) => (
 	teamID: number,
 ): ServerEither<RawTeamObject> =>
-	asyncRight(parseInt(teamID + '', 10), errorGenerator('Could not get team information'))
+	asyncRight(parseInt(teamID.toString(), 10), errorGenerator('Could not get team information'))
 		.filter(num => !isNaN(num), {
 			type: 'OTHER',
 			code: 400,
@@ -290,7 +298,7 @@ export const saveTeam = (schema: Schema) => (team: RawTeamObject): ServerEither<
 				.map(convertTeamToSaveObject)
 				.flatMap(saveToCollectionA(schema.getCollection<RawTeamObject>('Teams')));
 
-export const modfiyTeamMember = (member: NewTeamMember) => (
+export const modifyTeamMember = (member: NewTeamMember) => (
 	team: RawTeamObject,
 ): RawTeamObject => ({
 	...team,
@@ -303,7 +311,7 @@ export const modfiyTeamMember = (member: NewTeamMember) => (
 
 export const addMemberToTeamFunc = (now = Date.now) => (emitter: MemberUpdateEventEmitter) => (
 	account: AccountObject,
-) => (member: NewTeamMember) => (team: RawTeamObject) => {
+) => (member: NewTeamMember) => (team: RawTeamObject): RawTeamObject => {
 	const newTeam = {
 		...team,
 		members: [
@@ -331,7 +339,7 @@ export const addMembersToTeamFunc = (now = Date.now) => (account: AccountObject)
 	members.reduce(
 		(team, newMember) =>
 			isPartOfTeam(newMember.reference)(team)
-				? modfiyTeamMember(newMember)(team)
+				? modifyTeamMember(newMember)(team)
 				: addMemberToTeamFunc(now)(emitter)(account)(newMember)(team),
 		initialTeam,
 	);
@@ -339,11 +347,15 @@ export const addMembersToTeam = addMembersToTeamFunc();
 
 export const removeMemberFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (member: MemberReference) => (team: RawTeamObject) => {
+) => (member: MemberReference) => (team: RawTeamObject): RawTeamObject => {
 	if (isPartOfTeam(member)(team) && !isTeamLeader(member)(team)) {
 		const isOldMember = areMembersTheSame(member);
 
-		const oldPart = team.members.find(teamMember => isOldMember(teamMember.reference))!;
+		const oldPart = team.members.find(teamMember => isOldMember(teamMember.reference));
+
+		if (!oldPart) {
+			return team;
+		}
 
 		const newTeam: RawTeamObject = {
 			...team,
@@ -374,7 +386,7 @@ export const removeMemberFromTeam = removeMemberFromTeamFunc();
 
 export const removeMembersFromTeamFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (members: MemberReference[]) => (initialTeam: RawTeamObject) =>
+) => (members: MemberReference[]) => (initialTeam: RawTeamObject): RawTeamObject =>
 	members.reduce(
 		(team, member) => removeMemberFromTeamFunc(now)(account)(emitter)(member)(team),
 		initialTeam,
@@ -462,7 +474,7 @@ export const httpStripTeamObject = (member: MaybeObj<User>) => <T extends RawTea
 
 export const deleteTeam = (schema: Schema) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (team: RawTeamObject) =>
+) => (team: RawTeamObject): ServerEither<void> =>
 	(team.id === 0
 		? asyncLeft<ServerError, Collection<RawTeamObject>>({
 				type: 'OTHER',
@@ -489,7 +501,7 @@ const getDifferentTeamMembers = getItemsNotInSecondArray<NewTeamMember>(mem1 => 
 
 export const updateTeamMembersFunc = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
-) => (newMembers: NewTeamMember[]) => (team: RawTeamObject) =>
+) => (newMembers: NewTeamMember[]) => (team: RawTeamObject): RawTeamObject =>
 	pipe(
 		removeMembersFromTeamFunc(now)(account)(emitter)(
 			getDifferentTeamMembers(team.members)(newMembers).map(get('reference')),
@@ -500,7 +512,7 @@ export const updateTeamMembersFunc = (now = Date.now) => (account: AccountObject
 	)(team);
 export const updateTeamMembers = updateTeamMembersFunc();
 
-export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
+export const updateTeam = (now = Date.now) => (account: AccountObject) => (
 	emitter: MemberUpdateEventEmitter,
 ) => (team: RawTeamObject) => (newTeamInfo: NewTeamObject): RawTeamObject =>
 	pipe(
@@ -512,4 +524,122 @@ export const updateTeamFunc = (now = Date.now) => (account: AccountObject) => (
 		set<RawTeamObject, 'description'>('description')(newTeamInfo.description),
 		set<RawTeamObject, 'visibility'>('visibility')(newTeamInfo.visibility),
 	)(team);
-export const updateTeam = updateTeamFunc();
+
+const getNormalTeamObjects = (schema: Schema) => (
+	account: AccountObject,
+): ServerEither<AsyncIterableIterator<RawTeamObject>> =>
+	asyncRight(
+		schema.getCollection<RawTeamObject>('Teams'),
+		errorGenerator('Could not get teams for account'),
+	)
+		.map(
+			findAndBindC<RawTeamObject>({
+				accountID: account.id,
+			}),
+		)
+		.map(generateResults);
+
+export const getTeamObjects = (schema: Schema) => (
+	account: AccountObject,
+): ServerEither<AsyncIter<RawTeamObject>> =>
+	account.type === AccountType.CAPSQUADRON
+		? getStaffTeam(schema)(account).flatMap(team =>
+				getNormalTeamObjects(schema)(account).map(objectIter =>
+					asyncIterConcat(yieldObjAsync(Promise.resolve(team)))(() => objectIter),
+				),
+		  )
+		: getNormalTeamObjects(schema)(account);
+
+export interface TeamsBackend {
+	getTeam: (account: AccountObject) => (teamID: number) => ServerEither<RawTeamObject>;
+	getTeams: (account: AccountObject) => ServerEither<RawTeamObject[]>;
+	updateTeam: (
+		account: AccountObject,
+	) => (team: RawTeamObject) => (newTeamInfo: NewTeamObject) => RawTeamObject;
+	saveTeam: (team: RawTeamObject) => ServerEither<RawTeamObject>;
+	removeMemberFromTeam: (
+		member: MemberReference,
+	) => (team: RawTeamObject) => ServerEither<RawTeamObject>;
+	modifyTeamMember: (newMember: NewTeamMember) => (team: RawTeamObject) => RawTeamObject;
+	expandTeam: (team: RawTeamObject) => ServerEither<FullTeamObject>;
+	addMemberToTeam: (
+		member: NewTeamMember,
+	) => (team: RawTeamObject) => ServerEither<RawTeamObject>;
+	deleteTeam: (team: RawTeamObject) => ServerEither<void>;
+	createTeam: (account: AccountObject) => (team: NewTeamObject) => ServerEither<RawTeamObject>;
+}
+
+export const getTeamsBackend = (
+	req: BasicAccountRequest,
+	prevBackend: Backends<[TimeBackend]>,
+): TeamsBackend => ({
+	getTeam: memoize(account => memoize(getTeam(req.mysqlx)(account)), get('id')),
+	getTeams: memoize(
+		account => getTeamObjects(req.mysqlx)(account).map(collectGeneratorAsync),
+		get('id'),
+	),
+	updateTeam: account => updateTeam(prevBackend.now)(account)(req.memberUpdateEmitter),
+	saveTeam: saveTeam(req.mysqlx),
+	removeMemberFromTeam: member => team =>
+		req.backend
+			.getAccount(team.accountID)
+			.map(account => removeMemberFromTeam(account)(req.memberUpdateEmitter)(member)(team)),
+	modifyTeamMember,
+	expandTeam: team =>
+		req.backend
+			.getAccount(team.accountID)
+			.flatMap(account => expandTeam(req.mysqlx)(account)(team)),
+	addMemberToTeam: member => team =>
+		req.backend
+			.getAccount(team.accountID)
+			.map(account => addMemberToTeam(req.memberUpdateEmitter)(account)(member)(team)),
+	createTeam: createTeam(req.memberUpdateEmitter)(req.mysqlx),
+	deleteTeam: team =>
+		req.backend
+			.getAccount(team.accountID)
+			.flatMap(account => deleteTeam(req.mysqlx)(account)(req.memberUpdateEmitter)(team)),
+});
+
+export const getRequestFreeTeamsBackend = (
+	mysqlx: Schema,
+	prevBackend: Backends<[TimeBackend, AccountBackend]>,
+): TeamsBackend => ({
+	getTeam: memoize(account => memoize(getTeam(mysqlx)(account)), get('id')),
+	getTeams: memoize(
+		account => getTeamObjects(mysqlx)(account).map(collectGeneratorAsync),
+		get('id'),
+	),
+	updateTeam: account => updateTeam(prevBackend.now)(account)(new EventEmitter()),
+	saveTeam: saveTeam(mysqlx),
+	removeMemberFromTeam: member => team =>
+		prevBackend
+			.getAccount(team.accountID)
+			.map(account => removeMemberFromTeam(account)(new EventEmitter())(member)(team)),
+	modifyTeamMember,
+	expandTeam: team =>
+		prevBackend
+			.getAccount(team.accountID)
+			.flatMap(account => expandTeam(mysqlx)(account)(team)),
+	addMemberToTeam: member => team =>
+		prevBackend
+			.getAccount(team.accountID)
+			.map(account => addMemberToTeam(new EventEmitter())(account)(member)(team)),
+	deleteTeam: team =>
+		prevBackend
+			.getAccount(team.accountID)
+			.flatMap(account => deleteTeam(mysqlx)(account)(new EventEmitter())(team)),
+	createTeam: createTeam(new EventEmitter())(mysqlx),
+});
+
+export const getEmptyTeamsBackend = (): TeamsBackend => ({
+	getTeam: () => () => notImplementedError('getTeam'),
+	getTeams: () => notImplementedException('getTeams'),
+	saveTeam: () => notImplementedError('saveTeam'),
+	updateTeam: () => () => () => notImplementedException('updateTeam'),
+	removeMemberFromTeam: () => () => notImplementedError('removeMemberFromTeam'),
+	modifyTeamMember: () => () => notImplementedException('modifyTeamMember'),
+	expandTeam: () => notImplementedError('expandTeam'),
+	addMemberToTeam: () => () => notImplementedError('addMembersToTeam'),
+	createTeam: () => () => notImplementedError('createTeam'),
+	deleteTeam: () => notImplementedError('deleteTeam'),
+});

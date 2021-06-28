@@ -17,8 +17,8 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, RawEventObject, Timezone, RawResolvedEventObject } from 'common-lib';
-import { DateTime, Duration } from 'luxon';
+import { Either, RawEventObject, RawResolvedEventObject } from 'common-lib';
+import { DateTime } from 'luxon';
 import React from 'react';
 import Loader from '../components/Loader';
 import { isMobile } from '../components/page-elements/SideNavigation';
@@ -28,7 +28,7 @@ import DesktopCalendar from './calendars/DesktopCalendar';
 import MobileCalendar from './calendars/MobileCalendar';
 import Page, { PageProps } from './Page';
 
-export const getMonth = (month: number, year: number) =>
+export const getMonth = (month: number, year: number): DateTime =>
 	DateTime.utc()
 		.set({
 			year,
@@ -50,17 +50,6 @@ export const MONTHS = [
 	'November',
 	'December',
 ];
-
-const offsets: { [K in Timezone]: number } = {
-	'America/Hawaii': 10 * 3600 * 1000,
-	'America/Anchorage': 9 * 3600 * 1000,
-	'America/Los_Angeles': 8 * 3600 * 1000,
-	'America/Arizona': 7 * 3600 * 1000,
-	'America/Denver': 7 * 3600 * 1000,
-	'America/Chicago': 6 * 3600 * 1000,
-	'America/New_York': 5 * 3600 * 1000,
-	'America/Puerto_Rico': 4 * 3600 * 1000,
-};
 
 export const getPositionIndices = (
 	date: DateTime,
@@ -119,7 +108,7 @@ export default class Calendar extends Page<
 		this.checkToUpdate = this.checkToUpdate.bind(this);
 	}
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		window.addEventListener('resize', this.checkToUpdate);
 
 		this.props.updateBreadCrumbs([
@@ -146,28 +135,25 @@ export default class Calendar extends Page<
 				? new Date().getUTCMonth() + 1
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
-		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
-		const thisMonthStart = getMonth(month, year);
-		const monthEnd = DateTime.fromMillis(+getMonth(month + 1, year) - 1);
-
-		const startOfLastMonthWeek =
-			thisMonthStart.weekday === 7 // Sunday
-				? thisMonthStart
-				: lastMonth.weekday === 7
-				? lastMonth.minus(Duration.fromObject({ days: 1 }))
-				: lastMonth.startOf('week').minus(
-						Duration.fromObject({
-							days: 1,
-						}),
-				  );
-		const end = monthEnd.endOf('week').day === 5 ? monthEnd : monthEnd.endOf('week');
-
-		const offset = offsets[this.props.registry.Website.Timezone];
+		// create js Date object with intended month
+		const displayDate = new Date(year, month - 1);
+		// "day of month" first day
+		const dayOfMonthFirst = new Date(displayDate.getTime());
+		// "day of month" last day
+		const dayOfMonthLast = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
+		// "day of calendar" start day, start with current month
+		const dayOfCalendarStart = new Date(year, dayOfMonthFirst.getMonth(), 1);
+		// doc start day, modify to be the Sunday before the first day of the display month
+		dayOfCalendarStart.setDate(-(dayOfCalendarStart.getDay() - 1));
+		// "day of calendar" end day, start with last day of current month
+		const dayOfCalendarEnd = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
+		// doc end day, modify to be the Saturday after the last day of the display month
+		dayOfCalendarEnd.setDate(dayOfMonthLast.getDate() + (6 - dayOfMonthLast.getDay()));
 
 		const resEither = await fetchApi.events.events.getRange(
 			{
-				timestart: (+startOfLastMonthWeek + offset).toString(),
-				timeend: (+end + offset).toString(),
+				timestart: dayOfCalendarStart.getTime().toString(),
+				timeend: dayOfCalendarEnd.getTime().toString(),
 			},
 			{},
 		);
@@ -180,16 +166,16 @@ export default class Calendar extends Page<
 
 		this.setState({
 			events,
-			start: DateTime.fromMillis(+startOfLastMonthWeek + offset),
-			end: DateTime.fromMillis(+end),
+			start: DateTime.fromMillis(dayOfCalendarStart.getTime()),
+			end: DateTime.fromMillis(dayOfCalendarEnd.getTime()),
 		});
 	}
 
-	public componentWillUnmount() {
+	public componentWillUnmount(): void {
 		window.removeEventListener('resize', this.checkToUpdate);
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		if (this.state.events === null || this.state.start === null || this.state.end === null) {
 			return <Loader />;
 		}
@@ -211,7 +197,7 @@ export default class Calendar extends Page<
 		);
 	}
 
-	private checkToUpdate() {
+	private checkToUpdate = (): void => {
 		this.forceUpdate();
-	}
+	};
 }

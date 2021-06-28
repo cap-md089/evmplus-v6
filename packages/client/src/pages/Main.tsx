@@ -67,7 +67,7 @@ export default class Main extends Page<PageProps, MainState> {
 		state: 'UNLOADED',
 	};
 
-	public async componentDidMount() {
+	public async componentDidMount(): Promise<void> {
 		const links: SideNavigationItem[] = [
 			{
 				target: '/team',
@@ -125,160 +125,149 @@ export default class Main extends Page<PageProps, MainState> {
 		}
 	}
 
-	public render() {
-		return (
-			<div>
-				{this.state.state === 'UNLOADED' ? (
-					<Loader />
-				) : this.state.state === 'ERROR' ? (
-					<div>{this.state.message}</div>
-				) : (
-					<>
-						{this.props.member &&
-						!this.props.member.seniorMember &&
-						this.state.promotionRequirements.hasValue ? (
-							<section className="halfSection">
-								<RequirementsBuild {...this.state.promotionRequirements.value} />
-							</section>
-						) : null}
-						<section
-							className="halfSection"
-							style={{
-								float:
-									this.props.member && !this.props.member.seniorMember
-										? 'right'
-										: 'left',
-							}}
-						>
-							{!this.state.nextEvent.hasValue ? (
-								<h3 style={{ textAlign: 'center' }}>No upcoming meeting</h3>
-							) : (
-								<>
-									<h3
-										style={{
-											textAlign: 'center',
-										}}
-									>
-										Next meeting
-									</h3>
-									<strong>Event</strong>: {this.state.nextEvent.value.name}
-									<br />
-									<strong>Time</strong>:{' '}
-									{DateTime.fromMillis(
-										this.state.nextEvent.value.meetDateTime,
-									).toLocaleString({
-										year: 'numeric',
-										weekday: 'short',
-										month: 'short',
-										day: '2-digit',
-										hour: '2-digit',
-										minute: '2-digit',
-										hour12: false,
-									})}
-									<br />
-									<strong>Location</strong>:{' '}
-									{this.state.nextEvent.value.meetLocation}
-									<br />
-									<strong>Uniform of the day</strong>:{' '}
-									{pipe(
-										M.map(uniform => <>{uniform}</>),
-										M.orSome(<i>No uniform specified</i>),
-									)(
-										presentMultCheckboxReturn(
-											this.state.nextEvent.value.uniform,
-										),
-									)}
-									<br />
-									<Link
-										to={`/eventviewer/${getURIComponent(
-											this.state.nextEvent.value,
-										)}`}
-									>
-										View details
-									</Link>
-								</>
-							)}
+	public render = (): JSX.Element => (
+		<div>
+			{this.state.state === 'UNLOADED' ? (
+				<Loader />
+			) : this.state.state === 'ERROR' ? (
+				<div>{this.state.message}</div>
+			) : (
+				<>
+					{this.props.member &&
+					!this.props.member.seniorMember &&
+					this.state.promotionRequirements.hasValue ? (
+						<section className="halfSection">
+							<RequirementsBuild {...this.state.promotionRequirements.value} />
 						</section>
-						<section className="halfSection" style={{ float: 'right', clear: 'right' }}>
-							{this.state.events.length === 0 ? (
+					) : null}
+					<section
+						className="halfSection"
+						style={{
+							float:
+								this.props.member && !this.props.member.seniorMember
+									? 'right'
+									: 'left',
+						}}
+					>
+						{!this.state.nextEvent.hasValue ? (
+							<h3 style={{ textAlign: 'center' }}>No upcoming meeting</h3>
+						) : (
+							<>
 								<h3
 									style={{
 										textAlign: 'center',
-										lineHeight: 'initial',
 									}}
 								>
-									No upcoming events
+									Next meeting
 								</h3>
-							) : (
-								<h3
-									style={{
-										textAlign: 'center',
-										lineHeight: 'initial',
-									}}
+								<strong>Event</strong>: {this.state.nextEvent.value.name}
+								<br />
+								<strong>Time</strong>:{' '}
+								{DateTime.fromMillis(
+									this.state.nextEvent.value.meetDateTime,
+								).toLocaleString({
+									year: 'numeric',
+									weekday: 'short',
+									month: 'short',
+									day: '2-digit',
+									hour: '2-digit',
+									minute: '2-digit',
+									hour12: false,
+								})}
+								<br />
+								<strong>Location</strong>: {this.state.nextEvent.value.meetLocation}
+								<br />
+								<strong>Uniform of the day</strong>:{' '}
+								{pipe(
+									M.map(uniform => <>{uniform}</>),
+									M.orSome(<i>No uniform specified</i>),
+								)(presentMultCheckboxReturn(this.state.nextEvent.value.uniform))}
+								<br />
+								<Link
+									to={`/eventviewer/${getURIComponent(
+										this.state.nextEvent.value,
+									)}`}
 								>
-									Upcoming events
-								</h3>
-							)}
-							{this.state.events.map((ev, i) => (
-								<div key={i}>
-									{ev.status === EventStatus.CANCELLED ? (
-										<span style={{ color: 'red' }}>
-											<strong>
-												{DateTime.fromMillis(
-													ev.meetDateTime,
-												).toLocaleString({
-													day: '2-digit',
-													month: 'long',
-												})}
-											</strong>{' '}
-											<Link to={`/eventviewer/${getURIComponent(ev)}`}>
-												{ev.name}
-											</Link>{' '}
-											<strong>!! Cancelled !!</strong>
-										</span>
-									) : (
-										<span>
-											<strong>
-												{DateTime.fromMillis(
-													ev.meetDateTime,
-												).toLocaleString({
-													day: '2-digit',
-													month: 'long',
-												})}
-											</strong>{' '}
-											<Link to={`/eventviewer/${getURIComponent(ev)}`}>
-												{ev.name}
-											</Link>
-										</span>
-									)}
-								</div>
-							))}
+									View details
+								</Link>
+							</>
+						)}
+					</section>
+					<section className="halfSection" style={{ float: 'right', clear: 'right' }}>
+						{this.state.events.length === 0 ? (
+							<h3
+								style={{
+									textAlign: 'center',
+									lineHeight: 'initial',
+								}}
+							>
+								No upcoming events
+							</h3>
+						) : (
+							<h3
+								style={{
+									textAlign: 'center',
+									lineHeight: 'initial',
+								}}
+							>
+								Upcoming events
+							</h3>
+						)}
+						{this.state.events.map((ev, i) => (
+							<div key={i}>
+								{ev.status === EventStatus.CANCELLED ? (
+									<span style={{ color: 'red' }}>
+										<strong>
+											{DateTime.fromMillis(ev.meetDateTime).toLocaleString({
+												day: '2-digit',
+												month: 'long',
+											})}
+										</strong>{' '}
+										<Link to={`/eventviewer/${getURIComponent(ev)}`}>
+											{ev.name}
+										</Link>{' '}
+										<strong>!! Cancelled !!</strong>
+									</span>
+								) : (
+									<span>
+										<strong>
+											{DateTime.fromMillis(ev.meetDateTime).toLocaleString({
+												day: '2-digit',
+												month: 'long',
+											})}
+										</strong>{' '}
+										<Link to={`/eventviewer/${getURIComponent(ev)}`}>
+											{ev.name}
+										</Link>
+									</span>
+								)}
+							</div>
+						))}
+					</section>
+					{!!this.props.registry.Contact.Twitter ? (
+						<section className="halfSection">
+							<TwitterTimelineEmbed
+								screenName={this.props.registry.Contact.Twitter}
+								sourceType="profile"
+								options={{ height: 500 }}
+							/>
 						</section>
-						{!!this.props.registry.Contact.Twitter ? (
-							<section className="halfSection">
-								<TwitterTimelineEmbed
-									screenName={this.props.registry.Contact.Twitter}
-									sourceType="profile"
-									options={{ height: 500 }}
-								/>
-							</section>
-						) : null}
+					) : null}
 
-						{!!this.props.registry.Contact.FaceBook ? (
-							<section className="halfSection">
-								<FacebookProvider appId="1640151259363083">
-									<FBPage
-										href={`https://www.facebooko.com/${this.props.registry.Contact.FaceBook}`}
-										tabs="timeline"
-									/>
-								</FacebookProvider>
-							</section>
-						) : null}
-					</>
-				)}
-			</div>
-		);
-	}
+					{!!this.props.registry.Contact.FaceBook ? (
+						<section className="halfSection">
+							<FacebookProvider appId="1640151259363083">
+								<FBPage
+									href={`https://www.facebooko.com/${this.props.registry.Contact.FaceBook}`}
+									tabs="timeline"
+								/>
+							</FacebookProvider>
+						</section>
+					) : null}
+				</>
+			)}
+		</div>
+	);
 }
 
 function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {

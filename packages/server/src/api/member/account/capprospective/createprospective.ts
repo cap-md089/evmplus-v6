@@ -17,12 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-	ServerAPIEndpoint,
-	ServerAPIRequestParameter,
-	ServerEither,
-	validator,
-} from 'auto-client-api';
+import { ServerAPIRequestParameter, ServerEither, validator } from 'auto-client-api';
 import {
 	AccountType,
 	api,
@@ -30,7 +25,6 @@ import {
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
-	call,
 	CAPMemberContact,
 	CAPProspectiveMemberPasswordCreation,
 	CAPProspectiveMemberPasswordCreationType,
@@ -47,65 +41,88 @@ import {
 	toReference,
 	Validator,
 } from 'common-lib';
-import { randomBytes } from 'crypto';
-import { CAP, getRegistry, PAM, sendEmail } from 'server-common';
-import { promisify } from 'util';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	EmailBackend,
+	EmailParameters,
+	EmailToSend,
+	getAccountBackend,
+	getCombinedTeamsBackend,
+	getEmailBackend,
+	getMemberBackend,
+	getRandomBackend,
+	getRegistryBackend,
+	MemberBackend,
+	PAM,
+	RandomBackend,
+	RegistryBackend,
+	SUPPORT_BCC_ADDRESS,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../../..';
 import { validateRequest } from '../../../../lib/requestUtils';
 import wrapper from '../../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.member.account.capprospective.CreateProspectiveAccount>;
 
-const sendPasswordLink = (emailFunction: typeof sendEmail) => (req: Req) => (
-	member: RawCAPProspectiveMemberObject,
-) =>
-	Maybe.cata<string, ServerEither<string>>(() =>
-		asyncLeft({
-			type: 'OTHER',
-			code: 400,
-			message: 'Cannot have a link emailed if there is no email provided',
-		}),
-	)(email => asyncRight(email, errorGenerator('Could not set password link')))(
-		getMemberEmail(member.contact),
-	).flatMap(email =>
-		AsyncEither.All([
-			getRegistry(req.mysqlx)(req.account),
-			PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
-		]).flatMap(([registry, token]) =>
-			emailFunction(req.configuration)(true)(registry)(
-				'Finish Event Manager Account Creation',
-			)(email)(`<h2>You're almost there ${getFullMemberName(member)}!</h2>
+const generateLinkEmail = (token: string) => (member: RawCAPProspectiveMemberObject) => (
+	to: string,
+) => ({ url }: EmailParameters): EmailToSend => ({
+	to: [to],
+	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	subject: 'Finish Event Manager Account Creation',
+	htmlBody: `
+<h2>You're almost there ${getFullMemberName(member)}!</h2>
 <p>To complete your Event Manager account creation, click or visit the link below:</p>
-<p><a href="https://${req.account.id}.${
-				req.configuration.HOST_NAME
-			}/finishaccount/${token}/">Confirm account creation</a></p>
-<h4>Please respond to this email if you have any questions.</h4>`)(`You're almost there ${getFullMemberName(
-				member,
-			)}!
+<p>
+	<a href="${url}/finishaccount/${token}/">Confirm account creation</a>
+</p>
+<h4>Please respond to this email if you have any questions.</h4>
+`,
+	textBody: `
+You're almost there ${getFullMemberName(member)}!
 
 To complete your Event Manager account creation, copy and paste the link below into a web browser:
 
-Please respond to this email if you have any questions`),
-		),
-	);
+${url}/finishaccount/${token}/
 
-const createWithPassword = (req: Req) => (username: string) => (password: string) => (
-	member: RawCAPProspectiveMemberObject,
-) =>
-	PAM.addUserAccountCreationToken(req.mysqlx, toReference(member))
-		.map(token =>
-			PAM.addUserAccount(
-				req.mysqlx,
-				req.account,
-				username,
-				password,
-				toReference(member),
-				token,
-			),
-		)
-		.map(destroy);
+Please respond to this email if you have any questions
+`,
+});
 
-const createWithRandomPassword = (emailFunction: typeof sendEmail) => (req: Req) => (
+const generateRandomPasswordEmail = ([username, password]: [
 	username: string,
+	password: string,
+]) => (member: RawCAPProspectiveMemberObject) => (to: string) => ({
+	url,
+}: EmailParameters): EmailToSend => ({
+	to: [to],
+	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	subject: 'Finish Event Manager Account Registration',
+	htmlBody: `
+<h4>Your account has been created, ${getFullMemberName(member)}!</h4>
+<p>
+	You can now <a href="${url}/signin?returnurl=%2F">
+		sign in
+	</a> with the username ${username} and the password <b>${password}</b>.
+</p>`,
+	textBody: `
+Your account has been created, ${getFullMemberName(member)}!
+
+You can now sign in with the username ${username} and the password ${password}.
+
+Sign in with the link below:
+${url}/signin?returnurl=%2F
+`,
+});
+
+const sendPasswordLink = (backend: Backends<[EmailBackend, RegistryBackend, PAM.PAMBackend]>) => (
+	req: Req,
 ) => (member: RawCAPProspectiveMemberObject) =>
 	Maybe.cata<string, ServerEither<string>>(() =>
 		asyncLeft({
@@ -117,30 +134,51 @@ const createWithRandomPassword = (emailFunction: typeof sendEmail) => (req: Req)
 		getMemberEmail(member.contact),
 	).flatMap(email =>
 		AsyncEither.All([
-			getRegistry(req.mysqlx)(req.account),
-			PAM.addUserAccountCreationToken(req.mysqlx, toReference(member)),
-			asyncRight(
-				promisify(randomBytes)(10),
-				errorGenerator('Could not get random password'),
-			).map(buffer => buffer.toString('base64')),
+			backend.getRegistry(req.account),
+			backend.addUserAccountCreationToken(member),
+		]).flatMap(([registry, token]) =>
+			backend.sendEmail(registry)(generateLinkEmail(token)(member)(email)),
+		),
+	);
+
+const createWithPassword = (backend: Backends<[PAM.PAMBackend, AccountBackend]>) => (
+	username: string,
+) => (password: string) => (member: RawCAPProspectiveMemberObject) =>
+	AsyncEither.All([
+		backend.addUserAccountCreationToken(member),
+		backend.getAccount(member.accountID),
+	])
+		.map(([token, account]) =>
+			backend.addUserAccount(account)(member)([username, password])(token),
+		)
+		.map(destroy);
+
+const createWithRandomPassword = (
+	backend: Backends<[RandomBackend, EmailBackend, PAM.PAMBackend, RegistryBackend]>,
+) => (req: Req) => (username: string) => (member: RawCAPProspectiveMemberObject) =>
+	Maybe.cata<string, ServerEither<string>>(() =>
+		asyncLeft({
+			type: 'OTHER',
+			code: 400,
+			message: 'Cannot have a link emailed if there is no email provided',
+		}),
+	)(email => asyncRight(email, errorGenerator('Could not set password link')))(
+		getMemberEmail(member.contact),
+	).flatMap(email =>
+		AsyncEither.All([
+			backend.getRegistry(req.account),
+			backend.addUserAccountCreationToken(member),
+			backend.randomBytes(10).map(buffer => buffer.toString('base64')),
 		])
 			.tap(([_, token, password]) =>
-				PAM.addUserAccount(
-					req.mysqlx,
-					req.account,
-					username,
-					password,
-					toReference(member),
+				backend.addUserAccount(req.account)(toReference(member))([username, password])(
 					token,
 				),
 			)
 			.flatMap(([registry, _, password]) =>
-				emailFunction(req.configuration)(true)(registry)(
-					'Finish Event Manager Account Creation',
-				)(email)(`<h4>Your account has been created!</h4>
-				<p>You can now <a href="https://${req.account.id}.${req.configuration.HOST_NAME}/signin?returnurl=%2F">sign in</a> with the username ${username} and the password <b>${password}</b>.`)(`Your account has been created!
-
-You can now sign in with the username ${username} and the password ${password}.`),
+				backend.sendEmail(registry)(
+					generateRandomPasswordEmail([username, password])(member)(email),
+				),
 			),
 	);
 
@@ -159,11 +197,20 @@ const newProspectiveMemberAccountValidator = new Validator<
 	}),
 });
 
-export const func: (
-	emailFunction?: typeof sendEmail,
-) => ServerAPIEndpoint<api.member.account.capprospective.CreateProspectiveAccount> = (
-	emailFunction = sendEmail,
-) =>
+export const func: Endpoint<
+	Backends<
+		[
+			AccountBackend,
+			RandomBackend,
+			EmailBackend,
+			RegistryBackend,
+			MemberBackend,
+			CAP.CAPMemberBackend,
+			PAM.PAMBackend,
+		]
+	>,
+	api.member.account.capprospective.CreateProspectiveAccount
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(
 		PAM.RequiresPermission(
 			'ProspectiveMemberManagement',
@@ -172,25 +219,26 @@ export const func: (
 			validateRequest(newProspectiveMemberAccountValidator)(request)
 				.flatMap(req =>
 					asyncRight(req.account, errorGenerator('Could not create prospective member'))
-						.filter(account => account.type === AccountType.CAPSQUADRON, {
-							type: 'OTHER',
-							code: 400,
-							message:
-								'CAP Prospective member accounts may only be created for a CAP Squadron account',
-						})
-						.map(account => account as RawCAPSquadronAccountObject)
-						.map(CAP.createCAPProspectiveMember(req.mysqlx))
-						.flatMap(call(req.body.member))
+						.filter(
+							(account): account is RawCAPSquadronAccountObject =>
+								account.type === AccountType.CAPSQUADRON,
+							{
+								type: 'OTHER',
+								code: 400,
+								message:
+									'CAP Prospective member accounts may only be created for a CAP Squadron account',
+							},
+						)
+						.map(backend.createProspectiveMember)
+						.flatApply(req.body.member)
 						.flatMap(
 							req.body.login.type ===
 								CAPProspectiveMemberPasswordCreationType.EMAILLINK
-								? sendPasswordLink(emailFunction)(req)
+								? sendPasswordLink(backend)(req)
 								: req.body.login.type ===
 								  CAPProspectiveMemberPasswordCreationType.RANDOMPASSWORD
-								? createWithRandomPassword(emailFunction)(req)(
-										req.body.login.username,
-								  )
-								: createWithPassword(req)(req.body.login.username)(
+								? createWithRandomPassword(backend)(req)(req.body.login.username)
+								: createWithPassword(backend)(req.body.login.username)(
 										req.body.login.password,
 								  ),
 						),
@@ -199,4 +247,28 @@ export const func: (
 		),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[
+			AccountBackend,
+			RandomBackend,
+			EmailBackend,
+			RegistryBackend,
+			CAP.CAPMemberBackend,
+			TeamsBackend,
+			MemberBackend,
+			PAM.PAMBackend,
+		]
+	>(
+		getAccountBackend,
+		getRandomBackend,
+		getEmailBackend,
+		getRegistryBackend,
+		CAP.getCAPMemberBackend,
+		getCombinedTeamsBackend(),
+		getMemberBackend,
+		PAM.getPAMBackend,
+	),
+);

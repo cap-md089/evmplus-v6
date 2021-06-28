@@ -31,17 +31,6 @@ import {
 } from 'common-lib';
 import { collectResults, safeBind } from './MySQLUtil';
 
-// import { Schema } from '@mysql/xdevapi';
-// import { NHQ } from 'common-lib';
-
-export function getUnitNumber(inOrg: number) {
-	// execute query and return unit Region + '-' + Wing + '-' + Unit
-}
-
-export function getUnitName(inOrg: number) {
-	// execute query and return unit Name
-}
-
 const timezoneForWing: { [key: string]: Timezone } = {
 	AK: 'America/Anchorage',
 	AL: 'America/Chicago',

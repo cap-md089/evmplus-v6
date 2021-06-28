@@ -38,7 +38,9 @@ import {
 import { findAndBindC, generateResults } from '../MySQLUtil';
 import { ServerEither } from '../servertypes';
 
-export const hasGlobalNotification = (schema: Schema) => (account: AccountObject) =>
+export const hasGlobalNotification = (schema: Schema) => (
+	account: AccountObject,
+): ServerEither<boolean> =>
 	asyncRight(
 		schema.getCollection<GlobalNotification>('Notifications'),
 		errorGenerator('Could not get notifications'),
@@ -46,7 +48,7 @@ export const hasGlobalNotification = (schema: Schema) => (account: AccountObject
 		.map(
 			findAndBindC<GlobalNotification>({
 				accountID: account.id,
-				// @ts-ignore
+				// @ts-ignore: type is narrowed properly at runtime thanks to the type property
 				target: {
 					accountID: account.id,
 					type: NotificationTargetType.EVERYONE,
@@ -76,7 +78,7 @@ export const getCurrentGlobalNotification = (schema: Schema) => (
 		.map(
 			findAndBindC<GlobalNotification>({
 				accountID: account.id,
-				// @ts-ignore
+				// @ts-ignore: type is narrowed properly at runtime thanks to the type property
 				target: {
 					accountID: account.id,
 					type: NotificationTargetType.EVERYONE,

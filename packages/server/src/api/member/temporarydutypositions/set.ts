@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncEither,
@@ -30,8 +29,19 @@ import {
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
 } from 'common-lib';
-import { PAM, resolveReference, saveExtraMemberInformation } from 'server-common';
-import { getExtraMemberInformationForCAPMember } from 'server-common/dist/member/members/cap';
+import {
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	getCombinedMemberBackend,
+	getTimeBackend,
+	MemberBackend,
+	PAM,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const getDutyPosition = (now = Date.now) => (oldPositions: ShortDutyPosition[]) => (duty: string) =>
@@ -56,9 +66,10 @@ const getNewPositions = (now = Date.now) => (
 	...oldPositions.filter(({ type }) => type !== 'CAPUnit'),
 ];
 
-export const func: () => ServerAPIEndpoint<
+export const func: Endpoint<
+	Backends<[TimeBackend, MemberBackend]>,
 	api.member.temporarydutypositions.SetTemporaryDutyPositions
-> = (now = Date.now) =>
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(
 		PAM.RequiresPermission(
 			'AssignTemporaryDutyPositions',
@@ -68,10 +79,10 @@ export const func: () => ServerAPIEndpoint<
 				parseStringMemberReference(req.params.id),
 				errorGenerator('Could not parse member ID'),
 			)
-				.flatMap(resolveReference(req.mysqlx)(req.account))
+				.flatMap(backend.getMember(req.account))
 				.map<CAPMember>(member => ({
 					...member,
-					dutyPositions: getNewPositions(now)(req.body.dutyPositions)(
+					dutyPositions: getNewPositions(backend.now)(req.body.dutyPositions)(
 						member.dutyPositions,
 					),
 				}))
@@ -81,11 +92,17 @@ export const func: () => ServerAPIEndpoint<
 						account: req.account,
 					});
 				})
-				.flatMap(getExtraMemberInformationForCAPMember(req.account))
-				.flatMap(saveExtraMemberInformation(req.mysqlx))
+				.flatMap(CAP.getExtraMemberInformationForCAPMember(req.account))
+				.flatMap(backend.saveExtraMemberInformation)
 				.map(destroy)
 				.map(wrapper),
 		),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<BasicAccountRequest, [TimeBackend, MemberBackend]>(
+		getTimeBackend,
+		getCombinedMemberBackend(),
+	),
+);

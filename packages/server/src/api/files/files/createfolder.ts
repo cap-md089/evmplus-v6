@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	always,
 	api,
@@ -30,20 +29,33 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import * as debug from 'debug';
-import { expandRawFileObject, getFileObject, PAM } from 'server-common';
-import { v4 as uuid } from 'uuid';
+import {
+	Backends,
+	BasicAccountRequest,
+	combineBackends,
+	FileBackend,
+	getCombinedFileBackend,
+	getRandomBackend,
+	getTimeBackend,
+	PAM,
+	RandomBackend,
+	TimeBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canAddSubfolder = userHasFilePermission(FileUserAccessControlPermissions.MODIFY);
 
 const logFunc = debug('server:api:files:files:createfolder');
 
-export const func: (
-	uuidFunc?: typeof uuid,
-	now?: () => number,
-) => ServerAPIEndpoint<api.files.files.CreateFolder> = (uuidFunc = uuid, now = Date.now) =>
+export const func: Endpoint<
+	Backends<[TimeBackend, RandomBackend, FileBackend]>,
+	api.files.files.CreateFolder
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getFileObject(req.mysqlx)(req.account)(Maybe.some(req.member))(req.params.parentid)
+		backend
+			.getFileObject(req.account)(Maybe.some(req.member))(req.params.parentid)
 			.tap(file => logFunc('Creating folder in %O', file))
 			.leftTap(() => logFunc("Couldn't find parent folder with id '%s'", req.params.parentid))
 			.filter(canAddSubfolder(req.member), {
@@ -57,7 +69,7 @@ export const func: (
 				message: 'You can only add a subfolder to a folder',
 			})
 			.map(({ id: parentID }) => {
-				const id = uuidFunc().replace(/-/g, '');
+				const id = backend.uuid().replace(/-/g, '');
 
 				const fileCollection = req.mysqlx.getCollection<RawFileObject>('Files');
 
@@ -67,7 +79,7 @@ export const func: (
 					accountID: req.account.id,
 					comments: '',
 					contentType: 'application/folder',
-					created: now(),
+					created: backend.now(),
 					fileName: req.params.name,
 					forDisplay: false,
 					forSlideshow: false,
@@ -86,12 +98,9 @@ export const func: (
 
 				logFunc('Creating folder %O', newFile);
 
-				return fileCollection
-					.add(newFile)
-					.execute()
-					.then(always(newFile));
+				return fileCollection.add(newFile).execute().then(always(newFile));
 			})
-			.flatMap(expandRawFileObject(req.mysqlx)(req.account)(Maybe.some(req.member)))
+			.flatMap(backend.expandRawFileObject(Maybe.some(req.member)))
 			.map(file => ({
 				...file,
 				uploader: Maybe.some(req.member),
@@ -99,4 +108,11 @@ export const func: (
 			.map(wrapper),
 	);
 
-export default func();
+export default withBackends(
+	func,
+	combineBackends<BasicAccountRequest, [TimeBackend, RandomBackend, FileBackend]>(
+		getTimeBackend,
+		getRandomBackend,
+		getCombinedFileBackend(),
+	),
+);

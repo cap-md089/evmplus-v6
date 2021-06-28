@@ -26,9 +26,13 @@ import {
 	BasicMySQLRequest,
 	destroy,
 	errorGenerator,
+	FromDatabase,
 	Identifiable,
 	Maybe,
 	ParamType,
+	ServerError,
+	TableDataType,
+	TableNames,
 } from 'common-lib';
 import * as express from 'express';
 import { DateTime } from 'luxon';
@@ -45,8 +49,8 @@ export const createFakeRequest = <P extends ParamType = {}, B = any>(
 
 export const collectResults = async <T>(
 	find: mysql.CollectionFind<T>,
-): Promise<mysql.WithoutEmpty<T>[]> => {
-	const ret: mysql.WithoutEmpty<T>[] = [];
+): Promise<Array<mysql.WithoutEmpty<T>>> => {
+	const ret: Array<mysql.WithoutEmpty<T>> = [];
 
 	// The promise is resolved once the execute callback is called multiple times
 	try {
@@ -60,20 +64,22 @@ export const collectResults = async <T>(
 	return ret;
 };
 
-export const bindForArray = (arr: any[]) => '(' + arr.map(() => '?').join(',') + ')';
+export const bindForArray = (arr: unknown[]): string => '(' + arr.map(() => '?').join(',') + ')';
 
 export const collectSqlResults = async <T>(
 	find: mysql.SqlExecute,
-): Promise<mysql.WithoutEmpty<T>[]> => {
+): Promise<Array<mysql.WithoutEmpty<T>>> => {
 	try {
-		return (await find.execute()).fetchAll().map(item => item[0]);
+		return (await find.execute())
+			.fetchAll()
+			.map(([item]: Array<mysql.WithoutEmpty<T>>) => item);
 	} catch (e) {
 		console.error(e);
 		throw new Error(e);
 	}
 };
 
-export const generateResults = async function*<U>(
+export const generateResults = async function* <U>(
 	find: mysql.CollectionFind<U>,
 ): AsyncIterableIterator<mysql.WithoutEmpty<U>> {
 	type T = mysql.WithoutEmpty<U>;
@@ -140,6 +146,7 @@ export const generateResults = async function*<U>(
 	}
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const safeBind = <T, C extends mysql.Binding<T>>(find: C, bind: any): C => {
 	// Checks for any value being undefined, as MySQL xDevAPI has terrible
 	// error checking
@@ -157,6 +164,7 @@ export const generateFindStatement = <T>(
 			typeof find[val as keyof T] === 'object'
 				? '(' +
 				  generateFindStatement(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						find[val as keyof T]!,
 						scope === null ? val : `${scope.replace('.', '')}.${val}`,
 				  ) +
@@ -170,7 +178,7 @@ export const generateFindStatement = <T>(
 export const generateBindObject = <T>(
 	bind: RecursivePartial<T>,
 	scope: string | null = null,
-): any =>
+): Record<string, unknown> =>
 	Object.keys(bind)
 		.map(key => {
 			if (bind[key as keyof T] === undefined) {
@@ -179,22 +187,31 @@ export const generateBindObject = <T>(
 			}
 
 			return typeof bind[key as keyof T] === 'object'
-				? generateBindObject(bind[key as keyof T]!, scope === null ? key : `${scope}${key}`)
+				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				  generateBindObject(bind[key as keyof T]!, scope === null ? key : `${scope}${key}`)
 				: { [scope === null ? key : `${scope}${key}`]: bind[key as keyof T] };
 		})
-		.reduce((prev: any = {}, curr: any) => ({ ...prev, ...curr }));
+		.reduce((prev: Record<string, unknown> = {}, curr: Record<string, unknown>) => ({
+			...prev,
+			...curr,
+		}));
 
 type RecursivePartial<T> = {
-	[P in keyof T]?: T[P] extends (infer U)[]
-		? RecursivePartial<U>[]
+	[P in keyof T]?: T[P] extends Array<infer U>
+		? Array<RecursivePartial<U>>
 		: T[P] extends object
 		? RecursivePartial<T[P]>
 		: T[P];
 };
 
-export const findAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
-	find: mysql.Collection<T>,
-) => findAndBind(find, bind);
+export const isDuplicateRecordError = (err: ServerError): boolean =>
+	err.type === 'CRASH' &&
+	(err.error as { info?: { msg?: string } })?.info?.msg ===
+		'Document contains a field value that is not unique but required to be';
+
+export const findAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => <U extends T>(
+	find: mysql.Collection<U>,
+): mysql.CollectionFind<T> => findAndBind(find, bind);
 
 export const findAndBind = <T>(
 	find: mysql.Collection<T>,
@@ -206,7 +223,7 @@ export const findAndBind = <T>(
 
 	for (const i in bound) {
 		if (bound.hasOwnProperty(i)) {
-			findWithStatement.bind(i as keyof T, bound[i]);
+			findWithStatement.bind(i as keyof T, bound[i] as any);
 		}
 	}
 
@@ -215,7 +232,7 @@ export const findAndBind = <T>(
 
 export const modifyAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
 	modify: mysql.Collection<T>,
-) => modifyAndBind(modify, bind);
+): mysql.CollectionModify<T> => modifyAndBind(modify, bind);
 
 export const modifyAndBind = <T>(
 	modify: mysql.Collection<T>,
@@ -227,18 +244,18 @@ export const modifyAndBind = <T>(
 
 	for (const i in bound) {
 		if (bound.hasOwnProperty(i)) {
-			modifyWithStatement.bind(i as keyof T, bound[i]);
+			modifyWithStatement.bind(i as keyof T, bound[i] as any);
 		}
 	}
 
 	return modifyWithStatement;
 };
 
-export const convertMySQLDateToDateTime = (datestring: string) =>
+export const convertMySQLDateToDateTime = (datestring: string): DateTime =>
 	convertMySQLTimestampToDateTime(datestring + ' 00:00:00');
 
 export const convertNHQDate = (datestring: string): Date => {
-	const values = datestring.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+	const values = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(datestring);
 
 	if (!values) {
 		throw new Error('Invalid date format');
@@ -248,7 +265,7 @@ export const convertNHQDate = (datestring: string): Date => {
 };
 
 export const convertMySQLTimestampToDateTime = (datestring: string): DateTime => {
-	const values = datestring.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+	const values = /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/.exec(datestring);
 
 	if (!values) {
 		throw new Error('Invalid date format');
@@ -267,7 +284,9 @@ export const convertMySQLTimestampToDateTime = (datestring: string): DateTime =>
 	return datetime;
 };
 
-export const addToCollection = <T>(targetCollection: mysql.Collection<T>) => (item: T) =>
+export const addToCollection = <T>(targetCollection: mysql.Collection<T>) => (
+	item: T,
+): ServerEither<FromDatabase<T>> =>
 	asyncRight(targetCollection.add(item).execute(), errorGenerator('Could not add item')).map(
 		result => ({
 			...item,
@@ -277,14 +296,17 @@ export const addToCollection = <T>(targetCollection: mysql.Collection<T>) => (it
 
 export const addItemToCollection = <T extends AccountIdentifiable>(item: T) => (
 	targetCollection: mysql.Collection<T>,
-) =>
+): ServerEither<FromDatabase<T>> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection => collection.add(item).execute())
-		.map(always(item));
+		.map(result => ({
+			...item,
+			_id: result.getGeneratedIds()[0],
+		}));
 
 export const saveToCollection = <T extends Identifiable>(targetCollection: mysql.Collection<T>) => (
 	item: T,
-) =>
+): ServerEither<T> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
@@ -296,7 +318,7 @@ export const saveToCollection = <T extends Identifiable>(targetCollection: mysql
 
 export const saveToCollectionA = <T extends AccountIdentifiable>(
 	targetCollection: mysql.Collection<T>,
-) => (item: T) =>
+) => (item: T): ServerEither<T> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
@@ -309,7 +331,7 @@ export const saveToCollectionA = <T extends AccountIdentifiable>(
 
 export const saveItemToCollectionA = <T extends AccountIdentifiable>(item: T) => (
 	targetCollection: mysql.Collection<T>,
-) =>
+): ServerEither<T> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(
 			modifyAndBindC({
@@ -322,39 +344,34 @@ export const saveItemToCollectionA = <T extends AccountIdentifiable>(item: T) =>
 
 export const deleteFromCollection = <T extends Identifiable>(
 	targetCollection: mysql.Collection<T>,
-) => (item: T) =>
+) => (item: T): ServerEither<T> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
-		// @ts-ignore
-		.map(collection => collection.remove('id = :id').bind('id', item.id))
+		.map(collection => collection.remove('id = :id').bind('id', item.id as any))
 		.map(remove => remove.execute())
 		.map(always(item));
 
 export const deleteItemFromCollectionA = <T extends AccountIdentifiable>(
 	targetCollection: mysql.Collection<T>,
-) => (item: T) =>
+) => (item: T): ServerEither<void> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection =>
 			collection
 				.remove('id = :id AND accountID = :accountID')
-				// @ts-ignore
-				.bind('id', item.id)
-				// @ts-ignore
-				.bind('accountID', item.accountID),
+				.bind('id', item.id as any)
+				.bind('accountID', item.accountID as any),
 		)
 		.map(remove => remove.execute())
 		.map(destroy);
 
 export const deleteFromCollectionA = <T extends AccountIdentifiable>(item: T) => (
 	targetCollection: mysql.Collection<T>,
-) =>
+): ServerEither<void> =>
 	asyncRight(targetCollection, errorGenerator('Cannot save item'))
 		.map(collection =>
 			collection
 				.remove('id = :id AND accountID = :accountID')
-				// @ts-ignore
-				.bind('id', item.id)
-				// @ts-ignore
-				.bind('accountID', item.accountID),
+				.bind('id', item.id as any)
+				.bind('accountID', item.accountID as any),
 		)
 		.map(remove => remove.execute())
 		.map(destroy);
@@ -398,7 +415,7 @@ export const getOneOfIDA = <T extends AccountIdentifiable>(idObj: AccountIdentif
 
 export const getNewID = (account: AccountObject) => (
 	collection: mysql.Collection<AccountIdentifiable & { id: number }>,
-) =>
+): ServerEither<number> =>
 	asyncRight(collection, errorGenerator('Could not get new ID'))
 		.map(
 			findAndBindC<AccountIdentifiable & { id: number }>({
@@ -410,3 +427,21 @@ export const getNewID = (account: AccountObject) => (
 		.map(Maybe.fromArray)
 		.map(Maybe.map<AccountIdentifiable & { id: number }, number>(i => i.id + 1))
 		.map(Maybe.orSome(1));
+
+export interface RawMySQLBackend {
+	getSchema: () => mysql.Schema;
+	getCollection: <T extends TableNames>(
+		tableName: T,
+	) => mysql.Collection<mysql.WithoutEmpty<TableDataType<T>>>;
+}
+
+export const getRawMySQLBackend = (req: BasicMySQLRequest): RawMySQLBackend => ({
+	getSchema: always(req.mysqlx),
+	getCollection: <T extends TableNames>(name: T) =>
+		req.mysqlx.getCollection<TableDataType<T>>(name),
+});
+
+export const requestlessMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
+	getSchema: always(schema),
+	getCollection: <T extends TableNames>(name: T) => schema.getCollection<TableDataType<T>>(name),
+});

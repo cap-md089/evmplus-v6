@@ -50,10 +50,8 @@ export class TextInput extends React.Component<InnerTextInputProps, { changed: b
 		changed: false,
 	};
 
-	constructor(props: InnerTextInputProps) {
+	public constructor(props: InnerTextInputProps) {
 		super(props);
-
-		this.onChange = this.onChange.bind(this);
 
 		if (props.onInitialize) {
 			props.onInitialize({
@@ -63,7 +61,7 @@ export class TextInput extends React.Component<InnerTextInputProps, { changed: b
 		}
 	}
 
-	public onChange(e: React.FormEvent<HTMLInputElement>) {
+	public onChange = (e: React.FormEvent<HTMLInputElement>): void => {
 		const text = e.currentTarget.value;
 
 		let change = true;
@@ -87,37 +85,35 @@ export class TextInput extends React.Component<InnerTextInputProps, { changed: b
 
 			this.setState({ changed: true });
 		}
-	}
+	};
 
-	public render() {
-		return (
-			<div
-				className="input-formbox"
+	public render = (): JSX.Element => (
+		<div
+			className="input-formbox"
+			style={{
+				clear: this.props.fullWidth ? 'both' : undefined,
+				width: this.props.fullWidth ? '90%' : undefined,
+				...this.props.boxStyles,
+			}}
+		>
+			<input
+				type={this.props.password ? 'password' : 'text'}
+				value={this.props.value}
+				onChange={this.onChange}
+				name={this.props.name}
 				style={{
-					clear: this.props.fullWidth ? 'both' : undefined,
-					width: this.props.fullWidth ? '90%' : undefined,
-					...this.props.boxStyles,
+					width: this.props.fullWidth ? '100%' : undefined,
+					...this.props.inputStyles,
 				}}
-			>
-				<input
-					type={this.props.password ? 'password' : 'text'}
-					value={this.props.value}
-					onChange={this.onChange}
-					name={this.props.name}
-					style={{
-						width: this.props.fullWidth ? '100%' : undefined,
-						...this.props.inputStyles,
-					}}
-					placeholder={this.props.placeholder}
-					disabled={this.props.disabled}
-					autoComplete={this.props.showSuggestions ?? true ? 'on' : 'off'}
-				/>
-				{this.props.hasError && this.props.errorMessage && this.state.changed ? (
-					<span className="text-error">{this.props.errorMessage}</span>
-				) : null}
-			</div>
-		);
-	}
+				placeholder={this.props.placeholder}
+				disabled={this.props.disabled}
+				autoComplete={this.props.showSuggestions ?? true ? 'on' : 'off'}
+			/>
+			{this.props.hasError && this.props.errorMessage && this.state.changed ? (
+				<span className="text-error">{this.props.errorMessage}</span>
+			) : null}
+		</div>
+	);
 }
 
 export default React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => (

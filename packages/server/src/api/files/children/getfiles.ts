@@ -17,7 +17,6 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import {
 	api,
 	asyncIterFilter,
@@ -28,22 +27,39 @@ import {
 	userHasFilePermission,
 } from 'common-lib';
 import * as debug from 'debug';
-import { expandRawFileObject, getChildren, getFileObject } from 'server-common';
+import {
+	AccountBackend,
+	Backends,
+	BasicAccountRequest,
+	CAP,
+	combineBackends,
+	FileBackend,
+	getCombinedMemberBackend,
+	getFileBackend,
+	MemberBackend,
+	TeamsBackend,
+	withBackends,
+} from 'server-common';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 
 const logFunc = debug('server:api:files:children:getfiles');
 
-export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
-	getFileObject(req.mysqlx)(req.account)(req.member)(req.params.parentid)
+export const func: Endpoint<
+	Backends<[AccountBackend, TeamsBackend, FileBackend, MemberBackend, CAP.CAPMemberBackend]>,
+	api.files.children.GetBasicFiles
+> = backend => req =>
+	backend
+		.getFileObject(req.account)(req.member)(req.params.parentid)
 		.tap(file => logFunc('Got personal drive file %O', file))
 		.filter(canRead(Maybe.join(req.member)), {
 			type: 'OTHER',
 			code: 403,
 			message: 'Member cannot read the file requested',
 		})
-		.flatMap(getChildren(req.mysqlx)(req.account)(req.member))
+		.flatMap(backend.getChildren(backend)(req.member))
 		.map(
 			asyncIterTap(file =>
 				logFunc.extend('permissions')('Checking file for permissions: %o', file),
@@ -55,7 +71,13 @@ export const func: ServerAPIEndpoint<api.files.children.GetBasicFiles> = req =>
 			),
 		)
 		.map(asyncIterFilter(canRead(Maybe.join(req.member))))
-		.map(asyncIterMap(expandRawFileObject(req.mysqlx)(req.account)(req.member)))
+		.map(asyncIterMap(backend.expandRawFileObject(req.member)))
 		.map(wrapper);
 
-export default func;
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[Backends<[AccountBackend, TeamsBackend, MemberBackend, CAP.CAPMemberBackend]>, FileBackend]
+	>(getCombinedMemberBackend(), getFileBackend),
+);
