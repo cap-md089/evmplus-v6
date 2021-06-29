@@ -32,9 +32,13 @@ import {
 	TableNames,
 	User,
 } from 'common-lib';
-import { spawn } from 'child_process';
+import { promisify } from 'util';
+import { execFile } from 'child_process';
+import { resolve } from 'path';
 import * as Docker from 'dockerode';
 import { DateTime } from 'luxon';
+
+const execFilePromise = promisify(execFile);
 
 const getDockerConn = memoize(
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -190,18 +194,9 @@ export class TestConnection {
 	 */
 	private static async setupCollections(schema: string): Promise<void> {
 		if (process.env.GITHUB_ACTIONS_ENV) {
-			const { stdout } = spawn('sh', [
-				'packages/server-jest-config/test-data/setup-schema.sh',
-				schema,
-			]);
-
-			await new Promise<void>((res, rej) => {
-				stdout.on('close', () => {
-					res();
-				});
-				stdout.on('error', err => {
-					rej(err);
-				});
+			const path = resolve(__dirname, '../test-data/setup-schema.sh');
+			await execFilePromise(path, [schema], {
+				cwd: resolve(__dirname, '../../..'),
 			});
 		} else {
 			const dockerConn = getDockerConn(void 0);
@@ -228,8 +223,8 @@ export class TestConnection {
 				): void;
 			}).demuxStream(stream, process.stdout, process.stderr);
 
-			await new Promise(resolve => {
-				stream.on('end', resolve);
+			await new Promise(res => {
+				stream.on('end', res);
 			});
 
 			await exec.inspect();
