@@ -409,7 +409,7 @@ type TableForm<T extends string> = `NHQ_${T}`;
  */
 export const getCAPWATCHTestData = (): Required<Pick<PresetRecords, TableForm<DBNames>>> =>
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as Required<
+	require(resolve(__dirname, '../test-data/CAPWATCH_Test_Data.json')) as Required<
 		Pick<PresetRecords, TableForm<DBNames>>
 	>;
 
