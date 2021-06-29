@@ -26,13 +26,13 @@ jobs:
                 echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
                 docker-compose build
 
-   test:
-       runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
 
-       steps:
-           - uses: actions/checkout@v2
-           - run: |
-               sudo systemctl start mysql.service
-               docker-compose -f docker-compose.dev.yml run dev-setup
-               yarn run --cwd=packages/server-jest-config test
-               yarn run --cwd=packages/server-common test
+        steps:
+            - uses: actions/checkout@v2
+            - run: |
+                sudo systemctl start mysql.service
+                docker-compose -f docker-compose.dev.yml run dev-setup
+                yarn run --cwd=packages/server-jest-config test
+                yarn run --cwd=packages/server-common test
