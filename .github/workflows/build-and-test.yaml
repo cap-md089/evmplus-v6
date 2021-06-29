@@ -3,7 +3,6 @@ name: Build and Test
 on:
     push:
         branches:
-            - master
             - development
     pull_request:
         branches:
@@ -13,9 +12,10 @@ on:
 env:
     COMPOSE_DOCKER_CLI_BUILD: 1
     DOCKER_BUILDKIT: 1
+    GITHUB_ACTIONS_ENV: 1
 
 jobs:
-    build:
+    build-verify:
         runs-on: ubuntu-latest
 
         steps:
@@ -26,11 +26,13 @@ jobs:
                 echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
                 docker-compose build
 
-#    test:
-#        runs-on: ubuntu-latest
-#
-#        steps:
-#            - uses: actions/checkout@v2
-#            - run: |
-#                docker-compose -f docker-compose.dev.yml run dev-setup
-#                docker-compose -f docker-compose.test.yml up tests
+   test:
+       runs-on: ubuntu-latest
+
+       steps:
+           - uses: actions/checkout@v2
+           - run: |
+               sudo systemctl start mysql.service
+               docker-compose -f docker-compose.dev.yml run dev-setup
+               yarn run --cwd=packages/server-jest-config test
+               yarn run --cwd=packages/server-common test

@@ -32,6 +32,7 @@ import {
 	TableNames,
 	User,
 } from 'common-lib';
+import { spawn } from 'child_process';
 import * as Docker from 'dockerode';
 import { DateTime } from 'luxon';
 
@@ -188,37 +189,53 @@ export class TestConnection {
 	 * @param schema the name of the schema to setup
 	 */
 	private static async setupCollections(schema: string): Promise<void> {
-		const dockerConn = getDockerConn(void 0);
+		if (process.env.GITHUB_ACTIONS_ENV) {
+			const { stdout } = spawn('sh', [
+				'packages/server-jest-config/test-data/setup-schema.sh',
+				schema,
+			]);
 
-		const container = dockerConn.getContainer('evmplus_test-mysql');
+			await new Promise<void>((res, rej) => {
+				stdout.on('close', () => {
+					res();
+				});
+				stdout.on('error', err => {
+					rej(err);
+				});
+			});
+		} else {
+			const dockerConn = getDockerConn(void 0);
 
-		const exec = await container.exec({
-			Cmd: ['sh', 'setup-schema.sh', schema],
-			Tty: true,
-			AttachStdout: false,
-			AttachStderr: false,
-			AttachStdin: false,
-			Env: [],
-			WorkingDir: '/usr/evm-plus/packages/server-jest-config/test-data',
-		});
+			const container = dockerConn.getContainer('evmplus_test-mysql');
 
-		const stream = await exec.start({});
+			const exec = await container.exec({
+				Cmd: ['sh', 'packages/server-jest-config/test-data/setup-schema.sh', schema],
+				Tty: true,
+				AttachStdout: false,
+				AttachStderr: false,
+				AttachStdin: false,
+				Env: [],
+				WorkingDir: '/usr/evm-plus/',
+			});
 
-		(container.modem as {
-			demuxStream(
-				inputStream: typeof stream,
-				out: typeof process.stdout,
-				err: typeof process.stderr,
-			): void;
-		}).demuxStream(stream, process.stdout, process.stderr);
+			const stream = await exec.start({});
 
-		await new Promise(resolve => {
-			stream.on('end', resolve);
-		});
+			(container.modem as {
+				demuxStream(
+					inputStream: typeof stream,
+					out: typeof process.stdout,
+					err: typeof process.stderr,
+				): void;
+			}).demuxStream(stream, process.stdout, process.stderr);
 
-		await exec.inspect();
+			await new Promise(resolve => {
+				stream.on('end', resolve);
+			});
 
-		const session = await getSession('mysqlx://root:toor@test-mysql:33060');
+			await exec.inspect();
+		}
+
+		const session = await getSession(this.mysqlConnectionString);
 
 		let collections;
 
@@ -236,8 +253,11 @@ export class TestConnection {
 	 * Returns the constant connection string for connecting to the test mysql database
 	 */
 	public static get mysqlConnectionString(): string {
-		return 'mysqlx://root:toor@test-mysql:33060';
+		return process.env.GITHUB_ACTIONS_ENV
+			? 'mysqlx://root:root@localhost:33060'
+			: 'mysqlx://root:root@test-mysql:33060';
 	}
+
 	/**
 	 * @returns the current schema that is used for the test
 	 */
