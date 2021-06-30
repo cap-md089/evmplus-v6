@@ -46,7 +46,7 @@ services:
         expose:
             - '33060'
         environment:
-            - MYSQL_ROOT_PASSWORD=toor
+            - MYSQL_ROOT_PASSWORD=root
         cap_add:
             - SYS_NICE
         tmpfs:

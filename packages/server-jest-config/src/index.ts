@@ -32,8 +32,13 @@ import {
 	TableNames,
 	User,
 } from 'common-lib';
+import { promisify } from 'util';
+import { execFile } from 'child_process';
+import { resolve } from 'path';
 import * as Docker from 'dockerode';
 import { DateTime } from 'luxon';
+
+const execFilePromise = promisify(execFile);
 
 const getDockerConn = memoize(
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -188,37 +193,44 @@ export class TestConnection {
 	 * @param schema the name of the schema to setup
 	 */
 	private static async setupCollections(schema: string): Promise<void> {
-		const dockerConn = getDockerConn(void 0);
+		if (process.env.GITHUB_ACTIONS_ENV) {
+			const path = resolve(__dirname, '../test-data/setup-schema.sh');
+			await execFilePromise(path, [schema], {
+				cwd: resolve(__dirname, '../../..'),
+			});
+		} else {
+			const dockerConn = getDockerConn(void 0);
 
-		const container = dockerConn.getContainer('evmplus_test-mysql');
+			const container = dockerConn.getContainer('evmplus_test-mysql');
 
-		const exec = await container.exec({
-			Cmd: ['sh', 'setup-schema.sh', schema],
-			Tty: true,
-			AttachStdout: false,
-			AttachStderr: false,
-			AttachStdin: false,
-			Env: [],
-			WorkingDir: '/usr/evm-plus/packages/server-jest-config/test-data',
-		});
+			const exec = await container.exec({
+				Cmd: ['sh', 'packages/server-jest-config/test-data/setup-schema.sh', schema],
+				Tty: true,
+				AttachStdout: false,
+				AttachStderr: false,
+				AttachStdin: false,
+				Env: [],
+				WorkingDir: '/usr/evm-plus/',
+			});
 
-		const stream = await exec.start({});
+			const stream = await exec.start({});
 
-		(container.modem as {
-			demuxStream(
-				inputStream: typeof stream,
-				out: typeof process.stdout,
-				err: typeof process.stderr,
-			): void;
-		}).demuxStream(stream, process.stdout, process.stderr);
+			(container.modem as {
+				demuxStream(
+					inputStream: typeof stream,
+					out: typeof process.stdout,
+					err: typeof process.stderr,
+				): void;
+			}).demuxStream(stream, process.stdout, process.stderr);
 
-		await new Promise(resolve => {
-			stream.on('end', resolve);
-		});
+			await new Promise(res => {
+				stream.on('end', res);
+			});
 
-		await exec.inspect();
+			await exec.inspect();
+		}
 
-		const session = await getSession('mysqlx://root:toor@test-mysql:33060');
+		const session = await getSession(this.mysqlConnectionString);
 
 		let collections;
 
@@ -236,8 +248,11 @@ export class TestConnection {
 	 * Returns the constant connection string for connecting to the test mysql database
 	 */
 	public static get mysqlConnectionString(): string {
-		return 'mysqlx://root:toor@test-mysql:33060';
+		return process.env.GITHUB_ACTIONS_ENV
+			? 'mysqlx://root:root@localhost:33060'
+			: 'mysqlx://root:root@test-mysql:33060';
 	}
+
 	/**
 	 * @returns the current schema that is used for the test
 	 */
@@ -394,7 +409,7 @@ type TableForm<T extends string> = `NHQ_${T}`;
  */
 export const getCAPWATCHTestData = (): Required<Pick<PresetRecords, TableForm<DBNames>>> =>
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	require('/usr/evm-plus/packages/server-jest-config/test-data/CAPWATCH_Test_Data.json') as Required<
+	require(resolve(__dirname, '../test-data/CAPWATCH_Test_Data.json')) as Required<
 		Pick<PresetRecords, TableForm<DBNames>>
 	>;
 

@@ -21,8 +21,8 @@ LICENSE
 
 SCHEMA_NAME=$1
 
-cp /usr/evm-plus/mysql-init/00-setup-tables.sql /tmp/setup-tables-$SCHEMA_NAME.sql
+cp mysql-init/00-setup-tables.sql /tmp/setup-tables-$SCHEMA_NAME.sql
 
 sed -i -e "s/EventManagementv6/$SCHEMA_NAME/g" /tmp/setup-tables-$SCHEMA_NAME.sql
 
-mysql --user=root --password=toor --host=localhost < /tmp/setup-tables-$SCHEMA_NAME.sql
+mysql --user=root --password=root --host=localhost < /tmp/setup-tables-$SCHEMA_NAME.sql
