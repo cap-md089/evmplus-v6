@@ -3,7 +3,6 @@ name: Build and Test
 on:
     push:
         branches:
-            - master
             - development
     pull_request:
         branches:
@@ -23,11 +22,11 @@ jobs:
             - uses: actions/checkout@v2
             - name: Build code
               run: |
-                sudo systemctl start mysql.service
                 docker-compose -f docker-compose.dev.yml run dev-setup
                 yarn run --cwd=packages/client build
 
             - name: Test code
               run: |
+                sudo systemctl start mysql.service
                 yarn run --cwd=packages/server-jest-config test
                 yarn run --cwd=packages/server-common test
