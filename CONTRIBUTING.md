@@ -40,4 +40,10 @@ To use either the mysqlsh or util-cli command line utilities, run `docker-compos
 
 Commits are to be styled using the conventional changelog style. This can be made easier by installing the commitizen utility globally, e.g. `npm install --global commitizen`.
 
-All pull requests must be a single commit and address a single issue (see [how to squash commits](https://stackoverflow.com/questions/5189560/squash-my-last-x-commits-together-using-git)). The target of the pull requests will be the development branch. Each commit will have to be tested before it can be merged, so adding unit tests, while not required at this time, are recommended. Unit tests will eventually become mandatory as they become more standardized. To easily run unit tests, run the npm test script in the root directory
+All pull requests must be a single commit and address a single issue (see [how to squash commits](https://stackoverflow.com/questions/5189560/squash-my-last-x-commits-together-using-git)). Each commit will have to be tested before it can be merged, so adding unit tests, while not required at this time, are recommended. Unit tests will eventually become mandatory as they become more standardized. All branches and pull requests should be of the format `$username/issue$issueNumber`, where `$username` is your name and `$issueNumber` is the appropriate issue which the pull request is addressing.
+
+### Testing
+
+In order to run automated unit tests, run `yarn test` from the root of the project
+
+To watch and re-run server-common unit tests, run `docker-compose -f docker-compose.test.yml run watch-server-common-test`
