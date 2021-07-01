@@ -23,6 +23,9 @@ jobs:
             - name: Build code
               run: |
                 docker-compose -f docker-compose.dev.yml run dev-setup
+                echo "REACT_APP_HOST_NAME=events.md.cap.gov" >> packages/client/.env
+                echo "REACT_APP_RECAPTCHA_KEY={{ secrets.RECAPTCHA_PUBLIC_KEY }}" >> packages/client/.env
+                echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
                 yarn run --cwd=packages/client build
 
             - name: Test code
