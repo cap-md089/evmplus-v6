@@ -22,6 +22,7 @@ import {
 	applyCustomAttendanceFields,
 	AttendanceRecord,
 	AttendanceStatus,
+	ClientUser,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
 	effectiveManageEventPermissionForEvent,
@@ -32,10 +33,10 @@ import {
 	RawResolvedEventObject,
 	RegistryValues,
 	toReference,
-	ClientUser,
 } from 'common-lib';
 import * as React from 'react';
-import fetchApi, { fetchAPIForAccount } from '../../../lib/apis';
+import { FetchAPIProps, withFetchApi } from '../../../globals';
+import { fetchAPIForAccount } from '../../../lib/apis';
 import { attendanceStatusLabels } from '../../../pages/events/EventViewer';
 import Button from '../../Button';
 import EnumRadioButton from '../../form-inputs/EnumRadioButton';
@@ -55,13 +56,13 @@ const clamp = (min: number, max: number, input: number): number =>
 
 type FormState = NewAttendanceRecord & { usePartTime: boolean };
 
-export interface AttendanceFormProps {
+export interface AttendanceFormProps extends FetchAPIProps {
 	account: AccountObject;
 	member: ClientUser;
 	event: RawResolvedEventObject;
 	registry: RegistryValues;
 	record?: AttendanceRecord;
-	updateRecord: (record: Required<NewAttendanceRecord>, member: Member) => void;
+	updateRecord: (record: Required<NewAttendanceRecord>) => void;
 	removeRecord: (record: AttendanceRecord) => void;
 	recordMember?: Member | null;
 	updated: boolean;
@@ -153,10 +154,7 @@ const RenderCustomAttendanceFieldInput: React.FC<{
 		/>
 	);
 
-export default class AttendanceForm extends React.Component<
-	AttendanceFormProps,
-	AttendanceFormState
-> {
+export class AttendanceForm extends React.Component<AttendanceFormProps, AttendanceFormState> {
 	public state: AttendanceFormState;
 
 	public constructor(props: AttendanceFormProps) {
@@ -505,10 +503,6 @@ export default class AttendanceForm extends React.Component<
 	private onAttendanceFormSubmit = async (
 		attendanceSignup: NewAttendanceRecord & { usePartTime: boolean },
 	): Promise<void> => {
-		if (!this.props.recordMember) {
-			return;
-		}
-
 		let arrivalTime = attendanceSignup.shiftTime?.arrivalTime || this.props.event.meetDateTime;
 		let departureTime =
 			attendanceSignup.shiftTime?.departureTime || this.props.event.pickupDateTime;
@@ -556,7 +550,7 @@ export default class AttendanceForm extends React.Component<
 		if (this.props.record) {
 			const api =
 				this.props.record.sourceAccountID === this.props.account.id
-					? fetchApi
+					? this.props.fetchApi
 					: fetchAPIForAccount(this.props.record.sourceAccountID);
 
 			const result = await api.events.attendance.modify(
@@ -569,7 +563,7 @@ export default class AttendanceForm extends React.Component<
 				saving: false,
 			});
 		} else {
-			const result = await fetchApi.events.attendance.add(
+			const result = await this.props.fetchApi.events.attendance.add(
 				{ id: this.props.event.id.toString() },
 				{ ...newRecord, memberID: toReference(this.props.member) },
 			);
@@ -580,14 +574,11 @@ export default class AttendanceForm extends React.Component<
 			});
 		}
 
-		this.props.updateRecord(
-			{
-				...newRecord,
-				shiftTime: this.props.record?.shiftTime ?? null,
-				memberID: this.props.record?.memberID ?? toReference(this.props.member),
-			},
-			this.props.recordMember,
-		);
+		this.props.updateRecord({
+			...newRecord,
+			shiftTime: this.props.record?.shiftTime ?? null,
+			memberID: this.props.record?.memberID ?? toReference(this.props.member),
+		});
 	};
 
 	private removeAttendanceRecord = async (): Promise<void> => {
@@ -605,7 +596,7 @@ export default class AttendanceForm extends React.Component<
 
 		const api =
 			this.props.record.sourceAccountID === this.props.account.id
-				? fetchApi
+				? this.props.fetchApi
 				: fetchAPIForAccount(this.props.record.sourceAccountID);
 
 		await api.events.attendance.delete(
@@ -620,3 +611,5 @@ export default class AttendanceForm extends React.Component<
 		this.props.removeRecord(this.props.record);
 	};
 }
+
+export default withFetchApi(AttendanceForm);

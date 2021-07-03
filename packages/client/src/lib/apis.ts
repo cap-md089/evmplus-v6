@@ -20,10 +20,12 @@
 import apiGenerator from 'apis';
 import { fetchFunction } from './isofetch';
 
+export type TFetchAPI = typeof fetchApi;
+
 export const fetchApi = apiGenerator(fetchFunction);
 export default fetchApi;
 
-export const fetchAPIForAccount = (accountID: string): typeof fetchApi =>
+export const fetchAPIForAccount = (accountID: string): TFetchAPI =>
 	apiGenerator((url: RequestInfo, opts?: RequestInit) => {
 		const newUrl = `${window.location.protocol}//${accountID}.${
 			process.env.NODE_ENV === 'development' ? 'localevmplus' : 'evmplus'

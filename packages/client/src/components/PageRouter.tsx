@@ -68,7 +68,7 @@ import { SideNavigationItem } from './page-elements/SideNavigation';
 
 const pages: Array<{
 	url: string;
-	component: typeof Page | React.FC<PageProps>;
+	component: typeof Page | React.FC<PageProps<any>>;
 	exact: boolean;
 }> = [
 	{

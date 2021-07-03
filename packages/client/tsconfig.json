@@ -33,7 +33,8 @@
 		"removeComments": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"target": "es5"
+		"target": "es5",
+		"typeRoots": ["src/**/*.d.ts", "./node_modules/@types", "../../node_modules/@types"]
 	},
 	"include": ["src"]
 }
