@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2021 Andrew Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -17,21 +17,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable */
-// @ts-ignore
-import React from 'react';
-/* eslint-enable */
-// import App from '../App';
-// import { BrowserRouter } from 'react-router-dom';
+import { HTTPError } from '../../../common-lib/dist';
 
-// import { shallow } from 'enzyme';
-
-// describe('App', () => {
-// 	it('should successfully render without crashing', () => {
-// 		shallow(
-// 			<BrowserRouter>
-// 				<App isMobile={false} />
-// 			</BrowserRouter>
-// 		);
-// 	});
-// });
+export const clientErrorGenerator = (msg?: string) => (err?: Error): HTTPError => ({
+	code: 500,
+	message: msg ?? err?.message ?? 'An unknown error occurred',
+});

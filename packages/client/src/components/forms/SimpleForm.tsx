@@ -397,7 +397,7 @@ export default class SimpleForm<
 		};
 
 		return (
-			<form className="form-async">
+			<form className="form-async" onSubmit={this.submit}>
 				{(this.props.children as Array<React.ReactNode | React.ReactNode[]>)
 					.flatMap(node => (Array.isArray(node) ? node : [node]))
 					.map((child, i, children) => {
@@ -545,7 +545,6 @@ export default class SimpleForm<
 									(this.props.disableOnInvalid && this.hasError) ||
 									submitInfo.disabled
 								}
-								onClick={this.submit}
 							/>
 							{this.props.successMessage && (
 								<span style={saveMessage}>{this.props.successMessage}</span>
@@ -614,7 +613,7 @@ export default class SimpleForm<
 	 *
 	 * @param {React.MouseEvent<HTMLInputElement>} e Event
 	 */
-	protected submit = (e: React.MouseEvent<HTMLInputElement>): void => {
+	protected submit = (e: React.FormEvent<HTMLFormElement>): void => {
 		e.preventDefault();
 		if (typeof this.props.onSubmit !== 'undefined') {
 			this.props.onSubmit(
@@ -682,7 +681,10 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 				  );
 
 		return (
-			<form className={`${this.props.className ? `${this.props.className ?? ''} ` : ''}`}>
+			<form
+				className={`${this.props.className ? `${this.props.className ?? ''} ` : ''}`}
+				onSubmit={this.submit}
+			>
 				{React.Children.map(this.props.children, (child: React.ReactNode, i) => {
 					if (isInput(child)) {
 						const childName: keyof C = child.props.name as keyof C;
@@ -714,7 +716,6 @@ export class Form<C = {}, P extends BasicFormProps<C> = BasicFormProps<C>> exten
 						disabled={
 							(this.props.disableOnInvalid && this.hasError) || submitInfo.disabled
 						}
-						onClick={this.submit}
 					/>
 				</div>
 				<div style={clearFix} />

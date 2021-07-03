@@ -38,6 +38,14 @@ services:
             - test-mysql
         command: yarn --cwd=packages/server-common test --watch
 
+    watch-client-tests:
+        build:
+            context: .
+            target: tests
+        volumes:
+            - ./:/usr/evm-plus
+        command: yarn --cwd=packages/client test --watch
+
     test-mysql:
         container_name: evmplus_test-mysql
         image: mysql:8.0.19

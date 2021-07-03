@@ -10,6 +10,7 @@ import {
 } from 'common-lib';
 import * as React from 'react';
 import Loader from './components/Loader';
+import fetchApi, { fetchAPIForAccount, TFetchAPI } from './lib/apis';
 
 const { Consumer: MemberListConsumer, Provider: MemberListProvider } = React.createContext<{
 	state: EitherObj<HTTPError, Member[]> | null;
@@ -100,4 +101,32 @@ export const withMember = <T extends { member: ClientUser | null; fullMember: Si
 	</MemberDetailsConsumer>
 );
 
-export { MemberListProvider, MemberDetailsProvider, TeamListProvider };
+export interface FetchAPIProps {
+	fetchApi: TFetchAPI;
+	fetchAPIForAccount: (accountID: string) => TFetchAPI;
+}
+
+const {
+	Consumer: FetchAPIConsumer,
+	Provider: FetchAPIProvider,
+} = React.createContext<FetchAPIProps>({
+	fetchApi,
+	fetchAPIForAccount,
+});
+
+export const withFetchApi = <T extends FetchAPIProps>(
+	Component: React.FC<T> | (new (props: T) => React.Component<T>),
+): React.FC<Omit<T, 'fetchApi' | 'fetchAPIForAccount'> & Partial<FetchAPIProps>> => props => (
+	<FetchAPIConsumer>
+		{details => {
+			const newProps = ({
+				...details,
+				...props,
+			} as any) as T;
+
+			return <Component {...newProps} />;
+		}}
+	</FetchAPIConsumer>
+);
+
+export { MemberListProvider, MemberDetailsProvider, TeamListProvider, FetchAPIProvider };

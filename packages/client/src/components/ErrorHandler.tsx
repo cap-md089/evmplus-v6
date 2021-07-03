@@ -83,6 +83,13 @@ export default class ErrorHandler extends React.PureComponent<
 				.{' '}
 				{/* If you want to provide feedback, please submit feedback
 				through our feedback form */}
+				{process.env.NODE_ENV === 'development' ? (
+					<>
+						<br />
+						<br />
+						this.props.children
+					</>
+				) : null}
 			</div>
 		) : (
 			this.props.children

@@ -43,7 +43,6 @@ import {
 	getFullMemberName,
 	getMemberEmail,
 	getMemberEmails,
-	getMemberName,
 	getMemberPhone,
 	getURIComponent,
 	HTTPError,
@@ -88,7 +87,7 @@ import {
 import AttendanceForm from '../../components/forms/usable-forms/AttendanceForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
-import fetchApi from '../../lib/apis';
+import { FetchAPIProps, withFetchApi } from '../../globals';
 import Page, { PageProps } from '../Page';
 import './EventViewer.css';
 
@@ -154,7 +153,9 @@ interface EventViewerUIState {
 
 type EventViewerState = EventViewerUIState & EventViewerTeamState & EventViewerViewerState;
 
-type EventViewerProps = PageProps<{ id: string }>;
+interface EventViewerProps extends PageProps<{ id: string }>, FetchAPIProps {
+	now?: () => number;
+}
 
 export const attendanceStatusLabels = [
 	'Commited/Attended',
@@ -242,7 +243,7 @@ const canEitherMaybeSignUpForEvent = (event: api.events.events.EventViewerData) 
 		? always(Either.left('Could not load team information'))
 		: canSignUpForEvent(viewerDataToEventObject(event))(Maybe.some(team.value.value));
 
-export default class EventViewer extends Page<EventViewerProps, EventViewerState> {
+export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 	public state: EventViewerState = {
 		viewerState: 'LOADING',
 		teamState: 'LOADING',
@@ -262,7 +263,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 	};
 
 	public async componentDidMount(): Promise<void> {
-		const eventInformation = await fetchApi.events.events.getViewerData(
+		const eventInformation = await this.props.fetchApi.events.events.getViewerData(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{},
 		);
@@ -320,7 +321,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		let teamInfo: MaybeObj<APIEndpointReturnValue<api.team.GetTeam>> = Maybe.none();
 
 		if (event.teamID !== null && event.teamID !== undefined) {
-			const teamInfoEither = await fetchApi.team
+			const teamInfoEither = await this.props.fetchApi.team
 				.get({ id: event.teamID.toString() }, {})
 				.map(Maybe.some)
 				.map(Maybe.map(Either.right));
@@ -414,6 +415,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		if (this.state.viewerState === 'ERROR') {
 			return <div>{this.state.viewerMessage}</div>;
 		}
+
+		const now = this.props.now ?? Date.now;
 
 		const eventViewerInfo = this.state.eventInformation;
 		const {
@@ -1101,7 +1104,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											<p>Cannot sign up for event: {err}</p>
 										) : null,
 									)(() =>
-										Date.now() < event.pickupDateTime ? (
+										now() < event.pickupDateTime ? (
 											<>
 												<h3>Sign up</h3>
 												<AttendanceForm
@@ -1277,7 +1280,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 												memberName: Maybe.orSome(
 													stringifyMemberReference(record.memberID),
 												)(
-													Maybe.map(getMemberName)(
+													Maybe.map(getFullMemberName)(
 														Maybe.fromValue(member),
 													),
 												),
@@ -1307,13 +1310,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 							...prev.eventInformation,
 							attendees: [
 								...prev.eventInformation.attendees,
-								Either.right<
-									HTTPError,
-									api.events.events.EventViewerAttendanceRecord
-								>({
+								{
 									record: {
 										...record,
-										timestamp: Date.now(),
+										timestamp: (this.props.now ?? Date.now)(),
 										summaryEmailSent: false,
 										sourceAccountID: this.props.account.id,
 										sourceEventID: prev.eventInformation.event.id,
@@ -1321,11 +1321,11 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 											arrivalTime: prev.eventInformation.event.pickupDateTime,
 											departureTime: prev.eventInformation.event.meetDateTime,
 										},
-										memberName: getMemberName(member),
+										memberName: getFullMemberName(member),
 									},
 									member: Maybe.fromValue(this.props.member),
 									orgName: Maybe.some(this.props.registry.Website.Name),
-								}),
+								},
 							],
 						},
 				  }
@@ -1377,7 +1377,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			pickupDateTime: event.pickupDateTime + timeDelta,
 		};
 
-		await fetchApi.events.events.set({ id: event.id.toString() }, newEvent);
+		await this.props.fetchApi.events.events.set({ id: event.id.toString() }, newEvent);
 
 		this.setState({
 			...state,
@@ -1411,7 +1411,10 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 		const { event } = state.eventInformation;
 		await AsyncEither.All([
-			fetchApi.events.debrief.add({ id: event.id.toString() }, { debriefText, publicView }),
+			this.props.fetchApi.events.debrief.add(
+				{ id: event.id.toString() },
+				{ debriefText, publicView },
+			),
 		]);
 
 		this.setState(prev =>
@@ -1430,7 +1433,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 										memberName: getFullMemberName(mem),
 										memberRef: toReference(mem),
 										publicView,
-										timeSubmitted: Date.now(),
+										timeSubmitted: (this.props.now ?? Date.now)(),
 									},
 								],
 							},
@@ -1452,7 +1455,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 
 		const { event } = state.eventInformation;
 		await AsyncEither.All([
-			fetchApi.events.debrief.delete(
+			this.props.fetchApi.events.debrief.delete(
 				{ id: event.id.toString(), timestamp: timeSubmitted.toString() },
 				{},
 			),
@@ -1501,8 +1504,8 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		};
 
 		const result = await AsyncEither.All([
-			fetchApi.events.events.set({ id: event.id.toString() }, newEvent),
-			fetchApi.events.events.copy(
+			this.props.fetchApi.events.events.set({ id: event.id.toString() }, newEvent),
+			this.props.fetchApi.events.events.copy(
 				{ id: event.id.toString() },
 				{ newTime, copyFiles, newStatus: event.status },
 			),
@@ -1532,7 +1535,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			return;
 		}
 
-		const result = await fetchApi.events.events.copy(
+		const result = await this.props.fetchApi.events.events.copy(
 			{ id: state.eventInformation.event.id.toString() },
 			{ newTime, copyFiles, newStatus },
 		);
@@ -1553,7 +1556,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			return;
 		}
 
-		const result = await fetchApi.events.events.delete(
+		const result = await this.props.fetchApi.events.events.delete(
 			{ id: state.eventInformation.event.id.toString() },
 			{},
 		);
@@ -1705,7 +1708,7 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 			openLinkEventDialogue: false,
 		});
 
-		const result = await fetchApi.events.events.link(
+		const result = await this.props.fetchApi.events.events.link(
 			{ eventid: this.state.eventInformation.event.id.toString(), targetaccount },
 			{},
 		);
@@ -1724,3 +1727,5 @@ export default class EventViewer extends Page<EventViewerProps, EventViewerState
 		}
 	}
 }
+
+export default withFetchApi(EventViewer);

@@ -33,3 +33,4 @@ jobs:
                 sudo systemctl start mysql.service
                 yarn run --cwd=packages/server-jest-config test
                 yarn run --cwd=packages/server-common test
+                yarn run --cwd=packages/client test

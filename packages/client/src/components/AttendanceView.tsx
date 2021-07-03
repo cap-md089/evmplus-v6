@@ -22,6 +22,7 @@ import {
 	areMembersTheSame,
 	AttendanceRecord,
 	AttendanceStatus,
+	ClientUser,
 	CustomAttendanceFieldEntryType,
 	CustomAttendanceFieldValue,
 	effectiveManageEventPermissionForEvent,
@@ -29,10 +30,10 @@ import {
 	NewAttendanceRecord,
 	RawResolvedEventObject,
 	RegistryValues,
-	ClientUser,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import React, { Component } from 'react';
+import { FetchAPIProps, withFetchApi } from '../globals';
 import AttendanceForm from './forms/usable-forms/AttendanceForm';
 
 const renderCustomAttendanceField = (
@@ -51,16 +52,16 @@ const renderCustomAttendanceField = (
 		<i>This field currently is not supported</i>
 	);
 
-interface AttendanceItemViewProps {
+interface AttendanceItemViewProps extends FetchAPIProps {
 	owningEvent: RawResolvedEventObject;
 	owningAccount: AccountObject;
 	member: ClientUser;
 	registry: RegistryValues;
 	attendanceRecord: AttendanceRecord;
 	removeAttendance: (record: AttendanceRecord) => void;
-	updateAttendance: (record: Required<NewAttendanceRecord>, member: Member) => void;
+	updateAttendance: (record: Required<NewAttendanceRecord>, member: Member | null) => void;
 	clearUpdated: () => void;
-	recordMember?: Member | null;
+	recordMember: Member | null;
 	updated: boolean;
 	pickupDateTime: number;
 	index: number;
@@ -83,7 +84,7 @@ interface AttendanceItemViewState {
 	open: boolean;
 }
 
-export default class AttendanceItemView extends Component<
+export class AttendanceItemView extends Component<
 	AttendanceItemViewProps,
 	AttendanceItemViewState
 > {
@@ -100,11 +101,13 @@ export default class AttendanceItemView extends Component<
 		(areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) &&
 			Date.now() < this.props.pickupDateTime) ? (
 			<AttendanceForm
+				fetchAPIForAccount={this.props.fetchAPIForAccount}
+				fetchApi={this.props.fetchApi}
 				account={this.props.owningAccount}
 				event={this.props.owningEvent}
 				registry={this.props.registry}
 				member={this.props.member}
-				updateRecord={this.props.updateAttendance}
+				updateRecord={rec => this.props.updateAttendance(rec, this.props.recordMember)}
 				record={this.props.attendanceRecord}
 				updated={this.props.updated}
 				clearUpdated={this.props.clearUpdated}
@@ -144,3 +147,5 @@ export default class AttendanceItemView extends Component<
 			</div>
 		);
 }
+
+export default withFetchApi(AttendanceItemView);

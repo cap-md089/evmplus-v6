@@ -21,17 +21,21 @@ import { labels } from '..';
 import { applyCustomAttendanceFields } from '../lib/Events';
 import { defaultRadioFromLabels, emptyFromLabels, emptySimpleFromLabels } from '../lib/forms';
 import { Maybe } from '../lib/Maybe';
+import { toReference } from '../lib/Member';
 import {
 	AccountObject,
 	AccountType,
 	AttendanceRecord,
 	AttendanceStatus,
+	CAPNHQMemberObject,
 	EventStatus,
 	EventType,
 	Identifiable,
+	MemberReference,
 	NewEventObject,
 	RawAttendanceDBRecord,
 	RawRegularEventObject,
+	RegistryValues,
 } from '../typings/types';
 
 export const getTestNewEvent = (): NewEventObject => ({
@@ -105,13 +109,18 @@ export const getTestEvent = (account: Identifiable): RawRegularEventObject => ({
 	accountID: account.id as string,
 });
 
-export const getTestAttendanceRecord = (event: RawRegularEventObject): AttendanceRecord => ({
+export const getTestAttendanceRecord = (
+	event: RawRegularEventObject,
+	member?: MemberReference,
+): AttendanceRecord => ({
 	comments: '',
 	customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)([]),
-	memberID: {
-		type: 'CAPNHQMember',
-		id: 0,
-	},
+	memberID: member
+		? toReference(member)
+		: {
+				type: 'CAPNHQMember',
+				id: 0,
+		  },
 	memberName: '',
 	planToUseCAPTransportation: false,
 	shiftTime: {
@@ -145,4 +154,59 @@ export const getTestRawAttendanceRecord = (
 	status: AttendanceStatus.COMMITTEDATTENDED,
 	summaryEmailSent: false,
 	timestamp: 0,
+});
+
+export const getTestRegistry = (account: AccountObject): RegistryValues => ({
+	Contact: {
+		Discord: null,
+		FaceBook: null,
+		Flickr: null,
+		Instagram: null,
+		LinkedIn: null,
+		MailingAddress: null,
+		MeetingAddress: null,
+		Twitter: null,
+		YouTube: null,
+	},
+	RankAndFile: {
+		Flights: [],
+	},
+	Website: {
+		FaviconID: Maybe.none(),
+		Name: '',
+		PhotoLibraryImagesPerPage: 7,
+		Separator: ' - ',
+		ShowUpcomingEventCount: 7,
+		Timezone: 'America/New_York',
+	},
+	accountID: account.id,
+	id: account.id,
+});
+
+export const getTestMember = (): CAPNHQMemberObject => ({
+	absenteeInformation: null,
+	contact: {
+		CADETPARENTEMAIL: {},
+		CADETPARENTPHONE: {},
+		CELLPHONE: {},
+		EMAIL: {},
+		HOMEPHONE: {},
+		WORKPHONE: {},
+	},
+	dateOfBirth: 0,
+	dutyPositions: [],
+	expirationDate: 0,
+	flight: null,
+	id: 0,
+	memberRank: '',
+	nameFirst: '',
+	nameLast: '',
+	nameMiddle: '',
+	nameSuffix: '',
+	orgid: 0,
+	seniorMember: false,
+	squadron: '',
+	teamIDs: [],
+	type: 'CAPNHQMember',
+	usrID: '',
 });
