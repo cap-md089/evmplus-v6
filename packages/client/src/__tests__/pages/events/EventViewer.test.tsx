@@ -223,5 +223,7 @@ describe('EventViewer', () => {
 				memberID: toReference(testMember1),
 			},
 		]);
+
+		await waitFor(() => expect(getViewerData).toHaveBeenCalledTimes(1));
 	});
 });
