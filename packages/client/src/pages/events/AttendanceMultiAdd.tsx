@@ -50,7 +50,7 @@ import SimpleForm, {
 } from '../../components/forms/SimpleForm';
 import Loader from '../../components/Loader';
 import SigninLink from '../../components/SigninLink';
-import fetchApi from '../../lib/apis';
+import { FetchAPIProps, withFetchApi } from '../../globals';
 import Page, { PageProps } from '../Page';
 
 enum SortFunction {
@@ -278,7 +278,9 @@ const advancedFilters = [
 
 const simpleFilters = [nameInput, memberFilter] as const;
 
-export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, MultiAddState> {
+interface AttendanceMultiAddProps extends PageProps<{ id: string }>, FetchAPIProps {}
+
+export class AttendanceMultiAdd extends Page<AttendanceMultiAddProps, MultiAddState> {
 	public state: MultiAddState = {
 		state: 'LOADING',
 		displayAdvanced: false,
@@ -318,8 +320,9 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		}
 
 		const resultsEither = await AsyncEither.All([
-			fetchApi.member.memberList({}, {}),
-			fetchApi.events.events.get({ id: eventID.toString() }, {}),
+			this.props.fetchApi.member.memberList({}, {}),
+			this.props.fetchApi.events.events.get({ id: eventID.toString() }, {}),
+			this.props.fetchApi.events.attendance.get({ id: eventID.toString() }, {}),
 		]);
 
 		if (Either.isLeft(resultsEither)) {
@@ -331,7 +334,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			}));
 		}
 
-		const [members, event] = resultsEither.value;
+		const [members, event, attendance] = resultsEither.value;
 
 		// this.updateURL(`/multiadd/${event.getEventURLComponent()}`);
 
@@ -352,7 +355,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 			state: 'LOADED',
 			members,
-			event,
+			event: { ...event, attendance: attendance.filter(Either.isRight).map(get('value')) },
 		}));
 
 		this.props.updateBreadCrumbs([
@@ -449,7 +452,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		};
 
 		return (
-			<>
+			<div id="attendancemultiadd-form">
 				<SimpleForm<{ capid: number | null }>
 					values={{ capid: this.state.capidAdd }}
 					validator={{ capid: id => id !== null && id >= 100000 && id <= 999999 }}
@@ -501,7 +504,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 					{getSelector(this.state)}
 				</SimpleForm>
-			</>
+			</div>
 		);
 	}
 
@@ -569,7 +572,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 
 		const member = this.props.member;
 
-		const result = await fetchApi.events.attendance.addBulk(
+		const result = await this.props.fetchApi.events.attendance.addBulk(
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{
 				members: members.map(addedMember => ({
@@ -657,7 +660,7 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 			timestamp: Date.now(),
 		};
 
-		const result = await fetchApi.events.attendance.add(
+		const result = await this.props.fetchApi.events.attendance.add(
 			{ id: this.state.event.id.toString() },
 			record,
 		);
@@ -689,3 +692,5 @@ export default class AttendanceMultiAdd extends Page<PageProps<{ id: string }>, 
 		}
 	};
 }
+
+export default withFetchApi(AttendanceMultiAdd);

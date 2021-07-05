@@ -76,7 +76,9 @@ interface LinkedEventInfo {
 	accountName: string;
 }
 
-export const getViewingAccount = (account: AccountObject) => (event: RawResolvedEventObject) =>
+export const getViewingAccount = (account: AccountObject) => (
+	event: RawResolvedEventObject,
+): MaybeObj<AccountObject> =>
 	event.type === EventType.LINKED ? Maybe.some(account) : Maybe.none();
 
 export const expandLinkedEvent = (backend: Backends<[RegistryBackend]>) => (name: string) => ({
@@ -113,7 +115,9 @@ export const getEventPOCs = (
 		),
 	);
 
-const attendanceViewerRecordMapper = (record: AttendanceRecord) => ({
+const attendanceViewerRecordMapper = (
+	record: AttendanceRecord,
+): api.events.events.EventViewerAttendanceRecord => ({
 	member: Maybe.none(),
 	record,
 	orgName: Maybe.none(),
@@ -217,7 +221,7 @@ export const func: Endpoint<Backend, api.events.events.GetEventViewerData> = bac
 							  ),
 				  ]).map<AsyncRepr<api.events.events.EventViewerData>>(
 						([
-							registry,
+							,
 							attendees,
 							pointsOfContact,
 							sourceAccountName,
