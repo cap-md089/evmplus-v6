@@ -71,7 +71,7 @@ export function generateAPITree<T extends APIInfo>(
 ): APITree<T>;
 
 export function apiURL<
-	T extends APIEndpoint<string, any, any, any, any, any, any>
+	T extends APIEndpoint<string, any, any, any, any, any, any, any>
 >(): APIEndpointURL<T>;
 
 export function validator<T>(validatorConstructor: typeof Validator): ValidatorImpl<T>;

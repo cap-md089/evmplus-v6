@@ -136,13 +136,16 @@ export const getTestAttendanceRecord = (
 
 export const getTestRawAttendanceRecord = (
 	event: RawRegularEventObject,
+	member?: MemberReference,
 ): RawAttendanceDBRecord => ({
 	comments: '',
 	customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)([]),
-	memberID: {
-		type: 'CAPNHQMember',
-		id: 0,
-	},
+	memberID: member
+		? toReference(member)
+		: {
+				type: 'CAPNHQMember',
+				id: 0,
+		  },
 	memberName: '',
 	planToUseCAPTransportation: false,
 	shiftTime: {
