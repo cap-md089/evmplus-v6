@@ -77,6 +77,7 @@ type Tree = {
 	member: {
 		promotionrequirements: {
 			currentuser: api.member.promotionrequirements.RequirementsForCurrentUser;
+			account: api.member.promotionrequirements.RequirementsForCadetsInAccount;
 		};
 		account: {
 			capnhq: {
