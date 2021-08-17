@@ -23,7 +23,6 @@ import * as express from 'express';
 import { endpointAdder } from '../../lib/API';
 // API routes
 import absent from './absent';
-import account from './account';
 import basic from './attendance/basic';
 import other from './attendance/other';
 import short from './attendance/short';
@@ -37,6 +36,8 @@ import getmembers from './getmembers';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions from './permissions/setpermissions';
+import account from './account';
+import praccount from './promotionrequirements/account';
 import currentuser from './promotionrequirements/currentuser';
 import finishmfa from './session/finishmfa';
 import finishmfasetup from './session/finishmfasetup';
@@ -55,6 +56,7 @@ addAPI(Validator, adder, getdutypositions);
 addAPI(Validator, adder, setdutypositions);
 
 addAPI(Validator, adder, currentuser);
+addAPI(Validator, adder, praccount);
 
 addAPI(Validator, adder, setpermissions);
 addAPI(Validator, adder, getpermissions);

@@ -1,0 +1,277 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ *
+ * This file is part of EvMPlus.org.
+ *
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { DateTime } from 'luxon';
+import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { CAPProspectiveMemberObject } from '../..';
+import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
+// import type { Content, ContentCanvas, TDocumentDefinitions } from 'pdfmake/interfaces';
+// import { Maybe } from '../../lib/Maybe';
+// import {
+// 	EventStatus,
+// 	FullPointOfContact,
+// 	Member,
+// 	RawResolvedEventObject,
+// } from '../../typings/types';
+
+// const zeroPad = (n: number, a = 2): string => `00${n}`.substr(-a);
+
+// const formatDate = (date: number): string => {
+// 	const dateObject = new Date(date);
+
+// 	const hour = dateObject.getHours();
+// 	const minute = dateObject.getMinutes();
+
+// 	const day = dateObject.getDate();
+// 	const month = dateObject.getMonth();
+// 	const year = dateObject.getFullYear();
+
+// 	return `${zeroPad(month + 1)}/${zeroPad(day)}/${year} at ${zeroPad(hour)}:${zeroPad(minute)}`;
+// };
+
+// const boxChecked = (boxSize: number, vOffset: number): ContentCanvas => ({
+// 	canvas: [
+// 		{ type: 'rect', x: 0, y: vOffset, w: boxSize, h: boxSize, lineColor: 'black' },
+// 		{
+// 			type: 'line',
+// 			x1: 0,
+// 			y1: vOffset,
+// 			x2: boxSize,
+// 			y2: boxSize + vOffset,
+// 			lineColor: 'black',
+// 		},
+// 		{
+// 			type: 'line',
+// 			x1: 0,
+// 			y1: boxSize + vOffset,
+// 			x2: boxSize,
+// 			y2: vOffset,
+// 			lineColor: 'black',
+// 		},
+// 	],
+// });
+
+// const boxUnchecked = (boxSize: number, vOffset: number): ContentCanvas => ({
+// 	canvas: [{ type: 'rect', x: 0, y: vOffset, w: boxSize, h: boxSize, lineColor: 'black' }],
+// });
+
+export const sqr6020DocumentDefinition = (
+	nhqmembers: PromotionRequrementsItem[],
+	newmembers: CAPProspectiveMemberObject[], // cadets: PromotionRequrementsItem[],
+	// member: Member,
+): TDocumentDefinitions => {
+	// const MemberName = member.seniorMember
+	// 	? ''
+	// 	: member.memberRank + ' ' + member.nameFirst + ' ' + member.nameLast;
+
+	const myTest = true;
+	const myTitleFontSize = 10;
+	const myTextFontSize = 9;
+	const mySmallFontSize = 7;
+	// const boxSize = 8;
+	// const vOffset = myTextFontSize - boxSize;
+	// const getBox = (checked = false): ContentCanvas =>
+	// 	(checked ? boxChecked : boxUnchecked)(boxSize, vOffset);
+
+	const newmem = newmembers.length > 0 ? 'zero' : 'non-zero';
+
+	const myFill = myTest
+		? [
+				[
+					// row 1
+					[
+						{
+							text: nhqmembers[0].member.id,
+							fontSize: myTextFontSize,
+							bold: false,
+							alignment: 'left',
+						},
+						{ text: newmem, fontSize: myTextFontSize, bold: false, alignment: 'left' },
+						{ text: 'CAPID', fontSize: myTextFontSize, bold: false, alignment: 'left' },
+						{ text: 'Exp', fontSize: myTextFontSize, bold: false, alignment: 'left' },
+						{
+							text: 'Eligible',
+							fontSize: myTextFontSize,
+							bold: false,
+							alignment: 'left',
+						},
+						{ text: 'El', fontSize: myTextFontSize, bold: false, alignment: 'left' },
+						{
+							text: 'Achievement',
+							fontSize: myTextFontSize,
+							bold: false,
+							alignment: 'left',
+						},
+						{ text: 'Next', fontSize: myTextFontSize, bold: false, alignment: 'left' },
+						{
+							text: 'LeadLab',
+							fontSize: myTextFontSize,
+							bold: false,
+							alignment: 'left',
+						},
+					],
+				], // row 1
+		  ]
+		: [];
+
+	const nowDate = DateTime.utc();
+	const docDefinition: TDocumentDefinitions = {
+		pageSize: 'LETTER',
+		pageOrientation: 'landscape',
+		pageMargins: [12, 12, 54, 12],
+
+		header: {
+			text: 'Squadron Achievement Requirements',
+			alignment: 'left',
+			fontSize: myTitleFontSize,
+		},
+
+		footer: (currentPage: number, pageCount: number): Content => [
+			{
+				layout: 'noBorders',
+				table: {
+					widths: [612 - 36],
+					headerRows: 0,
+					body: [
+						[
+							{
+								layout: 'noBorders',
+								table: {
+									widths: ['*', 306, '*'],
+									headerRows: 0,
+									body: [
+										[
+											{
+												text: 'Squadron Form 60-20 Aug 2021',
+												bold: true,
+												fontSize: mySmallFontSize,
+											},
+											{
+												text: `(Local version, generated by EvMPlus.org on ${
+													nowDate.toLocaleString({
+														year: 'numeric',
+														month: '2-digit',
+														day: '2-digit',
+													}) ?? ''
+												})`,
+												bold: false,
+												fontSize: mySmallFontSize,
+												alignment: 'center',
+											},
+											{
+												text: `Page ${currentPage} of ${pageCount}`,
+												bold: false,
+												fontSize: mySmallFontSize,
+												alignment: 'right',
+											},
+										],
+									],
+								},
+							},
+						],
+					],
+				},
+				margin: [12, 2, 12, 2],
+			},
+		],
+
+		content: [
+			// content array start
+			{
+				// title table start
+				table: {
+					// table def start
+					headerRows: 1,
+					widths: [72, 72, 72, 72, 72, 72, 72, 72, 72],
+					body: [
+						[
+							// row 1
+							[
+								{
+									text: 'Grade',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'FullName',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'CAPID',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'Exp',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'Eligible',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'El',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'Achievement',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'Next',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+								{
+									text: 'LeadLab',
+									fontSize: myTextFontSize,
+									bold: true,
+									alignment: 'left',
+								},
+							],
+						], // row 1
+						...myFill,
+					],
+				}, // table def end
+				layout: {
+					fillColor: rowIndex => (rowIndex % 2 === 0 ? '#CCCCCC' : null),
+				}, // table layout end
+			}, // title table end
+		], // content array end
+		defaultStyle: {
+			font: 'FreeSans',
+		},
+	}; // doc def end
+
+	return docDefinition;
+};
+// http://localhost:3001/api/event/2/attendance/log

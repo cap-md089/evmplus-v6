@@ -26,6 +26,7 @@ import {
 	EitherObj,
 	get,
 	Maybe,
+	Permissions,
 	Right,
 	ServerError,
 	SessionType,
@@ -45,7 +46,10 @@ export const func: Endpoint<
 	Backends<[TeamsBackend, CAP.CAPMemberBackend]>,
 	api.member.promotionrequirements.RequirementsForCadetsInAccount
 > = backend =>
-	PAM.RequiresMemberType('CAPNHQMember')(
+	PAM.RequiresPermission(
+		'PromotionManagement',
+		Permissions.PromotionManagement.FULL,
+	)(
 		PAM.RequireSessionType(SessionType.REGULAR)(req =>
 			backend
 				.getNHQMembersInAccount(backend)(req.account)

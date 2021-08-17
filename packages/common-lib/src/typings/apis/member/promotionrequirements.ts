@@ -43,7 +43,7 @@ export interface PromotionRequrementsItem {
 }
 
 /**
- * Lists all members and their requirements for their next promotion
+ * Lists all CAP NHQ cadets and their requirements for their next promotion
  */
 export interface RequirementsForCadetsInAccount {
 	(params: {}, body: {}): APIEither<PromotionRequrementsItem[]>;
