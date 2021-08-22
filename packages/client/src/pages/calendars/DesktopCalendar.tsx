@@ -101,6 +101,33 @@ export const getClassNameFromEvent = (obj: RawResolvedEventObject): string => {
 	}
 };
 
+const getDayString = (inDay: number): string => {
+	let day = '';
+	switch (inDay) {
+		case 0:
+			day = 'Sunday';
+			break;
+		case 1:
+			day = 'Monday';
+			break;
+		case 2:
+			day = 'Tuesday';
+			break;
+		case 3:
+			day = 'Wednesday';
+			break;
+		case 4:
+			day = 'Thursday';
+			break;
+		case 5:
+			day = 'Friday';
+			break;
+		case 6:
+			day = 'Saturday';
+	}
+	return day;
+};
+
 export default class DesktopCalendar extends Page<CalendarProps> {
 	public state: {} = {};
 
@@ -143,11 +170,13 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 		dayOfCalendarEnd.setDate(dayOfMonthLast.getDate() + (6 - dayOfMonthLast.getDay()));
 
 		// value in milliseconds of one day of time
-		const oneDay = 1000 * 3600 * 24;
+		const oneHour = 1000 * 60 * 60;
+		const oneDay = oneHour * 24;
 		// the number of weeks to display the calendar.  Should be 5 the overwhelming majority of the time.
 		// will be 4 when February starts on a Sunday.  Will be 6 when long month starts on Friday or Saturday
-		const numberWeeks =
-			Math.ceil((dayOfCalendarEnd.getTime() - dayOfCalendarStart.getTime()) / oneDay) / 7;
+		const numberWeeks = Math.floor(
+			Math.ceil((dayOfCalendarEnd.getTime() - dayOfCalendarStart.getTime()) / oneDay) / 7,
+		);
 
 		let i;
 		let j;
@@ -157,18 +186,40 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 		}
 
 		let calDisp = new Date(dayOfCalendarStart);
+		let prevDate = calDisp.getDate();
 		for (i = 0; i < numberWeeks; i++) {
 			for (j = 0; j < 7; j++) {
-				console.log('calDisp Date: ' + calDisp.getDate().toString());
-				console.log('calDisp Month: ' + calDisp.getMonth().toString());
-				console.log('calDisp Year: ' + calDisp.getFullYear().toString());
+				console.log(
+					'i, j, calDisp: ' +
+						i.toString() +
+						', ' +
+						j.toString() +
+						', ' +
+						getDayString(calDisp.getDay()).substr(0, 2) +
+						' ' +
+						(calDisp.getMonth() + 1).toString() +
+						'/' +
+						calDisp.getDate().toString() +
+						'/' +
+						calDisp.getFullYear().toString() +
+						' ' +
+						calDisp.getHours().toString() +
+						':' +
+						calDisp.getMinutes().toString() +
+						':' +
+						calDisp.getSeconds().toString(),
+				);
 				calendar[i][j] = {
 					day: calDisp.getDate(),
 					month: calDisp.getMonth(),
 					year: calDisp.getFullYear(),
 					events: [],
 				};
+				prevDate = calDisp.getDate();
 				calDisp = new Date(calDisp.getTime() + oneDay);
+				if (prevDate === calDisp.getDate()) {
+					calDisp = new Date(calDisp.getTime() + oneHour);
+				}
 			}
 		}
 
