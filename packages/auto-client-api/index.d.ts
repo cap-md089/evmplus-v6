@@ -1,3 +1,4 @@
+import type { Client } from '@mysql/xdevapi';
 import type {
 	AccountObject,
 	ActiveSession,
@@ -18,6 +19,7 @@ import type {
 	HTTPError,
 	MaybeObj,
 	MemberRequirement,
+	ServerConfiguration,
 	ServerError,
 	User,
 	Validator,
@@ -165,3 +167,41 @@ export function addAPI<T extends APIEndpoint<string, any, any, any, any, any, an
 	) => (endpoint: ServerAPIEndpoint<T>) => void,
 	endpoint: ServerAPIEndpoint<T>,
 ): void;
+
+interface TestConnectionInformation {
+	session: Session;
+	client: Client;
+	schema: string;
+}
+
+export function generateRequest<
+	T extends APIEndpoint<string, any, any, any, any, 'unused', any, any>
+>(
+	client: TestConnectionInformation,
+	account: AccountObject,
+	params: APIEndpointParams<T>,
+	body: APIEndpointBody<T>,
+	configuration: ServerConfiguration,
+): ServerAPIRequestParameter<T>;
+export function generateRequest<
+	T extends APIEndpoint<string, any, any, any, any, 'required', any, any>
+>(
+	client: TestConnectionInformation,
+	account: AccountObject,
+	params: APIEndpointParams<T>,
+	body: APIEndpointBody<T>,
+	configuration: ServerConfiguration,
+	member: User,
+	session: ActiveSession,
+): ServerAPIRequestParameter<T>;
+export function generateRequest<
+	T extends APIEndpoint<string, any, any, any, any, 'optional', any, any>
+>(
+	client: TestConnectionInformation,
+	account: AccountObject,
+	params: APIEndpointParams<T>,
+	body: APIEndpointBody<T>,
+	configuration: ServerConfiguration,
+	member: MaybeObj<User>,
+	session: MaybeObj<ActiveSession>,
+): ServerAPIRequestParameter<T>;

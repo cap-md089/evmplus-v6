@@ -19,7 +19,12 @@
 
 import * as mysql from '@mysql/xdevapi';
 import { always, BasicMySQLRequest } from 'common-lib';
-import { AuditsBackend, getAuditsBackend, getRequestFreeEventsBackend } from '.';
+import {
+	AuditsBackend,
+	getAuditsBackend,
+	getRequestFreeAttendanceBackend,
+	getRequestFreeEventsBackend,
+} from '.';
 import {
 	AccountBackend,
 	BasicAccountRequest,
@@ -165,6 +170,7 @@ export const getDefaultTestBackend = <T>(
 		MemberBackend,
 		AuditsBackend,
 		EventsBackend,
+		AttendanceBackend,
 	]
 >) =>
 	combineBackends<
@@ -180,6 +186,7 @@ export const getDefaultTestBackend = <T>(
 			MemberBackend,
 			AuditsBackend,
 			EventsBackend,
+			AttendanceBackend,
 		]
 	>(
 		always(overrides) as () => T,
@@ -192,4 +199,5 @@ export const getDefaultTestBackend = <T>(
 		getRequestFreeMemberBackend,
 		getRequestFreeAuditsBackend,
 		getRequestFreeEventsBackend,
+		getRequestFreeAttendanceBackend,
 	);

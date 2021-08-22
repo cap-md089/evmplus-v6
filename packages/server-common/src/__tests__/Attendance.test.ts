@@ -47,6 +47,7 @@ import {
 	attendanceRecordMapper,
 	canMemberDeleteRecord,
 	canMemberModifyRecord,
+	deleteAttendanceRecord,
 	getAttendanceForEvent,
 } from '../Attendance';
 import { getDefaultTestBackend } from '../defaultBackends';
@@ -344,6 +345,32 @@ describe('Attendance', () => {
 		await expect(
 			canMemberDeleteRecord(backend)(member)(attendanceRecordMapper(testRec2)),
 		).resolves.toEqual(Either.right(true));
+		done();
+	});
+	it('should delete an attendance record', async done => {
+		const schema = dbref.connection.getSchema();
+		const backend = getDefaultTestBackend()(schema);
+		const member = {
+			...getTestUserForMember(getMemberFromTestData(testRec1.memberID)),
+			permissions: getDefaultAdminPermissions(AccountType.CAPSQUADRON),
+		};
+
+		await expect(
+			deleteAttendanceRecord(backend)(member)(testRec2.memberID)(testEvent),
+		).resolves.toMatchObject(Either.right({}));
+
+		const records = (
+			await dbref.connection
+				.getSchema()
+				.getCollection<RawAttendanceDBRecord>('Attendance')
+				.find('true')
+				.execute()
+		).fetchAll();
+
+		for (const rec of records) {
+			expect(rec.memberID).not.toMatchObject(testRec2.memberID);
+		}
+
 		done();
 	});
 });

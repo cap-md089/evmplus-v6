@@ -17,17 +17,23 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { func } from '../../../../api/events/attendance/deleteattendance';
-import { AccountType, api, getDefaultAdminPermissions } from 'common-lib';
-import { getTestAccount, getTestEvent, getTestRawAttendanceRecord } from 'common-lib/dist/test';
+import { generateRequest } from 'auto-client-api';
+import { AccountType, api, Either, getDefaultAdminPermissions } from 'common-lib';
+import {
+	getTestAccount,
+	getTestEvent,
+	getTestRawAttendanceRecord,
+	getTestSession,
+} from 'common-lib/dist/test';
+import { getDefaultTestBackend } from 'server-common';
 import {
 	getCAPWATCHTestData,
 	getDbHandle,
 	getMemberFromTestData,
 	setPresetRecords,
 } from 'server-jest-config';
-import { getDefaultTestBackend } from 'server-common';
-import { apiURL } from 'auto-client-api';
+import conf from 'server-jest-config/src/conf';
+import { func } from '../../../../api/events/attendance/deleteattendance';
 
 const testAccount = getTestAccount();
 const testEvent = getTestEvent(testAccount);
@@ -57,8 +63,28 @@ describe('DELETE api/events/attendance', () => {
 	beforeEach(testSetup(dbRef));
 
 	it('should delete an attendance record', async () => {
+		const request = generateRequest<api.events.attendance.Delete>(
+			dbRef.connection,
+			testAccount,
+			{ id: testEvent.id.toString() },
+			{ member: testRec.memberID },
+			conf(dbRef.connection),
+			testUser,
+			getTestSession(testUser),
+		);
+
 		const backend = getDefaultTestBackend()(dbRef.connection.getSchema());
 
-		console.log(apiURL<api.events.events.Delete>());
+		await expect(func(backend)(request)).resolves.toMatchObject(Either.right({}));
+
+		expect(
+			(
+				await dbRef.connection
+					.getSchema()
+					.getCollection('Attendance')
+					.find('true')
+					.execute()
+			).fetchAll(),
+		).toHaveLength(0);
 	});
 });
