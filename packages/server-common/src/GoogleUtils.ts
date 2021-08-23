@@ -18,9 +18,9 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import { ServerEither } from 'auto-client-api';
 import {
-	AccountObject,
-	CLIConfiguration,
+	AccountObject, destroy,
 	EventStatus,
 	isOneOfSelected,
 	Maybe,
@@ -29,13 +29,20 @@ import {
 	RawRegularEventObject,
 	RawResolvedEventObject,
 	RegistryValues,
-	ServerConfiguration,
-	Timezone,
+	Timezone
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { markdown } from 'markdown';
 import { v4 as uuid } from 'uuid';
-import { getRegistryById } from './Registry';
+import { AccountBackend, BasicAccountRequest } from '.';
+import { Backends, notImplementedError } from './backends';
+import { getRegistryById, RegistryBackend } from './Registry';
+
+export interface GoogleConfiguration {
+	GOOGLE_KEYS_PATH: string;
+	HOST_NAME: string;
+	NODE_ENV: string;
+}
 
 // 99999999  these five arrays need to go to a common area between client and server
 export const Uniforms = [
@@ -75,7 +82,7 @@ export const LodgingArrangments = [
 ];
 
 function buildEventDescription(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	registry: RegistryValues,
 	inEvent: RawResolvedEventObject,
 ): string {
@@ -200,7 +207,7 @@ const formatGoogleCalendarDate = (registry: RegistryValues) => (indate: number):
 	getDateFormatter(registry.Website.Timezone).format(new Date(indate));
 
 function buildDeadlineDescription(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	inEvent: RawResolvedEventObject,
 	inStatement: string,
 ): string {
@@ -232,7 +239,7 @@ function buildDeadlineDescription(
 export async function createGoogleCalendar(
 	accountID: string,
 	name: string,
-	config: CLIConfiguration,
+	config: GoogleConfiguration,
 ): Promise<string> {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privateKey = require(config.GOOGLE_KEYS_PATH + '/md089.json') as {
@@ -281,7 +288,7 @@ export async function createGoogleCalendarForEvent(
 	newEventName: string,
 	newAccountName: string,
 	accountID: string,
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 ): Promise<string> {
 	const name = `${newAccountName} - ${newEventName}`;
 
@@ -292,7 +299,7 @@ export async function createGoogleCalendarEvents(
 	schema: Schema,
 	inEvent: RawResolvedEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
@@ -327,10 +334,10 @@ export async function createGoogleCalendarEvents(
 }
 
 export default async function updateGoogleCalendars(
-	schema: Schema,
+	backend: Backends<[RegistryBackend]>,
 	inEvent: RawRegularEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 ): Promise<[string | null, string | null, string | null]> {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
@@ -347,7 +354,7 @@ export default async function updateGoogleCalendars(
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
-	const registry = await getRegistryById(schema)(inAccount.id).fullJoin();
+	const registry = await backend.getRegistryUnsafe(inAccount.id).fullJoin();
 
 	if (inEvent.status === EventStatus.DRAFT) {
 		return [null, null, null];
@@ -364,7 +371,7 @@ export default async function updateGoogleCalendars(
 export async function removeGoogleCalendarEvents(
 	inEvent: RawEventObject,
 	inAccount: AccountObject,
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 ): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
@@ -387,7 +394,7 @@ export async function removeGoogleCalendarEvents(
 
 export async function deleteAllGoogleCalendarEvents(
 	inAccount: AccountObject,
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 ): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
@@ -537,7 +544,7 @@ function getEventColor(inStatus: EventStatus): number {
 }
 
 function buildEvent(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	registry: RegistryValues,
 	inEvent: RawResolvedEventObject,
 ): calendar_v3.Schema$Event {
@@ -573,7 +580,7 @@ function buildEvent(
 }
 
 function buildDeadline(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	inEvent: RawResolvedEventObject,
 	inDate: number,
 	inString: string,
@@ -606,7 +613,7 @@ function buildDeadline(
 }
 
 async function updateFeeEvent(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawResolvedEventObject,
@@ -676,7 +683,7 @@ async function updateFeeEvent(
 }
 
 async function updateRegEvent(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawResolvedEventObject,
@@ -752,7 +759,7 @@ async function updateRegEvent(
 }
 
 async function updateMainEvent(
-	config: ServerConfiguration,
+	config: GoogleConfiguration,
 	myCalendar: calendar_v3.Calendar,
 	jwtClient: JWTClient,
 	inEvent: RawResolvedEventObject,
@@ -806,3 +813,36 @@ async function updateMainEvent(
 		}
 	}
 }
+
+export interface GoogleBackend {
+	removeGoogleCalendarEvents: (event: RawResolvedEventObject) => ServerEither<void>;
+	updateGoogleCalendars: ()
+}
+
+export const getGoogleBackend = (
+	req: BasicAccountRequest,
+	prevBackend: Backends<[RegistryBackend, AccountBackend]>,
+): GoogleBackend => ({
+	removeGoogleCalendarEvents: event =>
+		prevBackend
+			.getAccount(event.accountID)
+			.map(account => removeGoogleCalendarEvents(event, account, req.configuration))
+			.map(destroy),
+});
+
+export const getRequestFreeGoogleBackend = (
+	conf: GoogleConfiguration,
+	prevBackend: Backends<[RegistryBackend, AccountBackend]>,
+): GoogleBackend => ({
+	removeGoogleCalendarEvents: event =>
+		prevBackend
+			.getAccount(event.accountID)
+			.map(account => removeGoogleCalendarEvents(event, account, conf))
+			.map(destroy),
+});
+
+export const getEmptyGoogleBackend = (): GoogleBackend => ({
+	removeGoogleCalendarEvents: () => notImplementedError('removeGoogleCalendarEvents'),
+	updateGoogleCalendars: () => notImplementedError('updateGoogleCalendars'),
+	createGoogleCalendarEvents: () => notImplementedError('createGoogleCalendarEvents'),
+});

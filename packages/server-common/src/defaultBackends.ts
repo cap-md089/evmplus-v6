@@ -36,6 +36,12 @@ import { getRequestFreeAuditsBackend } from './Audits';
 import { Backends, combineBackends, GenBackend, getTimeBackend, TimeBackend } from './backends';
 import { EventsBackend, getEventsBackend } from './Event';
 import { FileBackend, getFileBackend } from './File';
+import {
+	getGoogleBackend,
+	getRequestFreeGoogleBackend,
+	GoogleBackend,
+	GoogleConfiguration,
+} from './GoogleUtils';
 import { CAP } from './member/members';
 import { getPAMBackend, PAMBackend } from './member/pam';
 import { getMemberBackend, MemberBackend, getRequestFreeMemberBackend } from './Members';
@@ -92,15 +98,18 @@ export const getCombinedPAMBackend = (): ((
 
 export const getCombinedEventsBackend = (): ((
 	req: BasicMySQLRequest,
-) => Backends<[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, EventsBackend]>) =>
+) => Backends<
+	[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, GoogleBackend, EventsBackend]
+>) =>
 	combineBackends<
 		BasicMySQLRequest,
-		[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, EventsBackend]
+		[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, GoogleBackend, EventsBackend]
 	>(
 		getTimeBackend,
 		getRegistryBackend,
 		getAccountBackend,
 		getCombinedAuditsBackend(),
+		getGoogleBackend,
 		getEventsBackend,
 	);
 
@@ -154,8 +163,29 @@ export const getCombinedTasksBackend = (): ((
 		[GenBackend<typeof getDefaultAccountBackend>, TimeBackend, TaskBackend]
 	>(getDefaultAccountBackend, getTimeBackend, getTaskBackend);
 
-export const getDefaultTestBackend = <T>(
-	overrides?: T,
+export interface DefaultTestBackendOptions<T> {
+	overrides?: Partial<T>;
+	googleConfiguration?: GoogleConfiguration;
+}
+
+export const getDefaultTestBackend = <
+	T extends Backends<
+		[
+			RawMySQLBackend,
+			TimeBackend,
+			RegistryBackend,
+			AccountBackend,
+			TeamsBackend,
+			CAP.CAPMemberBackend,
+			MemberBackend,
+			AuditsBackend,
+			GoogleBackend,
+			EventsBackend,
+			AttendanceBackend,
+		]
+	>
+>(
+	opts?: DefaultTestBackendOptions<T>,
 ): ((
 	mysql: mysql.Schema,
 ) => Backends<
@@ -169,6 +199,7 @@ export const getDefaultTestBackend = <T>(
 		CAP.CAPMemberBackend,
 		MemberBackend,
 		AuditsBackend,
+		GoogleBackend,
 		EventsBackend,
 		AttendanceBackend,
 	]
@@ -185,11 +216,12 @@ export const getDefaultTestBackend = <T>(
 			CAP.CAPMemberBackend,
 			MemberBackend,
 			AuditsBackend,
+			GoogleBackend,
 			EventsBackend,
 			AttendanceBackend,
 		]
 	>(
-		always(overrides) as () => T,
+		always(opts?.overrides) as () => T,
 		requestlessMySQLBackend,
 		getTimeBackend,
 		getRequestFreeRegistryBackend,
@@ -198,6 +230,7 @@ export const getDefaultTestBackend = <T>(
 		CAP.getRequestFreeCAPMemberBackend,
 		getRequestFreeMemberBackend,
 		getRequestFreeAuditsBackend,
+		(schema, curr) => getRequestFreeGoogleBackend(opts?.googleConfiguration!, curr),
 		getRequestFreeEventsBackend,
 		getRequestFreeAttendanceBackend,
 	);

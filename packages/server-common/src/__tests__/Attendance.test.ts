@@ -195,7 +195,9 @@ describe('Attendance', () => {
 	it('can edit own attendance record before event end time', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend({
-			now: always(0),
+			overrides: {
+				now: always(0),
+			},
 		})(schema);
 		const member = getTestUserForMember(getMemberFromTestData(testRec1.memberID));
 
@@ -207,7 +209,9 @@ describe('Attendance', () => {
 	it('default member cannot edit own attendance record after event end time', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend({
-			now: always(2),
+			overrides: {
+				now: always(2),
+			},
 		})(schema);
 		const member = getTestUserForMember(getMemberFromTestData(testRec1.memberID));
 
@@ -219,7 +223,9 @@ describe('Attendance', () => {
 	it('admin can edit own attendance record after event end time', async done => {
 		const schema = dbref.connection.getSchema();
 		const backend = getDefaultTestBackend({
-			now: always(2),
+			overrides: {
+				now: always(2),
+			},
 		})(schema);
 		const member = {
 			...getTestUserForMember(getMemberFromTestData(testRec1.memberID)),

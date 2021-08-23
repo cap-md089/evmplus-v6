@@ -72,6 +72,7 @@ const emptyMessage = always('');
 
 expect.extend({
 	toBeRight(received) {
+		console.log(received);
 		if (!isValidEitherObj(received)) {
 			return {
 				message: always('Value received is not a valid EitherObj'),

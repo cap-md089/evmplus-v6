@@ -68,10 +68,7 @@ import { AccountBackend, BasicAccountRequest, getAccount } from './Account';
 import { getAttendanceForEvent } from './Attendance';
 import { areDeepEqual } from './Audits';
 import { Backends, notImplementedError, TimeBackend } from './backends';
-import updateGoogleCalendars, {
-	createGoogleCalendarEvents,
-	removeGoogleCalendarEvents,
-} from './GoogleUtils';
+import updateGoogleCalendars, { createGoogleCalendarEvents, GoogleBackend } from './GoogleUtils';
 import { getMemberName } from './Members';
 import {
 	addToCollection,
@@ -468,15 +465,13 @@ export const removeItemFromEventDebrief = <T extends RawRegularEventObject>(even
 	debrief: event.debrief.filter(({ timeSubmitted }) => timeSubmitted !== timeToRemove),
 });
 
-export const deleteEvent = (backend: Backends<[TimeBackend, AuditsBackend]>) => (
-	config: ServerConfiguration,
-) => (schema: Schema) => (account: AccountObject) => (actor: MemberReference) => (
+export const deleteEvent = (backend: Backends<[TimeBackend, GoogleBackend, AuditsBackend]>) => (
+	schema: Schema,
+) => (account: AccountObject) => (actor: MemberReference) => (
 	event: FromDatabase<RawResolvedEventObject>,
 ): ServerEither<void> =>
-	asyncRight(
-		removeGoogleCalendarEvents(event, account, config),
-		errorGenerator('Could not delete Google calendar events'),
-	)
+	backend
+		.removeGoogleCalendarEvents(event)
 		.map(always(event))
 		.tap(backend.generateDeleteAudit(account)(actor))
 		.flatMap(deleteItemFromCollectionA(schema.getCollection<RawEventObject>('Events')));
@@ -746,7 +741,7 @@ export interface EventsBackend {
 
 export const getEventsBackend = (
 	req: BasicAccountRequest,
-	prevBackend: Backends<[TimeBackend, AuditsBackend]>,
+	prevBackend: Backends<[TimeBackend, GoogleBackend, AuditsBackend]>,
 ): EventsBackend => {
 	const backend: EventsBackend = {
 		...getRequestFreeEventsBackend(req.mysqlx, { ...prevBackend, ...req.backend }),
@@ -761,12 +756,6 @@ export const getEventsBackend = (
 						)(event),
 					),
 			),
-		deleteEvent: actor => event =>
-			req.backend
-				.getAccount(event.accountID)
-				.flatMap(account =>
-					deleteEvent(prevBackend)(req.configuration)(req.mysqlx)(account)(actor)(event),
-				),
 		createEvent: createEvent(prevBackend)(req.configuration)(req.mysqlx),
 		copyEvent: event => author => newStartTime => newStatus => copyFiles =>
 			req.backend
@@ -785,12 +774,15 @@ export const getEventsBackend = (
 
 export const getRequestFreeEventsBackend = (
 	mysqlx: Schema,
-	prevBackend: Backends<[TimeBackend, AuditsBackend, AccountBackend]>,
+	prevBackend: Backends<[TimeBackend, GoogleBackend, AuditsBackend, AccountBackend]>,
 ): EventsBackend => {
 	const backend: EventsBackend = {
 		getEvent: memoize((account: AccountObject) => memoize(getEvent(mysqlx)(account))),
 		saveEvent: () => () => notImplementedError('saveEvent'),
-		deleteEvent: () => () => notImplementedError('deleteEvent'),
+		deleteEvent: actor => event =>
+			prevBackend
+				.getAccount(event.accountID)
+				.flatMap(account => deleteEvent(prevBackend)(mysqlx)(account)(actor)(event)),
 		fullPointsOfContact: account => records => getFullPointsOfContact(mysqlx)(account)(records),
 		getLinkedEvents: account => eventID => getLinkedEvents(mysqlx)(account.id)(eventID),
 		getFullEventObject: event =>
