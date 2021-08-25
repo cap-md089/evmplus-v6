@@ -17,10 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
 import { ServerEither } from 'auto-client-api';
 import {
-	AccountObject, destroy,
+	AccountObject,
+	destroy,
 	EventStatus,
 	isOneOfSelected,
 	Maybe,
@@ -29,14 +29,14 @@ import {
 	RawRegularEventObject,
 	RawResolvedEventObject,
 	RegistryValues,
-	Timezone
+	Timezone,
 } from 'common-lib';
 import { calendar_v3, google } from 'googleapis';
 import { markdown } from 'markdown';
 import { v4 as uuid } from 'uuid';
 import { AccountBackend, BasicAccountRequest } from '.';
 import { Backends, notImplementedError } from './backends';
-import { getRegistryById, RegistryBackend } from './Registry';
+import { RegistryBackend } from './Registry';
 
 export interface GoogleConfiguration {
 	GOOGLE_KEYS_PATH: string;
@@ -296,7 +296,7 @@ export async function createGoogleCalendarForEvent(
 }
 
 export async function createGoogleCalendarEvents(
-	schema: Schema,
+	backend: Backends<[RegistryBackend]>,
 	inEvent: RawResolvedEventObject,
 	inAccount: AccountObject,
 	config: GoogleConfiguration,
@@ -320,7 +320,7 @@ export async function createGoogleCalendarEvents(
 		return [null, null, null];
 	}
 
-	const registry = await getRegistryById(schema)(inAccount.id).fullJoin();
+	const registry = await backend.getRegistryUnsafe(inAccount.id).fullJoin();
 
 	return Promise.all([
 		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, registry),
@@ -816,19 +816,18 @@ async function updateMainEvent(
 
 export interface GoogleBackend {
 	removeGoogleCalendarEvents: (event: RawResolvedEventObject) => ServerEither<void>;
-	updateGoogleCalendars: ()
+	updateGoogleCalendars: (
+		event: RawRegularEventObject,
+	) => ServerEither<[string | null, string | null, string | null]>;
+	createGoogleCalendarEvents: (
+		event: RawResolvedEventObject,
+	) => ServerEither<[string | null, string | null, string | null]>;
 }
 
 export const getGoogleBackend = (
 	req: BasicAccountRequest,
 	prevBackend: Backends<[RegistryBackend, AccountBackend]>,
-): GoogleBackend => ({
-	removeGoogleCalendarEvents: event =>
-		prevBackend
-			.getAccount(event.accountID)
-			.map(account => removeGoogleCalendarEvents(event, account, req.configuration))
-			.map(destroy),
-});
+): GoogleBackend => getRequestFreeGoogleBackend(req.configuration, prevBackend);
 
 export const getRequestFreeGoogleBackend = (
 	conf: GoogleConfiguration,
@@ -839,6 +838,14 @@ export const getRequestFreeGoogleBackend = (
 			.getAccount(event.accountID)
 			.map(account => removeGoogleCalendarEvents(event, account, conf))
 			.map(destroy),
+	updateGoogleCalendars: event =>
+		prevBackend
+			.getAccount(event.accountID)
+			.map(account => updateGoogleCalendars(prevBackend, event, account, conf)),
+	createGoogleCalendarEvents: event =>
+		prevBackend
+			.getAccount(event.accountID)
+			.map(account => createGoogleCalendarEvents(prevBackend, event, account, conf)),
 });
 
 export const getEmptyGoogleBackend = (): GoogleBackend => ({

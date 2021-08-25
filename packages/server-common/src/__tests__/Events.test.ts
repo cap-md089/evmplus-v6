@@ -74,6 +74,8 @@ const db = {
 const testSetup = setPresetRecords(db);
 
 describe('Events', () => {
+	jest.setTimeout(15000);
+
 	const dbRef = getDbHandle();
 
 	beforeAll(dbRef.setup);
@@ -92,19 +94,17 @@ describe('Events', () => {
 			.flatMap(backend.ensureResolvedEvent)
 			.fullJoin();
 
-		const result = await deleteEvent(backend)(dbRef.connection.getSchema())(testAccount)(
-			member,
-		)(event);
-
-		console.log(result);
-
-		expect(result).toBeRight();
+		await expect(
+			deleteEvent(backend)(dbRef.connection.getSchema())(testAccount)(member)(event),
+		).resolves.toBeRight();
 
 		await expect(
-			getEvent(dbRef.connection.getSchema())(testAccount)(testEvent.id)
-				.flatMap(backend.ensureResolvedEvent)
-				.fullJoin(),
-		).resolves.toThrow();
+			getEvent(dbRef.connection.getSchema())(testAccount)(testEvent.id).flatMap(
+				backend.ensureResolvedEvent,
+			),
+		).resolves.toMatchLeft({
+			code: 404,
+		});
 
 		done();
 	});

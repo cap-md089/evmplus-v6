@@ -278,7 +278,7 @@ export const createCAPEventAccountFunc = (
 export const getAccount = (schema: Schema) => (accountID: string): ServerEither<AccountObject> =>
 	asyncRight(
 		schema.getCollection<AccountObject>('Accounts'),
-		errorGenerator('Could not get accounts'),
+		errorGenerator(`Could not get accounts with ID '${accountID}'`),
 	)
 		.map(collection => generateResults(collection.find('true')))
 		.map<AsyncIterableIterator<AccountObject>>(

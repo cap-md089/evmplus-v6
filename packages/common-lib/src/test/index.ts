@@ -56,8 +56,8 @@ const isValidEitherObj = (obj: unknown): obj is EitherObj<unknown, unknown> =>
 	obj !== null &&
 	'direction' in obj &&
 	typeof (obj as { direction: unknown }).direction === 'string' &&
-	((obj as { direction: string }).direction === ('Left' as Left<any>['direction']) ||
-		(obj as { direction: string }).direction === ('Right' as Right<any>['direction'])) &&
+	((obj as { direction: string }).direction === ('left' as Left<any>['direction']) ||
+		(obj as { direction: string }).direction === ('right' as Right<any>['direction'])) &&
 	'value' in obj &&
 	(obj as { direction: unknown }).direction !== undefined;
 
@@ -72,7 +72,6 @@ const emptyMessage = always('');
 
 expect.extend({
 	toBeRight(received) {
-		console.log(received);
 		if (!isValidEitherObj(received)) {
 			return {
 				message: always('Value received is not a valid EitherObj'),

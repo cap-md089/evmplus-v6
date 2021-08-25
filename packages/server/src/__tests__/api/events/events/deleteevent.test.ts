@@ -18,7 +18,13 @@
  */
 
 import { generateRequest } from 'auto-client-api';
-import { AccountType, api, Either, getDefaultAdminPermissions } from 'common-lib';
+import {
+	AccountType,
+	api,
+	asyncRight,
+	errorGenerator,
+	getDefaultAdminPermissions,
+} from 'common-lib';
 import { getTestAccount, getTestEvent, getTestSession } from 'common-lib/dist/test';
 import { getDefaultTestBackend } from 'server-common';
 import {
@@ -48,6 +54,8 @@ const db = {
 const testSetup = setPresetRecords(db);
 
 describe('DELETE api/events/attendance', () => {
+	jest.setTimeout(15000);
+
 	const dbRef = getDbHandle();
 
 	beforeAll(dbRef.setup);
@@ -66,13 +74,14 @@ describe('DELETE api/events/attendance', () => {
 			getTestSession(testUser),
 		);
 
-		const backend = getDefaultTestBackend()(dbRef.connection.getSchema());
+		const backend = getDefaultTestBackend({
+			overrides: {
+				removeGoogleCalendarEvents: () =>
+					asyncRight(void 0, errorGenerator('Could not delete google calendar events')),
+			},
+		})(dbRef.connection.getSchema());
 
-        const result = await func(backend)(request);
-
-        console.log(result);
-
-		expect(result).toBeRight();
+		await expect(func(backend)(request)).resolves.toBeRight();
 
 		expect(
 			(
