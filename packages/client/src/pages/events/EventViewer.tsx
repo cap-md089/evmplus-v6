@@ -924,6 +924,23 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 								<br />
 							</>
 						) : null}
+						{pipe(
+							(renderedMeals: JSX.Element[]) =>
+								renderedMeals.length === 0
+									? Maybe.none()
+									: Maybe.some(renderedMeals),
+							Maybe.map<JSX.Element[], JSX.Element>(renderedMeals => (
+								<>
+									<strong>Meals Description:</strong>
+									<ul>
+										{renderedMeals.map((meal, index) => (
+											<li key={index}>{meal}</li>
+										))}
+									</ul>
+								</>
+							)),
+							Maybe.orSome<JSX.Element | null>(null),
+						)(advancedMultCheckboxReturn(event.mealsDescription, this.renderMeals))}
 						<strong>Desired number of participants:</strong>{' '}
 						{event.desiredNumberOfParticipants}
 						<br />
@@ -1612,6 +1629,12 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 			);
 		} else {
 			return <>{formName}</>;
+		}
+	};
+
+	private renderMeals = (mealName: string): JSX.Element => {
+		{
+			return <>{mealName}</>;
 		}
 	};
 
