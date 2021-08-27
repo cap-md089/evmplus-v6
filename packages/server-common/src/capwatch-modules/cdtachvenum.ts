@@ -21,7 +21,16 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileData, schema) => {
+const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+) => {
+	if (!trustedFile) {
+		return CAPWATCHError.NOPERMISSIONS;
+	}
+
 	if (
 		fileData.length === 0 ||
 		typeof fileData[0].CadetAchvID === 'undefined' ||

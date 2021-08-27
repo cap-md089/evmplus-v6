@@ -17,46 +17,24 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, schema) => {
-	if (
-		fileData.length === 0 ||
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].CadetAchvID === 'undefined' ||
-		typeof fileData[0].PhyFitTest === 'undefined' ||
-		typeof fileData[0].LeadLabDateP === 'undefined' ||
-		typeof fileData[0].LeadLabScore === 'undefined' ||
-		typeof fileData[0].AEDateP === 'undefined' ||
-		typeof fileData[0].AEScore === 'undefined' ||
-		typeof fileData[0].AEMod === 'undefined' ||
-		typeof fileData[0].AETest === 'undefined' ||
-		typeof fileData[0].MoralLDateP === 'undefined' ||
-		typeof fileData[0].ActivePart === 'undefined' ||
-		typeof fileData[0].OtherReq === 'undefined' ||
-		typeof fileData[0].SDAReport === 'undefined' ||
-		typeof fileData[0].UsrID === 'undefined' ||
-		typeof fileData[0].DateMod === 'undefined' ||
-		typeof fileData[0].FirstUsr === 'undefined' ||
-		typeof fileData[0].DateCreated === 'undefined' ||
-		typeof fileData[0].DrillDate === 'undefined' ||
-		typeof fileData[0].DrillScore === 'undefined' ||
-		typeof fileData[0].LeadCurr === 'undefined' ||
-		typeof fileData[0].CadetOath === 'undefined' ||
-		typeof fileData[0].AEBookValue === 'undefined' ||
-		typeof fileData[0].MileRun === 'undefined' ||
-		typeof fileData[0].ShuttleRun === 'undefined' ||
-		typeof fileData[0].SitAndReach === 'undefined' ||
-		typeof fileData[0].PushUps === 'undefined' ||
-		typeof fileData[0].CurlUps === 'undefined' ||
-		typeof fileData[0].HFZID === 'undefined' ||
-		typeof fileData[0].StaffServiceDate === 'undefined' ||
-		typeof fileData[0].TechnicalWritingAssignment === 'undefined' ||
-		typeof fileData[0].TechnicalWritingAssignmentDate === 'undefined' ||
-		typeof fileData[0].OralPresentationDate === 'undefined'
-	) {
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CadetAchv>(Validator) as Validator<NHQ.CadetAchv>,
+);
+
+const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (
+	fileData,
+	schema,
+	isValidORGID,
+) => {
+	const isValid = !fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft);
+
+	if (!isValid) {
 		return CAPWATCHError.BADDATA;
 	}
 

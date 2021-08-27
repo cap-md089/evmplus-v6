@@ -74,11 +74,11 @@ import {
 } from './Session';
 
 export {
+	checkPermissions,
 	getDefaultPermissions,
 	RequiresMemberType,
 	RequiresPermission,
 	simplifyUserInformation,
-	checkPermissions,
 } from './Account';
 export {
 	SigninFailed,
@@ -94,6 +94,7 @@ export {
 	filterSession,
 	memberRequestTransformer,
 	RequireSessionType,
+	getMemberSessionFromCookie,
 	SessionFilterError,
 } from './Session';
 

@@ -71,9 +71,11 @@ import {
 import { RegistryBackend } from '../../Registry';
 import { ServerEither } from '../../servertypes';
 import { getPermissionsForMemberInAccountDefault } from './Account';
+import type { generateSecret as generateSecretType } from 'speakeasy';
 
-// eslint-disable-next-line  no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
 const speakeasy = require('speakeasy');
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 speakeasy.generateSecret = speakeasy.generateSecret.bind(speakeasy);
 const promisedRandomBytes = promisify(randomBytes);
 
@@ -207,7 +209,7 @@ export const restoreFromSession = (
 	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
 ) => (account: AccountObject) => <T extends MemberReference = MemberReference>(
 	session: UserSession<T>,
-) =>
+): ServerEither<ActiveSession<T>> =>
 	AsyncEither.All([
 		asyncRight(
 			getPermissionsForMemberInAccountDefault(
@@ -273,7 +275,7 @@ export function memberRequestTransformer(
 	BasicMemberRequest<T extends BasicAccountRequest<infer P> ? P : never>
 >;
 
-export function memberRequestTransformer(memberRequired: boolean = false) {
+export function memberRequestTransformer(memberRequired = false) {
 	return <T extends BasicAccountRequest>(
 		request: T,
 	): AsyncEither<ServerError, BasicMaybeMemberRequest | BasicMemberRequest> =>
@@ -335,7 +337,32 @@ export function memberRequestTransformer(memberRequired: boolean = false) {
 		);
 }
 
-export const su = async (schema: Schema, session: UserSession, newUser: MemberReference) => {
+export const getMemberSessionFromCookie = (
+	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
+) => (account: AccountObject) => (sessionID: string | undefined): ServerEither<ActiveSession> =>
+	asyncRight(sessionID, errorGenerator('Could not get session information'))
+		.filter((cookie): cookie is string => !!cookie, {
+			type: 'OTHER',
+			code: 403,
+			message: 'Authorization token not provided',
+		})
+		.flatMap(cookie =>
+			validateSession(backend.getSchema(), cookie).leftMap(
+				code => ({
+					type: 'OTHER',
+					code: 400,
+					message: MEMBER_CREATE_ERRORS[code],
+				}),
+				errorGenerator('Could not validate session'),
+			),
+		)
+		.flatMap(restoreFromSession(backend)(account));
+
+export const su = async (
+	schema: Schema,
+	session: UserSession,
+	newUser: MemberReference,
+): Promise<void> => {
 	if (!isRioux(session.userAccount.member.id)) {
 		throw new Error('Cannot use su if not Rioux');
 	}
@@ -362,7 +389,7 @@ const addTokenToDatabase = async (
 	schema: Schema,
 	token: string,
 	member: SafeUserAccountInformation,
-) => {
+): Promise<void> => {
 	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	await tokenCollection
@@ -374,7 +401,7 @@ const addTokenToDatabase = async (
 		.execute();
 };
 
-const removeOldTokens = async (schema: Schema) => {
+const removeOldTokens = async (schema: Schema): Promise<void> => {
 	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	await safeBind(tokenCollection.remove('created < :created'), {
@@ -382,13 +409,13 @@ const removeOldTokens = async (schema: Schema) => {
 	}).execute();
 };
 
-const getTokenList = async (schema: Schema, token: string) => {
+const getTokenList = async (schema: Schema, token: string): Promise<PAMTypes.TokenObject[]> => {
 	const tokenCollection = schema.getCollection<PAMTypes.TokenObject>(TOKEN_TABLE);
 
 	return await collectResults(findAndBind(tokenCollection, { token }));
 };
 
-const invalidateToken = async (schema: Schema, token: string) => {
+const invalidateToken = async (schema: Schema, token: string): Promise<void> => {
 	const collection = schema.getCollection<PAMTypes.TokenObject>('Tokens');
 
 	await safeBind(collection.remove('token = :token'), { token }).execute();
@@ -505,7 +532,7 @@ export const filterSession = <T extends SessionType>(...sessionTypes: T[]) => <
 
 //#region MFA
 
-export const startMFASetupFunc = (generateSecret: typeof speakeasy.generateSecret) => (
+export const startMFASetupFunc = (generateSecret: typeof generateSecretType) => (
 	schema: Schema,
 ) => (member: MemberReference): ServerEither<string> =>
 	asyncRight(
@@ -525,7 +552,7 @@ export const startMFASetupFunc = (generateSecret: typeof speakeasy.generateSecre
 			code: 400,
 			message: 'Cannot setup MFA with MFA already enabled',
 		})
-		.flatMap(() =>
+		.flatMap<string>(() =>
 			asyncRight(
 				generateSecret({
 					otpauth_url: true,
@@ -545,6 +572,7 @@ export const startMFASetupFunc = (generateSecret: typeof speakeasy.generateSecre
 					.map(always(otpauth_url)),
 			),
 		);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 export const startMFASetup = startMFASetupFunc(speakeasy.generateSecret);
 
 /**
@@ -553,7 +581,7 @@ export const startMFASetup = startMFASetupFunc(speakeasy.generateSecret);
  *
  * Has to do with stupid JavaScript bind rules...
  */
-const innerVerifyToken = (totp: Totp) => (secret: string) => (token: string) => {
+const innerVerifyToken = (totp: Totp) => (secret: string) => (token: string): boolean => {
 	const innerToken = totp({
 		secret,
 		encoding: 'base32',
@@ -564,7 +592,7 @@ const innerVerifyToken = (totp: Totp) => (secret: string) => (token: string) => 
 
 export const finishMFASetupFunc = (totp: Totp) => (schema: Schema) => (member: MemberReference) => (
 	token: string,
-) =>
+): ServerEither<void> =>
 	asyncRight(
 		findAndBind(schema.getCollection<StoredMFASecret>('MFASetup'), {
 			member: toReference(member),
@@ -596,20 +624,21 @@ export const finishMFASetupFunc = (totp: Totp) => (schema: Schema) => (member: M
 				schema
 					.getCollection<StoredMFASecret>('MFASetup')
 					.remove('member.id = :member_id AND member.type = :member_type')
-					// @ts-ignore
+					// @ts-ignore part of the custom query above
 					.bind('member_id', member.id)
-					// @ts-ignore
+					// @ts-ignore part of the custom query above
 					.bind('member_type', member.type)
 					.execute(),
 				schema.getCollection<StoredMFASecret>('MFATokens').add(res).execute(),
 			]),
 		)
 		.map(destroy);
+// eslint-disable-next-line
 export const finishMFASetup = finishMFASetupFunc(speakeasy.totp.bind(speakeasy));
 
 export const verifyMFATokenFunc = (totp: Totp) => (schema: Schema) => (member: MemberReference) => (
 	token: string,
-) =>
+): ServerEither<void> =>
 	asyncRight(
 		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
 			member: toReference(member),
@@ -636,9 +665,10 @@ export const verifyMFATokenFunc = (totp: Totp) => (schema: Schema) => (member: M
 						message: 'Token provided is invalid',
 				  }),
 		);
+// eslint-disable-next-line
 export const verifyMFAToken = verifyMFATokenFunc(speakeasy.totp.bind(speakeasy));
 
-export const memberUsesMFA = (schema: Schema) => (member: MemberReference) =>
+export const memberUsesMFA = (schema: Schema) => (member: MemberReference): ServerEither<boolean> =>
 	asyncRight(
 		findAndBind(schema.getCollection<StoredMFASecret>('MFATokens'), {
 			member: toReference(member),

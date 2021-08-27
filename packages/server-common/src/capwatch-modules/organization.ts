@@ -20,7 +20,16 @@
 import { NHQ } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const organizationParse: CAPWATCHModule<NHQ.Organization> = async (fileData, schema) => {
+const organizationParse: CAPWATCHModule<NHQ.Organization> = async (
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+) => {
+	if (!trustedFile) {
+		return CAPWATCHError.NOPERMISSIONS;
+	}
+
 	if (
 		typeof fileData[0].ORGID === 'undefined' ||
 		typeof fileData[0].Region === 'undefined' ||

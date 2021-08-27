@@ -272,7 +272,11 @@ module.exports = {
             "always",
             {
                 "markers": [
-                    "/"
+                    "/",
+                    "#region",
+                    "#endregion",
+                    "region",
+                    "endregion"
                 ]
             }
         ],

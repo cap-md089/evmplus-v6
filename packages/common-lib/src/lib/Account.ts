@@ -67,6 +67,13 @@ export const getEmbedLink = (account: AccountObject): string =>
 		account.mainCalendarID,
 	)}&ctz=America%2FNew_York\" style=\"border: 0\" width=\"720\" height=\"540\" frameborder=\"0\" scrolling=\"no\"></iframe>`;
 
+export const getORGIDsFromRegularCAPAccount = (account: RegularCAPAccountObject): number[] =>
+	account.type === AccountType.CAPWING
+		? [account.orgid, ...account.orgIDs]
+		: account.type === AccountType.CAPSQUADRON
+		? [account.mainOrg, ...account.orgIDs]
+		: [account.orgid];
+
 export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<number[]> =>
 	account.type === AccountType.CAPSQUADRON
 		? Maybe.some([account.mainOrg, ...account.orgIDs])

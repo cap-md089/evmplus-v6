@@ -19,7 +19,7 @@
 
 import { Schema, Session } from '@mysql/xdevapi';
 import { spawn } from 'child_process';
-import { CAPWATCHImportErrors } from 'common-lib';
+import { CAPWATCHImportErrors, ValidateRuleSet, Validator } from 'common-lib';
 import * as csv from 'csv-parse';
 import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
@@ -36,13 +36,29 @@ import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
-type FileData<T> = {
+export type FileData<T> = {
 	[P in keyof T]: string;
+};
+
+export const convertCAPWATCHValidator = <T extends object>(
+	validator: Validator<T>,
+): Validator<FileData<T>> => {
+	const newRules = {} as ValidateRuleSet<FileData<T>>;
+
+	for (const ruleName in validator.rules) {
+		if (validator.rules.hasOwnProperty(ruleName)) {
+			newRules[ruleName] = Validator.String;
+		}
+	}
+
+	return new Validator(newRules);
 };
 
 export type CAPWATCHModule<T> = (
 	fileData: Array<FileData<T>>,
 	schema: Schema,
+	isORGIDValid: (orgid: number) => boolean,
+	trustedFile: boolean,
 ) => Promise<CAPWATCHImportErrors>;
 
 const modules: Array<{
@@ -142,6 +158,7 @@ export default async function* (
 	schema: Schema,
 	session: Session,
 	files: string[] = modules.map(mod => mod.file),
+	orgidFilter?: number[],
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
 	await session.startTransaction();
 
@@ -174,9 +191,14 @@ export default async function* (
 			}
 		});
 
+		const isTrustedFile = orgidFilter !== undefined;
+
+		const isORGIDValid = (orgid: number): boolean =>
+			isTrustedFile || (orgidFilter ?? []).includes(orgid);
+
 		yield new Promise<CAPWATCHModuleResult>(res => {
 			parser.on('end', () => {
-				void mod.module(rows, schema).then(error =>
+				void mod.module(rows, schema, isORGIDValid, isTrustedFile).then(error =>
 					res({
 						error,
 						file: mod.file,

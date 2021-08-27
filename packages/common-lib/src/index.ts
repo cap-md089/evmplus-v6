@@ -44,3 +44,4 @@ export * from './typings/api';
 export * from './typings/types';
 export * from './typings/schemas';
 export * as PAMTypes from './typings/pam';
+export * as sockets from './comms/sockets';

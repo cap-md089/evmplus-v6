@@ -39,10 +39,12 @@
 		"onchange": "^6.1.0",
 		"pdfkit": "^0.10.0",
 		"promise-mysql": "^3.2.1",
+		"redux": "^4.1.1",
 		"request": "^2.87.0",
 		"request-promise": "^4.2.2",
 		"serve-favicon": "^2.4.5",
 		"server-common": "^1.25.0",
+		"socket.io": "^4.1.3",
 		"speakeasy": "^2.0.0",
 		"ssh2-sftp-client": "^5.2.1",
 		"uuid": "^3.2.1"

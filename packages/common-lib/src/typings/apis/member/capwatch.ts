@@ -24,7 +24,36 @@
  */
 
 import { APIEither } from '../../api';
-import { CAPWATCHImportErrors, CAPWATCHImportUpdate } from '../../types';
+import {
+	CAPWATCHImportErrors,
+	CAPWATCHImportRequestType,
+	CAPWATCHImportUpdateType,
+} from '../../types';
+
+// Each of the `Request` interfaces is used by the client
+
+export interface CAPWATCHImportAuthRequest {
+	type: CAPWATCHImportRequestType.ImportFile;
+}
+
+export type CAPWATCHImportRequest = CAPWATCHImportAuthRequest;
+
+// These are used for general communication, they don't represent actual download progress indicators
+
+export interface ImportReadyMessage {
+	type: 'ImportReady';
+}
+
+export interface PermissionDeniedMessage {
+	type: 'Denied';
+}
+
+export interface ErrorMessage {
+	type: 'Error';
+	message: string;
+}
+
+export type Messages = ImportReadyMessage | PermissionDeniedMessage | ErrorMessage;
 
 // Each of the `Result` interfaces contains a currentStep, to allow a progress indicator
 
@@ -33,8 +62,7 @@ import { CAPWATCHImportErrors, CAPWATCHImportUpdate } from '../../types';
  * ORGID of the target CAPWATCH file
  */
 export interface CAPWATCHFileDownloadedResult {
-	type: CAPWATCHImportUpdate.CAPWATCHFileDownloaded;
-	id: number;
+	type: CAPWATCHImportUpdateType.CAPWATCHFileDownloaded;
 	currentStep: number;
 }
 
@@ -42,18 +70,17 @@ export interface CAPWATCHFileDownloadedResult {
  * Contains information about when a TXT file inside a CAPWATCH file is imported
  */
 export interface CAPWATCHFileImportedResult {
-	type: CAPWATCHImportUpdate.FileImported;
-	orgID: number;
+	type: CAPWATCHImportUpdateType.FileImported;
 	error: CAPWATCHImportErrors;
 	file: string;
+	currentStep: number;
 }
 
 /**
  * Shows which file in the CAPWATCH bundle has been fully imported
  */
 export interface CAPWATCHFileDoneResult {
-	type: CAPWATCHImportUpdate.CAPWATCHFileDone;
-	id: number;
+	type: CAPWATCHImportUpdateType.CAPWATCHFileDone;
 	currentStep: number;
 }
 
@@ -61,9 +88,16 @@ export interface CAPWATCHFileDoneResult {
  * Communicates how many steps the server will be communicating
  */
 export interface CAPWATCHProgressInitialization {
-	type: CAPWATCHImportUpdate.ProgressInitialization;
+	type: CAPWATCHImportUpdateType.ProgressInitialization;
 	totalSteps: number;
 }
+
+export type CAPWATCHImportUpdate =
+	| CAPWATCHFileDownloadedResult
+	| CAPWATCHFileImportedResult
+	| CAPWATCHFileDoneResult
+	| CAPWATCHProgressInitialization
+	| Messages;
 
 /**
  * Imports CAPWATCH files for the specified ORG IDs, given a password to go with the

@@ -353,6 +353,7 @@ export enum CAPWATCHImportErrors {
 	BADDATA = 'BadData',
 	INSERT = 'BadInsert',
 	CLEAR = 'BadClear',
+	NOPERMISSIONS = 'BadPerms',
 }
 
 export enum AttendanceStatus {
@@ -417,7 +418,12 @@ export enum CustomAttendanceFieldEntryType {
 	FILE = 'File',
 }
 
-export enum CAPWATCHImportUpdate {
+export enum CAPWATCHImportRequestType {
+	Authenticate = 'Authenticate',
+	ImportFile = 'Import',
+}
+
+export enum CAPWATCHImportUpdateType {
 	CAPWATCHFileDownloaded = 'Downloaded',
 	FileImported = 'Imported',
 	CAPWATCHFileDone = 'Done',
@@ -1840,6 +1846,10 @@ export interface CAPSquadronMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Used for importing all the organizations in the squadron provided in the CAPWATCH file
+	 */
+	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
 }
 
 /**
@@ -1987,6 +1997,10 @@ export interface CAPGroupMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Used for importing all the organizations in the group provided in the CAPWATCH file
+	 */
+	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
 }
 
 export interface CAPWingMemberPermissions {
@@ -2057,6 +2071,10 @@ export interface CAPWingMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Used for importing all the organizations in the wing provided in the CAPWATCH file
+	 */
+	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
 }
 
 export interface CAPRegionMemberPermissions {
@@ -2127,6 +2145,10 @@ export interface CAPRegionMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Used for importing all the organizations in the region provided in the CAPWATCH file
+	 */
+	DownloadCAPWATCH: Permissions.DownloadCAPWATCH;
 }
 
 export type MemberPermissions =
@@ -3846,7 +3868,7 @@ export declare interface MemberUpdateEventEmitter extends EventEmitter {
 		}) => void,
 	): this;
 
-	emit(event: 'capwatchImport', account: AccountObject): boolean;
+	emit(event: 'capwatchImport', account: CAPAccountObject): boolean;
 	emit(event: 'memberChange', member: { member: Member; account: AccountObject }): boolean;
 	emit(event: 'discordRegister', user: { user: DiscordAccount; account: AccountObject }): boolean;
 	emit(

@@ -22,6 +22,8 @@ import { MemberUpdateEventEmitter, ServerConfiguration } from 'common-lib';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as http from 'http';
+import { Server } from 'socket.io';
+import setupCapwatchImporter from './api/member/capwatch/importcapwatch';
 import getRouter from './getAPIRouter';
 
 export interface ServerInitializationOptions {
@@ -46,6 +48,7 @@ export default async (
 	server.listen(port);
 	server.on('error', onError);
 	server.on('listening', onListening);
+	const socketIo = new Server(server);
 
 	capwatchEmitter ??= new EventEmitter();
 
@@ -60,6 +63,8 @@ export default async (
 		next();
 	});
 	app.disable('x-powered-by');
+
+	setupCapwatchImporter(conf, mysql, socketIo, capwatchEmitter);
 
 	app.use(apiRouter);
 
