@@ -40,9 +40,9 @@ export namespace NHQ {
 		AEMod: number;
 		AETest: number;
 		MoralLDateP: string;
-		ActivePart: number;
-		OtherReq: number;
-		SDAReport: number;
+		ActivePart: boolean;
+		OtherReq: boolean;
+		SDAReport: boolean;
 		UsrID: string;
 		DateMod: string;
 		FirstUsr: string;
@@ -50,7 +50,7 @@ export namespace NHQ {
 		DrillDate: string;
 		DrillScore: number;
 		LeadCurr: string;
-		CadetOath: number;
+		CadetOath: boolean;
 		AEBookValue: string;
 		MileRun: number;
 		ShuttleRun: number;

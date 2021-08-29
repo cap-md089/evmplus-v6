@@ -21,7 +21,7 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const oFlight: CAPWATCHModule<NHQ.OFlight> = async (fileData, schema) => {
+const oFlight: CAPWATCHModule<NHQ.OFlight> = async (backend, fileData, schema) => {
 	if (
 		typeof fileData[0].CAPID === 'undefined' ||
 		typeof fileData[0].Wing === 'undefined' ||

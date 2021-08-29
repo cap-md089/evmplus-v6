@@ -21,7 +21,7 @@ import { NHQ, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib'
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
+const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (backend, fileData, schema) => {
 	if (typeof fileData[0].CAPID === 'undefined') {
 		return CAPWATCHError.BADDATA;
 	}

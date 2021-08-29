@@ -17,29 +17,22 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
+
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CadetAchvAprs>(Validator) as Validator<NHQ.CadetAchvAprs>,
+);
 
 const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async (
+	backend,
 	fileData,
 	schema,
 ) => {
-	if (
-		fileData.length === 0 ||
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].CadetAchvID === 'undefined' ||
-		typeof fileData[0].Status === 'undefined' ||
-		typeof fileData[0].AprCAPID === 'undefined' ||
-		typeof fileData[0].DspReason === 'undefined' ||
-		typeof fileData[0].AwardNo === 'undefined' ||
-		typeof fileData[0].JROTCWaiver === 'undefined' ||
-		typeof fileData[0].UsrID === 'undefined' ||
-		typeof fileData[0].DateMod === 'undefined' ||
-		typeof fileData[0].FirstUsr === 'undefined' ||
-		typeof fileData[0].DateCreated === 'undefined' ||
-		typeof fileData[0].PrintedCert === 'undefined'
-	) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return CAPWATCHError.BADDATA;
 	}
 

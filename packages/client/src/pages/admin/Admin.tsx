@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { hasPermission, isRioux, AccountType, Permissions } from 'common-lib';
+import { hasPermission, isRioux, AccountType, Permissions, ClientUser } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
 import SigninLink from '../../components/SigninLink';
@@ -47,6 +47,8 @@ import CreateProspectiveMember from '../account/CreateProspectiveMember';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import SetupMFA from '../account/SetupMFA';
+import { canUseDownload, CAPWATCHWidget } from './pluggables/CAPWATCH';
+import CAPWATCHUploadPage from './pages/CAPWATCH';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -63,7 +65,14 @@ interface LoadedAdminState {
 
 type AdminState = LoadedAdminState | UnloadedAdminState;
 
-const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
+interface RequiredMemberProps extends PageProps {
+	member: ClientUser;
+}
+
+const widgets: Array<{
+	canuse: (props: PageProps) => boolean;
+	widget: typeof Page | React.FC<RequiredMemberProps>;
+}> = [
 	{
 		canuse: shouldRenderNotifications,
 		widget: NotificationsPlug,
@@ -105,6 +114,10 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 			)(member) &&
 			account.type === AccountType.CAPSQUADRON,
 		widget: ProspectiveMemberManagementWidget,
+	},
+	{
+		canuse: canUseDownload,
+		widget: CAPWATCHWidget,
 	},
 ];
 
@@ -200,6 +213,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 					exact={false}
 				/>
 				<Route path="/admin/setupmfa" render={this.pageRenderer(SetupMFA)} exact={false} />
+				<Route
+					path="/admin/uploadcapwatch"
+					render={this.pageRenderer(CAPWATCHUploadPage)}
+					exact={false}
+				/>
 
 				<Route path="/admin" exact={false} render={this.defaultPage} />
 			</Switch>
@@ -207,24 +225,24 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	private defaultPage = (): JSX.Element => {
-		const member = this.props.member;
+		const props = this.props as RequiredMemberProps;
 
-		if (!member) {
+		if (props.member === null) {
 			return <SigninLink>Please sign in</SigninLink>;
 		}
 
 		return (
 			<div className="widget-holder">
 				{widgets.map((val, i) =>
-					val.canuse(this.props) || isRioux(member) ? (
-						<val.widget {...this.props} key={i} />
+					val.canuse(props) || isRioux(props.member) ? (
+						<val.widget {...props} key={i} />
 					) : null,
 				)}
 			</div>
 		);
 	};
 
-	private pageRenderer = (Component: typeof Page) => () => (
-		<Component key="/admin" {...this.props} />
+	private pageRenderer = (Component: typeof Page | React.FC<RequiredMemberProps>) => () => (
+		<Component key="/admin" {...(this.props as RequiredMemberProps)} />
 	);
 }

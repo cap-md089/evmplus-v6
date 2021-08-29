@@ -53,13 +53,20 @@ import {
 	TemporaryDutyPosition,
 } from 'common-lib';
 import { DateTime } from 'luxon';
-import { AccountBackend } from '../../..';
-import { BasicAccountRequest } from '../../../Account';
-import { Backends, notImplementedError, notImplementedException } from '../../../backends';
+import { AccountBackend, BasicAccountRequest } from '../../..';
+import {
+	Backends,
+	combineBackends,
+	getTimeBackend,
+	notImplementedError,
+	notImplementedException,
+	TimeBackend,
+} from '../../../backends';
 import { MemberBackend } from '../../../Members';
 import { collectResults, findAndBind, RawMySQLBackend } from '../../../MySQLUtil';
+import { RegistryBackend } from '../../../Registry';
 import { ServerEither } from '../../../servertypes';
-import { TeamsBackend } from '../../../Team';
+import { getTeamsBackend, TeamsBackend } from '../../../Team';
 import {
 	getBirthday,
 	getCAPNHQMembersForORGIDs,
@@ -81,11 +88,12 @@ import {
 
 export { downloadCAPWATCHFile } from './NHQMember';
 
-const invalidTypeLeft = asyncLeft<ServerError, any>({
-	type: 'OTHER',
-	message: 'Invalid member type',
-	code: 400,
-});
+const invalidTypeLeft = <T>(): ServerEither<T> =>
+	asyncLeft<ServerError, T>({
+		type: 'OTHER',
+		message: 'Invalid member type',
+		code: 400,
+	});
 
 // -------------------------------------------------
 //
@@ -113,10 +121,14 @@ export const resolveCAPReference = (schema: Schema) => (backends: Backends<[Team
 	reference: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	reference.type === 'CAPNHQMember' && typeof reference.id === 'number'
-		? getNHQMember(schema)(backends)(account)(reference.id)
+		? (getNHQMember(schema)(backends)(account)(reference.id) as ServerEither<
+				MemberForReference<T>
+		  >)
 		: reference.type === 'CAPProspectiveMember' && typeof reference.id === 'string'
-		? getProspectiveMember(schema)(backends)(account)(reference.id)
-		: invalidTypeLeft;
+		? (getProspectiveMember(schema)(backends)(account)(reference.id) as ServerEither<
+				MemberForReference<T>
+		  >)
+		: invalidTypeLeft<MemberForReference<T>>();
 
 export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => (
 	reference: CAPMemberReference,
@@ -125,7 +137,7 @@ export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => 
 		? getNameForCAPNHQMember(schema)(reference)
 		: reference.type === 'CAPProspectiveMember'
 		? getNameForCAPProspectiveMember(schema)(account)(reference)
-		: invalidTypeLeft;
+		: invalidTypeLeft();
 
 export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
 	member: CAPMember,
@@ -158,15 +170,13 @@ export const addTemporaryDutyPosition = (position: TemporaryDutyPosition) => (
 		});
 	} else {
 		if (dutyPosition.type === 'CAPUnit') {
-			for (const key in dutyPositions) {
-				if (dutyPositions.hasOwnProperty(key)) {
-					const oldDuty = dutyPositions[key];
-					if (oldDuty.duty === dutyPosition.duty && oldDuty.type === 'CAPUnit') {
-						oldDuty.expires = position.validUntil;
-						oldDuty.date = position.assigned;
-					}
+			dutyPositions.forEach((key, i) => {
+				const oldDuty = dutyPositions[i];
+				if (oldDuty.duty === dutyPosition.duty && oldDuty.type === 'CAPUnit') {
+					oldDuty.expires = position.validUntil;
+					oldDuty.date = position.assigned;
 				}
-			}
+			});
 		}
 	}
 
@@ -249,14 +259,26 @@ export interface CAPMemberBackend {
 		member: CAPProspectiveMemberObject,
 	) => (newMember: CAPNHQMemberReference) => ServerEither<void>;
 	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
+	getNHQMember: (
+		account: AccountObject,
+	) => (memberRef: CAPNHQMemberReference) => ServerEither<CAPNHQMemberObject>;
 }
 
-export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend =>
-	getRequestFreeCAPMemberBackend(req.mysqlx, req.backend);
+export const getCAPMemberBackend: (req: BasicAccountRequest) => CAPMemberBackend = combineBackends<
+	BasicAccountRequest,
+	[
+		Backends<[RawMySQLBackend, AccountBackend, RegistryBackend]>,
+		TimeBackend,
+		TeamsBackend,
+		CAPMemberBackend,
+	]
+>(get('backend'), getTimeBackend, getTeamsBackend, (req, backends) =>
+	getRequestFreeCAPMemberBackend(req.mysqlx, backends),
+);
 
 export const getRequestFreeCAPMemberBackend = (
 	mysqlx: Schema,
-	prevBackends: Backends<[AccountBackend, RawMySQLBackend]>,
+	prevBackends: Backends<[AccountBackend, RawMySQLBackend, TeamsBackend]>,
 ): CAPMemberBackend => ({
 	deleteProspectiveMember: deleteProspectiveMember(mysqlx),
 	createProspectiveMember: account => member =>
@@ -283,6 +305,12 @@ export const getRequestFreeCAPMemberBackend = (
 	upgradeProspectiveMember: backend =>
 		upgradeProspectiveMemberToCAPNHQ({ ...backend, ...prevBackends }),
 	getBirthday: memoize(getBirthday(mysqlx), stringifyMemberReference),
+	getNHQMember: memoize(account =>
+		memoize(
+			({ id }) => getNHQMember(mysqlx)(prevBackends)(account)(id),
+			ref => stringifyMemberReference(ref),
+		),
+	),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
@@ -294,4 +322,5 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 		notImplementedError('getProspectiveMembersInAccount'),
 	upgradeProspectiveMember: () => () => () => notImplementedError('upgradeProspectiveMember'),
 	getBirthday: () => notImplementedError('getBirthday'),
+	getNHQMember: () => () => notImplementedError('getNHQMember'),
 });

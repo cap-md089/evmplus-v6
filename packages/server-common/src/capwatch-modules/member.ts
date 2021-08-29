@@ -21,7 +21,7 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (fileData, schema) => {
+const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (backend, fileData, schema) => {
 	if (
 		fileData.length === 0 ||
 		typeof fileData[0].CAPID === 'undefined' ||

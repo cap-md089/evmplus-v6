@@ -22,6 +22,7 @@ import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
 const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async (
+	backend,
 	fileData,
 	schema,
 ) => {

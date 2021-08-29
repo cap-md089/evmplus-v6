@@ -206,6 +206,7 @@ export const setupCapwatchImporter = (
 		request.mysqlxSession = session;
 		request.configuration = conf;
 		request._originalUrl = request.originalUrl;
+		request.hostname = request.headers.host ?? request.hostname;
 
 		const backend = combineBackends<
 			MySQLRequest,
@@ -219,6 +220,12 @@ export const setupCapwatchImporter = (
 			getRawMySQLBackend,
 			always(getCombinedMemberBackend()(request)),
 		)(request);
+
+		socket.on('disconnect', async () => {
+			if (store.getState().state === 'Waiting') {
+				await session.close();
+			}
+		});
 
 		socket.on('importfile', async (fileid: string) => {
 			const state = store.getState();
@@ -257,7 +264,7 @@ export const setupCapwatchImporter = (
 			// files.length + 3 includes all the files as well as the 'downloaded', file imported, and zip file done events
 			resultsEmitter({
 				type: CAPWATCHImportUpdateType.ProgressInitialization,
-				totalSteps: files.length + 3,
+				totalSteps: files.length + 2,
 			});
 
 			resultsEmitter({
@@ -268,13 +275,14 @@ export const setupCapwatchImporter = (
 			const orgids = (
 				await session
 					.sql(orgidQuerySQL(conf, getORGIDsFromRegularCAPAccount(state.account)))
+					.bind(getORGIDsFromRegularCAPAccount(state.account))
 					.execute()
 			)
 				.fetchAll()
 				.map(([value]: [number]) => value);
 
 			const iter = ImportCAPWATCHFile(
-				join(conf.DRIVE_STORAGE_PATH, fileid),
+				join(conf.DRIVE_STORAGE_PATH, `${fileResult.value.accountID}-${fileid}`),
 				request.mysqlx,
 				session,
 				files,
@@ -284,6 +292,7 @@ export const setupCapwatchImporter = (
 			let step = 1;
 
 			for await (const result of iter) {
+				console.log(result);
 				resultsEmitter({
 					type: CAPWATCHImportUpdateType.FileImported,
 					currentStep: step++,

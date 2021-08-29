@@ -23,11 +23,17 @@ import type { io, Socket } from 'socket.io-client';
 type SocketPaths = 'member:capwatch:importcapwatch';
 
 const SocketPathsImpl = {
-	'member:capwatch:importcapwatch': '/api/member/capwatch/importcapwatch',
+	'member:capwatch:importcapwatch': 'member:capwatch:importcapwatch',
 };
 
 export const getServerNamespace = (namespace: SocketPaths, server: Server): Namespace =>
 	server.of(SocketPathsImpl[namespace]);
 
 export const getClientNamespace = (namespace: SocketPaths, client: typeof io): Socket =>
-	client(SocketPathsImpl[namespace]);
+	process.env.NODE_ENV === 'development'
+		? client(`http://md089.localevmplus.org:3001/${SocketPathsImpl[namespace]}`, {
+				withCredentials: true,
+		  })
+		: client(SocketPathsImpl[namespace], {
+				withCredentials: true,
+		  });

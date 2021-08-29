@@ -21,7 +21,7 @@ import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
-const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (fileData, schema) => {
+const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (backend, fileData, schema) => {
 	if (typeof fileData[0].CAPID === 'undefined') {
 		return CAPWATCHError.BADDATA;
 	}

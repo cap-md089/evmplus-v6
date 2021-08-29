@@ -10,7 +10,12 @@ console.log('Using proxy target:', process.env.PROXY);
 const target = process.env.PROXY || 'localhost';
 
 module.exports = function (app) {
+	console.log(`Using proxy: ${target}`);
 	app.use(
+		proxy('/socker.io', {
+			target: `http://${target}:3001`,
+			ws: true
+		}),
 		proxy('/api', {
 			target: `http://${target}:3001`,
 		}),

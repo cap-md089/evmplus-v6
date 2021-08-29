@@ -33,6 +33,12 @@ import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
 import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
 import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
+import { Backends, combineBackends, getTimeBackend, TimeBackend } from './backends';
+import { AccountBackend, getRequestFreeAccountsBackend } from '.';
+import { CAP } from './member/members';
+import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
+import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
+import { getRequestFreeTeamsBackend, TeamsBackend } from './Team';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
@@ -55,6 +61,7 @@ export const convertCAPWATCHValidator = <T extends object>(
 };
 
 export type CAPWATCHModule<T> = (
+	backend: Backends<[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend]>,
 	fileData: Array<FileData<T>>,
 	schema: Schema,
 	isORGIDValid: (orgid: number) => boolean,
@@ -160,15 +167,39 @@ export default async function* (
 	files: string[] = modules.map(mod => mod.file),
 	orgidFilter?: number[],
 ): AsyncIterableIterator<CAPWATCHModuleResult> {
-	await session.startTransaction();
-
 	const foundModules: { [key: string]: boolean } = {};
 
 	for (const i of files) {
 		foundModules[i] = false;
 	}
 
+	const backend = combineBackends<
+		Schema,
+		[
+			RawMySQLBackend,
+			RegistryBackend,
+			AccountBackend,
+			TimeBackend,
+			TeamsBackend,
+			CAP.CAPMemberBackend,
+		]
+	>(
+		requestlessMySQLBackend,
+		getRequestFreeRegistryBackend,
+		getRequestFreeAccountsBackend,
+		getTimeBackend,
+		getRequestFreeTeamsBackend,
+		CAP.getRequestFreeCAPMemberBackend,
+	)(schema);
+
+	let failed = false;
+
 	for (const mod of modules) {
+		if (failed) {
+			await session.rollback();
+			return;
+		}
+
 		if (files.indexOf(mod.file) === -1) {
 			continue;
 		}
@@ -198,23 +229,32 @@ export default async function* (
 
 		yield new Promise<CAPWATCHModuleResult>(res => {
 			parser.on('end', () => {
-				void mod.module(rows, schema, isORGIDValid, isTrustedFile).then(error =>
-					res({
-						error,
-						file: mod.file,
-					}),
-				);
+				console.log('Parsing', rows.length, 'records');
+				void mod
+					.module(backend, rows, schema, isORGIDValid, isTrustedFile)
+					.then(error => {
+						if (error !== CAPWATCHImportErrors.NONE) {
+							failed = true;
+						}
+						return error;
+					})
+					.then(error =>
+						res({
+							error,
+							file: mod.file,
+						}),
+					);
 			});
 
 			zippedFile.pipe(parser);
 		});
 	}
 
+	await session.commit();
+
 	for (const i in foundModules) {
 		if (foundModules.hasOwnProperty(i) && !foundModules[i]) {
-			console.error('Invalid file passed to ImportCAPWATCHFile:', i);
+			console.warn('Invalid file passed to ImportCAPWATCHFile:', i);
 		}
 	}
-
-	await session.commit();
 }

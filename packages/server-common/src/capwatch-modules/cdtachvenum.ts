@@ -22,6 +22,7 @@ import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
 
 const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (
+	backend,
 	fileData,
 	schema,
 	isORGIDValid,

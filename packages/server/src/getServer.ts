@@ -48,7 +48,16 @@ export default async (
 	server.listen(port);
 	server.on('error', onError);
 	server.on('listening', onListening);
-	const socketIo = new Server(server);
+	const socketIo =
+		process.env.NODE_ENV === 'development'
+			? new Server(server, {
+					cors: {
+						origin: true,
+						credentials: true,
+						methods: ['GET', 'POST', 'OPTIONS'],
+					},
+			  })
+			: new Server(server);
 
 	capwatchEmitter ??= new EventEmitter();
 

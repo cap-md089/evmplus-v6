@@ -405,6 +405,15 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+
+			<Label key="41">Upload CAPWATCH files</Label>
+			<EnumSelect<Permissions.DownloadCAPWATCH>
+				key="42"
+				name="DownloadCAPWATCH"
+				labels={['No', 'Yes']}
+				values={[Permissions.DownloadCAPWATCH.NO, Permissions.DownloadCAPWATCH.YES]}
+				defaultValue={Permissions.DownloadCAPWATCH.NO}
+			/>
 		</FormBlock>
 	);
 
@@ -758,6 +767,15 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+
+			<Label key="41">Upload CAPWATCH files</Label>
+			<EnumSelect<Permissions.DownloadCAPWATCH>
+				key="42"
+				name="DownloadCAPWATCH"
+				labels={['No', 'Yes']}
+				values={[Permissions.DownloadCAPWATCH.NO, Permissions.DownloadCAPWATCH.YES]}
+				defaultValue={Permissions.DownloadCAPWATCH.NO}
+			/>
 		</FormBlock>
 	);
 
@@ -930,6 +948,15 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
 			/>
+
+			<Label key="43">Upload CAPWATCH files</Label>
+			<EnumSelect<Permissions.DownloadCAPWATCH>
+				key="44"
+				name="DownloadCAPWATCH"
+				labels={['No', 'Yes']}
+				values={[Permissions.DownloadCAPWATCH.NO, Permissions.DownloadCAPWATCH.YES]}
+				defaultValue={Permissions.DownloadCAPWATCH.NO}
+			/>
 		</FormBlock>
 	);
 
@@ -1101,6 +1128,15 @@ export default class PermissionsEdit extends React.Component<
 				labels={['No', 'Yes']}
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
+			/>
+
+			<Label key="43">Upload CAPWATCH files</Label>
+			<EnumSelect<Permissions.DownloadCAPWATCH>
+				key="44"
+				name="DownloadCAPWATCH"
+				labels={['No', 'Yes']}
+				values={[Permissions.DownloadCAPWATCH.NO, Permissions.DownloadCAPWATCH.YES]}
+				defaultValue={Permissions.DownloadCAPWATCH.NO}
 			/>
 		</FormBlock>
 	);

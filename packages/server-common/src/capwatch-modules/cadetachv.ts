@@ -27,14 +27,8 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.CadetAchv>(Validator) as Validator<NHQ.CadetAchv>,
 );
 
-const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (
-	fileData,
-	schema,
-	isValidORGID,
-) => {
-	const isValid = !fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft);
-
-	if (!isValid) {
+const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (backend, fileData, schema) => {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return CAPWATCHError.BADDATA;
 	}
 
@@ -64,9 +58,9 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (
 				AEMod: parseInt(member.AEMod, 10),
 				AETest: parseInt(member.AETest, 10),
 				MoralLDateP: convertNHQDate(member.MoralLDateP).toISOString(),
-				ActivePart: parseInt(member.ActivePart, 10),
-				OtherReq: parseInt(member.OtherReq, 10),
-				SDAReport: parseInt(member.SDAReport, 10),
+				ActivePart: member.ActivePart === 'True',
+				OtherReq: member.OtherReq === 'True',
+				SDAReport: member.SDAReport === 'True',
 				UsrID: member.UsrID,
 				DateMod: convertNHQDate(member.DateMod).toISOString(),
 				FirstUsr: member.FirstUsr,
@@ -74,7 +68,7 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (
 				DrillDate: convertNHQDate(member.DrillDate).toISOString(),
 				DrillScore: parseInt(member.DrillScore, 10),
 				LeadCurr: member.LeadCurr,
-				CadetOath: parseInt(member.CadetOath, 10),
+				CadetOath: member.CadetOath === 'True',
 				AEBookValue: member.AEBookValue,
 				MileRun: parseInt(member.MileRun, 10),
 				ShuttleRun: parseInt(member.ShuttleRun, 10),

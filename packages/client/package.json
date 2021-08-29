@@ -92,5 +92,5 @@
 		"prettier": "2.2.1",
 		"typescript": "^4.2.3"
 	},
-	"proxy": "http://localhost:3001/"
+	"proxy": "http://main:3001/"
 }
