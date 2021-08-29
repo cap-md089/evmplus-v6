@@ -300,6 +300,12 @@ export const setupCapwatchImporter = (
 						error: result.error,
 						file: result.file,
 					});
+				} else if (result.type === 'PermsError') {
+					resultsEmitter({
+						type: CAPWATCHImportUpdateType.CancelledPermsIssue,
+						capid: result.capid,
+						memberName: result.memberName,
+					});
 				} else {
 					resultsEmitter({
 						type: CAPWATCHImportUpdateType.FileProgress,

@@ -54,6 +54,7 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 					.remove('CAPID = :CAPID')
 					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
 					.execute();
+				removedCAPIDs[member.CAPID] = true;
 			}
 
 			const values: NHQ.CadetAchvAprs = {

@@ -429,6 +429,7 @@ export enum CAPWATCHImportUpdateType {
 	CAPWATCHFileDone = 'Done',
 	ProgressInitialization = 'Init',
 	FileProgress = 'FileProgress',
+	CancelledPermsIssue = 'CancelledPermsIssue',
 }
 
 export enum PasswordResult {

@@ -93,6 +93,12 @@ export interface CAPWATCHFileDoneResult {
 	currentStep: number;
 }
 
+export interface CAPWATCHFileMemberImportCancelledResult {
+	type: CAPWATCHImportUpdateType.CancelledPermsIssue;
+	capid: number;
+	memberName: string;
+}
+
 /**
  * Communicates how many steps the server will be communicating
  */
@@ -105,6 +111,7 @@ export type CAPWATCHImportUpdate =
 	| CAPWATCHFileDownloadedResult
 	| CAPWATCHFileImportedResult
 	| CAPWATCHFileDoneResult
+	| CAPWATCHFileMemberImportCancelledResult
 	| CAPWATCHProgressInitialization
 	| CAPWATCHFileProgressUpdateResult
 	| Messages;

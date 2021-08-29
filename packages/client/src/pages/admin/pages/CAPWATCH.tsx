@@ -72,13 +72,20 @@ interface ErrorState {
 	message: string;
 }
 
+interface MemberCancellation {
+	state: 'MEMBERCANCELLED';
+	capid: number;
+	memberName: string;
+}
+
 type ImportState =
 	| LoadingState
 	| SelectingState
 	| SelectedState
 	| ImportingState
 	| DoneImportingState
-	| ErrorState;
+	| ErrorState
+	| MemberCancellation;
 
 const initialState: ImportState = {
 	state: 'LOADING',
@@ -164,6 +171,13 @@ const reducer = (state: ImportState, action: Actions): ImportState => {
 						recordCount: 1,
 				  }
 				: state;
+
+		case CAPWATCHImportUpdateType.CancelledPermsIssue:
+			return {
+				state: 'MEMBERCANCELLED',
+				capid: action.capid,
+				memberName: action.memberName,
+			};
 
 		case 'Denied':
 			return {
@@ -316,6 +330,23 @@ export const CAPWATCHUploadPage = (props: FetchAPIProps & RequiredMember): JSX.E
 					%
 				</div>
 			</div>
+		</div>
+	) : state.state === 'MEMBERCANCELLED' ? (
+		<div>
+			<h2>Member Import Issue</h2>
+			<h3>
+				A transfer request is required; one of the members in your CAPWATCH file has been
+				identified as being a part of another unit
+			</h3>
+			<p>
+				It has been detected that you are trying to import member data for:{' '}
+				{state.memberName} (CAPID: {state.capid}). Unfortunately, this is not an action that
+				can be automatically performed at this time. Please email{' '}
+				<a href="mailto:arioux@md.cap.gov">C/LtCol Andrew Rioux</a>
+				to request that the member you are trying to transfer be transferred to your unit.
+				When making the request, please be sure to include the name of the member, their CAP
+				ID, and your unit you are transferring them to.
+			</p>
 		</div>
 	) : (
 		<div>

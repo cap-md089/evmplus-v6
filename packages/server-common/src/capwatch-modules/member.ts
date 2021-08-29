@@ -17,25 +17,28 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Collection } from '@mysql/xdevapi';
 import { validator } from 'auto-client-api';
-import { Either, NHQ, Validator } from 'common-lib';
+import { Either, getFullMemberName, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { collectResults, findAndBind } from '../MySQLUtil';
 import { convertCAPWATCHValidator } from './lib/validator';
 
 const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.NHQMember>(Validator) as Validator<NHQ.NHQMember>,
 );
 
-const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (backend, fileData, schema) {
+const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+	files,
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
-		console.warn(
-			JSON.stringify(
-				fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft),
-				null,
-				4,
-			),
-		);
 		return yield {
 			type: 'Result',
 			error: CAPWATCHError.BADDATA,
@@ -44,21 +47,81 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (backend, fil
 
 	const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
 	const memberContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
+	const cadetAchvCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv');
+	const cadetAchvAprsCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchvAprs');
+	const cadetDutyPositionCollection = schema.getCollection<NHQ.CadetDutyPosition>(
+		'NHQ_CadetDutyPosition',
+	);
+	const dutyPositionCollection = schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition');
+	const mbrAchievementsCollection = schema.getCollection<NHQ.MbrAchievements>(
+		'NHQ_MbrAchievements',
+	);
+	const cadetActivitiesCollection = schema.getCollection<NHQ.MbrAchievements>(
+		'NHQ_CadetActivities',
+	);
+	const cadetHFZInformationCollection = schema.getCollection<NHQ.CadetHFZInformation>(
+		'NHQ_CadetHFZInformation',
+	);
+	const oFlightCollection = schema.getCollection<NHQ.OFlight>('NHQ_OFlight');
+
+	const extraCollections = [];
+
+	const collectionMap: { [key: string]: Collection<{ CAPID: number }> } = {
+		'DutyPosition.txt': dutyPositionCollection,
+		'MbrContact.txt': memberContactCollection,
+		'CadetDutyPositions.txt': cadetDutyPositionCollection,
+		'CadetActivities.txt': cadetActivitiesCollection,
+		'OFlight.txt': oFlightCollection,
+		'MbrAchievements': mbrAchievementsCollection,
+		'CadetAchv.txt': cadetAchvCollection,
+		'CadetAchvAprs.txt': cadetAchvAprsCollection,
+		'CadetHFZInformation.txt': cadetHFZInformationCollection,
+	};
+
+	// Only clear out tables we intend to fill later
+	for (const file of files) {
+		if (file in collectionMap) {
+			extraCollections.push(collectionMap[file]);
+		}
+	}
 
 	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
-			await Promise.all([
-				memberCollection
-					.remove('CAPID = :CAPID')
-					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-				memberContactCollection
-					.remove('CAPID = :CAPID')
-					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute(),
-			]);
+			const results = await collectResults(
+				findAndBind(memberCollection, {
+					CAPID: parseInt(member.CAPID, 10),
+				}),
+			);
+
+			if (results.length !== 0 && !isORGIDValid(results[0].ORGID)) {
+				return yield {
+					type: 'PermsError',
+					capid: parseInt(member.CAPID, 10),
+					memberName: getFullMemberName({
+						memberRank: member.Rank,
+						nameFirst: member.NameFirst,
+						nameLast: member.NameLast,
+						nameMiddle: member.NameMiddle,
+						nameSuffix: member.NameSuffix,
+					}),
+				};
+			}
+
+			capidMap[parseInt(member.CAPID, 10)] = parseInt(member.ORGID, 10);
+
+			await Promise.all(
+				[
+					memberCollection,
+					...extraCollections,
+				].map((collection: Collection<{ CAPID: number }>) =>
+					collection
+						.remove('CAPID = :CAPID')
+						.bind('CAPID', parseInt(member.CAPID, 10))
+						.execute(),
+				),
+			);
 
 			const values: NHQ.NHQMember = {
 				CAPID: parseInt(member.CAPID, 10),

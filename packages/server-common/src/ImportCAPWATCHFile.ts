@@ -70,13 +70,23 @@ export interface CAPWATCHFileUpdateResult {
 	currentRecord: number;
 }
 
+export interface CAPWATCHFilePermissionsResult {
+	type: 'PermsError';
+	memberName: string;
+	capid: number;
+}
+
 export type CAPWATCHModule<T> = (
 	backend: Backends<[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend]>,
 	fileData: Array<FileData<T>>,
 	schema: Schema,
 	isORGIDValid: (orgid: number) => boolean,
 	trustedFile: boolean,
-) => AsyncIterableIterator<CAPWATCHFileUpdateResult | CAPWATCHFileResult>;
+	capidMap: { [CAPID: number]: number },
+	files: string[],
+) => AsyncIterableIterator<
+	CAPWATCHFileUpdateResult | CAPWATCHFileResult | CAPWATCHFilePermissionsResult
+>;
 
 const modules: Array<{
 	module: CAPWATCHModule<any>;
@@ -177,7 +187,16 @@ export interface CAPWATCHFileUpdate {
 	currentRecord: number;
 }
 
-export type CAPWATCHUpdateOrResult = CAPWATCHModuleResult | CAPWATCHFileUpdate;
+export interface CAPWATCHFileMemberImportError {
+	type: 'PermsError';
+	capid: number;
+	memberName: string;
+}
+
+export type CAPWATCHUpdateOrResult =
+	| CAPWATCHModuleResult
+	| CAPWATCHFileUpdate
+	| CAPWATCHFileMemberImportError;
 
 export default async function* (
 	zipFileLocation: string,
@@ -188,7 +207,11 @@ export default async function* (
 ): AsyncIterableIterator<CAPWATCHUpdateOrResult> {
 	const foundModules: { [key: string]: boolean } = {};
 
-	for (const i of files) {
+	// Always import Member.txt first, so that it can set which CAPID belongs to which ORGID
+	// The Member.txt module impurely updates an object to allow for quick checking of CAPIDs vs ORGIDs
+	const usedFiles = ['Member.txt', ...files.filter(file => file !== 'Member.txt')];
+
+	for (const i of usedFiles) {
 		foundModules[i] = false;
 	}
 
@@ -211,8 +234,10 @@ export default async function* (
 		CAP.getRequestFreeCAPMemberBackend,
 	)(schema);
 
+	const capidMap: { [CAPID: number]: number } = {};
+
 	for (const mod of modules) {
-		if (files.indexOf(mod.file) === -1) {
+		if (usedFiles.indexOf(mod.file) === -1) {
 			continue;
 		}
 
@@ -254,6 +279,8 @@ export default async function* (
 			schema,
 			isORGIDValid,
 			isTrustedFile,
+			capidMap,
+			usedFiles,
 		)) {
 			if (result.type === 'Result') {
 				if (result.error !== CAPWATCHImportErrors.NONE) {
@@ -268,6 +295,10 @@ export default async function* (
 					...result,
 					file: mod.file,
 				};
+			} else if (result.type === 'PermsError') {
+				await session.rollback();
+
+				return yield result;
 			} else {
 				yield {
 					...result,
