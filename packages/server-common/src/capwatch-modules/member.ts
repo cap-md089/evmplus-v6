@@ -17,33 +17,35 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (backend, fileData, schema) => {
-	if (
-		fileData.length === 0 ||
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].DOB === 'undefined' ||
-		typeof fileData[0].Expiration === 'undefined' ||
-		typeof fileData[0].MbrStatus === 'undefined' ||
-		typeof fileData[0].NameFirst === 'undefined' ||
-		typeof fileData[0].NameLast === 'undefined' ||
-		typeof fileData[0].NameMiddle === 'undefined' ||
-		typeof fileData[0].NameSuffix === 'undefined' ||
-		typeof fileData[0].ORGID === 'undefined' ||
-		typeof fileData[0].Rank === 'undefined' ||
-		typeof fileData[0].Type === 'undefined' ||
-		typeof fileData[0].Unit === 'undefined' ||
-		typeof fileData[0].Wing === 'undefined' ||
-		typeof fileData[0].Region === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.NHQMember>(Validator) as Validator<NHQ.NHQMember>,
+);
+
+const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (backend, fileData, schema) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		console.warn(
+			JSON.stringify(
+				fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft),
+				null,
+				4,
+			),
+		);
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const memberCollection = schema.getCollection<NHQ.NHQMember>('NHQ_Member');
 	const memberContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
+
+	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
@@ -90,13 +92,27 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async (backend, fileData, sch
 			};
 
 			await memberCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default memberParse;

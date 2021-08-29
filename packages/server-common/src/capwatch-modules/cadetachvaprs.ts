@@ -27,13 +27,16 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.CadetAchvAprs>(Validator) as Validator<NHQ.CadetAchvAprs>,
 );
 
-const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async (
+const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async function* (
 	backend,
 	fileData,
 	schema,
-) => {
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
-		return CAPWATCHError.BADDATA;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetAchievementApprovalsCollection = schema.getCollection<NHQ.CadetAchvAprs>(
@@ -41,6 +44,8 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 	);
 
 	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
@@ -67,13 +72,27 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 			};
 
 			await cadetAchievementApprovalsCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default cadetAchievementApprovalsParse;

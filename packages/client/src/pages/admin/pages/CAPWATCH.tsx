@@ -34,6 +34,7 @@ import SimpleForm, { FileInput, Label } from '../../../components/forms/SimpleFo
 import Loader from '../../../components/Loader';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { RequiredMember } from '../pluggables/SiteAdmin';
+import './CAPWATCH.css';
 
 interface LoadingState {
 	state: 'LOADING';
@@ -54,6 +55,8 @@ interface ImportingState {
 	file: FileObject;
 	currentMessage: string;
 	currentStep: number;
+	recordCount: number;
+	currentRecord: number;
 	stepCount: number;
 }
 
@@ -136,6 +139,19 @@ const reducer = (state: ImportState, action: Actions): ImportState => {
 				  }
 				: state;
 
+		case CAPWATCHImportUpdateType.FileProgress:
+			return state.state === 'IMPORTING'
+				? {
+						state: 'IMPORTING',
+						currentMessage: state.currentMessage,
+						currentStep: state.currentStep,
+						file: state.file,
+						stepCount: state.stepCount,
+						currentRecord: action.currentRecord,
+						recordCount: action.recordCount,
+				  }
+				: state;
+
 		case CAPWATCHImportUpdateType.ProgressInitialization:
 			return state.state === 'FILESELECTED'
 				? {
@@ -144,6 +160,8 @@ const reducer = (state: ImportState, action: Actions): ImportState => {
 						currentStep: 0,
 						file: state.file,
 						stepCount: action.totalSteps,
+						currentRecord: 1,
+						recordCount: 1,
 				  }
 				: state;
 
@@ -234,6 +252,10 @@ export const CAPWATCHUploadPage = (props: FetchAPIProps & RequiredMember): JSX.E
 				message: fileDeleteResult.value.message,
 			});
 		}
+
+		dispatch({
+			type: 'CAPWATCHFileDeleted',
+		});
 	};
 
 	return state.state === 'LOADING' || state.state === 'FILESELECTED' ? (
@@ -268,15 +290,40 @@ export const CAPWATCHUploadPage = (props: FetchAPIProps & RequiredMember): JSX.E
 	) : state.state === 'IMPORTING' ? (
 		<div>
 			<h2>Importing...</h2>
-			<h3>
-				{state.currentMessage} ({state.currentStep} / {state.stepCount})
-			</h3>
+			<h3>{state.currentMessage}</h3>
+			<div className="capwatch-progress-bar-container">
+				<div
+					className="capwatch-progress-bar"
+					style={{
+						width: `${
+							(state.currentStep / state.stepCount +
+								(1 / state.stepCount) *
+									(state.recordCount === 0
+										? 0
+										: state.currentRecord / state.recordCount)) *
+							100
+						}%`,
+					}}
+				>
+					{(
+						(state.currentStep / state.stepCount +
+							(1 / state.stepCount) *
+								(state.recordCount === 0
+									? 0
+									: state.currentRecord / state.recordCount)) *
+						100
+					).toFixed(1)}
+					%
+				</div>
+			</div>
 		</div>
 	) : (
 		<div>
 			<h2>Done importing!</h2>
-			<h3>{state.lastMessage} (100%)</h3>
-			<Button onClick={deleteFile(state.file.id)}>Delete CAPWATCH file?</Button>
+			<h3>{state.lastMessage}</h3>
+			{state.fileDeleted ? (
+				<Button onClick={deleteFile(state.file.id)}>Delete CAPWATCH file?</Button>
+			) : null}
 		</div>
 	);
 };

@@ -17,13 +17,26 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (backend, fileData, schema) => {
-	if (typeof fileData[0].CAPID === 'undefined') {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.MbrAchievements>(Validator) as Validator<NHQ.MbrAchievements>,
+);
+
+const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async function* (
+	backend,
+	fileData,
+	schema,
+) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	let values: NHQ.MbrAchievements;
@@ -35,6 +48,8 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (backend, fil
 
 		const clearedORGIDs: { [key: string]: boolean } = {};
 
+		let currentRecord = 0;
+
 		for (const achv of fileData) {
 			if (!clearedORGIDs[achv.ORGID]) {
 				try {
@@ -44,7 +59,10 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (backend, fil
 						.execute();
 				} catch (e) {
 					console.warn(e);
-					return CAPWATCHError.CLEAR;
+					return yield {
+						type: 'Result',
+						error: CAPWATCHError.CLEAR,
+					};
 				}
 
 				clearedORGIDs[achv.ORGID] = true;
@@ -73,12 +91,26 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async (backend, fil
 			};
 
 			await mbrAchievementsCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		}
 
-		return CAPWATCHError.NONE;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.NONE,
+		};
 	} catch (e) {
 		console.warn(e);
-		return CAPWATCHError.INSERT;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.INSERT,
+		};
 	}
 };
 

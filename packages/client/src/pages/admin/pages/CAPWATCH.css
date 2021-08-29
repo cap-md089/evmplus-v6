@@ -1,0 +1,12 @@
+.capwatch-progress-bar-container {
+    width: calc(100% - 20px);
+    margin: 10px;
+}
+
+.capwatch-progress-bar {
+    height: 20px;
+    background-color: blue;
+    color: white;
+    overflow: hidden;
+    text-align: center;
+}

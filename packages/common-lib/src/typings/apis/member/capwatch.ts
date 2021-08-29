@@ -77,6 +77,15 @@ export interface CAPWATCHFileImportedResult {
 }
 
 /**
+ * Communicates how far into the file the import process is
+ */
+export interface CAPWATCHFileProgressUpdateResult {
+	type: CAPWATCHImportUpdateType.FileProgress;
+	recordCount: number;
+	currentRecord: number;
+}
+
+/**
  * Shows which file in the CAPWATCH bundle has been fully imported
  */
 export interface CAPWATCHFileDoneResult {
@@ -97,6 +106,7 @@ export type CAPWATCHImportUpdate =
 	| CAPWATCHFileImportedResult
 	| CAPWATCHFileDoneResult
 	| CAPWATCHProgressInitialization
+	| CAPWATCHFileProgressUpdateResult
 	| Messages;
 
 /**

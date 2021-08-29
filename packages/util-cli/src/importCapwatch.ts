@@ -54,7 +54,9 @@ void (async () => {
 	const capImport = ImportCAPWATCHFile(capwatchPath, schema, session);
 
 	for await (const i of capImport) {
-		console.log(i);
+		if (i.type === 'Result') {
+			console.log(i);
+		}
 	}
 
 	process.exit();

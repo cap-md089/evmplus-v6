@@ -17,37 +17,26 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async (
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CadetHFZInformation>(Validator) as Validator<NHQ.CadetHFZInformation>,
+);
+
+const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async function* (
 	backend,
 	fileData,
 	schema,
-) => {
-	if (
-		fileData.length === 0 ||
-		typeof fileData[0].HFZID === 'undefined' ||
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].DateTaken === 'undefined' ||
-		typeof fileData[0].ORGID === 'undefined' ||
-		typeof fileData[0].IsPassed === 'undefined' ||
-		typeof fileData[0].WeatherWaiver === 'undefined' ||
-		typeof fileData[0].PacerRun === 'undefined' ||
-		typeof fileData[0].PacerRunWaiver === 'undefined' ||
-		typeof fileData[0].PacerRunPassed === 'undefined' ||
-		typeof fileData[0].MileRun === 'undefined' ||
-		typeof fileData[0].MileRunWaiver === 'undefined' ||
-		typeof fileData[0].MileRunPassed === 'undefined' ||
-		typeof fileData[0].CurlUp === 'undefined' ||
-		typeof fileData[0].CurlUpWaiver === 'undefined' ||
-		typeof fileData[0].CurlUpPassed === 'undefined' ||
-		typeof fileData[0].SitAndReach === 'undefined' ||
-		typeof fileData[0].SitAndReachWaiver === 'undefined' ||
-		typeof fileData[0].SitAndReachPassed === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetHFZInformationCollection = schema.getCollection<NHQ.CadetHFZInformation>(
@@ -55,6 +44,8 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 	);
 
 	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
@@ -87,6 +78,14 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 			};
 
 			await cadetHFZInformationCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
 			return CAPWATCHError.INSERT;

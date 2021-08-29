@@ -27,14 +27,23 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.CadetAchv>(Validator) as Validator<NHQ.CadetAchv>,
 );
 
-const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (backend, fileData, schema) => {
+const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async function* (
+	backend,
+	fileData,
+	schema,
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
-		return CAPWATCHError.BADDATA;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetAchievementCollection = schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv');
 
 	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
@@ -85,13 +94,27 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (backend, fil
 			};
 
 			await cadetAchievementCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default cadetAchievementParse;

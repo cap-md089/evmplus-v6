@@ -17,33 +17,31 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const organizationParse: CAPWATCHModule<NHQ.Organization> = async (
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.Organization>(Validator) as Validator<NHQ.Organization>,
+);
+
+const organizationParse: CAPWATCHModule<NHQ.Organization> = async function* (
 	backend,
 	fileData,
 	schema,
 	isORGIDValid,
 	trustedFile,
-) => {
+) {
 	if (!trustedFile) {
 		return CAPWATCHError.NOPERMISSIONS;
 	}
 
-	if (
-		typeof fileData[0].ORGID === 'undefined' ||
-		typeof fileData[0].Region === 'undefined' ||
-		typeof fileData[0].Wing === 'undefined' ||
-		typeof fileData[0].Unit === 'undefined' ||
-		typeof fileData[0].NextLevel === 'undefined' ||
-		typeof fileData[0].Name === 'undefined' ||
-		typeof fileData[0].Type === 'undefined' ||
-		typeof fileData[0].Status === 'undefined' ||
-		typeof fileData[0].Scope === 'undefined' ||
-		typeof fileData[0].OrgNotes === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const organizationCollection = schema.getCollection<NHQ.Organization>('NHQ_Organization');
@@ -52,8 +50,13 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (
 		await organizationCollection.remove('true').execute();
 	} catch (e) {
 		console.warn(e);
-		return CAPWATCHError.CLEAR;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.CLEAR,
+		};
 	}
+
+	let currentRecord = 0;
 
 	for (const organization of fileData) {
 		try {
@@ -77,13 +80,27 @@ const organizationParse: CAPWATCHModule<NHQ.Organization> = async (
 			};
 
 			await organizationCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default organizationParse;

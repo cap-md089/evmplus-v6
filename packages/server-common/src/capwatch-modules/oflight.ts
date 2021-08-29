@@ -17,33 +17,29 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const oFlight: CAPWATCHModule<NHQ.OFlight> = async (backend, fileData, schema) => {
-	if (
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].Wing === 'undefined' ||
-		typeof fileData[0].Unit === 'undefined' ||
-		typeof fileData[0].Amount === 'undefined' ||
-		typeof fileData[0].Syllabus === 'undefined' ||
-		typeof fileData[0].Type === 'undefined' ||
-		typeof fileData[0].FltDate === 'undefined' ||
-		typeof fileData[0].TransDate === 'undefined' ||
-		typeof fileData[0].FltRlsNum === 'undefined' ||
-		typeof fileData[0].AcftTailNum === 'undefined' ||
-		typeof fileData[0].FltTime === 'undefined' ||
-		typeof fileData[0].LstUsr === 'undefined' ||
-		typeof fileData[0].LstDateMod === 'undefined' ||
-		typeof fileData[0].Comments === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.OFlight>(Validator) as Validator<NHQ.OFlight>,
+);
+
+const oFlight: CAPWATCHModule<NHQ.OFlight> = async function* (backend, fileData, schema) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const oFlightCollection = schema.getCollection<NHQ.OFlight>('NHQ_OFlight');
 
 	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	let currentRecord = 0;
 
 	for await (const oFlightConst of fileData) {
 		try {
@@ -74,13 +70,27 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async (backend, fileData, schema) =
 			};
 
 			await oFlightCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default oFlight;

@@ -17,13 +17,22 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { NHQ, CAPMemberContactType, CAPMemberContactPriority, Validator, Either } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (backend, fileData, schema) => {
-	if (typeof fileData[0].CAPID === 'undefined') {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.MbrContact>(Validator) as Validator<NHQ.MbrContact>,
+);
+
+const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (backend, fileData, schema) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	try {
@@ -32,6 +41,8 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (backend, fileData, sch
 		const addedCAPIDs: { [key: string]: boolean } = {};
 
 		let values: NHQ.MbrContact;
+
+		let currentRecord = 0;
 
 		for (const contact of fileData) {
 			if (!addedCAPIDs[contact.CAPID]) {
@@ -54,12 +65,26 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (backend, fileData, sch
 			};
 
 			await mbrContactCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		}
 
-		return CAPWATCHError.NONE;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.NONE,
+		};
 	} catch (e) {
 		console.warn(e);
-		return CAPWATCHError.INSERT;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.INSERT,
+		};
 	}
 };
 

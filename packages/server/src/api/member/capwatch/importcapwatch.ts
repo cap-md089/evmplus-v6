@@ -292,12 +292,21 @@ export const setupCapwatchImporter = (
 			let step = 1;
 
 			for await (const result of iter) {
-				console.log(result);
-				resultsEmitter({
-					type: CAPWATCHImportUpdateType.FileImported,
-					currentStep: step++,
-					...result,
-				});
+				if (result.type === 'Result') {
+					console.log(result);
+					resultsEmitter({
+						type: CAPWATCHImportUpdateType.FileImported,
+						currentStep: step++,
+						error: result.error,
+						file: result.file,
+					});
+				} else {
+					resultsEmitter({
+						type: CAPWATCHImportUpdateType.FileProgress,
+						currentRecord: result.currentRecord,
+						recordCount: result.recordCount,
+					});
+				}
 			}
 
 			resultsEmitter({

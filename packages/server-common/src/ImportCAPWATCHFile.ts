@@ -21,23 +21,23 @@ import { Schema, Session } from '@mysql/xdevapi';
 import { spawn } from 'child_process';
 import { CAPWATCHImportErrors, ValidateRuleSet, Validator } from 'common-lib';
 import * as csv from 'csv-parse';
-import cadetActivities from './capwatch-modules/cadetactivities';
-import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
+import { AccountBackend, getRequestFreeAccountsBackend } from '.';
+import { Backends, combineBackends, getTimeBackend, TimeBackend } from './backends';
 import cadetAchv from './capwatch-modules/cadetachv';
 import cadetAchvAprs from './capwatch-modules/cadetachvaprs';
+import cadetActivities from './capwatch-modules/cadetactivities';
+import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
+import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
+import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrAchievements from './capwatch-modules/mbrachievement';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
-import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
-import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
-import { Backends, combineBackends, getTimeBackend, TimeBackend } from './backends';
-import { AccountBackend, getRequestFreeAccountsBackend } from '.';
 import { CAP } from './member/members';
-import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
 import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
+import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
 import { getRequestFreeTeamsBackend, TeamsBackend } from './Team';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
@@ -60,13 +60,23 @@ export const convertCAPWATCHValidator = <T extends object>(
 	return new Validator(newRules);
 };
 
+export interface CAPWATCHFileResult {
+	type: 'Result';
+	error: CAPWATCHImportErrors;
+}
+
+export interface CAPWATCHFileUpdateResult {
+	type: 'Update';
+	currentRecord: number;
+}
+
 export type CAPWATCHModule<T> = (
 	backend: Backends<[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend]>,
 	fileData: Array<FileData<T>>,
 	schema: Schema,
 	isORGIDValid: (orgid: number) => boolean,
 	trustedFile: boolean,
-) => Promise<CAPWATCHImportErrors>;
+) => AsyncIterableIterator<CAPWATCHFileUpdateResult | CAPWATCHFileResult>;
 
 const modules: Array<{
 	module: CAPWATCHModule<any>;
@@ -155,10 +165,19 @@ const modules: Array<{
 	}*/,
 ];
 
-interface CAPWATCHModuleResult {
+export interface CAPWATCHModuleResult {
+	type: 'Result';
 	error: CAPWATCHImportErrors;
 	file: string;
 }
+
+export interface CAPWATCHFileUpdate {
+	type: 'Update';
+	recordCount: number;
+	currentRecord: number;
+}
+
+export type CAPWATCHUpdateOrResult = CAPWATCHModuleResult | CAPWATCHFileUpdate;
 
 export default async function* (
 	zipFileLocation: string,
@@ -166,7 +185,7 @@ export default async function* (
 	session: Session,
 	files: string[] = modules.map(mod => mod.file),
 	orgidFilter?: number[],
-): AsyncIterableIterator<CAPWATCHModuleResult> {
+): AsyncIterableIterator<CAPWATCHUpdateOrResult> {
 	const foundModules: { [key: string]: boolean } = {};
 
 	for (const i of files) {
@@ -192,14 +211,7 @@ export default async function* (
 		CAP.getRequestFreeCAPMemberBackend,
 	)(schema);
 
-	let failed = false;
-
 	for (const mod of modules) {
-		if (failed) {
-			await session.rollback();
-			return;
-		}
-
 		if (files.indexOf(mod.file) === -1) {
 			continue;
 		}
@@ -227,27 +239,42 @@ export default async function* (
 		const isORGIDValid = (orgid: number): boolean =>
 			isTrustedFile || (orgidFilter ?? []).includes(orgid);
 
-		yield new Promise<CAPWATCHModuleResult>(res => {
+		const records = await new Promise<any[]>(res => {
 			parser.on('end', () => {
 				console.log('Parsing', rows.length, 'records');
-				void mod
-					.module(backend, rows, schema, isORGIDValid, isTrustedFile)
-					.then(error => {
-						if (error !== CAPWATCHImportErrors.NONE) {
-							failed = true;
-						}
-						return error;
-					})
-					.then(error =>
-						res({
-							error,
-							file: mod.file,
-						}),
-					);
+				res(rows);
 			});
 
 			zippedFile.pipe(parser);
 		});
+
+		for await (const result of mod.module(
+			backend,
+			records,
+			schema,
+			isORGIDValid,
+			isTrustedFile,
+		)) {
+			if (result.type === 'Result') {
+				if (result.error !== CAPWATCHImportErrors.NONE) {
+					await session.rollback();
+
+					return yield {
+						...result,
+						file: mod.file,
+					};
+				}
+				yield {
+					...result,
+					file: mod.file,
+				};
+			} else {
+				yield {
+					...result,
+					recordCount: records.length,
+				};
+			}
+		}
 	}
 
 	await session.commit();

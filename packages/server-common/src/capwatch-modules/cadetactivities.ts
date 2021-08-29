@@ -17,20 +17,26 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { Either, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (backend, fileData, schema) => {
-	if (
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].Type === 'undefined' ||
-		typeof fileData[0].Location === 'undefined' ||
-		typeof fileData[0].Completed === 'undefined' ||
-		typeof fileData[0].UsrID === 'undefined' ||
-		typeof fileData[0].DateMod === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CadetActivities>(Validator) as Validator<NHQ.CadetActivities>,
+);
+
+const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async function* (
+	backend,
+	fileData,
+	schema,
+) {
+	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetActivitiesCollection = schema.getCollection<NHQ.CadetActivities>(
@@ -38,6 +44,8 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (backend, fil
 	);
 
 	const removedCAPIDs: { [key: string]: boolean } = {};
+
+	let currentRecord = 0;
 
 	for (const cadetActivitiesConst of fileData) {
 		try {
@@ -60,13 +68,27 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (backend, fil
 			};
 
 			await cadetActivitiesCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default cadetActivities;
