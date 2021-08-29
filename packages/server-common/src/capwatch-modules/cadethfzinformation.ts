@@ -43,19 +43,10 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 		'NHQ_CadetHFZInformation',
 	);
 
-	const removedCAPIDs: { [key: string]: boolean } = {};
-
 	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
-			if (!removedCAPIDs[member.CAPID]) {
-				await cadetHFZInformationCollection
-					.remove('CAPID = :CAPID')
-					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute();
-			}
-
 			const values: NHQ.CadetHFZInformation = {
 				HFZID: parseInt(member.HFZID, 10),
 				CAPID: parseInt(member.CAPID, 10),

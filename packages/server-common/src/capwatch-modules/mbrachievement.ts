@@ -46,28 +46,9 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async function* (
 			'NHQ_MbrAchievements',
 		);
 
-		const clearedORGIDs: { [key: string]: boolean } = {};
-
 		let currentRecord = 0;
 
 		for (const achv of fileData) {
-			if (!clearedORGIDs[achv.ORGID]) {
-				try {
-					await mbrAchievementsCollection
-						.remove('ORGID = :ORGID')
-						.bind('ORGID', parseInt(achv.ORGID + '', 10))
-						.execute();
-				} catch (e) {
-					console.warn(e);
-					return yield {
-						type: 'Result',
-						error: CAPWATCHError.CLEAR,
-					};
-				}
-
-				clearedORGIDs[achv.ORGID] = true;
-			}
-
 			values = {
 				CAPID: parseInt(achv.CAPID.toString(), 10),
 				AchvID: parseInt(achv.AchvID.toString(), 10),

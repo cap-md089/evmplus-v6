@@ -43,20 +43,10 @@ const cadetAchievementApprovalsParse: CAPWATCHModule<NHQ.CadetAchvAprs> = async 
 		'NHQ_CadetAchvAprs',
 	);
 
-	const removedCAPIDs: { [key: string]: boolean } = {};
-
 	let currentRecord = 0;
 
 	for (const member of fileData) {
 		try {
-			if (!removedCAPIDs[member.CAPID]) {
-				await cadetAchievementApprovalsCollection
-					.remove('CAPID = :CAPID')
-					.bind({ CAPID: parseInt(member.CAPID + '', 10) })
-					.execute();
-				removedCAPIDs[member.CAPID] = true;
-			}
-
 			const values: NHQ.CadetAchvAprs = {
 				CAPID: parseInt(member.CAPID, 10),
 				CadetAchvID: parseInt(member.CadetAchvID, 10),

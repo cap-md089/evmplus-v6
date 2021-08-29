@@ -48,26 +48,7 @@ const cadetDutyPosition: CAPWATCHModule<NHQ.CadetDutyPosition> = async function*
 			'NHQ_CadetDutyPosition',
 		);
 
-		const clearedORGIDs: { [key: string]: true } = {};
-
 		for (const duties of fileData) {
-			if (!clearedORGIDs[duties.ORGID]) {
-				try {
-					await dutyPositionCollection
-						.remove('ORGID = :ORGID')
-						.bind('ORGID', parseInt(duties.ORGID + '', 10))
-						.execute();
-				} catch (e) {
-					console.warn(e);
-					return yield {
-						type: 'Result',
-						error: CAPWATCHError.CLEAR,
-					};
-				}
-
-				clearedORGIDs[duties.ORGID] = true;
-			}
-
 			values = {
 				CAPID: parseInt(duties.CAPID, 10),
 				Duty: duties.Duty,

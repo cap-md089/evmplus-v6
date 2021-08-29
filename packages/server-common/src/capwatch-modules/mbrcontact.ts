@@ -38,22 +38,11 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (backend, fil
 	try {
 		const mbrContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
 
-		const addedCAPIDs: { [key: string]: boolean } = {};
-
 		let values: NHQ.MbrContact;
 
 		let currentRecord = 0;
 
 		for (const contact of fileData) {
-			if (!addedCAPIDs[contact.CAPID]) {
-				await mbrContactCollection
-					.remove('CAPID = :CAPID')
-					.bind('CAPID', parseInt(contact.CAPID, 10))
-					.execute();
-			}
-
-			addedCAPIDs[contact.CAPID] = true;
-
 			values = {
 				CAPID: parseInt(contact.CAPID.toString(), 10),
 				Type: contact.Type as CAPMemberContactType,

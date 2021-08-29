@@ -43,21 +43,10 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async function* (
 		'NHQ_CadetActivities',
 	);
 
-	const removedCAPIDs: { [key: string]: boolean } = {};
-
 	let currentRecord = 0;
 
 	for (const cadetActivitiesConst of fileData) {
 		try {
-			if (!removedCAPIDs[cadetActivitiesConst.CAPID]) {
-				await cadetActivitiesCollection
-					.remove('CAPID = :CAPID')
-					.bind('CAPID', parseInt(cadetActivitiesConst.CAPID, 10))
-					.execute();
-			}
-
-			removedCAPIDs[cadetActivitiesConst.CAPID] = true;
-
 			const values = {
 				CAPID: parseInt(cadetActivitiesConst.CAPID + '', 10),
 				Type: cadetActivitiesConst.Type,

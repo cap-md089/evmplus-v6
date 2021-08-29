@@ -40,28 +40,9 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async function* (backend,
 	try {
 		const dutyPositionCollection = schema.getCollection<NHQ.DutyPosition>('NHQ_DutyPosition');
 
-		const clearedORGIDs: { [key: string]: boolean } = {};
-
 		let currentRecord = 0;
 
 		for (const duties of fileData) {
-			if (!clearedORGIDs[duties.ORGID]) {
-				try {
-					await dutyPositionCollection
-						.remove('ORGID = :ORGID')
-						.bind('ORGID', parseInt(duties.ORGID + '', 10))
-						.execute();
-				} catch (e) {
-					console.warn(e);
-					return yield {
-						type: 'Result',
-						error: CAPWATCHError.CLEAR,
-					};
-				}
-
-				clearedORGIDs[duties.ORGID] = true;
-			}
-
 			values = {
 				CAPID: parseInt(duties.CAPID, 10),
 				Duty: duties.Duty,

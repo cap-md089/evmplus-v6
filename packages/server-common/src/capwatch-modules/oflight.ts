@@ -37,21 +37,10 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async function* (backend, fileData,
 
 	const oFlightCollection = schema.getCollection<NHQ.OFlight>('NHQ_OFlight');
 
-	const removedCAPIDs: { [key: string]: boolean } = {};
-
 	let currentRecord = 0;
 
 	for await (const oFlightConst of fileData) {
 		try {
-			if (!removedCAPIDs[oFlightConst.CAPID]) {
-				await oFlightCollection
-					.remove('CAPID = :CAPID')
-					.bind('CAPID', parseInt(oFlightConst.CAPID, 10))
-					.execute();
-			}
-
-			removedCAPIDs[oFlightConst.CAPID] = true;
-
 			const values: NHQ.OFlight = {
 				CAPID: parseInt(oFlightConst.CAPID + '', 10),
 				Wing: oFlightConst.Wing,
