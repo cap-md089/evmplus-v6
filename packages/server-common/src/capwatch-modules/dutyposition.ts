@@ -27,7 +27,14 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.DutyPosition>(Validator) as Validator<NHQ.DutyPosition>,
 );
 
-const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async function* (backend, fileData, schema) {
+const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
 			type: 'Result',
@@ -43,6 +50,13 @@ const dutyPosition: CAPWATCHModule<NHQ.DutyPosition> = async function* (backend,
 		let currentRecord = 0;
 
 		for (const duties of fileData) {
+			if (!isORGIDValid(capidMap[parseInt(duties.CAPID, 10)])) {
+				return yield {
+					type: 'Result',
+					error: CAPWATCHError.NOPERMISSIONS,
+				};
+			}
+
 			values = {
 				CAPID: parseInt(duties.CAPID, 10),
 				Duty: duties.Duty,

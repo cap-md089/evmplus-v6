@@ -31,6 +31,9 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async function* (
 	backend,
 	fileData,
 	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
 ) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
@@ -44,6 +47,13 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async function* (
 	let currentRecord = 0;
 
 	for (const member of fileData) {
+		if (!isORGIDValid(capidMap[parseInt(member.CAPID, 10)])) {
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.NOPERMISSIONS,
+			};
+		}
+
 		try {
 			const values: NHQ.CadetAchv = {
 				CAPID: parseInt(member.CAPID, 10),

@@ -27,7 +27,14 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.OFlight>(Validator) as Validator<NHQ.OFlight>,
 );
 
-const oFlight: CAPWATCHModule<NHQ.OFlight> = async function* (backend, fileData, schema) {
+const oFlight: CAPWATCHModule<NHQ.OFlight> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
 			type: 'Result',
@@ -40,6 +47,13 @@ const oFlight: CAPWATCHModule<NHQ.OFlight> = async function* (backend, fileData,
 	let currentRecord = 0;
 
 	for await (const oFlightConst of fileData) {
+		if (!isORGIDValid(capidMap[parseInt(oFlightConst.CAPID, 10)])) {
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.NOPERMISSIONS,
+			};
+		}
+
 		try {
 			const values: NHQ.OFlight = {
 				CAPID: parseInt(oFlightConst.CAPID + '', 10),

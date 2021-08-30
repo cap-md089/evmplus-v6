@@ -31,6 +31,9 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 	backend,
 	fileData,
 	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
 ) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
@@ -46,6 +49,13 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 	let currentRecord = 0;
 
 	for (const member of fileData) {
+		if (!isORGIDValid(capidMap[parseInt(member.CAPID, 10)])) {
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.NOPERMISSIONS,
+			};
+		}
+
 		try {
 			const values: NHQ.CadetHFZInformation = {
 				HFZID: parseInt(member.HFZID, 10),

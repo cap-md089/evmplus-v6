@@ -27,7 +27,14 @@ const recordValidator = convertCAPWATCHValidator(
 	validator<NHQ.MbrContact>(Validator) as Validator<NHQ.MbrContact>,
 );
 
-const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (backend, fileData, schema) {
+const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
 			type: 'Result',
@@ -43,6 +50,13 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (backend, fil
 		let currentRecord = 0;
 
 		for (const contact of fileData) {
+			if (!isORGIDValid(capidMap[parseInt(contact.CAPID, 10)])) {
+				return yield {
+					type: 'Result',
+					error: CAPWATCHError.NOPERMISSIONS,
+				};
+			}
+
 			values = {
 				CAPID: parseInt(contact.CAPID.toString(), 10),
 				Type: contact.Type as CAPMemberContactType,

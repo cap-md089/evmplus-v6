@@ -31,6 +31,9 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async function* (
 	backend,
 	fileData,
 	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
 ) {
 	if (!!fileData.map(value => recordValidator.validate(value, '')).find(Either.isLeft)) {
 		return yield {
@@ -49,6 +52,13 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async function* (
 		let currentRecord = 0;
 
 		for (const achv of fileData) {
+			if (!isORGIDValid(capidMap[parseInt(achv.CAPID, 10)])) {
+				return yield {
+					type: 'Result',
+					error: CAPWATCHError.NOPERMISSIONS,
+				};
+			}
+
 			values = {
 				CAPID: parseInt(achv.CAPID.toString(), 10),
 				AchvID: parseInt(achv.AchvID.toString(), 10),
