@@ -182,19 +182,19 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap --
 ENV NODE_ENV production
 
 # Setup crontab
-COPY cronjobs/crontab /etc/cron.d/hello-cron
+COPY cronjobs/crontab /etc/cron.d/crontab
 COPY cronjobs/download.sh ./cronjobs/download.sh
 COPY cronjobs/backup.sh ./cronjobs/backup.sh
 COPY scripts/database-dump.js ./cronjobs/database-dump.js
 
-RUN chmod 0744 /etc/cron.d/hello-cron \
+RUN chmod 0744 /etc/cron.d/crontab \
 	&& chmod 0744 /usr/evm-plus/cronjobs/download.sh \
 	&& chmod 0744 /usr/evm-plus/cronjobs/backup.sh \
-	&& crontab /etc/cron.d/hello-cron \
+	&& crontab /etc/cron.d/crontab \
 	&& touch /var/log/cron.log
 
 ENTRYPOINT [ "sh" ]
-CMD crond && tail -f /var/log/cron.log
+CMD [ "-c", "cron && tail -f /var/log/cron.log" ]
 
 #
 # This container provides access to the different CLI utilities provided, such as
