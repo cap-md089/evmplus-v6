@@ -1,0 +1,549 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ *
+ * This file is part of EvMPlus.org.
+ *
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { DateTime } from 'luxon';
+import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import {
+	CadetPromotionRequirements,
+	CadetPromotionRequirementsMap,
+	CAPProspectiveMemberObject,
+	get,
+	Maybe,
+	NHQ,
+	RegistryValues,
+} from '../..';
+import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
+
+export const sqr601DocumentDefinition = (
+	nhqmembers: PromotionRequrementsItem[],
+	newmembers: CAPProspectiveMemberObject[],
+	registry: RegistryValues,
+): TDocumentDefinitions => {
+	const myTest = true;
+	const myTitleFontSize = 10;
+	const mySmallFontSize = 7;
+
+	const newmem = newmembers.length > 0 ? 'non-zero' : 'zero';
+
+	function sortName(a: PromotionRequrementsItem, b: PromotionRequrementsItem): number {
+		const aName = a.member.nameLast + ', ' + a.member.nameFirst;
+		const bName = b.member.nameLast + ', ' + a.member.nameFirst;
+		return aName.localeCompare(bName);
+	}
+
+	function determineSDA(
+		member: PromotionRequrementsItem,
+		requirements: CadetPromotionRequirements,
+	): string {
+		let req = 0;
+		let reqComp = 0;
+		let compDate = new Date('01/01/2010').toLocaleDateString('en-US');
+		const recentDate = new Date('01/01/2010');
+		const reqs = [];
+		reqs.push({
+			required: requirements.SDAService,
+			completionDate: new Date(member.requirements.CurrentCadetAchv.StaffServiceDate),
+		});
+		reqs.push({
+			required: requirements.SDAWriting,
+			completionDate: new Date(
+				member.requirements.CurrentCadetAchv.TechnicalWritingAssignmentDate,
+			),
+		});
+		reqs.push({
+			required: requirements.SDAPresentation,
+			completionDate: new Date(member.requirements.CurrentCadetAchv.OralPresentationDate),
+		});
+
+		for (let i = 0; i < 3; i++) {
+			if (reqs[i].required) {
+				req++;
+				if (reqs[i].completionDate.getTime() > recentDate.getTime()) {
+					reqComp++;
+					if (reqs[i].completionDate.getTime() > new Date(compDate).getTime()) {
+						compDate = new Date(reqs[i].completionDate).toLocaleDateString('en-US');
+					}
+				}
+			}
+		}
+
+		if (req === 0) {
+			return 'N/A';
+		} else if (req > reqComp) {
+			return 'Incomplete';
+		} else {
+			return compDate;
+		}
+	}
+
+	const unpoweredFlights = [1, 2, 3, 4, 5];
+	const poweredFlights = [6, 7, 8, 9, 10];
+
+	const oridesShortDescription = (rides: NHQ.OFlight[]): string =>
+		[...new Set(rides.map(get('Syllabus')))]
+			.reduce<[number, number]>(
+				([powered, unpowered], syllabus) =>
+					poweredFlights.includes(syllabus)
+						? [powered + 1, unpowered]
+						: unpoweredFlights.includes(syllabus)
+						? [powered, unpowered + 1]
+						: [powered, unpowered],
+				[0, 0],
+			)
+			.join('p | ') + 'u';
+
+	const myFill = myTest
+		? nhqmembers.sort(sortName).map((loopmember): TableCell[] => [
+				{
+					text: loopmember.member.memberRank,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: loopmember.member.nameLast + ', ' + loopmember.member.nameFirst,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: loopmember.member.id,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: loopmember.member.flight,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
+							new Date().getTime() <=
+						0
+							? 'Y'
+							: new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
+									new Date().getTime() <=
+							  60 * 60 * 24 * 30 * 1000
+							? '<'
+							: '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: Maybe.isSome(loopmember.requirements.LastAprvDate)
+						? new Date(
+								loopmember.requirements.LastAprvDate.value +
+									60 * 60 * 24 * 56 * 1000,
+						  ).toLocaleDateString('en-US')
+						: '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+							.Grade,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alighment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.requirements.CurrentCadetAchv.LeadLabDateP).getTime() -
+							new Date('01/01/2010').getTime() <=
+						0
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Leadership === 'None'
+								? 'N/A'
+								: ''
+							: new Date(
+									loopmember.requirements.CurrentCadetAchv.LeadLabDateP.substr(
+										0,
+										10,
+									),
+							  ).toLocaleDateString('en-US'),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
+							new Date('01/01/2010').getTime() <=
+						0
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Aerospace === 'None'
+								? 'N/A'
+								: ''
+							: new Date(
+									loopmember.requirements.CurrentCadetAchv.AEDateP.substr(0, 10),
+							  ).toLocaleDateString('en-US'),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+							.SDAPresentation === false &&
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+							.SDAService === false &&
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+							.SDAWriting === false
+							? 'N/A'
+							: determineSDA(
+									loopmember,
+									CadetPromotionRequirementsMap[
+										loopmember.requirements.NextCadetAchvID
+									],
+							  ),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.requirements.HFZRecord.DateTaken).getTime() -
+							new Date('01/01/2010').getTime() <=
+						0
+							? 'N/A'
+							: new Date(
+									new Date(
+										loopmember.requirements.HFZRecord.DateTaken.substr(0, 10),
+									).getTime() +
+										60 * 60 * 24 * 182 * 1000,
+							  ).toLocaleDateString('en-US'),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
+							new Date('01/01/2010').getTime() <=
+						0
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Drill === 'None'
+								? 'N/A'
+								: CadetPromotionRequirementsMap[
+										loopmember.requirements.NextCadetAchvID
+								  ].Drill
+							: new Date(
+									loopmember.requirements.CurrentCadetAchv.DrillDate.substr(
+										0,
+										10,
+									),
+							  ).toLocaleDateString('en-US'),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text:
+						new Date(loopmember.requirements.CurrentCadetAchv.MoralLDateP).getTime() -
+							new Date('01/01/2010').getTime() <=
+						0
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.CharDev === false
+								? 'N/A'
+								: ''
+							: new Date(
+									loopmember.requirements.CurrentCadetAchv.MoralLDateP.substr(
+										0,
+										10,
+									),
+							  ).toLocaleDateString('en-US'),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+						.Mentor
+						? loopmember.requirements.CurrentCadetAchv.OtherReq
+							? 'Y'
+							: 'N'
+						: 'N/A',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: Maybe.isSome(loopmember.requirements.ges) ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: oridesShortDescription(loopmember.requirements.oflights),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+		  ])
+		: [];
+
+	const myFill2: TableCell[][] =
+		newmem === 'non-zero'
+			? [
+					[
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+					],
+			  ]
+			: [];
+
+	const nowDate = DateTime.utc();
+	const docDefinition: TDocumentDefinitions = {
+		pageSize: 'LETTER',
+		pageOrientation: 'landscape',
+		pageMargins: [25, 40, 64, 40],
+
+		header: {
+			text: registry.Website.Name + ' Cadet Status Report',
+			alignment: 'left',
+			fontSize: myTitleFontSize,
+			bold: true,
+			margin: [30, 20, 40, 35],
+		},
+
+		footer: (currentPage: number, pageCount: number): Content => [
+			{
+				layout: 'noBorders',
+				table: {
+					widths: [792 - 72],
+					headerRows: 0,
+					body: [
+						[
+							{
+								layout: 'noBorders',
+								table: {
+									widths: ['*', 306, '*'],
+									headerRows: 0,
+									body: [
+										[
+											{
+												text: 'Squadron Report 60-1 Aug 2021',
+												bold: true,
+												fontSize: mySmallFontSize,
+											},
+											{
+												text: `Generated by Event Manager on ${
+													nowDate.toLocaleString({
+														year: 'numeric',
+														month: '2-digit',
+														day: '2-digit',
+													}) ?? ''
+												}`,
+												bold: false,
+												fontSize: mySmallFontSize,
+												alignment: 'center',
+											},
+											{
+												text: `Page ${currentPage} of ${pageCount}`,
+												bold: false,
+												fontSize: mySmallFontSize,
+												alignment: 'right',
+											},
+										],
+									],
+								},
+							},
+						],
+					],
+				},
+				margin: [30, 0, 0, 60],
+			},
+		],
+
+		content: [
+			// content array start
+			{
+				// title table start
+				table: {
+					// table def start
+					headerRows: 1,
+					widths: [
+						30, // Grade
+						73, // Full Name
+						25, // CAPID
+						25, // Flight
+						13, // Exp
+						36, // Eligible
+						30, // Next
+						36, // Lead Lab
+						36, // AeroEd
+						36, // SDA
+						36, // HFZ
+						36, // Drill Test
+						30, // Oath
+						36, // Char Dev
+						30, // Mentor?
+						30, // GES
+						35, // O-Flights
+					],
+					body: [
+						[
+							// row 1
+							{
+								text: 'Grade',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Full Name',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'CAPID',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Flight',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Exp',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Eligible',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Next',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'LeadLab',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'AeroEd',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'SDA',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'HFZ Exp',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'DrillTest',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Oath',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'CharDev',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Mentor?',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'GES',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'O-Flights',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+						], // row 1
+						...myFill,
+						...myFill2,
+					],
+				}, // table def end
+				layout: {
+					fillColor: rowIndex => (rowIndex % 2 === 0 ? '#CCCCCC' : null),
+				}, // table layout end
+			}, // title table end
+		], // content array end
+		defaultStyle: {
+			font: 'FreeSans',
+		},
+	}; // doc def end
+
+	return docDefinition;
+};
+// http://localhost:3001/api/event/2/attendance/log

@@ -275,7 +275,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 	const days = 60 * 60 * 24 * 1000;
 	const promoReqs =
 		CadetPromotionRequirementsMap[
-			cps.CurrentAprvStatus === 'INC'
+			cps.MaxAprvStatus === 'INC'
 				? cps.CurrentCadetAchv.CadetAchvID
 				: cps.CurrentCadetAchv.CadetAchvID + 1
 		];
@@ -307,7 +307,7 @@ function RequirementsBuild(cps: CadetPromotionStatus): JSX.Element | null {
 	return (
 		<div>
 			<h3>Promotion requirements</h3>
-			{cps.CurrentAprvStatus === 'PND' ? (
+			{cps.MaxAprvStatus === 'PND' ? (
 				<p>
 					Your achievement completion is pending eServices approval. Local promotion
 					requirements may apply. Review the requirements for your next achievement{' '}

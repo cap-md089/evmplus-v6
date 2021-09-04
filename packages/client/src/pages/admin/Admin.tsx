@@ -17,7 +17,7 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { hasPermission, isRioux, AccountType, Permissions } from 'common-lib';
+import { hasPermission, isRioux, AccountType, Permissions, ClientUser } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
 import SigninLink from '../../components/SigninLink';
@@ -47,6 +47,7 @@ import CreateProspectiveMember from '../account/CreateProspectiveMember';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import SetupMFA from '../account/SetupMFA';
+import { ReportsWidget, shouldRenderReports } from './pluggables/Reports';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -63,7 +64,16 @@ interface LoadedAdminState {
 
 type AdminState = LoadedAdminState | UnloadedAdminState;
 
-const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Page }> = [
+interface AdminWidgetProps extends PageProps<any> {
+	member: ClientUser;
+}
+
+interface WidgetDefinition {
+	canuse: (props: AdminWidgetProps) => boolean;
+	widget: typeof Page | React.FC<AdminWidgetProps>;
+}
+
+const widgets: WidgetDefinition[] = [
 	{
 		canuse: shouldRenderNotifications,
 		widget: NotificationsPlug,
@@ -76,6 +86,10 @@ const widgets: Array<{ canuse: (props: PageProps) => boolean; widget: typeof Pag
 	{
 		canuse: shouldRenderSiteAdmin,
 		widget: SiteAdminWidget,
+	},
+	{
+		canuse: shouldRenderReports,
+		widget: ReportsWidget,
 	},
 	{
 		canuse: canUseCreate,
@@ -207,17 +221,19 @@ export default class Admin extends Page<PageProps, AdminState> {
 	}
 
 	private defaultPage = (): JSX.Element => {
-		const member = this.props.member;
+		const propsCheck = this.props;
 
-		if (!member) {
+		if (!propsCheck.member) {
 			return <SigninLink>Please sign in</SigninLink>;
 		}
+
+		const props = propsCheck as AdminWidgetProps;
 
 		return (
 			<div className="widget-holder">
 				{widgets.map((val, i) =>
-					val.canuse(this.props) || isRioux(member) ? (
-						<val.widget {...this.props} key={i} />
+					val.canuse(props) || isRioux(props.member) ? (
+						<val.widget {...props} key={i} />
 					) : null,
 				)}
 			</div>

@@ -86,6 +86,46 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 				AEMod: parseInt(member.AEMod, 10),
 				AETest: parseInt(member.AETest, 10),
 				MoralLDateP: convertNHQDate(member.MoralLDateP).toISOString(),
+				ActivePart: member.ActivePart === 'True',
+				OtherReq: member.OtherReq === 'True',
+				SDAReport: member.SDAReport === 'True',
+				UsrID: member.UsrID,
+				DateMod: convertNHQDate(member.DateMod).toISOString(),
+				FirstUsr: member.FirstUsr,
+				DateCreated: convertNHQDate(member.DateCreated).toISOString(),
+				DrillDate: convertNHQDate(member.DrillDate).toISOString(),
+				DrillScore: parseInt(member.DrillScore, 10),
+				LeadCurr: member.LeadCurr,
+				CadetOath: member.CadetOath === 'True',
+				AEBookValue: member.AEBookValue,
+				MileRun: parseInt(member.MileRun, 10),
+				ShuttleRun: parseInt(member.ShuttleRun, 10),
+				SitAndReach: parseInt(member.SitAndReach, 10),
+				PushUps: parseInt(member.PushUps, 10),
+				CurlUps: parseInt(member.CurlUps, 10),
+				HFZID: parseInt(member.HFZID, 10),
+				StaffServiceDate: convertNHQDate(member.StaffServiceDate).toISOString(),
+				TechnicalWritingAssignment: member.TechnicalWritingAssignment,
+				TechnicalWritingAssignmentDate: convertNHQDate(
+					member.TechnicalWritingAssignmentDate,
+				).toISOString(),
+				OralPresentationDate: convertNHQDate(member.OralPresentationDate).toISOString(),
+			};
+
+			await cadetAchievementCollection.add(values).execute();
+		} catch (e) {
+			console.warn(member);
+			console.warn({
+				CAPID: parseInt(member.CAPID, 10),
+				CadetAchvID: parseInt(member.CadetAchvID, 10),
+				PhyFitTest: convertNHQDate(member.PhyFitTest).toISOString(),
+				LeadLabDateP: convertNHQDate(member.LeadLabDateP).toISOString(),
+				LeadLabScore: parseInt(member.LeadLabScore, 10),
+				AEDateP: convertNHQDate(member.AEDateP).toISOString(),
+				AEScore: parseInt(member.AEScore, 10),
+				AEMod: parseInt(member.AEMod, 10),
+				AETest: parseInt(member.AETest, 10),
+				MoralLDateP: convertNHQDate(member.MoralLDateP).toISOString(),
 				ActivePart: parseInt(member.ActivePart, 10),
 				OtherReq: parseInt(member.OtherReq, 10),
 				SDAReport: parseInt(member.SDAReport, 10),
@@ -110,11 +150,8 @@ const cadetAchievementParse: CAPWATCHModule<NHQ.CadetAchv> = async (fileData, sc
 					member.TechnicalWritingAssignmentDate,
 				).toISOString(),
 				OralPresentationDate: convertNHQDate(member.OralPresentationDate).toISOString(),
-			};
-
-			await cadetAchievementCollection.add(values).execute();
-		} catch (e) {
-			console.warn(e);
+			});
+			console.error(e);
 			return CAPWATCHError.INSERT;
 		}
 	}

@@ -74,7 +74,6 @@ export {
 export * from './MySQLUtil';
 export * from './Notification';
 export * from './Organizations';
-export * from './PromotionRequirements';
 export {
 	getEmptyRegistryBackend,
 	getRegistryBackend,

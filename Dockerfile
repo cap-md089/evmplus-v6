@@ -83,7 +83,7 @@ COPY packages/server-jest-config/package.json packages/server-jest-config/packag
 COPY packages/util-cli/package.json packages/util-cli/package.json
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn/v6 lerna bootstrap
 
-COPY types/mysql__xdevapi/index.d.ts ./types/mysql__xdevapi/index.d.ts
+COPY types ./types
 COPY packages ./packages
 COPY tsconfig.* ./
 RUN --mount=type=cache,target=/usr/evm-plus/packages/apis/dist/ \
