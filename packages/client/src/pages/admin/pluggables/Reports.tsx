@@ -64,7 +64,9 @@ interface ReportsWidgetViewState {
 	showError: boolean;
 }
 
-export const shouldRenderReports = (props: PageProps): boolean => !!props.member;
+export const shouldRenderReports = (props: PageProps): boolean =>
+	!!props.member &&
+	hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(props.member);
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;
@@ -140,7 +142,7 @@ export const ReportsWidget = withFetchApi(
 											onClick={() => this.createSQR601()}
 											buttonType="none"
 										>
-											SRPT 60-1 Cadet status report
+											SQR 60-1 Cadet status report
 										</Button>
 										<br />
 									</>
