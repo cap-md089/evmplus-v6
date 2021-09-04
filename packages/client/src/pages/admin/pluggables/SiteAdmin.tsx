@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -19,23 +19,14 @@
 
 import {
 	AccountType,
-	api,
-	AsyncEither,
-	asyncRight,
-	CAPProspectiveMemberObject,
 	ClientUser,
-	Either,
 	hasOneDutyPosition,
 	hasPermission,
-	HTTPError,
 	Permissions,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Dialogue, { DialogueButtons } from '../../../components/dialogues/Dialogue';
-import { FetchAPIProps, withFetchApi } from '../../../globals';
-import { clientErrorGenerator } from '../../../lib/error';
-import Page, { PageProps } from '../../Page';
+import { PageProps } from '../../Page';
 
 export const shouldRenderSiteAdmin = (props: PageProps): boolean => !!props.member;
 
