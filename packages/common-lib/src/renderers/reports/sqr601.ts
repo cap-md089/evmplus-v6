@@ -39,11 +39,18 @@ export const sqr601DocumentDefinition = (
 	const myTitleFontSize = 10;
 	const mySmallFontSize = 7;
 
-	const newmem = newmembers.length > 0 ? 'non-zero' : 'zero';
-
-	function sortName(a: PromotionRequrementsItem, b: PromotionRequrementsItem): number {
+	function sortNHQName(a: PromotionRequrementsItem, b: PromotionRequrementsItem): number {
 		const aName = a.member.nameLast + ', ' + a.member.nameFirst;
-		const bName = b.member.nameLast + ', ' + a.member.nameFirst;
+		const bName = b.member.nameLast + ', ' + b.member.nameFirst;
+		return aName.localeCompare(bName);
+	}
+
+	function sortProspectiveName(
+		a: CAPProspectiveMemberObject,
+		b: CAPProspectiveMemberObject,
+	): number {
+		const aName = a.nameLast + ', ' + a.nameFirst;
+		const bName = b.nameLast + ', ' + b.nameFirst;
 		return aName.localeCompare(bName);
 	}
 
@@ -108,8 +115,8 @@ export const sqr601DocumentDefinition = (
 			)
 			.join('p | ') + 'u';
 
-	const myFill = myTest
-		? nhqmembers.sort(sortName).map((loopmember): TableCell[] => [
+	const fullMembers = myTest
+		? nhqmembers.sort(sortNHQName).map((loopmember): TableCell[] => [
 				{
 					text: loopmember.member.memberRank,
 					fontSize: mySmallFontSize,
@@ -310,30 +317,25 @@ export const sqr601DocumentDefinition = (
 		  ])
 		: [];
 
-	const myFill2: TableCell[][] =
-		newmem === 'non-zero'
-			? [
-					[
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
-					],
-			  ]
-			: [];
+	const prospectiveMembers = myTest
+		? newmembers
+				.sort(sortProspectiveName)
+				.filter(member => member.seniorMember === false)
+				.map((loopmember): TableCell[] => [
+					{
+						text: loopmember.nameLast + ', ' + loopmember.nameFirst,
+						fontSize: mySmallFontSize,
+						bold: false,
+						alignment: 'left',
+					},
+					{
+						text: loopmember.hasNHQReference ? 'Y' : 'N',
+						fontSize: mySmallFontSize,
+						bold: false,
+						alignment: 'left',
+					},
+				])
+		: [];
 
 	const nowDate = DateTime.utc();
 	const docDefinition: TDocumentDefinitions = {
@@ -401,7 +403,7 @@ export const sqr601DocumentDefinition = (
 		content: [
 			// content array start
 			{
-				// title table start
+				// table start
 				table: {
 					// table def start
 					headerRows: 1,
@@ -530,14 +532,57 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 						], // row 1
-						...myFill,
-						...myFill2,
+						...fullMembers,
 					],
 				}, // table def end
 				layout: {
 					fillColor: rowIndex => (rowIndex % 2 === 0 ? '#CCCCCC' : null),
 				}, // table layout end
-			}, // title table end
+			}, // table end
+			{
+				text: ' ',
+				alignment: 'left',
+				fontSize: mySmallFontSize,
+				bold: true,
+			},
+			{
+				text: 'Prospective Members:',
+				alignment: 'left',
+				fontSize: myTitleFontSize,
+				bold: true,
+			},
+			{
+				// table start
+				table: {
+					// table def start
+					headerRows: 1,
+					widths: [
+						73, // Full Name
+						70, // nhq member
+					],
+					body: [
+						[
+							// row 1
+							{
+								text: 'Full Name',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'NHQ Association?',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+						], // row 1
+						...prospectiveMembers,
+					],
+				}, // table def end
+				layout: {
+					fillColor: rowIndex => (rowIndex % 2 === 0 ? '#CCCCCC' : null),
+				}, // table layout end
+			}, // table end
 		], // content array end
 		defaultStyle: {
 			font: 'FreeSans',
