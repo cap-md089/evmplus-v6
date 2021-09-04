@@ -24,75 +24,19 @@ import {
 	CadetPromotionRequirementsMap,
 	CAPProspectiveMemberObject,
 	Maybe,
+	NHQ,
+	RegistryValues,
 } from '../..';
 import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
-// import type { Content, ContentCanvas, TDocumentDefinitions } from 'pdfmake/interfaces';
-// import { Maybe } from '../../lib/Maybe';
-// import {
-// 	EventStatus,
-// 	FullPointOfContact,
-// 	Member,
-// 	RawResolvedEventObject,
-// } from '../../typings/types';
-
-// const zeroPad = (n: number, a = 2): string => `00${n}`.substr(-a);
-
-// const formatDate = (date: number): string => {
-// 	const dateObject = new Date(date);
-
-// 	const hour = dateObject.getHours();
-// 	const minute = dateObject.getMinutes();
-
-// 	const day = dateObject.getDate();
-// 	const month = dateObject.getMonth();
-// 	const year = dateObject.getFullYear();
-
-// 	return `${zeroPad(month + 1)}/${zeroPad(day)}/${year} at ${zeroPad(hour)}:${zeroPad(minute)}`;
-// };
-
-// const boxChecked = (boxSize: number, vOffset: number): ContentCanvas => ({
-// 	canvas: [
-// 		{ type: 'rect', x: 0, y: vOffset, w: boxSize, h: boxSize, lineColor: 'black' },
-// 		{
-// 			type: 'line',
-// 			x1: 0,
-// 			y1: vOffset,
-// 			x2: boxSize,
-// 			y2: boxSize + vOffset,
-// 			lineColor: 'black',
-// 		},
-// 		{
-// 			type: 'line',
-// 			x1: 0,
-// 			y1: boxSize + vOffset,
-// 			x2: boxSize,
-// 			y2: vOffset,
-// 			lineColor: 'black',
-// 		},
-// 	],
-// });
-
-// const boxUnchecked = (boxSize: number, vOffset: number): ContentCanvas => ({
-// 	canvas: [{ type: 'rect', x: 0, y: vOffset, w: boxSize, h: boxSize, lineColor: 'black' }],
-// });
 
 export const sqr601DocumentDefinition = (
 	nhqmembers: PromotionRequrementsItem[],
-	newmembers: CAPProspectiveMemberObject[], // cadets: PromotionRequrementsItem[],
-	// member: Member,
+	newmembers: CAPProspectiveMemberObject[],
+	registry: RegistryValues,
 ): TDocumentDefinitions => {
-	// const MemberName = member.seniorMember
-	// 	? ''
-	// 	: member.memberRank + ' ' + member.nameFirst + ' ' + member.nameLast;
-
 	const myTest = true;
 	const myTitleFontSize = 10;
-	// const myTextFontSize = 9;
 	const mySmallFontSize = 7;
-	// const boxSize = 8;
-	// const vOffset = myTextFontSize - boxSize;
-	// const getBox = (checked = false): ContentCanvas =>
-	// 	(checked ? boxChecked : boxUnchecked)(boxSize, vOffset);
 
 	const newmem = newmembers.length > 0 ? 'non-zero' : 'zero';
 
@@ -101,10 +45,6 @@ export const sqr601DocumentDefinition = (
 		const bName = b.member.nameLast + ', ' + a.member.nameFirst;
 		return aName.localeCompare(bName);
 	}
-
-	// SDAService: false,
-	// SDAWriting: false,
-	// SDAPresentation: false,
 
 	function determineSDA(
 		member: PromotionRequrementsItem,
@@ -150,6 +90,22 @@ export const sqr601DocumentDefinition = (
 			return compDate;
 		}
 	}
+
+	const unpoweredFlights = [1, 2, 3, 4, 5];
+	const poweredFlights = [6, 7, 8, 9, 10];
+
+	const oridesShortDescription = (rides: NHQ.OFlight[]): string =>
+		rides
+			.reduce<[number, number]>(
+				([powered, unpowered], { Syllabus }) =>
+					poweredFlights.includes(Syllabus)
+						? [powered + 1, unpowered]
+						: unpoweredFlights.includes(Syllabus)
+						? [powered, unpowered + 1]
+						: [powered, unpowered],
+				[0, 0],
+			)
+			.join(' | ');
 
 	const myFill = myTest
 		? nhqmembers.sort(sortName).map((loopmember): TableCell[] => [
@@ -338,6 +294,18 @@ export const sqr601DocumentDefinition = (
 					bold: false,
 					alignment: 'left',
 				},
+				{
+					text: Maybe.isSome(loopmember.requirements.ges) ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					text: oridesShortDescription(loopmember.requirements.oflights),
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
 		  ])
 		: [];
 
@@ -345,6 +313,8 @@ export const sqr601DocumentDefinition = (
 		newmem === 'non-zero'
 			? [
 					[
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
+						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
 						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
 						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
 						{ text: 'none', fontSize: mySmallFontSize, bold: false, alignment: 'left' },
@@ -368,20 +338,21 @@ export const sqr601DocumentDefinition = (
 	const docDefinition: TDocumentDefinitions = {
 		pageSize: 'LETTER',
 		pageOrientation: 'landscape',
-		pageMargins: [30, 30, 64, 30],
+		pageMargins: [25, 40, 64, 40],
 
 		header: {
-			text: 'Squadron Achievement Requirements',
+			text: registry.Website.Name + ' Cadet Status Report',
 			alignment: 'left',
 			fontSize: myTitleFontSize,
-			margin: [20, 20, 40, 20],
+			bold: true,
+			margin: [30, 20, 40, 35],
 		},
 
 		footer: (currentPage: number, pageCount: number): Content => [
 			{
 				layout: 'noBorders',
 				table: {
-					widths: [792 - 36],
+					widths: [792 - 72],
 					headerRows: 0,
 					body: [
 						[
@@ -393,18 +364,18 @@ export const sqr601DocumentDefinition = (
 									body: [
 										[
 											{
-												text: 'Squadron Report 60-20 Aug 2021',
+												text: 'Squadron Report 60-1 Aug 2021',
 												bold: true,
 												fontSize: mySmallFontSize,
 											},
 											{
-												text: `(Local version, generated by EvMPlus.org on ${
+												text: `Generated by Event Manager on ${
 													nowDate.toLocaleString({
 														year: 'numeric',
 														month: '2-digit',
 														day: '2-digit',
 													}) ?? ''
-												})`,
+												}`,
 												bold: false,
 												fontSize: mySmallFontSize,
 												alignment: 'center',
@@ -422,7 +393,7 @@ export const sqr601DocumentDefinition = (
 						],
 					],
 				},
-				margin: [20, 20, 40, 20],
+				margin: [30, 0, 0, 60],
 			},
 		],
 
@@ -449,6 +420,8 @@ export const sqr601DocumentDefinition = (
 						30, // Oath
 						36, // Char Dev
 						30, // Mentor?
+						30, // GES
+						35, // O-Flights
 					],
 					body: [
 						[
@@ -539,6 +512,18 @@ export const sqr601DocumentDefinition = (
 							},
 							{
 								text: 'Mentor?',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'GES',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'O-Flights',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

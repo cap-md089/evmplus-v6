@@ -523,6 +523,20 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							.sort('HFZID DESC')
 							.limit(1),
 					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'),
+							{
+								CAPID: member.id,
+								AchvID: 53,
+							},
+						),
+					),
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.OFlight>('NHQ_OFlight'), {
+							CAPID: member.id,
+						}),
+					),
 				]),
 				errorGenerator('Could not load promotion requirements'),
 		  )
@@ -534,6 +548,8 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						encampResults,
 						rclsResults,
 						lastHFZRecord,
+						ges,
+						oflights,
 					]) =>
 						[
 							maxAchv.length === 1
@@ -546,6 +562,8 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							lastHFZRecord.length === 1
 								? lastHFZRecord[0]
 								: { ...emptyHFZID, CAPID: member.id },
+							ges,
+							oflights,
 						] as const,
 				)
 				/**
@@ -569,6 +587,8 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						encampResults,
 						rclsResults,
 						lastHFZRecord,
+						ges,
+						oflights,
 					]) => ({
 						NextCadetAchvID:
 							maxApprovedApproval.length !== 1
@@ -586,6 +606,8 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							acti => +new Date(acti.Completed),
 						)(Maybe.fromValue(rclsResults[0])),
 						HFZRecord: lastHFZRecord,
+						ges: Maybe.fromValue(ges[0]),
+						oflights,
 					}),
 				);
 

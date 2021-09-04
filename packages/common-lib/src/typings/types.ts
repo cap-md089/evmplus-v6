@@ -4193,6 +4193,16 @@ export interface CadetPromotionStatus {
 	 * HFZ information
 	 */
 	HFZRecord: NHQ.CadetHFZInformation;
+
+	/**
+	 * Orientation flight information
+	 */
+	oflights: NHQ.OFlight[];
+
+	/**
+	 * GES achievement
+	 */
+	ges: MaybeObj<NHQ.MbrAchievements>;
 }
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';

@@ -21,6 +21,7 @@ import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncIterTap,
 	CAPNHQMemberObject,
 	Either,
 	EitherObj,
@@ -41,6 +42,7 @@ import {
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
+import saveServerError from '../../../lib/saveServerError';
 
 export const func: Endpoint<
 	Backends<[TeamsBackend, CAP.CAPMemberBackend]>,
@@ -72,6 +74,15 @@ export const func: Endpoint<
 							member,
 							requirements,
 						})),
+					),
+				)
+				.map(
+					asyncIterTap(rec =>
+						Either.isRight(rec)
+							? void 0
+							: rec.value.type === 'CRASH'
+							? saveServerError(rec.value.error, req)
+							: void 0,
 					),
 				)
 				.map(

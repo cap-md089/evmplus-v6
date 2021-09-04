@@ -164,7 +164,7 @@ export const SiteAdminWidget = withFetchApi(
 						) ? (
 							<>
 								<Button onClick={() => this.createSQR601()} buttonType="none">
-									SRPT 60-1 Cadet achievement requirements
+									SRPT 60-1 Cadet status report
 								</Button>
 								<br />
 							</>
@@ -233,6 +233,7 @@ export const SiteAdminWidget = withFetchApi(
 			const docDef = reports.sqr601DocumentDefinition(
 				this.state.nhqMembers,
 				this.state.newMembers,
+				this.props.registry,
 			);
 
 			await this.printForm(docDef, `SQR601-${this.props.account.id}-${now}.pdf`);
