@@ -29,12 +29,9 @@ import {
 	hasPermission,
 	HTTPError,
 	Permissions,
-	reports,
 } from 'common-lib';
-import type { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../../../components/Button';
 import Dialogue, { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { clientErrorGenerator } from '../../../lib/error';
@@ -157,18 +154,6 @@ export const SiteAdminWidget = withFetchApi(
 						<br />
 						<Link to="/admin/attendance">View Attendance</Link>
 						<br />
-						{(this.props.account.type === AccountType.CAPSQUADRON ||
-							this.props.account.type === AccountType.CAPEVENT) &&
-						hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(
-							this.props.member,
-						) ? (
-							<>
-								<Button onClick={() => this.createSQR601()} buttonType="none">
-									SRPT 60-1 Cadet status report
-								</Button>
-								<br />
-							</>
-						) : null}
 						<Link to="/admin/setupmfa">Setup MFA</Link>
 						<br />
 						<Link to="/admin/tempdutypositions">Manage duty positions</Link>
@@ -215,58 +200,5 @@ export const SiteAdminWidget = withFetchApi(
 				</div>
 			</>
 		);
-
-		private createSQR601 = async (): Promise<void> => {
-			if (this.state.state === 'ERROR') {
-				this.setState({
-					showError: true,
-				});
-
-				return;
-			}
-
-			if (this.state.state !== 'LOADED' || !this.props.member) {
-				return;
-			}
-
-			const now = new Date().toString();
-			const docDef = reports.sqr601DocumentDefinition(
-				this.state.nhqMembers,
-				this.state.newMembers,
-				this.props.registry,
-			);
-
-			await this.printForm(docDef, `SQR601-${this.props.account.id}-${now}.pdf`);
-		};
-
-		private async printForm(docDef: TDocumentDefinitions, fileName: string): Promise<void> {
-			const pdfMake = await import('pdfmake');
-
-			const fontGetter =
-				process.env.NODE_ENV === 'production'
-					? (fontName: string) =>
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							`https://${this.props.account.id}.${process.env
-								.REACT_APP_HOST_NAME!}/images/fonts/${fontName}`
-					: (fontName: string) => `http://localhost:3000/images/fonts/${fontName}`;
-
-			const fonts: TFontDictionary = {
-				FreeSans: {
-					normal: fontGetter('FreeSans.ttf'),
-					bold: fontGetter('FreeSansBold.ttf'),
-					italics: fontGetter('FreeSansOblique.ttf'),
-					bolditalics: fontGetter('FreeSansBoldOblique.ttf'),
-				},
-			};
-
-			// @ts-ignore: the types lie, as has been verified with tests
-			const docPrinter = (pdfMake.createPdf as (
-				def: TDocumentDefinitions,
-				idk: null,
-				fontDictionary: TFontDictionary,
-			) => { download(filename: string): void })(docDef, null, fonts);
-
-			docPrinter.download(fileName);
-		}
 	},
 );

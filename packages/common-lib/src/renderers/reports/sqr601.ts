@@ -23,6 +23,7 @@ import {
 	CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
 	CAPProspectiveMemberObject,
+	get,
 	Maybe,
 	NHQ,
 	RegistryValues,
@@ -95,17 +96,17 @@ export const sqr601DocumentDefinition = (
 	const poweredFlights = [6, 7, 8, 9, 10];
 
 	const oridesShortDescription = (rides: NHQ.OFlight[]): string =>
-		rides
+		[...new Set(rides.map(get('Syllabus')))]
 			.reduce<[number, number]>(
-				([powered, unpowered], { Syllabus }) =>
-					poweredFlights.includes(Syllabus)
+				([powered, unpowered], syllabus) =>
+					poweredFlights.includes(syllabus)
 						? [powered + 1, unpowered]
-						: unpoweredFlights.includes(Syllabus)
+						: unpoweredFlights.includes(syllabus)
 						? [powered, unpowered + 1]
 						: [powered, unpowered],
 				[0, 0],
 			)
-			.join(' | ');
+			.join('p | ') + 'u';
 
 	const myFill = myTest
 		? nhqmembers.sort(sortName).map((loopmember): TableCell[] => [

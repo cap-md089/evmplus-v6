@@ -47,6 +47,7 @@ import CreateProspectiveMember from '../account/CreateProspectiveMember';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import SetupMFA from '../account/SetupMFA';
+import { ReportsWidget, shouldRenderReports } from './pluggables/Reports';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -85,6 +86,10 @@ const widgets: WidgetDefinition[] = [
 	{
 		canuse: shouldRenderSiteAdmin,
 		widget: SiteAdminWidget,
+	},
+	{
+		canuse: shouldRenderReports,
+		widget: ReportsWidget,
 	},
 	{
 		canuse: canUseCreate,
