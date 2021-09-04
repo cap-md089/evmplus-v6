@@ -136,95 +136,101 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 		]),
 		errorGenerator('Could not get member information for ORGIDs ' + ORGIDs.join(',')),
 	).map(([orgMembers, orgContacts, orgExtraInfo, orgDutyPositions, orgCadetDutyPositions]) =>
-		orgMembers.map<CAPNHQMemberObject>(member => {
-			const memberID = {
-				type: 'CAPNHQMember',
-				id: member.CAPID,
-			} as const;
-			const finder = areMembersTheSame(memberID);
+		orgMembers
+			.filter(
+				({ Expiration }) =>
+					new Date(Expiration).getTime() >
+					new Date().getTime() - 60 * 60 * 24 * 90 * 1000,
+			)
+			.map<CAPNHQMemberObject>(member => {
+				const memberID = {
+					type: 'CAPNHQMember',
+					id: member.CAPID,
+				} as const;
+				const finder = areMembersTheSame(memberID);
 
-			const extraInfo =
-				orgExtraInfo.find(({ member: id }) => finder(id)) ??
-				({
-					accountID,
-					member: memberID,
-					temporaryDutyPositions: [],
-					flight: null,
-					teamIDs: rawTeamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
-					absentee: null,
-					type: 'CAP',
-				} as CAPExtraMemberInformation);
+				const extraInfo =
+					orgExtraInfo.find(({ member: id }) => finder(id)) ??
+					({
+						accountID,
+						member: memberID,
+						temporaryDutyPositions: [],
+						flight: null,
+						teamIDs: rawTeamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
+						absentee: null,
+						type: 'CAP',
+					} as CAPExtraMemberInformation);
 
-			const contact: CAPMemberContact = {
-				CADETPARENTEMAIL: {},
-				CADETPARENTPHONE: {},
-				CELLPHONE: {},
-				EMAIL: {},
-				HOMEPHONE: {},
-				WORKPHONE: {},
-			};
+				const contact: CAPMemberContact = {
+					CADETPARENTEMAIL: {},
+					CADETPARENTPHONE: {},
+					CELLPHONE: {},
+					EMAIL: {},
+					HOMEPHONE: {},
+					WORKPHONE: {},
+				};
 
-			orgContacts
-				.filter(contactItem => contactItem.CAPID === member.CAPID)
-				.forEach(contactItem => {
-					const contactType = contactItem.Type.toUpperCase().replace(
-						/ /g,
-						'',
-					) as CAPMemberContactType;
+				orgContacts
+					.filter(contactItem => contactItem.CAPID === member.CAPID)
+					.forEach(contactItem => {
+						const contactType = contactItem.Type.toUpperCase().replace(
+							/ /g,
+							'',
+						) as CAPMemberContactType;
 
-					// Handles the types we don't support
-					// Or, erroneous data left in by NHQ
-					if (contactType in contact) {
-						contact[contactType][contactItem.Priority] = contactItem.Contact;
-					}
-				});
+						// Handles the types we don't support
+						// Or, erroneous data left in by NHQ
+						if (contactType in contact) {
+							contact[contactType][contactItem.Priority] = contactItem.Contact;
+						}
+					});
 
-			const dutyPositions: ShortDutyPosition[] = [
-				...orgDutyPositions
-					.filter(({ CAPID }) => CAPID === member.CAPID)
-					.map(dp => ({
+				const dutyPositions: ShortDutyPosition[] = [
+					...orgDutyPositions
+						.filter(({ CAPID }) => CAPID === member.CAPID)
+						.map(dp => ({
+							duty: dp.Duty,
+							date: +DateTime.fromISO(dp.DateMod),
+							orgid: dp.ORGID,
+							type: 'NHQ' as const,
+						})),
+					...orgCadetDutyPositions
+						.filter(({ CAPID }) => CAPID === member.CAPID)
+						.map(dp => ({
+							duty: dp.Duty,
+							date: +DateTime.fromISO(dp.DateMod),
+							orgid: dp.ORGID,
+							type: 'NHQ' as const,
+						})),
+					...extraInfo.temporaryDutyPositions.map(dp => ({
 						duty: dp.Duty,
-						date: +DateTime.fromISO(dp.DateMod),
-						orgid: dp.ORGID,
-						type: 'NHQ' as const,
+						date: dp.assigned,
+						expires: dp.validUntil,
+						type: 'CAPUnit' as const,
 					})),
-				...orgCadetDutyPositions
-					.filter(({ CAPID }) => CAPID === member.CAPID)
-					.map(dp => ({
-						duty: dp.Duty,
-						date: +DateTime.fromISO(dp.DateMod),
-						orgid: dp.ORGID,
-						type: 'NHQ' as const,
-					})),
-				...extraInfo.temporaryDutyPositions.map(dp => ({
-					duty: dp.Duty,
-					date: dp.assigned,
-					expires: dp.validUntil,
-					type: 'CAPUnit' as const,
-				})),
-			];
+				];
 
-			return {
-				absenteeInformation: extraInfo.absentee,
-				contact,
-				dateOfBirth: +DateTime.fromISO(member.DOB),
-				dutyPositions,
-				expirationDate: +DateTime.fromISO(member.Expiration),
-				flight: extraInfo.flight,
-				id: member.CAPID,
-				memberRank: member.Rank,
-				nameFirst: member.NameFirst,
-				nameLast: member.NameLast,
-				nameMiddle: member.NameMiddle,
-				nameSuffix: member.NameSuffix,
-				orgid: member.ORGID,
-				seniorMember: member.Type !== 'CADET',
-				squadron: `${member.Region}-${member.Wing}-${member.Unit}`,
-				teamIDs: extraInfo.teamIDs,
-				type: 'CAPNHQMember',
-				usrID: member.UsrID,
-			};
-		}),
+				return {
+					absenteeInformation: extraInfo.absentee,
+					contact,
+					dateOfBirth: +DateTime.fromISO(member.DOB),
+					dutyPositions,
+					expirationDate: +DateTime.fromISO(member.Expiration),
+					flight: extraInfo.flight,
+					id: member.CAPID,
+					memberRank: member.Rank,
+					nameFirst: member.NameFirst,
+					nameLast: member.NameLast,
+					nameMiddle: member.NameMiddle,
+					nameSuffix: member.NameSuffix,
+					orgid: member.ORGID,
+					seniorMember: member.Type !== 'CADET',
+					squadron: `${member.Region}-${member.Wing}-${member.Unit}`,
+					teamIDs: extraInfo.teamIDs,
+					type: 'CAPNHQMember',
+					usrID: member.UsrID,
+				};
+			}),
 	);
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
@@ -333,7 +339,7 @@ export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend
 				}),
 			]),
 		)
-		.map<CAPNHQMemberObject>(([info, contact, dutyPositions, extraInformation]) => ({
+		.map(([info, contact, dutyPositions, extraInformation]) => ({
 			absenteeInformation: extraInformation.absentee,
 			contact,
 			dateOfBirth: +DateTime.fromISO(info.DOB),
