@@ -66,7 +66,7 @@ import { TeamsBackend } from '../../../Team';
 
 export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
 	rawTeamObjects: RawTeamObject[],
-) => (ORGIDs: number[]) =>
+) => (ORGIDs: number[]): ServerEither<CAPNHQMemberObject[]> =>
 	asyncRight(
 		Promise.all([
 			collectSqlResults<NHQ.NHQMember>(
@@ -311,7 +311,7 @@ const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 
 export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
 	account: AccountObject,
-) => (CAPID: number) =>
+) => (CAPID: number): ServerEither<CAPNHQMemberObject> =>
 	asyncRight(CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
 			AsyncEither.All([
@@ -386,7 +386,9 @@ export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
 	type: 'CAP',
 });
 
-export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemberReference) =>
+export const getNameForCAPNHQMember = (schema: Schema) => (
+	reference: CAPNHQMemberReference,
+): ServerEither<string> =>
 	getNHQMemberRows(schema)(reference.id).map(
 		result =>
 			`${result.Rank} ${getMemberName({
@@ -401,8 +403,12 @@ export const getNHQMemberAccount = (backend: Backends<[AccountBackend]>) => (
 	member: CAPNHQMemberObject,
 ): ServerEither<CAPAccountObject[]> => backend.getCAPAccountsByORGID(member.orgid);
 
-export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
+export const getBirthday = (schema: Schema) => (
+	member: CAPNHQMemberReference,
+): ServerEither<DateTime> =>
+	getNHQMemberRows(schema)(member.id)
+		.map(getProp('DOB'))
+		.map(val => DateTime.fromISO(val));
 
 export const downloadCAPWATCHFile = (
 	orgid: number,
@@ -437,11 +443,13 @@ export const downloadCAPWATCHFile = (
 		errorGenerator('Could not download CAPWATCH file'),
 	)
 		.map(({ data }) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
 			data.pipe(storageLocation);
 
 			return Promise.all([
 				Promise.resolve(fileName),
 				new Promise<void>(res => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
 					data.on('end', res);
 				}),
 				new Promise<void>(res => {
@@ -503,38 +511,104 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							},
 						),
 					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.CadetHFZInformation>(
+								'NHQ_CadetHFZInformation',
+							),
+							{
+								CAPID: member.id,
+							},
+						)
+							.sort('HFZID DESC')
+							.limit(1),
+					),
 				]),
 				errorGenerator('Could not load promotion requirements'),
 		  )
 				.map(
-					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) =>
+					([
+						maxAchv,
+						maxApprovedApproval,
+						maxApproval,
+						encampResults,
+						rclsResults,
+						lastHFZRecord,
+					]) =>
 						[
 							maxAchv.length === 1
 								? maxAchv[0]
 								: { ...emptyCadetAchv, CAPID: member.id },
-							maxAprv,
-							maxAprvStatus[0]?.Status ?? 'INC',
+							maxApprovedApproval,
+							maxApproval,
 							encampResults,
 							rclsResults,
+							lastHFZRecord.length === 1
+								? lastHFZRecord[0]
+								: { ...emptyHFZID, CAPID: member.id },
 						] as const,
 				)
+				/**
+				 * NextCadetAchvID - The CadetAchvEnum associated with the achievement elements
+				 * 		the cadet needs to perform for their next promotion
+				 * CurrentCadetAchv - The current CadetAchvEnum for the cadet's present grade
+				 * CurrentAprvStatus - PND?
+				 *
+				 * States:
+				 * Brand new cadet - No achievement records
+				 * Partial achievement record = CadetAchv record and a CadetAchvAprs INC record at the cadet's next grade
+				 * Complete achievement record = CadetAchv record and a CadetAchvAprs PND record at the cadet's next grade - Leadership locked
+				 * Approved achievement record = CadetAchv record and a CadetAchvAprs APR record at the cadet's next grade - Leadership unlocked
+				 *
+				 */
 				.map<CadetPromotionStatus>(
-					([maxAchv, maxAprv, maxAprvStatus, encampResults, rclsResults]) => ({
+					([
+						maxAchv,
+						maxApprovedApproval,
+						maxApproval,
+						encampResults,
+						rclsResults,
+						lastHFZRecord,
+					]) => ({
 						NextCadetAchvID:
-							maxAprv.length !== 1 ? 0 : Math.min(21, maxAprv[0].CadetAchvID + 1),
-						CurrentCadetAchv: maxAchv,
-						CurrentAprvStatus: maxAprvStatus,
+							maxApprovedApproval.length !== 1
+								? 1
+								: Math.min(21, maxApprovedApproval[0].CadetAchvID + 1),
+						CurrentCadetAchv: maxAchv, // this is the next achievement the cadet is pursuing
+						MaxAprvStatus: maxApproval[0]?.Status ?? 'INC', // this is the approval status for the next achivement the cadet is pursuing
 						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
 							aprv => +new Date(aprv.DateMod),
-						)(Maybe.fromArray(maxAprv)),
+						)(Maybe.fromValue(maxApprovedApproval[0])),
 						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
 							acti => +new Date(acti.Completed),
-						)(Maybe.fromArray(encampResults)),
+						)(Maybe.fromValue(encampResults[0])),
 						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
 							acti => +new Date(acti.Completed),
-						)(Maybe.fromArray(rclsResults)),
+						)(Maybe.fromValue(rclsResults[0])),
+						HFZRecord: lastHFZRecord,
 					}),
 				);
+
+export const emptyHFZID: NHQ.CadetHFZInformation = {
+	CAPID: 0,
+	CurlUp: '0',
+	CurlUpPassed: 'n/a',
+	CurlUpWaiver: false,
+	DateTaken: '1900-01-01T05:00:00.000Z',
+	HFZID: 1,
+	IsPassed: false,
+	MileRun: '0:0',
+	MileRunPassed: 'n/a',
+	MileRunWaiver: false,
+	ORGID: 0,
+	PacerRun: '0:0',
+	PacerRunPassed: 'n/a',
+	PacerRunWaiver: false,
+	SitAndReach: '0',
+	SitAndReachPassed: 'n/a',
+	SitAndReachWaiver: false,
+	WeatherWaiver: false,
+};
 
 export const emptyCadetAchv: NHQ.CadetAchv = {
 	CAPID: 0,
@@ -547,9 +621,9 @@ export const emptyCadetAchv: NHQ.CadetAchv = {
 	AEMod: 0,
 	AETest: 0,
 	MoralLDateP: '1900-01-01T05:00:00.000Z',
-	ActivePart: 0,
-	OtherReq: 0,
-	SDAReport: 0,
+	ActivePart: false,
+	OtherReq: false,
+	SDAReport: false,
 	UsrID: '',
 	DateMod: '1900-01-01T05:00:00.000Z',
 	FirstUsr: '',
@@ -557,7 +631,7 @@ export const emptyCadetAchv: NHQ.CadetAchv = {
 	DrillDate: '1900-01-01T05:00:00.000Z',
 	DrillScore: 0,
 	LeadCurr: '',
-	CadetOath: 0,
+	CadetOath: false,
 	AEBookValue: '',
 	MileRun: 0,
 	ShuttleRun: 0,

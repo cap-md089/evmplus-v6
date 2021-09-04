@@ -163,8 +163,8 @@ export const SiteAdminWidget = withFetchApi(
 							this.props.member,
 						) ? (
 							<>
-								<Button onClick={() => this.createSQR6020()} buttonType="none">
-									Squadron achievement requirements
+								<Button onClick={() => this.createSQR601()} buttonType="none">
+									SRPT 60-1 Cadet achievement requirements
 								</Button>
 								<br />
 							</>
@@ -216,7 +216,7 @@ export const SiteAdminWidget = withFetchApi(
 			</>
 		);
 
-		private createSQR6020 = async (): Promise<void> => {
+		private createSQR601 = async (): Promise<void> => {
 			if (this.state.state === 'ERROR') {
 				this.setState({
 					showError: true,
@@ -230,12 +230,12 @@ export const SiteAdminWidget = withFetchApi(
 			}
 
 			const now = new Date().toString();
-			const docDef = reports.sqr6020DocumentDefinition(
+			const docDef = reports.sqr601DocumentDefinition(
 				this.state.nhqMembers,
 				this.state.newMembers,
 			);
 
-			await this.printForm(docDef, `SQR6020-${this.props.account.id}-${now}.pdf`);
+			await this.printForm(docDef, `SQR601-${this.props.account.id}-${now}.pdf`);
 		};
 
 		private async printForm(docDef: TDocumentDefinitions, fileName: string): Promise<void> {

@@ -17,4 +17,4 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export { sqr6020DocumentDefinition } from './sqr6020';
+export { sqr601DocumentDefinition } from './sqr601';
