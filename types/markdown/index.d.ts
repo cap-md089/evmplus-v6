@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ * Copyright (C) 2020 Andrew Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -17,6 +17,10 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * as forms from './forms';
-export * as reports from './reports';
-export * as spreadsheets from './spreadsheets';
+declare module "markdown" {
+  interface Markdown {
+    toHTML(md: string): string;
+  }
+
+  export const markdown: Markdown;
+}

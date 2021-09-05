@@ -17,17 +17,20 @@
  * along with emv6.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerAPIEndpoint } from 'auto-client-api';
 import { api, SessionType } from 'common-lib';
-import { getCadetPromotionRequirements, PAM } from 'server-common';
+import { Backends, getCombinedMemberBackend, PAM, withBackends } from 'server-common';
+import { CAPMemberBackend } from 'server-common/src/member/members/cap';
+import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-export const func: ServerAPIEndpoint<api.member.promotionrequirements.RequirementsForCurrentUser> = PAM.RequiresMemberType(
-	'CAPNHQMember',
-)(
-	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		getCadetPromotionRequirements(req.mysqlx)(req.member).map(wrapper),
-	),
-);
+export const func: Endpoint<
+	Backends<[CAPMemberBackend]>,
+	api.member.promotionrequirements.RequirementsForCurrentUser
+> = backend =>
+	PAM.RequiresMemberType('CAPNHQMember')(
+		PAM.RequireSessionType(SessionType.REGULAR)(req =>
+			backend.getPromotionRequirements(req.member).map(wrapper),
+		),
+	);
 
-export default func;
+export default withBackends(func, getCombinedMemberBackend());

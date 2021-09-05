@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -18,15 +18,15 @@
  */
 
 import {
-	ClientUser,
-	hasPermission,
-	hasOneDutyPosition,
 	AccountType,
+	ClientUser,
+	hasOneDutyPosition,
+	hasPermission,
 	Permissions,
 } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Page, { PageProps } from '../../Page';
+import { PageProps } from '../../Page';
 
 export const shouldRenderSiteAdmin = (props: PageProps): boolean => !!props.member;
 
@@ -34,20 +34,16 @@ export interface RequiredMember extends PageProps {
 	member: ClientUser;
 }
 
-export class SiteAdminWidget extends Page<RequiredMember> {
-	public state: {} = {};
-
-	public render = (): JSX.Element => (
+export const SiteAdminWidget = (props: RequiredMember): JSX.Element => (
+	<>
 		<div className="widget">
 			<div className="widget-title">
-				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member)
+				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(props.member)
 					? 'Site '
-					: hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(
-							this.props.member,
-					  ) ||
-					  ((this.props.member.type === 'CAPNHQMember' ||
-							this.props.member.type === 'CAPProspectiveMember') &&
-							this.props.member.seniorMember)
+					: hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(props.member) ||
+					  ((props.member.type === 'CAPNHQMember' ||
+							props.member.type === 'CAPProspectiveMember') &&
+							props.member.seniorMember)
 					? 'Account '
 					: 'Personal '}
 				administration
@@ -60,36 +56,36 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 				<Link to="/admin/setupmfa">Setup MFA</Link>
 				<br />
 				<Link to="/admin/tempdutypositions">Manage duty positions</Link>
-				{(this.props.account.type === AccountType.CAPSQUADRON ||
-					this.props.account.type === AccountType.CAPEVENT) &&
-				hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(this.props.member) ? (
+				{(props.account.type === AccountType.CAPSQUADRON ||
+					props.account.type === AccountType.CAPEVENT) &&
+				hasPermission('FlightAssign')(Permissions.FlightAssign.YES)(props.member) ? (
 					<>
 						<br />
 						<Link to="/admin/flightassign">Assign flight members</Link>
 					</>
 				) : null}
-				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(this.props.member) ? (
+				{hasPermission('RegistryEdit')(Permissions.RegistryEdit.YES)(props.member) ? (
 					<>
 						<br />
 						<Link to="/admin/regedit">Site configuration</Link>
 					</>
 				) : null}
 				{hasPermission('PermissionManagement')(Permissions.PermissionManagement.FULL)(
-					this.props.member,
+					props.member,
 				) ? (
 					<>
 						<br />
 						<Link to="/admin/permissions">Permission management</Link>
 					</>
 				) : null}
-				{(this.props.member.type === 'CAPProspectiveMember' ||
-					this.props.member.type === 'CAPNHQMember') &&
-				(this.props.member.seniorMember ||
+				{(props.member.type === 'CAPProspectiveMember' ||
+					props.member.type === 'CAPNHQMember') &&
+				(props.member.seniorMember ||
 					hasOneDutyPosition([
 						'Cadet Commander',
 						'Cadet Deputy Commander',
 						'Cadet Executive Officer',
-					])(this.props.member)) ? (
+					])(props.member)) ? (
 					<>
 						<br />
 						<Link to="/admin/emaillist">Email selector</Link>
@@ -97,5 +93,5 @@ export class SiteAdminWidget extends Page<RequiredMember> {
 				) : null}
 			</div>
 		</div>
-	);
-}
+	</>
+);

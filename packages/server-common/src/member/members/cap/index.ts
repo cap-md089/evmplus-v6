@@ -23,6 +23,7 @@ import {
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	CadetPromotionStatus,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
 	CAPMember,
@@ -62,6 +63,7 @@ import { ServerEither } from '../../../servertypes';
 import { TeamsBackend } from '../../../Team';
 import {
 	getBirthday,
+	getCadetPromotionRequirements,
 	getCAPNHQMembersForORGIDs,
 	getExtraInformationFromCAPNHQMember,
 	getNameForCAPNHQMember,
@@ -249,6 +251,7 @@ export interface CAPMemberBackend {
 		member: CAPProspectiveMemberObject,
 	) => (newMember: CAPNHQMemberReference) => ServerEither<void>;
 	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
+	getPromotionRequirements: (member: CAPNHQMemberObject) => ServerEither<CadetPromotionStatus>;
 }
 
 export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend =>
@@ -283,6 +286,10 @@ export const getRequestFreeCAPMemberBackend = (
 	upgradeProspectiveMember: backend =>
 		upgradeProspectiveMemberToCAPNHQ({ ...backend, ...prevBackends }),
 	getBirthday: memoize(getBirthday(mysqlx), stringifyMemberReference),
+	getPromotionRequirements: memoize(
+		getCadetPromotionRequirements(mysqlx),
+		stringifyMemberReference,
+	),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
@@ -294,4 +301,5 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 		notImplementedError('getProspectiveMembersInAccount'),
 	upgradeProspectiveMember: () => () => () => notImplementedError('upgradeProspectiveMember'),
 	getBirthday: () => notImplementedError('getBirthday'),
+	getPromotionRequirements: () => notImplementedError('getPromotionRequirements'),
 });

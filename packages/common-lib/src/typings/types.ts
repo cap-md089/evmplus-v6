@@ -40,9 +40,9 @@ export namespace NHQ {
 		AEMod: number;
 		AETest: number;
 		MoralLDateP: string;
-		ActivePart: number;
-		OtherReq: number;
-		SDAReport: number;
+		ActivePart: boolean;
+		OtherReq: boolean;
+		SDAReport: boolean;
 		UsrID: string;
 		DateMod: string;
 		FirstUsr: string;
@@ -50,7 +50,7 @@ export namespace NHQ {
 		DrillDate: string;
 		DrillScore: number;
 		LeadCurr: string;
-		CadetOath: number;
+		CadetOath: boolean;
 		AEBookValue: string;
 		MileRun: number;
 		ShuttleRun: number;
@@ -4176,9 +4176,9 @@ export interface CadetPromotionStatus {
 	CurrentCadetAchv: NHQ.CadetAchv;
 
 	/**
-	 * The current highest achievement status
+	 * The current highest approved achievement status
 	 */
-	CurrentAprvStatus: CadetAprvStatus;
+	MaxAprvStatus: CadetAprvStatus;
 
 	/**
 	 * The date of the last promotion approval
@@ -4194,6 +4194,21 @@ export interface CadetPromotionStatus {
 	 * The date of completion of RCLS (should have Encampment and C/MSgt before eligible)
 	 */
 	RCLSDate: MaybeObj<number>;
+
+	/**
+	 * HFZ information
+	 */
+	HFZRecord: NHQ.CadetHFZInformation;
+
+	/**
+	 * Orientation flight information
+	 */
+	oflights: NHQ.OFlight[];
+
+	/**
+	 * GES achievement
+	 */
+	ges: MaybeObj<NHQ.MbrAchievements>;
 }
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';

@@ -17,10 +17,4 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare module 'markdown' {
-	interface Markdown {
-		toHTML(md: string): string;
-	}
-
-	const markdown: Markdown;
-}
+export { sqr601DocumentDefinition } from './sqr601';

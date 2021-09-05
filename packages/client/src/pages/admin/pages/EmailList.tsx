@@ -154,7 +154,7 @@ const nameInput: CheckInput<Member, string> = {
 			const reg = new RegExp(input, 'i');
 			return (
 				!!reg.exec(mem.nameFirst) ||
-				!!reg.exec(mem.nameFirst) ||
+				!!reg.exec(mem.nameLast) ||
 				!!reg.exec(mem.nameMiddle) ||
 				!!reg.exec(mem.nameSuffix)
 			);

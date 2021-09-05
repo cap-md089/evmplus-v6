@@ -93,8 +93,10 @@ export default async (
 
 	const router: express.Router = express.Router();
 
+	console.log('NODE_ENV: ', process.env.NODE_ENV);
 	const corsOptions: cors.CorsOptions = {
 		origin(origin, callback) {
+			console.log('origin: ', origin);
 			if (
 				process.env.NODE_ENV !== 'production' ||
 				origin?.endsWith(`.${conf.HOST_NAME}`) ||
@@ -108,6 +110,13 @@ export default async (
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
 		allowedHeaders: ['Authorization', 'Content-Type', 'authorization', 'content-type'],
 	};
+
+	if (process.env.NODE_ENV === 'development') {
+		router.use('*', (req, res, next) => {
+			res.setHeader('Access-Control-Allow-Origin', '*');
+			next();
+		});
+	}
 
 	// router.use(cors(corsOptions));
 

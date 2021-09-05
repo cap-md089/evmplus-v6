@@ -22,6 +22,7 @@ import { MemberUpdateEventEmitter, ServerConfiguration } from 'common-lib';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 import * as http from 'http';
+import { resolve } from 'path';
 import getRouter from './getAPIRouter';
 
 export interface ServerInitializationOptions {
@@ -67,6 +68,8 @@ export default async (
 		res.status(418);
 		res.end();
 	});
+
+	app.use('/images', express.static(resolve(__dirname, '../images')));
 
 	if (conf.NODE_ENV === 'production') {
 		// eslint-disable-next-line no-console

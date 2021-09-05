@@ -23,7 +23,9 @@ import {
 	AccountObject,
 	areMembersTheSame,
 	AsyncEither,
+	asyncLeft,
 	asyncRight,
+	CadetPromotionStatus,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
 	CAPMemberContact,
@@ -64,7 +66,7 @@ import { TeamsBackend } from '../../../Team';
 
 export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
 	rawTeamObjects: RawTeamObject[],
-) => (ORGIDs: number[]) =>
+) => (ORGIDs: number[]): ServerEither<CAPNHQMemberObject[]> =>
 	asyncRight(
 		Promise.all([
 			collectSqlResults<NHQ.NHQMember>(
@@ -134,95 +136,101 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 		]),
 		errorGenerator('Could not get member information for ORGIDs ' + ORGIDs.join(',')),
 	).map(([orgMembers, orgContacts, orgExtraInfo, orgDutyPositions, orgCadetDutyPositions]) =>
-		orgMembers.map<CAPNHQMemberObject>(member => {
-			const memberID = {
-				type: 'CAPNHQMember',
-				id: member.CAPID,
-			} as const;
-			const finder = areMembersTheSame(memberID);
+		orgMembers
+			.filter(
+				({ Expiration }) =>
+					new Date(Expiration).getTime() >
+					new Date().getTime() - 60 * 60 * 24 * 90 * 1000,
+			)
+			.map<CAPNHQMemberObject>(member => {
+				const memberID = {
+					type: 'CAPNHQMember',
+					id: member.CAPID,
+				} as const;
+				const finder = areMembersTheSame(memberID);
 
-			const extraInfo =
-				orgExtraInfo.find(({ member: id }) => finder(id)) ??
-				({
-					accountID,
-					member: memberID,
-					temporaryDutyPositions: [],
-					flight: null,
-					teamIDs: rawTeamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
-					absentee: null,
-					type: 'CAP',
-				} as CAPExtraMemberInformation);
+				const extraInfo =
+					orgExtraInfo.find(({ member: id }) => finder(id)) ??
+					({
+						accountID,
+						member: memberID,
+						temporaryDutyPositions: [],
+						flight: null,
+						teamIDs: rawTeamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
+						absentee: null,
+						type: 'CAP',
+					} as CAPExtraMemberInformation);
 
-			const contact: CAPMemberContact = {
-				CADETPARENTEMAIL: {},
-				CADETPARENTPHONE: {},
-				CELLPHONE: {},
-				EMAIL: {},
-				HOMEPHONE: {},
-				WORKPHONE: {},
-			};
+				const contact: CAPMemberContact = {
+					CADETPARENTEMAIL: {},
+					CADETPARENTPHONE: {},
+					CELLPHONE: {},
+					EMAIL: {},
+					HOMEPHONE: {},
+					WORKPHONE: {},
+				};
 
-			orgContacts
-				.filter(contactItem => contactItem.CAPID === member.CAPID)
-				.forEach(contactItem => {
-					const contactType = contactItem.Type.toUpperCase().replace(
-						/ /g,
-						'',
-					) as CAPMemberContactType;
+				orgContacts
+					.filter(contactItem => contactItem.CAPID === member.CAPID)
+					.forEach(contactItem => {
+						const contactType = contactItem.Type.toUpperCase().replace(
+							/ /g,
+							'',
+						) as CAPMemberContactType;
 
-					// Handles the types we don't support
-					// Or, erroneous data left in by NHQ
-					if (contactType in contact) {
-						contact[contactType][contactItem.Priority] = contactItem.Contact;
-					}
-				});
+						// Handles the types we don't support
+						// Or, erroneous data left in by NHQ
+						if (contactType in contact) {
+							contact[contactType][contactItem.Priority] = contactItem.Contact;
+						}
+					});
 
-			const dutyPositions: ShortDutyPosition[] = [
-				...orgDutyPositions
-					.filter(({ CAPID }) => CAPID === member.CAPID)
-					.map(dp => ({
+				const dutyPositions: ShortDutyPosition[] = [
+					...orgDutyPositions
+						.filter(({ CAPID }) => CAPID === member.CAPID)
+						.map(dp => ({
+							duty: dp.Duty,
+							date: +DateTime.fromISO(dp.DateMod),
+							orgid: dp.ORGID,
+							type: 'NHQ' as const,
+						})),
+					...orgCadetDutyPositions
+						.filter(({ CAPID }) => CAPID === member.CAPID)
+						.map(dp => ({
+							duty: dp.Duty,
+							date: +DateTime.fromISO(dp.DateMod),
+							orgid: dp.ORGID,
+							type: 'NHQ' as const,
+						})),
+					...extraInfo.temporaryDutyPositions.map(dp => ({
 						duty: dp.Duty,
-						date: +DateTime.fromISO(dp.DateMod),
-						orgid: dp.ORGID,
-						type: 'NHQ' as const,
+						date: dp.assigned,
+						expires: dp.validUntil,
+						type: 'CAPUnit' as const,
 					})),
-				...orgCadetDutyPositions
-					.filter(({ CAPID }) => CAPID === member.CAPID)
-					.map(dp => ({
-						duty: dp.Duty,
-						date: +DateTime.fromISO(dp.DateMod),
-						orgid: dp.ORGID,
-						type: 'NHQ' as const,
-					})),
-				...extraInfo.temporaryDutyPositions.map(dp => ({
-					duty: dp.Duty,
-					date: dp.assigned,
-					expires: dp.validUntil,
-					type: 'CAPUnit' as const,
-				})),
-			];
+				];
 
-			return {
-				absenteeInformation: extraInfo.absentee,
-				contact,
-				dateOfBirth: +DateTime.fromISO(member.DOB),
-				dutyPositions,
-				expirationDate: +DateTime.fromISO(member.Expiration),
-				flight: extraInfo.flight,
-				id: member.CAPID,
-				memberRank: member.Rank,
-				nameFirst: member.NameFirst,
-				nameLast: member.NameLast,
-				nameMiddle: member.NameMiddle,
-				nameSuffix: member.NameSuffix,
-				orgid: member.ORGID,
-				seniorMember: member.Type !== 'CADET',
-				squadron: `${member.Region}-${member.Wing}-${member.Unit}`,
-				teamIDs: extraInfo.teamIDs,
-				type: 'CAPNHQMember',
-				usrID: member.UsrID,
-			};
-		}),
+				return {
+					absenteeInformation: extraInfo.absentee,
+					contact,
+					dateOfBirth: +DateTime.fromISO(member.DOB),
+					dutyPositions,
+					expirationDate: +DateTime.fromISO(member.Expiration),
+					flight: extraInfo.flight,
+					id: member.CAPID,
+					memberRank: member.Rank,
+					nameFirst: member.NameFirst,
+					nameLast: member.NameLast,
+					nameMiddle: member.NameMiddle,
+					nameSuffix: member.NameSuffix,
+					orgid: member.ORGID,
+					seniorMember: member.Type !== 'CADET',
+					squadron: `${member.Region}-${member.Wing}-${member.Unit}`,
+					teamIDs: extraInfo.teamIDs,
+					type: 'CAPNHQMember',
+					usrID: member.UsrID,
+				};
+			}),
 	);
 
 const getCAPWATCHContactForMember = (schema: Schema) => (id: number) =>
@@ -309,7 +317,7 @@ const getNHQMemberRows = (schema: Schema) => (CAPID: number) =>
 
 export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
 	account: AccountObject,
-) => (CAPID: number) =>
+) => (CAPID: number): ServerEither<CAPNHQMemberObject> =>
 	asyncRight(CAPID, errorGenerator('Could not get member information'))
 		.flatMap(id =>
 			AsyncEither.All([
@@ -331,7 +339,7 @@ export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend
 				}),
 			]),
 		)
-		.map<CAPNHQMemberObject>(([info, contact, dutyPositions, extraInformation]) => ({
+		.map(([info, contact, dutyPositions, extraInformation]) => ({
 			absenteeInformation: extraInformation.absentee,
 			contact,
 			dateOfBirth: +DateTime.fromISO(info.DOB),
@@ -384,7 +392,9 @@ export const getExtraInformationFromCAPNHQMember = (account: AccountObject) => (
 	type: 'CAP',
 });
 
-export const getNameForCAPNHQMember = (schema: Schema) => (reference: CAPNHQMemberReference) =>
+export const getNameForCAPNHQMember = (schema: Schema) => (
+	reference: CAPNHQMemberReference,
+): ServerEither<string> =>
 	getNHQMemberRows(schema)(reference.id).map(
 		result =>
 			`${result.Rank} ${getMemberName({
@@ -399,8 +409,12 @@ export const getNHQMemberAccount = (backend: Backends<[AccountBackend]>) => (
 	member: CAPNHQMemberObject,
 ): ServerEither<CAPAccountObject[]> => backend.getCAPAccountsByORGID(member.orgid);
 
-export const getBirthday = (schema: Schema) => (member: CAPNHQMemberReference) =>
-	getNHQMemberRows(schema)(member.id).map(getProp('DOB')).map(DateTime.fromISO);
+export const getBirthday = (schema: Schema) => (
+	member: CAPNHQMemberReference,
+): ServerEither<DateTime> =>
+	getNHQMemberRows(schema)(member.id)
+		.map(getProp('DOB'))
+		.map(val => DateTime.fromISO(val));
 
 export const downloadCAPWATCHFile = (
 	orgid: number,
@@ -435,11 +449,13 @@ export const downloadCAPWATCHFile = (
 		errorGenerator('Could not download CAPWATCH file'),
 	)
 		.map(({ data }) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
 			data.pipe(storageLocation);
 
 			return Promise.all([
 				Promise.resolve(fileName),
 				new Promise<void>(res => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
 					data.on('end', res);
 				}),
 				new Promise<void>(res => {
@@ -448,4 +464,211 @@ export const downloadCAPWATCHFile = (
 			]);
 		})
 		.map(([filepath]) => filepath);
+};
+
+export const getCadetPromotionRequirements = (schema: Schema) => (
+	member: CAPNHQMemberObject,
+): ServerEither<CadetPromotionStatus> =>
+	member.seniorMember
+		? asyncLeft<ServerError, CadetPromotionStatus>({
+				type: 'OTHER',
+				code: 400,
+				message: 'Cannot get promotion requirements for a senior member',
+		  })
+		: asyncRight(
+				Promise.all([
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv'), {
+							CAPID: member.id,
+						})
+							.sort('CadetAchvID DESC')
+							.limit(1),
+					),
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
+							CAPID: member.id,
+							Status: 'APR',
+						})
+							.sort('CadetAchvID DESC')
+							.limit(1),
+					),
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
+							CAPID: member.id,
+						})
+							.sort('CadetAchvID DESC')
+							.limit(1),
+					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'),
+							{
+								CAPID: member.id,
+								Type: 'ENCAMP',
+							},
+						),
+					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'),
+							{
+								CAPID: member.id,
+								Type: 'RCLS',
+							},
+						),
+					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.CadetHFZInformation>(
+								'NHQ_CadetHFZInformation',
+							),
+							{
+								CAPID: member.id,
+							},
+						)
+							.sort('HFZID DESC')
+							.limit(1),
+					),
+					collectResults(
+						findAndBind(
+							schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'),
+							{
+								CAPID: member.id,
+								AchvID: 53,
+							},
+						),
+					),
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.OFlight>('NHQ_OFlight'), {
+							CAPID: member.id,
+						}),
+					),
+				]),
+				errorGenerator('Could not load promotion requirements'),
+		  )
+				.map(
+					([
+						maxAchv,
+						maxApprovedApproval,
+						maxApproval,
+						encampResults,
+						rclsResults,
+						lastHFZRecord,
+						ges,
+						oflights,
+					]) =>
+						[
+							maxAchv.length === 1
+								? maxAchv[0]
+								: { ...emptyCadetAchv, CAPID: member.id },
+							maxApprovedApproval,
+							maxApproval,
+							encampResults,
+							rclsResults,
+							lastHFZRecord.length === 1
+								? lastHFZRecord[0]
+								: { ...emptyHFZID, CAPID: member.id },
+							ges,
+							oflights,
+						] as const,
+				)
+				/**
+				 * NextCadetAchvID - The CadetAchvEnum associated with the achievement elements
+				 * 		the cadet needs to perform for their next promotion
+				 * CurrentCadetAchv - The current CadetAchvEnum for the cadet's present grade
+				 * CurrentAprvStatus - PND?
+				 *
+				 * States:
+				 * Brand new cadet - No achievement records
+				 * Partial achievement record = CadetAchv record and a CadetAchvAprs INC record at the cadet's next grade
+				 * Complete achievement record = CadetAchv record and a CadetAchvAprs PND record at the cadet's next grade - Leadership locked
+				 * Approved achievement record = CadetAchv record and a CadetAchvAprs APR record at the cadet's next grade - Leadership unlocked
+				 *
+				 */
+				.map<CadetPromotionStatus>(
+					([
+						maxAchv,
+						maxApprovedApproval,
+						maxApproval,
+						encampResults,
+						rclsResults,
+						lastHFZRecord,
+						ges,
+						oflights,
+					]) => ({
+						NextCadetAchvID:
+							maxApprovedApproval.length !== 1
+								? 1
+								: Math.min(21, maxApprovedApproval[0].CadetAchvID + 1),
+						CurrentCadetAchv: maxAchv, // this is the next achievement the cadet is pursuing
+						MaxAprvStatus: maxApproval[0]?.Status ?? 'INC', // this is the approval status for the next achivement the cadet is pursuing
+						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
+							aprv => +new Date(aprv.DateMod),
+						)(Maybe.fromValue(maxApprovedApproval[0])),
+						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromValue(encampResults[0])),
+						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
+							acti => +new Date(acti.Completed),
+						)(Maybe.fromValue(rclsResults[0])),
+						HFZRecord: lastHFZRecord,
+						ges: Maybe.fromValue(ges[0]),
+						oflights,
+					}),
+				);
+
+export const emptyHFZID: NHQ.CadetHFZInformation = {
+	CAPID: 0,
+	CurlUp: '0',
+	CurlUpPassed: 'n/a',
+	CurlUpWaiver: false,
+	DateTaken: '1900-01-01T05:00:00.000Z',
+	HFZID: 1,
+	IsPassed: false,
+	MileRun: '0:0',
+	MileRunPassed: 'n/a',
+	MileRunWaiver: false,
+	ORGID: 0,
+	PacerRun: '0:0',
+	PacerRunPassed: 'n/a',
+	PacerRunWaiver: false,
+	SitAndReach: '0',
+	SitAndReachPassed: 'n/a',
+	SitAndReachWaiver: false,
+	WeatherWaiver: false,
+};
+
+export const emptyCadetAchv: NHQ.CadetAchv = {
+	CAPID: 0,
+	CadetAchvID: 0,
+	PhyFitTest: '1900-01-01T05:00:00.000Z',
+	LeadLabDateP: '1900-01-01T05:00:00.000Z',
+	LeadLabScore: 0,
+	AEDateP: '1900-01-01T05:00:00.000Z',
+	AEScore: 0,
+	AEMod: 0,
+	AETest: 0,
+	MoralLDateP: '1900-01-01T05:00:00.000Z',
+	ActivePart: false,
+	OtherReq: false,
+	SDAReport: false,
+	UsrID: '',
+	DateMod: '1900-01-01T05:00:00.000Z',
+	FirstUsr: '',
+	DateCreated: '1900-01-01T05:00:00.000Z',
+	DrillDate: '1900-01-01T05:00:00.000Z',
+	DrillScore: 0,
+	LeadCurr: '',
+	CadetOath: false,
+	AEBookValue: '',
+	MileRun: 0,
+	ShuttleRun: 0,
+	SitAndReach: 0,
+	PushUps: 0,
+	CurlUps: 0,
+	HFZID: 0,
+	StaffServiceDate: '1900-01-01T05:00:00.000Z',
+	TechnicalWritingAssignment: '',
+	TechnicalWritingAssignmentDate: '1900-01-01T05:00:00.000Z',
+	OralPresentationDate: '1900-01-01T05:00:00.000Z',
 };
