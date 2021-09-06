@@ -19,6 +19,7 @@
 
 import { join, resolve } from 'path';
 import * as ts from 'typescript';
+import generateRequest from './generateRequest';
 import addAPI from './addAPI';
 import apiCall from './apiCall';
 import apiURL from './apiURL';
@@ -71,6 +72,7 @@ const isAPICallExpression = isFunctionCallExpression('apiCall');
 const isValidatorCallExpression = isFunctionCallExpression('validator');
 const isAddAPICallExpression = isFunctionCallExpression('addAPI');
 const isGenerateAPITreeCallExpression = isFunctionCallExpression('generateAPITree');
+const isGenerateRequestCallExpression = isFunctionCallExpression('generateRequest');
 
 function visitNodeAndChildren(
 	node: ts.SourceFile,
@@ -127,6 +129,9 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 	}
 	if (isGenerateAPITreeCallExpression(node, typeChecker)) {
 		return generateAPITree(node, typeChecker);
+	}
+	if (isGenerateRequestCallExpression(node, typeChecker)) {
+		return generateRequest(node, typeChecker);
 	}
 
 	return node;

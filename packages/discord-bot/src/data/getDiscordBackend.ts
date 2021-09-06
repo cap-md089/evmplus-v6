@@ -41,6 +41,8 @@ import {
 	CAP,
 	AttendanceBackend,
 	Backends,
+	GoogleBackend,
+	getEmptyGoogleBackend,
 } from 'server-common';
 
 export type DiscordBackends = Backends<
@@ -53,6 +55,7 @@ export type DiscordBackends = Backends<
 		CAP.CAPMemberBackend,
 		MemberBackend,
 		AuditsBackend,
+		GoogleBackend,
 		EventsBackend,
 		AttendanceBackend,
 		PAM.PAMBackend,
@@ -70,6 +73,7 @@ export const getDiscordBackend = combineBackends<
 		CAP.CAPMemberBackend,
 		MemberBackend,
 		AuditsBackend,
+		GoogleBackend,
 		EventsBackend,
 		AttendanceBackend,
 		PAM.PAMBackend,
@@ -83,6 +87,7 @@ export const getDiscordBackend = combineBackends<
 	CAP.getRequestFreeCAPMemberBackend,
 	getRequestFreeMemberBackend,
 	getRequestFreeAuditsBackend,
+	getEmptyGoogleBackend,
 	getRequestFreeEventsBackend,
 	getRequestFreeAttendanceBackend,
 	PAM.getRequestFreePAMBackend,
