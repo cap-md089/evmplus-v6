@@ -109,6 +109,7 @@ export const createRegistry = (schema: Schema) => (
 				},
 				Website: {
 					Name: '',
+					UnitName: '',
 					Separator: ' - ',
 					ShowUpcomingEventCount: 7,
 					PhotoLibraryImagesPerPage: 20,
