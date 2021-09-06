@@ -180,6 +180,7 @@ export const getTestRegistry = (account: AccountObject): RegistryValues => ({
 	Website: {
 		FaviconID: Maybe.none(),
 		Name: '',
+		UnitName: '',
 		PhotoLibraryImagesPerPage: 7,
 		Separator: ' - ',
 		ShowUpcomingEventCount: 7,
