@@ -3042,6 +3042,10 @@ export interface WebsiteInformation {
 	 */
 	Name: string;
 	/**
+	 * The full name of the unit
+	 */
+	UnitName: string;
+	/**
 	 * -, ::, etc. Personal taste, used in the title of the page
 	 */
 	Separator: string;
