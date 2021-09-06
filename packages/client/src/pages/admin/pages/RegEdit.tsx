@@ -261,7 +261,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 					<Label>Website name</Label>
 					<TextInput name="Name" />
 
-					<Label>Unit name</Label>
+					<Label>Full unit name (used for reports)</Label>
 					<TextInput name="UnitName" />
 
 					<Label>Title separator</Label>
