@@ -149,6 +149,7 @@ WORKDIR /usr/evm-plus
 ENV IN_DOCKER_TEST_ENVIRONMENT=1
 CMD yarn run --cwd=packages/server-jest-config test && \
 	yarn run --cwd=packages/server-common test && \
+	yarn run --cwd=packages/server test && \
 	yarn run --cwd=packages/client test
 
 #

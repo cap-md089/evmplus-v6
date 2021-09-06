@@ -95,8 +95,9 @@
 	"jest": {
 		"globals": {
 			"ts-jest": {
-				"tsConfig": "tsconfig.test.json",
-				"diagnostics": false
+				"tsconfig": "tsconfig.test.json",
+				"diagnostics": false,
+				"compiler": "ttypescript"
 			}
 		},
 		"testRegex": "(/src/__tests__/.*\\.ts)",

@@ -230,6 +230,27 @@ export const findAndBind = <T>(
 	return findWithStatement;
 };
 
+export const removeAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
+	remove: mysql.Collection<T>,
+): mysql.CollectionRemove<T> => removeAndBind(remove, bind);
+
+export const removeAndBind = <T>(
+	remove: mysql.Collection<T>,
+	bind: RecursivePartial<mysql.Bound<T>>,
+): mysql.CollectionRemove<T> => {
+	const modifyWithStatement = remove.remove(generateFindStatement(bind));
+
+	const bound = generateBindObject(bind);
+
+	for (const i in bound) {
+		if (bound.hasOwnProperty(i)) {
+			modifyWithStatement.bind(i as keyof T, bound[i] as any);
+		}
+	}
+
+	return modifyWithStatement;
+};
+
 export const modifyAndBindC = <T>(bind: RecursivePartial<mysql.Bound<T>>) => (
 	modify: mysql.Collection<T>,
 ): mysql.CollectionModify<T> => modifyAndBind(modify, bind);
