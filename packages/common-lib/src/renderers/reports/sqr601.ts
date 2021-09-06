@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -22,6 +22,7 @@ import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interface
 import {
 	CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
+	CadetPromotionStatus,
 	CAPProspectiveMemberObject,
 	get,
 	Maybe,
@@ -52,6 +53,35 @@ export const sqr601DocumentDefinition = (
 		const aName = a.nameLast + ', ' + a.nameFirst;
 		const bName = b.nameLast + ', ' + b.nameFirst;
 		return aName.localeCompare(bName);
+	}
+
+	function getHFZExpire(reqs: CadetPromotionStatus): string {
+		let dateVal = '';
+		if (reqs.CurrentCadetAchv.CadetAchvID < 5 && Array.isArray(reqs.HFZRecords)) {
+			if (reqs.HFZRecords.length === 0) {
+				return '';
+			} else {
+				dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
+				return new Date(
+					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
+				).toLocaleDateString('en-US');
+			}
+			// return 'Phase I';
+		} else if (Array.isArray(reqs.HFZRecords)) {
+			if (reqs.HFZRecords.filter(rec => rec.IsPassed === true).length > 0) {
+				dateVal = reqs.HFZRecords.filter(rec => rec.IsPassed === true)[0].DateTaken.substr(
+					0,
+					10,
+				);
+				return new Date(
+					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
+				).toLocaleDateString('en-US');
+			} else {
+				return '';
+			}
+		} else {
+			return '-'; // shouldn't ever get here...
+		}
 	}
 
 	function determineSDA(
@@ -102,46 +132,55 @@ export const sqr601DocumentDefinition = (
 	const unpoweredFlights = [1, 2, 3, 4, 5];
 	const poweredFlights = [6, 7, 8, 9, 10];
 
-	const oridesShortDescription = (rides: NHQ.OFlight[]): string =>
-		[...new Set(rides.map(get('Syllabus')))]
-			.reduce<[number, number]>(
-				([powered, unpowered], syllabus) =>
-					poweredFlights.includes(syllabus)
-						? [powered + 1, unpowered]
-						: unpoweredFlights.includes(syllabus)
-						? [powered, unpowered + 1]
-						: [powered, unpowered],
-				[0, 0],
-			)
-			.join('p | ') + 'u';
+	const oflightsShortDescription = (rides: NHQ.OFlight[]): string =>
+		(
+			[...new Set(rides.map(get('Syllabus')))]
+				.reduce<[number, number]>(
+					([powered, unpowered], syllabus) =>
+						poweredFlights.includes(syllabus)
+							? [powered + 1, unpowered]
+							: unpoweredFlights.includes(syllabus)
+							? [powered, unpowered + 1]
+							: [powered, unpowered],
+					[0, 0],
+				)
+				.join('p | ') + 'u'
+		)
+			.replace('0p', '_p')
+			.replace('0u', '_u');
 
 	const fullMembers = myTest
 		? nhqmembers.sort(sortNHQName).map((loopmember): TableCell[] => [
 				{
+					// Grade
 					text: loopmember.member.memberRank,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// Full Name
 					text: loopmember.member.nameLast + ', ' + loopmember.member.nameFirst,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// CAPID
 					text: loopmember.member.id,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// Flight
 					text: loopmember.member.flight,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// Expired? - '<' means within 30 days of expiring
 					text:
 						new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
 							new Date().getTime() <=
@@ -157,6 +196,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// Eligible date for next promotion
 					text: Maybe.isSome(loopmember.requirements.LastAprvDate)
 						? new Date(
 								loopmember.requirements.LastAprvDate.value +
@@ -168,6 +208,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// Next Grade
 					text:
 						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 							.Grade,
@@ -176,6 +217,7 @@ export const sqr601DocumentDefinition = (
 					alighment: 'left',
 				},
 				{
+					// Lead Lab pass date or N/A if not required
 					text:
 						new Date(loopmember.requirements.CurrentCadetAchv.LeadLabDateP).getTime() -
 							new Date('01/01/2010').getTime() <=
@@ -195,6 +237,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// Aerospace Education pass date or N/A if not required
 					text:
 						new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
 							new Date('01/01/2010').getTime() <=
@@ -211,6 +254,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// SDA requirements
 					text:
 						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 							.SDAPresentation === false &&
@@ -230,22 +274,14 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
-					text:
-						new Date(loopmember.requirements.HFZRecord.DateTaken).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
-							? 'N/A'
-							: new Date(
-									new Date(
-										loopmember.requirements.HFZRecord.DateTaken.substr(0, 10),
-									).getTime() +
-										60 * 60 * 24 * 182 * 1000,
-							  ).toLocaleDateString('en-US'),
+					// HFZ credit expiration date
+					text: getHFZExpire(loopmember.requirements),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// Drill Test required or date passed
 					text:
 						new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
 							new Date('01/01/2010').getTime() <=
@@ -267,12 +303,14 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// Oath
 					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
+					// Character Development
 					text:
 						new Date(loopmember.requirements.CurrentCadetAchv.MoralLDateP).getTime() -
 							new Date('01/01/2010').getTime() <=
@@ -292,6 +330,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// Mentor?
 					text: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 						.Mentor
 						? loopmember.requirements.CurrentCadetAchv.OtherReq
@@ -303,13 +342,15 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// GES complete?
 					text: Maybe.isSome(loopmember.requirements.ges) ? 'Y' : '',
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
 				},
 				{
-					text: oridesShortDescription(loopmember.requirements.oflights),
+					// Orientation Flights
+					text: oflightsShortDescription(loopmember.requirements.oflights),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
