@@ -18,15 +18,17 @@
  */
 
 import {
-	AccountType,
+	// AccountType,
 	api,
 	AsyncEither,
 	asyncRight,
 	CAPProspectiveMemberObject,
 	ClientUser,
 	Either,
+	// hasOneDutyPosition,
 	hasPermission,
 	HTTPError,
+	// isCAPMember,
 	Permissions,
 	reports,
 } from 'common-lib';
@@ -64,9 +66,28 @@ interface ReportsWidgetViewState {
 	showError: boolean;
 }
 
+// const isMaybeFlightStaff = pipe(
+// 	M.filterType<Member, CAPMember>(isCAPMember),
+// 	M.filter(hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])),
+// 	M.isSome,
+// );
+
+// const isFlightStaff = (member: Member | undefined | null): member is CAPMember =>
+// 	isMaybeFlightStaff(M.fromValue(member));
+
+// const hasAllowedDutyPosition = hasOneDutyPosition([
+// 	'Cadet Flight Commander',
+// 	'Cadet Flight Sergeant',
+// 	'Cadet Commander',
+// 	'Cadet Deputy Commander',
+// 	'Cadet Executive Officer',
+// 	'Deputy Commander For Cadets',
+// ]);
+
 export const shouldRenderReports = (props: PageProps): boolean =>
 	!!props.member &&
-	hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(props.member);
+	hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(props.member); // ||
+	// hasAllowedDutyPosition(props.member)
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;
@@ -132,21 +153,19 @@ export const ReportsWidget = withFetchApi(
 							<div>{this.state.error}</div>
 						) : (
 							<div>
-								{(this.props.account.type === AccountType.CAPSQUADRON ||
+								{/* {(this.props.account.type === AccountType.CAPSQUADRON ||
 									this.props.account.type === AccountType.CAPEVENT) &&
-								hasPermission('PromotionManagement')(
-									Permissions.PromotionManagement.FULL,
-								)(this.props.member) ? (
-									<>
-										<Button
-											onClick={() => this.createSQR601()}
-											buttonType="none"
-										>
-											SQR 60-1 Cadet status report
-										</Button>
-										<br />
-									</>
-								) : null}
+									(
+										hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(this.props.member) ||
+										hasAllowedDutyPosition(this.props.member)
+									) ? ( */}
+								<>
+									<Button onClick={() => this.createSQR601()} buttonType="none">
+										SQR 60-1 Cadet status report
+									</Button>
+									<br />
+								</>
+								{/* ) : null} */}
 							</div>
 						)}
 					</div>
