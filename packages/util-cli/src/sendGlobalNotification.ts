@@ -106,7 +106,7 @@ void (async () => {
 
 	const emSchema = session.getSchema(config.DB_SCHEMA);
 
-	const backend = backendGenerator(emSchema);
+	const backend = backendGenerator(config)(emSchema);
 
 	const alertAccount = async (account: AccountObject, db: Schema): Promise<void> => {
 		try {

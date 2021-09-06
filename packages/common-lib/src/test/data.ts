@@ -25,6 +25,7 @@ import { toReference } from '../lib/Member';
 import {
 	AccountObject,
 	AccountType,
+	ActiveSession,
 	AttendanceRecord,
 	AttendanceStatus,
 	CAPNHQMemberObject,
@@ -36,6 +37,8 @@ import {
 	RawAttendanceDBRecord,
 	RawRegularEventObject,
 	RegistryValues,
+	SessionType,
+	User,
 } from '../typings/types';
 
 export const getTestNewEvent = (): NewEventObject => ({
@@ -124,8 +127,8 @@ export const getTestAttendanceRecord = (
 	memberName: '',
 	planToUseCAPTransportation: false,
 	shiftTime: {
-		arrivalTime: 0,
-		departureTime: 0,
+		arrivalTime: event.startDateTime,
+		departureTime: event.endDateTime,
 	},
 	sourceAccountID: event.accountID,
 	sourceEventID: event.id,
@@ -136,18 +139,21 @@ export const getTestAttendanceRecord = (
 
 export const getTestRawAttendanceRecord = (
 	event: RawRegularEventObject,
+	member?: MemberReference,
 ): RawAttendanceDBRecord => ({
 	comments: '',
 	customAttendanceFieldValues: applyCustomAttendanceFields(event.customAttendanceFields)([]),
-	memberID: {
-		type: 'CAPNHQMember',
-		id: 0,
-	},
+	memberID: member
+		? toReference(member)
+		: {
+				type: 'CAPNHQMember',
+				id: 0,
+		  },
 	memberName: '',
 	planToUseCAPTransportation: false,
 	shiftTime: {
-		arrivalTime: 0,
-		departureTime: 0,
+		arrivalTime: event.startDateTime,
+		departureTime: event.endDateTime,
 	},
 	accountID: event.accountID,
 	eventID: event.id,
@@ -209,4 +215,16 @@ export const getTestMember = (): CAPNHQMemberObject => ({
 	teamIDs: [],
 	type: 'CAPNHQMember',
 	usrID: '',
+});
+
+export const getTestSession = (member: User): ActiveSession => ({
+	type: SessionType.REGULAR,
+	user: member,
+	expires: 0,
+	id: '',
+	userAccount: {
+		member,
+		passwordHistory: [],
+		username: '',
+	},
 });
