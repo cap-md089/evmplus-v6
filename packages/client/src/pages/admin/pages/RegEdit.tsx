@@ -67,6 +67,7 @@ interface RegEditFormValues {
 	RankAndFile: RankAndFileInformation;
 	Website: {
 		Name: string;
+		UnitName: string;
 		PhotoLibraryImagesPerPage: number;
 		ShowUpcomingEventCount: number;
 		Separator: string;
@@ -132,6 +133,7 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 			},
 			Website: {
 				Name: this.props.registry.Website.Name,
+				UnitName: this.props.registry.Website.UnitName,
 				PhotoLibraryImagesPerPage: this.props.registry.Website.PhotoLibraryImagesPerPage,
 				Separator: this.props.registry.Website.Separator,
 				ShowUpcomingEventCount: this.props.registry.Website.ShowUpcomingEventCount,
@@ -258,6 +260,9 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 				<FormBlock name="Website">
 					<Label>Website name</Label>
 					<TextInput name="Name" />
+
+					<Label>Full unit name (used for reports)</Label>
+					<TextInput name="UnitName" />
 
 					<Label>Title separator</Label>
 					<TextInput name="Separator" />
