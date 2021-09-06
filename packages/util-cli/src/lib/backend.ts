@@ -18,9 +18,11 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import { CLIConfiguration } from 'common-lib';
 import {
 	AccountBackend,
 	AuditsBackend,
+	Backends,
 	CAP,
 	combineBackends,
 	EventsBackend,
@@ -29,10 +31,12 @@ import {
 	getRequestFreeAuditsBackend,
 	getRequestFreeEventsBackend,
 	getRequestFreeFileBackend,
+	getRequestFreeGoogleBackend,
 	getRequestFreeMemberBackend,
 	getRequestFreeRegistryBackend,
 	getRequestFreeTeamsBackend,
 	getTimeBackend,
+	GoogleBackend,
 	MemberBackend,
 	PAM,
 	RawMySQLBackend,
@@ -42,8 +46,11 @@ import {
 	TimeBackend,
 } from 'server-common';
 
-export const backendGenerator = combineBackends<
-	Schema,
+export const backendGenerator = (
+	conf: CLIConfiguration,
+): ((
+	schema: Schema,
+) => Backends<
 	[
 		TimeBackend,
 		RawMySQLBackend,
@@ -54,19 +61,38 @@ export const backendGenerator = combineBackends<
 		MemberBackend,
 		FileBackend,
 		AuditsBackend,
+		GoogleBackend,
 		EventsBackend,
 		PAM.PAMBackend,
 	]
->(
-	getTimeBackend,
-	requestlessMySQLBackend,
-	getRequestFreeRegistryBackend,
-	getRequestFreeAccountsBackend,
-	getRequestFreeTeamsBackend,
-	CAP.getRequestFreeCAPMemberBackend,
-	getRequestFreeMemberBackend,
-	getRequestFreeFileBackend,
-	getRequestFreeAuditsBackend,
-	getRequestFreeEventsBackend,
-	PAM.getRequestFreePAMBackend,
-);
+>) =>
+	combineBackends<
+		Schema,
+		[
+			TimeBackend,
+			RawMySQLBackend,
+			RegistryBackend,
+			AccountBackend,
+			TeamsBackend,
+			CAP.CAPMemberBackend,
+			MemberBackend,
+			FileBackend,
+			AuditsBackend,
+			GoogleBackend,
+			EventsBackend,
+			PAM.PAMBackend,
+		]
+	>(
+		getTimeBackend,
+		requestlessMySQLBackend,
+		getRequestFreeRegistryBackend,
+		getRequestFreeAccountsBackend,
+		getRequestFreeTeamsBackend,
+		CAP.getRequestFreeCAPMemberBackend,
+		getRequestFreeMemberBackend,
+		getRequestFreeFileBackend,
+		getRequestFreeAuditsBackend,
+		(schema, backends) => getRequestFreeGoogleBackend(conf, backends),
+		getRequestFreeEventsBackend,
+		PAM.getRequestFreePAMBackend,
+	);

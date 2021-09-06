@@ -122,6 +122,8 @@ export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguratio
 
 	NODE_ENV: raw.NODE_ENV.trim(),
 
+	HOST_NAME: raw.HOST_NAME.trim(),
+
 	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN?.trim?.(),
 
 	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),

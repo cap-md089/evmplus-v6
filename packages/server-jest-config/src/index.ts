@@ -18,6 +18,7 @@
  */
 
 import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
+import { execFile } from 'child_process';
 import {
 	AccountType,
 	CAPMemberContact,
@@ -26,17 +27,17 @@ import {
 	CAPNHQMemberReference,
 	getDefaultMemberPermissions,
 	Member,
+	MemberPermissions,
 	memoize,
 	ShortDutyPosition,
 	TableDataType,
 	TableNames,
 	User,
 } from 'common-lib';
-import { promisify } from 'util';
-import { execFile } from 'child_process';
-import { resolve } from 'path';
 import * as Docker from 'dockerode';
 import { DateTime } from 'luxon';
+import { resolve } from 'path';
+import { promisify } from 'util';
 
 const execFilePromise = promisify(execFile);
 
@@ -489,8 +490,8 @@ export const getMemberFromTestData = (
 /**
  * Given a member, upgrades them to a user by giving them default squadron permissions
  */
-export const getTestUserForMember = (member: Member): User => ({
+export const getTestUserForMember = (member: Member, permissions?: MemberPermissions): User => ({
 	...member,
 	sessionID: '',
-	permissions: getDefaultMemberPermissions(AccountType.CAPSQUADRON),
+	permissions: permissions ?? getDefaultMemberPermissions(AccountType.CAPSQUADRON),
 });

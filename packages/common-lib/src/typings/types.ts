@@ -3790,6 +3790,8 @@ export interface CLIConfiguration {
 
 	GOOGLE_KEYS_PATH: string;
 
+	HOST_NAME: string;
+
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
@@ -3805,6 +3807,8 @@ export interface EnvCLIConfiguration {
 
 	GOOGLE_KEYS_PATH: string;
 
+	HOST_NAME: string;
+
 	NODE_ENV: string;
 
 	DRIVE_STORAGE_PATH: string;
@@ -3819,6 +3823,8 @@ export interface RawCLIConfiguration {
 	DB_POOL_SIZE: string;
 
 	GOOGLE_KEYS_PATH: string;
+
+	HOST_NAME: string;
 
 	NODE_ENV: string;
 

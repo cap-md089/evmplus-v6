@@ -61,7 +61,7 @@ void (async () => {
 
 	const schema = session.getSchema(config.DB_SCHEMA);
 
-	const backend = backendGenerator(schema);
+	const backend = backendGenerator(config)(schema);
 
 	const account = await backend.getAccount('md089').fullJoin();
 

@@ -73,6 +73,7 @@ import {
 	isDuplicateRecordError,
 	modifyAndBindC,
 	RawMySQLBackend,
+	removeAndBindC,
 } from './MySQLUtil';
 import { ServerEither } from './servertypes';
 import { TeamsBackend } from './Team';
@@ -517,13 +518,24 @@ export const modifyEventAttendanceRecord = (schema: Schema) => (event: RawResolv
 		)
 		.map(destroy);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const deleteAttendanceRecord = (schema: Schema) => (actor: User) => (
+export const deleteAttendanceRecord = (backend: Backends<[RawMySQLBackend]>) =>
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	member: MemberReference,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-) => (event: RawResolvedEventObject): ServerEither<void> =>
-	asyncRight(void 0, errorGenerator('Could not delete record'));
+	(actor: User) => (member: MemberReference) => (
+		event: RawResolvedEventObject,
+	): ServerEither<void> =>
+		asyncRight(
+			backend.getCollection('Attendance'),
+			errorGenerator('Could not delete attendance record'),
+		)
+			.map(
+				removeAndBindC({
+					memberID: toReference(member),
+					eventID: event.id,
+					accountID: event.accountID,
+				}),
+			)
+			.map(collection => collection.execute())
+			.map(destroy);
 
 export const getMemberAttendanceRecordForEvent = (backend: Backends<[RawMySQLBackend]>) => (
 	event: RawEventObject,
@@ -605,7 +617,7 @@ export const getRequestFreeAttendanceBackend = (
 	canMemberDeleteRecord: canMemberDeleteRecord(prevBackend),
 	applyAttendanceFilter: applyAttendanceFilter(prevBackend),
 	applyAttendanceRecordUpdates: applyAttendanceRecordUpdates(prevBackend),
-	removeMemberFromEventAttendance: deleteAttendanceRecord(mysqlx),
+	removeMemberFromEventAttendance: deleteAttendanceRecord(prevBackend),
 	getMemberAttendanceRecordForEvent: memoize(
 		event =>
 			memoize(

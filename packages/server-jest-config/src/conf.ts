@@ -1,5 +1,5 @@
 import { ServerConfiguration } from 'common-lib';
-import TestConnection from '.';
+import TestConnection from './index';
 
 export default (connection: TestConnection): ServerConfiguration => ({
 	AWS_ACCESS_KEY_ID: '',
