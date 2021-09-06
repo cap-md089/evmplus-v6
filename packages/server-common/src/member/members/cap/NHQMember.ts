@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -525,9 +525,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							{
 								CAPID: member.id,
 							},
-						)
-							.sort('HFZID DESC')
-							.limit(1),
+						).sort('HFZID DESC'),
 					),
 					collectResults(
 						findAndBind(
@@ -553,7 +551,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						maxApproval,
 						encampResults,
 						rclsResults,
-						lastHFZRecord,
+						HFZ,
 						ges,
 						oflights,
 					]) =>
@@ -565,9 +563,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							maxApproval,
 							encampResults,
 							rclsResults,
-							lastHFZRecord.length === 1
-								? lastHFZRecord[0]
-								: { ...emptyHFZID, CAPID: member.id },
+							HFZ,
 							ges,
 							oflights,
 						] as const,
@@ -592,7 +588,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						maxApproval,
 						encampResults,
 						rclsResults,
-						lastHFZRecord,
+						HFZ,
 						ges,
 						oflights,
 					]) => ({
@@ -611,32 +607,11 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
 							acti => +new Date(acti.Completed),
 						)(Maybe.fromValue(rclsResults[0])),
-						HFZRecord: lastHFZRecord,
+						HFZRecords: HFZ,
 						ges: Maybe.fromValue(ges[0]),
 						oflights,
 					}),
 				);
-
-export const emptyHFZID: NHQ.CadetHFZInformation = {
-	CAPID: 0,
-	CurlUp: '0',
-	CurlUpPassed: 'n/a',
-	CurlUpWaiver: false,
-	DateTaken: '1900-01-01T05:00:00.000Z',
-	HFZID: 1,
-	IsPassed: false,
-	MileRun: '0:0',
-	MileRunPassed: 'n/a',
-	MileRunWaiver: false,
-	ORGID: 0,
-	PacerRun: '0:0',
-	PacerRunPassed: 'n/a',
-	PacerRunWaiver: false,
-	SitAndReach: '0',
-	SitAndReachPassed: 'n/a',
-	SitAndReachWaiver: false,
-	WeatherWaiver: false,
-};
 
 export const emptyCadetAchv: NHQ.CadetAchv = {
 	CAPID: 0,
