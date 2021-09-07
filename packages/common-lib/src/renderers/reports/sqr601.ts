@@ -56,31 +56,26 @@ export const sqr601DocumentDefinition = (
 	}
 
 	function getHFZExpire(reqs: CadetPromotionStatus): string {
-		let dateVal = '';
-		if (reqs.CurrentCadetAchv.CadetAchvID < 5 && Array.isArray(reqs.HFZRecords)) {
+		if (reqs.CurrentCadetAchv.CadetAchvID < 4) {
 			if (reqs.HFZRecords.length === 0) {
 				return '';
 			} else {
-				dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
+				const dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
 				return new Date(
 					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
 				).toLocaleDateString('en-US');
 			}
 			// return 'Phase I';
-		} else if (Array.isArray(reqs.HFZRecords)) {
-			if (reqs.HFZRecords.filter(rec => rec.IsPassed === true).length > 0) {
-				dateVal = reqs.HFZRecords.filter(rec => rec.IsPassed === true)[0].DateTaken.substr(
-					0,
-					10,
-				);
+		} else {
+			const passedRecord = reqs.HFZRecords.find(rec => rec.IsPassed);
+			if (!!passedRecord) {
+				const dateVal = passedRecord.DateTaken.substr(0, 10);
 				return new Date(
 					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
 				).toLocaleDateString('en-US');
 			} else {
 				return '';
 			}
-		} else {
-			return '-'; // shouldn't ever get here...
 		}
 	}
 
