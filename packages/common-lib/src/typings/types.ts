@@ -4202,7 +4202,7 @@ export interface CadetPromotionStatus {
 	/**
 	 * HFZ information
 	 */
-	HFZRecords: NHQ.CadetHFZInformation[];
+	HFZRecord: MaybeObj<NHQ.CadetHFZInformation>;
 
 	/**
 	 * Orientation flight information
