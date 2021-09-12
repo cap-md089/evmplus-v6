@@ -205,6 +205,7 @@ export const getTestMember = (): CAPNHQMemberObject => ({
 	expirationDate: 0,
 	flight: null,
 	id: 0,
+	joined: 0,
 	memberRank: '',
 	nameFirst: '',
 	nameLast: '',

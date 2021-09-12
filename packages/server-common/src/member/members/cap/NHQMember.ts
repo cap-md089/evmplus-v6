@@ -218,6 +218,7 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 					expirationDate: +DateTime.fromISO(member.Expiration),
 					flight: extraInfo.flight,
 					id: member.CAPID,
+					joined: +DateTime.fromISO(member.Joined),
 					memberRank: member.Rank,
 					nameFirst: member.NameFirst,
 					nameLast: member.NameLast,
@@ -358,6 +359,7 @@ export const getNHQMember = (schema: Schema) => (backend: Backends<[TeamsBackend
 			expirationDate: +DateTime.fromISO(info.Expiration),
 			flight: extraInformation.flight,
 			id: info.CAPID,
+			joined: +DateTime.fromISO(info.Joined),
 			memberRank: info.Rank,
 			nameFirst: info.NameFirst,
 			nameLast: info.NameLast,
@@ -495,6 +497,14 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 					collectResults(
 						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
 							CAPID: member.id,
+							Status: 'PND',
+						})
+							.sort('CadetAchvID DESC')
+							.limit(1),
+					),
+					collectResults(
+						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
+							CAPID: member.id,
 						})
 							.sort('CadetAchvID DESC')
 							.limit(1),
@@ -548,6 +558,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 					([
 						maxAchv,
 						maxApprovedApproval,
+						maxPendingApproval,
 						maxApproval,
 						encampResults,
 						rclsResults,
@@ -559,7 +570,12 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 							maxAchv.length === 1
 								? maxAchv[0]
 								: { ...emptyCadetAchv, CAPID: member.id },
-							maxApprovedApproval,
+							maxApprovedApproval.length === 1
+								? maxApprovedApproval[0]
+								: { ...emptyCadetAchvAprApr, CAPID: member.id },
+							maxPendingApproval.length === 1
+								? maxPendingApproval[0]
+								: { ...emptyCadetAchvAprPnd, CAPID: member.id },
 							maxApproval,
 							encampResults,
 							rclsResults,
@@ -585,6 +601,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 					([
 						maxAchv,
 						maxApprovedApproval,
+						maxPendingApproval,
 						maxApproval,
 						encampResults,
 						rclsResults,
@@ -592,15 +609,31 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						ges,
 						oflights,
 					]) => ({
-						NextCadetAchvID:
-							maxApprovedApproval.length !== 1
+						CurrentCadetAchv: maxAchv, // this is the achievement the cadet is pursuing (next higher grade)
+						CurrentCadetGradeID: maxApprovedApproval.CadetAchvID,
+						// NextCadetGradeID: 1 === 1 ? 1 : maxPendingApproval.CadetAchvID,
+						NextCadetGradeID:
+							maxApproval.length !== 1
 								? 1
-								: Math.min(21, maxApprovedApproval[0].CadetAchvID + 1),
-						CurrentCadetAchv: maxAchv, // this is the next achievement the cadet is pursuing
+								: maxApproval[0]?.CadetAchvID === maxApprovedApproval.CadetAchvID
+								? maxApproval[0]?.CadetAchvID + 1
+								: maxApprovedApproval.CadetAchvID === 0 &&
+								  maxPendingApproval.CadetAchvID === 0
+								? 1
+								: maxPendingApproval.CadetAchvID > 0
+								? 23
+								: maxApproval[0]?.CadetAchvID,
+						// NextCadetAchvID: 2,
+						NextCadetAchvID:
+							maxApprovedApproval.CadetAchvID === 0
+								? 1
+								: maxApproval[0]?.CadetAchvID === maxApprovedApproval.CadetAchvID
+								? maxApproval[0]?.CadetAchvID + 1
+								: maxApproval[0]?.CadetAchvID,
 						MaxAprvStatus: maxApproval[0]?.Status ?? 'INC', // this is the approval status for the next achivement the cadet is pursuing
 						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
 							aprv => +new Date(aprv.DateMod),
-						)(Maybe.fromValue(maxApprovedApproval[0])),
+						)(Maybe.fromValue(maxApprovedApproval)),
 						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
 							acti => +new Date(acti.Completed),
 						)(Maybe.fromValue(encampResults[0])),
@@ -646,4 +679,34 @@ export const emptyCadetAchv: NHQ.CadetAchv = {
 	TechnicalWritingAssignment: '',
 	TechnicalWritingAssignmentDate: '1900-01-01T05:00:00.000Z',
 	OralPresentationDate: '1900-01-01T05:00:00.000Z',
+};
+
+export const emptyCadetAchvAprApr: NHQ.CadetAchvAprs = {
+	CAPID: 0,
+	CadetAchvID: 0,
+	Status: 'APR',
+	AprCAPID: 0,
+	DspReason: '',
+	AwardNo: 0,
+	JROTCWaiver: false,
+	UsrID: '',
+	DateMod: '1900-01-01T05:00:00.000Z',
+	FirstUsr: '',
+	DateCreated: '1900-01-01T05:00:00.000Z',
+	PrintedCert: false,
+};
+
+export const emptyCadetAchvAprPnd: NHQ.CadetAchvAprs = {
+	CAPID: 0,
+	CadetAchvID: 0,
+	Status: 'PND',
+	AprCAPID: 0,
+	DspReason: '',
+	AwardNo: 0,
+	JROTCWaiver: false,
+	UsrID: '',
+	DateMod: '1900-01-01T05:00:00.000Z',
+	FirstUsr: '',
+	DateCreated: '1900-01-01T05:00:00.000Z',
+	PrintedCert: false,
 };

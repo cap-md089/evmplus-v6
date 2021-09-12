@@ -62,7 +62,8 @@ export const sqr601DocumentDefinition = (
 			} else {
 				const dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
 				return new Date(
-					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
+					new Date(dateVal.replace(/-/g, '/').replace(/T.+/, '')).getTime() +
+						60 * 60 * 24 * 182 * 1000,
 				).toLocaleDateString('en-US');
 			}
 			// return 'Phase I';
@@ -71,7 +72,8 @@ export const sqr601DocumentDefinition = (
 			if (!!passedRecord) {
 				const dateVal = passedRecord.DateTaken.substr(0, 10);
 				return new Date(
-					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
+					new Date(dateVal.replace(/-/g, '/').replace(/T.+/, '')).getTime() +
+						60 * 60 * 24 * 182 * 1000,
 				).toLocaleDateString('en-US');
 			} else {
 				return '';
@@ -118,7 +120,7 @@ export const sqr601DocumentDefinition = (
 		if (req === 0) {
 			return 'N/A';
 		} else if (req > reqComp) {
-			return 'Incomplete';
+			return '';
 		} else {
 			return compDate;
 		}
@@ -148,7 +150,9 @@ export const sqr601DocumentDefinition = (
 		? nhqmembers.sort(sortNHQName).map((loopmember): TableCell[] => [
 				{
 					// Grade
-					text: loopmember.member.memberRank,
+					text:
+						CadetPromotionRequirementsMap[loopmember.requirements.CurrentCadetGradeID]
+							.Grade,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
@@ -158,6 +162,12 @@ export const sqr601DocumentDefinition = (
 					text: loopmember.member.nameLast + ', ' + loopmember.member.nameFirst,
 					fontSize: mySmallFontSize,
 					bold: false,
+					decoration:
+						new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
+							new Date().getTime() <=
+						0
+							? 'lineThrough'
+							: '',
 					alignment: 'left',
 				},
 				{
@@ -191,12 +201,24 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
-					// Eligible date for next promotion
+					// Eligible date for next promotion - or number of weeks since joined for c/ab
 					text: Maybe.isSome(loopmember.requirements.LastAprvDate)
 						? new Date(
 								loopmember.requirements.LastAprvDate.value +
 									60 * 60 * 24 * 56 * 1000,
 						  ).toLocaleDateString('en-US')
+						: loopmember.requirements.CurrentCadetAchv.CadetAchvID <= 1
+						? Math.round(
+								Math.round(
+									new Date().getTime() -
+										new Date(loopmember.member.joined).getTime(),
+								) /
+									1000 /
+									60 /
+									60 /
+									24 /
+									7,
+						  )
 						: '',
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -205,8 +227,15 @@ export const sqr601DocumentDefinition = (
 				{
 					// Next Grade
 					text:
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetGradeID]
 							.Grade,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alighment: 'left',
+				},
+				{
+					// Current achievement
+					text: loopmember.requirements.CurrentCadetAchv,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alighment: 'left',
@@ -222,10 +251,10 @@ export const sqr601DocumentDefinition = (
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.LeadLabDateP.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.LeadLabDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -242,7 +271,10 @@ export const sqr601DocumentDefinition = (
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.AEDateP.substr(0, 10),
+									loopmember.requirements.CurrentCadetAchv.AEDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -288,10 +320,10 @@ export const sqr601DocumentDefinition = (
 										loopmember.requirements.NextCadetAchvID
 								  ].Drill
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.DrillDate.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.DrillDate.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -315,10 +347,10 @@ export const sqr601DocumentDefinition = (
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.MoralLDateP.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.MoralLDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -330,7 +362,7 @@ export const sqr601DocumentDefinition = (
 						.Mentor
 						? loopmember.requirements.CurrentCadetAchv.OtherReq
 							? 'Y'
-							: 'N'
+							: ''
 						: 'N/A',
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -380,7 +412,11 @@ export const sqr601DocumentDefinition = (
 		pageMargins: [25, 40, 64, 40],
 
 		header: {
-			text: registry.Website.Name + ' Cadet Status Report',
+			text:
+				registry.Website.Name +
+				' Cadet Status Report: ' +
+				nhqmembers.length.toString() +
+				' members',
 			alignment: 'left',
 			fontSize: myTitleFontSize,
 			bold: true,
@@ -403,7 +439,7 @@ export const sqr601DocumentDefinition = (
 									body: [
 										[
 											{
-												text: 'Squadron Report 60-1 Aug 2021',
+												text: 'Squadron Report 60-1 Sep 2021',
 												bold: true,
 												fontSize: mySmallFontSize,
 											},
@@ -444,23 +480,24 @@ export const sqr601DocumentDefinition = (
 					// table def start
 					headerRows: 1,
 					widths: [
-						30, // Grade
+						29, // Grade
 						73, // Full Name
-						25, // CAPID
+						24, // CAPID
 						25, // Flight
 						13, // Exp
 						36, // Eligible
-						30, // Next
+						29, // Next
+						17, // Achv
 						36, // Lead Lab
 						36, // AeroEd
 						36, // SDA
 						36, // HFZ
 						36, // Drill Test
-						30, // Oath
+						17, // Oath
 						36, // Char Dev
-						30, // Mentor?
-						30, // GES
-						35, // O-Flights
+						29, // Mentor?
+						15, // GES
+						33, // O-Flights
 					],
 					body: [
 						[
@@ -496,13 +533,19 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'Eligible',
+								text: 'Eligible*',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
 								text: 'Next',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'Achv',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

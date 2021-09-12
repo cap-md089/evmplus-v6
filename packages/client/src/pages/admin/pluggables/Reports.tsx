@@ -166,6 +166,16 @@ export const ReportsWidget = withFetchApi(
 				return;
 			}
 
+			this.state.nhqMembers.map(member => {
+				console.log(
+					member.member.id,
+					' ',
+					member.member.nameLast,
+					', ',
+					member.member.nameFirst,
+				);
+			});
+
 			const now = new Date().toString();
 			const docDef = reports.sqr601DocumentDefinition(
 				this.state.nhqMembers,
