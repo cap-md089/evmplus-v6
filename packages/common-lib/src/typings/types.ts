@@ -323,6 +323,7 @@ export enum MemberCreateError {
 	UNKOWN_SERVER_ERROR = 'UnknownServerError',
 	DATABASE_ERROR = 'DatabaseError',
 	ACCOUNT_USES_MFA = 'MFAChallengeRequired',
+	ACCOUNT_EXPIRED = 'AccountExpired',
 }
 
 export enum PointOfContactType {
@@ -2824,6 +2825,10 @@ export interface SigninRequiresMFA {
 	error: MemberCreateError.ACCOUNT_USES_MFA;
 }
 
+export interface AccountExpiredResult {
+	error: MemberCreateError.ACCOUNT_EXPIRED;
+}
+
 /**
  * Allows for multiplexing the data together but still have type inference and
  * not use try/catch
@@ -2832,7 +2837,8 @@ export type SigninReturn =
 	| SuccessfulSigninReturn
 	| ExpiredSuccessfulSigninReturn
 	| FailedSigninReturn
-	| SigninRequiresMFA;
+	| SigninRequiresMFA
+	| AccountExpiredResult;
 
 /**
  * Used by the different files to indicate what they are

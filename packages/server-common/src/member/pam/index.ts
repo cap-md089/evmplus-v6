@@ -42,6 +42,7 @@ import {
 	UserAccountInformation,
 	UserSession,
 } from 'common-lib';
+import { TimeBackend } from '../..';
 import type { BasicAccountRequest } from '../../Account';
 import type { Backends } from '../../backends';
 import type { MemberBackend } from '../../Members';
@@ -145,7 +146,7 @@ export interface PAMBackend {
 
 export const getPAMBackend = (
 	req: BasicAccountRequest,
-	prevBackends: Backends<[MemberBackend]>,
+	prevBackends: Backends<[MemberBackend, TimeBackend]>,
 ): PAMBackend => ({
 	...getRequestFreePAMBackend(req.mysqlx, prevBackends),
 	verifyCaptcha: token =>

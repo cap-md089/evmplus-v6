@@ -10,7 +10,7 @@
 		"watch": "tsc --build tsconfig.build.json --watch",
 		"check": "tsc --build tsconfig.build.json --noEmit",
 		"test": "jest",
-		"lint": "eslint src/**/*.{ts,tsx} src/*.{ts,tsx}"
+		"lint": "eslint src/**/*.ts src/*.ts"
 	},
 	"dependencies": {
 		"debug": "^4.3.1",
