@@ -203,23 +203,27 @@ export const sqr601DocumentDefinition = (
 				{
 					// Eligible date for next promotion - or number of weeks since joined for c/ab
 					text: Maybe.isSome(loopmember.requirements.LastAprvDate)
-						? new Date(
-								loopmember.requirements.LastAprvDate.value +
-									60 * 60 * 24 * 56 * 1000,
-						  ).toLocaleDateString('en-US')
-						: loopmember.requirements.CurrentCadetAchv.CadetAchvID <= 1
-						? Math.round(
+						? loopmember.requirements.LastAprvDate.value -
+								new Date('01/01/2010').getTime() >
+						  0
+							? new Date(
+									loopmember.requirements.LastAprvDate.value +
+										60 * 60 * 24 * 56 * 1000,
+							  ).toLocaleDateString('en-US')
+							: Math.round(
+									Math.round(
+										new Date().getTime() -
+											new Date(loopmember.member.joined).getTime(),
+									) /
+										(1000 * 60 * 60 * 24 * 7),
+							  )
+						: Math.round(
 								Math.round(
 									new Date().getTime() -
 										new Date(loopmember.member.joined).getTime(),
 								) /
-									1000 /
-									60 /
-									60 /
-									24 /
-									7,
-						  )
-						: '',
+									(1000 * 60 * 60 * 24 * 7),
+						  ),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
@@ -235,7 +239,10 @@ export const sqr601DocumentDefinition = (
 				},
 				{
 					// Current achievement
-					text: loopmember.requirements.CurrentCadetAchv,
+					text:
+						loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
+						'-' +
+						loopmember.requirements.MaxAprvStatus.substr(0, 1),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alighment: 'left',
@@ -243,9 +250,17 @@ export const sqr601DocumentDefinition = (
 				{
 					// Lead Lab pass date or N/A if not required
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.LeadLabDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Leadership === 'None'
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(
+									loopmember.requirements.CurrentCadetAchv.LeadLabDateP,
+							  ).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Leadership === 'None'
 								? 'N/A'
@@ -263,9 +278,15 @@ export const sqr601DocumentDefinition = (
 				{
 					// Aerospace Education pass date or N/A if not required
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Aerospace === 'None'
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Aerospace === 'None'
 								? 'N/A'
@@ -283,12 +304,22 @@ export const sqr601DocumentDefinition = (
 				{
 					// SDA requirements
 					text:
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAPresentation === false &&
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAService === false &&
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAWriting === false
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAPresentation === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAService === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAWriting === false
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAPresentation === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAService === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAWriting === false
 							? 'N/A'
 							: determineSDA(
 									loopmember,
@@ -310,9 +341,17 @@ export const sqr601DocumentDefinition = (
 				{
 					// Drill Test required or date passed
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Drill === 'None'
+								? 'N/A'
+								: CadetPromotionRequirementsMap[
+										loopmember.requirements.NextCadetAchvID
+								  ].Drill
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Drill === 'None'
 								? 'N/A'
@@ -339,9 +378,18 @@ export const sqr601DocumentDefinition = (
 				{
 					// Character Development
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.MoralLDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.CharDev === false
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+
+							new Date(
+									loopmember.requirements.CurrentCadetAchv.MoralLDateP,
+							  ).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.CharDev === false
 								? 'N/A'
@@ -503,7 +551,7 @@ export const sqr601DocumentDefinition = (
 						[
 							// row 1
 							{
-								text: 'Grade',
+								text: 'Current Grade',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -533,19 +581,19 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'Eligible*',
+								text: 'Eligible or Weeks',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'Next',
+								text: 'Next Grade',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'Achv',
+								text: 'eSvc Achv',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -569,13 +617,13 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'HFZ Exp',
+								text: 'HFZ Cred Expiration',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'DrillTest',
+								text: 'Drill Test',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -587,7 +635,7 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'CharDev',
+								text: 'Character Devel',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
