@@ -22,13 +22,32 @@ import { CadetPromotionRequirements } from '../typings/types';
 /*
  * This array maps the Cadet Achievement ID from 0, 1, 2, ... 21 to
  * the achivement requirements to achieve that grade
- */
+ * 
+ * 	Case				Database Record States																Desired Display			
+						Max Cadet Achv	Max Cadet Achv Apr	Max Cadet Achv Apr Apr	Max Cadet Achv Apr Pnd	Grade		Next Grade	AchvID		Value Achv
+	AB empty			empty set		empty set			empty set				empty set				AchvID 0	AchvID 1	AchvID 1	AchvID 1
+	AB incomplete		AchvID 1		AchvID 1			empty set				empty set				AchvID 0	AchvID 1	AchvID 1	AchvID 1
+	AB pending			AchvID 1		AchvID 1			empty set				AchvID 1				AchvID 0	AchvID 23	AchvID 1	AchvID 1
+	AB approved			AchvID 1		AchvID 1			AchvID 1				empty set				AchvID 1	AchvID 2	AchvID 2	AchvID 2
+	Not AB incomplete	AchvID x		AchvID x			AchvID x-1				empty set				AchvID x-1	AchvID x	AchvID x	AchvID x
+	Not AB pending		AchvID x		AchvID x			AchvID x-1				AchvID x				AchvID x-1	AchvID 23	AchvID x	AchvID x
+	Not AB approved		AchvID x		AchvID x			AchvID x				empty set				AchvID x	AchvID x+1	AchvID x+1	AchvID x+1
+	C/Col incomplete	AchvID 21		AchvID 21			AchvID 20				empty set				AchvID 20	AchvID 21	AchvID 21	AchvID 21
+	C/Col pending		AchvID 21		AchvID 21			AchvID 20				AchvID 21				AchvID 20	AchvID 23	AchvID 21	AchvID 21
+	C/Col approved		AchvID 21		AchvID 21			AchvID 21				empty set				AchvID 21	AchvID 22	AchvID 22	AchvID 22
+								
+								
+	AchvID 0 is to populate 'C/AB' as current grade								
+	AchvID 22 is to populate promotion requirements (not required) for C/Col achievement (no further achievement requirements)								
+	AchvID 23 is for use to indicate 'Pending' promotion status
+
+	*/
 
 export const CadetPromotionRequirementsMap: readonly CadetPromotionRequirements[] = [
 	{
 		CadetAchvID: 0,
 		AchvName: 'Cadet Basic',
-		Rank: 'CADET',
+		Rank: 'C/AB',
 		Grade: 'C/AB',
 		AchvNumber: 'CadetBasic',
 		Oath: false,
@@ -580,6 +599,54 @@ export const CadetPromotionRequirementsMap: readonly CadetPromotionRequirements[
 		RCLS: false,
 		ReqsWebLink:
 			'https://www.gocivilairpatrol.com/programs/cadets/stripes-to-diamonds/spaatz-award/',
+		LeadTestWebLink: 'None',
+		AeroTestWebLink: 'None',
+		DrillTestWebLink: 'None',
+	},
+	{
+		CadetAchvID: 22,
+		AchvName: 'Gen Carl A Spaatz',
+		Rank: 'C/Col',
+		Grade: 'C/Col',
+		AchvNumber: 'Spaatz',
+		Oath: false,
+		Leadership: 'None',
+		Mentor: false,
+		SDAService: false,
+		SDAWriting: false,
+		SDAPresentation: false,
+		Drill: 'None',
+		DrillItemsPass: 0,
+		DrillItemsTotal: 0,
+		Aerospace: 'None',
+		CharDev: false,
+		Encampment: false,
+		RCLS: false,
+		ReqsWebLink: '',
+		LeadTestWebLink: 'None',
+		AeroTestWebLink: 'None',
+		DrillTestWebLink: 'None',
+	},
+	{
+		CadetAchvID: 23,
+		AchvName: 'Pending',
+		Rank: 'Pending',
+		Grade: 'Pending',
+		AchvNumber: 'Pending',
+		Oath: false,
+		Leadership: 'None',
+		Mentor: false,
+		SDAService: false,
+		SDAWriting: false,
+		SDAPresentation: false,
+		Drill: 'None',
+		DrillItemsPass: 0,
+		DrillItemsTotal: 0,
+		Aerospace: 'None',
+		CharDev: false,
+		Encampment: false,
+		RCLS: false,
+		ReqsWebLink: 'None',
 		LeadTestWebLink: 'None',
 		AeroTestWebLink: 'None',
 		DrillTestWebLink: 'None',
