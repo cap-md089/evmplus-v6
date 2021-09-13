@@ -19,6 +19,7 @@
 
 import { DateTime } from 'luxon';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { pipe } from 'ramda';
 import {
 	CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
@@ -55,31 +56,15 @@ export const sqr601DocumentDefinition = (
 		return aName.localeCompare(bName);
 	}
 
-	function getHFZExpire(reqs: CadetPromotionStatus): string {
-		if (reqs.CurrentCadetAchv.CadetAchvID < 4) {
-			if (reqs.HFZRecords.length === 0) {
-				return '';
-			} else {
-				const dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
-				return new Date(
-					new Date(dateVal.replace(/-/g, '/').replace(/T.+/, '')).getTime() +
-						60 * 60 * 24 * 182 * 1000,
-				).toLocaleDateString('en-US');
-			}
-			// return 'Phase I';
-		} else {
-			const passedRecord = reqs.HFZRecords.find(rec => rec.IsPassed);
-			if (!!passedRecord) {
-				const dateVal = passedRecord.DateTaken.substr(0, 10);
-				return new Date(
-					new Date(dateVal.replace(/-/g, '/').replace(/T.+/, '')).getTime() +
-						60 * 60 * 24 * 182 * 1000,
-				).toLocaleDateString('en-US');
-			} else {
-				return '';
-			}
-		}
-	}
+	const getHFZExpire = (reqs: CadetPromotionStatus): string =>
+		pipe(
+			get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
+			Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
+			Maybe.map(({ DateTaken }) => DateTaken.substr(0, 10)),
+			Maybe.map(s => +new Date(s) + 182 * 24 * 60 * 60 * 1000),
+			Maybe.map(s => new Date(s).toLocaleDateString('en-US')),
+			Maybe.orSome(''),
+		)(reqs);
 
 	function determineSDA(
 		member: PromotionRequrementsItem,
