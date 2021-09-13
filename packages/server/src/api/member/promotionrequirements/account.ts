@@ -108,7 +108,7 @@ export const func: Endpoint<
 	api.member.promotionrequirements.RequirementsForCadetsInAccount
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(req.member) &&
+		hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(req.member) ||
 		hasAllowedDutyPosition(req.member)
 			? getPromotionRequirementsForAccount(backend)(req)
 			: asyncLeft({
