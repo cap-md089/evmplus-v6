@@ -607,7 +607,7 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
 							acti => +new Date(acti.Completed),
 						)(Maybe.fromValue(rclsResults[0])),
-						HFZRecords: HFZ,
+						HFZRecord: Maybe.fromArray(HFZ),
 						ges: Maybe.fromValue(ges[0]),
 						oflights,
 					}),
