@@ -19,7 +19,7 @@
 
 import { errorGenerator, ServerError } from '../typings/api';
 import { Identifiable } from '../typings/types';
-import { AsyncEither, asyncEither } from './AsyncEither';
+import { AsyncEither, asyncEither, asyncRight } from './AsyncEither';
 import { Either, EitherObj } from './Either';
 import { alwaysFalse, identity } from './Util';
 
@@ -262,6 +262,34 @@ export function asyncIterFilter<T>(filter: (v: T) => boolean | PromiseLike<boole
 			}
 		}
 	};
+}
+
+export const asyncIterRaiseEither = <L, T>(errorValue: L | ((err: Error) => L)) => (
+	iter: AsyncIter<EitherObj<L, T>>,
+): AsyncEither<L, T[]> => {
+	const internal = async (iter: AsyncIter<EitherObj<L, T>>): Promise<EitherObj<L, T[]>> => {
+		const results: T[] = [];
+
+		for await (const i of iter) {
+			if (Either.isLeft(i)) {
+				return i;
+			}
+
+			results.push(i.value);
+		}
+
+		return Either.right(results);
+	};
+
+	return asyncRight(internal(iter), errorValue).flatMap(identity);
+};
+
+export async function* asyncIterFlatten<T>(iter: AsyncIter<AsyncIter<T>>): AsyncIter<T> {
+	for await (const i of iter) {
+		for await (const j of i) {
+			yield j;
+		}
+	}
 }
 
 export function asyncIterEitherFilter<T>(filter: (v: T) => AsyncEither<any, boolean>) {
