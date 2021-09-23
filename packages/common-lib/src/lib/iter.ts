@@ -267,7 +267,7 @@ export function asyncIterFilter<T>(filter: (v: T) => boolean | PromiseLike<boole
 export const asyncIterRaiseEither = <L, T>(errorValue: L | ((err: Error) => L)) => (
 	iter: AsyncIter<EitherObj<L, T>>,
 ): AsyncEither<L, T[]> => {
-	const internal = async (iter: AsyncIter<EitherObj<L, T>>): Promise<EitherObj<L, T[]>> => {
+	const internal = async (): Promise<EitherObj<L, T[]>> => {
 		const results: T[] = [];
 
 		for await (const i of iter) {
@@ -281,7 +281,7 @@ export const asyncIterRaiseEither = <L, T>(errorValue: L | ((err: Error) => L)) 
 		return Either.right(results);
 	};
 
-	return asyncRight(internal(iter), errorValue).flatMap(identity);
+	return asyncRight(internal(), errorValue).flatMap(identity);
 };
 
 export async function* asyncIterFlatten<T>(iter: AsyncIter<AsyncIter<T>>): AsyncIter<T> {

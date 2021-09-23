@@ -57,6 +57,7 @@ type Tree = {
 			link: api.events.events.Link;
 			set: api.events.events.Set;
 			delete: api.events.events.Delete;
+			getCompoundRange: api.events.events.GetCompoundRange;
 		};
 	};
 	files: {

@@ -290,7 +290,7 @@ export interface Delete {
 }
 
 /**
- * Gets all events between the two specified timestamps
+ * Gets all events between the two specified timestamps for the account
  *
  * timestart and timeend are Unix timestamps in milliseconds, the same as the return value
  * from Date.now()
@@ -298,7 +298,7 @@ export interface Delete {
 export interface GetRange {
 	(params: { timestart: string; timeend: string }, body: {}): APIEither<RawResolvedEventObject[]>;
 
-	url: '/api/events/:timestart/:timeend';
+	url: '/api/events/range/:timestart/:timeend';
 
 	method: 'get';
 
@@ -306,5 +306,33 @@ export interface GetRange {
 
 	needsToken: false;
 
-	useValidator: true;
+	useValidator: false;
+}
+
+export interface CompoundCalendar {
+	events: RawResolvedEventObject[];
+	accounts: Array<{
+		displayName: string;
+		accountID: string;
+	}>;
+}
+
+/**
+ * Gets all events between the two specified timestamps for the account as well as all subordinate accounts
+ *
+ * timestart and timeend are Unix timestamps in milliseconds, the same as the return value
+ * from Date.now()
+ */
+export interface GetCompoundRange {
+	(params: { timestart: string; timeend: string }, body: {}): APIEither<CompoundCalendar>;
+
+	url: '/api/events/range/compound/:timestart/:timeend';
+
+	method: 'get';
+
+	requiresMember: 'optional';
+
+	needsToken: false;
+
+	useValidator: false;
 }

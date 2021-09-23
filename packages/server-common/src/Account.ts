@@ -67,6 +67,7 @@ import {
 	RawCAPWingAccountObject,
 	RawEventObject,
 	RawRegularEventObject,
+	RegularCAPAccountObject,
 	Right,
 	ServerConfiguration,
 	ServerError,
@@ -616,6 +617,29 @@ export const getEventsInRange = (schema: Schema) => (account: AccountObject) => 
 	)(generateResults(iterator));
 };
 
+export const getEventsInRangeForMultipleAccounts = (schema: Schema) => (
+	accounts: AccountObject[],
+) => (start: number) => (
+	end: number,
+): AsyncIter<EitherObj<ServerError, FromDatabase<RawEventObject>>> => {
+	const eventCollection = schema.getCollection<EventObject>('Events');
+
+	const iterator = eventCollection
+		.find(
+			`accountID in ${bindForArray(
+				accounts,
+			)} AND ((pickupDateTime > :pickupDateTime AND pickupDateTime < :meetDateTime) OR (meetDateTime < :meetDateTime AND meetDateTime > :pickupDateTime))`,
+		)
+		// @ts-ignore: the typings are made up and sometimes just get in the way, such as for this custom query
+		.bind(accounts.map(get('id')))
+		.bind('pickupDateTime', start)
+		.bind('meetDateTime', end);
+
+	return asyncIterHandler<FromDatabase<RawEventObject>>(
+		errorGenerator('Could not get event for account'),
+	)(generateResults(iterator));
+};
+
 export const saveAccount = (schema: Schema) => async (account: AccountObject): Promise<void> => {
 	const collection = schema.getCollection<AccountObject>('Accounts');
 
@@ -702,7 +726,7 @@ WITH RECURSIVE Units AS (
 SELECT id FROM Units;`;
 
 export const getSubordinateCAPUnits = (backend: AccountBackend) => (schema: Schema) => (
-	wing: RawCAPWingAccountObject,
+	wing: RegularCAPAccountObject,
 ): ServerEither<CAPAccountObject[]> =>
 	asyncRight(schema.getSession(), errorGenerator('Could not get subordinate unit ORG IDs'))
 		.map(session =>
@@ -728,6 +752,11 @@ export interface AccountBackend {
 		account: AccountObject,
 	) => (bind: any) => CollectionFind<FromDatabase<TableDataType<'Events'>>>;
 	getSortedEvents: (account: AccountObject) => AsyncIter<TableDataType<'Events'>>;
+	getEventsInRangeForMultipleAccounts: (
+		accounts: AccountObject[],
+	) => (
+		range: [start: number, end: number],
+	) => AsyncIter<EitherObj<ServerError, FromDatabase<TableDataType<'Events'>>>>;
 	getEventsInRange: (
 		account: AccountObject,
 	) => (
@@ -747,7 +776,7 @@ export interface AccountBackend {
 	getOrgNameForMember: (
 		account: AccountObject,
 	) => (member: Member) => ServerEither<MaybeObj<string>>;
-	getSubordinateCAPUnits: (wing: RawCAPWingAccountObject) => ServerEither<CAPAccountObject[]>;
+	getSubordinateCAPUnits: (wing: RegularCAPAccountObject) => ServerEither<CAPAccountObject[]>;
 }
 
 export const getAccountBackend = (
@@ -794,6 +823,8 @@ export const getRequestFreeAccountsBackend = (
 		getSortedEvents: account => getSortedEvents(mysqlx)(account),
 		getEventsInRange: account => ([start, end]) =>
 			getEventsInRange(mysqlx)(account)(start)(end),
+		getEventsInRangeForMultipleAccounts: accounts => ([start, end]) =>
+			getEventsInRangeForMultipleAccounts(mysqlx)(accounts)(start)(end),
 		createCAPEventAccount: () => () => () => () => () => () =>
 			notImplementedError('createCAPEventAccount'),
 		getOrgNameForMember: memoize(
@@ -821,4 +852,6 @@ export const getEmptyAccountBackend = (): AccountBackend => ({
 		notImplementedError('createCAPEventAccount'),
 	getOrgNameForMember: () => () => notImplementedError('getOrgName'),
 	getSubordinateCAPUnits: () => notImplementedError('getSubordinateCAPUnits'),
+	getEventsInRangeForMultipleAccounts: () => () =>
+		notImplementedException('getEventsInRangeForMultipleAccounts'),
 });
