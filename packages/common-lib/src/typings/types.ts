@@ -2415,6 +2415,10 @@ export interface CAPNHQMemberObject extends CAPMemberObject {
 	 */
 	type: 'CAPNHQMember';
 	/**
+	 * The date of membership establishment
+	 */
+	joined: number;
+	/**
 	 * When the membership lapses for this member
 	 */
 	expirationDate: number;
@@ -4170,14 +4174,24 @@ export interface CadetPromotionRequirements {
 
 export interface CadetPromotionStatus {
 	/**
-	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
-	 */
-	NextCadetAchvID: number;
-
-	/**
 	 * The current highest achievement data
 	 */
 	CurrentCadetAchv: NHQ.CadetAchv;
+
+	/**
+	 * The Achievement ID Number of the current Grade (uses promotionRequirements.ts)
+	 */
+	CurrentCadetGradeID: number;
+
+	/**
+	 * The Achievement ID Number of the NEXT Grade (uses promotionRequirements.ts)
+	 */
+	NextCadetGradeID: number;
+
+	/**
+	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
+	 */
+	NextCadetAchvID: number;
 
 	/**
 	 * The current highest approved achievement status
