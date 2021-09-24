@@ -17,6 +17,6 @@ COPY scripts/start-mysqlsh-in-container.sh start-mysqlsh-in-container.sh
 
 RUN chmod +x start-mysqlsh-in-container.sh
 
-COPY scripts/*.js .
+COPY scripts/*.js ./
 
 ENTRYPOINT [ "bash", "/usr/evm-plus/start-mysqlsh-in-container.sh" ]
