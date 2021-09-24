@@ -4231,6 +4231,43 @@ export interface CadetPromotionStatus {
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
 
+export interface CadetHFZRequirements {
+	/**
+	 * Gender
+	 */
+	Gender: string;
+
+	/**
+	 * Age
+	 */
+	Age: number;
+
+	/**
+	 * Pacer Run requirement
+	 */
+	Pacer: number;
+
+	/**
+	 * Mile Run requirement
+	 */
+	MileRun: string;
+
+	/**
+	 * Curl Ups requirement
+	 */
+	CurlUps: number;
+
+	/**
+	 * Push Ups requirement
+	 */
+	PushUps: number;
+
+	/**
+	 * Sit Reach requirement
+	 */
+	SitReach: number;
+}
+
 /**
  * Represents the MFA tokens that are stored for a user
  */
