@@ -204,6 +204,7 @@ export const getTestMember = (): CAPNHQMemberObject => ({
 	dutyPositions: [],
 	expirationDate: 0,
 	flight: null,
+	gender: '',
 	id: 0,
 	joined: 0,
 	memberRank: '',

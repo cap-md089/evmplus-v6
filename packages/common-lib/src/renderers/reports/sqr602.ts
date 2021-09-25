@@ -21,20 +21,19 @@ import { DateTime } from 'luxon';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { pipe } from 'ramda';
 import {
-	CadetPromotionRequirements,
+	// CadetHFZRequirements,
+	CadetHFZRequirementsMap,
+	// CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
 	CadetPromotionStatus,
-	CAPProspectiveMemberObject,
 	get,
 	Maybe,
-	NHQ,
 	RegistryValues,
 } from '../..';
 import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
 
 export const sqr602DocumentDefinition = (
 	nhqmembers: PromotionRequrementsItem[],
-	newmembers: CAPProspectiveMemberObject[],
 	registry: RegistryValues,
 ): TDocumentDefinitions => {
 	const myTitleFontSize = 10;
@@ -67,72 +66,20 @@ export const sqr602DocumentDefinition = (
 			Maybe.orSome(''),
 		)(reqs);
 
-	function determineSDA(
-		member: PromotionRequrementsItem,
-		requirements: CadetPromotionRequirements,
-	): string {
-		let req = 0;
-		let reqComp = 0;
-		let compDate = new Date('01/01/2010').toLocaleDateString('en-US');
-		const recentDate = new Date('01/01/2010');
-		const reqs = [];
-		reqs.push({
-			required: requirements.SDAService,
-			completionDate: new Date(member.requirements.CurrentCadetAchv.StaffServiceDate),
-		});
-		reqs.push({
-			required: requirements.SDAWriting,
-			completionDate: new Date(
-				member.requirements.CurrentCadetAchv.TechnicalWritingAssignmentDate,
-			),
-		});
-		reqs.push({
-			required: requirements.SDAPresentation,
-			completionDate: new Date(member.requirements.CurrentCadetAchv.OralPresentationDate),
-		});
+	// function ageCalc(birthday: string): number {
+	// 	const birthdate = new Date(birthday).getTime();
+	// 	const todate = new Date().getTime();
 
-		for (let i = 0; i < 3; i++) {
-			if (reqs[i].required) {
-				req++;
-				if (reqs[i].completionDate.getTime() > recentDate.getTime()) {
-					reqComp++;
-					if (reqs[i].completionDate.getTime() > new Date(compDate).getTime()) {
-						compDate = new Date(reqs[i].completionDate).toLocaleDateString('en-US');
-					}
-				}
-			}
-		}
-
-		if (req === 0) {
-			return 'N/A';
-		} else if (req > reqComp) {
-			return '';
-		} else {
-			return compDate;
-		}
-	}
-
-	const unpoweredFlights = [1, 2, 3, 4, 5];
-	const poweredFlights = [6, 7, 8, 9, 10];
-
-	const oflightsShortDescription = (rides: NHQ.OFlight[]): string =>
-		(
-			[...new Set(rides.map(get('Syllabus')))]
-				.reduce<[number, number]>(
-					([powered, unpowered], syllabus) =>
-						poweredFlights.includes(syllabus)
-							? [powered + 1, unpowered]
-							: unpoweredFlights.includes(syllabus)
-							? [powered, unpowered + 1]
-							: [powered, unpowered],
-					[0, 0],
-				)
-				.join('p | ') + 'u'
-		)
-			.replace('0p', '_p')
-			.replace('0u', '_u');
+	// 	return Math.floor((todate - birthdate) / (1000 * 60 * 60 * 24 * 365 ));
+	// }
 
 	// const tableHeaders: TableCell = [
+	// 	{
+	// 		text: 'CAPID',
+	// 		fontSize: mySmallFontSize,
+	// 		bold: true,
+	// 		alignment: 'left',
+	// 	},
 	// 	{
 	// 		text: 'Full Name',
 	// 		fontSize: mySmallFontSize,
@@ -209,6 +156,13 @@ export const sqr602DocumentDefinition = (
 
 	const fullMembers = nhqmembers.sort(sortNHQName).map((loopmember): TableCell[] => [
 		{
+			// CAPID
+			text: loopmember.member.id,
+			fontSize: mySmallFontSize,
+			bold: false,
+			alignment: 'left',
+		},
+		{
 			// Full Name
 			text:
 				CadetPromotionRequirementsMap[loopmember.requirements.CurrentCadetGradeID].Grade +
@@ -227,156 +181,6 @@ export const sqr602DocumentDefinition = (
 			alignment: 'left',
 		},
 		{
-			// CAPID
-			text: loopmember.member.id,
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Flight
-			text: loopmember.member.flight,
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Expired? - '<' means within 30 days of expiring
-			text:
-				new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
-					new Date().getTime() <=
-				0
-					? 'Y'
-					: new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
-							new Date().getTime() <=
-					  60 * 60 * 24 * 30 * 1000
-					? '<'
-					: '',
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Eligible date for next promotion - or number of weeks since joined for c/ab
-			text: Maybe.isSome(loopmember.requirements.LastAprvDate)
-				? loopmember.requirements.LastAprvDate.value - new Date('01/01/2010').getTime() > 0
-					? new Date(
-							loopmember.requirements.LastAprvDate.value + 60 * 60 * 24 * 56 * 1000,
-					  ).toLocaleDateString('en-US')
-					: Math.round(
-							Math.round(
-								new Date().getTime() - new Date(loopmember.member.joined).getTime(),
-							) /
-								(1000 * 60 * 60 * 24 * 7),
-					  )
-				: Math.round(
-						Math.round(
-							new Date().getTime() - new Date(loopmember.member.joined).getTime(),
-						) /
-							(1000 * 60 * 60 * 24 * 7),
-				  ),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Next Grade
-			text: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetGradeID].Grade,
-			fontSize: mySmallFontSize,
-			bold: false,
-			alighment: 'left',
-		},
-		{
-			// Current achievement
-			text:
-				loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
-				'-' +
-				loopmember.requirements.MaxAprvStatus.substr(0, 1),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alighment: 'left',
-		},
-		{
-			// Lead Lab pass date or N/A if not required
-			text:
-				loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Leadership === 'None'
-						? 'N/A'
-						: ''
-					: // if incomplete or pending status, display current requirements (even if all filled in)
-					new Date(loopmember.requirements.CurrentCadetAchv.LeadLabDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-					  0
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Leadership === 'None'
-						? 'N/A'
-						: ''
-					: new Date(
-							loopmember.requirements.CurrentCadetAchv.LeadLabDateP.replace(
-								/-/g,
-								'/',
-							).replace(/T.+/, ''),
-					  ).toLocaleDateString('en-US'),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Aerospace Education pass date or N/A if not required
-			text:
-				loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Aerospace === 'None'
-						? 'N/A'
-						: ''
-					: // if incomplete or pending status, display current requirements (even if all filled in)
-					new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-					  0
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Aerospace === 'None'
-						? 'N/A'
-						: ''
-					: new Date(
-							loopmember.requirements.CurrentCadetAchv.AEDateP.replace(
-								/-/g,
-								'/',
-							).replace(/T.+/, ''),
-					  ).toLocaleDateString('en-US'),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// SDA requirements
-			text:
-				loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAPresentation === false &&
-					  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAService === false &&
-					  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAWriting === false
-						? 'N/A'
-						: ''
-					: // if incomplete or pending status, display current requirements (even if all filled in)
-					CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAPresentation === false &&
-					  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAService === false &&
-					  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAWriting === false
-					? 'N/A'
-					: determineSDA(
-							loopmember,
-							CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID],
-					  ),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
 			// HFZ credit expiration date
 			text: getHFZExpire(loopmember.requirements),
 			fontSize: mySmallFontSize,
@@ -384,88 +188,20 @@ export const sqr602DocumentDefinition = (
 			alignment: 'left',
 		},
 		{
-			// Drill Test required or date passed
-			text:
-				loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Drill === 'None'
-						? 'N/A'
-						: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-								.Drill
-					: // if incomplete or pending status, display current requirements (even if all filled in)
-					new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
-							new Date('01/01/2010').getTime() <=
-					  0
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.Drill === 'None'
-						? 'N/A'
-						: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-								.Drill
-					: new Date(
-							loopmember.requirements.CurrentCadetAchv.DrillDate.replace(
-								/-/g,
-								'/',
-							).replace(/T.+/, ''),
-					  ).toLocaleDateString('en-US'),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Oath
-			text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Character Development
-			text:
-				loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.CharDev === false
-						? 'N/A'
-						: ''
-					: // if incomplete or pending status, display current requirements (even if all filled in)
-
-					new Date(loopmember.requirements.CurrentCadetAchv.MoralLDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-					  0
-					? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.CharDev === false
-						? 'N/A'
-						: ''
-					: new Date(
-							loopmember.requirements.CurrentCadetAchv.MoralLDateP.replace(
-								/-/g,
-								'/',
-							).replace(/T.+/, ''),
-					  ).toLocaleDateString('en-US'),
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Mentor?
-			text: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID].Mentor
-				? loopmember.requirements.CurrentCadetAchv.OtherReq
-					? 'Y'
-					: ''
-				: 'N/A',
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// GES complete?
-			text: Maybe.isSome(loopmember.requirements.ges) ? 'Y' : '',
-			fontSize: mySmallFontSize,
-			bold: false,
-			alignment: 'left',
-		},
-		{
-			// Orientation Flights
-			text: oflightsShortDescription(loopmember.requirements.oflights),
+			// Pacer required
+			text: CadetHFZRequirementsMap.find(function (hfzentry) {
+				if (
+					hfzentry.Gender === loopmember.member.gender &&
+					hfzentry.Age ===
+						Math.floor(
+							(new Date().getTime() - loopmember.member.dateOfBirth) /
+								(1000 * 60 * 60 * 24 * 365),
+						)
+				) {
+					return true;
+				}
+			})?.Pacer,
+			// text: Math.floor((new Date().getTime() - loopmember.member.joined) / (1000 * 60 * 60 * 24 * 365 )),
 			fontSize: mySmallFontSize,
 			bold: false,
 			alignment: 'left',
@@ -559,6 +295,7 @@ export const sqr602DocumentDefinition = (
 					// table def start
 					headerRows: 1,
 					widths: [
+						24, // CAPID
 						80, // Full Name
 						70, // HFZ Expire Date
 						29, // Pacer Req

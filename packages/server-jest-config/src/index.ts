@@ -472,6 +472,7 @@ export const getMemberFromTestData = (
 		dutyPositions,
 		expirationDate: +DateTime.fromISO(baseDetails.Expiration),
 		flight: null,
+		gender: baseDetails.Gender,
 		id: CAPID,
 		joined: +DateTime.fromISO(baseDetails.Joined),
 		memberRank: baseDetails.Rank,

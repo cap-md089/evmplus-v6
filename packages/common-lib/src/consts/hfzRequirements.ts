@@ -24,7 +24,7 @@ import { CadetHFZRequirements } from '../typings/types';
  *
  */
 
-export const CadetPromotionRequirementsMap: readonly CadetHFZRequirements[] = [
+export const CadetHFZRequirementsMap: readonly CadetHFZRequirements[] = [
 	{
 		Age: 10,
 		Gender: 'MALE',

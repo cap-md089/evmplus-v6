@@ -2426,6 +2426,10 @@ export interface CAPNHQMemberObject extends CAPMemberObject {
 	 * The date of birth of the member
 	 */
 	dateOfBirth: number;
+	/**
+	 * The member's gender
+	 */
+	gender: string;
 }
 
 /**
