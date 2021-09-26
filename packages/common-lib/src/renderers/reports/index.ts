@@ -18,3 +18,4 @@
  */
 
 export { sqr601DocumentDefinition } from './sqr601';
+export { sqr6020DocumentDefinition } from './sqr6020';

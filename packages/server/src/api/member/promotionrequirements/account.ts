@@ -72,7 +72,7 @@ const getPromotionRequirementsForAccount: Endpoint<
 		.map(
 			asyncIterMap<
 				CAPNHQMemberObject,
-				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequrementsItem>
+				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequirementsItem>
 			>(member =>
 				backend.getPromotionRequirements(member).map(requirements => ({
 					member,
@@ -91,14 +91,14 @@ const getPromotionRequirementsForAccount: Endpoint<
 		)
 		.map(
 			asyncIterFilter<
-				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequrementsItem>,
-				Right<api.member.promotionrequirements.PromotionRequrementsItem>
+				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequirementsItem>,
+				Right<api.member.promotionrequirements.PromotionRequirementsItem>
 			>(Either.isRight),
 		)
 		.map(
 			asyncIterMap<
-				Right<api.member.promotionrequirements.PromotionRequrementsItem>,
-				api.member.promotionrequirements.PromotionRequrementsItem
+				Right<api.member.promotionrequirements.PromotionRequirementsItem>,
+				api.member.promotionrequirements.PromotionRequirementsItem
 			>(get('value')),
 		)
 		.map(wrapper);

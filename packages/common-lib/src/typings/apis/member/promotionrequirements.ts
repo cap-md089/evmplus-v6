@@ -37,7 +37,7 @@ export interface RequirementsForCurrentUser {
 	useValidator: false;
 }
 
-export interface PromotionRequrementsItem {
+export interface PromotionRequirementsItem {
 	member: CAPNHQMemberObject;
 	requirements: CadetPromotionStatus;
 }
@@ -46,7 +46,7 @@ export interface PromotionRequrementsItem {
  * Lists all CAP NHQ cadets and their requirements for their next promotion
  */
 export interface RequirementsForCadetsInAccount {
-	(params: {}, body: {}): APIEither<PromotionRequrementsItem[]>;
+	(params: {}, body: {}): APIEither<PromotionRequirementsItem[]>;
 
 	url: '/api/member/promotionrequirements/account';
 

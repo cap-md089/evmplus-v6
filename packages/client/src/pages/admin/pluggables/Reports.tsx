@@ -47,7 +47,7 @@ interface ReportsWidgetLoadingState {
 interface ReportsWidgetLoadedState {
 	state: 'LOADED';
 
-	nhqMembers: api.member.promotionrequirements.PromotionRequrementsItem[];
+	nhqMembers: api.member.promotionrequirements.PromotionRequirementsItem[];
 	newMembers: CAPProspectiveMemberObject[];
 }
 
@@ -151,15 +151,14 @@ export const ReportsWidget = withFetchApi(
 									<br />
 								</div>
 							)}
-							,
 							{this.state.state === 'LOADING' ? (
 								<LoaderShort />
 							) : this.state.state === 'ERROR' ? (
 								<div>{this.state.error}</div>
 							) : (
 								<div>
-									<Button onClick={() => this.createSQR602()} buttonType="none">
-										SQR 60-2 Cadet HFZ report
+									<Button onClick={() => this.createSQR6020()} buttonType="none">
+										SQR 60-20 Cadet HFZ report
 									</Button>
 									<br />
 								</div>
@@ -192,7 +191,7 @@ export const ReportsWidget = withFetchApi(
 			await this.printForm(docDef, `SQR601-${this.props.account.id}-${now}.pdf`);
 		};
 
-		private createSQR602 = async (): Promise<void> => {
+		private createSQR6020 = async (): Promise<void> => {
 			if (this.state.state === 'ERROR') {
 				this.setState({
 					showError: true,
@@ -206,13 +205,13 @@ export const ReportsWidget = withFetchApi(
 			}
 
 			const now = new Date().toString();
-			const docDef = reports.sqr601DocumentDefinition(
+			const docDef = reports.sqr6020DocumentDefinition(
 				this.state.nhqMembers,
 				this.state.newMembers,
 				this.props.registry,
 			);
 
-			await this.printForm(docDef, `SQR602-${this.props.account.id}-${now}.pdf`);
+			await this.printForm(docDef, `SQR6020-${this.props.account.id}-${now}.pdf`);
 		};
 
 		private async printForm(docDef: TDocumentDefinitions, fileName: string): Promise<void> {
