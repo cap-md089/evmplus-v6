@@ -30,10 +30,10 @@ import {
 	NHQ,
 	RegistryValues,
 } from '../..';
-import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
+import { PromotionRequirementsItem } from '../../typings/apis/member/promotionrequirements';
 
 export const sqr601DocumentDefinition = (
-	nhqmembers: PromotionRequrementsItem[],
+	nhqmembers: PromotionRequirementsItem[],
 	newmembers: CAPProspectiveMemberObject[],
 	registry: RegistryValues,
 ): TDocumentDefinitions => {
@@ -41,7 +41,7 @@ export const sqr601DocumentDefinition = (
 	const myTitleFontSize = 10;
 	const mySmallFontSize = 7;
 
-	function sortNHQName(a: PromotionRequrementsItem, b: PromotionRequrementsItem): number {
+	function sortNHQName(a: PromotionRequirementsItem, b: PromotionRequirementsItem): number {
 		const aName = a.member.nameLast + ', ' + a.member.nameFirst;
 		const bName = b.member.nameLast + ', ' + b.member.nameFirst;
 		return aName.localeCompare(bName);
@@ -67,7 +67,7 @@ export const sqr601DocumentDefinition = (
 		)(reqs);
 
 	function determineSDA(
-		member: PromotionRequrementsItem,
+		member: PromotionRequirementsItem,
 		requirements: CadetPromotionRequirements,
 	): string {
 		let req = 0;
