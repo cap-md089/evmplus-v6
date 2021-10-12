@@ -64,6 +64,8 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 					.execute();
 			}
 
+			removedCAPIDs[member.CAPID] = true;
+
 			const values: NHQ.CadetHFZInformation = {
 				HFZID: parseInt(member.HFZID, 10),
 				CAPID: parseInt(member.CAPID, 10),
