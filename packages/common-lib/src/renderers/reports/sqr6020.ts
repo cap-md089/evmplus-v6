@@ -223,7 +223,7 @@ export const sqr6020DocumentDefinition = (
 		},
 		{
 			// Full Name
-			text: `${loopmember.member.memberRank} ${loopmember.member.nameLast} ${loopmember.member.nameFirst}`,
+			text: `${loopmember.member.memberRank} ${loopmember.member.nameLast}, ${loopmember.member.nameFirst}`,
 			fontSize: mySmallFontSize,
 			bold: false,
 			decoration:
@@ -325,7 +325,7 @@ export const sqr6020DocumentDefinition = (
 			},
 			{
 				// Full Name
-				text: `${loopmember.member.memberRank} ${loopmember.member.nameLast} ${loopmember.member.nameFirst}`,
+				text: `${loopmember.member.memberRank} ${loopmember.member.nameLast}, ${loopmember.member.nameFirst}`,
 				fontSize: mySmallFontSize,
 				bold: false,
 				decoration:
