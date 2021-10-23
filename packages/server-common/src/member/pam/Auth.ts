@@ -76,7 +76,8 @@ export interface SigninFailed {
 		| MemberCreateError.INCORRRECT_CREDENTIALS
 		| MemberCreateError.SERVER_ERROR
 		| MemberCreateError.UNKOWN_SERVER_ERROR
-		| MemberCreateError.RECAPTCHA_INVALID;
+		| MemberCreateError.RECAPTCHA_INVALID
+		| MemberCreateError.ACCOUNT_EXPIRED;
 }
 
 export interface SigninRequiresMFA {

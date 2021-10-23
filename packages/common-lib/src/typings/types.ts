@@ -2823,7 +2823,8 @@ export interface FailedSigninReturn {
 		| MemberCreateError.SERVER_ERROR
 		| MemberCreateError.UNKOWN_SERVER_ERROR
 		| MemberCreateError.INVALID_SESSION_ID
-		| MemberCreateError.RECAPTCHA_INVALID;
+		| MemberCreateError.RECAPTCHA_INVALID
+		| MemberCreateError.ACCOUNT_EXPIRED;
 }
 
 export interface SigninRequiresMFA {

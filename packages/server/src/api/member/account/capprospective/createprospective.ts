@@ -56,12 +56,14 @@ import {
 	getMemberBackend,
 	getRandomBackend,
 	getRegistryBackend,
+	getTimeBackend,
 	MemberBackend,
 	PAM,
 	RandomBackend,
 	RegistryBackend,
 	SUPPORT_BCC_ADDRESS,
 	TeamsBackend,
+	TimeBackend,
 	withBackends,
 } from 'server-common';
 import { Endpoint } from '../../../..';
@@ -259,6 +261,7 @@ export default withBackends(
 			CAP.CAPMemberBackend,
 			TeamsBackend,
 			MemberBackend,
+			TimeBackend,
 			PAM.PAMBackend,
 		]
 	>(
@@ -269,6 +272,7 @@ export default withBackends(
 		CAP.getCAPMemberBackend,
 		getCombinedTeamsBackend(),
 		getMemberBackend,
+		getTimeBackend,
 		PAM.getPAMBackend,
 	),
 );

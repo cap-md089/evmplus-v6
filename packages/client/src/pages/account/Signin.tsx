@@ -63,6 +63,7 @@ const signinErrorMessages = {
 	[MemberCreateError.UNKOWN_SERVER_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.DATABASE_ERROR]: 'An error occurred while trying to sign in',
 	[MemberCreateError.RECAPTCHA_INVALID]: 'Invalid reCAPTCHA',
+	[MemberCreateError.ACCOUNT_EXPIRED]: 'Your account has expired',
 };
 
 const validateNotEmpty = (val: string | null): val is string => !!val;
@@ -124,7 +125,7 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				<Link to="/privacy-policy">this page</Link>.
 				<br />
 				<br />
-				Don't have an account with us? <Link to="/create-account">Create one here</Link>
+				Don&#39;t have an account with us? <Link to="/create-account">Create one here</Link>
 				<br />
 				Forget your username? <Link to="/usernamerequest">Request it here</Link>
 				<br />
