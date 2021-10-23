@@ -20,6 +20,7 @@
 export { compose, pipe } from 'ramda';
 export { default as defaultAPICallBase } from './api/defaultAPICallBase';
 export * as labels from './consts/labels';
+export * from './consts/hfzRequirements';
 export * from './consts/promotionRequirements';
 export * from './lib/Account';
 export * from './lib/AsyncEither';

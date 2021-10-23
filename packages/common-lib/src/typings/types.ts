@@ -2416,6 +2416,10 @@ export interface CAPNHQMemberObject extends CAPMemberObject {
 	 */
 	type: 'CAPNHQMember';
 	/**
+	 * The date of membership establishment
+	 */
+	joined: number;
+	/**
 	 * When the membership lapses for this member
 	 */
 	expirationDate: number;
@@ -2423,6 +2427,10 @@ export interface CAPNHQMemberObject extends CAPMemberObject {
 	 * The date of birth of the member
 	 */
 	dateOfBirth: number;
+	/**
+	 * The member's gender
+	 */
+	gender: string;
 }
 
 /**
@@ -4176,14 +4184,24 @@ export interface CadetPromotionRequirements {
 
 export interface CadetPromotionStatus {
 	/**
-	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
-	 */
-	NextCadetAchvID: number;
-
-	/**
 	 * The current highest achievement data
 	 */
 	CurrentCadetAchv: NHQ.CadetAchv;
+
+	/**
+	 * The Achievement ID Number of the current Grade (uses promotionRequirements.ts)
+	 */
+	CurrentCadetGradeID: number;
+
+	/**
+	 * The Achievement ID Number of the NEXT Grade (uses promotionRequirements.ts)
+	 */
+	NextCadetGradeID: number;
+
+	/**
+	 * The Achievement ID Number of the NEXT achievement to complete (0 - 21, NOT the current Achievement ID number)
+	 */
+	NextCadetAchvID: number;
 
 	/**
 	 * The current highest approved achievement status
@@ -4208,7 +4226,7 @@ export interface CadetPromotionStatus {
 	/**
 	 * HFZ information
 	 */
-	HFZRecords: NHQ.CadetHFZInformation[];
+	HFZRecord: MaybeObj<NHQ.CadetHFZInformation>;
 
 	/**
 	 * Orientation flight information
@@ -4222,6 +4240,43 @@ export interface CadetPromotionStatus {
 }
 
 export type CadetAprvStatus = 'INC' | 'PND' | 'APR';
+
+export interface CadetHFZRequirements {
+	/**
+	 * Gender
+	 */
+	Gender: string;
+
+	/**
+	 * Age
+	 */
+	Age: number;
+
+	/**
+	 * Pacer Run requirement
+	 */
+	Pacer: number;
+
+	/**
+	 * Mile Run requirement
+	 */
+	MileRun: string;
+
+	/**
+	 * Curl Ups requirement
+	 */
+	CurlUps: number;
+
+	/**
+	 * Push Ups requirement
+	 */
+	PushUps: number;
+
+	/**
+	 * Sit Reach requirement
+	 */
+	SitReach: number;
+}
 
 /**
  * Represents the MFA tokens that are stored for a user

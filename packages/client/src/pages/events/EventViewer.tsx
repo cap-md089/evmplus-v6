@@ -783,7 +783,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 						)}
 						<br />
 						{member &&
-						(event.status === EventStatus.COMPLETE ||
+						(event.pickupDateTime < new Date().getTime() ||
 							event.status === EventStatus.CANCELLED) ? (
 							<DialogueButtonForm<{
 								publicView: boolean;

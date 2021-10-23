@@ -24,6 +24,7 @@ import {
 	AccountType,
 	addOne,
 	AllAudits,
+	always,
 	areMembersTheSame,
 	AsyncEither,
 	asyncIterReduce,
@@ -46,6 +47,7 @@ import {
 	getMemberName,
 	getMemberPhone,
 	getUserID,
+	identity,
 	isPartOfTeam,
 	isRegularCAPAccountObject,
 	Maybe,
@@ -119,7 +121,7 @@ const getRowsForProspectiveMember = (schema: Schema) => (account: AccountObject)
 
 export const getProspectiveMembersForAccount = (schema: Schema) => (
 	backend: Backends<[TeamsBackend]>,
-) => (account: RawCAPSquadronAccountObject) =>
+) => (account: RawCAPSquadronAccountObject): ServerEither<CAPProspectiveMemberObject[]> =>
 	AsyncEither.All([
 		getRegistry(schema)(account),
 		asyncRight(
@@ -196,7 +198,7 @@ export const getProspectiveMembersForAccount = (schema: Schema) => (
 
 export const expandProspectiveMember = (schema: Schema) => (backends: Backends<[TeamsBackend]>) => (
 	account: Exclude<CAPAccountObject, RawCAPEventAccountObject>,
-) => (info: RawCAPProspectiveMemberObject) =>
+) => (info: RawCAPProspectiveMemberObject): ServerEither<CAPProspectiveMemberObject> =>
 	getRegistry(schema)(account).flatMap(registry =>
 		asyncRight(info.id, errorGenerator('Could not get member information'))
 			.flatMap(id =>
@@ -399,11 +401,15 @@ export const getProspectiveMemberAccounts = (backend: Backends<[AccountBackend]>
 ): ServerEither<CAPAccountObject[]> =>
 	backend.getAccount(member.accountID).map(account => [account]);
 
-export const deleteProspectiveMember = (schema: Schema) => (member: CAPProspectiveMemberObject) =>
+export const deleteProspectiveMember = (schema: Schema) => (
+	member: CAPProspectiveMemberObject,
+): ServerEither<void> =>
 	asyncRight(
 		schema.getCollection<StoredProspectiveMemberObject>('ProspectiveMembers'),
 		errorGenerator('Could not delete prospective member'),
-	).flatMap(deleteFromCollectionA(member));
+	)
+		.flatMap(deleteFromCollectionA(member))
+		.map(destroy);
 
 const getAllRecords = <T>(
 	collection: Collection<FromDatabase<T>>,
@@ -431,7 +437,9 @@ const updateCollection = <T>(
 			for await (const record of generator) {
 				const updatedRecord = recordUpdater(record as T, member, prevMember);
 
-				promises.push(collection.replaceOne(record._id!, updatedRecord as FromDatabase<T>));
+				const { _id } = record as Required<FromDatabase<T>>;
+
+				promises.push(collection.replaceOne(_id, updatedRecord as FromDatabase<T>));
 			}
 
 			await Promise.all(promises);
@@ -446,7 +454,7 @@ const attendanceUpdater = updateCollection<RawAttendanceDBRecord>(
 		memberID: toReference(member),
 		memberName: getFullMemberName(member),
 	}),
-	(collection, memberID) => findAndBind(collection, { memberID }),
+	(collection, memberID) => findAndBind(collection, { memberID: toReference(memberID) }),
 );
 
 const auditsUpdater = updateCollection<AllAudits>(
@@ -455,7 +463,7 @@ const auditsUpdater = updateCollection<AllAudits>(
 		actor: toReference(member),
 		actorName: getFullMemberName(member),
 	}),
-	(collection, actor) => findAndBind(collection, { actor }),
+	(collection, actor) => findAndBind(collection, { actor: toReference(actor) }),
 );
 
 const discordAccountUpdater = updateCollection<DiscordAccount>(
@@ -463,7 +471,7 @@ const discordAccountUpdater = updateCollection<DiscordAccount>(
 		...record,
 		member: toReference(member),
 	}),
-	(collection, member) => findAndBind(collection, { member }),
+	(collection, member) => findAndBind(collection, { member: toReference(member) }),
 );
 
 const eventsUpdater = updateCollection<RawEventObject>((record, member, prevMember) =>
@@ -499,7 +507,7 @@ const extraAccountMembershipUpdater = updateCollection<CAPExtraMemberInformation
 		...record,
 		member: toReference(member),
 	}),
-	(collection, member) => findAndBind(collection, { member }),
+	(collection, member) => findAndBind(collection, { member: toReference(member) }),
 );
 
 const filesUpdater = updateCollection<RawFileObject>(
@@ -507,7 +515,7 @@ const filesUpdater = updateCollection<RawFileObject>(
 		...record,
 		owner: toReference(member),
 	}),
-	(collection, owner) => findAndBind(collection, { owner }),
+	(collection, owner) => findAndBind(collection, { owner: toReference(owner) }),
 );
 
 const mfaTokensUpdater = updateCollection<StoredMFASecret>(
@@ -515,7 +523,7 @@ const mfaTokensUpdater = updateCollection<StoredMFASecret>(
 		...record,
 		member: toReference(member),
 	}),
-	(collection, member) => findAndBind(collection, { member }),
+	(collection, member) => findAndBind(collection, { member: toReference(member) }),
 );
 
 const receivedNotificationsUpdater = updateCollection<
@@ -529,7 +537,9 @@ const receivedNotificationsUpdater = updateCollection<
 		},
 	}),
 	(collection, to) =>
-		findAndBind(collection, { target: { type: NotificationTargetType.MEMBER, to } }),
+		findAndBind(collection, {
+			target: { type: NotificationTargetType.MEMBER, to: toReference(to) },
+		}),
 );
 
 const sentNotificationUpdater = updateCollection<
@@ -545,7 +555,10 @@ const sentNotificationUpdater = updateCollection<
 	}),
 	(collection, from) =>
 		findAndBind(collection, {
-			cause: { from, type: NotificationCauseType.MEMBER } as NotificationMemberCause,
+			cause: {
+				from: toReference(from),
+				type: NotificationCauseType.MEMBER,
+			} as NotificationMemberCause,
 		}),
 );
 
@@ -554,7 +567,7 @@ const signInLogUpdater = updateCollection<SignInLogData>(
 		...record,
 		memberRef: toReference(member),
 	}),
-	(collection, memberRef) => findAndBind(collection, { memberRef }),
+	(collection, memberRef) => findAndBind(collection, { memberRef: toReference(memberRef) }),
 );
 
 const tasksSentUpdater = updateCollection<TaskObject>(
@@ -562,7 +575,7 @@ const tasksSentUpdater = updateCollection<TaskObject>(
 		...record,
 		tasker: toReference(member),
 	}),
-	(collection, tasker) => findAndBind(collection, { tasker }),
+	(collection, tasker) => findAndBind(collection, { tasker: toReference(tasker) }),
 );
 
 const tasksReceivedUpdater = updateCollection<TaskObject>((record, member, prevMember) => ({
@@ -579,7 +592,7 @@ const userAccountInfoUpdater = updateCollection<UserAccountInformation>(
 		...record,
 		member: toReference(member),
 	}),
-	(collection, member) => findAndBind(collection, { member }),
+	(collection, member) => findAndBind(collection, { member: toReference(member) }),
 );
 
 const userPermissionsUpdater = updateCollection<StoredMemberPermissions>(
@@ -587,7 +600,7 @@ const userPermissionsUpdater = updateCollection<StoredMemberPermissions>(
 		...record,
 		member: toReference(member),
 	}),
-	(collection, member) => findAndBind(collection, { member }),
+	(collection, member) => findAndBind(collection, { member: toReference(member) }),
 );
 
 const updateFunctions = [
@@ -605,30 +618,49 @@ const updateFunctions = [
 	[tasksReceivedUpdater, 'Tasks'],
 	[userAccountInfoUpdater, 'UserAccountInfo'],
 	[userPermissionsUpdater, 'UserPermissions'],
-] as [
-	(
-		prevMember: CAPProspectiveMemberObject,
-		member: CAPNHQMemberObject,
-	) => (collection: Collection) => ServerEither<void>,
-	TableNames,
-][];
+] as Array<
+	[
+		(
+			prevMember: CAPProspectiveMemberObject,
+			member: CAPNHQMemberObject,
+		) => (collection: Collection) => ServerEither<void>,
+		TableNames,
+	]
+>;
 
 export const upgradeProspectiveMemberToCAPNHQ = (
 	backend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
-) => (member: CAPProspectiveMemberObject) => (nhqReference: CAPNHQMemberReference) =>
-	AsyncEither.All([
-		asyncRight(
-			backend.getCollection('ProspectiveMembers'),
-			errorGenerator('Could not delete prospective member'),
-		).flatMap(deleteFromCollectionA(member)),
-		backend
-			.getAccount(member.accountID)
-			.flatMap(account => backend.getMember(account)(nhqReference))
-			.flatMap(newMember =>
-				AsyncEither.All(
-					updateFunctions.map(([func, tableName]) =>
-						func(member, newMember)(backend.getCollection(tableName)),
+) => (member: CAPProspectiveMemberObject) => (
+	nhqReference: CAPNHQMemberReference,
+): ServerEither<void> =>
+	asyncRight(
+		backend.getSchema().getSession().startTransaction(),
+		errorGenerator('Could not get session'),
+	)
+		.filter(identity, {
+			type: 'OTHER',
+			code: 500,
+			message: 'Failed to prepare to upgrade prospective member',
+		})
+		.map(always(backend.getSchema().getSession()))
+		.flatMap(session =>
+			AsyncEither.All([
+				asyncRight(
+					backend.getCollection('ProspectiveMembers'),
+					errorGenerator('Could not delete prospective member'),
+				).flatMap(deleteFromCollectionA(member)),
+				backend
+					.getAccount(member.accountID)
+					.flatMap(account => backend.getMember(account)(nhqReference))
+					.flatMap(newMember =>
+						AsyncEither.All(
+							updateFunctions.map(([func, tableName]) =>
+								func(member, newMember)(backend.getCollection(tableName)),
+							),
+						),
 					),
-				),
-			),
-	]).map(destroy);
+			])
+				.map(destroy)
+				.tap(() => session.commit())
+				.leftTap(() => session.rollback()),
+		);

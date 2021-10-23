@@ -19,6 +19,7 @@
 
 import { DateTime } from 'luxon';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { pipe } from 'ramda';
 import {
 	CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
@@ -29,10 +30,10 @@ import {
 	NHQ,
 	RegistryValues,
 } from '../..';
-import { PromotionRequrementsItem } from '../../typings/apis/member/promotionrequirements';
+import { PromotionRequirementsItem } from '../../typings/apis/member/promotionrequirements';
 
 export const sqr601DocumentDefinition = (
-	nhqmembers: PromotionRequrementsItem[],
+	nhqmembers: PromotionRequirementsItem[],
 	newmembers: CAPProspectiveMemberObject[],
 	registry: RegistryValues,
 ): TDocumentDefinitions => {
@@ -40,7 +41,7 @@ export const sqr601DocumentDefinition = (
 	const myTitleFontSize = 10;
 	const mySmallFontSize = 7;
 
-	function sortNHQName(a: PromotionRequrementsItem, b: PromotionRequrementsItem): number {
+	function sortNHQName(a: PromotionRequirementsItem, b: PromotionRequirementsItem): number {
 		const aName = a.member.nameLast + ', ' + a.member.nameFirst;
 		const bName = b.member.nameLast + ', ' + b.member.nameFirst;
 		return aName.localeCompare(bName);
@@ -55,32 +56,18 @@ export const sqr601DocumentDefinition = (
 		return aName.localeCompare(bName);
 	}
 
-	function getHFZExpire(reqs: CadetPromotionStatus): string {
-		if (reqs.CurrentCadetAchv.CadetAchvID < 4) {
-			if (reqs.HFZRecords.length === 0) {
-				return '';
-			} else {
-				const dateVal = reqs.HFZRecords[0].DateTaken.substr(0, 10);
-				return new Date(
-					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
-				).toLocaleDateString('en-US');
-			}
-			// return 'Phase I';
-		} else {
-			const passedRecord = reqs.HFZRecords.find(rec => rec.IsPassed);
-			if (!!passedRecord) {
-				const dateVal = passedRecord.DateTaken.substr(0, 10);
-				return new Date(
-					new Date(dateVal).getTime() + 60 * 60 * 24 * 182 * 1000,
-				).toLocaleDateString('en-US');
-			} else {
-				return '';
-			}
-		}
-	}
+	const getHFZExpire = (reqs: CadetPromotionStatus): string =>
+		pipe(
+			get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
+			Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
+			Maybe.map(({ DateTaken }) => DateTaken.substr(0, 10)),
+			Maybe.map(s => +new Date(s) + 182 * 24 * 60 * 60 * 1000),
+			Maybe.map(s => new Date(s).toLocaleDateString('en-US')),
+			Maybe.orSome(''),
+		)(reqs);
 
 	function determineSDA(
-		member: PromotionRequrementsItem,
+		member: PromotionRequirementsItem,
 		requirements: CadetPromotionRequirements,
 	): string {
 		let req = 0;
@@ -118,7 +105,7 @@ export const sqr601DocumentDefinition = (
 		if (req === 0) {
 			return 'N/A';
 		} else if (req > reqComp) {
-			return 'Incomplete';
+			return '';
 		} else {
 			return compDate;
 		}
@@ -148,7 +135,9 @@ export const sqr601DocumentDefinition = (
 		? nhqmembers.sort(sortNHQName).map((loopmember): TableCell[] => [
 				{
 					// Grade
-					text: loopmember.member.memberRank,
+					text:
+						CadetPromotionRequirementsMap[loopmember.requirements.CurrentCadetGradeID]
+							.Grade,
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
@@ -158,6 +147,12 @@ export const sqr601DocumentDefinition = (
 					text: loopmember.member.nameLast + ', ' + loopmember.member.nameFirst,
 					fontSize: mySmallFontSize,
 					bold: false,
+					decoration:
+						new Date(loopmember.member.expirationDate + 60 * 60 * 24).getTime() -
+							new Date().getTime() <=
+						0
+							? 'lineThrough'
+							: '',
 					alignment: 'left',
 				},
 				{
@@ -191,13 +186,29 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
-					// Eligible date for next promotion
+					// Eligible date for next promotion - or number of weeks since joined for c/ab
 					text: Maybe.isSome(loopmember.requirements.LastAprvDate)
-						? new Date(
-								loopmember.requirements.LastAprvDate.value +
-									60 * 60 * 24 * 56 * 1000,
-						  ).toLocaleDateString('en-US')
-						: '',
+						? loopmember.requirements.LastAprvDate.value -
+								new Date('01/01/2010').getTime() >
+						  0
+							? new Date(
+									loopmember.requirements.LastAprvDate.value +
+										60 * 60 * 24 * 56 * 1000,
+							  ).toLocaleDateString('en-US')
+							: Math.round(
+									Math.round(
+										new Date().getTime() -
+											new Date(loopmember.member.joined).getTime(),
+									) /
+										(1000 * 60 * 60 * 24 * 7),
+							  )
+						: Math.round(
+								Math.round(
+									new Date().getTime() -
+										new Date(loopmember.member.joined).getTime(),
+								) /
+									(1000 * 60 * 60 * 24 * 7),
+						  ),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
@@ -205,8 +216,18 @@ export const sqr601DocumentDefinition = (
 				{
 					// Next Grade
 					text:
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetGradeID]
 							.Grade,
+					fontSize: mySmallFontSize,
+					bold: false,
+					alighment: 'left',
+				},
+				{
+					// Current achievement
+					text:
+						loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
+						'-' +
+						loopmember.requirements.MaxAprvStatus.substr(0, 1),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alighment: 'left',
@@ -214,18 +235,26 @@ export const sqr601DocumentDefinition = (
 				{
 					// Lead Lab pass date or N/A if not required
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.LeadLabDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Leadership === 'None'
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(
+									loopmember.requirements.CurrentCadetAchv.LeadLabDateP,
+							  ).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Leadership === 'None'
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.LeadLabDateP.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.LeadLabDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -234,15 +263,24 @@ export const sqr601DocumentDefinition = (
 				{
 					// Aerospace Education pass date or N/A if not required
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Aerospace === 'None'
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(loopmember.requirements.CurrentCadetAchv.AEDateP).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Aerospace === 'None'
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.AEDateP.substr(0, 10),
+									loopmember.requirements.CurrentCadetAchv.AEDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -251,12 +289,22 @@ export const sqr601DocumentDefinition = (
 				{
 					// SDA requirements
 					text:
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAPresentation === false &&
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAService === false &&
-						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-							.SDAWriting === false
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAPresentation === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAService === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAWriting === false
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAPresentation === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAService === false &&
+							  CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.SDAWriting === false
 							? 'N/A'
 							: determineSDA(
 									loopmember,
@@ -278,9 +326,17 @@ export const sqr601DocumentDefinition = (
 				{
 					// Drill Test required or date passed
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.Drill === 'None'
+								? 'N/A'
+								: CadetPromotionRequirementsMap[
+										loopmember.requirements.NextCadetAchvID
+								  ].Drill
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+							new Date(loopmember.requirements.CurrentCadetAchv.DrillDate).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.Drill === 'None'
 								? 'N/A'
@@ -288,10 +344,10 @@ export const sqr601DocumentDefinition = (
 										loopmember.requirements.NextCadetAchvID
 								  ].Drill
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.DrillDate.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.DrillDate.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -307,18 +363,27 @@ export const sqr601DocumentDefinition = (
 				{
 					// Character Development
 					text:
-						new Date(loopmember.requirements.CurrentCadetAchv.MoralLDateP).getTime() -
-							new Date('01/01/2010').getTime() <=
-						0
+						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
+							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
+									.CharDev === false
+								? 'N/A'
+								: ''
+							: // if incomplete or pending status, display current requirements (even if all filled in)
+
+							new Date(
+									loopmember.requirements.CurrentCadetAchv.MoralLDateP,
+							  ).getTime() -
+									new Date('01/01/2010').getTime() <=
+							  0
 							? CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
 									.CharDev === false
 								? 'N/A'
 								: ''
 							: new Date(
-									loopmember.requirements.CurrentCadetAchv.MoralLDateP.substr(
-										0,
-										10,
-									),
+									loopmember.requirements.CurrentCadetAchv.MoralLDateP.replace(
+										/-/g,
+										'/',
+									).replace(/T.+/, ''),
 							  ).toLocaleDateString('en-US'),
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -330,7 +395,7 @@ export const sqr601DocumentDefinition = (
 						.Mentor
 						? loopmember.requirements.CurrentCadetAchv.OtherReq
 							? 'Y'
-							: 'N'
+							: ''
 						: 'N/A',
 					fontSize: mySmallFontSize,
 					bold: false,
@@ -380,7 +445,11 @@ export const sqr601DocumentDefinition = (
 		pageMargins: [25, 40, 64, 40],
 
 		header: {
-			text: registry.Website.Name + ' Cadet Status Report',
+			text:
+				registry.Website.Name +
+				' Cadet Status Report: ' +
+				nhqmembers.length.toString() +
+				' members',
 			alignment: 'left',
 			fontSize: myTitleFontSize,
 			bold: true,
@@ -403,7 +472,7 @@ export const sqr601DocumentDefinition = (
 									body: [
 										[
 											{
-												text: 'Squadron Report 60-1 Aug 2021',
+												text: 'Squadron Report 60-1 Sep 2021',
 												bold: true,
 												fontSize: mySmallFontSize,
 											},
@@ -444,29 +513,30 @@ export const sqr601DocumentDefinition = (
 					// table def start
 					headerRows: 1,
 					widths: [
-						30, // Grade
+						29, // Grade
 						73, // Full Name
-						25, // CAPID
+						24, // CAPID
 						25, // Flight
 						13, // Exp
 						36, // Eligible
-						30, // Next
+						29, // Next
+						17, // Achv
 						36, // Lead Lab
 						36, // AeroEd
 						36, // SDA
 						36, // HFZ
 						36, // Drill Test
-						30, // Oath
+						17, // Oath
 						36, // Char Dev
-						30, // Mentor?
-						30, // GES
-						35, // O-Flights
+						29, // Mentor?
+						15, // GES
+						33, // O-Flights
 					],
 					body: [
 						[
 							// row 1
 							{
-								text: 'Grade',
+								text: 'Current Grade',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -496,13 +566,19 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'Eligible',
+								text: 'Eligible or Weeks',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'Next',
+								text: 'Next Grade',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'eSvc Achv',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -526,13 +602,13 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'HFZ Exp',
+								text: 'HFZ Cred Expiration',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'DrillTest',
+								text: 'Drill Test',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -544,7 +620,7 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'CharDev',
+								text: 'Character Devel',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
