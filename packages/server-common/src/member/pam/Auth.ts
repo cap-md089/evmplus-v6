@@ -40,6 +40,7 @@ import {
 import { createPublicKey, createVerify, randomBytes } from 'crypto';
 import * as rp from 'request-promise';
 import { promisify } from 'util';
+import { TimeBackend } from '../..';
 import { Backends } from '../../backends';
 import { MemberBackend } from '../../Members';
 import { collectResults, findAndBind } from '../../MySQLUtil';
@@ -60,6 +61,10 @@ export interface SigninSuccess {
 	member: MemberReference;
 }
 
+export interface SigninExpired {
+	result: MemberCreateError.ACCOUNT_EXPIRED;
+}
+
 export interface SigninPasswordOld {
 	result: MemberCreateError.PASSWORD_EXPIRED;
 	sessionID: string;
@@ -71,7 +76,8 @@ export interface SigninFailed {
 		| MemberCreateError.INCORRRECT_CREDENTIALS
 		| MemberCreateError.SERVER_ERROR
 		| MemberCreateError.UNKOWN_SERVER_ERROR
-		| MemberCreateError.RECAPTCHA_INVALID;
+		| MemberCreateError.RECAPTCHA_INVALID
+		| MemberCreateError.ACCOUNT_EXPIRED;
 }
 
 export interface SigninRequiresMFA {
@@ -80,7 +86,12 @@ export interface SigninRequiresMFA {
 	expires: number;
 }
 
-export type SigninResult = SigninSuccess | SigninPasswordOld | SigninFailed | SigninRequiresMFA;
+export type SigninResult =
+	| SigninSuccess
+	| SigninPasswordOld
+	| SigninFailed
+	| SigninRequiresMFA
+	| SigninExpired;
 
 export const verifyCaptcha = async (
 	response: string,
@@ -91,7 +102,7 @@ export const verifyCaptcha = async (
 	}
 
 	try {
-		const results = await rp('https://www.google.com/recaptcha/api/siteverify', {
+		const results = (await rp('https://www.google.com/recaptcha/api/siteverify', {
 			followRedirect: false,
 			method: 'POST',
 			form: {
@@ -100,9 +111,9 @@ export const verifyCaptcha = async (
 			},
 			resolveWithFullResponse: false,
 			simple: true,
-		});
+		})) as string;
 
-		return JSON.parse(results).success;
+		return (JSON.parse(results) as { success: boolean }).success;
 	} catch (e) {
 		return false;
 	}
@@ -120,7 +131,7 @@ export const addSignatureNonceFunc = (now: () => number) => (schema: Schema) => 
 			.tap(async buf => {
 				await collection
 					.add({
-						expireTime: Date.now() + NONCE_EXPIRE_TIME,
+						expireTime: now() + NONCE_EXPIRE_TIME,
 						nonce: buf,
 						signatureID,
 					})
@@ -270,7 +281,7 @@ const getUserID = async (schema: Schema, username: string): Promise<MemberRefere
  */
 export const trySignin = async (
 	schema: Schema,
-	backend: Backends<[MemberBackend]>,
+	backend: Backends<[MemberBackend, TimeBackend]>,
 	account: AccountObject,
 	username: string,
 	password: string,
@@ -305,6 +316,20 @@ export const trySignin = async (
 	} catch (e) {
 		return {
 			result: MemberCreateError.INCORRRECT_CREDENTIALS,
+		};
+	}
+
+	try {
+		const fullMember = await backend.getMember(account)(member).fullJoin();
+
+		if (fullMember.type === 'CAPNHQMember' && fullMember.expirationDate < backend.now()) {
+			return {
+				result: MemberCreateError.ACCOUNT_EXPIRED,
+			};
+		}
+	} catch (e) {
+		return {
+			result: MemberCreateError.UNKOWN_SERVER_ERROR,
 		};
 	}
 

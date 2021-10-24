@@ -44,10 +44,12 @@ import {
 	getCombinedMemberBackend,
 	getEmailBackend,
 	getRegistryBackend,
+	getTimeBackend,
 	MemberBackend,
 	PAM,
 	RegistryBackend,
 	SUPPORT_BCC_ADDRESS,
+	TimeBackend,
 	withBackends,
 } from 'server-common';
 import { Endpoint } from '../../..';
@@ -137,6 +139,12 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[RegistryBackend, MemberBackend, EmailBackend, PAM.PAMBackend]
-	>(getRegistryBackend, getCombinedMemberBackend(), getEmailBackend, PAM.getPAMBackend),
+		[RegistryBackend, MemberBackend, EmailBackend, TimeBackend, PAM.PAMBackend]
+	>(
+		getRegistryBackend,
+		getCombinedMemberBackend(),
+		getEmailBackend,
+		getTimeBackend,
+		PAM.getPAMBackend,
+	),
 );
