@@ -207,6 +207,10 @@ export const applyCustomAttendanceFields = (eventFields: CustomAttendanceField[]
 			defaultCustomAttendanceFieldValue(customField),
 	);
 
+export const getCustomAttendanceFieldForValue = (eventFields: CustomAttendanceField[]) => (
+	field: CustomAttendanceFieldValue,
+): CustomAttendanceField | undefined => eventFields.find(value => value.title === field.title);
+
 /**
  * See if someone has the ability to add attendeees to an event and modify attendance for
  * an event

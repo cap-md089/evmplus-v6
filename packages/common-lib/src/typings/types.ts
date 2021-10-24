@@ -323,6 +323,7 @@ export enum MemberCreateError {
 	UNKOWN_SERVER_ERROR = 'UnknownServerError',
 	DATABASE_ERROR = 'DatabaseError',
 	ACCOUNT_USES_MFA = 'MFAChallengeRequired',
+	ACCOUNT_EXPIRED = 'AccountExpired',
 }
 
 export enum PointOfContactType {
@@ -2822,7 +2823,8 @@ export interface FailedSigninReturn {
 		| MemberCreateError.SERVER_ERROR
 		| MemberCreateError.UNKOWN_SERVER_ERROR
 		| MemberCreateError.INVALID_SESSION_ID
-		| MemberCreateError.RECAPTCHA_INVALID;
+		| MemberCreateError.RECAPTCHA_INVALID
+		| MemberCreateError.ACCOUNT_EXPIRED;
 }
 
 export interface SigninRequiresMFA {
@@ -2830,6 +2832,10 @@ export interface SigninRequiresMFA {
 	 * Reports the fact that the account may need to submit MFA information
 	 */
 	error: MemberCreateError.ACCOUNT_USES_MFA;
+}
+
+export interface AccountExpiredResult {
+	error: MemberCreateError.ACCOUNT_EXPIRED;
 }
 
 /**
@@ -2840,7 +2846,8 @@ export type SigninReturn =
 	| SuccessfulSigninReturn
 	| ExpiredSuccessfulSigninReturn
 	| FailedSigninReturn
-	| SigninRequiresMFA;
+	| SigninRequiresMFA
+	| AccountExpiredResult;
 
 /**
  * Used by the different files to indicate what they are
