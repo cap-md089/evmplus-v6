@@ -232,14 +232,6 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 				values={{
 					...this.state.attendance,
 					usePartTime: this.state.usePartTime,
-					// Index here is not necessarily the same as the enum values
-					// If there is no record (a new one is being made), the index is for
-					// 'Will attend' vs 'Will NOT attend'
-					status: !!this.props.record
-						? this.state.attendance.status
-						: this.state.attendance.status === AttendanceStatus.COMMITTEDATTENDED
-						? AttendanceStatus.COMMITTEDATTENDED
-						: AttendanceStatus.NOSHOW,
 				}}
 				onChange={this.onAttendanceFormChange}
 				onSubmit={this.onAttendanceFormSubmit}
