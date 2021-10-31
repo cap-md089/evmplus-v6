@@ -76,8 +76,14 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					Password reset request succesful. Please check your inbox for a password reset
-					link.
+					<p>
+						Password reset request succesful. Please check your inbox for a password
+						reset link.
+					</p>
+					<p>
+						If the email is not received in your inbox, please check your Spam or Junk
+						folder for the message
+					</p>
 				</TextBox>
 			) : null}
 
@@ -93,8 +99,14 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 
 			<Label />
 			<TextBox>
-				Enter your username, and if it exists an email containing a password reset link will
-				be sent to the associated email address.
+				<p>
+					Enter your username, and if it exists an email containing a password reset link
+					will be sent to the associated email address.
+				</p>
+				<p>
+					If the email is not received in your inbox, please check your Spam or Junk
+					folder for the message
+				</p>
 			</TextBox>
 
 			<Label>Username</Label>

@@ -223,11 +223,13 @@ export const getRequestFreePAMBackend = (
 	),
 	validateUserAccountCreationToken: token =>
 		asyncRight(validateUserAccountCreationToken(mysqlx, token), error =>
-			error.message === 'Could not match user account creation token'
+			error.message ===
+			'Could not match user account creation token, the token may be expired'
 				? {
 						type: 'OTHER',
 						code: 400,
-						message: 'Could not match user account creation token',
+						message:
+							'Could not match user account creation token, the token may be expired',
 				  }
 				: { type: 'CRASH', error, code: 500, message: error.message },
 		),

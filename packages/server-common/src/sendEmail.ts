@@ -31,7 +31,7 @@ import {
 } from 'common-lib';
 import { notImplementedError } from './backends';
 
-export const SUPPORT_BCC_ADDRESS = 'capstmarys@gmail.com';
+export const SUPPORT_BCC_ADDRESS = 'eventsupport@md.cap.gov';
 
 aws.config.update({ region: 'us-east-1' });
 

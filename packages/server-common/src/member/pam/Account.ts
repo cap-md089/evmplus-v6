@@ -18,6 +18,7 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import { integer } from 'aws-sdk/clients/cloudfront';
 import { promisify } from 'bluebird';
 import {
 	AccountObject,
@@ -60,7 +61,7 @@ import {
 import { ServerEither } from '../../servertypes';
 import { addPasswordForUser } from './Password';
 
-//#region Account creation
+// #region Account creation
 
 const ACCOUNT_TOKEN_AGE = 24 * 60 * 60 * 1000;
 
@@ -99,7 +100,7 @@ const removeAccountToken = async (schema: Schema, token: string): Promise<void> 
 	await safeBind(collection.remove('token = :token'), { token }).execute();
 };
 
-const getTokenCountForUser = async (schema: Schema, member: MemberReference) => {
+const getTokenCountForUser = async (schema: Schema, member: MemberReference): Promise<integer> => {
 	const collection = schema.getCollection<PAMTypes.AccountCreationToken>('UserAccountTokens');
 
 	await cleanAccountCreationTokens(schema);
@@ -162,7 +163,7 @@ export const validateUserAccountCreationToken = async (
 	const tokens = await getUserAccountCreationTokens(schema, token);
 
 	if (tokens.length !== 1) {
-		throw new Error('Could not match user account creation token');
+		throw new Error('Could not match user account creation token, the token may be expired');
 	}
 
 	return tokens[0].member;
@@ -242,9 +243,9 @@ export const addUserAccount = (
 			.tap(() => removeAccountToken(schema, token)),
 	);
 
-//#endregion
+// #endregion
 
-//#region Basic account information
+// #region Basic account information
 
 /**
  * Loads information about a user from the database
