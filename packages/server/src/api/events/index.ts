@@ -52,10 +52,6 @@ import timelist from './events/timelist';
 
 const router = express.Router();
 
-// router.get('/:id/attendance/log/cadet', attendancelogcadet);
-// router.get('/:id/attendance/log/senior', conditionalMemberMiddleware, attendancelogsenior);
-// router.get('/:id/attendance/roster', conditionalMemberMiddleware, attendanceroster);
-
 const adder = endpointAdder(router) as () => () => void;
 
 addAPI(Validator, adder, create);

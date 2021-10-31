@@ -42,6 +42,7 @@ import {
 	EventType,
 	FromDatabase,
 	get,
+	getCustomAttendanceFieldForValue,
 	getFullMemberName,
 	hasBasicAttendanceManagementPermission,
 	identity,
@@ -389,23 +390,113 @@ export const visibleCustomAttendanceFields = (
 ): ServerEither<CustomAttendanceFieldValue[]> => asyncRight([], attendanceFilterError);
 
 export const canMemberModifyCustomAttendanceField = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-) => (attendanceModifier: User) => (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	backend: Backends<
+		[RawMySQLBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
+	>,
+) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
 	customAttendanceField: CustomAttendanceFieldValue,
-): ServerEither<boolean> => asyncRight(false, attendanceFilterError);
+): ServerEither<boolean> =>
+	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+		backend
+			.getEvent(account)(attendanceRecord.sourceEventID)
+			.flatMap(backend.ensureResolvedEvent)
+			.map(
+				event =>
+					effectiveManageEventPermissionForEvent(attendanceModifier)(event) ===
+						Permissions.ManageEvent.FULL ||
+					!!getCustomAttendanceFieldForValue(event.customAttendanceFields)(
+						customAttendanceField,
+					)?.allowMemberToModify,
+			),
+	);
 
 export const applyAttendanceRecordUpdates = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	backend: Backends<
+		[TimeBackend, RawMySQLBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
+	>,
 ) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	changes: NewAttendanceRecord,
 ): ServerEither<void> =>
-	asyncRight(void 0, errorGenerator('Could not update member attendance record'));
+	backend
+		.getAccount(attendanceRecord.sourceAccountID)
+		.flatMap(account =>
+			backend
+				.getEvent(account)(attendanceRecord.sourceEventID)
+				.flatMap(backend.ensureResolvedEvent)
+				.filter(
+					event =>
+						(typeof event.teamID === 'number'
+							? backend.getTeam(account)(event.teamID).map(Maybe.some)
+							: asyncRight(
+									Maybe.none(),
+									errorGenerator(
+										'Could not check permissions for attendance update',
+									),
+							  )
+						).map(hasBasicAttendanceManagementPermission(attendanceModifier)(event)),
+					{
+						type: 'OTHER',
+						code: 403,
+						message: 'You do not have permission to modify this attendance record',
+					},
+				),
+		)
+		.flatMap(() =>
+			AsyncEither.All(
+				attendanceRecord.customAttendanceFieldValues.map(value =>
+					canMemberModifyCustomAttendanceField(backend)(attendanceModifier)(
+						attendanceRecord,
+					)(value).map(canModify => ({
+						canModify,
+						value,
+					})),
+				),
+			),
+		)
+		.map<AttendanceRecord>(modifiableValues => ({
+			timestamp: backend.now(),
+			comments: changes.comments ?? attendanceRecord.comments,
+			customAttendanceFieldValues: attendanceRecord.customAttendanceFieldValues.map(value => {
+				const findResult = modifiableValues.find(
+					result => result.value.title === value.title,
+				);
+
+				const changedValue = changes.customAttendanceFieldValues.find(
+					({ title }) => title === value.title,
+				);
+
+				if (findResult?.canModify && changedValue) {
+					return changedValue;
+				} else {
+					return value;
+				}
+			}),
+			memberID: attendanceRecord.memberID,
+			memberName: attendanceRecord.memberName,
+			planToUseCAPTransportation:
+				changes.planToUseCAPTransportation ?? attendanceRecord.planToUseCAPTransportation,
+			shiftTime: changes.shiftTime ?? attendanceRecord.shiftTime,
+			sourceAccountID: attendanceRecord.sourceAccountID,
+			sourceEventID: attendanceRecord.sourceEventID,
+			status: changes.status ?? attendanceRecord.status,
+			summaryEmailSent: attendanceRecord.summaryEmailSent,
+		}))
+		.map(rawAttendanceRecordWrapper)
+		.flatMap(record =>
+			asyncRight(
+				backend.getCollection('Attendance'),
+				errorGenerator('Cannot save attendance record'),
+			)
+				.map(
+					modifyAndBindC({
+						accountID: record.accountID,
+						eventID: record.eventID,
+						memberID: record.memberID,
+					}),
+				)
+				.map(modify => modify.patch(record).execute()),
+		)
+		.map(destroy);
 
 export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
 	event: RawEventObject,

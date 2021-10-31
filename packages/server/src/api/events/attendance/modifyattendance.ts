@@ -65,7 +65,7 @@ export const getMember = (
 	backend: Backend,
 ) => (body: APIEndpointBody<api.events.attendance.ModifyAttendance>) => (
 	event: RawResolvedEventObject,
-) => (team: MaybeObj<RawTeamObject>) =>
+) => (team: MaybeObj<RawTeamObject>): ServerEither<Member> =>
 	hasBasicAttendanceManagementPermission(req.member)(event)(team)
 		? Maybe.orSome<ServerEither<Member>>(
 				asyncRight(req.member, errorGenerator('Could not get member information')),
@@ -90,7 +90,8 @@ export const maybeGetTeam = (
 
 export const isAttendanceRecordInScope = (backend: Backend) => (account: AccountObject) => (
 	attendanceRecordOwner: MemberReference,
-) => backend.getMember(account)(attendanceRecordOwner).flatMap(backend.accountHasMember(account));
+): ServerEither<boolean> =>
+	backend.getMember(account)(attendanceRecordOwner).flatMap(backend.accountHasMember(account));
 
 export const func: Endpoint<Backend, api.events.attendance.ModifyAttendance> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(request =>
