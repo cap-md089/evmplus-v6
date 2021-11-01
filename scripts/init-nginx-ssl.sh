@@ -33,7 +33,7 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
 fi
 
-filter_func="account.id === 'md001' || (account.type === 'CAPGroup' && account.parentWing && account.parentWing.value === 'md001') || (account.type === 'CAPSquadron' && account.parentWing && account.parentWing.value === 'md001')"
+filter_func="account.id === 'md001' || (account.type === 'CAPGroup' && account.parentWing && account.parentWing.value === 'md001') || (account.type === 'CAPSquadron' && account.parentWing && account.parentWing.value === 'md001') || (account.type === 'CAPEvent' && account.parent.value === 'md001')"
 get_accounts_file="/usr/evm-plus/packages/util-cli/dist/getAccounts.js"
 
 docker_compose_file_arg=""
