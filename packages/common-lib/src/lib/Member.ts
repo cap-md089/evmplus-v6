@@ -37,6 +37,8 @@ import {
 import { Either, EitherObj } from './Either';
 import { Maybe, MaybeObj } from './Maybe';
 
+const ACCOUNT_TOKEN_AGE = 24 * 60 * 60 * 1000;
+
 export const stringifyMemberReference = (ref: MemberReference): string => `${ref.type}-${ref.id}`;
 
 const toCAPNHQReference = (id: number): CAPNHQMemberReference => ({
@@ -146,6 +148,9 @@ export const getFullMemberName = (member: {
 	member.memberRank + ' ' + getMemberName(member);
 //   )
 // : Maybe.none();
+
+export const getExpireTime = (): string =>
+	new Date(new Date().getTime() + ACCOUNT_TOKEN_AGE).toLocaleString();
 
 export const hasSpecificPermission = <T extends MemberPermission>(permission: T) => (
 	threshold: number,

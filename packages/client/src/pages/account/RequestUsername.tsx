@@ -76,8 +76,14 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					Login request successful. Please check the email associated with the CAP ID
-					entered for an email with your CAP account.
+					<p>
+						Login request successful. Please check the email associated with the CAP ID
+						entered for an email with your CAP account.
+					</p>
+					<p>
+						If the email is not received in your inbox, please check your Spam or Junk
+						folder for the message
+					</p>
 				</TextBox>
 			) : null}
 
@@ -93,8 +99,14 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 
 			<Label />
 			<TextBox>
-				Enter your CAP ID below. Once your request is submitted, please check the email
-				account associated with your CAP ID in eServices.
+				<p>
+					Enter your CAP ID below. Once your request is submitted, please check the email
+					account associated with your CAP ID in eServices.
+				</p>
+				<p>
+					If the email is not received in your inbox, please check your Spam or Junk
+					folder for the message
+				</p>
 			</TextBox>
 
 			<Label>CAP ID</Label>

@@ -26,6 +26,7 @@ import {
 	CAPNHQMemberObject,
 	EmailSentType,
 	errorGenerator,
+	getExpireTime,
 	getFullMemberName,
 	Member,
 	RegistryValues,
@@ -103,8 +104,9 @@ const getEmail = (member: Member) => (email: string) => (token: string): EmailSe
 To complete your Event Manager account creation: visit the link below:
 ${url}/finishaccount/${token}`,
 	htmlBody: `<h2>You're almost there ${getFullMemberName(member)}!</h2>
-<p>To complete your Eveent Manager account creation, click or visit the link below:</p>
+<p>To complete your Event Manager account creation, click or visit the link below:</p>
 <p><a href="${url}/finishaccount/${token}">Confirm account creation</a></p>
+<p>This link will expire at ${getExpireTime()}</p>
 <h4>Please respond to this email if you have questions regarding your Event Manager account. If you did not request this account, simply disregard this email.</h4>`,
 });
 
