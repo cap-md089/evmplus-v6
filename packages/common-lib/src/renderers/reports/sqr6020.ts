@@ -103,7 +103,8 @@ export const sqr6020DocumentDefinition = (
 	function getNextMonth(): Date {
 		const today = new Date();
 		const thisMonth = today.getMonth();
-		const nextMonth = (thisMonth + 2) % 12;
+		let nextMonth = (thisMonth + 1) % 12;
+		nextMonth += 1;
 		return new Date(
 			nextMonth.toString() +
 				'/' +
