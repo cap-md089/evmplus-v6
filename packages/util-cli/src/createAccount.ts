@@ -60,7 +60,7 @@ void (async () => {
 		if (id !== null) {
 			console.log('ID cannot be blank');
 		}
-		id = await asker('What will be the ID of the new account? - ');
+		id = await asker('What will be the ID of the new account? (ie: md001) - ');
 	}
 
 	let name = null;
@@ -68,7 +68,9 @@ void (async () => {
 		if (name !== null) {
 			console.log('Website name cannot be blank');
 		}
-		name = await asker('What is the name of the new account? - ');
+		name = await asker(
+			'What is the name of the new account? (ie: John Smith Composite Squadron) - ',
+		);
 	}
 
 	const serverID = await asker(
