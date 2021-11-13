@@ -41,19 +41,19 @@ const formatHtmlEmail = (
 	config: ServerConfiguration,
 	reg: RegistryValues,
 	body: string,
-): string => `<div style="background-color:#f0f8ff;padding:20px">
-<header style="background:#28497e;padding:20px;margin:0">
+): string => `<div style="background-color:#A5B9FE;padding:20px">
+<header style="background:#A5B9FE;padding:20px;margin:0">
 <a href="https://${reg.accountID}.${config.HOST_NAME}/">
-<h2 style="text-align:center;color:white;">${reg.Website.Name}</h3>
-<h3 style="text-align:center;color:white;">Maryland Wing CAP Event Manager Action</h4>
+<h2 style="text-align:center;">${reg.Website.Name}</h3>
+<h3 style="text-align:center;">Maryland Wing CAP Event Manager Action</h4>
 </a>
 </header>
-<div style="border:5px solid #28497e;margin:0;padding:20px">
+<div style="border:5px solid #0E2B8D;margin:0;padding:20px">
 ${body}<br /><br />
 Sincerely,<br />
 The Event Manager Support Team
 </div>
-<footer style="background:#28497e;padding:25px;color:white">&copy; Event Manager 2017-${new Date().getUTCFullYear()}</footer>
+<footer style="background:A5B9FE;padding:25px">&copy; Event Manager 2017-${new Date().getUTCFullYear()}</footer>
 </div>`;
 
 const formatTextEmail = (reg: RegistryValues, text: string): string => `${reg.Website.Name}
