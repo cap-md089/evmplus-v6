@@ -101,3 +101,20 @@ export interface MemberGet {
 
 	useValidator: false;
 }
+
+/**
+ * Allows for searching for members by name
+ */
+export interface MemberSearch {
+	(params: { lastName?: string; firstName?: string }, body: {}): APIEither<Member[]>;
+
+	url: '/api/member/search/:lastName?/:firstName?';
+
+	method: 'get';
+
+	requiresMember: 'required';
+
+	needsToken: false;
+
+	useValidator: false;
+}
