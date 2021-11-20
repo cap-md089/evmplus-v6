@@ -21,31 +21,35 @@ import {
 	api,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncLeft,
 	asyncRight,
 	Either,
 	EitherObj,
 	errorGenerator,
 	get,
+	getORGIDsFromRegularCAPAccount,
 	hasOneDutyPosition,
+	isRegularCAPAccountObject,
 	Member,
+	RegularCAPAccountObject,
 	Right,
 	ServerError,
 	SessionType,
 } from 'common-lib';
 import {
-	Backends,
-	combineBackends,
-	RawMySQLBackend,
 	AccountBackend,
-	MemberBackend,
+	Backends,
+	BasicAccountRequest,
 	CAP,
+	combineBackends,
+	generateResults,
+	getCombinedMemberBackend,
+	getRawMySQLBackend,
+	MemberBackend,
+	PAM,
+	RawMySQLBackend,
 	TeamsBackend,
 	withBackends,
-	BasicAccountRequest,
-	getRawMySQLBackend,
-	getCombinedMemberBackend,
-	PAM,
-	generateResults,
 } from 'server-common';
 import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
@@ -61,7 +65,17 @@ export const func: Endpoint<
 				code: 403,
 				message: 'You do not have permission to do that',
 			})
-			.flatMap(req =>
+			.flatMap(request =>
+				isRegularCAPAccountObject(request.account)
+					? backend.getSubordinateCAPUnits(request.account)
+					: asyncLeft<ServerError, RegularCAPAccountObject[]>({
+							type: 'OTHER',
+							code: 400,
+							message: 'You cannot do that for this type of account',
+					  }),
+			)
+			.map(accounts => accounts.flatMap(getORGIDsFromRegularCAPAccount))
+			.flatMap(safeOrgIds =>
 				asyncRight(
 					backend.getCollection('NHQ_Member'),
 					errorGenerator('Could not get members'),
@@ -69,7 +83,7 @@ export const func: Endpoint<
 					.map(collection =>
 						collection
 							.find(
-								'LOWER(NameLast) like :NameLast AND LOWER(NameFirst) like :NameFirst',
+								'LOWER(NameLast) like :NameLast AND LOWER(NameFirst) like :NameFirst AND ORGID in :ORGID',
 							)
 							.fields(['CAPID'])
 							.bind(
@@ -79,7 +93,9 @@ export const func: Endpoint<
 							.bind(
 								'NameLast',
 								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
-							),
+							)
+							// @ts-ignore: the library is too strictly typed
+							.bind('ORGID', safeOrgIds),
 					)
 					.map(generateResults)
 					.map(

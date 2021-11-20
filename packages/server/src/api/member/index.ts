@@ -33,6 +33,7 @@ import flightbasic from './flights/flightbasic';
 import flightmembers from './flights/flightmembers';
 import getmember from './getmemberbyid';
 import getmembers from './getmembers';
+import membersearch from './membersearch';
 import passwordreset from './passwordreset';
 import getpermissions from './permissions/getpermissions';
 import setpermissions from './permissions/setpermissions';
@@ -80,6 +81,7 @@ addAPI(Validator, adder, startmfasetup);
 addAPI(Validator, adder, finishmfasetup);
 addAPI(Validator, adder, finishmfa);
 addAPI(Validator, adder, setscanaddsession);
+addAPI(Validator, adder, membersearch);
 addAPI(Validator, adder, getmembers);
 addAPI(Validator, adder, getmember);
 
