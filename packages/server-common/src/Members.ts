@@ -57,6 +57,7 @@ import {
 	RawTeamObject,
 	ServerError,
 	SignInLogData,
+	StoredAccountMembership,
 	StoredMemberPermissions,
 	stringifyMemberReference,
 	TableDataType,
@@ -341,11 +342,20 @@ export const getBasicMemberAccounts = (
 		.map(iterToArray);
 
 export const isPartOfAccountSlow = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 ) => (member: Member) => (account: AccountObject): ServerEither<boolean> =>
-	asyncRight(false, errorGenerator('Could not verify account membership'));
+	asyncRight(
+		backend.getCollection('ExtraAccountMembership'),
+		errorGenerator('Could not verify account membership'),
+	)
+		.map(
+			findAndBindC<StoredAccountMembership>({
+				member: toReference(member),
+				accountID: account.id,
+			}),
+		)
+		.map(collectResults)
+		.map(results => results.length === 1);
 
 export const isMemberPartOfAccount = (
 	backend: Backends<[AccountBackend, MemberBackend, RawMySQLBackend]>,
