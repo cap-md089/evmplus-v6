@@ -1,20 +1,24 @@
-# Copyright (C) 2020 Andrew Rioux
+#!/bin/sh
+
+# Copyright (C) 2021 Andrew Rioux
 # 
-# This file is part of EvMPlus.org.
+# This file is part of evmplus
 # 
-# EvMPlus.org is free software: you can redistribute it and/or modify
+# EvMPlus is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 # 
-# EvMPlus.org is distributed in the hope that it will be useful,
+# EvMPlus is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 # 
 # You should have received a copy of the GNU General Public License
-# along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+# along with EvMPlus.  If not, see <http://www.gnu.org/licenses/>.
 
-*/5 * * * * bash /usr/evm-plus/cronjobs/download.sh 2>&1 >> /var/log/cron.log
-1 0 * * 0 bash /usr/evm-plus/cronjobs/backup.sh 2>&1 >> /var/log/cron.log
+printenv | grep -v "no_proxy" >> /etc/environment
 
+cron
+
+tail -f /var/log/cron.log
