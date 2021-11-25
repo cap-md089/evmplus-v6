@@ -55,7 +55,6 @@ const readfile = promisify(readFile);
 	).fullJoin();
 })().then(
 	() => {
-		console.log('Finished execution');
 		process.exit(0);
 	},
 	e => {
