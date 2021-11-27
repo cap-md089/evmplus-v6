@@ -191,11 +191,11 @@ const pages: Array<{
 		component: FlightAssign,
 		exact: false,
 	},
-	{
-		url: '/notifications',
-		component: Notifications,
-		exact: false,
-	},
+	// {
+	// 	url: '/notifications',
+	// 	component: Notifications,
+	// 	exact: false,
+	// },
 	{
 		url: '/debug',
 		component: Debug,
