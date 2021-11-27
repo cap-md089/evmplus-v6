@@ -118,7 +118,6 @@ services:
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=50
-            - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
             - HOST_NAME=evmplus.org
 
@@ -153,7 +152,6 @@ services:
             - DB_HOST=mysql
             - DB_PORT=33060
             - DB_POOL_SIZE=50
-            - KEEP_CAPWATCH_ZIP=1
             - DOWNLOAD_PATH=/downloads
             - HOST_NAME=evmplus.org
 
