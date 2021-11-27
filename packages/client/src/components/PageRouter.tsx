@@ -38,7 +38,7 @@ import Signin from '../pages/account/Signin';
 import Signup from '../pages/account/Signup';
 import Admin from '../pages/admin/Admin';
 import FlightAssign from '../pages/admin/pages/FlightAssign';
-import Notifications from '../pages/admin/pages/Notifications';
+// import Notifications from '../pages/admin/pages/Notifications';
 import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
 import Debug from '../pages/Debug';
