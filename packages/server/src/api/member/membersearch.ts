@@ -27,11 +27,9 @@ import {
 	EitherObj,
 	errorGenerator,
 	get,
-	getORGIDsFromRegularCAPAccount,
 	hasOneDutyPosition,
 	isRegularCAPAccountObject,
 	Member,
-	RegularCAPAccountObject,
 	Right,
 	ServerError,
 	SessionType,
@@ -40,9 +38,10 @@ import {
 	AccountBackend,
 	Backends,
 	BasicAccountRequest,
+	bindForArray2,
 	CAP,
+	collectResults,
 	combineBackends,
-	generateResults,
 	getCombinedMemberBackend,
 	getRawMySQLBackend,
 	MemberBackend,
@@ -67,37 +66,50 @@ export const func: Endpoint<
 			})
 			.flatMap(request =>
 				isRegularCAPAccountObject(request.account)
-					? backend.getSubordinateCAPUnits(request.account)
-					: asyncLeft<ServerError, RegularCAPAccountObject[]>({
+					? backend.getSubordinateCAPUnitIDs(request.account)
+					: asyncLeft<ServerError, number[]>({
 							type: 'OTHER',
 							code: 400,
 							message: 'You cannot do that for this type of account',
 					  }),
 			)
-			.map(accounts => accounts.flatMap(getORGIDsFromRegularCAPAccount))
 			.flatMap(safeOrgIds =>
 				asyncRight(
 					backend.getCollection('NHQ_Member'),
 					errorGenerator('Could not get members'),
 				)
-					.map(collection =>
-						collection
-							.find(
-								'LOWER(NameLast) like :NameLast AND LOWER(NameFirst) like :NameFirst AND ORGID in :ORGID',
-							)
-							.fields(['CAPID'])
-							.bind(
-								'NameFirst',
-								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
-							)
-							.bind(
-								'NameLast',
-								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
-							)
-							// @ts-ignore: the library is too strictly typed
-							.bind('ORGID', safeOrgIds),
-					)
-					.map(generateResults)
+					.tap(() => {
+						const { arrayKey, arrayValues } = bindForArray2(safeOrgIds);
+
+						console.log(
+							`LOWER(NameLast) LIKE :NameLast AND LOWER(NameFirst) LIKE :NameFirst AND ORGID in ${arrayKey}`,
+						);
+						console.log(`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`);
+						console.log(`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`);
+						console.log(arrayValues);
+					})
+					.map(collection => {
+						const { arrayKey, arrayValues } = bindForArray2(safeOrgIds);
+
+						return (
+							collection
+								.find(
+									`LOWER(NameLast) LIKE :NameLast AND LOWER(NameFirst) LIKE :NameFirst AND ORGID in ${arrayKey}`,
+								)
+								.fields(['CAPID'])
+								.bind(
+									'NameLast',
+									`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
+								)
+								.bind(
+									'NameFirst',
+									`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
+								)
+								// @ts-ignore: the library is too strictly typed
+								.bind(arrayValues)
+						);
+					})
+					.map(collectResults)
 					.map(
 						asyncIterMap(({ CAPID }) =>
 							backend.getMember(req.account)({

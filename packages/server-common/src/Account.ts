@@ -37,6 +37,7 @@ import {
 	CAPNHQMemberObject,
 	CAPProspectiveMemberObject,
 	collectGeneratorAsync,
+	complement,
 	Either,
 	EitherObj,
 	errorGenerator,
@@ -706,6 +707,15 @@ SELECT id FROM Units;`;
 export const getSubordinateCAPUnits = (backend: AccountBackend) => (schema: Schema) => (
 	wing: RegularCAPAccountObject,
 ): ServerEither<RegularCAPAccountObject[]> =>
+	backend
+		.getSubordinateCAPUnitIDs(wing)
+		.map(asyncIterMap(backend.getCAPAccountsByORGID))
+		.flatMap(asyncIterRaiseEither(errorGenerator('Could not get subordinate unit information')))
+		.map(accounts => accounts.flatMap(identity));
+
+export const getSubordinateCAPUnitIDs = (schema: Schema) => (
+	wing: RegularCAPAccountObject,
+): ServerEither<number[]> =>
 	asyncRight(schema.getSession(), errorGenerator('Could not get subordinate unit ORG IDs'))
 		.map(session =>
 			session
@@ -713,10 +723,8 @@ export const getSubordinateCAPUnits = (backend: AccountBackend) => (schema: Sche
 				.bind(getORGIDsFromRegularCAPAccount(wing))
 				.execute(),
 		)
-		.map(result => result.fetchAll().map(([value]: [number]) => value))
-		.map(asyncIterMap(backend.getCAPAccountsByORGID))
-		.flatMap(asyncIterRaiseEither(errorGenerator('Could not get subordinate unit information')))
-		.map(accounts => accounts.flatMap(identity));
+		.map(result => result.fetchAll().map(([value]: [string]) => parseInt(value, 10)))
+		.map(results => results.filter(complement(isNaN)));
 
 export interface AccountBackend {
 	getAccount: (accountID: string) => ServerEither<AccountObject>;
@@ -752,6 +760,7 @@ export interface AccountBackend {
 	getSubordinateCAPUnits: (
 		unit: RegularCAPAccountObject,
 	) => ServerEither<RegularCAPAccountObject[]>;
+	getSubordinateCAPUnitIDs: (unit: RegularCAPAccountObject) => ServerEither<number[]>;
 }
 
 export const getAccountBackend = (
@@ -808,6 +817,7 @@ export const getRequestFreeAccountsBackend = (
 				),
 			get('id'),
 		),
+		getSubordinateCAPUnitIDs: memoize(getSubordinateCAPUnitIDs(mysqlx), get('id')),
 		getSubordinateCAPUnits: unit => getSubordinateCAPUnits(backend)(mysqlx)(unit),
 	};
 
@@ -825,4 +835,5 @@ export const getEmptyAccountBackend = (): AccountBackend => ({
 		notImplementedError('createCAPEventAccount'),
 	getOrgNameForMember: () => () => notImplementedError('getOrgName'),
 	getSubordinateCAPUnits: () => notImplementedError('getSubordinateCAPUnits'),
+	getSubordinateCAPUnitIDs: () => notImplementedError('getSubordinateCAPUnitIDs'),
 });
