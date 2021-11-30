@@ -17,10 +17,13 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { hasPermission, isRioux, AccountType, Permissions, ClientUser } from 'common-lib';
+import { AccountType, ClientUser, hasPermission, isRioux, Permissions } from 'common-lib';
 import * as React from 'react';
 import { Route, Switch } from 'react-router';
 import SigninLink from '../../components/SigninLink';
+import CreateProspectiveMember from '../account/CreateProspectiveMember';
+import SetupMFA from '../account/SetupMFA';
+import CreateAccount from '../events/CreateAccount';
 import Page, { PageProps } from '../Page';
 import './Admin.css';
 import AttendanceHistory from './pages/AttendanceHistory';
@@ -29,25 +32,23 @@ import ErrorListPage, { ErrorListWidget, shouldRenderErrorList } from './pages/E
 import FlightAssign from './pages/FlightAssign';
 import Notifications from './pages/Notifications';
 import PermissionAssign from './pages/PermissionAssign';
-import CreateAccount from '../events/CreateAccount';
+import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import RegEdit from './pages/RegEdit';
 import TemporaryDutyPositions from './pages/TemporaryDutyPosition';
 import { AbsenteeWidget, canUseAbsentee } from './pluggables/Absentee';
 import { canUseCreate, CreateWidget } from './pluggables/Create';
 import { DriveWidget } from './pluggables/Drive';
+import FindMember, { shouldRenderMemberSearchWidget } from './pluggables/FindMember';
 import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget,
 } from './pluggables/FlightContact';
 import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
+import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
+import { ReportsWidget, shouldRenderReports } from './pluggables/Reports';
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
 import SuWidget, { canUseSu } from './pluggables/Su';
 import './Widget.css';
-import CreateProspectiveMember from '../account/CreateProspectiveMember';
-import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
-import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
-import SetupMFA from '../account/SetupMFA';
-import { ReportsWidget, shouldRenderReports } from './pluggables/Reports';
 
 interface UnloadedAdminState {
 	loaded: false;
@@ -119,6 +120,10 @@ const widgets: WidgetDefinition[] = [
 			)(member) &&
 			account.type === AccountType.CAPSQUADRON,
 		widget: ProspectiveMemberManagementWidget,
+	},
+	{
+		canuse: shouldRenderMemberSearchWidget,
+		widget: FindMember,
 	},
 ];
 

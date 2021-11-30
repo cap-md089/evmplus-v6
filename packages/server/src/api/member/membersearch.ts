@@ -29,7 +29,8 @@ import {
 	get,
 	hasOneDutyPosition,
 	isRegularCAPAccountObject,
-	Member,
+	Maybe,
+	memoize,
 	Right,
 	ServerError,
 	SessionType,
@@ -38,7 +39,7 @@ import {
 	AccountBackend,
 	Backends,
 	BasicAccountRequest,
-	bindForArray2,
+	bindForArray,
 	CAP,
 	collectResults,
 	combineBackends,
@@ -52,6 +53,23 @@ import {
 } from 'server-common';
 import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
+
+const memberSearchSQL = (schema: Schema, orgids: number[]): string => /* sql */ `SELECT
+	CAPID
+FROM
+	${schema.getName()}.NHQ_Member as M
+INNER JOIN
+	${schema.getName()}.NHQ_Organization as O
+ON
+	M.ORGID = O.ORGID
+WHERE
+	M.ORGID in ${bindForArray(orgids)}
+AND
+	LOWER(M.doc ->> '$.NameFirst') LIKE ?
+AND
+	LOWER(M.doc ->> '$.NameLast') LIKE ?
+AND
+	LOWER(O.doc ->> '$.Name') LIKE ?`;
 
 export const func: Endpoint<
 	Backends<[RawMySQLBackend, AccountBackend, MemberBackend, CAP.CAPMemberBackend, TeamsBackend]>,
@@ -74,54 +92,59 @@ export const func: Endpoint<
 					  }),
 			)
 			.flatMap(safeOrgIds =>
-				asyncRight(
-					backend.getCollection('NHQ_Member'),
-					errorGenerator('Could not get members'),
-				)
-					.tap(() => {
-						const { arrayKey, arrayValues } = bindForArray2(safeOrgIds);
-
-						console.log(
-							`LOWER(NameLast) LIKE :NameLast AND LOWER(NameFirst) LIKE :NameFirst AND ORGID in ${arrayKey}`,
-						);
-						console.log(`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`);
-						console.log(`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`);
-						console.log(arrayValues);
-					})
-					.map(collection => {
-						const { arrayKey, arrayValues } = bindForArray2(safeOrgIds);
-
-						return (
-							collection
-								.find(
-									`LOWER(NameLast) LIKE :NameLast AND LOWER(NameFirst) LIKE :NameFirst AND ORGID in ${arrayKey}`,
-								)
-								.fields(['CAPID'])
-								.bind(
-									'NameLast',
-									`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
-								)
-								.bind(
-									'NameFirst',
-									`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
-								)
-								// @ts-ignore: the library is too strictly typed
-								.bind(arrayValues)
-						);
-					})
-					.map(collectResults)
-					.map(
-						asyncIterMap(({ CAPID }) =>
-							backend.getMember(req.account)({
-								type: 'CAPNHQMember',
-								id: CAPID,
-							}),
-						),
+				asyncRight(backend.getSchema(), errorGenerator('Could not get members'))
+					.map(schema =>
+						schema
+							.getSession()
+							.sql(memberSearchSQL(schema, safeOrgIds))
+							.bind([
+								...safeOrgIds,
+								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
+								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
+								`%${(req.params.unitName ?? '').toLocaleLowerCase()}%`,
+							])
+							.execute(),
 					)
+					.map(result =>
+						result
+							.fetchAll()
+							.map(([capid]: [string | number]) => parseInt(capid.toString(), 10)),
+					)
+					.map(iter => {
+						const getOrganization = memoize((orgid: number) =>
+							asyncRight(
+								backend.getCollection('NHQ_Organization'),
+								errorGenerator('Could not get member organization'),
+							)
+								.map(collection =>
+									collection.find('ORGID = :ORGID').bind('ORGID', orgid),
+								)
+								.map(collectResults)
+								.map(Maybe.fromArray),
+						);
+
+						return asyncIterMap<
+							number,
+							EitherObj<ServerError, api.member.MemberSearchResult>
+						>(id =>
+							backend
+								.getMember(req.account)({
+									type: 'CAPNHQMember',
+									id,
+								})
+								.flatMap(member =>
+									getOrganization(member.orgid).map(organization => ({
+										member,
+										organization,
+									})),
+								),
+						)(iter);
+					})
 					.map(
-						asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(
-							Either.isRight,
-						),
+						asyncIterFilter<
+							EitherObj<ServerError, api.member.MemberSearchResult>,
+							Right<api.member.MemberSearchResult>
+						>(Either.isRight),
 					)
 					.map(asyncIterMap(get('value')))
 					.map(wrapper),

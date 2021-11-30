@@ -108,6 +108,7 @@ export class TextInput extends React.Component<InnerTextInputProps, { changed: b
 				placeholder={this.props.placeholder}
 				disabled={this.props.disabled}
 				autoComplete={this.props.showSuggestions ?? true ? 'on' : 'off'}
+				key={this.props.name}
 			/>
 			{this.props.hasError && this.props.errorMessage && this.state.changed ? (
 				<span className="text-error">{this.props.errorMessage}</span>

@@ -22,8 +22,9 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { MaybeObj } from '../../../lib/Maybe';
 import { APIEither } from '../../api';
-import { AbsenteeInformation, Member, MemberType, PasswordSetResult } from '../../types';
+import { AbsenteeInformation, Member, MemberType, NHQ, PasswordSetResult } from '../../types';
 
 export * as account from './account';
 export * as attendance from './attendance';
@@ -102,13 +103,20 @@ export interface MemberGet {
 	useValidator: false;
 }
 
+export interface MemberSearchResult {
+	member: Member;
+	organization: MaybeObj<NHQ.Organization>;
+}
+
 /**
  * Allows for searching for members by name
  */
 export interface MemberSearch {
-	(params: { lastName?: string; firstName?: string }, body: {}): APIEither<Member[]>;
+	(params: { unitName?: string; lastName?: string; firstName?: string }, body: {}): APIEither<
+		MemberSearchResult[]
+	>;
 
-	url: '/api/member/search/:lastName?/:firstName?';
+	url: '/api/member/search/:unitName?/:lastName?/:firstName?';
 
 	method: 'get';
 
