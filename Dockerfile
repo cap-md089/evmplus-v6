@@ -185,16 +185,18 @@ ENV NODE_ENV production
 COPY cronjobs/crontab /etc/cron.d/crontab
 COPY cronjobs/download.sh ./cronjobs/download.sh
 COPY cronjobs/backup.sh ./cronjobs/backup.sh
+COPY cronjobs/start-crond.sh ./cronjobs/start-crond.sh
 COPY scripts/database-dump.js ./cronjobs/database-dump.js
 
 RUN chmod 0744 /etc/cron.d/crontab \
 	&& chmod 0744 /usr/evm-plus/cronjobs/download.sh \
 	&& chmod 0744 /usr/evm-plus/cronjobs/backup.sh \
+	&& chmod 0744 /usr/evm-plus/cronjobs/start-crond.sh \
 	&& crontab /etc/cron.d/crontab \
 	&& touch /var/log/cron.log
 
 ENTRYPOINT [ "sh" ]
-CMD [ "-c", "cron && tail -f /var/log/cron.log" ]
+CMD [ "-c", "/usr/evm-plus/cronjobs/start-crond.sh" ]
 
 #
 # This container provides access to the different CLI utilities provided, such as

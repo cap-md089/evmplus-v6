@@ -115,13 +115,13 @@ export class SideNavigation extends React.Component<SideNavigationProps, SideNav
 						</SigninLink>
 					)}
 				</li>
-				{this.props.fullMemberDetails.error === MemberCreateError.NONE ? (
+				{/* {this.props.fullMemberDetails.error === MemberCreateError.NONE ? (
 					<li className="nav-item">
 						<SideNavigationLink target={'/admin/notifications'} onClick={this.close}>
 							Unread Notifications: {this.props.fullMemberDetails.notificationCount}
 						</SideNavigationLink>
 					</li>
-				) : null}
+				) : null} */}
 				<li className="nav-item">
 					<button onClick={this.goBack} style={cursor}>
 						<span className="arrow" />

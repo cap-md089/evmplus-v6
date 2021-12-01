@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 <<LICENSE
  Copyright (C) 2020 Andrew Rioux
@@ -19,13 +19,19 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
+source /etc/environment
+
+set -eux
+
 echo "Starting CAPWATCH import on $(date)"
 
 cd /usr/evm-plus/packages/util-cli
 
 echo "Downloading CAPWATCH file"
 
-CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
+export CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
+
+echo "CAPWATCH downloaded to $CAPWATCH_ZIP_PATH"
 
 if [ ! -s $CAPWATCH_ZIP_PATH ]; then
 	echo "CAPWATCH file failed to download"
@@ -39,7 +45,7 @@ node --no-warnings dist/importCapwatch.js $CAPWATCH_ZIP_PATH
 
 echo "Done with CAPWATCH import"
 
-if [ "$KEEP_CAPWATCH_ZIP" != "1" ]; then
+if [ "$DELETE_CAPWATCH_ZIP" == "1" ]; then
 	echo "Deleting CAPWATCH zip"
 	rm $CAPWATCH_ZIP_PATH
 fi
