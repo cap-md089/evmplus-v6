@@ -71,6 +71,8 @@ AND
 AND
 	LOWER(O.doc ->> '$.Name') LIKE ?`;
 
+const stripPunctuation = (s: string): string => s.replace(/[',.]/g, '');
+
 export const func: Endpoint<
 	Backends<[RawMySQLBackend, AccountBackend, MemberBackend, CAP.CAPMemberBackend, TeamsBackend]>,
 	api.member.MemberSearch
@@ -101,7 +103,9 @@ export const func: Endpoint<
 								...safeOrgIds,
 								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
 								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
-								`%${(req.params.unitName ?? '').toLocaleLowerCase()}%`,
+								`%${stripPunctuation(
+									req.params.unitName ?? '',
+								).toLocaleLowerCase()}%`,
 							])
 							.execute(),
 					)
