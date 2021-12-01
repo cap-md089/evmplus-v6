@@ -89,7 +89,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 							</Link>
 						</div>
 					)),
-				)}
+				)(this.state.errors)}
 			</div>
 		</div>
 	);
