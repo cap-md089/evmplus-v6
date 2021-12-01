@@ -30,7 +30,7 @@ import AttendanceHistory from './pages/AttendanceHistory';
 import EmailList from './pages/EmailList';
 import ErrorListPage, { ErrorListWidget, shouldRenderErrorList } from './pages/ErrorList';
 import FlightAssign from './pages/FlightAssign';
-import Notifications from './pages/Notifications';
+// import Notifications from './pages/Notifications';
 import PermissionAssign from './pages/PermissionAssign';
 import ProspectiveMemberManagement from './pages/ProspectiveMemberManagement';
 import RegEdit from './pages/RegEdit';
@@ -43,7 +43,6 @@ import FlightContact, {
 	FlightContactWidget,
 	shouldRenderFlightContactWidget,
 } from './pluggables/FlightContact';
-import NotificationsPlug, { shouldRenderNotifications } from './pluggables/Notifications';
 import { ProspectiveMemberManagementWidget } from './pluggables/ProspectiveMembers';
 import { ReportsWidget, shouldRenderReports } from './pluggables/Reports';
 import { shouldRenderSiteAdmin, SiteAdminWidget } from './pluggables/SiteAdmin';
@@ -75,10 +74,10 @@ interface WidgetDefinition {
 }
 
 const widgets: WidgetDefinition[] = [
-	{
-		canuse: shouldRenderNotifications,
-		widget: NotificationsPlug,
-	},
+	// {
+	// 	canuse: shouldRenderNotifications,
+	// 	widget: NotificationsPlug,
+	// },
 	{
 		canuse: ({ member }) =>
 			!!member && hasPermission('FileManagement')(Permissions.FileManagement.FULL)(member),
@@ -163,11 +162,11 @@ export default class Admin extends Page<PageProps, AdminState> {
 					render={this.pageRenderer(FlightAssign)}
 					exact={false}
 				/>
-				<Route
+				{/* <Route
 					path="/admin/notifications"
 					render={this.pageRenderer(Notifications)}
 					exact={false}
-				/>
+				/> */}
 				<Route
 					path="/admin/permissions"
 					render={this.pageRenderer(PermissionAssign)}
