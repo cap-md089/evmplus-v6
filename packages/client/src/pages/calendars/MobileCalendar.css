@@ -1,0 +1,79 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+.calendar-mobile {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
+.calendar-mobile .calendar-title {
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid black;
+	border-bottom: none;
+	padding: 5px;
+	font-size: 1.2em;
+	text-align: center;
+}
+.calendar-mobile .left-link {
+	float: left;
+	font-size: 0.8333em;
+	margin-left: 10px;
+}
+.calendar-mobile .right-link {
+	float: right;
+	font-size: 0.8333em;
+	margin-right: 10px;
+}
+.calendar-mobile ul.day-list {
+	border: 0 solid black;
+	border-width: 0 0 1px 1px;
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+.calendar-mobile .day-list > li {
+	border: 0 solid black;
+	border-width: 1px 1px 0 0;
+}
+.calendar-mobile .day-title {
+	margin: 0;
+	padding: 4px;
+	border-bottom: 1px solid black;
+}
+.calendar-mobile .events-list {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+.calendar-mobile .events-list li {
+	overflow-y: hidden;
+	margin: 3px;
+	max-height: 55px;
+	padding: 5px;
+	box-sizing: border-box;
+	border-width: 2px;
+	border-style: solid;
+	font-size: 0.8em;
+	cursor: pointer;
+	text-decoration: none;
+	border: 2px solid #071d31;
+	background-color: #0f407d;
+	color: white;
+}

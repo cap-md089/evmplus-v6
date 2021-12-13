@@ -23,7 +23,7 @@ import * as React from 'react';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import fetchApi from '../../lib/apis';
 import SigninLink from '../SigninLink';
-import './SideNavigation.scss';
+import './SideNavigation.css';
 
 export const isMobile = (): boolean => window.innerWidth < 1028;
 

@@ -19,7 +19,7 @@
 
 import Page, { PageProps } from '../Page';
 import React, { FunctionComponent } from 'react';
-import styles from './quizzer.module.scss';
+import styles from './quizzer.module.css';
 import { ribbonURLs, insigniaURLs, InsigniaKeys, RibbonKeys } from './images';
 import Button from '../../components/Button';
 

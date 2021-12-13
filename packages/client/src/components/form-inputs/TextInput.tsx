@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { InputProps } from './Input';
-import './TextInput.scss';
+import './TextInput.css';
 
 export interface TextInputProps extends InputProps<string> {
 	/**

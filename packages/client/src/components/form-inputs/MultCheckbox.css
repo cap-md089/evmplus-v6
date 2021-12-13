@@ -16,19 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-@import '../../theme';
-
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
 input[type='text'].otherInput {
-	border: 0px solid $primary-color;
-	color: $primary-color;
+	border: 0px solid #0b375b;
+	color: #0b375b;
 	border-bottom-width: 1px;
 	background-color: transparent;
 	border-radius: 0;
 	padding: 2px;
 	margin-left: 4px;
-
-	&:focus {
-		box-shadow: none;
-	}
+}
+input[type='text'].otherInput:focus {
+	box-shadow: none;
 }

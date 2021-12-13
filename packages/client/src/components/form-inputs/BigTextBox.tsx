@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { TextInputProps } from './TextInput';
-import './BigTextBox.scss';
+import './BigTextBox.css';
 
 export default class BigTextBox extends React.Component<TextInputProps> {
 	public constructor(props: TextInputProps) {
