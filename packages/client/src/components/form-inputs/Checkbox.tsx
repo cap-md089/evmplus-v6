@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import './Checkbox.scss';
+import './Checkbox.css';
 import { InputProps } from './Input';
 
 export default class Checkbox extends React.Component<InputProps<boolean>> {

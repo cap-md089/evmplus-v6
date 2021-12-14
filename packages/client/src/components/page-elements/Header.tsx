@@ -21,7 +21,7 @@ import { MaybeObj, RegistryValues } from 'common-lib';
 import React, { FunctionComponent, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import jQuery, { bestfit } from '../../jquery.textfit';
-import './Header.scss';
+import './Header.css';
 
 interface HeaderProps {
 	registry: MaybeObj<RegistryValues>;

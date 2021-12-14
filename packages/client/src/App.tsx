@@ -34,7 +34,7 @@ import {
 	SigninReturn,
 } from 'common-lib';
 import * as React from 'react';
-import './App.scss';
+import './App.css';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import GlobalNotification from './components/GlobalNotification';
 import Loader from './components/Loader';

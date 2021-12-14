@@ -1,31 +1,66 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
- * 
+ * Copyright (C) 2020 Andrew Rioux, Melissa Trick
+ *
  * This file is part of EvMPlus.org.
- * 
+ *
  * EvMPlus.org is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * EvMPlus.org is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$primary-color: #0b375b;
-$secondary-color: #f6bf22;
-$special-text-color: #ffffff;
-$normal-text-color: #0b375b;
-$link-color: #2875d7;
-$h1-color: $primary-color;
-$h-color: #396f9c;
+body,
+html,
+#root {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+}
 
-$text-font: RobotoRegular, Arial, Helvetica, sans-serif;
+.quizzer-root {
+	margin: 0;
+	box-sizing: border-box;
+	padding: 10px;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
 
-$primary-button-color: #4278ba;
-$secondary-button-color: #07346c;
+img.insigniaImage {
+	width: 40px;
+	height: 60px;
+}
+
+img.ribbonImage {
+	height: 20px;
+	width: 76.7px;
+}
+
+img {
+	border: 2px solid transparent;
+	box-sizing: border-box;
+}
+
+input[type='radio'],
+input[type='checkbox'] {
+	display: none;
+}
+
+input[type='radio']:checked + label img,
+input[type='checkbox']:checked + label img {
+	border: 2px solid red;
+}
+
+.inline {
+	display: inline-block;
+}

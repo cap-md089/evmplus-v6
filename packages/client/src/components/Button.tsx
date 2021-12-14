@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import './Button.scss';
+import './Button.css';
 
 export interface ButtonProps {
 	className?: string;

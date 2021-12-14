@@ -22,7 +22,7 @@ import { createPortal } from 'react-dom';
 
 import $ from 'jquery';
 
-import './Dialogue.scss';
+import './Dialogue.css';
 
 export interface DialogueWithOK {
 	open: boolean;

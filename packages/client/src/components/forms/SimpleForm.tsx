@@ -46,7 +46,7 @@ import TextBox from '../form-inputs/TextBox';
 import TextInput from '../form-inputs/TextInput';
 import SimpleMultCheckbox from '../form-inputs/SimpleMultCheckbox';
 import LaxAutocomplete from '../form-inputs/LaxAutocomplete';
-import './Form.scss';
+import './Form.css';
 import {
 	ContactInput,
 	ContactInstanceInput,
