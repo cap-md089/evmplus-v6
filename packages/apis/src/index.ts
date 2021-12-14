@@ -129,6 +129,7 @@ type Tree = {
 		passwordReset: api.member.PasswordReset;
 		memberList: api.member.Members;
 		getByID: api.member.MemberGet;
+		memberSearch: api.member.MemberSearch;
 	};
 	notifications: {
 		global: {

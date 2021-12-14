@@ -30,13 +30,14 @@ import {
 	asyncIterFilter,
 	asyncIterHandler,
 	asyncIterMap,
+	asyncIterRaiseEither,
 	asyncRight,
 	AttendanceStatus,
 	BasicMySQLRequest,
-	CAPAccountObject,
 	CAPNHQMemberObject,
 	CAPProspectiveMemberObject,
 	collectGeneratorAsync,
+	complement,
 	Either,
 	EitherObj,
 	errorGenerator,
@@ -45,6 +46,7 @@ import {
 	FromDatabase,
 	get,
 	getDefaultAdminPermissions,
+	getORGIDsFromRegularCAPAccount,
 	identity,
 	isRioux,
 	Maybe,
@@ -65,6 +67,7 @@ import {
 	RawCAPWingAccountObject,
 	RawEventObject,
 	RawRegularEventObject,
+	RegularCAPAccountObject,
 	Right,
 	ServerConfiguration,
 	ServerError,
@@ -92,6 +95,7 @@ import { PAMBackend } from './member/pam';
 import { CAP, resolveReference } from './Members';
 import {
 	addToCollection,
+	bindForArray,
 	collectResults,
 	findAndBind,
 	findAndBindC,
@@ -297,20 +301,22 @@ export const getAccount = (schema: Schema) => (accountID: string): ServerEither<
 
 export const getCAPAccountsForORGID = (schema: Schema) => (
 	orgid: number,
-): ServerEither<CAPAccountObject[]> =>
+): ServerEither<RegularCAPAccountObject[]> =>
 	pipe(
 		asyncIterFilter(
-			statefulFunction<{ [key: string]: boolean }>({})<AccountObject, boolean>(
+			statefulFunction<{ [key: string]: boolean }>({})<RegularCAPAccountObject, boolean>(
 				(account, state) => [!state[account.id], { ...state, [account.id]: true }],
 			),
 		),
-		asyncIterMap<CAPAccountObject, CAPAccountObject>(
-			stripProp('_id') as (obj: CAPAccountObject) => CAPAccountObject,
-		),
+		asyncIterMap(stripProp('_id') as (obj: RegularCAPAccountObject) => RegularCAPAccountObject),
 		collectGeneratorAsync,
-		results => asyncRight(results, errorGenerator('Could not get account objects')),
+		results =>
+			asyncRight<ServerError, RegularCAPAccountObject[]>(
+				results,
+				errorGenerator('Could not get account objects'),
+			),
 	)(
-		asyncIterConcat2<CAPAccountObject>(
+		asyncIterConcat2<RegularCAPAccountObject>(
 			generateResults(
 				schema
 					.getCollection<
@@ -321,13 +327,13 @@ export const getCAPAccountsForORGID = (schema: Schema) => (
 					.find('orgid = :orgid')
 					.bind('orgid', orgid),
 			),
-			generateResults<CAPAccountObject>(
+			generateResults<RegularCAPAccountObject>(
 				schema
 					.getCollection<RawCAPSquadronAccountObject>('Accounts')
 					.find('mainOrg = :mainOrg')
 					.bind('mainOrg', orgid),
 			),
-			generateResults<AccountObject>(
+			generateResults<RegularCAPAccountObject>(
 				schema
 					.getCollection<RawCAPSquadronAccountObject>('Accounts')
 					.find(':orgIDs in orgIDs')
@@ -677,9 +683,52 @@ export const getOrgNameForMember = (
 	}
 };
 
+const orgidQuerySQL = (schema: Schema, orgids: number[]): string => /* sql */ `\
+WITH RECURSIVE Units AS (
+        SELECT
+                doc ->> '$.ORGID' as id,
+                doc ->> '$.Name' as name,
+                doc ->> '$.NextLevel' as parent
+        FROM
+                ${schema.getName()}.NHQ_Organization
+        WHERE
+                doc ->> '$.ORGID' in ${bindForArray(orgids)}
+        UNION ALL
+        SELECT
+                O.doc ->> '$.ORGID',
+                O.doc ->> '$.Name',
+                O.doc ->> '$.NextLevel'
+        FROM Units AS U
+        JOIN ${schema.getName()}.NHQ_Organization AS O
+        ON O.doc ->> '$.NextLevel' = U.id
+)
+SELECT id FROM Units;`;
+
+export const getSubordinateCAPUnits = (backend: AccountBackend) => (schema: Schema) => (
+	wing: RegularCAPAccountObject,
+): ServerEither<RegularCAPAccountObject[]> =>
+	backend
+		.getSubordinateCAPUnitIDs(wing)
+		.map(asyncIterMap(backend.getCAPAccountsByORGID))
+		.flatMap(asyncIterRaiseEither(errorGenerator('Could not get subordinate unit information')))
+		.map(accounts => accounts.flatMap(identity));
+
+export const getSubordinateCAPUnitIDs = (schema: Schema) => (
+	wing: RegularCAPAccountObject,
+): ServerEither<number[]> =>
+	asyncRight(schema.getSession(), errorGenerator('Could not get subordinate unit ORG IDs'))
+		.map(session =>
+			session
+				.sql(orgidQuerySQL(schema, getORGIDsFromRegularCAPAccount(wing)))
+				.bind(getORGIDsFromRegularCAPAccount(wing))
+				.execute(),
+		)
+		.map(result => result.fetchAll().map(([value]: [string]) => parseInt(value, 10)))
+		.map(results => results.filter(complement(isNaN)));
+
 export interface AccountBackend {
 	getAccount: (accountID: string) => ServerEither<AccountObject>;
-	getCAPAccountsByORGID: (orgid: number) => ServerEither<CAPAccountObject[]>;
+	getCAPAccountsByORGID: (orgid: number) => ServerEither<RegularCAPAccountObject[]>;
 	getMembers: (
 		backend: Backends<[CAP.CAPMemberBackend, TeamsBackend]>,
 	) => (account: AccountObject) => (type?: MemberType | undefined) => ServerEither<Member[]>;
@@ -708,6 +757,10 @@ export interface AccountBackend {
 	getOrgNameForMember: (
 		account: AccountObject,
 	) => (member: Member) => ServerEither<MaybeObj<string>>;
+	getSubordinateCAPUnits: (
+		unit: RegularCAPAccountObject,
+	) => ServerEither<RegularCAPAccountObject[]>;
+	getSubordinateCAPUnitIDs: (unit: RegularCAPAccountObject) => ServerEither<number[]>;
 }
 
 export const getAccountBackend = (
@@ -764,6 +817,8 @@ export const getRequestFreeAccountsBackend = (
 				),
 			get('id'),
 		),
+		getSubordinateCAPUnitIDs: memoize(getSubordinateCAPUnitIDs(mysqlx), get('id')),
+		getSubordinateCAPUnits: unit => getSubordinateCAPUnits(backend)(mysqlx)(unit),
 	};
 
 	return backend;
@@ -779,4 +834,6 @@ export const getEmptyAccountBackend = (): AccountBackend => ({
 	createCAPEventAccount: () => () => () => () => () => () =>
 		notImplementedError('createCAPEventAccount'),
 	getOrgNameForMember: () => () => notImplementedError('getOrgName'),
+	getSubordinateCAPUnits: () => notImplementedError('getSubordinateCAPUnits'),
+	getSubordinateCAPUnitIDs: () => notImplementedError('getSubordinateCAPUnitIDs'),
 });
