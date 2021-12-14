@@ -16,46 +16,41 @@
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 @media screen {
 	section.slideshow-box {
 		width: 100%;
 		position: relative;
 		overflow: hidden;
-
-		.slideshow {
-			margin-top: -29px;
-			position: relative;
-			overflow: hidden;
-			width: 100%;
-		}
-
-		.image {
-			width: 100%;
-			height: 342px;
-			background-size: cover;
-			background-position: 0 50%;
-		}
-
-		.slideshow-top {
-			height: 29px;
-			background-image: url('/images/bg-slideshow-borders.png');
-			background-repeat: no-repeat;
-			background-position: 0 0;
-			position: relative;
-			z-index: 10;
-		}
-
-		.slideshow-bottom {
-			width: 100%;
-			height: 31px;
-			background-image: url('/images/bg-slideshow-borders.png');
-			background-repeat: no-repeat;
-			background-position: 0 -29px;
-			position: relative;
-			z-index: 10;
-			margin: -27px 0 0 0;
-		}
+	}
+	section.slideshow-box .slideshow {
+		margin-top: -29px;
+		position: relative;
+		overflow: hidden;
+		width: 100%;
+	}
+	section.slideshow-box .image {
+		width: 100%;
+		height: 342px;
+		background-size: cover;
+		background-position: 0 50%;
+	}
+	section.slideshow-box .slideshow-top {
+		height: 29px;
+		background-image: url('/images/bg-slideshow-borders.png');
+		background-repeat: no-repeat;
+		background-position: 0 0;
+		position: relative;
+		z-index: 10;
+	}
+	section.slideshow-box .slideshow-bottom {
+		width: 100%;
+		height: 31px;
+		background-image: url('/images/bg-slideshow-borders.png');
+		background-repeat: no-repeat;
+		background-position: 0 -29px;
+		position: relative;
+		z-index: 10;
+		margin: -27px 0 0 0;
 	}
 }
 

@@ -27,7 +27,7 @@ import {
 	WebsiteContact,
 } from 'common-lib';
 import * as React from 'react';
-import './Footer.scss';
+import './Footer.css';
 
 interface FooterProps {
 	registry: MaybeObj<RegistryValues>;

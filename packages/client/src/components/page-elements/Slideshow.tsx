@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import './Slideshow.scss';
+import './Slideshow.css';
 
 interface SlideshowProps {
 	fileIDs: string[];
