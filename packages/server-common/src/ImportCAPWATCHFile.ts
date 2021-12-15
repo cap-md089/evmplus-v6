@@ -19,7 +19,11 @@
 
 import { Schema, Session } from '@mysql/xdevapi';
 import { spawn } from 'child_process';
+<<<<<<< Updated upstream
 import { CAPWATCHImportErrors } from 'common-lib';
+=======
+import { CAPWATCHError, CAPWATCHImportErrors, Either, ValidateRuleSet, Validator } from 'common-lib';
+>>>>>>> Stashed changes
 import * as csv from 'csv-parse';
 import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
@@ -40,6 +44,64 @@ type FileData<T> = {
 	[P in keyof T]: string;
 };
 
+<<<<<<< Updated upstream
+=======
+export const convertCAPWATCHValidator = <T extends object>(
+	validator: Validator<T>,
+): Validator<FileData<T>> => {
+	const newRules = {} as ValidateRuleSet<FileData<T>>;
+
+	for (const ruleName in validator.rules) {
+		if (validator.rules.hasOwnProperty(ruleName)) {
+			newRules[ruleName] = Validator.String;
+		}
+	}
+
+	return new Validator(newRules);
+};
+
+export const badDataResult: CAPWATCHFileResult = {
+	type: 'Result',
+	error: CAPWATCHError.BADDATA,
+};
+
+export const isFileDataValid = <T>(validator: Validator<T>) => (fileData: Array<FileData<T>>): boolean => {
+	const results = fileData.map(value => validator.validate(value, '')).filter(Either.isLeft);
+
+	if (results.length !== 0) {
+		console.error('Error! Error when validating CAPWATCH file data');
+
+		const displayCount = 3;
+
+		console.error(results.map(({ value }) => value).slice(displayCount));
+
+		if (results.length > displayCount) {
+			console.error(`... and ${results.length - displayCount} more errors`)
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+export interface CAPWATCHFileResult {
+	type: 'Result';
+	error: CAPWATCHImportErrors;
+}
+
+export interface CAPWATCHFileUpdateResult {
+	type: 'Update';
+	currentRecord: number;
+}
+
+export interface CAPWATCHFilePermissionsResult {
+	type: 'PermsError';
+	memberName: string;
+	capid: number;
+}
+
+>>>>>>> Stashed changes
 export type CAPWATCHModule<T> = (
 	fileData: Array<FileData<T>>,
 	schema: Schema,

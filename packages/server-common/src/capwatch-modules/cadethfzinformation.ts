@@ -17,13 +17,22 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+<<<<<<< Updated upstream
 import { NHQ } from 'common-lib';
 import { convertNHQDate } from '..';
 import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+=======
+import { validator } from 'auto-client-api';
+import { NHQ, Validator } from 'common-lib';
+import { convertNHQDate } from '..';
+import { CAPWATCHError, CAPWATCHModule, badDataResult, isFileDataValid } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
+>>>>>>> Stashed changes
 
 const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async (
 	fileData,
 	schema,
+<<<<<<< Updated upstream
 ) => {
 	if (
 		fileData.length === 0 ||
@@ -47,6 +56,14 @@ const cadetHFZInformationParse: CAPWATCHModule<NHQ.CadetHFZInformation> = async 
 		typeof fileData[0].SitAndReachPassed === 'undefined'
 	) {
 		return CAPWATCHError.BADDATA;
+=======
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
+	if (!isFileDataValid(recordValidator)(fileData)) {
+		return yield badDataResult;
+>>>>>>> Stashed changes
 	}
 
 	const cadetHFZInformationCollection = schema.getCollection<NHQ.CadetHFZInformation>(
