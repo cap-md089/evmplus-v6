@@ -45,7 +45,7 @@ node --no-warnings dist/importCapwatch.js $CAPWATCH_ZIP_PATH
 
 echo "Done with CAPWATCH import"
 
-if [ "$DELETE_CAPWATCH_ZIP" == "1" ]; then
+if [[ ! -z ${DELETE_CAPWATCH_ZIP+x} ]]; then
 	echo "Deleting CAPWATCH zip"
 	rm $CAPWATCH_ZIP_PATH
 fi
