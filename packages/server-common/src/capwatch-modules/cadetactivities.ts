@@ -17,39 +17,46 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
-import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { CAPWATCHError, CAPWATCHModule, isFileDataValid } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, schema) => {
-	if (
-		typeof fileData[0].CAPID === 'undefined' ||
-		typeof fileData[0].Type === 'undefined' ||
-		typeof fileData[0].Location === 'undefined' ||
-		typeof fileData[0].Completed === 'undefined' ||
-		typeof fileData[0].UsrID === 'undefined' ||
-		typeof fileData[0].DateMod === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CadetActivities>(Validator) as Validator<NHQ.CadetActivities>,
+);
+
+const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
+	if (!isFileDataValid(recordValidator)(fileData)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetActivitiesCollection = schema.getCollection<NHQ.CadetActivities>(
 		'NHQ_CadetActivities',
 	);
 
-	const removedCAPIDs: { [key: string]: boolean } = {};
+	let currentRecord = 0;
 
 	for (const cadetActivitiesConst of fileData) {
+		if (!isORGIDValid(capidMap[parseInt(cadetActivitiesConst.CAPID, 10)])) {
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.NOPERMISSIONS,
+			};
+		}
+
 		try {
-			if (!removedCAPIDs[cadetActivitiesConst.CAPID]) {
-				await cadetActivitiesCollection
-					.remove('CAPID = :CAPID')
-					.bind('CAPID', parseInt(cadetActivitiesConst.CAPID, 10))
-					.execute();
-			}
-
-			removedCAPIDs[cadetActivitiesConst.CAPID] = true;
-
 			const values = {
 				CAPID: parseInt(cadetActivitiesConst.CAPID + '', 10),
 				Type: cadetActivitiesConst.Type,
@@ -60,13 +67,27 @@ const cadetActivities: CAPWATCHModule<NHQ.CadetActivities> = async (fileData, sc
 			};
 
 			await cadetActivitiesCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default cadetActivities;

@@ -17,31 +17,45 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ, CAPMemberContactType, CAPMemberContactPriority } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { CAPMemberContactPriority, CAPMemberContactType, NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
-import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { CAPWATCHError, CAPWATCHModule, isFileDataValid } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
-	if (typeof fileData[0].CAPID === 'undefined') {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.MbrContact>(Validator) as Validator<NHQ.MbrContact>,
+);
+
+const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+	capidMap,
+) {
+	if (!isFileDataValid(recordValidator)(fileData)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	try {
 		const mbrContactCollection = schema.getCollection<NHQ.MbrContact>('NHQ_MbrContact');
 
-		const addedCAPIDs: { [key: string]: boolean } = {};
-
 		let values: NHQ.MbrContact;
 
-		for (const contact of fileData) {
-			if (!addedCAPIDs[contact.CAPID]) {
-				await mbrContactCollection
-					.remove('CAPID = :CAPID')
-					.bind('CAPID', parseInt(contact.CAPID, 10))
-					.execute();
-			}
+		let currentRecord = 0;
 
-			addedCAPIDs[contact.CAPID] = true;
+		for (const contact of fileData) {
+			if (!isORGIDValid(capidMap[parseInt(contact.CAPID, 10)])) {
+				return yield {
+					type: 'Result',
+					error: CAPWATCHError.NOPERMISSIONS,
+				};
+			}
 
 			values = {
 				CAPID: parseInt(contact.CAPID.toString(), 10),
@@ -54,12 +68,26 @@ const mbrContact: CAPWATCHModule<NHQ.MbrContact> = async (fileData, schema) => {
 			};
 
 			await mbrContactCollection.add(values).execute();
+
+			currentRecord++;
+			if (currentRecord % 15 === 0) {
+				yield {
+					type: 'Update',
+					currentRecord,
+				};
+			}
 		}
 
-		return CAPWATCHError.NONE;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.NONE,
+		};
 	} catch (e) {
 		console.warn(e);
-		return CAPWATCHError.INSERT;
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.INSERT,
+		};
 	}
 };
 

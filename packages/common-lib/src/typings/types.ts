@@ -354,6 +354,7 @@ export enum CAPWATCHImportErrors {
 	BADDATA = 'BadData',
 	INSERT = 'BadInsert',
 	CLEAR = 'BadClear',
+	NOPERMISSIONS = 'BadPerms',
 }
 
 export enum AttendanceStatus {
