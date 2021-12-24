@@ -81,7 +81,7 @@ services:
             - backend
         expose:
             - '33060'
-        command: mysqld --local-infile=ON
+        command: mysqld --local-infile=ON --skip-log-bin
         environment:
             - MYSQL_DATABASE=EventManagementv6
             - MYSQL_USER_FILE=/run/secrets/db_user
