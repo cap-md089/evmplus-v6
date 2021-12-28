@@ -1,0 +1,91 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+.form-async {
+	width: 100%;
+	margin: 0;
+	margin-bottom: 20px;
+	clear: both;
+}
+.form-async .form-header {
+	border-bottom: 2px solid #f6bf22;
+	height: 25px;
+	padding-left: 15px;
+	margin: 20px 0;
+}
+.form-async .formbar {
+	display: grid;
+	width: 100%;
+	margin: 0;
+	margin-bottom: 10px;
+	padding: 0;
+	grid-template-areas: 'label input';
+	grid-template-columns: 220px auto;
+	min-height: 40px;
+}
+.form-async .formbar.fullwidth {
+	grid-template-areas: 'input';
+	grid-template-columns: auto;
+}
+.form-async .label-formbox {
+	grid-area: label;
+	padding-right: 10px;
+	box-sizing: border-box;
+}
+.form-async .input-formbox {
+	grid-area: input;
+	margin: 0;
+	padding: 0;
+}
+.form-async input[type='submit']:disabled {
+	color: black;
+}
+
+@media (max-width: 1028px) {
+	.form-async .formbar {
+		grid-template-areas: 'label' 'input';
+		grid-template-columns: 100%;
+		grid-template-rows: min-content min-content;
+	}
+	.form-async .formbar.fullwidth {
+		grid-template-areas: 'input';
+		grid-template-rows: min-content;
+	}
+	.form-async .label-formbox.has-content {
+		border-bottom: 1px solid #0b375b;
+		margin-bottom: 10px;
+	}
+}

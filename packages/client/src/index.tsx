@@ -26,7 +26,6 @@ import * as ReactDOM from 'react-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import 'regenerator-runtime/runtime';
 import App from './App';
-import './_theme.scss';
 
 ReactDOM.render(
 	<Router>

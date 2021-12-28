@@ -66,6 +66,19 @@ export const collectResults = async <T>(
 
 export const bindForArray = (arr: unknown[]): string => '(' + arr.map(() => '?').join(',') + ')';
 
+export const bindForArray2 = <T>(
+	arr: T[],
+): { arrayKey: string; arrayValues: Record<string, T> } => {
+	const arrayKey = `(${arr.map((_, i) => `:arrayKey${i}`).join(',')})`;
+
+	const arrayValues: Record<string, T> = {};
+	for (let i = 0; i < arr.length; i++) {
+		arrayValues[`arrayKey${i}`] = arr[i];
+	}
+
+	return { arrayKey, arrayValues };
+};
+
 export const collectSqlResults = async <T>(
 	find: mysql.SqlExecute,
 ): Promise<Array<mysql.WithoutEmpty<T>>> => {

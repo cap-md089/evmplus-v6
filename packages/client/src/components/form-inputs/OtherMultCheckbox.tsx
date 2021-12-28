@@ -20,7 +20,7 @@
 import { emptyFromLabels, get, Maybe as M, OtherMultCheckboxReturn, pipe } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
-import './MultCheckbox.scss';
+import './MultCheckbox.css';
 
 interface OtherMultCheckboxProps extends InputProps<OtherMultCheckboxReturn> {
 	labels: string[];

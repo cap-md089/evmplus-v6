@@ -21,7 +21,7 @@ import * as React from 'react';
 import { InputProps } from './Input';
 import { identity } from 'common-lib';
 import { default as ReactAutocomplete } from 'react-autocomplete';
-import './Autocomplete.scss';
+import './Autocomplete.css';
 
 interface AutocompleteProps<T> extends InputProps<T> {
 	items: T[];

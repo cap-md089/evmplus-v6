@@ -19,7 +19,7 @@
 
 import React, { ReactNode, PureComponent } from 'react';
 import jQuery from 'jquery';
-import './DropDownList.scss';
+import './DropDownList.css';
 import { alwaysFalse } from 'common-lib';
 
 interface DropDownListProps<T> {

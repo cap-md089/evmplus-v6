@@ -16,11 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-@import '../theme';
-
-%button {
-	font-family: $text-font;
+.primaryButton,
+.secondaryButton {
+	font-family: RobotoRegular, Arial, Helvetica, sans-serif;
 	font-size: 14px;
 	line-height: 18px;
 	color: white;
@@ -29,28 +27,24 @@
 	border-radius: 8px;
 	padding: 10px 24px 8px 24px;
 	cursor: pointer;
-
-	&:hover {
-		background-color: $secondary-color;
-		color: $h1-color;
-	}
+}
+.primaryButton:hover,
+.secondaryButton:hover {
+	background-color: #f6bf22;
+	color: #0b375b;
 }
 
 .primaryButton {
-	@extend %button;
-
-	background: $primary-button-color;
+	background: #4278ba;
 }
 
 .secondaryButton {
-	@extend %button;
-
-	background: $secondary-button-color;
+	background: #07346c;
 }
 
 .linkButton {
 	padding: 0;
-	color: $link-color;
+	color: #2875d7;
 	cursor: pointer;
 	border: 0;
 	background: none;
@@ -58,10 +52,9 @@
 	text-decoration: underline;
 	font-size: 14px;
 	line-height: 14px;
-
-	&:hover {
-		color: $secondary-color;
-	}
+}
+.linkButton:hover {
+	color: #f6bf22;
 }
 
 .primaryButton.disabled,

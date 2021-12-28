@@ -20,7 +20,10 @@
 import * as React from 'react';
 import './loader.css';
 
-export default class Loader extends React.Component<{}, { display: boolean }> {
+export default class Loader extends React.Component<
+	{ forceDisplay?: boolean },
+	{ display: boolean }
+> {
 	public state = {
 		display: false,
 	};
@@ -45,7 +48,7 @@ export default class Loader extends React.Component<{}, { display: boolean }> {
 	}
 
 	public render = (): JSX.Element | null =>
-		this.state.display ? (
+		this.state.display || this.props.forceDisplay ? (
 			<div>
 				<div
 					className="uil-default-css"

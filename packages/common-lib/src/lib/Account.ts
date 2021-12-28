@@ -76,6 +76,13 @@ export const getORGIDsFromCAPAccount = (account: CAPAccountObject): MaybeObj<num
 		? Maybe.some([account.orgid, ...account.orgIDs])
 		: Maybe.none();
 
+export const getORGIDsFromRegularCAPAccount = (account: RegularCAPAccountObject): number[] =>
+	account.type === AccountType.CAPWING
+		? [account.orgid, ...account.orgIDs]
+		: account.type === AccountType.CAPSQUADRON
+		? [account.mainOrg, ...account.orgIDs]
+		: [account.orgid];
+
 export const canCreateCAPEventAccount = (parent: CAPAccountObject) => (
 	user: ClientUser,
 ): boolean => {

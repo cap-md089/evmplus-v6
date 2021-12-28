@@ -25,7 +25,7 @@ import { MONTHS } from '../../components/form-inputs/DateTimeInput';
 import { CalendarProps, getMonth } from '../Calendar';
 import Page from '../Page';
 import { getClassNameFromEvent } from './DesktopCalendar';
-import './MobileCalendar.scss';
+import './MobileCalendar.css';
 
 export default class MobileCalendar extends Page<CalendarProps> {
 	public state = {

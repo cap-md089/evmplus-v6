@@ -1,0 +1,140 @@
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/**
+ * Copyright (C) 2020 Andrew Rioux
+ * 
+ * This file is part of EvMPlus.org.
+ * 
+ * EvMPlus.org is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * EvMPlus.org is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ */
+@media screen {
+	.side-nav {
+		grid-area: side-nav;
+		margin-right: 3px;
+		background: url('../../images/bg-left-column.jpg') repeat-x;
+		min-height: 570px;
+	}
+	.side-nav ul {
+		margin: 0;
+		position: sticky;
+		top: 0;
+		padding: 0;
+		list-style-type: none;
+		z-index: 35;
+	}
+	.side-nav .nav-item {
+		margin: 0;
+		padding: 0px 0;
+		box-sizing: border-box;
+		border-bottom: 2px solid #022c61;
+		border-top: 1px solid #1e487f;
+		width: 100%;
+		float: left;
+		background-image: linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+		color: #0b375b;
+		font-size: 14px;
+		line-height: 22px;
+		font-family: 'RobotoRegular', Arial, Helvetica, sans-serif;
+		z-index: 35;
+	}
+	.side-nav .nav-item a,
+	.side-nav .nav-item button {
+		font-family: 'Myriad Pro', 'Gill Sans', 'Gill Sans MT', 'Gill Sans', 'Gill Sans MT', Calibri,
+			sans-serif;
+		font-size: 14px;
+		line-height: 18px;
+		color: white;
+		text-decoration: none;
+		padding: 9px 0 5px 0;
+		margin: 0 10px 0 10px;
+		width: calc(100% - 20px);
+		float: left;
+		text-align: left;
+		border: 0;
+		background-image: linear-gradient(to bottom, #0d3a74 1%, #05326d 100%);
+	}
+	.side-nav .nav-item a span,
+	.side-nav .nav-item button span {
+		margin: 0 0 0 8px;
+		width: calc(100% - 32px);
+		float: left;
+		text-overflow: clip;
+		word-break: break-word;
+	}
+	.side-nav .nav-item a .arrow,
+	.side-nav .nav-item button .arrow {
+		background-image: url('../../images/ic-arrows.png');
+		background-repeat: no-repeat;
+		width: 4px;
+		height: 6px;
+		background-position: 0 0;
+		display: inline-block;
+		margin: 5px 0 0 0;
+	}
+	.side-nav .nav-item a:hover span,
+	.side-nav .nav-item button:hover span {
+		color: #f6bf22;
+	}
+	.side-nav .nav-item a:hover .arrow,
+	.side-nav .nav-item button:hover .arrow {
+		background-position: 0 -6px;
+	}
+}
+
+@media print {
+	.side-nav {
+		display: none;
+	}
+}
+
+@media (max-width: 1028px) {
+	.side-nav .nav-item {
+		padding: 5px 0;
+	}
+	.side-nav {
+		overflow: hidden;
+		margin-right: 0;
+		min-height: 0;
+		background-size: 100%;
+		z-index: 40;
+	}
+	.side-nav.parent-closed {
+		z-index: 40;
+	}
+	.side-nav.stuck {
+		position: fixed;
+		top: 0;
+		right: 0;
+		left: 0;
+	}
+	.side-nav ul {
+		position: relative;
+	}
+}

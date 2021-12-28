@@ -20,7 +20,7 @@
 import { get, Maybe as M, pipe, RadioReturnWithOther } from 'common-lib';
 import * as React from 'react';
 import { InputProps } from './Input';
-import './RadioButton.scss';
+import './RadioButton.css';
 
 export interface RadioProps<E extends number = number> extends InputProps<RadioReturnWithOther<E>> {
 	labels: string[];

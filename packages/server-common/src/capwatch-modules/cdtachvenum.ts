@@ -17,23 +17,32 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NHQ } from 'common-lib';
+import { validator } from 'auto-client-api';
+import { NHQ, Validator } from 'common-lib';
 import { convertNHQDate } from '..';
-import { CAPWATCHError, CAPWATCHModule } from '../ImportCAPWATCHFile';
+import { CAPWATCHError, CAPWATCHModule, isFileDataValid } from '../ImportCAPWATCHFile';
+import { convertCAPWATCHValidator } from './lib/validator';
 
-const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileData, schema) => {
-	if (
-		fileData.length === 0 ||
-		typeof fileData[0].CadetAchvID === 'undefined' ||
-		typeof fileData[0].AchvName === 'undefined' ||
-		typeof fileData[0].CurAwdNo === 'undefined' ||
-		typeof fileData[0].UsrID === 'undefined' ||
-		typeof fileData[0].DateMod === 'undefined' ||
-		typeof fileData[0].FirstUsr === 'undefined' ||
-		typeof fileData[0].DateCreated === 'undefined' ||
-		typeof fileData[0].Rank === 'undefined'
-	) {
-		return CAPWATCHError.BADDATA;
+const recordValidator = convertCAPWATCHValidator(
+	validator<NHQ.CdtAchvEnum>(Validator) as Validator<NHQ.CdtAchvEnum>,
+);
+
+const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async function* (
+	backend,
+	fileData,
+	schema,
+	isORGIDValid,
+	trustedFile,
+) {
+	if (!trustedFile) {
+		return CAPWATCHError.NOPERMISSIONS;
+	}
+
+	if (!isFileDataValid(recordValidator)(fileData)) {
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.BADDATA,
+		};
 	}
 
 	const cadetAchievementEnumCollection = schema.getCollection<NHQ.CdtAchvEnum>('NHQ_CdtAchvEnum');
@@ -56,11 +65,17 @@ const cadetAchievementEnumParse: CAPWATCHModule<NHQ.CdtAchvEnum> = async (fileDa
 			await cadetAchievementEnumCollection.add(values).execute();
 		} catch (e) {
 			console.warn(e);
-			return CAPWATCHError.INSERT;
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.INSERT,
+			};
 		}
 	}
 
-	return CAPWATCHError.NONE;
+	return yield {
+		type: 'Result',
+		error: CAPWATCHError.NONE,
+	};
 };
 
 export default cadetAchievementEnumParse;
