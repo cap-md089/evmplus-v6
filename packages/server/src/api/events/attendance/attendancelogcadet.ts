@@ -24,7 +24,7 @@
 // export const Uniforms = [
 // 	'Dress Blue A',
 // 	'Dress Blue B',
-// 	'Battle Dress Uniform or Airman Battle Uniform (BDU/ABU)',
+// 	'Airman Battle Uniform (ABU)',
 // 	'PT Gear',
 // 	'Polo Shirts (Senior Members)',
 // 	'Blue Utilities (Senior Members)',
