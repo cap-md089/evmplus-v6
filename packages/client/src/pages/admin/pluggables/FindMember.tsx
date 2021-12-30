@@ -26,6 +26,7 @@ import {
 	Either,
 	EitherObj,
 	getFullMemberName,
+	hasDutyPosition,
 	hasOneDutyPosition,
 	HTTPError,
 	Maybe,
@@ -389,7 +390,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 }
 
 export const shouldRenderMemberSearchWidget = ({ member }: PageProps): boolean =>
-	!!member && hasOneDutyPosition(['Safety Officer'])(member);
+	!!member && member.seniorMember && member.dutyPositions.length > 0;
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;
