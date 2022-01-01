@@ -26,8 +26,6 @@ import {
 	Either,
 	EitherObj,
 	getFullMemberName,
-	hasDutyPosition,
-	hasOneDutyPosition,
 	HTTPError,
 	Maybe,
 	pipe,

@@ -62,6 +62,8 @@ export const func: Endpoint<
 				'Cadet Flight Commander',
 				'Cadet Flight Sergeant',
 				'Cadet Commander',
+				'Cadet Element Leader',
+				'Cadet First Sergeant',
 				'Cadet Deputy Commander',
 				'Cadet Executive Officer',
 				'Deputy Commander for Cadets',
@@ -82,6 +84,7 @@ export const func: Endpoint<
 							: hasOneDutyPosition([
 									'Cadet Flight Commander',
 									'Cadet Flight Sergeant',
+									'Cadet Element Leader',
 							  ])(req.member)
 							? mem => mem.flight === req.member.flight && mem.flight !== null
 							: always(true),
