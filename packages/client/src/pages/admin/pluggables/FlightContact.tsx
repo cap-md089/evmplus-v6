@@ -55,7 +55,13 @@ import './FlightContact.css';
 
 const isMaybeFlightStaff = pipe(
 	M.filterType<Member, CAPMember>(isCAPMember),
-	M.filter(hasOneDutyPosition(['Cadet Flight Commander', 'Cadet Flight Sergeant'])),
+	M.filter(
+		hasOneDutyPosition([
+			'Cadet Flight Commander',
+			'Cadet Flight Sergeant',
+			'Cadet Element Leader',
+		]),
+	),
 	M.isSome,
 );
 
@@ -66,6 +72,8 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Cadet Flight Commander',
 	'Cadet Flight Sergeant',
 	'Cadet Commander',
+	'Cadet Element Leader',
+	'Cadet First Sergeant',
 	'Cadet Deputy Commander',
 	'Cadet Executive Officer',
 	'Deputy Commander For Cadets',

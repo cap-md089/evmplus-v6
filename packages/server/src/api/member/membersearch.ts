@@ -27,8 +27,8 @@ import {
 	EitherObj,
 	errorGenerator,
 	get,
-	hasOneDutyPosition,
 	isRegularCAPAccountObject,
+	isRequesterRioux,
 	Maybe,
 	memoize,
 	Right,
@@ -79,11 +79,16 @@ export const func: Endpoint<
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		asyncRight(req, errorGenerator('Could not validate request'))
-			.filter(request => hasOneDutyPosition(['Safety Officer'])(request.member), {
-				type: 'OTHER',
-				code: 403,
-				message: 'You do not have permission to do that',
-			})
+			.filter(
+				request =>
+					(request.member.seniorMember && request.member.dutyPositions.length > 0) ||
+					isRequesterRioux(request),
+				{
+					type: 'OTHER',
+					code: 403,
+					message: 'You do not have permission to do that',
+				},
+			)
 			.flatMap(request =>
 				isRegularCAPAccountObject(request.account)
 					? backend.getSubordinateCAPUnitIDs(request.account)
