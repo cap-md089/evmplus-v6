@@ -27,6 +27,7 @@ import {
 	EitherObj,
 	getFullMemberName,
 	HTTPError,
+	isRioux,
 	Maybe,
 	pipe,
 	stringifyMemberReference,
@@ -388,7 +389,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 }
 
 export const shouldRenderMemberSearchWidget = ({ member }: PageProps): boolean =>
-	!!member && member.seniorMember && member.dutyPositions.length > 0;
+	!!member && ((member.seniorMember && member.dutyPositions.length > 0) || isRioux(member));
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;

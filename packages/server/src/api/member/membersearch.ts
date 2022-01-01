@@ -28,6 +28,7 @@ import {
 	errorGenerator,
 	get,
 	isRegularCAPAccountObject,
+	isRequesterRioux,
 	Maybe,
 	memoize,
 	Right,
@@ -79,7 +80,9 @@ export const func: Endpoint<
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
 		asyncRight(req, errorGenerator('Could not validate request'))
 			.filter(
-				request => request.member.seniorMember && request.member.dutyPositions.length > 0,
+				request =>
+					(request.member.seniorMember && request.member.dutyPositions.length > 0) ||
+					isRequesterRioux(request),
 				{
 					type: 'OTHER',
 					code: 403,
