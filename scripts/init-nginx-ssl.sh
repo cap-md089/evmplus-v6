@@ -82,3 +82,5 @@ certbot certonly --webroot -w /var/www/certbot \
 	--force-renewal \
 	--non-interactive \
 	$staging_arg" certbot-web
+
+docker-compose exec proxy nginx -s reload
