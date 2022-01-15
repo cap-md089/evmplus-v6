@@ -70,8 +70,8 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Cadet Flight Commander',
 	'Cadet Flight Sergeant',
 	'Cadet Commander',
-	'Cadet Deputy Commander',
-	'Cadet Executive Officer',
+	'Cadet Deputy Commander for Operations',
+	'Cadet Deputy Commander for Support ',
 	'Deputy Commander For Cadets',
 ]);
 

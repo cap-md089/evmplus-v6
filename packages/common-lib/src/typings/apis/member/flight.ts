@@ -97,7 +97,7 @@ export interface FlightMembersBasic {
  * the squadron:
  * 	- Cadet Commander
  *  - Cadet Exective Officer
- *  - Cadet Deputy Commander
+ *  - Cadet Deputy Commander for Operations
  *  - Deputy Commander for Cadets
  */
 export interface FlightMembersFull {

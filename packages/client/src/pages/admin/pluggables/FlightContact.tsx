@@ -74,8 +74,8 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Cadet Commander',
 	'Cadet Element Leader',
 	'Cadet First Sergeant',
-	'Cadet Deputy Commander',
-	'Cadet Executive Officer',
+	'Cadet Deputy Commander for Operations',
+	'Cadet Deputy Commander for Support',
 	'Deputy Commander For Cadets',
 ]);
 
@@ -476,8 +476,8 @@ export default class FlightContact extends Page<PageProps, EmailListState> {
 				isCAPMember(this.props.member) &&
 				hasOneDutyPosition([
 					'Cadet Commander',
-					'Cadet Deputy Commander',
-					'Cadet Executive Officer',
+					'Cadet Deputy Commander for Operations',
+					'Cadet Deputy Commander for Support ',
 					'Deputy Commander for Cadets',
 				])(this.props.member);
 
