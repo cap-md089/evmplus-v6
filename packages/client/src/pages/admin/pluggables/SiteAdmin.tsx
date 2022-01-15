@@ -83,8 +83,8 @@ export const SiteAdminWidget = (props: RequiredMember): JSX.Element => (
 				(props.member.seniorMember ||
 					hasOneDutyPosition([
 						'Cadet Commander',
-						'Cadet Deputy Commander',
-						'Cadet Executive Officer',
+						'Cadet Deputy Commander for Operations',
+						'Cadet Deputy Commander for Support ',
 					])(props.member)) ? (
 					<>
 						<br />

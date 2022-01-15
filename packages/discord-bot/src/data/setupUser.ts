@@ -54,8 +54,8 @@ import { getOrCreateTeamRolesForTeam } from './getTeamRole';
 
 export const CadetExecutiveStaffRoles = [
 	'Cadet Commander',
-	'Cadet Deputy Commander',
-	'Cadet Executive Officer',
+	'Cadet Deputy Commander for Operations',
+	'Cadet Deputy Commander for Support',
 ];
 
 export const CadetLineStaffRoles = [
@@ -313,11 +313,11 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 	if (hasExecutiveStaffRole(dutyPositionNames)) {
 		categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Executive Staff'))));
 
-		if (dutyPositionNames.includes('Cadet Deputy Commander')) {
+		if (dutyPositionNames.includes('Cadet Deputy Commander for Operations')) {
 			categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Line Staff'))));
 		}
 
-		if (dutyPositionNames.includes('Cadet Executive Officer')) {
+		if (dutyPositionNames.includes('Cadet Deputy Commander for Support')) {
 			categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Support Staff'))));
 		}
 	}

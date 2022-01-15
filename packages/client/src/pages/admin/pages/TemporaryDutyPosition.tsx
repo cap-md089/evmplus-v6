@@ -90,7 +90,7 @@ const highMarginTop = {
 const temporaryDutyPositions = [
 	'Cadet Safety NCO',
 	'Cadet Aerospace Education Officer',
-	'Cadet Deputy Commander',
+	'Cadet Deputy Commander for Operations',
 	'Cadet Operations Officer',
 	'Cadet Recruiting Officer',
 	'Cadet Leadership Officer',
@@ -98,7 +98,7 @@ const temporaryDutyPositions = [
 	'Cadet Commander',
 	'Cadet Historian Officer',
 	'Cadet Safety Officer',
-	'Cadet Executive Officer',
+	'Cadet Deputy Commander for Support',
 	'Cadet Activities NCO',
 	'Cadet Administrative NCO',
 	'Cadet Aerospace Education NCO',

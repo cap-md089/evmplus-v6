@@ -60,9 +60,9 @@ export const func: Endpoint<
 				'Cadet Flight Commander',
 				'Cadet Flight Sergeant',
 				'Cadet Commander',
-				'Cadet Deputy Commander',
-				'Cadet Executive Officer',
-				'Cadet Deputy Commander',
+				'Cadet Deputy Commander for Operations',
+				'Cadet Deputy Commander for Support',
+				'Cadet Deputy Commander for Operations',
 			])(req.member)
 				? asyncRight(req, errorGenerator('Could not process request'))
 				: asyncLeft<ServerError, typeof req>({
