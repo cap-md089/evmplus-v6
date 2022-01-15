@@ -227,7 +227,7 @@ export const hasBasicAttendanceManagementPermission = (member: User) => (
 	// CAP duty positions
 	(isCAPMember(member) &&
 		hasDutyPositions([
-			'Cadet Executive Officer',
+			'Cadet Deputy Commander for Support',
 			'Cadet Administrative Officer',
 			'Cadet Administrative NCO',
 		])(member)) ||

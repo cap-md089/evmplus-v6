@@ -64,8 +64,8 @@ export const func: Endpoint<
 				'Cadet Commander',
 				'Cadet Element Leader',
 				'Cadet First Sergeant',
-				'Cadet Deputy Commander',
-				'Cadet Executive Officer',
+				'Cadet Deputy Commander for Operations',
+				'Cadet Deputy Commander for Support',
 				'Deputy Commander for Cadets',
 			])(req.member)
 				? asyncRight(req, errorGenerator('Could not process request'))
