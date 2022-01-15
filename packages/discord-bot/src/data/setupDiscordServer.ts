@@ -18,7 +18,7 @@
  */
 
 import { Client as MySQLClient } from '@mysql/xdevapi';
-import { always, DiscordAccount } from 'common-lib';
+import { DiscordAccount } from 'common-lib';
 import { Client, Guild, Permissions, Role } from 'discord.js';
 import { collectResults, findAndBind } from 'server-common';
 import { getXSession } from '..';
@@ -96,7 +96,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 		};
 
 		if (usedRules.deleteOldRoles) {
-			for (const [, role] of (await guild.roles.fetch()).cache.entries()) {
+			for (const [, role] of (await guild.roles.fetch()).entries()) {
 				if (!usedRules.preserveRoles.includes(role.name)) {
 					try {
 						await role.delete();
@@ -118,26 +118,22 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 
 		const createRole = (color: [number, number, number]) => (name: string) =>
 			guild.roles.create({
-				data: {
-					hoist: false,
-					mentionable: false,
-					name,
-					permissions,
-					position: 0,
-					color,
-				},
+				hoist: false,
+				mentionable: false,
+				name,
+				permissions,
+				position: 0,
+				color,
 			});
 
 		const createRoleGroup = (color: [number, number, number]) => (name: string) =>
 			guild.roles.create({
-				data: {
-					hoist: true,
-					mentionable: false,
-					name,
-					permissions,
-					position: 0,
-					color,
-				},
+				hoist: true,
+				mentionable: false,
+				name,
+				permissions,
+				position: 0,
+				color,
 			});
 
 		if (usedRules.addSeniorMemberRoles) {
@@ -182,17 +178,15 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 			for (const name of CadetSupportStaffRoles) {
 				if (name === 'Cadet IT Officer' && usedRules.itOfficerAdmin) {
 					await guild.roles.create({
-						data: {
-							hoist: false,
-							mentionable: false,
-							name,
-							permissions: new Permissions(Permissions.DEFAULT).add(
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								Permissions.FLAGS.ADMINISTRATOR!,
-							),
-							position: 0,
-							color: [17, 128, 106],
-						},
+						hoist: false,
+						mentionable: false,
+						name,
+						permissions: new Permissions(Permissions.DEFAULT).add(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Permissions.FLAGS.ADMINISTRATOR!,
+						),
+						position: 0,
+						color: [17, 128, 106],
 					});
 				} else {
 					await createRole([17, 128, 106])(name);
@@ -244,30 +238,31 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 
 		const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 
-		for (const member of (await guild.members.fetch()).array()) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		for (const [_, member] of await guild.members.fetch()) {
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
-			if (guild.ownerID !== member.id && !member.user.bot) {
+			if (guild.ownerId !== member.id && !member.user.bot) {
 				if (results.length === 1) {
 					await setupUser(client)(backend)(guildId)(account.value)()(results[0]);
 				} else {
 					await (
 						await member.roles.set(
-							[(await guild.roles.fetch()).cache.find(byName('Processing'))].filter(
+							[(await guild.roles.fetch()).find(byName('Processing'))].filter(
 								(role): role is Role => !!role,
 							),
 						)
 					).setNickname('');
 
 					try {
-						const dmChannel = await member.createDM();
-						const messages = await dmChannel.awaitMessages(always(true));
+						/* const dmChannel = await member.createDM();
+						const messages = await dmChannel.awaitMessages();
 						if (messages.size === 0) {
 							await dmChannel.send(
 								`Welcome to the ${registry.Website.Name} Discord server. Please go to the following page on your squadron's website to finish account setup: https://${account.value.id}.${config.HOST_NAME}/signin/?returnurl=/registerdiscord/${member.id}`,
 							);
 							console.log('Empty chat:', member.displayName);
-						}
+						}*/
 					} catch (e) {
 						console.error('Cannot send message to ', member.displayName);
 					}
