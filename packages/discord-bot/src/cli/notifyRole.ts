@@ -19,7 +19,7 @@
 
 import * as mysql from '@mysql/xdevapi';
 import { Maybe } from 'common-lib';
-import { Client, GuildChannel, Role, TextChannel } from 'discord.js';
+import { Client, Collection, GuildChannel, Role, Snowflake, TextChannel } from 'discord.js';
 import { getDiscordBackend } from '../data/getDiscordBackend';
 import { byName, byProp } from '../data/setupUser';
 import { DiscordCLIConfiguration } from '../getDiscordConf';
@@ -62,7 +62,7 @@ export default async (
 		const rolesToMention: Role[] = [];
 
 		for (const roleName of roleNames) {
-			const role = (await guild.roles.fetch()).cache.find(byName(roleName));
+			const role = (await guild.roles.fetch()).find(byName(roleName));
 
 			if (!role) {
 				throw new Error(`Could not find role by the name of "${roleName}"`);
@@ -75,13 +75,14 @@ export default async (
 			throw new Error('No roles are being mentioned');
 		}
 
-		const channel = guild.channels.cache.find(byProp<GuildChannel>('name')(channelName));
+		const channels = (await guild.channels.fetch()) as Collection<Snowflake, GuildChannel>;
+		const channel = channels.find(byProp<GuildChannel>('name')(channelName));
 
 		if (!channel) {
 			throw new Error('There was an issue getting the staff channel');
 		}
 
-		if (channel.type !== 'text') {
+		if (channel.type !== 'GUILD_TEXT') {
 			throw new Error('Staff channel is not a text channel');
 		}
 

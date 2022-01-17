@@ -31,6 +31,7 @@ import {
 	identity,
 	isPartOfTeam,
 	isTeamLeader,
+	iterCollect,
 	Maybe,
 	MaybeObj,
 	Member,
@@ -294,7 +295,7 @@ export const byProp = <T, K extends keyof T = keyof T>(prop: K) => (value: T[K])
 export const byName = byProp<{ name: string }>('name');
 
 const roleNamesToRoles = (rolesCollection: GuildMemberRoleManager) => (roleNames: string[]) =>
-	rolesCollection.cache.array().filter(role => roleNames.includes(role.name));
+	rolesCollection.cache.filter(role => roleNames.includes(role.name));
 
 const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 	member: Member,
@@ -307,7 +308,7 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 
 	const extraRoles = dutyPositionNames.filter(name => !AllRoles.includes(name));
 
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = await guild.roles.fetch();
 
 	if (hasExecutiveStaffRole(dutyPositionNames)) {
 		categoryRoles.push(Maybe.fromValue(roles.find(byName('Cadet Executive Staff'))));
@@ -346,17 +347,15 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
 			await guild.roles.create({
-				data: {
-					color: [17, 128, 106],
-					hoist: false,
-					mentionable: false,
-					name: role,
-					permissions: new Permissions(Permissions.DEFAULT)
-						.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
-						.remove(Permissions.FLAGS.CHANGE_NICKNAME)
-						.remove(Permissions.FLAGS.MENTION_EVERYONE),
-					position,
-				},
+				color: [17, 128, 106],
+				hoist: false,
+				mentionable: false,
+				name: role,
+				permissions: new Permissions(Permissions.DEFAULT)
+					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
+					.remove(Permissions.FLAGS.CHANGE_NICKNAME)
+					.remove(Permissions.FLAGS.MENTION_EVERYONE),
+				position,
 			});
 		} else {
 			if (roles.find(byName(role))) {
@@ -370,17 +369,15 @@ const getDutyPositionRoles = (guild: Guild) => (orgids: number[]) => async (
 				.reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
 			await guild.roles.create({
-				data: {
-					color: [17, 128, 106],
-					hoist: false,
-					mentionable: false,
-					name: role,
-					permissions: new Permissions(Permissions.DEFAULT)
-						.remove(Permissions.FLAGS.MENTION_EVERYONE)
-						.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
-						.remove(Permissions.FLAGS.CHANGE_NICKNAME),
-					position,
-				},
+				color: [17, 128, 106],
+				hoist: false,
+				mentionable: false,
+				name: role,
+				permissions: new Permissions(Permissions.DEFAULT)
+					.remove(Permissions.FLAGS.MENTION_EVERYONE)
+					.remove(Permissions.FLAGS.CREATE_INSTANT_INVITE)
+					.remove(Permissions.FLAGS.CHANGE_NICKNAME),
+				position,
 			});
 		}
 	}
@@ -401,9 +398,9 @@ const getSeniorMemberDutyPositions = (guild: Guild) => (orgids: number[]) => asy
 		.filter(position => position.type === 'NHQ' && orgids.includes(position.orgid))
 		.map(get('duty'));
 
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = await guild.roles.fetch();
 
-	return roles.array().filter(role => dutyPositions.includes(role.name));
+	return roles.filter(role => dutyPositions.includes(role.name));
 };
 
 const getFlightRoles = (guild: Guild) => async (member: Member): Promise<Role[]> => {
@@ -411,7 +408,7 @@ const getFlightRoles = (guild: Guild) => async (member: Member): Promise<Role[]>
 		const isMatchingFlightRole = (flight: string) => (role: Role) =>
 			!!new RegExp(`^${flight}( flight)?$`, 'i').exec(role.name);
 
-		const roles = (await guild.roles.fetch()).cache;
+		const roles = await guild.roles.fetch();
 
 		const flightRole = Maybe.fromValue(roles.find(isMatchingFlightRole(member.flight)));
 
@@ -448,7 +445,7 @@ const getTeamRoles = (guild: Guild) => (teams: RawTeamObject[]) => async (
 		resolve = _resolve;
 	});
 
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = await guild.roles.fetch();
 
 	const finalTeamRoles = [Maybe.fromValue(roles.find(byName('Team Member')))];
 
@@ -481,7 +478,7 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 		return [];
 	}
 
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = await guild.roles.fetch();
 
 	const achievementIDs = await collectResults(
 		findAndBind(schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'), {
@@ -518,13 +515,13 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 		roleNames = roleNames.filter(name => name !== 'GTM3');
 	}
 
-	return roles.filter(role => roleNames.includes(role.name)).array();
+	return iterCollect(roles.filter(role => roleNames.includes(role.name)).values());
 };
 
 const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Schema) => (
 	account: AccountObject,
 ) => (discordUser: GuildMember) => (teams: RawTeamObject[]) => async (member: Member) => {
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = (await guild.roles.fetch());
 
 	const finalRoles = new Collection<string, Role>();
 
@@ -553,10 +550,10 @@ const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Sche
 			]);
 
 			const newRoles = [
-				...beforeRoles,
-				...seniorMemberDutyPositions,
-				...es101CardCertifications,
-				...teamRoles,
+				...beforeRoles.values(),
+				...seniorMemberDutyPositions.values(),
+				...es101CardCertifications.values(),
+				...teamRoles.values(),
 				...onlyJustValues([
 					Maybe.fromValue(roles.find(byName('Senior Member'))),
 					Maybe.fromValue(roles.find(byName('Certified Member'))),
@@ -584,11 +581,11 @@ const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Sche
 			const oldRoles = discordUser.roles.cache;
 
 			let newRoles = [
-				...beforeRoles,
-				...dutyPositionRoles,
-				...flightRoles,
-				...teamRoles,
-				...es101CardCertifications,
+				...beforeRoles.values(),
+				...dutyPositionRoles.values(),
+				...flightRoles.values(),
+				...teamRoles.values(),
+				...es101CardCertifications.values(),
 				...onlyJustValues([Maybe.fromValue(roles.find(byName('Certified Member')))]),
 			];
 
@@ -628,7 +625,7 @@ const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Sche
 		}
 	}
 
-	if (guild.ownerID !== discordUser.id) {
+	if (guild.ownerId !== discordUser.id) {
 		// If there is actually a difference...
 		if (
 			finalRoles.difference(discordUser.roles.cache).size >= 0 ||
@@ -679,7 +676,7 @@ export default (client: Client) => (backend: DiscordBackends) => (guildID: strin
 
 		const member = await backend.getMember(account)(discordUser.member).fullJoin();
 
-		if (guild.ownerID !== discordUser.discordID) {
+		if (guild.ownerId !== discordUser.discordID) {
 			await Promise.all([
 				user.setNickname(getFullMemberName(member)),
 				setupRoles(guild)(backend)(backend.getSchema())(account)(user)(teamObjects)(member),

@@ -137,6 +137,14 @@ export const filterUnique = function* <T extends Identifiable | number | string>
 	}
 };
 
+export const iterCollect = <T>(iter1: Iter<T>): T[] => {
+	const results = [];
+	for (const i of iter1) {
+		results.push(i);
+	}
+	return results;
+}
+
 export async function* toAsyncIterableIterator<T>(iter: AsyncIter<T>): AsyncIterableIterator<T> {
 	for await (const i of iter) {
 		yield i;

@@ -19,11 +19,11 @@
 
 import { Schema } from '@mysql/xdevapi';
 import { DiscordAccount, Maybe, MaybeObj } from 'common-lib';
-import { GuildMember } from 'discord.js';
+import { GuildMember, User } from 'discord.js';
 import { collectResults, findAndBind } from 'server-common';
 
 export default (schema: Schema) => async (
-	member: GuildMember,
+	member: GuildMember | User,
 ): Promise<MaybeObj<DiscordAccount>> => {
 	const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 

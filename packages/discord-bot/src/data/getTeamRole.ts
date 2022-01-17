@@ -27,7 +27,7 @@ const renderTeamName = (team: RawTeamObject): string =>
 export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 	team: RawTeamObject,
 ): Promise<[MaybeObj<Role>, MaybeObj<Role>, MaybeObj<Role>]> => {
-	const roles = (await guild.roles.fetch()).cache;
+	const roles = (await guild.roles.fetch());
 
 	const genericTeamMemberRole = M.fromValue(roles.find(byName('Team Member')));
 
@@ -54,14 +54,12 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 
 		teamLeaderRole = M.some(
 			await guild.roles.create({
-				data: {
-					color: [241, 196, 15],
-					hoist: false,
-					mentionable: false,
-					name: `Team Lead - ${team.name}`,
-					position,
-					permissions,
-				},
+				color: [241, 196, 15],
+				hoist: false,
+				mentionable: false,
+				name: `Team Lead - ${team.name}`,
+				position,
+				permissions,
 			}),
 		);
 	}
@@ -87,14 +85,12 @@ export const getOrCreateTeamRolesForTeam = (guild: Guild) => async (
 
 		teamMemberRole = M.some(
 			await guild.roles.create({
-				data: {
-					color: [194, 124, 14],
-					hoist: false,
-					mentionable: false,
-					name: renderTeamName(team),
-					position,
-					permissions,
-				},
+				color: [194, 124, 14],
+				hoist: false,
+				mentionable: false,
+				name: renderTeamName(team),
+				position,
+				permissions,
 			}),
 		);
 	}

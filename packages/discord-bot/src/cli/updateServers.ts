@@ -68,7 +68,7 @@ export default async (
 		for (const [, member] of await guild.members.fetch()) {
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
-			if (guild.ownerID !== member.id && !member.user.bot) {
+			if (guild.ownerId !== member.id && !member.user.bot) {
 				if (results.length === 1) {
 					console.log(`Updating ${member.displayName}`);
 					await setupUser(client)(backend)(id)(account)(
@@ -77,7 +77,7 @@ export default async (
 				} else {
 					await (
 						await member.roles.set(
-							[(await guild.roles.fetch()).cache.find(byName('Processing'))].filter(
+							[(await guild.roles.fetch()).find(byName('Processing'))].filter(
 								(role): role is Role => !!role,
 							),
 						)
@@ -134,7 +134,7 @@ export default async (
 			const collection = schema.getCollection<DiscordAccount>('DiscordAccounts');
 			const results = await collectResults(findAndBind(collection, { discordID: member.id }));
 
-			if (guild.ownerID !== member.id && !member.user.bot) {
+			if (guild.ownerId !== member.id && !member.user.bot) {
 				if (results.length === 1) {
 					const teams = await backend
 						.getTeams(accountMaybe.value)
@@ -149,7 +149,7 @@ export default async (
 				} else {
 					await (
 						await member.roles.set(
-							[(await guild.roles.fetch()).cache.find(byName('Processing'))].filter(
+							[(await guild.roles.fetch()).find(byName('Processing'))].filter(
 								(role): role is Role => !!role,
 							),
 						)
