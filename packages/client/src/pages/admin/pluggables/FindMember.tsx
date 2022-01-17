@@ -569,7 +569,7 @@ const MemberSearchRenderCurrentMemberInfo = (): ReactElement => {
 		<div className="member-contact-view-box has-info">
 			<h3>
 				Information for {getFullMemberName(currentMember.member)}
-				{orgDisplay}
+				&nbsp;({currentMember.member.id}){orgDisplay}
 			</h3>
 
 			<ul>
