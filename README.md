@@ -1,14 +1,24 @@
-# EvMPlus.org v6
+# Event Manager v6
 
 The premiere event and unit management site for Civil Air Patrol
 
-Current units running the EventManagement+ suite:
+Current units running the Event Manager suite:
 
 1. [MD001 - Maryland Wing](https://events.md.cap.gov/)
-2. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
-3. [MD008 - Harford Composite Squadron](https://harford.events.md.cap.gov/)
-4. [MD003 - Frederick Composite Squadron](https://frederick.events.md.cap.gov/)
-5. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
+2. [MD003 - Frederick Composite Squadron](https://frederick.events.md.cap.gov/)
+3. [MD007 - Calvert Cadet Squadron](https://calvert.events.md.cap.gov/)
+4. [MD008 - Harford Composite Squadron](https://harford.events.md.cap.gov/)
+5. [MD022 - Osprey Composite Squadron](https://osprey.events.md.cap.gov/)
+6. [MD023 - Arundel Composite Squadron](https://arundel.events.md.cap.gov/)
+7. [MD028 - Col. Mary S. Feik Composite Squadron](https://colmarysfeik.events.md.cap.gov/)
+8. [MD039 - Carroll Composite Squadron](https://carroll.events.md.cap.gov/)
+9. [MD041 - Group 1](https://md041.events.md.cap.gov/)
+10. [MD042 - Group 2](https://md042.events.md.cap.gov/)
+11. [MD043 - Group 3](https://md043.events.md.cap.gov/)
+12. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
+13. [MD071 - Bethesda - Chevy Chase Composite Squadron](https://bcc.events.md.cap.gov/)
+14. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
+15. [MD091 - Mt. Airy Composite Squadron](https://mtairy.events.md.cap.gov/)
 
 **Table Of Contents**
 
