@@ -181,31 +181,41 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		let first = 0;
 
 		return (
-			<div>
-				{flights.map((flight, index) => (
-					<FlightRow
-						key={index}
-						index={index}
-						open={this.state.open}
-						onDragStart={this.onDragStart}
-						onDrop={this.onDrop(flight[0])}
-						name={flight[0]}
-						members={flight[1]}
-						first={!first++}
-						highlighted={flight[0] === this.state.highlighted}
-					/>
-				))}
-				<div style={saveButtonMargin} id="save">
-					<Button
-						buttonType="primaryButton"
-						onClick={this.onSaveClick}
-						disabled={this.state.saving}
-					>
-						{this.state.saving ? 'Saving...' : 'Save'}
-					</Button>
-					{this.state.saved ? <span style={saveMessage}>Saved!</span> : null}
+			<>
+				<p>
+					Duty responsibilities are indicated by a letter in front of the Cadet:
+					<ul>
+						<li>"o" for duty assignments involving Operations, </li>
+						<li>"s" for duty assignments involving Support, and</li>
+						<li>"c" for duty assignments involving CAC</li>
+					</ul>
+				</p>
+				<div>
+					{flights.map((flight, index) => (
+						<FlightRow
+							key={index}
+							index={index}
+							open={this.state.open}
+							onDragStart={this.onDragStart}
+							onDrop={this.onDrop(flight[0])}
+							name={flight[0]}
+							members={flight[1]}
+							first={!first++}
+							highlighted={flight[0] === this.state.highlighted}
+						/>
+					))}
+					<div style={saveButtonMargin} id="save">
+						<Button
+							buttonType="primaryButton"
+							onClick={this.onSaveClick}
+							disabled={this.state.saving}
+						>
+							{this.state.saving ? 'Saving...' : 'Save'}
+						</Button>
+						{this.state.saved ? <span style={saveMessage}>Saved!</span> : null}
+					</div>
 				</div>
-			</div>
+			</>
 		);
 	}
 
