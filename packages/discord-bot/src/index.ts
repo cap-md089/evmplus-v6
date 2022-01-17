@@ -27,9 +27,10 @@ import {
 	toReference,
 } from 'common-lib';
 import * as debug from 'debug';
-import { Client, Role } from 'discord.js';
+import { Client, Role, Intents } from 'discord.js';
 import 'dotenv/config';
 import notifyRole from './cli/notifyRole';
+import registerCommands from './cli/registerCommands';
 import setupServer from './cli/setupServer';
 import updateServers from './cli/updateServers';
 import attendancerecord from './commands/attendancerecord';
@@ -56,16 +57,14 @@ export const getXSession = async (
 
 export const getClient = (): Client =>
 	new Client({
-		ws: {
-			intents: [
-				'GUILD_MEMBERS',
-				'GUILD_MESSAGES',
-				'GUILDS',
-				'DIRECT_MESSAGES',
-				'GUILD_PRESENCES',
-				'GUILD_VOICE_STATES',
-			],
-		},
+		intents: [
+			Intents.FLAGS.GUILDS,
+			Intents.FLAGS.GUILD_MEMBERS,
+			Intents.FLAGS.GUILD_MESSAGES,
+			Intents.FLAGS.DIRECT_MESSAGES,
+			Intents.FLAGS.GUILD_PRESENCES,
+			Intents.FLAGS.GUILD_VOICE_STATES,
+		],
 	});
 
 export default function setupDiscordBot(
@@ -294,7 +293,7 @@ export default function setupDiscordBot(
 				await (
 					await member.roles.set(
 						[
-							(await member.guild.roles.fetch()).cache.find(byName('Processing')),
+							(await member.guild.roles.fetch()).find(byName('Processing')),
 						].filter((role): role is Role => !!role),
 					)
 				).setNickname('');
@@ -304,27 +303,13 @@ export default function setupDiscordBot(
 		}
 	});
 
-	client.on('message', async message => {
-		const parts = message.content.split(' ');
+	client.on('interactionCreate', async interaction => {
+		if (!interaction.isCommand()) {
+			return;
+		}
 
-		emitter.extend('message')('Received message');
-
-		if (parts[0] === `<@!${client.user?.id ?? ''}>` && message.member?.id !== client.user?.id) {
-			if (parts.length < 2) {
-				await message.reply('Command needed; known command is "attendancerecord"');
-				return;
-			}
-
-			switch (parts[1].toLowerCase()) {
-				case 'attendancerecord':
-					await attendancerecord(client)(mysqlClient)(conf)(parts)(message);
-
-					break;
-
-				default:
-					await message.reply('Unknown command; known command is "attendancerecord"');
-					break;
-			}
+		if (interaction.commandName === 'attendancerecord') {
+			await attendancerecord(client)(mysqlClient)(conf)(interaction);
 		}
 	});
 
@@ -363,6 +348,7 @@ if (require.main === module) {
 				setupserver: setupServer,
 				notifyrole: notifyRole,
 				updateservers: updateServers,
+				registercommands: registerCommands
 			};
 
 			const commandFunction = availableCommands[command.toLowerCase()];
