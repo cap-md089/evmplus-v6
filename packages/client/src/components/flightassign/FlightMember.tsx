@@ -40,19 +40,21 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 		newProps.member.id !== this.props.member.id;
 
 	public render = (): JSX.Element => (
-		<div
-			draggable={true}
-			className="flightmember-box"
-			onDragStart={this.onDragStart}
-			onDrop={this.onDrop}
-			onDragOver={this.handleOver}
-			onDragEnd={this.handleOver}
-			onDragExit={this.handleOver}
-			onDragLeave={this.handleOver}
-			onDragEnter={this.handleOver}
-		>
-			{getFullMemberName(this.props.member)}
-		</div>
+		<>
+			<div
+				draggable={true}
+				className="flightmember-box"
+				onDragStart={this.onDragStart}
+				onDrop={this.onDrop}
+				onDragOver={this.handleOver}
+				onDragEnd={this.handleOver}
+				onDragExit={this.handleOver}
+				onDragLeave={this.handleOver}
+				onDragEnter={this.handleOver}
+			>
+				{this.getDutyColor(this.props.member)}&nbsp;{getFullMemberName(this.props.member)}
+			</div>
+		</>
 	);
 
 	private onDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
@@ -71,5 +73,67 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 	private handleOver = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.stopPropagation();
 		e.preventDefault();
+	};
+
+	private getDutyColor = (myMember: Member): string => {
+		let supportFlag = '';
+		let lineFlag = '';
+		let councilFlag = '';
+		myMember.dutyPositions.forEach(element => {
+			if (
+				element.duty === 'Cadet Commander' ||
+				element.duty === 'Cadet Deputy Commander for Operations' ||
+				element.duty === 'Cadet Element Leader' ||
+				element.duty === 'Cadet First Sergeant' ||
+				element.duty === 'Cadet Flight Commander' ||
+				element.duty === 'Cadet Flight Sergeant'
+			) {
+				lineFlag = 'o';
+			} else if (
+				element.duty === 'Cadet Activities NCO' ||
+				element.duty === 'Cadet Activities Officer' ||
+				element.duty === 'Cadet Administrative NCO' ||
+				element.duty === 'Cadet Administrative Officer' ||
+				element.duty === 'Cadet Aerospace Education NCO' ||
+				element.duty === 'Cadet Aerospace Education Officer' ||
+				element.duty === 'Cadet Communications NCO' ||
+				element.duty === 'Cadet Communications Officer' ||
+				element.duty === 'Cadet Deputy Commander for Support' ||
+				element.duty === 'Cadet Drug Demand Reduction NCO' ||
+				element.duty === 'Cadet Emergency Services NCO' ||
+				element.duty === 'Cadet Emergency Services Officer' ||
+				element.duty === 'Cadet Historian NCO' ||
+				element.duty === 'Cadet IT NCO' ||
+				element.duty === 'Cadet IT Officer' ||
+				element.duty === 'Cadet Leadership Education NCO' ||
+				element.duty === 'Cadet Leadership Education Officer' ||
+				element.duty === 'Cadet Logistics NCO' ||
+				element.duty === 'Cadet Logistics Officer' ||
+				element.duty === 'Cadet Operations NCO' ||
+				element.duty === 'Cadet Public Affairs NCO' ||
+				element.duty === 'Cadet Public Affairs Officer' ||
+				element.duty === 'Cadet Recruiting NCO' ||
+				element.duty === 'Cadet Recruiting Officer' ||
+				element.duty === 'Cadet Safety NCO' ||
+				element.duty === 'Cadet Safety Officer' ||
+				element.duty === 'Cadet Supply NCO' ||
+				element.duty === 'Cadet Supply Officer'
+			) {
+				supportFlag = 's';
+			} else if (
+				element.duty === 'Cadet RCAC Assistant' ||
+				element.duty === 'Cadet RCAC Representative' ||
+				element.duty === 'Cadet WCAC Assistant' ||
+				element.duty === 'Cadet WCAC Chair' ||
+				element.duty === 'Cadet WCAC Recorder' ||
+				element.duty === 'Cadet WCAC Representative' ||
+				element.duty === 'Cadet WCAC Vice Chair'
+			) {
+				councilFlag = 'c';
+			}
+		});
+		return supportFlag + lineFlag + councilFlag !== ''
+			? supportFlag + lineFlag + councilFlag
+			: '';
 	};
 }
