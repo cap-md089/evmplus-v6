@@ -28,10 +28,12 @@ import { conf } from 'server-common';
 		account: AccountObject,
 	) => boolean;
 
-	const flattenAccountList = (account: AccountObject): string[] => [
-		account.id,
-		...account.aliases,
-	];
+	const flattenAccountList = process.argv[3]
+		? // eslint-disable-next-line @typescript-eslint/no-implied-eval
+		  (new Function('account', `return ${process.argv[3]}`) as (
+				account: AccountObject,
+		  ) => string[])
+		: (account: AccountObject): string[] => [account.id, ...account.aliases];
 
 	const config = await conf.getCLIConfiguration();
 	const session = await getSession({
