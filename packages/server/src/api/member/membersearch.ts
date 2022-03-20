@@ -62,6 +62,10 @@ INNER JOIN
 	${schema.getName()}.NHQ_Organization as O
 ON
 	M.ORGID = O.ORGID
+INNER JOIN
+	${schema.getName()}.NHQ_DutyPosition as D 
+ON
+	M.CAPID = D.CAPID
 WHERE
 	M.ORGID in ${bindForArray(orgids)}
 AND
@@ -69,7 +73,9 @@ AND
 AND
 	LOWER(M.doc ->> '$.NameLast') LIKE ?
 AND
-	LOWER(O.doc ->> '$.Name') LIKE ?`;
+	LOWER(O.doc ->> '$.Name') LIKE ?
+AND
+	LOWER(D.doc ->> '$.Duty') LIKE ?`;
 
 const stripPunctuation = (s: string): string => s.replace(/[',.]/g, '');
 
@@ -111,6 +117,7 @@ export const func: Endpoint<
 								`%${stripPunctuation(
 									req.params.unitName ?? '',
 								).toLocaleLowerCase()}%`,
+								`%${(req.params.dutyName ?? '').toLocaleLowerCase()}%`,
 							])
 							.execute(),
 					)

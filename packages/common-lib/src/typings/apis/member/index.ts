@@ -112,11 +112,12 @@ export interface MemberSearchResult {
  * Allows for searching for members by name
  */
 export interface MemberSearch {
-	(params: { unitName?: string; lastName?: string; firstName?: string }, body: {}): APIEither<
-		MemberSearchResult[]
-	>;
+	(
+		params: { unitName?: string; lastName?: string; firstName?: string; dutyName?: string },
+		body: {},
+	): APIEither<MemberSearchResult[]>;
 
-	url: '/api/member/search/:unitName?/:lastName?/:firstName?';
+	url: '/api/member/search/:unitName?/:lastName?/:firstName?/:dutyName?';
 
 	method: 'get';
 
