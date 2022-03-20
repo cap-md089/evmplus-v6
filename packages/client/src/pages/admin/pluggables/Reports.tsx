@@ -31,6 +31,7 @@ import {
 	// isCAPMember,
 	Permissions,
 	reports,
+	spreadsheets,
 } from 'common-lib';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
@@ -145,8 +146,9 @@ export const ReportsWidget = withFetchApi(
 								<div>{this.state.error}</div>
 							) : (
 								<div>
+									SQR 60-1 Cadet status report &nbsp;
 									<Button onClick={() => this.createSQR601()} buttonType="none">
-										SQR 60-1 Cadet status report
+										pdf
 									</Button>
 									<br />
 								</div>
@@ -157,8 +159,16 @@ export const ReportsWidget = withFetchApi(
 								<div>{this.state.error}</div>
 							) : (
 								<div>
+									SQR 60-20 Cadet HFZ report &nbsp;
 									<Button onClick={() => this.createSQR6020()} buttonType="none">
-										SQR 60-20 Cadet HFZ report
+										pdf
+									</Button>{' '}
+									&nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr6020Spreadsheet}
+									>
+										xlsx
 									</Button>
 									<br />
 								</div>
@@ -181,14 +191,24 @@ export const ReportsWidget = withFetchApi(
 				return;
 			}
 
-			const now = new Date().toString();
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
 			const docDef = reports.sqr601DocumentDefinition(
 				this.state.nhqMembers,
 				this.state.newMembers,
 				this.props.registry,
 			);
 
-			await this.printForm(docDef, `SQR601-${this.props.account.id}-${now}.pdf`);
+			await this.printForm(docDef, `SQR601-${this.props.account.id}-${formatdate}.pdf`);
 		};
 
 		private createSQR6020 = async (): Promise<void> => {
@@ -204,14 +224,24 @@ export const ReportsWidget = withFetchApi(
 				return;
 			}
 
-			const now = new Date().toString();
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
 			const docDef = reports.sqr6020DocumentDefinition(
 				this.state.nhqMembers,
 				this.state.newMembers,
 				this.props.registry,
 			);
 
-			await this.printForm(docDef, `SQR6020-${this.props.account.id}-${now}.pdf`);
+			await this.printForm(docDef, `SQR6020-${this.props.account.id}-${formatdate}.pdf`);
 		};
 
 		private async printForm(docDef: TDocumentDefinitions, fileName: string): Promise<void> {
@@ -243,5 +273,45 @@ export const ReportsWidget = withFetchApi(
 
 			docPrinter.download(fileName);
 		}
+
+		private createsqr6020Spreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx');
+
+			const wb = XLSX.utils.book_new();
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr6020XL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr6020XL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			wsName = 'HFZStatus';
+			const [wsDataAttendance, widths] = spreadsheets.sqr6020MembersXL(
+				this.state.nhqMembers,
+				this.state.newMembers,
+				// this.props.registry,
+			);
+			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+			sheet = spreadsheets.Formatsqr6020MembersXL(ws, widths, wsDataAttendance.length);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 60-20 ${this.props.account.id}-${formatdate}.xlsx`);
+		};
 	},
 );
