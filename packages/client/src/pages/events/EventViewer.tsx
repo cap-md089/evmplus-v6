@@ -1719,7 +1719,18 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
-		XLSX.writeFile(wb, `Attendance ${evtID}.xlsx`);
+		const now = new Date();
+		const formatdate =
+			now.getFullYear().toString() +
+			'-' +
+			(now.getMonth() + 1).toString().padStart(2, '0') +
+			'-' +
+			now.getDate().toString().padStart(2, '0') +
+			' ' +
+			now.getHours().toString().padStart(2, '0') +
+			now.getMinutes().toString().padStart(2, '0');
+
+		XLSX.writeFile(wb, `Attendance ${evtID} ${formatdate}.xlsx`);
 	};
 
 	private async linkEventTo(targetaccount: string): Promise<void> {
