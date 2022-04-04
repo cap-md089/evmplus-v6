@@ -38,6 +38,7 @@ import {
 	ServerError,
 	SigninRequiresMFA,
 	SigninReturn,
+	SigninToken,
 	SuccessfulSigninReturn,
 	toReference,
 } from 'common-lib';
@@ -141,21 +142,63 @@ const handleFailure = (result: PAM.SigninFailed): ServerEither<Wrapped<FailedSig
 		  )
 	).map(wrapper);
 
-const handleMFA = (result: PAM.SigninRequiresMFA): ServerEither<Wrapped<SigninRequiresMFA>> =>
-	asyncRight<ServerError, Wrapped<SigninRequiresMFA>>(
-		{
-			response: {
-				error: MemberCreateError.ACCOUNT_USES_MFA,
-			},
-			cookies: {
-				sessionID: {
-					expires: result.expires,
-					value: result.sessionID,
+const handleMFA = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
+	req: ServerAPIRequestParameter<api.Signin>,
+) => (token: SigninToken) => (result: PAM.SigninRequiresMFA): ServerEither<Wrapped<SigninReturn>> =>
+	token.type === 'Recaptcha'
+		? asyncRight<ServerError, Wrapped<SigninRequiresMFA>>(
+				{
+					response: {
+						error: MemberCreateError.ACCOUNT_USES_MFA,
+					},
+					cookies: {
+						sessionID: {
+							expires: result.expires,
+							value: result.sessionID,
+						},
+					},
 				},
-			},
-		},
-		errorGenerator('Could not handle failure'),
-	);
+				errorGenerator('Could not handle failure'),
+		  )
+		: AsyncEither.All([
+				backend.getMember(req.account)(result.member),
+				backend
+					.getPermissionsForMemberInAccount(req.account)(result.member)
+					.map(PAM.getDefaultPermissions(req.account)),
+				backend.getUnreadNotificationCountForMember(req.account)(result.member),
+				backend.getUnfinishedTaskCountForMember(req.account)(result.member),
+				asyncRight<ServerError, AccountLinkTarget[]>(
+					collectGeneratorAsync(
+						asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
+							asyncIterFilter<
+								EitherObj<ServerError, AccountLinkTarget>,
+								Right<AccountLinkTarget>
+							>(Either.isRight)(
+								backend.getAdminAccountIDs(toReference(result.member)),
+							),
+						),
+					),
+					errorGenerator('Could not get admin account IDs for member'),
+				),
+				backend.logSignin(req.account)(result.member),
+		  ]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
+				response: {
+					error: MemberCreateError.NONE,
+					member: {
+						...member,
+						permissions,
+					},
+					notificationCount,
+					taskCount,
+					linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+				},
+				cookies: {
+					sessionID: {
+						expires: result.expires,
+						value: result.sessionID,
+					},
+				},
+		  }));
 
 export const func: Endpoint<
 	Backends<[MemberBackend, PAM.PAMBackend]>,
@@ -169,7 +212,7 @@ export const func: Endpoint<
 				: results.result === MemberCreateError.PASSWORD_EXPIRED
 				? handlePasswordExpired(results)
 				: results.result === MemberCreateError.ACCOUNT_USES_MFA
-				? handleMFA(results)
+				? handleMFA(backend)(req)(req.body.token)(results)
 				: handleFailure(results),
 		);
 

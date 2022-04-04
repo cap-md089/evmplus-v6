@@ -84,6 +84,7 @@ export interface SigninRequiresMFA {
 	result: MemberCreateError.ACCOUNT_USES_MFA;
 	sessionID: string;
 	expires: number;
+	member: MemberReference;
 }
 
 export type SigninResult =
@@ -360,6 +361,7 @@ export const trySignin = async (
 					result: MemberCreateError.ACCOUNT_USES_MFA,
 					sessionID: session.id,
 					expires: session.expires,
+					member,
 				})),
 			);
 	}
