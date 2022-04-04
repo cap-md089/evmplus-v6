@@ -18,3 +18,4 @@
  */
 
 export * from './AttendanceXlsx';
+export * from './sqr6020';
