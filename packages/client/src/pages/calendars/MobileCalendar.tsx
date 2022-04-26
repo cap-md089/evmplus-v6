@@ -106,6 +106,22 @@ export default class MobileCalendar extends Page<CalendarProps> {
 						.map(this.renderEventListForDay(thisMonth))
 						.filter(eventList => !!eventList)}
 				</ul>
+				<div id="legend">
+					<ul class="day-list">
+						<li>
+							<div class="day-title">Legend</div>
+							<ul class="events-list">
+								<li class="event-item">Event</li>
+								<li class="event-item draft">Draft</li>
+								<li class="event-item team">Team</li>
+								<li class="event-item draft team">Team draft</li>
+								<li class="event-item tentative">Tentative</li>
+								<li class="event-item cancelled">Cancelled</li>
+								<li class="event-item info">Info</li>
+							</ul>
+						</li>
+					</ul>
+				</div>
 			</div>
 		);
 	}
