@@ -453,20 +453,44 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							</tr>
 						))}
 					</tbody>
-					<td class="calendar-outmonth">
-						<div class="date-name">Legend</div>
-						<div class="events-list">
-							<div class="event-container" style="width: 100%;">
-								<div class="event-item">Event</div>
-								<div class="event-item draft">Draft</div>
-								<div class="event-item team">Team</div>
-								<div class="event-item draft team">Team draft</div>
-								<div class="event-item tentative">Tentative</div>
-								<div class="event-item cancelled">Cancelled</div>
-								<div class="event-item info">Info</div>
-							</div>
-						</div>
-					</td>
+					<div id="legend">
+						<ul class="day-list">
+							<li>
+								<td class="calendar-outmonth">
+									<div class="date-name">Legend</div>
+									<div class="events-list">
+										<table class="event-container" style="width: 100%;">
+											<tbody>
+												<tr>
+													<td>
+														<li class="event-item">Event</li>
+													</td>
+													<td>
+														<li class="event-item draft">Draft</li>
+													</td>
+													<td>
+														<li class="event-item team">Team</li>
+													</td>
+													<td>
+														<li class="event-item draft team">Team draft</li>
+													</td>
+													<td>
+														<li class="event-item tentative">Tentative</li>
+													</td>
+													<td>
+														<li class="event-item cancelled">Cancelled</li>
+													</td>
+													<td>
+														<li class="event-item info">Info</li>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</td>
+							</li>
+						</ul>
+					</div>
 				</table>
 			</div>
 		);

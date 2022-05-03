@@ -81,6 +81,44 @@ export default class MobileCalendar extends Page<CalendarProps> {
 
 		return (
 			<div className="calendar calendar-mobile">
+				<div id="legend">
+					<ul class="day-list">
+						<li>
+							<div class="events-list">
+								<div class="date-name">Legend</div>
+								<div class="events-list">
+									<table class="event-container" style="width: 100%;">
+										<tbody>
+											<tr>
+												<td>
+													<li class="event-item">Event</li>
+												</td>
+												<td>
+												date-name	<li class="event-item draft">Draft</li>
+												</td>
+												<td>
+													<li class="event-item team">Team</li>
+												</td>
+												<td>
+													<li class="event-item draft team">Team draft</li>
+												</td>
+												<td>
+													<li class="event-item tentative">Tentative</li>
+												</td>
+												<td>
+													<li class="event-item cancelled">Cancelled</li>
+												</td>
+												<td>
+													<li class="event-item info">Info</li>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
 				{this.props.member &&
 				effectiveManageEventPermission(this.props.member) !==
 					Permissions.ManageEvent.NONE ? (
@@ -106,22 +144,6 @@ export default class MobileCalendar extends Page<CalendarProps> {
 						.map(this.renderEventListForDay(thisMonth))
 						.filter(eventList => !!eventList)}
 				</ul>
-				<div id="legend">
-					<ul class="day-list">
-						<li>
-							<div class="day-title">Legend</div>
-							<ul class="events-list">
-								<li class="event-item">Event</li>
-								<li class="event-item draft">Draft</li>
-								<li class="event-item team">Team</li>
-								<li class="event-item draft team">Team draft</li>
-								<li class="event-item tentative">Tentative</li>
-								<li class="event-item cancelled">Cancelled</li>
-								<li class="event-item info">Info</li>
-							</ul>
-						</li>
-					</ul>
-				</div>
 			</div>
 		);
 	}
