@@ -454,34 +454,34 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 						))}
 					</tbody>
 					<div id="legend">
-						<ul class="day-list">
+						<ul className="day-list">
 							<li>
-								<td class="calendar-outmonth">
-									<div class="date-name">Legend</div>
-									<div class="events-list">
-										<table class="event-container" style="width: 100%;">
+								<td className="calendar-outmonth">
+									<div className="date-name">Legend</div>
+									<div className="events-list">
+										<table className="event-container" style="width: 100%;">
 											<tbody>
 												<tr>
 													<td>
-														<li class="event-item">Event</li>
+														<li className="event-item">Event</li>
 													</td>
 													<td>
-														<li class="event-item draft">Draft</li>
+														<li className="event-item draft">Draft</li>
 													</td>
 													<td>
-														<li class="event-item team">Team</li>
+														<li className="event-item team">Team</li>
 													</td>
 													<td>
-														<li class="event-item draft team">Team draft</li>
+														<li className="event-item draft team">Team draft</li>
 													</td>
 													<td>
-														<li class="event-item tentative">Tentative</li>
+														<li className="event-item tentative">Tentative</li>
 													</td>
 													<td>
-														<li class="event-item cancelled">Cancelled</li>
+														<li className="event-item cancelled">Cancelled</li>
 													</td>
 													<td>
-														<li class="event-item info">Info</li>
+														<li className="event-item info">Info</li>
 													</td>
 												</tr>
 											</tbody>
