@@ -321,6 +321,7 @@ a:hover {
 	grid-template-areas: 'body';
 	grid-template-columns: 100%;
 	grid-template-rows: 100%;
+	overflow: auto;
 }
 #root.embedded .background,
 #root.embedded header,
