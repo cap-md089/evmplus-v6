@@ -459,7 +459,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 								<td className="calendar-outmonth">
 									<div className="date-name">Legend</div>
 									<div className="events-list">
-										<table className="event-container" style="width: 100%;">
+										<table className="event-container" style = {{ width: '100%' }}>
 											<tbody>
 												<tr>
 													<td>

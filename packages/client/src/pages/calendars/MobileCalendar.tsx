@@ -87,7 +87,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 							<div className="events-list">
 								<div className="date-name">Legend</div>
 								<div className="events-list">
-									<table className="event-container" style="width: 100%;">
+									<table className="event-container" style = {{ width: '100%' }}>
 										<tbody>
 											<tr>
 												<td>
