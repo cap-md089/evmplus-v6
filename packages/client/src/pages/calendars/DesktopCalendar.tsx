@@ -453,6 +453,44 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 							</tr>
 						))}
 					</tbody>
+					<div id="legend">
+						<ul className="day-list">
+							<li>
+								<td className="calendar-outmonth">
+									<div className="date-name">Legend</div>
+									<div className="events-list">
+										<table className="event-container" style = {{ width: '100%' }}>
+											<tbody>
+												<tr>
+													<td>
+														<li className="event-item">Event</li>
+													</td>
+													<td>
+														<li className="event-item draft">Draft</li>
+													</td>
+													<td>
+														<li className="event-item team">Team</li>
+													</td>
+													<td>
+														<li className="event-item draft team">Team draft</li>
+													</td>
+													<td>
+														<li className="event-item tentative">Tentative</li>
+													</td>
+													<td>
+														<li className="event-item cancelled">Cancelled</li>
+													</td>
+													<td>
+														<li className="event-item info">Info</li>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</td>
+							</li>
+						</ul>
+					</div>
 				</table>
 			</div>
 		);
