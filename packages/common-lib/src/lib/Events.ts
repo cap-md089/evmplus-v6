@@ -109,9 +109,20 @@ const DRAFT_EVENT_DUTY_POSITIONS = [
 	'Cadet Operations NCO',
 	'Cadet Activities Officer',
 	'Cadet Activities NCO',
+	'Cadet Emergency Services Officer',
+	'Cadet Emergency Services NCO',
 ];
 
 const FULL_MANAGE_EVENT_DUTY_POSITIONS = [
+	'Cadet Commander',
+	'Cadet Deputy Commander for Operations',
+	'Cadet Deputy Commander for Support',
+	'Commander',
+	'Vice Commander',
+	'Deputy Commander for Cadets',
+	'Deputy Commander for Seniors',
+	'Director of Cadet Programs',
+	'Director of Emergency Services',
 	'Operations Officer',
 	'Activities Officer',
 	'Squadron Activities Officer',
