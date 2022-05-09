@@ -71,25 +71,30 @@ const handleSuccess = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
 	req: ServerAPIRequestParameter<api.Signin>,
 ) => (result: PAM.SigninSuccess): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
 	AsyncEither.All([
-		backend.getMember(req.account)(result.member),
+		backend
+			.getMember(req.account)(result.member)
+			.flatMap(member =>
+				asyncRight<ServerError, AccountLinkTarget[]>(
+					collectGeneratorAsync(
+						asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
+							asyncIterFilter<
+								EitherObj<ServerError, AccountLinkTarget>,
+								Right<AccountLinkTarget>
+							>(Either.isRight)(
+								backend.getAdminAccountIDs(backend)(toReference(member)),
+							),
+						),
+					),
+					errorGenerator('Could not get admin account IDs for member'),
+				).map(accounts => [member, accounts] as const),
+			),
 		backend
 			.getPermissionsForMemberInAccount(req.account)(result.member)
 			.map(PAM.getDefaultPermissions(req.account)),
 		backend.getUnreadNotificationCountForMember(req.account)(result.member),
 		backend.getUnfinishedTaskCountForMember(req.account)(result.member),
-		asyncRight<ServerError, AccountLinkTarget[]>(
-			collectGeneratorAsync(
-				asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
-					asyncIterFilter<
-						EitherObj<ServerError, AccountLinkTarget>,
-						Right<AccountLinkTarget>
-					>(Either.isRight)(backend.getAdminAccountIDs(toReference(result.member))),
-				),
-			),
-			errorGenerator('Could not get admin account IDs for member'),
-		),
 		backend.logSignin(req.account)(result.member),
-	]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
+	]).map(([[member, linkableAccounts], permissions, notificationCount, taskCount]) => ({
 		response: {
 			error: MemberCreateError.NONE,
 			member: {
@@ -161,27 +166,32 @@ const handleMFA = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
 				errorGenerator('Could not handle failure'),
 		  )
 		: AsyncEither.All([
-				backend.getMember(req.account)(result.member),
+				backend
+					.getMember(req.account)(result.member)
+					.flatMap(member =>
+						asyncRight<ServerError, AccountLinkTarget[]>(
+							collectGeneratorAsync(
+								asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(
+									get('value'),
+								)(
+									asyncIterFilter<
+										EitherObj<ServerError, AccountLinkTarget>,
+										Right<AccountLinkTarget>
+									>(Either.isRight)(
+										backend.getAdminAccountIDs(backend)(toReference(member)),
+									),
+								),
+							),
+							errorGenerator('Could not get admin account IDs for member'),
+						).map(accounts => [member, accounts] as const),
+					),
 				backend
 					.getPermissionsForMemberInAccount(req.account)(result.member)
 					.map(PAM.getDefaultPermissions(req.account)),
 				backend.getUnreadNotificationCountForMember(req.account)(result.member),
 				backend.getUnfinishedTaskCountForMember(req.account)(result.member),
-				asyncRight<ServerError, AccountLinkTarget[]>(
-					collectGeneratorAsync(
-						asyncIterMap<Right<AccountLinkTarget>, AccountLinkTarget>(get('value'))(
-							asyncIterFilter<
-								EitherObj<ServerError, AccountLinkTarget>,
-								Right<AccountLinkTarget>
-							>(Either.isRight)(
-								backend.getAdminAccountIDs(toReference(result.member)),
-							),
-						),
-					),
-					errorGenerator('Could not get admin account IDs for member'),
-				),
 				backend.logSignin(req.account)(result.member),
-		  ]).map(([member, permissions, notificationCount, taskCount, linkableAccounts]) => ({
+		  ]).map(([[member, linkableAccounts], permissions, notificationCount, taskCount]) => ({
 				response: {
 					error: MemberCreateError.NONE,
 					member: {

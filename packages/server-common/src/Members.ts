@@ -36,19 +36,21 @@ import {
 	asyncRight,
 	countAsync,
 	destroy,
+	effectiveManageEventPermission,
 	Either,
 	EitherObj,
 	errorGenerator,
 	filterUnique,
 	get,
+	getDefaultMemberPermissions,
 	getORGIDsFromCAPAccount,
+	identity,
 	isPartOfTeam,
 	iterMap,
 	iterToArray,
 	Maybe,
 	Member,
 	MemberForReference,
-	MemberPermissions,
 	MemberReference,
 	memoize,
 	Permissions,
@@ -58,7 +60,6 @@ import {
 	ServerError,
 	SignInLogData,
 	StoredAccountMembership,
-	StoredMemberPermissions,
 	stringifyMemberReference,
 	TableDataType,
 	toReference,
@@ -69,6 +70,7 @@ import { RawAttendanceDBRecord } from './Attendance';
 import { Backends, notImplementedError, notImplementedException } from './backends';
 import { CAP } from './member/members';
 import { getCAPMemberName, resolveCAPReference } from './member/members/cap';
+import { PAMBackend } from './member/pam';
 import {
 	collectResults,
 	findAndBind,
@@ -269,25 +271,30 @@ export const getEventAccountsForMember = (schema: Schema) => (
 		}),
 	);
 
-export const getAdminAccountIDsForMember = (schema: Schema) => (
-	member: MemberReference,
-): AsyncIter<EitherObj<ServerError, AccountLinkTarget>> =>
-	asyncIterMap<{ accountID: string }, EitherObj<ServerError, AccountLinkTarget>>(record =>
-		getRegistryById(schema)(record.accountID).map(registry => ({
+const memberHasAccountPermissions = (backend: Backends<[RawMySQLBackend, PAMBackend]>) => (
+	member: Member,
+) => (account: AccountObject): ServerEither<boolean> =>
+	backend
+		.getPermissionsForMemberInAccount(account)(member)
+		.map(Maybe.orSome(getDefaultMemberPermissions(account.type)))
+		.map(permissions => ({ ...member, permissions }))
+		.map(effectiveManageEventPermission)
+		.map(perm => perm === Permissions.ManageEvent.FULL);
+
+export const getAdminAccountIDsForMember = (schema: RawMySQLBackend) => (
+	backend: Backends<[PAMBackend]>,
+) => (member: Member): AsyncIter<EitherObj<ServerError, AccountLinkTarget>> =>
+	asyncIterMap<AccountObject, EitherObj<ServerError, AccountLinkTarget>>(record =>
+		getRegistryById(schema.getSchema())(record.id).map(registry => ({
 			name: registry.Website.Name,
-			id: record.accountID,
+			id: record.id,
 		})),
 	)(
-		asyncIterFilter<{ accountID: string }>(record => record.accountID !== 'www')(
-			generateResults<{ accountID: string }>(
-				findAndBind(schema.getCollection<StoredMemberPermissions>('UserPermissions'), {
-					member: toReference(member),
-					permissions: {
-						ManageEvent: Permissions.ManageEvent.FULL,
-					} as MemberPermissions,
-				}).fields('accountID'),
+		asyncIterFilter<AccountObject>(record =>
+			memberHasAccountPermissions({ ...schema, ...backend })(member)(record).then(
+				Either.cata<ServerError, boolean, boolean>(always(false))(identity),
 			),
-		),
+		)(generateResults<AccountObject>(schema.getCollection('Accounts').find('true'))),
 	);
 
 export const getExtraAccountMembership = (backend: Backends<[RawMySQLBackend, AccountBackend]>) => (
@@ -401,8 +408,8 @@ export interface MemberBackend {
 	getBasicMemberAccounts: (member: Member) => ServerEither<AccountObject[]>;
 	getEventAccountMembership: (member: Member) => AsyncIter<EitherObj<ServerError, AccountObject>>;
 	getAdminAccountIDs: (
-		member: MemberReference,
-	) => AsyncIter<EitherObj<ServerError, AccountLinkTarget>>;
+		backend: PAMBackend,
+	) => (member: Member) => AsyncIter<EitherObj<ServerError, AccountLinkTarget>>;
 	logSignin: (account: AccountObject) => (member: MemberReference) => ServerEither<void>;
 	getUnfinishedTaskCountForMember: (
 		account: AccountObject,
@@ -444,10 +451,7 @@ export const getMemberBackend = (
 			(member: Member) => getEventAccountMembership(req.backend)(member),
 			stringifyMemberReference,
 		),
-		getAdminAccountIDs: memoize(
-			getAdminAccountIDsForMember(req.mysqlx),
-			stringifyMemberReference,
-		),
+		getAdminAccountIDs: getAdminAccountIDsForMember(req.backend),
 		logSignin: account => member => logSignin(req.mysqlx)(account)(toReference(member)),
 		getUnfinishedTaskCountForMember: memoize(
 			account =>
@@ -492,7 +496,7 @@ export const getEmptyMemberBackend = (): MemberBackend => ({
 	saveExtraMemberInformation: () => notImplementedError('saveExtraMemberInformation'),
 	getBasicMemberAccounts: () => notImplementedError('getBasicMemberAccounts'),
 	getEventAccountMembership: () => notImplementedException('getEventAccountMembership'),
-	getAdminAccountIDs: () => [],
+	getAdminAccountIDs: () => () => [],
 	logSignin: () => () => notImplementedError('logSignin'),
 	getUnfinishedTaskCountForMember: () => () =>
 		notImplementedError('getUnfinishedTaskCountForMember'),
@@ -524,7 +528,7 @@ export const getRequestFreeMemberBackend = (
 		accountHasMemberInAttendance: accountHasMemberInAttendance(db),
 		accountHasMember: account => member =>
 			isMemberPartOfAccount({ ...prevBackend, ...backend })(member)(account),
-		getAdminAccountIDs: getAdminAccountIDsForMember(db),
+		getAdminAccountIDs: memoize(getAdminAccountIDsForMember(prevBackend)),
 		getBasicMemberAccounts: memoize(
 			(member: Member) => getBasicMemberAccounts({ ...prevBackend, ...backend })(member),
 			stringifyMemberReference,
