@@ -104,19 +104,26 @@ export const getURIComponent = (event: RawResolvedEventObject): string =>
 export const hasMember = (event: EventObject) => (member: MemberReference): boolean =>
 	event.attendance.map(get('memberID')).filter(areMembersTheSame(member)).length > 0;
 
+const DRAFT_EVENT_DUTY_POSITIONS = [
+	'Cadet Operations Officer',
+	'Cadet Operations NCO',
+	'Cadet Activities Officer',
+	'Cadet Activities NCO',
+];
+
+const FULL_MANAGE_EVENT_DUTY_POSITIONS = [
+	'Operations Officer',
+	'Activities Officer',
+	'Squadron Activities Officer',
+];
+
 export const hasBasicEventPermissions = (member: User): boolean =>
 	hasPermission('ManageEvent')(Permissions.ManageEvent.ADDDRAFTEVENTS)(member) ||
 	hasPermission('ManageEvent')(Permissions.ManageEvent.FULL)(member) ||
 	((member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
-		hasOneDutyPosition([
-			'Operations Officer',
-			'Cadet Operations Officer',
-			'Cadet Operations NCO',
-			'Activities Officer',
-			'Squadron Activities Officer',
-			'Cadet Activities Officer',
-			'Cadet Activities NCO',
-		])(member));
+		hasOneDutyPosition([...DRAFT_EVENT_DUTY_POSITIONS, ...FULL_MANAGE_EVENT_DUTY_POSITIONS])(
+			member,
+		));
 
 export const getAttendanceRecordForMember = (attendance: AttendanceRecord[]) => (
 	member: MemberReference,
@@ -153,20 +160,11 @@ export const effectiveManageEventPermission = (member: ClientUser): Permissions.
 	orderedManageEventPermissions[
 		Math.max(
 			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
-				hasOneDutyPosition([
-					'Operations Officer',
-					'Activities Officer',
-					'Squadron Activities Officer',
-				])(member)
+				hasOneDutyPosition(FULL_MANAGE_EVENT_DUTY_POSITIONS)(member)
 				? 2
 				: 0,
 			(member.type === 'CAPNHQMember' || member.type === 'CAPProspectiveMember') &&
-				hasOneDutyPosition([
-					'Cadet Operations Officer',
-					'Cadet Operations NCO',
-					'Cadet Activities Officer',
-					'Cadet Activities NCO',
-				])(member)
+				hasOneDutyPosition(DRAFT_EVENT_DUTY_POSITIONS)(member)
 				? 1
 				: 0,
 			permissionIndex(member.permissions.ManageEvent),

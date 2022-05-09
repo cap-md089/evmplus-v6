@@ -36,7 +36,6 @@ import {
 	asyncRight,
 	countAsync,
 	destroy,
-	effectiveManageEventPermission,
 	Either,
 	EitherObj,
 	errorGenerator,
@@ -44,6 +43,7 @@ import {
 	get,
 	getDefaultMemberPermissions,
 	getORGIDsFromCAPAccount,
+	hasBasicEventPermissions,
 	identity,
 	isPartOfTeam,
 	iterMap,
@@ -53,7 +53,6 @@ import {
 	MemberForReference,
 	MemberReference,
 	memoize,
-	Permissions,
 	pipe,
 	RawCAPEventAccountObject,
 	RawTeamObject,
@@ -278,8 +277,7 @@ const memberHasAccountPermissions = (backend: Backends<[RawMySQLBackend, PAMBack
 		.getPermissionsForMemberInAccount(account)(member)
 		.map(Maybe.orSome(getDefaultMemberPermissions(account.type)))
 		.map(permissions => ({ ...member, permissions }))
-		.map(effectiveManageEventPermission)
-		.map(perm => perm === Permissions.ManageEvent.FULL);
+		.map(hasBasicEventPermissions);
 
 export const getAdminAccountIDsForMember = (schema: RawMySQLBackend) => (
 	backend: Backends<[PAMBackend]>,
