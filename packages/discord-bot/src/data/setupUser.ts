@@ -95,6 +95,11 @@ export const CadetSupportStaffRoles = [
 	'Cadet Recruiting NCO',
 	'Cadet Safety NCO',
 	'Cadet Supply NCO',
+
+	'Cadet WCAC Representative',
+	'Cadet WCAC Assistant',
+	'Cadet GCAC Representative',
+	'Cadet GCAC Assistant',
 ];
 
 export const CACRepresentativeRoles = [
@@ -521,7 +526,7 @@ const get101CardCertificationRoles = (guild: Guild) => (schema: Schema) => async
 const setupRoles = (guild: Guild) => (backend: DiscordBackends) => (schema: Schema) => (
 	account: AccountObject,
 ) => (discordUser: GuildMember) => (teams: RawTeamObject[]) => async (member: Member) => {
-	const roles = (await guild.roles.fetch());
+	const roles = await guild.roles.fetch();
 
 	const finalRoles = new Collection<string, Role>();
 
