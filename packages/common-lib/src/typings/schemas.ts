@@ -43,11 +43,13 @@ export interface TableNameMap {
 	NHQ_CadetDutyPosition: NHQ.CadetDutyPosition;
 	NHQ_CadetHFZInformation: NHQ.CadetHFZInformation;
 	NHQ_CdtAchvEnum: NHQ.CdtAchvEnum;
+	NHQ_Commanders: NHQ.Commanders;
 	NHQ_DutyPosition: NHQ.DutyPosition;
 	NHQ_MbrAchievements: NHQ.MbrAchievements;
 	NHQ_MbrContact: NHQ.MbrContact;
 	NHQ_Member: NHQ.NHQMember;
 	NHQ_OFlight: NHQ.OFlight;
+	NHQ_OrgContact: NHQ.OrgContact;
 	NHQ_Organization: NHQ.Organization;
 	Notifications: RawNotificationObject<NotificationCause, NotificationTarget>;
 	PasswordResetTokens: PasswordResetTokenInformation;

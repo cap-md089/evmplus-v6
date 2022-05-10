@@ -75,6 +75,7 @@ interface MemberSearchUIState {
 	firstNameInput: string;
 	lastNameInput: string;
 	unitNameInput: string;
+	dutyNameInput: string;
 	dialogueOpen: boolean;
 	inputHasBeenEntered: boolean;
 	memberViewed: api.member.MemberSearchResult | null;
@@ -115,6 +116,12 @@ interface MemberSearchUnitNameSearchInputAction {
 	payload: string;
 }
 
+interface MemberSearchDutyNameSearchInputAction {
+	type: 'DUTY_NAME_SEARCH_UPDATE';
+
+	payload: string;
+}
+
 interface MemberSearchOpenUIAction {
 	type: 'OPEN_UI';
 }
@@ -138,6 +145,7 @@ type MemberSearchActions =
 	| MemberSearchFirstNameSearchInputAction
 	| MemberSearchLastNameSearchInputAction
 	| MemberSearchUnitNameSearchInputAction
+	| MemberSearchDutyNameSearchInputAction
 	| MemberSearchOpenUIAction
 	| MemberSearchCloseUIAction
 	| MemberSearchSelectMemberAction
@@ -155,6 +163,11 @@ const updateLastName = (payload: string): MemberSearchActions => ({
 
 const updateUnitName = (payload: string): MemberSearchActions => ({
 	type: 'UNIT_NAME_SEARCH_UPDATE',
+	payload,
+});
+
+const updateDutyName = (payload: string): MemberSearchActions => ({
+	type: 'DUTY_NAME_SEARCH_UPDATE',
 	payload,
 });
 
@@ -193,6 +206,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 		firstNameInput: '',
 		lastNameInput: '',
 		unitNameInput: '',
+		dutyNameInput: '',
 		dialogueOpen: false,
 		inputHasBeenEntered: false,
 		memberViewed: null,
@@ -241,6 +255,13 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 					unitNameInput: action.payload,
 				};
 
+			case 'DUTY_NAME_SEARCH_UPDATE':
+				return {
+					...state,
+
+					dutyNameInput: action.payload,
+				};
+
 			case 'START_LOADING':
 				return {
 					...state,
@@ -286,32 +307,44 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 		| MemberSearchFirstNameSearchInputAction
 		| MemberSearchLastNameSearchInputAction
 		| MemberSearchUnitNameSearchInputAction
+		| MemberSearchDutyNameSearchInputAction
 	> =>
 		filter<
 			MemberSearchActions,
 			| MemberSearchFirstNameSearchInputAction
 			| MemberSearchLastNameSearchInputAction
 			| MemberSearchUnitNameSearchInputAction
+			| MemberSearchDutyNameSearchInputAction
 		>(
 			(
 				action,
 			): action is
 				| MemberSearchFirstNameSearchInputAction
 				| MemberSearchLastNameSearchInputAction
-				| MemberSearchUnitNameSearchInputAction =>
+				| MemberSearchUnitNameSearchInputAction
+				| MemberSearchDutyNameSearchInputAction =>
 				(action.type === 'FIRST_NAME_SEARCH_UPDATE' &&
 					state$.value.unitNameInput.length +
 						state$.value.lastNameInput.length +
+						state$.value.dutyNameInput.length +
 						action.payload.length >=
 						3) ||
 				(action.type === 'LAST_NAME_SEARCH_UPDATE' &&
 					state$.value.unitNameInput.length +
 						state$.value.firstNameInput.length +
+						state$.value.dutyNameInput.length +
 						action.payload.length >=
 						3) ||
 				(action.type === 'UNIT_NAME_SEARCH_UPDATE' &&
 					state$.value.firstNameInput.length +
 						state$.value.lastNameInput.length +
+						state$.value.dutyNameInput.length +
+						action.payload.length >=
+						3) ||
+				(action.type === 'DUTY_NAME_SEARCH_UPDATE' &&
+					state$.value.firstNameInput.length +
+						state$.value.lastNameInput.length +
+						state$.value.unitNameInput.length +
 						action.payload.length >=
 						3),
 		);
@@ -332,6 +365,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 								unitName: encodeURIComponent(state$.value.unitNameInput || '%'),
 								firstName: encodeURIComponent(state$.value.firstNameInput || '%'),
 								lastName: encodeURIComponent(state$.value.lastNameInput || '%'),
+								dutyName: encodeURIComponent(state$.value.dutyNameInput || '%'),
 							},
 							{},
 						),
@@ -351,20 +385,30 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 				): action is
 					| MemberSearchFirstNameSearchInputAction
 					| MemberSearchLastNameSearchInputAction
-					| MemberSearchUnitNameSearchInputAction =>
+					| MemberSearchUnitNameSearchInputAction
+					| MemberSearchDutyNameSearchInputAction =>
 					(action.type === 'FIRST_NAME_SEARCH_UPDATE' &&
 						state$.value.unitNameInput.length +
 							state$.value.lastNameInput.length +
+							state$.value.dutyNameInput.length +
 							action.payload.length <
 							3) ||
 					(action.type === 'LAST_NAME_SEARCH_UPDATE' &&
 						state$.value.unitNameInput.length +
 							state$.value.firstNameInput.length +
+							state$.value.dutyNameInput.length +
 							action.payload.length <
 							3) ||
 					(action.type === 'UNIT_NAME_SEARCH_UPDATE' &&
 						state$.value.firstNameInput.length +
 							state$.value.lastNameInput.length +
+							state$.value.dutyNameInput.length +
+							action.payload.length <
+							3) ||
+					(action.type === 'DUTY_NAME_SEARCH_UPDATE' &&
+						state$.value.firstNameInput.length +
+							state$.value.lastNameInput.length +
+							state$.value.unitNameInput.length +
 							action.payload.length <
 							3),
 			),
@@ -455,6 +499,28 @@ const MemberSearchUnitNameFilter = React.memo(
 					onChange={e => setUnitName(e.target.value)}
 					key="unitName-input"
 					name="unitName"
+				/>
+			</div>
+		);
+	},
+);
+
+const MemberSearchDutyNameFilter = React.memo(
+	(): ReactElement => {
+		const dispatch = useDispatch();
+
+		const setDutyName = useCallback(name => dispatch(updateDutyName(name)), [dispatch]);
+
+		const dutyName = useSelector<MemberSearchState, string>(state => state.dutyNameInput);
+
+		return (
+			<div className="input-formbox" key="dutyName-formbox">
+				<input
+					type="text"
+					value={dutyName}
+					onChange={e => setDutyName(e.target.value)}
+					key="dutyName-input"
+					name="dutyName"
 				/>
 			</div>
 		);
@@ -712,8 +778,14 @@ const MemberSearchDataBox = (): ReactElement => (
 					</li>
 					<li key="orgName">
 						<div className="selector-left-filter">Unit name</div>
-						<div className="selector-right-filter" key="lastName-div">
+						<div className="selector-right-filter" key="unitName-div">
 							<MemberSearchUnitNameFilter key="unitName-box" />
+						</div>
+					</li>
+					<li key="dutyName">
+						<div className="selector-left-filter">Duty name</div>
+						<div className="selector-right-filter" key="dutyName-div">
+							<MemberSearchDutyNameFilter key="dutyName-box" />
 						</div>
 					</li>
 				</ul>

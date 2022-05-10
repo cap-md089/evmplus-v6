@@ -60,13 +60,22 @@ import {
 	RegistryBackend,
 	TeamsBackend,
 	withBackends,
+	CAP,
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 type Req = ServerAPIRequestParameter<api.events.events.GetEventViewerData>;
 type Backend = Backends<
-	[EventsBackend, AccountBackend, MemberBackend, TeamsBackend, RegistryBackend, AttendanceBackend]
+	[
+		EventsBackend,
+		AccountBackend,
+		CAP.CAPMemberBackend,
+		MemberBackend,
+		TeamsBackend,
+		RegistryBackend,
+		AttendanceBackend,
+	]
 >;
 
 interface LinkedEventInfo {
@@ -120,7 +129,7 @@ const attendanceViewerRecordMapper = (
 ): api.events.events.EventViewerAttendanceRecord => ({
 	member: Maybe.none(),
 	record,
-	orgName: Maybe.none(),
+	orgInformation: Maybe.none(),
 });
 
 export const getAttendanceForNonAdmin = (
@@ -161,21 +170,39 @@ export const getFullEventInformation = (
 			asyncIterMap(record =>
 				backend
 					.getMember(req.account)(record.memberID)
-					.flatMap(member =>
-						backend
-							.getOrgNameForMember(req.account)(member)
-							.map(orgName => ({
-								member: Maybe.some(member),
-								record,
-								orgName,
-							})),
+					.flatMap<api.events.events.EventViewerAttendanceRecord>(member =>
+						member.type === 'CAPNHQMember'
+							? backend
+									.getOrgInfo(member)
+									.map(orgInformation => ({
+										member: Maybe.some(member),
+										record,
+										orgInformation: Maybe.some(orgInformation),
+									}))
+									.leftFlatMap(
+										always(
+											Either.right({
+												member: Maybe.some(member),
+												record,
+												orgInformation: Maybe.none(),
+											}),
+										),
+									)
+							: asyncRight(
+									{
+										member: Maybe.some(member),
+										record,
+										orgInformation: Maybe.none(),
+									},
+									errorGenerator('What?'),
+							  ),
 					)
 					.leftFlatMap(
 						always(
 							Either.right({
 								member: Maybe.none(),
 								record,
-								orgName: Maybe.none(),
+								orgInformation: Maybe.none(),
 							}),
 						),
 					)

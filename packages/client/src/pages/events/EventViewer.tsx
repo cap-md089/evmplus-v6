@@ -63,6 +63,7 @@ import {
 	stringifyMemberReference,
 	toReference,
 } from 'common-lib';
+import { SquadronPOC } from 'common-lib/dist/typings/apis/events/events';
 import { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
 import * as React from 'react';
 import MarkdownRenderer from 'react-markdown-renderer';
@@ -188,9 +189,10 @@ const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEvent
 		} = member.record;
 
 		const accountName = pipe(
-			Maybe.map((name: string) => `[${name}]`),
+			Maybe.flatMap<SquadronPOC, string>(get('orgName')),
+			Maybe.map(name => `[${name}]`),
 			Maybe.orSome(''),
-		)(member.orgName);
+		)(member.orgInformation);
 
 		const contactEmail = pipe(
 			Maybe.map<Member, CAPMemberContact>(get('contact')),
@@ -1341,7 +1343,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 										memberName: getFullMemberName(member),
 									},
 									member: Maybe.fromValue(this.props.member),
-									orgName: Maybe.some(this.props.registry.Website.Name),
+									orgInformation: Maybe.none(),
 								},
 							],
 						},

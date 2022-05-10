@@ -18,9 +18,10 @@
  */
 
 import type * as XLSX from 'xlsx';
+import { pipe } from 'ramda';
 import { Maybe } from '../../lib/Maybe';
 import { get } from '../../lib/Util';
-import { EventViewerAttendanceRecord } from '../../typings/apis/events/events';
+import { EventViewerAttendanceRecord, SquadronPOC } from '../../typings/apis/events/events';
 import {
 	AttendanceStatus,
 	CustomAttendanceField,
@@ -260,7 +261,6 @@ export const AttendanceXL = (
 		'Timestamp',
 		'CAPID',
 		'Grade/Name',
-		'Squadron',
 		'Arrival Time',
 		'Departure Time',
 		'Status',
@@ -268,6 +268,9 @@ export const AttendanceXL = (
 		'Email(s)',
 		'Phone(s)',
 		'Comments',
+		'Unit Name',
+		'Commander Name',
+		'Unit Contacts',
 	];
 
 	const retVal: Array<Array<string | number>> = [];
@@ -279,13 +282,30 @@ export const AttendanceXL = (
 
 	const orEmptyString = Maybe.orSome('');
 
+	const getCommanderName = pipe(
+		Maybe.flatMap<SquadronPOC, string>(get('commanderName')),
+		orEmptyString,
+	);
+
+	// attendee.orgInformation
+	// |> Maybe.map (\r -> r.commanderName)
+	// |> Maybe.withDefault ""
+
+	const getUnitName = pipe(Maybe.flatMap<SquadronPOC, string>(get('orgName')), orEmptyString);
+
+	const getUnitContacts = pipe(
+		Maybe.map<SquadronPOC, string>(({ contacts }) =>
+			contacts.map<string>(curr => `${curr.type}: ${curr.contact}`).join('\n'),
+		),
+		orEmptyString,
+	);
+
 	// if event attendance present (no count function??)
 	for (const attendee of attendance) {
 		row = [
 			attendee.record.timestamp,
 			`${attendee.record.memberID.id} `,
 			attendee.record.memberName,
-			attendee.member.hasValue ? attendee.member.value.squadron : '',
 			attendee.record.shiftTime.arrivalTime,
 			attendee.record.shiftTime.departureTime,
 			DisplayAttendanceStatus[attendee.record.status],
@@ -293,7 +313,11 @@ export const AttendanceXL = (
 			orEmptyString(Maybe.map(GetBestEmails)(attendee.member)),
 			orEmptyString(Maybe.map(GetBestPhones)(attendee.member)),
 			attendee.record.comments,
+			getUnitName(attendee.orgInformation),
+			getCommanderName(attendee.orgInformation),
+			getUnitContacts(attendee.orgInformation),
 		];
+
 		for (const fieldVal of attendee.record.customAttendanceFieldValues) {
 			row.push(
 				typeof fieldVal.value === 'boolean'
@@ -328,7 +352,7 @@ export const FormatAttendanceXL = (
 	numRows: number,
 ): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
-	const numStaticColumns = 10;
+	const numStaticColumns = 12;
 	let rowCount = 0;
 	let emails = '';
 	let phones = '';
