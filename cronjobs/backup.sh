@@ -19,7 +19,7 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-/usr/local/mysql-shell/bin/mysqlsh --file  /usr/evm-plus/cronjobs/database-dump.js
+/usr/local/mysql-shell/bin/mysqlsh -h mysql --password=$(cat /run/secrets/mysql_root_password) --user=root --file /usr/evm-plus/cronjobs/database-dump.js
 
 printf -v date "%(%a_%b_%e_%Y)T"
 
